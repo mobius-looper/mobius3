@@ -1,0 +1,48 @@
+#baseURL = 'https://example.org/'
+#languageCode = 'en-us'
+#title = 'My New Hugo Site'
+#theme = 'spectral'
+#copyright = 'Circular Labs'
+
+baseURL = "/"
+title = "Möbius 3"
+languageCode = "en-us"
+defaultContentLanguage = "en"
+paginate = "7"
+theme = "spectral"
+
+[params]
+fancyTitle = "Möbius 3" # title for frontpage, may include image
+copyright = "Jeffrey Larson"
+description = 'The Möbius Programmable Looper<br />Rises from the ashes'
+startbuttonText = "Download"
+startbuttonLink = "/downloads"
+body_is_markdown = true
+
+[[params.menu.main]]
+url = '/'
+title = "Home"
+
+[[params.menu.main]]
+url = '/downloads/'
+title = "Downloads"
+
+[[params.menu.main]]
+url = '/documentation/'
+title = "Documentation"
+
+[[params.menu.main]]
+url = 'http://www.circularlabs.com/forum'
+title = "Community"
+
+[[params.menu.main]]
+url = '/about/'
+title = "About"
+
+[params.one]
+enable = true
+title = 'Welcome to the new Mobius'
+body = '''
+This is an early release not intended for wide distrubition.  If you are familiar with old Mobius feel free to download it, try it out, and send me problem reports.  But it is not in a state where I am able to help new people learn it, and I do not recommend using it for serioius live performance until it has had more testing.  I may be reached for limited support at jeff@circularlabs.com.  
+'''
+

@@ -1,0 +1,20 @@
+Sun May 26 14:27:04 2024
+
+Filezilla is the FTP client I use to upload files to the Midphase server.
+Any FTP client would do the job but this one is free and works well enough.
+
+The Midphase FTP configuration is:
+
+  FTP host: ftp.zonemobius.com
+
+I did not specify a port or override the default TLS setting.
+The default port seems to be 21.
+
+To upload individual files, click the destination folder on the right, then
+navigate to the source file on the left, right click, and select Upload.
+
+
+
+
+
+

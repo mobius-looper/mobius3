@@ -1,0 +1,213 @@
+Sun May 26 14:09:13 2024
+
+rclone is a command line tool for doing bulk transfers of web site files.
+It supports a large number of network protocols, but I only use simple FTP.
+
+Executive summary:
+
+To copy a compiled Hugo site enter this command:
+
+rclone copy circularlabs/public zonemobius:public_html/circularlabs.com
+
+!!! DO NOT USE SYNC !!!
+
+The "sync" option will make the destination site match the source site, which
+will delete everything on the destination that isn't in the source.  Since I keep
+a number of extra files on the server, including the forum, that would get wiped
+out using sync.  Always use "rclone copy".
+
+To copy an installer enter this command:
+
+  rclone copy ../install/Output/MobiusSetup.exe zonemobius:public_html/circularlabs.com
+
+
+
+
+Get it here:
+https://rclone.org/install/
+
+It is a single .exe file, copy it to c:/cygwin64/usr/local/bin
+
+You must first configure a "remote" which is where all the FTP connection
+parameters are defined.  These are stored in a file, I noticed this:
+
+rclone listremotes
+2024/05/19 17:01:28 NOTICE: Config file "C:\\Users\\jeff\\AppData\\Roaming\\rclone\\rclone.conf" not found - using defaults
+
+To configure a remote do:
+
+  rclone config
+  
+Run this in a non-emacs terminal window, it will ask a lot of questions.
+I didn't try it, but you can probably just edit the rclone.conf file manually
+for simple things and save time.
+
+Once the remote is configured you reference it by name followed by a colon,
+followed by a path relative to the root of the FTP server.  
+
+rclone copy circularlabs/public zonemobius:public_html/circularlabs.com
+
+Docs are really confusing on the syntax of the arguments.  When you see "remote:"
+It means replace "remote" with the name of your remote configuration, in my case "zonemobius".
+
+So this:
+
+rclone copy hello.txt zonemobius:
+
+copies the hello.txt file to the root of the FTP server which is /home/zonemobi in cpanel.
+
+----------------------------------------------------------------------
+Documentation
+----------------------------------------------------------------------
+
+The installation package is a .zip file containing these files:
+
+  -rw-rw-rw-  1 jeff jeff   125681 05-18 21:17 git-log.txt
+  -rw-rw-rw-  1 jeff jeff  2513938 05-18 21:17 rclone.1
+  -rwxrwxrwx  1 jeff jeff 60416000 05-18 21:17 rclone.exe
+  -rw-rw-rw-  1 jeff jeff  2684491 05-18 21:17 README.html
+  -rw-rw-rw-  1 jeff jeff  2317711 05-18 21:17 README.txt
+
+The .txt file has a lot of information, but I mostly just read the web site.
+
+https://gohugo.io/hosting-and-deployment/deployment-with-rclone/
+https://rclone.org/docs/
+
+----------------------------------------------------------------------
+Initial Setup Notes
+----------------------------------------------------------------------
+
+Tried initially with SFTP but it hung.  FTP works.
+
+Loki setup I just hacked at till it worked.  Thor has detailed notes below.
+
+Docs are really confusing on the syntax of the arguments.  When you see "remote:"
+It means replace "remote" with the name of your remote configuration, in my case "zonemobius".
+
+So this:
+
+rclone copy hello.txt zonemobius:
+
+copies the hello.txt file to the root of the FTP server which is /home/zonemobi in cpanel.
+
+Basic usage:
+
+rclone copy mobius/public zonemobius:public_html/hairycrazyants.com
+
+This seems to require that it be at the root of the domain directory under
+public_html, probably because of the baseUrl thing in hugo.toml which is
+"/" but can't be changed without messing up the local hugo server.  
+
+----------------------------------------------------------------------
+Thor Setup
+----------------------------------------------------------------------
+
+rclone listremotes
+2024/05/19 17:01:28 NOTICE: Config file "C:\\Users\\jeff\\AppData\\Roaming\\rclone\\rclone.conf" not found - using defaults
+
+It likes to ask questions so can't do this from an emacs shell, use cygwin
+
+https://rclone.org/docs/
+
+Enter this:
+
+  rclone config
+
+Enters this dialog...
+
+No remotes found, make a new one?
+n) New Remote
+s) Set configuration password
+q) Quit
+
+Type: n
+
+Enter name for new remote>
+name> zonemobius
+
+Type of storage to configre.
+Choose a number from below, or type in your own value.
+...
+15 FTP
+...
+Storage> 15
+
+Option host.
+FTP host to connect to.
+e.g. "ftp.example.com".
+Enter a value.
+
+host> ftp.zonemobius.com
+
+Option user.
+FTP Username.
+Enter a string value.  Press Enter for the default (THOR\jeff)
+
+user> zonemobi
+
+Option port.
+FTP port number.
+Enter a signed integer. Prese Enter for the default (21)
+
+port> (enter)
+
+Option pass.
+FTP password.
+Choose an alternative below.  Press enter for the default (n).
+y) Yes, type in my own password
+g) Generate random password
+n) No, leave this optional password blank
+
+y/g/n> y
+
+Enter the password:
+password: hanson@9799
+confirm...
+
+Option tls.
+Use Implicit FTPS (FTP over TLS).
+When using implicit FTP over TLS the client connects using TLS
+right from the start which breaks compatibility with non-TLS-aware servers.
+This is usually served over port 990 rather than port 21.  Cannot be used in
+combination with explicit FTPS.
+Enter a boolean value (true or false).  Press Enter for the default (false).
+
+tls> (enter)
+
+Option explicit_tls.
+Use Explicit FTPS (FTP over TLS).
+When using explicit FTP over TLS the client explicitly requests
+security from the server in order to upgrade a plain text connection
+to an encrypted one. Cannot be used in combination with implicit FTPS.
+Enter a boolean value (true or false). Press Enter for the default (false).
+
+explicit_tls> (enter)
+
+Edit advanced config?
+y) Yes
+n) No (default)
+
+y/n> (enter)
+
+Configuration complete.
+Options:
+- type: ftp
+- host: ftp.zonemobius.com
+- user: zonemobi
+- pass: *** ENCRYPTED ***
+Keep this "zonemobius" remote?
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+
+Now we're in a top level menu where you can edit existing, create new etc.
+c:/Users/Jeff/AppData/Roaming/rclone/rclone.conf has this:
+
+[zonemobius]
+type = ftp
+host = ftp.zonemobius.com
+user = zonemobi
+pass = rwjbHNWgnI94_ZclR6dTuBL7ENhdd4m-juln
+
+
+So everything I could just type in except for the password

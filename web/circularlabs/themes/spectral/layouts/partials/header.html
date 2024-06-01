@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<!--
+	Spectral by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html lang="{{ .Site.Language.Lang | default "en-us" }}">
+	<head>
+	  <title>{{ .Title }}</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="referrer" content="origin">
+
+	{{ template "_internal/google_analytics.html" . }}
+
+    {{ with .Site.Params.description }}<meta name="description" content="{{ . | plainify }}">{{ end }}
+    {{ with .Site.Params.author }}<meta name="author" content="{{ . }}">{{ end }}
+    {{ range .AlternativeOutputFormats -}}
+      {{ printf `<link rel="%s" type="%s" href="%s" title="%s">` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
+    {{ end -}}
+    {{ hugo.Generator }}
+
+    {{ partial "stylesheets.html" . }}
+    {{ range .Translations }}
+    <link rel="alternate" hreflang="{{ .Lang }}" href="{{ .Permalink }}">
+    {{ end }}
+    {{ template "_internal/twitter_cards.html" . }}
+    {{ template "_internal/opengraph.html" . }}
+    {{ partial "hooks/head-end.html" . }}
+	</head>
+	<body class="landing is-preload">
+
+		<!-- Page Wrapper -->
+			<div id="page-wrapper">
+
+				<!-- Header -->
+          <header id="header"{{ if .Page.IsHome }} class="alt"{{ end }}>
+            <h1><a href="{{ .Site.BaseURL }}">{{ .Site.Title }}</a></h1>
+						<nav id="nav">
+							<ul>
+								<li class="special">
+                  <a href="#menu" class="menuToggle" aria-label='{{ i18n "menu" }}'><span>{{ i18n "menu" }}</span></a>
+									<div id="menu">
+										<ul>
+				              {{ range .Site.Params.menu.main }}
+				              <li><a href="{{ .url | relURL }}">{{ .title }}</a></li>
+				              {{ end }}
+										</ul>
+									</div>
+								</li>
+							</ul>
+						</nav>
+					</header>

@@ -1,0 +1,50 @@
+Sun May 26 14:29:26 2024
+
+Spectral is a complex but very pretty Hugo theme.  It works well enough
+but it does things I don't want and is really confusing to change so
+look for something simpler.
+
+All of the configuration I needed was nicely in the hugo.toml file,
+so far I haven't made any changes to the original code, though I would
+like to make the header area around the page titles smaller.
+
+----------------------------------------------------------------------
+Installation Notes
+----------------------------------------------------------------------
+
+The git repo is:
+
+  https://github.com/sbruder/spectral
+
+You normally check this out as a git submodule.
+
+Originally I just cloned the repository directly under circularlabs/themes
+When I added the surrounding site to my git repo it said this:
+
+warning: adding embedded git repository: UI/Source/web/first/themes/spectral
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint: 
+hint: 	git submodule add <url> UI/Source/web/first/themes/spectral
+hint: 
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint: 
+hint: 	git rm --cached UI/Source/web/first/themes/spectral
+hint: 
+hint: See "git help submodule" for more information.
+
+Checking out the submodule left this in c:/dev/jucetest/.submodules
+
+[submodule "UI/Source/web/mobius/themes/spectral"]
+	path = UI/Source/web/mobius/themes/spectral
+	url = https://github.com/sbruder/spectral
+
+Need to learn more about git submodules.
+
+I did that, but since it isn't in my git repo it doesn't sync across
+machines.  For simplicity, I removed the .submodules file and related
+.git files under themes/spectral and just checked everything in to
+my repo.

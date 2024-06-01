@@ -1,0 +1,34 @@
+{{ $md := .Site.Params.body_is_markdown | default false }}
+
+{{ with .Site.Params.contact }}
+{{ if .enable }}
+<section id="contact" class="wrapper style5">
+  <div class="inner">
+    <header class="major">
+      <h2>{{ .title }}</h2>
+      {{ partial "body_text.html" (dict "context" . "md" $md) }}
+    </header>
+    <form method="post" action="https://formspree.io/f/{{ .formspree_form_id }}">
+      <div class="row gtr-uniform">
+        <input type="hidden" name="subject" value="{{ .subject }}" />
+        <div class="col-6 col-12-xsmall">
+          <input type="text" name="name" id="name" value="" placeholder="{{ i18n "name" }}" required />
+        </div>
+        <div class="col-6 col-12-xsmall">
+          <input type="email" name="email" id="email" value="" placeholder="{{ i18n "email" }}" required />
+        </div>
+        <div class="col-12">
+          <textarea name="message" id="message" placeholder="{{ i18n "yourmessage" }}" rows="6" required></textarea>
+        </div>
+        <div class="col-12">
+          <ul class="actions">
+            <li><input type="submit" value="{{ i18n "send" }}" class="primary" /></li>
+            <li><input type="reset" value="{{ i18n "reset" }}" /></li>
+          </ul>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+{{ end }}
+{{ end }}

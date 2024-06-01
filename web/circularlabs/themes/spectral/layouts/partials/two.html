@@ -1,0 +1,21 @@
+{{ $md := .Site.Params.body_is_markdown | default false }}
+
+{{ with .Site.Params.two }}
+{{ if .enable }}
+<section id="two" class="wrapper alt style2">
+  {{ range .section }}
+	<section class="spotlight">
+    {{ if .img }}
+    <div class="image">
+      <img src="{{ .img | relURL }}" {{ with .img_alt }}alt="{{ . }}"{{ end }} />
+    </div>
+    {{ end }}
+    <div class="content">
+      <h2>{{ .title | safeHTML }}</h2>
+      {{ partial "body_text.html" (dict "context" . "md" $md) }}
+		</div>
+	</section>
+  {{ end }}
+</section>
+{{ end }}
+{{ end }}

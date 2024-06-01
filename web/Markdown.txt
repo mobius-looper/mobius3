@@ -1,0 +1,46 @@
+Sun May 26 14:37:57 2024
+
+Markdown is a popular text syntax for editing documentation and web pages.
+It is usually rendered to HTML using various tools.
+
+This site has a good overview:
+
+  https://www.markdownguide.org
+
+An online editor:
+
+  https://dillinger.io/
+
+Thor had a nice Markdown viewer app named MarkPad, not sure where it came from.
+
+Ghostwriter seems to be popular
+
+Ugh, the Ghostwriter download is enormous with all sorts of support files.
+There is an exe but not sure how it works without the many dlls.
+probably functional but not nearly  as pretty as MarkPad
+
+----------------------------------------------------------------------
+Syntax Summary
+----------------------------------------------------------------------
+
+https://www.markdownguide.org/cheat-sheet/
+
+# H1
+## H2
+### H3
+
+**bold**
+
+> blockquote
+
+1. ordered list
+- unordered list
+
+`code`
+
+--- horzontal rule
+
+[title](https://link)
+
+![alt text](image.jpg)
+

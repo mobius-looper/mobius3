@@ -1,0 +1,127 @@
+Sun May 26 13:27:43 2024
+
+Hugo is a static web site generator.  Download it here:
+
+https://github.com/gohugoio/hugo/releases/tag/v0.125.7
+
+The .zip has a single hugo.exe file, after decompression copy this to
+a location on the shell search path.  I only do web site management
+from Windows with Cygwin so it was copied to c:/cygwin64/usr/local/bin.
+
+The source for the circularlabs.com site is under the circularlabs directory.
+
+Note that it is crucial that you add this to hugo.toml in order to use embedded HTML in Markup files
+
+[markup.goldmark.renderer]
+unsafe= true
+
+To build the site, go there and enter this command:
+
+   hugo --buildDrafts
+
+The --buildDrafts argument is necessary because I'm still using the default
+template which makes every Markdown file a draft by default.  Need to fix that.
+
+To test the site locally enter this command:
+
+  hugo server -D
+
+I think the -D means to include draft files.
+
+The compiled site is found under the "public" directory under the root directory.
+To publish the site, head over to Rclone.txt
+
+If you need to make surgical changes to individual files without copying the entire site,
+just use Filezilla and upload them one at a time.
+
+The download pages expect the two installation binaries to be in the root folder
+for the web site.  Currently they are:
+
+   www.circularlabs.com/MobiusSetup.exe
+   www.circularlabs.com/Mobius.pkg
+
+Those two need to be uploaded individually with Filzilla after building
+the installers, they are not part of the Hugo site.
+
+From the root of the Midphase hosting site the paths to circularlabs.com
+is:
+
+   /public_html/circularlabs.com
+
+----------------------------------------------------------------------
+Content Pages
+----------------------------------------------------------------------
+
+Pages are written in Markdown and are found under the circiularlabs/content
+directory.  After compilation the names of each file become the names
+of directories under public: about, community, downloads, etc.  I'm assuming
+this means you can't have a content page whose name conflicts with one of
+the Hugo system directories like categories, fonts, css, etc. since they
+are at the same level.
+
+Using the Spectral theme, links to the pages are written in the hugo.toml file
+and then referenced deep within the Spectral code.  I don't know how common
+this is, but it's convenient since Spectral is hella complex.
+
+----------------------------------------------------------------------
+Download Problem
+----------------------------------------------------------------------
+
+There is something wonky with the download links in the downloads.md page.
+They render fine, and the link hover text is correct, but Chrome refuses
+to actually download the file.  There is a brief fliker and the page appears
+to refresh but nothing downloads.  I thought it might be security settings
+in Chrome but I turned off the things I could find and that didn't work.
+
+Both Safari and Opera download the file as expected.  Weirdly, if you right
+click on the link and chose "Save link as" it will download.
+
+Also weirdly, when the site is running locally under the Hugo server, the
+link works normally in Chrome.  So it is possibly related to the Midphase
+server as well as Chrome.
+
+I could have sworn that the original large Download button on the Spectral
+home page worked, but I didn't dig into the Spectral source to see how
+that was rendered.
+
+Oh, it's because the URL on the page wasn't using https://
+
+Chrome started preventing downloads of http:// downloads
+
+https://support.google.com/chrome/thread/77421860/clicking-download-link-does-nothing-at-all?hl=en
+
+https://support.google.com/chrome/thread/63305163
+
+Changed to https:// and it started working again
+
+----------------------------------------------------------------------
+Tutorials and Random Notes
+----------------------------------------------------------------------
+
+See training links here:
+https://gohugo.io/getting-started/external-learning-resources/
+
+Giraffe Academy videos are good
+
+A quickstart guide
+https://gohugo.io/getting-started/quick-start/
+
+"hugo new" had different suggested steps
+
+hugo new site quickstart
+Congratulations! Your new Hugo site was created in C:\dev\hugo\quickstart.
+
+Just a few more steps...
+
+1. Change the current directory to C:\dev\hugo\quickstart.
+2. Create or install a theme:
+   - Create a new theme with the command "hugo new theme <THEMENAME>"
+   - Or, install a theme from https://themes.gohugo.io/
+3. Edit hugo.toml, setting the "theme" property to the theme name.
+4. Create new content with the command "hugo new content <SECTIONNAME>\<FILENAME>.<FORMAT>".
+5. Start the embedded web server with the command "hugo server --buildDrafts".
+
+See documentation at https://gohugo.io/.
+
+----------------------------------------------------------------------
+
