@@ -1,0 +1,21 @@
+HelpNGo looks nice
+
+Explore Markdown as a raw text format for the docs that can be imported into HelpNGo
+
+Jekyll look interesting to build static web sites from Markdown
+
+For websites...
+
+Bernard recomended this and other "static site generators"
+https://gohugo.io/?fbclid=IwZXh0bgNhZW0CMTAAAR3M4UWKZkDMSM1DFw4lVlV8g5RYX9ixJtgMou_PlpLSHHHZBi4TXWjaMAM_aem_AQa_mKeZXlVBagmUyRPsRxdHFMobv1Vg_g_DWWhTZCt-nbLLoLDO_HnBklQ0xtDC2-MBZ85yFVR-X-axvhCcMeS2
+
+Someone else mentioned this
+
+https://www.elegantthemes.com/gallery/divi/?utm_source=Branded&utm_medium=Divi%20Builder&utm_campaign=Google%20Search&gad_source=1&gclid=CjwKCAjwouexBhAuEiwAtW_Zx8NDWfRLn42Ernz2gmwzYxGqULewiHszGIOuSzBelBmDDaBxwLiQbxoCyo4QAvD_BwE&fbclid=IwZXh0bgNhZW0CMTAAAR3M4UWKZkDMSM1DFw4lVlV8g5RYX9ixJtgMou_PlpLSHHHZBi4TXWjaMAM_aem_AQa_mKeZXlVBagmUyRPsRxdHFMobv1Vg_g_DWWhTZCt-nbLLoLDO_HnBklQ0xtDC2-MBZ85yFVR-X-axvhCcMeS2
+
+
+---
+
+
+Yeah, Hugo looks really good also check ut the Paige theme
+
