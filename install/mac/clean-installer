@@ -1,0 +1,13 @@
+#
+# Remove various intermediate files produced by build-installer
+# Not normally necessary except when making changes and
+# testing build-installer
+#
+
+rm -f *~
+rm -f *.*~
+rm -f *.pkg
+rm -rf stage
+rm -f au.plist
+rm -f vst.plist
+

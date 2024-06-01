@@ -1,0 +1,88 @@
+#
+# This is a shell script that does a number of intermediate operations
+# and generates the mobius.pkg file for upload.  It must be run
+# from within the mobius3/install/mac directory of the local Git
+# development tree and has path assumptions about the various build
+# output locations.
+#
+# Before running this script you just first build both the mobius3/Mobius
+# and mobius3/MobiusPlugin Juce projects.
+#
+
+# this is where Juce leaves the compiled bundles
+export appsrc=../../UI/Builds/MacOSX/build/Debug/Mobius.app
+export vstsrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.vst3
+export ausrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.component
+
+# use a staging directory for each intermediate package so we don't
+# pollute the build trees
+
+rm -rf stage
+mkdir stage
+
+echo Building standalone app package
+
+cp -r $appsrc stage
+
+# copy support files to be included with the installation into
+# the Mobius.app bundle directory
+export dest=stage/Mobius.app/Contents/Resources/Install
+mkdir $dest
+mkdir $dest/test
+mkdir $dest/test/samples
+
+cp ../resources/mobius.xml $dest
+cp ../resources/uiconfig.xml $dest
+cp ../../UI/Source/help.xml $dest
+cp ../../UI/Source/test/samples/gcloop.wav $dest/test/samples
+
+# make the component property list
+# sigh, by default this makes it relocatable which I do not want
+# and I don't see a command line option to override that
+# maybe --property-list ?
+# for now, keep the last edited one
+#pkgbuild --analyze --root stage app.plist
+
+# make the package
+pkgbuild --root stage --component-plist app.plist --install-location /Applications app.pkg
+
+#
+# VST3
+# This will not include the Resources/Install payload like Mobius.app
+# I suppose we could but you have to install both right now
+#
+
+echo Building VST3 package
+rm -rf stage
+mkdir stage
+cp -r $vstsrc stage
+pkgbuild --analyze --root stage vst.plist
+pkgbuild --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
+
+#
+# AU
+#
+
+echo Building AU package
+rm -rf stage
+mkdir stage
+cp -r $ausrc stage
+pkgbuild --analyze --root stage au.plist
+pkgbuild --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
+
+#
+# Mobius.pkg
+#
+
+echo Generating Mobius product package
+
+# commented out because I made changes to the generated plist to add
+# a custom title
+#productbuild --synthesize --package app.pkg --package vst.pkg --package au.pkg mobius.plist
+productbuild --distribution mobius.plist --resources . --package-path . Mobius.pkg
+
+
+
+
+
+

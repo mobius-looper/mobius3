@@ -1,0 +1,223 @@
+Wed May 29 16:46:43 2024
+
+Notes on using pkgbuild and productbuild
+Mostly from here:  https://thegreyblog.blogspot.com/2014/06/os-x-creating-packages-from-command_2.html
+
+Assuming we want to build a component package for an OS X application, we first invoke pkgbuild in analyse mode on a release installation directory to create an initial component property list file:
+
+$ pkgbuild --analyze \
+  --root /tmp/Name.dst \
+  NameComponent.plist
+
+Okay, try this
+
+pkgbuild --analyze --root ../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.app mypackage
+
+pkgbuild --analyze --root ../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.app mypackage
+pkgbuild --analyze --root ../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.app mypackage
+pkgbuild: Inferring bundle components from contents of ../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.app
+pkgbuild: Writing new component property list to mypackage
+
+It created an empty file, so not good on that...
+
+pkgbuild --analyze --root ../MobiusPlugin/Builds/MacOSX/build/Debug mypackage
+
+This worked better, it created:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>BundleIsVersionChecked</key>
+		<true/>
+		<key>BundleOverwriteAction</key>
+		<string>upgrade</string>
+		<key>RootRelativeBundlePath</key>
+		<string>Mobius.vst3</string>
+	</dict>
+	<dict>
+		<key>BundleIsVersionChecked</key>
+		<true/>
+		<key>BundleOverwriteAction</key>
+		<string>upgrade</string>
+		<key>RootRelativeBundlePath</key>
+		<string>Mobius.component</string>
+	</dict>
+	<dict>
+		<key>BundleHasStrictIdentifier</key>
+		<true/>
+		<key>BundleIsRelocatable</key>
+		<true/>
+		<key>BundleIsVersionChecked</key>
+		<true/>
+		<key>BundleOverwriteAction</key>
+		<string>upgrade</string>
+		<key>RootRelativeBundlePath</key>
+		<string>Mobius.app</string>
+	</dict>
+</array>
+</plist>
+
+So that looks good, but it has all three things in it, app, au, and vst3
+
+Tweak your component property file according to your needs (man pkgbuild for detailed information about the available configuration property) and when the configuration is ready pkgbuild can be run in its main mode to create the component package (split lines for better readability):
+
+$ pkgbuild --root /tmp/Name.dst \
+  --component-plist NameComponent.plist \
+  NameComponent.pkg
+
+
+Okay, let's give that a shot:
+
+pkgbuild --root ../MobiusPlugin/Builds/MacOSX/build/Debug --component-plist mypackage mystuff.pkg
+
+pkgbuild --root ../MobiusPlugin/Builds/MacOSX/build/Debug --component-plist mypackage mystuff.pkg
+pkgbuild: Reading components from mypackage
+pkgbuild: Adding component at Mobius.app
+pkgbuild: Adding component at Mobius.component
+pkgbuild: Adding component at Mobius.vst3
+pkgbuild: error: No package identifier specified and not exactly one component to derive it from.
+
+Maybe this is because pkgbuild can only do one thing?
+
+StackOverflow:
+  Ok, I've figured it out. If I add --identifier <unique identifier> to the pkgbuild command above, it works.
+
+Try with just one thing, copied Mobius.app over to test/Mobius.app
+
+pkgbuild --analyze --root test testpackage.plist
+
+Got the one entry as expected
+
+pkgbuild --root test --component-plist testpackage.plist testpackage.pkg
+
+pkgbuild --root test --component-plist testpackage.plist testpackage.pkg
+pkgbuild: Reading components from testpackage.plist
+pkgbuild: Adding component at Mobius.app
+pkgbuild: Wrote package to testpackage.pkg
+
+Well now, that worked better.
+
+I ran it and it went through the motions but it didn't end up in /Applications
+not sure where it went.
+
+Try this
+
+pkgbuild --root test --component-plist testpackage.plist --install-location /Applications testpackage.pkg
+
+That didn't work either
+
+https://apple.stackexchange.com/questions/219123/pkgbuild-created-package-does-not-install-correctly
+
+Holy shit, it may just be finding one at random.   Set "relocatable" to false
+
+Yes!!  That worked, always set
+
+		<key>BundleIsRelocatable</key>
+		<false/>
+
+Now, on to productbuild.  This works similarly you have to first run in analyze mode to create
+a "distribution file" then create a .pkg from that.
+
+A distribution file is to the product archive what the component property list is for the component package: it includes all the configuration of the product archive, including (see the man page for detailed information):
+A product license.
+A product README file.
+The list of component packages.
+Constraints (such as minimum OS version).
+
+$ productbuild --synthesize \
+  --product requirements.plist \
+  --package MyFrameworkComponent.pkg \
+  --package NameComponent.pkg \
+  distribution.plist
+
+I simplified this to have just a single package and skip the requirements file
+
+productbuild --synthesize --package testpackage.pkg testdist.plist
+
+productbuild --synthesize --package testpackage.pkg testdist.plist
+productbuild: Wrote synthesized distribution to testdist.plist
+
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <pkg-ref id="com.circularlabs.Mobius"/>
+    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.circularlabs.Mobius"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.circularlabs.Mobius" visible="false">
+        <pkg-ref id="com.circularlabs.Mobius"/>
+    </choice>
+    <pkg-ref id="com.circularlabs.Mobius" version="1.0.0" onConclusion="none">testpackage.pkg</pkg-ref>
+</installer-gui-script>
+
+that looks about right
+
+His example has a Title and a readme
+
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="2">
+  <title>Name</title>
+  ...
+  <license file="LICENSE.html"/>
+  <readme file="README.html"/>
+  ...
+</installer-gui-script
+
+Once the distribution file is ready, productbuild can be run to finally create the product archive. In this case we have to specify the distribution file with the --distribution option, the resource path where resource files are found (such as license and README, even if they are in the current working directory) the package path where component packages can be found using the --package-path options (in case they are not in the current working directory) and the name of the product package:
+
+$ productbuild \
+  --distribution distribution.plist
+  --resources .
+  --package-path path/to/MyFrameworkComponent.pkg
+  --package-path path/to/NameComponent.pkg
+  Name.pkg
+
+productbuild --distribution testdist.plist --resources . --package-path testpackage.pkg testprod.pkg
+
+productbuild --distribution testdist.plist --resources . --package-path testpackage.pkg testprod.pkg
+productbuild: Wrote product to testprod.pkg
+
+Well, that was too easy
+
+This has the schema of the installer-gui-script
+
+https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
+
+Not too much of interest here, "choices" could be used to selectively decide which plugin formats to install.
+options/customize can allow destination customizations which I've seen warnings about, just force it to the usual locations
+
+There is language in that doc that suggests you can specify the bundles in here without needing to use pkg-ref and making
+intermediate packages.  Could explore that someday to skip a step, but it's all automated anyway using shell scripts.
+
+"If there are multiple pkg-ref elements with the same ID, their attributes will be collapsed together as if they were specified with a single element. In particular, a pkg-ref element with only an ID can be used inside of a choice element to bind that choice to a pkg-ref that is more fully defined elsewhere in the distribution file."
+
+That explains what the two pkg-ref's inside the synthesized plist do.  Not sure why that was necessary.
+
+<title> was in the docs but didn't have any useful description.
+
+"welcome
+Specifies text that is displayed by Installer at the beginning of the installation process."
+
+it takes a file attribute like readme
+
+<title> results in the following
+
+The Window header bar says "Install Mobius of Destiny"
+The first line under the header bar says "Welcome to the Mobius of Destiny Installer
+
+<welcome>
+
+This looks similar to readme, it's just another wizard panel that appears before readme.
+
+On the left you get an "Introduction" item with the welcome text, then
+the Read Me item has "Important Information" label text above the file contents.
+
+<license> is probably what you're used to
+
+
+

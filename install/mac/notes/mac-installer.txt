@@ -1,0 +1,105 @@
+https://thegreyblog.blogspot.com/2014/06/os-x-creating-packages-from-command_2.html
+
+https://medium.com/swlh/the-easiest-way-to-build-macos-installer-for-your-application-34a11dd08744
+
+https://www.unix.com/man-page/osx/1/productbuild/
+
+https://stackoverflow.com/questions/11487596/making-macos-installer-packages-which-are-developer-id-ready
+  - scroll down for a very detailed response
+
+Holy shit, that guy was thorough
+
+https://stackoverflow.com/questions/50765934/how-to-customize-macos-installers-name-for-my-package-made-with-productbuild
+
+
+Good docs on the Bundle structure
+
+https://developer.apple.com/library/archive/documentation/CoreFoundation/Conceptual/CFBundles/BundleTypes/BundleTypes.html#//apple_ref/doc/uid/10000123i-CH101-SW1
+
+---
+
+Info.plist notes
+
+	<key>CFBundleSignature</key>
+	<string>????</string>
+
+The Bundle Signature is analogous to the "Creator Code" found in Classic Mac OS. It exists only for compatibility with Classic Mac OS apps and documents. Modern Mac OS X apps don't need to worry about assigning a Bundle Signature.
+
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.music</string>
+
+Describes a category for the app store
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires audio input. If you do not have an audio interface connected it will use the built-in microphone.</string>
+
+This was added by Juce when I checked something to say it needed the microphone.  The installer will display it.
+
+In the VST3 I see these:
+
+	<key>CFBundleDisplayName</key>
+	<string>MobiusPlugin</string>
+
+Not what I want
+
+	<key>CFBundleIdentifier</key>
+	<string>com.circularlabs.Mobius</string>
+
+Needs to be more specific
+
+  com.circularlabs.vst3.Mobius3
+
+	<key>CFBundleName</key>
+	<string>MobiusPlugin</string>
+
+Not what I would want, but it doesn't look like these are actually
+used by plugin hosts.
+
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+
+Should be 3.0.0
+Same with CFBundleVersion
+
+Information about the PkgInfo file...
+
+https://stackoverflow.com/questions/6677604/what-is-the-purpuse-of-pkginfo-in-ios
+http://fileformats.archiveteam.org/wiki/PkgInfo
+"It has long been deprecated, in favor of features of the Info.plist file (see also Property List)."
+
+Mac VST3/Contents/Resources/moduleinfo.json
+
+Looks like VST3 specific stuff.  Same file exists on Windows.  The Windows VST3 format seems to follow the Mac package
+format with Contents and Resources, but that may be optional.
+
+Icons.icns
+
+.icns is a Mac specific "icon resource file"
+equivalent to .ico files on Windows
+
+One or more images can be stored within the same icon file, and are normally created from a PNG file. The format supports the following sizes: 16x16, 32x32, 48x48, 128x128, 256x256, 512x512, and 1024x1024 pixels.
+
+ICNS files can be opened with Apple Preview in macOS. Adobe Photoshop can open and build these files, too, but only if the IconBuilder plugin is installed.
+
+Windows can open ICNS files with Inkscape or XnView MP (both also work on a Mac). IconWorkshop should support the Apple icon image format on Windows, too.
+
+Windows users can use Inkscape or XnView MP to convert the ICNS file to basically any other image format. If you're on a Mac, Snap Converter can save the file as something else.
+
+Regardless of the operating system you're on, you can also convert an ICNS file with an online converter, like CloudConvert or CoolUtils, the latter of which supports output formats like JPG, BMP, GIF, ICO, PNG, and PDF.
+
+Alternatively, if you want to create an ICNS file from a PNG file, you can do so quickly on any OS with the MiConv website. Otherwise, I recommend using the Icon Composer tool that's part of the Apple Developer Tools software suite.
+
+!! Yes, see that last one.
+
+Can use this site to see the metadata in a .png file
+
+https://www.metadata2go.com/result#j=296c8b48-386f-4ab0-b1f4-088a012feeaa
+
+It says the BlueSphere I've been using is 32x32
+
+While exploring, I notice that OG Mobius has a mobius.icns file see if we can replace the one that Juce generates
+MiConv got an error trying to convert it to a .png
+
+
+
+

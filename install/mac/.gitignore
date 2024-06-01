@@ -1,0 +1,4 @@
+*.pkg
+stage
+au.plist
+vst.plist

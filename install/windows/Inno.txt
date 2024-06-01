@@ -1,0 +1,81 @@
+Sun May 26 15:00:07 2024
+
+Inno Setup is an old and popular installation builder for Windows
+
+Get it here:
+
+  https://jrsoftware.org/isinfo.php
+
+The main competitor in the free space is Nullsoft which I used
+in OG Mobius, but the Juce tutorials used Inno and I wanted to try it.
+They seem comparable.
+
+----------------------------------------------------------------------
+File Notes
+----------------------------------------------------------------------
+
+MobiusInstaller.iss
+
+This is the INNO script file that is compiled to create the installer.
+Use the "Inno Setup Compiler" to compile it.
+
+In order to get things into c:\Program Files you have to allow "Install for all users"
+with "elevated privileges".  Do NOT uncomment the ProvilegesRequired=lowest line in the
+default script.
+
+The installer will put the things here:
+
+   ROOT="c:/Users/jeff/AppData/Local/Circular Labs/Mobius"
+
+This is the convention used for all non-binary user files.
+
+Inno without modification uses this for the destination
+
+  C:\Users\Jeff\AppData\Local\Programs\Mobius
+
+This is where {app} goes
+
+Wow, it worked pretty well.  Created a desktop icon with the big blue globe.
+Icon name has "Mobius" but the .exe can be anything.
+
+Everything went here:
+
+  -rw-rw-rw-  1 Jeff None     5513 05-10 21:53 help.xml
+  -rw-rw-rw-  1 Jeff None     8792 05-08 22:12 mobius.xml
+  -rw-rw-rw-  1 Jeff None     3072 05-09 00:46 uiconfig.xml
+  -rwxrwxrwx  1 Jeff None 18935296 05-09 00:43 UI.exe
+  -rw-rw-rw-  1 Jeff None     2353 05-10 22:01 unins000.dat
+  -rwxrwxrwx  1 Jeff None  3223613 05-10 21:55 unins000.exe
+
+Changed to use {userappdata} for the .xml files
+
+That put the files in c:/Users/Jeff/AppData/Roaming WITHOUT a "Mobius" wrapper folder.
+
+This is bad because it was supposed to go in Local rather than Roaming since I did a
+non-administrative install.
+
+Almost all apps install into c:\Program Files, certainly major ones.  So {app} is not a good location.
+
+{commonpf64} is:
+
+{localappdata} is what I want, {userappdata} and {commonappdata} are the same thing
+and go into Roaming
+
+Sigh, commonpf requires admin privs so if you want lowest it has to go into AppData\Programs which
+no one seems to do.
+
+After allowing admin for c:\Program Files get a warning about putting files in {localappdata}
+At least Bome does this too, not sure why it is bitching
+
+Probably wants me to use {commonappdata} which is not documented where it goes.  Try it:
+
+It goes in c:/ProgramData
+
+Yeah, I hate putting them here because you can't edit them by hand.
+
+Vastly prefer putting them in localappdata, despite the warning.  The only reason to put the .exe
+in Program Files is because that's where everyone expects it to go.
+
+Weirdly, Ableton puts the .exe under c:/ProgramData
+
+

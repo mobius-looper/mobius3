@@ -1,0 +1,177 @@
+Sun May 26 15:04:52 2024
+
+Random notes on where things usually go when they are installed.
+
+Executive summary:
+
+Mac files go to
+
+   /Applications/Mobius.app
+   /Library/Audio/Plug-Ins/VST3/Mobius.vst3
+   /Library/Audio/Plug-Ins/VST3/Mobius.component
+   ~/Library/Application Support/Circular Labs/Mobius/mobius.xml
+
+Windows files go to:
+
+   c:/Program Files/Circular Labs/Mobius
+   c:/Program Files/Common Files/VST3/Mobius.vst3
+   c:/Users/<yourname>/AppData/Local/Circular Labs/Mobius/mobius.xml
+
+----------------------------------------------------------------------
+Mac
+----------------------------------------------------------------------
+
+The standard location for standalone applications is /Applications.
+VST3 plugins go in /Library/Audio/Plug-Ins/VST3
+Audio Unit plugins go in /Library/Audio/Plug-Ins/Components
+
+These are the "shared" locations that will be accessible to all user
+accounts on the machine.  You can also install plugins to the user's
+private ~/Library but this seems not to be typically done for plugins.
+
+Mobius is more complex than a lot of plugins because it has supporting
+configuration files like mobius.xml, and scripts that are not normally
+inside the "bundle" folders containing the binaries for the application
+or plugin.  These typically go in /Library/Application Support if they
+are shared by all users annd ~/Library/Application Support if they
+are available only to the installing user.
+
+OG Mobius put mobius.xml under /Library so it could be shared but this
+caused file permission problems because this is not by default writable
+by everyone, and I never figured out how to do permission elevation in order
+to save runtime changes.  I think I made the installer set these as
+globally writable to get around that, but that's unusual.
+
+For Mobius 3 I'm starting by putting them in the user's private ~/Library
+folder which is writable by default.  This means they aren't shared by
+all users but seems to be a more normal Mac way of doing things.
+
+It is unclear what /User/Shared is for, most apps don't seem to use it, I see things
+in ~/Library/Application Support/Ableton etc.
+
+The usual way for an application to distribute random support files like mobius.xml
+is to put them under the Resources directory in the bundle directory. Read-only files
+can be left there but writable configuration files like mobius.xml cannot live there
+since users do not normally have write access to /Applications or /Library.  The convention
+seems to be that initial versions of these files can be installed with the bundle, but
+once changes need to made they are copied to ~/Library/Application Support, after which
+the files in the bundle directory are ignored.
+
+mobius.xml and uiconfig.xml are the most important editable files that need to be moved.
+Others like help.xml and examples could be left in the bundles directory but to
+make runtime location simpler I'm copying everything that isn't binary to
+~/Library/Application Support.
+
+The files to be copied are all gathered under Resources/Install.  These are not copied
+by the installer, they will be copied the first time the standalone application
+or a plugin runs.
+
+Output from RootLocator::whereAmI on a Mac...
+
+Current working directory: /
+Current executable file: /Users/jeff/dev/jucetest/UI/Builds/MacOSX/build/Debug/Mobius.app/Contents/MacOS/Mobius
+Current application file: /Users/jeff/dev/jucetest/UI/Builds/MacOSX/build/Debug/Mobius.app
+Invoked executable file: /Users/jeff/dev/jucetest/UI/Builds/MacOSX/build/Debug/Mobius.app/Contents/MacOS/Mobius
+Host application path: /Users/jeff/dev/jucetest/UI/Builds/MacOSX/build/Debug/Mobius.app/Contents/MacOS/Mobius
+User home directory: /Users/jeff
+User application data directory: /Users/jeff/Library
+Common application data directory: /Library
+Common documents directory: /Users/Shared
+Temp directory: /Users/jeff/Library/Caches/Mobius
+Supervisor::start
+RootLocator: Starting root exploration in: /Users/jeff/Library
+RootLocator: Redirect file found /Users/jeff/Library/Circular Labs/Mobius/mobius-redirect
+RootLocator: Redirecting to /Users/jeff/dev/jucetest/UI/Source
+RootLocator: Redirect file found /Users/jeff/dev/jucetest/UI/Source/mobius-redirect
+RootLocator: Empty redirect file
+RootLocator: mobius.xml found: /Users/jeff/dev/jucetest/UI/Source/mobius.xml
+
+----------------------------------------------------------------------
+Windows
+----------------------------------------------------------------------
+
+Windows standalone apps almost always go in:
+
+    c:/Program Files
+
+VST3 plugins go in:
+
+    c:/Program Files/Common Files/VST3
+
+It is common for Windows installers to support installing the program in another
+location.  I haven't seen many installers that put plugins in random locations.
+If someone wants that it's easy enough to make the move it after installation.
+
+Support files like mobius.xml are more complicated than on Mac.  There is no notion
+of the "bundle" directory on Windows so applications can put support files
+under Program Files but these are not normally writable.  Writable files
+usually go in /Users/<yourname>/AppData.
+
+It is possible to have shared writable support files outside /User but this
+got weird after Vista.  Programs used to put things under Program Files,
+which they still can but when you attempt to write to them they get
+magically and silently redirected to a "Virtual Store" folder.  
+
+See here for more:
+
+https://stackoverflow.com/questions/3219255/why-do-files-get-placed-in-c-users-usernameappdata-local-virtualstore-progra
+
+Since it is common for users to manually edit .xml files and script files,
+I wanted to keep these in a stable and obvious location.  The installer
+will therefore put these in:
+
+   c:/Users/<yourname>/AppData/Local/Circular Labs/Mobius
+
+There are actually three directories these ould go in:
+
+   c:/Users/<yourname>/AppData/Local
+   c:/Users/<yourname>/AppData/Roaming
+   c:/Users/<yourname>/AppData/RoamingLow
+
+The "Roaming" directory is used by some apps and has to do with sharing within
+a Windows domain.
+
+There are also locations that can be shared by all users, but these were less
+obvious to me at the time and I didn't want to mess with file permissions
+in the installer.  I believe shared data is supposed to go in:
+
+   c:\ProgramData
+
+Since almost all Mobius users just want it for a single user,
+I'm forcing the installer to put everything under the AppData/Local so we don't
+have to have an extended conversation looking for the mobius.xml file whenever
+someone has a problem.
+
+RootLocator::whereAmI output...
+
+RootLocator displays:
+User home directory: C:\Users\jeff
+User application data directory: C:\Users\jeff\AppData\Roaming
+Common application data directory: C:\ProgramData
+Common documents directory: C:\Users\Public\Documents
+Temp directory: C:\Users\jeff\AppData\Local\Temp
+Windows system directory: C:\Windows\system32
+Global applications directory: C:\Program Files
+Windows local app data directory: C:\Users\jeff\AppData\Local
+
+More random notes on app data redirect:
+
+---
+
+Ever since Windows Vista, applications that are not running with raised privileges that try to write to the Program Files (or Program Files (x86)) folder will in fact write to the VirtualStore folder, unknowingly. Microsoft thought that this would be better than a program failure (caused by the access restriction). And indeed, thanks to this, most old programs that save their settings in the Program Files folder will continue to work with Windows Vista+, and each user will get her own settings, as a bonus, even though the original software manufacturer did not think of this.
+
+You can use a manifest to tell Windows that your application is aware of VirtualStore and that Windows should not change any paths during runtime. But if you really want to be able to write to the Program Files folder, then I think that you have to run the application with raised privileges, every time, which is inadvisable in general.
+
+The details on how to create manifests to make your program display the UAC prompt on each execution, and how to disable VirtualStore, have been addressed at several previous Stack Overflow questions. Feel free to use the search box!
+
+---
+
+Local vs Roaming
+
+https://superuser.com/questions/150012/what-is-the-difference-between-local-and-roaming-folders
+
+"Local stays with the user on that specific computer.
+
+If you are on a domain, a "roaming" profile will be uploaded before you logoff. When you log onto another computer with roaming folders, all of your files in the roaming folder will be at the new computer too."
+
+"In certain network settings, profiles roam with the user regardless of what computer they are on. That application data ultimately ends up in the "roaming" folder."

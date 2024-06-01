@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<UIConfig activeButtonSet="Default" activeLayout="Default">
+  <Layout name="Default">
+    <Element name="ModeElement" x="688" y="182"/>
+    <Element name="BeatersElement" x="514" y="132"/>
+    <Element name="LoopMeterElement" x="454" y="179"/>
+    <Element name="CounterElement" x="456" y="90"/>
+    <Element name="FloatingStripElement" x="1095" y="23"/>
+    <Element name="ParametersElement" x="12" y="34"/>
+    <Element name="AudioMeterElement" x="456" y="259"/>
+    <Element name="LayerElement" x="436" y="288"/>
+    <Element name="AlertElement" x="365" y="431"/>
+    <Element name="MinorModesElement" x="437" y="57"/>
+    <Element name="TempoElement" x="438" y="31"/>
+    <Element name="LoopWindowElement" x="452" y="343"/>
+    <Strip name="Docked">
+      <Element name="trackNumber"/>
+      <Element name="loopRadar"/>
+      <Element name="loopStack"/>
+      <Element name="output"/>
+      <Element name="loopMeter" disabled="1"/>
+      <Element name="outputMeter"/>
+    </Strip>
+    <Strip name="Floating">
+      <Element name="input"/>
+      <Element name="output"/>
+      <Element name="feedback"/>
+      <Element name="pan"/>
+      <Element name="altFeedback" disabled="1"/>
+    </Strip>
+    <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+  </Layout>
+  <ButtonSet name="Default">
+    <Button action="GlobalReset"/>
+    <Button action="Reset"/>
+    <Button action="Record"/>
+    <Button action="Overdub"/>
+    <Button action="Undo"/>
+    <Button action="Mute"/>
+    <Button action="NextLoop"/>
+    <Button action="PrevLoop"/>
+    <Button action="Reverse"/>
+    <Button action="Halfspeed"/>
+  </ButtonSet>
+</UIConfig>

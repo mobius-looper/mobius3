@@ -1,0 +1,62 @@
+update: I abandoned this in favor of pkgbuild and productbuild
+
+Sun May 26 15:15:31 2024
+
+Notes on the freeware Packages installation builder for Mac.
+
+Get it here:
+
+  http://s.sudre.free.fr/Software/Packages/about.html
+
+This was used in the Juce tutorials and shows up a lot on the webz, so
+it seems to the main alternative to the now deprecated Package Maker from Apple.
+
+I found it to be non-obvious and buggy.  The documentation is sparse.  But it
+is free and doesn't have the usual complications that Apple products have.
+
+OG Mobius used Apple's Package Maker (I'm pretty sure) and that was much easier
+and more flexible from what I rememmber.  Apple deprecated that for some reason,
+probably to force people into the App Store ecosystem.  That would be worth
+pursuing but I don't want to mess with it now.
+
+I got Packages working well enough, but I don't love it so I'll probably try
+to use Package Maker again.  It seems to be still available with Xcode and works
+though it is not maintained.
+
+Note that the Packages "Presentation" tab where you are supposed to be
+able to set the welcome message and other things was greyed out when
+I tried it and did not work.  There is web chatter around this, and supposedly
+a link to an unreleased patch is available, but that was over a year old and
+it's odd that it hasn't been released yet.
+
+The main problem I had with Packages is that I couldn't find a way to put things
+in the user's local ~/Library directory.  It only (easily) puts things into
+fixed directories, which doesn't work for "/Users/<randomname>/Library".
+Post-install scripts may work for that but I didn't see any documentation
+on how to use those.
+
+Like Inno, Packages has a source file that contains the instructions
+necessary to build the installation package, and is compiled by the
+application into a .pkg file.  These project files have the .pkgproj
+extension and are found under the "mac" directory.
+
+I'm keeping things really simple initially and installing just the
+standalone application under /Applications and the VST3 plugin
+under /Library/Audio/Plug-Ins/VST3 which are the standard locations
+for those bundles.
+
+Extra support files like mobius.xml are included in the the application
+package directory under "resources".  These files will be copied at
+runtime to the user's Application Support directory:
+
+   ~/Library/Application Support/Circular Labs/Mobius
+
+This post-install setup is done by RootLocator when the standalone
+application runs for the first time.
+
+This would ordinarilly be done by the installer but I couldn't figure
+out how to make Packages do that.  The old Package Maker put those
+files in the shared /Library/Application Support directory
+which made them accessible to all users, but had file permission problems
+since things installed there are not normally writable with text editors,
+and manual editing of mobius.xml files was not uncommon back in the day.

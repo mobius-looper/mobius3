@@ -1,0 +1,71 @@
+Sun May 26 15:58:19 2024
+
+This is the current process I go through to publish a new release.
+See notes under install for more information about how the installers work.
+See notes under web for more information about how Hugo and rclone work.
+
+1) Refresh the web site
+
+This is not usually necessary unless page content changes.
+Go to web/circularlabs, make the changes, use hugo.exe to rebuild
+the site, use rclone.exe to copy it to Midphase.
+
+
+2) Build the application and plugins
+
+Do a clean rebuild of the UI and MobiusPlugin Juce projects.
+Be sure to bump the build number in Supervisor.h
+
+The installer builders must have BOTH the standalone app and
+the plugin binaries.
+
+
+3) Build the Windows installer
+
+Make any necessary adjustments to install/windows/MobiusInstaller.iss.
+This may be done manually with a text editor or under the Inno app.
+Use the Inno app to compile MobiusSetup.exe
+
+The result is left in install/windows/Output/MobiusSetup.exe
+
+
+4) Build the Mac installer
+
+This is more complicated because of the inclusion of the mobius.xml
+and other support files inside the Mobius.app application bundle.
+
+From a Mac shell, go to the "install" directory under the
+UI source tree and run the mac-prepare-payload.sh script.
+
+This copies mobius.xml and other support files into the Juce build
+directory, under the Mobius.app application bundle.  
+
+Run the build-installer.sh script.
+
+This uses a combination of the pkgbuild and productbuild
+tools to produce a set of .pkg files.  Only mobius.pkg is
+the "product" distribution package that is to be uploaded.
+The others are individual packages for the app and the pugins
+that are included in the produce package.
+
+
+5) Upload the installers
+
+Use Filezilla on both the Windows and Mac development machines
+
+Mac Filezilla is still in the Downloads folder, copy it to /Applications or something...
+
+They need to go in public_html/circularlabs.com
+
+or hairycrazyants.com during the pre-release period
+
+---
+
+Mac won't allow a .pkg to open without allowing it.
+
+Click the ? on the popup window.
+Follow the instructions: Open Privacy & Security Settings.
+Scroll down to "Security", there should be an entry with
+text like "Mobius.pkg was blocked from use..." and a button
+that says "Open Anyway".
+
