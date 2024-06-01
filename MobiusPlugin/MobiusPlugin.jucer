@@ -9,7 +9,7 @@
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"
               pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{2,2}"
               pluginAUExportPrefix="MobiusAU" lv2Uri="www.circularlabs.com/plugins/Mobiius"
-              headerPath="../../Mobius/Source&#10;" companyName="Circular Labs"
+              headerPath="../../../Mobius/Source&#10;" companyName="Circular Labs"
               companyEmail="jeff@circularlabs.com">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
