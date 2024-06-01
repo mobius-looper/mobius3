@@ -38,9 +38,8 @@ void TrackStrips::configure()
         // we're initializing
         MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
         int trackCount = config->getTracks();
-        if (trackCount == 0 || trackCount > 16) {
-            trackCount = 8;
-        }
+        if (trackCount == 0)
+          trackCount = 8;
         
         for (int i = 0 ; i < trackCount ; i++) {
             TrackStrip* strip = new TrackStrip(this);

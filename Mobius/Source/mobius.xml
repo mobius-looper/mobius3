@@ -2,7 +2,7 @@
   quickSave='mobiusloop'
   noiseFloor='13'
   maxSyncDrift='2048'
-  trackCount='8'
+  trackCount='32'
   groupCount='2'
   maxLoops='2'
   longPress='500'

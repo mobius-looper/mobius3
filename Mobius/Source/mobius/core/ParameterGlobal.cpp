@@ -47,6 +47,8 @@
 
 #include "Parameter.h"
 
+#define MAX_TRACKS 32
+
 /****************************************************************************
  *                                                                          *
  *   						  GLOBAL PARAMETER                              *
@@ -409,7 +411,7 @@ TrackParameterType::TrackParameterType() :
 {
 	type = TYPE_INT;
 	low = 1;
-	high = 16;
+	high = MAX_TRACKS;
     // not in XML
     transient = true;
     // but a good one for CC bindings
@@ -1890,7 +1892,7 @@ TracksParameterType::TracksParameterType() :
     // not bindable
 	type = TYPE_INT;
     low = 1;
-	high = 16;
+	high = MAX_TRACKS;
 }
 
 void TracksParameterType::getValue(MobiusConfig* c, ExValue* value)
