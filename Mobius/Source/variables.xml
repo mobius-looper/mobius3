@@ -1,0 +1,27 @@
+<VariableDefinitionSet>
+  
+  <VariableDefinition name='level'>
+    <Property name='displayName' value='Level'/>
+    <Property name='automatable' value='true'/>
+    <Property name='min' value='0'/>
+    <Property name='max' value='127'/>
+    <Property name='default' value='64'/>
+  </VariableDefinition>
+  
+  <VariableDefinition name='Boolio'>
+    <Property name='type' value='bool'/>
+    <Property name='automatable' value='true'/>
+    <Property name='default' value='true'/>
+  </VariableDefinition>
+  
+  <VariableDefinition name='Sex'>
+    <Property name='type' value='choice'/>
+    <Property name='automatable' value='true'/>
+    <Property name='default' value='1'/>
+    <Property name='values' value='x,y,z'/>
+  </VariableDefinition>
+  
+  <!-- and one that isn't automatable -->
+  <VariableDefinition name='foo'/>
+
+</VariableDefinitionSet>

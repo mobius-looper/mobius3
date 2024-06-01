@@ -1,0 +1,29 @@
+<DeviceConfig
+  inputChannels='4'
+  outputChannels='4'>
+  <Machine
+    hostName='Loki'
+    audioDeviceType='Windows Audio'
+    audioInput='Microphone Array (Intel Smart Sound Technology for Digital Microphones)'
+    audioOutput='Speakers (Realtek(R) Audio)'
+    sampleRate='48000'
+    blockSize='256'
+    midiInput='OP-1'
+    midiOutput='Bome MIDI Translator 1'/>
+  <Machine
+    hostName='Thor'
+    audioDeviceType='Windows Audio'
+    audioInput='ADAT (5+6) (RME Fireface UC)'
+    audioOutput='Speakers (RME Fireface UC)'
+    sampleRate='44100'
+    blockSize='256'
+    midiInput='HST 2'
+    midiOutput='Bome MIDI Translator 1'/>
+  <Machine
+    hostName='Frigg'
+    audioDeviceType='CoreAudio'
+    audioInput='MacBook Pro Microphone'
+    audioOutput='MacBook Pro Speakers'
+    sampleRate='48000'
+    blockSize='256'/>
+</DeviceConfig>

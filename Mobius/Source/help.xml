@@ -1,0 +1,112 @@
+<HelpCatalog>
+  
+<Help name='displayEditorElementsCurrent'>
+The current status elements displayed in the main central area.  Drag from the right panel to the left to add elements display.  Drag from the left panel to the right to remove elements.</Help>
+
+<Help name='displayEditorElementsAvailable'>
+The available status elements not yet displayed in the main central area.  Drag from the right panel to the left to add elements to the display.</Help>
+
+<Help name='displayEditorDockCurrent'>
+The current elements displayed in the docked track strips at the bottom.  This list is ordered top to bottom.  To add new elements drag from the right panel to the left.  To remove elements drag from the left panel to the right.  To reorder, drag within the current list.</Help>
+
+<Help name='displayEditorDockAvailable'>
+The available elements not yet included in the docked track strip.</Help>
+
+<Help name='displayEditorFloatingCurrent'>
+The current elements displayed in the docked track strips at the bottom.  This list is ordered top to bottom.  To add new elements drag from the right panel to the left.  To remove elements drag from the left panel to the right.  To reorder, drag within the current list.</Help>
+
+<Help name='displayEditorFloatingAvailable'>
+The available elements not yet included in the docked track strip.</Help>
+
+<Help name='displayEditorParametersCurrent'>
+The current set of instant displayed in the Instant Parameters status element.</Help>
+
+<Help name='displayEditorParametersAvailable'>
+The parameters not yet displayed in the Instant Parameters status element.</Help>
+
+<!-- Global Parameters Panel -->
+
+<Help name='startingSetup'>
+  The Track Setup that will be active when the application starts or the plugin is loaded.
+</Help>
+
+<Help name='defaultPreset'>
+  The Preset that will be active after Global Reset, if not overridden by the Track Setup.
+</Help>
+
+<Help name='trackCount'>
+  The number of tracks to display in the track strips at the bottom.  The application or plugin must be restarted after this is changed.
+</Help>
+
+<Help name='groupCount'>
+  The number of groups that may be assigned to tracks and used in bindings.  Groups are referenced in bindings by letter, so for a Group Count of 4 the group names will be A, B, C, and D.
+</Help>
+
+<Help name='maxLoops'>
+  The maximum number of loops to allow in each track.  The actual number used by each track may be lower if specified in the Track Setup.
+</Help>
+
+<Help name='pluginPorts'>
+  The number of stereo channel pairs to tell the plugin host to use.  Some hosts do not support more than one port.
+</Help>
+
+<Help name='quickSave'>
+  The base name of the file generated when using the Quick Save action.  This file will contain the contents of the active loop in the active track.
+  The file will be located in the application data directory for the current user.
+</Help>
+
+<Help name='longPress'>
+  The number of milliseconds a button or key must be held down to be considered a long press. Depending on the function associated with the trigger, this may cause a new action.  For example, a long press of the Record function will perform a Reset.
+</Help>  
+
+<Help name='autoFeedbackReduction'>
+  When enabled, a small amount of feedback reduction will be applied automatically while overdubbing.  This may help prevent overload when overdubbing a loud signal over a loud loop.
+</Help>  
+
+<Help name='maxSyncDrift'>
+  The number of audio samples a loop is allowed to diverge from the expected location when syncing to MIDI clocks or the host transport.  When drift exceeds this threshold, the loop playback position is adjusted to keep it aligned with the external device.
+</Help>  
+
+<Help name='noiseFloor'>
+  The level of audio signal that must be execeeded to be considered interesting for recording.  This is used by the Auto Record function to automatically start recording when a sound that is loud enough is received.  It can be used to prevent room noise or guitar string noise from accidentally triggering an Auto Record.  It is also used to suppress the creation of a new loop layer when overdubbing but not playing loudly.
+</Help>  
+
+<Help name='traceLevel'>
+  Controls the level of diagnostic trace message that are emitted as the plugin runs.  This is set only by developers or testers.  It should normally be 1 meaning that only significant errors are sent to the trace log.  Higher numbers will generate more verbose trace.
+</Help>
+
+<Help name='saveLayers'>
+  When selected, each layer within the loop will be saved to individual files when saving a project.  Normally only the most recent "flattened" layer is saved in the project.
+</Help>
+
+<Help name='monitorAudio'>
+  When true, audio being received by the input ports is echoed automatically to the first output port.  This is not normally used except during testing.  It is commonly referred to as "through monitoring" and can introduce significant latency delays.  It is always best to use hardware or direct monitoring of the live audio signal.
+</Help>
+
+<!-- others defined in parameters.xml that aren't displayed -->
+<!--
+name='fadeFrames'
+name='driftCheckPoint'
+name='spreadRange'
+name='isolateOverdubs'
+name='integerWaveFile'
+name='altFeedbackDisable'
+name='groupFocusLock'
+name='inputLatency'
+name='outputLatency'
+name='midiInput'
+name='midiOutput'
+name='midiThrough'
+name='pluginMidiInput'
+name='pluginMidiOutput'
+name='pluginMidiThrough'
+name='audioInput'
+name='audioOutput'
+name='midiRecordMode'
+-->
+
+<!-- Preset Parameters -->
+
+
+
+</HelpCatalog>

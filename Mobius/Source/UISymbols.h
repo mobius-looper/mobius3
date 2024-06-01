@@ -1,0 +1,77 @@
+/**
+ * Symbol definitions for things handled by the UI
+ *
+ * There will be one UISymbols object inside Supervisor.
+ * The only thing this really does is provide a method to
+ * install the symbols, and maintain an owned array
+ * of the UIParameter objects created at runtime.
+ */
+
+#pragma once
+
+#include "model/UIParameter.h"
+
+typedef enum {
+
+    // functions
+    UISymbolParameterUp = 1,
+    UISymbolParameterDown,
+    UISymbolParameterInc,
+    UISymbolParameterDec,
+
+    // parameters
+    UISymbolActiveLayout,
+    UISymbolActiveButtons
+    
+} UISymbolId;
+
+class UISymbols
+{
+  public:
+
+    // fuck, We need to make UIParameter subclasses at runtime, but
+    // SystemConstant expects a static const char* for the name and display name
+    // it doesn't have to be a static constant as long as it is guaranteed to live
+    // longer than The UIParameter does, but be safe
+    // one way around this would be to give DisplayParameter it's own parallel name
+    // model, but everything else still wants to call getName so would have
+    // to overload that
+    constexpr static const char* ActiveLayout = "activeLayout";
+    constexpr static const char* ActiveLayoutLabel = "Active Layout";
+    
+    constexpr static const char* ActiveButtons = "activeButtons";
+    constexpr static const char* ActiveButtonsLabel = "Active Buttons";
+    
+    UISymbols() {}
+    ~UISymbols() {}
+
+    void initialize();
+
+  private:
+
+    juce::OwnedArray<class DisplayParameter> parameters;
+
+    void installDisplayFunction(const char* name, int symbolId);
+    void installDisplayParameter(const char* name, const char* label, int symbolId);
+    
+};
+
+/**
+ * UIParameter is an abstract class with a few pure virtual methods.
+ * Need something concrete to make at runtime.
+ * Really hating the UI prefix, need to differentiate between "parameter model used by the UI"
+ * and "instance of a parameter related to the UI"
+ */
+class DisplayParameter : public UIParameter
+{
+  public:
+    
+    DisplayParameter() {}
+    ~DisplayParameter() {}
+
+    // these two virtual methods we have to implement, though we won't call them
+    // Supervisor just handles the values inline
+    void getValue(void* container, class ExValue* value);
+    void setValue(void* container, class ExValue* value);
+};
+ 
