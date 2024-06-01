@@ -1,0 +1,75 @@
+
+In a UIAction there is usually a triggerId.  When set it
+must have a unique value among other actions with the same Trigger type.
+
+This is used for two things:
+
+     - detection of the up and down transitions of a sustainable trigger
+
+     - construction of optimized dispatch tables to find the behavior
+       associated with a trigger
+
+Up/down transitions are used by EDP-style functions where something
+happens both when a physical switch is pressed and released.
+
+They are also used for the detection of "long presses" where something
+can happen when a switch is held for around a second or more.
+
+These two concepts are often referred to as the "sustainability" of a
+trigger.  See trigger-sustainability
+
+For up/down/long detection the system will monitor when a trigger
+goes down and when it goes up and the time in between.  This
+is currently implemented by mobius/core/TriggerState.
+
+It is in core for historical reasons but it might possible to move
+this up to the UI binding layer, where it could be useful for actions
+that target the UI rather than the core.
+
+To construct dispatch tables, a few parts of the system make assumptions
+on the range of values the triggerId can have.
+
+TriggerKey ids are assumed to have one byte of significance so an array
+of 256 pointers can be used.  They were originally raw scan codes, under
+Juce I think it uses the ASCII codes.  Need more here...
+
+TriggerMidi is more complex.  To form a unique id for up/down tracking
+the id is formed by combining three bytes of the MIDI message: status,
+channel, and value.
+
+The format is:
+
+    ((status | channel) << 8) | value
+
+where value is a key number, program change number, CC value, etc.
+
+This packed format alone is enough for detection of up/down transitions.
+
+For dispatch tables, the bytes may be unpacked to construct 256 element
+arrays for each status.  I didn't explode those out by 16 for each channel
+so some elements of the arrays may be lists of pointers for each channel
+since usually only a single channel is in use.
+
+For TriggerHost the id will be the host parameter id.  This is also assumed
+to be a single byte integer.
+
+For TriggerOsc I forget what I did, see the consolidated OSC design notes
+when I get around to redesigning that.
+
+TriggerUI does not set an id because it is currently assumed that those
+triggers are not sustainable and do not require tracking.  They do not use
+dispatch tables, the UI directly builds UIActions and sends them down.
+TriggerOsc probably did the same.
+
+Digression: Need more words about categories of triggers, those that
+represent physical buttons or knobs and use dispatch tables to associate
+behavior, and those that are more ambiguous "system" triggers that just
+happen in code.
+
+Physical triggers use "bindings" to associate an external event with an action.
+
+System triggers just build Actions on the fly without any external stimulous.
+
+Physical trigger need triggerIds, system triggers don't since they will
+not use dispatch tables or transition tracking.
+

@@ -1,0 +1,154 @@
+
+There are two closely related Capture and Bounce.
+
+Fundamentally Capture is the process of copying live audio
+as it is being sent to the output stream.  It lives at
+a level above tracks and loops.  A capture has a start and
+and end, which may be initated by the user or from a script.
+
+Once a capture is complete it may be sent to a destination.
+The two current destinations are a file or a track.
+
+In old terminology "capture" means saving to a file and
+"bounce" means saving to a track.  Though they use the
+same mechanism to copy source audio, the start/end
+points and the way it is processed after ending is different
+for bounce.
+
+Though Capture has been available for general use, it was
+designed and almost exclusively used by the unit test scripts.
+The goal was to detect audio discontinuities (clicks) while
+performing looping functions.
+
+Bounce was intended for general use, though I doubt it was
+used much by anyone.
+
+Capture is initiated with the StartCapture function and ended with
+StopCapture.  Saving the capture is done by the SaveCapture function.
+It is unclear why stop and save were two seperate operations, but it
+does allow you to stop without saving, since there is no 
+"cancel capture" function.  Capture is automatically canceled on GlobalReset.
+
+Capture is not sensitive to quantization when initiated by a user.
+Scripts may cause quantization if desired with Wait statements.
+This means that there is no event scheduling for the start and end
+of a capture, the function handlers call Mobius directly.
+The Mobius methods of interest are startCapture, stopCapture,
+saveCapture, and getCapture.
+
+The start and end of a Bounce may however be quantized or be
+sensitive to threshold recording or synchronization.  This means
+that start and ending a bounce are scheduled with track events.
+When the track events are handled, the Mobius function that
+does the work is toggleBounceRecording.
+
+There was always limited flexibility as to what audio would
+be included in a capture.  While the functions were scheduled
+within a track, the audio was taken from the output buffers
+at the end of each interrupt.  This means it would include
+content from every track that contributed to that port buffer.
+Further, only the buffer for port 0 was used, the ports
+that may have been configured for the track where the start/end
+events were scheduled were not used.  For the unit tests that's fine
+but for a more general track bounce, it should be using whatever
+port buffer the track is sending to.
+
+Going forward, a redesign of capture and bounce should consider
+whether the capture should be "global" and include anything
+left behind in ALL output buffers.  Or more focused and include
+only the buffer used by an individual track, or the set of
+buffers used by a group of tracks.
+
+Because we are capturing the audio from the ending state
+of an audio block there is no way to selectively include
+track content.  The most flexibility here would require that
+each track maintain an intermediate output buffer that
+contains only the contribution of that track before it
+is merged with the common output buffer.  While conceptually
+interesting, it is unlikely that an actual user would need this.
+
+It is however important that we start paying attention to the
+bouncing track's output port rather than always using port zero.
+
+This is another way that capture can differ from bounce.  Capture
+is more of a multi-track operation where Bounce is more the capture
+of a performance from one track to another.  For example, if you've
+got a backing track looping away on track 1 and you're doing live looping
+over that in track 2, you would want the bounce to include only what
+you were doing in track 2 without also including the backing track which
+can keep going independently.
+
+Audio Ownership Issues
+
+Because captured Audio objects can be large I want to avoid copying
+them as they make their way through the system levels.  This means we
+can enter a sensntive state where an Audio object is still owned by
+Mobius, but was allowed to escape to the shell's maintenance thread
+for saving.  While that happens the engine must not modify it.
+
+Bounce Future Notes
+
+[moved here from code comments]
+
+ * TODO: I was going to support a BounceMode preset parameter that
+
+ * would let you customize the bounce. The default would be to mute all
+ * source tracks, another option would be to reset them.  Should we do
+ * this we need to decide which of the possible source tracks provides
+ * the Preset.  Assume the current track if not changed by the script.
+ *
+ * Selecting the target track could also be controlled with parameters.
+ * Currently we pick the first non-empty track to the right.
+ *
+ * Try to preserve the cycle length in the bounce target track.  If the
+ * length of the bounce track is an even multiple of the cycle length 
+ * of the source track(s) preserve the cycle length.
+ * 
+ * Determining the cycle length of the source tracks is ambiguous because
+ * all tracks could have a different cycle length.  Some methods are:
+ *
+ *  - Let tracks "vote" and the ones with the most common cycle length win.  
+ *    Muted tracks should not be allowed to vote.  
+ *
+ *  - The first unmuted track from the left wins.
+ *
+ *  - The current track (or script target track) wins, but it may be empty.
+ *
+ *  - The current track wins if not empty, otherwise first unmuted
+ *    track from the left.
+ *
+ * It feels right to favor the current track if it is not empty.
+ * Voting would be nice but complicated, assume for now we can pick
+ * the first one from the left.
+
+Bounce Audio Ownership
+
+toggleBounceRecording removes mCaptureAudio from Mobius and tries to isntall
+it in a track.  If it can't locate a track, it used to delete it.  Assuming
+the audio blocks self-return themselves to the AudioPool that's okay, but I still
+want to get away from having pooled objects know about the pool they came from.
+So that needs to change.
+
+Also we shouldn't be deleting the Audio object container, those should be pooled as well.
+
+It would be easiest if Mobius could retain ownership of mCaptureAudio for reuse, and
+instead of taking ownership of the audio buffers, we copied them into the
+destination track.
+
+
+Notes on "Checkout" for SaveCapture
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
