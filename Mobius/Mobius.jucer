@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="TBmN6K" name="Mobius" projectType="guiapp" useAppConfig="0" addUsingNamespaceToJuceHeader="0"
+              displaySplashScreen="1" jucerFormatVersion="1" companyName="Circular Labs"
+              companyWebsite="www.circularlabs.com" companyEmail="jeff@circularlabs.com"
+              bundleIdentifier="com.circularlabs.Mobius3" version="3.0">
+  <MAINGROUP id="NUIV6l" name="Mobius">
+    <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
+      <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
+        <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
+        <FILE id="QGYdos" name="ff_meters.h" compile="0" resource="0" file="Source/ff_meters/ff_meters.h"/>
+        <FILE id="jM2xSH" name="LevelMeter.cpp" compile="0" resource="0" file="Source/ff_meters/LevelMeter/LevelMeter.cpp"/>
+        <FILE id="GC5v3O" name="LevelMeter.h" compile="0" resource="0" file="Source/ff_meters/LevelMeter/LevelMeter.h"/>
+        <FILE id="uR9T35" name="LevelMeterLookAndFeel.h" compile="0" resource="0"
+              file="Source/ff_meters/LookAndFeel/LevelMeterLookAndFeel.h"/>
+        <FILE id="Bp51nT" name="LevelMeterLookAndFeelMethods.h" compile="0"
+              resource="0" file="Source/ff_meters/LookAndFeel/LevelMeterLookAndFeelMethods.h"/>
+        <FILE id="luoeHe" name="LevelMeterSource.h" compile="0" resource="0"
+              file="Source/ff_meters/LevelMeter/LevelMeterSource.h"/>
+        <FILE id="RwQR9L" name="OutlineBuffer.h" compile="0" resource="0" file="Source/ff_meters/Visualisers/OutlineBuffer.h"/>
+        <FILE id="pOQRjc" name="SoundFieldLookAndFeelMethods.h" compile="0"
+              resource="0" file="Source/ff_meters/LookAndFeel/SoundFieldLookAndFeelMethods.h"/>
+        <FILE id="UsZT36" name="StereoFieldBuffer.h" compile="0" resource="0"
+              file="Source/ff_meters/Visualisers/StereoFieldBuffer.h"/>
+        <FILE id="wjojNb" name="StereoFieldComponent.h" compile="0" resource="0"
+              file="Source/ff_meters/Visualisers/StereoFieldComponent.h"/>
+      </GROUP>
+      <GROUP id="{AA148867-8C9E-F915-82DD-CBE33D79A966}" name="util">
+        <FILE id="Zkkfco" name="DataModel.cpp" compile="1" resource="0" file="Source/util/DataModel.cpp"/>
+        <FILE id="wDfiXs" name="DataModel.h" compile="0" resource="0" file="Source/util/DataModel.h"/>
+        <FILE id="MCgODr" name="FileUtil.cpp" compile="1" resource="0" file="Source/util/FileUtil.cpp"/>
+        <FILE id="hbiDF8" name="FileUtil.h" compile="0" resource="0" file="Source/util/FileUtil.h"/>
+        <FILE id="M50Qiq" name="List.cpp" compile="1" resource="0" file="Source/util/List.cpp"/>
+        <FILE id="aLSQtU" name="List.h" compile="0" resource="0" file="Source/util/List.h"/>
+        <FILE id="gEdMSH" name="MidiUtil.cpp" compile="1" resource="0" file="Source/util/MidiUtil.cpp"/>
+        <FILE id="a2wHMK" name="MidiUtil.h" compile="0" resource="0" file="Source/util/MidiUtil.h"/>
+        <FILE id="kZhxhi" name="qtrace.cpp" compile="1" resource="0" file="Source/util/qtrace.cpp"/>
+        <FILE id="rCdOpI" name="qtrace.h" compile="0" resource="0" file="Source/util/qtrace.h"/>
+        <FILE id="dNnT6d" name="StructureDumper.cpp" compile="1" resource="0"
+              file="Source/util/StructureDumper.cpp"/>
+        <FILE id="mfA4UK" name="StructureDumper.h" compile="0" resource="0"
+              file="Source/util/StructureDumper.h"/>
+        <FILE id="kxfasO" name="Trace.cpp" compile="1" resource="0" file="Source/util/Trace.cpp"/>
+        <FILE id="JZyodG" name="Trace.h" compile="0" resource="0" file="Source/util/Trace.h"/>
+        <FILE id="dba9iS" name="TraceClient.cpp" compile="1" resource="0" file="Source/util/TraceClient.cpp"/>
+        <FILE id="O72iMF" name="TraceClient.h" compile="0" resource="0" file="Source/util/TraceClient.h"/>
+        <FILE id="I7g2J4" name="TraceFile.cpp" compile="1" resource="0" file="Source/util/TraceFile.cpp"/>
+        <FILE id="erMiE5" name="TraceFile.h" compile="0" resource="0" file="Source/util/TraceFile.h"/>
+        <FILE id="yz3ePc" name="Util.cpp" compile="1" resource="0" file="Source/util/Util.cpp"/>
+        <FILE id="N7aEkq" name="Util.h" compile="0" resource="0" file="Source/util/Util.h"/>
+        <FILE id="udcaId" name="Vbuf.cpp" compile="1" resource="0" file="Source/util/Vbuf.cpp"/>
+        <FILE id="XVkstu" name="Vbuf.h" compile="0" resource="0" file="Source/util/Vbuf.h"/>
+        <FILE id="uTm7Oi" name="XmlBuffer.cpp" compile="1" resource="0" file="Source/util/XmlBuffer.cpp"/>
+        <FILE id="LaPag0" name="XmlBuffer.h" compile="0" resource="0" file="Source/util/XmlBuffer.h"/>
+        <FILE id="Q3QHcI" name="XmlModel.cpp" compile="1" resource="0" file="Source/util/XmlModel.cpp"/>
+        <FILE id="UdU7Im" name="XmlModel.h" compile="0" resource="0" file="Source/util/XmlModel.h"/>
+        <FILE id="qcNqPB" name="XmlParser.cpp" compile="1" resource="0" file="Source/util/XmlParser.cpp"/>
+        <FILE id="voQV4p" name="XmlParser.h" compile="0" resource="0" file="Source/util/XmlParser.h"/>
+        <FILE id="GxiMwh" name="XomParser.cpp" compile="1" resource="0" file="Source/util/XomParser.cpp"/>
+        <FILE id="s5ZXBc" name="XomParser.h" compile="0" resource="0" file="Source/util/XomParser.h"/>
+      </GROUP>
+      <GROUP id="{95DE79DE-EE25-804C-123F-4D4433BA69CB}" name="midi">
+        <FILE id="V405w4" name="MidiByte.h" compile="0" resource="0" file="Source/midi/MidiByte.h"/>
+        <FILE id="Rji20c" name="MidiEvent.cpp" compile="1" resource="0" file="Source/midi/MidiEvent.cpp"/>
+        <FILE id="nhPKZi" name="MidiEvent.h" compile="0" resource="0" file="Source/midi/MidiEvent.h"/>
+        <FILE id="FqPEgq" name="MidiQueue.cpp" compile="1" resource="0" file="Source/midi/MidiQueue.cpp"/>
+        <FILE id="zPpRNa" name="MidiQueue.h" compile="0" resource="0" file="Source/midi/MidiQueue.h"/>
+        <FILE id="LzUaVM" name="MidiRealizer.cpp" compile="1" resource="0"
+              file="Source/midi/MidiRealizer.cpp"/>
+        <FILE id="VnWN2i" name="MidiRealizer.h" compile="0" resource="0" file="Source/midi/MidiRealizer.h"/>
+        <FILE id="pe7gGA" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/midi/MidiSyncEvent.h"/>
+        <FILE id="upm6Bb" name="TempoMonitor.cpp" compile="1" resource="0"
+              file="Source/midi/TempoMonitor.cpp"/>
+        <FILE id="DRPHZb" name="TempoMonitor.h" compile="0" resource="0" file="Source/midi/TempoMonitor.h"/>
+      </GROUP>
+      <GROUP id="{35F5BDA4-4F12-7FE6-B25F-7B2965D913CF}" name="model">
+        <FILE id="jPc72V" name="ActionType.cpp" compile="1" resource="0" file="Source/model/ActionType.cpp"/>
+        <FILE id="rE9rrD" name="ActionType.h" compile="0" resource="0" file="Source/model/ActionType.h"/>
+        <FILE id="DDTUb4" name="Binding.cpp" compile="1" resource="0" file="Source/model/Binding.cpp"/>
+        <FILE id="Kl8nMI" name="Binding.h" compile="0" resource="0" file="Source/model/Binding.h"/>
+        <FILE id="dnNSw0" name="DeviceConfig.cpp" compile="1" resource="0"
+              file="Source/model/DeviceConfig.cpp"/>
+        <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
+        <FILE id="t2jj07" name="DynamicConfig.cpp" compile="1" resource="0"
+              file="Source/model/DynamicConfig.cpp"/>
+        <FILE id="a9NMlH" name="DynamicConfig.h" compile="0" resource="0" file="Source/model/DynamicConfig.h"/>
+        <FILE id="azEsBL" name="ExValue.cpp" compile="1" resource="0" file="Source/model/ExValue.cpp"/>
+        <FILE id="km0fDA" name="ExValue.h" compile="0" resource="0" file="Source/model/ExValue.h"/>
+        <FILE id="I1rPMU" name="FunctionDefinition.cpp" compile="1" resource="0"
+              file="Source/model/FunctionDefinition.cpp"/>
+        <FILE id="tzGQOW" name="FunctionDefinition.h" compile="0" resource="0"
+              file="Source/model/FunctionDefinition.h"/>
+        <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
+        <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
+        <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>
+        <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
+              file="Source/model/MobiusConfig.cpp"/>
+        <FILE id="rrRIuQ" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/MobiusConfig.h"/>
+        <FILE id="ZkQ3jU" name="MobiusState.cpp" compile="1" resource="0" file="Source/model/MobiusState.cpp"/>
+        <FILE id="PhGxLv" name="MobiusState.h" compile="0" resource="0" file="Source/model/MobiusState.h"/>
+        <FILE id="aasR6n" name="ModeDefinition.cpp" compile="1" resource="0"
+              file="Source/model/ModeDefinition.cpp"/>
+        <FILE id="yuqq72" name="ModeDefinition.h" compile="0" resource="0"
+              file="Source/model/ModeDefinition.h"/>
+        <FILE id="bGX9AO" name="ObjectPool.cpp" compile="1" resource="0" file="Source/model/ObjectPool.cpp"/>
+        <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
+        <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
+        <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
+        <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
+        <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
+        <FILE id="gNzjgL" name="SampleConfig.cpp" compile="1" resource="0"
+              file="Source/model/SampleConfig.cpp"/>
+        <FILE id="ndteTZ" name="SampleConfig.h" compile="0" resource="0" file="Source/model/SampleConfig.h"/>
+        <FILE id="qnVby1" name="SampleProperties.h" compile="0" resource="0"
+              file="Source/model/SampleProperties.h"/>
+        <FILE id="NQ5JrS" name="ScriptConfig.cpp" compile="1" resource="0"
+              file="Source/model/ScriptConfig.cpp"/>
+        <FILE id="rxHb7c" name="ScriptConfig.h" compile="0" resource="0" file="Source/model/ScriptConfig.h"/>
+        <FILE id="M1kotK" name="ScriptProperties.cpp" compile="1" resource="0"
+              file="Source/model/ScriptProperties.cpp"/>
+        <FILE id="glMQJM" name="ScriptProperties.h" compile="0" resource="0"
+              file="Source/model/ScriptProperties.h"/>
+        <FILE id="OZh5wr" name="Setup.cpp" compile="1" resource="0" file="Source/model/Setup.cpp"/>
+        <FILE id="I3HQ2E" name="Setup.h" compile="0" resource="0" file="Source/model/Setup.h"/>
+        <FILE id="RWjxQk" name="Structure.cpp" compile="1" resource="0" file="Source/model/Structure.cpp"/>
+        <FILE id="UvI59d" name="Structure.h" compile="0" resource="0" file="Source/model/Structure.h"/>
+        <FILE id="F539YC" name="Symbol.cpp" compile="1" resource="0" file="Source/model/Symbol.cpp"/>
+        <FILE id="PNgWm3" name="Symbol.h" compile="0" resource="0" file="Source/model/Symbol.h"/>
+        <FILE id="JZYXKm" name="SystemConstant.h" compile="0" resource="0"
+              file="Source/model/SystemConstant.h"/>
+        <FILE id="Gs8SHl" name="Trigger.cpp" compile="1" resource="0" file="Source/model/Trigger.cpp"/>
+        <FILE id="A7dZul" name="Trigger.h" compile="0" resource="0" file="Source/model/Trigger.h"/>
+        <FILE id="AbOPmx" name="UIAction.cpp" compile="1" resource="0" file="Source/model/UIAction.cpp"/>
+        <FILE id="coRPMH" name="UIAction.h" compile="0" resource="0" file="Source/model/UIAction.h"/>
+        <FILE id="sCrCkv" name="UIConfig.cpp" compile="1" resource="0" file="Source/model/UIConfig.cpp"/>
+        <FILE id="dgLWU9" name="UIConfig.h" compile="0" resource="0" file="Source/model/UIConfig.h"/>
+        <FILE id="qY5nI3" name="UIEventType.cpp" compile="1" resource="0" file="Source/model/UIEventType.cpp"/>
+        <FILE id="PBE6wD" name="UIEventType.h" compile="0" resource="0" file="Source/model/UIEventType.h"/>
+        <FILE id="yMAblz" name="UIParameter.cpp" compile="1" resource="0" file="Source/model/UIParameter.cpp"/>
+        <FILE id="xcuW9G" name="UIParameter.h" compile="0" resource="0" file="Source/model/UIParameter.h"/>
+        <FILE id="MwPgTN" name="UIParameterClasses.cpp" compile="1" resource="0"
+              file="Source/model/UIParameterClasses.cpp"/>
+        <FILE id="sf9iOw" name="UIParameterClasses.h" compile="0" resource="0"
+              file="Source/model/UIParameterClasses.h"/>
+        <FILE id="Rhe2jn" name="UIParameterHandler.cpp" compile="1" resource="0"
+              file="Source/model/UIParameterHandler.cpp"/>
+        <FILE id="eekiKa" name="UIParameterHandler.h" compile="0" resource="0"
+              file="Source/model/UIParameterHandler.h"/>
+        <FILE id="a1ENbP" name="UIParameterIds.cpp" compile="1" resource="0"
+              file="Source/model/UIParameterIds.cpp"/>
+        <FILE id="cDq1yW" name="UIParameterIds.h" compile="0" resource="0"
+              file="Source/model/UIParameterIds.h"/>
+        <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
+              file="Source/model/UserVariable.cpp"/>
+        <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>
+        <FILE id="OTK6EH" name="VariableDefinition.cpp" compile="1" resource="0"
+              file="Source/model/VariableDefinition.cpp"/>
+        <FILE id="Oi3yrZ" name="VariableDefinition.h" compile="0" resource="0"
+              file="Source/model/VariableDefinition.h"/>
+        <FILE id="BDrDZa" name="XmlRenderer.cpp" compile="1" resource="0" file="Source/model/XmlRenderer.cpp"/>
+        <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
+      </GROUP>
+      <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
+          <FILE id="YtRrYA" name="AudioDevicesPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/AudioDevicesPanel.cpp"/>
+          <FILE id="BNTYC1" name="AudioDevicesPanel.h" compile="0" resource="0"
+                file="Source/ui/config/AudioDevicesPanel.h"/>
+          <FILE id="QuaeIT" name="BindingPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/BindingPanel.cpp"/>
+          <FILE id="q7bVeN" name="BindingPanel.h" compile="0" resource="0" file="Source/ui/config/BindingPanel.h"/>
+          <FILE id="WsJcLu" name="BindingTable.cpp" compile="1" resource="0"
+                file="Source/ui/config/BindingTable.cpp"/>
+          <FILE id="ucuOsk" name="BindingTable.h" compile="0" resource="0" file="Source/ui/config/BindingTable.h"/>
+          <FILE id="Bm8yeH" name="BindingTargetPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/BindingTargetPanel.cpp"/>
+          <FILE id="PgF3wm" name="BindingTargetPanel.h" compile="0" resource="0"
+                file="Source/ui/config/BindingTargetPanel.h"/>
+          <FILE id="TjpfTj" name="ButtonPanel.cpp" compile="1" resource="0" file="Source/ui/config/ButtonPanel.cpp"/>
+          <FILE id="FYyoFi" name="ButtonPanel.h" compile="0" resource="0" file="Source/ui/config/ButtonPanel.h"/>
+          <FILE id="Du70TA" name="ConfigEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/ConfigEditor.cpp"/>
+          <FILE id="zqWOpM" name="ConfigEditor.h" compile="0" resource="0" file="Source/ui/config/ConfigEditor.h"/>
+          <FILE id="xcIb02" name="ConfigPanel.cpp" compile="1" resource="0" file="Source/ui/config/ConfigPanel.cpp"/>
+          <FILE id="EB8YDo" name="ConfigPanel.h" compile="0" resource="0" file="Source/ui/config/ConfigPanel.h"/>
+          <FILE id="uTQSAz" name="DisplayPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/DisplayPanel.cpp"/>
+          <FILE id="yQzNQ6" name="DisplayPanel.h" compile="0" resource="0" file="Source/ui/config/DisplayPanel.h"/>
+          <FILE id="UrIXNZ" name="GlobalPanel.cpp" compile="1" resource="0" file="Source/ui/config/GlobalPanel.cpp"/>
+          <FILE id="GsBQz3" name="GlobalPanel.h" compile="0" resource="0" file="Source/ui/config/GlobalPanel.h"/>
+          <FILE id="jBiSXy" name="HostPanel.cpp" compile="1" resource="0" file="Source/ui/config/HostPanel.cpp"/>
+          <FILE id="WpkBTG" name="HostPanel.h" compile="0" resource="0" file="Source/ui/config/HostPanel.h"/>
+          <FILE id="E5fxCw" name="InfoPanel.cpp" compile="1" resource="0" file="Source/ui/config/InfoPanel.cpp"/>
+          <FILE id="J6YCFL" name="InfoPanel.h" compile="0" resource="0" file="Source/ui/config/InfoPanel.h"/>
+          <FILE id="CdDmPy" name="KeyboardPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/KeyboardPanel.cpp"/>
+          <FILE id="xnfHRb" name="KeyboardPanel.h" compile="0" resource="0" file="Source/ui/config/KeyboardPanel.h"/>
+          <FILE id="uXmVmw" name="LogPanel.cpp" compile="1" resource="0" file="Source/ui/config/LogPanel.cpp"/>
+          <FILE id="l9ojKZ" name="LogPanel.h" compile="0" resource="0" file="Source/ui/config/LogPanel.h"/>
+          <FILE id="Az47GJ" name="MidiDevicesPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/MidiDevicesPanel.cpp"/>
+          <FILE id="XDzrVN" name="MidiDevicesPanel.h" compile="0" resource="0"
+                file="Source/ui/config/MidiDevicesPanel.h"/>
+          <FILE id="JtxTWz" name="MidiPanel.cpp" compile="1" resource="0" file="Source/ui/config/MidiPanel.cpp"/>
+          <FILE id="PtHgA2" name="MidiPanel.h" compile="0" resource="0" file="Source/ui/config/MidiPanel.h"/>
+          <FILE id="CqcHvV" name="MultiSelectDrag.cpp" compile="1" resource="0"
+                file="Source/ui/config/MultiSelectDrag.cpp"/>
+          <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
+                file="Source/ui/config/MultiSelectDrag.h"/>
+          <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
+                file="Source/ui/config/ParameterField.cpp"/>
+          <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
+                file="Source/ui/config/ParameterField.h"/>
+          <FILE id="s6l7RT" name="PresetPanel.cpp" compile="1" resource="0" file="Source/ui/config/PresetPanel.cpp"/>
+          <FILE id="NT6kia" name="PresetPanel.h" compile="0" resource="0" file="Source/ui/config/PresetPanel.h"/>
+          <FILE id="Zf2ti7" name="SamplePanel.cpp" compile="1" resource="0" file="Source/ui/config/SamplePanel.cpp"/>
+          <FILE id="rJ1VuB" name="SamplePanel.h" compile="0" resource="0" file="Source/ui/config/SamplePanel.h"/>
+          <FILE id="d9dR5l" name="SampleTable.cpp" compile="1" resource="0" file="Source/ui/config/SampleTable.cpp"/>
+          <FILE id="zM7JM5" name="SampleTable.h" compile="0" resource="0" file="Source/ui/config/SampleTable.h"/>
+          <FILE id="LMAEQ5" name="ScriptPanel.cpp" compile="1" resource="0" file="Source/ui/config/ScriptPanel.cpp"/>
+          <FILE id="bUHoC6" name="ScriptPanel.h" compile="0" resource="0" file="Source/ui/config/ScriptPanel.h"/>
+          <FILE id="hZGAaO" name="ScriptTable.cpp" compile="1" resource="0" file="Source/ui/config/ScriptTable.cpp"/>
+          <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
+          <FILE id="exr3oW" name="SetupPanel.cpp" compile="1" resource="0" file="Source/ui/config/SetupPanel.cpp"/>
+          <FILE id="F0YB7p" name="SetupPanel.h" compile="0" resource="0" file="Source/ui/config/SetupPanel.h"/>
+        </GROUP>
+        <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
+          <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"
+                file="Source/ui/display/ActionButton.cpp"/>
+          <FILE id="Tb2xAQ" name="ActionButton.h" compile="0" resource="0" file="Source/ui/display/ActionButton.h"/>
+          <FILE id="fDm6Vs" name="ActionButtons.cpp" compile="1" resource="0"
+                file="Source/ui/display/ActionButtons.cpp"/>
+          <FILE id="JEpK4O" name="ActionButtons.h" compile="0" resource="0" file="Source/ui/display/ActionButtons.h"/>
+          <FILE id="XEu9CG" name="AlertElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/AlertElement.cpp"/>
+          <FILE id="Cjhodf" name="AlertElement.h" compile="0" resource="0" file="Source/ui/display/AlertElement.h"/>
+          <FILE id="sIqEzc" name="AudioMeter.cpp" compile="1" resource="0" file="Source/ui/display/AudioMeter.cpp"/>
+          <FILE id="IzEYu2" name="AudioMeter.h" compile="0" resource="0" file="Source/ui/display/AudioMeter.h"/>
+          <FILE id="sCNRwz" name="AudioMeterElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/AudioMeterElement.cpp"/>
+          <FILE id="FpvABV" name="AudioMeterElement.h" compile="0" resource="0"
+                file="Source/ui/display/AudioMeterElement.h"/>
+          <FILE id="kTPpfK" name="BeatersElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/BeatersElement.cpp"/>
+          <FILE id="WnT2mO" name="BeatersElement.h" compile="0" resource="0"
+                file="Source/ui/display/BeatersElement.h"/>
+          <FILE id="VuqI7g" name="Colors.cpp" compile="1" resource="0" file="Source/ui/display/Colors.cpp"/>
+          <FILE id="iB815e" name="Colors.h" compile="0" resource="0" file="Source/ui/display/Colors.h"/>
+          <FILE id="pLW9gm" name="CounterElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/CounterElement.cpp"/>
+          <FILE id="RNkXdk" name="CounterElement.h" compile="0" resource="0"
+                file="Source/ui/display/CounterElement.h"/>
+          <FILE id="W7GRFq" name="FloatingStripElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/FloatingStripElement.cpp"/>
+          <FILE id="hry81p" name="FloatingStripElement.h" compile="0" resource="0"
+                file="Source/ui/display/FloatingStripElement.h"/>
+          <FILE id="ST90gc" name="LayerElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/LayerElement.cpp"/>
+          <FILE id="g1JAU3" name="LayerElement.h" compile="0" resource="0" file="Source/ui/display/LayerElement.h"/>
+          <FILE id="HieNtm" name="LayerModel.cpp" compile="1" resource="0" file="Source/ui/display/LayerModel.cpp"/>
+          <FILE id="b1B1Vo" name="LayerModel.h" compile="0" resource="0" file="Source/ui/display/LayerModel.h"/>
+          <FILE id="pfpSj1" name="LoopMeterElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/LoopMeterElement.cpp"/>
+          <FILE id="tZlDJz" name="LoopMeterElement.h" compile="0" resource="0"
+                file="Source/ui/display/LoopMeterElement.h"/>
+          <FILE id="kIMKYN" name="LoopWindowElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/LoopWindowElement.cpp"/>
+          <FILE id="nlWxmg" name="LoopWindowElement.h" compile="0" resource="0"
+                file="Source/ui/display/LoopWindowElement.h"/>
+          <FILE id="Z6gJ99" name="MinorModesElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/MinorModesElement.cpp"/>
+          <FILE id="JAQb1S" name="MinorModesElement.h" compile="0" resource="0"
+                file="Source/ui/display/MinorModesElement.h"/>
+          <FILE id="JBJRcC" name="MobiusDisplay.cpp" compile="1" resource="0"
+                file="Source/ui/display/MobiusDisplay.cpp"/>
+          <FILE id="wVdVcf" name="MobiusDisplay.h" compile="0" resource="0" file="Source/ui/display/MobiusDisplay.h"/>
+          <FILE id="HTY3mt" name="ModeElement.cpp" compile="1" resource="0" file="Source/ui/display/ModeElement.cpp"/>
+          <FILE id="HvJPJu" name="ModeElement.h" compile="0" resource="0" file="Source/ui/display/ModeElement.h"/>
+          <FILE id="O41Y1r" name="ParametersElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/ParametersElement.cpp"/>
+          <FILE id="JQfwD2" name="ParametersElement.h" compile="0" resource="0"
+                file="Source/ui/display/ParametersElement.h"/>
+          <FILE id="fGQWhr" name="StatusArea.cpp" compile="1" resource="0" file="Source/ui/display/StatusArea.cpp"/>
+          <FILE id="PL33Lh" name="StatusArea.h" compile="0" resource="0" file="Source/ui/display/StatusArea.h"/>
+          <FILE id="xu4lJg" name="StatusElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/StatusElement.cpp"/>
+          <FILE id="TnBtCz" name="StatusElement.h" compile="0" resource="0" file="Source/ui/display/StatusElement.h"/>
+          <FILE id="G2txQx" name="StripElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/StripElement.cpp"/>
+          <FILE id="hgDLnu" name="StripElement.h" compile="0" resource="0" file="Source/ui/display/StripElement.h"/>
+          <FILE id="I9R4wt" name="StripElements.cpp" compile="1" resource="0"
+                file="Source/ui/display/StripElements.cpp"/>
+          <FILE id="GB84je" name="StripElements.h" compile="0" resource="0" file="Source/ui/display/StripElements.h"/>
+          <FILE id="Xa5EM4" name="StripRotary.cpp" compile="1" resource="0" file="Source/ui/display/StripRotary.cpp"/>
+          <FILE id="IIRO4P" name="StripRotary.h" compile="0" resource="0" file="Source/ui/display/StripRotary.h"/>
+          <FILE id="tzlNy2" name="TempoElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/TempoElement.cpp"/>
+          <FILE id="kMtPBf" name="TempoElement.h" compile="0" resource="0" file="Source/ui/display/TempoElement.h"/>
+          <FILE id="ty1mou" name="TrackStrip.cpp" compile="1" resource="0" file="Source/ui/display/TrackStrip.cpp"/>
+          <FILE id="jzCok7" name="TrackStrip.h" compile="0" resource="0" file="Source/ui/display/TrackStrip.h"/>
+          <FILE id="UXBs6H" name="TrackStrips.cpp" compile="1" resource="0" file="Source/ui/display/TrackStrips.cpp"/>
+          <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
+        </GROUP>
+        <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
+          <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
+          <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
+          <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
+          <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
+          <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
+          <FILE id="wXEPam" name="FieldGrid.h" compile="0" resource="0" file="Source/ui/common/FieldGrid.h"/>
+          <FILE id="ayhV48" name="Form.cpp" compile="1" resource="0" file="Source/ui/common/Form.cpp"/>
+          <FILE id="S7Xbq6" name="Form.h" compile="0" resource="0" file="Source/ui/common/Form.h"/>
+          <FILE id="qFRIjz" name="FormPanel.cpp" compile="1" resource="0" file="Source/ui/common/FormPanel.cpp"/>
+          <FILE id="JWBS2l" name="FormPanel.h" compile="0" resource="0" file="Source/ui/common/FormPanel.h"/>
+          <FILE id="qcxCOI" name="HelpArea.cpp" compile="1" resource="0" file="Source/ui/common/HelpArea.cpp"/>
+          <FILE id="UpmMlt" name="HelpArea.h" compile="0" resource="0" file="Source/ui/common/HelpArea.h"/>
+          <FILE id="z0zBNd" name="JLabel.cpp" compile="1" resource="0" file="Source/ui/common/JLabel.cpp"/>
+          <FILE id="n1jih9" name="JLabel.h" compile="0" resource="0" file="Source/ui/common/JLabel.h"/>
+          <FILE id="yVC7nU" name="Panel.cpp" compile="1" resource="0" file="Source/ui/common/Panel.cpp"/>
+          <FILE id="TLuhnZ" name="Panel.h" compile="0" resource="0" file="Source/ui/common/Panel.h"/>
+          <FILE id="OjuAfI" name="SimpleButton.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleButton.cpp"/>
+          <FILE id="pGSyi0" name="SimpleButton.h" compile="0" resource="0" file="Source/ui/common/SimpleButton.h"/>
+          <FILE id="JeWRRg" name="SimpleListBox.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleListBox.cpp"/>
+          <FILE id="SOk6NY" name="SimpleListBox.h" compile="0" resource="0" file="Source/ui/common/SimpleListBox.h"/>
+          <FILE id="IxU0jZ" name="SimpleRadio.cpp" compile="1" resource="0" file="Source/ui/common/SimpleRadio.cpp"/>
+          <FILE id="WL6Zy9" name="SimpleRadio.h" compile="0" resource="0" file="Source/ui/common/SimpleRadio.h"/>
+          <FILE id="SCCaw4" name="SimpleTable.cpp" compile="1" resource="0" file="Source/ui/common/SimpleTable.cpp"/>
+          <FILE id="yNdibm" name="SimpleTable.h" compile="0" resource="0" file="Source/ui/common/SimpleTable.h"/>
+          <FILE id="ttfh9P" name="SimpleTabPanel.cpp" compile="1" resource="0"
+                file="Source/ui/common/SimpleTabPanel.cpp"/>
+          <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
+                file="Source/ui/common/SimpleTabPanel.h"/>
+        </GROUP>
+        <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
+        <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>
+        <FILE id="BDnCv2" name="JuceUtil.cpp" compile="1" resource="0" file="Source/ui/JuceUtil.cpp"/>
+        <FILE id="XzPX2v" name="JuceUtil.h" compile="0" resource="0" file="Source/ui/JuceUtil.h"/>
+        <FILE id="pup9jz" name="MainMenu.cpp" compile="1" resource="0" file="Source/ui/MainMenu.cpp"/>
+        <FILE id="Fo9xTD" name="MainMenu.h" compile="0" resource="0" file="Source/ui/MainMenu.h"/>
+        <FILE id="FsMNcl" name="MainWindow.cpp" compile="1" resource="0" file="Source/ui/MainWindow.cpp"/>
+        <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
+      </GROUP>
+      <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <GROUP id="{8E4BAFF4-3AEF-CED4-3179-55768C778B1C}" name="core">
+          <GROUP id="{7F4264E6-7D7C-D713-8A19-178DDC4B82F9}" name="functions">
+            <FILE id="e38cai" name="Alert.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Alert.cpp"/>
+            <FILE id="bJwqIY" name="Bounce.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Bounce.cpp"/>
+            <FILE id="LY3sKE" name="Capture.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Capture.cpp"/>
+            <FILE id="NvOinP" name="Checkpoint.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Checkpoint.cpp"/>
+            <FILE id="xOxovJ" name="Clear.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Clear.cpp"/>
+            <FILE id="jwCnaO" name="Confirm.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Confirm.cpp"/>
+            <FILE id="xPUwL0" name="Coverage.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Coverage.cpp"/>
+            <FILE id="mzXteI" name="Debug.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Debug.cpp"/>
+            <FILE id="cSSxV7" name="Divide.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Divide.cpp"/>
+            <FILE id="T67WnF" name="FocusLock.cpp" compile="1" resource="0" file="Source/mobius/core/functions/FocusLock.cpp"/>
+            <FILE id="Xem7S0" name="FunctionUtil.cpp" compile="1" resource="0"
+                  file="Source/mobius/core/functions/FunctionUtil.cpp"/>
+            <FILE id="vm16kR" name="FunctionUtil.h" compile="0" resource="0" file="Source/mobius/core/functions/FunctionUtil.h"/>
+            <FILE id="ug2fwv" name="Insert.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Insert.cpp"/>
+            <FILE id="VdeV2m" name="InstantMultiply.cpp" compile="1" resource="0"
+                  file="Source/mobius/core/functions/InstantMultiply.cpp"/>
+            <FILE id="xejWBa" name="LoopSwitch.cpp" compile="1" resource="0" file="Source/mobius/core/functions/LoopSwitch.cpp"/>
+            <FILE id="nYzaWL" name="Midi.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Midi.cpp"/>
+            <FILE id="rShFn1" name="Move.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Move.cpp"/>
+            <FILE id="RXSmY5" name="Multiply.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Multiply.cpp"/>
+            <FILE id="ZkSgQR" name="Mute.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Mute.cpp"/>
+            <FILE id="BOXlnS" name="Overdub.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Overdub.cpp"/>
+            <FILE id="sBmc1w" name="Pitch.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Pitch.cpp"/>
+            <FILE id="VV4hjg" name="Play.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Play.cpp"/>
+            <FILE id="nBOor2" name="Realign.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Realign.cpp"/>
+            <FILE id="zKi9RI" name="Record.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Record.cpp"/>
+            <FILE id="cXwV7P" name="Replace.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Replace.cpp"/>
+            <FILE id="E6iHan" name="Reset.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Reset.cpp"/>
+            <FILE id="fmL5aI" name="Reverse.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Reverse.cpp"/>
+            <FILE id="EKTDgU" name="RunScript.cpp" compile="1" resource="0" file="Source/mobius/core/functions/RunScript.cpp"/>
+            <FILE id="Zedliz" name="Sample.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Sample.cpp"/>
+            <FILE id="yL28ee" name="Save.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Save.cpp"/>
+            <FILE id="dshLuO" name="Shuffle.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Shuffle.cpp"/>
+            <FILE id="KPWyA3" name="Slip.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Slip.cpp"/>
+            <FILE id="mwzyP2" name="Solo.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Solo.cpp"/>
+            <FILE id="TuKQVO" name="Speed.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Speed.cpp"/>
+            <FILE id="W2lMIy" name="StartPoint.cpp" compile="1" resource="0" file="Source/mobius/core/functions/StartPoint.cpp"/>
+            <FILE id="BD9WVu" name="Stutter.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Stutter.cpp"/>
+            <FILE id="nZvo45" name="Substitute.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Substitute.cpp"/>
+            <FILE id="v9vyy1" name="Sync.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Sync.cpp"/>
+            <FILE id="geL4FJ" name="TrackCopy.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackCopy.cpp"/>
+            <FILE id="diKBBx" name="TrackGroup.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackGroup.cpp"/>
+            <FILE id="ZHJtYT" name="TrackSelect.cpp" compile="1" resource="0" file="Source/mobius/core/functions/TrackSelect.cpp"/>
+            <FILE id="QolWqa" name="Trim.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Trim.cpp"/>
+            <FILE id="a17JLI" name="UndoRedo.cpp" compile="1" resource="0" file="Source/mobius/core/functions/UndoRedo.cpp"/>
+            <FILE id="yBhzyV" name="Window.cpp" compile="1" resource="0" file="Source/mobius/core/functions/Window.cpp"/>
+          </GROUP>
+          <FILE id="bzTZ6i" name="Action.cpp" compile="1" resource="0" file="Source/mobius/core/Action.cpp"/>
+          <FILE id="KEOJ4i" name="Action.h" compile="0" resource="0" file="Source/mobius/core/Action.h"/>
+          <FILE id="a0lb08" name="Actionator.cpp" compile="1" resource="0" file="Source/mobius/core/Actionator.cpp"/>
+          <FILE id="nn36LQ" name="Actionator.h" compile="0" resource="0" file="Source/mobius/core/Actionator.h"/>
+          <FILE id="SJ01Nd" name="AudioConstants.h" compile="0" resource="0"
+                file="Source/mobius/core/AudioConstants.h"/>
+          <FILE id="fBI64E" name="Event.cpp" compile="1" resource="0" file="Source/mobius/core/Event.cpp"/>
+          <FILE id="FKv7IC" name="Event.h" compile="0" resource="0" file="Source/mobius/core/Event.h"/>
+          <FILE id="b9JQVm" name="EventManager.cpp" compile="1" resource="0"
+                file="Source/mobius/core/EventManager.cpp"/>
+          <FILE id="zyQLix" name="EventManager.h" compile="0" resource="0" file="Source/mobius/core/EventManager.h"/>
+          <FILE id="wppVHn" name="Export.cpp" compile="1" resource="0" file="Source/mobius/core/Export.cpp"/>
+          <FILE id="tUYgCO" name="Export.h" compile="0" resource="0" file="Source/mobius/core/Export.h"/>
+          <FILE id="D2etDD" name="Expr.cpp" compile="1" resource="0" file="Source/mobius/core/Expr.cpp"/>
+          <FILE id="fhSwxi" name="Expr.h" compile="0" resource="0" file="Source/mobius/core/Expr.h"/>
+          <FILE id="VrKIIG" name="FadeTail.cpp" compile="1" resource="0" file="Source/mobius/core/FadeTail.cpp"/>
+          <FILE id="hqFkk9" name="FadeWindow.cpp" compile="1" resource="0" file="Source/mobius/core/FadeWindow.cpp"/>
+          <FILE id="GBOHKf" name="FadeWindow.h" compile="0" resource="0" file="Source/mobius/core/FadeWindow.h"/>
+          <FILE id="OP6PC2" name="Function.cpp" compile="1" resource="0" file="Source/mobius/core/Function.cpp"/>
+          <FILE id="yk0tvL" name="Function.h" compile="0" resource="0" file="Source/mobius/core/Function.h"/>
+          <FILE id="GOMBhW" name="Layer.cpp" compile="1" resource="0" file="Source/mobius/core/Layer.cpp"/>
+          <FILE id="QooRmj" name="Layer.h" compile="0" resource="0" file="Source/mobius/core/Layer.h"/>
+          <FILE id="tqhmJS" name="Loader.cpp" compile="1" resource="0" file="Source/mobius/core/Loader.cpp"/>
+          <FILE id="lfkRxb" name="Loader.h" compile="0" resource="0" file="Source/mobius/core/Loader.h"/>
+          <FILE id="MjJST1" name="Loop.cpp" compile="1" resource="0" file="Source/mobius/core/Loop.cpp"/>
+          <FILE id="A548Vd" name="Loop.h" compile="0" resource="0" file="Source/mobius/core/Loop.h"/>
+          <FILE id="q1lpim" name="Mapper.cpp" compile="1" resource="0" file="Source/mobius/core/Mapper.cpp"/>
+          <FILE id="BHbh81" name="Mapper.h" compile="0" resource="0" file="Source/mobius/core/Mapper.h"/>
+          <FILE id="AXgurM" name="Mem.cpp" compile="1" resource="0" file="Source/mobius/core/Mem.cpp"/>
+          <FILE id="Kz2Efj" name="Mem.h" compile="0" resource="0" file="Source/mobius/core/Mem.h"/>
+          <FILE id="W6SHN9" name="Messages.h" compile="0" resource="0" file="Source/mobius/core/Messages.h"/>
+          <FILE id="lHBt2R" name="Mobius.cpp" compile="1" resource="0" file="Source/mobius/core/Mobius.cpp"/>
+          <FILE id="LMQl5U" name="Mobius.h" compile="0" resource="0" file="Source/mobius/core/Mobius.h"/>
+          <FILE id="UE7nUh" name="Mode.cpp" compile="1" resource="0" file="Source/mobius/core/Mode.cpp"/>
+          <FILE id="yTJ6C3" name="Mode.h" compile="0" resource="0" file="Source/mobius/core/Mode.h"/>
+          <FILE id="WMBb80" name="Parameter.cpp" compile="1" resource="0" file="Source/mobius/core/Parameter.cpp"/>
+          <FILE id="GWezJ4" name="Parameter.h" compile="0" resource="0" file="Source/mobius/core/Parameter.h"/>
+          <FILE id="NolJMo" name="ParameterGlobal.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ParameterGlobal.cpp"/>
+          <FILE id="wRUIqb" name="ParameterPreset.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ParameterPreset.cpp"/>
+          <FILE id="EiCEqS" name="ParameterSetup.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ParameterSetup.cpp"/>
+          <FILE id="e8xP8p" name="ParameterTrack.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ParameterTrack.cpp"/>
+          <FILE id="QYMlnj" name="PitchPlugin.cpp" compile="1" resource="0" file="Source/mobius/core/PitchPlugin.cpp"/>
+          <FILE id="CC49Jg" name="Project.cpp" compile="1" resource="0" file="Source/mobius/core/Project.cpp"/>
+          <FILE id="WRiG9w" name="Project.h" compile="0" resource="0" file="Source/mobius/core/Project.h"/>
+          <FILE id="q4kSE4" name="Resampler.cpp" compile="1" resource="0" file="Source/mobius/core/Resampler.cpp"/>
+          <FILE id="ciXgnG" name="Resampler.h" compile="0" resource="0" file="Source/mobius/core/Resampler.h"/>
+          <FILE id="T2PYXg" name="Script.cpp" compile="1" resource="0" file="Source/mobius/core/Script.cpp"/>
+          <FILE id="iKu9PT" name="Script.h" compile="0" resource="0" file="Source/mobius/core/Script.h"/>
+          <FILE id="JBhqXF" name="Scriptarian.cpp" compile="1" resource="0" file="Source/mobius/core/Scriptarian.cpp"/>
+          <FILE id="BnyopL" name="Scriptarian.h" compile="0" resource="0" file="Source/mobius/core/Scriptarian.h"/>
+          <FILE id="Kx9XwY" name="ScriptCompiler.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ScriptCompiler.cpp"/>
+          <FILE id="xmZKKx" name="ScriptCompiler.h" compile="0" resource="0"
+                file="Source/mobius/core/ScriptCompiler.h"/>
+          <FILE id="dnsemY" name="ScriptRuntime.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ScriptRuntime.cpp"/>
+          <FILE id="fVkEKL" name="ScriptRuntime.h" compile="0" resource="0" file="Source/mobius/core/ScriptRuntime.h"/>
+          <FILE id="rfccJC" name="Segment.cpp" compile="1" resource="0" file="Source/mobius/core/Segment.cpp"/>
+          <FILE id="dcWfMT" name="Segment.h" compile="0" resource="0" file="Source/mobius/core/Segment.h"/>
+          <FILE id="oiXDfr" name="Stream.cpp" compile="1" resource="0" file="Source/mobius/core/Stream.cpp"/>
+          <FILE id="tqPxNY" name="Stream.h" compile="0" resource="0" file="Source/mobius/core/Stream.h"/>
+          <FILE id="CEziwz" name="StreamPlugin.cpp" compile="1" resource="0"
+                file="Source/mobius/core/StreamPlugin.cpp"/>
+          <FILE id="bDbVYT" name="StreamPlugin.h" compile="0" resource="0" file="Source/mobius/core/StreamPlugin.h"/>
+          <FILE id="RA1PQz" name="Synchronizer.cpp" compile="1" resource="0"
+                file="Source/mobius/core/Synchronizer.cpp"/>
+          <FILE id="mydA6m" name="Synchronizer.h" compile="0" resource="0" file="Source/mobius/core/Synchronizer.h"/>
+          <FILE id="QocDfP" name="SyncState.cpp" compile="1" resource="0" file="Source/mobius/core/SyncState.cpp"/>
+          <FILE id="xzjuPE" name="SyncState.h" compile="0" resource="0" file="Source/mobius/core/SyncState.h"/>
+          <FILE id="ro4223" name="SyncTracker.cpp" compile="1" resource="0" file="Source/mobius/core/SyncTracker.cpp"/>
+          <FILE id="R2mCoz" name="SyncTracker.h" compile="0" resource="0" file="Source/mobius/core/SyncTracker.h"/>
+          <FILE id="U54Yyx" name="Track.cpp" compile="1" resource="0" file="Source/mobius/core/Track.cpp"/>
+          <FILE id="Pk3xfB" name="Track.h" compile="0" resource="0" file="Source/mobius/core/Track.h"/>
+          <FILE id="eAJ65C" name="TriggerState.cpp" compile="1" resource="0"
+                file="Source/mobius/core/TriggerState.cpp"/>
+          <FILE id="sLafRe" name="TriggerState.h" compile="0" resource="0" file="Source/mobius/core/TriggerState.h"/>
+          <FILE id="e5tfsC" name="Variable.cpp" compile="1" resource="0" file="Source/mobius/core/Variable.cpp"/>
+          <FILE id="knqe8D" name="Variable.h" compile="0" resource="0" file="Source/mobius/core/Variable.h"/>
+        </GROUP>
+        <FILE id="wGjjQT" name="Audio.cpp" compile="1" resource="0" file="Source/mobius/Audio.cpp"/>
+        <FILE id="l5fUmt" name="Audio.h" compile="0" resource="0" file="Source/mobius/Audio.h"/>
+        <FILE id="uXEvtN" name="AudioCursor.cpp" compile="1" resource="0" file="Source/mobius/AudioCursor.cpp"/>
+        <FILE id="jErnGH" name="AudioFile.cpp" compile="1" resource="0" file="Source/mobius/AudioFile.cpp"/>
+        <FILE id="XCxjp6" name="AudioFile.h" compile="0" resource="0" file="Source/mobius/AudioFile.h"/>
+        <FILE id="TZns7W" name="AudioPool.cpp" compile="1" resource="0" file="Source/mobius/AudioPool.cpp"/>
+        <FILE id="dBer2Q" name="AudioPool.h" compile="0" resource="0" file="Source/mobius/AudioPool.h"/>
+        <FILE id="VBNXZD" name="KernelBinderator.cpp" compile="1" resource="0"
+              file="Source/mobius/KernelBinderator.cpp"/>
+        <FILE id="MO0zLL" name="KernelBinderator.h" compile="0" resource="0"
+              file="Source/mobius/KernelBinderator.h"/>
+        <FILE id="KAI4RP" name="KernelCommunicator.cpp" compile="1" resource="0"
+              file="Source/mobius/KernelCommunicator.cpp"/>
+        <FILE id="a4sBIH" name="KernelCommunicator.h" compile="0" resource="0"
+              file="Source/mobius/KernelCommunicator.h"/>
+        <FILE id="laEZjP" name="KernelEvent.cpp" compile="1" resource="0" file="Source/mobius/KernelEvent.cpp"/>
+        <FILE id="Xlas8b" name="KernelEvent.h" compile="0" resource="0" file="Source/mobius/KernelEvent.h"/>
+        <FILE id="VZvPAV" name="MobiusInterface.cpp" compile="1" resource="0"
+              file="Source/mobius/MobiusInterface.cpp"/>
+        <FILE id="M2HKN2" name="MobiusInterface.h" compile="0" resource="0"
+              file="Source/mobius/MobiusInterface.h"/>
+        <FILE id="vFnGFJ" name="MobiusKernel.cpp" compile="1" resource="0"
+              file="Source/mobius/MobiusKernel.cpp"/>
+        <FILE id="jXxZsV" name="MobiusKernel.h" compile="0" resource="0" file="Source/mobius/MobiusKernel.h"/>
+        <FILE id="a53xaP" name="MobiusMidiTransport.h" compile="0" resource="0"
+              file="Source/mobius/MobiusMidiTransport.h"/>
+        <FILE id="RZNLnz" name="MobiusShell.cpp" compile="1" resource="0" file="Source/mobius/MobiusShell.cpp"/>
+        <FILE id="TK5FKu" name="MobiusShell.h" compile="0" resource="0" file="Source/mobius/MobiusShell.h"/>
+        <FILE id="p07BSI" name="SampleBuilder.cpp" compile="1" resource="0"
+              file="Source/mobius/SampleBuilder.cpp"/>
+        <FILE id="wwdEks" name="SampleManager.cpp" compile="1" resource="0"
+              file="Source/mobius/SampleManager.cpp"/>
+        <FILE id="k4TZKG" name="SampleManager.h" compile="0" resource="0" file="Source/mobius/SampleManager.h"/>
+        <FILE id="JOsfQX" name="SampleReader.cpp" compile="1" resource="0"
+              file="Source/mobius/SampleReader.cpp"/>
+        <FILE id="RDP88j" name="SampleReader.h" compile="0" resource="0" file="Source/mobius/SampleReader.h"/>
+        <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>
+        <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
+      </GROUP>
+      <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
+        <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"
+              file="Source/test/AudioDifferencer.cpp"/>
+        <FILE id="Qc1i0p" name="AudioDifferencer.h" compile="0" resource="0"
+              file="Source/test/AudioDifferencer.h"/>
+        <FILE id="OQQ3Ra" name="BasicButtonRow.cpp" compile="1" resource="0"
+              file="Source/test/BasicButtonRow.cpp"/>
+        <FILE id="Avzqjz" name="BasicButtonRow.h" compile="0" resource="0"
+              file="Source/test/BasicButtonRow.h"/>
+        <FILE id="H2HZoM" name="BasicForm.cpp" compile="1" resource="0" file="Source/test/BasicForm.cpp"/>
+        <FILE id="SOIBTo" name="BasicForm.h" compile="0" resource="0" file="Source/test/BasicForm.h"/>
+        <FILE id="bG5tyS" name="BasicInput.cpp" compile="1" resource="0" file="Source/test/BasicInput.cpp"/>
+        <FILE id="rxmD0s" name="BasicInput.h" compile="0" resource="0" file="Source/test/BasicInput.h"/>
+        <FILE id="vIaS2v" name="BasicLog.cpp" compile="1" resource="0" file="Source/test/BasicLog.cpp"/>
+        <FILE id="Ip61Fi" name="BasicLog.h" compile="0" resource="0" file="Source/test/BasicLog.h"/>
+        <FILE id="RWdxbD" name="BasicTabs.cpp" compile="1" resource="0" file="Source/test/BasicTabs.cpp"/>
+        <FILE id="Bjd63G" name="BasicTabs.h" compile="0" resource="0" file="Source/test/BasicTabs.h"/>
+        <FILE id="ADIZUu" name="MidiTransportPanel.cpp" compile="1" resource="0"
+              file="Source/test/MidiTransportPanel.cpp"/>
+        <FILE id="gCCTmG" name="MidiTransportPanel.h" compile="0" resource="0"
+              file="Source/test/MidiTransportPanel.h"/>
+        <FILE id="Vul8l7" name="SymbolTablePanel.cpp" compile="1" resource="0"
+              file="Source/test/SymbolTablePanel.cpp"/>
+        <FILE id="fvesuL" name="SymbolTablePanel.h" compile="0" resource="0"
+              file="Source/test/SymbolTablePanel.h"/>
+        <FILE id="vEWRZ2" name="TestDriver.cpp" compile="1" resource="0" file="Source/test/TestDriver.cpp"/>
+        <FILE id="E9hifY" name="TestDriver.h" compile="0" resource="0" file="Source/test/TestDriver.h"/>
+        <FILE id="lgCOr0" name="TestPanel.cpp" compile="1" resource="0" file="Source/test/TestPanel.cpp"/>
+        <FILE id="hyKpqT" name="TestPanel.h" compile="0" resource="0" file="Source/test/TestPanel.h"/>
+        <FILE id="fbbVWi" name="UpgradePanel.cpp" compile="1" resource="0"
+              file="Source/test/UpgradePanel.cpp"/>
+        <FILE id="Abea0g" name="UpgradePanel.h" compile="0" resource="0" file="Source/test/UpgradePanel.h"/>
+      </GROUP>
+      <FILE id="oEMAnd" name="Alerter.cpp" compile="1" resource="0" file="Source/Alerter.cpp"/>
+      <FILE id="XG1PMx" name="Alerter.h" compile="0" resource="0" file="Source/Alerter.h"/>
+      <FILE id="jXKMYe" name="AudioClerk.cpp" compile="1" resource="0" file="Source/AudioClerk.cpp"/>
+      <FILE id="EtUcKk" name="AudioClerk.h" compile="0" resource="0" file="Source/AudioClerk.h"/>
+      <FILE id="GO2jW8" name="AudioManager.cpp" compile="1" resource="0"
+            file="Source/AudioManager.cpp"/>
+      <FILE id="Kk05Us" name="AudioManager.h" compile="0" resource="0" file="Source/AudioManager.h"/>
+      <FILE id="IuZuwY" name="Binderator.cpp" compile="1" resource="0" file="Source/Binderator.cpp"/>
+      <FILE id="aN84BY" name="Binderator.h" compile="0" resource="0" file="Source/Binderator.h"/>
+      <FILE id="Gc0Vst" name="BlueSphere-10.png" compile="0" resource="1"
+            file="Source/BlueSphere-10.png"/>
+      <FILE id="oyuBTW" name="Conditionals.h" compile="0" resource="0" file="Source/Conditionals.h"/>
+      <FILE id="NNPAXk" name="DiagnosticWindow.cpp" compile="1" resource="0"
+            file="Source/DiagnosticWindow.cpp"/>
+      <FILE id="Hk9F8Y" name="DiagnosticWindow.h" compile="0" resource="0"
+            file="Source/DiagnosticWindow.h"/>
+      <FILE id="YEqlIy" name="HostSyncState.cpp" compile="1" resource="0"
+            file="Source/HostSyncState.cpp"/>
+      <FILE id="cNUiA8" name="HostSyncState.h" compile="0" resource="0" file="Source/HostSyncState.h"/>
+      <FILE id="vM6WFT" name="JuceAudioStream.cpp" compile="1" resource="0"
+            file="Source/JuceAudioStream.cpp"/>
+      <FILE id="biIlCl" name="JuceAudioStream.h" compile="0" resource="0"
+            file="Source/JuceAudioStream.h"/>
+      <FILE id="Ugflnj" name="KeyTracker.cpp" compile="1" resource="0" file="Source/KeyTracker.cpp"/>
+      <FILE id="wXaKpF" name="KeyTracker.h" compile="0" resource="0" file="Source/KeyTracker.h"/>
+      <FILE id="YlAxvV" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="x4dOIH" name="MainComponent.cpp" compile="1" resource="0"
+            file="Source/MainComponent.cpp"/>
+      <FILE id="yWDgXx" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="QNh0y4" name="MainThread.cpp" compile="1" resource="0" file="Source/MainThread.cpp"/>
+      <FILE id="Q7CcHg" name="MainThread.h" compile="0" resource="0" file="Source/MainThread.h"/>
+      <FILE id="gYasMO" name="MidiManager.cpp" compile="1" resource="0" file="Source/MidiManager.cpp"/>
+      <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
+      <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
+      <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
+      <FILE id="Zfd5Mq" name="PluginParameter.cpp" compile="1" resource="0"
+            file="Source/PluginParameter.cpp"/>
+      <FILE id="rXclHv" name="PluginParameter.h" compile="0" resource="0"
+            file="Source/PluginParameter.h"/>
+      <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
+      <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>
+      <FILE id="eOUyrZ" name="SuperDumper.cpp" compile="1" resource="0" file="Source/SuperDumper.cpp"/>
+      <FILE id="mBQtpX" name="SuperDumper.h" compile="0" resource="0" file="Source/SuperDumper.h"/>
+      <FILE id="md4KUz" name="Supervisor.cpp" compile="1" resource="0" file="Source/Supervisor.cpp"/>
+      <FILE id="qYO2SW" name="Supervisor.h" compile="0" resource="0" file="Source/Supervisor.h"/>
+      <FILE id="Q1Cu7N" name="UISymbols.cpp" compile="1" resource="0" file="Source/UISymbols.cpp"/>
+      <FILE id="d2qdos" name="UISymbols.h" compile="0" resource="0" file="Source/UISymbols.h"/>
+      <FILE id="zYypIv" name="VariableManager.cpp" compile="1" resource="0"
+            file="Source/VariableManager.cpp"/>
+      <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"
+            file="Source/VariableManager.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022" bigIcon="Gc0Vst">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Mobius" useRuntimeLibDLL="0"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Mobius"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+    <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
+               smallIcon="" bigIcon="ZTzR5l" customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;&#10;&lt;plist version=&quot;1.0&quot;&gt;&#10;&lt;dict&gt;&#10;&#9;&lt;key&gt;CFBundleName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&#9;&lt;key&gt;CFBundleDisplayName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&lt;/dict&gt;&#10;&lt;/plist&gt;&#10;"
+               microphonePermissionNeeded="1">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Mobius"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Mobius"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_devices" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_formats" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_processors" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_audio_utils" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_core" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_data_structures" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_events" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_graphics" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_basics" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+        <MODULEPATH id="juce_gui_extra" path="C:\dev\Juce\juce-7.0.9-windows\JUCE\modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
