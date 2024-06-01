@@ -1,0 +1,16 @@
+#
+# Mobius test driver script
+#
+# layertests <noFlattening> <reverse>
+
+!name Layer SegRev
+!autoload
+#!button
+
+Echo *** Beginning Test Passes ***
+
+Call layertests true true
+
+Echo *** All Tests Complete ***
+
+

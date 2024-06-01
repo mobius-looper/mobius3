@@ -1,0 +1,7 @@
+#
+# This script is used by exprtest.mos to test the Call statement
+#
+
+!name ScriptOfDestiny
+
+Echo Script Of Destiny

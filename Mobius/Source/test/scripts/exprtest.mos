@@ -1,0 +1,368 @@
+#
+# Tests basic operation of the script interpreter focusing on the
+# expression evaluator but also on other basic script functionality
+# like Call resolution.  Generally you would run this first since
+# if scripts aint workin' aint nobody workin'.
+#
+# Verification is mostly manual, looking in the output for expected
+# results.
+#
+# To test script calls, this relies on the script calltest.mos
+# which must also be referenced in the ScriptConfig.
+#
+# update: changed references to autoRecord which was deprecated
+# and replaced by emptyLoopAction to overdubQuantized
+
+!name Expression Tests
+!autoload
+#!button
+
+
+Echo ******************************************************************
+Echo Expression Tests
+Echo ******************************************************************
+
+# make sure we're starting clean
+GlobalReset
+
+# necessary to get the preset to a known state
+UnitTestSetup
+
+set noExternalAudio true
+set quickSave synctest
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+Call AllTests
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+  Call Test4
+  Call Test5
+  Call Test6
+  Call Test7
+Endproc
+
+Echo Expression Tests Complete
+end
+
+######################################################################
+#
+# Test1
+# 
+# References to variables, parameters, internal variables, 
+# and stack arguments.
+#
+######################################################################
+
+Proc SubProc
+
+  if $1 != "a local variable"
+    echo ERROR: Unable to resolve string stack argument 1
+  endif
+
+  if $2 != 42
+    echo ERROR: Unable to resolve integer stack argument
+  endif
+
+endproc
+
+Proc Test1
+  Echo Expr 1 - Reference Tests
+
+  Variable local1 "a local variable"
+  Variable track track1 "a track variable"
+  Variable global global1 "a global variable"
+
+  # check some script variables
+
+  if local1 != "a local variable"
+    echo ERROR: Unable to resolve variable: local1
+  endif
+
+  if track1 != "a track variable"
+    echo ERROR: Unable to resolve variable: track1
+  endif
+
+  if global1 != "a global variable"
+    echo ERROR: Unable to resolve variable: global1
+  endif
+
+  # check older reference prefix convention
+  if $local1 != "a local variable"
+    echo ERROR: Unable to resolve variable with prefix: local1
+  endif
+
+  # check some default parameter values 
+  # assumes a genereral reset will select Test Preset
+
+  # an enum
+  if quantize != off
+    echo ERROR: Unable to resolve parameter: quantize
+  endif
+
+  if mode != reset
+    echo ERROR: Unable to resolve parameter: mode
+  endif
+
+  # a bool
+  if overdubQuantized != false
+    echo ERROR: Unable to resolve parameter: overdubQuantized
+  endif
+  
+  # an int
+  if 8thsPerCycle != 4
+    echo ERROR: Unable to resolve parameter: 8thsPerCycle $(8thsPerCycle)
+  endif
+  
+  if moreLoops != 4
+    echo ERROR: Unable to resolve parameter: moreLoops
+  endif
+
+  # check some internal variables
+  
+  if track != 1
+    echo ERROR: Unable to resolve internal variable: track
+  endif
+
+  if loopFrames != 0
+    echo ERROR: Unable to resolve internal variable: loopFrames
+  endif
+
+  # call a procedure and check argument resolution
+  call SubProc local1 42
+
+endproc
+
+######################################################################
+#
+# Test2
+# 
+# Logical expressions with multiple references
+#
+######################################################################
+
+Proc Test2
+  Echo Expr 2 - Logical Expression Tests
+
+  if mode == reset && track == 1 && overdubQuantized == false
+    # should succeed
+  else
+    echo ERROR: Expression 1
+  endif
+
+  # negation of previous, should fail
+  if !(mode == reset && track == 1 && overdubQuantized == false)
+    echo ERROR: Expression 2
+  endif
+
+  # should fail, track!=2
+  if mode == reset && track == 2 && overdubQuantized == false
+    echo ERROR: Expression 3: mode $mode track $track overdubQuantized $overdubQuantized
+  endif
+
+  if !(8thsPerCycle > 3 && moreLoops <= 4)
+    echo ERROR: Expression 4
+  endif
+
+  if !(8thsPerCycle == 999 || moreLoops == 4)
+    echo ERROR: Expression 5
+  endif
+
+Endproc
+
+######################################################################
+#
+# Test3
+# 
+# Math expressions
+#
+######################################################################
+
+Proc Test3
+  Echo Expr 3 - Math Expression Tests
+
+  if abs(-42) != 42
+    echo ERROR: Expression 1
+  endif
+
+  if -abs(-42) != -42
+    echo ERROR: Expression 2
+  endif
+
+  if 8thsPerCycle / 2 != 2
+    echo ERROR: Expression 3: 8thsPerCycle $(8thsPerCycle)
+  endif
+
+Endproc
+
+######################################################################
+#
+# Test4
+# 
+# Variable and Set expressions
+#
+######################################################################
+
+Proc Test4
+  Echo Expr 4 - Set Expression Tests
+
+  Variable bogus 103
+
+  Variable calc (12 * 2 / 8) + (bogus % 100)
+  Variable track tcalc (12 * 2 / 8) + (bogus % 100)
+  Variable global gcalc (12 * 2 / 8) + (bogus % 100)
+
+  if calc != 6
+    echo ERROR: Variable initialization error $calc
+  endif
+
+  if tcalc != 6
+    echo ERROR: Variable initialization error $tcalc
+  endif
+
+  if gcalc != 6
+    echo ERROR: Variable initialization error $gcalc
+  endif
+
+  if 8thsPerCycle != 4
+    echo ERROR: Unexpected 8thsPerCycle
+  endif
+
+  set 8thsPerCycle (12 * 2 / 8) + (bogus % 100)
+
+  if 8thsPerCycle != 6
+    echo ERROR: Error in 8thsPerCycle calculation $(8thsPerCycle)
+  endif
+
+  # verify that we can use an = between the name and expression,
+  # a common problem
+  # Note that it is important that the variable be named "foo"
+  # to test scoping down in Test7
+
+  Variable foo = 42
+  if foo != 42
+    echo ERROR: Error in variable initialization with =
+  endif
+
+  set foo = 99
+  if foo != 99
+    echo ERROR: Error in variable assignment with =
+  endif
+
+Endproc
+
+######################################################################
+#
+# Test5
+# 
+# Jump expressions
+# These aren't usually used anymore, but make sure they still work.
+#
+######################################################################
+
+Proc Test5
+  Echo Expr 5 - Jump Tests
+
+  Jump good1 ((12 * 2 / 8) + (bogus % 100)) == 6
+  echo ERROR: First jump not taken
+
+  Label good1
+  Jump good2 8thsPerCycle != 4
+  echo ERROR: Second jump not taken
+
+  Label good2
+  Variable bogus 103
+  Jump good3 bogus == 103
+  echo ERROR: Third jump not taken
+
+  Label good3
+  Jump good4  mode == reset && track == 1 && overdubQuantized == false
+  echo ERROR: Fourth jump not taken
+
+  Label good4
+
+Endproc
+
+######################################################################
+#
+# Test6
+# 
+# Cross script calls.
+#
+######################################################################
+
+Proc Test6
+  Echo Expr 6 - Call Tests
+  Echo You should see "ScriptOfDestiny called" after each test header
+
+  Echo *** Calling with simple name
+  Call ScriptOfDestiny
+
+  Echo *** Calling with a file name
+  Call calltest
+
+  # since this runs async have to wait a bit so the messages
+  # interleave in stdout properly
+  Echo *** Calling as a function
+  ScriptOfDestiny
+  Wait msec 500
+
+  Echo *** End of Test6
+
+Endproc
+
+######################################################################
+#
+# Test7
+# 
+# Test an obscure scoping problem that's been around
+# forever but I didn't notice until 1.45.  "foo" is defined as a Variable
+# inside a Proc above and "Call TestInner2 foo" was resolving foo to 
+# that variable rather than passing it as a literal.  This forced the
+# introduction of ScriptBlock so we can do proper scoping 
+# of Variable declarations.
+#
+######################################################################
+
+Proc TestInner1
+
+  echo TestInner1 $1
+
+Endproc
+
+Proc TestInner2
+
+  echo TestInner2 $1
+
+  Variable arg $1
+
+  Call TestInner1 $arg
+
+Endproc
+
+Proc Test7
+  Echo Expr 7 - Argument Test
+
+  Echo You should see lines "TestInner2 foo" and "TestInner1 foo"
+  Call TestInner2 foo
+
+  # we lost the ability to use $() in Call in 1.45 because the Expr
+  # parser treats this as a function call.  Verify that we can still quote it.
+  # Actually this doesn't work, there is no expansion of quoted strings,
+  # Not sure what the right thing is...
+
+  #  Echo You should see lines "TestInner2 bar" and "TestInner1 bar"
+  #  Variable bar "bar"
+  #  Call TestInner2 "$(bar)"
+
+Endproc

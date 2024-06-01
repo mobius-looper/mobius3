@@ -1,0 +1,2028 @@
+#
+# NOTE: This file has been updated with the Warp statement
+# to allow individual tests to be run from the TestPanel
+#
+# Mobius layer test script
+#
+# This is designed to be called with two arguments
+#
+#    <noFlattening> <reverse>
+#
+# If any of these is non-empty string, it enables that mode for each test.
+#
+# Not specifically setting IO latency, but the master files were captured
+# using the LynxOne ASIO driver with a block size of 256, and a reported
+# input latency of 289 and reported output latency of 282.  It is critical
+# that these values be maintained.  
+#
+# Fade range is 128 using the "squares" curve.
+#
+# Sample1 - base.wav
+#   117,536 frames, 2.6 seconds
+#   soft swirly chord, the usual base loop
+#
+# Sample2 - medium.wav
+#   63,304 frames, 1.4 seconds
+#   soft basic chord
+#
+# Sample3 - medium2.wav
+#    141,408 frames, 3.2 seconds
+#    louder clean warm chord
+#
+# Sample4 - short1.wav
+#    95,712 frames, 2.1 seconds
+#    clean warm chord with punchy attack, not all that short really
+#
+# Sample5 - short2.wav
+#    67,384 frames, 1.5 seconds
+#    clean chord with punchy attack, higher than short1.wav
+#
+# Sample6 - long.wav
+#    326,572 frames, 7.4 seconds
+#    single swirly base note
+#
+
+!name Layer Tests
+!autoload
+!hide
+
+# There are two operating parameters: noFlattening, reverse
+Variable isNoFlattening $1
+Variable isReverse $2
+
+Echo ******************************************************************
+Echo Layer Test pass noFlattening=$(isNoFlattening) reverse=$(isReverse)
+Echo ******************************************************************
+
+# Most of the tests start with base.wav with a little clipped off each edge
+# to test fading.  base.wav is 117,536 frames, or around 2.6 seconds, 
+# wait close to that so the sample doesn't keep playing long after we've
+# closed the loop.
+# !! need a way to shut off samples before they complete
+Variable baseStartWait 1024
+Variable baseEndWait 116000
+
+# make sure we're starting clean
+GlobalReset
+set noExternalAudio true
+set monitorAudio false
+set quickSave unittest
+
+# All the captured test files depend on these values.  They may not
+# exactly match the latency of the audio device, but they should be close.
+set inputLatency 289
+set outputLatency 282
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+# here is where the magic begins
+Warp
+
+Call AllTests
+#Call SomeTests
+
+# this is one of many that fail in reverse
+#Call Test6
+#Call Test8-2
+
+# This one is failing due to a missing expected file
+#Call Test23-2
+
+Proc SomeTests
+  Call Test27
+  Call Test28
+  Call Test29
+  Call Test29-2
+  
+  Call Test30
+  Call Test30-2
+  Call Test30-3
+  Call Test31
+  Call Test31-2
+  Call Test32
+  Call Test32-2
+  Call Test33
+  Call Test34
+  Call Test34-2
+Endproc
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+  Call Test4
+  Call Test5
+  Call Test6
+  Call Test7
+  Call Test8
+  Call Test8-2
+  Call Test9
+  Call Test9-2
+  Call Test10
+  Call Test11
+  Call Test12
+  Call Test13
+  Call Test14
+  Call Test15
+  Call Test16
+  Call Test17
+  Call Test17-2
+  Call Test18
+  Call Test19
+  Call Test20
+  Call Test21
+  Call Test22
+  Call Test22-2
+  Call Test23
+  Call Test24
+  Call Test25
+  Call Test26
+  Call Test26-2
+  Call Test26-3
+  Call Test27
+  Call Test28
+  Call Test29
+  Call Test29-2
+  Call Test30
+  Call Test30-2
+  Call Test30-3
+  Call Test31
+  Call Test31-2
+  Call Test32
+  Call Test32-2
+  Call Test33
+  Call Test34
+  Call Test34-2
+  end
+Endproc
+
+Echo Layer Test Suite Complete
+Coverage
+end
+
+######################################################################
+#
+# Procedures
+#
+######################################################################
+
+# State initialization before every test
+Proc SetupTest
+
+  GeneralReset
+  UnitTestSetup
+
+  # default is 8
+  set 8thsPerCycle 2
+  # default is 4
+  set moreLoops 3
+
+  if isNoFlattening == true
+    set noLayerFlattening true
+  endif
+
+  if isReverse == true
+    Reverse
+  endif
+
+Endproc
+
+# Record the basic backing loop
+Proc RecordBackground
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+
+Endproc
+
+Proc SetupTestBackground
+
+  Call SetupTest
+  Call RecordBackground
+  #echo SetupTestBackground complete
+
+Endproc
+
+Proc SetupTestSilent
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+Endproc
+
+
+# Save files and diff
+Proc DiffTest
+
+  Variable testname $1
+  Variable suffix $2
+
+  #echo DiffTest $1 $2
+  #echo DiffTest $testname $suffix
+
+  StopAudioRecording
+  # these will be processed in order on the mobius thread
+  SaveLoop ./$(testname)$(suffix)loop
+  Wait thread
+  SaveAudioRecording ./$(testname)$(suffix)rec
+  Wait thread
+
+  # when recording in reverse, have to diff in reverse
+  if isReverse == true
+    # this will be saved in reverse
+    Diff reverse ./$(testname)loop
+    # this one isn't
+    Diff audio ./$(testname)rec
+  else
+    Diff audio ./$(testname)$(suffix)loop
+    Diff audio ./$(testname)$(suffix)rec
+  endif
+
+Endproc
+
+Proc DiffTest2
+
+  #echo DiffTest2 $1
+
+  # kludge, have to copy this into a local to prevent a stack overflow
+  Variable testname $1
+
+  if isNoFlattening == true
+    Call DiffTest testname seg
+  else
+    Call DiffTest testname
+  endif
+Endproc
+
+# !! this should work but there is an interpreter error with more
+# than one level of numeric stack arg references, results in a stack
+# overflow, need to fix
+Proc DiffTest3
+
+  if isNoFlattening == true
+    Call DiffTest $1 seg
+  else
+    Call DiffTest $1
+  endif
+Endproc
+
+######################################################################
+#
+# Test1: Lossless audio insertion
+#
+# Verify that we can use samples to insert audio into the input
+# stream and have it recorded exactly.
+#
+######################################################################
+
+Proc Test1
+  TestStart Test1 Audio Insertion
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Sample 1
+  # note the use of noFade to suppress leading and trailing fades
+  Record noFade
+  Wait frame sampleFrames
+  Record noFade
+  Wait last 
+  Wait loop
+  # plus a little over the loop boundary
+  Wait frame 256
+  Call DiffTest test1
+  Reset
+Endproc
+
+######################################################################
+#
+# Test2: Basic recording
+#
+# 1 rrrrrrrr
+#
+######################################################################
+
+Proc Test2
+  TestStart Test2 Basic Recording
+  Call SetupTestBackground
+  # then let it play once, plus a little over the loop boundary
+  Wait loop
+  Wait frame 256
+  Call DiffTest test2
+  Reset
+Endproc
+
+######################################################################
+#
+# Test3: Basic Overdub
+#
+# 1 rrrrrrrr
+# 2 ++oooo++
+#
+######################################################################
+
+Proc Test3
+  TestStart Test3 Overdub
+  Call SetupTestBackground
+  Sample 4
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  Overdub
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test3
+  Reset
+Endproc
+
+######################################################################
+#
+# Test4: Overdub crossing loop boundary
+#
+# 1  rrrrrrrr
+# 2  ++++oooo>
+# 3 >oooo++++}
+#
+######################################################################
+
+Proc Test4
+  TestStart Test4 - Overdub crossing loop boundary
+  Call SetupTestBackground
+  #Call SetupTestSilent
+  # recording is 116,000 long, Sample2 about 63,000
+  Wait frame 90000
+  Sample 4
+  Overdub
+  Wait frame 60000
+  Overdub
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test4
+  Reset
+Endproc
+
+######################################################################
+#
+# Test5: End record with overdub
+#
+# 1  rrrrrrrr>
+# 2 >oooo++++}
+#
+######################################################################
+
+Proc Test5
+  TestStart Test5 - End record with overdub
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  # wait a little less than usual so we have enough content to spill
+  Wait frame 90000
+  Overdub
+  Wait subcycle
+  Overdub
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test5
+  Reset
+Endproc
+
+######################################################################
+#
+# Test6: Overdub over silence
+#
+# 1  rrrrrrrr
+# 2  ++oooo++
+#
+# Verifies that the overdub edges are properly faded.
+#
+######################################################################
+
+Proc Test6
+  TestStart Test6 - Overdub over silence
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+  Sample 4
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  Overdub
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test6
+  Reset
+Endproc
+
+######################################################################
+#
+# Test7: Overdub Undo/Redo
+#
+# 1  rrrrrrrr
+# 2  ++++oooo>
+# 3 >oooo++++}
+# 4 }+++U
+# 2  .......-
+# 3  +++D
+# 3  -.......
+#  
+#
+# (Work on the notation)
+#
+# Overdub crossing loop boundary defers end fade, after undo the
+# deferred tail fade must be applied.  On redo, the the deferred
+# head fade must be applied if layer flattening is disabled.
+#
+# This tests will produce different results if flattening is enabled.
+#
+######################################################################
+
+Proc Test7
+  Echo Layer 7 - Overdub Undo/Redo
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 4
+  Overdub
+  Wait frame 60000
+  Overdub
+  Wait loop
+  Wait subcycle
+  Wait last
+  Undo
+  Wait loop
+  Wait subcycle
+  Redo
+  Wait last
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest2 test7
+  Reset
+Endproc
+
+######################################################################
+#
+# Test8: Replace center
+#
+# 1  rrrrrrrr
+# 2  ++R++R++
+#
+# A basic replace in the center.  Two loops are created, in the first
+# two replaces are made, one with no content to check edge fades in
+# the backing layer, and another with content.  In the second loop,
+# the backing layer is silent to check edge fades on the replace.
+#
+# With flattening enabled, the edge fades of the in the backing layer
+# will be different because they are implemented with a reduction
+# in feedback rather than a hard segment occlusion with a segment
+# edge fade.  To make the testing simpler, might want to make feedback 
+# of 0 be a special case?
+#
+# UPDATE: The above comments don't appear to be true since we have
+# only one set of test files for both segmenets and flattening.
+#
+######################################################################
+
+Proc Test8
+  Echo Layer 8 - Replace center
+  Call SetupTestBackground
+  Wait frame 20000
+  Replace
+  Wait frame 20000
+  Replace
+  Wait last
+  Sample 2
+  Wait frame 20000
+  Replace
+  Wait frame 20000
+  Replace
+  Wait loop 2
+  Wait 256
+  Call DiffTest test8
+  Reset
+Endproc
+
+Proc Test8-2
+  Echo Layer 8-2 - Replace center (silence)
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Record
+  Wait frame 100000
+  Record
+  Wait last
+  Sample 2
+  Wait frame 20000
+  Replace
+  Wait frame 20000
+  Replace
+  Wait loop 2
+  Wait 256
+  # starting in 1.45 Call args are expressions, we have to quote
+  # them to stop - from being treated as a minus.
+  Call DiffTest "test8-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test9: Substitute center
+#
+# 1  rrrrrrrr
+# 2  ++S++S++
+#
+# Same as test 8, but uses Substitute instead of Replace.
+#
+######################################################################
+
+Proc Test9
+  Echo Layer 9 - Substitute center
+  Call SetupTestBackground
+  Wait frame 20000
+  Substitute
+  Wait frame 20000
+  Substitute
+  Wait last
+  Sample 2
+  Wait frame 20000
+  Substitute
+  Wait frame 20000
+  Substitute
+  Wait loop 2
+  Wait 256
+  Call DiffTest test9
+  Reset
+Endproc
+
+Proc Test9-2
+  Echo Layer 9-2 - Substitute center (silence)
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Record
+  Wait frame 100000
+  Record
+  Wait last
+  Sample 2
+  Wait frame 20000
+  Substitute
+  Wait frame 20000
+  Substitute
+  Wait loop 2
+  Wait 256
+  Call DiffTest "test9-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test10: Replace over loop boundary
+#
+# 1  rrrrrrrr
+# 2  ++++RRRR>
+# 3 >RRRR++++}
+# 4 }++++U
+# 2  ........-
+# 3  ++++D
+# 3  -.......
+#
+# Begin a replace toward the end and let it continue into the next layer.
+# Similar to a seamless overdub.  Undo and apply deferred tail fade.
+# Redo and apply deferred head fade if flattening is disabled.
+#
+# Another test where flattening will produce different results.
+#
+######################################################################
+
+Proc Test10
+  Echo Layer 10 - Replace over loop boundary
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+   Wait frame 60000
+  Replace
+  Wait loop
+  Wait subcycle
+  Undo
+  Wait loop
+  Wait subcycle
+  Redo
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest2 test10
+  endif
+  Reset
+Endproc
+
+######################################################################
+#
+# Test11: Substitute over loop boundary
+#
+# 1  rrrrrrrr
+# 2  ++++SSSS>
+# 3 >SSSS++++}
+# 4 }++++U
+# 2  ........-
+# 3  ++++D
+# 3  -.......
+#
+# Same as 10 but with Substitute.
+#
+######################################################################
+
+Proc Test11
+  Echo Layer 11 - Substitute over loop boundary
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Substitute
+  Wait frame 60000
+  Substitute
+  Wait loop
+  Wait subcycle
+  Undo
+  Wait loop
+  Wait subcycle
+  Redo
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest2 test11
+  endif
+  Reset
+Endproc
+
+######################################################################
+#
+# Test12: Replace occlusion fade left
+#
+# 1  rrrrrrrr
+# 2  ++++RRRR>
+# 3 >RRRR++++}
+# 4 }++oooo++}
+# 5  -+++RRRR
+#
+# Use an overlapping replace to create seamless content over the 
+# loop boundary.   Do a center overdub to add another layer and push
+# the deferred fades back another level.  Perform a quantized Replace
+# to occlude the end of the layer. Must force a background fade at the start.
+#
+######################################################################
+
+Proc Test12
+  Echo Layer 12 - Replace occlusion fade left
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 30000
+  Sample 4
+  Overdub
+  Wait frame 60000
+  Overdub
+  Wait loop
+  set quantize subcycle
+  Wait subcycle
+  Replace
+  Replace
+  Wait loop 2
+  Wait 256
+  Call DiffTest test12
+  Reset
+Endproc
+
+######################################################################
+#
+# Test13: Replace occlusion fade right
+#
+# 1  rrrrrrrr
+# 2  ++++RRRR>
+# 3 >RRRR++++}
+# 4 }++oooo++}
+# 5  RRRR+++-
+#
+# Same setup as 12, but replace at the start.  Must force a background
+# fade at the right.
+#
+######################################################################
+
+Proc Test13
+  Echo Layer 13 - Replace occlusion fade right
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 30000
+  Sample 4
+  Overdub
+  Wait frame 60000
+  Overdub
+  Wait loop
+  set quantize subcycle
+  Wait 90000
+  Replace
+  Replace
+  Wait loop 3
+  Wait 256
+  Call DiffTest test13
+  Reset
+Endproc
+
+######################################################################
+#
+# Test14: Multiply
+#
+# 1  rrrrrrrr
+# 2  mmmmmmmm mmmmmmmm mmmmmmmm
+#
+# 1  rrrrrrrr
+# 2  ++++mmmm mmmm++++
+#
+# Two loops are created, the first one containing a simple multiply
+# of the backing layer with no additional overdubs, very that the 
+# content is identical in each cycle. The second loop has content
+# in the multiply.
+#
+# Waiting after Multiply is tricky because the loop length
+# keeps changing.  A "Wait loop" statement will wait till the end
+# of the loop at the moment the Wait is evaluted, if we're still in
+# Multiply mode the loop length may keep growing.  If the goal is to wait
+# until the start point of the loop after the multiply has finished, 
+# use "Wait until 0".
+#
+######################################################################
+
+Proc Test14
+  Echo Layer 14 - Multiply
+  Call SetupTestBackground
+  Multiply
+  Wait cycle 3
+  Multiply
+  Wait loop
+  Wait frame 256
+  Call DiffTest test14
+  Reset
+  Call SetupTestBackground
+  Wait 80000
+  Sample 2
+  Multiply
+  Wait frame sampleFrames
+  Multiply
+  # wait until the multiply is eventually done and we've looped
+  Wait until 0
+  # then let it play once
+  Wait loop
+  Wait frame 256
+  Call DiffTest "test14-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test15: ReMultiply
+#
+# 1  rrrrrrrr
+# 2  mmmmmmmm mmmmmmmm mmmmmmmm
+# 3  ++++++++ mmmmmmmm
+# 4           ++++++++
+#
+# Create a loop with 4 cycles and some overdubs in cycle 3.
+# ReMultiply to splice out cycles 3 and 4.
+#
+# Again "Wait loop" is tricky because if you do it before the remultiply
+# has a chance to shorten the loop, you will wait longer than you expect.
+#
+######################################################################
+
+Proc Test15
+  Echo Layer 15 - ReMultiply
+  Call SetupTestBackground
+  Multiply
+  Wait 80000
+  Sample 2
+  Wait frame sampleFrames
+  # wait a little more so we have something crossing the second cycle boundary
+  Wait 40000
+  Sample 5
+  Wait cycle 2
+  Multiply
+  Wait until 0
+  Wait cycle
+  Multiply
+  Wait cycle
+  Multiply
+  Wait until 0
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test15
+  Reset
+Endproc
+
+######################################################################
+#
+# Test16: Unrounded Multiply, Trim Start, Trim End
+#
+# Here 'T' is TrimStart and 'E' is TrimEnd
+#
+# 1  rrrrrrrr
+# 2  mmmmsmmm mmmmmmmm mmmmmmmm
+# 3  ++++mmmm mmmr
+# 4      +T
+# 5       +++ ++++
+# 6       +++ ++E
+# 7       +++ +++
+#
+# Create a backing loop of 4 cycles.  Perform an unrounded multiply
+# to splice out a center section.  Use both Trim Start and Trim End
+# to remove additional content.
+#
+######################################################################
+
+Proc Test16
+  Echo Layer 16 - Unrounded Multiply
+  Call SetupTestBackground
+  Multiply
+  Wait subcycle
+  Sample 3
+  Wait cycle 3
+  Multiply
+  Wait until 0
+  Wait subcycle
+  Multiply
+  Wait subcycle 2
+  Record
+  # Subtlety: The Record schedules an event on the current frame, 
+  # but that won't have been evaluated by the time we interpret the
+  # next script statement unless we explicitly wait for it.  It might
+  # be convenient if the interpreter always waited until there were no
+  # more events on the current frame before proceeding?
+  # Without waiting for the Record, the loop length will be too large
+  Wait last
+  Wait loop
+  Wait until frame 20000
+  TrimStart
+  Wait last
+  Wait loop 2
+  Wait frame 50000
+  TrimEnd
+  Wait last
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test16
+  Reset
+Endproc
+
+######################################################################
+#
+# Test17: Insert
+#
+# 1  rrrrrrrr
+# 2  ++iiiiii ii++++++
+# 3  ++++++++ ++++++++ iiiiiiii
+# 4  iiiiiiii ++++++++ ++++++++ ++++++++
+#
+# Do an unquantized center insert. Then a quantized insert at the end
+# and another at the beginning.
+#
+# !! Need to add these wait variants:
+#
+#    Insert
+#    # capture the last event time for later use
+#    Variable insertEndFrame lastEventFrame
+#
+#    # wait for a previously scheduled InsertEndEvent
+#    Wait event InsertEndEvent    
+#
+######################################################################
+
+Proc Test17
+  Echo Layer 17 - Insert
+  Call SetupTestBackground
+  Wait frame 29000
+  # this one is a little more than half as long as the cycle, 
+  # so do it twice so we can fill up the insert
+  Sample 2
+  Wait frame 1000
+  Insert
+  Insert
+  # since we waited another 1000, there will be a short gap, would
+  # be nice to have subtraction!
+  Wait frame sampleFrames
+  Sample 2
+  # finsh the remainder
+  Wait start
+  # let it play once and append
+  Wait end
+  Sample 2
+  Insert
+  Insert
+  # let it complete  
+  Wait start
+  # let it play once
+  Wait end
+  # to insert at the front, we have to let it loop back to zero
+  Wait start
+  # 4 is too loud, can mask cross fade problems 
+  #Sample4
+  Sample 2
+  Insert
+  Insert
+  # let it complete and play once
+  Wait start
+  Wait start
+  Wait frames 256
+  Call DiffTest test17
+  Reset
+Endproc
+
+######################################################################
+#
+# Test17: Insert over Overdub
+#
+# 1  rrrrrrrr
+# 2  ooooiiii iiiioooo
+#
+# Recording should move seamlessly from overdub into the insert.
+# But because we shift the layer immediately after the insert, there
+# will be a fade bump at the end of the insert.  
+#
+# This would be solved if we deferred the shift after the insert.
+#
+######################################################################
+
+Proc Test17-2
+  Echo Layer 17-2 - Insert over Overdub
+  Call SetupTest
+  # record some silence
+  Wait block
+  StartAudioRecording
+  Record
+  Wait frame 80000
+  Record
+  Wait frame 20000
+  Overdub
+  Sample 4
+  Wait frame 10000
+  Insert
+  Insert
+  Wait start
+  Wait start
+  Wait frame 256
+  Call DiffTest "test17-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test18: Unrounded Insert
+#
+# 1 rrrrrrrr
+# 2 +ir^^^^^^^
+# 3 ++++ir^^^^^^
+# 4 +++++++ir^^^^^
+#
+# Record a backing layer and drop in several short unrounded inserts.
+# Currently doing a layer shift on each insert, would be nice if these
+# could be combined like we do for replace, but it raises issues.
+#
+######################################################################
+
+Proc Test18
+  Echo Layer 18 - Insert
+  Call SetupTestBackground
+  Wait frame 30000
+  Sample 2
+  Insert
+  Wait frame 10000
+  Record
+  Wait frame 10000
+  Insert
+  Wait frame 10000
+  Record
+  Wait frame 10000
+  Insert
+  Wait frame 10000
+  Record
+  Wait start
+  Wait start
+  Wait frame 256
+  Call DiffTest test18
+  Reset
+Endproc
+
+######################################################################
+#
+# Test19: Stutter
+#
+# Stutter = t
+#
+# 1  rrrrrrrr
+# 2  ++++++++ iiiiiiii
+# 3  ^^^^^^^^ ^^^^^^^^ iiiiiiii
+# 4  ++++++++ tttttttt tttttttt ^^^^^^^^
+#
+# Multiply a three cycle loop with different content in each cycle.
+# Stutter the middle cycle once.  This implementation will not
+# multiply the cycle we start in until we cross the cycle boundary, 
+# so leaving stutter on for two cycles will only add one cycle, the
+# first one will be overdubbed, and a new one inserted.
+#
+######################################################################
+
+Proc Test19
+  Echo Layer 19 - Stutter
+  Call SetupTestBackground
+  Wait end
+  Sample 2
+  Insert
+  Insert
+  Wait end
+  Sample 4
+  Insert
+  Insert
+  Wait end
+  # now at the start of the loop
+  Wait cycle
+  Stutter
+  Wait cycle 2
+  Stutter
+  Wait start
+  Wait start
+  Wait frame 256
+  Call DiffTest test19
+  Reset
+Endproc
+
+######################################################################
+#
+# Test20: StartPoint
+#
+# S = StartPoint
+#
+# 1  rrrrrrrr
+# 2  ++++S
+# 3 }++++++++}
+# 4 }++++RRRR
+# 5  ++++++++
+#
+# Record basic background, set start point in the center.  There
+# will be indirect deferred fades on both edges of the new layer.
+# Do an a replace of the right half to force a fade to the leading edge.
+#
+######################################################################
+
+Proc Test20
+  Echo Layer 20 - StartPoint
+  Call SetupTestBackground
+  Wait subcycle
+  StartPoint
+  Wait loop 2
+  Wait subcycle
+  Replace
+  Wait end
+  Replace
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test20
+  Reset
+Endproc
+
+######################################################################
+#
+# Test21: SUSMute
+#
+# M = Mute
+#
+# 1  rrrrrrrr
+# 2  +M+M+M++
+#
+# Record a backing loop, do a bunch of short mutes.  This has no effect
+# on the loop, but will be heard in the recording.
+#
+######################################################################
+
+Proc Test21
+  Echo Layer 21 - SUSMute
+  Call SetupTestBackground
+  Wait frame 10000
+  SUSMute down
+  Wait frame 10000
+  SUSMute up
+  Wait frame 10000
+  SUSMute down
+  Wait frame 10000
+  SUSMute up
+  Wait frame 10000
+  SUSMute down
+  Wait frame 10000
+  SUSMute up
+  Wait start
+  Wait start
+  Wait 256
+  Call DiffTest test21
+  Reset
+Endproc
+
+######################################################################
+#
+# Test22: Record/NextLoop
+#
+# 1-1 rrrrrrrN
+# 2-1 
+#
+# 1-1 rrrrrrrN
+# 2-1 rrrrrrrr
+#
+# End a recording with NextLoop and AutoRecord=Off.  Check fades.
+# End a recording with NextLoop and AutoRecord=On, should record
+# into the next loop but with fades.
+#
+######################################################################
+
+Proc Test22
+  Echo Layer 22 - Record/NextLoop
+  call SetupTest
+
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autorecord off
+  #set loopcopy off
+  set emptyLoopAction none
+  
+  # check the new 1.43 parameter replacement for autorecord and loopcopy
+  if emptyLoopAction != none
+     Echo ERROR: emptyLoopAction is $emptyLoopAction
+  endif
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  NextLoop
+  Wait last
+
+  if mode != reset
+    Echo ERROR: Not in reset mode after next loop!
+  else if loopNumber != 2
+    Echo ERROR: Not in second loop!
+  endif
+
+  # spend a little time here
+  Wait msec 1000
+
+  PrevLoop
+  Wait last
+  if loopNumber != 1
+    Echo ERROR: Not in first loop!
+  endif
+  Wait end
+  Wait 256
+  Call DiffTest test22
+  Reset
+Endproc
+  
+Proc Test22-2
+  Echo Layer 22-2 - Record/NextLoop, AutoRecord=On
+  call SetupTest
+
+  #update: autorecord is now emptyLoopAction=record
+  #set autorecord on
+  set emptyLoopAction record
+  
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  # shorter than usual so we get some obvious spill
+  Wait frame 90000
+  NextLoop
+  Wait last
+  if mode != record
+    Echo ERROR: Not in record mode after next loop!
+  endif
+  
+  Wait frame 90000
+  Record
+  Wait loop
+  Wait 256
+  Call DiffTest "test22-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test23: Record/NextLoop LoopCopy=Sound
+#
+# 1-1 rrrrrrrN
+# 2-1 cccccccc
+#
+# End a recording with NextLoop, verify that next loop has identical
+# content.
+#
+######################################################################
+
+Proc Test23
+  Echo Layer 23 - LoopCopy=Sound
+  call SetupTest
+
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autorecord off
+  #set loopCopy sound
+  set emptyLoopAction copy
+  
+  # don't go into multiply to avoid a some spillage from the end
+  # of the first loop into the next making them different
+  set soundCopyMode play
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  NextLoop
+  Wait last
+
+  # kludge, we will not actually be in the sound copy mode after the switch,
+  # there is an event scheduled for frame 0 that will put us there so
+  # we have to wait at least one frame before checking.  Would be nice
+  # to have a "Wait events" to let all events scheduled for the current
+  # frame be processed.
+  Wait frame 1  
+
+  if mode != play
+    Echo ERROR: Not in play mode after loopcopy=sound!
+  else
+    Wait loop
+    Wait 256
+    Call DiffTest test23
+    PrevLoop
+    Wait last
+    SaveLoop ./test23-2loop
+    Wait thread
+    # compare generated loop 2 with loop 1
+    # Diff isn't able to do pathname expansion on two arguments so
+    # have to be explicit
+
+    # update: not sure if this changed, but the order of files
+    # is now "result" and "expected", and the order in the old script
+    # was backward, for most things it doesn't matter, but here it does
+    #Diff ./test23loop.wav ./test23-2loop.wav
+    Diff ./test23-2loop.wav ./test23loop.wav 
+  endif
+  
+  GeneralReset
+
+Endproc
+
+######################################################################
+#
+# Test24: Record/NextLoop LoopCopy=Timing
+#
+# 1-1 rrrrrrrr
+# 2-1 ________
+#
+# End a recording with NextLoop, verify that next loop has 
+# identical size but is empty.
+#
+######################################################################
+
+Proc Test24
+  Echo Layer 24 - LoopCopy=Timing
+  call SetupTest
+
+  # update: autoRecord and loopCopy are not emptyLoopAction
+  #set autorecord off
+  #set loopcopy timing
+  set emptyLoopAction copyTime
+  
+  set timecopymode play
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  NextLoop
+  Wait last
+  
+  # kludge for the initial mode event, see Test23
+  Wait frame 1
+
+  if mode != play
+    Echo ERROR: Not in play mode after loopcopy=timing!
+  else
+    Wait loop
+    Wait 256
+    Call DiffTest test24
+    # not really necessary since we've diff'd a file, but make sure the
+    # variables work
+    Variable loop2frames loopframes
+    if loop2frames != baseEndWait
+      echo ERROR: Loop frames not equal!
+    endif
+  endif
+  
+  GeneralReset
+Endproc
+
+######################################################################
+#
+# Test25: Overdub and Trigger
+#
+# 1 rrrrrrrr
+# 2 ++ooT
+# 3 ++++++++
+#
+# Modify a layer with an overdub, retrigger.  Must shift a new
+# layer to preserve the overdub.
+#
+######################################################################
+
+Proc Test25
+  Echo Layer 25 - Overdub and Retrigger
+  Call SetupTestBackground
+  set switchquant off
+
+  # update: samplerstyle has been replaced by switchLocation, returnLocation,
+  # and switchDuration
+  # that's a lot to remember, so might want to restore this as a write-only
+  # parameter for old scripts, or introduce the notion of a "macro" parameter
+  # that sets combinations of other parameters?
+
+  #set samplerstyle start
+  set switchLocation start
+  set returnLocation restore
+  set switchDuration permanent
+  
+  Sample 2
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  Retrigger
+  Wait last
+  if layercount != 2
+    echo ERROR: Layer count not 2!
+  endif
+  Wait loop 2
+  Wait frame 256
+  Call DiffTest test25
+  Reset
+Endproc
+
+######################################################################
+#
+# Test26: Basic Feedback
+#
+# First oscillate feedback within the layer.
+#
+# 1  rrrrrrrr
+# 2  +f+f++++
+#
+# 26-2: Then lower feedback and leave it on for a few layers.
+#
+# 1  rrrrrrrr
+# 2  ++++ffff
+# 3  ffffffff
+# 4  ffffffff
+#
+# 26-3: Finally, setup a deferred edge fade and lower feedback.
+#
+# 1  rrrrrrrr
+# 2  ++++RRRR>
+# 3 >RRRR++++}
+# 4 }ffff++++}
+#
+#
+######################################################################
+
+Proc Test26
+  Echo Layer 26 - Basic Feedback
+  Call SetupTestBackground
+  Wait frame 20000
+  set feedback 64
+  Wait frame 20000
+  set feedback 127
+  Wait frame 20000
+  set feedback 64
+  Wait frame 20000
+  set feedback 127
+  Wait start
+  Wait start
+  Call DiffTest2 test26
+  Reset
+
+Endproc
+
+Proc Test26-2
+  Echo Layer 26-2 - Feedback over loop boundary
+  Call SetupTestBackground
+  Wait frame 60000
+  set feedback 64
+  Wait loop 4
+  Wait 256
+  Call DiffTest2 "test26-2"
+  Reset
+Endproc
+
+Proc Test26-3
+  Echo Layer 26-3 - Feedback with deferred fades
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 4
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  set feedback 96
+  Wait loop 3
+  Wait 256
+  Call DiffTest2 "test26-3"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test27: Feedback Occlusion
+#
+# 1  rrrrrrrr>
+# 2 >oooo++++}
+# 3 }++++++++}
+# 4  -+++ffff
+#
+# This test works only when flattening is enabled.  End record with overdub
+# to create a deferred head fade.  Drop feedback to 0 in the middle.
+# Must perform deferred edge fades.  This is basically the same as
+# a replace test.
+#
+######################################################################
+
+Proc Test27
+  if isNoFlattening == true
+    Echo Skipping test 27 when flattening is disabled
+  else
+    Echo Layer 27 - Feedback Occlusion
+    Call SetupTest
+    Wait block
+    StartAudioRecording
+    Sample 1
+    Wait frame baseStartWait
+    Record
+    # wait a little less than usual so we have enough content to spill
+    Wait frame 90000
+    Overdub
+    Wait subcycle
+    Overdub
+    Wait loop
+    Wait subcycle
+    set feedback 0
+    Wait loop
+    set feedback 127
+    Wait loop
+    Wait frame 256
+    Call DiffTest test27
+    Reset
+  endif
+Endproc
+
+######################################################################
+#
+# Test28: Replace occlusion, keep deferred fade
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++RRRR>
+# 5   >RRRR++++}
+#
+# Here the feedback different rule would ordinarilly force a fade
+# to the head of 5, but since the feedback at the end of 4 and
+# the beginning of 5 were both zero, we can avoid this.
+#
+######################################################################
+
+Proc Test28
+  Echo Layer 28 - Replace occlusion, keep deferred fade
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 3
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop 2
+  Wait 256
+  Call DiffTest test28
+  Reset
+Endproc
+
+######################################################################
+#
+# Test29: Overdub to replace, raise background head
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++oooo>
+# 5    RRRR+++-
+#
+# Split into two tests, one with silence in the overdub/replace
+# from 4 to 5 and one with content.  It makes it easier to hear
+# the fade adjustment for 2/3 and surfaced an issue for segments involving
+# the preplay of a squelched record layer where we try to capture
+# a fade tail from the new record layer into which we've been replacing.
+#
+# The occlusion at the beginning of 5 causes a break in the content
+# from 2 to 3.  This is a specific case of feedback being less than
+# ending feedback requiring an adjustment if there are contained deferred
+# fades.  In this case we also have a seamless recording into the layer.
+#
+# When flattening, we preserve the deferred fade into this layer by
+# capturing a fade tail from the beginning of layer 4 and adding it to the
+# beginning of 5.  This softens the break from 2 to 3 but does not disrupt
+# the recording from 4 to 5.  Using segments, we do not perform this
+# fade magic, we force the application of the deferred fades resulting
+# in a bump.  It is difficult to use the same technique with segments
+# because we have no memory that the fade tail has been copied to 
+# analyze during fade compilation.
+# 
+# This also tests a subtle preplay issue.  When we begin the preplay
+# of layer 5, the content after the end of layer 2 will be occluded
+# and it is too late to introduce a down fade to the end of 4.
+# will have to capture a fade tail from the beginning of 4 and merge
+# it with what we are preplaying at the beginning of 5.  This will
+# eventually be fixed in finalize().  This should sound the same
+# as finalize when flattening, but not the same when using segments.
+#
+######################################################################
+
+Proc Test29
+  Echo Layer 29 - Overdub to Replace, raise background head
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  # stay silent
+  Overdub
+  Wait loop
+  Overdub
+  Replace
+  Wait frame 30000
+  Replace    
+  Wait loop 2
+  Wait 256
+  Call DiffTest test29
+  Reset
+Endproc
+
+Proc Test29-2
+  Echo Layer 29-2 - Overdub to Replace, raise background head
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 4
+  Overdub
+  Wait loop
+  Overdub
+  Replace
+  Wait frame 30000
+  Replace    
+  Wait loop 2
+  Wait 256
+  Call DiffTest2 "test29-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test30: Overdub to feedback, apply partial deferred fade
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++oooo>
+#      ffff  ee
+# 5   >oooo+++-}
+#
+# where feedback e > f
+#
+# Like 26-3 we have to do a complicated cross fade during
+# the jump from layer 4 to 5 because the feedback was reduced.
+# Also verify that the background fade does not effect the recording
+# from 4 into 5.
+#
+# When flattening, the background head must be raised to match
+# the level of the tail.  
+#
+# If we're not flattening, there should no adjustment since feedback
+# is not applied until the end of 5 when it will be back to 100%
+#
+# In 30 'e' is 127 which will not affect the foreground head.
+#
+# In 30-2 we do the same thing, but 'e' is < 127.  This complicates the
+# amount of feedback corection we have to apply to the background head,
+# and also requires a level adjustment in the foreground head.
+#
+# In 30-3 is the same as 30-2 except that the Sample4 replace is silent,
+# making it easier to hear the level adjustment on the deferred fade from
+# 4 into 5.
+#
+######################################################################
+
+Proc Test30
+  Echo Layer 30 - Overdub to feedback, background head leveling
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 4
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 2
+  Overdub
+  Wait loop
+  set feedback 96
+  Wait frame 30000
+  Overdub
+  # get all of Sample4 at reduced level
+  Wait frame 30000
+  set feedback 127
+  Wait loop 3
+  Wait 256
+  Call DiffTest2 test30
+  Reset
+Endproc
+
+Proc Test30-2
+  Echo Layer 30-2 - Overdub to feedback, background & foreground head leveling
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 4
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 2
+  Overdub
+  Wait loop
+  #set feedback 64
+  set feedback 96
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  # only go up a little, this forces a partial foreground head fade
+  # as well as a more complicated background head fade
+  set feedback 96
+  Wait loop 3
+  Wait 256
+  Call DiffTest2 "test30-2"
+  Reset
+Endproc
+
+Proc Test30-3
+  Echo Layer 30-3 - Overdub to feedback, foreground head leveling
+ Call SetupTestBackground
+  Wait frame 90000
+  # keep this silent so we're dealing only with the foreground head
+  #Sample4
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 2
+  Overdub
+  Wait loop
+  #set feedback 64
+  set feedback 96
+  Wait frame 30000
+  Overdub
+  Wait frame 30000
+  set feedback 96
+  Wait loop 3
+  Wait 256
+  Call DiffTest2 "test30-3"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test31: Overdub to feedback, raise feedback, apply partial head raise
+#
+# Here 'f' represents a feedback of 96 or 75%
+# and 'e' represents a feedback of 64 or 50%
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++oooo>
+#      ee    ff
+# 5   >oooo+++-}
+#
+# Similar to 29 except that we have some feedback at the end too.
+# The end of the copied content from 4 will be slightly louder because
+# of the increase in feedback.  We will raise the background head to 
+# match the background tail, but unlike 20 only do a partial raise.
+#
+# When using segments only the ending feedback of 75% will apply to the 
+# entire layer.
+#
+# Like 29, split into two versions with a silent third overdub so
+# we can hear the processing of the background replace and cause 
+# a layer squelch which complicates segment processing.
+#
+######################################################################
+
+Proc Test31
+  Echo Layer 31 - Overdub to feedback, partial head raise
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  # stay silent
+  Overdub
+  Wait loop
+  set feedback 64
+  Wait frame 30000
+  Overdub
+  set feedback 96
+  Wait loop
+  set feedback 127
+  Wait loop 2
+  Wait 256
+  Call DiffTest2 test31
+  Reset
+Endproc
+
+Proc Test31-2
+  Echo Layer 31-2 - Overdub to feedback, partial head raise
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 4
+  Overdub
+  Wait loop
+  set feedback 64
+  Wait frame 30000
+  Overdub
+  set feedback 96
+  Wait loop
+  set feedback 127
+  Wait loop 2
+  Wait 256
+  Call DiffTest2 "test31-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test32: Overdub to feedback, lower feedback, partial head fade
+#
+# Here 'f' represents a feedback of 96 or 75%
+# and 'e' represents a feedback of 64 or 50%
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++oooo>
+#      ff    ee
+# 5   >oooo++++}
+#
+# The end of the copied content from 4 will be slightly softer because
+# of the reduction in feedback.  The background head of 5 must therefore
+# be lowered 25% to match levels.
+#
+# Also tests the preplay level matching problem.
+#
+######################################################################
+
+Proc Test32
+  Echo Layer 32 - Overdub to feedback, partial head fade
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  # stay silent
+  Overdub
+  Wait loop
+  set feedback 96
+  Wait frame 30000
+  Overdub
+  set feedback 64
+  Wait loop
+  set feedback 127
+  Wait loop
+  Wait 256
+  Call DiffTest2 test32
+  Reset
+Endproc
+
+Proc Test32-2
+  Echo Layer 32-2 - Overdub to feedback, partial head fade
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 4
+  Overdub
+  Wait loop
+  set feedback 96
+  Wait frame 30000
+  Overdub
+  set feedback 64
+  Wait loop
+  set feedback 127
+  Wait loop
+  Wait 256
+  Call DiffTest2 "test32-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# Test33: Incomplete head fade window
+#
+# Here 'f' represents a feedback of 96 or 75%
+# and 'e' represents a feedback of 64 or 50%
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4   }++++oooo>
+#      ff    ee
+# 5   >o+++++++}
+#
+# An obscure boundary case involving the head window.
+# The test setup is the same as 32, except that the overdub that carries
+# over into 5 is shorter than the length of the fade window.
+# Checks an obscure case where an overdub tail fade
+# carries over into the end of the previous layer.
+#
+######################################################################
+
+Proc Test33
+  Echo Layer 33 - Incomplete head fade window
+  Call SetupTestBackground
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Wait frame 80000
+  Sample 4
+  Overdub
+  Wait loop
+  set feedback 96
+  Wait frame 64
+  Overdub
+  set feedback 64
+  Wait loop
+  set feedback 127
+  Wait loop 2
+  Wait 256
+  Call DiffTest2 test33
+  Reset
+Endproc
+
+######################################################################
+#
+# Test34: Incomplete tail fade window
+#
+# 1    rrrrrrrr
+# 2    ++++RRRR>
+# 3   >RRRR++++}
+# 4    RRRRRRR+
+#
+# Setup a contained deferred fade and overdub almost to the end such
+# that the tail window does not reach the end but is within the fade range.
+# This used to be more important when we tried to let the FadeWindow to
+# half of the fade, now it is much simpler but it is still a fringe case
+# worth checking.
+#
+######################################################################
+
+Proc Test34
+  Echo Layer 34 - Incomplete tail fade window
+  Call SetupTestBackground
+  set noiseFloor 0
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Replace
+  Wait frame 30000
+  # don't replace all the way so we get some backgound at the end
+  Replace
+  Overdub
+  # loop is exactly 11600 frames long, this is 64 from the end
+  Wait until frame 115936
+  Overdub
+  Wait loop 2
+  Wait 256
+  Call DiffTest test34
+  Reset
+Endproc
+
+Proc Test34-2
+  Echo Layer 34-2 - Incomplete tail fade window
+  Call SetupTestBackground
+  set noiseFloor 0
+  Wait frame 90000
+  Sample 2
+  Replace
+  Wait frame 60000
+  Replace
+  Wait loop
+  Replace
+  # Sample4 isn't quite long enough to last till the loop end so delay
+  Wait frame 30000
+  # !! a block wait is necessary to get the initial fade in
+  # this should NOT be necessary buf fixing it may cause shifting
+  # of the inserted ocntent in all the other tests?
+  Wait block
+  Sample 4
+  # don't replace all the way so we get some backgound at the end
+  Replace
+  Overdub
+  # loop is exactly 11600 frames long, this is 64 from the end
+  Wait until frame 115936
+  Overdub
+  Wait loop 2
+  Wait 256
+  Call DiffTest "test34-2"
+  Reset
+Endproc
+
+######################################################################
+#
+# End
+#
+######################################################################

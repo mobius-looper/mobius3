@@ -1,0 +1,304 @@
+#
+# Mobius test script for rate changes
+# See layertests.mos for information on each of the test samples.
+#
+#
+
+!name Speed Tests
+!autoload
+
+Echo ******************************************************************
+Echo Speed Tests
+Echo ******************************************************************
+
+# Most of the tests start with base.wav with a little clipped off each edge
+# to test fading.  base.wav is 117,536 frames, or around 2.6 seconds, 
+# wait close to that so the sample doesn't keep playing long after we've
+# closed the loop.
+# !! need a way to shut off samples before they complete
+Variable baseStartWait 1024
+Variable baseEndWait 116000
+Variable baseEndWaitHalf 58000
+
+# make sure we're starting clean
+GlobalReset
+set noExternalAudio true
+set monitorAudio false
+set quickSave unittest
+
+# All the captured test files depend on these values.  They may not
+# exactly match the latency of the audio device, but they should be close.
+set inputLatency 289
+set outputLatency 282
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+Call AllTests
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+  Call Test4
+Endproc
+
+Echo Speed Test Suite Complete
+
+end
+
+######################################################################
+#
+# Procedures
+#
+######################################################################
+
+# State initialization before every test
+Proc SetupTest
+
+  GeneralReset
+  UnitTestSetup
+
+  # default is 8
+  set 8thsPerCycle 2
+
+  #  if isReverse == true
+  #    Reverse
+  #  endif
+
+Endproc
+
+# Record the basic backing loop
+Proc RecordBackground
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  if inHalfSpeed
+    Wait frame baseEndWaitHalf
+  else
+    Wait frame baseEndWait
+  endif
+  Record
+  Wait last
+
+Endproc
+
+Proc SetupTestBackground
+
+  Call SetupTest
+  Call RecordBackground
+
+Endproc
+
+# Save files and diff
+Proc DiffTest
+
+  Variable testname $1
+  Variable diffraw $2
+
+  StopAudioRecording
+  # these will be processed in order on the mobius thread
+  SaveLoop ./$(testname)loop
+  SaveAudioRecording ./$(testname)rec
+  Wait thread
+
+  # when recording in reverse, have to diff in reverse
+  if isReverse == true
+    # this will be saved in reverse
+    Diff reverse ./$(testname)loop
+    # this one isn't
+    Diff audio ./$(testname)rec
+  else
+    if diffraw
+      # In some cases, diff the raw wav file to verify that we're generating
+      # it propertly.  Can't do this all the time though due to floating
+      # point roundoff errors.
+      echo Diffing raw file
+      Diff ./$(testname)loop
+    endif
+    Diff audio ./$(testname)loop
+    Diff audio ./$(testname)rec
+  endif
+
+Endproc
+
+######################################################################
+#
+# Test1: HalfSpeed playback
+#
+# Record a loop and drop in and out of half speed.  The session recording
+# will have the only thing of interest since the loop is not modified.
+#
+######################################################################
+
+Proc Test1
+  Echo Speed 1 - HalfSpeed playback
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+  # first do one quantized, but wait a frame so we get past the subcycle
+  # at the start point
+  Wait frame 1
+  Speed
+  Speed
+  Wait loop
+  # another one unquantized
+  set quantize off
+  Wait frame 30000
+  Speed
+  Wait frame 60000
+  Speed
+  Wait loop
+  Wait 256
+  call Difftest speed1
+  Reset
+Endproc
+
+######################################################################
+#
+# Test2: HalfSpeed record
+#
+# Record a loop and drop in and out of half speed.  The session recording
+# will have the only thing of interest since the loop is not modified.
+#
+######################################################################
+
+Proc Test2
+  Echo Speed 2 - HalfSpeed record
+  Echo Started seeing a minor difference at 234053, wave looks and sounds ok
+  Call SetupTest
+  Speed
+  Call RecordBackground
+  Wait loop
+  Speed
+  Wait loop
+  Wait 256
+  call Difftest speed2
+  Reset
+Endproc
+
+######################################################################
+#
+# Test3: HalfSpeed overdub
+#
+# Record a normal loop, during play enter half speed and drop in an
+# overdub.
+#
+######################################################################
+
+Proc Test3
+  Echo Speed 3 - HalfSpeed overdub
+  Call SetupTestBackground
+  Wait frame 30000
+  Speed
+  Overdub
+  Sample 2
+  Wait frame 60000
+  Overdub
+  Speed
+  Wait loop 2
+  Wait 256
+  call Difftest speed3
+  Reset
+Endproc
+
+######################################################################
+#
+# Test4: HalfSpeed overdub oscillate
+#
+# Record a normal loop, during play enter overdub and oscillate in and
+# out of halfspeed.
+#
+######################################################################
+
+Proc Test4
+  Echo Speed 4 - HalfSpeed overdub oscillate
+  Call SetupTestBackground
+  Wait frame 30000
+  Overdub
+  Sample 4
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Wait frame 10000
+  Speed
+  Overdub
+  Wait loop 2
+  Wait 256
+  call Difftest speed4
+  Reset
+Endproc
+
+######################################################################
+#
+# Test5: Rate shift playback
+#
+#
+######################################################################
+
+Proc Test5
+  Echo Speed 5 - Rate Down/Up Fifth
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+  RateDown 5
+  Wait loop
+  RateUp 5
+  Wait loop
+  Wait 256
+  call Difftest speed5
+  Reset
+Endproc
+
+Proc Test6
+  Echo Speed 5 - Rate Down/Up Semitone
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+  # first do one quantized, but wait a frame so we get past the subcycle
+  # at the start point
+  Wait frame 1
+  # down a semi and back up
+  RateDown
+  RateUp
+  Wait loop
+  # another one unquantized down/up a fifth
+  set quantize off
+  Wait frame 30000
+  RateDown 5
+  Wait frame 60000
+  RateUp 5
+  Wait loop
+  Wait 256
+  call Difftest speed5
+  Reset
+Endproc
+
+######################################################################
+#
+# End
+#
+######################################################################

@@ -1,0 +1,38 @@
+<!--
+Sparse MobiusConfig containing scripts, samples, and parameter overrides for Test Mode.
+This will be read by TestDriver which then pulls things out and installs them.
+
+button='true' in either a Sample or ScriptRef will automatically install an action
+button at the top of the main display.  This was an older convention for getting buttons
+to run test scripts that is no longer necessary under the TestDriver.
+
+The new convention for installing test buttons is to place a directive in the
+script source file:
+
+  !name Some Test
+  !test
+
+-->
+<MobiusConfig>
+  <SampleConfig>
+    <Sample path='samples/base.wav' button='true'/>
+    <Sample path='samples/medium.wav'/>
+    <Sample path='samples/medium2.wav'/>
+    <Sample path='samples/short1.wav'/>
+    <Sample path='samples/short2.wav'/>
+    <Sample path='samples/long.wav'/>
+  </SampleConfig>
+  <ScriptConfig>
+    <ScriptRef file='scripts/calltest.mos'/>
+    <ScriptRef file='scripts/exprtest.mos' test='true'/>
+    <ScriptRef file='scripts/layertests.mos'/>
+    <ScriptRef file='scripts/testdriverflat.mos' test='true'/>
+    <ScriptRef file='scripts/testdriverflatrev.mos' test='true'/>
+    <ScriptRef file='scripts/testdriverseg.mos' test='true'/>
+    <ScriptRef file='scripts/testdriversegrev.mos' test='true'/>
+    <ScriptRef file='scripts/jumptests.mos' test='true'/>
+    <ScriptRef file='scripts/mutetests.mos' test='true'/>
+    <ScriptRef file='scripts/eventtests.mos' test='true'/>
+    <ScriptRef file='scripts/speedtests.mos' test='true'/>
+  </ScriptConfig>
+</MobiusConfig>

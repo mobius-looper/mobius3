@@ -1,0 +1,2219 @@
+#
+# NOTE: This file has been updated with the Warp statement
+# to allow individual tests to be run from the TestPanel.
+#
+# All pitch tests have been disabled
+#
+#Proc Test4
+#  Echo Jump 4 - Basic Pitch
+#Proc Test4-2
+#  Echo Jump 4-2 - Rapid Pitch
+#Proc Test12
+#  Echo Jump 12 - Quantized Pitch Changes
+#Proc Test16-2
+#  Echo Jump 16-2 - Pitch Transfer Mode
+#Proc Test17-2
+#  Echo Jump 17-2 - Switch Stack with Pitch
+#
+# Mobius test script for play jumps
+# See layertests.mos for descriptions of the samples and assumed latencies.
+#
+# The tests exercise code paths related to JumpPlayEvents that are
+# scheduled in advance of a mode changing event.  Simple jumps just
+# change the layer and play frame, more complex jumps may change the
+# playback rate, pitch, direction, and mute states.
+#
+# Jumps that preceed a Switch event are especially complex because there
+# may be several "stacked" events that affect what happens after the
+# switch that must all be evaluated to determine what the pre-play.
+#
+# This is the first major test suite after layertests.mos and we're
+# sharing some of the same setup and analysis functions.  Figure out
+# a way to share these!
+#
+# RATE FUNCTION SUBTLETY: If you schedule an event immediately after 
+# a function that changes the rate (and hence latency) there will be
+# a warning about the latency loss being corrected.  This is because 
+# when we schedule the next event, we don't know that latency is going 
+# to be changed by an event on the current frame that we haven't 
+# processed yet.  So the latency loss calculation for the next event
+# will be wrong.  This is an obscure case that in practice only happens
+# in scripts.  The correction doesn't hurt anything but I don't want
+# to remove the warning as it sometimes catches scheduling errors.  
+# To avoid the warning, always "Wait last" after any rate change function.
+#
+# Ideally we should be looking for any unprocessed JumpPlayEvents on the
+# current frame when we schedule a new event, and factor in the pending
+# rate changes.  But this is complicated, and is only relevant in scripts.
+#
+# TODO
+#
+# MuteStartSong
+# MuteRealign
+# Realign
+# Undo/Redo
+# Mute Cancel
+#  minor modes do not cancel Mute mode, but are silently performed
+#
+# 
+
+!name Jump Tests
+!autoload
+
+Echo ******************************************************************
+Echo Jump Tests
+Echo ******************************************************************
+
+# Most of the tests start with base.wav with a little clipped off each edge
+# to test fading.  base.wav is 117,536 frames, or around 2.6 seconds, 
+# wait close to that so the sample doesn't keep playing long after we've
+# closed the loop.
+# !! need a way to shut off samples before they complete
+Variable baseStartWait 1024
+Variable baseEndWait 116000
+
+# make sure we're starting clean
+GlobalReset
+set noExternalAudio true
+set monitorAudio false
+set quickSave unittest
+
+# All the captured test files depend on these values.  They may not
+# exactly match the latency of the audio device, but they should be close.
+set inputLatency 289
+set outputLatency 282
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+# here is where the magic begins
+Warp
+
+Call AllTests
+
+Echo Jump Tests Suite Complete
+end
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+#  Call Test4           pitch
+#  Call Test4-2         pitch
+  Call Test5
+  Call Test5-2
+  Call Test6
+  Call Test6-2
+  Call Test7
+  Call Test7-2
+  Call Test7-3
+  Call Test8
+  Call Test8-2
+  Call Test9
+  Call Test10
+  Call Test11
+#  Call Test12          pitch
+  Call Test13
+  Call Test13-2
+  Call Test13-3
+  
+#  Call Test14          something with copyTime, should be working
+  Call Test15
+  Call Test16
+#  Call Test16-2        pitch
+  Call Test17
+#  Call Test17-2        pitch
+  Call Test18
+  Call Test19
+  Call Test20
+  Call Test30
+
+Endproc
+
+Proc SwitchTests
+  Call Test13
+  Call Test13-2
+  Call Test13-3
+#  Call Test14
+  Call Test15
+  Call Test16
+#  Call Test16-2
+  Call Test17
+#  Call Test17-2
+  Call Test18
+  Call Test19
+  Call Test20
+  Call Test30
+
+Endproc
+
+######################################################################
+#
+# Procedures
+#
+######################################################################
+
+# State initialization before every test
+Proc SetupTest
+
+  GeneralReset
+  UnitTestSetup
+
+  # default is 8
+  set 8thsPerCycle 2
+
+  if isNoFlattening == true
+    set noLayerFlattening true
+  endif
+
+  if isReverse == true
+    Reverse
+  endif
+
+Endproc
+
+# Record the basic backing loop
+Proc RecordBackground
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+
+Endproc
+
+Proc SetupTestBackground
+
+  Call SetupTest
+  Call RecordBackground
+
+Endproc
+
+Proc SetupTestSilent
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+Endproc
+
+
+# Save files and diff
+Proc DiffTest
+
+  Variable testname $1
+  Variable suffix $2
+
+  StopAudioRecording
+  # these will be processed in order on the mobius thread
+  SaveLoop ./$(testname)$(suffix)loop
+  Wait thread
+  SaveAudioRecording ./$(testname)$(suffix)rec
+  Wait thread
+
+  # when recording in reverse, have to diff in reverse
+  if isReverse == true
+    # this will be saved in reverse
+    Diff reverse ./$(testname)loop
+    # this one isn't
+    Diff audio ./$(testname)rec
+  else
+    Diff audio ./$(testname)$(suffix)loop
+    Diff audio ./$(testname)$(suffix)rec
+  endif
+
+Endproc
+
+Proc DiffTest2
+
+  # kludge, have to copy this into a local to prevent a stack overflow
+  Variable testname $1
+
+  if isNoFlattening == true
+    Call DiffTest testname seg
+  else
+    Call DiffTest testname
+  endif
+Endproc
+
+######################################################################
+#
+# Test1: Basic play mode jumps for Mute and Reverse
+#
+# Two sets of tests, the first quantized, and the second unquantized.
+#   
+######################################################################
+
+Proc Test1
+  Echo Jump 1 - Basic Mute and Reverse
+  Call SetupTestBackground
+
+  set quantize subcycle
+  set 8thsPerCycle 4
+  # we're right at frame zero, wait 1 so we quantize to the next subcycle
+  Wait 1  
+  # the second mute will be pushed to the third subcycle
+  Mute
+  Mute
+  # reverse on the fourth, have to wait for the last one and
+  # step forward one to get to the next subcycle since reverse will
+  # stack on top of a Mute
+  Wait last
+  Wait 1
+  Reverse
+  Wait last
+  # let the reverse go 2 subcycles, note that "Wait subcycle 2" will
+  # to the exact wait then force an unquantized transition with latency
+  # loss, here be careful to allow quantization, wait one subcycle plus
+  # one frame, then do the quantized function
+  Wait subcycle
+  Wait 1
+  Reverse
+
+  # let it finish
+  # NOTE: if you use "Wait loop" here it will reflect into the middle rather
+  # than at the end.  This is because after the reverse, all remaining
+  # events are reflected to maintain the same relative position from the
+  # reverse event, not a pure reflection within the loop.  Need to use
+  # the logical targets "end" or "start" to wait for the end of the loop
+  Wait end
+
+  # again unquantized
+  Wait subcycle
+  Mute
+  Wait subcycle
+  Mute
+  Wait subcycle
+  Reverse
+  Wait subcycle 2
+  Reverse
+
+  Wait end
+  Call DiffTest jump1
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test2: Basic HalfSpeed
+#
+# This one relies on a number of subtle behavioral issues around
+# latency compensation that could change, so I'm keeping speed related 
+# tests independnet of other play mode changes to make them easier to 
+# diagnose and upgrade.
+#
+# It also assumes that speed is a "rescheduler" function so that
+# the second Speed will be rescheduled after the first one
+# finishes.
+#
+######################################################################
+
+Proc Test2
+  Echo Jump 2 - Basic HalfSpeed
+  Call SetupTestBackground
+  set quantize subcycle
+  set 8thsPerCycle 4
+  # we're right at frame zero, wait 1 so we quantize to the next subcycle
+  Wait 1  
+
+  Speed
+  Speed
+
+  Wait end
+  Call DiffTest jump2
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test3: Basic Rates
+#
+######################################################################
+
+Proc Test3
+  Echo Jump 3 - Basic Rates
+  # added a 2 unit tolerance since everything else was okay
+  #Echo Started getting a minor Mac error around 2.2
+  #Echo Files differ at frame 184324: 3949 3948: jump3rec.wav
+
+  Call SetupTestBackground
+  set quantize subcycle
+  set 8thsPerCycle 4
+  # we're right at frame zero, wait 1 so we quantize to the next subcycle
+  Wait 1  
+
+  RateShift -5
+  Wait last
+  Wait 1
+  RateShift 7
+  Wait last
+  Wait 1
+  SpeedCancel
+  Wait end
+
+  # bypass for testing
+  # jump unquantized
+
+  # now for some fun
+  # quantize to subcycle boundary to avoid latency loss
+  # since the percieved subcycle length changes as the rate goes
+  # up, this will appear to speed up
+  # this method of getting quantized events without latency loss
+  # sucks, think of a better way!!
+
+  set 8thsPerCycle 12
+  Wait 1
+  RateShift -12
+  Wait last
+  Wait 1
+  RateShift -11
+  Wait last
+  Wait 1
+  RateShift -10
+  Wait last
+  Wait 1
+  RateShift -9
+  Wait last
+  Wait 1
+  RateShift -8
+  Wait last
+  Wait 1
+  RateShift -7
+  Wait last
+  Wait 1
+  RateShift -6
+  Wait last
+  Wait 1
+  RateShift -5
+  Wait last
+  Wait 1
+  RateShift -4
+  Wait last
+  Wait 1
+  RateShift -3
+  Wait last
+  Wait 1
+  RateShift -2
+  Wait last
+  Wait 1
+  RateShift -1
+  Wait last
+  Wait 1
+  RateShift 0
+  Wait last
+  Wait 1
+  RateShift 1
+  Wait last
+  Wait 1
+  RateShift 2
+  Wait last
+  Wait 1
+  RateShift 3
+  Wait last
+  Wait 1
+  RateShift 4
+  Wait last
+  Wait 1
+  RateShift 5
+  Wait last
+  Wait 1
+  RateShift 6
+  Wait last
+  Wait 1
+  RateShift 7
+  Wait last
+  Wait 1
+  RateShift 8
+  Wait last
+  Wait 1
+  RateShift 9
+  Wait last
+  Wait 1
+  RateShift 10
+  Wait last
+  Wait 1
+  RateShift 11
+  Wait last
+  Wait 1
+  RateShift 12
+  Wait end
+
+  # and again unquantized
+  # here we use a msec wait which will stay constant with the rate
+
+  set quantize off
+  RateShift -12
+  Wait msec 500
+  RateShift -11
+  Wait msec 500
+  RateShift -10
+  Wait msec 500
+  RateShift -9
+  Wait msec 500
+  RateShift -8
+  Wait msec 500
+  RateShift -7
+  Wait msec 500
+  RateShift -6
+  Wait msec 500
+  RateShift -5
+  Wait msec 500
+  RateShift -4
+  Wait msec 500
+  RateShift -3
+  Wait msec 500
+  RateShift -2
+  Wait msec 500
+  RateShift -1
+  Wait msec 500
+  RateShift 0
+  Wait msec 500
+  RateShift 1
+  Wait msec 500
+  RateShift 2
+  Wait msec 500
+  RateShift 3
+  Wait msec 500
+  RateShift 4
+  Wait msec 500
+  RateShift 5
+  Wait msec 500
+  RateShift 6
+  Wait msec 500
+  RateShift 7
+  Wait msec 500
+  RateShift 8
+  Wait msec 500
+  RateShift 9
+  Wait msec 500
+  RateShift 10
+  Wait msec 500
+  RateShift 11
+  Wait msec 500
+  RateShift 12
+  Wait msec 500
+  RateNormal
+  Wait end
+
+  Call DiffTest jump3
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test4: 
+#
+# 4 is just a basic test of enabling and disabling the pitch
+# shifter to verify that cross fades are happening.
+#
+# 4-2 is a test of rapid pitch shifting like the rate test above.
+#
+######################################################################
+
+Proc Test4
+  Echo Jump 4 - Basic Pitch
+  Echo This often fails when run with the full suite.
+  Echo The wav diffs are extremely minor, so check to be sure and ignore.
+  Echo Expect difference at frame 151046 or 151068
+
+  Call SetupTestBackground
+  set 8thsPerCycle 4
+  set quantize subcycle
+
+  # quantize to subcycle boundary to avoid latency loss
+  # though for pitch it really doesn't matter because the plugin
+  # introduces uncompensated latency anyway
+  Wait 1
+
+  # this enables the shifter for the first time, a gap will
+  # be inserted in the output stream requiring a fade tail from the current layer
+  # a "plugin startup fade" must also be initiated
+  PitchShift 1
+  Wait last
+  Wait 1
+
+  # change pitch ratio, with the current algorithm this requires
+  # a recalculation of latency and will require special edge fades
+  PitchShift 2
+  Wait last
+  Wait 1
+
+  # returning to normal pitch and disabling the plugin
+  # this will result in a skip ahead since we're no longer being delayed 
+  # by the plugin
+  PitchShift 0
+
+  Wait end
+  Call DiffTest jump4
+  Reset
+
+Endproc
+
+Proc Test4-2
+  Echo Jump 4-2 - Rapid Pitch
+  Echo This often fails when run with the full suite.
+  Echo The wav diffs are extremely minor, so check to be sure and ignore.
+  Echo Expect difference at frame 130844
+
+  Call SetupTestBackground
+  set quantize subcycle
+
+  # quantize to subcycle boundary to avoid latency loss
+  # since the percieved subcycle length changes as the rate goes
+  # up, this will appear to speed up
+  # this method of getting quantized events without latency loss
+  # sucks, think of a better way!!
+  set 8thsPerCycle 12
+
+  Wait 1
+  PitchShift -12
+  Wait last
+  Wait 1
+  PitchShift -11
+  Wait last
+  Wait 1
+  PitchShift -10
+  Wait last
+  Wait 1
+  PitchShift -9
+  Wait last
+  Wait 1
+  PitchShift -8
+  Wait last
+  Wait 1
+  PitchShift -7
+  Wait last
+  Wait 1
+  PitchShift -6
+  Wait last
+  Wait 1
+  PitchShift -5
+  Wait last
+  Wait 1
+  PitchShift -4
+  Wait last
+  Wait 1
+  PitchShift -3
+  Wait last
+  Wait 1
+  PitchShift -2
+  Wait last
+  Wait 1
+  PitchShift -1
+  Wait last
+  Wait 1
+  PitchShift 0
+  Wait last
+  Wait 1
+  PitchShift 1
+  Wait last
+  Wait 1
+  PitchShift 2
+  Wait last
+  Wait 1
+  PitchShift 3
+  Wait last
+  Wait 1
+  PitchShift 4
+  Wait last
+  Wait 1
+  PitchShift 5
+  Wait last
+  Wait 1
+  PitchShift 6
+  Wait last
+  Wait 1
+  PitchShift 7
+  Wait last
+  Wait 1
+  PitchShift 8
+  Wait last
+  Wait 1
+  PitchShift 9
+  Wait last
+  Wait 1
+  PitchShift 10
+  Wait last
+  Wait 1
+  PitchShift 11
+  Wait last
+  Wait 1
+  PitchShift 12
+  Wait end
+
+  # and again unquantized
+  # here we use a msec wait which will stay constant with the rate
+
+  set quantize off
+  PitchShift -12
+  Wait msec 500
+  PitchShift -11
+  Wait msec 500
+  PitchShift -10
+  Wait msec 500
+  PitchShift -9
+  Wait msec 500
+  PitchShift -8
+  Wait msec 500
+  PitchShift -7
+  Wait msec 500
+  PitchShift -6
+  Wait msec 500
+  PitchShift -5
+  Wait msec 500
+  PitchShift -4
+  Wait msec 500
+  PitchShift -3
+  Wait msec 500
+  PitchShift -2
+  Wait msec 500
+  PitchShift -1
+  Wait msec 500
+  PitchShift 0
+  Wait msec 500
+  PitchShift 1
+  Wait msec 500
+  PitchShift 2
+  Wait msec 500
+  PitchShift 3
+  Wait msec 500
+  PitchShift 4
+  Wait msec 500
+  PitchShift 5
+  Wait msec 500
+  PitchShift 6
+  Wait msec 500
+  PitchShift 7
+  Wait msec 500
+  PitchShift 8
+  Wait msec 500
+  PitchShift 9
+  Wait msec 500
+  PitchShift 10
+  Wait msec 500
+  PitchShift 11
+  Wait msec 500
+  PitchShift 12
+  Wait msec 500
+  PitchCancel
+
+  Wait end
+  Call DiffTest "jump4-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test5: Multiply
+#
+# Tests the cycle jump during multiply and the jump at the end.
+#
+######################################################################
+
+Proc Test5
+
+  Echo Jump 5 - Multiply
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+  # get off the first subcycle, so we quantized to the second
+  Wait 1
+  Multiply
+  Wait last
+  Sample 2
+  Wait cycle
+  # this used to be enough to force a second cycle but in 1.43 we always
+  # use what used to be called "new" mode which doesn't add a new
+  # cycle until you actually cross a cycle boundary
+  # wait 1 more to push another cycle
+  Wait 1
+  Multiply
+  Wait last
+  Wait end
+  # !! can't have two of these in a row
+  Wait 1
+  Wait end
+
+  Call DiffTest jump5
+  Reset
+
+Endproc
+
+Proc Test5-2
+
+  Echo Jump 5-2 - Multiply Unquantized
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize off
+  # make the multiply carry over the edge of the loop
+  Wait 1
+  Sample 3
+  Multiply
+  Wait cycle
+  Wait 1
+  Multiply
+  Wait last
+  Wait end
+  # !! can't have two of these in a row
+  Wait 1
+  Wait end
+
+  Call DiffTest "jump5-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test6: Trim
+#
+# Unrounded multiply, TrimStart, TrimEnd.
+#
+######################################################################
+
+Proc Test6
+  Echo Jump 6 - Trim
+  Call SetupTestBackground
+  set 8thsPerCycle 8
+  set quantize subcycle
+
+  # trim one subcycle off each edge
+  # get off the first subcycle, so we quantized to the second
+  Wait 1
+  Multiply
+  # cycle numbers start at zero, so here they are 0-7
+  # get to five, step off, then quantize to 6
+  Wait until subcycle 5
+  Wait 1
+  Record
+  Wait end
+  Wait loop
+
+  # trim off the first subcycle
+  Wait 1
+  TrimStart
+  Wait end
+
+  # trim off the last subcycle
+  Wait until subcycle 5
+  Wait 1
+  TrimEnd
+  Wait start
+  Wait end
+
+  Call DiffTest jump6
+  Reset
+
+Endproc
+
+Proc Test6-2
+  Echo Jump 6 - Trim Unquantized
+  Call SetupTestBackground
+  set 8thsPerCycle 8
+  set quantize subcycle
+
+  # trim one subcycle off each edge
+  Wait until subcycle 1
+  Multiply
+  Wait until subcycle 6
+  Record
+  Wait end
+  
+  # trim off the first subcycle
+  Wait until subcycle 1
+  TrimStart
+  Wait end
+
+  # trim off the last subcycle
+  Wait until subcycle 6
+  TrimEnd
+  Wait start
+  Wait end
+
+  Call DiffTest "jump6-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test7: Insert
+#
+######################################################################
+
+Proc Test7
+  Echo Jump 7 - Insert
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+  # get off the first subcycle, so we quantized to the second
+  Wait 1
+  Insert
+  Wait last
+  Sample 3
+  Wait cycle
+  Insert
+  Wait last
+  Wait start
+  Wait end
+
+  Call DiffTest jump7
+  Reset
+
+Endproc
+
+Proc Test7-2
+  Echo Jump 7-2 - Insert Unquantized
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+
+  Wait until subcycle 1
+  Sample 3
+  Insert
+  Wait last
+  Wait cycle
+  Insert
+  Wait last
+  Wait start
+  Wait end
+
+  Call DiffTest "jump7-2"
+  Reset
+
+Endproc
+
+Proc Test7-3
+  Echo Jump 7-3 - Insert Unrounded
+  Call SetupTestBackground
+  set 8thsPerCycle 2
+  set quantize subcycle
+
+  Wait until subcycle 1
+  Sample 3
+  Insert
+  Wait last
+  Wait cycle
+  Record
+  Wait last
+  Wait start
+  Wait end
+
+  Call DiffTest "jump7-3"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test8: Replace
+#
+######################################################################
+
+Proc Test8
+  Echo Jump 8 - Replace
+  Call SetupTestBackground
+  set 8thsPerCycle 4
+  set quantize subcycle
+
+  # get off the first subcycle, so we quantized to the second
+  Wait 1
+  Sample 3
+  Replace
+  Wait last
+  Wait 1
+  Replace  
+  Wait start
+  Wait end
+
+  Call DiffTest jump8
+  Reset
+
+Endproc
+
+Proc Test8-2
+  Echo Jump 8 - Replace Unquantized
+  Call SetupTestBackground
+  set 8thsPerCycle 4
+  set quantize subcycle
+
+  Wait until subcycle 1
+  Sample 3
+  Replace
+  Wait last
+  Wait subcycle
+  Replace 
+  Wait start
+  Wait end
+
+  Call DiffTest "jump8-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test9: Stutter
+#
+# The key thing here is the weird parentless jump at the end
+# of the stuttered cycle that keeps being generated while we're
+# in stutter mode.  Quantization is unimportant.
+#
+######################################################################
+
+Proc Test9
+  Echo Jump 9 - Stutter
+  Call SetupTestBackground
+  set 8thsPerCycle 4
+  set quantize subcycle
+
+  # splice out a shorter section
+  Multiply
+  Wait subcycle 
+  Record
+
+  # repeat it a few times
+  Wait last
+  Sample 3
+  Multiply
+  Wait cycle 3
+  Multiply
+  Wait last
+  Wait end
+  Wait loop 2
+
+  Wait cycle 1
+  Stutter
+  # since we're ending right on a cycle boundary without
+  # latency compensation, will hear a slight bump as we
+  # preplay from the beginning of the stutter cycle, this
+  # is ok and only happens in scripts
+  #Wait cycle 4
+  # try to avoid the bump by simulating a footswitch wait
+  # three cycles instead of 4, step off, then the stutter
+  # will be quantized with latency compensation
+  Wait cycle 3
+  Wait 1
+  Stutter
+
+  Wait end
+  Wait loop
+
+  Call DiffTest jump9
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test10: Mute Modes
+#
+# Continuous, Start, Pause
+#
+######################################################################
+
+Proc Test10
+  Echo Jump 10 - Mute Modes
+  Call SetupTestBackground
+  set 8thsPerCycle 4
+  set quantize subcycle
+
+  # Continuous quantized
+  set muteMode continuous
+  Wait 1
+  Mute
+  Wait last
+  Wait 1
+  Mute
+  Wait end
+
+  # Start quantized
+  set muteMode start
+  Wait 1
+  Mute
+  Wait last
+  Wait 1
+  Mute
+  Wait end
+
+  # Pause quantized
+  set muteMode pause
+  Wait 1
+  Mute
+  Wait last
+  Wait msec 1000
+  Mute
+  Wait end
+
+  # Unquantized
+  set quantize off
+
+  # Continuous
+  set muteMode continuous
+  Wait subcycle
+  Mute
+  Wait subcycle
+  Mute
+  Wait end
+
+  # Start
+  set muteMode start
+  Wait subcycle
+  Mute
+  Wait subcycle
+  Mute
+  Wait end
+
+  # Pause
+  set muteMode pause
+  Wait subcycle
+  Mute
+  # Note we have to use the special option to advance during pause
+  # using a unit other than "msec".  Hmm, why not just make all relative
+  # waits pause enabled?  
+  Wait inPause subcycle
+  Mute
+  Wait end
+
+  Call DiffTest jump10
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test11: Quantized Rate Changes
+# Test12: Quantized Pitch Changes
+#
+# While there is a non-processed rate change scheduled, any other
+# function that changes the rate should modify the previous event
+# rather than schedule a new one on the next quantization boundary.
+#
+######################################################################
+
+Proc Test11
+  Echo Jump 11 - Quantized Rate Changes
+  Call SetupTestBackground
+  set quantize cycle
+
+  # step off the start of the first cycle
+  Wait 1
+  RateShift 1
+
+  # go slow so we can see them
+  Wait msec 200
+  RateShift 2
+  Wait msec 200
+  RateShift 3
+  Wait msec 200
+  RateShift 4
+  Wait msec 200
+  RateShift 5
+
+  Wait start
+  Wait end
+  Call DiffTest jump11
+  Reset
+
+Endproc
+
+Proc Test12
+  Echo Jump 12 - Quantized Pitch Changes
+  Echo This often fails when run with the full suite.
+  Echo The wav diffs are extremely minor, so check to be sure and ignore.
+  Echo Expect difference at frame 238088
+
+  Call SetupTestBackground
+  set quantize cycle
+
+  # step off the start of the first cycle
+  Wait 1
+  PitchShift 1
+
+  # go slow so we can see them
+  Wait msec 200
+  PitchShift 2
+  Wait msec 200
+  PitchShift 3
+  Wait msec 200
+  PitchShift 4
+  Wait msec 200
+  PitchShift 5
+
+  Wait start
+  Wait end
+  Call DiffTest jump12
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test13: Basic Switch
+#
+######################################################################
+
+Proc Test13
+  Echo Jump 13 - Basic Switch - SwitchLocation=Start
+  Call SetupTestBackground
+
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autoRecord on
+  set emptyLoopAction record
+  
+  set switchQuant subcycle
+  set 8thsPerCycle 4
+  set switchLocation start
+
+  # to test switchLocation=Start, move ahead
+  Wait subcycle 2
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+  Wait loop
+
+  # at beginning of loop 2, wait a subcycle, step off, 
+  # then  quantize to the next
+  Wait subcycle
+  Wait 1
+  PrevLoop
+  Wait last
+
+  # should be back at beginning of loop 1, play a bit then quantize switch
+  if loopframe != 0
+     echo ERROR: Not at frame 0 after loop switch 1
+  endif
+  Wait subcycle 2
+  Wait 1
+  NextLoop
+  Wait last
+  # should be back at the beginning of loop 2
+  if loopframe != 0
+     echo ERROR: Not at frame 0 after loop switch 2
+  endif
+
+  # again unquantized
+  set switchQuant off
+
+  Wait subcycle 2
+  PrevLoop
+  Wait last
+  if loopframe != 0
+     echo ERROR: Not at frame 0 after loop switch 3
+  endif
+
+  Wait subcycle 2
+  NextLoop
+  Wait last
+  if loopframe != 0
+     echo ERROR: Not at frame 0 after loop switch 4
+  endif
+
+  Wait end
+  Call DiffTest jump13
+  Reset
+
+Endproc
+
+Proc Test13-2
+  Echo Jump 13-2 - Basic Switch - SwitchLocation=Restore
+  Call SetupTestBackground
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant subcycle
+  set 8thsPerCycle 4
+  set switchLocation restore
+
+  # move ahead 2 subcycles, will switch at 58000
+  Wait subcycle 2
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+
+  # at beginning of loop 2, step off first subcycle, quantize to the next
+  # will be leaving at 15000
+  Wait 1
+  PrevLoop
+  Wait last
+
+  # should be back at subcycle 2 of loop 1
+  if loopframe != 58000
+    echo ERROR: Did not return to expected frame in switch 1 - $loopframe
+  endif
+
+  # wait for the start, step off, and quantize to the second subcycle
+  # will be leaving at 29000
+  Wait start
+  Wait 1
+  NextLoop
+  Wait last
+
+  # should be back at subcycle 2 of loop 2
+  if loopframe != 15000
+    echo ERROR: Did not return to expected frame in switch 2 - $loopframe
+  endif
+
+  # again unquantized
+  set switchQuant off
+
+  # wait another subcycle, leaving at 30000
+  Wait subcycle
+  PrevLoop
+  Wait last
+  if loopframe != 29000
+    echo ERROR: Did not return to expected frame in switch 3 - $loopframe
+  endif
+  Wait subcycle 2
+  NextLoop
+  Wait last
+  if loopframe != 30000
+    echo ERROR: Did not return to expected frame in switch 4 - $loopframe
+  endif
+
+  Wait end
+  Call DiffTest "jump13-2"
+  Reset
+
+Endproc
+
+Proc Test13-3
+  Echo Jump 13-3 - Basic Switch - SwitchLocation=Follow
+  Call SetupTestBackground
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant subcycle
+  set 8thsPerCycle 4
+  set switchLocation follow
+
+  # move ahead 2 subcycles, will switch at 58000
+  Wait subcycle 2
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+
+  # at beginning of loop 2, step off first subcycle, quantize to the next
+  # will be leaving at 15000
+  Wait 1
+  PrevLoop
+  Wait last
+
+  # should be at the same frame in loop 1
+  if loopframe != 15000
+    echo ERROR: Did not return to expected frame in switch 1 - $loopframe
+  endif
+
+  # currently in the middle of the first subcycle, wait for the third,
+  # step off and quantize to the fourth
+  Wait subcycle 2
+  if loopframe != 58000
+    echo ERROR: Not where we should be 1!
+  endif
+  Wait 1
+  NextLoop
+  Wait last
+
+  # logically would have been at 87000, since the second loop is only 60000
+  # will have wrapped back to 27000
+  if loopframe != 27000
+    echo ERROR: Did not return to expected frame in switch 2 - $loopframe
+  endif
+
+  # again unquantized
+  set switchQuant off
+
+  # wait two subcycles, leaving at 45000
+  Wait subcycle 2
+  if loopframe != 45000
+    echo ERROR: Not where we should be 2 !
+  endif
+  PrevLoop
+  Wait last
+  if loopframe != 45000
+    echo ERROR: Did not return to expected frame in switch 3 - $loopframe
+  endif
+
+  # again wait till the 4th subcycle (zero based numbering)
+  Wait until subcycle 3
+  NextLoop
+  Wait last
+  # should have wrapped again
+  if loopframe != 27000
+    echo ERROR: Did not return to expected frame in switch 4 - $loopframe
+  endif
+
+  Wait end
+  Call DiffTest "jump13-3"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test14: LoopCopy/AutoRecord
+#
+# We've already tested AutoRecord=on in Test13, here make sure we
+# can turn it off.
+#
+# For LoopCopy:
+#
+#   Off    - obey AutoRecord
+#   Timing - TimeCopy if empty
+#   Sound  - SoundCopy if empty
+#
+######################################################################
+
+Proc Test14
+
+  Echo Jump 14 - LoopCopy/AutoRecord
+  Call SetupTestBackground
+  # update: autoRecord and loopCopy are now emptyLoopAction
+  #set autoRecord off
+  #set loopCopy off
+  set emptyLoopAction none
+
+  set quantize off
+  set switchQuant loop
+  set switchLocation start
+  set timeCopyMode insert
+  set soundCopyMode multiply
+
+  # check autoRecord=off
+  NextLoop
+  Wait last
+  if mode != reset
+    echo ERROR: Next loop not in Reset!
+  endif
+  Wait msec 1000
+
+  # try again
+  set switchQuant off
+  PrevLoop
+  
+  #set AutoRecord on
+  set emptyLoopAction record
+  
+  Sample 2
+  NextLoop
+  Wait last
+  if mode != record
+    echo ERROR: Next loop not in Record!
+  endif
+
+  set switchQuant loop
+  Wait 60000
+  Record
+  Wait last
+
+  Wait end
+  Reset
+
+  Wait msec 1000
+  PrevLoop
+  # note that we have to "Wait last" here, otherwise NextLoop will
+  # just modify the event scheduled by PrevLoop and we'll end up
+  # in the same loop
+  Wait last
+
+  #set loopCopy timing
+  set emptyLoopAction copyTime
+  
+  # being at frame zero apparently qualifies as SwitchQuant=Loop,
+  # step off so we can hear the first loop once before time copy
+  Wait 1
+  NextLoop
+  Wait last
+  # time copy puts us in Insert mode, end it immediately
+  Insert
+
+  Wait end
+  Reset
+  Wait msec 1000
+  PrevLoop
+  Wait last
+
+  #set loopCopy sound
+  set emptyLoopAction copy
+  
+  # step the loop boundary so it plays once before sound copy
+  Wait 1
+  NextLoop
+  Wait last
+  # sound copy puts us in Multiply mode, end it immediately
+  # Starting with 1.43 multiply behaves in what used to be "new" mode
+  # cycles are not created unless necessary, have to wait 1 or else
+  # it thinks the Multiply needs to be collapsed to nothing
+  # !! This won't work if we're stacking a Multiply after the one
+  # that does a sound copy, do we care?
+  Wait 1
+  Multiply
+
+  Wait loop 2
+  Call DiffTest jump14
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test15: Switch Endings
+#
+# Switch/Record - force recording of existing loop
+# Switch/Overdub - SoundCopy if empty
+# Switch/Multiply - SoundCopy
+# Switch/Insert - TimeCopy
+# Switch/Stutter - CycleCopy
+#
+######################################################################
+
+Proc Test15
+
+  Echo Jump 15 - Switch Endings
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant loop
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+  set timeCopyMode insert
+  set soundCopyMode multiply
+
+  # Overdub causes a SimpleCopy if the target is empty
+  # This is the same as SoundCopy except that we're always left in Overdub mode
+  Wait 1
+  NextLoop
+  Overdub
+  Wait last
+  if mode != overdub
+     echo ERROR: Not in Overdub mode after Switch/Overdub
+  endif
+  Wait end
+  Overdub
+
+  # Insert does unconditional TimeCopy
+  PrevLoop
+  # step off the start point so we quantize the next switch to the end
+  # NOTE: wait obscurity
+  # We are at the end point 116000, a "Wait 1" will schedule an event
+  # for frame 116001.  If we were to stay in this loop, that would be
+  # wrapped back to 1 eventually.  But since we're immediately switching
+  # to another loop the event is transfered but the time is not wrapped.
+  # So instead of waiting one frame, we wait an entire loop plus 1 frame.
+  # There is explicit logic to *not* wrap wait events since we may be
+  # purposely waiting for some time in the future.  Think about this!!
+  # Doing a "Wait last" for the PrevLoop will avoid this
+  Wait last
+  Wait 1
+  NextLoop
+  Insert
+  Wait last
+  if mode != insert
+     echo ERROR: Not in Insert mode after Switch/Insert
+  endif
+  # end the insert immediately, will still overdub a cycle
+  Insert
+  Wait end
+
+  # Multiply does unconditional SoundCopy
+  PrevLoop
+  Wait last
+  Wait 1
+  NextLoop
+  Multiply
+  Wait last
+  if mode != multiply
+     echo ERROR: Not in Multiply mode after Switch/Multiply
+  endif
+  # end the multiply immediately, will still overdub a cycle
+  # !! UPDATE: as of 1.43 we have to wait at least 1 for a multiply
+  # to take effect, if you end it on the same frame it starts it collapses
+  # rather than creating a single cycle multiply, is this a bug??
+  Wait 1
+  Multiply
+  Wait end
+
+  # Record forces unconditional re-record
+  PrevLoop
+  Wait last
+  Wait 1
+  NextLoop
+  Record
+  Wait last
+  if mode != record
+     echo ERROR: Not in Record mode after Switch/Record
+  endif
+  Wait 116000
+  Record
+
+  # !! one strange display bug, after the recording finishes
+  # and we're waiting for it to play once, getting a phantom
+  # Record event marker on the left edge
+  # This may be due to the display update thread contention problem
+
+  Wait end
+
+  # Stutter copies current cycle only
+  # actually this isn't working, it does a full sound copy
+  Jump test15done
+  PrevLoop
+  Wait last
+  Wait 1
+  NextLoop
+  Stutter
+  Wait last
+  if mode != stutter
+     echo ERROR: Not in Stutter mode after Switch/Stutter
+  endif
+  # end the stutter immediately, will still overdub a cycle
+  Stutter
+  Wait end
+
+  Label test15done
+  Call DiffTest jump15
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test16: Transfer Modes
+#
+# Overdub, Reverse, Speed, Rate.
+# Pitch split out into another test until we can fix the artifacts.
+#
+######################################################################
+
+Proc Test16
+
+  Echo Jump 16 - Transfer Modes
+
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant off
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+  PrevLoop
+  Wait last
+
+  # since we're only advancing the clock a short distance, these are going
+  # to go by too fast to manually analyze, have to check the output for errors
+  # until the master file is generated
+
+  # Overdub
+  Overdub
+  set overdubTransfer follow
+  NextLoop
+  Wait last
+  if inOverdub == false
+     echo ERROR: Overdub mode did not follow
+  endif
+  Wait 20000
+  set overdubTransfer remember
+  PrevLoop
+  Wait last
+  # turn it off in loop 1
+  Overdub
+  NextLoop
+  Wait last
+  if inOverdub == false
+     echo ERROR: Overdub mode not remembered
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+  set overdubTransfer off
+  NextLoop
+  Wait last
+  if inOverdub
+     echo ERROR: Overdub mode not turned off
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+
+  # Reverse
+  Reverse
+  set reverseTransfer follow
+  NextLoop
+  Wait last
+  if inReverse == false
+     echo ERROR: Reverse mode did not follow
+  endif
+  Wait 20000
+  set reverseTransfer remember
+  PrevLoop
+  Wait last
+  # turn it off in loop 1
+  Reverse
+  NextLoop
+  Wait last
+  if inReverse == false
+     echo ERROR: Reverse mode not remembered
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+  set reverseTransfer off
+  NextLoop
+  Wait last
+  if inReverse
+     echo ERROR: Reverse mode not turned off
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+
+  # HalfSpeed
+  Speed
+  # see comments at the top of the file why we have to wait after a rate
+  # change function to avoid a warning about latency loss correction
+  Wait last
+  set rateTransfer follow
+  NextLoop
+  Wait last
+  if inHalfSpeed == false
+     echo ERROR: HalfSpeed mode did not follow
+  endif
+  Wait 20000
+  set rateTransfer remember
+  PrevLoop
+  Wait last
+  # turn it off in loop 1
+  Speed
+  Wait last
+  NextLoop
+  Wait last
+  if inHalfSpeed == false
+     echo ERROR: HalfSpeed mode not remembered
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+  set rateTransfer off
+  NextLoop
+  Wait last
+  if inHalfSpeed
+     echo ERROR: HalfSpeed mode not turned off
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+
+  # Rate
+  RateShift 5
+  Wait last
+  set rateTransfer follow
+  NextLoop
+  Wait last
+  if speedStep != 5
+     echo ERROR: Rate shift did not follow
+  endif
+  Wait 20000
+  set rateTransfer remember
+  PrevLoop
+  Wait last
+  # turn it off in loop 1
+  RateShift 0
+  Wait last
+  NextLoop
+  Wait last
+  if speedStep != 5
+     echo ERROR: Rate shift not remembered
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+  set rateTransfer off
+  NextLoop
+  Wait last
+  if speedStep != 0
+     echo ERROR: Rate shift not turned off
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+
+  Wait end
+  Call DiffTest jump16
+  Reset
+
+Endproc
+
+Proc Test16-2
+
+  Echo Jump 16-2 - Pitch Transfer Mode
+  Echo This may fail when run in the full suite.
+  Echo Expect difference at frame 182027
+
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant off
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+  PrevLoop
+  Wait last
+
+  PitchShift 5
+  set pitchTransfer follow
+  NextLoop
+  Wait last
+  if pitchStep != 5
+     echo ERROR: Pitch shift did not follow
+  endif
+  Wait 20000
+  set pitchTransfer remember
+  PrevLoop
+  Wait last
+  # turn it off in loop 1
+  PitchShift 0
+  Wait last
+  NextLoop
+  Wait last
+  if pitchStep != 5
+     echo ERROR: Pitch shift not remembered
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+  set pitchTransfer off
+  NextLoop
+  Wait last
+  if pitchStep != 0
+     echo ERROR: Pitch shift not turned off
+  endif
+  Wait 20000
+  PrevLoop
+  Wait last
+
+  Wait end
+  Call DiffTest "jump16-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test17: Switch Stack
+#
+# Stack various combinations of events on a quantized switch.
+# In one case do a SoundCopy to verify that the control functions
+# can be combined with the minor mode functions.
+#
+# ISSUE: If you do a "Wait last" on a function that is "mutex scheduled"
+# after a switch, what happens to the wait?
+#
+#   - cancel the wait
+#     doesn't seem useful
+#   - reschedule wait to the event that canceled the previous one
+#     seems more useful
+#
+# Same issue if we undo a stacked event.
+#
+# Other issues:
+#
+# - a Switch/Speed is taking us out of mute, the minor modes should
+#   not be canceling mute, or at least have the option not to
+#   See comments in jumpPlayEvent, need to analyze all the control
+#   events to decide whether to come out of mute
+#
+# - Reverse needs to be doing some subtle latency loss calculations,
+#   merge logic in reversePlayEvent
+#
+# - Switch/Mute ok, but for general mute there is still a lot
+#   of logic in mutePlayEvent that needs to be merged
+#   ! look more the mutePlayEvent logic, why wouldn't this apply
+#     to a Switch/Mute?
+#
+# - some error messages combining Speed and RateShift on a Switch
+#
+# Will see this:
+# ERROR: 102 0: Major frame resynchronization!: mPlayFrame=574 wrappedPlayFrame=571
+# Only off by three, could be accumulated rounding errors caused by all
+# the stacked events, probably can't happen in practice
+#
+######################################################################
+
+Proc Test17
+
+  Echo Jump 17 - Switch Stack
+  Echo Frame resync error from 574 to 571 is allowed
+
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant loop
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+
+  # advance past the cycle boundary for switchQuant
+  Wait 1
+  PrevLoop
+  Wait last
+
+  # stack some events
+  # ISSUE: the display will only show 4 of these, you can stack
+  # more and test for them, but you can't verify visually
+  Wait 1
+  NextLoop
+  Overdub
+  Reverse
+  Speed
+  RateShift -3
+
+  Wait last
+
+  if inReverse == false
+    echo ERROR: Not in reverse after switch
+  endif
+  if inHalfSpeed == false
+    echo ERROR: Not in half-speed after switch
+  endif
+  if inOverdub == false
+    echo ERROR: Not in overdub after switch
+  endif
+
+  # before 2.2 this would be -3 since halfspeed was a flag, 
+  # now they combine so the effective step will be -15
+  if speedStep != -15
+    echo ERROR: Speed step not -15 after switch: $speedStep
+  endif
+
+  Wait end
+
+  # turn everything off normally
+  # !! still getting a "Major frame resynchronization" error here
+  Overdub
+  Reverse
+  Speed
+  RateShift 0
+  Wait last
+
+  if inReverse == true
+    echo ERROR: Still in reverse
+  endif
+  if inHalfSpeed == true
+    echo ERROR: Still in half-speed
+  endif
+  if inOverdub == true
+    echo ERROR: Still in overdub
+  endif
+  if speedStep != 0
+    echo ERROR: Speed step still $speedStep
+  endif
+
+  Wait end
+  Call DiffTest jump17
+  Reset
+
+Endproc
+
+Proc Test17-2
+
+  Echo Jump 17-2 - Switch Stack with Pitch
+  Echo This will often fail with a minor difference in the full suite.
+  Echo Expect difference at frame 357394
+
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant loop
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+
+  # advance past the cycle boundary for switchQuant
+  Wait 1
+  PrevLoop
+  Wait last
+
+  # stack some events
+  Wait 1
+  NextLoop
+  PitchShift 5
+  Wait last
+
+  if pitchStep != 5
+    echo ERROR: Pitch step not 5 after switch
+  endif
+
+  Wait end
+
+  # turn everything off normally
+  PitchShift 0
+  Wait last
+
+  if pitchStep != 0
+    echo ERROR: Pitch step still $pitchStep
+  endif
+
+  Wait end
+  Call DiffTest "jump17-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test18: Switch Stack Undo
+#
+# Test switch stack mutex functions and stack undo.
+#
+######################################################################
+ 
+Proc Test18
+
+  Echo Jump 18 - Switch Stack Undo and Mutex
+  Call SetupTestBackground
+  set quantize off
+  #set autoRecord on
+  set emptyLoopAction record
+  set switchQuant loop
+  set switchLocation start
+  set reverseTransfer follow
+  set rateTransfer follow
+  set pitchTransfer follow
+
+  # record loop 2
+  Sample 2
+  NextLoop
+  Wait last
+  Wait 60000
+  Record
+  Wait last
+
+  # advance past the cycle boundary for switchQuant
+  Wait 1
+  PrevLoop
+
+  # stack some
+  Speed
+  Overdub
+
+  # then undo one
+  Wait 25000
+  Undo
+
+  # !! points out a flaw in Wait last
+  # what we'd really like to wait on is the event before the one
+  # we just undid, which here would be Speed, consider having
+  # the script interpreter just find the highest non-pending event?
+
+  # note that since the switch happens after the "end" must wait
+  # for the start to be formally after the switch
+  # !! ugh, maybe "Wait beforeSwitch" and "Wait afterSwitch" would be better
+  # after all
+  Wait start
+
+  if inHalfSpeed != true
+    Echo ERROR: Not in halfSpeed!
+  endif
+  if inOverdub == true
+    Echo ERROR: Didn't undo overdub 
+  endif
+
+  # test function mutexes
+  Wait 1
+  NextLoop
+  Speed
+  Record
+  Wait 20000
+  Multiply
+  Wait 20000
+  Insert
+  Wait 20000
+  Overdub
+  Reverse
+
+  Wait last
+
+  if inHalfSpeed == true
+    Echo ERROR: Still in halfSpeed!
+  endif
+  if inOverdub != true
+    Echo ERROR: Not in overdub!
+  endif
+  if inReverse != true
+    Echo ERROR: Not in reverse!
+  endif
+
+  if mode == record
+    Echo ERROR: Didn't cancel Record mode!
+  else if mode == multiply
+    Echo ERROR: Didn't cancel Multiply mode!
+  else if mode == insert
+    Echo ERROR: Didn't cancel Insert mode!
+  else if mode != overdub
+    Echo ERROR: Not in overdub mode
+  endif
+
+  Wait end
+  Call DiffTest jump18
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test19: Switch Latency Undo
+#
+# Set up a complicated switch play jump, then undo before
+# reaching the SwitchEvent.  Must restore all play state.
+#
+# Include one that includes rate changes to check subtle rate
+# undo calculations.
+#
+######################################################################
+
+Proc Test19
+
+  Echo Jump 19 - Switch Stack
+  Echo This test not yet implemented.
+
+  #Call SetupTestBackground
+  #Wait end
+  #Call DiffTest jump19
+  #Reset
+
+Endproc
+
+######################################################################
+#
+# Test20: Switch Play Adjust
+#
+# Set up a complicated switch play jump, then before reaching
+# the SwitchEvent, perform another function that would have affected
+# the play jump if done earlier.
+#
+# Two options:
+#
+#  - comitted jump
+#    It's too late to modify the way we're playing, either ignore
+#    the event or schedule it for evaluation at the transition frame
+#
+#  - redo jump
+#    undo the last jump, then reevaluate it given the new function
+#    this is how we originally did it, it may work, but if not it is
+#    too complicated to mess with, just use "comitted jump"
+#
+######################################################################
+
+Proc Test20
+
+  Echo Jump 20 - Switch Play Adjust
+  Echo This test not yet implemented.
+
+  #Call SetupTestBackground
+  #Wait end
+  #Call DiffTest jump20
+  #Reset
+
+Endproc
+
+######################################################################
+#
+# Test30: Other Stuff
+#
+# MuteStartSong
+# MuteRealign
+# Realign
+# Undo/Redo
+#
+######################################################################
+
+Proc Test30
+
+  Echo Jump 30 - Other Stuff
+  Call SetupTestBackground
+
+  Wait end
+  Call DiffTest jump30
+  Reset
+
+Endproc
+
+######################################################################
+#
+# End
+#
+######################################################################

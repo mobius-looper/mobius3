@@ -1,0 +1,282 @@
+#
+# Mobius event test script
+#
+# This covers some of the same ground as layertests and jumptests
+# but is more focused on event handling.
+#
+# Record/Switch
+#   - ends the recording immediately
+#
+# AutoRecord/Switch
+#   - switch scheduled after RecordStopEvent, moves if we change
+#     the autorecord size
+# 
+# SyncRecord/Switch
+#   - switch pending after a pulsed RecordStopEvent, 
+#     can't move
+
+
+!name Event Tests
+!autoload
+
+Echo ******************************************************************
+Echo Event Tests
+Echo ******************************************************************
+
+# Most of the tests start with base.wav with a little clipped off each edge
+# to test fading.  base.wav is 117,536 frames, or around 2.6 seconds, 
+# wait close to that so the sample doesn't keep playing long after we've
+# closed the loop.
+# !! need a way to shut off samples before they complete
+Variable baseStartWait 1024
+Variable baseEndWait 116000
+
+# make sure we're starting clean
+GlobalReset
+set noExternalAudio true
+set monitorAudio false
+set quickSave unittest
+
+# All the captured test files depend on these values.  They may not
+# exactly match the latency of the audio device, but they should be close.
+set inputLatency 289
+set outputLatency 282
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+# here is where the magic begins
+Warp
+
+Call AllTests
+
+Echo Event Tests Suite Complete
+end
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+Endproc
+
+######################################################################
+#
+# Procedures
+#
+# These are duplicated in several test files, need libraries!!
+#
+######################################################################
+
+# State initialization before every test
+Proc SetupTest
+
+  GeneralReset
+  UnitTestSetup
+
+  # default is 8
+  set 8thsPerCycle 2
+
+Endproc
+
+# Record the basic backing loop
+Proc RecordBackground
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+
+Endproc
+
+Proc SetupTestBackground
+
+  Call SetupTest
+  Call RecordBackground
+
+Endproc
+
+Proc SetupTestSilent
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+Endproc
+
+
+# Save files and diff
+Proc DiffTest
+
+  Variable testname $1
+  Variable suffix $2
+
+  StopAudioRecording
+  # these will be processed in order on the mobius thread
+  SaveLoop ./$(testname)$(suffix)loop
+  Wait thread
+  SaveAudioRecording ./$(testname)$(suffix)rec
+  Wait thread
+
+  # when recording in reverse, have to diff in reverse
+  if isReverse == true
+    # this will be saved in reverse
+    Diff reverse ./$(testname)loop
+    # this one isn't
+    Diff audio ./$(testname)rec
+  else
+    Diff audio ./$(testname)$(suffix)loop
+    Diff audio ./$(testname)$(suffix)rec
+  endif
+
+Endproc
+
+Proc DiffTest2
+
+  if isNoFlattening == true
+    Call DiffTest $1 seg
+  else
+    Call DiffTest $1
+  endif
+Endproc
+
+######################################################################
+#
+# Test1: Record/Switch
+#
+######################################################################
+
+Proc Test1
+  Echo Event 1 - Record/Switch
+
+  call SetupTest
+  #set autorecord off
+  #set loopcopy off
+  set emptyLoopAction none
+  
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+
+  # end recording with NextLoop
+  NextLoop
+
+  if eventSummary != "RecordStop(f=116000,c=2:Switch),Switch(f=116000,c=3:JumpPlay),JumpPlay(f=116000)"
+     Echo ERROR: Event list 1: $eventSummary
+  endif
+
+  Wait last
+  if eventSummary != ""
+    Echo ERROR: Event list should be empty: $(eventSummary)
+  endif
+
+  GlobalReset
+
+Endproc
+
+######################################################################
+#
+# Test2: AutoRecord/Switch
+#
+######################################################################
+
+Proc Test2
+  Echo Event 2 - AutoRecord/Switch
+
+  call SetupTest
+  #set autorecord off
+  #set loopcopy off
+  set emptyLoopAction none
+  
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  AutoRecord
+
+  # stack a Switch
+  # !! This is badly broken because Switch scheduling looks at the mode
+  # and that may not be set until we have a latency delay.
+  # We need to rethink how currently scheduled events effect the scheduling
+  # of new events.  The rescheduling we do for quantization may be necessary
+  # in some unquantized cases.  Or some notion of a "pending" mode.  Or maybe
+  # the stacking state needs to start earlier.
+  Wait msec 500
+  NextLoop
+
+  if eventSummary != "RecordStop(f=88200,c=2:Switch),Switch(f=88200,c=3:JumpPlay),JumpPlay(f=87629)"
+     Echo ERROR: Event list 1: $eventSummary
+  endif
+
+  Wait last
+  if eventSummary != ""
+    Echo ERROR: Event list should be empty: $(eventSummary)
+  endif
+
+  GlobalReset
+
+Endproc
+
+######################################################################
+#
+# Test3: SyncRecord/Switch
+#
+# End a recording where the RecordStopEvent is pulsed.  The Switch
+# must be stacked pending and confirmed after the pulse.
+# This uses syncSource=track, but the same event pattern will appear
+# for host sync.
+#
+######################################################################
+
+Proc Test3
+  Echo Event 3 - SyncRecord/Switch
+
+  call SetupTestBackground
+
+  Track 2
+  Wait last
+  set syncSource "track"
+  Wait 1000
+  Record
+  Wait last
+  Wait 1000
+  Record
+
+  # should have a pending record stop
+  if eventSummary != "RecordStop(pending)"
+    Echo ERROR: Event list 1: $(eventSummary)
+  endif
+
+  # stack a switch
+  NextLoop
+  if eventSummary != "RecordStop(pending,c=2:Switch),Switch(pending)"
+    Echo ERROR: Event list 2: $(eventSummary)
+  endif
+
+  Echo INFO: Waiting for switch
+  Wait last
+
+  Echo INFO: Switch over
+  if loopNumber != 2
+     echo ERROR: Wrong loopNumber: $loopNumber
+  endif
+  Wait msec 2000
+
+  GlobalReset
+
+Endproc

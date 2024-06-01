@@ -1,0 +1,7 @@
+!name MIDI Test
+!button
+
+#MidiOut noteon 1 42 127
+#MidiOut start
+#MidiOut noteoff 2 42 127
+MidiOut control 0 4 64

@@ -1,0 +1,1190 @@
+#
+# Mute and Mute Cancel 
+#
+# Record enters an immediate mute.
+# Rehearse turns mute on and off.
+# Mute
+# MuteStartSong
+# Insert
+# Replace
+#
+# SamplePlay
+# SamplerStyle=Once
+# MuteStartSong
+#
+# 
+
+!name Mute Tests
+!autoload
+
+Echo ******************************************************************
+Echo Mute Tests
+Echo ******************************************************************
+
+Variable baseStartWait 1024
+Variable baseEndWait 116000
+
+# make sure we're starting clean
+GlobalReset
+set noExternalAudio true
+set monitorAudio false
+set quickSave unittest
+set muteCancelFunctions 
+
+# All the captured test files depend on these values.  They may not
+# exactly match the latency of the audio device, but they should be close.
+set inputLatency 289
+set outputLatency 282
+
+# do a wait to kick us out of latency compensation mode
+Wait frame 0
+
+######################################################################
+#
+# Suites
+#
+######################################################################
+
+# here is where the magic begins
+Warp
+
+Call AllTests
+
+Echo Mute Tests Finished
+end
+
+Proc AllTests
+  Call Test1
+  Call Test2
+  Call Test3
+  Call Test3-2
+  Call Test4
+  Call Test5
+  Call Test6
+Endproc
+
+######################################################################
+#
+# Procedures
+#
+######################################################################
+
+# State initialization before every test
+Proc SetupTest
+
+  GeneralReset
+  UnitTestSetup
+
+  # start off with custom for finer control
+  set muteCancel custom
+  set muteCancelFunctions 
+
+Endproc
+
+# Record the basic backing loop
+Proc RecordBackground
+
+  Wait block
+  StartAudioRecording
+  Sample 1
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+
+Endproc
+
+Proc SetupTestBackground
+
+  Call SetupTest
+  Call RecordBackground
+
+Endproc
+
+Proc SetupTestSilent
+  Call SetupTest
+  Wait block
+  StartAudioRecording
+  Wait frame baseStartWait
+  Record
+  Wait frame baseEndWait
+  Record
+  Wait last
+Endproc
+
+
+# Save files and diff
+Proc DiffTest
+
+  Variable testname $1
+  Variable suffix $2
+
+  StopAudioRecording
+  # these will be processed in order on the mobius thread
+  SaveLoop ./$(testname)$(suffix)loop
+  Wait thread
+  SaveAudioRecording ./$(testname)$(suffix)rec
+  Wait thread
+
+  # when recording in reverse, have to diff in reverse
+  # NOTE: This variable is not set in this test file
+  if isReverse == true
+    # this will be saved in reverse
+    Diff reverse ./$(testname)loop
+    # this one isn't
+    Diff audio ./$(testname)rec
+  else
+    Diff audio ./$(testname)$(suffix)loop
+    Diff audio ./$(testname)$(suffix)rec
+  endif
+
+Endproc
+
+Proc DiffTest2
+
+  # kludge, have to copy this into a local to prevent a stack overflow
+  Variable testname $1
+
+  if isNoFlattening == true
+    Call DiffTest $(testname) seg
+  else
+    Call DiffTest $(testname)
+  endif
+Endproc
+
+# !! this should work but there is an interpreter error with more
+# than one level of numeric stack arg references, results in a stack
+# overflow, need to fix
+Proc DiffTest3
+
+  if isNoFlattening == true
+    Call DiffTest $1 seg
+  else
+    Call DiffTest $1
+  endif
+Endproc
+
+######################################################################
+#
+# Test1: Basic Mutes
+#
+# Verify basic operation of the Mute function, as well as functions
+# that do "internal" muting: 
+#
+# Mute
+# Insert
+# Replace
+# Record (mute immediately if not in reset)
+# Rehearse (turns mute on and off)
+#
+# In addition, we should be checking this but it requires 
+# synchronization setup, move to another test?
+#
+#   MuteStartSong
+#
+######################################################################
+
+Proc Test1
+  Echo Mute 1 - Basic Mutes
+
+  Call SetupTest
+  set muteCancel always
+
+  # Verify that we can go in and out of Mute while reset
+  Mute
+  if inMute == false
+    echo ERROR: Did not enter mute during reset!
+  endif
+  Wait msec 1000
+  Mute
+  if inMute == true
+    echo ERROR: Did not leave mute during reset!
+  endif
+
+  # leave it on
+  Mute
+
+  Call SetupTestBackground
+
+  # but it must be canceled by the Record
+  if inMute == true
+    echo ERROR: Did not leave mute after Record!
+  endif
+
+  # always use quantization, to catch mute errors between
+  # the JumpPlayEvent and the mode end event
+  set quantize subcycle
+  set 8thsPerCycle 4
+
+  # Basic mute
+  # The wait pattern here uses "Wait 1" to step off a subcycle
+  # boundary, the next function will then be quantized to the
+  # next subcycle including a jumpPlayEvent with no latency loss
+
+  Wait 1
+  Mute
+  Wait last
+  Wait 1
+  Mute
+  Wait last
+
+  # Insert
+  Wait end
+  Wait 1
+  Insert
+  Wait last
+  Wait 1
+  Insert
+  Wait last
+  Wait start
+  Undo
+
+  # Replace
+  Wait last
+  Wait 1
+  Replace
+  Wait last
+  Wait 1
+  Replace
+  Wait start
+
+  # Record
+  # This will have a little blip at the start because we will have preplayed
+  # the start of the current loop
+  Wait block
+  Record
+  Wait msec 4000
+  Record
+  Wait end
+
+  # Rehearse
+  # Same as RecordBackground but uses Rehearse
+
+  Wait block
+  Sample 1
+  Wait frame baseStartWait
+  Rehearse
+  Wait frame baseEndWait
+  Rehearse
+  Wait last
+
+  # it should play once
+  Wait end
+
+  # then mute
+  Wait 1
+  Wait end
+
+  # NOTE WELL: There is a race condition if you call SaveLoop (which
+  # DiffTest does) at the exact end of the loop when we're about to 
+  # enter the Rehearse mode record phase.  The current play layer will 
+  # be reset when that happens, so if the MobiusThread is busy
+  # saving it there will be play frame overflow errors from the cursor.
+  # Wait a frame to make sure that the layer shift has happened.  This
+  # is unlikely to happen in practice since you don't use SaveLoop
+  # while you're in Rehearse mode.
+  Wait 1  
+
+  Call DiffTest mute1
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test2: MuteCancel=Never
+#
+# Verify that Mute remains on during all operations.
+#
+# As with the last test, always use quantization so there is 
+# space between the JumpPlayEvent and the parent event.
+#
+######################################################################
+
+Proc Test2
+  Echo Mute 2 - MuteCancel=Never
+  Echo mute2rec was regenerated for 1.43 after fixing multiply mode.
+  Echo The file size will be too short for 1.42 since the extra cycle is gone.
+
+  Call SetupTestBackground
+  set muteCancel never
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  # kludge: have to quote this so we consider this a literal rather
+  # than the value of the Quantize parameter
+  set overdubQuantized true
+
+  # Mute immediately
+  Mute
+
+  # Minor Modes
+
+  # Speed
+  Wait 1
+  Speed
+  Wait 1
+  Speed
+  Wait end
+
+  # Reverse
+  Wait subcycle
+  Wait 1
+  Reverse
+  Wait 1
+  Reverse
+  Wait end
+
+# issue: the UI displays "Rate up 1" then "Rate Down", showing
+# absolute scale degrees, not relative up/down increments
+
+  # Rate
+  Wait 1
+  RateUp
+# issue: need to wait for RateUp here, the RateDown is being ignored
+  Wait last
+  Wait 1
+  RateDown
+  Wait end
+
+  # Pitch
+  Wait 1
+# issue: the event name is not showing up in the UI, just the triangle,
+# but we see the name flicker near the point of execution
+# UPDATE: actually not always, this problem moves around
+
+  # pitch not working
+  # Changed PitchUp to RateUp just so the test files are the expected size
+  # weirdly didn't work though, just comment it all out
+#  PitchUp
+#  Wait last
+#  Wait 1
+#  PitchDown
+  Wait end
+
+  # Overdub
+  Wait 1
+  Overdub
+  Wait last
+  Wait 1
+  Overdub
+  Wait end
+
+  # Trigger
+
+  Wait 1
+  Retrigger
+  Wait end
+
+  # Major Mode Edits
+
+  # Multiply
+  Wait 1
+  Multiply
+  Wait last
+  Multiply
+  Wait last
+  Wait end
+  Undo
+
+  # Insert
+  Wait 1
+  Insert
+  Wait last
+  Insert
+  Wait last
+  Wait end
+  Undo
+
+  # Replace
+  Wait 1
+  Replace
+  Wait last
+# issue: why is the wait 1 necessary to get to the next subcycle?
+  Wait 1
+  Replace
+  Wait end
+
+  # Substitute
+  Wait 1
+  Substitute
+  Wait last
+  Wait 1
+  Substitute
+  Wait end
+
+  # Stutter
+  Wait 1
+  Stutter
+  Wait last
+  Wait 1
+  Stutter
+  Wait end
+
+  # Instant Edits
+
+  # SlipForward
+  Wait 1
+  SlipForward
+  Wait end
+
+  # SlipBackward
+  Wait 1
+  SlipBackward
+  Wait end
+  
+  # InstantMultiply, Undo, Redo
+  # This one doesn't quantize, but pause a bit to prepare mentally
+  Wait subcycle
+  InstantMultiply 2
+
+  # sigh, no option to quantize undo
+  Wait subcycle
+  Undo
+  Wait subcycle
+  Redo
+  Wait Subcycle
+  Undo
+  Wait end
+
+  # StartPoint
+  Wait 1
+  StartPoint
+  Wait end
+
+  # TrimStart
+  Wait 1
+  TrimStart
+  Wait end
+
+  # TrimEnd
+  Wait subcycle
+  Wait 1
+  TrimEnd
+  Wait end
+ 
+  # Clear, going kind of fast now after the trims
+  Wait subcycle
+  Clear
+
+  Wait end
+  Call DiffTest mute2
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test3: MuteCancel=Edit
+#
+# Functions that enter an editing mode cancel mute, but no others.
+#
+# As with the last test, always use quantization so there is 
+# space between the JumpPlayEvent and the parent event.
+# 
+######################################################################
+
+Proc Test3
+  Echo Mute 3 - MuteCancel=Edit, Instant Edits
+
+  Call SetupTestBackground
+  set muteCancel edit
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  # kludge: have to quote so we consider this
+  # a literal rather than the value of the Quantize parameter
+  set overdubQuantized true
+
+  # Mute immediately
+  Mute
+
+  # Minor Modes
+
+  # Speed
+  Wait 1
+  Speed
+  Wait 1
+  Speed
+  Wait end
+
+  # Reverse
+  Wait subcycle
+  Wait 1
+  Reverse
+  Wait 1
+  Reverse
+  Wait end
+
+  # Rate
+  Wait 1
+  RateUp
+  Wait last
+  Wait 1
+  RateDown
+  Wait end
+
+  # Pitch - not working
+  # removed from the test and regsnerated expected file
+  # keep pitch in it's own set of tests
+#  Wait 1
+#  PitchUp
+#  Wait last
+#  Wait 1
+#  PitchDown
+#  Wait end
+
+  # Triggers
+
+  Wait 1
+  Retrigger
+  Wait end
+
+  # SlipForward
+  Wait 1
+  SlipForward
+  Wait end
+
+  # SlipBackward
+  Wait 1
+  SlipBackward
+  Wait end
+
+  if !inMute
+    echo ERROR: Mute canceled after effect and trigger functions
+  endif
+  
+  # Instant Edits
+
+  # InstantMultiply, Undo, Redo
+  # This one doesn't quantize, but pause a bit to prepare mentally
+  # Note that we have to use UndoOnly since Mute/Undo has special
+  # behavior in the EDP (toggles the MuteMode)
+  echo INFO: InstantMultiply
+  Wait subcycle
+  InstantMultiply 2
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after InstantMultiply
+  endif
+  Wait end
+  MuteOn
+  # sigh, no option to quantize undo
+  Wait subcycle
+  UndoOnly
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Undo
+  endif
+  Wait subcycle
+  MuteOn
+  Wait subcycle 2
+  Redo
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Redo
+  endif
+  Wait subcycle 2
+  UndoOnly
+  MuteOn
+  Wait end
+
+  # StartPoint
+  echo INFO: StartPoint
+  Wait 1
+  StartPoint
+  Wait last
+  if inMute == true
+    echo ERROR: Mute not canceled after StartPoint
+  endif
+  Wait subcycle 
+  MuteOn
+  Wait end
+
+  # TrimStart
+  echo INFO: TrimStart
+  echo INFO: Started seeing two segment compliation errors during 1.30h development
+  echo INFO: Not sure if they are benign
+  # this is complicated but has something to do with TrimStart calling
+  # Layer::splice before we've advanced the layer to the end of the splice
+  # like we do in all other cases like TrimEnd or UnroundedMultiply.  splice()
+  # tries to fade the local audio but we don't have any yet, then later
+  # in compileSegmentFades there is an inconsistency in the 
+  # containsDeferredFadeRight calculation.  
+  Wait 1
+  TrimStart
+  Wait last
+  if inMute == true
+    echo ERROR: Mute not canceled after TrimStart
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # TrimEnd
+  echo INFO: TrimEnd
+  Wait subcycle
+  Wait 1
+  TrimEnd
+  Wait last
+  if inMute == true
+    echo ERROR: Mute not canceled after TrimEnd
+  endif
+  Wait subcycle
+
+  # Clear, going kind of fast now after the trims
+  # Undo back to the original
+  echo INFO: Clear
+  UndoOnly
+  UndoOnly
+  MuteOn
+  Wait end
+
+  # Ignore clear, I don't want to record another one
+  #Wait subcycle
+  #Clear
+
+  Call DiffTest mute3
+  Reset
+
+Endproc
+
+Proc Test3-2
+  Echo Mute 3-2 - MuteCancel=Edit, Major Mode Edits
+
+  Call SetupTestBackground
+  set muteCancel edit
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  set overdubQuantized true
+
+  # Mute immediately
+  Mute
+
+  # Major Mode Edits
+  # Note that Overdub is considered an edit though we also
+  # sometimes think of it a a minor mode
+
+  # Overdub
+  echo INFO: Overdub
+  Wait 1
+  Overdub
+  Wait last
+  if inMute = true
+    echo ERROR: Still in Mute after Overdub
+  endif
+  Wait 1
+  Overdub
+  Wait last
+  Wait end
+  Mute
+
+  # Replace
+  echo INFO: Replace
+  Wait 1
+  Replace
+  Wait last
+  if inMute = true
+    echo ERROR: Still in Mute after Replace
+  endif
+  Wait 1
+  Replace
+  # note that to undo, have to wait for the start not the end
+  Wait start
+  UndoOnly
+  Mute
+
+  # Substitute
+  echo INFO: Substitute
+  Wait 1
+  Substitute
+  Wait last
+  if inMute = true
+    echo ERROR: Still in Mute after Substitute
+  endif
+  Wait 1
+  Substitute
+  Wait start
+  UndoOnly
+  Mute
+
+  # Stutter
+  echo INFO: Stutter
+  Wait 1
+  Stutter
+  Wait last
+  if inMute = true
+    echo ERROR: Still in Mute after Substitute
+  endif
+  Wait 1
+  Stutter
+  Wait end
+  Mute
+
+  #
+  # Special Cases
+  #
+
+# new: these didn't work and relied on obscure Mute mode combo behavior
+# that has probably been broken for a long time.  Mute/Multiply did not do
+# what the comments said, it just entered Multiply mode, which means
+# that the next test for Mute/Insert did not become SamplePlay either.
+# Need to rewrite these tests for "modern" usages and decide if we need
+# any of the old Edpisms any more
+if oldEdpismTests
+
+  # Multiply
+  # Mute/Multiply will turn into a StartSong if Sync=Out otherwise Realign
+  # Since Realign is a trigger function, should remain in mute
+  # UPDATE: The Realign is now ignored if we're not syncing, and since
+  # we're not syncing a Multiply will be silently ignored.  
+  # !! Would like a parameter muteMultiplyRealign=true to control this.
+
+  echo INFO: Multiply
+  Wait 1
+  Multiply
+  if !inMute
+    echo ERROR: Canceled mute after impotent Multiply
+  endif
+  Wait end
+
+  # here is the original test, could adapt this for Sync=out
+  if syncWereOn
+    Wait 1
+    Multiply
+    # would be nice to get a handle on the last even type...
+    if inRealign != true
+      echo ERROR: Did not enter Realign after Mute/Multiply
+    endif
+    # since we're not using external sync, and this is the track sync master,
+    # we'll never have a realign event, so cancel it, but wait a bit so we
+    # can see it
+    Wait subcycle 2
+    UndoOnly
+    if inRealign == true
+      echo ERROR: Still in Realign mode!
+    endif
+    if inMute != true
+      echo ERROR: Canceled mute after Realign undo
+    endif
+    Wait end
+  endif
+
+  # Insert
+  # Mute/Insert will turn into a SamplePlay when Insert is not itself
+  # a mute cancel function.  
+  # Prior to 2.0 since SamplePlay was considered a trigger function, 
+  # it would not cancel mute if muteCancel=edit.  In 2.0 it was decided
+  # that since any form of switchDuration=Once schedules a Mute
+  # at the end that it didn't make sense to leave it in mute just
+  # to continue muting after it played muted once, so the various
+  # "once" modes are implicit mute cancel functions.  Without this
+  # you could never play loops like a sampler because once RetriggerOnce
+  # muted, you could never get out of mute.
+
+  # new: to get Mute/Insert converted to SamplePlay you have to
+  # enable MobiusConfig::mEdpisms, which was not a Parameter and was
+  # never set in old code that I could see.  So this must be a really old test.
+  # added a global parameter just to get the test to work, but need to reconsider
+  # whether we still want this at all
+  set edpisms true
+  
+  echo INFO: Insert
+  Wait 1
+  Insert
+  Wait last
+
+  Echo INFO: 1.43 behavior change, older releases will not see a mute cancel
+  if inMute = true
+    echo ERROR: Mute not canceled after SamplePlay
+  endif
+  Wait start
+  # SamplePlay schedules a MuteOn event to put us back into mute
+  if inMute != true
+    echo ERROR: Not in mute after SamplePlay
+  endif
+
+# oldEdpismTests commented out
+endif
+
+  Wait end
+  Call DiffTest "mute3-2"
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test4: MuteCancel=Trigger
+#
+# Technically should run through all of the Edit functions to make
+# sure they cancel, but just do a few of them.
+#
+# As with the last test, always use quantization so there is 
+# space between the JumpPlayEvent and the parent event.
+# 
+######################################################################
+
+Proc Test4
+  Echo Mute 4 - MuteCancel=Trigger
+
+  Call SetupTestBackground
+  set muteCancel trigger
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  set overdubQuantized true
+
+  # Mute immediately
+  Mute
+
+  # Minor Modes
+
+  # Speed
+  Wait 1
+  Speed
+  Wait 1
+  Speed
+  Wait end
+
+  # Reverse
+  Wait subcycle
+  Wait 1
+  Reverse
+  Wait 1
+  Reverse
+  Wait end
+
+  # Trigger
+  # This one should now take us out of Mute
+
+  Wait 1
+  Retrigger
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Retrigger
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # Instant Edits
+
+  # SlipForward
+  Wait 1
+  SlipForward
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after SlipForward
+  endif
+  Wait end
+  MuteOn
+
+  # Major Mode Edits
+
+  # Overdub
+  Wait 1
+  Overdub
+  Wait last
+  if inMute = true
+    echo ERROR: Still in Mute after Overdub
+  endif
+  Wait 1
+  Overdub
+  Wait last
+  Wait end
+  MuteOn
+
+  #
+  # Special Cases
+  #
+
+# new: like Test3-2 commented Multiply/Insert tests out since they
+# rely on some obscure Edpisms that I don't want to support any more
+if oldEdpismTests
+
+  # Multiply
+  # Mute/Multiply will turn into a StartSong if Sync=Out otherwise Realign
+  # Since Realign is a trigger function, should unmute.
+  # Unfortunately, we don't have a way to test that since we're not 
+  # external syncing...need to fake a sync event!!
+  #
+
+  # Insert
+  # Mute/Insert will turn into a SamplePlay, since this is a trigger
+  # we should remain in mute
+  Wait 1
+  Insert
+  Wait last
+  if inMute = true
+    echo ERROR: Did not cancel mute after SamplePlay
+  endif
+  Wait start
+  # SamplePlay schedules a MuteOn event to put us back into mute
+  if inMute != true
+    echo ERROR: Not in mute at end of SamplePlay
+  endif
+
+# oldEdpismTests
+endif
+
+  #Wait end
+  Call DiffTest mute4
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test5: MuteCancel=Effect
+#
+# As with the last test, always use quantization so there is 
+# space between the JumpPlayEvent and the parent event.
+# 
+# NOTE: There is actually no difference between MuteCancel=Effect and 
+# MuteCancel=Always.  But leave Always around in case we want to use
+# it for things like BounceRecord and other global functions?
+#
+######################################################################
+
+Proc Test5
+  Echo Mute 5 - MuteCancel=Effect
+
+  Call SetupTestBackground
+  set muteCancel effect
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  set overdubQuantized true
+
+  # Mute immediately
+  Mute
+
+  # Minor Modes
+
+  # Speed
+  Wait 1
+  Speed
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Speed
+  endif
+  Wait 1
+  Speed
+  MuteOn
+  Wait end
+
+  # Reverse
+  Wait subcycle
+  Wait 1
+  Reverse
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Reverse
+  endif
+  Wait 1
+  Reverse
+  MuteOn
+  Wait end
+
+  # Trigger
+
+  Wait 1
+  Retrigger
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Retrigger
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # Instant Edits
+
+  # SlipForward
+  Wait 1
+  SlipForward
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after SlipForward
+  endif
+  Wait end
+  MuteOn
+
+  # Major Mode Edits
+
+  # Overdub
+  Wait 1
+  Overdub
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Overdub
+  endif
+  Wait 1
+  Overdub
+  Wait last
+  Wait end
+  MuteOn
+
+  #Wait end
+  Call DiffTest mute5
+  Reset
+
+Endproc
+
+######################################################################
+#
+# Test6: MuteCancel=Custom
+#
+# As with the last test, always use quantization so there is 
+# space between the JumpPlayEvent and the parent event.
+# 
+######################################################################
+
+Proc Test6
+  Echo Mute 6 - MuteCancel=Custom
+
+  Call SetupTestBackground
+  set muteCancel custom
+  set quantize subcycle
+  set 8thsPerCycle 3
+  set switchQuant subcycle
+  set overdubQuantized true
+
+  set muteCancelFunctions 'speedToggle,overdub,slipForward,nextLoop'
+
+  # Mute immediately
+  Mute
+
+  # Minor Modes
+  # Speed kills, but Reverse lives
+
+  # Speed
+  Wait 1
+  Speed
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Speed
+  endif
+  Wait 1
+  Speed
+  # !!this will actually not be stacked with the Speed but 
+  # pushed to the end, ok?
+  MuteOn
+  Wait end
+
+  # Reverse
+  Wait subcycle
+  Wait 1
+  Reverse
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after Reverse
+  endif
+  Wait 1
+  Reverse
+  MuteOn
+  Wait end
+
+  # Trigger
+  # NextLoop cancels, Retrigger and PrevLoop don't
+
+  # Retrigger
+  Wait 1
+  Retrigger
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after Retrigger
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # NextLoop
+  # make sure there's something there
+
+  #set loopCopy sound
+  set emptyLoopAction copy
+
+  set soundCopyMode play
+  Wait 1
+  NextLoop
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after NextLoop
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # PrevLoop
+  Wait 1
+  PrevLoop
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after PrevLoop
+  endif
+  Wait subcycle
+  MuteOn
+  Wait end
+
+  # Instant Edits
+  # SlipForward cancels, SlipBackward doesn't
+
+  # SlipForward
+  Wait 1
+  SlipForward
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after SlipForward
+  endif
+  Wait end
+  MuteOn
+
+  # SlipBackward
+  Wait 1
+  SlipBackward
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after SlipBackward
+  endif
+  Wait end
+  MuteOn
+
+  # Major Mode Edits
+  # Overdub cancels, Replace doesn't
+
+  # Overdub
+  Wait 1
+  Overdub
+  Wait last
+  if inMute = true
+    echo ERROR: Mute not canceled after Overdub
+  endif
+  Wait 1
+  Overdub
+  Wait last
+  Wait end
+  MuteOn
+
+  # Replace
+  Wait 1
+  Replace
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after Replace
+  endif
+  Wait 1
+  Replace
+  Wait last
+  if inMute != true
+    echo ERROR: Mute canceled after Replace
+  endif
+
+  Wait end
+  Call DiffTest mute6
+  Reset
+
+Endproc
