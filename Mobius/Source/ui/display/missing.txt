@@ -1,0 +1,7 @@
+
+not use by default
+Floating Track Strip 2
+Loop Bars
+  what is this?
+  I think a simple set of horiz rectangles to show selected loop, not
+  needed when we have loop status in the track strip
