@@ -23,7 +23,6 @@
 #include "display/MobiusDisplay.h"
 #include "config/ConfigEditor.h"
 #include "config/InfoPanel.h"
-#include "common/ColorSelector.h"
 #include "AboutPanel.h"
 
 #ifdef USE_FFMETERS
@@ -81,7 +80,6 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     ConfigEditor configEditor {this};
     InfoPanel infoPanel;
     AboutPanel aboutPanel;
-    ColorSelector colorSelector;
     
 #ifdef USE_FFMETERS
     foleys::LevelMeter levelMeter;

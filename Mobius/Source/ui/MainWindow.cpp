@@ -46,9 +46,6 @@ MainWindow::MainWindow(Supervisor* super)
     addChildComponent(infoPanel);
     addChildComponent(aboutPanel);
     
-    addAndMakeVisible(colorSelector);
-    
-
 #ifdef USE_FFMETERS
     addAndMakeVisible(levelMeter);
     levelMeter.setMeterSource(supervisor->getLevelMeterSource());
@@ -101,9 +98,6 @@ void MainWindow::resized()
 #ifdef USE_FFMETERS
     levelMeter.setBounds(20, 20, 200, 600);
 #endif
-
-    colorSelector.setBounds(100, 100, 200, 200);
-    
 }
 
 /**
@@ -120,13 +114,6 @@ int MainWindow::getPreferredHeight()
 {
     return 800;
 }
-
-#if 0
-void MainWindow::showColourSelector()
-{
-    colorSelector.setVisible();
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //

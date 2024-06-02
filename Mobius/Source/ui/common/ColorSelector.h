@@ -13,7 +13,7 @@ class ColorSelector : public juce::Component, public juce::Button::Listener
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void colorSelected(juce::Colour c) = 0;
+        virtual void colorSelectorClosed(juce::Colour c, bool ok) = 0;
     };
 
     ColorSelector(Listener* l = nullptr);
@@ -30,7 +30,7 @@ class ColorSelector : public juce::Component, public juce::Button::Listener
 
     Listener* listener = nullptr;
     juce::ColourSelector selector;
-    juce::TextButton okButton;
-    juce::TextButton cancelButton;
+    juce::TextButton okButton {"Ok"};
+    juce::TextButton cancelButton {"Cancel"};
     BasicButtonRow buttons;
 };

@@ -63,11 +63,11 @@
     <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <ButtonSet name="Default">
-    <Button action="GlobalReset"/>
+    <Button action="GlobalReset" color="-13969235"/>
     <Button action="Reset"/>
     <Button action="Record"/>
     <Button action="Overdub"/>
-    <Button action="Undo"/>
+    <Button action="Undo" color="-1440250"/>
     <Button action="Mute"/>
     <Button action="NextLoop"/>
     <Button action="PrevLoop"/>

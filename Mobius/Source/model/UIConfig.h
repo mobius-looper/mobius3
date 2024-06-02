@@ -224,6 +224,9 @@ class DisplayButton
     // this is optional, if not set it will be the symbol name
     juce::String name;
 
+    // alternate color
+    int color = 0;
+
     // kludge: transient id number used to correlate this with a Binding
     // when editing in the ButtonPanel
     int id = 0;
@@ -248,6 +251,8 @@ class ButtonSet
 
     // the buttons that will be displayed when this set is active
     juce::OwnedArray<DisplayButton> buttons;
+    
+    DisplayButton* getButton(juce::String id);
 };
 
 /**

@@ -233,8 +233,27 @@ ButtonSet::ButtonSet(ButtonSet* src)
         neu->arguments = srcButton->arguments;
         neu->scope = srcButton->scope;
         neu->name = srcButton->name;
+        neu->color = srcButton->color;
         buttons.add(neu);
     }
+}
+
+/**
+ * Find a DisplayButton by name.
+ * name here is the primary unique name which is the action name.
+ * Don't assume display name is unique.
+ * Used when we need to save edited state for an ActionButton.
+ */
+DisplayButton* ButtonSet::getButton(juce::String id)
+{
+    DisplayButton* found = nullptr;
+    for (auto button : buttons) {
+        if (button->action == id) {
+            found = button;
+            break;
+        }
+    }
+    return found;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -352,6 +371,7 @@ DisplayButton* UIConfig::parseButton(juce::XmlElement* root)
     button->arguments = root->getStringAttribute("arguments");
     button->scope = root->getStringAttribute("scope");
     button->name = root->getStringAttribute("name");
+    button->color = root->getIntAttribute("color");
     return button;
 }
 
@@ -473,6 +493,8 @@ void UIConfig::renderButton(juce::XmlElement* parent, DisplayButton* button)
     if (button->action.length() > 0) root->setAttribute("action", button->action);
     if (button->arguments.length() > 0) root->setAttribute("arguments", button->arguments);
     if (button->scope.length() > 0) root->setAttribute("scope", button->scope);
+    // note that ARGB values with the high bit set will be negative
+    if (button->color !=  0) root->setAttribute("color", juce::String(button->color));
 }
 
 //////////////////////////////////////////////////////////////////////

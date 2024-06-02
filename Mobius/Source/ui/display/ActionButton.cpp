@@ -61,6 +61,7 @@
 ActionButton::ActionButton()
 {
     downTracker = false;
+    downRight = false;
 }
 
 /**
@@ -95,6 +96,8 @@ ActionButton::ActionButton(DisplayButton* src)
         setButtonText(buttonText);
     }
 
+    color = src->color;
+
     if (symbolName.length() > 0) {
         action.symbol = Symbols.intern(symbolName);
         CopyString(src->arguments.toUTF8(), action.arguments, sizeof(action.arguments));
@@ -111,6 +114,10 @@ ActionButton::ActionButton(DisplayButton* src)
 /**
  * Initialie a button to trigger a action for a Symbol
  * associated with a script or sample.
+ *
+ * todo: since these don't come from a DisplayButton, we don't
+ * yet have a way to save color preferences, it would have to be something
+ * in the ScriptProperties or SampleProperties
  */
 ActionButton::ActionButton(Symbol* src)
 {
@@ -130,6 +137,12 @@ ActionButton::ActionButton(Symbol* src)
 
 ActionButton::~ActionButton()
 {
+}
+
+void ActionButton::setColor(juce::Colour c)
+{
+    color = c.getARGB();
+    repaint();
 }
 
 /**
@@ -167,16 +180,20 @@ int ActionButton::getPreferredWidth(int height)
 void ActionButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted,
                                bool shouldDrawButtonAsDown)
 {
+    juce::Colour background = juce::Colour(MobiusBlue);
+    if (color != 0)
+      background = juce::Colour(color);
+    
     if (shouldDrawButtonAsHighlighted) {
         if (shouldDrawButtonAsDown) {
-            paintButton(g, juce::Colour(MobiusBlue), juce::Colour(MobiusRed));
+            paintButton(g, background, juce::Colour(MobiusRed));
         }
         else {
-            paintButton(g, juce::Colour(MobiusBlue), juce::Colour(MobiusYellow));
+            paintButton(g, background, juce::Colour(MobiusYellow));
         }
     }
     else {
-        paintButton(g, juce::Colour(MobiusBlue), juce::Colours::black);
+        paintButton(g, background, juce::Colours::black);
     }
 }    
 
@@ -218,13 +235,19 @@ void ActionButton::setTriggerId(int id)
  * can watch for an up transition when it receives
  * ButtonListener:: buttonStateChanged.
  */
-void ActionButton::setDownTracker(bool b)
+void ActionButton::setDownTracker(bool b, bool rmb)
 {
     downTracker = b;
+    downRight = rmb;
 }
 
 // Button already has isDown) so don't conflict with that
 bool ActionButton::isDownTracker()
 {
     return downTracker;
+}
+
+bool ActionButton::isDownRight()
+{
+    return downRight;
 }

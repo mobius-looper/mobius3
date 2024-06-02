@@ -353,15 +353,23 @@ void ActionButtons::paint(juce::Graphics& g)
  */
 void ActionButtons::buttonClicked(juce::Button* src)
 {
-    // todo: figure out of dynamic_cast has any performance implications
-    ActionButton* ab = (ActionButton*)src;
-    UIAction* action = ab->getAction();
+    // weird that Juce allows RMB to be a normal click and not pass this
+    // to buttonClicked, have to check modifiers
+    auto modifiers = juce::ModifierKeys::getCurrentModifiers();
+    if (modifiers.isRightButtonDown()) {
+        buttonMenu(src);
+    }
+    else {
+        // todo: figure out of dynamic_cast has any performance implications
+        ActionButton* ab = (ActionButton*)src;
+        UIAction* action = ab->getAction();
 
-    // if we're configured to allow sustain, then make it look like we can
-    action->sustain = enableSustain;
-    action->sustainEnd = false;
+        // if we're configured to allow sustain, then make it look like we can
+        action->sustain = enableSustain;
+        action->sustainEnd = false;
     
-    Supervisor::Instance->doAction(action);
+        Supervisor::Instance->doAction(action);
+    }
 }
 
 /**
@@ -381,6 +389,14 @@ void ActionButtons::buttonClicked(juce::Button* src)
  * To reliably track down then up, you have to remember
  * when a Down notification was received, and check that
  * the next time the state is anything other than Down.
+ *
+ * new: To get RMB menu behavior, have to ignore down transition
+ * on the right button, which we do in buttonClicked, but we also
+ * need to handle this when the button goes up.  At that point
+ * we'll be in ButtonState::buttonNormal but the mouse button isn't
+ * actually down at this point so checking ModifierKeys doesn't work.
+ * We have to remember which button was pressed when we got to
+ * buttonDown.
  */
 void ActionButtons::buttonStateChanged(juce::Button* b)
 {
@@ -421,7 +437,9 @@ void ActionButtons::buttonStateChanged(juce::Button* b)
             }
             // don't have to do anything here, the buttonClicked
             // callback will do the action
-            ab->setDownTracker(true);
+            auto modifiers = juce::ModifierKeys::getCurrentModifiers();
+            bool rmb = modifiers.isRightButtonDown();
+            ab->setDownTracker(true, rmb);
         }
             break;
     }
@@ -444,7 +462,12 @@ void ActionButtons::buttonStateChanged(juce::Button* b)
  */
 void ActionButtons::buttonUp(ActionButton* b)
 {
-    if (enableSustain) {
+    if (b->isDownRight()) {
+        // up transition of the right mouse button,
+        // no current behavior since a menu is usually being displayed
+    }
+    else if (enableSustain) {
+        // ignore 
         //Trace(2, "ActionButtons: Sending up action\n");
         UIAction* action = b->getAction();
         Symbol* s = action->symbol;
@@ -453,7 +476,91 @@ void ActionButtons::buttonUp(ActionButton* b)
             Supervisor::Instance->doAction(action);
         }
     }
-    b->setDownTracker(false);
+    b->setDownTracker(false, false);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Button Menu
+//
+// There are several unusual parts to this.  First we need to detect when
+// just the right button is used to click a button. That is done in
+// buttonClicked and buttonStateChanged by checking ModifierKeys.
+//
+// Next we need to open a menu oriented to the current mouse position
+// within the button.  Mouse position is not passed through the usual
+// but you can get it with Component::getMouseXYRelative.
+// 
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here on a right click.
+ * todo: can think of a number of useful things to do here, quick change arguments,
+ * change display name, move within the button set...
+ *
+ * Let's try something different and add/remove the menu from the parent every time
+ * rather than keeping it there forever and changing visibility.  Not sure what
+ * the difference is, but I'd like config panels to work this way.
+ */
+void ActionButtons::buttonMenu(juce::Button* button)
+{
+    //colorSelector.setListener(this);
+    //parent.addAndMakeVisible(colorSelector);
+
+    juce::Point<int> point = getMouseXYRelative();
+    // Trace(2, "Button menu at %d %d\n", point.getX(), point.getY());
+
+    colorSelector.setListener(this);
+    // have to remember what button we were dealing with, though I suppose
+    // we could derive it from the location of the menu when it is closed
+    colorButton = (ActionButton*)button;
+    
+    getParentComponent()->addAndMakeVisible(&colorSelector);
+    colorSelector.setBounds(point.getX(), point.getY(), 200, 200);
+}
+
+/**
+ * Locate the DisplayButton this ActionButton came from and remember
+ * the color.  The model wasn't designed well to go this direction,
+ * to locate the DisplayButton assume the buttons UIAction symbol name
+ * matches the action of the DisplayButton.
+ */
+void ActionButtons::colorSelectorClosed(juce::Colour color, bool ok)
+{
+    if (ok) {
+        if (colorButton == nullptr) {
+            Trace(1, "ActionButtons: Didn't remember the button to color!\n");
+        }
+        else {
+            // Trace(2, "Color changed\n");
+            UIConfig* config = Supervisor::Instance->getUIConfig();
+            ButtonSet* buttonSet = config->getActiveButtonSet();
+
+            juce::String actionName;
+            UIAction* action = colorButton->getAction();
+            if (action == nullptr) {
+                Trace(1, "ActionButtons: Can't color a button without an action\n");
+            }
+            else if (action->symbol == nullptr) {
+                Trace(1, "ActionButtons: Can't color a button with an unresolved symbol\n");
+            }
+            else {
+                DisplayButton* db = buttonSet->getButton(action->symbol->name);
+                if (db == nullptr) {
+                    Trace(1, "ActionButtons: Can't color unmatched button %s\n", action->symbol->getName());
+                }
+                else {
+                    db->color = color.getARGB();
+                    colorButton->setColor(color);
+                    // always save it or wait for shutdown?
+                }
+            }
+        }
+    }
+
+    // for both ok and cancel, we need to remove it
+    getParentComponent()->removeChildComponent(&colorSelector);
+    colorButton = nullptr;
 }
 
 /****************************************************************************/

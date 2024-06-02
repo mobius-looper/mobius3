@@ -8,9 +8,12 @@ ColorSelector::ColorSelector(Listener* l)
     listener = l;
     
     addAndMakeVisible(&selector);
+
+    buttons.setListener(this);
+    buttons.setCentered(true);
     buttons.add(&okButton, this);
     buttons.add(&cancelButton, this);
-    addAndMakeVisible(&buttons);
+    addAndMakeVisible(buttons);
 }
 
 void ColorSelector::setListener(Listener* l)
@@ -31,8 +34,8 @@ void ColorSelector::resized()
 
 void ColorSelector::buttonClicked(juce::Button* b)
 {
-    if (b == &okButton && listener != nullptr)
-      listener->colorSelected(getColor());
+    if (listener != nullptr)
+      listener->colorSelectorClosed(getColor(), b == &okButton);
 
     setVisible(false);
 }

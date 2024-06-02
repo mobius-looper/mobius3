@@ -12,11 +12,13 @@
 
 // for DynamicConfigListener
 #include "../../Supervisor.h"
+#include "../common/ColorSelector.h"
 
 #include "ActionButton.h"
 
 class ActionButtons : public juce::Component,
-                      public juce::Button::Listener
+                      public juce::Button::Listener,
+                      public ColorSelector::Listener
 {
   public:
 
@@ -32,6 +34,8 @@ class ActionButtons : public juce::Component,
     void buttonClicked(juce::Button* b) override;
     void buttonStateChanged(juce::Button* b) override;
     
+    void colorSelectorClosed(juce::Colour color, bool ok);
+
   private:
 
     // experiment with sustainable buttons
@@ -48,4 +52,8 @@ class ActionButtons : public juce::Component,
     void buildButtons(class UIConfig* c);
     void assignTriggerIds();
     void buttonUp(ActionButton* b);
+
+    void buttonMenu(juce::Button* b);
+    ColorSelector colorSelector;
+    class ActionButton* colorButton = nullptr;
 };
