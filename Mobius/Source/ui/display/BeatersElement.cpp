@@ -93,6 +93,8 @@ int BeatersElement::getPreferredWidth()
 
 void BeatersElement::resized()
 {
+    StatusElement::resized();
+    
     // how much air should we leave around these?
     // might want to give them some padding
 

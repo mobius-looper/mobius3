@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig activeButtonSet="Default" activeLayout="Default">
+<UIConfig windowWidth="1565" windowHeight="800" activeButtonSet="Default"
+          activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
-    <Element name="BeatersElement" x="514" y="132"/>
+    <Element name="BeatersElement" x="514" y="132" width="185" height="37"/>
     <Element name="LoopMeterElement" x="454" y="179"/>
     <Element name="CounterElement" x="456" y="90"/>
-    <Element name="FloatingStripElement" x="1095" y="23" width="12" height="12"/>
+    <Element name="FloatingStripElement" x="1074" y="37" width="12" height="12"/>
     <Element name="ParametersElement" x="12" y="34" width="171"/>
     <Element name="AudioMeterElement" x="456" y="259"/>
-    <Element name="LayerElement" x="436" y="288"/>
+    <Element name="LayerElement" x="378" y="288" width="300" height="108"/>
     <Element name="AlertElement" x="365" y="431"/>
     <Element name="MinorModesElement" x="437" y="57"/>
     <Element name="TempoElement" x="438" y="31"/>

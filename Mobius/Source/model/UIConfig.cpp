@@ -254,6 +254,9 @@ void UIConfig::parseXml(juce::String xml)
         xmlError("Unexpected XML tag name: %s\n", root->getTagName());
     }
     else {
+        windowWidth = root->getIntAttribute("windowWidth");
+        windowHeight = root->getIntAttribute("windowHeight");
+        
         activeButtonSet = root->getStringAttribute("activeButtonSet");
         activeLayout = root->getStringAttribute("activeLayout");
         testName = root->getStringAttribute("testName");
@@ -373,6 +376,12 @@ juce::String UIConfig::toXml()
 
     // definitions don't need to be serialized yet, we will
     // generate them at runtime, same with availableParameters
+
+    if (windowWidth > 0)
+      root.setAttribute("windowWidth", windowWidth);
+    
+    if (windowHeight > 0)
+      root.setAttribute("windowHeight", windowHeight);
 
     // could fix these if they're stale
     if (activeButtonSet.length() > 0) 

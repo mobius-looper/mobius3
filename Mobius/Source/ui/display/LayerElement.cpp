@@ -69,6 +69,9 @@ int LayerElement::getPreferredWidth()
 
 void LayerElement::resized()
 {
+    // StatusElement needs to adjust the Resizer
+    StatusElement::resized();
+    
     // no Component substructure
 }
 

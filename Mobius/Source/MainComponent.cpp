@@ -53,8 +53,12 @@ MainComponent::MainComponent()
     // Start with a size large enough to give us room but still display
     // on most monitors.  Should be asking Supervisor for this after it's
     // had a chance to build out and configure the component tree.
-   
-    setSize (1200, 800);
+    // Supervisor.start will normally have set this from uioconfig if one was saved
+    int width = getWidth();
+    int height = getHeight();
+    if (width == 0) width = 1200;
+    if (height == 0) height = 800;
+    setSize (width, height);
 }
 
 MainComponent::~MainComponent()

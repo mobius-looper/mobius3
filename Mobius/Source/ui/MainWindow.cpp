@@ -45,7 +45,9 @@ MainWindow::MainWindow(Supervisor* super)
 
     addChildComponent(infoPanel);
     addChildComponent(aboutPanel);
-
+    
+    addAndMakeVisible(colorSelector);
+    
 
 #ifdef USE_FFMETERS
     addAndMakeVisible(levelMeter);
@@ -99,6 +101,8 @@ void MainWindow::resized()
 #ifdef USE_FFMETERS
     levelMeter.setBounds(20, 20, 200, 600);
 #endif
+
+    colorSelector.setBounds(100, 100, 200, 200);
     
 }
 
@@ -117,6 +121,12 @@ int MainWindow::getPreferredHeight()
     return 800;
 }
 
+#if 0
+void MainWindow::showColourSelector()
+{
+    colorSelector.setVisible();
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -328,6 +338,10 @@ void MainWindow::mainMenuSelection(int id)
  */
 void MainWindow::captureConfiguration(UIConfig* config)
 {
+    config->windowWidth = getWidth();
+    config->windowHeight = getHeight();
+    // todo: should we save the screen origin X/Y?
+    
     display.captureConfiguration(config);
 }
 

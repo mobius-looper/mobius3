@@ -168,6 +168,13 @@ void Supervisor::start()
     // if plugin have to do this later when the editor is created
     if (mainComponent != nullptr) {
         mainComponent->addAndMakeVisible(win);
+        // get the size previoiusly used
+        UIConfig* config = getUIConfig();
+        int width = mainComponent->getWidth();
+        int height = mainComponent->getHeight();
+        if (config->windowWidth > 0) width = config->windowWidth;
+        if (config->windowHeight > 0) height = config->windowHeight;
+        mainComponent->setSize(width, height);
     }
     
     meter("Mobius");

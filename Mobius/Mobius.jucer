@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="TBmN6K" name="Mobius" projectType="guiapp" useAppConfig="0" addUsingNamespaceToJuceHeader="0"
-              displaySplashScreen="1" jucerFormatVersion="1" companyName="Circular Labs"
-              companyWebsite="www.circularlabs.com" companyEmail="jeff@circularlabs.com"
-              bundleIdentifier="com.circularlabs.Mobius3" version="3.0">
+<JUCERPROJECT id="TBmN6K" name="Mobius" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              companyName="Circular Labs" companyWebsite="www.circularlabs.com"
+              companyEmail="jeff@circularlabs.com" bundleIdentifier="com.circularlabs.Mobius3"
+              version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -286,6 +287,9 @@
           <FILE id="xu4lJg" name="StatusElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/StatusElement.cpp"/>
           <FILE id="TnBtCz" name="StatusElement.h" compile="0" resource="0" file="Source/ui/display/StatusElement.h"/>
+          <FILE id="oMVTZT" name="StatusResizer.cpp" compile="1" resource="0"
+                file="Source/ui/display/StatusResizer.cpp"/>
+          <FILE id="QScaaq" name="StatusResizer.h" compile="0" resource="0" file="Source/ui/display/StatusResizer.h"/>
           <FILE id="G2txQx" name="StripElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/StripElement.cpp"/>
           <FILE id="hgDLnu" name="StripElement.h" compile="0" resource="0" file="Source/ui/display/StripElement.h"/>
@@ -305,6 +309,9 @@
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
           <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
+          <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
+                file="Source/ui/common/ColorSelector.cpp"/>
+          <FILE id="ZbSGBN" name="ColorSelector.h" compile="0" resource="0" file="Source/ui/common/ColorSelector.h"/>
           <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
           <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
           <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>

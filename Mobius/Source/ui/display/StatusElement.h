@@ -7,6 +7,8 @@
 
 #include <JuceHeader.h>
 
+#include "StatusResizer.h"
+
 class StatusElement : public juce::Component
 {
   public:
@@ -36,7 +38,8 @@ class StatusElement : public juce::Component
 
   private:
 
-    juce::ResizableBorderComponent resizer {this, nullptr};
+    //juce::ResizableBorderComponent resizer {this, nullptr};
+    StatusResizer resizer {this};
     juce::ComponentDragger dragger;
     bool mouseEntered = false;
     

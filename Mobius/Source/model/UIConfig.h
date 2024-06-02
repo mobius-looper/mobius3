@@ -261,6 +261,10 @@ class UIConfig
     UIConfig();
     ~UIConfig();
 
+    // size of the outer window
+    int windowWidth = 0;
+    int windowHeight = 0;
+
     // the definitions of the elements that can be displayed
     juce::OwnedArray<DisplayElementDefinition> definitions;
 
