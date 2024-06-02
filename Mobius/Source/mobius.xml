@@ -182,8 +182,6 @@
     <Binding name='Record' trigger='control' value='12'/>
   </BindingSet>
   <ScriptConfig>
-    <ScripRef file='c:\dev\jucetest\UI\Source\test\scripts\miditest.mos'/>
-    <ScripRef file='c:\dev\jucetest\UI\Source\test\scripts\message.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav' button='true'/>

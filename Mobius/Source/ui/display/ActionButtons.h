@@ -34,7 +34,7 @@ class ActionButtons : public juce::Component,
     void buttonClicked(juce::Button* b) override;
     void buttonStateChanged(juce::Button* b) override;
     
-    void colorSelectorClosed(juce::Colour color, bool ok);
+    void colorSelectorClosed(juce::Colour color, bool ok) override;
 
   private:
 
