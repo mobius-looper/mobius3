@@ -139,9 +139,9 @@ ActionButton::~ActionButton()
 {
 }
 
-void ActionButton::setColor(juce::Colour c)
+void ActionButton::setColor(int argb)
 {
-    color = c.getARGB();
+    color = argb;
     repaint();
 }
 

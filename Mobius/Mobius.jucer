@@ -246,6 +246,8 @@
                 file="Source/ui/display/BeatersElement.cpp"/>
           <FILE id="WnT2mO" name="BeatersElement.h" compile="0" resource="0"
                 file="Source/ui/display/BeatersElement.h"/>
+          <FILE id="oh9y6k" name="ButtonPopup.cpp" compile="1" resource="0" file="Source/ui/display/ButtonPopup.cpp"/>
+          <FILE id="ZyHj9B" name="ButtonPopup.h" compile="0" resource="0" file="Source/ui/display/ButtonPopup.h"/>
           <FILE id="VuqI7g" name="Colors.cpp" compile="1" resource="0" file="Source/ui/display/Colors.cpp"/>
           <FILE id="iB815e" name="Colors.h" compile="0" resource="0" file="Source/ui/display/Colors.h"/>
           <FILE id="pLW9gm" name="CounterElement.cpp" compile="1" resource="0"

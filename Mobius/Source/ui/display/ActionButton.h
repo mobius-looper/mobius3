@@ -34,8 +34,12 @@ class ActionButton : public juce::TextButton
         return dynamic;
     }
 
+    void setColor(int c);
+    int getColor() {
+        return color;
+    }
+
     void setTriggerId(int id);
-    void setColor(juce::Colour color);
 
     // called by ActionButtons as down/up transitions are detected
     void setDownTracker(bool b, bool rmb);

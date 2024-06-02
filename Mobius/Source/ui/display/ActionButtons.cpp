@@ -18,6 +18,7 @@
 #include "../JuceUtil.h"
 
 #include "ActionButton.h"
+#include "ButtonPopup.h"
 #include "ActionButtons.h"
 #include "MobiusDisplay.h"
 
@@ -357,7 +358,8 @@ void ActionButtons::buttonClicked(juce::Button* src)
     // to buttonClicked, have to check modifiers
     auto modifiers = juce::ModifierKeys::getCurrentModifiers();
     if (modifiers.isRightButtonDown()) {
-        buttonMenu(src);
+        // show the popup editor
+        popup.show(this, (ActionButton*)src);
     }
     else {
         // todo: figure out of dynamic_cast has any performance implications
@@ -477,90 +479,6 @@ void ActionButtons::buttonUp(ActionButton* b)
         }
     }
     b->setDownTracker(false, false);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Button Menu
-//
-// There are several unusual parts to this.  First we need to detect when
-// just the right button is used to click a button. That is done in
-// buttonClicked and buttonStateChanged by checking ModifierKeys.
-//
-// Next we need to open a menu oriented to the current mouse position
-// within the button.  Mouse position is not passed through the usual
-// but you can get it with Component::getMouseXYRelative.
-// 
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Here on a right click.
- * todo: can think of a number of useful things to do here, quick change arguments,
- * change display name, move within the button set...
- *
- * Let's try something different and add/remove the menu from the parent every time
- * rather than keeping it there forever and changing visibility.  Not sure what
- * the difference is, but I'd like config panels to work this way.
- */
-void ActionButtons::buttonMenu(juce::Button* button)
-{
-    //colorSelector.setListener(this);
-    //parent.addAndMakeVisible(colorSelector);
-
-    juce::Point<int> point = getMouseXYRelative();
-    // Trace(2, "Button menu at %d %d\n", point.getX(), point.getY());
-
-    colorSelector.setListener(this);
-    // have to remember what button we were dealing with, though I suppose
-    // we could derive it from the location of the menu when it is closed
-    colorButton = (ActionButton*)button;
-    
-    getParentComponent()->addAndMakeVisible(&colorSelector);
-    colorSelector.setBounds(point.getX(), point.getY(), 200, 200);
-}
-
-/**
- * Locate the DisplayButton this ActionButton came from and remember
- * the color.  The model wasn't designed well to go this direction,
- * to locate the DisplayButton assume the buttons UIAction symbol name
- * matches the action of the DisplayButton.
- */
-void ActionButtons::colorSelectorClosed(juce::Colour color, bool ok)
-{
-    if (ok) {
-        if (colorButton == nullptr) {
-            Trace(1, "ActionButtons: Didn't remember the button to color!\n");
-        }
-        else {
-            // Trace(2, "Color changed\n");
-            UIConfig* config = Supervisor::Instance->getUIConfig();
-            ButtonSet* buttonSet = config->getActiveButtonSet();
-
-            juce::String actionName;
-            UIAction* action = colorButton->getAction();
-            if (action == nullptr) {
-                Trace(1, "ActionButtons: Can't color a button without an action\n");
-            }
-            else if (action->symbol == nullptr) {
-                Trace(1, "ActionButtons: Can't color a button with an unresolved symbol\n");
-            }
-            else {
-                DisplayButton* db = buttonSet->getButton(action->symbol->name);
-                if (db == nullptr) {
-                    Trace(1, "ActionButtons: Can't color unmatched button %s\n", action->symbol->getName());
-                }
-                else {
-                    db->color = color.getARGB();
-                    colorButton->setColor(color);
-                    // always save it or wait for shutdown?
-                }
-            }
-        }
-    }
-
-    // for both ok and cancel, we need to remove it
-    getParentComponent()->removeChildComponent(&colorSelector);
-    colorButton = nullptr;
 }
 
 /****************************************************************************/

@@ -12,14 +12,14 @@
 
 // for DynamicConfigListener
 #include "../../Supervisor.h"
-#include "../common/ColorSelector.h"
-
+#include "ButtonPopup.h"
 #include "ActionButton.h"
 
 class ActionButtons : public juce::Component,
-                      public juce::Button::Listener,
-                      public ColorSelector::Listener
+                      public juce::Button::Listener
 {
+    friend class ButtonPopup;
+    
   public:
 
     ActionButtons(class MobiusDisplay*);
@@ -33,11 +33,17 @@ class ActionButtons : public juce::Component,
     void paint (juce::Graphics& g) override;
     void buttonClicked(juce::Button* b) override;
     void buttonStateChanged(juce::Button* b) override;
-    
-    void colorSelectorClosed(juce::Colour color, bool ok) override;
 
+  protected:
+
+    juce::OwnedArray<class ActionButton>& getButtons() {
+        return buttons;
+    }
+    
   private:
 
+    ButtonPopup popup;
+    
     // experiment with sustainable buttons
     bool enableSustain = true;
 
@@ -53,7 +59,4 @@ class ActionButtons : public juce::Component,
     void assignTriggerIds();
     void buttonUp(ActionButton* b);
 
-    void buttonMenu(juce::Button* b);
-    ColorSelector colorSelector;
-    class ActionButton* colorButton = nullptr;
 };

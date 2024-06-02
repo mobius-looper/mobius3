@@ -1,7 +1,84 @@
 
 #include <JuceHeader.h>
 
+#include "../display/Colors.h"
 #include "ColorSelector.h"
+
+//////////////////////////////////////////////////////////////////////
+//
+// SwatchColorSelector
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Leave off showColourAtTop
+ * default doesn't have editableColour
+ * not sure what editableColour does, maybe only if showColourAtTop is also on?
+ */
+SwatchColorSelector::SwatchColorSelector() :
+    juce::ColourSelector (juce::ColourSelector::ColourSelectorOptions::showAlphaChannel |
+                          //juce::ColourSelector::ColourSelectorOptions::editableColour |
+                          juce::ColourSelector::ColourSelectorOptions::showSliders |
+                          juce::ColourSelector::ColourSelectorOptions::showColourspace)
+{
+    // start with 8 slots
+    for (int i = swatches.size() ; i < 8 ; i++)
+      swatches.add(juce::Colours::black);
+
+    // the first one is always the default color so we can get back to it
+    swatches.set(0, juce::Colour(MobiusBlue));
+}
+
+void  SwatchColorSelector::addSwatch(int argb)
+{
+    // default color is already there
+    if (argb != 0) {
+        juce::Colour c = juce::Colour(argb);
+        bool found = false;
+        int empty = -1;
+        for (int i = 0 ; i < swatches.size() ; i++) {
+            if (swatches[i] == c) {
+                found = true;
+                break;
+            }
+            else if (empty < 0 && swatches[i] == juce::Colours::black)
+              empty = i;
+        }
+
+        if (!found) {
+            if (empty >= 0) {
+                swatches.set(empty, c);
+            }
+            else {
+                // so many colors, must have more
+                swatches.add(c);
+                swatches.add(juce::Colours::black);
+            }
+        }
+    }
+}
+
+int SwatchColorSelector::getNumSwatches() const
+{
+    return swatches.size();
+}
+
+juce::Colour SwatchColorSelector::getSwatchColour(int index) const
+{
+    juce::Colour c = swatches[index];
+    return c;
+}
+
+void SwatchColorSelector::setSwatchColour(int index, const juce::Colour &c)
+{
+    swatches.set(index, c);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ColorSelector
+//
+//////////////////////////////////////////////////////////////////////
 
 ColorSelector::ColorSelector(Listener* l)
 {
@@ -23,6 +100,16 @@ void ColorSelector::setListener(Listener* l)
 
 ColorSelector::~ColorSelector()
 {
+}
+
+void ColorSelector::setColor(int argb)
+{
+    selector.setCurrentColour(juce::Colour(argb));
+}
+
+void ColorSelector::setColor(juce::Colour c)
+{
+    selector.setCurrentColour(c);
 }
 
 void ColorSelector::resized()
@@ -50,3 +137,7 @@ juce::Colour ColorSelector::getColor()
 {
     return selector.getCurrentColour();
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
