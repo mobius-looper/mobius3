@@ -192,7 +192,7 @@ MobiusShell* TestDriver::getMobiusShell()
 void TestDriver::captureConfiguration(UIConfig* config)
 {
     juce::String testName = controlPanel.getTestName();
-    config->testName = testName;
+    config->put("testName", testName);
 }
 
 void TestDriver::showMidiTransport()

@@ -51,6 +51,7 @@ void PresetPanel::load()
         juce::Array<juce::String> names;
         // clone the Preset list into a local copy
         presets.clear();
+        revertPresets.clear();
         MobiusConfig* config = editor->getMobiusConfig();
         if (config != nullptr) {
             // convert the linked list to an OwnedArray
@@ -205,10 +206,13 @@ void PresetPanel:: deleteObject()
 
 void PresetPanel::revertObject()
 {
-    Preset* reverted = new Preset(revertPresets[selectedPreset]);
-    presets.set(selectedPreset, reverted);
-    // what about the name?
-    loadPreset(selectedPreset);
+    Preset* revert = revertPresets[selectedPreset];
+    if (revert != nullptr) {
+        Preset* reverted = new Preset(revert);
+        presets.set(selectedPreset, reverted);
+        // what about the name?
+        loadPreset(selectedPreset);
+    }
 }
 
 void PresetPanel::renameObject(juce::String newName)

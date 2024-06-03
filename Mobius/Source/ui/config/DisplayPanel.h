@@ -8,6 +8,7 @@
 
 #include "../common/HelpArea.h"
 #include "../../test/BasicTabs.h"
+#include "../../test/BasicInput.h"
 #include "MultiSelectDrag.h"
 
 #include "ConfigPanel.h"
@@ -34,6 +35,7 @@ class DisplayEditor : public juce::Component, public juce::DragAndDropContainer
     MultiSelectDrag dockedStrip;
     MultiSelectDrag floatingStrip;
     MultiSelectDrag instantParameters;
+    BasicInput trackRows {"Track Rows", 20};
     BasicTabs tabs;
     
     HelpArea helpArea;

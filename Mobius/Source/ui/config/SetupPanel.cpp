@@ -58,6 +58,7 @@ void SetupPanel::load()
         juce::Array<juce::String> names;
         // clone the Setup list into a local copy
         setups.clear();
+        revertSetups.clear();
         MobiusConfig* config = editor->getMobiusConfig();
         if (config != nullptr) {
             // convert the linked list to an OwnedArray
@@ -66,6 +67,9 @@ void SetupPanel::load()
                 Setup* s = new Setup(plist);
                 setups.add(s);
                 names.add(juce::String(plist->getName()));
+                // also a copy for the revert list
+                revertSetups.add(new Setup(plist));
+                
                 plist = (Setup*)(plist->getNext());
             }
         }
@@ -139,6 +143,7 @@ void SetupPanel::cancel()
 {
     // delete the copied setups
     setups.clear();
+    revertSetups.clear();
     loaded = false;
     changed = false;
 }
@@ -208,10 +213,13 @@ void SetupPanel:: deleteObject()
 
 void SetupPanel::revertObject()
 {
-    Setup* reverted = new Setup(revertSetups[selectedSetup]);
-    setups.set(selectedSetup, reverted);
-    // what about the name?
-    loadSetup(selectedSetup);
+    Setup* revert = revertSetups[selectedSetup];
+    if (revert != nullptr) {
+        Setup* reverted = new Setup(revert);
+        setups.set(selectedSetup, reverted);
+        // what about the name?
+        loadSetup(selectedSetup);
+    }
 }
 
 void SetupPanel::renameObject(juce::String newName)

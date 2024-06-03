@@ -92,7 +92,7 @@ void TestPanel::show()
     refreshTestButtons();
 
     UIConfig* config = Supervisor::Instance->getUIConfig();
-    testName.setText(config->testName);
+    testName.setText(config->get("testName"));
     
     setVisible(true);
     // log("Test mode activated");

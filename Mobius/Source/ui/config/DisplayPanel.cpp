@@ -296,6 +296,10 @@ DisplayEditor::DisplayEditor()
         tabs.add("Floating Track Strip", &floatingStrip);
         tabs.add("Instant Parameters", &instantParameters);
 
+        // need an extensible name/value editor here or drive
+        // it from a model
+        tabs.add("Properties", &trackRows);
+                 
         addAndMakeVisible(helpArea);
     }
     else {
@@ -340,7 +344,8 @@ void DisplayEditor::load(DisplayLayout* layout)
     instantParameters.clear();
 
     UIConfig* config = Supervisor::Instance->getUIConfig();
-
+    trackRows.setText(config->get("trackRows"));
+    
     initElementSelector(&mainElements, config, layout->mainElements, false);
 
     DisplayStrip* docked = layout->getDockedStrip();
@@ -517,6 +522,11 @@ void DisplayEditor::save(DisplayLayout* layout)
           symbolNames.add(param->getName());
     }
     layout->instantParameters = symbolNames;
+
+    // this one is global
+    UIConfig* config = Supervisor::Instance->getUIConfig();
+    config->put("trackRows", trackRows.getText());
+    
 }
 
 /**

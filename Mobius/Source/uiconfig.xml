@@ -75,4 +75,10 @@
     <Button action="Halfspeed"/>
     <Button action="Multiply"/>
   </ButtonSet>
+  <Properties>
+    <Property name="x" value="value of x"/>
+    <Property name="y" value="42"/>
+    <Property name="z" value="true"/>
+    <Property name="testName" value=""/>
+  </Properties>
 </UIConfig>

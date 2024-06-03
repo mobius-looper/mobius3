@@ -290,11 +290,14 @@ class UIConfig
     juce::OwnedArray<ButtonSet> buttonSets;
     juce::String activeButtonSet;
 
-    // wtf is this?
-    juce::String testName;
-
     // flag set to enable StatusArea borders and titles for arrangement
     bool showBorders = false;
+
+    /**
+     * Arbitrary estensible properties.
+     * Consider moving showBorders in here now
+     */
+    juce::HashMap<juce::String,juce::String> properties;
 
     // flag set whenever this is modified at runtime
     // used during Supervisor shutdown to write the changes to the file
@@ -323,6 +326,16 @@ class UIConfig
     int getButtonSetOrdinal(juce::String name);
     ButtonSet* getActiveButtonSet();
 
+
+    // type casing property getters
+    int getInt(juce::String name);
+    bool getBool(juce::String name);
+    juce::String get(juce::String name);
+    
+    void put(juce::String name, juce::String value);
+    void putInt(juce::String name, int value);
+    void putBool(juce::String name, bool value);
+
     // Build the UIConfig from XML
     void parseXml(juce::String xml);
     juce::String toXml();
@@ -340,6 +353,7 @@ class UIConfig
     DisplayStrip* parseStrip(juce::XmlElement* root);
     ButtonSet* parseButtonSet(juce::XmlElement* root);
     DisplayButton* parseButton(juce::XmlElement* root);
+    void parseProperties(juce::XmlElement* root, juce::HashMap<juce::String,juce::String>& map);
     void xmlError(const char* msg, juce::String arg);
 
     void renderLayout(juce::XmlElement* parent, DisplayLayout* layout);
@@ -347,5 +361,6 @@ class UIConfig
     void renderStrip(juce::XmlElement* parent, DisplayStrip* strip);
     void renderButtonSet(juce::XmlElement* parent, ButtonSet* set);
     void renderButton(juce::XmlElement* parent, DisplayButton* button);
+    void renderProperties(juce::XmlElement* parent, juce::HashMap<juce::String, juce::String>& props);
     
 };

@@ -132,6 +132,42 @@ int UIConfig::getButtonSetOrdinal(juce::String name)
     return ordinal;
 }
 
+//
+// Properties
+//
+
+void UIConfig::put(juce::String name, juce::String value)
+{
+    properties.set(name, value);
+}
+
+void UIConfig::putInt(juce::String name, int value)
+{
+    properties.set(name, juce::String(value));
+}
+
+void UIConfig::putBool(juce::String name, bool value)
+{
+    properties.set(name, (value) ? juce::String("true") : juce::String("false"));
+}
+
+juce::String UIConfig::get(juce::String name)
+{
+    return properties[name];
+}
+
+int UIConfig::getInt(juce::String name)
+{
+    juce::String value = properties[name];
+    return value.getIntValue();
+}
+
+bool UIConfig::getBool(juce::String name)
+{
+    juce::String value = properties[name];
+    return (value == "true") ? true : false;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // DisplayLayout
@@ -278,8 +314,6 @@ void UIConfig::parseXml(juce::String xml)
         
         activeButtonSet = root->getStringAttribute("activeButtonSet");
         activeLayout = root->getStringAttribute("activeLayout");
-        testName = root->getStringAttribute("testName");
-        showBorders = root->getBoolAttribute("showBorders");
         
         for (auto* el : root->getChildIterator()) {
             if (el->hasTagName("Layout")) {
@@ -287,6 +321,10 @@ void UIConfig::parseXml(juce::String xml)
             }
             else if (el->hasTagName("ButtonSet")) {
                 buttonSets.add(parseButtonSet(el));
+            }
+            else if (el->hasTagName("Properties")) {
+                properties.clear();
+                parseProperties(el, properties);
             }
             else {
                 xmlError("Unexpected XML tag name: %s\n", el->getTagName());
@@ -375,6 +413,19 @@ DisplayButton* UIConfig::parseButton(juce::XmlElement* root)
     return button;
 }
 
+void UIConfig::parseProperties(juce::XmlElement* root, juce::HashMap<juce::String,juce::String>& map)
+{
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName("Property")) {
+            juce::String key = el->getStringAttribute("name");
+            juce::String value = el->getStringAttribute("value");
+            if (key.length() > 0) {
+                map.set(key, value);
+            }
+        }
+    }
+}
+
 void UIConfig::xmlError(const char* msg, juce::String arg)
 {
     juce::String fullmsg ("UIConfig: " + juce::String(msg));
@@ -410,9 +461,6 @@ juce::String UIConfig::toXml()
     if (activeLayout.length() > 0)
       root.setAttribute("activeLayout", activeLayout);
     
-    if (testName.length() > 0)
-      root.setAttribute("testName", testName);
-
     if (showBorders)
       root.setAttribute("showBorders", showBorders);
 
@@ -422,9 +470,10 @@ juce::String UIConfig::toXml()
     for (auto set : buttonSets)
       renderButtonSet(&root, set);
 
+    renderProperties(&root, properties);
+
     return root.toString();
 }
-
 
 void UIConfig::renderLayout(juce::XmlElement* parent, DisplayLayout* layout)
 {
@@ -495,6 +544,24 @@ void UIConfig::renderButton(juce::XmlElement* parent, DisplayButton* button)
     if (button->scope.length() > 0) root->setAttribute("scope", button->scope);
     // note that ARGB values with the high bit set will be negative
     if (button->color !=  0) root->setAttribute("color", juce::String(button->color));
+}
+
+void UIConfig::renderProperties(juce::XmlElement* parent, juce::HashMap<juce::String, juce::String>& props)
+{
+    if (props.size() > 0) {
+        juce::XmlElement* root = new juce::XmlElement("Properties");
+        parent->addChildElement(root);
+
+        // figure out what begin() does...
+        // this is from the docs
+        for (juce::HashMap<juce::String,juce::String>::Iterator i (props) ; i.next() ;) {
+            
+            juce::XmlElement* propel = new juce::XmlElement("Property");
+            root->addChildElement(propel);
+            propel->setAttribute("name", i.getKey());
+            propel->setAttribute("value", i.getValue());
+         }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
