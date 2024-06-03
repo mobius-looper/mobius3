@@ -14,27 +14,13 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 3 Changes
+## Build 5 Changes
 
-- The Audio Unit plugin is now available for the Mac
-- Channel numbers in the MidiOut script statement are 0 based rather than 1 based as they were in the original code
-- The script Echo statement only sends the message to the debug output stream, it will not appear in the Message element in the UI
-- An outputMeter was added to the docked track strips at the bottom, this may be removed
-
-## Build 2 Changes
-
-- changing the track count in global parameters works after restart
-- changing loop count in the preset works
-- loop stack now scrolls if there are more loops than 4
-- loop radar displays solid red during initial recording
-- loop radar and loop meter colors track modes (blue=mute, grey=halfspeed, etc.)
-- script configuration table now supports selecting multiple files and directories
-- tracks may now be selected by clicking on them
-- fixed handling of MIDI channels which caused MIDI commands to be ignored
-
-The changes related to MIDI channels will require adjusting any
-existing MIDI bindings to set the proper channel.  The special option "Any"
-was added to mean that the message will be accepted on all channels.
+- Mac install should now support Intel hardware
+- Windows install now uses static Microsoft libraries so you should no longer get errors about missing DLL files
+- Right clicking on a button opens a color selection popup
+- Using the **Revert** button in the Setup and Preset configuration panels no longer crashes
+- Display Configuration panel has been reorganized to make it easier to use
 
 ## Windows Security
 
@@ -49,9 +35,9 @@ the same machine, you will have to reinstall for each user.
 
 The Mac may not allow you to run the .pkg installer after downloading.  A dialog popups up telling you how awful it is not to get Apple's permission to do anything, in the upper right there should be an icon that looks like a question mark.  Click it.  For me this brings up a help window with a link to bring up the security settings page.  Click it.  If not, bring up System Settings and navitage to Privacy & Security.  Scroll down the "Security" section, there should be an entry there with text saying that Mobius.pkg was blocked from use and a button that says "Open Anyway".  Click it.  The package installer should run.
 
-On MacOS, the standalone application will be installed in `/Applications` and the VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`.
-Mac installation is unusual due to issues with the package builder I'm currently using.  The folder `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`
-will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
+On MacOS, the standalone application will be installed in `/Applications`, VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`, and the Audio Units plugin will be installed in `/Library/Audio/Plug-Ins/Components`.
+
+The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
 
 
 
