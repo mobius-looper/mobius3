@@ -10,7 +10,7 @@
 #
 
 # this is where Juce leaves the compiled bundles
-export appsrc=../../UI/Builds/MacOSX/build/Debug/Mobius.app
+export appsrc=../../Mobius/Builds/MacOSX/build/Debug/Mobius.app
 export vstsrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.vst3
 export ausrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.component
 
@@ -33,8 +33,8 @@ mkdir $dest/test/samples
 
 cp ../resources/mobius.xml $dest
 cp ../resources/uiconfig.xml $dest
-cp ../../UI/Source/help.xml $dest
-cp ../../UI/Source/test/samples/gcloop.wav $dest/test/samples
+cp ../../Mobius/Source/help.xml $dest
+cp ../../Mobius/Source/test/samples/gcloop.wav $dest/test/samples
 
 # make the component property list
 # sigh, by default this makes it relocatable which I do not want

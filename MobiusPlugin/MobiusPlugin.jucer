@@ -636,7 +636,8 @@
         <MODULEPATH id="juce_gui_extra" path="../../Juce/juce-7.0.9-windows/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
-    <XCODE_MAC targetFolder="Builds/MacOSX" bigIcon="eHrGZn" smallIcon="eHrGZn">
+    <XCODE_MAC targetFolder="Builds/MacOSX" bigIcon="eHrGZn" smallIcon="eHrGZn"
+               xcodeValidArchs="arm64,x86_64">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/jeff/dev/jucetest/Mobius/Source&#10;"
                        targetName="Mobius"/>
