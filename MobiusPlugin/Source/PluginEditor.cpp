@@ -39,6 +39,11 @@ MobiusPluginAudioProcessorEditor::MobiusPluginAudioProcessorEditor (MobiusPlugin
 
     addAndMakeVisible(rootComponent);
     
+    // first arg is allowHostToResize, second is useBottomRightCornerResizer
+    // first worked in Live/Windows, not sure why the second would be necessary
+    // there is also setResizeLimits that can set min/max sizes
+    setResizable(true, false);
+
     // let the component determine the size of the window
     // did it already do this?
     // default it if it didn't, this is what MainComponent does
@@ -47,6 +52,7 @@ MobiusPluginAudioProcessorEditor::MobiusPluginAudioProcessorEditor (MobiusPlugin
     
     if (width == 0) width = 1200;
     if (height == 0) height = 800;
+
     
     setSize (width, height);
 }
