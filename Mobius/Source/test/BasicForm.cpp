@@ -18,12 +18,21 @@ void BasicForm::setLabelCharWidth(int chars)
     labelCharWidth = chars;
 }
 
+void BasicForm::setLabelColor(juce::Colour c)
+{
+    labelColor = c;
+    labelColorOverride = true;
+}
+
 void BasicForm::add(BasicInput* field, juce::Label::Label::Listener* listener)
 {
     // kludge: need a better way to figure this out, but it's harder when
     // they're added one at a time
     if (labelCharWidth)
       field->setLabelCharWidth(labelCharWidth);
+
+    if (labelColorOverride)
+      field->setLabelColor(labelColor);
     
     fields.add(field);
     addAndMakeVisible(field);

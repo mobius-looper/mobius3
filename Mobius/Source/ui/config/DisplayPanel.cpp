@@ -66,9 +66,6 @@
 
 #include "DisplayPanel.h"
 
-const bool DisplayPanelTabs = true;
-
-
 DisplayPanel::DisplayPanel(ConfigEditor* argEditor) :
     ConfigPanel{argEditor, "Displays", ConfigPanelButton::Save | ConfigPanelButton::Cancel, true}
 {
@@ -287,36 +284,18 @@ DisplayEditor::DisplayEditor()
     dockedStrip.setHelpArea(&helpArea, "displayEditorDock");
     floatingStrip.setHelpArea(&helpArea, "displayEditorFloating");
     instantParameters.setHelpArea(&helpArea, "displayEditorParameters");
-    
-    if (DisplayPanelTabs) {
-        addAndMakeVisible(&tabs);
 
-        tabs.add("Main Elements", &mainElements);
-        tabs.add("Docked Track Strip", &dockedStrip);
-        tabs.add("Floating Track Strip", &floatingStrip);
-        tabs.add("Instant Parameters", &instantParameters);
+    properties.setLabelColor(juce::Colours::white);
+    properties.add(&trackRows);
 
-        // need an extensible name/value editor here or drive
-        // it from a model
-        tabs.add("Properties", &trackRows);
+    tabs.add("Main Elements", &mainElements);
+    tabs.add("Docked Track Strip", &dockedStrip);
+    tabs.add("Floating Track Strip", &floatingStrip);
+    tabs.add("Instant Parameters", &instantParameters);
+    tabs.add("Properties", &properties);
                  
-        addAndMakeVisible(helpArea);
-    }
-    else {
-        mainElements.setLabel(juce::String("Display Elements"));
-        addAndMakeVisible(mainElements);
-        
-        dockedStrip.setLabel(juce::String("Docked Track Strip"));
-        addAndMakeVisible(dockedStrip);
-        
-        floatingStrip.setLabel(juce::String("Floating Track Strip"));
-        addAndMakeVisible(floatingStrip);
-        
-        instantParameters.setLabel(juce::String("Instant Parameters"));
-        addAndMakeVisible(instantParameters);
-        
-        addAndMakeVisible(helpArea);
-    }
+    addAndMakeVisible(&tabs);
+    addAndMakeVisible(helpArea);
 }
 
 DisplayEditor::~DisplayEditor()
@@ -449,45 +428,19 @@ void DisplayEditor::addParameterDisplayName(juce::String name, juce::StringArray
 
 void DisplayEditor::resized()
 {
-    if (DisplayPanelTabs) {
-        juce::Rectangle<int> area = getLocalBounds();
-        int helpHeight = 40;
-        //area.reduced(20);
+    juce::Rectangle<int> area = getLocalBounds();
+    int helpHeight = 40;
+    //area.reduced(20);
 
-        juce::Rectangle<int> helpBounds = area.removeFromBottom(helpHeight);
-        // inset it a little
-        (void)helpBounds.reduced(2);
-        helpArea.setBounds(helpBounds);
+    juce::Rectangle<int> helpBounds = area.removeFromBottom(helpHeight);
+    // inset it a little
+    (void)helpBounds.reduced(2);
+    helpArea.setBounds(helpBounds);
 
-        // start here till we get more in the form
-        // area.removeFromRight(area.getWidth() / 2);
+    // start here till we get more in the form
+    // area.removeFromRight(area.getWidth() / 2);
 
-        tabs.setBounds(area);
-    }
-    else {
-        juce::Rectangle<int> area = getLocalBounds();
-        int helpHeight = 40;
-        //area.reduced(20);
-
-        juce::Rectangle<int> helpBounds = area.removeFromBottom(helpHeight);
-        // inset it a little
-        (void)helpBounds.reduced(2);
-        helpArea.setBounds(helpBounds);
-
-        // start here till we get more in the form
-        area.removeFromRight(area.getWidth() / 2);
-        int unit = area.getHeight() / 4;
-        int gap = 4;
-        int multiHeight = unit - gap;
-    
-        mainElements.setBounds(area.removeFromTop(multiHeight));
-        area.removeFromTop(gap);
-        dockedStrip.setBounds(area.removeFromTop(multiHeight));
-        area.removeFromTop(gap);
-        floatingStrip.setBounds(area.removeFromTop(multiHeight));
-        area.removeFromTop(gap);
-        instantParameters.setBounds(area.removeFromTop(multiHeight));
-    }
+    tabs.setBounds(area);
 }
 
 void DisplayEditor::paint(juce::Graphics& g)

@@ -33,6 +33,7 @@ class TrackStrips : public juce::Component
 
     class MobiusDisplay* display;
     juce::OwnedArray<class TrackStrip> tracks;
+    bool dualTracks = false;
     int dropTarget = -1;
     
     int getDropTarget(int x, int y);

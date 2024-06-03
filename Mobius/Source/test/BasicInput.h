@@ -18,7 +18,9 @@ class BasicInput : public juce::Component
 
     BasicInput(juce::String label, int numChars, bool readOnly = false);
     ~BasicInput();
+    
     void setLabelCharWidth(int chars);
+    void setLabelColor(juce::Colour c);
     
     juce::String getText();
     void setText(juce::String s);

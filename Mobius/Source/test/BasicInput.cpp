@@ -66,6 +66,11 @@ void BasicInput::setLabelCharWidth(int numChars)
     labelCharWidth = numChars;
 }
 
+void BasicInput::setLabelColor(juce::Colour c)
+{
+    label.setColour(juce::Label::textColourId, c);
+}
+
 /**
  * Calculate a reasonable size based on the label and desired number of
  * characters in the text field.

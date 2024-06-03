@@ -47,6 +47,12 @@ void TrackStrips::configure()
             tracks.add(strip);
             addAndMakeVisible(strip);
         }
+
+        // decided to simplify this to just a dualRows boolean since it
+        // can only ever be 1 or 2
+        UIConfig* uiconfig = Supervisor::Instance->getUIConfig();
+        int rows = uiconfig->getInt("trackRows");
+        dualTracks = (rows == 2);
     }
 
     for (auto strip : tracks)
@@ -67,6 +73,12 @@ int TrackStrips::getPreferredHeight()
     // these are all the same so just look at the first one
     if (tracks.size() > 0)
       preferred = tracks[0]->getPreferredHeight();
+
+    if (dualTracks) {
+        // but we can now divide them
+        preferred *= 2;
+    }
+    
     return preferred;
 }
 
@@ -78,29 +90,71 @@ int TrackStrips::getPreferredWidth()
         int oneWidth = tracks[0]->getPreferredWidth();
         preferred = oneWidth * tracks.size();
     }
+
+    if (dualTracks) {
+        // does this actually matter?
+        // the containing window will be whatever it is
+        // and we'll resize accordingly
+        // what we really need here is to have a minimum width
+        // and have dualTracks take effect only if we overflow that
+    }
+    
     return preferred;
 }
 
+/**
+ * These are normally just spread over a single row at the bottom
+ * of the main window.  If dualRows is on, they are split into two rows
+ * which almost no one will want unless they have a very large number of tracks.
+ * Since this will take a large amount of space away from the status area,
+ * I don't think it is very useful.  A viewport that scrolls would be better?
+ */
 void TrackStrips::resized()
 {
     if (tracks.size() > 0) {
-        int height = getHeight();
-        int oneWidth = tracks[0]->getPreferredWidth();
-        int leftOffset = 0;
 
-        // a few options: spread out to fill or compress and center
-        bool spread = true;
-        if (spread) {
-            oneWidth = getWidth() / tracks.size();
+        if (!dualTracks) {
+            // original layout that I know works
+            int height = getHeight();
+            int oneWidth = tracks[0]->getPreferredWidth();
+            int leftOffset = 0;
+
+            // a few options: spread out to fill or compress and center
+            bool spread = true;
+            if (spread) {
+                oneWidth = getWidth() / tracks.size();
+            }
+            else {
+                int indent = (getWidth() - (oneWidth * tracks.size()) / 2);
+                leftOffset = (indent >= 0) ? indent : 0;
+            }
+        
+            for (auto strip : tracks) {
+                strip->setBounds(leftOffset, 0, oneWidth, height);
+                leftOffset += oneWidth;
+            }
         }
         else {
-            int indent = (getWidth() - (oneWidth * tracks.size()) / 2);
-            leftOffset = (indent >= 0) ? indent : 0;
-        }
-        
-        for (auto strip : tracks) {
-            strip->setBounds(leftOffset, 0, oneWidth, height);
-            leftOffset += oneWidth;
+            // experimental multi-row layout
+            int rowHeight = getHeight() / 2;
+            int oneWidth = tracks[0]->getPreferredWidth();
+            int leftOffset = 0;
+            int topOffset = 0;
+            int firstRow = getWidth() / oneWidth;
+
+            for (int i = 0 ; i < tracks.size() ; i++) {
+                TrackStrip* strip = tracks[i];
+                strip->setBounds(leftOffset, topOffset, oneWidth, rowHeight);
+                leftOffset += oneWidth;
+                if (i == firstRow - 1) {
+                    // move to the next row and make the remaining fit
+                    topOffset += rowHeight;
+                    leftOffset = 0;
+                    int remaining = tracks.size() - i - 1;
+                    oneWidth = getWidth() / remaining;
+                }
+
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1565" windowHeight="800" activeButtonSet="Default"
+<UIConfig windowWidth="1670" windowHeight="800" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
@@ -80,5 +80,6 @@
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>
     <Property name="testName" value=""/>
+    <Property name="trackRows" value="1"/>
   </Properties>
 </UIConfig>
