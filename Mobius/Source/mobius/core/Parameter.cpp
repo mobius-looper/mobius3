@@ -69,8 +69,8 @@ Parameter::Parameter()
     init();
 }
 
-Parameter::Parameter(const char* name, int key) :
-    SystemConstant(name, key)
+Parameter::Parameter(const char* name) :
+    SystemConstant(name)
 {
     init();
 }

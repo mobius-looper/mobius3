@@ -53,8 +53,8 @@ class PresetParameter : public Parameter
 {
   public:
 
-    PresetParameter(const char* name, int key) :
-        Parameter(name, key) {
+    PresetParameter(const char* name) :
+        Parameter(name) {
         scope = PARAM_SCOPE_PRESET;
     }
 
@@ -159,7 +159,7 @@ class SubCycleParameterType : public PresetParameter
 };
 
 SubCycleParameterType::SubCycleParameterType() :
-    PresetParameter("subcycles", MSG_PARAM_SUBCYCLES)
+    PresetParameter("subcycles")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -213,7 +213,7 @@ int MULTIPLY_MODE_KEYS[] = {
 };
 
 MultiplyModeParameterType::MultiplyModeParameterType() :
-    PresetParameter("multiplyMode", MSG_PARAM_MULTIPLY_MODE)
+    PresetParameter("multiplyMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -281,7 +281,7 @@ int SHUFFLE_MODE_KEYS[] = {
 };
 
 ShuffleModeParameterType::ShuffleModeParameterType() :
-    PresetParameter("shuffleMode", MSG_PARAM_SHUFFLE_MODE)
+    PresetParameter("shuffleMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -322,7 +322,7 @@ class AltFeedbackEnableParameterType : public PresetParameter
 };
 
 AltFeedbackEnableParameterType::AltFeedbackEnableParameterType() :
-    PresetParameter("altFeedbackEnable", MSG_PARAM_ALT_FEEDBACK_ENABLE)
+    PresetParameter("altFeedbackEnable")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -373,7 +373,7 @@ int EMPTY_LOOP_KEYS[] = {
 };
 
 EmptyLoopActionParameterType::EmptyLoopActionParameterType() :
-    PresetParameter("emptyLoopAction", MSG_PARAM_EMPTY_LOOP_ACTION)
+    PresetParameter("emptyLoopAction")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -425,7 +425,7 @@ class EmptyTrackActionParameterType : public PresetParameter
 };
 
 EmptyTrackActionParameterType::EmptyTrackActionParameterType() :
-    PresetParameter("emptyTrackAction", MSG_PARAM_EMPTY_TRACK_ACTION)
+    PresetParameter("emptyTrackAction")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -477,7 +477,7 @@ int TRACK_LEAVE_KEYS[] = {
 };
 
 TrackLeaveActionParameterType::TrackLeaveActionParameterType() :
-    PresetParameter("trackLeaveAction", MSG_PARAM_TRACK_LEAVE_ACTION)
+    PresetParameter("trackLeaveAction")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -517,7 +517,7 @@ class LoopCountParameterType : public PresetParameter
 };
 
 LoopCountParameterType::LoopCountParameterType() :
-    PresetParameter("loopCount", MSG_PARAM_LOOP_COUNT)
+    PresetParameter("loopCount")
 {
     // not bindable
 	type = TYPE_INT;
@@ -576,7 +576,7 @@ int MUTE_MODE_KEYS[] = {
 };
 
 MuteModeParameterType::MuteModeParameterType() :
-    PresetParameter("muteMode", MSG_PARAM_MUTE_MODE)
+    PresetParameter("muteMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -636,7 +636,7 @@ int MUTE_CANCEL_KEYS[] = {
 };
 
 MuteCancelParameterType::MuteCancelParameterType() :
-    PresetParameter("muteCancel", MSG_PARAM_MUTE_CANCEL)
+    PresetParameter("muteCancel")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -682,7 +682,7 @@ class OverdubQuantizedParameterType : public PresetParameter
 };
 
 OverdubQuantizedParameterType::OverdubQuantizedParameterType() :
-    PresetParameter("overdubQuantized", MSG_PARAM_OVERDUB_QUANTIZED)
+    PresetParameter("overdubQuantized")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -735,7 +735,7 @@ int QUANTIZE_MODE_KEYS[] = {
 };
 
 QuantizeParameterType::QuantizeParameterType() :
-    PresetParameter("quantize", MSG_PARAM_QUANTIZE_MODE)
+    PresetParameter("quantize")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -776,7 +776,7 @@ class BounceQuantizeParameterType : public PresetParameter
 };
 
 BounceQuantizeParameterType::BounceQuantizeParameterType() :
-    PresetParameter("bounceQuantize", MSG_PARAM_BOUNCE_QUANTIZE)
+    PresetParameter("bounceQuantize")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -817,7 +817,7 @@ class RecordResetsFeedbackParameterType : public PresetParameter
 };
 
 RecordResetsFeedbackParameterType::RecordResetsFeedbackParameterType() :
-    PresetParameter("recordResetsFeedback", MSG_PARAM_RECORD_FEEDBACK)
+    PresetParameter("recordResetsFeedback")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -856,7 +856,7 @@ class SpeedRecordParameterType : public PresetParameter
 };
 
 SpeedRecordParameterType::SpeedRecordParameterType() :
-    PresetParameter("speedRecord", MSG_PARAM_SPEED_RECORD)
+    PresetParameter("speedRecord")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -896,7 +896,7 @@ class RoundingOverdubParameterType : public PresetParameter
 };
 
 RoundingOverdubParameterType::RoundingOverdubParameterType() :
-    PresetParameter("roundingOverdub", MSG_PARAM_ROUND_MODE)
+    PresetParameter("roundingOverdub")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -951,7 +951,7 @@ int SWITCH_LOCATION_KEYS[] = {
 };
 
 SwitchLocationParameterType::SwitchLocationParameterType() :
-    PresetParameter("switchLocation", MSG_PARAM_SWITCH_LOCATION)
+    PresetParameter("switchLocation")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -992,7 +992,7 @@ class ReturnLocationParameterType : public PresetParameter
 };
 
 ReturnLocationParameterType::ReturnLocationParameterType() :
-    PresetParameter("returnLocation", MSG_PARAM_RETURN_LOCATION)
+    PresetParameter("returnLocation")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1046,7 +1046,7 @@ int SWITCH_DURATION_KEYS[] = {
 };
 
 SwitchDurationParameterType::SwitchDurationParameterType() :
-    PresetParameter("switchDuration", MSG_PARAM_SWITCH_DURATION)
+    PresetParameter("switchDuration")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1104,7 +1104,7 @@ int SWITCH_QUANT_KEYS[] = {
 };
 
 SwitchQuantizeParameterType::SwitchQuantizeParameterType() :
-    PresetParameter("switchQuantize", MSG_PARAM_SWITCH_QUANTIZE)
+    PresetParameter("switchQuantize")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1159,7 +1159,7 @@ int COPY_MODE_KEYS[] = {
 };
 
 TimeCopyParameterType::TimeCopyParameterType() :
-    PresetParameter("timeCopyMode", MSG_PARAM_TIME_COPY_MODE)
+    PresetParameter("timeCopyMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1200,7 +1200,7 @@ class SoundCopyParameterType : public PresetParameter
 };
 
 SoundCopyParameterType::SoundCopyParameterType() :
-    PresetParameter("soundCopyMode", MSG_PARAM_SOUND_COPY_MODE)
+    PresetParameter("soundCopyMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1241,7 +1241,7 @@ class RecordThresholdParameterType : public PresetParameter
 };
 
 RecordThresholdParameterType::RecordThresholdParameterType() :
-    PresetParameter("recordThreshold", MSG_PARAM_RECORD_THRESHOLD)
+    PresetParameter("recordThreshold")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -1284,7 +1284,7 @@ class SwitchVelocityParameterType : public PresetParameter
 };
 
 SwitchVelocityParameterType::SwitchVelocityParameterType() :
-    PresetParameter("switchVelocity", MSG_PARAM_SWITCH_VELOCITY)
+    PresetParameter("switchVelocity")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -1323,7 +1323,7 @@ class MaxUndoParameterType : public PresetParameter
 };
 
 MaxUndoParameterType::MaxUndoParameterType() :
-    PresetParameter("maxUndo", MSG_PARAM_MAX_UNDO)
+    PresetParameter("maxUndo")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -1363,7 +1363,7 @@ class MaxRedoParameterType : public PresetParameter
 };
 
 MaxRedoParameterType::MaxRedoParameterType() :
-    PresetParameter("maxRedo", MSG_PARAM_MAX_REDO)
+    PresetParameter("maxRedo")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -1402,7 +1402,7 @@ class NoFeedbackUndoParameterType : public PresetParameter
 };
 
 NoFeedbackUndoParameterType::NoFeedbackUndoParameterType() :
-    PresetParameter("noFeedbackUndo", MSG_PARAM_NO_FEEDBACK_UNDO)
+    PresetParameter("noFeedbackUndo")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1441,7 +1441,7 @@ class NoLayerFlatteningParameterType : public PresetParameter
 };
 
 NoLayerFlatteningParameterType::NoLayerFlatteningParameterType() :
-    PresetParameter("noLayerFlattening", MSG_PARAM_NO_LAYER_FLATTENING)
+    PresetParameter("noLayerFlattening")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1479,7 +1479,7 @@ class SpeedSequenceParameterType : public PresetParameter
 };
 
 SpeedSequenceParameterType::SpeedSequenceParameterType() :
-    PresetParameter("speedSequence", MSG_PARAM_SPEED_SEQUENCE)
+    PresetParameter("speedSequence")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1517,7 +1517,7 @@ class SpeedShiftRestartParameterType : public PresetParameter
 };
 
 SpeedShiftRestartParameterType::SpeedShiftRestartParameterType() :
-    PresetParameter("speedShiftRestart", MSG_PARAM_SPEED_SHIFT_RESTART)
+    PresetParameter("speedShiftRestart")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -1557,7 +1557,7 @@ class PitchSequenceParameterType : public PresetParameter
 };
 
 PitchSequenceParameterType::PitchSequenceParameterType() :
-    PresetParameter("pitchSequence", MSG_PARAM_PITCH_SEQUENCE)
+    PresetParameter("pitchSequence")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1594,7 +1594,7 @@ class PitchShiftRestartParameterType : public PresetParameter
 };
 
 PitchShiftRestartParameterType::PitchShiftRestartParameterType() :
-    PresetParameter("pitchShiftRestart", MSG_PARAM_PITCH_SHIFT_RESTART)
+    PresetParameter("pitchShiftRestart")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -1633,7 +1633,7 @@ class SpeedStepRangeParameterType : public PresetParameter
 };
 
 SpeedStepRangeParameterType::SpeedStepRangeParameterType() :
-    PresetParameter("speedStepRange", MSG_PARAM_SPEED_STEP_RANGE)
+    PresetParameter("speedStepRange")
 {
     // not worth bindable ?
 	type = TYPE_INT;
@@ -1668,7 +1668,7 @@ class SpeedBendRangeParameterType : public PresetParameter
 };
 
 SpeedBendRangeParameterType::SpeedBendRangeParameterType() :
-    PresetParameter("speedBendRange", MSG_PARAM_SPEED_BEND_RANGE)
+    PresetParameter("speedBendRange")
 {
     // not worth bindable?
 	type = TYPE_INT;
@@ -1703,7 +1703,7 @@ class PitchStepRangeParameterType : public PresetParameter
 };
 
 PitchStepRangeParameterType::PitchStepRangeParameterType() :
-    PresetParameter("pitchStepRange", MSG_PARAM_PITCH_STEP_RANGE)
+    PresetParameter("pitchStepRange")
 {
     // not worth bindable?
 	type = TYPE_INT;
@@ -1741,7 +1741,7 @@ class PitchBendRangeParameterType : public PresetParameter
 };
 
 PitchBendRangeParameterType::PitchBendRangeParameterType() :
-    PresetParameter("pitchBendRange", MSG_PARAM_PITCH_BEND_RANGE)
+    PresetParameter("pitchBendRange")
 {
     // not worth bindable?
 	type = TYPE_INT;
@@ -1779,7 +1779,7 @@ class TimeStretchRangeParameterType : public PresetParameter
 };
 
 TimeStretchRangeParameterType::TimeStretchRangeParameterType() :
-    PresetParameter("timeStretchRange", MSG_PARAM_TIME_STRETCH_RANGE)
+    PresetParameter("timeStretchRange")
 {
     // not worth bindable?
 	type = TYPE_INT;
@@ -1832,7 +1832,7 @@ int SLIP_MODE_KEYS[] = {
 };
 
 SlipModeParameterType::SlipModeParameterType() :
-    PresetParameter("slipMode", MSG_PARAM_SLIP_MODE)
+    PresetParameter("slipMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1878,7 +1878,7 @@ class SlipTimeParameterType : public PresetParameter
 };
 
 SlipTimeParameterType::SlipTimeParameterType() :
-    PresetParameter("slipTime", MSG_PARAM_SLIP_TIME)
+    PresetParameter("slipTime")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -1921,7 +1921,7 @@ class AutoRecordTempoParameterType : public PresetParameter
 };
 
 AutoRecordTempoParameterType::AutoRecordTempoParameterType() :
-    PresetParameter("autoRecordTempo", MSG_PARAM_AUTO_RECORD_TEMPO)
+    PresetParameter("autoRecordTempo")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -1961,7 +1961,7 @@ class AutoRecordBarsParameterType : public PresetParameter
 };
 
 AutoRecordBarsParameterType::AutoRecordBarsParameterType() :
-    PresetParameter("autoRecordBars", MSG_PARAM_AUTO_RECORD_BARS)
+    PresetParameter("autoRecordBars")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -2006,7 +2006,7 @@ class SustainFunctionsParameterType : public PresetParameter
 };
 
 SustainFunctionsParameterType::SustainFunctionsParameterType() :
-    PresetParameter("sustainFunctions", MSG_PARAM_SUSTAIN_FUNCTIONS)
+    PresetParameter("sustainFunctions")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2074,7 +2074,7 @@ int RECORD_TRANSFER_KEYS[] = {
 };
 
 RecordTransferParameterType::RecordTransferParameterType() :
-    PresetParameter("recordTransfer", MSG_PARAM_RECORD_TRANSFER)
+    PresetParameter("recordTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2129,7 +2129,7 @@ int MODE_TRANSFER_KEYS[] = {
 };
 
 OverdubTransferParameterType::OverdubTransferParameterType() :
-    PresetParameter("overdubTransfer", MSG_PARAM_OVERDUB_TRANSFER)
+    PresetParameter("overdubTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2172,7 +2172,7 @@ class ReverseTransferParameterType : public PresetParameter
 };
 
 ReverseTransferParameterType::ReverseTransferParameterType() :
-    PresetParameter("reverseTransfer", MSG_PARAM_REVERSE_TRANSFER)
+    PresetParameter("reverseTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2215,7 +2215,7 @@ class SpeedTransferParameterType : public PresetParameter
 };
 
 SpeedTransferParameterType::SpeedTransferParameterType() :
-    PresetParameter("speedTransfer", MSG_PARAM_SPEED_TRANSFER)
+    PresetParameter("speedTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2259,7 +2259,7 @@ class PitchTransferParameterType : public PresetParameter
 };
 
 PitchTransferParameterType::PitchTransferParameterType() :
-    PresetParameter("pitchTransfer", MSG_PARAM_PITCH_TRANSFER)
+    PresetParameter("pitchTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2315,7 +2315,7 @@ int WINDOW_SLIDE_KEYS[] = {
 };
 
 WindowSlideUnitParameterType::WindowSlideUnitParameterType() :
-    PresetParameter("windowSlideUnit", MSG_PARAM_WINDOW_SLIDE_UNIT)
+    PresetParameter("windowSlideUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2369,7 +2369,7 @@ int WINDOW_EDGE_KEYS[] = {
 };
 
 WindowEdgeUnitParameterType::WindowEdgeUnitParameterType() :
-    PresetParameter("windowEdgeUnit", MSG_PARAM_WINDOW_EDGE_UNIT)
+    PresetParameter("windowEdgeUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -2410,7 +2410,7 @@ class WindowSlideAmountParameterType : public PresetParameter
 };
 
 WindowSlideAmountParameterType::WindowSlideAmountParameterType() :
-    PresetParameter("windowSlideAmount", MSG_PARAM_WINDOW_SLIDE_AMOUNT)
+    PresetParameter("windowSlideAmount")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -2453,7 +2453,7 @@ class WindowEdgeAmountParameterType : public PresetParameter
 };
 
 WindowEdgeAmountParameterType::WindowEdgeAmountParameterType() :
-    PresetParameter("windowEdgeAmount", MSG_PARAM_WINDOW_EDGE_AMOUNT)
+    PresetParameter("windowEdgeAmount")
 {
     bindable = true;
 	type = TYPE_INT;

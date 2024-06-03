@@ -37,7 +37,7 @@ MobiusMode::MobiusMode()
 }
 
 MobiusMode::MobiusMode(const char* name, int key) :
-    SystemConstant(name, key)
+    SystemConstant(name)
 {
     init();
 }

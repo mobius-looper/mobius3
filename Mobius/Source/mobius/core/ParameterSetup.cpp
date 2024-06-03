@@ -51,8 +51,8 @@ class SetupParameter : public Parameter
 {
   public:
 
-    SetupParameter(const char* name, int key) :
-        Parameter(name, key) {
+    SetupParameter(const char* name) :
+        Parameter(name) {
         scope = PARAM_SCOPE_SETUP;
     }
 
@@ -180,7 +180,7 @@ int DEFAULT_SYNC_SOURCE_KEYS[] = {
 };
 
 DefaultSyncSourceParameterType::DefaultSyncSourceParameterType() :
-    SetupParameter("defaultSyncSource", MSG_PARAM_DEFAULT_SYNC_SOURCE)
+    SetupParameter("defaultSyncSource")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -243,7 +243,7 @@ int DEFAULT_TRACK_SYNC_UNIT_KEYS[] = {
 };
 
 DefaultTrackSyncUnitParameterType::DefaultTrackSyncUnitParameterType() :
-    SetupParameter("defaultTrackSyncUnit", MSG_PARAM_DEFAULT_TRACK_SYNC_UNIT)
+    SetupParameter("defaultTrackSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -305,7 +305,7 @@ int SYNC_UNIT_KEYS[] = {
 };
 
 SlaveSyncUnitParameterType::SlaveSyncUnitParameterType() :
-    SetupParameter("slaveSyncUnit", MSG_PARAM_SYNC_UNIT)
+    SetupParameter("slaveSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -347,7 +347,7 @@ class ManualStartParameterType : public SetupParameter
 };
 
 ManualStartParameterType::ManualStartParameterType() :
-    SetupParameter("manualStart", MSG_PARAM_MANUAL_START)
+    SetupParameter("manualStart")
 {
     bindable = true;
 	type = TYPE_BOOLEAN;
@@ -386,7 +386,7 @@ class MinTempoParameterType : public SetupParameter
 };
 
 MinTempoParameterType::MinTempoParameterType() :
-    SetupParameter("minTempo", MSG_PARAM_MIN_TEMPO)
+    SetupParameter("minTempo")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -426,7 +426,7 @@ class MaxTempoParameterType : public SetupParameter
 };
 
 MaxTempoParameterType::MaxTempoParameterType() :
-    SetupParameter("maxTempo", MSG_PARAM_MAX_TEMPO)
+    SetupParameter("maxTempo")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -466,7 +466,7 @@ class BeatsPerBarParameterType : public SetupParameter
 };
 
 BeatsPerBarParameterType::BeatsPerBarParameterType() :
-    SetupParameter("beatsPerBar", MSG_PARAM_BEATS_PER_BAR)
+    SetupParameter("beatsPerBar")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -518,7 +518,7 @@ int MUTE_SYNC_KEYS[] = {
 };
 
 MuteSyncModeParameterType::MuteSyncModeParameterType() :
-    SetupParameter("muteSyncMode", MSG_PARAM_MUTE_SYNC_MODE)
+    SetupParameter("muteSyncMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -569,7 +569,7 @@ int SYNC_ADJUST_KEYS[] = {
 };
 
 ResizeSyncAdjustParameterType::ResizeSyncAdjustParameterType() :
-    SetupParameter("resizeSyncAdjust", MSG_PARAM_RESIZE_SYNC_ADJUST)
+    SetupParameter("resizeSyncAdjust")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -611,7 +611,7 @@ class SpeedSyncAdjustParameterType : public SetupParameter
 };
 
 SpeedSyncAdjustParameterType::SpeedSyncAdjustParameterType() :
-    SetupParameter("speedSyncAdjust", MSG_PARAM_SPEED_SYNC_ADJUST)
+    SetupParameter("speedSyncAdjust")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -665,7 +665,7 @@ int REALIGN_TIME_KEYS[] = {
 };
 
 RealignTimeParameterType::RealignTimeParameterType() :
-    SetupParameter("realignTime", MSG_PARAM_REALIGN_TIME)
+    SetupParameter("realignTime")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -716,7 +716,7 @@ int REALIGN_MODE_KEYS[] = {
 };
 
 OutRealignModeParameterType::OutRealignModeParameterType() :
-    SetupParameter("outRealign", MSG_PARAM_OUT_REALIGN_MODE)
+    SetupParameter("outRealign")
 {
     bindable = true;
 	type = TYPE_ENUM;

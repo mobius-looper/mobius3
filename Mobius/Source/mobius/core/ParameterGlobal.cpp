@@ -58,8 +58,8 @@
 class GlobalParameter : public Parameter {
   public:
 
-    GlobalParameter(const char* name, int key) :
-        Parameter(name, key) {
+    GlobalParameter(const char* name) :
+        Parameter(name) {
         scope = PARAM_SCOPE_GLOBAL;
         mComplained = false;
     }
@@ -207,7 +207,7 @@ class SetupNameParameterType : public GlobalParameter
 
 SetupNameParameterType::SetupNameParameterType() :
     // this must match the TargetSetup name
-    GlobalParameter("setup", MSG_PARAM_SETUP)
+    GlobalParameter("setup")
 {
 	type = TYPE_STRING;
     bindable = true;
@@ -343,7 +343,7 @@ class SetupNumberParameterType : public GlobalParameter
 Parameter* SetupNumberParameter = new SetupNumberParameterType();
 
 SetupNumberParameterType::SetupNumberParameterType() :
-    GlobalParameter("setupNumber", MSG_PARAM_SETUP_NUMBER)
+    GlobalParameter("setupNumber")
 {
 	type = TYPE_INT;
     // not displayed in the UI, don't include it in the XML
@@ -407,7 +407,7 @@ class TrackParameterType : public GlobalParameter
 TrackParameterType::TrackParameterType() :
 	// changed from "track" to "selectedTrack" to avoid ambiguity
 	// with the read-only variable
-    GlobalParameter("selectedTrack", MSG_PARAM_TRACK)
+    GlobalParameter("selectedTrack")
 {
 	type = TYPE_INT;
 	low = 1;
@@ -498,7 +498,7 @@ class BindingsParameterType : public GlobalParameter
 BindingsParameterType::BindingsParameterType() :
     // formerly "midiConfig" but don't bother with an alias
     // this must match the TargetBindings name
-    GlobalParameter("bindings", MSG_PARAM_BINDINGS)
+    GlobalParameter("bindings")
 {
 	type = TYPE_STRING;
     bindable = true;
@@ -648,7 +648,7 @@ class FadeFramesParameterType : public GlobalParameter
 };
 
 FadeFramesParameterType::FadeFramesParameterType() :
-    GlobalParameter("fadeFrames", MSG_PARAM_FADE_FRAMES)
+    GlobalParameter("fadeFrames")
 {
     // not bindable
 	type = TYPE_INT;
@@ -699,7 +699,7 @@ class MaxSyncDriftParameterType : public GlobalParameter
 };
 
 MaxSyncDriftParameterType::MaxSyncDriftParameterType() :
-    GlobalParameter("maxSyncDrift", MSG_PARAM_SYNC_DRIFT)
+    GlobalParameter("maxSyncDrift")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -767,7 +767,7 @@ const char* DRIFT_CHECK_POINT_NAMES[] = {
 };
 
 DriftCheckPointParameterType::DriftCheckPointParameterType() :
-    GlobalParameter("driftCheckPoint", 0)
+    GlobalParameter("driftCheckPoint")
 {
     // don't bother making this bindable
 	type = TYPE_ENUM;
@@ -825,7 +825,7 @@ class NoiseFloorParameterType : public GlobalParameter
 };
 
 NoiseFloorParameterType::NoiseFloorParameterType() :
-    GlobalParameter("noiseFloor", MSG_PARAM_NOISE_FLOOR)
+    GlobalParameter("noiseFloor")
 {
     // not bindable
 	type = TYPE_INT;
@@ -860,7 +860,7 @@ class PluginPortsParameterType : public GlobalParameter
 };
 
 PluginPortsParameterType::PluginPortsParameterType() :
-    GlobalParameter("pluginPorts", MSG_PARAM_PLUGIN_PORTS)
+    GlobalParameter("pluginPorts")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -895,7 +895,7 @@ class MidiExportParameterType : public GlobalParameter
 };
 
 MidiExportParameterType::MidiExportParameterType() : 
-    GlobalParameter("midiExport", MSG_PARAM_MIDI_EXPORT)
+    GlobalParameter("midiExport")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -926,7 +926,7 @@ class HostMidiExportParameterType : public GlobalParameter
 };
 
 HostMidiExportParameterType::HostMidiExportParameterType() :
-    GlobalParameter("hostMidiExport", MSG_PARAM_HOST_MIDI_EXPORT)
+    GlobalParameter("hostMidiExport")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -960,7 +960,7 @@ class LongPressParameterType : public GlobalParameter
 };
 
 LongPressParameterType::LongPressParameterType() :
-    GlobalParameter("longPress", MSG_PARAM_LONG_PRESS)
+    GlobalParameter("longPress")
 {
     // not bindable
 	type = TYPE_INT;
@@ -995,7 +995,7 @@ class SpreadRangeParameterType : public GlobalParameter
 };
 
 SpreadRangeParameterType::SpreadRangeParameterType() :
-    GlobalParameter("spreadRange", MSG_PARAM_SPREAD_RANGE)
+    GlobalParameter("spreadRange")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -1040,7 +1040,7 @@ class TraceDebugLevelParameterType : public GlobalParameter
 };
 
 TraceDebugLevelParameterType::TraceDebugLevelParameterType() :
-    GlobalParameter("traceDebugLevel", MSG_PARAM_TRACE_DEBUG_LEVEL)
+    GlobalParameter("traceDebugLevel")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -1094,7 +1094,7 @@ class TracePrintLevelParameterType : public GlobalParameter
 };
 
 TracePrintLevelParameterType::TracePrintLevelParameterType() :
-    GlobalParameter("tracePrintLevel", MSG_PARAM_TRACE_PRINT_LEVEL)
+    GlobalParameter("tracePrintLevel")
 {
     // not worth bindable
 	type = TYPE_INT;
@@ -1148,7 +1148,7 @@ class CustomModeParameterType : public GlobalParameter
 };
 
 CustomModeParameterType::CustomModeParameterType() :
-    GlobalParameter("customMode", MSG_PARAM_CUSTOM_MODE)
+    GlobalParameter("customMode")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1200,7 +1200,7 @@ class AutoFeedbackReductionParameterType : public GlobalParameter
 };
 
 AutoFeedbackReductionParameterType::AutoFeedbackReductionParameterType() :
-    GlobalParameter("autoFeedbackReduction", MSG_PARAM_AUTO_FEEDBACK_REDUCTION)
+    GlobalParameter("autoFeedbackReduction")
 {
     // not worth bindable
     type = TYPE_BOOLEAN;
@@ -1258,7 +1258,7 @@ class IsolateOverdubsParameterType : public GlobalParameter
 };
 
 IsolateOverdubsParameterType::IsolateOverdubsParameterType() :
-    GlobalParameter("isolateOverdubs", MSG_PARAM_ISOLATE_OVERDUBS)
+    GlobalParameter("isolateOverdubs")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1292,7 +1292,7 @@ class MonitorAudioParameterType : public GlobalParameter
 };
 
 MonitorAudioParameterType::MonitorAudioParameterType() :
-    GlobalParameter("monitorAudio", MSG_PARAM_MONITOR_AUDIO)
+    GlobalParameter("monitorAudio")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1347,7 +1347,7 @@ class SaveLayersParameterType : public GlobalParameter
 };
 
 SaveLayersParameterType::SaveLayersParameterType() :
-    GlobalParameter("saveLayers", MSG_PARAM_SAVE_LAYERS)
+    GlobalParameter("saveLayers")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1380,7 +1380,7 @@ class QuickSaveParameterType : public GlobalParameter
 };
 
 QuickSaveParameterType::QuickSaveParameterType() :
-    GlobalParameter("quickSave", MSG_PARAM_QUICK_SAVE)
+    GlobalParameter("quickSave")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1413,7 +1413,7 @@ class UnitTestsParameterType : public GlobalParameter
 };
 
 UnitTestsParameterType::UnitTestsParameterType() :
-    GlobalParameter("unitTests", MSG_PARAM_UNIT_TESTS)
+    GlobalParameter("unitTests")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1448,7 +1448,7 @@ class IntegerWaveFileParameterType : public GlobalParameter
 };
 
 IntegerWaveFileParameterType::IntegerWaveFileParameterType() :
-    GlobalParameter("16BitWaveFile", MSG_PARAM_INTEGER_WAVE_FILE)
+    GlobalParameter("16BitWaveFile")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1501,7 +1501,7 @@ class AltFeedbackDisableParameterType : public GlobalParameter
 };
 
 AltFeedbackDisableParameterType::AltFeedbackDisableParameterType() :
-    GlobalParameter("altFeedbackDisable", MSG_PARAM_ALT_FEEDBACK_DISABLE)
+    GlobalParameter("altFeedbackDisable")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1544,7 +1544,7 @@ class GroupFocusLockParameterType : public GlobalParameter
 };
 
 GroupFocusLockParameterType::GroupFocusLockParameterType() :
-    GlobalParameter("groupFocusLock", MSG_PARAM_GROUP_FOCUS_LOCK)
+    GlobalParameter("groupFocusLock")
 {
     // not worth bindable?
 	type = TYPE_BOOLEAN;
@@ -1577,7 +1577,7 @@ class FocusLockFunctionsParameterType : public GlobalParameter
 };
 
 FocusLockFunctionsParameterType::FocusLockFunctionsParameterType() :
-    GlobalParameter("focusLockFunctions", MSG_PARAM_FOCUS_LOCK_FUNCTIONS)
+    GlobalParameter("focusLockFunctions")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1624,7 +1624,7 @@ class MuteCancelFunctionsParameterType : public GlobalParameter
 };
 
 MuteCancelFunctionsParameterType::MuteCancelFunctionsParameterType() :
-    GlobalParameter("muteCancelFunctions", MSG_PARAM_MUTE_CANCEL_FUNCTIONS)
+    GlobalParameter("muteCancelFunctions")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1692,7 +1692,7 @@ class ConfirmationFunctionsParameterType : public GlobalParameter
 };
 
 ConfirmationFunctionsParameterType::ConfirmationFunctionsParameterType() :
-    GlobalParameter("confirmationFunctions", MSG_PARAM_CONFIRMATION_FUNCTIONS)
+    GlobalParameter("confirmationFunctions")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1761,7 +1761,7 @@ const char* MIDI_RECORD_MODE_NAMES[] = {
 };
 
 MidiRecordModeParameterType::MidiRecordModeParameterType() :
-    GlobalParameter("midiRecordMode", 0)
+    GlobalParameter("midiRecordMode")
 {
     // not worth bindable
 	type = TYPE_ENUM;
@@ -1818,7 +1818,7 @@ class DualPluginWindowParameterType : public GlobalParameter
 };
 
 DualPluginWindowParameterType::DualPluginWindowParameterType() :
-    GlobalParameter("dualPluginWindow", MSG_PARAM_DUAL_PLUGIN_WINDOW)
+    GlobalParameter("dualPluginWindow")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -1853,7 +1853,7 @@ class CustomMessageFileParameterType : public GlobalParameter
 };
 
 CustomMessageFileParameterType::CustomMessageFileParameterType() :
-    GlobalParameter("customMessageFile", MSG_PARAM_CUSTOM_MESSAGE_FILE)
+    GlobalParameter("customMessageFile")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -1887,7 +1887,7 @@ class TracksParameterType : public GlobalParameter
 };
 
 TracksParameterType::TracksParameterType() :
-    GlobalParameter("tracks", MSG_PARAM_TRACKS)
+    GlobalParameter("tracks")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1922,7 +1922,7 @@ class TrackGroupsParameterType : public GlobalParameter
 };
 
 TrackGroupsParameterType::TrackGroupsParameterType() :
-    GlobalParameter("trackGroups", MSG_PARAM_TRACK_GROUPS)
+    GlobalParameter("trackGroups")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1956,7 +1956,7 @@ class MaxLoopsParameterType : public GlobalParameter
 };
 
 MaxLoopsParameterType::MaxLoopsParameterType() :
-    GlobalParameter("maxLoops", MSG_PARAM_MAX_LOOPS)
+    GlobalParameter("maxLoops")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1997,7 +1997,7 @@ class OscInputPortParameterType : public GlobalParameter
 };
 
 OscInputPortParameterType::OscInputPortParameterType() :
-    GlobalParameter("oscInputPort", MSG_PARAM_OSC_INPUT_PORT)
+    GlobalParameter("oscInputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -2030,7 +2030,7 @@ class OscOutputPortParameterType : public GlobalParameter
 };
 
 OscOutputPortParameterType::OscOutputPortParameterType() :
-    GlobalParameter("oscOutputPort", MSG_PARAM_OSC_OUTPUT_PORT)
+    GlobalParameter("oscOutputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -2063,7 +2063,7 @@ class OscOutputHostParameterType : public GlobalParameter
 };
 
 OscOutputHostParameterType::OscOutputHostParameterType() :
-    GlobalParameter("oscOutputHost", MSG_PARAM_OSC_OUTPUT_HOST)
+    GlobalParameter("oscOutputHost")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2096,7 +2096,7 @@ class OscTraceParameterType : public GlobalParameter
 };
 
 OscTraceParameterType::OscTraceParameterType() :
-    GlobalParameter("oscTrace", MSG_PARAM_OSC_TRACE)
+    GlobalParameter("oscTrace")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -2129,7 +2129,7 @@ class OscEnableParameterType : public GlobalParameter
 };
 
 OscEnableParameterType::OscEnableParameterType() :
-    GlobalParameter("oscEnable", MSG_PARAM_OSC_ENABLE)
+    GlobalParameter("oscEnable")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;
@@ -2170,7 +2170,7 @@ class InputLatencyParameterType : public GlobalParameter
 };
 
 InputLatencyParameterType::InputLatencyParameterType() :
-    GlobalParameter("inputLatency", MSG_PARAM_INPUT_LATENCY)
+    GlobalParameter("inputLatency")
 {
     // not bindable
 	type = TYPE_INT;
@@ -2228,7 +2228,7 @@ class OutputLatencyParameterType : public GlobalParameter
 };
 
 OutputLatencyParameterType::OutputLatencyParameterType() :
-    GlobalParameter("outputLatency", MSG_PARAM_OUTPUT_LATENCY)
+    GlobalParameter("outputLatency")
 {
     // not bindable
 	type = TYPE_INT;
@@ -2294,7 +2294,7 @@ class MidiInputParameterType : public GlobalParameter
 };
 
 MidiInputParameterType::MidiInputParameterType() :
-    GlobalParameter("midiInput", MSG_PARAM_MIDI_INPUT)
+    GlobalParameter("midiInput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2327,7 +2327,7 @@ class MidiOutputParameterType : public GlobalParameter
 };
 
 MidiOutputParameterType::MidiOutputParameterType() :
-    GlobalParameter("midiOutput", MSG_PARAM_MIDI_OUTPUT)
+    GlobalParameter("midiOutput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2360,7 +2360,7 @@ class MidiThroughParameterType : public GlobalParameter
 };
 
 MidiThroughParameterType::MidiThroughParameterType() :
-    GlobalParameter("midiThrough", MSG_PARAM_MIDI_THRU)
+    GlobalParameter("midiThrough")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2393,7 +2393,7 @@ class PluginMidiInputParameterType : public GlobalParameter
 };
 
 PluginMidiInputParameterType::PluginMidiInputParameterType() :
-    GlobalParameter("pluginMidiInput", MSG_PARAM_PLUGIN_MIDI_INPUT)
+    GlobalParameter("pluginMidiInput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2427,7 +2427,7 @@ class PluginMidiOutputParameterType : public GlobalParameter
 };
 
 PluginMidiOutputParameterType::PluginMidiOutputParameterType() :
-    GlobalParameter("pluginMidiOutput", MSG_PARAM_PLUGIN_MIDI_OUTPUT)
+    GlobalParameter("pluginMidiOutput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2461,7 +2461,7 @@ class PluginMidiThroughParameterType : public GlobalParameter
 };
 
 PluginMidiThroughParameterType::PluginMidiThroughParameterType() :
-    GlobalParameter("pluginMidiThrough", MSG_PARAM_PLUGIN_MIDI_THRU)
+    GlobalParameter("pluginMidiThrough")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2495,7 +2495,7 @@ class AudioInputParameterType : public GlobalParameter
 };
 
 AudioInputParameterType::AudioInputParameterType() :
-    GlobalParameter("audioInput", MSG_PARAM_AUDIO_INPUT)
+    GlobalParameter("audioInput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2528,7 +2528,7 @@ class AudioOutputParameterType : public GlobalParameter
 };
 
 AudioOutputParameterType::AudioOutputParameterType() :
-    GlobalParameter("audioOutput", MSG_PARAM_AUDIO_OUTPUT)
+    GlobalParameter("audioOutput")
 {
     // not bindable
 	type = TYPE_STRING;
@@ -2568,7 +2568,7 @@ const char* SAMPLE_RATE_NAMES[] = {
  * Could be a int, but an enum helps is constrain the value better.
  */
 SampleRateParameterType::SampleRateParameterType() :
-    GlobalParameter("sampleRate", MSG_PARAM_SAMPLE_RATE)
+    GlobalParameter("sampleRate")
 {
     // not worth bindable
 	type = TYPE_ENUM;
@@ -2612,7 +2612,7 @@ class EdpismsParameterType : public GlobalParameter
 };
 
 EdpismsParameterType::EdpismsParameterType() : 
-    GlobalParameter("edpisms", 0)
+    GlobalParameter("edpisms")
 {
     // not worth bindable
 	type = TYPE_BOOLEAN;

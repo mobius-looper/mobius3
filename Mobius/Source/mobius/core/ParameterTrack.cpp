@@ -56,8 +56,8 @@ class TrackParameter : public Parameter
 {
   public:
 
-    TrackParameter(const char* name, int key) :
-        Parameter(name, key) {
+    TrackParameter(const char* name) :
+        Parameter(name) {
         scope = PARAM_SCOPE_TRACK;
     }
 
@@ -187,7 +187,7 @@ class TrackNameParameterType : public TrackParameter
 };
 
 TrackNameParameterType::TrackNameParameterType() :
-    TrackParameter("trackName", MSG_PARAM_TRACK_NAME)
+    TrackParameter("trackName")
 {
 	type = TYPE_STRING;
 
@@ -242,7 +242,7 @@ class FocusParameterType : public TrackParameter
 };
 
 FocusParameterType::FocusParameterType() :
-    TrackParameter("focus", MSG_PARAM_FOCUS)
+    TrackParameter("focus")
 {
     // not bindable, use the FocusLock function
 	type = TYPE_BOOLEAN;
@@ -299,7 +299,7 @@ class GroupParameterType : public TrackParameter
 };
 
 GroupParameterType::GroupParameterType() :
-    TrackParameter("group", MSG_PARAM_GROUP)
+    TrackParameter("group")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -406,7 +406,7 @@ class MonoParameterType : public TrackParameter
 };
 
 MonoParameterType::MonoParameterType() :
-    TrackParameter("mono", MSG_PARAM_MONO)
+    TrackParameter("mono")
 {
     // not worth bindable?
 	type = TYPE_BOOLEAN;
@@ -461,7 +461,7 @@ class FeedbackLevelParameterType : public TrackParameter
 };
 
 FeedbackLevelParameterType::FeedbackLevelParameterType() :
-    TrackParameter("feedback", MSG_PARAM_FEEDBACK_LEVEL)
+    TrackParameter("feedback")
 {
     bindable = true;
     control = true;
@@ -519,7 +519,7 @@ class AltFeedbackLevelParameterType : public TrackParameter
 };
 
 AltFeedbackLevelParameterType::AltFeedbackLevelParameterType() :
-    TrackParameter("altFeedback", MSG_PARAM_ALT_FEEDBACK_LEVEL)
+    TrackParameter("altFeedback")
 {
     bindable = true;
     control = true;
@@ -575,7 +575,7 @@ class InputLevelParameterType : public TrackParameter
 };
 
 InputLevelParameterType::InputLevelParameterType() :
-    TrackParameter("input", MSG_PARAM_INPUT_LEVEL)
+    TrackParameter("input")
 {
     bindable = true;
     control = true;
@@ -631,7 +631,7 @@ class OutputLevelParameterType : public TrackParameter
 };
 
 OutputLevelParameterType::OutputLevelParameterType() :
-    TrackParameter("output", MSG_PARAM_OUTPUT_LEVEL)
+    TrackParameter("output")
 {
     bindable = true;
     control = true;
@@ -688,7 +688,7 @@ class PanParameterType : public TrackParameter
 };
 
 PanParameterType::PanParameterType() :
-    TrackParameter("pan", MSG_PARAM_PAN)
+    TrackParameter("pan")
 {
     bindable = true;
     control = true;
@@ -751,7 +751,7 @@ class SpeedOctaveParameterType : public TrackParameter
 };
 
 SpeedOctaveParameterType::SpeedOctaveParameterType() :
-    TrackParameter("speedOctave", MSG_PARAM_SPEED_OCTAVE)
+    TrackParameter("speedOctave")
 {
     bindable = true;
     control = true;
@@ -829,7 +829,7 @@ class SpeedStepParameterType : public TrackParameter
  * twitchy and easier to control.
  */
 SpeedStepParameterType::SpeedStepParameterType() :
-    TrackParameter("speedStep", MSG_PARAM_SPEED_STEP)
+    TrackParameter("speedStep")
 {
     bindable = true;
     control = true;
@@ -894,7 +894,7 @@ class SpeedBendParameterType : public TrackParameter
 };
 
 SpeedBendParameterType::SpeedBendParameterType() :
-    TrackParameter("speedBend", MSG_PARAM_SPEED_BEND)
+    TrackParameter("speedBend")
 {
     bindable = true;
     control = true;
@@ -961,7 +961,7 @@ class PitchOctaveParameterType : public TrackParameter
 };
 
 PitchOctaveParameterType::PitchOctaveParameterType() :
-    TrackParameter("pitchOctave", MSG_PARAM_PITCH_OCTAVE)
+    TrackParameter("pitchOctave")
 {
     bindable = true;
     control = true;
@@ -1040,7 +1040,7 @@ class PitchStepParameterType : public TrackParameter
  * twitchy and easier to control.
  */
 PitchStepParameterType::PitchStepParameterType() :
-    TrackParameter("pitchStep", MSG_PARAM_PITCH_STEP)
+    TrackParameter("pitchStep")
 {
     bindable = true;
     control = true;
@@ -1104,7 +1104,7 @@ class PitchBendParameterType : public TrackParameter
 };
 
 PitchBendParameterType::PitchBendParameterType() :
-    TrackParameter("pitchBend", MSG_PARAM_PITCH_BEND)
+    TrackParameter("pitchBend")
 {
     bindable = true;
     control = true;
@@ -1168,7 +1168,7 @@ class TimeStretchParameterType : public TrackParameter
 };
 
 TimeStretchParameterType::TimeStretchParameterType() :
-    TrackParameter("timeStretch", MSG_PARAM_TIME_STRETCH)
+    TrackParameter("timeStretch")
 {
     bindable = true;
     control = true;
@@ -1245,7 +1245,7 @@ Parameter* TrackPresetParameter = new TrackPresetParameterType();
 // this has a UIParameter alias from activePreset
 
 TrackPresetParameterType::TrackPresetParameterType() :
-    TrackParameter("preset", MSG_PARAM_TRACK_PRESET)
+    TrackParameter("preset")
 {
     bindable = true;
 	type = TYPE_STRING;
@@ -1393,7 +1393,7 @@ Parameter* TrackPresetNumberParameter =
 new TrackPresetNumberParameterType();
 
 TrackPresetNumberParameterType::TrackPresetNumberParameterType() :
-    TrackParameter("presetNumber", MSG_PARAM_TRACK_PRESET_NUMBER)
+    TrackParameter("presetNumber")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1485,7 +1485,7 @@ int SYNC_SOURCE_KEYS[] = {
 };
 
 SyncSourceParameterType::SyncSourceParameterType() :
-    TrackParameter("syncSource", MSG_PARAM_SYNC_SOURCE)
+    TrackParameter("syncSource")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1605,7 +1605,7 @@ int TRACK_SYNC_UNIT_KEYS[] = {
 };
 
 TrackSyncUnitParameterType::TrackSyncUnitParameterType() :
-    TrackParameter("trackSyncUnit", MSG_PARAM_TRACK_SYNC_UNIT)
+    TrackParameter("trackSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
@@ -1714,7 +1714,7 @@ class AudioInputPortParameterType : public TrackParameter
 };
 
 AudioInputPortParameterType::AudioInputPortParameterType() :
-    TrackParameter("audioInputPort", MSG_PARAM_AUDIO_INPUT_PORT)
+    TrackParameter("audioInputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1803,7 +1803,7 @@ class AudioOutputPortParameterType : public TrackParameter
 };
 
 AudioOutputPortParameterType::AudioOutputPortParameterType() :
-    TrackParameter("audioOutputPort", MSG_PARAM_AUDIO_OUTPUT_PORT)
+    TrackParameter("audioOutputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1885,7 +1885,7 @@ class PluginInputPortParameterType : public TrackParameter
 };
 
 PluginInputPortParameterType::PluginInputPortParameterType() :
-    TrackParameter("pluginInputPort", MSG_PARAM_PLUGIN_INPUT_PORT)
+    TrackParameter("pluginInputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -1966,7 +1966,7 @@ class PluginOutputPortParameterType : public TrackParameter
 };
 
 PluginOutputPortParameterType::PluginOutputPortParameterType() :
-    TrackParameter("pluginOutputPort", MSG_PARAM_PLUGIN_OUTPUT_PORT)
+    TrackParameter("pluginOutputPort")
 {
     // not bindable
 	type = TYPE_INT;
@@ -2055,7 +2055,7 @@ class InputPortParameterType : public TrackParameter
  * Note we use the same display name as InputPort.
  */
 InputPortParameterType::InputPortParameterType() :
-    TrackParameter("inputPort", MSG_PARAM_INPUT_PORT)
+    TrackParameter("inputPort")
 {
     bindable = true;
 	type = TYPE_INT;
@@ -2159,7 +2159,7 @@ class OutputPortParameterType : public TrackParameter
 };
 
 OutputPortParameterType::OutputPortParameterType() :
-    TrackParameter("outputPort", MSG_PARAM_OUTPUT_PORT)
+    TrackParameter("outputPort")
 {
     bindable = true;
 	type = TYPE_INT;

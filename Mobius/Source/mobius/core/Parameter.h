@@ -58,7 +58,7 @@ class Parameter : public SystemConstant {
   public:
 
 	Parameter();
-	Parameter(const char* name, int key);
+	Parameter(const char* name);
 	virtual ~Parameter();
     //void localize(MessageCatalog* cat);
 

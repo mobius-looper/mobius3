@@ -335,7 +335,7 @@ Function::Function()
 }
 
 Function::Function(const char* name, int key) :
-    SystemConstant(name, key)
+    SystemConstant(name)
 {
     //Instances.push_back(this);
     init();

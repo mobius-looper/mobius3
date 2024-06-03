@@ -51,9 +51,10 @@ class SystemConstant {
         name = argName;
         displayName = argDisplayName;
     }
-    
-	SystemConstant(const char* argName, int key) {
-        (void)key; // ignore
+
+    // signature for the old core model that lost message keys
+    // and doesn't have display names
+	SystemConstant(const char* argName) {
         name = argName;
         // so we can call getDisplayName until we retool
         // everything not to expect a message catalog
