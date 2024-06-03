@@ -35,6 +35,9 @@ ConfigPanel::ConfigPanel(ConfigEditor* argEditor, const char* titleText, int but
     // size has to be deferred to the subclass after it has finished rendering
 
     helpHeight = ConfigPanelHelpHeight;
+
+    // pass back mouse events from the header so we can drag
+    header.addMouseListener(this, true);
 }
 
 ConfigPanel::~ConfigPanel()
@@ -177,6 +180,20 @@ void ConfigPanel::paint (juce::Graphics& g)
 
     g.setColour(juce::Colours::white);
     g.drawRect(getLocalBounds(), 4);
+}
+
+void ConfigPanel::mouseDown(const juce::MouseEvent& e)
+{
+    dragger.startDraggingComponent(this, e);
+    // the first argu is "minimumWhenOffTheTop" set
+    // this to the full height and it won't allow dragging the
+    // top out of boundsa
+    dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
+}
+
+void ConfigPanel::mouseDrag(const juce::MouseEvent& e)
+{
+    dragger.dragComponent(this, e, &dragConstrainer);
 }
 
 //////////////////////////////////////////////////////////////////////

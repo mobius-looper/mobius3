@@ -178,6 +178,9 @@ class ConfigPanel : public juce::Component
     void resized() override;
     void paint (juce::Graphics& g) override;
 
+    void mouseDown(const juce::MouseEvent& e);
+    void mouseDrag(const juce::MouseEvent& e);
+    
     // callback from the footer buttons
     void footerButtonClicked(ConfigPanelButton button);
     
@@ -248,5 +251,8 @@ class ConfigPanel : public juce::Component
     ConfigPanelHeader header;
     ConfigPanelFooter footer;
     juce::Component* main = nullptr;
+
+    juce::ComponentDragger dragger;
+    juce::ComponentBoundsConstrainer dragConstrainer;
 
 };
