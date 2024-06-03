@@ -232,6 +232,8 @@
                 file="../Mobius/Source/ui/display/BeatersElement.cpp"/>
           <FILE id="e7FmYf" name="BeatersElement.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/display/BeatersElement.h"/>
+          <FILE id="Ov81Qu" name="ButtonPopup.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/ButtonPopup.cpp"/>
+          <FILE id="ZHfX2e" name="ButtonPopup.h" compile="0" resource="0" file="../Mobius/Source/ui/display/ButtonPopup.h"/>
           <FILE id="JGfJPL" name="Colors.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/Colors.cpp"/>
           <FILE id="c7r1Q9" name="Colors.h" compile="0" resource="0" file="../Mobius/Source/ui/display/Colors.h"/>
           <FILE id="nUoGSN" name="CounterElement.cpp" compile="1" resource="0"
@@ -273,6 +275,9 @@
           <FILE id="FIiq1Q" name="StatusElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/StatusElement.cpp"/>
           <FILE id="gYjcYF" name="StatusElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/StatusElement.h"/>
+          <FILE id="UYwtbU" name="StatusResizer.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/StatusResizer.cpp"/>
+          <FILE id="RprOwV" name="StatusResizer.h" compile="0" resource="0" file="../Mobius/Source/ui/display/StatusResizer.h"/>
           <FILE id="m4TG8B" name="StripElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/StripElement.cpp"/>
           <FILE id="KOU0mw" name="StripElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/StripElement.h"/>
@@ -292,6 +297,9 @@
         <GROUP id="{231B57B1-8D47-A229-88DE-29CA3BEA36CE}" name="common">
           <FILE id="Syoz16" name="ButtonBar.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/ButtonBar.cpp"/>
           <FILE id="ZPyRV1" name="ButtonBar.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ButtonBar.h"/>
+          <FILE id="CQNzmt" name="ColorSelector.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/common/ColorSelector.cpp"/>
+          <FILE id="f2vKZW" name="ColorSelector.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ColorSelector.h"/>
           <FILE id="Dzkodv" name="Field.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/Field.cpp"/>
           <FILE id="x2Mdf8" name="Field.h" compile="0" resource="0" file="../Mobius/Source/ui/common/Field.h"/>
           <FILE id="M7p1Y6" name="FieldGrid.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/FieldGrid.cpp"/>
