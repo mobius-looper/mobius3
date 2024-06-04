@@ -14,13 +14,14 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 5 Changes
+## Build 6 Changes
 
-- Mac install should now support Intel hardware
-- Windows install now uses static Microsoft libraries so you should no longer get errors about missing DLL files
-- Right clicking on a button opens a color selection popup
-- Using the **Revert** button in the Setup and Preset configuration panels no longer crashes
-- Display Configuration panel has been reorganized to make it easier to use
+- Mac install now has Universal binaries and should run on both Silicon and Intel Macs
+- Plugin editor windows are now resizeable
+- Button arguments for SelectLoop and SelectTrack now work
+- Fixed MIDI channel issues with bindings
+- Reorganized menus based on Claudio's suggestions
+- Script configuration panel will now automatically reload scripts
 
 ## Windows Security
 
