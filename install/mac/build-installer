@@ -23,6 +23,8 @@ mkdir stage
 echo Building standalone app package
 
 cp -r $appsrc stage
+# sanity check on the universal binary
+lipo -info stage/Mobius.app/Contents/MacOS/Mobius
 
 # copy support files to be included with the installation into
 # the Mobius.app bundle directory
@@ -57,6 +59,9 @@ echo Building VST3 package
 rm -rf stage
 mkdir stage
 cp -r $vstsrc stage
+# sanity check on the universal binary
+#lipo -info stage/Mobius.app/Contents/MacOS/Mobius.vst3...
+
 pkgbuild --analyze --root stage vst.plist
 pkgbuild --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
 
