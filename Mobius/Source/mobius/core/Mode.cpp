@@ -61,34 +61,6 @@ MobiusMode::~MobiusMode()
 {
 }
 
-/**
- * Default formatting just copies the display name into the
- * buffer.  The buffer must be large enough for the largest mode
- * name, 128 is enough.
- */
-// what was this for?
-#if 0
-void MobiusMode::format(char* buffer)
-{
-    const char* dname = getDisplayName();
-    if (dname != NULL)
-      strcpy(buffer, dname);
-    else
-      strcpy(buffer, getName());
-}
-
-/**
- * Default formatting just copies the display name into the 
- * buffer, others may include the argument as a numeric qualifier.
- * The buffer must be large enough for the largest mode name, 128 is enough.
- */
-void MobiusMode::format(char* buffer, int arg)
-{
-    const char* dname = getDisplayName();
-    sprintf(buffer, "%s %d", (dname != NULL) ? dname : getName(), arg);
-}
-#endif
-
 /****************************************************************************
  *                                                                          *
  *   							 ENUMERATION                                *

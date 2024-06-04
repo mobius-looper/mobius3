@@ -23,8 +23,6 @@
 
 #include "../../util/Util.h"
 #include "../../util/List.h"
-//#include "XmlModel.h"
-//#include "XmlBuffer.h"
 
 #include "Action.h"
 #include "../Audio.h"
@@ -241,78 +239,6 @@ void Parameter::getDisplayValue(Mobius* m, ExValue* value)
     // things that overload getOrdinalLabel
     value->setNull();
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// XML
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Emit the XML attribute for a parameter.
- */
-#if 0
-void Parameter::toXml(XmlBuffer* b, void* obj)
-{
-	ExValue value;
-	getObjectValue(obj, &value);
-
-    if (value.getType() == EX_INT) {
-        // option to filter zero?
-        b->addAttribute(getName(), value.getInt());
-    }
-    else {
-        // any filtering options?
-        b->addAttribute(getName(), value.getString());
-    }
-}
-
-/**
- * There are two aliases we can use here to upgrade XML.
- * If the "aliases" list is set we assume this is an upgrade to
- * both the XML name and the internal parameter name.  
- *
- * If xmlAlias is set this is an upgrade to the XML name only
- * and another parmaeter may be using this internal name.
- * This was added for inputPort and audioInputPort where we're
- * needing to upgrade inputPort to audioInputPort in the Setup
- * but we have another parameter named inputPort that has to 
- * use that name so it can't be an alias of audioInputPort.
- */
-void Parameter::parseXml(XmlElement* e, void* obj)
-{
-    const char* value = e->getAttribute(getName());
-
-    // try the xml alias
-    if (value == NULL && xmlAlias != NULL)
-      value = e->getAttribute(xmlAlias);
-
-    // try regular aliases
-    if (value == NULL) {
-        for (int i = 0 ; i < MAX_PARAMETER_ALIAS ; i++) {
-            const char* alias = aliases[i];
-            if (alias == NULL)
-              break;
-            else {
-                value = e->getAttribute(alias);
-                if (value != NULL)
-                  break;
-            }
-        }
-    }
-
-    // Only set it if we found a value in the XML, otherwise it has the
-    // default from Preset::reset and more importantly may have
-    // some upgraded values from older parameters like sampleStyle
-    // that won't be in the XML yet.  And if deprecated setting to null
-    // can have side effects we don't want.
-    if (value != NULL) {
-        ExValue v;
-        v.setString(value);
-        setObjectValue(obj, &v);
-    }
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //

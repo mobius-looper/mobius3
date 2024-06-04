@@ -173,13 +173,6 @@ class Parameter : public SystemConstant {
 
     virtual void getDisplayValue(class Mobius* m, ExValue* value);
 
-	//
-	// XML
-	//
-
-	void toXml(class XmlBuffer* b, void* obj);
-	void parseXml(class XmlElement* e, void* obj);
-
     // formerly protected, made public for MobiusKernel
 	static Parameter* getParameter(const char* name);
 
