@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include "Symbol.h"
+
 class FunctionProperties
 {
   public:
@@ -21,6 +23,17 @@ class FunctionProperties
     ~FunctionProperties() {}
 
     /**
+     * The level this function is implemented in.
+     * This exists only during the conversion of a file containg <Function> definitions
+     * into the Symbol table, after which it will be the Symbol's level.
+     * todo: if we can get to the point where all function/parameter symbols have
+     * a properties object, then this may be the more appropriate place to keep the level
+     * and get it off Symbol.
+     */
+    SymbolLevel level = LevelNone;
+
+
+     /**
      * When true, this function may respond to a sustained action.
      */
     bool sustainable = false;
@@ -29,6 +42,14 @@ class FunctionProperties
      * Handle to a core object that implements this function.
      */
     void* coreFunction = nullptr;
+
+    /**
+     * Text describing the arguments supported by this function in the binding panels.
+     */
+    juce::String argumentHelp;
+
+
+  private:
     
 };
 

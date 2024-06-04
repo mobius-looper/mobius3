@@ -34,6 +34,7 @@ mkdir $dest/test/samples
 cp ../resources/mobius.xml $dest
 cp ../resources/uiconfig.xml $dest
 cp ../../Mobius/Source/help.xml $dest
+cp ../../Mobius/Source/symbols.xml $dest
 cp ../../Mobius/Source/test/samples/gcloop.wav $dest/test/samples
 
 # make the component property list

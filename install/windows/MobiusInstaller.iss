@@ -48,6 +48,7 @@ Source: "..\..\Mobius\Builds\VisualStudio2022\x64\Debug\App\{#MyAppSourceExeName
 Source: "..\resources\mobius.xml"; DestDir: "{#MyAppData}"; Flags: onlyifdoesntexist
 Source: "..\resources\uiconfig.xml"; DestDir: "{#MyAppData}"; Flags: onlyifdoesntexist
 Source: "..\..\Mobius\Source\help.xml"; DestDir: "{#MyAppData}"; Flags: ignoreversion
+Source: "..\..\Mobius\Source\symbols.xml"; DestDir: "{#MyAppData}"; Flags: ignoreversion
 Source: "..\..\Mobius\Source\test\samples\gcloop.wav"; DestDir: "{#MyAppData}\test\samples"; Flags: ignoreversion
 Source: "..\..\MobiusPlugin\Builds\VisualStudio2022\x64\Debug\VST3\Mobius.vst3\Contents\Resources\moduleinfo.json"; DestDir: "{commonpf64}\Common Files\VST3\Mobius.vst3\Contents\Resources"; Flags: ignoreversion
 Source: "..\..\MobiusPlugin\Builds\VisualStudio2022\x64\Debug\VST3\Mobius.vst3\Contents\x86_64-win\Mobius.vst3"; DestDir: "{commonpf64}\Common Files\VST3\Mobius.vst3\Contents\x86_64-win"; Flags: ignoreversion

@@ -215,6 +215,8 @@ class Symbol
      */
     class VariableDefinition* variable = nullptr;
     class FunctionDefinition* function = nullptr;
+    // eventual replacement for FunctionDefinition
+    std::unique_ptr<class FunctionProperties> functionProperties;
     class UIParameter* parameter = nullptr;
 
     // don't seem to be using this!?

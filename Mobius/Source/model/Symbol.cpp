@@ -9,6 +9,7 @@
 #include "../util/Trace.h"
 #include "../util/Util.h"
 
+#include "FunctionProperties.h"
 #include "ScriptProperties.h"
 #include "SampleProperties.h"
 

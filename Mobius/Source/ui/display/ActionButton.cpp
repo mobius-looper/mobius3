@@ -101,6 +101,24 @@ ActionButton::ActionButton(DisplayButton* src)
     if (symbolName.length() > 0) {
         action.symbol = Symbols.intern(symbolName);
         CopyString(src->arguments.toUTF8(), action.arguments, sizeof(action.arguments));
+
+        // kludge: This is what Binderator does for MIDI/key bindings
+        // if the binding has a simple numeric argument, promote that
+        // to the action value
+        //
+        // The binding panels can only deal with a single argument string, but both
+        // the new and old action models prefer an integer argument (or in the new model the value)
+        // and expected the argument string to be parsed into that.  Argument strings used to be
+        // more compliccated but at the moment they're limited to just a single numeric value.
+        // Need to rethink at what level we do this.  If any functions need the full string then
+        // we should just pass that and leave the parsing to the function implementation.  If none do
+        // then we should package and share this conversion somewhere.
+        //
+        // Here, we're not dealing with a Binding, but DisplayButton has the same argument string
+        if (strlen(action.arguments) > 0) {
+            if (IsInteger(action.arguments))
+              action.value = ToInt(action.arguments);
+        }
     }
     else {
         Trace(1, "ActionButton: DisplayButton with no symbol name\n");

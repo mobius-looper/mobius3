@@ -22,6 +22,7 @@
 #include "MidiManager.h"
 #include "AudioManager.h"
 #include "RootLocator.h"
+#include "Symbolizer.h"
 #include "Parametizer.h"
 #include "VariableManager.h"
 #include "Alerter.h"
@@ -253,6 +254,9 @@ class Supervisor : public MobiusContainer, public MobiusListener
 
     // the "maintenance thread"
     MainThread uiThread {this};
+
+    // Symbol table loader
+    Symbolizer symbolizer;
     
     // the Mobius "engine"
     // this is a singleton managed by MobiusInterface and deleted

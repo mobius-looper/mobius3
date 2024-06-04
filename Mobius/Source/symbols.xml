@@ -1,0 +1,115 @@
+<Symbols>
+  <Function name="AutoRecord"/>
+  <Function name="Backward"/>
+  <Function name="Bounce"/>
+  <Function name="Checkpoint"/>
+  <Function name="Clear"/>
+  <Function name="Confirm"/>
+  <Function name="Divide"/>
+  <Function name="Divide3"/>
+  <Function name="Divide4"/>
+  <Function name="FocusLock"/>
+  <Function name="Forward"/>
+  <Function name="GlobalMute"/>
+  <Function name="GlobalPause"/>
+  <Function name="GlobalReset"/>
+  <Function name="Halfspeed"/>
+  <Function name="Insert"/>
+  <Function name="InstantMultiply"/>
+  <!--
+      these are similar to replicated functions but have been in use
+      for a long time, think about this
+      -->
+  <Function name="InstantMultiply3"/>
+  <Function name="InstantMultiply4"/>
+
+  <!-- Formerly LoopN, Loop1, Loop2, etc. -->
+  <Function name="SelectLoop"
+            argumentHelp="Loop Number: 1-8"/>
+
+  <Function name="MidiStart"/>
+  <Function name="MidiStop"/>
+
+  <Function name="Multiply"/>
+  <Function name="Mute"/>
+  <Function name="MuteRealign"/>
+  <Function name="MuteMidiStart"/>
+  <Function name="NextLoop"/>
+  <Function name="NextTrack"/>
+  <Function name="Overdub"/>
+  <Function name="Pause"/>
+  <Function name="PitchDown"/>
+  <Function name="PitchNext"/>
+  <Function name="PitchCancel"/>
+  <Function name="PitchPrev"/>
+  <Function name="PitchStep"/>
+  <Function name="PitchUp"/>
+  <Function name="Play"/>
+  <Function name="PrevLoop"/>
+  <Function name="PrevTrack"/>
+  <Function name="Realign"/>
+  <Function name="Record"/>
+  <Function name="Redo"/>
+  <Function name="Rehearse"/>
+  <Function name="Replace"/>
+  <Function name="Reset"/>
+  <Function name="Restart"/>
+  <Function name="RestartOnce"/>
+  <Function name="Reverse"/>
+  <Function name="SaveCapture"/>
+  <Function name="SaveLoop"/>
+  <Function name="Shuffle"/>
+  <Function name="SlipForward"/>
+  <Function name="SlipBackward"/>
+  <Function name="Solo"/>
+  <Function name="SpeedDown"/>
+  <Function name="SpeedNext"/>
+  <Function name="SpeedCancel"/>
+  <Function name="SpeedPrev"/>
+  <Function name="SpeedStep"/>
+  <Function name="SpeedUp"/>
+  <Function name="SpeedToggle"/>
+  <Function name="StartCapture"/>
+  <Function name="StartPoint"/>
+  <Function name="StopCapture"/>
+  <Function name="Stutter"/>
+  <Function name="Substitute"/>
+
+  <Function name="SUSInsert"/>
+  <Function name="SUSMultiply"/>
+  <Function name="SUSMute"/>
+  <Function name="SUSMuteRestart"/>
+  <Function name="SUSNextLoop"/>
+  <Function name="SUSOverdub"/>
+  <Function name="SUSPrevLoop"/>
+  <Function name="SUSRecord"/>
+  <Function name="SUSReplace"/>
+  <Function name="SUSReverse"/>
+  <Function name="SUSSpeedToggle"/>
+  <Function name="SUSStutter"/>
+  <Function name="SUSSubstitute"/>
+  <Function name="SUSUnroundedInsert"/>
+  <Function name="SUSUnroundedMultiply"/>
+  <Function name="SyncStartPoint"/>
+  
+  <!-- Formerly TrackN, Track1, etc. -->
+  <Function name="SelectTrack"
+            argumentHelp="Track Number: 1-16"/>
+  
+  <Function name="TrackCopy"/>
+  <Function name="TrackCopyTiming"/>
+  <Function name="TrackGroup"/>
+  <Function name="TrackReset"/>
+  <Function name="TrimEnd"/>
+  <Function name="TrimStart"/>
+  <Function name="Undo"/>
+  <Function name="WindowBackward"/>
+  <Function name="WindowForward"/>
+  <Function name="WindowStartBackward"/>
+  <Function name="WindowStartForward"/>
+  <Function name="WindowEndBackward"/>
+  <Function name="WindowEndForward"/>
+
+  <!-- various diagnostic functions for testing -->
+  <Function name="TraceStatus"/>
+</Symbols>

@@ -74,6 +74,8 @@
     <Button action="Reverse"/>
     <Button action="Halfspeed"/>
     <Button action="Multiply"/>
+    <Button action="SelectLoop" arguments="1"/>
+    <Button action="SelectLoop" arguments="2"/>
   </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>

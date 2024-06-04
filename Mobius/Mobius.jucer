@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
+      <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
@@ -92,6 +94,10 @@
               file="Source/model/FunctionDefinition.cpp"/>
         <FILE id="tzGQOW" name="FunctionDefinition.h" compile="0" resource="0"
               file="Source/model/FunctionDefinition.h"/>
+        <FILE id="am0Lis" name="FunctionProperties.cpp" compile="1" resource="0"
+              file="Source/model/FunctionProperties.cpp"/>
+        <FILE id="VOgufo" name="FunctionProperties.h" compile="0" resource="0"
+              file="Source/model/FunctionProperties.h"/>
         <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
         <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
         <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>

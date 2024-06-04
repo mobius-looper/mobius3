@@ -40,6 +40,7 @@
 #include "MainComponent.h"
 #include "RootLocator.h"
 #include "UISymbols.h"
+#include "Symbolizer.h"
 #include "AudioManager.h"
 #include "MidiManager.h"
 #include "JuceAudioStream.h"
@@ -146,8 +147,12 @@ void Supervisor::start()
     }
 
     meter("Initialize symbols");
+
+    // todo: Symbolizer should be handling all of this now
+    // merge with UISymbols and maybe VariableManager
     
     // install UI Symbols
+    symbolizer.initialize();
     uiSymbols.initialize();
 
     // install variables
