@@ -25,7 +25,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Script.h"
@@ -220,7 +219,7 @@ ResumeScriptFunction ResumeScriptObj;
 Function* ResumeScript = &ResumeScriptObj;
 
 ResumeScriptFunction::ResumeScriptFunction() :
-    Function("ResumeScript", MSG_FUNC_RESUME_SCRIPT)
+    Function("ResumeScript")
 {
 	noFocusLock = true;
 
@@ -259,7 +258,7 @@ ReloadScriptsFunction ReloadScriptsObj;
 Function* ReloadScripts = &ReloadScriptsObj;
 
 ReloadScriptsFunction::ReloadScriptsFunction() :
-    Function("LoadScripts", MSG_FUNC_RELOAD_SCRIPTS)
+    Function("LoadScripts")
 {
     global = true;
 	noFocusLock = true;

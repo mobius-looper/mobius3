@@ -31,7 +31,6 @@
 #include "FunctionUtil.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Resampler.h"
@@ -285,17 +284,14 @@ PitchFunction::PitchFunction(PitchFunctionType type)
 		case PITCH_CANCEL:
 			setName("PitchCancel");
 			alias1 = "PitchNormal";
-			setKey(MSG_FUNC_PITCH_CANCEL);
 			break;
 		case PITCH_OCTAVE:
 			setName("PitchOctave");
-			setKey(MSG_PARAM_PITCH_OCTAVE);
             scriptOnly = true;
 			break;
 		case PITCH_STEP:
 			setName("PitchStep");
 			alias1 = "PitchShift";
-			setKey(MSG_PARAM_PITCH_STEP);
 			spread = true;
             // Since these can be "played" rapidly keep them out of 
             // trace.  Should we disable quantization too?
@@ -303,7 +299,6 @@ PitchFunction::PitchFunction(PitchFunctionType type)
 			break;
 		case PITCH_BEND:
 			setName("PitchBend");
-			setKey(MSG_PARAM_PITCH_BEND);
             // keep this out of the binding list, use PitchBendParameter
             scriptOnly = true;
             mCanRestart = false;
@@ -311,19 +306,15 @@ PitchFunction::PitchFunction(PitchFunctionType type)
 			break;
 		case PITCH_UP:
 			setName("PitchUp");
-			setKey(MSG_FUNC_PITCH_UP);
 			break;
 		case PITCH_DOWN:
 			setName("PitchDown");
-			setKey(MSG_FUNC_PITCH_DOWN);
 			break;
 		case PITCH_NEXT:
 			setName("PitchNext");
-			setKey(MSG_FUNC_PITCH_NEXT);
 			break;
 		case PITCH_PREV:
 			setName("PitchPrev");
-			setKey(MSG_FUNC_PITCH_PREV);
 			break;
 		case PITCH_RESTORE:
 			setName("PitchRestore");

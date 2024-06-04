@@ -31,7 +31,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
 
@@ -102,11 +101,9 @@ SlipFunction::SlipFunction(int direction)
 	}
 	else if (direction > 0) {
 		setName("SlipForward");
-		setKey(MSG_FUNC_SLIP_FORWARD);
 	}
 	else {
 		setName("SlipBackward");
-		setKey(MSG_FUNC_SLIP_BACKWARD);
 	}
 }
 

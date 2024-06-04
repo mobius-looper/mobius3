@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 
@@ -74,17 +73,14 @@ CaptureFunction::CaptureFunction(bool stop, bool save)
 
 	if (mSave) {
 		setName("SaveCapture");
-		setKey(MSG_FUNC_SAVE_CAPTURE);
         alias1 = "SaveAudioRecording";
 	}
 	else if (mStop) {
 		setName("StopCapture");
-		setKey(MSG_FUNC_STOP_CAPTURE);
 		alias1 = "StopAudioRecording";
 	}
 	else {
 		setName("StartCapture");
-		setKey(MSG_FUNC_START_CAPTURE);
 		alias1 = "StartAudioRecording";
 	}
 }

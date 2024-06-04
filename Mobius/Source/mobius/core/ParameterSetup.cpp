@@ -31,7 +31,6 @@
 #include "Action.h"
 #include "Export.h"
 #include "Function.h"
-#include "Messages.h"
 #include "Mobius.h"
 #include "Mode.h"
 #include "Project.h"
@@ -170,22 +169,12 @@ const char* DEFAULT_SYNC_SOURCE_NAMES[] = {
 	"none", "track", "out", "host", "midi", NULL
 };
 
-int DEFAULT_SYNC_SOURCE_KEYS[] = {
-	MSG_VALUE_SYNC_SOURCE_NONE,
-	MSG_VALUE_SYNC_SOURCE_TRACK,
-	MSG_VALUE_SYNC_SOURCE_OUT,
-	MSG_VALUE_SYNC_SOURCE_HOST,
-	MSG_VALUE_SYNC_SOURCE_MIDI,
-	0
-};
-
 DefaultSyncSourceParameterType::DefaultSyncSourceParameterType() :
     SetupParameter("defaultSyncSource")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = DEFAULT_SYNC_SOURCE_NAMES;
-	valueKeys = DEFAULT_SYNC_SOURCE_KEYS;
 }
 
 int DefaultSyncSourceParameterType::getOrdinalValue(Setup* s)
@@ -235,20 +224,12 @@ const char* DEFAULT_TRACK_SYNC_UNIT_NAMES[] = {
 	"subcycle", "cycle", "loop", NULL
 };
 
-int DEFAULT_TRACK_SYNC_UNIT_KEYS[] = {
-	MSG_VALUE_TRACK_UNIT_SUBCYCLE,
-	MSG_VALUE_TRACK_UNIT_CYCLE,
-	MSG_VALUE_TRACK_UNIT_LOOP,
-	0
-};
-
 DefaultTrackSyncUnitParameterType::DefaultTrackSyncUnitParameterType() :
     SetupParameter("defaultTrackSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = DEFAULT_TRACK_SYNC_UNIT_NAMES;
-	valueKeys = DEFAULT_TRACK_SYNC_UNIT_KEYS;
 }
 
 int DefaultTrackSyncUnitParameterType::getOrdinalValue(Setup* s)
@@ -298,19 +279,12 @@ const char* SYNC_UNIT_NAMES[] = {
 	"beat", "bar", NULL
 };
 
-int SYNC_UNIT_KEYS[] = {
-	MSG_VALUE_SYNC_UNIT_BEAT,
-	MSG_VALUE_SYNC_UNIT_BAR,
-	0
-};
-
 SlaveSyncUnitParameterType::SlaveSyncUnitParameterType() :
     SetupParameter("slaveSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SYNC_UNIT_NAMES;
-	valueKeys = SYNC_UNIT_KEYS;
 }
 
 int SlaveSyncUnitParameterType::getOrdinalValue(Setup* s)
@@ -509,21 +483,12 @@ const char* MUTE_SYNC_NAMES[] = {
 	"transport", "transportClocks", "clocks", "none", NULL
 };
 
-int MUTE_SYNC_KEYS[] = {
-	MSG_VALUE_MUTE_SYNC_TRANSPORT,
-	MSG_VALUE_MUTE_SYNC_TRANSPORT_CLOCKS,
-	MSG_VALUE_MUTE_SYNC_CLOCKS,
-	MSG_VALUE_MUTE_SYNC_NONE,
-	0
-};
-
 MuteSyncModeParameterType::MuteSyncModeParameterType() :
     SetupParameter("muteSyncMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = MUTE_SYNC_NAMES;
-	valueKeys = MUTE_SYNC_KEYS;
 }
 
 int MuteSyncModeParameterType::getOrdinalValue(Setup* s)
@@ -562,19 +527,12 @@ const char* SYNC_ADJUST_NAMES[] = {
 	"none", "tempo", NULL
 };
 
-int SYNC_ADJUST_KEYS[] = {
-	MSG_VALUE_SYNC_ADJUST_NONE,
-	MSG_VALUE_SYNC_ADJUST_TEMPO,
-	0
-};
-
 ResizeSyncAdjustParameterType::ResizeSyncAdjustParameterType() :
     SetupParameter("resizeSyncAdjust")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SYNC_ADJUST_NAMES;
-	valueKeys = SYNC_ADJUST_KEYS;
 }
 
 int ResizeSyncAdjustParameterType::getOrdinalValue(Setup* s)
@@ -616,7 +574,6 @@ SpeedSyncAdjustParameterType::SpeedSyncAdjustParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = SYNC_ADJUST_NAMES;
-	valueKeys = SYNC_ADJUST_KEYS;
 }
 
 int SpeedSyncAdjustParameterType::getOrdinalValue(Setup* s)
@@ -656,21 +613,12 @@ const char* REALIGN_TIME_NAMES[] = {
     "start", "bar", "beat", "now", NULL
 };
 
-int REALIGN_TIME_KEYS[] = {
-	MSG_VALUE_REALIGN_START,
-	MSG_VALUE_REALIGN_BAR,
-	MSG_VALUE_REALIGN_BEAT,
-	MSG_VALUE_REALIGN_NOW,
-	0
-};
-
 RealignTimeParameterType::RealignTimeParameterType() :
     SetupParameter("realignTime")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = REALIGN_TIME_NAMES;
-	valueKeys = REALIGN_TIME_KEYS;
 }
 
 int RealignTimeParameterType::getOrdinalValue(Setup* s)
@@ -709,19 +657,12 @@ const char* REALIGN_MODE_NAMES[] = {
 	"midiStart", "restart", NULL
 };
 
-int REALIGN_MODE_KEYS[] = {
-	MSG_VALUE_REALIGN_MIDI_START,
-	MSG_VALUE_REALIGN_RESTART,
-	0
-};
-
 OutRealignModeParameterType::OutRealignModeParameterType() :
     SetupParameter("outRealign")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = REALIGN_MODE_NAMES;
-	valueKeys = REALIGN_MODE_KEYS;
 }
 
 int OutRealignModeParameterType::getOrdinalValue(Setup* s)

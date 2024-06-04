@@ -53,7 +53,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
@@ -116,13 +115,9 @@ RealignFunction::RealignFunction(bool b)
 
 	if (mute) {
 		setName("MuteRealign");
-		setKey(MSG_FUNC_MUTE_REALIGN);
-		setHelp("Mute and restart loop at next global MIDI start point");
 	}
 	else {
 		setName("Realign");
-		setKey(MSG_FUNC_REALIGN);
-		setHelp("Restart loop at next global MIDI start point");
         mayConfirm = true;
 	}
 }
@@ -257,7 +252,7 @@ DriftCorrectFunction DriftCorrectObj;
 Function* DriftCorrect = &DriftCorrectObj;
 
 DriftCorrectFunction::DriftCorrectFunction() :
-    Function("DriftCorrect", 0)
+    Function("DriftCorrect")
 {
     global = true;
     // This is one of the few functions we allow outside the interrupt

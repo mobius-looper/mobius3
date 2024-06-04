@@ -32,7 +32,6 @@
 #include "../Loop.h"   
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
@@ -55,7 +54,7 @@ class InsertModeType : public MobiusMode {
 };
 
 InsertModeType::InsertModeType() :
-    MobiusMode("insert", MSG_MODE_INSERT)
+    MobiusMode("insert")
 {
 	extends = true;
 	rounding = true;
@@ -155,17 +154,14 @@ InsertFunction::InsertFunction(bool sus, bool unrounded)
 
 	if (!sus) {
 		setName("Insert");
-		setKey(MSG_FUNC_INSERT);
         // controlled by SustainFunctions parameter
         maySustain = true;
 	}
 	else if (unrounded) {
 		setName("SUSUnroundedInsert");
-		setKey(MSG_FUNC_SUS_UINSERT);
 	}
 	else {
 		setName("SUSInsert");
-		setKey(MSG_FUNC_SUS_INSERT);
 	}
 
 }

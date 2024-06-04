@@ -91,7 +91,6 @@ class Parameter : public SystemConstant {
 	ParameterScope scope;
     const char** values;
 	const char** valueLabels;
-	int* valueKeys;
 
     /**
      * Used in rare cases where we need to change the

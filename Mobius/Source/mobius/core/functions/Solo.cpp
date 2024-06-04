@@ -22,7 +22,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Track.h"
@@ -46,7 +45,7 @@ class SoloModeType : public MobiusMode {
 };
 
 SoloModeType::SoloModeType() :
-    MobiusMode("solo", MSG_MODE_SOLO)
+    MobiusMode("solo")
 {
 }
 
@@ -77,7 +76,7 @@ SoloFunction SoloObj;
 Function* Solo = &SoloObj;
 
 SoloFunction::SoloFunction() :
-    Function("Solo", MSG_FUNC_SOLO)
+    Function("Solo")
 {
 	global = true;
 }

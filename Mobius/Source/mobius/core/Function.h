@@ -28,7 +28,11 @@ class Function : public SystemConstant {
     friend class ScriptFunctionStatement;
 
   public:
-    
+
+	Function();
+	Function(const char* name);
+    virtual ~Function();
+
     static std::vector<Function*> Instances;
     static void dumpFunctions();
 
@@ -140,9 +144,6 @@ class Function : public SystemConstant {
     // Methods
     //////////////////////////////////////////////////////////////////////
 
-	Function();
-	Function(const char* name, int key);
-    virtual ~Function();
 
 	void trace(class Action* action, class Mobius* m);
 	void trace(class Action* action, class Loop* l);

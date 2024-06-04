@@ -33,7 +33,6 @@
 #include "../Track.h"
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../SyncState.h"
@@ -51,7 +50,7 @@ class MultiplyModeType : public MobiusMode {
 };
 
 MultiplyModeType::MultiplyModeType() :
-    MobiusMode("multiply", MSG_MODE_MULTIPLY)
+    MobiusMode("multiply")
 {
 	extends = true;
 	rounding = true;
@@ -151,16 +150,13 @@ MultiplyFunction::MultiplyFunction(bool sus, bool unr)
 
 	if (!sus) {
 		setName("Multiply");
-		setKey(MSG_FUNC_MULTIPLY);
         maySustain = true;
 	}
 	else if (unrounded) {
 		setName("SUSUnroundedMultiply");
-		setKey(MSG_FUNC_SUS_UMULTIPLY);
 	}
 	else {
 		setName("SUSMultiply");
-		setKey(MSG_FUNC_SUS_MULTIPLY);
 	}
 }
 

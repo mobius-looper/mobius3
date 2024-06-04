@@ -28,7 +28,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Mem.h"
@@ -100,7 +99,7 @@ ShuffleFunction ShuffleObj;
 Function* Shuffle = &ShuffleObj;
 
 ShuffleFunction::ShuffleFunction() :
-    Function("Shuffle", MSG_FUNC_SHUFFLE)
+    Function("Shuffle")
 {
 	eventType = ShuffleEvent;
 	cancelReturn = true;

@@ -21,7 +21,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Track.h"
 
@@ -45,7 +44,7 @@ SaveLoopFunction SaveLoopObj;
 Function* SaveLoop = &SaveLoopObj;
 
 SaveLoopFunction::SaveLoopFunction() :
-    Function("SaveLoop", MSG_FUNC_SAVE_LOOP)
+    Function("SaveLoop")
 {
 	global = true;
 	noFocusLock = true;

@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Track.h"
 
@@ -34,7 +33,7 @@ class PlayModeType : public MobiusMode {
 };
 
 PlayModeType::PlayModeType() :
-    MobiusMode("play", MSG_MODE_PLAY)
+    MobiusMode("play")
 {
 }
 
@@ -79,7 +78,7 @@ PlayFunction PlayObj;
 Function* Play = &PlayObj;
 
 PlayFunction::PlayFunction() :
-    Function("Play", MSG_FUNC_PLAY)
+    Function("Play")
 {
 	eventType = PlayEvent;
     mMode = PlayMode;

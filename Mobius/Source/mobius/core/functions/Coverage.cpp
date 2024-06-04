@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -37,7 +36,7 @@ CoverageFunction CoverageFunctionObj;
 Function* Coverage = &CoverageFunctionObj;
 
 CoverageFunction::CoverageFunction() :
-    Function("Coverage", 0)
+    Function("Coverage")
 {
     global = true;
     scriptOnly = true;
@@ -70,7 +69,7 @@ InitCoverageFunction InitCoverageObj;
 Function* InitCoverage = &InitCoverageObj;
 
 InitCoverageFunction::InitCoverageFunction() :
-    Function("InitCoverage", 0)
+    Function("InitCoverage")
 {
     global = true;
     scriptOnly = true;

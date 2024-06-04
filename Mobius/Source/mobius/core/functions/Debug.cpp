@@ -31,7 +31,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -51,7 +50,7 @@ DebugFunction DebugFunctionObj;
 Function* Debug = &DebugFunctionObj;
 
 DebugFunction::DebugFunction() :
-    Function("Debug", 0)
+    Function("Debug")
 {
     global = true;
 	scriptOnly = true;
@@ -107,7 +106,7 @@ BreakpointFunction BreakpointObj;
 Function* Breakpoint = &BreakpointObj;
 
 BreakpointFunction::BreakpointFunction() :
-    Function("Breakpoint", 0)
+    Function("Breakpoint")
 {
     global = true;
 	scriptOnly = true;
@@ -154,7 +153,7 @@ DebugStatusFunction DebugStatusObj;
 Function* DebugStatus = &DebugStatusObj;
 
 DebugStatusFunction::DebugStatusFunction() :
-    Function("TraceStatus", 0)
+    Function("TraceStatus")
 {
     global = true;
 

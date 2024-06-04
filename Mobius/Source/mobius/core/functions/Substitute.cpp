@@ -20,7 +20,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -35,7 +34,7 @@ class SubstituteModeType : public MobiusMode {
 };
 
 SubstituteModeType::SubstituteModeType() :
-    MobiusMode("substitute", MSG_MODE_SUBSTITUTE)
+    MobiusMode("substitute")
 {
 	recording = true;
 	altFeedbackSensitive = true;
@@ -100,7 +99,6 @@ SubstituteFunction::SubstituteFunction(bool sus)
 
 	if (!sus) {
 		setName("Substitute");
-		setKey(MSG_FUNC_SUBSTITUTE);
 		longFunction = SUSSubstitute;
         // can also force this with SustainFunctions parameter
         maySustain = true;
@@ -108,7 +106,6 @@ SubstituteFunction::SubstituteFunction(bool sus)
 	}
 	else {
 		setName("SUSSubstitute");
-		setKey(MSG_FUNC_SUS_SUBSTITUTE);
 	}
 }
 

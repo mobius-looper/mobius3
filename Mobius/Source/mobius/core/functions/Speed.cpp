@@ -28,7 +28,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Resampler.h"
@@ -380,14 +379,12 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 			setName("SpeedCancel");
             alias1 = "RateNormal";
             alias2 = "Fullspeed";
-			setKey(MSG_FUNC_SPEED_CANCEL);
             mCanRestart = true;
 			break;
 
         // these are access as parameters or controls
 		case SPEED_OCTAVE:
 			setName("SpeedOctave");
-			setKey(MSG_PARAM_SPEED_OCTAVE);
             // keep this out of the binding list, we'll get here via
             // the Parameter
             scriptOnly = true;
@@ -395,7 +392,6 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 		case SPEED_STEP:
 			setName("SpeedStep");
             alias1 = "RateShift";
-			setKey(MSG_PARAM_SPEED_STEP);
 			spread = true;
             mCanRestart = true;
             // Since these can be "played" rapidly keep them out of 
@@ -405,7 +401,6 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 		case SPEED_BEND:
             // could be spread but this is intended more for CC bindings
 			setName("SpeedBend");
-			setKey(MSG_PARAM_SPEED_BEND);
             // keep this out of the binding list, we'll get here via
             // the Parameter
             scriptOnly = true;
@@ -413,7 +408,6 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 			break;
 		case SPEED_STRETCH:
 			setName("TimeStretch");
-			setKey(MSG_PARAM_TIME_STRETCH);
             // keep this out of the binding list, we'll get here via
             // the Parameter
             scriptOnly = true;
@@ -424,30 +418,25 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
 		case SPEED_NEXT:
 			setName("SpeedNext");
 			alias1 = "RateNext";
-			setKey(MSG_FUNC_SPEED_NEXT);
             mCanRestart = true;
 			break;
 		case SPEED_PREV:
 			setName("SpeedPrev");
 			alias1 = "RatePrev";
-			setKey(MSG_FUNC_SPEED_PREV);
             mCanRestart = true;
 			break;
 		case SPEED_UP:
 			setName("SpeedUp");
 			alias1 = "RateUp";
-			setKey(MSG_FUNC_SPEED_UP);
             mCanRestart = true;
 			break;
 		case SPEED_DOWN:
 			setName("SpeedDown");
 			alias1 = "RateDown";
-			setKey(MSG_FUNC_SPEED_DOWN);
             mCanRestart = true;
 			break;
 		case SPEED_TOGGLE:
 			setName("SpeedToggle");
-			setKey(MSG_FUNC_SPEED_TOGGLE);
             alias1 = "Speed";
             longFunction = SUSSpeedToggle;
             maySustain = true;
@@ -457,11 +446,9 @@ SpeedFunction::SpeedFunction(SpeedFunctionType type)
             sustain = true;
             setName("SUSSpeedToggle");
             alias1 = "SUSSpeed";
-            setKey(MSG_FUNC_SPEED_SUS_TOGGLE);
             break;
         case SPEED_HALF:
 			setName("Halfspeed");
-			setKey(MSG_FUNC_SPEED_HALF);
             break;
         case SPEED_RESTORE:
             setName("SpeedRestore");

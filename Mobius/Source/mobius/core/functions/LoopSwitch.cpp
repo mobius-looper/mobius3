@@ -53,7 +53,6 @@
 #include "../Mobius.h"
 #include "../Track.h"
 #include "../Stream.h"
-#include "../Messages.h"
 #include "../Mode.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -94,7 +93,7 @@ class SwitchModeType : public MobiusMode {
 };
 
 SwitchModeType::SwitchModeType() :
-    MobiusMode("switch", MSG_MODE_SWITCH)
+    MobiusMode("switch")
 {
 }
 
@@ -109,7 +108,7 @@ class ConfirmModeType : public MobiusMode {
 };
 
 ConfirmModeType::ConfirmModeType() :
-    MobiusMode("confirm", MSG_MODE_CONFIRM)
+    MobiusMode("confirm")
 {
 }
 
@@ -287,23 +286,17 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
 		if (index > 0) {
 			if (sus) {
 				setName("SUSNextLoop");
-				setKey(MSG_FUNC_SUS_NEXT);
-				setHelp("Note On = Next Loop, Note Off = Previous Loop");
 			}
 			else {
 				setName("NextLoop");
-				setKey(MSG_FUNC_NEXT);
 			}
 		}
 		else {
 			if (sus) {
 				setName("SUSPrevLoop");
-				setKey(MSG_FUNC_SUS_PREV);
-				setHelp("Note On = Previous Loop, Note Off = Next Loop");
 			}
 			else {
 				setName("PrevLoop");
-				setKey(MSG_FUNC_PREV);
 			}
 		}
 	}
@@ -316,13 +309,11 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
 		//setName("Loop");
         setName("SelectLoop");
         alias1 = "Loop";
-		setKey(MSG_FUNC_TRIGGER);
         maySustain = false;
 	}
 	else {
 		snprintf(fullName, sizeof(fullName), "Loop%d", i + 1);
 		setName(fullName);
-		setKey(MSG_FUNC_TRIGGER);
 
         // an older longer name, keep for backward compatibility
 		snprintf(fullAlias1, sizeof(fullAlias1), "LoopTrigger%d", i + 1);
@@ -347,17 +338,12 @@ LoopTriggerFunction::LoopTriggerFunction(bool once)
 
 	if (mOnce) {
 		setName("RestartOnce");
-		setKey(MSG_FUNC_RESTART_ONCE);
-		setHelp("Restart loop and play once");
-
         // this is what the EDP calls it and what we used to call it
         // prior to 1.43
         alias1 = "SamplePlay";
 	}
 	else {
 		setName("Restart");
-		setKey(MSG_FUNC_RESTART);
-		setHelp("Restart loop and play forever");
         mayConfirm = true;
         alias1 = "Retrigger";
 	}

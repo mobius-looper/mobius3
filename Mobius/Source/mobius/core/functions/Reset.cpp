@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Loop.h"
 #include "../Layer.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Track.h"
@@ -35,7 +34,7 @@ class ResetModeType : public MobiusMode {
 };
 
 ResetModeType::ResetModeType() :
-    MobiusMode("reset", MSG_MODE_RESET)
+    MobiusMode("reset")
 {
 }
 
@@ -78,20 +77,14 @@ ResetFunction::ResetFunction(bool gen, bool glob)
 
 	if (gen) {
 		setName("TrackReset");
-		setKey(MSG_FUNC_TRACK_RESET);
-		setHelp("Immediately reset all loops");
         alias1 = "GeneralReset";
 	}
 	else if (glob) {
 		setName("GlobalReset");
-		setKey(MSG_FUNC_GLOBAL_RESET);
-		setHelp("Immediately reset all tracks");
 		noFocusLock = true;
 	}
 	else {
 		setName("Reset");
-		setKey(MSG_FUNC_RESET);
-		setHelp("Immediately reset current loop");
         mayConfirm = true;
 	}
 }

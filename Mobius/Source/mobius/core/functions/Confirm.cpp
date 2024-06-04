@@ -32,7 +32,6 @@
 #include "../Loop.h"
 #include "../Track.h"
 #include "../Stream.h"
-#include "../Messages.h"
 #include "../Mode.h"
 
 /****************************************************************************
@@ -51,7 +50,7 @@ ConfirmFunction ConfirmFunctionObj;
 Function* Confirm = &ConfirmFunctionObj;
 
 ConfirmFunction::ConfirmFunction() :
-    Function("Confirm", MSG_FUNC_CONFIRM)
+    Function("Confirm")
 {
 }
 

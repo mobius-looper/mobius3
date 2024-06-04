@@ -22,7 +22,6 @@
 #include "../Stream.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
@@ -40,7 +39,7 @@ class StutterModeType : public MobiusMode {
 };
 
 StutterModeType::StutterModeType() :
-    MobiusMode("stutter", MSG_MODE_STUTTER)
+    MobiusMode("stutter")
 {
 	recording = true;
 	extends = true;
@@ -113,12 +112,10 @@ StutterFunction::StutterFunction(bool sus)
 
 	if (!sus) {
 		setName("Stutter");
-		setKey(MSG_FUNC_STUTTER);
 		longFunction = SUSStutter;
 	}
 	else {
 		setName("SUSStutter");
-		setKey(MSG_FUNC_SUS_STUTTER);
 	}
 }
 

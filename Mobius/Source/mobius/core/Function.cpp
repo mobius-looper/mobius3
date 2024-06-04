@@ -326,7 +326,6 @@ void Function::dumpFunctions()
     }
 }
 
-
 Function::Function()
 {
     // having weird crashes with this
@@ -334,7 +333,7 @@ Function::Function()
     init();
 }
 
-Function::Function(const char* name, int key) :
+Function::Function(const char* name) :
     SystemConstant(name)
 {
     //Instances.push_back(this);

@@ -27,7 +27,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
 #include "../Stream.h"
@@ -122,25 +121,21 @@ UndoFunction::UndoFunction(bool dynamic, bool shortpress, bool only)
 	if (mDynamic) {
 		if (mOnly) {
 			setName("UndoOnly");
-			setKey(MSG_FUNC_UNDO_ONLY);
 			// keep this hidden for awhile
 			scriptOnly = true;
 		}
 		else {
 			setName("Undo");
-			setKey(MSG_FUNC_UNDO);
             mayConfirm = true;
 		}
 	}
 	else if (mShort) {
 		setName("ShortUndo");
-		setKey(MSG_FUNC_SHORT_UNDO);
 		// these don't work anyway so keep them hidden
 		scriptOnly = true;
 	}
 	else {
 		setName("LongUndo");
-		setKey(MSG_FUNC_LONG_UNDO);
 		// these don't work anyway so keep them hidden
 		scriptOnly = true;
 	}
@@ -272,7 +267,7 @@ RedoFunction RedoObj;
 Function* Redo = &RedoObj;
 
 RedoFunction::RedoFunction() :
-    Function("Redo", MSG_FUNC_REDO)
+    Function("Redo")
 {
 	eventType = RedoEvent;
 	mayCancelMute = true;

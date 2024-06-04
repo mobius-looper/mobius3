@@ -21,7 +21,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Segment.h"
 #include "../Stream.h"
@@ -96,13 +95,9 @@ StartPointFunction::StartPointFunction(bool midiop)
 
 	if (mMidi) {
 		setName("SyncStartPoint");
-		setKey(MSG_FUNC_SYNC_START_POINT);
-		setHelp("Set the loop start point at next external sync start point");
 	}
 	else {
 		setName("StartPoint");
-		setKey(MSG_FUNC_START_POINT);
-		setHelp("Set the start point to current position in the loop");
 	}
 }
 

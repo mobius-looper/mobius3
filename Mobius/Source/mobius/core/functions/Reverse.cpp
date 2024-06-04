@@ -68,7 +68,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Stream.h"
 #include "../Track.h"
@@ -87,7 +86,7 @@ class ReverseModeType : public MobiusMode {
 };
 
 ReverseModeType::ReverseModeType() :
-    MobiusMode("reverse", MSG_MODE_REVERSE)
+    MobiusMode("reverse")
 {
 	minor = true;
 }
@@ -203,20 +202,16 @@ ReverseFunction::ReverseFunction(bool sus, bool tog, bool fwd)
 	if (!toggle) {
 		if (forward) {
 			setName("Forward");
-			setKey(MSG_FUNC_FORWARD);
 		}
 		else {
 			setName("Backward");
-			setKey(MSG_FUNC_BACKWARD);
 		}
 	}
 	else if (sustain) {
 		setName("SUSReverse");
-		setKey(MSG_FUNC_SUS_REVERSE);
 	}
 	else {
 		setName("Reverse");
-		setKey(MSG_FUNC_REVERSE);
 		longFunction = SUSReverse;
         // can also force this with SustainFunctions preset parameter
         maySustain = true;

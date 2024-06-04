@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 
 /****************************************************************************
@@ -43,7 +42,7 @@ CheckpointFunction CheckpointFunctionObj;
 Function* Checkpoint = &CheckpointFunctionObj;
 
 CheckpointFunction::CheckpointFunction() :
-    Function("Checkpoint", MSG_FUNC_CHECKPOINT)
+    Function("Checkpoint")
 {
 	mayCancelMute = true;
 }

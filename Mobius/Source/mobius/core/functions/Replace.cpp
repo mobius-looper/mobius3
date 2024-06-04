@@ -51,7 +51,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Track.h"
 
@@ -67,7 +66,7 @@ class ReplaceModeType : public MobiusMode {
 };
 
 ReplaceModeType::ReplaceModeType() :
-    MobiusMode("replace", MSG_MODE_REPLACE)
+    MobiusMode("replace")
 {
 	recording = true;
 }
@@ -134,7 +133,6 @@ ReplaceFunction::ReplaceFunction(bool sus)
 
 	if (!sus) {
 		setName("Replace");
-		setKey(MSG_FUNC_REPLACE);
 		// this was not defined in the EDP manual but seems logical
 		longFunction = SUSReplace;
         // can also force this with SustainFunctions parameter
@@ -143,7 +141,6 @@ ReplaceFunction::ReplaceFunction(bool sus)
 	}
 	else {
 		setName("SUSReplace");
-		setKey(MSG_FUNC_SUS_REPLACE);
 	}
 }
 

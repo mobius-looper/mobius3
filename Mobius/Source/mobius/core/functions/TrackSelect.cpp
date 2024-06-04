@@ -26,7 +26,6 @@
 #include "../Loop.h"
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Messages.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
 
@@ -119,11 +118,9 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 	if (relative) {
 		if (i > 0) {
 			setName("NextTrack");
-			setKey(MSG_FUNC_NEXT_TRACK);
 		}
 		else {
 			setName("PrevTrack");
-			setKey(MSG_FUNC_PREV_TRACK);
 		}
 	}
 	else if (index < 0) {
@@ -138,12 +135,10 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 		//setName("Track");
         setName("SelectTrack");
         alias1 = "Track";
-		setKey(MSG_FUNC_SELECT_TRACK);
 	}
 	else {
 		snprintf(fullName, sizeof(fullName), "Track%d", i + 1);
 		setName(fullName);
-		setKey(MSG_FUNC_TRACK);
 
 		// the older name 
 		snprintf(fullAlias1, sizeof(fullAlias1), "TrackSelect%d", i + 1);

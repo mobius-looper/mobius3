@@ -27,7 +27,7 @@ class MobiusMode : public SystemConstant {
   public:
 
 	MobiusMode();
-	MobiusMode(const char* name, int key);
+	MobiusMode(const char* name);
 	MobiusMode(const char* name, const char* display);
     void init();
 	virtual ~MobiusMode();

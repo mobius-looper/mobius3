@@ -432,7 +432,6 @@
           <FILE id="BHbh81" name="Mapper.h" compile="0" resource="0" file="Source/mobius/core/Mapper.h"/>
           <FILE id="AXgurM" name="Mem.cpp" compile="1" resource="0" file="Source/mobius/core/Mem.cpp"/>
           <FILE id="Kz2Efj" name="Mem.h" compile="0" resource="0" file="Source/mobius/core/Mem.h"/>
-          <FILE id="W6SHN9" name="Messages.h" compile="0" resource="0" file="Source/mobius/core/Messages.h"/>
           <FILE id="lHBt2R" name="Mobius.cpp" compile="1" resource="0" file="Source/mobius/core/Mobius.cpp"/>
           <FILE id="LMQl5U" name="Mobius.h" compile="0" resource="0" file="Source/mobius/core/Mobius.h"/>
           <FILE id="UE7nUh" name="Mode.cpp" compile="1" resource="0" file="Source/mobius/core/Mode.cpp"/>

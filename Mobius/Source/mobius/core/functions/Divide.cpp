@@ -20,7 +20,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Stream.h"
 #include "../Synchronizer.h"
@@ -94,15 +93,12 @@ DivideFunction::DivideFunction(int n)
         // divide by two unless there is a binding arg
 		name = "Divide";
         alias1 = "Divide2";
-		//setKey(MSG_FUNC_DIVIDE);
 	}
 	else if (n == 3) {
 		setName("Divide3");
-		//setKey(MSG_FUNC_DIVIDE_3);
 	}
 	else if (n == 4) {
 		setName("Divide4");
-		//setKey(MSG_FUNC_DIVIDE_4);
 	}
 }
 

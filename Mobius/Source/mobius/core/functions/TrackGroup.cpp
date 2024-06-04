@@ -19,7 +19,6 @@
 #include "../Event.h"
 #include "../Function.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Track.h"
 
@@ -40,7 +39,7 @@ TrackGroupFunction TrackGroupObj;
 Function* TrackGroup = &TrackGroupObj;
 
 TrackGroupFunction::TrackGroupFunction() :
-    Function("TrackGroup", MSG_FUNC_TRACK_GROUP)
+    Function("TrackGroup")
 {
 	longPressable = true;
 }

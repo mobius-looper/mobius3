@@ -42,7 +42,6 @@
 #include "../Action.h"
 #include "../Event.h"
 #include "../Function.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Layer.h"
 #include "../Loop.h"
@@ -59,7 +58,7 @@ class OverdubModeType : public MobiusMode {
 };
 
 OverdubModeType::OverdubModeType() :
-    MobiusMode("overdub", MSG_MODE_OVERDUB)
+    MobiusMode("overdub")
 {
 	minor = true;
 	recording = true;
@@ -156,22 +155,18 @@ OverdubFunction::OverdubFunction(bool sus, bool tog, bool turnOff)
 	if (!toggle) {
 		if (off) {
 			setName("OverdubOff");
-			setKey(MSG_FUNC_OVERDUB_OFF);
 			scriptOnly = true;
 		}
 		else {
 			setName("OverdubOn");
-			setKey(MSG_FUNC_OVERDUB_ON);
 			scriptOnly = true;
 		}
 	}
 	else if (sustain) {
 		setName("SUSOverdub");
-		setKey(MSG_FUNC_SUS_OVERDUB);
 	}
 	else {
 		setName("Overdub");
-		setKey(MSG_FUNC_OVERDUB);
 		longFunction = SUSOverdub;
         // sustain controlled by the SustainFunctions parameter
         maySustain = true;

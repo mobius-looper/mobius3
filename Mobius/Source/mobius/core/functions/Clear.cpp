@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Stream.h"
@@ -62,7 +61,7 @@ ClearFunction ClearFunctionObj;
 Function* Clear = &ClearFunctionObj;
 
 ClearFunction::ClearFunction() :
-    Function("Clear", MSG_FUNC_CLEAR)
+    Function("Clear")
 {
 	eventType = ClearEvent;
 	cancelReturn = true;

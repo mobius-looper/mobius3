@@ -19,7 +19,6 @@
 #include "../Layer.h"
 #include "../Loop.h"
 #include "../Mobius.h"
-#include "../Messages.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
 #include "../Mode.h"
@@ -52,11 +51,9 @@ TrackCopyFunction::TrackCopyFunction(bool b)
 
 	if (timing) {
 		setName("TrackCopyTiming");
-		setKey(MSG_FUNC_TRACK_COPY_TIMING);
 	}
 	else {
 		setName("TrackCopy");
-		setKey(MSG_FUNC_TRACK_COPY);
 	}
 }
 

@@ -35,7 +35,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
 
@@ -98,12 +97,10 @@ MoveFunction::MoveFunction(bool drift)
 
 	if (drift) {
 		setName("Drift");
-		setKey(MSG_FUNC_DRIFT);
 		scriptOnly = true;
 	}
 	else {
 		setName("Move");
-		setKey(MSG_FUNC_MOVE);
 
         // until we support binding arguments it doesn't make sense
         // to expose this

@@ -21,7 +21,6 @@
 #include "../Stream.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Mem.h"
@@ -92,15 +91,12 @@ InstantMultiplyFunction::InstantMultiplyFunction(int n)
 	if (n == 0) {
 		setName("InstantMultiply");
         alias1 = "InstantMultiply2";
-		setKey(MSG_FUNC_INSTANT_MULTIPLY);
 	}
 	else if (n == 3) {
 		setName("InstantMultiply3");
-		setKey(MSG_FUNC_INSTANT_MULTIPLY_3);
 	}
 	else if (n == 4) {
 		setName("InstantMultiply4");
-		setKey(MSG_FUNC_INSTANT_MULTIPLY_4);
 	}
 }
 

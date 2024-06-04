@@ -18,7 +18,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 
@@ -61,10 +60,8 @@ BounceFunction BounceFunctionObj;
 Function* Bounce = &BounceFunctionObj;
 
 BounceFunction::BounceFunction() :
-    Function("Bounce", MSG_FUNC_BOUNCE)
+    Function("Bounce")
 {
-	setHelp("Start or end a bounce down recording");
-
 	// this is not a "global" function, since we try to schedule events
 	// in the current track
 	noFocusLock = true;

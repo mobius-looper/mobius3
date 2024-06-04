@@ -124,7 +124,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
@@ -200,7 +199,7 @@ class RecordModeType : public MobiusMode {
 };
 
 RecordModeType::RecordModeType() :
-    MobiusMode("record", MSG_MODE_RECORD)
+    MobiusMode("record")
 {
 	extends = true;
 	recording = true;
@@ -219,7 +218,7 @@ class SynchronizeModeType : public MobiusMode {
 };
 
 SynchronizeModeType::SynchronizeModeType() :
-    MobiusMode("synchronize", MSG_MODE_SYNCHRONIZE)
+    MobiusMode("synchronize")
 {
 }
 
@@ -236,7 +235,7 @@ class ThresholdModeType : public MobiusMode {
 };
 
 ThresholdModeType::ThresholdModeType() :
-    MobiusMode("threshold", MSG_MODE_THRESHOLD)
+    MobiusMode("threshold")
 {
 }
 
@@ -253,7 +252,7 @@ class RunModeType : public MobiusMode {
 };
 
 RunModeType::RunModeType() :
-    MobiusMode("run", MSG_MODE_RUN)
+    MobiusMode("run")
 {
 }
 
@@ -309,16 +308,13 @@ RecordFunction::RecordFunction(bool sus, bool aut)
 
 	if (sustain) {
 		setName("SUSRecord");
-		setKey(MSG_FUNC_SUS_RECORD);
 	}
 	else if (mAuto) {
 		setName("AutoRecord");
-		setKey(MSG_FUNC_AUTO_RECORD);
 		longPressable = true;
 	}
 	else {
 		setName("Record");
-		setKey(MSG_FUNC_RECORD);
 		longPressable = true;
         // controlled by RecordFunctions parameter
         maySustain = true;
@@ -784,11 +780,9 @@ RehearseModeType::RehearseModeType(bool record)
 {
 	if (record) {
 		setName("rehearseRecord");
-		setKey(MSG_MODE_REHEARSE_RECORD);
 	}
 	else {
 		setName("rehearse");
-		setKey(MSG_MODE_REHEARSE);
 	}
 
 	recording = true;
@@ -812,7 +806,6 @@ class RehearseFunction : public RecordFunction {
 RehearseFunction::RehearseFunction() : RecordFunction(false, false)
 {
     setName("Rehearse");
-    setKey(MSG_FUNC_REHEARSE);
     maySustain = false;
 }
 

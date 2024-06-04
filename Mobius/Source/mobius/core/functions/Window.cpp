@@ -31,7 +31,6 @@
 #include "../Loop.h"
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Stream.h"
 #include "../Synchronizer.h"
@@ -56,7 +55,7 @@ class WindowModeType : public MobiusMode {
 };
 
 WindowModeType::WindowModeType() :
-    MobiusMode("window", MSG_MODE_WINDOW)
+    MobiusMode("window")
 {
 	minor = true;
 }
@@ -231,21 +230,17 @@ WindowFunction::WindowFunction(bool edge, bool start, int direction)
         else if (mStart) {
             if (mDirection < 0) {
                 setName("WindowStartBackward");
-                setKey(MSG_FUNC_WINDOW_START_BACKWARD);
             }
             else {
                 setName("WindowStartForward");
-                setKey(MSG_FUNC_WINDOW_START_FORWARD);
             }
         }
         else {
             if (mDirection < 0) {
                 setName("WindowEndBackward");
-                setKey(MSG_FUNC_WINDOW_END_BACKWARD);
             }
             else {
                 setName("WindowEndForward");
-                setKey(MSG_FUNC_WINDOW_END_FORWARD);
             }
         }
     }
@@ -257,11 +252,9 @@ WindowFunction::WindowFunction(bool edge, bool start, int direction)
         }
         else if (mDirection < 0) {
             setName("WindowBackward");
-            setKey(MSG_FUNC_WINDOW_BACKWARD);
         }
         else {
             setName("WindowForward");
-            setKey(MSG_FUNC_WINDOW_FORWARD);
         }
     }
 }

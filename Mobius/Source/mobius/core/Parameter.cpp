@@ -23,7 +23,6 @@
 
 #include "../../util/Util.h"
 #include "../../util/List.h"
-//#include "MessageCatalog.h"
 //#include "XmlModel.h"
 //#include "XmlBuffer.h"
 
@@ -31,7 +30,6 @@
 #include "../Audio.h"
 #include "Export.h"
 #include "Function.h"
-#include "Messages.h"
 #include "Mobius.h"
 #include "../../model/MobiusConfig.h"
 #include "Mode.h"
@@ -54,10 +52,6 @@
 
 const char* BOOLEAN_VALUE_NAMES[] = {
 	"off", "on", NULL
-};
-
-int BOOLEAN_VALUE_KEYS[] = {
-	MSG_VALUE_BOOLEAN_FALSE, MSG_VALUE_BOOLEAN_TRUE, 0
 };
 
 const char* BOOLEAN_VALUE_LABELS[] = {
@@ -94,7 +88,6 @@ void Parameter::init()
     mDefault = 0;
 
 	values = NULL;
-	valueKeys = NULL;
 	valueLabels = NULL;
     xmlAlias = NULL;
 
@@ -166,56 +159,6 @@ void Parameter::setValue(Action* action)
     Trace(1, "Parameter %s: setValue not overloaded!\n",
           getName());
 }
-
-/**
- * Refresh the cached display names from the message catalog.
- * This overloads the one inherited from SystemConstant so we
- * can avoid warning about hidden and deprecated parameters.
- * Push that down to SysetmConstant?
- *
- * We also handle the localization of the values.
- */
-#if 0
-void Parameter::localize(MessageCatalog* cat)
-{
-    int key = getKey();
-
-	if (key == 0) {
-		if (bindable)
-		  Trace(1, "No catalog key for parameter %s\n", getName());
-		setDisplayName(getName());
-	}
-	else {
-		const char* msg = cat->get(key);
-		if (msg != NULL)
-		  setDisplayName(msg);
-		else {
-			Trace(1, "No localization for parameter %s\n", getName());
-			setDisplayName(getName());
-		}
-	}
-
-	if (valueKeys != NULL) {
-		// note that these will leak if we don't have something to flush them
-		if (valueLabels == NULL) {
-			int count = 0;
-			while (valueKeys[count] != 0) count++;
-			valueLabels = allocLabelArray(count);
-		}
-		for (int i = 0 ; valueKeys[i] != 0 ; i++) {
-			const char* msg = cat->get(valueKeys[i]);
-			if (msg != NULL)
-			  valueLabels[i] = msg;
-			else {
-				Trace(1, "No localization for parameter %s value %s\n", 
-					  getName(), values[i]);
-				if (valueLabels[i] == NULL)
-				  valueLabels[i] = values[i];
-			}
-		}
-	}
-}
-#endif
 
 /**
  * Allocate a label array and fill it with nulls.
@@ -797,33 +740,6 @@ void Parameter::deleteParameters()
     // more than once during shutdown
     Parameters[0] = nullptr;
 }
-
-/**
- * Refresh the cached display names from the message catalog.
- */
-#if 0
-void Parameter::localizeAll(MessageCatalog* cat)
-{
-	int i;
-
-	for (i = 0 ; Parameters[i] != NULL ; i++)
-	  Parameters[i]->localize(cat);
-
-	// these are shared by all
-	for (i = 0 ; BOOLEAN_VALUE_NAMES[i] != NULL; i++) {
-		const char* msg = cat->get(BOOLEAN_VALUE_KEYS[i]);
-		if (msg == NULL)
-		  msg = BOOLEAN_VALUE_NAMES[i];
-		BOOLEAN_VALUE_LABELS[i] = msg;
-	}
-
-    // a good point to run diagnostics
-    checkAmbiguousNames();
-
-    // debugging hack
-    //    dumpFlags();
-}
-#endif
 
 void Parameter::checkAmbiguousNames()
 {

@@ -35,7 +35,6 @@
 #include "Action.h"
 #include "Export.h"
 #include "Function.h"
-#include "Messages.h"
 #include "Mobius.h"
 #include "Mode.h"
 #include "Project.h"
@@ -1474,23 +1473,12 @@ const char* SYNC_SOURCE_NAMES[] = {
 	"default", "none", "track", "out", "host", "midi", NULL
 };
 
-int SYNC_SOURCE_KEYS[] = {
-	MSG_VALUE_SYNC_SOURCE_DEFAULT,
-	MSG_VALUE_SYNC_SOURCE_NONE,
-	MSG_VALUE_SYNC_SOURCE_TRACK,
-	MSG_VALUE_SYNC_SOURCE_OUT,
-	MSG_VALUE_SYNC_SOURCE_HOST,
-	MSG_VALUE_SYNC_SOURCE_MIDI,
-	0
-};
-
 SyncSourceParameterType::SyncSourceParameterType() :
     TrackParameter("syncSource")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SYNC_SOURCE_NAMES;
-	valueKeys = SYNC_SOURCE_KEYS;
 }
 
 void SyncSourceParameterType::getValue(SetupTrack* s, ExValue* value)
@@ -1596,21 +1584,12 @@ const char* TRACK_SYNC_UNIT_NAMES[] = {
 	"default", "subcycle", "cycle", "loop", NULL
 };
 
-int TRACK_SYNC_UNIT_KEYS[] = {
-	MSG_VALUE_TRACK_UNIT_DEFAULT,
-	MSG_VALUE_TRACK_UNIT_SUBCYCLE,
-	MSG_VALUE_TRACK_UNIT_CYCLE,
-	MSG_VALUE_TRACK_UNIT_LOOP,
-	0
-};
-
 TrackSyncUnitParameterType::TrackSyncUnitParameterType() :
     TrackParameter("trackSyncUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = TRACK_SYNC_UNIT_NAMES;
-	valueKeys = TRACK_SYNC_UNIT_KEYS;
 }
 
 void TrackSyncUnitParameterType::getValue(SetupTrack* s, ExValue* value)

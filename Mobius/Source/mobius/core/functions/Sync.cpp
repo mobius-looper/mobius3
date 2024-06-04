@@ -19,7 +19,6 @@
 #include "../Event.h"
 #include "../Function.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
@@ -157,22 +156,16 @@ SyncMasterFunction::SyncMasterFunction(bool track, bool midi)
 
 	if (track && !midi) {
 		setName("SyncMasterTrack");
-		setKey(MSG_FUNC_SYNC_MASTER_TRACK);
-
         // why were the others scriptOnly but not this one?
         scriptOnly = true;
 	}
 	else if (midi && !track) {
 		setName("SyncMasterMidi");
-		setKey(MSG_FUNC_SYNC_MASTER_MIDI);
-
         // doesn't work yet so keep it hidden
         scriptOnly = true;
 	}
 	else {
 		setName("SyncMaster");
-		setKey(MSG_FUNC_SYNC_MASTER_ALL);
-
         // doesn't work yet so keep it hidden
         scriptOnly = true;
 	}

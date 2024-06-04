@@ -27,7 +27,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../Synchronizer.h"
@@ -90,14 +89,10 @@ MidiStartFunction::MidiStartFunction(bool b)
 
 	if (mute) {
 		setName("MuteMidiStart");
-		setKey(MSG_FUNC_MUTE_MIDI_START);
-		setHelp("Mute, wait for the loop start point, then send MIDI start");
         alias1 = "MuteStartSong";
 	}
 	else {
 		setName("MidiStart");
-		setKey(MSG_FUNC_MIDI_START);
-		setHelp("Wait for the loop start point, then send MIDI Start");
         alias1 = "StartSong";
 	}
 }
@@ -269,9 +264,8 @@ MidiStopFunction MidiStopObj;
 Function* MidiStop = &MidiStopObj;
 
 MidiStopFunction::MidiStopFunction() :
-    Function("MidiStop", MSG_FUNC_MIDI_STOP)
+    Function("MidiStop")
 {
-	setHelp("Send MIDI Stop");
     alias1 = "StopSong";
 
 	eventType = MidiStopEvent;
@@ -326,10 +320,8 @@ MidiOutFunction MidiOutObj;
 Function* MidiOut = &MidiOutObj;
 
 MidiOutFunction::MidiOutFunction() :
-    Function("MidiOut", MSG_FUNC_MIDI_OUT)
+    Function("MidiOut")
 {
-	setHelp("Send MIDI message");
-
     global = true;
 
     // until we support binding arguments this

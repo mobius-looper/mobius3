@@ -37,7 +37,6 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mode.h"
 #include "../Stream.h"
 #include "../Synchronizer.h"
@@ -102,13 +101,9 @@ TrimFunction::TrimFunction(bool startop)
 
     if (start) {
 		setName("TrimStart");
-		setKey(MSG_FUNC_TRIM_START);
-		setHelp("Remove the loop prior to the current frame");
     }
     else {
 		setName("TrimEnd");
-		setKey(MSG_FUNC_TRIM_END);
-		setHelp("Remove the loop after the current frame");
     }
 }
 

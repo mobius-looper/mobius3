@@ -32,7 +32,6 @@
 #include "Action.h"
 #include "Export.h"
 #include "Function.h"
-#include "Messages.h"
 #include "Mobius.h"
 #include "Mode.h"
 #include "Project.h"
@@ -207,18 +206,12 @@ const char* MULTIPLY_MODE_NAMES[] = {
 	"normal", "simple", NULL
 };
 
-int MULTIPLY_MODE_KEYS[] = {
-	MSG_VALUE_MULTIPLY_NORMAL, MSG_VALUE_MULTIPLY_SIMPLE, 
-	0
-};
-
 MultiplyModeParameterType::MultiplyModeParameterType() :
     PresetParameter("multiplyMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = MULTIPLY_MODE_NAMES;
-	valueKeys = MULTIPLY_MODE_KEYS;
 }
 
 int MultiplyModeParameterType::getOrdinalValue(Preset* p)
@@ -272,21 +265,12 @@ const char* SHUFFLE_MODE_NAMES[] = {
 	"reverse", "shift", "swap", "random", NULL
 };
 
-int SHUFFLE_MODE_KEYS[] = {
-	MSG_VALUE_SHUFFLE_REVERSE, 
-	MSG_VALUE_SHUFFLE_SHIFT,
-	MSG_VALUE_SHUFFLE_SWAP,
-	MSG_VALUE_SHUFFLE_RANDOM,
-	0
-};
-
 ShuffleModeParameterType::ShuffleModeParameterType() :
     PresetParameter("shuffleMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SHUFFLE_MODE_NAMES;
-	valueKeys = SHUFFLE_MODE_KEYS;
 }
 
 int ShuffleModeParameterType::getOrdinalValue(Preset* p)
@@ -364,21 +348,12 @@ const char* EMPTY_LOOP_NAMES[] = {
 	"none", "record", "copy", "copyTime", NULL
 };
 
-int EMPTY_LOOP_KEYS[] = {
-	MSG_VALUE_EMPTY_LOOP_NONE,
-	MSG_VALUE_EMPTY_LOOP_RECORD,
-	MSG_VALUE_EMPTY_LOOP_COPY,
-	MSG_VALUE_EMPTY_LOOP_TIME,
-	0
-};
-
 EmptyLoopActionParameterType::EmptyLoopActionParameterType() :
     PresetParameter("emptyLoopAction")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = EMPTY_LOOP_NAMES;
-	valueKeys = EMPTY_LOOP_KEYS;
 }
 
 int EmptyLoopActionParameterType::getOrdinalValue(Preset* p)
@@ -430,7 +405,6 @@ EmptyTrackActionParameterType::EmptyTrackActionParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = EMPTY_LOOP_NAMES;
-	valueKeys = EMPTY_LOOP_KEYS;
 }
 
 int EmptyTrackActionParameterType::getOrdinalValue(Preset* p)
@@ -469,20 +443,12 @@ const char* TRACK_LEAVE_NAMES[] = {
 	"none", "cancel", "wait", NULL
 };
 
-int TRACK_LEAVE_KEYS[] = {
-	MSG_VALUE_TRACK_LEAVE_NONE,
-	MSG_VALUE_TRACK_LEAVE_CANCEL,
-	MSG_VALUE_TRACK_LEAVE_WAIT,
-	0
-};
-
 TrackLeaveActionParameterType::TrackLeaveActionParameterType() :
     PresetParameter("trackLeaveAction")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = TRACK_LEAVE_NAMES;
-	valueKeys = TRACK_LEAVE_KEYS;
 }
 
 int TrackLeaveActionParameterType::getOrdinalValue(Preset* p)
@@ -568,20 +534,12 @@ const char* MUTE_MODE_NAMES[] = {
 	"continue", "start", "pause", NULL
 };
 
-int MUTE_MODE_KEYS[] = {
-	MSG_VALUE_MUTE_CONTINUE,
-	MSG_VALUE_MUTE_START,
-	MSG_VALUE_MUTE_PAUSE,
-	0
-};
-
 MuteModeParameterType::MuteModeParameterType() :
     PresetParameter("muteMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = MUTE_MODE_NAMES;
-	valueKeys = MUTE_MODE_KEYS;
 }
 
 int MuteModeParameterType::getOrdinalValue(Preset* p)
@@ -625,23 +583,12 @@ const char* MUTE_CANCEL_NAMES[] = {
 	"never", "edit", "trigger", "effect", "custom", "always", NULL
 };
 
-int MUTE_CANCEL_KEYS[] = {
-	MSG_VALUE_MUTE_CANCEL_NEVER,
-	MSG_VALUE_MUTE_CANCEL_EDIT,
-	MSG_VALUE_MUTE_CANCEL_TRIGGER,
-	MSG_VALUE_MUTE_CANCEL_EFFECT,
-	MSG_VALUE_MUTE_CANCEL_CUSTOM,
-	MSG_VALUE_MUTE_CANCEL_ALWAYS,
-	0
-};
-
 MuteCancelParameterType::MuteCancelParameterType() :
     PresetParameter("muteCancel")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = MUTE_CANCEL_NAMES;
-	valueKeys = MUTE_CANCEL_KEYS;
 }
 
 int MuteCancelParameterType::getOrdinalValue(Preset* p)
@@ -726,21 +673,12 @@ const char* QUANTIZE_MODE_NAMES[] = {
 	"off", "subCycle", "cycle", "loop", NULL
 };
 
-int QUANTIZE_MODE_KEYS[] = {
-	MSG_VALUE_QUANTIZE_OFF,
-	MSG_VALUE_QUANTIZE_SUBCYCLE,
-	MSG_VALUE_QUANTIZE_CYCLE,
-	MSG_VALUE_QUANTIZE_LOOP,
-	0
-};
-
 QuantizeParameterType::QuantizeParameterType() :
     PresetParameter("quantize")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = QUANTIZE_MODE_NAMES;
-	valueKeys = QUANTIZE_MODE_KEYS;
 }
 
 int QuantizeParameterType::getOrdinalValue(Preset* p)
@@ -781,7 +719,6 @@ BounceQuantizeParameterType::BounceQuantizeParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = QUANTIZE_MODE_NAMES;
-	valueKeys = QUANTIZE_MODE_KEYS;
 }
 
 int BounceQuantizeParameterType::getOrdinalValue(Preset* p)
@@ -942,21 +879,12 @@ const char* SWITCH_LOCATION_NAMES[] = {
 	"follow", "restore", "start", "random", NULL
 };
 
-int SWITCH_LOCATION_KEYS[] = {
-	MSG_VALUE_SWITCH_FOLLOW,
-	MSG_VALUE_SWITCH_RESTORE,
-	MSG_VALUE_SWITCH_START,
-	MSG_VALUE_SWITCH_RANDOM,
-	0
-};
-
 SwitchLocationParameterType::SwitchLocationParameterType() :
     PresetParameter("switchLocation")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SWITCH_LOCATION_NAMES;
-	valueKeys = SWITCH_LOCATION_KEYS;
 }
 
 int SwitchLocationParameterType::getOrdinalValue(Preset* p)
@@ -997,7 +925,6 @@ ReturnLocationParameterType::ReturnLocationParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = SWITCH_LOCATION_NAMES;
-	valueKeys = SWITCH_LOCATION_KEYS;
 }
 
 int ReturnLocationParameterType::getOrdinalValue(Preset* p)
@@ -1036,22 +963,12 @@ const char* SWITCH_DURATION_NAMES[] = {
 	"permanent", "once", "onceReturn", "sustain", "sustainReturn", NULL
 };
 
-int SWITCH_DURATION_KEYS[] = {
-	MSG_VALUE_SWITCH_PERMANENT,
-	MSG_VALUE_SWITCH_ONCE,
-	MSG_VALUE_SWITCH_ONCE_RETURN,
-	MSG_VALUE_SWITCH_SUSTAIN,
-	MSG_VALUE_SWITCH_SUSTAIN_RETURN,
-	0
-};
-
 SwitchDurationParameterType::SwitchDurationParameterType() :
     PresetParameter("switchDuration")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SWITCH_DURATION_NAMES;
-	valueKeys = SWITCH_DURATION_KEYS;
 }
 
 int SwitchDurationParameterType::getOrdinalValue(Preset* p)
@@ -1091,25 +1008,12 @@ const char* SWITCH_QUANT_NAMES[] = {
     "confirm", "confirmSubCycle", "confirmCycle", "confirmLoop", NULL
 };
 
-int SWITCH_QUANT_KEYS[] = {
-	MSG_VALUE_SWITCH_OFF,
-	MSG_VALUE_SWITCH_SUBCYCLE,
-	MSG_VALUE_SWITCH_CYCLE,
-	MSG_VALUE_SWITCH_LOOP,
-	MSG_VALUE_SWITCH_CONFIRM,
-	MSG_VALUE_SWITCH_CONFIRM_SUBCYCLE,
-	MSG_VALUE_SWITCH_CONFIRM_CYCLE,
-	MSG_VALUE_SWITCH_CONFIRM_LOOP,
-	0
-};
-
 SwitchQuantizeParameterType::SwitchQuantizeParameterType() :
     PresetParameter("switchQuantize")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SWITCH_QUANT_NAMES;
-	valueKeys = SWITCH_QUANT_KEYS;
     // old name
     addAlias("switchQuant");
 }
@@ -1150,21 +1054,12 @@ const char* COPY_MODE_NAMES[] = {
 	"play", "overdub", "multiply", "insert", NULL
 };
 
-int COPY_MODE_KEYS[] = {
-	MSG_VALUE_COPY_MODE_PLAY,
-	MSG_VALUE_COPY_MODE_OVERDUB,
-	MSG_VALUE_COPY_MODE_MULTIPLY,
-	MSG_VALUE_COPY_MODE_INSERT,
-	0
-};
-
 TimeCopyParameterType::TimeCopyParameterType() :
     PresetParameter("timeCopyMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = COPY_MODE_NAMES;
-	valueKeys = COPY_MODE_KEYS;
 }
 
 int TimeCopyParameterType::getOrdinalValue(Preset* p)
@@ -1205,7 +1100,6 @@ SoundCopyParameterType::SoundCopyParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = COPY_MODE_NAMES;
-	valueKeys = COPY_MODE_KEYS;
 }
 
 int SoundCopyParameterType::getOrdinalValue(Preset* p)
@@ -1821,23 +1715,12 @@ const char* SLIP_MODE_NAMES[] = {
 	"subCycle", "cycle", "start", "relSubCycle", "relCycle", "time", NULL
 };
 
-int SLIP_MODE_KEYS[] = {
-	MSG_VALUE_SLIP_MODE_SUBCYCLE, 
-	MSG_VALUE_SLIP_MODE_CYCLE, 
-	MSG_VALUE_SLIP_MODE_LOOP,
-	MSG_VALUE_SLIP_MODE_REL_SUBCYCLE, 
-	MSG_VALUE_SLIP_MODE_REL_CYCLE, 
-	MSG_VALUE_SLIP_MODE_TIME, 
-	0
-};
-
 SlipModeParameterType::SlipModeParameterType() :
     PresetParameter("slipMode")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = SLIP_MODE_NAMES;
-	valueKeys = SLIP_MODE_KEYS;
 }
 
 int SlipModeParameterType::getOrdinalValue(Preset* p)
@@ -2067,19 +1950,12 @@ const char* RECORD_TRANSFER_NAMES[] = {
 	"off", "follow", NULL
 };
 
-int RECORD_TRANSFER_KEYS[] = {
-	MSG_VALUE_TRANSFER_OFF, 
-	MSG_VALUE_TRANSFER_FOLLOW, 
-	0
-};
-
 RecordTransferParameterType::RecordTransferParameterType() :
     PresetParameter("recordTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = RECORD_TRANSFER_NAMES;
-	valueKeys = RECORD_TRANSFER_KEYS;
 }
 
 int RecordTransferParameterType::getOrdinalValue(Preset* p)
@@ -2121,20 +1997,12 @@ const char* MODE_TRANSFER_NAMES[] = {
 	"off", "follow", "restore", NULL
 };
 
-int MODE_TRANSFER_KEYS[] = {
-	MSG_VALUE_TRANSFER_OFF, 
-	MSG_VALUE_TRANSFER_FOLLOW, 
-	MSG_VALUE_TRANSFER_RESTORE, 
-	0
-};
-
 OverdubTransferParameterType::OverdubTransferParameterType() :
     PresetParameter("overdubTransfer")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = MODE_TRANSFER_NAMES;
-	valueKeys = MODE_TRANSFER_KEYS;
 }
 
 int OverdubTransferParameterType::getOrdinalValue(Preset* p)
@@ -2177,7 +2045,6 @@ ReverseTransferParameterType::ReverseTransferParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = MODE_TRANSFER_NAMES;
-	valueKeys = MODE_TRANSFER_KEYS;
 }
 
 int ReverseTransferParameterType::getOrdinalValue(Preset* p)
@@ -2220,7 +2087,6 @@ SpeedTransferParameterType::SpeedTransferParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = MODE_TRANSFER_NAMES;
-	valueKeys = MODE_TRANSFER_KEYS;
     addAlias("rateTransfer");
 }
 
@@ -2264,7 +2130,6 @@ PitchTransferParameterType::PitchTransferParameterType() :
     bindable = true;
 	type = TYPE_ENUM;
 	values = MODE_TRANSFER_NAMES;
-	valueKeys = MODE_TRANSFER_KEYS;
 }
 
 int PitchTransferParameterType::getOrdinalValue(Preset* p)
@@ -2305,22 +2170,12 @@ const char* WINDOW_SLIDE_NAMES[] = {
 	"loop", "cycle", "subcycle", "msec", "frame", NULL
 };
 
-int WINDOW_SLIDE_KEYS[] = {
-	MSG_UNIT_LOOP,
-	MSG_UNIT_CYCLE,
-	MSG_UNIT_SUBCYCLE,
-	MSG_UNIT_MSEC,
-	MSG_UNIT_FRAME,
-	0
-};
-
 WindowSlideUnitParameterType::WindowSlideUnitParameterType() :
     PresetParameter("windowSlideUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = WINDOW_SLIDE_NAMES;
-	valueKeys = WINDOW_SLIDE_KEYS;
 }
 
 int WindowSlideUnitParameterType::getOrdinalValue(Preset* p)
@@ -2359,22 +2214,12 @@ const char* WINDOW_EDGE_NAMES[] = {
 	"loop", "cycle", "subcycle", "msec", "frame", NULL
 };
 
-int WINDOW_EDGE_KEYS[] = {
-	MSG_UNIT_LOOP,
-	MSG_UNIT_CYCLE,
-	MSG_UNIT_SUBCYCLE,
-	MSG_UNIT_MSEC,
-	MSG_UNIT_FRAME,
-	0
-};
-
 WindowEdgeUnitParameterType::WindowEdgeUnitParameterType() :
     PresetParameter("windowEdgeUnit")
 {
     bindable = true;
 	type = TYPE_ENUM;
 	values = WINDOW_EDGE_NAMES;
-	valueKeys = WINDOW_EDGE_KEYS;
 }
 
 int WindowEdgeUnitParameterType::getOrdinalValue(Preset* p)

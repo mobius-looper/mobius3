@@ -18,8 +18,6 @@
 #include "../../util/List.h"
 #include "../../util/Trace.h"
 
-//#include "Messages.h"
-//#include "MessageCatalog.h"
 #include "Mobius.h"
 #include "../../model/MobiusConfig.h"
 #include "Mode.h"
@@ -36,7 +34,7 @@ MobiusMode::MobiusMode()
     init();
 }
 
-MobiusMode::MobiusMode(const char* name, int key) :
+MobiusMode::MobiusMode(const char* name) :
     SystemConstant(name)
 {
     init();

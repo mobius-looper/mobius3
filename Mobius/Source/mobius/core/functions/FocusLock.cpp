@@ -20,7 +20,6 @@
 #include "../Event.h"
 #include "../Function.h"
 #include "../Loop.h"
-#include "../Messages.h"
 #include "../Mobius.h"
 #include "../Track.h"
 
@@ -40,7 +39,7 @@ FocusLockFunction FocusLockFunctionObj;
 Function* FocusLock = &FocusLockFunctionObj;
 
 FocusLockFunction::FocusLockFunction() :
-    Function("FocusLock", MSG_FUNC_FOCUS_LOCK)
+    Function("FocusLock")
 {
     // one of the few that can do this
 	runsWithoutAudio = true;

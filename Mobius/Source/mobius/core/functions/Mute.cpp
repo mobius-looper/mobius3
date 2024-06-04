@@ -22,7 +22,6 @@
 #include "../Loop.h"
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Messages.h"
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
@@ -39,7 +38,7 @@ class MuteModeType : public MobiusMode {
 };
 
 MuteModeType::MuteModeType() :
-    MobiusMode("mute", MSG_MODE_MUTE)
+    MobiusMode("mute")
 {
 }
 
@@ -80,7 +79,7 @@ class PauseModeType : public MobiusMode {
 };
 
 PauseModeType::PauseModeType() :
-    MobiusMode("pause", MSG_MODE_PAUSE)
+    MobiusMode("pause")
 {
 }
 
@@ -98,7 +97,7 @@ class GlobalPauseModeType : public MobiusMode {
 };
 
 GlobalPauseModeType::GlobalPauseModeType() :
-    MobiusMode("globalPause", MSG_MODE_GLOBAL_PAUSE)
+    MobiusMode("globalPause")
 {
 }
 
@@ -215,36 +214,29 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 		noFocusLock = true;
 		if (mPause) {
 			setName("GlobalPause");
-			setKey(MSG_FUNC_GLOBAL_PAUSE);
 		}
 		else {
 			setName("GlobalMute");
-			setKey(MSG_FUNC_GLOBAL_MUTE);
 		}
 	}
 	else if (mRestart) {
 		setName("SUSMuteRestart");
-		setKey(MSG_FUNC_SUS_MUTE_RESTART);
 	}
 	else if (mPause) {
 		if (sustain) {
 			setName("SUSPause");
-			setKey(MSG_FUNC_SUS_PAUSE);
 		}
 		else {
 			setName("Pause");
-			setKey(MSG_FUNC_PAUSE);
 			longFunction = SUSPause;
 		}
 	}
 	else if (sustain) {
 		setName("SUSMute");
-		setKey(MSG_FUNC_SUS_MUTE);
 	}
 	else if (mToggle) {
 		// toggle, or force on
 		setName("Mute");
-		setKey(MSG_FUNC_MUTE);
 
 		// !! in addition to switching to SUSMute, this is also supposed
 		// to force MuteMode=Continuous, the only way for Loop to know
@@ -261,14 +253,12 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 	}
 	else if (mMute) {
 		setName("MuteOn");
-		setKey(MSG_FUNC_MUTE_ON);
 		switchStack = true;
 		switchStackMutex = true;
 		scriptOnly = true;
 	}
 	else {
 		setName("MuteOff");
-		setKey(MSG_FUNC_MUTE_OFF);
 		scriptOnly = true;
 	}
 }

@@ -37,7 +37,6 @@
 #include "Action.h"
 #include "Export.h"
 #include "Function.h"
-#include "Messages.h"
 #include "Mobius.h"
 #include "Mode.h"
 #include "Project.h"
