@@ -5,7 +5,8 @@
 #include "Alerter.h"
 
 const int AlertComponentButtonHeight = 30;
-const int AlertComponentTextHeight = 20;
+const int AlertComponentFontHeight = 20;
+const int AlertComponentTextHeight = 100;
 
 AlertComponent::AlertComponent(Alerter* a, juce::String message)
 {
@@ -15,7 +16,7 @@ AlertComponent::AlertComponent(Alerter* a, juce::String message)
 
     label.setText(text, juce::NotificationType::dontSendNotification);
     label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
-    label.setFont(juce::Font(AlertComponentTextHeight));
+    label.setFont(juce::Font(AlertComponentFontHeight));
     addAndMakeVisible(label);
                   
     okButton.addListener(this);
@@ -33,7 +34,7 @@ void AlertComponent::resized()
     juce::Rectangle area = getLocalBounds();
     
     int labelWidth = label.getFont().getStringWidth(text);
-    int max = area.getWidth() - 8;
+    int max = area.getWidth() - 12;
     if (labelWidth > max)
       labelWidth = max;
     

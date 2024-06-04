@@ -44,7 +44,6 @@
 
 #include "../model/MobiusConfig.h"
 #include "../model/MobiusState.h"
-#include "../model/FunctionDefinition.h"
 #include "../model/UIParameter.h"
 #include "../model/Setup.h"
 #include "../model/Preset.h"

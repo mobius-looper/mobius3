@@ -79,7 +79,15 @@ class UIParameter : public SystemConstant
     // don't think we'll be needing subclasses yet
 	virtual ~UIParameter();
 
+    /**
+     * For configuration parameters, indidicates which structdure this
+     * parameter lives in.  Global=MobiusConfig, Preset=Preset, etc.
+     */
     UIParameterScope scope = ScopeGlobal;
+
+    /**
+     * The value type.
+     */
 	UIParameterType type = TypeInt;
     
     /**
@@ -156,43 +164,49 @@ class UIParameter : public SystemConstant
     bool noBinding;
 
     /**
+     * Indiciates that this parameter is visible for bindings, but not found
+     * in configuration files so no get/set code will be generated.
+     * They can only be used at runtime, and are set with UIActions
+     * and read with MobiusState or Query.
+     * Used for various control parameters related to speed and pitch.
+     * update: This appears to be unused and the same as "transient"
+     */
+    //bool noConfig;
+    
+    //////////////////////////////////////////////////////////////////////
+    // 
+    // Runtime Options
+    //
+    // These are from the core Parameter model and are not used in the UI.
+    // We don't need them if we keep the models separate, which I'm leaning toward.
+    // Unfortunately they're used in the generated code so keep them in until
+    // we get rid of generated UIParameter definition objects.
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    /**
      * Indiciates that the value of current value of this parameter is to be retained
      * after a track is Reset.
      */
     bool resetRetain;
 
     /**
-     * Old option I'm not sure we need to carry forward.
+     * Setting this parameter results in scheduling a function.
+     * Used for the Pitch related parameters.
      */
     bool scheduled;
 
-    /**
-     * Indiciates that this parameter is visible for bindings, but not found
-     * in configuration files so no get/set code will be generated.
-     * They can only be used at runtime, and are set with UIActions
-     * and read with MobiusState or Query.
-     * Used for various control parameters related to speed and pitch.
-     * Needs more thought.
-     */
-    bool noConfig;
-    
     /**
      * In a few cases the names were changed to be more consistent
      * or obvious or because I liked them better.  In order to correlate
      * the new parameter definitions with the old ones, this would
      * be the name of the old Parameter.
+     *
+     * update: this was used when we generated code for UIParameter definitions
+     * it may not be necessary any more, except for correlating core parameters.
      */
     const char* coreName = nullptr;
     
-    //
-    // Others from the old model to consider
-    //
-
-    // bindable: true if this is may be used in a Binding
-    // resettable: used at runtime to indiciate that the parameter
-    //  value is changed after the Reset function, don't think this
-    //  is interesting for the UI
-
     //////////////////////////////////////////////////////////////////////
     //
     // Value Access Functions

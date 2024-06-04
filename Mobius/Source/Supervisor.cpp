@@ -1359,6 +1359,13 @@ void Supervisor::menuLoadScripts()
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
         mobius->installScripts(sconfig);
+
+        int count = 0;
+        for (auto symbol : Symbols.getSymbols()) {
+            if (symbol->script != nullptr) 
+              count++;
+        }
+        alert(juce::String(count) + " scripts loaded");
     }
 }
 
@@ -1373,6 +1380,13 @@ void Supervisor::menuLoadSamples()
     SampleConfig* sconfig = config->getSampleConfig();
     if (sconfig != nullptr) {
         mobius->installSamples(sconfig);
+
+        int count = 0;
+        for (auto symbol : Symbols.getSymbols()) {
+            if (symbol->sample != nullptr)
+              count++;
+        }
+        alert(juce::String(count) + " samples loaded");
     }
 }
 

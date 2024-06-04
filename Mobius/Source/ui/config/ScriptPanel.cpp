@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 
+#include "../../Supervisor.h"
 #include "../../model/MobiusConfig.h"
 
 #include "../common/Form.h"
@@ -61,6 +62,10 @@ void ScriptPanel::save()
         config->setScriptConfig(newConfig);
 
         editor->saveMobiusConfig();
+
+        // you almost always want scripts reloaded after editing
+        // so force that now, samples are another story...
+        Supervisor::Instance->menuLoadScripts();
 
         loaded = false;
         changed = false;

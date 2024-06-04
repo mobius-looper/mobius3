@@ -179,12 +179,13 @@
     <Binding name='Record' trigger='note' value='48'/>
     <Binding name='UIParameterUp' trigger='note' value='53'/>
     <Binding name='UIParameterDown' trigger='note' value='55'/>
-    <Binding name='Record' trigger='control' value='12'/>
+    <Binding name='Record' trigger='control' value='12' channel='2'/>
   </BindingSet>
   <ScriptConfig>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>
   </ScriptConfig>
   <SampleConfig>
-    <Sample path='$INSTALL/test/samples/gcloop.wav' button='true'/>
+    <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>
   <FocusLockFunctions>
     <String>Reset</String>

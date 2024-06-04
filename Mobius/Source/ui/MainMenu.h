@@ -102,6 +102,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         About,
 
         // test
+        TestInfo,
         TestMode,
         MidiTransport,
         SymbolTable,

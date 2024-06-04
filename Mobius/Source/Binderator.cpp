@@ -363,18 +363,19 @@ void Binderator::installMidiActions(MobiusConfig* config)
 
             if (dest != nullptr) {
 
-                // currently storing the note number and channel separately
-                // but now that we have the qualifier concept could merge them like
-                // we do for keyboard triggerValues
                 int index = binding->triggerValue;
                 if (index < 0 ||  index >= BinderatorMaxIndex) {
                     Trace(1, "Binderator: Invalid MIDI note %s\n", binding->getSymbolName());
                 }
                 else {
                     // todo: here is where we could be sensitive to a global option
-                    // to ignore channels
+                    // to ignore channels, but it's less necessary now with the "Any"
+                    // channel in each binding
                     UIAction* action = buildAction(binding);
                     if (action != nullptr) {
+                        // note that the Binding model uses MIDI channel 0 to mean
+                        // "any" and specific channels are numbered from 1
+                        // this needs to be understood when matching incomming events
                         int qualifier = binding->midiChannel;
                         addEntry(dest, index, qualifier, action);
                     }
@@ -399,6 +400,7 @@ UIAction* Binderator::getKeyAction(int code, int modifiers)
 /**
  * Given a MIDI message, look up the corresponding action.
  * MidiMessage channels start at 1 with zero reserved for sysex.
+ * This matches channel numbers in the Binding model.
  * A binding channel of zero means "any" so we use the
  * "wild zero" option to getAction.
  */
@@ -406,7 +408,7 @@ UIAction* Binderator::getMidiAction(const juce::MidiMessage& message)
 {
     UIAction* action = nullptr;
     
-    int qualifier = message.getChannel() - 1;
+    int qualifier = message.getChannel();
     
     if (message.isNoteOnOrOff()) {
         int index = message.getNoteNumber();

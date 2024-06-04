@@ -176,22 +176,10 @@ void MainWindow::mainMenuSelection(int id)
                 
             case MainMenu::LoadScripts: {
                 supervisor->menuLoadScripts();
-                int count = 0;
-                for (auto symbol : Symbols.getSymbols()) {
-                    if (symbol->script != nullptr) 
-                      count++;
-                }
-                supervisor->alert(juce::String(count) + " scripts loaded");
             }
                 break;
             case MainMenu::LoadSamples: {
                 supervisor->menuLoadSamples();
-                int count = 0;
-                for (auto symbol : Symbols.getSymbols()) {
-                    if (symbol->sample != nullptr)
-                      count++;
-                }
-                supervisor->alert(juce::String(count) + " samples loaded");
             }
                 break;
 
@@ -283,6 +271,11 @@ void MainWindow::mainMenuSelection(int id)
                 
             case MainMenu::About: {
                 aboutPanel.show();
+            }
+                break;
+
+            case MainMenu::TestInfo: {
+                Supervisor::Instance->alert("The test menu has development tools that will be hidden in normal releases.  They don't do anything partiuclarly useful.  You probably won't hurt anything if you use them.  Probably.");
             }
                 break;
 

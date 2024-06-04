@@ -152,6 +152,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     }
     else if (menuIndex == menuIndexSetup)
     {
+        menu.addItem(TrackSetups, "Edit Setups...");
+        menu.addSeparator();
+        
         Supervisor* supervisor = Supervisor::Instance;
         MobiusConfig* config = supervisor->getMobiusConfig();
         Setup* setup = config->getSetups();
@@ -174,9 +177,13 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             index++;
             setup = (Setup*)(setup->getNext());
         }
+
     }
     else if (menuIndex == menuIndexPreset)
     {
+        menu.addItem(Presets, "Edit Presets...");
+        menu.addSeparator();
+
         Supervisor* supervisor = Supervisor::Instance;
         MobiusConfig* config = supervisor->getMobiusConfig();
         Preset* preset = config->getPresets();
@@ -200,8 +207,13 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             index++;
             preset = (Preset*)(preset->getNext());
         }
+        
     }
     else if (menuIndex == menuIndexDisplay) {
+        menu.addItem(DisplayComponents, "Edit Layouts...");
+        menu.addItem(Buttons, "Edit Buttons...");
+        menu.addSeparator();
+        
         Supervisor* supervisor = Supervisor::Instance;
         UIConfig* config = supervisor->getUIConfig();
 
@@ -248,18 +260,19 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     }
     else if (menuIndex == menuIndexConfig)
     {
-        menu.addItem(GlobalParameters, "Global Parameters");
-        menu.addItem(Presets, "Presets");
-        menu.addItem(TrackSetups, "Track Setups");
         menu.addItem(MidiControl, "MIDI Control");
         menu.addItem(KeyboardControl, "Keyboard Control");
-        menu.addItem(Buttons, "UI Buttons");
+        menu.addSeparator();
+        menu.addItem(GlobalParameters, "Global Parameters");
         menu.addItem(HostParameters, "Plugin Parameters");
-        menu.addItem(DisplayComponents, "Display Configuration");
+        menu.addSeparator();
         menu.addItem(Scripts, "Scripts");
+        menu.addItem(LoadScripts, "Reload Scripts");
+        menu.addSeparator();
         menu.addItem(Samples, "Samples");
+        menu.addItem(LoadSamples, "Reload Samples");
+        menu.addSeparator();
         menu.addItem(MidiDevices, "MIDI Devices");
-
         // don't show this if we're a plugin
         if (!Supervisor::Instance->isPlugin())
           menu.addItem(AudioDevices, "Audio Devices");
@@ -269,9 +282,12 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     {
         menu.addItem(KeyBindings, "Key Bindings");
         menu.addItem(MidiBindings, "MIDI Bindings");
+        menu.addSeparator();
         menu.addItem(About, "About");
     }
     else if (menuIndex == menuIndexTest) {
+        menu.addItem(TestInfo, "What is this?");
+        menu.addSeparator();
         // todo: won't want to show this in released code
         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String("Test Mode"));
         item.setID(TestMode);
