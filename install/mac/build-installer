@@ -47,7 +47,8 @@ cp ../../Mobius/Source/test/samples/gcloop.wav $dest/test/samples
 #pkgbuild --analyze --root stage app.plist
 
 # make the package
-pkgbuild --root stage --component-plist app.plist --install-location /Applications app.pkg
+#pkgbuild --root stage --component-plist app.plist --install-location /Applications app.pkg
+pkgbuild --identifier com.circularlabs.Mobius --root stage --component-plist app.plist --install-location /Applications app.pkg
 
 #
 # VST3
@@ -60,10 +61,11 @@ rm -rf stage
 mkdir stage
 cp -r $vstsrc stage
 # sanity check on the universal binary
-#lipo -info stage/Mobius.app/Contents/MacOS/Mobius.vst3...
+lipo -info stage/Mobius.vst3/Contents/MacOS/Mobius
 
 pkgbuild --analyze --root stage vst.plist
-pkgbuild --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
+#pkgbuild --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
+pkgbuild --identifier com.circularlabs.vst3.Mobius --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
 
 #
 # AU
@@ -73,8 +75,12 @@ echo Building AU package
 rm -rf stage
 mkdir stage
 cp -r $ausrc stage
+# sanity check on the universal binary
+lipo -info stage/Mobius.component/Contents/MacOS/Mobius
+
 pkgbuild --analyze --root stage au.plist
-pkgbuild --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
+#pkgbuild --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
+pkgbuild --identifier com.circularlabs.au.Mobius --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
 
 #
 # Mobius.pkg

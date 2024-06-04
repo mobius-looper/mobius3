@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
+    <pkg-ref id="com.circularlabs.Mobius3"/>
     <pkg-ref id="com.circularlabs.Mobius"/>
-    <pkg-ref id="com.circularlabs.vst3.Mobius"/>
-    <pkg-ref id="com.circularlabs.au.Mobius"/>
+    <pkg-ref id="com.circularlabs.Mobius-1"/>
     <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
     <choices-outline>
         <line choice="default">
+            <line choice="com.circularlabs.Mobius3"/>
             <line choice="com.circularlabs.Mobius"/>
-            <line choice="com.circularlabs.vst3.Mobius"/>
-            <line choice="com.circularlabs.au.Mobius"/>
+            <line choice="com.circularlabs.Mobius-1"/>
         </line>
     </choices-outline>
     <choice id="default"/>
+    <choice id="com.circularlabs.Mobius3" visible="false">
+        <pkg-ref id="com.circularlabs.Mobius3"/>
+    </choice>
+    <pkg-ref id="com.circularlabs.Mobius3" version="3.0.0" onConclusion="none">app.pkg</pkg-ref>
     <choice id="com.circularlabs.Mobius" visible="false">
         <pkg-ref id="com.circularlabs.Mobius"/>
     </choice>
-    <pkg-ref id="com.circularlabs.Mobius" version="0" onConclusion="none">app.pkg</pkg-ref>
-    <choice id="com.circularlabs.vst3.Mobius" visible="false">
-        <pkg-ref id="com.circularlabs.vst3.Mobius"/>
+    <pkg-ref id="com.circularlabs.Mobius" version="1.0.0" onConclusion="none">vst.pkg</pkg-ref>
+    <choice id="com.circularlabs.Mobius-1" visible="false">
+        <pkg-ref id="com.circularlabs.Mobius-1"/>
     </choice>
-    <pkg-ref id="com.circularlabs.vst3.Mobius" version="0" onConclusion="none">vst.pkg</pkg-ref>
-    <choice id="com.circularlabs.au.Mobius" visible="false">
-        <pkg-ref id="com.circularlabs.au.Mobius"/>
-    </choice>
-    <pkg-ref id="com.circularlabs.au.Mobius" version="0" onConclusion="none">au.pkg</pkg-ref>
+    <pkg-ref id="com.circularlabs.Mobius-1" version="1.0.0" onConclusion="none">au.pkg</pkg-ref>
+
     <!-- these are jeff's additions -->
     <title>Mobius</title>
     <!-- here is how you would add a readme and license page
     <license file="LICENSE.html"/>
     <readme file="README.html"/>
     -->
+    
 </installer-gui-script>
