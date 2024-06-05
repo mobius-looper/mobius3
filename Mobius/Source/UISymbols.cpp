@@ -16,26 +16,6 @@ void UISymbols::initialize()
     installDisplayFunction("UIParameterInc", UISymbolParameterInc);
     installDisplayFunction("UIParameterDec", UISymbolParameterDec);
 
-    // while we have FunctionDefinition and UIParameter
-    // objects defined, install them now too
-    for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
-        FunctionDefinition* def = FunctionDefinition::Instances[i];
-        Symbol* s = Symbols.intern(def->name);
-        s->behavior = BehaviorFunction;
-        // start them out in core, Mobuis can change that
-        s->level = LevelCore;
-        // we have an ordinal but that won't be used any more
-        s->function = def;
-    }
-        
-    for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
-        UIParameter* def = UIParameter::Instances[i];
-        Symbol* s = Symbols.intern(def->name);
-        s->behavior = BehaviorParameter;
-        s->level = LevelCore;
-        s->parameter = def;
-    }
-
     // runtime parameter experiment
     // I'd like to be able to create parameters at runtime
     // without needing static definition objects

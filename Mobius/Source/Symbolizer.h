@@ -6,6 +6,9 @@
 
 #include <JuceHeader.h>
 
+// for UIParameterType, UIParameterScope
+#include "model/UIParameter.h"
+// for SymbolLevel
 #include "model/Symbol.h"
 
 class Symbolizer
@@ -24,7 +27,16 @@ class Symbolizer
 
     void loadSymbolDefinitions();
     void xmlError(const char* msg, juce::String arg);
+    
     void parseFunction(juce::XmlElement* root);
     SymbolLevel parseLevel(juce::String lname);
+
+    void parseParameterScope(juce::XmlElement* root);
+    void parseParameter(juce::XmlElement* el, UIParameterScope scope);
+    UIParameterScope parseScope(juce::String name);
+    UIParameterType parseType(juce::String name);
+    juce::StringArray parseStringList(juce::String csv);
+    juce::StringArray parseLabels(juce::String csv, juce::StringArray values);
+    juce::String formatDisplayName(juce::String xmlName);
 
 };

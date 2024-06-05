@@ -10,6 +10,7 @@
 #include "../util/Util.h"
 
 #include "FunctionProperties.h"
+#include "ParameterProperties.h"
 #include "ScriptProperties.h"
 #include "SampleProperties.h"
 

@@ -229,6 +229,19 @@ juce::String SymbolTablePanel::getCellText(int row, int columnId)
         else if (s->parameter != nullptr && s->level == LevelCore && s->coreParameter == nullptr) {
             cell = "Core parameter not implemented";
         }
+        else if (s->function != nullptr && s->functionProperties == nullptr) {
+            cell = "Function without FunctionProperties";
+        }
+        else if (s->function == nullptr && s->functionProperties != nullptr) {
+            cell = "FunctionProperties without function definition";
+        }
+        else if (s->parameter != nullptr && s->parameterProperties == nullptr) {
+            cell = "UIParameter without ParameterProperties";
+        }
+        else if (s->parameter == nullptr && s->parameterProperties != nullptr) {
+            cell = "ParameterProperties without UIParameter";
+        }
+        
     }
     
     return cell;

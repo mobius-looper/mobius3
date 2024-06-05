@@ -214,11 +214,15 @@ class Symbol
      * Pointers to various objects that define more about what this symbol does.
      */
     class VariableDefinition* variable = nullptr;
+    
     class FunctionDefinition* function = nullptr;
     // eventual replacement for FunctionDefinition
     std::unique_ptr<class FunctionProperties> functionProperties;
-    class UIParameter* parameter = nullptr;
 
+    class UIParameter* parameter = nullptr;
+    // eventual replacement for UIParameter
+    std::unique_ptr<class ParameterProperties> parameterProperties;
+    
     // don't seem to be using this!?
     // probably makes sense since Preset/Setup can be deleted at any time
     class Structure* structure = nullptr;
