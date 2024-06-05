@@ -276,7 +276,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         // don't show this if we're a plugin
         if (!Supervisor::Instance->isPlugin())
           menu.addItem(AudioDevices, "Audio Devices");
-
+        menu.addSeparator();
+        menu.addItem(UpgradeConfig, "Upgrade Configuration");
     }
     else if (menuIndex == menuIndexHelp)
     {
@@ -297,7 +298,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         
         menu.addItem(MidiTransport, "MIDI Transport");
         menu.addItem(SymbolTable, "Symbol Table");
-        menu.addItem(UpgradeConfig, "Upgrade Configuration");
         // this never did work right
         //menu.addItem(DiagnosticWindow, "Diagnostic Window");
     }

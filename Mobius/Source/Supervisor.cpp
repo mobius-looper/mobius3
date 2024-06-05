@@ -70,8 +70,8 @@ Supervisor::Supervisor(juce::AudioAppComponent* main)
     mainComponent = main;
     
     // temporary
-    trace("RootLocator::whereAmI\n");
-    RootLocator::whereAmI();
+    //trace("RootLocator::whereAmI\n");
+    //RootLocator::whereAmI();
 }
 
 /**
@@ -88,7 +88,7 @@ Supervisor::Supervisor(juce::AudioProcessor* ap)
     audioProcessor = ap;
     
     // temporary
-    RootLocator::whereAmI();
+    //RootLocator::whereAmI();
 }
 
 /**
@@ -128,12 +128,30 @@ void Supervisor::start()
     TraceFile.setFile(logfile);
     // keep the file through several plugin runs to watch
     // how the hosts touch it
-    if (!isPlugin()) TraceFile.clear();
+    // now that it's out there, stop this so it doesn't get too big
+    //if (!isPlugin()) TraceFile.clear();
+    TraceFile.clear();
     TraceFile.enable();
-    if (isPlugin())
-      Trace(2, "Supervisor: Beginning Plugin Initialization\n");
-    else
-      Trace(2, "Supervisor: Beginning Application Initialization\n");
+    
+    juce::Time now = juce::Time::getCurrentTime();
+    // date, time, seconds, 24hour
+    Trace(2, "*** %s ***\n", now.toString(true, true, true, false).toUTF8());
+    
+    if (isPlugin()) {
+        Trace(2, "Supervisor: Beginning Plugin Initialization\n");
+        juce::PluginHostType host;
+        Trace(2, "Supervisor: Host %s\n", host.getHostDescription());
+        juce::AudioProcessor::WrapperType wtype = juce::PluginHostType::getPluginLoadedAs();
+        const char* typeName = "unknown";
+        if (wtype == juce::AudioProcessor::WrapperType::wrapperType_VST3)
+          typeName = "VST3";
+        else if (wtype == juce::AudioProcessor::WrapperType::wrapperType_AudioUnit)
+          typeName = "Audio Unit";
+        Trace(2, "Supervisor: Plugin type %s\n", typeName);
+    }
+    else {
+        Trace(2, "Supervisor: Beginning Standalone Application Initialization\n");
+    }
     
     Trace(2, "Supervisor: Root path %s\n", root.getFullPathName().toUTF8());
     Trace(2, "Supervisor: Computer name %s\n", juce::SystemStats::getComputerName().toUTF8());
@@ -750,6 +768,25 @@ void Supervisor::updateMobiusConfig()
         
         configureBindings(config);
     }
+}
+
+/**
+ * Added for UpgradePanel
+ * Reload the entire MobiusConfig from the file and
+ * notify as if it had been edited.
+ */
+void Supervisor::reloadMobiusConfig()
+{
+    mobiusConfig.reset(nullptr);
+    (void)getMobiusConfig();
+    
+    propagateConfiguration();
+        
+    MobiusConfig* config = mobiusConfig.get();
+    if (mobius != nullptr)
+      mobius->reconfigure(config);
+        
+    configureBindings(config);
 }
 
 void Supervisor::updateUIConfig()

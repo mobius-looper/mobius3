@@ -335,6 +335,31 @@ void BindingSet::removeBinding(Binding* b)
     }
 }
 
+/**
+ * Added for UpgradePanel
+ * See if a Binding already exists before adding another one
+ */
+Binding* BindingSet::findBinding(Binding* src)
+{
+    Binding* found = nullptr;
+    
+    if (src != nullptr) {
+        for (Binding* b = mBindings ; b != nullptr ; b = b->getNext()) {
+            // ignoring triggerMode
+            if (b->trigger == src->trigger &&
+                b->triggerValue == src->triggerValue &&
+                b->midiChannel == src->midiChannel &&
+                StringEqual(b->getSymbolName(), src->getSymbolName()) &&
+                StringEqual(b->getArguments(), src->getArguments()) &&
+                StringEqual(b->getScope(), src->getScope())) {
+                found = b;
+                break;
+            }
+        }
+    }
+    return found;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -20,6 +20,12 @@ class JuceUtil
     static void CsvToArray(juce::String csv, juce::StringArray& values);
     static juce::String ArrayToCsv(juce::StringArray& values);
 
+    // centering
+
     static void center(juce::Component* c);
+
+    static int getCenterLeft(juce::Component* container, juce::Component* c);
+    static int getCenterTop(juce::Component* container, juce::Component* c);
+    static void centerInParent(juce::Component* c);
     
 };

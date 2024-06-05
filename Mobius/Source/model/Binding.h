@@ -218,6 +218,8 @@ class BindingSet : public Structure {
 	void addBinding(Binding* c);
 	void removeBinding(Binding* c);
 
+    Binding* findBinding(Binding* b);
+
   private:
 
 	Binding* mBindings;

@@ -155,3 +155,22 @@ void JuceUtil::center(juce::Component* comp)
     
     comp->setTopLeftPosition(left, top);
 }
+
+//
+// Newer centering tools
+
+int JuceUtil::getCenterLeft(juce::Component* container, juce::Component* c)
+{
+    return (container->getWidth() / 2) - (c->getWidth() / 2);
+}
+
+int JuceUtil::getCenterTop(juce::Component* container, juce::Component* c)
+{
+    return (container->getHeight() / 2) - (c->getHeight() / 2);
+}
+
+void JuceUtil::centerInParent(juce::Component* c)
+{
+    juce::Component* parent = c->getParentComponent();
+    c->setTopLeftPosition(getCenterLeft(parent, c), getCenterTop(parent, c));
+}    

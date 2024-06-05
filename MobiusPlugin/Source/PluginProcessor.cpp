@@ -141,7 +141,7 @@ MobiusPluginAudioProcessor::MobiusPluginAudioProcessor()
     // things like Supervisor.  It's going to build out EVERYTHING before
     // we've even know what the host is going to want.  If it's just
     // scanning plugins, we've done all that UI configuration for nothing
-    RootLocator::whereAmI();
+    // RootLocator::whereAmI();
 
     // the environment we're in is conceptually like the MainComponent
     // constructor when running standalone
