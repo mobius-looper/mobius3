@@ -801,6 +801,17 @@ void Supervisor::updateUIConfig()
 }
 
 /**
+ * Added for UpgradePanel
+ */
+void Supervisor::reloadUIConfig()
+{
+    uiConfig.reset(nullptr);
+    (void)getUIConfig();
+    
+    propagateConfiguration();
+}
+
+/**
  * This one is easier, devices will already have been
  * configured for any changes, we just write it.
  */

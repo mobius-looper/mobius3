@@ -158,6 +158,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     void reloadMobiusConfig();
     class UIConfig* getUIConfig();
     void updateUIConfig();
+    void reloadUIConfig();
     
     class HelpCatalog* getHelpCatalog();
     class DynamicConfig* getDynamicConfig();

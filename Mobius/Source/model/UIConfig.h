@@ -253,6 +253,7 @@ class ButtonSet
     juce::OwnedArray<DisplayButton> buttons;
     
     DisplayButton* getButton(juce::String id);
+    DisplayButton* getButton(DisplayButton* src);
 };
 
 /**

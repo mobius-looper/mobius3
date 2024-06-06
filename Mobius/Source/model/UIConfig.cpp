@@ -292,6 +292,25 @@ DisplayButton* ButtonSet::getButton(juce::String id)
     return found;
 }
 
+/**
+ * Added for UpgradePanel
+ * Look for a matching button definition including the name,
+ * arguments, and scope.
+ */
+DisplayButton* ButtonSet::getButton(DisplayButton* src)
+{
+    DisplayButton* found = nullptr;
+    for (auto button : buttons) {
+        if (button->action == src->action &&
+            button->arguments == src->arguments &&
+            button->scope == src->scope) {
+            found = button;
+            break;
+        }
+    }
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // XML Parsing

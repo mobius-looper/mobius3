@@ -29,8 +29,11 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
 
   private:
 
+    bool strict = false;
+    juce::File expected;
+    bool expectedVerified = false;
+    
     class MobiusConfig* mobiusConfig = nullptr;
-    class UIConfig* uiConfig = nullptr;
     class MobiusConfig* masterConfig = nullptr;
 
     juce::OwnedArray<class Preset> newPresets;
@@ -38,6 +41,7 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     juce::OwnedArray<class ScriptRef> newScripts;
     juce::Array<juce::String> scriptNames;
     juce::OwnedArray<class Binding> newBindings;
+    class ButtonSet* newButtons = nullptr;
     
     BasicLog log;
 
@@ -52,11 +56,14 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
 
+    void locateExisting();
     void doLoad();
     void doFileChooser();
     void doLoad(juce::File file);
 
     void loadUIConfig(juce::String xml);
+    bool convertButton(juce::XmlElement* el);
+    
     void loadMobiusConfig(juce::String xml);
     void loadPresets();
     void loadSetups();
@@ -69,6 +76,7 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     void loadBindings();
     Binding* verifyBinding(Binding* src);
     int getLastDigit(juce::String s);
+    bool addUpgradeButton(class DisplayButton* db);
 
     void doInstall();
     void noLoad();

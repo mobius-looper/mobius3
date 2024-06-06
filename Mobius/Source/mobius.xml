@@ -50,6 +50,44 @@
     windowEdgeUnit='loop'
     windowSlideAmount='1'
     windowSlideUnit='loop'/>
+  <Preset
+    name='Upgrade:Default'
+    autoRecordBars='1'
+    autoRecordTempo='120'
+    bounceQuantize='loop'
+    emptyLoopAction='none'
+    emptyTrackAction='none'
+    loopCount='4'
+    maxRedo='1'
+    multiplyMode='normal'
+    muteCancel='edit'
+    muteMode='continue'
+    overdubTransfer='follow'
+    pitchBendRange='12'
+    pitchStepRange='24'
+    pitchTransfer='follow'
+    quantize='off'
+    speedBendRange='12'
+    speedStepRange='24'
+    speedTransfer='follow'
+    timeStretchRange='12'
+    recordTransfer='follow'
+    returnLocation='restore'
+    reverseTransfer='follow'
+    roundingOverdub='true'
+    shuffleMode='reverse'
+    slipMode='subCycle'
+    soundCopyMode='multiply'
+    subcycles='4'
+    switchDuration='permanent'
+    switchLocation='restore'
+    switchQuantize='off'
+    timeCopyMode='insert'
+    trackLeaveAction='cancel'
+    windowEdgeAmount='1'
+    windowEdgeUnit='subcycle'
+    windowSlideAmount='1'
+    windowSlideUnit='loop'/>
   <Setup
     name='Default'
     active='0'
@@ -161,6 +199,85 @@
       syncSource='default'
       trackSyncUnit='default'/>
   </Setup>
+  <Setup
+    name='Upgrade:Default'
+    active='0'
+    beatsPerBar='4'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='loop'
+    maxTempo='300'
+    minTempo='20'
+    muteSyncMode='transport'
+    outRealign='restart'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
   <BindingSet ordinal='0'>
     <Binding name='output' scope='1' trigger='host'/>
     <Binding name='Record' trigger='key' value='82'/>
@@ -180,6 +297,14 @@
     <Binding name='UIParameterUp' trigger='note' value='53'/>
     <Binding name='UIParameterDown' trigger='note' value='55'/>
     <Binding name='Record' trigger='control' value='12' channel='2'/>
+    <Binding name='input' trigger='host'/>
+    <Binding name='output' trigger='host' value='1'/>
+    <Binding name='feedback' trigger='host' value='2'/>
+    <Binding name='altFeedback' trigger='host' value='3'/>
+    <Binding name='pan' trigger='host' value='4'/>
+    <Binding name='selectedTrack' trigger='host' value='5'/>
+    <Binding name='quantize' trigger='host' value='6'/>
+    <Binding name='switchQuant' trigger='host' value='7'/>
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>

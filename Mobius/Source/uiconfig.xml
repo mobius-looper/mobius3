@@ -77,6 +77,29 @@
     <Button action="SelectLoop" arguments="1"/>
     <Button action="SelectLoop" arguments="2"/>
   </ButtonSet>
+  <ButtonSet name="Upgrade">
+    <Button action="Reset"/>
+    <Button action="GlobalReset"/>
+    <Button action="Record"/>
+    <Button action="Overdub"/>
+    <Button action="Undo"/>
+    <Button action="Redo"/>
+    <Button action="Mute"/>
+    <Button action="Multiply"/>
+    <Button action="InstantMultiply"/>
+    <Button action="Replace"/>
+    <Button action="SpeedToggle"/>
+    <Button action="Reverse"/>
+    <Button action="SUSReverse"/>
+    <Button action="NextLoop"/>
+    <Button action="Speed"/>
+    <Button action="InstantMultiply2"/>
+    <Button action="StartPoint"/>
+    <Button action="Retrigger"/>
+    <Button action="StartAudioRecording"/>
+    <Button action="SaveAudioRecording"/>
+    <Button action="Time Warp 1 Multi.mos"/>
+  </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
