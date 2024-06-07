@@ -214,6 +214,7 @@ class BindingSet : public Structure {
 
     Binding* getBindings();
 	void setBindings(Binding* b);
+    Binding* stealBindings();
 
 	void addBinding(Binding* c);
 	void removeBinding(Binding* c);

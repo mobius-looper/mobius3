@@ -78,27 +78,35 @@
     <Button action="SelectLoop" arguments="2"/>
   </ButtonSet>
   <ButtonSet name="Upgrade">
+    <Button action="Play"/>
+    <Button action="MuteRealign"/>
+    <Button action="Mute"/>
+    <Button action="Stutter"/>
+    <Button action="Divide"/>
+    <Button action="Realign"/>
     <Button action="Reset"/>
-    <Button action="GlobalReset"/>
-    <Button action="Record"/>
-    <Button action="Overdub"/>
+    <Button action="TrackReset"/>
     <Button action="Undo"/>
     <Button action="Redo"/>
-    <Button action="Mute"/>
+    <Button action="Shuffle"/>
+    <Button action="TrimStart"/>
+    <Button action="TrimEnd"/>
+    <Button action="Record"/>
+    <Button action="Overdub"/>
     <Button action="Multiply"/>
-    <Button action="InstantMultiply"/>
-    <Button action="Replace"/>
-    <Button action="SpeedToggle"/>
+    <Button action="Halfspeed"/>
+    <Button action="Sync to previous track"/>
+    <Button action="No sync"/>
+    <Button action="sync to previous track"/>
+    <Button action="no sync"/>
+    <Button action="GlobalReset"/>
+    <Button action="Rate12"/>
+    <Button action="SlowNoPitch"/>
+    <Button action="SlowNoPitch24"/>
+    <Button action="down a 5th"/>
+    <Button action="down an octave"/>
+    <Button action="Backward"/>
     <Button action="Reverse"/>
-    <Button action="SUSReverse"/>
-    <Button action="NextLoop"/>
-    <Button action="Speed"/>
-    <Button action="InstantMultiply2"/>
-    <Button action="StartPoint"/>
-    <Button action="Retrigger"/>
-    <Button action="StartAudioRecording"/>
-    <Button action="SaveAudioRecording"/>
-    <Button action="Time Warp 1 Multi.mos"/>
   </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>

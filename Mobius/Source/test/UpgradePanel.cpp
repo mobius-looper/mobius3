@@ -1,11 +1,12 @@
 /**
- * Evolving utility to read old mobius.xml and ui.xml files and convert
- * them to the new format.
+ * Utility to read old mobius.xml and ui.xml files and convert them
+ * to the new model.
  */
 
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../util/Util.h"
 
 #include "../model/XmlRenderer.h"
 #include "../model/MobiusConfig.h"
@@ -27,7 +28,8 @@ UpgradePanel::UpgradePanel()
 {
     addAndMakeVisible(commands);
     commands.setListener(this);
-    commands.add(&loadButton);
+    commands.add(&loadCurrentButton);
+    commands.add(&loadFileButton);
     commands.add(&installButton);
     commands.add(&undoButton);
     
@@ -48,16 +50,55 @@ UpgradePanel::~UpgradePanel()
 {
     // should be using a smart pointer
     delete mobiusConfig;
+    delete newButtons;
 }
 
 void UpgradePanel::show()
 {
     JuceUtil::centerInParent(this);
     setVisible(true);
+    
     log.add("Click \"Load File\" to analyze a configuration file");
     log.add("Click \"Install\" to install a configuration after analysis");
     log.add("Click \"Undo\" to undo the last install");
+    
     locateExisting();
+}
+
+/**
+ * Attempt to locate the current configuration file.
+ * On Windows this starts in c:/Program Files (x86) but gets
+ * redirected to the "virtual store" when you write to it.
+ */
+void UpgradePanel::locateExisting()
+{
+    expectedVerified = false;
+    
+#ifdef __APPLE__
+    // OG Mobius put things under /Library which is normally a shared location
+    // and we had to hack around file permissions so we could write there
+    // commonApplicationDataDirectory is normally /Library
+    juce::File appdata = juce::File::getSpecialLocation(juce::File::commonApplicationDataDirectory);
+    // this is where it should have gone, /Users/<user>/Library
+    //juce::File appdata = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
+    expected = appdata.getChildFile("Application Support/Mobius 2/mobius.xml");
+#else
+    // OG Mobius installed everything in c:/Program Files, but when you write
+    // to that location Windows quetly redirects it to this magic location
+    // since users don't normally have write access to Program Files
+    // userHomeDirectory is normally c:/Users/<name>/
+    juce::File home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+    expected = home.getChildFile("AppData/Local/VirtualStore/Program Files (x86)/Mobius 2/mobius.xml");
+#endif
+    
+    if (expected.existsAsFile()) {
+        log.add("Located existing file at: " + expected.getFullPathName());
+        expectedVerified = true;
+    }
+    else {
+        log.add("Unable to locate existing mobius.xml file");
+        log.add("The expected location is: " + expected.getFullPathName());
+    }
 }
 
 void UpgradePanel::buttonClicked(juce::Button* b)
@@ -65,8 +106,11 @@ void UpgradePanel::buttonClicked(juce::Button* b)
     if (b == &okButton) {
         setVisible(false);
     }
-    else if (b == &loadButton) {
-        doLoad();
+    else if (b == &loadCurrentButton) {
+        doLoadCurrent();
+    }
+    else if (b == &loadFileButton) {
+        doLoadFile();
     }
     else if (b == &installButton) {
         doInstall();
@@ -125,43 +169,36 @@ void UpgradePanel::paint(juce::Graphics& g)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Attempt to locate the current configuration file.
- * On Windows this starts in c:/Program Files (x86) but gets
- * redirected to the "virtual store" when you write to it.
- */
-void UpgradePanel::locateExisting()
+void UpgradePanel::doLoadCurrent()
 {
-    expectedVerified = false;
-    
-    // todo: conditionalize this for Mac
-    juce::File home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-    expected = home.getChildFile("AppData/Local/VirtualStore/Program Files (x86)/Mobius 2/mobius.xml");
-    if (expected.existsAsFile()) {
-        log.add("Located existing file at: " + expected.getFullPathName());
-        expectedVerified = true;
-    }
+    if (expectedVerified)
+      doLoad(expected);
     else {
-        log.add("Unable to locate existing mobius.xml file");
-        log.add("The expected location is: " + expected.getFullPathName());
+        log.add("");
+        log.add("Expected installation file not found: " + expected.getFullPathName());
+        log.add("Click the \"Load File\" button to search for one");
     }
 }
 
-void UpgradePanel::doLoad()
+void UpgradePanel::doLoadFile()
 {
     doFileChooser();
 }
 
 void UpgradePanel::doFileChooser()
 {
+    // start in the located file if we could find one, otherwise installation root
     juce::File startPath(Supervisor::Instance->getRoot());
     if (lastFolder.length() > 0)
       startPath = lastFolder;
-    else if (expectedVerified)
-      startPath = expected;
+
+    // now that we have different LoadCurrent and LoadFile buttons
+    // start in the dev directory which is more convenient for testing
+    //else if (expectedVerified)
+    //startPath = expected;
     
-    // a form of smart pointer
-    chooser = std::make_unique<juce::FileChooser> ("Select an XML file ...",
+    // unlike most Jucey things, we have to delete this 
+    chooser = std::make_unique<juce::FileChooser> ("Select the mobius.xml file ...",
                                                    startPath,
                                                    "*.xml");
 
@@ -190,6 +227,10 @@ void UpgradePanel::doFileChooser()
     });
 }
 
+/**
+ * Here from the file chooser.  Normally file will be mobius.xml
+ * but allow it to be ui.xml as well for testing.
+ */
 void UpgradePanel::doLoad(juce::File file)
 {
     log.add("");
@@ -197,8 +238,10 @@ void UpgradePanel::doLoad(juce::File file)
     
     juce::String xml = file.loadFileAsString();
     if (xml.contains("MobiusConfig")) {
+        
         loadMobiusConfig(xml);
-        // hack, button bindings were once in mobius.xml but were moved to ui.xml
+        // auto-load the ui.xml file as well which is normally right next to it
+        // button bindings were once in mobius.xml but were moved to ui.xml
         // there can be a mixture, rather than make them load the ui.xml as a sspearate
         // step, can find it now that we know where mobius.xml was
         juce::File sib = file.getSiblingFile("ui.xml");
@@ -219,6 +262,12 @@ void UpgradePanel::doLoad(juce::File file)
     log.add("Click the \"Install\" button to install into the new configuration files");
 }
 
+/**
+ * Load the old UIConfig and convert <Button> elements into
+ * DisplayButtons.  To support older bindings which were stored
+ * in a mobius.xml BindingConfig, we look in both places and
+ * merge them.
+ */
 void UpgradePanel::loadUIConfig(juce::String xml)
 {
     int buttonCount = 0;
@@ -227,7 +276,7 @@ void UpgradePanel::loadUIConfig(juce::String xml)
     juce::XmlDocument doc(xml);
     std::unique_ptr<juce::XmlElement> docel = doc.getDocumentElement();
     if (docel == nullptr) {
-        log.add("Error: XML parsing error: " + juce::String(doc.getLastParseError()));
+        log.add("Error: XML parse error: " + juce::String(doc.getLastParseError()));
     }
     else if (!docel->hasTagName("UIConfig")) {
         log.add("Error: Unexpected XML tag name: " + juce::String(docel->getTagName()));
@@ -270,6 +319,41 @@ bool UpgradePanel::convertButton(juce::XmlElement* el)
     return converted;
 }
 
+/**
+ * For buttons, we'll collect them in a new ButtonSet with the name "Upgrade"
+ * rather than merge them into an existing object.
+ * Still need dup checking within the upgrade set though.
+ */
+bool UpgradePanel::addUpgradeButton(DisplayButton* db)
+{
+    bool added = false;
+
+    // find or create the upgrade set
+    if (newButtons == nullptr) {
+        juce::String upgradeName ("Upgrade");
+        UIConfig* uiConfig = Supervisor::Instance->getUIConfig();
+        ButtonSet* upgrade = uiConfig->findButtonSet(upgradeName);
+        if (upgrade == nullptr) {
+            newButtons = new ButtonSet();
+            newButtons->name = upgradeName;
+        }
+        else 
+          newButtons = new ButtonSet(upgrade);
+    }
+
+    // then add the button if it isn't there
+    DisplayButton* existing = newButtons->getButton(db);
+    if (existing == nullptr) {
+        newButtons->buttons.add(db);
+        added = true;
+    }
+    return added;
+}
+
+/**
+ * MobiusConfig loading creates new object lists containing
+ * only things that are not already in the new model.
+ */
 void UpgradePanel::loadMobiusConfig(juce::String xml)
 {
     delete mobiusConfig;
@@ -280,7 +364,7 @@ void UpgradePanel::loadMobiusConfig(juce::String xml)
     newSetups.clear();
     newScripts.clear();
     scriptNames.clear();
-    newBindings.clear();
+    newBindingSets.clear();
     delete newButtons;
     newButtons = nullptr;
     
@@ -393,6 +477,14 @@ void UpgradePanel::loadSetups()
             juce::String(newSetups.size()));
 }
 
+/**
+ * Loading scripts does two things.  First we accumulate a list
+ * of ScriptRef objects for the files and directories containing
+ * the scripts.  Then we analyze the contents of the script to determine
+ * what the visible binding name for that would have been.  This is used
+ * later in verifyBinding to warn about bindings to things that
+ * don't exist.
+ */
 void UpgradePanel::loadScripts()
 {
     int count = 0;
@@ -404,11 +496,15 @@ void UpgradePanel::loadScripts()
         ScriptRef* ref = srcScripts->getScripts();
         while (ref != nullptr) {
             count++;
-            juce::File file (ref->getFile());
-            if (file.isDirectory()) {
-                log.add("Verified script directory: " + juce::String(ref->getFile()));
-                // we keep the reference, but need to descend into it to
-                // register what it contains for binding resolution
+            bool skipValidation = false;
+            // this is a testing convenience for Mac files loaded on Windows
+            // avoid a Juce assertion if we know the path isn't going to go anywhere
+#ifndef __APPLE__
+            const char* path = ref->getFile();
+            if (path != nullptr && path[0] == '/')
+              skipValidation = true;
+#endif
+            if (skipValidation) {
                 ScriptRef* existing = masterScripts->get(ref->getFile());
                 if (existing == nullptr) {
                     newScripts.add(new ScriptRef(ref));
@@ -416,16 +512,13 @@ void UpgradePanel::loadScripts()
                 else {
                     log.add("Script path already exists: " + juce::String(ref->getFile()));
                 }
-
-                registerDirectoryScripts(file);
             }
             else {
-                // this does two things, it verifies that the file exists
-                // and if it does, reads enough of it to dig out the !name to add it
-                // to the name list
-                juce::String scriptName = verifyScript(ref);
-                if (scriptName.length() > 0) {
-                    // but only add it to the pending list if it isn't already there
+                juce::File file (ref->getFile());
+                if (file.isDirectory()) {
+                    log.add("Verified script directory: " + juce::String(ref->getFile()));
+                    // we keep the reference, but need to descend into it to
+                    // register what it contains for binding resolution
                     ScriptRef* existing = masterScripts->get(ref->getFile());
                     if (existing == nullptr) {
                         newScripts.add(new ScriptRef(ref));
@@ -433,9 +526,25 @@ void UpgradePanel::loadScripts()
                     else {
                         log.add("Script path already exists: " + juce::String(ref->getFile()));
                     }
+
+                    registerDirectoryScripts(file);
                 }
                 else {
-                    // will have already logged a warning
+                    // this verifies that the file exists, and extracts the binding name
+                    juce::String scriptName = verifyScript(ref);
+                    if (scriptName.length() > 0) {
+                        // but only add it to the pending list if it isn't already there
+                        ScriptRef* existing = masterScripts->get(ref->getFile());
+                        if (existing == nullptr) {
+                            newScripts.add(new ScriptRef(ref));
+                        }
+                        else {
+                            log.add("Script path already exists: " + juce::String(ref->getFile()));
+                        }
+                    }
+                    else {
+                        // will have already logged a warning
+                    }
                 }
             }
             ref = ref->getNext();
@@ -454,7 +563,7 @@ juce::String UpgradePanel::verifyScript(ScriptRef* ref)
     if (!file.existsAsFile()) {
         // two options here, ignore it, or add it and let them fix the path later
         // since we need the file to validate bindings to the !name in the script
-        // you'll lose bindings unless the binding name happens to be the same
+        // you'll get a warning unless the binding name happens to be the same
         // as the leaf file name, which it sometimes is
         scriptName = file.getFileNameWithoutExtension();
         log.add("Warning: Script file not found: " + juce::String(ref->getFile()));
@@ -477,8 +586,6 @@ juce::String UpgradePanel::verifyScript(ScriptRef* ref)
  * When the ScriptConfig contains a directory reference, we just keep the
  * single ScriptRef, but for binding verification we need to descend into it
  * and load all the script names it contains.
- * Hmm, this may be more anal than we need, could just leave unresolved bindings behind
- * and let them sort it out later.
  */
 void UpgradePanel::registerDirectoryScripts(juce::File dir)
 {
@@ -530,10 +637,59 @@ juce::String UpgradePanel::getScriptName(juce::File file)
 /**
  * When strict mode is on, bindings will be filtered unless they resolve
  * to an existing Symbol, or are found in the registered scripts.
+ *
+ * OG Mobius supported the concept of "overlay" bindings, which are not
+ * fully implemented yet, but we'll bring them in.  The first BindingConfig
+ * is normally named "Common Bindings" and is always active.  Subsequent
+ * BindingConfigs are overlays and could be individually selected and
+ * merged with the common bindings.
+ *
+ * On upgrade, each BindingConfig is name matched with a BindingSet in the
+ * new model.  If a name is not found, a new one is created.  Within each
+ * new BindingSet, Bindings that already exist in the new model are filtered.
+ * Installation is then a merge of the new BindingSets and the existing ones
+ * rather than a full replacement like Presets and Setups.  The special case
+ * is the first BindingConfig which is always merged with the first BindingSet
+ * in the new model regardless of name.  
  */
 void UpgradePanel::loadBindings()
 {
-    int setCount = 0;
+    // the first one is special, it doesn't requirea name match
+    BindingSet* oldBindings = mobiusConfig->getBindingSets();
+    if (oldBindings != nullptr) {
+        
+        BindingSet* masterBindings = masterConfig->getBindingSets();
+        newBindingSets.add(loadBindings(oldBindings, masterBindings));
+
+        // the rest require name matching
+        BindingSet* masterOverlays = nullptr;
+        if (masterBindings != nullptr)
+          masterOverlays = masterBindings->getNextBindingSet();
+        
+        oldBindings = oldBindings->getNextBindingSet();
+        while (oldBindings != nullptr) {
+            // locate an existing set by name
+            BindingSet* master = nullptr;
+            for (BindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
+                if (StringEqual(oldBindings->getName(), set->getName())) {
+                    master = set;
+                    break;
+                }
+            }
+
+            newBindingSets.add(loadBindings(oldBindings, master));
+            oldBindings = oldBindings->getNextBindingSet();
+        }
+    }
+}
+
+BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
+{
+    BindingSet* newBindings = new BindingSet();
+    // if this is the first one, the name doesn't matter
+    // it will always be installed in the first master BindingSet
+    newBindings->setName(old->getName());
+    
     int midiCount = 0;
     int keyCount = 0;
     int hostCount = 0;
@@ -542,91 +698,78 @@ void UpgradePanel::loadBindings()
     int midiAdded = 0;
     int hostAdded = 0;
     int buttonAdded = 0;
+
+    log.add("Upgrading binding set: " + juce::String(old->getName()));
     
-    BindingSet* masterBindings = masterConfig->getBindingSets();
-    BindingSet* bindings = mobiusConfig->getBindingSets();
-
-    while (bindings != nullptr) {
-        setCount++;
-        const char* name = bindings->getName();
-        // these normally do not have names
-        if (name == nullptr)
-          name = "unnamed";
-        juce::String jname = juce::String(name);
-        log.add("Loading binding set: " + jname);
+    Binding* binding = old->getBindings();
+    while (binding != nullptr) {
+        Binding* copy = nullptr;
             
-        Binding* binding = bindings->getBindings();
-        while (binding != nullptr) {
-            Binding* copy = nullptr;
-            
-            if (binding->trigger == TriggerMidi ||
-                binding->isMidi()) {
-                midiCount++;
+        if (binding->trigger == TriggerMidi ||
+            binding->isMidi()) {
+            midiCount++;
 
-                copy = verifyBinding(binding);
-                if (copy != nullptr) {
-                    midiAdded++;
-                    // adjust the channel
-                    copy->midiChannel = binding->midiChannel + 1;
-                }
-            }
-            else if (binding->trigger == TriggerKey) {
-                keyCount++;
-            }
-            else if (binding->trigger == TriggerHost) {
-                hostCount++;
-                copy = verifyBinding(binding);
-                if (copy != nullptr)
-                  hostAdded++;
-            }
-            else if (binding->trigger == TriggerUI) {
-                buttonCount++;
-                copy = verifyBinding(binding);
-                if (copy != nullptr) {
-                    // these aren't Bindings in the new model
-                    DisplayButton* db = new DisplayButton();
-                    db->action = copy->getSymbolName();
-                    db->arguments = juce::String(copy->getArguments());
-                    db->scope = juce::String(copy->getScope());
-                    delete copy;
-                    copy = nullptr;
-                    if (!addUpgradeButton(db)) {
-                        log.add(juce::String("Binding for button ") + binding->getSymbolName() + " already exists");
-                        delete db;
-                    }
-                    else {
-                        buttonAdded++;
-                    }
-                }
-            }
-
+            copy = upgradeBinding(binding);
             if (copy != nullptr) {
-                // it was valid, but ignore if already there
-                Binding* existing = masterBindings->findBinding(copy);
-                if (existing == nullptr) {
-                    newBindings.add(copy);
+                // adjust the channel
+                copy->midiChannel = binding->midiChannel + 1;
+            }
+        }
+        else if (binding->trigger == TriggerKey) {
+            // these are complicated, not supported yet
+            keyCount++;
+        }
+        else if (binding->trigger == TriggerHost) {
+            hostCount++;
+            copy = upgradeBinding(binding);
+        }
+        else if (binding->trigger == TriggerUI) {
+            // this must be a very old MobiusConfig since
+            // button bindings were moved to uiconfig.xml
+            // this will be converted to a DisplayButton
+            buttonCount++;
+            copy = upgradeBinding(binding);
+            if (copy != nullptr) {
+                // these aren't Bindings in the new model
+                DisplayButton* db = new DisplayButton();
+                db->action = copy->getSymbolName();
+                db->arguments = juce::String(copy->getArguments());
+                db->scope = juce::String(copy->getScope());
+                delete copy;
+                copy = nullptr;
+                if (!addUpgradeButton(db)) {
+                   log.add(juce::String("Binding for button ") + binding->getSymbolName() + " already exists");
+                    delete db;
                 }
                 else {
-                    delete copy;
-                    log.add(juce::String("Binding for ") + binding->getSymbolName() + " already exists");
-                    // ugh, we already incremented the counter
-                    if (binding->trigger == TriggerHost)
-                      hostAdded--;
-                    else
-                      midiAdded--;
+                    buttonAdded++;
                 }
             }
-            
-            binding = binding->getNext();
         }
-        bindings = bindings->getNextBindingSet();
+        
+        if (copy != nullptr) {
+            // it was valid, but ignore if already there
+            Binding* existing = nullptr;
+            if (master != nullptr)
+              existing = master->findBinding(copy);
+            
+            
+            if (existing == nullptr) {
+                newBindings->addBinding(copy);
+                if (binding->trigger == TriggerHost)
+                  hostAdded++;
+                else
+                  midiAdded++;
+            }   
+            else {
+                delete copy;
+                log.add(juce::String("Binding for ") + binding->getSymbolName() + " already exists");
+            }
+        }
+        
+        binding = binding->getNext();
     }
-
-    if (setCount > 1) {
-        log.add("Warning: Multiple binding sets encountered");
-        log.add("  These were formerly called \"overlay\" bindings and are not currently supported");
-        log.add("  All binding sets will be merged together when upgrading");
-    }
+                         
     if (keyCount > 0) {
         log.add("Warning: Keyboard bindings are not currently upgradable, " + 
                 juce::String(keyCount) + " ignored");
@@ -640,43 +783,18 @@ void UpgradePanel::loadBindings()
     
     log.add(juce::String(buttonCount) + " UI Button bindings loaded, " +
             juce::String(buttonAdded) + " retained");
+
+    return newBindings;
 }
 
 /**
- * For buttons, we'll collect them in a new ButtonSet with the name "Upgrade"
- * rather than merge them into an existing object.
- * Still need dup checking within the upgrade set though.
+ * Upgrade an old binding, and emit validation messages.
+ * Normally this returns a copy of the old binding with
+ * the necessary adjustments.  If strict mode is on it
+ * will return nullptr if the binding does not resolve
+ * to a valid symbol or script name.
  */
-bool UpgradePanel::addUpgradeButton(DisplayButton* db)
-{
-    bool added = false;
-
-    // find or create the upgrade set
-    if (newButtons == nullptr) {
-        juce::String upgradeName ("Upgrade");
-        UIConfig* uiConfig = Supervisor::Instance->getUIConfig();
-        ButtonSet* upgrade = uiConfig->findButtonSet(upgradeName);
-        if (upgrade == nullptr) {
-            newButtons = new ButtonSet();
-            newButtons->name = upgradeName;
-        }
-        else 
-          newButtons = new ButtonSet(upgrade);
-    }
-
-    // then add the button if it isn't there
-    DisplayButton* existing = newButtons->getButton(db);
-    if (existing == nullptr) {
-        newButtons->buttons.add(db);
-        added = true;
-    }
-    return added;
-}
-
-/**
- * Fix some of the most common binding name changes.
- */
-Binding* UpgradePanel::verifyBinding(Binding* src)
+Binding* UpgradePanel::upgradeBinding(Binding* src)
 {
     Binding* copy = new Binding(src);
 
@@ -732,10 +850,20 @@ Binding* UpgradePanel::verifyBinding(Binding* src)
         copy->setSymbolName("SpeedToggle");
     }
     else if (scriptNames.contains(name)) {
-        // reference to a script, assuming we could figure out the reference name
+        // a reference to a script where were able to validate the name
+        // no further adjustments
     }
     else {
+        // unresolved reference
+        // this may happen if the scripts can't be loaded
+        // or if there is an old function alias that isn't supported
+        // by the above logic
         log.add("Warning: Unresolved binding name \"" + name + "\"");
+        
+        // if strict is on, don't add it
+        // I used this in testing, but in practice users won't want this
+        // since it's usually an unloaded script reference they can correct
+        // or an error in my alias handling that I need to fix
         if (strict) {
             log.add("  Strict mode active, ignoring binding");
             delete copy;
@@ -818,9 +946,8 @@ void UpgradePanel::doInstall()
             masterConfig->addSetup(s);
         }
 
-        ScriptConfig* masterScripts = masterConfig->getScriptConfig();
-        ScriptConfig* srcScripts = mobiusConfig->getScriptConfig();
-        if (srcScripts != nullptr) {
+        if (newScripts.size() > 0) {
+            ScriptConfig* masterScripts = masterConfig->getScriptConfig();
             if (masterScripts == nullptr) {
                 masterScripts = new ScriptConfig();
                 masterConfig->setScriptConfig(masterScripts);
@@ -831,13 +958,52 @@ void UpgradePanel::doInstall()
                 masterScripts->add(ref);
             }
         }
-        
-        BindingSet* masterBindings = masterConfig->getBindingSets();
-        while (newBindings.size() > 0) {
-            Binding* b = newBindings.removeAndReturn(0);
-            masterBindings->addBinding(b);
-        }
 
+        // these are more complicated
+        // they are merged into existing sets with the same name
+        if (newBindingSets.size() > 0) {
+            BindingSet* neu = newBindingSets.removeAndReturn(0);
+            BindingSet* masterBindings = masterConfig->getBindingSets();
+            if (masterBindings == nullptr) {
+                // unusual, bootstrap the default set
+                masterBindings = new BindingSet();
+                masterConfig->addBindingSet(masterBindings);
+            }
+
+            // the first two are always merged regardless of name
+            mergeBindings(neu, masterBindings);
+            delete neu;
+
+            // the reset are "overlays", they will have been filtered
+            BindingSet* masterOverlays = masterBindings->getNextBindingSet();
+            while (newBindingSets.size() > 0) {
+                neu = newBindingSets.removeAndReturn(0);
+                BindingSet* masterDest = nullptr;
+ for (BindingSet* set = masterOverlays ; set != nullptr ; set = set->getNextBindingSet()) {
+                    if (StringEqual(neu->getName(), set->getName())) {
+                        masterDest = set;
+                        break;
+                    }
+                }
+                
+                if (masterDest != nullptr) {
+                    mergeBindings(neu, masterDest);
+                    delete neu;
+                }
+                else {
+                    // first time here with a new one
+                    // the expectation is that the order is preserved so append it
+                    BindingSet* masterLast = masterBindings;
+                    while (masterLast->getNext() != nullptr)
+                      masterLast = masterLast->getNextBindingSet();
+                    masterLast->setNext(neu);
+                }
+            }
+        }
+        
+        // buttons go in UIConfig
+        // since we're not merging into a potentially existing
+        // object, we just replace it every time
         if (newButtons != nullptr) {
             UIConfig* config = Supervisor::Instance->getUIConfig();
             ButtonSet* existing = config->findButtonSet(newButtons->name);
@@ -852,6 +1018,27 @@ void UpgradePanel::doInstall()
         
         log.add("MobiusConfig ugprade installed");
         log.add("You may revert these changes by returning to this panel and clicking \"Undo\"");
+    }
+}
+
+/**
+ * Move the filtered Binding list from the upgraded set into
+ * a master set.  This one is annoying due to old memory management.
+ * We want to move ownership of the objects over to the destination set.
+ * Easiest is to do linked list surgery on the destination.
+ */
+void UpgradePanel::mergeBindings(BindingSet* src, BindingSet* dest)
+{
+    Binding* list = src->stealBindings();
+
+    Binding* destLast = dest->getBindings();
+    if (destLast == nullptr) {
+        dest->setBindings(list);
+    }
+    else {
+        while (destLast->getNext() != nullptr)
+          destLast = destLast->getNext();
+        destLast->setNext(list);
     }
 }
 

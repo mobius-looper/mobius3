@@ -40,13 +40,14 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     juce::OwnedArray<class Setup> newSetups;
     juce::OwnedArray<class ScriptRef> newScripts;
     juce::Array<juce::String> scriptNames;
-    juce::OwnedArray<class Binding> newBindings;
+    juce::OwnedArray<class BindingSet> newBindingSets;
     class ButtonSet* newButtons = nullptr;
     
     BasicLog log;
 
     BasicButtonRow commands;
-    juce::TextButton loadButton {"Load File"};
+    juce::TextButton loadCurrentButton {"Load Current"};
+    juce::TextButton loadFileButton {"Load File"};
     juce::TextButton installButton {"Install"};
     juce::TextButton undoButton {"Undo"};
     
@@ -57,7 +58,8 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     juce::String lastFolder;
 
     void locateExisting();
-    void doLoad();
+    void doLoadCurrent();
+    void doLoadFile();
     void doFileChooser();
     void doLoad(juce::File file);
 
@@ -68,18 +70,20 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     void loadPresets();
     void loadSetups();
     void loadScripts();
-    juce::String verifyScript(ScriptRef* ref);
+    juce::String verifyScript(class ScriptRef* ref);
     juce::String getScriptNameFromPath(const char* path);
     void registerDirectoryScripts(juce::File dir);
     juce::String getScriptName(juce::File file);
     
     void loadBindings();
-    Binding* verifyBinding(Binding* src);
+    class BindingSet* loadBindings(class BindingSet* old, class BindingSet* master);
+    class Binding* upgradeBinding(class Binding* src);
     int getLastDigit(juce::String s);
     bool addUpgradeButton(class DisplayButton* db);
 
     void doInstall();
     void noLoad();
+    void mergeBindings(BindingSet* src, BindingSet* dest);
     
     void doUndo();
 };

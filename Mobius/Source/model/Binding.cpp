@@ -288,6 +288,13 @@ Binding* BindingSet::getBindings()
 	return mBindings;
 }
 
+Binding* BindingSet::stealBindings()
+{
+    Binding* list = mBindings;
+    mBindings = nullptr;
+    return list;
+}
+
 /**
  * !! Does not delete the current bindings
  * this is inconsistent
