@@ -35,6 +35,7 @@ class SetupPanel : public ConfigPanel, public SimpleRadio::Listener, public juce
     
   private:
 
+    void refreshObjectSelector();
     void render();
     void initForm();
     void addField(const char* tab, class UIParameter* p);

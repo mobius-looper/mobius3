@@ -246,6 +246,7 @@ void UpgradePanel::doLoad(juce::File file)
         // step, can find it now that we know where mobius.xml was
         juce::File sib = file.getSiblingFile("ui.xml");
         if (sib.existsAsFile()) {
+            log.add("");
             log.add("Loading: " + sib.getFullPathName());
             xml = sib.loadFileAsString();
             loadUIConfig(xml);
@@ -395,12 +396,12 @@ void UpgradePanel::loadPresets()
 {
     int count = 0;
     
+    log.add("");
     log.add("Loading Presets...");
     Preset* preset = mobiusConfig->getPresets();
     while (preset != nullptr) {
         count++;
         juce::String name = juce::String(preset->getName());
-        log.add("Loading Preset: " + name);
 
         bool ignore = false;
         juce::String newName;
@@ -438,12 +439,12 @@ void UpgradePanel::loadSetups()
 {
     int count = 0;
     
+    log.add("");
     log.add("Loading Setups...");
     Setup* setup = mobiusConfig->getSetups();
     while (setup != nullptr) {
         count++;
         juce::String name = juce::String(setup->getName());
-        log.add("Loading Setup: " + name);
 
         bool ignore = false;
         juce::String newName;
@@ -489,6 +490,7 @@ void UpgradePanel::loadScripts()
 {
     int count = 0;
     
+    log.add("");
     log.add("Loading Scripts...");
     ScriptConfig* masterScripts = masterConfig->getScriptConfig();
     ScriptConfig* srcScripts = mobiusConfig->getScriptConfig();
@@ -551,6 +553,10 @@ void UpgradePanel::loadScripts()
         }
     }
 
+    log.add("Registered script names:");
+    for (auto name : scriptNames)
+      log.add("  " + name);
+
     log.add("Loaded " + juce::String(count) + " scripts, retained " +
             juce::String(newScripts.size()));
 }
@@ -567,17 +573,16 @@ juce::String UpgradePanel::verifyScript(ScriptRef* ref)
         // as the leaf file name, which it sometimes is
         scriptName = file.getFileNameWithoutExtension();
         log.add("Warning: Script file not found: " + juce::String(ref->getFile()));
-        log.add("  Assuming bindings reference the name: " + scriptName);
+        // adds log clutter and doesn't help 
+        //log.add("  Assuming bindings reference the name: " + scriptName);
     }
     else {
         log.add("Verified script file: " + juce::String(ref->getFile()));
         scriptName = getScriptName(file);
     }
 
-    if (scriptName.length() > 0) {
-        log.add("Registering script name " + scriptName);
-        scriptNames.add(scriptName);
-    }
+    if (scriptName.length() > 0)
+      scriptNames.add(scriptName);
     
     return scriptName;
 }
@@ -697,8 +702,10 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
             
     int midiAdded = 0;
     int hostAdded = 0;
+    int keyAdded = 0;
     int buttonAdded = 0;
 
+    log.add("");
     log.add("Upgrading binding set: " + juce::String(old->getName()));
     
     Binding* binding = old->getBindings();
@@ -716,8 +723,13 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
             }
         }
         else if (binding->trigger == TriggerKey) {
-            // these are complicated, not supported yet
+            // these are almost always simple ASCII codes which should
+            // transfer from the old keycode space to Juce
+            // anything beyond that like function keys and modifiers
+            // won't and I don't want to mess with mapping them right now
+            // just leave them there so they can be corrected later
             keyCount++;
+            copy = upgradeBinding(binding);
         }
         else if (binding->trigger == TriggerHost) {
             hostCount++;
@@ -758,6 +770,8 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
                 newBindings->addBinding(copy);
                 if (binding->trigger == TriggerHost)
                   hostAdded++;
+                else if (binding->trigger == TriggerKey)
+                  keyAdded++;
                 else
                   midiAdded++;
             }   
@@ -769,20 +783,22 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
         
         binding = binding->getNext();
     }
-                         
-    if (keyCount > 0) {
-        log.add("Warning: Keyboard bindings are not currently upgradable, " + 
-                juce::String(keyCount) + " ignored");
-    }
+
+    if (midiCount > 0) 
+      log.add(juce::String(midiCount) + " MIDI bindings loaded, " +
+              juce::String(midiAdded) + " retained");
     
-    log.add(juce::String(midiCount) + " MIDI bindings loaded, " +
-            juce::String(midiAdded) + " retained");
+    if (hostCount > 0)
+      log.add(juce::String(hostCount) + " Host Parameter bindings loaded, " +
+              juce::String(hostAdded) + " retained");
     
-    log.add(juce::String(hostCount) + " Host Parameter bindings loaded, " +
-            juce::String(hostAdded) + " retained");
+    if (keyCount > 0)
+      log.add(juce::String(keyCount) + " Keyboard bindings loaded, " +
+              juce::String(keyAdded) + " retained");
     
-    log.add(juce::String(buttonCount) + " UI Button bindings loaded, " +
-            juce::String(buttonAdded) + " retained");
+    if (buttonCount > 0)
+      log.add(juce::String(buttonCount) + " UI Button bindings loaded, " +
+              juce::String(buttonAdded) + " retained");
 
     return newBindings;
 }

@@ -90,6 +90,22 @@ void SetupPanel::load()
 }
 
 /**
+ * Refresh the object selector on initial load and after any
+ * objects are added or removed.
+ */
+void SetupPanel::refreshObjectSelector()
+{
+    juce::Array<juce::String> names;
+    for (auto setup : setups) {
+        if (setup->getName() == nullptr)
+          setup->setName("[New]");
+        names.add(setup->getName());
+    }
+    objectSelector.setObjectNames(names);
+    objectSelector.setSelectedObject(selectedSetup);
+}
+
+/**
  * Called by the Save button in the footer.
  * 
  * Save all setups that have been edited during this session
@@ -181,11 +197,9 @@ void SetupPanel::newObject()
     Setup* revert = new Setup(neu);
     revertSetups.add(revert);
     
-    objectSelector.addObjectName(juce::String(neu->getName()));
-    // select the one we just added
-    objectSelector.setSelectedObject(newOrdinal);
     selectedSetup = newOrdinal;
     loadSetup(selectedSetup);
+    refreshObjectSelector();
 }
 
 /**
@@ -208,6 +222,7 @@ void SetupPanel:: deleteObject()
           newOrdinal = setups.size() - 1;
         selectedSetup = newOrdinal;
         loadSetup(selectedSetup);
+        refreshObjectSelector();
     }
 }
 
@@ -219,11 +234,14 @@ void SetupPanel::revertObject()
         setups.set(selectedSetup, reverted);
         // what about the name?
         loadSetup(selectedSetup);
+        refreshObjectSelector();
     }
 }
 
 void SetupPanel::renameObject(juce::String newName)
 {
+    Setup* setup = setups[selectedSetup];
+    setup->setName(objectSelector.getObjectName().toUTF8());
 }
 
 //////////////////////////////////////////////////////////////////////

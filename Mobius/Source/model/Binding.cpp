@@ -265,6 +265,8 @@ BindingSet::BindingSet(BindingSet* src)
 {
     mBindings = nullptr;
 
+    setName(src->getName());
+
     Binding* last = nullptr;
     Binding* srcBinding = src->getBindings();
     while (srcBinding != nullptr) {

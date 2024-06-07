@@ -119,8 +119,8 @@ void DisplayPanel::load()
             }
         }
 
-        refreshObjectSelector();
         loadLayout(selectedLayout);
+        refreshObjectSelector();
         
         // force this true for testing
         changed = true;
@@ -133,7 +133,7 @@ void DisplayPanel::load()
  * objects are added or removed.  This could be pushed up to
  * ConfigPanel if each subclass had a method to return
  * the list of names and the current selection, but at that point
- * you're not elimiating much duplication.
+ * you're not eliminating much duplication.
  */
 void DisplayPanel::refreshObjectSelector()
 {
@@ -143,7 +143,6 @@ void DisplayPanel::refreshObjectSelector()
           layout->name = "[New]";
         names.add(layout->name);
     }
-    // this will also auto-select the first one
     objectSelector.setObjectNames(names);
     objectSelector.setSelectedObject(selectedLayout);
 }
@@ -218,14 +217,11 @@ void DisplayPanel::newObject()
     neu->name = "[New]";
 
     layouts.add(neu);
-    // make another copy for revert
     revertLayouts.add(new DisplayLayout(neu));
     
-    objectSelector.addObjectName(neu->name);
-    // select the one we just added
-    objectSelector.setSelectedObject(newOrdinal);
     selectedLayout = newOrdinal;
     loadLayout(selectedLayout);
+
     refreshObjectSelector();
 }
 
@@ -256,8 +252,8 @@ void DisplayPanel:: deleteObject()
 void DisplayPanel::revertObject()
 {
     DisplayLayout* reverted = new DisplayLayout(revertLayouts[selectedLayout]);
+    // !! wait, aren't we supposed to copy this like we do for the old model ?
     layouts.set(selectedLayout, reverted);
-    // what about the ObjectSelector name!!
     loadLayout(selectedLayout);
     // in case the name was edited
     refreshObjectSelector();

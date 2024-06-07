@@ -82,6 +82,22 @@ void PresetPanel::load()
 }
 
 /**
+ * Refresh the object selector on initial load and after any
+ * objects are added or removed.
+ */
+void PresetPanel::refreshObjectSelector()
+{
+    juce::Array<juce::String> names;
+    for (auto preset : presets) {
+        if (preset->getName() == nullptr)
+          preset->setName("[New]");
+        names.add(preset->getName());
+    }
+    objectSelector.setObjectNames(names);
+    objectSelector.setSelectedObject(selectedPreset);
+}
+
+/**
  * Called by the Save button in the footer.
  * 
  * Save all presets that have been edited during this session
@@ -173,12 +189,12 @@ void PresetPanel::newObject()
     // make another copy for revert
     Preset* revert = new Preset(neu);
     revertPresets.add(revert);
-    
-    objectSelector.addObjectName(juce::String(neu->getName()));
-    // select the one we just added
-    objectSelector.setSelectedObject(newOrdinal);
+
     selectedPreset = newOrdinal;
     loadPreset(selectedPreset);
+    
+    objectSelector.addObjectName(juce::String(neu->getName()));
+    objectSelector.setSelectedObject(newOrdinal);
 }
 
 /**
@@ -217,6 +233,8 @@ void PresetPanel::revertObject()
 
 void PresetPanel::renameObject(juce::String newName)
 {
+    Preset* preset = presets[selectedPreset];
+    preset->setName(objectSelector.getObjectName().toUTF8());
 }
 
 //////////////////////////////////////////////////////////////////////

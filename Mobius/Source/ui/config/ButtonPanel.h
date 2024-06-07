@@ -39,6 +39,7 @@ class ButtonPanel : public BindingPanel
     
   private:
 
+    void refreshObjectSelector();
     void loadButtons(int index);
     void saveButtons(int index);
     class DisplayButton* getDisplayButton(class Binding* binding);

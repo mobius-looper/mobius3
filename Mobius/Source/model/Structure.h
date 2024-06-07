@@ -58,7 +58,7 @@ class Structure
         
   private:
 
-    Structure* mNext;
-    char* mName;
+    Structure* mNext = nullptr;
+    char* mName = nullptr;
 };
 

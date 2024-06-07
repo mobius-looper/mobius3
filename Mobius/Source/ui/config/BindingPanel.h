@@ -36,6 +36,13 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     virtual void save();
     virtual void cancel();
 
+    // ObjectSelector overloads
+    void selectObject(int ordinal) override;
+    void newObject() override;
+    void deleteObject() override;
+    void revertObject() override;
+    void renameObject(juce::String) override;
+    
     void resized();
 
     // BindingTable
@@ -63,6 +70,7 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     
   private:
 
+    void refreshObjectSelector();
     void render();
     void rebuildTable();
 
@@ -74,10 +82,7 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     juce::OwnedArray<BindingSet> revertBindingSets;
     int selectedBindingSet = 0;
 
-    void loadNew();
-    void loadBindingSet(int ordinal);
-    void saveNew();
-    void cancelNew();
+    void loadBindingSet(int index);
     void saveBindingSet(int index);
     void saveBindingSet(BindingSet* dest);
 

@@ -547,9 +547,20 @@ void ObjectSelector::addObjectName(juce::String name)
     combobox.addItem(name, combobox.getNumItems() + 1);
 }
 
+/**
+ * Note well: setSelectedId will by default result
+ * in a change notification being sent to the listeners.
+ * In this usage, the panel subclasses are managing their
+ * own state, and just want to programatically move
+ * the selected item. If you change this you need to make
+ * sure that the subclass is prepared to immediately receive
+ * a selectObject callback as if the user had interacted with
+ * the combo box
+ * 
+ */ 
 void ObjectSelector::setSelectedObject(int ordinal)
 {
-    combobox.setSelectedId(ordinal + 1);
+    combobox.setSelectedId(ordinal + 1, juce::NotificationType::dontSendNotification);
 }
 
 // TODO: give the name label a listener to call renameObject

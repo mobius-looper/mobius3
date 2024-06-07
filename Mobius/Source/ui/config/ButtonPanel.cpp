@@ -69,8 +69,6 @@ void ButtonPanel::load()
             buttons.add(copy);
             revertButtons.add(new ButtonSet(set));
         }
-        // this will also auto-select the first one
-        objectSelector.setObjectNames(names);
 
         // todo: really need to find a way to deal with "named object lists"
         // in a generic way with OwnedArray, c++ makes this too fucking hard
@@ -88,14 +86,30 @@ void ButtonPanel::load()
                 index++;
             }
         }
-        objectSelector.setSelectedObject(selectedButtons);
-        
+
         loadButtons(selectedButtons);
+        refreshObjectSelector();
 
         // force this true for testing
         changed = true;
         loaded = true;
     }
+}
+
+/**
+ * Refresh the object selector on initial load and after any
+ * objects are added or removed.
+ */
+void ButtonPanel::refreshObjectSelector()
+{
+    juce::Array<juce::String> names;
+    for (auto set : buttons) {
+        if (set->name.length() == 0)
+          set->name = "[New]";
+        names.add(set->name);
+    }
+    objectSelector.setObjectNames(names);
+    objectSelector.setSelectedObject(selectedButtons);
 }
 
 /**
@@ -275,11 +289,10 @@ void ButtonPanel::newObject()
     // make another copy for revert
     revertButtons.add(new ButtonSet(neu));
     
-    objectSelector.addObjectName(neu->name);
-    // select the one we just added
-    objectSelector.setSelectedObject(newOrdinal);
     selectedButtons = newOrdinal;
     loadButtons(selectedButtons);
+
+    refreshObjectSelector();
 }
 
 /**
@@ -305,6 +318,7 @@ void ButtonPanel:: deleteObject()
           newOrdinal = buttons.size() - 1;
         selectedButtons = newOrdinal;
         loadButtons(selectedButtons);
+        refreshObjectSelector();
     }
 }
 
@@ -314,6 +328,7 @@ void ButtonPanel::revertObject()
     buttons.set(selectedButtons, reverted);
     // what about the ObjectSelector name!!
     loadButtons(selectedButtons);
+    refreshObjectSelector();
 }
 
 /**

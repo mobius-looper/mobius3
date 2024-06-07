@@ -69,6 +69,8 @@ BindingPanel::~BindingPanel()
 
 /**
  * ConfigPanel overload to prepare the panel to be shown.
+ * Make copies of all the BindingSets in bindingSets and revertBindingSets.
+ * Load the first BindingSet into the BindingTable.
  */
 void BindingPanel::load()
 {
@@ -80,23 +82,38 @@ void BindingPanel::load()
 
         targets.load();
 
-        // until we support overlay editing, just start with
-        // the first base binding set
-        BindingSet* baseBindings = config->getBindingSets();
-        if (baseBindings != nullptr) {
-            Binding* blist = baseBindings->getBindings();
-            while (blist != nullptr) {
-                // subclass overload
-                if (isRelevant(blist)) {
-                    // table will copy
-                    bindings.add(blist);
-                }
-                blist = blist->getNext();
-            }
-            bindings.updateContent();
+        // Though only MidiPanel supports overlays, handle all three
+        // the same.  ButtonPanel overloads this differently
+
+        bindingSets.clear();
+        revertBindingSets.clear();
+
+        BindingSet* setlist = config->getBindingSets();
+        if (setlist == nullptr) {
+            // must be a misconfigured install, shouldn't happen
+            setlist = new BindingSet();
+            setlist->setName("Base");
+            config->setBindingSets(setlist);
         }
 
-        // make sure the form is reset from the last time
+        while (setlist != nullptr) {
+            BindingSet* set = new BindingSet(setlist);
+
+            // first set doesn't always have a name, force one
+            if (bindingSets.size() == 0 && set->getName() == nullptr)
+              set->setName("Base");
+                
+            bindingSets.add(set);
+            revertBindingSets.add(new BindingSet(set));
+
+            setlist = setlist->getNextBindingSet();
+        }
+        
+        selectedBindingSet = 0;
+        loadBindingSet(selectedBindingSet);
+
+        refreshObjectSelector();
+        
         resetForm();
 
         // force this true for testing
@@ -105,113 +122,262 @@ void BindingPanel::load()
     }
 }
 
+/**
+ * Refresh the object selector on initial load and after any
+ * objects are added or removed.  This could be pushed up to
+ * ConfigPanel if each subclass had a method to return
+ * the list of names and the current selection, but at that point
+ * you're not eliminating much duplication.
+ */
+void BindingPanel::refreshObjectSelector()
+{
+    juce::Array<juce::String> names;
+    for (auto set : bindingSets) {
+        if (set->getName() == nullptr)
+          set->setName("[New]");
+        names.add(set->getName());
+    }
+    objectSelector.setObjectNames(names);
+    objectSelector.setSelectedObject(selectedBindingSet);
+}
+
+void BindingPanel::loadBindingSet(int index)
+{
+    bindings.clear();
+    BindingSet* set = bindingSets[index];
+    if (set != nullptr) {
+        Binding* blist = set->getBindings();
+        while (blist != nullptr) {
+            // subclass overload
+            if (isRelevant(blist)) {
+                // table will copy
+                bindings.add(blist);
+            }
+            blist = blist->getNext();
+        }
+    }
+    bindings.updateContent();
+    resetForm();
+}
+
+
+/**
+ * Called by the Save button in the footer.
+ * 
+ * Save all presets that have been edited during this session
+ * back to the master configuration.
+ *
+ * Tell the ConfigEditor we are done.
+ */
 void BindingPanel::save()
 {
     if (changed) {
-        MobiusConfig* config = editor->getMobiusConfig();
-
-        // only dealing with the base binding set atm
-        BindingSet* baseBindings = config->getBindingSets();
-        if (baseBindings == nullptr) {
-            // boostrap one
-            baseBindings = new BindingSet();
-            config->addBindingSet(baseBindings);
-        }
-
-        // note well: unlike most strings, setBingings() does
-        // NOT delete the current Binding list, it just takes the pointer
-        // so we can reconstruct the list and set it back without worrying
-        // about dual ownership.  deleting a Binding DOES however follow the
-        // chain so be careful with that.  Really need model cleanup
-        juce::Array<Binding*> newBindings;
-
-        Binding* original = baseBindings->getBindings();
-        baseBindings->setBindings(nullptr);
+        // capture visible state in the table back into
+        // the current BidningSet
+        saveBindingSet(selectedBindingSet);
         
-        while (original != nullptr) {
-            // take it out of the list to prevent cascaded delete
-            Binding* next = original->getNext();
-            original->setNext(nullptr);
-            if (!isRelevant(original))
-              newBindings.add(original);
-            else
-              delete original;
-            original = next;
-        }
-        //traceBindingList("filtered", newBindings);
+        // build a new BindingSet linked list
+        BindingSet* setlist = nullptr;
+        BindingSet* last = nullptr;
         
-        // now add back the edited ones, some may have been deleted or added
-        Binding* edited = bindings.captureBindings();
-        //traceBindingList("from table", edited);
-        while (edited != nullptr) {
-            newBindings.add(edited);
-            edited = edited->getNext();
-        }
-
-        //traceBindingList("merged", newBindings);
-
-        // link them back up
-        Binding* merged = nullptr;
-        Binding* last = nullptr;
-        for (int i = 0 ; i < newBindings.size() ; i++) {
-            Binding* b = newBindings[i];
-            // clear any residual chain
-            b->setNext(nullptr);
+        for (int i = 0 ; i < bindingSets.size() ; i++) {
+            BindingSet* set = bindingSets[i];
             if (last == nullptr)
-              merged = b;
+              setlist = set;
             else
-              last->setNext(b);
-            last = b;
+              last->setNext(set);
+            last = set;
         }
 
-        //traceBindingList("final", merged);
+        // we took ownership of the objects so
+        // clear the owned array but don't delete them
+        bindingSets.clear(false);
+        // these we don't need any more
+        revertBindingSets.clear();
 
-        // store the merged list back
-        baseBindings->setBindings(merged);
-        
+        MobiusConfig* config = editor->getMobiusConfig();
+        // this also deletes the current list
+        config->setBindingSets(setlist);
         editor->saveMobiusConfig();
 
-        changed = false;
         loaded = false;
+        changed = false;
     }
     else if (loaded) {
-        // throw away the copies
-        cancel();
+        // throw away preset copies
+        bindingSets.clear();
+        revertBindingSets.clear();
+        loaded = false;
     }
 }
 
-// temporary debugging hacks when flailing away at some problem
-// not necessary
-
-void BindingPanel::traceBindingList(const char* title, Binding* blist)
+void BindingPanel::saveBindingSet(int index)
 {
-    int count = 0;
-    trace("*** Bindings %s\n", title);
-    while (blist != nullptr) {
-        trace("%s\n", blist->getSymbolName());
-        blist = blist->getNext();
-        count++;
+    BindingSet* set = bindingSets[index];
+    if (set != nullptr) {
+        saveBindingSet(set);
     }
-    trace("*** %s %d total bindings\n", title, count);
 }
 
-void BindingPanel::traceBindingList(const char* title, juce::Array<Binding*> &blist)
+/**
+ * Take the set of Binding objects that have been edited in the Binding
+ * table and merge them back into a BindingSet.  The BindingTable
+ * only held a subset of the Bindings that were in the BindingSet
+ * so everything that wasn't in the table needs to be preserved,
+ * and everything that was copied to the table neds to be replaced.
+ */
+void BindingPanel::saveBindingSet(BindingSet* dest)
 {
-    trace("*** Bindings %s\n", title);
-    for (int i = 0 ; i < blist.size() ; i++) {
-        Binding* b = blist[i];
-        trace("%s\n", b->getSymbolName());
+    // note well: unlike most object lists, MobiusConfig::setBindingSets does
+    // NOT delete the current Binding list, it just takes the pointer
+    // so we can reconstruct the list and set it back without worrying
+    // about dual ownership.  Deleting a Binding DOES however follow the
+    // chain so be careful with that.  Really need model cleanup.
+    juce::Array<Binding*> newBindings;
+
+    Binding* original = dest->getBindings();
+    dest->setBindings(nullptr);
+        
+    while (original != nullptr) {
+        // take it out of the list to prevent cascaded delete
+        Binding* next = original->getNext();
+        original->setNext(nullptr);
+        if (!isRelevant(original))
+          newBindings.add(original);
+        else
+          delete original;
+        original = next;
     }
-    trace("*** %s %d total bindings\n", title, blist.size());
+        
+    // now add back the edited ones, some may have been deleted
+    // and some may be new
+    Binding* edited = bindings.captureBindings();
+    while (edited != nullptr) {
+        Binding* next = edited->getNext();
+        edited->setNext(nullptr);
+        newBindings.add(edited);
+        edited = next;
+    }
+
+    // link them back up
+    Binding* merged = nullptr;
+    Binding* last = nullptr;
+    for (int i = 0 ; i < newBindings.size() ; i++) {
+        Binding* b = newBindings[i];
+        // clear any residual chain
+        b->setNext(nullptr);
+        if (last == nullptr)
+          merged = b;
+        else
+          last->setNext(b);
+        last = b;
+    }
+
+    // put the new list back
+    dest->setBindings(merged);
 }
 
+/**
+ * Throw away all editing state.
+ */
 void BindingPanel::cancel()
 {
     // throw away the copies
     Binding* blist = bindings.captureBindings();
     delete blist;
-    changed = false;
+    
+    // delete the copied sets
+    bindingSets.clear();
+    revertBindingSets.clear();
     loaded = false;
+    changed = false;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ObjectSelector overloads
+//
+// Okay,  this is now the fourth multi-object panel, and we duplicate
+// the same logic in all three with different names.  Need to refactor
+// generic logic back down to ConfigPanel with subclass overloads
+// for the things that differ.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Called when the combobox changes.
+ */
+void BindingPanel::selectObject(int ordinal)
+{
+    if (ordinal != selectedBindingSet) {
+        saveBindingSet(selectedBindingSet);
+        selectedBindingSet = ordinal;
+        loadBindingSet(selectedBindingSet);
+    }
+}
+
+void BindingPanel::newObject()
+{
+    int newOrdinal = bindingSets.size();
+    BindingSet* neu = new BindingSet();
+    neu->setName("[New]");
+
+    bindingSets.add(neu);
+    // make another copy for revert
+    BindingSet* revert = new BindingSet(neu);
+    revertBindingSets.add(revert);
+    
+    selectedBindingSet = newOrdinal;
+    loadBindingSet(selectedBindingSet);
+
+    refreshObjectSelector();
+}
+
+/**
+ * Delete is somewhat complicated.
+ * You can't undo it unless we save it somewhere.
+ * An alert would be nice, ConfigPanel could do that.
+ */
+void BindingPanel:: deleteObject()
+{
+    // MidiPanel is unique in that the first one is reserved
+    // and must always be there, it has to overload this
+
+    if (bindingSets.size() == 1) {
+        // must have at least one object
+    }
+    else {
+        bindingSets.remove(selectedBindingSet);
+        revertBindingSets.remove(selectedBindingSet);
+        // leave the index where it was and show the next one,
+        // if we were at the end, move back
+        int newOrdinal = selectedBindingSet;
+        if (newOrdinal >= bindingSets.size())
+          newOrdinal = bindingSets.size() - 1;
+        selectedBindingSet = newOrdinal;
+        loadBindingSet(selectedBindingSet);
+        refreshObjectSelector();
+    }
+}
+
+void BindingPanel::revertObject()
+{
+    BindingSet* revert = revertBindingSets[selectedBindingSet];
+    if (revert != nullptr) {
+        BindingSet* reverted = new BindingSet(revert);
+        bindingSets.set(selectedBindingSet, reverted);
+        loadBindingSet(selectedBindingSet);
+        // in case the name was edited
+        refreshObjectSelector();
+    }
+}
+
+void BindingPanel::renameObject(juce::String newName)
+{
+    BindingSet* set = bindingSets[selectedBindingSet];
+    set->setName(objectSelector.getObjectName().toUTF8());
+    // this doesn't need to refreshObjectSelector since that's
+    // where the name came from
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -463,211 +629,6 @@ void BindingPanel::resized()
     //form->render();
     form.setTopLeftPosition(area.getX(), targets.getY() + targets.getHeight() + 10);
 }    
-
-//////////////////////////////////////////////////////////////////////
-//
-// New Multi-Object Base Panel
-//
-// The code here is dormant and evolving
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * ConfigPanel overload to prepare the panel to be shown.
- */
-void BindingPanel::loadNew()
-{
-    if (!loaded) {
-        MobiusConfig* config = editor->getMobiusConfig();
-
-        maxTracks = config->getTracks();
-        maxGroups = config->getTrackGroups();
-
-        targets.load();
-
-        // Though only MidiPanel supports overlays, handle all three
-        // the same.  ButtonPanel overloads this differently
-
-        // build a list of names for the object selector
-        juce::Array<juce::String> names;
-        // clone the BindingSet list into a local copy
-        bindingSets.clear();
-        revertBindingSets.clear();
-        if (config != nullptr) {
-            BindingSet* setlist = config->getBindingSets();
-            while (setlist != nullptr) {
-                BindingSet* set = new BindingSet(setlist);
-                bindingSets.add(set);
-
-                // first set doesn't always have a name, force one
-                if (names.size() == 0 && set->getName() == nullptr)
-                  set->setName("Base");
-                
-                names.add(juce::String(set->getName()));
-                // also a copy for the revert list
-                revertBindingSets.add(new BindingSet(set));
-
-                setlist = setlist->getNextBindingSet();
-            }
-        }
-        
-        // this will also auto-select the first one
-        objectSelector.setObjectNames(names);
-
-        // load the first one, do we need to bootstrap one if
-        // we had an empty config?
-        selectedBindingSet = 0;
-        loadBindingSet(selectedBindingSet);
-        
-        // make sure the form is reset from the last time
-        resetForm();
-
-        // force this true for testing
-        changed = true;
-        loaded = true;
-    }
-}
-
-void BindingPanel::loadBindingSet(int index)
-{
-    BindingSet* set = bindingSets[index];
-    if (set != nullptr) {
-        Binding* blist = set->getBindings();
-        while (blist != nullptr) {
-            // subclass overload
-            if (isRelevant(blist)) {
-                // table will copy
-                bindings.add(blist);
-            }
-            blist = blist->getNext();
-        }
-        bindings.updateContent();
-    }
-
-    resetForm();
-}
-
-/**
- * Called by the Save button in the footer.
- * 
- * Save all presets that have been edited during this session
- * back to the master configuration.
- *
- * Tell the ConfigEditor we are done.
- */
-void BindingPanel::saveNew()
-{
-    if (changed) {
-        // copy visible state back into the Preset
-        // need to also do this when the selected preset is changed
-        saveBindingSet(selectedBindingSet);
-        
-        // build a new BindingSet linked list
-        BindingSet* setlist = nullptr;
-        BindingSet* last = nullptr;
-        
-        for (int i = 0 ; i < bindingSets.size() ; i++) {
-            BindingSet* set = bindingSets[i];
-            if (last == nullptr)
-              setlist = set;
-            else
-              last->setNext(set);
-            last = set;
-        }
-
-        // we took ownership of the objects so
-        // clear the owned array but don't delete them
-        bindingSets.clear(false);
-
-        MobiusConfig* config = editor->getMobiusConfig();
-        // this also deletes the current list
-        config->setBindingSets(setlist);
-        editor->saveMobiusConfig();
-
-        loaded = false;
-        changed = false;
-    }
-    else if (loaded) {
-        // throw away preset copies
-        bindingSets.clear();
-        loaded = false;
-    }
-}
-
-void BindingPanel::saveBindingSet(int index)
-{
-    BindingSet* set = bindingSets[index];
-    if (set != nullptr) {
-        saveBindingSet(set);
-    }
-}
-
-// gak this is complicated
-void BindingPanel::saveBindingSet(BindingSet* dest)
-{
-    // note well: unlike most strings, setBingings() does
-    // NOT delete the current Binding list, it just takes the pointer
-    // so we can reconstruct the list and set it back without worrying
-    // about dual ownership.  deleting a Binding DOES however follow the
-    // chain so be careful with that.  Really need model cleanup
-    juce::Array<Binding*> newBindings;
-
-    Binding* original = dest->getBindings();
-    dest->setBindings(nullptr);
-        
-    while (original != nullptr) {
-        // take it out of the list to prevent cascaded delete
-        Binding* next = original->getNext();
-        original->setNext(nullptr);
-        if (!isRelevant(original))
-          newBindings.add(original);
-        else
-          delete original;
-        original = next;
-    }
-    //traceBindingList("filtered", newBindings);
-        
-    // now add back the edited ones, some may have been deleted or added
-    Binding* edited = bindings.captureBindings();
-    //traceBindingList("from table", edited);
-    while (edited != nullptr) {
-        newBindings.add(edited);
-        edited = edited->getNext();
-    }
-
-    //traceBindingList("merged", newBindings);
-
-    // link them back up
-    Binding* merged = nullptr;
-    Binding* last = nullptr;
-    for (int i = 0 ; i < newBindings.size() ; i++) {
-        Binding* b = newBindings[i];
-        // clear any residual chain
-        b->setNext(nullptr);
-        if (last == nullptr)
-          merged = b;
-        else
-          last->setNext(b);
-        last = b;
-    }
-}
-
-/**
- * Throw away all editing state.
- */
-void BindingPanel::cancelNew()
-{
-    // throw away the copies
-    Binding* blist = bindings.captureBindings();
-    delete blist;
-    
-    // delete the copied sets
-    bindingSets.clear();
-    revertBindingSets.clear();
-    loaded = false;
-    changed = false;
-}
-
 
 /****************************************************************************/
 /****************************************************************************/

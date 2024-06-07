@@ -138,16 +138,16 @@ class Binding {
 
 	// trigger
 
-    Trigger *trigger;
-    TriggerMode* triggerMode;
+    Trigger *trigger = nullptr;
+    TriggerMode* triggerMode = 0;
 
     // key number, midi note number
-    int triggerValue;
+    int triggerValue = 0;
 
     // for TriggerMidi, the MIDI channel
     // todo: eventually want the note/program/control types as seperate
     // values rather than overloading Trigger
-    int midiChannel;
+    int midiChannel = 0;
 
     // target
     
@@ -165,8 +165,8 @@ class Binding {
     // parsed scopes
     // !! won't be able to do this automatically once we allow
     // groups to have user defined names
-    int trackNumber;
-    int groupOrdinal;
+    int trackNumber = 0;
+    int groupOrdinal = 0;
 
     // utilities to take a number and convert it to a scope string
     void setTrack(int t);
@@ -180,10 +180,10 @@ class Binding {
 
     void parseScope();
 
-	Binding* mNext;
-	char* mSymbolName;
-    char* mArguments;
-    char* mScope;
+	Binding* mNext = nullptr;
+	char* mSymbolName = nullptr;
+    char* mArguments = nullptr;
+    char* mScope = nullptr;
 
 };
 

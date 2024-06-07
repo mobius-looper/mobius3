@@ -30,6 +30,7 @@ class PresetPanel : public ConfigPanel
 
   private:
 
+    void refreshObjectSelector();
     void render();
     void initForm();
     void addField(const char* tab, class UIParameter* p, int col = 0);
