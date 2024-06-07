@@ -464,6 +464,211 @@ void BindingPanel::resized()
     form.setTopLeftPosition(area.getX(), targets.getY() + targets.getHeight() + 10);
 }    
 
+//////////////////////////////////////////////////////////////////////
+//
+// New Multi-Object Base Panel
+//
+// The code here is dormant and evolving
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * ConfigPanel overload to prepare the panel to be shown.
+ */
+void BindingPanel::loadNew()
+{
+    if (!loaded) {
+        MobiusConfig* config = editor->getMobiusConfig();
+
+        maxTracks = config->getTracks();
+        maxGroups = config->getTrackGroups();
+
+        targets.load();
+
+        // Though only MidiPanel supports overlays, handle all three
+        // the same.  ButtonPanel overloads this differently
+
+        // build a list of names for the object selector
+        juce::Array<juce::String> names;
+        // clone the BindingSet list into a local copy
+        bindingSets.clear();
+        revertBindingSets.clear();
+        if (config != nullptr) {
+            BindingSet* setlist = config->getBindingSets();
+            while (setlist != nullptr) {
+                BindingSet* set = new BindingSet(setlist);
+                bindingSets.add(set);
+
+                // first set doesn't always have a name, force one
+                if (names.size() == 0 && set->getName() == nullptr)
+                  set->setName("Base");
+                
+                names.add(juce::String(set->getName()));
+                // also a copy for the revert list
+                revertBindingSets.add(new BindingSet(set));
+
+                setlist = setlist->getNextBindingSet();
+            }
+        }
+        
+        // this will also auto-select the first one
+        objectSelector.setObjectNames(names);
+
+        // load the first one, do we need to bootstrap one if
+        // we had an empty config?
+        selectedBindingSet = 0;
+        loadBindingSet(selectedBindingSet);
+        
+        // make sure the form is reset from the last time
+        resetForm();
+
+        // force this true for testing
+        changed = true;
+        loaded = true;
+    }
+}
+
+void BindingPanel::loadBindingSet(int index)
+{
+    BindingSet* set = bindingSets[index];
+    if (set != nullptr) {
+        Binding* blist = set->getBindings();
+        while (blist != nullptr) {
+            // subclass overload
+            if (isRelevant(blist)) {
+                // table will copy
+                bindings.add(blist);
+            }
+            blist = blist->getNext();
+        }
+        bindings.updateContent();
+    }
+
+    resetForm();
+}
+
+/**
+ * Called by the Save button in the footer.
+ * 
+ * Save all presets that have been edited during this session
+ * back to the master configuration.
+ *
+ * Tell the ConfigEditor we are done.
+ */
+void BindingPanel::saveNew()
+{
+    if (changed) {
+        // copy visible state back into the Preset
+        // need to also do this when the selected preset is changed
+        saveBindingSet(selectedBindingSet);
+        
+        // build a new BindingSet linked list
+        BindingSet* setlist = nullptr;
+        BindingSet* last = nullptr;
+        
+        for (int i = 0 ; i < bindingSets.size() ; i++) {
+            BindingSet* set = bindingSets[i];
+            if (last == nullptr)
+              setlist = set;
+            else
+              last->setNext(set);
+            last = set;
+        }
+
+        // we took ownership of the objects so
+        // clear the owned array but don't delete them
+        bindingSets.clear(false);
+
+        MobiusConfig* config = editor->getMobiusConfig();
+        // this also deletes the current list
+        config->setBindingSets(setlist);
+        editor->saveMobiusConfig();
+
+        loaded = false;
+        changed = false;
+    }
+    else if (loaded) {
+        // throw away preset copies
+        bindingSets.clear();
+        loaded = false;
+    }
+}
+
+void BindingPanel::saveBindingSet(int index)
+{
+    BindingSet* set = bindingSets[index];
+    if (set != nullptr) {
+        saveBindingSet(set);
+    }
+}
+
+// gak this is complicated
+void BindingPanel::saveBindingSet(BindingSet* dest)
+{
+    // note well: unlike most strings, setBingings() does
+    // NOT delete the current Binding list, it just takes the pointer
+    // so we can reconstruct the list and set it back without worrying
+    // about dual ownership.  deleting a Binding DOES however follow the
+    // chain so be careful with that.  Really need model cleanup
+    juce::Array<Binding*> newBindings;
+
+    Binding* original = dest->getBindings();
+    dest->setBindings(nullptr);
+        
+    while (original != nullptr) {
+        // take it out of the list to prevent cascaded delete
+        Binding* next = original->getNext();
+        original->setNext(nullptr);
+        if (!isRelevant(original))
+          newBindings.add(original);
+        else
+          delete original;
+        original = next;
+    }
+    //traceBindingList("filtered", newBindings);
+        
+    // now add back the edited ones, some may have been deleted or added
+    Binding* edited = bindings.captureBindings();
+    //traceBindingList("from table", edited);
+    while (edited != nullptr) {
+        newBindings.add(edited);
+        edited = edited->getNext();
+    }
+
+    //traceBindingList("merged", newBindings);
+
+    // link them back up
+    Binding* merged = nullptr;
+    Binding* last = nullptr;
+    for (int i = 0 ; i < newBindings.size() ; i++) {
+        Binding* b = newBindings[i];
+        // clear any residual chain
+        b->setNext(nullptr);
+        if (last == nullptr)
+          merged = b;
+        else
+          last->setNext(b);
+        last = b;
+    }
+}
+
+/**
+ * Throw away all editing state.
+ */
+void BindingPanel::cancelNew()
+{
+    // throw away the copies
+    Binding* blist = bindings.captureBindings();
+    delete blist;
+    
+    // delete the copied sets
+    bindingSets.clear();
+    revertBindingSets.clear();
+    loaded = false;
+    changed = false;
+}
+
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

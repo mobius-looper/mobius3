@@ -69,4 +69,17 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     void refreshForm(Binding* b);
     void captureForm(Binding* b);
 
+    // start making this more like Preset and other multi-object panels
+    juce::OwnedArray<BindingSet> bindingSets;
+    juce::OwnedArray<BindingSet> revertBindingSets;
+    int selectedBindingSet = 0;
+
+    void loadNew();
+    void loadBindingSet(int ordinal);
+    void saveNew();
+    void cancelNew();
+    void saveBindingSet(int index);
+    void saveBindingSet(BindingSet* dest);
+
+
 };

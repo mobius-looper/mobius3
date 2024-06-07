@@ -819,6 +819,14 @@ BindingSet* MobiusConfig::getBindingSets()
 	return mBindings;
 }
 
+void MobiusConfig::setBindingSets(BindingSet* list)
+{
+    if (list != mBindings) {
+		delete mBindings;
+		mBindings = list;
+    }
+}
+
 // no set function, I guess to enforce that you can't take the
 // first one away, not really necessary
 

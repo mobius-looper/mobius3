@@ -312,6 +312,7 @@ class MobiusConfig {
     
 	class BindingSet* getBindingSets();
 	void addBindingSet(class BindingSet* bs);
+    void setBindingSets(BindingSet* list);
 
     const char* getOverlayBindings();
     void setOverlayBindings(const char* name);
