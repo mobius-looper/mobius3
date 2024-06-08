@@ -157,7 +157,10 @@ SyncMasterFunction::SyncMasterFunction(bool track, bool midi)
 	if (track && !midi) {
 		setName("SyncMasterTrack");
         // why were the others scriptOnly but not this one?
-        scriptOnly = true;
+        // Bert noticed this, apparently it is useful to bind a function
+        // to this, not sure why.  If we're going to expose this one,
+        // why not SyncMasterMidi?
+        //scriptOnly = true;
 	}
 	else if (midi && !track) {
 		setName("SyncMasterMidi");

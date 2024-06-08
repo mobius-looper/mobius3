@@ -147,6 +147,12 @@ void ButtonPopup::change(ActionButton* b, int color)
         else {
             b->setColor(color);
             // always save it or wait for shutdown?
+            // setting dirty doesn't work, and is unreliable anyway
+            // because something else can cause UIConfig to get reloaded
+            // save it now
+            db->color = color;
+            config->dirty = true;
+            Supervisor::Instance->updateUIConfig();
         }
     }
 }

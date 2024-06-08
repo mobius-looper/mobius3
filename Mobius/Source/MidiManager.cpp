@@ -121,11 +121,13 @@ void MidiManager::removeListener(Listener* l)
 void MidiManager::setExclusiveListener(Listener* l)
 {
     exclusiveListener = l;
+    configurePluginListening();
 }
 
 void MidiManager::removeExclusiveListener()
 {
     exclusiveListener = nullptr;
+    configurePluginListening();
 }
 
 void MidiManager::addRealtimeListener(RealtimeListener* l)
@@ -137,6 +139,68 @@ void MidiManager::addRealtimeListener(RealtimeListener* l)
 void MidiManager::removeRealtimeListener(RealtimeListener* l)
 {
     realtimeListeners.removeAllInstancesOf(l);
+}
+
+/**
+ * An ugly hack to MidiPanel can receive MIDI messages when running
+ * as a plugin rather than standalone.
+ *
+ * Since we're not dealing directly with a MIDI device where we receive
+ * notifications from the device,  we have to use a kludgey
+ * backdoor into the plugin audio thread to pass through the MIDI
+ * events that Juce has received and passed to the plugin during
+ * audio block processing.
+ *
+ * This is only done for the MidiPanel to implement MIDI capture
+ * when creating bindings.  It isn't something that works
+ * well enough for any serious listening.
+ *
+ * When MobiusKernel receives MidiMessages, it will pass them
+ * to the MobiusContainer::mobiusMidiMessage callback.
+ * THIS HAPPENS IN THE AUDIO THREAD so you have to be extremely
+ * careful about what this does.
+ *
+ * We should be using something similar to the ListenerMessageCallback
+ * thing below, but I'm tired and my brain hurts.  Instead, we'll
+ * just save a copy of the message and make MidiPanel poll for it.
+ *
+ * Actually, I decided to use a KernelMessage to get the data
+ * passed up to the maintenance thread safely.  This won't have
+ * anything close to accurate timing, but it's enough for MIDI capture.
+ */
+void MidiManager::configurePluginListening()
+{
+    MobiusInterface* mobius = supervisor->getMobius();
+    if (mobius != nullptr) {
+        if (exclusiveListener == nullptr)
+          mobius->enableMidiMonitor(false);
+        else
+          mobius->enableMidiMonitor(true);
+    }
+}
+
+/**
+ * Here through a long and tortured path from the plugin.
+ * when MidiMonitor is enabled.
+ */
+void MidiManager::mobiusMidiReceived(juce::MidiMessage& msg)
+{
+    // Trace(2, "MidiManager: mobiusMidiReceived\n");
+    if (exclusiveListener != nullptr) {
+
+        // this isn't something I'd ordinarilly do, but it's easier
+        // than messing with a CallbackMessage
+        const juce::MessageManagerLock mml (juce::Thread::getCurrentThread());
+        if (!mml.lockWasGained()) {
+            // if something is trying to kill this job the lock will fail
+            // in which case we better return
+            return;
+        }
+        // Listener wants a "source" which when connected direct I think is the
+        // device name.  Not sure if the plugin has any more context around this
+        // so fake up a name
+        exclusiveListener->midiMessage(msg, juce::String("Plugin"));
+    }
 }
 
 /**

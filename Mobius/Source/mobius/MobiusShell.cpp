@@ -151,6 +151,11 @@ void MobiusShell::setListener(MobiusListener* l)
     listener = l;
 }
 
+void MobiusShell::enableMidiMonitor(bool b)
+{
+    kernel.enableMidiMonitor(b);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration

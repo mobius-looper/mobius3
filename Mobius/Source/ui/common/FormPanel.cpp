@@ -37,6 +37,18 @@ void FormPanel::addHeader(juce::Component* c)
     header.add(c);
 }
 
+// kludge for SetupPanel to replace the track selector radio
+// with a combo box, the whole Form design is old and a mess
+// this is just a hack to get it working until I can redesign it
+void FormPanel::replaceHeader(juce::Component* c)
+{
+    for (auto hcomp : header)
+      removeChildComponent(hcomp);
+    header.clear();
+
+    addHeader(c);
+}
+
 void FormPanel::addFooter(juce::Component* c)
 {
     addAndMakeVisible(c);

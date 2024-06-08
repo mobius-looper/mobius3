@@ -4,6 +4,7 @@
 #include "../../util/Trace.h"
 #include "../../model/MobiusState.h"
 #include "../../model/UIParameter.h"
+#include "../../model/MobiusConfig.h"
 
 #include "Colors.h"
 #include "TrackStrip.h"
@@ -17,6 +18,15 @@
 //////////////////////////////////////////////////////////////////////
 
 // This formerly also functioned as the focus lock widget
+// Might be nice to have that by clicking on it rather than making
+// them take up space with the FocusLock button, but clicking on
+// the number is also a very common way to select tracks with the mouse
+// so not sure...
+
+// number vs. name
+// Old code displayed either the number or the track name if one was
+// set in the Setup.  Since names are variable, the preferred size
+// needs to be reasonably wide.
 
 StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
@@ -29,7 +39,10 @@ StripTrackNumber::~StripTrackNumber()
 
 int StripTrackNumber::getPreferredWidth()
 {
-    return 60;
+    // this is what we started with when just displaying a number
+    // make it wider for names
+    //return 60;
+    return 180;
 }
 
 int StripTrackNumber::getPreferredHeight()
@@ -37,18 +50,84 @@ int StripTrackNumber::getPreferredHeight()
     return 30;
 }
 
+/**
+ * In theory they do an action to change the track name
+ * and make it different than the Setup.  There isn't a good
+ * place to pull that right now, not even sure if Query works.
+ * But startingSetup will be enough for most.
+ */
+void StripTrackNumber::configure()
+{
+    int tracknum = strip->getTrackNumber();
+
+    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    Setup* setup = config->getStartingSetup();
+    SetupTrack* track = setup->getTrack(tracknum);
+    if (track != nullptr)
+      trackName = juce::String(track->getName());
+}
+/**
+ * drawFittedText
+ * arg after justification is maximumNumberOfLines
+ * which can be used to break up the next into several lines
+ * last arg is minimumHorizontalScale which specifies
+ * "how much the text can be squashed horizontally"
+ * set this to 1.0f to prevent horizontal squashing
+ * what that does is unclear, leaving it zero didn't seem to adjust
+ * the font height, 0.5 was smaller but still not enough for
+ * "This is a really long name"
+ * adding another line didn't do anything, maybe the area needs
+ * to be a multiple of the font height?
+ * What I was expecting is that it would scale the font height down
+ * to make everything smaller, but it doesn't seem to do that
+ * setting this to 1.0f had the effect I expected, the font got smaller
+ * and it used multiple lines.  So if this isn't 1.0 it prefers
+ * squashing over font manipulation and mulitple lines.
+ * "This is a name longer than anyone should use" mostly displayed
+ * it lots the first "T" and the "n" at the end of "than" on the first
+ * line, and the second line was complete and centered.  But
+ * smaller names are okay, and I've spent enough time trying to figure
+ * out exactly how this works.
+ *
+ * Still getting some truncation on the left and right for text that
+ * fits mostly on one line "This is a long" will lose the left half
+ * of the initial T and half of the final g.  Don't know if this is
+ * an artifact of drawFittedText, or if I have bounds messed up somewhere.
+ *
+ */
+
 void StripTrackNumber::paint(juce::Graphics& g)
 {
-    juce::Font font((float)getHeight());
+    if (trackName.length() == 0) {
+        juce::Font font((float)getHeight());
 
-    g.setFont(font);
-    g.setColour(juce::Colour(MobiusGreen));
+        g.setFont(font);
+        g.setColour(juce::Colour(MobiusGreen));
 
-    // if we're docked, the TrackStrip has the number
-    // otherwise update must have remembered the active track
+        // if we're docked, the TrackStrip has the number
+        // otherwise update must have remembered the active track
 
-    g.drawText(juce::String(strip->getTrackNumber() + 1), 0, 0, getWidth(), getHeight(),
-               juce::Justification::centred);
+        g.drawText(juce::String(strip->getTrackNumber() + 1), 0, 0, getWidth(), getHeight(),
+                   juce::Justification::centred);
+    }
+    else {
+        juce::Font font((float)getHeight());
+        // hacking around the unpredictable truncation, if the name is beyond
+        // a certain length, reduce the font height
+        if (trackName.length() >= 10)
+          font = juce::Font((float)(getHeight() * 0.75f));
+          
+        // not sure about font sizes, we're going to use fit so I think
+        // that will size down as necessary
+
+        g.setFont(font);
+        g.setColour(juce::Colour(MobiusGreen));
+
+        g.drawFittedText(trackName, 0, 0, getWidth(), getHeight(),
+                         juce::Justification::centred,
+                         1, // max lines
+                         1.0f);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

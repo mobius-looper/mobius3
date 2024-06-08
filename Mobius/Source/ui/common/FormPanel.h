@@ -26,6 +26,7 @@ class FormPanel : public Panel
     }
 
     void addHeader(Component* c);
+    void replaceHeader(Component* c);
     void addFooter(Component* c);
     
     void addGrid(FieldGrid* grid);

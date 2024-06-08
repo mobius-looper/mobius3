@@ -1120,6 +1120,12 @@ void Supervisor::mobiusPrompt(MobiusPrompt* prompt)
     Trace(1, "Supervisor: mobiusPrompt not implemented\n");
 }
 
+void Supervisor::mobiusMidiReceived(juce::MidiMessage& msg)
+{
+    // must be in the special capture mode
+    midiManager.mobiusMidiReceived(msg);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions

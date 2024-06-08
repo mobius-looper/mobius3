@@ -14,6 +14,12 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 7 Changes
+
+- A utility to upgrade old XML configuration files has been added.  Under the **Configuration** menu, select **Upgrade Configuration**
+- Fixed MIDI bindings to Sustainable "SUS" functions so that the Note Off messages properly end the function
+- Fixed Long Press behavior
+
 ## Build 6 Changes
 
 - Mac install now has Universal binaries and should run on both Silicon and Intel Macs

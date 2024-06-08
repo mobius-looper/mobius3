@@ -97,6 +97,9 @@ class MidiManager : public juce::MidiInputCallback
     // needs to be public so it can be called from a CallbackMessage
     void notifyListeners(const juce::MidiMessage& message, juce::String& source);
 
+
+    void mobiusMidiReceived(juce::MidiMessage& msg);
+    
   private:
 
     class Supervisor* supervisor = nullptr;
@@ -119,6 +122,7 @@ class MidiManager : public juce::MidiInputCallback
     // when logging incomming MIDI messages
     double startTime;
     
+    void configurePluginListening();
     juce::String getDeviceId(juce::Array<juce::MidiDeviceInfo> devices, juce::String name);
     juce::String getInputDeviceId(juce::String name);
     juce::String getOutputDeviceId(juce::String name);

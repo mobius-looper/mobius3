@@ -26,6 +26,8 @@
 
 #include "../common/SimpleRadio.h"
 
+#include "../../Supervisor.h"
+
 #include "ConfigEditor.h"
 #include "ParameterField.h"
 #include "SetupPanel.h"
@@ -83,6 +85,10 @@ void SetupPanel::load()
         selectedTrack = 0;
         loadSetup(selectedSetup);
 
+        // if we've had the panel open before, it will keep the radio
+        // from the last time, have to put it back to match selectedTrack
+        adjustTrackSelector();
+        
         loaded = true;
         // force this true for testing
         changed = true;
@@ -103,6 +109,52 @@ void SetupPanel::refreshObjectSelector()
     }
     objectSelector.setObjectNames(names);
     objectSelector.setSelectedObject(selectedSetup);
+}
+
+/**
+ * Adjust the track selector Radio prior to loading to reflect
+ * changes to the configured track count.  During static initialization
+ * this was built out for 8 tracks.
+ * ugh, this doesn't work, the radio just keeps going into the void and doesn't
+ * size down, and the labels don't gain a 10th digit
+ * probably an issue with the old SimpleRadio, but rather than trying to fix that
+ * just switch over to a combo box if the size is more than 8.
+ *
+ * This transition only happens once, then it's combo all the way.
+ * This is really ugly, but it gets the one user that needs more than 8 tracks
+ * something usable.
+ */
+void SetupPanel::adjustTrackSelector()
+{
+    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    int ntracks = config->getTracks();
+    if (ntracks > 8 && ntracks <= 32 && trackCombo == nullptr) {
+
+        // it has been a radio
+        // gak, Form/FormPanel is a mess, it requires a dynamic object that it
+        // takes ownership of
+        // SimpleRadio had it's own label, but since we're not in control of
+        // layout, it's easier just to put the "label" in the item names
+        trackCombo =  new juce::ComboBox();
+        for (int i = 1 ; i <= ntracks ; i++) {
+            trackCombo->addItem("Track " + juce::String(i), i);
+        }
+        trackCombo->addListener(this);
+
+        // shit, Form/Field was built in the days where components sized themselves
+        // raw ComboBox doesn't do that
+        trackCombo->setSize(100, 20);
+
+        // this will also delete the former trackSelector radio
+        FormPanel* formPanel = form.getPanel("Tracks");
+        formPanel->replaceHeader(trackCombo);
+        trackSelector = nullptr;
+    }
+
+    if (trackSelector != nullptr)
+      trackSelector->setSelection(selectedTrack);
+    else if (trackCombo != nullptr)
+      trackCombo->setSelectedId(selectedTrack + 1);
 }
 
 /**
@@ -331,11 +383,13 @@ void SetupPanel::render()
     initForm();
     form.render();
 
-    // Track panel is special
+    // the number of tracks is configurable but since render() is called
+    // by the static constructor we won't have the MobiusConfig available yet
+    // start with the default of 8 tracks and deal with it later during load()
     trackSelector = new SimpleRadio();
-    int ntracks = 8; // TODO: need to get this from config
+    trackCount = 8;
     juce::StringArray trackNumbers;
-    for (int i = 0 ; i < ntracks ; i++) {
+    for (int i = 0 ; i < trackCount ; i++) {
         trackNumbers.add(juce::String(i+1));
     }
     trackSelector->setButtonLabels(trackNumbers);
@@ -488,3 +542,12 @@ void SetupPanel::buttonClicked(juce::Button* b)
     Trace(1, "Button %s\n", b->getButtonText().toUTF8());
 }
 
+void SetupPanel::comboBoxChanged(juce::ComboBox* c)
+{
+    int id = c->getSelectedId();
+    int trackNumber = id - 1;
+
+    saveSetup(selectedSetup);
+    selectedTrack = trackNumber;
+    loadSetup(selectedSetup);
+}

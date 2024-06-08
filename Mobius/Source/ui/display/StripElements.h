@@ -15,12 +15,17 @@ class StripTrackNumber : public StripElement
     StripTrackNumber(class TrackStrip* parent);
     ~StripTrackNumber();
 
+    void configure() override;
+
     int getPreferredHeight() override;
     int getPreferredWidth() override;
-
+    
     void paint(juce::Graphics& g) override;
     
   private:
+
+    juce::String trackName;
+    
 };
 
 class StripFocusLock : public StripElement

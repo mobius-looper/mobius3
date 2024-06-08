@@ -2,7 +2,7 @@
   quickSave='mobiusloop'
   noiseFloor='13'
   maxSyncDrift='2048'
-  trackCount='8'
+  trackCount='16'
   groupCount='2'
   maxLoops='2'
   longPress='500'
@@ -65,6 +65,7 @@
     slaveSyncUnit='beat'
     speedSyncAdjust='none'>
     <SetupTrack
+      name='Track 1'
       input='127'
       output='127'
       feedback='127'
@@ -77,6 +78,20 @@
       syncSource='track'
       trackSyncUnit='loop'/>
     <SetupTrack
+      name='X'
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      audioInputPort='1'
+      audioOutputPort='1'
+      pluginInputPort='1'
+      pluginOutputPort='1'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      name='This is a long'
       input='127'
       output='127'
       feedback='127'
@@ -154,10 +169,62 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
       syncSource='default'
       trackSyncUnit='default'/>
   </Setup>

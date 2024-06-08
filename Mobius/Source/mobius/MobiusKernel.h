@@ -51,6 +51,8 @@ class MobiusKernel : public MobiusAudioListener
      */
     void setTestMode(bool b);
 
+    void enableMidiMonitor(bool b);
+
     void dump(class StructureDumper& d);
     bool isGlobalReset();
     
@@ -167,7 +169,8 @@ class MobiusKernel : public MobiusAudioListener
 
     // special mode for TestDriver
     bool testMode = false;
-
+    bool midiMonitor = false;
+    
     void installSymbols();
 
     // KernelMessage handling

@@ -56,6 +56,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     void mobiusAlert(juce::String) override;
     void mobiusDoAction(class UIAction*) override;
     void mobiusPrompt(class MobiusPrompt*) override;
+    void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
     void mobiusTestStart(juce::String) override;
     void mobiusTestStop(juce::String) override;

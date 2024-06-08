@@ -12,7 +12,8 @@
 #include "../common/SimpleButton.h"
 #include "ConfigPanel.h"
 
-class SetupPanel : public ConfigPanel, public SimpleRadio::Listener, public juce::Button::Listener
+class SetupPanel : public ConfigPanel, public SimpleRadio::Listener,
+                   public juce::Button::Listener, public juce::ComboBox::Listener
 {
   public:
     SetupPanel(class ConfigEditor *);
@@ -32,10 +33,12 @@ class SetupPanel : public ConfigPanel, public SimpleRadio::Listener, public juce
 
     void radioSelected(class SimpleRadio* r, int index) override;
     void buttonClicked(juce::Button* b) override;
+    void comboBoxChanged(juce::ComboBox* combo) override;
     
   private:
 
     void refreshObjectSelector();
+    void adjustTrackSelector();
     void render();
     void initForm();
     void addField(const char* tab, class UIParameter* p);
@@ -49,12 +52,14 @@ class SetupPanel : public ConfigPanel, public SimpleRadio::Listener, public juce
     juce::OwnedArray<Setup> revertSetups;
     // this will be in FormPanel's OwnedArray
     SimpleRadio* trackSelector = nullptr;
+    juce::ComboBox* trackCombo = nullptr;
     SimpleButton* initButton = nullptr;
     SimpleButton* initAllButton = nullptr;
     SimpleButton* captureButton = nullptr;
     SimpleButton* captureAllButton = nullptr;
     int selectedSetup = 0;
     int selectedTrack = 0;
-
+    int trackCount = 0;
+    
     Form form;
 };

@@ -252,6 +252,13 @@ class MobiusInterface {
      */
     virtual bool isGlobalReset() = 0;
 
+    /**
+     * Stupid hack for MIDI capture in the MIDI binding panel to receive
+     * MIDI messages sent through Juce when running as a plugin.
+     * Need to come up with a better way to do this.
+     */
+    virtual void enableMidiMonitor(bool enable) = 0;
+
   private:
 
     // maintain a singleton for now so we can get to it easilly without
@@ -441,6 +448,11 @@ class MobiusListener {
      * must be deleted or it will leak.
      */
     virtual void mobiusPrompt(class MobiusPrompt* prompt) = 0;
+
+    /**
+     * Temporary hack for MIDI monitoring from the plugin.
+     */
+    virtual void mobiusMidiReceived(juce::MidiMessage& msg) = 0;
 
     //////////////////////////////////////////////////////////////////////
     //

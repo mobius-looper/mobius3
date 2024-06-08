@@ -48,6 +48,7 @@ class MobiusShell : public MobiusInterface
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
+    void enableMidiMonitor(bool enable) override;
     
     //
     // Internal component services

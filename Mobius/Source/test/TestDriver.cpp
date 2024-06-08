@@ -704,6 +704,11 @@ void TestDriver::mobiusPrompt(MobiusPrompt* prompt)
     supervisor->mobiusPrompt(prompt);
 }
 
+void TestDriver::mobiusMidiReceived(juce::MidiMessage& msg)
+{
+    (void)msg;
+}
+
 void TestDriver::mobiusTestStart(juce::String name)
 {
 }

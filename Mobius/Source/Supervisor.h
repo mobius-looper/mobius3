@@ -38,7 +38,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
 
     static Supervisor* Instance;
 
-    static const int BuildNumber = 7;
+    static const int BuildNumber = 8;
 
     /**
      * Interface implemented by an internal component that wants
@@ -196,6 +196,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     void mobiusAlert(juce::String) override;
     void mobiusDoAction(class UIAction*) override;
     void mobiusPrompt(class MobiusPrompt*) override;
+    void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
 
     // AudioStreamHandler

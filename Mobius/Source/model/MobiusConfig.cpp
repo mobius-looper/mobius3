@@ -619,6 +619,11 @@ bool MobiusConfig::isEdpisms() {
  *                                                                          *
  ****************************************************************************/
 
+// The default preset has the same cache issues as startingSetup
+// if the UI does list surgery without going through one of these
+// methods, the cache can be invalid and point to a deleted object.
+// Dislike...
+
 Preset* MobiusConfig:: getPresets() 
 {
 	return mPresets;
@@ -629,6 +634,8 @@ void MobiusConfig::setPresets(Preset* list)
     if (list != mPresets) {
 		delete mPresets;
 		mPresets = list;
+        // invalidate cache
+        mDefaultPreset = nullptr;
     }
 }
 	
@@ -662,6 +669,8 @@ void MobiusConfig::setDefaultPresetName(const char* name)
 {
     delete mDefaultPresetName;
     mDefaultPresetName = CopyString(name);
+    // invalidate cache
+    mDefaultPreset = nullptr;
 }
 
 /**
@@ -712,6 +721,12 @@ Preset* MobiusConfig::getDefaultPreset()
  *                                                                          *
  ****************************************************************************/
 
+// StartingSetup cache notes
+// This is not reliable.  The config editor will usually replace the Setup
+// list but if it just does list surgery we won't know that and won't
+// invalidate the cache.  Currently it sets the entire list but
+// this is too fragile.
+
 Setup* MobiusConfig::getSetups() 
 {
 	return mSetups;
@@ -723,12 +738,15 @@ void MobiusConfig::setSetups(Setup* list)
 		delete mSetups;
 		mSetups = list;
         // setting the list might invalidate the activeSetup name
+        mStartingSetup = nullptr;
     }
 }
 	
 void MobiusConfig::addSetup(Setup* s) 
 {
     mSetups = (Setup*)Structure::append(mSetups, s);
+    // shouldn't invalidate but be safe
+    mStartingSetup = nullptr;
 }
 
 Setup* MobiusConfig::getSetup(const char* name)

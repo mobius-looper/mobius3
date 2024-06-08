@@ -28,7 +28,7 @@ MidiPanel::~MidiPanel()
 {
     // remove lingering listener from MidiTracker
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->removeListener(this);
+    mm->removeExclusiveListener();
 }
 
 /**
@@ -47,7 +47,6 @@ MidiPanel::~MidiPanel()
 void MidiPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    //mm->addListener(this);
     mm->setExclusiveListener(this);
 }
 
@@ -57,7 +56,6 @@ void MidiPanel::showing()
 void MidiPanel::hiding()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    //mm->removeListener(this);
     mm->removeExclusiveListener();
 }
 

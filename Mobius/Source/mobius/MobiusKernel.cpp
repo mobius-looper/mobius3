@@ -67,6 +67,11 @@ void MobiusKernel::setTestMode(bool b)
     testMode = b;
 }
 
+void MobiusKernel::enableMidiMonitor(bool b)
+{
+    midiMonitor = b;
+}
+
 /**
  * This can only be destructed by the shell after
  * ensuring it will no longer be responding to
@@ -403,6 +408,14 @@ void MobiusKernel::consumeMidiMessages()
         for (const auto metadata : *buffer) {
             // do we really need to pass these by value?
             juce::MidiMessage msg = metadata.getMessage();
+
+            // hack for MidiPanel and MIDI capture,
+            if (midiMonitor) {
+                MobiusListener* l = shell->getListener();
+                if (l != nullptr)
+                  l->mobiusMidiReceived(msg);
+            }
+            
             UIAction* action = binderator.getMidiAction(msg);
             if (action != nullptr) {
                 // Binderator owns the action so for consistency with
