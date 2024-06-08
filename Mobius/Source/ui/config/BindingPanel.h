@@ -32,9 +32,9 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     virtual ~BindingPanel();
 
     // ConfigPanel overloads
-    virtual void load();
-    virtual void save();
-    virtual void cancel();
+    virtual void load() override;
+    virtual void save() override;
+    virtual void cancel() override;
 
     // ObjectSelector overloads
     void selectObject(int ordinal) override;
@@ -43,17 +43,17 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     void revertObject() override;
     void renameObject(juce::String) override;
     
-    void resized();
+    void resized() override;
 
     // BindingTable
-    juce::String renderTriggerCell(Binding* b);
-    void bindingSelected(class Binding* b);
-    void bindingUpdate(class Binding* b);
-    void bindingDelete(class Binding* b);
-    class Binding* bindingNew();
+    juce::String renderTriggerCell(Binding* b) override;
+    void bindingSelected(class Binding* b) override;
+    void bindingUpdate(class Binding* b) override;
+    void bindingDelete(class Binding* b) override;
+    class Binding* bindingNew() override;
 
     // Field
-    void fieldChanged(Field* field);
+    void fieldChanged(Field* field) override;
     
   protected:
 
