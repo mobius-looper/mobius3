@@ -161,7 +161,7 @@
       syncSource='default'
       trackSyncUnit='default'/>
   </Setup>
-  <BindingSet ordinal='0'>
+  <BindingSet name='Base'>
     <Binding name='output' scope='1' trigger='host'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
@@ -180,6 +180,7 @@
     <Binding name='UIParameterUp' trigger='note' value='53'/>
     <Binding name='UIParameterDown' trigger='note' value='55'/>
     <Binding name='Record' trigger='control' value='12' channel='2'/>
+    <Binding name='SUSOverdub' trigger='note' value='41' channel='1'/>
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>

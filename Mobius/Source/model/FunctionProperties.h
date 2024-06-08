@@ -48,6 +48,15 @@ class FunctionProperties
      */
     juce::String argumentHelp;
 
+    /**
+     * Text describing what sustaining a trigger bound to this function does.
+     */
+    juce::String sustainHelp;
+
+    /**
+     * Text describing what a long-press of a trigger does.
+     */
+    juce::String longHelp;
 
   private:
     

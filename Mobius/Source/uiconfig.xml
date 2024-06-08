@@ -76,6 +76,7 @@
     <Button action="Multiply"/>
     <Button action="SelectLoop" arguments="1"/>
     <Button action="SelectLoop" arguments="2"/>
+    <Button action="SUSOverdub"/>
   </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>

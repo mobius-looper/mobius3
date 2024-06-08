@@ -181,11 +181,13 @@ void TriggerState::assimilate(Action* action)
         // SUS functions.  We could track long presses for those but it's less
         // useful for scripts, they can do their own timing.
 
+        // new: had TriggerHost in here, but I don't think we need to mess with that
+        // host parameters are almost never used for functions
         Trigger* trigger = action->trigger;
         bool longTrigger = (trigger == TriggerUI ||
                             trigger == TriggerKey ||
-                            trigger == TriggerMidi ||
-                            trigger == TriggerHost || 
+                            trigger == TriggerNote ||
+                            trigger == TriggerControl ||
                             trigger == TriggerOsc);
 
         bool longFunction = (func->longPressable || func->longFunction);

@@ -1,5 +1,5 @@
 <Symbols>
-  <Function name="AutoRecord"/>
+  <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'/>
   <Function name="Backward"/>
   <Function name="Bounce"/>
   <Function name="Checkpoint"/>
@@ -30,14 +30,14 @@
   <Function name="MidiStart"/>
   <Function name="MidiStop"/>
 
-  <Function name="Multiply"/>
-  <Function name="Mute"/>
+  <Function name="Multiply" sustainable='true'/>
+  <Function name="Mute" sustainable='true'/>
   <Function name="MuteRealign"/>
   <Function name="MuteMidiStart"/>
   <Function name="NextLoop"/>
   <Function name="NextTrack"/>
-  <Function name="Overdub"/>
-  <Function name="Pause"/>
+  <Function name="Overdub" sustainable='true'/>
+  <Function name="Pause" sustainable='true'/>
   <Function name="PitchDown"/>
   <Function name="PitchNext"/>
   <Function name="PitchCancel"/>
@@ -48,14 +48,14 @@
   <Function name="PrevLoop"/>
   <Function name="PrevTrack"/>
   <Function name="Realign"/>
-  <Function name="Record"/>
+  <Function name="Record" sustainable='true' longHelp='Long press becomes Reset'/>
   <Function name="Redo"/>
-  <Function name="Rehearse"/>
-  <Function name="Replace"/>
+  <Function name="Rehearse" sustainable='true'/>
+  <Function name="Replace" sustainable='true'/>
   <Function name="Reset"/>
   <Function name="Restart"/>
   <Function name="RestartOnce"/>
-  <Function name="Reverse"/>
+  <Function name="Reverse" sustainable='true'/>
   <Function name="SaveCapture"/>
   <Function name="SaveLoop"/>
   <Function name="Shuffle"/>
@@ -68,28 +68,28 @@
   <Function name="SpeedPrev"/>
   <Function name="SpeedStep"/>
   <Function name="SpeedUp"/>
-  <Function name="SpeedToggle"/>
+  <Function name="SpeedToggle" sustainable='true'/>
   <Function name="StartCapture"/>
   <Function name="StartPoint"/>
   <Function name="StopCapture"/>
-  <Function name="Stutter"/>
-  <Function name="Substitute"/>
+  <Function name="Stutter" sustainable='true'/>
+  <Function name="Substitute" sustainable='true'/>
 
-  <Function name="SUSInsert"/>
-  <Function name="SUSMultiply"/>
-  <Function name="SUSMute"/>
-  <Function name="SUSMuteRestart"/>
-  <Function name="SUSNextLoop"/>
-  <Function name="SUSOverdub"/>
-  <Function name="SUSPrevLoop"/>
-  <Function name="SUSRecord"/>
-  <Function name="SUSReplace"/>
-  <Function name="SUSReverse"/>
-  <Function name="SUSSpeedToggle"/>
-  <Function name="SUSStutter"/>
-  <Function name="SUSSubstitute"/>
-  <Function name="SUSUnroundedInsert"/>
-  <Function name="SUSUnroundedMultiply"/>
+  <Function name="SUSInsert" sustainable='true'/>
+  <Function name="SUSMultiply" sustainable='true'/>
+  <Function name="SUSMute" sustainable='true'/>
+  <Function name="SUSMuteRestart" sustainable='true'/>
+  <Function name="SUSNextLoop" sustainable='true'/>
+  <Function name="SUSOverdub" sustainable='true'/>
+  <Function name="SUSPrevLoop" sustainable='true'/>
+  <Function name="SUSRecord" sustainable='true'/>
+  <Function name="SUSReplace" sustainable='true'/>
+  <Function name="SUSReverse" sustainable='true'/>
+  <Function name="SUSSpeedToggle" sustainable='true'/>
+  <Function name="SUSStutter" sustainable='true'/>
+  <Function name="SUSSubstitute" sustainable='true'/>
+  <Function name="SUSUnroundedInsert" sustainable='true'/>
+  <Function name="SUSUnroundedMultiply" sustainable='true'/>
   <Function name="SyncStartPoint"/>
   
   <!-- Formerly TrackN, Track1, etc. -->
@@ -98,7 +98,7 @@
   
   <Function name="TrackCopy"/>
   <Function name="TrackCopyTiming"/>
-  <Function name="TrackGroup"/>
+  <Function name="TrackGroup" sustainable='true'/>
   <Function name="TrackReset"/>
   <Function name="TrimEnd"/>
   <Function name="TrimStart"/>

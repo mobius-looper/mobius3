@@ -30,6 +30,7 @@
 #include "../../model/UIAction.h"
 #include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
+#include "../../model/FunctionDefinition.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -354,6 +355,10 @@ void Mobius::installSymbols()
         s->level = LevelCore;
         s->coreFunction = f;
         s->behavior = BehaviorFunction;
+        // until we get FunctionProperties fleshed out, copy the sustainable
+        // flag from the Function to the FunctionDefinition so SUS functions work
+        if (s->function != nullptr)
+          s->function->sustainable = f->isSustainable();
     }
 
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {

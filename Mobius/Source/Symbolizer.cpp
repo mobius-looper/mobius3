@@ -116,6 +116,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->level = level;
         func->sustainable = root->getBoolAttribute("sustainable");
         func->argumentHelp = root->getStringAttribute("argumentHelp");
+        func->sustainHelp = root->getStringAttribute("sustainHelp");
 
         Symbol* s = Symbols.intern(name);
         s->functionProperties.reset(func);

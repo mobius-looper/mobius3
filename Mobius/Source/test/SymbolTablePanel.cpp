@@ -5,6 +5,8 @@
 #include <JuceHeader.h>
 
 #include "../model/Symbol.h"
+#include "../model/FunctionDefinition.h"
+
 #include "../Supervisor.h"
 #include "SymbolTablePanel.h"
 
@@ -120,7 +122,8 @@ void SymbolTablePanel::initTable()
 const int SymbolTableNameColumn = 1;
 const int SymbolTableTypeColumn = 2;
 const int SymbolTableLevelColumn = 3;
-const int SymbolTableWarnColumn = 4;
+const int SymbolTableFlagsColumn = 4;
+const int SymbolTableWarnColumn = 5;
 
 void SymbolTablePanel::initColumns()
 {
@@ -143,6 +146,10 @@ void SymbolTablePanel::initColumns()
                      juce::TableHeaderComponent::defaultFlags);
     
     header.addColumn(juce::String("Level"), SymbolTableLevelColumn,
+                     100, 30, -1,
+                     juce::TableHeaderComponent::defaultFlags);
+    
+    header.addColumn(juce::String("Flags"), SymbolTableFlagsColumn,
                      100, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
     
@@ -214,6 +221,11 @@ juce::String SymbolTablePanel::getCellText(int row, int columnId)
             case LevelKernel: cell = "Kernel"; break;
             case LevelCore: cell = "Core"; break;
         }
+    }
+    else if (columnId == SymbolTableFlagsColumn) {
+        // expose interesting things
+        if (s->function != nullptr && s->function->sustainable)
+          cell = "sustainable";
     }
     else if (columnId == SymbolTableWarnColumn) {
         if (s->coreFunction != nullptr && s->function == nullptr) {
