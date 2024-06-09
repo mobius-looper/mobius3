@@ -44,6 +44,20 @@ A few of you made use of an old feature called **Binding Overlays** where you co
 Command buttons displayed at the top of the UI should all be imported, but they are collected under a new **Button Set** with the name "Upgrade".  Button sets are a new feature in Mobius 3 where you can define any number of different button collections and switch between them.  To see and use your old buttons, you will need to select the "Upgrade" set under the **Display** menu.
 
 
+## Binding Overlays
+
+A few users made use of what Mobius 2.5 called **Binding Overlays**.  An overlay binding is a named set of MIDI bindings that will be merged with the base set named "Common Bindings" when it is activated.  There could only be one binding overlay active at a time.  The intent here was to support bindings from multiple hardware devices, but only one of those devices would be in use at a time, and some of those bindings might be different.
+
+Mobius 3 has a similar concept.  You can create any number of MIDI binding sets in the MIDI Control panel.  The first one is always named "Base" and is always active.
+
+The binding sets after the first one are also called **overlay bindings**.  Where this differs from Mobius 2.5, is that more than one can be active at a time.
+
+To activate a binding overlay, select it in the MIDI Control panel, and check the *Active* checkbox.  Next to this is another checkbox labeled "Merge with others".  What the merge checkbox does is allows this binding overlay to be active at the same time as other binding overlays.  If the merge checkbox is not on, then any time you activate an overlay, all the others that do not have the merge checkbox will be deactivated.
+
+The effect is similar to Mobius 2.5 but slightly more flexible.  If you don't check **Merge** on any of them, then it behaves exactly like 2.5 overlays, with only one being active at a time.
+
+I'm not entirely happy with the UI for this but, it is functional and not many people make use of this feature.  I'll be adding a simpler way to activate bindings from the main menu.
+
 
 
 

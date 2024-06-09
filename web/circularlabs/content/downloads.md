@@ -14,6 +14,17 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 8 Changes
+- Track names set in the Track Setup will now display in the UI
+- SyncMasterTrack is back to being a bindable function
+- Support for Track Setups when the track count is more than 8
+- Fixed button colors not being saved
+- Various improvements to the configuration upgrade utillity
+- Implement binding overlays
+- Improve the MIDI Bindings and Keyboard Bindings help panels
+
+See the documentation page for more information on what binding overlays are, and how they differ from Mobius 2.5.
+
 ## Build 7 Changes
 
 - A utility to upgrade old XML configuration files has been added.  Under the **Configuration** menu, select **Upgrade Configuration**
