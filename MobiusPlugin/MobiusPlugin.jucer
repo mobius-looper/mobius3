@@ -537,6 +537,8 @@
               file="../Mobius/Source/test/SymbolTablePanel.cpp"/>
         <FILE id="lKXoSC" name="SymbolTablePanel.h" compile="0" resource="0"
               file="../Mobius/Source/test/SymbolTablePanel.h"/>
+        <FILE id="gdTWiH" name="SyncPanel.cpp" compile="1" resource="0" file="../Mobius/Source/test/SyncPanel.cpp"/>
+        <FILE id="KJM7bi" name="SyncPanel.h" compile="0" resource="0" file="../Mobius/Source/test/SyncPanel.h"/>
         <FILE id="f9IRjH" name="TestDriver.cpp" compile="1" resource="0" file="../Mobius/Source/test/TestDriver.cpp"/>
         <FILE id="uHbTAW" name="TestDriver.h" compile="0" resource="0" file="../Mobius/Source/test/TestDriver.h"/>
         <FILE id="aSKv4M" name="TestPanel.cpp" compile="1" resource="0" file="../Mobius/Source/test/TestPanel.cpp"/>

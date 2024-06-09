@@ -63,11 +63,11 @@
     <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <ButtonSet name="Default">
-    <Button action="GlobalReset" color="-13969235"/>
+    <Button action="GlobalReset"/>
     <Button action="Reset"/>
     <Button action="Record"/>
     <Button action="Overdub"/>
-    <Button action="Undo" color="-13969235"/>
+    <Button action="Undo"/>
     <Button action="Mute"/>
     <Button action="NextLoop"/>
     <Button action="PrevLoop"/>
@@ -79,10 +79,6 @@
     <Button action="SUSOverdub"/>
   </ButtonSet>
   <Properties>
-    <Property name="x" value="value of x"/>
-    <Property name="y" value="42"/>
-    <Property name="z" value="true"/>
     <Property name="testName" value=""/>
-    <Property name="trackRows" value="1"/>
   </Properties>
 </UIConfig>

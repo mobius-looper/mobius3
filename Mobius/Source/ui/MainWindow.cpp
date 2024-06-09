@@ -255,6 +255,10 @@ void MainWindow::mainMenuSelection(int id)
                 supervisor->menuShowMidiTransport();
                 break;
                 
+            case MainMenu::SyncPanel:
+                supervisor->menuShowSyncPanel();
+                break;
+                
             case MainMenu::SymbolTable:
                 supervisor->menuShowSymbolTable();
                 break;

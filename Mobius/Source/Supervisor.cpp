@@ -1553,6 +1553,11 @@ void Supervisor::menuShowMidiTransport()
     testDriver.showMidiTransport();
 }
 
+void Supervisor::menuShowSyncPanel()
+{
+    testDriver.showSyncPanel();
+}
+
 void Supervisor::menuShowSymbolTable()
 {
     testDriver.showSymbolTable();

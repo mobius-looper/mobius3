@@ -112,6 +112,7 @@ void TestDriver::initialize(juce::Component* parent)
 
     // other testing panels
     parent->addChildComponent(&midiTransport);
+    parent->addChildComponent(&syncPanel);
     parent->addChildComponent(symbolTable);
     parent->addChildComponent(upgradePanel);
 }
@@ -198,6 +199,11 @@ void TestDriver::captureConfiguration(UIConfig* config)
 void TestDriver::showMidiTransport()
 {
     midiTransport.show();
+}
+
+void TestDriver::showSyncPanel()
+{
+    syncPanel.show();
 }
 
 void TestDriver::showSymbolTable()
@@ -360,6 +366,9 @@ void TestDriver::advance()
     // whether or not test mode is activated
     if (midiTransport.isVisible())
       midiTransport.update();
+
+    if (syncPanel.isVisible())
+      syncPanel.update();
     
     if (active) {
         if (waitingId > 0) {

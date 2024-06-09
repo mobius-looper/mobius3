@@ -9,6 +9,7 @@
 
 #include "TestPanel.h"
 #include "MidiTransportPanel.h"
+#include "SyncPanel.h"
 #include "SymbolTablePanel.h"
 #include "UpgradePanel.h"
 
@@ -46,6 +47,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     // other panels managed by TestDriver but don't put the
     // system in "test mode"
     void showMidiTransport();
+    void showSyncPanel();
     void showSymbolTable();
     void showUpgradePanel();
     
@@ -108,6 +110,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     class Supervisor* supervisor;
     TestPanel controlPanel {this};
     MidiTransportPanel midiTransport;
+    SyncPanel syncPanel;
     SymbolTablePanel symbolTable {};
     UpgradePanel upgradePanel;
     

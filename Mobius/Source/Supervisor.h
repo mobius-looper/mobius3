@@ -216,6 +216,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
 
     // other test panels
     void menuShowMidiTransport();
+    void menuShowSyncPanel();
     void menuShowSymbolTable();
     void menuShowUpgradePanel();
     

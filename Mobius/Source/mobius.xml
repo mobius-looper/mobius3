@@ -2,7 +2,7 @@
   quickSave='mobiusloop'
   noiseFloor='13'
   maxSyncDrift='2048'
-  trackCount='16'
+  trackCount='8'
   groupCount='2'
   maxLoops='2'
   longPress='500'
@@ -54,7 +54,7 @@
     name='Default'
     active='0'
     beatsPerBar='4'
-    defaultSyncSource='track'
+    defaultSyncSource='host'
     defaultTrackSyncUnit='loop'
     maxTempo='300'
     minTempo='20'
@@ -62,7 +62,7 @@
     outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
+    slaveSyncUnit='bar'
     speedSyncAdjust='none'>
     <SetupTrack
       name='Track 1'
@@ -75,7 +75,7 @@
       audioOutputPort='1'
       pluginInputPort='1'
       pluginOutputPort='1'
-      syncSource='track'
+      syncSource='host'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='X'

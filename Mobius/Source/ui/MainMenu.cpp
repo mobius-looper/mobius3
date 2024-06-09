@@ -295,8 +295,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         if (Supervisor::Instance->isTestMode())
           item.setTicked(true);
         menu.addItem(item);
-        
+
         menu.addItem(MidiTransport, "MIDI Transport");
+        menu.addItem(SyncPanel, "Synchronization Status");
         menu.addItem(SymbolTable, "Symbol Table");
         // this never did work right
         //menu.addItem(DiagnosticWindow, "Diagnostic Window");

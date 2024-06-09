@@ -150,6 +150,7 @@ class Synchronizer {
 
     class SyncTracker* getSyncTracker(Track* t);
 	long getMidiSongClock(SyncSource src);
+    void getState(class MobiusState* state);
 	void getState(class MobiusTrackState* state, class Track* t);
 
     //

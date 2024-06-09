@@ -127,7 +127,7 @@ void MidiTransportPanel::paint(juce::Graphics& g)
     juce::Font font (MidiTransportPanelHeaderHeight * 0.8f);
     g.setFont(font);
     g.setColour(juce::Colours::white);
-    g.drawText(" MIDI Transport", header, juce::Justification::centred);
+    g.drawText("MIDI Transport", header, juce::Justification::centred);
     
     //g.setColour(juce::Colour(MobiusBlue));
     //g.drawRect(getLocalBounds(), 1);

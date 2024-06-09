@@ -317,6 +317,40 @@ class MobiusTrackState
 };
 
 /**
+ * New structure to hold state of the Synchronizer.
+ * Most sync state is independent of Tracks, and the older
+ * state in TrackState is duplicated.  Move toward using this
+ * for everything.
+ *
+ * The things that ARE track specific are:
+ *
+ *     syncSource
+ *     syncUnit
+ *     outSyncMaster
+ *     trackSyncMaster
+ */
+class MobiusSyncState
+{
+  public:
+
+    bool outStarted = false;
+    float outTempo = 0.0f;
+    int outBeat = 0;
+    int outBar = 0;
+
+    bool inStarted = false;
+    float inTempo = 0.0f;
+    int inBeat = 0;
+    int inBar = 0;
+
+    bool hostStarted = false;
+    float hostTempo = 0.0f;
+    int hostBeat = 0;
+    int hostBar = 0;
+
+};
+
+/**
  * Overall state of the engine.
  */
 class MobiusState
@@ -349,6 +383,9 @@ class MobiusState
 
     // state for each track
     MobiusTrackState tracks[MobiusStateMaxTracks];
+
+    // state for the shared synchronizer
+    MobiusSyncState sync;
 
     // testing
     void simulate(MobiusState* state);

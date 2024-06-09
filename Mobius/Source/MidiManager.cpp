@@ -199,7 +199,8 @@ void MidiManager::mobiusMidiReceived(juce::MidiMessage& msg)
         // Listener wants a "source" which when connected direct I think is the
         // device name.  Not sure if the plugin has any more context around this
         // so fake up a name
-        exclusiveListener->midiMessage(msg, juce::String("Plugin"));
+        juce::String source("Plugin");
+        exclusiveListener->midiMessage(msg, source);
     }
 }
 

@@ -554,6 +554,8 @@
               file="Source/test/SymbolTablePanel.cpp"/>
         <FILE id="fvesuL" name="SymbolTablePanel.h" compile="0" resource="0"
               file="Source/test/SymbolTablePanel.h"/>
+        <FILE id="Yz1NTw" name="SyncPanel.cpp" compile="1" resource="0" file="Source/test/SyncPanel.cpp"/>
+        <FILE id="grb203" name="SyncPanel.h" compile="0" resource="0" file="Source/test/SyncPanel.h"/>
         <FILE id="vEWRZ2" name="TestDriver.cpp" compile="1" resource="0" file="Source/test/TestDriver.cpp"/>
         <FILE id="E9hifY" name="TestDriver.h" compile="0" resource="0" file="Source/test/TestDriver.h"/>
         <FILE id="lgCOr0" name="TestPanel.cpp" compile="1" resource="0" file="Source/test/TestPanel.cpp"/>

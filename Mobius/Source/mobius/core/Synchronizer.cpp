@@ -870,6 +870,9 @@ long Synchronizer::getMidiSongClock(SyncSource src)
  * !! This is no longer really track specific.  Sync on/off can be set
  * but you can't have one track with Sync=Host and another with Sync=Midi,
  * some of the state variables could be moved up?
+ *
+ * update: added MobiusSyncState for common state for all tracks.
+ * Need to refactor TrackState.
  */
 void Synchronizer::getState(MobiusTrackState* state, Track* t)
 {
@@ -897,7 +900,7 @@ void Synchronizer::getState(MobiusTrackState* state, Track* t)
 				state->bar = getOutBar() + 1;
 			}
 		}
-		break;
+            break;
 
 		case SYNC_MIDI: {
 			// for display purposes we use the "smooth" tempo
@@ -913,7 +916,7 @@ void Synchronizer::getState(MobiusTrackState* state, Track* t)
 				state->bar = getInBar() + 1;
 			}
 		}
-		break;
+            break;
 
 		case SYNC_HOST: {
 			state->tempo = getHostTempo();
@@ -926,9 +929,9 @@ void Synchronizer::getState(MobiusTrackState* state, Track* t)
                 state->bar = getHostBar() + 1;
             }
 		}
-		break;
+            break;
 
-		// have to have these or Xcode 5 bitches
+            // have to have these or Xcode 5 bitches
 		case SYNC_DEFAULT:
 		case SYNC_NONE:
 		case SYNC_TRACK:
@@ -937,6 +940,56 @@ void Synchronizer::getState(MobiusTrackState* state, Track* t)
 
 }
 
+/**
+ * Newer state shared by all tracks.
+ */
+void Synchronizer::getState(MobiusState* state)
+{
+    MobiusSyncState* sync = &(state->sync);
+
+    // MIDI output sync
+
+    sync->outStarted = mTransport->isSending();
+    sync->outTempo = 0;
+    sync->outBeat = 0;
+    sync->outBar = 0;
+    if (sync->outStarted) {
+        sync->outTempo = getOutTempo();
+        // Note that we adjust the zero based beat/bar count
+        // for display.
+        sync->outBeat = getOutBeat() + 1;
+        sync->outBar = getOutBar() + 1;
+    }
+
+    // MIDI input sync
+    sync->inStarted = isInStarted();
+    sync->inBeat = 0;
+    sync->inBar = 0;
+    
+    // for display purposes we use the "smooth" tempo
+    // this is a 10x integer
+    int smoothTempo = mTransport->getInputSmoothTempo();
+    sync->inTempo = (float)smoothTempo / 10.0f;
+
+    // only display advance beats when started,
+    // TODO: should we save the last known beat/bar values
+    // so we can keep displaying them till the next start/continue?
+    if (isInStarted()) {
+        sync->inBeat = getInBeat() + 1;
+        sync->inBar = getInBar() + 1;
+    }
+
+    // Host sync
+    sync->hostStarted = isHostReceiving();
+    sync->hostTempo = getHostTempo();
+    sync->hostBeat = 0;
+    sync->hostBar = 0;
+    if (isHostReceiving()) {
+        sync->hostBeat = getHostBeat() + 1;
+        sync->hostBar = getHostBar() + 1;
+    }
+}
+    
 /****************************************************************************
  *                                                                          *
  *                          RECORD START SCHEDULING                         *

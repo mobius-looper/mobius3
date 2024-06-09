@@ -1705,6 +1705,8 @@ MobiusState* Mobius::getState()
 
 	mState.globalRecording = mCapturing;
 
+    mSynchronizer->getState(&mState);
+
     // OG Mobius only refreshed the active track, now we do all of them
     // since the TrackStrips will want most things
     
