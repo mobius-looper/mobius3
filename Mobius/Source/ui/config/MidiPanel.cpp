@@ -61,7 +61,7 @@ void MidiPanel::hiding()
 
 /**
  * Called by BindingPanel as it iterates over all the bindings
- * stored in a BindingSet.  Return true if this is for keys.
+ * stored in a BindingSet.  Return true if this is for MIDI.
  */
 bool MidiPanel::isRelevant(Binding* b)
 {

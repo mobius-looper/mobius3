@@ -94,6 +94,7 @@ class Binderator
 
     void installKeyboardActions(class MobiusConfig* config);
     void installMidiActions(class MobiusConfig* config);
+    void installMidiActions(class BindingSet* set);
     class UIAction* buildAction(class Binding* b);
     
     class UIAction* getKeyAction(int code, int modifiers);

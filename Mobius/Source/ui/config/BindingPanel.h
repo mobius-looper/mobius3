@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 
 #include "../common/Field.h"
+#include "../../test/BasicButtonRow.h"
 
 #include "ConfigPanel.h"
 #include "BindingTable.h"
@@ -64,7 +65,10 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     Field* arguments = nullptr;
     int maxTracks = 0;
     int maxGroups = 0;
-
+    juce::ToggleButton activeButton {"Active"};
+    juce::ToggleButton mergeButton {"Merge with others"};
+    BasicButtonRow activationButtons;
+    
     void initForm();
     void resetForm();
     

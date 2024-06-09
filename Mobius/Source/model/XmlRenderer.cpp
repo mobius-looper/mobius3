@@ -1009,7 +1009,9 @@ void XmlRenderer::render(XmlBuffer* b, BindingSet* c)
 	b->addOpenStartTag(EL_BINDING_SET);
 
 	renderStructure(b, c);
-
+    b->addAttribute("merge", c->isMerge());
+    b->addAttribute("active", c->isActive());
+    
 	b->add(">\n");
 	b->incIndent();
 
@@ -1062,6 +1064,8 @@ void XmlRenderer::render(XmlBuffer* b, Binding* binding)
 void XmlRenderer::parse(XmlElement* e, BindingSet* c)
 {
 	parseStructure(e, c);
+    c->setMerge(e->getBoolAttribute("merge"));
+    c->setActive(e->getBoolAttribute("active"));
 
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {

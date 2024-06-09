@@ -345,44 +345,56 @@ void Binderator::installMidiActions(MobiusConfig* config)
     prepareArray(&noteActions);
     prepareArray(&programActions);
     prepareArray(&controlActions);
-    
-    // only pay attention to the base set for now
+
+    // always add base bindings
     BindingSet* baseBindings = config->getBindingSets();
     if (baseBindings != nullptr) {
-        Binding* binding = baseBindings->getBindings();
-        while (binding != nullptr) {
+        installMidiActions(baseBindings);
+        // plus any active overlays
+        BindingSet* overlay = baseBindings->getNextBindingSet();
+        while (overlay != nullptr) {
+            if (overlay->isActive())
+              installMidiActions(overlay);
+            overlay = overlay->getNextBindingSet();
+        }
+    }
+}
 
-            juce::OwnedArray<juce::OwnedArray<TableEntry>>* dest = nullptr;
-            Trigger* trigger = binding->trigger;
-            if (trigger == TriggerNote)
-              dest = &noteActions;
-            else if (trigger == TriggerProgram)
-              dest = &programActions;
-            else if (trigger == TriggerControl)
-              dest = &controlActions;
+void Binderator::installMidiActions(BindingSet* set)
+{
+    Binding* binding = set->getBindings();
+    while (binding != nullptr) {
 
-            if (dest != nullptr) {
+        juce::OwnedArray<juce::OwnedArray<TableEntry>>* dest = nullptr;
+        Trigger* trigger = binding->trigger;
+        if (trigger == TriggerNote)
+          dest = &noteActions;
+        else if (trigger == TriggerProgram)
+          dest = &programActions;
+        else if (trigger == TriggerControl)
+          dest = &controlActions;
 
-                int index = binding->triggerValue;
-                if (index < 0 ||  index >= BinderatorMaxIndex) {
-                    Trace(1, "Binderator: Invalid MIDI note %s\n", binding->getSymbolName());
-                }
-                else {
-                    // todo: here is where we could be sensitive to a global option
-                    // to ignore channels, but it's less necessary now with the "Any"
-                    // channel in each binding
-                    UIAction* action = buildAction(binding);
-                    if (action != nullptr) {
-                        // note that the Binding model uses MIDI channel 0 to mean
-                        // "any" and specific channels are numbered from 1
-                        // this needs to be understood when matching incomming events
-                        int qualifier = binding->midiChannel;
-                        addEntry(dest, index, qualifier, action);
-                    }
+        if (dest != nullptr) {
+
+            int index = binding->triggerValue;
+            if (index < 0 ||  index >= BinderatorMaxIndex) {
+                Trace(1, "Binderator: Invalid MIDI note %s\n", binding->getSymbolName());
+            }
+            else {
+                // todo: here is where we could be sensitive to a global option
+                // to ignore channels, but it's less necessary now with the "Any"
+                // channel in each binding
+                UIAction* action = buildAction(binding);
+                if (action != nullptr) {
+                    // note that the Binding model uses MIDI channel 0 to mean
+                    // "any" and specific channels are numbered from 1
+                    // this needs to be understood when matching incomming events
+                    int qualifier = binding->midiChannel;
+                    addEntry(dest, index, qualifier, action);
                 }
             }
-            binding = binding->getNext();
         }
+        binding = binding->getNext();
     }
 }
 

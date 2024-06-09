@@ -43,10 +43,21 @@ BindingPanel::BindingPanel(ConfigEditor* argEditor, const char* title, bool mult
     ConfigPanel{argEditor, title, ConfigPanelButton::Save | ConfigPanelButton::Cancel, multi}
 {
     setName("BindingPanel");
-
+    
+    // this one is selectively shown
+    content.addChildComponent(activationButtons);
+    
+    activeButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    activeButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
+    activeButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
+    activationButtons.add(&activeButton);
+    mergeButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    mergeButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
+    mergeButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
+    activationButtons.add(&mergeButton);
+    
     bindings.setListener(this);
     content.addAndMakeVisible(bindings);
-    
     content.addAndMakeVisible(targets);
 
     content.addAndMakeVisible(form);
@@ -54,6 +65,7 @@ BindingPanel::BindingPanel(ConfigEditor* argEditor, const char* title, bool mult
     // of the form, we have to complete construction before calling initForm
     // subclass must do this instead
     // initForm();
+
 
     // default help area is a bit tall for the older layouts
     setHelpHeight(12);
@@ -158,8 +170,13 @@ void BindingPanel::loadBindingSet(int index)
     }
     bindings.updateContent();
     resetForm();
-}
 
+    // this is shown only when editing one of the overlay sets
+    // hmm, think about adding an "active" here too, if you're editing
+    activationButtons.setVisible(index > 0);
+    activeButton.setToggleState(set->isActive(), juce::NotificationType::dontSendNotification);
+    mergeButton.setToggleState(set->isMerge(), juce::NotificationType::dontSendNotification);
+}
 
 /**
  * Called by the Save button in the footer.
@@ -211,11 +228,38 @@ void BindingPanel::save()
     }
 }
 
+/**
+ * Merge rules:
+ *
+ * Any binding set with merge=true has an independent
+ * active flag which may be on or off.
+ *
+ * Any binding set with merge=false, when made active,
+ * turns off active any all other binding sets that
+ * do not have the merge flag.
+ */
 void BindingPanel::saveBindingSet(int index)
 {
     BindingSet* set = bindingSets[index];
     if (set != nullptr) {
         saveBindingSet(set);
+
+        if (index > 0) {
+            set->setActive(activeButton.getToggleState());
+            set->setMerge(mergeButton.getToggleState());
+            // if this is an exclusive overlay, turn off the
+            // activation state of the others so the selection menus look right
+            // when we're done
+            if (set->isActive()) {
+                for (int i = 1 ; i < bindingSets.size() ; i++) {
+                    if (i != index) {
+                        BindingSet* other = bindingSets[i];
+                        if (!set->isMerge() && !other->isMerge())
+                          other->setActive(false);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -607,10 +651,11 @@ void BindingPanel::resized()
     
     juce::Rectangle<int> area = getLocalBounds();
 
-    // leave some space at the top
-    area.removeFromTop(20);
-    // and on the left
+    // leave a little gap on the left
     area.removeFromLeft(10);
+    
+    // leave some space at the top for the merge checkbox
+    activationButtons.setBounds(area.removeFromTop(20));
 
     // let's fix the size of the table for now rather
     // adapt to our size

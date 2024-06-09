@@ -40,6 +40,7 @@ Binding::Binding()
     mSymbolName = nullptr;
     mArguments = nullptr;
     mScope = nullptr;
+    mSource = nullptr;
 }
 
 Binding::~Binding()
@@ -49,7 +50,8 @@ Binding::~Binding()
 	delete mSymbolName;
     delete mArguments;
     delete mScope;
-
+    delete mSource;
+    
 	for (el = mNext ; el != nullptr ; el = next) {
 		next = el->getNext();
 		el->setNext(nullptr);
@@ -63,6 +65,7 @@ Binding::Binding(Binding* src)
     mSymbolName = nullptr;
     mArguments = nullptr;
     mScope = nullptr;
+    mSource = nullptr;
     
     trigger = src->trigger;
     triggerMode = src->triggerMode;
@@ -79,6 +82,9 @@ Binding::Binding(Binding* src)
 
     // need this for the BindingTable
     id = src->id;
+
+    // mSource is a transient information field for
+    // the InfoPanel and does not need to be copied
 }
 
 void Binding::setNext(Binding* c)
@@ -100,6 +106,17 @@ void Binding::setSymbolName(const char *name)
 const char* Binding::getSymbolName()
 {
 	return mSymbolName;
+}
+
+void Binding::setSource(const char *name) 
+{
+	delete mSource;
+	mSource = CopyString(name);
+}
+
+const char* Binding::getSource()
+{
+	return mSource;
 }
 
 void Binding::setArguments(const char* args) 
@@ -278,6 +295,16 @@ BindingSet::BindingSet(BindingSet* src)
         last = copy;
         srcBinding = srcBinding->getNext();
     }
+
+    // assume that if you're starting with an overlay, the new one is also one
+    mMerge = src->isMerge();
+
+    // hmm, when cloning to create a new one, activation shouldn't be assumed
+    // but when cloning to edit an existing one, activation is expected
+    // to be retained
+    mActive = src->isActive();
+
+    
 }
 
 Structure* BindingSet::clone()

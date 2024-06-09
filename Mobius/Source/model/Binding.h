@@ -136,6 +136,11 @@ class Binding {
     // true if this represents a MIDI binding
 	bool isMidi();
 
+    // transient field used to hold the name of the BindingSet this
+    // binding came from for runtime information
+    void setSource(const char* name);
+    const char* getSource();
+
 	// trigger
 
     Trigger *trigger = nullptr;
@@ -184,7 +189,8 @@ class Binding {
 	char* mSymbolName = nullptr;
     char* mArguments = nullptr;
     char* mScope = nullptr;
-
+    char* mSource = nullptr;
+    
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -221,9 +227,27 @@ class BindingSet : public Structure {
 
     Binding* findBinding(Binding* b);
 
+    void setActive(bool b) {
+        mActive = b;
+    }
+
+    bool isActive() {
+        return mActive;
+    }
+  
+    void setMerge(bool b) {
+        mMerge = b;
+    }
+    
+    bool isMerge() {
+        return mMerge;
+    }
+
   private:
 
 	Binding* mBindings;
+    bool mActive = false;
+    bool mMerge = false;
 	
 };
 

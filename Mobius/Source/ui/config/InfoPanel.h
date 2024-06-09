@@ -31,6 +31,11 @@ class InfoPanel : public juce::Component, juce::Button::Listener, public juce::T
                    int width, int height, bool rowIsSelected) override;
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
+    // drag and resize
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& e) override;
+    
   private:
 
     bool midi = false;
@@ -46,11 +51,18 @@ class InfoPanel : public juce::Component, juce::Button::Listener, public juce::T
     void centerInParent(juce::Component& c);
     void centerInParent();
 
+    void addBindings(class BindingSet* set);
     void initTable();
     void initColumns();
     juce::String getCellText(int row, int columnId);
-    juce::String renderMidiTrigger(Binding* b);
+    juce::String renderMidiTrigger(class Binding* b);
 
-
+    // I'm tired of duplicating this in a bunch of places
+    // factor out a common superclass so we can share this shit
+    juce::ComponentBoundsConstrainer resizeConstrainer;
+    juce::ComponentBoundsConstrainer dragConstrainer;
+    juce::ResizableBorderComponent resizer {this, &resizeConstrainer};
+    juce::ComponentDragger dragger;
+    bool dragging = false;
 };
 

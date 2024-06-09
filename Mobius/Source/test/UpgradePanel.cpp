@@ -298,7 +298,7 @@ void UpgradePanel::loadUIConfig(juce::String xml)
         }
     }
 
-    log.add(juce::String(buttonCount) + " ui.xml buttons loaded, retained " +
+    log.add(juce::String(buttonCount) + " ui.xml buttons loaded, new " +
             juce::String(buttonAdded));
 }
 
@@ -392,6 +392,18 @@ void UpgradePanel::loadMobiusConfig(juce::String xml)
     }
 }
 
+/**
+ * Presets and Setups are relatively easy.
+ * If one already exists with the name "Default"
+ * the imported one is given the prefix "Upgrade:" so it doesn't
+ * conflict with the default preset, just case they need to
+ * get back to something stable.
+ *
+ * For others, if one exists, it has probably been imported already
+ * and we don't need to do it again.  In rare cases, they could
+ * have made changes to the imported XML files and want those, they'll
+ * have to delete the existing ones first.
+ */
 void UpgradePanel::loadPresets()
 {
     int count = 0;
@@ -402,36 +414,34 @@ void UpgradePanel::loadPresets()
     while (preset != nullptr) {
         count++;
         juce::String name = juce::String(preset->getName());
-
         bool ignore = false;
-        juce::String newName;
-        Preset* existing = masterConfig->getPreset(preset->getName());
-        if (existing != nullptr) {
-            newName = "Upgrade:" + juce::String(existing->getName());
-            Preset* upgrade = masterConfig->getPreset(newName.toUTF8());
-            if (upgrade != nullptr) {
-                log.add("Upgraded Preset \"" + newName + "\" already exists");
-                log.add("  Delete or rename it if you need to upgrade again");
-                ignore = true;
-            }
-            else {
-                log.add("Preset \"" + juce::String(existing->getName()) +
-                        "\" already exists, renaming to \"" + newName + "\"");
-            }
+        bool renamed = false;
+
+        if (name == juce::String("Default")) {
+            name = "Upgrade:" + name;
+            renamed = true;
+        }
+        
+        Preset* existing = masterConfig->getPreset(name.toUTF8());
+        if (existing == nullptr) {
+            log.add("Preset: " + name);
+        }
+        else {
+            log.add("Preset: " + name + " already exists");
+            ignore = true;
         }
 
         if (!ignore) {
             Preset* copy = new Preset(preset);
-            if (newName.length() > 0)
-              copy->setName(newName.toUTF8());
+            if (renamed)
+              copy->setName(name.toUTF8());
             newPresets.add(copy);
-            log.add("Added Preset: " + juce::String(copy->getName()));
         }
         
         preset = preset->getNextPreset();
     }
 
-    log.add("Loaded " + juce::String(count) + " presets, retained " +
+    log.add("Loaded " + juce::String(count) + " presets, new " +
             juce::String(newPresets.size()));
 }
 
@@ -445,36 +455,34 @@ void UpgradePanel::loadSetups()
     while (setup != nullptr) {
         count++;
         juce::String name = juce::String(setup->getName());
-
         bool ignore = false;
-        juce::String newName;
-        Setup* existing = masterConfig->getSetup(setup->getName());
-        if (existing != nullptr) {
-            newName = "Upgrade:" + juce::String(existing->getName());
-            Setup* upgrade = masterConfig->getSetup(newName.toUTF8());
-            if (upgrade != nullptr) {
-                log.add("Upgraded Setup \"" + newName + "\" already exists");
-                log.add("  Delete or rename it if you need to upgrade again");
-                ignore = true;
-            }
-            else {
-                log.add("Setup \"" + juce::String(existing->getName()) +
-                        "\" already exists, renaming to \"" + newName + "\"");
-            }
+        bool renamed = false;
+
+        if (name == juce::String("Default")) {
+            name = "Upgrade:" + name;
+            renamed = true;
+        }
+        
+        Setup* existing = masterConfig->getSetup(name.toUTF8());
+        if (existing == nullptr) {
+            log.add("Setup: " + name);
+        }
+        else {
+            log.add("Setup: " + name + " already exists");
+            ignore = true;
         }
 
         if (!ignore) {
             Setup* copy = new Setup(setup);
-            if (newName.length() > 0)
-              copy->setName(newName.toUTF8());
+            if (renamed) 
+              copy->setName(name.toUTF8());
             newSetups.add(copy);
-            log.add("Added Setup: " + juce::String(copy->getName()));
         }
         
         setup = setup->getNextSetup();
     }
 
-    log.add("Loaded " + juce::String(count) + " setups, retained " +
+    log.add("Loaded " + juce::String(count) + " setups, new " +
             juce::String(newSetups.size()));
 }
 
@@ -509,10 +517,12 @@ void UpgradePanel::loadScripts()
             if (skipValidation) {
                 ScriptRef* existing = masterScripts->get(ref->getFile());
                 if (existing == nullptr) {
+                    log.add("Adding script: " + juce::String(ref->getFile()));
                     newScripts.add(new ScriptRef(ref));
                 }
                 else {
-                    log.add("Script path already exists: " + juce::String(ref->getFile()));
+                    // this doesn't really help much and adds clutter
+                    //log.add("Script path already exists: " + juce::String(ref->getFile()));
                 }
             }
             else {
@@ -526,7 +536,7 @@ void UpgradePanel::loadScripts()
                         newScripts.add(new ScriptRef(ref));
                     }
                     else {
-                        log.add("Script path already exists: " + juce::String(ref->getFile()));
+                        //log.add("Script path already exists: " + juce::String(ref->getFile()));
                     }
 
                     registerDirectoryScripts(file);
@@ -541,7 +551,7 @@ void UpgradePanel::loadScripts()
                             newScripts.add(new ScriptRef(ref));
                         }
                         else {
-                            log.add("Script path already exists: " + juce::String(ref->getFile()));
+                            // log.add("Script path already exists: " + juce::String(ref->getFile()));
                         }
                     }
                     else {
@@ -557,7 +567,7 @@ void UpgradePanel::loadScripts()
     for (auto name : scriptNames)
       log.add("  " + name);
 
-    log.add("Loaded " + juce::String(count) + " scripts, retained " +
+    log.add("Loaded " + juce::String(count) + " scripts, new " +
             juce::String(newScripts.size()));
 }
 
@@ -750,7 +760,8 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
                 delete copy;
                 copy = nullptr;
                 if (!addUpgradeButton(db)) {
-                   log.add(juce::String("Binding for button ") + binding->getSymbolName() + " already exists");
+                    // don't add log clutter
+                    // log.add(juce::String("Binding for button ") + binding->getSymbolName() + " already exists");
                     delete db;
                 }
                 else {
@@ -760,12 +771,14 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
         }
         
         if (copy != nullptr) {
-            // it was valid, but ignore if already there
+            // it was valid
             Binding* existing = nullptr;
             if (master != nullptr)
               existing = master->findBinding(copy);
-            
-            
+
+            // if we fixed the upgrader and do it again, there might
+            // be stale bindings left behind we don't want, it's hard to
+            // know what those were unfortunately
             if (existing == nullptr) {
                 newBindings->addBinding(copy);
                 if (binding->trigger == TriggerHost)
@@ -777,7 +790,8 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
             }   
             else {
                 delete copy;
-                log.add(juce::String("Binding for ") + binding->getSymbolName() + " already exists");
+                // don't add log clutter, may have to upgrade several times
+                //log.add(juce::String("Binding for ") + binding->getSymbolName() + " already exists");
             }
         }
         
@@ -786,19 +800,19 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
 
     if (midiCount > 0) 
       log.add(juce::String(midiCount) + " MIDI bindings loaded, " +
-              juce::String(midiAdded) + " retained");
+              juce::String(midiAdded) + " new");
     
     if (hostCount > 0)
       log.add(juce::String(hostCount) + " Host Parameter bindings loaded, " +
-              juce::String(hostAdded) + " retained");
+              juce::String(hostAdded) + " new");
     
     if (keyCount > 0)
       log.add(juce::String(keyCount) + " Keyboard bindings loaded, " +
-              juce::String(keyAdded) + " retained");
+              juce::String(keyAdded) + " new");
     
     if (buttonCount > 0)
       log.add(juce::String(buttonCount) + " UI Button bindings loaded, " +
-              juce::String(buttonAdded) + " retained");
+              juce::String(buttonAdded) + " new");
 
     return newBindings;
 }
@@ -816,15 +830,10 @@ Binding* UpgradePanel::upgradeBinding(Binding* src)
 
     juce::String name (src->getSymbolName());
     Symbol* symbol = Symbols.find(name);
-    if (symbol != nullptr) {
-        // already know about this one
-        if (symbol->coreFunction == nullptr &&
-            symbol->coreParameter == nullptr) {
-            // what the hell is this?
-            // don't think there are any new symbols that match old names
-            log.add("Warning: Binding resolved to non-core symbol: " + name);
-            log.add("  Ask Jeff what's the deal.");
-        }
+    
+    if (symbol != nullptr &&
+        (symbol->function != nullptr || symbol->parameter != nullptr)) {
+        // a standard name
     }
     else if (name.startsWith("Loop")) {
         // two forms, LoopN and the older LoopTriggerN
@@ -868,6 +877,17 @@ Binding* UpgradePanel::upgradeBinding(Binding* src)
     else if (scriptNames.contains(name)) {
         // a reference to a script where were able to validate the name
         // no further adjustments
+    }
+    else if (symbol != nullptr && symbol->coreFunction != nullptr) {
+        // this is an old core function that didn't map to a new one
+        // the binding may work but we should have caught it and
+        // renamed it above
+        log.add("Warning: Binding to unsupported core function: " + name);
+    }
+    else if (symbol != nullptr && symbol->coreParameter != nullptr) {
+        // like resolved core functions, this might work, but probably
+        // not as intended
+        log.add("Warning: Binding to unsupported core parameter: " + name);
     }
     else {
         // unresolved reference

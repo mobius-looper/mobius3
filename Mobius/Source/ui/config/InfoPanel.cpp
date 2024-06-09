@@ -4,13 +4,20 @@
 #include "../../util/MidiUtil.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Binding.h"
+#include "../JuceUtil.h"
 #include "../../Supervisor.h"
 #include "InfoPanel.h"
 
+const int InfoPanelHeaderHeight = 20;
 const int InfoPanelFooterHeight = 20;
 
 InfoPanel::InfoPanel()
 {
+    addAndMakeVisible(resizer);
+    resizer.setBorderThickness(juce::BorderSize<int>(4));
+    resizeConstrainer.setMinimumHeight(20);
+    resizeConstrainer.setMinimumWidth(20);
+
     initTable();
     addAndMakeVisible(table);
 
@@ -19,7 +26,7 @@ InfoPanel::InfoPanel()
     addAndMakeVisible(footer);
     footer.addAndMakeVisible(okButton);
 
-    setSize(300, 600);
+    setSize(600, 600);
 }
 
 InfoPanel::~InfoPanel()
@@ -29,21 +36,45 @@ InfoPanel::~InfoPanel()
 void InfoPanel::show(bool doMidi)
 {
     midi = doMidi;
-    centerInParent();
+    JuceUtil::centerInParent(this);
     setVisible(true);
 
     things.clear();
     MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
-    BindingSet* bindingSet = config->getBindingSets();
-    Binding* bindings = bindingSet->getBindings();
+    BindingSet* bindingSets = config->getBindingSets();
+
+    // the first one is always added
+    addBindings(bindingSets);
+
+    // the rest are added if they are active, this only applies to MIDI
+    // it would be more reliable if this were driven from what is actually
+    // installed in Binderator, which may filter conflicts or do other
+    // things
+    bindingSets = bindingSets->getNextBindingSet();
+    while (bindingSets != nullptr) {
+        if (bindingSets->isActive())
+          addBindings(bindingSets);
+        bindingSets = bindingSets->getNextBindingSet();
+    }
+    
+    table.updateContent();
+}
+
+void InfoPanel::addBindings(BindingSet* set)
+{
+    Binding* bindings = set->getBindings();
     while (bindings != nullptr) {
         if ((midi && bindings->isMidi()) ||
             (!midi && bindings->trigger == TriggerKey)) {
+
+            // just for this panel, set the source binding set
+            // name so they can see where it came from
+            bindings->setSource(set->getName());
+
             things.add(bindings);
         }
         bindings = bindings->getNext();
     }
-    table.updateContent();
 }
 
 void InfoPanel::buttonClicked(juce::Button* b)
@@ -55,6 +86,11 @@ void InfoPanel::buttonClicked(juce::Button* b)
 void InfoPanel::resized()
 {
     juce::Rectangle area = getLocalBounds();
+
+    resizer.setBounds(area);
+
+    area.removeFromTop(InfoPanelHeaderHeight);
+    
     area.removeFromBottom(5);
     area.removeFromTop(5);
     area.removeFromLeft(5);
@@ -62,44 +98,33 @@ void InfoPanel::resized()
     
     footer.setBounds(area.removeFromBottom(InfoPanelFooterHeight));
     okButton.setSize(60, InfoPanelFooterHeight);
-    centerInParent(okButton);
+    JuceUtil::centerInParent(&okButton);
 
     table.setBounds(area);
 }
 
 void InfoPanel::paint(juce::Graphics& g)
 {
+    juce::Rectangle<int> area = getLocalBounds();
+    
     g.fillAll (juce::Colours::black);
 
     g.setColour(juce::Colours::white);
-    g.drawRect(getLocalBounds(), 4);
+    g.drawRect(area, 4);
+    
+    area = area.reduced(4);
+    
+    juce::Rectangle<int> header = area.removeFromTop(InfoPanelHeaderHeight);
+    g.setColour(juce::Colours::blue);
+    g.fillRect(header);
+    juce::Font font (InfoPanelHeaderHeight * 0.8f);
+    g.setFont(font);
+    g.setColour(juce::Colours::white);
+    if (midi)
+      g.drawText("MIDI Bindings", header, juce::Justification::centred);
+    else
+      g.drawText("Key Bindings", header, juce::Justification::centred);
 }
-
-int InfoPanel::centerLeft(juce::Component& c)
-{
-    return centerLeft(this, c);
-}
-
-int InfoPanel::centerLeft(juce::Component* container, juce::Component& c)
-{
-    return (container->getWidth() / 2) - (c.getWidth() / 2);
-}
-
-int InfoPanel::centerTop(juce::Component* container, juce::Component& c)
-{
-    return (container->getHeight() / 2) - (c.getHeight() / 2);
-}
-
-void InfoPanel::centerInParent(juce::Component& c)
-{
-    juce::Component* parent = c.getParentComponent();
-    c.setTopLeftPosition(centerLeft(parent, c), centerTop(parent, c));
-}    
-
-void InfoPanel::centerInParent()
-{
-    centerInParent(*this);
-}    
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -119,13 +144,16 @@ void InfoPanel::initTable()
     initColumns();
 
 }
+
+const int InfoPanelTriggerColumn = 1;
+const int InfoPanelTargetColumn = 2;
+const int InfoPanelScopeColumn = 3;
+const int InfoPanelArgumentsColumn = 4;
+const int InfoPanelSourceColumn = 5;
         
 void InfoPanel::initColumns()
 {
     juce::TableHeaderComponent& header = table.getHeader();
-
-    int triggerColumn = 1;
-    int targetColumn = 2;
 
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
     // minWidth defaults to 30
@@ -135,12 +163,24 @@ void InfoPanel::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("Key"), triggerColumn,
+    header.addColumn(juce::String("Trigger"), InfoPanelTriggerColumn,
                      100, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 
-    header.addColumn(juce::String("Target"), targetColumn,
-                     100, 30, -1,
+    header.addColumn(juce::String("Target"), InfoPanelTargetColumn,
+                     200, 30, -1,
+                     juce::TableHeaderComponent::defaultFlags);
+
+    header.addColumn(juce::String("Scope"), InfoPanelScopeColumn,
+                     50, 30, -1,
+                     juce::TableHeaderComponent::defaultFlags);
+
+    header.addColumn(juce::String("Arguments"), InfoPanelArgumentsColumn,
+                     50, 30, -1,
+                     juce::TableHeaderComponent::defaultFlags);
+
+    header.addColumn(juce::String("Source"), InfoPanelSourceColumn,
+                     200, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 }
 
@@ -155,7 +195,7 @@ juce::String InfoPanel::getCellText(int row, int columnId)
     juce::String cell;
 
     Binding* b = things[row];
-    if (columnId == 1) {
+    if (columnId == InfoPanelTriggerColumn) {
         if (midi) {
             cell = renderMidiTrigger(b);
         }
@@ -164,8 +204,17 @@ juce::String InfoPanel::getCellText(int row, int columnId)
             cell = KeyTracker::getKeyText(b->triggerValue, 0);
         }
     }
-    else {
+    else if (columnId == InfoPanelTargetColumn) {
         cell = juce::String(b->getSymbolName());
+    }
+    else if (columnId == InfoPanelScopeColumn) {
+        cell = juce::String(b->getScope());
+    }
+    else if (columnId == InfoPanelArgumentsColumn) {
+        cell = juce::String(b->getArguments());
+    }
+    else if (columnId == InfoPanelSourceColumn) {
+        cell = juce::String(b->getSource());
     }
     
     return cell;
@@ -292,4 +341,69 @@ void InfoPanel::cellClicked(int rowNumber, int columnId, const juce::MouseEvent&
     (void)rowNumber;
     (void)columnId;
     (void)event;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Drag
+//////////////////////////////////////////////////////////////////////
+
+// Working pretty well, but you can drag it completely out of the
+// containing window.  Need to prevent dragging when it reaches some
+// threshold.  If that isn't possible, let it finish, then snap it back to
+// ensure at least part of it is visible.
+
+
+void InfoPanel::mouseDown(const juce::MouseEvent& e)
+{
+    // ugh, this panel doesn't have a header yet
+    // give it a drag sensitivity region but that's going to
+    // overlap with the sorting table headers
+    //if (e.getMouseDownY() < TestPanelHeaderHeight) {
+    if (e.getMouseDownY() < 20) {
+        dragger.startDraggingComponent(this, e);
+
+        // the first argu is "minimumWhenOffTheTop" set
+        // this to the full height and it won't allow dragging the
+        // top out of boundsa
+        dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
+        
+        dragging = true;
+    }
+}
+
+void InfoPanel::mouseDrag(const juce::MouseEvent& e)
+{
+    // dragger.dragComponent(this, e, nullptr);
+    dragger.dragComponent(this, e, &dragConstrainer);
+    
+    if (!dragging)
+      Trace(1, "InfoPanel: mosueDrag didn't think it was dragging\n");
+}
+
+// don't need any of this logic, left over from when I was learning
+void InfoPanel::mouseUp(const juce::MouseEvent& e)
+{
+    if (dragging) {
+        if (e.getDistanceFromDragStartX() != 0 ||
+            e.getDistanceFromDragStartY() != 0) {
+
+            // is this the same, probably not sensitive to which button
+            if (!e.mouseWasDraggedSinceMouseDown()) {
+                Trace(1, "InfoPanel: Juce didn't think it was dragging\n");
+            }
+            
+            //Trace(2, "InfoPanel: New location %d %d\n", getX(), getY());
+            
+            //area->saveLocation(this);
+            dragging = false;
+        }
+        else if (e.mouseWasDraggedSinceMouseDown()) {
+            Trace(1, "InfoPanel: Juce thought we were dragging but the position didn't change\n");
+        }
+    }
+    else if (e.mouseWasDraggedSinceMouseDown()) {
+        Trace(1, "InfoPanel: Juce thought we were dragging\n");
+    }
+
+    dragging = false;
 }
