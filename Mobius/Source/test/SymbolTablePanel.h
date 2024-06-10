@@ -1,27 +1,19 @@
 
 #pragma once
 
-class SymbolTableFooter : public juce::Component
-{
-  public:
-    SymbolTableFooter() {}
-    ~SymbolTableFooter() {}
-};
-    
+#include "../ui/BasePanel.h"    
 
-class SymbolTablePanel : public juce::Component, juce::Button::Listener, public juce::TableListBoxModel
+class SymbolTableContent : public juce::Component, public juce::TableListBoxModel
 {
   public:
 
-    SymbolTablePanel();
-    ~SymbolTablePanel();
+    SymbolTableContent();
+    ~SymbolTableContent();
 
-    void show();
-
+    void prepare();
     void resized() override;
-    void paint(juce::Graphics& g) override;
-    void buttonClicked(juce::Button* b) override;
 
+    // TableListBoxModel
     int getNumRows() override;
     void paintRowBackground(juce::Graphics& g, int rowNumber,
                             int /*width*/, int /*height*/,
@@ -35,19 +27,30 @@ class SymbolTablePanel : public juce::Component, juce::Button::Listener, public 
     juce::Array<class Symbol*> symbols;
 
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
-    SymbolTableFooter footer;
-    juce::TextButton okButton {"OK"};
-
-    int centerLeft(juce::Component& c);
-    int centerLeft(juce::Component* container, juce::Component& c);
-    int centerTop(juce::Component* container, juce::Component& c);
-    void centerInParent(juce::Component& c);
-    void centerInParent();
 
     void initTable();
     void initColumns();
     juce::String getCellText(int row, int columnId);
 
+};
 
+class SymbolTablePanel : public BasePanel
+{
+  public:
+
+    SymbolTablePanel() {
+        setTitle("Symbols");
+        setContent(&content);
+        setSize(800, 600);
+    }
+    ~SymbolTablePanel() {}
+
+    void showing() override {
+        content.prepare();
+    }
+
+  private:
+
+    SymbolTableContent content;
 };
 

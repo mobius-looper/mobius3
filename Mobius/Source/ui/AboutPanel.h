@@ -1,39 +1,42 @@
 
 #pragma once
 
-class AboutFooter : public juce::Component {
-  public: 
-    AboutFooter() {}
-    ~AboutFooter() {}
-};
+#include <JuceHeader.h>
+#include "BasePanel.h"
 
-class AboutPanel : public juce::Component, juce::Button::Listener
+class AboutContent : public juce::Component
 {
   public:
 
-    AboutPanel();
-    ~AboutPanel();
-
-    void show();
+    AboutContent();
+    ~AboutContent() {}
 
     void resized() override;
-    void paint(juce::Graphics& g) override;
-    void buttonClicked(juce::Button* b) override;
 
   private:
 
-    juce::Label build;
-    juce::Label root;
+    juce::Label product;
+    juce::Label copyright;
     juce::URL url;
     juce::HyperlinkButton hyper;
+    juce::Label build;
+    juce::Label root;
 
-    AboutFooter footer;
-    juce::TextButton okButton {"OK"};
+};    
 
-    int centerLeft(juce::Component& c);
-    int centerLeft(juce::Component* container, juce::Component& c);
-    int centerTop(juce::Component* container, juce::Component& c);
-    void centerInParent(juce::Component& c);
-    void centerInParent();
+class AboutPanel : public BasePanel
+{
+  public:
+
+    AboutPanel() {
+        setTitle("About");
+        setContent(&content);
+        setSize(500, 200);
+    }
+    ~AboutPanel() {}
+
+  private:
+
+    AboutContent content;
 };
 

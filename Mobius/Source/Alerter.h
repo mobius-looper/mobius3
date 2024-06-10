@@ -1,3 +1,7 @@
+/*
+ * NOTE: This is no longer used.
+ * It was replaced by AlertPanel managed by MainWindow
+ */
 
 #pragma once
 #include <JuceHeader.h>

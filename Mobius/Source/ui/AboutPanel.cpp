@@ -1,13 +1,32 @@
+/**
+ * Simple panel that shows information about what this is 
+ * and who we are.
+ */
 
 #include <JuceHeader.h>
 
 #include "../Supervisor.h"
+
+#include "BasePanel.h"
 #include "AboutPanel.h"
 
-const int AboutPanelFooterHeight = 20;
-
-AboutPanel::AboutPanel()
+AboutContent::AboutContent()
 {
+    // yes, folks, that mess is an umlat-o
+    // see here why this is complicated
+    // https://forum.juce.com/t/embedding-unicode-string-literals-in-your-cpp-files/12600    
+    product.setText(juce::CharPointer_UTF8("M\xc3\xb6""bius 3 by"), juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(product);
+
+    url = juce::URL("http://www.circularlabs.com");
+    hyper.setButtonText("Circular Labs");
+    hyper.setURL(url);
+    addAndMakeVisible(hyper);
+
+    // same with copyright symbol
+    copyright.setText(juce::CharPointer_UTF8("\xc2\xa9 Jeffrey Larson"), juce::NotificationType::dontSendNotification);
+    addAndMakeVisible(copyright);
+        
     juce::String buildText ("Build: ");
     buildText += juce::String(Supervisor::BuildNumber);
     build.setText(buildText, juce::NotificationType::dontSendNotification);
@@ -17,85 +36,28 @@ AboutPanel::AboutPanel()
     rootText += Supervisor::Instance->getRoot().getFullPathName();
     root.setText(rootText, juce::NotificationType::dontSendNotification);
     addAndMakeVisible(root);
-
-    url = juce::URL("http://www.circularlabs.com");
-    hyper.setButtonText("Circular Labs");
-    hyper.setURL(url);
-    addAndMakeVisible(hyper);
-
-    okButton.addListener(this);
-    addAndMakeVisible(footer);
-    footer.addAndMakeVisible(okButton);
-
-    setSize(300, 200);
 }
 
-AboutPanel::~AboutPanel()
-{
-}
-
-void AboutPanel::show()
-{
-    centerInParent();
-    setVisible(true);
-}
-
-void AboutPanel::buttonClicked(juce::Button* b)
-{
-    (void)b;
-    setVisible(false);
-}
-
-void AboutPanel::resized()
+void AboutContent::resized()
 {
     juce::Rectangle area = getLocalBounds();
-    area.removeFromBottom(5);
-    area.removeFromTop(5);
-    area.removeFromLeft(5);
-    area.removeFromRight(5);
-    
-    footer.setBounds(area.removeFromBottom(AboutPanelFooterHeight));
-    okButton.setSize(60, AboutPanelFooterHeight);
-    centerInParent(okButton);
+
+    area.removeFromTop(10);
+    juce::Rectangle productArea = area.removeFromTop(18);
+
+    juce::Font font ((float)(productArea.getHeight()));
+    int productWidth = font.getStringWidth(product.getText());
+    // there is still a gap between the product text and the hyperlink
+    // not sure if the getStringWidth is inaccurate, or if there
+    // is something weird with hyperlink rendering, whatever it's close enough
+    productWidth -= 12;
+    product.setBounds(productArea.removeFromLeft(productWidth));
+    hyper.setBounds(productArea);
+    hyper.changeWidthToFitText();
 
     build.setBounds(area.removeFromTop(18));
     root.setBounds(area.removeFromTop(18));
-    
-    hyper.setTopLeftPosition(area.getX(), area.getY());
-    hyper.setSize(100, 20);
-    hyper.changeWidthToFitText();
+
+    area.removeFromBottom(10);
+    copyright.setBounds(area.removeFromBottom(18));
 }
-
-void AboutPanel::paint(juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::black);
-
-    g.setColour(juce::Colours::white);
-    g.drawRect(getLocalBounds(), 4);
-}
-
-int AboutPanel::centerLeft(juce::Component& c)
-{
-    return centerLeft(this, c);
-}
-
-int AboutPanel::centerLeft(juce::Component* container, juce::Component& c)
-{
-    return (container->getWidth() / 2) - (c.getWidth() / 2);
-}
-
-int AboutPanel::centerTop(juce::Component* container, juce::Component& c)
-{
-    return (container->getHeight() / 2) - (c.getHeight() / 2);
-}
-
-void AboutPanel::centerInParent(juce::Component& c)
-{
-    juce::Component* parent = c.getParentComponent();
-    c.setTopLeftPosition(centerLeft(parent, c), centerTop(parent, c));
-}    
-
-void AboutPanel::centerInParent()
-{
-    centerInParent(*this);
-}    

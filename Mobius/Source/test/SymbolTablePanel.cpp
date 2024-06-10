@@ -1,39 +1,29 @@
 /**
- * Hacked up panel to show the symbol table.
- * Derived from InfoPanel so it does more than we need.
+ * Display all of the interned symbols for debugging.
  */
+
 #include <JuceHeader.h>
 
 #include "../model/Symbol.h"
 #include "../model/FunctionDefinition.h"
 
 #include "../Supervisor.h"
+#include "../ui/BasePanel.h"
+
 #include "SymbolTablePanel.h"
 
-const int SymbolTablePanelFooterHeight = 20;
-
-SymbolTablePanel::SymbolTablePanel()
+SymbolTableContent::SymbolTableContent()
 {
     initTable();
     addAndMakeVisible(table);
-
-    okButton.addListener(this);
-
-    addAndMakeVisible(footer);
-    footer.addAndMakeVisible(okButton);
-
-    setSize(800, 600);
 }
 
-SymbolTablePanel::~SymbolTablePanel()
+SymbolTableContent::~SymbolTableContent()
 {
 }
 
-void SymbolTablePanel::show()
+void SymbolTableContent::prepare()
 {
-    centerInParent();
-    setVisible(true);
-
     symbols.clear();
     for (auto symbol : Symbols.getSymbols()) {
         symbols.add(symbol);
@@ -41,64 +31,10 @@ void SymbolTablePanel::show()
     table.updateContent();
 }
 
-void SymbolTablePanel::buttonClicked(juce::Button* b)
+void SymbolTableContent::resized()
 {
-    (void)b;
-    setVisible(false);
+    table.setBounds(getLocalBounds());
 }
-
-void SymbolTablePanel::resized()
-{
-    juce::Rectangle area = getLocalBounds();
-    area.removeFromBottom(5);
-    area.removeFromTop(5);
-    area.removeFromLeft(5);
-    area.removeFromRight(5);
-    
-    footer.setBounds(area.removeFromBottom(SymbolTablePanelFooterHeight));
-    okButton.setSize(60, SymbolTablePanelFooterHeight);
-    centerInParent(okButton);
-
-    table.setBounds(area);
-}
-
-void SymbolTablePanel::paint(juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::black);
-
-    g.setColour(juce::Colours::white);
-    g.drawRect(getLocalBounds(), 4);
-}
-
-//
-// todo: this shit happens a lot, put something in JuceUtil
-//
-
-int SymbolTablePanel::centerLeft(juce::Component& c)
-{
-    return centerLeft(this, c);
-}
-
-int SymbolTablePanel::centerLeft(juce::Component* container, juce::Component& c)
-{
-    return (container->getWidth() / 2) - (c.getWidth() / 2);
-}
-
-int SymbolTablePanel::centerTop(juce::Component* container, juce::Component& c)
-{
-    return (container->getHeight() / 2) - (c.getHeight() / 2);
-}
-
-void SymbolTablePanel::centerInParent(juce::Component& c)
-{
-    juce::Component* parent = c.getParentComponent();
-    c.setTopLeftPosition(centerLeft(parent, c), centerTop(parent, c));
-}    
-
-void SymbolTablePanel::centerInParent()
-{
-    centerInParent(*this);
-}    
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -106,7 +42,7 @@ void SymbolTablePanel::centerInParent()
 //
 //////////////////////////////////////////////////////////////////////
 
-void SymbolTablePanel::initTable()
+void SymbolTableContent::initTable()
 {
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);
     table.setOutlineThickness (1);
@@ -125,7 +61,7 @@ const int SymbolTableLevelColumn = 3;
 const int SymbolTableFlagsColumn = 4;
 const int SymbolTableWarnColumn = 5;
 
-void SymbolTablePanel::initColumns()
+void SymbolTableContent::initColumns()
 {
     juce::TableHeaderComponent& header = table.getHeader();
 
@@ -163,7 +99,7 @@ void SymbolTablePanel::initColumns()
  * Row is zero based columnId is 1 based and is NOT a column index, you have
  * to map it to the logical column if allowing column reording in the table.
  */
-juce::String SymbolTablePanel::getCellText(int row, int columnId)
+juce::String SymbolTableContent::getCellText(int row, int columnId)
 {
     juce::String cell;
     Symbol* s = symbols[row];
@@ -263,7 +199,7 @@ juce::String SymbolTablePanel::getCellText(int row, int columnId)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int SymbolTablePanel::getNumRows()
+int SymbolTableContent::getNumRows()
 {
     return symbols.size();
 }
@@ -281,7 +217,7 @@ int SymbolTablePanel::getNumRows()
  * todo: I've used this in a bunch of places by now, factor out something
  * that can be shared
  */
-void SymbolTablePanel::paintRowBackground(juce::Graphics& g, int rowNumber,
+void SymbolTableContent::paintRowBackground(juce::Graphics& g, int rowNumber,
                                           int /*width*/, int /*height*/,
                                           bool rowIsSelected)
 {
@@ -309,7 +245,7 @@ void SymbolTablePanel::paintRowBackground(juce::Graphics& g, int rowNumber,
  *
  * todo: I've carried around this analysis over multiple classes, get rid of it
  */
-void SymbolTablePanel::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void SymbolTableContent::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -342,7 +278,7 @@ void SymbolTablePanel::paintCell(juce::Graphics& g, int rowNumber, int columnId,
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
-void SymbolTablePanel::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void SymbolTableContent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;

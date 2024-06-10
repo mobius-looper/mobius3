@@ -1,3 +1,10 @@
+/*
+ * NOTE: This is no longer used.
+ * It was replaced by AlertPanel managed by MainWindow
+ * Keep it around for awhile in case we need to resurrect multiple
+ * autonomous alert windows, but I don't think that's necessary.
+ * Just make the single AlertPanel accumulate messages.
+ */
 
 #include <JuceHeader.h>
 

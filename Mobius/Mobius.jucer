@@ -169,6 +169,12 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="aTpN2M" name="AlertPanel.cpp" compile="1" resource="0" file="Source/ui/AlertPanel.cpp"/>
+        <FILE id="wUOt37" name="AlertPanel.h" compile="0" resource="0" file="Source/ui/AlertPanel.h"/>
+        <FILE id="CXsMeg" name="InfoPanel.cpp" compile="1" resource="0" file="Source/ui/InfoPanel.cpp"/>
+        <FILE id="lPVLqQ" name="InfoPanel.h" compile="0" resource="0" file="Source/ui/InfoPanel.h"/>
+        <FILE id="keXdso" name="BasePanel.cpp" compile="1" resource="0" file="Source/ui/BasePanel.cpp"/>
+        <FILE id="oBlSlj" name="BasePanel.h" compile="0" resource="0" file="Source/ui/BasePanel.h"/>
         <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
           <FILE id="YtRrYA" name="AudioDevicesPanel.cpp" compile="1" resource="0"
                 file="Source/ui/config/AudioDevicesPanel.cpp"/>
@@ -198,8 +204,6 @@
           <FILE id="GsBQz3" name="GlobalPanel.h" compile="0" resource="0" file="Source/ui/config/GlobalPanel.h"/>
           <FILE id="jBiSXy" name="HostPanel.cpp" compile="1" resource="0" file="Source/ui/config/HostPanel.cpp"/>
           <FILE id="WpkBTG" name="HostPanel.h" compile="0" resource="0" file="Source/ui/config/HostPanel.h"/>
-          <FILE id="E5fxCw" name="InfoPanel.cpp" compile="1" resource="0" file="Source/ui/config/InfoPanel.cpp"/>
-          <FILE id="J6YCFL" name="InfoPanel.h" compile="0" resource="0" file="Source/ui/config/InfoPanel.h"/>
           <FILE id="CdDmPy" name="KeyboardPanel.cpp" compile="1" resource="0"
                 file="Source/ui/config/KeyboardPanel.cpp"/>
           <FILE id="xnfHRb" name="KeyboardPanel.h" compile="0" resource="0" file="Source/ui/config/KeyboardPanel.h"/>

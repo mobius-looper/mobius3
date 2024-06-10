@@ -22,8 +22,9 @@
 #include "MainMenu.h"
 #include "display/MobiusDisplay.h"
 #include "config/ConfigEditor.h"
-#include "config/InfoPanel.h"
+#include "InfoPanel.h"
 #include "AboutPanel.h"
+#include "AlertPanel.h"
 
 #ifdef USE_FFMETERS
 #include "../ff_meters/ff_meters.h"
@@ -71,6 +72,10 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
         display.setIdentifyMode(b);
     }
 
+    void alert(juce::String msg) {
+        alertPanel.show(msg);
+    }
+    
   private:
 
     class Supervisor* supervisor;
@@ -80,6 +85,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     ConfigEditor configEditor {this};
     InfoPanel infoPanel;
     AboutPanel aboutPanel;
+    AlertPanel alertPanel;
     
 #ifdef USE_FFMETERS
     foleys::LevelMeter levelMeter;

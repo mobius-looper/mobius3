@@ -1,44 +1,27 @@
 
 #include <JuceHeader.h>
 
-#include "../../util/MidiUtil.h"
-#include "../../model/MobiusConfig.h"
-#include "../../model/Binding.h"
-#include "../JuceUtil.h"
-#include "../../Supervisor.h"
+#include "../util/MidiUtil.h"
+#include "../model/MobiusConfig.h"
+#include "../model/Binding.h"
+#include "../Supervisor.h"
+
+#include "JuceUtil.h"
 #include "InfoPanel.h"
 
-const int InfoPanelHeaderHeight = 20;
-const int InfoPanelFooterHeight = 20;
-
-InfoPanel::InfoPanel()
+InfoContent::InfoContent()
 {
-    addAndMakeVisible(resizer);
-    resizer.setBorderThickness(juce::BorderSize<int>(4));
-    resizeConstrainer.setMinimumHeight(20);
-    resizeConstrainer.setMinimumWidth(20);
-
     initTable();
     addAndMakeVisible(table);
-
-    okButton.addListener(this);
-
-    addAndMakeVisible(footer);
-    footer.addAndMakeVisible(okButton);
-
-    setSize(600, 600);
 }
 
-InfoPanel::~InfoPanel()
+InfoContent::~InfoContent()
 {
 }
 
-void InfoPanel::show(bool doMidi)
+void InfoContent::prepare(bool doMidi)
 {
     midi = doMidi;
-    JuceUtil::centerInParent(this);
-    setVisible(true);
-
     things.clear();
     MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
     BindingSet* bindingSets = config->getBindingSets();
@@ -60,7 +43,7 @@ void InfoPanel::show(bool doMidi)
     table.updateContent();
 }
 
-void InfoPanel::addBindings(BindingSet* set)
+void InfoContent::addBindings(BindingSet* set)
 {
     Binding* bindings = set->getBindings();
     while (bindings != nullptr) {
@@ -77,53 +60,9 @@ void InfoPanel::addBindings(BindingSet* set)
     }
 }
 
-void InfoPanel::buttonClicked(juce::Button* b)
+void InfoContent::resized()
 {
-    (void)b;
-    setVisible(false);
-}
-
-void InfoPanel::resized()
-{
-    juce::Rectangle area = getLocalBounds();
-
-    resizer.setBounds(area);
-
-    area.removeFromTop(InfoPanelHeaderHeight);
-    
-    area.removeFromBottom(5);
-    area.removeFromTop(5);
-    area.removeFromLeft(5);
-    area.removeFromRight(5);
-    
-    footer.setBounds(area.removeFromBottom(InfoPanelFooterHeight));
-    okButton.setSize(60, InfoPanelFooterHeight);
-    JuceUtil::centerInParent(&okButton);
-
-    table.setBounds(area);
-}
-
-void InfoPanel::paint(juce::Graphics& g)
-{
-    juce::Rectangle<int> area = getLocalBounds();
-    
-    g.fillAll (juce::Colours::black);
-
-    g.setColour(juce::Colours::white);
-    g.drawRect(area, 4);
-    
-    area = area.reduced(4);
-    
-    juce::Rectangle<int> header = area.removeFromTop(InfoPanelHeaderHeight);
-    g.setColour(juce::Colours::blue);
-    g.fillRect(header);
-    juce::Font font (InfoPanelHeaderHeight * 0.8f);
-    g.setFont(font);
-    g.setColour(juce::Colours::white);
-    if (midi)
-      g.drawText("MIDI Bindings", header, juce::Justification::centred);
-    else
-      g.drawText("Key Bindings", header, juce::Justification::centred);
+    table.setBounds(getLocalBounds());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -132,7 +71,7 @@ void InfoPanel::paint(juce::Graphics& g)
 //
 //////////////////////////////////////////////////////////////////////
 
-void InfoPanel::initTable()
+void InfoContent::initTable()
 {
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);
     table.setOutlineThickness (1);
@@ -145,13 +84,13 @@ void InfoPanel::initTable()
 
 }
 
-const int InfoPanelTriggerColumn = 1;
-const int InfoPanelTargetColumn = 2;
-const int InfoPanelScopeColumn = 3;
-const int InfoPanelArgumentsColumn = 4;
-const int InfoPanelSourceColumn = 5;
+const int InfoContentTriggerColumn = 1;
+const int InfoContentTargetColumn = 2;
+const int InfoContentScopeColumn = 3;
+const int InfoContentArgumentsColumn = 4;
+const int InfoContentSourceColumn = 5;
         
-void InfoPanel::initColumns()
+void InfoContent::initColumns()
 {
     juce::TableHeaderComponent& header = table.getHeader();
 
@@ -163,23 +102,23 @@ void InfoPanel::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("Trigger"), InfoPanelTriggerColumn,
+    header.addColumn(juce::String("Trigger"), InfoContentTriggerColumn,
                      100, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 
-    header.addColumn(juce::String("Target"), InfoPanelTargetColumn,
+    header.addColumn(juce::String("Target"), InfoContentTargetColumn,
                      200, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 
-    header.addColumn(juce::String("Scope"), InfoPanelScopeColumn,
+    header.addColumn(juce::String("Scope"), InfoContentScopeColumn,
                      50, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 
-    header.addColumn(juce::String("Arguments"), InfoPanelArgumentsColumn,
+    header.addColumn(juce::String("Arguments"), InfoContentArgumentsColumn,
                      50, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 
-    header.addColumn(juce::String("Source"), InfoPanelSourceColumn,
+    header.addColumn(juce::String("Source"), InfoContentSourceColumn,
                      200, 30, -1,
                      juce::TableHeaderComponent::defaultFlags);
 }
@@ -190,12 +129,12 @@ void InfoPanel::initColumns()
  * to map it to the logical column if allowing column reording in the table.
  *
  */
-juce::String InfoPanel::getCellText(int row, int columnId)
+juce::String InfoContent::getCellText(int row, int columnId)
 {
     juce::String cell;
 
     Binding* b = things[row];
-    if (columnId == InfoPanelTriggerColumn) {
+    if (columnId == InfoContentTriggerColumn) {
         if (midi) {
             cell = renderMidiTrigger(b);
         }
@@ -204,16 +143,16 @@ juce::String InfoPanel::getCellText(int row, int columnId)
             cell = KeyTracker::getKeyText(b->triggerValue, 0);
         }
     }
-    else if (columnId == InfoPanelTargetColumn) {
+    else if (columnId == InfoContentTargetColumn) {
         cell = juce::String(b->getSymbolName());
     }
-    else if (columnId == InfoPanelScopeColumn) {
+    else if (columnId == InfoContentScopeColumn) {
         cell = juce::String(b->getScope());
     }
-    else if (columnId == InfoPanelArgumentsColumn) {
+    else if (columnId == InfoContentArgumentsColumn) {
         cell = juce::String(b->getArguments());
     }
-    else if (columnId == InfoPanelSourceColumn) {
+    else if (columnId == InfoContentSourceColumn) {
         cell = juce::String(b->getSource());
     }
     
@@ -221,7 +160,7 @@ juce::String InfoPanel::getCellText(int row, int columnId)
 }
 
 // need a MidiUtil for this
-juce::String InfoPanel::renderMidiTrigger(Binding* b)
+juce::String InfoContent::renderMidiTrigger(Binding* b)
 {
     juce::String text;
     Trigger* trigger = b->trigger;
@@ -262,7 +201,7 @@ juce::String InfoPanel::renderMidiTrigger(Binding* b)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int InfoPanel::getNumRows()
+int InfoContent::getNumRows()
 {
     return things.size();
 }
@@ -277,7 +216,7 @@ int InfoPanel::getNumRows()
  * fancier than just filling the entire thing.  Could be useful
  * for borders, though Juce might provide something for selected rows/cells already.
  */
-void InfoPanel::paintRowBackground(juce::Graphics& g, int rowNumber,
+void InfoContent::paintRowBackground(juce::Graphics& g, int rowNumber,
                                       int /*width*/, int /*height*/,
                                       bool rowIsSelected)
 {
@@ -303,7 +242,7 @@ void InfoPanel::paintRowBackground(juce::Graphics& g, int rowNumber,
  * default to 22 but ideally this should be proportional to the row height if it can be changed.
  * 14 is 63% of 22
  */
-void InfoPanel::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void InfoContent::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -336,74 +275,9 @@ void InfoPanel::paintCell(juce::Graphics& g, int rowNumber, int columnId,
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
-void InfoPanel::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void InfoContent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;
     (void)event;
-}
-
-//////////////////////////////////////////////////////////////////////
-// Drag
-//////////////////////////////////////////////////////////////////////
-
-// Working pretty well, but you can drag it completely out of the
-// containing window.  Need to prevent dragging when it reaches some
-// threshold.  If that isn't possible, let it finish, then snap it back to
-// ensure at least part of it is visible.
-
-
-void InfoPanel::mouseDown(const juce::MouseEvent& e)
-{
-    // ugh, this panel doesn't have a header yet
-    // give it a drag sensitivity region but that's going to
-    // overlap with the sorting table headers
-    //if (e.getMouseDownY() < TestPanelHeaderHeight) {
-    if (e.getMouseDownY() < 20) {
-        dragger.startDraggingComponent(this, e);
-
-        // the first argu is "minimumWhenOffTheTop" set
-        // this to the full height and it won't allow dragging the
-        // top out of boundsa
-        dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
-        
-        dragging = true;
-    }
-}
-
-void InfoPanel::mouseDrag(const juce::MouseEvent& e)
-{
-    // dragger.dragComponent(this, e, nullptr);
-    dragger.dragComponent(this, e, &dragConstrainer);
-    
-    if (!dragging)
-      Trace(1, "InfoPanel: mosueDrag didn't think it was dragging\n");
-}
-
-// don't need any of this logic, left over from when I was learning
-void InfoPanel::mouseUp(const juce::MouseEvent& e)
-{
-    if (dragging) {
-        if (e.getDistanceFromDragStartX() != 0 ||
-            e.getDistanceFromDragStartY() != 0) {
-
-            // is this the same, probably not sensitive to which button
-            if (!e.mouseWasDraggedSinceMouseDown()) {
-                Trace(1, "InfoPanel: Juce didn't think it was dragging\n");
-            }
-            
-            //Trace(2, "InfoPanel: New location %d %d\n", getX(), getY());
-            
-            //area->saveLocation(this);
-            dragging = false;
-        }
-        else if (e.mouseWasDraggedSinceMouseDown()) {
-            Trace(1, "InfoPanel: Juce thought we were dragging but the position didn't change\n");
-        }
-    }
-    else if (e.mouseWasDraggedSinceMouseDown()) {
-        Trace(1, "InfoPanel: Juce thought we were dragging\n");
-    }
-
-    dragging = false;
 }

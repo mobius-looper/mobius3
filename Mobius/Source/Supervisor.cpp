@@ -896,7 +896,9 @@ void Supervisor::notifyAlertListeners(juce::String msg)
 
 void Supervisor::alert(juce::String msg)
 {
-    alerter.alert(mainWindow.get(), msg);
+    // original style
+    //alerter.alert(mainWindow.get(), msg);
+    mainWindow->alert(msg);
 }
 
 void Supervisor::addTimeListener(TimeListener* l)
