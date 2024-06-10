@@ -54,7 +54,7 @@
     name='Default'
     active='0'
     beatsPerBar='4'
-    defaultSyncSource='track'
+    defaultSyncSource='host'
     defaultTrackSyncUnit='loop'
     maxTempo='300'
     minTempo='20'
@@ -62,7 +62,7 @@
     outRealign='midiStart'
     realignTime='start'
     resizeSyncAdjust='none'
-    slaveSyncUnit='beat'
+    slaveSyncUnit='bar'
     speedSyncAdjust='none'>
     <SetupTrack
       input='127'
@@ -74,7 +74,7 @@
       audioOutputPort='1'
       pluginInputPort='1'
       pluginOutputPort='1'
-      syncSource='track'
+      syncSource='default'
       trackSyncUnit='loop'/>
     <SetupTrack
       input='127'

@@ -535,6 +535,13 @@ void Supervisor::advance()
         
             // traverse the display components telling then to reflect changes in the engine
             MobiusState* state = mobius->getState();
+
+            // was doing this directly in mobiusTimeBoundary but that
+            // caused deadlocks, if we have to do this in the normal maintenance
+            // cycle, by breaking MainThread out of the wait early, then we don't need
+            // TimeListeners
+            notifyTimeListeners();
+            
             mainWindow->update(state);
         }
     }
@@ -1036,6 +1043,8 @@ void Supervisor::setAudioListener(MobiusAudioListener* l)
  */
 void Supervisor::mobiusTimeBoundary()
 {
+    // seems to cause deadlocks since we're in the audio thread
+#if 0    
     if (timeListeners.size() > 0) {
         const juce::MessageManagerLock mml (juce::Thread::getCurrentThread());
         if (!mml.lockWasGained()) {
@@ -1047,6 +1056,11 @@ void Supervisor::mobiusTimeBoundary()
 
         notifyTimeListeners();
     }
+#endif
+
+    // try this instead which is supposed to get MainThread out of it's wait state
+    // and make it do an immediate refresh
+    uiThread.notify();
 }
 
 /**

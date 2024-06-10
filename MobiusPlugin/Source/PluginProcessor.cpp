@@ -158,6 +158,11 @@ MobiusPluginAudioProcessor::~MobiusPluginAudioProcessor()
     supervisor.shutdown();
 }
 
+void MobiusPluginAudioProcessor::reset()
+{
+    Trace(2, "MobiusPluginAudioProcessor::reset\n");
+}
+
 //==============================================================================
 
 //

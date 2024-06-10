@@ -29,6 +29,8 @@ class MobiusPluginAudioProcessor  : public juce::AudioProcessor
     MobiusPluginAudioProcessor();
     ~MobiusPluginAudioProcessor() override;
 
+    void reset() override;
+
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
