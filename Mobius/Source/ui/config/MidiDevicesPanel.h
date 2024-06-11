@@ -17,10 +17,62 @@
 #include "../../test/BasicTabs.h"
 #include "../common/Form.h"
 #include "../common/Field.h"
+#include "../common/BasicTable.h"
 
 #include "LogPanel.h"
 #include "ConfigPanel.h"
 
+class MidiDeviceTableRow
+{
+  public:
+
+    MidiDeviceTableRow() {}
+    ~MidiDeviceTableRow() {}
+
+    juce::String name;
+    // true if this was in DeviceConfig but not found
+    bool missing = false;
+
+    bool appControl = false;
+    bool appSync = false;
+    bool pluginControl = false;
+    bool pluginSync = false;
+};
+
+class MidiDeviceTable : public BasicTable
+{
+  public:
+
+    MidiDeviceTable();
+    ~MidiDeviceTable() {}
+
+    void setOuput(bool b) {
+        isOutput = b;
+    }
+
+    void init(bool output);
+    void load(class DeviceConfig* config);
+    void save(class DeviceConfig* config);
+
+    // BasicTable::Model
+    int getNumRows();
+    juce::String getCellText(int row, int col);
+    bool getCellCheck(int row, int column);
+    void setCellCheck(int row, int column, bool state);
+    
+  private:
+
+    bool initialized = false;
+    bool isOutput = false;
+    juce::OwnedArray<MidiDeviceTableRow> devices;
+
+    MidiDeviceTableRow* getRow(juce::String name);
+    void loadDevices(juce::String names, bool sync, bool plugin);
+    juce::String getDevices(bool sync, bool plugin);
+
+    
+};
+    
 class MidiDevicesContent : public juce::Component
 {
   public:
@@ -62,9 +114,8 @@ class MidiDevicesPanel : public ConfigPanel, public Field::Listener, public Midi
     class Field* pluginOutputField = nullptr;
 
     BasicTabs tabs;
-    SimpleListBox appInputs;
-    SimpleListBox appOutputs;
-    SimpleListBox pluginInputs;
-    SimpleListBox pluginOutputs;
+    MidiDeviceTable inputTable;
+    MidiDeviceTable outputTable;
+    
 };
 

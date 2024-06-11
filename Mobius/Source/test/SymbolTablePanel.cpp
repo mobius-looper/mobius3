@@ -7,14 +7,27 @@
 #include "../model/Symbol.h"
 #include "../model/FunctionDefinition.h"
 
-#include "../Supervisor.h"
+#include "../ui/common/BasicTable.h"
 #include "../ui/BasePanel.h"
+
+#include "../Supervisor.h"
 
 #include "SymbolTablePanel.h"
 
+const int SymbolTableNameColumn = 1;
+const int SymbolTableTypeColumn = 2;
+const int SymbolTableLevelColumn = 3;
+const int SymbolTableFlagsColumn = 4;
+const int SymbolTableWarnColumn = 5;
+
 SymbolTableContent::SymbolTableContent()
 {
-    initTable();
+    table.setBasicModel(this);
+    table.addColumn("Symbol", SymbolTableNameColumn, 150);
+    table.addColumn("Type", SymbolTableTypeColumn, 100);
+    table.addColumn("Level", SymbolTableLevelColumn, 100);
+    table.addColumn("Flags", SymbolTableFlagsColumn, 100);
+    table.addColumn("Warnings", SymbolTableWarnColumn, 100);
     addAndMakeVisible(table);
 }
 
@@ -36,77 +49,11 @@ void SymbolTableContent::resized()
     table.setBounds(getLocalBounds());
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// TableListBoxModel
-//
-//////////////////////////////////////////////////////////////////////
-
-void SymbolTableContent::initTable()
+int SymbolTableContent::getNumRows()
 {
-    table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);
-    table.setOutlineThickness (1);
-    table.setMultipleSelectionEnabled (false);
-    table.setClickingTogglesRowSelection(true);
-    table.setHeaderHeight(22);
-    table.setRowHeight(22);
-
-    initColumns();
-
+    return symbols.size();
 }
 
-const int SymbolTableNameColumn = 1;
-const int SymbolTableTypeColumn = 2;
-const int SymbolTableLevelColumn = 3;
-const int SymbolTableFlagsColumn = 4;
-const int SymbolTableWarnColumn = 5;
-
-void SymbolTableContent::initColumns()
-{
-    juce::TableHeaderComponent& header = table.getHeader();
-
-    // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
-    // sortable is not relevant for most tables and causes confusion when things don't sort
-    // appearsOnColumnMenu means "the columnn will be shown on the pop-up menu allowing it to
-    // be hidden/shown, not sure what that means but I don't need it
-    int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
-        juce::TableHeaderComponent::ColumnPropertyFlags::resizable |
-        juce::TableHeaderComponent::ColumnPropertyFlags::draggable;
-
-    // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
-    // minWidth defaults to 30
-    // maxWidth to -1
-    // propertyFlags=defaultFlags
-    // insertIndex=-1
-    // propertyFlags has various options for visibility, sorting, resizing, dragging
-    // example used 1 based column ids, is that necessary?
-
-    header.addColumn(juce::String("Symbol"), SymbolTableNameColumn,
-                     150, 30, -1,
-                     columnFlags);
-
-    header.addColumn(juce::String("Type"), SymbolTableTypeColumn,
-                     100, 30, -1,
-                     columnFlags);
-    
-    header.addColumn(juce::String("Level"), SymbolTableLevelColumn,
-                     100, 30, -1,
-                     columnFlags);
-    
-    header.addColumn(juce::String("Flags"), SymbolTableFlagsColumn,
-                     100, 30, -1,
-                     columnFlags);
-    
-    header.addColumn(juce::String("Warnings"), SymbolTableWarnColumn,
-                     100, 30, -1,
-                     columnFlags);
-}
-
-/**
- * Callback from TableListBoxModel to derive the text to paint in this cell.
- * Row is zero based columnId is 1 based and is NOT a column index, you have
- * to map it to the logical column if allowing column reording in the table.
- */
 juce::String SymbolTableContent::getCellText(int row, int columnId)
 {
     juce::String cell;
@@ -201,96 +148,6 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
     }
     
     return cell;
-}
-
-/**
- * The maximum of all column rows.
- * This is independent of the table size.
- */
-int SymbolTableContent::getNumRows()
-{
-    return symbols.size();
-}
-
-/**
- * Taken from the example to show alternate row backgrounds.
- * Colors look reasonable, don't really need to mess with
- * LookAndFeel though.
- *
- * Graphics will be initialized to the size of the visible row.
- * Width and height are passed, I guess in case you want to do something
- * fancier than just filling the entire thing.  Could be useful
- * for borders, though Juce might provide something for selected rows/cells already.
- *
- * todo: I've used this in a bunch of places by now, factor out something
- * that can be shared
- */
-void SymbolTableContent::paintRowBackground(juce::Graphics& g, int rowNumber,
-                                          int /*width*/, int /*height*/,
-                                          bool rowIsSelected)
-{
-    // I guess this makes an alternate color that is a variant of the existing background
-    // color rather than having a hard coded unrelated color
-    auto alternateColour = getLookAndFeel().findColour (juce::ListBox::backgroundColourId)
-        .interpolatedWith (getLookAndFeel().findColour (juce::ListBox::textColourId), 0.03f);
-
-    if (rowIsSelected) {
-        g.fillAll (juce::Colours::lightblue);
-    }
-    else if (rowNumber % 2) {
-        g.fillAll (alternateColour);
-    }
-}
-
-/**
- * Based on the example.
- * If the row is selected it will have a light blue backgound and we'll paint the
- * text in dark blue.  Otherwise we use whatever the text color is set in the ListBox
- * 
- * Example had font hard coded as Font(14.0f) which is fine if you let the row heiught
- * default to 22 but ideally this should be proportional to the row height if it can be changed.
- * 14 is 63% of 22
- *
- * todo: I've carried around this analysis over multiple classes, get rid of it
- */
-void SymbolTableContent::paintCell(juce::Graphics& g, int rowNumber, int columnId,
-                             int width, int height, bool rowIsSelected)
-{
-    g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
-    
-    // how expensive is this, should we be caching it after the row height changes?
-    g.setFont(juce::Font(height * .66f));
-
-    juce::String cell = getCellText(rowNumber, columnId);
-
-    // again from the table example
-    // x, y, width, height, justification, useEllipses
-    // example gave it 2 on the left, I guess to give it a little padding next to the cell border
-    // same on the right with the width reduction
-    // height was expected to be tall enough
-    // centeredLeft means "centered vertically but placed on the left hand side"
-    g.drawText (cell, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
-
-    // this is odd, it fills a little rectangle on the right edge 1 pixel wide with
-    // the background color, I'm guessing if the text is long enough, perhaps with elippses,
-    // this erases part of to make it look better?
-    //g.setColour (getLookAndFeel().findColour (juce::ListBox::backgroundColourId));
-    //g.fillRect (width - 1, 0, 1, height);
-}
-
-/**
- * MouseEvent has various characters of the mouse click such as the actual x/y coordinate
- * offsetFromDragStart, numberOfClicks, etc.  Not interested in those right now.
- *
- * Can pass the row/col to the listener.
- * Can use ListBox::isRowSelected to get the selected row
- * Don't know if there is tracking of a selected column but we don't need that yet.
- */
-void SymbolTableContent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
-{
-    (void)rowNumber;
-    (void)columnId;
-    (void)event;
 }
 
 /****************************************************************************/

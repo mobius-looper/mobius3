@@ -2,8 +2,9 @@
 #pragma once
 
 #include "../ui/BasePanel.h"    
+#include "../ui/common/BasicTable.h"
 
-class SymbolTableContent : public juce::Component, public juce::TableListBoxModel
+class SymbolTableContent : public juce::Component, public BasicTable::Model
 {
   public:
 
@@ -13,24 +14,14 @@ class SymbolTableContent : public juce::Component, public juce::TableListBoxMode
     void prepare();
     void resized() override;
 
-    // TableListBoxModel
+    // BasicTable::Model
     int getNumRows() override;
-    void paintRowBackground(juce::Graphics& g, int rowNumber,
-                            int /*width*/, int /*height*/,
-                            bool rowIsSelected) override;
-    void paintCell(juce::Graphics& g, int rowNumber, int columnId,
-                   int width, int height, bool rowIsSelected) override;
-    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    juce::String getCellText(int row, int columnId);
 
   private:
 
     juce::Array<class Symbol*> symbols;
-
-    juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
-
-    void initTable();
-    void initColumns();
-    juce::String getCellText(int row, int columnId);
+    BasicTable table;
 
 };
 

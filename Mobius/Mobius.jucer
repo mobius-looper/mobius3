@@ -319,6 +319,8 @@
           <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
+          <FILE id="akjBJh" name="BasicTable.cpp" compile="1" resource="0" file="Source/ui/common/BasicTable.cpp"/>
+          <FILE id="X43ibi" name="BasicTable.h" compile="0" resource="0" file="Source/ui/common/BasicTable.h"/>
           <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
           <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
           <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"

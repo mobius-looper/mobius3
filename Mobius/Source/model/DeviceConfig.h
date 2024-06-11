@@ -11,6 +11,8 @@
  * style, we'll just maintain one of these and if you call any
  * methods that change it, it sets a "dirty" flag so Supervisor
  * needs to know it needs to be saved.
+ *
+ * update: MidiDevicePanel is changing to not work that way...
  */
 
 #pragma once
@@ -44,6 +46,20 @@ class MachineConfig
     
     juce::String getPluginMidiOutput();
     void setPluginMidiOutput(juce::String name);
+
+    // hating the dirty flag and endless accessors
+    // these are the new ones, start doing it this way
+    // fuck, this is ugly, reconsider using a table model for this
+    // like the UI
+    juce::String midiInput;
+    juce::String midiInputSync;
+    juce::String midiOutput;
+    juce::String midiOutputSync;
+    
+    juce::String pluginMidiInput;
+    juce::String pluginMidiInputSync;
+    juce::String pluginMidiOutput;
+    juce::String pluginMidiOutputSync;
     
     int getSampleRate();
     void setSampleRate(int rate);
@@ -60,9 +76,6 @@ class MachineConfig
     juce::String audioDeviceType;
     juce::String audioInput;
     juce::String audioOutput;
-    juce::String midiInput;
-    juce::String midiOutput;
-    juce::String pluginMidiOutput;
 
     int sampleRate = 0;
     int blockSize = 0;
