@@ -36,7 +36,20 @@ MidiDevicesPanel::MidiDevicesPanel(ConfigEditor* argEditor) :
 
     // don't need help
     setHelpHeight(0);
-    render();
+    
+    mdcontent.addAndMakeVisible(tabs);
+    mdcontent.addAndMakeVisible(log);
+
+    tabs.add("Input Devices", &inputTable);
+    tabs.add("Output Devices", &outputTable);
+    
+    // place it in the ConfigPanel content panel
+    content.addAndMakeVisible(mdcontent);
+
+    // have been keeping the same size for all ConfigPanels
+    // rather than having them shrink to fit, should move this
+    // to ConfigPanel or ConfigEditor
+    setSize (900, 600);
 }
 
 MidiDevicesPanel::~MidiDevicesPanel()
@@ -97,32 +110,11 @@ void MidiDevicesPanel::midiMessage(const juce::MidiMessage& message, juce::Strin
 
 /**
  * Called by ConfigEditor when asked to edit devices.
- * Unlike most other config panels, we don't have a lot of complex state to manage.
- * We also do not edit the DeviceConfig directly, instead get/set selections through
- * MidiManager which will cause the config to become dirty and flushed on shutdown.
- *
- * yeah well, that's about to change...
  */
 void MidiDevicesPanel::load()
 {
     if (!loaded) {
 
-        MidiManager* mm = Supervisor::Instance->getMidiManager();
-
-        juce::String input = mm->getInput();
-        juce::String output = mm->getOutput();
-        juce::String pluginOutput = mm->getPluginOutput();
-
-        if (Supervisor::Instance->isPlugin()) {
-            pluginOutputField->setValue(pluginOutput);
-        }
-        else {
-            inputField->setValue(input);
-            outputField->setValue(output);
-            pluginOutputField->setValue(pluginOutput);
-        }
-
-        // evolving new style
         DeviceConfig* config = Supervisor::Instance->getDeviceConfig();
         inputTable.load(config);
         outputTable.load(config);
@@ -136,14 +128,6 @@ void MidiDevicesPanel::load()
 /**
  * Called by the Save button in the footer.
  * Tell the ConfigEditor we are done.
- *
- * We don't actually have pending state to save, the field listeners
- * directly modified the devices.  I suppose we could have saved
- * the original values and restore them if they click Cancel.
- *
- * Don't need to save devices.xml now since Supervisor will do that
- * automatically on shutdown, but go ahead so we can see the results
- * immediately.
  */
 void MidiDevicesPanel::save()
 {
@@ -155,6 +139,10 @@ void MidiDevicesPanel::save()
         
         Supervisor::Instance->updateDeviceConfig();
 
+        // reflect the changes in the active devices
+        MidiManager* mm = Supervisor::Instance->getMidiManager();
+        mm->openDevices();
+
         loaded = false;
         changed = false;
     }
@@ -165,6 +153,10 @@ void MidiDevicesPanel::save()
 
 /**
  * Throw away all editing state.
+ *
+ * If we ever add an "Apply" button to monitor inputs as they are selected,
+ * then cancel would need to restore the open devices to just those
+ * that are in the DeviceConfig.
  */
 void MidiDevicesPanel::cancel()
 {
@@ -179,7 +171,7 @@ void MidiDevicesPanel::cancel()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * MidiDevicesContent is a wrapper around the Form used to select
+ * MidiDevicesContent is a wrapper tabs used to select
  * devices and a LogPanel used to display MIDI events.  Necessary
  * because ConfigPanel only allows a single child of it's content
  * component and we want to control layout of the form relative
@@ -195,123 +187,15 @@ void MidiDevicesPanel::cancel()
  */
 void MidiDevicesContent::resized()
 {
-    // the form will have sized itself to the minimum bounds
-    // necessary for the fields
-    // leave a little gap then let the log window fill the rest
-    // of the available space
     juce::Rectangle<int> area = getLocalBounds();
     
-    // kludge, work out parenting awareness
-    Form* form = (Form*)getChildComponent(0);
-    if (form != nullptr) {
-        juce::Rectangle<int> min = form->getMinimumSize();
-        form->setBounds(area.removeFromTop(min.getHeight()));
-    }
-    
-    // gap
-    area.removeFromTop(20);
-
     // this sucks so hard
-    BasicTabs* tabs = (BasicTabs*)getChildComponent(2);
+    BasicTabs* tabs = (BasicTabs*)getChildComponent(0);
     tabs->setBounds(area.removeFromTop(200));
 
     LogPanel* log = (LogPanel*)getChildComponent(1);
     if (log != nullptr)
       log->setBounds(area);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Form Rendering
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiDevicesPanel::render()
-{
-    initForm();
-    form.render();
-
-    mdcontent.addAndMakeVisible(form);
-    mdcontent.addAndMakeVisible(log);
-    mdcontent.addAndMakeVisible(tabs);
-
-    tabs.add("Input Devices", &inputTable);
-    tabs.add("Output Devices", &outputTable);
-    
-    // place it in the ConfigPanel content panel
-    content.addAndMakeVisible(mdcontent);
-
-    // have been keeping the same size for all ConfigPanels
-    // rather than having them shrink to fit, should move this
-    // to ConfigPanel or ConfigEditor
-    setSize (900, 600);
-}
-
-const char* NoDeviceSelected = "[No Device]";
-
-/**
- * Display all three fields if we're a standalone application,
- * otherwise just the plugin output field.
- */
-void MidiDevicesPanel::initForm()
-{
-    bool plugin = Supervisor::Instance->isPlugin();
-
-    if (!plugin) {
-        inputField = new Field("Input Device", Field::Type::String);
-        form.add(inputField);
-
-        outputField = new Field("Output Device", Field::Type::String);
-        form.add(outputField);
-    }
-
-    pluginOutputField = new Field("Plugin Output Device", Field::Type::String);
-    form.add(pluginOutputField);
-    
-    MidiManager* mm = Supervisor::Instance->getMidiManager();
-    
-    juce::StringArray inputs = mm->getInputDevices();
-    inputs.insert(0, juce::String(NoDeviceSelected));
-    
-    juce::StringArray outputs = mm->getOutputDevices();
-    outputs.insert(0, juce::String(NoDeviceSelected));
-
-    if (inputField != nullptr) {
-        inputField->setAllowedValues(inputs);
-        inputField->addListener(this);
-    }
-
-    if (outputField != nullptr) {
-        outputField->setAllowedValues(outputs);
-        outputField->addListener(this);
-    }
-
-    if (pluginOutputField != nullptr) {
-        pluginOutputField->setAllowedValues(outputs);
-        pluginOutputField->addListener(this);
-    }
-}
-
-/**
- * Get notifications during initialization before it is even
- * shown.  Not sure why, I think I asked for dontSendNotifications
- */
-void MidiDevicesPanel::fieldChanged(Field* field)
-{
-    if (isVisible()) {
-        MidiManager* mm = Supervisor::Instance->getMidiManager();
-        juce::String name = field->getStringValue();
-
-        // collapse this to empty string so MidiManager will no to close it
-        if (name == NoDeviceSelected) name = "";
-    
-        if (field == inputField)
-          mm->setInput(name);
-        else if (field == outputField)
-          mm->setOutput(name);
-        else if (field == pluginOutputField)
-          mm->setPluginOutput(name);
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -322,6 +206,8 @@ void MidiDevicesPanel::fieldChanged(Field* field)
 
 MidiDeviceTable::MidiDeviceTable()
 {
+    // are our own model
+    setBasicModel(this);
 }
 
 /**
@@ -336,14 +222,14 @@ void MidiDeviceTable::init(bool output)
             addColumnCheckbox("Export", 2);
             addColumnCheckbox("Sync", 3);
             addColumnCheckbox("Plugin Export", 4);
-            addColumnCheckbox("plugin Sync", 5);
+            addColumnCheckbox("Plugin Sync", 5);
         }
         else {
             addColumn("Name", 1);
             addColumnCheckbox("Control", 2);
             addColumnCheckbox("Sync", 3);
             addColumnCheckbox("Plugin Control", 4);
-            addColumnCheckbox("plugin Sync", 5);
+            addColumnCheckbox("Plugin Sync", 5);
         }
     
         MidiManager* mm = Supervisor::Instance->getMidiManager();
@@ -447,20 +333,20 @@ void MidiDeviceTable::loadDevices(juce::String names, bool sync, bool plugin)
 
 void MidiDeviceTable::save(DeviceConfig* config)
 {
-    (void)config;
-    
-    // test deriving the csvs from the table but don't save them yet
-    juce::String names = getDevices(false, false);
-    Trace(2, "MidiDeviceTable: appControl %s\n", names.toUTF8());
-    
-    names = getDevices(true, false);
-    Trace(2, "MidiDeviceTable: appSync %s\n", names.toUTF8());
-    
-    names = getDevices(false, true);
-    Trace(2, "MidiDeviceTable: pluginControl %s\n", names.toUTF8());
+    MachineConfig* mconfig = config->getMachineConfig();
 
-    names = getDevices(true, true);
-    Trace(2, "MidiDeviceTable: pluginSync %s\n", names.toUTF8());
+    if (isOutput) {
+        mconfig->midiOutput = getDevices(false, false);
+        mconfig->midiOutputSync = getDevices(true, false);
+        mconfig->pluginMidiOutput = getDevices(false, true);
+        mconfig->pluginMidiOutputSync = getDevices(true, true);
+    }
+    else {
+        mconfig->midiInput = getDevices(false, false);
+        mconfig->midiInputSync = getDevices(true, false);
+        mconfig->pluginMidiInput = getDevices(false, true);
+        mconfig->pluginMidiInputSync = getDevices(true, true);
+    }
 }
 
 juce::String MidiDeviceTable::getDevices(bool sync, bool plugin)
@@ -514,6 +400,25 @@ juce::String MidiDeviceTable::getCellText(int row, int columnId)
         Trace(1, "MidiDeviceTable::getCellText not supposed to be here\n");
     }
     return value;
+}
+
+juce::Colour MidiDeviceTable::getCellColor(int row, int columnId)
+{
+    juce::Colour color (0);
+    
+    MidiDeviceTableRow* device = devices[row];
+    if (device == nullptr) {
+        Trace(1, "MidiDeviceTable::getCellText row out of bounds %d\n", row);
+    }
+    else if (columnId == 1) {
+        if (device->missing)
+          color = juce::Colours::red;
+    }
+    else {
+        // these are all checkboxes, shouldn't be here
+        Trace(1, "MidiDeviceTable::getCellText not supposed to be here\n");
+    }
+    return color;
 }
 
 bool MidiDeviceTable::getCellCheck(int row, int column)

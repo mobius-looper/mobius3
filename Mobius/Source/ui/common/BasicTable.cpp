@@ -136,6 +136,12 @@ void BasicTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
 
     juce::String cell = getCellText(rowNumber, columnId);
 
+    if (model != nullptr) {
+        juce::Colour c = model->getCellColor(rowNumber, columnId);
+        if (c != juce::Colour(0))
+          g.setColour(c);
+    }
+
     // again from the table example
     // x, y, width, height, justification, useEllipses
     // example gave it 2 on the left, I guess to give it a little padding next to the cell border

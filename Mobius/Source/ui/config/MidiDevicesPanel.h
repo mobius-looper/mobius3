@@ -39,7 +39,7 @@ class MidiDeviceTableRow
     bool pluginSync = false;
 };
 
-class MidiDeviceTable : public BasicTable
+class MidiDeviceTable : public BasicTable, public BasicTable::Model
 {
   public:
 
@@ -55,10 +55,11 @@ class MidiDeviceTable : public BasicTable
     void save(class DeviceConfig* config);
 
     // BasicTable::Model
-    int getNumRows();
-    juce::String getCellText(int row, int col);
-    bool getCellCheck(int row, int column);
-    void setCellCheck(int row, int column, bool state);
+    int getNumRows() override;
+    juce::String getCellText(int row, int col) override;
+    juce::Colour getCellColor(int row, int col) override;
+    bool getCellCheck(int row, int column) override;
+    void setCellCheck(int row, int column, bool state) override;
     
   private:
 
@@ -94,25 +95,13 @@ class MidiDevicesPanel : public ConfigPanel, public Field::Listener, public Midi
     void save() override;
     void cancel() override;
 
-    // Field listener
-    void fieldChanged(Field* field) override;
-
     // MidiManager::Listener
     void midiMessage(const juce::MidiMessage& message, juce::String& source) override;
     
   private:
 
-    void render();
-    void initForm();
-
     MidiDevicesContent mdcontent;
-    Form form;
     LogPanel log;
-    
-    class Field* inputField = nullptr;
-    class Field* outputField = nullptr;
-    class Field* pluginOutputField = nullptr;
-
     BasicTabs tabs;
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;

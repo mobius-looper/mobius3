@@ -82,18 +82,20 @@ MidiManager::~MidiManager()
  */
 void MidiManager::suspend()
 {
-    if (inputDevice != nullptr) {
-        inputDevice->stop();
+    for (auto dev : inputDevices) {
+        dev->stop();
     }
 }
 
+/**
+ * Re-open just the input devices after suspend()
+ * Since the inputDevices list is never pruned, have to let DeviceConfig
+ * be the guide for what gets restarted.
+ */
 void MidiManager::resume()
 {
-    if (inputDevice != nullptr) {
-        inputDevice->start();
-    }
+    reopenInputs();
 }
-
 
 /**
  * "Close" any open devices.
@@ -142,7 +144,7 @@ void MidiManager::removeRealtimeListener(RealtimeListener* l)
 }
 
 /**
- * An ugly hack to MidiPanel can receive MIDI messages when running
+ * An ugly hack so MidiPanel can receive MIDI messages when running
  * as a plugin rather than standalone.
  *
  * Since we're not dealing directly with a MIDI device where we receive
@@ -163,10 +165,6 @@ void MidiManager::removeRealtimeListener(RealtimeListener* l)
  * We should be using something similar to the ListenerMessageCallback
  * thing below, but I'm tired and my brain hurts.  Instead, we'll
  * just save a copy of the message and make MidiPanel poll for it.
- *
- * Actually, I decided to use a KernelMessage to get the data
- * passed up to the maintenance thread safely.  This won't have
- * anything close to accurate timing, but it's enough for MIDI capture.
  */
 void MidiManager::configurePluginListening()
 {
@@ -190,15 +188,20 @@ void MidiManager::mobiusMidiReceived(juce::MidiMessage& msg)
 
         // this isn't something I'd ordinarilly do, but it's easier
         // than messing with a CallbackMessage
+        // update, there were crashes in FLSdudio around this so it is bad
+        // MidiPanel needs to copy the message and deal with it later on a different thread
+#if 0
         const juce::MessageManagerLock mml (juce::Thread::getCurrentThread());
         if (!mml.lockWasGained()) {
             // if something is trying to kill this job the lock will fail
             // in which case we better return
             return;
         }
+#endif
         // Listener wants a "source" which when connected direct I think is the
         // device name.  Not sure if the plugin has any more context around this
         // so fake up a name
+        // this is now wht MidiPanel uses to decide whether it is thread safe
         juce::String source("Plugin");
         exclusiveListener->midiMessage(msg, source);
     }
@@ -206,8 +209,19 @@ void MidiManager::mobiusMidiReceived(juce::MidiMessage& msg)
 
 /**
  * Open previously configured devices.
- * If we don't have any saved, figure out what the default
- * devices are and save those.
+ * This can be called by MidiDevicesPanel after startup to reflect
+ * changes to the desired devices.
+ *
+ * Not distinguishing between input "control" and "sync" devices, they'll all
+ * get opened with the same callback.  Unclear if there is any benefit to
+ * having different callbacks for the two different usages.  Internal listeners
+ * don't care, they'll take events from wherever they come.  I suppose you could
+ * want to designate a device for sync input that may receive MIDI commands you
+ * don't want sent through Binderator.
+ *
+ * Output control vs. sync is important however.  MidiOut from scripts and MIDI
+ * state export will go to the control output device, and synchronization messages
+ * will goto the sync device if there is one.
  */
 void MidiManager::openDevices()
 {
@@ -215,9 +229,9 @@ void MidiManager::openDevices()
     MachineConfig* mconfig = config->getMachineConfig();
 
     Trace(2, "MidiManager::openDevices\n");
-    Trace(2, "    input: %s\n", mconfig->getMidiInput().toUTF8());
-    Trace(2, "   output: %s\n", mconfig->getMidiOutput().toUTF8());
-    Trace(2, "   plugin: %s\n", mconfig->getPluginMidiOutput().toUTF8());
+    Trace(2, "    input: %s\n", mconfig->midiInput.toUTF8());
+    Trace(2, "   output: %s\n", mconfig->midiOutput.toUTF8());
+    Trace(2, "   plugin: %s\n", mconfig->pluginMidiOutput.toUTF8());
 
     bool traceAll = false;
     if (traceAll) {
@@ -231,114 +245,156 @@ void MidiManager::openDevices()
         for (auto name : names)
           Trace(2, "  %s\n", name.toUTF8());
     }
+
+    // "close" the current ones first
+    for (auto dev : inputDevices)
+      dev->stop();
+    outputDevice = nullptr;
+    outputSyncDevice = nullptr;
     
     if (supervisor->isPlugin()) {
-        // the only thing plugins can do is open an optional
-        // output device for (hopefully) jitter-reduced MIDI clocks
-        // this must be set, we won't bootstrap the default device for this one
-        juce::String outname = mconfig->getPluginMidiOutput();
-        if (outname.length() > 0)
-          setPluginOutput(outname);
+        openInputs(mconfig->pluginMidiInput);
+        openInputs(mconfig->pluginMidiInputSync);
+
+        openOutputs(getFirstName(mconfig->pluginMidiOutput), false);
+        openOutputs(getFirstName(mconfig->pluginMidiOutputSync), true);
     }
     else {
-        juce::String outname = mconfig->getMidiOutput();
-        if (outname.length() > 0) {
-            setOutput(outname);
-        }
+        openInputs(mconfig->midiInput);
+        openInputs(mconfig->midiInputSync);
 
-        juce::String inname = mconfig->getMidiInput();
-        if (inname.length() > 0) {
-            setInput(inname);
-        }
+        openOutputs(getFirstName(mconfig->midiOutput), false);
+        openOutputs(getFirstName(mconfig->midiOutputSync), true);
     }
 }    
 
-/**
- * Open the named output device and remember it in a member variable
- * for use by send().
- *
- * This can be called during both Supervisor initialization via
- * openDevices and from MidiDevicePanel to make runtime changes.
- *
- * The name is allowed to be empty string meaning to close an existing
- * device if there is one.
- */
-void MidiManager::setOutput(juce::String name)
+juce::String MidiManager::getFirstName(juce::String csv)
 {
-    DeviceConfig* config = supervisor->getDeviceConfig();
-    MachineConfig* machine = config->getMachineConfig();
-        
-    if (supervisor->isPlugin()) {
-        // could only be here from MidiDevicePanel and only then if it
-        // were displaying a field for the application output device
-        // which it shouldn't
-        Trace(1, "MidiManager: Application MIDI output device can't be set in a plugin\n");
-    }
-    else if (name.length() == 0) {
-        closeOutput();
-        // passing empty explicitly means you don't want it any more
-        machine->setMidiOutput("");
-    }
-    else {
-        openOutput(name);
-        // only store the name if the open succeeded, if this came from
-        // openDevices we want to preserve the last setting in case the
-        // device comes back online later
-        if (outputDevice != nullptr)
-          machine->setMidiOutput(name);
+    juce::String name;
+    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
+
+    if (list.size() > 1)
+      Trace(1, "MidiManager: Multiple devices configured but only one can be opened: %s\n",
+            csv.toUTF8());
+    
+    if (list.size() > 0)
+      name = list[0];
+    return name;
+}
+
+/**
+ * Open a list of input devices.
+ * What "open" means in Juce is weird.  "open" gets you a handle to a MidiInput
+ * object inside a std::unique_ptr so it apparently keeps those somewhere.
+ * Once you have it open you start and stop it.  There doesn't appear to be
+ * a "close" or way to dispose of the object, or deregister the listener once
+ * it is open.
+ */
+void MidiManager::openInputs(juce::String csv)
+{
+    // convert the MachineConfig model to a list
+    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
+    for (auto name : list) {
+        // do we already have it from a previous open?
+        // seems like we shouldn't have to do this, maybe Juce just returns
+        // the same object if it already returned it from openDevice
+        bool alreadyOpen = false;
+        for (auto existing : inputDevices) {
+            if (existing->getName() == name) {
+                Trace(2, "MidiManager: Restarting input %s\n", name.toUTF8());
+                existing->start();
+                alreadyOpen = true;
+                break;
+            }
+        }
+
+        if (!alreadyOpen) {
+            // this is a new one
+            std::unique_ptr<juce::MidiInput> neu = openNewInput(name);
+            if (neu != nullptr) {
+                inputDevices.add(neu);
+                neu->start();
+            }
+        }
     }
 }
 
 /**
- * Open the named output device if we're a plugin.
- * If we're not a plugin, just save it in the DeviceConfig
- * since MidiDevicePanel allows setting all three even if we're
- * not using it.
+ * Reopen just the inputs after suspend/resume
  */
-void MidiManager::setPluginOutput(juce::String name)
+void MidiManager::reopenInputs()
 {
     DeviceConfig* config = supervisor->getDeviceConfig();
-    MachineConfig* machine = config->getMachineConfig();
-
-    if (!supervisor->isPlugin()) {
-        // we're not a plugin so just save it
-        machine->setPluginMidiOutput(name);
-    }
-    else if (name.length() == 0) {
-        closeOutput();
-        // passing empty explicitly means you don't want it any more
-        machine->setMidiOutput("");
-    }
-    else {
-        openOutput(name);
-        if (outputDevice != nullptr)
-          machine->setPluginMidiOutput(name);
-    }
-}
-
-/**
- * Start the named input device and register a callback.
- */
-void MidiManager::setInput(juce::String name)
-{
-    DeviceConfig* config = supervisor->getDeviceConfig();
-    MachineConfig* machine = config->getMachineConfig();
+    MachineConfig* mconfig = config->getMachineConfig();
     
     if (supervisor->isPlugin()) {
-        // plugins shouldn't be trying to do this
-        Trace(1, "MidiManager: Private MIDI input devices not supported in plugins\n");
-    }
-    else if (name.length() == 0) {
-        closeInput();
-        machine->setMidiInput("");
+        openInputs(mconfig->pluginMidiInput);
+        openInputs(mconfig->pluginMidiInputSync);
     }
     else {
-        openInput(name);
-        if (inputDevice != nullptr)
-          machine->setMidiInput(name);
+        openInputs(mconfig->midiInput);
+        openInputs(mconfig->midiInputSync);
     }
 }
 
+/**
+ * Open a MIDI input through the MidiInput class and register a listener.
+ * The listener callback is the second arg to openDevice, we don't have
+ * different callbacks for control vs. sync
+ */
+std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
+{
+    const char* tracename = name.toUTF8();
+    juce::String id = getInputDeviceId(name);
+
+    if (id.isEmpty()) {
+        Trace(1, "MidiManager: Unable to find input device id for %s\n", tracename);
+    }
+    else {
+        Trace(2, "MidiManager: Opening input %s\n", tracename);
+
+        inputDevice = juce::MidiInput::openDevice(id, this);
+
+        if (inputDevice == nullptr) {
+            Trace(1, "MidiManager: Unable to open input %s\n", tracename);
+        }
+        else {
+            // presumably this is what starts it pumping events to the callback
+            inputDevice->start();
+        }
+    }
+}
+
+/**
+ * As far as I can tell, you do not "close" a device after it was opened.
+ * You just stop using it, and if you try to open the same device again, Juce
+ * returns the same object.  It must keep it's own cache of these internally.
+ */
+void MidiManager::openOutput(juce::String name, bool sync)
+{
+    const char* tracename = name.toUTF8();
+    juce::String id = getOutputDeviceId(name);
+
+    if (id.isEmpty()) {
+        Trace(1, "MidiManager: Unable to find output device id for %s\n", tracename);
+    }
+    else {
+        Trace(2, "MidiManager: Opening output %s\n", tracename);
+        std::unique_ptr<juce::MidiOutput> dev = juce::MidiOutput::openDevice(id);
+        if (dev == nullptr) {
+            Trace(1, "MidiManager: Unable to open output %s\n", tracename);
+        }
+        else {
+            // this is where you would do startBackgroundThread if
+            // you ever want that
+            if (sync)
+              outputSyncDevice = dev;
+            else
+              outputDevice = dev;
+        }
+    }
+}
+        
 bool MidiManager::hasOutputDevice()
 {
     return (outputDevice != nullptr);
@@ -351,6 +407,12 @@ void MidiManager::send(juce::MidiMessage msg)
 {
     if (outputDevice)
       outputDevice->sendMessageNow(msg);
+}
+
+void MidiManager::sendSync(juce::MidiMessage msg)
+{
+    if (outputSyncDevice)
+      outputSyncDevice->sendMessageNow(msg);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -440,146 +502,6 @@ juce::String MidiManager::getInputDeviceId(juce::String name)
 juce::String MidiManager::getOutputDeviceId(juce::String name)
 {
     return getDeviceId(juce::MidiOutput::getAvailableDevices(), name);
-}
-
-juce::String MidiManager::getInput()
-{
-    juce::String name;
-    if (inputDevice != nullptr)
-      name = inputDevice->getName();
-    return name;
-}
-
-juce::String MidiManager::getOutput()
-{
-    juce::String name;
-    if (outputDevice != nullptr)
-      name = outputDevice->getName();
-    return name;
-}
-
-/**
- * Return the name from the config which will normally be outputDevice
- * If we're actually running as a plugin, but if not it won't
- * have been open.
- */
-juce::String MidiManager::getPluginOutput()
-{
-    DeviceConfig* config = supervisor->getDeviceConfig();
-    MachineConfig* machine = config->getMachineConfig();
-    return machine->getPluginMidiOutput();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Opening Devices
-//
-// I see two ways to do this in the examples, one that goes through
-// AudioDeviceManager and one that goes through MidiInput/MidiOutput.
-// Unclear whether ADM is required, or if it's a convenience hub
-// for normal applications that do both audio and midi.
-//
-// Try it both ways since I'm interested in private plugin MIDI where
-// an AudioDeviceManager is not normally accessible.
-// 
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Open a MIDI input through the MidiInput class and register a listener.
- */
-void MidiManager::openInput(juce::String name)
-{
-    const char* tracename = name.toUTF8();
-    juce::String id = getInputDeviceId(name);
-
-    if (id.isEmpty()) {
-        Trace(1, "MidiManager: Unable to find input device id for %s\n", tracename);
-    }
-    else if (inputDevice != nullptr && inputDevice->getIdentifier() == id) {
-        Trace(2, "MidiManager: Input device already open %s\n", tracename);
-    }
-    else {
-        closeInput();
-        Trace(2, "MidiManager: Opening input %s\n", tracename);
-
-        inputDevice = juce::MidiInput::openDevice(id, this);
-
-        if (inputDevice == nullptr) {
-            Trace(1, "MidiManager: Unable to open input %s\n", tracename);
-        }
-        else {
-            // presumably this is what starts it pumping events to the callback
-            inputDevice->start();
-        }
-    }
-}
-
-/**
- * Close the last opened input device.
- * There does not appear to be a process to unregister a listener though
- * you can start() and stop() it.  Presumably stop() removes the listener,
- * or at least stops it from being called.
- */
-void MidiManager::closeInput()
-{
-    if (inputDevice != nullptr) {
-        Trace(2, "MidiManager: Closing input %s\n", inputDevice->getName().toUTF8());
-        inputDevice->stop();
-    }
-    inputDevice = nullptr;
-}
-
-/**
- * MidiOutput::openDevice returns a MidiOutput unique pointer.
- * It does not have start() and stop() methods like MidiInput and no callback.
- *
- * To send things you call sendMessageNow, sendBlockOfMessagesNow,
- * sendBlockOfMessage.
- *
- * There is also startBackgroundThread/stopBackgroundThread
- * "so that the device can send blocks of data". Unclearwhat that does
- * probably to send large amount of data like sysex in a background thread without
- * hanging whatever thread we're on.
- */
-void MidiManager::openOutput(juce::String name)
-{
-    const char* tracename = name.toUTF8();
-    juce::String id = getOutputDeviceId(name);
-
-    if (id.isEmpty()) {
-        Trace(1, "MidiManager: Unable to find output device id for %s\n", tracename);
-    }
-    else if (outputDevice != nullptr && outputDevice->getIdentifier() == id) {
-        Trace(2, "MidiManager: Output device already open %s\n", tracename);
-    }
-    else {
-        closeOutput();
-        Trace(2, "MidiManager: Opening output %s\n", tracename);
-        
-        outputDevice = juce::MidiOutput::openDevice(id);
-        
-        if (outputDevice == nullptr) {
-            Trace(1, "MidiManager: Unable to open output %s\n", tracename);
-        }
-        else {
-            // this is where you would do startBackgroundThread if
-            // you ever want that
-        }
-    }
-}
-
-/**
- * Unlike MidiInput there is no stop() on MidiOutput.
- * There is stopBackgroundThread but we're not starting one.
- * Doesn't seem to be the concept of closing.
- */
-void MidiManager::closeOutput()
-{
-    if (outputDevice != nullptr) {
-        Trace(2, "MidiManager: Closing output %s\n", outputDevice->getName().toUTF8());
-        // stop the background thread if it was started...
-    }
-    outputDevice = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -837,6 +759,8 @@ void MidiManager::notifyListeners(const juce::MidiMessage& message, juce::String
  * 
  */
 
+#if 0
+
 /**
  * Open a MIDI input through the AudioDeviceManager.
  * Here you don't open/start/stop it, you "enable" it and
@@ -968,6 +892,8 @@ void MidiManager::closeOutputADM()
         lastOutputInfo.identifier = "";
     }
 }
+
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //

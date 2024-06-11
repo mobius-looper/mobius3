@@ -216,6 +216,11 @@ void MidiPanel::resetSubclassFields()
 
 void MidiPanel::midiMessage(const juce::MidiMessage& message, juce::String& source)
 {
+    // todo: if we're in a plugin, this is called in the audio thread
+    // and it is not safe to mess with UI components here, until this
+    // can be redesigned, ignore
+    if (source == juce::String("Plugin")) return;
+    
     (void)source;
     if (capture->getBoolValue()) {
         int value = -1;

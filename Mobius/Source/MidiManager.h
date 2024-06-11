@@ -66,17 +66,7 @@ class MidiManager : public juce::MidiInputCallback
 
     bool hasOutputDevice();
     void send(juce::MidiMessage msg);
-
-    // open the named devices, either during app initialization
-    // or after using the MidiDevicesPanel
-    void setInput(juce::String name);
-    void setOutput(juce::String name);
-    void setPluginOutput(juce::String name);
-    
-    // the devices in current use
-    juce::String getInput();
-    juce::String getOutput();
-    juce::String getPluginOutput();
+    void sendSync(juce::MidiMessage msg);
 
     // Device Information
     juce::StringArray getInputDevices();
@@ -97,7 +87,6 @@ class MidiManager : public juce::MidiInputCallback
     // needs to be public so it can be called from a CallbackMessage
     void notifyListeners(const juce::MidiMessage& message, juce::String& source);
 
-
     void mobiusMidiReceived(juce::MidiMessage& msg);
     
   private:
@@ -108,16 +97,10 @@ class MidiManager : public juce::MidiInputCallback
     Listener* exclusiveListener = nullptr;
     class juce::Array<RealtimeListener*> realtimeListeners;
 
-    // only supporting a single input and output device
-    // may want to support more than one
-    
-    std::unique_ptr<juce::MidiInput> inputDevice;
+    juce::Array<std::unique_ptr<juce::MidiInput>> inputDevices;
     std::unique_ptr<juce::MidiOutput> outputDevice;
+    std::unique_ptr<juce::MidiOutput> outputSyncDevice;
     
-    // Device identifiiers when opened through AudioDeviceManager
-    juce::MidiDeviceInfo lastInputInfo;
-    juce::MidiDeviceInfo lastOutputInfo;
-
     // tutorial captures this on creation to show relative times
     // when logging incomming MIDI messages
     double startTime;
@@ -127,20 +110,26 @@ class MidiManager : public juce::MidiInputCallback
     juce::String getInputDeviceId(juce::String name);
     juce::String getOutputDeviceId(juce::String name);
 
-    void openInput(juce::String name);
-    void closeInput();
-
-    void openOutput(juce::String name);
-    void closeOutput();
+    juce::String getFirstName(juce::String csv);
+    void openInputs(juce::String csv);
+    void reopenInputs();
+    std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name);
+    void openOutputs(juce::String csv, bool sync);
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
 
     // experiments
+#if 0    
+    // Device identifiiers when opened through AudioDeviceManager
+    juce::MidiDeviceInfo lastInputInfo;
+    juce::MidiDeviceInfo lastOutputInfo;
+
     void openInputADM(juce::String name);
     void closeInputADM();
     void openOutputADM(juce::String name);
     void closeOutputADM();
-
+#endif
+    
     // leftovers from the tutorial
     // static juce::String getMidiMessageDescription (const class juce::MidiMessage& m);
 

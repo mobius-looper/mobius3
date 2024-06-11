@@ -228,6 +228,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             menu.addItem(item);
             index++;
         }
+        
+        menu.addSeparator();
 
         // Buttons
         menu.addSectionHeader(juce::String("Buttons"));
@@ -241,6 +243,8 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
             index++;
         }
 
+        menu.addSeparator();
+        
         // Options
         menu.addSectionHeader(juce::String("Options"));
         juce::PopupMenu::Item item = juce::PopupMenu::Item("Borders");

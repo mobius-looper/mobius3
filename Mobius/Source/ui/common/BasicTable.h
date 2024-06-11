@@ -32,6 +32,11 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
             (void)columnId;
             (void)state;
         }
+        virtual juce::Colour getCellColor(int row, int columnId) {
+            (void)row;
+            (void)columnId;
+            return juce::Colour(0);
+        }
     };
 
     BasicTable();

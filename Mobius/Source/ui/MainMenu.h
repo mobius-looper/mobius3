@@ -37,7 +37,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Names of the top-level menu items
      */
-    juce::StringArray MenuNames {"File", "Track Setups", "Presets", "Display", "Configuration", "Help", "Test"};
+    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Configuration", "Help", "Test"};
 
     /**
      * Offset of menu item ids for the generated track setup items
