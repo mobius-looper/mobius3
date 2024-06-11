@@ -91,15 +91,19 @@ class MidiManager : public juce::MidiInputCallback
     
   private:
 
+
     class Supervisor* supervisor = nullptr;
 
     class juce::Array<Listener*> listeners;
     Listener* exclusiveListener = nullptr;
     class juce::Array<RealtimeListener*> realtimeListeners;
 
-    juce::Array<std::unique_ptr<juce::MidiInput>> inputDevices;
-    std::unique_ptr<juce::MidiOutput> outputDevice;
-    std::unique_ptr<juce::MidiOutput> outputSyncDevice;
+    // this isn't the way you're supposed to do it, but I fucking
+    // hate dealing with unique_ptr, I don't need my goddam dick held for me
+    //juce::Array<std::unique_ptr<juce::MidiInput>> inputDevices;
+    juce::OwnedArray<juce::MidiInput> inputDevices;
+    std::unique_ptr<juce::MidiOutput> outputDevice = nullptr;
+    std::unique_ptr<juce::MidiOutput> outputSyncDevice = nullptr;
     
     // tutorial captures this on creation to show relative times
     // when logging incomming MIDI messages
@@ -111,10 +115,11 @@ class MidiManager : public juce::MidiInputCallback
     juce::String getOutputDeviceId(juce::String name);
 
     juce::String getFirstName(juce::String csv);
+    void stopInputs();
     void openInputs(juce::String csv);
     void reopenInputs();
     std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name);
-    void openOutputs(juce::String csv, bool sync);
+    void openOutput(juce::String name, bool sync);
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
 

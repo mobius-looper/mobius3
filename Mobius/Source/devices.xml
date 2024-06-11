@@ -17,7 +17,7 @@
     audioOutput='Speakers (RME Fireface UC)'
     sampleRate='44100'
     blockSize='256'
-    midiInput='HST 2'
+    midiInput='HST 1,HST 2'
     midiOutput='Bome MIDI Translator 1'/>
   <Machine
     hostName='Frigg'

@@ -190,45 +190,6 @@ void MachineConfig::setAudioOutput(juce::String name)
         dirty = true;
     }
 }
-    
-juce::String MachineConfig::getMidiInput()
-{
-    return midiInput;
-}
-
-void MachineConfig::setMidiInput(juce::String name)
-{
-    if (name != midiInput) {
-        midiInput = name;
-        dirty = true;
-    }
-}
-    
-juce::String MachineConfig::getMidiOutput()
-{
-    return midiOutput;
-}
-
-void MachineConfig::setMidiOutput(juce::String name)
-{
-    if (name != midiOutput) {
-        midiOutput = name;
-        dirty = true;
-    }
-}
-
-juce::String MachineConfig::getPluginMidiOutput()
-{
-    return pluginMidiOutput;
-}
-
-void MachineConfig::setPluginMidiOutput(juce::String name)
-{
-    if (name != pluginMidiOutput) {
-        pluginMidiOutput = name;
-        dirty = true;
-    }
-}
 
 int MachineConfig::getSampleRate()
 {
@@ -309,9 +270,16 @@ juce::String DeviceConfig::toXml()
         b.addAttribute(ATT_AUDIO_OUTPUT, machine->getAudioOutput());
         b.addAttribute(ATT_SAMPLE_RATE, machine->getSampleRate());
         b.addAttribute(ATT_BLOCK_SIZE, machine->getBlockSize());
-        b.addAttribute(ATT_MIDI_INPUT, machine->getMidiInput());
-        b.addAttribute(ATT_MIDI_OUTPUT, machine->getMidiOutput());
-        b.addAttribute(ATT_PLUGIN_MIDI_OUTPUT, machine->getPluginMidiOutput());
+        
+        b.addAttribute(ATT_MIDI_INPUT, machine->midiInput);
+        b.addAttribute("midiInputSync", machine->midiInputSync);
+        b.addAttribute(ATT_MIDI_OUTPUT, machine->midiOutput);
+        b.addAttribute("midiOutputSync", machine->midiOutputSync);
+        
+        b.addAttribute("pluginMidiInput", machine->pluginMidiInput);
+        b.addAttribute("pluginMidiInputSync", machine->pluginMidiInputSync);
+        b.addAttribute("pluginMidiOutput", machine->pluginMidiOutput);
+        b.addAttribute("pluginMidiOutputSync", machine->pluginMidiOutputSync);
 
         b.closeEmptyElement();
     }
@@ -364,12 +332,19 @@ void DeviceConfig::parseXml(XmlElement* e, DeviceConfig* c)
             mc->setAudioDeviceType(child->getJString(ATT_AUDIO_DEVICE_TYPE));
             mc->setAudioInput(child->getJString(ATT_AUDIO_INPUT));
             mc->setAudioOutput(child->getJString(ATT_AUDIO_OUTPUT));
-            mc->setMidiInput(child->getJString(ATT_MIDI_INPUT));
-            mc->setMidiOutput(child->getJString(ATT_MIDI_OUTPUT));
-            mc->setPluginMidiOutput(child->getJString(ATT_PLUGIN_MIDI_OUTPUT));
             mc->setSampleRate(child->getInt(ATT_SAMPLE_RATE));
             mc->setBlockSize(child->getInt(ATT_BLOCK_SIZE));
 
+            mc->midiInput = child->getJString(ATT_MIDI_INPUT);
+            mc->midiInputSync = child->getJString("midiInputSync");
+            mc->midiOutput = child->getJString(ATT_MIDI_OUTPUT);
+            mc->midiOutputSync = child->getJString("midiOutputSync");
+            
+            mc->pluginMidiInput = child->getJString("pluginMidiInput");
+            mc->pluginMidiInputSync = child->getJString("pluginMidiInputSync");
+            mc->pluginMidiOutput = child->getJString("pluginMidiOutput");
+            mc->pluginMidiOutputSync = child->getJString("pluginMidiOutputSync");
+            
             c->machines.add(mc);
         }
     }

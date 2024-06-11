@@ -820,16 +820,11 @@ void Supervisor::reloadUIConfig()
     propagateConfiguration();
 }
 
-/**
- * This one is easier, devices will already have been
- * configured for any changes, we just write it.
- */
 void Supervisor::updateDeviceConfig()
 {
     if (deviceConfig) {
         DeviceConfig* config = deviceConfig.get();
-        if (config->isDirty())
-          writeDeviceConfig(config);
+        writeDeviceConfig(config);
     }
 }
 

@@ -38,15 +38,6 @@ class MachineConfig
     juce::String getAudioOutput();
     void setAudioOutput(juce::String name);
     
-    juce::String getMidiInput();
-    void setMidiInput(juce::String name);
-    
-    juce::String getMidiOutput();
-    void setMidiOutput(juce::String name);
-    
-    juce::String getPluginMidiOutput();
-    void setPluginMidiOutput(juce::String name);
-
     // hating the dirty flag and endless accessors
     // these are the new ones, start doing it this way
     // fuck, this is ugly, reconsider using a table model for this

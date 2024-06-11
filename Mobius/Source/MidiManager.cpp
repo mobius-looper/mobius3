@@ -82,9 +82,7 @@ MidiManager::~MidiManager()
  */
 void MidiManager::suspend()
 {
-    for (auto dev : inputDevices) {
-        dev->stop();
-    }
+    stopInputs();
 }
 
 /**
@@ -105,8 +103,8 @@ void MidiManager::resume()
  */
 void MidiManager::shutdown()
 {
-    closeInput();
-    closeOutput();
+    // don't know what we need to do with these...
+    stopInputs();
 }
 
 void MidiManager::addListener(Listener* l)
@@ -247,8 +245,7 @@ void MidiManager::openDevices()
     }
 
     // "close" the current ones first
-    for (auto dev : inputDevices)
-      dev->stop();
+    stopInputs();
     outputDevice = nullptr;
     outputSyncDevice = nullptr;
     
@@ -256,15 +253,25 @@ void MidiManager::openDevices()
         openInputs(mconfig->pluginMidiInput);
         openInputs(mconfig->pluginMidiInputSync);
 
-        openOutputs(getFirstName(mconfig->pluginMidiOutput), false);
-        openOutputs(getFirstName(mconfig->pluginMidiOutputSync), true);
+        openOutput(getFirstName(mconfig->pluginMidiOutput), false);
+        openOutput(getFirstName(mconfig->pluginMidiOutputSync), true);
     }
     else {
         openInputs(mconfig->midiInput);
         openInputs(mconfig->midiInputSync);
 
-        openOutputs(getFirstName(mconfig->midiOutput), false);
-        openOutputs(getFirstName(mconfig->midiOutputSync), true);
+        openOutput(getFirstName(mconfig->midiOutput), false);
+        openOutput(getFirstName(mconfig->midiOutputSync), true);
+    }
+}    
+
+/**
+ * Stop any currently open input devices.
+ */
+void MidiManager::stopInputs()
+{
+    for (auto dev : inputDevices) {
+        dev->stop();
     }
 }    
 
@@ -312,8 +319,10 @@ void MidiManager::openInputs(juce::String csv)
             // this is a new one
             std::unique_ptr<juce::MidiInput> neu = openNewInput(name);
             if (neu != nullptr) {
-                inputDevices.add(neu);
                 neu->start();
+                // liberate the MidiInput from the fucking unique_ptr
+                // so it can be dealt with naturally
+                inputDevices.add(neu.release());
             }
         }
     }
@@ -344,25 +353,29 @@ void MidiManager::reopenInputs()
  */
 std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
 {
-    const char* tracename = name.toUTF8();
-    juce::String id = getInputDeviceId(name);
-
-    if (id.isEmpty()) {
-        Trace(1, "MidiManager: Unable to find input device id for %s\n", tracename);
-    }
-    else {
-        Trace(2, "MidiManager: Opening input %s\n", tracename);
-
-        inputDevice = juce::MidiInput::openDevice(id, this);
-
-        if (inputDevice == nullptr) {
-            Trace(1, "MidiManager: Unable to open input %s\n", tracename);
+    std::unique_ptr<juce::MidiInput> dev = nullptr;
+    if (name.length() > 0) {
+        const char* tracename = name.toUTF8();
+        juce::String id = getInputDeviceId(name);
+        
+        if (id.isEmpty()) {
+            Trace(1, "MidiManager: Unable to find input device id for %s\n", tracename);
         }
         else {
-            // presumably this is what starts it pumping events to the callback
-            inputDevice->start();
+            Trace(2, "MidiManager: Opening input %s\n", tracename);
+
+            dev = juce::MidiInput::openDevice(id, this);
+
+            if (dev == nullptr) {
+                Trace(1, "MidiManager: Unable to open input %s\n", tracename);
+            }
+            else {
+                // presumably this is what starts it pumping events to the callback
+                dev->start();
+            }
         }
     }
+    return dev;
 }
 
 /**
@@ -372,29 +385,31 @@ std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
  */
 void MidiManager::openOutput(juce::String name, bool sync)
 {
-    const char* tracename = name.toUTF8();
-    juce::String id = getOutputDeviceId(name);
+    if (name.length() > 0) {
+        const char* tracename = name.toUTF8();
+        juce::String id = getOutputDeviceId(name);
 
-    if (id.isEmpty()) {
-        Trace(1, "MidiManager: Unable to find output device id for %s\n", tracename);
-    }
-    else {
-        Trace(2, "MidiManager: Opening output %s\n", tracename);
-        std::unique_ptr<juce::MidiOutput> dev = juce::MidiOutput::openDevice(id);
-        if (dev == nullptr) {
-            Trace(1, "MidiManager: Unable to open output %s\n", tracename);
+        if (id.isEmpty()) {
+            Trace(1, "MidiManager: Unable to find output device id for %s\n", tracename);
         }
         else {
-            // this is where you would do startBackgroundThread if
-            // you ever want that
-            if (sync)
-              outputSyncDevice = dev;
-            else
-              outputDevice = dev;
+            Trace(2, "MidiManager: Opening output %s\n", tracename);
+            std::unique_ptr<juce::MidiOutput> dev = juce::MidiOutput::openDevice(id);
+            if (dev == nullptr) {
+                Trace(1, "MidiManager: Unable to open output %s\n", tracename);
+            }
+            else {
+                // this is where you would do startBackgroundThread if
+                // you ever want that
+                if (sync)
+                  outputSyncDevice = std::move(dev);
+                else
+                  outputDevice = std::move(dev);
+            }
         }
     }
 }
-        
+
 bool MidiManager::hasOutputDevice()
 {
     return (outputDevice != nullptr);

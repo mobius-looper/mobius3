@@ -190,12 +190,12 @@ void MidiDevicesContent::resized()
     juce::Rectangle<int> area = getLocalBounds();
     
     // this sucks so hard
-    BasicTabs* tabs = (BasicTabs*)getChildComponent(0);
-    tabs->setBounds(area.removeFromTop(200));
-
     LogPanel* log = (LogPanel*)getChildComponent(1);
     if (log != nullptr)
-      log->setBounds(area);
+      log->setBounds(area.removeFromBottom(100));
+    
+    BasicTabs* tabs = (BasicTabs*)getChildComponent(0);
+    tabs->setBounds(area);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -239,6 +239,10 @@ void MidiDeviceTable::init(bool output)
         else
           deviceNames = mm->getInputDevices();
 
+        // mioXM piles on a boatload of ports
+        // so sort them so you can find things
+        deviceNames.sort(false);
+        
         for (auto name : deviceNames) {
             MidiDeviceTableRow* device = new MidiDeviceTableRow();
             device->name = name;

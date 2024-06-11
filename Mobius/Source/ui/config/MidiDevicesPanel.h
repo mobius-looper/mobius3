@@ -82,7 +82,7 @@ class MidiDevicesContent : public juce::Component
     void resized() override;
 };
 
-class MidiDevicesPanel : public ConfigPanel, public Field::Listener, public MidiManager::Listener
+class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener
 {
   public:
     MidiDevicesPanel(class ConfigEditor*);
