@@ -50,6 +50,7 @@ class InfoPanel : public BasePanel
         if (!isVisible()) {
             setTitle("MIDI Bindings");
             content.prepare(true);
+            resized();
             show();
         }
     }
@@ -58,6 +59,7 @@ class InfoPanel : public BasePanel
         if (!isVisible()) {
             setTitle("Keyboard Bindings");
             content.prepare(false);
+            resized();
             show();
         }
     }

@@ -14,21 +14,11 @@
 
 #include "BasicInput.h"
 #include "BasicLog.h"
+
 #include "SyncPanel.h"
 
-SyncPanel::SyncPanel()
+SyncContent::SyncContent()
 {
-    addAndMakeVisible(resizer);
-    resizer.setBorderThickness(juce::BorderSize<int>(4));
-    // keeps the resizer from warping this out of existence
-    resizeConstrainer.setMinimumHeight(20);
-    resizeConstrainer.setMinimumWidth(20);
-
-    footerButtons.setListener(this);
-    footerButtons.setCentered(true);
-    footerButtons.add(&closeButton);
-    addAndMakeVisible(&footerButtons);
-    
     commandButtons.setListener(this);
     commandButtons.setCentered(true);
     //commandButtons.add(&startButton);
@@ -45,125 +35,70 @@ SyncPanel::SyncPanel()
     addAndMakeVisible(form);
 
     addAndMakeVisible(&log);
-    
-    // todo: let this auto size
-    setSize (800, 500);
 }
 
-SyncPanel::~SyncPanel()
+SyncContent::~SyncContent()
 {
     GlobalTraceListener = nullptr;
 }
 
-void SyncPanel::show()
+void SyncContent::showing()
 {
-    JuceUtil::center(this);
-
-    // seemed to be having difficulty setting this at construction
-    // so get it before showing, why?
-    //realizer = Supervisor::Instance->getMidiRealizer();
-    //outTempo.setText(juce::String(realizer->getTempo()));
-    
     update();
     
     // start intercepting trace messages
     // TestPanel also does this so if you try to open them both at the same
     // time, there will be a battle over who gets it
     GlobalTraceListener = this;
-    
-    setVisible(true);
 }
 
-void SyncPanel::hide()
+void SyncContent::hiding()
 {
     GlobalTraceListener = nullptr;
-    setVisible(false);
 }
 
-void SyncPanel::start()
+void SyncContent::start()
 {
     //realizer->start();
     update();
 }
 
-void SyncPanel::stop()
+void SyncContent::stop()
 {
     //realizer->stop();
     update();
 }
 
-void SyncPanel::cont()
+void SyncContent::cont()
 {
     //realizer->midiContinue();
     update();
 }
 
-const int SyncPanelHeaderHeight = 20;
+const int SyncContentHeaderHeight = 20;
 
-void SyncPanel::resized()
+void SyncContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    resizer.setBounds(area);
-    
-    area.removeFromTop(SyncPanelHeaderHeight);
-    
     commandButtons.setBounds(area.removeFromTop(commandButtons.getHeight()));
-    footerButtons.setBounds(area.removeFromBottom(SyncPanelHeaderHeight));
     form.setBounds(area.removeFromTop(form.getHeight()));
 
     log.setBounds(area);
 }
 
-void SyncPanel::paint(juce::Graphics& g)
+void SyncContent::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
     
     // todo: figure out how opaque components work so we dont' have to do this
     g.setColour(juce::Colours::white);
     g.fillRect(area);
-
-    juce::Rectangle<int> header = area.removeFromTop(SyncPanelHeaderHeight);
-    g.setColour(juce::Colours::blue);
-    g.fillRect(header);
-    juce::Font font (SyncPanelHeaderHeight * 0.8f);
-    g.setFont(font);
-    g.setColour(juce::Colours::white);
-    g.drawText("Synchronization Status", header, juce::Justification::centred);
-    
-    //g.setColour(juce::Colour(MobiusBlue));
-    //g.drawRect(getLocalBounds(), 1);
 }
 
-void SyncPanel::mouseDown(const juce::MouseEvent& e)
+void SyncContent::buttonClicked(juce::Button* b)
 {
-    if (e.getMouseDownY() < SyncPanelHeaderHeight) {
-        dragger.startDraggingComponent(this, e);
-        // the first argu is "minimumWhenOffTheTop" set
-        // this to the full height and it won't allow dragging the
-        // top out of boundsa
-        dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
-        dragging = true;
-    }
-}
-
-void SyncPanel::mouseDrag(const juce::MouseEvent& e)
-{
-    dragger.dragComponent(this, e, &dragConstrainer);
-}
-
-void SyncPanel::mouseUp(const juce::MouseEvent& e)
-{
-    (void)e;
-    dragging = false;
-}
-
-void SyncPanel::buttonClicked(juce::Button* b)
-{
-    if (b == &closeButton) {
-        hide();
-    }
-    else if (b == &startButton) {
+    if (b == &startButton) {
         start();
     }
     else if (b == &stopButton) {
@@ -172,6 +107,10 @@ void SyncPanel::buttonClicked(juce::Button* b)
     else if (b == &continueButton) {
         cont();
     }
+    else {
+        // shouldn't need this
+        //BasePanel::buttonClicked(b);
+    }
 }
 
 /**
@@ -179,7 +118,7 @@ void SyncPanel::buttonClicked(juce::Button* b)
  * more than one, will need to give BasicInput an accessor
  * for the wrapped Label.
  */
-void SyncPanel::labelTextChanged(juce::Label* l)
+void SyncContent::labelTextChanged(juce::Label* l)
 {
     (void)l;
 }
@@ -188,7 +127,7 @@ void SyncPanel::labelTextChanged(juce::Label* l)
  * Called during Supervisor's advance() in the maintenance thread.
  * Refresh the whole damn thing if anything changes.
  */
-void SyncPanel::update()
+void SyncContent::update()
 {
     MobiusInterface* mobius = Supervisor::Instance->getMobius();
     MobiusState* state = mobius->getState();
@@ -229,7 +168,7 @@ void SyncPanel::update()
     }
 }
 
-juce::String SyncPanel::formatBeat(int rawbeat)
+juce::String SyncContent::formatBeat(int rawbeat)
 {
     juce::String beatBar;
 
@@ -255,7 +194,7 @@ juce::String SyncPanel::formatBeat(int rawbeat)
     return beatBar;
 }
 
-juce::String SyncPanel::formatTempo(float tempo)
+juce::String SyncContent::formatTempo(float tempo)
 {
     // this was for MidiTransport which held tempos as a int x100
     //int main = tempo / 10;
@@ -267,7 +206,7 @@ juce::String SyncPanel::formatTempo(float tempo)
 /**
  * Intercepts Trace log flushes and puts them in the sync log.
  */
-void SyncPanel::traceEmit(const char* msg)
+void SyncContent::traceEmit(const char* msg)
 {
     juce::String jmsg(msg);
     

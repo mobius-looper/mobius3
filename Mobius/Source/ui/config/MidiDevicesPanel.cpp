@@ -64,7 +64,17 @@ void MidiDevicesPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
     mm->addListener(this);
+
+    juce::StringArray inputNames = mm->getInputDevices();
+    appInputs.setValues(inputNames);
+    pluginInputs.setValues(inputNames);
+
+    juce::StringArray outputNames = mm->getOutputDevices();
+    appOutputs.setValues(outputNames);
+    pluginOutputs.setValues(outputNames);
+    
 }
+
 
 /**
  * Called by ConfigEditor when we're about to be made invisible.
@@ -195,6 +205,10 @@ void MidiDevicesContent::resized()
     // gap
     area.removeFromTop(20);
 
+    // this sucks so hard
+    BasicTabs* tabs = (BasicTabs*)getChildComponent(2);
+    tabs->setBounds(area.removeFromTop(200));
+
     LogPanel* log = (LogPanel*)getChildComponent(1);
     if (log != nullptr)
       log->setBounds(area);
@@ -213,7 +227,13 @@ void MidiDevicesPanel::render()
 
     mdcontent.addAndMakeVisible(form);
     mdcontent.addAndMakeVisible(log);
+    mdcontent.addAndMakeVisible(tabs);
 
+    tabs.add("Application Inputs", &appInputs);
+    tabs.add("Appliation Outputs", &appOutputs);
+    tabs.add("Plugin Inputs", &pluginInputs);
+    tabs.add("Plugin Outputs", &pluginOutputs);
+    
     // place it in the ConfigPanel content panel
     content.addAndMakeVisible(mdcontent);
 

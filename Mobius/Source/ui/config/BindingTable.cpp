@@ -192,6 +192,11 @@ void BindingTable::initTable()
  */
 void BindingTable::initColumns()
 {
+    // take sorting out of the default flags until we can implement it correctly
+    int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
+        juce::TableHeaderComponent::ColumnPropertyFlags::resizable |
+        juce::TableHeaderComponent::ColumnPropertyFlags::draggable;
+    
     juce::TableHeaderComponent& header = table.getHeader();
 
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
@@ -204,20 +209,20 @@ void BindingTable::initColumns()
 
     header.addColumn(juce::String("Target"), TargetColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
                      
     // trigger is optional for buttons
     header.addColumn(juce::String("Trigger"), TriggerColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Arguments"), ArgumentsColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
     
     header.addColumn(juce::String("Scope"), ScopeColumn,
                      50, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     //header.setSortColumnId (1, true);
 

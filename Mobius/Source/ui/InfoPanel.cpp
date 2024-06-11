@@ -92,6 +92,13 @@ const int InfoContentSourceColumn = 5;
         
 void InfoContent::initColumns()
 {
+    // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
+    // sortable is not relevant for most tables and causes confusion when things don't sort
+    // todo: This is a table where sorting could be useful
+    int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
+        juce::TableHeaderComponent::ColumnPropertyFlags::resizable |
+        juce::TableHeaderComponent::ColumnPropertyFlags::draggable;
+    
     juce::TableHeaderComponent& header = table.getHeader();
 
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
@@ -104,23 +111,23 @@ void InfoContent::initColumns()
 
     header.addColumn(juce::String("Trigger"), InfoContentTriggerColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Target"), InfoContentTargetColumn,
                      200, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Scope"), InfoContentScopeColumn,
                      50, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Arguments"), InfoContentArgumentsColumn,
                      50, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Source"), InfoContentSourceColumn,
                      200, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 }
 
 /**

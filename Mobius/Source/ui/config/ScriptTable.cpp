@@ -133,6 +133,13 @@ void ScriptTable::initTable()
  */
 void ScriptTable::initColumns()
 {
+    // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
+    // sortable is not relevant for most tables and causes confusion when things don't sort
+    // todo: This is a table where sorting could be useful
+    int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
+        juce::TableHeaderComponent::ColumnPropertyFlags::resizable |
+        juce::TableHeaderComponent::ColumnPropertyFlags::draggable;
+    
     juce::TableHeaderComponent& header = table.getHeader();
 
     fileColumn = 1;
@@ -147,7 +154,7 @@ void ScriptTable::initColumns()
 
     header.addColumn(juce::String("File"), fileColumn,
                      450, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 }
 
 const int CommandButtonGap = 10;

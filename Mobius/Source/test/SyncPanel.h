@@ -7,22 +7,26 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../ui/BasePanel.h"
 #include "BasicInput.h"
 #include "BasicButtonRow.h"
 #include "BasicForm.h"
 #include "BasicLog.h"
 
-class SyncPanel : public juce::Component, public juce::Button::Listener,
-                  public juce::Label::Listener,
-                  public TraceListener
+class SyncContent : public juce::Component, public juce::Button::Listener,
+                    public juce::Label::Listener,
+                    public TraceListener
 {
   public:
 
-    SyncPanel();
-    ~SyncPanel();
+    SyncContent();
+    ~SyncContent();
 
-    void show();
-    void hide();
+    void showing();
+    void hiding();
+    
+    void update();
+    
     void start();
     void stop();
     void cont();
@@ -37,22 +41,11 @@ class SyncPanel : public juce::Component, public juce::Button::Listener,
     void buttonClicked(juce::Button* b) override;
     void labelTextChanged(juce::Label* l) override;
     
-    // drag and resize
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseDrag(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& e) override;
-
-    void update();
-    
   private:
 
-    class MidiRealizer* realizer = nullptr;
-
-    BasicButtonRow footerButtons;
     BasicButtonRow commandButtons;
     BasicForm form;
     
-    juce::TextButton closeButton {"Close"};
     juce::TextButton startButton {"Start"};
     juce::TextButton stopButton {"Stop"};
     juce::TextButton continueButton {"Continue"};
@@ -70,14 +63,36 @@ class SyncPanel : public juce::Component, public juce::Button::Listener,
     BasicInput inBeat {"In Beat", 10, true};
 
     BasicLog log;
-
-    juce::ComponentBoundsConstrainer resizeConstrainer;
-    juce::ComponentBoundsConstrainer dragConstrainer;
-    juce::ResizableBorderComponent resizer {this, &resizeConstrainer};
-    juce::ComponentDragger dragger;
-    bool dragging = false;
     
     juce::String formatBeat(int rawbeat);
     juce::String formatTempo(float tempo);
 
+};
+
+class SyncPanel : public BasePanel
+{
+  public:
+
+    SyncPanel() {
+        setTitle("Synchronization Status");
+        setContent(&content);
+        setSize(800, 500);
+    }
+    ~SyncPanel() {}
+
+    void update() {
+        content.update();
+    }
+
+    void showing() override {
+        content.showing();
+    }
+    
+    void hiding() override {
+        content.hiding();
+    }
+    
+  private:
+
+    SyncContent content;
 };

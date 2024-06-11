@@ -8,20 +8,23 @@
 
 #include <JuceHeader.h>
 
+#include "../ui/BasePanel.h"
+
 #include "BasicInput.h"
 #include "BasicButtonRow.h"
 #include "BasicForm.h"
 
-class MidiTransportPanel : public juce::Component, public juce::Button::Listener,
-                           public juce::Label::Listener
+class MidiTransportContent : public juce::Component, public juce::Button::Listener,
+                             public juce::Label::Listener
 {
   public:
 
-    MidiTransportPanel();
-    ~MidiTransportPanel();
+    MidiTransportContent();
+    ~MidiTransportContent();
 
-    void show();
-    void hide();
+    void showing();
+    void hiding();
+    
     void start();
     void stop();
     void cont();
@@ -33,22 +36,14 @@ class MidiTransportPanel : public juce::Component, public juce::Button::Listener
     void buttonClicked(juce::Button* b) override;
     void labelTextChanged(juce::Label* l) override;
     
-    // drag and resize
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseDrag(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& e) override;
-
     void update();
     
   private:
 
     class MidiRealizer* realizer = nullptr;
-
-    BasicButtonRow footerButtons;
     BasicButtonRow commandButtons;
     BasicForm form;
     
-    juce::TextButton closeButton {"Close"};
     juce::TextButton startButton {"Start"};
     juce::TextButton stopButton {"Stop"};
     juce::TextButton continueButton {"Continue"};
@@ -71,13 +66,35 @@ class MidiTransportPanel : public juce::Component, public juce::Button::Listener
     int lastInTempo = 0;
     int lastInBeat = -1;
     
-    juce::ComponentBoundsConstrainer resizeConstrainer;
-    juce::ComponentBoundsConstrainer dragConstrainer;
-    juce::ResizableBorderComponent resizer {this, &resizeConstrainer};
-    juce::ComponentDragger dragger;
-    bool dragging = false;
-    
     juce::String formatBeat(int rawbeat);
     juce::String formatTempo(int tempo);
 
+};
+
+class MidiTransportPanel : public BasePanel
+{
+  public:
+
+    MidiTransportPanel() {
+        setTitle("MIDI Transport");
+        setContent(&content);
+        setSize(400, 500);
+    }
+    ~MidiTransportPanel() {}
+
+    void update() {
+        content.update();
+    }
+
+    void showing() override {
+        content.showing();
+    }
+    
+    void hiding() override {
+        content.hiding();
+    }
+    
+  private:
+
+    MidiTransportContent content;
 };

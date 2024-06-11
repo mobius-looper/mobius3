@@ -65,6 +65,14 @@ void SymbolTableContent::initColumns()
 {
     juce::TableHeaderComponent& header = table.getHeader();
 
+    // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
+    // sortable is not relevant for most tables and causes confusion when things don't sort
+    // appearsOnColumnMenu means "the columnn will be shown on the pop-up menu allowing it to
+    // be hidden/shown, not sure what that means but I don't need it
+    int columnFlags = juce::TableHeaderComponent::ColumnPropertyFlags::visible |
+        juce::TableHeaderComponent::ColumnPropertyFlags::resizable |
+        juce::TableHeaderComponent::ColumnPropertyFlags::draggable;
+
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
     // minWidth defaults to 30
     // maxWidth to -1
@@ -75,23 +83,23 @@ void SymbolTableContent::initColumns()
 
     header.addColumn(juce::String("Symbol"), SymbolTableNameColumn,
                      150, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 
     header.addColumn(juce::String("Type"), SymbolTableTypeColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
     
     header.addColumn(juce::String("Level"), SymbolTableLevelColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
     
     header.addColumn(juce::String("Flags"), SymbolTableFlagsColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
     
     header.addColumn(juce::String("Warnings"), SymbolTableWarnColumn,
                      100, 30, -1,
-                     juce::TableHeaderComponent::defaultFlags);
+                     columnFlags);
 }
 
 /**

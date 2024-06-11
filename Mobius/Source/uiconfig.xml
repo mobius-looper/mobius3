@@ -66,7 +66,7 @@
     <Button action="GlobalReset" color="-13969235"/>
     <Button action="Reset"/>
     <Button action="Record"/>
-    <Button action="Overdub"/>
+    <Button action="Overdub" color="-15707416"/>
     <Button action="Undo" color="-1440250"/>
     <Button action="Mute"/>
     <Button action="NextLoop"/>

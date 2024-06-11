@@ -138,7 +138,12 @@ void BasePanel::paint(juce::Graphics& g)
 
     if (title.length() > 0) {
         juce::Rectangle<int> header = area.removeFromTop(HeaderHeight);
-        g.setColour(juce::Colours::blue);
+        // g.setColour(juce::Colours::blue);
+        // this is what ColorSelector shows, but strangely, if you take
+        // the negative number from the uixonfig.xml and do an online dec-to-nex
+        // the number is different and wrong
+        //g.setColour(juce::Colour(0xFF1052E8));
+        g.setColour(juce::Colour((juce::uint32)-15707416));
         g.fillRect(header);
         juce::Font font (HeaderHeight * 0.75f);
         // looks a little too thick without making the header taller

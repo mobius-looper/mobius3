@@ -18,6 +18,7 @@
 SwatchColorSelector::SwatchColorSelector() :
     juce::ColourSelector (juce::ColourSelector::ColourSelectorOptions::showAlphaChannel |
                           //juce::ColourSelector::ColourSelectorOptions::editableColour |
+                          juce::ColourSelector::ColourSelectorOptions::showColourAtTop |
                           juce::ColourSelector::ColourSelectorOptions::showSliders |
                           juce::ColourSelector::ColourSelectorOptions::showColourspace)
 {

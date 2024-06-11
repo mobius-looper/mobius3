@@ -14,6 +14,7 @@
 
 #include "../../MidiManager.h"
 
+#include "../../test/BasicTabs.h"
 #include "../common/Form.h"
 #include "../common/Field.h"
 
@@ -60,5 +61,10 @@ class MidiDevicesPanel : public ConfigPanel, public Field::Listener, public Midi
     class Field* outputField = nullptr;
     class Field* pluginOutputField = nullptr;
 
+    BasicTabs tabs;
+    SimpleListBox appInputs;
+    SimpleListBox appOutputs;
+    SimpleListBox pluginInputs;
+    SimpleListBox pluginOutputs;
 };
 

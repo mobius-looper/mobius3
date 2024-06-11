@@ -19,20 +19,10 @@
 #include "../ui/JuceUtil.h"
 
 #include "BasicInput.h"
+#include "MidiTransportPanel.h"
 
-MidiTransportPanel::MidiTransportPanel()
+MidiTransportContent::MidiTransportContent()
 {
-    addAndMakeVisible(resizer);
-    resizer.setBorderThickness(juce::BorderSize<int>(4));
-    // keeps the resizer from warping this out of existence
-    resizeConstrainer.setMinimumHeight(20);
-    resizeConstrainer.setMinimumWidth(20);
-
-    footerButtons.setListener(this);
-    footerButtons.setCentered(true);
-    footerButtons.add(&closeButton);
-    addAndMakeVisible(&footerButtons);
-    
     commandButtons.setListener(this);
     commandButtons.setCentered(true);
     commandButtons.add(&startButton);
@@ -52,116 +42,64 @@ MidiTransportPanel::MidiTransportPanel()
     form.add(&inTempo);
     form.add(&inBeat);
     addAndMakeVisible(form);
-    
-    // todo: let this auto size
-    setSize (400, 500);
 }
 
-MidiTransportPanel::~MidiTransportPanel()
+MidiTransportContent::~MidiTransportContent()
 {
 }
 
-void MidiTransportPanel::show()
+void MidiTransportContent::showing()
 {
-    JuceUtil::center(this);
-
     // seemed to be having difficulty setting this at construction
     // so get it before showing, why?
     realizer = Supervisor::Instance->getMidiRealizer();
     outTempo.setText(juce::String(realizer->getTempo()));
     
     update();
-    
-    setVisible(true);
 }
 
-void MidiTransportPanel::hide()
+void MidiTransportContent::hiding()
 {
-    setVisible(false);
 }
 
-void MidiTransportPanel::start()
+void MidiTransportContent::start()
 {
     realizer->start();
     update();
 }
 
-void MidiTransportPanel::stop()
+void MidiTransportContent::stop()
 {
     realizer->stop();
     update();
 }
 
-void MidiTransportPanel::cont()
+void MidiTransportContent::cont()
 {
     realizer->midiContinue();
     update();
 }
 
-const int MidiTransportPanelHeaderHeight = 20;
-
-void MidiTransportPanel::resized()
+void MidiTransportContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    resizer.setBounds(area);
-    
-    area.removeFromTop(MidiTransportPanelHeaderHeight);
-    
     commandButtons.setBounds(area.removeFromTop(commandButtons.getHeight()));
-    footerButtons.setBounds(area.removeFromBottom(MidiTransportPanelHeaderHeight));
     form.setBounds(area);
 }
 
-void MidiTransportPanel::paint(juce::Graphics& g)
+void MidiTransportContent::paint(juce::Graphics& g)
 {
     juce::Rectangle<int> area = getLocalBounds();
     
     // todo: figure out how opaque components work so we dont' have to do this
     g.setColour(juce::Colours::white);
     g.fillRect(area);
-
-    juce::Rectangle<int> header = area.removeFromTop(MidiTransportPanelHeaderHeight);
-    g.setColour(juce::Colours::blue);
-    g.fillRect(header);
-    juce::Font font (MidiTransportPanelHeaderHeight * 0.8f);
-    g.setFont(font);
-    g.setColour(juce::Colours::white);
-    g.drawText("MIDI Transport", header, juce::Justification::centred);
-    
-    //g.setColour(juce::Colour(MobiusBlue));
-    //g.drawRect(getLocalBounds(), 1);
 }
 
-void MidiTransportPanel::mouseDown(const juce::MouseEvent& e)
+void MidiTransportContent::buttonClicked(juce::Button* b)
 {
-    if (e.getMouseDownY() < MidiTransportPanelHeaderHeight) {
-        dragger.startDraggingComponent(this, e);
-        // the first argu is "minimumWhenOffTheTop" set
-        // this to the full height and it won't allow dragging the
-        // top out of boundsa
-        dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
-        dragging = true;
-    }
-}
-
-void MidiTransportPanel::mouseDrag(const juce::MouseEvent& e)
-{
-    dragger.dragComponent(this, e, &dragConstrainer);
-}
-
-void MidiTransportPanel::mouseUp(const juce::MouseEvent& e)
-{
-    (void)e;
-    dragging = false;
-}
-
-void MidiTransportPanel::buttonClicked(juce::Button* b)
-{
-    if (b == &closeButton) {
-        hide();
-    }
-    else if (b == &startButton) {
+    if (b == &startButton) {
         start();
     }
     else if (b == &stopButton) {
@@ -177,7 +115,7 @@ void MidiTransportPanel::buttonClicked(juce::Button* b)
  * more than one, will need to give BasicInput an accessor
  * for the wrapped Label.
  */
-void MidiTransportPanel::labelTextChanged(juce::Label* l)
+void MidiTransportContent::labelTextChanged(juce::Label* l)
 {
     (void)l;
 
@@ -191,7 +129,7 @@ void MidiTransportPanel::labelTextChanged(juce::Label* l)
  * Called during Supervisor's advance() in the maintenance thread.
  * Refresh the whole damn thing if anything changes.
  */
-void MidiTransportPanel::update()
+void MidiTransportContent::update()
 {
     if (realizer != nullptr) {
         bool newOutStatus = realizer->isSending();
@@ -265,7 +203,7 @@ void MidiTransportPanel::update()
  * that does this.
  */
 #if 0
-void MidiTransportPanel::update()
+void MidiTransportContent::update()
 {
     // this little dance we do all the time, would be nice
     // to have some sort of utility container to automate this
@@ -298,7 +236,7 @@ void MidiTransportPanel::update()
 }
 #endif
 
-juce::String MidiTransportPanel::formatBeat(int rawbeat)
+juce::String MidiTransportContent::formatBeat(int rawbeat)
 {
     juce::String beatBar;
     
@@ -317,7 +255,7 @@ juce::String MidiTransportPanel::formatBeat(int rawbeat)
     return beatBar;
 }
 
-juce::String MidiTransportPanel::formatTempo(int tempo)
+juce::String MidiTransportContent::formatTempo(int tempo)
 {
     int main = tempo / 10;
     int fraction = tempo % 10;
