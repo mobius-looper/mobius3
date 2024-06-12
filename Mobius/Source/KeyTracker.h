@@ -16,8 +16,10 @@ class KeyTracker : public juce::KeyListener
 {
   public:
 
-    static KeyTracker Instance;
-
+    /**
+     * Another class may register with the key tracker to receive
+     * processed key events.
+     */
     class Listener {
       public:
         virtual ~Listener() {}
@@ -41,6 +43,8 @@ class KeyTracker : public juce::KeyListener
     ~KeyTracker();
 
     // juce::KeyListener
+    // this is where we get the raw keyboard events, process them
+    // and call our Listeners
     bool keyPressed(const juce::KeyPress& key, juce::Component* originator);
     bool keyStateChanged(bool isKeyDown, juce::Component* originator);
 

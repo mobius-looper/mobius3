@@ -30,29 +30,9 @@ MainComponent::MainComponent()
     // having some ugly initialization timing issues trying to do too much
     // in the MainComponent constructor, is there a convenient hook to defer that?
     supervisor.start();
-    
-    // redirect key events to the global listener
-    // todo: needs thought, when we're a plugin this probably needs to be done
-    // down in MainWindow
-    addKeyListener(&KeyTracker::Instance);
-
-    // didn't do this originally does it help with focus loss after changing buttons?
-    // yes, unclear why this works because focus is hella complicated, but when changing
-    // action ButtonSets, MainComponent was losing focus, possibly this is because
-    // an ActionButton is a juce::TextButton and it either wants focus, or doing anything
-    // to the child component list after construction grabs focus?  whatever, setting
-    // this seems to allow MainComponent to retain focus and keep pumping events
-    // through KeyTracker
-    setWantsKeyboardFocus(true);
-
-    // when the application first starts, it doesn't have keyboard focus for some reason
-    // tried this here and got an assertion failure because we're constructing and not
-    // yet visible, moved this to paint(), which I would think is okay
-    // grabKeyboardFocus();
 
     // Start with a size large enough to give us room but still display
-    // on most monitors.  Should be asking Supervisor for this after it's
-    // had a chance to build out and configure the component tree.
+    // on most monitors.
     // Supervisor.start will normally have set this from uioconfig if one was saved
     int width = getWidth();
     int height = getHeight();

@@ -19,6 +19,7 @@
 #include "../../model/Preset.h"
 #include "../../model/MobiusState.h"
 #include "../../model/UIParameter.h"
+#include "../../model/ParameterProperties.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/Query.h"
@@ -54,30 +55,37 @@ ParametersElement::~ParametersElement()
 /**
  * To reduce flicker, retain the values of the currently displayed parameters
  * if they change position.
+ *
+ * update: Once UI level parameters stopped being UIParameters, we lost the
+ * ability to 
  */
 void ParametersElement::configure()
 {
     UIConfig* config = Supervisor::Instance->getUIConfig();
 
     // remember the parameter the cursor was currently on
-    UIParameter* current = nullptr;
+    Symbol* current = nullptr;
     if (cursor < parameters.size())
-      current = parameters[cursor]->parameter;
+      current = parameters[cursor]->symbol;
 
     // rebuild the parameter list, retaining the old values
     juce::Array<ParameterState*> newParameters;
     
     DisplayLayout* layout = config->getActiveLayout();
     for (auto name : layout->instantParameters) {
-        const char* cname = name.toUTF8();
-        UIParameter* p = UIParameter::find(cname);
-        if (p == nullptr) {
-            Trace(1, "ParametersElement: Invalid parameter name %s\n", cname);
+        
+        Symbol* s = Symbols.find(name);
+        if (s == nullptr ||
+            // two ways to represent these now...
+            (s->parameter == nullptr &&
+             s->parameterProperties == nullptr)) {
+
+            Trace(1, "ParametersElement: Invalid parameter name %s\n", name.toUTF8());
         }
         else {
             ParameterState* existing = nullptr;
             for (auto pstate : parameters) {
-                if (pstate->parameter == p) {
+                if (pstate->symbol == s) {
                     existing = pstate;
                     break;
                 }
@@ -88,12 +96,6 @@ void ParametersElement::configure()
             }
             else {
                 ParameterState* neu = new ParameterState();
-                neu->parameter = p;
-                // Query now wants a Symbol so we don't need to be saving
-                // the UIParameter any more too
-                Symbol* s = Symbols.intern(p->getName());
-                if (s->parameter != p)
-                  Trace(1, "ParametersElement: Parameter symbol anomoly %s\n", p->getName());
                 neu->symbol = s;
                 newParameters.add(neu);
             }
@@ -109,7 +111,7 @@ void ParametersElement::configure()
     int position = 0;
     for (auto ps : newParameters) {
         parameters.add(ps);
-        if (current != nullptr && current == ps->parameter)
+        if (current != nullptr && current == ps->symbol)
           cursor = position;
         position++;
     }
@@ -120,14 +122,35 @@ int ParametersElement::getPreferredHeight()
     return (ParametersRowHeight + ParametersVerticalGap) * parameters.size();
 }
 
+/**
+ * Derive the display name for a parameter symbol.
+ * Temporary complication due to the evoluation from UIParameter
+ * to ParameterProperties
+ */
+juce::String ParametersElement::getDisplayName(Symbol* s)
+{
+    juce::String displayName;
+    
+    if (s->parameter != nullptr) 
+      displayName = s->parameter->getDisplayableName();
+    
+    else
+      displayName = s->parameterProperties->displayName;
+            
+    if (displayName.length() == 0)
+      displayName = s->name;
+
+    return displayName;
+}
+
 int ParametersElement::getPreferredWidth()
 {
     juce::Font font = juce::Font(ParametersRowHeight);
 
     int maxName = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {
-        UIParameter* p = parameters[i]->parameter;
-        int nameWidth = font.getStringWidth(p->getDisplayableName());
+        juce::String displayName = getDisplayName(parameters[i]->symbol);
+        int nameWidth = font.getStringWidth(displayName);
         if (nameWidth > maxName)
           maxName = nameWidth;
     }
@@ -191,21 +214,32 @@ void ParametersElement::paint(juce::Graphics& g)
     int rowTop = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {
         ParameterState* ps = parameters[i];
-        UIParameter* p = ps->parameter;
+        Symbol* s = ps->symbol;
         int value = ps->value;
         juce::String strValue;
+
+        // ugliness here due to the dual model again
+        UIParameterType type;
+
+        if (s->parameter != nullptr)
+          type = s->parameter->type;
+        else
+          type = s->parameterProperties->type;
         
-        if (p->type == TypeEnum) {
-            strValue = juce::String(p->getEnumLabel(value));
+        if (type == TypeEnum) {
+            // only works for UIParameter
+            UIParameter* p = s->parameter;
+            if (p != nullptr)
+              strValue = juce::String(p->getEnumLabel(value));
         }
-        else if (p->type == TypeBool) {
+        else if (type == TypeBool) {
             if (value)
               strValue = juce::String("true");
             else
               strValue = juce::String("false");
         }
-        else if (p->type == TypeStructure) {
-            strValue = Supervisor::Instance->getParameterLabel(p, value);
+        else if (type == TypeStructure) {
+            strValue = Supervisor::Instance->getParameterLabel(s, value);
         }
         else {
             strValue = juce::String(value);
@@ -213,7 +247,7 @@ void ParametersElement::paint(juce::Graphics& g)
 
         // old mobius uses dim yellow
         g.setColour(juce::Colours::beige);
-        g.drawText(juce::String(p->getDisplayableName()),
+        g.drawText(getDisplayName(s),
                    0, rowTop, maxNameWidth, ParametersRowHeight,
                    juce::Justification::centredRight);
 
@@ -268,14 +302,11 @@ bool ParametersElement::doAction(UIAction* action)
             
         case UISymbolParameterInc: {
             ParameterState* ps = parameters[cursor];
-            UIParameter* p = ps->parameter;
             int value = ps->value;
-            int max = Supervisor::Instance->getParameterMax(p);
+            int max = Supervisor::Instance->getParameterMax(ps->symbol);
             if (value < max ) {
                 UIAction coreAction;
-                // christ this is horrible, should just be saving the Symbol here
-                // instead of or in addition to the UIParameter
-                coreAction.symbol = Symbols.intern(p->getName());
+                coreAction.symbol = ps->symbol;
                 coreAction.value = value + 1;
                 Supervisor::Instance->doAction(&coreAction);
                 // avoid refresh lag and flicker by optimistically setting the value
@@ -292,9 +323,8 @@ bool ParametersElement::doAction(UIAction* action)
             int value = ps->value;
             // can assume that the minimum will always be zero
             if (value > 0) {
-                UIParameter* p = ps->parameter;
                 UIAction coreAction;
-                coreAction.symbol = Symbols.intern(p->getName());
+                coreAction.symbol = ps->symbol;
                 coreAction.value = value - 1;
                 Supervisor::Instance->doAction(&coreAction);
                 ps->value = coreAction.value;

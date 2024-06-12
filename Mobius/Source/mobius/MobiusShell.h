@@ -89,6 +89,13 @@ class MobiusShell : public MobiusInterface
     
   private:
 
+    // Maintan a static instance counter to warn when a host
+    // tries to instantiate multiple plugins.  Supervisor
+    // should have prevented this.  Multi-instance at this level
+    // isn't far away, and I think we did it for awhile, but
+    // Supervisor has several problems.
+    static int Instances;
+
     class MobiusContainer* container = nullptr;
     MobiusListener* listener = nullptr;
     class MobiusConfig* configuration = nullptr;

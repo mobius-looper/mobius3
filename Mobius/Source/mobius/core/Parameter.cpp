@@ -160,7 +160,9 @@ void Parameter::setValue(Action* action)
 
 /**
  * Allocate a label array and fill it with nulls.
+ * wtf did this do?
  */
+#if 0
 const char** Parameter::allocLabelArray(int size)
 {
 	int fullsize = size + 1; // leave a null terminator
@@ -171,6 +173,7 @@ const char** Parameter::allocLabelArray(int size)
 
 	return labels;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //

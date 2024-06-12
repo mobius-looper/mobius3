@@ -146,7 +146,7 @@ MobiusPluginAudioProcessor::MobiusPluginAudioProcessor()
     // the environment we're in is conceptually like the MainComponent
     // constructor when running standalone
     // Supervisor is a static member and we start it
-    supervisor.start();
+    supervisorStarted = supervisor.start();
 }
 
 MobiusPluginAudioProcessor::~MobiusPluginAudioProcessor()

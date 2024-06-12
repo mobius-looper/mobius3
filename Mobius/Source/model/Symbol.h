@@ -155,6 +155,11 @@ class Symbol
     Symbol();
     ~Symbol();
 
+    // temporary kludge as we work around the
+    // UIParameter/ParameterProperties transition
+    // actually, might not be that bad since it can handle other things too
+    juce::String getDisplayName();
+
     /**
      * All symbols must have a unique name which is used internally
      * to reference the symbol.
@@ -168,6 +173,8 @@ class Symbol
     /**
      * Symbols may have an alternate display name when it is presented
      * to the end user.
+     * todo: this isn't being used consistently, at least not for parameters
+     * which has to use getDisplayName
      */
     juce::String displayName;
 

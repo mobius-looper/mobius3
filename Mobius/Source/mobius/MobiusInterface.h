@@ -80,18 +80,11 @@ class MobiusInterface {
 
     /**
      * Factory method called during application initialization to obtain
-     * a handle to the Mobius engine.  This will be a singleton that
-     * must not be deleted.  Call shutdown() when no longer needed.
+     * a handle to the Mobius engine.  This must be deleted, and
+     * in should really be guarded against multiple instantiation until
+     * that can be thorougly tested.
      */
     static class MobiusInterface* getMobius(class MobiusContainer* container);
-    
-    /**
-     * This must be called once during main application shutdown.
-     *
-     * todo: not liking this, should be enough just to delete
-     * the MobiusInterface object?
-     */
-    static void shutdown();
 
     /**
      * Called by the UI to register an object to recieve notifications
@@ -261,9 +254,6 @@ class MobiusInterface {
 
   private:
 
-    // maintain a singleton for now so we can get to it easilly without
-    // passing it everywhere
-    static MobiusInterface* Singleton;
     
 };
    

@@ -76,8 +76,7 @@ class UIParameter : public SystemConstant
   public:
 
 	UIParameter();
-    // don't think we'll be needing subclasses yet
-	virtual ~UIParameter();
+	~UIParameter();
 
     /**
      * For configuration parameters, indidicates which structdure this

@@ -3,6 +3,13 @@
  * activities between the various sub-components of the Mobius application.
  * Managed by the Juce MainComponent
  *
+ * This has to be a global Singleton right now, mostly for the global Symbols
+ * but also because it's just too damn convenient to call Supervisor::Instance rather
+ * than pass it down literally everywhere.
+ * 
+ * This does prevent multi-instance plugins, and you have to be careful to guard against
+ * some hosts that do multi-instance during scanning.  Not entirely happy with this but
+ * no one really needs multi-innstance Mobius.
  */
 
 #pragma once
@@ -17,6 +24,7 @@
 
 #include "JuceAudioStream.h"
 
+#include "KeyTracker.h"
 #include "MainThread.h"
 #include "Binderator.h"
 #include "MidiManager.h"
@@ -37,7 +45,8 @@ class Supervisor : public MobiusContainer, public MobiusListener
   public:
 
     static Supervisor* Instance;
-
+    static int InstanceCount;
+    
     static const int BuildNumber = 8;
 
     /**
@@ -89,7 +98,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     ~Supervisor();
 
     // this called by the application/plugin container
-    void start();
+    bool start();
     void shutdown();
     juce::Component* getPluginEditorComponent();
     void closePluginEditor();
@@ -125,6 +134,10 @@ class Supervisor : public MobiusContainer, public MobiusListener
     }
 
     juce::AudioDeviceManager* getAudioDeviceManager();
+
+    class KeyTracker* getKeyTracker() {
+        return &keyTracker;
+    }
     
     class MidiManager* getMidiManager() {
         return &midiManager;
@@ -169,9 +182,8 @@ class Supervisor : public MobiusContainer, public MobiusListener
 
     // find the value of a parameter or variable
     bool doQuery(class Query* q);
-    
-    juce::String getParameterLabel(class UIParameter* p, int ordinal);
-    int getParameterMax(class UIParameter* p);
+    juce::String getParameterLabel(class Symbol* s, int ordinal);
+    int getParameterMax(class Symbol* s);
 
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
@@ -240,9 +252,10 @@ class Supervisor : public MobiusContainer, public MobiusListener
         return audioStream.getLevelMeterSource();
     }
 #endif
-    
+
   private:
 
+    bool startPrevented = false;
     char meterName[128];
     int meterStart = 0;
     int meterTime = 0;
@@ -256,6 +269,9 @@ class Supervisor : public MobiusContainer, public MobiusListener
     JuceAudioStream audioStream {this};
     class MobiusAudioListener* audioListener = nullptr;
 
+    // track keyboard transitions
+    KeyTracker keyTracker;
+
     // the "maintenance thread"
     MainThread uiThread {this};
 
@@ -263,9 +279,10 @@ class Supervisor : public MobiusContainer, public MobiusListener
     Symbolizer symbolizer;
     
     // the Mobius "engine"
-    // this is a singleton managed by MobiusInterface and deleted
-    // by MobiusInterface::shutdown
-    // do not make this a unique_ptr
+    // this started as a singleton managed by MobiusInterface
+    // with getMobius and shutdown() which is why it isn't a unique_ptr
+    // I took that out so it could be, but I'm letting Supervisor handle
+    // that for awhile to prevent disruption
     class MobiusInterface* mobius = nullptr;
     
     // the root of the user interface

@@ -107,6 +107,13 @@ void BindingTargetPanel::load()
                   // parameters.add(p->getDisplayableName());
                   parameters.add(symbol->getName());
             }
+            else {
+                // this isn't catching the two newer UI level parameters
+                // for ActiveLayouts and ActiveButtons
+                // could add those but they're not that important for
+                // bindings and I don't want to mess with the UIParameter/ParameterProperties/Symbol
+                // shit right now
+            }
         }
         else if (symbol->behavior == BehaviorScript) {
             scripts.add(symbol->getName());

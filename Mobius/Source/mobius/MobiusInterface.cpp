@@ -1,27 +1,17 @@
 /**
  * Factory method to instantiate MobiusShell for use by the UI
- *
+ * Doesn't acomplish much except to hide MobiusShell and force the UI
+ * to always go through MobiusInterface.
  */
 
 #include "MobiusInterface.h"
 #include "MobiusShell.h"
 
 /**
- * We don't really need to maintain a singleton but
- * it keeps the UI honest.
+ * Instantiate the instance of MobiusInterface.
+ * This MUST be deleted by the caller.
  */
-MobiusInterface* MobiusInterface::Singleton = nullptr;
-
 MobiusInterface* MobiusInterface::getMobius(MobiusContainer* container)
 {
-    if (Singleton == nullptr) {
-        Singleton = new MobiusShell(container);
-    }
-    return Singleton;
-}
-
-void MobiusInterface::shutdown()
-{
-    delete Singleton;
-    Singleton = nullptr;
+    return new MobiusShell(container);
 }

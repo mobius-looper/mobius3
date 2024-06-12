@@ -1,4 +1,8 @@
 /*
+ * Helper class to monitor keyboard key transitions.
+ * This must be registered as a KeyListener at an appropriate
+ * point during application or plugin editor initialization.
+ *
  * Juce has a somewhat understandable but annoying lack of sending
  * events for key up transitions.  You get notified with keyStateChanged
  * when anything goes up but you don't know what it was.  Most of the time
@@ -82,7 +86,6 @@
  * in non-ASCII codes like function and arrow keys, and no one besides me uses key
  * bindings much anyway.  Fidling with ctrl-shift-alt while performing doesn't happen.
  *
- *
  * Key codes are weird, see notes/keycodes.txt
  */
 
@@ -92,13 +95,6 @@
 #include "util/Trace.h"
 
 #include "KeyTracker.h"
-
-/**
- * Global singleton.
- * Must be registered as a KeyListener somewhere during
- * application initialization, typically by MainComponent
- */
-KeyTracker KeyTracker::Instance;
 
 KeyTracker::KeyTracker()
 {

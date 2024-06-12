@@ -68,7 +68,8 @@ class MobiusPluginAudioProcessor  : public juce::AudioProcessor
 
     // this is where it all starts
     Supervisor supervisor {this};
-
+    bool supervisorStarted = false;
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MobiusPluginAudioProcessor)
 };

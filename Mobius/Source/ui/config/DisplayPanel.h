@@ -53,7 +53,7 @@ class DisplayEditor : public juce::Component, public juce::DragAndDropContainer
 
     void addParameterDisplayName(juce::String name, juce::StringArray& values);
 
-    class UIParameter* findParameterWithDisplayName(juce::String dname);
+    class Symbol* findSymbolWithDisplayName(juce::String dname);
 
     class StringList* toStringList(juce::StringArray& src);
 

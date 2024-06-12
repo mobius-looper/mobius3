@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 
+#include "../../Supervisor.h"
 #include "../../KeyTracker.h"
 #include "../../Binderator.h"
 #include "../../util/Trace.h"
@@ -27,7 +28,7 @@ KeyboardPanel::KeyboardPanel(ConfigEditor* argEditor) :
 KeyboardPanel::~KeyboardPanel()
 {
     // make sure this doesn't linger
-    KeyTracker::Instance.removeExclusiveListener(this);
+    Supervisor::Instance->getKeyTracker()->removeExclusiveListener(this);
 }
 
 /**
@@ -43,7 +44,7 @@ void KeyboardPanel::showing()
     // use the newer "exclusive" listener to prevent Binderator
     // from going crazy while we capture key events
     //KeyTracker::addListener(this);
-    KeyTracker::Instance.setExclusiveListener(this);
+    Supervisor::Instance->getKeyTracker()->setExclusiveListener(this);
 }
 
 /**
@@ -52,7 +53,7 @@ void KeyboardPanel::showing()
 void KeyboardPanel::hiding()
 {
     // KeyTracker::removeListener(this);
-    KeyTracker::Instance.removeExclusiveListener(this);
+    Supervisor::Instance->getKeyTracker()->removeExclusiveListener(this);
 }
 
 /**

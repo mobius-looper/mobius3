@@ -191,7 +191,7 @@ class Parameter : public SystemConstant {
 	static void checkAmbiguousNames();
     void addAlias(const char* alias);
 
-	const char** allocLabelArray(int size);
+	// const char** allocLabelArray(int size);
     int getOrdinalInternal(class ExValue* value, const char** varray);
 
 	int low;

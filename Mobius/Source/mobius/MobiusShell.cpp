@@ -80,8 +80,19 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Hack to warn about multi-instance
+ */
+int MobiusShell::Instances = 0;
+
 MobiusShell::MobiusShell(MobiusContainer* cont)
 {
+    if (Instances > 0) {
+        Trace(1, "MobiusShell: Instantiating more than one instance!\n");
+        Trace(1, "You are likely going to have a bad day\n");
+    }
+    Instances++;
+    
     container = cont;
     
     // this is given to us later
@@ -144,6 +155,8 @@ MobiusShell::~MobiusShell()
     delete configuration;
 
     audioPool.dump();
+
+    Instances--;
 }
 
 void MobiusShell::setListener(MobiusListener* l)

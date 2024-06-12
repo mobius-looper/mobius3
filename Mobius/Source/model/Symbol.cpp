@@ -30,6 +30,28 @@ Symbol::~Symbol()
 {
 }
 
+juce::String Symbol::getDisplayName()
+{
+    juce::String dname;
+
+    if (parameterProperties != nullptr) {
+        dname = parameterProperties->displayName;
+    }
+    else if (parameter != nullptr) {
+        dname = juce::String(parameter->getDisplayableName());
+    }
+
+    if (dname.length() == 0) {
+        // this hasn't been set reliably but use it if it was
+        if (displayName.length() > 0)
+          dname = displayName;
+        else
+          displayName = name;
+    }
+    
+    return displayName;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // SymbolTable
@@ -38,6 +60,15 @@ Symbol::~Symbol()
 
 /**
  * Global registry
+ * 
+ * This is EXTREMELY dangerious but it's just too convenient
+ * to use Symbols.intern() everywhere.  It has to be carefully
+ * controlled by Supervisor which itself has to prevent
+ * multiple instantiations and call Symbols.clear()
+ * when it destructs.  Would obviously be better to have
+ * this inside Supervisor but then
+ * everyone has to Supervisor::Instance::Symbols.intern()
+ * 
  */
 SymbolTable Symbols;
 
@@ -177,7 +208,7 @@ void SymbolTable::traceCorrespondence()
     }
                   
 }
-                  
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

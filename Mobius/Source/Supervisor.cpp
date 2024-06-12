@@ -51,9 +51,11 @@
 /**
  * Singleton object definition.  Having this static makes
  * it easier for the few sub-components that need to get it directly
- * rather than walking all the way up the hierarchy.
+ * rather than walking all the way up the hierarchy.  But it does
+ * prevent multi-instance plugins.
  */
 Supervisor* Supervisor::Instance = nullptr;
+int Supervisor::InstanceCount = 0;
 
 /**
  * Start building the Supervisor when running as a standalone
@@ -62,10 +64,17 @@ Supervisor* Supervisor::Instance = nullptr;
 Supervisor::Supervisor(juce::AudioAppComponent* main)
 {
     trace("Supervisor: standalone construction\n");
-    if (Instance != nullptr)
-      trace("Attempt to instantiate more than one Supervisor!\n");
-    else
-      Instance = this;
+
+    // see comments above ~Supervisor for why we use InstanceCount
+    // rather than testing nullness of Instance
+    if (InstanceCount == 0) {
+        Instance = this;
+    }
+    else {
+        // this really can't happen with the standalone app
+        Trace(1, "Instantiating more than one standalone Supervisor!");
+    }
+    InstanceCount++;
     
     mainComponent = main;
     
@@ -80,10 +89,19 @@ Supervisor::Supervisor(juce::AudioAppComponent* main)
 Supervisor::Supervisor(juce::AudioProcessor* ap)
 {
     trace("Supervisor: plugin construction\n");
-    if (Instance != nullptr)
-      trace("Attempt to instantiate more than one Supervisor!\n");
-    else
-      Instance = this;
+
+    // see comments above ~Supervisor for why we use InstanceCount
+    // rather than testing nullness of Instance
+    if (InstanceCount == 0) {
+        Instance = this;
+    }
+    else {
+        // Host is trying to create another instance before deleting the last one
+        // I don't think they're supposed to do that if we tell it to only allow one.
+        // This secondary instance will be prevented from doing anything
+        Trace(1, "Supervisor: Host is creating another instance before deleting the last one\n");
+    }
+    InstanceCount++;
 
     audioProcessor = ap;
     
@@ -96,22 +114,66 @@ Supervisor::Supervisor(juce::AudioProcessor* ap)
  * by calling shutdown() before destructing due to subtle
  * problems with static destruction order.  If that's the case
  * why even bother with RAII for the Supervisor?
+ *
+ * Fuck, it's worse.  I attempted to handle back-to-back
+ * plugin instantiation by nulling Instance in the destructor
+ * so it was clean for the next contstructor.  The problem is
+ * the RAII destructors for all our internal components happen AFTER
+ * our destructor finishes, an some of them call back to Instance
+ * to unregister listeners and otherwise try to clean up after themselves.
+ * The combo of RAII at the root level and globals sucks.
+ *
+ * Most of the last-minute cleanup in internal components doesn't really
+ * need to happen since the listeners aren't going to fire anyway, but it's
+ * hard to prevent, and also a PITA for everything to check for Instance nullptr.
+ * This needs a thorough redesign.  While not at all pretty, here is what happens.
+ *
+ * Instead of nulling Instance here, leave it set but decreemnt the InstanceCount.
+ * On the next construction use InstanceCount rather than nullness of Instance
+ * to detect whether we cleaned up the last one.
+ *
+ * What this won't handle is if the host had two threads, one destructing the old
+ * instance and one constructing the new one at exactly the same time.  But the worst
+ * that can happen is the second one fails to start because it still thinks there
+ * is an old one.
  */
 Supervisor::~Supervisor()
 {
-    Trace(2, "Supervisor: Destructor\n");
+    if (Instance == this) {
+        // the normal case
+        Trace(2, "Supervisor: Destructor\n");
+        // see method comments about why this doesn't work
+        //Instance = nullptr;
+    }
+    else {
+        // must have been a second instance and the old one is still alive
+        Trace(1, "Supervisor: Destructor of secondary disabled instance\n");
+    }
+    
     // todo: check for proper termination?
     TraceFile.flush();
+
+    InstanceCount--;
 }
 
 /**
  * Initialize the supervisor, this is where the magic begins.
  */
-void Supervisor::start()
+bool Supervisor::start()
 {
     // note using lower "trace" functions here till we get
     // Trace files set up
     trace("Supervisor::start\n");
+
+    if (InstanceCount != 1) {
+        // should have already traced something scary in the constructor
+        // terminate without initializing and it won't be in Instance
+        // so nothing can use it
+        trace("Supervisor::start Multiple instances prevented\n");
+        // keep shutdown() from doing anything
+        startPrevented = true;
+        return false;
+    }
 
     strcpy(meterName, "");
     meter("Start");
@@ -129,6 +191,8 @@ void Supervisor::start()
     // keep the file through several plugin runs to watch
     // how the hosts touch it
     // now that it's out there, stop this so it doesn't get too big
+    // sigh, this is useful to debug scanning problems on startup, would be nice
+    // to enable or disable this without hard coding it
     //if (!isPlugin()) TraceFile.clear();
     TraceFile.clear();
     TraceFile.enable();
@@ -190,6 +254,16 @@ void Supervisor::start()
     // if we're standalone add to the MainComponent now
     // if plugin have to do this later when the editor is created
     if (mainComponent != nullptr) {
+        mainComponent->addKeyListener(&keyTracker);
+        // didn't do this originally does it help with focus loss after changing buttons?
+        // yes, unclear why this works because focus is hella complicated, but when changing
+        // action ButtonSets, MainComponent was losing focus, possibly this is because
+        // an ActionButton is a juce::TextButton and it either wants focus, or doing anything
+        // to the child component list after construction grabs focus?  whatever, setting
+        // this seems to allow MainComponent to retain focus and keep pumping events
+        // through KeyTracker
+        mainComponent->setWantsKeyboardFocus(true);
+        
         mainComponent->addAndMakeVisible(win);
         // get the size previoiusly used
         UIConfig* config = getUIConfig();
@@ -204,6 +278,11 @@ void Supervisor::start()
 
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
+    // this used to be a Singleton that was released with
+    // MobiusInterface::shutdown, but now it's just an ordinary pointer
+    // that has to be deleted
+    // should be a unique_ptr, but it's also better if this
+    // is deleted earler to control ordering
     mobius = MobiusInterface::getMobius(this);
     
     // this is where the bulk of the engine initialization happens
@@ -286,6 +365,7 @@ void Supervisor::start()
     meter(nullptr);
 
     Trace(2, "Supervisor::start finished\n");
+    return true;
 }
 
 /**
@@ -321,6 +401,12 @@ void Supervisor::shutdown()
 {
     Trace(2, "Supervisor::shutdown\n");
 
+    if (startPrevented) {
+        // we bypassed start() after detecting multiple instances
+        // so nothing to do
+        return;
+    }
+
     // stop the maintenance thread so we don't get any more advance() calls
     Trace(2, "Supervisor: Stopping maintenance thread\n");
     uiThread.stop();
@@ -338,8 +424,10 @@ void Supervisor::shutdown()
     midiManager.shutdown();
 
     Trace(2, "Supervisor: Stopping Mobius engine\n");
-    MobiusInterface::shutdown();
-    // this is now invalid
+    // used to be a singleton with MobiusInterface::shutdown()
+    // now we just delete it, should also be a unique_ptr
+    // but it's better if destruction order is controlled
+    delete mobius;
     mobius = nullptr;
     // any cleanup in audioStream?
     
@@ -369,6 +457,8 @@ void Supervisor::shutdown()
     // be deleted yet, and Juce complains.  This is only an issue for static
     // objects that reference Juce objects.  To avoid the assertion, clear
     // the SymbolTable early.
+    // yeah, well, this is pretty damn important with multi-instance plugins
+    // too, can't leave anything behind when Supervisor is dead
     Symbols.clear();
     
     TraceFile.flush();
@@ -418,9 +508,10 @@ juce::Component* Supervisor::getPluginEditorComponent()
     pluginEditorOpen = true;
     
     juce::Component* comp = mainWindow.get();
-    // we do this backwards from how MainComponent does it
-    // should be consistent and have Supervisor set this up for both
-    comp->addKeyListener(&KeyTracker::Instance);
+
+    // unlike the application with MainComponent we have to add
+    // a key tracker every time the editor window is opened
+    comp->addKeyListener(&keyTracker);
     
     return comp;
 }
@@ -440,10 +531,6 @@ void Supervisor::closePluginEditor()
         Trace(2, "Supervisor::closePluginEditor");
     }
     pluginEditorOpen = false;
-    
-    // we don't unregister KeyTracker as a KeyListener on MainComponent
-    // when the standalone app shuts down, should we do that
-    // for the editor component since it will continue to exist?
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1276,21 +1363,12 @@ bool Supervisor::doQuery(Query* query)
     if (s == nullptr) {
         Trace(1, "Supervisor: Query without symbol\n");
     }
-    else {
-        // hmm, two ways to determine level for this, the Symbol
-        // can have LevelUI and the UIParameter can have ScopeUI
-        UIParameter* p = s->parameter;
-        if (p != nullptr && p->scope == ScopeUI) {
-            // it's one of ours
-            int value = -1;
-            UIConfig* config = getUIConfig();
-            // hmm, unlike UIAction, UIParameter does not have a Symbol so
-            // we have to intern it to get the id, faster just to check the few
-            // names we know about
-            // this sucks, refine!
-            if (StringEqual(p->getName(), UISymbols::ActiveLayout)) {
-                // gag, there has to be a way to generalize this with OwnedArray in the fucking way
-                value = -1;
+    else if (s->level == LevelUI) {
+        // it's one of ours, these don't use UIParameter
+        UIConfig* config = getUIConfig();
+        int value = -1;
+        switch (s->id) {
+            case UISymbolActiveLayout: {
                 int index = 0;
                 for (auto layout : config->layouts) {
                     if (layout->name == config->activeLayout) {
@@ -1305,9 +1383,10 @@ bool Supervisor::doQuery(Query* query)
                     value = 0;
                 }
             }
-            else if (StringEqual(p->getName(), UISymbols::ActiveButtons)) {
+                break;
+                
+            case UISymbolActiveButtons: {
                 // gag, there has to be a way to generalize this with OwnedArray in the fucking way
-                value = -1;
                 int index = 0;
                 for (auto set : config->buttonSets) {
                     if (set->name == config->activeButtonSet) {
@@ -1322,23 +1401,21 @@ bool Supervisor::doQuery(Query* query)
                     value = 0;
                 }
             }
-            else {
-                Trace(1, "Supervisor: Unsupported UI parameter %s\n", p->getName());
-            }
+                break;
+                
+            default:
+                Trace(1, "Supervisor: Unsupported UI parameter %s\n", s->name.toUTF8());
+                break;
+        }
             
-            query->value = value;
-            if (value >= 0)
-              success = true;
-        }
-        else if (s->level == LevelUI) {
-            // don't have anything that wouldn't also be a UIParameter
-            //doUILevelQuery(query);
-        }
-        else {
-            // send it down
-            if (mobius != nullptr) {
-                success = mobius->doQuery(query);
-            }
+        query->value = value;
+        if (value >= 0)
+          success = true;
+    }
+    else {
+        // send it down
+        if (mobius != nullptr) {
+            success = mobius->doQuery(query);
         }
     }
     
@@ -1349,28 +1426,37 @@ bool Supervisor::doQuery(Query* query)
  * Return the value of a parameter as a display name to show
  * in the UI or export through a PluginParameter.
  */
-juce::String Supervisor::getParameterLabel(UIParameter* p, int ordinal)
+juce::String Supervisor::getParameterLabel(Symbol* s, int ordinal)
 {
     juce::String label;
     
-    if (p->scope == ScopeUI) {
+    if (s->level == LevelUI) {
         // it's one of ours
         UIConfig* config = getUIConfig();
-        if (StringEqual(p->getName(), "activeLayout")) {
-            if (ordinal >= 0 && ordinal < config->layouts.size())
-              label = config->layouts[ordinal]->name;
-        }
-        else if (StringEqual(p->getName(), "activeButtons")) {
-            if (ordinal >= 0 && ordinal < config->buttonSets.size())
-              label = config->buttonSets[ordinal]->name;
-        }
-        else {
-            Trace(1, "Supervisor: Unsupported UI parameter %s\n", p->getName());
+        switch (s->id) {
+            case UISymbolActiveLayout: {
+                if (ordinal >= 0 && ordinal < config->layouts.size())
+                  label = config->layouts[ordinal]->name;
+            }
+                break;
+            case UISymbolActiveButtons: {
+                if (ordinal >= 0 && ordinal < config->buttonSets.size())
+                  label = config->buttonSets[ordinal]->name;
+            }
+                break;
+
+            default: {
+                Trace(1, "Supervisor: Unsupported UI parameter %s\n", s->name.toUTF8());
+            }
         }
     }
     else {
-        MobiusConfig* config = getMobiusConfig();
-        label = juce::String(p->getStructureName(config, ordinal));
+        // these need to have a UIParameter
+        UIParameter* p = s->parameter;
+        if (p != nullptr) {
+            MobiusConfig* config = getMobiusConfig();
+            label = juce::String(p->getStructureName(config, ordinal));
+        }
     }
     return label;
 }
@@ -1379,32 +1465,33 @@ juce::String Supervisor::getParameterLabel(UIParameter* p, int ordinal)
  * Return the high range of the parameter ordinal.
  * The minimum can be assumed zero.
  */
-int Supervisor::getParameterMax(UIParameter* p)
+int Supervisor::getParameterMax(Symbol* s)
 {
     int max = 0;
     
-    if (p->scope == ScopeUI) {
-        // it's one of ours
+    if (s->level == LevelUI) {
         UIConfig* config = getUIConfig();
-        // hmm, unlike UIAction, UIParameter does not have a Symbol so
-        // we have to intern it to get the id, faster just to check the few
-        // names we know about
-        // this sucks, refine!
-        if (StringEqual(p->getName(), "activeLayout")) {
-            max = config->layouts.size() - 1;
-        }
-        else if (StringEqual(p->getName(), "activeButtons")) {
-            max = config->buttonSets.size() - 1;
-        }
-        else {
-            Trace(1, "Supervisor: Unsupported UI parameter %s\n", p->getName());
+        switch (s->id) {
+            case UISymbolActiveLayout:
+                max = config->layouts.size() - 1;
+                break;
+
+            case UISymbolActiveButtons:
+                max = config->buttonSets.size() - 1;
+                break;
+                
+            default:
+                Trace(1, "Supervisor: Unsupported UI parameter %s\n", s->name.toUTF8());
         }
     }
     else {
         // logic is currently embedded within UIParameter which
         // I don't like but it's old and works well enough for now
-        MobiusConfig* config = getMobiusConfig();
-        max = p->getDynamicHigh(config);
+        UIParameter* p = s->parameter;
+        if (p != nullptr) {
+            MobiusConfig* config = getMobiusConfig();
+            max = p->getDynamicHigh(config);
+        }
     }
     return max;
 }

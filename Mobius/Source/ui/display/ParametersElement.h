@@ -16,7 +16,7 @@ class ParametersElement : public StatusElement,
   public:
 
     /**
-     * Small helper structure to keep the UIParameter we're displaying
+     * Small helper structure to keep the parameter symbol we're displaying
      * along with it's last displayed value.  Reduces flicker when
      * reconfiguring the parameter list so we can keep the last value
      * if the same parameter is found in the old and new lists.
@@ -24,7 +24,6 @@ class ParametersElement : public StatusElement,
     class ParameterState {
       public:
         class Symbol* symbol = nullptr;
-        UIParameter* parameter = nullptr;
         int value = 0;
         ParameterState() {}
         ~ParameterState() {}
@@ -50,6 +49,8 @@ class ParametersElement : public StatusElement,
     int maxNameWidth = 0;
     int maxValueWidth = 0;
     int cursor = 0;
+    
+    juce::String getDisplayName(Symbol* s);
     
 };
 

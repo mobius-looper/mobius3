@@ -730,14 +730,14 @@ ApplicationBinderator::ApplicationBinderator(Supervisor* super)
 
 ApplicationBinderator::~ApplicationBinderator()
 {
-    KeyTracker::Instance.removeListener(this);
+    supervisor->getKeyTracker()->removeListener(this);
     supervisor->getMidiManager()->removeListener(this);
 }
 
 void ApplicationBinderator::start()
 {
     if (!started) {
-        KeyTracker::Instance.addListener(this);
+        supervisor->getKeyTracker()->addListener(this);
         supervisor->getMidiManager()->addListener(this);
         started = true;
     }
@@ -746,7 +746,7 @@ void ApplicationBinderator::start()
 void ApplicationBinderator::stop()
 {
     if (started) {
-        KeyTracker::Instance.removeListener(this);
+        supervisor->getKeyTracker()->removeListener(this);
         supervisor->getMidiManager()->removeListener(this);
         started = false;
     }

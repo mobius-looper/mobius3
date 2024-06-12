@@ -4,7 +4,7 @@
 
 #include "model/Symbol.h"
 #include "model/FunctionDefinition.h"
-#include "model/UIParameter.h"
+#include "model/ParameterProperties.h"
 #include "model/ExValue.h"
 
 #include "UISymbols.h"
@@ -37,46 +37,28 @@ void UISymbols::installDisplayFunction(const char* name, int symbolId)
 
 /**
  * Runtime defined parameters are defined by two things,
- * a Symbol that reserves the name and a DisplayParameter object
- * that hangs off the Symbol.
+ * a Symbol that reserves the name and a ParameterProperties that
+ * defines the characteristics of the parameter.
+ *
+ * There is some confusing overlap on the Symbol->level and
+ * ParameterProperties->scope.  As we move away from UIParameter/FunctionDefinition
+ * to the new ParameterProperties and FunctionProperties need to rethink this.
+ * ParameterProperties is derived from UIParameter where scopes include things
+ * like global, preset, setup, and UI.  This is not the same as Symbol->level but
+ * in the case of UI related things they're the same since there are no UI level
+ * parameters with Preset scope for example.  So it looks like duplication
+ * but it's kind of not.
  */
 void UISymbols::installDisplayParameter(const char* name, const char* label, int symbolId)
 {
-    DisplayParameter* p = new DisplayParameter();
-    p->setName(name);
-    p->setDisplayName(label);
+    ParameterProperties* p = new ParameterProperties();
+    p->displayName = juce::String(label);
     p->type = TypeStructure;
     p->scope = ScopeUI;
-    // todo: lambdas to get/set the value would be sweet
-    // right now Supervisor needs to intercept them
-    parameters.add(p);
     
-    Symbol* s = Symbols.intern(p->getName());
+    Symbol* s = Symbols.intern(name);
     s->behavior = BehaviorParameter;
     s->id = (unsigned char)symbolId;
     s->level = LevelUI;
-    // need this when building the instant parameters list since it's wants a display name
-    s->parameter = p;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// DisplayParameter
-//
-// Subclass of UIParameter implementing the two pure virtuals so we can
-// make one of these at runtime to represent the parameters related to the
-// UI and handdled by Supervisor.
-//
-//////////////////////////////////////////////////////////////////////
-
-void DisplayParameter::getValue(void* container, ExValue* value)
-{
-    (void)container;
-    value->setNull();
-}
-
-void DisplayParameter::setValue(void* container, ExValue* value)
-{
-    (void)container;
-    (void)value;
+    s->parameterProperties.reset(p);
 }

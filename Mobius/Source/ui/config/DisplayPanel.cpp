@@ -58,7 +58,6 @@
 #include "../../util/Trace.h"
 #include "../../util/List.h"
 #include "../../model/UIConfig.h"
-#include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
 #include "../../Supervisor.h"
 
@@ -383,14 +382,8 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
     else {
         // fall back to all of them, less easy to navigate but it's a start
         for (auto symbol : Symbols.getSymbols()) {
-            UIParameter* p = symbol->parameter;
-            if (p != nullptr) {
-                const char* dname = p->getDisplayName();
-                if (dname != nullptr) 
-                  allowed.add(juce::String(dname));
-                else
-                  allowed.add(symbol->name);
-            }
+            if (symbol->behavior == BehaviorParameter)
+              allowed.add(symbol->getDisplayName());
         }
     }
 
@@ -409,16 +402,11 @@ void DisplayEditor::addParameterDisplayName(juce::String name, juce::StringArray
     if (s == nullptr) {
         Trace(1, "DisplayPanel: Unresolved parameter %s\n", name.toUTF8());
     }
-    else if (s->parameter == nullptr) {
+    else if (s->behavior != BehaviorParameter) {
         Trace(1, "DisplayPanel: Symbol %s is not a parameter\n", name.toUTF8());
     }
     else {
-        UIParameter* p = s->parameter;
-        const char* dname = p->getDisplayName();
-        if (dname != nullptr) 
-          values.add(juce::String(dname));
-        else
-          values.add(s->name);
+        values.add(s->getDisplayName());
     }
 }
 
@@ -466,16 +454,15 @@ void DisplayEditor::save(DisplayLayout* layout)
     juce::StringArray displayNames = instantParameters.getValue();
     juce::StringArray symbolNames;
     for (auto dname : displayNames) {
-        UIParameter* param = findParameterWithDisplayName(dname);
-        if (param != nullptr)
-          symbolNames.add(param->getName());
+        Symbol* s = findSymbolWithDisplayName(dname);
+        if (s != nullptr)
+          symbolNames.add(s->name);
     }
     layout->instantParameters = symbolNames;
 
     // this one is global
     UIConfig* config = Supervisor::Instance->getUIConfig();
     config->put("trackRows", trackRows.getText());
-    
 }
 
 /**
@@ -581,19 +568,18 @@ StringList* DisplayEditor::toStringList(juce::StringArray& src)
  * Might want a Map for this someaday since the symbol list can
  * be long, but this doesn't happen often.
  */
-UIParameter* DisplayEditor::findParameterWithDisplayName(juce::String dname)
+Symbol* DisplayEditor::findSymbolWithDisplayName(juce::String dname)
 {
-    UIParameter* found = nullptr;
+    Symbol* found = nullptr;
 
     for (auto symbol : Symbols.getSymbols()) {
-        UIParameter* p = symbol->parameter;
-        if (p != nullptr && (dname == juce::String(p->getDisplayName()))) {
-            found = p;
+        if (dname == symbol->getDisplayName()) {
+            found = symbol;
             break;
         }
     }
     if (found == nullptr)
-      Trace(1, "DisplayEditor: Unable to locate parameter with display name %s\n",
+      Trace(1, "DisplayEditor: Unable to locate symbol with display name %s\n",
             dname.toUTF8());
 
     return found;

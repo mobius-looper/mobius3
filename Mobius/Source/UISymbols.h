@@ -49,29 +49,7 @@ class UISymbols
 
   private:
 
-    juce::OwnedArray<class DisplayParameter> parameters;
-
     void installDisplayFunction(const char* name, int symbolId);
     void installDisplayParameter(const char* name, const char* label, int symbolId);
     
 };
-
-/**
- * UIParameter is an abstract class with a few pure virtual methods.
- * Need something concrete to make at runtime.
- * Really hating the UI prefix, need to differentiate between "parameter model used by the UI"
- * and "instance of a parameter related to the UI"
- */
-class DisplayParameter : public UIParameter
-{
-  public:
-    
-    DisplayParameter() {}
-    ~DisplayParameter() {}
-
-    // these two virtual methods we have to implement, though we won't call them
-    // Supervisor just handles the values inline
-    void getValue(void* container, class ExValue* value);
-    void setValue(void* container, class ExValue* value);
-};
- 

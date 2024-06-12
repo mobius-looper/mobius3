@@ -60,7 +60,38 @@
       <Element name="pan"/>
       <Element name="altFeedback" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="activePreset,activeLayout,activeButtons,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+  </Layout>
+  <Layout name="Another2">
+    <Element name="ModeElement" x="688" y="182"/>
+    <Element name="BeatersElement" x="514" y="132" width="185" height="37"/>
+    <Element name="LoopMeterElement" x="454" y="179"/>
+    <Element name="CounterElement" x="456" y="90"/>
+    <Element name="FloatingStripElement" x="1074" y="37" width="12" height="12"/>
+    <Element name="ParametersElement" x="12" y="34" width="171"/>
+    <Element name="AudioMeterElement" x="456" y="259"/>
+    <Element name="LayerElement" x="378" y="288" width="300" height="108"/>
+    <Element name="AlertElement" x="365" y="431"/>
+    <Element name="MinorModesElement" x="437" y="57"/>
+    <Element name="TempoElement" x="438" y="31"/>
+    <Element name="LoopWindowElement" x="452" y="343"/>
+    <Strip name="Docked">
+      <Element name="trackNumber"/>
+      <Element name="loopRadar"/>
+      <Element name="loopStack"/>
+      <Element name="output"/>
+      <Element name="outputMeter"/>
+      <Element name="loopMeter" disabled="1"/>
+    </Strip>
+    <Strip name="Floating">
+      <Element name="input"/>
+      <Element name="output"/>
+      <Element name="feedback"/>
+      <Element name="pan"/>
+      <Element name="altFeedback" disabled="1"/>
+      <Element name="outputMeter" disabled="1"/>
+    </Strip>
+    <InstantParameters names="activePreset,activeButtons,quantize,activeLayout,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <ButtonSet name="Default">
     <Button action="GlobalReset" color="-13969235"/>

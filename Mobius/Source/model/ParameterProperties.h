@@ -19,6 +19,13 @@ class ParameterProperties
     ~ParameterProperties() {}
 
     /**
+     * Don't need a name since we're always attached to a symbol, but
+     * we can allow an alternate display name.
+     */
+    juce::String displayName;
+    
+
+    /**
      * For configuration parameters, indidicates which structdure this
      * parameter lives in.  Global=MobiusConfig, Preset=Preset, etc.
      */
