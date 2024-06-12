@@ -93,7 +93,17 @@ class BasicTableCheckbox : public juce::Component
     ~BasicTableCheckbox() {}
 
     void resized() {
-        checkbox.setBoundsInset(juce::BorderSize<int>(2));
+        // this is what the tutorial does
+        // "position the component within its parent, leaving the specified
+        //  number of pixels around each edge"
+        //checkbox.setBoundsInset(juce::BorderSize<int>(2));
+        
+        // hack for centering
+        juce::Rectangle<int> area = getLocalBounds();
+        int checkWidth = area.getHeight() - 4;
+        int centerLeft = (area.getWidth() / 2) - (checkWidth / 2);
+        // getting the right edge of the checkbox border clipped, make it bigger
+        checkbox.setBounds(centerLeft, 2, checkWidth + 2, checkWidth);
     }
     
     void setRowAndColumn (const int newRow, const int newColumn) {

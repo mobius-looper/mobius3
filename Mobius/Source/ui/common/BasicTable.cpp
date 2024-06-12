@@ -198,7 +198,11 @@ juce::Component* BasicTable::refreshComponentForCell (int rowNumber, int columnI
 
         if (checkbox == nullptr)
           checkbox = new BasicTableCheckbox (*this);
-
+        else {
+            Trace(2, "Cell bounds: %d %d %d %d\n", checkbox->getX(), checkbox->getY(),
+                  checkbox->getWidth(), checkbox->getHeight());
+            checkbox->setTopLeftPosition(checkbox->getX() + 30, checkbox->getY());
+        }
         checkbox->setRowAndColumn (rowNumber, columnId);
         custom = checkbox;
     }

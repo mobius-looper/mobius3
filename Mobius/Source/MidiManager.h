@@ -116,6 +116,7 @@ class MidiManager : public juce::MidiInputCallback
 
     juce::String getFirstName(juce::String csv);
     void stopInputs();
+    void closeInputs();
     void openInputs(juce::String csv);
     void reopenInputs();
     std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name);

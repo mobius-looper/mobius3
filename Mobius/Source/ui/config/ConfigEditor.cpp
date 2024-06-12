@@ -154,6 +154,8 @@ void ConfigEditor::closeAll()
 
 /**
  * Hide the currently active panel if any and show the desired one.
+ * Subtle: because of the way MidiManager::setExclusiveListener/removeExclusiveListener
+ * works it is important to hide all panels first, before showing the new one
  */
 void ConfigEditor::show(ConfigPanel* selected)
 {
@@ -161,15 +163,20 @@ void ConfigEditor::show(ConfigPanel* selected)
         ConfigPanel* other = panels[i];
         // note that this does not cancel an editing session, it
         // just hides it.  Some might want different behavior?
-        bool showing = (other == selected);
-        // added this hook for KeyboardPanel to add/remove KeyTracker listener
-        if (showing)
-          other->showing();
-        else
-          other->hiding();
-        other->setVisible(showing);
+        if (other != selected) {
+            if (other->isVisible()) {
+                other->hiding();
+                other->setVisible(false);
+            }
+        }
     }
-
+    if (selected != nullptr) {
+        if (!selected->isVisible()) {
+            selected->showing();
+            selected->setVisible(true);
+        }
+    }
+    
     // weird for Juce but since we defer rendering and don't do it the normal way
     // resize just before showing
     selected->resized();

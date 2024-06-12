@@ -14,7 +14,7 @@
 #include "ConfigPanel.h"
 #include "BindingPanel.h"
 
-class MidiPanel : public BindingPanel, public MidiManager::Listener
+class MidiPanel : public BindingPanel, public MidiManager::Listener, public juce::Timer
 {
   public:
     MidiPanel(class ConfigEditor *);
@@ -31,6 +31,7 @@ class MidiPanel : public BindingPanel, public MidiManager::Listener
     void resetSubclassFields() override;
 
     void midiMessage(const class juce::MidiMessage& message, juce::String& source) override;
+    void timerCallback() override;
 
   private:
 
@@ -38,4 +39,8 @@ class MidiPanel : public BindingPanel, public MidiManager::Listener
     Field* messageChannel = nullptr;
     Field* messageValue = nullptr;
     Field* capture = nullptr;
+
+    juce::MidiMessage pluginMessage;
+    bool pluginMessageQueued = false;
+
 };

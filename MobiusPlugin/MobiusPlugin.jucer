@@ -151,6 +151,12 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="BtwsP5" name="AlertPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/AlertPanel.cpp"/>
+        <FILE id="KaH2Zx" name="AlertPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/AlertPanel.h"/>
+        <FILE id="wwkrN1" name="BasePanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/BasePanel.cpp"/>
+        <FILE id="qOYcjV" name="BasePanel.h" compile="0" resource="0" file="../Mobius/Source/ui/BasePanel.h"/>
+        <FILE id="kn40EQ" name="InfoPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/InfoPanel.cpp"/>
+        <FILE id="v5hh5Y" name="InfoPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/InfoPanel.h"/>
         <GROUP id="{338E89C6-6E8F-CAD5-C704-F062DEB82EC5}" name="config">
           <FILE id="YBQvPh" name="AudioDevicesPanel.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/AudioDevicesPanel.cpp"/>
@@ -180,8 +186,6 @@
           <FILE id="RTN4iW" name="GlobalPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/GlobalPanel.h"/>
           <FILE id="AnKOsM" name="HostPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/HostPanel.cpp"/>
           <FILE id="eLcJx2" name="HostPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/HostPanel.h"/>
-          <FILE id="hereTE" name="InfoPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/InfoPanel.cpp"/>
-          <FILE id="JjcfvC" name="InfoPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/InfoPanel.h"/>
           <FILE id="Hjc4b3" name="KeyboardPanel.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/KeyboardPanel.cpp"/>
           <FILE id="QyBrJa" name="KeyboardPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/KeyboardPanel.h"/>
@@ -297,6 +301,8 @@
           <FILE id="MDJjOi" name="TrackStrips.h" compile="0" resource="0" file="../Mobius/Source/ui/display/TrackStrips.h"/>
         </GROUP>
         <GROUP id="{231B57B1-8D47-A229-88DE-29CA3BEA36CE}" name="common">
+          <FILE id="lm2k1v" name="BasicTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/BasicTable.cpp"/>
+          <FILE id="USfPhf" name="BasicTable.h" compile="0" resource="0" file="../Mobius/Source/ui/common/BasicTable.h"/>
           <FILE id="Syoz16" name="ButtonBar.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/ButtonBar.cpp"/>
           <FILE id="ZPyRV1" name="ButtonBar.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ButtonBar.h"/>
           <FILE id="CQNzmt" name="ColorSelector.cpp" compile="1" resource="0"

@@ -77,11 +77,12 @@ MidiDevicesPanel::~MidiDevicesPanel()
 void MidiDevicesPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->addListener(this);
+    mm->setExclusiveListener(this);
 
     // have to defer this post-construction
     inputTable.init(false);
     outputTable.init(true);
+    startTimer(50);
 }
 
 /**
@@ -90,7 +91,8 @@ void MidiDevicesPanel::showing()
 void MidiDevicesPanel::hiding()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->removeListener(this);
+    mm->removeExclusiveListener();
+    stopTimer();
 }
 
 /**
@@ -98,14 +100,37 @@ void MidiDevicesPanel::hiding()
  */
 void MidiDevicesPanel::midiMessage(const juce::MidiMessage& message, juce::String& source)
 {
-    juce::String msg = source + ": ";
-
-    int size = message.getRawDataSize();
-    const juce::uint8* data = message.getRawData();
-    for (int i = 0 ; i < size ; i++) {
-        msg += juce::String(data[i]) + " ";
+    if (source == juce::String("Plugin")) {
+        // queue it for the next timer callback
+        pluginMessage = message;
+        pluginMessageQueued = true;
     }
-    log.add(msg);
+    else {
+        juce::String msg = source + ": ";
+        int size = message.getRawDataSize();
+        const juce::uint8* data = message.getRawData();
+        for (int i = 0 ; i < size ; i++) {
+            msg += juce::String(data[i]) + " ";
+        }
+        log.add(msg);
+    }
+}
+
+/**
+ * Called periodically on the audio thread.
+ * This is how we safely capture MIDI events sent up from the plugin
+ * on the audio thread.  Once this is working, should do all midiMessage calls
+ * this way...
+ *
+ * There are race conditions here but for capture it works well enough.
+ */
+void MidiDevicesPanel::timerCallback()
+{
+    if (pluginMessageQueued) {
+        juce::String source ("Queued");
+        midiMessage(pluginMessage, source);
+        pluginMessageQueued = false;
+    }
 }
 
 /**
@@ -219,15 +244,15 @@ void MidiDeviceTable::init(bool output)
         isOutput = output;
         if (isOutput) {
             addColumn("Name", 1);
-            addColumnCheckbox("Export", 2);
-            addColumnCheckbox("Sync", 3);
+            addColumnCheckbox("App Export", 2);
+            addColumnCheckbox("App Sync", 3);
             addColumnCheckbox("Plugin Export", 4);
             addColumnCheckbox("Plugin Sync", 5);
         }
         else {
             addColumn("Name", 1);
-            addColumnCheckbox("Control", 2);
-            addColumnCheckbox("Sync", 3);
+            addColumnCheckbox("App Control", 2);
+            addColumnCheckbox("App Sync", 3);
             addColumnCheckbox("Plugin Control", 4);
             addColumnCheckbox("Plugin Sync", 5);
         }

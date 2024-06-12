@@ -82,7 +82,7 @@ class MidiDevicesContent : public juce::Component
     void resized() override;
 };
 
-class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener
+class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener, public juce::Timer
 {
   public:
     MidiDevicesPanel(class ConfigEditor*);
@@ -97,6 +97,7 @@ class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener
 
     // MidiManager::Listener
     void midiMessage(const juce::MidiMessage& message, juce::String& source) override;
+    void timerCallback() override;
     
   private:
 
@@ -105,6 +106,9 @@ class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener
     BasicTabs tabs;
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;
+
+    juce::MidiMessage pluginMessage;
+    bool pluginMessageQueued = false;
     
 };
 

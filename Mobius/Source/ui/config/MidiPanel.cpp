@@ -48,6 +48,9 @@ void MidiPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
     mm->setExclusiveListener(this);
+
+    // use a Timer to pick up queued MIDI events from the plugin
+    startTimer (50);
 }
 
 /**
@@ -57,6 +60,7 @@ void MidiPanel::hiding()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
     mm->removeExclusiveListener();
+    stopTimer();
 }
 
 /**
@@ -216,13 +220,12 @@ void MidiPanel::resetSubclassFields()
 
 void MidiPanel::midiMessage(const juce::MidiMessage& message, juce::String& source)
 {
-    // todo: if we're in a plugin, this is called in the audio thread
-    // and it is not safe to mess with UI components here, until this
-    // can be redesigned, ignore
-    if (source == juce::String("Plugin")) return;
-    
-    (void)source;
-    if (capture->getBoolValue()) {
+    if (source == juce::String("Plugin")) {
+        // queue it for the next timer callback
+        pluginMessage = message;
+        pluginMessageQueued = true;
+    }
+    else if (capture->getBoolValue()) {
         int value = -1;
         if (message.isNoteOn()) {
             messageType->setValue(0);
@@ -255,6 +258,23 @@ void MidiPanel::midiMessage(const juce::MidiMessage& message, juce::String& sour
               messageChannel->setValue(ch);
             messageValue->setValue(value);
         }
+    }
+}
+
+/**
+ * Called periodically on the audio thread.
+ * This is how we safely capture MIDI events sent up from the plugin
+ * on the audio thread.  Once this is working, should do all midiMessage calls
+ * this way...
+ *
+ * There are race conditions here but for capture it works well enough.
+ */
+void MidiPanel::timerCallback()
+{
+    if (pluginMessageQueued) {
+        juce::String source ("Queued");
+        midiMessage(pluginMessage, source);
+        pluginMessageQueued = false;
     }
 }
 

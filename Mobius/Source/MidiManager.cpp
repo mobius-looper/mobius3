@@ -104,7 +104,7 @@ void MidiManager::resume()
 void MidiManager::shutdown()
 {
     // don't know what we need to do with these...
-    stopInputs();
+    closeInputs();
 }
 
 void MidiManager::addListener(Listener* l)
@@ -199,7 +199,8 @@ void MidiManager::mobiusMidiReceived(juce::MidiMessage& msg)
         // Listener wants a "source" which when connected direct I think is the
         // device name.  Not sure if the plugin has any more context around this
         // so fake up a name
-        // this is now wht MidiPanel uses to decide whether it is thread safe
+        // update: this is now what MidiPanel uses to decide whether it is thread safe
+        // process the message or queue it, same with MidiDevicesPanel
         juce::String source("Plugin");
         exclusiveListener->midiMessage(msg, source);
     }
@@ -245,7 +246,8 @@ void MidiManager::openDevices()
     }
 
     // "close" the current ones first
-    stopInputs();
+    // stopInputs();
+    closeInputs();
     outputDevice = nullptr;
     outputSyncDevice = nullptr;
     
@@ -273,6 +275,14 @@ void MidiManager::stopInputs()
     for (auto dev : inputDevices) {
         dev->stop();
     }
+}    
+
+void MidiManager::closeInputs()
+{
+    // stop them first?
+    stopInputs();
+    // this deletes them
+    inputDevices.clear();
 }    
 
 juce::String MidiManager::getFirstName(juce::String csv)
