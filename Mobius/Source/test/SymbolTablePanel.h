@@ -16,7 +16,7 @@ class SymbolTableContent : public juce::Component, public BasicTable::Model
 
     // BasicTable::Model
     int getNumRows() override;
-    juce::String getCellText(int row, int columnId);
+    juce::String getCellText(int row, int columnId) override;
 
   private:
 

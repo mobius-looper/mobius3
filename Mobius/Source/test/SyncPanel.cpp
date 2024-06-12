@@ -75,8 +75,6 @@ void SyncContent::cont()
     update();
 }
 
-const int SyncContentHeaderHeight = 20;
-
 void SyncContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
