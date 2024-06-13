@@ -157,8 +157,11 @@ class Track : public TraceContext
 	int getRawNumber();
 	int getDisplayNumber();
 	bool isEmpty();
-	int getInputLatency();
-	int getOutputLatency();
+
+    // seem to have gotten lost
+	//int getInputLatency();
+	//int getOutputLatency();
+    
 	MobiusMode* getMode();
 	long getFrame();
     void getState(class MobiusTrackState* s);
