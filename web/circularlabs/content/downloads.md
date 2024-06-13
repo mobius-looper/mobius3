@@ -14,6 +14,14 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 9 Changes
+
+- Fixed several issues related to plugin scanning and deleting/adding the plugin several times
+- Fixed hang/crash when closing the host application while a loop was running
+- Fixed crash with MIDI capture in the plugin
+- Redesigned Midi Devices configuration panel, support for multiple devices in both standalone application and plugin
+
+
 ## Build 8 Changes
 - Track names set in the Track Setup will now display in the UI
 - SyncMasterTrack is back to being a bindable function
