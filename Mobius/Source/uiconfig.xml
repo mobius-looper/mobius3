@@ -108,6 +108,7 @@
     <Button action="SelectLoop" arguments="1"/>
     <Button action="SelectLoop" arguments="2"/>
     <Button action="Realign"/>
+    <Button action="Undo"/>
   </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>

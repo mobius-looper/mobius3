@@ -92,7 +92,7 @@
     name='Default'
     active='0'
     beatsPerBar='4'
-    defaultSyncSource='host'
+    defaultSyncSource='none'
     defaultTrackSyncUnit='loop'
     maxTempo='300'
     minTempo='20'

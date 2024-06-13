@@ -166,7 +166,13 @@ Mobius::~Mobius()
 
     // delete dynamically allocated Parameter objects to avoid
     // warning message in Visual Studio
-    Parameter::deleteParameters();
+    // do NOT do this if we're a plugin, hosts can create and delete plugin instances
+    // several times and if the parameters are deleted they won't be created on the
+    // second instantiation since they are created during static initialization
+    // they will leak if we're a plugin, but there is no easy way around that without
+    // changing everything to use static objects rathher than new
+    if (!mContainer->isPlugin())
+      Parameter::deleteParameters();
 }
 
 /**

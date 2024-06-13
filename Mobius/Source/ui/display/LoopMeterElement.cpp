@@ -100,6 +100,12 @@ void LoopMeterElement::update(MobiusState* state)
     int subcycles = 0;
     if (Supervisor::Instance->doQuery(&subcyclesQuery))
       subcycles = subcyclesQuery.value;
+
+    if (subcycles == 0) {
+        // this comes from the Preset, so something bad happened
+        Trace(1, "LoopMeterElement: Subcycles query came back zero\n");
+        subcycles = 4;
+    }
     
     if (lastSubcycles != subcycles) {
         lastSubcycles = subcycles;
@@ -144,6 +150,13 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int subcycles = lastSubcycles;
     int cycles = loop->cycles;
     int totalSubcycles = subcycles * cycles;
+    if (totalSubcycles == 0) {
+        // saw this after deleting and readding a plugin
+        // divide by zero crashes everything
+        // this shouldn't be happening but if it does at least don't crash
+        Trace(1, "LoopMeterElement: subcycles was zero!\n");
+        totalSubcycles = 4;
+    }
     int subcycleWidth = MeterBarWidth / totalSubcycles;
     int ticksToDraw = totalSubcycles + 1;
 

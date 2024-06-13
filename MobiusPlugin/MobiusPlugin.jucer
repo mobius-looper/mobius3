@@ -2,8 +2,7 @@
 
 <JUCERPROJECT id="HnqKRT" name="MobiusPlugin" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginAUMainType="'aumf'" pluginVST3Category="Fx,Instrument"
-              pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn"
+              pluginAUMainType="'aumf'" pluginVST3Category="Fx" pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginWantsMidiIn"
               pluginVSTCategory="kPlugCategEffect" companyWebsite="www.circularlabs.com"
               bundleIdentifier="com.circularlabs.Mobius" pluginName="Mobius"
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"

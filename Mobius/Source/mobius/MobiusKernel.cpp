@@ -88,7 +88,11 @@ MobiusKernel::~MobiusKernel()
         mCore->shutdown();
         delete mCore;
     }
-    Mobius::freeStaticObjects();
+
+    // this prevents a leak of the Parameters table since it contains dynamically
+    // allocated objects, but they can't be recreated, so for plugins must leave them in place
+    if (container != nullptr && !container->isPlugin())
+      Mobius::freeStaticObjects();
 
     // we do not own shell, communicator, or container
     delete configuration;
