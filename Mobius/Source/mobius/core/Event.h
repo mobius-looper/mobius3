@@ -276,7 +276,7 @@ class Event {
     const char* getInfo();
 
 	void savePreset(class Preset* p);
-	class Preset* getPreset();
+	class Preset* getEventPreset();
 	void addChild(Event* e);
 	void removeChild(Event* e);
 	Event* removeUndoChild();

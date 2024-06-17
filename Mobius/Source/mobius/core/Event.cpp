@@ -599,7 +599,7 @@ void Event::savePreset(Preset* p)
 	}
 }
 
-Preset* Event::getPreset()
+Preset* Event::getEventPreset()
 {
 	return ((mPresetValid) ? mPreset : NULL);
 }

@@ -4640,8 +4640,8 @@ void Loop::undoEvent(Event* e)
  */
 void Loop::addRedo(Event* e, Layer* undone)
 {
-	Preset* p = e->getPreset();
-	int max = p->getMaxRedo();
+	Preset* eventPreset = e->getEventPreset();
+	int max = eventPreset->getMaxRedo();
 
 	if (max == 0)
 	  undone->freeAll();
@@ -5535,8 +5535,8 @@ void Loop::switchEvent(Event* event)
 	// manual.  Now, Restart and RestartOnce will always send START as
 	// will switchLocation=Start
 
-	Preset* p = event->getPreset();
-    Preset::SwitchLocation location = p->getSwitchLocation();
+	Preset* eventPreset = event->getEventPreset();
+    Preset::SwitchLocation location = eventPreset->getSwitchLocation();
 	bool syncRestart = (event->function == Restart || 
                           event->function == RestartOnce ||
 						  location == Preset::SWITCH_START);

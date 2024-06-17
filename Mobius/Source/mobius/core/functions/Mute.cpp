@@ -372,7 +372,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 	else {
 		// !! hey some of the other prepareJump handlers aren't looking
 		// at the event preset, should they?
-		Preset* preset = e->getPreset();
+		Preset* preset = e->getEventPreset();
 		if (preset == NULL)
 		  preset = l->getPreset();
 
@@ -516,7 +516,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 		}
 	}
 	else {
-		Preset* preset = e->getPreset();
+		Preset* preset = e->getEventPreset();
 		if (preset == NULL)
 		  preset = l->getPreset();
 
