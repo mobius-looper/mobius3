@@ -7,8 +7,6 @@
  * will also be the same as the Preset in the Loop's Track.
  */
 
-#pragma once
-
 #include "../../model/ParameterConstants.h"
 #include "../../model/Preset.h"
 

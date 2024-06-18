@@ -95,6 +95,8 @@
         <FILE id="AH2jpY" name="ObjectPool.h" compile="0" resource="0" file="../Mobius/Source/model/ObjectPool.h"/>
         <FILE id="cbzLSD" name="OscConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/OscConfig.cpp"/>
         <FILE id="SjHrT6" name="OscConfig.h" compile="0" resource="0" file="../Mobius/Source/model/OscConfig.h"/>
+        <FILE id="wMAPL6" name="ParameterConstants.h" compile="0" resource="0"
+              file="../Mobius/Source/model/ParameterConstants.h"/>
         <FILE id="gLFmjn" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/Preset.cpp"/>
         <FILE id="bFBKiP" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/Preset.h"/>
         <FILE id="tisuQ3" name="SampleConfig.cpp" compile="1" resource="0"
@@ -438,6 +440,10 @@
                 file="../Mobius/Source/mobius/core/ParameterPreset.cpp"/>
           <FILE id="HJ3Kmm" name="ParameterSetup.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/ParameterSetup.cpp"/>
+          <FILE id="KgBaRZ" name="ParameterSource.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/core/ParameterSource.cpp"/>
+          <FILE id="piXhFv" name="ParameterSource.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/core/ParameterSource.h"/>
           <FILE id="MddO7b" name="ParameterTrack.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/ParameterTrack.cpp"/>
           <FILE id="d32CTL" name="PitchPlugin.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/PitchPlugin.cpp"/>
@@ -649,7 +655,7 @@
                xcodeValidArchs="arm64,x86_64">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Mobius"/>
-        <CONFIGURATION isDebug="0" name="Release"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Mobius"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../juce"/>
@@ -664,6 +670,26 @@
         <MODULEPATH id="juce_graphics" path="../../juce"/>
         <MODULEPATH id="juce_gui_basics" path="../../juce"/>
         <MODULEPATH id="juce_gui_extra" path="../../juce"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+    <XCODE_MAC targetFolder="Builds/MacOSX_Intel" xcodeValidArchs="x86_64">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" osxArchitecture="64BitIntel" targetName="Mobius"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Mobius"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="/Users/jeff/dev/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="/Users/jeff/dev/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
   </EXPORTFORMATS>

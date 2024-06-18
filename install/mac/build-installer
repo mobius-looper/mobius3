@@ -14,6 +14,18 @@ export appsrc=../../Mobius/Builds/MacOSX/build/Debug/Mobius.app
 export vstsrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.vst3
 export ausrc=../../MobiusPlugin/Builds/MacOSX/build/Debug/Mobius.component
 
+# and another set for Intel
+export appsrc_intel=../../Mobius/Builds/MacOSX_Intel/build/Debug/Mobius.app
+export vstsrc_intel=../../MobiusPlugin/Builds/MacOSX_Intel/build/Debug/Mobius.vst3
+export ausrc_intel=../../MobiusPlugin/Builds/MacOSX_Intel/build/Debug/Mobius.component
+
+# sigh, with more work this could be parameterizied to do ARM/Intel with less code
+# for now duplicate
+
+######################################################################
+echo Building ARM Installer
+######################################################################
+
 # use a staging directory for each intermediate package so we don't
 # pollute the build trees
 
@@ -23,7 +35,7 @@ mkdir stage
 echo Building standalone app package
 
 cp -r $appsrc stage
-# sanity check on the universal binary
+# sanity check on the arm binary
 lipo -info stage/Mobius.app/Contents/MacOS/Mobius
 
 # copy support files to be included with the installation into
@@ -92,6 +104,83 @@ echo Generating Mobius product package
 # a custom title
 #productbuild --synthesize --package app.pkg --package vst.pkg --package au.pkg mobius.plist
 productbuild --distribution mobius.plist --resources . --package-path . Mobius.pkg
+
+######################################################################
+echo Building Intel Installer
+######################################################################
+
+rm -rf stage
+mkdir stage
+
+echo Building standalone app package
+
+cp -r $appsrc_intel stage
+lipo -info stage/Mobius.app/Contents/MacOS/Mobius
+
+# copy support files to be included with the installation into
+# the Mobius.app bundle directory
+export dest=stage/Mobius.app/Contents/Resources/Install
+mkdir $dest
+mkdir $dest/test
+mkdir $dest/test/samples
+
+cp ../resources/mobius.xml $dest
+cp ../resources/uiconfig.xml $dest
+cp ../../Mobius/Source/help.xml $dest
+cp ../../Mobius/Source/symbols.xml $dest
+cp ../../Mobius/Source/test/samples/gcloop.wav $dest/test/samples
+
+# make the component property list
+# sigh, by default this makes it relocatable which I do not want
+# and I don't see a command line option to override that
+# maybe --property-list ?
+# for now, keep the last edited one
+#pkgbuild --analyze --root stage app.plist
+
+# make the package
+#pkgbuild --root stage --component-plist app.plist --install-location /Applications app.pkg
+pkgbuild --identifier com.circularlabs.Mobius --root stage --component-plist app.plist --install-location /Applications app.pkg
+
+#
+# VST3
+# This will not include the Resources/Install payload like Mobius.app
+# I suppose we could but you have to install both right now
+#
+
+echo Building VST3 package
+rm -rf stage
+mkdir stage
+cp -r $vstsrc_intel stage
+lipo -info stage/Mobius.vst3/Contents/MacOS/Mobius
+
+pkgbuild --analyze --root stage vst.plist
+#pkgbuild --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
+pkgbuild --identifier com.circularlabs.vst3.Mobius --root stage --component-plist vst.plist --install-location /Library/Audio/Plug-Ins/VST3 vst.pkg
+
+#
+# AU
+#
+
+echo Building AU package
+rm -rf stage
+mkdir stage
+cp -r $ausrc_intel stage
+lipo -info stage/Mobius.component/Contents/MacOS/Mobius
+
+pkgbuild --analyze --root stage au.plist
+#pkgbuild --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
+pkgbuild --identifier com.circularlabs.au.Mobius --root stage --component-plist au.plist --install-location /Library/Audio/Plug-Ins/Components au.pkg
+
+#
+# MobiusIntel.pkg
+#
+
+echo Generating MobiusIntel product package
+
+# commented out because I made changes to the generated plist to add
+# a custom title
+#productbuild --synthesize --package app.pkg --package vst.pkg --package au.pkg mobius.plist
+productbuild --distribution mobius.plist --resources . --package-path . MobiusIntel.pkg
 
 
 
