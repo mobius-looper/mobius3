@@ -353,7 +353,7 @@ void MidiDeviceTable::loadDevices(juce::String names, bool sync, bool plugin)
         }
         else {
             if (plugin)
-              device->appControl = true;
+              device->pluginControl = true;
             else
               device->appControl = true;
         }
