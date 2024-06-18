@@ -4717,7 +4717,7 @@ void Synchronizer::loopMute(Loop* l)
 {
 	if (l->getTrack() == mOutSyncMaster) {
 		Preset* p = l->getPreset();
-		if (p->getMuteMode() == Preset::MUTE_START) 
+		if (p->getMuteMode() == MUTE_START) 
           muteMidiStop(l);
 	}
 }

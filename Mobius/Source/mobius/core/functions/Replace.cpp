@@ -149,7 +149,7 @@ bool ReplaceFunction::isSustain(Preset* p)
     bool isSustain = sustain;
     if (!isSustain) {
         // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == Preset::RECORD_SUSTAIN);
+        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
         const char* susfuncs = p->getSustainFunctions();
         if (susfuncs != NULL)
           isSustain = (IndexOf(susfuncs, "Replace") >= 0);

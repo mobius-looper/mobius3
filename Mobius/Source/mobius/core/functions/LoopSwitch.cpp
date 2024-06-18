@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/Trigger.h"
 
 #include "../Action.h"
@@ -366,7 +367,7 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
     trace(action, l);
 
     Preset* p = l->getPreset();
-    Preset::SwitchDuration duration = p->getSwitchDuration();
+    SwitchDuration duration = p->getSwitchDuration();
     Event* susret = em->findEvent(SUSReturnEvent);
 
     if (!action->down) {
@@ -375,8 +376,8 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
 
         if (sustain ||
             (!mRestart && 
-             (duration == Preset::SWITCH_SUSTAIN ||
-              duration == Preset::SWITCH_SUSTAIN_RETURN))) {
+             (duration == SWITCH_SUSTAIN ||
+              duration == SWITCH_SUSTAIN_RETURN))) {
             
             // sustainable
             // !! KLUDGE we're using a SUSReturn for SWITCH_SUSTAIN
@@ -499,8 +500,8 @@ Event* LoopTriggerFunction::invoke(Action* action, Loop* l)
                 // if we're sussing, reverse the direction on the up transition
 				int direction = index;
 				if (sustain || 
-                    (duration == Preset::SWITCH_SUSTAIN ||
-                     duration == Preset::SWITCH_SUSTAIN_RETURN))
+                    (duration == SWITCH_SUSTAIN ||
+                     duration == SWITCH_SUSTAIN_RETURN))
 				  direction = (action->down) ? index : -index;
 
                 if (direction > 0) {
@@ -570,9 +571,9 @@ bool LoopTriggerFunction::isSustainableLoopTrigger(Loop*loop,
         // !! to support long press we should always let these
         // be sustainable, then let invokeLong check the preset
         Preset* preset = loop->getPreset();
-        Preset::SwitchDuration duration = preset->getSwitchDuration();
-        sustainable = (duration == Preset::SWITCH_SUSTAIN ||
-                       duration == Preset::SWITCH_SUSTAIN_RETURN);
+        SwitchDuration duration = preset->getSwitchDuration();
+        sustainable = (duration == SWITCH_SUSTAIN ||
+                       duration == SWITCH_SUSTAIN_RETURN);
     }
     return sustainable;
 }
@@ -599,11 +600,11 @@ bool LoopTriggerFunction::isMuteCancel(Preset* p)
 {
     bool cancel = Function::isMuteCancel(p);
     if (!cancel) {
-        Preset::SwitchDuration duration = p->getSwitchDuration();
+        SwitchDuration duration = p->getSwitchDuration();
         if (this == RestartOnce ||
             (this != Restart &&
-             (duration == Preset::SWITCH_ONCE ||
-              duration == Preset::SWITCH_SUSTAIN))) {
+             (duration == SWITCH_ONCE ||
+              duration == SWITCH_SUSTAIN))) {
             cancel = true;
         }
     }
@@ -825,11 +826,11 @@ Event* LoopTriggerFunction::scheduleSwitch(Action* action,
 	else {
 		// scheduling a new switch
         Preset* preset = current->getPreset();
-		Preset::SwitchQuantize q = preset->getSwitchQuantize();
-		bool needsConfirm = (q == Preset::SWITCH_QUANT_CONFIRM ||
-                             q == Preset::SWITCH_QUANT_CONFIRM_CYCLE ||
-                             q == Preset::SWITCH_QUANT_CONFIRM_SUBCYCLE ||
-                             q == Preset::SWITCH_QUANT_CONFIRM_LOOP);
+		SwitchQuantize q = preset->getSwitchQuantize();
+		bool needsConfirm = (q == SWITCH_QUANT_CONFIRM ||
+                             q == SWITCH_QUANT_CONFIRM_CYCLE ||
+                             q == SWITCH_QUANT_CONFIRM_SUBCYCLE ||
+                             q == SWITCH_QUANT_CONFIRM_LOOP);
 
         // this also takes ownership of the Action
 		event = addSwitchEvent(action, current, next);
@@ -962,9 +963,9 @@ Event* LoopTriggerFunction::promoteSUSReturn(Action* action,
 
     Function* func = action->getFunction();
     Preset* p = loop->getPreset();
-    Preset::SwitchDuration duration = p->getSwitchDuration();
+    SwitchDuration duration = p->getSwitchDuration();
 
-    if (func->sustain || duration == Preset::SWITCH_SUSTAIN_RETURN) {
+    if (func->sustain || duration == SWITCH_SUSTAIN_RETURN) {
 
         // we're returning
         // TODO: rather than return to the original loop, I think
@@ -1135,7 +1136,7 @@ void LoopTriggerFunction::confirmEvent(Action* action,
         else if (switchFrame == CONFIRM_FRAME_QUANTIZED) {
 
             Preset* p = l->getPreset();
-            Preset::SwitchQuantize q = p->getSwitchQuantize();
+            SwitchQuantize q = p->getSwitchQuantize();
             int latency = 0;
             if (!action->noLatency) {
                 InputStream* is = l->getInputStream();
@@ -1146,29 +1147,29 @@ void LoopTriggerFunction::confirmEvent(Action* action,
             switchFrame = realFrame;
 
             switch (q) {
-                case Preset::SWITCH_QUANT_CYCLE:
-                case Preset::SWITCH_QUANT_CONFIRM_CYCLE: {
+                case SWITCH_QUANT_CYCLE:
+                case SWITCH_QUANT_CONFIRM_CYCLE: {
                     switchFrame = 
-                        em->getQuantizedFrame(l, realFrame, Preset::QUANTIZE_CYCLE, false);
+                        em->getQuantizedFrame(l, realFrame, QUANTIZE_CYCLE, false);
                 }
                 break;
 
-                case Preset::SWITCH_QUANT_SUBCYCLE:
-                case Preset::SWITCH_QUANT_CONFIRM_SUBCYCLE: {
+                case SWITCH_QUANT_SUBCYCLE:
+                case SWITCH_QUANT_CONFIRM_SUBCYCLE: {
                     switchFrame = 
-                        em->getQuantizedFrame(l, realFrame, Preset::QUANTIZE_SUBCYCLE, false);
+                        em->getQuantizedFrame(l, realFrame, QUANTIZE_SUBCYCLE, false);
                 }
                 break;
 
-                case Preset::SWITCH_QUANT_LOOP:
-                case Preset::SWITCH_QUANT_CONFIRM_LOOP: {
+                case SWITCH_QUANT_LOOP:
+                case SWITCH_QUANT_CONFIRM_LOOP: {
                     switchFrame = 
-                        em->getQuantizedFrame(l, realFrame, Preset::QUANTIZE_LOOP, false);
+                        em->getQuantizedFrame(l, realFrame, QUANTIZE_LOOP, false);
 				}
                 break;
 
-				case Preset::SWITCH_QUANT_OFF:
-				case Preset::SWITCH_QUANT_CONFIRM:
+				case SWITCH_QUANT_OFF:
+				case SWITCH_QUANT_CONFIRM:
 					break;
             }
 

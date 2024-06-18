@@ -16,6 +16,7 @@
 #include <string.h>
 #include <memory.h>
 
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/Preset.h"
 
 #include "../Action.h"
@@ -253,7 +254,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
             if (next != NULL && next != l->getTrack()) {
 
                 Preset* p = l->getPreset();
-                Preset::TrackLeaveAction leaveAction = p->getTrackLeaveAction();
+                TrackLeaveAction leaveAction = p->getTrackLeaveAction();
                 MobiusMode* mode = l->getMode();
 
                 bool schedule = true;
@@ -264,7 +265,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                 // also serves to document each of the modes to explain why
                 // it can happen immediately.
 
-                if (leaveAction == Preset::TRACK_LEAVE_NONE) {
+                if (leaveAction == TRACK_LEAVE_NONE) {
                     immediate = true;
                 }
                 else if (l->isPaused()) {
@@ -370,7 +371,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                         }
                         else {
                             em->addEvent(stop);
-                            if (!stop->quantized || leaveAction == Preset::TRACK_LEAVE_WAIT)
+                            if (!stop->quantized || leaveAction == TRACK_LEAVE_WAIT)
                               selectFrame = stop->frame;
                         }
                     }
@@ -399,7 +400,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                         Trace(1, "TrackSelect: Rounding mode deleted track select event!\n");
                         event = NULL;
                     }
-                    else if (leaveAction == Preset::TRACK_LEAVE_CANCEL) {
+                    else if (leaveAction == TRACK_LEAVE_CANCEL) {
                         // we supposed to cancel but not wait,  
                         // restore the original frame
                         event->frame = selectFrame;
@@ -419,7 +420,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                     m->completeAction(stopAction);
 
                     if (stop->pending) {
-                        if (leaveAction == Preset::TRACK_LEAVE_WAIT) {
+                        if (leaveAction == TRACK_LEAVE_WAIT) {
                             // !! waiting on a sync pulse
                             // we should be able to handle this with
                             // stacking or rescheduling, punt for now

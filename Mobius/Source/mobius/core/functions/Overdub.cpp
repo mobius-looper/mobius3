@@ -178,7 +178,7 @@ bool OverdubFunction::isSustain(Preset* p)
     bool isSustain = sustain;
     if (!isSustain) {
         // formerly had an OverdubMode to turn SUS on and off
-        //return sustain || (p->getOverdubMode() == Preset::OVERDUB_SUSTAIN);
+        //return sustain || (p->getOverdubMode() == OVERDUB_SUSTAIN);
         const char* susfuncs = p->getSustainFunctions();
         if (susfuncs != NULL)
           isSustain = (IndexOf(susfuncs, "Overdub") >= 0);

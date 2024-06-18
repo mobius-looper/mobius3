@@ -25,7 +25,9 @@
 
 #include "../../util/Util.h"
 #include "../../util/List.h"
+#include "../../model/ParameterConstants.h"
 #include "../../model/MobiusConfig.h"
+#include "../../model/Preset.h"
 #include "../../model/Setup.h"
 #include "../Audio.h"
 
@@ -241,7 +243,7 @@ void MultiplyModeParameterType::setValue(Preset* p, ExValue* value)
           value->setString("simple");
     }
 
-	p->setMultiplyMode((Preset::MultiplyMode)getEnum(value));
+	p->setMultiplyMode((ParameterMultiplyMode)getEnum(value));
 }
 
 Parameter* MultiplyModeParameter = new MultiplyModeParameterType();
@@ -285,7 +287,7 @@ void ShuffleModeParameterType::getValue(Preset* p, ExValue* value)
 
 void ShuffleModeParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setShuffleMode((Preset::ShuffleMode)getEnum(value));
+	p->setShuffleMode((ShuffleMode)getEnum(value));
 }
 
 Parameter* ShuffleModeParameter = new ShuffleModeParameterType();
@@ -371,15 +373,15 @@ void EmptyLoopActionParameterType::setValue(Preset* p, ExValue* value)
     // catch a common misspelling
     if (value->getType() == EX_STRING && 
         StringEqualNoCase(value->getString(), "copyTiming"))
-      p->setEmptyLoopAction(Preset::EMPTY_LOOP_TIMING);
+      p->setEmptyLoopAction(EMPTY_LOOP_TIMING);
 
     // support for an old value
     else if (value->getType() == EX_STRING &&
              StringEqualNoCase(value->getString(), "copySound"))
-      p->setEmptyLoopAction(Preset::EMPTY_LOOP_COPY);
+      p->setEmptyLoopAction(EMPTY_LOOP_COPY);
       
     else
-      p->setEmptyLoopAction((Preset::EmptyLoopAction)getEnum(value));
+      p->setEmptyLoopAction((EmptyLoopAction)getEnum(value));
 }
 
 Parameter* EmptyLoopActionParameter = new EmptyLoopActionParameterType();
@@ -419,7 +421,7 @@ void EmptyTrackActionParameterType::getValue(Preset* p, ExValue* value)
 
 void EmptyTrackActionParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setEmptyTrackAction((Preset::EmptyLoopAction)getEnum(value));
+	p->setEmptyTrackAction((EmptyLoopAction)getEnum(value));
 }
 
 Parameter* EmptyTrackActionParameter = new EmptyTrackActionParameterType();
@@ -463,7 +465,7 @@ void TrackLeaveActionParameterType::getValue(Preset* p, ExValue* value)
 
 void TrackLeaveActionParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setTrackLeaveAction((Preset::TrackLeaveAction)getEnum(value));
+	p->setTrackLeaveAction((TrackLeaveAction)getEnum(value));
 }
 
 Parameter* TrackLeaveActionParameter = new TrackLeaveActionParameterType();
@@ -559,7 +561,7 @@ void MuteModeParameterType::setValue(Preset* p, ExValue* value)
         StringEqualNoCase(value->getString(), "continuous"))
       value->setString("continue");
 
-	p->setMuteMode((Preset::MuteMode)getEnum(value));
+	p->setMuteMode((ParameterMuteMode)getEnum(value));
 }
 
 Parameter* MuteModeParameter = new MuteModeParameterType();
@@ -608,7 +610,7 @@ void MuteCancelParameterType::setValue(Preset* p, ExValue* value)
         StringEqualNoCase(value->getString(), "allways"))
       value->setString("always");
 
-	p->setMuteCancel((Preset::MuteCancel)getEnum(value));
+	p->setMuteCancel((MuteCancel)getEnum(value));
 }
 
 Parameter* MuteCancelParameter = new MuteCancelParameterType();
@@ -693,7 +695,7 @@ void QuantizeParameterType::getValue(Preset* p, ExValue* value)
 
 void QuantizeParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setQuantize((Preset::QuantizeMode)getEnum(value));
+	p->setQuantize((QuantizeMode)getEnum(value));
 }
 
 Parameter* QuantizeParameter = new QuantizeParameterType();
@@ -733,7 +735,7 @@ void BounceQuantizeParameterType::getValue(Preset* p, ExValue* value)
 
 void BounceQuantizeParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setBounceQuantize((Preset::QuantizeMode)getEnum(value));
+	p->setBounceQuantize((QuantizeMode)getEnum(value));
 }
 
 Parameter* BounceQuantizeParameter = new BounceQuantizeParameterType();
@@ -1030,7 +1032,7 @@ void SwitchQuantizeParameterType::getValue(Preset* p, ExValue* value)
 
 void SwitchQuantizeParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setSwitchQuantize((Preset::SwitchQuantize)getEnum(value));
+	p->setSwitchQuantize((SwitchQuantize)getEnum(value));
 }
 
 Parameter* SwitchQuantizeParameter = new SwitchQuantizeParameterType();
@@ -1074,7 +1076,7 @@ void TimeCopyParameterType::getValue(Preset* p, ExValue* value)
 
 void TimeCopyParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setTimeCopyMode((Preset::CopyMode)getEnum(value));
+	p->setTimeCopyMode((CopyMode)getEnum(value));
 }
 
 Parameter* TimeCopyParameter = new TimeCopyParameterType();
@@ -1114,7 +1116,7 @@ void SoundCopyParameterType::getValue(Preset* p, ExValue* value)
 
 void SoundCopyParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setSoundCopyMode((Preset::CopyMode)getEnum(value));
+	p->setSoundCopyMode((CopyMode)getEnum(value));
 }
 
 Parameter* SoundCopyParameter = new SoundCopyParameterType();
@@ -1740,7 +1742,7 @@ void SlipModeParameterType::setValue(Preset* p, ExValue* value)
         StringEqualNoCase("loop", value->getString()))
       value->setString("start");
 
-	p->setSlipMode((Preset::SlipMode)getEnum(value));
+	p->setSlipMode((SlipMode)getEnum(value));
 }
 
 Parameter* SlipModeParameter = new SlipModeParameterType();
@@ -1971,9 +1973,9 @@ void RecordTransferParameterType::getValue(Preset* p, ExValue* value)
 void RecordTransferParameterType::setValue(Preset* p, ExValue* value)
 {
     // ignore restore mode
-    Preset::TransferMode mode = (Preset::TransferMode)getEnum(value);
-    if (mode != Preset::XFER_RESTORE)
-      p->setRecordTransfer((Preset::TransferMode)mode);
+    TransferMode mode = (TransferMode)getEnum(value);
+    if (mode != XFER_RESTORE)
+      p->setRecordTransfer((TransferMode)mode);
 }
 
 Parameter* RecordTransferParameter = new RecordTransferParameterType();
@@ -2019,7 +2021,7 @@ void OverdubTransferParameterType::setValue(Preset* p, ExValue* value)
 {
     // changed the name in 1.43
     fixEnum(value, "remember", "restore");
-	p->setOverdubTransfer((Preset::TransferMode)getEnum(value));
+	p->setOverdubTransfer((TransferMode)getEnum(value));
 }
 
 Parameter* OverdubTransferParameter = new OverdubTransferParameterType();
@@ -2061,7 +2063,7 @@ void ReverseTransferParameterType::setValue(Preset* p, ExValue* value)
 {
     // changed the name in 1.43
     fixEnum(value, "remember", "restore");
-	p->setReverseTransfer((Preset::TransferMode)getEnum(value));
+	p->setReverseTransfer((TransferMode)getEnum(value));
 }
 
 Parameter* ReverseTransferParameter = new ReverseTransferParameterType();
@@ -2104,7 +2106,7 @@ void SpeedTransferParameterType::setValue(Preset* p, ExValue* value)
 {
     // changed the name in 1.43
     fixEnum(value, "remember", "restore");
-	p->setSpeedTransfer((Preset::TransferMode)getEnum(value));
+	p->setSpeedTransfer((TransferMode)getEnum(value));
 }
 
 Parameter* SpeedTransferParameter = new SpeedTransferParameterType();
@@ -2146,7 +2148,7 @@ void PitchTransferParameterType::setValue(Preset* p, ExValue* value)
 {
     // changed the name in 1.43
     fixEnum(value, "remember", "restore");
-	p->setPitchTransfer((Preset::TransferMode)getEnum(value));
+	p->setPitchTransfer((TransferMode)getEnum(value));
 }
 
 Parameter* PitchTransferParameter = new PitchTransferParameterType();
@@ -2190,7 +2192,7 @@ void WindowSlideUnitParameterType::getValue(Preset* p, ExValue* value)
 
 void WindowSlideUnitParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setWindowSlideUnit((Preset::WindowUnit)getEnum(value));
+	p->setWindowSlideUnit((WindowUnit)getEnum(value));
 }
 
 Parameter* WindowSlideUnitParameter = new WindowSlideUnitParameterType();
@@ -2234,7 +2236,7 @@ void WindowEdgeUnitParameterType::getValue(Preset* p, ExValue* value)
 
 void WindowEdgeUnitParameterType::setValue(Preset* p, ExValue* value)
 {
-	p->setWindowEdgeUnit((Preset::WindowUnit)getEnum(value));
+	p->setWindowEdgeUnit((WindowUnit)getEnum(value));
 }
 
 Parameter* WindowEdgeUnitParameter = new WindowEdgeUnitParameterType();

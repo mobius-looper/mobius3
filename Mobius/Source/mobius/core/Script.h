@@ -14,7 +14,7 @@
 
 #include <stdio.h>
 
-#include "../../model/Preset.h"
+#include "../../model/ParameterConstants.h"
 #include "../KernelEvent.h"
 
 #include "Expr.h"
@@ -747,7 +747,7 @@ class ScriptWaitStatement : public ScriptStatement {
 	class Event* setupWaitEvent(ScriptInterpreter* si, long frame);
 	long getMsecFrames(ScriptInterpreter* si, long msecs);
 	long getWaitFrame(ScriptInterpreter* si);
-	long getQuantizedFrame(class Loop* loop, Preset::QuantizeMode q, 
+	long getQuantizedFrame(class Loop* loop, QuantizeMode q, 
 						   long frame, long count);
 
 	/**

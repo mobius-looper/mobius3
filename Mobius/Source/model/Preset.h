@@ -10,64 +10,14 @@
 
 #pragma once
 
+#include "ParameterConstants.h"
 #include "Structure.h"
-
-//
-// Things formerly in other core files
-// Think about where to define various limits, if the model is going
-// to enforce them, then they need to go here
-//
-
-// formerly in Redampler.h
-/**
- * Maximum rate step away from center.  
- * This is just MAX_RATE_OCTAVE * 12
- */
-#define MAX_RATE_STEP 48
-
-/**
- * The maximum effectve semitone steps in one direction in the
- * bend range.  Unlike step range, this is not adjustable without
- * recalculating some a root each time.
- *
- * This must match the BEND_FACTOR below.
- */
-#define MAX_BEND_STEP 12
-
-/****************************************************************************
- *                                                                          *
- *                                  DEFAULTS                                *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Preset parameter defaults.  
- * Note that the unit tests depend on some of these, do NOT change them
- * without understanding the consequences for the tests.
- */
-#define DEFAULT_LOOPS 4
-#define DEFAULT_SUBCYCLES 4
-#define DEFAULT_MAX_UNDO 0
-#define DEFAULT_MAX_REDO 1
-#define DEFAULT_AUTO_RECORD_TEMPO 120
-#define DEFAULT_AUTO_RECORD_BEATS 4
-#define DEFAULT_AUTO_RECORD_BARS 1
-
-// This must not be greater than Resampler::MAX_RATE_STEP which is 48
-#define DEFAULT_STEP_RANGE 24
-
-// This must not be greater than Resampler::MAX_BEND_STEP which is 12
-#define DEFAULT_BEND_RANGE 12
 
 /****************************************************************************
  *                                                                          *
  *   							STEP SEQUENCE                               *
  *                                                                          *
  ****************************************************************************/
-
-// Maximum number of steps in a rate sequence
-#define MAX_SEQUENCE_STEPS 32
-#define MAX_SEQUENCE_SOURCE 1024
 
 /**
  * Represents a sequence of "steps" which are integers.
@@ -181,13 +131,6 @@ class Preset : public Structure {
 	void setOverdubQuantized(bool b);
 	bool isOverdubQuantized();
 
-	typedef enum {
-		QUANTIZE_OFF,
-		QUANTIZE_SUBCYCLE,
-		QUANTIZE_CYCLE,
-		QUANTIZE_LOOP
-	} QuantizeMode;
-
 	void setQuantize(QuantizeMode i);
 	void setQuantize(int i);
 	QuantizeMode getQuantize();
@@ -195,17 +138,6 @@ class Preset : public Structure {
 	void setBounceQuantize(QuantizeMode i);
 	void setBounceQuantize(int i);
 	QuantizeMode getBounceQuantize();
-
-	typedef enum {
-		SWITCH_QUANT_OFF,
-		SWITCH_QUANT_SUBCYCLE,
-		SWITCH_QUANT_CYCLE,
-		SWITCH_QUANT_LOOP,
-		SWITCH_QUANT_CONFIRM,
-		SWITCH_QUANT_CONFIRM_SUBCYCLE,
-		SWITCH_QUANT_CONFIRM_CYCLE,
-		SWITCH_QUANT_CONFIRM_LOOP
-	} SwitchQuantize;
 
 	void setSwitchQuantize(SwitchQuantize i);
 	void setSwitchQuantize(int i);
@@ -228,14 +160,9 @@ class Preset : public Structure {
     // Multiply
     //
 
-	typedef enum {
-		MULTIPLY_NORMAL,
-		MULTIPLY_SIMPLE
-	} MultiplyMode;
-
-	void setMultiplyMode(MultiplyMode i);
+	void setMultiplyMode(ParameterMultiplyMode i);
 	void setMultiplyMode(int i);
-	MultiplyMode getMultiplyMode();
+	ParameterMultiplyMode getMultiplyMode();
 
 	void setRoundingOverdub(bool b);
 	bool isRoundingOverdub();
@@ -244,24 +171,9 @@ class Preset : public Structure {
     // Mute
     //
 
-	typedef enum {
-		MUTE_CONTINUE,
-		MUTE_START,
-		MUTE_PAUSE
-	} MuteMode;
-
-	void setMuteMode(MuteMode i);
+	void setMuteMode(ParameterMuteMode i);
 	void setMuteMode(int i);
-	MuteMode getMuteMode();
-
-	typedef enum {
-		MUTE_CANCEL_NEVER,
-		MUTE_CANCEL_EDIT,
-		MUTE_CANCEL_TRIGGER,
-		MUTE_CANCEL_EFFECT,
-		MUTE_CANCEL_CUSTOM,
-		MUTE_CANCEL_ALWAYS
-	} MuteCancel;
+	ParameterMuteMode getMuteMode();
 
 	void setMuteCancel(MuteCancel i);
 	void setMuteCancel(int i);
@@ -270,15 +182,6 @@ class Preset : public Structure {
     //
     // Slip
     //
-
-	typedef enum {
-		SLIP_SUBCYCLE,
-		SLIP_CYCLE,
-		SLIP_LOOP,
-		SLIP_REL_SUBCYCLE,
-		SLIP_REL_CYCLE,
-		SLIP_MSEC,
-	} SlipMode;
 
 	void setSlipMode(SlipMode sm);
 	void setSlipMode(int i);
@@ -290,13 +193,6 @@ class Preset : public Structure {
     //
     // Shuffle
     //
-
-	typedef enum {
-		SHUFFLE_REVERSE,
-		SHUFFLE_SHIFT,
-		SHUFFLE_SWAP,
-		SHUFFLE_RANDOM
-	} ShuffleMode;
 
 	void setShuffleMode(ShuffleMode sm);
 	void setShuffleMode(int i);
@@ -340,21 +236,6 @@ class Preset : public Structure {
 	void setSwitchVelocity(bool b);
 	bool isSwitchVelocity();
 
-	typedef enum {
-		SWITCH_FOLLOW,
-		SWITCH_RESTORE,
-		SWITCH_START,
-		SWITCH_RANDOM
-	} SwitchLocation;
-
-	typedef enum {
-		SWITCH_PERMANENT,
-		SWITCH_ONCE,
-		SWITCH_ONCE_RETURN,
-		SWITCH_SUSTAIN,
-		SWITCH_SUSTAIN_RETURN
-	} SwitchDuration;
-
 	void setSwitchLocation(SwitchLocation l);
 	void setSwitchLocation(int i);
 	SwitchLocation getSwitchLocation();
@@ -367,30 +248,9 @@ class Preset : public Structure {
 	void setSwitchDuration(int i);
 	SwitchDuration getSwitchDuration();
 
-	typedef enum {
-		EMPTY_LOOP_NONE,
-		EMPTY_LOOP_RECORD,
-		EMPTY_LOOP_COPY,
-        EMPTY_LOOP_TIMING
-	} EmptyLoopAction;
-
     void setEmptyLoopAction(EmptyLoopAction a);
     void setEmptyLoopAction(int i);
     EmptyLoopAction getEmptyLoopAction();
-
-    // NOTE: Obsolete, only for backward compatibility with old scripts
-	typedef enum {
-		XLOOP_COPY_OFF,
-		XLOOP_COPY_TIMING,
-		XLOOP_COPY_SOUND
-	} XLoopCopy;
-
-	typedef enum {
-		COPY_PLAY,
-		COPY_OVERDUB,
-		COPY_MULTIPLY,
-		COPY_INSERT
-	} CopyMode;
 
 	void setTimeCopyMode(CopyMode m);
 	void setTimeCopyMode(int m);
@@ -399,12 +259,6 @@ class Preset : public Structure {
 	void setSoundCopyMode(CopyMode m);
 	void setSoundCopyMode(int m);
 	CopyMode getSoundCopyMode();
-
-	typedef enum {
-		XFER_OFF,
-		XFER_FOLLOW,
-        XFER_RESTORE
-	} TransferMode;
 
 	void setRecordTransfer(TransferMode i);
 	void setRecordTransfer(int i);
@@ -436,13 +290,6 @@ class Preset : public Structure {
 	int getAutoRecordBars();
 	int getAutoBeatsPerBar();
 
-    // backward compatibility for older config files
-	typedef enum {
-		TRACK_COPY_OFF,
-		TRACK_COPY_TIMING,
-		TRACK_COPY_SOUND
-	} XTrackCopy;
-
     //
     // Synchronization 
     // Move this to Setup with the rest of the sync parameters?
@@ -452,12 +299,6 @@ class Preset : public Structure {
     void setEmptyTrackAction(int i);
     EmptyLoopAction getEmptyTrackAction();
 
-	typedef enum {
-		TRACK_LEAVE_NONE,
-		TRACK_LEAVE_CANCEL,
-		TRACK_LEAVE_WAIT
-	} TrackLeaveAction;
-
     void setTrackLeaveAction(TrackLeaveAction a);
     void setTrackLeaveAction(int i);
     TrackLeaveAction getTrackLeaveAction();
@@ -465,19 +306,6 @@ class Preset : public Structure {
     //
     // Windowing
     //
-
-    typedef enum {
-        WINDOW_UNIT_LOOP,
-        WINDOW_UNIT_CYCLE,
-        WINDOW_UNIT_SUBCYCLE,
-        WINDOW_UNIT_MSEC,
-        WINDOW_UNIT_FRAME,
-        // not visible, but used in scripts
-        WINDOW_UNIT_LAYER,
-        WINDOW_UNIT_START,
-        WINDOW_UNIT_END,
-        WINDOW_UNIT_INVALID
-    } WindowUnit;
 
     void setWindowSlideUnit(WindowUnit unit);
     WindowUnit getWindowSlideUnit();
@@ -618,7 +446,7 @@ class Preset : public Structure {
 	 * them, but ends exactly on the Multiply stop event like overdub
 	 * rather than rounding out to a cycle boundary.
 	 */
-	MultiplyMode mMultiplyMode;
+	ParameterMultiplyMode mMultiplyMode;
 
 	/**
 	 * Determines how multiply and insert round off recording.
@@ -638,7 +466,7 @@ class Preset : public Structure {
      * Pause is an addition, it functions like a tape recorder and
      * resumes exactly where it left off.
 	 */
-	MuteMode mMuteMode;
+	ParameterMuteMode mMuteMode;
 
 	/**
 	 * Controls the conditions under which we cancel a Mute mode.

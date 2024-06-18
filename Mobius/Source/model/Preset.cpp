@@ -270,15 +270,15 @@ bool Preset::isSustainFunction(Function* f)
 }
 #endif
 
-void Preset::setMultiplyMode(MultiplyMode i) {
+void Preset::setMultiplyMode(ParameterMultiplyMode i) {
 	mMultiplyMode = i;
 }
 
 void Preset::setMultiplyMode(int i) {
-	setMultiplyMode((MultiplyMode)i);
+	setMultiplyMode((ParameterMultiplyMode)i);
 }
 
-Preset::MultiplyMode Preset::getMultiplyMode() {
+ParameterMultiplyMode Preset::getMultiplyMode() {
 	return mMultiplyMode;
 }
 
@@ -300,7 +300,7 @@ void Preset::setEmptyLoopAction(int i) {
 	setEmptyLoopAction((EmptyLoopAction)i);
 }
 
-Preset::EmptyLoopAction Preset::getEmptyLoopAction() {
+EmptyLoopAction Preset::getEmptyLoopAction() {
 	return mEmptyLoopAction;
 }
 
@@ -314,7 +314,7 @@ void Preset::setEmptyTrackAction(int i) {
 	setEmptyTrackAction((EmptyLoopAction)i);
 }
 
-Preset::EmptyLoopAction Preset::getEmptyTrackAction() {
+EmptyLoopAction Preset::getEmptyTrackAction() {
 	return mEmptyTrackAction;
 }
 
@@ -328,7 +328,7 @@ void Preset::setTrackLeaveAction(int i) {
 	setTrackLeaveAction((TrackLeaveAction)i);
 }
 
-Preset::TrackLeaveAction Preset::getTrackLeaveAction() {
+TrackLeaveAction Preset::getTrackLeaveAction() {
 	return mTrackLeaveAction;
 }
 
@@ -343,15 +343,15 @@ int Preset::getLoops() {
 	return mLoops;
 }
 
-void Preset::setMuteMode(MuteMode i) {
+void Preset::setMuteMode(ParameterMuteMode i) {
 	mMuteMode = i;
 }
 
 void Preset::setMuteMode(int i) {
-	setMuteMode((MuteMode)i);
+	setMuteMode((ParameterMuteMode)i);
 }
 
-Preset::MuteMode Preset::getMuteMode() {
+ParameterMuteMode Preset::getMuteMode() {
 	return mMuteMode;
 }
 
@@ -363,7 +363,7 @@ void Preset::setMuteCancel(int i) {
 	setMuteCancel((MuteCancel)i);
 }
 
-Preset::MuteCancel Preset::getMuteCancel() {
+MuteCancel Preset::getMuteCancel() {
 	return mMuteCancel;
 }
 
@@ -383,7 +383,7 @@ void Preset::setRecordTransfer(int i) {
 	setRecordTransfer((TransferMode)i);
 }
 
-Preset::TransferMode Preset::getRecordTransfer() {
+TransferMode Preset::getRecordTransfer() {
 	return mRecordTransfer;
 }
 
@@ -395,7 +395,7 @@ void Preset::setOverdubTransfer(int i) {
 	setOverdubTransfer((TransferMode)i);
 }
 
-Preset::TransferMode Preset::getOverdubTransfer() {
+TransferMode Preset::getOverdubTransfer() {
 	return mOverdubTransfer;
 }
 
@@ -407,7 +407,7 @@ void Preset::setReverseTransfer(int i) {
 	setReverseTransfer((TransferMode)i);
 }
 
-Preset::TransferMode Preset::getReverseTransfer() {
+TransferMode Preset::getReverseTransfer() {
 	return mReverseTransfer;
 }
 
@@ -419,7 +419,7 @@ void Preset::setSpeedTransfer(int i) {
 	setSpeedTransfer((TransferMode)i);
 }
 
-Preset::TransferMode Preset::getSpeedTransfer() {
+TransferMode Preset::getSpeedTransfer() {
 	return mSpeedTransfer;
 }
 
@@ -431,7 +431,7 @@ void Preset::setPitchTransfer(int i) {
 	setPitchTransfer((TransferMode)i);
 }
 
-Preset::TransferMode Preset::getPitchTransfer() {
+TransferMode Preset::getPitchTransfer() {
 	return mPitchTransfer;
 }
 
@@ -443,7 +443,7 @@ void Preset::setQuantize(int i) {
 	setQuantize((QuantizeMode)i);
 }
 
-Preset::QuantizeMode Preset::getQuantize() {
+QuantizeMode Preset::getQuantize() {
 	return mQuantize;
 }
 
@@ -455,7 +455,7 @@ void Preset::setBounceQuantize(int i) {
 	setBounceQuantize((QuantizeMode)i);
 }
 
-Preset::QuantizeMode Preset::getBounceQuantize() {
+QuantizeMode Preset::getBounceQuantize() {
 	return mBounceQuantize;
 }
 
@@ -491,7 +491,7 @@ void Preset::setSwitchLocation(int i) {
 	setSwitchLocation((SwitchLocation)i);
 }
 
-Preset::SwitchLocation Preset::getSwitchLocation() {
+SwitchLocation Preset::getSwitchLocation() {
 	return mSwitchLocation;
 }
 
@@ -503,7 +503,7 @@ void Preset::setReturnLocation(int i) {
 	setReturnLocation((SwitchLocation)i);
 }
 
-Preset::SwitchLocation Preset::getReturnLocation() {
+SwitchLocation Preset::getReturnLocation() {
 	return mReturnLocation;
 }
 
@@ -515,7 +515,7 @@ void Preset::setSwitchDuration(int i) {
 	setSwitchDuration((SwitchDuration)i);
 }
 
-Preset::SwitchDuration Preset::getSwitchDuration() {
+SwitchDuration Preset::getSwitchDuration() {
 	return mSwitchDuration;
 }
 
@@ -527,7 +527,7 @@ void Preset::setSwitchQuantize(int i) {
 	setSwitchQuantize((SwitchQuantize)i);
 }
 
-Preset::SwitchQuantize Preset::getSwitchQuantize() {
+SwitchQuantize Preset::getSwitchQuantize() {
 	return mSwitchQuantize;
 }
 
@@ -539,7 +539,7 @@ void Preset::setTimeCopyMode(int i) {
 	setTimeCopyMode((CopyMode)i);
 }
 
-Preset::CopyMode Preset::getTimeCopyMode() {
+CopyMode Preset::getTimeCopyMode() {
 	return mTimeCopyMode;
 }
 
@@ -551,7 +551,7 @@ void Preset::setSoundCopyMode(int i) {
 	setSoundCopyMode((CopyMode)i);
 }
 
-Preset::CopyMode Preset::getSoundCopyMode() {
+CopyMode Preset::getSoundCopyMode() {
 	return mSoundCopyMode;
 }
 
@@ -759,7 +759,7 @@ void Preset::setSlipMode(int i) {
 	setSlipMode((SlipMode)i);
 }
 
-Preset::SlipMode Preset::getSlipMode() {
+SlipMode Preset::getSlipMode() {
 	return mSlipMode;
 }
 
@@ -781,7 +781,7 @@ void Preset::setShuffleMode(int i) {
 	setShuffleMode((ShuffleMode)i);
 }
 
-Preset::ShuffleMode Preset::getShuffleMode() {
+ShuffleMode Preset::getShuffleMode() {
 	return mShuffleMode;
 }
 
@@ -791,7 +791,7 @@ void Preset::setWindowSlideUnit(WindowUnit u) {
 	mWindowSlideUnit = u;
 }
 
-Preset::WindowUnit Preset::getWindowSlideUnit() {
+WindowUnit Preset::getWindowSlideUnit() {
 	return mWindowSlideUnit;
 }
 
@@ -811,7 +811,7 @@ void Preset::setWindowEdgeUnit(WindowUnit u) {
 	mWindowEdgeUnit = u;
 }
 
-Preset::WindowUnit Preset::getWindowEdgeUnit() {
+WindowUnit Preset::getWindowEdgeUnit() {
 	return mWindowEdgeUnit;
 }
 

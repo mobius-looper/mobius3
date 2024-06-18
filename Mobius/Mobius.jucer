@@ -114,6 +114,8 @@
         <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
         <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
         <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
+        <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"
+              file="Source/model/ParameterConstants.h"/>
         <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
         <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
         <FILE id="gNzjgL" name="SampleConfig.cpp" compile="1" resource="0"
@@ -456,6 +458,10 @@
                 file="Source/mobius/core/ParameterPreset.cpp"/>
           <FILE id="EiCEqS" name="ParameterSetup.cpp" compile="1" resource="0"
                 file="Source/mobius/core/ParameterSetup.cpp"/>
+          <FILE id="lJpYcJ" name="ParameterSource.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ParameterSource.cpp"/>
+          <FILE id="N40mmm" name="ParameterSource.h" compile="0" resource="0"
+                file="Source/mobius/core/ParameterSource.h"/>
           <FILE id="e8xP8p" name="ParameterTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/core/ParameterTrack.cpp"/>
           <FILE id="QYMlnj" name="PitchPlugin.cpp" compile="1" resource="0" file="Source/mobius/core/PitchPlugin.cpp"/>

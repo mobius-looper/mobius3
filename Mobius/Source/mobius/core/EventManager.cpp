@@ -125,14 +125,12 @@
 #include <stdio.h>
 #include <memory.h>
 
-// went missing, probably in one of the config files
-#define MAX_CUSTOM_MODE 256
-
 // MapEventType, MapFunction
 #include "Mapper.h"
 
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
+#include "../../model/ParameterConstants.h"
 #include "../../model/Trigger.h"
 
 #include "Action.h"
@@ -404,7 +402,7 @@ Event* EventManager::getFunctionEvent(Action* action,
     }
 
 	Event* event = newEvent(func, 0);
-	Preset::QuantizeMode q = Preset::QUANTIZE_OFF;
+	QuantizeMode q = QUANTIZE_OFF;
     long frame = 0;
     Preset* preset = mTrack->getPreset();
 
@@ -461,7 +459,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 
          frame = action->rescheduling->frame;
 
-        if (q == Preset::QUANTIZE_OFF) {
+        if (q == QUANTIZE_OFF) {
             // This is what we would do below to "catch up to real time"
             // Is This relevant here?
             // Note that by definition latency is not included when 
@@ -539,7 +537,7 @@ Event* EventManager::getFunctionEvent(Action* action,
 		frame = mSwitch->frame;
 		event->quantized = true;
 	}
-	else if (q != Preset::QUANTIZE_OFF) {
+	else if (q != QUANTIZE_OFF) {
         // quantization must be done relative to "realtime" which
         // is mFrame + InputLatency since we're always behind
         frame = loop->getFrame() + latency;
@@ -1757,22 +1755,22 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         if (sustain) {
             // SUS switches use SwitchQuantize to determine when to return
             // Assume you don't have to confirm the return
-            Preset::SwitchQuantize q = preset->getSwitchQuantize();
+            SwitchQuantize q = preset->getSwitchQuantize();
             long loopFrame = loop->getFrame();
             switch (q) {
-                case Preset::SWITCH_QUANT_CYCLE:
-                case Preset::SWITCH_QUANT_CONFIRM_CYCLE: {
-                    returnFrame = getQuantizedFrame(loop, loopFrame, Preset::QUANTIZE_CYCLE, true);
+                case SWITCH_QUANT_CYCLE:
+                case SWITCH_QUANT_CONFIRM_CYCLE: {
+                    returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_CYCLE, true);
                 }
                 break;
-                case Preset::SWITCH_QUANT_SUBCYCLE:
-                case Preset::SWITCH_QUANT_CONFIRM_SUBCYCLE: {
-                    returnFrame = getQuantizedFrame(loop, loopFrame, Preset::QUANTIZE_SUBCYCLE, true);
+                case SWITCH_QUANT_SUBCYCLE:
+                case SWITCH_QUANT_CONFIRM_SUBCYCLE: {
+                    returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_SUBCYCLE, true);
                 }
                 break;
-                case Preset::SWITCH_QUANT_LOOP:
-                case Preset::SWITCH_QUANT_CONFIRM_LOOP: {
-                    returnFrame = getQuantizedFrame(loop, loopFrame, Preset::QUANTIZE_LOOP, true);
+                case SWITCH_QUANT_LOOP:
+                case SWITCH_QUANT_CONFIRM_LOOP: {
+                    returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_LOOP, true);
                 }
                 break;
                 default:
@@ -1797,8 +1795,8 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
         re->afterLoop = true;
 
         long nextFrame = 0;
-        Preset::SwitchLocation location = preset->getReturnLocation();
-        if (location == Preset::SWITCH_RESTORE) {
+        SwitchLocation location = preset->getReturnLocation();
+        if (location == SWITCH_RESTORE) {
             // restore playback to what the record frame was when we left 
             // this feels wrong, but it will be on the right quantization
             // boundary, and that's where we want to resume play
@@ -1807,13 +1805,13 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
             // should be using that here too?
             nextFrame = wrapFrame(prev->getFrame(), prev->getFrames());
         }
-        else if (location == Preset::SWITCH_FOLLOW) {
+        else if (location == SWITCH_FOLLOW) {
             // carry the current frame over to the next loop
             long frames = prev->getFrames(); 
             if (frames > 0)
               nextFrame = wrapFrame(loop->getFrames(), frames);
         }
-        else if (location == Preset::SWITCH_RANDOM) {
+        else if (location == SWITCH_RANDOM) {
             // RANDOM_SUBCYCLE would be more useful?
             long frames = prev->getFrames();
             if (frames > 0)
@@ -2442,7 +2440,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 		// don't treat frame 0 as a cycle boundary, this is actually
 		// the same as the loop event above
         if (!found && startFrame > 0) {
-            long next = getQuantizedFrame(loop, startFrame, Preset::QUANTIZE_CYCLE, false);
+            long next = getQuantizedFrame(loop, startFrame, QUANTIZE_CYCLE, false);
             if (next >= startFrame && next <= lastFrame && 
 				next != mLastSyncEventFrame) {
                 if (event == NULL || 
@@ -2460,7 +2458,7 @@ Event* EventManager::getNextScheduledEvent(long availFrames,
 
         // if we're not on a cycle boundary, check subcycle boundary
         if (!found && startFrame > 0) {
-            long next = getQuantizedFrame(loop, startFrame, Preset::QUANTIZE_SUBCYCLE, false);
+            long next = getQuantizedFrame(loop, startFrame, QUANTIZE_SUBCYCLE, false);
             if (next >= startFrame && next <= lastFrame &&
 				next != mLastSyncEventFrame) {
                 if (event == NULL || 
@@ -2720,7 +2718,7 @@ Event* EventManager::getRescheduleEvents(Loop* loop, Event* previous)
  * 
  */
 long EventManager::getQuantizedFrame(Loop* loop, long frame,
-                                            Preset::QuantizeMode q, 
+                                            QuantizeMode q, 
                                             bool after)
 {
     long qframe = frame;
@@ -2731,7 +2729,7 @@ long EventManager::getQuantizedFrame(Loop* loop, long frame,
 	if (loopFrames > 0) {
 
 		switch (q) {
-			case Preset::QUANTIZE_CYCLE: {
+			case QUANTIZE_CYCLE: {
 				long cycleFrames = loop->getCycleFrames();
 				int cycle = (int)(frame / cycleFrames);
 				if (after || ((cycle * cycleFrames) != frame))
@@ -2741,7 +2739,7 @@ long EventManager::getQuantizedFrame(Loop* loop, long frame,
 			}
 			break;
 
-			case Preset::QUANTIZE_SUBCYCLE: {
+			case QUANTIZE_SUBCYCLE: {
 				// this is harder due to float roudning
 				// all subcycles except the last are the same size,
 				// the last may need to be adjusted so that the combination
@@ -2777,14 +2775,14 @@ long EventManager::getQuantizedFrame(Loop* loop, long frame,
 			}
 			break;
 
-			case Preset::QUANTIZE_LOOP: {
+			case QUANTIZE_LOOP: {
 				int loopCount = (int)(frame / loopFrames);
 				if (after || ((loopCount * loopFrames) != frame))
 				  qframe = (loopCount + 1) * loopFrames;
 			}
 			break;
 			
-			case Preset::QUANTIZE_OFF: {
+			case QUANTIZE_OFF: {
 				// xcode 5 complains if we don't have this
 			}
 			break;
@@ -2800,7 +2798,7 @@ long EventManager::getQuantizedFrame(Loop* loop, long frame,
  * a quantization frame, to find the one before the current frame.
  */
 long EventManager::getPrevQuantizedFrame(Loop* loop, long frame, 
-                                                Preset::QuantizeMode q,
+                                                QuantizeMode q,
                                                 bool before)
 {
     long qframe = frame;
@@ -2811,7 +2809,7 @@ long EventManager::getPrevQuantizedFrame(Loop* loop, long frame,
 	if (loopFrames > 0) {
 
 		switch (q) {
-			case Preset::QUANTIZE_CYCLE: {
+			case QUANTIZE_CYCLE: {
 				long cycleFrames = loop->getCycleFrames();
 				int cycle = (int)(frame / cycleFrames);
 				long cycleBase = cycle * cycleFrames;
@@ -2825,7 +2823,7 @@ long EventManager::getPrevQuantizedFrame(Loop* loop, long frame,
 			}
 			break;
 
-			case Preset::QUANTIZE_SUBCYCLE: {
+			case QUANTIZE_SUBCYCLE: {
 				// this is harder due to float roudning
 				// all subcycles except the last are the same size,
 				// the last may need to be adjusted so that the combination
@@ -2865,7 +2863,7 @@ long EventManager::getPrevQuantizedFrame(Loop* loop, long frame,
 			}
 			break;
 
-			case Preset::QUANTIZE_LOOP: {
+			case QUANTIZE_LOOP: {
 				int loopCount = (int)(frame / loopFrames);
 				long loopBase = loopCount * loopFrames;
 				if (frame > loopBase)
@@ -2875,7 +2873,7 @@ long EventManager::getPrevQuantizedFrame(Loop* loop, long frame,
 			}
 			break;
 
-			case Preset::QUANTIZE_OFF: {
+			case QUANTIZE_OFF: {
 				// xcode 5 complains if we don't have this
 			}
 			break;

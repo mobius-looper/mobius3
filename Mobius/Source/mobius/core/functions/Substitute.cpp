@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -114,7 +115,7 @@ bool SubstituteFunction::isSustain(Preset* p)
     bool isSustain = sustain;
     if (!isSustain) {
         // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == Preset::RECORD_SUSTAIN);
+        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
         const char* susfuncs = p->getSustainFunctions();
         if (susfuncs != NULL)
           isSustain = (IndexOf(susfuncs, "Substitute") >= 0);

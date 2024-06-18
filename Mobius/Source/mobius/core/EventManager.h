@@ -12,7 +12,7 @@
 #ifndef EVENT_MANAGER_H
 #define EVENT_MANAGER_H
 
-#include "../../model/Preset.h"
+#include "../../model/ParameterConstants.h"
 
 /**
  * A class encapsulating Event management code for a Track.
@@ -116,10 +116,10 @@ class EventManager {
 
     // Utilities
 
-    long getQuantizedFrame(Loop* loop, long frame, Preset::QuantizeMode q, 
+    long getQuantizedFrame(Loop* loop, long frame, QuantizeMode q, 
                            bool after);
 
-    long getPrevQuantizedFrame(Loop* loop, long frame, Preset::QuantizeMode q,
+    long getPrevQuantizedFrame(Loop* loop, long frame, QuantizeMode q,
                                bool before);
 
     long wrapFrame(long frame, long loopFrames);

@@ -470,26 +470,26 @@ bool Function::isMuteCancel(Preset* p)
 
 	switch (p->getMuteCancel()) {
 
-		case Preset::MUTE_CANCEL_NEVER:
+		case MUTE_CANCEL_NEVER:
 			break;
 
-		case Preset::MUTE_CANCEL_EDIT:
+		case MUTE_CANCEL_EDIT:
 			isCancel = majorMode || instant;
 			break;
 
-		case Preset::MUTE_CANCEL_TRIGGER:
+		case MUTE_CANCEL_TRIGGER:
 			isCancel = (majorMode || instant || trigger);
 			break;
 
-		case Preset::MUTE_CANCEL_EFFECT:
+		case MUTE_CANCEL_EFFECT:
 			isCancel = (majorMode || instant || trigger || minorMode);
 			break;
 
-		case Preset::MUTE_CANCEL_CUSTOM:
+		case MUTE_CANCEL_CUSTOM:
 			isCancel = (mayCancelMute && cancelMute);
 			break;
 
-		case Preset::MUTE_CANCEL_ALWAYS:
+		case MUTE_CANCEL_ALWAYS:
 			isCancel = true;
 			break;
 	}

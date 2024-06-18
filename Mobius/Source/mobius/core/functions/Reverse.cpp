@@ -62,6 +62,8 @@
 #include <memory.h>
 #include <string.h>
 
+#include "../../../model/ParameterConstants.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -326,9 +328,9 @@ Event* ReverseFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
     Preset* p = l->getPreset();
-    Preset::TransferMode tm = p->getReverseTransfer();
+    TransferMode tm = p->getReverseTransfer();
 
-    if (tm == Preset::XFER_OFF || tm == Preset::XFER_RESTORE) {
+    if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
         // !!!!  this original declaration hides the one above
         // the if block and would have prevented the event from
@@ -344,7 +346,7 @@ Event* ReverseFunction::scheduleTransfer(Loop* l)
 
         Event* prev = em->findEvent(eventType);
         if (prev == NULL) {
-            if (tm == Preset::XFER_OFF) {
+            if (tm == XFER_OFF) {
                 event = em->newEvent(Forward, l->getFrame());
             }
             else {

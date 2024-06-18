@@ -114,6 +114,7 @@
 #include "../Mapper.h"
 // IndexOf
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/Trigger.h"
 #include "../../../model/Setup.h"
 #include "../../Audio.h"
@@ -326,7 +327,7 @@ bool RecordFunction::isSustain(Preset* p)
     bool isSustain = sustain;
     if (!isSustain) {
         // formerly sensitive to RecordMode
-        // || (!mAuto && p->getRecordMode() == Preset::RECORD_SUSTAIN);
+        // || (!mAuto && p->getRecordMode() == RECORD_SUSTAIN);
         const char* susfuncs = p->getSustainFunctions();
         if (susfuncs != NULL)
           isSustain = (IndexOf(susfuncs, "Record") >= 0);

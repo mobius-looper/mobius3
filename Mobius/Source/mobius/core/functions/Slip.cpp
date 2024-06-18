@@ -24,6 +24,7 @@
 #include "../AudioConstants.h"
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -164,34 +165,34 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		long loopFrames = l->getFrames();
 		long unitFrames = 0;
 		long relativeFrames = 0;
-		Preset::QuantizeMode absoluteQ = Preset::QUANTIZE_OFF;
+		QuantizeMode absoluteQ = QUANTIZE_OFF;
 		Preset* preset = l->getPreset();
 
-		Preset::SlipMode smode = preset->getSlipMode();
+		SlipMode smode = preset->getSlipMode();
 		switch (smode) {
-			case Preset::SLIP_SUBCYCLE: {
-				absoluteQ = Preset::QUANTIZE_SUBCYCLE;
+			case SLIP_SUBCYCLE: {
+				absoluteQ = QUANTIZE_SUBCYCLE;
 			}
 				break;
-			case Preset::SLIP_CYCLE: {
-				absoluteQ = Preset::QUANTIZE_CYCLE;
+			case SLIP_CYCLE: {
+				absoluteQ = QUANTIZE_CYCLE;
 			}
 				break;
-			case Preset::SLIP_LOOP: {
-				absoluteQ = Preset::QUANTIZE_LOOP;
+			case SLIP_LOOP: {
+				absoluteQ = QUANTIZE_LOOP;
 			}
 				break;
-			case Preset::SLIP_REL_SUBCYCLE: {
+			case SLIP_REL_SUBCYCLE: {
 				unitFrames = l->getSubCycleFrames();
 				relativeFrames = unitFrames * units;
 			}
 				break;
-			case Preset::SLIP_REL_CYCLE: {
+			case SLIP_REL_CYCLE: {
 				unitFrames = l->getCycleFrames();
 				relativeFrames = unitFrames * units;
 			}
 				break;
-			case Preset::SLIP_MSEC: {
+			case SLIP_MSEC: {
 				// this is complicated by variable speeds!
 				int msecs = preset->getSlipTime();
 				float speed = l->getTrack()->getEffectiveSpeed();
@@ -206,11 +207,11 @@ void SlipFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 			// probably can't be here, don't go into the calculation weeds
 			newFrame = 0;
 		}
-		else if (absoluteQ == Preset::QUANTIZE_OFF) {
+		else if (absoluteQ == QUANTIZE_OFF) {
 			// a relative move
 			newFrame = playFrame + relativeFrames;
 		}
-		else if (absoluteQ != Preset::QUANTIZE_OFF) {
+		else if (absoluteQ != QUANTIZE_OFF) {
 			newFrame = playFrame;
 			if (units > 0) {
 				for (int i = 0 ; i < units ; i++)

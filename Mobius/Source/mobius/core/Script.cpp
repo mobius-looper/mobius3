@@ -57,6 +57,7 @@
 #include "../../util/List.h"
 #include "../../util/Util.h"
 
+#include "../../model/ParameterConstants.h"
 #include "../../model/Trigger.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/ScriptConfig.h"
@@ -3815,21 +3816,21 @@ long ScriptWaitStatement::getWaitFrame(ScriptInterpreter* si)
 				case UNIT_SUBCYCLE: {
 					// wait for the start of a subcycle after the current frame
 					frame = getQuantizedFrame(loop, 
-											  Preset::QUANTIZE_SUBCYCLE, 
+											  QUANTIZE_SUBCYCLE, 
 											  current, time);
 				}
                     break;
 
 				case UNIT_CYCLE: {
 					// wait for the start of a cycle after the current frame
-					frame = getQuantizedFrame(loop, Preset::QUANTIZE_CYCLE, 
+					frame = getQuantizedFrame(loop, QUANTIZE_CYCLE, 
 											  current, time);
 				}
                     break;
 
 				case UNIT_LOOP: {
 					// wait for the start of a loop after the current frame
-					frame = getQuantizedFrame(loop, Preset::QUANTIZE_LOOP, 
+					frame = getQuantizedFrame(loop, QUANTIZE_LOOP, 
 											  current, time);
 				}
                     break;
@@ -3913,7 +3914,7 @@ long ScriptWaitStatement::getTime(ScriptInterpreter* si)
  * don't quantize to the end of the loop, go to the next.
  */
 long ScriptWaitStatement::getQuantizedFrame(Loop* loop,
-                                            Preset::QuantizeMode q, 
+                                            QuantizeMode q, 
                                             long frame, long count)
 {
 	long loopFrames = loop->getFrames();

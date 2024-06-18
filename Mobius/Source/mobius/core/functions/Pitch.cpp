@@ -21,6 +21,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../midi/MidiByte.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 
 
@@ -673,9 +674,9 @@ Event* PitchFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
     Preset* p = l->getPreset();
-    Preset::TransferMode tm = p->getPitchTransfer();
+    TransferMode tm = p->getPitchTransfer();
 
-    if (tm == Preset::XFER_OFF || tm == Preset::XFER_RESTORE) {
+    if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
         // !!!!  this original declaration hides the one above
         // the if block and would have prevented the event from
@@ -691,7 +692,7 @@ Event* PitchFunction::scheduleTransfer(Loop* l)
 
         Event* prev = em->findEvent(eventType);
         if (prev == NULL) {
-            if (tm == Preset::XFER_OFF) {
+            if (tm == XFER_OFF) {
                 event = em->newEvent(PitchCancel, l->getFrame());
             }
             else {

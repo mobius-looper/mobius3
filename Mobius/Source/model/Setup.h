@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "ParameterConstants.h"
 #include "Structure.h"
 
 /****************************************************************************
@@ -24,116 +25,13 @@
  */
 #define SETUP_OVERLAY_CANCEL "cancel"
 
-/**
- * Default number of tracks in a setup.
- */
-#define DEFAULT_TRACK_COUNT 8
-
 /****************************************************************************
  *                                                                          *
  *                                ENUMERATIONS                              *
  *                                                                          *
  ****************************************************************************/
 
-/**
- * An eumeration defining the possible synchronization sources.
- * This is what older releases called SyncMode.
- * DEFAULT is only a valid value in SetupTrack, it will never be seen
- * in a SyncState.
- */
-typedef enum {
-
-    SYNC_DEFAULT,
-    SYNC_NONE,
-    SYNC_TRACK,
-    SYNC_OUT,
-    SYNC_HOST,
-    SYNC_MIDI
-
-} SyncSource;
-
 extern const char* GetSyncSourceName(SyncSource src);
-
-/**
- * Defines the granularity of MIDI and HOST quantization.
- * While it's just a boolean now, keep it open for more options.
- * It would be nice if we could merge this with SyncTrackUnit but
- * then it would be messy to deal with subranges.
- */
-typedef enum {
-
-    SYNC_UNIT_BEAT,
-    SYNC_UNIT_BAR
-
-} SyncUnit;
-
-/**
- * Defines the granularity of SYNC_TRACK quantization.
- * DEFAULT is only a valid value in SetupTrack, it will never be seen
- * in a SyncState.
- */
-typedef enum {
-
-    TRACK_UNIT_DEFAULT,
-    TRACK_UNIT_SUBCYCLE,
-    TRACK_UNIT_CYCLE,
-    TRACK_UNIT_LOOP
-
-} SyncTrackUnit;
-
-/**
- * Defines what happens when muting during SYNC_OUT
- */
-typedef enum {
-
-    MUTE_SYNC_TRANSPORT,
-    MUTE_SYNC_TRANSPORT_CLOCKS,
-    MUTE_SYNC_CLOCKS,
-    MUTE_SYNC_NONE
-
-} MuteSyncMode;
-
-/**
- * Defines what happens to the SYNC_OUT tempo when various
- * changes are made to the sync master track
- */
-typedef enum {
-
-    SYNC_ADJUST_NONE,
-    SYNC_ADJUST_TEMPO
-
-} SyncAdjust;
-
-/**
- * Defines when a Realign function is performed.
- * START is the most common and means that the realign will be performed
- * on the next pulse that represents the "external start point" of the
- * sync loop.  BAR and BEAT can be used if you want the realign
- * to happen at a smaller yet still musically significant granule.
- * 
- * NOW means the realign will happen as soon as possible.  For
- * SYNC_TRACK it will happen immediately, for other sync modes it will
- * happen on the next pulse.  Note that SYNC_HOST since a pulse is the same
- * as a beat, REALIGN_NOW will behave the same as REALIGN_BEAT.
- */
-typedef enum {
-
-    REALIGN_START,
-    REALIGN_BAR,
-    REALIGN_BEAT,
-    REALIGN_NOW
-
-} RealignTime;
-
-/**
- * Defines out SYNC_OUT Realign is performed.
- */
-typedef enum {
-
-    REALIGN_MIDI_START,
-    REALIGN_RESTART
-
-} OutRealignMode;
 
 /****************************************************************************
  *                                                                          *

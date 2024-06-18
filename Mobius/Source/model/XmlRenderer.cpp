@@ -743,9 +743,9 @@ void XmlRenderer::parse(XmlElement* e, Preset* p)
 
     // ugh, I seem to have made redundant setters for all these that take an int
     // rather than an enum, but not these, why?  Kind of like not having the duplication
-    p->setWindowEdgeUnit((Preset::WindowUnit)parse(e, UIParameterWindowEdgeUnit));
+    p->setWindowEdgeUnit((WindowUnit)parse(e, UIParameterWindowEdgeUnit));
     p->setWindowSlideAmount(parse(e, UIParameterWindowSlideAmount));
-    p->setWindowSlideUnit((Preset::WindowUnit)parse(e, UIParameterWindowSlideUnit));
+    p->setWindowSlideUnit((WindowUnit)parse(e, UIParameterWindowSlideUnit));
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -794,7 +794,7 @@ void UIParameterMultiplyModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterMultiplyModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setMultiplyMode((Preset::MultiplyMode)value->getInt());
+    ((Preset*)obj)->setMultiplyMode((ParameterMultiplyMode)value->getInt());
 }
 UIParameterMultiplyModeClass UIParameterMultiplyModeObj;
 UIParameter* UIParameterMultiplyMode = &UIParameterMultiplyModeObj;
@@ -825,7 +825,7 @@ void UIParameterShuffleModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterShuffleModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setShuffleMode((Preset::ShuffleMode)value->getInt());
+    ((Preset*)obj)->setShuffleMode((ShuffleMode)value->getInt());
 }
 UIParameterShuffleModeClass UIParameterShuffleModeObj;
 UIParameter* UIParameterShuffleMode = &UIParameterShuffleModeObj;
@@ -883,7 +883,7 @@ void UIParameterEmptyLoopActionClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterEmptyLoopActionClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setEmptyLoopAction((Preset::EmptyLoopAction)value->getInt());
+    ((Preset*)obj)->setEmptyLoopAction((EmptyLoopAction)value->getInt());
 }
 UIParameterEmptyLoopActionClass UIParameterEmptyLoopActionObj;
 UIParameter* UIParameterEmptyLoopAction = &UIParameterEmptyLoopActionObj;
@@ -914,7 +914,7 @@ void UIParameterEmptyTrackActionClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterEmptyTrackActionClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setEmptyTrackAction((Preset::EmptyLoopAction)value->getInt());
+    ((Preset*)obj)->setEmptyTrackAction((EmptyLoopAction)value->getInt());
 }
 UIParameterEmptyTrackActionClass UIParameterEmptyTrackActionObj;
 UIParameter* UIParameterEmptyTrackAction = &UIParameterEmptyTrackActionObj;
@@ -945,7 +945,7 @@ void UIParameterTrackLeaveActionClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterTrackLeaveActionClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setTrackLeaveAction((Preset::TrackLeaveAction)value->getInt());
+    ((Preset*)obj)->setTrackLeaveAction((TrackLeaveAction)value->getInt());
 }
 UIParameterTrackLeaveActionClass UIParameterTrackLeaveActionObj;
 UIParameter* UIParameterTrackLeaveAction = &UIParameterTrackLeaveActionObj;
@@ -1007,7 +1007,7 @@ void UIParameterMuteModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterMuteModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setMuteMode((Preset::MuteMode)value->getInt());
+    ((Preset*)obj)->setMuteMode((ParameterMuteMode)value->getInt());
 }
 UIParameterMuteModeClass UIParameterMuteModeObj;
 UIParameter* UIParameterMuteMode = &UIParameterMuteModeObj;
@@ -1038,7 +1038,7 @@ void UIParameterMuteCancelClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterMuteCancelClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setMuteCancel((Preset::MuteCancel)value->getInt());
+    ((Preset*)obj)->setMuteCancel((MuteCancel)value->getInt());
 }
 UIParameterMuteCancelClass UIParameterMuteCancelObj;
 UIParameter* UIParameterMuteCancel = &UIParameterMuteCancelObj;
@@ -1096,7 +1096,7 @@ void UIParameterQuantizeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterQuantizeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setQuantize((Preset::QuantizeMode)value->getInt());
+    ((Preset*)obj)->setQuantize((QuantizeMode)value->getInt());
 }
 UIParameterQuantizeClass UIParameterQuantizeObj;
 UIParameter* UIParameterQuantize = &UIParameterQuantizeObj;
@@ -1127,7 +1127,7 @@ void UIParameterBounceQuantizeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterBounceQuantizeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setBounceQuantize((Preset::QuantizeMode)value->getInt());
+    ((Preset*)obj)->setBounceQuantize((QuantizeMode)value->getInt());
 }
 UIParameterBounceQuantizeClass UIParameterBounceQuantizeObj;
 UIParameter* UIParameterBounceQuantize = &UIParameterBounceQuantizeObj;
@@ -1239,7 +1239,7 @@ void UIParameterSwitchLocationClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSwitchLocationClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSwitchLocation((Preset::SwitchLocation)value->getInt());
+    ((Preset*)obj)->setSwitchLocation((SwitchLocation)value->getInt());
 }
 UIParameterSwitchLocationClass UIParameterSwitchLocationObj;
 UIParameter* UIParameterSwitchLocation = &UIParameterSwitchLocationObj;
@@ -1270,7 +1270,7 @@ void UIParameterReturnLocationClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterReturnLocationClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setReturnLocation((Preset::SwitchLocation)value->getInt());
+    ((Preset*)obj)->setReturnLocation((SwitchLocation)value->getInt());
 }
 UIParameterReturnLocationClass UIParameterReturnLocationObj;
 UIParameter* UIParameterReturnLocation = &UIParameterReturnLocationObj;
@@ -1301,7 +1301,7 @@ void UIParameterSwitchDurationClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSwitchDurationClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSwitchDuration((Preset::SwitchDuration)value->getInt());
+    ((Preset*)obj)->setSwitchDuration((SwitchDuration)value->getInt());
 }
 UIParameterSwitchDurationClass UIParameterSwitchDurationObj;
 UIParameter* UIParameterSwitchDuration = &UIParameterSwitchDurationObj;
@@ -1332,7 +1332,7 @@ void UIParameterSwitchQuantizeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSwitchQuantizeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSwitchQuantize((Preset::SwitchQuantize)value->getInt());
+    ((Preset*)obj)->setSwitchQuantize((SwitchQuantize)value->getInt());
 }
 UIParameterSwitchQuantizeClass UIParameterSwitchQuantizeObj;
 UIParameter* UIParameterSwitchQuantize = &UIParameterSwitchQuantizeObj;
@@ -1363,7 +1363,7 @@ void UIParameterTimeCopyModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterTimeCopyModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setTimeCopyMode((Preset::CopyMode)value->getInt());
+    ((Preset*)obj)->setTimeCopyMode((CopyMode)value->getInt());
 }
 UIParameterTimeCopyModeClass UIParameterTimeCopyModeObj;
 UIParameter* UIParameterTimeCopyMode = &UIParameterTimeCopyModeObj;
@@ -1394,7 +1394,7 @@ void UIParameterSoundCopyModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSoundCopyModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSoundCopyMode((Preset::CopyMode)value->getInt());
+    ((Preset*)obj)->setSoundCopyMode((CopyMode)value->getInt());
 }
 UIParameterSoundCopyModeClass UIParameterSoundCopyModeObj;
 UIParameter* UIParameterSoundCopyMode = &UIParameterSoundCopyModeObj;
@@ -1798,7 +1798,7 @@ void UIParameterSlipModeClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSlipModeClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSlipMode((Preset::SlipMode)value->getInt());
+    ((Preset*)obj)->setSlipMode((SlipMode)value->getInt());
 }
 UIParameterSlipModeClass UIParameterSlipModeObj;
 UIParameter* UIParameterSlipMode = &UIParameterSlipModeObj;
@@ -1914,7 +1914,7 @@ void UIParameterRecordTransferClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterRecordTransferClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setRecordTransfer((Preset::TransferMode)value->getInt());
+    ((Preset*)obj)->setRecordTransfer((TransferMode)value->getInt());
 }
 UIParameterRecordTransferClass UIParameterRecordTransferObj;
 UIParameter* UIParameterRecordTransfer = &UIParameterRecordTransferObj;
@@ -1945,7 +1945,7 @@ void UIParameterOverdubTransferClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterOverdubTransferClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setOverdubTransfer((Preset::TransferMode)value->getInt());
+    ((Preset*)obj)->setOverdubTransfer((TransferMode)value->getInt());
 }
 UIParameterOverdubTransferClass UIParameterOverdubTransferObj;
 UIParameter* UIParameterOverdubTransfer = &UIParameterOverdubTransferObj;
@@ -1976,7 +1976,7 @@ void UIParameterReverseTransferClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterReverseTransferClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setReverseTransfer((Preset::TransferMode)value->getInt());
+    ((Preset*)obj)->setReverseTransfer((TransferMode)value->getInt());
 }
 UIParameterReverseTransferClass UIParameterReverseTransferObj;
 UIParameter* UIParameterReverseTransfer = &UIParameterReverseTransferObj;
@@ -2007,7 +2007,7 @@ void UIParameterSpeedTransferClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterSpeedTransferClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setSpeedTransfer((Preset::TransferMode)value->getInt());
+    ((Preset*)obj)->setSpeedTransfer((TransferMode)value->getInt());
 }
 UIParameterSpeedTransferClass UIParameterSpeedTransferObj;
 UIParameter* UIParameterSpeedTransfer = &UIParameterSpeedTransferObj;
@@ -2038,7 +2038,7 @@ void UIParameterPitchTransferClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterPitchTransferClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setPitchTransfer((Preset::TransferMode)value->getInt());
+    ((Preset*)obj)->setPitchTransfer((TransferMode)value->getInt());
 }
 UIParameterPitchTransferClass UIParameterPitchTransferObj;
 UIParameter* UIParameterPitchTransfer = &UIParameterPitchTransferObj;
@@ -2069,7 +2069,7 @@ void UIParameterWindowSlideUnitClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterWindowSlideUnitClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setWindowSlideUnit((Preset::WindowUnit)value->getInt());
+    ((Preset*)obj)->setWindowSlideUnit((WindowUnit)value->getInt());
 }
 UIParameterWindowSlideUnitClass UIParameterWindowSlideUnitObj;
 UIParameter* UIParameterWindowSlideUnit = &UIParameterWindowSlideUnitObj;
@@ -2100,7 +2100,7 @@ void UIParameterWindowEdgeUnitClass::getValue(void* obj, ExValue* value)
 }
 void UIParameterWindowEdgeUnitClass::setValue(void* obj, ExValue* value)
 {
-    ((Preset*)obj)->setWindowEdgeUnit((Preset::WindowUnit)value->getInt());
+    ((Preset*)obj)->setWindowEdgeUnit((WindowUnit)value->getInt());
 }
 UIParameterWindowEdgeUnitClass UIParameterWindowEdgeUnitObj;
 UIParameter* UIParameterWindowEdgeUnit = &UIParameterWindowEdgeUnitObj;

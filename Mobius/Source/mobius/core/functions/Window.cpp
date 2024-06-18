@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/Preset.h"
 
 #include "../Action.h"
@@ -159,8 +160,8 @@ class WindowFunction : public Function {
 
     void moveWindow(Event* event);
     void resizeWindow(Event* event);
-    Preset::WindowUnit getScriptUnit(ExValue* arg);
-    long getUnitFrames(Preset::WindowUnit unit);
+    WindowUnit getScriptUnit(ExValue* arg);
+    long getUnitFrames(WindowUnit unit);
     long getMsecFrames(int msecs);
     void buildWindow();
     void constrainWindow();
@@ -336,7 +337,7 @@ void WindowFunction::moveWindow(Event* event)
     }
 
     Preset* p = mLoop->getPreset();
-    Preset::WindowUnit unit = p->getWindowSlideUnit();
+    WindowUnit unit = p->getWindowSlideUnit();
 
     if (amount <= 0) {
         amount = p->getWindowSlideAmount();
@@ -351,8 +352,8 @@ void WindowFunction::moveWindow(Event* event)
           Trace(mLoop, 1, "WindowMove called without arguments\n");
         else {
             ExValue* arg = args->getValue(0);
-            Preset::WindowUnit argUnit = getScriptUnit(arg);
-            if (argUnit == Preset::WINDOW_UNIT_INVALID) {
+            WindowUnit argUnit = getScriptUnit(arg);
+            if (argUnit == WINDOW_UNIT_INVALID) {
                 // should be an int
                 amount = arg->getInt();
                 if (args->size() > 1) 
@@ -369,13 +370,13 @@ void WindowFunction::moveWindow(Event* event)
         }
     }
 
-    if (unit == Preset::WINDOW_UNIT_START) {
+    if (unit == WINDOW_UNIT_START) {
         mOffset = 0;
     }
-    else if (unit == Preset::WINDOW_UNIT_END) {
+    else if (unit == WINDOW_UNIT_END) {
         mOffset = mLoop->getHistoryFrames() - mLoop->getFrames();
     }
-    else if (unit == Preset::WINDOW_UNIT_LAYER) {
+    else if (unit == WINDOW_UNIT_LAYER) {
         // ignore this, doesn't seem that useful
         Trace(mLoop, 1, "WindowMove layer not implemented\n");
     }
@@ -405,7 +406,7 @@ void WindowFunction::resizeWindow(Event* event)
     }
 
     Preset* p = mLoop->getPreset();
-    Preset::WindowUnit unit = p->getWindowEdgeUnit();
+    WindowUnit unit = p->getWindowEdgeUnit();
 
     if (amount <= 0) {
         amount = p->getWindowEdgeAmount();
@@ -431,16 +432,16 @@ void WindowFunction::resizeWindow(Event* event)
 
             if (amount > 0 && args->size() > 1) {
                 arg = args->getValue(1);
-                Preset::WindowUnit argUnit = getScriptUnit(arg);
-                if (argUnit == Preset::WINDOW_UNIT_INVALID) {
+                WindowUnit argUnit = getScriptUnit(arg);
+                if (argUnit == WINDOW_UNIT_INVALID) {
                     // should be an int
                     amount = arg->getInt();
                     if (args->size() > 2) 
                       Trace(mLoop, 1, "WindowResize with extra args\n");
                 }                
-                else if (argUnit == Preset::WINDOW_UNIT_LAYER ||
-                         argUnit == Preset::WINDOW_UNIT_START ||
-                         argUnit == Preset::WINDOW_UNIT_END) {
+                else if (argUnit == WINDOW_UNIT_LAYER ||
+                         argUnit == WINDOW_UNIT_START ||
+                         argUnit == WINDOW_UNIT_END) {
                     // these aren't supported for resize
                     Trace(mLoop, 1, "WindowResize with invalid unit\n");
                     amount = 0;
@@ -501,23 +502,23 @@ void WindowFunction::resizeWindow(Event* event)
  * There are two parmaeters we could use, WindowSlideUnitParameter and
  * WindowEdgeUnitParameter but they both have the same values.
  */
-Preset::WindowUnit WindowFunction::getScriptUnit(ExValue* arg)
+WindowUnit WindowFunction::getScriptUnit(ExValue* arg)
 {
-    Preset::WindowUnit unit = Preset::WINDOW_UNIT_INVALID;
+    WindowUnit unit = WINDOW_UNIT_INVALID;
     const char* str = arg->getString();
     int unitOrdinal = WindowSlideUnitParameter->getEnumValue(str);
 
     if (unitOrdinal >= 0)
-      unit = (Preset::WindowUnit)unitOrdinal;
+      unit = (WindowUnit)unitOrdinal;
     else {
         // These aren't included in the parameter definitions since they
         // are not visible so we have to check for them oursleves.
         if (StringEqualNoCase(str, "start"))
-          unit = Preset::WINDOW_UNIT_START;
+          unit = WINDOW_UNIT_START;
         else if (StringEqualNoCase(str, "end"))
-          unit = Preset::WINDOW_UNIT_END;
+          unit = WINDOW_UNIT_END;
         else if (StringEqualNoCase(str, "layer"))
-          unit = Preset::WINDOW_UNIT_LAYER;
+          unit = WINDOW_UNIT_LAYER;
     }
 
     return unit;
@@ -526,17 +527,17 @@ Preset::WindowUnit WindowFunction::getScriptUnit(ExValue* arg)
 /**
  * Calculate the number of frames in one unit.
  */
-long WindowFunction::getUnitFrames(Preset::WindowUnit unit)
+long WindowFunction::getUnitFrames(WindowUnit unit)
 {
     long frames = 0;
 
-    if (unit == Preset::WINDOW_UNIT_LOOP)
+    if (unit == WINDOW_UNIT_LOOP)
       frames = mLoop->getFrames();
 
-    else if (unit == Preset::WINDOW_UNIT_CYCLE)
+    else if (unit == WINDOW_UNIT_CYCLE)
       frames = mLoop->getCycleFrames();
 
-    else if (unit == Preset::WINDOW_UNIT_SUBCYCLE) {
+    else if (unit == WINDOW_UNIT_SUBCYCLE) {
         if (mLayer->getWindowOffset() < 0)
           frames = mLoop->getSubCycleFrames();
         else {
@@ -544,10 +545,10 @@ long WindowFunction::getUnitFrames(Preset::WindowUnit unit)
             frames = mLayer->getWindowSubcycleFrames();
         }
     }
-    else if (unit == Preset::WINDOW_UNIT_MSEC) {
+    else if (unit == WINDOW_UNIT_MSEC) {
         frames = getMsecFrames(1);
     }
-    else if (unit == Preset::WINDOW_UNIT_FRAME) {
+    else if (unit == WINDOW_UNIT_FRAME) {
         frames = 1;
     }
     else {

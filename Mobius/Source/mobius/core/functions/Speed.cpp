@@ -20,6 +20,7 @@
 
 #include "../../../util/Util.h"
 #include "../../../midi/MidiByte.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 
 #include "../Action.h"
@@ -944,9 +945,9 @@ Event* SpeedFunction::scheduleTransfer(Loop* l)
 {
     Event* event = NULL;
     Preset* p = l->getPreset();
-    Preset::TransferMode tm = p->getSpeedTransfer();
+    TransferMode tm = p->getSpeedTransfer();
 
-    if (tm == Preset::XFER_OFF || tm == Preset::XFER_RESTORE) {
+    if (tm == XFER_OFF || tm == XFER_RESTORE) {
 
         // !!! another inner definition that would hide the return value
         //Event* event = NULL;
@@ -959,7 +960,7 @@ Event* SpeedFunction::scheduleTransfer(Loop* l)
 
         Event* prev = em->findEvent(eventType);
         if (prev == NULL) {
-            if (tm == Preset::XFER_OFF) {
+            if (tm == XFER_OFF) {
                 event = em->newEvent(SpeedCancel, l->getFrame());
             }
             else {

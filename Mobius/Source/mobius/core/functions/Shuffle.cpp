@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -86,7 +87,7 @@ class ShuffleFunction : public Function {
 
   private:
 
-	void shuffle(Loop* loop, Layer* layer, Preset::ShuffleMode mode, int granules);
+	void shuffle(Loop* loop, Layer* layer, ShuffleMode mode, int granules);
     void shuffle(Loop* loop, Layer* layer, ExValueList* pattern);
     void segmentize(Loop* loop, Layer* layer, int sourceGranules, 
 					int resultGranules, int* pattern);
@@ -190,7 +191,7 @@ void ShuffleFunction::doEvent(Loop* loop, Event* event)
               granules = alt;
         }
 
-        Preset::ShuffleMode mode = preset->getShuffleMode();
+        ShuffleMode mode = preset->getShuffleMode();
 
         shuffle(loop, layer, mode, granules);
         shuffled = true;
@@ -240,7 +241,7 @@ void ShuffleFunction::undoEvent(Loop* loop, Event* event)
  *
  */
 void ShuffleFunction::shuffle(Loop* loop, Layer* layer, 
-							  Preset::ShuffleMode mode, int granules)
+							  ShuffleMode mode, int granules)
 {
 	Segment* original = layer->getSegments();
 
@@ -260,19 +261,19 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer,
 		// Step 1: determine the pull positions
 		int positions[MAX_SHUFFLE_GRANULES];
 		switch (mode) {
-			case Preset::SHUFFLE_REVERSE: {
+			case SHUFFLE_REVERSE: {
 				psn = 0;
 				for (i = granules - 1 ; i >= 0 ; i--)
 				  positions[psn++] = i;
 			}
 			break;
-			case Preset::SHUFFLE_SHIFT: {
+			case SHUFFLE_SHIFT: {
 				for (i = 0 ; i < granules ; i++)
 				  positions[i] = i+1;
 				positions[granules-1] = 0;
 			}
 			break;
-			case Preset::SHUFFLE_SWAP: {
+			case SHUFFLE_SWAP: {
 				// length should be a configurable thing!
 				int length = 1;
 				int dest = 0;
@@ -298,7 +299,7 @@ void ShuffleFunction::shuffle(Loop* loop, Layer* layer,
 			}
 			break;
 
-			case Preset::SHUFFLE_RANDOM: {	
+			case SHUFFLE_RANDOM: {	
 				// array to mark source granules as they are chosen
 				int sources[MAX_SHUFFLE_GRANULES];
 				for (i = 0 ; i < granules ; i++)

@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 #include "../../../model/MobiusConfig.h"
 
 #include "../Action.h"
@@ -25,6 +26,7 @@
 #include "../Segment.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../ParameterSource.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -370,12 +372,6 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		Trace(l, 1, "MuteFunction: A place we shouldn't be!\n");
 	}
 	else {
-		// !! hey some of the other prepareJump handlers aren't looking
-		// at the event preset, should they?
-		Preset* preset = e->getEventPreset();
-		if (preset == NULL)
-		  preset = l->getPreset();
-
 		Event* primary = e;
 		if (e->getParent() != NULL)
 		  primary = e->getParent();
@@ -410,7 +406,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		}
 		else if (l->getMode() != MuteMode) {
 			// Must be a mute minor mode with something else going on
-			// can't use Preset::MuteMode here because the current mode
+			// can't use MuteMode here because the current mode
 			// may not have been ended properly yet, just turn it off 
 			// and leave the position along.  Could be smarter about this.
 			jump->unmute = true;
@@ -418,17 +414,17 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		else {
 			// Leaving mute mode
 
-			Preset::MuteMode muteMode = preset->getMuteMode();
+			ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
 
 			// Mute/Undo toggles mute mode
 			if (invoker == Undo) {
-				if (muteMode == Preset::MUTE_START)
-				  muteMode = Preset::MUTE_CONTINUE;
+				if (muteMode == MUTE_START)
+				  muteMode = MUTE_CONTINUE;
 				else
-				  muteMode = Preset::MUTE_START;
+				  muteMode = MUTE_START;
 			}
 
-			if (muteMode == Preset::MUTE_CONTINUE) {
+			if (muteMode == MUTE_CONTINUE) {
 				// will not have been advancing mPlayFrame so have to resync
 				jump->frame = e->frame + 
 					jump->inputLatency + jump->outputLatency;
@@ -437,7 +433,7 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 				// we've already factored in latency loss so don't do it again
 				jump->latencyLossOverride = true;
 			}
-			else if (muteMode == Preset::MUTE_START) {
+			else if (muteMode == MUTE_START) {
 				// start playing from the very beginning, but may have
 				// had latency loss
 				long latencyLoss = 0;
@@ -516,14 +512,10 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 		}
 	}
 	else {
-		Preset* preset = e->getEventPreset();
-		if (preset == NULL)
-		  preset = l->getPreset();
-
 		// pause mode can come from the preset or from specific functions
-		Preset::MuteMode muteMode = preset->getMuteMode();
+		ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
 		if (e->function == Pause || e->function == GlobalPause)	
-		  muteMode = Preset::MUTE_PAUSE;
+		  muteMode = MUTE_PAUSE;
 
         // ignore if we're already there
         if ((e->function == MuteOn && l->isMuteMode()) ||
@@ -558,15 +550,15 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 
 				// undo alternate ending toggles mode
 				if (e->getInvokingFunction() == Undo) {
-					if (muteMode == Preset::MUTE_START)
-					  muteMode = Preset::MUTE_CONTINUE;
+					if (muteMode == MUTE_START)
+					  muteMode = MUTE_CONTINUE;
 					else
-					  muteMode = Preset::MUTE_START;
+					  muteMode = MUTE_START;
 				}
 
                 Synchronizer* sync = l->getSynchronizer();
 
-				if (muteMode == Preset::MUTE_START || 
+				if (muteMode == MUTE_START || 
 					(e->function == SUSMuteRestart && !e->down)) {
 
 					// will already have processed a mutePlayEvent and be
@@ -578,7 +570,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 					// Synchronizer may need to send MIDI START
 					sync->loopRestart(l);
 				}	
-				else if (muteMode == Preset::MUTE_PAUSE) {
+				else if (muteMode == MUTE_PAUSE) {
 					// Resume sending MIDI clocks if we're the OutSyncMaster.
 					// NOTE: Like many other places, we should have been
 					// doing clock control InputLatency frames ago.
@@ -611,11 +603,11 @@ void MuteFunction::doEvent(Loop* l, Event* e)
             Synchronizer* sync = l->getSynchronizer();
 
 			// Should we stop the sequencer on SUSMuteRestart?
-			if (muteMode == Preset::MUTE_PAUSE) {
+			if (muteMode == MUTE_PAUSE) {
 				l->setPause(true);
 				sync->loopPause(l);
 			}
-			else if (muteMode == Preset::MUTE_START) {
+			else if (muteMode == MUTE_START) {
 				// EDP stops clocks when we enter a mute in Start mode
 				sync->loopMute(l);
 			}

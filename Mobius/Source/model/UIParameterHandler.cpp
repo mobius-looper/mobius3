@@ -574,11 +574,11 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdMultiplyMode:
-            ((Preset*)obj)->setMultiplyMode((Preset::MultiplyMode)value->getInt());
+            ((Preset*)obj)->setMultiplyMode((ParameterMultiplyMode)value->getInt());
             break;
             
         case UIParameterIdShuffleMode:
-            ((Preset*)obj)->setShuffleMode((Preset::ShuffleMode)value->getInt());
+            ((Preset*)obj)->setShuffleMode((ShuffleMode)value->getInt());
             break;
             
         case UIParameterIdAltFeedbackEnable:
@@ -586,15 +586,15 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdEmptyLoopAction:
-            ((Preset*)obj)->setEmptyLoopAction((Preset::EmptyLoopAction)value->getInt());
+            ((Preset*)obj)->setEmptyLoopAction((EmptyLoopAction)value->getInt());
             break;
             
         case UIParameterIdEmptyTrackAction:
-            ((Preset*)obj)->setEmptyTrackAction((Preset::EmptyLoopAction)value->getInt());
+            ((Preset*)obj)->setEmptyTrackAction((EmptyLoopAction)value->getInt());
             break;
             
         case UIParameterIdTrackLeaveAction:
-            ((Preset*)obj)->setTrackLeaveAction((Preset::TrackLeaveAction)value->getInt());
+            ((Preset*)obj)->setTrackLeaveAction((TrackLeaveAction)value->getInt());
             break;
             
         case UIParameterIdLoopCount:
@@ -602,11 +602,11 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdMuteMode:
-            ((Preset*)obj)->setMuteMode((Preset::MuteMode)value->getInt());
+            ((Preset*)obj)->setMuteMode((ParameterMuteMode)value->getInt());
             break;
             
         case UIParameterIdMuteCancel:
-            ((Preset*)obj)->setMuteCancel((Preset::MuteCancel)value->getInt());
+            ((Preset*)obj)->setMuteCancel((MuteCancel)value->getInt());
             break;
             
         case UIParameterIdOverdubQuantized:
@@ -614,11 +614,11 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdQuantize:
-            ((Preset*)obj)->setQuantize((Preset::QuantizeMode)value->getInt());
+            ((Preset*)obj)->setQuantize((QuantizeMode)value->getInt());
             break;
             
         case UIParameterIdBounceQuantize:
-            ((Preset*)obj)->setBounceQuantize((Preset::QuantizeMode)value->getInt());
+            ((Preset*)obj)->setBounceQuantize((QuantizeMode)value->getInt());
             break;
             
         case UIParameterIdRecordResetsFeedback:
@@ -634,27 +634,27 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdSwitchLocation:
-            ((Preset*)obj)->setSwitchLocation((Preset::SwitchLocation)value->getInt());
+            ((Preset*)obj)->setSwitchLocation((SwitchLocation)value->getInt());
             break;
             
         case UIParameterIdReturnLocation:
-            ((Preset*)obj)->setReturnLocation((Preset::SwitchLocation)value->getInt());
+            ((Preset*)obj)->setReturnLocation((SwitchLocation)value->getInt());
             break;
             
         case UIParameterIdSwitchDuration:
-            ((Preset*)obj)->setSwitchDuration((Preset::SwitchDuration)value->getInt());
+            ((Preset*)obj)->setSwitchDuration((SwitchDuration)value->getInt());
             break;
             
         case UIParameterIdSwitchQuantize:
-            ((Preset*)obj)->setSwitchQuantize((Preset::SwitchQuantize)value->getInt());
+            ((Preset*)obj)->setSwitchQuantize((SwitchQuantize)value->getInt());
             break;
             
         case UIParameterIdTimeCopyMode:
-            ((Preset*)obj)->setTimeCopyMode((Preset::CopyMode)value->getInt());
+            ((Preset*)obj)->setTimeCopyMode((CopyMode)value->getInt());
             break;
             
         case UIParameterIdSoundCopyMode:
-            ((Preset*)obj)->setSoundCopyMode((Preset::CopyMode)value->getInt());
+            ((Preset*)obj)->setSoundCopyMode((CopyMode)value->getInt());
             break;
             
         case UIParameterIdRecordThreshold:
@@ -710,7 +710,7 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdSlipMode:
-            ((Preset*)obj)->setSlipMode((Preset::SlipMode)value->getInt());
+            ((Preset*)obj)->setSlipMode((SlipMode)value->getInt());
             break;
             
         case UIParameterIdSlipTime:
@@ -726,31 +726,31 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdRecordTransfer:
-            ((Preset*)obj)->setRecordTransfer((Preset::TransferMode)value->getInt());
+            ((Preset*)obj)->setRecordTransfer((TransferMode)value->getInt());
             break;
             
         case UIParameterIdOverdubTransfer:
-            ((Preset*)obj)->setOverdubTransfer((Preset::TransferMode)value->getInt());
+            ((Preset*)obj)->setOverdubTransfer((TransferMode)value->getInt());
             break;
             
         case UIParameterIdReverseTransfer:
-            ((Preset*)obj)->setReverseTransfer((Preset::TransferMode)value->getInt());
+            ((Preset*)obj)->setReverseTransfer((TransferMode)value->getInt());
             break;
             
         case UIParameterIdSpeedTransfer:
-            ((Preset*)obj)->setSpeedTransfer((Preset::TransferMode)value->getInt());
+            ((Preset*)obj)->setSpeedTransfer((TransferMode)value->getInt());
             break;
             
         case UIParameterIdPitchTransfer:
-            ((Preset*)obj)->setPitchTransfer((Preset::TransferMode)value->getInt());
+            ((Preset*)obj)->setPitchTransfer((TransferMode)value->getInt());
             break;
             
         case UIParameterIdWindowSlideUnit:
-            ((Preset*)obj)->setWindowSlideUnit((Preset::WindowUnit)value->getInt());
+            ((Preset*)obj)->setWindowSlideUnit((WindowUnit)value->getInt());
             break;
             
         case UIParameterIdWindowEdgeUnit:
-            ((Preset*)obj)->setWindowEdgeUnit((Preset::WindowUnit)value->getInt());
+            ((Preset*)obj)->setWindowEdgeUnit((WindowUnit)value->getInt());
             break;
             
         case UIParameterIdWindowSlideAmount:

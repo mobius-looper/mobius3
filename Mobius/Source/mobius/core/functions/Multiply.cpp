@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "../../../util/Util.h"
+#include "../../../model/ParameterConstants.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -317,7 +318,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
 
         bool pruned = false;
         Preset* p = l->getPreset();
-        Preset::MultiplyMode mmode = p->getMultiplyMode();
+        ParameterMultiplyMode mmode = p->getMultiplyMode();
         Layer* play = l->getPlayLayer();
 
         // I'm not liking the uncontrollable nature of unrounded multiply,
@@ -328,7 +329,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
              pruneCycles(l, 1, true, false);
              pruned = true;
         }
-        else if (mmode == Preset::MULTIPLY_NORMAL &&
+        else if (mmode == MULTIPLY_NORMAL &&
                  (play != NULL && play->getCycles() > 1)) {
 
             OutputStream* output = l->getOutputStream();
