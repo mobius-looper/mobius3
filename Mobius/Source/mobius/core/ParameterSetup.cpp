@@ -202,8 +202,8 @@ void DefaultSyncSourceParameterType::setValue(Setup* s, ExValue* value)
     }
 }
 
-Parameter* DefaultSyncSourceParameter = 
-new DefaultSyncSourceParameterType();
+DefaultSyncSourceParameterType DefaultSyncSourceParameterTypeObj;
+Parameter* DefaultSyncSourceParameter = &DefaultSyncSourceParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -257,8 +257,8 @@ void DefaultTrackSyncUnitParameterType::setValue(Setup* s, ExValue* value)
     }
 }
 
-Parameter* DefaultTrackSyncUnitParameter = 
-new DefaultTrackSyncUnitParameterType();
+DefaultTrackSyncUnitParameterType DefaultTrackSyncUnitParameterTypeObj;
+Parameter* DefaultTrackSyncUnitParameter = &DefaultTrackSyncUnitParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -302,8 +302,8 @@ void SlaveSyncUnitParameterType::setValue(Setup* s, ExValue* value)
 	s->setSyncUnit((SyncUnit)getEnum(value));
 }
 
-Parameter* SlaveSyncUnitParameter = 
-new SlaveSyncUnitParameterType();
+SlaveSyncUnitParameterType SlaveSyncUnitParameterTypeObj;
+Parameter* SlaveSyncUnitParameter = &SlaveSyncUnitParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -342,7 +342,8 @@ void ManualStartParameterType::setValue(Setup* s, ExValue* value)
 	s->setManualStart(value->getBool());
 }
 
-Parameter* ManualStartParameter = new ManualStartParameterType();
+ManualStartParameterType ManualStartParameterTypeObj;
+Parameter* ManualStartParameter = &ManualStartParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -382,7 +383,8 @@ void MinTempoParameterType::setValue(Setup* s, ExValue* value)
 	s->setMinTempo(value->getInt());
 }
 
-Parameter* MinTempoParameter = new MinTempoParameterType();
+MinTempoParameterType MinTempoParameterTypeObj;
+Parameter* MinTempoParameter = &MinTempoParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -422,7 +424,8 @@ void MaxTempoParameterType::setValue(Setup* s, ExValue* value)
 	s->setMaxTempo(value->getInt());
 }
 
-Parameter* MaxTempoParameter = new MaxTempoParameterType();
+MaxTempoParameterType MaxTempoParameterTypeObj;
+Parameter* MaxTempoParameter = &MaxTempoParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -462,7 +465,8 @@ void BeatsPerBarParameterType::setValue(Setup* s, ExValue* value)
 	s->setBeatsPerBar(value->getInt());
 }
 
-Parameter* BeatsPerBarParameter = new BeatsPerBarParameterType();
+BeatsPerBarParameterType BeatsPerBarParameterTypeObj;
+Parameter* BeatsPerBarParameter = &BeatsPerBarParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -506,7 +510,8 @@ void MuteSyncModeParameterType::setValue(Setup* s, ExValue* value)
 	s->setMuteSyncMode((MuteSyncMode)getEnum(value));
 }
 
-Parameter* MuteSyncModeParameter = new MuteSyncModeParameterType();
+MuteSyncModeParameterType MuteSyncModeParameterTypeObj;
+Parameter* MuteSyncModeParameter = &MuteSyncModeParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -550,8 +555,8 @@ void ResizeSyncAdjustParameterType::setValue(Setup* s, ExValue* value)
 	s->setResizeSyncAdjust((SyncAdjust)getEnum(value));
 }
 
-Parameter* ResizeSyncAdjustParameter = 
-new ResizeSyncAdjustParameterType();
+ResizeSyncAdjustParameterType ResizeSyncAdjustParameterTypeObj;
+Parameter* ResizeSyncAdjustParameter = &ResizeSyncAdjustParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -591,8 +596,8 @@ void SpeedSyncAdjustParameterType::setValue(Setup* s, ExValue* value)
 	s->setSpeedSyncAdjust((SyncAdjust)getEnum(value));
 }
 
-Parameter* SpeedSyncAdjustParameter = 
-new SpeedSyncAdjustParameterType();
+SpeedSyncAdjustParameterType SpeedSyncAdjustParameterTypeObj;
+Parameter* SpeedSyncAdjustParameter = &SpeedSyncAdjustParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -636,7 +641,8 @@ void RealignTimeParameterType::setValue(Setup* s, ExValue* value)
 	s->setRealignTime((RealignTime)getEnum(value));
 }
 
-Parameter* RealignTimeParameter = new RealignTimeParameterType();
+RealignTimeParameterType RealignTimeParameterTypeObj;
+Parameter* RealignTimeParameter = &RealignTimeParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -685,7 +691,8 @@ void OutRealignModeParameterType::setValue(Setup* s, ExValue* value)
 	s->setOutRealignMode((OutRealignMode)getEnum(value));
 }
 
-Parameter* OutRealignModeParameter = new OutRealignModeParameterType();
+OutRealignModeParameterType OutRealignModeParameterTypeObj;
+Parameter* OutRealignModeParameter = &OutRealignModeParameterTypeObj;
 
 /****************************************************************************/
 /****************************************************************************/

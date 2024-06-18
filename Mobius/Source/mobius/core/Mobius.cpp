@@ -171,6 +171,8 @@ Mobius::~Mobius()
     // second instantiation since they are created during static initialization
     // they will leak if we're a plugin, but there is no easy way around that without
     // changing everything to use static objects rathher than new
+
+    // don't need this any more, they're statically allocated
     if (!mContainer->isPlugin())
       Parameter::deleteParameters();
 }
@@ -230,6 +232,7 @@ void Mobius::initStaticObjects()
  */
 void Mobius::freeStaticObjects()
 {
+    // these are now statically allocated as of build 11
     Parameter::deleteParameters();
 }
 

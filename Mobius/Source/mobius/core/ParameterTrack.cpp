@@ -222,7 +222,8 @@ int TrackNameParameterType::getOrdinalValue(Track* t)
     return -1;
 }
 
-Parameter* TrackNameParameter = new TrackNameParameterType();
+TrackNameParameterType TrackNameParameterTypeObj;
+Parameter* TrackNameParameter = &TrackNameParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -275,7 +276,8 @@ int FocusParameterType::getOrdinalValue(Track* t)
     return (int)t->isFocusLock();
 }
 
-Parameter* FocusParameter = new FocusParameterType();
+FocusParameterType FocusParameterTypeObj;
+Parameter* FocusParameter = &FocusParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -386,7 +388,8 @@ void GroupParameterType::getOrdinalLabel(Mobius* m,
     }
 }
 
-Parameter* GroupParameter = new GroupParameterType();
+GroupParameterType GroupParameterTypeObj;
+Parameter* GroupParameter = &GroupParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -439,7 +442,8 @@ int MonoParameterType::getOrdinalValue(Track* t)
     return -1;
 }
 
-Parameter* MonoParameter = new MonoParameterType();
+MonoParameterType MonoParameterTypeObj;
+Parameter* MonoParameter = &MonoParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -497,7 +501,8 @@ int FeedbackLevelParameterType::getOrdinalValue(Track* t)
     return t->getFeedback();
 }
 
-Parameter* FeedbackLevelParameter = new FeedbackLevelParameterType();
+FeedbackLevelParameterType FeedbackLevelParameterTypeObj;
+Parameter* FeedbackLevelParameter = &FeedbackLevelParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -555,7 +560,8 @@ int AltFeedbackLevelParameterType::getOrdinalValue(Track* t)
     return t->getAltFeedback();
 }
 
-Parameter* AltFeedbackLevelParameter = new AltFeedbackLevelParameterType();
+AltFeedbackLevelParameterType AltFeedbackLevelParameterTypeObj;
+Parameter* AltFeedbackLevelParameter = &AltFeedbackLevelParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -611,7 +617,8 @@ int InputLevelParameterType::getOrdinalValue(Track* t)
     return t->getInputLevel();
 }
 
-Parameter* InputLevelParameter = new InputLevelParameterType();
+InputLevelParameterType InputLevelParameterTypeObj;
+Parameter* InputLevelParameter = &InputLevelParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -668,7 +675,8 @@ int OutputLevelParameterType::getOrdinalValue(Track* t)
     return t->getOutputLevel();
 }
 
-Parameter* OutputLevelParameter = new OutputLevelParameterType();
+OutputLevelParameterType OutputLevelParameterTypeObj;
+Parameter* OutputLevelParameter = &OutputLevelParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -728,7 +736,8 @@ int PanParameterType::getOrdinalValue(Track* t)
     return t->getPan();
 }
 
-Parameter* PanParameter = new PanParameterType();
+PanParameterType PanParameterTypeObj;
+Parameter* PanParameter = &PanParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -797,7 +806,8 @@ int SpeedOctaveParameterType::getOrdinalValue(Track* t)
     return t->getSpeedOctave();
 }
 
-Parameter* SpeedOctaveParameter = new SpeedOctaveParameterType();
+SpeedOctaveParameterType SpeedOctaveParameterTypeObj;
+Parameter* SpeedOctaveParameter = &SpeedOctaveParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -874,7 +884,8 @@ int SpeedStepParameterType::getOrdinalValue(Track* t)
     return t->getSpeedStep();
 }
 
-Parameter* SpeedStepParameter = new SpeedStepParameterType();
+SpeedStepParameterType SpeedStepParameterTypeObj;
+Parameter* SpeedStepParameter = &SpeedStepParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -938,7 +949,8 @@ int SpeedBendParameterType::getOrdinalValue(Track* t)
     return t->getSpeedBend();
 }
 
-Parameter* SpeedBendParameter = new SpeedBendParameterType();
+SpeedBendParameterType SpeedBendParameterTypeObj;
+Parameter* SpeedBendParameter = &SpeedBendParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1008,7 +1020,8 @@ int PitchOctaveParameterType::getOrdinalValue(Track* t)
     return t->getPitchOctave();
 }
 
-Parameter* PitchOctaveParameter = new PitchOctaveParameterType();
+PitchOctaveParameterType PitchOctaveParameterTypeObj;
+Parameter* PitchOctaveParameter = &PitchOctaveParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1084,7 +1097,8 @@ int PitchStepParameterType::getOrdinalValue(Track* t)
     return t->getPitchStep();
 }
 
-Parameter* PitchStepParameter = new PitchStepParameterType();
+PitchStepParameterType PitchStepParameterTypeObj;
+Parameter* PitchStepParameter = &PitchStepParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1148,7 +1162,8 @@ int PitchBendParameterType::getOrdinalValue(Track* t)
     return t->getPitchBend();
 }
 
-Parameter* PitchBendParameter = new PitchBendParameterType();
+PitchBendParameterType PitchBendParameterTypeObj;
+Parameter* PitchBendParameter = &PitchBendParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1217,7 +1232,8 @@ int TimeStretchParameterType::getOrdinalValue(Track* t)
     return t->getTimeStretch();
 }
 
-Parameter* TimeStretchParameter = new TimeStretchParameterType();
+TimeStretchParameterType TimeStretchParameterTypeObj;
+Parameter* TimeStretchParameter = &TimeStretchParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1240,7 +1256,8 @@ class TrackPresetParameterType : public TrackParameter
 
 };
 
-Parameter* TrackPresetParameter = new TrackPresetParameterType();
+TrackPresetParameterType TrackPresetParameterTypeObj;
+Parameter* TrackPresetParameter = &TrackPresetParameterTypeObj;
 
 // this has a UIParameter alias from activePreset
 
@@ -1389,8 +1406,8 @@ class TrackPresetNumberParameterType : public TrackParameter
     int getOrdinalValue(Track* t);
 };
 
-Parameter* TrackPresetNumberParameter = 
-new TrackPresetNumberParameterType();
+TrackPresetNumberParameterType TrackPresetNumberParameterTypeObj;
+Parameter* TrackPresetNumberParameter = &TrackPresetNumberParameterTypeObj;
 
 TrackPresetNumberParameterType::TrackPresetNumberParameterType() :
     TrackParameter("presetNumber")
@@ -1560,8 +1577,8 @@ void SyncSourceParameterType::getOrdinalLabel(Mobius* m,
 }
 
 
-Parameter* SyncSourceParameter = 
-new SyncSourceParameterType();
+SyncSourceParameterType SyncSourceParameterTypeObj;
+Parameter* SyncSourceParameter = &SyncSourceParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1664,8 +1681,8 @@ void TrackSyncUnitParameterType::getOrdinalLabel(Mobius* m,
 	}
 }
 
-Parameter* TrackSyncUnitParameter = 
-new TrackSyncUnitParameterType();
+TrackSyncUnitParameterType TrackSyncUnitParameterTypeObj;
+Parameter* TrackSyncUnitParameter = &TrackSyncUnitParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1754,7 +1771,8 @@ void AudioInputPortParameterType::setValue(Track* t, ExValue* value)
     t->setInputPort(value->getInt());
 }
 
-Parameter* AudioInputPortParameter = new AudioInputPortParameterType();
+AudioInputPortParameterType AudioInputPortParameterTypeObj;
+Parameter* AudioInputPortParameter = &AudioInputPortParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1838,7 +1856,8 @@ void AudioOutputPortParameterType::setValue(Track* t, ExValue* value)
     t->setOutputPort(value->getInt());
 }
 
-Parameter* AudioOutputPortParameter = new AudioOutputPortParameterType();
+AudioOutputPortParameterType AudioOutputPortParameterTypeObj;
+Parameter* AudioOutputPortParameter = &AudioOutputPortParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1919,7 +1938,8 @@ void PluginInputPortParameterType::setValue(Track* t, ExValue* value)
     t->setInputPort(value->getInt());
 }
 
-Parameter* PluginInputPortParameter = new PluginInputPortParameterType();
+PluginInputPortParameterType PluginInputPortParameterTypeObj;
+Parameter* PluginInputPortParameter = &PluginInputPortParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2000,8 +2020,8 @@ void PluginOutputPortParameterType::setValue(Track* t, ExValue* value)
     t->setOutputPort(value->getInt());
 }
 
-Parameter* PluginOutputPortParameter = 
-new PluginOutputPortParameterType();
+PluginOutputPortParameterType PluginOutputPortParameterTypeObj;
+Parameter* PluginOutputPortParameter = &PluginOutputPortParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2108,7 +2128,8 @@ void InputPortParameterType::setValue(Track* t, ExValue* value)
     t->setInputPort(value->getInt());
 }
 
-Parameter* InputPortParameter = new InputPortParameterType();
+InputPortParameterType InputPortParameterTypeObj;
+Parameter* InputPortParameter = &InputPortParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -2212,7 +2233,8 @@ void OutputPortParameterType::setValue(Track* t, ExValue* value)
     t->setOutputPort(value->getInt());
 }
 
-Parameter* OutputPortParameter = new OutputPortParameterType();
+OutputPortParameterType OutputPortParameterTypeObj;
+Parameter* OutputPortParameter = &OutputPortParameterTypeObj;
 
 /****************************************************************************/
 /****************************************************************************/

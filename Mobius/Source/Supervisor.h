@@ -47,7 +47,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     static Supervisor* Instance;
     static int InstanceCount;
     
-    static const int BuildNumber = 10;
+    static const int BuildNumber = 11;
 
     /**
      * Interface implemented by an internal component that wants

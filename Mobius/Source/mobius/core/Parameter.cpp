@@ -658,15 +658,25 @@ void Parameter::initParameters()
 /**
  * Like MobiusMode and Function, release the dynamically
  * allocated Parameter objects on shutdown.
+ *
+ * update: not no more!
+ * these and all other constant objects should now be statically initialized
+ * with the stupid object-and-pointer-to-it pair until we can load these
+ * dynamically from a file.
  */
 void Parameter::deleteParameters()
 {
+#if 0    
 	for (int i = 0 ; Parameters[i] != NULL ; i++) {
         Parameter* p = Parameters[i];
-        delete p;
+
+        Trace(2, "Delete %s\n", p->getName());
+        //delete p;
     }
+#endif    
     // important to "clear" the array since this can be called
     // more than once during shutdown
+    // is this still relevant now that we don't dynamically allocate them?
     Parameters[0] = nullptr;
 }
 
