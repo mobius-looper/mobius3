@@ -560,27 +560,6 @@ void TestDriver::avoidMemoryLeak()
 //
 //////////////////////////////////////////////////////////////////////
 
-// for the general stream info, should we return what Supervisor
-// opened for the real ausdio device, or what test config forces it to be?
-// I don't think latencies are necessary beause the test scripts use
-// "set inputLatency xxx" to the values used when the expected files
-// were captured
-
-int TestDriver::getSampleRate()
-{
-    return 44100;
-}
-
-int TestDriver::getInputLatency()
-{
-    return 256;
-}
-
-int TestDriver::getOutputLatency()
-{
-    return 256;
-}
-
 /**
  * The number of frames in the next audio block.
  * This is long for historical reasons, it doesn't need to be because int and long

@@ -513,7 +513,7 @@ void ScriptRuntime::doScriptMaintenance()
     // Some of the scripts need to know the millisecond size of the buffer
     // so get sampleRate from the container
     MobiusAudioStream* stream = mMobius->getStream();
-	int sampleRate = stream->getSampleRate();	
+	int sampleRate = mMobius->getSampleRate();	
 	long frames = stream->getInterruptFrames();
 	int msecsInBuffer = (int)((float)frames / ((float)sampleRate / 1000.0));
 	// just in case we're having rounding errors, make sure this advances

@@ -280,9 +280,13 @@
     </Parameter>
     
     <Parameter name='inputLatency'>
+      The number of samples to use for input latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
     </Parameter>
     
     <Parameter name='outputLatency'>
+      The number of samples to use for output latency adjustments.  Overrides
+      what is reported by the container for the selected audio device.
     </Parameter>
 
     <!-- Things that exist but are obscure

@@ -1015,21 +1015,14 @@ bool Supervisor::isPlugin()
     return (audioProcessor != nullptr);
 }
         
-// rethink these, should they always be on MobiusAudioStream?
-
 int Supervisor::getSampleRate()
 {
-    return 44100;
+    return audioStream.getSampleRate();
 }
 
-int Supervisor::getOutputLatency()
+int Supervisor::getBlockSize()
 {
-    return 0;
-}
-
-int Supervisor::getInputLatency()
-{
-    return 0;
+    return audioStream.getBlockSize();
 }
 
 int Supervisor::getMillisecondCounter()

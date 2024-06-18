@@ -194,8 +194,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     
     // MobiusContainer
     int getSampleRate() override;
-    int getInputLatency() override;
-    int getOutputLatency() override;
+    int getBlockSize() override;
     int getMillisecondCounter() override;
     void sleep(int millis) override;
     void midiSend(class MidiEvent* event) override;

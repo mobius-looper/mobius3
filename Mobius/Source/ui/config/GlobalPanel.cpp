@@ -151,6 +151,8 @@ void GlobalPanel::initForm()
     addField("General", UIParameterAutoFeedbackReduction);
 
     // these are obscure
+    addField("Advanced", UIParameterInputLatency);
+    addField("Advanced", UIParameterOutputLatency);
     addField("Advanced", UIParameterMaxSyncDrift);
     addField("Advanced", UIParameterNoiseFloor);
     addField("Advanced", UIParameterTraceLevel);

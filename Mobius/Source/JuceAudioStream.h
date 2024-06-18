@@ -72,12 +72,12 @@ class JuceAudioStream : public MobiusAudioStream
     void prepareToPlayPlugin(double sampleRate, int samplesPerBlock);
     void releaseResourcesPlugin();
     void processBlockPlugin(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi);
-    
-    // MobiusAudioStream
-    int getSampleRate();
-    int getInputLatency();
-    int getOutputLatency();
 
+    // Stream properties derived from prepareToPlay
+    int getSampleRate();
+    int getBlockSize();
+    
+    // MobiusAudioStream interface
 	long getInterruptFrames();
 	void getInterruptBuffers(int inport, float** input, 
                                      int outport, float** output);

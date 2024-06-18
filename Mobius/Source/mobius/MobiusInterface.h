@@ -307,12 +307,9 @@ class MobiusContainer
 
     /**
      * General information about the audio stream.
-     * Should we just have this only in MobiusAudioStream or would
-     * you want it before streams come alive?
      */
     virtual int getSampleRate() = 0;
-    virtual int getInputLatency() = 0;
-    virtual int getOutputLatency() = 0;
+    virtual int getBlockSize() = 0;
 
     /**
      * This is used to monitor run times of internal components,
@@ -619,17 +616,6 @@ class MobiusAudioStream
   public:
 
     virtual ~MobiusAudioStream() {}
-
-    /**
-     * General characteristics of the stream.
-     * These are duplicated by MobiusContainer but it can be more convenient to have
-     * them here to avoid having MobiusContainer spread throughout engine code.
-     *
-     * todo: reconsider whether we should have these in MobiusContainer at all
-     */
-    virtual int getSampleRate() = 0;
-    virtual int getInputLatency() = 0;
-    virtual int getOutputLatency() = 0;
 
     /**
      * The number of frames in the next audio block.

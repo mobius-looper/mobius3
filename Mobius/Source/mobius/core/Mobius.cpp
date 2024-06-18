@@ -1515,19 +1515,19 @@ UserVariables* Mobius::getVariables()
 }
 
 /**
- * Return the sample rate.
- * Whoever needs should just access MobiusContainer directly
- */
-int Mobius::getSampleRate()
-{
-    return mContainer->getSampleRate();
-}
-
-/**
  * Used only by the two parameters that select ports.
  */
 bool Mobius::isPlugin() {
     return mContainer->isPlugin();
+}
+
+/**
+ * Return the sample rate.  This always comes from the container
+ * and unlike latencies is not overridden by MobiusConfig.
+ */
+int Mobius::getSampleRate()
+{
+    return mContainer->getSampleRate();
 }
 
 /**
@@ -1544,16 +1544,29 @@ bool Mobius::isPlugin() {
  * InputLatencyParmeter will save the value in the kernel's MobiusConfig
  * so we just need to return it here.  This will be lost on reconfigure()
  * so the test scripts need to set it every time they run.
+ *
+ * NEW: It is unclear whether we need an override setting that turns latency
+ * off entirely.  If you configure it to zero, it will fall back to the block size
+ * so 1 would be the smallest latency you could configure.  I suppose we could
+ * use negative numbers here but the UI doesn't allow that.
  * 
  */
 int Mobius::getEffectiveInputLatency()
 {
-	return  mConfig->getInputLatency();
+    int latency = mConfig->getInputLatency();
+    if (latency == 0) {
+        latency = mContainer->getBlockSize();
+    }
+    return latency;
 }
 
 int Mobius::getEffectiveOutputLatency()
 {
-	return mConfig->getOutputLatency();
+    int latency = mConfig->getOutputLatency();
+    if (latency == 0) {
+        latency = mContainer->getBlockSize();
+    }
+    return latency;
 }
 
 //

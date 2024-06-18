@@ -99,24 +99,12 @@ int JuceAudioStream::getSampleRate()
 }
 
 /**
- * When I used PortAudio, it had some services for calculating the effective
- * input and output latencies in a rather obscure way.  You wouldn't set a block
- * size you would "suggest" a latency and it would pick a block size, then you
- * had to call back to get the real latency.
- *
- * Now this should just be the block size.  
- * Still need work on this...
+ * The stream block size becomes the default input and output latency for
+ * compensation in core code.  This is often overridden in MobiusConfig.
  */
-int JuceAudioStream::getInputLatency()
+int JuceAudioStream::getBlockSize()
 {
-    Trace(1, "JuceAudioStream::getInputLatencyFrames doesn't want you to know!\n");
-    return 0;
-}
-
-int JuceAudioStream::getOutputLatency()
-{
-    Trace(1, "JuceAudioStream::getOutputLatencyFrames doesn't want you to know!\n");
-    return 0;
+    return (int)preparedSamplesPerBlock;
 }
 
 /**
