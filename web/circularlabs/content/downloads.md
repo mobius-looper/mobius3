@@ -10,9 +10,21 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 [Download for Windows](https://www.hairycrazyants.com/MobiusSetup.exe)
 
-[Download for MacOS](https://www.hairycrazyants.com/Mobius.pkg)
+[Download for MacOS Silicon](https://www.hairycrazyants.com/Mobius.pkg)
+
+[Download for MacOS Intel](https://www.hairycrazyants.com/MobiusIntel.pkg)
+
+The MacOS version is distributed in two different installation packages, one for modern M1+ or "Silicon" processors, and one for older Intel processors.  It is important that you download the right installer for your machine.  If the application does not run or the plugins fail to appear in the host, you most likely installed the wrong package.
+
+Also be careful if you are running Intel host applications on a Silicon Mac using "Rosetta".  This has its own set of compatibility problems and is not recommended.
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
+
+## Build 10 Changes
+
+- The plugin now advertise as an audio effect rather than an instrument, it can now be inserted into an audio track.  Routing MIDI into the plugin through the host may be more complex as a side effect.  How this is done is host dependent.
+- Fix latency compensation and put latency overrides back in global configuration.  The default latency will now be determined by the block size of the audio device.  If you set the **Input Latency** and **Output Latency** global parameters, those will be used instead.
+- Fix another crash when deleting and re-adding the plugin.
 
 ## Build 9 Changes
 
