@@ -30,4 +30,13 @@ class ParameterValue
     ParameterValue() {}
     ~ParameterValue() {}
 
-    
+    int value = 0;
+
+    // for the rare cases where we have string values
+    char string[256];
+
+    bool resettable = false;
+    int resetValue = 0;
+};
+
+
