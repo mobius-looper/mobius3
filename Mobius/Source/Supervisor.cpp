@@ -467,18 +467,13 @@ void Supervisor::shutdown()
 
 /**
  * Refresh Binderator tables to map events to UIActions.
- * If we're standalone we install both MIDI and keyboard bindings.
- * If we're a plugin we install only keyboard bindings because
- * the plugin (MobiusKernel) will receive MIDI events in a different way
- * and manages it's own smaller KernelBinderator.
+ * Note that we install MIDI actions even when we're a plugin because
+ * the plugin can open it's own private devices in addition to receiving
+ * MIDI messages through the host.
  */
 void Supervisor::configureBindings(MobiusConfig* config)
 {
-    if (mainComponent != nullptr)
-      binderator.configure(config);
-    else
-      binderator.configureKeyboard(config);
-
+    binderator.configure(config);
     binderator.start();
 }
 

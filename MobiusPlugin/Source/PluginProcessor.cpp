@@ -181,11 +181,12 @@ const juce::String MobiusPluginAudioProcessor::getName() const
  */
 bool MobiusPluginAudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
     return true;
-   #else
-    return false;
-   #endif
+//#if JucePlugin_WantsMidiInput
+//return true;
+//#else
+//return false;
+//#endif
 }
 
 /**
@@ -206,11 +207,12 @@ bool MobiusPluginAudioProcessor::producesMidi() const
  */
 bool MobiusPluginAudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
     return false;
-   #endif
+//   #if JucePlugin_IsMidiEffect
+//    return true;
+//   #else
+//    return false;
+//   #endif
 }
 
 /**
