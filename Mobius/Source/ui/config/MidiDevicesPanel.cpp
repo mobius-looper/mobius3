@@ -216,7 +216,6 @@ void MidiDevicesPanel::tableCheckboxTouched(BasicTable* table, int row, int col,
 
     bool dynamicOpen = false;
 
-    
     if (dynamicOpen && relevant) {
         MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
         juce::String device = mtd->getName(row);
@@ -238,23 +237,12 @@ void MidiDevicesPanel::tableCheckboxTouched(BasicTable* table, int row, int col,
             }
             else {
                 if (state)
-                  mm->openOutputSync(name);
+                  mm->openOutput(name);
                 else
-                  mm->closeOutputSync(name);
+                  mm->closeOutput(name);
             }
         }
-        
-            
-            if (
-        if (Supervisor::Instance->isPlugin())
-          relevant = col > 3;
-        else
-          relevant = col < 4;
-
-        if (relevant) {
-            
-          
-
+    }
         
         log.add("Input " + mdt->getName(row) + " " +
                 ((state) ? "opened" : "closed"));
