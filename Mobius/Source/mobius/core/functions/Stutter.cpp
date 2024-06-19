@@ -114,6 +114,8 @@ StutterFunction::StutterFunction(bool sus)
 	if (!sus) {
 		setName("Stutter");
 		longFunction = SUSStutter;
+        // check SustainFunctions
+        maySustain = true;
 	}
 	else {
 		setName("SUSStutter");
