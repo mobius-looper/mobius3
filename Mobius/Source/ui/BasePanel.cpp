@@ -36,6 +36,11 @@ void BasePanel::setContent(juce::Component* c)
     }
 }
 
+void BasePanel::addButton(juce::Button* b)
+{
+    closeButtons.add(b);
+}
+
 /**
  * Hack subclasses can use if they don't want a title but also
  * want to al low drag.  Forwards mouse events from the children
@@ -159,6 +164,14 @@ void BasePanel::buttonClicked(juce::Button* b)
     if (b == &okButton) {
         close();
     }
+    else {
+        footerButton(b);
+    }
+}
+
+void BasePanel::footerButton(juce::Button* b)
+{
+    (void)b;
 }
 
 //////////////////////////////////////////////////////////////////////

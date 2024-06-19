@@ -97,6 +97,12 @@ class MobiusInterface {
     virtual void setListener(class MobiusListener* l) = 0;
 
     /**
+     * Called by the UI to register an object to receive notificiations
+     * of MIDI events received by the plugin from the host.
+     */
+    virtual void setMidiListener(class MobiusMidiListener* l) = 0;
+
+    /**
      * Initialize the engine for the first time.
      * Must be called before the audio thread is active.
      *
@@ -244,13 +250,6 @@ class MobiusInterface {
      * for TestDriver to know this easily.
      */
     virtual bool isGlobalReset() = 0;
-
-    /**
-     * Stupid hack for MIDI capture in the MIDI binding panel to receive
-     * MIDI messages sent through Juce when running as a plugin.
-     * Need to come up with a better way to do this.
-     */
-    virtual void enableMidiMonitor(bool enable) = 0;
 
   private:
 
@@ -570,6 +569,33 @@ class MobiusPrompt
     
 //////////////////////////////////////////////////////////////////////
 //
+// MobiusMidiListener
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Interface of an object that wants to receive notification of MIDI
+ * events that have been received.  This is implemented by something in
+ * the UI, currently MidiMonitorPanel and MidiDevicesPanel.
+ *
+ * This is an unusual callback in that it will happen in the audio thread
+ * immedately when messages are received, so the handler needs to be careful
+ * to queue the message for complex processing if required.
+ */
+class MobiusMidiListener
+{
+  public:
+
+    virtual ~MobiusMidiListener() {}
+    
+    // a message was received that needs a good monitoring
+    // returns true if the message can be processed further, false
+    // if it should be suppressed
+    virtual bool mobiusMidiReceived(juce::MidiMessage& msg) = 0;
+};
+
+//////////////////////////////////////////////////////////////////////
+//
 // MobiusAudioListener
 //
 //////////////////////////////////////////////////////////////////////
@@ -577,6 +603,8 @@ class MobiusPrompt
 /**
  * Interface of an object that wants to receive blocks of audio and
  * MIDI data from connected devices or the plugin host.
+ *
+ * This is implemented by MobiusKernel and given to the MobiusContainer.
  */
 class MobiusAudioListener
 {

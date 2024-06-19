@@ -99,6 +99,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         // Help
         KeyBindings,
         MidiBindings,
+        MidiMonitor,
         About,
 
         // test

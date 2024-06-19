@@ -19,7 +19,7 @@
 #include "../common/Field.h"
 #include "../common/BasicTable.h"
 
-#include "LogPanel.h"
+#include "../MidiLog.h"
 #include "ConfigPanel.h"
 
 class MidiDeviceTableRow
@@ -54,6 +54,8 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     void load(class DeviceConfig* config);
     void save(class DeviceConfig* config);
 
+    juce::String getName(int row);
+
     // BasicTable::Model
     int getNumRows() override;
     juce::String getCellText(int row, int col) override;
@@ -82,7 +84,9 @@ class MidiDevicesContent : public juce::Component
     void resized() override;
 };
 
-class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener, public juce::Timer
+class MidiDevicesPanel : public ConfigPanel,
+                         public MidiManager::Monitor,
+                         public BasicTable::CheckboxListener
 {
   public:
     MidiDevicesPanel(class ConfigEditor*);
@@ -95,14 +99,17 @@ class MidiDevicesPanel : public ConfigPanel, public MidiManager::Listener, publi
     void save() override;
     void cancel() override;
 
-    // MidiManager::Listener
-    void midiMessage(const juce::MidiMessage& message, juce::String& source) override;
-    void timerCallback() override;
+    // MidiManager::Monitor
+    void midiMonitor(const juce::MidiMessage& message, juce::String& source) override;
+    bool midiMonitorExclusive() override;
+
+    // BasicTable::CheckboxListener
+    void tableCheckboxTouched(BasicTable* table, int row, int col, bool state) override;
     
   private:
 
     MidiDevicesContent mdcontent;
-    LogPanel log;
+    MidiLog log;
     BasicTabs tabs;
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;

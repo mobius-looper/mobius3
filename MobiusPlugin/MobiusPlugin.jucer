@@ -196,6 +196,8 @@
                 file="../Mobius/Source/ui/config/MidiDevicesPanel.cpp"/>
           <FILE id="wahWYn" name="MidiDevicesPanel.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/MidiDevicesPanel.h"/>
+          <FILE id="HlkSDD" name="MidiLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiLog.cpp"/>
+          <FILE id="jz58co" name="MidiLog.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiLog.h"/>
           <FILE id="OpzBcB" name="MidiPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiPanel.cpp"/>
           <FILE id="e5mhLJ" name="MidiPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiPanel.h"/>
           <FILE id="HmIkCz" name="MultiSelectDrag.cpp" compile="1" resource="0"

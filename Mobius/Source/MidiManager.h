@@ -7,26 +7,41 @@
  * callback are forward to one or more listeners.
  *
  * It is primarily used when running as a standalone application,
- * but can be used in a very limited way by a plugin to send MIDI clocks
+ * but can be used in a more limited way by a plugin to send MIDI clocks
  * to a single private output device outside the host application's control.
  * It is unclear after all these years if this still needs to be done,
  * I did it originally to reduce clock jitter but these days things may be
  * fast enough just to pass clocks through the usual host MIDI streams.
  *
- * Only supporting a single input and output device right now which
- * is enough for testing and most people don't use the standalone app.
+ * There are two types of listeners that can be installed:
+ * 
+ *   processing listeners
+ *   monitoring listeners
+ *
+ * A processing listener handles events received directly from a MidiInput
+ * opened in the standalone application and normally maps those to actions.
+ *
+ * A monitoring listener is used to display information about the MIDI being
+ * received but does not always want them to be processed.
+ *
+ * Monitoring listeners can receive events both from directly opened devices,
+ * and indirectly from the kernel when it receives events through the plugin host.
+ * 
  */
 
 #pragma once
+
 #include <JuceHeader.h>
 
-class MidiManager : public juce::MidiInputCallback
+#include "mobius/MobiusInterface.h"
+
+class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
 {
   public:
 
     /**
-     * Interface of an object that wants to receive MidiMessages.
-     * Used by Binderator and MidiDevicePanel.
+     * Interface of an object that wants to receive MidiMessages for processing.
+     * Only normal consumer is Binderator.
      * This is used only for non-realtime messages like notes, controllers, etc.
      */
     class Listener {
@@ -46,20 +61,55 @@ class MidiManager : public juce::MidiInputCallback
         virtual void midiRealtime(const juce::MidiMessage& message, juce::String& source) = 0;
     };
 
+    /**
+     * Interface of an object that wants to receive MidiMessages for monitoring.
+     * Used by MidiMonitorPanel, MidiPanel, and MidiDevicesPanel.
+     */
+    class Monitor {
+      public:
+        virtual ~Monitor() {}
+        virtual void midiMonitor(const juce::MidiMessage& message, juce::String& source) = 0;
+        virtual bool midiMonitorExclusive() = 0;
+        virtual void midiMonitorOpen(juce::String name, bool input, bool sync) {}
+        virtual void midiMonitorClose(juce::String name, bool input, bool sync) {}
+        virtual void midiMonitorWarn(juce::String msg) {}
+    };
+    
     MidiManager(class Supervisor* super);
     ~MidiManager();
 
     void addListener(Listener* l);
     void removeListener(Listener* l);
-    void setExclusiveListener(Listener* l);
-    void removeExclusiveListener();
-    
+
     void addRealtimeListener(RealtimeListener* l);
     void removeRealtimeListener(RealtimeListener* l);
+    
+    void addMonitor(Monitor* l);
+    void removeMonitor(Monitor* l);
 
+    // open all configured devices at startup or when
+    // doing bulk configuration changes
     void openDevices();
+
+    // open and close devices individually
+    void openInput(juce::String name);
+    void closeInput(juce::String name);
+    void openOutput(juce::String name);
+    void closeOutput(juce::String name);
+    void openOutputSync(juce::String name);
+    void closeOutputSync(juce::String name);
+
+    // temporarily disable inputs
     void suspend();
     void resume();
+
+    // process queued monitoring events from the audio thread
+    void performMaintenance();
+
+    // current device status
+    juce::StringArray getErrors();
+    juce::StringArray getOpenInputDevices();
+    juce::StringArray getOpenOutputDevices();
     
     // Close devices and remove callbacks
     void shutdown();
@@ -68,7 +118,7 @@ class MidiManager : public juce::MidiInputCallback
     void send(juce::MidiMessage msg);
     void sendSync(juce::MidiMessage msg);
 
-    // Device Information
+    // Available device information
     juce::StringArray getInputDevices();
     juce::StringArray getOutputDevices();
 
@@ -87,7 +137,7 @@ class MidiManager : public juce::MidiInputCallback
     // needs to be public so it can be called from a CallbackMessage
     void notifyListeners(const juce::MidiMessage& message, juce::String& source);
 
-    void mobiusMidiReceived(juce::MidiMessage& msg);
+    bool mobiusMidiReceived(juce::MidiMessage& msg);
     
   private:
 
@@ -95,8 +145,11 @@ class MidiManager : public juce::MidiInputCallback
     class Supervisor* supervisor = nullptr;
 
     class juce::Array<Listener*> listeners;
-    Listener* exclusiveListener = nullptr;
     class juce::Array<RealtimeListener*> realtimeListeners;
+    class juce::Array<Monitor*> monitors;
+
+    // error messages from the last time openDevices was called
+    juce::StringArray errors;
 
     // this isn't the way you're supposed to do it, but I fucking
     // hate dealing with unique_ptr, I don't need my goddam dick held for me
@@ -108,19 +161,27 @@ class MidiManager : public juce::MidiInputCallback
     // tutorial captures this on creation to show relative times
     // when logging incomming MIDI messages
     double startTime;
+
+    // holding area for messages received from the plugin audio thread
+    juce::MidiMessage pluginMessage;
+    bool pluginMessageQueued = false;
     
-    void configurePluginListening();
+    void somethingBadHappened(juce::String msg);
+
     juce::String getDeviceId(juce::Array<juce::MidiDeviceInfo> devices, juce::String name);
     juce::String getInputDeviceId(juce::String name);
     juce::String getOutputDeviceId(juce::String name);
 
     juce::String getFirstName(juce::String csv);
+    MidiInput* findInput(juce::String name);
+    
     void stopInputs();
     void closeInputs();
     void openInputs(juce::String csv);
     void reopenInputs();
     std::unique_ptr<juce::MidiInput> openNewInput(juce::String name);
-    void openOutput(juce::String name, bool sync);
+    void openOutputInternal(juce::String name, bool sync);
+    void closeOutputInternal(juce::String name, bool sync);
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
 

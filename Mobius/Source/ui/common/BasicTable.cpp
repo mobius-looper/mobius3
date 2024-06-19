@@ -28,6 +28,11 @@ void BasicTable::setBasicModel(Model* m)
     model = m;
 }
 
+void BasicTable::setCheckboxListener(CheckboxListener* l)
+{
+    checkboxListener = l;
+}
+
 void BasicTable::addColumn(juce::String name, int id, int width)
 {
     juce::TableHeaderComponent& tableHeader = getHeader();
@@ -199,8 +204,8 @@ juce::Component* BasicTable::refreshComponentForCell (int rowNumber, int columnI
         if (checkbox == nullptr)
           checkbox = new BasicTableCheckbox (*this);
         else {
-            Trace(2, "Cell bounds: %d %d %d %d\n", checkbox->getX(), checkbox->getY(),
-                  checkbox->getWidth(), checkbox->getHeight());
+            //Trace(2, "Cell bounds: %d %d %d %d\n", checkbox->getX(), checkbox->getY(),
+            //checkbox->getWidth(), checkbox->getHeight());
             checkbox->setTopLeftPosition(checkbox->getX() + 30, checkbox->getY());
         }
         checkbox->setRowAndColumn (rowNumber, columnId);
@@ -240,6 +245,9 @@ void BasicTable::doCheck(int row, int column, bool state)
 {
     if (model != nullptr)
       model->setCellCheck(row, column, state);
+
+    if (checkboxListener != nullptr)
+      checkboxListener->tableCheckboxTouched(this, row, column, state);
 }
 
 /****************************************************************************/

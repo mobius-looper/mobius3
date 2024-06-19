@@ -51,7 +51,10 @@ class MobiusKernel : public MobiusAudioListener
      */
     void setTestMode(bool b);
 
-    void enableMidiMonitor(bool b);
+    /**
+     * Special monitoring mode for tracking MIDI events.
+     */
+    void setMidiListener(class MobiusMidiListener* l);
 
     void dump(class StructureDumper& d);
     bool isGlobalReset();
@@ -169,7 +172,8 @@ class MobiusKernel : public MobiusAudioListener
 
     // special mode for TestDriver
     bool testMode = false;
-    bool midiMonitor = false;
+    // special mode for MidiMonitorPanel and MidiDevicesPanel
+    class MobiusMidiListener* midiListener = nullptr;
     
     void installSymbols();
 

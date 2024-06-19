@@ -52,6 +52,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     virtual ~BasePanel();
 
     void setContent(juce::Component* c);
+    void addButton(juce::Button* b);
 
     // panels should have a title, could make this part of the constructor
     void setTitle(juce::String title);
@@ -71,6 +72,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     // subclass overrides this if it has more preparations to make
     virtual void showing();
     virtual void hiding();
+    virtual void footerButton(juce::Button* b);
     
     // Component
     void resized() override;

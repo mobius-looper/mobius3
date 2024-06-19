@@ -633,6 +633,10 @@ void Supervisor::advance()
 
     // let TestDriver advance wait states, and process completed tests
     testDriver.advance();
+
+    // let MidiMonitors display things queued from the plugin
+    midiManager.performMaintenance();
+    
 }
 
 //////////////////////////////////////////////////////////////////////

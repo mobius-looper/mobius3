@@ -34,6 +34,7 @@ class MobiusShell : public MobiusInterface
 
     // MobiusInterface
     void setListener(class MobiusListener* l) override;
+    void setMidiListener(class MobiusMidiListener* l) override;
     void initialize(class MobiusConfig* config) override;
     void reconfigure(class MobiusConfig* config) override;
     MobiusState* getState() override;    // also shared by the kernel
@@ -48,7 +49,6 @@ class MobiusShell : public MobiusInterface
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
-    void enableMidiMonitor(bool enable) override;
     
     //
     // Internal component services

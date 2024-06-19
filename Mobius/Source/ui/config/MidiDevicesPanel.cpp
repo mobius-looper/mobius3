@@ -22,7 +22,6 @@
 #include "../JuceUtil.h"
 
 #include "ConfigEditor.h"
-#include "LogPanel.h"
  
 #include "MidiDevicesPanel.h"
 
@@ -39,6 +38,9 @@ MidiDevicesPanel::MidiDevicesPanel(ConfigEditor* argEditor) :
     
     mdcontent.addAndMakeVisible(tabs);
     mdcontent.addAndMakeVisible(log);
+
+    inputTable.setCheckboxListener(this);
+    outputTable.setCheckboxListener(this);
 
     tabs.add("Input Devices", &inputTable);
     tabs.add("Output Devices", &outputTable);
@@ -77,12 +79,11 @@ MidiDevicesPanel::~MidiDevicesPanel()
 void MidiDevicesPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->setExclusiveListener(this);
+    mm->addMonitor(this);
 
     // have to defer this post-construction
     inputTable.init(false);
     outputTable.init(true);
-    startTimer(50);
 }
 
 /**
@@ -91,46 +92,20 @@ void MidiDevicesPanel::showing()
 void MidiDevicesPanel::hiding()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->removeExclusiveListener();
-    stopTimer();
+    mm->removeMonitor(this);
 }
 
 /**
- * MidiManager Listener
+ * MidiManager::Monitor
  */
-void MidiDevicesPanel::midiMessage(const juce::MidiMessage& message, juce::String& source)
+void MidiDevicesPanel::midiMonitor(const juce::MidiMessage& message, juce::String& source)
 {
-    if (source == juce::String("Plugin")) {
-        // queue it for the next timer callback
-        pluginMessage = message;
-        pluginMessageQueued = true;
-    }
-    else {
-        juce::String msg = source + ": ";
-        int size = message.getRawDataSize();
-        const juce::uint8* data = message.getRawData();
-        for (int i = 0 ; i < size ; i++) {
-            msg += juce::String(data[i]) + " ";
-        }
-        log.add(msg);
-    }
+    log.midiMessage(message, source);
 }
 
-/**
- * Called periodically on the audio thread.
- * This is how we safely capture MIDI events sent up from the plugin
- * on the audio thread.  Once this is working, should do all midiMessage calls
- * this way...
- *
- * There are race conditions here but for capture it works well enough.
- */
-void MidiDevicesPanel::timerCallback()
+bool MidiDevicesPanel::midiMonitorExclusive()
 {
-    if (pluginMessageQueued) {
-        juce::String source ("Queued");
-        midiMessage(pluginMessage, source);
-        pluginMessageQueued = false;
-    }
+    return true;
 }
 
 /**
@@ -143,6 +118,8 @@ void MidiDevicesPanel::load()
         DeviceConfig* config = Supervisor::Instance->getDeviceConfig();
         inputTable.load(config);
         outputTable.load(config);
+
+        log.showOpen();
         
         loaded = true;
         // force this true for testing
@@ -221,6 +198,71 @@ void MidiDevicesContent::resized()
     
     BasicTabs* tabs = (BasicTabs*)getChildComponent(0);
     tabs->setBounds(area);
+}
+
+/**
+ * Called by either the input or output device table when a checkbox
+ * is clicked on or off.
+ *
+ * If the device is relevant to the current runtime context (app vs. plugin)
+ * then immediately ask MidiManager to open or close the device, rather than
+ * waiting until Save is clicked.  This feels better for the user and is more
+ * like how AudioDevicesPanel behaves.  
+ */
+void MidiDevicesPanel::tableCheckboxTouched(BasicTable* table, int row, int col, bool state)
+{
+    int colbase = (Supervisor::Instance->isPlugin() ? 4 : 2);
+    bool relevant = (col >= colbase && col < colbase + 2);
+
+    bool dynamicOpen = false;
+
+    
+    if (dynamicOpen && relevant) {
+        MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
+        juce::String device = mtd->getName(row);
+        MidiManager* mm = Supervisor::Instance->getMidiManager();
+        
+        if (table == &inputTable) {
+            // not differentiating between control and sync right now
+            if (state)
+              mm->openInput(device);
+            else
+              mm->closeInput(device);
+        }
+        else {
+            if (col > colbase) {
+                if (state)
+                  mm->openOutputSync(name);
+                else
+                  mm->closeOutputSync(name);
+            }
+            else {
+                if (state)
+                  mm->openOutputSync(name);
+                else
+                  mm->closeOutputSync(name);
+            }
+        }
+        
+            
+            if (
+        if (Supervisor::Instance->isPlugin())
+          relevant = col > 3;
+        else
+          relevant = col < 4;
+
+        if (relevant) {
+            
+          
+
+        
+        log.add("Input " + mdt->getName(row) + " " +
+                ((state) ? "opened" : "closed"));
+    }
+    else {
+        log.add("Output " + mdt->getName(row) + " " +
+                ((state) ? "opened" : "closed"));
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -401,6 +443,12 @@ juce::String MidiDeviceTable::getDevices(bool sync, bool plugin)
     }
 
     return list.joinIntoString(",");
+}
+
+juce::String MidiDeviceTable::getName(int rownum)
+{
+    MidiDeviceTableRow* row = devices[rownum];
+    return row->name;
 }
 
 //

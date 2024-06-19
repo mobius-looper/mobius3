@@ -67,9 +67,9 @@ void MobiusKernel::setTestMode(bool b)
     testMode = b;
 }
 
-void MobiusKernel::enableMidiMonitor(bool b)
+void MobiusKernel::setMidiListener(MobiusMidiListener* l)
 {
-    midiMonitor = b;
+    midiListener = l;
 }
 
 /**
@@ -401,7 +401,15 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
  * process that immediately, but since these are being queued, and we can have more
  * than one MIDI event of the same type (rapid down/up events) we need to allocate
  * new ones.  This also fits with how UIActions sent down from the shell work.  They're
- * independent objects that have to be reclaimed when we're
+ * independent objects that have to be reclaimed when we're done with them.
+ *
+ * midiListener is a hack for MIDI logging utilities to redirect messages up to the UI.
+ * We bypass the usual audio thread message passing and call MobiusListener directly
+ * Listener needs to understand it is in the audio thread and queue the message in
+ * an appropriate way.  Not sure why I didn't just use KernelCommunicator here, maybe
+ * event ordering.  Like the "exclusive listener" with direct MidiInput devices, if
+ * monitoring is on bypass the Binderator so we can see what is comming in without
+ * firing off actions.
  */
 void MobiusKernel::consumeMidiMessages()
 {
@@ -413,21 +421,27 @@ void MobiusKernel::consumeMidiMessages()
             // do we really need to pass these by value?
             juce::MidiMessage msg = metadata.getMessage();
 
-            // hack for MidiPanel and MIDI capture,
-            if (midiMonitor) {
-                MobiusListener* l = shell->getListener();
-                if (l != nullptr)
-                  l->mobiusMidiReceived(msg);
-            }
-            
-            UIAction* action = binderator.getMidiAction(msg);
-            if (action != nullptr) {
-                // Binderator owns the action so for consistency with
-                // all other action passing in the kernel, convert it to
-                // a pooled action that can be returned to the pool
-                UIAction* pooled = actionPool->newAction();
-                pooled->copy(action);
-                doAction(pooled);
+            // only consider the ones we can use in bindings
+            // realtime might be interesting for Synchronizer, but when
+            // comming through the host are likely to be jittery so get
+            // sync with direct device connections working first
+            if (msg.isNoteOnOrOff() || msg.isProgramChange() || msg.isController()) {
+
+                bool doit = true;
+                if (midiListener != nullptr)
+                  doit = midiListener->mobiusMidiReceived(msg);
+                
+                if (doit) {
+                    UIAction* action = binderator.getMidiAction(msg);
+                    if (action != nullptr) {
+                        // Binderator owns the action so for consistency with
+                        // all other action passing in the kernel, convert it to
+                        // a pooled action that can be returned to the pool
+                        UIAction* pooled = actionPool->newAction();
+                        pooled->copy(action);
+                        doAction(pooled);
+                    }
+                }
             }
         }
     }

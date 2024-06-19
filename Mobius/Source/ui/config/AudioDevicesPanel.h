@@ -14,8 +14,7 @@
 
 #include "../common/Form.h"
 #include "../common/Field.h"
-
-#include "LogPanel.h"
+#include "../common/LogPanel.h"
 
 #include "ConfigPanel.h"
 

@@ -14,7 +14,7 @@
 #include "ConfigPanel.h"
 #include "BindingPanel.h"
 
-class MidiPanel : public BindingPanel, public MidiManager::Listener, public juce::Timer
+class MidiPanel : public BindingPanel, public MidiManager::Monitor
 {
   public:
     MidiPanel(class ConfigEditor *);
@@ -30,8 +30,8 @@ class MidiPanel : public BindingPanel, public MidiManager::Listener, public juce
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
 
-    void midiMessage(const class juce::MidiMessage& message, juce::String& source) override;
-    void timerCallback() override;
+    void midiMonitor(const juce::MidiMessage& message, juce::String& source) override;
+    bool midiMonitorExclusive() override;
 
   private:
 

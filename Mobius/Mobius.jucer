@@ -171,6 +171,12 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="n0rzUS" name="MidiLog.cpp" compile="1" resource="0" file="Source/ui/MidiLog.cpp"/>
+        <FILE id="yWQtm2" name="MidiLog.h" compile="0" resource="0" file="Source/ui/MidiLog.h"/>
+        <FILE id="lmIMa3" name="MidiMonitorPanel.cpp" compile="1" resource="0"
+              file="Source/ui/MidiMonitorPanel.cpp"/>
+        <FILE id="ErLWR1" name="MidiMonitorPanel.h" compile="0" resource="0"
+              file="Source/ui/MidiMonitorPanel.h"/>
         <FILE id="aTpN2M" name="AlertPanel.cpp" compile="1" resource="0" file="Source/ui/AlertPanel.cpp"/>
         <FILE id="wUOt37" name="AlertPanel.h" compile="0" resource="0" file="Source/ui/AlertPanel.h"/>
         <FILE id="CXsMeg" name="InfoPanel.cpp" compile="1" resource="0" file="Source/ui/InfoPanel.cpp"/>
@@ -209,8 +215,6 @@
           <FILE id="CdDmPy" name="KeyboardPanel.cpp" compile="1" resource="0"
                 file="Source/ui/config/KeyboardPanel.cpp"/>
           <FILE id="xnfHRb" name="KeyboardPanel.h" compile="0" resource="0" file="Source/ui/config/KeyboardPanel.h"/>
-          <FILE id="uXmVmw" name="LogPanel.cpp" compile="1" resource="0" file="Source/ui/config/LogPanel.cpp"/>
-          <FILE id="l9ojKZ" name="LogPanel.h" compile="0" resource="0" file="Source/ui/config/LogPanel.h"/>
           <FILE id="Az47GJ" name="MidiDevicesPanel.cpp" compile="1" resource="0"
                 file="Source/ui/config/MidiDevicesPanel.cpp"/>
           <FILE id="XDzrVN" name="MidiDevicesPanel.h" compile="0" resource="0"
@@ -340,6 +344,8 @@
           <FILE id="UpmMlt" name="HelpArea.h" compile="0" resource="0" file="Source/ui/common/HelpArea.h"/>
           <FILE id="z0zBNd" name="JLabel.cpp" compile="1" resource="0" file="Source/ui/common/JLabel.cpp"/>
           <FILE id="n1jih9" name="JLabel.h" compile="0" resource="0" file="Source/ui/common/JLabel.h"/>
+          <FILE id="XyHMMp" name="LogPanel.cpp" compile="1" resource="0" file="Source/ui/common/LogPanel.cpp"/>
+          <FILE id="T9t9hM" name="LogPanel.h" compile="0" resource="0" file="Source/ui/common/LogPanel.h"/>
           <FILE id="yVC7nU" name="Panel.cpp" compile="1" resource="0" file="Source/ui/common/Panel.cpp"/>
           <FILE id="TLuhnZ" name="Panel.h" compile="0" resource="0" file="Source/ui/common/Panel.h"/>
           <FILE id="OjuAfI" name="SimpleButton.cpp" compile="1" resource="0"

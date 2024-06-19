@@ -39,11 +39,22 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
         }
     };
 
+    /**
+     * Optional listener to receive notificiations when checkboxes are twiddled.
+     */
+    class CheckboxListener {
+      public:
+        CheckboxListener() {}
+        virtual ~CheckboxListener() {}
+        virtual void tableCheckboxTouched(BasicTable* table, int row, int column, bool state) = 0;
+    };
+
     BasicTable();
     ~BasicTable() {}
 
     void addColumn(juce::String name, int id, int width = 150);
     void addColumnCheckbox(juce::String name, int id);
+    void setCheckboxListener(CheckboxListener* l);
 
     void setBasicModel(Model* m);
     // subclass can override these to insert the model as an alternative
@@ -65,14 +76,14 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
 
     Component* refreshComponentForCell (int rowNumber, int columnId, bool isRowSelected,
                                         Component* existingComponentToUpdate) override;
-    
-    
+
   private:
 
     Model* model = nullptr;
 
     juce::Array<bool> checkboxColumns;
-
+    CheckboxListener* checkboxListener = nullptr;
+    
     void setCheckboxFlag(int columnId, bool flag);
     bool needsCheckbox(int row, int col);
 

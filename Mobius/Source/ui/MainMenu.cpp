@@ -287,6 +287,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     {
         menu.addItem(KeyBindings, "Key Bindings");
         menu.addItem(MidiBindings, "MIDI Bindings");
+        menu.addItem(MidiMonitor, "MIDI Monitor");
         menu.addSeparator();
         menu.addItem(About, "About");
     }

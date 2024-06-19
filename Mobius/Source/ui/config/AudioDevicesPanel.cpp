@@ -71,10 +71,10 @@
 
 #include "../common/Form.h"
 #include "../common/Field.h"
+#include "../common/LogPanel.h"
 #include "../JuceUtil.h"
 
 #include "ConfigEditor.h"
-#include "LogPanel.h"
  
 #include "AudioDevicesPanel.h"
 

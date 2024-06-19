@@ -46,6 +46,7 @@ MainWindow::MainWindow(Supervisor* super)
     addChildComponent(infoPanel);
     addChildComponent(aboutPanel);
     addChildComponent(alertPanel);
+    addChildComponent(midiMonitor);
     
 #ifdef USE_FFMETERS
     addAndMakeVisible(levelMeter);
@@ -250,6 +251,9 @@ void MainWindow::mainMenuSelection(int id)
                 break;
             case MainMenu::MidiBindings: 
                 infoPanel.showMidi();
+                break;
+            case MainMenu::MidiMonitor:
+                midiMonitor.show();
                 break;
                 
             case MainMenu::MidiTransport:

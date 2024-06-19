@@ -28,7 +28,7 @@ MidiPanel::~MidiPanel()
 {
     // remove lingering listener from MidiTracker
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->removeExclusiveListener();
+    mm->removeMonitor(this);
 }
 
 /**
@@ -47,10 +47,7 @@ MidiPanel::~MidiPanel()
 void MidiPanel::showing()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->setExclusiveListener(this);
-
-    // use a Timer to pick up queued MIDI events from the plugin
-    startTimer (50);
+    mm->addMonitor(this);
 }
 
 /**
@@ -59,8 +56,7 @@ void MidiPanel::showing()
 void MidiPanel::hiding()
 {
     MidiManager* mm = Supervisor::Instance->getMidiManager();
-    mm->removeExclusiveListener();
-    stopTimer();
+    mm->removeMonitor(this);
 }
 
 /**
@@ -218,14 +214,10 @@ void MidiPanel::resetSubclassFields()
     messageValue->setValue(juce::String());
 }
 
-void MidiPanel::midiMessage(const juce::MidiMessage& message, juce::String& source)
+void MidiPanel::midiMonitor(const juce::MidiMessage& message, juce::String& source)
 {
-    if (source == juce::String("Plugin")) {
-        // queue it for the next timer callback
-        pluginMessage = message;
-        pluginMessageQueued = true;
-    }
-    else if (capture->getBoolValue()) {
+    (void)source;
+    if (capture->getBoolValue()) {
         int value = -1;
         if (message.isNoteOn()) {
             messageType->setValue(0);
@@ -261,21 +253,9 @@ void MidiPanel::midiMessage(const juce::MidiMessage& message, juce::String& sour
     }
 }
 
-/**
- * Called periodically on the audio thread.
- * This is how we safely capture MIDI events sent up from the plugin
- * on the audio thread.  Once this is working, should do all midiMessage calls
- * this way...
- *
- * There are race conditions here but for capture it works well enough.
- */
-void MidiPanel::timerCallback()
+bool MidiPanel::midiMonitorExclusive()
 {
-    if (pluginMessageQueued) {
-        juce::String source ("Queued");
-        midiMessage(pluginMessage, source);
-        pluginMessageQueued = false;
-    }
+    return true;
 }
 
 /****************************************************************************/

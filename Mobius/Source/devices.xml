@@ -17,9 +17,8 @@
     audioOutput='Speakers (RME Fireface UC)'
     sampleRate='44100'
     blockSize='256'
-    midiInput='HST 1,HST 2'
-    midiOutput='Bome MIDI Translator 1'
-    pluginMidiInput='HST 1'/>
+    midiInput='Arturia MiniLab mkII,HST 1,HST 2'
+    midiOutput='Bome MIDI Translator 1'/>
   <Machine
     hostName='Frigg'
     audioDeviceType='CoreAudio'

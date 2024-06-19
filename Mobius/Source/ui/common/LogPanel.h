@@ -11,7 +11,7 @@ class LogPanel : public juce::TextEditor
   public:
 
     LogPanel();
-    ~LogPanel();
+    virtual ~LogPanel();
 
     void add(const juce::String& m);
 
