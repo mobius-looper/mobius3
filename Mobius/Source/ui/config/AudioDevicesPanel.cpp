@@ -1,6 +1,15 @@
 /**
- * A form panel for configuring MIDI devices using the built-in
- * AudioDeviceSelectorComponent.  Much of the code adapted from a tutorial.
+ * ConfigPanel to configure audio devices when running standalone.
+ *
+ * This uses a built-in Juce component for configuring the audio device
+ * and doesn't work like other ConfigPanels.  Changes made here will
+ * be directly reflected in the application, you don't "Save" or "Cancel".
+ * The panel is simply closed.
+ *
+ * This is one of the oldest panels and comments may reflect early misunderstandings
+ * about how things worked.
+ *
+ * AudioDeviceSelectorComponent
  *
  * Size of this thing was a PITA, see audio-device-selector.txt
  * Looks like you can control it to some degree with setItemHeight
@@ -44,24 +53,9 @@
  *   is the output device, yet it has functions for getInputChannelNames
  *   getAudioDevice looks like it has both, why would you want this one?
  *
- * WHO SETS THE AUDIO DEVICE?
- *
- * After thinking about this, when would we ever need to set the input and
- * output devices?  If you don't do anything it appears to use the default
- * devices and channels, which on Windows is set in the control panel.  You
- * can change that within the app but I don't think this changes the Windows configuration.
- *
- * For the RME this could be useful if you wanted different input or output ports
- * than the default but in practice this would be rarely done.
- *
- * It is also confusing that the driver breaks up the available hardware ports
+ * It is confusing that the driver and/or Juce breaks up the available hardware ports
  * into seperate devices with stereo pairs and you can only select one in Juce.
- * I don't see how to support opening more than one pair of ports.
- * This doesn't matter right now but will want to address at some point.  If you
- * just rely on control panel there isn't really a need to have this config panel other
- * than for information.  So you don't really need to save/load the selected
- * devices in MobiusConfig until you want to start using something other than the
- * default.
+ * I don't see how to support opening more than one pair of ports except using ASIO.
  */
 
 #include <JuceHeader.h>
@@ -107,6 +101,11 @@ AudioDevicesPanel::AudioDevicesPanel(ConfigEditor* argEditor) :
         setName("AudioDevicesPanel");
 
         // new way, dynamic allocation only if we can
+        // the only setting you might want to tinker with is
+        // "treat channels as stereo pairs"
+        // that's convenient for most users, but when using ASIO could allow more
+        // flexibility on which hardware jacks are grouped for sterso
+        
         juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
         if (adm != nullptr) {
 
@@ -507,56 +506,6 @@ void AudioDevicesPanel::logMessage (const juce::String& m)
     log.moveCaretToEnd();
     log.insertTextAtCaret (m + juce::newLine);
 }
-
-/**
- * This was captured from the tutorial for reference
- * Unlike the tutorial we are not an AudioAppComponent
- * so this will never be called, but it's an interesting example
- * of audio block handling.  In some cases components might want to
- * temporarily splice in a "listener" for audio blocks so think
- * about injecting a hook in MainComponent.
- */
-#if 0
-void AudioDevicesPanel::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
-{
-    juce::AudioDeviceManager* deviceManger = Supervisor::Instance::getAudioDeviceManager();
-
-    auto* device = deviceManager->getCurrentAudioDevice();
-    auto activeInputChannels  = device->getActiveInputChannels();
-    auto activeOutputChannels = device->getActiveOutputChannels();
-
-    // jsl - compiler error
-    // Error	C3536	'activeInputChannels': cannot be used before it is initialized
-    auto maxInputChannels  = activeInputChannels.countNumberOfSetBits();
-    auto maxOutputChannels = activeOutputChannels.countNumberOfSetBits();
-
-    for (auto channel = 0; channel < maxOutputChannels; ++channel)
-    {
-        if ((! activeOutputChannels[channel]) || maxInputChannels == 0)
-        {
-            bufferToFill.buffer->clear (channel, bufferToFill.startSample, bufferToFill.numSamples);
-        }
-        else
-        {
-            auto actualInputChannel = channel % maxInputChannels;
-
-            if (! activeInputChannels[channel])
-            {
-                bufferToFill.buffer->clear (channel, bufferToFill.startSample, bufferToFill.numSamples);
-            }
-            else
-            {
-                auto* inBuffer  = bufferToFill.buffer->getReadPointer  (actualInputChannel,
-                                                                        bufferToFill.startSample);
-                auto* outBuffer = bufferToFill.buffer->getWritePointer (channel, bufferToFill.startSample);
-
-                for (auto sample = 0; sample < bufferToFill.numSamples; ++sample)
-                  outBuffer[sample] = inBuffer[sample] * random.nextFloat() * 0.25f;
-            }
-        }
-    }
-}
-#endif
 
 /****************************************************************************/
 /****************************************************************************/

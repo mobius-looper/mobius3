@@ -622,17 +622,6 @@ void JuceAudioStream::interleaveInputBuffers(const juce::AudioSourceChannelInfo&
     // out the result buffer so we don't have to clean up the mess after
     // the next loop
     clearInterleavedBuffer(bufferToFill.numSamples, resultBuffer);
-
-    // something weird started happening after enabling ASIO and selecting
-    // random channel configurations  the active channels bit vector
-    // looks as expected, but the AudioBuffer may sometimes have fewer than
-    // that so you can't just iterate over maxOutputChannels
-    // and I'm assuming inputs are the same
-    int availableChannels = bufferToFill.buffer->getNumChannels();
-    if (availableChannels < maxInputChannels) {
-        // happens all the time, so don't trace
-        maxInputChannels = availableChannels;
-    }
     
     // look for the two lowest numbered active channels to serve as the source
     // for our stereo frames, when we find one, copy them as soon as we find them
@@ -644,19 +633,13 @@ void JuceAudioStream::interleaveInputBuffers(const juce::AudioSourceChannelInfo&
         if (activeInputChannels[channel]) {
             // okay, here's one
             auto* buffer = bufferToFill.buffer->getReadPointer(channel, bufferToFill.startSample);
-            if (buffer == nullptr) {
-                // should have caught this when testing availableChannels above?
-                int setBreakpointHere = availableChannels;
+            for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
+                int frameOffset = i * 2;
+                resultBuffer[frameOffset + interleavedChannel] = buffer[i];
             }
-            else {
-                for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
-                    int frameOffset = i * 2;
-                    resultBuffer[frameOffset + interleavedChannel] = buffer[i];
-                }
-                interleavedChannel++;
-                if (interleavedChannel >= 2)
-                  break;
-            }
+            interleavedChannel++;
+            if (interleavedChannel >= 2)
+              break;
         }
     }
 
@@ -687,27 +670,13 @@ void JuceAudioStream::deinterleaveOutputBuffers(const juce::AudioSourceChannelIn
     auto activeOutputChannels = device->getActiveOutputChannels();
     auto maxOutputChannels = activeOutputChannels.getHighestBit() + 1;
     
-    // something weird started happening after enabling ASIO and selecting
-    // random channel configurations  the active channels bit vector
-    // looks as expected, but the AudioBuffer may sometimes have fewer than
-    // that so you can't just iterate over maxOutputChannels
-    int availableChannels = bufferToFill.buffer->getNumChannels();
-    if (availableChannels < maxOutputChannels) {
-        // happens all the time, so don't trace
-        maxOutputChannels = availableChannels;
-    }
-    
     // first locate the two lowest numbered active channels to serve as the
     // destination for our stereo frames
     int interleavedChannel = 0;
     for (int channel = 0 ; channel < maxOutputChannels ; channel++) {
         if (activeOutputChannels[channel]) {
             auto* buffer = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
-            if (buffer == nullptr) {
-                // should have been caught with the availableChannels test?
-                int setBreakpointHere = availableChannels;
-            }
-            else if (interleavedChannel < 2) {
+            if (interleavedChannel < 2) {
                 for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
                     int frameOffset = i * 2;
                     buffer[i] = sourceBuffer[frameOffset + interleavedChannel];

@@ -1,11 +1,14 @@
 /**
- * ConfigPanel to configure MIDI devices when running standalone.
- *  
- * This one is more complicated than most ConfigPanels with the
- * MIDI event logging window under the device selection form.
- * Kind of not liking the old decision to have ConfigPanel with
- * a single content component, or at least be able to give it a
- * content component to use?
+ * ConfigPanel to configure audio devices when running standalone.
+ *
+ * This uses a built-in Juce component for configuring the audio device
+ * and doesn't work like other ConfigPanels.  Changes made here will
+ * be directly reflected in the application, you don't "Save" or "Cancel".
+ * The panel is simply closed.
+ *
+ * This is one of the oldest panels and comments may reflect early misunderstandings
+ * about how things worked.
+ *
  */
 
 #pragma once

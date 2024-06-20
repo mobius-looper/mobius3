@@ -242,6 +242,8 @@ void MachineConfig::clearDirty()
 #define ATT_AUDIO_DEVICE_TYPE "audioDeviceType"
 #define ATT_AUDIO_INPUT "audioInput"
 #define ATT_AUDIO_OUTPUT "audioOutput"
+#define ATT_INPUT_CHANNELS "inputChannels"
+#define ATT_OUTPUT_CHANNELS "outputChannels"
 #define ATT_SAMPLE_RATE "sampleRate"
 #define ATT_BLOCK_SIZE "blockSize"
 #define ATT_MIDI_INPUT "midiInput"
@@ -268,6 +270,8 @@ juce::String DeviceConfig::toXml()
         b.addAttribute(ATT_AUDIO_DEVICE_TYPE, machine->getAudioDeviceType());
         b.addAttribute(ATT_AUDIO_INPUT, machine->getAudioInput());
         b.addAttribute(ATT_AUDIO_OUTPUT, machine->getAudioOutput());
+        b.addAttribute(ATT_INPUT_CHANNELS, machine->inputChannels);
+        b.addAttribute(ATT_OUTPUT_CHANNELS, machine->outputChannels);
         b.addAttribute(ATT_SAMPLE_RATE, machine->getSampleRate());
         b.addAttribute(ATT_BLOCK_SIZE, machine->getBlockSize());
         
@@ -332,6 +336,8 @@ void DeviceConfig::parseXml(XmlElement* e, DeviceConfig* c)
             mc->setAudioDeviceType(child->getJString(ATT_AUDIO_DEVICE_TYPE));
             mc->setAudioInput(child->getJString(ATT_AUDIO_INPUT));
             mc->setAudioOutput(child->getJString(ATT_AUDIO_OUTPUT));
+            mc->inputChannels = child->getJString(ATT_INPUT_CHANNELS);
+            mc->outputChannels = child->getJString(ATT_OUTPUT_CHANNELS);
             mc->setSampleRate(child->getInt(ATT_SAMPLE_RATE));
             mc->setBlockSize(child->getInt(ATT_BLOCK_SIZE));
 

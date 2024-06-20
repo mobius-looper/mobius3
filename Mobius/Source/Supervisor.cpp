@@ -444,10 +444,15 @@ void Supervisor::shutdown()
 
     // save any changes to audio/midi device selection
     // this one will have a dirty flag if MidiDevicePanel touched it
+
+    // save final state
+    // interface sucks, clean this up and get rid of the damn dirty flag?
+    audioManager.captureDeviceState();
+    
     DeviceConfig* devconfig = getDeviceConfig();
-    if (devconfig->isDirty()) {
+    //if (devconfig->isDirty()) {
         writeDeviceConfig(devconfig);
-    }
+        //}
 
     // Started getting a Juce leak detection on the StringArray
     // inside ScriptProperties on a Symbol when shutting down the app.

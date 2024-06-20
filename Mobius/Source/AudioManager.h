@@ -19,10 +19,13 @@ class AudioManager
     
     void traceDeviceSetup();
 
+    void captureDeviceState();
+    
   private:
 
     class Supervisor* supervisor;
 
     void openApplicationAudio();
+    void openDevicesNew();
 
 };

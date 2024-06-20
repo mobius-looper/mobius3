@@ -37,6 +37,11 @@ class MachineConfig
     
     juce::String getAudioOutput();
     void setAudioOutput(juce::String name);
+
+    // stop using accessors for the device names and such
+    // and just do it all this way
+    juce::String inputChannels;
+    juce::String outputChannels;
     
     // hating the dirty flag and endless accessors
     // these are the new ones, start doing it this way

@@ -1,6 +1,6 @@
 <DeviceConfig
-  inputChannels='4'
-  outputChannels='4'>
+  inputChannels='2'
+  outputChannels='2'>
   <Machine
     hostName='Loki'
     audioDeviceType='Windows Audio'
@@ -12,9 +12,11 @@
     midiInputSync='Bome MIDI Translator 1'/>
   <Machine
     hostName='Thor'
-    audioDeviceType='Windows Audio'
-    audioInput='ADAT (5+6) (RME Fireface UC)'
-    audioOutput='Speakers (RME Fireface UC)'
+    audioDeviceType='ASIO'
+    audioInput='ASIO Fireface USB'
+    audioOutput='ASIO Fireface USB'
+    inputChannels='11'
+    outputChannels='11'
     sampleRate='44100'
     blockSize='256'
     midiInput='Arturia MiniLab mkII,HST 1,HST 2'
