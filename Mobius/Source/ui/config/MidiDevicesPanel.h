@@ -102,7 +102,8 @@ class MidiDevicesPanel : public ConfigPanel,
     // MidiManager::Monitor
     void midiMonitor(const juce::MidiMessage& message, juce::String& source) override;
     bool midiMonitorExclusive() override;
-
+    void midiMonitorMessage(juce::String msg) override;
+    
     // BasicTable::CheckboxListener
     void tableCheckboxTouched(BasicTable* table, int row, int col, bool state) override;
     
@@ -113,7 +114,8 @@ class MidiDevicesPanel : public ConfigPanel,
     BasicTabs tabs;
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;
-
+    bool dynamicOpen = false;
+    
     juce::MidiMessage pluginMessage;
     bool pluginMessageQueued = false;
     

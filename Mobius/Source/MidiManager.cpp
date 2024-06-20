@@ -226,9 +226,9 @@ void MidiManager::openInputs(juce::String csv)
     }
 }
 
-MidiInput* MidiManager::findInput(juce::String name)
+juce::MidiInput* MidiManager::findInput(juce::String name)
 {
-    MidiInput* found = nullptr;
+    juce::MidiInput* found = nullptr;
     for (auto dev : inputDevices) {
         if (dev->getName() == name) {
             found = dev;
@@ -254,7 +254,7 @@ MidiInput* MidiManager::findInput(juce::String name)
  */
 void MidiManager::openInput(juce::String name)
 {
-    MidiInput* existing = findInput(name);
+    juce::MidiInput* existing = findInput(name);
     if (existing != nullptr) {
         // already open, unclear what should happen if this was
         // in a stopped state, which shouldn't happen from the devices panel
@@ -264,12 +264,9 @@ void MidiManager::openInput(juce::String name)
     else {
         std::unique_ptr<juce::MidiInput> neu = openNewInput(name);
         if (neu != nullptr) {
-            neu->start();
             // liberate the MidiInput from the fucking unique_ptr
             // so it can be dealt with naturally
             inputDevices.add(neu.release());
-
-            monitorMessage("Input opened: " + name);
         }
     }
 }
@@ -283,24 +280,24 @@ std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
 {
     std::unique_ptr<juce::MidiInput> dev = nullptr;
     if (name.length() > 0) {
-        const char* tracename = name.toUTF8();
         juce::String id = getInputDeviceId(name);
-        
         if (id.isEmpty()) {
-            Trace(1, "MidiManager: Unable to find input device id for %s\n", tracename);
+            juce::String msg = "Unable to find input device id for " + name;
+            somethingBadHappened(msg);
         }
         else {
-            Trace(2, "MidiManager: Opening input %s\n", tracename);
+            Trace(2, "MidiManager: Opening input %s\n", name.toUTF8());
 
             dev = juce::MidiInput::openDevice(id, this);
 
             if (dev == nullptr) {
-                Trace(1, "MidiManager: Unable to open input %s\n", tracename);
-                errors.add("Unable to open MIDI Input: " + name);
+                juce::String msg = "Unable to open input " + name;
+                somethingBadHappened(msg);
             }
             else {
                 // presumably this is what starts it pumping events to the callback
                 dev->start();
+                monitorMessage("Opened input " + name);
             }
         }
     }
@@ -309,7 +306,7 @@ std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
 
 void MidiManager::closeInput(juce::String name)
 {
-    MidiInput* existing = findInput(name);
+    juce::MidiInput* existing = findInput(name);
     if (existing == nullptr) {
         // should only get here if they're deselecting something
         // from the devices panel that we couldn't open anyway due to conflicts
@@ -317,7 +314,7 @@ void MidiManager::closeInput(juce::String name)
     else {
         // this is an OwnedArray so it will delete it
         inputDevices.removeObject(existing);
-        monitorMessage("Input closed: " + name);
+        monitorMessage("Closed input " + name);
     }
 }
     
@@ -398,7 +395,7 @@ void MidiManager::openOutputSync(juce::String name)
     openOutputInternal(name, true);
 }
 
-void MidiManager:;closeOutputSync(juce::String name)
+void MidiManager::closeOutputSync(juce::String name)
 {
     closeOutputInternal(name, true);
 }
@@ -438,12 +435,16 @@ void MidiManager::openOutputInternal(juce::String name, bool sync)
                     // since this is a unique_ptr it will delete the previous one
                     // todo: inform the monitor that we're closing the previous one
                     outputSyncDevice = std::move(dev);
+
+                    monitorMessage("Opened sync output " + outputSyncDevice->getName());
                 }
                 else {
                     if (outputDevice != nullptr)
                       monitorMessage("Closing output " + outputDevice->getName());
                       
                     outputDevice = std::move(dev);
+
+                    monitorMessage("Opened sync output " + outputDevice->getName());
                 }
             }
         }
@@ -486,7 +487,7 @@ void MidiManager::closeOutputInternal(juce::String name, bool sync)
     }
     else {
         if (outputDevice == nullptr ||
-            ouputDevice->getName() != name) {
+            outputDevice->getName() != name) {
             // trying to close something that wasn't open
             // should only happen if MidiDevicesPanel is out of sync with reality
             monitorMessage("Output device not open: " + name);

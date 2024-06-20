@@ -41,6 +41,7 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
 
     /**
      * Optional listener to receive notificiations when checkboxes are twiddled.
+     * Hey, why isn't this the same as Model::setCellCheck?
      */
     class CheckboxListener {
       public:

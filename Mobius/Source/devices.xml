@@ -8,8 +8,8 @@
     audioOutput='Speakers (Realtek(R) Audio)'
     sampleRate='48000'
     blockSize='256'
-    midiInput='Bome MIDI Translator 1,Midi Captain- MIDI ,OP-1'
-    midiOutput='Bome MIDI Translator 1'/>
+    midiInput='Midi Captain- MIDI '
+    midiInputSync='Bome MIDI Translator 1'/>
   <Machine
     hostName='Thor'
     audioDeviceType='Windows Audio'

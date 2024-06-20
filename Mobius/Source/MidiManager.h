@@ -70,9 +70,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
         virtual ~Monitor() {}
         virtual void midiMonitor(const juce::MidiMessage& message, juce::String& source) = 0;
         virtual bool midiMonitorExclusive() = 0;
-        virtual void midiMonitorOpen(juce::String name, bool input, bool sync) {}
-        virtual void midiMonitorClose(juce::String name, bool input, bool sync) {}
-        virtual void midiMonitorWarn(juce::String msg) {}
+        virtual void midiMonitorMessage(juce::String msg) {}
     };
     
     MidiManager(class Supervisor* super);
@@ -173,7 +171,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     juce::String getOutputDeviceId(juce::String name);
 
     juce::String getFirstName(juce::String csv);
-    MidiInput* findInput(juce::String name);
+    juce::MidiInput* findInput(juce::String name);
     
     void stopInputs();
     void closeInputs();
@@ -182,6 +180,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     std::unique_ptr<juce::MidiInput> openNewInput(juce::String name);
     void openOutputInternal(juce::String name, bool sync);
     void closeOutputInternal(juce::String name, bool sync);
+    void monitorMessage(juce::String msg);
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
 

@@ -152,6 +152,12 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="oteE9G" name="MidiLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/MidiLog.cpp"/>
+        <FILE id="WcTH3V" name="MidiLog.h" compile="0" resource="0" file="../Mobius/Source/ui/MidiLog.h"/>
+        <FILE id="OjtIuW" name="MidiMonitorPanel.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/MidiMonitorPanel.cpp"/>
+        <FILE id="zQtaBX" name="MidiMonitorPanel.h" compile="0" resource="0"
+              file="../Mobius/Source/ui/MidiMonitorPanel.h"/>
         <FILE id="BtwsP5" name="AlertPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/AlertPanel.cpp"/>
         <FILE id="KaH2Zx" name="AlertPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/AlertPanel.h"/>
         <FILE id="wwkrN1" name="BasePanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/BasePanel.cpp"/>
@@ -190,14 +196,10 @@
           <FILE id="Hjc4b3" name="KeyboardPanel.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/KeyboardPanel.cpp"/>
           <FILE id="QyBrJa" name="KeyboardPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/KeyboardPanel.h"/>
-          <FILE id="kR0LPd" name="LogPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/LogPanel.cpp"/>
-          <FILE id="q9zM98" name="LogPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/LogPanel.h"/>
           <FILE id="zZFAv7" name="MidiDevicesPanel.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/MidiDevicesPanel.cpp"/>
           <FILE id="wahWYn" name="MidiDevicesPanel.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/MidiDevicesPanel.h"/>
-          <FILE id="HlkSDD" name="MidiLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiLog.cpp"/>
-          <FILE id="jz58co" name="MidiLog.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiLog.h"/>
           <FILE id="OpzBcB" name="MidiPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiPanel.cpp"/>
           <FILE id="e5mhLJ" name="MidiPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiPanel.h"/>
           <FILE id="HmIkCz" name="MultiSelectDrag.cpp" compile="1" resource="0"
@@ -323,6 +325,8 @@
           <FILE id="Kg9nLA" name="HelpArea.h" compile="0" resource="0" file="../Mobius/Source/ui/common/HelpArea.h"/>
           <FILE id="a26w2Q" name="JLabel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/JLabel.cpp"/>
           <FILE id="xQBIa4" name="JLabel.h" compile="0" resource="0" file="../Mobius/Source/ui/common/JLabel.h"/>
+          <FILE id="ilQQE8" name="LogPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/LogPanel.cpp"/>
+          <FILE id="AEQT6j" name="LogPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/common/LogPanel.h"/>
           <FILE id="oYrLRu" name="Panel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/Panel.cpp"/>
           <FILE id="fQHzAb" name="Panel.h" compile="0" resource="0" file="../Mobius/Source/ui/common/Panel.h"/>
           <FILE id="CB8XTz" name="SimpleButton.cpp" compile="1" resource="0"

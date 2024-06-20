@@ -48,6 +48,14 @@ MidiDevicesPanel::MidiDevicesPanel(ConfigEditor* argEditor) :
     // place it in the ConfigPanel content panel
     content.addAndMakeVisible(mdcontent);
 
+    // this can be used in two ways, when dynamicOpen is true
+    // devices will be opened and closed as they are selected in the grid
+    // Save then simply updates the config file.  Cancel does not update
+    // the config file and reloads the starting device set.
+    // This results in more device churn but feels more natural to see
+    // the new devices being monitored immediately.
+    dynamicOpen = true;
+
     // have been keeping the same size for all ConfigPanels
     // rather than having them shrink to fit, should move this
     // to ConfigPanel or ConfigEditor
@@ -108,6 +116,11 @@ bool MidiDevicesPanel::midiMonitorExclusive()
     return true;
 }
 
+void MidiDevicesPanel::midiMonitorMessage(juce::String msg)
+{
+    log.add(msg);
+}
+
 /**
  * Called by ConfigEditor when asked to edit devices.
  */
@@ -141,10 +154,14 @@ void MidiDevicesPanel::save()
         
         Supervisor::Instance->updateDeviceConfig();
 
-        // reflect the changes in the active devices
-        MidiManager* mm = Supervisor::Instance->getMidiManager();
-        mm->openDevices();
-
+        // if dynamicOpen was on, then we don't need to reopen devices
+        // since they will have already followed the grid
+        if (!dynamicOpen) {
+            // reflect the changes in the active devices
+            MidiManager* mm = Supervisor::Instance->getMidiManager();
+            mm->openDevices();
+        }
+        
         loaded = false;
         changed = false;
     }
@@ -155,13 +172,19 @@ void MidiDevicesPanel::save()
 
 /**
  * Throw away all editing state.
- *
- * If we ever add an "Apply" button to monitor inputs as they are selected,
- * then cancel would need to restore the open devices to just those
- * that are in the DeviceConfig.
  */
 void MidiDevicesPanel::cancel()
 {
+    if (changed) {
+
+        // if dynamicOpen was on, then we were tracking changes
+        // in the grid and need to restore the original configuration
+        if (dynamicOpen) {
+            MidiManager* mm = Supervisor::Instance->getMidiManager();
+            mm->openDevices();
+        }
+    }
+        
     loaded = false;
     changed = false;
 }
@@ -214,11 +237,9 @@ void MidiDevicesPanel::tableCheckboxTouched(BasicTable* table, int row, int col,
     int colbase = (Supervisor::Instance->isPlugin() ? 4 : 2);
     bool relevant = (col >= colbase && col < colbase + 2);
 
-    bool dynamicOpen = false;
-
     if (dynamicOpen && relevant) {
         MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
-        juce::String device = mtd->getName(row);
+        juce::String device = mdt->getName(row);
         MidiManager* mm = Supervisor::Instance->getMidiManager();
         
         if (table == &inputTable) {
@@ -231,25 +252,26 @@ void MidiDevicesPanel::tableCheckboxTouched(BasicTable* table, int row, int col,
         else {
             if (col > colbase) {
                 if (state)
-                  mm->openOutputSync(name);
+                  mm->openOutputSync(device);
                 else
-                  mm->closeOutputSync(name);
+                  mm->closeOutputSync(device);
             }
             else {
                 if (state)
-                  mm->openOutput(name);
+                  mm->openOutput(device);
                 else
-                  mm->closeOutput(name);
+                  mm->closeOutput(device);
             }
         }
     }
-        
-        log.add("Input " + mdt->getName(row) + " " +
-                ((state) ? "opened" : "closed"));
-    }
-    else {
-        log.add("Output " + mdt->getName(row) + " " +
-                ((state) ? "opened" : "closed"));
+
+    // for both dynamicOpen and deferred, only allow one output
+    // device to be selected
+    if (table == &outputTable && state) {
+        // how do we control checkbox state as a side effect?
+        // can't get a handle to the checkbox component from here
+        // and the table isn't tracking model changes
+        // !! redesign this
     }
 }
 
