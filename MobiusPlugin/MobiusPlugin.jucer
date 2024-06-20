@@ -152,6 +152,10 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="Mwnc0m" name="EnvironmentPanel.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/EnvironmentPanel.cpp"/>
+        <FILE id="i5FlYK" name="EnvironmentPanel.h" compile="0" resource="0"
+              file="../Mobius/Source/ui/EnvironmentPanel.h"/>
         <FILE id="oteE9G" name="MidiLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/MidiLog.cpp"/>
         <FILE id="WcTH3V" name="MidiLog.h" compile="0" resource="0" file="../Mobius/Source/ui/MidiLog.h"/>
         <FILE id="OjtIuW" name="MidiMonitorPanel.cpp" compile="1" resource="0"

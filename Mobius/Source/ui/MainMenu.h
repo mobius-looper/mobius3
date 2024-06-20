@@ -100,6 +100,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         KeyBindings,
         MidiBindings,
         MidiMonitor,
+        Environment,
         About,
 
         // test

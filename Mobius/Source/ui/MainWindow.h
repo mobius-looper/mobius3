@@ -26,6 +26,7 @@
 #include "AboutPanel.h"
 #include "AlertPanel.h"
 #include "MidiMonitorPanel.h"
+#include "EnvironmentPanel.h"
 
 #ifdef USE_FFMETERS
 #include "../ff_meters/ff_meters.h"
@@ -88,6 +89,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     AboutPanel aboutPanel;
     AlertPanel alertPanel;
     MidiMonitorPanel midiMonitor;
+    EnvironmentPanel environment;
     
 #ifdef USE_FFMETERS
     foleys::LevelMeter levelMeter;

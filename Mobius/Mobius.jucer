@@ -171,6 +171,10 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="fomy04" name="EnvironmentPanel.cpp" compile="1" resource="0"
+              file="Source/ui/EnvironmentPanel.cpp"/>
+        <FILE id="mGPafm" name="EnvironmentPanel.h" compile="0" resource="0"
+              file="Source/ui/EnvironmentPanel.h"/>
         <FILE id="n0rzUS" name="MidiLog.cpp" compile="1" resource="0" file="Source/ui/MidiLog.cpp"/>
         <FILE id="yWQtm2" name="MidiLog.h" compile="0" resource="0" file="Source/ui/MidiLog.h"/>
         <FILE id="lmIMa3" name="MidiMonitorPanel.cpp" compile="1" resource="0"
