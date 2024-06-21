@@ -443,16 +443,18 @@ void Supervisor::shutdown()
     }
 
     // save any changes to audio/midi device selection
-    // this one will have a dirty flag if MidiDevicePanel touched it
+    // started this with a dirty flag set as a side effect of calling
+    // the setters but in hindsight I hate it
 
     // save final state
-    // interface sucks, clean this up and get rid of the damn dirty flag?
-    audioManager.captureDeviceState();
-    
+    // MidiDevicesPanel will have updated DeviceConfig already, AudioDevicesPanel
+    // just leaves it there and expects it to be saved automatically
     DeviceConfig* devconfig = getDeviceConfig();
-    //if (devconfig->isDirty()) {
-        writeDeviceConfig(devconfig);
-        //}
+
+    if (mainComponent != nullptr)
+      audioManager.captureDeviceState(devconfig);
+    
+    writeDeviceConfig(devconfig);
 
     // Started getting a Juce leak detection on the StringArray
     // inside ScriptProperties on a Symbol when shutting down the app.
@@ -697,11 +699,8 @@ DeviceConfig* Supervisor::readDeviceConfig()
         config = new DeviceConfig();
     }
     else {
-        config = DeviceConfig::parseXml(xml);
-        if (config == nullptr) {
-            Trace(1, "Supervisor: Parse error encountered in %s", DeviceConfigFile);
-            config = new DeviceConfig();
-        }
+        config = new DeviceConfig();
+        config->parseXml(xml);
     }
 
     return config;
@@ -755,7 +754,6 @@ void Supervisor::writeDeviceConfig(DeviceConfig* config)
     if (config != nullptr) {
         juce::String xml = config->toXml();
         writeConfigFile(DeviceConfigFile, xml.toUTF8());
-        config->clearDirty();
     }
 }
 
@@ -771,7 +769,6 @@ void Supervisor::writeMobiusConfig(MobiusConfig* config)
         delete xml;
     }
 }
-
 
 /**
  * Write a UIConfig back to the file system.

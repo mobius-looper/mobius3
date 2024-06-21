@@ -7,44 +7,6 @@
  * This is still pretty hacky.
  * The AudioDeviceManager interface is weird.
  *
- */
-
-#include <JuceHeader.h>
-
-#include "util/Trace.h"
-#include "model/MobiusConfig.h"
-#include "model/DeviceConfig.h"
-
-#include "MainComponent.h"
-#include "Supervisor.h"
-
-#include "AudioManager.h"
-
-AudioManager::AudioManager(Supervisor* super)
-{
-    supervisor = super;
-}
-
-AudioManager::~AudioManager()
-{
-}
-
-/**
- * Thought for awhile we would do MIDI here too, but we're only
- * doing audio.
- */
-void AudioManager::openDevices()
-{
-    openApplicationAudio();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Application Audio Devices
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
  * The AudioDeviceManager should be in an uninitialized state.
  * Original Projecer code in MainComponent got things started
  * in the audio thread by calling setAudioChannels() in it's constructor.
@@ -81,8 +43,34 @@ void AudioManager::openDevices()
  * than it should be.  Look at the commented out Juce source after this function.
  *
  * update: see openDevicesNew which seems faster and avoids the double-open.
+ *
  */
-void AudioManager::openApplicationAudio()
+
+#include <JuceHeader.h>
+
+#include "util/Trace.h"
+#include "model/MobiusConfig.h"
+#include "model/DeviceConfig.h"
+
+#include "MainComponent.h"
+#include "Supervisor.h"
+
+#include "AudioManager.h"
+
+AudioManager::AudioManager(Supervisor* super)
+{
+    supervisor = super;
+}
+
+AudioManager::~AudioManager()
+{
+}
+
+/**
+ * Thought for awhile we would do MIDI here too, but we're only
+ * doing audio.
+ */
+void AudioManager::openDevices()
 {
     openDevicesNew();
     
@@ -121,11 +109,15 @@ void AudioManager::openDevicesNew()
     int inputChannels = config->desiredInputChannels;
     int outputChannels = config->desiredOutputChannels;
 
+    // in case we're bootstrapping an empty file, make these reasonable
+    if (inputChannels < 2) inputChannels = 2;
+    if (outputChannels < 2) outputChannels = 2;
+
     // in case you ever decide to fake up an XmlElement to pass to
     // initialize() this may work
     juce::String stupidXml = "<DEVICESETUP deviceType='ASIO'/>";
     
-    juce::String deviceType = machine->getAudioDeviceType();
+    juce::String deviceType = machine->audioDeviceType;
 
     // unclear whether we should always do this or just let it default
     // if it isn't ASIO.  On Mac at least there is really only one option
@@ -143,17 +135,19 @@ void AudioManager::openDevicesNew()
     // hooter something, Juce stopped opening the RME, and even Live
     // hung at startup.  Do not let this set an empty name which
     // results in "<<none>>" in the Juce device panel
-    juce::String name = machine->getAudioInput();
+    juce::String name = machine->audioInput;
     if (name.length() > 0)
       setup.inputDeviceName = name;
         
-    name = machine->getAudioOutput();
+    name = machine->audioOutput;
     if (name.length() > 0)
       setup.outputDeviceName = name;
 
     if (deviceType != "ASIO") {
-        setup.sampleRate = machine->getSampleRate();
-        setup.bufferSize = machine->getBlockSize();
+        if (machine->sampleRate > 0)
+          setup.sampleRate = machine->sampleRate;
+        if (machine->blockSize > 0)
+          setup.bufferSize = machine->blockSize;
     }
     else {
         // for ASIO, Juce can control the sample rate, but oddly not the
@@ -211,7 +205,7 @@ void AudioManager::openDevicesNew()
 /**
  * Capture the ending device state in the DeviceConfig so it can be saved.
  */
-void AudioManager::captureDeviceState()
+void AudioManager::captureDeviceState(DeviceConfig* config)
 {
     juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
     juce::AudioDeviceManager::AudioDeviceSetup setup = deviceManager->getAudioDeviceSetup();
@@ -227,29 +221,30 @@ void AudioManager::captureDeviceState()
         Trace(2, "Block size: %d\n", (int)(setup.bufferSize));
     }
     
-    DeviceConfig* config = supervisor->getDeviceConfig();
     MachineConfig* machine = config->getMachineConfig();
-    machine->setAudioDeviceType(deviceManager->getCurrentAudioDeviceType());
-    machine->setAudioInput(setup.inputDeviceName);
-    machine->setAudioOutput(setup.outputDeviceName);
-    machine->setSampleRate((int)(setup.sampleRate));
-    machine->setBlockSize(setup.bufferSize);
+    machine->audioDeviceType = deviceManager->getCurrentAudioDeviceType();
+    machine->audioInput = setup.inputDeviceName;
+    machine->audioOutput = setup.outputDeviceName;
+    machine->sampleRate = (int)(setup.sampleRate);
+    machine->blockSize = (int)(setup.bufferSize);
     machine->inputChannels = setup.inputChannels.toString(2);
     machine->outputChannels = setup.outputChannels.toString(2);
 
     // experimented with this too, it seems to get at least some of it
     // but you can't easily embed this XML inside other XML without
     // CDATA sections and I don't want to mess with that
-
-    Trace(2, "createStateXml\n");
-    // this maddingly returns nullptr unless you made a change at runtime
-    // otherwise it defaulted and wants you to default again I guess
-    //juce::String error = deviceManager->setAudioDeviceSetup(setup, true);
-    std::unique_ptr<juce::XmlElement> xml = deviceManager->createStateXml();
-    if (xml != nullptr) {
-        juce::String xmlstring = xml->toString();
-        juce::File file = supervisor->getRoot().getChildFile("audioState.xml");
-        file.replaceWithText(xmlstring);
+    bool saveAudioXml = false;
+    if (saveAudioXml) {
+        Trace(2, "createStateXml\n");
+        // this maddingly returns nullptr unless you made a change at runtime
+        // otherwise it defaulted and wants you to default again I guess
+        //juce::String error = deviceManager->setAudioDeviceSetup(setup, true);
+        std::unique_ptr<juce::XmlElement> xml = deviceManager->createStateXml();
+        if (xml != nullptr) {
+            juce::String xmlstring = xml->toString();
+            juce::File file = supervisor->getRoot().getChildFile("audioState.xml");
+            file.replaceWithText(xmlstring);
+        }
     }
 }
 
@@ -275,6 +270,10 @@ void AudioManager::openDevicesOld()
 {
     juce::AudioAppComponent* mainComponent = supervisor->getAudioAppComponent();
     juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
+    DeviceConfig* config = supervisor->getDeviceConfig();
+    MachineConfig* machine = config->getMachineConfig();
+    int inputChannels = config->desiredInputChannels;
+    int outputChannels = config->desiredOutputChannels;
     
     Trace(2, "AudioManager: Initial device state");
     traceDeviceSetup();
@@ -297,13 +296,13 @@ void AudioManager::openDevicesOld()
     }
     
     // remember what we did
-    juce::AudioDeviceManager::AudioDeviceSetup setup = deviceManager->getAudioDeviceSetup();
-    MachineConfig* machine = config->getMachineConfig();
-    machine->setAudioDeviceType(deviceManager->getCurrentAudioDeviceType());
-    machine->setAudioInput(setup.inputDeviceName);
-    machine->setAudioOutput(setup.outputDeviceName);
-    machine->setSampleRate((int)(setup.sampleRate));
-    machine->setBlockSize(setup.bufferSize);
+    // not necessary if we save the DeviceConfig every time on shutdown
+    setup = deviceManager->getAudioDeviceSetup();
+    machine->audioDeviceType = deviceManager->getCurrentAudioDeviceType();
+    machine->audioInput = setup.inputDeviceName;
+    machine->audioOutput = setup.outputDeviceName;
+    machine->sampleRate = (int)(setup.sampleRate);
+    machine->blockSize = (int)(setup.bufferSize);
     machine->inputChannels = setup.inputChannels.toString(2);
     machine->outputChannels = setup.outputChannels.toString(2);
 }
@@ -311,12 +310,16 @@ void AudioManager::openDevicesOld()
 /**
  * First attempt at supporting ASIO.
  * Like openDevicesOld it calls setAudioChannels first, then corrects
- * things later which works but has a delay.
+ * things later which works but has a delay when it closes the starting
+ * device and opens ASIO.
  */
-void AudioManager::openDevicesResotre()
+void AudioManager::openDevicesRestore()
 {
     juce::AudioAppComponent* mainComponent = supervisor->getAudioAppComponent();
     juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
+    DeviceConfig* config = supervisor->getDeviceConfig();
+    int inputChannels = config->desiredInputChannels;
+    int outputChannels = config->desiredOutputChannels;
 
     Trace(2, "AudioManager: Starting audio thread");
     // start with this that openes the defeault audio device without any
@@ -330,7 +333,7 @@ void AudioManager::openDevicesResotre()
 
     // todo: only on Windows change device type
     MachineConfig* machine = config->getMachineConfig();
-    juce::String deviceType = machine->getAudioDeviceType();
+    juce::String deviceType = machine->audioDeviceType;
     if (deviceType != "Windows Audio") {
         Trace(2, "AudioManager: Setting audio device type to %s\n", deviceType.toUTF8());
         // second arg is treatAsChosenDevice whatever the fuck that means
@@ -344,11 +347,11 @@ void AudioManager::openDevicesResotre()
     // hooter something, Juce stopped opening the RME, and even Live
     // hung at startup.  Do not let this set an empty name which
     // results in "<<none>>" in the Juce device panel
-    juce::String name = machine->getAudioInput();
+    juce::String name = machine->audioInput;
     if (name.length() > 0)
       setup.inputDeviceName = name;
         
-    name = machine->getAudioOutput();
+    name = machine->audioOutput;
     if (name.length() > 0)
       setup.outputDeviceName = name;
         
@@ -393,8 +396,13 @@ void AudioManager::openDevicesResotre()
  * I don't remember why this was abandoned, at the time I was mostly
  * focused on getting the block size changed and this didn't do it.
  */
-void AudioManager::openDevicesBroken1()
+void AudioManager::openDevicesBroken()
 {
+    juce::AudioAppComponent* mainComponent = supervisor->getAudioAppComponent();
+    juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
+    DeviceConfig* config = supervisor->getDeviceConfig();
+    int inputChannels = config->desiredInputChannels;
+    int outputChannels = config->desiredOutputChannels;
     
     Trace(2, "AudioManager: Initial device state");
     traceDeviceSetup();

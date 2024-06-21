@@ -1,31 +1,14 @@
-<DeviceConfig
-  inputChannels='2'
-  outputChannels='2'>
-  <Machine
-    hostName='Loki'
-    audioDeviceType='Windows Audio'
-    audioInput='Microphone Array (Intel Smart Sound Technology for Digital Microphones)'
-    audioOutput='Speakers (Realtek(R) Audio)'
-    sampleRate='48000'
-    blockSize='256'
-    midiInput='Midi Captain- MIDI '
-    midiInputSync='Bome MIDI Translator 1'/>
-  <Machine
-    hostName='Thor'
-    audioDeviceType='ASIO'
-    audioInput='ASIO Fireface USB'
-    audioOutput='ASIO Fireface USB'
-    inputChannels='11'
-    outputChannels='11'
-    sampleRate='44100'
-    blockSize='256'
-    midiInput='Arturia MiniLab mkII,HST 1,HST 2'
-    midiOutput='Bome MIDI Translator 1'/>
-  <Machine
-    hostName='Frigg'
-    audioDeviceType='CoreAudio'
-    audioInput='MacBook Pro Microphone'
-    audioOutput='MacBook Pro Speakers'
-    sampleRate='48000'
-    blockSize='256'/>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<DeviceConfig inputChannels="2" outputChannels="2">
+  <Machine hostName="Loki" audioDeviceType="Windows Audio" audioInput="Microphone Array (Intel&#174; Smart Sound Technology for Digital Microphones)"
+           inputChannels="11" audioOutput="Speakers (Realtek(R) Audio)"
+           outputChannels="11" sampleRate="48000" blockSize="480"/>
+  <Machine hostName="Thor" audioDeviceType="ASIO" audioInput="ASIO Fireface USB"
+           inputChannels="11" audioOutput="ASIO Fireface USB" outputChannels="11"
+           sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2"
+           midiOutput="Bome MIDI Translator 1"/>
+  <Machine hostName="Frigg" audioDeviceType="CoreAudio" audioInput="MacBook Pro Microphone"
+           inputChannels="" audioOutput="MacBook Pro Speakers" outputChannels=""
+           sampleRate="48000" blockSize="256"/>
 </DeviceConfig>

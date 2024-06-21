@@ -16,16 +16,18 @@ class AudioManager
     ~AudioManager();
 
     void openDevices();
+    void captureDeviceState(class DeviceConfig* config);
     
     void traceDeviceSetup();
-
-    void captureDeviceState();
     
   private:
 
     class Supervisor* supervisor;
 
-    void openApplicationAudio();
     void openDevicesNew();
+    
+    void openDevicesOld();
+    void openDevicesRestore();
+    void openDevicesBroken();
 
 };

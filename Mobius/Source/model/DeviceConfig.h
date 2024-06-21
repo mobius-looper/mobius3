@@ -26,27 +26,19 @@ class MachineConfig
     MachineConfig() {}
     ~MachineConfig() {}
 
-    juce::String getHostName();
-    void setHostName(juce::String name);
-    
-    juce::String getAudioDeviceType();
-    void setAudioDeviceType(juce::String type);
-    
-    juce::String getAudioInput();
-    void setAudioInput(juce::String name);
-    
-    juce::String getAudioOutput();
-    void setAudioOutput(juce::String name);
-
-    // stop using accessors for the device names and such
-    // and just do it all this way
+    // this is what the opened device actually used
+    // usually the same as desired
     juce::String inputChannels;
     juce::String outputChannels;
     
-    // hating the dirty flag and endless accessors
-    // these are the new ones, start doing it this way
-    // fuck, this is ugly, reconsider using a table model for this
-    // like the UI
+    juce::String hostName;
+    juce::String audioDeviceType;
+    juce::String audioInput;
+    juce::String audioOutput;
+
+    int sampleRate = 0;
+    int blockSize = 0;
+
     juce::String midiInput;
     juce::String midiInputSync;
     juce::String midiOutput;
@@ -57,26 +49,7 @@ class MachineConfig
     juce::String pluginMidiOutput;
     juce::String pluginMidiOutputSync;
     
-    int getSampleRate();
-    void setSampleRate(int rate);
-    
-    int getBlockSize();
-    void setBlockSize(int size);
-    
-    bool isDirty();
-    void clearDirty();
-
   private:
-
-    juce::String hostName;
-    juce::String audioDeviceType;
-    juce::String audioInput;
-    juce::String audioOutput;
-
-    int sampleRate = 0;
-    int blockSize = 0;
-    
-    bool dirty = false;
 
 };
 
@@ -96,17 +69,14 @@ class DeviceConfig
     MachineConfig* getMachineConfig();
     MachineConfig* getMachineConfig(juce::String name);
 
-    bool isDirty();
-    void clearDirty();
-    
     juce::String toXml();
-    static DeviceConfig* parseXml(juce::String xml);
+    void parseXml(juce::String xml);
 
   private:
 
     juce::OwnedArray<MachineConfig> machines;
-    bool dirty = false;
 
-    static void parseXml(class XmlElement* e, DeviceConfig* c);
-        
+    void addAttribute(juce::XmlElement* el, const char* name, juce::String value);
+    void xmlError(const char* msg, juce::String arg);
+
 };
