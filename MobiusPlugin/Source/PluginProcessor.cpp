@@ -121,6 +121,32 @@
 
 //==============================================================================
 
+// notes on PreferredChannelConfigurations
+// this has been defined in Projucer so #ifndef conditionals in the generated
+// code will be false.  The bus configuration seems to be handled deep in
+// the library code in juce_audio_plugin_client_VST3 which takes the string from Projecer
+// and uses it as an array initializer
+// {4,4} results in 4 IO pins, but it's unclear what the AudioChannelSet is
+// there is a "discrete" AudioChannelSet which is probably what we want here, or at least
+// that's how old Mobius did it in VST2.  In VST3, it may make sense to define each
+// stereo pair as seperate busses of sterro channels so they can be given names like
+// Port1, Port2, etc. that the host can display, but will need to do a lot of experimentation
+// to see which hosts actually do anything with that
+//
+// There doesn't seem to be a way to change the BusesProperties after construction,
+// or at least the tutorial says you're not supposed to and that the host can request different
+// layouts that we need to approve or not
+// The Projecer string accepts multiple array initializers, so some comments indicate that
+// certain hosts may not work well with large IO channels so we could have both {2,2}{16,16}
+// as options.  To make this be dynamically configurable, you take the string out of Projecer
+// and then use the AudioProcessor constructor to pass a BussesProperties object.  To allow that
+// to be configured in mobius.xml we would have to read the config file during the construction
+// of everything, which I think we're allowed to do but RootLocator will not have been run yet
+// so it would be a somewhat complicated set of explorations that have to happen during construction.
+// for now, relying on Projecer to give the plugin a reasonably large set of pins, 16 should be good
+// for most except that guy that wanted 32 tracks which would be 64 freaking pins.
+// Definitely don't want that many in the usual case.
+
 MobiusPluginAudioProcessor::MobiusPluginAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()

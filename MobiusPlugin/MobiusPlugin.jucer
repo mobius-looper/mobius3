@@ -6,12 +6,19 @@
               pluginVSTCategory="kPlugCategEffect" companyWebsite="www.circularlabs.com"
               bundleIdentifier="com.circularlabs.Mobius" pluginName="Mobius"
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"
-              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{2,2}"
+              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{4,4}"
               pluginAUExportPrefix="MobiusAU" lv2Uri="www.circularlabs.com/plugins/Mobiius"
               headerPath="../../../Mobius/Source&#10;" companyName="Circular Labs"
               companyEmail="jeff@circularlabs.com" pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="nXiRiv" name="JuceAudioStreamNew.cpp" compile="1" resource="0"
+            file="../Mobius/Source/JuceAudioStreamNew.cpp"/>
+      <FILE id="z0zPoe" name="JuceAudioStreamNew.h" compile="0" resource="0"
+            file="../Mobius/Source/JuceAudioStreamNew.h"/>
+      <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
+            file="../Mobius/Source/PortAuthority.cpp"/>
+      <FILE id="OcWY51" name="PortAuthority.h" compile="0" resource="0" file="../Mobius/Source/PortAuthority.h"/>
       <FILE id="vk5hIg" name="Symbolizer.cpp" compile="1" resource="0" file="../Mobius/Source/Symbolizer.cpp"/>
       <FILE id="ONKjCt" name="Symbolizer.h" compile="0" resource="0" file="../Mobius/Source/Symbolizer.h"/>
       <GROUP id="{3B7BFE95-950A-511A-F815-8A2E6614CEB5}" name="util">
