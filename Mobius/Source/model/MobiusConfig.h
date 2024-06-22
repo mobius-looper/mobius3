@@ -210,12 +210,20 @@ class MobiusConfig {
     MobiusConfig();
     MobiusConfig(bool dflt);
     ~MobiusConfig();
+
+    int getVersion() {
+        return mVersion;
+    }
+
+    void setVersion(int v) {
+        mVersion = v;
+    }
     
     // !! wtf does this do?
 	void generateNames();
 	
     const char* getError();
-    MobiusConfig* clone();
+    //MobiusConfig* clone();
 
     bool isDefault();
     void setHistory(MobiusConfig* config);
@@ -389,6 +397,7 @@ class MobiusConfig {
     //void numberThings(class Bindable* things);
     //int countThings(class Bindable* things);
 
+    int mVersion = 1;
     char mError[256];
     bool mDefault;
     MobiusConfig* mHistory;

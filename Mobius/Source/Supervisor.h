@@ -23,6 +23,7 @@
 #include "mobius/MobiusMidiTransport.h"
 
 #include "JuceAudioStream.h"
+#include "JuceAudioStreamNew.h"
 
 #include "KeyTracker.h"
 #include "MainThread.h"
@@ -266,6 +267,9 @@ class Supervisor : public MobiusContainer, public MobiusListener
     juce::AudioProcessor* audioProcessor = nullptr;
 
     JuceAudioStream audioStream {this};
+    JuceAudioStreamNew audioStreamNew {this};
+    bool useNewStream = false;
+    
     class MobiusAudioListener* audioListener = nullptr;
 
     // track keyboard transitions
@@ -346,5 +350,9 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // Listener notification
     void notifyAlertListeners(juce::String msg);
     void notifyTimeListeners();
+
+    void upgrade(class MobiusConfig* config);
+    int upgradePort(int number);
+
     
 };

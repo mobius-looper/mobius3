@@ -73,10 +73,10 @@ class PortAuthority
 {
   public:
 
-    PortAuthority(class Supervisor* super);
+    PortAuthority();
     ~PortAuthority();
 
-    void configure(juce::AudioProcessor* processor);
+    void configure(class Supervisor* super);
 
     /**
      * Prepare the input and output buffers for each port at the
@@ -103,8 +103,6 @@ class PortAuthority
 
   private:
 
-    Supervisor* supervisor;
-    
     // keep these in the heap since they are large and configurable
     juce::OwnedArray<PortBuffer> ports;
 
@@ -128,7 +126,7 @@ class PortAuthority
     int outputPortHostRangeErrors = 0;
     
     void resetPorts();
-    void clearBuffer(float* buffer, int frames);
+    void clearInterleavedBuffer(float* buffer, int frames = 0);
     void interleaveInput(int port, float* result);
 
 };

@@ -2963,8 +2963,9 @@ UIParameterAudioInputPortClass::UIParameterAudioInputPortClass()
     displayName = "Audio Input Port";
     scope = ScopeTrack;
     type = TypeInt;
-    low = 1;
-    high = 64;
+    low = 0;
+    high = 31;
+    displayBase = 1;
     noBinding = true;
 }
 void UIParameterAudioInputPortClass::getValue(void* obj, ExValue* value)
@@ -2993,8 +2994,9 @@ UIParameterAudioOutputPortClass::UIParameterAudioOutputPortClass()
     displayName = "Audio Output Port";
     scope = ScopeTrack;
     type = TypeInt;
-    low = 1;
-    high = 64;
+    low = 0;
+    high = 31;
+    displayBase = 1;
     noBinding = true;
 }
 void UIParameterAudioOutputPortClass::getValue(void* obj, ExValue* value)
@@ -3023,8 +3025,9 @@ UIParameterPluginInputPortClass::UIParameterPluginInputPortClass()
     displayName = "Plugin Input Port";
     scope = ScopeTrack;
     type = TypeInt;
-    low = 1;
-    high = 64;
+    low = 0;
+    high = 31;
+    displayBase = 1;
     noBinding = true;
 }
 void UIParameterPluginInputPortClass::getValue(void* obj, ExValue* value)
@@ -3053,8 +3056,9 @@ UIParameterPluginOutputPortClass::UIParameterPluginOutputPortClass()
     displayName = "Plugin Output Port";
     scope = ScopeTrack;
     type = TypeInt;
-    low = 1;
-    high = 64;
+    low = 0;
+    high = 31;
+    displayBase = 1;
     noBinding = true;
 }
 void UIParameterPluginOutputPortClass::getValue(void* obj, ExValue* value)

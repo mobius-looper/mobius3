@@ -380,6 +380,7 @@ void XmlRenderer::parseStructure(XmlElement* e, Structure* structure)
 #define EL_PRESET "Preset"
 #define EL_SETUP "Setup"
 
+#define ATT_VERSION "version"
 #define ATT_LANGUAGE "language"
 #define ATT_SETUP "setup"
 #define ATT_MIDI_CONFIG "midiConfig"
@@ -419,6 +420,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 {
 	b->addOpenStartTag(EL_MOBIUS_CONFIG);
 	b->setAttributeNewline(true);
+
+    b->addAttribute(ATT_VERSION, c->getVersion());
 
     render(b, UIParameterQuickSave, c->getQuickSave());
     //render(b, UIParameterCustomMessageFile, c->getCustomMessageFile());
@@ -509,6 +512,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 
 void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 {
+    c->setVersion(e->getIntAttribute(ATT_VERSION));
+    
     // save this for upgrade
     // this is part of OldBinding, get rid of this?
     // c->setSelectedMidiConfig(e->getAttribute(ATT_MIDI_CONFIG));

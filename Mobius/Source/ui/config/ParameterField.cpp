@@ -90,7 +90,10 @@ void ParameterField::loadValue(void *obj)
         else {
             switch (parameter->type) {
                 case TypeInt: {
-                    newValue = ev.getInt();
+                    int ival = ev.getInt();
+                    if (parameter->displayBase > 0)
+                      ival += parameter->displayBase;
+                    newValue = ival;
                 }
                     break;
                 case TypeBool: {
@@ -149,7 +152,13 @@ void ParameterField::saveValue(void *obj)
         else {
             switch (parameter->type) {
                 case TypeInt: {
-                    ev.setInt(getIntValue());
+                    int curValue = getIntValue();
+                    if (parameter->displayBase > 0) {
+                        curValue -= (parameter->displayBase);
+                        // if they force edited it out of range, limit it
+                        if (curValue < 0) curValue = 0;
+                    }
+                    ev.setInt(curValue);
                 }
                     break;
                 case TypeBool: {

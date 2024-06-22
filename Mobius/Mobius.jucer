@@ -7,6 +7,10 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="m7UWlK" name="JuceAudioStreamNew.cpp" compile="1" resource="0"
+            file="Source/JuceAudioStreamNew.cpp"/>
+      <FILE id="RfTAL5" name="JuceAudioStreamNew.h" compile="0" resource="0"
+            file="Source/JuceAudioStreamNew.h"/>
       <FILE id="FvmX3i" name="PortAuthority.cpp" compile="1" resource="0"
             file="Source/PortAuthority.cpp"/>
       <FILE id="NaAOgB" name="PortAuthority.h" compile="0" resource="0" file="Source/PortAuthority.h"/>

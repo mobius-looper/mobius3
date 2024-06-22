@@ -276,6 +276,16 @@ bool Supervisor::start()
     
     meter("Mobius");
 
+    // let this initialize before we start the audio device
+    // and blocks start comming in
+    // also before Mobius so it registers the block listener with
+    // the right one
+    // !! revisit this, for plugins we don't control when blocks start
+    // so it needs to be in a quiet state immediately
+    useNewStream = true;
+    audioStream.configure();
+    audioStreamNew.configure();
+    
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
     // this used to be a Singleton that was released with
@@ -307,6 +317,7 @@ bool Supervisor::start()
     
     meter("Devices");
 
+    
     // initialize the audio device last if we're standalone after
     // everything is wired together and events can come in safely
     if (mainComponent != nullptr) {
@@ -417,7 +428,11 @@ void Supervisor::shutdown()
     // in an audio thread callback at this very moment,
     // if you see crashes on shutdown look here
     audioStream.setAudioListener(nullptr);
-    audioStream.traceFinalStatistics();
+    audioStreamNew.setAudioListener(nullptr);
+    if (useNewStream)
+      audioStreamNew.traceFinalStatistics();
+    else
+      audioStream.traceFinalStatistics();
     
     binderator.stop();
     midiRealizer.shutdown();
@@ -804,9 +819,41 @@ MobiusConfig* Supervisor::getMobiusConfig()
             // bootstrap one so we don't have to keep checking
             neu = new MobiusConfig();
         }
+        
+        upgrade(neu);
+        
         mobiusConfig.reset(neu);
     }
     return mobiusConfig.get();
+}
+
+/**
+ * Kludge to adjust port numbers which were being incorrectly saved 1 based rather
+ * than zero based.  Unfortunately this means imported Setups will have to be imported again.
+ */
+void Supervisor::upgrade(MobiusConfig* config)
+{
+    if (config->getVersion() < 1) {
+        for (Setup* s = config->getSetups() ; s != nullptr ; s = s->getNextSetup()) {
+            // todo: only do this for the ones we know weren't upgraded?
+            for (SetupTrack* t = s->getTracks() ; t != nullptr ; t = t->getNext()) {
+                t->setAudioInputPort(upgradePort(t->getAudioInputPort()));
+                t->setAudioOutputPort(upgradePort(t->getAudioOutputPort()));
+                t->setPluginInputPort(upgradePort(t->getPluginInputPort()));
+                t->setPluginOutputPort(upgradePort(t->getPluginOutputPort()));
+            }
+        }
+        config->setVersion(1);
+    }
+}
+
+int Supervisor::upgradePort(int number)
+{
+    // if it's already zero then it has either been upgraded or it hasn't passed
+    // through the UI yet
+    if (number > 0)
+      number--;
+    return number;
 }
 
 /**
@@ -1018,12 +1065,18 @@ bool Supervisor::isPlugin()
         
 int Supervisor::getSampleRate()
 {
-    return audioStream.getSampleRate();
+    if (useNewStream)
+      return audioStreamNew.getSampleRate();
+    else
+      return audioStream.getSampleRate();
 }
 
 int Supervisor::getBlockSize()
 {
-    return audioStream.getBlockSize();
+    if (useNewStream)
+      return audioStreamNew.getBlockSize();
+    else
+      return audioStream.getBlockSize();
 }
 
 int Supervisor::getMillisecondCounter()
@@ -1098,7 +1151,10 @@ void Supervisor::midiSend(class MidiEvent* event)
 void Supervisor::setAudioListener(MobiusAudioListener* l)
 {
     audioListener = l;
-    audioStream.setAudioListener(l);
+    if (useNewStream)
+      audioStreamNew.setAudioListener(l);
+    else
+      audioStream.setAudioListener(l);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1553,34 +1609,52 @@ void Supervisor::menuLoadSamples()
 
 void Supervisor::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    audioStream.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    if (useNewStream)
+      audioStreamNew.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    else
+      audioStream.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void Supervisor::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    audioStream.getNextAudioBlock(bufferToFill);
+    if (useNewStream)
+      audioStreamNew.getNextAudioBlock(bufferToFill);
+    else
+      audioStream.getNextAudioBlock(bufferToFill);
 }
 
 void Supervisor::releaseResources()
 {
-    audioStream.releaseResources();
+    if (useNewStream)
+      audioStreamNew.releaseResources();
+    else
+      audioStream.releaseResources();
 }
 
 // AudioProcessor (plugin)
 
 void Supervisor::prepareToPlayPlugin(double sampleRate, int samplesPerBlock)
 {
-    audioStream.prepareToPlayPlugin(sampleRate, samplesPerBlock);
+    if (useNewStream)
+      audioStreamNew.prepareToPlayPlugin(sampleRate, samplesPerBlock);
+    else
+      audioStream.prepareToPlayPlugin(sampleRate, samplesPerBlock);
 }
 
 void Supervisor::releaseResourcesPlugin()
 {
-    audioStream.releaseResourcesPlugin();
+    if (useNewStream)
+      audioStreamNew.releaseResourcesPlugin();
+    else
+      audioStream.releaseResourcesPlugin();
 }
 
 void Supervisor::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
-    audioStream.processBlockPlugin(buffer, midi);
+    if (useNewStream)
+      audioStreamNew.processBlockPlugin(buffer, midi);
+    else
+      audioStream.processBlockPlugin(buffer, midi);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1622,7 +1696,11 @@ bool Supervisor::isTestMode()
  */
 MobiusAudioListener* Supervisor::overrideAudioListener(MobiusAudioListener* l)
 {
-    audioStream.setAudioListener(l);
+    if (useNewStream)
+      audioStreamNew.setAudioListener(l);
+    else
+      audioStream.setAudioListener(l);
+
     return audioListener;
 }
 
@@ -1638,7 +1716,11 @@ MobiusListener* Supervisor::overrideMobiusListener(MobiusListener* l)
 
 void Supervisor::cancelListenerOverrides()
 {
-    audioStream.setAudioListener(audioListener);
+    if (useNewStream)
+      audioStreamNew.setAudioListener(audioListener);
+    else
+      audioStream.setAudioListener(audioListener);
+
     mobius->setListener(this);
 }
 

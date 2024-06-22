@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "model/MobiusConfig.h"
+#include "Supervisor.h"
 #include "PortAuthority.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -14,9 +16,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-PortAuthority::PortAuthority(Supervisor* s)
+PortAuthority::PortAuthority()
 {
-    supervisor = s;
 }
 
 PortAuthority::~PortAuthority()
@@ -30,9 +31,14 @@ PortAuthority::~PortAuthority()
  * because I don't have "side chains" or "aux busses".   Should explore
  * that though.
  */
-void PortAuthority::configure(juce::AudioProcessor* processor)
+void PortAuthority::configure(Supervisor* super)
 {
+    juce::AudioProcessor* processor = super->getAudioProcessor();
+    
     if (processor != nullptr) {
+        // we're a plugin
+        isPlugin = true;
+        
         // docs: This method will return the total number of input channels
         // by accumulating the number of channels on each input bus
         // the number of channels of the buffer passed to your processBlock
@@ -42,10 +48,29 @@ void PortAuthority::configure(juce::AudioProcessor* processor)
         // jsl - can this change at runtime, or is it fixed at startup?
         pluginInputChannels = processor->getTotalNumInputChannels();
         pluginOutputChannels = processor->getTotalNumOutputChannels();
-        isPlugin = true;
     }
     else {
         // we're standalone, pass in what?
+    }
+
+    int maxPorts = 0;
+    if (isPlugin) {
+        // this was configurable as "pins" which were then grouped
+        // into stero pairs.  Should just call these ports since we don't support
+        // mono channels anywhere
+        MobiusConfig* config = super->getMobiusConfig();
+        int pins = config->getPluginPins();
+        maxPorts = pins / 2;
+    }
+    else {
+        // should be getting this from MobiusConfig but it was
+        // always hard coded to 16
+        maxPorts = 16;
+    }
+    
+    for (int i = 0 ; i < maxPorts ; i++) {
+        PortBuffer* pb = new PortBuffer();
+        ports.add(pb);
     }
 }
 
@@ -258,8 +283,8 @@ void PortAuthority::interleaveInput(int port, float* result)
             
             int sampleIndex = 0;
             for (int i = 0 ; i < blockSize ; i++) {
-                resultBuffer[sampleIndex] = leftChannel[i];
-                resultBuffer[sampleIndex+1] = rightChannel[i];
+                result[sampleIndex] = leftChannel[i];
+                result[sampleIndex+1] = rightChannel[i];
                 sampleIndex += 2;
             }
         }
@@ -308,7 +333,11 @@ void PortAuthority::commit()
             if (srcSamples == nullptr) {
                 // we either don't have a port for this output channel or
                 // the engine decided not to put anything into it
-                clearJuceBuffer(destSamples, blockSize);
+                // hmm, I'd use memset here but the "auto" shit makes it unclear
+                // how large this is, can you do sizeof(*destSamples) ?
+                for (int i = 0 ; i < blockSize ; i++) {
+                    destSamples[i] = 0.0f;
+                }
             }
             else {
                 int srcOffset = 0;

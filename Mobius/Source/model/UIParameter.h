@@ -117,6 +117,13 @@ class UIParameter : public SystemConstant
     int high = 0;
 
     /**
+     * for TypeInt, the base value to display rather than the low value.
+     * This is only used for ports where the low value starts from zero but
+     * we want to display them starting from 1.
+     */
+    int displayBase = 0;
+
+    /**
      * For TypeInt, a few parameters may have a default value other
      * than zer.  Typically this will be the upper end of a range
      * or the center.

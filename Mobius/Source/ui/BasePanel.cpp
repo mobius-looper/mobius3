@@ -95,7 +95,7 @@ void BasePanel::close()
 
 void BasePanel::showing()
 {
-    JuceUtil::dumpComponent(this);
+    //JuceUtil::dumpComponent(this);
 }
 
 void BasePanel::hiding()

@@ -584,10 +584,10 @@
     <Parameter name='syncSource' values='default,none,track,out,host,midi' />
     <Parameter name='trackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
                values='default,subcycle,cycle,loop' />
-    <Parameter name='audioInputPort' low='1' high='64' options='noBinding'/>
-    <Parameter name='audioOutputPort' low='1' high='64' options='noBinding'/>
-    <Parameter name='pluginInputPort' low='1' high='64' options='noBinding'/>
-    <Parameter name='pluginOutputPort' low='1' high='64' options='noBinding'/>
+    <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+    <Parameter name='audioOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
+    <Parameter name='pluginInputPort' low='0' high='31' displayBase='1'options='noBinding'/>
+    <Parameter name='pluginOutputPort' low='0' high='31' displayBase='1' options='noBinding'/>
 
     <!-- special catagory of parameters availalbe for runtime bindings, but
          not in the configuration files, no get/set code will be generated
