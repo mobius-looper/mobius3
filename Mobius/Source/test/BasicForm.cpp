@@ -13,6 +13,15 @@ BasicForm::BasicForm()
 {
 }
 
+/**
+ * Used in a few cases, like forms directly in a BasicTabs
+ * to give it some air between the tab and the start of the form.
+ */
+void BasicForm::setTopInset(int size)
+{
+    topInset = size;
+}
+
 void BasicForm::setLabelCharWidth(int chars)
 {
     labelCharWidth = chars;
@@ -31,6 +40,9 @@ void BasicForm::add(BasicInput* field, juce::Label::Label::Listener* listener)
     if (labelCharWidth)
       field->setLabelCharWidth(labelCharWidth);
 
+    // looks better?
+    field->setLabelRightJustify(true);
+
     if (labelColorOverride)
       field->setLabelColor(labelColor);
     
@@ -42,7 +54,10 @@ void BasicForm::add(BasicInput* field, juce::Label::Label::Listener* listener)
     int newWidth = getWidth();
     if (field->getWidth() > newWidth)
       newWidth = field->getWidth();
-    int newHeight = getHeight() + field->getHeight();
+
+    int startHeight = getHeight();
+    if (startHeight == 0) startHeight = topInset;
+    int newHeight = startHeight + field->getHeight();
     setSize(newWidth, newHeight);
 }
 
@@ -54,7 +69,7 @@ void BasicForm::resized()
 {
     // int fieldHeight = getHeight() / fields.size();
     int fieldHeight = 20;
-    int fieldTop = 0;
+    int fieldTop = topInset;
     for (auto field : fields) {
         field->setBounds(0, fieldTop, getWidth(), fieldHeight);
         fieldTop += fieldHeight;

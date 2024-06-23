@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig activeButtonSet="Default" activeLayout="Default">
+<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
+          activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
     <Element name="BeatersElement" x="514" y="132" width="185" height="37"/>
@@ -20,6 +21,7 @@
       <Element name="loopStack"/>
       <Element name="output"/>
       <Element name="outputMeter"/>
+      <Element name="inputMeter"/>
       <Element name="loopMeter" disabled="1"/>
     </Strip>
     <Strip name="Floating">
@@ -30,7 +32,7 @@
       <Element name="altFeedback" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="activePreset,activeLayout,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -111,6 +113,7 @@
     <Button action="SamplePlay" arguments="1"/>
   </ButtonSet>
   <Properties>
+    <Property name="loopRows" value="4"/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>

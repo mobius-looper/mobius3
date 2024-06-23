@@ -16,6 +16,7 @@ class BasicForm : public juce::Component
     
     void setLabelCharWidth(int chars);
     void setLabelColor(juce::Colour color);
+    void setTopInset(int size);
     
     void add(class BasicInput* field, juce::Label::Listener* listener = nullptr);
 
@@ -24,6 +25,7 @@ class BasicForm : public juce::Component
 
   private:
 
+    int topInset = 0;
     juce::Array<class BasicInput*> fields;
     int labelCharWidth = 0;
     juce::Colour labelColor;

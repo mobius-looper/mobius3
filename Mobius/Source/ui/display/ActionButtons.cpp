@@ -22,6 +22,8 @@
 #include "ActionButtons.h"
 #include "MobiusDisplay.h"
 
+const int ActionButtonsRowGap = 1;
+
 ActionButtons::ActionButtons(MobiusDisplay* argDisplay)
 {
     setName("ActionButtons");
@@ -287,7 +289,7 @@ void ActionButtons::layout(juce::Rectangle<int> bounds)
             // but just let it truncate
             centerRow(rowStart, i, leftOffset, availableWidth);
             leftOffset = 0;
-            topOffset += buttonHeight;
+            topOffset += buttonHeight + ActionButtonsRowGap;
             rowStart = i;
         }
         b->setTopLeftPosition(leftOffset, topOffset);
@@ -297,7 +299,7 @@ void ActionButtons::layout(juce::Rectangle<int> bounds)
     // close off the last row
     if (leftOffset > 0) {
         centerRow(rowStart, buttons.size(), leftOffset, availableWidth);
-        topOffset += buttonHeight;
+        topOffset += buttonHeight + ActionButtonsRowGap;
     }
 
     // now adjust our height to only use what we needed

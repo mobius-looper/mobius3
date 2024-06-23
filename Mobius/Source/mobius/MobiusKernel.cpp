@@ -341,13 +341,6 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     consumeMidiMessages();
     consumeParameters();
 
-    // todo: it was around this point that we used to ask the Recorder
-    // to echo the input to the output for monitoring
-    //    rec->setEcho(mConfig->isMonitorAudio());
-    // Recorder is gone now, and the option was mostly useless due to
-    // latency, but if you need to resurrect it will have to do the
-    // equivalent here
-
     // let SampleManager do it's thing
     if (sampleManager != nullptr)
       sampleManager->processAudioStream(stream);

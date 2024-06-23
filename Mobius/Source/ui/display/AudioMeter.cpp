@@ -123,6 +123,7 @@ void AudioMeter::paint(juce::Graphics& g)
     }
       
     if (savedLevel > 0) {
+        g.setColour(juce::Colour(MobiusRed));
         g.fillRect(AudioMeterInset,
                    AudioMeterInset,
                    savedLevel,

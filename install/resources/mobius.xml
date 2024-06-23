@@ -71,10 +71,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='track'
       trackSyncUnit='loop'/>
     <SetupTrack
@@ -83,10 +79,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -95,10 +87,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -107,10 +95,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -119,10 +103,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -131,10 +111,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -143,10 +119,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -155,10 +127,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
-      audioOutputPort='1'
-      pluginInputPort='1'
-      pluginOutputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
   </Setup>

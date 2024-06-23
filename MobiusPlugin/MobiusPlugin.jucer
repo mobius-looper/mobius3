@@ -6,7 +6,7 @@
               pluginVSTCategory="kPlugCategEffect" companyWebsite="www.circularlabs.com"
               bundleIdentifier="com.circularlabs.Mobius" pluginName="Mobius"
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"
-              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{4,4}"
+              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{16,16}"
               pluginAUExportPrefix="MobiusAU" lv2Uri="www.circularlabs.com/plugins/Mobiius"
               headerPath="../../../Mobius/Source&#10;" companyName="Circular Labs"
               companyEmail="jeff@circularlabs.com" pluginFormats="buildAU,buildStandalone,buildVST3">

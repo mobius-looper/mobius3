@@ -64,11 +64,21 @@ BasicInput::BasicInput(juce::String argLabel, int numChars, bool argReadOnly)
 void BasicInput::setLabelCharWidth(int numChars)
 {
     labelCharWidth = numChars;
+    if (labelCharWidth > 0)
+      autoSize();
 }
 
 void BasicInput::setLabelColor(juce::Colour c)
 {
     label.setColour(juce::Label::textColourId, c);
+}
+
+void BasicInput::setLabelRightJustify(bool b)
+{
+    if (b)
+      label.setJustificationType(juce::Justification::centredRight);
+    else
+      label.setJustificationType(juce::Justification::centredLeft);
 }
 
 /**
@@ -83,15 +93,18 @@ void BasicInput::autoSize()
     // you typically want something wide enough for the thing
     // being typed in, numbers are a few characters and names are more
     // you think "I'd like this 20 letters wide" not "I'd like this 429 pixels wide"
-    int emWidth = font.getStringWidth("M");
-    int textWidth = emWidth * charWidth;
 
+    // todo: I have various calculatesion that use "M" width but this always results
+    // in something way too large when using proportional fonts with mostly lower case
+    // here let's try using e instead
+    int emWidth = font.getStringWidth("e");
+    int textWidth = emWidth * charWidth;
     int labelWidth = 0;
     if (labelCharWidth)
       labelWidth = emWidth * labelCharWidth;
     else
       labelWidth = font.getStringWidth(label.getText());
-
+    
     // todo: remember the proportion of the label within the total default width
     // so this can be resized later and keep the same approximate balance between
     // the label and the text box?
@@ -122,7 +135,8 @@ void BasicInput::resized()
     juce::Rectangle<int> area = getLocalBounds();
     
     juce::Font font ((float)getHeight());
-    int emWidth = font.getStringWidth("M");
+    // M is too large, experiment with e
+    int emWidth = font.getStringWidth("e");
     int textWidth = emWidth * charWidth;
 
     int labelWidth = 0;

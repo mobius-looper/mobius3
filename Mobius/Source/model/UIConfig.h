@@ -327,7 +327,6 @@ class UIConfig
     int getButtonSetOrdinal(juce::String name);
     ButtonSet* getActiveButtonSet();
 
-
     // type casing property getters
     int getInt(juce::String name);
     bool getBool(juce::String name);

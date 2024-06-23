@@ -21,6 +21,7 @@ class BasicInput : public juce::Component
     
     void setLabelCharWidth(int chars);
     void setLabelColor(juce::Colour c);
+    void setLabelRightJustify(bool b);
     
     juce::String getText();
     void setText(juce::String s);

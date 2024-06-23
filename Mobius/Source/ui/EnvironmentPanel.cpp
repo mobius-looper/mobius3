@@ -78,6 +78,10 @@ void EnvironmentContent::showing()
         else if (wtype == juce::AudioProcessor::WrapperType::wrapperType_AudioUnit)
           typeName = "Audio Unit";
         log.add("Plugin type: " + juce::String(typeName));
+        
+        juce::AudioProcessor* ap = super->getAudioProcessor();
+        log.add("Input channels: " + juce::String(ap->getTotalNumInputChannels()));
+        log.add("Output channels: " + juce::String(ap->getTotalNumOutputChannels()));
     }
     else {
         juce::AudioDeviceManager* deviceManager = super->getAudioDeviceManager();

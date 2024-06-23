@@ -329,6 +329,7 @@ class Track : public TraceContext
     int         mMonitorLevel;
 	bool		mGlobalMute;
 	bool 		mSolo;
+    bool        mThroughMonitor = false;
 	// used to cycle between a "full reset" and a "setup reset"
 	// in theory can have more than one config we cycle through, 
     // but only two now

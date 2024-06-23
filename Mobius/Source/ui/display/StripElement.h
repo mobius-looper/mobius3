@@ -68,6 +68,7 @@ extern StripElementDefinition* StripDefinitionTrackNumber;
 extern StripElementDefinition* StripDefinitionLoopRadar;
 extern StripElementDefinition* StripDefinitionLoopStack;
 extern StripElementDefinition* StripDefinitionOutputMeter;
+extern StripElementDefinition* StripDefinitionInputMeter;
 
 // optional but useful
 extern StripElementDefinition* StripDefinitionGroupName;

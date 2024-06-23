@@ -38,6 +38,7 @@ class DisplayEditor : public juce::Component, public juce::DragAndDropContainer
     MultiSelectDrag instantParameters;
 
     BasicForm properties;
+    BasicInput loopRows {"Loop Rows", 20};
     BasicInput trackRows {"Track Rows", 20};
     
     BasicTabs tabs;

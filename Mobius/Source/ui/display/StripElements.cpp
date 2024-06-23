@@ -1,10 +1,10 @@
-
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
 #include "../../model/MobiusState.h"
 #include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
+#include "../../model/UIConfig.h"
 
 #include "Colors.h"
 #include "TrackStrip.h"
@@ -385,6 +385,45 @@ void StripOutputMeter::resized()
 
 //////////////////////////////////////////////////////////////////////
 //
+// InputMeter
+//
+//////////////////////////////////////////////////////////////////////
+
+StripInputMeter::StripInputMeter(class TrackStrip* parent) :
+    StripElement(parent, StripDefinitionInputMeter)
+{
+    addAndMakeVisible(&meter);
+}
+
+StripInputMeter::~StripInputMeter()
+{
+}
+
+int StripInputMeter::getPreferredWidth()
+{
+    return 100;
+}
+
+int StripInputMeter::getPreferredHeight()
+{
+    return 10;
+}
+
+void StripInputMeter::update(MobiusState* state)
+{
+    int tracknum = strip->getTrackNumber();
+    MobiusTrackState* track = &(state->tracks[tracknum]);
+
+    meter.update(track->inputMonitorLevel);
+}
+
+void StripInputMeter::resized()
+{
+    meter.setBounds(getLocalBounds());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // LoopStack
 //
 // Displays brief information about all loops in a track
@@ -402,12 +441,12 @@ const int LoopStackHorizontalGap = 10;
 const int LoopStackVerticalGap = 1;
 const int LoopStackRectangleWidth = 60;
 const int LoopStackBorderWidth = 1;
+const int LoopStackDefaultLoopRows = 4;
 
 StripLoopStack::StripLoopStack(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionLoopStack)
 {
-    // show at most 4 loops, should be configurable
-    maxLoops = 4;
+    maxLoops = LoopStackDefaultLoopRows;
 }
 
 StripLoopStack::~StripLoopStack()
@@ -417,6 +456,11 @@ StripLoopStack::~StripLoopStack()
 void StripLoopStack::configure()
 {
     // todo, here is where we should allow the maximum loop display to be set
+    UIConfig* config = Supervisor::Instance->getUIConfig();
+    int max = config->getInt("loopRows");
+    // no need to get extreme on this if they type in something wrong
+    if (max > 0 && max <= 16)
+      maxLoops = max;
 }
 
 int StripLoopStack::getPreferredWidth()

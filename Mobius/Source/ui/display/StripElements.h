@@ -103,6 +103,24 @@ class StripOutputMeter : public StripElement
     AudioMeter meter;
 };
     
+class StripInputMeter : public StripElement
+{
+  public:
+    
+    StripInputMeter(class TrackStrip* parent);
+    ~StripInputMeter();
+
+    int getPreferredHeight() override;
+    int getPreferredWidth() override;
+
+    void resized() override;
+    void update(MobiusState* state) override;
+
+  private:
+
+    AudioMeter meter;
+};
+    
 class StripLoopStack : public StripElement, public juce::FileDragAndDropTarget
 {
   public:

@@ -714,11 +714,14 @@ void Track::getState(MobiusTrackState* s)
 
 	s->outputMonitorLevel = mOutput->getMonitorLevel();
 
-    // only monitor the input level if we're the selected track
-    if (mMobius->getTrack() == this)
-      s->inputMonitorLevel = mInput->getMonitorLevel();
-	else
-	  s->inputMonitorLevel = 0;
+    // formerly updated inputMonitorLevel only if this was the selected track, why?
+    // I guess this prevents excessive bouncing if all tracks are listening to the same port
+    // and you've got input monitor enabled in the track strip, but if they're not all on the same
+    // port, you'ld still want to see if anything was being received
+    //if (mMobius->getTrack() == this)
+    s->inputMonitorLevel = mInput->getMonitorLevel();
+	//else
+    //s->inputMonitorLevel = 0;
 
 	s->inputLevel = mInputLevel;
 	s->outputLevel = mOutputLevel;
@@ -966,11 +969,10 @@ void Track::processBuffers(MobiusAudioStream* stream,
 
 	// if this is the selected track and we're monitoring, immediately
 	// copy the level adjusted input to the output
+    // todo: monitoring should be a per-track setting rather than global
 	float* echo = NULL;
-    if (mMobius->getTrack() == this) {
-        MobiusConfig* config = mMobius->getConfiguration();
-        if (config->isMonitorAudio())
-          echo = outbuf;
+    if (mMobius->getTrack() == this && mThroughMonitor) {
+        echo = outbuf;
     }
 
    	// we're beginning a new track iteration for the synchronizer
@@ -1226,11 +1228,17 @@ void Track::updateConfiguration(MobiusConfig* config)
  */
 void Track::updateGlobalParameters(MobiusConfig* config)
 {
-
     // do NOT get latency from the config, Mobius calculates it
     mInput->setLatency(mMobius->getEffectiveInputLatency());
     mOutput->setLatency(mMobius->getEffectiveOutputLatency());
 
+    // this enables through monitoring, echoing the input to the output
+    // in addition to whatever the track might have to say
+    // mostly useful in testing since it adds a lot of latency and actual useers
+    // will want to be using direct hardware monitoring
+    // todo: this shouldn't be global, monitoring should be set per-track in the Setup
+    mThroughMonitor = config->isMonitorAudio();
+        
     // Loop caches a few global parameters too
     // do all of them even if they aren't currently active
     for (int i = 0 ; i < MAX_LOOPS ; i++)

@@ -116,6 +116,8 @@ StripElementDefinition* StripDefinitionLoopStack = &StripLoopStackObj;
 
 StripElementDefinition StripOutputMeterObj {"outputMeter", "Output Meter"};
 StripElementDefinition* StripDefinitionOutputMeter = &StripOutputMeterObj;
+StripElementDefinition StripInputMeterObj {"inputMeter", "Input Meter"};
+StripElementDefinition* StripDefinitionInputMeter = &StripInputMeterObj;
 
 
 // optional but popular

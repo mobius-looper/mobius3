@@ -66,7 +66,7 @@
 #include "DisplayPanel.h"
 
 DisplayPanel::DisplayPanel(ConfigEditor* argEditor) :
-    ConfigPanel{argEditor, "Displays", ConfigPanelButton::Save | ConfigPanelButton::Cancel, true}
+    ConfigPanel{argEditor, "Layouts", ConfigPanelButton::Save | ConfigPanelButton::Cancel, true}
 {
     setName("DisplayPanel");
 
@@ -280,7 +280,10 @@ DisplayEditor::DisplayEditor()
     floatingStrip.setHelpArea(&helpArea, "displayEditorFloating");
     instantParameters.setHelpArea(&helpArea, "displayEditorParameters");
 
-    properties.setLabelColor(juce::Colours::white);
+    properties.setLabelColor(juce::Colours::orange);
+    properties.setLabelCharWidth(10);
+    properties.setTopInset(12);
+    properties.add(&loopRows);
     properties.add(&trackRows);
 
     tabs.add("Main Elements", &mainElements);
@@ -319,6 +322,7 @@ void DisplayEditor::load(DisplayLayout* layout)
 
     UIConfig* config = Supervisor::Instance->getUIConfig();
     trackRows.setText(config->get("trackRows"));
+    loopRows.setText(config->get("loopRows"));
     
     initElementSelector(&mainElements, config, layout->mainElements, false);
 
@@ -462,7 +466,11 @@ void DisplayEditor::save(DisplayLayout* layout)
 
     // this one is global
     UIConfig* config = Supervisor::Instance->getUIConfig();
+
+    // todo: really need to be constraining this to an integer before saving
+    // if we're just using a text field
     config->put("trackRows", trackRows.getText());
+    config->put("loopRows", loopRows.getText());
 }
 
 /**
