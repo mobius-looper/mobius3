@@ -261,6 +261,9 @@ class Supervisor : public MobiusContainer, public MobiusListener
     int meterTime = 0;
     bool doMeters = true;
     void meter(const char* name);
+
+    // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
+    juce::AudioDeviceManager customAudioDeviceManager;
     
     // one of two Juce parent containers depending on whether we're standalone or plugin
     juce::AudioAppComponent* mainComponent = nullptr;

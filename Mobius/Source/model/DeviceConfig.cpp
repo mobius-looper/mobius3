@@ -18,38 +18,10 @@
  *     ...
  *  </DeviceConfig>
  *
- * On startup, if a matching machine is not found, DeviceConfigurator
- * will initialize with the default device, and store that back to the
- * file for the next time.
+ * On startup, if a matching machine is not found, the default
+ * device will be opened, and the state for that device will
+ * be captured and saved in devices.xml on shutdown.
  *
- * The "plugin" MIDI device names are for the eventual use of opening
- * private MIDI devices outside the plugin host for synchronization.
- * Typically only pluginMidiOutput is defined.  This is how OG Mobius
- * did things, expolore whether using the normal host MIDI support is
- * enough for accurate clocking.
- *
- * For MIDi state export and random MIDI events sent from scripts, can
- * use the host's MIDI output.
- *
- * This replaces similar global parameters found in MobiusConfig and
- * adds multi-machine configurations.
- *
- * For plugins we have the "pluginPins" parameter in MobiusConfig which
- * we still need.  Consider whether those should go here, or if we should
- * have a different plugin.xml config file.
- *
- * Old config also has a pluginMidiThrough parameter.  Don't remember what
- * that was for and probably not necessary.
- *
- * Unclear whether we need a different number of plugin input pins and
- * plugin output pins.
- *
- * Also for plugins, the number of midi pins and the number of audio
- * pins can be different.
- *
- * Note that plugin parameters are not machine specific so those belong
- * outside the <Machine> certainly so maybe MobiusConfig isn't so bad.
- *  
  */
 
 #include <JuceHeader.h>
@@ -112,8 +84,8 @@ MachineConfig* DeviceConfig::getMachineConfig()
 //////////////////////////////////////////////////////////////////////
 
 #define EL_DEVICE_CONFIG "DeviceConfig"
-#define ATT_INPUT_CHANNELS "inputChannels"
-#define ATT_OUTPUT_CHANNELS "outputChannels"
+#define ATT_INPUT_PORTS "inputPorts"
+#define ATT_OUTPUT_PORTS "outputPorts"
 
 #define EL_MACHINE "Machine"
 #define ATT_HOST_NAME "hostName"
@@ -135,18 +107,20 @@ MachineConfig* DeviceConfig::getMachineConfig()
 #define ATT_PLUGIN_MIDI_OUTPUT_SYNC "pluginMidiOutputsYNC"
 
 /**
- * Serialize the DeviceConfig to XML using Juce.
+ * Serialize the DeviceConfig to XML.
  *
- * Sigh, this gets the weird Intel copyright symbols exported
- * but all the attributes are on one line and it's hard to read than
- * the old XmlBuffer rendering.
+ * Started using my old XmlBuffer for this but had problems on Loki
+ * because a device name containing "Intel" used a weird copyright symbol
+ * that was extended Unicode and didn't serialize right.  Switched to
+ * using Juce serialization which preserves the special characters but
+ * we lost control over how the xml text is formatted.  Sigh.
  */
 juce::String DeviceConfig::toXml()
 {
     juce::XmlElement root ("DeviceConfig");
     
-    root.setAttribute(ATT_INPUT_CHANNELS, desiredInputChannels);
-    root.setAttribute(ATT_OUTPUT_CHANNELS, desiredOutputChannels);
+    root.setAttribute(ATT_INPUT_PORTS, inputPorts);
+    root.setAttribute(ATT_OUTPUT_PORTS, outputPorts);
 
     for (auto machine : machines) {
 
@@ -194,9 +168,8 @@ void DeviceConfig::parseXml(juce::String xml)
         xmlError("Unexpected XML tag name: %s\n", root->getTagName());
     }
     else {
-        // todo: reconsider whether we need these both here and in Machine
-        desiredInputChannels = root->getIntAttribute(ATT_INPUT_CHANNELS);
-        desiredOutputChannels = root->getIntAttribute(ATT_OUTPUT_CHANNELS);
+        inputPorts = root->getIntAttribute(ATT_INPUT_PORTS);
+        outputPorts = root->getIntAttribute(ATT_OUTPUT_PORTS);
 
         for (auto* el : root->getChildIterator()) {
             if (el->hasTagName(EL_MACHINE)) {
@@ -255,8 +228,8 @@ juce::String DeviceConfig::toXmlOld()
 	b.addOpenStartTag(EL_DEVICE_CONFIG);
 	b.setAttributeNewline(true);
 
-    b.addAttribute(ATT_INPUT_CHANNELS, desiredInputChannels);
-    b.addAttribute(ATT_OUTPUT_CHANNELS, desiredOutputChannels);
+    b.addAttribute(ATT_INPUT_PORTS, inputPorts);
+    b.addAttribute(ATT_OUTPUT_PORTS, outputPorts);
     
 	b.closeStartTag(true);
     b.incIndent();

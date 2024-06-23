@@ -7,7 +7,6 @@
   groupCount='2'
   maxLoops='2'
   longPress='500'
-  monitorAudio='true'
   pluginPins='16'
   spreadRange='48'
   driftCheckPoint='loop'
@@ -110,6 +109,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
+      audioInputPort='1'
       syncSource='default'
       trackSyncUnit='loop'/>
     <SetupTrack

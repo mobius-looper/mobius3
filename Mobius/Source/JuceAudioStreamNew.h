@@ -100,6 +100,7 @@ class JuceAudioStreamNew : public MobiusAudioStream
 
     // Temporary audio callback statistics
     int prepareToPlayCalls = 0;
+    bool blocksAnalyzed = false;
     int getNextAudioBlockCalls = 0;
     int processBlockCalls = 0;
     int releaseResourcesCalls = 0;

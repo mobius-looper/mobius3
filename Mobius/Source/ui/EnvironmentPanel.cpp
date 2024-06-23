@@ -102,19 +102,19 @@ void EnvironmentContent::showing()
                 log.add("Input device: " + setup.inputDeviceName);
                 log.add("Output device: " + setup.outputDeviceName);
                 const char* bstring = setup.useDefaultInputChannels ? "true" : "false";
-                log.add("Default input channels: " + juce::String(bstring));
+                log.add("Use default input channels: " + juce::String(bstring));
                 bstring = setup.useDefaultOutputChannels ? "true" : "false";
-                log.add("Default output channels: " + juce::String(bstring));
+                log.add("Use default output channels: " + juce::String(bstring));
                 
                 log.add("Sample rate: " + juce::String (device->getCurrentSampleRate()));
                 log.add("Block size: " + juce::String (device->getCurrentBufferSizeSamples()));
                 log.add("Bit depth: " + juce::String (device->getCurrentBitDepth()));
                 juce::StringArray channels = device->getInputChannelNames();
-                log.add("Input channels: " + juce::String(channels.size())); 
+                log.add("Available input channels: " + juce::String(channels.size())); 
                 log.add("Active input channels: " + getListOfActiveBits(device->getActiveInputChannels()));
                 log.add("Input channel names: " + channels.joinIntoString (", "));
                 channels = device->getOutputChannelNames();
-                log.add("Output channels: " + juce::String(channels.size()));
+                log.add("Available output channels: " + juce::String(channels.size()));
                 log.add("Active output channels: " + getListOfActiveBits (device->getActiveOutputChannels()));
                 log.add("Output channel names: "   + channels.joinIntoString (", "));
             }

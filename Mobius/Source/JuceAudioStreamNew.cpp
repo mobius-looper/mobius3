@@ -250,6 +250,9 @@ void JuceAudioStreamNew::prepareToPlay (int samplesPerBlockExpected, double samp
     preparedSampleRate = sampleRate;
     
     audioPrepared = true;
+
+    // after every prepareToPlay, trace the configuration of the next AudioBuffer
+    blocksAnalyzed = false;
 }
 
 void JuceAudioStreamNew::releaseResources()
@@ -279,6 +282,49 @@ void JuceAudioStreamNew::releaseResources()
 void JuceAudioStreamNew::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
     getNextAudioBlockCalls++;
+
+    // temporary diagnostics for the configuration of the AudioBuffer under
+    // various port/channel activation scenarios
+    if (!blocksAnalyzed) {
+        Trace(2, "JuceAudioStream: Analyzing AudioBuffer configuration\n");
+        juce::AudioBuffer<float>* buffer = bufferToFill.buffer;
+        int channels = buffer->getNumChannels();
+
+        Trace(2, "  %d channels\n", channels);
+
+        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        auto* device = deviceManager->getCurrentAudioDevice();
+        auto activeInputChannels = device->getActiveInputChannels();
+        Trace(2, "  Active input channels %s\n", activeInputChannels.toString(2).toUTF8());
+        
+        auto activeOutputChannels = device->getActiveOutputChannels();
+        Trace(2, "  Active output channels %s\n", activeOutputChannels.toString(2).toUTF8());
+
+        // so technically we're supposed to ignore the channel buffers for the
+        // channels that don't have the active bit set in those two bit vectors
+        
+        // I would expect all of these to be non-null since they are bi-directional
+        // unless getReadPointer and getWritePointer return different things
+        int nulls = 0;
+        for (int i = 0 ; i < channels ; i++) {
+            auto* samples = buffer->getReadPointer(i, bufferToFill.startSample);
+            if (samples == nullptr)
+              nulls++;
+        }
+        if (nulls > 0)
+          Trace(2, "  %d null read buffers encountered\n", nulls);
+
+        nulls = 0;
+        for (int i = 0 ; i < channels ; i++) {
+            auto* samples = buffer->getWritePointer(i, bufferToFill.startSample);
+            if (samples == nullptr)
+              nulls++;
+        }
+        if (nulls > 0)
+          Trace(2, "  %d null write buffers encountered\n", nulls);
+
+        blocksAnalyzed = true;
+    }
 
     // this clears everything we are expected to write to
     // until the engine is fully functional, start with this to avoid noise

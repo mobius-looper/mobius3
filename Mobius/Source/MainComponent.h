@@ -39,6 +39,14 @@ class MainComponent  : public juce::AudioAppComponent
 
   private:
 
+    // make a custom one of these because the default one inherited from
+    // AudioAppComponent REALLY wants to use that XML initialization shit
+    // and it's insanely hard to get it to not want that
+    // I just want to use AudioDeviceSetup directly and not have it overwritten
+    // during setAudioChannels, probably other ways to do this if you dig into
+    // the AudioAppComponent code more but I'm too fucking tired
+    juce::AudioDeviceManager customAudioDeviceManager;
+
     Supervisor supervisor {this};
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)

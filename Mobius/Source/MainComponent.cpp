@@ -17,7 +17,8 @@
 
 #include "Supervisor.h"
 
-MainComponent::MainComponent()
+MainComponent::MainComponent() :
+    AudioAppComponent(customAudioDeviceManager)
 {
     // Jeff's component tree debugging hack
     setName("MainComponent");
