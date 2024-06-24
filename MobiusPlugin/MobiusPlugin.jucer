@@ -9,7 +9,7 @@
               pluginManufacturerCode="Circ" pluginCode="Mobi" pluginAUExportPrefix="MobiusAU"
               lv2Uri="www.circularlabs.com/plugins/Mobiius" headerPath="../../../Mobius/Source&#10;c:/dev/mobius3-sdk/vst2.4&#10;"
               companyName="Circular Labs" companyEmail="jeff@circularlabs.com"
-              pluginFormats="buildAU,buildStandalone,buildVST,buildVST3">
+              pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
       <FILE id="nXiRiv" name="JuceAudioStreamNew.cpp" compile="1" resource="0"

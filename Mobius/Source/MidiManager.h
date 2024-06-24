@@ -135,7 +135,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // needs to be public so it can be called from a CallbackMessage
     void notifyListeners(const juce::MidiMessage& message, juce::String& source);
 
-    bool mobiusMidiReceived(juce::MidiMessage& msg);
+    bool mobiusMidiReceived(juce::MidiMessage& msg) override;
     
   private:
 

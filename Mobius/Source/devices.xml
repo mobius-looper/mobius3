@@ -9,7 +9,7 @@
            audioInput="ASIO Fireface USB" inputChannels="11" audioOutput="ASIO Fireface USB"
            outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2"
            midiOutput="Bome MIDI Translator 1"/>
-  <Machine hostName="Frigg" inputPorts="0" outputPorts="0" audioDeviceType="CoreAudio"
-           audioInput="MacBook Pro Microphone" inputChannels="" audioOutput="MacBook Pro Speakers"
-           outputChannels="" sampleRate="48000" blockSize="256"/>
+  <Machine hostName="Frigg" inputPorts="0" outputPorts="1" audioDeviceType="CoreAudio"
+           audioInput="MacBook Pro Microphone" inputChannels="0" audioOutput="MacBook Pro Speakers"
+           outputChannels="11" sampleRate="48000" blockSize="256"/>
 </DeviceConfig>

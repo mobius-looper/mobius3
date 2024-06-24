@@ -449,13 +449,15 @@ bool MobiusPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
     // load plugins that support stereo bus layouts.
 
     // jsl - modified this to only allow stereo
-    //if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-    //&& layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
-    //return false;
-    // todo: now that we have an aux bus, I guess we should be checking those too?
-    
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    // hmm, on the mac test machine all we typically have is the microphone
+    // so it asserts all over if you don't allow this
+    // the downside is that in Bidule it gives you the choice between
+    // 1x1 or 2x2 but I guess it's a fair tradeoff
+    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
+        && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
       return false;
+    
+    // todo: now that we have an aux bus, I guess we should be checking those too?
     
     // This checks if the input layout matches the output layout
    #if ! JucePlugin_IsSynth
