@@ -74,13 +74,6 @@ void AudioManager::openAudioDevice()
     // read what we want from devices.xml
     DeviceConfig* config = supervisor->getDeviceConfig();
     MachineConfig* machine = config->getMachineConfig();
-    int inputChannels = config->inputPorts * 2;
-    int outputChannels = config->outputPorts * 2;
-
-    // sanity check on empty files or insane asks
-    // probably want a limit here, that one guy wanted 64 channels
-    if (inputChannels < 2) inputChannels = 2;
-    if (outputChannels < 2) outputChannels = 2;
 
     // this goes in three phases that might be simplified further
     // but this works well enough
@@ -156,6 +149,14 @@ void AudioManager::openAudioDevice()
     // but normally they do.  Basically if they don't match, it ignores
     // the selected channel flags, and automatically selects enough to fill
     // the requested number of channels starting from the bottom
+
+    int inputChannels = machine->inputPorts * 2;
+    int outputChannels = machine->outputPorts * 2;
+    // sanity check on empty files or insane asks
+    // probably want a limit here, that one guy wanted 64 channels
+    if (inputChannels < 2) inputChannels = 2;
+    if (outputChannels < 2) outputChannels = 2;
+    
     Trace(2, "AudioManager: Opening device with %d input channels and %d outputs\n",
           inputChannels, outputChannels);
     juce::AudioAppComponent* mainComponent = supervisor->getAudioAppComponent();
@@ -185,8 +186,34 @@ void AudioManager::captureDeviceState(DeviceConfig* config)
         Trace(2, "Sample Rate: %d\n", (int)(setup.sampleRate));
         Trace(2, "Block size: %d\n", (int)(setup.bufferSize));
     }
-    
+
     MachineConfig* machine = config->getMachineConfig();
+    // remember if we had to bootstrap port counts
+    if (machine->inputPorts == 0) machine->inputPorts = 1;
+    if (machine->outputPorts == 0) machine->outputPorts = 1;
+    
+    // if device channels were enabled or disabled at runtime,
+    // adjust the port counts so that it is high enough to accomodate
+    // all of the enabled channels and low enough that we won't auto-activate
+    // channels that were not selected at runtime
+    int channels = setup.inputChannels.countNumberOfSetBits();
+    // assuming you can only select stereo channel sets, if you select/deselect mono
+    // channels, there will br rouding errors and your mood will sour
+    int ports = channels / 2;
+    if (ports != machine->inputPorts) {
+        Trace(2, "AudioManager: Adjusting input port count from %d to %d\n",
+              machine->inputPorts, ports);
+        machine->inputPorts = ports;
+    }
+    
+    channels = setup.outputChannels.countNumberOfSetBits();
+    ports = channels / 2;
+    if (ports != machine->outputPorts) {
+        Trace(2, "AudioManager: Adjusting output port count from %d to %d\n",
+              machine->outputPorts, ports);
+        machine->outputPorts = ports;
+    }
+
     machine->audioDeviceType = deviceManager->getCurrentAudioDeviceType();
     machine->audioInput = setup.inputDeviceName;
     machine->audioOutput = setup.outputDeviceName;

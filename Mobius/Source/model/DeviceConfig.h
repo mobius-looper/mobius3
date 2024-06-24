@@ -62,6 +62,10 @@ class MachineConfig
     // the name of the machine using this audio configuration
     juce::String hostName;
 
+    // the number of ports we will ask for when opening the audio device
+    int inputPorts = 1;
+    int outputPorts = 1;
+    
     // the driver type
     // always CoreAudio for Mac, usually ASIO for Windows
     // May be WindowsAudio for a Windows machine with no ASIO devices
@@ -117,8 +121,10 @@ class DeviceConfig
 
     // the number of stereo ports to allow when running standalone
     // See file header comments for the relationship between ports and channels
-    // this defaults to 8 (16 channels) but may be raised or lowered by the user
+    // this defaults to 1 (2 channels) but may be raised by the user
     // this does not impact the channel count for the plugin
+    // update: port counts really need to be machine specificc since they closely
+    // correspond to the available hardware
     int inputPorts = 8;
     int outputPorts = 8; 
     

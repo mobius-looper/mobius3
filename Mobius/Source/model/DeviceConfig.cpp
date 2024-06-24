@@ -128,6 +128,9 @@ juce::String DeviceConfig::toXml()
         root.addChildElement(child);
 
         child->setAttribute(ATT_HOST_NAME, machine->hostName);
+        child->setAttribute(ATT_INPUT_PORTS, machine->inputPorts);
+        child->setAttribute(ATT_OUTPUT_PORTS, machine->outputPorts);
+        
         child->setAttribute(ATT_AUDIO_DEVICE_TYPE, machine->audioDeviceType);
         child->setAttribute(ATT_AUDIO_INPUT, machine->audioInput);
         child->setAttribute(ATT_INPUT_CHANNELS, machine->inputChannels);
@@ -177,6 +180,9 @@ void DeviceConfig::parseXml(juce::String xml)
                 machines.add(mc);
                 
                 mc->hostName = el->getStringAttribute(ATT_HOST_NAME);
+                mc->inputPorts = el->getIntAttribute(ATT_INPUT_PORTS);
+                mc->outputPorts = el->getIntAttribute(ATT_OUTPUT_PORTS);
+                
                 mc->audioDeviceType = el->getStringAttribute(ATT_AUDIO_DEVICE_TYPE);
                 mc->audioInput = el->getStringAttribute(ATT_AUDIO_INPUT);
                 mc->inputChannels = el->getStringAttribute(ATT_INPUT_CHANNELS);

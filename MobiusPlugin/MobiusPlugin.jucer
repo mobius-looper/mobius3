@@ -6,10 +6,11 @@
               pluginVSTCategory="kPlugCategEffect" companyWebsite="www.circularlabs.com"
               bundleIdentifier="com.circularlabs.Mobius" pluginName="Mobius"
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"
-              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{16,16}"
+              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{2,2}"
               pluginAUExportPrefix="MobiusAU" lv2Uri="www.circularlabs.com/plugins/Mobiius"
-              headerPath="../../../Mobius/Source&#10;" companyName="Circular Labs"
-              companyEmail="jeff@circularlabs.com" pluginFormats="buildAU,buildStandalone,buildVST3">
+              headerPath="../../../Mobius/Source&#10;c:/dev/vst2.4&#10;&#10;"
+              companyName="Circular Labs" companyEmail="jeff@circularlabs.com"
+              pluginFormats="buildAU,buildStandalone,buildVST,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
       <FILE id="nXiRiv" name="JuceAudioStreamNew.cpp" compile="1" resource="0"

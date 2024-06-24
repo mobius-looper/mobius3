@@ -97,6 +97,7 @@ class ConfigEditor
     
     class Supervisor* supervisor = nullptr;
     juce::Component* owner = nullptr;
+    juce::OwnedArray<NewConfigPanel> newPanels;
 
     bool initialized = false;
 
