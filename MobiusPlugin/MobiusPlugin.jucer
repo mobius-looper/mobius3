@@ -2,13 +2,12 @@
 
 <JUCERPROJECT id="HnqKRT" name="MobiusPlugin" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginAUMainType="'aumf'" pluginVST3Category="Fx" pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginWantsMidiIn"
+              pluginAUMainType="'aumf'" pluginVST3Category="Fx" pluginCharacteristicsValue="pluginEditorRequiresKeys,pluginProducesMidiOut,pluginWantsMidiIn"
               pluginVSTCategory="kPlugCategEffect" companyWebsite="www.circularlabs.com"
               bundleIdentifier="com.circularlabs.Mobius" pluginName="Mobius"
               pluginDesc="Mobius Programmable Looper" pluginManufacturer="Circular Labs"
-              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginChannelConfigs="{2,2}"
-              pluginAUExportPrefix="MobiusAU" lv2Uri="www.circularlabs.com/plugins/Mobiius"
-              headerPath="../../../Mobius/Source&#10;c:/dev/mobius3-sdk/vst2.4&#10;"
+              pluginManufacturerCode="Circ" pluginCode="Mobi" pluginAUExportPrefix="MobiusAU"
+              lv2Uri="www.circularlabs.com/plugins/Mobiius" headerPath="../../../Mobius/Source&#10;c:/dev/mobius3-sdk/vst2.4&#10;"
               companyName="Circular Labs" companyEmail="jeff@circularlabs.com"
               pluginFormats="buildAU,buildStandalone,buildVST,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">

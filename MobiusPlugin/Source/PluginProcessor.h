@@ -25,11 +25,24 @@ class MobiusPluginAudioProcessor  : public juce::AudioProcessor
 {
   public:
     
+    static BusesProperties ConstructorBuses;
+    static BusesProperties& getConstructorBuses();
+    
     //==============================================================================
     MobiusPluginAudioProcessor();
     ~MobiusPluginAudioProcessor() override;
 
     void reset() override;
+
+    
+    void dumpBuses(juce::AudioProcessor::BusesProperties& props);
+    void dumpBusProperties(juce::String  type, juce::Array<juce::AudioProcessor::BusProperties>& array);
+    void dumpBusProperties(juce::AudioProcessor::BusProperties& props);
+
+    void dumpPluginBuses();
+    void dumpBus(juce::AudioProcessor::Bus* bus);
+    void dumpAudioChannelSet(const juce::AudioChannelSet& set);
+    const char* getTruth(bool b);
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -66,9 +79,14 @@ class MobiusPluginAudioProcessor  : public juce::AudioProcessor
 
   private:
 
+    // object describing the buses, calculated during construction
+    // and passed to AudioProcessor
+    BusesProperties busesProperties;
+
     // this is where it all starts
     Supervisor supervisor {this};
     bool supervisorStarted = false;
+    bool pluginBusesTraced = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MobiusPluginAudioProcessor)

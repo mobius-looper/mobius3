@@ -118,8 +118,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      pluginInputPort='1'
-      pluginOutputPort='2'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
