@@ -664,7 +664,7 @@
     <VS2022 targetFolder="Builds/VisualStudio2022" bigIcon="Gc0Vst">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Mobius" useRuntimeLibDLL="0"
-                       headerPath="c:\dev\asiosdk_2.3.3_2019-06-14\common&#10;"/>
+                       headerPath="c:\dev\mobius3-sdk\asiosdk_2.3.3_2019-06-14\common&#10;"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Mobius"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
