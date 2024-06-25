@@ -12,6 +12,8 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
+      <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
       <FILE id="nXiRiv" name="JuceAudioStreamNew.cpp" compile="1" resource="0"
             file="../Mobius/Source/JuceAudioStreamNew.cpp"/>
       <FILE id="z0zPoe" name="JuceAudioStreamNew.h" compile="0" resource="0"
