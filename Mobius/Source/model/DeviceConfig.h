@@ -52,6 +52,36 @@
 
 #include <JuceHeader.h>
 
+class PluginPort
+{
+  public:
+    juce::String name;
+    int channels;
+};
+
+class HostConfig
+{
+  public:
+    juce::String name;
+    juce::OwnedArray<PluginPort> inputs;
+    juce::OwnedArray<PluginPort> outputs;
+};
+
+class PluginConfig
+{
+  public:
+    juce::OwnedArray<HostConfig> hosts;
+
+    void addXml(juce::XmlElement* parent);
+    void parseXml(juce::XmlElement* el);
+
+  private:
+    
+    void addXml(juce::XmlElement* parent, bool isInput, PluginPort* port);
+    PluginPort* parsePort(juce::XmlElement* el);
+    
+};
+
 class MachineConfig
 {
   public:
@@ -136,6 +166,10 @@ class DeviceConfig
 
     // look up a machine config for any host
     MachineConfig* getMachineConfig(juce::String name);
+
+
+    // object describing the layout of the plugin IO buses
+    PluginConfig pluginConfig;
 
     juce::String toXml();
     void parseXml(juce::String xml);

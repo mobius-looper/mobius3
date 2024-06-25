@@ -69,13 +69,14 @@
 
 #include "RootLocator.h"
 
-RootLocator::RootLocator()
-{
-}
-
-RootLocator::~RootLocator()
-{
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Static Interface
+//
+// Used in environments that need a quick answer and don't want to mess
+// with maiintaining a singleton object.
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Don't normally like macros, but it's unclear what the lifecycle
@@ -157,193 +158,181 @@ void RootLocator::whereAmI()
  *
  * todo: Is it worth messing with environment variables or the Windows registry?
  * OG Mobius had the installer leave registry entries behind so we could remember
- * the user selections if they deviated from the norm.  
+ * the user selections if they deviated from the norm.
+ *
+ * This one is static so it can be more easily used in random places.
+ * Errors are returned in the supplied array.
  *
  */
-juce::File RootLocator::getRoot()
+juce::File RootLocator::getRoot(juce::StringArray errors)
 {
-    // is this the right way to check for uninitialized?
-    if (verifiedRoot == juce::File()) {
+    juce::File verifiedRoot;
+    char error[1024];
+    errors.clear();
 
-        // todo: check environment variables and/or Windows registry?
-
-        char error[1024];
-        errors.clear();
-        const char* companyName = "Circular Labs";
-        const char* productName = "Mobius";
+    const char* companyName = "Circular Labs";
+    const char* productName = "Mobius";
         
 #ifdef __APPLE__
-        // this is normally /Users/user/Library
-        // if you ask for commonApplicationDataDirectory it will be /Library
-        // I had permission problems dumping things in /Library in the past let's force
-        // it under the user for now, which is probably what most people want anyway
-        juce::File appdata = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
+    // this is normally /Users/user/Library
+    // if you ask for commonApplicationDataDirectory it will be /Library
+    // I had permission problems dumping things in /Library in the past let's force
+    // it under the user for now, which is probably what most people want anyway
+    juce::File appdata = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory);
 #else
-        // this is normally c:\Users\user\AppData\Local
-        // note that if you use userApplicationDataDirectory like is done on Mac this ended
-        // up under "Roaming" rather than "Local" and don't want to fuck with that shit
-        // there are then three places (at least) this could go: User/AppData/Local, User/AppData/Roaming
-        // and c:\ProgramData for "all users" which is commonApplicationDataDirectory
-        juce::File appdata = juce::File::getSpecialLocation(juce::File::windowsLocalAppData);
+    // this is normally c:\Users\user\AppData\Local
+    // note that if you use userApplicationDataDirectory like is done on Mac this ended
+    // up under "Roaming" rather than "Local" and don't want to fuck with that shit
+    // there are then three places (at least) this could go: User/AppData/Local, User/AppData/Roaming
+    // and c:\ProgramData for "all users" which is commonApplicationDataDirectory
+    juce::File appdata = juce::File::getSpecialLocation(juce::File::windowsLocalAppData);
 #endif        
 
-        juce::File mobiusinst;
+    juce::File mobiusinst;
         
-        if (!appdata.isDirectory()) {
-            // something is seriously different about this machine, bail
-            snprintf(error, sizeof(error), "Normal root location does not exist: %s\n",
-                     PATHSTRING(appdata));
-            addError(error);
+    if (!appdata.isDirectory()) {
+        // something is seriously different about this machine, bail
+        snprintf(error, sizeof(error), "Normal root location does not exist: %s\n",
+                 PATHSTRING(appdata));
+        errors.add(juce::String(error));
+    }
+    else {
+        trace("RootLocator: Starting root exploration in: %s\n", PATHSTRING(appdata));
+#ifdef __APPLE__
+        // this is normally ~/Library
+        // the convention seems to be that products put their stuff under
+        // Application Support, then company/product folders
+        const char* appSupportName = "Application Support";
+        juce::File appsupport = appdata.getChildFile(appSupportName);
+        if (appsupport.isDirectory()) {
+            appdata = appsupport;
         }
         else {
-            trace("RootLocator: Starting root exploration in: %s\n", PATHSTRING(appdata));
-#ifdef __APPLE__
-            // this is normally ~/Library
-            // the convention seems to be that products put their stuff under
-            // Application Support, then company/product folders
-            const char* appSupportName = "Application Support";
-            juce::File appsupport = appdata.getChildFile(appSupportName);
-            if (appsupport.isDirectory()) {
-                appdata = appsupport;
+            trace("Bootstrapping %s\n", appSupportName);
+            juce::Result r = appsupport.createDirectory();
+            if (r.failed()) {
+                snprintf(error, sizeof(error), "Directory creation failed: %s\n",
+                         CONSTSTRING(r.getErrorMessage()));
+                errors.add(juce::String(error));
             }
             else {
-                trace("Bootstrapping %s\n", appSupportName);
-                juce::Result r = appsupport.createDirectory();
-                if (r.failed()) {
-                    snprintf(error, sizeof(error), "Directory creation failed: %s\n",
-                             CONSTSTRING(r.getErrorMessage()));
-                    addError(error);
-                }
-                else {
-                    // pretend this was appdata all along
-                    appdata = appsupport;
-                }
+                // pretend this was appdata all along
+                appdata = appsupport;
             }
+        }
 #endif
             
-            juce::File company = appdata.getChildFile(companyName);
-            if (!company.isDirectory()) {
-                trace("Bootstrapping %s\n", companyName);
-                juce::Result r = company.createDirectory();
+        juce::File company = appdata.getChildFile(companyName);
+        if (!company.isDirectory()) {
+            trace("Bootstrapping %s\n", companyName);
+            juce::Result r = company.createDirectory();
+            if (r.failed()) {
+                snprintf(error, sizeof(error), "Directory creation failed: %s\n",
+                         CONSTSTRING(r.getErrorMessage()));
+                errors.add(juce::String(error));
+            }
+        }
+
+        if (company.isDirectory()) {
+            juce::File mobius = company.getChildFile(productName);
+            if (!mobius.isDirectory()) {
+                trace("RootLocator: Bootstrapping %s\n", productName);
+                juce::Result r = mobius.createDirectory();
                 if (r.failed()) {
                     snprintf(error, sizeof(error), "Directory creation failed: %s\n",
                              CONSTSTRING(r.getErrorMessage()));
-                    addError(error);
+                    errors.add(juce::String(error));
                 }
             }
 
-            if (company.isDirectory()) {
-                juce::File mobius = company.getChildFile(productName);
-                if (!mobius.isDirectory()) {
-                    trace("RootLocator: Bootstrapping %s\n", productName);
-                    juce::Result r = mobius.createDirectory();
-                    if (r.failed()) {
-                        snprintf(error, sizeof(error), "Directory creation failed: %s\n",
-                                 CONSTSTRING(r.getErrorMessage()));
-                        addError(error);
-                    }
+            if (mobius.isDirectory()) {
+                mobiusinst = mobius;
+                // don't look for mobius.xml yet, redirect first
+                juce::File alt = checkRedirect(mobius);
+                juce::File f = alt.getChildFile("mobius.xml");
+                if (f.existsAsFile()) {
+                    trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
+                    verifiedRoot = alt;
                 }
-
-                if (mobius.isDirectory()) {
-                    mobiusinst = mobius;
-                    // don't look for mobius.xml yet, redirect first
-                    juce::File alt = checkRedirect(mobius);
-                    juce::File f = alt.getChildFile("mobius.xml");
+                else {
+                    // redirect missing or wrong, look where it normally is
+                    f = mobius.getChildFile("mobius.xml");
                     if (f.existsAsFile()) {
                         trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
-                        verifiedRoot = alt;
+                        verifiedRoot = mobiusinst;
                     }
-                    else {
-                        // redirect missing or wrong, look where it normally is
-                        f = mobius.getChildFile("mobius.xml");
-                        if (f.existsAsFile()) {
-                            trace("RootLocator: mobius.xml found: %s\n", PATHSTRING(f));
-                            verifiedRoot = mobiusinst;
-                        }
 #ifdef __APPLE__
+                    else {
+                        // incomplete or missing install
+                        // on Mac we play the game of bootstrapping Application Support
+                        // by copying files from the /Application bundle before looking
+                        // for the development directory
+                        // On Windows we don't have to do this since INNO should be setting
+                        // up AppData as expected
+                        const char* appdirPath = "/Applications/Mobius.app/Contents/Resources/Install";
+                        juce::File appdir = juce::File(appdirPath);
+                        if (!appdir.isDirectory()) {
+                            // todo: could look in /Library/Audio/Plug-Ins/VST3 for the same shenanigans
+                            snprintf(error, sizeof(error), "/Applications/Mobius.app was not installed, unable to locate mobius.xml\n");
+                            errors.add(juce::String(error));
+                        }
                         else {
-                            // incomplete or missing install
-                            // on Mac we play the game of bootstrapping Application Support
-                            // by copying files from the /Application bundle before looking
-                            // for the development directory
-                            // On Windows we don't have to do this since INNO should be setting
-                            // up AppData as expected
-                            const char* appdirPath = "/Applications/Mobius.app/Contents/Resources/Install";
-                            juce::File appdir = juce::File(appdirPath);
-                            if (!appdir.isDirectory()) {
-                                // todo: could look in /Library/Audio/Plug-Ins/VST3 for the same shenanigans
-                                snprintf(error, sizeof(error), "/Applications/Mobius.app was not installed, unable to locate mobius.xml\n");
-                                addError(error);
+                            // If we can't get the installer to do these extra
+                            // files, we'll need a way to selectively upgrade some of them
+                            // while keeping the custom ones
+                            // mobius.xml is always preserved
+                            // help.xml must be replaced on every new install
+                            // this argues for splitting the locations
+                            trace("RootLocator: Bootstrapping configuration files from /Applications to ~/Library/Application Support\n");
+                            if (appdir.copyDirectoryTo(mobiusinst)) {
+                                verifiedRoot = mobiusinst;
                             }
                             else {
-                                // If we can't get the installer to do these extra
-                                // files, we'll need a way to selectively upgrade some of them
-                                // while keeping the custom ones
-                                // mobius.xml is always preserved
-                                // help.xml must be replaced on every new install
-                                // this argues for splitting the locations
-                                trace("RootLocator: Bootstrapping configuration files from /Applications to ~/Library/Application Support\n");
-                                if (appdir.copyDirectoryTo(mobiusinst)) {
-                                    verifiedRoot = mobiusinst;
-                                }
-                                else {
-                                    snprintf(error, sizeof(error), "/Applications/Mobius.app was not copied\n");
-                                    addError(error);
-                                }
+                                snprintf(error, sizeof(error), "/Applications/Mobius.app was not copied\n");
+                                errors.add(juce::String(error));
                             }
                         }
+                    }
 #endif                        
-                    }
                 }
             }
-        }
-
-        // development hack, look in the usual location for a build environment
-        if (verifiedRoot == juce::File()) {
-            if (mobiusinst != juce::File())
-              trace("RootLocator: Empty installation directory, searching for mobius.xml\n");
-#ifdef __APPLE__
-            juce::File devroot = juce::File("~/dev/jucetest/UI/Source");
-#else
-            juce::File devroot = juce::File("c:/dev/jucetest/UI/Source");
-#endif
-            if (devroot.isDirectory()) {
-                trace("RootLocator: Development root found: %s\n", PATHSTRING(devroot));
-                verifiedRoot = devroot;
-                if (mobiusinst != juce::File()) {
-                    trace("RootLocator: Bootstrapping mobius-redirect to devroot\n");
-                    juce::File f = mobiusinst.getChildFile("mobius-redirect");
-                    bool status = f.replaceWithText(devroot.getFullPathName() + "\n");
-                    if (!status) {
-                        snprintf(error, sizeof(error), "Error creating mobius-redirect\n");
-                        addError(error);
-                    }
-                }
-                verifiedRoot = devroot;
-            }
-        }
-        
-        if (verifiedRoot == juce::File()) {
-            // have to go somewhere
-            verifiedRoot = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-            snprintf(error, sizeof(error), "Unable to locate root, defaulting to %s\n",
-                     PATHSTRING(verifiedRoot));
-            addError(error);
         }
     }
 
+    // development hack, look in the usual location for a build environment
+    if (verifiedRoot == juce::File()) {
+        if (mobiusinst != juce::File())
+          trace("RootLocator: Empty installation directory, searching for mobius.xml\n");
+#ifdef __APPLE__
+        juce::File devroot = juce::File("~/dev/jucetest/UI/Source");
+#else
+        juce::File devroot = juce::File("c:/dev/jucetest/UI/Source");
+#endif
+        if (devroot.isDirectory()) {
+            trace("RootLocator: Development root found: %s\n", PATHSTRING(devroot));
+            verifiedRoot = devroot;
+            if (mobiusinst != juce::File()) {
+                trace("RootLocator: Bootstrapping mobius-redirect to devroot\n");
+                juce::File f = mobiusinst.getChildFile("mobius-redirect");
+                bool status = f.replaceWithText(devroot.getFullPathName() + "\n");
+                if (!status) {
+                    snprintf(error, sizeof(error), "Error creating mobius-redirect\n");
+                    errors.add(juce::String(error));
+                }
+            }
+            verifiedRoot = devroot;
+        }
+    }
+        
+    if (verifiedRoot == juce::File()) {
+        // have to go somewhere
+        verifiedRoot = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+        snprintf(error, sizeof(error), "Unable to locate root, defaulting to %s\n",
+                 PATHSTRING(verifiedRoot));
+        errors.add(juce::String(error));
+    }
+
     return verifiedRoot;
-}
-
-void RootLocator::addError(const char* buf)
-{
-    errors.add(juce::String(buf));
-    trace(buf);
-}
-
-juce::String RootLocator::getRootPath()
-{
-    return getRoot().getFullPathName();
 }
 
 juce::File RootLocator::checkRedirect(juce::File::SpecialLocationType type)
@@ -403,6 +392,48 @@ juce::String RootLocator::findRelevantLine(juce::String src)
     }
     
     return line;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Singelton Interface
+//
+// Used by Supervisor to cache a copy of the verified root, which
+// in retrospect it doesn't need to do, could just call the static
+// method and save the File somewhere.
+//
+//////////////////////////////////////////////////////////////////////
+
+RootLocator::RootLocator()
+{
+}
+
+RootLocator::~RootLocator()
+{
+}
+
+juce::File RootLocator::getRoot()
+{
+    // is this the right way to check for uninitialized?
+    if (verifiedRoot == juce::File()) {
+
+        verifiedRoot = getRoot(errors);
+
+        for (auto error : errors)
+          trace(error);
+    }
+
+    return verifiedRoot;
+}
+
+juce::String RootLocator::getRootPath()
+{
+    return getRoot().getFullPathName();
+}
+
+juce::StringArray RootLocator::getErrors()
+{
+    return errors;
 }
 
 /****************************************************************************/

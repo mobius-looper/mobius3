@@ -79,11 +79,6 @@ class MobiusPluginAudioProcessor  : public juce::AudioProcessor
 
   private:
 
-    // object describing the buses, calculated during construction
-    // and passed to AudioProcessor
-    BusesProperties busesProperties;
-
-    // this is where it all starts
     Supervisor supervisor {this};
     bool supervisorStarted = false;
     bool pluginBusesTraced = false;

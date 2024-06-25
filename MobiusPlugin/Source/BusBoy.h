@@ -5,8 +5,9 @@
  * Also includes utilities to dump bus configurations to the trace log for inspection.
  * 
  * There does not appear to be a good way to to make Juce change
- * Bus configuration after the plugin has been instantiated under the control
- * of the plugin itself, it wants it to be done in the PluginProcessor constructor.
+ * Bus configuration after the plugin has been instantiated as it is intended
+ * to be under host control.  Everything is designed around doing that in the
+ * AudioProcessor constructor which makes it slighly awkward.
  *
  * This is always demonstrated with a transient object built during class initialization
  * like this:
@@ -20,7 +21,7 @@
  * Which works but fixes the structure of the BusesProperties at compile time and
  * I much prefer changing configurations without rebuilding the plugin code.
  *
- * Luckily you can call static functions in the initializer, so that gives us the hook
+ * You can call static functions in the initializer, so that gives us the hook
  * necessary to do more complex things like read configuration files to influence
  * how the BusesProperties is built.  Here we'll read the desired
  * bus configuration from the devices.xml file which allows experimenetation with the
@@ -28,7 +29,12 @@
  * about supported bus layouts.
  *
  * I decided to make everything about this static so it can be more easily reused
- * in different plugin classes.
+ * in different plugin classes.  An unfortunate side effect of moving this out of
+ * an AudioProcessor class is that BusesProperties is protected because who in their
+ * right mind would want to use it outside the constructor.  Hi.
+ *
+ * To gain access BusBoy needs to BE an AudioProcessor which it actually isn't but
+ * don't tell anyone lest we be accused of stolen valor or something.
  *
  * It uses RootLocator to determine the installation directory, follow redirects,
  * and locate the devices.xml file from which we pull the bus configuration.
@@ -41,11 +47,6 @@
 
 #include <JuceHeader.h>
 
-/**
- * Sweet tapdancing christ on a stick, why is BusesProperties protected?
- * This extends AudioProcess just to gain access to these protected classes
- * so we can trace information about them.  It is not an actual AudioProcessor
- */
 class BusBoy : public juce::AudioProcessor
 {
   public:
@@ -59,11 +60,15 @@ class BusBoy : public juce::AudioProcessor
     // use this to look at the actual runtime bus structure in use by a plugin
     static void tracePluginBuses(juce::AudioProcessor* plugin);
 
+    
   private:
     
     // this is the thing we build and provide a reference to for the
     // AudioProcessor contstructor
     static juce::AudioProcessor::BusesProperties BusDefinition;
+    
+    static void loadPortConfiguration();
+    juce::AudioChannelSet deriveLayout(class PluginPort* port);
 
     static void traceBusProperties(juce::String type, juce::Array<juce::AudioProcessor::BusProperties>& array);
     static void traceBusProperties(juce::AudioProcessor::BusProperties& props);

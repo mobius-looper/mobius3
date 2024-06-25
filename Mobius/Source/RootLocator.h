@@ -8,28 +8,25 @@
 class RootLocator
 {
   public:
-    
-    RootLocator();
-    ~RootLocator();
 
     static void whereAmI();
+    static juce::File getRoot(juce::StringArray errors);
 
-    juce::String getRootPath();
-    juce::File getRoot();
+    RootLocator();
+    ~RootLocator();
     
-    juce::StringArray getErrors() {
-        return errors;
-    }
+    juce::File getRoot();
+    juce::String getRootPath();
+    juce::StringArray getErrors();
     
   private:
 
+    static juce::File checkRedirect(juce::File path);
+    static juce::File checkRedirect(juce::File::SpecialLocationType type);
+    static juce::String findRelevantLine(juce::String src);
+
     juce::File verifiedRoot;
     juce::StringArray errors;
-    
-    juce::File checkRedirect(juce::File path);
-    juce::File checkRedirect(juce::File::SpecialLocationType type);
-    juce::String findRelevantLine(juce::String src);
-    void addError(const char* buf);
-    
+
 };
 

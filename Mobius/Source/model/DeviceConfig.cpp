@@ -22,6 +22,18 @@
  * device will be opened, and the state for that device will
  * be captured and saved in devices.xml on shutdown.
  *
+ * Added PluginConfig so we can play around with bus configurations
+ * without recompiling the PluginProcessor every time.  This will probably
+ * not be necessary in the long run but who knows.  It might be nice to
+ * be more complex than just stereo ports for the few hosts that support that.
+ *
+ *  <PluginConfig>
+ *    <Host name='default'>
+ *      <Input name='InPort2' channels='2'/>
+ *      <Input name='InPort3' channels='2'/>
+ *      <Output name='OutPort2' channels='2'/>
+ *    </Host>
+ *  </PluginConfig
  */
 
 #include <JuceHeader.h>
@@ -33,6 +45,77 @@
 
 #include "DeviceConfig.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// PluginConfig
+//
+//////////////////////////////////////////////////////////////////////
+
+#define EL_PLUGIN_CONFIG "PluginConfig"
+
+/**
+ * Currently these are expected to live inside a DeviceConfig
+ * but might want to break it out
+ */
+void PluginConfig::addXml(juce::XmlElement* parent)
+{
+    juce::XmlElement* root = new juce::XmlElement(EL_PLUGIN_CONFIG);
+    parent->addChildElement(root);
+    
+    for (auto host : hosts) {
+        juce::XmlElement* hostel = new juce::XmlElement("Host");
+        root->addChildElement(hostel);
+        hostel->setAttribute("name", host->name);
+
+        for (auto port : host->inputs)
+          addXml(hostel, true, port);
+
+        for (auto port : host->outputs)
+          addXml(hostel, false, port);
+    }
+}
+
+void PluginConfig::addXml(juce::XmlElement* parent, bool isInput, PluginPort* port)
+{
+    juce::String elname = (isInput) ? "Input" : "Output";
+    juce::XmlElement* el = new juce::XmlElement(elname);
+    parent->addChildElement(el);
+    
+    el->setAttribute("name", port->name);
+    // normalize this if missing
+    el->setAttribute("channels", port->channels);
+}
+
+void PluginConfig::parseXml(juce::XmlElement* root)
+{
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName("Host")) {
+            HostConfig* host = new HostConfig();
+            hosts.add(host);
+            
+            host->name = el->getStringAttribute("name");
+            
+            for (auto* portel : el->getChildIterator()) {
+                if (portel->hasTagName("Input")) {
+                    host->inputs.add(parsePort(portel));
+                }
+                else if (portel->hasTagName("Output")) {
+                    host->outputs.add(parsePort(portel));
+                }
+            }
+        }
+    }
+}
+        
+PluginPort* PluginConfig::parsePort(juce::XmlElement* el)
+{
+    PluginPort* port = new PluginPort();
+
+    port->name = el->getStringAttribute("name");
+    port->channels = el->getIntAttribute("channels");
+    return port;
+}
+        
 //////////////////////////////////////////////////////////////////////
 //
 // DeviceConfig
@@ -150,6 +233,8 @@ juce::String DeviceConfig::toXml()
         addAttribute(child, ATT_PLUGIN_MIDI_OUTPUT_SYNC, machine->pluginMidiOutputSync);
     }
 
+    pluginConfig.addXml(&root);
+
     return root.toString();
 }
 
@@ -200,6 +285,9 @@ void DeviceConfig::parseXml(juce::String xml)
                 mc->pluginMidiInputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_INPUT_SYNC);
                 mc->pluginMidiOutput = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT);
                 mc->pluginMidiOutputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT_SYNC);
+            }
+            else if (el->hasTagName(EL_PLUGIN_CONFIG)) {
+                pluginConfig.parseXml(el);
             }
         }
     }

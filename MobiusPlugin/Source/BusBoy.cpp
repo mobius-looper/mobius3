@@ -4,7 +4,11 @@
  */
 
 #include <JuceHeader.h>
+
 #include "util/Trace.h"
+#include "model/DeviceConfig.h"
+#include "RootLocator.h"
+
 #include "BusBoy.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -16,19 +20,76 @@
 juce::AudioProcessor::BusesProperties BusBoy::BusDefinition;
 
 /**
- * Start with the basic, work up to file based configuration.
+ * Start with the basics, work up to file based configuration.
  */
 juce::AudioProcessor::BusesProperties& BusBoy::getBusDefinition()
 {
     BusDefinition = BusesProperties()
         .withInput("Input", juce::AudioChannelSet::stereo(), true)
         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-        .withInput("AuxIn", juce::AudioChannelSet::stereo(), true)
-        .withOutput("AuxOut", juce::AudioChannelSet::stereo(), true)
-        .withInput("AuxIn2", juce::AudioChannelSet::stereo(), true)
-        .withOutput("AuxOut2", juce::AudioChannelSet::stereo(), true);
+        .withInput("Port2In", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Port2Out", juce::AudioChannelSet::stereo(), true)
+        .withInput("Port3In", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Port3Out", juce::AudioChannelSet::stereo(), true);
         
     return BusDefinition;
+}
+
+void BusBoy::loadPortConfiguration()
+{
+    // always start with the main set of sterso ports
+    BusDefinition = BusesProperties()
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true);
+    
+    juce::StringArray errors;
+    juce::File root = RootLocator::getRoot(errors);
+    for (auto error : errors) {
+        Trace(2, "%s\n", error.toUTF8());
+    }
+    juce::File devices = root.getChildFile("devices.xml");
+    if (devices.existsAsFile()) {
+
+        // we're going to end up reading this twice, once here and once in Supervisor
+        // later, would be nice if we could stash it somewhere and reuse it, but we're static
+        juce::String xml = devices.loadFileAsString();
+        DeviceConfig* config = new DeviceConfig();
+        config->parseXml(xml);
+
+        // will this be accessible by now?
+        juce::PluginHostType host;
+        HostConfig* hostConfig = config->pluginConfig.getHostConfig(host.getHostDescription());
+
+        for (auto input : hostConfig->inputs) {
+            BusDefinition.addBus(true, input->name, deriveLayout(input), true);
+        }
+        
+        for (auto output : hostConfig->outputs) {
+            BusDefinition.addBus(false, output->name, deriveLayout(output), true);
+        }
+
+        delete config;
+    }
+}
+
+juce::AudioChannelSet BusBoy::deriveLayout(PluginPort* port)
+{
+    // not sure the best way to deal with these other than structure
+    // copies all the time
+    juce::AudioChannelSet set = juce::AudioChannelSet::stereo();
+
+    if (port->channels == 1) {
+      set = juce::AudioChannelSet::mono();
+    }
+    else if (port->channels > 2) {
+        for (int i = 0 ; i < port->channels) {
+            // clear it?
+            set = juce::AudioChannelSet();
+            // is this the right way to do arbitary channels?
+            set.addChannel(juce::AudioChannelSet::ChannelType::discreteChannel0);
+        }
+    }
+    return set;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -44,7 +105,7 @@ void BusBoy::traceBusDefinition(juce::AudioProcessor::BusesProperties& props)
     traceBusProperties("Output", props.outputLayouts);
 }
 
-void BusBoy::traceBusProperties(juce::String  type, juce::Array<juce::AudioProcessor::BusProperties>& array)
+void BusBoy::traceBusProperties(juce::String type, juce::Array<juce::AudioProcessor::BusProperties>& array)
 {
     Trace(2, "  %s: %d properties\n", type.toUTF8(), array.size());
     for (int i = 0 ; i < array.size() ; i++) {

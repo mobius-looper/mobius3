@@ -40,8 +40,9 @@ UninstallDisplayIcon={app}/{#MyAppExeName}
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+; add unchecked to Flags: if you want the desktop icon checkbox to be initially unselected
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: 
 
 [Files]
 Source: "..\..\Mobius\Builds\VisualStudio2022\x64\Debug\App\{#MyAppSourceExeName}"; DestDir: "{#MyAppProgram}"; DestName: "{#MyAppExeName}"; Flags: ignoreversion
@@ -68,5 +69,5 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{#MyAppProgram}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{#MyAppProgram}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{#MyAppProgram}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{#MyAppProgram}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall unchecked skipifsilent
 
