@@ -16,8 +16,8 @@
 #include "../common/HelpArea.h"
 
 /**
- * Types of buttons the popup may display at the bottom.
- * These are a bitmask that can be ORd to define the desired buttons.
+ * Types of buttons that may be displayed along the bottom.
+ * These are or'd together and passed to the constructor.
  */
 enum NewConfigPanelButton {
     // read-only informational panels will have an Ok rather than a Save button
@@ -27,40 +27,10 @@ enum NewConfigPanelButton {
     Revert = 8
 };
 
-class ConfigPanelFooter : public juce::Component, public juce::Button::Listener
-{
-  public:
-        
-    ConfigPanelFooter(class ConfigPanel* parentPanel, int buttons);
-    ~ConfigPanelFooter() override;
-    
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-    
-    int getPreferredHeight();
-
-    // Button::Listener
-    virtual void buttonClicked(juce::Button* b) override;
-    
-  private:
-        
-    // find a better way to redirect button listeners without needing
-    // a back pointer to the parent
-    class ConfigPanel* parentPanel;
-    int buttonList;
-    juce::TextButton okButton;
-    juce::TextButton saveButton;
-    juce::TextButton cancelButton;
-    juce::TextButton revertButton;
-    
-    void addButton(juce::TextButton* button, const char* text);
-};
-
 /**
  * The object selector presents a combobox to select one of a list
  * of objects.  It also displays the name of the selected object
- * for editing.  Is there such a thing as a combo with editable items?
- * There is a set of buttons for acting on the object list.
+ * for editing.   There is a set of buttons for acting on the object list.
  */
 class NewObjectSelector : public juce::Component, juce::Button::Listener, juce::ComboBox::Listener
 {
@@ -111,25 +81,30 @@ class NewObjectSelector : public juce::Component, juce::Button::Listener, juce::
     //juce::TextButton revertButton {"Revert"};
 };
 
-// this wss the wrong way to do this
-// change everything to add their own content component
-class ConfigContentPanel : public juce::Component
+/**
+ * This is the BasePanel content component.
+ * We add the ObjectSelector and HelpArea, both optional.
+ * The subclass gives us another level of arbitrary content
+ * to put between them.
+ */
+class ConfigPanelContent : public juce::Component
 {
   public:
 
     ContentPanel();
     ~ContentPanel();
 
+    void setContent(juce::Component* c);
+
     void resized() override;
-    void paint (juce::Graphics& g) override;
 
   private:
 
     NewObjectSelector objectSelector;
-    
-
+    HelpArea helpArea;
+    int helpHeight = 0;
+    juce::Component* content = nullptr;
 };
-
 
 /**
  * ConfigPanel arranges the previous generic components and
@@ -137,19 +112,17 @@ class ConfigContentPanel : public juce::Component
  * 
  * It is subclassed by the various configuration panels.
  */
-class ConfigPanel : public juce::Component
+class NewConfigPanel : public BasePanel
 {
   public:
-
 
     ConfigPanel(class ConfigEditor* argEditor, const char* titleText, int buttons, bool multi);
     ~ConfigPanel() override;
 
-    // subclass provides a content component for the center
-    void setMainContent(juce::Component* c);;
+    // the subclass provides a content component for the center
+    // under ObjectSelect and above HelpArea
+    void setContent(juce::Component* c);;
     void setHelpHeight(int h);
-    
-    void center();
 
     // Component
     void resized() override;
@@ -157,9 +130,6 @@ class ConfigPanel : public juce::Component
 
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
-    
-    // callback from the footer buttons
-    void footerButtonClicked(ConfigPanelButton button);
     
     // callbacks from the object selector
     // could these be pure virtual?
@@ -208,10 +178,7 @@ class ConfigPanel : public juce::Component
   protected:
     
     class ConfigEditor* editor;
-    ContentPanel content;
-    ObjectSelector objectSelector;
-    HelpArea helpArea;
-    int helpHeight = 0;
+    ConfigContentPanel content;
     
     // set by this class after handling the first prepare() call
     bool prepared = false;
@@ -225,11 +192,9 @@ class ConfigPanel : public juce::Component
   private:
 
     bool hasObjectSelector = false;;
-    ConfigPanelHeader header;
-    ConfigPanelFooter footer;
-    juce::Component* main = nullptr;
 
-    juce::ComponentDragger dragger;
-    juce::ComponentBoundsConstrainer dragConstrainer;
+    juce::TextButton saveButton;
+    juce::TextButton cancelButton;
+    juce::TextButton revertButton;
 
 };
