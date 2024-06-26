@@ -23,7 +23,6 @@
 #include "mobius/MobiusMidiTransport.h"
 
 #include "JuceAudioStream.h"
-#include "JuceAudioStreamNew.h"
 
 #include "KeyTracker.h"
 #include "MainThread.h"
@@ -270,8 +269,6 @@ class Supervisor : public MobiusContainer, public MobiusListener
     juce::AudioProcessor* audioProcessor = nullptr;
 
     JuceAudioStream audioStream {this};
-    JuceAudioStreamNew audioStreamNew {this};
-    bool useNewStream = false;
     
     class MobiusAudioListener* audioListener = nullptr;
 

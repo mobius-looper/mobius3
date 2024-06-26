@@ -64,6 +64,11 @@ JuceAudioStream::~JuceAudioStream()
 {
 }
 
+void JuceAudioStream::configure()
+{
+    portAuthority.configure(supervisor);
+}
+
 void JuceAudioStream::traceFinalStatistics()
 {
     Tracej("AudioStream: Ending audio callback statistics:");
@@ -178,27 +183,6 @@ MobiusMidiTransport* JuceAudioStream::getMidiTransport()
 //
 // Audio Block Processing
 //
-// Now we get to the important bits.  PortAudio arranged things in
-// interleaved "frame" buffers with each frame being a pair of stereo
-// samples.  That is too hard to unwind so we continue that tradition
-// and convert the Juce buffer styles into that format.
-//
-// When an audio blocks comes in the listener is notified with
-// the processAudioStream() callback and passed JuceAudioStream
-// which implements MobiusAudioStream.
-//
-// The listener is expected to immediately call getInterruptFrames
-// and getInterruptBuffers on the stream to obtain the size of the block and the
-// interleaved frame buffers for the ports it uses.
-//
-// Once we start handling plugin MIDI events it will call back to get
-// those too.
-//
-// For the initial Juce port this has been simplified to a single input
-// and output port and the interleaved buffers will have been constructred
-// at the start of the Juce interrupt (getNextAudioBlock or processBlock)
-// and left in a member variable before the listener is notified.
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -226,63 +210,16 @@ long JuceAudioStream::getInterruptFrames()
 void JuceAudioStream::getInterruptBuffers(int inport, float** input, 
                                               int outport, float** output)
 {
-    (void)inport;
-    (void)outport;
-    if (input != nullptr) *input = inputBuffer;
-    if (output != nullptr) *output = outputBuffer;
+    if (input != nullptr) *input = portAuthority.getInput(inport);
+    if (output != nullptr) *output = portAuthority.getOutput(outport);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
 // Standalone AudioAppComponent Interface
 //
-// Web chatter...
-//
-// There are no other guarantees. Some streams will call prepareToPlay()/releaseResources()
-// repeatedly if they stop and start, others will not. It is possible for
-// releaseResources() to be called when prepareToPlay() has not.
-// Or another way to look at it that I find a little more intuitive:
-// An AudioStream can only have two states, prepared and released,
-// An AudioStream must always start and end its life in the released state…
-// …but getNextAudioBlock() can only be called if the AudioStream is in the prepared state.
-// prepareToPlay() puts the AudioStream into the prepared state;
-// releaseResources() puts it in the released state.
-// prepareToPlay() and releaseResources() can be called at any time, in any order.
-//
-// ---
-// Prepare lets you know that the audio pipeline is about to start (or you’re about to
-// be included in said pipeline if you’re a plugin), this is where you can create buffers or
-// threads to use on the audio thread, and, if you’re a plugin this is where you will
-// find out what SampleRate and BlockSize you’re going to be working with.
-//
 //////////////////////////////////////////////////////////////////////
 
-/**
- * This function will be called when the audio device is started, or when
- * its settings (i.e. sample rate, block size, etc) are changed.
- *
- * The prepareToPlay() method is guaranteed to be called at least once on an 'unprepared'
- * source to put it into a 'prepared' state before any calls will be made to
- * getNextAudioBlock(). This callback allows the source to initialise any resources it
- * might need when playing.
- * 
- * Once playback has finished, the releaseResources() method is called to put the stream
- * back into an 'unprepared' state.
- *
- * Note that this method could be called more than once in succession without a matching
- * call to releaseResources(), so make sure your code is robust and can handle that kind
- * of situation.
- *
- * samplesPerBlockExpected
- *   the number of samples that the source will be expected to supply each time
- *   its getNextAudioBlock() method is called. This number may vary slightly, because it
- *   will be dependent on audio hardware callbacks, and these aren't guaranteed to always
- *   use a constant block size, so the source should be able to cope with small variations.
- *
- * sampleRate
- *  the sample rate that the output will be used at - this is needed by sources such
- *  as tone generators.
- */
 void JuceAudioStream::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
     if (prepareToPlayCalls == 0) {
@@ -313,14 +250,11 @@ void JuceAudioStream::prepareToPlay (int samplesPerBlockExpected, double sampleR
     preparedSampleRate = sampleRate;
     
     audioPrepared = true;
+
+    // after every prepareToPlay, trace the configuration of the next AudioBuffer
+    blocksAnalyzed = false;
 }
 
-/**
- * I think this should only be called during shutdown or after device configuration
- * changes.  For Mobius, it probably needs to perform a GlobalReset because
- * any synchronization calculations it was making may be wrong if the sample rate
- * changes on the next prepareToPlay call.
- */
 void JuceAudioStream::releaseResources()
 {
     releaseResourcesCalls++;
@@ -348,6 +282,49 @@ void JuceAudioStream::releaseResources()
 void JuceAudioStream::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
     getNextAudioBlockCalls++;
+
+    // temporary diagnostics for the configuration of the AudioBuffer under
+    // various port/channel activation scenarios
+    if (!blocksAnalyzed) {
+        Trace(2, "JuceAudioStream: Analyzing AudioBuffer configuration\n");
+        juce::AudioBuffer<float>* buffer = bufferToFill.buffer;
+        int channels = buffer->getNumChannels();
+
+        Trace(2, "  %d channels\n", channels);
+
+        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        auto* device = deviceManager->getCurrentAudioDevice();
+        auto activeInputChannels = device->getActiveInputChannels();
+        Trace(2, "  Active input channels %s\n", activeInputChannels.toString(2).toUTF8());
+        
+        auto activeOutputChannels = device->getActiveOutputChannels();
+        Trace(2, "  Active output channels %s\n", activeOutputChannels.toString(2).toUTF8());
+
+        // so technically we're supposed to ignore the channel buffers for the
+        // channels that don't have the active bit set in those two bit vectors
+        
+        // I would expect all of these to be non-null since they are bi-directional
+        // unless getReadPointer and getWritePointer return different things
+        int nulls = 0;
+        for (int i = 0 ; i < channels ; i++) {
+            auto* samples = buffer->getReadPointer(i, bufferToFill.startSample);
+            if (samples == nullptr)
+              nulls++;
+        }
+        if (nulls > 0)
+          Trace(2, "  %d null read buffers encountered\n", nulls);
+
+        nulls = 0;
+        for (int i = 0 ; i < channels ; i++) {
+            auto* samples = buffer->getWritePointer(i, bufferToFill.startSample);
+            if (samples == nullptr)
+              nulls++;
+        }
+        if (nulls > 0)
+          Trace(2, "  %d null write buffers encountered\n", nulls);
+
+        blocksAnalyzed = true;
+    }
 
     // this clears everything we are expected to write to
     // until the engine is fully functional, start with this to avoid noise
@@ -433,305 +410,25 @@ void JuceAudioStream::getNextAudioBlockForReal (const juce::AudioSourceChannelIn
 #ifdef USE_FFMETERS    
     meterSource.measureBlock(*(bufferToFill.buffer));
 #endif
-    
-    // do NOT call clearActiveBufferRegion like the boilerplate code
-    // from Projucer, it is unclear whether this just does output buffers
-    // or if it also wipes the input buffers too
-    // the output buffers will get propery initialized during deinterleaving
 
     // number of samples we're expected to consume and fill
     // save this for the handler callback
     nextBlockSamples = bufferToFill.numSamples;
     
-    // leave the result in our inputBuffer array
-    interleaveInputBuffers(bufferToFill, inputBuffer);
+    portAuthority.prepare(bufferToFill);
+
+    if (audioListener != nullptr)
+      audioListener->processAudioStream(this);
+
+    portAuthority.commit();
     
-    // clear the interleaved output buffer just in case the handler is bad
-    clearInterleavedBuffer(nextBlockSamples, outputBuffer);
-
-    // call the handler which will immediately call back to 
-    // getInterruptFrames and getInterruptBuffers
-    if (audioListener != nullptr) {
-        audioListener->processAudioStream(this);
-    }
-    else {
-        // inject a temporary test
-        test(bufferToFill.numSamples);
-    }
-
     // in case the listener didn't consume queued realtime message, flush the queue
     supervisor->getMidiRealizer()->flushEvents();
-    
-    // copy what was left in the in the interleaved output buffer back to
-    // the Juce buffer, if we don't have a handler we'll copy the
-    // empty output buffer left by clearInterleavedBuffer and clear
-    // the channel buffers we didn't use
-    deinterleaveOutputBuffers(bufferToFill, outputBuffer);
-
-    // pray
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// AudioAppComponent Buffer Conversion
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Wipe one of our interleaved buffers of content.
- * Only for the output buffer
- * Note that numSamples here is number of samples in one non-interleaved buffer
- * passed to getNextAudioBlock.  We need to multiply that by the number of channels
- * for the interleaved buffer.
- *
- * Our internal buffer will actually be larger than this (up to 4096 frames) but
- * just do what we need.
- */
-void JuceAudioStream::clearInterleavedBuffer(int numSamples, float* buffer)
-{
-    // is it still fashionable to use memset?
-    int totalSamples = numSamples * 2;
-    memset(buffer, 0, (sizeof(float) * totalSamples));
-}
-
-/**
- * Convert a set of non-interleaved input buffers into an interleaved buffer.
- * Here we expect two channel buffers.  In theory there could be more but we'll ignore
- * them.  If there is only one, clear those samples so the engine doesn't
- * have to deal with it.
- *
- * The tutorial is kind of insane about how buffers are organized, so I'm capturing some
- * of it here:
- * 
- * It is important to know that the input and output buffers are not completely separate.
- * The same buffer is used for the input and output. You can test this by temporarily
- * commenting out all of the code in the getNextAudioBlock() function. If you then run
- * the application, the audio input will be passed directly to the output.
- * In the getNextAudioBlock() function, the number of channels in the AudioSampleBuffer
- * object within the bufferToFill struct may be larger than the number input channels,
- * the number of output channels, or both. It is important to access only the data that
- * refers to the number of input and output channels that you have requested, and that
- * are available. In particular, if you have more input channels than output channels you
- * must not modify the channels that should contain read-only data.
- *
- * Yeah, that sounds scary.
- *
- * In the getNextAudioBlock() function we obtain BigInteger objects that represent the list
- * of active input and output channels as a bitmask (this is similar to the std::bitset
- * class or using a std::vector<bool> object). In these BigInteger objects the channels
- * are represented by a 0 (inactive) or 1 (active) in the bits comprising the BigInteger value.
- *
- * Oh, do go on...
- *
- * To work out the maximum number of channels over which we need to iterate, we can inspect
- * the bits in the BigInteger objects to find the highest numbered bit. The maximum number
- * of channels will be one more than this.
- *
- * The code should be reasonably self-explanatory but here are a few highlights:
- *
- * [narrator: no, no it is not]
- *
- * [1]: We may have requested more output channels than input channels, so our app needs to
- * make a decision about what to do about these extra outputs. In this example we simply
- * repeat the input channels if we have more outputs than inputs. (To do this we use the
- * modulo operator to "wrap" our access to the input channels based on the number of input
- * channels available.) In other applications it may be more appropriate to output silence
- * for higher numbered channels where there are more output channels than input channels.
- * [2]: Individual input channels may be inactive so we output silence in this case too.
- *
- * Okay, let's see if I undersand this
- *
- * The getActiveFooChannels returns a big int like this
- *    0000101001
- * where each bit represents a channel and it will be set if it is active.  You
- * should only read from or write to channel buffers that are marked active.  In order
- * to properly silence output buffers you should iterate over all of them.  For input buffers
- * I guess you only need to consume what you need.  There can be a different number
- * of input and output channels.  To know how many you're allowed to iterate over
- * find the highest bit set.  Channels and bit numbers are zero based.
- * There is no guarantee that a pair of channels that are considered "stereo" will
- * be next to each other than that is simply a convention followed by the person plugging
- * things in to the hardware and enabling channels in the device manager.
- *
- * In most "normal" usage you plug each stereo channel into adjacent hardware jacks so
- * you should usually see this:
- *      000000011
- *
- * If they have chosen not to do that, we have to decide:
- *   1) use adjacent channels anyway and just consume/send silence if it is inactive
- *   2) arbitrarily find two active channels and merge them
- *
- * When you look at the AudioDeviceSelector component, you can pick different input
- * output devices.  There can be only one of each, unclear whether this is a Juce enforcement
- * or an OS enforcement.  You can also only use one "device type" at a time which appear
- * to be the device driver types: Windows Audio, ASIO, etc.
- *
- * In my case I'm using the Fireface.  For output selection the RME driver lists
- * a number of "devices" that represent physical ports arranged in stereo pairs.
- * "Speakers (RME Fireface UC)", "Analog 3+4", etc.  When you select the RME for either
- * input or output in the Active channels sections there is only one item "Output channel 1+2
- * and "Input channel 1+2".  I think because I asked the UI to group them, if left mono
- * there would be two items you could enable individually.  In theory other drivers might
- * provide larger clusters than two, pretty sure that's how it used to work, you just
- * selected "RME" and you got 8 or however many physical channels there were.  Maybe that's
- * a function of ASIO4All or maybe there is an RME driver setting to tweak that.
- *
- * In any case the driver gives you a list of devices to pick, and each device can have a
- * number of channels, and each channel can be selectively active or inactive.
- *
- * For the purposes of standalone Mobius, since we are in control over the device
- * configuration we can say you must activate a pair of channels for stereo and it
- * is recommended that they be adjacent.  But we don't have to depend on that, if you
- * wanted L going into jack 1 and R going into jack 5 who are we to judge.  But we're not
- * going to provide a UI that lets to pick which channels should be considered a stereo
- * pair.  This is enforced to a degree by making the selector UI group them in pairs, but
- * in cases where there is an odd number you still might end up with a "pair" that has only one
- * channel, I think.  Maybe it just doesn't show those.
- *
- * To allow for configuration flexibility, we'll take option 2 above.  Find the lowest numbered
- * pair of active channels and combine them into our stereo buffer.  If someone wanted
- * to say put all the Left channels on jacks 1-4 and all the Right channels on jacks
- * 5-8 they couldn't do that, but then they have larger problems in life.
- *
- * Anyway, this is where we could implement the old concept of "ports".  Find as many
- * pairs of active channels as you can and treat those as ports.  However, the RME driver
- * only shows 2 channels per "device" so we can't do that without changing something
- * in the driver.
- *
- * I picked the wrong week to give up drinking...
- *
- * Sweet jesus, bufferToFill.buffer->getReadPointer does not return a float*
- * it is templated and returns "something" you apparently aren't suposed to know
- * and the examples hide this by using "auto" variables to hide the type.  It may be float*
- * or I guess it may be double*.  The compiler complains if you try to assign it to a float*
- * with "C2440	'=': cannot convert from 'const Type *' to 'float *"
- * This means you can't easily iterate over them and save the pointers for later.
- * Instead we'll iterate and remember just the channel numbers, then call getReadPointer
- * in the next loop where we need to access the samples.  Fuck.
- */
-void JuceAudioStream::interleaveInputBuffers(const juce::AudioSourceChannelInfo& bufferToFill,
-                                                float* resultBuffer)
-{
-    // to do the active channel folderol, we need to get to the AudioDeviceManager
-    juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
-    auto* device = deviceManager->getCurrentAudioDevice();
-    auto activeInputChannels = device->getActiveInputChannels();
-    auto maxInputChannels = activeInputChannels.getHighestBit() + 1;
-
-    // because we can't be sure we'll find 2 or any active channels, zero
-    // out the result buffer so we don't have to clean up the mess after
-    // the next loop
-    clearInterleavedBuffer(bufferToFill.numSamples, resultBuffer);
-
-    // something weird started happening after enabling ASIO and selecting
-    // random channel configurations  the active channels bit vector
-    // looks as expected, but the AudioBuffer may sometimes have fewer than
-    // that so you can't just iterate over maxOutputChannels
-    // and I'm assuming inputs are the same
-    int availableChannels = bufferToFill.buffer->getNumChannels();
-    if (availableChannels < maxInputChannels) {
-        // happens all the time, so don't trace
-        maxInputChannels = availableChannels;
-    }
-    
-    // look for the two lowest numbered active channels to serve as the source
-    // for our stereo frames, when we find one, copy them as soon as we find them
-    // so we can use the fucking auto
-    int interleavedChannel = 0;
-    for (auto channel = 0 ; channel < maxInputChannels ; channel++) {
-        // this is a misnomer, it isn't the channels that are active
-        // it's a bit vector of channels that could be active
-        if (activeInputChannels[channel]) {
-            // okay, here's one
-            auto* buffer = bufferToFill.buffer->getReadPointer(channel, bufferToFill.startSample);
-            if (buffer == nullptr) {
-                // should have caught this when testing availableChannels above?
-                int setBreakpointHere = availableChannels;
-            }
-            else {
-                for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
-                    int frameOffset = i * 2;
-                    resultBuffer[frameOffset + interleavedChannel] = buffer[i];
-                }
-                interleavedChannel++;
-                if (interleavedChannel >= 2)
-                  break;
-            }
-        }
-    }
-
-    // our job was just to get the input samples, output comes later
-    // after the listener is called
-}
-
-/**
- * Take the interleaved Mobius output buffer and spray that into active
- * Juce output channel buffers.
- *
- * Similar issues with output channels that represent stereo pairs.
- * In practice these will almost always be the first two but if not pick
- * the lowest two we can find.
- *
- * For any active output channels that we decide not to use, fill them
- * with zeros.  I think that is required because they're not cleared
- * by default.  Or we could put a jaunty tune in there.
- */
-void JuceAudioStream::deinterleaveOutputBuffers(const juce::AudioSourceChannelInfo& bufferToFill,
-                                                   float* sourceBuffer)
-{
-    // to do the active channel folderol, we need to get to the AudioDeviceManager
-    // once this is working, can save some of this so we don't have to do it all again
-    // but it should be fast enough
-    juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
-    auto* device = deviceManager->getCurrentAudioDevice();
-    auto activeOutputChannels = device->getActiveOutputChannels();
-    auto maxOutputChannels = activeOutputChannels.getHighestBit() + 1;
-    
-    // something weird started happening after enabling ASIO and selecting
-    // random channel configurations  the active channels bit vector
-    // looks as expected, but the AudioBuffer may sometimes have fewer than
-    // that so you can't just iterate over maxOutputChannels
-    int availableChannels = bufferToFill.buffer->getNumChannels();
-    if (availableChannels < maxOutputChannels) {
-        // happens all the time, so don't trace
-        maxOutputChannels = availableChannels;
-    }
-    
-    // first locate the two lowest numbered active channels to serve as the
-    // destination for our stereo frames
-    int interleavedChannel = 0;
-    for (int channel = 0 ; channel < maxOutputChannels ; channel++) {
-        if (activeOutputChannels[channel]) {
-            auto* buffer = bufferToFill.buffer->getWritePointer(channel, bufferToFill.startSample);
-            if (buffer == nullptr) {
-                // should have been caught with the availableChannels test?
-                int setBreakpointHere = availableChannels;
-            }
-            else if (interleavedChannel < 2) {
-                for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
-                    int frameOffset = i * 2;
-                    buffer[i] = sourceBuffer[frameOffset + interleavedChannel];
-                }
-            }
-            else {
-                // an extra one, clear it
-                for (int i = 0 ; i < bufferToFill.numSamples ; i++) {
-                    buffer[i] = 0.0f;
-                }
-            }
-            interleavedChannel++;
-        }
-    }
-    
-    // if you're like me you're tired, but it's a good kind of tired
 }
 
 //////////////////////////////////////////////////////////////////////
 //
 // Plugin AudioProcessor Interface
-//
-// These are conceptually similar to the callback used in an
-// AudioAppCompoenent but the signatures are different.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -774,23 +471,6 @@ void JuceAudioStream::releaseResourcesPlugin()
     audioPrepared = false;
 }
 
-/**
- * Now the hard part.
- * Like getNextAudioBlock in standalone applciations we need to convert
- * the AudioBuffer style into interleaved buffers.
- *
- * Since I kind of know what's going on now, there is less diagnostic trace
- * in this one than there is in getNextAudioBlock.
- *
- * Everything is port zero, first two channels again, but we need fix that asap.
- * 
- * This time we get the number of samples to consume/fill (aka the block size)
- * from buffer.getNumSamples where getNextAudioBlock got it from AudioSourceChannelInfo.
- * We don't have to mess with "startSamples", it's always zero to the block size.
- *
- * Using "auto" again since the buffer can contain either float or double and it
- * whines about casting.
- */
 void JuceAudioStream::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     processBlockCalls++;
@@ -809,176 +489,21 @@ void JuceAudioStream::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce:
         // prevent passing this along to Mobius
     }
     else {
-        // example shows going back here to get the number of channels
-        // every time, it's less complicated than standalone where we have that
-        // freaking bit vector to deal with
-        // not that it matters, but can we cache this in prepareToPlay?
-        juce::AudioProcessor* processor = supervisor->getAudioProcessor();
+        // used in the tutorials
         // wtf does this do?
         // oh, this is very interesting, explore this for test file comparison...
         juce::ScopedNoDenormals noDenormals;
-        auto inputChannels  = processor->getTotalNumInputChannels();
-        auto outputChannels = processor->getTotalNumOutputChannels();
-        int blockSize = buffer.getNumSamples();
-        
-        interleaveInputBuffers(buffer, 0, inputChannels, blockSize, inputBuffer);
-
-        // clear the interleaved output buffer just in case the handler is bad
-        clearInterleavedBuffer(blockSize, outputBuffer);
 
         // this is what the listener will ask for
-        nextBlockSamples = blockSize;
+        nextBlockSamples = buffer.getNumSamples();
+        nextMidiMessages = &midiMessages;
     
-        // call the handler which will immediately call back to 
-        // getInterruptFrames and getInterruptBuffers
-        // and now getMidiMessages
-        if (audioListener != nullptr) {
-            nextMidiMessages = &midiMessages;
-            audioListener->processAudioStream(this);
-        }
+        portAuthority.prepare(buffer);
+        
+        if (audioListener != nullptr)
+          audioListener->processAudioStream(this);
 
-        // copy what was left in the in the interleaved output buffer back to
-        // the Juce buffer, if we don't have a handler we'll copy the
-        // empty output buffer left by clearInterleavedBuffer and clear
-        // the channel buffers we didn't use
-        deinterleaveOutputBuffers(buffer, 0, outputChannels, blockSize, outputBuffer);
-
-        // pray
-    }
-
-    // do what Projucer did until we can figure this out
-    //processBlockDefault(buffer, midiMessages);
-}
-
-/**
- * Interleave two adjacent input channels into the temporary buffer.
- */
-void JuceAudioStream::interleaveInputBuffers(juce::AudioBuffer<float>& buffer, int port, int maxInputs,
-                                                 int blockSize, float* resultBuffer)
-{
-    int channelOffset = port * 2;
-
-    if (channelOffset >= maxInputs) {
-        // don't have at least one channel, must have a misconfigured port number
-        clearInterleavedBuffer(blockSize, resultBuffer);
-    }
-    else {
-        // should have 2 but if there is only one go mono
-        auto* channel1 = buffer.getReadPointer(channelOffset);
-        auto* channel2 = channel1;
-        if (channelOffset + 1 < maxInputs)
-          channel2 = buffer.getReadPointer(channelOffset + 1);
-
-        // !! do some range checking on the result buffer
-        int sampleIndex = 0;
-        for (int i = 0 ; i < blockSize ; i++) {
-            resultBuffer[sampleIndex] = channel1[i];
-            resultBuffer[sampleIndex+1] = channel2[i];
-            sampleIndex += 2;
-        }
-    }
-}
-
-/**
- * Deinterleave a port output buffer into two adjacent Juce buffers.
- * We've got to fill all Juce buffers with something because they may start
- * with garbage.
- */
-void JuceAudioStream::deinterleaveOutputBuffers(juce::AudioBuffer<float>& buffer, int port,
-                                                    int maxOutputs, int blockSize, float* sourceBuffer)
-{
-    int destChannelOffset = port * 2;
-
-    for (int channel = 0 ; channel < maxOutputs ; channel++) {
-        auto* destSamples = buffer.getWritePointer(channel);
-
-        float* srcSamples = nullptr;
-        if (channel == destChannelOffset) {
-            // this one wants to receive the left channel
-            srcSamples = sourceBuffer;
-        }
-        else if (channel == (destChannelOffset + 1)) {
-            // this one wants to receive the right channel
-            srcSamples = sourceBuffer + 1;
-        }
-        else {
-            // this one is out of range, leave null
-        }
-
-        // now that we've determined the source pointer, copy them
-        for (int i = 0 ; i < blockSize ; i++) {
-            if (srcSamples == nullptr) {
-                destSamples[i] = 0.0f;
-            }
-            else {
-                destSamples[i] = *srcSamples;
-                // skip to the next frame
-                srcSamples += 2;
-            }
-        }
-    }
-    
-    // if you're like me you're tired, but it's a good kind of tired
-}
-
-/**
- * This is what the generated Projecer code did, keep it around for ahwile
- * as a reference.
- */
-void JuceAudioStream::processBlockDefault(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
-{
-    (void)midiMessages;
-    // getTotal... methods are defined on this so we have to go back there
-    // since we're not in Kansas anymore
-    juce::AudioProcessor* processor = supervisor->getAudioProcessor();
-    
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = processor->getTotalNumInputChannels();
-    auto totalNumOutputChannels = processor->getTotalNumOutputChannels();
-
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        //auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Tests
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * If we don't have a handler we'll call down here and inject
- * something interesting for testing.
- *
- * Start by just copying the input to the output to verify
- * that interleaving works.
- */
-void JuceAudioStream::test(int numSamples)
-{
-    // input buffer has been filled, copy them to the output buffer buffer
-
-    int frameSamples = numSamples * 2;
-    for (int i = 0 ; i < frameSamples ; i++) {
-        outputBuffer[i] = inputBuffer[i];
+        portAuthority.commit();
     }
 }
 

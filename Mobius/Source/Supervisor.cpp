@@ -282,9 +282,7 @@ bool Supervisor::start()
     // the right one
     // !! revisit this, for plugins we don't control when blocks start
     // so it needs to be in a quiet state immediately
-    useNewStream = true;
     audioStream.configure();
-    audioStreamNew.configure();
     
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
@@ -428,11 +426,7 @@ void Supervisor::shutdown()
     // in an audio thread callback at this very moment,
     // if you see crashes on shutdown look here
     audioStream.setAudioListener(nullptr);
-    audioStreamNew.setAudioListener(nullptr);
-    if (useNewStream)
-      audioStreamNew.traceFinalStatistics();
-    else
-      audioStream.traceFinalStatistics();
+    audioStream.traceFinalStatistics();
     
     binderator.stop();
     midiRealizer.shutdown();
@@ -1065,18 +1059,12 @@ bool Supervisor::isPlugin()
         
 int Supervisor::getSampleRate()
 {
-    if (useNewStream)
-      return audioStreamNew.getSampleRate();
-    else
-      return audioStream.getSampleRate();
+    return audioStream.getSampleRate();
 }
 
 int Supervisor::getBlockSize()
 {
-    if (useNewStream)
-      return audioStreamNew.getBlockSize();
-    else
-      return audioStream.getBlockSize();
+    return audioStream.getBlockSize();
 }
 
 int Supervisor::getMillisecondCounter()
@@ -1151,10 +1139,7 @@ void Supervisor::midiSend(class MidiEvent* event)
 void Supervisor::setAudioListener(MobiusAudioListener* l)
 {
     audioListener = l;
-    if (useNewStream)
-      audioStreamNew.setAudioListener(l);
-    else
-      audioStream.setAudioListener(l);
+    audioStream.setAudioListener(l);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1609,52 +1594,34 @@ void Supervisor::menuLoadSamples()
 
 void Supervisor::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    if (useNewStream)
-      audioStreamNew.prepareToPlay(samplesPerBlockExpected, sampleRate);
-    else
-      audioStream.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    audioStream.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void Supervisor::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    if (useNewStream)
-      audioStreamNew.getNextAudioBlock(bufferToFill);
-    else
-      audioStream.getNextAudioBlock(bufferToFill);
+    audioStream.getNextAudioBlock(bufferToFill);
 }
 
 void Supervisor::releaseResources()
 {
-    if (useNewStream)
-      audioStreamNew.releaseResources();
-    else
-      audioStream.releaseResources();
+    audioStream.releaseResources();
 }
 
 // AudioProcessor (plugin)
 
 void Supervisor::prepareToPlayPlugin(double sampleRate, int samplesPerBlock)
 {
-    if (useNewStream)
-      audioStreamNew.prepareToPlayPlugin(sampleRate, samplesPerBlock);
-    else
-      audioStream.prepareToPlayPlugin(sampleRate, samplesPerBlock);
+    audioStream.prepareToPlayPlugin(sampleRate, samplesPerBlock);
 }
 
 void Supervisor::releaseResourcesPlugin()
 {
-    if (useNewStream)
-      audioStreamNew.releaseResourcesPlugin();
-    else
-      audioStream.releaseResourcesPlugin();
+    audioStream.releaseResourcesPlugin();
 }
 
 void Supervisor::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
-    if (useNewStream)
-      audioStreamNew.processBlockPlugin(buffer, midi);
-    else
-      audioStream.processBlockPlugin(buffer, midi);
+    audioStream.processBlockPlugin(buffer, midi);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1696,10 +1663,7 @@ bool Supervisor::isTestMode()
  */
 MobiusAudioListener* Supervisor::overrideAudioListener(MobiusAudioListener* l)
 {
-    if (useNewStream)
-      audioStreamNew.setAudioListener(l);
-    else
-      audioStream.setAudioListener(l);
+    audioStream.setAudioListener(l);
 
     return audioListener;
 }
@@ -1716,10 +1680,7 @@ MobiusListener* Supervisor::overrideMobiusListener(MobiusListener* l)
 
 void Supervisor::cancelListenerOverrides()
 {
-    if (useNewStream)
-      audioStreamNew.setAudioListener(audioListener);
-    else
-      audioStream.setAudioListener(audioListener);
+    audioStream.setAudioListener(audioListener);
 
     mobius->setListener(this);
 }
