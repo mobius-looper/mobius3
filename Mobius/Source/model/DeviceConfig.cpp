@@ -51,6 +51,38 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Find a HostConfig that matches the host string
+ * provided by juce::PluginHostType.
+ *
+ * If one is found with an exact match return it.
+ * If an exact match is not found and one is named "default"
+ * return that one.
+ * 
+ * Otherwise return nullptr which indiciates the plugin should
+ * use the defaultInputs and defaultOutputs properties.
+ */
+HostConfig* PluginConfig::getHostConfig(juce::String name)
+{
+    HostConfig* found = nullptr;
+    HostConfig* dflt = nullptr;
+
+    for (auto host : hosts) {
+        if (host->name == name) {
+            found = host;
+            break;
+        }
+        else if (host->name == juce::String(DefaultHostName)) {
+            dflt = host;
+        }
+    }
+
+    if (found == nullptr)
+      found = dflt;
+
+    return found;
+}
+
 #define EL_PLUGIN_CONFIG "PluginConfig"
 
 /**
@@ -61,6 +93,9 @@ void PluginConfig::addXml(juce::XmlElement* parent)
 {
     juce::XmlElement* root = new juce::XmlElement(EL_PLUGIN_CONFIG);
     parent->addChildElement(root);
+
+    root->setAttribute("defaultAuxInputs", defaultAuxInputs);
+    root->setAttribute("defaultAuxOutputs", defaultAuxOutputs);
     
     for (auto host : hosts) {
         juce::XmlElement* hostel = new juce::XmlElement("Host");
@@ -88,6 +123,12 @@ void PluginConfig::addXml(juce::XmlElement* parent, bool isInput, PluginPort* po
 
 void PluginConfig::parseXml(juce::XmlElement* root)
 {
+    int ports = root->getIntAttribute("defaultAuxInputs");
+    if (ports > 0) defaultAuxInputs = ports;
+    
+    ports = root->getIntAttribute("defaultAuxOutputs");
+    if (ports > 0) defaultAuxOutputs = ports;
+    
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Host")) {
             HostConfig* host = new HostConfig();

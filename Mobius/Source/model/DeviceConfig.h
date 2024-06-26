@@ -70,7 +70,20 @@ class HostConfig
 class PluginConfig
 {
   public:
+
+    const char* DefaultHostName = "default";
+
+    // the default number of secondary input and output ports
+    // used unless overridden with a HostConfig
+    int defaultAuxInputs = 2;
+    int defaultAuxOutputs = 2;
+
+    // host specific port configuration
+    // if one of these is named "default" it will be used
+    // instead of defaultInputs and defaultOutputs
     juce::OwnedArray<HostConfig> hosts;
+
+    HostConfig* getHostConfig(juce::String name);
 
     void addXml(juce::XmlElement* parent);
     void parseXml(juce::XmlElement* el);

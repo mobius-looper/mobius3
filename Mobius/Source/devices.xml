@@ -12,4 +12,10 @@
   <Machine hostName="Frigg" inputPorts="0" outputPorts="0" audioDeviceType="CoreAudio"
            audioInput="MacBook Pro Microphone" inputChannels="0" audioOutput="MacBook Pro Speakers"
            outputChannels="11" sampleRate="48000" blockSize="256"/>
+  <PluginConfig defaultAuxInputs="2" defaultAuxOutputs="2">
+    <Host name="default">
+      <Input name="Aux1" channels="2"/>
+      <Output name="Aux1" channels="2"/>
+    </Host>
+  </PluginConfig>
 </DeviceConfig>

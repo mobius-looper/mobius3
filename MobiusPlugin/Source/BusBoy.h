@@ -68,7 +68,7 @@ class BusBoy : public juce::AudioProcessor
     static juce::AudioProcessor::BusesProperties BusDefinition;
     
     static void loadPortConfiguration();
-    juce::AudioChannelSet deriveLayout(class PluginPort* port);
+    static void deriveLayout(class PluginPort* port, juce::AudioChannelSet& set);
 
     static void traceBusProperties(juce::String type, juce::Array<juce::AudioProcessor::BusProperties>& array);
     static void traceBusProperties(juce::AudioProcessor::BusProperties& props);
