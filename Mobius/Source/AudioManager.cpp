@@ -78,69 +78,78 @@ void AudioManager::openAudioDevice()
     // this goes in three phases that might be simplified further
     // but this works well enough
 
-    // phase 1: set the driver device type since that can't be specified
-    // in the AudioDeviceSetup
-    juce::String deviceType = machine->audioDeviceType;
-    // unclear whether we should always do this or just let it default
-    // if it isn't ASIO.  On Mac at least there is really only one option
-    if (deviceType.length() > 0) {
-        Trace(2, "AudioManager: Setting audio device type to %s\n", deviceType.toUTF8());
-        // second arg is treatAsChosenDevice whatever the fuck that means
-        deviceManager->setCurrentAudioDeviceType(deviceType, true);
-    }
-
-    // phase 2: put our configuration in the AudioDeviceSetup
-    juce::AudioDeviceManager::AudioDeviceSetup setup = deviceManager->getAudioDeviceSetup();
+    // NOTE: If the input or output device names got lost for some reason,
+    // it seems to really hooter everything up if you ask for ASIO and then
+    // don't name a devices.  The Juce component comes up with <<none>> for
+    // the device, sometimes the device list is empty, and other times you can
+    // pick one but it hangs and says "device not available".  On the RME at least
+    // once in this state you have to power cycle it.  So it might be an RME driver
+    // problem.  Whatever the cause, if it doesn't look like we have what we need
+    // to properly set up a device, don't do anything with AudioDeviceSetup and
+    // just let it open the default device.
+    if (machine->audioInput.length() > 0 && machine->audioOutput.length() > 0) {
     
-    // for ASIO input and output device names should be the same
-    // note: if the device names get messed up it seemed to really
-    // hooter something, Juce stopped opening the RME, and even Live
-    // hung at startup.  Do not let this set an empty name which
-    // results in "<<none>>" in the Juce device panel
-    juce::String name = machine->audioInput;
-    if (name.length() > 0)
-      setup.inputDeviceName = name;
+        // phase 1: set the driver device type since that can't be specified
+        // in the AudioDeviceSetup
+
+        juce::String deviceType = machine->audioDeviceType;
+        // unclear whether we should always do this or just let it default
+        // if it isn't ASIO.  On Mac at least there is really only one option
+        if (deviceType.length() > 0) {
+            Trace(2, "AudioManager: Setting audio device type to %s\n", deviceType.toUTF8());
+            // second arg is treatAsChosenDevice whatever the fuck that means
+            deviceManager->setCurrentAudioDeviceType(deviceType, true);
+        }
+    
+        // phase 2: put our configuration in the AudioDeviceSetup
+        juce::AudioDeviceManager::AudioDeviceSetup setup = deviceManager->getAudioDeviceSetup();
+    
+        // for ASIO input and output device names should be the same
+        juce::String name = machine->audioInput;
+        if (name.length() > 0)
+          setup.inputDeviceName = name;
         
-    name = machine->audioOutput;
-    if (name.length() > 0)
-      setup.outputDeviceName = name;
+        name = machine->audioOutput;
+        if (name.length() > 0)
+          setup.outputDeviceName = name;
 
-    // For ASIO, Juce can control the sample rate, but oddly not the
-    // block size.  It will remain whatever it was the last time it was
-    // set in the driver control panel.  It also seems to add a slight
-    // delay if you override that.  Just let the device driver be
-    // in control of both of these.
+        // For ASIO, Juce can control the sample rate, but oddly not the
+        // block size.  It will remain whatever it was the last time it was
+        // set in the driver control panel.  It also seems to add a slight
+        // delay if you override that.  Just let the device driver be
+        // in control of both of these.
     
-    // todo: revisit this after the revelation about the custom AudioDeviceManager
-    // maybe setting sample rate and block size will work now
-    if (deviceType != "ASIO") {
-        if (machine->sampleRate > 0)
-          setup.sampleRate = machine->sampleRate;
-        if (machine->blockSize > 0)
-          setup.bufferSize = machine->blockSize;
+        // todo: revisit this after the revelation about the custom AudioDeviceManager
+        // maybe setting sample rate and block size will work now
+        if (deviceType != "ASIO") {
+            if (machine->sampleRate > 0)
+              setup.sampleRate = machine->sampleRate;
+            if (machine->blockSize > 0)
+              setup.bufferSize = machine->blockSize;
+        }
+
+        // let this default if not set, usually the first two channels
+        // this is that channel bit vector that you need to put things back
+        // to the previous selections, but after that you no longer need to
+        // worry about it
+        if (machine->inputChannels.length() > 0) {
+            juce::BigInteger channels;
+            channels.parseString(machine->inputChannels, 2);
+            setup.inputChannels = channels;
+            setup.useDefaultInputChannels = false;
+        }
+
+        if (machine->outputChannels.length() > 0) {
+            juce::BigInteger channels;
+            channels.parseString(machine->outputChannels, 2);
+            setup.outputChannels = channels;
+            setup.useDefaultOutputChannels = false;
+        }
+        
+        // save the modified setup back into the custom ADM
+        deviceManager->setAudioDeviceSetup(setup, true);
     }
-
-    // let this default if not set, usually the first two channels
-    // this is that channel bit vector that you need to put things back
-    // to the previous selections, but after that you no longer need to
-    // worry about it
-    if (machine->inputChannels.length() > 0) {
-        juce::BigInteger channels;
-        channels.parseString(machine->inputChannels, 2);
-        setup.inputChannels = channels;
-        setup.useDefaultInputChannels = false;
-    }
-
-    if (machine->outputChannels.length() > 0) {
-        juce::BigInteger channels;
-        channels.parseString(machine->outputChannels, 2);
-        setup.outputChannels = channels;
-        setup.useDefaultOutputChannels = false;
-    }
-
-    // save the modified setup back into the custom ADM
-    deviceManager->setAudioDeviceSetup(setup, true);
-
+    
     // phase 3: open the device we just specified
     // this is where the audio blocks start happening
     //

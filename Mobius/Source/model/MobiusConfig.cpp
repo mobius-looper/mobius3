@@ -79,8 +79,6 @@ void MobiusConfig::init()
     mDefault = false;
     mHistory = nullptr;
 	mQuickSave = nullptr;
-    mCustomMessageFile = nullptr;
-	mUnitTests = nullptr;
 
 	mNoiseFloor = DEFAULT_NOISE_FLOOR;
 	mInputLatency = 0;
@@ -113,7 +111,6 @@ void MobiusConfig::init()
 //     mSampleRate = SAMPLE_RATE_44100;
 	mMonitorAudio = false;
     mHostRewinds = false;
-	mPluginPins = DEFAULT_PLUGIN_PINS;
     mAutoFeedbackReduction = false;
     mIsolateOverdubs = false;
     mIntegerWaveFile = false;
@@ -150,8 +147,6 @@ MobiusConfig::~MobiusConfig()
 	}
 
 	delete mQuickSave;
-    delete mCustomMessageFile;
-	delete mUnitTests;
 
 	delete mFocusLockFunctions;
 	delete mMuteCancelFunctions;
@@ -198,34 +193,6 @@ void MobiusConfig::setMonitorAudio(bool b)
 bool MobiusConfig::isMonitorAudio()
 {
 	return mMonitorAudio;
-}
-
-void MobiusConfig::setPluginPins(int i)
-{
-    // zero looks confusing in the UI, default it if we have 
-    // an old config file
-    if (i == 0) i = DEFAULT_PLUGIN_PINS;
-	mPluginPins = i;
-}
-
-int MobiusConfig::getPluginPins()
-{
-	return mPluginPins;
-}
-
-/**
- * Pseudo property to expose the pin count as "ports" which
- * are sets of stereo pins.  Ports are what we deal within all other
- * places so this makes a more logical global parameter.
- */
-int MobiusConfig::getPluginPorts()
-{
-	return (mPluginPins / 2);
-}
-
-void MobiusConfig::setPluginPorts(int i) 
-{
-	mPluginPins = i * 2;
 }
 
 void MobiusConfig::setHostRewinds(bool b)
@@ -460,28 +427,6 @@ void MobiusConfig::setQuickSave(const char* s)
 const char* MobiusConfig::getQuickSave()
 {
 	return mQuickSave;
-}
-
-void MobiusConfig::setCustomMessageFile(const char* s) 
-{
-	delete mCustomMessageFile;
-	mCustomMessageFile = CopyString(s);
-}
-
-const char* MobiusConfig::getCustomMessageFile()
-{
-	return mCustomMessageFile;
-}
-
-void MobiusConfig::setUnitTests(const char* s) 
-{
-	delete mUnitTests;
-	mUnitTests = CopyString(s);
-}
-
-const char* MobiusConfig::getUnitTests()
-{
-	return mUnitTests;
 }
 
 void MobiusConfig::setSampleConfig(SampleConfig* s)

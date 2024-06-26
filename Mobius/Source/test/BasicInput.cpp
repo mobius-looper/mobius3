@@ -159,6 +159,11 @@ juce::String BasicInput::getText()
     return text.getText();
 }
 
+int BasicInput::getInt()
+{
+    return text.getText().getIntValue();
+}
+
 void BasicInput::setText(juce::String s)
 {
     text.setText(s, juce::NotificationType::dontSendNotification);

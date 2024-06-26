@@ -26,6 +26,8 @@ class Form : public juce::Component
     void add(FormPanel* panel);
     FormPanel* getPanel(juce::String name);
 
+    void addTab(juce::String name, juce::Component* c);
+
     // will want more options here
     void add(Field* f, const char* tab = nullptr, int column = 0);
 

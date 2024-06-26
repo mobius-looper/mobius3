@@ -1895,8 +1895,13 @@ PluginInputPortParameterType::PluginInputPortParameterType() :
 
 int PluginInputPortParameterType::getHigh(Mobius* m)
 {
-    MobiusConfig* config = m->getConfiguration();
-    return config->getPluginPorts();
+    (void)m;
+    // we don't have PluginPins/Ports in MobiusConfig any more
+    // but it doesn't matter since we're not using the old Parameter model
+    // to drive the UI
+    //MobiusConfig* config = m->getConfiguration();
+    //return config->getPluginPorts();
+    return 16;
 }
 
 void PluginInputPortParameterType::getValue(SetupTrack* t, ExValue* value)
@@ -1977,8 +1982,11 @@ PluginOutputPortParameterType::PluginOutputPortParameterType() :
 
 int PluginOutputPortParameterType::getHigh(Mobius* m)
 {
-    MobiusConfig* config = m->getConfiguration();
-    return config->getPluginPorts();
+    (void)m;
+    // no longer configured in MobiusConfig and we don't use this to drive the UI
+    //MobiusConfig* config = m->getConfiguration();
+    //return config->getPluginPorts();
+    return 16;
 }
 
 void PluginOutputPortParameterType::getValue(SetupTrack* t, ExValue* value)
@@ -2074,8 +2082,9 @@ int InputPortParameterType::getHigh(Mobius* m)
     int ports = 0;
 
     if (m->isPlugin()) {
-        MobiusConfig* config = m->getConfiguration();
-        ports = config->getPluginPorts();
+        //MobiusConfig* config = m->getConfiguration();
+        //ports = config->getPluginPorts();
+        ports = 16;
     }
     else {
         ports = 2;
@@ -2181,8 +2190,9 @@ int OutputPortParameterType::getHigh(Mobius* m)
     // why would this need to be different now, the
     // container can provide it in both contexts
     if (m->isPlugin()) {
-        MobiusConfig* config = m->getConfiguration();
-        ports = config->getPluginPorts();
+        //MobiusConfig* config = m->getConfiguration();
+        //ports = config->getPluginPorts();
+        ports = 16;
     }
     else {
         ports = 2;

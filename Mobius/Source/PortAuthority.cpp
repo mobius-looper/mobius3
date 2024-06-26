@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 
 #include "model/MobiusConfig.h"
+#include "model/DeviceConfig.h"
 #include "Supervisor.h"
 #include "PortAuthority.h"
 
@@ -55,16 +56,39 @@ void PortAuthority::configure(Supervisor* super)
 
     int maxPorts = 0;
     if (isPlugin) {
-        // this was configurable as "pins" which were then grouped
-        // into stero pairs.  Should just call these ports since we don't support
-        // mono channels anywhere
-        MobiusConfig* config = super->getMobiusConfig();
-        int pins = config->getPluginPins();
-        maxPorts = pins / 2;
+        // this was originally configurable as "pins" in MobiusConfig
+        // we now do something similar in DeviceConfig/PluginConfig
+        // unlike standalone, these can't be dynamically resized without
+        // restarting the plugin so we don't necessarily need to pre-allocate
+        // more than we'll need at runtime
+        DeviceConfig* config = super->getDeviceConfig();
+        juce::PluginHostType host;
+        HostConfig* hostConfig = config->pluginConfig.getHostConfig(host.getHostDescription());
+        int maxAux = 0;
+        if (hostConfig == nullptr) {
+            maxAux = config->pluginConfig.defaultAuxOutputs;
+            if (config->pluginConfig.defaultAuxInputs > maxAux)
+              maxAux = config->pluginConfig.defaultAuxInputs;
+        }
+        else {
+            // !! todo: the model allows each io bus to have more than two
+            // channels, which if configured would make the AudioBuffer have unusual
+            // channel groupings that we don't understand
+            // continue assuming everything has 2 channels, but need to revisit this
+            maxAux = hostConfig->inputs.size();
+            if (hostConfig->outputs.size() > maxAux)
+              maxAux = hostConfig->outputs.size();
+        }
+        
+        // always the single main bus
+        maxPorts = maxAux + 1;
     }
     else {
-        // should be getting this from MobiusConfig but it was
-        // always hard coded to 16
+        // this was always harded to 16 in old Mobius
+        // in the new, it should be in devices.xml
+        // it is less important now since we could just dynamically
+        // adapt to the number of channels in the AudioBuffer and grow
+        // as necessary
         maxPorts = 16;
     }
     

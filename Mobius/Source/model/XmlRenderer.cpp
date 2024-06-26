@@ -381,11 +381,9 @@ void XmlRenderer::parseStructure(XmlElement* e, Structure* structure)
 #define EL_SETUP "Setup"
 
 #define ATT_VERSION "version"
-#define ATT_LANGUAGE "language"
 #define ATT_SETUP "setup"
 #define ATT_MIDI_CONFIG "midiConfig"
 #define ATT_UI_CONFIG  "uiConfig"
-#define ATT_PLUGIN_PINS "pluginPins"
 #define ATT_PLUGIN_HOST_REWINDS "pluginHostRewinds"
 
 #define ATT_NO_SYNC_BEAT_ROUNDING "noSyncBeatRounding"
@@ -424,9 +422,6 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     b->addAttribute(ATT_VERSION, c->getVersion());
 
     render(b, UIParameterQuickSave, c->getQuickSave());
-    //render(b, UIParameterCustomMessageFile, c->getCustomMessageFile());
-    //render(b, UIParameterUnitTests, c->getUnitTests());
-
     render(b, UIParameterNoiseFloor, c->getNoiseFloor());
 
     render(b, UIParameterInputLatency, c->getInputLatency());
@@ -440,7 +435,6 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     render(b, UIParameterLongPress, c->getLongPress());
     render(b, UIParameterMonitorAudio, c->isMonitorAudio());
 	b->addAttribute(ATT_PLUGIN_HOST_REWINDS, c->isHostRewinds());
-	b->addAttribute(ATT_PLUGIN_PINS, c->getPluginPins());
     render(b, UIParameterAutoFeedbackReduction, c->isAutoFeedbackReduction());
     // don't allow this to be persisted any more, can only be set in scripts
 	//render(IsolateOverdubsParameter->getName(), mIsolateOverdubs);
@@ -519,8 +513,6 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
     // c->setSelectedMidiConfig(e->getAttribute(ATT_MIDI_CONFIG));
     
 	c->setQuickSave(parseString(e, UIParameterQuickSave));
-	//c->setUnitTests(parseString(e, UIParameterUnitTests));
-	//c->setCustomMessageFile(parseString(e, UIParameterCustomMessageFile));
 
 	c->setNoiseFloor(parse(e, UIParameterNoiseFloor));
 	c->setInputLatency(parse(e, UIParameterInputLatency));
@@ -533,7 +525,6 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 
 	c->setMonitorAudio(parse(e, UIParameterMonitorAudio));
 	c->setHostRewinds(e->getBoolAttribute(ATT_PLUGIN_HOST_REWINDS));
-	c->setPluginPins(e->getIntAttribute(ATT_PLUGIN_PINS));
 	c->setAutoFeedbackReduction(parse(e, UIParameterAutoFeedbackReduction));
 
     // don't allow this to be persisted any more, can only be set in scripts

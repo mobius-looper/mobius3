@@ -118,12 +118,6 @@
 #define DEFAULT_SPREAD_RANGE 48
 
 /**
- * Default number of plugin pins.
- * This corresponds to 8 stereo ports.  
- */
-#define DEFAULT_PLUGIN_PINS 16
-
-/**
  * Default number of LayerInfo objects returned in a MobiusState.
  * This also controls the width of the layer list in the UI.
  */
@@ -232,10 +226,6 @@ class MobiusConfig {
 
 	void setMonitorAudio(bool b);
 	bool isMonitorAudio();
-	void setPluginPins(int i);
-	int getPluginPins();
-	void setPluginPorts(int i);
-	int getPluginPorts();
 	void setHostRewinds(bool b);
 	bool isHostRewinds();
 	void setAutoFeedbackReduction(bool b);
@@ -358,9 +348,6 @@ class MobiusConfig {
     void setDualPluginWindow(bool b);
     bool isDualPluginWindow();
 
-    void setCustomMessageFile(const char* s);
-    const char* getCustomMessageFile();
-
     void setMidiExport(bool b);
     bool isMidiExport();
 
@@ -401,20 +388,7 @@ class MobiusConfig {
     char mError[256];
     bool mDefault;
     MobiusConfig* mHistory;
-
-#if 0
-	char* mMidiInput;
-	char* mMidiOutput;
-	char* mMidiThrough;
-	char* mPluginMidiInput;
-	char* mPluginMidiOutput;
-	char* mPluginMidiThrough;
-	char* mAudioInput;
-	char* mAudioOutput;
-#endif    
 	char* mQuickSave;
-    char* mCustomMessageFile;
-	char* mUnitTests;
 
 	/**
 	 * The noise floor sample level.
@@ -486,12 +460,6 @@ class MobiusConfig {
 	 * starting so we have to defer detection of a bar boundary.
 	 */
 	bool mHostRewinds;
-
-	/**
-	 * Specifies the number of input and output pins we will advertise
-	 * to the VST host.
-	 */
-	int mPluginPins;
 
 	/**
 	 * When true, indicates that we should perform an automatic

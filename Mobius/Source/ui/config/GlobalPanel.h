@@ -7,6 +7,8 @@
 #include <JuceHeader.h>
 
 #include "../common/Form.h"
+#include "../../test/BasicForm.h"
+#include "../../test/BasicInput.h"
 #include "ConfigPanel.h"
 
 class GlobalPanel : public ConfigPanel 
@@ -28,7 +30,13 @@ class GlobalPanel : public ConfigPanel
     
     void loadGlobal(class MobiusConfig* c);
     void saveGlobal(class MobiusConfig* c);
+    int getPortValue(BasicInput* field, int max);
     
     Form form;
-        
+    BasicForm properties;
+    BasicInput asioInputs {"Standalone Inputs", 20};
+    BasicInput asioOutputs {"Standalone Outputs", 20};
+    BasicInput pluginInputs {"Plugin Inputs", 20};
+    BasicInput pluginOutputs {"Plugin Outputs", 20};
+    
 };

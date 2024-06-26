@@ -594,15 +594,11 @@ void Parameter::initParameters()
         // Global
 
         add(AltFeedbackDisableParameter);
-//        add(AudioInputParameter);
-//        add(AudioOutputParameter);
         add(AutoFeedbackReductionParameter);
         add(BindingsParameter);
         add(ConfirmationFunctionsParameter);
-        //add(CustomMessageFileParameter);
         add(CustomModeParameter);
         add(DriftCheckPointParameter);
-        //add(DualPluginWindowParameter);
         add(FadeFramesParameter);
         add(FocusLockFunctionsParameter);
         add(GroupFocusLockParameter);
@@ -614,36 +610,20 @@ void Parameter::initParameters()
         add(MaxLoopsParameter);
         add(MaxSyncDriftParameter);
         add(MidiExportParameter);
-//        add(MidiInputParameter);
-//        add(MidiOutputParameter);
         add(MidiRecordModeParameter);
-//        add(MidiThroughParameter);
         add(MonitorAudioParameter);
         add(MuteCancelFunctionsParameter);
         add(NoiseFloorParameter);
         add(OutputLatencyParameter);
-        //add(OscInputPortParameter);
-        //add(OscOutputPortParameter);
-        //add(OscOutputHostParameter);
-        //add(OscTraceParameter);
-        //add(OscEnableParameter);
-        //add(PluginMidiInputParameter);
-        //add(PluginMidiOutputParameter);
-        //add(PluginMidiThroughParameter);
-        add(PluginPortsParameter);
         add(QuickSaveParameter);
-        //add(SampleRateParameter);
         add(SaveLayersParameter);
         add(SetupNameParameter);
         add(SetupNumberParameter);
         add(SpreadRangeParameter);
-        //add(TraceDebugLevelParameter);
-        //add(TracePrintLevelParameter);
         add(TrackGroupsParameter);
         add(TrackParameter);
         add(TracksParameter);
         add(EdpismsParameter);
-        //add(UnitTestsParameter);
 
         // sanity check on scopes since they're critical
         for (int i = 0 ; Parameters[i] != NULL ; i++) {

@@ -7,7 +7,6 @@
   groupCount='2'
   maxLoops='2'
   longPress='500'
-  pluginPins='16'
   spreadRange='48'
   driftCheckPoint='loop'
   midiRecordMode='average'

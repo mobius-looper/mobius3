@@ -1,0 +1,15 @@
+<!--
+  This is an example of what a PluginConfig elemement looks like when inside
+  the DeviceConfig.  It is not part of the distribution, use it as a template
+  for experimenting with bus layouts in the stock DeviceConfig that just uses
+  the defeault aux port counts.
+-->  
+
+  <PluginConfig>
+    <Host name="default">
+      <Input name="InPort2" channels="2"/>
+      <Input name="InPort3" channels="2"/>
+      <Output name="OutPort2" channels="2"/>
+      <Output name="OutPort3" channels="2"/>
+    </Host>
+  </PluginConfig>

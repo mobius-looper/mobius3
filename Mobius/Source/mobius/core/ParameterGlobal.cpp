@@ -853,42 +853,6 @@ Parameter* NoiseFloorParameter = &NoiseFloorParameterTypeObj;
 
 //////////////////////////////////////////////////////////////////////
 //
-// PluginPorts
-//
-//////////////////////////////////////////////////////////////////////
-
-class PluginPortsParameterType : public GlobalParameter
-{
-  public:
-	PluginPortsParameterType();
-	void getValue(MobiusConfig* c, ExValue* value);
-	void setValue(MobiusConfig* c, ExValue* value);
-};
-
-PluginPortsParameterType::PluginPortsParameterType() :
-    GlobalParameter("pluginPorts")
-{
-    // not worth bindable
-	type = TYPE_INT;
-    low = 1;
-	high = 8;
-}
-
-void PluginPortsParameterType::getValue(MobiusConfig* c, ExValue* value)
-{
-	value->setInt(c->getPluginPorts());
-}
-
-void PluginPortsParameterType::setValue(MobiusConfig* c, ExValue* value)
-{
-	c->setPluginPorts(value->getInt());
-}
-
-PluginPortsParameterType PluginPortsParameterTypeObj;
-Parameter* PluginPortsParameter = &PluginPortsParameterTypeObj;
-
-//////////////////////////////////////////////////////////////////////
-//
 // MidiExport, HostMidiExport
 //
 //////////////////////////////////////////////////////////////////////

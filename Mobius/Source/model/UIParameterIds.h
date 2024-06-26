@@ -17,7 +17,6 @@ typedef enum {
     UIParameterIdFadeFrames,
     UIParameterIdMaxSyncDrift,
     UIParameterIdDriftCheckPoint,
-    UIParameterIdPluginPorts,
     UIParameterIdLongPress,
     UIParameterIdSpreadRange,
     UIParameterIdTraceLevel,

@@ -15,7 +15,6 @@ UIParameterName UIParameterRegistry[] = {
     {"fadeFrames", UIParameterIdFadeFrames},
     {"maxSyncDrift", UIParameterIdMaxSyncDrift},
     {"driftCheckPoint", UIParameterIdDriftCheckPoint},
-    {"pluginPorts", UIParameterIdPluginPorts},
     {"longPress", UIParameterIdLongPress},
     {"spreadRange", UIParameterIdSpreadRange},
     {"traceLevel", UIParameterIdTraceLevel},

@@ -44,10 +44,6 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
             value->setInt(((MobiusConfig*)obj)->getDriftCheckPoint());
             break;
             
-        case UIParameterIdPluginPorts:
-            value->setInt(((MobiusConfig*)obj)->getPluginPorts());
-            break;
-            
         case UIParameterIdLongPress:
             value->setInt(((MobiusConfig*)obj)->getLongPress());
             break;
@@ -493,10 +489,6 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             
         case UIParameterIdDriftCheckPoint:
             ((MobiusConfig*)obj)->setDriftCheckPoint((DriftCheckPoint)value->getInt());
-            break;
-            
-        case UIParameterIdPluginPorts:
-            ((MobiusConfig*)obj)->setPluginPorts(value->getInt());
             break;
             
         case UIParameterIdLongPress:

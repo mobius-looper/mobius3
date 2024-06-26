@@ -27,6 +27,9 @@ class BasicInput : public juce::Component
     void setText(juce::String s);
     void setAndNotify(juce::String s);
 
+    // coerce the text to an int
+    int getInt();
+
     void resized() override;
     void paint(juce::Graphics& g) override;
 

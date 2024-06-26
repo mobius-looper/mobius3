@@ -41,6 +41,13 @@ Form::~Form()
 {
 }
 
+// new interface for adding tabs that aren't FormPanels
+// really need to get tab handling out of Form
+void Form::addTab(juce::String name, juce::Component* c)
+{
+    tabs.addTab(name, juce::Colours::black, c, false);
+}    
+
 void Form::add(FormPanel* panel)
 {
     panels.add(panel);

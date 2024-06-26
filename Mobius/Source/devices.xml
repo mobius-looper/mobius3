@@ -5,17 +5,12 @@
            audioInput="Microphone Array (Intel&#174; Smart Sound Technology for Digital Microphones)"
            inputChannels="11" audioOutput="Speakers (Realtek(R) Audio)"
            outputChannels="11" sampleRate="48000" blockSize="480"/>
-  <Machine hostName="Thor" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
-           audioInput="ASIO Fireface USB" inputChannels="11" audioOutput="ASIO Fireface USB"
-           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2"
+  <Machine hostName="Thor" inputPorts="2" outputPorts="2" audioDeviceType="ASIO"
+           audioInput="ASIO Fireface USB" inputChannels="1111" audioOutput="ASIO Fireface USB"
+           outputChannels="1111" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2"
            midiOutput="Bome MIDI Translator 1"/>
   <Machine hostName="Frigg" inputPorts="0" outputPorts="0" audioDeviceType="CoreAudio"
            audioInput="MacBook Pro Microphone" inputChannels="0" audioOutput="MacBook Pro Speakers"
            outputChannels="11" sampleRate="48000" blockSize="256"/>
-  <PluginConfig defaultAuxInputs="2" defaultAuxOutputs="2">
-    <Host name="default">
-      <Input name="Aux1" channels="2"/>
-      <Output name="Aux1" channels="2"/>
-    </Host>
-  </PluginConfig>
+  <PluginConfig defaultAuxInputs="2" defaultAuxOutputs="2"/>
 </DeviceConfig>

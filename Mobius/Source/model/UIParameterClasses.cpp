@@ -234,35 +234,6 @@ void UIParameterDriftCheckPointClass::setValue(void* obj, ExValue* value)
 UIParameterDriftCheckPointClass UIParameterDriftCheckPointObj;
 UIParameter* UIParameterDriftCheckPoint = &UIParameterDriftCheckPointObj;
 
-////////////// PluginPorts
-
-class UIParameterPluginPortsClass : public UIParameter
-{
-  public:
-    UIParameterPluginPortsClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterPluginPortsClass::UIParameterPluginPortsClass()
-{
-    name = "pluginPorts";
-    displayName = "Plugin Ports";
-    scope = ScopeGlobal;
-    type = TypeInt;
-    low = 1;
-    high = 8;
-}
-void UIParameterPluginPortsClass::getValue(void* obj, ExValue* value)
-{
-    value->setInt(((MobiusConfig*)obj)->getPluginPorts());
-}
-void UIParameterPluginPortsClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setPluginPorts(value->getInt());
-}
-UIParameterPluginPortsClass UIParameterPluginPortsObj;
-UIParameter* UIParameterPluginPorts = &UIParameterPluginPortsObj;
-
 ////////////// LongPress
 
 class UIParameterLongPressClass : public UIParameter

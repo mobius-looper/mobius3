@@ -5,9 +5,14 @@
 #include <sstream>
 
 #include "../../model/MobiusConfig.h"
+#include "../../model/DeviceConfig.h"
 #include "../../model/UIParameter.h"
+#include "../../Supervisor.h"
 
 #include "../common/Form.h"
+#include "../../test/BasicForm.h"
+#include "../../test/BasicInput.h"
+
 #include "ParameterField.h"
 #include "ConfigEditor.h"
 
@@ -49,8 +54,33 @@ void GlobalPanel::save()
         MobiusConfig* config = editor->getMobiusConfig();
         saveGlobal(config);
         editor->saveMobiusConfig();
+
+        DeviceConfig* dc = Supervisor::Instance->getDeviceConfig();
+
+        // actually don't need to display the standalone ports the way it's working now
+        // it will auto-adjust to whatever ports were selected in AudioDevicesPanel
+        //MachineConfig* mc = dc->getMachineConfig();
+        //mc->inputPorts = getPortValue(&asioInputs, 32);
+        //mc->outputPorts = getPortValue(&asioOutputs, 32);
+        dc->pluginConfig.defaultAuxInputs = getPortValue(&pluginInputs, 8) - 1;
+        dc->pluginConfig.defaultAuxOutputs = getPortValue(&pluginOutputs, 8) - 1;
+
         changed = false;
     }
+}
+
+/**
+ * Extract the value of one of the port fields as an integer
+ * and constraint the value.
+ */
+int GlobalPanel::getPortValue(BasicInput* field, int max)
+{
+    int value = field->getInt();
+    if (value < 1)
+      value = 1;
+    else if (max > 0 && value > max)
+      value = max;
+    return value;
 }
 
 void GlobalPanel::cancel()
@@ -71,6 +101,18 @@ void GlobalPanel::loadGlobal(MobiusConfig* config)
         if (pf != nullptr)
           pf->loadValue(config);
     }
+
+    // ports don't come from MobiusConfig
+    DeviceConfig* dc = Supervisor::Instance->getDeviceConfig();
+
+    // actually don't need to expose these, we auto-adjust whenever
+    // AudioDevicesPanel selects channels
+    // MachineConfig* mc = dc->getMachineConfig();
+    //asioInputs.setText(juce::String(mc->inputPorts));
+    //asioOutputs.setText(juce::String(mc->outputPorts));
+
+    pluginInputs.setText(juce::String(dc->pluginConfig.defaultAuxInputs + 1));
+    pluginOutputs.setText(juce::String(dc->pluginConfig.defaultAuxOutputs + 1));
 }
 
 /**
@@ -99,6 +141,17 @@ void GlobalPanel::render()
     initForm();
     form.render();
 
+    // after adding the tabs for the form, add one
+    // for the random properties that are not in the form
+    form.addTab("IO Ports", &properties);
+    properties.setLabelColor(juce::Colours::orange);
+    properties.setLabelCharWidth(15);
+    properties.setTopInset(12);
+    //properties.add(&asioInputs);
+    //properties.add(&asioOutputs);
+    properties.add(&pluginInputs);
+    properties.add(&pluginOutputs);
+    
     // place it in the content panel
     content.addAndMakeVisible(form);
 
@@ -145,7 +198,6 @@ void GlobalPanel::initForm()
     // isn't ideal
     //addField("General", UIParameterMaxLoops);
     
-    addField("General", UIParameterPluginPorts);
     addField("General", UIParameterQuickSave);
     addField("General", UIParameterLongPress);
     addField("General", UIParameterAutoFeedbackReduction);
