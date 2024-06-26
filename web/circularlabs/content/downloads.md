@@ -20,45 +20,14 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 10 Changes
+## Build 11 Changes
 
-- The plugin now advertise as an audio effect rather than an instrument, it can now be inserted into an audio track.  Routing MIDI into the plugin through the host may be more complex as a side effect.  How this is done is host dependent.
-- Fix latency compensation and put latency overrides back in global configuration.  The default latency will now be determined by the block size of the audio device.  If you set the **Input Latency** and **Output Latency** global parameters, those will be used instead.
-- Fix another crash when deleting and re-adding the plugin.
-
-## Build 9 Changes
-
-- Fixed several issues related to plugin scanning and deleting/adding the plugin several times
-- Fixed hang/crash when closing the host application while a loop was running
-- Fixed crash with MIDI capture in the plugin
-- Redesigned Midi Devices configuration panel, support for multiple devices in both standalone application and plugin
-
-
-## Build 8 Changes
-- Track names set in the Track Setup will now display in the UI
-- SyncMasterTrack is back to being a bindable function
-- Support for Track Setups when the track count is more than 8
-- Fixed button colors not being saved
-- Various improvements to the configuration upgrade utillity
-- Implement binding overlays
-- Improve the MIDI Bindings and Keyboard Bindings help panels
-
-See the documentation page for more information on what binding overlays are, and how they differ from Mobius 2.5.
-
-## Build 7 Changes
-
-- A utility to upgrade old XML configuration files has been added.  Under the **Configuration** menu, select **Upgrade Configuration**
-- Fixed MIDI bindings to Sustainable "SUS" functions so that the Note Off messages properly end the function
-- Fixed Long Press behavior
-
-## Build 6 Changes
-
-- Mac install now has Universal binaries and should run on both Silicon and Intel Macs
-- Plugin editor windows are now resizeable
-- Button arguments for SelectLoop and SelectTrack now work
-- Fixed MIDI channel issues with bindings
-- Reorganized menus based on Claudio's suggestions
-- Script configuration panel will now automatically reload scripts
+- Support for multiple input and output ports
+- Support for ASIO devices on Windows
+- **Midi Monitor** and **Environment** information panels under the Help menu
+- Loop stack in the track strips may have a configurable number of rows
+- Both an input level meter and an output level meter may be added to the track strip
+- Add a gap between rows of action buttons
 
 ## Windows Security
 
