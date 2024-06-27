@@ -96,11 +96,9 @@ class ConfigEditor
 
     void addPanel(ConfigPanel* panel);
     void show(ConfigPanel* panel);
-    void show(class NewConfigPanel* selected);
     
     class Supervisor* supervisor = nullptr;
     juce::Component* owner = nullptr;
-    juce::OwnedArray<NewConfigPanel> newPanels;
 
     bool initialized = false;
 

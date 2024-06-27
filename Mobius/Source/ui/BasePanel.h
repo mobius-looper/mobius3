@@ -51,6 +51,13 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     BasePanel();
     virtual ~BasePanel();
 
+    int getId() {
+        return id;
+    }
+    void setId(int i) {
+        id = i;
+    }
+
     void setContent(juce::Component* c);
     void addButton(juce::Button* b);
 
@@ -66,12 +73,14 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     void followContentMouse();
 
     // make the panel visible
+    // won't be necessary once PanelFactory is done...
     void show();
     void close();
 
     // subclass overrides this if it has more preparations to make
     virtual void showing();
     virtual void hiding();
+    virtual void update();
     virtual void footerButton(juce::Button* b);
     
     // Component
@@ -88,6 +97,8 @@ class BasePanel : public juce::Component, public juce::Button::Listener
 
     
   private:
+
+    int id = 0;
 
     juce::String title;
     juce::Colour borderColor;

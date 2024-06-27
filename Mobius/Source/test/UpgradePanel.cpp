@@ -1,6 +1,8 @@
 /**
  * Utility to read old mobius.xml and ui.xml files and convert them
  * to the new model.
+ *
+ * Unforntately not yet a BasePanel managed by PanelFactory, but it could be...
  */
 
 #include <JuceHeader.h>
@@ -16,15 +18,11 @@
 #include "../model/Binding.h"
 #include "../model/ScriptConfig.h"
 
-#include "../ui/JuceUtil.h"
 #include "../Supervisor.h"
 
 #include "UpgradePanel.h"
 
-const int UpgradePanelHeaderHeight = 20;
-const int UpgradePanelFooterHeight = 20;
-
-UpgradePanel::UpgradePanel()
+UpgradeContent::UpgradeContent()
 {
     addAndMakeVisible(commands);
     commands.setListener(this);
@@ -33,31 +31,22 @@ UpgradePanel::UpgradePanel()
     commands.add(&installButton);
     commands.add(&undoButton);
     
-    addAndMakeVisible(footer);
-    footer.addAndMakeVisible(okButton);
-    okButton.addListener(this);
-    
     addAndMakeVisible(&log);
 
     // set this true to enable stricter error checking and filtering
     // need a checkbox...
     strict = false;
-    
-    setSize(800, 600);
 }
 
-UpgradePanel::~UpgradePanel()
+UpgradeContent::~UpgradeContent()
 {
     // should be using a smart pointer
     delete mobiusConfig;
     delete newButtons;
 }
 
-void UpgradePanel::show()
+void UpgradeContent::showing()
 {
-    JuceUtil::centerInParent(this);
-    setVisible(true);
-    
     log.add("Click \"Load File\" to analyze a configuration file");
     log.add("Click \"Install\" to install a configuration after analysis");
     log.add("Click \"Undo\" to undo the last install");
@@ -70,7 +59,7 @@ void UpgradePanel::show()
  * On Windows this starts in c:/Program Files (x86) but gets
  * redirected to the "virtual store" when you write to it.
  */
-void UpgradePanel::locateExisting()
+void UpgradeContent::locateExisting()
 {
     expectedVerified = false;
     
@@ -101,12 +90,9 @@ void UpgradePanel::locateExisting()
     }
 }
 
-void UpgradePanel::buttonClicked(juce::Button* b)
+void UpgradeContent::buttonClicked(juce::Button* b)
 {
-    if (b == &okButton) {
-        setVisible(false);
-    }
-    else if (b == &loadCurrentButton) {
+    if (b == &loadCurrentButton) {
         doLoadCurrent();
     }
     else if (b == &loadFileButton) {
@@ -120,7 +106,7 @@ void UpgradePanel::buttonClicked(juce::Button* b)
     }
 }
 
-void UpgradePanel::resized()
+void UpgradeContent::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
@@ -129,38 +115,10 @@ void UpgradePanel::resized()
     area.removeFromLeft(5);
     area.removeFromRight(5);
 
-    area.removeFromTop(UpgradePanelHeaderHeight);
-
     juce::Rectangle<int> commandArea = area.removeFromTop(20);
     commands.setBounds(commandArea);
     
-    footer.setBounds(area.removeFromBottom(UpgradePanelFooterHeight));
-    okButton.setSize(60, UpgradePanelFooterHeight);
-
     log.setBounds(area);
-
-    JuceUtil::centerInParent(&okButton);
-}
-
-void UpgradePanel::paint(juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::black);
-
-    g.setColour(juce::Colours::white);
-    g.drawRect(getLocalBounds(), 4);
-
-    // easier to just give this a container component...
-    int headerLeft = 5;
-    int headerTop = 5;
-    int headerWidth = getWidth() - 10;
-    int headerHeight = UpgradePanelHeaderHeight;
-    
-    g.setColour(juce::Colours::blue);
-    g.fillRect(headerLeft, headerTop, headerWidth, headerHeight);
-    juce::Font font (UpgradePanelHeaderHeight * 0.8f);
-    g.setColour(juce::Colours::white);
-    g.drawText("Configuration File Upgrade", headerLeft, headerTop, headerWidth, headerHeight,
-               juce::Justification::centred);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -169,7 +127,7 @@ void UpgradePanel::paint(juce::Graphics& g)
 //
 //////////////////////////////////////////////////////////////////////
 
-void UpgradePanel::doLoadCurrent()
+void UpgradeContent::doLoadCurrent()
 {
     if (expectedVerified)
       doLoad(expected);
@@ -180,12 +138,12 @@ void UpgradePanel::doLoadCurrent()
     }
 }
 
-void UpgradePanel::doLoadFile()
+void UpgradeContent::doLoadFile()
 {
     doFileChooser();
 }
 
-void UpgradePanel::doFileChooser()
+void UpgradeContent::doFileChooser()
 {
     // start in the located file if we could find one, otherwise installation root
     juce::File startPath(Supervisor::Instance->getRoot());
@@ -231,7 +189,7 @@ void UpgradePanel::doFileChooser()
  * Here from the file chooser.  Normally file will be mobius.xml
  * but allow it to be ui.xml as well for testing.
  */
-void UpgradePanel::doLoad(juce::File file)
+void UpgradeContent::doLoad(juce::File file)
 {
     log.add("");
     log.add("Loading: " + file.getFullPathName());
@@ -269,7 +227,7 @@ void UpgradePanel::doLoad(juce::File file)
  * in a mobius.xml BindingConfig, we look in both places and
  * merge them.
  */
-void UpgradePanel::loadUIConfig(juce::String xml)
+void UpgradeContent::loadUIConfig(juce::String xml)
 {
     int buttonCount = 0;
     int buttonAdded = 0;
@@ -302,7 +260,7 @@ void UpgradePanel::loadUIConfig(juce::String xml)
             juce::String(buttonAdded));
 }
 
-bool UpgradePanel::convertButton(juce::XmlElement* el)
+bool UpgradeContent::convertButton(juce::XmlElement* el)
 {
     bool converted = false;
     juce::String function = el->getStringAttribute("function");
@@ -325,7 +283,7 @@ bool UpgradePanel::convertButton(juce::XmlElement* el)
  * rather than merge them into an existing object.
  * Still need dup checking within the upgrade set though.
  */
-bool UpgradePanel::addUpgradeButton(DisplayButton* db)
+bool UpgradeContent::addUpgradeButton(DisplayButton* db)
 {
     bool added = false;
 
@@ -355,7 +313,7 @@ bool UpgradePanel::addUpgradeButton(DisplayButton* db)
  * MobiusConfig loading creates new object lists containing
  * only things that are not already in the new model.
  */
-void UpgradePanel::loadMobiusConfig(juce::String xml)
+void UpgradeContent::loadMobiusConfig(juce::String xml)
 {
     delete mobiusConfig;
     mobiusConfig = nullptr;
@@ -404,7 +362,7 @@ void UpgradePanel::loadMobiusConfig(juce::String xml)
  * have made changes to the imported XML files and want those, they'll
  * have to delete the existing ones first.
  */
-void UpgradePanel::loadPresets()
+void UpgradeContent::loadPresets()
 {
     int count = 0;
     
@@ -445,7 +403,7 @@ void UpgradePanel::loadPresets()
             juce::String(newPresets.size()));
 }
 
-void UpgradePanel::loadSetups()
+void UpgradeContent::loadSetups()
 {
     int count = 0;
     
@@ -494,7 +452,7 @@ void UpgradePanel::loadSetups()
  * later in verifyBinding to warn about bindings to things that
  * don't exist.
  */
-void UpgradePanel::loadScripts()
+void UpgradeContent::loadScripts()
 {
     int count = 0;
     
@@ -571,7 +529,7 @@ void UpgradePanel::loadScripts()
             juce::String(newScripts.size()));
 }
 
-juce::String UpgradePanel::verifyScript(ScriptRef* ref)
+juce::String UpgradeContent::verifyScript(ScriptRef* ref)
 {
     juce::String scriptName;
 
@@ -602,7 +560,7 @@ juce::String UpgradePanel::verifyScript(ScriptRef* ref)
  * single ScriptRef, but for binding verification we need to descend into it
  * and load all the script names it contains.
  */
-void UpgradePanel::registerDirectoryScripts(juce::File dir)
+void UpgradeContent::registerDirectoryScripts(juce::File dir)
 {
     int types = juce::File::TypesOfFileToFind::findFiles;
     juce::String pattern ("*.mos");
@@ -628,7 +586,7 @@ void UpgradePanel::registerDirectoryScripts(juce::File dir)
     }
 }
 
-juce::String UpgradePanel::getScriptName(juce::File file)
+juce::String UpgradeContent::getScriptName(juce::File file)
 {
     juce::String scriptName;
     
@@ -667,7 +625,7 @@ juce::String UpgradePanel::getScriptName(juce::File file)
  * is the first BindingConfig which is always merged with the first BindingSet
  * in the new model regardless of name.  
  */
-void UpgradePanel::loadBindings()
+void UpgradeContent::loadBindings()
 {
     // the first one is special, it doesn't requirea name match
     BindingSet* oldBindings = mobiusConfig->getBindingSets();
@@ -698,7 +656,7 @@ void UpgradePanel::loadBindings()
     }
 }
 
-BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
+BindingSet* UpgradeContent::loadBindings(BindingSet* old, BindingSet* master)
 {
     BindingSet* newBindings = new BindingSet();
     // if this is the first one, the name doesn't matter
@@ -824,7 +782,7 @@ BindingSet* UpgradePanel::loadBindings(BindingSet* old, BindingSet* master)
  * will return nullptr if the binding does not resolve
  * to a valid symbol or script name.
  */
-Binding* UpgradePanel::upgradeBinding(Binding* src)
+Binding* UpgradeContent::upgradeBinding(Binding* src)
 {
     Binding* copy = new Binding(src);
 
@@ -910,7 +868,7 @@ Binding* UpgradePanel::upgradeBinding(Binding* src)
     return copy;
 }
 
-int UpgradePanel::getLastDigit(juce::String s)
+int UpgradeContent::getLastDigit(juce::String s)
 {
     juce::String suffix = s.getLastCharacters(1);
     return suffix.getIntValue();
@@ -922,7 +880,7 @@ int UpgradePanel::getLastDigit(juce::String s)
 //
 //////////////////////////////////////////////////////////////////////
 
-void UpgradePanel::noLoad()
+void UpgradeContent::noLoad()
 {
     log.add("No configuration file has been loaded");
     log.add("Press the \"Load\" button and select a file");
@@ -949,7 +907,7 @@ void UpgradePanel::noLoad()
  * don't think many people besides myself use key bindings.
  *
  */
-void UpgradePanel::doInstall()
+void UpgradeContent::doInstall()
 {
     if (mobiusConfig == nullptr) {
         noLoad();
@@ -1063,7 +1021,7 @@ void UpgradePanel::doInstall()
  * We want to move ownership of the objects over to the destination set.
  * Easiest is to do linked list surgery on the destination.
  */
-void UpgradePanel::mergeBindings(BindingSet* src, BindingSet* dest)
+void UpgradeContent::mergeBindings(BindingSet* src, BindingSet* dest)
 {
     Binding* list = src->stealBindings();
 
@@ -1084,7 +1042,7 @@ void UpgradePanel::mergeBindings(BindingSet* src, BindingSet* dest)
 //
 //////////////////////////////////////////////////////////////////////
 
-void UpgradePanel::doUndo()
+void UpgradeContent::doUndo()
 {
     log.add("");
     juce::File root = Supervisor::Instance->getRoot();

@@ -1,32 +1,51 @@
 
 #include <JuceHeader.h>
 
-#include "NewConfigPanel.h"
 #include "TestConfigPanel.h"
 
-TestConfigPanel::TestConfigPanel(ConfigEditor* editor)
-    : NewConfigPanel(editor, "Test",
-                     NewConfigPanel::ButtonType::Save | NewConfigPanel::ButtonType::Cancel, true)
-{
-    setName("TestConfigPanel");
-    content.setContent(&testContent);
-    content.setHelpHeight(0);
-}
-
-TestConfigPanel::~TestConfigPanel()
+TestConfigContent::TestConfigContent()
 {
 }
 
-void TestConfigPanel::load()
+TestConfigContent::~TestConfigContent()
 {
 }
 
-void TestConfigPanel::save()
+void TestConfigContent::showing()
 {
 }
 
-void TestConfigPanel::cancel()
+void TestConfigContent::hiding()
 {
 }
 
-                     
+void TestConfigContent::load()
+{
+}
+void TestConfigContent::save()
+{
+}
+void TestConfigContent::cancel()
+{
+}
+
+void TestConfigContent::objectSelectorSelect(int ordinal)
+{
+}
+
+void TestConfigContent::objectSelectorRename(juce::String newName)
+{
+}
+
+void TestConfigContent::objectSelectorNew()
+{
+}
+
+void TestConfigContent::objectSelectorDelete()
+{
+}
+
+void TestConfigContent::objectSelectorCopy()
+{
+}
+

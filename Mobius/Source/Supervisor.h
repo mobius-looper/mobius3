@@ -225,12 +225,6 @@ class Supervisor : public MobiusContainer, public MobiusListener
     class MobiusListener* overrideMobiusListener(class MobiusListener* l);
     void cancelListenerOverrides();
 
-    // other test panels
-    void menuShowMidiTransport();
-    void menuShowSyncPanel();
-    void menuShowSymbolTable();
-    void menuShowUpgradePanel();
-    
     // diagnostics
     void traceDeviceSetup();
 

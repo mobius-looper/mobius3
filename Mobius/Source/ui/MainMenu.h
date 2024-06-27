@@ -111,6 +111,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         SymbolTable,
         DiagnosticWindow,
         UpgradeConfig,
+        TestConfig
         
         };
     

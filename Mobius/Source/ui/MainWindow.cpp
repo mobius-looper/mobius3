@@ -43,11 +43,7 @@ MainWindow::MainWindow(Supervisor* super)
     // let the config editor pre-load all its panels
     configEditor.init(supervisor);
 
-    addChildComponent(infoPanel);
-    addChildComponent(aboutPanel);
     addChildComponent(alertPanel);
-    addChildComponent(midiMonitor);
-    addChildComponent(environment);
     
 #ifdef USE_FFMETERS
     addAndMakeVisible(levelMeter);
@@ -61,10 +57,8 @@ MainWindow::~MainWindow()
 }
 
 /**
- * Inform children of a change to the configuration
- *
- * MainMenu, ConfigEditor, InfoPanel, AboutPanel are not
- * sensitive to configuration changes.
+ * Inform child components of configuration changes.
+ * The various PanelFactory popup panels are not currently sensitive.
  */
 void MainWindow::configure()
 {
@@ -248,32 +242,32 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::KeyBindings:
-                infoPanel.showKeyboard();
+                panelFactory.show(PanelFactory::KeyboardSummary);
                 break;
-            case MainMenu::MidiBindings: 
-                infoPanel.showMidi();
+            case MainMenu::MidiBindings:
+                panelFactory.show(PanelFactory::MidiSummary);
                 break;
             case MainMenu::MidiMonitor:
-                midiMonitor.show();
+                panelFactory.show(PanelFactory::MidiMonitor);
                 break;
             case MainMenu::Environment:
-                environment.show();
+                panelFactory.show(PanelFactory::Environment);
                 break;
                 
             case MainMenu::MidiTransport:
-                supervisor->menuShowMidiTransport();
+                panelFactory.show(PanelFactory::MidiTransport);
                 break;
                 
             case MainMenu::SyncPanel:
-                supervisor->menuShowSyncPanel();
+                panelFactory.show(PanelFactory::Sync);
                 break;
                 
             case MainMenu::SymbolTable:
-                supervisor->menuShowSymbolTable();
+                panelFactory.show(PanelFactory::SymbolTable);
                 break;
                 
             case MainMenu::UpgradeConfig:
-                supervisor->menuShowUpgradePanel();
+                panelFactory.show(PanelFactory::Upgrade);
                 break;
                 
             case MainMenu::DiagnosticWindow: {
@@ -281,9 +275,13 @@ void MainWindow::mainMenuSelection(int id)
                 //DiagnosticWindow::launch();
             }
                 break;
+
+            case MainMenu::TestConfig:
+                panelFactory.show(PanelFactory::TestConfig);
+                break;
                 
             case MainMenu::About: {
-                aboutPanel.show();
+                panelFactory.show(PanelFactory::About);
             }
                 break;
 
@@ -338,9 +336,15 @@ void MainWindow::captureConfiguration(UIConfig* config)
     display.captureConfiguration(config);
 }
 
+/**
+ * The periodic ping from MainThread to refresh the display.
+ */
 void MainWindow::update(MobiusState* state)
 {
     display.update(state);
+
+    // A few visible panels need to do periodic refreshes as well
+    panelFactory.update();
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -5,26 +5,20 @@
 
 #pragma once
 
+#include "../ui/BasePanel.h"
 #include "BasicLog.h"
+#include "BasicButtonRow.h"
 
-class UpgradePanelFooter : public juce::Component
-{
-  public:
-    UpgradePanelFooter() {}
-    ~UpgradePanelFooter() {}
-};
-
-class UpgradePanel : public juce::Component, juce::Button::Listener
+class UpgradeContent : public juce::Component, juce::Button::Listener
 {
   public:
 
-    UpgradePanel();
-    ~UpgradePanel();
+    UpgradeContent();
+    ~UpgradeContent();
 
-    void show();
+    void showing();
 
     void resized() override;
-    void paint(juce::Graphics& g) override;
     void buttonClicked(juce::Button* b) override;
 
   private:
@@ -50,9 +44,6 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     juce::TextButton loadFileButton {"Load File"};
     juce::TextButton installButton {"Install"};
     juce::TextButton undoButton {"Undo"};
-    
-    UpgradePanelFooter footer;
-    juce::TextButton okButton {"OK"};
     
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
@@ -88,3 +79,22 @@ class UpgradePanel : public juce::Component, juce::Button::Listener
     void doUndo();
 };
 
+class UpgradePanel : public BasePanel
+{
+  public:
+
+    UpgradePanel() {
+        setTitle("Configuration File Upgrader");
+        setContent(&content);
+        setSize(800, 600);
+    }
+    ~UpgradePanel() {}
+
+    void showing() override {
+        content.showing();
+    }
+    
+  private:
+
+    UpgradeContent content;
+};

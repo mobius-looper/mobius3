@@ -30,10 +30,6 @@ void EnvironmentPanel::showing()
     content.showing();
 }
 
-void EnvironmentPanel::hiding()
-{
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // EnvironmentContent

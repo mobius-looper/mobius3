@@ -3,12 +3,12 @@
 
 #include "BasePanel.h"
 
-class InfoContent : public juce::Component, public juce::TableListBoxModel
+class BindingSummary : public juce::Component, public juce::TableListBoxModel
 {
   public:
 
-    InfoContent();
-    ~InfoContent();
+    BindingSummary();
+    ~BindingSummary();
 
     void prepare(bool midi);
     
@@ -36,37 +36,40 @@ class InfoContent : public juce::Component, public juce::TableListBoxModel
     juce::String renderMidiTrigger(class Binding* b);
 };
 
-class InfoPanel : public BasePanel
+class MidiSummaryPanel : public BasePanel
 {
   public:
-
-    InfoPanel() {
+    
+    MidiSummaryPanel() {
+        setTitle("MIDI Bindings");
         setContent(&content);
         setSize(600, 600);
     }
-    ~InfoPanel() {}
 
-    void showMidi() {
-        if (!isVisible()) {
-            setTitle("MIDI Bindings");
-            content.prepare(true);
-            resized();
-            show();
-        }
+    void showing() override {
+        content.prepare(true);
     }
-    
-    void showKeyboard() {
-        if (!isVisible()) {
-            setTitle("Keyboard Bindings");
-            content.prepare(false);
-            resized();
-            show();
-        }
-    }
-    
+
   private:
+    BindingSummary content;
+};
 
-    InfoContent content;
+class KeyboardSummaryPanel : public BasePanel
+{
+  public:
+    
+    KeyboardSummaryPanel() {
+        setTitle("Keyboard Bindings");
+        setContent(&content);
+        setSize(600, 600);
+    }
+
+    void showing() override {
+        content.prepare(false);
+    }
+
+  private:
+    BindingSummary content;
 };
 
     

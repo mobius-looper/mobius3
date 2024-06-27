@@ -648,6 +648,8 @@ void Supervisor::advance()
     midiRealizer.checkClocks();
 
     // let TestDriver advance wait states, and process completed tests
+    // need to revisit this after TestPanel becomes managed by PanelFactory
+    // and will have it's own mechanism for periodic advance
     testDriver.advance();
 
     // let MidiMonitors display things queued from the plugin
@@ -1683,26 +1685,6 @@ void Supervisor::cancelListenerOverrides()
     audioStream.setAudioListener(audioListener);
 
     mobius->setListener(this);
-}
-
-void Supervisor::menuShowMidiTransport()
-{
-    testDriver.showMidiTransport();
-}
-
-void Supervisor::menuShowSyncPanel()
-{
-    testDriver.showSyncPanel();
-}
-
-void Supervisor::menuShowSymbolTable()
-{
-    testDriver.showSymbolTable();
-}
-
-void Supervisor::menuShowUpgradePanel()
-{
-    testDriver.showUpgradePanel();
 }
 
 /****************************************************************************/

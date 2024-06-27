@@ -22,11 +22,8 @@
 #include "MainMenu.h"
 #include "display/MobiusDisplay.h"
 #include "config/ConfigEditor.h"
-#include "InfoPanel.h"
-#include "AboutPanel.h"
 #include "AlertPanel.h"
-#include "MidiMonitorPanel.h"
-#include "EnvironmentPanel.h"
+#include "PanelFactory.h"
 
 #ifdef USE_FFMETERS
 #include "../ff_meters/ff_meters.h"
@@ -85,11 +82,8 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     MainMenu menu;
     MobiusDisplay display {this};
     ConfigEditor configEditor {this};
-    InfoPanel infoPanel;
-    AboutPanel aboutPanel;
     AlertPanel alertPanel;
-    MidiMonitorPanel midiMonitor;
-    EnvironmentPanel environment;
+    PanelFactory panelFactory {this};
     
 #ifdef USE_FFMETERS
     foleys::LevelMeter levelMeter;

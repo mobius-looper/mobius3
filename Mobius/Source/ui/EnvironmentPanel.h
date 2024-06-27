@@ -31,7 +31,6 @@ class EnvironmentPanel : public BasePanel
     ~EnvironmentPanel();
 
     void showing() override;
-    void hiding() override;
     
   private:
 

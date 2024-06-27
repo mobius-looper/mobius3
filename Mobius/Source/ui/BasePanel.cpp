@@ -102,6 +102,10 @@ void BasePanel::hiding()
 {
 }
 
+void BasePanel::update()
+{
+}
+
 void BasePanel::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();

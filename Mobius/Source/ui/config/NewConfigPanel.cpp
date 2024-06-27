@@ -1,27 +1,24 @@
 
 #include <JuceHeader.h>
 
+#include "../../Supervisor.h"
+
 #include "NewConfigPanel.h"
 
-NewConfigPanel::NewConfigPanel(ConfigEditor* argEditor, const char* titleText, int buttons, bool multi)
+NewConfigPanel::NewConfigPanel()
 {
     setName("NewConfigPanel");
-    editor = argEditor;
 
-    setTitle(titleText);
+    // always replace the single "Ok" button from BasePanel
+    // with Save/Revert/Cancel
+    // todo: make Revert optional, and support custom ones like Capture
 
-    if (multi) {
-        content.enableObjectSelector(this);
-    }
-    
-    // convert the buttons spec into calls to BasePanel
-    // to add buttons
-    if (buttons & ButtonType::Save) {
-    }
-    if (buttons & ButtonType::Cancel) {
-    }
-        
-    setContent(&content);
+    // addFooterButton(&saveButton);
+    // addFooterButton(&revertButton);
+    // addFooterButton(&cancelButton);
+
+    // the default size, subclass may change
+    setSize (900, 600);
 }
 
 NewConfigPanel::~NewConfigPanel()
@@ -29,57 +26,79 @@ NewConfigPanel::~NewConfigPanel()
 }
 
 /**
- * Called by ConfigEditor each time one of the subclasses
- * is about to be shown.  Gives this a chance to do
- * potentially expensive initialization that we want
- * to avoid in the constructor, and save having to force the
- * subclasses to all call something to make it happen.
+ * Called by BasePanel when we've been invisible, and are now being shown.
  */
-void NewConfigPanel::prepare()
+void NewConfigPanel::showing()
 {
-    if (!prepared) {
-        // load the help catalog if it isn't already
-        //helpArea.setCatalog(Supervisor::Instance->getHelpCatalog());
-        prepared = true;
-    }
+    wrapper.showing();
+}
+
+void NewConfigPanel::hiding()
+{
+    wrapper.hiding();
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// ConfigPanelContent
+// ConfigPanelWrapper
 //
 //////////////////////////////////////////////////////////////////////
 
-ConfigPanelContent::ConfigPanelContent()
+ConfigPanelWrapper::ConfigPanelWrapper()
 {
     helpArea.setBackground(juce::Colours::black);
 }
 
-ConfigPanelContent::~ConfigPanelContent()
+ConfigPanelWrapper::~ConfigPanelWrapper()
 {
 }
 
-void ConfigPanelContent::setContent(juce::Component* c)
+void ConfigPanelWrapper::setContent(ConfigPanelContent* c)
 {
     content = c;
     addAndMakeVisible(c);
 }
 
-void ConfigPanelContent::enableObjectSelector(NewObjectSelector::Listener* l)
+void ConfigPanelWrapper::enableObjectSelector(NewObjectSelector::Listener* l)
 {
     objectSelectorEnabled = true;
     objectSelector.setListener(l);
     addAndMakeVisible(objectSelector);
 }
 
-void ConfigPanelContent::setHelpHeight(int h)
+void ConfigPanelWrapper::setHelpHeight(int h)
 {
     helpHeight = h;
     if (helpHeight > 0)
       addAndMakeVisible(helpArea);
 }        
 
-void ConfigPanelContent::resized()
+/**
+ * Were were invisible and are about to be shown
+ * If this is the first time here, and there is a visible help area,
+ * load the catalog.
+ */
+void ConfigPanelWrapper::showing()
+{
+    if (!prepared) {
+        if (helpHeight > 0) {
+            helpArea.setCatalog(Supervisor::Instance->getHelpCatalog());
+        }
+        prepared = true;
+    }
+
+    if (content != nullptr) {
+        content->showing();
+    }
+}
+
+void ConfigPanelWrapper::hiding()
+{
+    if (content != nullptr)
+      content->hiding();
+}
+
+void ConfigPanelWrapper::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 

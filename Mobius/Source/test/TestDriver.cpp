@@ -109,12 +109,6 @@ void TestDriver::initialize(juce::Component* parent)
     // add our control panel to the parent component
     // could defer this until started
     parent->addChildComponent(controlPanel);
-
-    // other testing panels
-    parent->addChildComponent(&midiTransport);
-    parent->addChildComponent(&syncPanel);
-    parent->addChildComponent(symbolTable);
-    parent->addChildComponent(upgradePanel);
 }
 
 bool TestDriver::isActive()
@@ -194,26 +188,6 @@ void TestDriver::captureConfiguration(UIConfig* config)
 {
     juce::String testName = controlPanel.getTestName();
     config->put("testName", testName);
-}
-
-void TestDriver::showMidiTransport()
-{
-    midiTransport.show();
-}
-
-void TestDriver::showSyncPanel()
-{
-    syncPanel.show();
-}
-
-void TestDriver::showSymbolTable()
-{
-    symbolTable.show();
-}
-
-void TestDriver::showUpgradePanel()
-{
-    upgradePanel.show();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -362,14 +336,6 @@ void TestDriver::mobiusScriptFinished(int requestId)
  */
 void TestDriver::advance()
 {
-    // this needs a heartbeat and since we manage it, ping it
-    // whether or not test mode is activated
-    if (midiTransport.isVisible())
-      midiTransport.update();
-
-    if (syncPanel.isVisible())
-      syncPanel.update();
-    
     if (active) {
         if (waitingId > 0) {
             int msec = supervisor->getMillisecondCounter();

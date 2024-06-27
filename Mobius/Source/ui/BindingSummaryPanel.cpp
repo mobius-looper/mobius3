@@ -6,20 +6,19 @@
 #include "../model/Binding.h"
 #include "../Supervisor.h"
 
-#include "JuceUtil.h"
-#include "InfoPanel.h"
+#include "BindingSummaryPanel.h"
 
-InfoContent::InfoContent()
+BindingSummary::BindingSummary()
 {
     initTable();
     addAndMakeVisible(table);
 }
 
-InfoContent::~InfoContent()
+BindingSummary::~BindingSummary()
 {
 }
 
-void InfoContent::prepare(bool doMidi)
+void BindingSummary::prepare(bool doMidi)
 {
     midi = doMidi;
     things.clear();
@@ -43,7 +42,7 @@ void InfoContent::prepare(bool doMidi)
     table.updateContent();
 }
 
-void InfoContent::addBindings(BindingSet* set)
+void BindingSummary::addBindings(BindingSet* set)
 {
     Binding* bindings = set->getBindings();
     while (bindings != nullptr) {
@@ -60,7 +59,7 @@ void InfoContent::addBindings(BindingSet* set)
     }
 }
 
-void InfoContent::resized()
+void BindingSummary::resized()
 {
     table.setBounds(getLocalBounds());
 }
@@ -71,7 +70,7 @@ void InfoContent::resized()
 //
 //////////////////////////////////////////////////////////////////////
 
-void InfoContent::initTable()
+void BindingSummary::initTable()
 {
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);
     table.setOutlineThickness (1);
@@ -84,13 +83,13 @@ void InfoContent::initTable()
 
 }
 
-const int InfoContentTriggerColumn = 1;
-const int InfoContentTargetColumn = 2;
-const int InfoContentScopeColumn = 3;
-const int InfoContentArgumentsColumn = 4;
-const int InfoContentSourceColumn = 5;
+const int BindingSummaryTriggerColumn = 1;
+const int BindingSummaryTargetColumn = 2;
+const int BindingSummaryScopeColumn = 3;
+const int BindingSummaryArgumentsColumn = 4;
+const int BindingSummarySourceColumn = 5;
         
-void InfoContent::initColumns()
+void BindingSummary::initColumns()
 {
     // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
     // sortable is not relevant for most tables and causes confusion when things don't sort
@@ -109,23 +108,23 @@ void InfoContent::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("Trigger"), InfoContentTriggerColumn,
+    header.addColumn(juce::String("Trigger"), BindingSummaryTriggerColumn,
                      100, 30, -1,
                      columnFlags);
 
-    header.addColumn(juce::String("Target"), InfoContentTargetColumn,
+    header.addColumn(juce::String("Target"), BindingSummaryTargetColumn,
                      200, 30, -1,
                      columnFlags);
 
-    header.addColumn(juce::String("Scope"), InfoContentScopeColumn,
+    header.addColumn(juce::String("Scope"), BindingSummaryScopeColumn,
                      50, 30, -1,
                      columnFlags);
 
-    header.addColumn(juce::String("Arguments"), InfoContentArgumentsColumn,
+    header.addColumn(juce::String("Arguments"), BindingSummaryArgumentsColumn,
                      50, 30, -1,
                      columnFlags);
 
-    header.addColumn(juce::String("Source"), InfoContentSourceColumn,
+    header.addColumn(juce::String("Source"), BindingSummarySourceColumn,
                      200, 30, -1,
                      columnFlags);
 }
@@ -136,12 +135,12 @@ void InfoContent::initColumns()
  * to map it to the logical column if allowing column reording in the table.
  *
  */
-juce::String InfoContent::getCellText(int row, int columnId)
+juce::String BindingSummary::getCellText(int row, int columnId)
 {
     juce::String cell;
 
     Binding* b = things[row];
-    if (columnId == InfoContentTriggerColumn) {
+    if (columnId == BindingSummaryTriggerColumn) {
         if (midi) {
             cell = renderMidiTrigger(b);
         }
@@ -150,16 +149,16 @@ juce::String InfoContent::getCellText(int row, int columnId)
             cell = KeyTracker::getKeyText(b->triggerValue, 0);
         }
     }
-    else if (columnId == InfoContentTargetColumn) {
+    else if (columnId == BindingSummaryTargetColumn) {
         cell = juce::String(b->getSymbolName());
     }
-    else if (columnId == InfoContentScopeColumn) {
+    else if (columnId == BindingSummaryScopeColumn) {
         cell = juce::String(b->getScope());
     }
-    else if (columnId == InfoContentArgumentsColumn) {
+    else if (columnId == BindingSummaryArgumentsColumn) {
         cell = juce::String(b->getArguments());
     }
-    else if (columnId == InfoContentSourceColumn) {
+    else if (columnId == BindingSummarySourceColumn) {
         cell = juce::String(b->getSource());
     }
     
@@ -167,7 +166,7 @@ juce::String InfoContent::getCellText(int row, int columnId)
 }
 
 // need a MidiUtil for this
-juce::String InfoContent::renderMidiTrigger(Binding* b)
+juce::String BindingSummary::renderMidiTrigger(Binding* b)
 {
     juce::String text;
     Trigger* trigger = b->trigger;
@@ -208,7 +207,7 @@ juce::String InfoContent::renderMidiTrigger(Binding* b)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int InfoContent::getNumRows()
+int BindingSummary::getNumRows()
 {
     return things.size();
 }
@@ -223,7 +222,7 @@ int InfoContent::getNumRows()
  * fancier than just filling the entire thing.  Could be useful
  * for borders, though Juce might provide something for selected rows/cells already.
  */
-void InfoContent::paintRowBackground(juce::Graphics& g, int rowNumber,
+void BindingSummary::paintRowBackground(juce::Graphics& g, int rowNumber,
                                       int /*width*/, int /*height*/,
                                       bool rowIsSelected)
 {
@@ -249,7 +248,7 @@ void InfoContent::paintRowBackground(juce::Graphics& g, int rowNumber,
  * default to 22 but ideally this should be proportional to the row height if it can be changed.
  * 14 is 63% of 22
  */
-void InfoContent::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void BindingSummary::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -282,7 +281,7 @@ void InfoContent::paintCell(juce::Graphics& g, int rowNumber, int columnId,
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
-void InfoContent::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void BindingSummary::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;

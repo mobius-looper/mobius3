@@ -282,6 +282,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
           menu.addItem(AudioDevices, "Audio Devices");
         menu.addSeparator();
         menu.addItem(UpgradeConfig, "Upgrade Configuration");
+        menu.addItem(TestConfig, "Test Config Panel");
     }
     else if (menuIndex == menuIndexHelp)
     {
