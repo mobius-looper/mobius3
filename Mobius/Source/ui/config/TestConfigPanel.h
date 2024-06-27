@@ -14,11 +14,11 @@ class TestConfigContent : public juce::Component
   private:
 };
 
-class TestConfigPanel : public ConfigPanel
+class TestConfigPanel : public NewConfigPanel
 {
   public:
     
-    TestConfigPanel();
+    TestConfigPanel(class ConfigEditor* editor);
     virtual ~TestConfigPanel();
 
     void load();

@@ -1,11 +1,16 @@
 
 #include <JuceHeader.h>
+
+#include "NewConfigPanel.h"
 #include "TestConfigPanel.h"
 
-TestConfigPanel::TestConfigPanel()
+TestConfigPanel::TestConfigPanel(ConfigEditor* editor)
+    : NewConfigPanel(editor, "Test",
+                     NewConfigPanel::ButtonType::Save | NewConfigPanel::ButtonType::Cancel, true)
 {
-    setContent(&testContent);
-    setHelpHeight(0);
+    setName("TestConfigPanel");
+    content.setContent(&testContent);
+    content.setHelpHeight(0);
 }
 
 TestConfigPanel::~TestConfigPanel()
@@ -24,4 +29,4 @@ void TestConfigPanel::cancel()
 {
 }
 
-
+                     

@@ -25,6 +25,8 @@
 #include "../../model/UIConfig.h"
 #include "../JuceUtil.h"
 
+#include "NewConfigPanel.h"
+#include "TestConfigPanel.h"
 #include "ConfigEditor.h"
 
 ConfigEditor::ConfigEditor(juce::Component* argOwner)
@@ -149,7 +151,7 @@ void ConfigEditor::closeAll()
     }
 
     // TODO: should this have the side effect of canceling the current editing session?
-    show(nullptr);
+    show((ConfigPanel*)nullptr);
 }
 
 /**
@@ -181,6 +183,70 @@ void ConfigEditor::show(ConfigPanel* selected)
     // resize just before showing
     selected->resized();
     selected->center();
+
+    // ConfigPanel method to load the help catalog and other potentially
+    // expensive things we avoid at construction time
+    selected->prepare();
+    
+    // tell it to load state if it hasn't already
+    selected->load();
+
+    // JuceUtil::dumpComponent(selected);
+}
+
+// New style panel management
+
+void ConfigEditor::show(juce::String name)
+{
+    NewConfigPanel* found = nullptr;
+    for (auto panel : newPanels) {
+        if (panel->getName() == name) {
+            found = panel;
+            break;
+        }
+    }
+
+    if (found == nullptr) {
+        if (name == juce::String("TestConfigPanel")) {
+            found = new TestConfigPanel(this);
+            newPanels.add(found);
+            owner->addChildComponent(found);
+        }
+    }
+
+    if (found == nullptr) {
+        Trace(1, "ConfigEditor: Unknown panel name %s\n", name.toUTF8());
+    }
+    else {
+        show(found);
+    }
+}
+
+void ConfigEditor::show(NewConfigPanel* selected)
+{
+    for (int i = 0 ; i < newPanels.size() ; i++) {
+        NewConfigPanel* other = newPanels[i];
+        // note that this does not cancel an editing session, it
+        // just hides it.  Some might want different behavior?
+        if (other != selected) {
+            if (other->isVisible()) {
+                other->hiding();
+                other->setVisible(false);
+            }
+        }
+    }
+    
+    if (selected != nullptr) {
+        if (!selected->isVisible()) {
+            selected->showing();
+            selected->setVisible(true);
+        }
+    }
+    
+    // weird for Juce but since we defer rendering and don't do it the normal way
+    // resize just before showing
+    selected->resized();
+    JuceUtil::centerInParent(selected);
 
     // ConfigPanel method to load the help catalog and other potentially
     // expensive things we avoid at construction time

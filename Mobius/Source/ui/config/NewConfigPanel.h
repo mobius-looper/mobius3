@@ -13,19 +13,10 @@
 
 #include <JuceHeader.h>
 
+#include "../BasePanel.h"
 #include "../common/HelpArea.h"
 
-/**
- * Types of buttons that may be displayed along the bottom.
- * These are or'd together and passed to the constructor.
- */
-enum NewConfigPanelButton {
-    // read-only informational panels will have an Ok rather than a Save button
-    Ok = 1,
-    Save = 2,
-    Cancel = 4,
-    Revert = 8
-};
+#include "ConfigEditor.h"
 
 /**
  * The object selector presents a combobox to select one of a list
@@ -40,12 +31,25 @@ class NewObjectSelector : public juce::Component, juce::Button::Listener, juce::
     enum ButtonType {
         New,
         Delete,
-        Copy,
-        Revert
+        Copy
     };
 
-    ObjectSelector(class ConfigPanel* parent);
-    ~ObjectSelector() override;
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void objectSelectorSelect(int ordinal) = 0;
+        virtual void objectSelectorRename(juce::String newName) = 0;
+        virtual void objectSelectorNew() = 0;
+        virtual void objectSelectorDelete() = 0;
+        virtual void objectSelectorCopy() = 0;
+    };
+    
+    NewObjectSelector();
+    ~NewObjectSelector() override;
+    
+    void setListener(Listener* l) {
+        listener = l;
+    }
 
     void resized() override;
     void paint (juce::Graphics& g) override;
@@ -68,8 +72,8 @@ class NewObjectSelector : public juce::Component, juce::Button::Listener, juce::
   
   private:
 
-    class ConfigPanel* parentPanel;
-    
+    //class ConfigPanel* parentPanel;
+    Listener* listener = nullptr;
     juce::ComboBox combobox;
     int lastId = 0;
     
@@ -91,16 +95,18 @@ class ConfigPanelContent : public juce::Component
 {
   public:
 
-    ContentPanel();
-    ~ContentPanel();
+    ConfigPanelContent();
+    ~ConfigPanelContent();
 
     void setContent(juce::Component* c);
-
+    void enableObjectSelector(NewObjectSelector::Listener* l);
+    void setHelpHeight(int height);
     void resized() override;
 
   private:
 
     NewObjectSelector objectSelector;
+    bool objectSelectorEnabled = false;
     HelpArea helpArea;
     int helpHeight = 0;
     juce::Component* content = nullptr;
@@ -112,29 +118,19 @@ class ConfigPanelContent : public juce::Component
  * 
  * It is subclassed by the various configuration panels.
  */
-class NewConfigPanel : public BasePanel
+class NewConfigPanel : public BasePanel, public NewObjectSelector::Listener
 {
   public:
 
-    ConfigPanel(class ConfigEditor* argEditor, const char* titleText, int buttons, bool multi);
-    ~ConfigPanel() override;
+    enum ButtonType {
+        // read-only informational panels will have an Ok rather than a Save button
+        Save = 2,
+        Cancel = 4,
+        Revert = 8
+    };
 
-    // the subclass provides a content component for the center
-    // under ObjectSelect and above HelpArea
-    void setContent(juce::Component* c);;
-    void setHelpHeight(int h);
-
-    // Component
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-
-    void mouseDown(const juce::MouseEvent& e) override;
-    void mouseDrag(const juce::MouseEvent& e) override;
-    
-    // callbacks from the object selector
-    // could these be pure virtual?
-    void selectorButtonClicked(ObjectSelector::ButtonType button);
-    void objectSelected(juce::String name);
+    NewConfigPanel(class ConfigEditor* argEditor, const char* titleText, int buttons, bool multi);
+    ~NewConfigPanel() override;
 
     // called by ConfigEditor when the panel is to become visible or hidden
     // in case it needs to make preparations
@@ -168,17 +164,16 @@ class NewConfigPanel : public BasePanel
     virtual void cancel() = 0;
 
     // respond to ObjectSelector buttons if it supports multiple
-    virtual void selectObject(int /*ordinal*/) {};
-    virtual void newObject() {};
-    virtual void deleteObject() {};
-    virtual void copyObject() {};
-    virtual void revertObject() {};
-    virtual void renameObject(juce::String /*newName*/) {};
+    virtual void objectSelectorSelect(int /*ordinal*/) {};
+    virtual void objectSelectorNew() {};
+    virtual void objectSelectorDelete() {};
+    virtual void objectSelectorCopy() {};
+    virtual void objectSelectorRename(juce::String /*newName*/) {};
 
   protected:
     
     class ConfigEditor* editor;
-    ConfigContentPanel content;
+    ConfigPanelContent content;
     
     // set by this class after handling the first prepare() call
     bool prepared = false;

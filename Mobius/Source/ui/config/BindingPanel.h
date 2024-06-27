@@ -17,8 +17,8 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
 {
   public:
 
-    void traceBindingList(const char* title, Binding* blist);
-    void traceBindingList(const char* title, juce::Array<Binding*> &blist);
+    void traceBindingList(const char* title, class Binding* blist);
+    void traceBindingList(const char* title, juce::Array<class Binding*> &blist);
 
     // hmm, tried to make these pure virtual but got an abort when called
     // something about base classes calling down to their subclass, wtf?
@@ -47,7 +47,7 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     void resized() override;
 
     // BindingTable
-    juce::String renderTriggerCell(Binding* b) override;
+    juce::String renderTriggerCell(class Binding* b) override;
     void bindingSelected(class Binding* b) override;
     void bindingUpdate(class Binding* b) override;
     void bindingDelete(class Binding* b) override;
@@ -78,17 +78,17 @@ class BindingPanel : public ConfigPanel, public BindingTable::Listener, public F
     void render();
     void rebuildTable();
 
-    void refreshForm(Binding* b);
-    void captureForm(Binding* b);
+    void refreshForm(class Binding* b);
+    void captureForm(class Binding* b);
 
     // start making this more like Preset and other multi-object panels
-    juce::OwnedArray<BindingSet> bindingSets;
-    juce::OwnedArray<BindingSet> revertBindingSets;
+    juce::OwnedArray<class BindingSet> bindingSets;
+    juce::OwnedArray<class BindingSet> revertBindingSets;
     int selectedBindingSet = 0;
 
     void loadBindingSet(int index);
     void saveBindingSet(int index);
-    void saveBindingSet(BindingSet* dest);
+    void saveBindingSet(class BindingSet* dest);
 
 
 };

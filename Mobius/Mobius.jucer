@@ -232,6 +232,10 @@
                 file="Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
                 file="Source/ui/config/MultiSelectDrag.h"/>
+          <FILE id="PN9krn" name="NewConfigPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/NewConfigPanel.cpp"/>
+          <FILE id="vpL7ZR" name="NewConfigPanel.h" compile="0" resource="0"
+                file="Source/ui/config/NewConfigPanel.h"/>
           <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
                 file="Source/ui/config/ParameterField.cpp"/>
           <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
@@ -248,6 +252,10 @@
           <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
           <FILE id="exr3oW" name="SetupPanel.cpp" compile="1" resource="0" file="Source/ui/config/SetupPanel.cpp"/>
           <FILE id="F0YB7p" name="SetupPanel.h" compile="0" resource="0" file="Source/ui/config/SetupPanel.h"/>
+          <FILE id="t1fzgg" name="TestConfigPanel.cpp" compile="1" resource="0"
+                file="Source/ui/config/TestConfigPanel.cpp"/>
+          <FILE id="y9z0P1" name="TestConfigPanel.h" compile="0" resource="0"
+                file="Source/ui/config/TestConfigPanel.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"
