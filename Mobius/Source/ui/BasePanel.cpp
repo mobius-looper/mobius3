@@ -74,19 +74,11 @@ void BasePanel::setAlert()
 
 void BasePanel::show()
 {
+    // PanelFactor should only call this if we're not visible
+    // I guess it doesn't hurt to check again
     if (!isVisible()) {
-        if (!shown) {
-            JuceUtil::centerInParent(this);
-            shown = true;
-        }
         showing();
         setVisible(true);
-        // something about the way the content component is added
-        // makes it start out zero bounds
-        // oh, I think it was because BasePanel constructor did a setSize
-        // and if the subclass constructor set the same size after adding
-        // the content component, it wouldn't fire a resized()
-        //resized();
     }
 }    
 

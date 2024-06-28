@@ -53,10 +53,6 @@ class PanelFactory
         MidiTransport,
         Sync,
         Upgrade,
-
-        // temporary tests
-        TestConfig
-        
     };
 
     PanelFactory(class MainWindow* main);

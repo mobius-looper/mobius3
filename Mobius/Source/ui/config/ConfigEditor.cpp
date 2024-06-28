@@ -25,7 +25,6 @@
 #include "../../model/UIConfig.h"
 #include "../JuceUtil.h"
 
-#include "TestConfigPanel.h"
 #include "ConfigEditor.h"
 
 ConfigEditor::ConfigEditor(juce::Component* argOwner)

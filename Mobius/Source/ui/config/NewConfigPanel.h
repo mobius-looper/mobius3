@@ -1,12 +1,27 @@
 /**
- * Gradual replacement for the old ConfigPanel with some structural improvements.
+ * Gradual replacement for the old ConfigEditor/ConfigPanel with structural improvements.
  *
- * The ConfigPanel extends BasePanel which gives it a title bar and footer buttons.
+ * A ConfigPanel surrounds a ConfigEditor and provides common UI componentry
+ * such as a dragable panel with a title bar, a row of footer buttons at the bottom,
+ * an optional object selector when editing configuration types with multiple
+ * objects (Setups, Presets), and a help area to display details about input fields
+ * within the editor.
  *
- * The BasePanel content component is a ConfigPanelContent that may contain
- * an optional ObjectSelector, an optional HelpArea, and a subclass specific
- * content panel.
+ * ConfigPanel implements ConfigContext which defines the interface the ConfigEditor
+ * uses to request UI adjustments and to access to the environment such as reading
+ * and saving files.
  *
+ * Currently the only ConfigContext implementation is ConfigPanel which extends
+ * BasePanel so it can be managed by PanelFactory.  I'm not entirely happy with the
+ * way things are glued together here, with multiple levels of "content" objects and
+ * subclassing.  Content nesting is necessary due to the way top-down resized()
+ * layouts work.  The biggest mess is who gets to be the ConfigEditorContext,
+ * is it the outer ConfigPanel (which is a BasePanel subclass) or is it the
+ * inner ConfigEditorWrapper.
+ *
+ * Leaning toward making the Wrapper dumb and doing nothing but providing
+ * the resized() layout logic.  Interaction between the ConfigEditor and
+ * the outside world is handled by ConfigPanel.
  */
 
 #pragma once
@@ -16,61 +31,8 @@
 #include "../BasePanel.h"
 #include "../common/HelpArea.h"
 
-//////////////////////////////////////////////////////////////////////
-//
-// Editor
-//
-// This is the interface of a configuration object editor managed
-// by a ConfigPanel.  Most of the interesting logic around configuration
-// editing will be in subclasses of this.
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Interface of an object that performs the bulk of what this ConfigPanel does.
- * This lives inside the ConfigPanelWrapper between the ObjectSelector and
- * the HelpArea.
- */
-class ConfigPanelContent : public juce::Component
-{
-  public:
-
-    ConfigPanelContent() {}
-    virtual ~ConfigPanelContent() {}
-
-    virtual void showing() {}
-    virtual void hiding() {}
-    virtual void load() = 0;
-    virtual void save() = 0;
-    virtual void cancel() = 0;
-    virtual void revert() {}
-
-    // kind of awkward linkage to make it easier for subclasses
-    // to get to resources like MobiusConfig
-    void setPanel(class NewConfigPanel* p) {
-        panel = p;
-    }
-
-    bool isLoaded() {
-        return loaded;
-    }
-    void setLoaded(bool b) {
-        loaded = b;
-    }
-    
-    // editing utilities
-    class Supervisor* getSupervisor();
-    class MobiusConfig* getMobiusConfig();
-    void saveMobiusConfig();
-    class UIConfig* getUIConfig();
-    void saveUIConfig();
-    
-  private:
-    
-    class NewConfigPanel* panel = nullptr;
-    bool loaded = false;
-
-};
+// also includes ConfigEditorContxt
+#include "NewConfigEditor.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -89,22 +51,20 @@ class NewObjectSelector : public juce::Component,
 {
   public:
 
-    // should we put revert here or in the footer?
-    enum ButtonType {
-        New,
-        Delete,
-        Copy
-    };
-
     class Listener {
       public:
         virtual ~Listener() {}
         virtual void objectSelectorSelect(int ordinal) = 0;
         virtual void objectSelectorRename(juce::String newName) = 0;
-        virtual void objectSelectorNew() = 0;
+        virtual void objectSelectorNew(juce::String newName) = 0;
         virtual void objectSelectorDelete() = 0;
         virtual void objectSelectorCopy() = 0;
     };
+
+    /**
+     * The starting name to use for new objects.
+     */
+    const char* NewName = "[New]";
     
     NewObjectSelector();
     ~NewObjectSelector() override;
@@ -118,13 +78,16 @@ class NewObjectSelector : public juce::Component,
 
     int getPreferredHeight();
 
-    // set the names to display in the combo box
-    // currently reserving "[New]" to mean an object that
-    // does not yet have a name
+    // set the full list of names to display in the combo box
     void setObjectNames(juce::StringArray names);
+    // add a name to the end
     void addObjectName(juce::String name);
+    // change the selected name
     void setSelectedObject(int ordinal);
+    // get the currently selected name
     juce::String getObjectName();
+    // get the currently selected ordinal
+    int getObjectOrdinal();
     
     // Button Listener
     void buttonClicked(juce::Button* b) override;
@@ -149,45 +112,58 @@ class NewObjectSelector : public juce::Component,
 
 //////////////////////////////////////////////////////////////////////
 //
-// Wrapper
+// ConfigEditorWrapper
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is the BasePanel content component.
- * We add the ObjectSelector and HelpArea, both optional.
- * The subclass gives us another level of arbitrary content
- * to put between them.
+ * This is the BasePanel content component and provides a wrapper
+ * around a ConfigEditor which is where most of the work gets done.
+ * 
+ * Here we surround the ConfigEditor with an optional ObjectSelector and HelpArea.
  */
-class ConfigPanelWrapper : public juce::Component
+class ConfigEditorWrapper : public juce::Component, public NewObjectSelector::Listener
 {
   public:
 
-    ConfigPanelWrapper();
-    ~ConfigPanelWrapper();
+    ConfigEditorWrapper();
+    ~ConfigEditorWrapper();
 
-    void showing();
-    void hiding();
+    // set the inner editor
+    void setEditor(NewConfigEditor* argEditor);
+    NewConfigEditor* getEditor() {
+        return editor;
+    }
 
-    void setContent(ConfigPanelContent* c);
-    void enableObjectSelector(class NewObjectSelector::Listener* l);
-    void setHelpHeight(int height);
+    // enable the object selector
+    // the wrapper will do the listening and forward to the editor
+    void enableObjectSelector();
+    NewObjectSelector* getObjectSelector() {
+        return &objectSelector;
+    }
+    
+    // enable the help area
+    void enableHelp(class HelpCatalog* catalog, int height);
+
+    // what all this wrapper mess is for
     void resized() override;
 
-    ConfigPanelContent* getContent() {
-        return content;
-    }
+    // ObjectSelector::Listener
+    void objectSelectorSelect(int ordinal) override;
+    void objectSelectorRename(juce::String newName) override;
+    void objectSelectorNew(juce::String newName) override;
+    void objectSelectorDelete() override;
+    void objectSelectorCopy() override;
 
   private:
 
-    ConfigPanelContent* content = nullptr;
+    NewConfigEditor* editor = nullptr;
     
     NewObjectSelector objectSelector;
     bool objectSelectorEnabled = false;
     
     HelpArea helpArea;
     int helpHeight = 0;
-    bool prepared = false;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -200,24 +176,42 @@ class ConfigPanelWrapper : public juce::Component
  * Extends BasePanel and provides common services to the inner configuration
  * editing component.
  *
- * The subclass constructor will call back to enable the optional features
- * and install the inner content component.
+ * The subclass will call setEditor to give this a ConfigEditor.  See commentary
+ * above the setEditor() method for the subtle mess we have here.
  */
-class NewConfigPanel : public BasePanel
+class NewConfigPanel : public BasePanel, public ConfigEditorContext
 {
   public:
 
     NewConfigPanel();
     ~NewConfigPanel() override;
 
-    class Supervisor* getSupervisor();
+    // called by the subclass during construction
+    void setEditor(NewConfigEditor* editor);
 
-    // configuration instructions from the subclass
-    void addRevert();
-    void setConfigContent(ConfigPanelContent* c);
-    void enableObjectSelector(NewObjectSelector::Listener* l);
-    void setHelpHeight(int h);
+    // ConfigEditorContext methods called by the ConfigEditor
+    // during construction
 
+    void enableObjectSelector() override;
+    void enableHelp(int height) override;
+    void enableRevert() override;
+
+    // ConfigEditorContext methods called by the ConfigEditor
+    // at runtime
+
+    int getCurrentObject() override;
+    
+    class MobiusConfig* getMobiusConfig() override;
+    void saveMobiusConfig() override;
+
+    class UIConfig* getUIConfig() override;
+    void saveUIConfig() override;
+    
+    class DeviceConfig* getDeviceConfig() override;
+    void saveDeviceConfig() override;
+
+    class Supervisor* getSupervisor() override;
+    
     // BasePanel overloads
     void showing() override;
     void hiding() override;
@@ -227,10 +221,11 @@ class NewConfigPanel : public BasePanel
     
   private:
 
-    ConfigPanelWrapper wrapper;
+    ConfigEditorWrapper wrapper;
 
     juce::TextButton saveButton {"Save"};
     juce::TextButton cancelButton {"Cancel"};
     juce::TextButton revertButton {"Revert"};
 
+    bool loaded = false;
 };

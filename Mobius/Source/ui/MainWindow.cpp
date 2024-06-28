@@ -276,10 +276,6 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
 
-            case MainMenu::TestConfig:
-                panelFactory.show(PanelFactory::TestConfig);
-                break;
-                
             case MainMenu::About: {
                 panelFactory.show(PanelFactory::About);
             }

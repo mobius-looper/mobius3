@@ -247,20 +247,18 @@
                 file="Source/ui/config/ParameterField.h"/>
           <FILE id="s6l7RT" name="PresetPanel.cpp" compile="1" resource="0" file="Source/ui/config/PresetPanel.cpp"/>
           <FILE id="NT6kia" name="PresetPanel.h" compile="0" resource="0" file="Source/ui/config/PresetPanel.h"/>
-          <FILE id="Zf2ti7" name="SamplePanel.cpp" compile="1" resource="0" file="Source/ui/config/SamplePanel.cpp"/>
-          <FILE id="rJ1VuB" name="SamplePanel.h" compile="0" resource="0" file="Source/ui/config/SamplePanel.h"/>
+          <FILE id="gsYEsK" name="SampleEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/SampleEditor.cpp"/>
+          <FILE id="ieBZsG" name="SampleEditor.h" compile="0" resource="0" file="Source/ui/config/SampleEditor.h"/>
           <FILE id="d9dR5l" name="SampleTable.cpp" compile="1" resource="0" file="Source/ui/config/SampleTable.cpp"/>
           <FILE id="zM7JM5" name="SampleTable.h" compile="0" resource="0" file="Source/ui/config/SampleTable.h"/>
-          <FILE id="LMAEQ5" name="ScriptPanel.cpp" compile="1" resource="0" file="Source/ui/config/ScriptPanel.cpp"/>
-          <FILE id="bUHoC6" name="ScriptPanel.h" compile="0" resource="0" file="Source/ui/config/ScriptPanel.h"/>
+          <FILE id="JYjnre" name="ScriptEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/ScriptEditor.cpp"/>
+          <FILE id="tWAqbG" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/config/ScriptEditor.h"/>
           <FILE id="hZGAaO" name="ScriptTable.cpp" compile="1" resource="0" file="Source/ui/config/ScriptTable.cpp"/>
           <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
           <FILE id="exr3oW" name="SetupPanel.cpp" compile="1" resource="0" file="Source/ui/config/SetupPanel.cpp"/>
           <FILE id="F0YB7p" name="SetupPanel.h" compile="0" resource="0" file="Source/ui/config/SetupPanel.h"/>
-          <FILE id="t1fzgg" name="TestConfigPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/TestConfigPanel.cpp"/>
-          <FILE id="y9z0P1" name="TestConfigPanel.h" compile="0" resource="0"
-                file="Source/ui/config/TestConfigPanel.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"

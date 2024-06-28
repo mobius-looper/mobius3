@@ -113,6 +113,5 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     juce::ResizableBorderComponent resizer {this, &resizeConstrainer};
     juce::ComponentDragger dragger;
     bool dragging = false;
-    bool shown = false;
 
 };
