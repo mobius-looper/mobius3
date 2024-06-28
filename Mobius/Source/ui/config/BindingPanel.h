@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 
 #include "../common/Field.h"
+#include "../common/Form.h"
 #include "../../test/BasicButtonRow.h"
 
 #include "ConfigPanel.h"

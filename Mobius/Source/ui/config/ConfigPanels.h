@@ -13,6 +13,9 @@
 
 #include "NewConfigPanel.h"
 
+#include "GlobalEditor.h"
+#include "PresetEditor.h"
+#include "SetupEditor.h"
 #include "ScriptEditor.h"
 #include "SampleEditor.h"
 
@@ -40,4 +43,43 @@ class SamplePanel : public NewConfigPanel
  
   private:
     SampleEditor editor;
+};
+
+class PresetPanel : public NewConfigPanel
+{
+  public:
+    PresetPanel() {
+        setName("PresetPanel");
+        setEditor(&editor);
+    }
+    ~PresetPanel() {}
+ 
+  private:
+    PresetEditor editor;
+};
+
+class SetupPanel : public NewConfigPanel
+{
+  public:
+    SetupPanel() {
+        setName("SetupPanel");
+        setEditor(&editor);
+    }
+    ~SetupPanel() {}
+ 
+  private:
+    SetupEditor editor;
+};
+
+class GlobalPanel : public NewConfigPanel
+{
+  public:
+    GlobalPanel() {
+        setName("GlobalPanel");
+        setEditor(&editor);
+    }
+    ~GlobalPanel() {}
+ 
+  private:
+    GlobalEditor editor;
 };

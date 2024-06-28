@@ -35,7 +35,7 @@ class PanelFactory
         KeyboardSummary,
 
         // configuration editing panels
-        GlobalParameter,
+        Global,
         Setup,
         Preset,
         Button,

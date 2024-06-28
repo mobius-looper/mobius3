@@ -10,8 +10,6 @@
  * These methods may be used to show editors for various parts of the
  * configuration:
  *
- *   showGlobal
- *   showPresets
  *   showSetups
  *   showMIDIBindings
  *   showKeyboardBindings
@@ -40,9 +38,6 @@
 #include <JuceHeader.h>
 
 #include "ConfigPanel.h"
-#include "GlobalPanel.h"
-#include "PresetPanel.h"
-#include "SetupPanel.h"
 #include "ButtonPanel.h"
 #include "KeyboardPanel.h"
 #include "MidiPanel.h"
@@ -63,9 +58,6 @@ class ConfigEditor
     // in MainWindow
     void init(class Supervisor* supervisor);
 
-    void showGlobal();
-    void showPresets();
-    void showSetups();
     void showMidiBindings();
     void showKeyboardBindings();
     void showPluginParameters();
@@ -100,9 +92,6 @@ class ConfigEditor
     //class MobiusConfig* masterConfig = nullptr;
     //class UIConfig* masterUIConfig = nullptr;
     
-    GlobalPanel global {this};
-    PresetPanel presets {this};
-    SetupPanel setups {this};
     ButtonPanel buttons {this};
     KeyboardPanel keyboard {this};
     MidiPanel midi {this};

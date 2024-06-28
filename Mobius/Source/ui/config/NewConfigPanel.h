@@ -144,7 +144,10 @@ class ConfigEditorWrapper : public juce::Component, public NewObjectSelector::Li
     
     // enable the help area
     void enableHelp(class HelpCatalog* catalog, int height);
-
+    HelpArea* getHelpArea() {
+        return &helpArea;
+    }
+    
     // what all this wrapper mess is for
     void resized() override;
 
@@ -196,10 +199,16 @@ class NewConfigPanel : public BasePanel, public ConfigEditorContext
     void enableHelp(int height) override;
     void enableRevert() override;
 
+    class HelpArea* getHelpArea();
+
     // ConfigEditorContext methods called by the ConfigEditor
     // at runtime
 
-    int getCurrentObject() override;
+    void setObjectNames(juce::StringArray names) override;
+    void addObjectName(juce::String name) override;
+    void setSelectedObject(int ordinal) override;
+    int getSelectedObject() override;
+    juce::String getSelectedObjectName() override;
     
     class MobiusConfig* getMobiusConfig() override;
     void saveMobiusConfig() override;

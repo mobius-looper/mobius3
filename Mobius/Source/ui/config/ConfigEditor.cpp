@@ -47,9 +47,6 @@ void ConfigEditor::init(Supervisor* super)
 
     // add the various config panels to the owner but don't
     // make them visible yet
-    addPanel(&global);
-    addPanel(&presets);
-    addPanel(&setups);
     addPanel(&buttons);
     addPanel(&keyboard);
     addPanel(&midi);
@@ -78,21 +75,6 @@ void ConfigEditor::addPanel(ConfigPanel* p)
 {
     owner->addChildComponent(p);
     panels.add(p);
-}
-
-void ConfigEditor::showGlobal()
-{
-    show(&global);
-}
-
-void ConfigEditor::showPresets()
-{
-    show(&presets);
-}
-
-void ConfigEditor::showSetups()
-{
-    show(&setups);
 }
 
 void ConfigEditor::showButtons()

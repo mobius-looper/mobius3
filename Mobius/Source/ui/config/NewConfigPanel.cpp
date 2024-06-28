@@ -113,9 +113,39 @@ void NewConfigPanel::enableHelp(int height)
     wrapper.enableHelp(getSupervisor()->getHelpCatalog(), height);
 }
 
+HelpArea* NewConfigPanel::getHelpArea()
+{
+    return wrapper.getHelpArea();
+}
+
 void NewConfigPanel::enableRevert()
 {
     addButton(&revertButton);
+}
+
+void NewConfigPanel::setObjectNames(juce::StringArray names)
+{
+    wrapper.getObjectSelector()->setObjectNames(names);
+}
+
+void NewConfigPanel::addObjectName(juce::String name)
+{
+    wrapper.getObjectSelector()->addObjectName(name);
+}
+
+juce::String NewConfigPanel::getSelectedObjectName()
+{
+    return wrapper.getObjectSelector()->getObjectName();
+}
+
+int NewConfigPanel::getSelectedObject()
+{
+    return wrapper.getObjectSelector()->getObjectOrdinal();
+}
+
+void NewConfigPanel::setSelectedObject(int ordinal)
+{
+    wrapper.getObjectSelector()->setSelectedObject(ordinal);
 }
 
 //
@@ -131,11 +161,6 @@ Supervisor* NewConfigPanel::getSupervisor()
     return Supervisor::Instance;
 }
 
-int NewConfigPanel::getCurrentObject()
-{
-    return wrapper.getObjectSelector()->getObjectOrdinal();
-}
-    
 class MobiusConfig* NewConfigPanel::getMobiusConfig()
 {
     return getSupervisor()->getMobiusConfig();

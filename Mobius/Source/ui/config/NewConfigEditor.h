@@ -74,6 +74,7 @@ class ConfigEditorContext {
 
     // instructs the context to display a help area of the given height
     virtual void enableHelp(int height) = 0;
+    virtual class HelpArea* getHelpArea() = 0;
 
     // instructs the context to display a "Revert" button in addition
     // to the default Save and Cancel buttons
@@ -90,10 +91,6 @@ class ConfigEditorContext {
     //
     //////////////////////////////////////////////////////////////////////
     
-    // return the ordinal of the object currently selected
-    // valid only when enableObjectSelector() has been used
-    virtual int getCurrentObject() = 0;
-
     // read/write the various configuration object files
 
     virtual class MobiusConfig* getMobiusConfig() = 0;
@@ -108,6 +105,13 @@ class ConfigEditorContext {
     // in a few cases editors need things beyond what the context provides
     virtual class Supervisor* getSupervisor() = 0;
 
+    // diddle the object selector
+    virtual void setObjectNames(juce::StringArray names) = 0;
+    virtual void addObjectName(juce::String name) = 0;
+    virtual void setSelectedObject(int ordinal) =  0;
+    virtual int getSelectedObject() = 0;
+    virtual juce::String getSelectedObjectName() =  0;
+    
 };
 
 /**
@@ -120,8 +124,6 @@ class NewConfigEditor : public juce::Component {
 
     /**
      * Context object provided by the prepare() method.
-     * The subclass is expected to save the context here, it doesn't have to
-     * but they're all going to need one so why not use a common one.
      */
     ConfigEditorContext* context = nullptr;
     
@@ -136,8 +138,12 @@ class NewConfigEditor : public juce::Component {
     // called at a suitable time to connect the editor to it's context
     // and to ask the context for adjustments to how things are displayed
     // simple editors may not need anything beyond just saving the context
-    virtual void prepare(ConfigEditorContext* argContext) {
+    void prepare(ConfigEditorContext* argContext) {
         context = argContext;
+        prepare();
+    }
+
+    virtual void prepare() {
     }
 
     /**
@@ -210,18 +216,6 @@ class NewConfigEditor : public juce::Component {
     // Thes are optional and will be called only if the editor
     // calls enableObjectSelector on the context during construction
 
-    /**
-     * Return the list of names to be displayed in the object selector.
-     * Called by the context immediately after load()
-     */
-    virtual juce::StringArray getObjectNames() {
-        return juce::StringArray();
-    }
-
-    // Inform the editor of various actions taken by an object selector
-    // These are called only when enableObjectSelector has been
-    // called on the context 
-    
     /**
      * Inform the editor that an object has been selected.
      * The argument is the object ordinal, which is the index into

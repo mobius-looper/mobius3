@@ -220,8 +220,9 @@
           <FILE id="uTQSAz" name="DisplayPanel.cpp" compile="1" resource="0"
                 file="Source/ui/config/DisplayPanel.cpp"/>
           <FILE id="yQzNQ6" name="DisplayPanel.h" compile="0" resource="0" file="Source/ui/config/DisplayPanel.h"/>
-          <FILE id="UrIXNZ" name="GlobalPanel.cpp" compile="1" resource="0" file="Source/ui/config/GlobalPanel.cpp"/>
-          <FILE id="GsBQz3" name="GlobalPanel.h" compile="0" resource="0" file="Source/ui/config/GlobalPanel.h"/>
+          <FILE id="RlXlKB" name="GlobalEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/GlobalEditor.cpp"/>
+          <FILE id="Gjig9Y" name="GlobalEditor.h" compile="0" resource="0" file="Source/ui/config/GlobalEditor.h"/>
           <FILE id="jBiSXy" name="HostPanel.cpp" compile="1" resource="0" file="Source/ui/config/HostPanel.cpp"/>
           <FILE id="WpkBTG" name="HostPanel.h" compile="0" resource="0" file="Source/ui/config/HostPanel.h"/>
           <FILE id="CdDmPy" name="KeyboardPanel.cpp" compile="1" resource="0"
@@ -245,8 +246,9 @@
                 file="Source/ui/config/ParameterField.cpp"/>
           <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
                 file="Source/ui/config/ParameterField.h"/>
-          <FILE id="s6l7RT" name="PresetPanel.cpp" compile="1" resource="0" file="Source/ui/config/PresetPanel.cpp"/>
-          <FILE id="NT6kia" name="PresetPanel.h" compile="0" resource="0" file="Source/ui/config/PresetPanel.h"/>
+          <FILE id="gIdban" name="PresetEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/PresetEditor.cpp"/>
+          <FILE id="b2ZY1I" name="PresetEditor.h" compile="0" resource="0" file="Source/ui/config/PresetEditor.h"/>
           <FILE id="gsYEsK" name="SampleEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/SampleEditor.cpp"/>
           <FILE id="ieBZsG" name="SampleEditor.h" compile="0" resource="0" file="Source/ui/config/SampleEditor.h"/>
@@ -257,8 +259,8 @@
           <FILE id="tWAqbG" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/config/ScriptEditor.h"/>
           <FILE id="hZGAaO" name="ScriptTable.cpp" compile="1" resource="0" file="Source/ui/config/ScriptTable.cpp"/>
           <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
-          <FILE id="exr3oW" name="SetupPanel.cpp" compile="1" resource="0" file="Source/ui/config/SetupPanel.cpp"/>
-          <FILE id="F0YB7p" name="SetupPanel.h" compile="0" resource="0" file="Source/ui/config/SetupPanel.h"/>
+          <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
+          <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"

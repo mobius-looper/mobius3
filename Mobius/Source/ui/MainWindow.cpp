@@ -187,15 +187,15 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::GlobalParameters: {
-                configEditor.showGlobal();
+                panelFactory.show(PanelFactory::Global);
             }
                 break;
             case MainMenu::Presets: {
-                configEditor.showPresets();
+                panelFactory.show(PanelFactory::Preset);
             }
                 break;
             case MainMenu::TrackSetups: {
-                configEditor.showSetups();
+                panelFactory.show(PanelFactory::Setup);
             }
                 break;
             case MainMenu::MidiControl: {
