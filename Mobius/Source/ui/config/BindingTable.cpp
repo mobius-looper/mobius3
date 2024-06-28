@@ -370,7 +370,7 @@ juce::String BindingTable::getCellText(int row, int columnId)
           cell = "???";
     }
     else if (columnId == ScopeColumn) {
-        // BindingPanel should probably render this
+        // BindingEditor should probably render this
         cell = formatScopeText(b);
     }
     else if (columnId == ArgumentsColumn) {

@@ -1,8 +1,5 @@
 /**
  * ConfigEditor to configure MIDI devices when running standalone.
- *  
- * This one is more complicated than most ConfigEditors with the
- * MIDI event logging window under the device selection form.
  */
 
 #pragma once
@@ -17,7 +14,7 @@
 #include "../common/BasicTable.h"
 #include "../MidiLog.h"
 
-#include "ConfigEditor.h"
+#include "NewConfigEditor.h"
 
 class MidiDeviceTableRow
 {
@@ -47,7 +44,7 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
         isOutput = b;
     }
 
-    void init(bool output);
+    void init(class MidiManager* mm, bool output);
     void load(class DeviceConfig* config);
     void save(class DeviceConfig* config);
 
@@ -73,28 +70,23 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     
 };
     
-class MidiDevicesContent : public juce::Component
+class MidiDeviceEditor : public NewConfigEditor,
+                          public MidiManager::Monitor,
+                          public BasicTable::CheckboxListener
 {
   public:
-    MidiDevicesContent() {setName("MidiDevicesContent"); };
-    ~MidiDevicesContent() {};
-    void resized() override;
-};
+    MidiDeviceEditor();
+    ~MidiDeviceEditor();
 
-class MidiDevicesPanel : public ConfigPanel,
-                         public MidiManager::Monitor,
-                         public BasicTable::CheckboxListener
-{
-  public:
-    MidiDevicesPanel(class ConfigEditor*);
-    ~MidiDevicesPanel();
-
-    // ConfigPanel overloads
+    juce::String getTitle() override {return juce::String("MIDI Devices");}
+    
     void showing() override;
     void hiding() override;
     void load() override;
     void save() override;
     void cancel() override;
+
+    void resized() override;
 
     // MidiManager::Monitor
     void midiMonitor(const juce::MidiMessage& message, juce::String& source) override;
@@ -106,7 +98,6 @@ class MidiDevicesPanel : public ConfigPanel,
     
   private:
 
-    MidiDevicesContent mdcontent;
     MidiLog log;
     BasicTabs tabs;
     MidiDeviceTable inputTable;

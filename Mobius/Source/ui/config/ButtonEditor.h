@@ -1,34 +1,33 @@
 /**
- * Panel to edit UI button bindings
+ * ConfigEditor to edit UI button bindings
  */
 
 #pragma once
 
 #include <JuceHeader.h>
 
-#include "ConfigPanel.h"
-#include "BindingPanel.h"
+#include "BindingEditor.h"
 
-class ButtonPanel : public BindingPanel
+class ButtonEditor : public BindingEditor
 {
   public:
-    ButtonPanel(class ConfigEditor *);
-    ~ButtonPanel();
+    ButtonEditor();
+    ~ButtonEditor();
 
-    // have to overload these since the DisplayButton model
-    // isn't a Binding which is what BindingTable uses
+    juce::String getTitle() override {return juce::String("Button Sets");}
+
+    void prepare() override;
     void load() override;
     void save() override;
     void cancel() override;
+    void revert() override;
     
-    // ObjectSelector overloads
-    void selectObject(int ordinal) override;
-    void newObject() override;
-    void deleteObject() override;
-    void revertObject() override;
-    void renameObject(juce::String) override;
+    void objectSelectorSelect(int ordinal) override;
+    void objectSelectorNew(juce::String newName) override;
+    void objectSelectorDelete() override;
+    void objectSelectorRename(juce::String) override;
     
-    // BindingPanel overloads
+    // BindingEditor overloads
     juce::String renderSubclassTrigger(Binding* b) override;
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;

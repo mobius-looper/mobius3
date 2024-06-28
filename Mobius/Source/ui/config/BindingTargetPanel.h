@@ -1,5 +1,5 @@
 /**
- * Sub component of BindingPanel to show available binding targets
+ * Sub component of BindingEditor to show available binding targets
  */
 
 #pragma once

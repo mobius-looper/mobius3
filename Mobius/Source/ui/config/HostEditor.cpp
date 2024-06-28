@@ -14,12 +14,8 @@
 HostEditor::HostEditor()
 {
     setName("HostEditor");
-
     // we don't need a trigger column
     bindings.removeTrigger();
-    
-    // now that BindingPanel is fully constructed
-    // initialize the form so it can call down to our virtuals
     initForm();
 }
 
@@ -28,7 +24,7 @@ HostEditor::~HostEditor()
 }
 
 /**
- * Called by BindingPanel as it iterates over all the bindings
+ * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for host parameters.
  */
 bool HostEditor::isRelevant(Binding* b)
@@ -47,7 +43,7 @@ juce::String HostEditor::renderSubclassTrigger(Binding* b)
 }
 
 /**
- * Add fields to the BindingPanel form, we have none.
+ * Add fields to the BindingEditor form, we have none.
  */
 void HostEditor::addSubclassFields()
 {

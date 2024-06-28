@@ -10,16 +10,11 @@
 #include "../common/Form.h"
 #include "../../model/Binding.h"
 
-#include "ConfigEditor.h"
-#include "BindingPanel.h"
 #include "MidiEditor.h"
 
 MidiEditor::MidiEditor()
 {
     setName("MidiEditor");
-
-    // now that BindingPanel is fully constructed
-    // initialize the form so it can call down to our virtuals
     initForm();
 }
 
@@ -64,7 +59,7 @@ void MidiEditor::hiding()
 }
 
 /**
- * Called by BindingPanel as it iterates over all the bindings
+ * Called by BindingEditor as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for MIDI.
  */
 bool MidiEditor::isRelevant(Binding* b)
@@ -125,7 +120,7 @@ juce::String MidiEditor::renderSubclassTrigger(Binding* b)
 }
 
 /**
- * Overload of a BindingPanel virtual to insert our fields in between
+ * Overload of a BindingEditor virtual to insert our fields in between
  * scope and arguments.  Messy control flow and has constructor issues
  * with initForm.  Would be cleaner to give Form a way to insert into
  * existing Forms.

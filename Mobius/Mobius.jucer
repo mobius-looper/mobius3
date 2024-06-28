@@ -203,9 +203,6 @@
           <FILE id="L06hsc" name="BindingEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/BindingEditor.cpp"/>
           <FILE id="I5PGfx" name="BindingEditor.h" compile="0" resource="0" file="Source/ui/config/BindingEditor.h"/>
-          <FILE id="QuaeIT" name="BindingPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/BindingPanel.cpp"/>
-          <FILE id="q7bVeN" name="BindingPanel.h" compile="0" resource="0" file="Source/ui/config/BindingPanel.h"/>
           <FILE id="WsJcLu" name="BindingTable.cpp" compile="1" resource="0"
                 file="Source/ui/config/BindingTable.cpp"/>
           <FILE id="ucuOsk" name="BindingTable.h" compile="0" resource="0" file="Source/ui/config/BindingTable.h"/>
@@ -213,8 +210,9 @@
                 file="Source/ui/config/BindingTargetPanel.cpp"/>
           <FILE id="PgF3wm" name="BindingTargetPanel.h" compile="0" resource="0"
                 file="Source/ui/config/BindingTargetPanel.h"/>
-          <FILE id="TjpfTj" name="ButtonPanel.cpp" compile="1" resource="0" file="Source/ui/config/ButtonPanel.cpp"/>
-          <FILE id="FYyoFi" name="ButtonPanel.h" compile="0" resource="0" file="Source/ui/config/ButtonPanel.h"/>
+          <FILE id="DRfYUA" name="ButtonEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/ButtonEditor.cpp"/>
+          <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>
           <FILE id="Du70TA" name="ConfigEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/ConfigEditor.cpp"/>
           <FILE id="zqWOpM" name="ConfigEditor.h" compile="0" resource="0" file="Source/ui/config/ConfigEditor.h"/>
@@ -232,10 +230,10 @@
                 file="Source/ui/config/KeyboardEditor.cpp"/>
           <FILE id="Y1X7Kt" name="KeyboardEditor.h" compile="0" resource="0"
                 file="Source/ui/config/KeyboardEditor.h"/>
-          <FILE id="Az47GJ" name="MidiDevicesPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/MidiDevicesPanel.cpp"/>
-          <FILE id="XDzrVN" name="MidiDevicesPanel.h" compile="0" resource="0"
-                file="Source/ui/config/MidiDevicesPanel.h"/>
+          <FILE id="uJ4NaL" name="MidiDeviceEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/MidiDeviceEditor.cpp"/>
+          <FILE id="NsZHFn" name="MidiDeviceEditor.h" compile="0" resource="0"
+                file="Source/ui/config/MidiDeviceEditor.h"/>
           <FILE id="cLSRUC" name="MidiEditor.cpp" compile="1" resource="0" file="Source/ui/config/MidiEditor.cpp"/>
           <FILE id="KlGcL4" name="MidiEditor.h" compile="0" resource="0" file="Source/ui/config/MidiEditor.h"/>
           <FILE id="CqcHvV" name="MultiSelectDrag.cpp" compile="1" resource="0"

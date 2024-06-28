@@ -21,6 +21,8 @@
 #include "KeyboardEditor.h"
 #include "MidiEditor.h"
 #include "HostEditor.h"
+#include "ButtonEditor.h"
+#include "MidiDeviceEditor.h"
 
 class ScriptPanel : public NewConfigPanel
 {
@@ -124,4 +126,30 @@ class HostPanel : public NewConfigPanel
  
   private:
     HostEditor editor;
+};
+
+class ButtonPanel : public NewConfigPanel
+{
+  public:
+    ButtonPanel() {
+        setName("ButtonPanel");
+        setEditor(&editor);
+    }
+    ~ButtonPanel() {}
+ 
+  private:
+    ButtonEditor editor;
+};
+
+class MidiDevicePanel : public NewConfigPanel
+{
+  public:
+    MidiDevicePanel() {
+        setName("MidiDevicePanel");
+        setEditor(&editor);
+    }
+    ~MidiDevicePanel() {}
+ 
+  private:
+    MidiDeviceEditor editor;
 };

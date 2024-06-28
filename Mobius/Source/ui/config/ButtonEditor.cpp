@@ -1,22 +1,22 @@
+/**
+ * This one is more complicated than KeyboardEditor and MidiEditor
+ * since we're not working from the BindingSet model inside the MobiusConfig.
+ * Instead we load/save from the UIConfig/ButtonSet model and do a runtime
+ * conversion of that to make it look like BindingSet for the BindingTable.
+ */
 
 #include <JuceHeader.h>
-
-#include <string>
-#include <sstream>
 
 #include "../../util/Trace.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Binding.h"
 
-#include "ConfigEditor.h"
-#include "BindingPanel.h"
-#include "ButtonPanel.h"
+#include "ButtonEditor.h"
 
-ButtonPanel::ButtonPanel(ConfigEditor* argEditor) :
-    BindingPanel(argEditor, "Button Sets", true)
+ButtonEditor::ButtonEditor()
 {
-    setName("ButtonPanel");
+    setName("ButtonEditor");
 
     // we don't need a trigger column
     // sadly the BindingTable has already been constructed at this point
@@ -29,78 +29,77 @@ ButtonPanel::ButtonPanel(ConfigEditor* argEditor) :
     // show the up/down buttons for ordering until we can have drag and drop
     bindings.setOrdered(true);
     
-    // now that BindingPanel is fully constructed
+    // now that BindingEditor is fully constructed
     // initialize the form so it can call down to our virtuals
     initForm();
 }
 
-ButtonPanel::~ButtonPanel()
+ButtonEditor::~ButtonEditor()
 {
 }
 
+void ButtonEditor::prepare()
+{
+    context->enableObjectSelector();
+}
+
 /**
- * Want to reuse the same BindingPanel and BindingTable but
+ * Want to reuse the same BindingTable as other binding panels but
  * we're not dealing with the Binding model now in UIConfig.
  * Overload the load and save methods.
  */
-void ButtonPanel::load()
+void ButtonEditor::load()
 {
-    if (!loaded) {
-        MobiusConfig* mconfig = editor->getMobiusConfig();
-        UIConfig* config = editor->getUIConfig();
+    MobiusConfig* mconfig = context->getMobiusConfig();
+    UIConfig* config = context->getUIConfig();
 
-        // BingingPanel::load normally does this but since we
-        // overload load() we have to do it
-        maxTracks = mconfig->getTracks();
-        maxGroups = mconfig->getTrackGroups();
-        targets.load();
-        resetForm();
+    // BingingPanel::load normally does this but since we
+    // overload load() we have to do it
+    maxTracks = mconfig->getTracks();
+    maxGroups = mconfig->getTrackGroups();
+    targets.load();
+    resetForm();
 
-        // make a local copy of the ButtonSets and build
-        // the name array for ObjectSelector
-        buttons.clear();
-        revertButtons.clear();
-        juce::Array<juce::String> names;
-        for (auto set : config->buttonSets) {
-            ButtonSet* copy = new ButtonSet(set);
-            if (copy->name.length() == 0)
-              copy->name = "[No Name]";
-            names.add(copy->name);
-            buttons.add(copy);
-            revertButtons.add(new ButtonSet(set));
-        }
-
-        // todo: really need to find a way to deal with "named object lists"
-        // in a generic way with OwnedArray, c++ makes this too fucking hard
-        // maybe some sort of transient container Map that also gets rid
-        // of linear name searches
-        selectedButtons = 0;
-        juce::String active = config->activeButtonSet;
-        if (active.length() > 0) {
-            int index = 0;
-            for (auto set : config->buttonSets) {
-                if (set->name == active) {
-                    selectedButtons = index;
-                    break;
-                }
-                index++;
-            }
-        }
-
-        loadButtons(selectedButtons);
-        refreshObjectSelector();
-
-        // force this true for testing
-        changed = true;
-        loaded = true;
+    // make a local copy of the ButtonSets and build
+    // the name array for ObjectSelector
+    buttons.clear();
+    revertButtons.clear();
+    juce::Array<juce::String> names;
+    for (auto set : config->buttonSets) {
+        ButtonSet* copy = new ButtonSet(set);
+        if (copy->name.length() == 0)
+          copy->name = "[No Name]";
+        names.add(copy->name);
+        buttons.add(copy);
+        revertButtons.add(new ButtonSet(set));
     }
+
+    // todo: really need to find a way to deal with "named object lists"
+    // in a generic way with OwnedArray, c++ makes this too fucking hard
+    // maybe some sort of transient container Map that also gets rid
+    // of linear name searches
+    selectedButtons = 0;
+    juce::String active = config->activeButtonSet;
+    if (active.length() > 0) {
+        int index = 0;
+        for (auto set : config->buttonSets) {
+            if (set->name == active) {
+                selectedButtons = index;
+                break;
+            }
+            index++;
+        }
+    }
+
+    loadButtons(selectedButtons);
+    refreshObjectSelector();
 }
 
 /**
  * Refresh the object selector on initial load and after any
  * objects are added or removed.
  */
-void ButtonPanel::refreshObjectSelector()
+void ButtonEditor::refreshObjectSelector()
 {
     juce::Array<juce::String> names;
     for (auto set : buttons) {
@@ -108,64 +107,62 @@ void ButtonPanel::refreshObjectSelector()
           set->name = "[New]";
         names.add(set->name);
     }
-    objectSelector.setObjectNames(names);
-    objectSelector.setSelectedObject(selectedButtons);
+    context->setObjectNames(names);
+    context->setSelectedObject(selectedButtons);
 }
 
 /**
  * Convert BindingTable/Binding back into DisplayButtons.
  */
-void ButtonPanel::save()
+void ButtonEditor::save()
 {
-    if (changed) {
+    // capture the final editing state for the selected set
+    saveButtons(selectedButtons);
 
-        // capture the final editing state for the selected set
-        saveButtons(selectedButtons);
+    // build a new ButtonSet list and leave it in the
+    // master config
+    UIConfig* config = context->getUIConfig();
 
-        // build a new ButtonSet list and leave it in the
-        // master config
-        UIConfig* config = editor->getUIConfig();
-
-        config->activeButtonSet = (buttons[selectedButtons])->name;
-        config->buttonSets.clear();
+    config->activeButtonSet = (buttons[selectedButtons])->name;
+    config->buttonSets.clear();
         
-        while (buttons.size() > 0) {
-            ButtonSet* neu = buttons.removeAndReturn(0);
-            config->buttonSets.add(neu);
-        }
-
-        editor->saveUIConfig();
-
-        changed = false;
-        loaded = false;
+    while (buttons.size() > 0) {
+        ButtonSet* neu = buttons.removeAndReturn(0);
+        config->buttonSets.add(neu);
     }
-    else if (loaded) {
-        cancel();
-    }
+
+    context->saveUIConfig();
 }
 
-void ButtonPanel::cancel()
+void ButtonEditor::cancel()
 {
     buttons.clear();
     revertButtons.clear();
-    loaded = false;
-    changed = false;
 }
 
+void ButtonEditor::revert()
+{
+    ButtonSet* reverted = new ButtonSet(revertButtons[selectedButtons]);
+    buttons.set(selectedButtons, reverted);
+    // what about the ObjectSelector name!!
+    loadButtons(selectedButtons);
+    refreshObjectSelector();
+}
+    
 //////////////////////////////////////////////////////////////////////
 //
-// BindingPanel/ButtonSet Conversion
+// BindingEditor/ButtonSet Conversion
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Load one of the ButtonSets into the BindingPanel UI
+ * Load one of the ButtonSets into the BindingEditor UI
  *
  * This does a model conversion from the DisplayButton to
  * a Binding.  Assign a transient id to each so we can
  * correlate them on save.
  */
-void ButtonPanel::loadButtons(int index)
+void ButtonEditor::loadButtons(int index)
 {
     bindings.clear();
     ButtonSet* set = buttons[index];
@@ -210,7 +207,7 @@ void ButtonPanel::loadButtons(int index)
  * so we can correlate them, but really need to have a completely
  * different ButtonTable so we don't have to deal with this.  
  */
-void ButtonPanel::saveButtons(int index)
+void ButtonEditor::saveButtons(int index)
 {
     ButtonSet* set = buttons[index];
 
@@ -266,7 +263,7 @@ void ButtonPanel::saveButtons(int index)
 /**
  * Called when the combobox changes.
  */
-void ButtonPanel::selectObject(int ordinal)
+void ButtonEditor::objectSelectorSelect(int ordinal)
 {
     if (ordinal != selectedButtons) {
         saveButtons(selectedButtons);
@@ -275,7 +272,7 @@ void ButtonPanel::selectObject(int ordinal)
     }
 }
 
-void ButtonPanel::newObject()
+void ButtonEditor::objectSelectorNew(juce::String newName)
 {
     int newOrdinal = buttons.size();
     ButtonSet* neu = new ButtonSet();
@@ -298,9 +295,9 @@ void ButtonPanel::newObject()
 /**
  * Delete is somewhat complicated.
  * You can't undo it unless we save it somewhere.
- * An alert would be nice, ConfigPanel could do that.
+ * An alert would be nice.
  */
-void ButtonPanel:: deleteObject()
+void ButtonEditor::objectSelectorDelete()
 {
     if (buttons.size() == 1) {
         // Unlike Presets which must have at least one, we don't
@@ -322,27 +319,18 @@ void ButtonPanel:: deleteObject()
     }
 }
 
-void ButtonPanel::revertObject()
-{
-    ButtonSet* reverted = new ButtonSet(revertButtons[selectedButtons]);
-    buttons.set(selectedButtons, reverted);
-    // what about the ObjectSelector name!!
-    loadButtons(selectedButtons);
-    refreshObjectSelector();
-}
-
 /**
  * Called when the ObjectSelector's ComboBox changed the name.
  */
-void ButtonPanel::renameObject(juce::String newName)
+void ButtonEditor::objectSelectorRename(juce::String newName)
 {
     ButtonSet* set = buttons[selectedButtons];
-    set->name = objectSelector.getObjectName();
+    set->name = newName;
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// BindingPanel Overloads
+// BindingEditor Overloads
 //
 // Mostly not relevant except for the subclass fields which is where
 // we show and edit the alternate display name.
@@ -352,7 +340,7 @@ void ButtonPanel::renameObject(juce::String newName)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool ButtonPanel::isRelevant(Binding* b)
+bool ButtonEditor::isRelevant(Binding* b)
 {
     (void)b;
     return true;
@@ -362,13 +350,13 @@ bool ButtonPanel::isRelevant(Binding* b)
  * Return the string to show in the trigger column for a binding.
  * The trigger column should be suppressed for buttons so we won't get here
  */
-juce::String ButtonPanel::renderSubclassTrigger(Binding* b)
+juce::String ButtonEditor::renderSubclassTrigger(Binding* b)
 {
     (void)b;
     return juce::String();
 }
 
-void ButtonPanel::addSubclassFields()
+void ButtonEditor::addSubclassFields()
 {
     displayName = new Field("Display Name", Field::Type::String);
     displayName->setWidthUnits(20);
@@ -379,7 +367,7 @@ void ButtonPanel::addSubclassFields()
  * Locate the DisplayButton that corresponds to this Binding in the table
  * The binding will have the true target name.
  */
-DisplayButton* ButtonPanel::getDisplayButton(Binding* binding)
+DisplayButton* ButtonEditor::getDisplayButton(Binding* binding)
 {
     DisplayButton* button = nullptr;
     ButtonSet* set = buttons[selectedButtons];
@@ -392,14 +380,14 @@ DisplayButton* ButtonPanel::getDisplayButton(Binding* binding)
     return button;
 }
             
-void ButtonPanel::refreshSubclassFields(Binding* b)
+void ButtonEditor::refreshSubclassFields(Binding* b)
 {
     DisplayButton* button = getDisplayButton(b);
     if (button != nullptr) 
       displayName->setValue(button->name);
 }
 
-void ButtonPanel::captureSubclassFields(class Binding* b)
+void ButtonEditor::captureSubclassFields(class Binding* b)
 {
     // not necessary, but continue with this in case something
     // needs a Trigger
@@ -411,7 +399,7 @@ void ButtonPanel::captureSubclassFields(class Binding* b)
       button->name = dname;
 }
 
-void ButtonPanel::resetSubclassFields()
+void ButtonEditor::resetSubclassFields()
 {
     displayName->setValue("");
 }
@@ -420,7 +408,7 @@ void ButtonPanel::resetSubclassFields()
  * Unusual overload just for buttons since the other triggers
  * aren't visible.
  */
-juce::String ButtonPanel::getDisplayName(Binding* b)
+juce::String ButtonEditor::getDisplayName(Binding* b)
 {
     juce::String buttonDisplayName;
     // can be nullptr if this is new

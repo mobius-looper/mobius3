@@ -209,7 +209,7 @@ void MainWindow::mainMenuSelection(int id)
                 break;
             
             case MainMenu::Buttons: {
-                configEditor.showButtons();
+                panelFactory.show(PanelFactory::Button);
             }
                 break;
 
@@ -231,7 +231,7 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
             case MainMenu::MidiDevices: {
-                configEditor.showMidiDevices();
+                panelFactory.show(PanelFactory::MidiDevice);
             }
                 break;
             case MainMenu::AudioDevices: {

@@ -38,8 +38,6 @@
 #include <JuceHeader.h>
 
 #include "ConfigPanel.h"
-#include "ButtonPanel.h"
-#include "MidiDevicesPanel.h"
 #include "AudioDevicesPanel.h"
 #include "DisplayPanel.h"
 
@@ -56,8 +54,6 @@ class ConfigEditor
     void init(class Supervisor* supervisor);
 
     void showPluginParameters();
-    void showButtons();
-    void showMidiDevices();
     void showAudioDevices();
     void showDisplay();
 
@@ -86,8 +82,6 @@ class ConfigEditor
     //class MobiusConfig* masterConfig = nullptr;
     //class UIConfig* masterUIConfig = nullptr;
     
-    ButtonPanel buttons {this};
-    MidiDevicesPanel midiDevices {this};
     AudioDevicesPanel audioDevices {this};
     DisplayPanel display {this};
     

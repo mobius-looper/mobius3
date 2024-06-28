@@ -19,7 +19,6 @@ class HostEditor : public BindingEditor
 
     juce::String getTitle() override {return "Plugin Parameters";}
 
-    // BindingPanel overloads
     juce::String renderSubclassTrigger(Binding* b) override;
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
