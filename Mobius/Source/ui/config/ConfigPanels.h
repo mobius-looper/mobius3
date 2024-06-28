@@ -18,6 +18,9 @@
 #include "SetupEditor.h"
 #include "ScriptEditor.h"
 #include "SampleEditor.h"
+#include "KeyboardEditor.h"
+#include "MidiEditor.h"
+#include "HostEditor.h"
 
 class ScriptPanel : public NewConfigPanel
 {
@@ -82,4 +85,43 @@ class GlobalPanel : public NewConfigPanel
  
   private:
     GlobalEditor editor;
+};
+
+class KeyboardPanel : public NewConfigPanel
+{
+  public:
+    KeyboardPanel() {
+        setName("KeyboardPanel");
+        setEditor(&editor);
+    }
+    ~KeyboardPanel() {}
+ 
+  private:
+    KeyboardEditor editor;
+};
+
+class MidiPanel : public NewConfigPanel
+{
+  public:
+    MidiPanel() {
+        setName("MidiPanel");
+        setEditor(&editor);
+    }
+    ~MidiPanel() {}
+ 
+  private:
+    MidiEditor editor;
+};
+
+class HostPanel : public NewConfigPanel
+{
+  public:
+    HostPanel() {
+        setName("HostPanel");
+        setEditor(&editor);
+    }
+    ~HostPanel() {}
+ 
+  private:
+    HostEditor editor;
 };

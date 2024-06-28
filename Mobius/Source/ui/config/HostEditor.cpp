@@ -5,21 +5,15 @@
 
 #include <JuceHeader.h>
 
-#include <string>
-#include <sstream>
-
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Binding.h"
 
-#include "ConfigEditor.h"
-#include "BindingPanel.h"
-#include "HostPanel.h"
+#include "HostEditor.h"
 
-HostPanel::HostPanel(ConfigEditor* argEditor) :
-    BindingPanel(argEditor, "Host Parameters", false)
+HostEditor::HostEditor()
 {
-    setName("HostPanel");
+    setName("HostEditor");
 
     // we don't need a trigger column
     bindings.removeTrigger();
@@ -29,7 +23,7 @@ HostPanel::HostPanel(ConfigEditor* argEditor) :
     initForm();
 }
 
-HostPanel::~HostPanel()
+HostEditor::~HostEditor()
 {
 }
 
@@ -37,7 +31,7 @@ HostPanel::~HostPanel()
  * Called by BindingPanel as it iterates over all the bindings
  * stored in a BindingSet.  Return true if this is for host parameters.
  */
-bool HostPanel::isRelevant(Binding* b)
+bool HostEditor::isRelevant(Binding* b)
 {
     return (b->trigger == TriggerHost);
 }
@@ -46,7 +40,7 @@ bool HostPanel::isRelevant(Binding* b)
  * Return the string to show in the trigger column for a binding.
  * The trigger column should be suppressed for buttons so we won't get here
  */
-juce::String HostPanel::renderSubclassTrigger(Binding* b)
+juce::String HostEditor::renderSubclassTrigger(Binding* b)
 {
     (void)b;
     return juce::String();
@@ -55,14 +49,14 @@ juce::String HostPanel::renderSubclassTrigger(Binding* b)
 /**
  * Add fields to the BindingPanel form, we have none.
  */
-void HostPanel::addSubclassFields()
+void HostEditor::addSubclassFields()
 {
 }
 
 /**
  * Refresh local fields to reflect the selected binding.
  */
-void HostPanel::refreshSubclassFields(Binding* b)
+void HostEditor::refreshSubclassFields(Binding* b)
 {
     (void)b;
 }
@@ -75,12 +69,12 @@ void HostPanel::refreshSubclassFields(Binding* b)
  *
  * Host bindings do not have a value, only an operation.
  */
-void HostPanel::captureSubclassFields(class Binding* b)
+void HostEditor::captureSubclassFields(class Binding* b)
 {
     b->trigger = TriggerHost;
 }
 
-void HostPanel::resetSubclassFields()
+void HostEditor::resetSubclassFields()
 {
 }
 

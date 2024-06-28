@@ -127,6 +127,10 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Script: panel = new ScriptPanel(); break;
         case Sample: panel = new SamplePanel(); break;
 
+        case Keyboard: panel = new KeyboardPanel(); break;
+        case Midi: panel = new MidiPanel(); break;
+        case Host: panel = new HostPanel(); break;
+
         case SymbolTable: panel = new SymbolTablePanel(); break;
         case MidiTransport: panel =  new MidiTransportPanel(); break;
         case Sync: panel =  new SyncPanel(); break;

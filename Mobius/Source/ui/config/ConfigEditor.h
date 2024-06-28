@@ -39,12 +39,9 @@
 
 #include "ConfigPanel.h"
 #include "ButtonPanel.h"
-#include "KeyboardPanel.h"
-#include "MidiPanel.h"
 #include "MidiDevicesPanel.h"
 #include "AudioDevicesPanel.h"
 #include "DisplayPanel.h"
-#include "HostPanel.h"
 
 class ConfigEditor
 {
@@ -58,14 +55,11 @@ class ConfigEditor
     // in MainWindow
     void init(class Supervisor* supervisor);
 
-    void showMidiBindings();
-    void showKeyboardBindings();
     void showPluginParameters();
     void showButtons();
     void showMidiDevices();
     void showAudioDevices();
     void showDisplay();
-    void showHostParameters();
 
     void show(juce::String name);
     
@@ -93,12 +87,9 @@ class ConfigEditor
     //class UIConfig* masterUIConfig = nullptr;
     
     ButtonPanel buttons {this};
-    KeyboardPanel keyboard {this};
-    MidiPanel midi {this};
     MidiDevicesPanel midiDevices {this};
     AudioDevicesPanel audioDevices {this};
     DisplayPanel display {this};
-    HostPanel hostParameters {this};
     
     // list of all active panels, we often need to iterate over these
     juce::Array<ConfigPanel*> panels;

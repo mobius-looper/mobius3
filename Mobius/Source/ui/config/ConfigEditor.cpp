@@ -48,12 +48,9 @@ void ConfigEditor::init(Supervisor* super)
     // add the various config panels to the owner but don't
     // make them visible yet
     addPanel(&buttons);
-    addPanel(&keyboard);
-    addPanel(&midi);
     addPanel(&midiDevices);
     addPanel(&audioDevices);
     addPanel(&display);
-    addPanel(&hostParameters);
 }
 
 ConfigEditor::~ConfigEditor()
@@ -80,21 +77,6 @@ void ConfigEditor::addPanel(ConfigPanel* p)
 void ConfigEditor::showButtons()
 {
     show(&buttons);
-}
-
-void ConfigEditor::showHostParameters()
-{
-    show(&hostParameters);
-}
-
-void ConfigEditor::showKeyboardBindings()
-{
-    show(&keyboard);
-}
-
-void ConfigEditor::showMidiBindings()
-{
-    show(&midi);
 }
 
 void ConfigEditor::showMidiDevices()

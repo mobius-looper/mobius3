@@ -46,7 +46,7 @@ class PanelFactory
         Script,
         Sample,
         Display,
-        PluginParameter,
+        Host,
 
         // testing and diagnostic panels
         SymbolTable,

@@ -9,14 +9,15 @@
 
 #include <JuceHeader.h>
 
-#include "ConfigPanel.h"
-#include "BindingPanel.h"
+#include "BindingEditor.h"
 
-class HostPanel : public BindingPanel
+class HostEditor : public BindingEditor
 {
   public:
-    HostPanel(class ConfigEditor *);
-    ~HostPanel();
+    HostEditor();
+    ~HostEditor();
+
+    juce::String getTitle() override {return "Plugin Parameters";}
 
     // BindingPanel overloads
     juce::String renderSubclassTrigger(Binding* b) override;

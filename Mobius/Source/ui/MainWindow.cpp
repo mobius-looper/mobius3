@@ -199,12 +199,12 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
             case MainMenu::MidiControl: {
-                configEditor.showMidiBindings();
+                panelFactory.show(PanelFactory::Midi);
             }
                 break;
         
             case MainMenu::KeyboardControl:  {
-                configEditor.showKeyboardBindings();
+                panelFactory.show(PanelFactory::Keyboard);
             }
                 break;
             
@@ -214,7 +214,7 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::HostParameters: {
-                configEditor.showHostParameters();
+                panelFactory.show(PanelFactory::Host);
             }
                 break;
 
