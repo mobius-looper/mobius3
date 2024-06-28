@@ -56,8 +56,6 @@ void ConfigEditor::init(Supervisor* super)
     addPanel(&midi);
     addPanel(&midiDevices);
     addPanel(&audioDevices);
-    addPanel(&scripts);
-    addPanel(&samples);
     addPanel(&display);
     addPanel(&hostParameters);
 }
@@ -128,14 +126,6 @@ void ConfigEditor::showAudioDevices()
     show(&audioDevices);
 }
 
-void ConfigEditor::showScripts()
-{
-    show(&scripts);
-}
-void ConfigEditor::showSamples()
-{
-    show(&samples);
-}
 void ConfigEditor::showDisplay()
 {
     show(&display);

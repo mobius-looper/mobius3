@@ -45,7 +45,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
   public:
 
     static const int HeaderHeight = 24;
-    static const int FooterHeight = 24;
+    static const int FooterHeight = 30;
     static const int BorderWidth = 4;
 
     BasePanel();
@@ -59,6 +59,7 @@ class BasePanel : public juce::Component, public juce::Button::Listener
     }
 
     void setContent(juce::Component* c);
+    void resetButtons();
     void addButton(juce::Button* b);
 
     // panels should have a title, could make this part of the constructor

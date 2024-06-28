@@ -36,6 +36,11 @@ void BasePanel::setContent(juce::Component* c)
     }
 }
 
+void BasePanel::resetButtons()
+{
+    closeButtons.clear();
+}
+
 void BasePanel::addButton(juce::Button* b)
 {
     closeButtons.add(b);

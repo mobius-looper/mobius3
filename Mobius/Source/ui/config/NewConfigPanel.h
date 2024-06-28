@@ -18,6 +18,62 @@
 
 //////////////////////////////////////////////////////////////////////
 //
+// Editor
+//
+// This is the interface of a configuration object editor managed
+// by a ConfigPanel.  Most of the interesting logic around configuration
+// editing will be in subclasses of this.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Interface of an object that performs the bulk of what this ConfigPanel does.
+ * This lives inside the ConfigPanelWrapper between the ObjectSelector and
+ * the HelpArea.
+ */
+class ConfigPanelContent : public juce::Component
+{
+  public:
+
+    ConfigPanelContent() {}
+    virtual ~ConfigPanelContent() {}
+
+    virtual void showing() {}
+    virtual void hiding() {}
+    virtual void load() = 0;
+    virtual void save() = 0;
+    virtual void cancel() = 0;
+    virtual void revert() {}
+
+    // kind of awkward linkage to make it easier for subclasses
+    // to get to resources like MobiusConfig
+    void setPanel(class NewConfigPanel* p) {
+        panel = p;
+    }
+
+    bool isLoaded() {
+        return loaded;
+    }
+    void setLoaded(bool b) {
+        loaded = b;
+    }
+    
+    // editing utilities
+    class Supervisor* getSupervisor();
+    class MobiusConfig* getMobiusConfig();
+    void saveMobiusConfig();
+    class UIConfig* getUIConfig();
+    void saveUIConfig();
+    
+  private:
+    
+    class NewConfigPanel* panel = nullptr;
+    bool loaded = false;
+
+};
+
+//////////////////////////////////////////////////////////////////////
+//
 // ObjectSelector
 //
 //////////////////////////////////////////////////////////////////////
@@ -93,32 +149,6 @@ class NewObjectSelector : public juce::Component,
 
 //////////////////////////////////////////////////////////////////////
 //
-// Inner Content
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Interface of an object that performs the bulk of what this ConfigPanel does.
- * This lives inside the ConfigPanelWrapper between the ObjectSelector and
- * the HelpArea.
- */
-class ConfigPanelContent : public juce::Component
-{
-  public:
-
-    ConfigPanelContent() {}
-    virtual ~ConfigPanelContent() {}
-
-    virtual void showing() = 0;
-    virtual void hiding() = 0;
-    virtual void load() = 0;
-    virtual void save() = 0;
-    virtual void cancel() = 0;
-
-};
-
-//////////////////////////////////////////////////////////////////////
-//
 // Wrapper
 //
 //////////////////////////////////////////////////////////////////////
@@ -140,9 +170,13 @@ class ConfigPanelWrapper : public juce::Component
     void hiding();
 
     void setContent(ConfigPanelContent* c);
-    void enableObjectSelector(NewObjectSelector::Listener* l);
+    void enableObjectSelector(class NewObjectSelector::Listener* l);
     void setHelpHeight(int height);
     void resized() override;
+
+    ConfigPanelContent* getContent() {
+        return content;
+    }
 
   private:
 
@@ -173,42 +207,30 @@ class NewConfigPanel : public BasePanel
 {
   public:
 
-    /**
-     * BasePanel button overrides
-     */
-    enum ButtonType {
-        Save = 2,
-        Cancel = 4,
-        Revert = 8
-    };
-
     NewConfigPanel();
     ~NewConfigPanel() override;
 
+    class Supervisor* getSupervisor();
+
     // configuration instructions from the subclass
-
-    void setConfigContent(ConfigPanelContent* c) {
-        wrapper.setContent(c);
-    }
-    
-    void enableObjectSelector(NewObjectSelector::Listener* l) {
-        wrapper.enableObjectSelector(l);
-    }
-
-    void setHelpHeight(int h) {
-        wrapper.setHelpHeight(h);
-    }
+    void addRevert();
+    void setConfigContent(ConfigPanelContent* c);
+    void enableObjectSelector(NewObjectSelector::Listener* l);
+    void setHelpHeight(int h);
 
     // BasePanel overloads
     void showing() override;
     void hiding() override;
+
+    // BasePanel button handler
+    void footerButton(juce::Button* b) override;
     
   private:
 
     ConfigPanelWrapper wrapper;
 
-    juce::TextButton saveButton;
-    juce::TextButton cancelButton;
-    juce::TextButton revertButton;
+    juce::TextButton saveButton {"Save"};
+    juce::TextButton cancelButton {"Cancel"};
+    juce::TextButton revertButton {"Revert"};
 
 };

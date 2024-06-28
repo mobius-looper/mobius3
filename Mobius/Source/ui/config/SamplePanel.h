@@ -6,14 +6,14 @@
 
 #include <JuceHeader.h>
 
-#include "ConfigPanel.h"
+#include "NewConfigPanel.h"
 #include "SampleTable.h"
 
-class SamplePanel : public ConfigPanel 
+class SampleEditor : public ConfigPanelContent
 {
   public:
-    SamplePanel(class ConfigEditor*);
-    ~SamplePanel();
+    SampleEditor();
+    ~SampleEditor();
 
     // overloads called by ConfigPanel
     void load() override;
@@ -27,4 +27,19 @@ class SamplePanel : public ConfigPanel
     SampleTable table;
     juce::String lastFolder;
 
+};
+
+class SamplePanel : public NewConfigPanel
+{
+  public:
+    SamplePanel() {
+        setName("SamplePanel");
+        setTitle("Samples");
+        setConfigContent(&editor);
+    }
+    ~SamplePanel() {
+    }
+
+  private:
+    SampleEditor editor;
 };

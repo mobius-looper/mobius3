@@ -8,81 +8,50 @@
 #include "../../model/MobiusConfig.h"
 
 #include "../common/Form.h"
-#include "../JuceUtil.h"
-
-#include "ConfigEditor.h"
 
 #include "ScriptPanel.h"
 
 
-ScriptPanel::ScriptPanel(ConfigEditor* argEditor) :
-    ConfigPanel{argEditor, "Scripts", ConfigPanelButton::Save | ConfigPanelButton::Cancel, false}
+ScriptEditor::ScriptEditor()
 {
-    setName("ScriptPanel");
-
-    content.addAndMakeVisible(table);
-    
-    // we can either auto size at this point or try to
-    // make all config panels a uniform size
-    setSize (900, 600);
+    setName("ScriptEditor");
+    addAndMakeVisible(table);
 }
 
-ScriptPanel::~ScriptPanel()
+ScriptEditor::~ScriptEditor()
 {
 }
 
-/**
- * Simpler than Presets and Setups because we don't have multiple objects to deal with.
- * Load fields from the master config at the start, then commit them directly back
- * to the master config.
- */
-void ScriptPanel::load()
+void ScriptEditor::load()
 {
-    if (!loaded) {
-        MobiusConfig* config = editor->getMobiusConfig();
-
-        ScriptConfig* sconfig = config->getScriptConfig();
-        if (sconfig != nullptr) {
-            // this makes it's own copy
-            table.setScripts(sconfig);
-        }
-
-        loaded = true;
-        // force this true for testing
-        changed = true;
+    MobiusConfig* config = getMobiusConfig();
+    ScriptConfig* sconfig = config->getScriptConfig();
+    if (sconfig != nullptr) {
+        // this makes it's own copy
+        table.setScripts(sconfig);
     }
 }
 
-void ScriptPanel::save()
+void ScriptEditor::save()
 {
-    if (changed) {
-        MobiusConfig* config = editor->getMobiusConfig();
+    MobiusConfig* config = getMobiusConfig();
+    ScriptConfig* newConfig = table.capture();
+    config->setScriptConfig(newConfig);
 
-        ScriptConfig* newConfig = table.capture();
-        config->setScriptConfig(newConfig);
+    saveMobiusConfig();
 
-        editor->saveMobiusConfig();
-
-        // you almost always want scripts reloaded after editing
-        // so force that now, samples are another story...
-        Supervisor::Instance->menuLoadScripts();
-
-        loaded = false;
-        changed = false;
-    }
+    // you almost always want scripts reloaded after editing
+    // so force that now, samples are another story...
+    getSupervisor()->menuLoadScripts();
 }
 
-void ScriptPanel::cancel()
+void ScriptEditor::cancel()
 {
     table.clear();
-    loaded = false;
-    changed = false;
 }
 
-void ScriptPanel::resized()
+void ScriptEditor::resized()
 {
-    ConfigPanel::resized();
-    
     juce::Rectangle<int> area = getLocalBounds();
 
     // leave some padding

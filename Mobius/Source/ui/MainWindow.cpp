@@ -223,11 +223,11 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
             case MainMenu::Scripts: {
-                configEditor.showScripts();
+                panelFactory.show(PanelFactory::Script);
             }
                 break;
             case MainMenu::Samples: {
-                configEditor.showSamples();
+                panelFactory.show(PanelFactory::Sample);
             }
                 break;
             case MainMenu::MidiDevices: {

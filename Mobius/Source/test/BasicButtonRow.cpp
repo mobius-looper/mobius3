@@ -30,6 +30,15 @@ void BasicButtonRow::setListener(juce::Button::Listener* l)
     listener = l;
 }
 
+// call this to remove the default Ok button and start over
+void BasicButtonRow::clear()
+{
+    for (auto button : buttons) {
+        removeChildComponent(button);
+    }
+    buttons.clear();
+}
+
 void BasicButtonRow::add(juce::Button* b, juce::Button::Listener* l)
 {
     buttons.add(b);

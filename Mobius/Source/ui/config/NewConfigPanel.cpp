@@ -13,9 +13,11 @@ NewConfigPanel::NewConfigPanel()
     // with Save/Revert/Cancel
     // todo: make Revert optional, and support custom ones like Capture
 
-    // addFooterButton(&saveButton);
-    // addFooterButton(&revertButton);
-    // addFooterButton(&cancelButton);
+    resetButtons();
+    addButton(&saveButton);
+    addButton(&cancelButton);
+
+    setContent(&wrapper);
 
     // the default size, subclass may change
     setSize (900, 600);
@@ -26,16 +28,106 @@ NewConfigPanel::~NewConfigPanel()
 }
 
 /**
+ * Try to stop using Supervisor::Instance so much in code below this.
+ * Pass this in the constructor so we don't have to.
+ */
+Supervisor* NewConfigPanel::getSupervisor()
+{
+    return Supervisor::Instance;
+}
+
+void NewConfigPanel::addRevert()
+{
+    addButton(&revertButton);
+}
+
+void NewConfigPanel::setConfigContent(ConfigPanelContent* c) {
+    c->setPanel(this);
+    wrapper.setContent(c);
+}
+    
+void NewConfigPanel::enableObjectSelector(NewObjectSelector::Listener* l) {
+    wrapper.enableObjectSelector(l);
+}
+
+void NewConfigPanel::setHelpHeight(int h) {
+    wrapper.setHelpHeight(h);
+}
+
+/**
  * Called by BasePanel when we've been invisible, and are now being shown.
  */
 void NewConfigPanel::showing()
 {
     wrapper.showing();
+    // because of the weird way we stitch things together, have to force a resized
+    // when showing
+    resized();
 }
 
 void NewConfigPanel::hiding()
 {
     wrapper.hiding();
+}
+
+/**
+ * Called by BasePanel when a footer button is clicked.
+ * Kind of messy forwarding here, should we just let the wrapper
+ * deal with this?
+ */
+void NewConfigPanel::footerButton(juce::Button* b)
+{
+    if (b == &saveButton) {
+        wrapper.getContent()->save();
+    }
+    else if (b == &cancelButton) {
+        wrapper.getContent()->cancel();
+    }
+    else if (b == &revertButton) {
+        wrapper.getContent()->revert();
+    }
+    else {
+        // I guess this would be the place to forward the button to the
+        // ConfigPanelContent since it isn't one of the standard ones
+        Trace(1, "ConfigPanel: Unsupported button %s\n", b->getButtonText().toUTF8());
+    }
+
+    // save and cancel close the panel, revert keeps it going
+    if (b == &saveButton || b == &cancelButton)
+      close();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ConfigPanelContent
+//
+// Varioius accessors that all content editors want.
+//
+//////////////////////////////////////////////////////////////////////
+
+Supervisor* ConfigPanelContent::getSupervisor()
+{
+    return panel->getSupervisor();
+}
+
+MobiusConfig* ConfigPanelContent::getMobiusConfig()
+{
+    return getSupervisor()->getMobiusConfig();
+}
+
+void ConfigPanelContent::saveMobiusConfig()
+{
+    getSupervisor()->updateMobiusConfig();
+}
+
+UIConfig* ConfigPanelContent::getUIConfig()
+{
+    return getSupervisor()->getUIConfig();
+}
+
+void ConfigPanelContent::saveUIConfig()
+{
+    getSupervisor()->updateUIConfig();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -88,6 +180,11 @@ void ConfigPanelWrapper::showing()
     }
 
     if (content != nullptr) {
+        if (!content->isLoaded()) {
+            content->load();
+            content->setLoaded(true);
+        }
+        
         content->showing();
     }
 }

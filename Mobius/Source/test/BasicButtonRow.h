@@ -18,8 +18,9 @@ class BasicButtonRow : public juce::Component
     int getPreferredHeight();
     void setListener(juce::Button::Listener* l);
     
+    void clear();
     void add(juce::Button* b, juce::Button::Listener* l = nullptr);
-
+    
     void resized() override;
     void paint(juce::Graphics& g) override;
 

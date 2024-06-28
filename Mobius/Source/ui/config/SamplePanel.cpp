@@ -11,70 +11,45 @@
 
 #include "SamplePanel.h"
 
-
-SamplePanel::SamplePanel(ConfigEditor* argEditor) :
-    ConfigPanel{argEditor, "Samples", ConfigPanelButton::Save | ConfigPanelButton::Cancel, false}
+SampleEditor::SampleEditor()
 {
-    setName("SamplePanel");
-
-    content.addAndMakeVisible(table);
-
-    // we can either auto size at this point or try to
-    // make all config panels a uniform size
-    setSize (900, 600);
+    setName("SampleEditor");
+    addAndMakeVisible(table);
 }
 
-SamplePanel::~SamplePanel()
+SampleEditor::~SampleEditor()
 {
 }
 
-/**
- * Simpler than Presets and Setups because we don't have multiple objects to deal with.
- * Load fields from the master config at the start, then commit them directly back
- * to the master config.
- */
-void SamplePanel::load()
+void SampleEditor::load()
 {
-    if (!loaded) {
-        MobiusConfig* config = editor->getMobiusConfig();
-
-        SampleConfig* sconfig = config->getSampleConfig();
-        if (sconfig != nullptr) {
-            // this makes it's own copy
-            table.setSamples(sconfig);
-        }
-
-        loaded = true;
-        // force this true for testing
-        changed = true;
+    MobiusConfig* config = getMobiusConfig();
+    SampleConfig* sconfig = config->getSampleConfig();
+    if (sconfig != nullptr) {
+        // this makes it's own copy
+        table.setSamples(sconfig);
     }
 }
 
-void SamplePanel::save()
+void SampleEditor::save()
 {
-    if (changed) {
-        MobiusConfig* config = editor->getMobiusConfig();
+    MobiusConfig* config = getMobiusConfig();
+    SampleConfig* newConfig = table.capture();
+    config->setSampleConfig(newConfig);
 
-        SampleConfig* newConfig = table.capture();
-        config->setSampleConfig(newConfig);
+    saveMobiusConfig();
 
-        editor->saveMobiusConfig();
-        loaded = false;
-        changed = false;
-    }
+    // here is where ScriptPanel auto-loads scripts by calling
+    // Supervisor, do that for samples too?
 }
 
-void SamplePanel::cancel()
+void SampleEditor::cancel()
 {
     table.clear();
-    loaded = false;
-    changed = false;
 }
 
-void SamplePanel::resized()
+void SampleEditor::resized()
 {
-    ConfigPanel::resized();
-    
     juce::Rectangle<int> area = getLocalBounds();
 
     // leave some padding

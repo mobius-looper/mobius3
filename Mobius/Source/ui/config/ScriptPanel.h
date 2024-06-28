@@ -6,14 +6,15 @@
 
 #include <JuceHeader.h>
 
-#include "ConfigPanel.h"
 #include "ScriptTable.h"
-
-class ScriptPanel : public ConfigPanel 
+#include "NewConfigPanel.h"
+ 
+class ScriptEditor : public ConfigPanelContent
 {
   public:
-    ScriptPanel(class ConfigEditor*);
-    ~ScriptPanel();
+    
+    ScriptEditor();
+    ~ScriptEditor();
 
     // overloads called by ConfigPanel
     void load() override;
@@ -27,4 +28,19 @@ class ScriptPanel : public ConfigPanel
     ScriptTable table;
     juce::String lastFolder;
 
+};
+
+class ScriptPanel : public NewConfigPanel
+{
+  public:
+    ScriptPanel() {
+        setName("ScriptPanel");
+        setTitle("Scripts");
+        setConfigContent(&editor);
+    }
+    ~ScriptPanel() {
+    }
+
+  private:
+    ScriptEditor editor;
 };

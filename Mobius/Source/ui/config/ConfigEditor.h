@@ -16,8 +16,6 @@
  *   showMIDIBindings
  *   showKeyboardBindings
  *   showPluginParameters
- *   showScripts
- *   showSamples
  *
  * Although they are stored in different files, might as well do the UI configuration
  * here too:
@@ -50,8 +48,6 @@
 #include "MidiPanel.h"
 #include "MidiDevicesPanel.h"
 #include "AudioDevicesPanel.h"
-#include "ScriptPanel.h"
-#include "SamplePanel.h"
 #include "DisplayPanel.h"
 #include "HostPanel.h"
 
@@ -73,8 +69,6 @@ class ConfigEditor
     void showMidiBindings();
     void showKeyboardBindings();
     void showPluginParameters();
-    void showScripts();
-    void showSamples();
     void showButtons();
     void showMidiDevices();
     void showAudioDevices();
@@ -114,8 +108,6 @@ class ConfigEditor
     MidiPanel midi {this};
     MidiDevicesPanel midiDevices {this};
     AudioDevicesPanel audioDevices {this};
-    ScriptPanel scripts {this};
-    SamplePanel samples {this};
     DisplayPanel display {this};
     HostPanel hostParameters {this};
     

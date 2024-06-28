@@ -16,6 +16,8 @@
 #include "../test/UpgradePanel.h"
 
 #include "config/TestConfigPanel.h"
+#include "config/ScriptPanel.h"
+#include "config/SamplePanel.h"
 
 #include "PanelFactory.h"
 
@@ -119,6 +121,9 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MidiMonitor: panel = new MidiMonitorPanel(); break;
         case MidiSummary: panel = new MidiSummaryPanel(); break;
         case KeyboardSummary: panel = new KeyboardSummaryPanel(); break;
+
+        case Script: panel = new ScriptPanel(); break;
+        case Sample: panel = new SamplePanel(); break;
 
         case SymbolTable: panel = new SymbolTablePanel(); break;
         case MidiTransport: panel =  new MidiTransportPanel(); break;

@@ -19,7 +19,8 @@ class TestConfigContent : public ConfigPanelContent, public NewObjectSelector::L
     void load() override;
     void save() override;
     void cancel() override;
-
+    void revert() override;
+    
     // ObjectSelector::Listener
     void objectSelectorSelect(int ordinal) override;
     void objectSelectorRename(juce::String newName) override;
