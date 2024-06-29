@@ -23,6 +23,7 @@
 #include "HostEditor.h"
 #include "ButtonEditor.h"
 #include "MidiDeviceEditor.h"
+#include "AudioEditor.h"
 
 class ScriptPanel : public NewConfigPanel
 {
@@ -152,4 +153,17 @@ class MidiDevicePanel : public NewConfigPanel
  
   private:
     MidiDeviceEditor editor;
+};
+
+class AudioPanel : public NewConfigPanel
+{
+  public:
+    AudioPanel() {
+        setName("AudioPanel");
+        setEditor(&editor);
+    }
+    ~AudioPanel() {}
+ 
+  private:
+    AudioEditor editor;
 };

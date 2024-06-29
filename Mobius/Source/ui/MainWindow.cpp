@@ -237,7 +237,7 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::AudioDevices: {
                 // can only show this if we're standalone
                 if (!supervisor->isPlugin())
-                  configEditor.showAudioDevices();
+                  panelFactory.show(PanelFactory::Audio);
             }
                 break;
 

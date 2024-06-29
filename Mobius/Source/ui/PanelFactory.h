@@ -36,18 +36,20 @@ class PanelFactory
 
         // configuration editing panels
         Global,
-        Setup,
         Preset,
-        Button,
+        Setup,
         Keyboard,
         Midi,
-        MidiDevice,
-        AudioDevice,
+        Host,
         Script,
         Sample,
         Display,
-        Host,
+        Button,
 
+        // Devices
+        Audio,
+        MidiDevice,
+        
         // testing and diagnostic panels
         SymbolTable,
         MidiTransport,

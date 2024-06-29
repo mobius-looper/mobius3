@@ -47,7 +47,6 @@ void ConfigEditor::init(Supervisor* super)
 
     // add the various config panels to the owner but don't
     // make them visible yet
-    addPanel(&audioDevices);
     addPanel(&display);
 }
 
@@ -70,11 +69,6 @@ void ConfigEditor::addPanel(ConfigPanel* p)
 {
     owner->addChildComponent(p);
     panels.add(p);
-}
-
-void ConfigEditor::showAudioDevices()
-{
-    show(&audioDevices);
 }
 
 void ConfigEditor::showDisplay()

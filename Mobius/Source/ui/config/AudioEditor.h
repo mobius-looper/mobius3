@@ -6,7 +6,7 @@
  * be directly reflected in the application, you don't "Save" or "Cancel".
  * The panel is simply closed.
  *
- * This is one of the oldest panels and comments may reflect early misunderstandings
+ * This is one of the oldest editors and comments may reflect early misunderstandings
  * about how things worked.
  *
  */
@@ -19,44 +19,38 @@
 #include "../common/Field.h"
 #include "../common/LogPanel.h"
 
-#include "ConfigPanel.h"
-
-class AudioDevicesContent : public juce::Component
-{
-  public:
-    AudioDevicesContent() {setName("AudioDevicesContent"); };
-    ~AudioDevicesContent() {};
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-};
+#include "NewConfigEditor.h"
 
 /**
  * ChangeListener and Timer were added to conform to the
  * AudioDeviceSelector tutorial.  They aren't necessary but try
- * to follow the demo for awhile
+ * to follow the demo for awhile.
  */
-class AudioDevicesPanel : public ConfigPanel, 
-                          public juce::ChangeListener, public juce::Timer
+class AudioEditor : public NewConfigEditor,
+                    public juce::ChangeListener,
+                    public juce::Timer
 {
   public:
-    AudioDevicesPanel(class ConfigEditor*);
-    ~AudioDevicesPanel();
+    AudioEditor();
+    ~AudioEditor();
 
-    // ConfigPanel overloads
+    juce::String getTitle() override {return juce::String("Audio Devices");}
+
+    void prepare() override;
     void showing() override;
     void hiding() override;
     void load() override;
     void save() override;
     void cancel() override;
 
+    void resized() override;
+    void paint(juce::Graphics& g) override;
+
   private:
 
-    AudioDevicesContent adcontent;
-    // juce::AudioDeviceSelectorComponent audioSetupComp;
-    juce::AudioDeviceSelectorComponent* audioSetupComp = nullptr;
+    juce::AudioDeviceSelectorComponent* audioSelector = nullptr;
     juce::Label cpuUsageLabel;
     juce::Label cpuUsageText;
-
     LogPanel log;
 
     void dumpDeviceSetup();

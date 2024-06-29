@@ -38,7 +38,6 @@
 #include <JuceHeader.h>
 
 #include "ConfigPanel.h"
-#include "AudioDevicesPanel.h"
 #include "DisplayPanel.h"
 
 class ConfigEditor
@@ -54,7 +53,6 @@ class ConfigEditor
     void init(class Supervisor* supervisor);
 
     void showPluginParameters();
-    void showAudioDevices();
     void showDisplay();
 
     void show(juce::String name);
@@ -82,7 +80,6 @@ class ConfigEditor
     //class MobiusConfig* masterConfig = nullptr;
     //class UIConfig* masterUIConfig = nullptr;
     
-    AudioDevicesPanel audioDevices {this};
     DisplayPanel display {this};
     
     // list of all active panels, we often need to iterate over these

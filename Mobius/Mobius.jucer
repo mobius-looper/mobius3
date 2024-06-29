@@ -196,10 +196,8 @@
         <FILE id="keXdso" name="BasePanel.cpp" compile="1" resource="0" file="Source/ui/BasePanel.cpp"/>
         <FILE id="oBlSlj" name="BasePanel.h" compile="0" resource="0" file="Source/ui/BasePanel.h"/>
         <GROUP id="{C154E97D-0CEE-20FA-DFB7-9667274BF918}" name="config">
-          <FILE id="YtRrYA" name="AudioDevicesPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/AudioDevicesPanel.cpp"/>
-          <FILE id="BNTYC1" name="AudioDevicesPanel.h" compile="0" resource="0"
-                file="Source/ui/config/AudioDevicesPanel.h"/>
+          <FILE id="Rx6MAi" name="AudioEditor.cpp" compile="1" resource="0" file="Source/ui/config/AudioEditor.cpp"/>
+          <FILE id="ByMaOa" name="AudioEditor.h" compile="0" resource="0" file="Source/ui/config/AudioEditor.h"/>
           <FILE id="L06hsc" name="BindingEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/BindingEditor.cpp"/>
           <FILE id="I5PGfx" name="BindingEditor.h" compile="0" resource="0" file="Source/ui/config/BindingEditor.h"/>

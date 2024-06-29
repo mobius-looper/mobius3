@@ -1,5 +1,5 @@
 /**
- * ConfigPanel to configure audio devices when running standalone.
+ * ConfigEditor to configure audio devices when running standalone.
  *
  * This uses a built-in Juce component for configuring the audio device
  * and doesn't work like other ConfigPanels.  Changes made here will
@@ -68,101 +68,71 @@
 #include "../common/LogPanel.h"
 #include "../JuceUtil.h"
 
-#include "ConfigEditor.h"
- 
-#include "AudioDevicesPanel.h"
+#include "AudioEditor.h"
 
-AudioDevicesPanel::AudioDevicesPanel(ConfigEditor* argEditor) :
-    // superclass constructor
-    ConfigPanel{argEditor, "Audio Devices", ConfigPanelButton::Save | ConfigPanelButton::Cancel, false}
-    // this mess initializes the AudioDeviceSelectorComponent member as was
-    // done in the tutorial, you have to do this in the constructor so it has
-    // to be a member initializer (or whatever this is called), alternately could
-    // construct it dynamically but then you have to delete it
-    // we don't have an AudioDeviceManager member, so have to get it from Supervisor
+AudioEditor::AudioEditor()
+{
+    setName("AudioEditor");
+}
 
-    // fuck, had to change this to be a pointer when we added plugin
-    // support and won't always have a MainComponent with an ADM reference
-    // should get here anyway, but it needs to compile
-    // and unfortunately everything is a member object in ConfigEditor right
-    // now so it has to at least construct cleanly
-#if 0    
-    audioSetupComp (*(Supervisor::Instance->getAudioDeviceManager()),
-                    0,     // minimum input channels
-                    256,   // maximum input channels
-                    0,     // minimum output channels
-                    256,   // maximum output channels
-                    false, // ability to select midi inputs
-                    false, // ability to select midi output device
-                    true, // treat channels as stereo pairs
-                    false) // hide advanced options
-#endif    
-    {
-        setName("AudioDevicesPanel");
-
-        // new way, dynamic allocation only if we can
-        // the only setting you might want to tinker with is
-        // "treat channels as stereo pairs"
-        // that's convenient for most users, but when using ASIO could allow more
-        // flexibility on which hardware jacks are grouped for sterso
-        
-        juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
-        if (adm != nullptr) {
-
-            audioSetupComp = new juce::AudioDeviceSelectorComponent(*adm,
-                                                                    0,     // minimum input channels
-                                                                    256,   // maximum input channels
-                                                                    0,     // minimum output channels
-                                                                    256,   // maximum output channels
-                                                                    false, // ability to select midi inputs
-                                                                    false, // ability to select midi output device
-                                                                    true, // treat channels as stereo pairs
-                                                                    false); // hide advanced options
-
-            adcontent.addAndMakeVisible(audioSetupComp);
-            adcontent.addAndMakeVisible(log);
-
-            // these two went above the log in the tutorial
-            cpuUsageLabel.setText ("CPU Usage", juce::dontSendNotification);
-            cpuUsageText.setJustificationType (juce::Justification::left);
-            adcontent.addAndMakeVisible (&cpuUsageLabel);
-            adcontent.addAndMakeVisible (&cpuUsageText);
-
-            // place it in the ConfigPanel content panel
-            content.addAndMakeVisible(adcontent);
-        }
-
-        // don't need a help area
-        setHelpHeight(0);
-        
-        // have been keeping the same size for all ConfigPanels
-        // rather than having them shrink to fit, should move this
-        // to ConfigPanel or ConfigEditor
-        setSize (900, 600);
-    }
-
-AudioDevicesPanel::~AudioDevicesPanel()
+AudioEditor::~AudioEditor()
 {
     // members will delete themselves
     // remove the AudioDeviceManager callback listener and stop
     // the timer if we we were showing and the app was closed
     hiding();
-    delete audioSetupComp;
+    delete audioSelector;
+}
+
+/**
+ * Demo showed this as a member object initialized in the constructor, but that's
+ * hard to do in in the ConfigPanel/ConfigEditor world, and we also can't depend
+ * on an AudioDeviceManager reference if we're a plugin.  Have to dynamically allocate one
+ * and remember to clean it up.
+ */
+void AudioEditor::prepare()
+{
+    // if we're a plugin we shouldn't be opened, but in case we are
+    // verify that we actually have an AudioDeviceManager before using it
+    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
+    if (adm != nullptr) {
+
+        audioSelector = new juce::AudioDeviceSelectorComponent(*adm,
+                                                               0,     // minimum input channels
+                                                               256,   // maximum input channels
+                                                               0,     // minimum output channels
+                                                               256,   // maximum output channels
+                                                               false, // ability to select midi inputs
+                                                               false, // ability to select midi output device
+                                                               true, // treat channels as stereo pairs
+                                                               false); // hide advanced options
+        
+        addAndMakeVisible(audioSelector);
+        addAndMakeVisible(log);
+
+        // these two went above the log in the tutorial
+        cpuUsageLabel.setText ("CPU Usage", juce::dontSendNotification);
+        cpuUsageText.setJustificationType (juce::Justification::left);
+        addAndMakeVisible (&cpuUsageLabel);
+        addAndMakeVisible (&cpuUsageText);
+
+        // name things for JuceUtil::dump
+        audioSelector->setName("AudioDevicesSelectorCompoent");
+        cpuUsageLabel.setName("UsageLabel");
+        cpuUsageText.setName("UsageText");
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// ConfigPanel overloads
+// ConfigEditor overloads
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Called by ConfigEditor when we're about to be made visible.
- */
-void AudioDevicesPanel::showing()
+void AudioEditor::showing()
 {
     // the tutorial adds a change listener and starts the timer
-    juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
     if (adm != nullptr) {
         adm->addChangeListener(this);
 
@@ -173,12 +143,9 @@ void AudioDevicesPanel::showing()
     }
 }
 
-/**
- * Called by ConfigEditor when we're about to be made invisible.
- */
-void AudioDevicesPanel::hiding()
+void AudioEditor::hiding()
 {
-    juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
     if (adm != nullptr) {
         adm->removeChangeListener(this);
 
@@ -188,34 +155,20 @@ void AudioDevicesPanel::hiding()
 
 /**
  * Called by ConfigEditor when asked to edit devices.
- * Unlike most other config panels, we don't have a lot of complex state to manage.
- * The AudioDeviceManager should already have been initialized with what was
- * in the DeviceConfig at startup.  Here we just check to see if changes were
- * made that we don't expect.
- *
- * TODO: This code is old and needs some redesign.  Compare it to how MidiDevicesPanel works.
- * We could read and update the DeviceConfig.  Or we can just make changes directly
- * to the Juce devices and let Supervisor handle updating DeviceConfig when it shuts down.
- * This had been storing things in MobiusConfig which never did work, so I don't know
- * what it does now, maybe Juce magically remembers, or it just uses the system defaults.
+ * Unlike most other config panels, we don't have any state to manage.
+ * The AudioDeviceManager was already initialized with what was in the DeviceConfig
+ * at startup.  The AudioDeviceSelectorComponent makes changes directly,
+ * there is no load/save/cancel.
  */
-void AudioDevicesPanel::load()
+void AudioEditor::load()
 {
-    if (!loaded) {
-
-        // initialize the selector somehow
-        dumpDeviceInfo();
-        dumpDeviceSetup();
-
-        loaded = true;
-        // force this true for testing
-        changed = true;
-    }
+    dumpDeviceInfo();
+    dumpDeviceSetup();
 }
 
-void AudioDevicesPanel::dumpDeviceSetup()
+void AudioEditor::dumpDeviceSetup()
 {
-    juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
     if (adm != nullptr) {
         juce::AudioDeviceManager::AudioDeviceSetup setup = adm->getAudioDeviceSetup();
 
@@ -241,50 +194,14 @@ void AudioDevicesPanel::dumpDeviceSetup()
 
 /**
  * Called by the Save button in the footer.
- * Tell the ConfigEditor we are done.
- *
- * TODO: This never did anything but save the names in MobiusConfig which
- * weren't restored so I don't know how it remembers...
+ * Since we directly edit the AudioDeviceManager there is nothing to do.
  */
-void AudioDevicesPanel::save()
+void AudioEditor::save()
 {
-    if (changed) {
-#if 0        
-        MobiusConfig* config = editor->getMobiusConfig();
-        
-        // dig out the selected devices from the selector
-        juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
-        if (adm != nullptr) {
-            juce::AudioDeviceManager::AudioDeviceSetup setup = adm->getAudioDeviceSetup();
-
-            config->setAudioInput(setup.inputDeviceName.toUTF8());
-            config->setAudioOutput(setup.outputDeviceName.toUTF8());
-        }
-        
-        editor->saveMobiusConfig();
-#endif
-        
-        loaded = false;
-        changed = false;
-    }
-    else if (loaded) {
-        loaded = false;
-    }
 }
 
-/**
- * Throw away all editing state.
- *
- * What's interesting about this one is that state isn't just carried
- * in ConfigPanel memory, when use the device selector Component it actually
- * makes those changes to the application immediately.  So if you want to
- * support cancel, would have to save the starting devices and restore
- * them here if they changed.
- */
-void AudioDevicesPanel::cancel()
+void AudioEditor::cancel()
 {
-    loaded = false;
-    changed = false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -300,7 +217,7 @@ void AudioDevicesPanel::cancel()
  * the proportion here was to leave space for the log
  * since I'm putting the log below we don't need that
  */
-void AudioDevicesContent::paint (juce::Graphics& g)
+void AudioEditor::paint(juce::Graphics& g)
 {
     g.setColour (juce::Colours::black);
     // g.fillRect (getLocalBounds().removeFromRight (proportionOfWidth (0.4f)));
@@ -308,17 +225,8 @@ void AudioDevicesContent::paint (juce::Graphics& g)
 }
 
 /**
- * AudioDevicesContent is a wrapper around the components we need to
- * display because ConfigPanel.content only expects one child.
- * There is an ugly component ownership issue since the static
- * members are defined in AudioDevicesPanel but we need to size
- * them in this wrapper.  Making assumptions about the order of
- * child components which sucks since we're more complex than the
- * other panels that use just a form and a log.  Moving this to an
- * inner class would allow access to container members.  Rethink this!
- *
  * We will be given a relatively large area under the title and above
- * the buttons within a fixed size ConfigPanel component.
+ * the buttons within a default size ConfigPanel/ConfigEditor component.
  *
  * The tutorial put the log on the right as a proportion of the width
  * set in the main component.  Here the log goes on the bottom.
@@ -336,25 +244,9 @@ void AudioDevicesContent::paint (juce::Graphics& g)
  * the full height to the selector.
  * 
  */
-void AudioDevicesContent::resized()
+void AudioEditor::resized()
 {
-    // the form will have sized itself to the minimum bounds
-    // necessary for the fields
-    // leave a little gap then let the log window fill the rest
-    // of the available space
     juce::Rectangle<int> area = getLocalBounds();
-    
-    // this obviously sucks out loud
-    // change this to an inner class so we can get to them directly
-    // or put them inside like normal components
-    juce::AudioDeviceSelectorComponent* selector = (juce::AudioDeviceSelectorComponent*) getChildComponent(0);
-    selector->setName("AudioDevicesSelectorCompoent");
-    LogPanel* logpanel = (LogPanel*)getChildComponent(1);
-    logpanel->setName("LogPanel");
-    juce::Label* usageLabel = (juce::Label*)getChildComponent(2);
-    usageLabel->setName("UsageLabel");
-    juce::Label* usageText = (juce::Label*)getChildComponent(3);
-    usageText->setName("UsageText");
     
     // see audio-device-selector.txt for the annoying process to
     // arrive at the minimum sizes for this thing
@@ -371,7 +263,7 @@ void AudioDevicesContent::resized()
     // gives more room for the log though
     bool squeezeIt = true;
     if (squeezeIt) {
-        selector->setItemHeight(18);
+        audioSelector->setItemHeight(18);
         minSelectorHeight = 200;
     }
     
@@ -381,7 +273,7 @@ void AudioDevicesContent::resized()
 
     // probably some easier Rectangle methods to do this, but I'm tired
     int centerLeft = ((getWidth() - goodSelectorWidth) / 2) - leftShift;
-    selector->setBounds(centerLeft, area.getY(), goodSelectorWidth, minSelectorHeight);
+    audioSelector->setBounds(centerLeft, area.getY(), goodSelectorWidth, minSelectorHeight);
     area.removeFromTop(minSelectorHeight);
 
     // gap
@@ -391,43 +283,15 @@ void AudioDevicesContent::resized()
     auto topLine (area.removeFromTop(20));
     
     // conversion from 'ValueType' to 'float', possible loss of data
-    int labelWidth = juce::Font((float)topLine.getHeight()).getStringWidth(usageLabel->getText());
-    usageLabel->setBounds(topLine.removeFromLeft(labelWidth));
-    usageText->setBounds(topLine);
+    int labelWidth = juce::Font((float)topLine.getHeight()).getStringWidth(cpuUsageLabel.getText());
+    cpuUsageLabel.setBounds(topLine.removeFromLeft(labelWidth));
+    cpuUsageText.setBounds(topLine);
 
     // log gets the remainder
-    logpanel->setBounds(area);
+    log.setBounds(area);
 
     //JuceUtil::dumpComponent(this);
 }
-
-/**
- * Captured from the demo not used, temporary as an example
- * so we don't have to keep switching back to demo source
- */
-#if 0
-void resizedDemo()
-{
-    auto rect = getLocalBounds();
-
-    audioSetupComp->setBounds (rect.removeFromLeft (proportionOfWidth (0.6f)));
-    rect.reduce (10, 10);
-
-    auto topLine (rect.removeFromTop (20));
-    cpuUsageLabel.setBounds (topLine.removeFromLeft (topLine.getWidth() / 2));
-    cpuUsageText .setBounds (topLine);
-    rect.removeFromTop (20);
-
-    // log went on the right
-    // diagnosticsBox.setBounds (rect);
-}
-
-void AudioDevicesPanel::paintDemo (juce::Graphics& g)
-{
-    g.setColour (juce::Colours::grey);
-    g.fillRect (getLocalBounds().removeFromRight (proportionOfWidth (0.4f)));
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -441,7 +305,7 @@ void AudioDevicesPanel::paintDemo (juce::Graphics& g)
  * Periodically update CPU usage
  * Interesting use of Timer
  */
-void AudioDevicesPanel::timerCallback()
+void AudioEditor::timerCallback()
 {
     juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
     if (adm != nullptr) {
@@ -453,7 +317,7 @@ void AudioDevicesPanel::timerCallback()
 /**
  * Change listener for AudioDeviceManager
  */
-void AudioDevicesPanel::changeListenerCallback (juce::ChangeBroadcaster*)
+void AudioEditor::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     dumpDeviceInfo();
 }
@@ -462,7 +326,7 @@ void AudioDevicesPanel::changeListenerCallback (juce::ChangeBroadcaster*)
  * Helper for dumpDeviceInfo
  * Converts a BigInteger of bits into a String of bit characters
  */
-juce::String AudioDevicesPanel::getListOfActiveBits (const juce::BigInteger& b)
+juce::String AudioEditor::getListOfActiveBits (const juce::BigInteger& b)
 {
     juce::StringArray bits;
 
@@ -473,7 +337,7 @@ juce::String AudioDevicesPanel::getListOfActiveBits (const juce::BigInteger& b)
     return bits.joinIntoString (", ");
 }
 
-void AudioDevicesPanel::dumpDeviceInfo()
+void AudioEditor::dumpDeviceInfo()
 {
     juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
     if (deviceManager != nullptr) {
@@ -501,7 +365,7 @@ void AudioDevicesPanel::dumpDeviceInfo()
     }
 }
 
-void AudioDevicesPanel::logMessage (const juce::String& m)
+void AudioEditor::logMessage (const juce::String& m)
 {
     log.moveCaretToEnd();
     log.insertTextAtCaret (m + juce::newLine);
