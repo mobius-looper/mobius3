@@ -110,6 +110,8 @@
     <Button action="Realign"/>
     <Button action="Undo"/>
     <Button action="SamplePlay" arguments="1"/>
+    <Button action="SpeedToggle" arguments="-12" color="-13969235"/>
+    <Button action="SpeedToggle" arguments="12" color="-13969235"/>
   </ButtonSet>
   <Properties>
     <Property name="x" value="value of x"/>

@@ -4,6 +4,9 @@
 #include "../util/Trace.h"
 #include "UIConfig.h"
 #include "MobiusConfig.h"
+#include "UIAction.h"
+#include "Scope.h"
+#include "Symbol.h"
 
 #include "UIConfig.h"
 
@@ -275,16 +278,17 @@ ButtonSet::ButtonSet(ButtonSet* src)
 }
 
 /**
- * Find a DisplayButton by name.
- * name here is the primary unique name which is the action name.
- * Don't assume display name is unique.
+ * Find a DisplayButton matching the action name, scope, and arguments.
+ * The combination of those three is the only way to uniquely idenftify a button.
  * Used when we need to save edited state for an ActionButton.
  */
-DisplayButton* ButtonSet::getButton(juce::String id)
+DisplayButton* ButtonSet::getButton(juce::String action, juce::String scope, juce::String args)
 {
     DisplayButton* found = nullptr;
     for (auto button : buttons) {
-        if (button->action == id) {
+        if (button->action == action &&
+            button->scope == scope &&
+            button->arguments == args) {
             found = button;
             break;
         }
@@ -300,13 +304,26 @@ DisplayButton* ButtonSet::getButton(juce::String id)
 DisplayButton* ButtonSet::getButton(DisplayButton* src)
 {
     DisplayButton* found = nullptr;
-    for (auto button : buttons) {
-        if (button->action == src->action &&
-            button->arguments == src->arguments &&
-            button->scope == src->scope) {
-            found = button;
-            break;
-        }
+    if (src != nullptr)
+      found = getButton(src->action, src->scope, src->arguments);
+    return found;
+}
+
+/**
+ * Searcher the ActionButton popup that deals with UIActions.
+ */
+DisplayButton* ButtonSet::getButton(UIAction* action)
+{
+    DisplayButton* found = nullptr;
+    if (action != nullptr && action->symbol != nullptr) {
+        // shit, Binding keeps scope as a string, but UIAction has that
+        // parsed out into scopeTrack and scopeGroup, so we need to undo
+        // the transformation for the search
+        // REALLY need to normalize this where tracks are positive and groups are
+        // negative so we can just pass an int around
+        juce::String scope = Scope::render(action->scopeTrack, action->scopeGroup);
+        
+        found = getButton(action->symbol->name, scope, juce::String(action->arguments));
     }
     return found;
 }

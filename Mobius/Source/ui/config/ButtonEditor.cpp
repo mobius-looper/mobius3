@@ -371,11 +371,17 @@ void ButtonEditor::addSubclassFields()
 DisplayButton* ButtonEditor::getDisplayButton(Binding* binding)
 {
     DisplayButton* button = nullptr;
-    ButtonSet* set = buttons[selectedButtons];
-    for (auto b : set->buttons) {
-        if (b->action == binding->getSymbolName()) {
-            button = b;
-            break;
+
+    // juce dies if you use == on a String and nullptr
+    // symbol name can be null for new empty bindings
+    const char* symbolName = binding->getSymbolName();
+    if (symbolName != nullptr) {
+        ButtonSet* set = buttons[selectedButtons];
+        for (auto b : set->buttons) {
+            if (b->action == juce::String(symbolName)) {
+                button = b;
+                break;
+            }
         }
     }
     return button;

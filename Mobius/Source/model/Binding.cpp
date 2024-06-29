@@ -18,6 +18,7 @@
 #include "Trigger.h"
 #include "ActionType.h"
 #include "Structure.h"
+#include "Scope.h"
 
 #include "Binding.h"
 
@@ -149,27 +150,8 @@ const char* Binding::getScope()
  */
 void Binding::parseScope()
 {
-    trackNumber = 0;
-    groupOrdinal = 0;
-
-    if (mScope != nullptr) {
-        size_t len = strlen(mScope);
-        if (len > 1) {
-            // must be a number 
-            trackNumber = atoi(mScope);
-        }
-        else if (len == 1) {
-            char ch = mScope[0];
-            if (ch >= 'A') {
-                groupOrdinal = (ch - 'A') + 1;
-            }
-            else {
-                // normally an integer, anything else
-                // collapses to zero
-                trackNumber = atoi(mScope);
-            }
-        }
-    }
+    // implementation moved to Scope so it can be shared
+    Scope::parse(mScope, &trackNumber, &groupOrdinal);
 }
 
 /**
@@ -190,7 +172,7 @@ void Binding::setGroup(int t)
 {
     if (t > 0) {
         char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%c", (char)('A' + (t - 1)));
+        Scope::render(0, t, buffer, sizeof(buffer));
         setScope(buffer);
     }
 }

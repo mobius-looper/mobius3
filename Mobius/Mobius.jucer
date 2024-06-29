@@ -126,6 +126,8 @@
         <FILE id="ndteTZ" name="SampleConfig.h" compile="0" resource="0" file="Source/model/SampleConfig.h"/>
         <FILE id="qnVby1" name="SampleProperties.h" compile="0" resource="0"
               file="Source/model/SampleProperties.h"/>
+        <FILE id="Q1BCJH" name="Scope.cpp" compile="1" resource="0" file="Source/model/Scope.cpp"/>
+        <FILE id="SwQxQg" name="Scope.h" compile="0" resource="0" file="Source/model/Scope.h"/>
         <FILE id="NQ5JrS" name="ScriptConfig.cpp" compile="1" resource="0"
               file="Source/model/ScriptConfig.cpp"/>
         <FILE id="rxHb7c" name="ScriptConfig.h" compile="0" resource="0" file="Source/model/ScriptConfig.h"/>

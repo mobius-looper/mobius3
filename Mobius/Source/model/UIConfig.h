@@ -198,6 +198,10 @@ class DisplayLayout
  * execution of "actions" when they are clicked.  An action can include
  * a looping function such as Record, setting a parameter value, running a script,
  * or activating a preset.
+ *
+ * Note that the button action name and/or the display name are not unique.
+ * A button can only be uniquely defined by the combiantion of the action, scope,
+ * and arguments.  
  */
 class DisplayButton
 {
@@ -252,7 +256,8 @@ class ButtonSet
     // the buttons that will be displayed when this set is active
     juce::OwnedArray<DisplayButton> buttons;
     
-    DisplayButton* getButton(juce::String id);
+    DisplayButton* getButton(juce::String id, juce::String scope, juce::String arguments);
+    DisplayButton* getButton(class UIAction* action);
     DisplayButton* getButton(DisplayButton* src);
 };
 

@@ -50,8 +50,27 @@ void ButtonPopup::show(ActionButtons* buttons, ActionButton* button)
     
     juce::Point<int> point = buttons->getMouseXYRelative();
 
-    buttons->getParentComponent()->addAndMakeVisible(this);
-    setBounds(point.getX(), point.getY(), 300, 200);
+    // this will be MobiusDisplay which has most of the UI
+    juce::Component* parent = buttons->getParentComponent();
+    parent->addAndMakeVisible(this);
+
+    // when it fits, open it to the immediate right/under the current mouse location
+    // when we're near the right edge though, this has to be pushed to the left to
+    // it doesn't clip outside the bounds of the parent
+    int popupTop = point.getY();
+    int popupWidth = 300;
+    int popupLeft = point.getX();
+    int popupRight = popupLeft + popupWidth;
+    if (popupRight > parent->getWidth()) {
+        popupLeft = parent->getWidth() - popupWidth;
+        // since we're sliding it under the mouse, move it down a little
+        popupTop += 8;
+    }
+
+    // we'll have the same clipping at the bottom, but that only happens if the
+    // window was resized to be extremely short
+    
+    setBounds(popupLeft, popupTop, popupWidth, 200);
 }
 
 void ButtonPopup::close()
@@ -140,7 +159,7 @@ void ButtonPopup::change(ActionButton* b, int color)
         Trace(1, "ActionButtons: Can't color a button with an unresolved symbol\n");
     }
     else {
-        DisplayButton* db = buttonSet->getButton(action->symbol->name);
+        DisplayButton* db = buttonSet->getButton(action);
         if (db == nullptr) {
             Trace(1, "ActionButtons: Can't color unmatched button %s\n", action->symbol->getName());
         }
