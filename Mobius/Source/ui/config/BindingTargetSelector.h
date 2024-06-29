@@ -9,14 +9,25 @@
 #include "../common/SimpleTabPanel.h"
 #include "../common/SimpleListBox.h"
 
-class BindingTargetSelector : public SimpleTabPanel, public SimpleListBox::Listener,
-                           public juce::DragAndDropContainer
+class BindingTargetSelector : public SimpleTabPanel,
+                              public SimpleListBox::Listener,
+                              public juce::DragAndDropContainer
 {
   public:
 
+    class Listener {
+      public:
+        ~Listener() {}
+        void bindingTargetSelected(BindingTargetSelector* bts) = 0;
+    };
+
     BindingTargetSelector();
     ~BindingTargetSelector();
-    
+
+    void setListener(Listener* l) {
+        listener = l;
+    }
+
     void load();
     void capture(class Binding* b);
     void select(class Binding* b);
@@ -25,19 +36,20 @@ class BindingTargetSelector : public SimpleTabPanel, public SimpleListBox::Liste
     bool isTargetSelected();
     juce::String getSelectedTarget();
 
-    // temporary: used only for Button since it doesn't use Binding yet
-    // probably no longer necessary with Symbols
-    bool isValidTarget(juce::String name);
+    // seems to be unused
+    // bool isValidTarget(juce::String name);
     
     void showSelectedTarget(juce::String name);
     
+    // SimpleListBox::Listener
     void selectedRowsChanged(SimpleListBox* box, int lastRow);
         
   private:
 
     void initBox(SimpleListBox* box);
     void deselectOtherTargets(SimpleListBox* active);
-    
+
+    Listener* listener = nullptr;
     SimpleListBox functions;
     SimpleListBox controls;
     SimpleListBox scripts;

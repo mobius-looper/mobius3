@@ -500,7 +500,7 @@ void BindingEditor::refreshForm(Binding* b)
  * the two numbers would make it easier to deal with but
  * not as readable in the XML.
  */
-void BindingEditor::captureForm(Binding* b)
+void BindingEditor::captureForm(Binding* b, bool includeTarget)
 {
     // item 0 global, tracks, groups
     int item = scope->getIntValue();
@@ -517,13 +517,17 @@ void BindingEditor::captureForm(Binding* b)
         b->setGroup(item - maxTracks);
     }
 
-    targets.capture(b);
-
     // todo: scope
     captureSubclassFields(b);
     
     juce::var value = arguments->getValue();
     b->setArguments(value.toString().toUTF8());
+
+    // if we're doing immediate captures of the form without Update
+    // this should be false so the target remains in place
+    // if we're using the Update button, this would be true
+    if (includeTarget)
+      targets.capture(b);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -557,18 +561,25 @@ void BindingEditor::bindingSelected(Binding* b)
     
 }
 
+/**
+ * The "New" button is clicked.
+ * Two options here:
+ *   1) Create an empty row and requires an Update click after filling out the form
+ *   2) Create a new row filled with the current content of the form
+ *
+ * 1 is how I started, but Mobius 2 did option 2 which everyone expects
+ * and is easier since you don't have to remember to click Update.
+ */
 Binding* BindingEditor::bindingNew()
 {
     Binding* neu = nullptr;
     
-    // here we have the option of doing an immediate capture
-    // of what is in the target selectors, return null
-    // to leave a [New] placeholder row
-    bool captureCurrentTarget = false;
+    // what everyone expects
+    bool captureCurrentTarget = true;
 
     if (captureCurrentTarget && targets.isTargetSelected()) {
         neu = new Binding();
-        captureForm(neu);
+        captureForm(neu, true);
     }
     else {
         // we'l let BindingTable make a placeholder row
@@ -602,6 +613,16 @@ void BindingEditor::bindingDelete(Binding* b)
 void BindingEditor::fieldChanged(Field* field)
 {
     (void)field;
+}
+
+/**
+ * BindingTableSelector Listener
+ * When you change the targets are are NOT in targetUnlock mode,
+ * the form resets.
+ */
+void BindingEditor::bindingTargetSelected(BindingTargetSelector* bts)
+{
+    resetForm();
 }
 
 //////////////////////////////////////////////////////////////////////

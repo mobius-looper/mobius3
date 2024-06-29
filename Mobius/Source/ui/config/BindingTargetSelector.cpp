@@ -63,6 +63,11 @@ BindingTargetSelector::~BindingTargetSelector()
 {
 }
 
+void BindingTargetSelector::setListener(BindingTargetSelector::Listener* l)
+{
+    listener = l;
+}
+
 /**
  * Rebuild the data model that underlies the ListBox
  * in each tab.
@@ -172,7 +177,9 @@ void BindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
 {
     (void)lastRow;
     deselectOtherTargets(box);
-    // notify a listener
+
+    if (listener != nullptr)
+      listener->bindingTargetSelected(this);
 }
 
 void BindingTargetSelector::deselectOtherTargets(SimpleListBox* active)

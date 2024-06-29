@@ -16,6 +16,7 @@
 
 class BindingEditor : public ConfigEditor,
                       public BindingTable::Listener,
+                      public BindingTargetSelector::Listener,
                       public Field::Listener
 {
   public:
@@ -31,6 +32,9 @@ class BindingEditor : public ConfigEditor,
     BindingEditor();
     virtual ~BindingEditor();
 
+    // Component
+    void resized() override;
+
     // ConfigEditor
     virtual void load() override;
     virtual void save() override;
@@ -42,17 +46,17 @@ class BindingEditor : public ConfigEditor,
     void objectSelectorDelete() override;
     void objectSelectorRename(juce::String) override;
     
-    // Component
-    void resized() override;
-
-    // BindingTable
+    // BindingTable::Listener
     juce::String renderTriggerCell(class Binding* b) override;
     void bindingSelected(class Binding* b) override;
     void bindingUpdate(class Binding* b) override;
     void bindingDelete(class Binding* b) override;
     class Binding* bindingNew() override;
 
-    // Field
+    // BindingTargetSelector::Listener
+    void bindingTargetSelected(BindingTargetSelector* bts) override;
+
+    // Field::Listener
     void fieldChanged(Field* field) override;
     
   protected:
@@ -78,8 +82,8 @@ class BindingEditor : public ConfigEditor,
     void rebuildTable();
 
     void refreshForm(class Binding* b);
-    void captureForm(class Binding* b);
-
+    void captureForm(class Binding* b, bool includeTarget);
+    
     // start making this more like Preset and other multi-object panels
     juce::OwnedArray<class BindingSet> bindingSets;
     juce::OwnedArray<class BindingSet> revertBindingSets;
