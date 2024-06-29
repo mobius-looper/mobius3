@@ -238,6 +238,10 @@
                 file="Source/ui/config/NewConfigPanel.cpp"/>
           <FILE id="vpL7ZR" name="NewConfigPanel.h" compile="0" resource="0"
                 file="Source/ui/config/NewConfigPanel.h"/>
+          <FILE id="GqgflP" name="ObjectSelector.cpp" compile="1" resource="0"
+                file="Source/ui/config/ObjectSelector.cpp"/>
+          <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"
+                file="Source/ui/config/ObjectSelector.h"/>
           <FILE id="aY7LcN" name="ParameterField.cpp" compile="1" resource="0"
                 file="Source/ui/config/ParameterField.cpp"/>
           <FILE id="Olbaad" name="ParameterField.h" compile="0" resource="0"
