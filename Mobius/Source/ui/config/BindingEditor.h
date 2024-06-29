@@ -11,7 +11,7 @@
 #include "../../test/BasicButtonRow.h"
 
 #include "BindingTable.h"
-#include "BindingTargetPanel.h"
+#include "BindingTargetSelector.h"
 #include "ConfigEditor.h"
 
 class BindingEditor : public ConfigEditor,
@@ -58,7 +58,7 @@ class BindingEditor : public ConfigEditor,
   protected:
 
     BindingTable bindings;
-    BindingTargetPanel targets;
+    BindingTargetSelector targets;
     Form form;
     Field* scope = nullptr;
     Field* arguments = nullptr;

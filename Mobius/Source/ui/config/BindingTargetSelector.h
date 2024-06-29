@@ -9,13 +9,13 @@
 #include "../common/SimpleTabPanel.h"
 #include "../common/SimpleListBox.h"
 
-class BindingTargetPanel : public SimpleTabPanel, public SimpleListBox::Listener,
+class BindingTargetSelector : public SimpleTabPanel, public SimpleListBox::Listener,
                            public juce::DragAndDropContainer
 {
   public:
 
-    BindingTargetPanel();
-    ~BindingTargetPanel();
+    BindingTargetSelector();
+    ~BindingTargetSelector();
     
     void load();
     void capture(class Binding* b);

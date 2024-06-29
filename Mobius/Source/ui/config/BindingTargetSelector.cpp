@@ -20,7 +20,7 @@
 #include "../../model/Binding.h"
 #include "../../model/Symbol.h"
 
-#include "BindingTargetPanel.h"
+#include "BindingTargetSelector.h"
 
 /**
  * Build the tabbed component for selecting targets.
@@ -32,9 +32,9 @@
  * With the introduction of Symbols, we can assume all targets will
  * have a unique (and possibly qualfified) name.
  */
-BindingTargetPanel::BindingTargetPanel()
+BindingTargetSelector::BindingTargetSelector()
 {
-    setName("BindingTargetPanel");
+    setName("BindingTargetSelector");
 
     initBox(&functions);
     addTab(juce::String("Functions"), &functions);
@@ -52,14 +52,14 @@ BindingTargetPanel::BindingTargetPanel()
     addTab(juce::String("Parameters"), &parameters);
 }
 
-void BindingTargetPanel::initBox(SimpleListBox* box)
+void BindingTargetSelector::initBox(SimpleListBox* box)
 {
     box->setMultipleSelectionEnabled(false);
     box->addListener(this);
     boxes.add(box);
 }
 
-BindingTargetPanel::~BindingTargetPanel()
+BindingTargetSelector::~BindingTargetSelector()
 {
 }
 
@@ -71,7 +71,7 @@ BindingTargetPanel::~BindingTargetPanel()
  * since they're static, but that could change I suppose and
  * this doesn't happen often.
  */
-void BindingTargetPanel::load()
+void BindingTargetSelector::load()
 {
     functions.clear();
     scripts.clear();
@@ -139,7 +139,7 @@ void BindingTargetPanel::load()
 /**
  * Return true if there is any item in any tab selected.
  */
-bool BindingTargetPanel::isTargetSelected()
+bool BindingTargetSelector::isTargetSelected()
 {
     bool selected = false;
     int tab = tabs.getCurrentTabIndex();
@@ -154,7 +154,7 @@ bool BindingTargetPanel::isTargetSelected()
  * Return the name of the selected target, or empty string
  * if nothing is selected.
  */
-juce::String BindingTargetPanel::getSelectedTarget()
+juce::String BindingTargetSelector::getSelectedTarget()
 {
     juce::String target;
     int tab = tabs.getCurrentTabIndex();
@@ -168,14 +168,14 @@ juce::String BindingTargetPanel::getSelectedTarget()
     return target;
 }
 
-void BindingTargetPanel::selectedRowsChanged(SimpleListBox* box, int lastRow)
+void BindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
 {
     (void)lastRow;
     deselectOtherTargets(box);
     // notify a listener
 }
 
-void BindingTargetPanel::deselectOtherTargets(SimpleListBox* active)
+void BindingTargetSelector::deselectOtherTargets(SimpleListBox* active)
 {
     for (int i = 0 ; i < boxes.size() ; i++) {
         SimpleListBox* other = boxes[i];
@@ -184,7 +184,7 @@ void BindingTargetPanel::deselectOtherTargets(SimpleListBox* active)
     }
 }
 
-void BindingTargetPanel::reset()
+void BindingTargetSelector::reset()
 {
     deselectOtherTargets(nullptr);
     showTab(0);
@@ -195,7 +195,7 @@ void BindingTargetPanel::reset()
  * desired target.  The format of the name must
  * match what is returned by getSelectedTarget.
  */
-void BindingTargetPanel::showSelectedTarget(juce::String name)
+void BindingTargetSelector::showSelectedTarget(juce::String name)
 {
     bool found = false;
 
@@ -242,7 +242,7 @@ void BindingTargetPanel::showSelectedTarget(juce::String name)
  * of Symbols.  We'll intern symbols for invalid bindings
  * but can display them in red as unresolved.
  */
-bool BindingTargetPanel::isValidTarget(juce::String name)
+bool BindingTargetSelector::isValidTarget(juce::String name)
 {
     bool valid = false;
 
@@ -267,7 +267,7 @@ bool BindingTargetPanel::isValidTarget(juce::String name)
  * This is much simpler now that all we have to do
  * is find and store the Symbol.
  */
-void BindingTargetPanel::capture(Binding* b)
+void BindingTargetSelector::capture(Binding* b)
 {
     juce::String name = getSelectedTarget();
     if (name.length() == 0) {
@@ -285,7 +285,7 @@ void BindingTargetPanel::capture(Binding* b)
  * todo: If this was hidden or unresolved, we may not have
  * anything to show and should display a message.
  */
-void BindingTargetPanel::select(Binding* b)
+void BindingTargetSelector::select(Binding* b)
 {
     showSelectedTarget(b->getSymbolName());
 }

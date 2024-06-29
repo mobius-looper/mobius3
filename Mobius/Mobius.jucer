@@ -204,10 +204,10 @@
           <FILE id="WsJcLu" name="BindingTable.cpp" compile="1" resource="0"
                 file="Source/ui/config/BindingTable.cpp"/>
           <FILE id="ucuOsk" name="BindingTable.h" compile="0" resource="0" file="Source/ui/config/BindingTable.h"/>
-          <FILE id="Bm8yeH" name="BindingTargetPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/BindingTargetPanel.cpp"/>
-          <FILE id="PgF3wm" name="BindingTargetPanel.h" compile="0" resource="0"
-                file="Source/ui/config/BindingTargetPanel.h"/>
+          <FILE id="npsgp0" name="BindingTargetSelector.cpp" compile="1" resource="0"
+                file="Source/ui/config/BindingTargetSelector.cpp"/>
+          <FILE id="I1TGlk" name="BindingTargetSelector.h" compile="0" resource="0"
+                file="Source/ui/config/BindingTargetSelector.h"/>
           <FILE id="DRfYUA" name="ButtonEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/ButtonEditor.cpp"/>
           <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>

@@ -12,7 +12,7 @@
  * 
  * Under the Target table are buttons New, Update, Delete to manage rows in the table.
  *
- * Under the BindingTargetPanel are Extended Fields to add additional information about
+ * Under the BindingTargetSelector are Extended Fields to add additional information about
  * the Binding.  At minimum it will have an Arguments field to specifify arbitrary
  * trigger.
  *
@@ -34,7 +34,7 @@
 #include "../JuceUtil.h"
 
 #include "BindingTable.h"
-#include "BindingTargetPanel.h"
+#include "BindingTargetSelector.h"
 
 #include "BindingEditor.h"
 

@@ -157,6 +157,13 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="TytWBR" name="BindingSummaryPanel.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/BindingSummaryPanel.cpp"/>
+        <FILE id="A9BMMy" name="BindingSummaryPanel.h" compile="0" resource="0"
+              file="../Mobius/Source/ui/BindingSummaryPanel.h"/>
+        <FILE id="LZS2Rd" name="PanelFactory.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/PanelFactory.cpp"/>
+        <FILE id="Gfr1R1" name="PanelFactory.h" compile="0" resource="0" file="../Mobius/Source/ui/PanelFactory.h"/>
         <FILE id="Mwnc0m" name="EnvironmentPanel.cpp" compile="1" resource="0"
               file="../Mobius/Source/ui/EnvironmentPanel.cpp"/>
         <FILE id="i5FlYK" name="EnvironmentPanel.h" compile="0" resource="0"
@@ -171,66 +178,71 @@
         <FILE id="KaH2Zx" name="AlertPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/AlertPanel.h"/>
         <FILE id="wwkrN1" name="BasePanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/BasePanel.cpp"/>
         <FILE id="qOYcjV" name="BasePanel.h" compile="0" resource="0" file="../Mobius/Source/ui/BasePanel.h"/>
-        <FILE id="kn40EQ" name="InfoPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/InfoPanel.cpp"/>
-        <FILE id="v5hh5Y" name="InfoPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/InfoPanel.h"/>
         <GROUP id="{338E89C6-6E8F-CAD5-C704-F062DEB82EC5}" name="config">
-          <FILE id="YBQvPh" name="AudioDevicesPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/AudioDevicesPanel.cpp"/>
-          <FILE id="VDtA4c" name="AudioDevicesPanel.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/config/AudioDevicesPanel.h"/>
-          <FILE id="Z283eU" name="BindingPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/BindingPanel.cpp"/>
-          <FILE id="LUSOko" name="BindingPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/BindingPanel.h"/>
+          <FILE id="pkDnOm" name="AudioEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/AudioEditor.cpp"/>
+          <FILE id="ZBHbau" name="AudioEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/AudioEditor.h"/>
+          <FILE id="RoOecL" name="BindingEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/BindingEditor.cpp"/>
+          <FILE id="oknzjs" name="BindingEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/BindingEditor.h"/>
           <FILE id="BOwFhk" name="BindingTable.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/BindingTable.cpp"/>
           <FILE id="YnUq04" name="BindingTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/BindingTable.h"/>
-          <FILE id="JCwdEd" name="BindingTargetPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/BindingTargetPanel.cpp"/>
-          <FILE id="f9dVMl" name="BindingTargetPanel.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/config/BindingTargetPanel.h"/>
-          <FILE id="l7Pv5z" name="ButtonPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ButtonPanel.cpp"/>
-          <FILE id="etBuOA" name="ButtonPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ButtonPanel.h"/>
-          <FILE id="vIJSvO" name="ConfigEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/ConfigEditor.cpp"/>
+          <FILE id="DMWVti" name="BindingTargetSelector.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/BindingTargetSelector.cpp"/>
+          <FILE id="qq4L8F" name="BindingTargetSelector.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/BindingTargetSelector.h"/>
+          <FILE id="zgthD3" name="ButtonEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ButtonEditor.cpp"/>
+          <FILE id="ordKTn" name="ButtonEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ButtonEditor.h"/>
           <FILE id="JNcYKW" name="ConfigEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ConfigEditor.h"/>
           <FILE id="vW4Eor" name="ConfigPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ConfigPanel.cpp"/>
           <FILE id="Sst1UD" name="ConfigPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ConfigPanel.h"/>
-          <FILE id="ue4ZKF" name="DisplayPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/DisplayPanel.cpp"/>
-          <FILE id="rYtVMv" name="DisplayPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/DisplayPanel.h"/>
-          <FILE id="H2E3NJ" name="GlobalPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/GlobalPanel.cpp"/>
-          <FILE id="RTN4iW" name="GlobalPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/GlobalPanel.h"/>
-          <FILE id="AnKOsM" name="HostPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/HostPanel.cpp"/>
-          <FILE id="eLcJx2" name="HostPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/HostPanel.h"/>
-          <FILE id="Hjc4b3" name="KeyboardPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/KeyboardPanel.cpp"/>
-          <FILE id="QyBrJa" name="KeyboardPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/KeyboardPanel.h"/>
-          <FILE id="zZFAv7" name="MidiDevicesPanel.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/MidiDevicesPanel.cpp"/>
-          <FILE id="wahWYn" name="MidiDevicesPanel.h" compile="0" resource="0"
-                file="../Mobius/Source/ui/config/MidiDevicesPanel.h"/>
-          <FILE id="OpzBcB" name="MidiPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiPanel.cpp"/>
-          <FILE id="e5mhLJ" name="MidiPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiPanel.h"/>
+          <FILE id="YNVQKU" name="ConfigPanels.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ConfigPanels.h"/>
+          <FILE id="uKuWM5" name="DisplayEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/DisplayEditor.cpp"/>
+          <FILE id="xOroGV" name="DisplayEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/DisplayEditor.h"/>
+          <FILE id="ariMmc" name="GlobalEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/GlobalEditor.cpp"/>
+          <FILE id="OJ3nFH" name="GlobalEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/GlobalEditor.h"/>
+          <FILE id="mJS52v" name="HostEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/HostEditor.cpp"/>
+          <FILE id="Zd8aAW" name="HostEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/HostEditor.h"/>
+          <FILE id="ttELMa" name="KeyboardEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/KeyboardEditor.cpp"/>
+          <FILE id="pPvA54" name="KeyboardEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/KeyboardEditor.h"/>
+          <FILE id="Y48JZb" name="MidiDeviceEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/MidiDeviceEditor.cpp"/>
+          <FILE id="P2e80r" name="MidiDeviceEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/MidiDeviceEditor.h"/>
+          <FILE id="XNLX6q" name="MidiEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiEditor.cpp"/>
+          <FILE id="CFcVNt" name="MidiEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiEditor.h"/>
           <FILE id="HmIkCz" name="MultiSelectDrag.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="j3Tmoy" name="MultiSelectDrag.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/MultiSelectDrag.h"/>
+          <FILE id="tSFzpU" name="ObjectSelector.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ObjectSelector.cpp"/>
+          <FILE id="YyjtUA" name="ObjectSelector.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ObjectSelector.h"/>
           <FILE id="Iujc9f" name="ParameterField.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/ParameterField.cpp"/>
           <FILE id="usIHNW" name="ParameterField.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ParameterField.h"/>
-          <FILE id="deWHJo" name="PresetPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/PresetPanel.cpp"/>
-          <FILE id="Nb6Dby" name="PresetPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/PresetPanel.h"/>
-          <FILE id="kDigH6" name="SamplePanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SamplePanel.cpp"/>
-          <FILE id="van4wt" name="SamplePanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SamplePanel.h"/>
+          <FILE id="pjB2It" name="PresetEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/PresetEditor.cpp"/>
+          <FILE id="sJpDbg" name="PresetEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/PresetEditor.h"/>
+          <FILE id="zI5i3t" name="SampleEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/SampleEditor.cpp"/>
+          <FILE id="gw0WaR" name="SampleEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SampleEditor.h"/>
           <FILE id="u7w0dd" name="SampleTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SampleTable.cpp"/>
           <FILE id="zSERJn" name="SampleTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SampleTable.h"/>
-          <FILE id="AhoB88" name="ScriptPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ScriptPanel.cpp"/>
-          <FILE id="cm2eeO" name="ScriptPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptPanel.h"/>
+          <FILE id="dJXJm1" name="ScriptEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptEditor.cpp"/>
+          <FILE id="KPZdQO" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptEditor.h"/>
           <FILE id="IxoqUK" name="ScriptTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ScriptTable.cpp"/>
           <FILE id="TiRXAt" name="ScriptTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptTable.h"/>
-          <FILE id="s5nPC9" name="SetupPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupPanel.cpp"/>
-          <FILE id="wYUIkg" name="SetupPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SetupPanel.h"/>
+          <FILE id="YImupE" name="SetupEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupEditor.cpp"/>
+          <FILE id="f6jy1c" name="SetupEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SetupEditor.h"/>
         </GROUP>
         <GROUP id="{E80D8487-832C-A0E8-B891-7BCC1131D657}" name="display">
           <FILE id="Ma44Sv" name="ActionButton.cpp" compile="1" resource="0"
