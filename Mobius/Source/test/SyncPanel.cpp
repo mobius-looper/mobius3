@@ -12,9 +12,6 @@
 #include "../mobius/MobiusInterface.h"
 #include "../ui/JuceUtil.h"
 
-#include "BasicInput.h"
-#include "BasicLog.h"
-
 #include "SyncPanel.h"
 
 SyncContent::SyncContent()

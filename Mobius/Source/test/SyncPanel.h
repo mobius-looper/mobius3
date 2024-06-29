@@ -8,10 +8,10 @@
 
 #include "../util/Trace.h"
 #include "../ui/BasePanel.h"
-#include "BasicInput.h"
-#include "BasicButtonRow.h"
-#include "BasicForm.h"
-#include "BasicLog.h"
+#include "../ui/common/BasicInput.h"
+#include "../ui/common/BasicButtonRow.h"
+#include "../ui/common/BasicForm.h"
+#include "../ui/common/BasicLog.h"
 
 class SyncContent : public juce::Component, public juce::Button::Listener,
                     public juce::Label::Listener,

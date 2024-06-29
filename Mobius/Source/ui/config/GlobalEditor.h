@@ -7,8 +7,8 @@
 #include <JuceHeader.h>
 
 #include "../common/Form.h"
-#include "../../test/BasicForm.h"
-#include "../../test/BasicInput.h"
+#include "../common/BasicForm.h"
+#include "../common/BasicInput.h"
 
 #include "ConfigEditor.h"
 

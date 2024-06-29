@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "BasicTabs.h"
-#include "BasicLog.h"
-#include "BasicInput.h"
+#include "../ui/common/BasicTabs.h"
+#include "../ui/common/BasicLog.h"
+#include "../ui/common/BasicInput.h"
 
 class TestPanel : public juce::Component, public juce::Button::Listener,
                   public TraceListener

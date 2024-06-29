@@ -6,12 +6,7 @@
 #include "../../model/UIParameter.h"
 #include "../../Supervisor.h"
 
-#include "../common/Form.h"
-#include "../../test/BasicForm.h"
-#include "../../test/BasicInput.h"
-
 #include "ParameterField.h"
-
 #include "GlobalEditor.h"
 
 

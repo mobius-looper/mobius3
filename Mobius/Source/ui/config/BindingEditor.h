@@ -8,7 +8,7 @@
 
 #include "../common/Field.h"
 #include "../common/Form.h"
-#include "../../test/BasicButtonRow.h"
+#include "../common/BasicButtonRow.h"
 
 #include "BindingTable.h"
 #include "BindingTargetSelector.h"

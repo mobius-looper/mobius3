@@ -3,8 +3,7 @@
 
 #include <JuceHeader.h>
 
-// move this here!!
-#include "../../test/BasicButtonRow.h"
+#include "BasicButtonRow.h"
 
 /**
  * Add a set of swatches to the stock selector.

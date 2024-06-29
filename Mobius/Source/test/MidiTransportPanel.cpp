@@ -18,7 +18,6 @@
 #include "../midi/MidiRealizer.h"
 #include "../ui/JuceUtil.h"
 
-#include "BasicInput.h"
 #include "MidiTransportPanel.h"
 
 MidiTransportContent::MidiTransportContent()

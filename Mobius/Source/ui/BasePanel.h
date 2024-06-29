@@ -38,7 +38,7 @@
 #include <JuceHeader.h>
 
 // move this to ui/common
-#include "../test/BasicButtonRow.h"
+#include "common/BasicButtonRow.h"
 
 class BasePanel : public juce::Component, public juce::Button::Listener
 {

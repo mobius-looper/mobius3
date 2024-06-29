@@ -9,10 +9,9 @@
 #include <JuceHeader.h>
 
 #include "../ui/BasePanel.h"
-
-#include "BasicInput.h"
-#include "BasicButtonRow.h"
-#include "BasicForm.h"
+#include "../ui/common/BasicInput.h"
+#include "../ui/common/BasicButtonRow.h"
+#include "../ui/common/BasicForm.h"
 
 class MidiTransportContent : public juce::Component, public juce::Button::Listener,
                              public juce::Label::Listener

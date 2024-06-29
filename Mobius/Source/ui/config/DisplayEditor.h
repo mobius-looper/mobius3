@@ -7,9 +7,9 @@
 #include <JuceHeader.h>
 
 #include "../common/HelpArea.h"
-#include "../../test/BasicTabs.h"
-#include "../../test/BasicInput.h"
-#include "../../test/BasicForm.h"
+#include "../common/BasicTabs.h"
+#include "../common/BasicInput.h"
+#include "../common/BasicForm.h"
 #include "MultiSelectDrag.h"
 
 #include "ConfigEditor.h"

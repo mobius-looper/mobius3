@@ -6,8 +6,8 @@
 #pragma once
 
 #include "../ui/BasePanel.h"
-#include "BasicLog.h"
-#include "BasicButtonRow.h"
+#include "../ui/common/BasicLog.h"
+#include "../ui/common/BasicButtonRow.h"
 
 class UpgradeContent : public juce::Component, juce::Button::Listener
 {

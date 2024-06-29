@@ -343,8 +343,20 @@
           <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
+          <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
+                file="Source/ui/common/BasicButtonRow.cpp"/>
+          <FILE id="eRmfPe" name="BasicButtonRow.h" compile="0" resource="0"
+                file="Source/ui/common/BasicButtonRow.h"/>
+          <FILE id="vk7Xvn" name="BasicForm.cpp" compile="1" resource="0" file="Source/ui/common/BasicForm.cpp"/>
+          <FILE id="xwO8bF" name="BasicForm.h" compile="0" resource="0" file="Source/ui/common/BasicForm.h"/>
+          <FILE id="ny8ZPI" name="BasicInput.cpp" compile="1" resource="0" file="Source/ui/common/BasicInput.cpp"/>
+          <FILE id="MT14lz" name="BasicInput.h" compile="0" resource="0" file="Source/ui/common/BasicInput.h"/>
+          <FILE id="oO9q1o" name="BasicLog.cpp" compile="1" resource="0" file="Source/ui/common/BasicLog.cpp"/>
+          <FILE id="iD2q8n" name="BasicLog.h" compile="0" resource="0" file="Source/ui/common/BasicLog.h"/>
           <FILE id="akjBJh" name="BasicTable.cpp" compile="1" resource="0" file="Source/ui/common/BasicTable.cpp"/>
           <FILE id="X43ibi" name="BasicTable.h" compile="0" resource="0" file="Source/ui/common/BasicTable.h"/>
+          <FILE id="IaXFZL" name="BasicTabs.cpp" compile="1" resource="0" file="Source/ui/common/BasicTabs.cpp"/>
+          <FILE id="jWbMsE" name="BasicTabs.h" compile="0" resource="0" file="Source/ui/common/BasicTabs.h"/>
           <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
           <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
           <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
@@ -570,18 +582,6 @@
               file="Source/test/AudioDifferencer.cpp"/>
         <FILE id="Qc1i0p" name="AudioDifferencer.h" compile="0" resource="0"
               file="Source/test/AudioDifferencer.h"/>
-        <FILE id="OQQ3Ra" name="BasicButtonRow.cpp" compile="1" resource="0"
-              file="Source/test/BasicButtonRow.cpp"/>
-        <FILE id="Avzqjz" name="BasicButtonRow.h" compile="0" resource="0"
-              file="Source/test/BasicButtonRow.h"/>
-        <FILE id="H2HZoM" name="BasicForm.cpp" compile="1" resource="0" file="Source/test/BasicForm.cpp"/>
-        <FILE id="SOIBTo" name="BasicForm.h" compile="0" resource="0" file="Source/test/BasicForm.h"/>
-        <FILE id="bG5tyS" name="BasicInput.cpp" compile="1" resource="0" file="Source/test/BasicInput.cpp"/>
-        <FILE id="rxmD0s" name="BasicInput.h" compile="0" resource="0" file="Source/test/BasicInput.h"/>
-        <FILE id="vIaS2v" name="BasicLog.cpp" compile="1" resource="0" file="Source/test/BasicLog.cpp"/>
-        <FILE id="Ip61Fi" name="BasicLog.h" compile="0" resource="0" file="Source/test/BasicLog.h"/>
-        <FILE id="RWdxbD" name="BasicTabs.cpp" compile="1" resource="0" file="Source/test/BasicTabs.cpp"/>
-        <FILE id="Bjd63G" name="BasicTabs.h" compile="0" resource="0" file="Source/test/BasicTabs.h"/>
         <FILE id="ADIZUu" name="MidiTransportPanel.cpp" compile="1" resource="0"
               file="Source/test/MidiTransportPanel.cpp"/>
         <FILE id="gCCTmG" name="MidiTransportPanel.h" compile="0" resource="0"
