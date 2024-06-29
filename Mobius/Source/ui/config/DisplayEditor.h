@@ -12,9 +12,9 @@
 #include "../../test/BasicForm.h"
 #include "MultiSelectDrag.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
-class DisplayEditor : public NewConfigEditor
+class DisplayEditor : public ConfigEditor
 {
   public:
     

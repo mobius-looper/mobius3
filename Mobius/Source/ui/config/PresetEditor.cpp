@@ -12,7 +12,6 @@
 #include "../JuceUtil.h"
 
 #include "ParameterField.h"
-#include "NewConfigEditor.h"
 #include "PresetEditor.h"
 
 PresetEditor::PresetEditor()

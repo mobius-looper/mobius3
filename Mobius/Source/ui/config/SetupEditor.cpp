@@ -26,7 +26,6 @@
 #include "../../Supervisor.h"
 
 #include "ParameterField.h"
-#include "NewConfigEditor.h"
 #include "SetupEditor.h"
 
 SetupEditor::SetupEditor()

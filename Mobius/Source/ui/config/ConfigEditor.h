@@ -118,7 +118,7 @@ class ConfigEditorContext {
  * Base class of a component that provides an editing UI for a complex
  * object.
  */
-class NewConfigEditor : public juce::Component {
+class ConfigEditor : public juce::Component {
 
   protected:
 
@@ -132,8 +132,8 @@ class NewConfigEditor : public juce::Component {
     // you may wonder why we don't pass ConfigEditorContext to this constructor
     // rather than later in setContext, see comments at the top of ConfigPanel.cpp
     // for more on this
-    NewConfigEditor() {}
-    virtual ~NewConfigEditor() {}
+    ConfigEditor() {}
+    virtual ~ConfigEditor() {}
 
     // called at a suitable time to connect the editor to it's context
     // and to ask the context for adjustments to how things are displayed

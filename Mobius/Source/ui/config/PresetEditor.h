@@ -10,9 +10,9 @@
 #include "../../model/Preset.h"
 #include "../common/Form.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
-class PresetEditor : public NewConfigEditor
+class PresetEditor : public ConfigEditor
 {
   public:
     

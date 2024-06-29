@@ -32,7 +32,7 @@
 #include "../common/HelpArea.h"
 
 // also includes ConfigEditorContxt
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -130,8 +130,8 @@ class ConfigEditorWrapper : public juce::Component, public NewObjectSelector::Li
     ~ConfigEditorWrapper();
 
     // set the inner editor
-    void setEditor(NewConfigEditor* argEditor);
-    NewConfigEditor* getEditor() {
+    void setEditor(ConfigEditor* argEditor);
+    ConfigEditor* getEditor() {
         return editor;
     }
 
@@ -160,7 +160,7 @@ class ConfigEditorWrapper : public juce::Component, public NewObjectSelector::Li
 
   private:
 
-    NewConfigEditor* editor = nullptr;
+    ConfigEditor* editor = nullptr;
     
     NewObjectSelector objectSelector;
     bool objectSelectorEnabled = false;
@@ -190,7 +190,7 @@ class NewConfigPanel : public BasePanel, public ConfigEditorContext
     ~NewConfigPanel() override;
 
     // called by the subclass during construction
-    void setEditor(NewConfigEditor* editor);
+    void setEditor(ConfigEditor* editor);
 
     // ConfigEditorContext methods called by the ConfigEditor
     // during construction

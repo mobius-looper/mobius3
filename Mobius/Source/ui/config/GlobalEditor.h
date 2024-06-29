@@ -10,9 +10,9 @@
 #include "../../test/BasicForm.h"
 #include "../../test/BasicInput.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
-class GlobalEditor : public NewConfigEditor
+class GlobalEditor : public ConfigEditor
 {
   public:
     GlobalEditor();

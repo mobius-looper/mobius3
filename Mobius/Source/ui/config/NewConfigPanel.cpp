@@ -79,7 +79,7 @@ NewConfigPanel::~NewConfigPanel()
 /**
  * Here is where the magic wand waves.
  */
-void NewConfigPanel::setEditor(NewConfigEditor* editor)
+void NewConfigPanel::setEditor(ConfigEditor* editor)
 {
     // set the BasePanel title 
     setTitle(editor->getTitle());
@@ -205,7 +205,7 @@ void NewConfigPanel::saveDeviceConfig()
  */
 void NewConfigPanel::showing()
 {
-    NewConfigEditor* editor = wrapper.getEditor();
+    ConfigEditor* editor = wrapper.getEditor();
     
     if (!loaded) {
         editor->load();
@@ -270,7 +270,7 @@ ConfigEditorWrapper::~ConfigEditorWrapper()
 {
 }
 
-void ConfigEditorWrapper::setEditor(NewConfigEditor* e)
+void ConfigEditorWrapper::setEditor(ConfigEditor* e)
 {
     editor = e;
     addAndMakeVisible(e);

@@ -10,11 +10,11 @@
 #include "../common/Form.h"
 #include "../../test/BasicButtonRow.h"
 
-#include "NewConfigEditor.h"
 #include "BindingTable.h"
 #include "BindingTargetPanel.h"
+#include "ConfigEditor.h"
 
-class BindingEditor : public NewConfigEditor,
+class BindingEditor : public ConfigEditor,
                       public BindingTable::Listener,
                       public Field::Listener
 {

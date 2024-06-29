@@ -19,14 +19,14 @@
 #include "../common/Field.h"
 #include "../common/LogPanel.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
 /**
  * ChangeListener and Timer were added to conform to the
  * AudioDeviceSelector tutorial.  They aren't necessary but try
  * to follow the demo for awhile.
  */
-class AudioEditor : public NewConfigEditor,
+class AudioEditor : public ConfigEditor,
                     public juce::ChangeListener,
                     public juce::Timer
 {

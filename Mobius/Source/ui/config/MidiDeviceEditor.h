@@ -14,7 +14,7 @@
 #include "../common/BasicTable.h"
 #include "../MidiLog.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
 class MidiDeviceTableRow
 {
@@ -70,7 +70,7 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     
 };
     
-class MidiDeviceEditor : public NewConfigEditor,
+class MidiDeviceEditor : public ConfigEditor,
                           public MidiManager::Monitor,
                           public BasicTable::CheckboxListener
 {

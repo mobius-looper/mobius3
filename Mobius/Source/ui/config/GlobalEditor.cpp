@@ -12,8 +12,6 @@
 
 #include "ParameterField.h"
 
-#include "NewConfigEditor.h"
-
 #include "GlobalEditor.h"
 
 

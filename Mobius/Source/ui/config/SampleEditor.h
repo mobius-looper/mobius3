@@ -9,10 +9,10 @@
 
 #include <JuceHeader.h>
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 #include "SampleTable.h"
 
-class SampleEditor : public NewConfigEditor
+class SampleEditor : public ConfigEditor
 {
   public:
     

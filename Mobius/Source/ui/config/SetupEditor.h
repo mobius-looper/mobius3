@@ -12,9 +12,9 @@
 #include "../common/SimpleRadio.h"
 #include "../common/SimpleButton.h"
 
-#include "NewConfigEditor.h"
+#include "ConfigEditor.h"
 
-class SetupEditor : public NewConfigEditor,
+class SetupEditor : public ConfigEditor,
                     public SimpleRadio::Listener,
                     public juce::Button::Listener,
                     public juce::ComboBox::Listener

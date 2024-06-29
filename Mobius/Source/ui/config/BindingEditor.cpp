@@ -33,7 +33,6 @@
 #include "../common/Form.h"
 #include "../JuceUtil.h"
 
-#include "NewConfigEditor.h"
 #include "BindingTable.h"
 #include "BindingTargetPanel.h"
 
