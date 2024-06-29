@@ -30,7 +30,7 @@
  * If you ask for midi input or output channels it displays a box under
  * buffer size listing the available ports with a checkbox to enable them.
  * This scrolls, and it displays only two lines.  Need to understand what it
- * means to activate channels vs. actually receiving from them.  MidiDevicesPanel
+ * means to activate channels vs. actually receiving from them.  MidiDeviceEditor
  * will auto-activate them if you select them so I don't think we need this.
  *
  * AudioDeviceManager has some interesting info

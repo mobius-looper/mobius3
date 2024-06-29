@@ -1,5 +1,5 @@
 /**
- * ConfigPanel to edit track setups
+ * ConfigEditor to edit global parameters
  */
 
 #pragma once

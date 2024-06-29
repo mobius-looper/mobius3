@@ -24,6 +24,7 @@
 #include "ButtonEditor.h"
 #include "MidiDeviceEditor.h"
 #include "AudioEditor.h"
+#include "DisplayEditor.h"
 
 class ScriptPanel : public NewConfigPanel
 {
@@ -166,4 +167,17 @@ class AudioPanel : public NewConfigPanel
  
   private:
     AudioEditor editor;
+};
+
+class DisplayPanel : public NewConfigPanel
+{
+  public:
+    DisplayPanel() {
+        setName("DisplayPanel");
+        setEditor(&editor);
+    }
+    ~DisplayPanel() {}
+ 
+  private:
+    DisplayEditor editor;
 };

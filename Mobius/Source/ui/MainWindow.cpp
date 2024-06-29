@@ -219,7 +219,7 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::DisplayComponents: {
-                configEditor.showDisplay();
+                panelFactory.show(PanelFactory::Display);
             }
                 break;
             case MainMenu::Scripts: {

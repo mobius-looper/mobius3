@@ -1,8 +1,8 @@
 /**
- * ConfigPanel to configure audio devices when running standalone.
+ * ConfigEditor to configure audio devices when running standalone.
  *
  * This uses a built-in Juce component for configuring the audio device
- * and doesn't work like other ConfigPanels.  Changes made here will
+ * and doesn't work like other editors.  Changes made here will
  * be directly reflected in the application, you don't "Save" or "Cancel".
  * The panel is simply closed.
  *

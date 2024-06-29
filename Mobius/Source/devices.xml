@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <DeviceConfig inputPorts="0" outputPorts="0">
-  <Machine hostName="Loki" inputPorts="1" outputPorts="1" audioDeviceType="Windows Audio"
-           audioInput="Microphone Array (Intel&#174; Smart Sound Technology for Digital Microphones)"
-           inputChannels="11" audioOutput="Speakers (Realtek(R) Audio)"
-           outputChannels="11" sampleRate="48000" blockSize="480"/>
+  <Machine hostName="Loki" inputPorts="0" outputPorts="0" audioDeviceType=""
+           audioInput="" inputChannels="0" audioOutput="" outputChannels="0"
+           sampleRate="0" blockSize="0"/>
   <Machine hostName="Thor" inputPorts="2" outputPorts="2" audioDeviceType="ASIO"
            audioInput="ASIO Fireface USB" inputChannels="1111" audioOutput="ASIO Fireface USB"
            outputChannels="1111" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2"

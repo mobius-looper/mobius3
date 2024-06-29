@@ -38,7 +38,6 @@
 #include <JuceHeader.h>
 
 #include "ConfigPanel.h"
-#include "DisplayPanel.h"
 
 class ConfigEditor
 {
@@ -51,9 +50,6 @@ class ConfigEditor
     // but have to work out how the member initialization works
     // in MainWindow
     void init(class Supervisor* supervisor);
-
-    void showPluginParameters();
-    void showDisplay();
 
     void show(juce::String name);
     
@@ -79,8 +75,6 @@ class ConfigEditor
     // todo: these are unused, get rid of them
     //class MobiusConfig* masterConfig = nullptr;
     //class UIConfig* masterUIConfig = nullptr;
-    
-    DisplayPanel display {this};
     
     // list of all active panels, we often need to iterate over these
     juce::Array<ConfigPanel*> panels;

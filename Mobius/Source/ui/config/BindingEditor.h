@@ -20,11 +20,7 @@ class BindingEditor : public NewConfigEditor,
 {
   public:
 
-    void traceBindingList(const char* title, class Binding* blist);
-    void traceBindingList(const char* title, juce::Array<class Binding*> &blist);
-
-    // hmm, tried to make these pure virtual but got an abort when called
-    // something about base classes calling down to their subclass, wtf?
+    // Subclasses must implement these
     virtual juce::String renderSubclassTrigger(class Binding* b) = 0;
     virtual bool isRelevant(class Binding* b) = 0;
     virtual void addSubclassFields() = 0;
@@ -35,18 +31,18 @@ class BindingEditor : public NewConfigEditor,
     BindingEditor();
     virtual ~BindingEditor();
 
-    // ConfigPanel overloads
+    // ConfigEditor
     virtual void load() override;
     virtual void save() override;
     virtual void cancel() override;
     virtual void revert() override;
     
-    // ObjectSelector overloads
     void objectSelectorSelect(int ordinal) override;
     void objectSelectorNew(juce::String newName) override;
     void objectSelectorDelete() override;
     void objectSelectorRename(juce::String) override;
     
+    // Component
     void resized() override;
 
     // BindingTable
