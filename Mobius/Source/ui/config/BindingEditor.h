@@ -25,12 +25,16 @@ class BindingEditor : public ConfigEditor,
     virtual juce::String renderSubclassTrigger(class Binding* b) = 0;
     virtual bool isRelevant(class Binding* b) = 0;
     virtual void addSubclassFields() = 0;
+    virtual bool wantsCapture() {return false;}
     virtual void refreshSubclassFields(class Binding* b) = 0;
     virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
 
     BindingEditor();
     virtual ~BindingEditor();
+
+    bool isCapturing();
+    void showCapture(juce::String& stuff);
 
     // Component
     void resized() override;
@@ -54,7 +58,7 @@ class BindingEditor : public ConfigEditor,
     class Binding* bindingNew() override;
 
     // BindingTargetSelector::Listener
-    void bindingTargetSelected(BindingTargetSelector* bts) override;
+    void bindingTargetClicked(BindingTargetSelector* bts) override;
 
     // Field::Listener
     void fieldChanged(Field* field) override;
@@ -66,6 +70,7 @@ class BindingEditor : public ConfigEditor,
     Form form;
     Field* scope = nullptr;
     Field* arguments = nullptr;
+    Field* capture = nullptr;
     int maxTracks = 0;
     int maxGroups = 0;
     juce::ToggleButton activeButton {"Active"};
@@ -74,6 +79,9 @@ class BindingEditor : public ConfigEditor,
     
     void initForm();
     void resetForm();
+    void resetFormAndTarget();
+
+    void formChanged();
     
   private:
 

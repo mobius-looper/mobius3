@@ -173,14 +173,26 @@ void SimpleListBox::paintListBoxItem (int rowNumber, juce::Graphics& g,
 }
 
 /**
- * Don't need to overload this, the listbox will track selections
- * and we'll call getSelectedValues when we want to save them.
+ * This is called when the user clicks on a row AND when it is set
+ * programatically.  If you only want to see manual selection
+ * the the Listener should pay attention to listBoxItemClicked instead.
  */
 void SimpleListBox::selectedRowsChanged (int lastRowSelected)
 {
-    //do stuff when selection changes
     if (listener != nullptr)
       listener->selectedRowsChanged(this, lastRowSelected);
+}
+
+/**
+ * This is called when the user clicks on a row AFTER calling
+ * selectedRows changed.  If you only want to know about manual selections,
+ * use this listener.
+ */
+void SimpleListBox::listBoxItemClicked(int row, const juce::MouseEvent& event)
+{
+    (void)event;
+    if (listener != nullptr)
+      listener->listBoxItemClicked(this, row);
 }
 
 /**

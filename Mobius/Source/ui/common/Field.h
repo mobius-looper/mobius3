@@ -43,7 +43,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class Field : public juce::Component, public juce::ComboBox::Listener
+class Field : public juce::Component,
+              public juce::ComboBox::Listener,
+              public juce::Label::Listener
 {
   public:
     
@@ -175,6 +177,9 @@ class Field : public juce::Component, public juce::ComboBox::Listener
     const char* getCharValue();
     bool getBoolValue();
 
+    void addAnnotation(int width);
+    void setAnnotation(juce::String text);
+
     // build out the Juce components to display this field
     void render();
     juce::Rectangle<int> getMinimumSize();
@@ -190,6 +195,9 @@ class Field : public juce::Component, public juce::ComboBox::Listener
 
     // ComboBox
     void comboBoxChanged(juce::ComboBox* box) override;
+
+    // Label
+    void labelTextChanged(juce::Label* l) override;
 
     // MouseListener
     void mouseEnter(const juce::MouseEvent& e) override;
@@ -232,11 +240,13 @@ class Field : public juce::Component, public juce::ComboBox::Listener
     // component used to render the value, dependent on Type and options
     juce::Label textbox;
     juce::ToggleButton checkbox;
+    // horrible kludge for Capture in the binding panels
+    juce::Label annotation;
     juce::ComboBox combobox;
     juce::Slider slider;
     SimpleListBox listbox;
     
     // the component we chose to render the value
     juce::Component* renderer = nullptr;
-};
+ };
 

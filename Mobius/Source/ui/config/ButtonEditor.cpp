@@ -360,6 +360,7 @@ void ButtonEditor::addSubclassFields()
 {
     displayName = new Field("Display Name", Field::Type::String);
     displayName->setWidthUnits(20);
+    displayName->addListener(this);
     form.add(displayName);
 }
 

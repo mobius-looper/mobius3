@@ -16,7 +16,22 @@ class SimpleListBox : public juce::Component, public juce::ListBoxModel
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void selectedRowsChanged(SimpleListBox*box, int lastRowSelected) = 0;
+        // used to be a single pure virtual but since we need to know
+        // the difference between programatic and manual selection had
+        // to add both styles, and the listener overrides the right one
+        // messy, would be nice to have a setSelectedRow that doesn't send
+        // notifications like Juce does for some components
+        // problem is, clicked probably happens  before the selection changes
+        // so if you want both you'll have to overload both and combine
+        // them into a "selectedRowsChangedManually" callback
+        virtual void selectedRowsChanged(SimpleListBox*box, int lastRowSelected) {
+            (void)box;
+            (void)lastRowSelected;
+        }
+        virtual void listBoxItemClicked(SimpleListBox*box, int row) {
+            (void)box;
+            (void)row;
+        }
     };
     
     SimpleListBox();
@@ -68,6 +83,7 @@ class SimpleListBox : public juce::Component, public juce::ListBoxModel
                            int width, int height, bool rowIsSelected) override;
 
     void selectedRowsChanged (int /*lastRowselected*/) override;
+    void listBoxItemClicked(int row, const juce::MouseEvent& event) override;
 
   private:
     

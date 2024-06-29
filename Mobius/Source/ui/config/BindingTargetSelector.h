@@ -18,7 +18,7 @@ class BindingTargetSelector : public SimpleTabPanel,
     class Listener {
       public:
         ~Listener() {}
-        void bindingTargetSelected(BindingTargetSelector* bts) = 0;
+        virtual void bindingTargetClicked(BindingTargetSelector* bts) = 0;
     };
 
     BindingTargetSelector();
@@ -36,14 +36,14 @@ class BindingTargetSelector : public SimpleTabPanel,
     bool isTargetSelected();
     juce::String getSelectedTarget();
 
-    // seems to be unused
-    // bool isValidTarget(juce::String name);
+    bool isValidTarget(juce::String name);
     
     void showSelectedTarget(juce::String name);
     
     // SimpleListBox::Listener
     void selectedRowsChanged(SimpleListBox* box, int lastRow);
-        
+    void listBoxItemClicked(SimpleListBox* box, int row);
+    
   private:
 
     void initBox(SimpleListBox* box);

@@ -135,6 +135,7 @@ void MidiEditor::addSubclassFields()
     typeNames.add("Program");
     // typeNames.add("Pitch");
     messageType->setAllowedValues(typeNames);
+    messageType->addListener(this);
     form.add(messageType);
 
     // Binding number is the combo index where
@@ -146,16 +147,15 @@ void MidiEditor::addSubclassFields()
         channelNames.add(juce::String(i));
     }
     messageChannel->setAllowedValues(channelNames);
+    messageChannel->addListener(this);
     form.add(messageChannel);
 
     // todo: need to make field smarter about text fields that
     // can only contain digits
     messageValue = new Field("Value", Field::Type::String);
     messageValue->setWidthUnits(4);
+    messageValue->addListener(this);
     form.add(messageValue);
-    
-    capture = new Field("MIDI Capture", Field::Type::Boolean);
-    form.add(capture);
 }
 
 /**
@@ -216,40 +216,88 @@ void MidiEditor::resetSubclassFields()
 void MidiEditor::midiMonitor(const juce::MidiMessage& message, juce::String& source)
 {
     (void)source;
-    if (capture->getBoolValue()) {
-        int value = -1;
-        if (message.isNoteOn()) {
-            messageType->setValue(0);
-            value = message.getNoteNumber();
-        }
-        else if (message.isController()) {
-            messageType->setValue(1);
-            value = message.getControllerNumber();
-        }
-        else if (message.isProgramChange()) {
-            messageType->setValue(2);
-            value = message.getProgramChangeNumber();
-        }
-#if 0        
-        else if (message.isPitchWheel()) {
-            messageType->setValue(3);
-            // value is a 14-bit number, and is not significant
-            // since there is only one pitch wheel
-            value = 0;
 
-        }
+    bool relevant = message.isNoteOn() || message.isController() || message.isProgramChange();
+
+    if (relevant) {
+        if (isCapturing()) {
+            int value = -1;
+            if (message.isNoteOn()) {
+                messageType->setValue(0);
+                value = message.getNoteNumber();
+            }
+            else if (message.isController()) {
+                messageType->setValue(1);
+                value = message.getControllerNumber();
+            }
+            else if (message.isProgramChange()) {
+                messageType->setValue(2);
+                value = message.getProgramChangeNumber();
+            }
+#if 0        
+            else if (message.isPitchWheel()) {
+                messageType->setValue(3);
+                // value is a 14-bit number, and is not significant
+                // since there is only one pitch wheel
+                value = 0;
+
+            }
 #endif        
-        if (value >= 0) {
-            // channels are 1 based in Juce, 0 if sysex
-            // Binding 0 means "any"
-            // would be nice to have a checkbox to ignore the channel
-            // if they want "any"
-            int ch = message.getChannel();
-            if (ch > 0)
-              messageChannel->setValue(ch);
-            messageValue->setValue(value);
+            if (value >= 0) {
+                // channels are 1 based in Juce, 0 if sysex
+                // Binding 0 means "any"
+                // would be nice to have a checkbox to ignore the channel
+                // if they want "any"
+                int ch = message.getChannel();
+                if (ch > 0)
+                  messageChannel->setValue(ch);
+                messageValue->setValue(value);
+            }
         }
+
+        // whether we're capturing or not, tell BindingEditor about this
+        // so it can display what is being captured when capture is off
+        // sigh, need the equivalent of renderSubclassTrigger but we don't
+        // have a binding
+        juce::String cap = renderCapture(message);
+        showCapture(cap);
     }
+}
+
+/**
+ * Variant of renderTrigger used for capture.
+ * Could share this with a little effort and ensure the formats
+ * are consistent.
+ */
+juce::String MidiEditor::renderCapture(const juce::MidiMessage& msg)
+{
+    juce::String text;
+
+    // the menu displays channels as one based, not sure what
+    // most people expect
+    juce::String channel;
+    if (msg.getChannel() > 0)
+      channel = juce::String(msg.getChannel()) + ":";
+    
+    if (msg.isNoteOn()) {
+        // old utility
+        char buf[32];
+        MidiNoteName(msg.getNoteNumber(), buf);
+        text += channel;
+        text += buf;
+        // not interested in velocity
+    }
+    else if (msg.isProgramChange()) {
+        text += channel;
+        text += "Pgm ";
+        text += juce::String(msg.getProgramChangeNumber());
+    }
+    else if (msg.isController()) {
+        text += channel;
+        text += "CC ";
+        text += juce::String(msg.getControllerNumber());
+    }
+    return text;
 }
 
 bool MidiEditor::midiMonitorExclusive()

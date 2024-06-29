@@ -76,6 +76,11 @@ void BindingTable::add(Binding* src)
 void BindingTable::updateContent()
 {
     table.updateContent();
+    // hmm, this isn't doing a refresh when called after BindingEditor
+    // makes changes to one of the Bindings, the model changed
+    // but you won't see it until you click on another row to change
+    // the selection, weird, feels like we shouldn't have to do this
+    repaint();
 }
 
 /**
@@ -127,6 +132,24 @@ void BindingTable::clear()
 bool BindingTable::isNew(Binding* b)
 {
     return StringEqual(b->getSymbolName(), NewBindingName);
+}
+
+void BindingTable::deselect()
+{
+    // easier to use deselectAllRows?
+    int row = table.getSelectedRow();
+    if (row >= 0)
+      table.deselectRow(row);
+}
+
+Binding* BindingTable::getSelectedBinding()
+{
+    Binding* binding = nullptr;
+    int row = table.getSelectedRow();
+    if (row >= 0) {
+        binding = bindings[row];
+    }
+    return binding;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -280,16 +303,25 @@ void BindingTable::buttonClicked(juce::String name)
     if (name == juce::String("New")) {
         if (listener != nullptr) {
             Binding* neu = listener->bindingNew();
+
+            // formerly treated returning null as meaning
+            // to create a placeholder which could be
+            // updated later, don't do that, require that
+            // they have something selected to start with
+            // so we can get rid of the Update button
+#if 0            
             if (neu == nullptr) {
                 // generate a placeholder
                 neu = new Binding();
                 neu->setSymbolName(NewBindingName);
             }
-            
-            bindings.add(neu);
-            table.updateContent();
-            // select it, it will be the last
-            table.selectRow(bindings.size() - 1);
+#endif
+            if (neu != nullptr) {
+                bindings.add(neu);
+                table.updateContent();
+                // select it, it will be the last
+                table.selectRow(bindings.size() - 1);
+            }
         }
     }
     else if (name == juce::String("Update")) {

@@ -28,6 +28,7 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
     juce::String renderSubclassTrigger(Binding* b) override;
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
+    bool wantsCapture() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
@@ -40,9 +41,10 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
     Field* messageType = nullptr;
     Field* messageChannel = nullptr;
     Field* messageValue = nullptr;
-    Field* capture = nullptr;
 
     juce::MidiMessage pluginMessage;
     bool pluginMessageQueued = false;
+
+    juce::String renderCapture(const juce::MidiMessage& msg);
 
 };

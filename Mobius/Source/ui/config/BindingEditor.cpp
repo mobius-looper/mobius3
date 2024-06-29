@@ -56,6 +56,8 @@ BindingEditor::BindingEditor()
     
     bindings.setListener(this);
     addAndMakeVisible(bindings);
+
+    targets.setListener(this);
     addAndMakeVisible(targets);
 
     addAndMakeVisible(form);
@@ -111,7 +113,7 @@ void BindingEditor::load()
 
     refreshObjectSelector();
         
-    resetForm();
+    resetFormAndTarget();
 }
 
 /**
@@ -149,7 +151,7 @@ void BindingEditor::loadBindingSet(int index)
         }
     }
     bindings.updateContent();
-    resetForm();
+    resetFormAndTarget();
 
     // this is shown only when editing one of the overlay sets
     // hmm, think about adding an "active" here too, if you're editing
@@ -425,16 +427,66 @@ void BindingEditor::initForm()
     
     scope = new Field("Scope", Field::Type::String);
     scope->setAllowedValues(scopeNames);
+    scope->addListener(this);
     form.add(scope);
 
     // subclass gets to add it's fields
+    // it should always add "this" as the listener so we can
+    // consistently end up in fieldChanged below and refresh
+    // the BindingTable
     addSubclassFields();
 
     // arguments last
     arguments = new Field("Arguments", Field::Type::String);
     arguments->setWidthUnits(20);
+    arguments->addListener(this);
     form.add(arguments);
+
+    // subclass overloads this if it wants to use capture
+    if (wantsCapture()) {
+        capture = new Field("Capture", Field::Type::Boolean);
+        capture->addAnnotation(100);
+        form.add(capture);
+    }
+        
     form.render();
+}
+
+/**
+ * Subclass calls back to see when capture is enabled.
+ */
+bool BindingEditor::isCapturing()
+{
+    return (capture == nullptr) ? false : capture->getBoolValue();
+}
+
+/**
+ * Subclass back to this to show a string representation of
+ * what is currently being monitored.  This happens whether
+ * capture is on or off.
+ *
+ * todo: this could time out after awhile and go blank rather than
+ * keeping the last capture forever
+ */
+void BindingEditor::showCapture(juce::String& s)
+{
+    capture->setAnnotation(s);
+
+    // subclass will have already captured to the fields
+    // here we can automatically update the binding as well
+    if (isCapturing())
+      formChanged();
+}
+
+/**
+ * Field listener to do immediate updates to the binding table when
+ * fields are changed.  It doesn't matter which one it is, just
+ * capture the entire form.
+ */
+void BindingEditor::fieldChanged(Field* f)
+{
+    (void)f;
+    formChanged();
 }
 
 /**
@@ -444,11 +496,15 @@ void BindingEditor::resetForm()
 {
     scope->setValue(juce::var(0));
     
-    targets.reset();
-
     resetSubclassFields();
     
     arguments->setValue(juce::var());
+}
+
+void BindingEditor::resetFormAndTarget()
+{
+    resetForm();
+    targets.reset();
 }
 
 /**
@@ -530,6 +586,28 @@ void BindingEditor::captureForm(Binding* b, bool includeTarget)
       targets.capture(b);
 }
 
+/**
+ * Should be called whenever a change is detected to something in the form.
+ * This includes fields managed here, and in the subclass.
+ * Subclass is responsible for intercepting changes and calling this.
+ *
+ * This is an alternative to requiring the use of the Uppdate button
+ * to capture the form fields into the current binding.
+ * Assuming this is working properly, we don't need the Update button any more.
+ *
+ * We could try to be more granular and only update the field that changed
+ * but there aren't many of them, and it's a pita.
+ */
+void BindingEditor::formChanged()
+{
+    Binding* current = bindings.getSelectedBinding();
+    if (current != nullptr) {
+        // target shouldn't have changed, but ask to exclude it anyway
+        captureForm(current, false);
+        bindings.updateContent();
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // BindingTable Listener
@@ -553,7 +631,7 @@ void BindingEditor::bindingSelected(Binding* b)
 {
     if (bindings.isNew(b)) {
         // uninitialized row, don't modify it but reset the target display
-        resetForm();
+        resetFormAndTarget();
     }
     else {
         refreshForm(b);
@@ -584,7 +662,7 @@ Binding* BindingEditor::bindingNew()
     else {
         // we'l let BindingTable make a placeholder row
         // clear any lingering target selection?
-        resetForm();
+        resetFormAndTarget();
     }
 
     return neu;
@@ -594,35 +672,34 @@ void BindingEditor::bindingUpdate(Binding* b)
 {
     // was ignoring this if !target.isTargetSelected
     // but I suppose we can go ahead and capture what we have
-    captureForm(b);
+    captureForm(b, true);
 }
 
 void BindingEditor::bindingDelete(Binding* b)
 {
     (void)b;
-    resetForm();
+    resetFormAndTarget();
 }
 
 /**
- * Field::Listener callback
- * If there is something selected in the table could actively
- * change it, but we're going with a manual Update button for now
- * now that we have a Form this would have to be a lot more
- * complicated
- */
-void BindingEditor::fieldChanged(Field* field)
-{
-    (void)field;
-}
-
-/**
- * BindingTableSelector Listener
+ * BindingTableSelector Listener called when the user manually
+ * clicks on one of the targets.
+ * 
  * When you change the targets are are NOT in targetUnlock mode,
  * the form resets.
+ *
+ * Options: Try to locate an existing binding with the same target
+ * and auto-select it.  Might be a convenient way to detect if the
+ * binding already exists in a long binding list.  But what if there
+ * is more than one with differing arguments?
+ * 
  */
-void BindingEditor::bindingTargetSelected(BindingTargetSelector* bts)
+void BindingEditor::bindingTargetClicked(BindingTargetSelector* bts)
 {
+    (void)bts;
+    // note that this does not reset the target selector
     resetForm();
+    bindings.deselect();
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -21,7 +21,7 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 #include "BasicInput.h"
 
 const int BasicInputDefaultHeight = 20;

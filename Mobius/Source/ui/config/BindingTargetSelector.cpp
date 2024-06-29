@@ -63,11 +63,6 @@ BindingTargetSelector::~BindingTargetSelector()
 {
 }
 
-void BindingTargetSelector::setListener(BindingTargetSelector::Listener* l)
-{
-    listener = l;
-}
-
 /**
  * Rebuild the data model that underlies the ListBox
  * in each tab.
@@ -173,15 +168,37 @@ juce::String BindingTargetSelector::getSelectedTarget()
     return target;
 }
 
+/**
+ * This is called whenever the user manualy clicks on a row
+ * AND when a row is selected programatically by things
+ * like selectRow, deselectAllRows(), etc.
+ *
+ * BindingEditor needs to programatically select rows for
+ * showSelectedTarget, and those must not call the listener because
+ * BindingEditor uses the listener as a signal to reset the form
+ * which we don't want.
+ */
 void BindingTargetSelector::selectedRowsChanged(SimpleListBox* box, int lastRow)
 {
     (void)lastRow;
+    // once a row is selected in one tab's box, the others are deselected
     deselectOtherTargets(box);
-
-    if (listener != nullptr)
-      listener->bindingTargetSelected(this);
 }
 
+/**
+ * Here via the ListBoxModel when the user clicks on a row.
+ * This is enough for the current use of our listener.  The row is in
+ * a selected state at this point, so the receiver can call back to
+ * the SimpleListBox or to us to get the selection.
+ */
+void BindingTargetSelector::listBoxItemClicked(SimpleListBox* box, int row)
+{
+    (void)box;
+    (void)row;
+    if (listener != nullptr)
+      listener->bindingTargetClicked(this);
+}
+    
 void BindingTargetSelector::deselectOtherTargets(SimpleListBox* active)
 {
     for (int i = 0 ; i < boxes.size() ; i++) {

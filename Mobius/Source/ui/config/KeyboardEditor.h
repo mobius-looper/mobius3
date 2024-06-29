@@ -29,6 +29,7 @@ class KeyboardEditor : public BindingEditor,
     juce::String renderSubclassTrigger(Binding* b) override;
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
+    bool wantsCapture() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
@@ -42,7 +43,6 @@ class KeyboardEditor : public BindingEditor,
   private:
 
     Field* key = nullptr;
-    Field* capture = nullptr;
 
     int capturedCode = 0;
     

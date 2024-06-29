@@ -156,6 +156,29 @@ void Field::initLabel()
     label.setJustificationType (juce::Justification::left);
 }
 
+/**
+ * Kludge for checkboxes in the binding panels.
+ */
+void Field::addAnnotation(int width)
+{
+    addAndMakeVisible(annotation);
+    // if this were ever more general will need more control
+    // over the background vs. text color
+    annotation.setColour (juce::Label::textColourId, juce::Colours::white);
+    annotation.setSize(width, 20);
+}
+
+/**
+ * Kludge for the checkbox used in binding panels.
+ * Allow checkboxes to have an annotation which is a read-only
+ * label to the right of them where we can show things of interest.
+ */
+void Field::setAnnotation(juce::String text)
+{
+    // have to send notifications in order for it to repaint when set
+    annotation.setText(text, juce::NotificationType::sendNotificationAsync);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Rendering
@@ -244,6 +267,7 @@ void Field::renderString()
         renderType = RenderType::Text;
         renderer = &textbox;
         
+        textbox.addListener(this);
         textbox.setEditable(true);
         textbox.setColour (juce::Label::backgroundColourId, juce::Colours::darkgrey);
         // from the demo
@@ -270,7 +294,11 @@ void Field::renderString()
             // note that item ids must be non-zero
             combobox.addItem(s, i + 1);
         }
-        combobox.setSelectedId(1);
+
+        // when we set this programatically don't send notifications
+        // since our field listeners generally expect to be notified
+        // only when the user does it manually
+        combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
 
         // figure out how to make this transparent
         combobox.setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::white);
@@ -341,6 +369,7 @@ void Field::renderInt()
         renderType = RenderType::Text;
         renderer = &textbox;
         
+        textbox.addListener(this);
         textbox.setEditable(true);
         // make them look different for testing
         // this controls the background of the text area, default text
@@ -447,8 +476,6 @@ void Field::renderBool()
     // border. Seems to be a dimension requirement relative to the height.  +1 works
     // here but may change if you make it taller
     checkbox.setSize(21, 20);
-
-
 }
 
 /**
@@ -477,6 +504,9 @@ juce::Rectangle<int> Field::getMinimumSize()
         if (rheight > maxHeight)
           maxHeight = rheight;
     }
+
+    // kludge for checkbox annotations
+    totalWidth += annotation.getWidth();
 
     size.setWidth(totalWidth);
     size.setHeight(maxHeight);
@@ -507,6 +537,16 @@ void Field::comboBoxChanged(juce::ComboBox* box)
       fieldListener->fieldChanged(this);
 }
 
+/**
+ * Listener when we're configured as a text box.
+ */
+void Field::labelTextChanged(juce::Label* l)
+{
+    (void)l;
+    if (fieldListener != nullptr)
+      fieldListener->fieldChanged(this);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Layout
@@ -532,6 +572,7 @@ void Field::resized()
         }
         
         renderer->setTopLeftPosition(offset, 0);
+        annotation.setTopLeftPosition(offset + renderer->getWidth() + 4, 0);
     }
 }
 

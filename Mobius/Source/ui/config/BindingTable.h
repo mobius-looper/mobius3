@@ -24,9 +24,6 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
     static const int ScopeColumn = 4;
     static const int DisplayNameColumn = 5;
     
-    BindingTable();
-    ~BindingTable();
-
     class Listener {
       public:
         virtual ~Listener() {}
@@ -38,17 +35,13 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
         virtual juce::String getDisplayName(class Binding*) {return "";}
     };
 
-    // currently expected to be a linked list from the old model
-    // copies the list and ownership is retained by the caller
-    void setBindings(class Binding* bindings);
-    void add(class Binding* binding);
-    void updateContent();
+    BindingTable();
+    ~BindingTable();
+
+    //
+    // Constructor options
+    //
     
-    // return the edited list, ownership transfers to the caller
-    class Binding* captureBindings();
-
-    void clear();
-
     // option to hide the trigger column
     void removeTrigger();
     // option to add the display name column
@@ -59,6 +52,21 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
     }
 
     void setOrdered(bool b);
+
+    // currently expected to be a linked list from the old model
+    // copies the list and ownership is retained by the caller
+    void setBindings(class Binding* bindings);
+    void add(class Binding* binding);
+
+    void clear();
+    void updateContent();
+    void deselect();
+
+    // return the edited list, ownership transfers to the caller
+    class Binding* captureBindings();
+
+    // get the Binding that is currently selected
+    class Binding* getSelectedBinding();
 
     int getPreferredWidth();
     int getPreferredHeight();

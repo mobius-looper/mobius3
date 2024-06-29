@@ -81,10 +81,8 @@ void KeyboardEditor::addSubclassFields()
     // needs to be wide enough to show the full text representation
     // including qualifiers
     key->setWidthUnits(20);
+    key->addListener(this);
     form.add(key);
-
-    capture = new Field("Capture", Field::Type::Boolean);
-    form.add(capture);
 }
 
 /**
@@ -152,9 +150,11 @@ bool KeyboardEditor::keyPressed(const juce::KeyPress& keypress, juce::Component*
 {
     (void)originator;
     Trace(1, "KeyboardEditor::keyPressed  Sure wasn't expecting THAT to happen\n");
-    
-    if (capture->getBoolValue()) {
-        key->setValue(juce::var(keypress.getTextDescription()));
+
+    juce::String keytext = keypress.getTextDescription();
+
+    if (isCapturing()) {
+        key->setValue(juce::var(keytext));
 
         // format the Binderator "qualifier" for this key and save it
         // for captureSubclassFields
@@ -163,6 +163,8 @@ bool KeyboardEditor::keyPressed(const juce::KeyPress& keypress, juce::Component*
         // conversion.  They're supposed to be the same though.
         capturedCode = Binderator::getKeyQualifier(keypress);
     }
+
+    showCapture(keytext);
         
     return false;
 }
@@ -176,10 +178,13 @@ bool KeyboardEditor::keyStateChanged(bool isKeyDown, juce::Component* originator
 
 void KeyboardEditor::keyTrackerDown(int code, int modifiers)
 {
-    if (capture->getBoolValue()) {
-        key->setValue(juce::var(KeyTracker::getKeyText(code, modifiers)));
+    juce::String keytext = KeyTracker::getKeyText(code, modifiers);
+    if (isCapturing()) {
+        key->setValue(juce::var(keytext));
         capturedCode = Binderator::getKeyQualifier(code, modifiers);
     }
+
+    showCapture(keytext);
 }
 
 void KeyboardEditor::keyTrackerUp(int code, int modifiers)
