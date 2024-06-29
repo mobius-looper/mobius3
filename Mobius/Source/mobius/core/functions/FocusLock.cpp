@@ -48,10 +48,17 @@ FocusLockFunction::FocusLockFunction() :
 Event* FocusLockFunction::invoke(Action* action, Loop* l)
 {
     (void)action;
-    
-    Track* t = l->getTrack();
-	t->setFocusLock(!t->isFocusLock());
 
+    //Track* t = l->getTrack();
+
+    Track* t = l->getMobius()->getTrack();
+    int tnum = action->getTargetTrack();
+    if (tnum > 0)
+      t = l->getMobius()->getTrack(tnum);
+
+    if (t != nullptr)
+      t->setFocusLock(!t->isFocusLock());
+    
     return NULL;
 }
 

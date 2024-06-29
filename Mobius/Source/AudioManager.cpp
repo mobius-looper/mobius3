@@ -97,6 +97,15 @@ void AudioManager::openAudioDevice()
         // if it isn't ASIO.  On Mac at least there is really only one option
         if (deviceType.length() > 0) {
             Trace(2, "AudioManager: Setting audio device type to %s\n", deviceType.toUTF8());
+
+            // jesus fucking christ, if you call this from startup with a custom
+            // ADM, the availableDeviceTypes list is empty so it will ignore
+            // the call to setCurrentAudioDeviceType, of course the methods to
+            // scan device types are private, this does it as a side effect
+            // if this slows it down, the just use the fucking XML and initialize()
+            // and be done with it
+            (void)deviceManager->getAvailableDeviceTypes();
+
             // second arg is treatAsChosenDevice whatever the fuck that means
             deviceManager->setCurrentAudioDeviceType(deviceType, true);
         }

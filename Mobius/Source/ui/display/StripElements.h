@@ -41,8 +41,11 @@ class StripFocusLock : public StripElement
     void update(MobiusState* state) override;
     void paint(juce::Graphics& g) override;
     
+    void mouseDown(const class juce::MouseEvent& event);
+
   private:
     bool focusLock = false;
+    UIAction action;
 };
 
 class StripLoopRadar : public StripElement

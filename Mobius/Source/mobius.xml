@@ -10,7 +10,8 @@
   spreadRange='48'
   driftCheckPoint='loop'
   midiRecordMode='average'
-  setup='Default'>
+  setup='Default'
+  controllerActionThreshold='64'>
   <Preset
     name='Default'
     altFeedbackEnable='true'
@@ -226,7 +227,7 @@
     <Binding name='UIParameterDown' trigger='note' value='55'/>
     <Binding name='Record' trigger='control' value='12' channel='2'/>
     <Binding name='Overdub' trigger='program' channel='1'/>
-    <Binding name='Record' trigger='control' value='12' channel='2'/>
+    <Binding name='Record' trigger='control' value='12' channel='1'/>
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>

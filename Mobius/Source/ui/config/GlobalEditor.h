@@ -43,5 +43,7 @@ class GlobalEditor : public ConfigEditor
     BasicInput asioOutputs {"Standalone Outputs", 20};
     BasicInput pluginInputs {"Plugin Inputs", 20};
     BasicInput pluginOutputs {"Plugin Outputs", 20};
+
+    Field* ccThreshold = nullptr;
     
 };

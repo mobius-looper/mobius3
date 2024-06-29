@@ -224,6 +224,9 @@ class MobiusConfig {
     MobiusConfig* getHistory();
     int getHistoryCount();
 
+    // new stuff
+    int mControllerActionThreshold = 0;
+    
 	void setMonitorAudio(bool b);
 	bool isMonitorAudio();
 	void setHostRewinds(bool b);

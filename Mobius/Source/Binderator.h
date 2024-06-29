@@ -81,6 +81,7 @@ class Binderator
 
     private:
 
+    int controllerThreshold = 0;
     juce::OwnedArray<juce::OwnedArray<TableEntry>> keyActions;
     juce::OwnedArray<juce::OwnedArray<TableEntry>> noteActions;
     juce::OwnedArray<juce::OwnedArray<TableEntry>> programActions;

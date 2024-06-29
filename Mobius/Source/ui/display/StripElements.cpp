@@ -139,6 +139,8 @@ void StripTrackNumber::paint(juce::Graphics& g)
 StripFocusLock::StripFocusLock(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionFocusLock)
 {
+    action.symbol = Symbols.intern("FocusLock");
+    action.scopeTrack = parent->getTrackNumber();
 }
 
 StripFocusLock::~StripFocusLock()
@@ -168,17 +170,38 @@ void StripFocusLock::update(MobiusState* state)
 
 void StripFocusLock::paint(juce::Graphics& g)
 {
+    // Ellipse wants float rectangles, getLocalBounds returns ints
+    // seems like there should be an easier way to convert this
+    juce::Rectangle<float> area (0.0f, 0.0f, (float)getWidth(), (float)getHeight());
+
+    // clips a little
+    area = area.reduced(2.0f);
+    
     g.setColour(juce::Colours::white);
-    g.drawEllipse((float)getX(), (float)getY(), (float)getWidth(), (float)getHeight(), 2.0f);
+    g.drawEllipse(area, 2.0f);
 
     if (focusLock) {
         g.setColour(juce::Colour(MobiusRed));
+        area = area.reduced(2.0f);
+        g.fillEllipse(area);
     }
-    else {
-        g.setColour(juce::Colours::black);
-    }
+}
 
-    g.drawEllipse((float)getX() + 2, (float)getY() + 2, (float)getWidth() - 4, (float)getHeight() - 4, 2.0f);
+/**
+ * This one's a little weird because we potentialy do two things.
+ * 
+ * StripElement::mouseDown will generate an action to select the track
+ * if it isn't currently selected.
+ * Here, we send an action to toggle focus lock.
+ * Unclear what the ordering will be or if it matters, both will end
+ * on the Kernel action list at the same time.
+ */
+void StripFocusLock::mouseDown(const class juce::MouseEvent& event)
+{
+    // select the track first?
+    StripElement::mouseDown(event);
+    
+    Supervisor::Instance->doAction(&action);
 }
 
 //////////////////////////////////////////////////////////////////////

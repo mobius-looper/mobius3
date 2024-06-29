@@ -112,6 +112,10 @@ void Binderator::configure(MobiusConfig* config)
 {
     installKeyboardActions(config);
     installMidiActions(config);
+
+    controllerThreshold = config->mControllerActionThreshold;
+    if (controllerThreshold == 0)
+      controllerThreshold = 127;
 }
 
 void Binderator::configureKeyboard(MobiusConfig* config)
@@ -648,7 +652,7 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                         send = action;
                     }
                 }
-                else if (ccvalue == 127) {
+                else if (ccvalue >= controllerThreshold) {
                     // it's "down"
                     send = action;
                 }

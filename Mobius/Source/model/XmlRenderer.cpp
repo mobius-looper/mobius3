@@ -413,6 +413,7 @@ void XmlRenderer::parseStructure(XmlElement* e, Structure* structure)
 #define ATT_NAME "name"
 
 #define ATT_EDPISMS "edpisms"
+#define ATT_CC_THRESHOLD "controllerActionThreshold"
 
 void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 {
@@ -464,6 +465,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // not an official Parameter yet
     if (c->isEdpisms())
       b->addAttribute(ATT_EDPISMS, "true");
+
+    b->addAttribute(ATT_CC_THRESHOLD, c->mControllerActionThreshold);
 
 	b->add(">\n");
 	b->incIndent();
@@ -546,6 +549,8 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
     // not an official parameter yet
     c->setEdpisms(e->getBoolAttribute(ATT_EDPISMS));
 
+    c->mControllerActionThreshold = e->getIntAttribute(ATT_CC_THRESHOLD);
+    
 	//c->setSampleRate((AudioSampleRate)parse(e, UIParameterSampleRate));
 
     // fade frames can no longer be set high so we don't bother exposing it

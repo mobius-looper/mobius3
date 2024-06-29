@@ -16,6 +16,7 @@
     <Element name="TempoElement" x="438" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>
     <Strip name="Docked">
+      <Element name="focusLock"/>
       <Element name="trackNumber"/>
       <Element name="loopRadar"/>
       <Element name="loopStack"/>
@@ -31,7 +32,7 @@
       <Element name="altFeedback" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeButtons,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="activePreset,activeLayout,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -114,6 +115,7 @@
     <Button action="SpeedToggle" arguments="12" color="-13969235"/>
   </ButtonSet>
   <Properties>
+    <Property name="loopRows" value=""/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>

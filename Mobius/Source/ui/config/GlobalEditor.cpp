@@ -100,6 +100,14 @@ void GlobalEditor::loadGlobal(MobiusConfig* config)
 
     pluginInputs.setText(juce::String(dc->pluginConfig.defaultAuxInputs + 1));
     pluginOutputs.setText(juce::String(dc->pluginConfig.defaultAuxOutputs + 1));
+
+    if (ccThreshold != nullptr) {
+        // zero means max, but to make it look right to the user for the
+        // first time, bump it up
+        int value = config->mControllerActionThreshold;
+        if (value == 0) value = 127;
+        ccThreshold->setValue(juce::var(value));
+    }
 }
 
 /**
@@ -115,6 +123,11 @@ void GlobalEditor::saveGlobal(MobiusConfig* config)
         if (pf != nullptr)
           pf->saveValue(config);
     }
+
+    if (ccThreshold != nullptr) {
+        config->mControllerActionThreshold = ccThreshold->getIntValue();
+    }
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -179,6 +192,10 @@ void GlobalEditor::initForm()
     addField("General", UIParameterQuickSave);
     addField("General", UIParameterLongPress);
     addField("General", UIParameterAutoFeedbackReduction);
+
+    // this one doesn't have a UIParameter definition, wing it
+    ccThreshold = new Field("Controller Action Threshold", Field::Type::Integer);
+    form.add(ccThreshold);
 
     // these are obscure
     addField("Advanced", UIParameterInputLatency);
