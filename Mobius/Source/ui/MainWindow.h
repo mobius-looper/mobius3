@@ -3,7 +3,7 @@
  *
  * It combines a top-level menu (MainMenu) with a large central
  * status display area (MobiusDisplay) and a collection of on-demand
- * popup panels for editing the configuration properties (ConfigEditor).
+ * popup panels for editing the configuration properties (PanelFactory).
  *
  * From here down there must be no dependencies on the Juce Components
  * that we are contained in.
@@ -21,7 +21,6 @@
 #include "../Conditionals.h"
 #include "MainMenu.h"
 #include "display/MobiusDisplay.h"
-#include "config/ConfigEditor.h"
 #include "AlertPanel.h"
 #include "PanelFactory.h"
 
@@ -81,7 +80,6 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     MainMenu menu;
     MobiusDisplay display {this};
-    ConfigEditor configEditor {this};
     AlertPanel alertPanel;
     PanelFactory panelFactory {this};
     

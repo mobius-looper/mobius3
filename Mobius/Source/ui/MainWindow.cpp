@@ -17,14 +17,11 @@
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
 
-//#include "../DiagnosticWindow.h"
 #include "../Supervisor.h"
 #include "../UISymbols.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
-
-#include "config/ConfigEditor.h"
 
 #include "MainWindow.h"
 
@@ -39,10 +36,6 @@ MainWindow::MainWindow(Supervisor* super)
     menu.setListener(this);
     
     addAndMakeVisible(display);
-
-    // let the config editor pre-load all its panels
-    configEditor.init(supervisor);
-
     addChildComponent(alertPanel);
     
 #ifdef USE_FFMETERS

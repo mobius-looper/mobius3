@@ -211,11 +211,6 @@
           <FILE id="DRfYUA" name="ButtonEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/ButtonEditor.cpp"/>
           <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>
-          <FILE id="Du70TA" name="ConfigEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/ConfigEditor.cpp"/>
-          <FILE id="zqWOpM" name="ConfigEditor.h" compile="0" resource="0" file="Source/ui/config/ConfigEditor.h"/>
-          <FILE id="xcIb02" name="ConfigPanel.cpp" compile="1" resource="0" file="Source/ui/config/ConfigPanel.cpp"/>
-          <FILE id="EB8YDo" name="ConfigPanel.h" compile="0" resource="0" file="Source/ui/config/ConfigPanel.h"/>
           <FILE id="dqfccx" name="DisplayEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/DisplayEditor.cpp"/>
           <FILE id="I1bVV8" name="DisplayEditor.h" compile="0" resource="0" file="Source/ui/config/DisplayEditor.h"/>
