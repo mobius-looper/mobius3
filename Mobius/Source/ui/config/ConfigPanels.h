@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "NewConfigPanel.h"
+#include "ConfigPanel.h"
 
 #include "GlobalEditor.h"
 #include "PresetEditor.h"
@@ -26,7 +26,7 @@
 #include "AudioEditor.h"
 #include "DisplayEditor.h"
 
-class ScriptPanel : public NewConfigPanel
+class ScriptPanel : public ConfigPanel
 {
   public:
     ScriptPanel() {
@@ -39,7 +39,7 @@ class ScriptPanel : public NewConfigPanel
     ScriptEditor editor;
 };
 
-class SamplePanel : public NewConfigPanel
+class SamplePanel : public ConfigPanel
 {
   public:
     SamplePanel() {
@@ -52,7 +52,7 @@ class SamplePanel : public NewConfigPanel
     SampleEditor editor;
 };
 
-class PresetPanel : public NewConfigPanel
+class PresetPanel : public ConfigPanel
 {
   public:
     PresetPanel() {
@@ -65,7 +65,7 @@ class PresetPanel : public NewConfigPanel
     PresetEditor editor;
 };
 
-class SetupPanel : public NewConfigPanel
+class SetupPanel : public ConfigPanel
 {
   public:
     SetupPanel() {
@@ -78,7 +78,7 @@ class SetupPanel : public NewConfigPanel
     SetupEditor editor;
 };
 
-class GlobalPanel : public NewConfigPanel
+class GlobalPanel : public ConfigPanel
 {
   public:
     GlobalPanel() {
@@ -91,7 +91,7 @@ class GlobalPanel : public NewConfigPanel
     GlobalEditor editor;
 };
 
-class KeyboardPanel : public NewConfigPanel
+class KeyboardPanel : public ConfigPanel
 {
   public:
     KeyboardPanel() {
@@ -104,7 +104,7 @@ class KeyboardPanel : public NewConfigPanel
     KeyboardEditor editor;
 };
 
-class MidiPanel : public NewConfigPanel
+class MidiPanel : public ConfigPanel
 {
   public:
     MidiPanel() {
@@ -117,7 +117,7 @@ class MidiPanel : public NewConfigPanel
     MidiEditor editor;
 };
 
-class HostPanel : public NewConfigPanel
+class HostPanel : public ConfigPanel
 {
   public:
     HostPanel() {
@@ -130,7 +130,7 @@ class HostPanel : public NewConfigPanel
     HostEditor editor;
 };
 
-class ButtonPanel : public NewConfigPanel
+class ButtonPanel : public ConfigPanel
 {
   public:
     ButtonPanel() {
@@ -143,7 +143,7 @@ class ButtonPanel : public NewConfigPanel
     ButtonEditor editor;
 };
 
-class MidiDevicePanel : public NewConfigPanel
+class MidiDevicePanel : public ConfigPanel
 {
   public:
     MidiDevicePanel() {
@@ -156,7 +156,7 @@ class MidiDevicePanel : public NewConfigPanel
     MidiDeviceEditor editor;
 };
 
-class AudioPanel : public NewConfigPanel
+class AudioPanel : public ConfigPanel
 {
   public:
     AudioPanel() {
@@ -169,7 +169,7 @@ class AudioPanel : public NewConfigPanel
     AudioEditor editor;
 };
 
-class DisplayPanel : public NewConfigPanel
+class DisplayPanel : public ConfigPanel
 {
   public:
     DisplayPanel() {

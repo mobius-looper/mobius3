@@ -212,6 +212,8 @@
                 file="Source/ui/config/ButtonEditor.cpp"/>
           <FILE id="To8mZc" name="ButtonEditor.h" compile="0" resource="0" file="Source/ui/config/ButtonEditor.h"/>
           <FILE id="HHh8io" name="ConfigEditor.h" compile="0" resource="0" file="Source/ui/config/ConfigEditor.h"/>
+          <FILE id="RvUEDT" name="ConfigPanel.cpp" compile="1" resource="0" file="Source/ui/config/ConfigPanel.cpp"/>
+          <FILE id="fdciwP" name="ConfigPanel.h" compile="0" resource="0" file="Source/ui/config/ConfigPanel.h"/>
           <FILE id="dqfccx" name="DisplayEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/DisplayEditor.cpp"/>
           <FILE id="I1bVV8" name="DisplayEditor.h" compile="0" resource="0" file="Source/ui/config/DisplayEditor.h"/>
@@ -234,10 +236,6 @@
                 file="Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
                 file="Source/ui/config/MultiSelectDrag.h"/>
-          <FILE id="PN9krn" name="NewConfigPanel.cpp" compile="1" resource="0"
-                file="Source/ui/config/NewConfigPanel.cpp"/>
-          <FILE id="vpL7ZR" name="NewConfigPanel.h" compile="0" resource="0"
-                file="Source/ui/config/NewConfigPanel.h"/>
           <FILE id="GqgflP" name="ObjectSelector.cpp" compile="1" resource="0"
                 file="Source/ui/config/ObjectSelector.cpp"/>
           <FILE id="IRESL5" name="ObjectSelector.h" compile="0" resource="0"

@@ -108,12 +108,12 @@ class ConfigEditorWrapper : public juce::Component, public ObjectSelector::Liste
  * The subclass will call setEditor to give this a ConfigEditor.  See commentary
  * above the setEditor() method for the subtle mess we have here.
  */
-class NewConfigPanel : public BasePanel, public ConfigEditorContext
+class ConfigPanel : public BasePanel, public ConfigEditorContext
 {
   public:
 
-    NewConfigPanel();
-    ~NewConfigPanel() override;
+    ConfigPanel();
+    ~ConfigPanel() override;
 
     // called by the subclass during construction
     void setEditor(ConfigEditor* editor);

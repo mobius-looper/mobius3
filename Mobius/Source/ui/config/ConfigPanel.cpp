@@ -50,7 +50,7 @@
 
 #include "../../Supervisor.h"
 
-#include "NewConfigPanel.h"
+#include "ConfigPanel.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -58,9 +58,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-NewConfigPanel::NewConfigPanel()
+ConfigPanel::ConfigPanel()
 {
-    setName("NewConfigPanel");
+    setName("ConfigPanel");
 
     // always replace the single "Ok" button from BasePanel
     // with Save/Revert/Cancel
@@ -72,14 +72,14 @@ NewConfigPanel::NewConfigPanel()
     setContent(&wrapper);
 }
 
-NewConfigPanel::~NewConfigPanel()
+ConfigPanel::~ConfigPanel()
 {
 }
 
 /**
  * Here is where the magic wand waves.
  */
-void NewConfigPanel::setEditor(ConfigEditor* editor)
+void ConfigPanel::setEditor(ConfigEditor* editor)
 {
     // set the BasePanel title 
     setTitle(editor->getTitle());
@@ -103,47 +103,47 @@ void NewConfigPanel::setEditor(ConfigEditor* editor)
 // ConfigEditor callbacks to adjust the display
 //
 
-void NewConfigPanel::enableObjectSelector() {
+void ConfigPanel::enableObjectSelector() {
 
     wrapper.enableObjectSelector();
 }
 
-void NewConfigPanel::enableHelp(int height)
+void ConfigPanel::enableHelp(int height)
 {
     wrapper.enableHelp(getSupervisor()->getHelpCatalog(), height);
 }
 
-HelpArea* NewConfigPanel::getHelpArea()
+HelpArea* ConfigPanel::getHelpArea()
 {
     return wrapper.getHelpArea();
 }
 
-void NewConfigPanel::enableRevert()
+void ConfigPanel::enableRevert()
 {
     addButton(&revertButton);
 }
 
-void NewConfigPanel::setObjectNames(juce::StringArray names)
+void ConfigPanel::setObjectNames(juce::StringArray names)
 {
     wrapper.getObjectSelector()->setObjectNames(names);
 }
 
-void NewConfigPanel::addObjectName(juce::String name)
+void ConfigPanel::addObjectName(juce::String name)
 {
     wrapper.getObjectSelector()->addObjectName(name);
 }
 
-juce::String NewConfigPanel::getSelectedObjectName()
+juce::String ConfigPanel::getSelectedObjectName()
 {
     return wrapper.getObjectSelector()->getObjectName();
 }
 
-int NewConfigPanel::getSelectedObject()
+int ConfigPanel::getSelectedObject()
 {
     return wrapper.getObjectSelector()->getObjectOrdinal();
 }
 
-void NewConfigPanel::setSelectedObject(int ordinal)
+void ConfigPanel::setSelectedObject(int ordinal)
 {
     wrapper.getObjectSelector()->setSelectedObject(ordinal);
 }
@@ -156,38 +156,38 @@ void NewConfigPanel::setSelectedObject(int ordinal)
  * Try to stop using Supervisor::Instance so much in code below this.
  * Pass this in the constructor so we don't have to.
  */
-Supervisor* NewConfigPanel::getSupervisor()
+Supervisor* ConfigPanel::getSupervisor()
 {
     return Supervisor::Instance;
 }
 
-class MobiusConfig* NewConfigPanel::getMobiusConfig()
+class MobiusConfig* ConfigPanel::getMobiusConfig()
 {
     return getSupervisor()->getMobiusConfig();
 }
 
-void NewConfigPanel::saveMobiusConfig()
+void ConfigPanel::saveMobiusConfig()
 {
     getSupervisor()->updateMobiusConfig();
 }
 
 
-class UIConfig* NewConfigPanel::getUIConfig()
+class UIConfig* ConfigPanel::getUIConfig()
 {
     return getSupervisor()->getUIConfig();
 }
 
-void NewConfigPanel::saveUIConfig()
+void ConfigPanel::saveUIConfig()
 {
     getSupervisor()->updateUIConfig();
 }
     
-class DeviceConfig* NewConfigPanel::getDeviceConfig()
+class DeviceConfig* ConfigPanel::getDeviceConfig()
 {
     return getSupervisor()->getDeviceConfig();
 }
 
-void NewConfigPanel::saveDeviceConfig()
+void ConfigPanel::saveDeviceConfig()
 {
     getSupervisor()->updateDeviceConfig();
 }
@@ -203,7 +203,7 @@ void NewConfigPanel::saveDeviceConfig()
  * time we've ever shown this, or if you want to go back to away to selectively
  * hide/show after they've been loaded, we need to remember load state.
  */
-void NewConfigPanel::showing()
+void ConfigPanel::showing()
 {
     ConfigEditor* editor = wrapper.getEditor();
     
@@ -218,7 +218,7 @@ void NewConfigPanel::showing()
 /**
  * Making the panel invisible, but this does not cancel load state.
  */
-void NewConfigPanel::hiding()
+void ConfigPanel::hiding()
 {
     wrapper.getEditor()->hiding();
 }
@@ -228,7 +228,7 @@ void NewConfigPanel::hiding()
  * Kind of messy forwarding here, should we just let the wrapper
  * deal with this?
  */
-void NewConfigPanel::footerButton(juce::Button* b)
+void ConfigPanel::footerButton(juce::Button* b)
 {
     if (b == &saveButton) {
         wrapper.getEditor()->save();
