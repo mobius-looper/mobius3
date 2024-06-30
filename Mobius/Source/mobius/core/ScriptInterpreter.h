@@ -31,6 +31,9 @@ class ScriptInterpreter : public ExContext {
 
     // kludge added for the Warp statement
     // holds the UIAction/Argument argument string
+    // also now used by getActionArg()
+    // todo: would like to allow this to be a csv so we could
+    // use $1, $2 etc.
     char actionArgs[1024];
 
     void setRequestId(int id) {
@@ -146,6 +149,7 @@ class ScriptInterpreter : public ExContext {
 	void checkWait();
     void advance();
     void getStackArg(ScriptStack* stack, int index, ExValue* value);
+    void getActionArg(int index, ExValue* value);
     void restoreUses();
 
 	ScriptInterpreter* mNext;

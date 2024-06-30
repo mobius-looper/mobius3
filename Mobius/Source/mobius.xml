@@ -255,9 +255,7 @@
     <Binding name='Record' trigger='control' value='12' channel='1'/>
   </BindingSet>
   <ScriptConfig>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\sustain.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\click.mos'/>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>

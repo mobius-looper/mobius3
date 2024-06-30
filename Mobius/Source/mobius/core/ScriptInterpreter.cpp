@@ -1086,6 +1086,25 @@ void ScriptInterpreter::getStackArg(ScriptStack* stack,
             }
         }
     }
+    else if (stack == nullptr) {
+        // this is a reference at the top-level of the script
+        // not surrounded by a Call
+        // here we allow references to binding arguments passed in the UIAction/Action
+        getActionArg(index, value);
+    }
+}
+
+void ScriptInterpreter::getActionArg(int index, ExValue* value)
+ {
+    // todo: don't support indexes yet, but can access entire
+    // argument string
+    if (index == 1) {
+        value->setString(actionArgs);
+    }
+    else {
+        Trace(1, "ScriptIterpreter: Action argument reference out of range %d\n",
+              index);
+    }
 }
 
 /**
