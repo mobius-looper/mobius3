@@ -142,6 +142,7 @@
     slaveSyncUnit='bar'
     speedSyncAdjust='none'>
     <SetupTrack
+      name='sadf'
       input='127'
       output='127'
       feedback='127'
@@ -151,6 +152,7 @@
       syncSource='default'
       trackSyncUnit='loop'/>
     <SetupTrack
+      name='xxxx'
       input='127'
       output='127'
       feedback='127'
@@ -198,6 +200,29 @@
       pan='64'
       syncSource='default'
       trackSyncUnit='default'/>
+    <SetupTrack
+      input='127'
+      output='127'
+      feedback='127'
+      altFeedback='127'
+      pan='64'
+      syncSource='default'
+      trackSyncUnit='default'/>
+  </Setup>
+  <Setup
+    name='asdf'
+    active='0'
+    beatsPerBar='4'
+    defaultSyncSource='track'
+    defaultTrackSyncUnit='subcycle'
+    maxTempo='300'
+    minTempo='20'
+    muteSyncMode='transport'
+    outRealign='restart'
+    realignTime='start'
+    resizeSyncAdjust='none'
+    slaveSyncUnit='beat'
+    speedSyncAdjust='none'>
     <SetupTrack
       input='127'
       output='127'

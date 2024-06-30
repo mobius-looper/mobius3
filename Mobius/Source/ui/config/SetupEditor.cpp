@@ -40,6 +40,7 @@ SetupEditor::~SetupEditor()
 
 void SetupEditor::prepare()
 {
+    context->enableObjectSelector();
     // here or in the constructor?
     //render();
     form.setHelpArea(context->getHelpArea());
