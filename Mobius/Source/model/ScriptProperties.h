@@ -53,6 +53,11 @@ class ScriptProperties
     ~ScriptProperties();
 
     /**
+     * True if this script uses !sustain
+     */
+    bool sustainable = false;
+
+    /**
      * True if this script should be automatically given an action
      * button in the main display.  This was just a test hack I liked
      * but may be of general interest.

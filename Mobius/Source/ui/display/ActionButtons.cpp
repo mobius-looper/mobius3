@@ -475,7 +475,11 @@ void ActionButtons::buttonUp(ActionButton* b)
         //Trace(2, "ActionButtons: Sending up action\n");
         UIAction* action = b->getAction();
         Symbol* s = action->symbol;
-        if (s != nullptr && s->coreFunction != nullptr) {
+        // don't like how this logic is duplicated in several places
+        if (s != nullptr &&
+            (s->coreFunction != nullptr ||
+             (s->script != nullptr && s->script->sustainable))) {
+
             action->sustainEnd = true;
             Supervisor::Instance->doAction(action);
         }

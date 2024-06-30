@@ -74,6 +74,7 @@
 #include "model/FunctionDefinition.h"
 #include "model/UIParameter.h"
 #include "model/Binding.h"
+#include "model/ScriptProperties.h"
 
 #include "KeyTracker.h"
 #include "Supervisor.h"
@@ -547,6 +548,11 @@ UIAction* Binderator::buildAction(Binding* b)
             FunctionDefinition* f = symbol->function;
             if (f != nullptr)
               sustainableTarget = f->sustainable;
+        }
+        else if (symbol->script != nullptr) {
+            // this won't actually be set since ScriptCompler doesn't remember
+            // if it had !sustain, should we assume this?
+            sustainableTarget = symbol->script->sustainable;
         }
 
         // okay, if both sides get along, we'll let this be a sustaining action

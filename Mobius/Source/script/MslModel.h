@@ -35,21 +35,21 @@ class MslScript : public MslBlock
     
 };
 
-class MslVar : public MslStatement
-{
-  public:
-    MslVar() {}
-    ~MslVar() {}
-
-    juce::String name;
-    
-};
-
 class MslProc : public MslBlock
 {
   public:
     MslProc() {}
     ~MslProc() {}
+
+    juce::String name;
+    
+};
+
+class MslVar : public MslStatement
+{
+  public:
+    MslVar() {}
+    ~MslVar() {}
 
     juce::String name;
     
@@ -71,5 +71,15 @@ class MslAssignment : public MslStatement
     ~MslFunction() {}
 
     class Symbol* symbol = nullptr;
+};
+
+class MslIf : public MslStatement
+{
+  public:
+    MslIf() {}
+    ~MslIf() {}
+
+    MslBlock trueBlock;
+    MslBlock falseBlock;
 };
 

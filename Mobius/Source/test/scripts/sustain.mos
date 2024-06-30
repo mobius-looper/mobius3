@@ -1,0 +1,12 @@
+!name SuSTest
+!sustain
+
+Echo Starting SusTest
+end
+
+Label sustain
+if sustainCount == 1
+  Echo Sustain count 1
+else
+  Echo Sustain count $sustainCount
+endif

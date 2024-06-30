@@ -231,6 +231,7 @@
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\message.mos'/>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\sustain.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
