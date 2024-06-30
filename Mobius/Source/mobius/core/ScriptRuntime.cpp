@@ -20,6 +20,9 @@
 #include "Script.h"
 #include "Track.h"
 #include "Script.h"
+#include "ScriptInterpreter.h"
+#include "Export.h"
+#include "Function.h"
 
 #include "ScriptRuntime.h"
 #include "Mem.h"
@@ -283,7 +286,7 @@ void ScriptRuntime::startScript(Action* action, Script* s, Track* t)
 			else {
 				l = s->getReentryLabel();
                 if (l != NULL)
-                  Trace(2, "Mobius: Script thread %s notify reentry\n",
+                  Trace(2, "Mobius: Script thread %s: notify reentry\n",
                         si->getTraceName());
 			}
 
@@ -359,7 +362,7 @@ void ScriptRuntime::addScript(ScriptInterpreter* si)
 	else
 	  last->setNext(si);
     
-    Trace(2, "Mobius: Starting script thread %s: ",
+    Trace(2, "Mobius: Starting script thread %s",
           si->getTraceName());
 }
 
@@ -572,11 +575,18 @@ void ScriptRuntime::doScriptMaintenance()
                 // waited long enough
                 si->setClicking(false);
                 si->setClickedMsecs(0);
+                // should we reset this?
+				int clicks = si->getClickCount();
+                
                 // don't have to have one of these
                 if (label != NULL) {
-                    Trace(2, "Mobius: Script thread %s: notify end multiclick\n",
-                          si->getTraceName());
+                    Trace(2, "Mobius: Script thread %s: ending multiclick after %d with notify\n",
+                          si->getTraceName(), clicks);
                     si->notify(label);
+                }
+                else {
+                    Trace(2, "Mobius: Script thread %s: ending multiclick after %d\n",
+                          si->getTraceName(), clicks);
                 }
             }
 		}

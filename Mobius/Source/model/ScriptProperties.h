@@ -53,7 +53,8 @@ class ScriptProperties
     ~ScriptProperties();
 
     /**
-     * True if this script uses !sustain
+     * True if this script uses sustailable features
+     * Indiciates to Binderator that both down/up actions can be sent
      */
     bool sustainable = false;
 

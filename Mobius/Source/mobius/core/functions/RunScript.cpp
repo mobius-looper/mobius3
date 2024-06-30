@@ -27,7 +27,7 @@
 #include "../Loop.h"
 #include "../Mobius.h"
 #include "../Mode.h"
-#include "../Script.h"
+#include "../ScriptInterpreter.h"
 #include "../Track.h"
 
 //////////////////////////////////////////////////////////////////////

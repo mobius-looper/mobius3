@@ -13,6 +13,8 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
+#include "Parameter.h"
+
 /****************************************************************************
  *                                                                          *
  *                             INTERNAL VARIABLES                           *

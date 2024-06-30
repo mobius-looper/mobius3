@@ -1,0 +1,14 @@
+!name ClickTest
+!multiclick 2048
+
+Echo Starting ClickTest
+end
+
+Label click
+
+Echo ClickTest count $clickCount
+end
+
+Label endclick
+Echo ClickTest endclick after $clickCount
+end

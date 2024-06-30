@@ -1,5 +1,5 @@
 !name SuSTest
-!sustain
+!sustain 1024
 
 Echo Starting SusTest
 end
@@ -8,5 +8,9 @@ Label sustain
 if sustainCount == 1
   Echo Sustain count 1
 else
-  Echo Sustain count $sustainCount
+  Echo Sustain count more $sustainCount
 endif
+end
+
+Label endsustain
+Echo SusTest EndSustain

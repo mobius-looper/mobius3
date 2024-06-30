@@ -374,7 +374,8 @@ void MobiusShell::doAction(UIAction* action)
     }
     else if (s->level == LevelUI) {
         // this isn't the function you were supposed to call
-        Trace(1, "MmobiusShell::doAction Unexpected action level\n");
+        Trace(1, "MobiusShell::doAction Unexpected action level %s\n",
+              s->getName());
     }
     else if (s->level == LevelShell) {
         doShellAction(action);
@@ -1392,6 +1393,7 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
 
                     ScriptProperties* props = new ScriptProperties();
                     props->coreScript = script;
+                    props->sustainable = script->isSustainAllowed();
                     props->button = script->isButton();
                     props->test = script->isTest();
                     s->script.reset(props);

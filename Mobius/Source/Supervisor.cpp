@@ -1249,6 +1249,9 @@ void Supervisor::mobiusDoAction(UIAction* action)
     else if (s->level == LevelUI) {
         doUILevelAction(action);
     }
+    else {
+        Trace(1, "Supervisor::doAction Mobius sent up an action not at LevelUI\n");
+    }
 }
 
 void Supervisor::mobiusPrompt(MobiusPrompt* prompt)

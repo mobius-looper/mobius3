@@ -36,6 +36,7 @@
 #include "../Stream.h"
 #include "../Synchronizer.h"
 #include "../Track.h"
+#include "../Parameter.h"
 
 // only for CD_SAMPLE_RATE which is used by MSEC_TO_FRAMES
 #include "../AudioConstants.h"

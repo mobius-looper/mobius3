@@ -544,10 +544,8 @@ UIAction* Binderator::buildAction(Binding* b)
 
         // note this only works if the FunctionDefinition symbols are
         // interned BEFORE the Binderator is initialized
-        if (symbol->behavior == BehaviorFunction) {
-            FunctionDefinition* f = symbol->function;
-            if (f != nullptr)
-              sustainableTarget = f->sustainable;
+        if (symbol->function != nullptr) {
+            sustainableTarget = symbol->function->sustainable;
         }
         else if (symbol->script != nullptr) {
             // this won't actually be set since ScriptCompler doesn't remember

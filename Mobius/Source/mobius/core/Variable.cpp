@@ -48,6 +48,7 @@
 #include "Mode.h"
 #include "Project.h"
 #include "Script.h"
+#include "ScriptInterpreter.h"
 #include "Synchronizer.h"
 #include "SyncState.h"
 #include "SyncTracker.h"

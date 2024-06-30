@@ -30,6 +30,8 @@
 #include "Mobius.h"
 #include "Script.h"
 #include "Track.h"
+#include "Function.h"
+#include "ScriptInterpreter.h"
 #include "Mem.h"
 
 //////////////////////////////////////////////////////////////////////

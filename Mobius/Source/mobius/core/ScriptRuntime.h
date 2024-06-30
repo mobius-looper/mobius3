@@ -21,30 +21,30 @@ class ScriptRuntime {
     ScriptRuntime(class Mobius* m);
     ~ScriptRuntime();
 
-    void runScript(Action* action);
+    void runScript(class Action* action);
     void doScriptMaintenance();
 
     // Functions call this to resume script waiting on a Function
-    void resumeScript(Track* t, Function* f);
+    void resumeScript(class Track* t, class Function* f);
 
     // Resume scripts waiting on a KernelEvent
     void finishEvent(class KernelEvent* e);
 
     // Track calls this when it is Reset
-    void cancelScripts(Action* action, Track* t);
+    void cancelScripts(class Action* action, class Track* t);
 
     bool isBusy();
 
   private:
 
     // need to promote this
-    void doScriptNotification(Action* a);
+    void doScriptNotification(class Action* a);
 
-    void startScript(Action* action, Script* script);
-    void startScript(Action* action, Script* s, Track* t);
-    void addScript(ScriptInterpreter* si);
-    bool isInUse(Script* s);
-    ScriptInterpreter* findScript(Action* action, Script* s, Track* t);
+    void startScript(class Action* action, class Script* script);
+    void startScript(class Action* action, class Script* s, class Track* t);
+    void addScript(class ScriptInterpreter* si);
+    bool isInUse(class Script* s);
+    class ScriptInterpreter* findScript(class Action* action, class Script* s, class Track* t);
     void freeScripts();
 
 

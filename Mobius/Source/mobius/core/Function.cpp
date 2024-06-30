@@ -38,6 +38,7 @@
 #include "Mode.h"
 #include "Project.h"
 #include "Script.h"
+#include "ScriptInterpreter.h"
 #include "Stream.h"
 #include "Synchronizer.h"
 #include "Track.h"

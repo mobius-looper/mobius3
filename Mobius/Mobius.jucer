@@ -515,6 +515,10 @@
                 file="Source/mobius/core/ScriptCompiler.cpp"/>
           <FILE id="xmZKKx" name="ScriptCompiler.h" compile="0" resource="0"
                 file="Source/mobius/core/ScriptCompiler.h"/>
+          <FILE id="IESgJR" name="ScriptInterpreter.cpp" compile="1" resource="0"
+                file="Source/mobius/core/ScriptInterpreter.cpp"/>
+          <FILE id="chzSjZ" name="ScriptInterpreter.h" compile="0" resource="0"
+                file="Source/mobius/core/ScriptInterpreter.h"/>
           <FILE id="dnsemY" name="ScriptRuntime.cpp" compile="1" resource="0"
                 file="Source/mobius/core/ScriptRuntime.cpp"/>
           <FILE id="fVkEKL" name="ScriptRuntime.h" compile="0" resource="0" file="Source/mobius/core/ScriptRuntime.h"/>

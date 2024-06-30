@@ -335,8 +335,8 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
       clearExternalInput();
 
     // this may receive an updated MobiusConfig and will
-    // call Mobius::reconfigure, UIActions that aren't handled at
-    // this level are placed in coreActions
+    // call Mobius::reconfigure
+    // UIActions that aren't handled at this level are placed in coreActions
     consumeCommunications();
     consumeMidiMessages();
     consumeParameters();
@@ -627,8 +627,6 @@ void MobiusKernel::doAction(KernelMessage* msg)
 /**
  * Handle an action sent down through a KernelMessage from the shell
  * or received through KernelBinderator when a MIDI event comes in.
- *
- * todo: more flexitility in targeting tracks
  */
 void MobiusKernel::doAction(UIAction* action)
 {
@@ -679,7 +677,7 @@ void MobiusKernel::doAction(UIAction* action)
  *
  * This is actually easier for the binding UI, you dont' have to bind to the
  * SamplePlay function with an argument number, you can just bind directly to the
- * sample symbol.  Supporting both style till we sort out the best way forward.
+ * sample symbol.  Supporting both styles till we sort out the best way forward.
  */
 void MobiusKernel::doKernelAction(UIAction* action)
 {
@@ -703,16 +701,16 @@ void MobiusKernel::doKernelAction(UIAction* action)
  * Process an action sent up from the core.
  * If we don't handle it pass it up to the shell.
  *
- * todo: not that doAction has to handle passing actions in both directions
+ * todo: now that doAction has to handle passing actions in both directions
  * we don't really need this like I intended.  Can just have Mobius call doAction
- * and let it send it up.
+ * and let that pass it up.
  */
 void MobiusKernel::doActionFromCore(UIAction* action)
 {
     Symbol* symbol = action->symbol;
     if (symbol == nullptr) {
         // should not have made it this far without a symbol
-        Trace(1, "MobiusKernel: Action without symbol!\n");
+        Trace(1, "MobiusKernel: Core action without symbol!\n");
     }
     else if (symbol->level == LevelKernel) {
         doKernelAction(action);

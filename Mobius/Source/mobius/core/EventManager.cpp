@@ -142,6 +142,7 @@
 #include "Stream.h"
 #include "Synchronizer.h"
 #include "Track.h"
+#include "Function.h"
 
 #include "EventManager.h"
 #include "Mem.h"
