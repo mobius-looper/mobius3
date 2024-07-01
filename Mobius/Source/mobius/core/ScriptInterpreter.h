@@ -12,8 +12,11 @@
 
 #pragma once
 
+#include "../../model/ExValue.h"
 #include "../KernelEvent.h"
 #include "Script.h"
+
+const int MaxActionArgs = 4;
 
 /**
  * Script interpreter.
@@ -29,13 +32,6 @@ class ScriptInterpreter : public ExContext {
 	ScriptInterpreter(Mobius* mob, Track* t);
 	~ScriptInterpreter();
 
-    // kludge added for the Warp statement
-    // holds the UIAction/Argument argument string
-    // also now used by getActionArg()
-    // todo: would like to allow this to be a csv so we could
-    // use $1, $2 etc.
-    char actionArgs[1024];
-
     void setRequestId(int id) {
         mRequestId = id;
     }
@@ -43,6 +39,9 @@ class ScriptInterpreter : public ExContext {
     int getRequestId() {
         return mRequestId;
     }
+
+    // only for Warp
+    const char* getActionArgs();
     
 	void setMobius(Mobius* m);
 	void setTrack(Track* t);
@@ -149,6 +148,8 @@ class ScriptInterpreter : public ExContext {
 	void checkWait();
     void advance();
     void getStackArg(ScriptStack* stack, int index, ExValue* value);
+    void resetActionArgs();
+    void parseActionArgs(class Action* action);
     void getActionArg(int index, ExValue* value);
     void restoreUses();
 
@@ -180,7 +181,11 @@ class ScriptInterpreter : public ExContext {
 	int mSustainCount;
 	int mClickedMsecs;
 	int mClickCount;
-	
+
+    char actionArgs[1024];
+    ExValue parsedActionArgs[MaxActionArgs];
+    int parsedActionArgCount = 0;
+    
 };
 
 /****************************************************************************/

@@ -62,6 +62,7 @@
 void CopyString(const char* src, char* dest, int max);
 char* CopyString(const char *src);
 char* CopyString(const char* src, int len);
+void CopyString(const char* src, int srcchars, char* dest, int max);
 void AppendString(const char* src, char* dest, int max);
 
 bool StringEqual(const char* s1, const char* s2);

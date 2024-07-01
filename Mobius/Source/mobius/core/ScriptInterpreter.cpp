@@ -72,7 +72,15 @@ void ScriptInterpreter::init()
 	mClickCount = 0;
     mAction = nullptr;
     mExport = nullptr;
+    resetActionArgs();
+}
+
+void ScriptInterpreter::resetActionArgs()
+{
     strcpy(actionArgs, "");
+    parsedActionArgCount = 0;
+    for (int i = 0 ; i < MaxActionArgs ; i++)
+      parsedActionArgs[i].setNull();
 }
 
 ScriptInterpreter::~ScriptInterpreter()
@@ -294,13 +302,14 @@ void ScriptInterpreter::setClicking(bool b)
  */
 void ScriptInterpreter::setTrigger(Action* action)
 {
+    resetActionArgs();
+    
     if (action == nullptr) {
         mRequestId = 0;
         mTrigger = nullptr;
         mTriggerId = 0;
         mTriggerValue = 0;
         mTriggerOffset = 0;
-        strcpy(actionArgs, "");
     }
     else {
         mRequestId = action->requestId;
@@ -309,7 +318,56 @@ void ScriptInterpreter::setTrigger(Action* action)
         mTriggerValue = action->triggerValue;
         mTriggerOffset = action->triggerOffset;
         CopyString(action->bindingArgs, actionArgs, sizeof(actionArgs));
+        parseActionArgs(action);
     }
+}
+
+/**
+ * Parse the single argument string included in a UIAction/Action into
+ * a set of ExValue objects.  The source string is split using comma delimiters.
+ * These may then be referenced later with $ references at the top level of the
+ * script.  ExValue is used rather than the far easier juce::String/StringArray to avoid
+ * memmory allocation in the audio thread.
+ */
+void ScriptInterpreter::parseActionArgs(Action* action)
+{
+    int argnum = 0;
+    bool overflow = false;
+
+    // save the entire string just in case
+    CopyString(action->bindingArgs, actionArgs, sizeof(actionArgs));
+    parsedActionArgCount = 0;
+
+    if (*actionArgs != 0) {
+        const char* start = actionArgs;
+        bool done = false;
+        while (!done) {
+            const char* end = start;
+            while (*end != 0 && *end != ',')
+              end++;
+        
+            ExValue* dest = &parsedActionArgs[argnum];
+
+            // any standard library string copiers that do both source
+            // and destination limits?
+            int srclen = (int)(end - start);
+            CopyString(start, srclen, dest->getBuffer(), EX_MAX_STRING);
+
+            start = end + 1;
+            argnum++;
+            done = (*end == 0 || argnum >= MaxActionArgs);
+            overflow = (*end != 0);
+        }
+    }
+    
+    if (overflow) {
+        Trace(1, "ScriptInterpreter: Action arg limit exceeded %d\n",
+              MaxActionArgs);
+    }
+
+    parsedActionArgCount = argnum;
+    if (parsedActionArgCount > 0)
+      Trace(2, "ScriptInterpreter: Parsed %d action args\n", parsedActionArgCount);
 }
 
 Trigger* ScriptInterpreter::getTrigger()
@@ -367,7 +425,7 @@ void ScriptInterpreter::reset()
 
     // lose these I suppose?
     mRequestId = 0;
-    strcpy(actionArgs, "");
+    resetActionArgs();
 }
 
 void ScriptInterpreter::setScript(Script* s, bool inuse)
@@ -1094,17 +1152,28 @@ void ScriptInterpreter::getStackArg(ScriptStack* stack,
     }
 }
 
+/**
+ * Copy the value of one of the action arguments into the destination value.
+ * The index here is 1 based to match the reference: $1, $2, etc.
+ */
 void ScriptInterpreter::getActionArg(int index, ExValue* value)
- {
+{
     // todo: don't support indexes yet, but can access entire
     // argument string
-    if (index == 1) {
-        value->setString(actionArgs);
-    }
-    else {
+    if (index > MaxActionArgs) {
+        value->setNull();
         Trace(1, "ScriptIterpreter: Action argument reference out of range %d\n",
               index);
     }
+    else {
+        ExValue* src = &parsedActionArgs[index - 1];
+        value->setString(src->getString());
+    }
+}
+
+const char* ScriptInterpreter::getActionArgs()
+{
+    return actionArgs;
 }
 
 /**

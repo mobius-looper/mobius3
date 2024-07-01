@@ -115,7 +115,8 @@
     <Button action="SpeedToggle" arguments="12" color="-13969235"/>
     <Button action="SuSTest"/>
     <Button action="ClickTest"/>
-    <Button action="BindingArgTest" arguments="asdf"/>
+    <Button action="BindingArgTest" arguments="asdf,x,y,z"/>
+    <Button action="BindingArgTest"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>

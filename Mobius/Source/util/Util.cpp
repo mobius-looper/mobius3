@@ -74,6 +74,34 @@ void CopyString(const char* src, char* dest, int max)
 }
 
 /**
+ * Copy one string to a buffer with care.
+ * This one has limits on both the source and destination arrays,
+ * typically used when tokenizing strings like CSVs without modifying them
+ * to insert zero terminators.
+ * Is there a library function for this??
+ */
+void CopyString(const char* src, int srcchars, char* dest, int max)
+{
+	if (dest != nullptr && max > 0) {
+		if (src == nullptr)  {
+            strcpy(dest, "");
+        }
+		else {
+			int len = srcchars;
+			int avail = max - 1;
+			if (avail > len) {
+                strncpy(dest, src, srcchars);
+                dest[srcchars] = 0;
+            }
+			else {
+                strncpy(dest, src, avail);
+                dest[avail] = 0;
+            }
+		}
+	}
+}
+
+/**
  * CopyString
  *
  * Return a copy of a string allocated with new.

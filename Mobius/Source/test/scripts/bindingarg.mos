@@ -1,6 +1,6 @@
 !name BindingArgTest
 
-Echo Script received argument $1
+Echo Script received arguments $1 and $2 and $3 and $4 and $5
 
-Variable arg1 $1
-Echo Script received argument $arg1 via Variable
+#Variable arg1 $1
+#Echo Script received argument $arg1 via Variable

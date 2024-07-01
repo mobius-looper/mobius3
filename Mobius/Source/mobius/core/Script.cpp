@@ -2707,7 +2707,8 @@ ScriptStatement* ScriptWarpStatement::eval(ScriptInterpreter* si)
 {
     ScriptStatement* next = NULL;
 
-    const char* procname = si->actionArgs;
+    // todo: juse make this use a $ reference now that we have them
+    const char* procname = si->getActionArgs();
     if (strlen(procname) == 0) {
         Trace(2, "ScriptWarp: No Proc name specified\n");
     }
