@@ -151,7 +151,7 @@ void StripRotary::sliderDragEnded(juce::Slider*)
 void StripRotary::update(MobiusState* state)
 {
     if (!dragging) {
-        int tracknum = strip->getTrackNumber();
+        int tracknum = strip->getTrackIndex();
         MobiusTrackState* track = &(state->tracks[tracknum]);
 
         // subclass implements this

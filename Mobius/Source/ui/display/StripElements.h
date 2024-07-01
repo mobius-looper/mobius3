@@ -16,16 +16,20 @@ class StripTrackNumber : public StripElement
     ~StripTrackNumber();
 
     void configure() override;
+    void update(MobiusState* state);
 
     int getPreferredHeight() override;
     int getPreferredWidth() override;
     
     void paint(juce::Graphics& g) override;
     
+    void mouseDown(const class juce::MouseEvent& event);
+    
   private:
 
+    bool focusLock = false;
     juce::String trackName;
-    
+    UIAction action;
 };
 
 class StripFocusLock : public StripElement

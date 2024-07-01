@@ -1207,7 +1207,8 @@ void Supervisor::mobiusDynamicConfigChanged()
  */
 void Supervisor::mobiusAlert(juce::String msg)
 {
-    alerter.alert(mainWindow.get(), msg);
+    //alerter.alert(mainWindow.get(), msg);
+    mainWindow->alert(msg);
 }
 
 /**

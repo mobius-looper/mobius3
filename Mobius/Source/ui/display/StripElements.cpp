@@ -31,6 +31,8 @@
 StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
 {
+    action.symbol = Symbols.intern("FocusLock");
+    action.scopeTrack = parent->getTrackIndex() + 1;
 }
 
 StripTrackNumber::~StripTrackNumber()
@@ -58,7 +60,7 @@ int StripTrackNumber::getPreferredHeight()
  */
 void StripTrackNumber::configure()
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
 
     MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
     Setup* setup = config->getStartingSetup();
@@ -66,6 +68,21 @@ void StripTrackNumber::configure()
     if (track != nullptr)
       trackName = juce::String(track->getName());
 }
+
+void StripTrackNumber::update(MobiusState* state)
+{
+    int tracknum = strip->getTrackIndex();
+    MobiusTrackState* track = &(state->tracks[tracknum]);
+
+    // todo: also watch for name changes in the Setup
+    // that would eliminate the need for configure
+    
+    if (track->focusLock != focusLock) {
+        focusLock = track->focusLock;
+        repaint();
+    }
+}
+
 /**
  * drawFittedText
  * arg after justification is maximumNumberOfLines
@@ -93,21 +110,24 @@ void StripTrackNumber::configure()
  * fits mostly on one line "This is a long" will lose the left half
  * of the initial T and half of the final g.  Don't know if this is
  * an artifact of drawFittedText, or if I have bounds messed up somewhere.
- *
  */
-
 void StripTrackNumber::paint(juce::Graphics& g)
 {
+    juce::Colour textColor = juce::Colour(MobiusGreen);
+    if (focusLock)
+      textColor = juce::Colour(MobiusRed);
+
+    g.setColour(textColor);
+    
     if (trackName.length() == 0) {
         juce::Font font((float)getHeight());
 
         g.setFont(font);
-        g.setColour(juce::Colour(MobiusGreen));
 
         // if we're docked, the TrackStrip has the number
         // otherwise update must have remembered the active track
 
-        g.drawText(juce::String(strip->getTrackNumber() + 1), 0, 0, getWidth(), getHeight(),
+        g.drawText(juce::String(strip->getTrackIndex() + 1), 0, 0, getWidth(), getHeight(),
                    juce::Justification::centred);
     }
     else {
@@ -121,12 +141,29 @@ void StripTrackNumber::paint(juce::Graphics& g)
         // that will size down as necessary
 
         g.setFont(font);
-        g.setColour(juce::Colour(MobiusGreen));
-
         g.drawFittedText(trackName, 0, 0, getWidth(), getHeight(),
                          juce::Justification::centred,
                          1, // max lines
                          1.0f);
+    }
+}
+
+/**
+ * Like focus lock, this one has to deal both with making the current track
+ * active and toggling focus.
+ *
+ * Since clicking over the name is extremely common when selecting tracks,
+ * handle this in phases.  If the track is not active, just activate it without
+ * changing focus.
+ */
+void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
+{
+    if (!strip->isActive()) {
+        // superclass will activate it
+        StripElement::mouseDown(event);
+    }
+    else {
+        Supervisor::Instance->doAction(&action);
     }
 }
 
@@ -140,7 +177,9 @@ StripFocusLock::StripFocusLock(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionFocusLock)
 {
     action.symbol = Symbols.intern("FocusLock");
-    action.scopeTrack = parent->getTrackNumber();
+    // TrackStrip track numbers are zero based, should call
+    // this TrackIndex!
+    action.scopeTrack = parent->getTrackIndex() + 1;
 }
 
 StripFocusLock::~StripFocusLock()
@@ -149,17 +188,17 @@ StripFocusLock::~StripFocusLock()
 
 int StripFocusLock::getPreferredWidth()
 {
-    return 20;
+    return 14;
 }
 
 int StripFocusLock::getPreferredHeight()
 {
-    return 20;
+    return 14;
 }
 
 void StripFocusLock::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
     if (track->focusLock != focusLock) {
@@ -235,7 +274,7 @@ int StripLoopRadar::getPreferredHeight()
 
 void StripLoopRadar::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 
@@ -335,7 +374,7 @@ int StripLoopThermometer::getPreferredHeight()
 
 void StripLoopThermometer::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 
@@ -395,7 +434,7 @@ int StripOutputMeter::getPreferredHeight()
 
 void StripOutputMeter::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
     meter.update(track->outputMonitorLevel);
@@ -434,7 +473,7 @@ int StripInputMeter::getPreferredHeight()
 
 void StripInputMeter::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
     meter.update(track->inputMonitorLevel);
@@ -513,7 +552,7 @@ int StripLoopStack::getPreferredHeight()
  */
 void StripLoopStack::update(MobiusState* state)
 {
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
 
     bool needsRefresh = (strip != nullptr && strip->needsRefresh);
     
@@ -696,7 +735,7 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
 {
     dropTarget = -1;
 
-    int tracknum = strip->getTrackNumber();
+    int tracknum = strip->getTrackIndex();
     int loop = getDropTarget(x, y);
     Trace(2, "StripLoopStack: filesDropped into track %d loop %d\n", tracknum, loop);
 

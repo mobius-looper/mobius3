@@ -24,6 +24,7 @@
 
 #include "../Supervisor.h"
 
+#include "JuceUtil.h"
 #include "BasePanel.h"
 #include "AlertPanel.h"
 
@@ -31,6 +32,7 @@ void AlertPanel::show(juce::String message)
 {
     content.setMessage(message);
     content.resized();
+    JuceUtil::centerInParent(this);
     BasePanel::show();
 }
 

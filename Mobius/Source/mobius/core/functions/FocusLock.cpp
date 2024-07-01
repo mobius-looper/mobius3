@@ -54,7 +54,9 @@ Event* FocusLockFunction::invoke(Action* action, Loop* l)
     Track* t = l->getMobius()->getTrack();
     int tnum = action->getTargetTrack();
     if (tnum > 0)
-      t = l->getMobius()->getTrack(tnum);
+      // remember, action args are 1 based, internal methods use
+      // zero based indexes
+      t = l->getMobius()->getTrack(tnum - 1);
 
     if (t != nullptr)
       t->setFocusLock(!t->isFocusLock());

@@ -75,7 +75,7 @@ void TrackStrip::setFloatingConfig(int i)
  * If we follow a speicfic track return it.
  * If we're floating must have remembered it.
  */
-int TrackStrip::getTrackNumber()
+int TrackStrip::getTrackIndex()
 {
     int tnum = 0;
     if (followTrack >= 0) {
@@ -171,7 +171,7 @@ void TrackStrip::update(MobiusState* state)
     // wasy and reasonably effective
     // only do this for docked strips
     if (strips != nullptr) {
-        int tracknum = getTrackNumber();
+        int tracknum = getTrackIndex();
         MobiusTrackState* tstate = &(state->tracks[tracknum]);
         needsRefresh = tstate->needsRefresh;
         tstate->needsRefresh = false;
@@ -235,7 +235,7 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
         // action argument is the track number, 1 based
         // for some reason, the UI uses 0 based numbers with -1 meaning active
         // I guess to make it easier to use the numbers as indexes into the MobiusState track array
-        trackSelectAction.value = getTrackNumber() + 1;
+        trackSelectAction.value = getTrackIndex() + 1;
         Supervisor::Instance->doAction(&trackSelectAction);
     }
 }

@@ -70,9 +70,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
         display.setIdentifyMode(b);
     }
 
-    void alert(juce::String msg) {
-        alertPanel.show(msg);
-    }
+    void alert(juce::String msg);
     
   private:
 

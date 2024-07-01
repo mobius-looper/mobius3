@@ -28,8 +28,12 @@ class TrackStrip : public juce::Component,
     void setFloatingConfig(int i);
     void setFollowTrack(int i);
     
-    int getTrackNumber();
-
+    int getTrackIndex();
+    
+    bool isActive() {  
+        return (followTrack < 0 || activeTrack == followTrack);
+    }
+    
     int getPreferredWidth();
     int getPreferredHeight();
     

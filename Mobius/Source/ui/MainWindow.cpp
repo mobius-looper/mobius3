@@ -79,6 +79,11 @@ void MainWindow::showMainPopupMenu()
     menu.showPopupMenu();
 }
 
+void MainWindow::alert(juce::String msg)
+{
+    alertPanel.show(msg);
+}
+
 void MainWindow::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
