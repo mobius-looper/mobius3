@@ -65,6 +65,9 @@
 
 #pragma once
 
+// temporary for displayName
+#include <JuceHeader.h>
+
 #include "Trigger.h"
 #include "ActionType.h"
 #include "Structure.h"
@@ -177,10 +180,25 @@ class Binding {
     void setTrack(int t);
     void setGroup(int g);
 
-    // kludge: transient id number set during editing to correlate
+    // temporary DisplayButton kludge
+    // Action buttons in the UI are sort of like bindings in that
+    // they have target, scope, and arguments but don't have a trigger
+    // since the button itself is an implicit trigger.  Because of this
+    // I've been using some of the same UI machinery used to edit regular
+    // Bindings, with the DisplayButton model being converted to a Binding list
+    // for editing, then back to a DisplayButton list when saving.
+    // DisplayButton has things that Binding doesn't have though, and these
+    // differences are going to grow.  Eventually the Button panel needs to be it's
+    // own independent editor, but until then we store a few things temporarily
+    // on the Binding during editing that won't actually be used at runtime.
+    
+    // transient id number set during editing to correlate
     // this Binding object with something else, notably a DisplayButton
     int id = 0;
 
+    // transient display name for the DisplayButton
+    juce::String displayName;
+    
   private:
 
     void parseScope();

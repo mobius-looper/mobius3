@@ -156,7 +156,16 @@ void AudioManager::openAudioDevice()
         }
         
         // save the modified setup back into the custom ADM
-        deviceManager->setAudioDeviceSetup(setup, true);
+        juce::String error = deviceManager->setAudioDeviceSetup(setup, true);
+        if (error.length() > 0) {
+            juce::String msg = "Error initializing audio device: " + error;
+            supervisor->alert(msg);
+
+            // this started happening with the RME on startup
+            // not always, maybe after stopping abruptly in the debugger
+            // once this happens, it seems to stick until you restart the RME
+            startupError = true;
+        }
     }
     
     // phase 3: open the device we just specified
@@ -188,6 +197,10 @@ void AudioManager::openAudioDevice()
  * Capture the ending device state in the DeviceConfig so it can be used
  * on the next run.  This picks up any changes made in the Audio Devices
  * panel at runtime.
+ *
+ * Be careful not to trash the devices.xml file if there were errors
+ * at startup that weren't corrected in the AudioDevices panel.
+ *
  */
 void AudioManager::captureDeviceState(DeviceConfig* config)
 {
@@ -205,55 +218,66 @@ void AudioManager::captureDeviceState(DeviceConfig* config)
         Trace(2, "Block size: %d\n", (int)(setup.bufferSize));
     }
 
-    MachineConfig* machine = config->getMachineConfig();
-    // remember if we had to bootstrap port counts
-    if (machine->inputPorts == 0) machine->inputPorts = 1;
-    if (machine->outputPorts == 0) machine->outputPorts = 1;
-    
-    // if device channels were enabled or disabled at runtime,
-    // adjust the port counts so that it is high enough to accomodate
-    // all of the enabled channels and low enough that we won't auto-activate
-    // channels that were not selected at runtime
-    int channels = setup.inputChannels.countNumberOfSetBits();
-    // assuming you can only select stereo channel sets, if you select/deselect mono
-    // channels, there will br rouding errors and your mood will sour
-    int ports = channels / 2;
-    if (ports != machine->inputPorts) {
-        Trace(2, "AudioManager: Adjusting input port count from %d to %d\n",
-              machine->inputPorts, ports);
-        machine->inputPorts = ports;
+    if (deviceManager->getCurrentAudioDeviceType().length() == 0) {
+        Trace(1, "AudioManager: Suppressing devices.xml update: no device type");
     }
-    
-    channels = setup.outputChannels.countNumberOfSetBits();
-    ports = channels / 2;
-    if (ports != machine->outputPorts) {
-        Trace(2, "AudioManager: Adjusting output port count from %d to %d\n",
-              machine->outputPorts, ports);
-        machine->outputPorts = ports;
+    else if (setup.inputDeviceName.length() == 0) {
+        Trace(1, "AudioManager: Suppressing devices.xml update: no input device");
     }
+    else if (setup.outputDeviceName.length() == 0) {
+        Trace(1, "AudioManager: Suppressing devices.xml update: no output device");
+    }
+    else {
+        MachineConfig* machine = config->getMachineConfig();
+        // remember if we had to bootstrap port counts
+        if (machine->inputPorts == 0) machine->inputPorts = 1;
+        if (machine->outputPorts == 0) machine->outputPorts = 1;
+    
+        // if device channels were enabled or disabled at runtime,
+        // adjust the port counts so that it is high enough to accomodate
+        // all of the enabled channels and low enough that we won't auto-activate
+        // channels that were not selected at runtime
+        int channels = setup.inputChannels.countNumberOfSetBits();
+        // assuming you can only select stereo channel sets, if you select/deselect mono
+        // channels, there will br rouding errors and your mood will sour
+        int ports = channels / 2;
+        if (ports != machine->inputPorts) {
+            Trace(2, "AudioManager: Adjusting input port count from %d to %d\n",
+                  machine->inputPorts, ports);
+            machine->inputPorts = ports;
+        }
+    
+        channels = setup.outputChannels.countNumberOfSetBits();
+        ports = channels / 2;
+        if (ports != machine->outputPorts) {
+            Trace(2, "AudioManager: Adjusting output port count from %d to %d\n",
+                  machine->outputPorts, ports);
+            machine->outputPorts = ports;
+        }
 
-    machine->audioDeviceType = deviceManager->getCurrentAudioDeviceType();
-    machine->audioInput = setup.inputDeviceName;
-    machine->audioOutput = setup.outputDeviceName;
-    machine->sampleRate = (int)(setup.sampleRate);
-    machine->blockSize = (int)(setup.bufferSize);
-    machine->inputChannels = setup.inputChannels.toString(2);
-    machine->outputChannels = setup.outputChannels.toString(2);
+        machine->audioDeviceType = deviceManager->getCurrentAudioDeviceType();
+        machine->audioInput = setup.inputDeviceName;
+        machine->audioOutput = setup.outputDeviceName;
+        machine->sampleRate = (int)(setup.sampleRate);
+        machine->blockSize = (int)(setup.bufferSize);
+        machine->inputChannels = setup.inputChannels.toString(2);
+        machine->outputChannels = setup.outputChannels.toString(2);
 
-    // experimented with this too, it seems to get at least some of it
-    // but you can't easily embed this XML inside other XML without
-    // CDATA sections and I don't want to mess with that
-    bool saveAudioXml = false;
-    if (saveAudioXml) {
-        Trace(2, "createStateXml\n");
-        // this maddingly returns nullptr unless you made a change at runtime
-        // otherwise it defaulted and wants you to default again I guess
-        //juce::String error = deviceManager->setAudioDeviceSetup(setup, true);
-        std::unique_ptr<juce::XmlElement> xml = deviceManager->createStateXml();
-        if (xml != nullptr) {
-            juce::String xmlstring = xml->toString();
-            juce::File file = supervisor->getRoot().getChildFile("audioState.xml");
-            file.replaceWithText(xmlstring);
+        // experimented with this too, it seems to get at least some of it
+        // but you can't easily embed this XML inside other XML without
+        // CDATA sections and I don't want to mess with that
+        bool saveAudioXml = false;
+        if (saveAudioXml) {
+            Trace(2, "createStateXml\n");
+            // this maddingly returns nullptr unless you made a change at runtime
+            // otherwise it defaulted and wants you to default again I guess
+            //juce::String error = deviceManager->setAudioDeviceSetup(setup, true);
+            std::unique_ptr<juce::XmlElement> xml = deviceManager->createStateXml();
+            if (xml != nullptr) {
+                juce::String xmlstring = xml->toString();
+                juce::File file = supervisor->getRoot().getChildFile("audioState.xml");
+                file.replaceWithText(xmlstring);
+            }
         }
     }
 }

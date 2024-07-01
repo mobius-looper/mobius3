@@ -432,6 +432,9 @@ void Supervisor::shutdown()
     midiRealizer.shutdown();
     midiManager.shutdown();
 
+    // have to do this while Mobius is still alive
+    saveSession();
+
     Trace(2, "Supervisor: Stopping Mobius engine\n");
     // used to be a singleton with MobiusInterface::shutdown()
     // now we just delete it, should also be a unique_ptr
@@ -479,6 +482,65 @@ void Supervisor::shutdown()
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
+}
+
+/**
+ * Determine the active Setup being used by the engine.
+ * This is used both by Supervisor so we can save it in
+ * MobiusConfig, and eventualy a new session object on shutdown,
+ * and also by MainMenu to show a tick next to the active setup.
+ */
+int Supervisor::getActiveSetup()
+{
+    int ordinal = -1;
+    // !! where is the name constant for this?
+    Symbol* s = Symbols.intern("activeSetup");
+    if (s->parameter != nullptr) {
+        Query q (s);
+        if (mobius->doQuery(&q))
+          ordinal = q.value;
+    }
+    return ordinal;
+}
+
+/**
+ * Determine the active Preset being used by the active track.
+ * Used by MainMenu to show a tick in the menu.
+ */
+int Supervisor::getActivePreset()
+{
+    int ordinal = -1;
+    // todo: do we show the activePreset in the activeTrack
+    // or do we show the defaultPreset in global config?
+    // active makes the most sense
+    Symbol* s = Symbols.intern("activePreset");
+    if (s->parameter != nullptr) {
+        Query q(s);
+        if (mobius->doQuery(&q))
+          ordinal = q.value;
+    }
+    return ordinal;
+}
+
+/**
+ * Emergine "session" concept that at the moment just consists of
+ * saving the active setup on shutdown.
+ * Since we don't have a session object, this goes in the MobiusConfig.
+ */
+void Supervisor::saveSession()
+{
+    int active = getActiveSetup();
+    if (active >= 0) {
+        // try not to rewrite mobius.xml if we stayed on the starting setup
+        MobiusConfig* mconfig = getMobiusConfig();
+        Setup* setup = mconfig->getSetup(active);
+        
+        const char* starting = mconfig->getStartingSetupName();
+        if (!StringEqual(setup->getName(), starting)) {
+            mconfig->setStartingSetupName(setup->getName());
+            writeMobiusConfig(mconfig);
+        }
+    }
 }
 
 /**

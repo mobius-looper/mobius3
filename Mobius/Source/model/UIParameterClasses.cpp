@@ -30,34 +30,6 @@
 //******************** global
 
 
-////////////// StartingSetup
-
-class UIParameterStartingSetupClass : public UIParameter
-{
-  public:
-    UIParameterStartingSetupClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterStartingSetupClass::UIParameterStartingSetupClass()
-{
-    name = "startingSetup";
-    displayName = "Starting Setup";
-    scope = ScopeGlobal;
-    type = TypeStructure;
-    noBinding = true;
-}
-void UIParameterStartingSetupClass::getValue(void* obj, ExValue* value)
-{
-    value->setString(((MobiusConfig*)obj)->getStartingSetupName());
-}
-void UIParameterStartingSetupClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setStartingSetupName(value->getString());
-}
-UIParameterStartingSetupClass UIParameterStartingSetupObj;
-UIParameter* UIParameterStartingSetup = &UIParameterStartingSetupObj;
-
 ////////////// ActiveSetup
 
 class UIParameterActiveSetupClass : public UIParameter

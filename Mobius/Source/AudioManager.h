@@ -22,7 +22,8 @@ class AudioManager
   private:
 
     class Supervisor* supervisor;
-
+    bool startupError = false;
+    
     void openAudioDevice();
 
 };

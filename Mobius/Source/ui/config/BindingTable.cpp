@@ -409,8 +409,7 @@ juce::String BindingTable::getCellText(int row, int columnId)
         cell = juce::String(b->getArguments());
     }
     else if (columnId == DisplayNameColumn) {
-        // subclass must implement this
-        cell = listener->getDisplayName(b);
+        cell = b->displayName;
     }
 
     return cell;

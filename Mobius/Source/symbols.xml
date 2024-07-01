@@ -131,6 +131,8 @@
 
   <ParameterScope name='global'>
 
+    <!-- this is NOT a parameter, it's a session property that is used on
+         startup and saved on shutdown, you can't bind to it or change it at runtime
     <Parameter name='startingSetup'
                type='structure' structureClass='Setup'
                codeName='StartingSetupName'
@@ -140,17 +142,23 @@
       at all since the value will be set as a side effect of the main menu, or when
       selecting among available presets in the configuration UI.  The fields for that
       are not generated from a UIParameter definition.
-    </Parameter>
+      </Parameter>
+      -->
 
+    <!--
+        Revisit whether this should be bindable.
+        This one behaves differently than most global parameters, it's more like a "session"
+        property that just remembers what the last setup was on shutdown and restores
+        that on startup.  I decided to take out startingSetup for that reason too.
+        This is part of the evolving "session" concept.  
+    -->
     <Parameter name='activeSetup' coreName='setup'
                type='structure' structureClass='Setup'
                options='noBinding,transient'>
       This is a runtime parameter that has no structure equivalent.  It may be referenced
       from a script to change the active setup with "set setup foo".  This change is
-      will persist for the duration of the runtime session, but will not be saved in
-      the mobius.xml file and will be lost on restart.  It will be hidden from the
-      binding UI to avoid confusion since the most convenient way to change setups is
-      with special actions with BehaviorActivation.
+      will persist for the duration of the runtime.  On shutdown it will be saved
+      in mobius.xml as "startingSetup".
     </Parameter>
 
     <Parameter name='defaultPreset'

@@ -175,6 +175,13 @@ void TrackParameter::doFunction(Action* action, Function* func)
 //
 //////////////////////////////////////////////////////////////////////
 
+// another funny one
+// You can set trackName from a script, but it won't actually be displayed
+// in the UI because that just shows what is in the SetupTrack and that
+// isn't (what it ever) changed as a side effect of runtime changes
+// it won't be persisted even if it was, so is that even useful?
+//
+
 class TrackNameParameterType : public TrackParameter
 {
   public:

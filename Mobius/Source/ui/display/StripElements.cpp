@@ -60,13 +60,9 @@ int StripTrackNumber::getPreferredHeight()
  */
 void StripTrackNumber::configure()
 {
-    int tracknum = strip->getTrackIndex();
-
-    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
-    Setup* setup = config->getStartingSetup();
-    SetupTrack* track = setup->getTrack(tracknum);
-    if (track != nullptr)
-      trackName = juce::String(track->getName());
+    // could refresh the name here, but just reset the setup ordinal
+    // so we pick it up on the next update
+    setupOrdinal = -1;
 }
 
 void StripTrackNumber::update(MobiusState* state)
@@ -74,13 +70,29 @@ void StripTrackNumber::update(MobiusState* state)
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
-    // todo: also watch for name changes in the Setup
-    // that would eliminate the need for configure
+    bool needsRepaint = false;
+
+    // whenever the setup changes, refresh the name
+    if (setupOrdinal != state->setupOrdinal) {
+        trackName = "";
+        MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+        Setup* setup = config->getSetup(state->setupOrdinal);
+        if (setup != nullptr) {
+            SetupTrack* st = setup->getTrack(tracknum);
+            if (st != nullptr)
+              trackName = juce::String(st->getName());
+        }
+        setupOrdinal = state->setupOrdinal;
+        needsRepaint = true;
+    }
     
     if (track->focusLock != focusLock) {
         focusLock = track->focusLock;
-        repaint();
+        needsRepaint = true;
     }
+
+    if (needsRepaint)
+      repaint();
 }
 
 /**

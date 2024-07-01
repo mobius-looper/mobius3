@@ -186,8 +186,7 @@ Structure* UIParameter::getStructureList(MobiusConfig* container)
 
         list = container->getPresets();
     }
-    else if (this == UIParameterStartingSetup ||
-             this == UIParameterActiveSetup) {
+    else if (this == UIParameterActiveSetup) {
         
         list = container->getSetups();
     }

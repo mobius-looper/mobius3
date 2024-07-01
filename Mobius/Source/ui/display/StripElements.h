@@ -28,6 +28,7 @@ class StripTrackNumber : public StripElement
   private:
 
     bool focusLock = false;
+    int setupOrdinal = -1;
     juce::String trackName;
     UIAction action;
 };

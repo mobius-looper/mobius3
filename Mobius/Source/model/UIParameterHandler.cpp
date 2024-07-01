@@ -17,10 +17,6 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
 
         /* Global */
         
-        case UIParameterIdStartingSetup:
-            value->setString(((MobiusConfig*)obj)->getStartingSetupName());
-            break;
-            
         case UIParameterIdActiveSetup:
             break;
             
@@ -464,10 +460,6 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
         
         /* Global */
         
-        case UIParameterIdStartingSetup:
-            ((MobiusConfig*)obj)->setStartingSetupName(value->getString());
-            break;
-            
         case UIParameterIdActiveSetup:
             break;
             

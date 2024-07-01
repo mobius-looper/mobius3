@@ -81,9 +81,10 @@ Binding::Binding(Binding* src)
     // effect of setScope if we can, if not
     // should we trust the src?
 
-    // need this for the BindingTable
+    // temporary transient fields for DisplayButton
     id = src->id;
-
+    displayName = src->displayName;
+    
     // mSource is a transient information field for
     // the InfoPanel and does not need to be copied
 }

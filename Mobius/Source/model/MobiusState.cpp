@@ -115,6 +115,7 @@ void MobiusState::init()
     globalRecording = false;
     activeTrack = 0;
     trackCount = 0;
+    setupOrdinal = 0;
     for (int i = 0 ; i < MobiusStateMaxTracks ; i++)
       tracks[i].init();
 };

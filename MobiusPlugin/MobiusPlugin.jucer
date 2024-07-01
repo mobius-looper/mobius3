@@ -109,6 +109,8 @@
         <FILE id="Iz2C4a" name="SampleConfig.h" compile="0" resource="0" file="../Mobius/Source/model/SampleConfig.h"/>
         <FILE id="DXRXKC" name="SampleProperties.h" compile="0" resource="0"
               file="../Mobius/Source/model/SampleProperties.h"/>
+        <FILE id="yTKcZd" name="Scope.cpp" compile="1" resource="0" file="../Mobius/Source/model/Scope.cpp"/>
+        <FILE id="lVbls7" name="Scope.h" compile="0" resource="0" file="../Mobius/Source/model/Scope.h"/>
         <FILE id="kkafyc" name="ScriptConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/ScriptConfig.cpp"/>
         <FILE id="bnKFYG" name="ScriptConfig.h" compile="0" resource="0" file="../Mobius/Source/model/ScriptConfig.h"/>
@@ -498,6 +500,10 @@
                 file="../Mobius/Source/mobius/core/ScriptCompiler.cpp"/>
           <FILE id="lSvfYk" name="ScriptCompiler.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/core/ScriptCompiler.h"/>
+          <FILE id="TQDozZ" name="ScriptInterpreter.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/core/ScriptInterpreter.cpp"/>
+          <FILE id="Wv0lGO" name="ScriptInterpreter.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/core/ScriptInterpreter.h"/>
           <FILE id="TgYTP2" name="ScriptRuntime.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/core/ScriptRuntime.cpp"/>
           <FILE id="g5fkwZ" name="ScriptRuntime.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/ScriptRuntime.h"/>

@@ -71,6 +71,12 @@ BindingEditor::~BindingEditor()
  * ConfigPanel overload to prepare the panel to be shown.
  * Make copies of all the BindingSets in bindingSets and revertBindingSets.
  * Load the first BindingSet into the BindingTable.
+ *
+ * As the form is edited, changes are made to the model in the TABLE,
+ * not the model that is in the bindingSets array.  This is unlike
+ * Preset and others where modifications are made directly into the BindingEditor
+ * object list.  This means we have two copies of Bindings and you need to
+ * be careful about which is used.
  */
 void BindingEditor::load()
 {
@@ -95,6 +101,7 @@ void BindingEditor::load()
         config->setBindingSets(setlist);
     }
 
+    // copy all the BindingSets in the source
     while (setlist != nullptr) {
         BindingSet* set = new BindingSet(setlist);
 
@@ -109,6 +116,7 @@ void BindingEditor::load()
     }
         
     selectedBindingSet = 0;
+    // make another copy of the Binding list into the table
     loadBindingSet(selectedBindingSet);
 
     refreshObjectSelector();

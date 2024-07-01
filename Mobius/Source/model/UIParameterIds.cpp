@@ -8,7 +8,6 @@
 
 UIParameterName UIParameterRegistry[] = {
 
-    {"startingSetup", UIParameterIdStartingSetup},
     {"activeSetup", UIParameterIdActiveSetup},
     {"defaultPreset", UIParameterIdDefaultPreset},
     {"activeOverlay", UIParameterIdActiveOverlay},

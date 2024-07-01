@@ -3,6 +3,15 @@
  * since we're not working from the BindingSet model inside the MobiusConfig.
  * Instead we load/save from the UIConfig/ButtonSet model and do a runtime
  * conversion of that to make it look like BindingSet for the BindingTable.
+ *
+ * This lets us reuse the BindingEditor componentry which is nice, but the
+ * two models are starting to diverge, first with DisplayButton.displayName
+ * and eventuall colors and other things.  This really needs to be redesigned
+ * to not reuse BindingEditor since the differences will grow and it's kludgey
+ * right now.
+ *
+ * We have to save temporary transient fields on Binding that are relevant only
+ * during DisplayButton editing.
  */
 
 #include <JuceHeader.h>
@@ -183,6 +192,12 @@ void ButtonEditor::loadButtons(int index)
                 
             if (button->arguments.length() > 0)
               b.setArguments(button->arguments.toUTF8());
+
+            // transient field just for the display name
+            // since this uses juce::String it will be copied
+            // and destructed automagically
+            b.displayName = button->name;
+            
             // table will copy
             bindings.add(&b);
         }
@@ -241,6 +256,7 @@ void ButtonEditor::saveButtons(int index)
         match->action = binding->getSymbolName();
         match->arguments = binding->getArguments();
         match->scope = binding->getScope();
+        match->name = binding->displayName;
 
         binding = binding->getNext();
     }
@@ -364,34 +380,9 @@ void ButtonEditor::addSubclassFields()
     form.add(displayName);
 }
 
-/**
- * Locate the DisplayButton that corresponds to this Binding in the table
- * The binding will have the true target name.
- */
-DisplayButton* ButtonEditor::getDisplayButton(Binding* binding)
-{
-    DisplayButton* button = nullptr;
-
-    // juce dies if you use == on a String and nullptr
-    // symbol name can be null for new empty bindings
-    const char* symbolName = binding->getSymbolName();
-    if (symbolName != nullptr) {
-        ButtonSet* set = buttons[selectedButtons];
-        for (auto b : set->buttons) {
-            if (b->action == juce::String(symbolName)) {
-                button = b;
-                break;
-            }
-        }
-    }
-    return button;
-}
-            
 void ButtonEditor::refreshSubclassFields(Binding* b)
 {
-    DisplayButton* button = getDisplayButton(b);
-    if (button != nullptr) 
-      displayName->setValue(button->name);
+    displayName->setValue(b->displayName);
 }
 
 void ButtonEditor::captureSubclassFields(class Binding* b)
@@ -399,30 +390,13 @@ void ButtonEditor::captureSubclassFields(class Binding* b)
     // not necessary, but continue with this in case something
     // needs a Trigger
     b->trigger = TriggerUI;
-
-    juce::String dname = displayName->getValue().toString();
-    DisplayButton* button = getDisplayButton(b);
-    if (button != nullptr)
-      button->name = dname;
+    
+    b->displayName = displayName->getValue().toString();
 }
 
 void ButtonEditor::resetSubclassFields()
 {
     displayName->setValue("");
-}
-
-/**
- * Unusual overload just for buttons since the other triggers
- * aren't visible.
- */
-juce::String ButtonEditor::getDisplayName(Binding* b)
-{
-    juce::String buttonDisplayName;
-    // can be nullptr if this is new
-    DisplayButton* button = getDisplayButton(b);
-    if (button != nullptr)
-      buttonDisplayName = button->name;
-    return buttonDisplayName;
 }
 
 /****************************************************************************/

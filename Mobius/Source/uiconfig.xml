@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1262" windowHeight="812" activeButtonSet="Default"
+<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
@@ -96,6 +96,7 @@
   </Layout>
   <ButtonSet name="Default">
     <Button action="GlobalReset" color="-13969235"/>
+    <Button action="TrackReset"/>
     <Button action="Reset"/>
     <Button action="Record"/>
     <Button action="Overdub" color="-15707416"/>
@@ -106,17 +107,13 @@
     <Button action="Reverse"/>
     <Button action="Halfspeed"/>
     <Button action="Multiply"/>
-    <Button action="SelectLoop" arguments="1"/>
-    <Button action="SelectLoop" arguments="2"/>
-    <Button action="Realign"/>
-    <Button action="Undo"/>
     <Button action="SamplePlay" arguments="1"/>
-    <Button action="SpeedToggle" arguments="-12" color="-13969235"/>
-    <Button action="SpeedToggle" arguments="12" color="-13969235"/>
     <Button action="SuSTest"/>
     <Button action="ClickTest"/>
     <Button action="BindingArgTest" arguments="asdf,x,y,z"/>
     <Button action="BindingArgTest"/>
+    <Button action="MainTap Track1"/>
+    <Button action="Setup Name Test"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>

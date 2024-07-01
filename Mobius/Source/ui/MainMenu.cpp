@@ -156,17 +156,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         
         Supervisor* supervisor = Supervisor::Instance;
+        int active = supervisor->getActiveSetup();
         MobiusConfig* config = supervisor->getMobiusConfig();
         Setup* setup = config->getSetups();
-        int active = -1;
-        // !! where is the name constant for this?
-        Symbol* s = Symbols.intern("activeSetup");
-        if (s->parameter != nullptr) {
-            MobiusInterface* mobius = supervisor->getMobius();
-            Query q (s);
-            if (mobius->doQuery(&q))
-              active = q.value;
-        }
         int index = 0;
         while (setup != nullptr) {
             juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(setup->getName()));
@@ -185,19 +177,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
 
         Supervisor* supervisor = Supervisor::Instance;
+        int active = supervisor->getActivePreset();
         MobiusConfig* config = supervisor->getMobiusConfig();
         Preset* preset = config->getPresets();
-        int active = -1;
-        // todo: do we show the activePreset in the activeTrack
-        // or do we show the defaultPreset in global config?
-        // active makes the most sense
-        Symbol* s = Symbols.intern("activePreset");
-        if (s->parameter != nullptr) {
-            MobiusInterface* mobius = supervisor->getMobius();
-            Query q(s);
-            if (mobius->doQuery(&q))
-              active = q.value;
-        }
         int index = 0;
         while (preset != nullptr) {
             juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(preset->getName())).setID(MenuPresetOffset + index);

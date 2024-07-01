@@ -185,6 +185,10 @@ class Supervisor : public MobiusContainer, public MobiusListener
     juce::String getParameterLabel(class Symbol* s, int ordinal);
     int getParameterMax(class Symbol* s);
 
+    // special accessors for things deep within the engine
+    int getActiveSetup();
+    int getActivePreset();
+
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
     
@@ -340,6 +344,8 @@ class Supervisor : public MobiusContainer, public MobiusListener
     
     class UIConfig* readUIConfig();
     void writeUIConfig(class UIConfig* config);
+
+    void saveSession();
 
     // Listener notification
     void notifyAlertListeners(juce::String msg);

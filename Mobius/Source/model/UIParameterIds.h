@@ -10,7 +10,6 @@ typedef enum {
 
     /* Global */
     
-    UIParameterIdStartingSetup,
     UIParameterIdActiveSetup,
     UIParameterIdDefaultPreset,
     UIParameterIdActiveOverlay,

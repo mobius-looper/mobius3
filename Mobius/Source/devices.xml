@@ -7,8 +7,7 @@
            outputChannels="11" sampleRate="48000" blockSize="480"/>
   <Machine hostName="Thor" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
            audioInput="ASIO Fireface USB" inputChannels="11" audioOutput="ASIO Fireface USB"
-           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2,Midi Fighter Twister"
-           midiOutput="Arturia MiniLab mkII,HST 1,HST 2,Bome MIDI Translator 1"/>
+           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2,Midi Fighter Twister"/>
   <Machine hostName="Frigg" inputPorts="0" outputPorts="1" audioDeviceType="CoreAudio"
            audioInput="MacBook Pro Microphone" inputChannels="1" audioOutput="MacBook Pro Speakers"
            outputChannels="11" sampleRate="48000" blockSize="256"/>

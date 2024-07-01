@@ -82,6 +82,7 @@ class GlobalParameter : public Parameter {
 
     /**
      * These must always be overloaded.
+     * update: which is stupid because some now overload Export so it doesn't need to
      */
 	virtual void getValue(MobiusConfig* c, ExValue* value) = 0;
 	virtual void setValue(MobiusConfig* c, ExValue* value) = 0;
@@ -190,13 +191,35 @@ int GlobalParameter::getOrdinalValue(MobiusConfig* c)
 //
 //////////////////////////////////////////////////////////////////////
 
+// This one is important and awkward
+//
+// The name "setup" is used everywhere in test scripts and probably
+// user scripts.  It was a bindable parameter though don't know how often
+// that was used.
+//
+// In the olden code, this both set the active setup and saved it in the
+// MobiusConfig which was authoritative.  The notion of what the active setup
+// means is different now, it's not really a MobiusConfig parameter, it's more of
+// a session parameter that needs to be saved somewhere on exit, but you don't go
+// to the global parameters panel and change the Active Setup parameter, you pick
+// it from a manu or from a script, or other ways.  Since this is still the
+// way we deal with changing setups from the UI and scripts, need to keep it,
+// but it won't be edited in MobiusConfig any more.
+//
+// Now we always go to the "live" model which is Mobius->getSetup
+//
+
 class SetupNameParameterType : public GlobalParameter
 {
   public:
 	SetupNameParameterType();
 
 	void setValue(Action* action);
-	void getValue(MobiusConfig* c, ExValue* value);
+	void getValue(Export* exp, ExValue* value) override;
+    int getOrdinalValue(Export* exp);
+
+    // have to define these, but they're not used
+    void getValue(MobiusConfig* c, ExValue* value);
 	void setValue(MobiusConfig* c, ExValue* value);
     int getOrdinalValue(MobiusConfig* c);
 
@@ -213,14 +236,19 @@ SetupNameParameterType::SetupNameParameterType() :
 	dynamic = true;
 }
 
+// These can't be used for editing the MobiusConfig any more
+// we shouldn't be calling them
+
 int SetupNameParameterType::getOrdinalValue(MobiusConfig* c)
 {
+    Trace(1, "SetupNameParameter::getOrdinalValue Who called this?");
     Setup* setup = c->getStartingSetup();
     return setup->ordinal;
 }
 
 void SetupNameParameterType::getValue(MobiusConfig* c, ExValue* value)
 {
+    Trace(1, "SetupNameParameter::getValue Who called this?");
     Setup* setup = c->getStartingSetup();
 	value->setString(setup->getName());
 }
@@ -228,9 +256,13 @@ void SetupNameParameterType::getValue(MobiusConfig* c, ExValue* value)
 /**
  * For scripts accept a name or a number.
  * Number is 1 based like SetupNumberParameter.
+ *
+ * Scripts should use Action now
  */
 void SetupNameParameterType::setValue(MobiusConfig* c, ExValue* value)
 {
+    Trace(1, "SetupNameParameter::setValue Who called this?");
+    
     Setup* setup = NULL;
 
     if (value->getType() == EX_INT)
@@ -243,14 +275,35 @@ void SetupNameParameterType::setValue(MobiusConfig* c, ExValue* value)
       c->setStartingSetupName(setup->getName());
 }
 
+int SetupNameParameterType::getOrdinalValue(Export* exp)
+{
+    Mobius* m = (Mobius*)exp->getMobius();
+    Setup* setup = m->getSetup();
+
+    // sigh, setup->ordinal is unreliable, have to refresh
+    // fugly dependencies on Setup being inside MobiusConfig,
+    // why was ordinal broken?
+    MobiusConfig* config = m->getConfiguration();
+    Structure::ordinate(config->getSetups());
+    return setup->ordinal;
+}
+
 /**
- * For bindings, we not only update the config object, we also propagate
- * the change through the engine.
- * For scripts accept a name or a number.
+ * Unusual GlobalParameter override to get the value raw and live from Mobius
+ * rather than MobiusConfig.
+ */
+void SetupNameParameterType::getValue(Export* exp, ExValue* value)
+{
+    Mobius* m = (Mobius*)exp->getMobius();
+    Setup* setup = m->getSetup();
+    value->setString(setup->getName());
+}
+
+/**
+ * Here for scripts and for bindings if we expose them.
+ * This is now a transient session parameter that will be persisted
+ * on shutdown, possibly in MobiusConfig but maybe elsewhere.
  * Number is 1 based like SetupNumberParameter.
- *
- * This is one of the rare overloads to get the Action so we
- * can check the trigger.
  */
 void SetupNameParameterType::setValue(Action* action)
 {
@@ -267,17 +320,17 @@ void SetupNameParameterType::setValue(Action* action)
           setup = config->getSetup(action->arg.getString());
 
         if (setup != NULL) {
-            // Set the external one so that if you open the setup
-            // window you'll see the one we're actually using selected.
-            // in theory we could be cloning this config at the same time
-            // while opening the setup window but worse case it just gets
-            // the wrong selection.
-
-            // !! allocates memory
-            config->setStartingSetupName(setup->getName());
-
-            // then set the one we're actually using internally
+            
             m->setActiveSetup(setup->ordinal);
+
+            // historically we have saved this in MobiusConfig
+            // which we still can but it won't be saved in a file
+            // Supervisor handles that in the "session" save
+
+            // it MIGHT be important to have this for old code
+            // that looked here but since changing the name to StartingSetup
+            // I don't think there is any
+            config->setStartingSetupName(setup->getName());
         }
     }
 }
@@ -378,7 +431,6 @@ void SetupNumberParameterType::setValue(Action* action)
     Setup* setup = config->getSetup(index);
 
     if (setup != NULL) {
-        // we're always in the interrupt so can set it now
         m->setActiveSetup(index);
     }
 }

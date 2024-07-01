@@ -381,6 +381,9 @@ class MobiusState
     // index of the active track
     int activeTrack;
 
+    // ordinal of the active setup
+    int setupOrdinal = 0;
+
     // state for each track
     MobiusTrackState tracks[MobiusStateMaxTracks];
 

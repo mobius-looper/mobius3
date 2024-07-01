@@ -34,14 +34,12 @@ class ButtonEditor : public BindingEditor
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
-    juce::String getDisplayName(class Binding* b) override;
     
   private:
 
     void refreshObjectSelector();
     void loadButtons(int index);
     void saveButtons(int index);
-    class DisplayButton* getDisplayButton(class Binding* binding);
     
     juce::OwnedArray<class ButtonSet> buttons;
     // another copy for revert, don't need this as much for buttons

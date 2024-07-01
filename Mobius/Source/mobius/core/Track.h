@@ -80,6 +80,10 @@ class Track : public TraceContext
     void setOutputPort(int p) {
         mOutputPort = p;
     }
+
+    // used for sync parameters rather than having
+    // to maintain a local copy
+    SetupTrack* getSetup();
     
 	void setHalting(bool b);
 
@@ -137,7 +141,7 @@ class Track : public TraceContext
 	void setFocusLock(bool b);
 	bool isFocusLock();
 
-    void setSetup(class Setup* setup);
+    void propagateSetup(class Setup* setup);
 	void setPreset(class Preset* p);
 	void setPreset(int number);
 	class Preset* getPreset();
@@ -147,7 +151,6 @@ class Track : public TraceContext
 	//
 
 	Mobius* getMobius();
-    SetupTrack* getSetup();
     class SyncState* getSyncState();
 	class Synchronizer* getSynchronizer();
     class EventManager* getEventManager();
@@ -278,7 +281,7 @@ class Track : public TraceContext
 	void init(Mobius* mob, class Synchronizer* sync, int number);
     class Preset* getStartingPreset(MobiusConfig* config, Setup* setup);
     void doPendingConfiguration();
-    void setSetup(class Setup* setup, bool doPreset);
+    void propagateSetup(class Setup* setup, bool doPreset);
 	void resetParameters(class Setup* setup, bool global, bool doPreset);
 	void resetPorts(class SetupTrack* st);
 	void trackReset(class Action* action);
@@ -307,8 +310,8 @@ class Track : public TraceContext
 	class Mobius* mMobius;
 	class Synchronizer* mSynchronizer;
     class SyncState*  mSyncState;
+    class SetupTrack* mSetupCache = nullptr;
     class EventManager* mEventManager;
-    class SetupTrack* mSetup;
 	class InputStream* mInput;
 	class OutputStream* mOutput;
 	//class CriticalSection* mCsect;
@@ -330,10 +333,6 @@ class Track : public TraceContext
 	bool		mGlobalMute;
 	bool 		mSolo;
     bool        mThroughMonitor = false;
-	// used to cycle between a "full reset" and a "setup reset"
-	// in theory can have more than one config we cycle through, 
-    // but only two now
-	int			mResetConfig;
 	int         mInputLevel;
 	int         mOutputLevel;
 	int         mFeedbackLevel;

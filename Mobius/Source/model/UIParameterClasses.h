@@ -13,7 +13,6 @@
 
 /*** GENERATED ***/
 
-extern class UIParameter* UIParameterStartingSetup;
 extern class UIParameter* UIParameterActiveSetup;
 extern class UIParameter* UIParameterDefaultPreset;
 extern class UIParameter* UIParameterActiveOverlay;

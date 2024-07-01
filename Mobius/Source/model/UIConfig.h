@@ -257,6 +257,7 @@ class ButtonSet
     juce::OwnedArray<DisplayButton> buttons;
     
     DisplayButton* getButton(juce::String id, juce::String scope, juce::String arguments);
+    DisplayButton* getButton(class Binding* binding);
     DisplayButton* getButton(class UIAction* action);
     DisplayButton* getButton(DisplayButton* src);
 };

@@ -264,6 +264,11 @@ void Mobius::initialize(MobiusConfig* config)
         mConfig->setTracks(newCount);
     }
 
+    // having difficulty getting Setup and Preset ordinals set reliably,
+    // make sure that's done whenever we update
+    Structure::ordinate(config->getSetups());
+    Structure::ordinate(config->getPresets());
+
     // determine the Setup to use, bootstrap if necessary
     mSetup = config->getStartingSetup();
     
@@ -450,7 +455,31 @@ void Mobius::reconfigure(class MobiusConfig* config)
 {
     Trace(2, "Mobius::reconfigure");
     mConfig = config;
-    mSetup = config->getStartingSetup();
+
+    // having difficulty getting Setup and Preset ordinals set reliably,
+    // make sure that's done whenever we update
+    Structure::ordinate(config->getSetups());
+    Structure::ordinate(config->getPresets());
+
+    // mSetup is a pointer to an object inside mConfig so we need
+    // to refresh that but DON'T go back to getStartingSetup, the active
+    // setup needs to be retained until manually changed, it will be saved in
+    // MobiusConfig at shutdown
+
+    Setup* neu = nullptr;
+    if (mSetup != nullptr) {
+        const char* currentName = mSetup->getName();
+        neu = config->getSetup(currentName);
+    }
+    
+    if (neu != nullptr) {
+        mSetup = neu;
+    }
+    else {
+        // user must have deleted what was the active setup, fall back
+        // to the starting setup
+        mSetup = config->getStartingSetup();
+    }
 
     propagateConfiguration();
 }
@@ -459,7 +488,7 @@ void Mobius::reconfigure(class MobiusConfig* config)
  * Propagate non-structural configuration to internal components that
  * cache things from MobiusConfig.
  * 
- * mConfig and mSetup will be set.
+ * mConfig and mSetup will be have been set before this.
  */
 void Mobius::propagateConfiguration()
 {
@@ -511,12 +540,6 @@ void Mobius::propagateConfiguration()
     if (allReset) {
         setActiveTrack(mSetup->getActiveTrack());
     }
-
-    // during the early port we had this, which should not
-    // be necessary since we just did everything that should
-    // have been done in Track::updateConfiguration
-    // this calls Track::setSetup which is redundant
-    //propagateSetup();
 }
 
 /**
@@ -611,14 +634,8 @@ void Mobius::setActiveTrack(int index)
  * setup from MobiusConfig.
  *
  * This is a runtime value only, it is not put back into
- * MobiusConfig and saved.  It will be lost on reconfigure()
- *
- * I don't know if we do it now but we might want to be able
- * to revert this to MobiusConfig::startingSetup on GlobalReset.
- *
- * There is internal overlap between what Track::setSetup does
- * and what Track::updateConfiguration does that we call
- * when the entire MobiusConfig changes.  
+ * MobiusConfig and saved at this level.  The UI treats
+ * this as a "session property" and saves it on shutdown.
  */
 void Mobius::setActiveSetup(const char* name)
 {
@@ -657,7 +674,7 @@ void Mobius::propagateSetup()
 {
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
-        t->setSetup(mSetup);
+        t->propagateSetup(mSetup);
     }
     
     setActiveTrack(mSetup->getActiveTrack());
@@ -1739,7 +1756,8 @@ MobiusState* Mobius::getState()
     }
     
     mState.activeTrack = getActiveTrack();
-
+    mState.setupOrdinal = mSetup->ordinal;
+    
 	return &mState;
 }
 
@@ -1868,8 +1886,8 @@ void Mobius::globalReset(Action* action)
             vars->reset();
 		}
 
-		// return to the track selected int the setup
-		mSetup = mConfig->getStartingSetup();
+		// return to the track selected in the setup
+        // but do NOT touch the active setup
 		setActiveTrack(mSetup->getActiveTrack());
 
 		// cancel in progress audio recordings	

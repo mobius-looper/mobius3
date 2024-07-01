@@ -372,7 +372,7 @@ juce::String MidiManager::getFirstName(juce::String csv)
     juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
 
     if (list.size() > 1)
-      Trace(1, "MidiManager: Multiple devices configured but only one can be opened: %s\n",
+      Trace(1, "MidiManager: Multiple output devices configured but only one can be opened: %s\n",
             csv.toUTF8());
     
     if (list.size() > 0)
