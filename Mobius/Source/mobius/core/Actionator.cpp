@@ -229,13 +229,13 @@ void Actionator::doScript(UIAction* action)
  *    Preset foo
  *
  * Which is implemented by ScriptPresetStatement.  That parses the name to an ordinal
- * and eventually calls Track::setPreset.  It does not do this with an Action.
+ * and eventually calls Track::changePreset.  It does not do this with an Action.
  * There is also a parameter style:
  *
  *    set preset foo
  *
  * This is implemented in a script by the ScriptSetStatement which calls
- * TrackPresetParameterType::setValue which eventually calls Track::setPreset
+ * TrackPresetParameterType::setValue which eventually calls Track::changePreset
  *
  * Both of those use the old Action model.  Setups do the same with
  * "Setup foo" and "set setup foo".  The function oriented script statements
@@ -855,12 +855,12 @@ void Actionator::doPreset(Action* a)
         Track* track = resolveTrack(a);
 
         if (track != NULL) {
-            track->setPreset(number);
+            track->changePreset(number);
         }
         else if (a->noGroup) {
             // selected track only
             track = mMobius->getTrack();
-            track->setPreset(number);
+            track->changePreset(number);
         }
         else {
             // Apply to the current track, all focused tracks
@@ -875,14 +875,14 @@ void Actionator::doPreset(Action* a)
                 for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
                     Track* t = mMobius->getTrack(i);
                     if (targetGroup == t->getGroup())
-                      t->setPreset(number);
+                      t->changePreset(number);
                 }
             }
             else if (allowPresetFocus) {
                 for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
                     Track* t = mMobius->getTrack(i);
                     if (mMobius->isFocused(t))
-                      t->setPreset(number);
+                      t->changePreset(number);
                 }
             }
         }

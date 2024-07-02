@@ -205,6 +205,13 @@ class MobiusConfig {
     MobiusConfig(bool dflt);
     ~MobiusConfig();
 
+    MobiusConfig* clone();
+
+    // two transient flags to enable optimizations when
+    // reconfiguring the engine after editing the entire MobiusConfig
+    bool setupsEdited = false;
+    bool presetsEdited = false;
+
     int getVersion() {
         return mVersion;
     }
@@ -306,9 +313,6 @@ class MobiusConfig {
 	void addPreset(class Preset* p);
     class Preset* getPreset(const char* name);
     class Preset* getPreset(int ordinal);
-    
-    const char* getDefaultPresetName();
-    void setDefaultPresetName(const char* name);
     class Preset* getDefaultPreset();
     
 	class BindingSet* getBindingSets();
@@ -428,8 +432,6 @@ class MobiusConfig {
     class Setup* mStartingSetup;
 
 	class Preset* mPresets;
-    char* mDefaultPresetName;
-    class Preset* mDefaultPreset;
 
     // there is always (and usually) a sigle BindingSet
     // if there is more than one, those are considered "overlay"

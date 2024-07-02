@@ -81,6 +81,7 @@ UIParameterName UIParameterRegistry[] = {
     {"windowSlideAmount", UIParameterIdWindowSlideAmount},
     {"windowEdgeAmount", UIParameterIdWindowEdgeAmount},
     
+    {"defaultPreset", UIParameterIdDefaultPreset},
     {"defaultSyncSource", UIParameterIdDefaultSyncSource},
     {"defaultTrackSyncUnit", UIParameterIdDefaultTrackSyncUnit},
     {"slaveSyncUnit", UIParameterIdSlaveSyncUnit},
@@ -96,7 +97,7 @@ UIParameterName UIParameterRegistry[] = {
     {"activeTrack", UIParameterIdActiveTrack},
 
     {"trackName",     UIParameterIdTrackName},
-    {"startingPreset", UIParameterIdStartingPreset},
+    {"trackPreset", UIParameterIdTrackPreset},
     {"activePreset", UIParameterIdActivePreset},
     {"focus", UIParameterIdFocus},
     {"group", UIParameterIdGroup},

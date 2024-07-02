@@ -279,7 +279,18 @@ void Mobius::initialize(MobiusConfig* config)
     initializeTracks();
 
     // common, thread safe configuration propagation
+    // Track has an optimization to ignore configuration propagation
+    // unless these two flags are on.  Since we are initializing for the
+    // first time, force them on
+    config->setupsEdited = true;
+    config->presetsEdited = true;
+    
     propagateConfiguration();
+
+    // now turn them off, don't think this is necessary since
+    // reconfigure will always be called with a different object
+    config->setupsEdited = false;
+    config->presetsEdited = false;
 
     installSymbols();
 }
@@ -674,7 +685,7 @@ void Mobius::propagateSetup()
 {
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
-        t->propagateSetup(mSetup);
+        t->changeSetup(mSetup);
     }
     
     setActiveTrack(mSetup->getActiveTrack());
@@ -686,7 +697,7 @@ void Mobius::propagateSetup()
  */
 void Mobius::setActivePreset(int ordinal)
 {
-    mTrack->setPreset(ordinal);
+    mTrack->changePreset(ordinal);
 }
 
 //////////////////////////////////////////////////////////////////////

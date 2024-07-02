@@ -57,6 +57,9 @@ class Setup : public Structure {
     // put it it the standard state for the unit tests
     void reset(class Preset* p);
 
+	void setDefaultPresetName(const char* preset);
+	const char* getDefaultPresetName();
+    
 	void setBindings(const char* name);
 	const char* getBindings();
 
@@ -122,6 +125,11 @@ class Setup : public Structure {
 	 */
 	int mActiveTrack;
 
+    /**
+     * Base Preset for all tracks.
+     */
+	char* mDefaultPresetName;
+    
 	/**
 	 * User defined group names. (not used yet)
 	 */
@@ -249,8 +257,8 @@ class SetupTrack {
 	void setName(const char* name);
 	const char* getName();
 
-	void setStartingPresetName(const char* preset);
-	const char* getStartingPresetName();
+	void setTrackPresetName(const char* preset);
+	const char* getTrackPresetName();
 
     void setGroup(int i);
     int getGroup();
@@ -303,7 +311,7 @@ class SetupTrack {
 
 	SetupTrack* mNext;
 	char* mName;
-	char* mStartingPresetName;
+	char* mTrackPresetName;
 	bool mFocusLock;
 	bool mMono;
     int mGroup;

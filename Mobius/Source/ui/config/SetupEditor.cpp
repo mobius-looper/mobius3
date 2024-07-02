@@ -190,6 +190,10 @@ void SetupEditor::save()
     MobiusConfig* config = context->getMobiusConfig();
     // this will also delete the current setup list
     config->setSetups(plist);
+
+    // this flag is necessary to get the engine to pay attention
+    config->setupsEdited = true;
+    
     context->saveMobiusConfig();
 }
 
@@ -422,7 +426,7 @@ void SetupEditor::initForm()
     addField("Tracks", UIParameterTrackName);
     addField("Tracks", UIParameterSyncSource);    // overrides default SyncSourceParameter
     addField("Tracks", UIParameterTrackSyncUnit);
-    addField("Tracks", UIParameterStartingPreset);
+    addField("Tracks", UIParameterTrackPreset);
     addField("Tracks", UIParameterGroup);
     addField("Tracks", UIParameterFocus);
     addField("Tracks", UIParameterInput);
@@ -455,6 +459,7 @@ void SetupEditor::initForm()
     // this needs to be done in a more obvious way
 
     addField("Other", UIParameterActiveTrack);
+    addField("Other", UIParameterDefaultPreset);
 
     // this one has special values
     //form.add(buildResetablesField(), "Other");

@@ -858,7 +858,6 @@ void TestDriver::installPresetAndSetup(MobiusConfig* config)
         p->setName(UNIT_TEST_PRESET_NAME);
         config->addPreset(p);
     }
-    config->setDefaultPresetName(UNIT_TEST_PRESET_NAME);
 
     // boostrap a setup
     Setup* s = config->getSetup(UNIT_TEST_SETUP_NAME);
@@ -871,11 +870,19 @@ void TestDriver::installPresetAndSetup(MobiusConfig* config)
         s->reset(p);
         config->addSetup(s);
     }
+
+    // install the preset in the default
+    s->setDefaultPresetName(UNIT_TEST_PRESET_NAME);
+
+    // and install the setup as the startup
     config->setStartingSetupName(UNIT_TEST_SETUP_NAME);
 
+    
     // this will propagate the changes to the tracks
-
-    // !!!!!!!!!!! insane hackery alert
+    // Insane Hackery Alert
+    // Since we directly modified the MobiusConfig in the core
+    // we can bypass the usual config propatation layers
+    // and cause it to be activated
     MobiusShell* shell = getMobiusShell();
     MobiusKernel* kernel = shell->getKernel();
     Mobius* mobius = kernel->getCore();

@@ -63,34 +63,6 @@ void UIParameterActiveSetupClass::setValue(void* obj, ExValue* value)
 UIParameterActiveSetupClass UIParameterActiveSetupObj;
 UIParameter* UIParameterActiveSetup = &UIParameterActiveSetupObj;
 
-////////////// DefaultPreset
-
-class UIParameterDefaultPresetClass : public UIParameter
-{
-  public:
-    UIParameterDefaultPresetClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterDefaultPresetClass::UIParameterDefaultPresetClass()
-{
-    name = "defaultPreset";
-    displayName = "Default Preset";
-    scope = ScopeGlobal;
-    type = TypeStructure;
-    noBinding = true;
-}
-void UIParameterDefaultPresetClass::getValue(void* obj, ExValue* value)
-{
-    value->setString(((MobiusConfig*)obj)->getDefaultPresetName());
-}
-void UIParameterDefaultPresetClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setDefaultPresetName(value->getString());
-}
-UIParameterDefaultPresetClass UIParameterDefaultPresetObj;
-UIParameter* UIParameterDefaultPreset = &UIParameterDefaultPresetObj;
-
 ////////////// ActiveOverlay
 
 class UIParameterActiveOverlayClass : public UIParameter
@@ -2109,6 +2081,34 @@ UIParameter* UIParameterWindowEdgeAmount = &UIParameterWindowEdgeAmountObj;
 //******************** setup
 
 
+////////////// DefaultPreset
+
+class UIParameterDefaultPresetClass : public UIParameter
+{
+  public:
+    UIParameterDefaultPresetClass();
+    void getValue(void* obj, class ExValue* value) override;
+    void setValue(void* obj, class ExValue* value) override;
+};
+UIParameterDefaultPresetClass::UIParameterDefaultPresetClass()
+{
+    name = "defaultPreset";
+    displayName = "Default Preset";
+    scope = ScopeSetup;
+    type = TypeStructure;
+    noBinding = true;
+}
+void UIParameterDefaultPresetClass::getValue(void* obj, ExValue* value)
+{
+    value->setString(((Setup*)obj)->getDefaultPresetName());
+}
+void UIParameterDefaultPresetClass::setValue(void* obj, ExValue* value)
+{
+    ((Setup*)obj)->setDefaultPresetName(value->getString());
+}
+UIParameterDefaultPresetClass UIParameterDefaultPresetObj;
+UIParameter* UIParameterDefaultPreset = &UIParameterDefaultPresetObj;
+
 ////////////// DefaultSyncSource
 
 class UIParameterDefaultSyncSourceClass : public UIParameter
@@ -2531,34 +2531,34 @@ void UIParameterTrackNameClass::setValue(void* obj, ExValue* value)
 UIParameterTrackNameClass UIParameterTrackNameObj;
 UIParameter* UIParameterTrackName = &UIParameterTrackNameObj;
 
-////////////// StartingPreset
+////////////// TrackPreset
 
-class UIParameterStartingPresetClass : public UIParameter
+class UIParameterTrackPresetClass : public UIParameter
 {
   public:
-    UIParameterStartingPresetClass();
+    UIParameterTrackPresetClass();
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-UIParameterStartingPresetClass::UIParameterStartingPresetClass()
+UIParameterTrackPresetClass::UIParameterTrackPresetClass()
 {
-    name = "startingPreset";
-    displayName = "Starting Preset";
+    name = "trackPreset";
+    displayName = "Track Preset";
     coreName = "preset";
     scope = ScopeTrack;
     type = TypeStructure;
     noBinding = true;
 }
-void UIParameterStartingPresetClass::getValue(void* obj, ExValue* value)
+void UIParameterTrackPresetClass::getValue(void* obj, ExValue* value)
 {
-    value->setString(((SetupTrack*)obj)->getStartingPresetName());
+    value->setString(((SetupTrack*)obj)->getTrackPresetName());
 }
-void UIParameterStartingPresetClass::setValue(void* obj, ExValue* value)
+void UIParameterTrackPresetClass::setValue(void* obj, ExValue* value)
 {
-    ((SetupTrack*)obj)->setStartingPresetName(value->getString());
+    ((SetupTrack*)obj)->setTrackPresetName(value->getString());
 }
-UIParameterStartingPresetClass UIParameterStartingPresetObj;
-UIParameter* UIParameterStartingPreset = &UIParameterStartingPresetObj;
+UIParameterTrackPresetClass UIParameterTrackPresetObj;
+UIParameter* UIParameterTrackPreset = &UIParameterTrackPresetObj;
 
 ////////////// ActivePreset
 

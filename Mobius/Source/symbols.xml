@@ -161,17 +161,6 @@
       in mobius.xml as "startingSetup".
     </Parameter>
 
-    <Parameter name='defaultPreset'
-               type='structure' structureClass='Preset'
-               codeName='DefaultPresetName'
-               options='noBinding'>
-      This is used only in model context to define the default Preset by name.
-
-      This is new and has no correspondence in the old parameter mode, but Track
-      does use it at runtime.  I think this is being confused with the a transient
-      "activePreset" which doesn't exist.
-    </Parameter>
-
     <Parameter name='activeOverlay'
                type='structure' structureClass='BindingSet'
                codeName='OverlayBindings'
@@ -498,6 +487,16 @@
 
   <ParameterScope name='setup'>
 
+    <Parameter name='defaultPreset'
+               type='structure' structureClass='Preset'
+               codeName='DefaultPresetName'
+               options='noBinding'>
+      This is used only in model context to define the default Preset by name.
+
+      This is new and has no correspondence in the old parameter model, but may
+      be used at runtime.  
+    </Parameter>
+
     <!-- note that this needs "default" as the first enum value even though that's not
          allowed for this parameter since internally it shares the same SyncSource enumeration
          with the syncSource track scope parameter
@@ -558,8 +557,8 @@
     
     <Parameter name='trackName' codeName='Name' type='string' options='noBinding'/>
 
-    <Parameter name='startingPreset' coreName='preset'
-               codeName='StartingPresetName'
+    <Parameter name='trackPreset' coreName='preset'
+               codeName='TrackPresetName'
                type='structure' structureClass='Preset'
                options='noBinding'>
       In model context defined the starting preset for this track by name.

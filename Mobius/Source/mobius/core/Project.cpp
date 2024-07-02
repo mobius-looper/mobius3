@@ -894,9 +894,12 @@ ProjectTrack::ProjectTrack(MobiusConfig* config, Project* p, Track* t)
     Setup* setup = config->getStartingSetup();
     SetupTrack* st = setup->getTrack(t->getRawNumber());
 
+    // new: do we need to save this?
+    // we're not saving every transient runtime parameter, why would
+    // we save the active preset if it was different than the SetupTrack starting preset?
     Preset* pre = t->getPreset();
 	if (pre != NULL) {
-        const char* dflt = (st != NULL) ? st->getStartingPresetName() : NULL;
+        const char* dflt = (st != NULL) ? st->getTrackPresetName() : NULL;
         if (dflt == NULL || !StringEqual(dflt, pre->getName()))
           setPreset(pre->getName());
     }

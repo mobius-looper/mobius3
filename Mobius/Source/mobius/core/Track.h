@@ -141,9 +141,19 @@ class Track : public TraceContext
 	void setFocusLock(bool b);
 	bool isFocusLock();
 
-    void propagateSetup(class Setup* setup);
-	void setPreset(class Preset* p);
-	void setPreset(int number);
+    // Setup/Preset management
+
+    // change the setup at runtime
+    void changeSetup(class Setup* setup);
+
+    // change to a different active preset at runtime
+	void changePreset(int number);
+
+    // refresh the local preset copy
+    // this is mostly internal but InitScriptStatement needs access to it
+	void refreshPreset(class Preset* p);
+
+    // return the local Preset copy
 	class Preset* getPreset();
 
 	//
@@ -272,12 +282,15 @@ class Track : public TraceContext
   private:
 
 	void init(Mobius* mob, class Synchronizer* sync, int number);
+
+    // configuration management
+    
+    void propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdited);
     class Preset* getStartingPreset(MobiusConfig* config, Setup* setup);
-    void propagateSetup(class Setup* setup, bool doPreset);
+	void setupLoops();
 	void resetParameters(class Setup* setup, bool global, bool doPreset);
 	void resetPorts(class SetupTrack* st);
 	void trackReset(class Action* action);
-	void setupLoops();
     bool checkSyncEvent(class Event* e);
     void switchLoop(Function* f, bool forward);
     void switchLoop(Function* f, int index);
@@ -303,12 +316,16 @@ class Track : public TraceContext
 	class Synchronizer* mSynchronizer;
     class SyncState*  mSyncState;
     class SetupTrack* mSetupCache = nullptr;
+    int mSetupOrdinal = -1;
     class EventManager* mEventManager;
 	class InputStream* mInput;
 	class OutputStream* mOutput;
 	//class CriticalSection* mCsect;
 	class UserVariables* mVariables;
-	class Preset* mPreset;		// private copy
+    
+    // private copy of the active preset
+    // !! needs to be a member object
+	class Preset* mPreset;
 
 	class Loop*	mLoops[MAX_LOOPS];
     class Loop* mLoop;

@@ -14,7 +14,6 @@
 /*** GENERATED ***/
 
 extern class UIParameter* UIParameterActiveSetup;
-extern class UIParameter* UIParameterDefaultPreset;
 extern class UIParameter* UIParameterActiveOverlay;
 extern class UIParameter* UIParameterFadeFrames;
 extern class UIParameter* UIParameterMaxSyncDrift;
@@ -84,6 +83,7 @@ extern class UIParameter* UIParameterWindowSlideUnit;
 extern class UIParameter* UIParameterWindowEdgeUnit;
 extern class UIParameter* UIParameterWindowSlideAmount;
 extern class UIParameter* UIParameterWindowEdgeAmount;
+extern class UIParameter* UIParameterDefaultPreset;
 extern class UIParameter* UIParameterDefaultSyncSource;
 extern class UIParameter* UIParameterDefaultTrackSyncUnit;
 extern class UIParameter* UIParameterSlaveSyncUnit;
@@ -98,7 +98,7 @@ extern class UIParameter* UIParameterRealignTime;
 extern class UIParameter* UIParameterOutRealign;
 extern class UIParameter* UIParameterActiveTrack;
 extern class UIParameter* UIParameterTrackName;
-extern class UIParameter* UIParameterStartingPreset;
+extern class UIParameter* UIParameterTrackPreset;
 extern class UIParameter* UIParameterActivePreset;
 extern class UIParameter* UIParameterFocus;
 extern class UIParameter* UIParameterGroup;

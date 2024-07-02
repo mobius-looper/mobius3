@@ -20,10 +20,6 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
         case UIParameterIdActiveSetup:
             break;
             
-        case UIParameterIdDefaultPreset:
-            value->setString(((MobiusConfig*)obj)->getDefaultPresetName());
-            break;
-            
         case UIParameterIdActiveOverlay:
             value->setString(((MobiusConfig*)obj)->getOverlayBindings());
             break;
@@ -304,6 +300,10 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
 
             /* Setup */
     
+        case UIParameterIdDefaultPreset:
+            value->setString(((Setup*)obj)->getDefaultPresetName());
+            break;
+            
         case UIParameterIdDefaultSyncSource:
             value->setInt(((Setup*)obj)->getSyncSource());
             break;
@@ -362,8 +362,8 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
             value->setString(((SetupTrack*)obj)->getName());
             break;
             
-        case UIParameterIdStartingPreset:
-            value->setString(((SetupTrack*)obj)->getStartingPresetName());
+        case UIParameterIdTrackPreset:
+            value->setString(((SetupTrack*)obj)->getTrackPresetName());
             break;
             
         case UIParameterIdActivePreset:
@@ -461,10 +461,6 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
         /* Global */
         
         case UIParameterIdActiveSetup:
-            break;
-            
-        case UIParameterIdDefaultPreset:
-            ((MobiusConfig*)obj)->setDefaultPresetName(value->getString());
             break;
             
         case UIParameterIdActiveOverlay:
@@ -747,6 +743,10 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
 
             /* Setup */
     
+        case UIParameterIdDefaultPreset:
+            ((Setup*)obj)->setDefaultPresetName(value->getString());
+            break;
+            
         case UIParameterIdDefaultSyncSource:
             ((Setup*)obj)->setSyncSource((SyncSource)value->getInt());
             break;
@@ -805,8 +805,8 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             ((SetupTrack*)obj)->setName(value->getString());
             break;
             
-        case UIParameterIdStartingPreset:
-            ((SetupTrack*)obj)->setStartingPresetName(value->getString());
+        case UIParameterIdTrackPreset:
+            ((SetupTrack*)obj)->setTrackPresetName(value->getString());
             break;
             
         case UIParameterIdActivePreset:

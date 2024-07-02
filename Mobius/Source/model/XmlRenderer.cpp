@@ -780,6 +780,8 @@ void XmlRenderer::render(XmlBuffer* b, Setup* setup)
     // doing that for the sync options could do these...
     b->addAttribute(ATT_ACTIVE, setup->getActiveTrack());
     b->addAttribute(ATT_BINDINGS, setup->getBindings());
+
+    render(b, UIParameterDefaultPreset, setup->getDefaultPresetName());
     
     // these are a csv while the function lists in MobiusConfig
     // are String lists, should be consistent, I'm liking csv for brevity
@@ -816,6 +818,9 @@ void XmlRenderer::parse(XmlElement* e, Setup* setup)
 
 	setup->setActiveTrack(e->getIntAttribute(ATT_ACTIVE));
 	setup->setBindings(e->getAttribute(ATT_BINDINGS));
+
+    setup->setDefaultPresetName(parseString(e, UIParameterDefaultPreset));
+    
     setup->setResetRetains(e->getAttribute(ATT_RESET_RETAINS));
 
     setup->setBeatsPerBar(parse(e, UIParameterBeatsPerBar));
@@ -860,7 +865,7 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     // this was only InputPort, OutputPort, and PresetNumber
     // actually there are a lot missing and not just ones with transient
 
-    render(b, UIParameterStartingPreset, t->getStartingPresetName());
+    render(b, UIParameterTrackPreset, t->getTrackPresetName());
     render(b, UIParameterFocus, t->isFocusLock());
     render(b, UIParameterMono, t->isMono());
     render(b, UIParameterGroup, t->getGroup());
@@ -896,7 +901,7 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
 void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
 {
 	t->setName(e->getAttribute(ATT_NAME));
-    t->setStartingPresetName(parseString(e, UIParameterStartingPreset));
+    t->setTrackPresetName(parseString(e, UIParameterTrackPreset));
     t->setFocusLock(parse(e, UIParameterFocus));
     t->setMono(parse(e, UIParameterMono));
     t->setGroup(parse(e, UIParameterGroup));

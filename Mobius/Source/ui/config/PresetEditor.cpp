@@ -124,6 +124,10 @@ void PresetEditor::save()
     MobiusConfig* config = context->getMobiusConfig();
     // this will also delete the current preset list
     config->setPresets(plist);
+
+    // this flag is necessary to get the engine to pay attention
+    config->presetsEdited = true;
+    
     context->saveMobiusConfig();
 }
 

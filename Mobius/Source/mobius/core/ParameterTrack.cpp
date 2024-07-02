@@ -1279,7 +1279,9 @@ TrackPresetParameterType::TrackPresetParameterType() :
 
 void TrackPresetParameterType::getValue(SetupTrack* t, ExValue* value)
 {
-    value->setString(t->getStartingPresetName());
+    // these should no longer be used in model context
+    Trace(1, "TrackPresetParameterType::getValue Who called this?\n");
+    value->setString(t->getTrackPresetName());
 }
 
 void TrackPresetParameterType::setValue(SetupTrack* t, ExValue* value)
@@ -1287,7 +1289,8 @@ void TrackPresetParameterType::setValue(SetupTrack* t, ExValue* value)
     // since we intend this for parsing and editing should always
     // have a string, harder to support ordinals here because
     // we don't have a handle to Mobius
-    t->setStartingPresetName(value->getString());
+    Trace(1, "TrackPresetParameterType::setValue Who called this?\n");
+    t->setTrackPresetName(value->getString());
 }
 
 int TrackPresetParameterType::getOrdinalValue(Track* t)
@@ -1343,7 +1346,7 @@ void TrackPresetParameterType::setValue(Action* action)
 
 	if (preset != NULL) {
         Track* t = action->getResolvedTrack();
-        t->setPreset(preset->ordinal);
+        t->changePreset(preset->ordinal);
 	}
 }
 
@@ -1445,7 +1448,7 @@ void TrackPresetNumberParameterType::setValue(Action* action)
 
 	if (preset != NULL) {
         Track* t = action->getResolvedTrack();
-        t->setPreset(index);
+        t->changePreset(index);
 	}
 }
 

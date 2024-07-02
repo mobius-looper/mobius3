@@ -945,11 +945,20 @@ DeviceConfig* Supervisor::getDeviceConfig()
 /**
  * Save a modified MobiusConfig, and propagate changes
  * to the interested components.
- * In practice this should only be called by ConfigEditor.
+ * In practice this should only be called by ConfigEditors.
  *
- * Current assumption is that the object returned by getMobiusConfig
- * has been modified.  I don't think it's worth messing with excessive
- * copying of this and ownership transfers.
+ * The object returned by getMobiusConfig is expected to have
+ * been movidied and will be sent to Mobius after writing the file.
+ *
+ * There are two transient flags inside MobiusConfig that must be
+ * set by the PresetEditor and SetupEditor to indiciate that changes
+ * were made to those objects.  This is necessary to get the Mobius engine
+ * to actually use the new objects.  This prevents needlessly reconfiguring
+ * the* engine and losing runtime parameter values if all you change
+ * are bindings or global parameters.
+ *
+ * It's kind of kludgey but gets the job done.  Once the changes have been
+ * propagated clear the flags so we don't do it again.
  */
 void Supervisor::updateMobiusConfig()
 {
@@ -964,9 +973,14 @@ void Supervisor::updateMobiusConfig()
 
         // propagate config changes to other components
         propagateConfiguration();
-        
+
+        // send it down to the engine
         if (mobius != nullptr)
           mobius->reconfigure(config);
+
+        // clear speical triggers for the engine now that it is done
+        config->setupsEdited = false;
+        config->presetsEdited = false;
         
         configureBindings(config);
     }

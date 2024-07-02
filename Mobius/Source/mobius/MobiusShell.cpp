@@ -49,7 +49,6 @@
 #include "../model/Preset.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
-#include "../model/XmlRenderer.h"
 #include "../model/UIEventType.h"
 #include "../model/DynamicConfig.h"
 #include "../model/ScriptConfig.h"
@@ -196,11 +195,11 @@ void MobiusShell::initialize(MobiusConfig* config)
     if (configuration != nullptr) {
         Trace(1, "MobiusShell::initialize Already initialized!\n");
         delete configuration;
+        configuration = nullptr;
     }
 
     // todo: give this class a proper clone() method so we don't have to use XML
-    XmlRenderer xr;
-    configuration = xr.clone(config);
+    configuration = config->clone();
 
     // start tracking internal runtime changes that the UI may be interested in
     // update: not used any more
@@ -223,7 +222,7 @@ void MobiusShell::initialize(MobiusConfig* config)
     // it one at a time inside initialize, can do some things
     // in the constructor, but not all like audioPool and config
 
-    MobiusConfig* kernelCopy = xr.clone(config);
+    MobiusConfig* kernelCopy = config->clone();
     kernel.initialize(container, kernelCopy);
 
     // load the initial set of scripts, this may also add symbols
@@ -252,14 +251,13 @@ void MobiusShell::reconfigure(MobiusConfig* config)
     
     // todo: give this class a proper clone() method so we don't have to use XML
     delete configuration;
-    XmlRenderer xr;
-    configuration = xr.clone(config);
+    configuration = config->clone();
 
     // todo: reload scripts whenever the config changes?
     installActivationSymbols();
 
     // clone it again and give it to the kernel
-    MobiusConfig* kernelCopy = xr.clone(config);
+    MobiusConfig* kernelCopy = config->clone();
     sendKernelConfigure(kernelCopy);
 
     if (container->isPlugin()) {

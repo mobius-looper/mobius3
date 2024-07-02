@@ -2395,10 +2395,7 @@ ScriptStatement* ScriptPresetStatement::eval(ScriptInterpreter* si)
 		if (t == NULL)
 		  t = m->getTrack();
 
-		// note that since we're in a script, we can set it immediately,
-		// this is necessary if we have set statements immediately
-		// following this that depend on the preset change
-        t->setPreset(p);
+        t->changePreset(p->ordinal);
     }
 
     return NULL;
@@ -2473,6 +2470,9 @@ ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
 
     Mobius* m = si->getMobius();
     Track* srcTrack = m->getTrack();
+
+    // this uses an obscure back-door to pull out the local Preset
+    // copy from the Track, modify it, then refresh it
     Preset* p = srcTrack->getPreset();
     p->reset();
 
@@ -2485,7 +2485,7 @@ ScriptStatement* ScriptInitPresetStatement::eval(ScriptInterpreter* si)
       Trace(1, "Script %s: ScriptInitPresetStatement: Unexpected destination track\n",
             si->getTraceName());
 
-    destTrack->setPreset(p);
+    destTrack->refreshPreset(p);
 
     return NULL;
 }

@@ -93,6 +93,7 @@ Setup::Setup()
 {
 	mTracks = nullptr;
 	mActiveTrack = 0;
+    mDefaultPresetName = nullptr;
 	mResetRetains = nullptr;
 	mBindings = nullptr;
 
@@ -104,6 +105,7 @@ Setup::~Setup()
 	delete mTracks;
 	delete mBindings;
     delete mResetRetains;
+    delete mDefaultPresetName;
 }
 
 Structure* Setup::clone()
@@ -136,8 +138,10 @@ Setup::Setup(Setup* src)
 	mTracks = nullptr;
 	mBindings = nullptr;
    	mResetRetains = nullptr;
+    mDefaultPresetName = nullptr;
 
     setName(src->getName());
+    setDefaultPresetName(src->getDefaultPresetName());
     setResetRetains(src->getResetRetains());
 
     mActiveTrack = src->getActiveTrack();
@@ -176,6 +180,8 @@ void Setup::reset(Preset* p)
 {
 	mActiveTrack = 0;
 
+	setDefaultPresetName(nullptr);
+    
     // need a default list of these?
     setResetRetains(nullptr);
 
@@ -192,7 +198,7 @@ void Setup::reset(Preset* p)
         SetupTrack* t = getTrack(i);
         t->reset();
         if (p != nullptr)
-          t->setStartingPresetName(p->getName());
+          t->setTrackPresetName(p->getName());
     }
 
     initParameters();
@@ -244,6 +250,17 @@ SetupTrack* Setup::getTrack(int index)
  *                              SETUP PARAMETERS                            *
  *                                                                          *
  ****************************************************************************/
+
+void Setup::setDefaultPresetName(const char* name)
+{
+	delete mDefaultPresetName;
+	mDefaultPresetName = CopyString(name);
+}
+
+const char* Setup::getDefaultPresetName()
+{
+	return mDefaultPresetName;
+}
 
 void Setup::setBindings(const char* name)
 {
@@ -434,7 +451,7 @@ SetupTrack::SetupTrack()
 {
 	mNext = nullptr;
     mName = nullptr;
-	mStartingPresetName = nullptr;
+	mTrackPresetName = nullptr;
 	mVariables = nullptr;
 	reset();
 }
@@ -444,7 +461,7 @@ SetupTrack::~SetupTrack()
 	SetupTrack *el, *next;
 
 	delete mName;
-	delete mStartingPresetName;
+	delete mTrackPresetName;
 	delete mVariables;
 
 	for (el = mNext ; el != nullptr ; el = next) {
@@ -458,11 +475,11 @@ SetupTrack::SetupTrack(SetupTrack* src)
 {   
 	mNext = nullptr;
     mName = nullptr;
-	mStartingPresetName = nullptr;
+	mTrackPresetName = nullptr;
 	mVariables = nullptr;
     
     setName(src->getName());
-    setStartingPresetName(src->getStartingPresetName());
+    setTrackPresetName(src->getTrackPresetName());
 
 	mFocusLock = src->isFocusLock();
 	mGroup = src->getGroup();
@@ -492,7 +509,7 @@ SetupTrack::SetupTrack(SetupTrack* src)
  */
 void SetupTrack::reset()
 {
-	setStartingPresetName(nullptr);
+	setTrackPresetName(nullptr);
     setName(nullptr);
 	mFocusLock = false;
     mGroup = 0;
@@ -523,7 +540,7 @@ void SetupTrack::capture(MobiusState* state)
     // if we continue to do this, should avoid setting
     // this if the runtime preset is the same as the
     // default preset
-	setStartingPresetName(t->preset->getName());
+	setTrackPresetName(t->preset->getName());
 
 	mFocusLock = t->focusLock;
 	mGroup = t->group;
@@ -580,15 +597,15 @@ const char* SetupTrack::getName()
 	return mName;
 }
 
-void SetupTrack::setStartingPresetName(const char* name)
+void SetupTrack::setTrackPresetName(const char* name)
 {
-	delete mStartingPresetName;
-	mStartingPresetName = CopyString(name);
+	delete mTrackPresetName;
+	mTrackPresetName = CopyString(name);
 }
 
-const char* SetupTrack::getStartingPresetName()
+const char* SetupTrack::getTrackPresetName()
 {
-	return mStartingPresetName;
+	return mTrackPresetName;
 }
 
 void SetupTrack::setFocusLock(bool b)

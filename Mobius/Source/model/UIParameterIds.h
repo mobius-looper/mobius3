@@ -11,7 +11,6 @@ typedef enum {
     /* Global */
     
     UIParameterIdActiveSetup,
-    UIParameterIdDefaultPreset,
     UIParameterIdActiveOverlay,
     UIParameterIdFadeFrames,
     UIParameterIdMaxSyncDrift,
@@ -87,6 +86,7 @@ typedef enum {
 
     /* Setup */
     
+    UIParameterIdDefaultPreset,
     UIParameterIdDefaultSyncSource,
     UIParameterIdDefaultTrackSyncUnit,
     UIParameterIdSlaveSyncUnit,
@@ -104,7 +104,7 @@ typedef enum {
     /* Track */
     
     UIParameterIdTrackName,
-    UIParameterIdStartingPreset,
+    UIParameterIdTrackPreset,
     UIParameterIdActivePreset,
     UIParameterIdFocus,
     UIParameterIdGroup,

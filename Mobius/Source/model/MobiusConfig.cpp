@@ -25,6 +25,7 @@
 #include "Setup.h"
 #include "ScriptConfig.h"
 #include "SampleConfig.h"
+#include "XmlRenderer.h"
 
 #include "MobiusConfig.h"
 
@@ -67,6 +68,7 @@ MobiusConfig::MobiusConfig()
 	init();
 }
 
+// what the hell does this do?
 MobiusConfig::MobiusConfig(bool dflt)
 {
 	init();
@@ -96,8 +98,6 @@ void MobiusConfig::init()
 	mAltFeedbackDisables = nullptr;
 
 	mPresets = nullptr;
-    mDefaultPresetName = nullptr;
-    mDefaultPreset = nullptr;
     
 	mSetups = nullptr;
     mStartingSetupName = nullptr;
@@ -153,13 +153,30 @@ MobiusConfig::~MobiusConfig()
 	delete mConfirmationFunctions;
 	delete mAltFeedbackDisables;
 	delete mPresets;
-    delete mDefaultPresetName;
     delete mSetups;
     delete mStartingSetupName;
     delete mBindings;
     delete mOverlayBindings;
     delete mScriptConfig;
 	delete mSampleConfig;
+}
+
+/**
+ * This doesn't have a proper copy constructor so we have
+ * to use XML.
+ */
+MobiusConfig* MobiusConfig::clone()
+{
+    XmlRenderer xr;
+    MobiusConfig* neu = xr.clone(this);
+
+    // these are not in the XML rendering and need
+    // to follow the clone through the layers from the UI
+    // down to the core
+    neu->setupsEdited = setupsEdited;
+    neu->presetsEdited = presetsEdited;
+
+    return neu;
 }
 
 bool MobiusConfig::isDefault()
@@ -579,8 +596,6 @@ void MobiusConfig::setPresets(Preset* list)
     if (list != mPresets) {
 		delete mPresets;
 		mPresets = list;
-        // invalidate cache
-        mDefaultPreset = nullptr;
     }
 }
 	
@@ -605,59 +620,28 @@ Preset* MobiusConfig::getPreset(int ordinal)
     return (Preset*)Structure::get(mPresets, ordinal);
 }
 
-const char* MobiusConfig::getDefaultPresetName()
-{
-    return mDefaultPresetName;
-}
-
-void MobiusConfig::setDefaultPresetName(const char* name)
-{
-    delete mDefaultPresetName;
-    mDefaultPresetName = CopyString(name);
-    // invalidate cache
-    mDefaultPreset = nullptr;
-}
-
 /**
  * Return the Preset object that is considered the default preset.
- * This is a transient runtime value that is calculated by
- * searching the Preset list using the persistent mDefaultPresetName.
- * It is cached to avoid a linear string search very time.
+ * Formerly had mDefaultPresetName here to guide the search
+ * but that was never used.  The "default preset" concept must be
+ * implemented in the Setup.
  *
- * Like getStartingSetup we will try to fix misconfiguration so an
- * object can always be returned.
+ * What this does not is return the first Preset on the list and
+ * bootstraps one if this is a fresh or damanaged configuration
+ * that had no presets.  Code expects there to be a least one
+ * preset.
  */
 Preset* MobiusConfig::getDefaultPreset()
 {
-    if (mDefaultPreset == nullptr) {
-        if (mDefaultPresetName == nullptr) {
-            // misconfiguration, pick the first one
-            // note that this does memory allocation and should not
-            // be done in the kernel but it's an unusual situation
-            // still should switch to static arrays for names
-            Trace(1, "Default preset name not set, choosing the first\n"); 
-            if (mPresets == nullptr) {
-                // really raw config, bootstrap one
-                Trace(1, "Bootstrapping default preset, shouldn't be here\n");
-                mPresets = new Preset();
-                mPresets->setName("Default");
-            }
-            setDefaultPresetName(mPresets->getName());
-        }
-
-        // now the usual lookup by name
-        mDefaultPreset = getPreset(mDefaultPresetName);
-        
-        if (mDefaultPreset == nullptr) {
-            // name was misconfigured, should not happen
-            Trace(1, "Misconfigured default preset: %s does not exist, choosing the first\n",
-                  mDefaultPresetName);
-            // note that setting the name clears the cache so have to do that first
-            setDefaultPresetName(mPresets->getName());
-            mDefaultPreset = mPresets;
-        }
+    if (mPresets == nullptr) {
+        // misconfiguration, bootstrap one
+        // note that this does memory allocation and should not
+        // be done in the kernel but it's an unusual situation
+        Trace(1, "MobiusConfig: Bootstrapping default preset, shouldn't be here\n");
+        mPresets = new Preset();
+        mPresets->setName("Default");
     }
-    return mDefaultPreset;
+    return mPresets;
 }
 
 /****************************************************************************
