@@ -197,13 +197,6 @@ class Track : public TraceContext
      */
 	void updateGlobalParameters(class MobiusConfig* config);
 
-    /**
-     * Set by various sources outside the interrupt (bindings, the UI)
-     * to select a track preset.  The preset will be phased in on the
-     * next interrupt.
-     */
-    void setPendingPreset(int number);
-
 	/**
 	 * Called by Mobius as scripts terminate.
 	 */
@@ -280,7 +273,6 @@ class Track : public TraceContext
 
 	void init(Mobius* mob, class Synchronizer* sync, int number);
     class Preset* getStartingPreset(MobiusConfig* config, Setup* setup);
-    void doPendingConfiguration();
     void propagateSetup(class Setup* setup, bool doPreset);
 	void resetParameters(class Setup* setup, bool global, bool doPreset);
 	void resetPorts(class SetupTrack* st);
@@ -328,7 +320,6 @@ class Track : public TraceContext
 	bool 		mFocusLock;
 	bool		mHalting;
 	bool		mRunning;
-    int         mPendingPreset;
     int         mMonitorLevel;
 	bool		mGlobalMute;
 	bool 		mSolo;

@@ -15,7 +15,9 @@ void UISymbols::initialize()
     installDisplayFunction("UIParameterDown", UISymbolParameterDown);
     installDisplayFunction("UIParameterInc", UISymbolParameterInc);
     installDisplayFunction("UIParameterDec", UISymbolParameterDec);
-
+    installDisplayFunction("ReloadScripts", UISymbolReloadScripts);
+    installDisplayFunction("ReloadSamples", UISymbolReloadSamples);
+    
     // runtime parameter experiment
     // I'd like to be able to create parameters at runtime
     // without needing static definition objects

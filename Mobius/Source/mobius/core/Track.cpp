@@ -106,7 +106,6 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
 	mFocusLock = false;
 	mHalting = false;
 	mRunning = false;
-    mPendingPreset = -1;
     mMonitorLevel = 0;
 	mGlobalMute = false;
 	mSolo = false;
@@ -878,7 +877,6 @@ void Track::prepareForInterrupt()
     mTrackSyncEvent = NULL;
 
 	advanceControllers();
-	doPendingConfiguration();
 
 	mInput->initProcessedFrames();
 	mOutput->initProcessedFrames();
@@ -1311,27 +1309,6 @@ Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup)
     }
 
     return preset;
-}
-
-/**
- * Called when the preset is to be changed by something outside the interrupt.
- * todo: is this shit even used any more?  maybe by scripts?
- */
-void Track::setPendingPreset(int number)
-{
-    Trace(1, "Track::setPendingPreset Who called this??");
-    mPendingPreset = number;
-}
-
-/**
- * Called at the top of every interrupt to phase in config changes.
- */
-void Track::doPendingConfiguration()
-{
-    if (mPendingPreset >= 0) {
-        setPreset(mPendingPreset);
-        mPendingPreset = -1;
-    }
 }
 
 /**

@@ -114,6 +114,7 @@
     <Button action="BindingArgTest"/>
     <Button action="MainTap Track1"/>
     <Button action="Setup Name Test"/>
+    <Button action="ReloadScripts"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>

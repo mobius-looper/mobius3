@@ -1343,19 +1343,7 @@ void TrackPresetParameterType::setValue(Action* action)
 
 	if (preset != NULL) {
         Track* t = action->getResolvedTrack();
-
-        if (action->trigger != TriggerScript) {
-            // !! assume this has to be pending for safety, though
-            // we'll always be in a script?
-            // We should be doing this with Actions now rather than
-            // yet another type of pending
-            t->setPendingPreset(preset->ordinal);
-        }
-        else {
-            // do it immediately so the reset of the script sees it
-            // !! should be getting this from the interrupt config?
-            t->setPreset(preset->ordinal);
-        }
+        t->setPreset(preset->ordinal);
 	}
 }
 
@@ -1457,15 +1445,7 @@ void TrackPresetNumberParameterType::setValue(Action* action)
 
 	if (preset != NULL) {
         Track* t = action->getResolvedTrack();
-        if (action->trigger != TriggerScript) {
-            // !! assume this has to be pending for safety, though
-            // we'll always be in a script?
-            // Should be doing this with deferred Actions now
-            t->setPendingPreset(index);
-        }
-        else {
-            t->setPreset(index);
-        }
+        t->setPreset(index);
 	}
 }
 

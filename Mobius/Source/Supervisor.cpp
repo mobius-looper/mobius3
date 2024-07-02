@@ -1424,13 +1424,26 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 break;
         }
     }
-    else {
-        // we have no system wide Functions, pass down to the listeners
-        for (int i = 0 ; i < actionListeners.size() ; i++) {
-            ActionListener* l = actionListeners[i];
-            handled = l->doAction(action);
-            if (handled)
-              break;
+    else if (s->behavior == BehaviorFunction) {
+        switch (s->id) {
+            case UISymbolReloadScripts: {
+                menuLoadScripts();
+                handled = true;
+            }
+                break;
+            case UISymbolReloadSamples: {
+                menuLoadSamples();
+                handled = true;
+            }
+        }
+        if (!handled) {
+            // pass down to the listeners
+            for (int i = 0 ; i < actionListeners.size() ; i++) {
+                ActionListener* l = actionListeners[i];
+                handled = l->doAction(action);
+                if (handled)
+                  break;
+            }
         }
     }
     
