@@ -20,6 +20,20 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 12 Changes
+- Projects
+- Single loop save/load with Quick Save
+- Bug fixes for sustain scripts
+- Bug fix setting colors on buttons that have action arguments
+- Keep button color popup visible when it is close to the right edge
+- Fix display of the focus lock button, track number/name is also a focus lock toggle
+- Fix active setup switching back to the first one after editing setups
+- LoadScripts and LoadSamples are now bindable functions
+- Upgrader will now import old setups with track names
+- Host parameters may be bound to functions and scripts
+- Improved binding panels, immediate updates to the table when changing fields without **Update** button
+- Bindings to scripts may now have arguments that are passed through to the script
+
 ## Build 11 Changes
 
 - Support for multiple input and output ports
