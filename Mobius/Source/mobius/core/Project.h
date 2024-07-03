@@ -1,13 +1,25 @@
-/*
- * Copyright (c) 2010 Jeffrey S. Larson  <jeff@circularlabs.com>
- * All rights reserved.
- * See the LICENSE file for the full copyright and license declaration.
- * 
- * ---------------------------------------------------------------------
- * 
- * A representation of the runtime state of a Mobius instance, 
- * including audio data.  This allows Mobius state to be saved to
- * and restored from files.
+/**
+ * This is old but I'm trying not to make too many changes until it
+ * is working again reliably.
+ *
+ * This file defines the Project model and includes the code that
+ * walks over the internal objects like Track/Loop/Layer/Segment to
+ * load and save them.
+ *
+ * File handling has been moved up a level to Projector.cpp
+ *
+ * Creating a project requires memory allocation so it must be done
+ * above the audio thread while the engine is in a suspended state.
+ * It could be done in the audio thread as long as the engine was suspended,
+ * but even then, it can still take a significant amount of time, and if we're
+ * a plugin that could impact the ability of the host to process other plugins.
+ *
+ * Ideally it would be done in the maintenance thread, since the UI thread is
+ * also managed by the host and it is unclear what impact bogging that down would have.
+ *
+ * Loading a project is relatively fast.  It also requires memory allocation, but
+ * most of it uses pooled objects.  It could be done while the engine is suspended
+ * or within the audio thread like it used to.
  *
  */
 
@@ -104,8 +116,6 @@ class ProjectLayer {
 
 	void add(ProjectSegment* seg);
 
-	void writeAudio(const char* baseName, int tracknum, int loopnum, 
-					int layernum);
 	void toXml(class XmlBuffer* b);
 	void parseXml(class XmlElement* e);
 
@@ -189,7 +199,6 @@ class ProjectLoop {
 	void setActive(bool b);
 	bool isActive();
 
-	void writeAudio(const char* baseName, int tracknum, int loopnum);
 	void toXml(class XmlBuffer* b);
 	void parseXml(class XmlElement* e);
 
@@ -301,7 +310,6 @@ class ProjectTrack {
 	void allocLayers(class LayerPool* pool);
 	void resolveLayers(Project* p);
 
-	void writeAudio(const char* baseName, int tracknum);
 	void toXml(class XmlBuffer* b);
 	void toXml(class XmlBuffer* b, bool isTemplate);
 	void parseXml(class XmlElement* e);
@@ -388,6 +396,9 @@ class Project {
 	void setNumber(int i);
 	int getNumber();
 	
+    void setPath(const char* path);
+    const char* getPath();
+
 	//
 	// Audio hierarchy specification
 	//
@@ -408,15 +419,6 @@ class Project {
 	void setSetup(const char* name);
 	const char* getSetup();
 
-    // callers must check isError 
-    void read();
-	void read(class AudioPool* pool);
-    void write();
-	void write(const char* file, bool isTemplate);
-
-    void setPath(const char* path);
-    const char* getPath();
-
 	//
 	// Load options
 	//
@@ -435,15 +437,13 @@ class Project {
 	// Transient save/load state
 	//
 
-	bool isError();
-	const char* getErrorMessage();
-	void setErrorMessage(const char* msg);
+	//bool isError();
+	//const char* getErrorMessage();
+	//void setErrorMessage(const char* msg);
 	int getNextLayerId();
 	
-	bool isFinished();
-	void setFinished(bool b);
-
-    void deleteAudioFiles();
+	//bool isFinished();
+	//void setFinished(bool b);
 
 	void toXml(class XmlBuffer* b);
 	void toXml(class XmlBuffer* b, bool isTemplate);
@@ -452,9 +452,6 @@ class Project {
   private:
 
 	void init();
-    void read(class AudioPool* pool, const char* file);
-	void readAudio(class AudioPool* pool);
-	void writeAudio(const char* baseName);
 
 	//
 	// Persistent fields
@@ -525,26 +522,6 @@ class Project {
      * is loaded.
      */
     bool mIncludeAudio;
-
-
-	//
-	// Transient parse state
-	//
-
-	FILE* mFile;
-	char mBuffer[1024];
-	char** mTokens;
-	int mNumTokens;
-
-	//
-	// Transient save state
-
-	/**
-	 * Set by the interrupt handler when the state of the project
-	 * has been captured.
-	 */
-	bool mFinished;
-
 
 };
 
