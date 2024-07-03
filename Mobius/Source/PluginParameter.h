@@ -33,6 +33,10 @@ class PluginParameter
     Symbol* symbol = nullptr;
     int scopeTrack = 0;
     int scopeGroup = 0;
+
+    // unique identifier used when the parameter is bound to a sustainable function
+    // we're going to need something similar to tag AU parameters, can this be the same?
+    int sustainId = 0;
     
     // test hack
     bool installed = false;

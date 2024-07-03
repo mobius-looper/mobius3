@@ -64,8 +64,30 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
         Trace(1, "PluginParameter: Binding to Symbol %s that had no core Parameter\n",
               s->getName());
     }
+    else if (s->function != nullptr) {
+        // Hosts have not historically had the notion of a "momentary button" parameter type
+        // and neither does Juce
+        // Old Mobius exposed these as booleans
+        juce::String parameterId = s->name;
+        juce::String parameterName = s->name;
+        min = 0;
+        max = 1;
+        boolParameter = new juce::AudioParameterBool(parameterId, parameterName, false);
+    }
+    else if (s->script != nullptr) {
+        // These almost always behave like functions, though there is the !continuous
+        // script option that I'm not sure works
+        juce::String parameterId = s->getName();
+        juce::String parameterName = s->getName();
+        min = 0;
+        max = 1;
+        boolParameter = new juce::AudioParameterBool(parameterId, parameterName, false);
+    }
     else {
         // anything else to support?
+        // Samples not interesting yet
+        // activations however are...
+        
         Trace(1, "PluginParameter: Binding to Symbol %s that wasn't a UIParameter\n",
               s->getName());
     }

@@ -901,6 +901,13 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
 void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
 {
 	t->setName(e->getAttribute(ATT_NAME));
+
+    // if we're reading an old mobius.xml for upgrade, the track name
+    // attribute changed
+    const char* oldName = e->getAttribute("trackName");
+    if (oldName != nullptr)
+      t->setName(oldName);
+    
     t->setTrackPresetName(parseString(e, UIParameterTrackPreset));
     t->setFocusLock(parse(e, UIParameterFocus));
     t->setMono(parse(e, UIParameterMono));

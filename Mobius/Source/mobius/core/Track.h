@@ -285,8 +285,8 @@ class Track : public TraceContext
 
     // configuration management
     
-    void propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdited);
-    class Preset* getStartingPreset(MobiusConfig* config, Setup* setup);
+    void propagateSetup(MobiusConfig* config, Setup* setup, bool setupsEdited, bool presetsEdited);
+    class Preset* getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset);
 	void setupLoops();
 	void resetParameters(class Setup* setup, bool global, bool doPreset);
 	void resetPorts(class SetupTrack* st);

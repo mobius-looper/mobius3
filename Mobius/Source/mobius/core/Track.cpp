@@ -1210,12 +1210,7 @@ void Track::updateConfiguration(MobiusConfig* config)
     // reconfiguration and loss of runtime parameter values if nothing
     // about the setups or presets was changed
     
-    if (config->setupsEdited) {
-        // reset this to force a refresh of the setup if we're already using it
-        mSetupOrdinal = -1;
-    }
-
-    propagateSetup(config, setup, config->presetsEdited);
+    propagateSetup(config, setup, config->setupsEdited, config->presetsEdited);
 }
 
 /**
@@ -1278,7 +1273,7 @@ void Track::changePreset(int number)
 void Track::changeSetup(Setup* setup)
 {
     if (mSetupOrdinal != setup->ordinal)
-      propagateSetup(mMobius->getConfiguration(), setup, false);
+      propagateSetup(mMobius->getConfiguration(), setup, false, false);
 }
 
 /**
@@ -1295,14 +1290,15 @@ void Track::changeSetup(Setup* setup)
  * actually changed in this update.  If the were not changed, then we don't
  * need to refresh unless the preset itself changed.
  */
-void Track::propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdited)
+void Track::propagateSetup(MobiusConfig* config, Setup* setup,
+                           bool setupsEdited, bool presetsEdited)
 {
     // hate saving a pointer, but it's too wound up with Synchronizer
     // and needs to be fast until we can make local copies in SyncState
     // do this even if the ordinals are the same since we can get here
     // on updateConfiguration with different object pointers
     mSetupCache = setup->getTrack(mRawNumber);
-
+    
     Preset* newPreset = NULL;
     // determine whether we need to refresh the preset
     if (presetsEdited) {
@@ -1310,13 +1306,21 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdite
         // unfortately we can't tell WHICH preset was edited, only
         // that some were, and we have to assume that our local
         // copy was one of them
-        newPreset = getStartingPreset(config, setup);
+        newPreset = getStartingPreset(config, setup, false);
+    }
+    else if (setupsEdited) {
+        // setups were edited, refresh the preset only if the
+        // starting preset differs
+        Preset* newStarting = getStartingPreset(config, setup, false);
+        if (setupsEdited || newStarting->ordinal != mPreset->ordinal)
+          newPreset = newStarting;
     }
     else {
-        // presets haven't changed, but the setup may have
-        Preset* newStarting = getStartingPreset(config, setup);
-        if (newStarting->ordinal != mPreset->ordinal)
-          newPreset = newStarting;
+        // neither presets nor setups were edited, retain the
+        // runtime preset even if it differs from the starting preset
+        // here if you've made a runtime preset change, and then edited a binding
+        // or something that has no impact on the track
+        // don't lose runtime changes if the user is in the middle of something
     }
 
     // refresh the local preset if it may have changed
@@ -1328,7 +1332,7 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdite
       refreshPreset(newPreset);
 
     // now do things in the Setup itself
-    if (mSetupOrdinal != setup->ordinal) {
+    if (setupsEdited || mSetupOrdinal != setup->ordinal) {
     
         if (mLoop->isReset()) {
             // loop is empty, reset everything except the preset
@@ -1369,7 +1373,7 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup, bool presetsEdite
  * that was selected.  This is something I added for Fro, and it makes
  * sense since there is no global default preset.
  */
-Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup)
+Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset)
 {
     Preset* preset = NULL;
 
@@ -1398,20 +1402,32 @@ Preset* Track::getStartingPreset(MobiusConfig* config, Setup* setup)
 
     if (preset == nullptr) {
         // stay with the last active preset
-        // note: old code searched by ordinals which is unreliable
-        // if you're adding or removing presets, names work better
-        // unless you're also renaming presets
-        // no good way track that
 
-        preset = config->getPreset(mPreset->getName());
-        if (preset == NULL) {
-            // this will happen if we deleted or renamed it
-            // formerly had a persistent notion of a global default preset
-            // name but now it just picks the first one, since this
-            // really needs to be defined in the Setup if you
-            // want it to stick
-            preset = config->getDefaultPreset();
+        // wait, this is confusing...
+        // if neither the setup or the track has a preset, then the expectation
+        // is that GlobalReset will cause all tracks to be the same
+        // but if we use the "keep the last one" rule they can be different
+        // the only way this makes sense is if selecting a preset in a track also
+        // makes it active in all tracks, which I'm not sure is good either
+        // if this is just a loop or track reset, then it kind of makes sense but
+        // global should put it back to the way it would be on startup
+
+        if (!globalReset) {
+            // note: old code searched by ordinals which is unreliable
+            // if you're adding or removing presets, names work better
+            // unless you're also renaming presets
+            // no good way track that
+            preset = config->getPreset(mPreset->getName());
         }
+    }
+    
+    if (preset == NULL) {
+        // this will happen if we deleted or renamed it
+        // formerly had a persistent notion of a global default preset
+        // name but now it just picks the first one, since this
+        // really needs to be defined in the Setup if you
+        // want it to stick
+        preset = config->getDefaultPreset();
     }
     
     return preset;
@@ -1863,7 +1879,7 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
     if (doPreset && 
         (global || !setup->isResetRetain(TrackPresetParameter->getName()))) {
 
-        Preset* preset = getStartingPreset(mMobius->getConfiguration(), setup);
+        Preset* preset = getStartingPreset(mMobius->getConfiguration(), setup, global);
         refreshPreset(preset);
 	}
 

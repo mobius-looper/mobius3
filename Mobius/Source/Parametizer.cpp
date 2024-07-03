@@ -35,6 +35,8 @@ Parametizer::~Parametizer()
 void Parametizer::initialize()
 {
     Trace(2, "Parametizer::initialize\n");
+
+    int sustainId = 1;
     
     // start with Bindings
     MobiusConfig* mconfig = supervisor->getMobiusConfig();
@@ -58,6 +60,7 @@ void Parametizer::initialize()
                 delete p;
             }
             else {
+                p->sustainId = sustainId++;
                 parameters.add(p);
             }
         }

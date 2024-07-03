@@ -12,8 +12,11 @@
 #include "../../util/Trace.h"
 #include "../../model/UIParameter.h"
 #include "../../model/ExValue.h"
+#include "../../Supervisor.h"
 
 #include "ParameterField.h"
+
+static const char* ParameterFieldNone = "[None]";
 
 ParameterField::ParameterField(UIParameter* p) :
     Field(p->getName(), p->getDisplayName(), convertParameterType(p->type))
@@ -35,6 +38,26 @@ ParameterField::ParameterField(UIParameter* p) :
         if (p->valueLabels != nullptr) {
             setAllowedValueLabels(p->valueLabels);
         }
+    }
+    else if (p->type == TypeStructure) {
+        // these are combos (string + multi) but must have allowed values
+
+        // returns an old-school StringList for some reason, we never want that
+        // why not just return juce::StringArray and be done with it?
+        StringList* list = p->getStructureNames(Supervisor::Instance->getMobiusConfig());
+        juce::StringArray values;
+
+        // always start with this?  for the first usage of selecting Preset names
+        // in the Setup these are always optional so need to allow empty
+        values.add(ParameterFieldNone);
+        
+        if (list != nullptr) {
+            for (int i = 0 ; i < list->size() ; i++) {
+                values.add(juce::String(list->getString(i)));
+            }
+            delete list;
+        }
+        setAllowedValues(values);
     }
 
     // hack, these look better if they're all the same size
@@ -123,7 +146,16 @@ void ParameterField::loadValue(void *obj)
                 }
                     break;
                 case TypeStructure: {
-                    newValue = ev.getString();
+                    if (ev.isNull()) {
+                        newValue = ParameterFieldNone;
+                    }
+                    else {
+                        const char* str = ev.getString();
+                        if (str == nullptr || strlen(str) == 0)
+                          newValue = ParameterFieldNone;
+                        else
+                          newValue = ev.getString();
+                    }
                 }
                     break;
             }
@@ -144,10 +176,12 @@ void ParameterField::saveValue(void *obj)
     }
     else {
         ExValue ev;
-
+        bool invalid = false;
+        
         if (parameter->multi) {
             // todo: will need to handle multi-valued lists properly
             Trace(1, "ParameterField: muli-value parameter not supported without Juce accessors\n");
+            invalid = true;
         }
         else {
             switch (parameter->type) {
@@ -182,14 +216,24 @@ void ParameterField::saveValue(void *obj)
                 }
                     break;
                 case TypeStructure: {
-                    ev.setString(getCharValue());
+                    juce::String s = getStringValue();
+                    if (s == juce::String(ParameterFieldNone))
+                      ev.setString("");
+                    else
+                      ev.setString(s.toUTF8());
+                }
+                    break;
+                    
+                default: {
+                    Trace(1, "ParamaeterField: Invalid parameter type %d", parameter->type);
+                    invalid = true;
                 }
                     break;
             }
         }
 
         // should do this only if we had a conversion
-        if (!ev.isNull())
+        if (!invalid)
           parameter->setValue(obj, &ev);
     }
 }

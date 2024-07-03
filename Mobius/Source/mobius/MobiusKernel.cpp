@@ -454,7 +454,7 @@ void MobiusKernel::consumeParameters()
     for (int i = 0 ; i < params->size() ; i++) {
         PluginParameter* param = (*params)[i];
         if (param->capture()) {
-            Trace(2, "Parameter %s %ld\n", param->getName().toUTF8(), (long)(param->get()));
+            //Trace(2, "Parameter %s %ld\n", param->getName().toUTF8(), (long)(param->get()));
             doParameter(param);
         }
     }
@@ -474,7 +474,72 @@ void MobiusKernel::doParameter(PluginParameter* p)
         action->next = coreActions;
         coreActions = action;
     }
+    else if (s->function != nullptr && s->coreFunction != nullptr) {
+        // functions are exposed as booleans, should only be here with 0 and 1
+        // and should be supressing duplicate values
+        int value = p->get();
+
+        // here we have the sustainablility issue that would have been
+        // handled by Binderator for normal triggers
+        // ugh, can't do sustain right now because this parameter doesn't
+        // "return" value back to the host, the host will always think it was
+        // immediately set back to zero and then immediately send us another change
+        // to put it to zero, which for sus functions would immediately end the sustain
+        // if this needs to work, we will have to have the parameter export phase continue
+        // to return 1 we're "on"
+        bool enableSustainable = false;
+        if (enableSustainable) {
+            if (value > 0 || s->function->sustainable) {
+                UIAction* action = actionPool->newAction();
+                // pool should do this!
+                action->reset();
+                action->symbol = s;
+                action->scopeTrack = p->scopeTrack;
+                // todo: complex binding arguments
+            
+                if (value > 0) {
+                    // we're down
+                    if (s->function->sustainable) {
+                        action->sustain = true;
+                        action->sustainId = p->sustainId;
+                    }
+                }
+                else {
+                    // can only be here if we were sustainable
+                    action->sustainId = p->sustainId;
+                    action->sustainEnd = true;
+                }
+        
+                action->next = coreActions;
+                coreActions = action;
+            }
+        }
+        else if (value > 0) {
+            Trace(2, "MobiusKernel: Invoking function from host parameter %s",
+                  s->getName());
+            UIAction* action = actionPool->newAction();
+            action->reset();
+            action->symbol = s;
+            action->scopeTrack = p->scopeTrack;
+            action->next = coreActions;
+            coreActions = action;
+        }
+    }
+    else if (s->script != nullptr) {
+        // these behave like functions except that are not sustainable in the
+        // usual way, ScriptInterpreter deals with this
+        if (p->get() > 0) {
+            UIAction* action = actionPool->newAction();
+            action->reset();
+            action->symbol = s;
+            action->scopeTrack = p->scopeTrack;
+            action->next = coreActions;
+            coreActions = action;
+        }
+    }
     else {
+        // can get here if we allowed bindings to things that were not LevelCore
+        // there aren't any that useful right now, punt
         Trace(1, "MobiusKernel: Unhandled PluginParameter %s\n", s->getName());
     }
 }
