@@ -10,6 +10,9 @@
  *
  * One of these will be maintained within MobiusShell.
  *
+ * This is EXTREMELY hacked up, just trying to make it work like it did before.
+ * once the dust settles, it will be entirely replaced.
+ *
  */
 
 #pragma once
@@ -28,5 +31,24 @@ class ProjectManager
 
     class MobiusShell* shell;
     juce::StringArray errors;
+
+    // ancient file management
+    class Project* saveProject();
+    void writeProject(class Project* p, const char* file, bool isTemplate);
+    void writeAudio(class Project* p, const char* baseName);
+    void writeAudio(class ProjectTrack* track, const char* baseName, int tracknum);
+    void writeAudio(class ProjectLoop* loop, const char* baseName, int tracknum, int loopnum);
+    void writeAudio(class ProjectLayer* layer, const char* baseName,
+                    int tracknum, int loopnum, int layernum);
+    void writeAudio(class Audio* audio, const char* path);
+    void deleteAudioFiles(class Project* p);
+
+    //bool EndsWithNoCase(const char* str, const char* suffix);
+    //int LastIndexOf(const char* str, const char* substr);
+    int WriteFile(const char* name, const char* content);
+
+    void read(Project* p, juce::File file);
+    void readAudio(Project* p);
+    Audio* readAudio(const char* path);
     
 };

@@ -21,13 +21,22 @@
 #include "AudioFile.h"
 
 /**
+ * Interface I started with that didn't do an error list
+ */
+void AudioFile::write(juce::File file, Audio* a)
+{
+    juce::StringArray errors;
+    write(file, a, errors);
+}
+
+/**
  * Write an audio file using the old tool.
  * This is an adaptation of what used to be in Audio::write()
  * which no longer exists, but still sucks because it does this
  * a sample at a time rather than blocking.  Okay for initial testing
  * but you can do better.
  */
-void AudioFile::write(juce::File file, Audio* a)
+void AudioFile::write(juce::File file, Audio* a, juce::StringArray errors)
 {
     // Old code gave the illusion that it supported something other than 2
     // channels but this was never tested.  Ensuing that this all stays
@@ -55,6 +64,10 @@ void AudioFile::write(juce::File file, Audio* a)
 	if (error) {
 		Trace(1, "Error writing file %s: %s\n", path, 
 			  wav->getErrorMessage(error));
+
+        errors.add(juce::String("Error writing file ") +
+                   juce::String(path) + ": " +
+                   juce::String(wav->getErrorMessage(error)));
 	}
 	else {
 		// write one frame at a time not terribly effecient but messing
@@ -77,6 +90,10 @@ void AudioFile::write(juce::File file, Audio* a)
 		if (error) {
 			Trace(1, "Error finishing file %s: %s\n", path, 
 				  wav->getErrorMessage(error));
+
+            errors.add(juce::String("Error finishing file ") +
+                       juce::String(path) + ": " +
+                       juce::String(wav->getErrorMessage(error)));
 		}
     }
 

@@ -20,6 +20,7 @@
 class MobiusShell : public MobiusInterface
 {
     friend class MobiusKernel;
+    friend class ProjectManager;
     friend class TestDriver;
     
   public:
@@ -89,6 +90,9 @@ class MobiusShell : public MobiusInterface
     
     class SampleManager* compileSamples(class SampleConfig* src);
     void sendSamples(class SampleManager* manager, bool safeMode);
+
+    bool suspendKernel();
+    void resumeKernel();
     
   private:
 

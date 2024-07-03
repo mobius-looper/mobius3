@@ -1457,6 +1457,38 @@ juce::StringArray MobiusShell::saveProject(juce::File dest)
     return projectManager.save(dest);
 }
 
+/**
+ * Request that the Kernel be suspended.
+ * Added for ProjectManager.
+ * This builds on top of MobiusKernel::suspend by adding the polling loop
+ * to wait for it to actually suspend.
+ * 
+ * Note that this MUST NOT be called from within the audio thread because
+ * well, then Kernel would never get around to processing the suspend
+ * request because you're blocking it here.
+ */
+bool MobiusShell::suspendKernel()
+{
+    bool suspended = false;
+
+    kernel.suspend();
+
+    // we shouldn't have to wait too long and don't need to "poll" more than once
+    // since audio blocks should be comming in every few milliseconds
+    container->sleep(100);
+
+    suspended = kernel.isSuspended();
+    if (!suspended)
+      Trace(1, "MobiusShell: Timeout waiting for kernel suspend");
+
+    return suspended;
+}
+
+void MobiusShell::resumeKernel()
+{
+    kernel.resume();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

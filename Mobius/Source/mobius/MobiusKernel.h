@@ -141,7 +141,23 @@ class MobiusKernel : public MobiusAudioListener
 
     void coreTimeBoundary();
 
+    //
+    // temporarily suspend/resume the kernel so it can be
+    // accessed outside the audio thread without conflict
+    // added for ProjectManager just to get things working
+    // but needs more thought
+    //
+
+    void suspend();
+    void resume();
+    bool isSuspended();
+    
   private:
+
+    // hopefully temporary hack to suspend all audio block processing
+    // while ProjectManager violates the core
+    bool suspended = false;
+    bool suspendRequested = false;
 
     // stuff we are either passed or pull from the shell
     class MobiusShell* shell = nullptr;

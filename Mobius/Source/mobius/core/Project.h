@@ -103,7 +103,7 @@ class ProjectLayer {
     ProjectLayer();
     ProjectLayer(class XmlElement* e);
     ProjectLayer(class MobiusConfig* config, class Project* p, class Layer* src);
-    ProjectLayer(Audio* src);
+    ProjectLayer(class Audio* src);
     ~ProjectLayer();
 
 	int getId();
@@ -111,12 +111,12 @@ class ProjectLayer {
 	void setCycles(int i);
 	int getCycles();
 
-    void setAudio(Audio* a);
-    Audio* getAudio();
-    Audio* stealAudio();
-    void setOverdub(Audio* a);
-    Audio* getOverdub();
-    Audio* stealOverdub();
+    void setAudio(class Audio* a);
+    class Audio* getAudio();
+    class Audio* stealAudio();
+    void setOverdub(class Audio* a);
+    class Audio* getOverdub();
+    class Audio* stealOverdub();
 
 	void setBuffers(int i);
 	int getBuffers();
@@ -158,8 +158,8 @@ class ProjectLayer {
 
 	int mCycles;
 	class List* mSegments;
-    Audio* mAudio;
-	Audio* mOverdub;
+    class Audio* mAudio;
+	class Audio* mOverdub;
     char* mPath;
     char* mOverdubPath;
     bool mProtected;
@@ -318,8 +318,8 @@ class ProjectTrack {
 	void add(ProjectLoop* l);
 	class List* getLoops();
 
-	void setVariable(const char* name, ExValue* value);
-	void getVariable(const char* name, ExValue* value);
+	void setVariable(const char* name, class ExValue* value);
+	void getVariable(const char* name, class ExValue* value);
 
 	Layer* findLayer(int id);
 	void allocLayers(class LayerPool* pool);
@@ -405,7 +405,7 @@ class Project {
 	Project();
 	Project(class XmlElement* e);
 	Project(const char* file);
-	Project(Audio* a, int trackNumber, int loopNumber);
+	Project(class Audio* a, int trackNumber, int loopNumber);
 	~Project();
 
 	void setNumber(int i);
@@ -421,12 +421,12 @@ class Project {
 	void clear();
 	Layer* findLayer(int id);
 	void resolveLayers(class LayerPool* pool);
-	void setTracks(Mobius* m);
+	void setTracks(class Mobius* m);
 	void add(ProjectTrack* t);
 	class List* getTracks();
 
-	void setVariable(const char* name, ExValue* value);
-	void getVariable(const char* name, ExValue* value);
+	void setVariable(const char* name, class ExValue* value);
+	void getVariable(const char* name, class ExValue* value);
 
 	void setBindings(const char* name);
 	const char* getBindings();
@@ -452,9 +452,9 @@ class Project {
 	// Transient save/load state
 	//
 
-	//bool isError();
-	//const char* getErrorMessage();
-	//void setErrorMessage(const char* msg);
+	bool isError();
+	const char* getErrorMessage();
+	void setErrorMessage(const char* msg);
 	int getNextLayerId();
 	
 	//bool isFinished();

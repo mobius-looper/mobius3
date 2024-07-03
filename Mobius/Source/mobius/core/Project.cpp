@@ -1446,8 +1446,6 @@ const char* Project::getPath()
 	return mPath;
 }
 
-// these looked like parsing interfaces that should be moved up a level
-#if 0
 bool Project::isError()
 {
 	return mError;
@@ -1466,7 +1464,6 @@ void Project::setErrorMessage(const char* msg)
 	  strcpy(mMessage, msg);
 	mError = true;
 }
-#endif
 
 void Project::add(ProjectTrack* t)
 {

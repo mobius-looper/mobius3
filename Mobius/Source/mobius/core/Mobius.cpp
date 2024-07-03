@@ -48,7 +48,7 @@
 #include "Loop.h"
 #include "Mode.h"
 #include "Parameter.h"
-//#include "Project.h"
+#include "Project.h"
 #include "Scriptarian.h"
 #include "ScriptCompiler.h"
 #include "Script.h"
@@ -2002,6 +2002,171 @@ bool Mobius::isGlobalReset()
       allReset = !mScriptarian->isBusy();
 
     return allReset;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Projects
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is what remains of the old code for loading projects.
+ * Most has been moved up to ProjectManager.
+ *
+ * Saving a project is actually fairly isolated, Project::setTracks(Mobius)
+ * does the walk inside the Project classes.
+ *
+ * Putting a Project back into the engine is a little more involved.
+ * Here the Project has been read from files, and it will contain layer
+ * Audio objects that use blocks from the shared AudioPool.
+ *
+ * Now we pass that downthrough the layers to get it installed.
+ *
+ * Old code used mPendingProject to ensure that the project was installed
+ * while in the audio thread which eventuall called loadProjectInternal
+ *
+ * todo: well, there is SO much to do, but one of them is to accumulate
+ * errors in an error list for alerts
+ *
+ */
+void Mobius::loadProject(Project* p)
+{
+	p->resolveLayers(mLayerPool);
+
+	List* tracks = p->getTracks();
+
+    if (tracks == NULL) {
+        Trace(2, "Mobius::loadProjectInternal empty project\n");
+    }
+    else if (!p->isIncremental()) {
+		// globalReset to start from a clean slate
+		globalReset(NULL);
+
+        // change setups to match what was in the project
+        // a number of issues here...
+        // Project can be old and we may not have this setup any more
+#if 0        
+		const char* name = p->getSetup();
+		if (name != NULL) {
+            // remember to locate the Setup from the interrupt config
+            Setup* s = mInterruptConfig->getSetup(name);
+            if (s != NULL) {
+                setSetupInternal(s);
+            }
+        }
+#endif
+        // this is about the same as above
+		const char* name = p->getSetup();
+		if (name != NULL) {
+            Setup* s = mConfig->getSetup(name);
+            if (s != nullptr) {
+                mSetup = s;
+                propagateConfiguration();
+            }
+        }
+
+		// Global reset again to get the tracks adjusted to the 
+		// state in the Setup.
+        // new: don't think this is necessary now that we just did
+        // propagateConfiguration?
+		globalReset(NULL);
+
+        // change the selected binding overlay
+        // this is an unusual case where we're in an interrupt but we
+        // must set the master MobiusConfig object to change the
+        // binding overlay since that is not used inside the interrupt
+        // !! this will override what was in the Setup which I guess
+        // is okay if you changed it before saving the project, but most
+        // of the time this will already have been set during setSetupInternal
+
+        // new: ignoring this, bindings need to be handled at a higher level
+#if 0        
+		name = p->getBindings();
+		if (name != NULL) {
+			BindingConfig* bindings = mConfig->getBindingConfig(name);
+			if (bindings != NULL)
+			  setOverlayBindings(bindings);
+		}
+#endif        
+        
+        // should we let the project determine the track count
+        // or force the project to fit the configured tracks?
+		for (int i = 0 ; i < mTrackCount ; i++) {
+			if (i < tracks->size()) {
+				ProjectTrack* pt = (ProjectTrack*)tracks->get(i);
+				mTracks[i]->loadProject(pt);
+				if (pt->isActive())
+				  setActiveTrack(i);
+			}
+		}
+
+        // may now have master tracks
+        mSynchronizer->loadProject(p);
+	}
+	else {
+        // Replace only the loops in the project identified by number.
+        // Currently used only when loading individual loops.  Could beef
+        // this up so we can set more of the track.
+
+        // new: I don't think this is necessary any more but might
+        // be when you dust off the old loop save/load menu items
+        // there is are new MobiusInterface methods for loadLoop
+        // that don't require packaging it in a project
+
+		for (int i = 0 ; i < tracks->size() ; i++) {
+			ProjectTrack* pt = (ProjectTrack*)tracks->get(i);
+            int tnum = pt->getNumber();
+            if (tnum < 0 || tnum >= mTrackCount)
+              Trace(1, "Incremental project load: track %ld is out of range\n",
+                    (long)tnum);
+            else {
+                Track* track = mTracks[tnum];
+
+                List* loops = pt->getLoops();
+                if (loops == NULL) 
+                  Trace(2, "Mobius::loadProjectInternal empty track\n");
+                else {
+                    for (int j = 0 ; j < loops->size() ; j++) {
+                        ProjectLoop* pl = (ProjectLoop*)loops->get(j);
+                        int lnum = pl->getNumber();
+                        // don't allow extending LoopCount
+                        if (lnum < 0 || lnum >= track->getLoopCount())
+                          Trace(1, "Incremental project load: loop %ld is out of range\n",
+                                (long)lnum);
+                        else {
+                            Loop* loop = track->getLoop(lnum);
+                            if (pl->isActive())
+                              track->setLoop(loop);
+                            else {
+                                // this is important for Loop::loadProject
+                                // to start it in Pause mode
+                                if (loop == track->getLoop())
+                                  pl->setActive(true);
+                            }
+
+                            loop->reset(NULL);
+                            loop->loadProject(pl);
+
+                            // Kludge: Synchronizer wants to be notified when
+                            // we load individual loops, but we're using
+                            // incremental projects to do that. Rather than
+                            // calling loadProject() call loadLoop() for
+                            // each track.
+                            // !! Revisit this, it would be nice to handle
+                            // these the same way
+                            if (loop == track->getLoop())
+                                mSynchronizer->loadLoop(loop);
+                        }
+                    }
+                }
+            }
+		}
+	}
+
+    // we should have taken the Audio out of the project when
+    // the loops were loaded, so delete what remains
+	delete p;
 }
 
 /****************************************************************************/

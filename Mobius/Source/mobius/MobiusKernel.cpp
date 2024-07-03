@@ -255,6 +255,76 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Suspend/Resume
+//
+// Hacked up interface for ProjectManager to stop the kernel from
+// processing audio blocks while we're trying to save/load projects
+// from outside the audio thread.  I'm not sure this is the way
+// I want to do this, but it could be useful for other things.
+// It would be cleaner to do this with KernelMessages.
+//
+// Ideally this would be much more complicated since we're dealing with
+// an audio stream.  If we're actively playing something then it needs
+// an orderly fade out with a fade in when it is resumed or else there
+// will be clicks.
+//
+// For project save/load this isn't too bad, but still it looks unseemly.
+// The effect would be similar to GlobalPause, though I'm not sure if that
+// does fades either.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns true if the kernel is in a suspended state and is ready
+ * to be fucked with.
+ */
+bool MobiusKernel::isSuspended()
+{
+    return suspended;
+}
+
+/**
+ * Ask the the kernel be suspended.
+ * This is normally called by the UI or maintenance thread.
+ * Since the protocol is just a simple set of flags we can dispense with
+ * KernelMessage, though that has some advantages for tracking.
+ *
+ * The caller needs to poll isSuspended to determine when the kernel
+ * actually reaches a suspended state on the next audio block, and time out
+ * if the kernel isn't responding.
+ */
+void MobiusKernel::suspend()
+{
+    if (suspendRequested)
+      Trace(1, "MobiusKernel: Redundant suspend request, you will probably have a bad day");
+    else
+      Trace(2, "MobiusKernel: Suspend requested");
+    
+    suspendRequested = true;
+}
+
+/**
+ * Let the kernel be free again.
+ */
+void MobiusKernel::resume()
+{
+    if (!suspended) {
+        Trace(2, "MobiusKernel: Resume requested when the kernel wasn't suspended");
+    }
+    else if (suspendRequested) {
+        // I guess they gave up before we could get there
+        Trace(2, "MobiusKernel: Resume requested before suspend request was handled");
+    }
+    else {
+        Trace(2, "MobiusKernel: Resuming from suspend");
+    }
+    
+    suspendRequested = false;
+    suspended = false;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // MobiusAudioListener aka "the interrupt"
 //
 //////////////////////////////////////////////////////////////////////
@@ -321,6 +391,13 @@ void MobiusKernel::clearExternalInput()
  */
 void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 {
+    if (suspendRequested) {
+        Trace(2, "MobiusKernel: Suspending");
+        suspended = true;
+        suspendRequested = false;
+    }
+    if (suspended) return;
+    
     // save this here for the duration so we don't have to keep passing it around
     stream = argStream;
     

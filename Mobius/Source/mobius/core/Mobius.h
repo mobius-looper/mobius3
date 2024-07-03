@@ -137,6 +137,12 @@ class Mobius
     void dump(const char* name, class Loop* l);
     
     bool isGlobalReset();
+
+    /**
+     * The remains of project loading, called by ProjectManager after
+     * reading the Project object from files.
+     */
+    void loadProject(class Project* p);
     
     //////////////////////////////////////////////////////////////////////
     //
