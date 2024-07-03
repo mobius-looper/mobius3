@@ -251,6 +251,26 @@ class MobiusInterface {
      */
     virtual bool isGlobalReset() = 0;
 
+    //
+    // Project interface is evolving.  Start by keeping all file handling
+    // in the shell to avoid disruption of old code.  Move this to be more
+    // object oriented, Project goes in, Project goes out, and leave the file
+    // system representation to the UI.  
+    //
+
+    /**
+     * Save the current state of the Mobius engine to a project folder.
+     * There can be many issues doing this that need to be reported back
+     * to the user.  Start with a simple error list.
+     */
+    virtual juce::StringArray saveProject(juce::File dest) = 0;
+
+    /**
+     * Load the engine from state saved in a project file.
+     * Return a list of important messages to be shown to the user.
+     */
+    virtual juce::StringArray loadProject(juce::File src) = 0;
+
   private:
 
     

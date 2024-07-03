@@ -1,4 +1,6 @@
 /**
+ * TODO: UserVariables lost an XML transform at some point, need to put that back.
+ *
  * This is old but I'm trying not to make too many changes until it
  * is working again reliably.
  *
@@ -20,6 +22,19 @@
  * Loading a project is relatively fast.  It also requires memory allocation, but
  * most of it uses pooled objects.  It could be done while the engine is suspended
  * or within the audio thread like it used to.
+ *
+ * Constructing the Project hierarchy from the engine is mostly contained
+ * in this file.  Going the other direction has a few helper methods in core
+ * code like Track::loadProject and Loop::loadProject that pull things from the Project
+ * model and build out the internal structure.  Moving that here would require making
+ * more of the innards public which I don't like.
+ *
+ * It would be more consistent if Track/Loop/Layer/Segment had a symetrical pair
+ * of interfaces, Track::saveProject to builds a ProjectTrack from internal state and
+ * Track::loadProject to go the other direction.  But this does push depenencies on
+ * a particular project model down into core code which is not as good when you want
+ * to design a new model.  But you could also just write a model converter above all that
+ * and let core deal with Project and levels above convert that to something else.
  *
  */
 
@@ -380,7 +395,7 @@ class ProjectTrack {
  * Potentially everything that is in the Setup needs to be
  * in the ProjectTrack since it may be overridden.
  *
- * There are also lost of loop modes that aren't being saved
+ * There are also lots of loop modes that aren't being saved
  * such as rate and pitch shift, mute mode, etc.  
  */
 class Project {

@@ -154,19 +154,19 @@ void MainWindow::mainMenuSelection(int id)
     else {
         switch (id) {
             case MainMenu::OpenLoop:
-                supervisor->alert("Open Loop not implemented");
+                supervisor->menuLoadLoop();
                 break;
-            case MainMenu::OpenProject: 
-                supervisor->alert("Open Project not implemented");
+            case MainMenu::OpenProject:
+                supervisor->menuLoadProject();
                 break;
-            case MainMenu::SaveLoop: 
-                supervisor->alert("Save Loop not implemented");
+            case MainMenu::SaveLoop:
+                supervisor->menuSaveLoop();
                 break;
             case MainMenu::SaveProject:
-                supervisor->alert("Save Project not implemented");
+                supervisor->menuSaveProject();
                 break;
             case MainMenu::QuickSave:
-                supervisor->alert("Quick Save not implemented");
+                supervisor->menuQuickSave();
                 break;
                 
             case MainMenu::LoadScripts: {

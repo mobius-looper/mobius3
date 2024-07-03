@@ -1437,6 +1437,26 @@ void MobiusShell::installLoop(Audio* audio, int track, int loop)
     }
 }
 
+/**
+ * Projects are starting out differently than installLoop where the UI
+ * will have already read the Audio object from a file.  Here we're given
+ * the file containing the project definition file and we do all the file
+ * handling.  Since this is complex and the file structure is going to be
+ * changing it makes sense to encapsulate that rather than making the UI
+ * deal with it, but unclear how it should be packaged through MobiusInterface.
+ * Might be nice to have a standalone ProjectManager as a peer to MobiusInterface
+ * that just dealt with project file structures.
+ */
+juce::StringArray MobiusShell::loadProject(juce::File src)
+{
+    return projectManager.load(src);
+}
+
+juce::StringArray MobiusShell::saveProject(juce::File dest)
+{
+    return projectManager.save(dest);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

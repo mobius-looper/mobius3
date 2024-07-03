@@ -572,6 +572,10 @@
               file="Source/mobius/MobiusMidiTransport.h"/>
         <FILE id="RZNLnz" name="MobiusShell.cpp" compile="1" resource="0" file="Source/mobius/MobiusShell.cpp"/>
         <FILE id="TK5FKu" name="MobiusShell.h" compile="0" resource="0" file="Source/mobius/MobiusShell.h"/>
+        <FILE id="EZDnZh" name="ProjectManager.cpp" compile="1" resource="0"
+              file="Source/mobius/ProjectManager.cpp"/>
+        <FILE id="Uc4aGH" name="ProjectManager.h" compile="0" resource="0"
+              file="Source/mobius/ProjectManager.h"/>
         <FILE id="p07BSI" name="SampleBuilder.cpp" compile="1" resource="0"
               file="Source/mobius/SampleBuilder.cpp"/>
         <FILE id="wwdEks" name="SampleManager.cpp" compile="1" resource="0"
@@ -658,6 +662,9 @@
       <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"
             file="Source/VariableManager.h"/>
     </GROUP>
+    <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
+          file="Source/ProjectFiler.cpp"/>
+    <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

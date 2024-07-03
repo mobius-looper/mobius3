@@ -1446,6 +1446,7 @@ const char* Project::getPath()
 	return mPath;
 }
 
+// these looked like parsing interfaces that should be moved up a level
 #if 0
 bool Project::isError()
 {

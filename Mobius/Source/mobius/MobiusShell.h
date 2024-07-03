@@ -15,6 +15,7 @@
 #include "MobiusKernel.h"
 #include "MobiusInterface.h"
 #include "KernelEventHandler.h"
+#include "ProjectManager.h"
 
 class MobiusShell : public MobiusInterface
 {
@@ -49,6 +50,8 @@ class MobiusShell : public MobiusInterface
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
+    juce::StringArray saveProject(juce::File dest) override;
+    juce::StringArray loadProject(juce::File src) override;
     
     //
     // Internal component services
@@ -119,6 +122,8 @@ class MobiusShell : public MobiusInterface
     // todo: try to avoid passing this down, can we do
     // everything with messages?
     MobiusKernel kernel {this, &communicator};
+
+    ProjectManager projectManager {this};
 
     // flag enabling direct shell/kernel communication
     bool testMode = false;

@@ -45,6 +45,7 @@
 #include "MidiManager.h"
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
+#include "ProjectFiler.h"
 
 #include "Supervisor.h"
 
@@ -675,6 +676,37 @@ void Supervisor::setIdentifyMode(bool b)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Projects
+//
+//////////////////////////////////////////////////////////////////////
+
+void Supervisor::menuLoadProject()
+{
+    projectFiler.loadProject();
+}
+
+void Supervisor::menuSaveProject()
+{
+    projectFiler.saveProject();
+}
+
+void Supervisor::menuLoadLoop()
+{
+    projectFiler.loadLoop();
+}
+
+void Supervisor::menuSaveLoop()
+{
+    projectFiler.saveLoop();
+}
+      
+void Supervisor::menuQuickSave()
+{
+    projectFiler.quickSave();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Maintenance Thread
 //
 //////////////////////////////////////////////////////////////////////
@@ -1070,6 +1102,13 @@ void Supervisor::propagateConfiguration()
 {
     mainWindow->configure();
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Alerts and Time Boundaries
+//
+//////////////////////////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////////////////////////////
 //

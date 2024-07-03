@@ -36,6 +36,7 @@
 #include "Alerter.h"
 #include "UISymbols.h"
 #include "AudioClerk.h"
+#include "ProjectFiler.h"
 
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
@@ -195,6 +196,11 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // menu implementations
     void menuLoadScripts();
     void menuLoadSamples();
+    void menuLoadProject();
+    void menuSaveProject();
+    void menuLoadLoop();
+    void menuSaveLoop();
+    void menuQuickSave();
     
     // MobiusContainer
     int getSampleRate() override;
@@ -301,6 +307,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     Parametizer parametizer {this};
     Alerter alerter {this};
     AudioClerk audioClerk {this};
+    ProjectFiler projectFiler {this};
     ApplicationBinderator binderator {this};
     
     // internal component listeners
