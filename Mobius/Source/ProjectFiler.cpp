@@ -1,25 +1,11 @@
 
 #include <JuceHeader.h>
 
+#include "model/MobiusConfig.h"
+
 #include "Supervisor.h"
 
 #include "ProjectFiler.h"
-
-
-void ProjectFiler::loadLoop()
-{
-    supervisor->alert("Load Loop not implemented");
-}
-
-void ProjectFiler::saveLoop()
-{
-    supervisor->alert("Save Loop not implemented");
-}
-
-void ProjectFiler::quickSave()
-{
-    supervisor->alert("Quick Save not implemented");
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -49,6 +35,122 @@ void ProjectFiler::doProjectLoad(juce::File file)
 {
     MobiusInterface* mobius = supervisor->getMobius();
     mobius->loadProject(file);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Save/Load Loop
+//
+//////////////////////////////////////////////////////////////////////
+
+void ProjectFiler::loadLoop()
+{
+    chooseLoopLoad();
+}
+
+void ProjectFiler::doLoopLoad(juce::File file)
+{
+    MobiusInterface* mobius = supervisor->getMobius();
+    mobius->loadLoop(file);
+}
+
+void ProjectFiler::saveLoop()
+{
+    chooseLoopSave();
+}
+
+void ProjectFiler::doLoopSave(juce::File file)
+{
+    MobiusInterface* mobius = supervisor->getMobius();
+    mobius->saveLoop(file);
+}
+
+/**
+ * Quick save is different because we don't prompt for a location.
+ *
+ * We DO however need to be much more flexible about where these go.
+ * Allow the QuickSave in the config to be an absolute path to where it goes.
+ * Better to have a QuickSaveFolder that does this
+ *
+ * Also really want this to auto-number files so you can quick save over and
+ * over without overwriting the last one.
+ */
+void ProjectFiler::quickSave()
+{
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    const char* qname = config->getQuickSave();
+
+    juce::File root = supervisor->getRoot();
+    juce::File dest;
+
+    if (qname == nullptr) {
+        dest = root.getChildFile("quicksave.wav");
+    }
+    else if (juce::File::isAbsolutePath(qname)) {
+        dest = juce::File(qname).withFileExtension("wav");
+    }
+    else {
+        dest = root.getChildFile(qname).withFileExtension("wav");
+    }
+
+    // might want to make this optional
+    dest = uniqueify(dest);
+
+    MobiusInterface* mobius = supervisor->getMobius();
+    mobius->saveLoop(dest);
+
+    // use message rather than alert here so we don't get
+    // a popup you have to Ok
+    supervisor->message("Saved " + dest.getFileNameWithoutExtension());
+}
+
+/**
+ * Attempt to ensure that the quick save file doesn't already exist
+ * and add a qualifier if it does.
+ *
+ * As always this has the potential for runaway loops if youre in
+ * a folder with thousands of files, but in practice there won't be that many.
+ * Timestamps are another option, but those tend to be ugly when they're long
+ * enough to be unique.
+ *
+ * And as usual for this sort of algorithm, it won't find the "max" of the range
+ * so if files were deleted in the middle and left holes, we'll take the first
+ * one available, which can result in unpredictable naming.  But max scanning
+ * slows it down and they really should be cleaning these up.
+ *
+ */
+juce::File ProjectFiler::uniqueify(juce::File src)
+{
+    juce::File dest = src;
+
+    if (!dest.existsAsFile())
+      // no need to qualify
+      return dest;
+
+    juce::File folder = dest.getParentDirectory();
+    juce::String name = dest.getFileNameWithoutExtension();
+    juce::String extension = dest.getFileExtension();
+    
+    int max = 100;
+    int qualifier = 2;
+    while (qualifier <= max) {
+        juce::String qname = name + juce::String(qualifier);
+        juce::File probe = folder.getChildFile(qname).withFileExtension(extension);
+        if (!probe.existsAsFile()) {
+            dest = probe;
+            break;
+        }
+        qualifier++;
+    }
+    
+    if (qualifier > max) {
+        Trace(2, "Unable to qualify file, too many notes!");
+        // just start overwriting this one
+        juce::String qname = name + "-overflow";
+        dest = folder.getChildFile(qname).withFileExtension(extension);
+    }
+
+    return dest;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -153,6 +255,77 @@ void ProjectFiler::chooseProjectLoad()
             juce::File file = result[0];
             
             doProjectLoad(file);
+
+            // remember this directory for the next time
+            lastFolder = file.getParentDirectory().getFullPathName();
+        }
+        
+    });
+}
+
+/**
+ * For loop load, should be supporting other file formats besides .wav
+ * But that would mean reading it out here and the reader is currently
+ * down in mobius/ProjectManaager
+ */
+void ProjectFiler::chooseLoopLoad()
+{
+    juce::File startPath(supervisor->getRoot());
+    if (lastFolder.length() > 0)
+      startPath = lastFolder;
+
+    juce::String title = "Select a loop file...";
+
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.wav");
+
+    auto chooserFlags = juce::FileBrowserComponent::openMode
+        | juce::FileBrowserComponent::canSelectFiles;
+
+    chooser->launchAsync (chooserFlags, [this] (const juce::FileChooser& fc)
+    {
+        // magically get here after the modal dialog closes
+        // the array will be empty if Cancel was selected
+        juce::Array<juce::File> result = fc.getResults();
+        if (result.size() > 0) {
+            // chooserFlags should have only allowed one
+            juce::File file = result[0];
+            
+            doLoopLoad(file);
+
+            // remember this directory for the next time
+            lastFolder = file.getParentDirectory().getFullPathName();
+        }
+        
+    });
+}
+
+/**
+ * For loop save, I guess it's okay to select an existing one and overwrite it
+ */
+void ProjectFiler::chooseLoopSave()
+{
+    juce::File startPath(supervisor->getRoot());
+    if (lastFolder.length() > 0)
+      startPath = lastFolder;
+
+    juce::String title = "Select a loop destination...";
+
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.wav");
+
+    auto chooserFlags = juce::FileBrowserComponent::saveMode
+        | juce::FileBrowserComponent::canSelectFiles
+        | juce::FileBrowserComponent::warnAboutOverwriting;
+
+    chooser->launchAsync (chooserFlags, [this] (const juce::FileChooser& fc)
+    {
+        // magically get here after the modal dialog closes
+        // the array will be empty if Cancel was selected
+        juce::Array<juce::File> result = fc.getResults();
+        if (result.size() > 0) {
+            // chooserFlags should have only allowed one
+            juce::File file = result[0];
+            
+            doLoopSave(file);
 
             // remember this directory for the next time
             lastFolder = file.getParentDirectory().getFullPathName();

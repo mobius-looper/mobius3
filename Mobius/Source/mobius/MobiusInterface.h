@@ -271,6 +271,11 @@ class MobiusInterface {
      */
     virtual juce::StringArray loadProject(juce::File src) = 0;
 
+    // newer interfaces for individual loop load/save that fit more with
+    // the Project style of doing things
+    virtual juce::StringArray loadLoop(juce::File src) = 0;
+    virtual juce::StringArray saveLoop(juce::File src) = 0;
+
   private:
 
     

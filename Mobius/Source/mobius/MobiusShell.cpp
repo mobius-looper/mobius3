@@ -1449,12 +1449,22 @@ void MobiusShell::installLoop(Audio* audio, int track, int loop)
  */
 juce::StringArray MobiusShell::loadProject(juce::File src)
 {
-    return projectManager.load(src);
+    return projectManager.loadProject(src);
 }
 
 juce::StringArray MobiusShell::saveProject(juce::File dest)
 {
-    return projectManager.save(dest);
+    return projectManager.saveProject(dest);
+}
+
+juce::StringArray MobiusShell::loadLoop(juce::File src)
+{
+    return projectManager.loadLoop(src);
+}
+
+juce::StringArray MobiusShell::saveLoop(juce::File dest)
+{
+    return projectManager.saveLoop(dest);
 }
 
 /**

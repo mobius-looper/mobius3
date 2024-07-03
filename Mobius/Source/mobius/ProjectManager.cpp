@@ -26,6 +26,9 @@
 
 #include "core/Project.h"
 #include "core/Mobius.h"
+#include "core/Track.h"
+#include "core/Loop.h"
+
 #include "Audio.h"
 #include "AudioFile.h"
 
@@ -50,13 +53,11 @@ ProjectManager::~ProjectManager()
 /**
  * Main entry point to save projects.
  */
-juce::StringArray ProjectManager::save(juce::File file)
+juce::StringArray ProjectManager::saveProject(juce::File file)
 {
     errors.clear();
 
-    // magic
-    Trace(2, "ProjectManager::save got all the way here with %s",
-          file.getFullPathName().toUTF8());
+    Trace(2, "ProjectManager: Saving project");
 
     // old code went in two steps
     // first Mobius::saveProject created a Project object
@@ -439,15 +440,11 @@ void ProjectManager::deleteAudioFiles(Project* p)
  * have paths to audio files.  The Audio objects are read and
  * left in the Project.
  */
-juce::StringArray ProjectManager::load(juce::File file)
+juce::StringArray ProjectManager::loadProject(juce::File file)
 {
     errors.clear();
 
-    // magic
-    Trace(2, "ProjectManager::load got all the way here with %s",
-          file.getFullPathName().toUTF8());
-
-    // repackaging of the old menu handler
+    Trace(2, "ProjectManager: Loading project");
 
     // this just creates a Project object and copies the path
     // probably not necessary since reading was moved outside
@@ -648,6 +645,202 @@ int ProjectManager::WriteFile(const char* name, const char* content)
 		fclose(fp);
 	}
 	return written;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Individual Loop Load
+//
+// This is the old implementation that loaded loops by making a special
+// "incremental" project and loading the project.  It is different
+// than what AudioClerk now does with drag and drop.
+// Don't need this, but get it working to see if it adds anything useful.
+//
+//////////////////////////////////////////////////////////////////////
+
+// old code from the menu
+// it reads the Audio from the selected file then calls Mobius::loadLoop
+
+#if 0
+		else if (id == IDM_OPEN_LOOP) {
+
+			sprintf(filter, "%s (.wav)|*.wav;*.WAV", 
+					cat->get(MSG_DLG_OPEN_LOOP_FILTER));
+
+			OpenDialog* od = new OpenDialog(mWindow);
+			od->setTitle(cat->get(MSG_DLG_OPEN_LOOP));
+			od->setFilter(filter);
+            showSystemDialog(od);
+			if (!od->isCanceled()) {
+				const char* file = od->getFile();
+                AudioPool* pool = mMobius->getAudioPool();
+				Audio* au = pool->newAudio(file);
+				mMobius->loadLoop(au);
+				// loop meter is sensitive to this, maybe others
+				mSpace->invalidate();
+			}
+			delete od;
+		}
+#endif
+
+// Mobius::loadLoop then did this
+#if 0
+PUBLIC void Mobius::loadLoop(Audio* a)
+{
+    if (mTrack != NULL) {
+        Loop* loop = mTrack->getLoop();
+        // sigh, Track number is zero based, Loop number is one based
+        Project* p = new Project(a, mTrack->getRawNumber(), loop->getNumber() - 1);
+        // this causes it to merge rather than reset
+        p->setIncremental(true);
+
+        loadProject(p);
+    }
+}
+#endif
+
+// what that accomplshed was to create a Project with a single
+// ProjectTrack and a single ProjectLoop and and gave them the numbers
+// for the currently active track loop.  So the loop  would go into the one
+// currently active.  That's kind of interesting, and it may be useful
+// to be able to pass more information through in the wrapper Project than
+// just the layer audio.
+//
+// Project really could be (if it wasn't already) a very targeted way to
+// set content for specific tracks and loops, with or without layers.
+
+/**
+ * This then is about what the old Mobius::loadLoop did
+ */
+juce::StringArray ProjectManager::loadLoop(juce::File file)
+{
+    errors.clear();
+
+    Trace(2, "ProjectManager: Loading loop");
+
+    // before we bother reading the file, make sure it can go somewhere
+    // this is relatively safe to do without suspending the kernel
+    // the danger would be a pending MobiusConfig update that reduces
+    // the track or loop count under what we scrape right now
+
+    // rethink the interface here, I like being able to build the Project
+    // outside the core, but to get it numbered reliably we need to ask the
+    // core where it is, I guess you could get that from MobiusState
+
+    Mobius* core = shell->getKernel()->getCore();
+    // will always have an active track
+    Track* track = core->getTrack();
+    int trackIndex = track->getRawNumber();
+
+    Loop* loop = track->getLoop();
+    // unclear whether tracks can be empty without loops, probably not
+    if (loop == nullptr) {
+        Trace(1, "ProjectManager: Attempt to load loop into empty track");
+    }
+    else {
+
+        // read the audio file
+        AudioPool* pool = shell->getAudioPool();
+        Audio* audio = AudioFile::read(file, pool);
+
+        // todo: there may have been errors, capture them
+    
+        // this had a special constructor just for this purpose
+        // note that loop->getNumber() is one based, and here we need the index
+        Project* p = new Project(audio, trackIndex, loop->getNumber() - 1);
+        // the magic beans
+        p->setIncremental(true);
+
+        // now we need to suspend, may as well have done it to include the
+        // index probes above
+        if (shell->suspendKernel()) {
+
+            core->loadProject(p);
+
+            shell->resumeKernel();
+        }
+        else {
+            // yuno suspend?
+            delete p;
+            errors.add("Unable to suspend Kernel");
+        }
+    }
+
+    return errors;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Individual Loop Save
+//
+// This did not use Project, it used Mobius::getPlaybackAudio and
+// wrote the file.  It could only target the active loop in the active track.
+// getPlaybackAudio still exists, and there is some newer machinery around
+// that that uses KernelCommunicator (maybe), I think it was TestDriver
+// so it was going direct too.
+//
+// Again, get it working, just so people can make progress the old way
+// but need to redesign all this to be cleaner.
+//
+// There is already a mechanism for save loops for the TestDriver
+// but we're not using that for the menus.  Need to consolidate these!!
+//
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is approximately what Mobius::saveLoop did, except that redirected
+ * through MobiusThread for some reason.  Simplified to assume that
+ * the .wav extension was already put on, and that quicksave path
+ * derivation was already done.
+ */
+juce::StringArray ProjectManager::saveLoop(juce::File file)
+{
+    Trace(2, "ProjectManager: Saving loop");
+    
+    // hmm, for quicksave in particular it is really nice not to suspend
+    // the kernel which causes a glitch
+    // this is a lot less complicated than Projects, and I THINK it
+    // can be done reliably on a live engine, at least we did it that
+    // way in the past, will really depend on how active the user
+    // is, but they really shouldn't be if they're bothering with
+    // the quick save menu/button
+    // if this isn't reliable then we need to find a way to make it reliable
+    // can push it into the Kernel with a KernelMessage but then Kernel does
+    // a few memory allocations which isn't that bad considering
+    bool fastAndLoose = true;
+
+    if (fastAndLoose) {
+        Mobius* core = shell->getKernel()->getCore();
+        Audio* audio = core->getPlaybackAudio();
+        AudioFile::write(file, audio);
+        delete audio;
+    }
+    else {
+        if (shell->suspendKernel()) {
+
+            Mobius* core = shell->getKernel()->getCore();
+            Audio* audio = core->getPlaybackAudio();
+        
+            AudioFile::write(file, audio);
+            // this was a flattened copy of the play layer and must be reclaimed
+            delete audio;
+
+            // todo: capture errors
+
+            // note that Audio is still owned by the core, you do not delete it
+
+            // this is where this really should use an RAII resource reclaimer
+            // since it is more likely for AudioFile::write to throw an exception
+            // than it is for other uses of kernel suspend
+            shell->resumeKernel();
+        }
+        else {
+            errors.add("Unable to suspend Kernel");
+        }
+    }
+    
+    return errors;
 }
 
 /****************************************************************************/

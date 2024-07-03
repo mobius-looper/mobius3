@@ -131,7 +131,7 @@
     name='Default'
     active='0'
     beatsPerBar='4'
-    defaultSyncSource='none'
+    defaultSyncSource='track'
     defaultTrackSyncUnit='loop'
     maxTempo='300'
     minTempo='20'
@@ -148,7 +148,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
+      audioInputPort='2'
       syncSource='default'
       trackSyncUnit='loop'/>
     <SetupTrack
@@ -158,6 +158,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
+      audioInputPort='2'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack

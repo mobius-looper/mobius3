@@ -42,6 +42,13 @@ class ProjectFiler
     void chooseProjectLoad();
     void doProjectLoad(juce::File file);
 
+    void chooseLoopSave();
+    void doLoopSave(juce::File file);
+    
+    void chooseLoopLoad();
+    void doLoopLoad(juce::File file);
+    
+    juce::File uniqueify(juce::File src);
 
 };
 

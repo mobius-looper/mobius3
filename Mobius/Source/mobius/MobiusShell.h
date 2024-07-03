@@ -51,8 +51,11 @@ class MobiusShell : public MobiusInterface
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
+    
     juce::StringArray saveProject(juce::File dest) override;
     juce::StringArray loadProject(juce::File src) override;
+    juce::StringArray saveLoop(juce::File dest) override;
+    juce::StringArray loadLoop(juce::File src) override;
     
     //
     // Internal component services

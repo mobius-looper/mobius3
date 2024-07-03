@@ -180,7 +180,8 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*);
     void alert(juce::String message);
-
+    void message(juce::String message);
+    
     // find the value of a parameter or variable
     bool doQuery(class Query* q);
     juce::String getParameterLabel(class Symbol* s, int ordinal);

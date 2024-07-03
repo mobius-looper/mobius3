@@ -24,9 +24,12 @@ class ProjectManager
     ProjectManager(class MobiusShell* shell);
     ~ProjectManager();
 
-    juce::StringArray save(juce::File dest);
-    juce::StringArray load(juce::File src);
+    juce::StringArray saveProject(juce::File dest);
+    juce::StringArray loadProject(juce::File src);
 
+    juce::StringArray loadLoop(juce::File file);
+    juce::StringArray saveLoop(juce::File file);
+    
   private:
 
     class MobiusShell* shell;

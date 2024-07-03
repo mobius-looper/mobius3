@@ -136,10 +136,10 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     
     if (menuIndex == menuIndexFile)
     {
-        menu.addItem(OpenProject, "Open Project...");
+        menu.addItem(OpenProject, "Load Project...");
         menu.addItem(SaveProject, "Save Project...");
         menu.addSeparator();
-        menu.addItem(OpenLoop, "Open Loop...");
+        menu.addItem(OpenLoop, "Load Loop...");
         menu.addItem(SaveLoop, "Save Loop...");
         menu.addItem(QuickSave, "Quick Save");
         menu.addSeparator();

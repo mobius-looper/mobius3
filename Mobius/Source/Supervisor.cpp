@@ -1142,6 +1142,27 @@ void Supervisor::alert(juce::String msg)
     mainWindow->alert(msg);
 }
 
+/**
+ * This one is a little harder than alerts because
+ * the thing that does the displaying isn't directly
+ * on the MainWindow.  It's ui/display/AlertElement that
+ * registered itself as an alert listener, which is
+ * what is normally used when Mobius sends up a message
+ * from a script.
+ * 
+ * The names here are confusing, a Supervisor::alert
+ * is a popup window that makes you interact with it,
+ * while AlertElement just displays a message for a few
+ * seconds which is what you want when you want to be notified
+ * of something but don't want to interrupt what you're doing.
+ * Should really rename that MessageElement to make the distinction
+ * clearer.
+ */
+void Supervisor::message(juce::String msg)
+{
+    notifyAlertListeners(msg);
+}
+
 void Supervisor::addTimeListener(TimeListener* l)
 {
     if (!timeListeners.contains(l))
