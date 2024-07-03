@@ -12,6 +12,9 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
+            file="../Mobius/Source/ProjectFiler.cpp"/>
+      <FILE id="vYQogu" name="ProjectFiler.h" compile="0" resource="0" file="../Mobius/Source/ProjectFiler.h"/>
       <FILE id="KBDzgh" name="BusBoy.cpp" compile="1" resource="0" file="Source/BusBoy.cpp"/>
       <FILE id="Q3TtUF" name="BusBoy.h" compile="0" resource="0" file="Source/BusBoy.h"/>
       <FILE id="vH9ipF" name="PortAuthority.cpp" compile="1" resource="0"
@@ -557,6 +560,10 @@
               file="../Mobius/Source/mobius/MobiusMidiTransport.h"/>
         <FILE id="evPFPx" name="MobiusShell.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/MobiusShell.cpp"/>
         <FILE id="Xz9oVn" name="MobiusShell.h" compile="0" resource="0" file="../Mobius/Source/mobius/MobiusShell.h"/>
+        <FILE id="WkaMqB" name="ProjectManager.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mobius/ProjectManager.cpp"/>
+        <FILE id="DyreOL" name="ProjectManager.h" compile="0" resource="0"
+              file="../Mobius/Source/mobius/ProjectManager.h"/>
         <FILE id="BrKjvf" name="SampleBuilder.cpp" compile="1" resource="0"
               file="../Mobius/Source/mobius/SampleBuilder.cpp"/>
         <FILE id="NZ6zlj" name="SampleManager.cpp" compile="1" resource="0"
