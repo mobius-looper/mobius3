@@ -125,7 +125,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
     void enableHelp(int height) override;
     void enableRevert() override;
 
-    class HelpArea* getHelpArea();
+    class HelpArea* getHelpArea() override;
 
     // ConfigEditorContext methods called by the ConfigEditor
     // at runtime

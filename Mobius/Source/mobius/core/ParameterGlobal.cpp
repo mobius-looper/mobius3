@@ -214,17 +214,17 @@ class SetupNameParameterType : public GlobalParameter
   public:
 	SetupNameParameterType();
 
-	void setValue(Action* action);
+	void setValue(Action* action) override;
 	void getValue(Export* exp, ExValue* value) override;
-    int getOrdinalValue(Export* exp);
+    int getOrdinalValue(Export* exp) override;
 
     // have to define these, but they're not used
-    void getValue(MobiusConfig* c, ExValue* value);
-	void setValue(MobiusConfig* c, ExValue* value);
-    int getOrdinalValue(MobiusConfig* c);
+    void getValue(MobiusConfig* c, ExValue* value) override;
+	void setValue(MobiusConfig* c, ExValue* value) override;
+    int getOrdinalValue(MobiusConfig* c) override;
 
-	int getHigh(Mobius* m);
-    void getOrdinalLabel(Mobius* m, int i, ExValue* value);
+	int getHigh(Mobius* m) override;
+    void getOrdinalLabel(Mobius* m, int i, ExValue* value) override;
 };
 
 SetupNameParameterType::SetupNameParameterType() :
@@ -388,9 +388,9 @@ class SetupNumberParameterType : public GlobalParameter
   public:
 	SetupNumberParameterType();
 
-	void getValue(MobiusConfig* c, ExValue* value);
-	void setValue(MobiusConfig* c, ExValue* value);
-	void setValue(Action* action);
+	void getValue(MobiusConfig* c, ExValue* value) override;
+	void setValue(MobiusConfig* c, ExValue* value) override;
+	void setValue(Action* action) override;
 };
 
 SetupNumberParameterType SetupNumberParameterTypeObj;

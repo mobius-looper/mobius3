@@ -294,7 +294,7 @@ void ProjectManager::writeAudio(ProjectLayer* layer, const char* baseName,
     if (audio != NULL && !audio->isEmpty() && !layer->isProtected()) {
 
         // todo: need to support inline audio in the XML
-        sprintf(path, "%s-%d-%d-%d.wav", baseName, 
+        snprintf(path, sizeof(path), "%s-%d-%d-%d.wav", baseName, 
 				tracknum, loopnum, layernum);
 
         // Remember the new path too, should we every try to reuse
@@ -307,7 +307,7 @@ void ProjectManager::writeAudio(ProjectLayer* layer, const char* baseName,
     Audio* overdub = layer->getOverdub();
 	if (overdub != NULL && !overdub->isEmpty()) {
         // todo: need to support inline audio in the XML
-        sprintf(path, "%s-%d-%d-%d-overdub.wav", baseName, 
+        snprintf(path, sizeof(path), "%s-%d-%d-%d-overdub.wav", baseName, 
 				tracknum, loopnum, layernum);
 		layer->setOverdubPath(path);
 		writeAudio(overdub, path);

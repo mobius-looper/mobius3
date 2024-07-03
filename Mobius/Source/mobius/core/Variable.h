@@ -41,10 +41,10 @@ class ScriptInternalVariable {
     void setAlias(const char* name);
 	bool isMatch(const char* name);
 
-	virtual void getValue(ScriptInterpreter* si, class ExValue* value);
-    virtual void getTrackValue(Track* t, class ExValue* value);
+	virtual void getValue(class ScriptInterpreter* si, class ExValue* value);
+    virtual void getTrackValue(class Track* t, class ExValue* value);
     
-    virtual void setValue(ScriptInterpreter* si, class ExValue* value);
+    virtual void setValue(class ScriptInterpreter* si, class ExValue* value);
   
   protected:
 

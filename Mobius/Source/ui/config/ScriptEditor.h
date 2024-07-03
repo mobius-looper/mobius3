@@ -19,7 +19,7 @@ class ScriptEditor : public ConfigEditor
     ScriptEditor();
     ~ScriptEditor();
 
-    juce::String getTitle() {return "Scripts";}
+    juce::String getTitle() override {return "Scripts";}
     
     void load() override;
     void save() override;

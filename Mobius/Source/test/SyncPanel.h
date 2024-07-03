@@ -80,7 +80,7 @@ class SyncPanel : public BasePanel
     }
     ~SyncPanel() {}
 
-    void update() {
+    void update() override {
         content.update();
     }
 

@@ -81,7 +81,7 @@ class MidiTransportPanel : public BasePanel
     }
     ~MidiTransportPanel() {}
 
-    void update() {
+    void update() override {
         content.update();
     }
 

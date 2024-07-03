@@ -18,7 +18,7 @@ class GlobalEditor : public ConfigEditor
     GlobalEditor();
     ~GlobalEditor();
     
-    juce::String getTitle() {return "Global Parameters";}
+    juce::String getTitle() override {return "Global Parameters";}
 
     void prepare() override;
     void load() override;

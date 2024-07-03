@@ -17,7 +17,7 @@ class BindingTargetSelector : public SimpleTabPanel,
 
     class Listener {
       public:
-        ~Listener() {}
+        virtual ~Listener() {}
         virtual void bindingTargetClicked(BindingTargetSelector* bts) = 0;
     };
 

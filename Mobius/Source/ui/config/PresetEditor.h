@@ -19,7 +19,7 @@ class PresetEditor : public ConfigEditor
     PresetEditor();
     ~PresetEditor();
 
-    juce::String getTitle() {return "Presets";}
+    juce::String getTitle() override {return "Presets";}
 
     void prepare() override;
     void load() override;

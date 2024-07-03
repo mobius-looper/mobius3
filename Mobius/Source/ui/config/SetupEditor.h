@@ -24,7 +24,7 @@ class SetupEditor : public ConfigEditor,
     SetupEditor();
     ~SetupEditor();
 
-    juce::String getTitle() {return "Setups";}
+    juce::String getTitle() override {return "Setups";}
 
     void prepare() override;
     void load() override;

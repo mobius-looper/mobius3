@@ -19,7 +19,7 @@ class SampleEditor : public ConfigEditor
     SampleEditor();
     ~SampleEditor();
 
-    juce::String getTitle() {return "Samples";}
+    juce::String getTitle() override {return "Samples";}
 
     void load() override;
     void save() override;
