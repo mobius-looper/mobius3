@@ -14,6 +14,7 @@
 #include "../test/MidiTransportPanel.h"
 #include "../test/SyncPanel.h"
 #include "../test/UpgradePanel.h"
+#include "../test/ConsolePanel.h"
 
 // this has all the configuration panels
 #include "config/ConfigPanels.h"
@@ -140,7 +141,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case MidiTransport: panel =  new MidiTransportPanel(); break;
         case Sync: panel =  new SyncPanel(); break;
         case Upgrade: panel =  new UpgradePanel(); break;
-            
+        case Console: panel = new ConsolePanel(); break;
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);
             break;

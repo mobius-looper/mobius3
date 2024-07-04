@@ -287,6 +287,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(MidiTransport, "MIDI Transport");
         menu.addItem(SyncPanel, "Synchronization Status");
         menu.addItem(SymbolTable, "Symbol Table");
+        menu.addItem(Console, "Console");
         // this never did work right
         //menu.addItem(DiagnosticWindow, "Diagnostic Window");
     }

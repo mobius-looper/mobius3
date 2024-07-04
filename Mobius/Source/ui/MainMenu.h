@@ -110,7 +110,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         SyncPanel,
         SymbolTable,
         DiagnosticWindow,
-        UpgradeConfig
+        UpgradeConfig,
+        Console
         
         };
     

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig activeButtonSet="Default" activeLayout="Default">
+<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
+          activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
     <Element name="BeatersElement" x="514" y="132" width="185" height="37"/>

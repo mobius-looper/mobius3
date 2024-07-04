@@ -264,6 +264,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::SymbolTable);
                 break;
                 
+            case MainMenu::Console:
+                panelFactory.show(PanelFactory::Console);
+                break;
+                
             case MainMenu::UpgradeConfig:
                 panelFactory.show(PanelFactory::Upgrade);
                 break;

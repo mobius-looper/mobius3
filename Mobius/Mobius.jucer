@@ -592,6 +592,11 @@
               file="Source/test/AudioDifferencer.cpp"/>
         <FILE id="Qc1i0p" name="AudioDifferencer.h" compile="0" resource="0"
               file="Source/test/AudioDifferencer.h"/>
+        <FILE id="yOLV5J" name="Console.cpp" compile="1" resource="0" file="Source/test/Console.cpp"/>
+        <FILE id="B5kX46" name="Console.h" compile="0" resource="0" file="Source/test/Console.h"/>
+        <FILE id="VxEDMn" name="ConsolePanel.cpp" compile="1" resource="0"
+              file="Source/test/ConsolePanel.cpp"/>
+        <FILE id="obs4Gw" name="ConsolePanel.h" compile="0" resource="0" file="Source/test/ConsolePanel.h"/>
         <FILE id="ADIZUu" name="MidiTransportPanel.cpp" compile="1" resource="0"
               file="Source/test/MidiTransportPanel.cpp"/>
         <FILE id="gCCTmG" name="MidiTransportPanel.h" compile="0" resource="0"
