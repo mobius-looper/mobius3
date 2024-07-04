@@ -8,16 +8,18 @@
 
 #include "../util/Trace.h"
 #include "../ui/BasePanel.h"
+
+#include "Tokenizer.h"
 #include "Console.h"
 
 
-class ConsoleContent : public juce::Component, public juce::Button::Listener,
+class MobiusConsole : public juce::Component, public juce::Button::Listener,
                        public Console::Listener
 {
   public:
 
-    ConsoleContent(class ConsolePanel* panel);
-    ~ConsoleContent();
+    MobiusConsole(class ConsolePanel* panel);
+    ~MobiusConsole();
 
     void showing();
     void hiding();
@@ -37,11 +39,17 @@ class ConsoleContent : public juce::Component, public juce::Button::Listener,
     class ConsolePanel* panel = nullptr;
     BasicButtonRow commandButtons;
     Console console;
+    Tokenizer tokenizer;
     
     void parseLine(juce::String line);
     void showHelp();
-    void doTest();
     juce::String tokenType(int type);
+
+    void doLine(juce::String line);
+    juce::String eval(Token& t);
+    juce::String eval(class Symbol* s);
+    juce::String invoke(class Symbol* s);
+    juce::String query(class Symbol* s);
 
 };
 
@@ -70,5 +78,5 @@ class ConsolePanel : public BasePanel
     
   private:
 
-    ConsoleContent content {this};
+    MobiusConsole content {this};
 };

@@ -7,11 +7,6 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="FvmX3i" name="PortAuthority.cpp" compile="1" resource="0"
-            file="Source/PortAuthority.cpp"/>
-      <FILE id="NaAOgB" name="PortAuthority.h" compile="0" resource="0" file="Source/PortAuthority.h"/>
-      <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
-      <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
@@ -587,16 +582,20 @@
         <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>
         <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
       </GROUP>
+      <GROUP id="{AF593FE0-3ECC-DDB4-DBDB-FC6DA34DEFDE}" name="script">
+        <FILE id="U7Ep98" name="Console.cpp" compile="1" resource="0" file="Source/script/Console.cpp"/>
+        <FILE id="cGY5Fr" name="Console.h" compile="0" resource="0" file="Source/script/Console.h"/>
+        <FILE id="j63RQ8" name="ConsolePanel.cpp" compile="1" resource="0"
+              file="Source/script/ConsolePanel.cpp"/>
+        <FILE id="t6nx5O" name="ConsolePanel.h" compile="0" resource="0" file="Source/script/ConsolePanel.h"/>
+        <FILE id="d2nSoS" name="Tokenizer.cpp" compile="1" resource="0" file="Source/script/Tokenizer.cpp"/>
+        <FILE id="R199lr" name="Tokenizer.h" compile="0" resource="0" file="Source/script/Tokenizer.h"/>
+      </GROUP>
       <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
         <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"
               file="Source/test/AudioDifferencer.cpp"/>
         <FILE id="Qc1i0p" name="AudioDifferencer.h" compile="0" resource="0"
               file="Source/test/AudioDifferencer.h"/>
-        <FILE id="yOLV5J" name="Console.cpp" compile="1" resource="0" file="Source/test/Console.cpp"/>
-        <FILE id="B5kX46" name="Console.h" compile="0" resource="0" file="Source/test/Console.h"/>
-        <FILE id="VxEDMn" name="ConsolePanel.cpp" compile="1" resource="0"
-              file="Source/test/ConsolePanel.cpp"/>
-        <FILE id="obs4Gw" name="ConsolePanel.h" compile="0" resource="0" file="Source/test/ConsolePanel.h"/>
         <FILE id="ADIZUu" name="MidiTransportPanel.cpp" compile="1" resource="0"
               file="Source/test/MidiTransportPanel.cpp"/>
         <FILE id="gCCTmG" name="MidiTransportPanel.h" compile="0" resource="0"
@@ -654,12 +653,20 @@
             file="Source/PluginParameter.cpp"/>
       <FILE id="rXclHv" name="PluginParameter.h" compile="0" resource="0"
             file="Source/PluginParameter.h"/>
+      <FILE id="FvmX3i" name="PortAuthority.cpp" compile="1" resource="0"
+            file="Source/PortAuthority.cpp"/>
+      <FILE id="NaAOgB" name="PortAuthority.h" compile="0" resource="0" file="Source/PortAuthority.h"/>
+      <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
+            file="Source/ProjectFiler.cpp"/>
+      <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>
       <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
       <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>
       <FILE id="eOUyrZ" name="SuperDumper.cpp" compile="1" resource="0" file="Source/SuperDumper.cpp"/>
       <FILE id="mBQtpX" name="SuperDumper.h" compile="0" resource="0" file="Source/SuperDumper.h"/>
       <FILE id="md4KUz" name="Supervisor.cpp" compile="1" resource="0" file="Source/Supervisor.cpp"/>
       <FILE id="qYO2SW" name="Supervisor.h" compile="0" resource="0" file="Source/Supervisor.h"/>
+      <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
+      <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
       <FILE id="Q1Cu7N" name="UISymbols.cpp" compile="1" resource="0" file="Source/UISymbols.cpp"/>
       <FILE id="d2qdos" name="UISymbols.h" compile="0" resource="0" file="Source/UISymbols.h"/>
       <FILE id="zYypIv" name="VariableManager.cpp" compile="1" resource="0"
@@ -667,9 +674,6 @@
       <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"
             file="Source/VariableManager.h"/>
     </GROUP>
-    <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
-          file="Source/ProjectFiler.cpp"/>
-    <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

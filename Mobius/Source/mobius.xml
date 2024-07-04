@@ -312,6 +312,10 @@
     <Binding name='Overdub' trigger='program' channel='1'/>
     <Binding name='Record' trigger='control' value='12' channel='1'/>
   </BindingSet>
+  <BindingSet name='[New]' active='true'>
+    <Binding name='Backward' trigger='note'/>
+    <Binding name='Checkpoint' trigger='note'/>
+  </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\bugscript.mos'/>

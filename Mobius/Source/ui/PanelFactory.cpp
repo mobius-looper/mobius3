@@ -14,7 +14,7 @@
 #include "../test/MidiTransportPanel.h"
 #include "../test/SyncPanel.h"
 #include "../test/UpgradePanel.h"
-#include "../test/ConsolePanel.h"
+#include "../script/ConsolePanel.h"
 
 // this has all the configuration panels
 #include "config/ConfigPanels.h"
