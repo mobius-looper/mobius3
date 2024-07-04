@@ -9,7 +9,8 @@
 #include "../util/Trace.h"
 #include "../ui/BasePanel.h"
 
-#include "Tokenizer.h"
+#include "MslParser.h"
+#include "MslEvaluator.h"
 #include "Console.h"
 
 
@@ -33,19 +34,22 @@ class MobiusConsole : public juce::Component, public juce::Button::Listener,
 
     // Console::Listener
     void consoleLine(juce::String line) override;
+    void consoleEscape();
     
   private:
 
     class ConsolePanel* panel = nullptr;
     BasicButtonRow commandButtons;
     Console console;
-    Tokenizer tokenizer;
-    
-    void parseLine(juce::String line);
-    void showHelp();
-    juce::String tokenType(int type);
+    MslParser parser;
+    MslEvaluator evaluator;
 
+    void parseLine(juce::String line);
     void doLine(juce::String line);
+    void showHelp();
+    void toggleTrace();
+    void testParse(juce::String line);
+    
     juce::String eval(Token& t);
     juce::String eval(class Symbol* s);
     juce::String invoke(class Symbol* s);

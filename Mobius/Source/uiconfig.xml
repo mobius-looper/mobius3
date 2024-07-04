@@ -115,6 +115,7 @@
     <Button action="MainTap Track1"/>
     <Button action="Setup Name Test"/>
     <Button action="ReloadScripts"/>
+    <Button action="MainTap Track1"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>

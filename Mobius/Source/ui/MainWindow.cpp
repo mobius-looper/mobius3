@@ -110,6 +110,11 @@ int MainWindow::getPreferredHeight()
     return 800;
 }
 
+void MainWindow::showPanel(juce::String name)
+{
+    panelFactory.show(name);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Menu Callbacks

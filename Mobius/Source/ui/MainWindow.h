@@ -54,6 +54,9 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     // called by Supervisor to show the main popup menu
     void showMainPopupMenu();
 
+    // called by Supervisor to show a panel
+    void showPanel(juce::String name);
+
     // FileDragAndDropTarget
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void fileDragEnter(const juce::StringArray& files, int x, int y) override;

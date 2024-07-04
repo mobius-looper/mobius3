@@ -26,6 +26,9 @@ class PanelFactory
      */
     enum PanelId {
 
+        // used in name mapping to indiciate invalid name
+        None,
+
         // informational panels
         About,
         Alert,
@@ -68,6 +71,11 @@ class PanelFactory
     void show(PanelId id);
 
     /**
+     * Named panels is used for bindings.
+     */
+    void show(juce::String name);
+
+    /**
      * Hide a panel.
      * If this is a stateful editing panel the edit is not canceled.
      */
@@ -85,6 +93,7 @@ class PanelFactory
     
     BasePanel* findPanel(PanelId id);
     BasePanel* createPanel(PanelId id);
+    PanelId mapPanelName(juce::String name);
 
 };
 

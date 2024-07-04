@@ -588,6 +588,12 @@
         <FILE id="j63RQ8" name="ConsolePanel.cpp" compile="1" resource="0"
               file="Source/script/ConsolePanel.cpp"/>
         <FILE id="t6nx5O" name="ConsolePanel.h" compile="0" resource="0" file="Source/script/ConsolePanel.h"/>
+        <FILE id="mbWYXx" name="MslEvaluator.cpp" compile="1" resource="0"
+              file="Source/script/MslEvaluator.cpp"/>
+        <FILE id="tUczXt" name="MslEvaluator.h" compile="0" resource="0" file="Source/script/MslEvaluator.h"/>
+        <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
+        <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
+        <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
         <FILE id="d2nSoS" name="Tokenizer.cpp" compile="1" resource="0" file="Source/script/Tokenizer.cpp"/>
         <FILE id="R199lr" name="Tokenizer.h" compile="0" resource="0" file="Source/script/Tokenizer.h"/>
       </GROUP>

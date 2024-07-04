@@ -14,6 +14,7 @@ class Console : public juce::TextEditor, public juce::TextEditor::Listener
       public:
         virtual ~Listener() {}
         virtual void consoleLine(juce::String line) = 0;
+        virtual void consoleEscape() {}
     };
     
     Console();

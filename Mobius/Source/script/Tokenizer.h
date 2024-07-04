@@ -10,14 +10,15 @@ class Token
     enum Type {
         End,
         Error,
+        Comment,
         Symbol,
         String,
         Int,
         Float,
+        Bool,
         Bracket,
         Punctuation,
         Operator,
-        Comment,
         Processor
     };
     
@@ -29,6 +30,17 @@ class Token
     juce::String value;
 
     bool isSymbol() {return type == Type::Symbol;}
+
+    // when type is Bool, this must have the same logic
+    // that the tokenizer used to decide it was a bool
+    // it does when tokenized
+    bool getBool() {
+        return (value == "true");
+    }
+
+    bool isOpen() {
+        return ((value == "{") || (value == "(") || (value == "["));
+    }
 
   private:
 
@@ -45,6 +57,10 @@ class Tokenizer
     bool hasNext();
     Token next();
 
+    int getLines();
+    int getLine();
+    int getColumn();
+    
   private:
     juce::CodeDocument document;
     juce::CodeDocument::Iterator iterator;

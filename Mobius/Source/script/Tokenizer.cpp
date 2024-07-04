@@ -38,6 +38,23 @@ Token Tokenizer::next()
     return t;
 }
 
+int Tokenizer::getLines()
+{
+    return document.getNumLines();
+}
+
+int Tokenizer::getLine()
+{
+    juce::CodeDocument::Position psn = iterator.toPosition();
+    return psn.getLineNumber();
+}
+
+int Tokenizer::getColumn()
+{
+    juce::CodeDocument::Position psn = iterator.toPosition();
+    return psn.getIndexInLine();
+}
+
 /**
  * Convert the CPPTokeniser type to one of ours.
  */

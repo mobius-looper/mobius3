@@ -1509,6 +1509,10 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 menuLoadSamples();
                 handled = true;
             }
+            case UISymbolShowPanel: {
+                mainWindow->showPanel(action->arguments);
+                handled = true;
+            }
         }
         if (!handled) {
             // pass down to the listeners

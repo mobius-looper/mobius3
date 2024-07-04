@@ -150,6 +150,8 @@ void Console::textEditorReturnKeyPressed(juce::TextEditor& te)
 void Console::textEditorEscapeKeyPressed(juce::TextEditor& te)
 {
     (void)te;
+    if (listener != nullptr)
+      listener->consoleEscape();
 }
 
 void Console::textEditorFocusLost(juce::TextEditor& te)

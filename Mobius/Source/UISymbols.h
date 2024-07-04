@@ -20,7 +20,8 @@ typedef enum {
     UISymbolParameterDec,
     UISymbolReloadScripts,
     UISymbolReloadSamples,
-
+    UISymbolShowPanel,
+    
     // parameters
     UISymbolActiveLayout,
     UISymbolActiveButtons

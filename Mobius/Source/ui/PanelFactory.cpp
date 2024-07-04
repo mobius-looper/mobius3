@@ -154,6 +154,36 @@ BasePanel* PanelFactory::createPanel(PanelId id)
     return panel;
 }
             
+/**
+ * Panel name to id mapping.
+ * This is used when the panel is to be brought up under the
+ * control of a binding or script where the user wants to deal with
+ * the name rather than the id.
+ *
+ * We don't have a good registry for these, just hard code the few
+ * that I want all the time.  Each BasePanel class should overload
+ * a getBindingName or something to publish the names to use.
+ */
+PanelFactory::PanelId PanelFactory::mapPanelName(juce::String name)
+{
+    PanelFactory::PanelId id = None;
+
+    if (name == "console")
+      id = Console;
+
+    return id;
+}
+
+/**
+ * Show a panel by name.
+ */
+void PanelFactory::show(juce::String name)
+{
+    PanelFactory::PanelId id =  mapPanelName(name);
+    if (id != None)
+      show(id);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
