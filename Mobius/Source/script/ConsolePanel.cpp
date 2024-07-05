@@ -130,9 +130,10 @@ void MobiusConsole::doLine(juce::String line)
         showErrors(parser.getErrors());
     }
     else {
-        juce::String result = evaluator.start(node);
-        if (result.length() > 0)
-          console.add(result);
+        MslValue result = evaluator.start(node);
+        const char* s = result.getString();
+        if (s != nullptr) 
+          console.add(s);
 
         showErrors(evaluator.getErrors());
         
@@ -180,13 +181,6 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
     }
 
     console.add(line);
-
-    if (node->isSymbol()) {
-        MslSymbol* s = static_cast<MslSymbol*>(node);
-        if (s->arguments != nullptr) {
-            traceNode(s->arguments, indent + 2);
-        }
-    }
 
     for (auto child : node->children)
       traceNode(child, indent + 2);

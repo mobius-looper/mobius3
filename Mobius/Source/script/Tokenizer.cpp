@@ -37,9 +37,13 @@ Token Tokenizer::next()
         juce::String token = document.getTextBetween(start, end);
         // this does not appear to trim leading whitespace
         token = token.trimStart();
+        t.type = convertType(type);
+        if (t.type == Token::Type::String) {
+            // this tokenizer leaves the surrounding quotes on the token
+            token =  token.unquoted();
+        }
         t.value = token;
         
-        t.type = convertType(type);
     }
     return t;
 }

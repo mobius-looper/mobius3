@@ -47,32 +47,39 @@ MslNode* MslParser::parse(juce::String source)
     
     tokenizer.setContent(source);
     errors.clear();
+    bool separatorReceived = false;
 
     while (tokenizer.hasNext() && errors.size() == 0) {
         Token t = tokenizer.next();
 
+        // if we found a separator on the last token, prevent nodes
+        // from including another block
+        bool nodeClosed = false;
+        if (separatorReceived) {
+            nodeClosed = true;
+            separatorReceived = false;
+        }
+        
         switch (t.type) {
             
-            case Token::Type::End: {
-                // why would hasNext be true, then have nothing?
-                // maybe if there is whitespace at the end of the line
-                // that hasn't been consumed?
-            }
+            // why would hasNext be true, then have nothing?
+            // maybe if there is whitespace at the end of the line
+            // that hasn't been consumed?
+            case Token::Type::End: break;
+                
+            case Token::Type::Error:
+                errorSyntax(t, "Unexpected syntax");
+                break;
+
+            case Token::Type::Comment:
                 break;
                 
-            case Token::Type::Error: {
-                errorSyntax(t, "Unexpected syntax");
-            }
+            case Token::Type::Processor:
+                // todo: need some interesting ones
                 break;
 
-            case Token::Type::Comment: {
-                // ignore
-            }
-                break;
-
-            case Token::Type::String: {
+            case Token::Type::String:
                 current->add(new MslLiteral(t.value));
-            }
                 break;
 
             case Token::Type::Int: {
@@ -106,41 +113,52 @@ MslNode* MslParser::parse(juce::String source)
 
             case Token::Type::Bracket: {
                 if (t.isOpen()) {
+                    // open bracket, who gets to receive it?
+                    // even if the last node is willing if we got a separator
+                    // it won't get it
                     MslBlock* block = new MslBlock(t.value);
-                    if (t.value == "(") {
-                        // if the last was a symbol, this becomes symbol arguments
-                        // otherwise it's just a boolean expression block
-                        MslNode* last = current->getLast();
-                        if (last != nullptr && last->isSymbol()) {
-                            MslSymbol* s = static_cast<MslSymbol*>(last);
-                            if (s->arguments != nullptr) {
-                                // already had arguments, must be foo()()
-                                current->add(block);
-                            }
-                            else {
-                                block->parent = s;
-                                s->arguments = block;
-                            }
-                        }
-                        else {
-                            // else a parthesized expression block
-                            current->add(block);
-                        }
-                    }
-                    else {
-                        // if the last was a proc symbol will want to omake this the
-                        // proc body, else an expression block
-                        current->add(block);
-                    }
-                    // always pushes
+                    MslNode* last = current->getLast();
+                    if (!nodeClosed && last != nullptr && last->isOpen(block))
+                      last->add(block);
+                    else
+                      current->add(block);
                     current = block;
                 }
-                else if (matchBracket(t, current)) {
-                    current = current->parent;
-                    if (current == nullptr)
-                      errorSyntax(t, "Orphan node");
-                    else if (current->isSymbol())
-                      current = current->parent;
+                else {
+                    // close bracket, it must match the current block
+                    if (matchBracket(t, current)) {
+                        // block finished, pop the parse stack
+                        current = current->parent;
+                        // if this isn't a block, we just allowed it
+                        // to receive a block and it may be done, pop again
+                        // can we generalize this to be not type-specicic
+                        // how about isOpen() to anything?
+                        // or maybe isWaiting()
+                        if (!current->isBlock())
+                          current = current->parent;
+                    }
+                    // else, will have left an error
+                }
+            }
+                break;
+
+            case Token::Type::Operator: {
+                MslNode* last = current->getLast();
+                if (last == nullptr) {
+                    // todo: exceptions here are unaries, don't need those yet
+                    errorSyntax(t, "Invalid expression");
+                }
+                else {
+                    MslOperator* op = new MslOperator(t.value);
+
+                    // here we do extension or subsumption
+                    // todo: extension happens when the new node type has
+                    // a higher precedence than the previous node type
+                    // assuming subsumption
+                    current->remove(last);
+                    current->add(op);
+                    op->add(last);
+                    current = op;
                 }
             }
                 break;
@@ -149,62 +167,41 @@ MslNode* MslParser::parse(juce::String source)
                 // see if we can avoid commas but allow them
                 // it just moves to the next node
                 // another other than comma is unexpected
-                if (t.value != ",") {
+                if (t.value != "," && t.value != ";") {
                     errorSyntax(t, "Unexpected punctuation");
                 }
+                else {
+                    // force close operators and symbols, really anything?
+                    separatorReceived = true;
+                }
+#if 0                
                 else if (current->isOperator()) {
+                    // is this right?
                     // pop op
                     current = current->parent;
                 }
+#endif                
             }
                 break;
 
-            case Token::Type::Operator: {
-                MslNode* last = current->getLast();
-                if (last == nullptr) {
-                    errorSyntax(t, "Invalid expression");
-                }
-                else {
-                    current->remove(last);
-                    MslOperator* op = new MslOperator(t.value);
-                    current->add(op);
-                    op->add(last);
-                    current = op;
-                }
-            }
-                break;
-
-            case Token::Type::Processor: {
-                // todo: need some interesting ones
-            }
-                break;
         }
 
-        if (current == nullptr) {
-            // something wrong with the parent chain
-            errorSyntax(t, "Dangling block");
-        }
-        else  {
-            // todo: completion checking should be something
-            // every node does?
-            // it's the lookahead problem
-            // you either always assume something is done at the bottom
-            // or you have to close it on the next token
-            if (current->isOperator()) {
-                MslOperator* op = static_cast<MslOperator*>(current);
-                if (op->isComplete()) {
-                    // pop
-                    current = op->parent;
-                    if (current == nullptr)
-                      errorSyntax(t, "Invalid expression");
-                }
-            }
-        }
+        // check for node completion
+        // if something is no longer receptive to ANY block it can be popped
+        // I'm looking at you Operator
+        if (!current->isOpen(nullptr))
+          current = current->parent;
+
+        // can't go on without something to fill
+        if (current == nullptr)
+          errorSyntax(t, "Invalid expression");
     }
 
-    if (errors.size() > 0)
-      delete root;
-
+    if (errors.size() > 0) {
+        delete root;
+        root = nullptr;
+    }
+    
     return root;
 }
 

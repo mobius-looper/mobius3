@@ -6,9 +6,16 @@
 
 #include <JuceHeader.h>
 
-// have to include this if we want to be a header-only class
-// unfortunate because this may drag in a bunch of stuff
-#include "MslEvaluator.h"
+class MslVisitor
+{
+  public:
+    virtual ~MslVisitor() {}
+
+    virtual void mslVisit(class MslLiteral* obj) = 0;
+    virtual void mslVisit(class MslSymbol* obj) = 0;
+    virtual void mslVisit(class MslBlock* obj) = 0;
+    virtual void mslVisit(class MslOperator* obj) = 0;
+};
 
 class MslNode
 {
@@ -18,6 +25,8 @@ class MslNode
 
     juce::String token;
     MslNode* parent;
+    // would like to protect this, but we've got the ownership issue
+    juce::OwnedArray<MslNode> children;
 
     void add(MslNode* n) {
         n->parent = this;
@@ -33,25 +42,85 @@ class MslNode
         return children.getLast();
     }
 
-    // would like to protect this, but we've got the ownership issue
-    juce::OwnedArray<MslNode> children;
+    bool hasBlock(juce::String bracket) {
+        bool found = false;
+        for (auto child : children) {
+            if (child->token == bracket) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
 
-    virtual bool isBlock() {return false;}
-    virtual bool isSymbol() {return false;}
+    virtual bool isOpen(MslNode* node) {(void)node; return false;}
+
+    virtual bool isComplete() {
+        bool complete = true;
+        for (auto child : children) {
+            if (child->isComplete()) {
+                complete = false;
+                break;
+            }
+        }
+        return complete;
+    }
+
     virtual bool isLiteral() {return false;}
+    virtual bool isSymbol() {return false;}
+    virtual bool isBlock() {return false;}
     virtual bool isOperator() {return false;}
 
-    // the mechanism for runtime evaluator dispatching
-    virtual juce::String eval(class MslEvaluator* ev) = 0;
-
-  protected:
-    
+    virtual void visit(MslVisitor* visitor) = 0;
 };
 
-// see if we can get away without this
-// if nodes have all the blockness we need then the only
-// purpose this serves is as an anonymous container for the root
-// then we could just give our eval() to MslNode
+class MslLiteral : public MslNode
+{
+  public:
+    MslLiteral(juce::String s) : MslNode(s) {}
+    virtual ~MslLiteral() {}
+
+    bool isLiteral() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    // could use an MslValue here, but we've already
+    // stored the string in token and I don't want
+    // to drag in MslTokenizer::Token?
+    // hmm...
+    bool isBool = false;
+    bool isInt = false;
+    bool isFloat = false;
+};
+
+class MslSymbol : public MslNode
+{
+  public:
+    MslSymbol(juce::String s) : MslNode(s) {}
+    virtual ~MslSymbol() {}
+
+    bool isSymbol() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    class Symbol* symbol = nullptr;
+
+    // A symbol allows an arguments and body blocks
+    // but only one of each
+    bool isOpen(MslNode* node) override {
+        bool open = false;
+        if (node == nullptr) {
+            // it's asking if we might accept something, sure
+            open = true;
+        }
+        else {
+            // a block came in
+            // allow either, but may only proc symbols should allow bodies
+            if (node->token == "(" || node->token == "{")
+              open = !hasBlock(node->token);
+        }
+        return open;
+    }
+
+};
 
 class MslBlock : public MslNode
 {
@@ -60,49 +129,8 @@ class MslBlock : public MslNode
     virtual ~MslBlock() {}
 
     bool isBlock() override {return true;}
-    juce::String eval(class MslEvaluator* ev) {
-        return ev->evalBlock(this);
-    }
-};
-
-class MslSymbol : public MslNode
-{
-  public:
-    MslSymbol(juce::String s) : MslNode(s) {}
-    virtual ~MslSymbol() {delete arguments;}
-
-    class Symbol* symbol = nullptr;
-    // should be smart, or better inline
-    MslBlock* arguments = nullptr;;
-
-    bool isSymbol() override {return true;}
-    juce::String eval(class MslEvaluator* ev) {
-        return ev->evalSymbol(this);
-    }
-};
-
-/**
- * Still working out how to represent these.
- * We need the tokenizer type, but I'm not sure I want to make
- * this depend on the Tokenizer model we just happen to be using
- * at the moment.  Yet another type enumeration is annoying.
- * We don't have many of these so try flags.  It actually looks
- * cleaner to do "if (node.isBool)" than "if (node.type == AnotherTypeEnum::Bool)"
- */
-class MslLiteral : public MslNode
-{
-  public:
-    MslLiteral(juce::String s) : MslNode(s) {}
-    virtual ~MslLiteral() {}
-
-    bool isBool = false;
-    bool isInt = false;
-    bool isFloat = false;
-    
-    bool isLiteral() override {return true;}
-    juce::String eval(class MslEvaluator* ev) {
-        return ev->evalLiteral(this);
-    }
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    bool isOpen(MslNode* node) override {(void)node; return true;}
 };
 
 class MslOperator : public MslNode
@@ -111,14 +139,14 @@ class MslOperator : public MslNode
     MslOperator(juce::String s) : MslNode(s) {}
     virtual ~MslOperator() {}
 
-    bool isComplete() {
-        // todo: unary not supported
-        return (children.size() == 2);
-    }
-
     bool isOperator() override {return true;}
-    juce::String eval(class MslEvaluator* ev) {
-        return ev->evalOperator(this);
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    bool isOpen(MslNode* node) override {
+        (void)node;
+        // todo: handle uniaryness here or in the parser?
+        // todo: handle precedence here or in the parser?
+        return (children.size() < 2);
     }
     
 };
