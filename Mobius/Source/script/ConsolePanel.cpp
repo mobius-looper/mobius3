@@ -98,7 +98,7 @@ void MobiusConsole::parseLine(juce::String line)
             evaluator.trace = true;
         }
     }
-    else if (line.startsWith("trace")) {
+    else if (line.startsWith("parse")) {
         testParse(line);
     }
     else {
@@ -116,9 +116,10 @@ void MobiusConsole::showHelp()
     console.add("foo       evaluate a line of mystery");
 }
 
-void MobiusConsole::testParse(juce::String line)
+void MobiusConsole::showErrors(juce::StringArray* errors)
 {
-    // skip over "trace"
+    for (auto error : *errors)
+      console.add(error);
 }
 
 void MobiusConsole::doLine(juce::String line)
@@ -126,26 +127,70 @@ void MobiusConsole::doLine(juce::String line)
     // todo: allow parsing into a stack object
     MslNode* node = parser.parse(line);
     if (node == nullptr) {
-        juce::StringArray errors = parser.getErrors();
-        for (auto error : errors) {
-            console.add(error);
-        }
+        showErrors(parser.getErrors());
     }
     else {
         juce::String result = evaluator.start(node);
         if (result.length() > 0)
           console.add(result);
 
-        juce::StringArray errors = evaluator.getErrors();
-        for (auto error : errors) {
-            console.add(error);
-        }
+        showErrors(evaluator.getErrors());
         
         delete node;
     }
 }
 
+void MobiusConsole::testParse(juce::String line)
+{
+    juce::String remainder = line.fromFirstOccurrenceOf("parse", false, false);
+    MslNode* node = parser.parse(remainder);
+    if (node == nullptr) {
+        showErrors(parser.getErrors());
+    }
+    else {
+        traceNode(node, 0);
+        delete node;
+    }
+}
 
+void MobiusConsole::traceNode(MslNode* node, int indent)
+{
+    juce::String line;
+    for (int i = 0 ; i < indent ; i++) line += " ";
+
+    if (node->isLiteral()) {
+        MslLiteral* l = static_cast<MslLiteral*>(node);
+        if (l->isInt)
+          line += "Int: " + node->token;
+        else if (l->isFloat)
+          line += "Float: " + node->token;
+        else if (l->isBool)
+          line += "Bool: " + node->token;
+        else
+          line += "String: " + node->token;
+    }
+    else if (node->isSymbol()) {
+        line += "Symbol: " + node->token;
+    }
+    else if (node->isBlock()) {
+        line += "Block: " + node->token;
+    }
+    else if (node->isOperator()) {
+        line += "Operator: " + node->token;
+    }
+
+    console.add(line);
+
+    if (node->isSymbol()) {
+        MslSymbol* s = static_cast<MslSymbol*>(node);
+        if (s->arguments != nullptr) {
+            traceNode(s->arguments, indent + 2);
+        }
+    }
+
+    for (auto child : node->children)
+      traceNode(child, indent + 2);
+}
 
 /****************************************************************************/
 /****************************************************************************/

@@ -25,9 +25,9 @@ juce::String MslEvaluator::start(MslNode* node)
     return result;
 }
 
-juce::StringArray MslEvaluator::getErrors()
+juce::StringArray* MslEvaluator::getErrors()
 {
-    return errors;
+    return &errors;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -52,11 +52,11 @@ juce::String MslEvaluator::evalSymbol(MslSymbol* node)
     juce::String result;
 
     // will want to cache this in a "link" phase after parsing
-    Symbol* s = Symbols.find(node->name);
+    Symbol* s = Symbols.find(node->token);
     if (s != nullptr)
       result = eval(s);
     else
-      errors.add("Unknown symbol: " + node->name);
+      errors.add("Unknown symbol: " + node->token);
 
     return result;
 }
@@ -64,7 +64,7 @@ juce::String MslEvaluator::evalSymbol(MslSymbol* node)
 juce::String MslEvaluator::evalLiteral(MslLiteral* lit)
 {
     // will need a typed value container at runtime
-    return lit->value;
+    return lit->token;
 }
 
 juce::String MslEvaluator::evalOperator(MslOperator* op)

@@ -9,8 +9,9 @@
 void Tokenizer::setContent(juce::String s)
 {
     // do we need this or can it just live in the document?
-    content = s;
-    document.replaceAllContent(s);
+    // leading whitespace seems to be included with the first token so trim
+    content = s.trim();
+    document.replaceAllContent(content);
     // is this how you reset these?  seems weird it doesn't
     // have any setPosition interfaces
     iterator = juce::CodeDocument::Iterator(document);
@@ -32,7 +33,12 @@ Token Tokenizer::next()
         juce::CodeDocument::Position start = iterator.toPosition();
         int type = toker.readNextToken(iterator);
         juce::CodeDocument::Position end = iterator.toPosition();
-        t.value = document.getTextBetween(start, end);
+
+        juce::String token = document.getTextBetween(start, end);
+        // this does not appear to trim leading whitespace
+        token = token.trimStart();
+        t.value = token;
+        
         t.type = convertType(type);
     }
     return t;

@@ -13,11 +13,11 @@
 class MslNode
 {
   public:
-    MslNode() {}
+    MslNode(juce::String t) {token = t;}
     virtual ~MslNode() {}
 
-    virtual bool isOperator() {return false;}
-    virtual bool isSymbol() {return false;}
+    juce::String token;
+    MslNode* parent;
 
     void add(MslNode* n) {
         n->parent = this;
@@ -29,14 +29,20 @@ class MslNode
         children.removeObject(n, false);
     }
 
-    MslNode* parent;
-    juce::String bracket;
+    MslNode* getLast() {
+        return children.getLast();
+    }
+
+    // would like to protect this, but we've got the ownership issue
+    juce::OwnedArray<MslNode> children;
+
+    virtual bool isBlock() {return false;}
+    virtual bool isSymbol() {return false;}
+    virtual bool isLiteral() {return false;}
+    virtual bool isOperator() {return false;}
 
     // the mechanism for runtime evaluator dispatching
     virtual juce::String eval(class MslEvaluator* ev) = 0;
-
-    // would like to protect this...
-    juce::OwnedArray<MslNode> children;
 
   protected:
     
@@ -50,8 +56,10 @@ class MslNode
 class MslBlock : public MslNode
 {
   public:
-    MslBlock() {}
+    MslBlock(juce::String token) : MslNode(token) {}
     virtual ~MslBlock() {}
+
+    bool isBlock() override {return true;}
     juce::String eval(class MslEvaluator* ev) {
         return ev->evalBlock(this);
     }
@@ -60,14 +68,14 @@ class MslBlock : public MslNode
 class MslSymbol : public MslNode
 {
   public:
-    MslSymbol(juce::String s) {name = s;}
-    virtual ~MslSymbol() {}
+    MslSymbol(juce::String s) : MslNode(s) {}
+    virtual ~MslSymbol() {delete arguments;}
+
+    class Symbol* symbol = nullptr;
+    // should be smart, or better inline
+    MslBlock* arguments = nullptr;;
 
     bool isSymbol() override {return true;}
-
-    juce::String name;
-    class Symbol* symbol = nullptr;
-
     juce::String eval(class MslEvaluator* ev) {
         return ev->evalSymbol(this);
     }
@@ -84,42 +92,31 @@ class MslSymbol : public MslNode
 class MslLiteral : public MslNode
 {
   public:
-    MslLiteral(juce::String s) {value = s;}
-    MslLiteral(juce::String s, int ival) {(void)ival; value = s; isInt=true;}
-    MslLiteral(juce::String s, float fval) {(void)fval; value = s; isFloat=true;}
-    MslLiteral(juce::String s, bool bval) {(void)bval; value = s; isBool=true;}
+    MslLiteral(juce::String s) : MslNode(s) {}
     virtual ~MslLiteral() {}
 
     bool isBool = false;
     bool isInt = false;
     bool isFloat = false;
-
-    // we used the constructor arg values to derive the type flags
-    // don't really need to save the coerced value, a little weird
     
-    juce::String value;
-
+    bool isLiteral() override {return true;}
     juce::String eval(class MslEvaluator* ev) {
         return ev->evalLiteral(this);
     }
-    
 };
 
 class MslOperator : public MslNode
 {
   public:
-    MslOperator(juce::String s) {op = s;}
+    MslOperator(juce::String s) : MslNode(s) {}
     virtual ~MslOperator() {}
-    
-    bool isOperator() override {return true;}
 
     bool isComplete() {
         // todo: unary not supported
         return (children.size() == 2);
     }
 
-    juce::String op;
-
+    bool isOperator() override {return true;}
     juce::String eval(class MslEvaluator* ev) {
         return ev->evalOperator(this);
     }

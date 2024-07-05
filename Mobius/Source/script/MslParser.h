@@ -13,7 +13,7 @@ class MslParser
     ~MslParser() {}
 
     class MslNode* parse(juce::String source);
-    juce::StringArray getErrors();
+    juce::StringArray* getErrors();
 
   private:
 

@@ -4,7 +4,7 @@
   <Machine hostName="Loki" inputPorts="1" outputPorts="1" audioDeviceType="Windows Audio"
            audioInput="Microphone Array (Intel&#174; Smart Sound Technology for Digital Microphones)"
            inputChannels="11" audioOutput="Speakers (Realtek(R) Audio)"
-           outputChannels="11" sampleRate="48000" blockSize="480"/>
+           outputChannels="11" sampleRate="48000" blockSize="480" midiInput="Midi Captain- MIDI "/>
   <Machine hostName="Thor" inputPorts="3" outputPorts="1" audioDeviceType="ASIO"
            audioInput="ASIO Fireface USB" inputChannels="111111" audioOutput="ASIO Fireface USB"
            outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII,HST 1,HST 2,Midi Fighter Twister"/>

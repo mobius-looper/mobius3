@@ -11,7 +11,7 @@ class MslEvaluator
     bool trace = false;
     
     juce::String start(class MslNode* node);
-    juce::StringArray getErrors();
+    juce::StringArray* getErrors();
     
     // do I need a bunch of friends or will just MslNode work
     // to make these protected?

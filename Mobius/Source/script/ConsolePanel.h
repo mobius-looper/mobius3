@@ -49,6 +49,8 @@ class MobiusConsole : public juce::Component, public juce::Button::Listener,
     void showHelp();
     void toggleTrace();
     void testParse(juce::String line);
+    void showErrors(juce::StringArray* errors);
+    void traceNode(MslNode* node, int indent);
     
     juce::String eval(Token& t);
     juce::String eval(class Symbol* s);

@@ -5,9 +5,9 @@
 #include "MslParser.h"
 
 
-juce::StringArray MslParser::getErrors()
+juce::StringArray* MslParser::getErrors()
 {
-    return errors;
+    return &errors;
 }
 
 void MslParser::errorSyntax(Token& t, juce::String details)
@@ -30,9 +30,9 @@ bool MslParser::matchBracket(Token& t, MslNode* block)
 {
     // let's try to avoid a specific MslBlock just store the
     // bracketing char
-    bool match = ((t.value == "}") && (block->bracket == "{") ||
-                  (t.value == ")") && (block->bracket == "(") ||
-                  (t.value == "]") && (block->bracket == "["));
+    bool match = ((t.value == "}") && (block->token == "{") ||
+                  (t.value == ")") && (block->token == "(") ||
+                  (t.value == "]") && (block->token == "["));
 
     if (!match)
       errorSyntax(t, "Mismatched brackets");
@@ -42,9 +42,9 @@ bool MslParser::matchBracket(Token& t, MslNode* block)
 
 MslNode* MslParser::parse(juce::String source)
 {
-    MslNode* root = new MslBlock();
+    MslNode* root = new MslBlock("");
     MslNode* current = root;
-
+    
     tokenizer.setContent(source);
     errors.clear();
 
@@ -70,46 +70,77 @@ MslNode* MslParser::parse(juce::String source)
             }
                 break;
 
-            case Token::Type::Symbol: {
-                current->add(new MslSymbol(t.value));
-            }
-                break;
-
             case Token::Type::String: {
                 current->add(new MslLiteral(t.value));
             }
                 break;
 
             case Token::Type::Int: {
-                current->add(new MslLiteral(t.value, t.value.getIntValue()));
+                // would be convenient to pass the entire Token in but I
+                // don't want a dependency on that model yet
+                MslLiteral* l = new MslLiteral(t.value);
+                l->isInt = true;
+                current->add(l);
             }
                 break;
 
             case Token::Type::Float: {
-                current->add(new MslLiteral(t.value, t.value.getFloatValue()));
+                MslLiteral* l = new MslLiteral(t.value);
+                l->isFloat = true;
+                current->add(l);
             }
                 break;
                 
             case Token::Type::Bool: {
-                current->add(new MslLiteral(t.value, t.getBool()));
+                MslLiteral* l = new MslLiteral(t.value);
+                l->isBool = true;
+                current->add(l);
+            }
+                break;
+
+            case Token::Type::Symbol: {
+                MslSymbol* s = new MslSymbol(t.value);
+                current->add(s);
             }
                 break;
 
             case Token::Type::Bracket: {
                 if (t.isOpen()) {
-                    MslBlock* block = new MslBlock();
-                    block->bracket = t.value;
-                    current->add(block);
+                    MslBlock* block = new MslBlock(t.value);
+                    if (t.value == "(") {
+                        // if the last was a symbol, this becomes symbol arguments
+                        // otherwise it's just a boolean expression block
+                        MslNode* last = current->getLast();
+                        if (last != nullptr && last->isSymbol()) {
+                            MslSymbol* s = static_cast<MslSymbol*>(last);
+                            if (s->arguments != nullptr) {
+                                // already had arguments, must be foo()()
+                                current->add(block);
+                            }
+                            else {
+                                block->parent = s;
+                                s->arguments = block;
+                            }
+                        }
+                        else {
+                            // else a parthesized expression block
+                            current->add(block);
+                        }
+                    }
+                    else {
+                        // if the last was a proc symbol will want to omake this the
+                        // proc body, else an expression block
+                        current->add(block);
+                    }
+                    // always pushes
                     current = block;
                 }
                 else if (matchBracket(t, current)) {
-                    if (current->parent == nullptr) {
-                        // shouldn't see this if bracket matching worked right
-                        errorSyntax(t, "End bracket at root");
-                    }
-                    else {
-                        current = current->parent;
-                    }
+                    current = current->parent;
+                    if (current == nullptr)
+                      errorSyntax(t, "Orphan node");
+                    else if (current->isSymbol())
+                      current = current->parent;
                 }
             }
                 break;
@@ -124,22 +155,20 @@ MslNode* MslParser::parse(juce::String source)
                 else if (current->isOperator()) {
                     // pop op
                     current = current->parent;
-                    if (current == nullptr)
-                      errorSyntax(t, "Invalid expression");
                 }
             }
                 break;
 
             case Token::Type::Operator: {
-                MslNode* parent = current->parent;
-                if (parent == nullptr) {
-                    errorSyntax(t, "Unexpected operator");
+                MslNode* last = current->getLast();
+                if (last == nullptr) {
+                    errorSyntax(t, "Invalid expression");
                 }
                 else {
+                    current->remove(last);
                     MslOperator* op = new MslOperator(t.value);
-                    parent->remove(current);
-                    parent->add(op);
-                    op->add(current);
+                    current->add(op);
+                    op->add(last);
                     current = op;
                 }
             }
@@ -151,22 +180,26 @@ MslNode* MslParser::parse(juce::String source)
                 break;
         }
 
-        // todo: completion checking should be something
-        // every node does?
-        // it's the lookahead problem
-        // you either always assume something is done at the bottom
-        // or you have to close it on the next token
-        
-        if (current->isOperator()) {
-            MslOperator* op = static_cast<MslOperator*>(current);
-            if (op->isComplete()) {
-                // pop
-                current = current->parent;
-                if (current == nullptr)
-                  errorSyntax(t, "Invalid expression");
+        if (current == nullptr) {
+            // something wrong with the parent chain
+            errorSyntax(t, "Dangling block");
+        }
+        else  {
+            // todo: completion checking should be something
+            // every node does?
+            // it's the lookahead problem
+            // you either always assume something is done at the bottom
+            // or you have to close it on the next token
+            if (current->isOperator()) {
+                MslOperator* op = static_cast<MslOperator*>(current);
+                if (op->isComplete()) {
+                    // pop
+                    current = op->parent;
+                    if (current == nullptr)
+                      errorSyntax(t, "Invalid expression");
+                }
             }
         }
-        
     }
 
     if (errors.size() > 0)

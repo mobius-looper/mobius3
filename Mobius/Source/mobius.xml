@@ -292,12 +292,6 @@
   <BindingSet name='Base'>
     <Binding name='output' scope='1' trigger='host'/>
     <Binding name='Record' trigger='host'/>
-    <Binding name='Record' trigger='note' value='48'/>
-    <Binding name='UIParameterUp' trigger='note' value='53'/>
-    <Binding name='UIParameterDown' trigger='note' value='55'/>
-    <Binding name='Record' trigger='control' value='12' channel='2'/>
-    <Binding name='Overdub' trigger='program' channel='1'/>
-    <Binding name='Record' trigger='control' value='12' channel='1'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
     <Binding name='NextLoop' trigger='key' value='65576'/>
@@ -312,6 +306,13 @@
     <Binding name='Pause' trigger='key' value='80'/>
     <Binding name='Overdub' trigger='key' value='79'/>
     <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
+    <Binding name='Record' trigger='note' value='48'/>
+    <Binding name='UIParameterUp' trigger='note' value='53'/>
+    <Binding name='UIParameterDown' trigger='note' value='55'/>
+    <Binding name='Record' trigger='control' value='12' channel='2'/>
+    <Binding name='Overdub' trigger='program' channel='1'/>
+    <Binding name='Record' trigger='control' value='12' channel='1'/>
+    <Binding name='MainTap Track1' trigger='note' value='3' channel='1'/>
   </BindingSet>
   <BindingSet name='[New]' active='true'>
     <Binding name='Backward' trigger='note'/>
@@ -319,9 +320,7 @@
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\bugscript.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\setuptest.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\manyscript.mos'/>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\bert.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
