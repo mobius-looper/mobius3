@@ -676,6 +676,19 @@ Binding* BindingEditor::bindingNew()
     return neu;
 }
 
+/**
+ * The Copy/Duplicate button is clicked.
+ * This is like bindingNew except we don't capture the form, it makes
+ * a copy of the selected binding which is passed.
+ */
+Binding* BindingEditor::bindingCopy(Binding* src)
+{
+    Binding* neu = new Binding(src);
+    // since this is identical to the other one, don't need to refresh
+    // the form and target
+    return neu;
+}
+
 void BindingEditor::bindingUpdate(Binding* b)
 {
     // was ignoring this if !target.isTargetSelected

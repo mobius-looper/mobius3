@@ -56,6 +56,7 @@ class BindingEditor : public ConfigEditor,
     void bindingUpdate(class Binding* b) override;
     void bindingDelete(class Binding* b) override;
     class Binding* bindingNew() override;
+    class Binding* bindingCopy(class Binding* b) override;
 
     // BindingTargetSelector::Listener
     void bindingTargetClicked(BindingTargetSelector* bts) override;

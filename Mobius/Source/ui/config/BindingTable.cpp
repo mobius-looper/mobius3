@@ -22,7 +22,8 @@ BindingTable::BindingTable()
     addAndMakeVisible(table);
 
     commands.add("New");
-    commands.add("Update");
+    //commands.add("Update");
+    commands.add("Copy");
     commands.add("Delete");
     commands.autoSize();
     commands.addListener(this);
@@ -296,6 +297,7 @@ void BindingTable::resized()
 
 /**
  * ButtonBar::Listener
+ *
  */
 void BindingTable::buttonClicked(juce::String name)
 {
@@ -324,7 +326,24 @@ void BindingTable::buttonClicked(juce::String name)
             }
         }
     }
+    else if (name == juce::String("Copy")) {
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            Binding* b = bindings[row];
+            if (listener != nullptr) {
+                Binding* neu = listener->bindingCopy(b);
+                if (neu != nullptr) {
+                    bindings.add(neu);
+                    table.updateContent();
+                    // select it, it will be the last
+                    table.selectRow(bindings.size() - 1);
+                }
+            }
+        }
+        
+    }
     else if (name == juce::String("Update")) {
+        // shouldn't get here any more now that we have immediate form capture
         int row = table.getSelectedRow();
         if (row >= 0) {
             Binding* b = bindings[row];

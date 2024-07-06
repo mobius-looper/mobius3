@@ -517,15 +517,26 @@ UIAction* Binderator::buildAction(Binding* b)
         else if (trigger == TriggerControl) {
             // CC's can behave as sustainable if you adopt a value threshold
             // e.g. 0 for off and 127 for on or >64 for on, etc.
-            // Since this may want more flexible configuration, don't do that
-            // unless asked
-            if (mode == TriggerModeMomentary)
+            // update: I used to require TriggerModeMomentary but setting that
+            // is unreliable, and broke sus/long for almost everyone
+            // TriggerMode isn't baked yet and you can't set it in the binding
+            // windows so always assume sustainable
+            if (mode == nullptr || mode == TriggerModeMomentary)
               sustainId = b->triggerValue;
         }
         else if (trigger == TriggerHost) {
             // not sure how we're going to do this, they're similar
             // to TriggerControl
             // wait on those
+            // update: same with TriggerControl, err on the side of assuming
+            // that if you're bothering to binding a host parameter to a function
+            // you will use it as a momentary switch
+            // ugh...don't have unique ids for these though,
+            // really need to define some base ranges for the various types,
+            // buttons have an unknown base and will probably conflict with
+            // host parameter ids
+            //if (mode == nullptr || mode == TriggerModeMomentary)
+            //sustainId = b->triggerValue;
         }
         // TriggerProgram and TriggerPitch are unsustainable
         // TriggerUI and TriggerOsc won't be seen here

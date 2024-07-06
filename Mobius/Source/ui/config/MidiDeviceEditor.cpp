@@ -65,10 +65,6 @@ void MidiDeviceEditor::showing()
 {
     MidiManager* mm = context->getSupervisor()->getMidiManager();
     mm->addMonitor(this);
-
-    // have to defer this post-construction
-    inputTable.init(mm, false);
-    outputTable.init(mm, true);
 }
 
 /**
@@ -103,6 +99,10 @@ void MidiDeviceEditor::midiMonitorMessage(juce::String msg)
  */
 void MidiDeviceEditor::load()
 {
+    // have to defer this post-construction
+    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    inputTable.init(mm, false);
+    outputTable.init(mm, true);
 
     DeviceConfig* config = context->getDeviceConfig();
     inputTable.load(config);

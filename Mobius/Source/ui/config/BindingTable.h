@@ -32,6 +32,7 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
         virtual void bindingUpdate(class Binding* b) = 0;
         virtual void bindingDelete(class Binding* b) = 0;
         virtual class Binding* bindingNew() = 0;
+        virtual class Binding* bindingCopy(class Binding* b) = 0;
     };
 
     BindingTable();
