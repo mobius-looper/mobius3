@@ -88,60 +88,44 @@ MslNode* MslParser::parse(juce::String source)
                 // don't want a dependency on that model yet
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isInt = true;
-                current->add(l);
+                current = push(curent, l);
             }
                 break;
 
             case Token::Type::Float: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isFloat = true;
-                current->add(l);
+                current = push(curent, l);
             }
                 break;
                 
             case Token::Type::Bool: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isBool = true;
-                current->add(l);
+                current = push(curent, l);
             }
                 break;
 
             case Token::Type::Symbol: {
-                MslNode* keyword = checkKeywords(t.value);
-                if (keyword != nullptr)
-                  current->add(keyword);
-                else {
-                    MslSymbol* s = new MslSymbol(t.value);
-                    current->add(s);
-                }
+                MslNode* node = checkKeywords(t.value);
+                if (node == nullptr)
+                  node = new MslSymbol(t.value);
+                    
+                current = push(current, node);
+                
             }
                 break;
 
             case Token::Type::Bracket: {
                 if (t.isOpen()) {
-                    // open bracket, who gets to receive it?
-                    // even if the last node is willing if we got a separator
-                    // it won't get it
                     MslBlock* block = new MslBlock(t.value);
-                    MslNode* last = current->getLast();
-                    if (!nodeClosed && last != nullptr && last->isOpen(block))
-                      last->add(block);
-                    else
-                      current->add(block);
-                    current = block;
+                    current = push(current, block);
                 }
                 else {
                     // close bracket, it must match the current block
                     if (matchBracket(t, current)) {
                         // block finished, pop the parse stack
                         current = current->parent;
-                        // if this isn't a block, we just allowed it
-                        // to receive a block and it may be done, pop again
-                        // can we generalize this to be not type-specicic
-                        // how about isOpen() to anything?
-                        // or maybe isWaiting()
-                        if (!current->isBlock())
-                          current = current->parent;
                     }
                     // else, will have left an error
                 }
@@ -217,6 +201,24 @@ MslNode* MslParser::parse(juce::String source)
     }
     
     return root;
+}
+
+// usual processing for a new node
+MslNode* MslParser::push(MslNode* current, MslNode* node)
+{
+    // do we keep recuring up here?
+    if (!current->wantsNode(node)) {
+        current->locked = true;
+        current = current->parent;
+        // todo: should we keep recur
+    }
+
+    current->add(node);
+    
+    if (!node->locked)
+      current = node;
+
+    return current;
 }
 
 MslNode* MslParser::checkKeywords(juce::String token)

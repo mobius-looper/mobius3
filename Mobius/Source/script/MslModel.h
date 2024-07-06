@@ -31,6 +31,10 @@ class MslNode
     // would like to protect this, but we've got the ownership issue
     juce::OwnedArray<MslNode> children;
 
+    //////////////////////////////////////////////////////////////////////
+    // Parse State
+    //////////////////////////////////////////////////////////////////////
+    
     // due to the weird way we Symbols consume sibling () blocks
     // and the way Operator swaps our location and puts it
     // under a new block, we need to prevent assimulation of
@@ -52,6 +56,17 @@ class MslNode
         return children.getLast();
     }
 
+    // returns true if the node would like to consume the token
+    virtual bool wantsToken(Token& t) {(void)t; return false;}
+
+    // returns true if the node would like to consume another child node
+    // do we really need locked if this works?
+    virtual bool wantsNode(MslNode* node) {(void)node; return false;}
+    
+    //////////////////////////////////////////////////////////////////////
+    // Runtime State
+    //////////////////////////////////////////////////////////////////////
+    
     bool hasBlock(juce::String bracket) {
         bool found = false;
         for (auto child : children) {
@@ -61,19 +76,6 @@ class MslNode
             }
         }
         return found;
-    }
-
-    virtual bool isOpen(MslNode* node) {(void)node; return false;}
-
-    virtual bool isComplete() {
-        bool complete = true;
-        for (auto child : children) {
-            if (child->isComplete()) {
-                complete = false;
-                break;
-            }
-        }
-        return complete;
     }
 
     virtual bool isLiteral() {return false;}
@@ -90,7 +92,7 @@ class MslNode
 class MslLiteral : public MslNode
 {
   public:
-    MslLiteral(juce::String s) : MslNode(s) {}
+    MslLiteral(juce::String s) : MslNode(s) {locked=true;}
     virtual ~MslLiteral() {}
 
     bool isLiteral() override {return true;}
@@ -105,47 +107,49 @@ class MslLiteral : public MslNode
     bool isFloat = false;
 };
 
-class MslSymbol : public MslNode
-{
-  public:
-    MslSymbol(juce::String s) : MslNode(s) {}
-    virtual ~MslSymbol() {}
-
-    bool isSymbol() override {return true;}
-    void visit(MslVisitor* v) override {v->mslVisit(this);}
-
-    class Symbol* symbol = nullptr;
-
-    // A symbol allows an arguments and body blocks
-    // but only one of each
-    bool isOpen(MslNode* node) override {
-        bool open = false;
-        if (!locked) {
-            if (node == nullptr) {
-                // it's asking if we might accept something, sure
-                open = true;
-            }
-            else {
-                // a block came in
-                // allow either, but may only proc symbols should allow bodies
-                if (node->token == "(" || node->token == "{")
-                  open = !hasBlock(node->token);
-            }
-        }
-        return open;
-    }
-
-};
-
 class MslBlock : public MslNode
 {
   public:
     MslBlock(juce::String token) : MslNode(token) {}
     virtual ~MslBlock() {}
 
+    // doesn't want tokens but will always accept nodes
+    // might want tokens if inner blocks allow declarations
+    // or are those handled as preprocessor lines?
+    // I guess this is where locking comes in to play
+    // unless we consume the close bracket token and remember that
+    // to make wantsNode return false, this will always hapily take nodes
+    bool wantsNode(MslNode* node) override {(void)node; return true;}
+
     bool isBlock() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool isOpen(MslNode* node) override {(void)node; return true;}
+};
+
+class MslSymbol : public MslNode
+{
+  public:
+    MslSymbol(juce::String s) : MslNode(s) {}
+    virtual ~MslSymbol() {}
+
+    // symbols only allow () arguemnt blocks, which turns them into
+    // a parameterized reference, aka a "call"
+    // originally I allowed them to accept {} body blocks and magically
+    // become a proc, but I think no, require a proc keyword
+
+    bool wantsNode(MslNode* node) override {
+        bool wants = false;
+        if (node->token == "(" && children.size() == 0)
+          wants = true;
+        return wants;
+    }
+    
+    // runtime state
+    class Symbol* symbol = nullptr;
+    
+    bool isSymbol() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+
 };
 
 class MslOperator : public MslNode
@@ -154,33 +158,61 @@ class MslOperator : public MslNode
     MslOperator(juce::String s) : MslNode(s) {}
     virtual ~MslOperator() {}
 
+    // operators stop accepting nodes with all of their operands
+    // are satisified
+    // todo: need to support unary
+    // disallow structural nodes like proc and var
+    bool wantsNode(MslNode* node) override {
+        bool wants = false;
+        if (children.size() < 2 &&
+            node->isLiteral() || node->isSymbol() || node->isOperator ||
+            // for blocks, should only see ()
+            // I guess we can allow {} under the assumption that blocks return
+            // their last value, nice way to encapsulate a multi-step computation
+            // that actually gets you C-style ? operators
+            node->isBlock() ||
+            // what about Assignment?  it would be unusual to have one of those inside
+            // an expression, what does C do?
+            // the value of an assignment, is the assigned value
+            // this will look confusing though since = is often misused as ==
+            node->isAssignment())
+          wants = true;
+
+        return wants;
+    }
+
+    // if we rejected a node and our operands are not satisified, it is usually
+    // a syntax error like "x + proc"
+    // unclear if we want to halt when that happens, or just let it dangle
+    // should warn at runtime, to catch that early, will need a lock() method
+    // that tests the lockability of the node
+
+    // runtime
     bool isOperator() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
-    bool isOpen(MslNode* node) override {
-        (void)node;
-        // todo: handle uniaryness here or in the parser?
-        // todo: handle precedence here or in the parser?
-        return (children.size() < 2);
-    }
-    
 };
 
+// assignments are basically operators with added runtime semantics
 class MslAssignment : public MslNode
 {
   public:
     MslAssignment(juce::String s) : MslNode(s) {}
     virtual ~MslAssignment() {}
 
+    bool wantsNode(MslNode* node) override {
+        bool wants = false;
+        if (children.size() < 2 &&
+            node->isLiteral() || node->isSymbol() || node->isOperator ||
+            node->isBlock() ||
+            node->isAssignment())
+          wants = true;
+        return wants;
+    }
+
     bool isAssignment() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
-    bool isOpen(MslNode* node) override {
-        (void)node;
-        // todo: handle uniaryness here or in the parser?
-        // todo: handle precedence here or in the parser?
-        return (children.size() < 2);
-    }
 };    
     
 class MslVar : public MslNode
@@ -189,9 +221,38 @@ class MslVar : public MslNode
     MslVar(juce::String token) : MslNode(token) {}
     virtual ~MslVar() {}
 
+    // var is one of the few that consumes tokens
+    // hmm, it's a little more than this, it REQUIRES a token
+    // wantsToken doesn't have a way to reject with prejeduce
+    // we'll end up with a bad parse tree that will have to be caught at runtime
+    bool wantsToken(Token& t) override {
+        bool wants = false;
+        if (t.type == Token::Type::String) {
+            // take this as our name
+            name =  t.value;
+            wants = true;
+        }
+        return wants;
+    }
+
+    // vars accept an espression
+    bool wantsNode(MslNode* node) override {
+        // okay this is the same as Operator and Assignment
+        // except we only accept one child
+        // need an isExpression() that encapsulates this
+        bool wants = false;
+        if (children.size() < 1 &&
+            node->isLiteral() || node->isSymbol() || node->isOperator ||
+            node->isBlock() ||
+            node->isAssignment())
+          wants = true;
+        return wants;
+    }
+
+    juce::String name;
+
     bool isVar() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool isOpen(MslNode* node) override {(void)node; return false;}
 };
 
 class MslProc : public MslNode
@@ -200,9 +261,25 @@ class MslProc : public MslNode
     MslProc(juce::String token) : MslNode(token) {}
     virtual ~MslProc() {}
 
+    // same as var
+    bool wantsToken(Token& t) override {
+        bool wants = false;
+        if (t.type == Token::Type::String) {
+            name =  t.value;
+            wants = true;
+        }
+        return wants;
+    }
+
+    // reject this for now so we can test wants parsing
+    bool wantsNode(MslNode* node) override {
+        return false;
+    }
+
+    juce::String name;
+    
     bool isProc() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool isOpen(MslNode* node) override {(void)node; return false;}
 };
 
 

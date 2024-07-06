@@ -24,5 +24,6 @@ class MslParser
     bool matchBracket(Token& t, MslNode* block);
 
     MslNode* checkKeywords(juce::String token);
+    MslNode* push(MslNode* current, MslNode* node);
 
 };
