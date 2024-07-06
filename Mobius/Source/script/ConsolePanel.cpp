@@ -179,6 +179,15 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
     else if (node->isOperator()) {
         line += "Operator: " + node->token;
     }
+    else if (node->isAssignment()) {
+        line += "Assignment: " + node->token;
+    }
+    else if (node->isVar()) {
+        line += "Var: " + node->token;
+    }
+    else if (node->isProc()) {
+        line += "Proc: " + node->token;
+    }
 
     console.add(line);
 

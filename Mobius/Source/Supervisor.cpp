@@ -273,6 +273,9 @@ bool Supervisor::start()
         if (config->windowWidth > 0) width = config->windowWidth;
         if (config->windowHeight > 0) height = config->windowHeight;
         mainComponent->setSize(width, height);
+
+        // grab focus next ping
+        wantsFocus = true;
     }
     
     meter("Mobius");
@@ -586,6 +589,9 @@ juce::Component* Supervisor::getPluginEditorComponent()
     // unlike the application with MainComponent we have to add
     // a key tracker every time the editor window is opened
     comp->addKeyListener(&keyTracker);
+
+    // grab focus the next maintenance ping
+    wantsFocus = true;
     
     return comp;
 }
@@ -748,7 +754,12 @@ void Supervisor::advance()
 
     // let MidiMonitors display things queued from the plugin
     midiManager.performMaintenance();
-    
+
+    // hack to get focus when the window is first opened, may have other uses
+    if (wantsFocus) {
+        mainWindow->grabKeyboardFocus();
+        wantsFocus = false;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

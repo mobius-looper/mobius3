@@ -70,6 +70,55 @@ void MslEvaluator::mslVisit(MslSymbol* node)
     }
 }
 
+void MslEvaluator::mslVisit(MslAssignment* node)
+{
+    MslNode* target = (node->children.size() > 0) ? node->children[0] : nullptr;
+    MslNode* value = (node->children.size() > 1) ? node->children[1] : nullptr;
+
+    if (target == nullptr)
+      errors.add("Assignment without target");
+    else if (value == nullptr)
+      errors.add("Assignment without value");
+    else {
+        // this must get to a symbol
+        // like expressions, we don't have a way to pass quoted symbols without
+        // evaluating so it has to be immediate
+        if (!target->isSymbol()) {
+            errors.add("Assignment target not a symbol");
+        }
+        else {
+            MslSymbol* s = static_cast<MslSymbol*>(target);
+            resolve(s);
+            if (s->symbol == nullptr)
+              errors.add("Unresolved symbol " + s->token);
+            else {
+                value->visit(this);
+                // should be doing this everywhere we do pre-emptive evaluation!
+                if (errors.size() == 0) {
+                    assign(s->symbol, result.getInt());
+                }
+            }
+        }
+    }
+}
+
+void MslEvaluator::resolve(MslSymbol* node)
+{
+    if (node->symbol == nullptr)
+      node->symbol = Symbols.find(node->token);
+}
+
+void MslEvaluator::mslVisit(MslVar* node)
+{
+    (void)node;
+}
+
+void MslEvaluator::mslVisit(MslProc* node)
+{
+    (void)node;
+}
+
+
 //////////////////////////////////////////////////////////////////////
 //
 // Expressions
@@ -467,6 +516,16 @@ void MslEvaluator::query(Symbol* s)
             }
         }
     }
+}
+
+void MslEvaluator::assign(Symbol* s, int value)
+{
+    // todo: context forwarding
+    UIAction a;
+    a.symbol = s;
+    a.value = value;
+    Supervisor::Instance->doAction(&a);
+    result.setNull();
 }
 
 /****************************************************************************/

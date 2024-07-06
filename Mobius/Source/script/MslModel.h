@@ -15,6 +15,9 @@ class MslVisitor
     virtual void mslVisit(class MslSymbol* obj) = 0;
     virtual void mslVisit(class MslBlock* obj) = 0;
     virtual void mslVisit(class MslOperator* obj) = 0;
+    virtual void mslVisit(class MslAssignment* obj) = 0;
+    virtual void mslVisit(class MslVar* obj) = 0;
+    virtual void mslVisit(class MslProc* obj) = 0;
 };
 
 class MslNode
@@ -28,6 +31,13 @@ class MslNode
     // would like to protect this, but we've got the ownership issue
     juce::OwnedArray<MslNode> children;
 
+    // due to the weird way we Symbols consume sibling () blocks
+    // and the way Operator swaps our location and puts it
+    // under a new block, we need to prevent assimulation of
+    // any future blocks, could proabbly handle this in the parser
+    // but it's easy enough here
+    bool locked = false;
+    
     void add(MslNode* n) {
         n->parent = this;
         children.add(n);
@@ -70,6 +80,9 @@ class MslNode
     virtual bool isSymbol() {return false;}
     virtual bool isBlock() {return false;}
     virtual bool isOperator() {return false;}
+    virtual bool isAssignment() {return false;}
+    virtual bool isVar() {return false;}
+    virtual bool isProc() {return false;}
 
     virtual void visit(MslVisitor* visitor) = 0;
 };
@@ -107,15 +120,17 @@ class MslSymbol : public MslNode
     // but only one of each
     bool isOpen(MslNode* node) override {
         bool open = false;
-        if (node == nullptr) {
-            // it's asking if we might accept something, sure
-            open = true;
-        }
-        else {
-            // a block came in
-            // allow either, but may only proc symbols should allow bodies
-            if (node->token == "(" || node->token == "{")
-              open = !hasBlock(node->token);
+        if (!locked) {
+            if (node == nullptr) {
+                // it's asking if we might accept something, sure
+                open = true;
+            }
+            else {
+                // a block came in
+                // allow either, but may only proc symbols should allow bodies
+                if (node->token == "(" || node->token == "{")
+                  open = !hasBlock(node->token);
+            }
         }
         return open;
     }
@@ -151,16 +166,47 @@ class MslOperator : public MslNode
     
 };
 
-#if 0
+class MslAssignment : public MslNode
+{
+  public:
+    MslAssignment(juce::String s) : MslNode(s) {}
+    virtual ~MslAssignment() {}
+
+    bool isAssignment() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    bool isOpen(MslNode* node) override {
+        (void)node;
+        // todo: handle uniaryness here or in the parser?
+        // todo: handle precedence here or in the parser?
+        return (children.size() < 2);
+    }
+};    
+    
+class MslVar : public MslNode
+{
+  public:
+    MslVar(juce::String token) : MslNode(token) {}
+    virtual ~MslVar() {}
+
+    bool isVar() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    bool isOpen(MslNode* node) override {(void)node; return false;}
+};
+
 class MslProc : public MslNode
 {
   public:
-    MslProc() {}
-    ~MslProc() {}
+    MslProc(juce::String token) : MslNode(token) {}
+    virtual ~MslProc() {}
 
-    juce::String name;
-    
+    bool isProc() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    bool isOpen(MslNode* node) override {(void)node; return false;}
 };
+
+
+#if 0
 
 class MslVar : public MslNode
 {

@@ -329,6 +329,13 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // testing subsystem
     TestDriver testDriver {this};
 
+    // kludge to have MainWindow to grab keyboard focus when it is first displayed
+    // can't find the proper hook for this in Juce, didn't seem to work in MainComponent
+    // constructor but that doesn't work for plugin editors anyway
+    // this will be polled by the maintenance thread, set it when the user is expecting
+    // focus, initially just on startup, may be useful elsewhere
+    bool wantsFocus = false;
+
     //
     // Methods
     //

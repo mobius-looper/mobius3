@@ -313,6 +313,7 @@
     <Binding name='Overdub' trigger='program' channel='1'/>
     <Binding name='Record' trigger='control' value='12' channel='1'/>
     <Binding name='MainTap Track1' trigger='note' value='3' channel='1'/>
+    <Binding name='Record' trigger='control' channel='1'/>
   </BindingSet>
   <BindingSet name='[New]' active='true'>
     <Binding name='Backward' trigger='note'/>

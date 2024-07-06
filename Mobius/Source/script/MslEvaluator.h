@@ -185,6 +185,9 @@ class MslEvaluator : public MslVisitor
     void mslVisit(MslSymbol* node);
     void mslVisit(MslBlock* node);
     void mslVisit(MslOperator* node);
+    void mslVisit(MslAssignment* node);
+    void mslVisit(MslVar* node);
+    void mslVisit(MslProc* node);
     
   private:
 
@@ -195,6 +198,7 @@ class MslEvaluator : public MslVisitor
     void eval(class Symbol* s);
     void invoke(Symbol* s);
     void query(Symbol* s);
+    void assign(Symbol* s, int value);
 
     MslOperators mapOperator(juce::String& s);
 
@@ -209,4 +213,5 @@ class MslEvaluator : public MslVisitor
     MslNode* getUnresolved(MslNode* node1, MslNode* node2);
     MslNode* getUnresolved(MslNode* node);
     
+    void resolve(MslSymbol* node);
 };

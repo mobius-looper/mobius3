@@ -22,4 +22,7 @@ class MslParser
     
     void errorSyntax(Token& t, juce::String details);
     bool matchBracket(Token& t, MslNode* block);
+
+    MslNode* checkKeywords(juce::String token);
+
 };

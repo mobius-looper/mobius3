@@ -54,6 +54,7 @@ MslNode* MslParser::parse(juce::String source)
 
         // if we found a separator on the last token, prevent nodes
         // from including another block
+        // todo: rework this to use locked=true instead
         bool nodeClosed = false;
         if (separatorReceived) {
             nodeClosed = true;
@@ -106,8 +107,13 @@ MslNode* MslParser::parse(juce::String source)
                 break;
 
             case Token::Type::Symbol: {
-                MslSymbol* s = new MslSymbol(t.value);
-                current->add(s);
+                MslNode* keyword = checkKeywords(t.value);
+                if (keyword != nullptr)
+                  current->add(keyword);
+                else {
+                    MslSymbol* s = new MslSymbol(t.value);
+                    current->add(s);
+                }
             }
                 break;
 
@@ -149,7 +155,11 @@ MslNode* MslParser::parse(juce::String source)
                     errorSyntax(t, "Invalid expression");
                 }
                 else {
-                    MslOperator* op = new MslOperator(t.value);
+                    MslNode* op = nullptr;
+                    if (t.value == "=")
+                      op = new MslAssignment(t.value);
+                    else
+                      op = new MslOperator(t.value);
 
                     // here we do extension or subsumption
                     // todo: extension happens when the new node type has
@@ -158,6 +168,10 @@ MslNode* MslParser::parse(juce::String source)
                     current->remove(last);
                     current->add(op);
                     op->add(last);
+                    // kludge, lock symbol objects that have already been pushed
+                    // since we just ut it back into position
+                    last->locked = true;
+                    
                     current = op;
                 }
             }
@@ -203,6 +217,19 @@ MslNode* MslParser::parse(juce::String source)
     }
     
     return root;
+}
+
+MslNode* MslParser::checkKeywords(juce::String token)
+{
+    MslNode* keyword = nullptr;
+
+    if (token == "var")
+      keyword = new MslVar(token);
+    
+    else if (token == "proc")
+      keyword = new MslProc(token);
+
+    return keyword;
 }
 
 /****************************************************************************/
