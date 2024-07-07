@@ -5,6 +5,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Tokenizer.h"
 
 class MslVisitor
 {
@@ -165,17 +166,17 @@ class MslOperator : public MslNode
     bool wantsNode(MslNode* node) override {
         bool wants = false;
         if (children.size() < 2 &&
-            node->isLiteral() || node->isSymbol() || node->isOperator ||
+            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
             // for blocks, should only see ()
             // I guess we can allow {} under the assumption that blocks return
             // their last value, nice way to encapsulate a multi-step computation
             // that actually gets you C-style ? operators
-            node->isBlock() ||
-            // what about Assignment?  it would be unusual to have one of those inside
-            // an expression, what does C do?
-            // the value of an assignment, is the assigned value
-            // this will look confusing though since = is often misused as ==
-            node->isAssignment())
+             node->isBlock() ||
+             // what about Assignment?  it would be unusual to have one of those inside
+             // an expression, what does C do?
+             // the value of an assignment, is the assigned value
+             // this will look confusing though since = is often misused as ==
+             node->isAssignment()))
           wants = true;
 
         return wants;
@@ -186,6 +187,9 @@ class MslOperator : public MslNode
     // unclear if we want to halt when that happens, or just let it dangle
     // should warn at runtime, to catch that early, will need a lock() method
     // that tests the lockability of the node
+
+    // is this necessary?
+    bool unary = false;
 
     // runtime
     bool isOperator() override {return true;}
@@ -203,9 +207,9 @@ class MslAssignment : public MslNode
     bool wantsNode(MslNode* node) override {
         bool wants = false;
         if (children.size() < 2 &&
-            node->isLiteral() || node->isSymbol() || node->isOperator ||
-            node->isBlock() ||
-            node->isAssignment())
+            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
+             node->isBlock() ||
+             node->isAssignment()))
           wants = true;
         return wants;
     }
@@ -242,9 +246,8 @@ class MslVar : public MslNode
         // need an isExpression() that encapsulates this
         bool wants = false;
         if (children.size() < 1 &&
-            node->isLiteral() || node->isSymbol() || node->isOperator ||
-            node->isBlock() ||
-            node->isAssignment())
+            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
+             node->isBlock()))
           wants = true;
         return wants;
     }
@@ -273,6 +276,7 @@ class MslProc : public MslNode
 
     // reject this for now so we can test wants parsing
     bool wantsNode(MslNode* node) override {
+        (void)node;
         return false;
     }
 
@@ -282,18 +286,8 @@ class MslProc : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
-
 #if 0
 
-class MslVar : public MslNode
-{
-  public:
-    MslVar() {}
-    ~MslVar() {}
-
-    juce::String name;
-    
-};
 
 class MslFunction : public MslNode
 {

@@ -47,20 +47,10 @@ MslNode* MslParser::parse(juce::String source)
     
     tokenizer.setContent(source);
     errors.clear();
-    bool separatorReceived = false;
 
     while (tokenizer.hasNext() && errors.size() == 0) {
         Token t = tokenizer.next();
 
-        // if we found a separator on the last token, prevent nodes
-        // from including another block
-        // todo: rework this to use locked=true instead
-        bool nodeClosed = false;
-        if (separatorReceived) {
-            nodeClosed = true;
-            separatorReceived = false;
-        }
-        
         switch (t.type) {
             
             // why would hasNext be true, then have nothing?
@@ -88,21 +78,21 @@ MslNode* MslParser::parse(juce::String source)
                 // don't want a dependency on that model yet
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isInt = true;
-                current = push(curent, l);
+                current->add(l);
             }
                 break;
 
             case Token::Type::Float: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isFloat = true;
-                current = push(curent, l);
+                current->add(l);
             }
                 break;
                 
             case Token::Type::Bool: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isBool = true;
-                current = push(curent, l);
+                current->add(l);
             }
                 break;
 
@@ -122,9 +112,14 @@ MslNode* MslParser::parse(juce::String source)
                     current = push(current, block);
                 }
                 else {
-                    // close bracket, it must match the current block
+                    // walk up to the nearest block, closing along the way
+                    while (!current->isBlock()) {
+                        current->locked = true;
+                        current = current->parent;
+                    }
                     if (matchBracket(t, current)) {
-                        // block finished, pop the parse stack
+                        // block finished
+                        current->locked = true;
                         current = current->parent;
                     }
                     // else, will have left an error
@@ -133,30 +128,63 @@ MslNode* MslParser::parse(juce::String source)
                 break;
 
             case Token::Type::Operator: {
-                MslNode* last = current->getLast();
-                if (last == nullptr) {
-                    // todo: exceptions here are unaries, don't need those yet
-                    errorSyntax(t, "Invalid expression");
+                if (t.value == "=") {
+                    if (current->isVar()) {
+                        // these are weird, we don't need an assignment node, just
+                        // wait for an expression
+                    }
+                    else {
+                        // these behave sort of like expression operators
+                        // but they must have a symbol on the LHS
+                        MslAssignment* ass = new MslAssignment(t.value);
+
+                        // pop up till we're wanted, more than one level?
+                        // this still feels weird
+                        if (!current->wantsNode(ass)) {
+                            current->locked = true;
+                            current = current->parent;
+                        }
+
+                        MslNode* last = current->getLast();
+                        if (last == nullptr || !last->isSymbol()) {
+                            errorSyntax(t, "Assignment must have a symbol");
+                            delete ass;
+                        }
+                        else {
+                            current = subsume(ass, last);
+                        }
+                    }
                 }
                 else {
-                    MslNode* op = nullptr;
-                    if (t.value == "=")
-                      op = new MslAssignment(t.value);
-                    else
-                      op = new MslOperator(t.value);
+                    MslOperator* op = new MslOperator(t.value);
 
-                    // here we do extension or subsumption
-                    // todo: extension happens when the new node type has
-                    // a higher precedence than the previous node type
-                    // assuming subsumption
-                    current->remove(last);
-                    current->add(op);
-                    op->add(last);
-                    // kludge, lock symbol objects that have already been pushed
-                    // since we just ut it back into position
-                    last->locked = true;
-                    
-                    current = op;
+                    // pop up till we're wanted, more than one level?
+                    // this still feels weird
+                    if (!current->wantsNode(op)) {
+                        current->locked = true;
+                        current = current->parent;
+                    }
+
+                    // work backward until we can subsume something or hit a wall
+                    MslNode* last = current->getLast();
+                    if (!operandable(last)) {
+                        unarize(t, current, op);
+                    }
+                    else {
+                        // either subsume the last node, or if we're adjacent to an
+                        // operator of lower priority, it's second operand
+                        MslNode* operand = last;
+                        if (operand->isOperator()) {
+                            if (precedence(op->token, operand->token) >= 0) {
+                                if (last->children.size() == 2)
+                                  operand = last->getLast();
+                                else
+                                  errorSyntax(t, "Invalid expression, missing operand");
+                            }
+                        }
+
+                        current = subsume(op, operand);
+                    }
                 }
             }
                 break;
@@ -169,26 +197,19 @@ MslNode* MslParser::parse(juce::String source)
                     errorSyntax(t, "Unexpected punctuation");
                 }
                 else {
-                    // force close operators and symbols, really anything?
-                    separatorReceived = true;
+                    // hmm, logic unclear here
+                    // if this is a universal receptor like a block, just keep going
+                    // but if this is expecting somethig else, end it prematurely
+                    // would be better to have an isReady or isWaiting method?
+                    if (!current->isBlock()) {
+                        current->locked = true;
+                        current = current->parent;
+                    }
                 }
-#if 0                
-                else if (current->isOperator()) {
-                    // is this right?
-                    // pop op
-                    current = current->parent;
-                }
-#endif                
             }
                 break;
 
         }
-
-        // check for node completion
-        // if something is no longer receptive to ANY block it can be popped
-        // I'm looking at you Operator
-        if (!current->isOpen(nullptr))
-          current = current->parent;
 
         // can't go on without something to fill
         if (current == nullptr)
@@ -203,6 +224,85 @@ MslNode* MslParser::parse(juce::String source)
     return root;
 }
 
+/**
+ * Return true if the prior node is something that can participate
+ * as an operand.
+ *
+ * Need more here, while the operandable/unarize may work, the error that
+ * results "invalid uniary" is misleading if the non-operandable just doesn't even
+ * make sense in this context.  Add another level of error checking here.
+ */
+bool MslParser::operandable(MslNode* node)
+{
+    return (node != nullptr && (node->isLiteral() || node->isSymbol() || node->isOperator()));
+}
+
+/**
+ * Given two operator tokens, return 1 if the first is higher than the second,
+ * -1 if the first is lower than the second, and 0 if they are equal.
+ * We only have to deal with a subset of the C operators: the mdas in pemdas
+ */
+int MslParser::precedence(juce::String op1, juce::String op2)
+{
+    if (op1 == "*") {
+        if (op2 == "*")
+          return 0;
+        else
+          return 1;
+    }
+    else if (op1 == "/") {
+        if (op2 == "*")
+          return -1;
+        else if (op2 == "/")
+          return 0;
+        else
+          return 1;
+    }
+    else if (op1 == "+") {
+        if (op2 == "*" || op2 == "/")
+          return -1;
+        else if (op2 == "+")
+          return 0;
+        else
+          return 1;
+    }
+    else if (op1 == "-") {
+        if (op2 == "-")
+          return 0;
+        else
+          return -1;
+    }
+
+    // else could check for unsupported operators but can do that above
+    return 0;
+}
+
+MslNode* MslParser::subsume(MslNode* op, MslNode* operand)
+{
+    MslNode* parent = operand->parent;
+    parent->remove(operand);
+    parent->add(op);
+    op->add(operand);
+    return op;
+}
+
+/**
+ * In a syntactical context that requires a unary, we allow a subset
+ */
+void MslParser::unarize(Token& t, MslNode* current, MslOperator* possible)
+{
+    if (t.value == "!" || t.value == "-" || t.value == "+") {
+        // worth having a special node type for these?
+        possible->unary = true;
+        possible->locked = true;
+        current->add(possible);
+    }
+    else {
+        errorSyntax(t, "Invalid unary operator");
+        delete possible;
+    }
+}
+
 // usual processing for a new node
 MslNode* MslParser::push(MslNode* current, MslNode* node)
 {
@@ -214,9 +314,7 @@ MslNode* MslParser::push(MslNode* current, MslNode* node)
     }
 
     current->add(node);
-    
-    if (!node->locked)
-      current = node;
+    current = node;
 
     return current;
 }
