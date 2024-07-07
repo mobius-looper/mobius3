@@ -10,10 +10,13 @@
 #include "../Supervisor.h"
 
 #include "MslModel.h"
+#include "MslSession.h"
 #include "MslEvaluator.h"
 
-MslValue MslEvaluator::start(MslNode* node)
+MslValue MslEvaluator::start(MslSession* s, MslNode* node)
 {
+    session = s;
+    
     // initialize stacks etc...
     errors.clear();
     result.setNull();

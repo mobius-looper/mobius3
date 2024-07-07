@@ -3,7 +3,7 @@
 
 #include <JuceHeader.h>
 
-class Token
+class MslToken
 {
   public:
 
@@ -22,9 +22,9 @@ class Token
         Processor
     };
     
-    Token() {}
-    Token(Type t) {type = t;}
-    ~Token() {}
+    MslToken() {}
+    MslToken(Type t) {type = t;}
+    ~MslToken() {}
     
     Type type;
     juce::String value;
@@ -46,16 +46,16 @@ class Token
 
 };    
 
-class Tokenizer
+class MslTokenizer
 {
   public:
     
-    Tokenizer() {}
-    Tokenizer(juce::String s) {setContent(s);}
+    MslTokenizer() {}
+    MslTokenizer(juce::String s) {setContent(s);}
 
     void setContent(juce::String s);
     bool hasNext();
-    Token next();
+    MslToken next();
 
     int getLines();
     int getLine();
@@ -68,7 +68,7 @@ class Tokenizer
     juce::String content;
     juce::CPlusPlusCodeTokeniser tokeniser;
     
-    Token::Type convertType(int cpptype);
+    MslToken::Type convertType(int cpptype);
     juce::String toString(int cpptype);
 
     

@@ -1,5 +1,5 @@
 /**
- * A testing panel that shows an interactive console.
+ * The interactive MSL console.
  * 
  */
 
@@ -10,6 +10,7 @@
 
 #include "MslModel.h"
 #include "ConsolePanel.h"
+#include "MobiusConsole.h"
 
 MobiusConsole::MobiusConsole(ConsolePanel* parent)
 {
@@ -19,6 +20,8 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
     
     console.add("Shall we play a game?");
     console.prompt();
+
+    session.setListener(this);
 }
 
 MobiusConsole::~MobiusConsole()
@@ -63,7 +66,7 @@ void MobiusConsole::update()
 
 void MobiusConsole::consoleLine(juce::String line)
 {
-    parseLine(line);
+    doLine(line);
 }
 
 void MobiusConsole::consoleEscape()
@@ -77,7 +80,7 @@ void MobiusConsole::consoleEscape()
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusConsole::parseLine(juce::String line)
+void MobiusConsole::doLine(juce::String line)
 {
     if (line == "?") {
         showHelp();
@@ -89,20 +92,20 @@ void MobiusConsole::parseLine(juce::String line)
         panel->close();
     }
     else if (line == "trace") {
-        if (evaluator.trace) {
+        if (session.trace) {
             console.add("Trace disabled");
-            evaluator.trace = false;
+            session.trace = false;
         }
         else {
             console.add("Trace enabled");
-            evaluator.trace = true;
+            session.trace = true;
         }
     }
     else if (line.startsWith("parse")) {
         testParse(line);
     }
     else {
-        doLine(line);
+        eval(line);
     }
 }
 
@@ -122,25 +125,6 @@ void MobiusConsole::showErrors(juce::StringArray* errors)
       console.add(error);
 }
 
-void MobiusConsole::doLine(juce::String line)
-{
-    // todo: allow parsing into a stack object
-    MslNode* node = parser.parse(line);
-    if (node == nullptr) {
-        showErrors(parser.getErrors());
-    }
-    else {
-        MslValue result = evaluator.start(node);
-        const char* s = result.getString();
-        if (s != nullptr) 
-          console.add(s);
-
-        showErrors(evaluator.getErrors());
-        
-        delete node;
-    }
-}
-
 void MobiusConsole::testParse(juce::String line)
 {
     juce::String remainder = line.fromFirstOccurrenceOf("parse", false, false);
@@ -154,6 +138,31 @@ void MobiusConsole::testParse(juce::String line)
     }
 }
 
+void MobiusConsole::eval(juce::String line)
+{
+    // session does most of it's information convenyance throught the listener
+    session.eval(line);
+}
+
+void MobiusConsole::mslError(const char* s)
+{
+    console.add(juce::String(s));
+}
+
+void MobiusConsole::mslTrace(const char* s)
+{
+    console.add(juce::String(s));
+}
+
+void MobiusConsole::mslResult(const char* s)
+{
+    console.add(juce::String(s));
+}
+    
+/**
+ * This needs to be packaged better into a utliity that is closer to the
+ * nodes, and uses a visitor, and abstracts away the console dependency.
+ */
 void MobiusConsole::traceNode(MslNode* node, int indent)
 {
     juce::String line;
@@ -183,11 +192,13 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         line += "Assignment: " + node->token;
     }
     else if (node->isVar()) {
-        line += "Var: " + node->token;
+        MslVar* var = static_cast<MslVar*>(node);
+        line += "Var: " + var->name;
     }
     else if (node->isProc()) {
-        line += "Proc: " + node->token;
-    }
+        MslProc* proc = static_cast<MslProc*>(node);
+        line += "Proc: " + proc->name;
+     }
 
     console.add(line);
 

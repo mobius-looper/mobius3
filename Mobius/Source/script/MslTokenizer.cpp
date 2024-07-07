@@ -1,12 +1,12 @@
 
 #include <JuceHeader.h>
 
-#include "Tokenizer.h"
+#include "MslTokenizer.h"
 
 /**
  * Load the tokenizer with content.
  */
-void Tokenizer::setContent(juce::String s)
+void MslTokenizer::setContent(juce::String s)
 {
     // do we need this or can it just live in the document?
     // leading whitespace seems to be included with the first token so trim
@@ -19,14 +19,14 @@ void Tokenizer::setContent(juce::String s)
     //iterator = juce::CodeDocument::Iterator(document, 0, 0);
 }    
 
-bool Tokenizer::hasNext()
+bool MslTokenizer::hasNext()
 {
     return !iterator.isEOF();
 }
 
-Token Tokenizer::next()
+MslToken MslTokenizer::next()
 {
-    Token t = Token(Token::Type::End);
+    MslToken t = MslToken(MslToken::Type::End);
     if (!iterator.isEOF()) {
         // any need to keep one of these?  how expensive is the constructor?
         juce::CPlusPlusCodeTokeniser toker;
@@ -38,7 +38,7 @@ Token Tokenizer::next()
         // this does not appear to trim leading whitespace
         token = token.trimStart();
         t.type = convertType(type);
-        if (t.type == Token::Type::String) {
+        if (t.type == MslToken::Type::String) {
             // this tokenizer leaves the surrounding quotes on the token
             token =  token.unquoted();
         }
@@ -48,18 +48,18 @@ Token Tokenizer::next()
     return t;
 }
 
-int Tokenizer::getLines()
+int MslTokenizer::getLines()
 {
     return document.getNumLines();
 }
 
-int Tokenizer::getLine()
+int MslTokenizer::getLine()
 {
     juce::CodeDocument::Position psn = iterator.toPosition();
     return psn.getLineNumber();
 }
 
-int Tokenizer::getColumn()
+int MslTokenizer::getColumn()
 {
     juce::CodeDocument::Position psn = iterator.toPosition();
     return psn.getIndexInLine();
@@ -68,42 +68,42 @@ int Tokenizer::getColumn()
 /**
  * Convert the CPPTokeniser type to one of ours.
  */
-Token::Type Tokenizer::convertType(int cpptype)
+MslToken::Type MslTokenizer::convertType(int cpptype)
 {
-    Token::Type type = Token::Type::Error;
+    MslToken::Type type = MslToken::Type::Error;
     switch (cpptype) {
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_error:
-            type = Token::Type::Error;
+            type = MslToken::Type::Error;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_comment:
-            type = Token::Type::Comment;
+            type = MslToken::Type::Comment;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_keyword:
-            type = Token::Type::Symbol;
+            type = MslToken::Type::Symbol;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_operator:
-            type = Token::Type::Operator;
+            type = MslToken::Type::Operator;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_identifier:
-            type = Token::Type::Symbol;
+            type = MslToken::Type::Symbol;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_integer:
-            type = Token::Type::Int;
+            type = MslToken::Type::Int;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_float:
-            type = Token::Type::Float;
+            type = MslToken::Type::Float;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_string:
-            type = Token::Type::String;
+            type = MslToken::Type::String;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_bracket:
-            type = Token::Type::Bracket;
+            type = MslToken::Type::Bracket;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_punctuation:
-            type = Token::Type::Punctuation;
+            type = MslToken::Type::Punctuation;
             break;
         case juce::CPlusPlusCodeTokeniser::TokenType::tokenType_preprocessor:
-            type = Token::Type::Processor;
+            type = MslToken::Type::Processor;
             break;
         default:
             // not in the enum
@@ -115,7 +115,7 @@ Token::Type Tokenizer::convertType(int cpptype)
 /**
  * Converts the CPlusPlusCodeTokenizer type to a string for debugging.
  */
-juce::String Tokenizer::toString(int cpptype)
+juce::String MslTokenizer::toString(int cpptype)
 {
     juce::String str;
     switch (cpptype) {

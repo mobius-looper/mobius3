@@ -3,7 +3,7 @@
 
 #include <JuceHeader.h>
 
-#include "Tokenizer.h"
+#include "MslTokenizer.h"
 #include "MslModel.h"
 
 class MslParser
@@ -19,17 +19,17 @@ class MslParser
   private:
 
     juce::StringArray errors;
-    Tokenizer tokenizer;
+    MslTokenizer tokenizer;
     
-    void errorSyntax(Token& t, juce::String details);
-    bool matchBracket(Token& t, MslNode* block);
+    void errorSyntax(MslToken& t, juce::String details);
+    bool matchBracket(MslToken& t, MslNode* block);
 
     MslNode* checkKeywords(juce::String token);
     MslNode* push(MslNode* current, MslNode* node);
 
     bool operandable(MslNode* node);
     int precedence(juce::String op1, juce::String op2);
-    void unarize(Token& t, MslNode* current, MslOperator* possible);
+    void unarize(MslToken& t, MslNode* current, MslOperator* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 
     

@@ -5,7 +5,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Tokenizer.h"
+#include "MslTokenizer.h"
 
 class MslVisitor
 {
@@ -58,7 +58,7 @@ class MslNode
     }
 
     // returns true if the node would like to consume the token
-    virtual bool wantsToken(Token& t) {(void)t; return false;}
+    virtual bool wantsToken(MslToken& t) {(void)t; return false;}
 
     // returns true if the node would like to consume another child node
     // do we really need locked if this works?
@@ -229,9 +229,9 @@ class MslVar : public MslNode
     // hmm, it's a little more than this, it REQUIRES a token
     // wantsToken doesn't have a way to reject with prejeduce
     // we'll end up with a bad parse tree that will have to be caught at runtime
-    bool wantsToken(Token& t) override {
+    bool wantsToken(MslToken& t) override {
         bool wants = false;
-        if (t.type == Token::Type::String) {
+        if (t.type == MslToken::Type::Symbol) {
             // take this as our name
             name =  t.value;
             wants = true;
@@ -265,22 +265,31 @@ class MslProc : public MslNode
     virtual ~MslProc() {}
 
     // same as var
-    bool wantsToken(Token& t) override {
+    bool wantsToken(MslToken& t) override {
         bool wants = false;
-        if (t.type == Token::Type::String) {
+        if (t.type == MslToken::Type::Symbol) {
             name =  t.value;
             wants = true;
         }
         return wants;
     }
 
-    // reject this for now so we can test wants parsing
     bool wantsNode(MslNode* node) override {
-        (void)node;
-        return false;
+        bool wants = false;
+        if (!hasArgs && node->isBlock() && node->token == "(") {
+            hasArgs = true;
+            wants = true;
+        }
+        else if (!hasBody && node->isBlock() && node->token == "{") {
+            hasBody = true;
+            wants = true;
+        }
+        return wants;
     }
 
     juce::String name;
+    bool hasArgs = false;
+    bool hasBody = false;
     
     bool isProc() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}

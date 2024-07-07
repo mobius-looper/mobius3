@@ -173,7 +173,7 @@ class MslEvaluator : public MslVisitor
 
     bool trace = false;
     
-    MslValue start(class MslNode* node);
+    MslValue start(class MslSession* session, class MslNode* node);
 
     // todo: error accululation and presentation can't use memory
     // allocation so will need to work on this
@@ -190,7 +190,8 @@ class MslEvaluator : public MslVisitor
     void mslVisit(MslProc* node);
     
   private:
-
+    
+    class MslSession* session = nullptr;
     MslContext* context = nullptr;
     MslValue result;
     juce::StringArray errors;

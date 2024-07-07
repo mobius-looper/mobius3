@@ -10,7 +10,7 @@ juce::StringArray* MslParser::getErrors()
     return &errors;
 }
 
-void MslParser::errorSyntax(Token& t, juce::String details)
+void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
     juce::String error = "Error at ";
 
@@ -26,7 +26,7 @@ void MslParser::errorSyntax(Token& t, juce::String details)
       errors.add(details);
 }
 
-bool MslParser::matchBracket(Token& t, MslNode* block)
+bool MslParser::matchBracket(MslToken& t, MslNode* block)
 {
     // let's try to avoid a specific MslBlock just store the
     // bracketing char
@@ -49,32 +49,35 @@ MslNode* MslParser::parse(juce::String source)
     errors.clear();
 
     while (tokenizer.hasNext() && errors.size() == 0) {
-        Token t = tokenizer.next();
+        MslToken t = tokenizer.next();
+
+        if (current->wantsToken(t))
+          continue;
 
         switch (t.type) {
             
             // why would hasNext be true, then have nothing?
             // maybe if there is whitespace at the end of the line
             // that hasn't been consumed?
-            case Token::Type::End: break;
+            case MslToken::Type::End: break;
                 
-            case Token::Type::Error:
+            case MslToken::Type::Error:
                 errorSyntax(t, "Unexpected syntax");
                 break;
 
-            case Token::Type::Comment:
+            case MslToken::Type::Comment:
                 break;
                 
-            case Token::Type::Processor:
+            case MslToken::Type::Processor:
                 // todo: need some interesting ones
                 break;
 
-            case Token::Type::String:
+            case MslToken::Type::String:
                 current->add(new MslLiteral(t.value));
                 break;
 
-            case Token::Type::Int: {
-                // would be convenient to pass the entire Token in but I
+            case MslToken::Type::Int: {
+                // would be convenient to pass the entire MslToken in but I
                 // don't want a dependency on that model yet
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isInt = true;
@@ -82,21 +85,21 @@ MslNode* MslParser::parse(juce::String source)
             }
                 break;
 
-            case Token::Type::Float: {
+            case MslToken::Type::Float: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isFloat = true;
                 current->add(l);
             }
                 break;
                 
-            case Token::Type::Bool: {
+            case MslToken::Type::Bool: {
                 MslLiteral* l = new MslLiteral(t.value);
                 l->isBool = true;
                 current->add(l);
             }
                 break;
 
-            case Token::Type::Symbol: {
+            case MslToken::Type::Symbol: {
                 MslNode* node = checkKeywords(t.value);
                 if (node == nullptr)
                   node = new MslSymbol(t.value);
@@ -106,7 +109,7 @@ MslNode* MslParser::parse(juce::String source)
             }
                 break;
 
-            case Token::Type::Bracket: {
+            case MslToken::Type::Bracket: {
                 if (t.isOpen()) {
                     MslBlock* block = new MslBlock(t.value);
                     current = push(current, block);
@@ -127,7 +130,7 @@ MslNode* MslParser::parse(juce::String source)
             }
                 break;
 
-            case Token::Type::Operator: {
+            case MslToken::Type::Operator: {
                 if (t.value == "=") {
                     if (current->isVar()) {
                         // these are weird, we don't need an assignment node, just
@@ -189,7 +192,7 @@ MslNode* MslParser::parse(juce::String source)
             }
                 break;
 
-            case Token::Type::Punctuation: {
+            case MslToken::Type::Punctuation: {
                 // see if we can avoid commas but allow them
                 // it just moves to the next node
                 // another other than comma is unexpected
@@ -289,7 +292,7 @@ MslNode* MslParser::subsume(MslNode* op, MslNode* operand)
 /**
  * In a syntactical context that requires a unary, we allow a subset
  */
-void MslParser::unarize(Token& t, MslNode* current, MslOperator* possible)
+void MslParser::unarize(MslToken& t, MslNode* current, MslOperator* possible)
 {
     if (t.value == "!" || t.value == "-" || t.value == "+") {
         // worth having a special node type for these?
