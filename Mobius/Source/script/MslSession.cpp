@@ -14,50 +14,68 @@
 
 #include "MslSession.h"
 
-/** 
- * Main entry point to parse and evaluate one script
+MslSession::MslSession()
+{
+    // prepare the parser with our dynamic script
+    parser.prepare(&dynamicScript);
+}
+
+MslSession::~MslSession()
+{
+}
+
+/**
+ * Consume a block of MSL text, and display the evaluation along the way.
  */
 void MslSession::eval(juce::String src)
 {
-    MslNode* node = parser.parse(src);
-    if (node == nullptr) {
-        juce::StringArray* parseErrors = parser.getErrors();
-        if (listener != nullptr) {
-            for (auto error : *parseErrors)
-              listener->mslError(error.toUTF8());
+    int nodeIndex = parser.consume(src);
+
+    juce::StringArray* parseErrors = parser.getErrors();
+    if (listener != nullptr) {
+        for (auto error : *parseErrors)
+          listener->mslError(error.toUTF8());
+    }
+    
+    if (nodeIndex >= 0) {
+        MslBlock* root = dynamicScript.root;
+        for (int i = nodeIndex ; i < root->children.size() ; i++) {
+
+            MslNode* node = root->children[i];
+
+            MslValue result = evaluator.start(this, node);
+            
+            juce::StringArray* evalErrors = evaluator.getErrors();
+            if (listener != nullptr) {
+                for (auto error : *evalErrors)
+                  listener->mslError(error.toUTF8());
+            }
+        
+            const char* s = result.getString();
+            if (s != nullptr) {
+                if (listener != nullptr)
+                  listener->mslResult(s);
+            }
         }
     }
-    else {
-        // install procs and evaluate directives
-        node = assimilate(node);
-
-        // at this point, or maybe during the assimulation walk,
-        // we could have a "link" phase where we resolve symbol
-        // references in the parsed scriptlet to local procs and vars
-
-        // evaluation will run to the end unless there is a Wait
-        // encountered
-        // will need a way to pass back suspension state which means
-        // the value here isn't relevant yet
-        MslValue result = evaluator.start(this, node);
-
-        juce::StringArray* evalErrors = evaluator.getErrors();
-        if (listener != nullptr) {
-            for (auto error : *evalErrors)
-              listener->mslError(error.toUTF8());
-        }
-        
-        const char* s = result.getString();
-        if (s != nullptr) {
-            if (listener != nullptr)
-              listener->mslResult(s);
-        }
-
-        delete node;
-    }
-        
 }
 
+/**
+ * Handle an assignment from the evaluator
+ */
+void MslSession::assign(Symbol* s, int value)
+{
+    (void)s;
+    (void)value;
+}
+
+class Symbol* MslSession::findSymbol(juce::String name)
+{
+    (void)name;
+    return nullptr;
+}
+
+#if 0
 /**
  * Walk over a parse tree, removing proc nodes and installing them in
  * the session proc table.
@@ -116,6 +134,7 @@ Symbol* MslSession::findSymbol(juce::String name)
 {
     return symbols.get(name);
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

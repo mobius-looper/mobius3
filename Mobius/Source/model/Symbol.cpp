@@ -151,6 +151,7 @@ Symbol* SymbolTable::intern(juce::String name)
         s->name = name;
         // symbols.push_back(s);
         symbols.add(s);
+        symbolMap.set(s->name, s);
     }
     return s;
 }

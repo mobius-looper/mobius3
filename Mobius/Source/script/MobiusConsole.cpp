@@ -121,7 +121,7 @@ void MobiusConsole::showHelp()
     console.add("parse     parse a line of script");
     console.add("list      list loaded symbols");
     console.add("show      show proc structure");
-    console.add("foo       evaluate a line of mystery");
+    console.add("<text>    evaluate a line of mystery");
 }
 
 void MobiusConsole::showErrors(juce::StringArray* errors)
@@ -137,13 +137,13 @@ juce::String MobiusConsole::withoutCommand(juce::String line)
 
 void MobiusConsole::testParse(juce::String line)
 {
-    MslNode* node = parser.parse(withoutCommand(line));
-    if (node == nullptr) {
+    MslScript* s = parser.parseFile("", withoutCommand(line));
+    if (s == nullptr) {
         showErrors(parser.getErrors());
     }
     else {
-        traceNode(node, 0);
-        delete node;
+        traceNode(s->root, 0);
+        delete s;
     }
 }
 
@@ -185,45 +185,48 @@ void MobiusConsole::mslResult(const char* s)
  */
 void MobiusConsole::traceNode(MslNode* node, int indent)
 {
-    juce::String line;
-    for (int i = 0 ; i < indent ; i++) line += " ";
+    if (node != nullptr) {
 
-    if (node->isLiteral()) {
-        MslLiteral* l = static_cast<MslLiteral*>(node);
-        if (l->isInt)
-          line += "Int: " + node->token;
-        else if (l->isFloat)
-          line += "Float: " + node->token;
-        else if (l->isBool)
-          line += "Bool: " + node->token;
-        else
-          line += "String: " + node->token;
-    }
-    else if (node->isSymbol()) {
-        line += "Symbol: " + node->token;
-    }
-    else if (node->isBlock()) {
-        line += "Block: " + node->token;
-    }
-    else if (node->isOperator()) {
-        line += "Operator: " + node->token;
-    }
-    else if (node->isAssignment()) {
-        line += "Assignment: " + node->token;
-    }
-    else if (node->isVar()) {
-        MslVar* var = static_cast<MslVar*>(node);
-        line += "Var: " + var->name;
-    }
-    else if (node->isProc()) {
-        MslProc* proc = static_cast<MslProc*>(node);
-        line += "Proc: " + proc->name;
-     }
+        juce::String line;
+        for (int i = 0 ; i < indent ; i++) line += " ";
 
-    console.add(line);
+        if (node->isLiteral()) {
+            MslLiteral* l = static_cast<MslLiteral*>(node);
+            if (l->isInt)
+              line += "Int: " + node->token;
+            else if (l->isFloat)
+              line += "Float: " + node->token;
+            else if (l->isBool)
+              line += "Bool: " + node->token;
+            else
+              line += "String: " + node->token;
+        }
+        else if (node->isSymbol()) {
+            line += "Symbol: " + node->token;
+        }
+        else if (node->isBlock()) {
+            line += "Block: " + node->token;
+        }
+        else if (node->isOperator()) {
+            line += "Operator: " + node->token;
+        }
+        else if (node->isAssignment()) {
+            line += "Assignment: " + node->token;
+        }
+        else if (node->isVar()) {
+            MslVar* var = static_cast<MslVar*>(node);
+            line += "Var: " + var->name;
+        }
+        else if (node->isProc()) {
+            MslProc* proc = static_cast<MslProc*>(node);
+            line += "Proc: " + proc->name;
+        }
 
-    for (auto child : node->children)
-      traceNode(child, indent + 2);
+        console.add(line);
+
+        for (auto child : node->children)
+          traceNode(child, indent + 2);
+    }
 }
 
 /****************************************************************************/

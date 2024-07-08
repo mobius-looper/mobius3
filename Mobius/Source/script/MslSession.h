@@ -23,6 +23,7 @@
 
 #include "../model/Symbol.h"
 
+#include "MslScript.h"
 #include "MslParser.h"
 #include "MslEvaluator.h"
 
@@ -47,8 +48,8 @@ class MslSession
     // normally on only in inactive sessions
     bool trace = false;
 
-    MslSession() {}
-    ~MslSession() {}
+    MslSession();
+    ~MslSession();
     void setListener(Listener* l) {listener = l;}
 
     // evaluate a scriptlet
@@ -62,10 +63,13 @@ class MslSession
   protected:
 
     class Symbol* findSymbol(juce::String name);
-    
+    void assign(Symbol* s, int value);
     
  
   private:
+
+    // script holding parse state during dynamic sessions (the console)
+    MslScript dynamicScript;
 
     // these two do most of the work
     MslParser parser;

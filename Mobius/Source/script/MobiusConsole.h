@@ -45,7 +45,9 @@ class MobiusConsole : public juce::Component,
     
   private:
 
+    // state maintained during evaluation
     MslSession session;
+    // parser used for parse analysis without evaluation
     MslParser parser;
     
     class ConsolePanel* panel = nullptr;

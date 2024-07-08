@@ -13,23 +13,38 @@ class MslParser
     MslParser() {}
     ~MslParser() {}
 
-    class MslNode* parse(juce::String source);
-    juce::StringArray* getErrors();
+    class MslScript* parseFile(juce::String path, juce::String source);
 
+    void prepare(MslScript* src);
+    int consume(juce::String content);
+
+    juce::StringArray* getErrors() {
+        return &errors;
+    }
+    
   private:
 
-    juce::StringArray errors;
     MslTokenizer tokenizer;
+
+    // script being parsed
+    MslScript* script = nullptr;
+
+    // the parse stack
+    MslNode* current = nullptr;
+
+    juce::StringArray errors;
+
+    void parse(juce::String source);
     
     void errorSyntax(MslToken& t, juce::String details);
     bool matchBracket(MslToken& t, MslNode* block);
 
     MslNode* checkKeywords(juce::String token);
-    MslNode* push(MslNode* current, MslNode* node);
+    MslNode* push(MslNode* node);
 
     bool operandable(MslNode* node);
     int precedence(juce::String op1, juce::String op2);
-    void unarize(MslToken& t, MslNode* current, MslOperator* possible);
+    void unarize(MslToken& t, MslOperator* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 
     

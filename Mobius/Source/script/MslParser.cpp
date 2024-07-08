@@ -2,16 +2,133 @@
 #include <JuceHeader.h>
 
 #include "MslModel.h"
+#include "MslScript.h"
 #include "MslParser.h"
 
-
-juce::StringArray* MslParser::getErrors()
+/**
+ * Primary entry point for parsing script files.
+ * Reading the file contents is handled above.
+ */
+MslScript* MslParser::parseFile(juce::String path, juce::String content)
 {
-    return &errors;
+    script = new MslScript();
+    script->filename = path;
+
+    script->root = new MslBlock("");
+    // the "stack"
+    current = script->root;
+
+    parse(content);
+
+    // errors will have been left in the Script
+    MslScript* retval = script;
+    script = nullptr;
+    return retval;
 }
 
+/**
+ * The first of two entry points for the interactive script console.
+ * This prepares the parser to extend an existing script.
+ *
+ * todo: think more about the interface for interactive scripts.
+ * We need the outer Script to hold the proc, vars, and directives
+ * but each line of script source is typically evaluated immediately
+ * then is no longer necessary.  Maintaining that in the MslScript has
+ * some nice features though, we can elect to save the console session to
+ * a file, or use the top-level nodes as a history to "replay" previous statements.
+ *
+ * Currently, the nodes created during each call to consume() are placed inside the
+ * Script and retained.
+ */
+void MslParser::prepare(MslScript* src)
+{
+    script = src;
+
+    if (script->root == nullptr) {
+        script->root = new MslBlock("");
+    }
+    
+    current = script->root;
+    errors.clear();
+}
+
+
+/**
+ * Second of two interfaces for the interative script console.
+ * After using prepare() to arm the existing Script, this parses
+ * one or more lines of text and advances the parse state.
+ *
+ * todo: since the Script is the container of errors, we've got the problem
+ * of retaining errors from the last extension or resetting them and returning
+ * only new errors.  Having the full history can be nice for files, less
+ * important for the console.
+ *
+ * Return conventions:
+ *
+ * If no new nodes were added, -1 is returned.
+ * If new nodes were added, the index for the first new node is returned.
+ * This can be the same index as the past call to consume() if there was sublimation
+ * of prior nodes.
+ */
+int MslParser::consume(juce::String content)
+{
+    int newIndex = -1;
+
+    // start over with errors
+    script->errors.clear();
+
+    if (script == nullptr) {
+        errors.add(juce::String("Parser has not been prepared"));
+    }
+    else {
+        if (script->root == nullptr) {
+            script->root = new MslBlock("");
+            current = nullptr;
+        }
+        else if (current == nullptr) {
+            current = script->root;
+        }
+        
+        int startingSize = script->root->children.size();
+    
+        parse(content);
+
+        if (script->root->children.size() < startingSize) {
+            // shouldn't happen, you can't take nodes away without replacing them
+            errors.add(juce::String("Parser stack anomoly"));
+        }
+        else if (script->root->children.size() == startingSize) {
+            // didn't add anything new, but the last node may have
+            // been sublimated, continue evaluating it
+            newIndex = startingSize - 1;
+        }
+        else {
+            // move to the next one
+            newIndex = startingSize;
+        }
+    }
+    
+    return newIndex;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Internals
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Format a syntax error and add it to the Script being parsed.
+ */
 void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
+    // would prefer to this be an array of objec
+    MslError e (tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
+    script->errors.add(e);
+    
+    // Format errors for immediatel display on the console
+    // not necessary, but need to retool the console to use
+    // the Script error list
     juce::String error = "Error at ";
 
     if (tokenizer.getLines() == 1)
@@ -26,6 +143,11 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
       errors.add(details);
 }
 
+/**
+ * Return true if a close braken token just received matches
+ * the bracket of the given block.  If it doesn't match
+ * add an error and return false.
+ */
 bool MslParser::matchBracket(MslToken& t, MslNode* block)
 {
     // let's try to avoid a specific MslBlock just store the
@@ -40,11 +162,11 @@ bool MslParser::matchBracket(MslToken& t, MslNode* block)
     return match;
 }
 
-MslNode* MslParser::parse(juce::String source)
+/**
+ * Primary parse loop for lines of scripts.
+ */
+void MslParser::parse(juce::String source)
 {
-    MslNode* root = new MslBlock("");
-    MslNode* current = root;
-    
     tokenizer.setContent(source);
     errors.clear();
 
@@ -104,7 +226,7 @@ MslNode* MslParser::parse(juce::String source)
                 if (node == nullptr)
                   node = new MslSymbol(t.value);
                     
-                current = push(current, node);
+                current = push(node);
                 
             }
                 break;
@@ -112,7 +234,7 @@ MslNode* MslParser::parse(juce::String source)
             case MslToken::Type::Bracket: {
                 if (t.isOpen()) {
                     MslBlock* block = new MslBlock(t.value);
-                    current = push(current, block);
+                    current = push(block);
                 }
                 else {
                     // walk up to the nearest block, closing along the way
@@ -171,7 +293,7 @@ MslNode* MslParser::parse(juce::String source)
                     // work backward until we can subsume something or hit a wall
                     MslNode* last = current->getLast();
                     if (!operandable(last)) {
-                        unarize(t, current, op);
+                        unarize(t, op);
                     }
                     else {
                         // either subsume the last node, or if we're adjacent to an
@@ -218,13 +340,6 @@ MslNode* MslParser::parse(juce::String source)
         if (current == nullptr)
           errorSyntax(t, "Invalid expression");
     }
-
-    if (errors.size() > 0) {
-        delete root;
-        root = nullptr;
-    }
-    
-    return root;
 }
 
 /**
@@ -292,7 +407,7 @@ MslNode* MslParser::subsume(MslNode* op, MslNode* operand)
 /**
  * In a syntactical context that requires a unary, we allow a subset
  */
-void MslParser::unarize(MslToken& t, MslNode* current, MslOperator* possible)
+void MslParser::unarize(MslToken& t, MslOperator* possible)
 {
     if (t.value == "!" || t.value == "-" || t.value == "+") {
         // worth having a special node type for these?
@@ -307,7 +422,7 @@ void MslParser::unarize(MslToken& t, MslNode* current, MslOperator* possible)
 }
 
 // usual processing for a new node
-MslNode* MslParser::push(MslNode* current, MslNode* node)
+MslNode* MslParser::push(MslNode* node)
 {
     // do we keep recuring up here?
     if (!current->wantsNode(node)) {

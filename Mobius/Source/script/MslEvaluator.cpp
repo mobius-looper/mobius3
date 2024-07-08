@@ -60,7 +60,7 @@ void MslEvaluator::mslVisit(MslBlock* block)
  */
 void MslEvaluator::mslVisit(MslSymbol* node)
 {
-    Symbol* s = resolve(node->token);
+    Symbol* s = resolve(node);
     if (s != nullptr) {
         // it's a reference to a built-in symbol
         eval(s);
@@ -437,12 +437,12 @@ MslNode* MslEvaluator::getUnresolved(MslNode* node)
 //
 //////////////////////////////////////////////////////////////////////
 
-Symbol* MslSession::resolve(MslSymbol* snode)
+Symbol* MslEvaluator::resolve(MslSymbol* snode)
 {
     Symbol* sym = snode->symbol;
     if (sym == nullptr) {
         // first look locally
-        sym = session->findSymbol[snode->token];
+        sym = session->findSymbol(snode->token);
         if (sym == nullptr) {
             // then globally
             sym = Symbols.find(snode->token);
