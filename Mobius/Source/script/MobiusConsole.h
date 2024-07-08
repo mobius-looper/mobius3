@@ -54,7 +54,9 @@ class MobiusConsole : public juce::Component,
 
     void doLine(juce::String line);
     void showHelp();
+    juce::String withoutCommand(juce::String line);
     void testParse(juce::String line);
+    void listSymbols();
     void showErrors(juce::StringArray* errors);
 
     void eval(juce::String line);

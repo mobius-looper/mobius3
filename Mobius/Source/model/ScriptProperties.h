@@ -84,6 +84,11 @@ class ScriptProperties
      */
     void* coreScript = nullptr;
 
+    /**
+     * Handle to the internal object that implements a proc
+     */
+    void* proc = nullptr;
+
     
 };
 

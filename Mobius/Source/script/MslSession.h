@@ -21,11 +21,15 @@
 
 #include <JuceHeader.h>
 
+#include "../model/Symbol.h"
+
 #include "MslParser.h"
 #include "MslEvaluator.h"
 
 class MslSession
 {
+    friend class MslEvaluator;
+    
   public:
     
     /**
@@ -49,6 +53,17 @@ class MslSession
 
     // evaluate a scriptlet
     void eval(juce::String source);
+
+
+    juce::OwnedArray<class MslProc>& getProcs() {
+        return procs;
+    }
+    
+  protected:
+
+    class Symbol* findSymbol(juce::String name);
+    
+    
  
   private:
 
@@ -62,13 +77,19 @@ class MslSession
     // registry of global procs defined within this session
     juce::OwnedArray<class MslProc> procs;
     // name lookup index for procs
-    juce::HashMap<juce::String, class MslProc*> procIndex;
+    juce::HashMap<juce::String, class MslProc*> procTable;
 
     // registry of global variables
     juce::OwnedArray<class MslVar> vars;
     // name lookup index for procs
-    juce::HashMap<juce::String, class MslVar*> varIndex;
+    juce::HashMap<juce::String, class MslVar*> varTable;
 
+    // hmm, if we make this symbol oriented which has nice properties
+    // don't need procTable and varTable
+    SymbolTable symbols;
+
+    MslNode* assimilate(MslNode* node);
+    void intern(MslProc* proc);
     
 
 };

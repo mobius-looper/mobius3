@@ -104,6 +104,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("parse")) {
         testParse(line);
     }
+    else if (line.startsWith("list")) {
+        listSymbols();
+    }
     else {
         eval(line);
     }
@@ -116,6 +119,8 @@ void MobiusConsole::showHelp()
     console.add("quit      close the console");
     console.add("trace     toggle trace mode");
     console.add("parse     parse a line of script");
+    console.add("list      list loaded symbols");
+    console.add("show      show proc structure");
     console.add("foo       evaluate a line of mystery");
 }
 
@@ -125,10 +130,14 @@ void MobiusConsole::showErrors(juce::StringArray* errors)
       console.add(error);
 }
 
+juce::String MobiusConsole::withoutCommand(juce::String line)
+{
+    return line.fromFirstOccurrenceOf(" ", false, false);
+}
+
 void MobiusConsole::testParse(juce::String line)
 {
-    juce::String remainder = line.fromFirstOccurrenceOf("parse", false, false);
-    MslNode* node = parser.parse(remainder);
+    MslNode* node = parser.parse(withoutCommand(line));
     if (node == nullptr) {
         showErrors(parser.getErrors());
     }
@@ -138,6 +147,17 @@ void MobiusConsole::testParse(juce::String line)
     }
 }
 
+void MobiusConsole::listSymbols()
+{
+    juce::OwnedArray<MslProc>& procs = session.getProcs();
+    if (procs.size() > 0) {
+        console.add("Procs:");
+        for (auto proc : procs) {
+            console.add("  " + proc->name);
+        }
+    }
+}
+ 
 void MobiusConsole::eval(juce::String line)
 {
     // session does most of it's information convenyance throught the listener

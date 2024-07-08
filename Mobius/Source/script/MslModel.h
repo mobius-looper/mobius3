@@ -88,6 +88,15 @@ class MslNode
     virtual bool isProc() {return false;}
 
     virtual void visit(MslVisitor* visitor) = 0;
+
+    // console tools
+
+    void detach() {
+        if (parent != nullptr) {
+            parent->remove(this);
+        }
+    }
+    
 };
 
 class MslLiteral : public MslNode

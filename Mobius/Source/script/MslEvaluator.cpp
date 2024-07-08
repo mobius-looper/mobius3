@@ -1,4 +1,3 @@
-
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
@@ -61,8 +60,7 @@ void MslEvaluator::mslVisit(MslBlock* block)
  */
 void MslEvaluator::mslVisit(MslSymbol* node)
 {
-    // will want to cache this in a "link" phase after parsing
-    Symbol* s = Symbols.find(node->token);
+    Symbol* s = resolve(node->token);
     if (s != nullptr) {
         // it's a reference to a built-in symbol
         eval(s);
@@ -90,25 +88,20 @@ void MslEvaluator::mslVisit(MslAssignment* node)
             errors.add("Assignment target not a symbol");
         }
         else {
-            MslSymbol* s = static_cast<MslSymbol*>(target);
-            resolve(s);
-            if (s->symbol == nullptr)
-              errors.add("Unresolved symbol " + s->token);
+            MslSymbol* snode = static_cast<MslSymbol*>(target);
+            Symbol* s = resolve(snode);
+            if (s == nullptr) {
+              errors.add("Unresolved symbol " + snode->token);
+            }
             else {
                 value->visit(this);
                 // should be doing this everywhere we do pre-emptive evaluation!
                 if (errors.size() == 0) {
-                    assign(s->symbol, result.getInt());
+                    session->assign(s, result.getInt());
                 }
             }
         }
     }
-}
-
-void MslEvaluator::resolve(MslSymbol* node)
-{
-    if (node->symbol == nullptr)
-      node->symbol = Symbols.find(node->token);
 }
 
 void MslEvaluator::mslVisit(MslVar* node)
@@ -116,8 +109,13 @@ void MslEvaluator::mslVisit(MslVar* node)
     (void)node;
 }
 
+/**
+ * Shouldn't actually have these now if the session did assimilate() to install
+ * them in the local symbol table.
+ */
 void MslEvaluator::mslVisit(MslProc* node)
 {
+    
     (void)node;
 }
 
@@ -439,24 +437,39 @@ MslNode* MslEvaluator::getUnresolved(MslNode* node)
 //
 //////////////////////////////////////////////////////////////////////
 
+Symbol* MslSession::resolve(MslSymbol* snode)
+{
+    Symbol* sym = snode->symbol;
+    if (sym == nullptr) {
+        // first look locally
+        sym = session->findSymbol[snode->token];
+        if (sym == nullptr) {
+            // then globally
+            sym = Symbols.find(snode->token);
+        }
+    }
+
+    // cache for later
+    snode->symbol = sym;
+    return sym;
+}
+
+/**
+ * Evaluate a Symbol from the the parse tree and leave the result.
+ * Not sure I like the handoff between resolve and eval...
+ */
 void MslEvaluator::eval(Symbol* s)
 {
     if (s->function != nullptr) {
-        if (context != nullptr) {
-            context->mslInvoke(s, result);
-        }
-        else {
-            // assume we're in the UI
-            invoke(s);
-        }
+        // todo: look local
+
+        // assume we're in the UI
+        invoke(s);
     }
     else if (s->parameter != nullptr) {
-        if (context != nullptr) {
-            context->mslQuery(s, result);
-        }
-        else {
-            query(s);
-        }
+        // todo: look local
+        
+        query(s);
     }
 }
 
@@ -530,6 +543,7 @@ void MslEvaluator::assign(Symbol* s, int value)
     Supervisor::Instance->doAction(&a);
     result.setNull();
 }
+
 
 /****************************************************************************/
 /****************************************************************************/

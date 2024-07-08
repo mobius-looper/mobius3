@@ -316,6 +316,7 @@ class SymbolTable
     // the set of defined symbols
     // std::vector<Symbol*> symbols;
     juce::OwnedArray<Symbol> symbols;
+    juce::HashMap<juce::String, Symbol*> symbolMap;
     
 };
 

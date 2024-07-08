@@ -9,6 +9,9 @@
 
 #include <JuceHeader.h>
 
+#include "../model/Symbol.h"
+#include "../model/ScriptProperties.h"
+
 #include "MslSession.h"
 
 /** 
@@ -25,6 +28,12 @@ void MslSession::eval(juce::String src)
         }
     }
     else {
+        // install procs and evaluate directives
+        node = assimilate(node);
+
+        // at this point, or maybe during the assimulation walk,
+        // we could have a "link" phase where we resolve symbol
+        // references in the parsed scriptlet to local procs and vars
 
         // evaluation will run to the end unless there is a Wait
         // encountered
@@ -49,3 +58,65 @@ void MslSession::eval(juce::String src)
         
 }
 
+/**
+ * Walk over a parse tree, removing proc nodes and installing them in
+ * the session proc table.
+ * Not handling scoped proc, a proc at any level will be interned.
+ * Scoped, or nested proc definitiosn are allowed but any sort of temporary
+ * block-level definition makes it much harder for the interactive console
+ * to deal with them.
+ *
+ * We might as well handle directives here too.
+ */
+MslNode* MslSession::assimilate(MslNode* node)
+{
+    if (node->isProc()) {
+        MslProc* proc = static_cast<MslProc*>(node);
+        intern(proc);
+        node = nullptr;
+    }
+    else {
+        // unclear if iterators tolerate modification while active
+        int index = 0;
+        while (index < node->children.size()) {
+            MslNode* child = node->children[index];
+            if (assimilate(child) != nullptr) {
+                // did not consume it
+                index++;
+            }
+        }
+    }
+    return node;
+}
+
+/**
+ * Intern a proc from a new scriptlet parse tree
+ */
+void MslSession::intern(MslProc* proc)
+{
+    proc->detach();
+    MslProc* existing = procTable[proc->name];
+    if (existing != nullptr) {
+        procs.remove(existing, false, false);
+        delete existing;
+    }
+    procs.add(proc);
+    procTable.set(proc->name, proc);
+    
+    Symbol* s = symbols.intern(proc->name);
+    ScriptProperties* sprop = s->script.get();
+    if (sprop == nullprt) {
+        sprop = new ScriptProperties();
+        s->script = sprop;
+    }
+    sprop->proc = proc;
+}
+
+Symbol* MslSession::findSymbol(juce::String name)
+{
+    return symbols.get(name);
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

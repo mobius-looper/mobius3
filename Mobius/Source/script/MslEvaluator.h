@@ -196,6 +196,7 @@ class MslEvaluator : public MslVisitor
     MslValue result;
     juce::StringArray errors;
     
+    Symbol* resolve(MslSymbol* node);
     void eval(class Symbol* s);
     void invoke(Symbol* s);
     void query(Symbol* s);
@@ -214,5 +215,4 @@ class MslEvaluator : public MslVisitor
     MslNode* getUnresolved(MslNode* node1, MslNode* node2);
     MslNode* getUnresolved(MslNode* node);
     
-    void resolve(MslSymbol* node);
 };

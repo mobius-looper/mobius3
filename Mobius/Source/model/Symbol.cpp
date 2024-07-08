@@ -99,22 +99,29 @@ void SymbolTable::clear()
 Symbol* SymbolTable::find(juce::String name)
 {
     Symbol* found = nullptr;
+    bool linear = false;
 
-    for (int i = 0 ; i < symbols.size() ; i++) {
-        Symbol* s = symbols[i];
+    if (linear) {
+        for (int i = 0 ; i < symbols.size() ; i++) {
+            Symbol* s = symbols[i];
 
-        // todo: need to work out how the concept of "aliases" work
-        // we either have a single Symbol with multiple aliases or
-        // we have an entry in the table for each alias with a pointer
-        // to the "true" symbol
-        // do NOT do case insensntive comparison here, there are several
-        // collisions with functions that start with upper case and parameters
-        // that are lower
-		if (s->name == name) {
-            found = s;
-            break;
+            // todo: need to work out how the concept of "aliases" work
+            // we either have a single Symbol with multiple aliases or
+            // we have an entry in the table for each alias with a pointer
+            // to the "true" symbol
+            // do NOT do case insensntive comparison here, there are several
+            // collisions with functions that start with upper case and parameters
+            // that are lower
+            if (s->name == name) {
+                found = s;
+                break;
+            }
         }
     }
+    else {
+        found = symbolMap[name];
+    }
+    
     return found;
 }
 
@@ -129,8 +136,8 @@ void SymbolTable::intern(Symbol* s)
             Trace(1, "Symbol %s already interned", s->getName());
         }
         else {
-            // symbols.push_back(s);
             symbols.add(s);
+            symbolMap.set(s->name, s);
         }
     }
 }
