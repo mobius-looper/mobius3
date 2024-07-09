@@ -53,6 +53,14 @@ class MslNode
         children.removeObject(n, false);
     }
 
+    int size() {
+        return children.size();
+    }
+
+    MslNode* get(int i) {
+        return ((i >= 0 && i < children.size()) ? children[i] : nullptr);
+    }
+
     MslNode* getLast() {
         return children.getLast();
     }
@@ -131,6 +139,12 @@ class MslBlock : public MslNode
     // to make wantsNode return false, this will always hapily take nodes
     bool wantsNode(MslNode* node) override {(void)node; return true;}
 
+    // blocks accumulate procs and vars defined within it outside of the
+    // logic node tree
+
+    juce::OwnedArray<MslProc> procs;
+    juce::OwnedArray<MslVar> vars;
+
     bool isBlock() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
@@ -155,6 +169,7 @@ class MslSymbol : public MslNode
     
     // runtime state
     class Symbol* symbol = nullptr;
+    class MslProc* proc = nullptr;
     
     bool isSymbol() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
@@ -302,6 +317,16 @@ class MslProc : public MslNode
     
     bool isProc() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
+    MslBlock* getBody() {
+        MslBlock* body = nullptr;
+        for (auto child : children) {
+            if (child->isBlock() && child->token == "{") {
+                body = static_cast<MslBlock*>(child);
+                break;
+            }
+        }
+        return body;
+    }
 };
 
 #if 0

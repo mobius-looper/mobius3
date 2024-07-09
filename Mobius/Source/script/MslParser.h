@@ -16,8 +16,8 @@ class MslParser
     class MslScript* parseFile(juce::String path, juce::String source);
 
     void prepare(MslScript* src);
-    int consume(juce::String content);
-
+    void consume(juce::String content);
+    
     juce::StringArray* getErrors() {
         return &errors;
     }
@@ -35,6 +35,7 @@ class MslParser
     juce::StringArray errors;
 
     void parse(juce::String source);
+    void sift();
     
     void errorSyntax(MslToken& t, juce::String details);
     bool matchBracket(MslToken& t, MslNode* block);

@@ -45,7 +45,7 @@ class MslScript {
     // these are gathered here rather than left within the root block
     // todo: will want a distinction between local and exported procs
     // that can be referenced from the outside
-    juce::OwnedArray<class MslProc*> procs;
+    juce::OwnedArray<class MslProc> procs;
 
     // var definitions found within the script source
     // todo: work out how symbol overrides work, are all vars at any level
@@ -53,7 +53,7 @@ class MslScript {
     // have block scope?
     // todo: will want a distinction between local and exported vars
     // that can be referenced from the outside
-    juce::OwnedArray<class MslVar*> vars;
+    juce::OwnedArray<class MslVar> vars;
 
     // todo: capture any directives (like !button) found during parsing
 
@@ -65,6 +65,17 @@ class MslScript {
 
     // a list of error messages encountered during parsing and linking
     juce::Array<class MslError> errors;
+
+    class MslProc* findProc(juce::String name) {
+        MslProc* found = nullptr;
+        for (auto proc : procs) {
+            if (proc->name == name) {
+                found = proc;
+                break;
+            }
+        }
+        return found;
+    }
 
 };
 

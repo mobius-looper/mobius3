@@ -538,11 +538,18 @@ void Supervisor::saveSession()
         // try not to rewrite mobius.xml if we stayed on the starting setup
         MobiusConfig* mconfig = getMobiusConfig();
         Setup* setup = mconfig->getSetup(active);
-        
-        const char* starting = mconfig->getStartingSetupName();
-        if (!StringEqual(setup->getName(), starting)) {
-            mconfig->setStartingSetupName(setup->getName());
-            writeMobiusConfig(mconfig);
+
+        if (setup == nullptr) {
+            // saw this while testing randomly, active was 2 and there
+            // were only 2 setups so getSetup returned nullptr
+            Trace(1, "Supervisor: Null setup when saving final session");
+        }
+        else {
+            const char* starting = mconfig->getStartingSetupName();
+            if (!StringEqual(setup->getName(), starting)) {
+                mconfig->setStartingSetupName(setup->getName());
+                writeMobiusConfig(mconfig);
+            }
         }
     }
 }

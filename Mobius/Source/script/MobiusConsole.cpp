@@ -149,10 +149,10 @@ void MobiusConsole::testParse(juce::String line)
 
 void MobiusConsole::listSymbols()
 {
-    juce::OwnedArray<MslProc>& procs = session.getProcs();
-    if (procs.size() > 0) {
+    juce::OwnedArray<MslProc>* procs = session.getProcs();
+    if (procs->size() > 0) {
         console.add("Procs:");
-        for (auto proc : procs) {
+        for (auto proc : *procs) {
             console.add("  " + proc->name);
         }
     }

@@ -1,3 +1,14 @@
+/**
+ * I experimented a bit with allowing the parser to support incremental parsing
+ * for the console where partial nodes would be retained between calls to consume()
+ * and could be completed in the next console line.  This sort of worked
+ * but led to unpredictable results, and I decided I don't like building
+ * out an actual Script with the entire line history in it.
+ *
+ * So now, it resets at the start of every consume() but it does retain top level
+ * procs and vars.
+ *
+ */
 
 #include <JuceHeader.h>
 
@@ -62,18 +73,9 @@ void MslParser::prepare(MslScript* src)
  * of retaining errors from the last extension or resetting them and returning
  * only new errors.  Having the full history can be nice for files, less
  * important for the console.
- *
- * Return conventions:
- *
- * If no new nodes were added, -1 is returned.
- * If new nodes were added, the index for the first new node is returned.
- * This can be the same index as the past call to consume() if there was sublimation
- * of prior nodes.
  */
-int MslParser::consume(juce::String content)
+void MslParser::consume(juce::String content)
 {
-    int newIndex = -1;
-
     // start over with errors
     script->errors.clear();
 
@@ -81,34 +83,50 @@ int MslParser::consume(juce::String content)
         errors.add(juce::String("Parser has not been prepared"));
     }
     else {
-        if (script->root == nullptr) {
-            script->root = new MslBlock("");
-            current = nullptr;
-        }
-        else if (current == nullptr) {
-            current = script->root;
-        }
+        // reset parse state, the last block should already have been sifted
+        delete script->root;
+        script->root = new MslBlock("");
+        current = script->root;
         
-        int startingSize = script->root->children.size();
-    
         parse(content);
 
-        if (script->root->children.size() < startingSize) {
-            // shouldn't happen, you can't take nodes away without replacing them
-            errors.add(juce::String("Parser stack anomoly"));
+        sift();
+    }
+}
+
+/**
+ * After parsing, move any procs and vars encountered up to the
+ * Script.  The node tree may then be disposed of while retaining
+ * the definitions.
+ *
+ * This is difficuclt to do during parsing due to the simplicity
+ * of the stack being maintained as the node->parent reference rather
+ * than allowing the top of the stack to be anywhere.
+ *
+ * Not entirely happy with this, but it gets this started.
+ * Need a lot more thought into what procs in nested blocks mean.
+ * Vars in nested blocks are retained in position as the variable/symbol override
+ * is active only during that block.
+ *
+ * Only doing one level of sifting till we work that out.
+ */
+void MslParser::sift()
+{
+    int index = 0;
+    while (index < script->root->size()) {
+        MslNode* node = script->root->get(index);
+        if (node->isProc()) {
+            script->root->remove(node);
+            script->procs.add(static_cast<MslProc*>(node));
         }
-        else if (script->root->children.size() == startingSize) {
-            // didn't add anything new, but the last node may have
-            // been sublimated, continue evaluating it
-            newIndex = startingSize - 1;
+        else if (node->isVar()) {
+            script->root->remove(node);
+            script->vars.add(static_cast<MslVar*>(node));
         }
         else {
-            // move to the next one
-            newIndex = startingSize;
+            index++;
         }
     }
-    
-    return newIndex;
 }
 
 //////////////////////////////////////////////////////////////////////

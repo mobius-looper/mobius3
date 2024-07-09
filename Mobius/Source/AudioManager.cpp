@@ -130,12 +130,12 @@ void AudioManager::openAudioDevice()
     
         // todo: revisit this after the revelation about the custom AudioDeviceManager
         // maybe setting sample rate and block size will work now
-        if (deviceType != "ASIO") {
-            if (machine->sampleRate > 0)
-              setup.sampleRate = machine->sampleRate;
-            if (machine->blockSize > 0)
-              setup.bufferSize = machine->blockSize;
-        }
+        // if (deviceType != "ASIO") {
+        if (machine->sampleRate > 0)
+          setup.sampleRate = machine->sampleRate;
+        if (machine->blockSize > 0)
+          setup.bufferSize = machine->blockSize;
+        // }
 
         // let this default if not set, usually the first two channels
         // this is that channel bit vector that you need to put things back

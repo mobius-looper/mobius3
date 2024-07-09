@@ -2,11 +2,8 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
-#include "../model/UIAction.h"
+#include "../model/Symbol.h"
 #include "../model/UIParameter.h"
-#include "../model/Query.h"
-#include "../ui/JuceUtil.h"
-#include "../Supervisor.h"
 
 #include "MslModel.h"
 #include "MslSession.h"
@@ -57,22 +54,18 @@ void MslEvaluator::mslVisit(MslBlock* block)
  * Now it gets interesting.
  * If we had a linker could have decorated the node with
  * resolved things.
+ *
+ * Punt up to the Session for all symbol handling until this stabilizes
  */
 void MslEvaluator::mslVisit(MslSymbol* node)
 {
-    Symbol* s = resolve(node);
-    if (s != nullptr) {
-        // it's a reference to a built-in symbol
-        eval(s);
-    }
-    else {
-        // todo: here is where could dynamically start looking for procs and vars
-        errors.add("Unresolved symbol: " + node->token);
-    }
+    session->eval(node, result);
 }
 
 void MslEvaluator::mslVisit(MslAssignment* node)
 {
+    result.setNull();
+    
     MslNode* target = (node->children.size() > 0) ? node->children[0] : nullptr;
     MslNode* value = (node->children.size() > 1) ? node->children[1] : nullptr;
 
@@ -89,16 +82,11 @@ void MslEvaluator::mslVisit(MslAssignment* node)
         }
         else {
             MslSymbol* snode = static_cast<MslSymbol*>(target);
-            Symbol* s = resolve(snode);
-            if (s == nullptr) {
-              errors.add("Unresolved symbol " + snode->token);
-            }
-            else {
-                value->visit(this);
-                // should be doing this everywhere we do pre-emptive evaluation!
-                if (errors.size() == 0) {
-                    session->assign(s, result.getInt());
-                }
+            value->visit(this);
+            // should be doing this everywhere we do pre-emptive evaluation!
+            if (errors.size() == 0) {
+                session->assign(snode, result.getInt());
+                // what is the result of an assignment?
             }
         }
     }
@@ -107,18 +95,17 @@ void MslEvaluator::mslVisit(MslAssignment* node)
 void MslEvaluator::mslVisit(MslVar* node)
 {
     (void)node;
+    result.setNull();
 }
 
 /**
- * Shouldn't actually have these now if the session did assimilate() to install
- * them in the local symbol table.
+ * Shouldn't actually have these now if they were sifted up to the Script.
  */
 void MslEvaluator::mslVisit(MslProc* node)
 {
-    
     (void)node;
+    result.setNull();
 }
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -393,15 +380,15 @@ MslSymbol* MslEvaluator::getResolvedParameter(MslNode* node1, MslNode* node2)
     return param;
 }
 
+// need to move MslSymbol resolution up to session so it can deal with vars !!
+
 MslSymbol* MslEvaluator::getResolvedParameter(MslNode* node)
 {
     MslSymbol* param = nullptr;
     if (node->isSymbol()) {
         MslSymbol* symnode = static_cast<MslSymbol*>(node);
 
-        // until we have a link phase, have to do dynamic resolution
-        if (symnode->symbol == nullptr)
-          symnode->symbol = Symbols.find(node->token);
+        session->resolve(symnode);
         
         if (symnode->symbol != nullptr && symnode->symbol->parameter != nullptr)
           param = symnode;
@@ -430,120 +417,6 @@ MslNode* MslEvaluator::getUnresolved(MslNode* node)
     }
     return unresolved;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Engine Touchpoints
-//
-//////////////////////////////////////////////////////////////////////
-
-Symbol* MslEvaluator::resolve(MslSymbol* snode)
-{
-    Symbol* sym = snode->symbol;
-    if (sym == nullptr) {
-        // first look locally
-        sym = session->findSymbol(snode->token);
-        if (sym == nullptr) {
-            // then globally
-            sym = Symbols.find(snode->token);
-        }
-    }
-
-    // cache for later
-    snode->symbol = sym;
-    return sym;
-}
-
-/**
- * Evaluate a Symbol from the the parse tree and leave the result.
- * Not sure I like the handoff between resolve and eval...
- */
-void MslEvaluator::eval(Symbol* s)
-{
-    if (s->function != nullptr) {
-        // todo: look local
-
-        // assume we're in the UI
-        invoke(s);
-    }
-    else if (s->parameter != nullptr) {
-        // todo: look local
-        
-        query(s);
-    }
-}
-
-void MslEvaluator::invoke(Symbol* s)
-{
-    UIAction a;
-    a.symbol = s;
-    // todo: arguments
-    // todo: this needs to take a reference
-    Supervisor::Instance->doAction(&a);
-
-    // what is the result of a function?
-    result.setNull();
-}
-
-void MslEvaluator::query(Symbol* s)
-{
-    result.setNull();
-
-    if (s->parameter == nullptr) {
-        errors.add("Error: Not a parameter symbol " + s->name);
-    }
-    else {
-        Query q;
-        q.symbol = s;
-        bool success = Supervisor::Instance->doQuery(&q);
-        if (!success) {
-            errors.add("Error: Unable to query parameter " + s->name);
-        }
-        else if (q.async) {
-            // not really an error, need a different message/warning list
-            errors.add("Asynchronous parameter query " + s->name);
-        }
-        else {
-            // And now we have the issue of whether to return an ordinal
-            // or a label.  At runtime you usually want an ordinal, in the
-            // interactive console usually a label.
-            // will need a syntax for that, maybe ordinal(foo) or foo.ordinal
-
-            UIParameterType ptype = s->parameter->type;
-            if (ptype == TypeEnum) {
-                // don't use labels since I want scripters to get used to the names
-                //result.setString(s->parameter->getEnumLabel(q.value));
-                result.setString(s->parameter->getEnumName(q.value));
-            }
-            else if (ptype == TypeBool) {
-                result.setBool(q.value == 1);
-            }
-            else if (ptype == TypeStructure) {
-                // hmm, the understand of LevelUI symbols that live in
-                // UIConfig and LevelCore symbols that live in MobiusConfig
-                // is in Supervisor right now
-                // todo: Need to repackage this
-                result.setJString(Supervisor::Instance->getParameterLabel(s, q.value));
-            }
-            else {
-                // should only be here for TypeInt
-                // unclear what String would do
-                result.setInt(q.value);
-            }
-        }
-    }
-}
-
-void MslEvaluator::assign(Symbol* s, int value)
-{
-    // todo: context forwarding
-    UIAction a;
-    a.symbol = s;
-    a.value = value;
-    Supervisor::Instance->doAction(&a);
-    result.setNull();
-}
-
 
 /****************************************************************************/
 /****************************************************************************/

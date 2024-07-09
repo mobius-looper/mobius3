@@ -56,11 +56,15 @@ class MslSession
     void eval(juce::String source);
 
 
-    juce::OwnedArray<class MslProc>& getProcs() {
-        return procs;
+    juce::OwnedArray<class MslProc>* getProcs() {
+        return &(dynamicScript.procs);
     }
     
   protected:
+
+    bool resolve(MslSymbol* snode);
+    void eval(MslSymbol* snode, MslValue& result);
+    
 
     class Symbol* findSymbol(juce::String name);
     void assign(Symbol* s, int value);
@@ -78,23 +82,20 @@ class MslSession
     // optional listener to receive trace notifications
     Listener* listener = nullptr;
 
-    // registry of global procs defined within this session
-    juce::OwnedArray<class MslProc> procs;
-    // name lookup index for procs
-    juce::HashMap<juce::String, class MslProc*> procTable;
-
-    // registry of global variables
-    juce::OwnedArray<class MslVar> vars;
-    // name lookup index for procs
-    juce::HashMap<juce::String, class MslVar*> varTable;
+    juce::StringArray errors;
 
     // hmm, if we make this symbol oriented which has nice properties
     // don't need procTable and varTable
     SymbolTable symbols;
 
-    MslNode* assimilate(MslNode* node);
-    void intern(MslProc* proc);
+    //MslNode* assimilate(MslNode* node);
+    //void intern(MslProc* proc);
     
+    void invoke(Symbol* s, MslValue& result);
+    void query(Symbol* s, MslValue& result);
+    void assign(MslSymbol* snode, int value);
+
+    void conveyErrors(juce::StringArray* errors);
 
 };
 
