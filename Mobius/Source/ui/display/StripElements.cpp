@@ -611,6 +611,20 @@ void StripLoopStack::paint(juce::Graphics& g)
         origin = (active - maxLoops) + 1;
     }
     firstLoop = origin;
+
+    // to properly color the switch destination, we have to first find
+    // the active loop and look there
+    // although it is really a property of an event, summaraizer puts
+    // it here to make it easier to find, should really be on the track
+    // not sure why we made a distinction between switch and return, I guess
+    // there was a little "R" somewhere, here we don't care
+    // nextLoop and returnLoop are 1 based
+    int switchDestination = -1;
+    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+    if (loop->nextLoop >= 0)
+      switchDestination = loop->nextLoop - 1;
+    else if (loop->returnLoop >= 0)
+      switchDestination = loop->returnLoop - 1;
     
     for (int row = 0 ; row < maxLoops ; row++) {
 
@@ -620,7 +634,7 @@ void StripLoopStack::paint(juce::Graphics& g)
             break;
         }
             
-        MobiusLoopState* loop = &(track->loops[loopIndex]);
+        loop = &(track->loops[loopIndex]);
 
         int rowTop = (LoopStackRowHeight + LoopStackVerticalGap) * row;
         
@@ -633,20 +647,11 @@ void StripLoopStack::paint(juce::Graphics& g)
         g.drawText(juce::String(loopIndex+1), 0, rowTop, LoopStackNumberWidth, LoopStackRowHeight,
                    juce::Justification::centred);
         
-        // border: white=active, black=inactive, yellow=switching, green=switchDestination
-        // if we're recording and switching yellow may not stand out enough
+        // border: white=active, black=inactive, yellow=switching, red=switchDestination
+        // if we're recording and switching yellow may not stand out enough?
 
-        // determine switch destination before iteration since we can go up
-        // although it is really a property of an event, summaraizer puts
-        // it here to make it easier to find, should really be on the track
-        // not sure why we made a distinction between switch and return, I guess
-        // there was a little "R" somewhere, here we don't care
-        int switchDestination = -1;
-        if (loop->nextLoop >= 0)
-          switchDestination = loop->nextLoop;
-        else if (loop->returnLoop >= 0)
-          switchDestination = loop->returnLoop;
-
+        // the drop target shares the same color as switch destionation which
+        // isn't too bad, but might want to make drop target a bit more extreme
         if (loopIndex == dropTarget) {
             g.setColour(juce::Colours::red);
         }
@@ -659,7 +664,7 @@ void StripLoopStack::paint(juce::Graphics& g)
               g.setColour(juce::Colours::white);
         }
         else if (loopIndex == switchDestination) {
-            g.setColour(juce::Colours::green);
+            g.setColour(juce::Colours::red);
         }
         else {
             // empty, leave it black, or just don't draw it

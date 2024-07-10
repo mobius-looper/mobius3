@@ -111,6 +111,7 @@
 
 // StringEqualNoCase
 #include "../../util/Util.h"
+#include "../../SyncTrace.h"
 
 #include "../../midi/MidiByte.h"
 #include "../../midi/MidiSyncEvent.h"
@@ -2231,8 +2232,7 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
  */
 void Synchronizer::traceSyncEvent(Event* event, bool out)
 {
-    bool doTrace = false;
-    if (doTrace) {
+    if (SyncTraceEnabled) {
         const char* direction = (out) ? "out" : "in";
         SyncEventType type = event->fields.sync.eventType;
         if (type == SYNC_EVENT_STOP) {

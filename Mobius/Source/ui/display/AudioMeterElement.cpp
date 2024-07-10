@@ -105,7 +105,7 @@ void AudioMeterElement::paint(juce::Graphics& g)
         }
       
         if (savedLevel > 0) {
-            g.setColour(juce::Colour(MobiusRed));
+            g.setColour(juce::Colour(MobiusGreen));
             g.fillRect(AudioMeterElementInset,
                        AudioMeterElementInset,
                        savedLevel,

@@ -24,6 +24,8 @@ void MobiusLoopState::init()
     number = 0;
     mode = UIResetMode;
     recording = false;
+    // this is a qualifier for Mute mode, it would be better
+    // if the engine just set UIPauseMode instead
     paused = false;
     frame = 0;
     subcycle = 0;

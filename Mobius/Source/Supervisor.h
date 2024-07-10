@@ -180,6 +180,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*);
     void alert(juce::String message);
+    void addAlert(juce::String message);
     void message(juce::String message);
     
     // find the value of a parameter or variable
@@ -307,6 +308,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     VariableManager variableManager {this};
     Parametizer parametizer {this};
     Alerter alerter {this};
+    juce::StringArray pendingAlerts;
     AudioClerk audioClerk {this};
     ProjectFiler projectFiler {this};
     ApplicationBinderator binderator {this};
@@ -343,6 +345,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // symbols
     void initSymbols();
     bool doUILevelAction(UIAction* action);
+    void showPendingAlert();
     
     // configure Binderator depending on where we are
     void configureBindings(class MobiusConfig* config);

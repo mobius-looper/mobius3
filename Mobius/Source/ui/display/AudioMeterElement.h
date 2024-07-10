@@ -8,6 +8,9 @@
 
 #include "StatusElement.h"
 
+// todo: this duplicates much of what is now in AudioMeter
+// which could be shared
+
 class AudioMeterElement : public StatusElement
 {
   public:

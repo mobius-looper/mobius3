@@ -30,9 +30,7 @@ const int BorderThickness = 1;
 const int MarkerArrowWidth = 8;
 const int MarkerArrowHeight = 8;
 
-// marker text assume same size as arrow for now till
-// we can mess with centering
-const int MarkerTextHeight = 10;
+const int MarkerTextHeight = 12;
 const int MaxTextStack = 3;
 
 // We center the marker on a point along the loop meter bar
@@ -231,6 +229,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
             // full names look better
             // const char* symbol = ev->type->timelineSymbol;
             const char* name = ev->type->getName();
+            // if there is an argument, include it, for loop switch this will
+            // be the loop number, what other event types use arguments?  may
+            // want this only for switch events
+            char fullname[256];
+            if (ev->argument > 0) {
+                snprintf(fullname, sizeof(fullname), "%s %d", name, ev->argument);
+                name = fullname;
+            }
+            
             if (name == nullptr) {
                 name = "?";
                 Trace(1, "LoopMeter: Event with no name %s\n", ev->type->name);

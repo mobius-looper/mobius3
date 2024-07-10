@@ -499,6 +499,14 @@ UIAction* Binderator::buildAction(Binding* b)
         // also copy the entire string for a few things that pass names
         CopyString(b->getArguments(), action->arguments, sizeof(action->arguments));
 
+        // new hack to disable quantization, ideally we would have any parameter
+        // override here but only noQuantize is in the UIAction model
+        // while we're hacking, might as well support "quantize=off" but we can't
+        // do any of the other options
+        if (StartsWithNoCase(action->arguments, "noquant") ||
+            StringEqualNoCase(action->arguments, "quantize=off"))
+          action->noQuantize = true;
+
         // determine sustainabillity of the trigger
         // to be sustainable it must have a unique id
         // so don't just blindly follow TriggerMode

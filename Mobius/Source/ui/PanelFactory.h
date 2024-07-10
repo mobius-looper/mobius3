@@ -58,7 +58,8 @@ class PanelFactory
         MidiTransport,
         Sync,
         Upgrade,
-        Console
+        Console,
+        TraceLog
     };
 
     PanelFactory(class MainWindow* main);

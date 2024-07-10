@@ -34,6 +34,7 @@ class ProjectManager
 
     class MobiusShell* shell;
     juce::StringArray errors;
+    juce::File projectRoot;
 
     // ancient file management
     class Project* saveProject();

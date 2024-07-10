@@ -13,6 +13,7 @@
 #include "../test/SymbolTablePanel.h"
 #include "../test/MidiTransportPanel.h"
 #include "../test/SyncPanel.h"
+#include "../test/TracePanel.h"
 #include "../test/UpgradePanel.h"
 #include "../script/ConsolePanel.h"
 
@@ -142,6 +143,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Sync: panel =  new SyncPanel(); break;
         case Upgrade: panel =  new UpgradePanel(); break;
         case Console: panel = new ConsolePanel(); break;
+        case TraceLog: panel = new TracePanel(); break;
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);
             break;

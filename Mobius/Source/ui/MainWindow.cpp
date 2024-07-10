@@ -273,6 +273,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Console);
                 break;
                 
+            case MainMenu::TraceLog:
+                panelFactory.show(PanelFactory::TraceLog);
+                break;
+                
             case MainMenu::UpgradeConfig:
                 panelFactory.show(PanelFactory::Upgrade);
                 break;

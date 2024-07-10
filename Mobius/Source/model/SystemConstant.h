@@ -68,12 +68,18 @@ class SystemConstant {
         return name;
     }
 
+    // this is called a lot in old code that expects it to have
+    // been resolved and sometimes it isn't depending on the constructor used
+    // make this behave like getDisplayableName
+    // in the rare (and probably non-existant) need to know if there is an explicit
+    // displayName, just use the member
     const char* getDisplayName() {
-        return displayName;
+        return ((displayName != nullptr) ? displayName : name);
     }
 
+    // now the same as getDisplayName
     const char* getDisplayableName() {
-        return ((displayName != nullptr) ? displayName : name);
+        return getDisplayName();
     }
 
     // old replicated Functions want to call these

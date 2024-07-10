@@ -106,6 +106,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../SyncTrace.h"
 #include "../Supervisor.h"
 #include "../MidiManager.h"
 
@@ -142,22 +143,20 @@ void MidiRealizer::initialize()
 
 /**
  * Activate the clock thread.
+ * The thread always starts if it may be needed, whether sync actually
+ * happens depends on whether there is an output device configured which is checked later.
  */
 void MidiRealizer::startThread()
 {
     if (thread == nullptr) {
-        if (!midiManager->hasOutputDevice()) {
-            Trace(1, "MidiTransport: No MIDI Output device\n");
-            supervisor->alert("No MIDI Output device is open");
-        }
-        else {
-            Trace(2, "MidiTransport: Starting clock thread\n");
-            thread = new MidiClockThread(this);
-            if (!thread->start()) {
-                // what now? safe to delete?
-                delete thread;
-                thread = nullptr;
-            }
+        Trace(2, "MidiTransport: Starting clock thread\n");
+        thread = new MidiClockThread(this);
+        if (!thread->start()) {
+            // what now? safe to delete?
+            delete thread;
+            thread = nullptr;
+
+            supervisor->addAlert("Unable to start MIDI timer thread");
         }
     }
 }
@@ -334,6 +333,8 @@ void MidiRealizer::advance()
 
         // adjust to a new tempo and reset the msecsPerPulse
         if (pendingTempo > 0.0f) {
+            if (SyncTraceEnabled)
+              Trace(2, "Sync: Setting pending tempo");
             setTempoNow(pendingTempo);
             pendingTempo = 0.0f;
             // if we've been actively sending clocks and pluseWait is in
@@ -343,6 +344,9 @@ void MidiRealizer::advance()
         }
 
         if (pendingStartClock) {
+            if (SyncTraceEnabled)
+              Trace(2, "Sync: Sending pending start clock msec %d pulseWait %d",
+                    now, msecsPerPulse);
             // we sent Start or Continue on the last cycle and now
             // send the first clock which officially starts things running
             // in the external device
@@ -359,6 +363,8 @@ void MidiRealizer::advance()
             // todo: process pending tempo changes like old code?
         }
         else if (pendingStart) {
+            if (SyncTraceEnabled)
+              Trace(2, "Sync: Sending pending start msec %d", now);
             midiManager->send(juce::MidiMessage::midiStart());
             outputQueue.add(MS_START, now);
             pendingStartClock = true;
@@ -366,6 +372,8 @@ void MidiRealizer::advance()
             // todo: process pending tempo changes like old code?
         }
         else if (pendingContinue) {
+            if (SyncTraceEnabled)
+              Trace(2, "Sync: Sending pending continue msec %d", now);
             midiManager->send(juce::MidiMessage::midiContinue());
             outputQueue.add(MS_CONTINUE, now);
             // todo: this is where old code would look at mPendingSongPosition
@@ -374,12 +382,16 @@ void MidiRealizer::advance()
             // todo: process pending tempo changes like old code?
         }
         else if (pendingStop) {
+            if (SyncTraceEnabled)
+              Trace(2, "Sync: Sending pending stop msec %d", now);
             // these we don't have to wait on
             midiManager->send(juce::MidiMessage::midiStop());
             outputQueue.add(MS_STOP, now);
             pendingStop =  false;
             // optionally stop sending clocks
             if (pendingStopClocks) {
+                if (SyncTraceEnabled)
+                  Trace(2, "Sync: Stopping clocks msec %d", now);
                 running = false;
                 pendingStopClocks = false;
             }
@@ -389,14 +401,21 @@ void MidiRealizer::advance()
             pulseWait -= (float)delta;
             if (pulseWait <= 0.0f) {
                 // we've waited long enough, send a clock
-                midiManager->send(juce::MidiMessage::midiClock());
-                outputQueue.add(MS_CLOCK, now);
+
+                // adjust pulseWait early for trace
                 // due to jitter, pulseWait may be less than zero so
                 // accumulate the fraction for the next pulse
                 // todo: does it make sense to be proactive and send a clock
                 // when we're really close to zero instead of always counting down
                 // all the way?  Could result in less jitter
                 pulseWait += msecsPerPulse;
+                
+                if (SyncTraceEnabled)
+                  Trace(2, "Sync: Sending clock msec %d pulseWait %d",
+                        now, pulseWait);
+                
+                midiManager->send(juce::MidiMessage::midiClock());
+                outputQueue.add(MS_CLOCK, now);
 
                 // todo: here is where old code would check for overage in the
                 // "tick" counter and drop clocks, can this really happen?
@@ -414,13 +433,32 @@ void MidiRealizer::advance()
 //
 // Transport Control
 //
+// These are the entry points Synchronizer calls to control the MIDI
+// output thread.
+//
 //////////////////////////////////////////////////////////////////////
+
+//
+// If there are no MIDI output devices configured, we have two options
+// We can ignore any attempt to start/stop/continue, or we can continue
+// on our merry way and pretend.
+//
+// There is a lot of complicated state logic built around where we think we are
+// in the MIDI clock stream and it is risky to make all of that understand
+// a new state of "i tried but nothing will happen".  
+//
+// Instead, send an alert every time you try to send start, but otherwise
+// continue normally.
+//
 
 /**
  * Start sending clocks at the current tempo.
  */
 void MidiRealizer::startClocks()
 {
+    if (SyncTraceEnabled)
+      Trace(2, "MidiRealizer::startClocks");
+    
     if (!running) {
         // once the thread starts, it won't stop unless asked, but
         // "running" controls whether we send clocks
@@ -430,6 +468,7 @@ void MidiRealizer::startClocks()
         // sure the msecsPerPulse is calculated properly
         // only do this if we aren't running
         setTempoNow(tempo);
+
         running = true;
     }
 }
@@ -443,6 +482,19 @@ void MidiRealizer::startClocks()
  */
 void MidiRealizer::start()
 {
+    if (SyncTraceEnabled)
+      Trace(2, "MidiRealizer::start Set pendingStart");
+    
+    if (!midiManager->hasOutputDevice()) {
+        Trace(1, "MidiTransport: No MIDI Output device\n");
+        // note that if you call Supervisor::alert here it will
+        // try to show the AlertPanel which we can't do without
+        // a Juce runtime assertion since we're usually in the audio thread
+        // at this point.  Instead, set a pending alert and let Synchronizer do this
+        // on the next update.
+        supervisor->addAlert("No MIDI Output device is open.  Unable to send Start");
+    }
+    
     // what to do about overlaps?
     // this would only happen if there were bugs in Synchronizer or scripts or
     // the clock thread is stuck due to extreme load
@@ -462,6 +514,9 @@ void MidiRealizer::start()
  */
 void MidiRealizer::midiContinue()
 {
+    if (SyncTraceEnabled)
+      Trace(2, "MidiRealizer::continue Set pendingContinue");
+    
     if (pendingStart || pendingContinue || pendingStop) {
         Trace(1, "MidiRealizer: Continue request overflow!\n");
     }
@@ -491,12 +546,19 @@ void MidiRealizer::stop()
 void MidiRealizer::stopSelective(bool sendStop, bool stopClocks)
 {
     (void)sendStop;
+
+    if (SyncTraceEnabled)
+      Trace(2, "MidiRealizer::stopSelective sendStop %d stopClocks %d",
+            sendStop, stopClocks);
+    
     
     if (pendingStart || pendingContinue || pendingStop) {
         Trace(1, "MidiRealizer: Stop request overflow!\n");
     }
     else if (!running) {
         // we weren't doing anything, why not just leave us alone?
+        if (SyncTraceEnabled)
+          Trace(2, "MidiRealizer::stopSelective stop when not running");
     }
     else {
         // old code I think allowed you to stop clocks without
@@ -515,6 +577,9 @@ void MidiRealizer::stopSelective(bool sendStop, bool stopClocks)
 void MidiRealizer::setTempo(float newTempo)
 {
     if (running) {
+        if (SyncTraceEnabled)
+          Trace(2, "MidiRealizer: Set pendingTempo");
+        
         // if they're twisting a control knob we might have these
         // come in rapidly so just overwrite the last one if advance()
         // hasn't consumed it yet

@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
+      <FILE id="dGcedr" name="SyncTrace.h" compile="0" resource="0" file="Source/SyncTrace.h"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
@@ -620,6 +622,8 @@
         <FILE id="E9hifY" name="TestDriver.h" compile="0" resource="0" file="Source/test/TestDriver.h"/>
         <FILE id="lgCOr0" name="TestPanel.cpp" compile="1" resource="0" file="Source/test/TestPanel.cpp"/>
         <FILE id="hyKpqT" name="TestPanel.h" compile="0" resource="0" file="Source/test/TestPanel.h"/>
+        <FILE id="yZ2m16" name="TracePanel.cpp" compile="1" resource="0" file="Source/test/TracePanel.cpp"/>
+        <FILE id="ND0VEm" name="TracePanel.h" compile="0" resource="0" file="Source/test/TracePanel.h"/>
         <FILE id="fbbVWi" name="UpgradePanel.cpp" compile="1" resource="0"
               file="Source/test/UpgradePanel.cpp"/>
         <FILE id="Abea0g" name="UpgradePanel.h" compile="0" resource="0" file="Source/test/UpgradePanel.h"/>

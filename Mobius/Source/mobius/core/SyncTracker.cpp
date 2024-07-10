@@ -254,6 +254,7 @@
 #include <math.h>
 
 #include "../../util/Trace.h"
+#include "../../SyncTrace.h"
 
 #include "Event.h"
 #include "Loop.h"
@@ -430,6 +431,9 @@ float SyncTracker::getPulseFrames()
  */
 void SyncTracker::reset()
 {
+    if (SyncTraceEnabled)
+      Trace(2, "SyncTracker::reset");
+    
     mPulse = 0;
     mLoopPulses = 0;
     mLoopFrames = 0;
@@ -500,6 +504,11 @@ void SyncTracker::advance(long frames, EventPool* pool, EventList* events)
     mAudioFrame = advanceInternal(frames);
 
     if (mLoopFrames > 0) {
+
+        if (SyncTraceEnabled)
+          Trace(2, "SyncTracker::advance startFrame %d frames %d advanceFrames %d",
+                startFrame, frames, mAudioFrame);
+        
         float pulseFrames = getPulseFrames();
 
         // always guard against divide by zero
@@ -962,8 +971,9 @@ void SyncTracker::pulse(Event* e)
 
     // do this every time?  if the Mobius Loop is multi-cycle should
     // only do this in the first cycle
-    if (mPulse == 0)
-      traceDealign();
+    // Synchronizer is already doing this at the start point, so we don't need both
+    //if (mPulse == 0)
+    //traceDealign();
 
     mLastPulseAudioFrame = effectiveAudioFrame;
 

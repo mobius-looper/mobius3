@@ -111,7 +111,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         SymbolTable,
         DiagnosticWindow,
         UpgradeConfig,
-        Console
+        Console,
+        TraceLog
         
         };
     

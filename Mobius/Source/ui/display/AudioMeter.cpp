@@ -106,7 +106,9 @@ void AudioMeter::update(int value)
  */
 void AudioMeter::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colour(MobiusRed));
+    // this started as Red, but it was green in 2.5
+    // opportunity to use the colors to mean something?
+    g.setColour(juce::Colour(MobiusGreen));
 
     // getting a one line turd on the left, even when level is zero
     // AudioMeterElement also has that problem, but less often
@@ -123,7 +125,7 @@ void AudioMeter::paint(juce::Graphics& g)
     }
       
     if (savedLevel > 0) {
-        g.setColour(juce::Colour(MobiusRed));
+        g.setColour(juce::Colour(MobiusGreen));
         g.fillRect(AudioMeterInset,
                    AudioMeterInset,
                    savedLevel,

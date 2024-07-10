@@ -25,6 +25,24 @@ void ModeElement::update(MobiusState* state)
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
     ModeDefinition* mode = loop->mode;
 
+    // the engine does not actually set UIPauseMode, the loop will be
+    // in UIMuteMode with the paused flag set in the state
+    // would be better if the engine just used the pseudo mode instead
+
+    // unclear what the priority of these is or if they can be combined
+    // can you be in GlobalMute and Pause at the same time?
+    // favor Pause
+    // also why are these on the Track?  They should be on the root State
+    if (track->globalMute)
+      mode = UIGlobalMuteMode;
+
+    if (loop->paused)
+      mode = UIPauseMode;
+
+    // seem to have lost conveyance of GlobalPause
+    if (track->globalPause)
+      mode = UIGlobalPauseMode;
+    
     if (mode == nullptr) {
         // could interpret this to mean Reset?
     }

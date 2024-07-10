@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
+<UIConfig windowWidth="1199" windowHeight="800" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
@@ -116,6 +116,9 @@
     <Button action="Setup Name Test"/>
     <Button action="ReloadScripts"/>
     <Button action="MainTap Track1"/>
+    <Button action="Pause" arguments="noquant"/>
+    <Button action="GlobalPause"/>
+    <Button action="GlobalMute"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>

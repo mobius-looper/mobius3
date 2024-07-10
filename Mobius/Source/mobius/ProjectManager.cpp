@@ -456,6 +456,10 @@ juce::StringArray ProjectManager::loadProject(juce::File file)
     // browsed to
     Project* p = new Project(file.getFullPathName().toUTF8());
 
+    // set this so we can find .wav files relative to the .mob file
+    // later in readAudio
+    projectRoot = file.getParentDirectory();
+
     // formerly Project::read(pool)
     read(p, file);
     
@@ -591,8 +595,22 @@ Audio* ProjectManager::readAudio(const char* path)
     // have a new tool for this with the old code packaged
     // with juce::File
 
+    // .mob files have historically used absolute paths but it is
+    // quite common for those to be wrong when changing machines
+    // or exchanging projects with someone else
+    // I think I'd like to enforce that the .wav files be relative
+    // to the .mob file, though this may break old projects where the user
+    // manually moved the files somewhere else and edited the .mob file
+    // unlikely though
+
+    // this will get assertions if you're moving between mac/pc
+    // was hoping this would mutate the slashes but it doesn't 
+    juce::String convpath =  juce::File::createLegalPathName(path);
+    juce::File jpath (convpath);
+    juce::File relfile = projectRoot.getChildFile(jpath.getFileName());
+
     AudioPool* pool = shell->getAudioPool();
-    return AudioFile::read(juce::File(path), pool);
+    return AudioFile::read(relfile, pool);
 }
 
 //////////////////////////////////////////////////////////////////////

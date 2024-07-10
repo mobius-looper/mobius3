@@ -25,6 +25,7 @@
 #include <memory.h>
 
 #include "../util/Trace.h"
+#include "../SyncTrace.h"
 
 #include "MidiByte.h"
 #include "MidiSyncEvent.h"
@@ -330,6 +331,9 @@ void MidiQueue::add(int status, int millisecond)
 					beat++;
 					beatClock = 0;
 				}
+                if (SyncTraceEnabled)
+                  Trace(2, "Sync: Queue clock beatClock %d beat %d",
+                        beatClock, beat);
 			}
 
             // clocks always get an event
@@ -347,6 +351,9 @@ void MidiQueue::add(int status, int millisecond)
                         event->isBeat = true;
                         event->beat = beat;
                     }
+
+                    if (SyncTraceEnabled)
+                      Trace(2, "Sync: Generated sync event");
                     
                     commitEvent();
                 }
