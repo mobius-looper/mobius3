@@ -423,7 +423,12 @@ void JuceAudioStream::getNextAudioBlockForReal (const juce::AudioSourceChannelIn
     portAuthority.commit();
     
     // in case the listener didn't consume queued realtime message, flush the queue
-    supervisor->getMidiRealizer()->flushEvents();
+    // !!! NO
+    // I did this so that events wouldn't stack up when in the debugger and flood the
+    // Synchronizer when continued, but this causes rapid events like clocks to get lost
+    // if they came in during the processing of the last block.  Need another way to detect
+    // a hung engine
+    //supervisor->getMidiRealizer()->flushEvents();
 }
 
 //////////////////////////////////////////////////////////////////////
