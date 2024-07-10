@@ -225,10 +225,12 @@ MachineConfig* DeviceConfig::getMachineConfig()
 #define ATT_MIDI_INPUT_SYNC "midiInputSync"
 #define ATT_MIDI_OUTPUT "midiOutput"
 #define ATT_MIDI_OUTPUT_SYNC "midiOutputSync"
+#define ATT_MIDI_THRU "midiThru"
 #define ATT_PLUGIN_MIDI_INPUT "pluginMidiInput"
 #define ATT_PLUGIN_MIDI_INPUT_SYNC "pluginMidiInputSync"
 #define ATT_PLUGIN_MIDI_OUTPUT "pluginMidiOutput"
-#define ATT_PLUGIN_MIDI_OUTPUT_SYNC "pluginMidiOutputsYNC"
+#define ATT_PLUGIN_MIDI_OUTPUT_SYNC "pluginMidiOutputSync"
+#define ATT_PLUGIN_MIDI_THRU "pluginMidiThru"
 
 /**
  * Serialize the DeviceConfig to XML.
@@ -267,11 +269,13 @@ juce::String DeviceConfig::toXml()
         addAttribute(child, ATT_MIDI_INPUT_SYNC, machine->midiInputSync);
         addAttribute(child, ATT_MIDI_OUTPUT, machine->midiOutput);
         addAttribute(child, ATT_MIDI_OUTPUT_SYNC, machine->midiOutputSync);
+        addAttribute(child, ATT_MIDI_THRU, machine->midiThru);
         
         addAttribute(child, ATT_PLUGIN_MIDI_INPUT, machine->pluginMidiInput);
         addAttribute(child, ATT_PLUGIN_MIDI_INPUT_SYNC, machine->pluginMidiInputSync);
         addAttribute(child, ATT_PLUGIN_MIDI_OUTPUT, machine->pluginMidiOutput);
         addAttribute(child, ATT_PLUGIN_MIDI_OUTPUT_SYNC, machine->pluginMidiOutputSync);
+        addAttribute(child, ATT_PLUGIN_MIDI_THRU, machine->pluginMidiThru);
     }
 
     pluginConfig.addXml(&root);
@@ -321,11 +325,13 @@ void DeviceConfig::parseXml(juce::String xml)
                 mc->midiInputSync = el->getStringAttribute(ATT_MIDI_INPUT_SYNC);
                 mc->midiOutput = el->getStringAttribute(ATT_MIDI_OUTPUT);
                 mc->midiOutputSync = el->getStringAttribute(ATT_MIDI_OUTPUT_SYNC);
+                mc->midiThru = el->getStringAttribute(ATT_MIDI_THRU);
             
                 mc->pluginMidiInput = el->getStringAttribute(ATT_PLUGIN_MIDI_INPUT);
                 mc->pluginMidiInputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_INPUT_SYNC);
                 mc->pluginMidiOutput = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT);
                 mc->pluginMidiOutputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT_SYNC);
+                mc->pluginMidiThru = el->getStringAttribute(ATT_PLUGIN_MIDI_THRU);
             }
             else if (el->hasTagName(EL_PLUGIN_CONFIG)) {
                 pluginConfig.parseXml(el);
@@ -342,126 +348,6 @@ void DeviceConfig::xmlError(const char* msg, juce::String arg)
     else
       Trace(1, fullmsg.toUTF8(), arg.toUTF8());
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Original XML Rendering
-// Delete when the new one works properly
-//
-//////////////////////////////////////////////////////////////////////
-#if 0
-
-// this worked but it didn't support extended characters
-// in some device names, notably this
-//     audioInput='Microphone Array (Intel Smart Sound Technology for Digital Microphones)'
-// which had a special characters including a trademark after "Intel"
-//
-juce::String DeviceConfig::toXmlOld()
-{
-    XmlBuffer b;
-
-	b.addOpenStartTag(EL_DEVICE_CONFIG);
-	b.setAttributeNewline(true);
-
-    b.addAttribute(ATT_INPUT_PORTS, inputPorts);
-    b.addAttribute(ATT_OUTPUT_PORTS, outputPorts);
-    
-	b.closeStartTag(true);
-    b.incIndent();
-    
-    for (auto machine : machines) {
-
-        b.addOpenStartTag(EL_MACHINE);
-        b.addAttribute(ATT_HOST_NAME, machine->hostName);
-        b.addAttribute(ATT_AUDIO_DEVICE_TYPE, machine->getAudioDeviceType());
-        b.addAttribute(ATT_AUDIO_INPUT, machine->getAudioInput());
-        b.addAttribute(ATT_AUDIO_OUTPUT, machine->getAudioOutput());
-        b.addAttribute(ATT_INPUT_CHANNELS, machine->inputChannels);
-        b.addAttribute(ATT_OUTPUT_CHANNELS, machine->outputChannels);
-        b.addAttribute(ATT_SAMPLE_RATE, machine->getSampleRate());
-        b.addAttribute(ATT_BLOCK_SIZE, machine->getBlockSize());
-        
-        b.addAttribute(ATT_MIDI_INPUT, machine->midiInput);
-        b.addAttribute("midiInputSync", machine->midiInputSync);
-        b.addAttribute(ATT_MIDI_OUTPUT, machine->midiOutput);
-        b.addAttribute("midiOutputSync", machine->midiOutputSync);
-        
-        b.addAttribute("pluginMidiInput", machine->pluginMidiInput);
-        b.addAttribute("pluginMidiInputSync", machine->pluginMidiInputSync);
-        b.addAttribute("pluginMidiOutput", machine->pluginMidiOutput);
-        b.addAttribute("pluginMidiOutputSync", machine->pluginMidiOutputSync);
-
-        b.closeEmptyElement();
-    }
-
-    b.decIndent();
-    b.addEndTag(EL_DEVICE_CONFIG);
-
-    return juce::String(b.getString());
-}
-
-DeviceConfig* DeviceConfig::parseXmlOld(juce::String xml)
-{
-    DeviceConfig* config = nullptr;
-	XomParser parser;
-    XmlDocument* doc = parser.parse(xml.toUTF8());
-
-    if (doc == nullptr) {
-        Trace(1, "DeviceConfig: XML parse error %s\n", parser.getError());
-    }
-    else {
-        XmlElement* e = doc->getChildElement();
-        if (e == nullptr) {
-            Trace(1, "DeviceConfig: Missing child element\n");
-        }
-        else if (!e->isName(EL_DEVICE_CONFIG)) {
-            Trace(1, "DeviceConfig: Document is not a DeviceConfig: %s\n", e->getName());
-        }
-        else {
-            config = new DeviceConfig();
-			parseXml(e, config);
-        }
-    }
-
-    delete doc;
-    return config;
-}
-
-void DeviceConfig::parseXmlOld(XmlElement* e, DeviceConfig* c)
-{
-    c->desiredInputChannels = e->getIntAttribute(ATT_INPUT_CHANNELS);
-    c->desiredOutputChannels = e->getIntAttribute(ATT_OUTPUT_CHANNELS);
-    
-	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
-		 child = child->getNextElement()) {
-
-        if (child->isName(EL_MACHINE)) {
-            MachineConfig* mc = new MachineConfig();
-
-            mc->setHostName(child->getJString(ATT_HOST_NAME));
-            mc->setAudioDeviceType(child->getJString(ATT_AUDIO_DEVICE_TYPE));
-            mc->setAudioInput(child->getJString(ATT_AUDIO_INPUT));
-            mc->setAudioOutput(child->getJString(ATT_AUDIO_OUTPUT));
-            mc->inputChannels = child->getJString(ATT_INPUT_CHANNELS);
-            mc->outputChannels = child->getJString(ATT_OUTPUT_CHANNELS);
-            mc->setSampleRate(child->getInt(ATT_SAMPLE_RATE));
-            mc->setBlockSize(child->getInt(ATT_BLOCK_SIZE));
-
-            mc->midiInput = child->getJString(ATT_MIDI_INPUT);
-            mc->midiInputSync = child->getJString("midiInputSync");
-            mc->midiOutput = child->getJString(ATT_MIDI_OUTPUT);
-            mc->midiOutputSync = child->getJString("midiOutputSync");
-            
-            mc->pluginMidiInput = child->getJString("pluginMidiInput");
-            mc->pluginMidiInputSync = child->getJString("pluginMidiInputSync");
-            mc->pluginMidiOutput = child->getJString("pluginMidiOutput");
-            mc->pluginMidiOutputSync = child->getJString("pluginMidiOutputSync");
-            
-            c->machines.add(mc);
-        }
-    }
-}
-#endif
 
 /****************************************************************************/
 /****************************************************************************/

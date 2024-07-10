@@ -119,6 +119,7 @@
     <Button action="Pause" arguments="noquant"/>
     <Button action="GlobalPause"/>
     <Button action="GlobalMute"/>
+    <Button action="AutoRecord"/>
   </ButtonSet>
   <Properties>
     <Property name="loopRows" value=""/>
