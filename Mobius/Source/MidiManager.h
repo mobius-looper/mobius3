@@ -153,6 +153,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // hate dealing with unique_ptr, I don't need my goddam dick held for me
     //juce::Array<std::unique_ptr<juce::MidiInput>> inputDevices;
     juce::OwnedArray<juce::MidiInput> inputDevices;
+    juce::OwnedArray<juce::MidiOutput> outputDevices;
     std::unique_ptr<juce::MidiOutput> outputDevice = nullptr;
     std::unique_ptr<juce::MidiOutput> outputSyncDevice = nullptr;
     

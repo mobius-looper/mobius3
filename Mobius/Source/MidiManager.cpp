@@ -361,6 +361,73 @@ void MidiManager::reopenInputs()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Say something bad...
+ *
+ * Trace so we can see it immediately the debug log if nothing is watching.
+ * Add it to the error list so we can show it the next time the monitor window
+ * is opened. And finally send it to any monitors that might be open now.
+ */
+void MidiManager::somethingBadHappened(juce::String msg)
+{
+    Trace(1, "MidiManager: %s\n", msg.toUTF8());
+    errors.add(msg);
+    monitorMessage(msg);
+}
+
+void MidiManager::monitorMessage(juce::String msg)
+{
+    for (auto monitor : monitors)
+      monitor->midiMonitorMessage(msg);
+}
+
+juce::MidiOutput* MidiManager::findOutput(juce::String name)
+{
+    juce::MidiOutput* found = nullptr;
+    for (auto dev : outputDevices) {
+        if (dev->getName() == name) {
+            found = dev;
+            break;
+        }
+    }
+    return found;
+}
+
+/**
+ * Open an output device if it is not already open.
+ * Return either the new one or the an existing one.
+ */
+juce::MidiOutput* MidiManager::findOrOpenOutput(juce::String name)
+{
+    juce::MidiOutput* found = findOutput(name);
+    if (found == nullptr) {
+        if (name.length() > 0) {
+            const char* tracename = name.toUTF8();
+            juce::String id = getOutputDeviceId(name);
+
+            if (id.isEmpty()) {
+                juce::String msg = "Unable to find output device id for " + name;
+                somethingBadHappened(msg);
+            }
+            else {
+                Trace(2, "MidiManager: Opening output %s\n", tracename);
+                std::unique_ptr<juce::MidiOutput> dev = juce::MidiOutput::openDevice(id);
+                if (dev == nullptr) {
+                    juce::String msg = "Unable to open output " + name;
+                    somethingBadHappened(msg);
+                }
+                else {
+                    // liberate it
+                    found = dev.release();
+                    outputDevices.add(found);
+                }
+
+            }
+        }
+    }
+    return found;
+}
+
+/**
  * We have allowed devices.xml to have lists of names, though that
  * should have been prevented for output devices.  Currently only
  * allowing one output device at a time since there isn't a way
@@ -449,26 +516,6 @@ void MidiManager::openOutputInternal(juce::String name, bool sync)
             }
         }
     }
-}
-
-/**
- * Say something bad...
- *
- * Trace so we can see it immediately the debug log if nothing is watching.
- * Add it to the error list so we can show it the next time the monitor window
- * is opened. And finally send it to any monitors that might be open now.
- */
-void MidiManager::somethingBadHappened(juce::String msg)
-{
-    Trace(1, "MidiManager: %s\n", msg.toUTF8());
-    errors.add(msg);
-    monitorMessage(msg);
-}
-
-void MidiManager::monitorMessage(juce::String msg)
-{
-    for (auto monitor : monitors)
-      monitor->midiMonitorMessage(msg);
 }
 
 void MidiManager::closeOutputInternal(juce::String name, bool sync)
