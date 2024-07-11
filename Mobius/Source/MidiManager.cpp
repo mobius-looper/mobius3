@@ -93,7 +93,7 @@ void MidiManager::suspend()
  */
 void MidiManager::resume()
 {
-    reopenInputs();
+    startInputs();
 }
 
 /**
@@ -105,7 +105,7 @@ void MidiManager::resume()
 void MidiManager::shutdown()
 {
     // don't know what we need to do with these...
-    closeInputs();
+    closeAllInputs();
 }
 
 void MidiManager::addListener(Listener* l)
@@ -142,6 +142,26 @@ void MidiManager::removeMonitor(Monitor* l)
 }
 
 /**
+ * Say something bad...
+ *
+ * Trace so we can see it immediately the debug log if nothing is watching.
+ * Add it to the error list so we can show it the next time the monitor window
+ * is opened. And finally send it to any monitors that might be open now.
+ */
+void MidiManager::somethingBadHappened(juce::String msg)
+{
+    Trace(1, "MidiManager: %s\n", msg.toUTF8());
+    errors.add(msg);
+    monitorMessage(msg);
+}
+
+void MidiManager::monitorMessage(juce::String msg)
+{
+    for (auto monitor : monitors)
+      monitor->midiMonitorMessage(msg);
+}
+
+/**
  * Open previously configured devices.
  * This is always called at startup, and may be called by MidiDevicesPanel
  * randomly to reflect changes made in the UI.
@@ -165,39 +185,8 @@ void MidiManager::openDevices()
     // keep a list of device errors for display at an appropriate time later
     errors.clear();
 
-    bool traceAll = false;
-    if (traceAll) {
-        Trace(2, "MIDI Input Devices:\n");
-        juce::StringArray names = getInputDevices();
-        for (auto name : names)
-          Trace(2, "  %s\n", name.toUTF8());
-        
-        Trace(2, "MIDI Output Devices:\n");
-        names = getOutputDevices();
-        for (auto name : names)
-          Trace(2, "  %s\n", name.toUTF8());
-    }
-
-    // "close" the current ones first
-    // stopInputs();
-    closeInputs();
-    outputDevice = nullptr;
-    outputSyncDevice = nullptr;
-    
-    if (supervisor->isPlugin()) {
-        openInputs(mconfig->pluginMidiInput);
-        openInputs(mconfig->pluginMidiInputSync);
-
-        openOutputInternal(getFirstName(mconfig->pluginMidiOutput), false);
-        openOutputInternal(getFirstName(mconfig->pluginMidiOutputSync), true);
-    }
-    else {
-        openInputs(mconfig->midiInput);
-        openInputs(mconfig->midiInputSync);
-
-        openOutputInternal(getFirstName(mconfig->midiOutput), false);
-        openOutputInternal(getFirstName(mconfig->midiOutputSync), true);
-    }
+    reconcileInputs(mconfig);
+    reconcileOutputs(mconfig);
 
     // also install ourselves as the MobiusMidiListener when running
     // as a plugin, this only needs to be done once, but it's convenient
@@ -208,6 +197,65 @@ void MidiManager::openDevices()
     }
 }
 
+/**
+ * Return the device list (a csv) for the given usage, depending on whether or not we
+ * are running as a plugin.
+ *
+ * The two generaal MIDI inputs are allowed to be a csv, the others must
+ * all be singles, and if misconfigured, returns the first one.
+ */
+juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
+{
+    juce::String name;
+    
+    if (supervisor->isPlugin()) {
+        if (usage == Input)
+          name = config->pluginMidiInput;
+        else if (usage == InputSync)
+          name = getFirstName(config->pluginMidiInputSync);
+        else if (usage == Output)
+          name = getFirstName(config->pluginMidiOutput);
+        else if (usage == OutputSync)
+          name = getFirstName(config->pluginMidiOutputSync);
+        else if (usage == Thru)
+          name = getFirstName(config->pluginMidiThru);
+    }
+    else {
+        if (usage == Input)
+          name = config->midiInput;
+        else if (usage == InputSync)
+          name = getFirstName(config->midiInputSync);
+        else if (usage == Output)
+          name = getFirstName(config->midiOutput);
+        else if (usage == OutputSync)
+          name = getFirstName(config->midiOutputSync);
+        else if (usage == Thru)
+          name = getFirstName(config->midiThru);
+    }
+
+    return name;
+}
+
+/**
+ * We have allowed devices.xml to have lists of names, though that
+ * should have been prevented for output devices.  Currently only
+ * allowing one output device at a time since there isn't a way
+ * to address them from within.
+ */
+juce::String MidiManager::getFirstName(juce::String csv)
+{
+    juce::String name;
+    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
+
+    if (list.size() > 1)
+      Trace(1, "MidiManager: Multiple output devices configured but only one can be opened: %s\n",
+            csv.toUTF8());
+    
+    if (list.size() > 0)
+      name = list[0];
+    return name;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Input Devices
@@ -215,15 +263,27 @@ void MidiManager::openDevices()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Open a list of input devices from devices.xml
+ * Open the output devices configured, and close the ones that are not.
  */
-void MidiManager::openInputs(juce::String csv)
+void MidiManager::reconcileInputs(MachineConfig* config)
 {
-    // convert the MachineConfig model to a list
-    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
-    for (auto name : list) {
-        openInput(name);
+    // since we only have one usage pointer, capture the name for incremental close
+    juce::String csv = getDeviceName(config, Input);
+    // we don't have usage pointers for inputs like we do for outputs
+    // so remember the configured names, broken out of the csv
+    inputNames = juce::StringArray::fromTokens(csv, ",", "");
+    inputSyncName = getDeviceName(config, InputSync);
+
+    // normal inputs
+    for (auto name : inputNames) {
+        (void)findOrOpenInput(name);
     }
+
+    // special sync input
+    if (inputSyncName.length() > 0)
+      inputSyncDevice = findOrOpenInput(inputSyncName);
+
+    closeUnusedInputs();
 }
 
 juce::MidiInput* MidiManager::findInput(juce::String name)
@@ -248,38 +308,17 @@ juce::MidiInput* MidiManager::findInput(juce::String name)
  * when you're done.  Once you have it open you start and stop it.  There
  * doesn't appear to be a "close", in testing, deleting the object seemed to
  * deregister the callback.
- *
- * This does not currently save it in the devices.xml at this level,
- * still have to click Save on the panel.  Not sure I like that.
  */
-void MidiManager::openInput(juce::String name)
+juce::MidiInput* MidiManager::findOrOpenInput(juce::String name)
 {
-    juce::MidiInput* existing = findInput(name);
-    if (existing != nullptr) {
+    juce::MidiInput* found = findInput(name);
+    if (found != nullptr) {
         // already open, unclear what should happen if this was
         // in a stopped state, which shouldn't happen from the devices panel
         // I guess just ensure it is started so we can monitor it
-        existing->start();
+        found->start();
     }
-    else {
-        std::unique_ptr<juce::MidiInput> neu = openNewInput(name);
-        if (neu != nullptr) {
-            // liberate the MidiInput from the fucking unique_ptr
-            // so it can be dealt with naturally
-            inputDevices.add(neu.release());
-        }
-    }
-}
-
-/**
- * Open a MIDI input through the MidiInput class and register a listener.
- * The listener callback is the second arg to openDevice, we don't have
- * different callbacks for control vs. sync
- */
-std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
-{
-    std::unique_ptr<juce::MidiInput> dev = nullptr;
-    if (name.length() > 0) {
+    else if (name.length() > 0) {
         juce::String id = getInputDeviceId(name);
         if (id.isEmpty()) {
             juce::String msg = "Unable to find input device id for " + name;
@@ -288,36 +327,83 @@ std::unique_ptr<juce::MidiInput> MidiManager::openNewInput(juce::String name)
         else {
             Trace(2, "MidiManager: Opening input %s\n", name.toUTF8());
 
-            dev = juce::MidiInput::openDevice(id, this);
-
+            std::unique_ptr<juce::MidiInput> dev = juce::MidiInput::openDevice(id, this);
             if (dev == nullptr) {
                 juce::String msg = "Unable to open input " + name;
                 somethingBadHappened(msg);
             }
             else {
+                found = dev.release();
+                inputDevices.add(found);
                 // presumably this is what starts it pumping events to the callback
-                dev->start();
-                monitorMessage("Opened input " + name);
+                found->start();
             }
         }
     }
-    return dev;
+    return found;
 }
 
-void MidiManager::closeInput(juce::String name)
+/**
+ * Open an input device if not already open.
+ * This is designed to be called from MidiDevicesPanel when aa device is checked.
+ * The name is added to the name list for this usage to reflect the panel.
+ */
+void MidiManager::openInput(juce::String name, Usage usage)
 {
-    juce::MidiInput* existing = findInput(name);
-    if (existing == nullptr) {
-        // should only get here if they're deselecting something
-        // from the devices panel that we couldn't open anyway due to conflicts
+    if (usage == Input) {
+        if (!inputNames.contains(name))
+          inputNames.add(name);
+        (void)findOrOpenInput(name);
     }
-    else {
-        // this is an OwnedArray so it will delete it
-        inputDevices.removeObject(existing);
-        monitorMessage("Closed input " + name);
+    else if (usage == InputSync) {
+        inputSyncName = name;
+        inputSyncDevice = findOrOpenInput(name);
+        closeUnusedInputs();
     }
 }
-    
+
+/**
+ * Close one of the input devices.
+ * This is designed to be called from MidiDevicesPanel when aa device is unchecked.
+ * If the device isn't needed for a different usage it is closed.
+ * The name is removed from the name cache to track the selections in the panel.
+ */
+void MidiManager::closeInput(juce::String name, Usage usage)
+{
+    if (usage == Input) {
+        inputNames.removeString(name);
+    }
+    else if (usage == InputSync) {
+        // igmore if this isn't the one we had selected for sync
+        if (inputSyncName == name) {
+            // unpin the name reference
+            inputSyncName = "";
+            inputSyncDevice = nullptr;
+        }
+    }
+    closeUnusedInputs();
+}
+
+void MidiManager::closeUnusedInputs()
+{
+    int index = 0;
+    while (index < inputDevices.size()) {
+        juce::MidiInput* dev = inputDevices[index];
+        if (inputNames.contains(dev->getName()) || dev->getName() == inputSyncName) {
+            // still need this one
+            index++;
+        }
+        else {
+            // close and delete this one
+            dev->stop();
+            if (dev == inputSyncDevice)
+              inputSyncDevice = nullptr;
+            inputDevices.removeObject(dev, true);
+            monitorMessage("Closed input " + dev->getName());
+        }
+    }
+}
+
 /**
  * Stop any currently open input devices.
  */
@@ -328,7 +414,17 @@ void MidiManager::stopInputs()
     }
 }    
 
-void MidiManager::closeInputs()
+/**
+ * Restart any currently open input devices.
+ */
+void MidiManager::startInputs()
+{
+    for (auto dev : inputDevices) {
+        dev->start();
+    }
+}    
+
+void MidiManager::closeAllInputs()
 {
     // stop them first?
     stopInputs();
@@ -336,50 +432,72 @@ void MidiManager::closeInputs()
     inputDevices.clear();
 }    
 
-/**
- * Reopen just the inputs after suspend/resume
- */
-void MidiManager::reopenInputs()
-{
-    DeviceConfig* config = supervisor->getDeviceConfig();
-    MachineConfig* mconfig = config->getMachineConfig();
-    
-    if (supervisor->isPlugin()) {
-        openInputs(mconfig->pluginMidiInput);
-        openInputs(mconfig->pluginMidiInputSync);
-    }
-    else {
-        openInputs(mconfig->midiInput);
-        openInputs(mconfig->midiInputSync);
-    }
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Output Devices
 //
+// Management of these is more complex than inputs because we have
+// three different types, there can only be one of each type,
+// and we have usage pointers to each one.
+//
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Say something bad...
- *
- * Trace so we can see it immediately the debug log if nothing is watching.
- * Add it to the error list so we can show it the next time the monitor window
- * is opened. And finally send it to any monitors that might be open now.
+ * Open the output devices configured, and close the ones that are not.
  */
-void MidiManager::somethingBadHappened(juce::String msg)
+void MidiManager::reconcileOutputs(MachineConfig* config)
 {
-    Trace(1, "MidiManager: %s\n", msg.toUTF8());
-    errors.add(msg);
-    monitorMessage(msg);
+    openOutput(getDeviceName(config, Output), Output);
+    openOutput(getDeviceName(config, OutputSync), OutputSync);
+    openOutput(getDeviceName(config, Thru), Thru);
+
+    closeUnusedOutputs();
 }
 
-void MidiManager::monitorMessage(juce::String msg)
+/**
+ * Open a device for a particular usage.
+ * This is intended for use by the MidiDevicesPanel when checking a box in the grid.
+ */
+void MidiManager::openOutput(juce::String name, Usage usage)
 {
-    for (auto monitor : monitors)
-      monitor->midiMonitorMessage(msg);
+    if (usage == Output)
+      outputDevice = findOrOpenOutput(name);
+    else if (usage == OutputSync)
+      outputSyncDevice = findOrOpenOutput(name);
+    else if (usage == Thru)
+      thruDevice = findOrOpenOutput(name);
 }
 
+/**
+ * Close the output device with the given usage if it not used for something else.
+ * This will actually close ALL unused devices, not just the one requested.
+ * Don't need to differentiate between this yet.
+ */
+void MidiManager::closeOutput(juce::String name, Usage usage)
+{
+    if (usage == Output) {
+        if (outputDevice != nullptr && outputDevice->getName() == name) {
+            outputDevice = nullptr;
+            closeUnusedOutputs();
+        }
+    }
+    else if (usage == OutputSync) {
+        if (outputSyncDevice != nullptr && outputSyncDevice->getName() == name) {
+            outputSyncDevice = nullptr;
+            closeUnusedOutputs();
+        }
+    }
+    else if (usage == Thru) {
+        if (thruDevice != nullptr && thruDevice->getName() == name) {
+            thruDevice = nullptr;
+            closeUnusedOutputs();
+        }
+    }
+}
+
+/**
+ * Find an output device that has already been opened.
+ */
 juce::MidiOutput* MidiManager::findOutput(juce::String name)
 {
     juce::MidiOutput* found = nullptr;
@@ -428,132 +546,69 @@ juce::MidiOutput* MidiManager::findOrOpenOutput(juce::String name)
 }
 
 /**
- * We have allowed devices.xml to have lists of names, though that
- * should have been prevented for output devices.  Currently only
- * allowing one output device at a time since there isn't a way
- * to address them from within.
+ * Close any open output devices that are not selected for a usage.
  */
-juce::String MidiManager::getFirstName(juce::String csv)
+void MidiManager::closeUnusedOutputs()
 {
-    juce::String name;
-    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
+    juce::Array<juce::MidiOutput*> used;
+    retainOutput(outputDevice, used);
+    retainOutput(outputSyncDevice, used);
+    retainOutput(thruDevice, used);
 
-    if (list.size() > 1)
-      Trace(1, "MidiManager: Multiple output devices configured but only one can be opened: %s\n",
-            csv.toUTF8());
-    
-    if (list.size() > 0)
-      name = list[0];
-    return name;
-}
+    // close/delete what remains
+    outputDevices.clear();
 
-void MidiManager::openOutput(juce::String name)
-{
-    openOutputInternal(name, false);
-}
-
-void MidiManager::closeOutput(juce::String name)
-{
-    closeOutputInternal(name, false);
-}
-
-void MidiManager::openOutputSync(juce::String name)
-{
-    openOutputInternal(name, true);
-}
-
-void MidiManager::closeOutputSync(juce::String name)
-{
-    closeOutputInternal(name, true);
+    // and put the used ones back
+    outputDevices.addArray(used);
 }
 
 /**
- * As far as I can tell, you do not "close" a device after it was opened.
- * You just stop using it, and if you try to open the same device again, Juce
- * returns the same object.  It must keep it's own cache of these internally.
- *
- * Alternately, you seem to be able to delete these like you do MidiInputs
- * which is probably the equivalent of "close" in that it releases internal
- * the internal resources.
+ * If the device usage pointer is non-null, move the device from the open
+ * list to the retain list.
  */
-void MidiManager::openOutputInternal(juce::String name, bool sync)
+void MidiManager::retainOutput(juce::MidiOutput* dev, juce::Array<juce::MidiOutput*> retains)
 {
-    if (name.length() > 0) {
-        const char* tracename = name.toUTF8();
-        juce::String id = getOutputDeviceId(name);
-
-        if (id.isEmpty()) {
-            juce::String msg = "Unable to find output device id for " + name;
-            somethingBadHappened(msg);
-        }
-        else {
-            Trace(2, "MidiManager: Opening output %s\n", tracename);
-            std::unique_ptr<juce::MidiOutput> dev = juce::MidiOutput::openDevice(id);
-            if (dev == nullptr) {
-                juce::String msg = "Unable to open output " + name;
-                somethingBadHappened(msg);
-            }
-            else {
-                // this is where you would do startBackgroundThread if
-                // you ever want that
-                if (sync) {
-                    if (outputSyncDevice != nullptr)
-                      monitorMessage("Closing sync output " + outputSyncDevice->getName());
-                    // since this is a unique_ptr it will delete the previous one
-                    // todo: inform the monitor that we're closing the previous one
-                    outputSyncDevice = std::move(dev);
-
-                    monitorMessage("Opened sync output " + outputSyncDevice->getName());
-                }
-                else {
-                    if (outputDevice != nullptr)
-                      monitorMessage("Closing output " + outputDevice->getName());
-                      
-                    outputDevice = std::move(dev);
-
-                    monitorMessage("Opened sync output " + outputDevice->getName());
-                }
-            }
-        }
+    if (dev != nullptr) {
+        outputDevices.removeObject(dev, false);
+        retains.add(dev);
     }
 }
 
-void MidiManager::closeOutputInternal(juce::String name, bool sync)
+/**
+ * Close all open output devices and reset the usage pointers
+ */
+void MidiManager::closeAllOutputs()
 {
-    if (sync) {
-        if (outputSyncDevice == nullptr ||
-            outputSyncDevice->getName() != name) {
-            // trying to close something that wasn't open
-            // should only happen if MidiDevicesPanel is out of sync with reality
-            monitorMessage("Sync output device not open: " + name);
-        }
-        else {
-            monitorMessage("Closing sync output " + name);
-            outputSyncDevice = nullptr;
-        }
-    }
-    else {
-        if (outputDevice == nullptr ||
-            outputDevice->getName() != name) {
-            // trying to close something that wasn't open
-            // should only happen if MidiDevicesPanel is out of sync with reality
-            monitorMessage("Output device not open: " + name);
-        }
-        else {
-            monitorMessage("Closing output " + name);
-            outputDevice = nullptr;
-        }
-    }        
+    outputDevices.clear();
+    outputDevice = nullptr;
+    outputSyncDevice = nullptr;
+    thruDevice = nullptr;
 }
+
+/**
+ * Return the name of the currently open output devices.
+ * Used by MidiDevicesPanel to show what we were able to do after the
+ * last openDevices.
+ */
+juce::StringArray MidiManager::getOpenOutputDevices()
+{
+    juce::StringArray names;
+    for (auto dev : outputDevices)
+      names.add(dev->getName());
+    return names;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Output Messages
+//
+//////////////////////////////////////////////////////////////////////
 
 bool MidiManager::hasOutputDevice()
 {
     return (outputDevice != nullptr);
 }
 
-/**
- * Send a MIDI message if we have an output device.
- */
 void MidiManager::send(juce::MidiMessage msg)
 {
     if (outputDevice)
@@ -653,24 +708,6 @@ juce::String MidiManager::getInputDeviceId(juce::String name)
 juce::String MidiManager::getOutputDeviceId(juce::String name)
 {
     return getDeviceId(juce::MidiOutput::getAvailableDevices(), name);
-}
-
-/**
- * Return the name of the currently open output devices.
- * Used by MidiDevicesPanel to show what we were able to do after the
- * last openDevices.
- */
-juce::StringArray MidiManager::getOpenOutputDevices()
-{
-    juce::StringArray names;
-
-    if (outputDevice != nullptr)
-      names.add(outputDevice->getName());
-
-    if (outputSyncDevice != nullptr)
-      names.add(outputSyncDevice->getName());
-      
-    return names;
 }
 
 juce::StringArray MidiManager::getOpenInputDevices()

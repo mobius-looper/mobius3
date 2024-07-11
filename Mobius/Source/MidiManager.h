@@ -40,6 +40,17 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
   public:
 
     /**
+     * Internal usage indiciator when opening and closing devices.
+     */
+    enum Usage {
+        Input,
+        InputSync,
+        Output,
+        OutputSync,
+        Thru
+    };
+
+    /**
      * Interface of an object that wants to receive MidiMessages for processing.
      * Only normal consumer is Binderator.
      * This is used only for non-realtime messages like notes, controllers, etc.
@@ -90,12 +101,10 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void openDevices();
 
     // open and close devices individually
-    void openInput(juce::String name);
-    void closeInput(juce::String name);
-    void openOutput(juce::String name);
-    void closeOutput(juce::String name);
-    void openOutputSync(juce::String name);
-    void closeOutputSync(juce::String name);
+    void openInput(juce::String name, Usage usage);
+    void closeInput(juce::String name, Usage usage);
+    void openOutput(juce::String name, Usage usage);
+    void closeOutput(juce::String name, Usage usage);
 
     // temporarily disable inputs
     void suspend();
@@ -139,7 +148,6 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     
   private:
 
-
     class Supervisor* supervisor = nullptr;
 
     class juce::Array<Listener*> listeners;
@@ -149,13 +157,24 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // error messages from the last time openDevices was called
     juce::StringArray errors;
 
+    // device names captured from the MachineConfig
+    // used to maintain configured selections when deselecting individual devices
+    // the MidiDevicesPanel
+    juce::StringArray inputNames;
+    juce::String inputSyncName;
+
+    // pointers to open devices
     // this isn't the way you're supposed to do it, but I fucking
     // hate dealing with unique_ptr, I don't need my goddam dick held for me
-    //juce::Array<std::unique_ptr<juce::MidiInput>> inputDevices;
     juce::OwnedArray<juce::MidiInput> inputDevices;
     juce::OwnedArray<juce::MidiOutput> outputDevices;
-    std::unique_ptr<juce::MidiOutput> outputDevice = nullptr;
-    std::unique_ptr<juce::MidiOutput> outputSyncDevice = nullptr;
+
+    // usage pointers for objects in the inputDevices list
+    juce::MidiInput* inputSyncDevice = nullptr;
+    // usage pointers for objects in the outputDevices list
+    juce::MidiOutput* outputDevice = nullptr;
+    juce::MidiOutput* outputSyncDevice = nullptr;
+    juce::MidiOutput* thruDevice = nullptr;
     
     // tutorial captures this on creation to show relative times
     // when logging incomming MIDI messages
@@ -166,22 +185,30 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     bool pluginMessageQueued = false;
     
     void somethingBadHappened(juce::String msg);
+    void monitorMessage(juce::String msg);
 
     juce::String getDeviceId(juce::Array<juce::MidiDeviceInfo> devices, juce::String name);
     juce::String getInputDeviceId(juce::String name);
     juce::String getOutputDeviceId(juce::String name);
 
+
+    juce::String getDeviceName(class MachineConfig* config, Usage usage);
     juce::String getFirstName(juce::String csv);
+
+    void reconcileInputs(MachineConfig* config);
     juce::MidiInput* findInput(juce::String name);
-    
+    juce::MidiInput* findOrOpenInput(juce::String name);
+    void closeUnusedInputs();
     void stopInputs();
-    void closeInputs();
-    void openInputs(juce::String csv);
-    void reopenInputs();
-    std::unique_ptr<juce::MidiInput> openNewInput(juce::String name);
-    void openOutputInternal(juce::String name, bool sync);
-    void closeOutputInternal(juce::String name, bool sync);
-    void monitorMessage(juce::String msg);
+    void startInputs();
+    void closeAllInputs();
+
+    void reconcileOutputs(MachineConfig* config);
+    juce::MidiOutput* findOutput(juce::String name);
+    juce::MidiOutput* findOrOpenOutput(juce::String name);
+    void closeUnusedOutputs();
+    void retainOutput(juce::MidiOutput* dev, juce::Array<juce::MidiOutput*> retains);
+    void closeAllOutputs();
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
 

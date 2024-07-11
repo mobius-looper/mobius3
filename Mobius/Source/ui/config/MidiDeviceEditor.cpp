@@ -181,22 +181,22 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int col,
         if (table == &inputTable) {
             // not differentiating between control and sync right now
             if (state)
-              mm->openInput(device);
+              mm->openInput(device, MidiManager::Usage::Input);
             else
-              mm->closeInput(device);
+              mm->closeInput(device, MidiManager::Usage::InputSync);
         }
         else {
             if (col > colbase) {
                 if (state)
-                  mm->openOutputSync(device);
+                  mm->openOutput(device, MidiManager::Usage::OutputSync);
                 else
-                  mm->closeOutputSync(device);
+                  mm->closeOutput(device, MidiManager::Usage::OutputSync);
             }
             else {
                 if (state)
-                  mm->openOutput(device);
+                  mm->openOutput(device, MidiManager::Usage::Output);
                 else
-                  mm->closeOutput(device);
+                  mm->closeOutput(device, MidiManager::Usage::Output);
             }
         }
     }
