@@ -36,7 +36,7 @@ class MobiusConsole : public juce::Component,
 
     // Console::Listener
     void consoleLine(juce::String line) override;
-    void consoleEscape();
+    void consoleEscape() override;
 
     // MslSession::Listener
     void mslTrace(const char* msg) override;

@@ -170,9 +170,9 @@ bool MslParser::matchBracket(MslToken& t, MslNode* block)
 {
     // let's try to avoid a specific MslBlock just store the
     // bracketing char
-    bool match = ((t.value == "}") && (block->token == "{") ||
-                  (t.value == ")") && (block->token == "(") ||
-                  (t.value == "]") && (block->token == "["));
+    bool match = (((t.value == "}") && (block->token == "{")) ||
+                  ((t.value == ")") && (block->token == "(")) ||
+                  ((t.value == "]") && (block->token == "[")));
 
     if (!match)
       errorSyntax(t, "Mismatched brackets");

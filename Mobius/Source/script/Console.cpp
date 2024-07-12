@@ -92,7 +92,7 @@ juce::String Console::getLastLine()
     int psn = len - 1;
     
     // back up to the last character that is not a newline or space
-    while (psn > 0 && all[psn] == '\n' || all[psn] == ' ')
+    while (psn > 0 && (all[psn] == '\n' || all[psn] == ' '))
       psn--;
 
     if (psn == 0) {
