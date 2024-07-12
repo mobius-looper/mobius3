@@ -808,6 +808,19 @@ void MidiManager::handleIncomingMidiMessage (juce::MidiInput* source,
     // passing source->getName() directly as a reference arg
     juce::String sourceName = source->getName();
     postListenerMessage(message, sourceName);
+
+    // unclear whether sending MIDI is considered dangerous to do in the receiver thread,
+    // let's try
+    // might want some amount of filtering here, like supressing realtime
+    // if there are several inputs configured, might want to designate only certain
+    // ones to use thru
+    // and beyond that this could get really flexible and allow each input to specific a
+    // different thru device
+    if (thruDevice != nullptr) {
+        // since this is a reference, unclear if it would be modified
+        // though I think the presence of "const" in the signature says it won't be
+        thruDevice->sendMessageNow(message);
+    }
 }
 
 /**
