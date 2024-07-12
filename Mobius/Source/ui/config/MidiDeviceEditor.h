@@ -16,6 +16,25 @@
 
 #include "ConfigEditor.h"
 
+/**
+ * Enumeration of column ids for the two tables.  Though one
+ * table won't have all of these, it's nice to have a single number
+ * space to refer to both of them.
+ */
+enum MidiDeviceColumn {
+    MidiColumnName = 1,
+    MidiColumnInput,
+    MidiColumnInputSync,
+    MidiColumnOutput,
+    MidiColumnOutputSync,
+    MidiColumnThru,
+    MidiColumnPluginInput,
+    MidiColumnPluginInputSync,
+    MidiColumnPluginOutput,
+    MidiColumnPluginOutputSync,
+    MidiColumnPluginThru
+};
+
 class MidiDeviceTableRow
 {
   public:
@@ -27,10 +46,7 @@ class MidiDeviceTableRow
     // true if this was in DeviceConfig but not found
     bool missing = false;
 
-    bool appControl = false;
-    bool appSync = false;
-    bool pluginControl = false;
-    bool pluginSync = false;
+    juce::Array<MidiDeviceColumn> checks;
 };
 
 class MidiDeviceTable : public BasicTable, public BasicTable::Model
@@ -45,9 +61,14 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     }
 
     void init(class MidiManager* mm, bool output);
-    void load(class DeviceConfig* config);
-    void save(class DeviceConfig* config);
-
+    void load(class MachineConfig* config);
+    void save(class MachineConfig* config);
+    void uncheckOthers(MidiDeviceColumn colid, int selectedRow);
+    
+    MidiDeviceTableRow* getRow(int row) {
+        return devices[row];;
+    }
+    
     juce::String getName(int row);
 
     // BasicTable::Model
@@ -64,8 +85,8 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     juce::OwnedArray<MidiDeviceTableRow> devices;
 
     MidiDeviceTableRow* getRow(juce::String name);
-    void loadDevices(juce::String names, bool sync, bool plugin);
-    juce::String getDevices(bool sync, bool plugin);
+    void loadDevices(juce::String names, MidiDeviceColumn colid);
+    juce::String getDevices(MidiDeviceColumn colid);
 
     
 };
@@ -102,7 +123,11 @@ class MidiDeviceEditor : public ConfigEditor,
     BasicTabs tabs;
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;
-    bool dynamicOpen = false;
+
+    // the MachineConfig being edited
+    // when in "live" mode this will be the active model
+    // extracted from Supervisor::getDeviceConfig
+    class MachineConfig* machine = nullptr;
     
     juce::MidiMessage pluginMessage;
     bool pluginMessageQueued = false;

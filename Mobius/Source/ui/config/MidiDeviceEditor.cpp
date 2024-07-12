@@ -1,6 +1,47 @@
 /**
  * ConfigEditor for configuring MIDI devices.
  *
+ * This can work two ways...
+ * 
+ * Most of the config editors are Save/Cancel editors.
+ * You're editing an object read from a file and nothing happens
+ * until you click Save and the object is written back to the file
+ * and the changes propagated to the rest of the system.  If you click
+ * Cancel nothing is changed and you start over the next time.
+ *
+ * The AudioEditor doesn't work that way, mostly because the Juce component
+ * it uses to show the options has an immediate effect on the running system.
+ * We still need to save the changes in a file so they can be restored on the
+ * next restart, but there is no Cancel.  I suppose there could be, by restoring
+ * the audio settings from the file, but it doesn't do that now.
+ *
+ * The MidiDevices editor can work either way, it can just edit part of the
+ * devices.xml file and nothing happens till you click save.  For this one though,
+ * it's nice for it to work like AudioEditor and actually open the devices as you
+ * select them so we can watch the log and monitor MIDI messages to see if something
+ * is actually comming in as expected.  Without that you would have to Save the editor
+ * and close it, bring up MidiMonitor and test it, then bring up the editor again if the
+ * wrong device was selected.
+ *
+ * Now that this has immediate impact on the devices, we don't need Save/Cancel buttons
+ * here either.
+ *
+ * This is different than AudioEditor though because here we ARE directly editing
+ * an object read from a file.  So when the editor is closed it needs to update the
+ * file.  AudioEditor doesn't do that when you close the editor, instead Supervisor captures
+ * the final state of the audio devices at shutdown.
+ *
+ * Either an on-close or deferred-till-shutdown method works, except thta if you do deferred,
+ * when the panel is loaded again it CAN'T reload state from the file like most editors do.
+ * It has to leave the open device as it was the last time the user interacted with it.
+ * This is possible if you conditionalize load() to only load the file the first time
+ * but not the second time, but we still need to look at the runtime state to see what
+ * boxes to check.  AudioEditor doesn't have to do this since the editing component is
+ * built-in to Juce and already does that.
+ *
+ * To make AudioEditor and MidiDeviceEditor work similarly, it is easiest to always
+ * update devices.xml when the editor is closed AND again on shutdown just in case you
+ * shut down without closing the editor panel.
  */
 
 #include <JuceHeader.h>
@@ -29,14 +70,6 @@ MidiDeviceEditor::MidiDeviceEditor()
 
     tabs.add("Input Devices", &inputTable);
     tabs.add("Output Devices", &outputTable);
-    
-    // this can be used in two ways, when dynamicOpen is true
-    // devices will be opened and closed as they are selected in the grid
-    // Save then simply updates the config file.  Cancel does not update
-    // the config file and reloads the starting device set.
-    // This results in more device churn but feels more natural to see
-    // the new devices being monitored immediately.
-    dynamicOpen = true;
 }
 
 MidiDeviceEditor::~MidiDeviceEditor()
@@ -104,9 +137,14 @@ void MidiDeviceEditor::load()
     inputTable.init(mm, false);
     outputTable.init(mm, true);
 
+    // pull out the MachineConfig for this machinea
     DeviceConfig* config = context->getDeviceConfig();
-    inputTable.load(config);
-    outputTable.load(config);
+
+    // actively edit the live config
+    machine = config->getMachineConfig();
+    
+    inputTable.load(machine);
+    outputTable.load(machine);
 
     log.showOpen();
 }
@@ -117,33 +155,25 @@ void MidiDeviceEditor::load()
  */
 void MidiDeviceEditor::save()
 {
-    DeviceConfig* config = context->getDeviceConfig();
-    
-    inputTable.save(config);
-    outputTable.save(config);
+    // don't need this if we've been in live mode
+    inputTable.save(machine);
+    outputTable.save(machine);
         
+    // update the file
     context->saveDeviceConfig();
-
-    // if dynamicOpen was on, then we don't need to reopen devices
-    // since they will have already followed the grid
-    if (!dynamicOpen) {
-        // reflect the changes in the active devices
-        MidiManager* mm = context->getSupervisor()->getMidiManager();
-        mm->openDevices();
-    }
 }
 
 /**
  * Throw away all editing state.
+ * As described in the file comments, this doesn't actually cancel,
+ * it leaves the devices as they were.  If we need to support actual
+ * cancel, then we can't update devices.xml on save(), or we need to keep a copy
+ * and re-write the file and re-initializes the devices.
  */
 void MidiDeviceEditor::cancel()
 {
-    // if dynamicOpen was on, then we were tracking changes
-    // in the grid and need to restore the original configuration
-    if (dynamicOpen) {
-        MidiManager* mm = context->getSupervisor()->getMidiManager();
-        mm->openDevices();
-    }
+    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    mm->openDevices();
 }
 
 void MidiDeviceEditor::resized()
@@ -163,52 +193,88 @@ void MidiDeviceEditor::resized()
  * Called by either the input or output device table when a checkbox
  * is clicked on or off.
  *
- * If the device is relevant to the current runtime context (app vs. plugin)
- * then immediately ask MidiManager to open or close the device, rather than
- * waiting until Save is clicked.  This feels better for the user and is more
- * like how AudioDevicesPanel behaves.  
+ * We don't maintain an active edit of the MachineConfig model, the table itself
+ * is the model that will be converted back into MachineConfig on exit.
+ *
+ * God this is a mess due to the app/plugin dupllication and the input/output table split
+ * and how BasicTable has it's own model that is sort of like MidiDevicesRow but different.
  */
-void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int col, bool state)
+void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int colid, bool state)
 {
-    int colbase = (context->getSupervisor()->isPlugin() ? 4 : 2);
-    bool relevant = (col >= colbase && col < colbase + 2);
-
-    if (dynamicOpen && relevant) {
-        MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
-        juce::String device = mdt->getName(row);
-        MidiManager* mm = context->getSupervisor()->getMidiManager();
-        
-        if (table == &inputTable) {
-            // not differentiating between control and sync right now
-            if (state)
-              mm->openInput(device, MidiManager::Usage::Input);
-            else
-              mm->closeInput(device, MidiManager::Usage::InputSync);
-        }
-        else {
-            if (col > colbase) {
-                if (state)
-                  mm->openOutput(device, MidiManager::Usage::OutputSync);
-                else
-                  mm->closeOutput(device, MidiManager::Usage::OutputSync);
-            }
-            else {
-                if (state)
-                  mm->openOutput(device, MidiManager::Usage::Output);
-                else
-                  mm->closeOutput(device, MidiManager::Usage::Output);
-            }
-        }
+    // the device we touched
+    MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
+    MidiDeviceTableRow* device = mdt->getRow(row);
+    juce::String deviceName = mdt->getName(row);
+    bool plugin = context->getSupervisor()->isPlugin();
+    MidiDeviceColumn mdcol = (MidiDeviceColumn)colid;
+    
+    // reflect the state in the DeviceTableRow model
+    if (!state) {
+        device->checks.removeAllInstancesOf(mdcol);
     }
-
-    // for both dynamicOpen and deferred, only allow one output
-    // device to be selected
-    if (table == &outputTable && state) {
-        // how do we control checkbox state as a side effect?
-        // can't get a handle to the checkbox component from here
-        // and the table isn't tracking model changes
-        // !! redesign this
+    else {
+        // all but input only allows one
+        if (mdcol != MidiColumnInput && mdcol != MidiColumnPluginInput)
+          mdt->uncheckOthers(mdcol, row);
+        device->checks.add(mdcol);
     }
+    
+    // reflect the state in the open devices
+    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    switch (mdcol) {
+        case MidiColumnInput: {
+            if (!plugin)
+              mm->openInput(deviceName, MidiManager::Usage::Input);
+        }
+            break;
+        case MidiColumnInputSync: {
+            if (!plugin)
+              mm->openInput(deviceName, MidiManager::Usage::InputSync);
+        }
+            break;
+        case MidiColumnOutput: {
+            if (!plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::Output);
+        }
+            break;
+        case MidiColumnOutputSync: {
+            if (!plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::OutputSync);
+        }
+            break;
+        case MidiColumnThru: {
+            if (!plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::Thru);
+        }
+            break;
+            
+        case MidiColumnPluginInput: {
+            if (plugin)
+              mm->openInput(deviceName, MidiManager::Usage::Input);
+        }
+            break;
+        case MidiColumnPluginInputSync: {
+            if (plugin)
+              mm->openInput(deviceName, MidiManager::Usage::InputSync);
+        }
+            break;
+        case MidiColumnPluginOutput: {
+            if (plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::Output);
+        }
+            break;
+        case MidiColumnPluginOutputSync: {
+            if (plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::OutputSync);
+        }
+            break;
+        case MidiColumnPluginThru: {
+            if (plugin)
+              mm->openOutput(deviceName, MidiManager::Usage::Thru);
+        }
+            break;
+    }
+            
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -231,18 +297,20 @@ void MidiDeviceTable::init(MidiManager* mm, bool output)
     if (!initialized) {
         isOutput = output;
         if (isOutput) {
-            addColumn("Name", 1);
-            addColumnCheckbox("App Export", 2);
-            addColumnCheckbox("App Sync", 3);
-            addColumnCheckbox("Plugin Export", 4);
-            addColumnCheckbox("Plugin Sync", 5);
+            addColumn("Name", MidiColumnName);
+            addColumnCheckbox("App Export", MidiColumnOutput);
+            addColumnCheckbox("App Sync", MidiColumnOutputSync);
+            addColumnCheckbox("App Thru", MidiColumnThru);
+            addColumnCheckbox("Plugin Export", MidiColumnPluginOutput);
+            addColumnCheckbox("Plugin Sync", MidiColumnPluginOutputSync);
+            addColumnCheckbox("Plugin Thru", MidiColumnPluginThru);
         }
         else {
-            addColumn("Name", 1);
-            addColumnCheckbox("App Control", 2);
-            addColumnCheckbox("App Sync", 3);
-            addColumnCheckbox("Plugin Control", 4);
-            addColumnCheckbox("Plugin Sync", 5);
+            addColumn("Name", MidiColumnName);
+            addColumnCheckbox("App Control", MidiColumnInput);
+            addColumnCheckbox("App Sync", MidiColumnInputSync);
+            addColumnCheckbox("Plugin Control", MidiColumnPluginInput);
+            addColumnCheckbox("Plugin Sync", MidiColumnPluginInputSync);
         }
     
         juce::StringArray deviceNames;
@@ -284,33 +352,24 @@ MidiDeviceTableRow* MidiDeviceTable::getRow(juce::String name)
  * Load the state of the current machine's MIDI device selections
  * into the table.
  *
- * The MachineConfig model is not tabular, but it would be a lot cooler
- * if it was.
- *
- * It has a set of attributes with device names as CSVs.  Reconsider that.
- *
- * Realistically, there can only be one sync device selected for either
- * input or output.  I suppose we could allow multiple input sync devices
- * and just assume that only one will be active at a time.  But more than
- * one output sync device doesn't seem useful.  If you really want to
- * send clocks to multiple devices should be using a hub.
+ * MachineConfig model represents each device list as a CSV.
  */
-void MidiDeviceTable::load(DeviceConfig* config)
+void MidiDeviceTable::load(MachineConfig* config)
 {
-    MachineConfig* mconfig = config->getMachineConfig();
-
-    if (mconfig != nullptr) {
+    if (config != nullptr) {
         if (isOutput) {
-            loadDevices(mconfig->midiOutput, false, false);
-            loadDevices(mconfig->midiOutputSync, true, false);
-            loadDevices(mconfig->pluginMidiOutput, false, true);
-            loadDevices(mconfig->pluginMidiOutputSync, true, true);
+            loadDevices(config->midiOutput, MidiColumnOutput);
+            loadDevices(config->midiOutputSync, MidiColumnOutputSync);
+            loadDevices(config->midiThru, MidiColumnThru);
+            loadDevices(config->pluginMidiOutput, MidiColumnPluginOutput);
+            loadDevices(config->pluginMidiOutputSync, MidiColumnPluginOutputSync);
+            loadDevices(config->pluginMidiThru, MidiColumnPluginThru);
         }
         else {
-            loadDevices(mconfig->midiInput, false, false);
-            loadDevices(mconfig->midiInputSync, true, false);
-            loadDevices(mconfig->pluginMidiInput, false, true);
-            loadDevices(mconfig->pluginMidiInputSync, true, true);
+            loadDevices(config->midiInput, MidiColumnInput);
+            loadDevices(config->midiInputSync, MidiColumnInputSync);
+            loadDevices(config->pluginMidiInput, MidiColumnPluginInput);
+            loadDevices(config->pluginMidiInputSync, MidiColumnPluginInputSync);
         }
     }
     updateContent();
@@ -319,7 +378,7 @@ void MidiDeviceTable::load(DeviceConfig* config)
 /**
  * Update the table model for a csv of device names.
  */
-void MidiDeviceTable::loadDevices(juce::String names, bool sync, bool plugin)
+void MidiDeviceTable::loadDevices(juce::String names, MidiDeviceColumn colid)
 {
     juce::StringArray list = juce::StringArray::fromTokens(names, ",", "");
     for (auto name : list) {
@@ -332,59 +391,36 @@ void MidiDeviceTable::loadDevices(juce::String names, bool sync, bool plugin)
             device->missing = true;
             devices.add(device);
         }
-        if (sync) {
-            if (plugin)
-              device->pluginSync = true;
-            else
-              device->appSync = true;
-        }
-        else {
-            if (plugin)
-              device->pluginControl = true;
-            else
-              device->appControl = true;
-        }
+        device->checks.add(colid);
     }
 }
 
-void MidiDeviceTable::save(DeviceConfig* config)
+void MidiDeviceTable::save(MachineConfig* config)
 {
-    MachineConfig* mconfig = config->getMachineConfig();
-
     if (isOutput) {
-        mconfig->midiOutput = getDevices(false, false);
-        mconfig->midiOutputSync = getDevices(true, false);
-        mconfig->pluginMidiOutput = getDevices(false, true);
-        mconfig->pluginMidiOutputSync = getDevices(true, true);
+        config->midiOutput = getDevices(MidiColumnOutput);
+        config->midiOutputSync = getDevices(MidiColumnOutputSync);
+        config->midiThru = getDevices(MidiColumnThru);
+        config->pluginMidiOutput = getDevices(MidiColumnPluginOutput);
+        config->pluginMidiOutputSync = getDevices(MidiColumnPluginOutputSync);
+        config->pluginMidiThru = getDevices(MidiColumnPluginThru);
     }
     else {
-        mconfig->midiInput = getDevices(false, false);
-        mconfig->midiInputSync = getDevices(true, false);
-        mconfig->pluginMidiInput = getDevices(false, true);
-        mconfig->pluginMidiInputSync = getDevices(true, true);
+        config->midiInput = getDevices(MidiColumnInput);
+        config->midiInputSync = getDevices(MidiColumnInputSync);
+        config->pluginMidiInput = getDevices(MidiColumnPluginInput);
+        config->pluginMidiInputSync = getDevices(MidiColumnPluginInputSync);
     }
 }
 
-juce::String MidiDeviceTable::getDevices(bool sync, bool plugin)
+juce::String MidiDeviceTable::getDevices(MidiDeviceColumn colid)
 {
     juce::StringArray list;
 
     for (auto device : devices) {
-        bool include = false;
-        if (sync) {
-            if (plugin)
-              include = device->pluginSync;
-            else
-              include = device->appSync;
+        if (device->checks.contains(colid)) {
+            list.add(device->name);
         }
-        else {
-            if (plugin)
-              include = device->pluginControl;
-            else
-              include = device->appControl;
-        }
-        if (include)
-          list.add(device->name);
     }
 
     return list.joinIntoString(",");
@@ -394,6 +430,18 @@ juce::String MidiDeviceTable::getName(int rownum)
 {
     MidiDeviceTableRow* row = devices[rownum];
     return row->name;
+}
+
+/**
+ * Uncheck a column in the table for all rows except one.
+ */
+void MidiDeviceTable::uncheckOthers(MidiDeviceColumn colid, int selectedRow)
+{
+    for (int i = 0 ; i < devices.size() ; i++) {
+        MidiDeviceTableRow* row = devices[i];
+        if (i != selectedRow)
+          row->checks.removeAllInstancesOf(colid);
+    }
 }
 
 //
@@ -414,7 +462,7 @@ juce::String MidiDeviceTable::getCellText(int row, int columnId)
     if (device == nullptr) {
         Trace(1, "MidiDeviceTable::getCellText row out of bounds %d\n", row);
     }
-    else if (columnId == 1) {
+    else if (columnId == MidiColumnName) {
         value = device->name;
     }
     else {
@@ -432,7 +480,7 @@ juce::Colour MidiDeviceTable::getCellColor(int row, int columnId)
     if (device == nullptr) {
         Trace(1, "MidiDeviceTable::getCellText row out of bounds %d\n", row);
     }
-    else if (columnId == 1) {
+    else if (columnId == MidiColumnName) {
         if (device->missing)
           color = juce::Colours::red;
     }
@@ -443,7 +491,7 @@ juce::Colour MidiDeviceTable::getCellColor(int row, int columnId)
     return color;
 }
 
-bool MidiDeviceTable::getCellCheck(int row, int column)
+bool MidiDeviceTable::getCellCheck(int row, int columnId)
 {
     bool state = false;
     
@@ -452,15 +500,7 @@ bool MidiDeviceTable::getCellCheck(int row, int column)
         Trace(1, "MidiDeviceTable::getCellCheck row out of bounds %d\n", row);
     }
     else {
-        switch (column) {
-            case 2: state = device->appControl; break;
-            case 3: state = device->appSync; break;
-            case 4: state = device->pluginControl; break;
-            case 5: state = device->pluginSync; break;
-            default:
-                Trace(1, "MidiDeviceTable::getCellCheck column id out of bounds %d\n", column);
-                break;
-        }
+        state = device->checks.contains((MidiDeviceColumn)columnId);
     }
     return state;
 }
@@ -471,22 +511,17 @@ bool MidiDeviceTable::getCellCheck(int row, int column)
  * dynamically then we don't need that and could just let the
  * table do its thing and dig out the checks during save()
  */
-void MidiDeviceTable::setCellCheck(int row, int column, bool state)
+void MidiDeviceTable::setCellCheck(int row, int columnId, bool state)
 {
     MidiDeviceTableRow* device = devices[row];
     if (device == nullptr) {
         Trace(1, "MidiDeviceTable::setCellCheck row out of bounds %d\n", row);
     }
+    else if (state) {
+        device->checks.add((MidiDeviceColumn)columnId);
+    }
     else {
-        switch (column) {
-            case 2: device->appControl = state; break;
-            case 3: device->appSync = state; break;
-            case 4: device->pluginControl = state; break;
-            case 5: device->pluginSync = state; break;
-            default:
-                Trace(1, "MidiDeviceTable::setCellCheck column id out of bounds %d\n", column);
-                break;
-        }
+        device->checks.removeAllInstancesOf((MidiDeviceColumn)columnId);
     }
 }
 

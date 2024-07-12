@@ -33,6 +33,7 @@
 
 #include <JuceHeader.h>
 
+#include "model/DeviceConfig.h"
 #include "mobius/MobiusInterface.h"
 
 class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
@@ -102,7 +103,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
 
     // open and close devices individually
     void openInput(juce::String name, Usage usage);
-    void closeInput(juce::String name, Usage usage);
+    void closeInput(juce::String name,Usage usage);
     void openOutput(juce::String name, Usage usage);
     void closeOutput(juce::String name, Usage usage);
 
