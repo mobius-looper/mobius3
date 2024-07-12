@@ -19,10 +19,10 @@ class AudioFile
 {
   public:
 
-    static void write(juce::File, class Audio* a);
+    static juce::StringArray write(juce::File, class Audio* a);
     
-    static void write(juce::File, class Audio* a, juce::StringArray errors);
-
     static class Audio* read(juce::File, class AudioPool* pool);
+    
+    static class Audio* read(juce::File, class AudioPool* pool, juce::StringArray& errors);
 
 };

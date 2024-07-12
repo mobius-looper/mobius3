@@ -22,7 +22,8 @@ void ProjectFiler::saveProject()
 void ProjectFiler::doProjectSave(juce::File file)
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->saveProject(file);
+    juce::StringArray errors = mobius->saveProject(file);
+    showErrors(errors);
 }
 
 void ProjectFiler::loadProject()
@@ -34,7 +35,16 @@ void ProjectFiler::loadProject()
 void ProjectFiler::doProjectLoad(juce::File file)
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->loadProject(file);
+    juce::StringArray errors = mobius->loadProject(file);
+    showErrors(errors);
+}
+
+void ProjectFiler::showErrors(juce::StringArray& errors)
+{
+    // todo: in theory can have more than one
+    // should these be merged into a single alert, or one at a time?
+    for (auto error : errors)
+      supervisor->alert(error);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -51,7 +61,8 @@ void ProjectFiler::loadLoop()
 void ProjectFiler::doLoopLoad(juce::File file)
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->loadLoop(file);
+    juce::StringArray errors = mobius->loadLoop(file);
+    showErrors(errors);
 }
 
 void ProjectFiler::saveLoop()
@@ -62,7 +73,11 @@ void ProjectFiler::saveLoop()
 void ProjectFiler::doLoopSave(juce::File file)
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->saveLoop(file);
+    juce::StringArray errors = mobius->saveLoop(file);
+    showErrors(errors);
+
+    // quick save displays the file name, but it's more necessary
+    // there to show the numeric qualifier
 }
 
 /**
@@ -97,11 +112,14 @@ void ProjectFiler::quickSave()
     dest = uniqueify(dest);
 
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->saveLoop(dest);
-
-    // use message rather than alert here so we don't get
-    // a popup you have to Ok
-    supervisor->message("Saved " + dest.getFileNameWithoutExtension());
+    juce::StringArray errors = mobius->saveLoop(dest);
+    if (errors.size() > 0)
+      showErrors(errors);
+    else {
+        // use message rather than alert here so we don't get
+        // a popup you have to Ok
+        supervisor->message("Saved " + dest.getFileNameWithoutExtension());
+    }
 }
 
 /**

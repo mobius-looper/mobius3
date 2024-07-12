@@ -276,7 +276,8 @@ void XmlMiniParser::throwException(int code, const char *more)
 		buf->add(getLine() + 1);
 		buf->add(" column ");
 		buf->add(getColumn() + 1);
-		buf->add(".");
+        // why so definitive?
+		// buf->add(".");
 	}
 
 	if (more) {

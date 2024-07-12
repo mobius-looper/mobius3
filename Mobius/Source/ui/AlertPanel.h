@@ -7,6 +7,9 @@
  * letting these stack, allowing more than one concurrent AlertPanel with different
  * message, or keeping the same one but appending messages to it.
  *
+ * This is also unusual because a show request can happen multiple times with
+ * new messages to accumulate.  
+ *
  */
 #pragma once
 
@@ -23,15 +26,14 @@ class AlertContent : public juce::Component
     AlertContent();
     ~AlertContent() {}
 
-    void setMessage(juce::String msg) {
-        text.setText(msg, juce::NotificationType::dontSendNotification);
-    }
+    void addMessage(juce::String msg);
     
     void resized() override;
 
   private:
 
     juce::Label text;
+    // juce::StringArray messages;
 
 };    
 
@@ -45,7 +47,10 @@ class AlertPanel : public BasePanel
         // events for dragging
         //setTitle("Alert");
         setContent(&content);
+        // this gives it a yellow border
         setAlert();
+        // this gives it dragability within the entire window since
+        // these don't have a title bar
         followContentMouse();
         
         setSize(500, 200);

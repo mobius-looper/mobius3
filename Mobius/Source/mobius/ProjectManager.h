@@ -55,4 +55,5 @@ class ProjectManager
     void readAudio(Project* p);
     Audio* readAudio(const char* path);
     
+    bool looksAbsolute(juce::String path);
 };

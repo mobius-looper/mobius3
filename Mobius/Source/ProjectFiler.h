@@ -50,6 +50,8 @@ class ProjectFiler
     
     juce::File uniqueify(juce::File src);
 
+    void showErrors(juce::StringArray& errors);
+    
 };
 
         

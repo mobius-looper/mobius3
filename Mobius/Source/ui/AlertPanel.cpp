@@ -8,9 +8,11 @@
  * The original Alerter did this by dynamically allocating them and keeping
  * a garbage collection list, which was overkill.
  *
- * Here if the alert window is already displayed, we just replace the text.
- * If you want to get fancy, successive alerts could stack within the panel
- * but could require scrolling if there are a lot of them.
+ * Here if the alert window is already displayed, the new message is added to the existing
+ * one.
+ *
+ * todo: in extreme cases the number of messages could be large, which probably results in
+ * very squashed label text.  Could add a scroll bar.
  *
  * Could also queue them, and when "Ok" is clicked, it displays the next
  * message in the queue rather than closing.  In practice, multiple alerts
@@ -30,10 +32,18 @@
 
 void AlertPanel::show(juce::String message)
 {
-    content.setMessage(message);
-    content.resized();
-    JuceUtil::centerInParent(this);
-    BasePanel::show();
+    if (!isVisible()) {
+        content.addMessage(message);
+        // why was this necessary?
+        content.resized();
+        JuceUtil::centerInParent(this);
+        BasePanel::show();
+    }
+    else {
+        // another message came in while showing the last one
+        // is this enough to get it to repaint?
+        content.addMessage(message);
+    }
 }
 
 /**
@@ -58,4 +68,15 @@ AlertContent::AlertContent()
 void AlertContent::resized()
 {
     text.setBounds(getLocalBounds());
+}
+
+void AlertContent::addMessage(juce::String msg)
+{
+    // does it work to inject newlines between multiple messages?
+    juce::String current = text.getText();
+    if (current.length() > 0)
+      current += "\n";
+    current += msg;
+      
+    text.setText(current, juce::NotificationType::dontSendNotification);
 }

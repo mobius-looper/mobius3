@@ -1340,6 +1340,8 @@ void Project::clear()
 	mBindings = NULL;
 	delete mSetup;
 	mSetup = NULL;
+    delete mPath;
+    mPath = nullptr;
 }
 
 void Project::setNumber(int i)

@@ -221,9 +221,10 @@ void ProjectManager::writeProject(Project* p, const char* file, bool isTemplate)
 	// write the new project and Audio files
 	fp = fopen(path, "w");
 	if (fp == NULL) {
-		//snprintf(mMessage, sizeof(mMessage), "Unable to open output file: %s\n", path);
-		//mError = true;
-        errors.add(juce::String("Unable to open output file: ") + juce::String(path));
+        // try multiple alert lines...
+        // errors.add(juce::String("Unable to open output file: ") + juce::String(path));
+        errors.add("Unable to open project file");
+        errors.add(juce::String(path));
     }
 	else {
 		fclose(fp);
@@ -327,7 +328,7 @@ void ProjectManager::writeAudio(Audio* audio, const char* path)
     // this was repackaged awhile ago into this but it doesn't
     // support accumulation of error message, need to fix that!!
 
-    AudioFile::write(juce::File(path), audio);
+    errors.addArray(AudioFile::write(juce::File(path), audio));
 }
 
 /**
@@ -462,12 +463,11 @@ juce::StringArray ProjectManager::loadProject(juce::File file)
 
     // formerly Project::read(pool)
     read(p, file);
+
     
-    if (p->isError()) {
-        // todo: this is where it would do an alert
-        // find out where the errors were left and move them to the error list
-        Trace(1, "ProjectManager: Need a read alert here!");
-        
+    if (errors.size() > 0) {
+        // should have already trace something, caller responsible for
+        // alerting about the errors
         // interesting that old code never deleted the Project, probably a leak
         // have to watch this careful to make sure the Audio is returned to the pool
         delete p;
@@ -515,9 +515,9 @@ void ProjectManager::read(Project* p, juce::File file)
     
 	FILE* fp = fopen(path, "r");
 	if (fp == NULL) {
-		//snprintf(mMessage, sizeof(mMessage), "Unable to open file %s\n", path);
-        errors.add(juce::String("Unable to open file: ") + path);
-		//mError = true;
+        // errors.add(juce::String("Unable to open file: ") + path);
+        errors.add("Unable to open project file");
+        errors.add(path);
 	}
 	else {
 		fclose(fp);
@@ -537,18 +537,23 @@ void ProjectManager::read(Project* p, juce::File file)
         }
         else {
             // there was a syntax error in the file
+            // these can be long so let's make use of the multi-line AlertPanel
             //snprintf(mMessage, sizeof(mMessage), "Unable to read file %s: %s\n", 
             //path, p->getError());
             //mError = true;
-            errors.add(juce::String("Unable to read file ") +
-                       juce::String(path) + ": " +
-                       juce::String(parser->getError()));
+            //errors.add(juce::String("Unable to read file ") +
+            //juce::String(path) + ": " +
+            //juce::String(parser->getError()));
+            errors.add("Unable to read project file");
+            errors.add(path);
+            errors.add(parser->getError());
         }
         delete parser;
 
         // now that the structure has been filled out, walk over
         // it until we find audio files to read
-        readAudio(p);
+        if (errors.size() == 0)
+          readAudio(p);
     }
 }
 
@@ -556,25 +561,27 @@ void ProjectManager::readAudio(Project* p)
 {
     List* tracks = p->getTracks();
     if (tracks != nullptr) {
-        for (int i = 0 ; i < tracks->size() ; i++) {
+        for (int i = 0 ; i < tracks->size() && errors.size() == 0 ; i++) {
             ProjectTrack* track = (ProjectTrack*)tracks->get(i);
             List* loops = track->getLoops();
             if (loops != NULL) {
-                for (int j = 0 ; j < loops->size() ; j++) {
+                for (int j = 0 ; j < loops->size() && errors.size() == 0 ; j++) {
                     ProjectLoop* loop = (ProjectLoop*)loops->get(j);
                     List* layers = loop->getLayers();
                     if (layers != NULL) {
-                        for (int k = 0 ; k < layers->size() ; k++) {
+                        for (int k = 0 ; k < layers->size() && errors.size() == 0 ; k++) {
                             ProjectLayer* layer = (ProjectLayer*)layers->get(k);
 
                             // now the meat
                             const char* path = layer->getPath();
                             if (path != NULL)
 							  layer->setAudio(readAudio(path));
-                            
-                            path = layer->getOverdubPath();
-                            if (path != NULL)
-							  layer->setOverdub(readAudio(path));
+
+                            if (errors.size() == 0) {
+                                path = layer->getOverdubPath();
+                                if (path != NULL)
+                                  layer->setOverdub(readAudio(path));
+                            }
                         }
                     }
                 }
@@ -603,14 +610,45 @@ Audio* ProjectManager::readAudio(const char* path)
     // manually moved the files somewhere else and edited the .mob file
     // unlikely though
 
-    // this will get assertions if you're moving between mac/pc
-    // was hoping this would mutate the slashes but it doesn't 
+    // this doesn't seem to do enough, was hoping it would mutate slashes but
+    // it doesn't
     juce::String convpath =  juce::File::createLegalPathName(path);
-    juce::File jpath (convpath);
-    juce::File relfile = projectRoot.getChildFile(jpath.getFileName());
+
+    // hack, if the path already appears to be relative, don't stick it
+    // in a juce::File since juce will break with an annoying assertion
+    juce::File file;
+    if (looksAbsolute(convpath)) {
+        juce::File jpath = juce::File(convpath);
+        // todo: here would be an option to preserve the original path, or redirect
+        // ito the project root
+        file = projectRoot.getChildFile(jpath.getFileName());
+    }
+    else {
+        file = projectRoot.getChildFile(convpath);
+    }
 
     AudioPool* pool = shell->getAudioPool();
-    return AudioFile::read(relfile, pool);
+    return AudioFile::read(file, pool, errors);
+}
+
+/**
+ * Return true if this smells like an absolute path so we can avoid
+ * an annoying Juce assertion if you try to construct a juce::File with
+ * a relative path.
+ *
+ * On mac, this would start with '/'
+ * On windows, this would have ':' in it somewhere, typically
+ * as the second character but I guess it doesn't matter.
+ *
+ * I suppose we could be more accurate by looking at the actual runtime
+ * architecture.  It actually would be nice in my testing to auto-convert
+ * from one style to another so files in source control like mobius.xml ScriptConfig
+ * can easly slide between them.
+ * 
+ */
+bool ProjectManager::looksAbsolute(juce::String path)
+{
+    return path.startsWithChar('/') || path.containsChar(':');
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -759,31 +797,31 @@ juce::StringArray ProjectManager::loadLoop(juce::File file)
 
         // read the audio file
         AudioPool* pool = shell->getAudioPool();
-        Audio* audio = AudioFile::read(file, pool);
+        Audio* audio = AudioFile::read(file, pool, errors);
 
-        // todo: there may have been errors, capture them
-    
-        // this had a special constructor just for this purpose
-        // note that loop->getNumber() is one based, and here we need the index
-        Project* p = new Project(audio, trackIndex, loop->getNumber() - 1);
-        // the magic beans
-        p->setIncremental(true);
+        if (errors.size() == 0) {
+            // this had a special constructor just for this purpose
+            // note that loop->getNumber() is one based, and here we need the index
+            Project* p = new Project(audio, trackIndex, loop->getNumber() - 1);
+            // the magic beans
+            p->setIncremental(true);
 
-        // now we need to suspend, may as well have done it to include the
-        // index probes above
-        if (shell->suspendKernel()) {
+            // now we need to suspend, may as well have done it to include the
+            // index probes above
+            if (shell->suspendKernel()) {
 
-            core->loadProject(p);
+                core->loadProject(p);
 
-            shell->resumeKernel();
-        }
-        else {
-            // yuno suspend?
-            delete p;
-            errors.add("Unable to suspend Kernel");
+                shell->resumeKernel();
+            }
+            else {
+                // yuno suspend?
+                delete p;
+                errors.add("Unable to suspend Kernel");
+            }
         }
     }
-
+    
     return errors;
 }
 
@@ -814,6 +852,8 @@ juce::StringArray ProjectManager::loadLoop(juce::File file)
  */
 juce::StringArray ProjectManager::saveLoop(juce::File file)
 {
+    errors.clear();
+    
     Trace(2, "ProjectManager: Saving loop");
     
     // hmm, for quicksave in particular it is really nice not to suspend
@@ -831,7 +871,7 @@ juce::StringArray ProjectManager::saveLoop(juce::File file)
     if (fastAndLoose) {
         Mobius* core = shell->getKernel()->getCore();
         Audio* audio = core->getPlaybackAudio();
-        AudioFile::write(file, audio);
+        errors.addArray(AudioFile::write(file, audio));
         delete audio;
     }
     else {
@@ -840,7 +880,7 @@ juce::StringArray ProjectManager::saveLoop(juce::File file)
             Mobius* core = shell->getKernel()->getCore();
             Audio* audio = core->getPlaybackAudio();
         
-            AudioFile::write(file, audio);
+            errors.addArray(AudioFile::write(file, audio));
             // this was a flattened copy of the play layer and must be reclaimed
             delete audio;
 
