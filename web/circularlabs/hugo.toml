@@ -47,6 +47,6 @@ title = "About"
 enable = true
 title = 'Welcome to the new Mobius'
 body = '''
-This is an early release not intended for wide distrubition.  If you are familiar with old Mobius feel free to download it, try it out, and send me problem reports.  But it is not in a state where I am able to help new people learn it, and I do not recommend using it for serioius live performance until it has had more testing.  I may be reached for limited support at jeff@circularlabs.com.  
+Mobius 3 is available as a beta release and is not intended for general use.  If you are familiar with old Mobius feel free to download it, try it out, and send problem reports.  But it is not in a state where it should be used for any serious performance, and we are not ready to support new users learning it for the first time.  A support forum is still evolving, the best place for discussion is the [Mobius Group](https://www.facebook.com/groups/mobiuscentral) on Facebook.
 '''
 
