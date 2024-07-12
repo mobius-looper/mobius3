@@ -234,7 +234,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
             // want this only for switch events
             char fullname[256];
             if (ev->argument > 0) {
-                snprintf(fullname, sizeof(fullname), "%s %d", name, ev->argument);
+                snprintf(fullname, sizeof(fullname), "%s %d", name, (int)(ev->argument));
                 name = fullname;
             }
             
