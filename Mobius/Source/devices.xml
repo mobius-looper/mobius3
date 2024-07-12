@@ -8,8 +8,9 @@
            midiOutputSync="Focusrite USB MIDI"/>
   <Machine hostName="Thor" inputPorts="3" outputPorts="1" audioDeviceType="ASIO"
            audioInput="ASIO Fireface USB" inputChannels="111111" audioOutput="ASIO Fireface USB"
-           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Midi Captain- MIDI "
-           midiOutput="UC Midi Port 1" midiOutputSync="UC Midi Port 1"/>
+           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="HST 5,Midi Captain- MIDI "
+           midiInputSync="HST 1" midiOutput="UC Midi Port 1" midiOutputSync="UC Midi Port 1"
+           midiThru="HST 8"/>
   <Machine hostName="Frigg" inputPorts="0" outputPorts="1" audioDeviceType="CoreAudio"
            audioInput="MacBook Pro Microphone" inputChannels="1" audioOutput="MacBook Pro Speakers"
            outputChannels="11" sampleRate="48000" blockSize="256"/>

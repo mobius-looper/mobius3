@@ -346,7 +346,7 @@ void MidiRealizer::advance()
         if (pendingStartClock) {
             if (SyncTraceEnabled)
               Trace(2, "Sync: Sending pending start clock msec %d pulseWait %d",
-                    now, msecsPerPulse);
+                    now, (int)(msecsPerPulse * 100));
             // we sent Start or Continue on the last cycle and now
             // send the first clock which officially starts things running
             // in the external device
@@ -412,7 +412,7 @@ void MidiRealizer::advance()
                 
                 if (SyncTraceEnabled)
                   Trace(2, "Sync: Sending clock msec %d pulseWait %d",
-                        now, pulseWait);
+                        now, (int)(pulseWait * 100));
                 
                 midiManager->send(juce::MidiMessage::midiClock());
                 outputQueue.add(MS_CLOCK, now);

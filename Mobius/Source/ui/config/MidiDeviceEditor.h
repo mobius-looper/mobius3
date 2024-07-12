@@ -1,5 +1,5 @@
 /**
- * ConfigEditor to configure MIDI devices when running standalone.
+ * ConfigEditor to configure MIDI devices.
  */
 
 #pragma once
@@ -35,6 +35,10 @@ enum MidiDeviceColumn {
     MidiColumnPluginThru
 };
 
+/**
+ * Each table row represents one input or output device.
+ * The checks array represents which of the columns are checked.
+ */
 class MidiDeviceTableRow
 {
   public:
@@ -92,8 +96,8 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
 };
     
 class MidiDeviceEditor : public ConfigEditor,
-                          public MidiManager::Monitor,
-                          public BasicTable::CheckboxListener
+                         public MidiManager::Monitor,
+                         public BasicTable::CheckboxListener
 {
   public:
     MidiDeviceEditor();
@@ -124,11 +128,6 @@ class MidiDeviceEditor : public ConfigEditor,
     MidiDeviceTable inputTable;
     MidiDeviceTable outputTable;
 
-    // the MachineConfig being edited
-    // when in "live" mode this will be the active model
-    // extracted from Supervisor::getDeviceConfig
-    class MachineConfig* machine = nullptr;
-    
     juce::MidiMessage pluginMessage;
     bool pluginMessageQueued = false;
     

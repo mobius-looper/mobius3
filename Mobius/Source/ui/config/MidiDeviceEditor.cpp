@@ -26,22 +26,6 @@
  * Now that this has immediate impact on the devices, we don't need Save/Cancel buttons
  * here either.
  *
- * This is different than AudioEditor though because here we ARE directly editing
- * an object read from a file.  So when the editor is closed it needs to update the
- * file.  AudioEditor doesn't do that when you close the editor, instead Supervisor captures
- * the final state of the audio devices at shutdown.
- *
- * Either an on-close or deferred-till-shutdown method works, except thta if you do deferred,
- * when the panel is loaded again it CAN'T reload state from the file like most editors do.
- * It has to leave the open device as it was the last time the user interacted with it.
- * This is possible if you conditionalize load() to only load the file the first time
- * but not the second time, but we still need to look at the runtime state to see what
- * boxes to check.  AudioEditor doesn't have to do this since the editing component is
- * built-in to Juce and already does that.
- *
- * To make AudioEditor and MidiDeviceEditor work similarly, it is easiest to always
- * update devices.xml when the editor is closed AND again on shutdown just in case you
- * shut down without closing the editor panel.
  */
 
 #include <JuceHeader.h>
@@ -139,9 +123,7 @@ void MidiDeviceEditor::load()
 
     // pull out the MachineConfig for this machinea
     DeviceConfig* config = context->getDeviceConfig();
-
-    // actively edit the live config
-    machine = config->getMachineConfig();
+    MachineConfig* machine = config->getMachineConfig();
     
     inputTable.load(machine);
     outputTable.load(machine);
@@ -155,7 +137,9 @@ void MidiDeviceEditor::load()
  */
 void MidiDeviceEditor::save()
 {
-    // don't need this if we've been in live mode
+    // put table state back into the MachineConfig
+    DeviceConfig* config = context->getDeviceConfig();
+    MachineConfig* machine = config->getMachineConfig();
     inputTable.save(machine);
     outputTable.save(machine);
         
@@ -167,8 +151,8 @@ void MidiDeviceEditor::save()
  * Throw away all editing state.
  * As described in the file comments, this doesn't actually cancel,
  * it leaves the devices as they were.  If we need to support actual
- * cancel, then we can't update devices.xml on save(), or we need to keep a copy
- * and re-write the file and re-initializes the devices.
+ * cancel, then we would have to ask MidiManager to reconcile the open devices
+ * with what was left in DeviceConfig at the beginning.
  */
 void MidiDeviceEditor::cancel()
 {
@@ -193,88 +177,123 @@ void MidiDeviceEditor::resized()
  * Called by either the input or output device table when a checkbox
  * is clicked on or off.
  *
- * We don't maintain an active edit of the MachineConfig model, the table itself
- * is the model that will be converted back into MachineConfig on exit.
+ * The MidiDeviceTableRow checks array will already have been updated
+ * by setCellCheck to have the change, here we can add side effects like
+ * unckecking other boxes if only one may be selected in the column, or
+ * actively opening/closing the MIDI devices as they are checked.
  *
- * God this is a mess due to the app/plugin dupllication and the input/output table split
- * and how BasicTable has it's own model that is sort of like MidiDevicesRow but different.
+ * God this is a mess due to the app/plugin duplication and the input/output table split.
  */
 void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int colid, bool state)
 {
     // the device we touched
     MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
     MidiDeviceTableRow* device = mdt->getRow(row);
-    juce::String deviceName = mdt->getName(row);
     bool plugin = context->getSupervisor()->isPlugin();
     MidiDeviceColumn mdcol = (MidiDeviceColumn)colid;
     
     // reflect the state in the DeviceTableRow model
-    if (!state) {
-        device->checks.removeAllInstancesOf(mdcol);
-    }
-    else {
-        // all but input only allows one
+    if (state) {
+        // All columns except Input allow only one device to be selected
+        // so unckeck the other ones.  This has to be kept in sync with what
+        // MidiManager does when you call openOutput since we're only doing
+        // checkbox state here, the mutex of the open devices is done
+        // by MidiManager
         if (mdcol != MidiColumnInput && mdcol != MidiColumnPluginInput)
           mdt->uncheckOthers(mdcol, row);
-        device->checks.add(mdcol);
     }
     
     // reflect the state in the open devices
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    // first determine whether this is an input or output device and
+    // it's usage
+    bool doit = false;
+    bool output = false;
+    // don't have a Usage::None, so I guess default to Input
+    MidiManager::Usage usage = MidiManager::Usage::Input;
+    
     switch (mdcol) {
         case MidiColumnInput: {
-            if (!plugin)
-              mm->openInput(deviceName, MidiManager::Usage::Input);
+            usage = MidiManager::Usage::Input;
+            doit = !plugin;
         }
             break;
         case MidiColumnInputSync: {
-            if (!plugin)
-              mm->openInput(deviceName, MidiManager::Usage::InputSync);
+            usage = MidiManager::Usage::InputSync;
+            doit = !plugin;
         }
             break;
         case MidiColumnOutput: {
-            if (!plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::Output);
+            usage = MidiManager::Usage::Output;
+            output = true;
+            doit = !plugin;
         }
             break;
         case MidiColumnOutputSync: {
-            if (!plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::OutputSync);
+            usage = MidiManager::Usage::OutputSync;
+            output = true;
+            doit = !plugin;
         }
             break;
         case MidiColumnThru: {
-            if (!plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::Thru);
+            usage = MidiManager::Usage::Thru;
+            output = true;
+            doit = !plugin;
         }
             break;
             
         case MidiColumnPluginInput: {
-            if (plugin)
-              mm->openInput(deviceName, MidiManager::Usage::Input);
+            usage = MidiManager::Usage::Input;
+            doit = plugin;
         }
             break;
         case MidiColumnPluginInputSync: {
-            if (plugin)
-              mm->openInput(deviceName, MidiManager::Usage::InputSync);
+            usage = MidiManager::Usage::InputSync;
+            doit = plugin;
         }
             break;
         case MidiColumnPluginOutput: {
-            if (plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::Output);
+            usage = MidiManager::Usage::Output;
+            output = true;
+            doit = plugin;
         }
             break;
         case MidiColumnPluginOutputSync: {
-            if (plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::OutputSync);
+            usage = MidiManager::Usage::OutputSync;
+            output = true;
+            doit = plugin;
         }
             break;
         case MidiColumnPluginThru: {
-            if (plugin)
-              mm->openOutput(deviceName, MidiManager::Usage::Thru);
+            usage = MidiManager::Usage::Thru;
+            output = true;
+            doit = plugin;
         }
             break;
-    }
             
+        default: {
+            // a checkbox was added that wasn't handled in the switch
+            // leave it as Input, but this will be wrong...
+            Trace(1, "MidiDevicEditor: Checkbox handling error\n");
+            break;
+        }
+    }
+
+    // now open/close the device with the derived usage
+    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    if (doit) {
+        if (output) {
+            if (state)
+              mm->openOutput(device->name, usage);
+            else
+              mm->closeOutput(device->name, usage);
+        }
+        else {
+            if (state)
+              mm->openInput(device->name, usage);
+            else
+              mm->closeInput(device->name, usage);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -395,6 +414,9 @@ void MidiDeviceTable::loadDevices(juce::String names, MidiDeviceColumn colid)
     }
 }
 
+/**
+ * Convert the table model back into the MachineConfig
+ */
 void MidiDeviceTable::save(MachineConfig* config)
 {
     if (isOutput) {
@@ -413,6 +435,9 @@ void MidiDeviceTable::save(MachineConfig* config)
     }
 }
 
+/**
+ * Build a csv of all devices with a given column check.
+ */
 juce::String MidiDeviceTable::getDevices(MidiDeviceColumn colid)
 {
     juce::StringArray list;
@@ -442,6 +467,8 @@ void MidiDeviceTable::uncheckOthers(MidiDeviceColumn colid, int selectedRow)
         if (i != selectedRow)
           row->checks.removeAllInstancesOf(colid);
     }
+    // this was a non-interactive model change so have to refresh
+    updateContent();
 }
 
 //
@@ -505,12 +532,6 @@ bool MidiDeviceTable::getCellCheck(int row, int columnId)
     return state;
 }
 
-/**
- * Interface right now is proactive, where we receive notificiations
- * when the checkbox changes.  If we don't try to respond to these
- * dynamically then we don't need that and could just let the
- * table do its thing and dig out the checks during save()
- */
 void MidiDeviceTable::setCellCheck(int row, int columnId, bool state)
 {
     MidiDeviceTableRow* device = devices[row];

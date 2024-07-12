@@ -41,7 +41,8 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
 
     /**
      * Optional listener to receive notificiations when checkboxes are twiddled.
-     * Hey, why isn't this the same as Model::setCellCheck?
+     * If you've set a Model, this is the same as setCellCheck, forgot why I had both
+     * but MidiDeviceTable uses both.
      */
     class CheckboxListener {
       public:
@@ -82,6 +83,7 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
 
     Model* model = nullptr;
 
+    // indicates which columns are to have checkboxes, not the state of the checkbox
     juce::Array<bool> checkboxColumns;
     CheckboxListener* checkboxListener = nullptr;
     

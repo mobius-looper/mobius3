@@ -207,8 +207,9 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void reconcileOutputs(MachineConfig* config);
     juce::MidiOutput* findOutput(juce::String name);
     juce::MidiOutput* findOrOpenOutput(juce::String name);
+    void openOutputInternal(juce::String name, Usage usage);
     void closeUnusedOutputs();
-    void retainOutput(juce::MidiOutput* dev, juce::Array<juce::MidiOutput*> retains);
+    bool inUse(juce::MidiOutput* dev);
     void closeAllOutputs();
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
