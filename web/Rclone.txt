@@ -1,3 +1,40 @@
+Fri Jul 12 13:53:23 2024
+
+Updates after adding the A2 hosted site
+
+If you authenticate to FTP using the "root" account, the root directory is
+/home/mobiuslo and the files for mobiuslooper.com need to go in
+/home/mobiuslo/public_html
+
+rclone config
+
+  n for new remote
+  enter mobiuslooper
+
+  15 for storage option, FTP
+
+  host name: ftp.mobiuslooper.com
+  username: email address, seriously
+  port: nothing, default 21
+  password: y to type one in
+  enter password
+    - you can copy/paste here but nothing is echoed to the terminal
+  option tls: false
+  option explicit tls: false
+
+oh, had the user name wrong, use mobiuslo rather than the email address
+didn't authenticate, edited config and typed in password rather than using copy/paste
+that worked
+
+cd to c:/dev/mobius3/web/circularlabs
+
+rclone copy public mobiuslooper:public_html/
+
+
+
+
+----------------------------------------------------------------------
+
 Sun May 26 14:09:13 2024
 
 rclone is a command line tool for doing bulk transfers of web site files.
