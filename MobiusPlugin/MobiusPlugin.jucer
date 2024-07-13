@@ -12,6 +12,28 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="PboNeQ" name="SyncTrace.cpp" compile="1" resource="0" file="../Mobius/Source/SyncTrace.cpp"/>
+      <FILE id="rGQJAG" name="SyncTrace.h" compile="0" resource="0" file="../Mobius/Source/SyncTrace.h"/>
+      <GROUP id="{488A10F9-CEDB-CDD4-A066-7B71391B0EFE}" name="script">
+        <FILE id="HnexiE" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/script/Console.cpp"/>
+        <FILE id="Oa9xwH" name="Console.h" compile="0" resource="0" file="../Mobius/Source/script/Console.h"/>
+        <FILE id="yeMOj1" name="ConsolePanel.h" compile="0" resource="0" file="../Mobius/Source/script/ConsolePanel.h"/>
+        <FILE id="L1gpwb" name="MobiusConsole.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MobiusConsole.cpp"/>
+        <FILE id="m4hTgl" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/script/MobiusConsole.h"/>
+        <FILE id="N7AlF7" name="MslEvaluator.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslEvaluator.cpp"/>
+        <FILE id="RMnaeY" name="MslEvaluator.h" compile="0" resource="0" file="../Mobius/Source/script/MslEvaluator.h"/>
+        <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
+        <FILE id="AGNZ7d" name="MslParser.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslParser.cpp"/>
+        <FILE id="HXhg6q" name="MslParser.h" compile="0" resource="0" file="../Mobius/Source/script/MslParser.h"/>
+        <FILE id="IkVdQ5" name="MslScript.h" compile="0" resource="0" file="../Mobius/Source/script/MslScript.h"/>
+        <FILE id="xAkXss" name="MslSession.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSession.cpp"/>
+        <FILE id="IPJaMB" name="MslSession.h" compile="0" resource="0" file="../Mobius/Source/script/MslSession.h"/>
+        <FILE id="sxWlsd" name="MslTokenizer.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslTokenizer.cpp"/>
+        <FILE id="fh2FOK" name="MslTokenizer.h" compile="0" resource="0" file="../Mobius/Source/script/MslTokenizer.h"/>
+      </GROUP>
       <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
             file="../Mobius/Source/ProjectFiler.cpp"/>
       <FILE id="vYQogu" name="ProjectFiler.h" compile="0" resource="0" file="../Mobius/Source/ProjectFiler.h"/>
@@ -594,6 +616,8 @@
         <FILE id="uHbTAW" name="TestDriver.h" compile="0" resource="0" file="../Mobius/Source/test/TestDriver.h"/>
         <FILE id="aSKv4M" name="TestPanel.cpp" compile="1" resource="0" file="../Mobius/Source/test/TestPanel.cpp"/>
         <FILE id="mvjplS" name="TestPanel.h" compile="0" resource="0" file="../Mobius/Source/test/TestPanel.h"/>
+        <FILE id="dQZxFf" name="TracePanel.cpp" compile="1" resource="0" file="../Mobius/Source/test/TracePanel.cpp"/>
+        <FILE id="iHOby6" name="TracePanel.h" compile="0" resource="0" file="../Mobius/Source/test/TracePanel.h"/>
         <FILE id="ZNrGMr" name="UpgradePanel.cpp" compile="1" resource="0"
               file="../Mobius/Source/test/UpgradePanel.cpp"/>
         <FILE id="N47CdP" name="UpgradePanel.h" compile="0" resource="0" file="../Mobius/Source/test/UpgradePanel.h"/>
