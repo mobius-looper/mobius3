@@ -338,6 +338,36 @@ bool ParametersElement::doAction(UIAction* action)
     return handled;
 }
 
+/**
+ * Within this element, clicking over a title activates the element drag
+ * and clicking over a value activates the parameter row and allows value drag.
+ */
+void ParametersElement::mouseDown(const juce::MouseEvent& e)
+{
+    if (e.getMouseDownX() < maxNameWidth) {
+        // in the label area, let it drag
+        StatusElement::mouseDown(e);
+    }
+    else {
+        int row = e.getMouseDownY() / (ParametersRowHeight + ParametersVerticalGap);
+        //Trace(2, "Parameter row %d", row);
+        cursor = row;
+        repaint();
+    }
+}
+
+void ParametersElement::mouseDrag(const juce::MouseEvent& e)
+{
+    if (e.getMouseDownX() < maxNameWidth)
+      StatusElement::mouseDrag(e);
+}
+
+void ParametersElement::mouseUp(const juce::MouseEvent& e)
+{
+    if (e.getMouseDownX() < maxNameWidth)
+      StatusElement::mouseUp(e);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

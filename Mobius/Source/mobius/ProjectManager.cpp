@@ -243,14 +243,6 @@ void ProjectManager::writeProject(Project* p, const char* file, bool isTemplate)
 
 void ProjectManager::writeAudio(Project* p, const char* baseName)
 {
-#if 0    
-	if (mTracks != NULL) {
-		for (int i = 0 ; i < mTracks->size() ; i++) {
-			ProjectTrack* track = (ProjectTrack*)mTracks->get(i);
-			track->writeAudio(baseName, i + 1);
-		}
-	}
-#endif
     List* tracks = p->getTracks();
     if (tracks != nullptr) {
 		for (int i = 0 ; i < tracks->size() ; i++) {
@@ -366,6 +358,10 @@ void ProjectManager::deleteAudioFiles(Project* p)
                                 if (fp != NULL) {
                                     fclose(fp);
                                     remove(path);
+                                }
+                                else {
+                                    // should be returning messages if we couldn't delete files
+                                    // should this hold up saving the rest of the project though?
                                 }
                             }
                             path = layer->getOverdubPath();
@@ -496,19 +492,6 @@ juce::StringArray ProjectManager::loadProject(juce::File file)
 
 void ProjectManager::read(Project* p, juce::File file)
 {
-#if 0
-	char path[1024];
-	mError = false;
-	strcpy(mMessage, "");
-
-	if (strchr(file, '.') != NULL)
-	  strcpy(path, file);
-	else {
-		// auto extend
-		snprintf(path, sizeof(path), "%s.mob", file);
-	}
-#endif
-
     // let the old file utils take over
     // should have an extension by now
     const char* path = file.getFullPathName().toUTF8();
@@ -657,39 +640,6 @@ bool ProjectManager::looksAbsolute(juce::String path)
 //
 //////////////////////////////////////////////////////////////////////
 
-// already had these in Util.h
-#if 0
-bool EndsWithNoCase(const char* str, const char* suffix)
-{
-	bool endsWith = false;
-	if (str != NULL && suffix != NULL) {
-		size_t len1 = strlen(str);
-		size_t len2 = strlen(suffix);
-		if (len1 > len2)
-		  endsWith = StringEqualNoCase(suffix, &str[len1 - len2]);
-	}
-	return endsWith;
-}
-
-int LastIndexOf(const char* str, const char* substr)
-{
-	int index = -1;
-
-	// not a very smart search
-	if (str != NULL && substr != NULL) {
-		size_t len = strlen(str);
-		size_t sublen = strlen(substr);
-		size_t psn = len - sublen;
-		if (psn >= 0) {
-			while (psn >= 0 && strncmp(&str[psn], substr, sublen))
-			  psn--;
-			index = (int)psn;
-		}
-	}
-	return index;
-}
-#endif
-
 int ProjectManager::WriteFile(const char* name, const char* content) 
 {
 	int written = 0;
@@ -737,10 +687,8 @@ int ProjectManager::WriteFile(const char* name, const char* content)
 			}
 			delete od;
 		}
-#endif
 
 // Mobius::loadLoop then did this
-#if 0
 PUBLIC void Mobius::loadLoop(Audio* a)
 {
     if (mTrack != NULL) {

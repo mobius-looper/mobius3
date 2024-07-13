@@ -8,7 +8,7 @@
     <Element name="LoopMeterElement" x="454" y="179"/>
     <Element name="CounterElement" x="456" y="90"/>
     <Element name="FloatingStripElement" x="1074" y="37" width="12" height="12"/>
-    <Element name="ParametersElement" x="21" y="20" width="171"/>
+    <Element name="ParametersElement" x="24" y="29" width="171"/>
     <Element name="AudioMeterElement" x="456" y="259"/>
     <Element name="LayerElement" x="439" y="287" width="300" height="108"/>
     <Element name="AlertElement" x="365" y="431"/>
