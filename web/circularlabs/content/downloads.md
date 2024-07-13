@@ -8,11 +8,11 @@ Use the following links to download installers for Mac or Windows.  Note that th
 
 **NOTE:** We have had difficulty with the Windows download being corrupted if you simply click on it using Chrome.  If the application fails to run after downloading, return to the download page, right-click on the download link, and choose "Save link as...".   Reinstall using the new installer executable.
 
-[Download for Windows](https://www.hairycrazyants.com/MobiusSetup.exe)
+[Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
 
-[Download for MacOS Silicon](https://www.hairycrazyants.com/Mobius.pkg)
+[Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius.pkg)
 
-[Download for MacOS Intel](https://www.hairycrazyants.com/MobiusIntel.pkg)
+[Download for MacOS Intel](https://www.mobiuslooper.com/MobiusIntel.pkg)
 
 The MacOS version is distributed in two different installation packages, one for modern M1+ or "Silicon" processors, and one for older Intel processors.  It is important that you download the right installer for your machine.  If the application does not run or the plugins fail to appear in the host, you most likely installed the wrong package.
 
@@ -20,7 +20,22 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 12 Changes
+## Build 13
+- Fix long press with CCs
+- Fix anomolies in MIDI Devices panel showing previous devices in red
+- Fix MIDI clock sync problem causing immediate retrigger or "gap" in playback
+- Removed Update button from binding panels, added Copy
+- Make level meters green instead of red
+- Loop border in the loop stack is now red when it is a loop switch destination
+- Errors reading projects on Mac
+- Better error handling and reporting when loading projects
+- Project loading ignores old absolute paths, .wav files are assumed relative to .mob
+- Add MIDI Thru device selection
+- Instant parameter values may be changed by click-dragging up or down
+- New Trace Log panel to watch what is happening when you do the things
+- New console panel that you will one day be impressed by
+  
+## Build 12 
 - Projects
 - Single loop save/load with Quick Save
 - Bug fixes for sustain scripts
@@ -33,15 +48,6 @@ I am aware that the icon displayed on the Mac is garbled when you run the standa
 - Host parameters may be bound to functions and scripts
 - Improved binding panels, immediate updates to the table when changing fields without **Update** button
 - Bindings to scripts may now have arguments that are passed through to the script
-
-## Build 11 Changes
-
-- Support for multiple input and output ports
-- Support for ASIO devices on Windows
-- **Midi Monitor** and **Environment** information panels under the Help menu
-- Loop stack in the track strips may have a configurable number of rows
-- Both an input level meter and an output level meter may be added to the track strip
-- Add a gap between rows of action buttons
 
 ## Windows Security
 

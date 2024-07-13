@@ -598,7 +598,8 @@ juce::Component* Supervisor::getPluginEditorComponent()
     comp->addKeyListener(&keyTracker);
 
     // grab focus the next maintenance ping
-    wantsFocus = true;
+    // wow this seems to cause a hang, wtf???
+    //wantsFocus = true;
     
     return comp;
 }
