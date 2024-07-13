@@ -1,9 +1,3 @@
-#baseURL = 'https://example.org/'
-#languageCode = 'en-us'
-#title = 'My New Hugo Site'
-#theme = 'spectral'
-#copyright = 'Circular Labs'
-
 baseURL = "/"
 title = "Möbius 3"
 languageCode = "en-us"
@@ -15,8 +9,8 @@ theme = "spectral"
 fancyTitle = "Möbius 3" # title for frontpage, may include image
 copyright = "Jeffrey Larson"
 description = 'The Möbius Programmable Looper<br />Rises from the ashes'
-startbuttonText = "Download"
-startbuttonLink = "/downloads"
+#startbuttonText = "Download"
+#startbuttonLink = "/downloads"
 body_is_markdown = true
 
 [[params.menu.main]]
@@ -32,12 +26,12 @@ url = '/documentation/'
 title = "Documentation"
 
 [[params.menu.main]]
-url = 'http://www.circularlabs.com/forum'
+url = 'http://www.mobiuslooper.com/forum'
 title = "Community"
 
-[[params.menu.main]]
-url = '/subscribe'
-title = "Subscribe"
+#[[params.menu.main]]
+#url = '/subscribe'
+#title = "Subscribe"
 
 [[params.menu.main]]
 url = '/about/'
@@ -47,6 +41,11 @@ title = "About"
 enable = true
 title = 'Welcome to the new Mobius'
 body = '''
-Mobius 3 is available as a beta release and is not intended for general use.  If you are familiar with old Mobius feel free to download it, try it out, and send problem reports.  But it is not in a state where it should be used for any serious performance, and we are not ready to support new users learning it for the first time.  A support forum is still evolving, the best place for discussion is the [Mobius Group](https://www.facebook.com/groups/mobiuscentral) on Facebook.
+Mobius 3 is available as an early beta release for 64-bit Windows and Mac computers.
+It runs as both a standalone application and as a VST3 and AudioUnit plugin.
+While most of the functionality of the original Mobius has been preserved, it has been extensively redesigned and will not be stable for awhile.
+You are welcome to try it and report any problems you may encounter, but it is not recommended for serious use.
+If you are new to Mobius, this may not be the best time to become involved. If you are an experienced user that would like to test the new version, please create a forum account.
+The forum can be accessed from the **Community** item in the main menu.  There is also an active [Mobius Group](https://www.facebook.com/groups/mobiuscentral) on Facebook.
 '''
 
