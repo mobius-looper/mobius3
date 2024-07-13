@@ -2,6 +2,22 @@
 // cleaned up includes
 // 
 
+// This is an ancient utility that has code to support endian
+// byte swapping for PPC.  It is unclear if that works now,
+// but it shouldn't be necessary.
+//
+// I had trouble reading 32 bit unsigned ints into
+// myuint32, it set the top two bits, resulting in a hex
+// digit of 0x6 at the top.  One is 2's comp sign bit
+// unclear about the second.  This seemed to be because the
+// stack value was uninitialized, when I set it to zero before
+// the fread, it read the 4 bytes as expected and left a properly
+// formed uint.  Unclear why this was happening since the 4 byte read
+// should have replaced everything.  But whatever the reason, it works
+// if you initialize the destination to zero first, and this all really
+// needs to be thrown out and replace by Juce audio file readers
+// so I'm not agonizing over why.
+
 /**
  * Copyright (C) 2005 Jeff Larson.  All rights reserved.
  *
@@ -457,7 +473,8 @@ void WaveFile::readId(FILE* fp, char* buffer)
  */
 myuint32 WaveFile::read32(FILE* fp)
 {
-	myuint32 value;
+    // new: it is important this be initialized or else you get sign bits after the fread
+	myuint32 value = 0;
 
 	// size=4, count=1
 	size_t count = fread(&value, 4, 1, fp);
@@ -476,7 +493,8 @@ myuint32 WaveFile::read32(FILE* fp)
  */
 myuint16 WaveFile::read16(FILE* fp)
 {
-	myuint16 value;
+    // new: it is important this be initialized or else you get sign bits after the fread
+	myuint16 value = 0;
 
 	// size=2, count=1
 	size_t count = fread(&value, 2, 1, fp);

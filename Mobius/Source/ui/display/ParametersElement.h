@@ -41,8 +41,8 @@ class ParametersElement : public StatusElement,
     void resized() override;
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& e) override;
-    void mouseDrag(const juce::MouseEvent& e);
-    void mouseUp(const juce::MouseEvent& e);
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseUp(const juce::MouseEvent& e) override;
 
     bool doAction(class UIAction* action) override;
     
