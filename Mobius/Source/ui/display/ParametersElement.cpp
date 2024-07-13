@@ -353,19 +353,96 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
         //Trace(2, "Parameter row %d", row);
         cursor = row;
         repaint();
+
+        // if value drag is enabled, remember where we started
+        valueDrag = true;
+
+        ParameterState* ps = parameters[row];
+        valueDragStart = ps->value;
+
+        // most have a min of zero, Subcycles is an outlier with a min of 1
+        valueDragMin = 0;
+        if (ps->symbol->parameter != nullptr)
+          valueDragMin = ps->symbol->parameter->low;
+
+        // max is almost always parameter->high, but structure parameters
+        // are variable and we have to query them
+        valueDragMax = Supervisor::Instance->getParameterMax(ps->symbol);
     }
 }
 
+/**
+ * Here we try to replicate the old drag-value behavior.
+ * There are lots of ways to do this, but the expectation is that if the mouse moves
+ * up or to the right, the value increases.
+ *
+ * So this can be controlled without jitter the distance from the down point needs to e
+ * quantized into "units", let's start with 10 pixels.
+ *
+ * What these units do could be interpreted several ways.  One is to treat each unit
+ * as a value increment/decrement so if you're one unit away the value goes from the
+ * original value to original+1, if you move two units away original+2.
+ * The space around the mouse down represents a grid of possible value as you move into
+ * it the parameter is assigned that value.
+ *
+ * Another way is just to watch relative mouse movements, old Mobius tried to do that
+ * but I forget exactly how it worked, you could "spin" and it would try to act like
+ * a knob.
+ *
+ * I now think it's more predictable if you visualze a space around the mouse that looks
+ * like this
+ *
+ *        2
+ *        1
+ *  -2 -1 X 1 2 3
+ *        -1
+ *        -2
+ *
+ * Each "square" around the X represents an increment or decrement, and if you want
+ * both axes to count, then the max of the two of them wins.  So if you first go to the right
+ * into X+1 space, but then move up into Y+2 space, the increment will be 2.
+ *
+ * Not sure I want to get the X axis involved, the most obvious is to think of it like
+ * scrolling, you scroll up and down in the Y axis.
+ *
+ */
 void ParametersElement::mouseDrag(const juce::MouseEvent& e)
 {
-    if (e.getMouseDownX() < maxNameWidth)
+    if (!valueDrag && e.getMouseDownX() < maxNameWidth)
       StatusElement::mouseDrag(e);
+    else {
+        juce::Point<int> offset = e.getOffsetFromDragStart();
+        int unitsY = offset.getY() / 10;
+
+        // invert Y, pushing "up" means increment
+        int newValue = valueDragStart - unitsY;
+        if (newValue < valueDragMin) newValue = valueDragMin;
+        else if (newValue > valueDragMax) newValue = valueDragMax;
+
+        ParameterState* ps = parameters[cursor];
+        int value = ps->value;
+        
+        if (newValue != value) {
+            //Trace(2, "Changing value to %d", newValue);
+            UIAction coreAction;
+            coreAction.symbol = ps->symbol;
+            coreAction.value = newValue;
+            Supervisor::Instance->doAction(&coreAction);
+            // avoid refresh lag and flicker by optimistically setting the value
+            // now and triggering an immediate repaint
+            ps->value = coreAction.value;
+            repaint();
+        }
+    }
 }
 
 void ParametersElement::mouseUp(const juce::MouseEvent& e)
 {
     if (e.getMouseDownX() < maxNameWidth)
       StatusElement::mouseUp(e);
+
+    // wherever it is, it cancels value drag
+    valueDrag = false;
 }
 
 /****************************************************************************/

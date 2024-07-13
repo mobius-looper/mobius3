@@ -347,7 +347,7 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
     for (auto name : values) {
         addParameterDisplayName(name, current);
     }
-                
+
     multi->setValue(current, allowed);
 }
 
@@ -361,6 +361,8 @@ void DisplayEditor::addParameterDisplayName(juce::String name, juce::StringArray
         Trace(1, "DisplayEditor: Symbol %s is not a parameter\n", name.toUTF8());
     }
     else {
+        juce::String dname = s->getDisplayName();
+        const char* cstr = dname.toUTF8();
         values.add(s->getDisplayName());
     }
 }

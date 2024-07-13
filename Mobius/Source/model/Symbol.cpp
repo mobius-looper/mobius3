@@ -46,10 +46,10 @@ juce::String Symbol::getDisplayName()
         if (displayName.length() > 0)
           dname = displayName;
         else
-          displayName = name;
+          dname = name;
     }
     
-    return displayName;
+    return dname;
 }
 
 //////////////////////////////////////////////////////////////////////

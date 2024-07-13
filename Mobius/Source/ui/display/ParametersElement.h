@@ -52,6 +52,11 @@ class ParametersElement : public StatusElement,
     int maxNameWidth = 0;
     int maxValueWidth = 0;
     int cursor = 0;
+
+    bool valueDrag = false;
+    int valueDragStart = 0;
+    int valueDragMin = 0;
+    int valueDragMax = 0;
     
     juce::String getDisplayName(Symbol* s);
     

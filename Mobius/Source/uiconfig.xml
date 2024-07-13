@@ -32,7 +32,7 @@
       <Element name="altFeedback" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,activeLayout,activeLayout,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="activeLayout,activePreset,quantize,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
