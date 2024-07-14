@@ -72,6 +72,7 @@ DisplayEditor::DisplayEditor()
     properties.setTopInset(12);
     properties.add(&loopRows);
     properties.add(&trackRows);
+    properties.add(&buttonHeight);
 
     tabs.add("Main Elements", &mainElements);
     tabs.add("Docked Track Strip", &dockedStrip);
@@ -274,6 +275,7 @@ void DisplayEditor::loadLayout(int ordinal)
     UIConfig* config = context->getUIConfig();
     trackRows.setText(config->get("trackRows"));
     loopRows.setText(config->get("loopRows"));
+    buttonHeight.setText(config->get("buttonHeight"));
     
     initElementSelector(&mainElements, config, layout->mainElements, false);
 
@@ -408,6 +410,7 @@ void DisplayEditor::saveLayout(int ordinal)
     // if we're just using a text field
     config->put("trackRows", trackRows.getText());
     config->put("loopRows", loopRows.getText());
+    config->put("buttonHeight", buttonHeight.getText());
 }
 
 /**

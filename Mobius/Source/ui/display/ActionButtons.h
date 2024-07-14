@@ -47,6 +47,9 @@ class ActionButtons : public juce::Component,
     // experiment with sustainable buttons
     bool enableSustain = true;
 
+    // button height override from UIConfig
+    int buttonHeight = 0;
+
     class MobiusDisplay* display;
     juce::OwnedArray<class ActionButton> buttons;
 

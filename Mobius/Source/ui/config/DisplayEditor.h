@@ -51,6 +51,7 @@ class DisplayEditor : public ConfigEditor
     BasicForm properties;
     BasicInput loopRows {"Loop Rows", 20};
     BasicInput trackRows {"Track Rows", 20};
+    BasicInput buttonHeight {"Button Height", 20};
     
     BasicTabs tabs;
     

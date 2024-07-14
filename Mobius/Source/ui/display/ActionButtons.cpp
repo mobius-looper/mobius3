@@ -23,6 +23,7 @@
 #include "MobiusDisplay.h"
 
 const int ActionButtonsRowGap = 1;
+const int ActionButtonsDefaultHeight = 25;
 
 ActionButtons::ActionButtons(MobiusDisplay* argDisplay)
 {
@@ -37,10 +38,19 @@ ActionButtons::~ActionButtons()
 /**
  * Rebuild the buttons from the UIConfig, and add any script/sample
  * symbols that ask for buttons.
-n */
+ */
 void ActionButtons::configure()
 {
     UIConfig* config = Supervisor::Instance->getUIConfig();
+
+    // remember this for layout()
+    // since this is just a raw text entry field, do some sanity checks on it
+    int height = config->getInt("buttonHeight");
+    if (height > 10 && height < 100)
+      buttonHeight = height;
+    else
+      buttonHeight = ActionButtonsDefaultHeight;
+    
     buildButtons(config);
 
     DynamicConfig* dynconfig = Supervisor::Instance->getDynamicConfig();
@@ -264,8 +274,10 @@ void ActionButtons::layout(juce::Rectangle<int> bounds)
     int availableWidth = bounds.getWidth();
     int topOffset = 0;
     int leftOffset = 0;
-    // todo: make this configurable ?
-    int buttonHeight = 25;
+
+    // make sure this got set, it can now be configured
+    if (buttonHeight == 0)
+      buttonHeight = ActionButtonsDefaultHeight;
 
     // before we start, bound the parent with all of the available size
     // so the button mouse listeners have something to work with
