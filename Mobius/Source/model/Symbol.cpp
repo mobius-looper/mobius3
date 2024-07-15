@@ -87,6 +87,7 @@ SymbolTable::~SymbolTable()
 void SymbolTable::clear()
 {
     symbols.clear();
+    symbolMap.clear();
 }
 
 /**
