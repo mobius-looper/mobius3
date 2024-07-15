@@ -59,6 +59,13 @@ class ScriptProperties
     bool sustainable = false;
 
     /**
+     * True if this script can act as a continuous control.
+     * Indiciates to Binderator that this won't behave like a Function
+     * with on/off sustain behavior.
+     */
+    bool continuous = false;
+
+    /**
      * True if this script should be automatically given an action
      * button in the main display.  This was just a test hack I liked
      * but may be of general interest.

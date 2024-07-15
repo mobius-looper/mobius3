@@ -313,15 +313,15 @@
     <Binding name='Overdub' trigger='program' channel='1'/>
     <Binding name='Record' trigger='control' value='12' channel='1'/>
     <Binding name='MainTap Track1' trigger='note' value='3' channel='1'/>
-    <Binding name='Record' trigger='control' channel='1'/>
+    <Binding name='MainTap Track25' trigger='control' channel='1'/>
   </BindingSet>
-  <BindingSet name='[New]' active='true'>
+  <BindingSet name='[New]'>
     <Binding name='Backward' trigger='note'/>
     <Binding name='Checkpoint' trigger='note'/>
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\bert.mos'/>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\manyscript.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>

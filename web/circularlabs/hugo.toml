@@ -8,7 +8,7 @@ theme = "spectral"
 [params]
 fancyTitle = "Möbius 3" # title for frontpage, may include image
 copyright = "Jeffrey Larson"
-description = 'The Möbius Programmable Looper<br />Rises from the ashes'
+description = 'The Möbius Programmable Looper <br />Rises from the ashes'
 #startbuttonText = "Download"
 #startbuttonLink = "/downloads"
 body_is_markdown = true
@@ -32,6 +32,10 @@ title = "Community"
 #[[params.menu.main]]
 #url = '/subscribe'
 #title = "Subscribe"
+
+[[params.menu.main]]
+url = 'fileshare/public.php'
+title = "Library"
 
 [[params.menu.main]]
 url = '/about/'

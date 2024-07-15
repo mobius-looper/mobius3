@@ -58,6 +58,43 @@
 #include "ObjectPool.h"
 
 /**
+ * Sustainable triggers need to generate a unique "sustain id" that does
+ * not conflict with any other trigger types.  The sustain id must be
+ * greater than zero in the engine.  Code that builds actions should
+ * use these id offsets for the various trigger types.  Could have a more
+ * flexible registration of id bases, but this gets the job done.
+ *
+ * todo: Forming ids with arbitrary numbers like key scan codes is
+ * awkward due to unpredictable ranges.  Would be better if Binderator
+ * used a simpler numbering, like just the index of the Binding in the
+ * BindingSet
+ */
+
+// Id base for UI buttons, we normally won't have very many of these
+// The id is formed from this base plus the index of the button in
+// the ActionButtons list
+const int UIActionSustainBaseButton = 1;
+
+// Id base for MIDI notes and controllers
+// The id is formed from this base plus the MIDI note or CC number
+// there needs to be at least 128 between them
+const int UIActionSustainBaseNote = 100;
+const int UIActionSustainBaseControl = 300;
+
+// Id base for host parameters
+// the upper bound on these is unclear, but probably 128, it
+// would depend on the host and the amount of time the user wants to
+// spend configuring them
+const int UIActionSustainBaseHost = 500;
+
+// Id base for keyboard keys
+// Id is formed from this base plus the key code
+// key codes are usually relatively small ascii codes, but can be large
+// for some function keys.  Keep these at the end since the range
+// is unpredictable
+const int UIActionSustainBaseKey = 1000;
+
+/**
  * Maximum length of a string argument in an Action.
  * This receives a copy of the argument string from a Binding.
  */

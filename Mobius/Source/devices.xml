@@ -6,8 +6,8 @@
            outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Focusrite USB MIDI"
            midiInputSync="Focusrite USB MIDI" midiOutput="Focusrite USB MIDI"
            midiOutputSync="Focusrite USB MIDI"/>
-  <Machine hostName="Thor" inputPorts="0" outputPorts="0" audioDeviceType="ASIO"
-           audioInput="ASIO Fireface USB" inputChannels="111111" audioOutput="ASIO Fireface USB"
+  <Machine hostName="Thor" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
+           audioInput="ASIO Fireface USB" inputChannels="11" audioOutput="ASIO Fireface USB"
            outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Midi Captain- MIDI "
            midiOutput="UC Midi Port 1" midiOutputSync="UC Midi Port 1"/>
   <Machine hostName="Frigg" inputPorts="0" outputPorts="0" audioDeviceType="CoreAudio"

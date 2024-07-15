@@ -1392,6 +1392,7 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
                     ScriptProperties* props = new ScriptProperties();
                     props->coreScript = script;
                     props->sustainable = script->isSustainAllowed();
+                    props->continuous = script->isContinuous();
                     props->button = script->isButton();
                     props->test = script->isTest();
                     s->script.reset(props);

@@ -515,12 +515,16 @@ UIAction* Binderator::buildAction(Binding* b)
         TriggerMode* mode = b->triggerMode;
         int sustainId = -1;
         
-        if (trigger == TriggerKey || trigger == TriggerNote) {
+        if (trigger == TriggerKey) {
             // these are implicitly sustainable, but I suppose you might
             // want to turn that OFF in some cases, so look at the mode if specified
             // in practice, this would be done by setting mode to Once
             if (mode == nullptr || mode == TriggerModeMomentary)
-              sustainId = b->triggerValue;
+              sustainId = UIActionSustainBaseKey + b->triggerValue;
+        }
+        else if (trigger == TriggerNote) {
+            if (mode == nullptr || mode == TriggerModeMomentary)
+              sustainId = UIActionSustainBaseNote + b->triggerValue;
         }
         else if (trigger == TriggerControl) {
             // CC's can behave as sustainable if you adopt a value threshold
@@ -530,7 +534,7 @@ UIAction* Binderator::buildAction(Binding* b)
             // TriggerMode isn't baked yet and you can't set it in the binding
             // windows so always assume sustainable
             if (mode == nullptr || mode == TriggerModeMomentary)
-              sustainId = b->triggerValue;
+              sustainId = UIActionSustainBaseControl + b->triggerValue;
         }
         else if (trigger == TriggerHost) {
             // not sure how we're going to do this, they're similar
@@ -544,7 +548,7 @@ UIAction* Binderator::buildAction(Binding* b)
             // buttons have an unknown base and will probably conflict with
             // host parameter ids
             //if (mode == nullptr || mode == TriggerModeMomentary)
-            //sustainId = b->triggerValue;
+            //sustainId = UIActionSustainBaseHost + b->triggerValue;
         }
         // TriggerProgram and TriggerPitch are unsustainable
         // TriggerUI and TriggerOsc won't be seen here
@@ -678,6 +682,30 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                 else if (ccvalue >= controllerThreshold) {
                     // it's "down"
                     send = action;
+                }
+            }
+            else if (behavior == BehaviorScript) {
+                // these are treated like functeions unless the
+                // continuous flag is set
+                if (action->symbol->script != nullptr &&
+                    action->symbol->script->continuous) {
+
+                    // does this actually work?
+                    action->value = ccvalue;
+                    send = action;
+                }
+                else {
+                    // sustainable function
+                    if (ccvalue == 0) {
+                        if (action->sustain) {
+                            action->sustainEnd = true;
+                            send = action;
+                        }
+                    }
+                    else if (ccvalue >= controllerThreshold) {
+                        // it's "down"
+                        send = action;
+                    }
                 }
             }
             else if (behavior == BehaviorParameter) {

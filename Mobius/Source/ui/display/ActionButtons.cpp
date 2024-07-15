@@ -233,7 +233,7 @@ void ActionButtons::assignTriggerIds()
     // for now just number them from 1
     for (int i = 0 ; i < buttons.size() ; i++) {
         ActionButton* b = buttons[i];
-        b->setTriggerId(i+1);
+        b->setTriggerId(UIActionSustainBaseButton + i);
     }
 }
 
