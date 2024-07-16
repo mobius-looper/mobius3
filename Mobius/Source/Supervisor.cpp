@@ -46,6 +46,7 @@
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
 #include "ProjectFiler.h"
+#include "script/MslEnvironment.h"
 
 #include "Supervisor.h"
 
@@ -316,6 +317,8 @@ bool Supervisor::start()
 
     // prepare action bindings
     configureBindings(config);
+
+    
     
     meter("Devices");
 
@@ -353,6 +356,11 @@ bool Supervisor::start()
         // then install them if we're a plugin
         parametizer.install();
     }
+
+    // prepare the script environment
+    // move this higher if we ever need scripts accessible
+    // by other internal compenents during startup
+    scriptenv.initialize(this);
         
     // temporary diagnostic dumps
     
@@ -433,6 +441,7 @@ void Supervisor::shutdown()
     audioStream.traceFinalStatistics();
     
     binderator.stop();
+    scriptenv.shutdown();
     midiRealizer.shutdown();
     midiManager.shutdown();
 
@@ -732,6 +741,11 @@ void Supervisor::menuQuickSave()
 void Supervisor::advance()
 {
     if (mobius != nullptr) {
+
+        // the coordination between the script environment and Mobius maintenance
+        // is subtle and may need adjustment, should it be before or after?
+        scriptenv.shellAdvance();
+        
         // tell the engine to do housekeeping before we refresh the UI
         mobius->performMaintenance();
 
@@ -1745,6 +1759,35 @@ int Supervisor::getParameterMax(Symbol* s)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Tell Mobius to compile and install a pack of samples.
+ * The samples will be whatever is defined in the SampleConfig
+ * inside MobiusConfig.  We retain ownership of the SampleConfig.
+ */
+void Supervisor::menuLoadSamples()
+{
+    MobiusConfig* config = getMobiusConfig();
+    SampleConfig* sconfig = config->getSampleConfig();
+    if (sconfig != nullptr) {
+        mobius->installSamples(sconfig);
+
+        int count = 0;
+        for (auto symbol : Symbols.getSymbols()) {
+            if (symbol->sample != nullptr)
+              count++;
+        }
+        alert(juce::String(count) + " samples loaded");
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Scripts
+//
+// Starting to consolidate all script activities in MslEnvironment...
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
  * Tell Mobius to compile and install a pack of scripts.
  * The scripts will be whatever is defined in the ScriptConfig
  * inside MobiusConfig.  We retain ownership of the ScriptConfig.
@@ -1765,26 +1808,10 @@ void Supervisor::menuLoadScripts()
     }
 }
 
-/**
- * Tell Mobius to compile and install a pack of samples.
- * The samples will be whatever is defined in the SampleConfig
- * inside MobiusConfig.  We retain ownership of the SampleConfig.
- */
-void Supervisor::menuLoadSamples()
-{
-    MobiusConfig* config = getMobiusConfig();
-    SampleConfig* sconfig = config->getSampleConfig();
-    if (sconfig != nullptr) {
-        mobius->installSamples(sconfig);
 
-        int count = 0;
-        for (auto symbol : Symbols.getSymbols()) {
-            if (symbol->sample != nullptr)
-              count++;
-        }
-        alert(juce::String(count) + " samples loaded");
-    }
-}
+
+
+
 
 //////////////////////////////////////////////////////////////////////
 //

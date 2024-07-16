@@ -37,6 +37,7 @@
 #include "UISymbols.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
+#include "script/MslEnvironment.h"
 
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
@@ -338,6 +339,8 @@ class Supervisor : public MobiusContainer, public MobiusListener
     // focus, initially just on startup, may be useful elsewhere
     bool wantsFocus = false;
 
+    MslEnvironment scriptenv;
+    
     //
     // Methods
     //

@@ -17,6 +17,39 @@
 #include "MslParser.h"
 
 /**
+ * New entry point for MslEnvironment used when loading files and
+ * should be the only way to parse source.
+ */
+MslParserResult* MslParser::parseNew(juce::String source)
+{
+    MslParserResult* result = new MslParserResult();
+
+    result->source = source;
+
+    // there is a "script" member, get rid of it
+    MslScript* neu = new MslScript();
+
+    neu->root = new MslBlock("");
+    // the "stack"
+    current = neu->root;
+
+    parse(source);
+
+    // accumulte simple errors, add MslError someday
+    result->errors.addArray(errors);
+    
+    if (errors.size() == 0) {
+        // return the script only if could be parsed without error
+        result->script = neu;
+    }
+    else {
+        delete neu;
+    }
+
+    return result;
+}
+
+/**
  * Primary entry point for parsing script files.
  * Reading the file contents is handled above.
  */
