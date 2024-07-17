@@ -20,6 +20,36 @@
 
 #include "MslScript.h"
 
+/**
+ * Represents a linkage between a reference in a script and something
+ * in another script.  Cross-script references indirect through this table
+ * so the script files can be reloaded or unloaded without damaging the
+ * referencing script.
+ *
+ * This is conceptually similar to the Symbols table, but has more information
+ * and extra logic around reference management.
+ *
+ * todo: this table can drive the export of the environment to the Symbol table
+ * so need the notion of "public" and "script local" references that can be
+ * called from scripts but don't show up in bindings.
+ */
+class MslLinkage
+{
+  public:
+
+    MslLinkage() {}
+    ~MslLinkage() {}
+
+    // the name that was referenced
+    juce::String name;
+
+    // the script it currently resolves to
+    class MslScript* script = nullptr;
+
+    // the exported proc within the script
+    class MslProc* proc = nullptr;
+};
+
 class MslEnvironment
 {
   public:
@@ -37,47 +67,57 @@ class MslEnvironment
     void kernelAdvance();
     
     // primary entry point for file loading by the UI
-    bool loadFiles(juce::StringArray paths);
-    
-    class MslParserResult* getLastResult() {
-        return lastResult;
+    bool load(class ScriptClerk& clerk);
+
+    // load results for the diagnostic panel
+    juce::StringArray& getMissingFiles() {
+        return missingFiles;
     }
 
-    juce::StringArray& getErrors() {
-        return errors;
+    juce::OwnedArray<class MslFileError>* getFileErrors() {
+        return &fileErrors;
     }
-    
-    juce::OwnedArray<MslScript>* getScripts() {
+
+    juce::OwnedArray<class MslCollision>* getCollisions() {
+        return &collisions;
+    }
+
+    juce::OwnedArray<class MslScript>* getScripts() {
         return &scripts;
     }
     
   private:
 
     class Supervisor* supervisor = nullptr;
-    juce::HashMap<juce::String,class MslScript*> library;
-    juce::StringArray errors;
+
+    // last load state
     juce::StringArray missingFiles;
-    class MslParserResult* lastResult = nullptr;
-    int lastLoaded = 0;
+    juce::OwnedArray<MslFileErrors> fileErrors;
+    juce::OwnedArray<MslCollision> collisions;
+    juce::StringArray unloaded;
     
     // the active scripts
     juce::OwnedArray<class MslScript> scripts;
 
+    // the linkage table
+    juce::OwnedArray<MslLinkage> linkages;
+    juce::HashMap<juce::String,class MslLinkage*> library;
+
+    // special dynamic script used by the interactive console
+    std::unique_ptr<class MslScript> dynamicScript;
+
     // the scripts that were in use at the time of re-parsing and replacement
-    juce::OwnedArray<class MslScript> pendingDelete;
+    juce::OwnedArray<class MslScript> inactive;
 
-    // internal file loading
-    void loadPath(juce::String path);
-    juce::String normalizePath(juce::String src);
-    juce::String expandPath(juce::String src);
-    void loadDirectory(juce::File dir);
-    void loadFile(juce::File file);
-
+    //
     // internal library management
+    //
+    
+    void loadInternal(juce::String path);
     void install(MslScript* script);
     juce::String getScriptName(MslScript* script);
-
-    void traceErrors(class MslParserResult* result);
+    void unlink(MslScript* script);
+    void unload(juce::StringArray& retain);
     
 };
 

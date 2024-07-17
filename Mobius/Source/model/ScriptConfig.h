@@ -12,7 +12,6 @@ class ScriptConfig {
   public:
 
     ScriptConfig();
-    ScriptConfig(class XmlElement* e);
     ~ScriptConfig();
     ScriptConfig* clone();
 
@@ -23,9 +22,6 @@ class ScriptConfig {
 	void add(const char* file);
     class ScriptRef* get(const char* file);
     bool isDifference(ScriptConfig* other);
-
-    void parseXml(class XmlElement* e);
-    void toXml(class XmlBuffer* b);
 
   private:
 
@@ -47,7 +43,6 @@ class ScriptRef {
 
     ScriptRef();
     ScriptRef(const char* file);
-    ScriptRef(class XmlElement* e);
     ScriptRef(ScriptRef* src);
 	~ScriptRef();
 
@@ -56,9 +51,6 @@ class ScriptRef {
 
     void setFile(const char* file);
     const char* getFile();
-
-    void parseXml(class XmlElement* e);
-    void toXml(class XmlBuffer* b);
 
     void setTest(bool b);
     bool isTest();
@@ -69,6 +61,8 @@ class ScriptRef {
 
     ScriptRef* mNext;
     char* mFile;
+
+    // early hack for test scripts, try to get rid of this
     bool mTest;
 
 };

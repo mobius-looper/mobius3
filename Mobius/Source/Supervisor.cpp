@@ -1788,30 +1788,46 @@ void Supervisor::menuLoadSamples()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Tell Mobius to compile and install a pack of scripts.
- * The scripts will be whatever is defined in the ScriptConfig
- * inside MobiusConfig.  We retain ownership of the ScriptConfig.
+ * Reload all of the configured scripts.  This may be called from
+ * a main menu item, or by other things that need to force reloading
+ * of scripts after the configuration changes.
+ *
+ * There are two paths for script management, one for older .mos scripts
+ * which are handled by the mobius core, and one for new .msl scripts
+ * which are handled by MslEnvironment.
  */
 void Supervisor::menuLoadScripts()
 {
     MobiusConfig* config = getMobiusConfig();
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
-        mobius->installScripts(sconfig);
 
+        // split into .mos and .msl file lists and normalize paths
+        ScriptClerk clerk;
+        clerk.split(sconfig);
+
+        // new files go to the environment
+        scriptenv.load(clerk);
+
+        // old files go down to Mobuius core
+        mobius->installScripts(clerk.getOldConfig());
+
+        // gather interesting stats for the alert
+        // need MUCH more here
         int count = 0;
         for (auto symbol : Symbols.getSymbols()) {
             if (symbol->script != nullptr) 
               count++;
         }
-        alert(juce::String(count) + " scripts loaded");
+        juce::String msg = juce::String(count) + " scripts loaded";
+
+        int missing = clerk.getMissingFileCount();
+        if (missing > 0)
+          msg += "\n" + juce::String(missing) + " missing files";
+
+        alert(msg);
     }
 }
-
-
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 //

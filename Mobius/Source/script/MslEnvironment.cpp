@@ -30,224 +30,103 @@ void MslEnvironment::shutdown()
 {
 }
 
-///////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 //
-// Files
+// Load
 //
-///////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
 /**
- * Load a list of script files into the environment.
- * If any of the paths are directories, recurse and load any .msl files
- * found in them.
+ * Load the file list derived by ScriptClerk.
+ * Also saves any file errors for later display.
  *
- * Not passing ScriptConfig here because I want Supervisor to deal with
- * dependencies on the old configuration model.
- *
- * There are lots of things that can go wrong here, and error conveyance
- * to the user needs thought.  If this returns true, everything loaded normally.
- * If it returns false, something went wrong and the caller can call
- * getErrors() to return the list of things to display.
- *
- * Use getLastLoaded to return the number of files actually loaded.
- * Would be better to have a return object like MslLoadResult to convey
- * all of this so we don't have to keep state in here.
- *
- * This is intended only for use in the UI thread.
+ * If a script was previously loaded and is no longer in the configuraiton
+ * it is unloaded.  
  */
-bool MslEnvironment::loadFiles(juce::StringArray paths)
+void MslEnvironment::load(ScriptClerk& clerk)
 {
-    // clear load state
-    errors.clear();
-    missingFiles.clear();
-    lastLoaded = 0;
+    // reset state from last time
+    missingFiles = clerk.getMissingFiles();
+    fileErrors.clear();
+    unloaded.clear();
 
-    for (auto path : paths)
-      loadPath(path);
-
-    return (errors.size() == 0);
-}
-
-void MslEnvironment::loadPath(juce::String path)
-{
-    path = normalizePath(path);
-    if (path.length() > 0) {
-        juce::File f (path);
-        if (f.isDirectory())
-          loadDirectory(f);
-        else
-          loadFile(f);
+    for (auto path : clerk.getMslFiles()) {
+        loadInternal(path);
     }
+
+    unload(clerk.getMslFiles());
 }
 
 /**
- * Make adjustments to the path for cross-machine compatibility.
- * This is not necessary in normal use, but I hit this all the time
- * in development moving between machines with .xml files that are
- * under source control.
- *
- * Juce likes to raise assertions when you build a File with a non-standard
- * path which is really annoying on Mac because Xcode halts with a breakpoint.
- * Try to do a reasonable job making it look right without Juce complaining
- * and if you can't return empty string and skip it.
- *
- * The "parser" here probably isn't foolproof, but should get the job done in almost
- * all cases.
+ * Load one file into the library.
+ * Save parse errors if encountered.
+ * If the script has already been loaded, it is replaced and the old
+ * one is deleted.  If the replaced script is still in use it is placed
+ * on the pending delete list.
  */
-juce::String MslEnvironment::normalizePath(juce::String src)
+void MslEnvironment::loadInternal(juce::String path)
 {
-    juce::String path;
-
-    // start by replacing $ references
-    path = expandPath(src);
-
-    // next make the usual development root adjustments
-    // would be nice to have a few options for these, or at least
-    // substitute the user name
-    juce::String usualWindowsDev = "c:/dev";
-    juce::String usualMacDev = "/Users/jeff/dev";
+    juce::File file (path);
     
-    // todo: don't use conditional compilation here
-    // Juce must have a better way to test this
-#ifdef __APPLE__
-    if (src.startsWith(usualWindowsDev)) {
-        path = src.replaceFirstOccurrenceOf(usualWindowsDev, usualMacDev);
-    }
-    else if (src.contains(":")) {
-        // don't try to be smart here
-        missingFiles.add(src);
-        Trace(2, "MslEnvironment: Skipping non-stanard path %s",
-              src.toUTF8());
-        path = "";
-    }
-
-    // in all cases, adjust slash sex
-    path = path.replace("\\", "/");
-#else
-    if (src.startsWith(usualMacDev)) {
-        path = src.replaceFirstOccurrenceOf(usualMacDev, usualWindowsDev);
-    }
-    else if (src.startsWith("/")) {
-        // don't try to be smart here
-        missingFiles.add(src);
-        Trace(2, "MslEnvironment: Skipping non-stanard path %s",
-              src.toUTF8());
-        path = "";
-    }
-    path = path.replace("/", "\\");
-#endif
-
-    // isn't there a "looks absolute" juce::File method?
-    if (!path.startsWithChar('/') && !path.containsChar(':')) {
-        // looks relative
-        juce::File f = supervisor->getRoot().getChildFile(path);
-        path = f.getFullPathName();
-    }
-
-    if (!path.endsWith(".msl"))
-      path += ".msl";
-
-    return path;
-}
-
-/**
- * Expand $ references in a path.
- * The only one supported right now is $ROOT
- */
-juce::String MslEnvironment::expandPath(juce::String src)
-{
-    // todo: a Supervisor reference that needs to be factored out
-    juce::String rootPrefix = supervisor->getRoot().getFullPathName();
-    return src.replace("$ROOT", rootPrefix);
-}
-
-/**
- * Load all the .msl files in a directory
- * This does not recurse more than one level, but it could easily
- */
-void MslEnvironment::loadDirectory(juce::File dir)
-{
-    int types = juce::File::TypesOfFileToFind::findFiles;
-    juce::String pattern ("*.msl");
-    juce::Array<juce::File> files =
-        dir.findChildFiles(types,
-                           // searchRecursively   
-                           false,
-                           pattern,
-                           // followSymlinks
-                           juce::File::FollowSymlinks::no);
-    
-    for (auto file : files) {
-        // hmm, I had a case where a renamed .mos file left
-        // an emacs save file with the .mos~ extension and this
-        // passed the *.mos filter, seems like a bug
-        juce::String path = file.getFullPathName();
-        if (!path.endsWithIgnoreCase(".msl")) {
-            Trace(2, "MslEnvironment: Ignoring file with qualified extension %s",
-                  file.getFullPathName().toUTF8());
-        }
-        else {
-            loadFile(file);
-        }
-    }
-}
-
-/**
- * Finally the meat.  Parse and install a single script file.
- *
- * Parsing is a complex process and the errors that are encoutered need
- * to be conveyed to the user with as much context as possible.  Each time
- * a file is parsed with failures, the MslParserResult is saved and can be retrieved
- * by the container for display.
- *
- */
-void MslEnvironment::loadFile(juce::File file)
-{
     if (!file.existsAsFile()) {
-        Trace(1, "MslEnvironment: Unknown file %s", file.getFullPathName().toUTF8());
-        // ugh, starting to hate error handling
-        errors.add("Missing file " + file.getFullPathName());
+        // this should have been caught and saved by ScriptClerk by now
+        Trace(1, "MslEnvironment: loadInternal missing file %s", path.toUTF8());
     }
     else {
         juce::String source = file.loadFileAsString();
 
-        // keep last result here for inspection
-        delete lastResult;
-        lastResult = nullptr;
-
         MslParser parser;
-        lastResult = parser.parse(source);
+        MslParserResult* result = parser.parse(source);
 
-        // now it gets interesting
-        // if there were errors parsing the file we need to save them and show
-        // them later
-        // todo: might want a table of these keyed by file name, for initially
-        // whatever might display errors will do it immediately after parsing
+        // if the parser returns errors, save them
+        // if it returns a script install it
+        // on error, the script object if there is one is incomplete
+        // and can be discarded, any use in keeping these around?
 
-        if (lastResult != nullptr) {
-            // take immediate ownership of this
-            MslScript* script = lastResult->script;
-            lastResult->script = nullptr;
-        
-            if (script != nullptr) {
-                // success
-                // remember the path for naming
-                script->filename = file.getFullPathName();
-                install(script);
-            }
-            else {
-                // complain loudly
-                traceErrors(lastResult);
-            }
+        if (result->errors != nullptr) {
+            // transfer ownership
+            MslFileErrors* ferrors = result->errors.release();
+            fileErrors.add(ferrors);
+            // annotate this with the file path so we know where it came from
+            ferrors.path = path;
+        }
+        else if (result->script != nullptr) {
+            // transfer ownership
+            MslScript* script = result.script.release();
+            // annotate with path, which also provides the default reference name
+            script->path = path;
+            install(script);
+        }
+        else {
+            // nothing was done, I suppose this could happen if the file was
+            // empty, is this worth saying anything about
+            Trace(1, "MslEnvironment: No parser results for file %s", path.toUTF8());
         }
     }
 }
 
-void MslEnvironment::traceErrors(MslParserResult* result)
+/**
+ * Unload any scripts that were not included in the last full ScriptConfig load.
+ * Assumption right now is that ScriptConfig defines the state.  Incremental
+ * loads can follow that, but a reload of ScriptConfig cancels any incrementals.
+ *
+ * For all loaded scripts, if their path is not on the new path list, they
+ * are unloaded.
+ */
+void MslEnvironment::unload(juce::StringArray& retain)
 {
-    // todo: not building the detailed MslParserError list yet
-    for (auto error : result->errors)
-      Trace(1, "MslEnvironment: %s", error.toUTF8());
+    int index = 0;
+    while (index < scripts.size()) {
+        MslScript* s = scripts[index];
+        if (retain.contains(s->path)) {
+            index++;
+        }
+        else {
+            unlink(s);
+            scripts.removeObject(s, false);
+            inactive.add(s);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -263,25 +142,87 @@ void MslEnvironment::traceErrors(MslParserResult* result)
  * Initially only the Supervisor/UI can do this so we don't have
  * to worry about it but eventually the maintenance thread might need to.
  *
- * If a script with this name is already installed, it gets complicated.
- * We can't delete the old one until all sessions that use it have completed.
- * 
+ * There are several forms of "linking" that cause complications here:
+ * replacement of scripts that are currently in use, resolving references
+ * between scripts, and name collisions when multiple scripts have the
+ * same name either for the root script or an exported proc or var.
+ *
+ * When there are active sessions, the session can have pointers to anything
+ * that is currently in the library, so nothing is allowed to be deleted while
+ * sessions exist.  Instead reloaded scripts must be moved to an "inactive" list
+ * and reclained when all sessions have finished.
+ *
+ * References between scripts are handled through a local symbol table, this
+ * is similar to Symbols but only deals with cross-script references and has
+ * other state I don't want to clutter Symbol with.  This may change once this
+ * settles down.
+ *
+ * File paths are always unique identifiers, but the simplfied "reference name"
+ * may not be.  Only one name may be added to the library symbol table, collisions
+ * when detected are added to a collision list for display to the user.
+ *
+ * The scripts are still loaded, and the reference may be resolved later.
  */
 void MslEnvironment::install(MslScript* script)
 {
-    // new scripts always go here for reclamation
-    scripts.add(script);
-
-    // also maintain a map for faster lookup
-    juce::String name = getScriptName(script);
-    MslScript* existing = library[name];
-    if (existing != nullptr) { 
-        // todo: if anything is using this, put it on a pending delete lista
-        scripts.removeObject(existing, false);
-        pendingDelete.add(existing);
+    // is it already there?
+    // note that this is the authorative model for loaded scripts and is independent
+    // of linkages
+    MslScript* existing = nullptr;
+    for (auto s : scripts) {
+        if (s->path == script->path) {
+            existing = s;
+            break;
+        }
     }
 
-    library.set(name, script);
+    // if we're replacing one, move it to the inactive list
+    // todo: eventually do a usage check and reclaim it now rather than later
+    if (existing != nullptr) {
+        scripts.removeObject(existing, false);
+        inactive.add(existing);
+        unlink(existing);
+    }
+
+    // add it to the library
+    scripts.add(script);
+    
+    // derive the reference name for this script
+    juce::String name = getScriptName(script);
+    MslLinkage* link = library[name];
+
+    if (link == nullptr) {
+        // new file
+        link = new MslLinkage();
+        link->name = name;
+        link->script = script;
+        // todo: add linkages for any exported procs
+        library.set(name, link);
+    }
+    else if (link->script != nullptr) {
+        // it was already resolved
+        // remember the collision, it may get dynamicly resolved later
+        // no, this needs work
+        // if we don't remember the Script object then we can't magically
+        // install it when the offending thing is unloaded
+        // maybe MslLinkage needs to be the one maintaining the collision list?
+        // or have the Collisision keep the copy of the script, and install
+        // it once the linkage becomes free during reresolve
+        // also too: the script name may  have a collision, but the procs inside
+        // it don't
+        // also again: the script name may not collide, but the exported procs
+        // do
+        MslCollision* col = new MslCollision();
+        col->name = name;
+        col->fromPath = script->path;
+        col->otherPath = link->script->path;
+        collisions.add(col);
+    }
+    else {
+        link->script = script;
+        // just in case unlink misssed it
+        link->proc = nullptr;
+    }
 }
 
 /**
@@ -312,6 +253,20 @@ juce::String MslEnvironment::getScriptName(MslScript* script)
     }
 
     return name;
+}
+
+/**
+ * Remove linkages for a script that is being unloaded.
+ */
+void MslEnvironment::unlink(MslScript* script)
+{
+    // may be more than one if the script exported procs
+    for (auto link : linkages) {
+        if (link->script == script) {
+            link->script = nullptr;
+            link->proc = nullptr;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////
