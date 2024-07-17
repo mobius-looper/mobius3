@@ -253,6 +253,10 @@ class Supervisor : public MobiusContainer, public MobiusListener
     bool isIdentifyMode();
     void setIdentifyMode(bool b);
 
+    class MslEnvironment* getScriptEnvironment() {
+        return &scriptenv;
+    }
+    
 #ifdef USE_FFMETERS
     class foleys::LevelMeterSource* getLevelMeterSource() {
         return audioStream.getLevelMeterSource();

@@ -17,57 +17,51 @@
 #include "MslParser.h"
 
 /**
- * New entry point for MslEnvironment used when loading files and
- * should be the only way to parse source.
+ * Main entry point for parsing files.
+ * The MslResult and the MslScript it contains are owned by the
+ * caller and must be deleted.
  */
-MslParserResult* MslParser::parseNew(juce::String source)
+MslParserResult* MslParser::parse(juce::String source)
 {
-    MslParserResult* result = new MslParserResult();
+    resetResult();
 
+    // save this for error reporting
     result->source = source;
 
-    // there is a "script" member, get rid of it
+    // Make a new script container
     MslScript* neu = new MslScript();
-
     neu->root = new MslBlock("");
+    
+    result->script = neu;
+
+    // these pointers are transient runtime state and
+    // do not imply ownership
+
     // the "stack"
+    script = neu;
     current = neu->root;
 
-    parse(source);
+    parseInner(source);
 
-    // accumulte simple errors, add MslError someday
-    result->errors.addArray(errors);
-    
-    if (errors.size() == 0) {
-        // return the script only if could be parsed without error
-        result->script = neu;
-    }
-    else {
-        delete neu;
+    if (result->errors.size() > 0) {
+        // not much use in returning this
+        delete result->script;
+        result->script = nullptr;
     }
 
-    return result;
+    MslParserResult* retval = result;
+    result = nullptr;
+
+    return retval;
 }
 
 /**
- * Primary entry point for parsing script files.
- * Reading the file contents is handled above.
+ * Clear any residual results from the last parse.
  */
-MslScript* MslParser::parseFile(juce::String path, juce::String content)
+void MslParser::resetResult()
 {
-    script = new MslScript();
-    script->filename = path;
-
-    script->root = new MslBlock("");
-    // the "stack"
-    current = script->root;
-
-    parse(content);
-
-    // errors will have been left in the Script
-    MslScript* retval = script;
-    script = nullptr;
-    return retval;
+    delete result;
+    result = new MslParserResult();
 }
 
 /**
@@ -86,6 +80,10 @@ MslScript* MslParser::parseFile(juce::String path, juce::String content)
  */
 void MslParser::prepare(MslScript* src)
 {
+    resetResult();
+
+    // caller retains ownershipp of this object, we just
+    // inject it into the parse stack
     script = src;
 
     if (script->root == nullptr) {
@@ -93,9 +91,7 @@ void MslParser::prepare(MslScript* src)
     }
     
     current = script->root;
-    errors.clear();
 }
-
 
 /**
  * Second of two interfaces for the interative script console.
@@ -107,13 +103,12 @@ void MslParser::prepare(MslScript* src)
  * only new errors.  Having the full history can be nice for files, less
  * important for the console.
  */
-void MslParser::consume(juce::String content)
+MslParserResult* MslParser::consume(juce::String content)
 {
-    // start over with errors
-    script->errors.clear();
-
+    resetResult();
+    
     if (script == nullptr) {
-        errors.add(juce::String("Parser has not been prepared"));
+        result->errors.add(juce::String("Parser has not been prepared"));
     }
     else {
         // reset parse state, the last block should already have been sifted
@@ -125,6 +120,10 @@ void MslParser::consume(juce::String content)
 
         sift();
     }
+
+    MslParserResult* retval = result;
+    result = nullptr;
+    return retval;
 }
 
 /**
@@ -174,8 +173,36 @@ void MslParser::sift()
 void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
     // would prefer to this be an array of objec
-    MslError e (tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
-    script->errors.add(e);
+    MslParserError* e = new MslParserError(tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
+    result->details.add(e);
+    
+    // Format errors for immediatel display on the console
+    // not necessary, but need to retool the console to use
+    // the error object list
+    juce::String error = "Error at ";
+
+    if (tokenizer.getLines() == 1)
+      error += "character " + juce::String(tokenizer.getColumn());
+    else
+      error += "line " + juce::String(tokenizer.getLine()) +
+          " character " + juce::String(tokenizer.getColumn());
+
+    error += ": " + t.value;
+
+    if (details.length() > 0)
+      result->errors.add(details);
+}
+
+/**
+ * Here if the error wasn't detected until after the token
+ * was turned into a node.
+ * Think more about where the line/column is captured.
+ */
+void MslParser::errorSyntax(MslNode* node, juce::String details)
+{
+    // would prefer to this be an array of objec
+    MslParserError* e = new MslParserError(tokenizer.getLine(), tokenizer.getColumn(), node->token, details);
+    result->details.add(e);
     
     // Format errors for immediatel display on the console
     // not necessary, but need to retool the console to use
@@ -188,10 +215,10 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
       error += "line " + juce::String(tokenizer.getLine()) +
           " character " + juce::String(tokenizer.getColumn());
 
-    error += ": " + t.value;
+    error += ": " + node->token;
 
     if (details.length() > 0)
-      errors.add(details);
+      result->errors.add(details);
 }
 
 /**
@@ -216,16 +243,22 @@ bool MslParser::matchBracket(MslToken& t, MslNode* block)
 /**
  * Primary parse loop for lines of scripts.
  */
-void MslParser::parse(juce::String source)
+void MslParser::parseInner(juce::String source)
 {
     tokenizer.setContent(source);
-    errors.clear();
 
-    while (tokenizer.hasNext() && errors.size() == 0) {
+    // is this the right place for this?
+    result->errors.clear();
+
+    while (tokenizer.hasNext() && result->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
         if (current->wantsToken(t))
           continue;
+
+        // todo: if this is a keyword like "else" that doesn't
+        // make sense on it's own, then raise an error, otherwies
+        // it will just become a Symbol named "else"
 
         switch (t.type) {
             
@@ -475,16 +508,27 @@ void MslParser::unarize(MslToken& t, MslOperator* possible)
 // usual processing for a new node
 MslNode* MslParser::push(MslNode* node)
 {
-    // do we keep recuring up here?
-    if (!current->wantsNode(node)) {
-        current->locked = true;
-        current = current->parent;
-        // todo: should we keep recur
+    // kind of dangerous loop, but we must eventually hit the upper
+    // block which has an insatiable need
+    MslNode* receiver = current;
+    while (!receiver->wantsNode(node)) {
+        receiver->locked = true;
+        if (receiver->parent != nullptr) 
+          receiver = receiver->parent;
+        else {
+            // token has been consumed by now and that's where the line
+            // numbers are, need to save the entire token on the node!!
+            errorSyntax(node, "Unmatched token");
+            receiver = nullptr;
+            break;
+        }
     }
 
-    current->add(node);
-    current = node;
-
+    if (receiver != nullptr) {
+        receiver->add(node);
+        current = node;
+    }
+    
     return current;
 }
 
@@ -497,6 +541,12 @@ MslNode* MslParser::checkKeywords(juce::String token)
     
     else if (token == "proc")
       keyword = new MslProc(token);
+    
+    else if (token == "if")
+      keyword = new MslIf(token);
+
+    else if (token == "else")
+      keyword = new MslElse(token);
 
     return keyword;
 }

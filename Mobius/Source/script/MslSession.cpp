@@ -37,12 +37,14 @@ void MslSession::conveyErrors(juce::StringArray* elist)
 /**
  * Consume a block of MSL text, immediately evaluate what was parsed,
  * and display the result.  Accumuluate proc and var definitions.
+ *
+ * This is starting to become a horrible interface.  Revisit after file loading works.
  */
 void MslSession::eval(juce::String src)
 {
-    parser.consume(src);
+    MslParserResult* pres = parser.consume(src);
 
-    conveyErrors(parser.getErrors());
+    conveyErrors(&(pres->errors));
     
     MslBlock* root = dynamicScript.root;
     for (int i = 0 ; i < root->size(); i++) {
@@ -66,6 +68,8 @@ void MslSession::eval(juce::String src)
             }
         }
     }
+
+    delete pres;
 }
 
 // old dead code

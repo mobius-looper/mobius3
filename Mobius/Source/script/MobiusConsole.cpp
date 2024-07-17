@@ -7,8 +7,11 @@
 
 #include "../util/Trace.h"
 #include "../ui/JuceUtil.h"
+#include "../Supervisor.h"
 
 #include "MslModel.h"
+#include "MslParser.h"
+#include "MslEnvironment.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
 
@@ -22,6 +25,9 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
     console.prompt();
 
     session.setListener(this);
+
+    // get a more convenient handle to the script environment
+    scriptenv = Supervisor::Instance->getScriptEnvironment();
 }
 
 MobiusConsole::~MobiusConsole()
@@ -104,6 +110,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("parse")) {
         testParse(line);
     }
+    else if (line.startsWith("load")) {
+        loadFile(line);
+    }
     else if (line.startsWith("list")) {
         listSymbols();
     }
@@ -118,15 +127,16 @@ void MobiusConsole::showHelp()
     console.add("clear     clear display");
     console.add("quit      close the console");
     console.add("trace     toggle trace mode");
+    console.add("load      load a script file");
     console.add("parse     parse a line of script");
-    console.add("list      list loaded symbols");
+    console.add("list      list loaded scripts and symbols");
     console.add("show      show proc structure");
     console.add("<text>    evaluate a line of mystery");
 }
 
-void MobiusConsole::showErrors(juce::StringArray* errors)
+void MobiusConsole::showErrors(juce::StringArray& errors)
 {
-    for (auto error : *errors)
+    for (auto error : errors)
       console.add(error);
 }
 
@@ -135,20 +145,44 @@ juce::String MobiusConsole::withoutCommand(juce::String line)
     return line.fromFirstOccurrenceOf(" ", false, false);
 }
 
+void MobiusConsole::loadFile(juce::String line)
+{
+    juce::StringArray files;
+    files.add(withoutCommand(line));
+    
+    scriptenv->loadFiles(files);
+
+    showErrors(scriptenv->getErrors());
+
+    MslParserResult* result = scriptenv->getLastResult();
+    if (result != nullptr) {
+        showErrors(result->errors);
+    }
+}
+
 void MobiusConsole::testParse(juce::String line)
 {
-    MslScript* s = parser.parseFile("", withoutCommand(line));
-    if (s == nullptr) {
-        showErrors(parser.getErrors());
-    }
-    else {
-        traceNode(s->root, 0);
-        delete s;
+    MslParserResult* res = parser.parse(withoutCommand(line));
+    if (res != nullptr) {
+        // todo: error details display
+        showErrors(res->errors);
+
+        if (res->script != nullptr)
+          traceNode(res->script->root, 0);
+
+        delete res;
     }
 }
 
 void MobiusConsole::listSymbols()
 {
+    console.add("Loaded Scripts:");
+    for (auto script : *(scriptenv->getScripts()))
+      console.add("  " + script->name);
+    
+    // formerly dumped the "session"
+    // might still be intersting but I want to test files for awhile
+#if 0    
     juce::OwnedArray<MslProc>* procs = session.getProcs();
     if (procs->size() > 0) {
         console.add("Procs:");
@@ -156,6 +190,7 @@ void MobiusConsole::listSymbols()
             console.add("  " + proc->name);
         }
     }
+#endif    
 }
  
 void MobiusConsole::eval(juce::String line)
@@ -220,6 +255,16 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isProc()) {
             MslProc* proc = static_cast<MslProc*>(node);
             line += "Proc: " + proc->name;
+        }
+        else if (node->isIf()) {
+            //MslIf* ifnode = static_cast<MslIf*>(node);
+            line += "If: ";
+        }
+        else if (node->isElse()) {
+            line += "Else: ";
+        }
+        else {
+            line += "???: ";
         }
 
         console.add(line);

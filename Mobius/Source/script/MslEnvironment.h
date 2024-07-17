@@ -18,7 +18,7 @@
 
 #include <JuceHeader.h>
 
-#include "../Supervisor.h"
+#include "MslScript.h"
 
 class MslEnvironment
 {
@@ -27,7 +27,7 @@ class MslEnvironment
     MslEnvironment();
     ~MslEnvironment();
 
-    void initialize(Supervisor* s);
+    void initialize(class Supervisor* s);
     void shutdown();
 
     // the "ui thread" maintenance ping
@@ -38,14 +38,26 @@ class MslEnvironment
     
     // primary entry point for file loading by the UI
     bool loadFiles(juce::StringArray paths);
+    
+    class MslParserResult* getLastResult() {
+        return lastResult;
+    }
 
+    juce::StringArray& getErrors() {
+        return errors;
+    }
+    
+    juce::OwnedArray<MslScript>* getScripts() {
+        return &scripts;
+    }
     
   private:
 
-    Supervisor* supervisor = nullptr;
+    class Supervisor* supervisor = nullptr;
     juce::HashMap<juce::String,class MslScript*> library;
     juce::StringArray errors;
     juce::StringArray missingFiles;
+    class MslParserResult* lastResult = nullptr;
     int lastLoaded = 0;
     
     // the active scripts
@@ -65,6 +77,7 @@ class MslEnvironment
     void install(MslScript* script);
     juce::String getScriptName(MslScript* script);
 
-
+    void traceErrors(class MslParserResult* result);
+    
 };
 

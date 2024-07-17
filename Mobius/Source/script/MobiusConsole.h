@@ -45,6 +45,9 @@ class MobiusConsole : public juce::Component,
     
   private:
 
+    // handle to the global environment
+    class MslEnvironment* scriptenv = nullptr;
+
     // state maintained during evaluation
     MslSession session;
     // parser used for parse analysis without evaluation
@@ -54,12 +57,13 @@ class MobiusConsole : public juce::Component,
     BasicButtonRow commandButtons;
     Console console;
 
+    void loadFile(juce::String line);
     void doLine(juce::String line);
     void showHelp();
     juce::String withoutCommand(juce::String line);
     void testParse(juce::String line);
     void listSymbols();
-    void showErrors(juce::StringArray* errors);
+    void showErrors(juce::StringArray& errors);
 
     void eval(juce::String line);
     void traceNode(MslNode* node, int indent);

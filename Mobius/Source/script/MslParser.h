@@ -5,6 +5,7 @@
 
 #include "MslTokenizer.h"
 #include "MslModel.h"
+#include "MslScript.h"
 
 /**
  * Emerging object to capture details and location of one parser error.
@@ -14,11 +15,16 @@ class MslParserError
   public:
 
     MslParserError() {}
+    MslParserError(int l, int c, juce::String t, juce::String d) {
+        line = l; column = c; token = t; details = d;
+    }
     ~MslParserError() {}
 
-    juce::String details;
     int line = 0;
     int column = 0;
+    juce::String token;
+    juce::String details;
+    
 };
 
 /**
@@ -31,7 +37,7 @@ class MslParserResult
   public:
 
     MslParserResult() {}
-    ~MslParserResult() {}
+    ~MslParserResult() {delete script;}
 
     /**
      * The full path to the file that was parsed.
@@ -68,35 +74,33 @@ class MslParser
     MslParser() {}
     ~MslParser() {}
 
-    // new and unfinished interface we're moving toward
-    MslParserResult* parseNew(juce::String source);
-    
+    // usual file parsing interface
+    MslParserResult* parse(juce::String source);
 
-    class MslScript* parseFile(juce::String path, juce::String source);
-
+    // experimental interactive interface
+    // these are broken, think more about it or get rid of them
     void prepare(MslScript* src);
-    void consume(juce::String content);
-    
-    juce::StringArray* getErrors() {
-        return &errors;
-    }
+    MslParserResult* consume(juce::String content);
     
   private:
 
     MslTokenizer tokenizer;
 
+    // resuilt being generated
+    MslParserResult* result = nullptr;
+    
     // script being parsed
     MslScript* script = nullptr;
 
     // the parse stack
     MslNode* current = nullptr;
 
-    juce::StringArray errors;
-
-    void parse(juce::String source);
+    void resetResult();
+    void parseInner(juce::String source);
     void sift();
     
     void errorSyntax(MslToken& t, juce::String details);
+    void errorSyntax(MslNode* node, juce::String details);
     bool matchBracket(MslToken& t, MslNode* block);
 
     MslNode* checkKeywords(juce::String token);

@@ -18,6 +18,7 @@ MslEnvironment::MslEnvironment()
 
 MslEnvironment::~MslEnvironment()
 {
+    delete lastResult;
 }
 
 void MslEnvironment::initialize(Supervisor* s)
@@ -62,7 +63,7 @@ bool MslEnvironment::loadFiles(juce::StringArray paths)
     lastLoaded = 0;
 
     for (auto path : paths)
-      loadFile(path);
+      loadPath(path);
 
     return (errors.size() == 0);
 }
@@ -136,6 +137,16 @@ juce::String MslEnvironment::normalizePath(juce::String src)
     path = path.replace("/", "\\");
 #endif
 
+    // isn't there a "looks absolute" juce::File method?
+    if (!path.startsWithChar('/') && !path.containsChar(':')) {
+        // looks relative
+        juce::File f = supervisor->getRoot().getChildFile(path);
+        path = f.getFullPathName();
+    }
+
+    if (!path.endsWith(".msl"))
+      path += ".msl";
+
     return path;
 }
 
@@ -192,31 +203,51 @@ void MslEnvironment::loadDirectory(juce::File dir)
  */
 void MslEnvironment::loadFile(juce::File file)
 {
-    juce::String source = file.loadFileAsString();
+    if (!file.existsAsFile()) {
+        Trace(1, "MslEnvironment: Unknown file %s", file.getFullPathName().toUTF8());
+        // ugh, starting to hate error handling
+        errors.add("Missing file " + file.getFullPathName());
+    }
+    else {
+        juce::String source = file.loadFileAsString();
 
-    MslParser parser;
-    MslParserResult* res = parser.parseNew(source);
+        // keep last result here for inspection
+        delete lastResult;
+        lastResult = nullptr;
 
-    // now it gets interesting
-    // if there were errors parsing the file we need to save them and show
-    // them later
-    // todo: might want a table of these keyed by file name, for initially
-    // whatever might display errors will do it immediately after parsing
+        MslParser parser;
+        lastResult = parser.parse(source);
 
-    if (res != nullptr) {
-        // take immediate ownership of this
-        MslScript* script = res->script;
-        res->script = nullptr;
+        // now it gets interesting
+        // if there were errors parsing the file we need to save them and show
+        // them later
+        // todo: might want a table of these keyed by file name, for initially
+        // whatever might display errors will do it immediately after parsing
+
+        if (lastResult != nullptr) {
+            // take immediate ownership of this
+            MslScript* script = lastResult->script;
+            lastResult->script = nullptr;
         
-        if (script != nullptr) {
-            // success
-            install(script);
-
-        }
-        else {
-            // complain loudly
+            if (script != nullptr) {
+                // success
+                // remember the path for naming
+                script->filename = file.getFullPathName();
+                install(script);
+            }
+            else {
+                // complain loudly
+                traceErrors(lastResult);
+            }
         }
     }
+}
+
+void MslEnvironment::traceErrors(MslParserResult* result)
+{
+    // todo: not building the detailed MslParserError list yet
+    for (auto error : result->errors)
+      Trace(1, "MslEnvironment: %s", error.toUTF8());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -261,7 +292,7 @@ juce::String MslEnvironment::getScriptName(MslScript* script)
     juce::String name;
 
     // this would have been set after parsing a #name directive
-    //name = script->name;
+    name = script->name;
 
     if (name.length() == 0) {
         // have to fall back to the leaf file name
@@ -274,6 +305,10 @@ juce::String MslEnvironment::getScriptName(MslScript* script)
             Trace(1, "MslEnvironment: Installing script without name");
             name = "Unnamed";
         }
+
+        // remember this here so getScripts callers don't have to know any more
+        // beyond the Script
+        script->name = name;
     }
 
     return name;

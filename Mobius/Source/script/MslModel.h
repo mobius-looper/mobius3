@@ -1,5 +1,13 @@
 /**
  * Parse tree model for MSL scripts
+ *
+ * This is starting to have an awkward mixture of parse state and
+ * runtime state.  Starting to think it would be better to separate the two
+ * with MslNode being transient parse state that is post-processed aka "linked"
+ * to produce an different model for evaluation.  This makes the separation between
+ * the parser and the evaluator cleaner, which is better because I'm not liking
+ * how hacky the parser is.
+ *
  */
 
 #pragma once
@@ -19,6 +27,8 @@ class MslVisitor
     virtual void mslVisit(class MslAssignment* obj) = 0;
     virtual void mslVisit(class MslVar* obj) = 0;
     virtual void mslVisit(class MslProc* obj) = 0;
+    virtual void mslVisit(class MslIf* obj) = 0;
+    virtual void mslVisit(class MslElse* obj) = 0;
 };
 
 class MslNode
@@ -94,6 +104,8 @@ class MslNode
     virtual bool isAssignment() {return false;}
     virtual bool isVar() {return false;}
     virtual bool isProc() {return false;}
+    virtual bool isIf() {return false;}
+    virtual bool isElse() {return false;}
 
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -329,8 +341,60 @@ class MslProc : public MslNode
     }
 };
 
-#if 0
+class MslIf : public MslNode
+{
+  public:
+    MslIf(juce::String token) : MslNode(token) {}
+    ~MslIf() {}
 
+    bool isIf() override {return true;}
+
+    // this one can get kind of weird with else
+    // MslIf is the only thing that can receive an else so if
+    // we find one dangling need to error,
+    // rather than asking a target node if it wants a new node,
+    // ask the new node if it wants to be inside the target?
+    // is this any different, still have to move up the stack
+    bool wantsNode(MslNode* node) override {
+        bool wants = false;
+        if (node->isElse()) {
+            // only makes sense if we'e already got a condiition
+            // and a truth block, otherwise it's a syntax error?
+            wants = (children.size() == 2);
+        }
+        else {
+            wants = (children.size() < 2);
+        }
+        return wants;
+    }
+    
+    // old model just had a chain of conditionals and clauses
+    // which might be better than embedding another MslIf inside the false block
+
+    MslNode* condition = nullptr;
+    MslNode* trueBlock = nullptr;;
+    MslNode* falseBlock = nullptr;
+    
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+};
+
+class MslElse : public MslNode
+{
+  public:
+    MslElse(juce::String token) : MslNode(token) {}
+    ~MslElse() {}
+
+    bool isElse() override {return true;}
+
+    bool wantsNode(MslNode* node) override {
+        (void)node;
+        return (children.size() == 0);
+    }
+    
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+};
+
+#if 0
 
 class MslFunction : public MslNode
 {
@@ -341,15 +405,6 @@ class MslFunction : public MslNode
     class Symbol* symbol = nullptr;
 };
 
-class MslIf : public MslNode
-{
-  public:
-    MslIf() {}
-    ~MslIf() {}
-
-    MslNode trueBlock;
-    MslNode falseBlock;
-};
 #endif
 
 /****************************************************************************/

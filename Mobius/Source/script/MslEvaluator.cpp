@@ -107,6 +107,18 @@ void MslEvaluator::mslVisit(MslProc* node)
     result.setNull();
 }
 
+void MslEvaluator::mslVisit(MslIf* node)
+{
+    (void)node;
+    result.setNull();
+}
+
+void MslEvaluator::mslVisit(MslElse* node)
+{
+    (void)node;
+    result.setNull();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Expressions

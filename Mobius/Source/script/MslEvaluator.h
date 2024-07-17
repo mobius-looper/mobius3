@@ -188,6 +188,8 @@ class MslEvaluator : public MslVisitor
     void mslVisit(MslAssignment* node);
     void mslVisit(MslVar* node);
     void mslVisit(MslProc* node);
+    void mslVisit(MslIf* node);
+    void mslVisit(MslElse* node);
     
   private:
     

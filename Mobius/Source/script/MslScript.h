@@ -7,23 +7,6 @@
 
 #include "MslModel.h"
 
-class MslError {
-  public:
-    MslError() {}
-    MslError(int l, int c, juce::String t, juce::String d) {
-        line = l; column = c; token = t; details = d;
-    }
-    ~MslError() {}
-
-    int line = 0;
-    int column = 0;
-    juce::String token; 
-    juce::String details;
- 
-    // todo: distinguish between errors, warnings, and information
-    // maybe keep those on different lists?
-};
-
 class MslScript {
   public:
     MslScript() {}
@@ -34,6 +17,12 @@ class MslScript {
      * If this is empty, it is a scriptlet.
      */
     juce::String filename;
+
+    /**
+     * The reference name for this script.  This is taken from the filename
+     * unless the #name directive is found in the script source
+     */
+    juce::String name;
 
     /**
      * The root block.  Evaluation of a script normally begins with the
@@ -57,19 +46,13 @@ class MslScript {
 
     // todo: capture any directives (like !button) found during parsing
 
-    // todo: does it make any sense to keep a copy of the source code here?
-    // might be useful if we ever get around to showing where errors are in the code
-
     // todo: support the old concept of Labels ?
     // I think no, use exported procs instead
 
-    // a list of error messages encountered during parsing and linking
-    juce::Array<class MslError> errors;
-
-    class MslProc* findProc(juce::String name) {
+    class MslProc* findProc(juce::String procname) {
         MslProc* found = nullptr;
         for (auto proc : procs) {
-            if (proc->name == name) {
+            if (proc->name == procname) {
                 found = proc;
                 break;
             }
