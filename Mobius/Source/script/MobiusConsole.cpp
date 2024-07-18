@@ -25,14 +25,19 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
     console.add("Shall we play a game?");
     console.prompt();
 
-    session.setListener(this);
-
     // get a more convenient handle to the script environment
     scriptenv = Supervisor::Instance->getScriptEnvironment();
+
+    // allocate a scriptlet session we can keep forever
+    session = new MslScriptletSession(scriptenv);
+    
+    session.setListener(this);
 }
 
 MobiusConsole::~MobiusConsole()
 {
+    // really need more encapsulation of this
+    delete session;
 }
 
 void MobiusConsole::showing()
@@ -202,18 +207,26 @@ void MobiusConsole::showLoad()
 
 void MobiusConsole::doParse(juce::String line)
 {
-#if 0    
     MslParserResult* res = parser.parse(line);
     if (res != nullptr) {
         // todo: error details display
-        showErrors(res->errors);
+        showErrors(res);
 
         if (res->script != nullptr)
           traceNode(res->script->root, 0);
 
         delete res;
     }
-#endif    
+}
+
+void MobiusConsole::showErrors(MslParserResult* res)
+{
+    for (auto error : res->errors) {
+        juce::String msg = "Line " + juce::String(error->line) +
+            " column " + juce::String(error->column) + ": " +
+            error->token + ": " + error->details;
+        console.add(msg);
+    }
 }
 
 void MobiusConsole::doList()
@@ -222,25 +235,12 @@ void MobiusConsole::doList()
  
 void MobiusConsole::doEval(juce::String line)
 {
-    // session does most of it's information convenyance throught the listener
     session.eval(line);
+
+    // todo: here is where we display the result of the evaluation and
+    // any runtime errors
 }
 
-void MobiusConsole::mslError(const char* s)
-{
-    console.add(juce::String(s));
-}
-
-void MobiusConsole::mslTrace(const char* s)
-{
-    console.add(juce::String(s));
-}
-
-void MobiusConsole::mslResult(const char* s)
-{
-    console.add(juce::String(s));
-}
-    
 /**
  * This needs to be packaged better into a utliity that is closer to the
  * nodes, and uses a visitor, and abstracts away the console dependency.

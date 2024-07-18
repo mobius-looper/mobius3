@@ -15,6 +15,10 @@
 #include <JuceHeader.h>
 #include "MslTokenizer.h"
 
+/**
+ * An interface to be implemented by something that wants to walk
+ * over the parse tree without calling isFoo on every node.
+ */
 class MslVisitor
 {
   public:
@@ -31,6 +35,12 @@ class MslVisitor
     virtual void mslVisit(class MslElse* obj) = 0;
 };
 
+/**
+ * The parse tree is a tree of node subclasses.
+ * Each node has one parent and multiple children.
+ * Node subclasses assist in parsing by telling the MslParser if
+ * they want to accept the next token or other node.
+ */
 class MslNode
 {
   public:

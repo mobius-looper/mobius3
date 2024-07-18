@@ -48,8 +48,9 @@ class MobiusConsole : public juce::Component,
     // handle to the global environment
     class MslEnvironment* scriptenv = nullptr;
 
-    // state maintained during evaluation
-    MslSession session;
+    // scriptlet session we maintain
+    class MslScriptletSession* session = nullptr;
+
     // parser used for parse analysis without evaluation
     MslParser parser;
     

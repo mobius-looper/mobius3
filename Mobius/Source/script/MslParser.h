@@ -1,3 +1,13 @@
+/**
+ * A parser for the MSL language.
+ * 
+ * The parser consumes a string of text, and produces either
+ * an MslScript containing the parse tree, or a list of errors to be displayed.
+ *
+ * There is an experimental interface for incremental line-at-a-time parsing
+ * for the MobiusConsole.
+ *
+ */
 
 #pragma once
 
@@ -7,37 +17,39 @@
 #include "MslModel.h"
 #include "MslScript.h"
 
+/**
+ * The parser may return two things: a finished MslScript object,
+ * a list of errors encountered during parsing, or both.
+ *
+ * If a script is returned, it is suitable for installation and evaluation.
+ * If an error list is returned, it should be retained and displayed to the user.
+ *
+ * If a fatal error is encountered, it will be in the error list and a script
+ * is not returned.
+ *
+ * If only warnings are encountered, both a script and a warning list is returned.
+ *
+ * Currently there are no warnings.  You're going to jail son.
+ *
+ * The MslParserResult and it's contents are dynamically allocated and must
+ * be disposed of by the receiver. 
+ *
+ */
 class MslParserResult
 {
   public:
 
     MslParserResult() {}
-    ~MslParserResult() {delete script;}
+    ~MslParserResult() {}
 
-    /**
-     * The full path to the file that was parsed.
-     * Not set by the parser but may be added by the receiver.
-     */
-    juce::String path;
-
-    /**
-     * The source code that was parsed.
-     * Retained so that a tool that displays errors can show more of
-     * the surrounding context.
-     */
-    juce::String source;
-    
     /**
      * The script that was succesfully parsed.
-     * This is dynamically allocated and management must be taken over
-     * by the receiver of the result.
      */
     std::unique_ptr<class MslScript> script = nullptr;
 
-    // quick and dirty list of error messages
-    //juce::StringArray errors;
-
-    // evoving error details
+    /**
+     * Errors encountered during parsing.
+     */
     juce::OwnedArray<class MslError> errors;
 
 };
@@ -52,10 +64,8 @@ class MslParser
     // usual file parsing interface
     MslParserResult* parse(juce::String source);
 
-    // experimental interactive interface
-    // these are broken, think more about it or get rid of them
-    void prepare(MslScript* src);
-    MslParserResult* consume(juce::String content);
+    // parsing interface for scriptlets
+    MslParserResult* parse(class MslScript* scriptlet, juce::String source);
     
   private:
 

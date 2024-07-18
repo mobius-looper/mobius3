@@ -20,115 +20,41 @@
 
 MslSession::MslSession()
 {
-    // prepare the parser with our dynamic script
-    parser.prepare(&dynamicScript);
 }
 
 MslSession::~MslSession()
 {
 }
 
-void MslSession::conveyErrors(juce::StringArray* elist)
+/**
+ * Primary entry point for evaluating a script.
+ */
+void MslSession::start(MslScript* script)
 {
-    for (auto error : *elist)
-      listener->mslError(error.toUTF8());
+    // todo: initialze call stacks
+    errors.clear();
+
+    MslEvaluator ev (this);
+    MslValue result = ev->start(script->root);
+
+    // todo: where does the value go?
 }
 
 /**
- * Consume a block of MSL text, immediately evaluate what was parsed,
- * and display the result.  Accumuluate proc and var definitions.
- *
- * This is starting to become a horrible interface.  Revisit after file loading works.
+ * Called internally to add a runtime error.
+ * Using MslError here so we can capture the location in the source
+ * of the node having issues, but unfortunately the parser isn't leaving
+ * that behind yet.
  */
-void MslSession::eval(juce::String src)
+void MslEvaluator::addError(MslNode* node, const char* details)
 {
-    MslParserResult* pres = parser.consume(src);
-
-    conveyErrors(&(pres->errors));
-    
-    MslBlock* root = dynamicScript.root;
-    for (int i = 0 ; i < root->size(); i++) {
-
-        MslNode* node = root->get(i);
-        if (node != nullptr) {
-
-            // sigh, three levels of error list: session, parser, evaluator
-            // think about consolidating this
-            errors.clear();
-            
-            MslValue result = evaluator.start(this, node);
-
-            conveyErrors(evaluator.getErrors());
-            conveyErrors(&errors);
-        
-            const char* s = result.getString();
-            if (s != nullptr) {
-                if (listener != nullptr)
-                  listener->mslResult(s);
-            }
-        }
-    }
-
-    delete pres;
+    // see file comments about why this is bad
+    MslError* e = new MslError();
+    // todo: capture line/column from the node
+    e->token = node->token;
+    e->details = juce::String(details);
+    errors.add(e);
 }
-
-// old dead code
-#if 0
-/**
- * Walk over a parse tree, removing proc nodes and installing them in
- * the session proc table.
- * Not handling scoped proc, a proc at any level will be interned.
- * Scoped, or nested proc definitiosn are allowed but any sort of temporary
- * block-level definition makes it much harder for the interactive console
- * to deal with them.
- *
- * We might as well handle directives here too.
- */
-MslNode* MslSession::assimilate(MslNode* node)
-{
-    if (node->isProc()) {
-        MslProc* proc = static_cast<MslProc*>(node);
-        intern(proc);
-        node = nullptr;
-    }
-    else {
-        // unclear if iterators tolerate modification while active
-        int index = 0;
-        while (index < node->children.size()) {
-            MslNode* child = node->children[index];
-            if (assimilate(child) != nullptr) {
-                // did not consume it
-                index++;
-            }
-        }
-    }
-    return node;
-}
-
-/**
- * Intern a proc from a new scriptlet parse tree
- */
-void MslSession::intern(MslProc* proc)
-{
-    proc->detach();
-    MslProc* existing = procTable[proc->name];
-    if (existing != nullptr) {
-        procs.remove(existing, false, false);
-        delete existing;
-    }
-    procs.add(proc);
-    procTable.set(proc->name, proc);
-    
-    Symbol* s = symbols.intern(proc->name);
-    ScriptProperties* sprop = s->script.get();
-    if (sprop == nullprt) {
-        sprop = new ScriptProperties();
-        s->script = sprop;
-    }
-    sprop->proc = proc;
-}
-
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -151,8 +77,7 @@ bool MslSession::resolve(MslSymbol* snode)
 
     // first check for cached symbol
     if (snode->symbol == nullptr && snode->proc == nullptr) {
-
-        // look for a proc
+list        // look for a proc
         snode->proc = dynamicScript.findProc(snode->token);
         if (snode->proc == nullptr) {
             // todo: resolve vars in the current scope

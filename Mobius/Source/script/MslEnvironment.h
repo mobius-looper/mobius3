@@ -75,7 +75,6 @@ class MslEnvironment
     void load(juce::String path);
     void unload(juce::String name);
 
-
     //
     // Last load results
     //
@@ -99,6 +98,17 @@ class MslEnvironment
     juce::OwnedArray<class MslScript>* getScripts() {
         return &scripts;
     }
+
+    //
+    // Execution
+    //
+
+    // normal file-based script actions
+    void doAction(class UIAction* action);
+
+    // dynamic scriptlet evaluation
+    // ???
+    
     
   private:
 

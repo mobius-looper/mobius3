@@ -9,7 +9,8 @@
 #pragma once
 
 /** 
- * Represents a single error found in a file.
+ * Represents a single error found in a string of MSL text.
+ * Usually this came from a file, but it could have be entered in the console.
  *
  * The error has the line and column numbers within the source,
  * the token string where the error was detected, and details about
@@ -82,5 +83,6 @@ class MslCollision
     // name or an exported proc/var inside it
 };
 
-
-    
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

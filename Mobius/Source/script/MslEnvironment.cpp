@@ -102,7 +102,7 @@ void MslEnvironment::loadConfig()
  * Save parse errors if encountered.
  * If the script has already been loaded, it is replaced and the old
  * one is deleted.  If the replaced script is still in use it is placed
- * on the pending delete list.
+ * on the inactive list.
  */
 void MslEnvironment::loadInternal(juce::String path)
 {
@@ -117,7 +117,7 @@ void MslEnvironment::loadInternal(juce::String path)
 
         MslParser parser;
         MslParserResult* result = parser.parse(source);
-
+ 
         // if the parser returns errors, save them
         // if it returns a script install it
         // on error, the script object if there is one is incomplete

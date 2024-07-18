@@ -28,6 +28,7 @@ class MslScript {
      * The root block.  Evaluation of a script normally begins with the
      * first node in this block, but may start at any exported proc block.
      */
+    // use std::unique_ptr here...
     class MslBlock* root = nullptr;
 
     // proc definitions found within the script source

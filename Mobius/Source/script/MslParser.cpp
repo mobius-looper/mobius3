@@ -1,4 +1,17 @@
 /**
+ * If you're a "language guy" you will probably notice that I am not one.
+ *
+ * I didn't follow any of the usual Rules For Parser Construction, that
+ * I'm aware of.  It isn't pretty, there is an awkward combination of
+ * parse rules split between the MslParser and the MslNode model itself.
+ * But it gets the job done and is relatively simple.
+ *
+ * I really don't think we need to over-engineer this with BNF, Antlr, or
+ * whatever it is the cool kids are using these days.  But if you have any suggestions
+ * for an algorithm that accomplishes the same thing and pleases the
+ * Parser Gods, let me know.
+ *
+ * dev notes:
  * I experimented a bit with allowing the parser to support incremental parsing
  * for the console where partial nodes would be retained between calls to consume()
  * and could be completed in the next console line.  This sort of worked
@@ -19,17 +32,20 @@
 
 /**
  * Main entry point for parsing files.
- * The MslResult and the MslScript it contains are owned by the
- * caller and must be deleted.
+ * The result object and it's contents are owned by the receiver and must
+ * be deleted.
  */
 MslParserResult* MslParser::parse(juce::String source)
 {
-    resetResult();
+    if (result != nullptr) {
+        // lingering result from a previous parse, shouldn't happen
+        Trace(1, "MslParser: Someone didn't clean up a prior result, harm them.");
+        delete result;
+    }
 
-    // save this for error reporting
-    result->source = source;
+    result = new MslParserResult();
 
-    // Make a new script container
+    // flesh out a script skeleton
     MslScript* neu = new MslScript();
     neu->root = new MslBlock("");
     
@@ -44,11 +60,12 @@ MslParserResult* MslParser::parse(juce::String source)
 
     parseInner(source);
 
-    if (result->errors.size() > 0) {
-        // not much use in returning this
-        result->script = nullptr;
-    }
+    // if there were fatal errors, do not return the partial script
+    if (result->errors.size() > 0)
+      result->script = nullptr;
 
+
+    // return what we built, but don't remember the old pointer between calls
     MslParserResult* retval = result;
     result = nullptr;
 
@@ -56,71 +73,38 @@ MslParserResult* MslParser::parse(juce::String source)
 }
 
 /**
- * Clear any residual results from the last parse.
+ * Entry point for dynamic "scriptlet sessions".
+ * Here the MslScript is maintained outside the parser for an indefinite
+ * period of time, and we can add to it.
  */
-void MslParser::resetResult()
+MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
 {
-    delete result;
-    result = new MslParserResult();
-}
-
-/**
- * The first of two entry points for the interactive script console.
- * This prepares the parser to extend an existing script.
- *
- * todo: think more about the interface for interactive scripts.
- * We need the outer Script to hold the proc, vars, and directives
- * but each line of script source is typically evaluated immediately
- * then is no longer necessary.  Maintaining that in the MslScript has
- * some nice features though, we can elect to save the console session to
- * a file, or use the top-level nodes as a history to "replay" previous statements.
- *
- * Currently, the nodes created during each call to consume() are placed inside the
- * Script and retained.
- */
-void MslParser::prepare(MslScript* src)
-{
-    resetResult();
-
-    // caller retains ownershipp of this object, we just
-    // inject it into the parse stack
-    script = src;
-
-    if (script->root == nullptr) {
-        script->root = new MslBlock("");
+    if (result != nullptr) {
+        // incremental parsing shouldn't see this either
+        Trace(1, "MslParser: Someone didn't clean up a prior result, harm them.");
+        delete result;
     }
+    result = new MslParserResult();
     
-    current = script->root;
-}
-
-/**
- * Second of two interfaces for the interative script console.
- * After using prepare() to arm the existing Script, this parses
- * one or more lines of text and advances the parse state.
- *
- * todo: since the Script is the container of errors, we've got the problem
- * of retaining errors from the last extension or resetting them and returning
- * only new errors.  Having the full history can be nice for files, less
- * important for the console.
- */
-MslParserResult* MslParser::consume(juce::String content)
-{
-    resetResult();
-    
-    if (script == nullptr) {
-        result->errors.add(juce::String("Parser has not been prepared"));
+    if (scriptlet == nullptr) {
+        Trace(1, "MslParser: Dynamic parse with no scriptlet");
     }
     else {
         // reset parse state, the last block should already have been sifted
-        delete script->root;
-        script->root = new MslBlock("");
-        current = script->root;
+        // todo: this needs MUCH more work
+        delete scriptlet->root;
+        scriptlet->root = new MslBlock("");
+
+        // set up the stack
+        script = scriptlet;
+        current = scriptlet->root;
         
         parse(content);
 
         sift();
     }
 
+    // note that this result does not contain the script, only the error list
     MslParserResult* retval = result;
     result = nullptr;
     return retval;
@@ -168,11 +152,11 @@ void MslParser::sift()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Format a syntax error and add it to the Script being parsed.
+ * Format a syntax error for a token and add it to the result.
  */
 void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
-    // would prefer to this be an array of objec
+    // would prefer to this be an array of objects
     MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
     result->errors.add(e);
 }
@@ -180,11 +164,9 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
 /**
  * Here if the error wasn't detected until after the token
  * was turned into a node.
- * Think more about where the line/column is captured.
  */
 void MslParser::errorSyntax(MslNode* node, juce::String details)
 {
-    // would prefer to this be an array of objec
     MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), node->token, details);
     result->errors.add(e);
 }
@@ -209,7 +191,7 @@ bool MslParser::matchBracket(MslToken& t, MslNode* block)
 }
 
 /**
- * Primary parse loop for lines of scripts.
+ * Primary parse loop
  */
 void MslParser::parseInner(juce::String source)
 {
@@ -221,6 +203,7 @@ void MslParser::parseInner(juce::String source)
     while (tokenizer.hasNext() && result->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
+        // some nodes consume tokens without creating more nodes
         if (current->wantsToken(t))
           continue;
 
@@ -243,7 +226,7 @@ void MslParser::parseInner(juce::String source)
                 break;
                 
             case MslToken::Type::Processor:
-                // todo: need some interesting ones
+                // todo: this is where directives need to be parsed
                 break;
 
             case MslToken::Type::String:
@@ -274,6 +257,8 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::Symbol: {
+                // if the symbol name matches a keyword, a specific node class
+                // is pushed, otherwise it becomes a generic symbol node
                 MslNode* node = checkKeywords(t.value);
                 if (node == nullptr)
                   node = new MslSymbol(t.value);
@@ -399,7 +384,7 @@ void MslParser::parseInner(juce::String source)
  * as an operand.
  *
  * Need more here, while the operandable/unarize may work, the error that
- * results "invalid uniary" is misleading if the non-operandable just doesn't even
+ * results "invalid unary" is misleading if the non-operandable just doesn't even
  * make sense in this context.  Add another level of error checking here.
  */
 bool MslParser::operandable(MslNode* node)
@@ -473,7 +458,9 @@ void MslParser::unarize(MslToken& t, MslOperator* possible)
     }
 }
 
-// usual processing for a new node
+/**
+ * Add a new node to the next available receiver, and push it on the stack.
+ */
 MslNode* MslParser::push(MslNode* node)
 {
     // kind of dangerous loop, but we must eventually hit the upper
@@ -500,6 +487,9 @@ MslNode* MslParser::push(MslNode* node)
     return current;
 }
 
+/**
+ * Convert a keyword token into a specific node class.
+ */
 MslNode* MslParser::checkKeywords(juce::String token)
 {
     MslNode* keyword = nullptr;

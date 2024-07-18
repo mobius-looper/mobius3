@@ -1,4 +1,15 @@
-
+/**
+ * A simple source tokenizer built on top of the Juce CPlusPlusCodeTokenizer.
+ * 
+ * MSL isn't nearly as complex as C++ but it has similar tokens.  The main
+ * consequence of this is that old scripts used ! for preprocessor directives
+ * and now it's better to use #
+ *
+ * I'm hiding the use of the Juce tokenizer and adding a private MslToken
+ * model that captures things in a way that requires less typing, and adds
+ * some basic token alayisis.
+ *
+ */
 #pragma once
 
 #include <JuceHeader.h>

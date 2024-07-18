@@ -1,4 +1,12 @@
-
+/**
+ * todo: think about the distinction between MslSession and MslEvaluator
+ * they are almost the same thing.  The only thing evaluator really does is
+ * provide the visitor interface and the logic for each stateement evaluation.
+ *
+ * but the call stack, error list and other evaluation artificats are held in the session
+ * is this distinction useful?
+ */
+  
 #pragma once
 
 #include "MslModel.h"
@@ -127,20 +135,6 @@ class MslValue
 };
 
 /**
- * Object that provides access to the world outside the evaluator.
- */
-class MslContext
-{
-  public:
-    virtual ~MslContext() {}
-
-    // todo: what about error handling, I guess could use MslValue
-    virtual void mslInvoke(class Symbol* s, MslValue& result) = 0;
-    virtual void mslQuery(class Symbol* s, MslValue& result) = 0;
-
-};
-
-/**
  * This should live inside MslParser and it should do the work.
  */
 enum MslOperators {
@@ -167,19 +161,14 @@ class MslEvaluator : public MslVisitor
 {
   public:
 
-    MslEvaluator() {}
-    MslEvaluator(MslContext* c) {context = c;}
-    ~MslEvaluator() {}
+    MslEvaluator(MslSession* s);
+    ~MslEvaluator();
 
     bool trace = false;
     
-    MslValue start(class MslSession* session, class MslNode* node);
+    MslValue start(class MslNode* node);
 
-    // todo: error accululation and presentation can't use memory
-    // allocation so will need to work on this
-    juce::StringArray* getErrors();
-
-    // evaluation visitor targets
+    // MslVisitor targets
 
     void mslVisit(MslLiteral* node);
     void mslVisit(MslSymbol* node);
@@ -194,10 +183,8 @@ class MslEvaluator : public MslVisitor
   private:
     
     class MslSession* session = nullptr;
-    MslContext* context = nullptr;
     MslValue result;
-    juce::StringArray errors;
-    
+
     Symbol* resolve(MslSymbol* node);
     void eval(class Symbol* s);
     void invoke(Symbol* s);

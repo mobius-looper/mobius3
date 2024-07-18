@@ -1,3 +1,26 @@
+/**
+ * The Evaluator takes a previouisly parsed MslScript and makes it go.
+ *
+ * It always operates within an MslSession which in turn is held within
+ * an MslEnvironment.
+ *
+ * If errors are encountered during evaluation a list of MslError objects
+ * is maintained and should be captured by the MslSession and displayed.
+ *
+ * NOTE WELL:
+ *
+ * The way errors are handled right now is NOT going to work in practice
+ * because it allocates memory which is not allowed when running in the audio thread.
+ * I'm leaving it for now so we can flesh out how we want the error model to work,
+ * but this will need to be addressed at some point.
+ *
+ * Possibly a fixed vector of MslError objects with the text inside them
+ * being fixed char arrays rather than juce::String.
+ * There normally won't be that many runtime errors, and really do we need more than
+ * one?  I don't think any of them are continuable errors, except may be divide by
+ * zero, which we could just handle silently.
+ */
+
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
@@ -9,25 +32,24 @@
 #include "MslSession.h"
 #include "MslEvaluator.h"
 
-MslValue MslEvaluator::start(MslSession* s, MslNode* node)
+MslEvaluator::MslEvaluator(MslSession* s)
 {
     session = s;
-    
+}
+
+MslEvaluator::~MslEvaluator()
+{
+}
+
+MslValue MslEvaluator::start(MslNode* node)
+{
     // initialize stacks etc...
-    errors.clear();
     result.setNull();
 
     // will need to work out suspend, and deferred results
     node->visit(this);
 
-    // check errors etc...
-
     return result;
-}
-
-juce::StringArray* MslEvaluator::getErrors()
-{
-    return &errors;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -70,15 +92,15 @@ void MslEvaluator::mslVisit(MslAssignment* node)
     MslNode* value = (node->children.size() > 1) ? node->children[1] : nullptr;
 
     if (target == nullptr)
-      errors.add("Assignment without target");
+      session->addError(node, "Assignment without target");
     else if (value == nullptr)
-      errors.add("Assignment without value");
+      session->addError(node, "Assignment without value");
     else {
         // this must get to a symbol
         // like expressions, we don't have a way to pass quoted symbols without
         // evaluating so it has to be immediate
         if (!target->isSymbol()) {
-            errors.add("Assignment target not a symbol");
+            session->addError(node, "Assignment target not a symbol");
         }
         else {
             MslSymbol* snode = static_cast<MslSymbol*>(target);
@@ -170,7 +192,7 @@ void MslEvaluator::mslVisit(MslOperator* opnode)
     
     switch (op) {
         case MslUnknown:
-            errors.add(juce::String("Unknown operator " + opnode->token));
+            session->addError(opnode, "Unknown operator");
             break;
         case MslPlus:
             result.setInt(evalInt(node1) + evalInt(node2));
@@ -186,7 +208,7 @@ void MslEvaluator::mslVisit(MslOperator* opnode)
             if (divisor == 0) {
                 // we're obviously not going to throw if they made an error
                 result.setInt(0);
-                errors.add("Divide by zero");
+                session->addError(opnode, "Divide by zero");
             }
             else {
                 result.setInt(evalInt(node1) / divisor);
