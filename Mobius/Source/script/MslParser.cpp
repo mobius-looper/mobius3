@@ -14,6 +14,7 @@
 
 #include "MslModel.h"
 #include "MslScript.h"
+#include "MslError.h"
 #include "MslParser.h"
 
 /**
@@ -32,7 +33,7 @@ MslParserResult* MslParser::parse(juce::String source)
     MslScript* neu = new MslScript();
     neu->root = new MslBlock("");
     
-    result->script = neu;
+    result->script.reset(neu);
 
     // these pointers are transient runtime state and
     // do not imply ownership
@@ -45,7 +46,6 @@ MslParserResult* MslParser::parse(juce::String source)
 
     if (result->errors.size() > 0) {
         // not much use in returning this
-        delete result->script;
         result->script = nullptr;
     }
 
@@ -173,24 +173,8 @@ void MslParser::sift()
 void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
     // would prefer to this be an array of objec
-    MslParserError* e = new MslParserError(tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
-    result->details.add(e);
-    
-    // Format errors for immediatel display on the console
-    // not necessary, but need to retool the console to use
-    // the error object list
-    juce::String error = "Error at ";
-
-    if (tokenizer.getLines() == 1)
-      error += "character " + juce::String(tokenizer.getColumn());
-    else
-      error += "line " + juce::String(tokenizer.getLine()) +
-          " character " + juce::String(tokenizer.getColumn());
-
-    error += ": " + t.value;
-
-    if (details.length() > 0)
-      result->errors.add(details);
+    MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
+    result->errors.add(e);
 }
 
 /**
@@ -201,24 +185,8 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
 void MslParser::errorSyntax(MslNode* node, juce::String details)
 {
     // would prefer to this be an array of objec
-    MslParserError* e = new MslParserError(tokenizer.getLine(), tokenizer.getColumn(), node->token, details);
-    result->details.add(e);
-    
-    // Format errors for immediatel display on the console
-    // not necessary, but need to retool the console to use
-    // the Script error list
-    juce::String error = "Error at ";
-
-    if (tokenizer.getLines() == 1)
-      error += "character " + juce::String(tokenizer.getColumn());
-    else
-      error += "line " + juce::String(tokenizer.getLine()) +
-          " character " + juce::String(tokenizer.getColumn());
-
-    error += ": " + node->token;
-
-    if (details.length() > 0)
-      result->errors.add(details);
+    MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), node->token, details);
+    result->errors.add(e);
 }
 
 /**

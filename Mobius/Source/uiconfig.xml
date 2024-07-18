@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
-          activeLayout="Default">
+<UIConfig activeButtonSet="Default" activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
     <Element name="BeatersElement" x="514" y="132" width="185" height="37"/>
@@ -126,8 +125,8 @@
     <Property name="loopRows" value=""/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
-    <Property name="z" value="true"/>
     <Property name="buttonHeight" value="25"/>
+    <Property name="z" value="true"/>
     <Property name="testName" value=""/>
     <Property name="trackRows" value="1"/>
   </Properties>

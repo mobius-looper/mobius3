@@ -11,6 +11,7 @@
 
 #include "MslModel.h"
 #include "MslParser.h"
+#include "MslError.h"
 #include "MslEnvironment.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
@@ -89,7 +90,7 @@ void MobiusConsole::consoleEscape()
 void MobiusConsole::doLine(juce::String line)
 {
     if (line == "?") {
-        showHelp();
+        doHelp();
     }
     else if (line == "clear") {
         console.clear();
@@ -97,6 +98,7 @@ void MobiusConsole::doLine(juce::String line)
     else if (line == "quit" || line == "exit") {
         panel->close();
     }
+#if 0    
     else if (line == "trace") {
         if (session.trace) {
             console.add("Trace disabled");
@@ -107,21 +109,27 @@ void MobiusConsole::doLine(juce::String line)
             session.trace = true;
         }
     }
+#endif
     else if (line.startsWith("parse")) {
-        testParse(line);
+        doParse(withoutCommand(line));
     }
     else if (line.startsWith("load")) {
-        loadFile(line);
+        doLoad(withoutCommand(line));
     }
     else if (line.startsWith("list")) {
-        listSymbols();
+        doList();
     }
     else {
-        eval(line);
+        doEval(line);
     }
 }
 
-void MobiusConsole::showHelp()
+juce::String MobiusConsole::withoutCommand(juce::String line)
+{
+    return line.fromFirstOccurrenceOf(" ", false, false);
+}
+
+void MobiusConsole::doHelp()
 {
     console.add("?         help");
     console.add("clear     clear display");
@@ -134,35 +142,68 @@ void MobiusConsole::showHelp()
     console.add("<text>    evaluate a line of mystery");
 }
 
-void MobiusConsole::showErrors(juce::StringArray& errors)
+void MobiusConsole::doLoad(juce::String line)
 {
-    for (auto error : errors)
-      console.add(error);
-}
-
-juce::String MobiusConsole::withoutCommand(juce::String line)
-{
-    return line.fromFirstOccurrenceOf(" ", false, false);
-}
-
-void MobiusConsole::loadFile(juce::String line)
-{
-    juce::StringArray files;
-    files.add(withoutCommand(line));
-    
-    scriptenv->loadFiles(files);
-
-    showErrors(scriptenv->getErrors());
-
-    MslParserResult* result = scriptenv->getLastResult();
-    if (result != nullptr) {
-        showErrors(result->errors);
+    if (line.startsWith("config")) {
+        scriptenv->loadConfig();
     }
+    else {
+        scriptenv->resetLoad();
+        scriptenv->load(line);
+    }
+
+    showLoad();
 }
 
-void MobiusConsole::testParse(juce::String line)
+/**
+ * Emit the status of the environment, including errors to the console.
+ */
+void MobiusConsole::showLoad()
 {
-    MslParserResult* res = parser.parse(withoutCommand(line));
+    juce::StringArray& missing = scriptenv->getMissingFiles();
+    if (missing.size() > 0) {
+        console.add("Missing files:");
+        for (auto s : missing) {
+            console.add(s);
+        }
+    }
+
+    juce::OwnedArray<class MslFileErrors>* ferrors = scriptenv->getFileErrors();
+    if (ferrors->size() > 0) {
+        console.add("File errors:");
+        for (auto mfe : *ferrors) {
+            console.add(mfe->path);
+            for (auto err : mfe->errors) {
+                juce::String errline;
+                errline += "  Line " + juce::String(err->line) + " column " + juce::String(err->column) +
+                    err->token + " " + err->details;;
+                console.add(errline);
+            }
+        }
+    }
+
+    juce::OwnedArray<class MslCollision>* collisions = scriptenv->getCollisions();
+    if (collisions->size() > 0) {
+        console.add("Name Collisions:");
+        for (auto col : *collisions) {
+            console.add(col->name + " " + col->fromPath + " " + col->otherPath);
+        }
+    }
+
+    juce::OwnedArray<class MslScript>* scripts = scriptenv->getScripts();
+    if (scripts->size() > 0) {
+        console.add("Scripts:");
+        for (auto s : *scripts) {
+            console.add(s->name + " " + s->path);
+        }
+    }
+
+}
+
+void MobiusConsole::doParse(juce::String line)
+{
+#if 0    
+    MslParserResult* res = parser.parse(line);
     if (res != nullptr) {
         // todo: error details display
         showErrors(res->errors);
@@ -172,28 +213,14 @@ void MobiusConsole::testParse(juce::String line)
 
         delete res;
     }
-}
-
-void MobiusConsole::listSymbols()
-{
-    console.add("Loaded Scripts:");
-    for (auto script : *(scriptenv->getScripts()))
-      console.add("  " + script->name);
-    
-    // formerly dumped the "session"
-    // might still be intersting but I want to test files for awhile
-#if 0    
-    juce::OwnedArray<MslProc>* procs = session.getProcs();
-    if (procs->size() > 0) {
-        console.add("Procs:");
-        for (auto proc : *procs) {
-            console.add("  " + proc->name);
-        }
-    }
 #endif    
 }
+
+void MobiusConsole::doList()
+{
+}
  
-void MobiusConsole::eval(juce::String line)
+void MobiusConsole::doEval(juce::String line)
 {
     // session does most of it's information convenyance throught the listener
     session.eval(line);

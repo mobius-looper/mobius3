@@ -27,6 +27,7 @@
 #include "model/Symbol.h"
 #include "model/HelpCatalog.h"
 #include "model/UIParameterIds.h"
+#include "model/ScriptConfig.h"
 
 #include "ui/MainWindow.h"
 
@@ -46,6 +47,7 @@
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
 #include "ProjectFiler.h"
+#include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
 
 #include "Supervisor.h"
@@ -1821,9 +1823,9 @@ void Supervisor::menuLoadScripts()
         }
         juce::String msg = juce::String(count) + " scripts loaded";
 
-        int missing = clerk.getMissingFileCount();
+        juce::StringArray missing = scriptenv.getMissingFiles();
         if (missing > 0)
-          msg += "\n" + juce::String(missing) + " missing files";
+          msg += "\n" + juce::String(missing.size()) + " missing files";
 
         alert(msg);
     }

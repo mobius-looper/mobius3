@@ -21,6 +21,7 @@
         <FILE id="L1gpwb" name="MobiusConsole.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MobiusConsole.cpp"/>
         <FILE id="m4hTgl" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/script/MobiusConsole.h"/>
+        <FILE id="Dq1mlk" name="MslError.h" compile="0" resource="0" file="../Mobius/Source/script/MslError.h"/>
         <FILE id="N7AlF7" name="MslEvaluator.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslEvaluator.cpp"/>
         <FILE id="RMnaeY" name="MslEvaluator.h" compile="0" resource="0" file="../Mobius/Source/script/MslEvaluator.h"/>
@@ -33,6 +34,8 @@
         <FILE id="sxWlsd" name="MslTokenizer.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslTokenizer.cpp"/>
         <FILE id="fh2FOK" name="MslTokenizer.h" compile="0" resource="0" file="../Mobius/Source/script/MslTokenizer.h"/>
+        <FILE id="v0yPX5" name="ScriptClerk.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptClerk.cpp"/>
+        <FILE id="tp2f5F" name="ScriptClerk.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptClerk.h"/>
       </GROUP>
       <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
             file="../Mobius/Source/ProjectFiler.cpp"/>

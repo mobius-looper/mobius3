@@ -23,7 +23,7 @@ class MslError
     MslError(int l, int c, juce::String t, juce::String d) {
         line = l; column = c; token = t; details = d;
     }
-    ~MslParserError() {}
+    ~MslError() {}
 
     int line = 0;
     int column = 0;

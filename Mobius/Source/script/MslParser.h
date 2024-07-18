@@ -7,31 +7,6 @@
 #include "MslModel.h"
 #include "MslScript.h"
 
-/**
- * Emerging object to capture details and location of one parser error.
- */
-class MslParserError
-{
-  public:
-
-    MslParserError() {}
-    MslParserError(int l, int c, juce::String t, juce::String d) {
-        line = l; column = c; token = t; details = d;
-    }
-    ~MslParserError() {}
-
-    int line = 0;
-    int column = 0;
-    juce::String token;
-    juce::String details;
-    
-};
-
-/**
- * Soon to be complex object conveying all the things that went wrong
- * during the parsing of a file.  If the parse succeeds, warnings may be
- * in the result but a Script object will have been created and returned.
- */
 class MslParserResult
 {
   public:
@@ -43,7 +18,7 @@ class MslParserResult
      * The full path to the file that was parsed.
      * Not set by the parser but may be added by the receiver.
      */
-    juce::String sourceFile;
+    juce::String path;
 
     /**
      * The source code that was parsed.
@@ -57,13 +32,13 @@ class MslParserResult
      * This is dynamically allocated and management must be taken over
      * by the receiver of the result.
      */
-    class MslScript* script = nullptr;
+    std::unique_ptr<class MslScript> script = nullptr;
 
     // quick and dirty list of error messages
-    juce::StringArray errors;
+    //juce::StringArray errors;
 
     // evoving error details
-    juce::OwnedArray<MslParserError> details;
+    juce::OwnedArray<class MslError> errors;
 
 };
 

@@ -5,10 +5,13 @@
 
 #include <JuceHeader.h>
 
+#include "../model/MobiusConfig.h"
 #include "../Supervisor.h"
 
+#include "MslError.h"
 #include "MslScript.h"
 #include "MslParser.h"
+#include "ScriptClerk.h"
 
 #include "MslEnvironment.h"
 
@@ -58,6 +61,43 @@ void MslEnvironment::load(ScriptClerk& clerk)
 }
 
 /**
+ * Reset last load state.
+ */
+void MslEnvironment::resetLoad()
+{
+    missingFiles.clear();
+    fileErrors.clear();
+    unloaded.clear();
+}
+
+/**
+ * Load an individual file
+ * This is intended for use by the console and does not reset errors.
+ */
+void MslEnvironment::load(juce::String path)
+{
+    loadInternal(path);
+}
+
+/**
+ * Reload the ScriptConfig but only MSL files
+ */
+void MslEnvironment::loadConfig()
+{
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    ScriptConfig* sconfig = config->getScriptConfig();
+    if (sconfig != nullptr) {
+
+        // split into .mos and .msl file lists and normalize paths
+        ScriptClerk clerk;
+        clerk.split(sconfig);
+
+        // new files go to the environment
+        load(clerk);
+    }
+}
+
+/**
  * Load one file into the library.
  * Save parse errors if encountered.
  * If the script has already been loaded, it is replaced and the old
@@ -83,9 +123,9 @@ void MslEnvironment::loadInternal(juce::String path)
         // on error, the script object if there is one is incomplete
         // and can be discarded, any use in keeping these around?
 
-        if (result->errors != nullptr) {
+        if (result->errors.size() > 0) {
             // transfer ownership
-            MslFileErrors* ferrors = result->errors.release();
+            juce::OwnedArray<MslFileErrors>& ferrors = result->errors;
             fileErrors.add(ferrors);
             // annotate this with the file path so we know where it came from
             ferrors.path = path;

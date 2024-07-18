@@ -595,6 +595,7 @@
               file="Source/script/MslEnvironment.cpp"/>
         <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"
               file="Source/script/MslEnvironment.h"/>
+        <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
         <FILE id="mbWYXx" name="MslEvaluator.cpp" compile="1" resource="0"
               file="Source/script/MslEvaluator.cpp"/>
         <FILE id="tUczXt" name="MslEvaluator.h" compile="0" resource="0" file="Source/script/MslEvaluator.h"/>
@@ -606,6 +607,8 @@
         <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"
               file="Source/script/MslTokenizer.cpp"/>
         <FILE id="Sc7E1Z" name="MslTokenizer.h" compile="0" resource="0" file="Source/script/MslTokenizer.h"/>
+        <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
+        <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
       </GROUP>
       <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
         <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"

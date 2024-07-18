@@ -29,15 +29,15 @@ class ScriptClerk {
      */
     void split(class ScriptConfig* src);
 
-    juce::StringArray getMslFiles() {
+    juce::StringArray& getMslFiles() {
         return mslFiles;
     }
 
     class ScriptConfig* getOldConfig() {
-        oldConfig.get();
+        return oldConfig.get();
     }
 
-    int getMissingFiles() {
+    juce::StringArray& getMissingFiles() {
         return missingFiles;
     }
 

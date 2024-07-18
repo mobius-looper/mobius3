@@ -66,21 +66,35 @@ class MslEnvironment
     // the "audio thread" maintenance ping
     void kernelAdvance();
     
-    // primary entry point for file loading by the UI
-    bool load(class ScriptClerk& clerk);
+    // primary entry point for file loading by the UI/Supervisor
+    void load(class ScriptClerk& clerk);
 
-    // load results for the diagnostic panel
+    // incremental loading for the console
+    void resetLoad();
+    void loadConfig();
+    void load(juce::String path);
+    void unload(juce::String name);
+
+
+    //
+    // Last load results
+    //
+    
     juce::StringArray& getMissingFiles() {
         return missingFiles;
     }
 
-    juce::OwnedArray<class MslFileError>* getFileErrors() {
+    juce::OwnedArray<class MslFileErrors>* getFileErrors() {
         return &fileErrors;
     }
 
     juce::OwnedArray<class MslCollision>* getCollisions() {
         return &collisions;
     }
+
+    //
+    // Libraary
+    //
 
     juce::OwnedArray<class MslScript>* getScripts() {
         return &scripts;
@@ -92,8 +106,8 @@ class MslEnvironment
 
     // last load state
     juce::StringArray missingFiles;
-    juce::OwnedArray<MslFileErrors> fileErrors;
-    juce::OwnedArray<MslCollision> collisions;
+    juce::OwnedArray<class MslFileErrors> fileErrors;
+    juce::OwnedArray<class MslCollision> collisions;
     juce::StringArray unloaded;
     
     // the active scripts

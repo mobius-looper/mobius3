@@ -13,7 +13,9 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Trace.h"
 #include "../model/ScriptConfig.h"
+#include "../Supervisor.h"
 
 #include "ScriptClerk.h"
 
@@ -41,13 +43,13 @@ void ScriptClerk::split(ScriptConfig* src)
     missingFiles.clear();
 
     if (src != nullptr) {
-        for (auto ref : src->getScripts()) {
+        for (ScriptRef* ref = src->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
             juce::String path = juce::String(ref->getFile());
 
             path = normalizePath(path);
             if (path.length() == 0) {
                 // a syntax error in the path, unusual
-                Trace(1, "ScriptClerk: Unable to normalize path " + path.toUTF8());
+                Trace(1, "ScriptClerk: Unable to normalize path %s", path.toUTF8());
                 missingFiles.add(path);
             }
             else {
@@ -72,7 +74,7 @@ void ScriptClerk::splitFile(juce::File f)
         mslFiles.add(f.getFullPathName());
     }
     else {
-        oldConfig.add(new ScriptRef(f.getFullPathName().toUTF8()));
+        oldConfig->add(new ScriptRef(f.getFullPathName().toUTF8()));
     }
 }
 
@@ -182,7 +184,7 @@ juce::String ScriptClerk::normalizePath(juce::String src)
     // isn't there a "looks absolute" juce::File method?
     if (!path.startsWithChar('/') && !path.containsChar(':')) {
         // looks relative
-        juce::File f = supervisor->getRoot().getChildFile(path);
+        juce::File f = Supervisor::Instance->getRoot().getChildFile(path);
         path = f.getFullPathName();
     }
 
@@ -196,64 +198,11 @@ juce::String ScriptClerk::normalizePath(juce::String src)
 juce::String ScriptClerk::expandPath(juce::String src)
 {
     // todo: a Supervisor reference that needs to be factored out
-    juce::String rootPrefix = supervisor->getRoot().getFullPathName();
+    juce::String rootPrefix = Supervisor::Instance->getRoot().getFullPathName();
     return src.replace("$ROOT", rootPrefix);
 }
 
-///////////////////////////////////////////////////////////////////////
-//
-// Files
-//
-///////////////////////////////////////////////////////////////////////
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
 
-/**
- * Load a list of script files into the environment.
- * If any of the paths are directories, recurse and load any .msl files
- * found in them.
- *
- * Not passing ScriptConfig here because I want Supervisor to deal with
- * dependencies on the old configuration model.
- *
- * There are lots of things that can go wrong here, and error conveyance
- * to the user needs thought.  If this returns true, everything loaded normally.
- * If it returns false, something went wrong and the caller can call
- * getErrors() to return the list of things to display.
- *
- * Use getLastLoaded to return the number of files actually loaded.
- * Would be better to have a return object like MslLoadResult to convey
- * all of this so we don't have to keep state in here.
- *
- * This is intended only for use in the UI thread.
- */
-bool MslEnvironment::loadFiles(juce::StringArray paths)
-{
-    // clear load state
-    errors.clear();
-    missingFiles.clear();
-    lastLoaded = 0;
-
-    for (auto path : paths)
-      loadPath(path);
-
-    return (errors.size() == 0);
-}
-
-void MslEnvironment::loadPath(juce::String path)
-{
-    path = normalizePath(path);
-    if (path.length() > 0) {
-        juce::File f (path);
-        if (f.isDirectory())
-          loadDirectory(f);
-        else
-          loadFile(f);
-    }
-}
-
-
-void MslEnvironment::traceErrors(MslParserResult* result)
-{
-    // todo: not building the detailed MslParserError list yet
-    for (auto error : result->errors)
-      Trace(1, "MslEnvironment: %s", error.toUTF8());
-}

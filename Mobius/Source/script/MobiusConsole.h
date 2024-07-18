@@ -57,15 +57,17 @@ class MobiusConsole : public juce::Component,
     BasicButtonRow commandButtons;
     Console console;
 
-    void loadFile(juce::String line);
     void doLine(juce::String line);
-    void showHelp();
     juce::String withoutCommand(juce::String line);
-    void testParse(juce::String line);
-    void listSymbols();
-    void showErrors(juce::StringArray& errors);
+    void doHelp();
+    
+    void doLoad(juce::String line);
+    void showLoad();
 
-    void eval(juce::String line);
+    void doParse(juce::String line);
+    void doList();
+    
+    void doEval(juce::String line);
     void traceNode(MslNode* node, int indent);
 
 };
