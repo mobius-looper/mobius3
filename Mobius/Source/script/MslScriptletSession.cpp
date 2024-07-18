@@ -6,6 +6,8 @@
 #include <JuceHeader.h>
 
 #include "MslScript.h"
+#include "MslParser.h"
+#include "MslSession.h"
 
 #include "MslScriptletSession.h"
 
@@ -52,7 +54,7 @@ void MslScriptletSession::eval(juce::String source)
         // for everything
         MslSession* session = new MslSession(environment);
 
-        session.start(script.get());
+        session->start(script.get());
 
         // todo: capture results
 

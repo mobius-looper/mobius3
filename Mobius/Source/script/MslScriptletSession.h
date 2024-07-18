@@ -15,7 +15,7 @@
 class MslScriptletSession {
   public:
 
-    MslScriptletSession(MslEnvironment* env);
+    MslScriptletSession(class MslEnvironment* env);
     ~MslScriptletSession();
 
     // reset any state accumulated in this session
@@ -28,6 +28,8 @@ class MslScriptletSession {
     // todo: results and errors
 
   private:
+
+    class MslEnvironment* environment = nullptr;
 
     // dynamic script maintained for this session
     std::unique_ptr<class MslScript> script = nullptr;

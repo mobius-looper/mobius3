@@ -19,6 +19,7 @@
 
 #include "MslScript.h"
 #include "MslEvaluator.h"
+#include "MslError.h"
 
 class MslSession
 {
@@ -26,7 +27,7 @@ class MslSession
     
   public:
     
-    MslSession(MslEnvironment* env);
+    MslSession(class MslEnvironment* env);
     ~MslSession();
 
     // evaluate a script
@@ -45,11 +46,17 @@ class MslSession
  
   private:
 
+    class MslEnvironment* environment = nullptr;
+    class MslScript* script = nullptr;
+
+    // temporary
+    class MslEvaluator* evaluator = nullptr;
+    
     // runtime errors
     juce::OwnedArray<class MslError> errors;
 
     void invoke(Symbol* s, MslValue& result);
-    void query(Symbol* s, MslValue& result);
+    void query(MslSymbol* snode, Symbol* s, MslValue& result);
     void assign(MslSymbol* snode, int value);
 
 };

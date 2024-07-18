@@ -16,8 +16,7 @@
 
 class MobiusConsole : public juce::Component,
                       public juce::Button::Listener,
-                      public Console::Listener,
-                      public MslSession::Listener
+                      public Console::Listener
 {
   public:
 
@@ -38,11 +37,6 @@ class MobiusConsole : public juce::Component,
     void consoleLine(juce::String line) override;
     void consoleEscape() override;
 
-    // MslSession::Listener
-    void mslTrace(const char* msg) override;
-    void mslError(const char* msg) override;
-    void mslResult(const char* msg) override;
-    
   private:
 
     // handle to the global environment
@@ -71,5 +65,6 @@ class MobiusConsole : public juce::Component,
     void doEval(juce::String line);
     void traceNode(MslNode* node, int indent);
 
+    void showErrors(class MslParserResult* res);
 };
 

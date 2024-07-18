@@ -13,6 +13,8 @@
 
 #include <JuceHeader.h>
 
+#include "../model/ScriptConfig.h"
+
 class ScriptClerk {
   public:
 

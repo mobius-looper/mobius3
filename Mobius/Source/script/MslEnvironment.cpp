@@ -21,7 +21,6 @@ MslEnvironment::MslEnvironment()
 
 MslEnvironment::~MslEnvironment()
 {
-    delete lastResult;
 }
 
 void MslEnvironment::initialize(Supervisor* s)
@@ -124,15 +123,18 @@ void MslEnvironment::loadInternal(juce::String path)
         // and can be discarded, any use in keeping these around?
 
         if (result->errors.size() > 0) {
+            MslFileErrors* fe = new MslFileErrors();
             // transfer ownership
-            juce::OwnedArray<MslFileErrors>& ferrors = result->errors;
-            fileErrors.add(ferrors);
+            // todo: hate this
+            fe->captureErrors(result->errors);
             // annotate this with the file path so we know where it came from
-            ferrors.path = path;
+            fe->path = path;
+            fe->code = source;
+            fileErrors.add(fe);
         }
         else if (result->script != nullptr) {
             // transfer ownership
-            MslScript* script = result.script.release();
+            MslScript* script = result->script.release();
             // annotate with path, which also provides the default reference name
             script->path = path;
             install(script);
@@ -142,6 +144,8 @@ void MslEnvironment::loadInternal(juce::String path)
             // empty, is this worth saying anything about
             Trace(1, "MslEnvironment: No parser results for file %s", path.toUTF8());
         }
+
+        delete result;
     }
 }
 
@@ -277,8 +281,8 @@ juce::String MslEnvironment::getScriptName(MslScript* script)
 
     if (name.length() == 0) {
         // have to fall back to the leaf file name
-        if (script->filename.length() > 0) {
-            juce::File file (script->filename);
+        if (script->path.length() > 0) {
+            juce::File file (script->path);
             name = file.getFileNameWithoutExtension();
         }
         else {

@@ -161,7 +161,7 @@ class MslEvaluator : public MslVisitor
 {
   public:
 
-    MslEvaluator(MslSession* s);
+    MslEvaluator(class MslSession* s);
     ~MslEvaluator();
 
     bool trace = false;

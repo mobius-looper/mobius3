@@ -13,6 +13,7 @@
 #include "MslParser.h"
 #include "MslError.h"
 #include "MslEnvironment.h"
+#include "MslScriptletSession.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
 
@@ -30,8 +31,9 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
 
     // allocate a scriptlet session we can keep forever
     session = new MslScriptletSession(scriptenv);
-    
-    session.setListener(this);
+
+    // todo: need to work out the info passing
+    //session.setListener(this);
 }
 
 MobiusConsole::~MobiusConsole()
@@ -235,7 +237,7 @@ void MobiusConsole::doList()
  
 void MobiusConsole::doEval(juce::String line)
 {
-    session.eval(line);
+    session->eval(line);
 
     // todo: here is where we display the result of the evaluation and
     // any runtime errors

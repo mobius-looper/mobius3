@@ -106,7 +106,7 @@ void MslEvaluator::mslVisit(MslAssignment* node)
             MslSymbol* snode = static_cast<MslSymbol*>(target);
             value->visit(this);
             // should be doing this everywhere we do pre-emptive evaluation!
-            if (errors.size() == 0) {
+            if (session->errors.size() == 0) {
                 session->assign(snode, result.getInt());
                 // what is the result of an assignment?
             }

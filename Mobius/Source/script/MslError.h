@@ -57,6 +57,13 @@ class MslFileErrors
     // todo: since MslError is simple enough, this could just be an Array of objects
     juce::OwnedArray<MslError> errors;
 
+    // kludge: find a better way to pass these around
+    void captureErrors(juce::OwnedArray<MslError>& src) {
+        while (src.size() > 0) {
+            errors.add(src.removeAndReturn(0));
+        }
+    }
+
 };
 
 /**

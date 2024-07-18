@@ -25,6 +25,8 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Trace.h"
+
 #include "MslModel.h"
 #include "MslScript.h"
 #include "MslError.h"
@@ -99,7 +101,7 @@ MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
         script = scriptlet;
         current = scriptlet->root;
         
-        parse(content);
+        parse(source);
 
         sift();
     }

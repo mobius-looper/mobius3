@@ -16,10 +16,17 @@
 #include "../model/ScriptProperties.h"
 #include "../Supervisor.h"
 
+#include "MslError.h"
+#include "MslModel.h"
+#include "MslScript.h"
+#include "MslEvaluator.h"
+#include "MslEnvironment.h"
+
 #include "MslSession.h"
 
-MslSession::MslSession()
+MslSession::MslSession(MslEnvironment* env)
 {
+    environment = env;
 }
 
 MslSession::~MslSession()
@@ -29,13 +36,19 @@ MslSession::~MslSession()
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslScript* script)
+void MslSession::start(MslScript* argScript)
 {
     // todo: initialze call stacks
     errors.clear();
-
+    script = argScript;
+    
     MslEvaluator ev (this);
-    MslValue result = ev->start(script->root);
+
+    // ugh, have to save this fucker because of the stupid eval() callback
+    // control flow is terrible here
+    evaluator = &ev;
+    
+    MslValue result = ev.start(script->root);
 
     // todo: where does the value go?
 }
@@ -46,7 +59,7 @@ void MslSession::start(MslScript* script)
  * of the node having issues, but unfortunately the parser isn't leaving
  * that behind yet.
  */
-void MslEvaluator::addError(MslNode* node, const char* details)
+void MslSession::addError(MslNode* node, const char* details)
 {
     // see file comments about why this is bad
     MslError* e = new MslError();
@@ -77,8 +90,8 @@ bool MslSession::resolve(MslSymbol* snode)
 
     // first check for cached symbol
     if (snode->symbol == nullptr && snode->proc == nullptr) {
-list        // look for a proc
-        snode->proc = dynamicScript.findProc(snode->token);
+        // look for a proc
+        snode->proc = script->findProc(snode->token);
         if (snode->proc == nullptr) {
             // todo: resolve vars in the current scope
 
@@ -96,12 +109,15 @@ list        // look for a proc
  * Evaluate a Symbol node from the the parse tree and leave the result.
  * Not sure I like the handoff between resolve and eval...
  */
+// is this interface necessary any more?
+// shit, it is, this is terrible
+
 void MslSession::eval(MslSymbol* snode, MslValue& result)
 {
     result.setNull();
 
     if (!resolve(snode)) {
-        errors.add("Unresolved symbol " + snode->token);
+        addError(snode, "Unresolved symbol");
     }
     else {
         if (snode->proc != nullptr) {
@@ -115,7 +131,7 @@ void MslSession::eval(MslSymbol* snode, MslValue& result)
             // proc nodes just have a child list, not a block, or do they?
             MslBlock* body = snode->proc->getBody();
             if (body != nullptr)
-              evaluator.mslVisit(body);
+              evaluator->mslVisit(body);
         }
         else if (snode->symbol != nullptr) {
             Symbol* s = snode->symbol;
@@ -125,7 +141,7 @@ void MslSession::eval(MslSymbol* snode, MslValue& result)
             }
             else if (s->parameter != nullptr) {
         
-                query(s, result);
+                query(snode, s, result);
             }
         }
     }
@@ -143,23 +159,23 @@ void MslSession::invoke(Symbol* s, MslValue& result)
     result.setNull();
 }
 
-void MslSession::query(Symbol* s, MslValue& result)
+void MslSession::query(MslSymbol* snode, Symbol* s, MslValue& result)
 {
     result.setNull();
 
     if (s->parameter == nullptr) {
-        errors.add("Error: Not a parameter symbol " + s->name);
+        addError(snode, "Not a parameter symbol");
     }
     else {
         Query q;
         q.symbol = s;
         bool success = Supervisor::Instance->doQuery(&q);
         if (!success) {
-            errors.add("Error: Unable to query parameter " + s->name);
+            addError(snode, "Unable to query parameter");
         }
         else if (q.async) {
             // not really an error, need a different message/warning list
-            errors.add("Asynchronous parameter query " + s->name);
+            addError(snode, "Asynchronous parameter query");
         }
         else {
             // And now we have the issue of whether to return an ordinal

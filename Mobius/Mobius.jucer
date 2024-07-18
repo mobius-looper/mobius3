@@ -602,6 +602,10 @@
         <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
         <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
         <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
+        <FILE id="QgNmVy" name="MslScriptletSession.cpp" compile="1" resource="0"
+              file="Source/script/MslScriptletSession.cpp"/>
+        <FILE id="A5T3LL" name="MslScriptletSession.h" compile="0" resource="0"
+              file="Source/script/MslScriptletSession.h"/>
         <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
         <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
         <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"

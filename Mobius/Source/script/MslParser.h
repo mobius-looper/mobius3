@@ -16,6 +16,7 @@
 #include "MslTokenizer.h"
 #include "MslModel.h"
 #include "MslScript.h"
+#include "MslError.h"
 
 /**
  * The parser may return two things: a finished MslScript object,
