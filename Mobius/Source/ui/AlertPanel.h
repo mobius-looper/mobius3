@@ -26,6 +26,7 @@ class AlertContent : public juce::Component
     AlertContent();
     ~AlertContent() {}
 
+    void setMessage(juce::String msg);
     void addMessage(juce::String msg);
     
     void resized() override;

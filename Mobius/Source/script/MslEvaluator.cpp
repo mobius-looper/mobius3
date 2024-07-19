@@ -62,7 +62,7 @@ void MslEvaluator::mslVisit(MslLiteral* lit)
 {
     // todo, need to be more type aware of this literal
     // will need a result stack eventually too
-    result.setJString(lit->token);
+    result.setJString(lit->token.value);
 }
 
 void MslEvaluator::mslVisit(MslBlock* block)
@@ -186,7 +186,7 @@ void MslEvaluator::mslVisit(MslOperator* opnode)
 {
     result.setNull();
     
-    MslOperators op = mapOperator(opnode->token);
+    MslOperators op = mapOperator(opnode->token.value);
     MslNode* node1 = (opnode->children.size() > 0) ? opnode->children[0] : nullptr;
     MslNode* node2 = (opnode->children.size() > 1) ? opnode->children[1] : nullptr;
     
@@ -388,7 +388,7 @@ void MslEvaluator::compareSymbol(MslNode* node1, MslNode* node2, bool equal)
     }
     else {
         UIParameter* p = param->symbol->parameter;
-        juce::String s = other->token;
+        juce::String s = other->token.value;
         int otherOrdinal = p->getEnumOrdinal(s.toUTF8());
         int paramOrdinal = -1;
         // now get the parameter symbol ordinal

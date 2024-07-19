@@ -1270,36 +1270,42 @@ Scriptarian* MobiusShell::compileScripts(ScriptConfig* src)
         ScriptRef* ref = src->getScripts();
         while (ref != nullptr) {
             const char* cpath = ref->getFile();
-            juce::File f (cpath);
-            if (!f.isDirectory()) {
-                ScriptRef* copy = new ScriptRef(ref);
-                expanded->add(copy);
-            }
-            else {
-                // todo: I suppose if the directory ref had test=true
-                // or any other flag set, then all of the child files
-                // should too?
-                int types = juce::File::TypesOfFileToFind::findFiles;
-                juce::String pattern ("*.mos");
-                juce::Array<juce::File> files =
-                    f.findChildFiles(types,
-                                     // searchRecursively   
-                                     false,
-                                     pattern,
-                                     // followSymlinks
-                                     juce::File::FollowSymlinks::no);
-                for (auto file : files) {
-                    // hmm, I had a case where a renamed .mos file left
-                    // an emacs save file with the .mos~ extension and this
-                    // passed the *.mos filter, seems like a bug
-                    juce::String path = file.getFullPathName();
-                    if (path.endsWithIgnoreCase(".mos")) {
-                        ScriptRef* copy = new ScriptRef(path.toUTF8());
-                        expanded->add(copy);
+
+            // ignore .msl files until we retool Supervisor to
+            // pass down the bifurcated ScriptConfig
+            if (!EndsWith(cpath, ".msl")) {
+            
+                juce::File f (cpath);
+                if (!f.isDirectory()) {
+                    ScriptRef* copy = new ScriptRef(ref);
+                    expanded->add(copy);
+                }
+                else {
+                    // todo: I suppose if the directory ref had test=true
+                    // or any other flag set, then all of the child files
+                    // should too?
+                    int types = juce::File::TypesOfFileToFind::findFiles;
+                    juce::String pattern ("*.mos");
+                    juce::Array<juce::File> files =
+                        f.findChildFiles(types,
+                                         // searchRecursively   
+                                         false,
+                                         pattern,
+                                         // followSymlinks
+                                         juce::File::FollowSymlinks::no);
+                    for (auto file : files) {
+                        // hmm, I had a case where a renamed .mos file left
+                        // an emacs save file with the .mos~ extension and this
+                        // passed the *.mos filter, seems like a bug
+                        juce::String path = file.getFullPathName();
+                        if (path.endsWithIgnoreCase(".mos")) {
+                            ScriptRef* copy = new ScriptRef(path.toUTF8());
+                            expanded->add(copy);
+                        }
                     }
                 }
             }
-
+            
             ref = ref->getNext();
         }
     }

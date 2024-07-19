@@ -33,6 +33,8 @@ class MslSession
     // evaluate a script
     void start(class MslScript* script);
     bool isWaiting();
+    MslValue getResult();
+    juce::OwnedArray<MslError>* getErrors();
     
   protected:
 
@@ -54,6 +56,9 @@ class MslSession
     
     // runtime errors
     juce::OwnedArray<class MslError> errors;
+
+    // evaluation result
+    MslValue sessionResult;
 
     void invoke(Symbol* s, MslValue& result);
     void query(MslSymbol* snode, Symbol* s, MslValue& result);

@@ -27,6 +27,9 @@ bool MslTokenizer::hasNext()
 MslToken MslTokenizer::next()
 {
     MslToken t = MslToken(MslToken::Type::End);
+    t.line = getLine();
+    t.column = getColumn();
+    
     if (!iterator.isEOF()) {
         // any need to keep one of these?  how expensive is the constructor?
         juce::CPlusPlusCodeTokeniser toker;
@@ -43,7 +46,10 @@ MslToken MslTokenizer::next()
             token =  token.unquoted();
         }
         t.value = token;
-        
+        // hmm, if you capture the position here it is after the token
+        // which looks worse than if you do it before and get leading whitespace
+        //t.line = getLine();
+        //t.column = getColumn();
     }
     return t;
 }

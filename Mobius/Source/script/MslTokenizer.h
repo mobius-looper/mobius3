@@ -39,6 +39,8 @@ class MslToken
     
     Type type;
     juce::String value;
+    int line = 0;
+    int column = 0;
 
     bool isSymbol() {return type == Type::Symbol;}
 

@@ -48,9 +48,22 @@ void MslSession::start(MslScript* argScript)
     // control flow is terrible here
     evaluator = &ev;
     
-    MslValue result = ev.start(script->root);
+    sessionResult = ev.start(script->root);
+}
 
-    // todo: where does the value go?
+bool MslSession::isWaiting()
+{
+    return false;
+}
+
+MslValue MslSession::getResult()
+{
+    return sessionResult;
+}
+
+juce::OwnedArray<MslError>* MslSession::getErrors()
+{
+    return &errors;
 }
 
 /**
@@ -63,8 +76,11 @@ void MslSession::addError(MslNode* node, const char* details)
 {
     // see file comments about why this is bad
     MslError* e = new MslError();
-    // todo: capture line/column from the node
-    e->token = node->token;
+    // okay, this shit happens a lot now, why not just standardize on passing
+    // the MslToken by value everywhere
+    e->token = node->token.value;
+    e->line = node->token.line;
+    e->column = node->token.column;
     e->details = juce::String(details);
     errors.add(e);
 }
@@ -91,12 +107,12 @@ bool MslSession::resolve(MslSymbol* snode)
     // first check for cached symbol
     if (snode->symbol == nullptr && snode->proc == nullptr) {
         // look for a proc
-        snode->proc = script->findProc(snode->token);
+        snode->proc = script->findProc(snode->token.value);
         if (snode->proc == nullptr) {
             // todo: resolve vars in the current scope
 
             // else resolve to a global symbol
-            snode->symbol = Symbols.find(snode->token);
+            snode->symbol = Symbols.find(snode->token.value);
         }
     }
     
@@ -135,7 +151,7 @@ void MslSession::eval(MslSymbol* snode, MslValue& result)
         }
         else if (snode->symbol != nullptr) {
             Symbol* s = snode->symbol;
-            if (s->function != nullptr) {
+            if (s->function != nullptr || s->script != nullptr) {
 
                 invoke(s, result);
             }
@@ -155,8 +171,8 @@ void MslSession::invoke(Symbol* s, MslValue& result)
     // todo: this needs to take a reference
     Supervisor::Instance->doAction(&a);
 
-    // what is the result of a function?
-    result.setNull();
+    // only MSL scripts set a result right now
+    result.setString(a.result);
 }
 
 void MslSession::query(MslSymbol* snode, Symbol* s, MslValue& result)

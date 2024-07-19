@@ -182,8 +182,7 @@ void MobiusConsole::showLoad()
             console.add(mfe->path);
             for (auto err : mfe->errors) {
                 juce::String errline;
-                errline += "  Line " + juce::String(err->line) + " column " + juce::String(err->column) +
-                    err->token + " " + err->details;;
+                errline += "  Line " + juce::String(err->line) + " column " + juce::String(err->column) + ": " +  err->token + " " + err->details;;
                 console.add(errline);
             }
         }
@@ -209,10 +208,11 @@ void MobiusConsole::showLoad()
 
 void MobiusConsole::doParse(juce::String line)
 {
+    MslParser parser;
     MslParserResult* res = parser.parse(line);
     if (res != nullptr) {
         // todo: error details display
-        showErrors(res);
+        showErrors(&(res->errors));
 
         if (res->script != nullptr)
           traceNode(res->script->root, 0);
@@ -221,9 +221,9 @@ void MobiusConsole::doParse(juce::String line)
     }
 }
 
-void MobiusConsole::showErrors(MslParserResult* res)
+void MobiusConsole::showErrors(juce::OwnedArray<MslError>* errors)
 {
-    for (auto error : res->errors) {
+    for (auto error : *errors) {
         juce::String msg = "Line " + juce::String(error->line) +
             " column " + juce::String(error->column) + ": " +
             error->token + ": " + error->details;
@@ -233,14 +233,26 @@ void MobiusConsole::showErrors(MslParserResult* res)
 
 void MobiusConsole::doList()
 {
+    console.add("Loaded Scripts");
+    juce::OwnedArray<MslScript>* scripts = scriptenv->getScripts();
+    for (auto script : *scripts) {
+        console.add("  " + script->name);
+    }
 }
  
 void MobiusConsole::doEval(juce::String line)
 {
     session->eval(line);
 
-    // todo: here is where we display the result of the evaluation and
-    // any runtime errors
+    // side effect of an evaluation is a list of errors and a result
+    juce::OwnedArray<MslError>* errors = session->getErrors();
+    if (errors->size() > 0) {
+        showErrors(errors);
+    }
+    else {
+        MslValue v = session->getResult();
+        console.add(juce::String(v.getString()));
+    }
 }
 
 /**
@@ -257,25 +269,25 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         if (node->isLiteral()) {
             MslLiteral* l = static_cast<MslLiteral*>(node);
             if (l->isInt)
-              line += "Int: " + node->token;
+              line += "Int: " + node->token.value;
             else if (l->isFloat)
-              line += "Float: " + node->token;
+              line += "Float: " + node->token.value;
             else if (l->isBool)
-              line += "Bool: " + node->token;
+              line += "Bool: " + node->token.value;
             else
-              line += "String: " + node->token;
+              line += "String: " + node->token.value;
         }
         else if (node->isSymbol()) {
-            line += "Symbol: " + node->token;
+            line += "Symbol: " + node->token.value;
         }
         else if (node->isBlock()) {
-            line += "Block: " + node->token;
+            line += "Block: " + node->token.value;
         }
         else if (node->isOperator()) {
-            line += "Operator: " + node->token;
+            line += "Operator: " + node->token.value;
         }
         else if (node->isAssignment()) {
-            line += "Assignment: " + node->token;
+            line += "Assignment: " + node->token.value;
         }
         else if (node->isVar()) {
             MslVar* var = static_cast<MslVar*>(node);

@@ -30,6 +30,17 @@ class MslError
     int column = 0;
     juce::String token;
     juce::String details;
+
+    // stupid utility to transfer from one owned array to another
+    // there has to be a better way to do this
+    static void transfer(juce::OwnedArray<MslError>* src,
+                         juce::OwnedArray<MslError>& dest) {
+
+        while (src->size() > 0) {
+            dest.add(src->removeAndReturn(0));
+        }
+    }
+    
 };
 
 /**
@@ -56,13 +67,6 @@ class MslFileErrors
     // errors encountered
     // todo: since MslError is simple enough, this could just be an Array of objects
     juce::OwnedArray<MslError> errors;
-
-    // kludge: find a better way to pass these around
-    void captureErrors(juce::OwnedArray<MslError>& src) {
-        while (src.size() > 0) {
-            errors.add(src.removeAndReturn(0));
-        }
-    }
 
 };
 

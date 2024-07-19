@@ -286,6 +286,17 @@ class UIAction : public PooledObject {
      */
     bool noGroup = false;
 
+    //////////////////////////////////////////////////////////////////////
+    // Result
+    //////////////////////////////////////////////////////////////////////
+
+    /**
+     * Kind of a hack for testing MSL scripts that can return values.
+     * Needs more thought, any action should be able to have a synchronous value
+     * and a way to return some sort of async request id for polling.
+     */
+    char result[UIActionArgMax];
+    
   private:
 
 };

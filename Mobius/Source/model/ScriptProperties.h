@@ -83,6 +83,7 @@ class ScriptProperties
     /**
      * For scripts with test=true, the names of the test Procs
      * in the script for tests that may be run independently.
+     * todo: woah, this is kludgey, revisit this
      */
     juce::StringArray testProcs;
 
@@ -93,8 +94,15 @@ class ScriptProperties
 
     /**
      * Handle to the internal object that implements a proc
+     * todo: should be obsolete with MslLinkage
      */
     void* proc = nullptr;
+
+    /**
+     * For new MSL scripts, a pointer into the MslEnvironment for the
+     * script or proc to be called.
+     */
+    void *mslLinkage = nullptr;
 
     
 };

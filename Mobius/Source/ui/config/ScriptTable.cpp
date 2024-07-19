@@ -400,7 +400,7 @@ void ScriptTable::doFileChooser()
     // a form of smart pointer
     chooser = std::make_unique<juce::FileChooser> ("Select a Script file ...",
                                                    startPath,
-                                                   "*.mos");
+                                                   "*.mos;*.msl");
 
     // not documented under FileChooser, have to look
     // at FileBrowserComponent

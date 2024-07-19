@@ -20,6 +20,7 @@
 UIAction::UIAction()
 {
     strcpy(arguments, "");
+    strcpy(result, "");
 }
 
 UIAction::~UIAction()
@@ -37,6 +38,7 @@ void UIAction::reset()
     symbol = nullptr;
     value = 0;
     strcpy(arguments, "");
+    strcpy(result, "");
     scopeTrack = 0;
     scopeGroup = 0;
     sustain = false;
@@ -80,6 +82,7 @@ void UIAction::copy(UIAction* src)
     next = nullptr;
     owner = nullptr;
     track = nullptr;
+    strcpy(result, "");
 }
 
 /****************************************************************************/

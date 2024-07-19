@@ -49,7 +49,7 @@ MslParserResult* MslParser::parse(juce::String source)
 
     // flesh out a script skeleton
     MslScript* neu = new MslScript();
-    neu->root = new MslBlock("");
+    neu->root = new MslBlock();
     
     result->script.reset(neu);
 
@@ -95,13 +95,13 @@ MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
         // reset parse state, the last block should already have been sifted
         // todo: this needs MUCH more work
         delete scriptlet->root;
-        scriptlet->root = new MslBlock("");
+        scriptlet->root = new MslBlock();
 
         // set up the stack
         script = scriptlet;
         current = scriptlet->root;
         
-        parse(source);
+        parseInner(source);
 
         sift();
     }
@@ -159,7 +159,7 @@ void MslParser::sift()
 void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
     // would prefer to this be an array of objects
-    MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), t.value, details);
+    MslError* e = new MslError(t.line, t.column, t.value, details);
     result->errors.add(e);
 }
 
@@ -169,7 +169,7 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
  */
 void MslParser::errorSyntax(MslNode* node, juce::String details)
 {
-    MslError* e = new MslError(tokenizer.getLine(), tokenizer.getColumn(), node->token, details);
+    MslError* e = new MslError(node->token.line, node->token.column, node->token.value, details);
     result->errors.add(e);
 }
 
@@ -182,9 +182,9 @@ bool MslParser::matchBracket(MslToken& t, MslNode* block)
 {
     // let's try to avoid a specific MslBlock just store the
     // bracketing char
-    bool match = (((t.value == "}") && (block->token == "{")) ||
-                  ((t.value == ")") && (block->token == "(")) ||
-                  ((t.value == "]") && (block->token == "[")));
+    bool match = (((t.value == "}") && (block->token.value == "{")) ||
+                  ((t.value == ")") && (block->token.value == "(")) ||
+                  ((t.value == "]") && (block->token.value == "[")));
 
     if (!match)
       errorSyntax(t, "Mismatched brackets");
@@ -228,31 +228,31 @@ void MslParser::parseInner(juce::String source)
                 break;
                 
             case MslToken::Type::Processor:
-                // todo: this is where directives need to be parsed
+                parseDirective(t);
                 break;
 
             case MslToken::Type::String:
-                current->add(new MslLiteral(t.value));
+                current->add(new MslLiteral(t));
                 break;
 
             case MslToken::Type::Int: {
                 // would be convenient to pass the entire MslToken in but I
                 // don't want a dependency on that model yet
-                MslLiteral* l = new MslLiteral(t.value);
+                MslLiteral* l = new MslLiteral(t);
                 l->isInt = true;
                 current->add(l);
             }
                 break;
 
             case MslToken::Type::Float: {
-                MslLiteral* l = new MslLiteral(t.value);
+                MslLiteral* l = new MslLiteral(t);
                 l->isFloat = true;
                 current->add(l);
             }
                 break;
                 
             case MslToken::Type::Bool: {
-                MslLiteral* l = new MslLiteral(t.value);
+                MslLiteral* l = new MslLiteral(t);
                 l->isBool = true;
                 current->add(l);
             }
@@ -261,9 +261,9 @@ void MslParser::parseInner(juce::String source)
             case MslToken::Type::Symbol: {
                 // if the symbol name matches a keyword, a specific node class
                 // is pushed, otherwise it becomes a generic symbol node
-                MslNode* node = checkKeywords(t.value);
+                MslNode* node = checkKeywords(t);
                 if (node == nullptr)
-                  node = new MslSymbol(t.value);
+                  node = new MslSymbol(t);
                     
                 current = push(node);
                 
@@ -272,7 +272,7 @@ void MslParser::parseInner(juce::String source)
 
             case MslToken::Type::Bracket: {
                 if (t.isOpen()) {
-                    MslBlock* block = new MslBlock(t.value);
+                    MslBlock* block = new MslBlock(t);
                     current = push(block);
                 }
                 else {
@@ -300,7 +300,7 @@ void MslParser::parseInner(juce::String source)
                     else {
                         // these behave sort of like expression operators
                         // but they must have a symbol on the LHS
-                        MslAssignment* ass = new MslAssignment(t.value);
+                        MslAssignment* ass = new MslAssignment(t);
 
                         // pop up till we're wanted, more than one level?
                         // this still feels weird
@@ -320,7 +320,7 @@ void MslParser::parseInner(juce::String source)
                     }
                 }
                 else {
-                    MslOperator* op = new MslOperator(t.value);
+                    MslOperator* op = new MslOperator(t);
 
                     // pop up till we're wanted, more than one level?
                     // this still feels weird
@@ -339,7 +339,7 @@ void MslParser::parseInner(juce::String source)
                         // operator of lower priority, it's second operand
                         MslNode* operand = last;
                         if (operand->isOperator()) {
-                            if (precedence(op->token, operand->token) >= 0) {
+                            if (precedence(op->token.value, operand->token.value) >= 0) {
                                 if (last->children.size() == 2)
                                   operand = last->getLast();
                                 else
@@ -492,23 +492,38 @@ MslNode* MslParser::push(MslNode* node)
 /**
  * Convert a keyword token into a specific node class.
  */
-MslNode* MslParser::checkKeywords(juce::String token)
+MslNode* MslParser::checkKeywords(MslToken& t)
 {
     MslNode* keyword = nullptr;
 
-    if (token == "var")
-      keyword = new MslVar(token);
+    if (t.value == "var")
+      keyword = new MslVar(t);
     
-    else if (token == "proc")
-      keyword = new MslProc(token);
+    else if (t.value == "proc")
+      keyword = new MslProc(t);
     
-    else if (token == "if")
-      keyword = new MslIf(token);
+    else if (t.value == "if")
+      keyword = new MslIf(t);
 
-    else if (token == "else")
-      keyword = new MslElse(token);
+    else if (t.value == "else")
+      keyword = new MslElse(t);
 
     return keyword;
+}
+
+void MslParser::parseDirective(MslToken& t)
+{
+    int space = t.value.indexOfChar(0, ' ');
+    juce::String directive = t.value.substring(0, space);
+    juce::String remainder = t.value.substring(space);
+
+    if (directive.equalsIgnoreCase("#name")) {
+        script->name = remainder.trim();
+    }
+    else {
+        Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
+        errorSyntax(t, juce::String("Unknown directive ") + directive);
+    }
 }
 
 /****************************************************************************/

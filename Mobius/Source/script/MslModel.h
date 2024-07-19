@@ -44,10 +44,11 @@ class MslVisitor
 class MslNode
 {
   public:
-    MslNode(juce::String t) {token = t;}
+    MslNode() {}
+    MslNode(MslToken& t) {token = t;}
     virtual ~MslNode() {}
 
-    juce::String token;
+    MslToken token;
     MslNode* parent;
     // would like to protect this, but we've got the ownership issue
     juce::OwnedArray<MslNode> children;
@@ -99,7 +100,7 @@ class MslNode
     bool hasBlock(juce::String bracket) {
         bool found = false;
         for (auto child : children) {
-            if (child->token == bracket) {
+            if (child->token.value == bracket) {
                 found = true;
                 break;
             }
@@ -132,7 +133,7 @@ class MslNode
 class MslLiteral : public MslNode
 {
   public:
-    MslLiteral(juce::String s) : MslNode(s) {locked=true;}
+    MslLiteral(MslToken& t) : MslNode(t) {locked=true;}
     virtual ~MslLiteral() {}
 
     bool isLiteral() override {return true;}
@@ -150,7 +151,9 @@ class MslLiteral : public MslNode
 class MslBlock : public MslNode
 {
   public:
-    MslBlock(juce::String token) : MslNode(token) {}
+    MslBlock(MslToken& t) : MslNode(t) {}
+    // special constructor for the root block with no tokcn
+    MslBlock() {}
     virtual ~MslBlock() {}
 
     // doesn't want tokens but will always accept nodes
@@ -174,7 +177,7 @@ class MslBlock : public MslNode
 class MslSymbol : public MslNode
 {
   public:
-    MslSymbol(juce::String s) : MslNode(s) {}
+    MslSymbol(MslToken& t) : MslNode(t) {}
     virtual ~MslSymbol() {}
 
     // symbols only allow () arguemnt blocks, which turns them into
@@ -184,7 +187,7 @@ class MslSymbol : public MslNode
 
     bool wantsNode(MslNode* node) override {
         bool wants = false;
-        if (node->token == "(" && children.size() == 0)
+        if (node->token.value == "(" && children.size() == 0)
           wants = true;
         return wants;
     }
@@ -202,7 +205,7 @@ class MslSymbol : public MslNode
 class MslOperator : public MslNode
 {
   public:
-    MslOperator(juce::String s) : MslNode(s) {}
+    MslOperator(MslToken& t) : MslNode(t) {}
     virtual ~MslOperator() {}
 
     // operators stop accepting nodes with all of their operands
@@ -247,7 +250,7 @@ class MslOperator : public MslNode
 class MslAssignment : public MslNode
 {
   public:
-    MslAssignment(juce::String s) : MslNode(s) {}
+    MslAssignment(MslToken& t) : MslNode(t) {}
     virtual ~MslAssignment() {}
 
     bool wantsNode(MslNode* node) override {
@@ -268,7 +271,7 @@ class MslAssignment : public MslNode
 class MslVar : public MslNode
 {
   public:
-    MslVar(juce::String token) : MslNode(token) {}
+    MslVar(MslToken& t) : MslNode(t) {}
     virtual ~MslVar() {}
 
     // var is one of the few that consumes tokens
@@ -307,7 +310,7 @@ class MslVar : public MslNode
 class MslProc : public MslNode
 {
   public:
-    MslProc(juce::String token) : MslNode(token) {}
+    MslProc(MslToken& t) : MslNode(t) {}
     virtual ~MslProc() {}
 
     // same as var
@@ -322,11 +325,11 @@ class MslProc : public MslNode
 
     bool wantsNode(MslNode* node) override {
         bool wants = false;
-        if (!hasArgs && node->isBlock() && node->token == "(") {
+        if (!hasArgs && node->isBlock() && node->token.value == "(") {
             hasArgs = true;
             wants = true;
         }
-        else if (!hasBody && node->isBlock() && node->token == "{") {
+        else if (!hasBody && node->isBlock() && node->token.value == "{") {
             hasBody = true;
             wants = true;
         }
@@ -342,7 +345,7 @@ class MslProc : public MslNode
     MslBlock* getBody() {
         MslBlock* body = nullptr;
         for (auto child : children) {
-            if (child->isBlock() && child->token == "{") {
+            if (child->isBlock() && child->token.value == "{") {
                 body = static_cast<MslBlock*>(child);
                 break;
             }
@@ -354,7 +357,7 @@ class MslProc : public MslNode
 class MslIf : public MslNode
 {
   public:
-    MslIf(juce::String token) : MslNode(token) {}
+    MslIf(MslToken& t) : MslNode(t) {}
     ~MslIf() {}
 
     bool isIf() override {return true;}
@@ -391,7 +394,7 @@ class MslIf : public MslNode
 class MslElse : public MslNode
 {
   public:
-    MslElse(juce::String token) : MslNode(token) {}
+    MslElse(MslToken& t) : MslNode(t) {}
     ~MslElse() {}
 
     bool isElse() override {return true;}

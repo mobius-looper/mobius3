@@ -5,13 +5,17 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Util.h"
 #include "../model/MobiusConfig.h"
+#include "../model/Symbol.h"
+#include "../model/ScriptProperties.h"
 #include "../Supervisor.h"
 
 #include "MslError.h"
 #include "MslScript.h"
 #include "MslParser.h"
 #include "ScriptClerk.h"
+#include "MslSession.h"
 
 #include "MslEnvironment.h"
 
@@ -126,7 +130,7 @@ void MslEnvironment::loadInternal(juce::String path)
             MslFileErrors* fe = new MslFileErrors();
             // transfer ownership
             // todo: hate this
-            fe->captureErrors(result->errors);
+            MslError::transfer(&(result->errors), fe->errors);
             // annotate this with the file path so we know where it came from
             fe->path = path;
             fe->code = source;
@@ -235,11 +239,13 @@ void MslEnvironment::install(MslScript* script)
     juce::String name = getScriptName(script);
     MslLinkage* link = library[name];
 
+    bool collision = false;
     if (link == nullptr) {
         // new file
         link = new MslLinkage();
         link->name = name;
         link->script = script;
+        linkages.add(link);
         // todo: add linkages for any exported procs
         library.set(name, link);
     }
@@ -261,11 +267,30 @@ void MslEnvironment::install(MslScript* script)
         col->fromPath = script->path;
         col->otherPath = link->script->path;
         collisions.add(col);
+        collision = true;
     }
     else {
         link->script = script;
         // just in case unlink misssed it
         link->proc = nullptr;
+    }
+
+    if (!collision) {
+        // export this as a Symbol for bindings
+        Symbol* s = Symbols.intern(name);
+        if (s->script != nullptr || s->behavior == BehaviorNone) {
+            // can make this a script
+            // todo: all sortts of things to check here, it could be a core script
+            // what about all the flags that can be set in ScriptRef?
+            if (s->script == nullptr)
+              s->script.reset(new ScriptProperties());
+            s->script->mslLinkage = link;
+            s->level = LevelUI;
+            s->behavior = BehaviorScript;
+        }
+        else {
+            Trace(1, "MslEnvironment: Symbol conflict exporting script %s", name.toUTF8());
+        }
     }
 }
 
@@ -327,6 +352,54 @@ void MslEnvironment::kernelAdvance()
 {
 }
     
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Process an action on a symbol bound to an MSL script.
+ *
+ * todo: will need thread safety around the session
+ * todo: will need script directive to force this immediately into the audio thread
+ */
+void MslEnvironment::doAction(UIAction* action)
+{
+    // same sanity checking that should have been done by now
+    Symbol* s = action->symbol;
+    if (s == nullptr) {
+        Trace(1, "MslEnironment: Action without symbol");
+    }
+    else if (s->script == nullptr) {
+        Trace(1, "MslEnironment: Action with non-script symbol");
+    }
+    else if (s->script->mslLinkage == nullptr) {
+        Trace(1, "MslEnironment: Action with non-MSL symbol");
+    }    
+    else {
+        MslLinkage* link = static_cast<MslLinkage*>(s->script->mslLinkage);
+        MslSession* session = new MslSession(this);
+        
+        if (link->script != nullptr) {
+            session->start(link->script);
+        }
+        else if (link->proc != nullptr) {
+            Trace(1, "MslEnvironment: MSL Proc linkage not implemented");
+        }
+
+        if (!session->isWaiting()) {
+            MslValue result = session->getResult();
+            Trace(2, "MslEnvironment: Script returned %s", result.getString());
+            CopyString(result.getString(), action->result, sizeof(action->result));
+            delete session;
+        }
+        else {
+            // let it wait
+            sessions.add(session);
+        }
+    }
+}
 
 /****************************************************************************/
 /****************************************************************************/

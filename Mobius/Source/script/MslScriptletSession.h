@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "MslValue.h"
+
 class MslScriptletSession {
   public:
 
@@ -25,14 +27,23 @@ class MslScriptletSession {
     // parse one line of MSL text and evaluate it
     void eval(juce::String source);
 
-    // todo: results and errors
+    juce::OwnedArray<class MslError>* getErrors() {
+        return &errors;
+    }
 
+    MslValue getResult() {
+        return scriptletResult;
+    }
+    
   private:
 
     class MslEnvironment* environment = nullptr;
 
     // dynamic script maintained for this session
     std::unique_ptr<class MslScript> script = nullptr;
+
+    juce::OwnedArray<class MslError> errors;
+    MslValue scriptletResult;
 
     // active session created if the script needs to suspend
     //class MslSession* session = nullptr;

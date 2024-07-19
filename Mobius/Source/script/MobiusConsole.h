@@ -11,8 +11,6 @@
 #include "../ui/common/BasicButtonRow.h"
 
 #include "Console.h"
-#include "MslParser.h"
-#include "MslSession.h"
 
 class MobiusConsole : public juce::Component,
                       public juce::Button::Listener,
@@ -44,9 +42,6 @@ class MobiusConsole : public juce::Component,
 
     // scriptlet session we maintain
     class MslScriptletSession* session = nullptr;
-
-    // parser used for parse analysis without evaluation
-    MslParser parser;
     
     class ConsolePanel* panel = nullptr;
     BasicButtonRow commandButtons;
@@ -63,8 +58,8 @@ class MobiusConsole : public juce::Component,
     void doList();
     
     void doEval(juce::String line);
-    void traceNode(MslNode* node, int indent);
+    void traceNode(class MslNode* node, int indent);
 
-    void showErrors(class MslParserResult* res);
+    void showErrors(juce::OwnedArray<class MslError>* errors);
 };
 

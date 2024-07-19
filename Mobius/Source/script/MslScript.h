@@ -5,12 +5,10 @@
 
 #pragma once
 
-#include "MslModel.h"
-
 class MslScript {
   public:
-    MslScript() {}
-    ~MslScript() {delete root;}
+    MslScript();
+    ~MslScript();
 
     /**
      * The file this came from if loaded from a file.
@@ -50,16 +48,7 @@ class MslScript {
     // todo: support the old concept of Labels ?
     // I think no, use exported procs instead
 
-    class MslProc* findProc(juce::String procname) {
-        MslProc* found = nullptr;
-        for (auto proc : procs) {
-            if (proc->name == procname) {
-                found = proc;
-                break;
-            }
-        }
-        return found;
-    }
+    class MslProc* findProc(juce::String procname);
 
 };
 

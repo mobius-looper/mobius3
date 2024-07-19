@@ -321,7 +321,7 @@
   </BindingSet>
   <ScriptConfig>
     <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\manyscript.mos'/>
+    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\first.msl'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>

@@ -1588,6 +1588,10 @@ bool Supervisor::doUILevelAction(UIAction* action)
             }
         }
     }
+    else if (s->behavior == BehaviorScript) {
+        scriptenv.doAction(action);
+        handled = true;
+    }
     
     if (!handled) {
         // is this a problem?

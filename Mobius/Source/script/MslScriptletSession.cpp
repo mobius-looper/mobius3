@@ -40,11 +40,13 @@ void MslScriptletSession::eval(juce::String source)
 {
     MslParser parser;
 
-    // special parser interface where we manage the MslScript on the outside
-    MslParserResult* result = parser.parse(script.get(), source);
+    errors.clear();
 
-    if (result->errors.size() > 0) {
-        // todo: convey errors to the caller
+    // special parser interface where we manage the MslScript on the outside
+    MslParserResult* presult = parser.parse(script.get(), source);
+
+    if (presult->errors.size() > 0) {
+        MslError::transfer(&(presult->errors), errors);
     }
     else {
         // handoff is awkward
@@ -56,13 +58,17 @@ void MslScriptletSession::eval(juce::String source)
 
         session->start(script.get());
 
-        // todo: capture results
+        // the now familiar copying of result/error status from one object
+        // to another
+        // might be worth factoring out an MslErrorContainer or something we can pass
+        // down rather than always moving it back up
+        MslError::transfer(session->getErrors(), errors);
+        scriptletResult = session->getResult();
 
         delete session;
     }
 
-    // todo: convey the result to the caller
-    delete result;
+    delete presult;
 }
 
     

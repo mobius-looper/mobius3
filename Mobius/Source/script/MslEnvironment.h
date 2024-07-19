@@ -18,8 +18,6 @@
 
 #include <JuceHeader.h>
 
-#include "MslScript.h"
-
 /**
  * Represents a linkage between a reference in a script and something
  * in another script.  Cross-script references indirect through this table
@@ -106,10 +104,6 @@ class MslEnvironment
     // normal file-based script actions
     void doAction(class UIAction* action);
 
-    // dynamic scriptlet evaluation
-    // ???
-    
-    
   private:
 
     class Supervisor* supervisor = nullptr;
@@ -127,20 +121,21 @@ class MslEnvironment
     juce::OwnedArray<MslLinkage> linkages;
     juce::HashMap<juce::String,class MslLinkage*> library;
 
-    // special dynamic script used by the interactive console
-    std::unique_ptr<class MslScript> dynamicScript;
-
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
+
+    // suspended sessions
+    juce::OwnedArray<class MslSession> sessions;
+   
 
     //
     // internal library management
     //
     
     void loadInternal(juce::String path);
-    void install(MslScript* script);
-    juce::String getScriptName(MslScript* script);
-    void unlink(MslScript* script);
+    void install(class MslScript* script);
+    juce::String getScriptName(class MslScript* script);
+    void unlink(class MslScript* script);
     void unload(juce::StringArray& retain);
     
 };

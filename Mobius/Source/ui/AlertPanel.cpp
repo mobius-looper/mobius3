@@ -33,7 +33,7 @@
 void AlertPanel::show(juce::String message)
 {
     if (!isVisible()) {
-        content.addMessage(message);
+        content.setMessage(message);
         // why was this necessary?
         content.resized();
         JuceUtil::centerInParent(this);
@@ -68,6 +68,11 @@ AlertContent::AlertContent()
 void AlertContent::resized()
 {
     text.setBounds(getLocalBounds());
+}
+
+void AlertContent::setMessage(juce::String msg)
+{
+    text.setText(msg, juce::NotificationType::dontSendNotification);
 }
 
 void AlertContent::addMessage(juce::String msg)

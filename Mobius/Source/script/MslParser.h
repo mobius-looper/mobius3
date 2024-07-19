@@ -89,7 +89,7 @@ class MslParser
     void errorSyntax(MslNode* node, juce::String details);
     bool matchBracket(MslToken& t, MslNode* block);
 
-    MslNode* checkKeywords(juce::String token);
+    MslNode* checkKeywords(MslToken& t);
     MslNode* push(MslNode* node);
 
     bool operandable(MslNode* node);
@@ -97,5 +97,6 @@ class MslParser
     void unarize(MslToken& t, MslOperator* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 
+    void parseDirective(MslToken& t);
     
 };
