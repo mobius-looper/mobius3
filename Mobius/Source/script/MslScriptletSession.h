@@ -34,6 +34,10 @@ class MslScriptletSession {
     MslValue getResult() {
         return scriptletResult;
     }
+
+    juce::String getFullResult() {
+        return fullResult;
+    }
     
   private:
 
@@ -44,7 +48,8 @@ class MslScriptletSession {
 
     juce::OwnedArray<class MslError> errors;
     MslValue scriptletResult;
-
+    juce::String fullResult;
+    
     // active session created if the script needs to suspend
     //class MslSession* session = nullptr;
 

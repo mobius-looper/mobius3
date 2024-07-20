@@ -1,6 +1,10 @@
-/**
+ /**
  * Value container easilly stack allocated and guaranteed never
  * to do memory allocation.  juce::String is not allowed in an evaluation context.
+ *
+ * With the introduction of MslSession I needed to maintain lists as values.
+ * To get things fleshed out, I'm using juce::Array for this which DOES allocate
+ * memmory, but that can be addressed later.
  */
 
 #pragma once
@@ -8,7 +12,7 @@
 class MslValue
 {
   public:
-    MslValue() {}
+    MslValue() {setNull();}
     ~MslValue() {}
 
     static const int MaxString = 1024;
@@ -19,7 +23,8 @@ class MslValue
         Float,
         Bool,
         String,
-        Error
+        Error,
+        Enum
     };
 
     Type type = Null;
@@ -73,6 +78,12 @@ class MslValue
         }
     }
 
+    void setEnum(const char* s, int i) {
+        setString(s);
+        ival = i;
+        type = Enum;
+    }
+
     void setError(const char* s) {
         setString(s);
         type = Error;
@@ -98,7 +109,7 @@ class MslValue
 
     int getInt() {
         int result = 0;
-        if (type == Int || type == Bool) {
+        if (type == Int || type == Bool || type == Enum) {
             result = ival;
         }
         else if (type == Float) {
@@ -121,6 +132,40 @@ class MslValue
     int ival = 0;
     float fval = 0.0f;
     char string[MaxString];
-        
 };
 
+/**
+ * Runtime evaluation results are usually atomic values and lists
+ * of atomics, but sometimes they are lists of lists.
+ *
+ * Easiest way to represt that is a tree though the notion
+ * that each node can have both a value and sub-values won't happen.
+ * Dust off the old notes and look at how Lisp did this, feels
+ * like a "cons" could be used here.
+ */
+class MslValueTree
+{
+  public:
+
+    MslValueTree() {}
+    ~MslValueTree() {}
+
+    MslValue value;
+    juce::OwnedArray<MslValueTree> list;
+
+    void add(MslValue& v) {
+        MslValueTree* t = new MslValueTree();
+        t->value = v;
+        list.add(t);
+    }
+
+    void add(MslValueTree* l) {
+        list.add(l);
+    }
+
+};
+
+
+    
+
+    

@@ -251,8 +251,16 @@ void MobiusConsole::doEval(juce::String line)
         showErrors(errors);
     }
     else {
-        MslValue v = session->getResult();
-        console.add(juce::String(v.getString()));
+        // temporary debugging
+        bool fullResult = true;
+        if (fullResult) {
+            juce::String full = session->getFullResult();
+            console.add(full);
+        }
+        else {
+            MslValue v = session->getResult();
+            console.add(juce::String(v.getString()));
+        }
     }
 }
 

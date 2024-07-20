@@ -597,9 +597,6 @@
         <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"
               file="Source/script/MslEnvironment.h"/>
         <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
-        <FILE id="mbWYXx" name="MslEvaluator.cpp" compile="1" resource="0"
-              file="Source/script/MslEvaluator.cpp"/>
-        <FILE id="tUczXt" name="MslEvaluator.h" compile="0" resource="0" file="Source/script/MslEvaluator.h"/>
         <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
         <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
         <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
