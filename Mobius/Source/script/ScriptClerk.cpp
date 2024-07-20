@@ -15,7 +15,6 @@
 
 #include "../util/Trace.h"
 #include "../model/ScriptConfig.h"
-#include "../Supervisor.h"
 
 #include "ScriptClerk.h"
 
@@ -184,7 +183,7 @@ juce::String ScriptClerk::normalizePath(juce::String src)
     // isn't there a "looks absolute" juce::File method?
     if (!path.startsWithChar('/') && !path.containsChar(':')) {
         // looks relative
-        juce::File f = Supervisor::Instance->getRoot().getChildFile(path);
+        juce::File f = root.getChildFile(path);
         path = f.getFullPathName();
     }
 
@@ -198,7 +197,7 @@ juce::String ScriptClerk::normalizePath(juce::String src)
 juce::String ScriptClerk::expandPath(juce::String src)
 {
     // todo: a Supervisor reference that needs to be factored out
-    juce::String rootPrefix = Supervisor::Instance->getRoot().getFullPathName();
+    juce::String rootPrefix = root.getFullPathName();
     return src.replace("$ROOT", rootPrefix);
 }
 

@@ -746,7 +746,7 @@ void Supervisor::advance()
 
         // the coordination between the script environment and Mobius maintenance
         // is subtle and may need adjustment, should it be before or after?
-        scriptenv.shellAdvance();
+        scriptenv.shellAdvance(this);
         
         // tell the engine to do housekeeping before we refresh the UI
         mobius->performMaintenance();
@@ -1809,7 +1809,7 @@ void Supervisor::menuLoadScripts()
     if (sconfig != nullptr) {
 
         // split into .mos and .msl file lists and normalize paths
-        ScriptClerk clerk;
+        ScriptClerk clerk (getRoot());
         clerk.split(sconfig);
 
         // new files go to the environment
@@ -1833,6 +1833,39 @@ void Supervisor::menuLoadScripts()
 
         alert(msg);
     }
+}
+
+//
+// MslContext implementations
+//
+
+juce::File Supervisor::mslGetRoot()
+{
+    return getRoot();
+}
+
+MobiusConfig* Supervisor::mslGetMobiusConfig()
+{
+    return getMobiusConfig();
+}
+
+void Supervisor::mslDoAction(class UIAction* a)
+{
+    doAction(a);
+}
+
+bool Supervisor::mslDoQuery(class Query* q)
+{
+    return doQuery(q);
+}
+
+/**
+ * Return a handle to the MslEnvironment.
+ * This is part of the MslContainer interface.
+ */
+MslEnvironment* Supervisor::getMslEnvironment()
+{
+    return &scriptenv;
 }
 
 //////////////////////////////////////////////////////////////////////

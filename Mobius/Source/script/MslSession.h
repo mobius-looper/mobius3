@@ -17,11 +17,32 @@
 
 #include "../model/Symbol.h"
 
+#include "MslModel.h"
 #include "MslScript.h"
 #include "MslEvaluator.h"
 #include "MslError.h"
 
-class MslSession
+/**
+ * One frame of the session call stack.
+ */
+class MslStack
+{
+  public:
+    MslStack() {}
+    ~MslStack() {}
+
+    // script we're in
+    MslScript* script = nullptr;
+
+    // node we're on
+    MslNode* node = nullptr;
+
+    // next frame up the stack
+    MslStack* parent = nullptr;
+    
+};
+
+class MslSession : public MslVisitor
 {
     friend class MslEvaluator;
     
@@ -35,6 +56,17 @@ class MslSession
     bool isWaiting();
     MslValue getResult();
     juce::OwnedArray<MslError>* getErrors();
+
+    // node visitors
+    void mslVisit(MslLiteral* node) override;
+    void mslVisit(MslSymbol* node) override;
+    void mslVisit(MslBlock* node) override;
+    void mslVisit(MslOperator* node) override;
+    void mslVisit(MslAssignment* node) override;
+    void mslVisit(MslVar* node) override;
+    void mslVisit(MslProc* node) override;
+    void mslVisit(MslIf* node) override;
+    void mslVisit(MslElse* node) override;
     
   protected:
 
@@ -50,6 +82,9 @@ class MslSession
 
     class MslEnvironment* environment = nullptr;
     class MslScript* script = nullptr;
+    class MslStack* stack = nullptr;
+    
+    juce::OwnedArray<MslStack> stackPool;
 
     // temporary
     class MslEvaluator* evaluator = nullptr;

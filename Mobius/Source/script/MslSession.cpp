@@ -87,6 +87,60 @@ void MslSession::addError(MslNode* node, const char* details)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Stack Pool
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * !! This needs to be a proper stack pool with no memory allocation
+ * and periodic fluffing.
+ */
+MslStack* MslSession::allocStack()
+{
+    MslStack* stack = nullptr;
+    if (stackPool.size() > 0) {
+        stack = stackPool.removeAndReturn(0);
+    }
+    else {
+        stack = new MslStack();
+    }
+    return stack;
+}
+
+void MslSession::freeStack(MslStack* s)
+{
+    stackPool.add(s);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Run Loop
+//
+//////////////////////////////////////////////////////////////////////
+
+
+
+void MslSession::run()
+{
+    if (stack != nullptr) {
+
+        MslNode* node = stack->node;
+
+        // evaluate this node
+        // todo: will need this to be able to return the next node
+        node->visit(this);
+
+
+    }
+}
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////
+//
 // Symbol Resolution
 //
 // Unclear whether this should go in MslEvaluator or in Session
@@ -234,6 +288,58 @@ void MslSession::assign(MslSymbol* snode, int value)
         a.value = value;
         Supervisor::Instance->doAction(&a);
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Node Visitors
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslSession::mslVisit(MslLiteral* node)
+{
+    // todo, need to be more type aware of this literal
+    result.setJString(lit->token.value);
+}
+
+void MslSession::mslVisit(MslSymbol* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslBlock* node)
+{
+    // todo: blocks may one day have preparations to do 
+}
+
+void MslSession::mslVisit(MslOperator* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslAssignment* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslVar* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslProc* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslIf* node)
+{
+    (void)node;
+}
+
+void MslSession::mslVisit(MslElse* node)
+{
+    (void)node;
 }
 
 /****************************************************************************/

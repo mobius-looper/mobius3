@@ -18,7 +18,9 @@
 class ScriptClerk {
   public:
 
-    ScriptClerk() {}
+    ScriptClerk(juce::File argRoot) {
+        root = argRoot;
+    }
     ~ScriptClerk() {}
 
     //
@@ -44,6 +46,8 @@ class ScriptClerk {
     }
 
   private:
+
+    juce::File root;
 
     // list of .msl files after split
     juce::StringArray mslFiles;

@@ -810,6 +810,7 @@ void ScriptInterpreter::checkWait()
 /**
  * Advance to the next ScriptStatement, popping the stack if necessary.
  */
+#if 0
 void ScriptInterpreter::advance()
 {
 	if (mStatement != nullptr) {
@@ -825,6 +826,7 @@ void ScriptInterpreter::advance()
 		}
     }
 }
+#endif
 
 /**
  * Called when the script is supposed to unconditionally terminate.

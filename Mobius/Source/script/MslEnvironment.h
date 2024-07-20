@@ -55,21 +55,23 @@ class MslEnvironment
     MslEnvironment();
     ~MslEnvironment();
 
-    void initialize(class Supervisor* s);
+    void initialize(class MslContext* c);
+    // need a context for this?
     void shutdown();
 
     // the "ui thread" maintenance ping
-    void shellAdvance();
+    void shellAdvance(MslContext* c);
     
     // the "audio thread" maintenance ping
-    void kernelAdvance();
+    void kernelAdvance(MslContext* c);
     
     // primary entry point for file loading by the UI/Supervisor
+    // hate this interface
     void load(class ScriptClerk& clerk);
 
     // incremental loading for the console
     void resetLoad();
-    void loadConfig();
+    void loadConfig(class MslContext* context);
     void load(juce::String path);
     void unload(juce::String name);
 
@@ -106,8 +108,8 @@ class MslEnvironment
 
   private:
 
-    class Supervisor* supervisor = nullptr;
-
+    juce::File root;
+    
     // last load state
     juce::StringArray missingFiles;
     juce::OwnedArray<class MslFileErrors> fileErrors;

@@ -146,7 +146,7 @@ class ScriptInterpreter : public ExContext {
 	void init();
 	void run(bool block);
 	void checkWait();
-    void advance();
+    //void advance();
     void getStackArg(ScriptStack* stack, int index, ExValue* value);
     void resetActionArgs();
     void parseActionArgs(class Action* action);

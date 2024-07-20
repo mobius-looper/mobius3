@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "../script/MslContext.h"
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
@@ -27,7 +28,7 @@ typedef enum {
     KernelSamplePlay = 1
 } KernelSymbols;
 
-class MobiusKernel : public MobiusAudioListener
+class MobiusKernel : public MobiusAudioListener, public MslContext
 {
     friend class MobiusShell;
     friend class SampleFunction;
@@ -120,6 +121,14 @@ class MobiusKernel : public MobiusAudioListener
     // allocate a UIAction for an old Functions that want
     // to send something up levels
     class UIAction* newUIAction();
+
+    //
+    // MslContext
+    //
+    juce::File mslGetRoot();
+    class MobiusConfig* mslGetMobiusConfig();
+    void mslDoAction(class UIAction* a);
+    bool mslDoQuery(class Query* q);
 
   protected:
     

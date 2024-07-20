@@ -152,7 +152,8 @@ void MobiusConsole::doHelp()
 void MobiusConsole::doLoad(juce::String line)
 {
     if (line.startsWith("config")) {
-        scriptenv->loadConfig();
+        // todo: kludge, hating how this is wiring up
+        scriptenv->loadConfig(Supervisor::Instance);
     }
     else {
         scriptenv->resetLoad();

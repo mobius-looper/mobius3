@@ -19,6 +19,7 @@
 #include "../Binderator.h"
 #include "../PluginParameter.h"
 #include "../Parametizer.h"
+#include "../script/MslEnvironment.h"
 
 #include "MobiusInterface.h"
 #include "MobiusShell.h"
@@ -417,6 +418,14 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     consumeCommunications();
     consumeMidiMessages();
     consumeParameters();
+
+    // do any block start script maintenance
+    // if scrips were waiting on "Wait block" they run now
+    // and this may cause more doAction calls which put more things
+    // on the core action list
+    // todo: should this happen before or after we consume messages, MIDI, and parameters?
+    MslEnvironment* env = container->getMslEnvironment();
+    env->kernelAdvance(this);
 
     // let SampleManager do it's thing
     if (sampleManager != nullptr)
@@ -1124,6 +1133,49 @@ void MobiusKernel::doLoadLoop(KernelMessage* msg)
         delete audio;
     }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Scripts
+//
+//////////////////////////////////////////////////////////////////////
+
+//
+// MslContext implementations
+// Things called by MslSessios when they run in the kernel
+//
+
+juce::File MobiusKernel::mslGetRoot()
+{
+    // this should not be called in Kernel context
+    Trace(1, "MobiusKernel::mslGetRoot Who wants a file root down here?");
+    return container->getRoot();
+}
+
+MobiusConfig* MobiusKernel::mslGetMobiusConfig()
+{
+    return configuration;
+}
+
+/**
+ * This differs from doAction above because we're already "in" the core
+ * !! need more here
+ */
+void MobiusKernel::mslDoAction(class UIAction* a)
+{
+    doAction(a);
+}
+
+bool MobiusKernel::mslDoQuery(class Query* q)
+{
+    return doQuery(q);
+}
+
+//
+// Callbacks used by the core to let the MSL environment know when
+// things happen
+//
+
 
 /****************************************************************************/
 /****************************************************************************/

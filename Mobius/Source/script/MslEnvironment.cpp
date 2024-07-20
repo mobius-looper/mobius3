@@ -6,11 +6,13 @@
 #include <JuceHeader.h>
 
 #include "../util/Util.h"
+#include "../util/Trace.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Symbol.h"
 #include "../model/ScriptProperties.h"
-#include "../Supervisor.h"
+#include "../model/UIAction.h"
 
+#include "MslContext.h"
 #include "MslError.h"
 #include "MslScript.h"
 #include "MslParser.h"
@@ -27,9 +29,10 @@ MslEnvironment::~MslEnvironment()
 {
 }
 
-void MslEnvironment::initialize(Supervisor* s)
+void MslEnvironment::initialize(MslContext* c)
 {
-    supervisor = s;
+    // remember this while we have a context handle
+    root = c->mslGetRoot();
 }
 
 void MslEnvironment::shutdown()
@@ -85,14 +88,14 @@ void MslEnvironment::load(juce::String path)
 /**
  * Reload the ScriptConfig but only MSL files
  */
-void MslEnvironment::loadConfig()
+void MslEnvironment::loadConfig(MslContext* context)
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusConfig* config = context->mslGetMobiusConfig();
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
 
         // split into .mos and .msl file lists and normalize paths
-        ScriptClerk clerk;
+        ScriptClerk clerk (root);
         clerk.split(sconfig);
 
         // new files go to the environment
@@ -344,12 +347,14 @@ void MslEnvironment::unlink(MslScript* script)
 //
 ///////////////////////////////////////////////////////////////////////
 
-void MslEnvironment::shellAdvance()
+void MslEnvironment::shellAdvance(MslContext* c)
 {
+    (void)c;
 }
 
-void MslEnvironment::kernelAdvance()
+void MslEnvironment::kernelAdvance(MslContext* c)
 {
+    (void)c;
 }
     
 //////////////////////////////////////////////////////////////////////

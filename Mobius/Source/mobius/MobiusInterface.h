@@ -372,6 +372,11 @@ class MobiusContainer
      */
     virtual class MobiusMidiTransport* getMidiTransport() = 0;
 
+    /**
+     * The MSL environment from wherever it lives.
+     */
+    virtual class MslEnvironment* getMslEnvironment() = 0;
+
 };
 
 //////////////////////////////////////////////////////////////////////

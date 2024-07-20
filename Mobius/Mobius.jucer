@@ -591,6 +591,7 @@
         <FILE id="NoInlJ" name="MobiusConsole.cpp" compile="1" resource="0"
               file="Source/script/MobiusConsole.cpp"/>
         <FILE id="EFxzMc" name="MobiusConsole.h" compile="0" resource="0" file="Source/script/MobiusConsole.h"/>
+        <FILE id="hAbJ2X" name="MslContext.h" compile="0" resource="0" file="Source/script/MslContext.h"/>
         <FILE id="rl8nR0" name="MslEnvironment.cpp" compile="1" resource="0"
               file="Source/script/MslEnvironment.cpp"/>
         <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"

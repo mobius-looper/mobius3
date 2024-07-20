@@ -37,12 +37,13 @@
 #include "UISymbols.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
+#include "script/MslContext.h"
 #include "script/MslEnvironment.h"
 
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
 
-class Supervisor : public MobiusContainer, public MobiusListener
+class Supervisor : public MobiusContainer, public MobiusListener, public MslContext
 {
   public:
 
@@ -212,6 +213,7 @@ class Supervisor : public MobiusContainer, public MobiusListener
     void sleep(int millis) override;
     void midiSend(class MidiEvent* event) override;
     void setAudioListener(class MobiusAudioListener* l) override;
+    class MslEnvironment* getMslEnvironment() override;
     
     // MobiusListener
 	void mobiusTimeBoundary() override;
@@ -222,6 +224,12 @@ class Supervisor : public MobiusContainer, public MobiusListener
     void mobiusPrompt(class MobiusPrompt*) override;
     void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
+
+    // MslContext
+    juce::File mslGetRoot();
+    class MobiusConfig* mslGetMobiusConfig();
+    void mslDoAction(class UIAction* a);
+    bool mslDoQuery(class Query* q);
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
