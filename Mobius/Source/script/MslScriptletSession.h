@@ -38,6 +38,8 @@ class MslScriptletSession {
     juce::String getFullResult() {
         return fullResult;
     }
+
+    juce::OwnedArray<MslProc>* getProcs();
     
   private:
 

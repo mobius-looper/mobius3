@@ -234,10 +234,19 @@ void MobiusConsole::showErrors(juce::OwnedArray<MslError>* errors)
 
 void MobiusConsole::doList()
 {
-    console.add("Loaded Scripts");
     juce::OwnedArray<MslScript>* scripts = scriptenv->getScripts();
-    for (auto script : *scripts) {
-        console.add("  " + script->name);
+    if (scripts != nullptr && scripts->size() > 0) {
+        console.add("Loaded Scripts");
+        for (auto script : *scripts) {
+            console.add("  " + script->name);
+        }
+    }
+    juce::OwnedArray<MslProc>* procs = session->getProcs();
+    if (procs != nullptr && procs->size() > 0) {
+        console.add("Defined Procs");
+        for (auto proc : *procs) {
+            console.add("  " + proc->name);
+        }
     }
 }
  

@@ -388,10 +388,15 @@ void MslParser::parseInner(juce::String source)
  * Need more here, while the operandable/unarize may work, the error that
  * results "invalid unary" is misleading if the non-operandable just doesn't even
  * make sense in this context.  Add another level of error checking here.
+ *
+ * Blocks are necessary to get ().  Unclear if there are cases where {} should
+ * be allowed but if you take the position that {} is just a multi-valued node
+ * whose value is the last node within it, it would work.
  */
 bool MslParser::operandable(MslNode* node)
 {
-    return (node != nullptr && (node->isLiteral() || node->isSymbol() || node->isOperator()));
+    return (node != nullptr && (node->isLiteral() || node->isSymbol() || node->isOperator() ||
+                                node->isBlock()));
 }
 
 /**

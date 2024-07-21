@@ -127,6 +127,12 @@ class MslValue
         return result;
     }
 
+    bool getBool() {
+        // this one will be weird if you try to use it on an Enum
+        // since zero is a valid ordinal
+        return (getInt() > 0);
+    }
+
   private:
 
     int ival = 0;

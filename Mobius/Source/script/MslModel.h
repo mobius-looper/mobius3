@@ -49,7 +49,7 @@ class MslNode
     virtual ~MslNode() {}
 
     MslToken token;
-    MslNode* parent;
+    MslNode* parent = nullptr;
     // would like to protect this, but we've got the ownership issue
     juce::OwnedArray<MslNode> children;
 
@@ -195,6 +195,7 @@ class MslSymbol : public MslNode
     // runtime state
     class Symbol* symbol = nullptr;
     class MslProc* proc = nullptr;
+    class MslVar* var = nullptr;
     
     bool isSymbol() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}

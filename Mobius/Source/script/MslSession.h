@@ -116,36 +116,25 @@ class MslSession
     void freeStack(MslStack* s);
     void continueStack();
     void evalStack();
-    MslValue getAtomicResult(MslValueTree* t);
-
-    //
-    // evaluation support
-    //
     
-    bool resolve(class MslSymbol* snode);
-    void eval(class MslSymbol* snode, MslValue& result);
-    void invoke(class Symbol* s, MslValue& result);
-    void query(class MslSymbol* snode, class Symbol* s, MslValue& result);
-    void assign(class MslSymbol* snode, int value);
-    void addError(class MslNode* node, const char* details);
+    MslValue getAtomicResult(MslValueTree* t);
     void getResultString(MslValueTree* vt, juce::String& s);
+    void addError(class MslNode* node, const char* details);
+
+    // symbol evaluation
+    void doSymbol(MslStack* s, MslSymbol* snode, MslValueTree* dest);
+    void doSymbol(MslStack* s, class Symbol* sym, MslValue& result);
+    void invoke(MslStack* s, class Symbol* sym, MslValue& result);
+    void query(MslStack* s, class Symbol* sym, MslValue& result);
+    
+    void assign(class MslSymbol* snode, int value);
 
     // expressions
-
-    void doOperator(MslStack* stack, MslOperator* opnode);
+    MslValue* getArgument(MslStack* s, int index);
+    MslValue* getLeafValue(MslValueTree* arg);
+    void doOperator(MslStack* stack, MslOperator* opnode, MslValueTree* dest);
     MslOperators mapOperator(juce::String& s);
-    int evalInt(MslStack* s, int i);
-    bool evalBool(MslStack* s, int i);
-    bool compare(MslStack* s, MslNode* node1, MslNode* node2, bool equal);
-    bool isString(MslNode* node);
-    bool compareSymbol(MslStack* stack, MslNode* node1, MslNode* node2, bool equal);
-    MslValue evalString(MslStack* s, int index);
-
-    MslSymbol* getResolvedParameter(MslNode* node1, MslNode* node2);
-    MslSymbol* getResolvedParameter(MslNode* node);
-    MslNode* getUnresolved(MslNode* node1, MslNode* node2);
-    MslNode* getUnresolved(MslNode* node);
-
+    bool compare(MslStack* s, MslValue* value1, MslValue* value2, bool equal);
     
 };
 

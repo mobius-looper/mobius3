@@ -77,4 +77,9 @@ void MslScriptletSession::eval(juce::String source)
     delete presult;
 }
 
+juce::OwnedArray<MslProc>* MslScriptletSession::getProcs()
+{
+    return &(script->procs);
+}
+
     
