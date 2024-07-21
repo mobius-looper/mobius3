@@ -63,7 +63,13 @@ void MslScriptletSession::eval(juce::String source)
         // might be worth factoring out an MslErrorContainer or something we can pass
         // down rather than always moving it back up
         MslError::transfer(session->getErrors(), errors);
-        scriptletResult = session->getResult();
+
+        // scriptlets to not support complex values, though I suppose they could
+        // here is where value copy or capture starts being necessary
+        scriptletResult = session->getAtomicResult();
+
+        // temporary diagnostics
+        fullResult = session->getFullResult();
 
         delete session;
     }

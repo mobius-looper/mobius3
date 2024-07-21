@@ -17,10 +17,7 @@
 
 #include "../model/Symbol.h"
 
-#include "MslModel.h"
-#include "MslScript.h"
-#include "MslEvaluator.h"
-#include "MslError.h"
+#include "MslValue.h"
 
 /**
  * One frame of the session call stack.
@@ -29,23 +26,60 @@ class MslStack
 {
   public:
     MslStack() {}
-    ~MslStack() {}
+    ~MslStack() {
+        // use a smart pointer
+        delete childResults;
+    }
 
-    // script we're in
+    // script we're in, may not need this?
     MslScript* script = nullptr;
 
     // node we're on
     MslNode* node = nullptr;
 
-    // next frame up the stack
+    // previus node on the stack
     MslStack* parent = nullptr;
+
+    // the index of the last child pushed
+    // negative means this node has not been started
+    int childIndex = -1;
+
+    // value(s) for each child node, may be list 
+    MslValueTree* childResults = nullptr;
+
+    // true if this node is finished
+    bool finished = false;
+
+    // true if this node is waiting
+    bool waiting = false;
     
 };
 
-class MslSession : public MslVisitor
-{
-    friend class MslEvaluator;
+/**
+ * This should live inside MslParser and it should do the work.
+ */
+enum MslOperators {
     
+    MslUnknown,
+    MslPlus,
+    MslMinus,
+    MslMult,
+    MslDiv,
+    MslEq,
+    MslDeq,
+    MslNeq,
+    MslGt,
+    MslGte,
+    MslLt,
+    MslLte,
+    MslNot,
+    MslAnd,
+    MslOr,
+    MslAmp
+};
+
+class MslSession
+{
   public:
     
     MslSession(class MslEnvironment* env);
@@ -54,51 +88,65 @@ class MslSession : public MslVisitor
     // evaluate a script
     void start(class MslScript* script);
     bool isWaiting();
-    MslValue getResult();
-    juce::OwnedArray<MslError>* getErrors();
+    MslValueTree* getResult();
+    MslValue getAtomicResult();
+    juce::String getFullResult();
+    juce::OwnedArray<class MslError>* getErrors();
 
-    // node visitors
-    void mslVisit(MslLiteral* node) override;
-    void mslVisit(MslSymbol* node) override;
-    void mslVisit(MslBlock* node) override;
-    void mslVisit(MslOperator* node) override;
-    void mslVisit(MslAssignment* node) override;
-    void mslVisit(MslVar* node) override;
-    void mslVisit(MslProc* node) override;
-    void mslVisit(MslIf* node) override;
-    void mslVisit(MslElse* node) override;
-    
-  protected:
-
-    void addError(MslNode* node, const char* details);
-    
-    bool resolve(MslSymbol* snode);
-    void eval(MslSymbol* snode, MslValue& result);
-
-    class Symbol* findSymbol(juce::String name);
-    void assign(Symbol* s, int value);
- 
   private:
 
     class MslEnvironment* environment = nullptr;
     class MslScript* script = nullptr;
-    class MslStack* stack = nullptr;
-    
-    juce::OwnedArray<MslStack> stackPool;
 
-    // temporary
-    class MslEvaluator* evaluator = nullptr;
+    juce::OwnedArray<MslStack> stackPool;
+    class MslStack* stack = nullptr;
     
     // runtime errors
     juce::OwnedArray<class MslError> errors;
+    
+    // "root" value of the top of the stack
+    MslValueTree* rootResult = nullptr;
 
-    // evaluation result
-    MslValue sessionResult;
+    //
+    // core evaluator
+    //
+    
+    void run();
+    MslStack* allocStack();
+    void freeStack(MslStack* s);
+    void continueStack();
+    void evalStack();
+    MslValue getAtomicResult(MslValueTree* t);
 
-    void invoke(Symbol* s, MslValue& result);
-    void query(MslSymbol* snode, Symbol* s, MslValue& result);
-    void assign(MslSymbol* snode, int value);
+    //
+    // evaluation support
+    //
+    
+    bool resolve(class MslSymbol* snode);
+    void eval(class MslSymbol* snode, MslValue& result);
+    void invoke(class Symbol* s, MslValue& result);
+    void query(class MslSymbol* snode, class Symbol* s, MslValue& result);
+    void assign(class MslSymbol* snode, int value);
+    void addError(class MslNode* node, const char* details);
+    void getResultString(MslValueTree* vt, juce::String& s);
 
+    // expressions
+
+    void doOperator(MslStack* stack, MslOperator* opnode);
+    MslOperators mapOperator(juce::String& s);
+    int evalInt(MslStack* s, int i);
+    bool evalBool(MslStack* s, int i);
+    bool compare(MslStack* s, MslNode* node1, MslNode* node2, bool equal);
+    bool isString(MslNode* node);
+    bool compareSymbol(MslStack* stack, MslNode* node1, MslNode* node2, bool equal);
+    MslValue evalString(MslStack* s, int index);
+
+    MslSymbol* getResolvedParameter(MslNode* node1, MslNode* node2);
+    MslSymbol* getResolvedParameter(MslNode* node);
+    MslNode* getUnresolved(MslNode* node1, MslNode* node2);
+    MslNode* getUnresolved(MslNode* node);
+
+    
 };
 
 

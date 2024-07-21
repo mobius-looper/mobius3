@@ -394,7 +394,7 @@ void MslEnvironment::doAction(UIAction* action)
         }
 
         if (!session->isWaiting()) {
-            MslValue result = session->getResult();
+            MslValue result = session->getAtomicResult();
             Trace(2, "MslEnvironment: Script returned %s", result.getString());
             CopyString(result.getString(), action->result, sizeof(action->result));
             delete session;
