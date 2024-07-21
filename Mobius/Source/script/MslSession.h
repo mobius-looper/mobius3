@@ -44,8 +44,8 @@ class MslStack
     // negative means this node has not been started
     int childIndex = -1;
 
-    // value(s) for each child node, may be list 
-    MslValueTree* childResults = nullptr;
+    // value(s) for each child node, may be list
+    MslValue* childResults = nullptr;
 
     // true if this node is finished
     bool finished = false;
@@ -88,14 +88,15 @@ class MslSession
     // evaluate a script
     void start(class MslScript* script);
     bool isWaiting();
-    MslValueTree* getResult();
-    MslValue getAtomicResult();
+    MslValue* getResult();
+    MslValue* captureResult();
     juce::String getFullResult();
     juce::OwnedArray<class MslError>* getErrors();
 
   private:
 
     class MslEnvironment* environment = nullptr;
+    class MslValuePool* valuePool = nullptr;
     class MslScript* script = nullptr;
 
     juce::OwnedArray<MslStack> stackPool;
@@ -105,7 +106,7 @@ class MslSession
     juce::OwnedArray<class MslError> errors;
     
     // "root" value of the top of the stack
-    MslValueTree* rootResult = nullptr;
+    MslValue* rootResult = nullptr;
 
     //
     // core evaluator
@@ -116,25 +117,30 @@ class MslSession
     void freeStack(MslStack* s);
     void continueStack();
     void evalStack();
+
+    void addStackResult(MslValue* v);
+    void addBlockResult();
     
-    MslValue getAtomicResult(MslValueTree* t);
-    void getResultString(MslValueTree* vt, juce::String& s);
+    void getResultString(MslValue* v, juce::String& s);
     void addError(class MslNode* node, const char* details);
 
     // symbol evaluation
-    void doSymbol(MslStack* s, MslSymbol* snode, MslValueTree* dest);
-    void doSymbol(MslStack* s, class Symbol* sym, MslValue& result);
-    void invoke(MslStack* s, class Symbol* sym, MslValue& result);
-    void query(MslStack* s, class Symbol* sym, MslValue& result);
+    void doSymbol(MslSymbol* snode);
+    void doSymbol(class Symbol* sym);
+    void invoke(class Symbol* sym);
+    void query(class Symbol* sym);
     
     void assign(class MslSymbol* snode, int value);
 
     // expressions
-    MslValue* getArgument(MslStack* s, int index);
-    MslValue* getLeafValue(MslValueTree* arg);
-    void doOperator(MslStack* stack, MslOperator* opnode, MslValueTree* dest);
+    MslValue* getArgument(int index);
+    void doOperator(MslOperator* opnode);
     MslOperators mapOperator(juce::String& s);
-    bool compare(MslStack* s, MslValue* value1, MslValue* value2, bool equal);
+    bool compare(MslValue* value1, MslValue* value2, bool equal);
+    
+    void checkCycles(MslValue* v);
+    bool found(MslValue* node, MslValue* list);
+
     
 };
 

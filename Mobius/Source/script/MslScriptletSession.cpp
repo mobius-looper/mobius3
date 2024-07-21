@@ -8,6 +8,7 @@
 #include "MslScript.h"
 #include "MslParser.h"
 #include "MslSession.h"
+#include "MslEnvironment.h"
 
 #include "MslScriptletSession.h"
 
@@ -23,6 +24,8 @@ MslScriptletSession::~MslScriptletSession()
 {
     // todo: if we installed anything in the Environment,
     // make sure it is removed?
+    MslValuePool* vp = environment->getValuePool();
+    vp->free(scriptletResult);
 }
 
 void MslScriptletSession::reset()
@@ -64,12 +67,13 @@ void MslScriptletSession::eval(juce::String source)
         // down rather than always moving it back up
         MslError::transfer(session->getErrors(), errors);
 
-        // scriptlets to not support complex values, though I suppose they could
-        // here is where value copy or capture starts being necessary
-        scriptletResult = session->getAtomicResult();
-
         // temporary diagnostics
         fullResult = session->getFullResult();
+        
+        // scriptlets to not support complex values, though I suppose they could
+        MslValuePool* vp = environment->getValuePool();
+        vp->free(scriptletResult);
+        scriptletResult = session->captureResult();
 
         delete session;
     }

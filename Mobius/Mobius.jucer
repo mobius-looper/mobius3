@@ -610,6 +610,7 @@
         <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"
               file="Source/script/MslTokenizer.cpp"/>
         <FILE id="Sc7E1Z" name="MslTokenizer.h" compile="0" resource="0" file="Source/script/MslTokenizer.h"/>
+        <FILE id="mMNdWj" name="MslValue.cpp" compile="1" resource="0" file="Source/script/MslValue.cpp"/>
         <FILE id="WkVWlt" name="MslValue.h" compile="0" resource="0" file="Source/script/MslValue.h"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>

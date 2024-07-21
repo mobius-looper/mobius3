@@ -27,6 +27,7 @@
 MslSession::MslSession(MslEnvironment* env)
 {
     environment = env;
+    valuePool = env->getValuePool();
 }
 
 MslSession::~MslSession()
@@ -39,7 +40,10 @@ MslSession::~MslSession()
         stack = prev;
     }
 
-    delete rootResult;
+    // if we're shutting down, it may not make
+    // sense to return these to the pool, the "static initializer" ordering problem
+    //delete rootResult;
+    valuePool->free(rootResult);
 }
 
 /**
@@ -49,8 +53,8 @@ void MslSession::start(MslScript* argScript)
 {
     errors.clear();
 
-    delete rootResult;
-    rootResult = new MslValueTree();
+    valuePool->free(rootResult);
+    rootResult = nullptr;
     
     script = argScript;
     stack = allocStack();
@@ -64,7 +68,11 @@ bool MslSession::isWaiting()
     return (stack != nullptr && stack->waiting);
 }
 
-MslValueTree* MslSession::getResult()
+/**
+ * Ownership of the result DOES NOT TRANSFER to the caller.
+ * Needs thought about what the lifespan of this needs to be.
+ */
+MslValue* MslSession::getResult()
 {
     return rootResult;
 }
@@ -72,34 +80,20 @@ MslValueTree* MslSession::getResult()
 /**
  * Okay, here is where it's getting weird.
  *
- * For some things, like symbol invocations the result of a block
- * needs to be a list, which becomes the argument list for the symbol.
- * The node that consumes the child evaluations then decides what
- * to pass up the stack.
+ * In the first implementation with MslValueTree I had to do a tree
+ * walk to find the last leaf value in a bunch of nested trees because
+ * every block created it's own list.
  *
- * Here we are at the root of the stack and will normally have a
- * child block result for the implicit block that surrounds the script root.
- * In this context, the result of the block is the last result in the list.
+ * I don't think that's necessary any more?
  *
- * If that result is also a block, then recurse until we hit an atomic.
- * This little dance is going to be necessary as well during inner node
- * value propagation.
+ * What is different about this is that it returns ownership
+ * of the rootResult.
  */
-MslValue MslSession::getAtomicResult(MslValueTree* t)
+MslValue* MslSession::captureResult()
 {
-    MslValue v;
-    
-    if (t->list.size() > 0)
-      v = getAtomicResult(t->list[t->list.size() - 1]);
-    else
-      v = t->value;
-
-    return v;
-}
-
-MslValue MslSession::getAtomicResult()
-{
-    return getAtomicResult(rootResult);
+    MslValue* result = rootResult;
+    rootResult = nullptr;
+    return result;
 }
 
 juce::OwnedArray<MslError>* MslSession::getErrors()
@@ -117,20 +111,30 @@ juce::String MslSession::getFullResult()
     return s;
 }
 
-void MslSession::getResultString(MslValueTree* vt, juce::String& s)
+/**
+ * This should probably be an MslValue utility
+ */
+void MslSession::getResultString(MslValue* v, juce::String& s)
 {
-    if (vt->list.size() > 0) {
+    if (v == nullptr) {
+        s += "null";
+    }
+    else if (v->list != nullptr) {
+        // I'm a list
         s += "[";
-        int count = 0; 
-        for (auto v : vt->list) {
+        MslValue* ptr = v->list;
+        int count = 0;
+        while (ptr != nullptr) {
             if (count > 0) s += ",";
-            getResultString(v, s);
+            getResultString(ptr, s);
             count++;
+            ptr = ptr->next;
         }
         s += "]";
     }
     else {
-        const char* sval = vt->value.getString();
+        // I'm atomic
+        const char* sval = v->getString();
         if (sval != nullptr)
           s += sval;
         else
@@ -156,26 +160,25 @@ MslStack* MslSession::allocStack()
         // should have an empty list, if not reset it
         if (s->childResults != nullptr) {
             Trace(1, "MslSession: Lingering child result pooling stack");
-            delete s->childResults;
+            valuePool->free(s->childResults);
             s->childResults = nullptr;
         }
     }
     else {
+        // ordinarilly won't be here unless something is haywire
+        // so what's a little more hay
         s = new MslStack();
-        // make sure this starts clean
-        if (s->childResults != nullptr) {
-            // this one is more serious, it shouldn't have gotten in here with a result
-            Trace(1, "MslSession: Lingering child result in pooled stack");
-            delete s->childResults;
-            s->childResults = nullptr;
-        }
     }
     return s;
 }
 
 void MslSession::freeStack(MslStack* s)
 {
-    stackPool.add(s);
+    if (s != nullptr) {
+        valuePool->free(s->childResults);
+        s->childResults = nullptr;
+        stackPool.add(s);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -219,6 +222,8 @@ void MslSession::continueStack()
         // if this is a wait node, it may push another frame
         MslStack* starting = stack;
         
+        // don't like the way we detect popping, have evalStack return
+        // a bool and let it decide?
         evalStack();
 
         if (errors.size() == 0) {
@@ -243,68 +248,134 @@ void MslSession::continueStack()
  */
 void MslSession::evalStack()
 {
-    // not liking this, would be better if there was always a special "root" parent
-    // stack that did not evaluate?
-    MslValueTree* result = nullptr;
-    if (stack->parent == nullptr) {
-        result = rootResult;
-    }
-    else {
-        result = stack->parent->childResults;
-        if (result == nullptr) {
-            result = new MslValueTree();
-            stack->parent->childResults = result;
-        }
-    }
-    
     if (stack->node->isLiteral()) {
         MslLiteral* lit = static_cast<MslLiteral*>(stack->node);
-        // todo: the node token always has just the token string but
-        // we remembered the type the tokenizer thought it was with the flags isInt etc.
-        MslValue v;
+        MslValue* v = valuePool->alloc();
         if (lit->isInt) {
-            v.setInt(atoi(lit->token.value.toUTF8()));
+            v->setInt(atoi(lit->token.value.toUTF8()));
         }
         else if (lit->isBool) {
             // could be a bit more relaxed here but this is what the tokanizer left
-            v.setBool(lit->token.value == "true");
+            v->setBool(lit->token.value == "true");
         }
         else {
-            v.setJString(lit->token.value);
+            v->setJString(lit->token.value);
         }
-        result->add(v);
+        addStackResult(v);
     }
     else if (stack->node->isBlock()) {
-        // transfer the entire result list
-        if (stack->childResults != nullptr) {
-            result->add(stack->childResults);
-            stack->childResults = nullptr;
-        }
-        else {
-            // block with no value, i see this when entering procs in the console
-            // any other conditions
-            // don't want to mess with nullptr in value trees so leave a null node
-            MslValue v;
-            result->add(v);
-        }
+        addBlockResult();
     }
     else if (stack->node->isSymbol()) {
         // symbols are evaluated with an argument list determined by the child nodes
         // for initial testing return the name
         MslSymbol* sym = static_cast<MslSymbol*>(stack->node);
-        doSymbol(stack, sym, result);
+        doSymbol(sym);
     }
     else if (stack->node->isOperator()) {
         MslOperator* op = static_cast<MslOperator*>(stack->node);
-        doOperator(stack, op, result);
+        doOperator(op);
     }
     else {
         addError(stack->node, "Unsupport node evaluation");
-        MslValue v;
-        result->add(v);
+        // need to push a null for this?
     }
 }
 
+/**
+ * Blocks return a list and we don't usually want that, needs work...
+ */
+void MslSession::addBlockResult()
+{
+    // this is where we might want to be smarter about value
+    // accumulation and list expansion so we don't end up with a bunch
+    // of nested lists
+    // !! yes, almost all blocks are just evaluated for side effect
+    bool entireList = false;
+    if (entireList) {
+        // transfer the entire result list
+        MslValue* v = valuePool->alloc();
+        v->list = stack->childResults;
+        stack->childResults = nullptr;
+        addStackResult(v);
+    }
+    else {
+        // take the last value in the list
+        // this little dance needs to be a static util
+        if (stack->childResults == nullptr) {
+            // empty block, return a null placeholder?
+            addStackResult(valuePool->alloc());
+        }
+        else {
+            // remove the last one
+            MslValue* prev = nullptr;
+            MslValue* last = stack->childResults;
+            while (last->next != nullptr) {
+                prev = last;
+                last = last->next;
+            }
+            if (prev != nullptr)
+              prev->next = nullptr;
+            else
+              stack->childResults = nullptr;
+            // free what remains ahead of this one
+            valuePool->free(stack->childResults);
+            stack->childResults = nullptr;
+            // and return the last one
+            addStackResult(last);
+        }
+    }
+}
+
+void MslSession::addStackResult(MslValue* v)
+{
+    MslStack* parent = stack->parent;
+    if (parent == nullptr) {
+        if (rootResult == nullptr)
+          rootResult = v;
+        else {
+            MslValue* last = rootResult->getLast();
+            last->next = v;
+            checkCycles(rootResult);
+        }
+    }
+    else if (parent->childResults == nullptr) {
+        parent->childResults = v;
+    }
+    else {
+        MslValue* last = parent->childResults->getLast();
+        last->next = v;
+
+        if (last == v)
+          Trace(1, "WTF is going on here");
+        
+        checkCycles(parent->childResults);
+    }
+}
+
+// need to beef this up
+void MslSession::checkCycles(MslValue* v)
+{
+    if (found(v, v->next))
+      Trace(1, "Cycle in next list");
+    else if (found(v, v->list))
+      Trace(1, "Cycle in value list");
+}
+
+bool MslSession::found(MslValue* node, MslValue* list)
+ {
+    bool found = false;
+    MslValue* ptr = list;
+    while (ptr != nullptr) {
+        if (ptr == node) {
+            found = true;
+            break;
+        }
+        ptr = ptr->next;
+    }
+    return found;
+}
+    
 //////////////////////////////////////////////////////////////////////
 //
 // Symbol Resolution
@@ -314,11 +385,9 @@ void MslSession::evalStack()
 /**
  * Evaluate a MslSymbol node, leave the result in the parent's value list.
  */
-void MslSession::doSymbol(MslStack* s, MslSymbol* snode, MslValueTree* dest)
+void MslSession::doSymbol(MslSymbol* snode)
 {
-    MslValue result;
-
-    if (s->childResults == nullptr) {
+    if (stack->childResults == nullptr) {
         // first time here
         // resolve the symbol, may have been reaolved on a previous pass
         if (snode->symbol == nullptr && snode->proc == nullptr) {
@@ -339,44 +408,48 @@ void MslSession::doSymbol(MslStack* s, MslSymbol* snode, MslValueTree* dest)
                 neu->node = body;
                 neu->parent = stack;
                 stack = neu;
+                // will add the result later when the block returns
+            }
+            else {
+                // empty proc, null result?
+                addStackResult(valuePool->alloc());
             }
         }
         else if (snode->symbol != nullptr) {
-            doSymbol(s, snode->symbol, result);
+            doSymbol(snode->symbol);
         }
         else {
             // unresolved symbol
             // it is important for "if switchQuantize == loop" that we allow
             // unresolved symbols to be used instead of quoted string literals
-            result.setJString(snode->token.value);
+            MslValue* v = valuePool->alloc();
+            v->setJString(snode->token.value);
             // todo, might want an unresolved flag in the MslValue
+            addStackResult(v);
         }
-
-        if (errors.size() == 0)
-          dest->add(result);
     }
     else {
         // back from a proc
         // transfer the function result
         // todo: does it make sense to collapse surrounding blockage?
-        dest->add(s->childResults);
-        s->childResults = nullptr;
+        // here we have the "blocks retuning a list" problem again
+        // need to pull out the last one
+        addBlockResult();
     }
 }
 
-void MslSession::doSymbol(MslStack* s, Symbol* sym, MslValue& result)
+void MslSession::doSymbol(Symbol* sym)
 {
     if (sym->function != nullptr || sym->script != nullptr) {
-        invoke(s, sym, result);
+        invoke(sym);
     }
     else if (sym->parameter != nullptr) {
-        query(s, sym, result);
+        query(sym);
     }
 }
 
-void MslSession::invoke(MslStack* s, Symbol* sym, MslValue& result)
+void MslSession::invoke(Symbol* sym)
 {
-    (void)s;
     UIAction a;
     a.symbol = sym;
 
@@ -386,14 +459,13 @@ void MslSession::invoke(MslStack* s, Symbol* sym, MslValue& result)
     Supervisor::Instance->doAction(&a);
 
     // only MSL scripts set a result right now
-    result.setString(a.result);
+    MslValue* v = valuePool->alloc();
+    v->setString(a.result);
+    addStackResult(v);
 }
 
-void MslSession::query(MslStack* s, Symbol* sym, MslValue& result)
+void MslSession::query(Symbol* sym)
 {
-    (void)s;
-    result.setNull();
-
     if (sym->parameter == nullptr) {
         addError(stack->node, "Not a parameter symbol");
     }
@@ -409,15 +481,16 @@ void MslSession::query(MslStack* s, Symbol* sym, MslValue& result)
             addError(stack->node, "Asynchronous parameter query");
         }
         else {
+            MslValue* v = valuePool->alloc();
             // and now we have the ordinal vs. enum symbol problem
             UIParameterType ptype = sym->parameter->type;
             if (ptype == TypeEnum) {
                 // don't use labels since I want scripters to get used to the names
                 const char* ename = sym->parameter->getEnumName(q.value);
-                result.setEnum(ename, q.value);
+                v->setEnum(ename, q.value);
             }
             else if (ptype == TypeBool) {
-                result.setBool(q.value == 1);
+                v->setBool(q.value == 1);
             }
             else if (ptype == TypeStructure) {
                 // hmm, the understand of LevelUI symbols that live in
@@ -426,13 +499,15 @@ void MslSession::query(MslStack* s, Symbol* sym, MslValue& result)
                 // todo: Need to repackage this
                 // todo: this should be treated like an Enum and also return
                 // the ordinal!
-                result.setJString(Supervisor::Instance->getParameterLabel(sym, q.value));
+                v->setJString(Supervisor::Instance->getParameterLabel(sym, q.value));
             }
             else {
                 // should only be here for TypeInt
                 // unclear what String would do
-                result.setInt(q.value);
+                v->setInt(q.value);
             }
+
+            addStackResult(v);
         }
     }
 }
@@ -500,47 +575,25 @@ void MslSession::addError(MslNode* node, const char* details)
  * run some tests.  Blocks always return lists now and it is up to the
  * parent node to decide whether to use all of the values or just the last one.
  */
-MslValue* MslSession::getArgument(MslStack* s, int index)
+MslValue* MslSession::getArgument(int index)
 {
     MslValue* value = nullptr;
 
-    MslValueTree* arguments = s->childResults;
+    MslValue* arguments = stack->childResults;
 
     if (arguments == nullptr) {
         // this is probably a bug, node must not have been evaluated
-        addError(s->node, "Missing arguments");
-    }
-    else if (arguments->list.size() == 0) {
-        // not sure if this is necessary, could this ever collapse to
-        // a single value?
-        if (index == 0)
-          value = &(arguments->value);
-        else
-          addError(s->node, "Missing argument");
-    }
-    else if (index < arguments->list.size()) {
-        MslValueTree* arg = arguments->list[index];
-        value = getLeafValue(arg);
-    }
-
-    return value;
-}
-
-/**
- * Recurse down a value tree to get to the bottom-right-most value.
- * Common in cases with () blocks in expressions but ((x)) should be allowed
- * so really any level of gratuitous paren blocks.
- */
-MslValue* MslSession::getLeafValue(MslValueTree* arg)
-{
-    MslValue* value = nullptr;
-    if (arg->list.size() == 0) {
-        value = &(arg->value);
+        addError(stack->node, "Missing arguments");
     }
     else {
-        MslValueTree* nested = arg->list[arg->list.size() - 1];
-        value = getLeafValue(nested);
+        value = arguments->get(index);
+        if (value != nullptr) {
+            if (value->list != nullptr) {
+                value = value->list->getLast();
+            }
+        }
     }
+
     return value;
 }
 
@@ -591,10 +644,9 @@ MslOperators MslSession::mapOperator(juce::String& s)
  *
  * Null is treated as zero numerically which might be bad.
  */
-void MslSession::doOperator(MslStack* s, MslOperator* opnode, MslValueTree* dest)
+void MslSession::doOperator(MslOperator* opnode)
 {
-    // can't have tree values from operators yet
-    MslValue result;
+    MslValue* v = valuePool->alloc();
     
     MslOperators op = mapOperator(opnode->token.value);
 
@@ -603,10 +655,10 @@ void MslSession::doOperator(MslStack* s, MslOperator* opnode, MslValueTree* dest
     }
     else {
         // everything needs two operands except for !
-        MslValue* value1 = getArgument(s, 0);
+        MslValue* value1 = getArgument(0);
         MslValue* value2 = nullptr;
         if (op != MslNot)
-          value2 = getArgument(s, 1);
+          value2 = getArgument(1);
 
         if (errors.size() == 0) {
     
@@ -615,25 +667,25 @@ void MslSession::doOperator(MslStack* s, MslOperator* opnode, MslValueTree* dest
                     // already added an error
                     break;
                 case MslPlus:
-                    result.setInt(value1->getInt() + value2->getInt());
+                    v->setInt(value1->getInt() + value2->getInt());
                     break;
                 case MslMinus:
-                    result.setInt(value1->getInt() - value2->getInt());
+                    v->setInt(value1->getInt() - value2->getInt());
                     break;
                 case MslMult:
-                    result.setInt(value1->getInt() * value2->getInt());
+                    v->setInt(value1->getInt() * value2->getInt());
                     break;
                 case MslDiv: {
                     int divisor = value2->getInt();
                     if (divisor == 0) {
                         // we're obviously not going to throw if they made an error
-                        result.setInt(0);
+                        v->setInt(0);
                         // should be a warning
                         Trace(1, "MslSession: divide by zero");
                         //addError(opnode, "Divide by zero");
                     }
                     else {
-                        result.setInt(value1->getInt() / divisor);
+                        v->setInt(value1->getInt() / divisor);
                     }
                 }
                     break;
@@ -641,54 +693,51 @@ void MslSession::doOperator(MslStack* s, MslOperator* opnode, MslValueTree* dest
                     // for direct comparison, be smarter about coercion
                     // = and == are the same right now, but that probably won't work
                 case MslEq:
-                    result.setBool(compare(s, value1, value2, true));
+                    v->setBool(compare(value1, value2, true));
                     break;
                 case MslDeq:
-                    result.setBool(compare(s, value1, value2, true));
+                    v->setBool(compare(value1, value2, true));
                     break;
             
                 case MslNeq:
-                    result.setBool(compare(s, value2, value2, false));
+                    v->setBool(compare(value2, value2, false));
                     break;
             
                 case MslGt:
-                    result.setInt(value1->getInt() > value2->getInt());
+                    v->setInt(value1->getInt() > value2->getInt());
                     break;
                 case MslGte:
-                    result.setBool(value1->getInt() >= value2->getInt());
+                    v->setBool(value1->getInt() >= value2->getInt());
                     break;
                 case MslLt:
-                    result.setBool(value1->getInt() < value2->getInt());
+                    v->setBool(value1->getInt() < value2->getInt());
                     break;
                 case MslLte:
-                    result.setBool(value1->getInt() <= value2->getInt());
+                    v->setBool(value1->getInt() <= value2->getInt());
                     break;
                 case MslNot:
                     // here we check to make sure the node only has one child
-                    result.setBool(!(value1->getBool()));
+                    v->setBool(!(value1->getBool()));
                     break;
                 case MslAnd:
                     // c++ won't evaluate the second arg if the first one is false
                     // msl doesn't do deferred evaluation so no, we don't
-                    result.setBool(value1->getBool() && value2->getBool());
+                    v->setBool(value1->getBool() && value2->getBool());
                     break;
                 case MslOr:
                     // c++ won't evaluate the second arg if the first one is true
-                    result.setBool(value1->getBool() || value2->getBool());
+                    v->setBool(value1->getBool() || value2->getBool());
                     break;
             
                     // unclear about this, treat it as and
                 case MslAmp:
-                    result.setInt(value1->getBool() && value2->getBool());
+                    v->setInt(value1->getBool() && value2->getBool());
                     break;
             }
         }
     }
     
-    if (errors.size() == 0) {
-        // put the result in the parent's value list
-        dest->add(result);
-    }
+    addStackResult(v);
 }
 
 /**
@@ -713,9 +762,8 @@ void MslSession::doOperator(MslStack* s, MslOperator* opnode, MslValueTree* dest
  * Use of unresolved symbols is a little weird, and prevents checking for errors
  * at the point of evaluation.  But the alternative is to intern a bunch of Symbols.
  */
-bool MslSession::compare(MslStack* s, MslValue* value1, MslValue* value2, bool equal)
+bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
 {
-    (void)s;
     bool result = false;
 
     if (value1->type == MslValue::String || value2->type == MslValue::String) {

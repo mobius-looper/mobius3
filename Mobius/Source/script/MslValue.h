@@ -1,19 +1,68 @@
- /**
- * Value container easilly stack allocated and guaranteed never
- * to do memory allocation.  juce::String is not allowed in an evaluation context.
+/**
+ * This is the fundamental model for dealing with the values of things in the
+ * MSL interpreter.  Examples include: the value of a parameter, the return value
+ * of a function, the value of a function argument, the list of all arguments to a function.
  *
- * With the introduction of MslSession I needed to maintain lists as values.
- * To get things fleshed out, I'm using juce::Array for this which DOES allocate
- * memmory, but that can be addressed later.
+ * There are lots of ways to do this, but what makes MSL unusual is the overarching
+ * implementation rule that manipulation of data values must not do any dynamic memory
+ * allocation.  While this rule can be violated (and I often have in the past) it is
+ * generally considered a Very Bad Thing to do in code that needs to run in the audio
+ * block processing thread.  This is because dynamic memory allocation consumes an
+ * unpredictable amount of time and can have interactions with other system threads
+ * that prevent the audio processor from finishing in time to meet the demand to fill
+ * the next audio block to send to the audio interface.  You do not want that to happen.
+ *
+ * While not a hard rule, a lesser goal is to avoid when possible restricties on
+ * the sizes of value collections, aka lists or arrays of things.
+ *
+ * Things like the std:: collection classes, juce::var, juce::Array, and juce::String  are extemely
+ * convenient when dealign with things like this but they all have at least the POTENTIAL
+ * to do dynamic memory allocation if you are not very careful with them.
+ *
+ * So what we have here is essentially a model for dealing with atomic values like
+ * integers and strings, as well as linked lists of those values, and the fundamnental
+ * "cell" in that model can be maintained in a pool so you can create and free them
+ * as necessary without needing to use new/delete/malloc/free.  Of course those cells
+ * have to come from somewhere, and since we need an unknown number of them they can't
+ * be on the stack.  This object pool must therefore be filled using dynamic allocation,
+ * but in a thread other than the audio processing thread that does not have the same
+ * restrictions.
+ *
+ * If you're familiar with data structures, you might notice this resembles "s expressions"
+ * or "cons cells" in Lisp, which is a way I like to think about things.  It isn't as general
+ * as that, but it gets the job done and the languge hides most of the implementation details.
+ *
  */
 
 #pragma once
 
+#include <JuceHeader.h>
+
+/**
+ * The fundemtal value containing object.
+ * The value may be an "atom" which is one of a few intrinisic data types,
+ * or it may contain a "list" of other values.  This is like the "car" in Lisp.
+ * Values may also BE on a list, as represented by the "next" pointer.  This
+ * is like the "cdr" in Lisp.
+ *
+ * When dealing with values in MSL at runtime, you are almost always dealing with
+ * an atom or a list of atoms.  Lists of lists are rare, but are sometimes necessary
+ * temporarily in the intpreter.  There is no syntax to represent an array or list
+ * as a data value in MSL, but that may change in the future.
+ *
+ * For convenience, string values do have a maximum size, but use of string literals
+ * is rare in MSL and symbolic references are normally handled with interned Symbols.
+ *
+ * Enums are a little weird in that they have two values, an integer "ordinal" and
+ * a string "name".  This because while most code deals with ordinal numbers, users
+ * expect to be dealing with symbolic names, the use of either representation will
+ * depend on contxt.
+ */
 class MslValue
 {
   public:
-    MslValue() {setNull();}
-    ~MslValue() {}
+    MslValue();
+    ~MslValue();
 
     static const int MaxString = 1024;
 
@@ -23,15 +72,27 @@ class MslValue
         Float,
         Bool,
         String,
-        Error,
-        Enum
+        Enum,
+        List,
+        // may not need this but keep it around
+        Symbol
     };
 
-    Type type = Null;
+    // The "cdr"
+    MslValue* next = nullptr;
 
+    // The "car"
+    // sublist maintenance isn't very well controlled through methods
+    // revisit this
+    MslValue* list = nullptr;
+    
+    // The "atom"
+
+    Type type = Null;
+    
     void setNull() {
         type = Null;
-        // not necessary but looks better in the debugger
+        // not necessary to clear these but looks better in the debugger
         ival = 0;
         fval = 0.0f;
         string[0] = 0;
@@ -59,7 +120,7 @@ class MslValue
         type = Bool;
     }
 
-    // sigh, if we have both names with the same sig
+    // sigh, if we have two setString() methods with different signatures
     // it's ambiguous becasue Juce::String has a coersion operator
     // and we don't want to use that at runtime in the engine
     void setJString(juce::String s) {
@@ -82,11 +143,6 @@ class MslValue
         setString(s);
         ival = i;
         type = Enum;
-    }
-
-    void setError(const char* s) {
-        setString(s);
-        type = Error;
     }
 
     const char* getString() {
@@ -133,45 +189,47 @@ class MslValue
         return (getInt() > 0);
     }
 
+    //
+    // List utilities
+    // Ambiguity over what we're dealing with here, the list the value is ON
+    // or the list the value HAS, don't like it
+    // Starting think a concrete MslValueList container would be better
+    // 
+
+    void append(MslValue* v);
+    int size();
+    MslValue* get(int index);
+    MslValue* getLast();
+
   private:
 
+    // keep these private to enforce use of the methods to keep
+    // type Type in sync with the value
+    // by convention once "list" becomes non-null Type is implicitly List
+    // though those should be kept in sync
+    // "bool" is just 0 or 1
+    
     int ival = 0;
     float fval = 0.0f;
     char string[MaxString];
 };
 
 /**
- * Runtime evaluation results are usually atomic values and lists
- * of atomics, but sometimes they are lists of lists.
- *
- * Easiest way to represt that is a tree though the notion
- * that each node can have both a value and sub-values won't happen.
- * Dust off the old notes and look at how Lisp did this, feels
- * like a "cons" could be used here.
+ * A pool for values, look at them swim!
  */
-class MslValueTree
+class MslValuePool
 {
   public:
-
-    MslValueTree() {}
-    ~MslValueTree() {}
-
-    MslValue value;
-    juce::OwnedArray<MslValueTree> list;
-
-    void add(MslValue& v) {
-        MslValueTree* t = new MslValueTree();
-        t->value = v;
-        list.add(t);
-    }
-
-    void add(MslValueTree* l) {
-        list.add(l);
-    }
-
-};
-
-
     
+    MslValuePool();
+    ~MslValuePool();
+    
+    MslValue* alloc();
+    void free(MslValue* v);
+
+  private:
+
+    MslValue* pool = nullptr;
+};
 
     

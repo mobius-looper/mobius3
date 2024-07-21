@@ -27,6 +27,7 @@ MslEnvironment::MslEnvironment()
 
 MslEnvironment::~MslEnvironment()
 {
+    Trace(2, "MslEnvironment: destructing");
 }
 
 void MslEnvironment::initialize(MslContext* c)
@@ -394,9 +395,10 @@ void MslEnvironment::doAction(UIAction* action)
         }
 
         if (!session->isWaiting()) {
-            MslValue result = session->getAtomicResult();
-            Trace(2, "MslEnvironment: Script returned %s", result.getString());
-            CopyString(result.getString(), action->result, sizeof(action->result));
+            MslValue* result = session->captureResult();
+            Trace(2, "MslEnvironment: Script returned %s", result->getString());
+            CopyString(result->getString(), action->result, sizeof(action->result));
+            valuePool.free(result);
             delete session;
         }
         else {

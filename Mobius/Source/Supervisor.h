@@ -280,6 +280,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     bool doMeters = true;
     void meter(const char* name);
 
+    // put this and the MslValuePool first so the things
+    // below get destructed first and have a chance to put things back into the pool
+    MslEnvironment scriptenv;
+    
     // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
     juce::AudioDeviceManager customAudioDeviceManager;
     
@@ -351,8 +355,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // focus, initially just on startup, may be useful elsewhere
     bool wantsFocus = false;
 
-    MslEnvironment scriptenv;
-    
     //
     // Methods
     //

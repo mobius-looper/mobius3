@@ -267,8 +267,8 @@ void MobiusConsole::doEval(juce::String line)
             console.add(full);
         }
         else {
-            MslValue v = session->getResult();
-            console.add(juce::String(v.getString()));
+            MslValue* v = session->getResult();
+            console.add(juce::String(v->getString()));
         }
     }
 }

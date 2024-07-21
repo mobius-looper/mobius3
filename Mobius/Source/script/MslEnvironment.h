@@ -18,6 +18,8 @@
 
 #include <JuceHeader.h>
 
+#include "MslValue.h"
+
 /**
  * Represents a linkage between a reference in a script and something
  * in another script.  Cross-script references indirect through this table
@@ -92,7 +94,7 @@ class MslEnvironment
     }
 
     //
-    // Libraary
+    // Library
     //
 
     juce::OwnedArray<class MslScript>* getScripts() {
@@ -106,10 +108,21 @@ class MslEnvironment
     // normal file-based script actions
     void doAction(class UIAction* action);
 
+
+    // for the inner component classes, mainly Session
+    MslValuePool* getValuePool() {
+        return &valuePool;
+    }
+
   private:
 
     juce::File root;
-    
+
+    // note that this has to be first because things are destructed in reverse
+    // order of declaration and some of the things below return things to the pool
+    // value pool for the interpreter
+    MslValuePool valuePool;
+   
     // last load state
     juce::StringArray missingFiles;
     juce::OwnedArray<class MslFileErrors> fileErrors;
@@ -128,7 +141,6 @@ class MslEnvironment
 
     // suspended sessions
     juce::OwnedArray<class MslSession> sessions;
-   
 
     //
     // internal library management

@@ -135,16 +135,52 @@ void MslParser::sift()
         MslNode* node = script->root->get(index);
         if (node->isProc()) {
             script->root->remove(node);
-            script->procs.add(static_cast<MslProc*>(node));
+            addProc(static_cast<MslProc*>(node));
         }
         else if (node->isVar()) {
             script->root->remove(node);
-            script->vars.add(static_cast<MslVar*>(node));
+            addVar(static_cast<MslVar*>(node));
         }
         else {
             index++;
         }
     }
+}
+
+void MslParser::addProc(MslProc* proc)
+{
+    // replace if it was defined again
+    MslProc* existing = nullptr;
+    for (auto p : script->procs) {
+        if (p->name == proc->name) {
+            existing = p;
+            break;
+        }
+    }
+    if (existing != nullptr) {
+        Trace(2, "MslParser: Replacing proc definition %s", proc->name.toUTF8());
+        script->procs.removeObject(existing);
+    }
+    script->procs.add(proc);
+}
+
+// be nice if we could treat OwnedArray generically, maybe downdcase to
+// MslNode?
+void MslParser::addVar(MslVar* var)
+{
+    // replace if it was defined again
+    MslVar* existing = nullptr;
+    for (auto v : script->vars) {
+        if (v->name == var->name) {
+            existing = v;
+            break;
+        }
+    }
+    if (existing != nullptr) {
+        Trace(2, "MslParser: Replacing var definition %s", var->name.toUTF8());
+        script->vars.removeObject(existing);
+    }
+    script->vars.add(var);
 }
 
 //////////////////////////////////////////////////////////////////////

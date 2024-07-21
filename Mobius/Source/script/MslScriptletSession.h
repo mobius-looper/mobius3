@@ -31,7 +31,7 @@ class MslScriptletSession {
         return &errors;
     }
 
-    MslValue getResult() {
+    MslValue* getResult() {
         return scriptletResult;
     }
 
@@ -49,7 +49,7 @@ class MslScriptletSession {
     std::unique_ptr<class MslScript> script = nullptr;
 
     juce::OwnedArray<class MslError> errors;
-    MslValue scriptletResult;
+    MslValue* scriptletResult = nullptr;
     juce::String fullResult;
     
     // active session created if the script needs to suspend
