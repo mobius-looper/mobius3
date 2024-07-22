@@ -117,7 +117,7 @@ class MslSession
     void run();
     MslStack* allocStack();
     void freeStack(MslStack* s);
-    void continueStack();
+    void advanceStack();
     void evalStack();
 
     void addStackResult(MslValue* v);

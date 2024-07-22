@@ -243,25 +243,100 @@ MslBinding* MslStack::findBinding(const char* name)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * The run loop processes the node at the top of the stack.
- * Each node will push a new stack frame for each child node.
- * Once all child nodes have completed, the node is evaluated
- * and the stack is popped.
- *
- * During this process any node may enter a wait state and the session
- * suspends until the wait is cleared.
+ * The run loop processes the node at the top of the stack until
+ * all stack frames have been consumed, a wait state has been reached,
+ * or an unrecoverable runtime error has been encountered.
  */
 void MslSession::run()
 {
-    if (stack != nullptr) 
-      Trace(2, "Run: %s", debugNode(stack->node).toUTF8());
+    //if (stack != nullptr)
+    //aTrace(2, "Run: %s", debugNode(stack->node).toUTF8());
     
     while (stack != nullptr && !stack->waiting && errors.size() == 0) {
-        continueStack();
+        advanceStack();
     }
 }
 
-void MslSession::continueStack()
+/**
+ * During an advance, a handler for the node associated with the frame is called.
+ * This dispatching is done through a "visitor" pattern using overloaded class methods
+ * to handle the dispatch and downcasting.
+ *
+ * The node handler performs actions and calculates a result value.  Then
+ * the stack is popped and the result value is added to the child results list
+ * of the previous stack frame.
+ *
+ * Note node handlers will usually push additional frames onto the stack.
+ * These frames are then evaluated, results accumulated, and a final
+ * aggregate result is calculated and returned.  In this process a stack frame
+ * may be advanced several times, each time accumulating more information from
+ * the child nodes until a completion state is reached.
+ */
+void MslSession::advanceStack()
+{
+    if (stack->node != nullptr) {
+        // warp to a node-specific handler
+        stack->node->visit(this);
+    }
+    else {
+        // here is where we might add special stack frames that are not
+        // associated with language nodes
+    }
+}
+
+/**
+ * Stack handler for a literal.
+ * Literals do not have child nodes or computation, they simply return
+ * their value to the parent frame.
+ */
+void MslSession::mslVisit(MslLiteral* lit)
+{
+    MslValue* v = valuePool->alloc();
+    
+    if (lit->isInt) {
+        v->setInt(atoi(lit->token.value.toUTF8()));
+    }
+    else if (lit->isBool) {
+        // could be a bit more relaxed here but this is what the tokanizer left
+        v->setBool(lit->token.value == "true");
+    }
+    else {
+        v->setJString(lit->token.value);
+    }
+
+    popStack(v);
+}
+
+/**
+ * When a frame has completed, transfer a calculated value to the accumulation
+ * list of the parent frame, remove the frame from the stack, and return control
+ * to the parent.
+ */
+void MslSession::popStack(MslValue* v)
+{
+    if (v != nullptr)
+      addStackResult(v);
+    
+    MslStack* prev = stack->parent;
+    freeStack(stack);
+    stack = prev;
+}
+
+
+
+/**
+ * During an advance, a handler for the node associated with the frame is called.
+ * The node handler performs actions and calculates a result value.  Then
+ * the stack is popped and the result value is added to the child results list
+ * of the previous stack frame.
+ *
+ * Note node handlers will usually push additional frames onto the stack.
+ * These frames are then evaluated, results accumulated, and a final
+ * aggregate result is calculated and returned.  In this process a stack frame
+ * may be advanced several times, each time accumulating more information from
+ * the child nodes until a completion state is reached.
+ */
+void MslSession::advanceStack()
 {
     // process the next child
     // here we may have ordering issues, a few nodes need to process their
@@ -305,6 +380,7 @@ void MslSession::continueStack()
         }
     }
 }
+
 
 /**
  * At this point all of the child nodes have been evaluated and the
