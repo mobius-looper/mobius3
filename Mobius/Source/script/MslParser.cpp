@@ -137,10 +137,14 @@ void MslParser::sift()
             script->root->remove(node);
             addProc(static_cast<MslProc*>(node));
         }
+// no don't sift these, leave them in place since they define
+// bindings for the block they're in
+#if 0        
         else if (node->isVar()) {
             script->root->remove(node);
             addVar(static_cast<MslVar*>(node));
         }
+#endif        
         else {
             index++;
         }

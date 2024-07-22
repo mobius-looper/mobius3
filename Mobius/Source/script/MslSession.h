@@ -26,10 +26,7 @@ class MslStack
 {
   public:
     MslStack() {}
-    ~MslStack() {
-        // use a smart pointer
-        delete childResults;
-    }
+    ~MslStack();
 
     // script we're in, may not need this?
     MslScript* script = nullptr;
@@ -47,6 +44,11 @@ class MslStack
     // value(s) for each child node, may be list
     MslValue* childResults = nullptr;
 
+    // binding(s) for this block
+    MslBinding* bindings = nullptr;
+    void addBinding(MslBinding* b);
+    MslBinding* findBinding(const char* name);
+    
     // true if this node is finished
     bool finished = false;
 
@@ -124,6 +126,8 @@ class MslSession
     void getResultString(MslValue* v, juce::String& s);
     void addError(class MslNode* node, const char* details);
 
+    void doVar(MslVar* var);
+
     // symbol evaluation
     void doSymbol(MslSymbol* snode);
     void doSymbol(class Symbol* sym);
@@ -141,6 +145,8 @@ class MslSession
     void checkCycles(MslValue* v);
     bool found(MslValue* node, MslValue* list);
 
+    juce::String debugNode(MslNode* n);
+    void debugNode(MslNode* n, juce::String& s);
     
 };
 

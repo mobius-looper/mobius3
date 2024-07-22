@@ -163,6 +163,12 @@ MslStack* MslSession::allocStack()
             valuePool->free(s->childResults);
             s->childResults = nullptr;
         }
+        if (s->bindings != nullptr) {
+            Trace(1, "MslSession: Lingering child result pooling stack");
+            valuePool->free(s->bindings);
+            s->bindings = nullptr;
+        }
+        s->childIndex = -1;
     }
     else {
         // ordinarilly won't be here unless something is haywire
@@ -176,9 +182,58 @@ void MslSession::freeStack(MslStack* s)
 {
     if (s != nullptr) {
         valuePool->free(s->childResults);
+        valuePool->free(s->bindings);
         s->childResults = nullptr;
+        s->bindings = nullptr;
+        s->childIndex = -1;
         stackPool.add(s);
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Stack
+//
+//////////////////////////////////////////////////////////////////////
+
+MslStack::~MslStack()
+{
+    // use a smart pointer
+    delete childResults;
+    delete bindings;
+}
+
+/**
+ * Keep bindings ordered, not sure if necessary
+ */
+void MslStack::addBinding(MslBinding* b)
+{
+    if (bindings == nullptr)
+      bindings = b;
+    else {
+        MslBinding* last = bindings;
+        while (last->next != nullptr)
+          last = last->next;
+        last->next = b;
+    }
+}
+
+MslBinding* MslStack::findBinding(const char* name)
+{
+    MslBinding* found = nullptr;
+
+    MslBinding* ptr = bindings;
+    while (found == nullptr && ptr != nullptr) {
+        if (StringEqual(name, ptr->name))
+            found = ptr;
+        ptr = ptr->next;
+    }
+
+    // walk up
+    if (found == nullptr && parent != nullptr)
+      found = parent->findBinding(name);
+
+    return found;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -198,6 +253,9 @@ void MslSession::freeStack(MslStack* s)
  */
 void MslSession::run()
 {
+    if (stack != nullptr) 
+      Trace(2, "Run: %s", debugNode(stack->node).toUTF8());
+    
     while (stack != nullptr && !stack->waiting && errors.size() == 0) {
         continueStack();
     }
@@ -216,6 +274,8 @@ void MslSession::continueStack()
         neu->node = stack->node->children[stack->childIndex];
         neu->parent = stack;
         stack = neu;
+
+        Trace(2, "Pushed: %s", debugNode(stack->node).toUTF8());
     }
     else {
         // all children have finished, determine this node's value
@@ -224,6 +284,7 @@ void MslSession::continueStack()
         
         // don't like the way we detect popping, have evalStack return
         // a bool and let it decide?
+        Trace(2, "Evaluating: %s", debugNode(stack->node).toUTF8());
         evalStack();
 
         if (errors.size() == 0) {
@@ -233,6 +294,9 @@ void MslSession::continueStack()
                 MslStack* prev = stack->parent;
                 freeStack(stack);
                 stack = prev;
+                if (stack != nullptr)
+                  Trace(2, "Popped: %s", debugNode(stack->node).toUTF8());
+                
             }
             // todo: when a stack is finished, and evaluation pushes
             // another node, we don't want to keep evaluating it on the
@@ -275,6 +339,10 @@ void MslSession::evalStack()
     else if (stack->node->isOperator()) {
         MslOperator* op = static_cast<MslOperator*>(stack->node);
         doOperator(op);
+    }
+    else if (stack->node->isVar()) {
+        MslVar* var = static_cast<MslVar*>(stack->node);
+        doVar(var);
     }
     else {
         addError(stack->node, "Unsupport node evaluation");
@@ -378,6 +446,44 @@ bool MslSession::found(MslValue* node, MslValue* list)
     
 //////////////////////////////////////////////////////////////////////
 //
+// Var
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * When a var is encounterd, the child block will have left behind
+ * an initializer.  A binding for the var is created within the
+ * current block that may then be referenced by a symbol node.
+ * The var node itself has no value for the parent.
+ */
+void MslSession::doVar(MslVar* var)
+{
+    MslBinding* b = valuePool->allocBinding();
+    b->setName(var->name.toUTF8());
+    // value ownership transfers
+    b->value = stack->childResults;
+    stack->childResults = nullptr;
+    
+    MslStack* parent = stack->parent;
+    if (parent != nullptr) {
+        if (!parent->node->isBlock()) {
+            // if this isn't a block node, it's odd, a var embedded in an expression
+            // I guess it can't hurt it just does nothing?
+            Trace(1, "MslSession: Var encountered in non-block container");
+        }
+        else {
+            parent->addBinding(b);
+        }
+    }
+    else {
+        // top-level var, I'm starting to hate not having a synthesized wrapper
+        // block around the script, but Scripts always have a root block no?
+        Trace(1, "MslSession: Var encountered above root block");
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Symbol Resolution
 //
 //////////////////////////////////////////////////////////////////////
@@ -389,43 +495,65 @@ void MslSession::doSymbol(MslSymbol* snode)
 {
     if (stack->childResults == nullptr) {
         // first time here
-        // resolve the symbol, may have been reaolved on a previous pass
-        if (snode->symbol == nullptr && snode->proc == nullptr) {
-            // procs override global symbols
-            snode->proc = script->findProc(snode->token.value);
-            if (snode->proc == nullptr) {
-                // else resolve to a global symbol
-                snode->symbol = Symbols.find(snode->token.value);
-            }
-        }
 
-        if (snode->proc != nullptr) {
-            MslBlock* body = snode->proc->getBody();
-            if (body != nullptr) {
-                // todo: dig out the arguments and set up a binding context
-                // push the stack
-                MslStack* neu = allocStack();
-                neu->node = body;
-                neu->parent = stack;
-                stack = neu;
-                // will add the result later when the block returns
+        // bindings override procs and external symbols
+        MslBinding* binding = stack->findBinding(snode->token.value.toUTF8());
+        if (binding != nullptr) {
+            MslValue* value = binding->value;
+            MslValue* copy = nullptr;
+            if (value == nullptr) {
+                // binding without a value, should this be ignored or does
+                // it hide other things?
+                copy = valuePool->alloc();
             }
             else {
-                // empty proc, null result?
-                addStackResult(valuePool->alloc());
+                // bindings can be referenced multiple times, so need to copy
+                copy = valuePool->alloc();
+                copy->copy(value);
             }
-        }
-        else if (snode->symbol != nullptr) {
-            doSymbol(snode->symbol);
+            addStackResult(copy);
         }
         else {
-            // unresolved symbol
-            // it is important for "if switchQuantize == loop" that we allow
-            // unresolved symbols to be used instead of quoted string literals
-            MslValue* v = valuePool->alloc();
-            v->setJString(snode->token.value);
-            // todo, might want an unresolved flag in the MslValue
-            addStackResult(v);
+            if (snode->symbol == nullptr && snode->proc == nullptr) {
+                // procs override global symbols
+                snode->proc = script->findProc(snode->token.value);
+                if (snode->proc == nullptr) {
+                    // else resolve to a global symbol
+                    snode->symbol = Symbols.find(snode->token.value);
+                }
+            }
+
+            if (snode->proc != nullptr) {
+                MslBlock* body = snode->proc->getBody();
+                if (body != nullptr) {
+                    MslStack* neu = allocStack();
+                    neu->node = body;
+                    neu->parent = stack;
+                    stack = neu;
+                    // add the proc argument bindings
+                    // put them in the stack for the proc root block
+                    // but they need to have been captured in a prior eval
+                    // of the argument list 
+                    
+                    // will add the result later when the block returns
+                }
+                else {
+                    // empty proc, null result?
+                    addStackResult(valuePool->alloc());
+                }
+            }
+            else if (snode->symbol != nullptr) {
+                doSymbol(snode->symbol);
+            }
+            else {
+                // unresolved symbol
+                // it is important for "if switchQuantize == loop" that we allow
+                // unresolved symbols to be used instead of quoted string literals
+                MslValue* v = valuePool->alloc();
+                v->setJString(snode->token.value);
+                // todo, might want an unresolved flag in the MslValue
+                addStackResult(v);
+            }
         }
     }
     else {
@@ -784,6 +912,41 @@ bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
     }
     
     return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Debug
+//
+//////////////////////////////////////////////////////////////////////
+
+juce::String MslSession::debugNode(MslNode* n)
+{
+    juce::String s;
+    debugNode(n, s);
+    return s;
+}
+
+void MslSession::debugNode(MslNode* n, juce::String& s)
+{
+    if (n == nullptr)
+      s += "null ";
+    else if (n->isBlock())
+      s += "block ";
+    else if (n->isSymbol())
+      s += "symbol ";
+    else if (n->isVar())
+      s += "var ";
+    else
+      s += "??? ";
+
+    if (n->children.size() > 0) {
+        s += "[";
+        for (auto child : n->children) {
+            debugNode(child, s);
+        }
+        s += "]";
+    }
 }
 
 /****************************************************************************/

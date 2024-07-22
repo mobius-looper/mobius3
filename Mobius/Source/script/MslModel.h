@@ -286,6 +286,11 @@ class MslVar : public MslNode
             name =  t.value;
             wants = true;
         }
+        else if (t.type == MslToken::Type::Operator &&
+                 t.value == "=") {
+            // skip past this once we have a name
+            wants = (name.length() > 0);
+        }
         return wants;
     }
 

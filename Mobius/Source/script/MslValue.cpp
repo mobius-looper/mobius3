@@ -1,4 +1,6 @@
 
+#include "../util/Trace.h"
+
 #include "MslValue.h"
 
 
@@ -27,6 +29,27 @@ MslValue::~MslValue()
     delete next;
     // and the values I contain
     delete list;
+}
+
+/**
+ * Copy one value to another.
+ * Mostly to copy binding values which are expected to be atomic.
+ */
+void MslValue::copy(MslValue* src)
+{
+    type = src->type;
+    ival = src->ival;
+    fval = src->fval;
+    strcpy(string, src->string);
+
+    // I suppose we could support these, but needs more thought if you do
+    // bindings will always be atomic, right?
+    if (src->next != nullptr)
+      Trace(1, "MslValue: Unable to copy value on a list");
+
+    if (src->list != nullptr)
+      Trace(1, "MslValue: Unable to copy list value");
+      
 }
 
 /**
@@ -71,7 +94,33 @@ MslValue* MslValue::get(int index)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Pool
+// MslBinding
+//
+//////////////////////////////////////////////////////////////////////
+
+MslBinding::MslBinding()
+{
+}
+
+MslBinding::~MslBinding()
+{
+    // we do not have access to the MslValuePool at this point
+    // so normally this will have been done before pooling or
+    // deleting a binding, can still hit this on an abnormal termination though
+    if (value != nullptr) {
+        Trace(1, "MslBinding: Deleting lingering value");
+        delete value;
+    }
+}
+
+void MslBinding::setName(const char* s)
+{
+    strncpy(name, s, sizeof(name));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MslValuePool
 //
 // This isn't actually a good pool yet, it allocates on a whim and
 // isn't concerned with thread safety, but enough for initial testing.
@@ -80,17 +129,25 @@ MslValue* MslValue::get(int index)
 
 MslValuePool::MslValuePool()
 {
-    pool = nullptr;
+    valuePool = nullptr;
+    bindingPool = nullptr;
 }
 
 MslValuePool::~MslValuePool()
 {
     // assuming that we don't have any child lists to deal with at this point
-    while (pool != nullptr) {
-        MslValue* next = pool->next;
-        pool->next = nullptr;
-        delete pool;
-        pool = next;
+    while (valuePool != nullptr) {
+        MslValue* next = valuePool->next;
+        valuePool->next = nullptr;
+        delete valuePool;
+        valuePool = next;
+    }
+
+    while (bindingPool != nullptr) {
+        MslBinding* next = bindingPool->next;
+        bindingPool->next = nullptr;
+        delete bindingPool;
+        bindingPool = next;
     }
 }
 
@@ -99,9 +156,9 @@ MslValue* MslValuePool::alloc()
     MslValue* v = nullptr;
 
     // todo: need a csect here
-    if (pool != nullptr) {
-        v = pool;
-        pool = pool->next;
+    if (valuePool != nullptr) {
+        v = valuePool;
+        valuePool = valuePool->next;
         v->next = nullptr;
     }
     else {
@@ -127,8 +184,43 @@ void MslValuePool::free(MslValue* v)
         free(v->next);
         v->next = nullptr;
         // and now me
-        v->next = pool;
-        pool = v;
+        v->next = valuePool;
+        valuePool = v;
+    }
+}
+
+MslBinding* MslValuePool::allocBinding()
+{
+    MslBinding* b = nullptr;
+
+    // todo: need a csect here
+    if (bindingPool != nullptr) {
+        b = bindingPool;
+        bindingPool = bindingPool->next;
+        b->next = nullptr;
+    }
+    else {
+        // complain loudly that the fluffer isn't doing it's job
+        b = new MslBinding();
+    }
+    return b;
+}
+
+void MslValuePool::free(MslBinding* b)
+{
+    if (b != nullptr) {
+        // release the value back to the pool
+        if (b->value != nullptr) {
+            free(b->value);
+            b->value = nullptr;
+        }
+        
+        // free the remainder of the list
+        free(b->next);
+        b->next = nullptr;
+        // and now me
+        b->next = bindingPool;
+        bindingPool = b;
     }
 }
 
