@@ -37,24 +37,30 @@ class MslStack
     // previus node on the stack
     MslStack* parent = nullptr;
 
-    // the index of the last child pushed
-    // negative means this node has not been started
-    int childIndex = -1;
+    // a stack frame may have several evaluation phases
+    int phase = 0;
 
     // value(s) for each child node, may be list
     MslValue* childResults = nullptr;
+
+    // true if this frame accumulates all child results
+    bool accumulator = false;
+
+    // the index of the last child pushed
+    // negative means this node has not been started
+    int childIndex = -1;
 
     // binding(s) for this block
     MslBinding* bindings = nullptr;
     void addBinding(MslBinding* b);
     MslBinding* findBinding(const char* name);
-    
-    // true if this node is finished
-    bool finished = false;
 
-    // true if this node is waiting
+    // phases for complex nodes
+    MslProc* proc = nullptr;
+    Symbol* symbol = nullptr;
+
+    // is this necessary?
     bool waiting = false;
-    
 };
 
 /**
@@ -80,7 +86,7 @@ enum MslOperators {
     MslAmp
 };
 
-class MslSession
+class MslSession : public MslVisitor
 {
   public:
     
@@ -92,8 +98,20 @@ class MslSession
     bool isWaiting();
     MslValue* getResult();
     MslValue* captureResult();
+    void getResultString(MslValue* v, juce::String& s);
     juce::String getFullResult();
     juce::OwnedArray<class MslError>* getErrors();
+
+    // MslVisitor
+    void mslVisit(class MslLiteral* obj) override;
+    void mslVisit(class MslSymbol* obj) override;
+    void mslVisit(class MslBlock* obj) override;
+    void mslVisit(class MslOperator* obj) override;
+    void mslVisit(class MslAssignment* obj) override;
+    void mslVisit(class MslVar* obj) override;
+    void mslVisit(class MslProc* obj) override;
+    void mslVisit(class MslIf* obj) override;
+    void mslVisit(class MslElse* obj) override;
 
   private:
 
@@ -113,35 +131,41 @@ class MslSession
     //
     // core evaluator
     //
+    void addError(class MslNode* node, const char* details);
     
     void run();
     MslStack* allocStack();
     void freeStack(MslStack* s);
     void advanceStack();
-    void evalStack();
+    MslStack* pushStack(MslNode* node);
+    MslStack* pushNextChild();
+    void popStack(MslValue* v);
+    void popStack();
 
-    void addStackResult(MslValue* v);
-    void addBlockResult();
+    // extra node handling
+    void doAssignment(MslSymbol* namesym);
+    void returnUnresolved(MslSymbol* snode);
+    void returnBinding(MslBinding* binding);
+    void returnVar(class MslLinkage* link);
+    void pushProc(MslProc* proc);
+    void pushProc(class MslLinkage* link);
+    void returnProc();
+    void pushCall();
     
-    void getResultString(MslValue* v, juce::String& s);
-    void addError(class MslNode* node, const char* details);
-
-    void doVar(MslVar* var);
-
     // symbol evaluation
-    void doSymbol(MslSymbol* snode);
-    void doSymbol(class Symbol* sym);
-    void invoke(class Symbol* sym);
-    void query(class Symbol* sym);
-    
-    void assign(class MslSymbol* snode, int value);
+    bool doExternal(MslSymbol* snode);
+    void returnSymbol();
+    void doSymbol(Symbol* sym);
+    void invoke(Symbol* sym);
+    void query(Symbol* sym);
 
     // expressions
     MslValue* getArgument(int index);
     void doOperator(MslOperator* opnode);
     MslOperators mapOperator(juce::String& s);
     bool compare(MslValue* value1, MslValue* value2, bool equal);
-    
+
+    // debugging
     void checkCycles(MslValue* v);
     bool found(MslValue* node, MslValue* list);
 

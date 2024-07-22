@@ -48,6 +48,15 @@ class MslLinkage
 
     // the exported proc within the script
     class MslProc* proc = nullptr;
+
+    // the exported var within the script
+    class MslVar* var = nullptr;
+
+    // todo: for exported vars, where is the value?
+    // could maintain it here, or in a MslBinding inside the
+    // containing Script
+    
+    
 };
 
 class MslEnvironment
@@ -113,6 +122,8 @@ class MslEnvironment
     MslValuePool* getValuePool() {
         return &valuePool;
     }
+
+    MslLinkage* findLinkage(juce::String name);
 
   private:
 

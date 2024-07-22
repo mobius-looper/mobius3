@@ -142,6 +142,25 @@ void MslSession::getResultString(MslValue* v, juce::String& s)
     }
 }
 
+/**
+ * Called internally to add a runtime error.
+ * Using MslError here so we can capture the location in the source
+ * of the node having issues, but unfortunately the parser isn't leaving
+ * that behind yet.
+ */
+void MslSession::addError(MslNode* node, const char* details)
+{
+    // see file comments about why this is bad
+    MslError* e = new MslError();
+    // okay, this shit happens a lot now, why not just standardize on passing
+    // the MslToken by value everywhere
+    e->token = node->token.value;
+    e->line = node->token.line;
+    e->column = node->token.column;
+    e->details = juce::String(details);
+    errors.add(e);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Stack Pool
@@ -157,18 +176,30 @@ MslStack* MslSession::allocStack()
     MslStack* s = nullptr;
     if (stackPool.size() > 0) {
         s = stackPool.removeAndReturn(0);
-        // should have an empty list, if not reset it
+
+        // make sure it is initialized
+        // releasing resources should have been done when
+        // it was returned
         if (s->childResults != nullptr) {
-            Trace(1, "MslSession: Lingering child result pooling stack");
+            Trace(1, "MslSession: Lingering child result in pooled stack");
             valuePool->free(s->childResults);
             s->childResults = nullptr;
         }
         if (s->bindings != nullptr) {
-            Trace(1, "MslSession: Lingering child result pooling stack");
+            Trace(1, "MslSession: Lingering child bindings in pooled stack");
             valuePool->free(s->bindings);
             s->bindings = nullptr;
         }
+
+        s->script = nullptr;
+        s->node = nullptr;
+        s->parent = nullptr;
+        s->phase = 0;
+        s->accumulator = false;
         s->childIndex = -1;
+        s->proc = nullptr;
+        s->symbol = nullptr;
+        s->waiting = false;
     }
     else {
         // ordinarilly won't be here unless something is haywire
@@ -181,11 +212,11 @@ MslStack* MslSession::allocStack()
 void MslSession::freeStack(MslStack* s)
 {
     if (s != nullptr) {
+        // release resources as soon as it goes back in the pool
         valuePool->free(s->childResults);
-        valuePool->free(s->bindings);
         s->childResults = nullptr;
+        valuePool->free(s->bindings);
         s->bindings = nullptr;
-        s->childIndex = -1;
         stackPool.add(s);
     }
 }
@@ -280,223 +311,114 @@ void MslSession::advanceStack()
     }
     else {
         // here is where we might add special stack frames that are not
-        // associated with language nodes
+        // associated with language nodes?
     }
 }
 
 /**
- * Stack handler for a literal.
- * Literals do not have child nodes or computation, they simply return
- * their value to the parent frame.
+ * Called by node handlers to push a new frame onto the stack.
+ * The stack frame is returned and in some cases may be further initialized
+ * by the node handler.
  */
-void MslSession::mslVisit(MslLiteral* lit)
+MslStack* MslSession::pushStack(MslNode* node)
 {
-    MslValue* v = valuePool->alloc();
-    
-    if (lit->isInt) {
-        v->setInt(atoi(lit->token.value.toUTF8()));
-    }
-    else if (lit->isBool) {
-        // could be a bit more relaxed here but this is what the tokanizer left
-        v->setBool(lit->token.value == "true");
-    }
-    else {
-        v->setJString(lit->token.value);
-    }
+    MslStack* neu = allocStack();
 
-    popStack(v);
+    neu->node = node;
+    neu->parent = stack;
+    
+    stack = neu;
+
+    //Trace(2, "Pushed: %s", debugNode(stack->node).toUTF8());
+    return neu;
 }
 
 /**
- * When a frame has completed, transfer a calculated value to the accumulation
- * list of the parent frame, remove the frame from the stack, and return control
- * to the parent.
+ * Called by node handlers to push the next child node onto the stack.
+ * Most nodes do simple iteration of their child nodes in order.
+ * If we run out of children, nullptr is returned.
+ */
+MslStack* MslSession::pushNextChild()
+{
+    MslStack* neu = nullptr;
+
+    // todo: some nodes will want more control over this list
+    juce::OwnedArray<MslNode>* childNodes = &(stack->node->children);
+
+    // this starts at -1 
+    stack->childIndex++;
+    if (stack->childIndex < childNodes->size()) {
+        MslNode* next = (*childNodes)[stack->childIndex];
+        neu = pushStack(next);
+    }
+    return neu;
+}
+
+/**
+ * When a frame has completed, transfer a calculated value to the parent frame,
+ * remove the current frame from the stack, and return control to the parent frame.
+ *
+ * There are two ways values can be returned from a child frame to the parent.
+ * Simple nodes have single-valued results, prior results if any are discarded and
+ * the new result is saved.
+ *
+ * A frame may also be designated as an "accumulator" frame.  Here, the values from
+ * every child frame are accumulated on a list where they can be processed in bulk
+ * by the parent frame.
+ *
+ * There is a bit of ugliness here when dealing with the results for the root frame.
+ * Since there is no parent frame, the results to in the rootResult list managed
+ * by the session.  Root results are always accumulated.  It would simplify some things
+ * if we always had a dummy block at the top of the stack to accumulate root results.
  */
 void MslSession::popStack(MslValue* v)
 {
-    if (v != nullptr)
-      addStackResult(v);
-    
-    MslStack* prev = stack->parent;
-    freeStack(stack);
-    stack = prev;
-}
-
-
-
-/**
- * During an advance, a handler for the node associated with the frame is called.
- * The node handler performs actions and calculates a result value.  Then
- * the stack is popped and the result value is added to the child results list
- * of the previous stack frame.
- *
- * Note node handlers will usually push additional frames onto the stack.
- * These frames are then evaluated, results accumulated, and a final
- * aggregate result is calculated and returned.  In this process a stack frame
- * may be advanced several times, each time accumulating more information from
- * the child nodes until a completion state is reached.
- */
-void MslSession::advanceStack()
-{
-    // process the next child
-    // here we may have ordering issues, a few nodes need to process their
-    // children out of order, e.g. a conditional statement may skip over a child
-    // node or select one of them rather than doing them sequentially
-    stack->childIndex += 1;
-    if (stack->childIndex < stack->node->children.size()) {
-        // push the stack
-        MslStack* neu = allocStack();
-        neu->node = stack->node->children[stack->childIndex];
-        neu->parent = stack;
-        stack = neu;
-
-        Trace(2, "Pushed: %s", debugNode(stack->node).toUTF8());
-    }
-    else {
-        // all children have finished, determine this node's value
-        // if this is a wait node, it may push another frame
-        MslStack* starting = stack;
-        
-        // don't like the way we detect popping, have evalStack return
-        // a bool and let it decide?
-        Trace(2, "Evaluating: %s", debugNode(stack->node).toUTF8());
-        evalStack();
-
-        if (errors.size() == 0) {
-        
-            if (starting == stack) {
-                // still here, can pop now
-                MslStack* prev = stack->parent;
-                freeStack(stack);
-                stack = prev;
-                if (stack != nullptr)
-                  Trace(2, "Popped: %s", debugNode(stack->node).toUTF8());
-                
-            }
-            // todo: when a stack is finished, and evaluation pushes
-            // another node, we don't want to keep evaluating it on the
-            // next pass, so either popping needs to be aware of this
-            // and pop twice, or we need a finished flag
-        }
-    }
-}
-
-
-/**
- * At this point all of the child nodes have been evaluated and the
- * node examines the result and computes it's own value.
- */
-void MslSession::evalStack()
-{
-    if (stack->node->isLiteral()) {
-        MslLiteral* lit = static_cast<MslLiteral*>(stack->node);
-        MslValue* v = valuePool->alloc();
-        if (lit->isInt) {
-            v->setInt(atoi(lit->token.value.toUTF8()));
-        }
-        else if (lit->isBool) {
-            // could be a bit more relaxed here but this is what the tokanizer left
-            v->setBool(lit->token.value == "true");
-        }
-        else {
-            v->setJString(lit->token.value);
-        }
-        addStackResult(v);
-    }
-    else if (stack->node->isBlock()) {
-        addBlockResult();
-    }
-    else if (stack->node->isSymbol()) {
-        // symbols are evaluated with an argument list determined by the child nodes
-        // for initial testing return the name
-        MslSymbol* sym = static_cast<MslSymbol*>(stack->node);
-        doSymbol(sym);
-    }
-    else if (stack->node->isOperator()) {
-        MslOperator* op = static_cast<MslOperator*>(stack->node);
-        doOperator(op);
-    }
-    else if (stack->node->isVar()) {
-        MslVar* var = static_cast<MslVar*>(stack->node);
-        doVar(var);
-    }
-    else {
-        addError(stack->node, "Unsupport node evaluation");
-        // need to push a null for this?
-    }
-}
-
-/**
- * Blocks return a list and we don't usually want that, needs work...
- */
-void MslSession::addBlockResult()
-{
-    // this is where we might want to be smarter about value
-    // accumulation and list expansion so we don't end up with a bunch
-    // of nested lists
-    // !! yes, almost all blocks are just evaluated for side effect
-    bool entireList = false;
-    if (entireList) {
-        // transfer the entire result list
-        MslValue* v = valuePool->alloc();
-        v->list = stack->childResults;
-        stack->childResults = nullptr;
-        addStackResult(v);
-    }
-    else {
-        // take the last value in the list
-        // this little dance needs to be a static util
-        if (stack->childResults == nullptr) {
-            // empty block, return a null placeholder?
-            addStackResult(valuePool->alloc());
-        }
-        else {
-            // remove the last one
-            MslValue* prev = nullptr;
-            MslValue* last = stack->childResults;
-            while (last->next != nullptr) {
-                prev = last;
-                last = last->next;
-            }
-            if (prev != nullptr)
-              prev->next = nullptr;
-            else
-              stack->childResults = nullptr;
-            // free what remains ahead of this one
-            valuePool->free(stack->childResults);
-            stack->childResults = nullptr;
-            // and return the last one
-            addStackResult(last);
-        }
-    }
-}
-
-void MslSession::addStackResult(MslValue* v)
-{
+    // it is permissible to pop without a value, if the child wants nullness to have
+    // meaning, it must return an empty MslValue
     MslStack* parent = stack->parent;
     if (parent == nullptr) {
+        // we're at the root frame
         if (rootResult == nullptr)
           rootResult = v;
         else {
             MslValue* last = rootResult->getLast();
             last->next = v;
-            checkCycles(rootResult);
         }
     }
+    else if (!parent->accumulator) {
+        // replace the last value
+        valuePool->free(parent->childResults);
+        parent->childResults = v;
+    }
     else if (parent->childResults == nullptr) {
+        // we're an accumulator, and this is the first one
         parent->childResults = v;
     }
     else {
+        // add the result to the end of the list
         MslValue* last = parent->childResults->getLast();
         last->next = v;
-
-        if (last == v)
-          Trace(1, "WTF is going on here");
-        
-        checkCycles(parent->childResults);
     }
+
+    // now do the popping part
+    MslStack* prev = stack->parent;
+    freeStack(stack);
+    stack = prev;
 }
 
+/**
+ * Pop the stack and return whatever child results remain on the
+ * current stack frame.
+ */
+void MslSession::popStack()
+{
+    // ownership transfers so must clear this before pooling
+    MslValue* result = stack->childResults;
+    stack->childResults = nullptr;
+    
+    popStack(result);
+}
+    
 // need to beef this up
 void MslSession::checkCycles(MslValue* v)
 {
@@ -522,155 +444,717 @@ bool MslSession::found(MslValue* node, MslValue* list)
     
 //////////////////////////////////////////////////////////////////////
 //
+// Literal
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Stack handler for a literal.
+ * Literals do not have child nodes or computation, they simply return
+ * their value to the parent frame.
+ */
+void MslSession::mslVisit(MslLiteral* lit)
+{
+    MslValue* v = valuePool->alloc();
+    
+    if (lit->isInt) {
+        v->setInt(atoi(lit->token.value.toUTF8()));
+    }
+    else if (lit->isBool) {
+        // could be a bit more relaxed here but this is what the tokanizer left
+        v->setBool(lit->token.value == "true");
+    }
+    else {
+        v->setJString(lit->token.value);
+    }
+
+    popStack(v);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Block
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Block frames evaluate each child in order and may or may not accumulate
+ * results.  The accumulation flag will have been set by the parent frame
+ * that pushed this one.
+ */
+void MslSession::mslVisit(MslBlock* block)
+{
+    (void)block;
+    
+    MslStack* next = pushNextChild();
+    if (next == nullptr) {
+        // ran out of children, at this point we return the aggregate result
+        // to the parent
+        // todo: this is where we may want to make the distinction between
+        // concatenating a list onto the parent or returning a single
+        // value that is itself a list, will become interesting if we ever
+        // support arrays as values
+        popStack();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Var
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * When a var is encounterd, the child block will have left behind
- * an initializer.  A binding for the var is created within the
- * current block that may then be referenced by a symbol node.
- * The var node itself has no value for the parent.
+ * When a var is encounterd, push the optional child node to calculate
+ * an initial value.
+ *
+ * When the initializer has finished, place a Binding for this var and
+ * it's value into the parent frame
  */
-void MslSession::doVar(MslVar* var)
+void MslSession::mslVisit(MslVar* var)
 {
-    MslBinding* b = valuePool->allocBinding();
-    b->setName(var->name.toUTF8());
-    // value ownership transfers
-    b->value = stack->childResults;
-    stack->childResults = nullptr;
+    // the parser should have only allowed one child, if there is more than
+    // one we take the last value
+    MslStack* next = pushNextChild();
+    if (next == nullptr) {
+        // initializer finished
     
-    MslStack* parent = stack->parent;
-    if (parent != nullptr) {
-        if (!parent->node->isBlock()) {
-            // if this isn't a block node, it's odd, a var embedded in an expression
-            // I guess it can't hurt it just does nothing?
-            Trace(1, "MslSession: Var encountered in non-block container");
+        MslStack* parent = stack->parent;
+        if (parent == nullptr) {
+            // this shouldn't happen, there can be vars at the top level of a script
+            // but the script body should have been surrounded by a containing block
+            addError(var, "Var encountered above root block");
+        }
+        else if (!parent->node->isBlock()) {
+            // the var was inside something other than a {} block
+            // the parser allows this but it's unclear what that should mean, what use
+            // would a var be inside an expression for example?  I suppose we could allow
+            // this, but flag it for now until we find a compelling use case
+            addError(var, "Var encountered in non-block container");
         }
         else {
+            MslBinding* b = valuePool->allocBinding();
+            b->setName(var->name.toUTF8());
+            // value ownership transfers
+            b->value = stack->childResults;
+            stack->childResults = nullptr;
+            
             parent->addBinding(b);
+
+            // vars do not have values themselves
+            popStack(nullptr);
         }
-    }
-    else {
-        // top-level var, I'm starting to hate not having a synthesized wrapper
-        // block around the script, but Scripts always have a root block no?
-        Trace(1, "MslSession: Var encountered above root block");
     }
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Symbol Resolution
+// Proc
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Evaluate a MslSymbol node, leave the result in the parent's value list.
+ * This is the DECLARATION of a proc not a call.
+ * Currently, procs are "sifted" by the parser and left on a special list
+ * in the MslScript so we should not encounter them during evaluation.
+ * If that ever changes, then you'll have to deal with them here.
+ * In theory we could have scoped proc definitions like we do for vars.
  */
-void MslSession::doSymbol(MslSymbol* snode)
+void MslSession::mslVisit(MslProc* proc)
 {
-    if (stack->childResults == nullptr) {
-        // first time here
+    addError(proc, "Encountered unsifted Proc");
+}
 
-        // bindings override procs and external symbols
-        MslBinding* binding = stack->findBinding(snode->token.value.toUTF8());
-        if (binding != nullptr) {
-            MslValue* value = binding->value;
-            MslValue* copy = nullptr;
-            if (value == nullptr) {
-                // binding without a value, should this be ignored or does
-                // it hide other things?
-                copy = valuePool->alloc();
-            }
-            else {
-                // bindings can be referenced multiple times, so need to copy
-                copy = valuePool->alloc();
-                copy->copy(value);
-            }
-            addStackResult(copy);
-        }
-        else {
-            if (snode->symbol == nullptr && snode->proc == nullptr) {
-                // procs override global symbols
-                snode->proc = script->findProc(snode->token.value);
-                if (snode->proc == nullptr) {
-                    // else resolve to a global symbol
-                    snode->symbol = Symbols.find(snode->token.value);
-                }
-            }
+//////////////////////////////////////////////////////////////////////
+//
+// Assignment
+//
+//////////////////////////////////////////////////////////////////////
 
-            if (snode->proc != nullptr) {
-                MslBlock* body = snode->proc->getBody();
-                if (body != nullptr) {
-                    MslStack* neu = allocStack();
-                    neu->node = body;
-                    neu->parent = stack;
-                    stack = neu;
-                    // add the proc argument bindings
-                    // put them in the stack for the proc root block
-                    // but they need to have been captured in a prior eval
-                    // of the argument list 
-                    
-                    // will add the result later when the block returns
-                }
-                else {
-                    // empty proc, null result?
-                    addStackResult(valuePool->alloc());
-                }
-            }
-            else if (snode->symbol != nullptr) {
-                doSymbol(snode->symbol);
-            }
-            else {
-                // unresolved symbol
-                // it is important for "if switchQuantize == loop" that we allow
-                // unresolved symbols to be used instead of quoted string literals
-                MslValue* v = valuePool->alloc();
-                v->setJString(snode->token.value);
-                // todo, might want an unresolved flag in the MslValue
-                addStackResult(v);
-            }
-        }
+/**
+ * Assignments result from a statement of this form:
+ *
+ *     x=y
+ *
+ * Unlike Operator, the LHS is required to be a Symbol and the
+ * RHS can be any expression.  The LHS symbol is NOT evaluated, it is
+ * simply used as the name of the thing to be assigned.  It may be better
+ * to have the parser consume the Symbol token and just leave the name behind
+ * in the node as is done for proc and var.  But this does open up potentially
+ * useful behavior where the LHS could be any expression that produces a name
+ * literal string:    "x"=y  or foo()=y.  While possible and relatively easy
+ * that's hard to explain.
+ */
+void MslSession::mslVisit(MslAssignment* ass)
+{
+    // verify we have a name symbol, only really need this on phase 0 but it doesn't
+    // hurt to look again
+    MslSymbol* namesym = nullptr;
+    MslNode* first = ass->get(0);
+    if (first == nullptr) {
+        addError(ass, "Malformed assignment, missing assignment symbol");
+    }
+    else if (!first->isSymbol()) {
+        addError(ass, "Malformed assignment, assignment to non-symbol");
     }
     else {
-        // back from a proc
-        // transfer the function result
-        // todo: does it make sense to collapse surrounding blockage?
-        // here we have the "blocks retuning a list" problem again
-        // need to pull out the last one
-        addBlockResult();
+        namesym = static_cast<MslSymbol*>(first);
+    }
+
+    // asssignment of this symbol may require thread transition,
+    // but so may the initializer so we have to do that first
+
+    if (namesym != nullptr) {
+        if (stack->phase == 0) {
+            // first time here, push the initializer
+            MslNode* second = ass->get(1);
+            if (second == nullptr) {
+                addError(ass, "Malformed assignment, missing initializer");
+            }
+            else {
+                // push the initializer
+                pushStack(second);
+                stack->phase++;
+            }
+        }
+        else {
+            // back from the initializer
+            if (stack->childResults == nullptr) {
+                // something weird like "x=var foo;" that that the parser
+                // could have caught
+                addError(ass, "Malformed assignment, initializer had no value");
+            }
+            else {
+                doAssignment(namesym);
+            }
+        }
     }
 }
 
+/**
+ * At this point, we've evaluated what we need, and are ready to make the assignment.
+ * A thread transition may need to be made depending on the target symbol.
+ * The stack childResults has the value to assign.
+ *
+ * If we have to do thread transition, we're going to end up looking for bindings twice,
+ * could skip that with another stack phase but it shouldn't be too expensive.
+ */
+void MslSession::doAssignment(MslSymbol* namesym)
+{
+    // resolve the target symbol, first look for var bindings
+    MslBinding* binding = stack->findBinding(namesym->token.value.toUTF8());
+    if (binding != nullptr) {
+        // transfer the value
+        valuePool->free(binding->value);
+        binding->value = stack->childResults;
+        stack->childResults = nullptr;
+
+        // and we are done, assignments do not have values though I suppose
+        // we could allow the initializer value to be the assignment node value
+        // as well, what does c++ do?
+        popStack(nullptr);
+    }
+    else {
+        // symbol did not resolve internally, look outside
+        // !! this is where we need to factor out awareness of what
+        // model/Symbol is to the MslContainer
+        // currently the model provides a cache pointer to a previously
+        // resolved model/Symbol.  Should be using a cache, but until
+        // we factor out what model/Symbol is, I'd like to re-resolve it
+        // every time
+
+        // !! juce::String passing, need to weed out all of this in the evaluator
+        Symbol* extsym = Symbols.find(namesym->token.value);
+        if (extsym == nullptr) {
+            // here we could have the notion of an auto-var
+            // pretend that a var existed in the parent block and give
+            // it a binding...not sure if useful
+            addError(stack->node, "Unresolved symbol in assignment");
+        }
+        else if (stack->childResults == nullptr) {
+            // should have caught this in the previous phase
+            addError(stack->node, "Assignment with no value");
+        }
+        else {
+            // this is where we may need to do thread transition
+            
+            // !! and also factor out awareness of what a UIAction is
+            UIAction a;
+            a.symbol = extsym;
+            // UIActions can only have numeric values right now
+            // if the initializer didn't produce one, it coerce to zero
+            // probably want to raise an error instead
+            a.value = stack->childResults->getInt();
+            Supervisor::Instance->doAction(&a);
+
+            popStack(nullptr);
+        }
+    }
+}
+        
+//////////////////////////////////////////////////////////////////////
+//
+// Symbol
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Now it gets interesting.
+ *
+ * Symbols can return the value of these things:
+ *    an internal var Binding
+ *    an exported var value from another script
+ *    an internal proc call
+ *    an exported proc call
+ *    an external model/Symbol Query
+ *    an external model/Symbol UIAction
+ *    just the name literal of an unresolved symbol
+ *
+ * The only one that requires thread transition is the UIAction,
+ * though we might want to do this for some Query's as well
+ *
+ * Unresolved symbols are generally an error, but there are a few cases where
+ * we allow that just for names.  Think more about this, in those cases the parser
+ * should have consumed it and take the node out.
+ *
+ * Since there are so many things this can do, it saves extra state beyond the phase
+ * number on the stack frame so we don't have to keep running through this analysis 
+ * every time a child frame finishes.
+ *
+ * For procs and vars, if there are name collisions the code logic has an implied
+ * priority that is subtle.  If we don't allow procs and vars to have the same name
+ * it isn't an issue, but if they do, the search order is:
+ *     local var
+ *     local proc
+ *     exported var linkage
+ *     exported proc linkage
+ *
+ */
+void MslSession::mslVisit(MslSymbol* snode)
+{
+    // for safety check later
+    MslStack* startStack = stack;
+    
+    if (stack->proc != nullptr) {
+        // we resolved to an internal or exported proc and are
+        // back from the argument block or the body block
+        returnProc();
+    }
+    else if (stack->symbol != nullptr) {
+        // we resolved to an external model/Symbol and have completed
+        // calculating the argument list
+        // this may cause a thread transition
+        returnSymbol();
+    }
+    else {
+        // first time here
+
+        // look for local vars
+        MslBinding* binding = stack->findBinding(snode->token.value.toUTF8());
+        if (binding != nullptr) {
+            returnBinding(binding);    
+        }
+        else {
+            // look for local procs, these could be cached on the MslSymbol
+            MslProc* proc = script->findProc(snode->token.value);
+            if (proc != nullptr) {
+                pushProc(proc);
+            }
+            else {
+                // look for exports
+                MslLinkage* link = environment->findLinkage(snode->token.value);
+                if (link != nullptr) {
+                    if (link->var != nullptr) {
+                        returnVar(link);
+                    }
+                    else if (link->proc != nullptr) {
+                        pushProc(link);
+                    }
+                }
+                else {
+                    // look for external symbols
+                    if (!doExternal(snode)) {
+
+                        // unresolved
+                        returnUnresolved(snode);
+                    }
+                }
+            }
+        }
+    }
+
+    // sanity check
+    // at this point we should have returned a value and popped the stack,
+    // or pushed a new frame and are waiting for the result
+    // if neither happened it is a logic error, and the evaluator will
+    // hang if you don't catch this
+    if (errors.size() == 0 && startStack == stack &&
+        stack->proc == nullptr && stack->symbol == nullptr) {
+        
+        addError(snode, "Like your dreams, the symbol evaluator is broken");
+    }
+}
+
+/**
+ * Here if despite our best efforts, the symbol could go nowhere.
+ * Normally this would be an error, but in this silly language it is
+ * expected to be able to write things like this:
+ *
+ *    if switchQuantize == loop
+ *
+ * rather than
+ *
+ *    if switchQuantize == "loop"
+ *
+ * I'd really rather not introduce syntax complications that non-programmers
+ * are going to stumble over all the time.  Which then means the rest of the
+ * language needs to treat the evaluation of a symbol as it's name consistently.
+ * And if it doesn't like that in a certain context, then the error
+ * is raised at runtime.
+ *
+ * Ideally what should happen in this case is more language awareness of what
+ * enumerations are so if that's mispelled as looop we can raise an error rather
+ * than just consider the comparison unequal.
+ * Needs thought...
+ */
+void MslSession::returnUnresolved(MslSymbol* snode)
+{
+    // what we CAN do here is raise an error if there is an argument list
+    // on the symbol, that is always a spelling error
+    if (snode->children.size() > 0) {
+        addError(snode, "Unresolved function symbol");
+    }
+    else {
+        MslValue* v = valuePool->alloc();
+        v->setJString(snode->token.value);
+        // todo, might want an unresolved flag in the MslValue
+        popStack(v);
+    }
+}
+
+/**
+ * Here for a symbol that resolved to an internal binding.
+ * The binding holds the value to be returned, but it must be copied.
+ */
+void MslSession::returnBinding(MslBinding* binding)
+{
+    MslValue* value = binding->value;
+    MslValue* copy = nullptr;
+    if (value == nullptr) {
+        // binding without a value, should this be ignored or does
+        // it hide other things?
+        copy = valuePool->alloc();
+    }
+    else {
+        // bindings can be referenced multiple times, so need to copy
+        copy = valuePool->alloc();
+        copy->copy(value);
+    }
+    popStack(copy);
+}
+
+/**
+ * Here for a symbol that resolved to a var exported from another script.
+ */
+void MslSession::returnVar(MslLinkage* link)
+{
+    (void)link;
+    
+    // don't have a way to save values for these yet,
+    // needs to either be in the MslLinkage or in a list of value containers
+    // inside the referenced script
+
+    // return null
+    popStack(valuePool->alloc());
+}
+
+/**
+ * Calling a proc.
+ * Push the argument list if we have one, if not the body
+ */
+void MslSession::pushProc(MslProc* proc)
+{
+    stack->proc = proc;
+    
+    // does the call have arguments?
+    // note that we're dealing with the calling symbol node and not the proc node
+    if (stack->node->children.size() > 0) {
+        // yes, push them
+        pushStack(stack->node->children[0]);
+        // use the phase number to indiciate which block we're waiting for
+        stack->phase = 1;
+    }
+    else {
+        // no arguments, push the body
+        pushCall();
+    }
+}
+
+/**
+ * Calling a proc in another script.
+ * This is similar to calling a local proc except the environment
+ * for resolving references could be different.
+ *
+ * Needs thought...
+ * If an exported proc references a var defined in the other script we would
+ * need to look inside the other script which requires that it be saved on the stack
+ * so we know to look there.  Then again, when procs are brought "inside" another script
+ * should they be referencing things from within the calling script's scope?
+ *
+ * The former would be a way to encapsulate things like constant vars that influence
+ * the exported proc, but are not visible from the outside.  The later would behave
+ * more like an "include" where the proc body wakes up inside another in-progress script
+ * and resolves vars there.  That has uses too, and would be an alternative to passing
+ * arguments, rather than an argument list, the proc has unresolved references that are
+ * resolved within the caller.
+ *
+ * I'm going with the second because it's easier and procs really should be self-contained.
+ * Having dueling resolution scopes raises all sorts of issues with name collision and
+ * where those extern var values are stored.  They could be exported as MslLinkages or just
+ * saved inside the MslScript.  It's basically like a function with a closure around it.
+ * Or calling a method on an object.  Hmm, scripts as "objects with methods" could be interesting
+ * but you can't have more than one instance.
+ */
+void MslSession::pushProc(MslLinkage* link)
+{
+    // for now, same as calling a local proc, we just get it through
+    // a level of indirection
+    MslProc* proc = link->proc;
+    if (proc != nullptr) {
+        pushProc(proc);
+    }
+    else {
+        // should have caught this by now
+        addError(stack->node, "A Linkage with no Proc is like a day without sunshine");
+    }
+}
+
+/**
+ * Attempt to return a proc result after the completion of a child frame.
+ * There are two phases to this.  If a proc call has arguments, then the
+ * previous child frame was the argument list and we have to push another
+ * frame to handle the body.  If this was the body frame we can return
+ * from the call.
+ */
+void MslSession::returnProc()
+{
+    if (stack->phase == 1) {
+        // we were waiting for arguments
+        pushCall();
+    }
+    else if (stack->phase == 2) {
+        // we were waiting for the body
+        popStack();
+    }
+    else {
+        // we were waiting for Godot
+        addError(stack->node, "Invalid symbol stack phase");
+    }
+}
+
+/**
+ * Build a call frame with arguments.
+ * childResult has the result of the evaluation of the argument block.
+ * Turn that into something nice and pass it to the proc.
+ */
+void MslSession::pushCall()
+{
+    if (stack->node->children.size() > 0) {
+        // proc had arguments which will have been processed by now
+        // and left in child results
+        // mutate this into something nice for the call
+    }
+    valuePool->free(stack->childResults);
+    stack->childResults = nullptr;
+    stack->phase = 2;
+
+    MslBlock* body = stack->proc->getBody();
+    if (body != nullptr) {
+        pushStack(body);
+    }
+    // corner case, if the proc has no body, could force a null return
+    // now, or just use the phase handling normally
+}
+
+/**
+ * Convert the arguments for a proc to a list of MslBindings
+ * on the symbol node.  The names of the bindings come from
+ * the proc definition.
+ *
+ * The values for the binding are in the stack->childResults.
+ */
+void MslSession::bindArguments()
+{
+    // these define the binding names
+    MslBlock* names = stack->proc->getDeclaration();
+
+    int position = 1;
+    for (auto namenode : names->children) {
+        MslBinding* binding = makeArgBinding(namenode, position);
+        // give it the corresponding value
+        if (stack->childResults != nullptr) {
+            binding->value = stack->childResults;
+            stack->childResults = stack->childResults->next;
+        }
+        else {
+            // missing arg value
+            // still create a binding to it resolves and has null
+            Trace(2, "Not enough argument values for call");
+        }
+        binding->next = stack->bindings;
+        stack->bindings = binding;
+        position++;
+    }
+
+    // if we have any left over, give them bindings with positional names
+    while (stack->childResults != nullptr) {
+        MslBinding* b = valuePool->allocBinding();
+        snprintf(b->name, sizeof(b->name), "$%d", position);
+        b->value = stack->childResults;
+        stack->childResults = stack->childResults->next;
+        b->next = stack->bindings;
+        stack->bindings = b;
+    }
+}        
+
+//////////////////////////////////////////////////////////////////////
+//
+// External Symbols
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here we've encountered a symbol node that did not resolve into
+ * anything within the script environment.  Look into the container.
+ * This is the usual case since scripts are almost always used to set Mobius
+ * parameters and call functions.
+ *
+ * This is where thread transitioning may need to happen, moving the session
+ * between the shell and the kernel.
+ *
+ * Currently makes direct use of model/Symbol and model/UIAction but this
+ * needs to abstracted out so the interpreter can be used within other
+ * things besides Mobius.
+ *
+ * If this resolves to a parameter, the value is returned through a Query.
+ * If this resolves to a function, the function is invoked with a UIAction.
+ *
+ * Functions may have arguments, so this may turn into a push for the argument list.
+ *
+ */
+bool MslSession::doExternal(MslSymbol* snode)
+{
+    bool resolved = false;
+
+    // todo: cache this on the node so we don't have to keep going back
+    // to the symbol table
+    Symbol* sym = Symbols.find(snode->token.value);
+    if (sym != nullptr) {
+        resolved = true;
+
+        // todo: check for thread transitions
+        // could do this either before or after the argument list evaluation
+        // it doesn't really matter but we might as well go there early?
+
+        stack->symbol = sym;
+        
+        // does this have arguments?
+        if (snode->children.size() > 0) {
+            // yes, push them
+            pushStack(snode->children[0]);
+            // don't need to use phases here since there are no additional child blocks
+            stack->phase = 1;
+        }
+        else {
+            // no arguments, do the thing
+            // useful to have a frame for this?
+            doSymbol(sym);
+        }
+    }
+    return resolved;
+}
+
+/**
+ * Here after evaluating the argument block for an external symbol
+ * which is expected to be a function
+ */
+void MslSession::returnSymbol()
+{
+    doSymbol(stack->symbol);
+}
+
+/**
+ * Here when we're finally ready to do the external thing.
+ * If there was an argument block on the symbol node it will have
+ * been evaluated and left on the stack
+ */
 void MslSession::doSymbol(Symbol* sym)
 {
-    if (sym->function != nullptr || sym->script != nullptr) {
+    if (sym->parameter != nullptr) {
+        query(sym);
+    }
+    else if (sym->function != nullptr || sym->script != nullptr) {
         invoke(sym);
     }
-    else if (sym->parameter != nullptr) {
-        query(sym);
+    else {
+        // I suppose we could support others like BehaviorSample here
+        // but you can also get to that with a function
+        addError(stack->node, "Symbol is not a function or parameter");
     }
 }
 
+/**
+ * Build an action to perform a function.
+ * Thread transition should have already been performed, if not
+ * this will be asynchronous and go through the non-script way of
+ * doing thread transitions.  It should work but isn't immediate
+ * and you can't wait on it.
+ */
 void MslSession::invoke(Symbol* sym)
 {
     UIAction a;
     a.symbol = sym;
 
-    // todo: arguments
-    // this is where the MslContext needs to take over so we can do the
-    // function either async or sync, and possibly transition threads
+    // actions don't do much in the way of arguments right now
+    // only a few functions take arguments and they're all integers
+    // but a handful take strings
+    // needs a lot more work
+    if (stack->childResults != nullptr) {
+        // if there is more than one result, could warn since they're not going anywhere
+        MslValue *arg = stack->childResults;
+
+        // who gets to win the coersion wars?
+        // if the user typed in a literal int, that's what they wanted
+        if (arg->type == MslValue::Int)
+          a.value = arg->getInt();
+        else
+          CopyString(arg->getString(), a.arguments, sizeof(a.arguments));
+    }
+    
     Supervisor::Instance->doAction(&a);
 
     // only MSL scripts set a result right now
     MslValue* v = valuePool->alloc();
     v->setString(a.result);
-    addStackResult(v);
+
+    // what a long strange trip it's been
+    popStack(v);
 }
 
+/**
+ * Build a Query to dig out the value of an engine parameter.
+ * These always run synchronously right now and don't care which
+ * thread they're on, though that may change.
+ *
+ * The complication here is enumerations.
+ * The engine always uses ordinal numbers where possible, but script users
+ * don't think that way, they want enumeration names.  Use the weird
+ * Type::Enum to return both so either can be used.
+ */
 void MslSession::query(Symbol* sym)
 {
     if (sym->parameter == nullptr) {
+        // should have checked this by now
         addError(stack->node, "Not a parameter symbol");
     }
     else {
@@ -697,12 +1181,12 @@ void MslSession::query(Symbol* sym)
                 v->setBool(q.value == 1);
             }
             else if (ptype == TypeStructure) {
-                // hmm, the understand of LevelUI symbols that live in
+                // hmm, the understanding of LevelUI symbols that live in
                 // UIConfig and LevelCore symbols that live in MobiusConfig
                 // is in Supervisor right now
                 // todo: Need to repackage this
-                // todo: this should be treated like an Enum and also return
-                // the ordinal!
+                // todo: this could also be Type::Enum in the value but I don't
+                // think anything cares?
                 v->setJString(Supervisor::Instance->getParameterLabel(sym, q.value));
             }
             else {
@@ -711,49 +1195,9 @@ void MslSession::query(Symbol* sym)
                 v->setInt(q.value);
             }
 
-            addStackResult(v);
+            popStack(v);
         }
     }
-}
-
-void MslSession::assign(MslSymbol* snode, int value)
-{
-    if (snode->symbol == nullptr) {
-
-        // todo: look for local vars on the block stack
-        //snode->var = script->findProc(snode->token.value);
-        if (snode->var == nullptr) {
-            // else resolve to a global symbol
-            snode->symbol = Symbols.find(snode->token.value);
-        }
-    }
-
-    if (snode->symbol != nullptr) {
-        // todo: context forwarding
-        UIAction a;
-        a.symbol = snode->symbol;
-        a.value = value;
-        Supervisor::Instance->doAction(&a);
-    }
-}
-
-/**
- * Called internally to add a runtime error.
- * Using MslError here so we can capture the location in the source
- * of the node having issues, but unfortunately the parser isn't leaving
- * that behind yet.
- */
-void MslSession::addError(MslNode* node, const char* details)
-{
-    // see file comments about why this is bad
-    MslError* e = new MslError();
-    // okay, this shit happens a lot now, why not just standardize on passing
-    // the MslToken by value everywhere
-    e->token = node->token.value;
-    e->line = node->token.line;
-    e->column = node->token.column;
-    e->details = juce::String(details);
-    errors.add(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -803,9 +1247,34 @@ MslValue* MslSession::getArgument(int index)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Expressions
+// Operators
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * An operator node will normally have two children, one for unary.
+ *
+ * Kind of forgot about pushNextChild while my mind was melting with MslSymbol,
+ * revisit the complicated ones and see if that could be used there instead
+ * of phase markers?
+ */
+void MslSession::mslVisit(MslOperator* opnode)
+{
+    if (opnode->children.size() == 0) {
+        addError(opnode, "Missing operands");
+    } 
+    else {
+        // tell popStack that we want all child values
+        stack->accumulator = true;
+        
+        MslStack* next = pushNextChild();
+        if (next == nullptr) {
+            // ran out of children, apply the operator
+            doOperator(opnode);
+        }
+    }
+}
+
 
 // if we allow async functions in expressions, then this
 // will need to be much more complicated and use the stack
@@ -941,7 +1410,7 @@ void MslSession::doOperator(MslOperator* opnode)
         }
     }
     
-    addStackResult(v);
+    popStack(v);
 }
 
 /**
@@ -988,6 +1457,22 @@ bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
     }
     
     return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Conditionals
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslSession::mslVisit(MslIf* node)
+{
+    addError(node, "Unimplemented");
+}
+
+void MslSession::mslVisit(MslElse* node)
+{
+    addError(node, "Unimplemented");
 }
 
 //////////////////////////////////////////////////////////////////////

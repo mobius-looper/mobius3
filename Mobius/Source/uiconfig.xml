@@ -126,8 +126,8 @@
     <Property name="loopRows" value=""/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
-    <Property name="buttonHeight" value="25"/>
     <Property name="z" value="true"/>
+    <Property name="buttonHeight" value="25"/>
     <Property name="testName" value=""/>
     <Property name="trackRows" value="1"/>
   </Properties>

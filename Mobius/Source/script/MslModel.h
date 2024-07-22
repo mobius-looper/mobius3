@@ -358,6 +358,16 @@ class MslProc : public MslNode
         }
         return body;
     }
+    MslBlock* getDeclaration() {
+        MslBlock* decl = nullptr;
+        for (auto child : children) {
+            if (child->isBlock() && child->token.value == "(") {
+                decl = static_cast<MslBlock*>(child);
+                break;
+            }
+        }
+        return decl;
+    }
 };
 
 class MslIf : public MslNode
