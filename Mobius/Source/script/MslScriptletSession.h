@@ -39,6 +39,10 @@ class MslScriptletSession {
         return fullResult;
     }
 
+    MslBinding* getBindings() {
+        return scriptletBindings;
+    }
+
     juce::OwnedArray<MslProc>* getProcs();
     
   private:
@@ -50,6 +54,7 @@ class MslScriptletSession {
 
     juce::OwnedArray<class MslError> errors;
     MslValue* scriptletResult = nullptr;
+    MslBinding* scriptletBindings = nullptr;
     juce::String fullResult;
     
     // active session created if the script needs to suspend

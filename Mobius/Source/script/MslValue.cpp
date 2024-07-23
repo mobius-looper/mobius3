@@ -160,6 +160,8 @@ MslValue* MslValuePool::alloc()
         v = valuePool;
         valuePool = valuePool->next;
         v->next = nullptr;
+        // initialize it
+        v->setNull();
     }
     else {
         // complain loudly that the fluffer isn't doing it's job
@@ -198,6 +200,17 @@ MslBinding* MslValuePool::allocBinding()
         b = bindingPool;
         bindingPool = bindingPool->next;
         b->next = nullptr;
+
+        // make sure it goes out initialized
+        strcpy(b->name, "");
+        b->position = 0;
+        
+        if (b->value != nullptr) {
+            // should have been cleansed by now
+            Trace(1, "Dirty Binding in the pool");
+            free(b->value);
+            b->value = nullptr;
+        }
     }
     else {
         // complain loudly that the fluffer isn't doing it's job

@@ -33,6 +33,7 @@ class MslVisitor
     virtual void mslVisit(class MslProc* obj) = 0;
     virtual void mslVisit(class MslIf* obj) = 0;
     virtual void mslVisit(class MslElse* obj) = 0;
+    virtual void mslVisit(class MslReference* obj) = 0;
 };
 
 /**
@@ -92,6 +93,10 @@ class MslNode
     // returns true if the node would like to consume another child node
     // do we really need locked if this works?
     virtual bool wantsNode(MslNode* node) {(void)node; return false;}
+
+    // returns true if the node can behave as an operand
+    // most of them except for keywoards like if/else/var
+    virtual bool operandable() {return false;}
     
     //////////////////////////////////////////////////////////////////////
     // Runtime State
@@ -117,6 +122,7 @@ class MslNode
     virtual bool isProc() {return false;}
     virtual bool isIf() {return false;}
     virtual bool isElse() {return false;}
+    virtual bool isReference() {return false;}
 
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -137,6 +143,7 @@ class MslLiteral : public MslNode
     virtual ~MslLiteral() {}
 
     bool isLiteral() override {return true;}
+    bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
     // could use an MslValue here, but we've already
@@ -146,6 +153,33 @@ class MslLiteral : public MslNode
     bool isBool = false;
     bool isInt = false;
     bool isFloat = false;
+};
+
+class MslReference : public MslNode
+{
+  public:
+    MslReference(MslToken& t) : MslNode(t) {locked=true;}
+    virtual ~MslReference() {}
+
+    // take the next number or symbol
+    // this should actually error if the next token isn't one of those
+    // since there is no other use for $
+    // maybe requiresToken?
+    bool wantsToken(MslToken& t) override {
+        bool wants = false;
+        if (t.type == MslToken::Type::Symbol ||
+            t.type == MslToken::Type::Int) {
+            name = t.value;
+            wants = true;
+        }
+        return wants;
+    }
+    
+    juce::String name;
+    
+    bool isReference() override {return true;}
+    bool operandable() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
 class MslBlock : public MslNode
@@ -171,6 +205,7 @@ class MslBlock : public MslNode
     juce::OwnedArray<MslVar> vars;
 
     bool isBlock() override {return true;}
+    bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
@@ -198,6 +233,7 @@ class MslSymbol : public MslNode
     class MslVar* var = nullptr;
     
     bool isSymbol() override {return true;}
+    bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
 
@@ -216,7 +252,7 @@ class MslOperator : public MslNode
     bool wantsNode(MslNode* node) override {
         bool wants = false;
         if (children.size() < 2 &&
-            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
+            (node->operandable() ||
             // for blocks, should only see ()
             // I guess we can allow {} under the assumption that blocks return
             // their last value, nice way to encapsulate a multi-step computation
@@ -243,6 +279,7 @@ class MslOperator : public MslNode
 
     // runtime
     bool isOperator() override {return true;}
+    bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
 };
@@ -256,10 +293,9 @@ class MslAssignment : public MslNode
 
     bool wantsNode(MslNode* node) override {
         bool wants = false;
+        // geez, just have an isAssignable or something
         if (children.size() < 2 &&
-            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
-             node->isBlock() ||
-             node->isAssignment()))
+            (node->operandable() || node->isAssignment()))
           wants = true;
         return wants;
     }
@@ -294,15 +330,13 @@ class MslVar : public MslNode
         return wants;
     }
 
-    // vars accept an espression
+    // vars accept an expression
     bool wantsNode(MslNode* node) override {
         // okay this is the same as Operator and Assignment
         // except we only accept one child
         // need an isExpression() that encapsulates this
         bool wants = false;
-        if (children.size() < 1 &&
-            (node->isLiteral() || node->isSymbol() || node->isOperator() ||
-             node->isBlock()))
+        if (children.size() < 1 && node->operandable())
           wants = true;
         return wants;
     }

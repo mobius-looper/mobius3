@@ -54,6 +54,7 @@ class MslStack
     MslBinding* bindings = nullptr;
     void addBinding(MslBinding* b);
     MslBinding* findBinding(const char* name);
+    MslBinding* findBinding(int position);
 
     // phases for complex nodes
     MslProc* proc = nullptr;
@@ -94,10 +95,11 @@ class MslSession : public MslVisitor
     ~MslSession();
 
     // evaluate a script
-    void start(class MslScript* script);
+    void start(class MslScript* script, MslBinding* restoreBindings = nullptr);
     bool isWaiting();
     MslValue* getResult();
     MslValue* captureResult();
+    MslBinding* captureBindings();
     void getResultString(MslValue* v, juce::String& s);
     juce::String getFullResult();
     juce::OwnedArray<class MslError>* getErrors();
@@ -112,6 +114,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslProc* obj) override;
     void mslVisit(class MslIf* obj) override;
     void mslVisit(class MslElse* obj) override;
+    void mslVisit(class MslReference* obj) override;
 
   private:
 
@@ -127,7 +130,9 @@ class MslSession : public MslVisitor
     
     // "root" value of the top of the stack
     MslValue* rootResult = nullptr;
-
+    // kludge for the console
+    MslBinding* rootBindings = nullptr;
+    
     //
     // core evaluator
     //
@@ -142,7 +147,7 @@ class MslSession : public MslVisitor
     void popStack(MslValue* v);
     void popStack();
 
-    // extra node handling
+    // refs and calls
     void doAssignment(MslSymbol* namesym);
     void returnUnresolved(MslSymbol* snode);
     void returnBinding(MslBinding* binding);
@@ -151,6 +156,9 @@ class MslSession : public MslVisitor
     void pushProc(class MslLinkage* link);
     void returnProc();
     void pushCall();
+    void bindArguments();
+    MslBinding* makeArgBinding(MslNode* namenode);
+    void addArgValue(MslBinding* b, int position, bool required);
     
     // symbol evaluation
     bool doExternal(MslSymbol* snode);

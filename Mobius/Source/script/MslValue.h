@@ -253,6 +253,10 @@ class MslBinding
     // node is reached during evaluation
     MslValue* value = nullptr;
 
+    // for proc arguments, the position of this argument in the declaration
+    // used to resolve alternate $x references rather than name references
+    int position = 0;
+
     // todo: if this overloads an external Symbol, will need information
     // about save/restore state
 

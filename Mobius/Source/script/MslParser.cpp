@@ -260,8 +260,21 @@ void MslParser::parseInner(juce::String source)
             // that hasn't been consumed?
             case MslToken::Type::End: break;
                 
-            case MslToken::Type::Error:
-                errorSyntax(t, "Unexpected syntax");
+            case MslToken::Type::Error: {
+                // c++ tokenizer treats $ as an Error rather than punctuation
+                // but we'll use it for references
+                if (t.value == "$") {
+                    // reserve these for positional argument references
+                    // but may have other uses
+                    // could just make this a symbol but that that's so overloaded already
+                    MslReference* r = new MslReference(t);
+                    // this will also consume the next token
+                    current = push(r);
+                }
+                else { 
+                    errorSyntax(t, "Unexpected syntax");
+                }
+            }
                 break;
 
             case MslToken::Type::Comment:
@@ -394,13 +407,12 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::Punctuation: {
-                // see if we can avoid commas but allow them
-                // it just moves to the next node
-                // another other than comma is unexpected
-                if (t.value != "," && t.value != ";") {
-                    errorSyntax(t, "Unexpected punctuation");
-                }
-                else {
+                if (t.value == "," || t.value == ";") {
+                    // statement separator
+                    // see if we can avoid commas but allow them
+                    // it just moves to the next node
+                    // another other than comma is unexpected
+
                     // hmm, logic unclear here
                     // if this is a universal receptor like a block, just keep going
                     // but if this is expecting somethig else, end it prematurely
@@ -409,6 +421,9 @@ void MslParser::parseInner(juce::String source)
                         current->locked = true;
                         current = current->parent;
                     }
+                }
+                else {
+                    errorSyntax(t, "Unexpected punctuation");
                 }
             }
                 break;
@@ -435,8 +450,8 @@ void MslParser::parseInner(juce::String source)
  */
 bool MslParser::operandable(MslNode* node)
 {
-    return (node != nullptr && (node->isLiteral() || node->isSymbol() || node->isOperator() ||
-                                node->isBlock()));
+    return (node != nullptr &&
+            (node->operandable() || node->isBlock()));
 }
 
 /**

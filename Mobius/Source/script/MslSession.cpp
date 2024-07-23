@@ -44,21 +44,28 @@ MslSession::~MslSession()
     // sense to return these to the pool, the "static initializer" ordering problem
     //delete rootResult;
     valuePool->free(rootResult);
+    valuePool->free(rootBindings);
 }
 
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslScript* argScript)
+void MslSession::start(MslScript* argScript, MslBinding* restoreBindings)
 {
     errors.clear();
 
     valuePool->free(rootResult);
     rootResult = nullptr;
+    valuePool->free(rootBindings);
+    rootBindings = nullptr;
     
     script = argScript;
     stack = allocStack();
     stack->node = script->root;
+
+    // hack for the console to carry over vars from one eval to another
+    if (restoreBindings != nullptr)
+      stack->bindings = restoreBindings;
 
     run();
 }
@@ -94,6 +101,13 @@ MslValue* MslSession::captureResult()
     MslValue* result = rootResult;
     rootResult = nullptr;
     return result;
+}
+
+MslBinding* MslSession::captureBindings()
+{
+    MslBinding* bindings = rootBindings;
+    rootBindings = nullptr;
+    return bindings;
 }
 
 juce::OwnedArray<MslError>* MslSession::getErrors()
@@ -267,6 +281,35 @@ MslBinding* MslStack::findBinding(const char* name)
     return found;
 }
 
+/**
+ * Search for a positional binding.
+ * Unlike named bindings these only look for symbol nodes for
+ * proc calls that stored bindings with numbers.
+ *
+ * The root block may also have positional bindings for arguments
+ * passed into the script.
+ */
+MslBinding* MslStack::findBinding(int position)
+{
+    MslBinding* found = nullptr;
+
+    // only look in symbols, or the root block of a script
+    if (parent == nullptr || node->isSymbol()) {
+        MslBinding* ptr = bindings;
+        while (found == nullptr && ptr != nullptr) {
+            if (ptr->position == position)
+              found = ptr;
+            ptr = ptr->next;
+        }
+    }
+    
+    // walk up
+    if (found == nullptr && parent != nullptr)
+      found = parent->findBinding(position);
+
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Run Loop
@@ -384,6 +427,13 @@ void MslSession::popStack(MslValue* v)
             MslValue* last = rootResult->getLast();
             last->next = v;
         }
+
+        // kludge: the console would like to carry over Var bindings
+        // from one interactive line to the next, but these will be lost when
+        // the root frame is freed
+        // save them for your silly console
+        rootBindings = stack->bindings;
+        stack->bindings = nullptr;
     }
     else if (!parent->accumulator) {
         // replace the last value
@@ -613,8 +663,8 @@ void MslSession::mslVisit(MslAssignment* ass)
             }
             else {
                 // push the initializer
-                pushStack(second);
                 stack->phase++;
+                pushStack(second);
             }
         }
         else {
@@ -692,6 +742,48 @@ void MslSession::doAssignment(MslSymbol* namesym)
     }
 }
         
+//////////////////////////////////////////////////////////////////////
+//
+// Reference
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * A $x reference.
+ * These aren't used much now that we have named references but could
+ * still be useful for special symbol handling.
+ *
+ * If one of these is unresolved it's a little more serious than
+ * an unresolved symbol since you can't use them for just the name.
+ */
+void MslSession::mslVisit(MslReference* ref)
+{
+    MslBinding* binding = nullptr;
+    
+    int position = atoi(ref->name.toUTF8());
+    if (position > 0) {
+        binding = stack->findBinding(position);
+    }
+    else {
+        // it's not uncommon to do $foo to reference a named binding
+        // though it isn't necessary
+        binding = stack->findBinding(ref->name.toUTF8());
+    }
+
+    if (binding != nullptr) {
+        returnBinding(binding);
+    }
+    else {
+        // return null or error?
+        //MslValue* v = valuePool->alloc();
+        //popStack(v);
+        // the token in the error message will just say $ rather than
+        // the name which is inconvenient
+        addError(ref, "Unresolved reference");
+        Trace(1, "Unresolved reference %s", ref->name.toUTF8());
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Symbol
@@ -880,9 +972,9 @@ void MslSession::pushProc(MslProc* proc)
     // note that we're dealing with the calling symbol node and not the proc node
     if (stack->node->children.size() > 0) {
         // yes, push them
-        pushStack(stack->node->children[0]);
         // use the phase number to indiciate which block we're waiting for
         stack->phase = 1;
+        pushStack(stack->node->children[0]);
     }
     else {
         // no arguments, push the body
@@ -959,15 +1051,8 @@ void MslSession::returnProc()
  */
 void MslSession::pushCall()
 {
-    if (stack->node->children.size() > 0) {
-        // proc had arguments which will have been processed by now
-        // and left in child results
-        // mutate this into something nice for the call
-    }
-    valuePool->free(stack->childResults);
-    stack->childResults = nullptr;
+    bindArguments();
     stack->phase = 2;
-
     MslBlock* body = stack->proc->getBody();
     if (body != nullptr) {
         pushStack(body);
@@ -989,33 +1074,63 @@ void MslSession::bindArguments()
     MslBlock* names = stack->proc->getDeclaration();
 
     int position = 1;
-    for (auto namenode : names->children) {
-        MslBinding* binding = makeArgBinding(namenode, position);
-        // give it the corresponding value
-        if (stack->childResults != nullptr) {
-            binding->value = stack->childResults;
-            stack->childResults = stack->childResults->next;
+    if (names != nullptr) {
+        for (auto namenode : names->children) {
+            MslBinding* b = makeArgBinding(namenode);
+            addArgValue(b, position, true);
+            position++;
         }
-        else {
-            // missing arg value
-            // still create a binding to it resolves and has null
-            Trace(2, "Not enough argument values for call");
-        }
-        binding->next = stack->bindings;
-        stack->bindings = binding;
-        position++;
     }
-
+    
     // if we have any left over, give them bindings with positional names
     while (stack->childResults != nullptr) {
         MslBinding* b = valuePool->allocBinding();
         snprintf(b->name, sizeof(b->name), "$%d", position);
-        b->value = stack->childResults;
-        stack->childResults = stack->childResults->next;
-        b->next = stack->bindings;
-        stack->bindings = b;
+        addArgValue(b, position, false);
+        position++;
     }
 }        
+
+/**
+ * Start building a binding with a name from a proc declaration.
+ * These are supposed to all be MslSymbols but the parser may be
+ * letting other things through.
+ */
+MslBinding* MslSession::makeArgBinding(MslNode* namenode)
+{
+    // return something on error so the caller doesn't crash till the next
+    // error check
+    MslBinding* b = valuePool->allocBinding();
+    if (!namenode->isSymbol()) {
+        // what else would it be?
+        // I suppose we could allow literal strings but why
+        // could also allow this and just reference by number?
+        addError(namenode, "Proc declaration not a symbol");
+    }
+    else {
+        b->setName(namenode->token.value.toUTF8());
+    }
+    return b;
+}
+
+/**
+ * Add the next value to an argument binding and install it on the symbol.
+ */
+void MslSession::addArgValue(MslBinding* b, int position, bool required)
+{
+    if (stack->childResults != nullptr) {
+        b->value = stack->childResults;
+        stack->childResults = stack->childResults->next;
+    }
+    else if (required) {
+        // missing arg value
+        // still create a binding so it resolves but has null
+        Trace(2, "Not enough argument values for call");
+    }
+    b->position = position;
+    b->next = stack->bindings;
+    stack->bindings = b;
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1061,9 +1176,9 @@ bool MslSession::doExternal(MslSymbol* snode)
         // does this have arguments?
         if (snode->children.size() > 0) {
             // yes, push them
-            pushStack(snode->children[0]);
             // don't need to use phases here since there are no additional child blocks
             stack->phase = 1;
+            pushStack(snode->children[0]);
         }
         else {
             // no arguments, do the thing

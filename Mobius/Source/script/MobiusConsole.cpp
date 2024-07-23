@@ -1,6 +1,5 @@
 /**
  * The interactive MSL console.
- * 
  */
 
 #include <JuceHeader.h>
@@ -248,6 +247,14 @@ void MobiusConsole::doList()
             console.add("  " + proc->name);
         }
     }
+    MslBinding* bindings = session->getBindings();
+    if (bindings != nullptr) {
+        console.add("Defined Vars");
+        while (bindings != nullptr) {
+            console.add("  " + juce::String(bindings->name));
+            bindings = bindings->next;
+        }
+    }
 }
  
 void MobiusConsole::doEval(juce::String line)
@@ -321,6 +328,10 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         }
         else if (node->isElse()) {
             line += "Else: ";
+        }
+        else if (node->isReference()) {
+            MslReference* ref = static_cast<MslReference*>(node);
+            line += "Reference: " + ref->name;
         }
         else {
             line += "???: ";
