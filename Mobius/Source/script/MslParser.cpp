@@ -137,14 +137,6 @@ void MslParser::sift()
             script->root->remove(node);
             addProc(static_cast<MslProc*>(node));
         }
-// no don't sift these, leave them in place since they define
-// bindings for the block they're in
-#if 0        
-        else if (node->isVar()) {
-            script->root->remove(node);
-            addVar(static_cast<MslVar*>(node));
-        }
-#endif        
         else {
             index++;
         }
@@ -166,25 +158,6 @@ void MslParser::addProc(MslProc* proc)
         script->procs.removeObject(existing);
     }
     script->procs.add(proc);
-}
-
-// be nice if we could treat OwnedArray generically, maybe downdcase to
-// MslNode?
-void MslParser::addVar(MslVar* var)
-{
-    // replace if it was defined again
-    MslVar* existing = nullptr;
-    for (auto v : script->vars) {
-        if (v->name == var->name) {
-            existing = v;
-            break;
-        }
-    }
-    if (existing != nullptr) {
-        Trace(2, "MslParser: Replacing var definition %s", var->name.toUTF8());
-        script->vars.removeObject(existing);
-    }
-    script->vars.add(var);
 }
 
 //////////////////////////////////////////////////////////////////////

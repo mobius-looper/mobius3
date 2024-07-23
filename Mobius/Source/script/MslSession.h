@@ -53,8 +53,6 @@ class MslStack
     // binding(s) for this block
     MslBinding* bindings = nullptr;
     void addBinding(MslBinding* b);
-    MslBinding* findBinding(const char* name);
-    MslBinding* findBinding(int position);
 
     // phases for complex nodes
     MslProc* proc = nullptr;
@@ -95,7 +93,7 @@ class MslSession : public MslVisitor
     ~MslSession();
 
     // evaluate a script
-    void start(class MslScript* script, MslBinding* restoreBindings = nullptr);
+    void start(class MslScript* script);
     bool isWaiting();
     MslValue* getResult();
     MslValue* captureResult();
@@ -130,8 +128,6 @@ class MslSession : public MslVisitor
     
     // "root" value of the top of the stack
     MslValue* rootResult = nullptr;
-    // kludge for the console
-    MslBinding* rootBindings = nullptr;
     
     //
     // core evaluator
@@ -146,6 +142,9 @@ class MslSession : public MslVisitor
     MslStack* pushNextChild();
     void popStack(MslValue* v);
     void popStack();
+
+    MslBinding* findBinding(const char* name);
+    MslBinding* findBinding(int position);
 
     // refs and calls
     void doAssignment(MslSymbol* namesym);

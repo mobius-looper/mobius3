@@ -18,10 +18,6 @@ MslScriptletSession::MslScriptletSession(MslEnvironment* env)
     environment = env;
 
     script.reset(new MslScript());
-    // these too: cleaner if they were in the script
-    MslValuePool* vp = environment->getValuePool();
-    vp->free(scriptletBindings);
-    scriptletBindings = nullptr;
 }
 
 MslScriptletSession::~MslScriptletSession()
@@ -30,7 +26,6 @@ MslScriptletSession::~MslScriptletSession()
     // make sure it is removed?
     MslValuePool* vp = environment->getValuePool();
     vp->free(scriptletResult);
-    vp->free(scriptletBindings);
 }
 
 void MslScriptletSession::reset()
@@ -64,12 +59,8 @@ void MslScriptletSession::eval(juce::String source)
         // for everything
         MslSession* session = new MslSession(environment);
 
-        // kludge for binding carryover, these can change so the
-        // value we had is no longer valid after start
-        // cleaner if we carried these in the Script like procs?
-        session->start(script.get(), scriptletBindings);
-        scriptletBindings = nullptr;
-        
+        session->start(script.get());
+
         // the now familiar copying of result/error status from one object
         // to another
         // might be worth factoring out an MslErrorContainer or something we can pass
@@ -83,9 +74,6 @@ void MslScriptletSession::eval(juce::String source)
         MslValuePool* vp = environment->getValuePool();
         vp->free(scriptletResult);
         scriptletResult = session->captureResult();
-
-        // hack for var binding carryover
-        scriptletBindings = session->captureBindings();
         
         delete session;
     }

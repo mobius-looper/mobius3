@@ -261,6 +261,9 @@ class MslBinding
     // about save/restore state
 
     void setName(const char* s);
+    MslBinding* copy(MslBinding* src);
+    MslBinding* find(const char* s);
+    MslBinding* find(int position);
     
 };
 

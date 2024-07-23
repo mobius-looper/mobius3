@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 
 #include "MslModel.h"
+#include "MslValue.h"
 #include "MslScript.h"
 
 MslScript::MslScript()
@@ -14,6 +15,12 @@ MslScript::MslScript()
 MslScript::~MslScript()
 {
     delete root;
+    // these don't cascade delete
+    while (bindings != nullptr) {
+        MslBinding* next = bindings->next;
+        delete bindings;
+        bindings = next;
+    }
 }
 
 MslProc* MslScript::findProc(juce::String procname) {

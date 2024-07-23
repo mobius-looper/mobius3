@@ -1,5 +1,6 @@
 
 #include "../util/Trace.h"
+#include "../util/Util.h"
 
 #include "MslValue.h"
 
@@ -116,6 +117,30 @@ MslBinding::~MslBinding()
 void MslBinding::setName(const char* s)
 {
     strncpy(name, s, sizeof(name));
+}
+
+MslBinding* MslBinding::find(const char* argName)
+{
+    MslBinding* found = nullptr;
+    MslBinding* ptr = this;
+    while (found == nullptr && ptr != nullptr) {
+        if (StringEqual(argName, ptr->name))
+          found = ptr;
+        ptr = ptr->next;
+    }
+    return found;
+}
+
+MslBinding* MslBinding::find(int argPosition)
+{
+    MslBinding* found = nullptr;
+    MslBinding* ptr = this;
+    while (found == nullptr && ptr != nullptr) {
+        if (argPosition == ptr->position)
+          found = ptr;
+        ptr = ptr->next;
+    }
+    return found;
 }
 
 //////////////////////////////////////////////////////////////////////

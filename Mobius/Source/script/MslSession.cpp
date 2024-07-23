@@ -44,29 +44,35 @@ MslSession::~MslSession()
     // sense to return these to the pool, the "static initializer" ordering problem
     //delete rootResult;
     valuePool->free(rootResult);
-    valuePool->free(rootBindings);
 }
 
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslScript* argScript, MslBinding* restoreBindings)
+void MslSession::start(MslScript* argScript)
 {
     errors.clear();
 
     valuePool->free(rootResult);
     rootResult = nullptr;
-    valuePool->free(rootBindings);
-    rootBindings = nullptr;
     
     script = argScript;
     stack = allocStack();
     stack->node = script->root;
 
-    // hack for the console to carry over vars from one eval to another
-    if (restoreBindings != nullptr)
-      stack->bindings = restoreBindings;
-
+    // put the saved static bindings in the root block stack frame
+    // !! potential thread issues
+    // it is rare to have concurrent evaluations of the same script and still
+    // rarer to be doing it from both the UI thread and the audio thread at the same time
+    // but it can happen
+    // if static bindings are maintained on the MslScript and copied to the MslStack,
+    // any new values won't be "seen" by other threads until this session ends
+    // also, the last thread to execute overwrite the values of the previous ones
+    // todo this the Right Way, static variable bindings need to be more like exported
+    // bindings and managed in a single shared location with csects around access
+    stack->bindings = script->bindings;
+    script->bindings = nullptr;
+    
     run();
 }
 
@@ -101,13 +107,6 @@ MslValue* MslSession::captureResult()
     MslValue* result = rootResult;
     rootResult = nullptr;
     return result;
-}
-
-MslBinding* MslSession::captureBindings()
-{
-    MslBinding* bindings = rootBindings;
-    rootBindings = nullptr;
-    return bindings;
 }
 
 juce::OwnedArray<MslError>* MslSession::getErrors()
@@ -263,53 +262,6 @@ void MslStack::addBinding(MslBinding* b)
     }
 }
 
-MslBinding* MslStack::findBinding(const char* name)
-{
-    MslBinding* found = nullptr;
-
-    MslBinding* ptr = bindings;
-    while (found == nullptr && ptr != nullptr) {
-        if (StringEqual(name, ptr->name))
-            found = ptr;
-        ptr = ptr->next;
-    }
-
-    // walk up
-    if (found == nullptr && parent != nullptr)
-      found = parent->findBinding(name);
-
-    return found;
-}
-
-/**
- * Search for a positional binding.
- * Unlike named bindings these only look for symbol nodes for
- * proc calls that stored bindings with numbers.
- *
- * The root block may also have positional bindings for arguments
- * passed into the script.
- */
-MslBinding* MslStack::findBinding(int position)
-{
-    MslBinding* found = nullptr;
-
-    // only look in symbols, or the root block of a script
-    if (parent == nullptr || node->isSymbol()) {
-        MslBinding* ptr = bindings;
-        while (found == nullptr && ptr != nullptr) {
-            if (ptr->position == position)
-              found = ptr;
-            ptr = ptr->next;
-        }
-    }
-    
-    // walk up
-    if (found == nullptr && parent != nullptr)
-      found = parent->findBinding(position);
-
-    return found;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Run Loop
@@ -428,11 +380,13 @@ void MslSession::popStack(MslValue* v)
             last->next = v;
         }
 
-        // kludge: the console would like to carry over Var bindings
-        // from one interactive line to the next, but these will be lost when
-        // the root frame is freed
-        // save them for your silly console
-        rootBindings = stack->bindings;
+        // see start() for more on the thread issues here...
+        // save the final root block bindings back into the script
+        // technically should only be doing this for static variables
+        // and not locals
+        // or we could have the binding reset when the MslVar that defines
+        // them is encountered during evaluation
+        script->bindings = stack->bindings;
         stack->bindings = nullptr;
     }
     else if (!parent->accumulator) {
@@ -491,7 +445,65 @@ bool MslSession::found(MslValue* node, MslValue* list)
     }
     return found;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Bindings
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Walk up the stack looking for a binding, and finally into
+ * the static binging list in the script.
+ */
+MslBinding* MslSession::findBinding(const char* name)
+{
+    MslBinding* found = nullptr;
+
+    MslStack* level = stack;
+
+    while (found == nullptr && level != nullptr) {
+
+        if (level->bindings != nullptr)
+          found = level->bindings->find(name);
+
+        if (found == nullptr)
+          level = level->parent;
+    }
     
+    // if we make it to the top of the stack, look in the static bindings
+    // !! potential thread issues here
+    if (found == nullptr) {
+        if (script->bindings != nullptr)
+          found = script->bindings->find(name);
+    }
+
+    return found;
+}
+
+MslBinding* MslSession::findBinding(int position)
+{
+    MslBinding* found = nullptr;
+
+    MslStack* level = stack;
+    while (found == nullptr && level != nullptr) {
+        if (level->bindings != nullptr)
+          found = level->bindings->find(position);
+
+        if (found == nullptr)
+          level = level->parent;
+    }
+    
+    // if we make it to the top of the stack, look in the static bindings
+    // !! potential thread issues here
+    if (found == nullptr) {
+        if (script->bindings != nullptr)
+          found = script->bindings->find(position);
+    }
+
+    return found;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Literal
@@ -692,7 +704,7 @@ void MslSession::mslVisit(MslAssignment* ass)
 void MslSession::doAssignment(MslSymbol* namesym)
 {
     // resolve the target symbol, first look for var bindings
-    MslBinding* binding = stack->findBinding(namesym->token.value.toUTF8());
+    MslBinding* binding = findBinding(namesym->token.value.toUTF8());
     if (binding != nullptr) {
         // transfer the value
         valuePool->free(binding->value);
@@ -762,12 +774,12 @@ void MslSession::mslVisit(MslReference* ref)
     
     int position = atoi(ref->name.toUTF8());
     if (position > 0) {
-        binding = stack->findBinding(position);
+        binding = findBinding(position);
     }
     else {
         // it's not uncommon to do $foo to reference a named binding
         // though it isn't necessary
-        binding = stack->findBinding(ref->name.toUTF8());
+        binding = findBinding(ref->name.toUTF8());
     }
 
     if (binding != nullptr) {
@@ -842,7 +854,7 @@ void MslSession::mslVisit(MslSymbol* snode)
         // first time here
 
         // look for local vars
-        MslBinding* binding = stack->findBinding(snode->token.value.toUTF8());
+        MslBinding* binding = findBinding(snode->token.value.toUTF8());
         if (binding != nullptr) {
             returnBinding(binding);    
         }

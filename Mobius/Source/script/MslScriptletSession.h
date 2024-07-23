@@ -40,7 +40,7 @@ class MslScriptletSession {
     }
 
     MslBinding* getBindings() {
-        return scriptletBindings;
+        return script->bindings;
     }
 
     juce::OwnedArray<MslProc>* getProcs();
