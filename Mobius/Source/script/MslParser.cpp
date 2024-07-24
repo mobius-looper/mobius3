@@ -258,7 +258,7 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::String:
-                current->add(new MslLiteral(t));
+                current = push(new MslLiteral(t));
                 break;
 
             case MslToken::Type::Int: {
@@ -266,21 +266,21 @@ void MslParser::parseInner(juce::String source)
                 // don't want a dependency on that model yet
                 MslLiteral* l = new MslLiteral(t);
                 l->isInt = true;
-                current->add(l);
+                current = push(l);
             }
                 break;
 
             case MslToken::Type::Float: {
                 MslLiteral* l = new MslLiteral(t);
                 l->isFloat = true;
-                current->add(l);
+                current = push(l);
             }
                 break;
                 
             case MslToken::Type::Bool: {
                 MslLiteral* l = new MslLiteral(t);
                 l->isBool = true;
-                current->add(l);
+                current = push(l);
             }
                 break;
 
@@ -540,6 +540,12 @@ MslNode* MslParser::checkKeywords(MslToken& t)
 
     else if (t.value == "else")
       keyword = new MslElse(t);
+    
+    else if (t.value == "end")
+      keyword = new MslEnd(t);
+    
+    else if (t.value == "wait")
+      keyword = new MslWait(t);
 
     return keyword;
 }

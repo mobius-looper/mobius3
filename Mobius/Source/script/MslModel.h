@@ -34,6 +34,8 @@ class MslVisitor
     virtual void mslVisit(class MslIf* obj) = 0;
     virtual void mslVisit(class MslElse* obj) = 0;
     virtual void mslVisit(class MslReference* obj) = 0;
+    virtual void mslVisit(class MslEnd* obj) = 0;
+    virtual void mslVisit(class MslWait* obj) = 0;
 };
 
 /**
@@ -123,6 +125,8 @@ class MslNode
     virtual bool isIf() {return false;}
     virtual bool isElse() {return false;}
     virtual bool isReference() {return false;}
+    virtual bool isEnd() {return false;}
+    virtual bool isWait() {return false;}
 
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -457,18 +461,96 @@ class MslElse : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
-#if 0
-
-class MslFunction : public MslNode
+class MslEnd : public MslNode
 {
   public:
-    MslFunction() {}
-    ~MslFunction() {}
+    MslEnd(MslToken& t) : MslNode(t) {}
+    ~MslEnd() {}
 
-    class Symbol* symbol = nullptr;
+    bool isEnd() override {return true;}
+
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    virtual bool operandable() {return false;}
 };
 
-#endif
+typedef enum {
+
+    WaitNone,
+    WaitLast,
+	WaitSwitch,
+	WaitBlock,
+	WaitStart,
+	WaitEnd,
+	WaitExternalStart,
+	WaitDriftCheck,
+	WaitPulse,
+    WaitBeat,
+    WaitBar,
+    WaitRealign,
+    WaitReturn,
+    WaitMsec,
+    WaitFrame,
+    WaitSubcycle,
+    WaitCycle,
+    WaitLoop
+} MslWaitType;
+
+class MslWait : public MslNode
+{
+  public:
+    MslWait(MslToken& t) : MslNode(t) {}
+    ~MslWait() {}
+
+    bool isWait() override {return true;}
+    
+    bool wantsToken(MslToken& t) override {
+        bool wants = false;
+        type = mapType(t.value);
+        if (type != WaitNone) {
+            wants = true;
+            typeName = t.value;
+        }
+        return wants;
+    }
+
+    bool wantsNode(MslNode* node) override {
+        (void)node;
+        return (children.size() < 1 || type == WaitNone);
+    }
+
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    virtual bool operandable() {return false;}
+
+    MslWaitType type = WaitNone;
+    juce::String typeName;
+    
+    static MslWaitType mapType(juce::String s)
+    {
+        MslWaitType type = WaitNone;
+    
+        if (s == "last") type = WaitLast;
+        else if (s == "switch") type = WaitSwitch;
+        else if (s == "block" || s == "blocks") type = WaitBlock;
+        else if (s == "start" || s == "starts") type = WaitStart;
+        else if (s == "end" || s == "ends") type = WaitEnd;
+        else if (s == "externalStart" || s == "externalStarts") type = WaitExternalStart;
+        else if (s == "driftCheck") type = WaitDriftCheck;
+        else if (s == "pulse" || s == "pulses") type = WaitPulse;
+        else if (s == "beat" || s == "beats") type = WaitBeat;
+        else if (s == "bar" || s == "bars") type = WaitBar;
+        else if (s == "realign") type = WaitRealign;
+        else if (s == "return") type = WaitReturn;
+        else if (s == "msec" || s == "msecs") type = WaitMsec;
+        else if (s == "frame" || s == "frames") type = WaitFrame;
+        else if (s == "subcycle" || s == "subcycles") type = WaitSubcycle;
+        else if (s == "cycle" || s == "cycles") type = WaitCycle;
+        else if (s == "loop" || s == "loops") type = WaitLoop;
+
+        return type;
+    }
+
+};
+
 
 /****************************************************************************/
 /****************************************************************************/

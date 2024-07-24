@@ -113,6 +113,8 @@ class MslSession : public MslVisitor
     void mslVisit(class MslIf* obj) override;
     void mslVisit(class MslElse* obj) override;
     void mslVisit(class MslReference* obj) override;
+    void mslVisit(class MslEnd* obj) override;
+    void mslVisit(class MslWait* obj) override;
 
   private:
 

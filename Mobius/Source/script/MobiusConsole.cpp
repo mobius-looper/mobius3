@@ -333,6 +333,13 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             MslReference* ref = static_cast<MslReference*>(node);
             line += "Reference: " + ref->name;
         }
+        else if (node->isEnd()) {
+            line += "End";
+        }
+        else if (node->isWait()) {
+            MslWait* wait = static_cast<MslWait*>(node);
+            line += "Wait: " + wait->typeName;
+        }
         else {
             line += "???: ";
         }

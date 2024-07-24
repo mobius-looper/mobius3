@@ -1592,14 +1592,98 @@ bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * If nodes have at least two child nodes: a condition and a truth block
+ * They may have an optional else block.  There will only be two phases.
+ * First the condition block is pushed and evaluated and based on that
+ * either the truth or false block is pushed.
+ */
 void MslSession::mslVisit(MslIf* node)
 {
-    addError(node, "Unimplemented");
+    if (stack->phase == 0) {
+        // need the condition
+        int nodes = node->children.size();
+        if (nodes == 0) {
+            // malformed no condition, ignore or error?
+            addError(node, "If with no condition");
+        }
+        else if (nodes == 1) {
+            addError(node, "If with no consequence");
+        }
+        else {
+            stack->phase = 1;
+            pushStack(node->children[0]);
+        }
+    }
+    else if (stack->phase == 1) {
+        // back from the conditional
+        // what is truth?
+        bool truth = false;
+        if (stack->childResults != nullptr)
+          truth = stack->childResults->getBool();
+
+        stack->phase = 2;
+        if (truth && node->children.size() > 1) {
+            pushStack(node->children[1]);
+        }
+        else if (!truth && node->children.size() > 2) {
+            pushStack(node->children[2]);
+        }
+        else {
+            // if truth falls in the forest, does it make a return value?
+            // probably should return null for accumulators
+            popStack(valuePool->alloc());
+        }
+    }
+    else if (stack->phase == 2) {
+        // back from the consequence
+        popStack();
+    }
 }
 
+/**
+ * These could be collapsed by the parser since they do nothing but just act
+ * as a placeholder node.
+ */
 void MslSession::mslVisit(MslElse* node)
 {
-    addError(node, "Unimplemented");
+    (void)node;
+    MslStack* next = pushNextChild();
+    if (next == nullptr)
+      popStack();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Wait
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslSession::mslVisit(MslWait* wait)
+{
+    if (wait->type == WaitNone)
+      addError(wait, "Missing wait type");
+    else {
+        popStack();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// End
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Todo: might be nice to have end return a value for the script?
+ */
+void MslSession::mslVisit(MslEnd* end)
+{
+    (void)end;
+    MslValue* v = valuePool->alloc();
+    v->setString("end");
+    popStack(v);
+    while (stack != nullptr) popStack();
 }
 
 //////////////////////////////////////////////////////////////////////
