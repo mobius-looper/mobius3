@@ -39,7 +39,7 @@ void MslScriptletSession::reset()
  * Okay, now it gets interesting.
  * Parse the scriptlet text and evaluate it.
  */
-void MslScriptletSession::eval(juce::String source)
+void MslScriptletSession::eval(MslContext* c, juce::String source)
 {
     MslParser parser;
 
@@ -59,7 +59,7 @@ void MslScriptletSession::eval(juce::String source)
         // for everything
         MslSession* session = new MslSession(environment);
 
-        session->start(script.get());
+        session->start(c, script.get());
 
         // the now familiar copying of result/error status from one object
         // to another
@@ -74,11 +74,40 @@ void MslScriptletSession::eval(juce::String source)
         MslValuePool* vp = environment->getValuePool();
         vp->free(scriptletResult);
         scriptletResult = session->captureResult();
-        
-        delete session;
+
+        if (!session->isWaiting()) {
+            delete session;
+        }
+        else {
+            waitingSession.reset(session);
+        }
     }
 
     delete presult;
+}
+
+bool MslScriptletSession::isWaiting()
+{
+    return (waitingSession != nullptr);
+}
+
+void MslScriptletSession::resume(MslContext* c, MslWait* w)
+{
+    if (waitingSession != nullptr) {
+        waitingSession->resume(c, w);
+        
+        MslError::transfer(waitingSession->getErrors(), errors);
+        fullResult = waitingSession->getFullResult();
+        MslValuePool* vp = environment->getValuePool();
+        vp->free(scriptletResult);
+        scriptletResult = waitingSession->captureResult();
+
+        if (!waitingSession->isWaiting())
+          waitingSession = nullptr;
+    }
+    else {
+        waitingSession = nullptr;
+    }
 }
 
 juce::OwnedArray<MslProc>* MslScriptletSession::getProcs()

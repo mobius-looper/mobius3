@@ -612,7 +612,8 @@
         <FILE id="Sc7E1Z" name="MslTokenizer.h" compile="0" resource="0" file="Source/script/MslTokenizer.h"/>
         <FILE id="mMNdWj" name="MslValue.cpp" compile="1" resource="0" file="Source/script/MslValue.cpp"/>
         <FILE id="WkVWlt" name="MslValue.h" compile="0" resource="0" file="Source/script/MslValue.h"/>
-        <FILE id="vkoYJG" name="MslWait.cpp" compile="1" resource="0" file="Source/script/MslWait.cpp"/>
+        <FILE id="wjcsXg" name="MslWait.h" compile="0" resource="0" file="Source/script/MslWait.h"/>
+        <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
       </GROUP>

@@ -26,6 +26,9 @@ class MslScriptletSession {
 
     // parse one line of MSL text and evaluate it
     void eval(class MslContext* c, juce::String source);
+    bool isWaiting();
+    class MslWait* getWait();
+    void resume(class MslContext* c, class MslWait* w);
 
     juce::OwnedArray<class MslError>* getErrors() {
         return &errors;
@@ -51,6 +54,7 @@ class MslScriptletSession {
 
     // dynamic script maintained for this session
     std::unique_ptr<class MslScript> script = nullptr;
+    std::unique_ptr<class MslSession> waitingSession = nullptr;
 
     juce::OwnedArray<class MslError> errors;
     MslValue* scriptletResult = nullptr;

@@ -112,4 +112,6 @@ class MslWait
 
     // the stack frame that is waiting
     class MslStack* stack = nullptr;
+
+    int arguments = 0;
 };

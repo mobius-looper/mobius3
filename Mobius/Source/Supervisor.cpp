@@ -1589,7 +1589,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
         }
     }
     else if (s->behavior == BehaviorScript) {
-        scriptenv.doAction(action);
+        scriptenv.doAction(this, action);
         handled = true;
     }
     
@@ -1849,24 +1849,31 @@ MobiusConfig* Supervisor::mslGetMobiusConfig()
     return getMobiusConfig();
 }
 
-void Supervisor::mslDoAction(class UIAction* a)
+void Supervisor::mslAction(UIAction* a)
 {
     doAction(a);
 }
 
-bool Supervisor::mslDoQuery(class Query* q)
+bool Supervisor::mslQuery(Query* q)
 {
     return doQuery(q);
 }
 
-bool Supervisor::mslEcho(const char* msg)
+bool Supervisor::mslWait(MslWait* w)
 {
+    (void)w;
+    Trace(1, "Supervisor: MskContext.mslWait called on the wrong thread");
+    return false;
+}
+
+void Supervisor::mslEcho(const char* msg)
+{
+    (void)msg;
     // currently used only for debug messages
     // MslSession is already using Trace so we don't need to do it again
     // but if you want to factor out Trace, this would be the place
     // also consider using this interface for mobiusMessage and mobiusAlert as well
     // if we can
-    return true;
 }
 
 /**

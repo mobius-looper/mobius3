@@ -90,8 +90,10 @@ void MslSession::resume(MslContext* argContext, MslWait* wait)
     context = argContext;
 
     // go back to the stack frame that was waiting
-    stack = wait->stack();
-
+    stack = wait->stack;
+    // clear this so the run loop can advance
+    stack->waiting = false;
+    
     // run() will immediately call the MslWaitNode handler again
     // which needs to clear the waiting flag, but the node handler needs to
     // know it is being touched because of a resume() since I'm not positive
@@ -192,6 +194,17 @@ void MslSession::addError(MslNode* node, const char* details)
     e->column = node->token.column;
     e->details = juce::String(details);
     errors.add(e);
+}
+
+/**
+ * Only for MslScriptletSession and the console
+ */
+MslWait* MslSession::getWait()
+{
+    MslWait* wait = nullptr;
+    if (stack != nullptr)
+      wait = &(stack->wait);
+    return wait;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1171,6 +1184,12 @@ void MslSession::addArgValue(MslBinding* b, int position, bool required)
 //
 //////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////
+//
+// External Symbols
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Here we've encountered a symbol node that did not resolve into
  * anything within the script environment.  Look into the container.
@@ -1686,6 +1705,8 @@ void MslSession::mslVisit(MslWaitNode* wait)
         // back here after MslEnvironment::resume was called and the container
         // said the wait is over
         // might want to have an interesting return value here
+        stack->waiting = false;
+        stack->waitFinished = false;
         popStack();
     }
     else if (stack->waiting) {
@@ -1705,7 +1726,7 @@ void MslSession::mslVisit(MslWaitNode* wait)
     else if (wait->type == WaitTypeDuration && wait->duration == WaitDurationNone) {
         addError(wait, "Missing or invalid duration name");
     }
-    else if (wait->location == WaitLocationNone) {
+    else if (wait->type == WaitTypeLocation && wait->location == WaitLocationNone) {
         addError(wait, "Missing or invalid location name");
     }
     else {
@@ -1724,7 +1745,7 @@ void MslSession::setupWait(MslWaitNode* node)
     // do need to be reclaimed
     // ?? or do they, just point at the stack->childResults which will
     // be freed when this stack frame finishes
-    MslWait* = &(stack->wait);
+    MslWait* wait = &(stack->wait);
     
     wait->type = node->type;
     wait->event = node->event;
@@ -1740,8 +1761,8 @@ void MslSession::setupWait(MslWaitNode* node)
     if (stack->childResults != nullptr)
       wait->arguments = stack->childResults->getInt();
 
-    if (!context->mslDoWait(wait))
-      addError("Unable to schedule wait state");
+    if (!context->mslWait(wait))
+      addError(node, "Unable to schedule wait state");
 
     stack->waiting = true;
 }
@@ -1762,6 +1783,17 @@ void MslSession::mslVisit(MslEnd* end)
     v->setString("end");
     popStack(v);
     while (stack != nullptr) popStack();
+}
+
+void MslSession::mslVisit(MslEcho* echo)
+{
+    (void)echo;
+    MslStack* next = pushNextChild();
+    if (next == nullptr) {
+        if (stack->childResults != nullptr)
+          context->mslEcho(stack->childResults->getString());
+        popStack();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

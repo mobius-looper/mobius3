@@ -104,9 +104,10 @@ class MslSession : public MslVisitor
     void start(class MslContext* context, class MslScript* script);
 
     // resume evaluation after a wait if it can
-    void resume(class MslContext* context);
+    void resume(class MslContext* context, class MslWait* wait);
     
     bool isWaiting();
+    class MslWait* getWait();
     MslValue* getResult();
     MslValue* captureResult();
     MslBinding* captureBindings();
@@ -127,6 +128,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslReference* obj) override;
     void mslVisit(class MslEnd* obj) override;
     void mslVisit(class MslWaitNode* obj) override;
+    void mslVisit(class MslEcho* obj) override;
 
   private:
 
@@ -136,6 +138,8 @@ class MslSession : public MslVisitor
 
     juce::OwnedArray<MslStack> stackPool;
     class MslStack* stack = nullptr;
+
+    class MslContext* context = nullptr;
     
     // runtime errors
     juce::OwnedArray<class MslError> errors;

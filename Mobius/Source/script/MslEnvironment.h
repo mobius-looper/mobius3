@@ -71,13 +71,13 @@ class MslEnvironment
     void shutdown();
 
     // the "ui thread" maintenance ping
-    void shellAdvance(MslContext* c);
+    void shellAdvance(class MslContext* c);
     
     // the "audio thread" maintenance ping
-    void kernelAdvance(MslContext* c);
+    void kernelAdvance(class MslContext* c);
 
     // resume a session after a wait has completed
-    void resume(MslContext* c, MslWait* wait);
+    void resume(class MslContext* c, class MslWait* wait);
     
     // primary entry point for file loading by the UI/Supervisor
     // hate this interface
@@ -118,7 +118,7 @@ class MslEnvironment
     //
 
     // normal file-based script actions
-    void doAction(class UIAction* action);
+    void doAction(class MslContext* c, class UIAction* action);
 
 
     // for the inner component classes, mainly Session

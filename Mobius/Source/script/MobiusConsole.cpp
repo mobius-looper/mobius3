@@ -92,34 +92,40 @@ void MobiusConsole::consoleEscape()
 // hard wired Supervisor references till we can sort that shit out
 //
 
-juce::File Supervisor::mslGetRoot()
+juce::File MobiusConsole::mslGetRoot()
 {
     return Supervisor::Instance->getRoot();
 }
 
-MobiusConfig* Supervisor::mslGetMobiusConfig()
+MobiusConfig* MobiusConsole::mslGetMobiusConfig()
 {
     return Supervisor::Instance->getMobiusConfig();
 }
 
-void Supervisor::mslDoAction(class UIAction* a)
+void MobiusConsole::mslAction(UIAction* a)
 {
     Supervisor::Instance->doAction(a);
 }
 
-bool Supervisor::mslDoQuery(class Query* q)
+bool MobiusConsole::mslQuery(Query* q)
 {
-    return Sueprvisor::Instance->doQuery(q);
+    return Supervisor::Instance->doQuery(q);
+}
+
+bool MobiusConsole::mslWait(MslWait* w)
+{
+    wait = w;
+    // pretend this worked
+    return true;
 }
 
 /**
  * This is the only real reason we implement this, to get
  * echo statements from the script session into the console.
  */
-bool Supervisor::mslEcho(const char* msg)
+void MobiusConsole::mslEcho(const char* msg)
 {
     console.add(juce::String(msg));
-    return true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -160,6 +166,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("list")) {
         doList();
     }
+    else if (line.startsWith("resume")) {
+        doResume();
+    }
     else {
         doEval(line);
     }
@@ -180,6 +189,7 @@ void MobiusConsole::doHelp()
     console.add("parse     parse a line of script");
     console.add("list      list loaded scripts and symbols");
     console.add("show      show proc structure");
+    console.add("resume    resume the last scriptlet after a wait");
     console.add("<text>    evaluate a line of mystery");
 }
 
@@ -325,6 +335,16 @@ void MobiusConsole::doEval(juce::String line)
     }
 }
 
+void MobiusConsole::doResume()
+{
+    if (wait == nullptr)
+      console.add("Session is not waiting");
+    else {
+        session->resume(this, wait);
+        wait = nullptr;
+    }
+    
+}
 
 /**
  * This needs to be packaged better into a utliity that is closer to the
@@ -382,15 +402,18 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isEnd()) {
             line += "End";
         }
+        else if (node->isEcho()) {
+            line += "Echo";
+        }
         else if (node->isWait()) {
-            MslWait* wait = static_cast<MslWait*>(node);
-            line += "Wait: " + juce::String(wait->typeToKeyword(wait->type));
-            if (wait->type == WaitTypeEvent)
-              line += " " + juce::String(wait->eventToKeyword(wait->event));
-            else if (wait->type == WaitTypeDuration)
-              line += " " + juce::String(wait->durationToKeyword(wait->duration));
-            else if (wait ->type == WaitTypeLocation)
-              line += " " + juce::String(wait->locationToKeyword(wait->location));
+            MslWaitNode* waitnode = static_cast<MslWaitNode*>(node);
+            line += "Wait: " + juce::String(waitnode->typeToKeyword(waitnode->type));
+            if (waitnode->type == WaitTypeEvent)
+              line += " " + juce::String(waitnode->eventToKeyword(waitnode->event));
+            else if (waitnode->type == WaitTypeDuration)
+              line += " " + juce::String(waitnode->durationToKeyword(waitnode->duration));
+            else if (waitnode->type == WaitTypeLocation)
+              line += " " + juce::String(waitnode->locationToKeyword(waitnode->location));
               
         }
         else {

@@ -1161,14 +1161,25 @@ MobiusConfig* MobiusKernel::mslGetMobiusConfig()
  * This differs from doAction above because we're already "in" the core
  * !! need more here
  */
-void MobiusKernel::mslDoAction(class UIAction* a)
+void MobiusKernel::mslAction(UIAction* a)
 {
     doAction(a);
 }
 
-bool MobiusKernel::mslDoQuery(class Query* q)
+bool MobiusKernel::mslQuery(Query* q)
 {
     return doQuery(q);
+}
+
+bool MobiusKernel::mslWait(MslWait* w)
+{
+    (void)w;
+    return true;
+}
+
+void MobiusKernel::mslEcho(const char* msg)
+{
+    (void)msg;
 }
 
 //

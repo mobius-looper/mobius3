@@ -27,18 +27,18 @@ class MslContext
     virtual class MobiusConfig* mslGetMobiusConfig() = 0;
 
     // perform an action that invokes a function or assigns a parameter
-    virtual void mslDoAction(class UIAction* a) = 0;
+    virtual void mslAction(class UIAction* a) = 0;
 
     // find the value of an external symbol
-    virtual bool mslDoQuery(class Query* q) = 0;
+    virtual bool mslQuery(class Query* q) = 0;
 
     // initialize a wait state
-    virtual bool mslDoWait(class MslWait* w) = 0;
+    virtual bool mslWait(class MslWait* w) = 0;
 
     // say something somewhere
     // should we do levels here to so we can get rid of the
     // Message and Alert callbacks in MobiusListener?
-    virtual bool mslEcho(const char* msg) = 0;
+    virtual void mslEcho(const char* msg) = 0;
 
     //
     // From here down are more random services that need thought

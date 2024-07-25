@@ -228,8 +228,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // MslContext
     juce::File mslGetRoot() override;
     class MobiusConfig* mslGetMobiusConfig() override;
-    void mslDoAction(class UIAction* a) override;
-    bool mslDoQuery(class Query* q) override;
+    void mslAction(class UIAction* a) override;
+    bool mslQuery(class Query* q) override;
+    bool mslWait(class MslWait* w) override;
+    void mslEcho(const char* msg) override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);

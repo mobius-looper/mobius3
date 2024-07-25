@@ -545,7 +545,10 @@ MslNode* MslParser::checkKeywords(MslToken& t)
       keyword = new MslEnd(t);
     
     else if (t.value == "wait")
-      keyword = new MslWait(t);
+      keyword = new MslWaitNode(t);
+    
+    else if (t.value == "echo")
+      keyword = new MslEcho(t);
 
     return keyword;
 }

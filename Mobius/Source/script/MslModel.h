@@ -43,6 +43,7 @@ class MslVisitor
     virtual void mslVisit(class MslReference* obj) = 0;
     virtual void mslVisit(class MslEnd* obj) = 0;
     virtual void mslVisit(class MslWaitNode* obj) = 0;
+    virtual void mslVisit(class MslEcho* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -140,7 +141,8 @@ class MslNode
     virtual bool isReference() {return false;}
     virtual bool isEnd() {return false;}
     virtual bool isWait() {return false;}
-
+    virtual bool isEcho() {return false;}
+    
     virtual void visit(MslVisitor* visitor) = 0;
 
     // console tools
@@ -545,6 +547,22 @@ class MslEnd : public MslNode
     ~MslEnd() {}
 
     bool isEnd() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    bool operandable() {return false;}
+};
+
+class MslEcho : public MslNode
+{
+  public:
+    MslEcho(MslToken& t) : MslNode(t) {}
+    ~MslEcho() {}
+
+    bool wantsNode(MslNode* node) override {
+        (void)node;
+        return (children.size() == 0);
+    }
+    
+    bool isEcho() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     bool operandable() {return false;}
 };

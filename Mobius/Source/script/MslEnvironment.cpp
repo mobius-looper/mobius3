@@ -384,7 +384,7 @@ void MslEnvironment::resume(MslContext* c, MslWait* wait)
  * todo: will need thread safety around the session
  * todo: will need script directive to force this immediately into the audio thread
  */
-void MslEnvironment::doAction(UIAction* action)
+void MslEnvironment::doAction(MslContext* c, UIAction* action)
 {
     // same sanity checking that should have been done by now
     Symbol* s = action->symbol;
@@ -402,7 +402,7 @@ void MslEnvironment::doAction(UIAction* action)
         MslSession* session = new MslSession(this);
         
         if (link->script != nullptr) {
-            session->start(link->script);
+            session->start(c, link->script);
         }
         else if (link->proc != nullptr) {
             Trace(1, "MslEnvironment: MSL Proc linkage not implemented");
