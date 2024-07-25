@@ -1859,6 +1859,16 @@ bool Supervisor::mslDoQuery(class Query* q)
     return doQuery(q);
 }
 
+bool Supervisor::mslEcho(const char* msg)
+{
+    // currently used only for debug messages
+    // MslSession is already using Trace so we don't need to do it again
+    // but if you want to factor out Trace, this would be the place
+    // also consider using this interface for mobiusMessage and mobiusAlert as well
+    // if we can
+    return true;
+}
+
 /**
  * Return a handle to the MslEnvironment.
  * This is part of the MslContainer interface.

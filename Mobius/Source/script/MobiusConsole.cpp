@@ -87,6 +87,41 @@ void MobiusConsole::consoleEscape()
     panel->close();
 }
 
+//
+// MslContext implementations
+// hard wired Supervisor references till we can sort that shit out
+//
+
+juce::File Supervisor::mslGetRoot()
+{
+    return Supervisor::Instance->getRoot();
+}
+
+MobiusConfig* Supervisor::mslGetMobiusConfig()
+{
+    return Supervisor::Instance->getMobiusConfig();
+}
+
+void Supervisor::mslDoAction(class UIAction* a)
+{
+    Supervisor::Instance->doAction(a);
+}
+
+bool Supervisor::mslDoQuery(class Query* q)
+{
+    return Sueprvisor::Instance->doQuery(q);
+}
+
+/**
+ * This is the only real reason we implement this, to get
+ * echo statements from the script session into the console.
+ */
+bool Supervisor::mslEcho(const char* msg)
+{
+    console.add(juce::String(msg));
+    return true;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Commands
@@ -259,26 +294,37 @@ void MobiusConsole::doList()
  
 void MobiusConsole::doEval(juce::String line)
 {
-    session->eval(line);
-
-    // side effect of an evaluation is a list of errors and a result
-    juce::OwnedArray<MslError>* errors = session->getErrors();
-    if (errors->size() > 0) {
-        showErrors(errors);
+    if (session->isWaiting()) {
+        console.add("Session is waiting, must be resumed");
     }
     else {
-        // temporary debugging
-        bool fullResult = true;
-        if (fullResult) {
-            juce::String full = session->getFullResult();
-            console.add(full);
+    
+        session->eval(this, line);
+
+        // side effect of an evaluation is a list of errors and a result
+        juce::OwnedArray<MslError>* errors = session->getErrors();
+        if (errors->size() > 0) {
+            showErrors(errors);
         }
         else {
-            MslValue* v = session->getResult();
-            console.add(juce::String(v->getString()));
+            // temporary debugging
+            bool fullResult = true;
+            if (fullResult) {
+                juce::String full = session->getFullResult();
+                console.add(full);
+            }
+            else {
+                MslValue* v = session->getResult();
+                console.add(juce::String(v->getString()));
+            }
+        }
+
+        if (session->isWaiting()) {
+            console.add("Session is waiting");
         }
     }
 }
+
 
 /**
  * This needs to be packaged better into a utliity that is closer to the
@@ -338,7 +384,14 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         }
         else if (node->isWait()) {
             MslWait* wait = static_cast<MslWait*>(node);
-            line += "Wait: " + wait->typeName;
+            line += "Wait: " + juce::String(wait->typeToKeyword(wait->type));
+            if (wait->type == WaitTypeEvent)
+              line += " " + juce::String(wait->eventToKeyword(wait->event));
+            else if (wait->type == WaitTypeDuration)
+              line += " " + juce::String(wait->durationToKeyword(wait->duration));
+            else if (wait ->type == WaitTypeLocation)
+              line += " " + juce::String(wait->locationToKeyword(wait->location));
+              
         }
         else {
             line += "???: ";

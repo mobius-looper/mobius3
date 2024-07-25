@@ -14,7 +14,8 @@
 
 class MobiusConsole : public juce::Component,
                       public juce::Button::Listener,
-                      public Console::Listener
+                      public Console::Listener,
+                      public MslContext
 {
   public:
 
@@ -34,6 +35,13 @@ class MobiusConsole : public juce::Component,
     // Console::Listener
     void consoleLine(juce::String line) override;
     void consoleEscape() override;
+
+    // MslContext
+    juce::File mslGetRoot();
+    class MobiusConfig* mslGetMobiusConfig() override;
+    void mslDoAction(class UIAction* a) override;
+    bool mslDoQuery(class Query* q) override;
+    bool mslEcho(const char* msg) override;
 
   private:
 

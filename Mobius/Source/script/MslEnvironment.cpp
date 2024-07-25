@@ -357,7 +357,21 @@ void MslEnvironment::kernelAdvance(MslContext* c)
 {
     (void)c;
 }
-    
+
+void MslEnvironment::resume(MslContext* c, MslWait* wait)
+{
+    // todo: don't just assume this is still relevant?
+    // got some race conditions here, since the context is keeping a pointer
+    // to the MslWait we can't get rid of the MslSession until it gets back here
+    // once this is called, the context is not allowed to use the MslWait again
+    MslSession* session = wait->session;
+    if (session == nullptr)
+      Trace(1, "MslEnvironment: resume with invalid session");
+    else {
+        session->resume(c, wait);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions

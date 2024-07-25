@@ -49,7 +49,7 @@ MslSession::~MslSession()
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslScript* argScript)
+void MslSession::start(MslContext* argContext, MslScript* argScript)
 {
     errors.clear();
 
@@ -72,13 +72,33 @@ void MslSession::start(MslScript* argScript)
     // bindings and managed in a single shared location with csects around access
     stack->bindings = script->bindings;
     script->bindings = nullptr;
-    
+
+    context = argContext;
     run();
 }
 
 bool MslSession::isWaiting()
 {
     return (stack != nullptr && stack->waiting);
+}
+
+/**
+ * Resume the session when it is waiting for something.
+ */
+void MslSession::resume(MslContext* argContext, MslWait* wait)
+{
+    context = argContext;
+
+    // go back to the stack frame that was waiting
+    stack = wait->stack();
+
+    // run() will immediately call the MslWaitNode handler again
+    // which needs to clear the waiting flag, but the node handler needs to
+    // know it is being touched because of a resume() since I'm not positive
+    // there can't be other paths through the session that would cause it to
+    // be evaluated before we're actually notified of the wait being finished
+    stack->waitFinished = true;
+    run();
 }
 
 /**
@@ -213,6 +233,7 @@ MslStack* MslSession::allocStack()
         s->proc = nullptr;
         s->symbol = nullptr;
         s->waiting = false;
+        s->waitFinished = false;
     }
     else {
         // ordinarilly won't be here unless something is haywire
@@ -1659,13 +1680,70 @@ void MslSession::mslVisit(MslElse* node)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MslSession::mslVisit(MslWait* wait)
+void MslSession::mslVisit(MslWaitNode* wait)
 {
-    if (wait->type == WaitNone)
-      addError(wait, "Missing wait type");
-    else {
+    if (stack->waitFinished) {
+        // back here after MslEnvironment::resume was called and the container
+        // said the wait is over
+        // might want to have an interesting return value here
         popStack();
     }
+    else if (stack->waiting) {
+        // unclear if we can get here, but I suppose periodic maintenance would
+        // call this, here is where you could implement a timeout but you have to
+        // be careful because the context has a pointer to this MslWait object,
+        // would be better if we weren't sharing objects and instead a unqiue id or something
+        Trace(2, "MslSession: Wait node ping");
+    }
+    // else starting a wait for the first time
+    else if (wait->type == WaitTypeNone) {
+        addError(wait, "Missing wait type");
+    }
+    else if (wait->type == WaitTypeEvent && wait->event == WaitEventNone) {
+        addError(wait, "Missing or invalid event name");
+    }
+    else if (wait->type == WaitTypeDuration && wait->duration == WaitDurationNone) {
+        addError(wait, "Missing or invalid duration name");
+    }
+    else if (wait->location == WaitLocationNone) {
+        addError(wait, "Missing or invalid location name");
+    }
+    else {
+        // evaluate the count/number/duration
+        MslStack* next = pushNextChild();
+        if (next == nullptr)
+          setupWait(wait);
+    }
+}
+
+void MslSession::setupWait(MslWaitNode* node)
+{
+    // set up the MslWait to pass to the MslContainer
+    // since this is only used once, we can keep it within the stack
+    // and not worry about pooling.  The arguments inside it however
+    // do need to be reclaimed
+    // ?? or do they, just point at the stack->childResults which will
+    // be freed when this stack frame finishes
+    MslWait* = &(stack->wait);
+    
+    wait->type = node->type;
+    wait->event = node->event;
+    wait->duration = node->duration;
+    wait->location = node->location;
+
+    wait->session = this;
+    wait->stack = stack;
+
+    // I think this always has to be a number right now, it is just
+    // used differently
+    wait->arguments = 0;
+    if (stack->childResults != nullptr)
+      wait->arguments = stack->childResults->getInt();
+
+    if (!context->mslDoWait(wait))
+      addError("Unable to schedule wait state");
+
+    stack->waiting = true;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -25,7 +25,7 @@ class MslScriptletSession {
     void reset();
 
     // parse one line of MSL text and evaluate it
-    void eval(juce::String source);
+    void eval(class MslContext* c, juce::String source);
 
     juce::OwnedArray<class MslError>* getErrors() {
         return &errors;

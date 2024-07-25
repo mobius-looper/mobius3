@@ -75,6 +75,9 @@ class MslEnvironment
     
     // the "audio thread" maintenance ping
     void kernelAdvance(MslContext* c);
+
+    // resume a session after a wait has completed
+    void resume(MslContext* c, MslWait* wait);
     
     // primary entry point for file loading by the UI/Supervisor
     // hate this interface

@@ -18,6 +18,7 @@
 #include "../model/Symbol.h"
 
 #include "MslValue.h"
+#include "MslWait.h"
 
 /**
  * One frame of the session call stack.
@@ -58,8 +59,15 @@ class MslStack
     MslProc* proc = nullptr;
     Symbol* symbol = nullptr;
 
-    // is this necessary?
+    // the information we convey to the MslContainer to set up the wait
+    // this is only used once so don't need to pool them
+    MslWait wait;
+
+    // true if we are waiting, could go in MslWait too?
     bool waiting = false;
+    // true when Session::resume is called to let us proceed
+    bool waitFinished = false;
+    
 };
 
 /**
@@ -92,8 +100,12 @@ class MslSession : public MslVisitor
     MslSession(class MslEnvironment* env);
     ~MslSession();
 
-    // evaluate a script
-    void start(class MslScript* script);
+    // begin evaluation of a script, it will complete or reach a wait state
+    void start(class MslContext* context, class MslScript* script);
+
+    // resume evaluation after a wait if it can
+    void resume(class MslContext* context);
+    
     bool isWaiting();
     MslValue* getResult();
     MslValue* captureResult();
@@ -114,7 +126,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslElse* obj) override;
     void mslVisit(class MslReference* obj) override;
     void mslVisit(class MslEnd* obj) override;
-    void mslVisit(class MslWait* obj) override;
+    void mslVisit(class MslWaitNode* obj) override;
 
   private:
 
@@ -173,6 +185,9 @@ class MslSession : public MslVisitor
     void doOperator(MslOperator* opnode);
     MslOperators mapOperator(juce::String& s);
     bool compare(MslValue* value1, MslValue* value2, bool equal);
+
+    // waits
+    void setupWait(MslWaitNode* node);
 
     // debugging
     void checkCycles(MslValue* v);

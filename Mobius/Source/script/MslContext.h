@@ -32,6 +32,14 @@ class MslContext
     // find the value of an external symbol
     virtual bool mslDoQuery(class Query* q) = 0;
 
+    // initialize a wait state
+    virtual bool mslDoWait(class MslWait* w) = 0;
+
+    // say something somewhere
+    // should we do levels here to so we can get rid of the
+    // Message and Alert callbacks in MobiusListener?
+    virtual bool mslEcho(const char* msg) = 0;
+
     //
     // From here down are more random services that need thought
     // about what needs to have better abstraction

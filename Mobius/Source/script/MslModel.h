@@ -14,6 +14,13 @@
 
 #include <JuceHeader.h>
 #include "MslTokenizer.h"
+#include "MslWait.h"
+
+//////////////////////////////////////////////////////////////////////
+//
+// Visitor
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * An interface to be implemented by something that wants to walk
@@ -35,8 +42,14 @@ class MslVisitor
     virtual void mslVisit(class MslElse* obj) = 0;
     virtual void mslVisit(class MslReference* obj) = 0;
     virtual void mslVisit(class MslEnd* obj) = 0;
-    virtual void mslVisit(class MslWait* obj) = 0;
+    virtual void mslVisit(class MslWaitNode* obj) = 0;
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Node
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The parse tree is a tree of node subclasses.
@@ -140,6 +153,12 @@ class MslNode
     
 };
 
+//////////////////////////////////////////////////////////////////////
+//
+// Literal
+//
+//////////////////////////////////////////////////////////////////////
+
 class MslLiteral : public MslNode
 {
   public:
@@ -158,6 +177,12 @@ class MslLiteral : public MslNode
     bool isInt = false;
     bool isFloat = false;
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Reference
+//
+//////////////////////////////////////////////////////////////////////
 
 class MslReference : public MslNode
 {
@@ -186,6 +211,12 @@ class MslReference : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
+//////////////////////////////////////////////////////////////////////
+//
+// Block
+//
+//////////////////////////////////////////////////////////////////////
+
 class MslBlock : public MslNode
 {
   public:
@@ -212,6 +243,12 @@ class MslBlock : public MslNode
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Symbol
+//
+//////////////////////////////////////////////////////////////////////
 
 class MslSymbol : public MslNode
 {
@@ -242,6 +279,12 @@ class MslSymbol : public MslNode
 
 
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Operator
+//
+//////////////////////////////////////////////////////////////////////
 
 class MslOperator : public MslNode
 {
@@ -288,7 +331,15 @@ class MslOperator : public MslNode
 
 };
 
-// assignments are basically operators with added runtime semantics
+//////////////////////////////////////////////////////////////////////
+//
+// Assignment
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Assignments are basically operators with added runtime semantics
+ */
 class MslAssignment : public MslNode
 {
   public:
@@ -309,6 +360,12 @@ class MslAssignment : public MslNode
 
 };    
     
+//////////////////////////////////////////////////////////////////////
+//
+// Var
+//
+//////////////////////////////////////////////////////////////////////
+
 class MslVar : public MslNode
 {
   public:
@@ -350,6 +407,12 @@ class MslVar : public MslNode
     bool isVar() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Proc
+//
+//////////////////////////////////////////////////////////////////////
 
 class MslProc : public MslNode
 {
@@ -408,6 +471,12 @@ class MslProc : public MslNode
     }
 };
 
+//////////////////////////////////////////////////////////////////////
+//
+// If/Else
+//
+//////////////////////////////////////////////////////////////////////
+
 class MslIf : public MslNode
 {
   public:
@@ -461,6 +530,14 @@ class MslElse : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
+//////////////////////////////////////////////////////////////////////
+//
+// Flow Control
+//
+// End, Break, Return, Jump, Label
+//
+//////////////////////////////////////////////////////////////////////
+
 class MslEnd : public MslNode
 {
   public:
@@ -468,89 +545,79 @@ class MslEnd : public MslNode
     ~MslEnd() {}
 
     bool isEnd() override {return true;}
-
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    virtual bool operandable() {return false;}
+    bool operandable() {return false;}
 };
 
-typedef enum {
+//////////////////////////////////////////////////////////////////////
+//
+// Repetition
+//
+// Repeat, While, Until
+//
+//////////////////////////////////////////////////////////////////////
 
-    WaitNone,
-    WaitLast,
-	WaitSwitch,
-	WaitBlock,
-	WaitStart,
-	WaitEnd,
-	WaitExternalStart,
-	WaitDriftCheck,
-	WaitPulse,
-    WaitBeat,
-    WaitBar,
-    WaitRealign,
-    WaitReturn,
-    WaitMsec,
-    WaitFrame,
-    WaitSubcycle,
-    WaitCycle,
-    WaitLoop
-} MslWaitType;
+//////////////////////////////////////////////////////////////////////
+//
+// Scope
+//
+// In, For?
+//
+//////////////////////////////////////////////////////////////////////
 
-class MslWait : public MslNode
+//////////////////////////////////////////////////////////////////////
+//
+// Threads
+//
+// Launch, Suspend, Resume
+//
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
+//
+// Wait
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Implementation of this one is more complex and broken out into MslWaitNode.cpp
+ * The class has the Node suffix so it doesn't conflict with MslWait which needs
+ * to be public.  
+ */
+class MslWaitNode : public MslNode
 {
   public:
-    MslWait(MslToken& t) : MslNode(t) {}
-    ~MslWait() {}
+    MslWaitNode(MslToken& t) : MslNode(t) {}
+    ~MslWaitNode() {}
 
     bool isWait() override {return true;}
-    
-    bool wantsToken(MslToken& t) override {
-        bool wants = false;
-        type = mapType(t.value);
-        if (type != WaitNone) {
-            wants = true;
-            typeName = t.value;
-        }
-        return wants;
-    }
-
-    bool wantsNode(MslNode* node) override {
-        (void)node;
-        return (children.size() < 1 || type == WaitNone);
-    }
-
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    virtual bool operandable() {return false;}
+    bool operandable() override {return false;}
+    
+    bool wantsToken(MslToken& t) override;
+    bool wantsNode(MslNode* node) override;
 
-    MslWaitType type = WaitNone;
+    MslWaitType type = WaitTypeNone;
+    MslWaitEvent event = WaitEventNone;
+    MslWaitDuration duration = WaitDurationNone;
+    MslWaitLocation location = WaitLocationNone;
     juce::String typeName;
-    
-    static MslWaitType mapType(juce::String s)
-    {
-        MslWaitType type = WaitNone;
-    
-        if (s == "last") type = WaitLast;
-        else if (s == "switch") type = WaitSwitch;
-        else if (s == "block" || s == "blocks") type = WaitBlock;
-        else if (s == "start" || s == "starts") type = WaitStart;
-        else if (s == "end" || s == "ends") type = WaitEnd;
-        else if (s == "externalStart" || s == "externalStarts") type = WaitExternalStart;
-        else if (s == "driftCheck") type = WaitDriftCheck;
-        else if (s == "pulse" || s == "pulses") type = WaitPulse;
-        else if (s == "beat" || s == "beats") type = WaitBeat;
-        else if (s == "bar" || s == "bars") type = WaitBar;
-        else if (s == "realign") type = WaitRealign;
-        else if (s == "return") type = WaitReturn;
-        else if (s == "msec" || s == "msecs") type = WaitMsec;
-        else if (s == "frame" || s == "frames") type = WaitFrame;
-        else if (s == "subcycle" || s == "subcycles") type = WaitSubcycle;
-        else if (s == "cycle" || s == "cycles") type = WaitCycle;
-        else if (s == "loop" || s == "loops") type = WaitLoop;
+    bool error = false;
 
-        return type;
-    }
+    // public for the console
+    const char* typeToKeyword(MslWaitType e);
+    const char* eventToKeyword(MslWaitEvent e);
+    const char* durationToKeyword(MslWaitDuration e);
+    const char* locationToKeyword(MslWaitLocation e);
 
+  private:
+    const char* enumToKeyword(const char* keywords[], int e);
+    int keywordToEnum(const char* keywords[], const char* key);
+    MslWaitType keywordToType(const char* s);
+    MslWaitEvent keywordToEvent(const char* s);
+    MslWaitDuration keywordToDuration(const char* s);
+    MslWaitLocation keywordToLocation(const char* s);
 };
-
 
 /****************************************************************************/
 /****************************************************************************/
