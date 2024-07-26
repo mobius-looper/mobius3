@@ -231,6 +231,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void mobiusDynamicConfigChanged() override;
 
     // MslContext
+    MslContextId mslGetContextId() override;
     juce::File mslGetRoot() override;
     class MobiusConfig* mslGetMobiusConfig() override;
     void mslAction(class UIAction* a) override;

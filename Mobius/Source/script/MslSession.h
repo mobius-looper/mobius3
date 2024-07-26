@@ -95,6 +95,8 @@ enum MslOperators {
 
 class MslSession : public MslVisitor
 {
+    friend class MslEnvironment;
+    
   public:
     
     MslSession(class MslEnvironment* env);
@@ -129,6 +131,20 @@ class MslSession : public MslVisitor
     void mslVisit(class MslEnd* obj) override;
     void mslVisit(class MslWaitNode* obj) override;
     void mslVisit(class MslEcho* obj) override;
+    void mslVisit(class MslContext* obj) override;
+
+  protected:
+
+    // for use only by MslEnvironment
+    
+    // the list this session is on
+    MslContextId contextId = MslContextNone;
+
+    // the list this session wants to be on
+    MslContextId desiredContextId = MslContextNone;
+    
+    // session list chain
+    MslSession* contextNext = nullptr;
 
   private:
 

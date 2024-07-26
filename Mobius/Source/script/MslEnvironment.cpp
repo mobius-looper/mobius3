@@ -366,16 +366,221 @@ void MslEnvironment::doAction(MslContext* c, UIAction* action)
             Trace(1, "MslEnvironment: MSL Proc linkage not implemented");
         }
 
-        if (!session->isWaiting()) {
+        MslContextId currentContext = c->mslgetContextId();
+        
+        // if the session finishes without a stack, it is done
+        if (session->stack == nullptr) {
             MslValue* result = session->captureResult();
             Trace(2, "MslEnvironment: Script returned %s", result->getString());
             CopyString(result->getString(), action->result, sizeof(action->result));
             valuePool.free(result);
             delete session;
         }
+        else if (session->desiredContextId != MslContextNone &&
+                 session->desiredContextId != currentContext) {
+            // it wants to go to the other side
+            addSession(c, session, session->desiredContextId);
+        }
+        else if (session->isWaiting()) {
+            // let it wait, should already be in kernel context at this point
+            // because the shell can't setup waits
+            if (currentContextId != MslContextKernel)
+              Trace(1, "MslEnvironment: How do you wait when you're not in the kernel?");
+            addSession(c, session, MslSessionKernel);
+        }
         else {
-            // let it wait
-            sessions.add(session);
+            // it isn't waiting or transitioning, why did it stop?
+            Trace(1, "MslEnvironment: Session suspended for no discernable reason");
+            // what now?  
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Context List Management
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Put an unattached session on one of the lists.
+ */
+void MslEnvironment::addSession(MslContext* current, MslSession* s, MslContextId desired)
+{
+    if (s->contextId != MslContextNone)
+      Trace(1, "MslEnvironment: Installling session that thought it was on a list");
+
+    if (desired == MslContextNone) {
+        Trace(1, "MslEnvironment: Installing session with missing context id, assuming kernel");
+        desired = MslContextKernel;
+    }
+
+    if (desired == MslContextShell) {
+        // put iton the shell
+        if (current->mslGetContextId() == desired) {
+            // we're already in the shell, this could be either the UI thread
+            // or the maintenance thread, but they block each other so it is safe
+            // to slam it directly on the list
+            s->contextNext = shellSessions;
+            s->contextId = MslContextShell;
+        }
+        else {
+            // the kernel wants to put it on the shell list
+            juce::ScopedLock lock (criticalSection);
+            s->contextNext = toShell;
+            toShell = s;
+        }
+    }
+    else {
+        // put it on the kernel
+        if (current->mslGetContextId() == desired) {
+            // we're already in the shell, this could be either the UI thread
+            // or the maintenance thread, but they block each other so it is safe
+            // to slam it directly on the list
+            s->contextNext = kernelSessions;
+            s->contextId = MslContextKernel;
+        }
+        else {
+            // the shell wants to put it on the kernel list
+            juce::ScopedLock lock (criticalSection);
+            s->contextNext = toKernel;
+            toKernel = s;
+        }
+    }
+
+    // whatever happened, clear this so we don't keep going back here
+    s->desiredContextId = MslContextNone;
+}
+
+/**
+ * Install queued session transitions for the current context.
+ */
+void MslEnvironment::installSessions(MslContext* current)
+{
+    MslContextId id = current->mslGetContextId();
+    
+    if (id == MslContextShell) {
+        juce::ScopedLock lock (criticalSection);
+        // get the list of pending sessions
+        MslSession* neu = toShell;
+        toShell = nullptr;
+
+        // set their ids
+        for (MslSession s = neu ; s != nullptr ; s = s->contextNext)
+          s->contextId = MslContextShell;
+        
+        // and put them on the shell list
+        if (shellSessions == nullptr) {
+            shellSessions = neu;
+        }
+        else {
+            MslSession* last = shellSessions;
+            while (last->contextNext != nullptr) last = last->contextNext;
+            last->contextNext = neu;
+        }
+    }
+    else if (id == MslContextKernel) {
+        juce::ScopedLock lock (criticalSection);
+
+        MslSession* neu = toKernel;
+        toKernel = nullptr;
+        
+        for (MslSession s = neu ; s != nullptr ; s = s->contextNext)
+          s->contextId = MslContextKernel;
+
+        if (kernelSessions == nullptr) {
+            kernelSessions = neu;
+        }
+        else {
+            MslSession* last = kernelSessions;
+            while (last->contextNext != nullptr) last = last->contextNext;
+            last->contextNext = neu;
+        }
+    }
+    else {
+        Trace(1, "MslEnvironment: MslContext had a bad id, and you're going to have a bad day");
+    }
+}    
+
+/**
+ * Transition a session from one context list to another.
+ * The logic is more complex than it needs to be to check various error
+ * state that might happen during list maintenance.
+ *
+ * It doesn't really matter what the context is right now, we'll put it on
+ * the list it wants to be on.  But in practice the current context should
+ * be the same as the one the session is currently on.
+ */
+void MslEnvironment::moveSession(MslContext* current, MslSession* session)
+{
+    MslContextId wants = session->getDesiredContext();
+    if (wants == MslContextNone) {
+        // shouldn't be here if isTransitioning was true, leave it where it is
+        Trace(1, "MslEnvironment: Session didn't ask for the transition correctly");
+    }
+    else if (wants == session->contextId) {
+        Trace(1, "MslEnvironment: Session was already where it wanted to be");
+    }
+    else {
+
+        if (wants != current->mslGetContextId()) {
+            // the wrong thread seems to be handling the transition request
+            Trace(1, "MslEnvironment: Session transition anomoly");
+        }
+        
+        // do the transition
+        if (wants == MslContextShell) {
+            if (session->contextId == MslContextShell) {
+                Trace(1, "MslEnvironment: Session wanted shell context and was already there");
+            }
+            else {
+                juce::ScopedLock lock (criticalSection);
+                
+                // move it out of the kernel
+                MslSession* prev = nullptr;
+                MslSession* el = kernelSessions;
+                while (el != nullptr && el != session) {
+                    prev = el;
+                    el = el->contextNext;
+                }
+                if (el == nullptr) {
+                    // if the session thought it was there, whine
+                    if (session->contextId == MslContextKernel)
+                      Trace(1, "MslEnvironment: Session was not on the kernel list");
+                }
+                else
+                  prev->next = session->contextNext;
+
+                // and onto the transition list
+                session->contextNext = toShell;
+                session->contextId = MslContextNone;
+            }
+        }
+        else {
+            if (session->contextId == MslContextKernel) {
+                Trace(1, "MslEnvironment: Session wanted kernel context and was already there");
+            }
+            else {
+                juce::ScopedLock lock (criticalSection);
+                
+                // move it out of the shell;
+                MslSession* prev = nullptr;
+                MslSession* el = shellSessions;
+                while (el != nullptr && el != session) {
+                    prev = el;
+                    el = el->contextNext;
+                }
+                if (el == nullptr) {
+                    if (session->contextId == MslContextShell)
+                      Trace(1, "MslEnvironment: Session was not on the shell list");
+                }
+                else
+                  prev->next = session->contextNext;
+
+                // and onto the transition list
+                session->contextNext = toKernel;
+                session->contextId = MslContextNone;
+            }
         }
     }
 }

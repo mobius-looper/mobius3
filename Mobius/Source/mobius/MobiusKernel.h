@@ -125,6 +125,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     //
     // MslContext
     //
+
+    MslContextId mslGetContextId() override;
     juce::File mslGetRoot();
     class MobiusConfig* mslGetMobiusConfig();
     void mslAction(class UIAction* a) override;

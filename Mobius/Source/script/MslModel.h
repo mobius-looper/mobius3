@@ -44,6 +44,7 @@ class MslVisitor
     virtual void mslVisit(class MslEnd* obj) = 0;
     virtual void mslVisit(class MslWaitNode* obj) = 0;
     virtual void mslVisit(class MslEcho* obj) = 0;
+    virtual void mslVisit(class MslContextNode* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -142,6 +143,7 @@ class MslNode
     virtual bool isEnd() {return false;}
     virtual bool isWait() {return false;}
     virtual bool isEcho() {return false;}
+    virtual bool isContext() {return false;}
     
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -590,6 +592,59 @@ class MslEcho : public MslNode
 // Launch, Suspend, Resume
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * context <name>
+ *
+ * Switches the thread context running this script.
+ * There are currently two contexts: "shell" and "kernel"
+ * Most of the time contexts will be switched automatically but this
+ * can be used to force it into a context for testing or to preemptively
+ * put the script in a context that will eventually be required and avoid
+ * a transition delay.
+ *
+ * Alternate names for shell are: ui
+ * Alternate names for kernel are: audio
+ */
+class MslContextNode : public MslNode
+{
+  public:
+    MslContextNode(MslToken& t) : MslNode(t) {}
+    ~MslContextNode() {}
+
+    bool wantsToken(MslToken& t) override {
+        bool wants = false;
+        if (!finished) {
+            if (t.type == MslToken::Type::Symbol) {
+                if (t.value == "shell" || t.value == "ui") {
+                    shell = true;
+                    finished = true;
+                }
+                else if (t.value == "kernel" || t.value == "audio") {
+                    shell = false;
+                    finished = true;
+                }
+            }
+            if (!finished) {
+                // todo: need to raise an error because the keyword was not right
+            }
+        }
+        return wants;
+    }
+    
+    bool wantsNode(MslNode* node) override {
+        return false;
+    }
+
+    bool isContext() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    bool operandable() {return false;}
+
+    // the default is kernel since where most things happen
+    bool shell = false;
+};
+
+
 
 //////////////////////////////////////////////////////////////////////
 //

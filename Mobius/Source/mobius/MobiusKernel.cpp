@@ -1145,6 +1145,11 @@ void MobiusKernel::doLoadLoop(KernelMessage* msg)
 // Things called by MslSessios when they run in the kernel
 //
 
+MslContextId MobiusKernel::mslGetContextId()
+{
+    return MslContextKernel;
+}
+
 juce::File MobiusKernel::mslGetRoot()
 {
     // this should not be called in Kernel context

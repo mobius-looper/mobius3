@@ -60,6 +60,8 @@ class MslLinkage
 
 class MslEnvironment
 {
+    friend class MslSession;
+    
   public:
 
     MslEnvironment();
@@ -124,7 +126,13 @@ class MslEnvironment
     juce::OwnedArray<class MslCollision>* getCollisions() {
         return &collisions;
     }
+    
+  protected:
 
+    // the session asks us to be in a particular thread context
+    // only two right now: shell and kernel
+    void setContxt(class MslSession* s, bool toShell);
+    
   private:
 
     // note that this has to be first because things are destructed in reverse
@@ -143,8 +151,15 @@ class MslEnvironment
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
 
-    // suspended sessions
-    juce::OwnedArray<class MslSession> sessions;
+    // session lists
+    // note that we don't use OwnedArray here to avoid memory allocation
+    // in the audio thread so these have to be cleaned up manually
+    class MslSession* shellSessions = nullptr;
+    class MslSession* kernelSessions = nullptr;
+
+    // transitioning sessions
+    class MslSession* toShell = nullptr;
+    class MslSession* toKernel = nullptr;
 
     // active scriptlet sessions
     juce::OwnedArray<class MslScriptletSession> scriptlets;
@@ -157,6 +172,14 @@ class MslEnvironment
     void install(class MslScript* script);
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
-    
+
+    //
+    // Context management
+    //
+
+    void addSession(MslContext* current, MslSession* s, MslContextId desired);
+    void installSessions(MslContext* current);
+    void moveSession(MslContext* current, MslSession* session);
+
 };
 

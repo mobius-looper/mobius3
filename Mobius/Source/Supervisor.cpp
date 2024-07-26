@@ -1838,6 +1838,11 @@ void Supervisor::menuLoadScripts()
 // MslContext implementations
 //
 
+MslContextId Supervisor::mslGetContextId()
+{
+    return MslContextShell;
+}
+
 juce::File Supervisor::mslGetRoot()
 {
     return getRoot();
