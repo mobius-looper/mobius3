@@ -608,6 +608,8 @@ void UIConfig::renderProperties(juce::XmlElement* parent, juce::HashMap<juce::St
 
         // figure out what begin() does...
         // this is from the docs
+        // original implementation
+#if 0        
         for (juce::HashMap<juce::String,juce::String>::Iterator i (props) ; i.next() ;) {
             
             juce::XmlElement* propel = new juce::XmlElement("Property");
@@ -615,6 +617,30 @@ void UIConfig::renderProperties(juce::XmlElement* parent, juce::HashMap<juce::St
             propel->setAttribute("name", i.getKey());
             propel->setAttribute("value", i.getValue());
          }
+#endif
+
+        // XML serialization in Iterator order is unstable across machines
+        // which leads to xml file differences when they are under source control
+        // while it isn't necessary for this to be stable in normal use, I hit
+        // it all the time developing over several machines and it can make Git merges harder
+        // will want to encapsuate this somewhere if we have more than one 
+
+        // first find and sort the keys
+        juce::StringArray keys;
+        for (juce::HashMap<juce::String,juce::String>::Iterator i (props) ; i.next() ;) {
+            keys.add(i.getKey());
+        }
+        keys.sort(false);
+        // now emit the map in this order, also filter out "null" empty strings
+        for (auto key : keys) {
+            juce::String value = props[key];
+            if (value.length() > 0) {
+                juce::XmlElement* propel = new juce::XmlElement("Property");
+                root->addChildElement(propel);
+                propel->setAttribute("name", key);
+                propel->setAttribute("value", value);
+            }
+        }
     }
 }
 

@@ -1808,15 +1808,14 @@ void Supervisor::menuLoadScripts()
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
 
-        // split into .mos and .msl file lists and normalize paths
-        ScriptClerk clerk (getRoot());
-        clerk.split(sconfig);
 
-        // new files go to the environment
-        scriptenv.load(clerk);
+        // ScriptClerk does file analysis, saves errors for later,
+        // and passes what it can along to MslEnvironment
+        // The config is split between .msl and .mos files
+        scriptClerk.reload(sconfig);
 
         // old files go down to Mobuius core
-        mobius->installScripts(clerk.getOldConfig());
+        mobius->installScripts(scriptClerk.getOldConfig());
 
         // gather interesting stats for the alert
         // need MUCH more here
@@ -1827,7 +1826,7 @@ void Supervisor::menuLoadScripts()
         }
         juce::String msg = juce::String(count) + " scripts loaded";
 
-        juce::StringArray missing = scriptenv.getMissingFiles();
+        juce::StringArray missing = scriptClerk.getMissingFiles();
         if (missing > 0)
           msg += "\n" + juce::String(missing.size()) + " missing files";
 

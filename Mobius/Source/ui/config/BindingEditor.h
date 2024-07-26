@@ -83,6 +83,7 @@ class BindingEditor : public ConfigEditor,
     void resetFormAndTarget();
 
     void formChanged();
+    void targetChanged();
     
   private:
 

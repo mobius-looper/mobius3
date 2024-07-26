@@ -46,7 +46,7 @@ class MobiusConsole : public juce::Component,
 
   private:
 
-    // handle to the global environment
+    class Supervisor* supervisor = nullptr;
     class MslEnvironment* scriptenv = nullptr;
 
     // scriptlet session we maintain

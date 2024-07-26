@@ -16,20 +16,26 @@
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
 
+// !! need a Supervisor link, either at construction
+// or during a later initialization
+// tried to make this only require an MslContext but there is too much
+// going on here to be completely independent
+
 MobiusConsole::MobiusConsole(ConsolePanel* parent)
 {
     panel = parent;
-    addAndMakeVisible(&console);
-    console.setListener(this);
-    
-    console.add("Shall we play a game?");
-    console.prompt();
 
-    // get a more convenient handle to the script environment
-    scriptenv = Supervisor::Instance->getScriptEnvironment();
+    // pass this down!
+    supervisor = Supervisor::Instance;
+    scriptenv = supervisor->getScriptEnvironment();
 
     // allocate a scriptlet session we can keep forever
-    session = new MslScriptletSession(scriptenv);
+    session = scriptenv->newScriptletSession();
+    
+    addAndMakeVisible(&console);
+    console.setListener(this);
+    console.add("Shall we play a game?");
+    console.prompt();
 
     // todo: need to work out the info passing
     //session.setListener(this);
@@ -37,8 +43,7 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
 
 MobiusConsole::~MobiusConsole()
 {
-    // really need more encapsulation of this
-    delete session;
+    // environment owns the ScriptletSession
 }
 
 void MobiusConsole::showing()
@@ -94,22 +99,22 @@ void MobiusConsole::consoleEscape()
 
 juce::File MobiusConsole::mslGetRoot()
 {
-    return Supervisor::Instance->getRoot();
+    return supervisor->getRoot();
 }
 
 MobiusConfig* MobiusConsole::mslGetMobiusConfig()
 {
-    return Supervisor::Instance->getMobiusConfig();
+    return supervisor->getMobiusConfig();
 }
 
 void MobiusConsole::mslAction(UIAction* a)
 {
-    Supervisor::Instance->doAction(a);
+    supervisor->doAction(a);
 }
 
 bool MobiusConsole::mslQuery(Query* q)
 {
-    return Supervisor::Instance->doQuery(q);
+    return supervisor->doQuery(q);
 }
 
 bool MobiusConsole::mslWait(MslWait* w)
@@ -193,26 +198,32 @@ void MobiusConsole::doHelp()
     console.add("<text>    evaluate a line of mystery");
 }
 
+/**
+ * Reload the entire ScriptConfig or load an individual file.
+ */
 void MobiusConsole::doLoad(juce::String line)
 {
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    
     if (line.startsWith("config")) {
-        // todo: kludge, hating how this is wiring up
-        scriptenv->loadConfig(Supervisor::Instance);
+        clerk->reload();
     }
     else {
-        scriptenv->resetLoad();
-        scriptenv->load(line);
+        clerk->resetLoadResults();
+        clerk->loadFile(line);
     }
 
     showLoad();
 }
 
 /**
- * Emit the status of the environment, including errors to the console.
+ * Emit the status of the last load including errors to the console.
  */
 void MobiusConsole::showLoad()
 {
-    juce::StringArray& missing = scriptenv->getMissingFiles();
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    
+    juce::StringArray& missing = clerk->getMissingFiles();
     if (missing.size() > 0) {
         console.add("Missing files:");
         for (auto s : missing) {
@@ -220,7 +231,7 @@ void MobiusConsole::showLoad()
         }
     }
 
-    juce::OwnedArray<class MslFileErrors>* ferrors = scriptenv->getFileErrors();
+    juce::OwnedArray<class MslFileErrors>* ferrors = clerk->getFileErrors();
     if (ferrors->size() > 0) {
         console.add("File errors:");
         for (auto mfe : *ferrors) {
@@ -233,7 +244,7 @@ void MobiusConsole::showLoad()
         }
     }
 
-    juce::OwnedArray<class MslCollision>* collisions = scriptenv->getCollisions();
+    juce::OwnedArray<class MslCollision>* collisions = clerk->getCollisions();
     if (collisions->size() > 0) {
         console.add("Name Collisions:");
         for (auto col : *collisions) {
@@ -241,6 +252,7 @@ void MobiusConsole::showLoad()
         }
     }
 
+    // the actual scripts that were loaded come from the environment
     juce::OwnedArray<class MslScript>* scripts = scriptenv->getScripts();
     if (scripts->size() > 0) {
         console.add("Scripts:");
@@ -309,7 +321,7 @@ void MobiusConsole::doEval(juce::String line)
     }
     else {
     
-        session->eval(this, line);
+        (void)session->eval(this, line);
 
         // side effect of an evaluation is a list of errors and a result
         juce::OwnedArray<MslError>* errors = session->getErrors();
@@ -318,14 +330,15 @@ void MobiusConsole::doEval(juce::String line)
         }
         else {
             // temporary debugging
-            bool fullResult = true;
+            bool fullResult = false;
             if (fullResult) {
                 juce::String full = session->getFullResult();
                 console.add(full);
             }
             else {
                 MslValue* v = session->getResult();
-                console.add(juce::String(v->getString()));
+                if (v != nullptr)
+                  console.add(juce::String(v->getString()));
             }
         }
 

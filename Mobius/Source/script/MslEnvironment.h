@@ -56,7 +56,6 @@ class MslLinkage
     // could maintain it here, or in a MslBinding inside the
     // containing Script
     
-    
 };
 
 class MslEnvironment
@@ -67,9 +66,19 @@ class MslEnvironment
     ~MslEnvironment();
 
     void initialize(class MslContext* c);
-    // need a context for this?
     void shutdown();
 
+    //
+    // ScriptClerk Interface
+    //
+
+    class MslParserResult* load(juce::String path, juce::String source);
+    void unload(juce::StringArray& retain);
+    
+    //
+    // Supervisor/MobiusKernel interfaces
+    //
+    
     // the "ui thread" maintenance ping
     void shellAdvance(class MslContext* c);
     
@@ -78,32 +87,16 @@ class MslEnvironment
 
     // resume a session after a wait has completed
     void resume(class MslContext* c, class MslWait* wait);
-    
-    // primary entry point for file loading by the UI/Supervisor
-    // hate this interface
-    void load(class ScriptClerk& clerk);
-
-    // incremental loading for the console
-    void resetLoad();
-    void loadConfig(class MslContext* context);
-    void load(juce::String path);
-    void unload(juce::String name);
 
     //
-    // Last load results
+    // Console interface
     //
-    
-    juce::StringArray& getMissingFiles() {
-        return missingFiles;
-    }
 
-    juce::OwnedArray<class MslFileErrors>* getFileErrors() {
-        return &fileErrors;
-    }
-
-    juce::OwnedArray<class MslCollision>* getCollisions() {
-        return &collisions;
-    }
+    // the scriptlet session is owned and tracked by the environment
+    // caller does not need to delete it, but should tell the environment
+    // when it is no longer needed so it can be reclaimed
+    class MslScriptletSession* newScriptletSession();
+    void releaseScriptletSession(class MslScriptletSession* s);
 
     //
     // Library
@@ -128,33 +121,33 @@ class MslEnvironment
 
     MslLinkage* findLinkage(juce::String name);
 
-  private:
+    juce::OwnedArray<class MslCollision>* getCollisions() {
+        return &collisions;
+    }
 
-    juce::File root;
+  private:
 
     // note that this has to be first because things are destructed in reverse
     // order of declaration and some of the things below return things to the pool
     // value pool for the interpreter
     MslValuePool valuePool;
    
-    // last load state
-    juce::StringArray missingFiles;
-    juce::OwnedArray<class MslFileErrors> fileErrors;
-    juce::OwnedArray<class MslCollision> collisions;
-    juce::StringArray unloaded;
-    
     // the active scripts
     juce::OwnedArray<class MslScript> scripts;
 
     // the linkage table
     juce::OwnedArray<MslLinkage> linkages;
     juce::HashMap<juce::String,class MslLinkage*> library;
+    juce::OwnedArray<class MslCollision> collisions;
 
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
 
     // suspended sessions
     juce::OwnedArray<class MslSession> sessions;
+
+    // active scriptlet sessions
+    juce::OwnedArray<class MslScriptletSession> scriptlets;
 
     //
     // internal library management
@@ -164,7 +157,6 @@ class MslEnvironment
     void install(class MslScript* script);
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
-    void unload(juce::StringArray& retain);
     
 };
 

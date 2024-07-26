@@ -37,6 +37,7 @@
 #include "UISymbols.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
+#include "script/ScriptClerk.h"
 #include "script/MslContext.h"
 #include "script/MslEnvironment.h"
 
@@ -157,6 +158,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // !! these should just return references
     VariableManager* getVariableManager() {
         return &variableManager;
+    }
+
+    class ScriptClerk* getScriptClerk() {
+        return &scriptClerk;
     }
 
     // part of MobiusContainer
@@ -282,9 +287,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     bool doMeters = true;
     void meter(const char* name);
 
-    // put this and the MslValuePool first so the things
-    // below get destructed first and have a chance to put things back into the pool
+    // put this first since it contains object pools that the things below may
+    // need to use during the destruction sequence
     MslEnvironment scriptenv;
+    ScriptClerk scriptClerk {this};
     
     // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
     juce::AudioDeviceManager customAudioDeviceManager;

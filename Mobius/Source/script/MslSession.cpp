@@ -1792,7 +1792,8 @@ void MslSession::mslVisit(MslEcho* echo)
     if (next == nullptr) {
         if (stack->childResults != nullptr)
           context->mslEcho(stack->childResults->getString());
-        popStack();
+        // echo has no return value so we don't clutter up the console displaying it
+        popStack(nullptr);
     }
 }
 

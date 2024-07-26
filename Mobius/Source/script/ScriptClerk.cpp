@@ -1,22 +1,157 @@
 /**
- * Besides basic file access, this also contains the logic for dealing
- * with ScriptConfig and the dual registry of .mos and .msl files.
+ * The manager for all forms of file access for MSL scripts.
  *
- * .msl files will be compiled and managed by MslEnvironment while .mos
- * files are processed by the old Scriptarian buried in the mobius core.
+ * The MslEnvironemnt contains the management of compiled scripts and runtime
+ * sessions, while the ScriptClerk deals with files, drag-and-rop, and the
+ * split between new MSL scripts and old .mos scripts.
  *
- * This is intended to be a transient object, created on demand when file
- * access is neccessary then disposed of.  On each load request, it maintains
- * error state that is normally captured and placed somewhere else for presentation
- *
+ * ScriptClerk also deals with the gathering of file compilation errors returned
+ * by MslEnvironment so they may be presented to the user.
  */
 
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../model/MobiusConfig.h"
 #include "../model/ScriptConfig.h"
+#include "../Supervisor.h"
+
+#include "MslEnvironment.h"
+#include "MslParser.h"
 
 #include "ScriptClerk.h"
+
+ScriptClerk::ScriptClerk(Supervisor* s)
+{
+    supervisor = s;
+}
+
+ScriptClerk::~ScriptClerk()
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Load
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Do a full reload of the old ScriptConfig from mobius.xml
+ * This currentlly contains a combination of .msl and .mos files.
+ * Paths are normalized and a transient ScriptConfig containing
+ * only the .mos file is created to be passed to Mobius by Supervisor
+ * since it still needs to be in control of script compilation of
+ * old scripts.
+ *
+ * For new MSL files, the clerk asks MslEnvironment to compile them
+ * and captures any parse errors to be displayed later.  Files
+ * that compile are installed in the MslEnvironment for use.
+ *
+ * This "reload" method is considered authoritative over all file-based
+ * scripts in the environment, so if the user removed a file from
+ * ScriptConfig is it removed from the environment as well and no
+ * longer visible for bindings.
+ *
+ * If you want incremental file loading preserving the rest of the
+ * environment use other methods (which don't in fact exist yet).
+ */
+void ScriptClerk::reload(ScriptConfig* sconfig)
+{
+    // split the config into old/new files
+    split(sconfig);
+
+    resetLoadResults();
+
+    for (auto path : mslFiles) {
+        loadInternal(path);
+    }
+
+    // Unload any scripts that were not included in the new config
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    env->unload(mslFiles);
+}
+
+void ScriptClerk::reload()
+{
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    ScriptConfig* sconfig = config->getScriptConfig();
+    if (sconfig != nullptr)
+      reload(sconfig);
+}
+
+/**
+ * Reset last load state.
+ */
+void ScriptClerk::resetLoadResults()
+{
+    missingFiles.clear();
+    fileErrors.clear();
+    unloaded.clear();
+}
+
+/**
+ * Load an individual file
+ * This is intended for use by the console and does not reset errors.
+ */
+void ScriptClerk::loadFile(juce::String path)
+{
+    loadInternal(path);
+}
+
+/**
+ * Return the collisions after a load.
+ * This returns ALL of them, so might want somethign that just returns
+ * the collisions that happened after the last loadFile.
+ *
+ * This doesn't really belong here, you can get the current collisions from
+ * MslEnvironment any time, so really if Clerk returns collisions at all it
+ * should just be the ones it caused.
+ */
+juce::OwnedArray<class MslCollision>* ScriptClerk::getCollisions()
+{
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    return env->getCollisions();
+}
+
+/**
+ * Load one file into the library.
+ * Save parse errors if encountered.
+ * 
+ * Within the environment, if the script has already been loaded, it
+ * is replaced and the old one is deleted.  If the replaced script is still
+ * in use it is placed on the inactive list.
+ */
+void ScriptClerk::loadInternal(juce::String path)
+{
+    juce::File file (path);
+    
+    if (!file.existsAsFile()) {
+        // this should have been caught and saved by ScriptClerk by now
+        Trace(1, "ScriptClerk: loadInternal missing file %s", path.toUTF8());
+    }
+    else {
+        juce::String source = file.loadFileAsString();
+
+        // ask the environment to install it if it can
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        MslParserResult* result = env->load(path, source);
+ 
+        // if the parser returns errors, save them
+        if (result->errors.size() > 0) {
+            MslFileErrors* fe = new MslFileErrors();
+            // transfer ownership
+            // todo: hate this
+            MslError::transfer(&(result->errors), fe->errors);
+            // annotate this with the file path so we know where it came from
+            fe->path = path;
+            fe->code = source;
+            fileErrors.add(fe);
+        }
+
+        delete result;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////
 //

@@ -616,6 +616,20 @@ void BindingEditor::formChanged()
     }
 }
 
+/**
+ * Should be called whenever a change is detected in the binding target
+ * subcomponent.  Like formChanged, this is expected to update the
+ * current binding if there is one.
+ */
+void BindingEditor::targetChanged()
+{
+    Binding* current = bindings.getSelectedBinding();
+    if (current != nullptr) {
+        targets.capture(current);
+        bindings.updateContent();
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // BindingTable Listener
@@ -705,22 +719,22 @@ void BindingEditor::bindingDelete(Binding* b)
 /**
  * BindingTableSelector Listener called when the user manually
  * clicks on one of the targets.
- * 
- * When you change the targets are are NOT in targetUnlock mode,
- * the form resets.
  *
- * Options: Try to locate an existing binding with the same target
- * and auto-select it.  Might be a convenient way to detect if the
- * binding already exists in a long binding list.  But what if there
- * is more than one with differing arguments?
- * 
+ * Originally this deselected everything and initialized the form,
+ * but that isn't consistent with the way the form now works by
+ * auto updating the selected binding.
+ *
+ * Old thoughts said that it could try to locate a binding
+ * with that target and select it, but I'm not liking that.
  */
 void BindingEditor::bindingTargetClicked(BindingTargetSelector* bts)
 {
     (void)bts;
-    // note that this does not reset the target selector
-    resetForm();
-    bindings.deselect();
+    targetChanged();
+
+    // old way before form capture
+    //resetForm();
+    //bindings.deselect();
 }
 
 //////////////////////////////////////////////////////////////////////

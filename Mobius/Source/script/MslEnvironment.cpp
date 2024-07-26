@@ -1,5 +1,5 @@
 /**
- * Emerging runtime environment for script evaluation
+ * The global runtime environment for MSL scripts and sessions.
  *
  */
 
@@ -16,8 +16,8 @@
 #include "MslError.h"
 #include "MslScript.h"
 #include "MslParser.h"
-#include "ScriptClerk.h"
 #include "MslSession.h"
+#include "MslScriptletSession.h"
 
 #include "MslEnvironment.h"
 
@@ -32,115 +32,44 @@ MslEnvironment::~MslEnvironment()
 
 void MslEnvironment::initialize(MslContext* c)
 {
-    // remember this while we have a context handle
-    root = c->mslGetRoot();
+    (void)c;
+    // formerly we remembered things related to files here, so there
+    // isn't anything to do any more
 }
 
+/**
+ * The object pools will be reclained during the destruction process,
+ * which Supervisor has arranged to do last so other things have a chance
+ * return objects to the pools as they destruct.
+ * While that works, the static initialization order is subtle, and it
+ * could be better to have a more controled shutdown sequence.
+ */
 void MslEnvironment::shutdown()
 {
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Load
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
- * Load the file list derived by ScriptClerk.
- * Also saves any file errors for later display.
+ * Primary interface for ScriptClerk.
+ * A file has been loaded and the source extracted.
+ * Compile it and install it into the library if it comples.
+ * Return parse errors if they were encountered.
  *
- * If a script was previously loaded and is no longer in the configuraiton
- * it is unloaded.  
+ * The path is supplied to annotate the MslScript object after it
+ * has been compiled and also serves as the source for the default
+ * script name.  Don't like this as it requires path parsing down here
+ * ScriptClerk should do that and pass in the name.  It is however nice
+ * during debugging to know where this script came from.
+ *
+ * The result is dynamically allocated and must be deleted by the caller.
  */
-void MslEnvironment::load(ScriptClerk& clerk)
+MslParserResult* MslEnvironment::load(juce::String path, juce::String source)
 {
-    // reset state from last time
-    missingFiles = clerk.getMissingFiles();
-    fileErrors.clear();
-    unloaded.clear();
+    MslParser parser;
+    MslParserResult* result = parser.parse(source);
 
-    for (auto path : clerk.getMslFiles()) {
-        loadInternal(path);
-    }
-
-    unload(clerk.getMslFiles());
-}
-
-/**
- * Reset last load state.
- */
-void MslEnvironment::resetLoad()
-{
-    missingFiles.clear();
-    fileErrors.clear();
-    unloaded.clear();
-}
-
-/**
- * Load an individual file
- * This is intended for use by the console and does not reset errors.
- */
-void MslEnvironment::load(juce::String path)
-{
-    loadInternal(path);
-}
-
-/**
- * Reload the ScriptConfig but only MSL files
- */
-void MslEnvironment::loadConfig(MslContext* context)
-{
-    MobiusConfig* config = context->mslGetMobiusConfig();
-    ScriptConfig* sconfig = config->getScriptConfig();
-    if (sconfig != nullptr) {
-
-        // split into .mos and .msl file lists and normalize paths
-        ScriptClerk clerk (root);
-        clerk.split(sconfig);
-
-        // new files go to the environment
-        load(clerk);
-    }
-}
-
-/**
- * Load one file into the library.
- * Save parse errors if encountered.
- * If the script has already been loaded, it is replaced and the old
- * one is deleted.  If the replaced script is still in use it is placed
- * on the inactive list.
- */
-void MslEnvironment::loadInternal(juce::String path)
-{
-    juce::File file (path);
-    
-    if (!file.existsAsFile()) {
-        // this should have been caught and saved by ScriptClerk by now
-        Trace(1, "MslEnvironment: loadInternal missing file %s", path.toUTF8());
-    }
-    else {
-        juce::String source = file.loadFileAsString();
-
-        MslParser parser;
-        MslParserResult* result = parser.parse(source);
- 
-        // if the parser returns errors, save them
-        // if it returns a script install it
-        // on error, the script object if there is one is incomplete
-        // and can be discarded, any use in keeping these around?
-
-        if (result->errors.size() > 0) {
-            MslFileErrors* fe = new MslFileErrors();
-            // transfer ownership
-            // todo: hate this
-            MslError::transfer(&(result->errors), fe->errors);
-            // annotate this with the file path so we know where it came from
-            fe->path = path;
-            fe->code = source;
-            fileErrors.add(fe);
-        }
-        else if (result->script != nullptr) {
+    // if this parsed without error, install it in the library
+    if (result->errors.size() == 0) {
+        if (result->script != nullptr) {
             // transfer ownership
             MslScript* script = result->script.release();
             // annotate with path, which also provides the default reference name
@@ -152,9 +81,12 @@ void MslEnvironment::loadInternal(juce::String path)
             // empty, is this worth saying anything about
             Trace(1, "MslEnvironment: No parser results for file %s", path.toUTF8());
         }
-
-        delete result;
     }
+
+    // todo: if this was succesfull we don't need to return anything
+    // the only thing MslParserResult has in it is the MslError list so
+    // we could just return that instead
+    return result;
 }
 
 /**
@@ -179,6 +111,32 @@ void MslEnvironment::unload(juce::StringArray& retain)
             inactive.add(s);
         }
     }
+}
+
+/**
+ * ScriptletSession is fairly autonomous but I'd still like to get them
+ * through the environment in case we need to do tracking of them for some reason.
+ *
+ * The session should be returned with releaseScriptetSession() when no longer
+ * necessary, but it is not necessary to delete it.  Any lingering sessions
+ * will be reclaimed at shutdown.
+ */
+MslScriptletSession* MslEnvironment::newScriptletSession()
+{
+    MslScriptletSession* s = new MslScriptletSession(this);
+    scriptlets.add(s);
+    return s;
+}
+
+/**
+ * Return a scriptlet session when it is no longer necessary.
+ * Callers aren't required to do this but they'll leak and won't get reclained
+ * till shutdown if you don't.
+ */
+void MslEnvironment::releaseScriptletSession(MslScriptletSession* s)
+{
+    // any internal cleanup to do?
+    scriptlets.removeObject(s);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -270,7 +228,7 @@ void MslEnvironment::install(MslScript* script)
         col->name = name;
         col->fromPath = script->path;
         col->otherPath = link->script->path;
-        collisions.add(col);
+         collisions.add(col);
         collision = true;
     }
     else {

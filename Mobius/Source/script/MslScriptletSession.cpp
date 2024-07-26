@@ -39,7 +39,7 @@ void MslScriptletSession::reset()
  * Okay, now it gets interesting.
  * Parse the scriptlet text and evaluate it.
  */
-void MslScriptletSession::eval(MslContext* c, juce::String source)
+bool MslScriptletSession::eval(MslContext* c, juce::String source)
 {
     MslParser parser;
 
@@ -84,6 +84,7 @@ void MslScriptletSession::eval(MslContext* c, juce::String source)
     }
 
     delete presult;
+    return (errors.size() == 0);
 }
 
 bool MslScriptletSession::isWaiting()
