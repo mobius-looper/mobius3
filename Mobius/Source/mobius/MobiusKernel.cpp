@@ -1184,7 +1184,7 @@ bool MobiusKernel::mslWait(MslWait* w)
 
 void MobiusKernel::mslEcho(const char* msg)
 {
-    (void)msg;
+    Trace(2, "MobiusKernel::mslEcho %s", msg);
 }
 
 //

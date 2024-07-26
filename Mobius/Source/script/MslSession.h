@@ -17,6 +17,7 @@
 
 #include "../model/Symbol.h"
 
+#include "MslModel.h"
 #include "MslValue.h"
 #include "MslWait.h"
 
@@ -30,7 +31,7 @@ class MslStack
     ~MslStack();
 
     // script we're in, may not need this?
-    MslScript* script = nullptr;
+    class MslScript* script = nullptr;
 
     // node we're on
     MslNode* node = nullptr;
@@ -62,12 +63,6 @@ class MslStack
     // the information we convey to the MslContainer to set up the wait
     // this is only used once so don't need to pool them
     MslWait wait;
-
-    // true if we are waiting, could go in MslWait too?
-    bool waiting = false;
-    // true when Session::resume is called to let us proceed
-    bool waitFinished = false;
-    
 };
 
 /**
@@ -96,6 +91,7 @@ enum MslOperators {
 class MslSession : public MslVisitor
 {
     friend class MslEnvironment;
+    friend class MslConductor;
     
   public:
     
@@ -105,16 +101,22 @@ class MslSession : public MslVisitor
     // begin evaluation of a script, it will complete or reach a wait state
     void start(class MslContext* context, class MslScript* script);
 
-    // resume evaluation after a wait if it can
-    void resume(class MslContext* context, class MslWait* wait);
-    
+    // state after starting or resuming
+    // hmm, we don't really need isWaiting exposed do we?  
+    bool isFinished();
     bool isWaiting();
+    bool isTransitioning();
+    bool hasErrors();
+
+    // resume evaluation after transitioning or to check wait states
+    void resume(class MslContext* context);
+
+    // what we're waiting on
     class MslWait* getWait();
+
+    // results after finishing
     MslValue* getResult();
     MslValue* captureResult();
-    MslBinding* captureBindings();
-    void getResultString(MslValue* v, juce::String& s);
-    juce::String getFullResult();
     juce::OwnedArray<class MslError>* getErrors();
 
     // MslVisitor
@@ -131,20 +133,18 @@ class MslSession : public MslVisitor
     void mslVisit(class MslEnd* obj) override;
     void mslVisit(class MslWaitNode* obj) override;
     void mslVisit(class MslEcho* obj) override;
-    void mslVisit(class MslContext* obj) override;
+    void mslVisit(class MslContextNode* obj) override;
 
   protected:
 
-    // for use only by MslEnvironment
-    
-    // the list this session is on
-    MslContextId contextId = MslContextNone;
-
-    // the list this session wants to be on
-    MslContextId desiredContextId = MslContextNone;
+    // for use only by MslConductor
     
     // session list chain
-    MslSession* contextNext = nullptr;
+    MslSession* next = nullptr;
+
+    // unique id generated for results tracking
+    // mostly for ScriptletSession
+    int sessionId = 0;
 
   private:
 
@@ -156,6 +156,9 @@ class MslSession : public MslVisitor
     class MslStack* stack = nullptr;
 
     class MslContext* context = nullptr;
+
+    // set true during evaluation to transition to the other side
+    bool transitioning = false;
     
     // runtime errors
     juce::OwnedArray<class MslError> errors;

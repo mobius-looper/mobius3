@@ -25,9 +25,28 @@
  * I wish I had a more general thread/memory-safe container class for things like this
  * since this pattern is happening in three places now.
  *
+ * There are two lists of sessions to be processed: shellSessions and kernelSessions.
+ * While each side is being processed, if a session needs to transition to the other
+ * side it is placed on the toShell or toKernel list.
+ *
+ * Use of an intermediate TO list allows each side to be iterating over the primary
+ * list without a csect around the entire iteration.  Each side is not allowed to modify
+ * the primary list of the other side, it can only add things to the TO list.
+ * At the beginning of the processing cycle for each side, the TO list is moved onto
+ * the primary list, guarded by csects just for the move.
+ *
+ * When a session completes, it may contain errors or other interesting information that
+ * needs to be conveyed to the user.  These are accumulated on the result list by the shell.
+ * If a session ends in the kernel, it is marked as completed and placed on the toShell list.
+ * The shell then later consumes it and moves it to the result list.
+ *
+ * The result list is eventually consumed by the ScriptConsole.
+ *
  */
 
 #pragma once
+
+#include <JuceHeader.h>
 
 class MslConductor
 {
@@ -38,26 +57,44 @@ class MslConductor
 
     // shell interface
 
-    void shellMaintenance();
-    class MslSession* getShellSessions();
-    void addShellSession(class MslSession* s);
-    void sendToKernel(class MslSession* s);
+    void shellTransition();
+    void shellIterate(class MslContext* c);
+    void pruneResults();
 
     // kernel interface
 
-    void kernelMaintenance();
-    class MslSession* getKernelSessions();
-    void addKernelSEssion(class MslSEssion* s);
-    void sendToShell(class MslSession* s);
+    void kernelTransition();
+    void kernelIterate(class MslContext* c);
+
+    // launch results
+    
+    void addTransitioning(class MslContext* c, class MslSession* s);
+    void addWaiting(class MslContext* c, class MslSession* s);
+    void addResult(class MslContext* c, class MslSession* s);
+    MslSession* getResults();
+
+    // dangerous console hacks
+    bool isWaiting(int id);
+    MslSession* getFinished(int id);
 
   private:
 
+    juce::CriticalSection criticalSection;
+    juce::CriticalSection criticalSectionResult;
+
     class MslEnvironment* environment = nullptr;
 
-    MslSession* shellSessions = nullptr;
-    MslSession* kernelSessions = nullptr;
-    MslSession* toShell = nullptr;
-    MslSession* toKernel = nullptr;
+    class MslSession* shellSessions = nullptr;
+    class MslSession* kernelSessions = nullptr;
+    class MslSession* toShell = nullptr;
+    class MslSession* toKernel = nullptr;
+    class MslSession* results = nullptr;
+
+    void addResult(class MslSession* s);
+    void deleteSessionList(class MslSession* list);
+    
+    MslSession* findSessionDangerously(int id);
+    MslSession* findSessionDangerously(MslSession* list, int id);
 
 };
 

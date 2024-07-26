@@ -28,7 +28,7 @@ class MslContext
     virtual ~MslContext() {}
 
     // the id of the context that is talking to the environment
-    virtual void MslContextId mslGetContextId() = 0;
+    virtual MslContextId mslGetContextId() = 0;
 
     // perform an action that invokes a function or assigns a parameter
     virtual void mslAction(class UIAction* a) = 0;

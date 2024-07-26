@@ -1,6 +1,6 @@
 /**
- * Incredibly hacky, but just trying to get something functional and we'll
- * see about organization when the dust settles.
+ * State related to the compilation and evaluation of an MSL scriptlet.
+ *
  */
 
 #include <JuceHeader.h>
@@ -16,104 +16,221 @@
 MslScriptletSession::MslScriptletSession(MslEnvironment* env)
 {
     environment = env;
-
     script.reset(new MslScript());
 }
 
 MslScriptletSession::~MslScriptletSession()
 {
-    // todo: if we installed anything in the Environment,
-    // make sure it is removed?
+    // todo: should this always use environment pools or
+    // should we have a more controlled destruction?
     MslValuePool* vp = environment->getValuePool();
-    vp->free(scriptletResult);
+    vp->free(launchResult);
+    delete parseResult;
 }
 
 void MslScriptletSession::reset()
 {
-    // todo: remove procs and vars installed in the environment?
-
+    delete parseResult;
+    parseResult = nullptr;
+    resetLaunchResults();
     script.reset(new MslScript());
 }
 
-/**
- * Okay, now it gets interesting.
- * Parse the scriptlet text and evaluate it.
- */
-bool MslScriptletSession::eval(MslContext* c, juce::String source)
+//////////////////////////////////////////////////////////////////////
+//
+// Compilation
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MslScriptletSession::compile(juce::String source)
 {
-    MslParser parser;
+    bool success = false;
 
-    errors.clear();
+    // reclaim the last parser result
+    // todo: if we're in kernel context this needs to be pooling
+    // but we can't be right now
+    delete parseResult;
+    parseResult = nullptr;
 
+    // also reset evaluation state now, or wait till eval?
+    
     // special parser interface where we manage the MslScript on the outside
-    MslParserResult* presult = parser.parse(script.get(), source);
+    MslParser parser;
+    parseResult = parser.parse(script.get(), source);
 
-    if (presult->errors.size() > 0) {
-        MslError::transfer(&(presult->errors), errors);
+    // we own the result
+    if (parseResult->errors.size() == 0)
+      success = true;
+
+    return success;
+}
+
+/**
+ * Return the parser result for inspection.
+ * Note that unlike normal script compilation the result will NOT contain a pointer
+ * to an MslScript, just the errors.
+ * Could avoid the layer and just capture and return the MslError list instead.
+ */
+MslParserResult* MslScriptletSession::getCompileErrors()
+{
+    return parseResult;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Evaluation
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Evaluate a previously compiled scriptlet.
+ */
+bool MslScriptletSession::eval(class MslContext* c)
+{
+    bool success = false;
+
+    resetLaunchResults();
+    
+    if (script->root == nullptr) {
+        // nothing was compiled or the scriptlet source was empty
+        // should this be an error condition?
+        // what if it contained only directives
+        success = true;
     }
     else {
-        // handoff is awkward
-        // if we think of ScriptSession as living outside environment then
-        // we have to ask it to do a lot
-        // if it lives inside, then we have to go through the environment
-        // for everything
-        MslSession* session = new MslSession(environment);
+        // ask the environment to launch ourselves, this is a little weird
+        // but allows the environment to deposit complex results directly
+        // in this object rather than returning something we have to copy
+        environment->launch(c, this);
 
-        session->start(c, script.get());
-
-        // the now familiar copying of result/error status from one object
-        // to another
-        // might be worth factoring out an MslErrorContainer or something we can pass
-        // down rather than always moving it back up
-        MslError::transfer(session->getErrors(), errors);
-
-        // temporary diagnostics
-        fullResult = session->getFullResult();
-        
-        // scriptlets to not support complex values, though I suppose they could
-        MslValuePool* vp = environment->getValuePool();
-        vp->free(scriptletResult);
-        scriptletResult = session->captureResult();
-
-        if (!session->isWaiting()) {
-            delete session;
-        }
-        else {
-            waitingSession.reset(session);
-        }
+        if (launchErrors.size() == 0)
+          success = true;
     }
 
-    delete presult;
-    return (errors.size() == 0);
+    return success;
+}
+
+/**
+ * Reset launch state after a previous evaluation.
+ */
+void MslScriptletSession::resetLaunchResults()
+{
+    sessionId = 0;
+    wasTransitioned = false;
+    wasWaiting = false;
+    launchErrors.clear();
+    
+    MslValuePool* vp = environment->getValuePool();
+    vp->free(launchResult);
+    launchResult = nullptr;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Evaluation Results
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MslScriptletSession::isFinished()
+{
+    return (launchErrors.size() == 0 && sessionId == 0);
+}
+
+juce::OwnedArray<class MslError>* MslScriptletSession::getErrors()
+{
+    return &launchErrors;
+}
+
+bool MslScriptletSession::isTransitioning()
+{
+    return wasTransitioned;
 }
 
 bool MslScriptletSession::isWaiting()
 {
-    return (waitingSession != nullptr);
+    return wasWaiting;
 }
 
-void MslScriptletSession::resume(MslContext* c, MslWait* w)
+int MslScriptletSession::getSessionId()
 {
-    if (waitingSession != nullptr) {
-        waitingSession->resume(c, w);
-        
-        MslError::transfer(waitingSession->getErrors(), errors);
-        fullResult = waitingSession->getFullResult();
-        MslValuePool* vp = environment->getValuePool();
-        vp->free(scriptletResult);
-        scriptletResult = waitingSession->captureResult();
+    return sessionId;
+}
 
-        if (!waitingSession->isWaiting())
-          waitingSession = nullptr;
+/**
+ * The result of the last launch.
+ * Ownership is retained.
+ */
+MslValue* MslScriptletSession::getResult()
+{
+    return launchResult;
+}
+
+/**
+ * Trace the full results for debugging.
+ */
+juce::String MslScriptletSession::getFullResult()
+{
+    juce::String s;
+    getResultString(launchResult, s);
+    return s;
+}
+
+/**
+ * This should probably be an MslValue utility
+ */
+void MslScriptletSession::getResultString(MslValue* v, juce::String& s)
+{
+    if (v == nullptr) {
+        s += "null";
+    }
+    else if (v->list != nullptr) {
+        // I'm a list
+        s += "[";
+        MslValue* ptr = v->list;
+        int count = 0;
+        while (ptr != nullptr) {
+            if (count > 0) s += ",";
+            getResultString(ptr, s);
+            count++;
+            ptr = ptr->next;
+        }
+        s += "]";
     }
     else {
-        waitingSession = nullptr;
+        // I'm atomic
+        const char* sval = v->getString();
+        if (sval != nullptr)
+          s += sval;
+        else
+          s += "null";
     }
 }
 
+/**
+ * Used by the console to show the results of a proc evaluation.
+ * Proc definitions accumulate in the script after each evaluation.
+ * 
+ * !! woah, need to revisit how this is maintained if the inner
+ * session goes async.  Maybe not an issue except for the unusual
+ * way the console uses scriptlets.
+ */
 juce::OwnedArray<MslProc>* MslScriptletSession::getProcs()
 {
     return &(script->procs);
 }
+
+/**
+ * Used by the console to show the results of a var evaluation.
+ * These accumulate as Bindings on the script.
+ * Another ugly hack for the console.
+ */
+MslBinding* MslScriptletSession::getBindings()
+{
+    return script->bindings;
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
 
     

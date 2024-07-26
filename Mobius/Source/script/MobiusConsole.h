@@ -37,12 +37,13 @@ class MobiusConsole : public juce::Component,
     void consoleEscape() override;
 
     // MslContext
-    juce::File mslGetRoot();
-    class MobiusConfig* mslGetMobiusConfig() override;
+    MslContextId mslGetContextId();
     void mslAction(class UIAction* a) override;
     bool mslQuery(class Query* q) override;
     bool mslWait(class MslWait* w) override;
     void mslEcho(const char* msg) override;
+    juce::File mslGetRoot();
+    class MobiusConfig* mslGetMobiusConfig() override;
 
   private:
 
@@ -52,6 +53,7 @@ class MobiusConsole : public juce::Component,
     // scriptlet session we maintain
     class MslScriptletSession* session = nullptr;
     class MslWait* wait = nullptr;
+    int asyncSession = 0;
     
     class ConsolePanel* panel = nullptr;
     BasicButtonRow commandButtons;
@@ -67,6 +69,7 @@ class MobiusConsole : public juce::Component,
     void doParse(juce::String line);
     void doList();
     void doResume();
+    void doStatus(juce::String line);
     
     void doEval(juce::String line);
     void traceNode(class MslNode* node, int indent);

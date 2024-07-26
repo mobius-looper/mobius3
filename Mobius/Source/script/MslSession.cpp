@@ -1,10 +1,6 @@
 /**
  * The MSL interupreter.
  *
- * Need to improve conveyance of errors.  To be useful the messages
- * need to have line/column numbers and it would support a syntax highlighter
- * better if the error would include that in an MslError model rather than
- * embedded in the text.
  */
 
 #include <JuceHeader.h>
@@ -51,8 +47,8 @@ MslSession::~MslSession()
  */
 void MslSession::start(MslContext* argContext, MslScript* argScript)
 {
+    // should be clean out of the pool but make sure
     errors.clear();
-
     valuePool->free(rootResult);
     rootResult = nullptr;
     
@@ -61,7 +57,7 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
     stack->node = script->root;
 
     // put the saved static bindings in the root block stack frame
-    // !! potential thread issues
+    // !! todo: potential thread issues
     // it is rare to have concurrent evaluations of the same script and still
     // rarer to be doing it from both the UI thread and the audio thread at the same time
     // but it can happen
@@ -77,35 +73,99 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
     run();
 }
 
-bool MslSession::isWaiting()
-{
-    return (stack != nullptr && stack->waiting);
-}
-
 /**
- * Resume the session when it is waiting for something.
+ * Resume a script after transitioning or to check wait states.
+ * If we transitioned, it will just continue from the previous node.
+ * If waiting, we'll immediately wait again unless the MslWait was
+ * modified.
+ *
+ * If this was transitioning, the transition has happened, and that
+ * state can be cleared.
+ * 
+ * Everything else is left untouched, the error list may be non-empty
+ * if we're transitioning from the kernel back to the shell to show results.
  */
-void MslSession::resume(MslContext* argContext, MslWait* wait)
+void MslSession::resume(MslContext* argContext)
 {
+    transitioning = false;
+
+    // stack and bindings remain in place
     context = argContext;
 
-    // go back to the stack frame that was waiting
-    stack = wait->stack;
-    // clear this so the run loop can advance
-    stack->waiting = false;
-    
-    // run() will immediately call the MslWaitNode handler again
-    // which needs to clear the waiting flag, but the node handler needs to
-    // know it is being touched because of a resume() since I'm not positive
-    // there can't be other paths through the session that would cause it to
-    // be evaluated before we're actually notified of the wait being finished
-    stack->waitFinished = true;
+    // run may just immediately return if there were errors
+    // or if the MslWait hasn't been satisified
     run();
 }
 
 /**
+ * Return true if we're transitioning.
+ * This is just a flag that will toss the session to the other side.
+ * It is important that the session logic does not flag a transition that doesn't
+ * make sense, or else it will just keep bouncing between them.
+ */
+bool MslSession::isTransitioning()
+{
+    return (transitioning == true);
+}
+
+/**
+ * Return true if we're waiting on something.
+ * This is not normally true if transitioning is also true since
+ * we shold do the transition before we enter the wait state.
+ *
+ * When we get to the point where sessions can have multiple threads of
+ * execution will have to check all threads.
+ *
+ * Currently a wait state is indiciated by the top of the stack having
+ * an active MslWait 
+ */
+bool MslSession::isWaiting()
+{
+    bool waiting = (stack != nullptr && stack->wait.active);
+    
+    if (waiting && transitioning)
+      Trace(1, "MslSession: I'm both transitioning and waiting, can this happen?");
+    
+    return waiting;
+}
+
+/**
+ * Only for MslScriptletSession and the console
+ */
+MslWait* MslSession::getWait()
+{
+    MslWait* wait = nullptr;
+    if (stack != nullptr && stack->wait.active)
+      wait = &(stack->wait);
+    return wait;
+}
+
+/**
+ * Return true if the script has finished.
+ * This is indicated by an empty stack or the presence of errors.
+ * The error list is what distinguishes this from simply testing
+ * !transitioning and !waiting.  We can be in either of those states
+ * but are still fished because of errors.
+ */
+bool MslSession::isFinished()
+{
+    return (stack == nullptr || hasErrors());
+}
+
+bool MslSession::hasErrors()
+{
+    return (errors.size() > 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Results
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
  * Ownership of the result DOES NOT TRANSFER to the caller.
- * Needs thought about what the lifespan of this needs to be.
+ * Who uses this?  Anything that cares should be using captureResult
  */
 MslValue* MslSession::getResult()
 {
@@ -113,16 +173,7 @@ MslValue* MslSession::getResult()
 }
 
 /**
- * Okay, here is where it's getting weird.
- *
- * In the first implementation with MslValueTree I had to do a tree
- * walk to find the last leaf value in a bunch of nested trees because
- * every block created it's own list.
- *
- * I don't think that's necessary any more?
- *
- * What is different about this is that it returns ownership
- * of the rootResult.
+ * Transfer ownership of the final result.
  */
 MslValue* MslSession::captureResult()
 {
@@ -134,47 +185,6 @@ MslValue* MslSession::captureResult()
 juce::OwnedArray<MslError>* MslSession::getErrors()
 {
     return &errors;
-}
-
-/**
- * Trace the full results for debugging.
- */
-juce::String MslSession::getFullResult()
-{
-    juce::String s;
-    getResultString(rootResult, s);
-    return s;
-}
-
-/**
- * This should probably be an MslValue utility
- */
-void MslSession::getResultString(MslValue* v, juce::String& s)
-{
-    if (v == nullptr) {
-        s += "null";
-    }
-    else if (v->list != nullptr) {
-        // I'm a list
-        s += "[";
-        MslValue* ptr = v->list;
-        int count = 0;
-        while (ptr != nullptr) {
-            if (count > 0) s += ",";
-            getResultString(ptr, s);
-            count++;
-            ptr = ptr->next;
-        }
-        s += "]";
-    }
-    else {
-        // I'm atomic
-        const char* sval = v->getString();
-        if (sval != nullptr)
-          s += sval;
-        else
-          s += "null";
-    }
 }
 
 /**
@@ -194,17 +204,6 @@ void MslSession::addError(MslNode* node, const char* details)
     e->column = node->token.column;
     e->details = juce::String(details);
     errors.add(e);
-}
-
-/**
- * Only for MslScriptletSession and the console
- */
-MslWait* MslSession::getWait()
-{
-    MslWait* wait = nullptr;
-    if (stack != nullptr)
-      wait = &(stack->wait);
-    return wait;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -245,8 +244,7 @@ MslStack* MslSession::allocStack()
         s->childIndex = -1;
         s->proc = nullptr;
         s->symbol = nullptr;
-        s->waiting = false;
-        s->waitFinished = false;
+        s->wait.reset();
     }
     else {
         // ordinarilly won't be here unless something is haywire
@@ -312,7 +310,7 @@ void MslSession::run()
     //if (stack != nullptr)
     //aTrace(2, "Run: %s", debugNode(stack->node).toUTF8());
     
-    while (stack != nullptr && !stack->waiting && errors.size() == 0) {
+    while (stack != nullptr && !stack->wait.active && !transitioning && errors.size() == 0) {
         advanceStack();
     }
 }
@@ -377,8 +375,8 @@ MslStack* MslSession::pushNextChild()
     // this starts at -1 
     stack->childIndex++;
     if (stack->childIndex < childNodes->size()) {
-        MslNode* next = (*childNodes)[stack->childIndex];
-        neu = pushStack(next);
+        MslNode* nextNode = (*childNodes)[stack->childIndex];
+        neu = pushStack(nextNode);
     }
     return neu;
 }
@@ -582,8 +580,8 @@ void MslSession::mslVisit(MslBlock* block)
 {
     (void)block;
     
-    MslStack* next = pushNextChild();
-    if (next == nullptr) {
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr) {
         // ran out of children, at this point we return the aggregate result
         // to the parent
         // todo: this is where we may want to make the distinction between
@@ -611,8 +609,8 @@ void MslSession::mslVisit(MslVar* var)
 {
     // the parser should have only allowed one child, if there is more than
     // one we take the last value
-    MslStack* next = pushNextChild();
-    if (next == nullptr) {
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr) {
         // initializer finished
     
         MslStack* parent = stack->parent;
@@ -1434,8 +1432,8 @@ void MslSession::mslVisit(MslOperator* opnode)
         // tell popStack that we want all child values
         stack->accumulator = true;
         
-        MslStack* next = pushNextChild();
-        if (next == nullptr) {
+        MslStack* nextStack = pushNextChild();
+        if (nextStack == nullptr) {
             // ran out of children, apply the operator
             doOperator(opnode);
         }
@@ -1688,8 +1686,8 @@ void MslSession::mslVisit(MslIf* node)
 void MslSession::mslVisit(MslElse* node)
 {
     (void)node;
-    MslStack* next = pushNextChild();
-    if (next == nullptr)
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr)
       popStack();
 }
 
@@ -1699,52 +1697,69 @@ void MslSession::mslVisit(MslElse* node)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Wait nodes control an extension of the MslStack object that has
+ * information about what we are waiting on and when it has finished.
+ * It is necessary to put this on the stack rather than inside the node
+ * because the node can be shared by multiple sessions.
+ * This is in the MslWait object embedded within the MslStack.
+ *
+ * Since ALL MslStacks will have an MslWait, I suppose that could be used
+ * for other nodes besides MslWaitNode, but it isn't right now.
+ *
+ * When an MslStack has an active MslWait, the session (or thread within the session)
+ * suspends until the wait state is cleared by the outside, or
+ * it times out.  Timeout is not yet implemented.
+ *
+ * For MslWaitNode it is important to know if this is the first time this
+ * is visited or the second time after the MslWait has been satisfied
+ * so control must return here order to cancel the wait.  This makes MslWait
+ * not usable for other nodes without additional work.
+ *
+ */
 void MslSession::mslVisit(MslWaitNode* wait)
 {
-    if (stack->waitFinished) {
-        // back here after MslEnvironment::resume was called and the container
-        // said the wait is over
-        // might want to have an interesting return value here
-        stack->waiting = false;
-        stack->waitFinished = false;
-        popStack();
-    }
-    else if (stack->waiting) {
-        // unclear if we can get here, but I suppose periodic maintenance would
-        // call this, here is where you could implement a timeout but you have to
-        // be careful because the context has a pointer to this MslWait object,
-        // would be better if we weren't sharing objects and instead a unqiue id or something
-        Trace(2, "MslSession: Wait node ping");
-    }
-    // else starting a wait for the first time
-    else if (wait->type == WaitTypeNone) {
-        addError(wait, "Missing wait type");
-    }
-    else if (wait->type == WaitTypeEvent && wait->event == WaitEventNone) {
-        addError(wait, "Missing or invalid event name");
-    }
-    else if (wait->type == WaitTypeDuration && wait->duration == WaitDurationNone) {
-        addError(wait, "Missing or invalid duration name");
-    }
-    else if (wait->type == WaitTypeLocation && wait->location == WaitLocationNone) {
-        addError(wait, "Missing or invalid location name");
+    if (stack->wait.active) {
+        // we've been here before
+        if (stack->wait.finished) {
+            // back here after MslEnvironment::resume was called and the context
+            // decided the wait was over
+            // might want to have an interesting return value here
+            stack->wait.reset();
+            popStack();
+        }
+        else {
+            // still waiting, leave the stack as it is
+        }
     }
     else {
-        // evaluate the count/number/duration
-        MslStack* next = pushNextChild();
-        if (next == nullptr)
-          setupWait(wait);
+        // starting a wait for the first time
+        if (wait->type == WaitTypeNone) {
+            addError(wait, "Missing wait type");
+        }
+        else if (wait->type == WaitTypeEvent && wait->event == WaitEventNone) {
+            addError(wait, "Missing or invalid event name");
+        }
+        else if (wait->type == WaitTypeDuration && wait->duration == WaitDurationNone) {
+            addError(wait, "Missing or invalid duration name");
+        }
+        else if (wait->type == WaitTypeLocation && wait->location == WaitLocationNone) {
+            addError(wait, "Missing or invalid location name");
+        }
+        else {
+            // evaluate the count/number/duration
+            MslStack* nextStack = pushNextChild();
+            if (nextStack == nullptr)
+              setupWait(wait);
+        }
     }
 }
 
+/**
+ * Set up the MslWait on this stack frame to start the wait.
+ */
 void MslSession::setupWait(MslWaitNode* node)
 {
-    // set up the MslWait to pass to the MslContainer
-    // since this is only used once, we can keep it within the stack
-    // and not worry about pooling.  The arguments inside it however
-    // do need to be reclaimed
-    // ?? or do they, just point at the stack->childResults which will
-    // be freed when this stack frame finishes
     MslWait* wait = &(stack->wait);
     
     wait->type = node->type;
@@ -1752,19 +1767,25 @@ void MslSession::setupWait(MslWaitNode* node)
     wait->duration = node->duration;
     wait->location = node->location;
 
-    wait->session = this;
-    wait->stack = stack;
-
-    // I think this always has to be a number right now, it is just
-    // used differently
+    // This is always just a number right not, it just means different things
+    // depending on the wait type
     wait->arguments = 0;
     if (stack->childResults != nullptr)
       wait->arguments = stack->childResults->getInt();
 
+    // ask the context to schedule something suitable to end the wait
+    // the context is allowed to retain a pointer to the wait object, and
+    // expected to set the finished flag when the wait is over
     if (!context->mslWait(wait))
       addError(node, "Unable to schedule wait state");
 
-    stack->waiting = true;
+    // save where it came from, I don't think this is necessary any more
+    wait->session = this;
+    wait->stack = stack;
+
+    // make it go, or rather stop
+    wait->finished = false;
+    wait->active = true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1773,9 +1794,36 @@ void MslSession::setupWait(MslWaitNode* node)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MslSession::mslVisit(MslContext* con)
+/**
+ * context "shell" | "kernel"
+ *
+ * This transitions the session to one side of the great divide.
+ * Normally this happens automatcially as symbols or waits are reached
+ * that must be handled in a specific context, but it can also be
+ * forced for testing.
+ *
+ * Note that once the transitioning flag is set in this session it will
+ * move to whatever the other side is relative to the current MslContext.
+ * So don't set this unless the requested context is actually different
+ * from where we already are, or else it may bounce back and forth
+ * endlessly.
+ */
+void MslSession::mslVisit(MslContextNode* con)
 {
-    environment->setContext(this, con->shell);
+    if (con->shell) {
+        // the shell was requested
+        if (context->mslGetContextId() == MslContextKernel) {
+            // and it is different from where we are
+            transitioning = true;
+        }
+        // else ignore
+    }
+    else {
+        // the kernel was requested
+        if (context->mslGetContextId() == MslContextShell)
+          transitioning = true;
+    }
+    
     popStack(nullptr);
 }
 
@@ -1800,8 +1848,8 @@ void MslSession::mslVisit(MslEnd* end)
 void MslSession::mslVisit(MslEcho* echo)
 {
     (void)echo;
-    MslStack* next = pushNextChild();
-    if (next == nullptr) {
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr) {
         if (stack->childResults != nullptr)
           context->mslEcho(stack->childResults->getString());
         // echo has no return value so we don't clutter up the console displaying it

@@ -106,12 +106,41 @@ class MslWait
     MslWaitEvent event = WaitEventNone;
     MslWaitDuration duration = WaitDurationNone;
     MslWaitLocation location = WaitLocationNone;
-    
-    // the session that is waiting
+
+    // arguments from the Wait expression to pass to the MslContext
+    // this is the duration, location, counter, etc.
+    int arguments = 0;
+
+    // true if this wait is active
+    // since all MslStacks have an embedded MslWait this says whether
+    // it has been turned on or is dormant
+    bool active = false;
+
+    // true once an active wait is over
+    // this is relevant only if active is also true
+    // it is set by the MslContext when something appropriate happens
+    // or by MslEnvironment if it decides the wait has timed out
+    bool finished = false;
+
+    // Where the wait came from 
+
+    // Unclear if we realy need the session/stack here
+    // the outside world just needs to set the finished flag
+    // when the wait is over, the session will then resume from
+    // whatever frame contains this wait object
+
+    // the session that is waitin
     class MslSession* session = nullptr;
 
     // the stack frame that is waiting
     class MslStack* stack = nullptr;
 
-    int arguments = 0;
+    // initialize runtime wait state when the containing MslStack
+    // is brought out of the pool
+    // the only import thing is the active flag, but I suppose
+    // we could put it all back to rest to make it look better in the debugger
+    void reset() {
+        active = false;
+    }
+    
 };

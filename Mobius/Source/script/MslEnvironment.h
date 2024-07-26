@@ -19,6 +19,7 @@
 #include <JuceHeader.h>
 
 #include "MslValue.h"
+#include "MslConductor.h"
 
 /**
  * Represents a linkage between a reference in a script and something
@@ -61,6 +62,8 @@ class MslLinkage
 class MslEnvironment
 {
     friend class MslSession;
+    friend class MslConductor;
+    friend class MslScriptletSession;
     
   public:
 
@@ -76,6 +79,37 @@ class MslEnvironment
 
     class MslParserResult* load(juce::String path, juce::String source);
     void unload(juce::StringArray& retain);
+
+    //
+    // User initiated actions
+    //
+
+    // normal file-based script actions
+    void doAction(class MslContext* c, class UIAction* action);
+
+    //
+    // Console/Scriptlet interface
+    //
+
+    // the scriptlet session is owned and tracked by the environment
+    // caller does not need to delete it, but should tell the environment
+    // when it is no longer needed so it can be reclaimed
+    class MslScriptletSession* newScriptletSession();
+    void releaseScriptletSession(class MslScriptletSession* s);
+
+    juce::OwnedArray<class MslCollision>* getCollisions() {
+        return &collisions;
+    }
+
+    void launch(class MslContext* c, class MslScriptletSession* ss);
+
+    // !! these are not stable, needs work
+    
+    // return true if a session with this id is still waiting
+    bool isWaiting(int sessionId);
+
+    // return a completed session
+    class MslSession* getFinished(int sessionId);
     
     //
     // Supervisor/MobiusKernel interfaces
@@ -87,19 +121,6 @@ class MslEnvironment
     // the "audio thread" maintenance ping
     void kernelAdvance(class MslContext* c);
 
-    // resume a session after a wait has completed
-    void resume(class MslContext* c, class MslWait* wait);
-
-    //
-    // Console interface
-    //
-
-    // the scriptlet session is owned and tracked by the environment
-    // caller does not need to delete it, but should tell the environment
-    // when it is no longer needed so it can be reclaimed
-    class MslScriptletSession* newScriptletSession();
-    void releaseScriptletSession(class MslScriptletSession* s);
-
     //
     // Library
     //
@@ -108,13 +129,7 @@ class MslEnvironment
         return &scripts;
     }
 
-    //
-    // Execution
-    //
-
-    // normal file-based script actions
-    void doAction(class MslContext* c, class UIAction* action);
-
+  protected:
 
     // for the inner component classes, mainly Session
     MslValuePool* getValuePool() {
@@ -123,15 +138,8 @@ class MslEnvironment
 
     MslLinkage* findLinkage(juce::String name);
 
-    juce::OwnedArray<class MslCollision>* getCollisions() {
-        return &collisions;
-    }
-    
-  protected:
-
-    // the session asks us to be in a particular thread context
-    // only two right now: shell and kernel
-    void setContxt(class MslSession* s, bool toShell);
+    // for MslConductor
+    void processSession(MslContext* c, MslSession* s);
     
   private:
 
@@ -139,8 +147,13 @@ class MslEnvironment
     // order of declaration and some of the things below return things to the pool
     // value pool for the interpreter
     MslValuePool valuePool;
-   
-    // the active scripts
+
+    // this must be second to clean up sessions which have things in them
+    // that are normally returned to the pool
+    MslConductor conductor {this};
+
+    // the active loaded scripts
+    // these don't pool things
     juce::OwnedArray<class MslScript> scripts;
 
     // the linkage table
@@ -150,16 +163,6 @@ class MslEnvironment
 
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
-
-    // session lists
-    // note that we don't use OwnedArray here to avoid memory allocation
-    // in the audio thread so these have to be cleaned up manually
-    class MslSession* shellSessions = nullptr;
-    class MslSession* kernelSessions = nullptr;
-
-    // transitioning sessions
-    class MslSession* toShell = nullptr;
-    class MslSession* toKernel = nullptr;
 
     // active scriptlet sessions
     juce::OwnedArray<class MslScriptletSession> scriptlets;
@@ -173,13 +176,7 @@ class MslEnvironment
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
 
-    //
-    // Context management
-    //
-
-    void addSession(MslContext* current, MslSession* s, MslContextId desired);
-    void installSessions(MslContext* current);
-    void moveSession(MslContext* current, MslSession* session);
-
+    int generateSessionId();
+    int sessionIds = 1;
 };
 

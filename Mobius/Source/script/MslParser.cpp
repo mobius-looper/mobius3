@@ -549,6 +549,9 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     
     else if (t.value == "echo")
       keyword = new MslEcho(t);
+    
+    else if (t.value == "context")
+      keyword = new MslContextNode(t);
 
     return keyword;
 }
