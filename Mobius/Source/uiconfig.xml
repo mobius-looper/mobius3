@@ -124,10 +124,11 @@
     <Button action="Muteit"/>
   </ButtonSet>
   <Properties>
-    <Property name="buttonHeight" value="25"/>
-    <Property name="trackRows" value="1"/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>
+    <Property name="buttonHeight" value="25"/>
+    <Property name="testName" value=""/>
+    <Property name="trackRows" value="1"/>
   </Properties>
 </UIConfig>
