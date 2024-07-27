@@ -24,10 +24,10 @@ class MslResult
     int sessionId = 0;
 
     // the final result value when the session finishes without errors
-    MslValue* value = nullptr;
+    class MslValue* value = nullptr;
 
     // the list of errors accumulated at runtime
-    MslError* errors = nullptr;
+    class MslError* errors = nullptr;
 
     // chain pointer accessor so the console may iterate over results
     MslResult* getNext();
@@ -44,7 +44,7 @@ class MslResult
     bool interned = false;
     
     // direct pointer to the session if it is still running
-    MslSession* session = nullptr;
+    class MslSession* session = nullptr;
 
   private:
 

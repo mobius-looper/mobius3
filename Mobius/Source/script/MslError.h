@@ -1,45 +1,49 @@
 /**
- * Objects that describe errors encountered during parsing and evaluation
+ * Object that describe errors encountered during parsing and evaluation
  * of an MSL file.
  *
- * These are maintained by MslEnvironemnt after each load for display
- * in the script diagnostic panel.
+ * This started life using juce::String which is fine for the parser but
+ * not for the interpreter because of memory allocation restrictions.  So
+ * it is a pooled object with static string arrays that need to be long
+ * enough for most errors.
  */
 
 #pragma once
 
 /** 
  * Represents a single error found in a string of MSL text.
- * Usually this came from a file, but it could have be entered in the console.
- *
  * The error has the line and column numbers within the source,
  * the token string where the error was detected, and details about
- * the error left by the parser.
+ * the error left by the parser or interpreter.
+ *
+ * This object is part of the MslPools model and is not allowed
+ * to use anything that would result in dynamic memory allocation.
  */
 class MslError
 {
   public:
 
-    MslError() {}
-    MslError(int l, int c, juce::String t, juce::String d) {
-        line = l; column = c; token = t; details = d;
-    }
-    ~MslError() {}
+    MslError();
+    // constructor used by the parser which likes juce::String
+    MslError(int l, int c, juce::String t, juce::String d);
+    ~MslError();
+
+    // initializer for the object pool
+    void init();
+    // initializer used by MslSession interpreter
+    void init(MslNode* node, const char* details);
 
     int line = 0;
     int column = 0;
-    juce::String token;
-    juce::String details;
 
-    // stupid utility to transfer from one owned array to another
-    // there has to be a better way to do this
-    static void transfer(juce::OwnedArray<MslError>* src,
-                         juce::OwnedArray<MslError>& dest) {
+    static const int MslMaxErrorToken = 64;
+    char token[MslMaxErrorToken];
 
-        while (src->size() > 0) {
-            dest.add(src->removeAndReturn(0));
-        }
-    }
+    static const int MslMaxErrorDetails = 128;
+    char details[MslMaxErrorDetails];
+
+    // chain pointer when used in the kernel
+    MslError* next = nullptr;
     
 };
 
@@ -50,6 +54,9 @@ class MslError
  *
  * Beyond the MslSerror details, this also holds the path of the file
  * and the source code of the script for display in the debug panel.
+ *
+ * Since the parser resides only in shell threads this object is NOT
+ * pooled and may make use of juce::String
  */
 class MslFileErrors
 {
@@ -66,6 +73,8 @@ class MslFileErrors
 
     // errors encountered
     // todo: since MslError is simple enough, this could just be an Array of objects
+    // todo: might still want to just have a linked list here for consistency with
+    // MslSession.  Need a conversion utility
     juce::OwnedArray<MslError> errors;
 
 };

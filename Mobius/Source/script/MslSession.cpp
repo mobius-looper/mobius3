@@ -23,23 +23,42 @@
 MslSession::MslSession(MslEnvironment* env)
 {
     environment = env;
-    valuePool = env->getValuePool();
+    // need this all the time so cache it here
+    pool = env->getPools();
 }
 
+/**
+ * These are normally only deleted when the MslPool destructs and
+ * should be clean.  
+ * 
+ * But if we land in an error condition trying to clean up, delete things
+ * rather than returning them to the pool.  The pool should still be valid
+ * at this point, but it is sensitive to static initialization order
+ * in supervisor and I'd like to know if we get here because it means something
+ * isn't pooling properly.
+ */
 MslSession::~MslSession()
 {
-    // if we error, or cancel while waiting
-    // just clean the stack
-    while (stack != nullptr) {
-        MslStack* prev = stack->parent;
-        freeStack(stack);
-        stack = prev;
+    if (stack != nullptr) {
+        Trace(1, "MslSession: You're deleting a loaded session without freeing it to the pool");
+        while (stack != nullptr) {
+            MslStack* prev = stack->parent;
+            delete stack;
+            stack = prev;
+        }
     }
 
-    // if we're shutting down, it may not make
-    // sense to return these to the pool, the "static initializer" ordering problem
-    //delete rootResult;
-    valuePool->free(rootResult);
+    if (rootResult != nullptr) {
+        // this one does cascade
+        Trace(1, "MslSession: Lingering rootResult on delete");
+        delete rootResult;
+    }
+    
+    if (errors != nullptr) {
+        // this one does cascade
+        Trace(1, "MslSession: Lingering errors on delete");
+        delete errors;
+    }
 }
 
 /**
@@ -48,12 +67,15 @@ MslSession::~MslSession()
 void MslSession::start(MslContext* argContext, MslScript* argScript)
 {
     // should be clean out of the pool but make sure
-    errors.clear();
-    valuePool->free(rootResult);
+    pool->free(errors);
+    errors = nullptr;
+    pool->free(rootResult);
     rootResult = nullptr;
+    pool->freeList(stack);
+    stack = nullptr;
     
     script = argScript;
-    stack = allocStack();
+    stack = pool->allocStack();
     stack->node = script->root;
 
     // put the saved static bindings in the root block stack frame
@@ -154,7 +176,7 @@ bool MslSession::isFinished()
 
 bool MslSession::hasErrors()
 {
-    return (errors.size() > 0);
+    return (errors != nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -182,9 +204,16 @@ MslValue* MslSession::captureResult()
     return result;
 }
 
-juce::OwnedArray<MslError>* MslSession::getErrors()
+MslError* MslSession::getErrors()
 {
-    return &errors;
+    return errors;
+}
+
+MslError* MslSession::captureErrors()
+{
+    MslError* retaval = errors;
+    errors = nullptr;
+    return retval;
 }
 
 /**
@@ -195,75 +224,10 @@ juce::OwnedArray<MslError>* MslSession::getErrors()
  */
 void MslSession::addError(MslNode* node, const char* details)
 {
-    // see file comments about why this is bad
-    MslError* e = new MslError();
-    // okay, this shit happens a lot now, why not just standardize on passing
-    // the MslToken by value everywhere
-    e->token = node->token.value;
-    e->line = node->token.line;
-    e->column = node->token.column;
-    e->details = juce::String(details);
-    errors.add(e);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Stack Pool
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * !! This needs to be a proper stack pool with no memory allocation
- * and periodic fluffing.
- */
-MslStack* MslSession::allocStack()
-{
-    MslStack* s = nullptr;
-    if (stackPool.size() > 0) {
-        s = stackPool.removeAndReturn(0);
-
-        // make sure it is initialized
-        // releasing resources should have been done when
-        // it was returned
-        if (s->childResults != nullptr) {
-            Trace(1, "MslSession: Lingering child result in pooled stack");
-            valuePool->free(s->childResults);
-            s->childResults = nullptr;
-        }
-        if (s->bindings != nullptr) {
-            Trace(1, "MslSession: Lingering child bindings in pooled stack");
-            valuePool->free(s->bindings);
-            s->bindings = nullptr;
-        }
-
-        s->script = nullptr;
-        s->node = nullptr;
-        s->parent = nullptr;
-        s->phase = 0;
-        s->accumulator = false;
-        s->childIndex = -1;
-        s->proc = nullptr;
-        s->symbol = nullptr;
-        s->wait.reset();
-    }
-    else {
-        // ordinarilly won't be here unless something is haywire
-        // so what's a little more hay
-        s = new MslStack();
-    }
-    return s;
-}
-
-void MslSession::freeStack(MslStack* s)
-{
-    if (s != nullptr) {
-        // release resources as soon as it goes back in the pool
-        valuePool->free(s->childResults);
-        s->childResults = nullptr;
-        valuePool->free(s->bindings);
-        s->bindings = nullptr;
-        stackPool.add(s);
-    }
+    MslError* e = pool->allocError();
+    e->init(node, details);
+    e->next = errors;
+    errors = e;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -442,7 +406,7 @@ void MslSession::popStack(MslValue* v)
     }
     else if (!parent->accumulator) {
         // replace the last value
-        valuePool->free(parent->childResults);
+        pool->free(parent->childResults);
         parent->childResults = v;
     }
     else if (parent->childResults == nullptr) {
@@ -568,7 +532,7 @@ MslBinding* MslSession::findBinding(int position)
  */
 void MslSession::mslVisit(MslLiteral* lit)
 {
-    MslValue* v = valuePool->alloc();
+    MslValue* v = pool->alloc();
     
     if (lit->isInt) {
         v->setInt(atoi(lit->token.value.toUTF8()));
@@ -646,7 +610,7 @@ void MslSession::mslVisit(MslVar* var)
             addError(var, "Var encountered in non-block container");
         }
         else {
-            MslBinding* b = valuePool->allocBinding();
+            MslBinding* b = pool->allocBinding();
             b->setName(var->name.toUTF8());
             // value ownership transfers
             b->value = stack->childResults;
@@ -758,7 +722,7 @@ void MslSession::doAssignment(MslSymbol* namesym)
     MslBinding* binding = findBinding(namesym->token.value.toUTF8());
     if (binding != nullptr) {
         // transfer the value
-        valuePool->free(binding->value);
+        pool->free(binding->value);
         binding->value = stack->childResults;
         stack->childResults = nullptr;
 
@@ -838,7 +802,7 @@ void MslSession::mslVisit(MslReference* ref)
     }
     else {
         // return null or error?
-        //MslValue* v = valuePool->alloc();
+        //MslValue* v = pool->alloc();
         //popStack(v);
         // the token in the error message will just say $ rather than
         // the name which is inconvenient
@@ -980,7 +944,7 @@ void MslSession::returnUnresolved(MslSymbol* snode)
         addError(snode, "Unresolved function symbol");
     }
     else {
-        MslValue* v = valuePool->alloc();
+        MslValue* v = pool->alloc();
         v->setJString(snode->token.value);
         // todo, might want an unresolved flag in the MslValue
         popStack(v);
@@ -998,11 +962,11 @@ void MslSession::returnBinding(MslBinding* binding)
     if (value == nullptr) {
         // binding without a value, should this be ignored or does
         // it hide other things?
-        copy = valuePool->alloc();
+        copy = pool->alloc();
     }
     else {
         // bindings can be referenced multiple times, so need to copy
-        copy = valuePool->alloc();
+        copy = pool->alloc();
         copy->copy(value);
     }
     popStack(copy);
@@ -1020,7 +984,7 @@ void MslSession::returnVar(MslLinkage* link)
     // inside the referenced script
 
     // return null
-    popStack(valuePool->alloc());
+    popStack(pool->alloc());
 }
 
 /**
@@ -1147,7 +1111,7 @@ void MslSession::bindArguments()
     
     // if we have any left over, give them bindings with positional names
     while (stack->childResults != nullptr) {
-        MslBinding* b = valuePool->allocBinding();
+        MslBinding* b = pool->allocBinding();
         snprintf(b->name, sizeof(b->name), "$%d", position);
         addArgValue(b, position, false);
         position++;
@@ -1163,7 +1127,7 @@ MslBinding* MslSession::makeArgBinding(MslNode* namenode)
 {
     // return something on error so the caller doesn't crash till the next
     // error check
-    MslBinding* b = valuePool->allocBinding();
+    MslBinding* b = pool->allocBinding();
     if (!namenode->isSymbol()) {
         // what else would it be?
         // I suppose we could allow literal strings but why
@@ -1318,7 +1282,7 @@ void MslSession::invoke(Symbol* sym)
     Supervisor::Instance->doAction(&a);
 
     // only MSL scripts set a result right now
-    MslValue* v = valuePool->alloc();
+    MslValue* v = pool->alloc();
     v->setString(a.result);
 
     // what a long strange trip it's been
@@ -1353,7 +1317,7 @@ void MslSession::query(Symbol* sym)
             addError(stack->node, "Asynchronous parameter query");
         }
         else {
-            MslValue* v = valuePool->alloc();
+            MslValue* v = pool->alloc();
             // and now we have the ordinal vs. enum symbol problem
             UIParameterType ptype = sym->parameter->type;
             if (ptype == TypeEnum) {
@@ -1503,7 +1467,7 @@ MslOperators MslSession::mapOperator(juce::String& s)
  */
 void MslSession::doOperator(MslOperator* opnode)
 {
-    MslValue* v = valuePool->alloc();
+    MslValue* v = pool->alloc();
     
     MslOperators op = mapOperator(opnode->token.value);
 
@@ -1689,7 +1653,7 @@ void MslSession::mslVisit(MslIf* node)
         else {
             // if truth falls in the forest, does it make a return value?
             // probably should return null for accumulators
-            popStack(valuePool->alloc());
+            popStack(pool->alloc());
         }
     }
     else if (stack->phase == 2) {
@@ -1861,7 +1825,7 @@ void MslSession::mslVisit(MslContextNode* con)
 void MslSession::mslVisit(MslEnd* end)
 {
     (void)end;
-    MslValue* v = valuePool->alloc();
+    MslValue* v = pool->alloc();
     v->setString("end");
     popStack(v);
     while (stack != nullptr) popStack();

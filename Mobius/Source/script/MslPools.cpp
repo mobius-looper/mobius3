@@ -23,7 +23,7 @@ MslPools::MslPools()
 
 MslPools::~MslPools()
 {
-    // try to do these in reverse depenndency order, though shouldn't be necessary?
+    // try to do these in reverse depenndency order, though shouldn't be necessary
     flushSessions();
     flushStacks();
     flushBindings();
@@ -39,6 +39,8 @@ void MslPools::initialize()
 
 void MslPools::fluff()
 {
+    // todo: have the maintenance thread call this
+    // with a configurable set of thresholds and growth sizes
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,9 +49,13 @@ void MslPools::fluff()
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * MslValue will cascade delete the chain, but for some reason I decided to
+ * make them go one at a time here.
+ * Should just reduce to deleting the valuePool.
+ */ 
 void MslPools::flushValues()
 {
-    // assuming that we don't have any child lists to deal with at this point
     while (valuePool != nullptr) {
         MslValue* next = valuePool->next;
         valuePool->next = nullptr;
@@ -66,7 +72,7 @@ MslValue* MslValuePool::allocValue()
         v = valuePool;
         valuePool = valuePool->next;
         v->next = nullptr;
-        // initialize it
+        // this does full initialization
         v->setNull();
     }
     else {
@@ -118,12 +124,11 @@ MslError* MslValuePool::allocError()
 {
     MslError* e = nullptr;
 
-    // todo: need a csect here
     if (errorPool != nullptr) {
         e = errorPool;
         errorPool = errorPool->next;
         e->next = nullptr;
-        // make sure it goes out initialized
+
         e->init();
     }
     else {
@@ -175,12 +180,11 @@ MslResult* MslValuePool::allocResult()
 {
     MslResult* r = nullptr;
 
-    // todo: need a csect here
     if (resultPool != nullptr) {
         r = resultPool;
         resultPool = resultPool->next;
         r->next = nullptr;
-        // make sure it goes out initialized
+
         r->init();
     }
     else {
@@ -213,7 +217,6 @@ void MslValuePool::free(MslResult* r)
     }
 }
 
-
 //////////////////////////////////////////////////////////////////////
 //
 // Bindings
@@ -223,6 +226,8 @@ void MslValuePool::free(MslResult* r)
 void MslPools::flushBindings()
 {
     while (bindingPool != nullptr) {
+        // bindings cascade delete
+        // though we might want to override that to gather statistics?
         MslBinding* next = bindingPool->next;
         bindingPool->next = nullptr;
         delete bindingPool;
@@ -230,7 +235,7 @@ void MslPools::flushBindings()
     }
 }
 
-MslBinding* MslValuePool::allocBinding()
+MslBinding* MslPools::allocBinding()
 {
     MslBinding* b = nullptr;
 
@@ -240,24 +245,23 @@ MslBinding* MslValuePool::allocBinding()
         bindingPool = bindingPool->next;
         b->next = nullptr;
 
-        // make sure it goes out initialized
-        strcpy(b->name, "");
-        b->position = 0;
-        
         if (b->value != nullptr) {
             // should have been cleansed by now
             Trace(1, "Dirty Binding in the pool");
             free(b->value);
             b->value = nullptr;
         }
-delete 
-        // complain;
+
+        b->init();
+    }
+    else {
+        // complain
         b = new MslBinding();
     }
     return b;
 }
 
-void MslValuePool::free(MslBinding* b)
+void MslPools::free(MslBinding* b)
 {
     if (b != nullptr) {
         // release the value back to the pool
@@ -275,3 +279,154 @@ void MslValuePool::free(MslBinding* b)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Stack
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Stacks are unusual because the chain pointer is "parent" rather than "next"
+ * They do NOT cascade delete
+ */
+void MslPools::flushStacks()
+{
+    while (stackPool != nullptr) {
+        MslStack* next = stackPool->parent;
+        stackPool->parent = nullptr;
+        delete stackPool;
+        stackPool = next;
+    }
+}
+MslStack* MslPools::allocStack()
+{
+    MslStack* s = nullptr;
+    if (stackPool != nullptr) {
+        s = stackPool;
+        stackPool = stackPool->parent;
+        s->next = nullptr;
+
+        // check dangling resources that shouldn't be here
+        if (s->childResults != nullptr) {
+            Trace(1, "MslPools: Lingering child result in pooled stack");
+            free(s->childResults);
+            s->childResults = nullptr;
+        }
+        if (s->bindings != nullptr) {
+            Trace(1, "MslPools: Lingering child bindings in pooled stack");
+            free(s->bindings);
+            s->bindings = nullptr;
+        }
+
+        s->init();
+    }
+    else {
+        s = new MslStack();
+    }
+    return s;
+}
+
+/**
+ * Stacks don't have the usual "next" pointer, they have a "parent" pointer.
+ * It is the norm to free a stack frame but keep the parent frames so the
+ * default free does NOT cascade.
+ */
+void MslPools::free(MslStack* s)
+{
+    if (s != nullptr) {
+        // release resources as soon as it goes back in the pool
+        free(s->childResults);
+        s->childResults = nullptr;
+        free(s->bindings);
+        s->bindings = nullptr;
+
+        s->parent = stackPool;
+        stackPool = s;
+    }
+}
+
+/**
+ * In cases where you DO want to cascade free the stack list, use this.
+ * Should only be done by MslSession itself.
+ */
+void MslPools::freeList(MslStack* s)
+{
+    if (s != nullptr) {
+        while (s != nullptr) {
+            MslStack* next = s->parent;
+            s->parent = nullptr;
+            free(s);
+            s = next;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Session
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslPools::flushSessions()
+{
+    while (sessionPool != nullptr) {
+        MslSession* next = sessionPool->next;
+        sessionPool->next = nullptr;
+        delete sessionPool;
+        sessionPool = next;
+    }
+}
+
+MslSession* MslPools::allocSession()
+{
+    MslSession* s = nullptr;
+    if (sessionPool != nullptr) {
+        s = sessionPool;
+        sessionPool = sessionPool->next;
+        s->next = nullptr;
+
+        // check dangling resources that shouldn't be here
+        if (s->rootResult != nullptr) {
+            Trace(1, "MslPools: Lingering root result in pooled session");
+            free(s->rootResult);
+            s->rootResult = nullptr;
+        }
+        if (s->stack != nullptr) {
+            Trace(1, "MslPools: Lingering stack in pooled stack");
+            freeList(s->stack);
+            s->stack = nullptr;
+        }
+        if (s->errors != nullptr) {
+            Trace(1, "MslPools: Lingering errors in pooled stack");
+            free(s->errors);
+            s->errors = nullptr;
+        }
+
+        s->init();
+    }
+    else {
+        s = new MslStack();
+    }
+    return s;
+}
+
+void MslPools::free(MslSession* s)
+{
+    if (s != nullptr) {
+        // release the stacks, note use of freeList
+        freeList(s->stack);
+        s->stack = nullptr;
+
+        // release the root value, this one cascades
+        free(s->rootResult);
+        s->rootResult = nullptr;
+
+        // errors also cascade
+        free(s->errors);
+        s->errors = nullptr;
+    }
+}
+        
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

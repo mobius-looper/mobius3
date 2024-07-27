@@ -22,50 +22,6 @@
 #include "MslWait.h"
 
 /**
- * One frame of the session call stack.
- */
-class MslStack
-{
-  public:
-    MslStack() {}
-    ~MslStack();
-
-    // script we're in, may not need this?
-    class MslScript* script = nullptr;
-
-    // node we're on
-    MslNode* node = nullptr;
-
-    // previus node on the stack
-    MslStack* parent = nullptr;
-
-    // a stack frame may have several evaluation phases
-    int phase = 0;
-
-    // value(s) for each child node, may be list
-    MslValue* childResults = nullptr;
-
-    // true if this frame accumulates all child results
-    bool accumulator = false;
-
-    // the index of the last child pushed
-    // negative means this node has not been started
-    int childIndex = -1;
-
-    // binding(s) for this block
-    MslBinding* bindings = nullptr;
-    void addBinding(MslBinding* b);
-
-    // phases for complex nodes
-    MslProc* proc = nullptr;
-    Symbol* symbol = nullptr;
-
-    // the information we convey to the MslContainer to set up the wait
-    // this is only used once so don't need to pool them
-    MslWait wait;
-};
-
-/**
  * This should live inside MslParser and it should do the work.
  */
 enum MslOperators {
@@ -117,7 +73,8 @@ class MslSession : public MslVisitor
     // results after finishing
     MslValue* getResult();
     MslValue* captureResult();
-    juce::OwnedArray<class MslError>* getErrors();
+    MslError* getErrors();
+    MslError* captureErrors();
 
     // MslVisitor
     void mslVisit(class MslLiteral* obj) override;
@@ -160,19 +117,17 @@ class MslSession : public MslVisitor
   private:
 
     class MslEnvironment* environment = nullptr;
-    class MslValuePool* valuePool = nullptr;
+    class MslPools* pool = nullptr;
     class MslScript* script = nullptr;
-
-    juce::OwnedArray<MslStack> stackPool;
-    class MslStack* stack = nullptr;
-
     class MslContext* context = nullptr;
+
+    class MslStack* stack = nullptr;
 
     // set true during evaluation to transition to the other side
     bool transitioning = false;
     
     // runtime errors
-    juce::OwnedArray<class MslError> errors;
+    class MslError* errors = nullptr;
     
     // "root" value of the top of the stack
     MslValue* rootResult = nullptr;
