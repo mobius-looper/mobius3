@@ -49,6 +49,7 @@
 #include "ProjectFiler.h"
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
+#include "script/MobiusConsole.h"
 
 #include "Supervisor.h"
 
@@ -1870,14 +1871,34 @@ bool Supervisor::mslWait(MslWait* w)
     return false;
 }
 
+/**
+ * Kludge for mslEcho mostly.
+ * Allow the MobiusConsole to install itself as a sort of listener that gets
+ * informed about things Supervisor is doing so it can display them.  This was
+ * added for mslEcho when a scriptlet launched from the console transitions and
+ * is then resumed in the background by the maintenance thread.  If it echos,
+ * we'll end up here, and forward that to the console.
+ */
+void Supervisor::addMobiusConsole(MobiusConsole* c)
+{
+    // not really a listener list, just one of them
+    mobiusConsole = c;
+}
+
+void Supervisor::removeMobiusConsole(MobiusConsole* c)
+{
+    if (mobiusConsole == c)
+      mobiusConsole = nullptr;
+}
+
 void Supervisor::mslEcho(const char* msg)
 {
-    (void)msg;
-    // currently used only for debug messages
-    // MslSession is already using Trace so we don't need to do it again
-    // but if you want to factor out Trace, this would be the place
-    // also consider using this interface for mobiusMessage and mobiusAlert as well
-    // if we can
+    // normally used for debug messages
+    // if the MobiusConsole is visible, forward there so it can be displayed
+    if (mobiusConsole != nullptr)
+      mobiusConsole->mslEcho(msg);
+    else
+      Trace(2, "Supervisor::mslEcho %s", msg);
 }
 
 /**

@@ -135,6 +135,17 @@ class MslSession : public MslVisitor
     void mslVisit(class MslEcho* obj) override;
     void mslVisit(class MslContextNode* obj) override;
 
+    // ugh, need to expose this for the console to iterate
+    // over finished session results.  it would be better if we just
+    // captured the results in a new object rather than having
+    // to poke holes in session
+    MslSession* getNext() {
+        return next;
+    }
+    int getSessionId() {
+        return sessionId;
+    }
+    
   protected:
 
     // for use only by MslConductor
@@ -211,6 +222,7 @@ class MslSession : public MslVisitor
 
     // waits
     void setupWait(MslWaitNode* node);
+    bool isWaitActive();
 
     // debugging
     void checkCycles(MslValue* v);

@@ -498,13 +498,17 @@ void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
         delete session;
     }
     else if (session->isTransitioning()) {
-        session->sessionId = generateSessionId();
+        ss->wasTransitioned = true;
+        ss->sessionId = generateSessionId();
+        session->sessionId = ss->sessionId;
         // note that as soon as you call conductor, the session object is no longer
         // ensured to be valid
         conductor.addTransitioning(c, session);
     }
     else if (session->isWaiting()) {
-        session->sessionId = generateSessionId();
+        ss->wasWaiting = true;
+        ss->sessionId = generateSessionId();
+        session->sessionId = ss->sessionId;
         conductor.addWaiting(c, session);
     }
     else {
@@ -537,6 +541,19 @@ bool MslEnvironment::isWaiting(int id)
 MslSession* MslEnvironment::getFinished(int id)
 {
     return conductor.getFinished(id);
+}
+
+// hacks for the console, allow the result list to live until manually
+// pruned so we can watch it reliably
+
+MslSession* MslEnvironment::getResults()
+{
+    return conductor.getResults();
+}
+
+void MslEnvironment::pruneResults()
+{
+    conductor.pruneResults();
 }
 
 //////////////////////////////////////////////////////////////////////

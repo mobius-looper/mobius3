@@ -110,6 +110,13 @@ class MslEnvironment
 
     // return a completed session
     class MslSession* getFinished(int sessionId);
+
+    // until we work through a better way to manage finished session results
+    // with the console, they will not be pruned automatically
+    // you have to explicitly call pruneResults
+    // getResults will remain valid until that is called
+    class MslSession* getResults();
+    void pruneResults();
     
     //
     // Supervisor/MobiusKernel interfaces

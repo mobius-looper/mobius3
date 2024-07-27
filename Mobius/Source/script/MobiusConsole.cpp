@@ -42,6 +42,7 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
 MobiusConsole::~MobiusConsole()
 {
     // environment owns the ScriptletSession
+    supervisor->removeMobiusConsole(this);
 }
 
 void MobiusConsole::showing()
@@ -49,10 +50,16 @@ void MobiusConsole::showing()
     // don't reset this every time, it's more convenient to hide/show it
     // and have it remember what you were doing
     //console.clear();
+
+    // install ourselves as a sort of listener on the Supervisor to receive
+    // forwarded mslEcho calls when the scriptlet is pushed into the background
+    // and advanced on the maintenance thread
+    supervisor->addMobiusConsole(this);
 }
 
 void MobiusConsole::hiding()
 {
+    supervisor->removeMobiusConsole(this);
 }
 
 void MobiusConsole::resized()
@@ -182,6 +189,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("status")) {
         doStatus(withoutCommand(line));
     }
+    else if (line.startsWith("results")) {
+        doResults(withoutCommand(line));
+    }
     else if (line.startsWith("resume")) {
         doResume();
     }
@@ -207,6 +217,7 @@ void MobiusConsole::doHelp()
     console.add("show      show proc structure");
     console.add("status    show the status of an async session");
     console.add("resume    resume the last scriptlet after a wait");
+    console.add("results   show prior evaluation results");
     console.add("<text>    evaluate a line of mystery");
 }
 
@@ -409,6 +420,40 @@ void MobiusConsole::doResume()
         // next maintenance cycle
         wait->finished = true;
         wait = nullptr;
+    }
+}
+
+void MobiusConsole::doResults(juce::String arg)
+{
+    if (arg.length() == 0) {
+        MslSession* results = scriptenv->getResults();
+        while (results != nullptr) {
+            juce::String status;
+            juce::OwnedArray<class MslError>* errors = results->getErrors();
+            if (errors->size() > 0)
+              status = "error";
+            console.add(juce::String(results->getSessionId()) + " " + status);
+            results = results->getNext();
+        }
+    }
+    else {
+        int id = arg.getIntValue();
+        if (id > 0) {
+            MslSession* s = scriptenv->getFinished(id);
+            if (s == nullptr) {
+                console.add("No results for session " + juce::String(id));
+            }
+            else {
+                console.add("Session " + juce::String(id));
+                juce::OwnedArray<class MslError>* errors = s->getErrors();
+                showErrors(errors);
+                MslValue* r = s->getResult();
+                if (r != nullptr)
+                  console.add("Result: " + juce::String(r->getString()));
+                else
+                  console.add("No results");
+            }
+        }
     }
 }
 

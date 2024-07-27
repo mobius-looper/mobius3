@@ -310,9 +310,28 @@ void MslSession::run()
     //if (stack != nullptr)
     //aTrace(2, "Run: %s", debugNode(stack->node).toUTF8());
     
-    while (stack != nullptr && !stack->wait.active && !transitioning && errors.size() == 0) {
+    while (stack != nullptr && errors.size() == 0 && !transitioning && !isWaitActive()) {
         advanceStack();
     }
+}
+
+/**
+ * This is called by the run loop to determine if the stack is active and not
+ * finished wait.  This differs from isWaiting for non-obvious reasons, I think
+ * because isWaiting is used for initial results, and here we need to adapt to
+ * the completion of a wait asynchronously.
+ *
+ * I dislike having the logic duplicated here and in the MslWaitNode visitor but
+ * we've got a control flow issue.  If we use only wait.active in the run loop then
+ * MslWaitNode will never get processed, but if we don't check wait.active we'll never
+ * stop.  Might be better to have a "newWait" flag that is used like "transitioning" and can
+ * be cleared every time we're resumed, then set again if WaitNode decides it wasn't finished.
+ * Will have to do that eventually when you get to multiple threads.  Advance all threads
+ * then test of isAnyWaiting or something.
+ */
+bool MslSession::isWaitActive()
+{
+    return (stack->wait.active && !stack->wait.finished);
 }
 
 /**
@@ -1776,6 +1795,9 @@ void MslSession::setupWait(MslWaitNode* node)
     // ask the context to schedule something suitable to end the wait
     // the context is allowed to retain a pointer to the wait object, and
     // expected to set the finished flag when the wait is over
+    // todo: would really like to be able to have the context include more
+    // details about what was wrong with the wait request
+    // since we're almost always in the kernel now, have memory issues
     if (!context->mslWait(wait))
       addError(node, "Unable to schedule wait state");
 

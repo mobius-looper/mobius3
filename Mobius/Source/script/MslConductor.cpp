@@ -164,6 +164,11 @@ void MslConductor::addResult(MslSession* s)
 
 /**
  * Called periodically by the maintenance thread to prune the result list.
+ * Actually no, don't call this from the maintenance thread because it makes
+ * it extremely difficult for the ScriptConsole and the MobiusConsole to show
+ * the results of prior sessions without complex object locking.
+ * Let these accumulate, at least if enabled in global config and prune
+ * them manually when the user is in control.
  */
 void MslConductor::pruneResults()
 {

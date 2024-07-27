@@ -70,6 +70,7 @@ class MobiusConsole : public juce::Component,
     void doList();
     void doResume();
     void doStatus(juce::String line);
+    void doResults(juce::String arg);
     
     void doEval(juce::String line);
     void traceNode(class MslNode* node, int indent);

@@ -613,6 +613,7 @@ class MslContextNode : public MslNode
     ~MslContextNode() {}
 
     bool wantsToken(MslToken& t) override {
+        bool wants = false;
         if (!finished) {
             if (t.type == MslToken::Type::Symbol) {
                 if (t.value == "shell" || t.value == "ui") {
@@ -624,15 +625,20 @@ class MslContextNode : public MslNode
                     finished = true;
                 }
             }
-            if (!finished) {
+            if (finished)
+              wants = true;
+            else {
                 // todo: need to raise an error because the keyword was not right
                 // always consume the next token whether or not it was valid
                 // so we don't end up with a noise symbol if the typed something wrong
                 // need to be returning error instead
-                finished = true;
+                if (t.type == MslToken::Type::Symbol) {
+                    wants = true;
+                    finished = true;
+                }
             }
         }
-        return finished;
+        return wants;
     }
     
     bool wantsNode(MslNode* node) override {

@@ -1179,7 +1179,15 @@ bool MobiusKernel::mslQuery(Query* q)
 bool MobiusKernel::mslWait(MslWait* w)
 {
     (void)w;
-    return true;
+    // todo: if the wait was invalid for some reason we need to be able
+    // to pass details back in the MslSession for diagnostics in the ScriptConsole
+    // but we can't get to that with just the MslWait
+    // either need to make MslWait bidirectional or provide another way for the
+    // MslEnvironment to look up the MslSession associated with this wait.
+    // Oh wait (so to speak) that's in the MslWait!  Still don't like having that
+    // there though feels cleaner to put any error status in the MslWait
+    Trace(1, "MobiusKernel::mslWait Unable to schedule wait");
+    return false;
 }
 
 void MobiusKernel::mslEcho(const char* msg)

@@ -115,6 +115,12 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     
     void addTimeListener(TimeListener* l);
     void removeTimeListener(TimeListener* l);
+
+    // this isn't really a listener, but it wants to be informed of things
+    // if we ever have more the one console-like thing (MobiusConsole and ScriptConsole)
+    // then may want multiples
+    void addMobiusConsole(class MobiusConsole* c);
+    void removeMobiusConsole(class MobiusConsole* c);
     
     // used by a few thigns to disable components that
     // can only be used standalne, like AudioDevicePanel
@@ -343,6 +349,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     juce::Array<ActionListener*> actionListeners;
     juce::Array<AlertListener*> alertListeners;
     juce::Array<TimeListener*> timeListeners;
+    class MobiusConsole* mobiusConsole = nullptr;
 
     // master copies of the configuration files
     std::unique_ptr<class DeviceConfig> deviceConfig;
