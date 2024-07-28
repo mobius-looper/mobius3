@@ -85,7 +85,7 @@ class MslScriptletSession {
     bool eval(class MslContext* c);
 
     // errors from the last failed eval() that returned false
-    juce::OwnedArray<class MslError>* getErrors();
+    class MslError* getErrors();
 
     // True if the last evaluation of the scriptlet ran to completion without errors
     // and the inner session was not made asynchronous
@@ -145,7 +145,7 @@ class MslScriptletSession {
     int sessionId = 0;
 
     // synchronous errors encountered on the last launch
-    juce::OwnedArray<class MslError> launchErrors;
+    class MslError* launchErrors = nullptr;
 
     // flags indicating why it was launched async
     bool wasTransitioned = false;

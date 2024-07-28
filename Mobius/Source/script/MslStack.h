@@ -12,10 +12,12 @@
 
 #pragma once
 
+#include "MslWait.h"
+
 class MslStack
 {
   public:
-    MslStack() {}
+    MslStack();
     ~MslStack();
     void init();
 
@@ -23,7 +25,7 @@ class MslStack
     class MslScript* script = nullptr;
 
     // node we're on
-    MslNode* node = nullptr;
+    class MslNode* node = nullptr;
 
     // previous node on the stack
     MslStack* parent = nullptr;
@@ -32,7 +34,7 @@ class MslStack
     int phase = 0;
 
     // value(s) for each child node, may be list
-    MslValue* childResults = nullptr;
+    class MslValue* childResults = nullptr;
 
     // the index of the last child pushed
     // negative means this node has not been started
@@ -42,12 +44,12 @@ class MslStack
     bool accumulator = false;
 
     // binding list for this block
-    MslBinding* bindings = nullptr;
-    void addBinding(MslBinding* b);
+    class MslBinding* bindings = nullptr;
+    void addBinding(class MslBinding* b);
 
     // phases for complex nodes
-    MslProc* proc = nullptr;
-    Symbol* symbol = nullptr;
+    class MslProc* proc = nullptr;
+    class Symbol* symbol = nullptr;
 
     // the information we convey to the MslContainer to set up the wait
     // this is only used once so don't need to pool them

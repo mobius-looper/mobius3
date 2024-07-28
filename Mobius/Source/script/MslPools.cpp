@@ -2,10 +2,12 @@
  * A collection of object pools managed by the MslEnvironment.
  */
 
+#include "../util/Trace.h"
+
 #include "MslValue.h"
 #include "MslError.h"
 #include "MslResult.h"
-// also includes MslStack
+#include "MslStack.h"
 #include "MslSession.h"
 #include "MslBinding.h"
 
@@ -17,8 +19,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-MslPools::MslPools()
+MslPools::MslPools(MslEnvironment* env)
 {
+    environment = env;
 }
 
 MslPools::~MslPools()
@@ -64,7 +67,7 @@ void MslPools::flushValues()
     }
 }
 
-MslValue* MslValuePool::allocValue()
+MslValue* MslPools::allocValue()
 {
     MslValue* v = nullptr;
 
@@ -89,7 +92,7 @@ MslValue* MslValuePool::allocValue()
  * It is usually convenient to handle the next chain for these though
  * the others don't do that.
  */
-void MslValuePool::free(MslValue* v)
+void MslPools::free(MslValue* v)
 {
     if (v != nullptr) {
         // first the list I HAVE
@@ -120,7 +123,7 @@ void MslPools::flushErrors()
     }
 }
 
-MslError* MslValuePool::allocError()
+MslError* MslPools::allocError()
 {
     MslError* e = nullptr;
 
@@ -137,26 +140,11 @@ MslError* MslValuePool::allocError()
     return e;
 }
 
-void MslValuePool::free(MslError* e)
+void MslPools::free(MslError* e)
 {
     if (e != nullptr) {
-        // release the value back to the pool
-        if (r->value != nullptr) {
-            // this does the entire list
-            free(r->value);
-            r->value = nullptr;
-        }
-
-        while (r->errors != nullptr) {
-            MslError* next = r->errors->next;
-            r->errors->next = nullptr;
-            free(r->errors);
-            r->errors = next;
-        }
-        
-        // and now me
-        r->next = errorPool;
-        errorPool = r;
+        e->next = errorPool;
+        errorPool = e;
     }
 }
 
@@ -176,7 +164,7 @@ void MslPools::flushResults()
     }
 }
 
-MslResult* MslValuePool::allocResult()
+MslResult* MslPools::allocResult()
 {
     MslResult* r = nullptr;
 
@@ -191,10 +179,10 @@ MslResult* MslValuePool::allocResult()
         // complain loudly that the fluffer isn't doing it's job
         r = new MslResult();
     }
-    return b;
+    return r;
 }
 
-void MslValuePool::free(MslResult* r)
+void MslPools::free(MslResult* r)
 {
     if (r != nullptr) {
         // release the value back to the pool
@@ -298,13 +286,14 @@ void MslPools::flushStacks()
         stackPool = next;
     }
 }
+
 MslStack* MslPools::allocStack()
 {
     MslStack* s = nullptr;
     if (stackPool != nullptr) {
         s = stackPool;
         stackPool = stackPool->parent;
-        s->next = nullptr;
+        s->parent = nullptr;
 
         // check dangling resources that shouldn't be here
         if (s->childResults != nullptr) {
@@ -386,10 +375,10 @@ MslSession* MslPools::allocSession()
         s->next = nullptr;
 
         // check dangling resources that shouldn't be here
-        if (s->rootResult != nullptr) {
+        if (s->rootValue != nullptr) {
             Trace(1, "MslPools: Lingering root result in pooled session");
-            free(s->rootResult);
-            s->rootResult = nullptr;
+            free(s->rootValue);
+            s->rootValue = nullptr;
         }
         if (s->stack != nullptr) {
             Trace(1, "MslPools: Lingering stack in pooled stack");
@@ -405,7 +394,8 @@ MslSession* MslPools::allocSession()
         s->init();
     }
     else {
-        s = new MslStack();
+        // this one is unusual because it requires an environment in the constructor
+        s = new MslSession(environment);
     }
     return s;
 }
@@ -418,8 +408,8 @@ void MslPools::free(MslSession* s)
         s->stack = nullptr;
 
         // release the root value, this one cascades
-        free(s->rootResult);
-        s->rootResult = nullptr;
+        free(s->rootValue);
+        s->rootValue = nullptr;
 
         // errors also cascade
         free(s->errors);

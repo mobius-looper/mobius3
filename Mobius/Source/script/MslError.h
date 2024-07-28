@@ -31,78 +31,27 @@ class MslError
     // initializer for the object pool
     void init();
     // initializer used by MslSession interpreter
-    void init(MslNode* node, const char* details);
+    void init(class MslNode* node, const char* details);
 
     int line = 0;
     int column = 0;
 
     static const int MslMaxErrorToken = 64;
     char token[MslMaxErrorToken];
+    void setToken(const char* src);
 
     static const int MslMaxErrorDetails = 128;
     char details[MslMaxErrorDetails];
+    void setDetails(const char* src);
 
     // chain pointer when used in the kernel
-    MslError* next = nullptr;
+    class MslError* next = nullptr;
+
+    // for older shell level classes that need to transfer OwnedArrays
+    static void transfer(juce::OwnedArray<MslError>* src, juce::OwnedArray<MslError>* dest) {
+        while (src->size() > 0) {
+            dest->add(src->removeAndReturn(0));
+        }
+    }
     
 };
-
-/**
- * Represents all of the errors encountered while parsing one file.
- * The way the parser works now, there will only be one error, but that
- * may change and it might include errors detected during evaluation someday.
- *
- * Beyond the MslSerror details, this also holds the path of the file
- * and the source code of the script for display in the debug panel.
- *
- * Since the parser resides only in shell threads this object is NOT
- * pooled and may make use of juce::String
- */
-class MslFileErrors
-{
-  public:
-
-    MslFileErrors() {}
-    ~MslFileErrors() {}
-
-    // file this came from
-    juce::String path;
-
-    // source code that was read
-    juce::String code;
-
-    // errors encountered
-    // todo: since MslError is simple enough, this could just be an Array of objects
-    // todo: might still want to just have a linked list here for consistency with
-    // MslSession.  Need a conversion utility
-    juce::OwnedArray<MslError> errors;
-
-};
-
-/**
- * Represents a collision between reference name symbols.  The collision
- * may be resolved by renaming the script or export, or by unloading one
- * of the other scripts.
- */
-class MslCollision
-{
-  public:
-    MslCollision() {}
-    ~MslCollision() {}
-
-    // the name that is in conflict
-    juce::String name;
-
-    // the script that wanted to install the duplicadte name
-    juce::String fromPath;
-
-    // the script that already claimed this name
-    juce::String otherPath;
-
-    // todo remember whether this was a collision on the outer script
-    // name or an exported proc/var inside it
-};
-
-/****************************************************************************/
-/****************************************************************************/
-/****************************************************************************/

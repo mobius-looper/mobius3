@@ -21,19 +21,44 @@
         <FILE id="L1gpwb" name="MobiusConsole.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MobiusConsole.cpp"/>
         <FILE id="m4hTgl" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/script/MobiusConsole.h"/>
+        <FILE id="TUZBpd" name="MslBinding.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslBinding.cpp"/>
+        <FILE id="rXXRua" name="MslBinding.h" compile="0" resource="0" file="../Mobius/Source/script/MslBinding.h"/>
+        <FILE id="zOdQWq" name="MslCollision.h" compile="0" resource="0" file="../Mobius/Source/script/MslCollision.h"/>
+        <FILE id="Bin4RT" name="MslConductor.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslConductor.cpp"/>
+        <FILE id="Apzfms" name="MslConductor.h" compile="0" resource="0" file="../Mobius/Source/script/MslConductor.h"/>
+        <FILE id="w9Rqhd" name="MslEnvironment.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslEnvironment.cpp"/>
+        <FILE id="n5tTof" name="MslEnvironment.h" compile="0" resource="0"
+              file="../Mobius/Source/script/MslEnvironment.h"/>
+        <FILE id="RTEJr4" name="MslError.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslError.cpp"/>
         <FILE id="Dq1mlk" name="MslError.h" compile="0" resource="0" file="../Mobius/Source/script/MslError.h"/>
-        <FILE id="N7AlF7" name="MslEvaluator.cpp" compile="1" resource="0"
-              file="../Mobius/Source/script/MslEvaluator.cpp"/>
-        <FILE id="RMnaeY" name="MslEvaluator.h" compile="0" resource="0" file="../Mobius/Source/script/MslEvaluator.h"/>
+        <FILE id="UP6F9a" name="MslFileError.h" compile="0" resource="0" file="../Mobius/Source/script/MslFileError.h"/>
         <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
         <FILE id="AGNZ7d" name="MslParser.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslParser.cpp"/>
         <FILE id="HXhg6q" name="MslParser.h" compile="0" resource="0" file="../Mobius/Source/script/MslParser.h"/>
+        <FILE id="Y8s5yQ" name="MslPools.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslPools.cpp"/>
+        <FILE id="DnTdLG" name="MslPools.h" compile="0" resource="0" file="../Mobius/Source/script/MslPools.h"/>
+        <FILE id="PP50zY" name="MslResult.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslResult.cpp"/>
+        <FILE id="yg8cNS" name="MslResult.h" compile="0" resource="0" file="../Mobius/Source/script/MslResult.h"/>
+        <FILE id="Y0IheP" name="MslScript.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslScript.cpp"/>
         <FILE id="IkVdQ5" name="MslScript.h" compile="0" resource="0" file="../Mobius/Source/script/MslScript.h"/>
+        <FILE id="Ch9SrN" name="MslScriptletSession.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslScriptletSession.cpp"/>
+        <FILE id="rhNDht" name="MslScriptletSession.h" compile="0" resource="0"
+              file="../Mobius/Source/script/MslScriptletSession.h"/>
         <FILE id="xAkXss" name="MslSession.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSession.cpp"/>
         <FILE id="IPJaMB" name="MslSession.h" compile="0" resource="0" file="../Mobius/Source/script/MslSession.h"/>
+        <FILE id="hxXk5e" name="MslStack.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslStack.cpp"/>
+        <FILE id="ADcUlj" name="MslStack.h" compile="0" resource="0" file="../Mobius/Source/script/MslStack.h"/>
         <FILE id="sxWlsd" name="MslTokenizer.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslTokenizer.cpp"/>
         <FILE id="fh2FOK" name="MslTokenizer.h" compile="0" resource="0" file="../Mobius/Source/script/MslTokenizer.h"/>
+        <FILE id="I4U7Gs" name="MslValue.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslValue.cpp"/>
+        <FILE id="Rh7p4V" name="MslValue.h" compile="0" resource="0" file="../Mobius/Source/script/MslValue.h"/>
+        <FILE id="UPuwo4" name="MslWait.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWait.cpp"/>
+        <FILE id="cFavfJ" name="MslWait.h" compile="0" resource="0" file="../Mobius/Source/script/MslWait.h"/>
+        <FILE id="xTMPD5" name="MslWaitNode.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWaitNode.cpp"/>
         <FILE id="v0yPX5" name="ScriptClerk.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptClerk.cpp"/>
         <FILE id="tp2f5F" name="ScriptClerk.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptClerk.h"/>
       </GROUP>

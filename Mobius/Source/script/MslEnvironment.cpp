@@ -14,9 +14,11 @@
 
 #include "MslContext.h"
 #include "MslError.h"
+#include "MslCollision.h"
 #include "MslScript.h"
 #include "MslParser.h"
 #include "MslSession.h"
+#include "MslResult.h"
 #include "MslScriptletSession.h"
 
 #include "MslEnvironment.h"
@@ -121,7 +123,7 @@ void MslEnvironment::unload(juce::StringArray& retain)
 
 //////////////////////////////////////////////////////////////////////
 //
-// MobiusConsole/Binderator Interface
+// MobiusConsole/Binderator Scriptlet Interface
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -410,40 +412,83 @@ void MslEnvironment::doAction(MslContext* c, UIAction* action)
             }
         }
         else {
-            // make a new session, need a pool!
-            MslSession* session = new MslSession(this);
-
-            // start it
+            MslSession* session = pool.allocSession();
             session->start(c, link->script);
 
             if (session->isFinished()) {
 
                 if (session->hasErrors()) {
-                    conductor.addResult(c, session);
-                    Trace(1, "MslEnvironment: Script returns with errors");
-                    // todo: should have a way to convey at least an error flag in the action
+                    // will want options to control the generation of a result since
+                    // for actions there could be lot of them
+                    (void)makeResult(session, true);
+
+                    Trace(1, "MslEnvironment: Script returned with errors");
+                    // todo: should have a way to convey at least an error flag in the action?
+
+                    pool.free(session);
                 }
                 else {
                     // we are free to discard it, any use in keeping these around?
                     // may have interesting runtime statistics or complex result values
                     // put what we can back into the action
-                    MslValue* result = session->captureResult();
+                    MslValue* result = session->captureValue();
                     Trace(2, "MslEnvironment: Script returned %s", result->getString());
                     CopyString(result->getString(), action->result, sizeof(action->result));
-                    valuePool.free(result);
-                    
-                    // need a pool
-                    delete session;
+                    pool.free(result);
+                    pool.free(session);
                 }
             }
             else if (session->isTransitioning()) {
+                (void)makeResult(session, false);
                 conductor.addTransitioning(c, session);
             }
             else if (session->isWaiting()) {
+                (void)makeResult(session, false);
                 conductor.addWaiting(c, session);
             }
         }
     }
+}
+
+/**
+ * Make a new MslResult for an asynchronous MslSession, or one that
+ * completed with errors.
+ */
+MslResult* MslEnvironment::makeResult(MslSession* s, bool finished)
+{
+    MslResult* result = pool.allocResult();
+
+    // generate a new session id
+    int sessionId = generateSessionId();
+    result->sessionId = sessionId;
+    conductor.addResult(result);
+        
+    if (finished) {
+        // transfer errors and result value if it was finished
+        result->errors = s->captureErrors();
+        result->value = s->captureValue();
+    }
+    else {
+        // this won't have errors or results yet, but
+        // make an empty one with this session id so the console can monitor it
+        s->sessionId = sessionId;
+        s->result = result;
+        
+        // dangerious pointer to this
+        // a weak reference that may become invalid unless we do careful
+        // housekeeping
+        result->session = s;
+    }
+
+    return result;
+}
+
+/**
+ * Generate a unique non-zero session id for a newly launched session.
+ */
+int MslEnvironment::generateSessionId()
+{
+    return ++sessionIds;
 }
 
 /**
@@ -468,9 +513,9 @@ void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
     // MslScriptletSession may have already done this but make sure
     ss->resetLaunchResults();
     
-    // need a pool
-    MslSession* session = new MslSession(this);
+    pool.allocSession();
 
+    MslSession* session = pool.allocSession();
     session->start(c, ss->getScript());
     
     if (session->isFinished()) {
@@ -479,74 +524,66 @@ void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
             // action sessions that fail would be put on the result list but here
             // we can move the errors into the scriptlet session and immediately
             // reclaim the inner session
-
-            // todo: revisit the use of OwnedArray here, probably need a pooled
-            // error list like we do for everything else
-            MslError::transfer(session->getErrors(), ss->launchErrors);
+            ss->launchErrors = session->captureErrors();
             Trace(1, "MslEnvironment: Scriptlet session returned with errors");
         }
         else {
-            // move the result 
-            MslValue* result = session->captureResult();
-            valuePool.free(ss->launchResult);
-            ss->launchResult = result;
-            if (result != nullptr)
-              Trace(2, "MslEnvironment: Script returned %s", result->getString());
+            // move the result value
+            ss->launchResult = session->captureValue();
+            if (ss->launchResult != nullptr)
+              Trace(2, "MslEnvironment: Script returned %s", ss->launchResult->getString());
         }
 
-        // return it to the "pool"
-        delete session;
-    }
-    else if (session->isTransitioning()) {
-        ss->wasTransitioned = true;
-        ss->sessionId = generateSessionId();
-        session->sessionId = ss->sessionId;
-        // note that as soon as you call conductor, the session object is no longer
-        // ensured to be valid
-        conductor.addTransitioning(c, session);
-    }
-    else if (session->isWaiting()) {
-        ss->wasWaiting = true;
-        ss->sessionId = generateSessionId();
-        session->sessionId = ss->sessionId;
-        conductor.addWaiting(c, session);
+        pool.free(session);
     }
     else {
-        Trace(1, "MslEnvironment::launchScriptlet How did we get here?");
+        MslResult* r = makeResult(session, false);
+        ss->sessionId = r->sessionId;
+        
+        if (session->isTransitioning()) {
+            ss->wasTransitioned = true;
+            conductor.addTransitioning(c, session);
+        }
+        else if (session->isWaiting()) {
+            ss->wasWaiting = true;
+            conductor.addWaiting(c, session);
+        }
+        else {
+            Trace(1, "MslEnvironment::launchScriptlet How did we get here?");
+        }
     }
-}
-
-/**
- * Generate a unique non-zero session id for a newly launched session.
- */
-int MslEnvironment::generateSessionId()
-{
-    return ++sessionIds;
 }
 
 //////////////////////////////////////////////////////////////////////
 //
 // Async Session Results
 //
-// This is still experimental and won't work in practice once
-// we start pruning results.
-//
 //////////////////////////////////////////////////////////////////////
 
+MslResult* MslEnvironment::getResult(int id)
+{
+    return conductor.getResult(id);
+}
+
+/**
+ * Hack to probe for session status after it was launched async.
+ * This is old for the MobiusConsole and dangerous becuse the session
+ * pointer on the result is unstable.  Revisit...
+ */
 bool MslEnvironment::isWaiting(int id)
 {
-    return conductor.isWaiting(id);
+    bool waiting = false;
+    
+    MslResult* result = getResult(id);
+
+    // okay, this is dangerous, should be updating the result instead
+    if (result->session != nullptr)
+      waiting = result->session->isWaiting();
+    
+    return waiting;
 }
 
-MslSession* MslEnvironment::getFinished(int id)
-{
-    return conductor.getFinished(id);
-}
-
-// hacks for the console, allow the result list to live until manually
-// pruned so we can watch it reliably
-
-MslSession* MslEnvironment::getResults()
+MslResult* MslEnvironment::getResults()
 {
     return conductor.getResults();
 }

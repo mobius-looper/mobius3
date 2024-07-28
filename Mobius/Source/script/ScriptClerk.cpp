@@ -18,6 +18,7 @@
 
 #include "MslEnvironment.h"
 #include "MslParser.h"
+#include "MslFileError.h"
 
 #include "ScriptClerk.h"
 
@@ -142,7 +143,7 @@ void ScriptClerk::loadInternal(juce::String path)
             MslFileErrors* fe = new MslFileErrors();
             // transfer ownership
             // todo: hate this
-            MslError::transfer(&(result->errors), fe->errors);
+            MslError::transfer(&(result->errors), &(fe->errors));
             // annotate this with the file path so we know where it came from
             fe->path = path;
             fe->code = source;

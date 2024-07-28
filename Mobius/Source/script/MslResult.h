@@ -6,6 +6,10 @@
  * runs to completion synchronously, it is returned to the caller.  If the
  * script becomes asynchronous it is placed on the environments result list where
  * it can be inspected in the script console.
+ *
+ * todo: disliking the name ambiguity between "result" being the complex result
+ * from a running session and "result value" being the MslValue that was computed by
+ * the script.  Here we use "value" but session uses "result" and "childResults".
  */
 
 #pragma once
@@ -13,7 +17,9 @@
 class MslResult
 {
     friend class MslEnvironment;
-
+    friend class MslConductor;
+    friend class MslPools;
+    
   public:
 
     MslResult();

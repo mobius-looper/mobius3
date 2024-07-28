@@ -19,6 +19,7 @@
 #include <JuceHeader.h>
 
 #include "MslValue.h"
+#include "MslPools.h"
 #include "MslConductor.h"
 
 /**
@@ -103,19 +104,13 @@ class MslEnvironment
 
     void launch(class MslContext* c, class MslScriptletSession* ss);
 
-    // !! these are not stable, needs work
-    
-    // return true if a session with this id is still waiting
-    bool isWaiting(int sessionId);
+    //
+    // Session results
+    //
 
-    // return a completed session
-    class MslSession* getFinished(int sessionId);
-
-    // until we work through a better way to manage finished session results
-    // with the console, they will not be pruned automatically
-    // you have to explicitly call pruneResults
-    // getResults will remain valid until that is called
-    class MslSession* getResults();
+    class MslResult* getResult(int id);
+    bool isWaiting(int id);
+    class MslResult* getResults();
     void pruneResults();
     
     //
@@ -139,8 +134,8 @@ class MslEnvironment
   protected:
 
     // for the inner component classes, mainly Session
-    MslValuePool* getValuePool() {
-        return &valuePool;
+    MslPools* getPool() {
+        return &pool;
     }
 
     MslLinkage* findLinkage(juce::String name);
@@ -152,8 +147,7 @@ class MslEnvironment
 
     // note that this has to be first because things are destructed in reverse
     // order of declaration and some of the things below return things to the pool
-    // value pool for the interpreter
-    MslValuePool valuePool;
+    MslPools pool {this};
 
     // this must be second to clean up sessions which have things in them
     // that are normally returned to the pool
@@ -183,6 +177,7 @@ class MslEnvironment
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
 
+    MslResult* makeResult(MslSession* s, bool finished);
     int generateSessionId();
     int sessionIds = 1;
 };

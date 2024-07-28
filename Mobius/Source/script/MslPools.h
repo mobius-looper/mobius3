@@ -70,7 +70,7 @@ class MslPools
 {
   public :
 
-    MslPools();
+    MslPools(class MslEnvironment* env);
     ~MslPools();
 
     // fill out the initial set of pooled objects
@@ -80,32 +80,42 @@ class MslPools
     // if they dip below their pool threshold
     void fluff();
 
-    MslValue* allocValue();
-    void free(MslValue* v);
+    class MslValue* allocValue();
+    void free(class MslValue* v);
     
-    MslError* allocError();
-    void free(MslError* v);
+    class MslError* allocError();
+    void free(class MslError* v);
     
-    MslResult* allocResult();
-    void free(MslResult* r);
+    class MslResult* allocResult();
+    void free(class MslResult* r);
 
-    MslBinding* allocBinding();
-    void free(MslBinding* b);
+    class MslBinding* allocBinding();
+    void free(class MslBinding* b);
 
-    Mslstack* allocStack();
-    void free(MslStack* s);
+    class MslStack* allocStack();
+    void free(class MslStack* s);
+    void freeList(class MslStack* s);
 
-    MslSession* allocSession();
-    void free(MslSession* s);
+    class MslSession* allocSession();
+    void free(class MslSession* s);
 
   private:
 
-    MslValue* valuePool = nullptr;
-    MslError* errorPool = nullptr;
-    MslResult* resultPool = nullptr;
-    MslBinding* bindingPool = nullptr;
-    Mslstack* stackPool = nullptr;
-    MslSession* sessionPool = nullptr;
+    class MslEnvironment* environment = nullptr;
 
+    class MslValue* valuePool = nullptr;
+    class MslError* errorPool = nullptr;
+    class MslResult* resultPool = nullptr;
+    class MslBinding* bindingPool = nullptr;
+    class MslStack* stackPool = nullptr;
+    class MslSession* sessionPool = nullptr;
+
+    void flushSessions();
+    void flushStacks();
+    void flushBindings();
+    void flushResults();
+    void flushErrors();
+    void flushValues();
+    
 };
     

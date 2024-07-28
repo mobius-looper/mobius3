@@ -1,5 +1,6 @@
 
 #include "MslValue.h"
+#include "MslBinding.h"
 #include "MslStack.h"
 
 MslStack::MslStack()
@@ -27,3 +28,17 @@ void MslStack::init()
     wait.reset();
 }
 
+/**
+ * Keep bindings ordered, not sure if necessary
+ */
+void MslStack::addBinding(MslBinding* b)
+{
+    if (bindings == nullptr)
+      bindings = b;
+    else {
+        MslBinding* last = bindings;
+        while (last->next != nullptr)
+          last = last->next;
+        last->next = b;
+    }
+}

@@ -19,6 +19,8 @@
 
 #include "MslModel.h"
 #include "MslValue.h"
+#include "MslError.h"
+#include "MslBinding.h"
 #include "MslWait.h"
 
 /**
@@ -48,12 +50,14 @@ class MslSession : public MslVisitor
 {
     friend class MslEnvironment;
     friend class MslConductor;
+    friend class MslPools;
     
   public:
     
     MslSession(class MslEnvironment* env);
     ~MslSession();
-
+    void init();
+    
     // begin evaluation of a script, it will complete or reach a wait state
     void start(class MslContext* context, class MslScript* script);
 
@@ -71,8 +75,8 @@ class MslSession : public MslVisitor
     class MslWait* getWait();
 
     // results after finishing
-    MslValue* getResult();
-    MslValue* captureResult();
+    MslValue* getValue();
+    MslValue* captureValue();
     MslError* getErrors();
     MslError* captureErrors();
 
@@ -110,6 +114,9 @@ class MslSession : public MslVisitor
     // session list chain
     MslSession* next = nullptr;
 
+    // result the envionment allocated for us if we needed to go async
+    class MslResult* result = nullptr;
+
     // unique id generated for results tracking
     // mostly for ScriptletSession
     int sessionId = 0;
@@ -130,7 +137,7 @@ class MslSession : public MslVisitor
     class MslError* errors = nullptr;
     
     // "root" value of the top of the stack
-    MslValue* rootResult = nullptr;
+    MslValue* rootValue = nullptr;
     
     //
     // core evaluator
@@ -138,8 +145,6 @@ class MslSession : public MslVisitor
     void addError(class MslNode* node, const char* details);
     
     void run();
-    MslStack* allocStack();
-    void freeStack(MslStack* s);
     void advanceStack();
     MslStack* pushStack(MslNode* node);
     MslStack* pushNextChild();

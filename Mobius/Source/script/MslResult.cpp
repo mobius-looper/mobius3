@@ -1,5 +1,6 @@
 
 #include "MslValue.h"
+#include "MslError.h"
 #include "MslResult.h"
 
 MslResult::MslResult()

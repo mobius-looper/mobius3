@@ -1,5 +1,10 @@
+/**
+ * Binding between a symbolc name and a value.
+ * Used by the MslSession at runtime.
+ */
 
-#incluee "../util/Util.h"
+#include "../util/Trace.h"
+#include "../util/Util.h"
 
 #include "MslValue.h"
 #include "MslBinding.h"
@@ -22,7 +27,7 @@ MslBinding::~MslBinding()
     }
 }
 
-MslBinding::init()
+void MslBinding::init()
 {
     next = nullptr;
     strcpy(name, "");

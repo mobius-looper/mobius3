@@ -1,4 +1,6 @@
 
+#include <JuceHeader.h>
+
 #include "../util/Util.h"
 #include "MslModel.h"
 #include "MslError.h"
@@ -16,8 +18,8 @@ MslError::MslError(int l, int c, juce::String t, juce::String d)
     next = nullptr;
     line = l;
     column = c;
-    setToken(t.toUT8());
-    setDetails(d.toUTF8())
+    setToken(t.toUTF8());
+    setDetails(d.toUTF8());
 }
 
 /**
@@ -35,7 +37,7 @@ void MslError::init()
 /**
  * Initializer used by the interpreter (MslSession)
  */
-void MslError::init(MslNode* node, const char* details)
+void MslError::init(MslNode* node, const char* deets)
 {
     // okay, this shit happens a lot now, why not just standardize on passing
     // the MslToken by value everywhere
@@ -43,12 +45,15 @@ void MslError::init(MslNode* node, const char* details)
     line = node->token.line;
     column = node->token.column;
     setToken(node->token.value.toUTF8());
-    setDetails(details);
+    setDetails(deets);
 }
 
-// no substructure on these
+/**
+ * No substructure on these but they cascade delete.
+ */
 MslError::~MslError()
 {
+    delete next;
 }
 
 void MslError::setToken(const char* src)

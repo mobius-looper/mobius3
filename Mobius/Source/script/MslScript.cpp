@@ -6,6 +6,7 @@
 
 #include "MslModel.h"
 #include "MslValue.h"
+#include "MslBinding.h"
 #include "MslScript.h"
 
 MslScript::MslScript()

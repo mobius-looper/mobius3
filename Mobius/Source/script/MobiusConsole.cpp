@@ -13,7 +13,10 @@
 #include "MslError.h"
 #include "MslEnvironment.h"
 #include "MslScriptletSession.h"
-#include "MslSession.h"
+#include "MslResult.h"
+#include "MslBinding.h"
+#include "MslFileError.h"
+#include "MslCollision.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
 
@@ -267,6 +270,8 @@ void MobiusConsole::showLoad()
         }
     }
 
+    // this just passes through to MslEnvironment so we can get it there too
+    // it isn't the collisions on just this file yet
     juce::OwnedArray<class MslCollision>* collisions = clerk->getCollisions();
     if (collisions->size() > 0) {
         console.add("Name Collisions:");
@@ -301,9 +306,21 @@ void MobiusConsole::doParse(juce::String line)
     }
 }
 
+// show shell-level errors maintained in an OwnedArray
 void MobiusConsole::showErrors(juce::OwnedArray<MslError>* errors)
 {
     for (auto error : *errors) {
+        juce::String msg = "Line " + juce::String(error->line) +
+            " column " + juce::String(error->column) + ": " +
+            error->token + ": " + error->details;
+        console.add(msg);
+    }
+}
+
+// show kernel-level errors maintained in a linked list
+void MobiusConsole::showErrors(MslError* list)
+{
+    for (MslError* error = list ; error != nullptr ; error = error->next) {
         juce::String msg = "Line " + juce::String(error->line) +
             " column " + juce::String(error->column) + ": " +
             error->token + ": " + error->details;
@@ -353,8 +370,8 @@ void MobiusConsole::doEval(juce::String line)
             (void)session->eval(this);
 
             // side effect of an evaluation is a list of errors and a result
-            juce::OwnedArray<MslError>* errors = session->getErrors();
-            if (errors->size() > 0) {
+            MslError* errors = session->getErrors();
+            if (errors != nullptr) {
                 showErrors(errors);
             }
             else {
@@ -397,14 +414,13 @@ void MobiusConsole::doStatus(juce::String line)
         console.add("Session " + juce::String(id) + " is still waiting");
     }
     else {
-        MslSession* s = scriptenv->getFinished(id);
-        if (s == nullptr)
+        MslResult* r = scriptenv->getResult(id);
+        if (r == nullptr)
           console.add("Session " + juce::String(id) + " not found");
         else {
-            MslValue* r = s->getResult();
-            if (r != nullptr)
+            if (r->value != nullptr)
               console.add("Session " + juce::String(id) + " finished with " +
-                          juce::String(r->getString()));
+                          juce::String(r->value->getString()));
             else
               console.add("Session " + juce::String(id) + " finished with no result");
         }
@@ -426,30 +442,28 @@ void MobiusConsole::doResume()
 void MobiusConsole::doResults(juce::String arg)
 {
     if (arg.length() == 0) {
-        MslSession* results = scriptenv->getResults();
-        while (results != nullptr) {
+        MslResult* result = scriptenv->getResults();
+        while (result != nullptr) {
             juce::String status;
-            juce::OwnedArray<class MslError>* errors = results->getErrors();
-            if (errors->size() > 0)
+            if (result->errors != nullptr)
               status = "error";
-            console.add(juce::String(results->getSessionId()) + " " + status);
-            results = results->getNext();
+            console.add(juce::String(result->sessionId) + " " + status);
+            result = result->getNext();
         }
     }
     else {
         int id = arg.getIntValue();
         if (id > 0) {
-            MslSession* s = scriptenv->getFinished(id);
-            if (s == nullptr) {
+            MslResult* result = scriptenv->getResult(id);
+            if (result == nullptr) {
                 console.add("No results for session " + juce::String(id));
             }
             else {
                 console.add("Session " + juce::String(id));
-                juce::OwnedArray<class MslError>* errors = s->getErrors();
-                showErrors(errors);
-                MslValue* r = s->getResult();
-                if (r != nullptr)
-                  console.add("Result: " + juce::String(r->getString()));
+                showErrors(result->errors);
+                MslValue* value = result->value;
+                if (value != nullptr)
+                  console.add("Result: " + juce::String(value->getString()));
                 else
                   console.add("No results");
             }

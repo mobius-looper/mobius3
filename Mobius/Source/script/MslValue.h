@@ -215,39 +215,6 @@ class MslValue
     char string[MaxString];
 };
 
-// !!!! temporary until MslPools is working
-
-//////////////////////////////////////////////////////////////////////
-//
-// Pool
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * A pool for values and bindings, look at them swim!
- * Since these are related and reference each other it's
- * convenient to share the same pool container.
- */
-class MslValuePool
-{
-  public:
-    
-    MslValuePool();
-    ~MslValuePool();
-    
-    MslValue* alloc();
-    void free(MslValue* v);
-    
-    MslBinding* allocBinding();
-    void free(MslBinding* b);
-
-  private:
-
-    MslValue* valuePool = nullptr;
-    MslBinding* bindingPool = nullptr;
-    
-};
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -19,21 +19,41 @@ MslScriptletSession::MslScriptletSession(MslEnvironment* env)
     script.reset(new MslScript());
 }
 
+/**
+ * These are not pooled, but they can pool the things they contain.
+ */
 MslScriptletSession::~MslScriptletSession()
 {
-    // todo: should this always use environment pools or
-    // should we have a more controlled destruction?
-    MslValuePool* vp = environment->getValuePool();
-    vp->free(launchResult);
+    resetLaunchResults();
+    // this one isn't pooled which is starting to be awkward
     delete parseResult;
 }
 
 void MslScriptletSession::reset()
 {
+    resetLaunchResults();
     delete parseResult;
     parseResult = nullptr;
-    resetLaunchResults();
+
     script.reset(new MslScript());
+}
+
+/**
+ * Reset launch state after a previous evaluation.
+ */
+void MslScriptletSession::resetLaunchResults()
+{
+    sessionId = 0;
+    wasTransitioned = false;
+    wasWaiting = false;
+
+    MslPools* pool = environment->getPool();
+    
+    pool->free(launchResult);
+    launchResult = nullptr;
+
+    pool->free(launchErrors);
+    launchErrors = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -103,26 +123,11 @@ bool MslScriptletSession::eval(class MslContext* c)
         // in this object rather than returning something we have to copy
         environment->launch(c, this);
 
-        if (launchErrors.size() == 0)
+        if (launchErrors == nullptr)
           success = true;
     }
 
     return success;
-}
-
-/**
- * Reset launch state after a previous evaluation.
- */
-void MslScriptletSession::resetLaunchResults()
-{
-    sessionId = 0;
-    wasTransitioned = false;
-    wasWaiting = false;
-    launchErrors.clear();
-    
-    MslValuePool* vp = environment->getValuePool();
-    vp->free(launchResult);
-    launchResult = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -133,12 +138,12 @@ void MslScriptletSession::resetLaunchResults()
 
 bool MslScriptletSession::isFinished()
 {
-    return (launchErrors.size() == 0 && sessionId == 0);
+    return (launchErrors == nullptr && sessionId == 0);
 }
 
-juce::OwnedArray<class MslError>* MslScriptletSession::getErrors()
+MslError* MslScriptletSession::getErrors()
 {
-    return &launchErrors;
+    return launchErrors;
 }
 
 bool MslScriptletSession::isTransitioning()

@@ -66,16 +66,17 @@ class MslConductor
     void kernelTransition();
     void kernelIterate(class MslContext* c);
 
-    // launch results
+    // launch transitions
     
     void addTransitioning(class MslContext* c, class MslSession* s);
     void addWaiting(class MslContext* c, class MslSession* s);
-    void addResult(class MslContext* c, class MslSession* s);
-    MslSession* getResults();
 
-    // dangerous console hacks
+    // results
+    
+    void addResult(class MslResult* r);
+    MslResult* getResults();
+    MslResult* getResult(int id);
     bool isWaiting(int id);
-    MslSession* getFinished(int id);
 
   private:
 
@@ -88,13 +89,11 @@ class MslConductor
     class MslSession* kernelSessions = nullptr;
     class MslSession* toShell = nullptr;
     class MslSession* toKernel = nullptr;
-    class MslSession* results = nullptr;
-
-    void addResult(class MslSession* s);
-    void deleteSessionList(class MslSession* list);
+    class MslResult* results = nullptr;
     
-    MslSession* findSessionDangerously(int id);
-    MslSession* findSessionDangerously(MslSession* list, int id);
+    void deleteSessionList(MslSession* list);
+    void deleteResultList(MslResult* list);
+    void finishResult(MslSession* s);
 
 };
 

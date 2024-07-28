@@ -37,10 +37,33 @@
  * When it is waiting, it is left on the active list.
  *
  * When it is transitioning it is moved from one active list to another.
+ *
+ * RESULTS
+ * 
+ * Management of result lists is a little complicated due to threading issues.
+ *
+ * Once somethign lands on the main results list, it may be examined by the ScriptConsole
+ * or other things in the UI not under the environment's control.  The MslResult chain
+ * pointers MUST remain stable, the console will iterate over that without locking
+ * and it is assumed they have indefinite lifespan until the user explicitly asks
+ * to prune results.
+ *
+ * Results on this list are considered "interned".  Active sessions may CAREFULLY
+ * add things to an interned result like final errors and values, or statistics but those
+ * must be done as atomic operations on intrinsic values like numbers and pointers.
+ * If a new result needs to be added to the list it is pushed on the front.  The console
+ * doesn't care about new results as long as the chain of results it is now dealing with
+ * remains stable.
+ *
+ * Both shell threads and the kernel threads need to push new results onto the list
+ * and that must be guarded by a critical section.
  * 
  */
 
+#include "../util/Trace.h"
+
 #include "MslSession.h"
+#include "MslResult.h"
 #include "MslEnvironment.h"
 #include "MslContext.h"
 #include "MslConductor.h"
@@ -61,13 +84,24 @@ MslConductor::~MslConductor()
     deleteSessionList(kernelSessions);
     deleteSessionList(toShell);
     deleteSessionList(toKernel);
-    deleteSessionList(results);
+
+    deleteResultList(results);
 }
 
 void MslConductor::deleteSessionList(MslSession* list)
 {
     while (list != nullptr) {
         MslSession* next = list->next;
+        list->next = nullptr;
+        delete list;
+        list = next;
+    }
+}
+
+void MslConductor::deleteResultList(MslResult* list)
+{
+    while (list != nullptr) {
+        MslResult* next = list->next;
         list->next = nullptr;
         delete list;
         list = next;
@@ -83,7 +117,7 @@ void MslConductor::deleteSessionList(MslSession* list)
 /**
  * During the shell transition phase, all queued sessions from the kernel are consumed.
  * Sessions that are still alive are placed on the main shellSessions list and
- * sessions that have completed with results are placed on the results list.
+ * sessions that have completed are removed and their results updated.
  */
 void MslConductor::shellTransition()
 {
@@ -101,7 +135,7 @@ void MslConductor::shellTransition()
         neu->next = nullptr;
 
         if (neu->isFinished()) {
-            addResult(neu);
+            finishResult(neu);
         }
         else {
             neu->next = shellSessions;
@@ -134,7 +168,7 @@ void MslConductor::shellIterate(MslContext* context)
             current->next = nullptr;
 
             if (current->isFinished()) {
-                addResult(current);
+                finishResult(current);
             }
             else {
                 juce::ScopedLock lock (criticalSection);
@@ -148,31 +182,77 @@ void MslConductor::shellIterate(MslContext* context)
 }
 
 /**
- * Add a finished session from either the shell or the kernel to the
- * result list.
- *
- * todo: will need thread guards here once the SessionConsole
- * comes online and needs to iterate over it.
+ * Add a new result to the interned result list.
+ * The result may still be associated with an active session, or
+ * it may what was left behind from a session that immediately ran to completion
+ * without transitioning.
  */
-void MslConductor::addResult(MslSession* s)
+void MslConductor::addResult(MslResult* r)
 {
     juce::ScopedLock lock (criticalSectionResult);
-    
-    s->next = results;
-    results = s;
+    r->next = results;
+    results = r;
 }
 
 /**
- * Called periodically by the maintenance thread to prune the result list.
- * Actually no, don't call this from the maintenance thread because it makes
- * it extremely difficult for the ScriptConsole and the MobiusConsole to show
- * the results of prior sessions without complex object locking.
- * Let these accumulate, at least if enabled in global config and prune
- * them manually when the user is in control.
+ * Called when an background session has finished.
+ * It has been removed from the shell or kernel session list.
+ * Move any final state from the session to the result and
+ * release the session back to the pool.
+ *
+ * An associated MslResult should always have been created by now.
+ * todo: Who has the responsibility for refreshing the result, conductor
+ * or do we allow the session to touch the result along the way?
+ */
+void MslConductor::finishResult(MslSession* s)
+{
+    MslPools* pool = environment->getPool();
+    
+    MslResult* result = s->result;
+    if (result == nullptr) {
+        // I suppose we could generate a new one here, but Environment
+        // is supposed to have already done that
+        Trace(1, "MslConductor: Finished session without a result");
+    }
+    else {
+        // the console may be examining the object so only allowed to do
+        // atomic things
+        // !! this is a problem since we don't incrementally add things
+        // like more errors on a list or a different value this is safe,
+        // but I don't like how this is working.  Really don't want to have
+        // console locking these, perhaps we need two lists, one for dead sessions
+        // and one for those still running
+        
+        MslError* oldErrors = result->errors;
+        if (oldErrors != nullptr)
+          Trace(1, "MslConductor: Replacing result error list!");
+        result->errors = s->captureErrors();
+        pool->free(oldErrors);
+
+        MslValue* oldValue = result->value;
+        if (oldValue != nullptr)
+          Trace(1, "MslConductor: Replacing result value!");
+        result->value = s->captureValue();
+        pool->free(oldValue);
+
+        // todo: interesting execution statistics
+
+        // take away this pointer, which really shouldn't have been there anyway
+        result->session = nullptr;
+    }
+
+    // and finally reclaim the session
+    pool->free(s);
+}
+
+/**
+ * Called under user control to prune the result list.
+ * Note that this can't be called periodically by the maintenance thread since
+ * the ScriptConsole expects this list to be stable.
  */
 void MslConductor::pruneResults()
 {
-    MslSession* remainder = nullptr;
+    MslResult* remainder = nullptr;
     {
         juce::ScopedLock lock (criticalSectionResult);
     
@@ -180,7 +260,7 @@ void MslConductor::pruneResults()
         int maxResults = 10;
 
         int count = 0;
-        MslSession* s = results;
+        MslResult* s = results;
         while (s != nullptr && count < maxResults) {
             s = s->next;
             count++;
@@ -190,7 +270,7 @@ void MslConductor::pruneResults()
     }
 
     while (remainder != nullptr) {
-        MslSession* next = remainder->next;
+        MslResult* next = remainder->next;
         remainder->next = nullptr;
 
         // don't have a session pool yet
@@ -254,6 +334,8 @@ void MslConductor::kernelIterate(MslContext* context)
             current->next = nullptr;
 
             // and send it to the shell
+            // actually we could do the same finishResult processing
+            // that shell does here, but keep doing it the old way
             {
                 juce::ScopedLock lock (criticalSection);
                 current->next = toShell;
@@ -267,13 +349,7 @@ void MslConductor::kernelIterate(MslContext* context)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Launch Results
-//
-// The methods in this section are used after a new session is
-// created in either context and it did not run to completion
-// or it completed with errors.  In those cases it needs to
-// be added to the appropriate list for later processing during
-// the maintenance cycle.
+// Transitions
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -326,23 +402,12 @@ void MslConductor::addWaiting(MslContext* weAreHere, MslSession* s)
     }
 }
 
-/**
- * Place a session that immediately completed with errors on the result list.
- * If we're in the shell, it goes to the result list.
- * If we're in the kernel, it goes to toShell first, then the shell will
- * eventually move it to the result list.
- */
-void MslConductor::addResult(MslContext* weAreHere, MslSession* s)
-{
-    if (weAreHere->mslGetContextId() == MslContextKernel) {
-        juce::ScopedLock lock (criticalSection);
-        s->next = toShell;
-        toShell = s;
-    }
-    else {
-        addResult(s);
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Result Access
+//
+//////////////////////////////////////////////////////////////////////
+
 
 /**
  * This would be called by ScriptConsole to show what happened when recent script ran.
@@ -353,55 +418,25 @@ void MslConductor::addResult(MslContext* weAreHere, MslSession* s)
  * and the maintenance threads actively adding things to them.   Need a more
  * robust way to iterate over these or capture them.
  */
-MslSession* MslConductor::getResults()
+MslResult* MslConductor::getResults()
 {
     return results;
 }
 
 /**
- * Hack to probe for session status after it was launched async.
+ * Find a specific result by id.
  */
-bool MslConductor::isWaiting(int id)
+MslResult* MslConductor::getResult(int id)
 {
-    bool waiting = false;
-    MslSession* s = findSessionDangerously(id);
-    if (s != nullptr) {
-        waiting = s->isWaiting();
-    }
-    return waiting;
-}
-
-MslSession* MslConductor::getFinished(int id)
-{
-    return findSessionDangerously(results, id);
-}
-
-MslSession* MslConductor::findSessionDangerously(int id)
-{
-    MslSession* found = nullptr;
-
-    // first look in results
-    found = findSessionDangerously(results, id);
-
-    if (found == nullptr)
-      found = findSessionDangerously(shellSessions, id);
-
-    if (found == nullptr)
-      found = findSessionDangerously(kernelSessions, id);
-
-    return found;
-}
-
-MslSession* MslConductor::findSessionDangerously(MslSession* list, int id)
-{
-    MslSession* found = nullptr;
+    MslResult* found = nullptr;
     
-    while (list != nullptr) {
-        if (list->sessionId == id) {
-            found = list;
+    MslResult* ptr = results;
+    while (ptr != nullptr) {
+        if (ptr->sessionId == id) {
+            found = ptr;
             break;
         }
-        list = list->next;
+        ptr = ptr->next;
     }
     return found;
 }

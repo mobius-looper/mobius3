@@ -7,6 +7,8 @@
  * There is an experimental interface for incremental line-at-a-time parsing
  * for the MobiusConsole.
  *
+ * The parser lives at the shell level and does not need to use object pools.
+ *
  */
 
 #pragma once
