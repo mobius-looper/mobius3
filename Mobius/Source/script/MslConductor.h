@@ -71,6 +71,9 @@ class MslConductor
     void addTransitioning(class MslContext* c, class MslSession* s);
     void addWaiting(class MslContext* c, class MslSession* s);
 
+    // post-launch transitions
+    void transition(MslContext* weAreHere, MslSession* s);
+
     // results
     
     void addResult(class MslResult* r);
@@ -94,6 +97,7 @@ class MslConductor
     void deleteSessionList(MslSession* list);
     void deleteResultList(MslResult* list);
     void finishResult(MslSession* s);
+    bool remove(MslSession** list, MslSession* s);
 
 };
 

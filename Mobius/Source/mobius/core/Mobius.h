@@ -82,6 +82,19 @@ class Mobius
      * Query the value of a core parameter.
      */
     bool doQuery(class Query* q);
+
+    /**
+     * Immediately perform a core action.  This is where function calls
+     * in scripts end up rather than the actions queued in processAudioStream.
+     */
+    void doAction(class UIAction* a);
+
+    /**
+     * Schedule a wait event for the new MSL interpreter.
+     * Temporary: need to be factoring a cleaner interface for
+     * event management from outside Mobius core.
+     */
+    bool scheduleScriptWait(class MslWait* w);
     
     /**
      * Process a completed KernelEvent core scheduled earlier.
@@ -305,6 +318,16 @@ class Mobius
     // used only by InputPortParameter and OutputPortParameter
     bool isPlugin();
 
+    //////////////////////////////////////////////////////////////////////
+    // New public accessors for events to deal with MSL
+    //////////////////////////////////////////////////////////////////////
+    
+    // event callbacks
+    void finishMslWait(class Event* e);
+    void rescheduleMslWait(class Event* e, class Event* neu);
+    void cancelMslWait(class Event* e);
+    void handleMslWait(class Loop* l, class Event* e);
+    
   protected:
 
   private:
@@ -321,6 +344,15 @@ class Mobius
     // audio buffers
     void beginAudioInterrupt(class MobiusAudioStream* stream, class UIAction* actions);
     void endAudioInterrupt(class MobiusAudioStream* stream);
+
+    // new MSL support
+    class Track* getWaitTarget(class MslWait* wait);
+    bool scheduleDurationWait(class MslWait* wait);
+    int calculateDurationFrame(class MslWait* wait, class Track* t);
+    int getMsecFrames(class Track* t, long msecs);
+
+    bool scheduleLocationWait(class MslWait* wait);
+    bool scheduleEventWait(class MslWait* wait);
 
     //
     // Member Variables

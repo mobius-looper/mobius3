@@ -1712,6 +1712,13 @@ void MslSession::mslVisit(MslWaitNode* wait)
             // back here after MslEnvironment::resume was called and the context
             // decided the wait was over
             // might want to have an interesting return value here
+
+            // the assumption is that the session can't be resumed unless it is
+            // in a context that is prepared to deal with it, I don't think we
+            // can resume from the other side
+            if (context->mslGetContextId() != MslContextKernel)
+              Trace(1, "MslSession: Wait resumed outside of the kernel context");
+            
             stack->wait.reset();
             popStack();
         }
@@ -1736,8 +1743,15 @@ void MslSession::mslVisit(MslWaitNode* wait)
         else {
             // evaluate the count/number/duration
             MslStack* nextStack = pushNextChild();
-            if (nextStack == nullptr)
-              setupWait(wait);
+            if (nextStack == nullptr) {
+                // transition if we're not in kernel before setting up the wait event
+                // but after we've checked for syntax errors and evaluated the
+                // wait value
+                if (context->mslGetContextId() != MslContextKernel)
+                  transitioning = true;
+                else
+                  setupWait(wait);
+            }
         }
     }
 }
@@ -1756,9 +1770,9 @@ void MslSession::setupWait(MslWaitNode* node)
 
     // This is always just a number right not, it just means different things
     // depending on the wait type
-    wait->arguments = 0;
+    wait->value = 0;
     if (stack->childResults != nullptr)
-      wait->arguments = stack->childResults->getInt();
+      wait->value = stack->childResults->getInt();
 
     // ask the context to schedule something suitable to end the wait
     // the context is allowed to retain a pointer to the wait object, and
@@ -1769,7 +1783,9 @@ void MslSession::setupWait(MslWaitNode* node)
     if (!context->mslWait(wait))
       addError(node, "Unable to schedule wait state");
 
-    // save where it came from, I don't think this is necessary any more
+    // save where it came from, the session is necessary so MslEnvironment
+    // knows which one to resume, I don't think the stack is, it just advances the session
+    // and the wait will normally be the top of the stack
     wait->session = this;
     wait->stack = stack;
 

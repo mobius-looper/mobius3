@@ -290,13 +290,16 @@ class Event {
 	bool inProgress();
 	Event* findEvent(EventType* type);
 	Event* findEvent(EventType* type, class Function* f);
-	void cancelScriptWait();
-	void finishScriptWait();
-	void rescheduleScriptWait(Event* neu);
+	void cancelScriptWait(Mobius* m);
+	void finishScriptWait(Mobius* m);
+	void rescheduleScriptWait(Mobius* m, Event* neu);
 
 	// interpreter that scheduled the event
-	class ScriptInterpreter* getScript();
-	void setScript(class ScriptInterpreter* si);
+	class ScriptInterpreter* getScriptInterpreter();
+	void setScriptInterpreter(class ScriptInterpreter* si);
+    // new interface for MSL
+    class MslWait* getMslWait();
+    void setMslWait(class MslWait* w);
 
     // complex arguments from a script
     class ExValueList* getArguments();
@@ -672,7 +675,8 @@ class Event {
      * Script interpreter waiting for this event to finish.
      */
 	class ScriptInterpreter* mScript;
-
+    class MslWait* mMslWait = nullptr;
+    
     /**
      * Action that caused this event, if this is the "primary" event.
      * This will not be set for secondary events like JumpPlayEvent.

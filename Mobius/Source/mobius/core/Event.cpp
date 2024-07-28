@@ -212,13 +212,19 @@ void EventPool::freeEvent(Event* e, bool freeAll)
 			// Just to be safe, let the script interpreter know in case
 			// it is still waiting on this.  Shouldn't happen if
 			// we're processing events properly.
-			ScriptInterpreter* script = e->getScript();
+			ScriptInterpreter* script = e->getScriptInterpreter();
 			if (script != NULL) {
 				// return strue if we were actually waiting on this
 				if (script->cancelEvent(e))
 				  Trace(1, "Attempt to free an event a script is waiting on!\n");
-				e->setScript(NULL);
+				e->setScriptInterpreter(NULL);
 			}
+            // parallel shit for MSL, fuck we don't have a Mobius here
+            // this isn't supposed to happen, just let it hang I guess
+            class MslWait* wait = e->getMslWait();
+            if (wait != nullptr) {
+                Trace(1, "EventPool: Freeing event with lingering MslWait!!");
+            }
 
 			// if we have children, set them free
 			Event* next = NULL;
@@ -348,6 +354,7 @@ void Event::init()
 	mSibling	= NULL;
 	mPresetValid = false;
 	mScript     = NULL;
+    mMslWait    = nullptr;
     mAction     = NULL;
 	mInvokingFunction = NULL;
     mArguments  = NULL;
@@ -495,14 +502,24 @@ void Event::setTrack(Track* t)
 /**
  * The interpreter that scheduled the event.
  */
-ScriptInterpreter* Event::getScript() 
+ScriptInterpreter* Event::getScriptInterpreter() 
 {
 	return mScript;
 }
 
-void Event::setScript(ScriptInterpreter* si) 
+void Event::setScriptInterpreter(ScriptInterpreter* si) 
 {
 	mScript = si;
+}
+
+class MslWait* Event::getMslWait()
+{
+    return mMslWait;
+}
+
+void Event::setMslWait(class MslWait* w)
+{
+    mMslWait = w;
 }
 
 /**
@@ -822,11 +839,16 @@ void Event::confirm(Action* action, Loop* l, long argFrame)
  * next time it runs.
  *
  * !! NO it runs synchronously.  I don't like that at all...
+ *
+ * new: had to start passing Mobius in to deal with MslWait
  */
-void Event::finishScriptWait() 
+void Event::finishScriptWait(Mobius* m) 
 {
 	if (mScript != NULL)
 	  mScript->finishEvent(this);
+
+    if (mMslWait != nullptr)
+      m->finishMslWait(this);
 }
 
 /**
@@ -834,10 +856,13 @@ void Event::finishScriptWait()
  * If the interpreter was waiting on this event, then it can
  * switch to waiting on the new event.
  */
-void Event::rescheduleScriptWait(Event* neu) 
+void Event::rescheduleScriptWait(Mobius* m, Event* neu) 
 {
 	if (mScript != NULL)
 	  mScript->rescheduleEvent(this, neu);
+
+    if (mMslWait != nullptr)
+      m->rescheduleMslWait(this, neu);
 }
 
 /**
@@ -849,11 +874,16 @@ void Event::rescheduleScriptWait(Event* neu)
  * script wasn't waking up!
  *
  */
-void Event::cancelScriptWait()
+void Event::cancelScriptWait(Mobius* m)
 {
     if (mScript != NULL) {
 		mScript->cancelEvent(this);
         mScript = NULL;
+	}
+    
+    if (mMslWait != nullptr) {
+        m->cancelMslWait(this);
+        mMslWait = nullptr;
 	}
 }
 

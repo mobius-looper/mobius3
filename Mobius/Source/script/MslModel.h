@@ -105,7 +105,7 @@ class MslNode
     }
 
     // returns true if the node would like to consume the token
-    virtual bool wantsToken(MslToken& t) {(void)t; return false;}
+    virtual bool wantsToken(class MslParser* p, MslToken& t) {(void)p; (void)t; return false;}
 
     // returns true if the node would like to consume another child node
     // do we really need locked if this works?
@@ -195,18 +195,8 @@ class MslReference : public MslNode
     virtual ~MslReference() {}
 
     // take the next number or symbol
-    // this should actually error if the next token isn't one of those
-    // since there is no other use for $
-    // maybe requiresToken?
-    bool wantsToken(MslToken& t) override {
-        bool wants = false;
-        if (t.type == MslToken::Type::Symbol ||
-            t.type == MslToken::Type::Int) {
-            name = t.value;
-            wants = true;
-        }
-        return wants;
-    }
+    // if it isn't one of those raise an error
+    bool wantsToken(class MslParser* p, MslToken& t) override;
     
     juce::String name;
     
@@ -376,24 +366,7 @@ class MslVar : public MslNode
     MslVar(MslToken& t) : MslNode(t) {}
     virtual ~MslVar() {}
 
-    // var is one of the few that consumes tokens
-    // hmm, it's a little more than this, it REQUIRES a token
-    // wantsToken doesn't have a way to reject with prejeduce
-    // we'll end up with a bad parse tree that will have to be caught at runtime
-    bool wantsToken(MslToken& t) override {
-        bool wants = false;
-        if (t.type == MslToken::Type::Symbol) {
-            // take this as our name
-            name =  t.value;
-            wants = true;
-        }
-        else if (t.type == MslToken::Type::Operator &&
-                 t.value == "=") {
-            // skip past this once we have a name
-            wants = (name.length() > 0);
-        }
-        return wants;
-    }
+    bool wantsToken(class MslParser* p, MslToken& t) override;
 
     // vars accept an expression
     bool wantsNode(MslNode* node) override {
@@ -425,14 +398,7 @@ class MslProc : public MslNode
     virtual ~MslProc() {}
 
     // same as var
-    bool wantsToken(MslToken& t) override {
-        bool wants = false;
-        if (t.type == MslToken::Type::Symbol) {
-            name =  t.value;
-            wants = true;
-        }
-        return wants;
-    }
+    bool wantsToken(class MslParser* p, MslToken& t) override;
 
     bool wantsNode(MslNode* node) override {
         bool wants = false;
@@ -612,35 +578,8 @@ class MslContextNode : public MslNode
     MslContextNode(MslToken& t) : MslNode(t) {}
     ~MslContextNode() {}
 
-    bool wantsToken(MslToken& t) override {
-        bool wants = false;
-        if (!finished) {
-            if (t.type == MslToken::Type::Symbol) {
-                if (t.value == "shell" || t.value == "ui") {
-                    shell = true;
-                    finished = true;
-                }
-                else if (t.value == "kernel" || t.value == "audio") {
-                    shell = false;
-                    finished = true;
-                }
-            }
-            if (finished)
-              wants = true;
-            else {
-                // todo: need to raise an error because the keyword was not right
-                // always consume the next token whether or not it was valid
-                // so we don't end up with a noise symbol if the typed something wrong
-                // need to be returning error instead
-                if (t.type == MslToken::Type::Symbol) {
-                    wants = true;
-                    finished = true;
-                }
-            }
-        }
-        return wants;
-    }
-    
+    bool wantsToken(class MslParser* p, MslToken& t) override;
+
     bool wantsNode(MslNode* node) override {
         (void)node;
         return false;
@@ -654,8 +593,6 @@ class MslContextNode : public MslNode
     bool shell = false;
     bool finished = false;
 };
-
-
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -678,7 +615,7 @@ class MslWaitNode : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     bool operandable() override {return false;}
     
-    bool wantsToken(MslToken& t) override;
+    bool wantsToken(class MslParser* p, MslToken& t) override;
     bool wantsNode(MslNode* node) override;
 
     MslWaitType type = WaitTypeNone;

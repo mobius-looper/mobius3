@@ -102,14 +102,39 @@ class MslWait
 {
   public:
 
+    //
+    // Request State
+    // This is what is passed down to the engine to schedule the wait
+    //
+
     MslWaitType type = WaitTypeNone;
     MslWaitEvent event = WaitEventNone;
     MslWaitDuration duration = WaitDurationNone;
     MslWaitLocation location = WaitLocationNone;
 
-    // arguments from the Wait expression to pass to the MslContext
+    // the numeric value of the Wait expression
     // this is the duration, location, counter, etc.
-    int arguments = 0;
+    int value = 0;
+
+    // the track this wait should be in, zero means active track
+    int track = 0;
+
+    //
+    // Result State
+    // This is what the engine passes back up after scheduling
+    //
+
+    // handle to an internal object that represents the wait
+    // for Mobius this is a core Event object
+    void* coreEvent = nullptr;
+
+    // loop frame on which the event was scheduled
+    int coreEventFrame = 0;
+
+    //
+    // Interpreter State
+    // This is what the interpreter uses to track the status of the wait
+    //
 
     // true if this wait is active
     // since all MslStacks have an embedded MslWait this says whether
@@ -141,6 +166,10 @@ class MslWait
     // we could put it all back to rest to make it look better in the debugger
     void reset() {
         active = false;
+        finished = false;
+        value = 0;
+        track = 0;
+        coreEvent = nullptr;
+        coreEventFrame = 0;
     }
-    
 };

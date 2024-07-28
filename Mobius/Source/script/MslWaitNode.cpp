@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "MslModel.h"
+#include "MslParser.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -169,7 +170,7 @@ const char* MslWaitNode::locationToKeyword(MslWaitLocation e)
  * on things like "subcycle" which is used for all three types, but
  * event waits are the most common.  Reconsider this...
  */
-bool MslWaitNode::wantsToken(MslToken& t)
+bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
     const char* key = t.value.toUTF8();
@@ -185,6 +186,7 @@ bool MslWaitNode::wantsToken(MslToken& t)
           wants = true;
         else {
             // implicit type=event if the token matches an event keyword
+            // these are the most common and have priority
             MslWaitEvent ev = keywordToEvent(key);
             if (ev != WaitEventNone) {
                 type = WaitTypeEvent;
@@ -192,10 +194,26 @@ bool MslWaitNode::wantsToken(MslToken& t)
                 wants = true;
             }
             else {
-                // else syntax error
-                // !! need a way for the token handler to convey this to the Parser
-                // should pass the Parser in
-                error = true;
+                // implicit type=duration or type=location if the token has
+                // an unambiguous match
+                MslWaitDuration dur = keywordToDuration(key);
+                MslWaitLocation loc = keywordToLocation(key);
+                if (dur != WaitDurationNone && loc == WaitLocationNone) {
+                    type = WaitTypeDuration;
+                    duration = dur;
+                    wants = true;
+                }
+                else if (dur == WaitDurationNone && loc != WaitLocationNone) {
+                    type = WaitTypeLocation;
+                    location = loc;
+                    wants = true;
+                }
+                else if (dur == WaitDurationNone && loc == WaitLocationNone) {
+                    p->errorSyntax(t, "Invalid wait unit");
+                }
+                else {
+                    p->errorSyntax(t, "Ambiguous wait unit: use location or duration");
+                }
             }
         }
     }
@@ -204,21 +222,21 @@ bool MslWaitNode::wantsToken(MslToken& t)
         if (event != WaitEventNone)
           wants = true;
         else
-          error = true;
+          p->errorSyntax(t, "Invalid event name");
     }
     else if (type == WaitTypeDuration && duration == WaitDurationNone) {
         duration = keywordToDuration(key);
         if (duration != WaitDurationNone)
           wants = true;
         else
-          error = true;
+          p->errorSyntax(t, "Invalid duration name");
     }
     else if (type == WaitTypeLocation && location == WaitLocationNone) {
         location = keywordToLocation(key);
         if (location != WaitLocationNone)
           wants = true;
         else
-          error = true;
+          p->errorSyntax(t, "Invalid location name");
     }
     
     return wants;

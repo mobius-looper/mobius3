@@ -32,6 +32,9 @@
 #include "../../model/Symbol.h"
 #include "../../model/FunctionDefinition.h"
 
+// depenencies needed to handle MSL script waits
+#include "../../script/MslWait.h"
+
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
 
@@ -58,6 +61,9 @@
 
 // for ScriptInternalVariable, encapsulation sucks
 #include "Variable.h"
+
+// now necessary for MslWait scheduling
+#include "EventManager.h"
 
 #include "Mobius.h"
 #include "Mem.h"
@@ -718,6 +724,14 @@ bool Mobius::doQuery(Query* q)
     return mActionator->doQuery(q);
 }
 
+/**
+ * Perform a core action directly from a script.
+ */
+void Mobius::doAction(UIAction* a)
+{
+    mActionator->doScriptAction(a);
+}
+
 //
 // These are not part of the interface, but things Actionator needs
 // to do its thing
@@ -967,6 +981,10 @@ void Mobius::beginAudioInterrupt(MobiusAudioStream* stream, UIAction* actions)
 
 	// process scripts
     mScriptarian->doScriptMaintenance();
+
+    // process MSL scripts
+    // should these be before or after old scripts?
+    mKernel->runExternalScripts();
 }
 
 /**
@@ -2167,6 +2185,333 @@ void Mobius::loadProject(Project* p)
     // we should have taken the Audio out of the project when
     // the loops were loaded, so delete what remains
 	delete p;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MSL Script Waits
+//
+// This is approximately the same as what ScriptWaitStatement::eval
+// does for the old scripting engine.  It's rather complicated so after
+// it is working consider ways to refactor this to make it more self contained.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * todo: not handling the old "inPause" argument, need to find a syntax for
+ * that and pass it down through the MslWait
+ */
+bool Mobius::scheduleScriptWait(MslWait* wait)
+{
+    bool success = false;
+
+    // the first thing the old eval() did was user a UserVarible named "interrupted"
+    // to null, unclear what that was for
+
+    // first dispatch on type
+    if (wait->type == WaitTypeDuration)
+      success = scheduleDurationWait(wait);
+    
+    else if (wait->type == WaitTypeLocation)
+      success = scheduleLocationWait(wait);
+
+    else if (wait->type == WaitTypeEvent)
+      success = scheduleEventWait(wait);
+    
+    else
+      Trace(1, "Mobius: Invalid wait type");
+    
+    return success;
+}
+
+bool Mobius::scheduleLocationWait(MslWait* wait)
+{
+    (void)wait;
+    return false;
+}
+
+bool Mobius::scheduleEventWait(MslWait* wait)
+{
+    (void)wait;
+    return false;
+}
+
+/**
+ * Duration waits schedule an event that fires after
+ * a period of time realative to where the loop is now.
+ * Old scripts call this WAIT_RELATIVE.
+ *
+ * The track number in which to schedule the wait is passed in MslWait::track
+ * The frame at which the wait was scheduled is passed back in MslWait::endFrame
+ * An opaque pointer to the Event that was scheduled is passed back in MslWait::coreEvent
+ *
+ */
+bool Mobius::scheduleDurationWait(MslWait* wait)
+{
+    bool success = false;
+    
+    Track* track = getWaitTarget(wait);
+    if (track != nullptr) {
+        int frame = calculateDurationFrame(wait, track);
+
+        // If the duration is zero, skip scheduling an event
+        // This is different than old scripts which always scheduled an event
+        // that immediately timed out, unclear if there was some subtle side
+        // effect to doing that.  I know people used to do "Wait 1" a lot to
+        // advance past a quantization point but I don't think they used "Wait 0"
+        // to accomplish something.
+    
+        if (frame > 0) {
+    
+            EventManager* em = track->getEventManager();
+            Event* e = em->newEvent();
+        
+            e->type = ScriptEvent;
+            e->frame = frame;
+
+            // old scripts set the ScriptInterpreter on the event
+            // here we set the MslWait which triggers a parallel set of logic
+            // everywhere a ScriptInterpreter would be found
+            //e->setScript(si);
+            e->setMslWait(wait);
+        
+            em->addEvent(e);
+
+            // the old interpreter would set the event on the ScriptStack
+            // here we save it in the Wait object itself
+            wait->coreEvent = e;
+
+            // remember this while we're here, could be useful
+            // we can trace it once we get back
+            wait->coreEventFrame = frame;
+            success = true;
+        }
+        else {
+            // if we ignored it, is this "success"?
+            // MslSession will error off if we return false
+        }
+    }
+    return success;
+}
+
+/**
+ * The target track is supposed to be passed in the MslWait
+ * if the script is using an "in" statement for track scoping.
+ * I guess this can deafult to the active track since everything
+ * else works that way.
+ */
+Track* Mobius::getWaitTarget(MslWait* wait)
+{
+    // defaults to active
+    Track* track = getTrack();
+
+    if (wait->track > 0) {
+        track = getTrack(wait->track);
+        if (track == nullptr) {
+            Trace(1, "Mobius: MslWait with invalid track number %d", wait->track);
+            // fatal or default?
+            track = getTrack();
+        }
+    }
+    return track;
+}
+
+/**
+ * Calculate the number of frames that correspond to a duration.
+ *
+ * When the target loop is empty as is the case on the initial record,
+ * the durations Subcycle, Cycle, and Loop are not relevant.
+ *
+ * Well, I suppose they could be for AutoRecord, but it is most likely an error.
+ * Old scripts converted this to an arbitrary 1 second wait, here
+ * we'll trace an error.
+ *
+ * todo: need a way for wait scheduling to return warnings and errors
+ * so the user doesn't have to watch the trace log.
+ */
+int Mobius::calculateDurationFrame(MslWait* wait, Track* track)
+{
+    int frame = 0;
+
+    // figure out the loop we're operating within and how long it is
+    Loop* loop = track->getLoop();
+    int loopFrames = loop->getFrames();
+
+    switch (wait->duration) {
+
+        case WaitDurationFrame: {
+            // straight and to the point
+            frame = wait->value;
+        }
+            break;
+
+        case WaitDurationMsec: {
+            frame = getMsecFrames(track, wait->value);
+        }
+            break;
+            
+        case WaitDurationSecond: {
+            frame = getMsecFrames(track, wait->value * 1000);
+        }
+            break;
+            
+        case WaitDurationSubcycle: {
+            if (loopFrames > 0) {
+                frame = loop->getSubCycleFrames() * wait->value;
+            }
+            else {
+                Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
+            }
+        }
+            break;
+            
+        case WaitDurationCycle: {
+            if (loopFrames > 0) {
+                frame = loop->getCycleFrames() * wait->value;
+            }
+            else {
+                Trace(1, "MSL: Wait duration Cycle is not evailable in an empty loop");
+            }
+        }
+            break;
+            
+        case WaitDurationLoop: {
+            if (loopFrames > 0) {
+                frame = loopFrames * wait->value;
+            }
+            else {
+                Trace(1, "MSL: Wait duration Loop is not evailable in an empty loop");
+            }
+        }
+            break;
+            
+        case WaitDurationBeat: {
+            // new in MSL and not available yet
+            // beat is relevant only when syncing to Host or MIDI in which
+            // case we need to get the beat frame width from Synchronizer
+            // if Mobius is the sync master I suppose this could be the
+            // same as subcycle
+            Trace(1, "MSL: Wait duration Beat not implemented");
+        }
+            break;
+            
+        case WaitDurationBar: {
+            // new in MSL and not available yet
+            // like beat only relevant when syncing to Host or MIDI
+            // if Mobius is the sync master I suppose this could be the
+            // same as cycle
+            Trace(1, "MSL: Wait duration Beat not implemented");
+        }
+            break;
+
+        default:
+            Trace(1, "MSL: Invalid wait duration");
+            break;
+    }
+
+    return frame;
+}
+            
+/**
+ * Return the number of frames represented by a millisecond.
+ * Adjusted for the current playback rate.  
+ * For accurate waits, you have to ensure that the rate can't
+ * change while we're waiting.
+ */
+int Mobius::getMsecFrames(Track* t, long msecs)
+{
+    // old code uses the MSEC_TO_FRAMES macro which was defined
+    // as this buried in MobiusConfig.h
+    // #define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
+    //
+    // that obviously doesn't work with variable sample rates so need to weed
+    // out all uses of that old macro
+	// should we ceil() here?
+    int msecFrames = (int)((float)(mContainer->getSampleRate()) * ((float)msecs / 1000.0f));
+
+    // adjust by playback rate
+	float rate = t->getEffectiveSpeed();
+    int frames = (int)((float)msecFrames * rate);
+    
+    return frames;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MslWait Event Callbacks
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here from the ScriptEventType::invoke handler
+ * It would normally call ScriptInterpreter::scriptEvent
+ *
+ * There is some commentary in old code about whether this should
+ * advance the script synchronously or wait for the event processing
+ * to wind out back to the outer event loop.  We have historically
+ * done it synchronously.
+ */
+void Mobius::handleMslWait(class Loop* l, class Event* e)
+{
+    (void)l;
+    // what a long strange trip it's been
+    MslWait* wait = e->getMslWait();
+    if (wait == nullptr)
+      Trace(1, "Mobius::handleMslWait Got here without an MslWait which is insane!");
+    else {
+        // we've done all the shit we're going to do in the core and
+        // we feel very dirty about it, pop back up to the kernel that
+        // thinks everything is just shiny
+        mKernel->coreWaitFinished(wait);
+
+        // the pool will trace an error if this is left behind
+        e->setMslWait(nullptr);
+    }
+}
+
+/**
+ * Here from Event::finishScriptWait
+ *
+ * This is called after EVERY event type that had an interpreter/wait
+ * hanging on it and is used to resume a script that is waiting on
+ * another event like the last function event.
+ *
+ * Comments from ScriptInterpreter::finishEvent
+ * 
+ * Called by Loop after it processes any Event that has an attached
+ * interpreter.  Check to see if we've met an event wait condition.
+ * Can get here with ScriptEvents, but we will have already handled
+ * those in the scriptEvent method below.
+ */
+void Mobius::finishMslWait(class Event* e)
+{
+    (void)e;
+    Trace(2, "Mobius::finishMslWait");
+}
+
+/**
+ * Here from both Event and Function after rescheduling an event
+ * I think we're suppsoed to replace one with the other.
+ * Normally calls ScriptInterpreter::rescheduleEvent
+ */
+void Mobius::rescheduleMslWait(class Event* e, class Event* neu)
+{
+    (void)e;
+    (void)neu;
+    Trace(2, "Mobius::rescheduleMslWait");
+}
+
+/**
+ * Here from Event::cancelScriptWait
+ * Normally calls ScriptInterpreter::cancelEvent
+ *
+ * I think this is caused by "cancel" statement processing
+ * within the interpreter itself, but may happen on Reset too?
+ */
+void Mobius::cancelMslWait(class Event* e)
+{
+    (void)e;
+    Trace(2, "Mobius::cancelMslWait");
 }
 
 /****************************************************************************/

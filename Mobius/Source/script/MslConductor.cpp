@@ -385,6 +385,10 @@ void MslConductor::addTransitioning(MslContext* weAreHere, MslSession* s)
  * protect the list because UIActions can be handled by both the UI
  * thread and the maintenance thread.  Really?  won't they be blocking
  * each other?
+ *
+ * !!!!!!!!!!!!! why is this a special case, this is only used
+ * on the initial launch, once launched transition() is used to toss
+ * it from one side to another.  
  */
 void MslConductor::addWaiting(MslContext* weAreHere, MslSession* s)
 {
@@ -400,6 +404,74 @@ void MslConductor::addWaiting(MslContext* weAreHere, MslSession* s)
         s->next = kernelSessions;
         kernelSessions = s;
     }
+}
+
+/**
+ * Move a session from one side to the other after it has been added.
+ */
+void MslConductor::transition(MslContext* weAreHere, MslSession* s)
+{
+    if (s != nullptr) {
+        if (weAreHere->mslGetContextId() == MslContextShell) {
+            bool foundit = false;
+            {
+                // scope lock on the "result" csect just in case we have
+                // multiple shell threads touching sessions
+                juce::ScopedLock lock (criticalSectionResult);
+                foundit = remove(&shellSessions, s);
+            }
+            if (!foundit) {
+                // it must have been added by now
+                // don't just toss it on the kernel list without figuring out why
+                Trace(1, "MslConductor: Transitioning session not on shell list");
+            }
+            else {
+                juce::ScopedLock lock (criticalSection);
+                s->next = toKernel;
+                toKernel = s;
+            }
+        }
+        else {
+            // don't need to csect on the kernel list since there is only one thread
+            bool foundit = remove(&kernelSessions, s);
+            if (!foundit) {
+                Trace(1, "MslConductor: Transitioning session not on kernel list");
+            }
+            else {
+                juce::ScopedLock lock (criticalSection);
+                s->next = toShell;
+                toShell = s;
+            }
+        }
+    }
+}
+
+/**
+ * Splice a session out of a list.
+ * Because we need to return both a status flag and a modification
+ * to the head of the list, pass a pointer to the list head.
+ * This must already be in an appropriate csect.
+ */
+bool MslConductor::remove(MslSession** list, MslSession* s)
+{
+    bool foundit = false;
+
+    MslSession* prev = nullptr;
+    MslSession* ptr = *list;
+    while (ptr != nullptr && ptr != s) {
+        prev = ptr;
+        ptr = ptr->next;
+    }
+    
+    if (ptr == s) {
+        foundit = true;
+        if (prev == nullptr)
+          *list = ptr->next;
+        else
+          prev->next = ptr->next;
+        ptr->next = nullptr;
+    }
+    return foundit;
 }
 
 //////////////////////////////////////////////////////////////////////

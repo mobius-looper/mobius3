@@ -144,6 +144,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void slamSampleManager(SampleManager* neu);
     void slamBinderator(class Binderator* bindings);
     
+    // used by Mobius to start the execution of MSL scripts
+    void runExternalScripts();
+
     // used by Mobius to send an action up the levels
     void doActionFromCore(UIAction* action);
     
@@ -164,6 +167,12 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void suspend();
     void resume();
     bool isSuspended();
+
+    //
+    // MSL callbacks after wait event scheduling
+    //
+    void coreWaitFinished(class MslWait* wait);
+    
     
   private:
 

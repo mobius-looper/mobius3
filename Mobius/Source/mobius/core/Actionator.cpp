@@ -87,6 +87,14 @@ void Actionator::doInterruptActions(UIAction* actions, long frames)
 }
 
 /**
+ * Process an action that came from an MSL script.
+ */
+void Actionator::doScriptAction(UIAction* action)
+{
+    doCoreAction(action);
+}
+
+/**
  * Do one of the actions in from the Shell and queued for the
  * next audio block.
  */

@@ -753,9 +753,13 @@ void Function::invokeEvent(Loop* l, Event* e)
         if (realEvent != NULL) {
             // if we had a Wait last on the pending event, switch it to waiting
             // for the new event
-            ScriptInterpreter* si = e->getScript();
+            ScriptInterpreter* si = e->getScriptInterpreter();
             if (si != NULL)
               si->rescheduleEvent(e, realEvent);
+
+            class MslWait* wait = e->getMslWait();
+            if (wait != nullptr)
+              l->getMobius()->rescheduleMslWait(e, realEvent);
         }
         
         // reclaim the action if the new event doesn't want it
@@ -1055,9 +1059,13 @@ Event* Function::rescheduleEvent(Loop* l, Event* prev, Event* next)
         if (newEvent != NULL) {
             // if we had a Wait last on the pending event, switch it to waiting
             // for the new event
-            ScriptInterpreter* si = next->getScript();
+            ScriptInterpreter* si = next->getScriptInterpreter();
             if (si != NULL)
               si->rescheduleEvent(next, newEvent);
+
+            class MslWait* wait = next->getMslWait();
+            if (wait != nullptr)
+              l->getMobius()->rescheduleMslWait(next, newEvent);
         }
 
         // reclaim the action if the new event doesn't want it

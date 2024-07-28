@@ -30,6 +30,10 @@ class Actionator
     // it has to do similar UI/core mapping and is small
     bool doQuery(class Query* q);
 
+    // special interface for scripts that want immediate action
+    // handling that isn't queued by doInterruptActions
+    void doScriptAction(class UIAction* action);
+
     //////////////////////////////////////////////////////////////////////
     // Old Model
     //////////////////////////////////////////////////////////////////////

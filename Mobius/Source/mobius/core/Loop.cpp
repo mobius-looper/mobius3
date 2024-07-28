@@ -5135,7 +5135,7 @@ void Loop::switchEvent(Event* event)
 		// in the next loop, have to tell the script interpreter
 		// in case we're waiting on the the control event.
 		if (reschedule != NULL)
-		  e->rescheduleScriptWait(reschedule);
+		  e->rescheduleScriptWait(mMobius, reschedule);
 
 		if (remove) {
 			event->removeChild(e);
@@ -5301,7 +5301,7 @@ void Loop::switchEvent(Event* event)
 	// for the automatic events scheduled for transfer modes
 	Event* v = em->newEvent(ValidateEvent, next->mFrame);
 	em->addEvent(v);
-	event->rescheduleScriptWait(v);
+	event->rescheduleScriptWait(mMobius, v);
 
 	// Any remaining top-level events slide over to the next loop.
 	// Originally this is how we transfered "stacked" events, but now
@@ -5552,7 +5552,7 @@ void Loop::switchEvent(Event* event)
     // EventManager::processEvent because we have to make sure it is
     // finished *before* the control events.
 
-	event->finishScriptWait();
+	event->finishScriptWait(mMobius);
 
 	// release the control events we processed
 	nexte = NULL;
@@ -5561,7 +5561,7 @@ void Loop::switchEvent(Event* event)
 		e->setNext(NULL);
 
         // can there be script waits on these?
-        e->finishScriptWait();
+        e->finishScriptWait(mMobius);
 
         em->freeEvent(e);
 	}
@@ -5569,7 +5569,7 @@ void Loop::switchEvent(Event* event)
 	// it shouldn't happen, but if we had waits on any of the
 	// residual events, finish them too
 	for (e = current->getEvents() ; e != NULL ; e = e->getNext())
-	  e->finishScriptWait();
+	  e->finishScriptWait(mMobius);
 
 	// this will return the contained events to the free list
 	delete current;

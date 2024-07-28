@@ -57,6 +57,7 @@ class EventManager {
     bool isEventScheduled(Event* e) ;
     void removeEvent(Event* e);
     void removeScriptReferences(class ScriptInterpreter* si);
+    void removeScriptReferences(class MslWait* wait);
     Event* getFunctionEvent(Action* action, Loop* loop, Function* func);
 
     // Adjustments

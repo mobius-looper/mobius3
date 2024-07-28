@@ -19,6 +19,7 @@
 #include "MslParser.h"
 #include "MslSession.h"
 #include "MslResult.h"
+#include "MslExternal.h"
 #include "MslScriptletSession.h"
 
 #include "MslEnvironment.h"
@@ -349,6 +350,10 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
 {
     // resuming will cancel the transitioning state but not the waits
     s->resume(c);
+    if (s->isTransitioning()) {
+        // toss it to the other side after resuming
+        conductor.transition(c, s);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -380,6 +385,8 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
 MslError* MslEnvironment::resolve(MslScript* script)
 {
     //MslError* errors = nullptr;
+    (void)script;
+    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -588,6 +595,48 @@ void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
         }
         else {
             Trace(1, "MslEnvironment::launchScriptlet How did we get here?");
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Wait Resume
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here after a Wait statement has been scheduled in the MslContext
+ * and the has come.  Normally in the kernel thread at this point.
+ *
+ * Setting the finished flag on the MslWait object will automatically pick
+ * this up on the next maintenance cycle, but it is important that the
+ * script be advanced synchronously now.
+ *
+ * Getting back to the MslSession what caused this is simple if it is stored
+ * on the MslWait before sending it off.  We could also look in all the active
+ * sessions for the one containing this MslWait object, but that's kind of a tedious walk
+ * and it's easy enough just to save it.
+ *
+ * There is some potential thread contention here on the session if we allow waits
+ * to happen in sessions at the shell level since there are more threads involved
+ * up there than there are in the kernel.  That can't happen right now, but
+ * if you do, then think about it here.
+ */
+void MslEnvironment::resume(MslContext* c, MslWait* wait)
+{
+    MslSession* session = wait->session;
+    if (session == nullptr)
+      Trace(1, "MslEnvironment: No session stored in MslWait");
+    else {
+        // this is the magic bean that makes it go
+        wait->finished = true;
+        
+        session->resume(c);
+
+        if (session->isTransitioning()) {
+            // toss it to the other side after resuming
+            conductor.transition(c, session);
         }
     }
 }

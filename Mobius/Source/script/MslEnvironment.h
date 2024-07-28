@@ -123,6 +123,9 @@ class MslEnvironment
     // the "audio thread" maintenance ping
     void kernelAdvance(class MslContext* c);
 
+    // resume a session after a scheduled wait has completed
+    void resume(class MslContext* c, class MslWait* w);
+
     //
     // Library
     //
@@ -164,7 +167,7 @@ class MslEnvironment
 
     // the external link table
     juce::OwnedArray<class MslExternal> externals;
-    juce::HashMap<Juce::String,class MslExternal> externalMap;
+    juce::HashMap<juce::String,class MslExternal> externalMap;
 
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
@@ -181,7 +184,7 @@ class MslEnvironment
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
 
-    MslError* esolve(MslScript* script);
+    MslError* resolve(MslScript* script);
 
     MslResult* makeResult(MslSession* s, bool finished);
     int generateSessionId();

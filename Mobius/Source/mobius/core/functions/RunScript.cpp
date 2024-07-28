@@ -97,12 +97,16 @@ ScriptEventType::ScriptEventType()
 
 void ScriptEventType::invoke(Loop* l, Event* e)
 {
-	ScriptInterpreter* si = e->getScript();
-
-	if (si == NULL)
-	  Trace(l, 1, "ScriptEvent: no script interpreter!\n");
-	else
+	ScriptInterpreter* si = e->getScriptInterpreter();
+    if (si != nullptr)
 	  si->scriptEvent(l, e);
+      
+    class MslWait* wait = e->getMslWait();
+    if (wait != nullptr)
+      l->getMobius()->handleMslWait(l, e);
+
+	if (si == nullptr && wait == nullptr)
+	  Trace(l, 1, "ScriptEvent: no script interpreter!\n");
 }
 
 ScriptEventType ScriptEventObj;

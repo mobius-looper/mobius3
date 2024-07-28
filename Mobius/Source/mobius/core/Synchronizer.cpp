@@ -3646,7 +3646,7 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
       loop->cancelSyncMute(realign);
 
     // resume waiting scripts
-    realign->finishScriptWait();
+    realign->finishScriptWait(mMobius);
 
 	// we didn't process this in the usual way, we own it
     // this will remove and free

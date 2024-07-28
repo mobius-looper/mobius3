@@ -3745,7 +3745,7 @@ Event* ScriptWaitStatement::setupWaitEvent(ScriptInterpreter* si,
 
 	e->type = ScriptEvent;
 	e->frame = frame;
-	e->setScript(si);
+	e->setScriptInterpreter(si);
 	Trace(3, "Script %s: wait for frame %ld\n", si->getTraceName(), e->frame);
 	em->addEvent(e);
 
@@ -4899,7 +4899,7 @@ void ScriptStack::cancelWaits()
             Trace(1, "Wait event without target track!\n");
         }
         else {
-            mWaitEvent->setScript(NULL);
+            mWaitEvent->setScriptInterpreter(NULL);
 
             EventManager* em = track->getEventManager();
             em->freeEvent(mWaitEvent);

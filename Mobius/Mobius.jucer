@@ -604,7 +604,9 @@
               file="Source/script/MslEnvironment.h"/>
         <FILE id="bhfqpU" name="MslError.cpp" compile="1" resource="0" file="Source/script/MslError.cpp"/>
         <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
+        <FILE id="j4d2od" name="MslExternal.h" compile="0" resource="0" file="Source/script/MslExternal.h"/>
         <FILE id="KLN9HN" name="MslFileError.h" compile="0" resource="0" file="Source/script/MslFileError.h"/>
+        <FILE id="s2BlCY" name="MslModel.cpp" compile="1" resource="0" file="Source/script/MslModel.cpp"/>
         <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
         <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>
         <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>

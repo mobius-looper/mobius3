@@ -704,14 +704,14 @@ void ScriptInterpreter::rescheduleEvent(Event* src, Event* neu)
 
 		if (mStack != nullptr) {
 			if (mStack->changeWait(src, neu))
-			  neu->setScript(this);
+			  neu->setScriptInterpreter(this);
 		}
 
 		// this should only be the case if we did a Wait last, not
 		// sure this can happen?
 		if (mLastEvent == src) {
 			mLastEvent = neu;
-			neu->setScript(this);
+			neu->setScriptInterpreter(this);
 		}
 	}
 }
@@ -898,7 +898,7 @@ void ScriptInterpreter::setLastEvents(Action* a)
 {
 	if (a->getEvent() != nullptr) {
 		mLastEvent = a->getEvent();
-		mLastEvent->setScript(this);
+		mLastEvent->setScriptInterpreter(this);
 	}
 
 	if (a->getKernelEvent() != nullptr) {

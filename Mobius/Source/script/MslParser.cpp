@@ -219,7 +219,9 @@ void MslParser::parseInner(juce::String source)
         MslToken t = tokenizer.next();
 
         // some nodes consume tokens without creating more nodes
-        if (current->wantsToken(t))
+        // parser passed so the node can add an error if it wants to
+        // ugly
+        if (current->wantsToken(this, t) || result->errors.size() > 0)
           continue;
 
         // todo: if this is a keyword like "else" that doesn't

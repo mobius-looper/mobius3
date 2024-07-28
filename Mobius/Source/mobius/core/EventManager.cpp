@@ -366,11 +366,26 @@ void EventManager::addEvent(Event* event)
 void EventManager::removeScriptReferences(ScriptInterpreter* si)
 {
 	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
-		if (e->getScript() == si)
-		  e->setScript(NULL);
+		if (e->getScriptInterpreter() == si)
+		  e->setScriptInterpreter(NULL);
 		for (Event* c = e->getChildren() ; c != NULL ; c = c->getSibling()) {
-			if (c->getScript() == si)
-			  c->setScript(NULL);
+			if (c->getScriptInterpreter() == si)
+			  c->setScriptInterpreter(NULL);
+		}
+	}
+}
+
+/**
+ * I guess we need the same for MSL?
+ */
+void EventManager::removeScriptReferences(class MslWait* wait)
+{
+	for (Event* e = mEvents->getEvents() ; e != NULL ; e = e->getNext()) {
+		if (e->getMslWait() == wait)
+		  e->setMslWait(nullptr);
+		for (Event* c = e->getChildren() ; c != NULL ; c = c->getSibling()) {
+			if (c->getMslWait() == wait)
+			  c->setMslWait(nullptr);
 		}
 	}
 }
@@ -998,7 +1013,7 @@ void EventManager::freeEvent(Event* event)
 		mTrack->leaveCriticalSection();
 
         // let the interpreter know in case it is waiting
-        event->cancelScriptWait();
+        event->cancelScriptWait(mTrack->getMobius());
 
         // Reclaim the action
         Action* action = event->getAction();
@@ -1085,7 +1100,7 @@ void EventManager::free(Event* event, bool flush)
 void EventManager::release(Event* event)
 {
     // let the interpreter know in case it is waiting
-    event->cancelScriptWait();
+    event->cancelScriptWait(mTrack->getMobius());
 
     // Reclaim the action
     Action* action = event->getAction();
@@ -1258,7 +1273,7 @@ void EventManager::undoAndFree(Event* event)
           event->getName());
 
     // let the interpreter know in case it is waiting
-    event->cancelScriptWait();
+    event->cancelScriptWait(mTrack->getMobius());
 
     if (event == mSwitch) {
         // it's the switch quantize event, cancel the switch
@@ -2127,8 +2142,7 @@ bool EventManager::isEventVisible(Event* e, bool stacked)
                 long frame = loop->getFrame();
                 long delta = e->frame - frame;
 
-                visible = (e->quantized || e->pending || e->
-                           type == ScriptEvent ||
+                visible = (e->quantized || e->pending || e->type == ScriptEvent ||
                            // negative might be for reverse reflection?
                            delta < 0 ||
                            // this should be sensntive to latency?
@@ -2548,8 +2562,8 @@ void EventManager::processEvent(Event* e)
 	// script may be waiting on this specific event
     // NOTE: This will cause the script to run, would prefer that callers
     // resume them at a higher level
-	e->finishScriptWait();
-
+	e->finishScriptWait(mTrack->getMobius());
+    
     // return the action to the pool
     Action* action = e->getAction();
     if (action != NULL) {

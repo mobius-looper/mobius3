@@ -69,6 +69,9 @@ class MslParser
 
     // parsing interface for scriptlets
     MslParserResult* parse(class MslScript* scriptlet, juce::String source);
+
+    // make this public so the MslModel classes can add token errors
+    void errorSyntax(MslToken& t, juce::String details);
     
   private:
 
@@ -86,19 +89,18 @@ class MslParser
     void resetResult();
     void parseInner(juce::String source);
     void sift();
-    void addProc(MslProc* proc);
-    void addVar(MslVar* var);
+    void addProc(class MslProc* proc);
+    void addVar(class MslVar* var);
     
-    void errorSyntax(MslToken& t, juce::String details);
     void errorSyntax(MslNode* node, juce::String details);
-    bool matchBracket(MslToken& t, MslNode* block);
+    bool matchBracket(MslToken& t, class MslNode* block);
 
     MslNode* checkKeywords(MslToken& t);
     MslNode* push(MslNode* node);
 
     bool operandable(MslNode* node);
     int precedence(juce::String op1, juce::String op2);
-    void unarize(MslToken& t, MslOperator* possible);
+    void unarize(MslToken& t, class MslOperator* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 
     void parseDirective(MslToken& t);

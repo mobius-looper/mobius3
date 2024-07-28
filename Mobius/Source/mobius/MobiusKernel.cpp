@@ -16,10 +16,12 @@
 #include "../model/Symbol.h"
 #include "../model/SampleProperties.h"
 
+#include "../script/MslEnvironment.h"
+#include "../script/MslWait.h"
+
 #include "../Binderator.h"
 #include "../PluginParameter.h"
 #include "../Parametizer.h"
-#include "../script/MslEnvironment.h"
 
 #include "MobiusInterface.h"
 #include "MobiusShell.h"
@@ -418,14 +420,6 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     consumeCommunications();
     consumeMidiMessages();
     consumeParameters();
-
-    // do any block start script maintenance
-    // if scrips were waiting on "Wait block" they run now
-    // and this may cause more doAction calls which put more things
-    // on the core action list
-    // todo: should this happen before or after we consume messages, MIDI, and parameters?
-    MslEnvironment* env = container->getMslEnvironment();
-    env->kernelAdvance(this);
 
     // let SampleManager do it's thing
     if (sampleManager != nullptr)
@@ -1138,11 +1132,113 @@ void MobiusKernel::doLoadLoop(KernelMessage* msg)
 //
 // Scripts
 //
+// How MSL gets injected into the core is a little unpleasant.
+//
+// The actual runtime container that scripts will be operating in most of the
+// time is Mobius core and the code underneath that.  So arguably Mobius should
+// implement the MslContext interface and BE the context.  I'm not liking that because
+// I would like scripts to "run" at as high a level as possible within the Kernel, and dip
+// into the core when they need to, which is most of the time.  But sometimes they need
+// to do things that are not in the core, which means core needs to redirect actions back
+// up to the Kernel.  So there we have to poke holes in the interface somewhere, either
+// kernel needs a few new access points into Mobius core, or Mobius core has to get into
+// the business of understanding what MSL is which introduces compile time dependencies and
+// complicates core code a bit.
+//
+// I'd like to keep MSL awareness in the new code with MslContext implemented by MobiusKernel
+// and Mobius providing the necessary interfaces to accomplish what MslContext needs to do,
+// mostly immediate sample-accurate execution of functions, and the scheduling of wait events.
+//
+// The main complication is how UIActions are performed.  Current MobiusKernel::doAction expects
+// to be working with a set of queued actions passed down through KernelEvents or MIDI events
+// received from Juce.  These actions are placed on a list and sent down to the core
+// in the call to Mobius::processAudioStream.  Script actions don't work that way, they
+// need to skip this buffering and execute immediately in the core which has already gone
+// through processAudioStream and has completed a "preparation" phase.  Script processing
+// needs to be injected at the end of Mobius::beginAudioInterrupt which is where the old
+// scripting language runs and this is AFTER any queued actions sent through the usual way
+// are performed.  It's kind of messy, but fixing this would require another level of mess,
+// refactoring Mobius::processAudioStream into several phases: one that prepares things for
+// the audio blocks, another to do the queued actions sent by the UI, and finally running the
+// scripts.  Instead we'll let Mobius call back to MobiusKernel::runExternalScripts when
+// it thinks the time is right.  This then advances the MSL scripts and calls out to MslContext
+// can assume they are happening at the same time as the old scripts run.  We can bypass
+// most of the action handling logic in Kernel, an just call the equivalent of
+// Actionator::doCoreAction.
+//
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This is the callback Mobius calls when it has sufficitnely prepared at the start
+ * of every audio block and is ready to let scripts run.  The scripts will advance
+ * and call out to our MslContext methods when they need to call functions or set parameters.
+ */
+void MobiusKernel::runExternalScripts()
+{
+    MslEnvironment* env = container->getMslEnvironment();
+    env->kernelAdvance(this);
+}
+
+/**
+ * Now we're at the heart of the matter.
+ * A script running under runExternalScripts reached a point where it
+ * wants to perform an action.  If this action is destined for the core, bypass
+ * the layers we would normally go through for actions that come from the UI.
+ *
+ * Note that one thing this bypasses is Actionator::doInterruptActions which
+ * is where TriggerState is monitoring long presses.  This shouldn't be an issue
+ * because scripts aren't sustainable triggers and if we need to simulate that it can
+ * be done in other ways.
+ */
+void MobiusKernel::mslAction(UIAction* action)
+{
+    Symbol* symbol = action->symbol;
+
+    // it's been done a 100 times already so why not one more
+    if (symbol == nullptr) {
+        Trace(1, "MobiusKernel: Script action without a symbol\n");
+    }
+    else if (symbol->level == LevelCore) {
+        // these are the ones we're interested in
+        mCore->doAction(action);
+    }
+    else {
+        // the script is calling a kernel or UI level action
+        // here we can go through our normal action handling which may pass it up to the shell
+        doAction(action);
+    }
+}
+
+/**
+ * Unlike mslAction we don't need any special redirection for these, just
+ * pass it through the usualy query code.
+ */
+bool MobiusKernel::mslQuery(Query* q)
+{
+    return doQuery(q);
+}
+
+/**
+ * Armegeddon.  There are no useful wait states in the kernel so send everything down
+ * to the core.  This is the only injection of the MSL model into the core which
+ * I don't like but this unfortunately requires some really complicated Event management
+ * that's hard to factor out cleanly.  Revisit.
+ */
+bool MobiusKernel::mslWait(MslWait* wait)
+{
+    bool success = mCore->scheduleScriptWait(wait);
+
+    if (!success) {
+        Trace(1, "MobiusKernel: MslWait scheduling failed in core");
+    }
+    else {
+        Trace(2, "MobiusKernel: Core schedule a wait at frame %d", wait->coreEventFrame);
+    }
+    return success;
+}
+
 //
-// MslContext implementations
-// Things called by MslSessios when they run in the kernel
+// Various MslContext fluff that probably shouldn't be there
 //
 
 MslContextId MobiusKernel::mslGetContextId()
@@ -1162,80 +1258,29 @@ MobiusConfig* MobiusKernel::mslGetMobiusConfig()
     return configuration;
 }
 
-/**
- * This differs from doAction above because we're not necessarily at the start
- * of the audio block.  The script can be removed during wait event processing
- * and the action needs to happen exactly now.  doAction expects itself at the beginning
- * of the block and just queues the action for the core which has already been started.
- *
- * Ordering is confusing.  Noramlly kernel gathers up all the queued shell actions
- * and the results of any MIDI bindings and sends them to the core at once.  If we allow
- * scripts to bypass that and go directly at the core, then those will happen first which
- * is probably not bad, but Mobius::beginAudioInterrupt will not have been called yet.
- *
- * hmm...old scripts don't advance until we're inside Mobius core at the end of
- * beginAudioInterrupt and actions use doActionNow to handle them immediately.  I think
- * what needs to happen is this:
- *
- * Kernel calls a new "prepre" method on Mobius to get it ready to receive actions and audio.
- * This is beginAudioInterrupt without the last two lines
- * 
- *      // do the queued actions
- *     mActionator->doInterruptActions(actions, stream->getInterruptFrames());
- * 
- * 	// process scripts
- *     mScriptarian->doScriptMaintenance();
- *
- * Next we do the queued interrupt actions.
- * THEN we resume the MSL scripts followed by the old scripts.
- *
- * Or, we do everything in what is currently beginAudioInterrupt first.
- * Then let MSL scripts go and let them schedule directly in the core.  If the script needs
- * to send an action up, it will go through doActionFromCore like old scripts do.
- *
- * Or move MSL down into core and have Mobius be the MslContext rather than Kernel.  That's
- * the least disruptive since there really isn't anything to do at this level except
- * trigger samples.
- *
- * Still I don't like how MobiusKernel::doAction works with the action queue.  It should
- * just go directly at core.  Then again, waits have to be scheduled down there
- * anyway so MslContext should be core.  Yes...move it down.
- *
- */
-void MobiusKernel::mslAction(UIAction* a)
-{
-    doAction(a);
-}
-
-bool MobiusKernel::mslQuery(Query* q)
-{
-    return doQuery(q);
-}
-
-bool MobiusKernel::mslWait(MslWait* w)
-{
-    (void)w;
-    // todo: if the wait was invalid for some reason we need to be able
-    // to pass details back in the MslSession for diagnostics in the ScriptConsole
-    // but we can't get to that with just the MslWait
-    // either need to make MslWait bidirectional or provide another way for the
-    // MslEnvironment to look up the MslSession associated with this wait.
-    // Oh wait (so to speak) that's in the MslWait!  Still don't like having that
-    // there though feels cleaner to put any error status in the MslWait
-    Trace(1, "MobiusKernel::mslWait Unable to schedule wait");
-    return false;
-}
-
 void MobiusKernel::mslEcho(const char* msg)
 {
     Trace(2, "MobiusKernel::mslEcho %s", msg);
 }
 
+//////////////////////////////////////////////////////////////////////
 //
-// Callbacks used by the core to let the MSL environment know when
-// things happen
+// Mobius Wait Event Callbacks
 //
+// We should end up in one of these after an unbelievably tortured journey
+// after the call to Mobius::scheduleScriptWait.
+// Some kind of hidden event was scheduled, waited for, and hit.
+// Now we get to tell the session it was done and let it advance or deal
+// with cancellation.  It may have been rescheduled from it's original
+// location.
+//
+//////////////////////////////////////////////////////////////////////
 
+void MobiusKernel::coreWaitFinished(MslWait* wait)
+{
+    MslEnvironment* env = container->getMslEnvironment();
+    env->resume(this, wait);
+}
 
 /****************************************************************************/
 /****************************************************************************/
