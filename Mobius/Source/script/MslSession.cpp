@@ -760,8 +760,10 @@ void MslSession::doAssignment(MslSymbol* namesym)
             // if the initializer didn't produce one, it coerce to zero
             // probably want to raise an error instead
             a.value = stack->childResults->getInt();
-            Supervisor::Instance->doAction(&a);
 
+            // Supervisor::Instance->doAction(&a);
+            context->mslAction(&a);
+            
             popStack(nullptr);
         }
     }
@@ -1277,7 +1279,8 @@ void MslSession::invoke(Symbol* sym)
           CopyString(arg->getString(), a.arguments, sizeof(a.arguments));
     }
     
-    Supervisor::Instance->doAction(&a);
+    //Supervisor::Instance->doAction(&a);
+    context->mslAction(&a);
 
     // only MSL scripts set a result right now
     MslValue* v = pool->allocValue();
@@ -1306,7 +1309,10 @@ void MslSession::query(Symbol* sym)
     else {
         Query q;
         q.symbol = sym;
-        bool success = Supervisor::Instance->doQuery(&q);
+        
+        // bool success = Supervisor::Instance->doQuery(&q);
+        bool success = context->mslQuery(&q);
+        
         if (!success) {
             addError(stack->node, "Unable to query parameter");
         }

@@ -1163,8 +1163,44 @@ MobiusConfig* MobiusKernel::mslGetMobiusConfig()
 }
 
 /**
- * This differs from doAction above because we're already "in" the core
- * !! need more here
+ * This differs from doAction above because we're not necessarily at the start
+ * of the audio block.  The script can be removed during wait event processing
+ * and the action needs to happen exactly now.  doAction expects itself at the beginning
+ * of the block and just queues the action for the core which has already been started.
+ *
+ * Ordering is confusing.  Noramlly kernel gathers up all the queued shell actions
+ * and the results of any MIDI bindings and sends them to the core at once.  If we allow
+ * scripts to bypass that and go directly at the core, then those will happen first which
+ * is probably not bad, but Mobius::beginAudioInterrupt will not have been called yet.
+ *
+ * hmm...old scripts don't advance until we're inside Mobius core at the end of
+ * beginAudioInterrupt and actions use doActionNow to handle them immediately.  I think
+ * what needs to happen is this:
+ *
+ * Kernel calls a new "prepre" method on Mobius to get it ready to receive actions and audio.
+ * This is beginAudioInterrupt without the last two lines
+ * 
+ *      // do the queued actions
+ *     mActionator->doInterruptActions(actions, stream->getInterruptFrames());
+ * 
+ * 	// process scripts
+ *     mScriptarian->doScriptMaintenance();
+ *
+ * Next we do the queued interrupt actions.
+ * THEN we resume the MSL scripts followed by the old scripts.
+ *
+ * Or, we do everything in what is currently beginAudioInterrupt first.
+ * Then let MSL scripts go and let them schedule directly in the core.  If the script needs
+ * to send an action up, it will go through doActionFromCore like old scripts do.
+ *
+ * Or move MSL down into core and have Mobius be the MslContext rather than Kernel.  That's
+ * the least disruptive since there really isn't anything to do at this level except
+ * trigger samples.
+ *
+ * Still I don't like how MobiusKernel::doAction works with the action queue.  It should
+ * just go directly at core.  Then again, waits have to be scheduled down there
+ * anyway so MslContext should be core.  Yes...move it down.
+ *
  */
 void MobiusKernel::mslAction(UIAction* a)
 {

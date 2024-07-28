@@ -162,6 +162,10 @@ class MslEnvironment
     juce::HashMap<juce::String,class MslLinkage*> library;
     juce::OwnedArray<class MslCollision> collisions;
 
+    // the external link table
+    juce::OwnedArray<class MslExternal> externals;
+    juce::HashMap<Juce::String,class MslExternal> externalMap;
+
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
 
@@ -176,6 +180,8 @@ class MslEnvironment
     void install(class MslScript* script);
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
+
+    MslError* esolve(MslScript* script);
 
     MslResult* makeResult(MslSession* s, bool finished);
     int generateSessionId();

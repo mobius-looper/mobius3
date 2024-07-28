@@ -353,12 +353,48 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Linking and Externals
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Once an MslScript has been sucessfully parsed it is "linked" to resolve
+ * MslSymbols in the source code to the concrete things that implement them.
+ *
+ * Primarily this locates and interns MslExternals and caches them on the symbol
+ * node for use at runtime.
+ *
+ * Now that we have a link phase, we may as well do resolution to internal procs
+ * and vars too, but that is still being done at runtime.  Would be better to do
+ * it up front so we can warn the user about unresolved symbols before they run
+ * the script.
+ *
+ * This was added after MslLinkage which is used for cross script references
+ * to scripts and exported procs.  There are similarities, see if we can settle
+ * on a common linkage model.
+ *
+ * Yeah, we're doing linking two ways now, internal script linkages are done
+ * at run time.  We could do all of this at compile time.
+ *
+ */
+MslError* MslEnvironment::resolve(MslScript* script)
+{
+    //MslError* errors = nullptr;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Actions
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Process an action on a symbol bound to an MSL script.
+ *
+ * !!! this has a dependency on the Mobius model that needs to be factored out.
+ * Like MslExternal used to go from MSL to the outside world, we need another
+ * abstraction for the outside world to push things into MSL that does not
+ * need UIAction.
  *
  * This is what normally launches a new script session outside of a scriptlet.
  *
