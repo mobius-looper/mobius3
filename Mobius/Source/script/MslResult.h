@@ -37,10 +37,16 @@ class MslResult
 
     // chain pointer accessor so the console may iterate over results
     MslResult* getNext();
+
+    // logging name
+    static const int MslResultMaxName = 64;
+    char name[MslResultMaxName];
+    void setName(const char* s);
     
     // true if this session is still running
     bool isRunning();
-
+    bool isWaiting();
+    
   protected:
 
     // the chain pointer for the environment's result list

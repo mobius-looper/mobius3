@@ -121,4 +121,9 @@ class JuceAudioStream : public MobiusAudioStream
 
     void captureAudioTime(int blockSize);
 
+    // hacks for host sync debugging
+    bool traceppq = true;
+    double lastppq = 0.0f;
+    
+    
 };

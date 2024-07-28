@@ -149,7 +149,7 @@
       altFeedback='127'
       pan='64'
       audioInputPort='2'
-      syncSource='out'
+      syncSource='host'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'

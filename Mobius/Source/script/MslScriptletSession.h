@@ -63,6 +63,8 @@ class MslScriptletSession {
     
   public:
 
+    void setName(juce::String s);
+
     // reset any state accumulated in this session
     void reset();
 
@@ -160,6 +162,8 @@ class MslScriptletSession {
   private:
 
     class MslEnvironment* environment = nullptr;
+    // optional name for logging
+    juce::String name;
 
     // dynamic script maintained for this session
     std::unique_ptr<class MslScript> script = nullptr;

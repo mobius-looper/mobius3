@@ -111,6 +111,17 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
 }
 
 /**
+ * Name to use in the MslResult and for logging.
+ */
+const char* MslSession::getName()
+{
+    const char* s = nullptr;
+    if (script != nullptr)
+      s = script->name.toUTF8();
+    return s;
+}
+
+/**
  * Resume a script after transitioning or to check wait states.
  * If we transitioned, it will just continue from the previous node.
  * If waiting, we'll immediately wait again unless the MslWait was

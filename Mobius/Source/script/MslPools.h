@@ -99,6 +99,8 @@ class MslPools
     class MslSession* allocSession();
     void free(class MslSession* s);
 
+    void traceStatistics();
+
   private:
 
     class MslEnvironment* environment = nullptr;
@@ -109,6 +111,37 @@ class MslPools
     class MslBinding* bindingPool = nullptr;
     class MslStack* stackPool = nullptr;
     class MslSession* sessionPool = nullptr;
+
+    // god this needs a common superclass...
+    int valuesCreated = 0;
+    int valuesRequested = 0;
+    int valuesReturned = 0;
+    int valuesDeleted = 0;
+    
+    int errorsCreated = 0;
+    int errorsRequested = 0;
+    int errorsReturned = 0;
+    int errorsDeleted = 0;
+    
+    int resultsCreated = 0;
+    int resultsRequested = 0;
+    int resultsReturned = 0;
+    int resultsDeleted = 0;
+    
+    int bindingsCreated = 0;
+    int bindingsRequested = 0;
+    int bindingsReturned = 0;
+    int bindingsDeleted = 0;
+    
+    int stacksCreated = 0;
+    int stacksRequested = 0;
+    int stacksReturned = 0;
+    int stacksDeleted = 0;
+    
+    int sessionsCreated = 0;
+    int sessionsRequested = 0;
+    int sessionsReturned = 0;
+    int sessionsDeleted = 0;
 
     void flushSessions();
     void flushStacks();

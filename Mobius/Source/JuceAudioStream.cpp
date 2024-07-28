@@ -665,6 +665,14 @@ void JuceAudioStream::captureAudioTime(int blockSize)
             juce::Optional<double> ppq = pos->getPpqPosition();
             if (ppq.hasValue()) beatPosition = *ppq;
 
+            if (traceppq) {
+                int lastq = (int)lastppq;
+                int newq = (int)beatPosition;
+                if (lastq != newq)
+                  Trace(2, "JAS: beat %d", newq);
+                lastppq = beatPosition;
+            }
+
             // HostSyncState never tried to use "bar" information from the host
             // because it was so unreliable as to be useless, things may have
             // changed by now.  It will try to figure that out it's own self,

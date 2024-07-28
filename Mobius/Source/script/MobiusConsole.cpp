@@ -35,6 +35,7 @@ MobiusConsole::MobiusConsole(ConsolePanel* parent)
 
     // allocate a scriptlet session we can keep forever
     session = scriptenv->newScriptletSession();
+    session->setName("Console");
     
     addAndMakeVisible(&console);
     console.setListener(this);
@@ -445,9 +446,12 @@ void MobiusConsole::doResults(juce::String arg)
         MslResult* result = scriptenv->getResults();
         while (result != nullptr) {
             juce::String status;
-            if (result->errors != nullptr)
-              status = "error";
-            console.add(juce::String(result->sessionId) + " " + status);
+            status += result->name;
+            if (!result->isRunning()) status += " finished";
+            if (result->isWaiting()) status += " waiting";
+            if (result->errors != nullptr) status += " errors";
+
+            console.add(juce::String(result->sessionId) + ": " + status);
             result = result->getNext();
         }
     }
@@ -459,13 +463,13 @@ void MobiusConsole::doResults(juce::String arg)
                 console.add("No results for session " + juce::String(id));
             }
             else {
-                console.add("Session " + juce::String(id));
+                console.add("Session " + juce::String(id) + " " + result->name);
                 showErrors(result->errors);
                 MslValue* value = result->value;
                 if (value != nullptr)
-                  console.add("Result: " + juce::String(value->getString()));
+                  console.add("Result value: " + juce::String(value->getString()));
                 else
-                  console.add("No results");
+                  console.add("No result value");
             }
         }
     }

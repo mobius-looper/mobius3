@@ -61,6 +61,9 @@ class MslSession : public MslVisitor
     // begin evaluation of a script, it will complete or reach a wait state
     void start(class MslContext* context, class MslScript* script);
 
+    // name for logging, usually the MslScript name
+    const char* getName();
+
     // state after starting or resuming
     // hmm, we don't really need isWaiting exposed do we?  
     bool isFinished();

@@ -26,6 +26,7 @@ MslPools::MslPools(MslEnvironment* env)
 
 MslPools::~MslPools()
 {
+    Trace(2, "MslPools: destructing");
     // try to do these in reverse depenndency order, though shouldn't be necessary
     flushSessions();
     flushStacks();
@@ -33,6 +34,47 @@ MslPools::~MslPools()
     flushResults();
     flushErrors();
     flushValues();
+
+    traceStatistics();
+}
+
+/**
+ * Obviously not thread safe, but intended for use only during shutdown
+ */
+void MslPools::traceStatistics()
+{
+    Trace(2, "MslPools: created/requested/returned/deleted/pooled");
+
+    // sigh, it sure would be nice if these had a common superclass for the chain pointer
+    int count = 0;
+    for (MslValue* obj = valuePool ; obj != nullptr ; obj = obj->next) count++;
+    Trace(2, "  values: %d %d %d %d",
+          valuesCreated, valuesRequested, valuesReturned, valuesDeleted);
+
+    count = 0;
+    for (MslError* obj = errorPool ; obj != nullptr ; obj = obj->next) count++;
+    Trace(2, "  errors: %d %d %d %d",
+          errorsCreated, errorsRequested, errorsReturned, errorsDeleted);
+
+    count = 0;
+    for (MslResult* obj = resultPool ; obj != nullptr ; obj = obj->next) count++;
+    Trace(2, "  results: %d %d %d %d",
+          resultsCreated, resultsRequested, resultsReturned, resultsDeleted);
+
+    count = 0;
+    for (MslBinding* obj = bindingPool ; obj != nullptr ; obj = obj->next) count++;
+    Trace(2, "  bindings: %d %d %d %d",
+          bindingsCreated, bindingsRequested, bindingsReturned, bindingsDeleted);
+
+    count = 0;
+    for (MslStack* obj = stackPool ; obj != nullptr ; obj = obj->parent) count++;
+    Trace(2, "  stacks: %d %d %d %d",
+          stacksCreated, stacksRequested, stacksReturned, stacksDeleted);
+
+    count = 0;
+    for (MslSession* obj = sessionPool ; obj != nullptr ; obj = obj->next) count++;
+    Trace(2, "  sessions: %d %d %d %d",
+          sessionsCreated, sessionsRequested, sessionsReturned, sessionsDeleted);
 }
 
 void MslPools::initialize()
@@ -64,6 +106,7 @@ void MslPools::flushValues()
         valuePool->next = nullptr;
         delete valuePool;
         valuePool = next;
+        valuesDeleted++;
     }
 }
 
@@ -81,7 +124,9 @@ MslValue* MslPools::allocValue()
     else {
         // complain loudly that the fluffer isn't doing it's job
         v = new MslValue();
+        valuesCreated++;
     }
+    valuesRequested++;
     return v;
 }
 
@@ -104,6 +149,7 @@ void MslPools::free(MslValue* v)
         // and now me
         v->next = valuePool;
         valuePool = v;
+        valuesReturned++;
     }
 }
 
@@ -120,6 +166,7 @@ void MslPools::flushErrors()
         errorPool->next = nullptr;
         delete errorPool;
         errorPool = next;
+        errorsDeleted++;
     }
 }
 
@@ -136,7 +183,9 @@ MslError* MslPools::allocError()
     }
     else {
         e = new MslError();
+        errorsCreated++;
     }
+    errorsRequested++;
     return e;
 }
 
@@ -145,6 +194,7 @@ void MslPools::free(MslError* e)
     if (e != nullptr) {
         e->next = errorPool;
         errorPool = e;
+        errorsReturned++;
     }
 }
 
@@ -161,6 +211,7 @@ void MslPools::flushResults()
         resultPool->next = nullptr;
         delete resultPool;
         resultPool = next;
+        resultsDeleted++;
     }
 }
 
@@ -178,7 +229,9 @@ MslResult* MslPools::allocResult()
     else {
         // complain loudly that the fluffer isn't doing it's job
         r = new MslResult();
+        resultsCreated++;
     }
+    resultsRequested++;
     return r;
 }
 
@@ -202,6 +255,7 @@ void MslPools::free(MslResult* r)
         // and now me
         r->next = resultPool;
         resultPool = r;
+        resultsReturned++;
     }
 }
 
@@ -220,6 +274,7 @@ void MslPools::flushBindings()
         bindingPool->next = nullptr;
         delete bindingPool;
         bindingPool = next;
+        bindingsDeleted++;
     }
 }
 
@@ -245,7 +300,9 @@ MslBinding* MslPools::allocBinding()
     else {
         // complain
         b = new MslBinding();
+        bindingsCreated++;
     }
+    bindingsRequested++;
     return b;
 }
 
@@ -264,6 +321,7 @@ void MslPools::free(MslBinding* b)
         // and now me
         b->next = bindingPool;
         bindingPool = b;
+        bindingsReturned++;
     }
 }
 
@@ -284,6 +342,7 @@ void MslPools::flushStacks()
         stackPool->parent = nullptr;
         delete stackPool;
         stackPool = next;
+        stacksDeleted++;
     }
 }
 
@@ -311,7 +370,9 @@ MslStack* MslPools::allocStack()
     }
     else {
         s = new MslStack();
+        stacksCreated++;
     }
+    stacksRequested++;
     return s;
 }
 
@@ -331,6 +392,7 @@ void MslPools::free(MslStack* s)
 
         s->parent = stackPool;
         stackPool = s;
+        stacksReturned++;
     }
 }
 
@@ -363,6 +425,7 @@ void MslPools::flushSessions()
         sessionPool->next = nullptr;
         delete sessionPool;
         sessionPool = next;
+        sessionsDeleted++;
     }
 }
 
@@ -396,7 +459,10 @@ MslSession* MslPools::allocSession()
     else {
         // this one is unusual because it requires an environment in the constructor
         s = new MslSession(environment);
+        sessionsCreated++;
     }
+    
+    sessionsRequested++;
     return s;
 }
 
@@ -414,6 +480,11 @@ void MslPools::free(MslSession* s)
         // errors also cascade
         free(s->errors);
         s->errors = nullptr;
+
+        s->next = sessionPool;
+        sessionPool = s;
+        
+        sessionsReturned++;
     }
 }
         

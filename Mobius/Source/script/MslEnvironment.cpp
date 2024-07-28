@@ -461,6 +461,10 @@ MslResult* MslEnvironment::makeResult(MslSession* s, bool finished)
     // generate a new session id
     int sessionId = generateSessionId();
     result->sessionId = sessionId;
+
+    // give it a meaningful name if we can
+    result->setName(s->getName());
+    
     conductor.addResult(result);
         
     if (finished) {
@@ -513,8 +517,6 @@ void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
     // MslScriptletSession may have already done this but make sure
     ss->resetLaunchResults();
     
-    pool.allocSession();
-
     MslSession* session = pool.allocSession();
     session->start(c, ss->getScript());
     

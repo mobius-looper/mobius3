@@ -17,6 +17,8 @@ MslScriptletSession::MslScriptletSession(MslEnvironment* env)
 {
     environment = env;
     script.reset(new MslScript());
+    // this is how we convey the logging name to the environment
+    script->name = name;
 }
 
 /**
@@ -36,6 +38,15 @@ void MslScriptletSession::reset()
     parseResult = nullptr;
 
     script.reset(new MslScript());
+    // this is how we convey the logging name to the environment
+    script->name = name;
+}
+
+void MslScriptletSession::setName(juce::String s)
+{
+    name = s;
+    if (script != nullptr)
+      script->name = s;
 }
 
 /**

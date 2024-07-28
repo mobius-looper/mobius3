@@ -1,10 +1,13 @@
 
 #include "MslValue.h"
 #include "MslError.h"
+// temporary until waiting flag can be on the result
+#include "MslSession.h"
 #include "MslResult.h"
 
 MslResult::MslResult()
 {
+    init();
 }
 
 /**
@@ -29,6 +32,7 @@ void MslResult::init()
     errors = nullptr;
     interned = false;
     session = nullptr;
+    strcpy(name, "");
 }
 
 MslResult* MslResult::getNext()
@@ -41,3 +45,13 @@ bool MslResult::isRunning()
     return (session != nullptr);
 }
 
+bool MslResult::isWaiting()
+{
+    return (session != nullptr && session->isWaiting());
+}
+
+void MslResult::setName(const char* s)
+{
+    strncpy(name, s, sizeof(name));
+}
+    
