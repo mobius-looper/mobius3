@@ -88,6 +88,10 @@ class MslExternal
     // based on the name
     juce::String name;
 
+    // the context this symbol is implemented in
+    // controls thread transitioning when evaluating
+    MslContextId context = MslContextNone;
+
     // the behaviora of this external: Function or Variable
     bool isFunction = false;
 

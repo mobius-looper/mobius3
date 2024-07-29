@@ -124,12 +124,12 @@ class MslWait
     // This is what the engine passes back up after scheduling
     //
 
-    // handle to an internal object that represents the wait
+    // handle to an internal object that represents the wait event
     // for Mobius this is a core Event object
-    void* coreEvent = nullptr;
+    void* event = nullptr;
 
     // loop frame on which the event was scheduled
-    int coreEventFrame = 0;
+    int eventFrame = 0;
 
     //
     // Interpreter State
@@ -143,33 +143,35 @@ class MslWait
 
     // true once an active wait is over
     // this is relevant only if active is also true
-    // it is set by the MslContext when something appropriate happens
-    // or by MslEnvironment if it decides the wait has timed out
+    // the context does not set this, the completion of a is performed
+    // by calling MslEnvironment::resume
     bool finished = false;
 
-    // Where the wait came from 
-
-    // Unclear if we realy need the session/stack here
-    // the outside world just needs to set the finished flag
-    // when the wait is over, the session will then resume from
-    // whatever frame contains this wait object
-
-    // the session that is waitin
+    //
+    // Where the wait came from
+    // 
+    
+    // the session that is waiting
     class MslSession* session = nullptr;
 
     // the stack frame that is waiting
+    // not necessary until sessions can have multiple execution threads
     class MslStack* stack = nullptr;
-
-    // initialize runtime wait state when the containing MslStack
-    // is brought out of the pool
-    // the only import thing is the active flag, but I suppose
-    // we could put it all back to rest to make it look better in the debugger
-    void reset() {
+    
+    /**
+     * Initialize runtime wait state when the containing MslStack
+     * is brought out of the pool.
+     * The only import thing is the active flag, but it looks better in the
+     * debugger to initialize all state.
+     */
+    void init() {
         active = false;
         finished = false;
         value = 0;
         track = 0;
-        coreEvent = nullptr;
-        coreEventFrame = 0;
+        event = nullptr;
+        eventFrame = 0;
+        session = nullptr;
+        stack = nullptr;
     }
 };

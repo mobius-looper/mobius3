@@ -3,9 +3,6 @@
  * environment.  In practice there will only be two of these, one maintained
  * by Supervisor when scripts are being managed outside the audio thread
  * and one by MobiusKernel when scripts are being managed inside the audio thread.
- *
- * Ideally model dependencies like MobiusConfig and UIAction would be abstracted
- * away as well, so the Environment only has to deal with classes that it defines.
  */
 
 #pragma once
@@ -14,6 +11,10 @@
 
 /**
  * Enumeration of the contexts an MSL session can be running in.
+ * Within Shell, this could be divided into the two UI and Maintenance
+ * threads but those are already blocking each other with a Juce MessageLock
+ * so it is safe to cross reference things between them.  This would change
+ * if other non-blocking threads are added.
  */
 typedef enum {
     MslContextNone,
@@ -22,22 +23,11 @@ typedef enum {
 } MslContextId;
 
 /**
- * Container used to convey back to the MSL engine an opaque pointer representing
- * an event that will be used to schedule a call or an assignment in the future.
- * This handle can be used in an MslWait to wait for that event to finish.
- */
-class MslContextEvent
-{
-  public:
-    MslContextEvent() {}
-    ~MslContextEvent() {}
-
-    void* event = nullptr;
-};
-
-/**
- * Container used to convey back to the MSL engine an error message that resulted
- * from a call or an assignment.
+ * Access to things in the context may encounter errors that are of interest
+ * to the script author.  Because errors are arbitrary strings a buffer is provided
+ * to deposit the message without dynamic memory allocation.  While these could be passed
+ * by value on the stack, they are usually contained within another object such
+ * as MslQuery and MslAction.
  */
 class MslContextError
 {
@@ -54,6 +44,71 @@ class MslContextError
     }
 };
 
+/**
+ * MslQuery is a bi-directional model containg the state necessary to GET something.
+ * The MslExternal is the handle to the external variable whose value is to
+ * be retrieved.
+ *
+ * The context obtains the value in an appropriate way and leaves it in the
+ * MslValue container that is provided.  Currently this must be a single atomic value
+ * as no interface is yet provided for the context to allocate new MslValues to
+ * construct a list.  Revisit this when necessary...
+ *
+ * If an error is detected during the query, a message may be left in the MslContextError
+ * message buffer.
+ *
+ */
+public MslQuery
+{
+  public:
+
+    MslQuery() {}
+    ~MslQuery() {}
+
+    MslExternal* external = nullptr;
+    
+    MslValue value;
+    MslError error;
+};
+
+/**
+ * MslAction defines a collection of state necessary to DO something.
+ * Actions are used for two things: calling a function or assigning a variable.
+ *
+ * The "target" of the action is an MslExternal representing a function or variable.
+ * The "value" is the value to assign the variable, or a list of values representing
+ * the function arguments.
+ *
+ * If an error is detected during the query, a message may be left in the message
+ * string array.
+ *
+ * todo: if we get using "keyword arguments" a name will be needed in the MslValue
+ * list.
+ *
+ */
+public MslAction
+{
+  public:
+
+    MslAction() {}
+    ~MslAction() {}
+
+    MslExternal* external = nullptr;
+    MslValue* arguments = nullptr;
+
+    MslValue result;
+    MslError error;
+
+    // opaque pointer to an object in the context representing an asynchronous
+    // event that has been scheduled to handle the action
+    // this may be used in a Wait
+    void* event = nullptr;
+    
+};
+
+/**
+ * A pure virtual interface of an object providing services to the MSL environment.
+ */
 class MslContext
 {
   public:
@@ -64,57 +119,28 @@ class MslContext
     virtual MslContextId mslGetContextId() = 0;
 
     // resolve a name to an MslExternal
+    // todo: may want more complex falure messages beyond just true/false
     virtual bool mslResolve(juce::String name, MslExternal* ext);
 
-    // call an external function
-    // the external function is identified by a previously resolved
-    // MslExternal, arguments to the function are passed as a list of MslValues
-    // the return value is conveyed by setting a value in the MslValue used for returns
-    // false is returned to indiciate error, in which case the return MslValue may have
-    // an error message string
-    virtual bool mslCall(MslExternal* ext, MslValue* arguments, MslValue* result,
-                         MslContextEvent* event, MslContextError* error);
+    // perform a query
+    virtual bool mslQuery(MslQuery* query);
 
-    // assign a value to a variable
-    virtual bool mslAssign(MslExternal* ext, MslValue* value,
-                           MslContextEvent* event, MslContextError* error);
-
-    // retrieve the value of a variable
-    // returning false means there was an error
-    virtual bool mslQuery(MslExternal* ext, MslValue* value, MslContextError* error);
+    // perform an action
+    virtual bool mslAction(MslAction* ation);
 
     // initialize a wait state
+    // for errors, an error buffer is supplied as an argument rather
+    // than inside the MslWait, reconsider this
     virtual bool mslWait(class MslWait* w, MslContextError* error) = 0;
 
-
-    // obsolete, will delete when mslCall etc are working
-    // perform an action that invokes a function or assigns a parameter
-    virtual void mslAction(class UIAction* a) = 0;
-
-    // obsolete, will delete when mslQuery(external) etc are working
-    // find the value of an external symbol
-    virtual bool mslQuery(class Query* q) = 0;
-
     // say something somewhere
-    // should we do levels here to so we can get rid of the
-    // Message and Alert callbacks in MobiusListener?
+    // intended for diagnostic messages from the script
+    // could model this with an action but it is used frequently and
+    // can have a simpler interface
     virtual void mslEcho(const char* msg) = 0;
 
-    //
-    // try to get rid of these, file handling is now done by ScriptClerk
-    //
-    
-    // locate the root of the Mobius installation tree
-    // for Environment, this can be where we locate the standard script library files
-    // maybe make this more explicit, like getScriptLibraryLocation
-    virtual juce::File mslGetRoot() = 0;
-    
-    // locate a read-only copy of the MobiusConfig
-    virtual class MobiusConfig* mslGetMobiusConfig() = 0;
-
-    //
-    // From here down are more random services that need thought
-    // about what needs to have better abstraction
-    //
-
 };
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
