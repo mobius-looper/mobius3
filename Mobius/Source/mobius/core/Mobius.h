@@ -86,15 +86,29 @@ class Mobius
     /**
      * Immediately perform a core action.  This is where function calls
      * in scripts end up rather than the actions queued in processAudioStream.
+     * could be named mslAction which is what it is
      */
     void doAction(class UIAction* a);
+
+    /**
+     * Resolve an MSL symbol reference to an internal Variable.
+     */
+    bool mslResolve(juce::String name, class MslExternal* ext);
+
+    /**
+     * Perform an MSL query.  In theory this could be used for
+     * both Symbol and Variable queries, but in practice Symbol
+     * queries will already have been converted so the only
+     * thing this needs to deal with are Variables.
+     */
+    bool mslQuery(class MslQuery* query);
 
     /**
      * Schedule a wait event for the new MSL interpreter.
      * Temporary: need to be factoring a cleaner interface for
      * event management from outside Mobius core.
      */
-    bool scheduleScriptWait(class MslWait* w);
+    bool mslWait(class MslWait* w, class MslContextError* error);
     
     /**
      * Process a completed KernelEvent core scheduled earlier.
@@ -352,10 +366,7 @@ class Mobius
     int getMsecFrames(class Track* t, long msecs);
     bool scheduleLocationWait(MslWait* wait);
     int calculateLocationFrame(MslWait* wait, Track* track);
-    
-
-    bool scheduleLocationWait(class MslWait* wait);
-    bool scheduleEventWait(class MslWait* wait);
+    bool scheduleEventWait(MslWait* wait);
 
     //
     // Member Variables

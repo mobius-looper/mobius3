@@ -50,6 +50,7 @@
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
 #include "script/MobiusConsole.h"
+#include "script/MslExternal.h"
 
 #include "Supervisor.h"
 
@@ -1846,51 +1847,185 @@ MslContextId Supervisor::mslGetContextId()
     return MslContextShell;
 }
 
+/**
+ * Resolve a symbolic reference in an MSL script to something
+ * in the outside world.  For Mobius there are two possibilities
+ * Symbols and core Variables.  I don't want to mess with exposing
+ * Varialbes through MobiusInterface and resolving them doesn't
+ * require thread safety, so if it doesn't resolve to a Symbol
+ * It will be passed directlly through to the Mobius core for
+ * resolution.
+ */
 bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 {
+    bool success = false;
+    
+    Symbol* s = Symbols.find(name);
+    if (s != nullptr) {
+
+        // filter out symbosl that don't represent functions or parameters
+        // though I suppose we could treat Sample symbols like functions
+        // hmm, that could be cool for testing
+        //
+        // BehaviorScript may mean both old and new scripts old ones
+        // need to be treated as functions, but new ones will resolve
+        // within the MSL environment.  Need a way to distinguish those
+        // before we allow them to be called
+
+        if (s->behavior == BehaviorParameter ||
+            s->behavior == BehaviorFunction ||
+            s->behavior == BehaviorSample) {
+
+            ext->object = s;
+            ext->type = 0;
+            
+            if (!(s->behavior == BehaviorParameter))
+              ext->isFunction = true;
+
+            // MSL only has two contexts shell and kernel
+            if (s->level == LevelKernel || s->level == LevelCore)
+              ext->context = MslContextKernel;
+            else
+              ext->context = MslContextShell;
+            
+            success = true;
+        }
+    }
+    else {
+        // pass it down to the core for resolution
+        success = mobius->mslResolve(name, ext);
+    }
+
+    return success;
 }
 
-bool Supervisor::mslCall(MslExternal* ext, MslValue* arguments, MslValue* result,
-                         MslContextEvent* event, MslContextError* error)
+bool Supervisor::mslQuery(MslQuery* query)
 {
+    bool success = false;
+    if (query->external->type == 0) {
+        Query q;
+        q.symbol = static_cast<Symbol*>(query->external->object);
+        q.scope = query->scope;
+
+        doQuery(&q);
+
+        mutateMslReturn(q.symbol, q.value, &(query->value));
+
+        // Query has an "async" return value, may want
+        // something like that in the MSL result
+        success = true;
+    }
+    else {
+        // must be a core Variable
+        // Queries don't transition so send it down
+        return mobius->mslQuery(query);
+    }
+    return success;
 }
 
-bool Supervisor::mslAssign(MslExternal* ext, MslValue* value,
-                           MslContextEvent* event, MslContextError* error)
+/**
+ * Convert a query result that was the value of an enumerated parameter
+ * into a pair of values to return to the interpreter.
+ * Not liking this but it works.  MobiusKernel needs to do exactly the same
+ * thing so it would be nice to share this.
+ */
+void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 {
+    if (s->parameter == nullptr) {
+        // no extra definition, return whatever it was
+        retval->setInt(value);
+    }
+    else {
+        UIParameterType ptype = s->parameter->type;
+        if (ptype == TypeEnum) {
+            // don't use labels since I want scripters to get used to the names
+            const char* ename = s->parameter->getEnumName(value);
+            retval->setEnum(ename, value);
+        }
+        else if (ptype == TypeBool) {
+            retval->setBool(value == 1);
+        }
+        else if (ptype == TypeStructure) {
+            // hmm, the understanding of LevelUI symbols that live in
+            // UIConfig and LevelCore symbols that live in MobiusConfig
+            // is in Supervisor right now
+            // todo: Need to repackage this
+            // todo: this could also be Type::Enum in the value but I don't
+            // think anything cares?
+            retval->setJString(getParameterLabel(s, value));
+        }
+        else {
+            // should only be here for TypeInt
+            // unclear what String would do
+            retval->setInt(value);
+        }
+    }
 }
 
-bool Supervisor::mslQuery(MslExternal* ext, MslValue* value, MslContextError* error)
+/**
+ * Convert the MslAction to a UIAction and send it down
+ * Normally kernel level actions will have been thread transitioned
+ * to the kernel context so we won't have to deal with them here,
+ * but if we do, it's an async request.
+ *
+ * The interpreter supports complex argument lists but Mobius functions
+ * only take one argument and it has to be an integer.
+ */
+bool Supervisor::mslAction(MslAction* action)
 {
+    bool success = false;
+    if (action->external->type == 0) {
+        UIAction uia;
+        uia.symbol = static_cast<Symbol*>(action->external->object);
+
+        if (action->arguments != nullptr)
+          uia.value = action->arguments->getInt();
+
+        // there is no group scope in MslAction
+        uia.scopeTrack = action->scope;
+    
+        doAction(&uia);
+
+        // UIActions don't have complex return values yet,
+        // and there isn't a way to return the scheduled event
+        // but events should be handled in the kernel anyway
+        action->result.setString(uia.result);
+        
+        success = true;
+    }
+    else {
+        // must be a core Variable, should have transitioned
+        // to the kernel context
+        Trace(1, "Supervisor: mslAction with non-symbol target");
+    }
+    return success;
 }
 
-bool Supervisor::mslWait(MslWait* w, MslContextError* error)
+/**
+ * Waits can not be scheduled at this level, the context
+ * should have been traisitioned to the kernel.
+ */
+bool Supervisor::mslWait(class MslWait* w, class MslContextError* error)
 {
     (void)w;
-    (void)error;
-    Trace(1, "Supervisor: MskContext.mslWait called on the wrong thread");
+    Trace(1, "Supervisor::mslWait Shell context can't do waits");
+    error->setError("This context can't wait");
     return false;
 }
 
-juce::File Supervisor::mslGetRoot()
+void Supervisor::mslEcho(const char* msg)
 {
-    return getRoot();
+    // normally used for debug messages
+    // if the MobiusConsole is visible, forward there so it can be displayed
+    if (mobiusConsole != nullptr)
+      mobiusConsole->mslEcho(msg);
+    else
+      Trace(2, "Supervisor::mslEcho %s", msg);
 }
 
-MobiusConfig* Supervisor::mslGetMobiusConfig()
-{
-    return getMobiusConfig();
-}
-
-void Supervisor::mslAction(UIAction* a)
-{
-    doAction(a);
-}
-
-bool Supervisor::mslQuery(Query* q)
-{
-    return doQuery(q);
-}
+//
+// MSL support for other things in the shell
+//
 
 /**
  * Kludge for mslEcho mostly.
@@ -1912,20 +2047,6 @@ void Supervisor::removeMobiusConsole(MobiusConsole* c)
       mobiusConsole = nullptr;
 }
 
-void Supervisor::mslEcho(const char* msg)
-{
-    // normally used for debug messages
-    // if the MobiusConsole is visible, forward there so it can be displayed
-    if (mobiusConsole != nullptr)
-      mobiusConsole->mslEcho(msg);
-    else
-      Trace(2, "Supervisor::mslEcho %s", msg);
-}
-
-/**
- * Return a handle to the MslEnvironment.
- * This is part of the MslContainer interface.
- */
 MslEnvironment* Supervisor::getMslEnvironment()
 {
     return &scriptenv;

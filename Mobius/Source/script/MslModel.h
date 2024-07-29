@@ -45,6 +45,7 @@ class MslVisitor
     virtual void mslVisit(class MslWaitNode* obj) = 0;
     virtual void mslVisit(class MslEcho* obj) = 0;
     virtual void mslVisit(class MslContextNode* obj) = 0;
+    virtual void mslVisit(class MslIn* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -144,6 +145,7 @@ class MslNode
     virtual bool isWait() {return false;}
     virtual bool isEcho() {return false;}
     virtual bool isContext() {return false;}
+    virtual bool isIn() {return false;}
     
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -263,9 +265,9 @@ class MslSymbol : public MslNode
     }
     
     // runtime state
-    class Symbol* symbol = nullptr;
     class MslProc* proc = nullptr;
     class MslVar* var = nullptr;
+    class MslExternal* external = nullptr;
     
     bool isSymbol() override {return true;}
     bool operandable() override {return true;}
@@ -547,9 +549,25 @@ class MslEcho : public MslNode
 //
 // Scope
 //
-// In, For?
-//
 //////////////////////////////////////////////////////////////////////
+
+class MslIn : public MslNode
+{
+  public:
+    MslIn(MslToken& t) : MslNode(t) {}
+    virtual ~MslIn() {}
+
+    bool hasArgs = false;
+    bool hasBody = false;
+    
+    bool isIn() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    bool wantsNode(MslNode* n) {
+        (void)n;
+        return (children.size() < 2);
+    }
+};
 
 //////////////////////////////////////////////////////////////////////
 //

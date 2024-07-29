@@ -98,6 +98,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslWaitNode* obj) override;
     void mslVisit(class MslEcho* obj) override;
     void mslVisit(class MslContextNode* obj) override;
+    void mslVisit(class MslIn* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
@@ -172,10 +173,10 @@ class MslSession : public MslVisitor
     
     // symbol evaluation
     bool doExternal(MslSymbol* snode);
-    void returnSymbol();
-    void doSymbol(Symbol* sym);
-    void invoke(Symbol* sym);
-    void query(Symbol* sym);
+    class MslExternal* resolveExternal(MslSymbol* snode);
+    void returnExternal();
+    void doExternalAction(MslExternal* ext);
+    void doExternalQuery(MslExternal* ext);
 
     // expressions
     MslValue* getArgument(int index);

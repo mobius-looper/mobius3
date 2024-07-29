@@ -296,6 +296,13 @@ class UIAction : public PooledObject {
      * and a way to return some sort of async request id for polling.
      */
     char result[UIActionArgMax];
+
+    /**
+     * If the core action scheduled an event, this is a pointer
+     * to it.  Necessary for MSL script waits.
+     */
+    void* coreEvent = nullptr;
+    int coreEventFrame = 0;
     
   private:
 

@@ -18,6 +18,7 @@
 #include "MslScript.h"
 #include "MslStack.h"
 #include "MslBinding.h"
+#include "MslExternal.h"
 #include "MslEnvironment.h"
 
 #include "MslSession.h"
@@ -717,6 +718,8 @@ void MslSession::mslVisit(MslAssignment* ass)
 void MslSession::doAssignment(MslSymbol* namesym)
 {
     // resolve the target symbol, first look for var bindings
+    // todo: now that MslEnvironment has a link phase for MslExternals
+    // we could have done the local binding resolution there too?
     MslBinding* binding = findBinding(namesym->token.value.toUTF8());
     if (binding != nullptr) {
         // transfer the value
@@ -730,45 +733,52 @@ void MslSession::doAssignment(MslSymbol* namesym)
         popStack(nullptr);
     }
     else {
-        // symbol did not resolve internally, look outside
-        // !! this is where we need to factor out awareness of what
-        // model/Symbol is to the MslContainer
-        // currently the model provides a cache pointer to a previously
-        // resolved model/Symbol.  Should be using a cache, but until
-        // we factor out what model/Symbol is, I'd like to re-resolve it
-        // every time
-
-        // !! juce::String passing, need to weed out all of this in the evaluator
-        Symbol* extsym = Symbols.find(namesym->token.value);
-        if (extsym == nullptr) {
-            // here we could have the notion of an auto-var
-            // pretend that a var existed in the parent block and give
-            // it a binding...not sure if useful
-            addError(stack->node, "Unresolved symbol in assignment");
-        }
-        else if (stack->childResults == nullptr) {
-            // should have caught this in the previous phase
-            addError(stack->node, "Assignment with no value");
+        MslExternal* external = resolveExternal(namesym);
+        if (external == nullptr) {
+            // unlike references, the name symbol of an assignment must resolve
+            addError(namesym, "Unresolved symbol");
         }
         else {
-            // this is where we may need to do thread transition
-            
-            // !! and also factor out awareness of what a UIAction is
-            UIAction a;
-            a.symbol = extsym;
-            // UIActions can only have numeric values right now
-            // if the initializer didn't produce one, it coerce to zero
-            // probably want to raise an error instead
-            a.value = stack->childResults->getInt();
+            // symbol did not resolve internally, but there was an external
+            // local bindings always override externals
 
-            // Supervisor::Instance->doAction(&a);
-            context->mslAction(&a);
+            // assignments are currently expected to be synchronous and won't do transitions
+            // but that probably needs to change
+        
+            MslAction action;
+            action.external = external;
+            // todo: scope with IN
+            if (stack->childResults == nullptr) {
+                // assignment with no value, I suppose this could mean "set to null"
+                // but it's most likely a syntax error
+                addError(stack->node, "Assignment with no value");
+            }
+            else {
+                // assignments are currently only to atomic values
+                // though the MslAction model says that the value can be a list
+                // chained with the next pointer
+                // if we ever get to the point where lists become usable data types
+                // then there will be ambiguity here between the child list as the list
+                // we want to pass vs. an element of the child list HAVING a list value
+                action.arguments = stack->childResults;
+
+                // here is the magic bean
+                context->mslAction(&action);
+
+                // assignment actions are not expected to have return value
+                // though they can have errors
+                // the MslContextError wrapper doesn't provide any purpose beyond the message
+                if (strlen(action.error.error) > 0) {
+                    // this will copy the string to the MslError
+                    addError(stack->node, action.error.error);
+                }
             
-            popStack(nullptr);
+                popStack(nullptr);
+            }
         }
     }
 }
-        
+
 //////////////////////////////////////////////////////////////////////
 //
 // Reference
@@ -859,11 +869,11 @@ void MslSession::mslVisit(MslSymbol* snode)
         // back from the argument block or the body block
         returnProc();
     }
-    else if (stack->symbol != nullptr) {
+    else if (stack->external != nullptr) {
         // we resolved to an external model/Symbol and have completed
         // calculating the argument list
         // this may cause a thread transition
-        returnSymbol();
+        returnExternal();
     }
     else {
         // first time here
@@ -892,8 +902,14 @@ void MslSession::mslVisit(MslSymbol* snode)
                 }
                 else {
                     // look for external symbols
+                    // this is old when we did symbol resolution at runtime
+                    // keep it around but it should find the MslExternal and stop
+                    // aw shit, the whole purpose of dynamic resolution originally
+                    // was to allow "switchQuantize == loop" which everyone expects
+                    // so if MslEnvironment bitches about that during linking it won't work
+                    // it has to be allowed to go through to evaluation so we can treat
+                    // it like a string
                     if (!doExternal(snode)) {
-
                         // unresolved
                         returnUnresolved(snode);
                     }
@@ -908,7 +924,7 @@ void MslSession::mslVisit(MslSymbol* snode)
     // if neither happened it is a logic error, and the evaluator will
     // hang if you don't catch this
     if (errors == nullptr && startStack == stack &&
-        stack->proc == nullptr && stack->symbol == nullptr) {
+        stack->proc == nullptr && stack->external == nullptr) {
         
         addError(snode, "Like your dreams, the symbol evaluator is broken");
     }
@@ -1165,12 +1181,6 @@ void MslSession::addArgValue(MslBinding* b, int position, bool required)
 //
 //////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////////////
-//
-// External Symbols
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
  * Here we've encountered a symbol node that did not resolve into
  * anything within the script environment.  Look into the container.
@@ -1180,74 +1190,111 @@ void MslSession::addArgValue(MslBinding* b, int position, bool required)
  * This is where thread transitioning may need to happen, moving the session
  * between the shell and the kernel.
  *
- * Currently makes direct use of model/Symbol and model/UIAction but this
- * needs to abstracted out so the interpreter can be used within other
- * things besides Mobius.
+ * There are two ways this can work: pre-linking and dynanmic linking.
+ * MslEnvironment will attempt (if you ask it) to pre link symbols
+ * to MslExternals and it will whine if they are unresolved.  This is nice
+ * for the user so they can see the errors immediately when the script is
+ * compiled in the script console.  Unfortunately it prevents a very common
+ * use of symbols for enumerations:
  *
- * If this resolves to a parameter, the value is returned through a Query.
- * If this resolves to a function, the function is invoked with a UIAction.
+ *      if switchQuantize=loop
  *
- * Functions may have arguments, so this may turn into a push for the argument list.
+ * "loop" in this case is not a bound symbol, it's the name of an enumeration element.
+ *
+ * If we prevent the script from compiling when that happens then they'll have to
+ * use if switchQuantize="loop"   which isn't bad but annoying for them.
+ *
+ * An alternative here would be something like operator overloading casting where
+ * if the LHS can be resolved to an enumeration, then the RHS is coerced into a value
+ * suitable for that enumeration.  That would be nicer since we could find misspellings
+ * in enumeration names.  This would be possible if we resolved switchQuantize first but
+ * it's more work for the linker.
+ *
+ * Here we'll use pre-resolved MslExternals if they were left there, otherwise do dynamic
+ * linking.
+ *
+ * If the user calls a function however foo(x) then it MUST resolve to an external.
+ * This will be handled by returnUnresolved above.
  *
  */
 bool MslSession::doExternal(MslSymbol* snode)
 {
     bool resolved = false;
 
-    // todo: cache this on the node so we don't have to keep going back
-    // to the symbol table
-    Symbol* sym = Symbols.find(snode->token.value);
-    if (sym != nullptr) {
+    MslExternal* external = resolveExternal(snode);
+    if (external != nullptr) {
         resolved = true;
 
-        // todo: check for thread transitions
-        // could do this either before or after the argument list evaluation
-        // it doesn't really matter but we might as well go there early?
-
-        stack->symbol = sym;
-        
         // does this have arguments?
-        if (snode->children.size() > 0) {
+        if (snode->children.size() > 0 && stack->phase == 0) {
             // yes, push them
-            // don't need to use phases here since there are no additional child blocks
+            // !! this is interesting, if this is a function that requires a transition
+            // in which context should the arguments be evaluated?
+            // probably the one it ends up in but not necessarily and we'll bounce around
             stack->phase = 1;
             pushStack(snode->children[0]);
         }
         else {
-            // no arguments, do the thing
+            // no arguments, or back from arguments, do the thing
             // useful to have a frame for this?
-            doSymbol(sym);
+            stack->external = external;
+            returnExternal();
         }
     }
     return resolved;
 }
 
 /**
- * Here after evaluating the argument block for an external symbol
- * which is expected to be a function
+ * Resolve an MslExternal for a symbol node.
+ * The intent is that this has already been done by MslEnvironment
+ * during a linking phase, but sometimes it forgets.
  */
-void MslSession::returnSymbol()
+MslExternal* MslSession::resolveExternal(MslSymbol* snode)
 {
-    doSymbol(stack->symbol);
-}
-
-/**
- * Here when we're finally ready to do the external thing.
- * If there was an argument block on the symbol node it will have
- * been evaluated and left on the stack
- */
-void MslSession::doSymbol(Symbol* sym)
-{
-    if (sym->parameter != nullptr) {
-        query(sym);
+    MslExternal* external = snode->external;
+    if (external == nullptr) {
+        juce::String name = snode->token.value;
+        // do we need to attempt dynamic resolution?
+        external = environment->getExternal(name);
+        if (external != nullptr) {
+            snode->external = external;
+        }
+        else {
+            MslExternal retval;
+            if (context->mslResolve(name, &retval)) {
+                // make one we can intern
+                external = new MslExternal(retval);
+                external->name = name;
+                environment->intern(external);
+                snode->external = external;
+            }
+        }
     }
-    else if (sym->function != nullptr || sym->script != nullptr) {
-        invoke(sym);
+
+    return external;
+}
+    
+/**
+ * Here after evaluating the argument block for an external symbol
+ * which is expected to be a function.  Or returning from a transition.
+ */
+void MslSession::returnExternal()
+{
+    MslExternal* external = stack->external;
+    
+    // check transitions for functions
+    // queries have so far not required transitions
+    // wait, should we transition now or way
+    if (external->isFunction &&
+        external->context != MslContextNone &&
+        external->context != context->mslGetContextId()) {
+        transitioning = true;
+    }
+    else if (external->isFunction) {
+        doExternalAction(external);
     }
     else {
-        // I suppose we could support others like BehaviorSample here
-        // but you can also get to that with a function
-        addError(stack->node, "Symbol is not a function or parameter");
+        doExternalQuery(external);
     }
 }
 
@@ -1258,36 +1305,41 @@ void MslSession::doSymbol(Symbol* sym)
  * doing thread transitions.  It should work but isn't immediate
  * and you can't wait on it.
  */
-void MslSession::invoke(Symbol* sym)
+void MslSession::doExternalAction(MslExternal* ext)
 {
-    UIAction a;
-    a.symbol = sym;
+    MslAction action;
 
-    // actions don't do much in the way of arguments right now
-    // only a few functions take arguments and they're all integers
-    // but a handful take strings
-    // needs a lot more work
-    if (stack->childResults != nullptr) {
-        // if there is more than one result, could warn since they're not going anywhere
-        MslValue *arg = stack->childResults;
+    action.external = ext;
+    action.arguments = stack->childResults;
 
-        // who gets to win the coersion wars?
-        // if the user typed in a literal int, that's what they wanted
-        if (arg->type == MslValue::Int)
-          a.value = arg->getInt();
-        else
-          CopyString(arg->getString(), a.arguments, sizeof(a.arguments));
+    // todo: scope
+    // action.scope = ?
+
+    if (!context->mslAction(&action)) {
+        // need both messages?
+        addError(stack->node, "Error calling external function");
+        if (strlen(action.error.error) > 0)
+          addError(stack->node, action.error.error);
     }
-    
-    //Supervisor::Instance->doAction(&a);
-    context->mslAction(&a);
+    else {
+        // the action handler was allowed to full in a single static MslResult
+        MslValue* v = pool->allocValue();
+        // !! this won't handle lists
+        v->copy(&(action.result));
 
-    // only MSL scripts set a result right now
-    MslValue* v = pool->allocValue();
-    v->setString(a.result);
+        // ah...now we have the "wait last" problem.
+        // the action may have scheduled an event and the next
+        // statement is often "wait last" to wait for it
+        // but it isn't necessarily the next immediate statement so
+        // in the mean time, where do we store the event pointer that
+        // was returned in this action?
 
-    // what a long strange trip it's been
-    popStack(v);
+        if (action.event != nullptr)
+          Trace(1, "MslSession: External action returned an event with no place to go");
+
+        // what a long strange trip it's been
+        popStack(v);
+    }
 }
 
 /**
@@ -1300,55 +1352,29 @@ void MslSession::invoke(Symbol* sym)
  * don't think that way, they want enumeration names.  Use the weird
  * Type::Enum to return both so either can be used.
  */
-void MslSession::query(Symbol* sym)
+void MslSession::doExternalQuery(MslExternal* ext)
 {
-    if (sym->parameter == nullptr) {
-        // should have checked this by now
-        addError(stack->node, "Not a parameter symbol");
+    MslQuery query;
+
+    query.external = ext;
+    // todo: scope
+
+    if (!context->mslQuery(&query)) {
+        // need both messages?
+        addError(stack->node, "Error retrieving external variable");
+        if (strlen(query.error.error) > 0)
+          addError(stack->node, query.error.error);
     }
     else {
-        Query q;
-        q.symbol = sym;
+        MslValue* v = pool->allocValue();
         
-        // bool success = Supervisor::Instance->doQuery(&q);
-        bool success = context->mslQuery(&q);
-        
-        if (!success) {
-            addError(stack->node, "Unable to query parameter");
-        }
-        else if (q.async) {
-            // not really an error, need a different message/warning list
-            addError(stack->node, "Asynchronous parameter query");
-        }
-        else {
-            MslValue* v = pool->allocValue();
-            // and now we have the ordinal vs. enum symbol problem
-            UIParameterType ptype = sym->parameter->type;
-            if (ptype == TypeEnum) {
-                // don't use labels since I want scripters to get used to the names
-                const char* ename = sym->parameter->getEnumName(q.value);
-                v->setEnum(ename, q.value);
-            }
-            else if (ptype == TypeBool) {
-                v->setBool(q.value == 1);
-            }
-            else if (ptype == TypeStructure) {
-                // hmm, the understanding of LevelUI symbols that live in
-                // UIConfig and LevelCore symbols that live in MobiusConfig
-                // is in Supervisor right now
-                // todo: Need to repackage this
-                // todo: this could also be Type::Enum in the value but I don't
-                // think anything cares?
-                v->setJString(Supervisor::Instance->getParameterLabel(sym, q.value));
-            }
-            else {
-                // should only be here for TypeInt
-                // unclear what String would do
-                v->setInt(q.value);
-            }
+        // and now we have the ordinal vs. enum symbol problem
+        // with the introduction of MslExternal that mess was pushed into the MslContext
+        // and it is supposed return a value with TypeEnum
 
-            popStack(v);
-        }
+        v->copy(&(query.value));
+
+        popStack(v);
     }
 }
 
@@ -1719,7 +1745,7 @@ void MslSession::mslVisit(MslWaitNode* wait)
             if (context->mslGetContextId() != MslContextKernel)
               Trace(1, "MslSession: Wait resumed outside of the kernel context");
             
-            stack->wait.reset();
+            stack->wait.init();
             popStack();
         }
         else {
@@ -1780,8 +1806,12 @@ void MslSession::setupWait(MslWaitNode* node)
     // todo: would really like to be able to have the context include more
     // details about what was wrong with the wait request
     // since we're almost always in the kernel now, have memory issues
-    if (!context->mslWait(wait))
-      addError(node, "Unable to schedule wait state");
+    MslContextError error;
+    if (!context->mslWait(wait, &error)) {
+        addError(node, "Unable to schedule wait state");
+        if (error.hasError())
+          addError(node, error.error);
+    }
 
     // save where it came from, the session is necessary so MslEnvironment
     // knows which one to resume, I don't think the stack is, it just advances the session
@@ -1792,6 +1822,36 @@ void MslSession::setupWait(MslWaitNode* node)
     // make it go, or rather stop
     wait->finished = false;
     wait->active = true;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// In
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslSession::mslVisit(MslIn* innode)
+{
+    if (stack->phase == 0) {
+        if (innode->children.size() < 1)
+          addError(innode, "Missing target block");
+        else if (innode->children.size() < 2)
+          addError(innode, "Missing body block");
+
+        stack->phase = 1;
+        pushNextChild();
+    }
+    else if (stack->phase == 1) {
+
+        if (stack->childResults == nullptr) {
+            addError(innode, "No targets to iterate");
+        }
+        else{
+            Trace(2, "MslSession: In %s", stack->childResults->getString());
+        }
+
+        popStack(nullptr);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

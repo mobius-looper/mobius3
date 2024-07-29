@@ -126,23 +126,12 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // MslContext
     //
 
-    virtual bool mslResolve(juce::String name, class MslExternal* ext);
-    virtual bool mslCall(class MslExternal* ext, class MslValue* arguments, class MslValue* result,
-                         class MslContextEvent* event, class MslContextError* error);
-
-    virtual bool mslAssign(class MslExternal* ext, class MslValue* value,
-                           class MslContextEvent* event, class MslContextError* error);
-    virtual bool mslQuery(class MslExternal* ext, class MslValue* value, class MslContextError* error);
-    virtual bool mslWait(class MslWait* w, class MslContextError* error) = 0;
-
-    // obsolete
-    void mslAction(class UIAction* a) override;
-    bool mslQuery(class Query* q) override;
-
-    // misc
+    MslContextId mslGetContextId() override;
+    bool mslResolve(juce::String name, class MslExternal* ext) override;
+    bool mslQuery(MslQuery* query) override;
+    bool mslAction(MslAction* ation) override;
+    bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslEcho(const char* msg) override;
-    juce::File mslGetRoot() override;
-    class MobiusConfig* mslGetMobiusConfig() override;
 
   protected:
     
@@ -247,6 +236,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     void playSample(UIAction* action);
 
+    void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
 };
 
 /****************************************************************************/

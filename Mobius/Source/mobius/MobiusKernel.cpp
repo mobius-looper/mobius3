@@ -17,6 +17,8 @@
 #include "../model/SampleProperties.h"
 
 #include "../script/MslEnvironment.h"
+#include "../script/MslContext.h"
+#include "../script/MslExternal.h"
 #include "../script/MslWait.h"
 
 #include "../Binderator.h"
@@ -35,6 +37,9 @@
 #include "core/Action.h"
 #include "core/Parameter.h"
 #include "core/Mem.h"
+
+// temporary for the mslQuery parameter shit
+#include "../Supervisor.h"
 
 #include "MobiusKernel.h"
 
@@ -1168,15 +1173,83 @@ void MobiusKernel::doLoadLoop(KernelMessage* msg)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * This is the callback Mobius calls when it has sufficitnely prepared at the start
- * of every audio block and is ready to let scripts run.  The scripts will advance
- * and call out to our MslContext methods when they need to call functions or set parameters.
- */
-void MobiusKernel::runExternalScripts()
+MslContextId MobiusKernel::mslGetContextId()
 {
-    MslEnvironment* env = container->getMslEnvironment();
-    env->kernelAdvance(this);
+    return MslContextKernel;
+}
+
+/**
+ * Symbols have already been resolved by the shell, here we add
+ * internal script Variable definitions, but those are defined down in core.
+ */
+bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
+{
+    return mCore->mslResolve(name, ext);
+}
+
+/**
+ * Convert it to a Query and handle it like other queries.
+ * If this external is bound to a Variable pass it to the core.
+ */
+bool MobiusKernel::mslQuery(MslQuery* query)
+{
+    bool success = false;
+    if (query->external->type == 0) {
+        Query q;
+        q.symbol = static_cast<Symbol*>(query->external->object);
+        q.scope = query->scope;
+
+        doQuery(&q);
+
+        mutateMslReturn(q.symbol, q.value, &(query->value));
+
+        // Query at this level will never be "async"
+        success = true;
+    }
+    else {
+        // must be a core Variable
+        success = mCore->mslQuery(query);
+    }
+    return success;
+}
+
+/**
+ * Convert a query result that was the value of an enumerated parameter
+ * into a pair of values to return to the interpreter.
+ * Not liking this but it works.  Supervisor needs to do exactly the same
+ * thing so it would be nice to share this.
+ */
+void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
+{
+    if (s->parameter == nullptr) {
+        // no extra definition, return whatever it was
+        retval->setInt(value);
+    }
+    else {
+        UIParameterType ptype = s->parameter->type;
+        if (ptype == TypeEnum) {
+            // don't use labels since I want scripters to get used to the names
+            const char* ename = s->parameter->getEnumName(value);
+            retval->setEnum(ename, value);
+        }
+        else if (ptype == TypeBool) {
+            retval->setBool(value == 1);
+        }
+        else if (ptype == TypeStructure) {
+            // hmm, the understanding of LevelUI symbols that live in
+            // UIConfig and LevelCore symbols that live in MobiusConfig
+            // is in Supervisor right now
+            // todo: Need to repackage this
+            // todo: this could also be Type::Enum in the value but I don't
+            // think anything cares?
+            retval->setJString(Supervisor::Instance->getParameterLabel(s, value));
+        }
+        else {
+            // should only be here for TypeInt
+            // unclear what String would do
+            retval->setInt(value);
+        }
+    }
 }
 
 /**
@@ -1190,32 +1263,50 @@ void MobiusKernel::runExternalScripts()
  * because scripts aren't sustainable triggers and if we need to simulate that it can
  * be done in other ways.
  */
-void MobiusKernel::mslAction(UIAction* action)
+bool MobiusKernel::mslAction(MslAction* action)
 {
-    Symbol* symbol = action->symbol;
+    bool success = false;
+    if (action->external->type == 0) {
+        Symbol* symbol = static_cast<Symbol*>(action->external->object);
 
-    // it's been done a 100 times already so why not one more
-    if (symbol == nullptr) {
-        Trace(1, "MobiusKernel: Script action without a symbol\n");
-    }
-    else if (symbol->level == LevelCore) {
-        // these are the ones we're interested in
-        mCore->doAction(action);
+        UIAction uia;
+        uia.symbol = symbol;
+
+        if (action->arguments != nullptr)
+          uia.value = action->arguments->getInt();
+
+        // there is no group scope in MslAction
+        uia.scopeTrack = action->scope;
+
+        if (symbol->level == LevelCore) {
+            // this is where all the interesting stuff happens
+            mCore->doAction(&uia);
+
+        }
+        else {
+            // the script is calling a kernel or UI level action
+            // here we can go through our normal action handling which may pass it up to the shell
+            doAction(&uia);
+        }
+
+        // UIActions don't have complex return values yet,
+        action->result.setString(uia.result);
+
+        // these would only have been set if it went into the core
+        action->event = uia.coreEvent;
+        action->eventFrame = uia.coreEventFrame;
+
+        // must
+        // and there isn't a way to return the scheduled event
+        // but events should be handled in the kernel anyway
+        success = true;
     }
     else {
-        // the script is calling a kernel or UI level action
-        // here we can go through our normal action handling which may pass it up to the shell
-        doAction(action);
+        // must be a core Variable, should have transitioned
+        // to the kernel context
+        Trace(1, "Supervisor: mslAction with non-symbol target");
     }
-}
-
-/**
- * Unlike mslAction we don't need any special redirection for these, just
- * pass it through the usualy query code.
- */
-bool MobiusKernel::mslQuery(Query* q)
-{
-    return doQuery(q);
+    return success;
 }
 
 /**
@@ -1226,8 +1317,7 @@ bool MobiusKernel::mslQuery(Query* q)
  */
 bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
 {
-    (void)error;
-    bool success = mCore->scheduleScriptWait(wait);
+    bool success = mCore->mslWait(wait, error);
 
     if (!success) {
         Trace(1, "MobiusKernel: MslWait scheduling failed in core");
@@ -1238,131 +1328,14 @@ bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
     return success;
 }
 
-//
-// Various MslContext fluff that probably shouldn't be there
-//
-
-MslContextId MobiusKernel::mslGetContextId()
-{
-    return MslContextKernel;
-}
-
-juce::File MobiusKernel::mslGetRoot()
-{
-    // this should not be called in Kernel context
-    Trace(1, "MobiusKernel::mslGetRoot Who wants a file root down here?");
-    return container->getRoot();
-}
-
-MobiusConfig* MobiusKernel::mslGetMobiusConfig()
-{
-    return configuration;
-}
-
 void MobiusKernel::mslEcho(const char* msg)
 {
     Trace(2, "MobiusKernel::mslEcho %s", msg);
 }
 
-//
-// New alternatve that hides UIAction
-//
-
-/**
- * Resolve should not be called in the kernel.
- */
-bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
-{
-    (void)name;
-    (void)ext;
-    Trace(1, "MobiusKernel::mslResolve Shouldn't be here");
-}
-
-bool MobiusKernel::mslCall(MslExternal* ext, MslValue* arguments, MslValue* result,
-                           MslContextEvent* event, MslContextError* error)
-{
-    (void)event;
-    (void)error;
-
-    // the only external type is symbol
-    UIAction a;
-    a.symbol = (Symbol*)(ext->object);
-    // only one argument to intrinsic functions though
-    // old scripts should allow more
-    a.value = arguments->getInt();
-
-    if (doMslAction(&a)) {
-
-        // todo: see if there is an event in the UIAction and put it
-        // in the MslContextEvent
-        
-        // todo: more complex results from UIAction?
-        result->setInt(a.value);
-
-        // todo: errors?
-    }
-}
-
-bool MobiusKernel::mslAssign(MslExternal* ext, MslValue* value,
-                           MslContextEvent* event, MslContextError* error)
-{
-    (void)event;
-    (void)error;
-    
-    bool success = false;
-    
-    if (ext->type == 0) {
-        Symbol* s = (Symbol*)ext->object;
-        // todo: scope
-        UIAction a;
-        a.symbol = a;
-
-        // todo: complex values?
-        a.value = value->getInt();
-
-        if (doMslAction(&a)) {
-            
-            // todo: see if there is an event in the UIAction and put it
-            // in the MslContextEvent
-
-            // todo: any errors to convey?
-            
-            success = true;
-        }
-    }
-    else {
-        // do somethign similar for script Variables
-        success = true;
-    }
-}
-
-bool MobiusKernel::mslQuery(MslExternal* ext, MslValue* value, MslContextError* error)
-{
-    (void)error;
-    bool success = false;
-
-    if (ext->type == 0) {
-        Symbol* s = (Symbol*)ext->object;
-        // godo: scope
-        Query q;
-        q.symbol = s;
-        if (doQuery(q)) {
-            value->setInt(q.value);
-            success = true;
-        }
-    }
-    else {
-        // do somethign similar for script Variables
-        value.setNull();
-        success = true;
-    }
-    
-    return success;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
-// Mobius Wait Event Callbacks
+// Mobius MSL Callbacks
 //
 // We should end up in one of these after an unbelievably tortured journey
 // after the call to Mobius::scheduleScriptWait.
@@ -1372,6 +1345,17 @@ bool MobiusKernel::mslQuery(MslExternal* ext, MslValue* value, MslContextError* 
 // location.
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * This is the callback Mobius calls when it has sufficitnely prepared at the start
+ * of every audio block and is ready to let scripts run.  The scripts will advance
+ * and call out to our MslContext methods when they need to call functions or set parameters.
+ */
+void MobiusKernel::runExternalScripts()
+{
+    MslEnvironment* env = container->getMslEnvironment();
+    env->kernelAdvance(this);
+}
 
 void MobiusKernel::coreWaitFinished(MslWait* wait)
 {

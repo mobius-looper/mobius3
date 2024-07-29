@@ -169,6 +169,19 @@ void MobiusShell::setMidiListener(MobiusMidiListener* l)
     kernel.setMidiListener(l);
 }
 
+/**
+ * MSL symbol resolution pass through to the core
+ */
+bool MobiusShell::mslResolve(juce::String name, MslExternal* ext)
+{
+    return kernel.mslResolve(name, ext);
+}
+
+bool MobiusShell::mslQuery(class MslQuery* q)
+{
+    return kernel.mslQuery(q);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration

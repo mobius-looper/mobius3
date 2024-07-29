@@ -276,6 +276,12 @@ class MobiusInterface {
     virtual juce::StringArray loadLoop(juce::File src) = 0;
     virtual juce::StringArray saveLoop(juce::File src) = 0;
 
+    // resolve a MSL symbol reference to something in the core
+    // note that while it shares the same name as a method in MslContext
+    // the MobiusInterface is NOT itself an MslContext
+    virtual bool mslResolve(juce::String name, class MslExternal* ext) = 0;
+    virtual bool mslQuery(class MslQuery* q) = 0;
+
   private:
 
     

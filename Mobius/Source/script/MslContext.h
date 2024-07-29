@@ -9,6 +9,8 @@
 
 #include <JuceHeader.h>
 
+#include "MslValue.h"
+
 /**
  * Enumeration of the contexts an MSL session can be running in.
  * Within Shell, this could be divided into the two UI and Maintenance
@@ -33,15 +35,20 @@ class MslContextError
 {
   public:
 
-    MslExternalError() {strcpy(error, "");}
-    ~MslExternalERror() {}
+    MslContextError() {strcpy(error, "");}
+    ~MslContextError() {}
 
-    static const int MslContextErrorMax;
+    static const int MslContextErrorMax = 128;
     char error[MslContextErrorMax];
 
     void setError(const char* msg) {
         strncpy(error, msg, sizeof(error));
     }
+
+    bool hasError() {
+        return (strlen(error) > 0);
+    }
+            
 };
 
 /**
@@ -58,17 +65,23 @@ class MslContextError
  * message buffer.
  *
  */
-public MslQuery
+class MslQuery
 {
   public:
 
     MslQuery() {}
     ~MslQuery() {}
 
-    MslExternal* external = nullptr;
+    class MslExternal* external = nullptr;
+
+    // actions may have a scope identifier when using "IN"
+    // so external references need that too
+    // currently this is a track number but should be more flexible
+    // about abstract scope names
+    int scope = 0;
     
     MslValue value;
-    MslError error;
+    MslContextError error;
 };
 
 /**
@@ -86,23 +99,32 @@ public MslQuery
  * list.
  *
  */
-public MslAction
+class MslAction
 {
   public:
 
     MslAction() {}
     ~MslAction() {}
 
-    MslExternal* external = nullptr;
+    class MslExternal* external = nullptr;
     MslValue* arguments = nullptr;
 
+    // actions may have a scope identifier when using "IN"
+    // currently this is a track number but should be more flexible
+    // about abstract scope names
+    int scope = 0;
+
     MslValue result;
-    MslError error;
+    MslContextError error;
 
     // opaque pointer to an object in the context representing an asynchronous
     // event that has been scheduled to handle the action
     // this may be used in a Wait
     void* event = nullptr;
+    int eventFrame = 0;
+
+    // todo: need a model for temporary external variable bindings
+    // e.g. parameter overrides
     
 };
 
@@ -120,13 +142,13 @@ class MslContext
 
     // resolve a name to an MslExternal
     // todo: may want more complex falure messages beyond just true/false
-    virtual bool mslResolve(juce::String name, MslExternal* ext);
+    virtual bool mslResolve(juce::String name, class MslExternal* ext) = 0;
 
     // perform a query
-    virtual bool mslQuery(MslQuery* query);
+    virtual bool mslQuery(MslQuery* query) = 0;
 
     // perform an action
-    virtual bool mslAction(MslAction* ation);
+    virtual bool mslAction(MslAction* ation) = 0;
 
     // initialize a wait state
     // for errors, an error buffer is supplied as an argument rather

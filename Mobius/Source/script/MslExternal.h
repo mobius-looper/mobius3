@@ -105,6 +105,15 @@ class MslExternal
     // todo: a small number of random arguments that may be necessary
     // to evaluate this external symbol?
 
+    // copy constructor when using stack allocated externals for mslResolve
+    MslExternal(MslExternal& src) {
+        name = src.name;
+        context = src.context;
+        isFunction = src.isFunction;
+        object = src.object;
+        type = src.type;
+    }
+
 };
 
     

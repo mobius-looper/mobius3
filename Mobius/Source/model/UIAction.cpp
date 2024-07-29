@@ -52,6 +52,8 @@ void UIAction::reset()
     owner = nullptr;
     track = nullptr;
     noGroup = false;
+    coreEvent = nullptr;
+    coreEventFrame = 0;
 }
 
 /**
@@ -83,6 +85,8 @@ void UIAction::copy(UIAction* src)
     owner = nullptr;
     track = nullptr;
     strcpy(result, "");
+    coreEvent = nullptr;
+    coreEventFrame = 0;
 }
 
 /****************************************************************************/

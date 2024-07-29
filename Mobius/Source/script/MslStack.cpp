@@ -24,8 +24,8 @@ void MslStack::init()
     accumulator = false;
     bindings = nullptr;
     proc = nullptr;
-    symbol = nullptr;
-    wait.reset();
+    external = nullptr;
+    wait.init();
 }
 
 /**

@@ -33,7 +33,10 @@
 #include "../../model/FunctionDefinition.h"
 
 // depenencies needed to handle MSL script waits
+#include "../../script/MslContext.h"
+#include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
+#include "../../script/MslValue.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -2189,6 +2192,153 @@ void Mobius::loadProject(Project* p)
 
 //////////////////////////////////////////////////////////////////////
 //
+// MSL Access to Variables
+//
+// Most of the Variable definitions are for things
+// in a Track but a few are related to the old ScriptInterpreters:
+// 
+//      sustainCount
+//      clickCount
+//      triggerSource
+//      triggerNumber
+//      triggerValue
+//      triggerVelocity
+//      triggerOffset
+//      midiType
+//      midiChannel
+//      midiNumber
+//      midiValue
+//      returnCode
+//
+// A few are global things in random locations:
+//
+//      noExternalAudio
+//      installationDirectory
+//      configurationDirectory
+//
+// These could be assigned:
+//
+//      returnCode
+//      noExternalAudio
+//
+//      cycleCount
+//      speedSequence
+//      pitchSequence
+//      syncCorrections
+//
+//
+// sustainCount and clickCount are not implemented within the MSL
+// interpreter and can be resolved there.
+//
+// trigger and MIDI information should probably not be exposed, but
+// if necessary would also be something provided by the MSL environment
+//
+// returnCode I'm not remembering but MSL has it's own way of return
+// values from scripts, though this might be a way for OLD scripts to
+// return a value to MSL scripts when called
+//
+// The two directories are not relevant any more and should not be accessible
+// in scripts.
+//
+// The handful that can be assigned might be interesting, in particular
+// cycleCount which is useful for end users and the others that are
+// interesting for test scripts.
+//
+// At the moment, we'll resolve all of them, but only the track variables
+// will do anything.  This will probably break some test scripts but
+// I think I'd rather fix that by promoting the small number of these
+// that are useful to Symbols rather than hacking around ways to
+// access the old Variables.
+//
+// What I'd really like to do is let ScriptInternalVariable die
+// and replace it for MSL with a single large Handler class with
+// a bunch of methods so we don't have to continue the stupid static
+// object thing.  That also makes it easier to add new external variables
+// which we're going to need eventually.
+//
+//////////////////////////////////////////////////////////////////////
+
+bool Mobius::mslResolve(juce::String name, MslExternal* ext)
+{
+    bool success = false;
+    
+    ScriptInternalVariable* var = ScriptInternalVariable::getVariable(name.toUTF8());
+    if (var != nullptr) {
+        // todo: filter out the ones we don't want to expose so they
+        // don't get MslExternal that don't do anything
+        
+        ext->object = var;
+        // none of these are functions
+        // there are only two types 0=Symbol and 1=Variable
+        ext->type = 1;
+
+        // we can set a correct context here, but Supervisor isn't actually checking
+        // that, it will always do a direct Query without thread transitions
+        // since most (all?) of these are just simple numbers it should be okay
+        ext->context = MslContextKernel;
+
+        success = true;
+    }
+    return success;
+}
+
+/**
+ * Handle an MSL query on an internal variable.
+ * Symbol queries will have been handled through a different path.
+ */
+bool Mobius::mslQuery(MslQuery* query)
+{
+    bool success = false;
+
+    // symbols have been handled in an different path
+    if (query->external->type == 1) {
+        ScriptInternalVariable* var = static_cast<ScriptInternalVariable*>(query->external->object);
+
+        Track* track = getTrack();
+        if (query->scope > 0) {
+            track = getTrack(query->scope);
+            if (track == nullptr)
+              query->error.setError("Track number out of range");
+        }
+        if (track != nullptr) {
+
+            // if this isn't a track variable, it will always return 0
+            ExValue v;
+            var->getTrackValue(track, &v);
+
+            // ExValue is pretty much the same as MslValue
+            // but we don't have a shared copyier for them
+            // might want that
+
+            success = true;
+            if (v.getType() == EX_INT) {
+                query->value.setInt(v.getInt());
+            }
+            else if (v.getType() == EX_FLOAT) {
+                query->value.setFloat(v.getFloat());
+            }
+            else if (v.getType() == EX_BOOL) {
+                query->value.setBool(v.getBool());
+            }
+            else if (v.getType() == EX_STRING) {
+                query->value.setString(v.getString());
+            }
+            else {
+                // must be EX_LIST, we don't support that in MslQuery yet
+                // but there are no variables that need it
+                query->error.setError("Queries returning lists not supported");
+                success = false;
+            }
+        }
+    }
+    else {
+        Trace(1, "Mobius: MQL Query request not for a Variable");
+    }
+    return success;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // MSL Script Waits
 //
 // This is approximately the same as what ScriptWaitStatement::eval
@@ -2201,8 +2351,10 @@ void Mobius::loadProject(Project* p)
  * todo: not handling the old "inPause" argument, need to find a syntax for
  * that and pass it down through the MslWait
  */
-bool Mobius::scheduleScriptWait(MslWait* wait)
+bool Mobius::mslWait(MslWait* wait, MslContextError* error)
 {
+    // todo: start depositing errors in MslError now that we have it
+    (void)error;
     bool success = false;
 
     // the first thing the old eval() did was user a UserVarible named "interrupted"
@@ -2523,7 +2675,7 @@ int Mobius::calculateLocationFrame(MslWait* wait, Track* track)
 
     // figure out the loop we're operating within and how long it is
     Loop* loop = track->getLoop();
-    int loopFrames = loop->getFrames();
+    //int loopFrames = loop->getFrames();
 
     switch (wait->location) {
 

@@ -34,6 +34,7 @@
 #include "Loop.h"
 #include "Script.h"
 #include "Mobius.h"
+#include "Event.h"
 
 #include "Actionator.h"
 
@@ -314,12 +315,40 @@ void Actionator::doFunctionOld(UIAction* action, Function* f)
     coreAction->type = ActionFunction;
     coreAction->implementation.function = f;
     doOldAction(coreAction);
+
+    // to do MSL waits, we have to convey the old Event pointer
+    Event* coreEvent = coreAction->getEvent();
+    if (coreEvent != nullptr) {
+        action->coreEvent = coreEvent;
+        action->coreEventFrame = coreEvent->frame;
+    }
+
+    // Action can also have a pointer to a KernelEvent which
+    // was a way for old scripts to wait on the new KernelEvents
+    // that replaced the old ThreadEvents
+    // could pass those back too for waiting but MSL scripts shouldn't
+    // be scheduling KernelEvents any more, they can just use transitions
+    // and call synchronous function symbols in the right context, right?
+    if (coreAction->getKernelEvent() != nullptr) {
+        Trace(1, "Actionator: Converted Action has a KernelEvent that isn't being passed back");
+    }
+    
+    // !! there is also a "rescheduling" Event pointer in here that
+    // probably does something important
+    // tracking reschedules is going to be extremely annoying probably
+    // if the event pointer changes?
+    // this is related to ScriptInterpreter::rescheduleEvent which
+    // must be where the swap happened
+    
     completeAction(coreAction);
 }
 
 /**
  * Here starts the redesign of function invocation control flow.
  * This level handles global vs. track replication.
+ *
+ * This is not used, and if you resurrect it, will need to handle
+ * passing back the Event that was scheduled like doFunctionOld does...
  */
 void Actionator::doFunctionNew(UIAction* action, Function* f)
 {

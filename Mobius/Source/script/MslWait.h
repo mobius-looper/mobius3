@@ -126,10 +126,10 @@ class MslWait
 
     // handle to an internal object that represents the wait event
     // for Mobius this is a core Event object
-    void* event = nullptr;
+    void* coreEvent = nullptr;
 
     // loop frame on which the event was scheduled
-    int eventFrame = 0;
+    int coreEventFrame = 0;
 
     //
     // Interpreter State
@@ -169,8 +169,8 @@ class MslWait
         finished = false;
         value = 0;
         track = 0;
-        event = nullptr;
-        eventFrame = 0;
+        coreEvent = nullptr;
+        coreEventFrame = 0;
         session = nullptr;
         stack = nullptr;
     }

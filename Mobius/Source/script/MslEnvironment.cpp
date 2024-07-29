@@ -389,6 +389,23 @@ MslError* MslEnvironment::resolve(MslScript* script)
     return nullptr;
 }
 
+MslExternal* MslEnvironment::getExternal(juce::String name)
+{
+    return externalMap[name];
+}
+
+void MslEnvironment::intern(MslExternal* ext)
+{
+    if (externalMap[ext->name] != nullptr) {
+        Trace(1, "MslEnvironment: Name collision interning MslExternal %s",
+              ext->name.toUTF8());
+    }
+    else {
+        externals.add(ext);
+        externalMap.set(ext->name, ext);
+    }
+}
+ 
 //////////////////////////////////////////////////////////////////////
 //
 // Actions

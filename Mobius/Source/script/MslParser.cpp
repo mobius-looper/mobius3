@@ -554,6 +554,9 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     
     else if (t.value == "context")
       keyword = new MslContextNode(t);
+    
+    else if (t.value == "in")
+      keyword = new MslIn(t);
 
     return keyword;
 }

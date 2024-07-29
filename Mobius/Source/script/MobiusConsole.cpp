@@ -101,55 +101,9 @@ void MobiusConsole::consoleEscape()
     panel->close();
 }
 
-//
-// MslContext implementations
-// hard wired Supervisor references till we can sort that shit out
-//
-
-MslContextId MobiusConsole::mslGetContextId()
-{
-    return MslContextShell;
-}
-
-juce::File MobiusConsole::mslGetRoot()
-{
-    return supervisor->getRoot();
-}
-
-MobiusConfig* MobiusConsole::mslGetMobiusConfig()
-{
-    return supervisor->getMobiusConfig();
-}
-
-void MobiusConsole::mslAction(UIAction* a)
-{
-    supervisor->doAction(a);
-}
-
-bool MobiusConsole::mslQuery(Query* q)
-{
-    return supervisor->doQuery(q);
-}
-
-bool MobiusConsole::mslWait(MslWait* w)
-{
-    wait = w;
-    // pretend this worked
-    // this keeps it out of both Supervisor and MobiusKernel so we can
-    // simulate wait handling, hmm, well no, as soon
-    // as transitioning works, the session the scriptlet launches
-    // is going to go over to the kernel so we can't really keep a handle
-    // to this
-    return true;
-}
-
-/**
- * This is the only real reason we implement this, to get
- * echo statements from the script session into the console.
- */
 void MobiusConsole::mslEcho(const char* msg)
 {
-    console.add(juce::String(msg));
+    console.add(msg);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -357,47 +311,42 @@ void MobiusConsole::doList()
  
 void MobiusConsole::doEval(juce::String line)
 {
-    if (wait != nullptr) {
-        console.add("Session is waiting, must be resumed");
+    if (!session->compile(line)) {
+        MslParserResult *pr = session->getCompileErrors();
+        if (pr != nullptr)
+          showErrors(&(pr->errors));
     }
     else {
-        if (!session->compile(line)) {
-            MslParserResult *pr = session->getCompileErrors();
-            if (pr != nullptr)
-              showErrors(&(pr->errors));
+    
+        (void)session->eval(supervisor);
+
+        // side effect of an evaluation is a list of errors and a result
+        MslError* errors = session->getErrors();
+        if (errors != nullptr) {
+            showErrors(errors);
         }
         else {
-    
-            (void)session->eval(this);
-
-            // side effect of an evaluation is a list of errors and a result
-            MslError* errors = session->getErrors();
-            if (errors != nullptr) {
-                showErrors(errors);
+            // temporary debugging
+            bool fullResult = false;
+            if (fullResult) {
+                juce::String full = session->getFullResult();
+                console.add(full);
             }
             else {
-                // temporary debugging
-                bool fullResult = false;
-                if (fullResult) {
-                    juce::String full = session->getFullResult();
-                    console.add(full);
-                }
-                else {
-                    MslValue* v = session->getResult();
-                    if (v != nullptr)
-                      console.add(juce::String(v->getString()));
-                }
+                MslValue* v = session->getResult();
+                if (v != nullptr)
+                  console.add(juce::String(v->getString()));
             }
+        }
 
-            asyncSession = 0;
-            if (session->isWaiting()) {
-                asyncSession = session->getSessionId();
-                console.add("Session " + juce::String(asyncSession) + " is waiting");
-            }
-            if (session->isTransitioning()) {
-                asyncSession = session->getSessionId();
-                console.add("Session " + juce::String(asyncSession) + " is transitioning");
-            }
+        asyncSession = 0;
+        if (session->isWaiting()) {
+            asyncSession = session->getSessionId();
+            console.add("Session " + juce::String(asyncSession) + " is waiting");
+        }
+        if (session->isTransitioning()) {
+            asyncSession = session->getSessionId();
+            console.add("Session " + juce::String(asyncSession) + " is transitioning");
         }
     }
 }
@@ -430,14 +379,10 @@ void MobiusConsole::doStatus(juce::String line)
 
 void MobiusConsole::doResume()
 {
-    if (wait == nullptr)
-      console.add("Session is not waiting");
-    else {
-        // all we can do is set the flag, it will be processed on the
-        // next maintenance cycle
-        wait->finished = true;
-        wait = nullptr;
-    }
+    // we used to intercept Waits and simulate them
+    // what we do need now is commands that can operate on waiting scripts
+    // to cancel wait states and terminate the script
+    console.add("Resume not implemented");
 }
 
 void MobiusConsole::doResults(juce::String arg)
@@ -533,6 +478,9 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         }
         else if (node->isEcho()) {
             line += "Echo";
+        }
+        else if (node->isIn()) {
+            line += "In";
         }
         else if (node->isWait()) {
             MslWaitNode* waitnode = static_cast<MslWaitNode*>(node);

@@ -240,23 +240,12 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // MslContext
     //
 
-    virtual bool mslResolve(juce::String name, class MslExternal* ext);
-    virtual bool mslCall(class MslExternal* ext, class MslValue* arguments, class MslValue* result,
-                         class MslContextEvent* event, class MslContextError* error);
-
-    virtual bool mslAssign(class MslExternal* ext, class MslValue* value,
-                           class MslContextEvent* event, class MslContextError* error);
-    virtual bool mslQuery(class MslExternal* ext, class MslValue* value, class MslContextError* error);
-    virtual bool mslWait(class MslWait* w, class MslContextError* error) = 0;
-
-    // obsolete
-    void mslAction(class UIAction* a) override;
-    bool mslQuery(class Query* q) override;
-
-    // misc
+    MslContextId mslGetContextId() override;
+    bool mslResolve(juce::String name, class MslExternal* ext);
+    bool mslQuery(MslQuery* query) override;
+    bool mslAction(MslAction* ation) override;
+    bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslEcho(const char* msg) override;
-    juce::File mslGetRoot() override;
-    class MobiusConfig* mslGetMobiusConfig() override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
@@ -417,6 +406,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     void upgrade(class MobiusConfig* config);
     int upgradePort(int number);
+
+    // msl support
+    void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
+    
 
     
 };

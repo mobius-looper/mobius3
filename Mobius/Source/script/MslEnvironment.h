@@ -145,6 +145,10 @@ class MslEnvironment
 
     // for MslConductor
     void processSession(MslContext* c, MslSession* s);
+
+    // for MslSession
+    class MslExternal* getExternal(juce::String name);
+    void intern(class MslExternal* ext);
     
   private:
 
@@ -167,7 +171,7 @@ class MslEnvironment
 
     // the external link table
     juce::OwnedArray<class MslExternal> externals;
-    juce::HashMap<juce::String,class MslExternal> externalMap;
+    juce::HashMap<juce::String,class MslExternal*> externalMap;
 
     // the scripts that were in use at the time of re-parsing and replacement
     juce::OwnedArray<class MslScript> inactive;
