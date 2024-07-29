@@ -236,14 +236,27 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
 
+    //
     // MslContext
-    MslContextId mslGetContextId() override;
-    juce::File mslGetRoot() override;
-    class MobiusConfig* mslGetMobiusConfig() override;
+    //
+
+    virtual bool mslResolve(juce::String name, class MslExternal* ext);
+    virtual bool mslCall(class MslExternal* ext, class MslValue* arguments, class MslValue* result,
+                         class MslContextEvent* event, class MslContextError* error);
+
+    virtual bool mslAssign(class MslExternal* ext, class MslValue* value,
+                           class MslContextEvent* event, class MslContextError* error);
+    virtual bool mslQuery(class MslExternal* ext, class MslValue* value, class MslContextError* error);
+    virtual bool mslWait(class MslWait* w, class MslContextError* error) = 0;
+
+    // obsolete
     void mslAction(class UIAction* a) override;
     bool mslQuery(class Query* q) override;
-    bool mslWait(class MslWait* w) override;
+
+    // misc
     void mslEcho(const char* msg) override;
+    juce::File mslGetRoot() override;
+    class MobiusConfig* mslGetMobiusConfig() override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);

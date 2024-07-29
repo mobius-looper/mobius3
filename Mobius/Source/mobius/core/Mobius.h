@@ -350,6 +350,9 @@ class Mobius
     bool scheduleDurationWait(class MslWait* wait);
     int calculateDurationFrame(class MslWait* wait, class Track* t);
     int getMsecFrames(class Track* t, long msecs);
+    bool scheduleLocationWait(MslWait* wait);
+    int calculateLocationFrame(MslWait* wait, Track* track);
+    
 
     bool scheduleLocationWait(class MslWait* wait);
     bool scheduleEventWait(class MslWait* wait);

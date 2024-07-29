@@ -1835,13 +1835,41 @@ void Supervisor::menuLoadScripts()
     }
 }
 
+//////////////////////////////////////////////////////////////////////
 //
-// MslContext implementations
+// MslContext
 //
+//////////////////////////////////////////////////////////////////////
 
 MslContextId Supervisor::mslGetContextId()
 {
     return MslContextShell;
+}
+
+bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
+{
+}
+
+bool Supervisor::mslCall(MslExternal* ext, MslValue* arguments, MslValue* result,
+                         MslContextEvent* event, MslContextError* error)
+{
+}
+
+bool Supervisor::mslAssign(MslExternal* ext, MslValue* value,
+                           MslContextEvent* event, MslContextError* error)
+{
+}
+
+bool Supervisor::mslQuery(MslExternal* ext, MslValue* value, MslContextError* error)
+{
+}
+
+bool Supervisor::mslWait(MslWait* w, MslContextError* error)
+{
+    (void)w;
+    (void)error;
+    Trace(1, "Supervisor: MskContext.mslWait called on the wrong thread");
+    return false;
 }
 
 juce::File Supervisor::mslGetRoot()
@@ -1862,13 +1890,6 @@ void Supervisor::mslAction(UIAction* a)
 bool Supervisor::mslQuery(Query* q)
 {
     return doQuery(q);
-}
-
-bool Supervisor::mslWait(MslWait* w)
-{
-    (void)w;
-    Trace(1, "Supervisor: MskContext.mslWait called on the wrong thread");
-    return false;
 }
 
 /**

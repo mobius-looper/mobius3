@@ -1224,8 +1224,9 @@ bool MobiusKernel::mslQuery(Query* q)
  * I don't like but this unfortunately requires some really complicated Event management
  * that's hard to factor out cleanly.  Revisit.
  */
-bool MobiusKernel::mslWait(MslWait* wait)
+bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
 {
+    (void)error;
     bool success = mCore->scheduleScriptWait(wait);
 
     if (!success) {
@@ -1261,6 +1262,102 @@ MobiusConfig* MobiusKernel::mslGetMobiusConfig()
 void MobiusKernel::mslEcho(const char* msg)
 {
     Trace(2, "MobiusKernel::mslEcho %s", msg);
+}
+
+//
+// New alternatve that hides UIAction
+//
+
+/**
+ * Resolve should not be called in the kernel.
+ */
+bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
+{
+    (void)name;
+    (void)ext;
+    Trace(1, "MobiusKernel::mslResolve Shouldn't be here");
+}
+
+bool MobiusKernel::mslCall(MslExternal* ext, MslValue* arguments, MslValue* result,
+                           MslContextEvent* event, MslContextError* error)
+{
+    (void)event;
+    (void)error;
+
+    // the only external type is symbol
+    UIAction a;
+    a.symbol = (Symbol*)(ext->object);
+    // only one argument to intrinsic functions though
+    // old scripts should allow more
+    a.value = arguments->getInt();
+
+    if (doMslAction(&a)) {
+
+        // todo: see if there is an event in the UIAction and put it
+        // in the MslContextEvent
+        
+        // todo: more complex results from UIAction?
+        result->setInt(a.value);
+
+        // todo: errors?
+    }
+}
+
+bool MobiusKernel::mslAssign(MslExternal* ext, MslValue* value,
+                           MslContextEvent* event, MslContextError* error)
+{
+    (void)event;
+    (void)error;
+    
+    bool success = false;
+    
+    if (ext->type == 0) {
+        Symbol* s = (Symbol*)ext->object;
+        // todo: scope
+        UIAction a;
+        a.symbol = a;
+
+        // todo: complex values?
+        a.value = value->getInt();
+
+        if (doMslAction(&a)) {
+            
+            // todo: see if there is an event in the UIAction and put it
+            // in the MslContextEvent
+
+            // todo: any errors to convey?
+            
+            success = true;
+        }
+    }
+    else {
+        // do somethign similar for script Variables
+        success = true;
+    }
+}
+
+bool MobiusKernel::mslQuery(MslExternal* ext, MslValue* value, MslContextError* error)
+{
+    (void)error;
+    bool success = false;
+
+    if (ext->type == 0) {
+        Symbol* s = (Symbol*)ext->object;
+        // godo: scope
+        Query q;
+        q.symbol = s;
+        if (doQuery(q)) {
+            value->setInt(q.value);
+            success = true;
+        }
+    }
+    else {
+        // do somethign similar for script Variables
+        value.setNull();
+        success = true;
+    }
+    
+    return success;
 }
 
 //////////////////////////////////////////////////////////////////////

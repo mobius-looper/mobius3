@@ -83,7 +83,14 @@ class MslExternal
   public:
     MslExternal() {}
     ~MslExternal() {}
-    
+
+    // the name of this symbol, in case the application still needs to make decisions
+    // based on the name
+    juce::String name;
+
+    // the behaviora of this external: Function or Variable
+    bool isFunction = false;
+
     // the primary pointer to the application object that implements this symbol
     void *object = nullptr;
 
@@ -91,9 +98,8 @@ class MslExternal
     // class of object being referenced
     int type = 0;
 
-    // the name of this symbol, in case the application still needs to make decisions
-    // based on the name
-    juce::String name;
+    // todo: a small number of random arguments that may be necessary
+    // to evaluate this external symbol?
 
 };
 
