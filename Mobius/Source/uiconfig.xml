@@ -122,6 +122,7 @@
     <Button action="AutoRecord"/>
     <Button action="MainTap Track25"/>
     <Button action="Muteit"/>
+    <Button action="SyncMasterTrack"/>
   </ButtonSet>
   <Properties>
     <Property name="buttonHeight" value="25"/>

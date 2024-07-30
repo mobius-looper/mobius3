@@ -91,6 +91,7 @@
   <Function name="SUSUnroundedInsert" sustainable='true'/>
   <Function name="SUSUnroundedMultiply" sustainable='true'/>
   <Function name="SyncStartPoint"/>
+  <Function name="SyncMasterTrack"/>
   
   <!-- Formerly TrackN, Track1, etc. -->
   <Function name="SelectTrack"

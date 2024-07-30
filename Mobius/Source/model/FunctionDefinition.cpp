@@ -193,6 +193,8 @@ FunctionDefinition SUSUnroundedInsertDef {"SUSUnroundedInsert"};
 FunctionDefinition SUSUnroundedMultiplyDef {"SUSUnroundedMultiply"};
 
 FunctionDefinition SyncStartPointDef {"SyncStartPoint"};
+FunctionDefinition SyncMasterTrackDef {"SyncMasterTrack"};
+
 // Formerly TrackN, Track1, etc.
 FunctionDefinition SelectTrackDef {"SelectTrack"};
 FunctionDefinition TrackCopyDef {"TrackCopy"};
