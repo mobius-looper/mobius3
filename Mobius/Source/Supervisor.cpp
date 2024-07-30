@@ -221,6 +221,10 @@ bool Supervisor::start()
     }
     else {
         Trace(2, "Supervisor: Beginning Standalone Application Initialization\n");
+
+        // see if we can get command line args for file associations
+        juce::StringArray args = juce::JUCEApplicationBase::getCommandLineParameterArray();
+        commandLine = args;
     }
     
     Trace(2, "Supervisor: Root path %s\n", root.getFullPathName().toUTF8());
@@ -475,7 +479,7 @@ void Supervisor::shutdown()
     // started this with a dirty flag set as a side effect of calling
     // the setters but in hindsight I hate it
 
-    // save final state
+    // save final state
     // MidiDevicesPanel will have updated DeviceConfig already, AudioDevicesPanel
     // just leaves it there and expects it to be saved automatically
     DeviceConfig* devconfig = getDeviceConfig();

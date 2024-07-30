@@ -63,6 +63,13 @@ void EnvironmentContent::showing()
     log.add("Configuration path: " + super->getRoot().getFullPathName());
     log.add("Audio block size: " + juce::String(super->getBlockSize()));
     log.add("Sample rate: " + juce::String(super->getSampleRate()));
+
+    juce::StringArray& commandLine = super->getCommandLine();
+    if (commandLine.size() > 0) {
+        log.add("Command line arguments:");
+        for (auto arg : commandLine)
+          log.add("  " + arg);
+    }
     
     if (super->isPlugin()) {
         juce::PluginHostType host;

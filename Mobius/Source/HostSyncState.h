@@ -229,4 +229,6 @@ class HostSyncState {
      */
     int mBeatDecay;
 
+    int mLastBaseBeat = 0;
+
 };

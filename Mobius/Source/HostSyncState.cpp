@@ -37,10 +37,10 @@
 HostSyncState::HostSyncState()
 {
 	// changes to stream state
-	mTraceChanges = false;
+	mTraceChanges = true;
 	// SyncTracker traces enough, don't need this too if  
 	// things are working
-    mTraceBeats = false;
+    mTraceBeats = true;
 
     // These were options for a few ancient hosts and some weird
     // Cubase behavior
@@ -70,6 +70,9 @@ HostSyncState::HostSyncState()
     mLastBeat = -1;
     mBeatCount = 0;
     mBeatDecay = 0;
+
+    // new
+    mLastBaseBeat = 0;
 }
 
 HostSyncState::~HostSyncState()
@@ -246,11 +249,12 @@ void HostSyncState::advance(int frames,
     long newBeatOffset = 0;
     double newBeatRange = 0.0;
 
+    // remove the fraction
+    long baseBeat = (long)newBeatPosition;
+    
     // Determine if there is a beat boundary in this buffer
     if (mPlaying && !mAwaitingRewind) {
 
-        // remove the fraction
-        long baseBeat = (long)newBeatPosition;
         long newBeat = baseBeat;
 
         // determine the last ppqPos within this buffer
@@ -287,6 +291,14 @@ void HostSyncState::advance(int frames,
                     (((double)lastBeatInBuffer - newBeatPosition) / mBeatsPerFrame);
                 newBeat = lastBeatInBuffer;
             }
+        }
+
+        // sanity check on this
+        bool missedBeat = false;
+        if ((mLastBaseBeat != baseBeat) &&
+            !newBeatBoundary) {
+            Trace(1, "HostSync: Looks like we missed a beat");
+            missedBeat = true;
         }
 
         // check for jumps and missed beats
@@ -332,6 +344,9 @@ void HostSyncState::advance(int frames,
             }
         }
 
+        if (missedBeat && newBeatBoundary)
+          Trace(1, "HostSync: Missed beat corrected");
+
         // when we resume or jump, have to recalculate the beat counter
         if (mResumed || jumped) {
             // !! this will be wrong if mBeatsPerBar is not an integer,
@@ -355,6 +370,7 @@ void HostSyncState::advance(int frames,
         if (newBeatBoundary) {
             if (mBeatBoundary) {
                 // had one on the last buffer
+                Trace(1, "HostSync: Canceling beat boundary for some reason");
                 newBeatBoundary = false;
                 if (!mResumed && !jumped) 
                   Trace(1, "HostSync: Supressed double beat, possible calculation error!\n");
@@ -415,6 +431,7 @@ void HostSyncState::advance(int frames,
     }
 
     // save state for the next interrupt
+    mLastBaseBeat = baseBeat;
     mLastSamplePosition = newSamplePosition;
     mLastBeatPosition = newBeatPosition;
     mLastBeatRange = newBeatRange;
@@ -441,6 +458,7 @@ void HostSyncState::updateTransport(double samplePosition,
 
     // detect transport changes
 	if (transportChanged) {
+        Trace(2, "HostSync: transportChanged");
 		if (transportPlaying != mPlaying) {
 			if (transportPlaying) {
 				if (mTraceChanges)

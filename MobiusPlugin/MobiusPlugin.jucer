@@ -34,6 +34,7 @@
         <FILE id="RTEJr4" name="MslError.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslError.cpp"/>
         <FILE id="Dq1mlk" name="MslError.h" compile="0" resource="0" file="../Mobius/Source/script/MslError.h"/>
         <FILE id="UP6F9a" name="MslFileError.h" compile="0" resource="0" file="../Mobius/Source/script/MslFileError.h"/>
+        <FILE id="ICgOuB" name="MslModel.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslModel.cpp"/>
         <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
         <FILE id="AGNZ7d" name="MslParser.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslParser.cpp"/>
         <FILE id="HXhg6q" name="MslParser.h" compile="0" resource="0" file="../Mobius/Source/script/MslParser.h"/>

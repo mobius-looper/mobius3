@@ -287,8 +287,13 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     }
 #endif
 
+    juce::StringArray& getCommandLine() {
+        return commandLine;
+    }        
+
   private:
 
+    juce::StringArray commandLine;
     bool startPrevented = false;
     char meterName[128];
     int meterStart = 0;

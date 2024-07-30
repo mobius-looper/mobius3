@@ -123,7 +123,7 @@ class JuceAudioStream : public MobiusAudioStream
 
     // hacks for host sync debugging
     bool traceppq = true;
-    double lastppq = 0.0f;
+    double lastppq = -1.0f;
     
     
 };
