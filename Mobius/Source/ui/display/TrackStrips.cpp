@@ -137,23 +137,28 @@ void TrackStrips::resized()
         else {
             // experimental multi-row layout
             int rowHeight = getHeight() / 2;
-            int oneWidth = tracks[0]->getPreferredWidth();
+            // may round off and the second will include the odd size
+            int tracksPerRow = tracks.size() / 2;
+            int squishWidth = getWidth() / tracksPerRow;
+            int preferred = tracks[0]->getPreferredWidth();
+            int oneWidth = squishWidth;
+            if (preferred < squishWidth)
+              oneWidth = preferred;
             int leftOffset = 0;
             int topOffset = 0;
-            int firstRow = getWidth() / oneWidth;
 
             for (int i = 0 ; i < tracks.size() ; i++) {
-                TrackStrip* strip = tracks[i];
-                strip->setBounds(leftOffset, topOffset, oneWidth, rowHeight);
-                leftOffset += oneWidth;
-                if (i == firstRow - 1) {
-                    // move to the next row and make the remaining fit
+                if (i == tracksPerRow) {
+                    // move to the next one
                     topOffset += rowHeight;
                     leftOffset = 0;
-                    int remaining = tracks.size() - i - 1;
+                    int remaining = tracks.size() - tracksPerRow;
                     oneWidth = getWidth() / remaining;
                 }
 
+                TrackStrip* strip = tracks[i];
+                strip->setBounds(leftOffset, topOffset, oneWidth, rowHeight);
+                leftOffset += oneWidth;
             }
         }
     }
