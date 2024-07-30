@@ -390,6 +390,10 @@ void MslPools::free(MslStack* s)
         free(s->bindings);
         s->bindings = nullptr;
 
+        free(s->inList);
+        s->inList = nullptr;
+        s->inPtr = nullptr;
+
         s->parent = stackPool;
         stackPool = s;
         stacksReturned++;

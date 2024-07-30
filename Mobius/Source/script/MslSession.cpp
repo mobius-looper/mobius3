@@ -747,7 +747,8 @@ void MslSession::doAssignment(MslSymbol* namesym)
         
             MslAction action;
             action.external = external;
-            // todo: scope with IN
+            action.scope = getTrackScope();
+
             if (stack->childResults == nullptr) {
                 // assignment with no value, I suppose this could mean "set to null"
                 // but it's most likely a syntax error
@@ -777,6 +778,28 @@ void MslSession::doAssignment(MslSymbol* namesym)
             }
         }
     }
+}
+
+/**
+ * Look up the stack for a binding for "scope" which will be taken as the track
+ * number to use when referenccingn externals.
+ * One of these is created automatically by "in" but as a side effect of the way
+ * that works you could also do this:
+ *
+ *    {var scope = 1 Record}
+ *
+ * Interesting...if we keep that might want a better name.
+ */
+int MslSession::getTrackScope()
+{
+    int scope = 0;
+
+    MslBinding* b = findBinding("scope");
+    if (b != nullptr && b->value != nullptr) {
+        // need some sanity checks on the range
+        scope = b->value->getInt();
+    }
+    return scope;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1311,9 +1334,7 @@ void MslSession::doExternalAction(MslExternal* ext)
 
     action.external = ext;
     action.arguments = stack->childResults;
-
-    // todo: scope
-    // action.scope = ?
+    action.scope = getTrackScope();
 
     if (!context->mslAction(&action)) {
         // need both messages?
@@ -1357,7 +1378,7 @@ void MslSession::doExternalQuery(MslExternal* ext)
     MslQuery query;
 
     query.external = ext;
-    // todo: scope
+    query.scope = getTrackScope();
 
     if (!context->mslQuery(&query)) {
         // need both messages?
@@ -1518,7 +1539,7 @@ void MslSession::doOperator(MslOperator* opnode)
                     // already added an error
                     break;
                 case MslPlus:
-                    v->setInt(value1->getInt() + value2->getInt());
+                    addTwoThings(value1, value2, v);
                     break;
                 case MslMinus:
                     v->setInt(value1->getInt() - value2->getInt());
@@ -1589,6 +1610,29 @@ void MslSession::doOperator(MslOperator* opnode)
     }
     
     popStack(v);
+}
+
+/**
+ * When using the + operator if either side is a String,
+ * coerce the other side to a string and do concatenation.
+ * Think: This may not be what you always want.  It isn't uncommon
+ * for something to produce a string that looks like a number.  Especially
+ * when dealing with MIDI Binding arguments which is just a string.
+ * It is probably better to have an explicit string concatenation operator.
+ */
+void MslSession::addTwoThings(MslValue* v1, MslValue* v2, MslValue* res)
+{
+    if (v1->type == MslValue::String || v2->type == MslValue::String) {
+        // if we flesh out string operations more, would be nice if MslValue
+        // could do this sort of thing
+        char merged[128];
+        // hello darkness my old friend
+        snprintf(merged, sizeof(merged), "%s%s", v1->getString(), v2->getString());
+        res->setString(merged);
+    }
+    else {
+        res->setInt(v1->getInt() + v2->getInt());
+    }
 }
 
 /**
@@ -1833,24 +1877,112 @@ void MslSession::setupWait(MslWaitNode* node)
 void MslSession::mslVisit(MslIn* innode)
 {
     if (stack->phase == 0) {
+        // the first child block will always be the sequnce injected
+        // by the parser
         if (innode->children.size() < 1)
-          addError(innode, "Missing target block");
-        else if (innode->children.size() < 2)
-          addError(innode, "Missing body block");
-
+          addError(innode, "Missing sequence");
+        if (innode->children.size() < 2)
+          addError(innode, "Missing body");
         stack->phase = 1;
         pushNextChild();
+        // the sequenece is an accumulator
+        stack->accumulator = true;
     }
     else if (stack->phase == 1) {
-
         if (stack->childResults == nullptr) {
             addError(innode, "No targets to iterate");
         }
-        else{
-            Trace(2, "MslSession: In %s", stack->childResults->getString());
-        }
+        else {
+            // convert the child list to an iteration list
+            // saved on the stack
+            MslValue* inList = nullptr;
+            MslValue* inLast = nullptr;
+            // capture the child results and reset it to accumulate body results
+            MslValue* cv = stack->childResults;
+            while (cv != nullptr) {
+                if (cv->type != MslValue::Int) {
+                    // error or just warn and move on
+                    // since we're in the middle of the script it might
+                    // be better to ignore and let it finish then present warnings
+                    // rather than just cancel it abruptly?
+                    // todo: it's actually not the innode that is the problem
+                    // it was the child node that produced this value
+                    addError(innode, "Sequence term did not evaluate to a number");
+                }
+                else {
+                    MslValue* scopenum = pool->allocValue();
+                    scopenum->setInt(cv->getInt());
+                    if (inLast != nullptr)
+                      inLast->next = scopenum;
+                    else
+                      inList = scopenum;
+                    inLast = scopenum;
+                }
+                cv = cv->next;
+            }
+            // reset child results and accumulate body results
+            pool->free(stack->childResults);
+            stack->childResults = nullptr;
+            stack->childIndex = -1;
 
-        popStack(nullptr);
+            // save iteration list on the stack
+            stack->inList = inList;
+            // start the iteration
+            stack->inPtr = inList;
+            // advance the phase and evaluate this node again
+            stack->phase = 2;
+            // set this if you want to accumulate the results of all the body blocks
+            stack->accumulator = true;
+        }
+    }
+    else if (stack->phase == 2) {
+        // for each number in stack->inList call the body block
+        if (stack->inPtr != nullptr) {
+            int scopeNumber = stack->inPtr->getInt();
+            Trace(2, "MslSession: In iteration %d", scopeNumber);
+            stack->phase = 3;
+            // add a referenceable binding for the scope number
+            if (stack->bindings == nullptr) {
+                stack->bindings = pool->allocBinding();
+                stack->bindings->setName("scope");
+                stack->bindings->value = pool->allocValue();
+            }
+            // to make use of this for echo REALLY need to support format
+            // strings or string catenation 
+            stack->bindings->value->setInt(scopeNumber);
+            pushStack(stack->node->children[1]);
+        }
+    }
+    else if (stack->phase == 3) {
+        // back from a body call
+        stack->inPtr = stack->inPtr->next;
+        // go back to phase 2 and evaluate the next one
+        stack->phase = 2;
+
+        // pop if we ran off the list
+        // in does not have a return value though I suppose we could gather them in
+        // the child list
+        if (stack->inPtr == nullptr) {
+            // at this point we were accumulating body block results
+            // what interesting thing is there to do with them?  Need better
+            // support for arrays
+            Trace(2, "MslSession: In results");
+            for (MslValue* v = stack->childResults ; v != nullptr ; v = v->next)
+              Trace(2, "  %s", v->getString());
+            popStack(nullptr);
+        }
+    }
+}
+
+/**
+ * This behaves just like a block after parsing
+ */
+void MslSession::mslVisit(MslSequence* seq)
+{
+    (void)seq;
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr) {
+        popStack();
     }
 }
 

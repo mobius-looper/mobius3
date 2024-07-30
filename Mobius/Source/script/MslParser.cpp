@@ -294,7 +294,11 @@ void MslParser::parseInner(juce::String source)
                   node = new MslSymbol(t);
                     
                 current = push(node);
-                
+
+                // hack for In that creates it's own child node for the
+                // target sequence
+                if (node->children.size() > 0)
+                  current = node->children[node->children.size() - 1];
             }
                 break;
 
@@ -392,9 +396,18 @@ void MslParser::parseInner(juce::String source)
                     // if this is a universal receptor like a block, just keep going
                     // but if this is expecting somethig else, end it prematurely
                     // would be better to have an isReady or isWaiting method?
+                    // feels like this needs to recurse up, we have to do that for
+                    // Sequence which is hacked
                     if (!current->isBlock()) {
                         current->locked = true;
                         current = current->parent;
+
+                        // maybe call wantsNode here instead
+                        if (current->isSequence()) {
+                            MslSequence* seq = static_cast<MslSequence*>(current);
+                            seq->armed = true;
+                        }
+                        
                     }
                 }
                 else {
@@ -555,9 +568,13 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     else if (t.value == "context")
       keyword = new MslContextNode(t);
     
-    else if (t.value == "in")
-      keyword = new MslIn(t);
-
+    else if (t.value == "in") {
+        // this one is weird because not only does it create a node
+        // for this token, it also pushes another node under it, an MslSequence
+        keyword = new MslIn(t);
+        keyword->add(new MslSequence());
+    }
+    
     return keyword;
 }
 

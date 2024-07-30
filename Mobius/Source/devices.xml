@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <DeviceConfig inputPorts="0" outputPorts="0">
-  <Machine hostName="Loki" inputPorts="1" outputPorts="1" audioDeviceType="ASIO"
-           audioInput="Focusrite USB ASIO" inputChannels="11" audioOutput="Focusrite USB ASIO"
+  <Machine hostName="Loki" inputPorts="2" outputPorts="1" audioDeviceType="ASIO"
+           audioInput="Focusrite USB ASIO" inputChannels="1111" audioOutput="Focusrite USB ASIO"
            outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Focusrite USB MIDI"
            midiInputSync="Focusrite USB MIDI" midiOutput="Focusrite USB MIDI"
            midiOutputSync="Focusrite USB MIDI"/>

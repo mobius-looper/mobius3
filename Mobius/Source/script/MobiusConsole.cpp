@@ -482,6 +482,9 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isIn()) {
             line += "In";
         }
+        else if (node->isSequence()) {
+            line += "Sequence";
+        }
         else if (node->isWait()) {
             MslWaitNode* waitnode = static_cast<MslWaitNode*>(node);
             line += "Wait: " + juce::String(waitnode->typeToKeyword(waitnode->type));

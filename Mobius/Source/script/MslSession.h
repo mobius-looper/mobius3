@@ -99,6 +99,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslEcho* obj) override;
     void mslVisit(class MslContextNode* obj) override;
     void mslVisit(class MslIn* obj) override;
+    void mslVisit(class MslSequence* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
@@ -177,12 +178,14 @@ class MslSession : public MslVisitor
     void returnExternal();
     void doExternalAction(MslExternal* ext);
     void doExternalQuery(MslExternal* ext);
+    int getTrackScope();
 
     // expressions
     MslValue* getArgument(int index);
     void doOperator(MslOperator* opnode);
     MslOperators mapOperator(juce::String& s);
     bool compare(MslValue* value1, MslValue* value2, bool equal);
+    void addTwoThings(MslValue* v1, MslValue* v2, MslValue* result);
 
     // waits
     void setupWait(MslWaitNode* node);

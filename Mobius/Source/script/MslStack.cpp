@@ -25,6 +25,8 @@ void MslStack::init()
     bindings = nullptr;
     proc = nullptr;
     external = nullptr;
+    inList = nullptr;
+    inPtr = nullptr;
     wait.init();
 }
 

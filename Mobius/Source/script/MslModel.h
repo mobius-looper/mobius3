@@ -46,6 +46,7 @@ class MslVisitor
     virtual void mslVisit(class MslEcho* obj) = 0;
     virtual void mslVisit(class MslContextNode* obj) = 0;
     virtual void mslVisit(class MslIn* obj) = 0;
+    virtual void mslVisit(class MslSequence* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -146,6 +147,7 @@ class MslNode
     virtual bool isEcho() {return false;}
     virtual bool isContext() {return false;}
     virtual bool isIn() {return false;}
+    virtual bool isSequence() {return false;}
     
     virtual void visit(MslVisitor* visitor) = 0;
 
@@ -236,6 +238,45 @@ class MslBlock : public MslNode
     juce::OwnedArray<MslVar> vars;
 
     bool isBlock() override {return true;}
+    bool operandable() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+};
+
+/**
+ * A sequence is similar to a block except that it is not enclosed in brackets
+ * It accumulates nodes as long as a ',' token is received
+ * One of these is not created automatically during parsing, it needs to be
+ * injected where necessary, notably after an "in"
+ */
+class MslSequence : public MslNode
+{
+  public:
+    // these are not created from tokens
+    MslSequence() {}
+    virtual ~MslSequence() {}
+
+    // this one is a little weird, it wants to SEE the token
+    // but it doesn't consume it so , continues to act as a terminator
+    // for theh last node
+    bool wantsToken(class MslParser* p, MslToken& t) override {
+        (void)p;
+        if (t.value == ",")
+          armed = true;
+        return false;
+    }
+
+    // should be more restritive here, procs and vars for example
+    // don't make sense in a sequence, they are not binding blocks
+    bool wantsNode(MslNode* node) override {
+        (void)node;
+        bool wants (children.size() == 0 || armed);
+        armed = false;
+        return wants;
+    }
+
+    bool armed = false;
+    
+    bool isSequence() override {return true;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };

@@ -43,6 +43,10 @@ class MslStack
     // true if this frame accumulates all child results
     bool accumulator = false;
 
+    // special state for MslIn iteration
+    class MslValue* inList = nullptr;
+    class MslValue* inPtr = nullptr;
+
     // binding list for this block
     class MslBinding* bindings = nullptr;
     void addBinding(class MslBinding* b);
