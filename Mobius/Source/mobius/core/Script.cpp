@@ -34,7 +34,7 @@
  *   referenced functions, variables, and parameters.
  * 
  * Link
- *   Call references between scripts in the ScriptLibrary are resolved.
+ *   Call references between scripts in the MScriptLibrary are resolved.
  *   Some statements may do their expression parsing and variable
  *   resolution here too.  Included in this process is the construction
  *   of a new Function array including both static functions and scripts.
@@ -934,7 +934,7 @@ void ScriptStatement::resolve(Mobius* m)
 }
 
 /**
- * Called when the entire ScriptLibrary has been loaded and the
+ * Called when the entire MScriptLibrary has been loaded and the
  * scripts have been exported to the global function table.
  * Overloaded by the subclasses to resolve references between scripts.
  */
@@ -3961,7 +3961,7 @@ Script::Script()
     mFunction = NEW1(RunScriptFunction, this);
 }
 
-Script::Script(ScriptLibrary* env, const char* filename)
+Script::Script(MScriptLibrary* env, const char* filename)
 {
 	init();
 	mLibrary = env;
@@ -4021,12 +4021,12 @@ Script::~Script()
 	}
 }
 
-void Script::setLibrary(ScriptLibrary* env)
+void Script::setLibrary(MScriptLibrary* env)
 {
     mLibrary = env;
 }
 
-ScriptLibrary* Script::getLibrary()
+MScriptLibrary* Script::getLibrary()
 {
     return mLibrary;
 }
@@ -4399,20 +4399,20 @@ void Script::xwrite(const char* filename)
 
 //////////////////////////////////////////////////////////////////////
 //
-// ScriptLibrary
+// MScriptLibrary
 //
 //////////////////////////////////////////////////////////////////////
 
-ScriptLibrary::ScriptLibrary()
+MScriptLibrary::MScriptLibrary()
 {
     mNext = NULL;
     mSource = NULL;
 	mScripts = NULL;
 }
 
-ScriptLibrary::~ScriptLibrary()
+MScriptLibrary::~MScriptLibrary()
 {
-	ScriptLibrary *el, *next;
+	MScriptLibrary *el, *next;
 
     delete mSource;
     delete mScripts;
@@ -4424,33 +4424,33 @@ ScriptLibrary::~ScriptLibrary()
 	}
 }
 
-ScriptLibrary* ScriptLibrary::getNext()
+MScriptLibrary* MScriptLibrary::getNext()
 {
     return mNext;
 }
 
-void ScriptLibrary::setNext(ScriptLibrary* env)
+void MScriptLibrary::setNext(MScriptLibrary* env)
 {
     mNext = env;
 }
 
-ScriptConfig* ScriptLibrary::getSource()
+ScriptConfig* MScriptLibrary::getSource()
 {
     return mSource;
 }
 
-void ScriptLibrary::setSource(ScriptConfig* config)
+void MScriptLibrary::setSource(ScriptConfig* config)
 {
     delete mSource;
     mSource = config;
 }
 
-Script* ScriptLibrary::getScripts()
+Script* MScriptLibrary::getScripts()
 {
 	return mScripts;
 }
 
-void ScriptLibrary::setScripts(Script* scripts)
+void MScriptLibrary::setScripts(Script* scripts)
 {
     delete mScripts;
     mScripts = scripts;
@@ -4465,7 +4465,7 @@ void ScriptLibrary::setScripts(Script* scripts)
  * ScriptConfig due to filtering out invalid names, compare with the
  * original ScriptConfig which we saved at compilation.
  */
-bool ScriptLibrary::isDifference(ScriptConfig* config)
+bool MScriptLibrary::isDifference(ScriptConfig* config)
 {
     bool difference = false;
 
@@ -4492,7 +4492,7 @@ bool ScriptLibrary::isDifference(ScriptConfig* config)
  * if it was specified or the base file name.
  * Might want to search on full path to be safe?
  */
-Script* ScriptLibrary::getScript(Script* src)
+Script* MScriptLibrary::getScript(Script* src)
 {
     Script* found = NULL;
 

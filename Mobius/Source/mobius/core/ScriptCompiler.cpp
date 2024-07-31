@@ -62,21 +62,21 @@ ScriptCompiler::~ScriptCompiler()
 }
 
 /**
- * Compile a ScriptConfig into a ScriptLibrary.
+ * Compile a ScriptConfig into a MScriptLibrary.
  * 
- * The returned ScriptLibrary is completely self contained and only has
+ * The returned MScriptLibrary is completely self contained and only has
  * references to static objects like Functions and Parameters.
  * 
  * Mobius is only necessary to resolve references to Parameters and Functions.
  */
-ScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
+MScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
 {
     // should not try to use this more than once
     if (mLibrary != NULL)
       Trace(1, "ScriptCompiler: dangling library!\n");
 
     mMobius = m;
-    mLibrary = new ScriptLibrary();
+    mLibrary = new MScriptLibrary();
     mScripts = NULL;
     mLast = NULL;
 
@@ -107,7 +107,7 @@ ScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
     mLibrary->setScripts(mScripts);
 
     // ownership transfers
-    ScriptLibrary* retval = mLibrary;
+    MScriptLibrary* retval = mLibrary;
     mLibrary = nullptr;
     
     return retval;
@@ -118,7 +118,7 @@ ScriptLibrary* ScriptCompiler::compile(Mobius* m, ScriptConfig* config)
  *
  * Recompile one script declared with !autoload
  * Keep the same script object so we don't have to mess
- * with substitution in the ScriptLibrary and elsewhere.
+ * with substitution in the MScriptLibrary and elsewhere.
  * This should only be called if the script is not currently
  * running, ScriptInterpreter checks that.
  * 
@@ -787,7 +787,7 @@ Script* ScriptCompiler::resolveScript(const char* name)
         found = resolveScript(mScripts, name);
     }
     else if (mLibrary != NULL) {
-        // fall back to ScriptLibrary
+        // fall back to MScriptLibrary
         found = resolveScript(mLibrary->getScripts(), name);
     }
 
@@ -834,7 +834,7 @@ Script* ScriptCompiler::resolveScript(Script* scripts, const char* name)
     }
 
     if (found != NULL) {
-		Trace(2, "ScriptLibrary: Reference %s resolved to script %s\n",
+		Trace(2, "MScriptLibrary: Reference %s resolved to script %s\n",
 			  name, found->getFilename());
 	}
 

@@ -16,7 +16,7 @@ class Scriptarian
 
     // library access just for Shell to build the DynamicConfig
     // update: not used after SymbolTable
-    class ScriptLibrary* getLibrary() {
+    class MScriptLibrary* getLibrary() {
         return mLibrary;
     }
 
@@ -38,7 +38,7 @@ class Scriptarian
     class Mobius* mMobius;
 
     // compilation artifacts
-    class ScriptLibrary* mLibrary;
+    class MScriptLibrary* mLibrary;
 
     // consider whether this needs to be distinct
     // or can we just merge it with Scriptarian

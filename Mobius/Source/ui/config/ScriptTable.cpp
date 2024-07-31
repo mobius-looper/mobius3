@@ -41,7 +41,7 @@ void ScriptTable::setScripts(ScriptConfig* config)
     ScriptRef* script = config->getScripts();
     while (script != nullptr) {
         juce::String path = juce::String(script->getFile());
-        ScriptFile* sf = new ScriptFile(path);
+        ScriptTableFile* sf = new ScriptTableFile(path);
         files.add(sf);
         // color it red if it doesn't exist
         // this assumes that we have an absolute path, which should be the case now
@@ -63,14 +63,14 @@ void ScriptTable::updateContent()
 }
 
 /**
- * Reconstructes a ScriptConfig from the ScriptFiles
+ * Reconstructes a ScriptConfig from the ScriptTableFiles
  * Ownership of the ScriptConfig passes to the caller.
  */
 ScriptConfig* ScriptTable::capture()
 {
     ScriptConfig* config = new ScriptConfig();
     for (int i = 0 ; i < files.size() ; i++) {
-        ScriptFile* sf = files[i];
+        ScriptTableFile* sf = files[i];
         if (sf->path.length() > 0) {
             ScriptRef* script = new ScriptRef(sf->path.toUTF8());
             config->add(script);
@@ -218,7 +218,7 @@ void ScriptTable::buttonClicked(juce::String name)
     else if (name == juce::String("Move Up")) {
         int row = table.getSelectedRow();
         if (row >= 1) {
-            ScriptFile* other = files[row-1];
+            ScriptTableFile* other = files[row-1];
             files.set(row-1, files[row], false);
             files.set(row, other, false);
             table.selectRow(row-1);
@@ -227,7 +227,7 @@ void ScriptTable::buttonClicked(juce::String name)
     else if (name == juce::String("Move Down")) {
         int row = table.getSelectedRow();
         if (row >= 0 && row < (files.size() - 1)) {
-            ScriptFile* other = files[row+1];
+            ScriptTableFile* other = files[row+1];
             files.set(row+1, files[row], false);
             files.set(row, other, false);
             table.selectRow(row+1);
@@ -298,7 +298,7 @@ void ScriptTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     (void)columnId;
-    ScriptFile* file = files[rowNumber];
+    ScriptTableFile* file = files[rowNumber];
 
     // what the tutorial did
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -426,7 +426,7 @@ void ScriptTable::doFileChooser()
                 juce::String path = file.getFullPathName();
                 //Trace(2, "  %s\n", path.toUTF8());
 
-                ScriptFile* sf = new ScriptFile(path);
+                ScriptTableFile* sf = new ScriptTableFile(path);
                 files.add(sf);
 
                 // remember this directory for the next time

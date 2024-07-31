@@ -21,7 +21,7 @@
  * The ExParser is always available.
  *
  * The compiler is normally built once when a ScriptConfig is loaded
- * and converted into a ScriptLibrary.  It may also be built to 
+ * and converted into a MScriptLibrary.  It may also be built to 
  * incrementally compile scripts that use the !autoload option.
  *
  */
@@ -32,9 +32,9 @@ class ScriptCompiler {
 	~ScriptCompiler();
 
     /**
-     * Compile a ScriptConfig into a ScriptLibrary.
+     * Compile a ScriptConfig into a MScriptLibrary.
      */
-    class ScriptLibrary* compile(class Mobius* m, class ScriptConfig* config);
+    class MScriptLibrary* compile(class Mobius* m, class ScriptConfig* config);
     
     /**
      * Incrementally recompile one script.
@@ -73,7 +73,7 @@ class ScriptCompiler {
 	class ExParser* mParser;
 
     // Environment we're compiling into
-    class ScriptLibrary* mLibrary;
+    class MScriptLibrary* mLibrary;
 
     // scripts we have parsed
     class Script* mScripts;

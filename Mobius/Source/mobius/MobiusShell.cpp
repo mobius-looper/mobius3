@@ -1231,7 +1231,7 @@ void MobiusShell::initializeScripts()
  * This is a relatively heavy thing to be doing in the UI thread and requires
  * reaching deep into the core model to build a Scriptarian.  Because
  * compilation and linking to internal components like Function and Parameter
- * is tightly wound together, we can't just compile it to a ScriptLibrary
+ * is tightly wound together, we can't just compile it to a MScriptLibrary
  * and pass it down, we have to make an entire scriptarian with a Mobius to
  * resolve references.
  *
@@ -1384,7 +1384,7 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
     }
     
     if (scriptarian != nullptr) {
-        ScriptLibrary* lib = scriptarian->getLibrary();
+        MScriptLibrary* lib = scriptarian->getLibrary();
         if (lib != nullptr) {
             Script* script = lib->getScripts();
             while (script != nullptr) {

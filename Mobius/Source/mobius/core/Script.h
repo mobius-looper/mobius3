@@ -175,7 +175,7 @@ typedef enum {
 
 //////////////////////////////////////////////////////////////////////
 //
-// ScriptLibrary
+// MScriptLibrary
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -183,14 +183,14 @@ typedef enum {
  * A collection of compiled scripts.
  * This is created by the ScriptCompiler from a ScriptConfig.
  */
-class ScriptLibrary {
+class MScriptLibrary {
   public:
 
-	ScriptLibrary();
-	~ScriptLibrary();
+	MScriptLibrary();
+	~MScriptLibrary();
 
-    ScriptLibrary* getNext();
-    void setNext(ScriptLibrary* env);
+    MScriptLibrary* getNext();
+    void setNext(MScriptLibrary* env);
 
     class ScriptConfig* getSource();
     void setSource(ScriptConfig* config);
@@ -209,7 +209,7 @@ class ScriptLibrary {
     /**
      * Link for the script environment history.
      */
-    ScriptLibrary* mNext;
+    MScriptLibrary* mNext;
 
     /**
      * A copy of the ScriptConfig from which this environmment
@@ -317,11 +317,11 @@ class Script {
   public:
 
 	Script();
-    Script(ScriptLibrary* env, const char* filename);
+    Script(MScriptLibrary* env, const char* filename);
 	~Script();
 
-    void setLibrary(ScriptLibrary* env);
-    ScriptLibrary* getLibrary();
+    void setLibrary(MScriptLibrary* env);
+    MScriptLibrary* getLibrary();
 
 	void setNext(Script* s);
     Script* getNext();
@@ -411,10 +411,10 @@ class Script {
 	 * Environment we're a part of.  
 	 * Necessary to resolve calls when !autoload is enabled.
 	 */
-	ScriptLibrary* mLibrary;
+	MScriptLibrary* mLibrary;
 
     /**
-     * Chain pointer within the ScriptLibrary.
+     * Chain pointer within the MScriptLibrary.
      */
     Script* mNext;
 
@@ -522,7 +522,7 @@ class ScriptResolver : public ExResolver {
  *
  * An "include" directive would make it easier to build libraries of
  * Variable and Proc declarations.  We could try to resolve Variables
- * within the entire ScriptLibrary like we do for Call to other scripts,
+ * within the entire MScriptLibrary like we do for Call to other scripts,
  * this makes it hard to see how a variable is going to behave.
  *
  * Proc libraries would be very useful for the unit tests, but have

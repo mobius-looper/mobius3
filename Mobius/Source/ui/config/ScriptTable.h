@@ -11,16 +11,17 @@
 
 /**
  * Represents one sample file in the table.
+ * todo: see if this can be replaced with the new script/ScriptFile
  */
-class ScriptFile
+class ScriptTableFile
 {
   public:
-    ScriptFile() {
+    ScriptTableFile() {
     }
-    ScriptFile(juce::String argPath) {
+    ScriptTableFile(juce::String argPath) {
         path = argPath;
     }
-    ~ScriptFile() {
+    ~ScriptTableFile() {
     }
 
     juce::String path;
@@ -66,7 +67,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
 
   private:
 
-    juce::OwnedArray<class ScriptFile> files;
+    juce::OwnedArray<class ScriptTableFile> files;
     
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
