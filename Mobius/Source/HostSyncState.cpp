@@ -25,8 +25,10 @@
 #include "HostSyncState.h"
 
 /**
- * The three initializations to -1 have been done
- * for a long time but I don't think they're all necessary.
+ * The -1 initializations are there because the initial beat after
+ * starting is usually at ppq 0.0f and that needs to be detected as
+ * a beat boundary.
+ *
  * mLastSamplePosition is only relevant when trying to detect transport
  * changes from the sample position.
  *

@@ -631,6 +631,11 @@
         <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
+        <FILE id="VynjNQ" name="ScriptFile.cpp" compile="1" resource="0" file="Source/script/ScriptFile.cpp"/>
+        <FILE id="ijvESz" name="ScriptFile.h" compile="0" resource="0" file="Source/script/ScriptFile.h"/>
+        <FILE id="VF5Qmh" name="ScriptLibrary.cpp" compile="1" resource="0"
+              file="Source/script/ScriptLibrary.cpp"/>
+        <FILE id="rB58Nv" name="ScriptLibrary.h" compile="0" resource="0" file="Source/script/ScriptLibrary.h"/>
       </GROUP>
       <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
         <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"

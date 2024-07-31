@@ -20,6 +20,8 @@
 
 #include <JuceHeader.h>
 
+#include "ScriptLibrary.h"
+
 // have to include this so the unique_ptr can compile
 #include "../model/ScriptConfig.h"
 
@@ -78,6 +80,10 @@ class ScriptClerk {
     class Supervisor* supervisor = nullptr;
     juce::File root;
 
+    // files round in the library folder
+    juce::OwnedArray<class ScriptLibrary> library;
+
+    
     // list of .msl files after split
     juce::StringArray mslFiles;
 
