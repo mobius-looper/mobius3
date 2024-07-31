@@ -13,12 +13,89 @@
 
 #pragma once
 
+/**
+ * An emerging replacement for the older HostSyncState below
+ * these will be maintained in parallel for awhile.
+ */
+class NewHostSyncState {
+
+  public:
+
+    NewHostSyncState();
+    ~NewHostSyncState();
+
+    /**
+     * Update state related to host tempo and time signature.
+     */
+    void updateTempo(int sampleRate, double tempo, 
+                     int timeSigNumerator, int timeSigDenomonator);
+
+    /**
+     * Update audio stream state.
+     */
+    void advance(int frames, bool transportPlaying, double samplePosition, double beatPosition);
+
+    void transfer(AudioTime* autime);
+    
+  private:
+
+    bool mTraceTempo = true;
+    bool mTraceBeats = false;
+    
+    /**
+     * The current sample rate reported by the host.  This is not
+     * expected to change though we track it.
+     */
+    int mSampleRate = 0;
+    
+    /** 
+     * The current tempo reported by the host.  This is expected to change.
+     */
+    double mTempo = 0.0f;
+
+    /**
+     * The current time signagure reported by the host.
+     */
+    int mTimeSigNumerator = 0;
+    int mTimeSigDenominator = 0;
+    double mBeatsPerBar = 0.0f;
+    
+    // 
+    // Things derived from updateTempo()
+    //
+
+    /**
+     * The fraction of a beat represented by one frame.
+     * Typically a very small number.  This is used in the conversion
+     * of mBeatPosition into a buffer offset.
+     * Don't need this any more if we just let beats be quantized to the start
+     * of every block.
+     */
+    double mBeatsPerFrame = 0.0f;
+
+    //
+    // Transport State
+    //
+
+    bool mPlaying = false;
+    double mLastBeatPosition = -1.0f;
+    int mLastBeat = -1;
+    int mLastBar = -1;
+    bool mBeatBoundary = false;
+    bool mBarBoundary = false;
+    
+};
+
+
 class HostSyncState {
 
   public:
 
     HostSyncState();
     ~HostSyncState();
+
+    // temporary: maintain this in parallel for awhile
+    NewHostSyncState newState;
 
 	/**
 	 * Adjust for optional host options.
@@ -152,6 +229,12 @@ class HostSyncState {
     bool mPlaying;
 
     /**
+     * True if the transport changed from playing to not playing
+     * on the last block.
+     */
+    bool mTransportChanged;
+
+    /**
      * The sample position of the last buffer.  This is normally
      * advances by the buffer size with zero being the start of the
      * host's timeline.
@@ -232,3 +315,4 @@ class HostSyncState {
     int mLastBaseBeat = 0;
 
 };
+

@@ -640,7 +640,8 @@ void JuceAudioStream::captureAudioTime(int blockSize)
                 tsigDenominator = tsig->denominator;
             }
 
-            syncState.updateTempo(sampleRate, tempo, tsigNumerator, tsigDenominator);
+            //syncState.updateTempo(sampleRate, tempo, tsigNumerator, tsigDenominator);
+            newSyncState.updateTempo(sampleRate, tempo, tsigNumerator, tsigDenominator);
 
             // advance needs: frames, samplePosition, beatPosition,
             // transportChanged, transportPlaying
@@ -648,7 +649,7 @@ void JuceAudioStream::captureAudioTime(int blockSize)
             // transportChanged is an artifact of kVstTransportChanged in VST2
             // and CallHostTransportState in AUv1 that don't seem to exist in
             // VST3 and AU3
-            // so we can keep using the old HostSyncState code, derive transportChanged just by
+            // so we can keep using the old HostSyncState code, derive transportChanged by
             // comparing isPlaying to the last value
             bool transportChanged = isPlaying != syncState.isPlaying();
 
@@ -678,11 +679,14 @@ void JuceAudioStream::captureAudioTime(int blockSize)
             // changed by now.  It will try to figure that out it's own self,
             // would be good to verify that it matches what Juce says...
             
-            syncState.advance(blockSize, samplePosition, beatPosition,
-                              transportChanged, isPlaying);
+            //syncState.advance(blockSize, samplePosition, beatPosition,
+            //transportChanged, isPlaying);
+            
+            newSyncState.advance(blockSize, isPlaying, samplePosition, beatPosition);
 
             // now dump that mess into an AudioTime for Mobius
-            syncState.transfer(&audioTime);
+            //syncState.transfer(&audioTime);
+            newSyncState.transfer(&audioTime);
         }
     }
 }

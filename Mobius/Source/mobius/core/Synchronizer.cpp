@@ -2172,10 +2172,25 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
             // advance the beat by one, assume we can do a START/CONTINUE.
             // This isn't critical but it's nice with host sync so we can 
             // reset the avererage pulse width calculator which may be
-            // way off if we're jumping the host transport.  
+            // way off if we're jumping the host transport.
 
-            if (mHostTransportPending || ((lastBeat + 1) != mHostBeat)) {
-                if (mHostBeat == 0) {
+
+            // NEW: This logic was messing up FL Studio and probably other pattern-based
+            // hosts that don't increase beat numbers monotonically, it jumps back to zero
+            // on every cycle.  In general, Mobius isn't ready to be smart about
+            // following the host transport.  The old sync code is an absoluate mess
+            // that needs to be taken out back and burned.  Don't try to be smart about this.
+            // get the fundamental beat/bar sync working and worry about trying to follow
+            // pause/continue later since it is far more complicated than just this
+            // if (mHostTransportPending || ((lastBeat + 1) != mHostBeat)) {
+            
+            if (mHostTransportPending) {
+
+                // NEW: not sure if we should even try to mess with CONTINUE
+                // whenever the transport starts, just send START?
+                bool alwaysStarts = false;
+                
+                if (alwaysStarts ||  mHostBeat == 0) {
                     event->fields.sync.eventType = SYNC_EVENT_START;
                     event->fields.sync.pulseType = SYNC_PULSE_BAR;
                 }

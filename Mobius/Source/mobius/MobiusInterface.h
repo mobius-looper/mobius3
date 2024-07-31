@@ -730,8 +730,8 @@ class MobiusAudioStream
 };
 
 /**
- * VST and AU streams can also include synchronization info.
- * This is the same data in the VstTimeInfo, plus some analysis.
+ * An older model that sat between Synchronizer and VstTimeInfo.
+ * This is now constructed by HostSyncState.
  */
 class AudioTime {
 
@@ -772,6 +772,8 @@ class AudioTime {
 
 	/**
 	 * Frame offset to the beat/bar boundary in this buffer.
+     * note: this never worked right and it will always be zero
+     * see extensive comments in HostSyncState
 	 */
 	long boundaryOffset = 0;
 
@@ -782,12 +784,15 @@ class AudioTime {
 
 	/**
 	 * Current bar.
+     * This is the bar the host provides if it can.
+     * For pattern-based hosts like FL Studio the bar may stay at zero all the time.
 	 */
-	//int bar;
+	int bar;
 
     /**
      * Number of beats in one bar.  If zero it is undefined, beat should
      * increment without wrapping and bar should stay zero.
+     * Most hosts can convey the transport time signature but not all do.
      */
     int beatsPerBar = 0;
 
@@ -802,7 +807,7 @@ class AudioTime {
 		barBoundary = false;
 		boundaryOffset = 0;
 		beat = 0;
-//		bar = 0;
+		bar = 0;
         beatsPerBar = 0;
 	}
 

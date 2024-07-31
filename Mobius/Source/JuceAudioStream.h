@@ -77,6 +77,8 @@ class JuceAudioStream : public MobiusAudioStream
 
     // maintains an analysis of host transport position for each block
     HostSyncState syncState;
+    NewHostSyncState newSyncState;
+
     // simplification of HostSyncState for Mobius
     AudioTime audioTime;
     
@@ -122,7 +124,7 @@ class JuceAudioStream : public MobiusAudioStream
     void captureAudioTime(int blockSize);
 
     // hacks for host sync debugging
-    bool traceppq = true;
+    bool traceppq = false;
     double lastppq = -1.0f;
     
     
