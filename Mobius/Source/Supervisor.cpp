@@ -479,7 +479,8 @@ void Supervisor::shutdown()
     // started this with a dirty flag set as a side effect of calling
     // the setters but in hindsight I hate it
 
-    // save final state
+    // save final state
+
     // MidiDevicesPanel will have updated DeviceConfig already, AudioDevicesPanel
     // just leaves it there and expects it to be saved automatically
     DeviceConfig* devconfig = getDeviceConfig();

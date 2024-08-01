@@ -320,7 +320,7 @@
     <Binding name='Pause' trigger='key' value='80'/>
     <Binding name='Overdub' trigger='key' value='79'/>
     <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
-    <Binding name='Confirm' trigger='key' value='67'/>
+    <Binding name='Confirm' trigger='key' value='71'/>
   </BindingSet>
   <BindingSet name='[New]'>
     <Binding name='Backward' trigger='note'/>
