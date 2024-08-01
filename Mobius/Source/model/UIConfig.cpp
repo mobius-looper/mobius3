@@ -676,27 +676,20 @@ void UIConfig::hackDefinitions()
     definitions.add(new DisplayElementDefinition("AudioMeterElement"));
     definitions.add(new DisplayElementDefinition("LayerElement"));
     definitions.add(new DisplayElementDefinition("AlertElement"));
+    definitions.add(new DisplayElementDefinition("MinorModesElement"));
+    definitions.add(new DisplayElementDefinition("TempoElement"));
+    definitions.add(new DisplayElementDefinition("LoopWindowElement"));
+
 
     // these were from old code and not yet implemented
-
-    // the first two we need at some point
-    // new DisplayElement("MinorModes", "Modes", MSG_UI_EL_MINOR_MODES);
-    // new DisplayElement("SyncStatus", "Sync", MSG_UI_EL_SYNC_STATUS);
 
     // don't remember what this was for
     // new DisplayElement("PresetAlert", MSG_UI_EL_PRESET_ALERT);
 
-    // this probably corresponds close enough to the new AlertElement
-    // new DisplayElement("Messages", MSG_UI_EL_MESSAGES);
-    
     // there was support for a second floating strip for pitch/speed knobs
     // do it a better way
     // new DisplayElement("TrackStrip2", MSG_UI_EL_TRACK_STRIP_2);
     
-    // probably something to do with loop windowing, and trying to show
-    // where you are?
-    // new DisplayElement("LoopWindow", MSG_UI_EL_LOOP_WINDOW);
-
     // this was an extremly simple set of vertical bars representing
     // loops in the active track, not necessary with the loop status element
     // in the track strip

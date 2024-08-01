@@ -2136,9 +2136,9 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
         */
     }
     else {
-        // similar jump detection in VstMobius, could we push  
+        // similar jump detection in VstMobius, could we push
         // that into AudioTimer?
-        int lastBeat = mHostBeat;
+        //int lastBeat = mHostBeat;
 
 		mHostTempo = (float)hostTime->tempo;
 		mHostBeat = hostTime->beat;

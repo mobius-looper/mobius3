@@ -13,10 +13,10 @@ The current elements displayed in the docked track strips at the bottom.  This l
 The available elements not yet included in the docked track strip.</Help>
 
 <Help name='displayEditorFloatingCurrent'>
-The current elements displayed in the docked track strips at the bottom.  This list is ordered top to bottom.  To add new elements drag from the right panel to the left.  To remove elements drag from the left panel to the right.  To reorder, drag within the current list.</Help>
+The current elements displayed in the floating track strips at the bottom.  This list is ordered top to bottom.  To add new elements drag from the right panel to the left.  To remove elements drag from the left panel to the right.  To reorder, drag within the current list.</Help>
 
 <Help name='displayEditorFloatingAvailable'>
-The available elements not yet included in the docked track strip.</Help>
+The available elements not yet included in the floating track strip.</Help>
 
 <Help name='displayEditorParametersCurrent'>
 The current set of instant displayed in the Instant Parameters status element.</Help>

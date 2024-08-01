@@ -149,7 +149,7 @@
       altFeedback='127'
       pan='64'
       audioInputPort='1'
-      syncSource='host'
+      syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -292,20 +292,6 @@
   <BindingSet name='Base'>
     <Binding name='output' scope='1' trigger='host'/>
     <Binding name='Record' trigger='host'/>
-    <Binding name='Record' trigger='key' value='82'/>
-    <Binding name='Reset' trigger='key' value='27'/>
-    <Binding name='NextLoop' trigger='key' value='65576'/>
-    <Binding name='PrevLoop' trigger='key' value='65574'/>
-    <Binding name='PrevTrack' trigger='key' value='65573'/>
-    <Binding name='NextTrack' trigger='key' value='65575'/>
-    <Binding name='UIParameterUp' trigger='key' value='327718'/>
-    <Binding name='UIParameterDown' trigger='key' value='327720'/>
-    <Binding name='UIParameterInc' trigger='key' value='327719'/>
-    <Binding name='UIParameterDec' trigger='key' value='327717'/>
-    <Binding name='Play' trigger='key' value='32'/>
-    <Binding name='Pause' trigger='key' value='80'/>
-    <Binding name='Overdub' trigger='key' value='79'/>
-    <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
     <Binding name='Record' trigger='note' value='48'/>
     <Binding name='UIParameterUp' trigger='note' value='53'/>
     <Binding name='UIParameterDown' trigger='note' value='55'/>
@@ -320,6 +306,21 @@
     <Binding name='Muteit' scope='2' trigger='note' value='5' channel='1'/>
     <Binding name='Muteit' scope='3' trigger='note' value='6' channel='1'/>
     <Binding name='Muteit' scope='4' trigger='note' value='7' channel='1'/>
+    <Binding name='Record' trigger='key' value='82'/>
+    <Binding name='Reset' trigger='key' value='27'/>
+    <Binding name='NextLoop' trigger='key' value='65576'/>
+    <Binding name='PrevLoop' trigger='key' value='65574'/>
+    <Binding name='PrevTrack' trigger='key' value='65573'/>
+    <Binding name='NextTrack' trigger='key' value='65575'/>
+    <Binding name='UIParameterUp' trigger='key' value='327718'/>
+    <Binding name='UIParameterDown' trigger='key' value='327720'/>
+    <Binding name='UIParameterInc' trigger='key' value='327719'/>
+    <Binding name='UIParameterDec' trigger='key' value='327717'/>
+    <Binding name='Play' trigger='key' value='32'/>
+    <Binding name='Pause' trigger='key' value='80'/>
+    <Binding name='Overdub' trigger='key' value='79'/>
+    <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
+    <Binding name='Confirm' trigger='key' value='67'/>
   </BindingSet>
   <BindingSet name='[New]'>
     <Binding name='Backward' trigger='note'/>

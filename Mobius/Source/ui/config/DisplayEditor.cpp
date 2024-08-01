@@ -454,49 +454,50 @@ void DisplayEditor::saveElements(juce::OwnedArray<DisplayElement>& elements,
 
 /**
  * Unlike main status elements, strip elements are ordered.
+ * This is touchy because we're dealing with OwnedArray and reordering it
+ * as well as adding new elements and iterating over it.
+ * 
+ * Start by copying the current elements to a temporary array, clearing the OwnedArray without
+ * deleting the elements, then rebuilding it in order.
  */
 void DisplayEditor::saveStripElements(juce::OwnedArray<DisplayElement>& elements,
                                       juce::StringArray names)
 {
-    juce::Array<DisplayElement*> newElements;
-    
+    juce::OwnedArray<DisplayElement> existing;
+
+    // move the elements to the temporary array
+    while (elements.size() > 0)
+      existing.add(elements.removeAndReturn(0));
+
+    // rebuild it with the new order
     for (auto name : names) {
         // really wish this was a map
-        DisplayElement* existing = nullptr;
-        for (auto el : elements) {
+        DisplayElement* found = nullptr;
+        for (auto el : existing) {
             if (el->name == name) {
-                existing = el;
+                found = el;
                 break;
             }
         }
-        if (existing != nullptr) {
-            existing->disabled = false;
-            newElements.add(existing);
-            elements.removeObject(existing, false);
+        
+        if (found != nullptr) {
+            existing.removeObject(found, false);
+            elements.add(found);
+            found->disabled = false;
         }
         else {
             DisplayElement* el = new DisplayElement();
             el->name = name;
-            newElements.add(el);
+            elements.add(el);
         }
     }
 
     // anything not in the new list is marked as disabled
-    for (auto el : elements) {
-        if (!names.contains(el->name)) {
-            el->disabled = true;
-            newElements.add(el);
-            elements.removeObject(el, false);
-        }
+    while (existing.size() > 0) {
+        DisplayElement* el = existing.removeAndReturn(0);
+        elements.add(el);
+        el->disabled = true;
     }
-
-    // should be empty
-    if (elements.size() > 0)
-      Trace(1, "DisplayEditor::saveStripElements Your code sucks and you have lingering elements\n");
-
-    // put the new ordrered list back
-    for (auto el : newElements)
-      elements.add(el);
 }
 
 /**

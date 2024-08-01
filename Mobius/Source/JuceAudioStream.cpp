@@ -651,7 +651,7 @@ void JuceAudioStream::captureAudioTime(int blockSize)
             // VST3 and AU3
             // so we can keep using the old HostSyncState code, derive transportChanged by
             // comparing isPlaying to the last value
-            bool transportChanged = isPlaying != syncState.isPlaying();
+            //bool transportChanged = isPlaying != syncState.isPlaying();
 
             // samplePosition was only used for transport detection in old hosts
             // that didn't support kVstTransportChanged, shouldn't need that any more
