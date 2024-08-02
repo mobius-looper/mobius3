@@ -148,7 +148,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
       syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
@@ -158,7 +157,6 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      audioInputPort='1'
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
@@ -321,6 +319,8 @@
     <Binding name='Overdub' trigger='key' value='79'/>
     <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
     <Binding name='Confirm' trigger='key' value='71'/>
+    <Binding name='Undo' trigger='key' value='8'/>
+    <Binding name='GlobalReset' trigger='key' value='71'/>
   </BindingSet>
   <BindingSet name='[New]'>
     <Binding name='Backward' trigger='note'/>

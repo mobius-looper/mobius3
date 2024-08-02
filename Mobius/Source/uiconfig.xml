@@ -126,6 +126,7 @@
     <Button action="Muteit"/>
     <Button action="SyncMasterTrack"/>
     <Button action="Confirm"/>
+    <Button action="SamplePlay" arguments="1"/>
   </ButtonSet>
   <Properties>
     <Property name="buttonHeight" value="25"/>
