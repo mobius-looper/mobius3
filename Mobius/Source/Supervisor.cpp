@@ -263,6 +263,7 @@ bool Supervisor::start()
     
     // if we're standalone add to the MainComponent now
     // if plugin have to do this later when the editor is created
+
     if (mainComponent != nullptr) {
         mainComponent->addKeyListener(&keyTracker);
         // didn't do this originally does it help with focus loss after changing buttons?
@@ -273,8 +274,8 @@ bool Supervisor::start()
         // this seems to allow MainComponent to retain focus and keep pumping events
         // through KeyTracker
         mainComponent->setWantsKeyboardFocus(true);
-        
         mainComponent->addAndMakeVisible(win);
+
         // get the size previoiusly used
         UIConfig* config = getUIConfig();
         int width = mainComponent->getWidth();
@@ -285,6 +286,16 @@ bool Supervisor::start()
 
         // grab focus next ping
         wantsFocus = true;
+    }
+    else {
+        // plugins don't have the wrapper yet, so size the MainWindow
+        // can't we just do this consistently in MainWindow for both?
+        UIConfig* config = getUIConfig();
+        int width = mainWindow->getWidth();
+        int height = mainWindow->getHeight();
+        if (config->windowWidth > 0) width = config->windowWidth;
+        if (config->windowHeight > 0) height = config->windowHeight;
+        mainWindow->setSize(width, height);
     }
     
     meter("Mobius");

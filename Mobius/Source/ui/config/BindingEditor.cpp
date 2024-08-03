@@ -33,6 +33,9 @@
 #include "../common/Form.h"
 #include "../JuceUtil.h"
 
+// temporary until we can get the initialization order sorted out
+#include "../../Supervisor.h"
+
 #include "BindingTable.h"
 #include "BindingTargetSelector.h"
 
@@ -418,7 +421,11 @@ void BindingEditor::initForm()
     juce::StringArray scopeNames;
     scopeNames.add("Global");
 
-    if (maxTracks == 0) maxTracks = 8;
+    // context is not always set at this point so we have to go direct
+    // to Supervisor to get to MobiusConfig, this sucks work out a more
+    // orderly initialization sequence
+    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    maxTracks = config->getTracks();
     for (int i = 0 ; i < maxTracks ; i++)
       scopeNames.add("Track " + juce::String(i+1));
 
