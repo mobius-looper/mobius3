@@ -394,7 +394,7 @@ bool Supervisor::start()
 
     // test this
 #if 0    
-    SuperDumper sd;
+    SuperDumper sd {this};
     // sd.test();
     mobius->dump(sd);
     sd.write("mobius.txt");

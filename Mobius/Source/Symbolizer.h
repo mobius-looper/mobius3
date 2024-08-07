@@ -15,7 +15,7 @@ class Symbolizer
 {
   public:
 
-    Symbolizer();
+    Symbolizer(class Supervisor* s);
     ~Symbolizer();
 
     /**
@@ -25,6 +25,8 @@ class Symbolizer
 
   private:
 
+    class Supervisor* supervisor = nullptr;
+    
     void loadSymbolDefinitions();
     void xmlError(const char* msg, juce::String arg);
     

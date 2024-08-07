@@ -324,7 +324,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     MainThread uiThread {this};
 
     // Symbol table loader
-    Symbolizer symbolizer;
+    Symbolizer symbolizer {this};
     
     // the Mobius "engine"
     // this started as a singleton managed by MobiusInterface

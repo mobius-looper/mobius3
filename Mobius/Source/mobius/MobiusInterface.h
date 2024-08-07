@@ -383,6 +383,15 @@ class MobiusContainer
      */
     virtual class MslEnvironment* getMslEnvironment() = 0;
 
+    /**
+     * Get labels for parameters that may be defined at levels above
+     * Mobius core.
+     *
+     * Necessary for MobiusKernel::mutateMslReturn.  Not happy with
+     * how spread out this is.
+     */
+    virtual juce::String getParameterLabel(class Symbol* s, int ordinal) = 0;
+
 };
 
 //////////////////////////////////////////////////////////////////////

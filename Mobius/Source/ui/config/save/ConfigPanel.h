@@ -1,258 +1,167 @@
 /**
- * Base component class for all configuration editors.
- * Managed by the ConfigEditor which receives instructions from the MainComponent
- * about what to display.
+ * Gradual replacement for the old ConfigEditor/ConfigPanel with structural improvements.
  *
- * A config panel contains a header area at the top with a title, and a footer
- * area at the bottom with a set of configurable buttons.
+ * A ConfigPanel surrounds a ConfigEditor and provides common UI componentry
+ * such as a dragable panel with a title bar, a row of footer buttons at the bottom,
+ * an optional object selector when editing configuration types with multiple
+ * objects (Setups, Presets), and a help area to display details about input fields
+ * within the editor.
  *
- * The content area is in the middle where the subclasses place a component with
- * the detailed editing widgetry for the thing being edited.
+ * ConfigPanel implements ConfigContext which defines the interface the ConfigEditor
+ * uses to request UI adjustments and to access to the environment such as reading
+ * and saving files.
  *
- * For config object types that support multiple objects (presets, setups)
- * there may be an optional object selector that displays the names of the available
- * objects and buttons for operating on them.  This is between the header and the content panel.
+ * Currently the only ConfigContext implementation is ConfigPanel which extends
+ * BasePanel so it can be managed by PanelFactory.  I'm not entirely happy with the
+ * way things are glued together here, with multiple levels of "content" objects and
+ * subclassing.  Content nesting is necessary due to the way top-down resized()
+ * layouts work.  The biggest mess is who gets to be the ConfigEditorContext,
+ * is it the outer ConfigPanel (which is a BasePanel subclass) or is it the
+ * inner ConfigEditorWrapper.
+ *
+ * Leaning toward making the Wrapper dumb and doing nothing but providing
+ * the resized() layout logic.  Interaction between the ConfigEditor and
+ * the outside world is handled by ConfigPanel.
  */
 
 #pragma once
 
 #include <JuceHeader.h>
 
+#include "../BasePanel.h"
 #include "../common/HelpArea.h"
 
-/**
- * Types of buttons the popup may display at the bottom.
- * These are a bitmask that can be ORd to define the desired buttons.
- * I tried encapsulating this inside ConfigPanel but since it needs to be
- * visible to both ConfigPanel and ConfigPanelFooter you get into a typical circular
- * dependency nightmare.
- *
- * There must be a better way to do this, probably with inner classes.
- */
-enum ConfigPanelButton {
-    // read-only informational panels will have an Ok rather than a Save button
-    Ok = 1,
-    Save = 2,
-    Cancel = 4,
-    Revert = 8
-};
+#include "ObjectSelector.h"
 
-class ConfigPanelHeader : public juce::Component
-{
-  public:
+// also includes ConfigEditorContxt
+#include "ConfigEditor.h"
 
-    ConfigPanelHeader(const char* titleText);
-    ~ConfigPanelHeader() override;
-    
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-    
-    int getPreferredHeight();
-    
-  private:
-        
-    juce::Label titleLabel;
-};
-
-class ConfigPanelFooter : public juce::Component, public juce::Button::Listener
-{
-  public:
-        
-    ConfigPanelFooter(class ConfigPanel* parentPanel, int buttons);
-    ~ConfigPanelFooter() override;
-    
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-    
-    int getPreferredHeight();
-
-    // Button::Listener
-    virtual void buttonClicked(juce::Button* b) override;
-    
-  private:
-        
-    // find a better way to redirect button listeners without needing
-    // a back pointer to the parent
-    class ConfigPanel* parentPanel;
-    int buttonList;
-    juce::TextButton okButton;
-    juce::TextButton saveButton;
-    juce::TextButton cancelButton;
-    juce::TextButton revertButton;
-    
-    void addButton(juce::TextButton* button, const char* text);
-};
-
-// this wss the wrong way to do this
-// change everything to add their own content component
-class ContentPanel : public juce::Component
-{
-  public:
-
-    ContentPanel();
-    ~ContentPanel();
-
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-
-  private:
-
-};
+//////////////////////////////////////////////////////////////////////
+//
+// ConfigEditorWrapper
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
- * The object selector presents a combobox to select one of a list
- * of objects.  It also displays the name of the selected object
- * for editing.  Is there such a thing as a combo with editable items?
- * There is a set of buttons for acting on the object list.
- */
-class ObjectSelector : public juce::Component, juce::Button::Listener, juce::ComboBox::Listener
-{
-  public:
-
-    // should we put revert here or in the footer?
-    enum ButtonType {
-        New,
-        Delete,
-        Copy,
-        Revert
-    };
-
-    ObjectSelector(class ConfigPanel* parent);
-    ~ObjectSelector() override;
-
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-
-    int getPreferredHeight();
-
-    // set the names to display in the combo box
-    // currently reserving "[New]" to mean an object that
-    // does not yet have a name
-    void setObjectNames(juce::StringArray names);
-    void addObjectName(juce::String name);
-    void setSelectedObject(int ordinal);
-    juce::String getObjectName();
-    
-    // Button Listener
-    void buttonClicked(juce::Button* b) override;
-
-    // Combobox Listener
-    void comboBoxChanged(juce::ComboBox* combo) override;
-  
-  private:
-
-    class ConfigPanel* parentPanel;
-    
-    juce::ComboBox combobox;
-    int lastId = 0;
-    
-    juce::TextButton newButton {"New"};
-    juce::TextButton deleteButton {"Delete"};
-    juce::TextButton copyButton {"Copy"};
-
-    // decided to put this in the footer instead
-    //juce::TextButton revertButton {"Revert"};
-};
-
-/**
- * ConfigPanel arranges the previous generic components and
- * holds object-specific component within the content panel.
+ * This is the BasePanel content component and provides a wrapper
+ * around a ConfigEditor which is where most of the work gets done.
  * 
- * It is subclassed by the various configuration panels.
+ * Here we surround the ConfigEditor with an optional ObjectSelector and HelpArea.
  */
-class ConfigPanel : public juce::Component
+class ConfigEditorWrapper : public juce::Component, public ObjectSelector::Listener
 {
   public:
 
+    ConfigEditorWrapper();
+    ~ConfigEditorWrapper();
 
-    ConfigPanel(class ConfigEditor* argEditor, const char* titleText, int buttons, bool multi);
-    ~ConfigPanel() override;
+    // set the inner editor
+    void setEditor(ConfigEditor* argEditor);
+    ConfigEditor* getEditor() {
+        return editor;
+    }
 
-    // subclass provides a content component for the center
-    void setMainContent(juce::Component* c);;
-    void setHelpHeight(int h);
+    // enable the object selector
+    // the wrapper will do the listening and forward to the editor
+    void enableObjectSelector();
+    ObjectSelector* getObjectSelector() {
+        return &objectSelector;
+    }
     
-    void center();
-
-    // Component
+    // enable the help area
+    void enableHelp(class HelpCatalog* catalog, int height);
+    HelpArea* getHelpArea() {
+        return &helpArea;
+    }
+    
+    // what all this wrapper mess is for
     void resized() override;
-    void paint (juce::Graphics& g) override;
 
-    void mouseDown(const juce::MouseEvent& e) override;
-    void mouseDrag(const juce::MouseEvent& e) override;
+    // ObjectSelector::Listener
+    void objectSelectorSelect(int ordinal) override;
+    void objectSelectorRename(juce::String newName) override;
+    void objectSelectorNew(juce::String newName) override;
+    void objectSelectorDelete() override;
+    void objectSelectorCopy() override;
+
+  private:
+
+    ConfigEditor* editor = nullptr;
     
-    // callback from the footer buttons
-    void footerButtonClicked(ConfigPanelButton button);
-    
-    // callbacks from the object selector
-    // could these be pure virtual?
-    void selectorButtonClicked(ObjectSelector::ButtonType button);
-    void objectSelected(juce::String name);
-
-    // called by ConfigEditor when the panel is to become visible or hidden
-    // in case it needs to make preparations
-    virtual void showing() {
-    }
-    virtual void hiding() {
-    }
-    
-    bool isLoaded() {
-        return loaded;
-    }
-
-    bool isChanged() {
-        return changed;
-    }
-
-    // common initialization before a subclass is loaded
-    void prepare();
-    
-    // Subclass overloads
-
-    // prepare for this panel to be shown
-    virtual void load() = 0;
-
-    // save the all edited objects and prepare to close
-    virtual void save() = 0;
-
-    // throw away any changes and prepare to close
-    // is this necessary?  could just implement this as revert
-    // for all of them
-    virtual void cancel() = 0;
-
-    // respond to ObjectSelector buttons if it supports multiple
-    virtual void selectObject(int /*ordinal*/) {};
-    virtual void newObject() {};
-    virtual void deleteObject() {};
-    virtual void copyObject() {};
-    virtual void revertObject() {};
-    virtual void renameObject(juce::String /*newName*/) {};
-
-  protected:
-    
-    class ConfigEditor* editor;
-    ContentPanel content;
     ObjectSelector objectSelector;
+    bool objectSelectorEnabled = false;
+    
     HelpArea helpArea;
     int helpHeight = 0;
-    
-    // set by this class after handling the first prepare() call
-    bool prepared = false;
+};
 
-    // set by the subclass if state has been loaded
-    bool loaded = false;
+//////////////////////////////////////////////////////////////////////
+//
+// ConfigPanel
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Extends BasePanel and provides common services to the inner configuration
+ * editing component.
+ *
+ * The subclass will call setEditor to give this a ConfigEditor.  See commentary
+ * above the setEditor() method for the subtle mess we have here.
+ */
+class ConfigPanel : public BasePanel, public ConfigEditorContext
+{
+  public:
+
+    ConfigPanel(class Supervisor* s);
+    ~ConfigPanel() override;
+
+    // called by the subclass during construction
+    void setEditor(ConfigEditor* editor);
+
+    // ConfigEditorContext methods called by the ConfigEditor
+    // during construction
+
+    void enableObjectSelector() override;
+    void enableHelp(int height) override;
+    void enableRevert() override;
+
+    class HelpArea* getHelpArea() override;
+
+    // ConfigEditorContext methods called by the ConfigEditor
+    // at runtime
+
+    void setObjectNames(juce::StringArray names) override;
+    void addObjectName(juce::String name) override;
+    void setSelectedObject(int ordinal) override;
+    int getSelectedObject() override;
+    juce::String getSelectedObjectName() override;
     
-    // set by the subclass if it was shown and there are pending changes
-    bool changed = false;
+    class MobiusConfig* getMobiusConfig() override;
+    void saveMobiusConfig() override;
+
+    class UIConfig* getUIConfig() override;
+    void saveUIConfig() override;
+    
+    class DeviceConfig* getDeviceConfig() override;
+    void saveDeviceConfig() override;
+
+    class Supervisor* getSupervisor() override;
+    
+    // BasePanel overloads
+    void showing() override;
+    void hiding() override;
+
+    // BasePanel button handler
+    void footerButton(juce::Button* b) override;
     
   private:
 
-    bool hasObjectSelector = false;;
-    ConfigPanelHeader header;
-    ConfigPanelFooter footer;
-    juce::Component* main = nullptr;
+    class Supervisor* supervisor = nullptr;
+    ConfigEditorWrapper wrapper;
 
-    juce::ComponentDragger dragger;
-    juce::ComponentBoundsConstrainer dragConstrainer;
+    juce::TextButton saveButton {"Save"};
+    juce::TextButton cancelButton {"Cancel"};
+    juce::TextButton revertButton {"Revert"};
 
+    bool loaded = false;
 };

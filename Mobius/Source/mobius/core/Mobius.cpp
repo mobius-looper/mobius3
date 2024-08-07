@@ -23,7 +23,7 @@
 #include "../../util/Util.h"
 #include "../../util/List.h"
 #include "../../util/StructureDumper.h"
-#include "../../SuperDumper.h"
+//#include "../../SuperDumper.h"
 
 #include "../../model/Setup.h"
 #include "../../model/UserVariable.h"
@@ -1985,16 +1985,25 @@ void Mobius::dump(StructureDumper& d)
 
 void Mobius::dump(const char* name)
 {
+    // commented out when we started getting rid of Supervisor::Instance
+    // need to repackage the dumping tools
+    (void)name;
+#if 0
     SuperDumper sd;
     dump(sd);
     sd.write(name);
+#endif    
 }
 
 void Mobius::dump(const char* name, Loop* l)
 {
+    (void)name;
+    (void)l;
+#if 0    
     SuperDumper sd;
     l->dump(sd);
     sd.write(name);
+#endif    
 }
 
 /**

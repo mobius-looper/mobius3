@@ -17,6 +17,7 @@
 #include "MslBinding.h"
 #include "MslFileError.h"
 #include "MslCollision.h"
+#include "MslPreprocessor.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
 
@@ -138,6 +139,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("parse")) {
         doParse(withoutCommand(line));
     }
+    else if (line.startsWith("preproc")) {
+        doPreproc(withoutCommand(line));
+    }
     else if (line.startsWith("load")) {
         doLoad(withoutCommand(line));
     }
@@ -258,6 +262,23 @@ void MobiusConsole::doParse(juce::String line)
           traceNode(res->script->root, 0);
 
         delete res;
+    }
+}
+
+void MobiusConsole::doPreproc(juce::String line)
+{
+    MslPreprocessor preproc;
+
+    juce::File root = supervisor->getRoot();
+    juce::File file = root.getChildFile(line);
+    if (!file.existsAsFile()) {
+        console.add("File does not exist: " + juce::String(line));
+    }
+    else {
+        juce::String src = file.loadFileAsString();
+        juce::String result = preproc.process(src);
+        console.add("Preprocessor results:");
+        console.add(result);
     }
 }
 

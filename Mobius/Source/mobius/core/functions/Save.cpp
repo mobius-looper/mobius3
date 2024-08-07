@@ -11,7 +11,7 @@
 
 #include <JuceHeader.h>
 #include "../../AudioFile.h"
-#include "../../../SuperDumper.h"
+//#include "../../../SuperDumper.h"
 
 #include <stdio.h>
 #include <memory.h>
@@ -37,7 +37,7 @@ class SaveLoopFunction : public Function {
   private:
 	bool stop;
 	bool save;
-    SuperDumper dumper;
+//    SuperDumper dumper;
 };
 
 SaveLoopFunction SaveLoopObj;

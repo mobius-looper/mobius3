@@ -38,9 +38,6 @@
 #include "core/Parameter.h"
 #include "core/Mem.h"
 
-// temporary for the mslQuery parameter shit
-#include "../Supervisor.h"
-
 #include "MobiusKernel.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -1242,7 +1239,7 @@ void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             // todo: Need to repackage this
             // todo: this could also be Type::Enum in the value but I don't
             // think anything cares?
-            retval->setJString(Supervisor::Instance->getParameterLabel(s, value));
+            retval->setJString(container->getParameterLabel(s, value));
         }
         else {
             // should only be here for TypeInt
@@ -1304,7 +1301,7 @@ bool MobiusKernel::mslAction(MslAction* action)
     else {
         // must be a core Variable, should have transitioned
         // to the kernel context
-        Trace(1, "Supervisor: mslAction with non-symbol target");
+        Trace(1, "MobiusKernel: mslAction with non-symbol target");
     }
     return success;
 }

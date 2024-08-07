@@ -10,8 +10,8 @@
 class SuperDumper : public StructureDumper
 {
   public:
+    SuperDumper(class Supervisor* super);
     virtual ~SuperDumper() {}
-    SuperDumper();
 
     void write(juce::String filename) override;
 
@@ -20,6 +20,7 @@ class SuperDumper : public StructureDumper
     }
     
   private:
+    class Supervisor* supervisor = nullptr;
     int counter = 0;
     
 };

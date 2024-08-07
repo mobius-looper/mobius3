@@ -292,7 +292,7 @@ void JuceAudioStream::getNextAudioBlock (const juce::AudioSourceChannelInfo& buf
 
         Trace(2, "  %d channels\n", channels);
 
-        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
         auto* device = deviceManager->getCurrentAudioDevice();
         auto activeInputChannels = device->getActiveInputChannels();
         Trace(2, "  Active input channels %s\n", activeInputChannels.toString(2).toUTF8());

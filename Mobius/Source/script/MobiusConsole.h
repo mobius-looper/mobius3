@@ -59,6 +59,7 @@ class MobiusConsole : public juce::Component,
     void showLoad();
 
     void doParse(juce::String line);
+    void doPreproc(juce::String line);
     void doList();
     void doResume();
     void doStatus(juce::String line);

@@ -1,569 +1,348 @@
 /**
- * Base class for all configuration and information popup dialogs.
+ * Initialization order is extremely subtle due to subclassing, inline object
+ * initialization, and cross references.
+ *
+ * I'm avoiding doing most initialization in constructors to gain more control
+ * and make it obvious when things happen.
+ * 
+ * The order is this, which is already pretty terrible, but it could be much worse:
+ *
+ * 1) PanelFactory calls new on a ConfigPanel subclass such as PresetPanel
+ *    This is the outermost clean interface and where the mess starts.
+ * 
+ * 2) PresetPanel has an inline member object PresetEditor
+ *    It would be simpler in an number of ways to defer this and dynamically allocate
+ *    it but hey, let's do fucking RAII since that's all the rage now.
+ * 
+ * 3) At this point the PresetEditor and PresetPanel class hierarchy constructors
+ *    will all be run in a non-obvious order.  If you know what that is, good for you,
+ *    but a lot of people won't and since these are intertwined it's very easy to introduce
+ *    dependencies that take hours to figure out.  So the requirement is that
+ *    ConfigEditor and it's subclass constructors do nothing.
+ *
+ * 4) BasePanel is at the root of the PresetPanel hierarchy so it's constructor is called
+ *    It adds subcomponents for the title bar and footer buttons.
+ *
+ * 5) ConfigPanel constructor is called next
+ *    It makes modifications to the button list created by BasePanel and installs
+ *    the ConfigEditorWrapper object as the content component of BasePanel
+ *
+ * 6) PresetPanel constructor resumes, and by this point the PresetEditor
+ *    member object constructor will have finished.  PresetPanel calls
+ *    setEditor on itself passing the PresetEditor.
+ *
+ * 7) ConfigPanel::setEditor installs PresetEditor inside the wrapper,  and calls
+ *    PresetEditor::prepare passing itself as the ConfigEditorContext.
+ *
+ * 8) PresetEditor::prepare calls back to ConfigPanel to make further adjustments.
+ *
+ * 9) ConfigPanel::setEditor regains control and sets the final default size.
+ *
+ * 10) Everyone raises a glass to C++, RAII, Juce top-down resized() layout management,
+ *     and me, trying to share common code despite all that.
+ *
+ * There are almost certainly more obvious ways to structure that mess, but at least
+ * the interfacess on the edges at PanelFactory and within ConfigEditor are
+ * relatively clean.
  */
 
 #include <JuceHeader.h>
 
-#include "../../util/Trace.h"
 #include "../../Supervisor.h"
-#include "../common/HelpArea.h"
 
-#include "ConfigEditor.h"
 #include "ConfigPanel.h"
 
-// this can't scroll so make it tall enough for all the possible help the
-// subclasses need
-const int ConfigPanelHelpHeight = 60;
+//////////////////////////////////////////////////////////////////////
+//
+// ConfigPanel
+//
+//////////////////////////////////////////////////////////////////////
 
-ConfigPanel::ConfigPanel(ConfigEditor* argEditor, const char* titleText, int buttons, bool multi)
-    : objectSelector{this}, header{titleText}, footer{this,buttons}
+ConfigPanel::ConfigPanel(Supervisor* s)
 {
     setName("ConfigPanel");
-    editor = argEditor;
+    supervisor = s;
 
-    addAndMakeVisible(header);
-    addAndMakeVisible(footer);
-    addAndMakeVisible(helpArea);
-    helpArea.setBackground(juce::Colours::black);
-    addAndMakeVisible(content);
+    // always replace the single "Ok" button from BasePanel
+    // with Save/Revert/Cancel
+    // todo: make Revert optional, and support custom ones like Capture
 
-    if (multi) {
-        hasObjectSelector = true;
-        addAndMakeVisible(objectSelector);
-    }
-    
-    // size has to be deferred to the subclass after it has finished rendering
-
-    helpHeight = ConfigPanelHelpHeight;
-
-    // pass back mouse events from the header so we can drag
-    header.addMouseListener(this, true);
+    resetButtons();
+    addButton(&saveButton);
+    addButton(&cancelButton);
+    setContent(&wrapper);
 }
 
 ConfigPanel::~ConfigPanel()
 {
 }
 
-void ConfigPanel::setHelpHeight(int h)
-{
-    helpHeight = h;
-}
-
 /**
- * New/better way to set the editing component in the center.
- * This replaces the original content container which will
- * be removed when everything starts ddoing it this way.
+ * Here is where the magic wand waves.
  */
-void ConfigPanel::setMainContent(juce::Component* c)
+void ConfigPanel::setEditor(ConfigEditor* editor)
 {
-    main = c;
-    addAndMakeVisible(main);
-    removeChildComponent(&content);
-}
-
-/**
- * Called by ConfigEditor each time one of the subclasses
- * is about to be shown.  Gives this a chance to do
- * potentially expensive initialization that we want
- * to avoid in the constructor, and save having to force the
- * subclasses to all call something to make it happen.
- */
-void ConfigPanel::prepare()
-{
-    if (!prepared) {
-        // load the help catalog if it isn't already
-        helpArea.setCatalog(Supervisor::Instance->getHelpCatalog());
-        prepared = true;
-    }
-}
-
-/**
- * Called by the footer when a button is clicked
- *
- * !! I don't like the way the "loaded" flag is used to
- * mean both "I've done my complex initialization" and
- * "I no longer want to be visible".  Revisit this and
- * make it more obvious why subclasses MUST ad loaded=false
- * in save/cancel.
- */
-void ConfigPanel::footerButtonClicked(ConfigPanelButton button)
-{
-    switch (button) {
-        case (ConfigPanelButton::Ok):
-        case (ConfigPanelButton::Save): {
-            save();
-        }
-        break;
-        case (ConfigPanelButton::Cancel): {
-            cancel();
-        }
-        break;
-        case (ConfigPanelButton::Revert): {
-            revertObject();
-        }
-        break;
-    }
-
-    // ConfigEditor will decide whether to show
-    // another editor panel if one has unsaved changes
-    if (editor != nullptr)
-      editor->close(this);
-}
-
-/**
- * Calculate the preferred width for the configued components.
- * MainComponent will use this to set our size, then we adjust downward.
- */
-#if 0
-int ConfigPanel::getPreferredHeight()
-{
-    return 0;
-}
-#endif
-
-/**
- * TODO: MainComponent will give us it's maximum size.
- * We wander through the configured child components asking for their
- * preferred sizes and shrink down if possible.
- */
-void ConfigPanel::resized()
-{
-    juce::Rectangle area = getLocalBounds();
-    // surrounding border
-    area = area.reduced(5);
+    // set the BasePanel title 
+    setTitle(editor->getTitle());
     
-    header.setBounds(area.removeFromTop(header.getPreferredHeight()));
+    // put the editor inside the wrapper between the ObjectSelector and HelpArea
+    wrapper.setEditor(editor);
+    
+    // give the editor a handle to the thing that provides access to
+    // the outside world, which just happens to be us
+    editor->prepare(this);
 
-    // leave a little space under the header
+    // set the starting size only after things are finished wiring up so
+    // that the initial resized() pass sees everything
+    // it would be nice to allow the subclass to ask for a different size,
+    // I guess we could allow the subclass constructor or prepare() do that and just
+    // test here to see if the size was already set
+    setSize (900, 600);
+}
+
+//
+// ConfigEditor callbacks to adjust the display
+//
+
+void ConfigPanel::enableObjectSelector() {
+
+    wrapper.enableObjectSelector();
+}
+
+void ConfigPanel::enableHelp(int height)
+{
+    wrapper.enableHelp(getSupervisor()->getHelpCatalog(), height);
+}
+
+HelpArea* ConfigPanel::getHelpArea()
+{
+    return wrapper.getHelpArea();
+}
+
+void ConfigPanel::enableRevert()
+{
+    addButton(&revertButton);
+}
+
+void ConfigPanel::setObjectNames(juce::StringArray names)
+{
+    wrapper.getObjectSelector()->setObjectNames(names);
+}
+
+void ConfigPanel::addObjectName(juce::String name)
+{
+    wrapper.getObjectSelector()->addObjectName(name);
+}
+
+juce::String ConfigPanel::getSelectedObjectName()
+{
+    return wrapper.getObjectSelector()->getObjectName();
+}
+
+int ConfigPanel::getSelectedObject()
+{
+    return wrapper.getObjectSelector()->getObjectOrdinal();
+}
+
+void ConfigPanel::setSelectedObject(int ordinal)
+{
+    wrapper.getObjectSelector()->setSelectedObject(ordinal);
+}
+
+//
+// ConfigEditor callbacks to access files
+//
+
+Supervisor* ConfigPanel::getSupervisor()
+{
+    return supervisor;
+}
+
+class MobiusConfig* ConfigPanel::getMobiusConfig()
+{
+    return getSupervisor()->getMobiusConfig();
+}
+
+void ConfigPanel::saveMobiusConfig()
+{
+    getSupervisor()->updateMobiusConfig();
+}
+
+
+class UIConfig* ConfigPanel::getUIConfig()
+{
+    return getSupervisor()->getUIConfig();
+}
+
+void ConfigPanel::saveUIConfig()
+{
+    getSupervisor()->updateUIConfig();
+}
+    
+class DeviceConfig* ConfigPanel::getDeviceConfig()
+{
+    return getSupervisor()->getDeviceConfig();
+}
+
+void ConfigPanel::saveDeviceConfig()
+{
+    getSupervisor()->updateDeviceConfig();
+}
+
+//
+// BasePanel notifications
+//
+
+/**
+ * Called by BasePanel when we've been invisible, and are now being shown.
+ *
+ * Here is where we track the loaded state of the editor.  If this is the first
+ * time we've ever shown this, or if you want to go back to away to selectively
+ * hide/show after they've been loaded, we need to remember load state.
+ */
+void ConfigPanel::showing()
+{
+    ConfigEditor* editor = wrapper.getEditor();
+    
+    if (!loaded) {
+        editor->load();
+        loaded = true;
+    }
+
+    editor->showing();
+}
+
+/**
+ * Making the panel invisible, but this does not cancel load state.
+ */
+void ConfigPanel::hiding()
+{
+    wrapper.getEditor()->hiding();
+}
+
+/**
+ * Called by BasePanel when a footer button is clicked.
+ * Kind of messy forwarding here, should we just let the wrapper
+ * deal with this?
+ */
+void ConfigPanel::footerButton(juce::Button* b)
+{
+    if (b == &saveButton) {
+        wrapper.getEditor()->save();
+        // this resets load
+        loaded = false;
+    }
+    else if (b == &cancelButton) {
+        wrapper.getEditor()->cancel();
+        // this resets load
+        loaded = false;
+    }
+    else if (b == &revertButton) {
+        wrapper.getEditor()->revert();
+        // this does not reset load
+    }
+    else {
+        // I guess this would be the place to forward the button to the
+        // ConfigPanelContent since it isn't one of the standard ones
+        Trace(1, "ConfigPanel: Unsupported button %s\n", b->getButtonText().toUTF8());
+    }
+
+    // save and cancel close the panel, revert keeps it going
+    if (b == &saveButton || b == &cancelButton)
+      close();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ConfigEditorWrapper
+//
+//////////////////////////////////////////////////////////////////////
+
+ConfigEditorWrapper::ConfigEditorWrapper()
+{
+    helpArea.setBackground(juce::Colours::black);
+}
+
+ConfigEditorWrapper::~ConfigEditorWrapper()
+{
+}
+
+void ConfigEditorWrapper::setEditor(ConfigEditor* e)
+{
+    editor = e;
+    addAndMakeVisible(e);
+}
+
+void ConfigEditorWrapper::enableObjectSelector()
+{
+    objectSelectorEnabled = true;
+    objectSelector.setListener(this);
+    addAndMakeVisible(objectSelector);
+}
+
+void ConfigEditorWrapper::enableHelp(HelpCatalog* catalog, int height)
+{
+    helpHeight = height;
+    if (helpHeight > 0) {
+        addAndMakeVisible(helpArea);
+
+        // NOTE WELL: this is where component object initialization didn't
+        // work before we started dynamically allocating ConfigPanelsl
+        // Before we were being called during construction, and Supervisor isn't
+        // initialized enough to have a HelpCatalog yet to pass down.
+        // Now since we create ConfigPanels on demand, Supervisor will have had
+        // time to load the catalog.  If that ever changes, then we'll have to
+        // go back to using a prepare() phase on the wrapper called during showing()
+        // of the ConfigPanel
+        helpArea.setCatalog(catalog);
+    }
+}        
+
+void ConfigEditorWrapper::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+
     area.removeFromTop(4);
     
-    if (hasObjectSelector) {
+    if (objectSelectorEnabled) {
         objectSelector.setBounds(area.removeFromTop(objectSelector.getPreferredHeight()));
         area.removeFromTop(4);
     }
 
-    footer.setBounds(area.removeFromBottom(footer.getPreferredHeight()));
-
-    helpArea.setBounds(area.removeFromBottom(helpHeight));
-    
-    // new way
-    if (main != nullptr)
-      main->setBounds(area);
-    else
-      content.setBounds(area);
-}
-
-/**
- * ConfigPanels are not at the moment resizeable, but they
- * can auto-center within the parent.
- */
-void ConfigPanel::center()
-{
-    int pwidth = getParentWidth();
-    int pheight = getParentHeight();
-    
-    int mywidth = getWidth();
-    int myheight = getHeight();
-    
-    if (mywidth > pwidth) mywidth = pwidth;
-    if (myheight > pheight) myheight = pheight;
-
-    int left = (pwidth - mywidth) / 2;
-    int top = (pheight - myheight) / 2;
-    
-    setTopLeftPosition(left, top);
-}
-
-void ConfigPanel::paint (juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::black);
-
-    g.setColour(juce::Colours::white);
-    g.drawRect(getLocalBounds(), 4);
-}
-
-void ConfigPanel::mouseDown(const juce::MouseEvent& e)
-{
-    dragger.startDraggingComponent(this, e);
-    // the first argu is "minimumWhenOffTheTop" set
-    // this to the full height and it won't allow dragging the
-    // top out of boundsa
-    dragConstrainer.setMinimumOnscreenAmounts(getHeight(), 100, 100, 100);
-}
-
-void ConfigPanel::mouseDrag(const juce::MouseEvent& e)
-{
-    dragger.dragComponent(this, e, &dragConstrainer);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Header
-//
-//////////////////////////////////////////////////////////////////////
-
-ConfigPanelHeader::ConfigPanelHeader(const char* titleText)
-{
-    setName("ConfigPanelHeader");
-    addAndMakeVisible (titleLabel);
-    titleLabel.setFont (juce::Font (16.0f, juce::Font::bold));
-    titleLabel.setText (titleText, juce::dontSendNotification);
-    titleLabel.setColour (juce::Label::textColourId, juce::Colours::white);
-    titleLabel.setJustificationType (juce::Justification::centred);
-}
-
-
-ConfigPanelHeader::~ConfigPanelHeader()
-{
-}
-
-int ConfigPanelHeader::getPreferredHeight()
-{
-    // todo: ask the title font
-    return 30;
-}
-
-void ConfigPanelHeader::resized()
-{
-    // let it fill the entire area
-    titleLabel.setBounds(getLocalBounds());
-}
-
-void ConfigPanelHeader::paint(juce::Graphics& g)
-{
-    // give it an obvious background
-    // need to work out  borders
-    g.fillAll (juce::Colours::blue);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Footer
-//
-//////////////////////////////////////////////////////////////////////
-
-ConfigPanelFooter::ConfigPanelFooter(ConfigPanel* parent, int buttons)
-{
-    setName("ConfigPanelFooter");
-    parentPanel = parent;
-    buttonList = buttons;
-
-    if (buttons & ConfigPanelButton::Ok) {
-        addButton(&okButton, "Ok");
+    if (helpHeight > 0) {
+        helpArea.setBounds(area.removeFromBottom(helpHeight));
     }
 
-    if (buttons & ConfigPanelButton::Save) {
-        addButton(&saveButton, "Save");
-    }
-    
-    if (buttons & ConfigPanelButton::Revert) {
-        addButton(&revertButton, "Revert");
-    }
-    
-    if (buttons & ConfigPanelButton::Cancel) {
-        addButton(&cancelButton, "Cancel");
-    }
-
+    if (editor != nullptr)
+      editor->setBounds(area);
 }
 
-ConfigPanelFooter::~ConfigPanelFooter()
+// ObjectSelector::Listeners just forward to the wrapped editor
+
+void ConfigEditorWrapper::objectSelectorSelect(int ordinal)
 {
+    editor->objectSelectorSelect(ordinal);
 }
 
-void ConfigPanelFooter::addButton(juce::TextButton* button, const char* text)
+void ConfigEditorWrapper::objectSelectorRename(juce::String newName)
 {
-    addAndMakeVisible(button);
-    button->setButtonText(text);
-    button->addListener(this);
+    editor->objectSelectorRename(newName);
 }
 
-/**
- * This effectively determines the height of the save/cancel buttons at the bottom
- * Started with 36 which made them pretty chonky.
- */
-int ConfigPanelFooter::getPreferredHeight()
+void ConfigEditorWrapper::objectSelectorNew(juce::String newName)
 {
-    // todo: more control over the internal button sizes
-    return 24;
+    editor->objectSelectorNew(newName);
 }
 
-void ConfigPanelFooter::resized()
+void ConfigEditorWrapper::objectSelectorDelete()
 {
-    auto area = getLocalBounds();
-    const int buttonWidth = 100;
-
-    // seems like centering should be easier...
-    // don't really need to deal with having both Ok and Save there
-    // will only ever be two
-    int numButtons = 0;
-    if (buttonList & ConfigPanelButton::Ok) numButtons++;
-    if (buttonList & ConfigPanelButton::Save) numButtons++;
-    if (buttonList & ConfigPanelButton::Cancel) numButtons++;
-    if (buttonList & ConfigPanelButton::Revert) numButtons++;
-
-    int totalWidth = area.getWidth();
-    int buttonsWidth = buttonWidth * numButtons;
-    int leftOffset = (totalWidth / 2) - (buttonsWidth / 2);
-    area.removeFromLeft(leftOffset);
-    
-    if (buttonList & ConfigPanelButton::Ok) {
-        okButton.setBounds(area.removeFromLeft(buttonWidth));
-    }
-    
-    if (buttonList & ConfigPanelButton::Save) {
-        saveButton.setBounds(area.removeFromLeft(buttonWidth));
-    }
-
-    if (buttonList & ConfigPanelButton::Revert) {
-        revertButton.setBounds(area.removeFromLeft(buttonWidth));
-    }
-    
-    if (buttonList & ConfigPanelButton::Cancel) {
-        cancelButton.setBounds(area.removeFromLeft(buttonWidth));
-    }
+    editor->objectSelectorDelete();
 }
 
-void ConfigPanelFooter::paint(juce::Graphics& g)
+void ConfigEditorWrapper::objectSelectorCopy()
 {
-    // buttons will draw themselves in whatever the default color is
-    g.fillAll (juce::Colours::black);
+    // never did implement Copy
 }
-
-/**
- * juce::Button::Listener
- * Forward to the parent
- */
-void ConfigPanelFooter::buttonClicked(juce::Button* b)
-{
-    // find a better way to do this, maybe subclassing Button
-    if (b == &okButton) {
-        parentPanel->footerButtonClicked(ConfigPanelButton::Ok);
-    }
-    else if (b == &saveButton) {
-        parentPanel->footerButtonClicked(ConfigPanelButton::Save);
-    }
-    else if (b == &cancelButton) {
-        parentPanel->footerButtonClicked(ConfigPanelButton::Cancel);
-    }
-    else if (b == &revertButton) {
-        parentPanel->footerButtonClicked(ConfigPanelButton::Revert);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Content
-//
-// Nothing really to do here.  If all subclasses just have a single
-// component could do away with this, but it is a nice spot to leave
-// the available area.
-//
-//////////////////////////////////////////////////////////////////////
-
-ContentPanel::ContentPanel()
-{
-    setName("ContentPanel");
-}
-
-ContentPanel::~ContentPanel()
-{
-}
-
-void ContentPanel::resized()
-{
-    // assume subclass added a single child
-    Component* child = getChildComponent(0);
-    if (child != nullptr)
-      child->setSize(getWidth(), getHeight());
-}
-
-void ContentPanel::paint(juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::black);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// ObjectSelector
-//
-//////////////////////////////////////////////////////////////////////
-
-ObjectSelector::ObjectSelector(ConfigPanel* parent)
-{
-    setName("ObjectSelector");
-    parentPanel = parent;
-
-    addAndMakeVisible(combobox);
-    combobox.addListener(this);
-    combobox.setEditableText(true);
-    
-    addAndMakeVisible(newButton);
-    newButton.addListener(this);
-    
-    addAndMakeVisible(deleteButton);
-    deleteButton.addListener(this);
-
-    // todo: have a copyButton, is this still needed?
-    // getting implicit copy just by creating a new one
-    // might be nice to have an "Init" button instead
-}
-
-ObjectSelector::~ObjectSelector()
-{
-}
-
-int ObjectSelector::getPreferredHeight()
-{
-    return 30;
-}
-
-void ObjectSelector::resized()
-{
-    juce::Rectangle<int> area = getLocalBounds();
-
-    // todo: calculate max width for object names?
-    int comboWidth = 200;
-    int comboHeight = 20;
-
-    int centerLeft = (getWidth() - comboWidth) / 2;
-
-    combobox.setBounds(centerLeft, area.getY(), comboWidth, comboHeight);
-
-    newButton.setBounds(combobox.getX() + combobox.getWidth() + 4, area.getY(),
-                        30, comboHeight);
-
-    deleteButton.setBounds(newButton.getX() + newButton.getWidth() + 4, area.getY(),
-                           50, comboHeight);
-
-}
-
-void ObjectSelector::paint(juce::Graphics& g)
-{
-    (void)g;
-}
-
-/**
- * Now that we have an editable name, return the name.
- */
-juce::String ObjectSelector::getObjectName()
-{
-    return combobox.getText();
-}
-
-/**
- * Called by the ConfigPanel subclass to set the names
- * to display in the combobox.
- * When the combobox is changed we call the selectObject overload.
- * This also auto-selects the first name in the list.
- */
-void ObjectSelector::setObjectNames(juce::StringArray names)
-{
-    combobox.clear();
-    // item ids must start from 1
-    combobox.addItemList(names, 1);
-    combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
-    lastId = 1;
-}
-
-/**
- * Juce listener for the object management buttons.
- */
-void ObjectSelector::buttonClicked(juce::Button* b)
-{
-    if (b == &newButton) {
-        parentPanel->newObject();
-    }
-    else if (b == &deleteButton) {
-        parentPanel->deleteObject();
-    }
-    else if (b == &copyButton) {
-        parentPanel->copyObject();
-    }
-
-    // decided to put the revert button in the footer rather than up here
-    /*
-    else if (b == &revertButton) {
-        parentPanel->revertObject();
-    }
-    */
-}
-
-/**
- * Carefull here, some of the ComboBox methods use "index"
- * and some use "id".  Index is the zero based array index into
- * the item array, Id is the arbitrary number we can assigned
- * to the item at each index.
- *
- * This is how editable comboboxes seem to work.  If you edit
- * the text displayed in a combobox without using the item
- * selection menu, you get here with SelectedId == 0 and
- * getText returns the text that was entered. The items in
- * the menu do not change, and the checkboxes go away since what
- * is displayed in the text area doesn't match any of the items.
- *
- * If you type in a name that is the same as one of the existing items
- * sometimes it selects the item and sometimes it doesn't.  In my testing
- * I could get the first item selected by typing it's name but not the second.
- *
- * Tutorial on item id 0:
- * " You can use any integer as an item ID except zero. Zero has a special meaning. It
- * is used to indicate that none of the items are selected (either an item hasn't
- * been selected yet or the ComboBox object is displaying some other custom text)."
- *
- * So it kind of becomes a text entry field with a menu glued underneath to auto-fill
- * values.  You are NOT editing the text of an item.  To use this to implement item rename
- * you have to remember the id/index of the last item selected.  When you get
- * selectedId==0 compare the current text to the text of the last selected item and
- * if they are different treat as a rename.
- *
- * You can use escape to abandon the edit.  It appears the only reliable way to
- * have it select an existing item if you type in a matching name is to search and
- * select it in code, this doesn't seem to be automatic.
- * 
- */
-void ObjectSelector::comboBoxChanged(juce::ComboBox* combo)
-{
-    (void)combo;
-    int id = combobox.getSelectedId();
-    if (id == 0) {
-        juce::String text = combobox.getText();
-        juce::String itemText = combobox.getItemText(combobox.indexOfItemId(lastId));
-        if (text != itemText) {
-            // rename
-            parentPanel->renameObject(text);
-            // change the text of the item too
-            combobox.changeItemText(lastId, text);
-        }
-    }
-    else {
-        // ids are 1 based
-        parentPanel->selectObject(id - 1);
-        lastId = id;
-    }
-}
-
-void ObjectSelector::addObjectName(juce::String name)
-{
-    combobox.addItem(name, combobox.getNumItems() + 1);
-}
-
-/**
- * Note well: setSelectedId will by default result
- * in a change notification being sent to the listeners.
- * In this usage, the panel subclasses are managing their
- * own state, and just want to programatically move
- * the selected item. If you change this you need to make
- * sure that the subclass is prepared to immediately receive
- * a selectObject callback as if the user had interacted with
- * the combo box
- * 
- */ 
-void ObjectSelector::setSelectedObject(int ordinal)
-{
-    combobox.setSelectedId(ordinal + 1, juce::NotificationType::dontSendNotification);
-}
-
-// TODO: give the name label a listener to call renameObject
 
 /****************************************************************************/
 /****************************************************************************/

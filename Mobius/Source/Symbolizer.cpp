@@ -20,8 +20,9 @@
 
 #include "Symbolizer.h"
 
-Symbolizer::Symbolizer()
+Symbolizer::Symbolizer(Supervisor* s)
 {
+    supervisor = s;
 }
 
 Symbolizer::~Symbolizer()
@@ -59,7 +60,7 @@ void Symbolizer::initialize()
 
 void Symbolizer::loadSymbolDefinitions()
 {
-    juce::File root = Supervisor::Instance->getRoot();
+    juce::File root = supervisor->getRoot();
     juce::File file = root.getChildFile("symbols.xml");
     if (!file.existsAsFile()) {
         Trace(1, "Symbolizer: Initialization file not found\n");

@@ -1118,7 +1118,7 @@ void MidiManager::openInputADM(juce::String name)
         Trace(2, "MidiManager: Input device already open %s\n", name.toUTF8());
     }
     else {
-        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
         if (deviceManager == nullptr) {
             Trace(1, "MidiManager: AudioDeviceManager not available, are you a plugin?\n");
         }
@@ -1148,7 +1148,7 @@ void MidiManager::openInputADM(juce::String name)
 void MidiManager::closeInputADM()
 {
     if (!lastInputInfo.identifier.isEmpty()) {
-        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
         if (deviceManager == nullptr) {
             Trace(1, "MidiManager: AudioDeviceManager not available, are you a plugin?\n");
         }
@@ -1172,7 +1172,7 @@ void MidiManager::openOutputADM(juce::String name)
         Trace(2, "MidiManager: Output device already open %s\n", name.toUTF8());
     }
     else {
-        juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+        juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
         if (deviceManager == nullptr) {
             Trace(1, "MidiManager: AudioDeviceManager not available, are you a plugin?\n");
         }

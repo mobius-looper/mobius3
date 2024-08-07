@@ -6,13 +6,14 @@
 #include "Supervisor.h"
 #include "SuperDumper.h"
 
-SuperDumper::SuperDumper()
+SuperDumper::SuperDumper(Supervisor* s)
 {
+    supervisor = s;
 }
 
 void SuperDumper::write(juce::String filename)
 {
-    setRoot(Supervisor::Instance->getRoot());
+    setRoot(supervisor->getRoot());
     
     if (counter > 0)
       filename += juce::String(counter);

@@ -612,6 +612,10 @@
         <FILE id="yxTHnC" name="MslParser.h" compile="0" resource="0" file="Source/script/MslParser.h"/>
         <FILE id="mH7jkQ" name="MslPools.cpp" compile="1" resource="0" file="Source/script/MslPools.cpp"/>
         <FILE id="y6hrow" name="MslPools.h" compile="0" resource="0" file="Source/script/MslPools.h"/>
+        <FILE id="zgZGYe" name="MslPreprocessor.cpp" compile="1" resource="0"
+              file="Source/script/MslPreprocessor.cpp"/>
+        <FILE id="qtqfqu" name="MslPreprocessor.h" compile="0" resource="0"
+              file="Source/script/MslPreprocessor.h"/>
         <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
         <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
         <FILE id="dJ6rJt" name="MslScript.cpp" compile="1" resource="0" file="Source/script/MslScript.cpp"/>
