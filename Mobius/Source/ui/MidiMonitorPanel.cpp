@@ -13,10 +13,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiMonitorPanel::MidiMonitorPanel()
+MidiMonitorPanel::MidiMonitorPanel(Supervisor* s) : content(s)
 {
+    supervisor = s;
     setTitle("MIDI Monitor");
-    
     setContent(&content);
     addButton(&clearButton);
     
@@ -29,7 +29,7 @@ MidiMonitorPanel::~MidiMonitorPanel()
 
 void MidiMonitorPanel::showing()
 {
-    MidiManager* mm = Supervisor::Instance->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->addMonitor(this);
     
     // let the log say hello
@@ -38,7 +38,7 @@ void MidiMonitorPanel::showing()
 
 void MidiMonitorPanel::hiding()
 {
-    MidiManager* mm = Supervisor::Instance->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->removeMonitor(this);
 }
 
@@ -75,8 +75,9 @@ bool MidiMonitorPanel::midiMonitorExclusive()
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiMonitorContent::MidiMonitorContent()
+MidiMonitorContent::MidiMonitorContent(Supervisor* s) : log(s)
 {
+    supervisor = s;
     addAndMakeVisible(log);
 }
 

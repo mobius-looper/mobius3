@@ -15,7 +15,7 @@
 
 #include "MobiusDisplay.h"
 
-MobiusDisplay::MobiusDisplay(MainWindow* parent)
+MobiusDisplay::MobiusDisplay(MainWindow* parent) : mainWindow(parent), statusArea(this)
 {
     setName("MobiusDisplay");
     mainWindow = parent;
@@ -27,6 +27,11 @@ MobiusDisplay::MobiusDisplay(MainWindow* parent)
 
 MobiusDisplay::~MobiusDisplay()
 {
+}
+
+Supervisor* MobiusDisplay::getSupervisor()
+{
+    return mainWindow->getSupervisor();
 }
 
 /**

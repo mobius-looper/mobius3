@@ -8,13 +8,13 @@ class AboutContent : public juce::Component
 {
   public:
 
-    AboutContent();
+    AboutContent(class Supervisor* s);
     ~AboutContent() {}
 
     void resized() override;
 
   private:
-
+    class Supervisor* supervisor = nullptr;
     juce::Label product;
     juce::Label copyright;
     juce::URL url;
@@ -28,7 +28,7 @@ class AboutPanel : public BasePanel
 {
   public:
 
-    AboutPanel() {
+    AboutPanel(class Supervisor* s) : content(s) {
         setTitle("About");
         setContent(&content);
         setSize(500, 200);
@@ -36,7 +36,6 @@ class AboutPanel : public BasePanel
     ~AboutPanel() {}
 
   private:
-
     AboutContent content;
 };
 

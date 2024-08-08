@@ -45,14 +45,12 @@ LayerElement::LayerElement(StatusArea* area) :
     testLoop.init();
 
     // intercept our test actions
-    Supervisor* s = Supervisor::Instance;
-    s->addActionListener(this);
+    area->getSupervisor()->addActionListener(this);
 }
 
 LayerElement::~LayerElement()
 {
-    Supervisor* s = Supervisor::Instance;
-    s->removeActionListener(this);
+    statusArea->getSupervisor()->removeActionListener(this);
 }
 
 int LayerElement::getPreferredHeight()

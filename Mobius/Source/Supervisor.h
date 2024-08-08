@@ -3,13 +3,11 @@
  * activities between the various sub-components of the Mobius application.
  * Managed by the Juce MainComponent
  *
- * This has to be a global Singleton right now, mostly for the global Symbols
- * but also because it's just too damn convenient to call Supervisor::Instance rather
- * than pass it down literally everywhere.
- * 
- * This does prevent multi-instance plugins, and you have to be careful to guard against
- * some hosts that do multi-instance during scanning.  Not entirely happy with this but
- * no one really needs multi-innstance Mobius.
+ * For plugins, this isn't actually a singleton.  Each plugin instance will
+ * have it's own Supervisor and this needs to be passed down to subcomponents.
+ *
+ * The Instance static is temporary and only as we ease the transition toward
+ * multi-instance.
  */
 
 #pragma once
@@ -21,6 +19,7 @@
 
 #include "mobius/MobiusInterface.h"
 #include "mobius/MobiusMidiTransport.h"
+#include "model/Symbol.h"
 
 #include "JuceAudioStream.h"
 
@@ -48,7 +47,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 {
   public:
 
-    static Supervisor* Instance;
+    //static Supervisor* Instance;
     static int InstanceCount;
     
     static const int BuildNumber = 15;
@@ -134,6 +133,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     // also in MobiusContainer
     juce::File getRoot() override;
+
+    SymbolTable* getSymbols() {
+        return &symbols;
+    }
 
     juce::AudioAppComponent* getAudioAppComponent() {
         return mainComponent;
@@ -305,6 +308,9 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // need to use during the destruction sequence
     MslEnvironment scriptenv;
     ScriptClerk scriptClerk {this};
+
+    // symbol table for this application/plugin instance
+    SymbolTable symbols;
     
     // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
     juce::AudioDeviceManager customAudioDeviceManager;
@@ -366,7 +372,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     std::unique_ptr<class HelpCatalog> helpCatalog;
 
     // dynamic UI related parameters experiment
-    UISymbols uiSymbols;
+    UISymbols uiSymbols {this};
 
     // testing subsystem
     TestDriver testDriver {this};

@@ -18,7 +18,7 @@ class KeyboardEditor : public BindingEditor,
                        public KeyTracker::Listener
 {
   public:
-    KeyboardEditor();
+    KeyboardEditor(class Supervisor* s);
     ~KeyboardEditor();
 
     juce::String getTitle() override {return "Keyboard Bindings";}

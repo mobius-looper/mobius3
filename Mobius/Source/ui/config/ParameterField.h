@@ -14,7 +14,7 @@ class ParameterField : public Field
 {
   public:
 
-    ParameterField(class UIParameter* p);
+    ParameterField(class Supervisor* s, class UIParameter* p);
     ~ParameterField();
 
     static Field::Type convertParameterType(UIParameterType intype);
@@ -27,7 +27,7 @@ class ParameterField : public Field
     void saveValue(void* targetObject);
     
   private:
-
+    class Supervisor* supervisor = nullptr;
     UIParameter* parameter = nullptr;
 
 };

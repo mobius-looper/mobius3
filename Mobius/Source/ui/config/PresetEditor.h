@@ -16,7 +16,7 @@ class PresetEditor : public ConfigEditor
 {
   public:
     
-    PresetEditor();
+    PresetEditor(class Supervisor* s);
     ~PresetEditor();
 
     juce::String getTitle() override {return "Presets";}

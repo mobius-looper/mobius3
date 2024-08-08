@@ -70,7 +70,9 @@ juce::String Symbol::getDisplayName()
  * everyone has to Supervisor::Instance::Symbols.intern()
  * 
  */
-SymbolTable Symbols;
+// no, this is dangerous and fucks up multi-instance plgins
+// Supervisor owns the only SymbolTable
+// SymbolTable Symbols;
 
 SymbolTable::SymbolTable()
 {

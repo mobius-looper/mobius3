@@ -12,7 +12,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-EnvironmentPanel::EnvironmentPanel()
+EnvironmentPanel::EnvironmentPanel(Supervisor* s) : content(s)
 {
     setTitle("Environment");
     
@@ -36,8 +36,9 @@ void EnvironmentPanel::showing()
 //
 //////////////////////////////////////////////////////////////////////
 
-EnvironmentContent::EnvironmentContent()
+EnvironmentContent::EnvironmentContent(Supervisor* s)
 {
+    supervisor = s;
     addAndMakeVisible(log);
 }
 
@@ -52,26 +53,24 @@ void EnvironmentContent::resized()
 
 void EnvironmentContent::showing()
 {
-    Supervisor* super = Supervisor::Instance;
-    
     log.clear();
 
     log.add("Mobius 3 Build " + juce::String(Supervisor::BuildNumber) +
-            (super->isPlugin() ? " Plugin" : " Standalone"));
+            (supervisor->isPlugin() ? " Plugin" : " Standalone"));
     
     log.add("Computer name: " + juce::SystemStats::getComputerName());
-    log.add("Configuration path: " + super->getRoot().getFullPathName());
-    log.add("Audio block size: " + juce::String(super->getBlockSize()));
-    log.add("Sample rate: " + juce::String(super->getSampleRate()));
+    log.add("Configuration path: " + supervisor->getRoot().getFullPathName());
+    log.add("Audio block size: " + juce::String(supervisor->getBlockSize()));
+    log.add("Sample rate: " + juce::String(supervisor->getSampleRate()));
 
-    juce::StringArray& commandLine = super->getCommandLine();
+    juce::StringArray& commandLine = supervisor->getCommandLine();
     if (commandLine.size() > 0) {
         log.add("Command line arguments:");
         for (auto arg : commandLine)
           log.add("  " + arg);
     }
     
-    if (super->isPlugin()) {
+    if (supervisor->isPlugin()) {
         juce::PluginHostType host;
         log.add(juce::String("Plugin host: ") + host.getHostDescription());
         juce::AudioProcessor::WrapperType wtype = juce::PluginHostType::getPluginLoadedAs();
@@ -82,12 +81,12 @@ void EnvironmentContent::showing()
           typeName = "Audio Unit";
         log.add("Plugin type: " + juce::String(typeName));
         
-        juce::AudioProcessor* ap = super->getAudioProcessor();
+        juce::AudioProcessor* ap = supervisor->getAudioProcessor();
         log.add("Input channels: " + juce::String(ap->getTotalNumInputChannels()));
         log.add("Output channels: " + juce::String(ap->getTotalNumOutputChannels()));
     }
     else {
-        juce::AudioDeviceManager* deviceManager = super->getAudioDeviceManager();
+        juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
         if (deviceManager != nullptr) {
 
             log.add("Audio device type: " + (deviceManager->getCurrentDeviceTypeObject() != nullptr

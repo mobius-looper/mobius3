@@ -20,8 +20,9 @@ const int SymbolTableLevelColumn = 3;
 const int SymbolTableFlagsColumn = 4;
 const int SymbolTableWarnColumn = 5;
 
-SymbolTableContent::SymbolTableContent()
+SymbolTableContent::SymbolTableContent(Supervisor* s)
 {
+    supervisor = s;
     table.setBasicModel(this);
     table.addColumn("Symbol", SymbolTableNameColumn, 150);
     table.addColumn("Type", SymbolTableTypeColumn, 100);
@@ -38,7 +39,7 @@ SymbolTableContent::~SymbolTableContent()
 void SymbolTableContent::prepare()
 {
     symbols.clear();
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         symbols.add(symbol);
     }
     table.updateContent();

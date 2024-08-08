@@ -19,6 +19,7 @@
 #include "../../model/Setup.h"
 #include "../../model/Binding.h"
 #include "../../model/Symbol.h"
+#include "../../Supervisor.h"
 
 #include "BindingTargetSelector.h"
 
@@ -32,8 +33,10 @@
  * With the introduction of Symbols, we can assume all targets will
  * have a unique (and possibly qualfified) name.
  */
-BindingTargetSelector::BindingTargetSelector()
+BindingTargetSelector::BindingTargetSelector(Supervisor* s)
 {
+    supervisor = s;
+    
     setName("BindingTargetSelector");
 
     initBox(&functions);
@@ -79,7 +82,7 @@ void BindingTargetSelector::load()
     configurations.clear();
     parameters.clear();
     
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         
         if (symbol->behavior == BehaviorFunction) {
             // only allow bindings to functions that we define,

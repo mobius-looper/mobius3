@@ -16,6 +16,8 @@ class FloatingStripElement : public StatusElement
     FloatingStripElement(class StatusArea* area);
     ~FloatingStripElement();
 
+    class Supervisor* getSupervisor();
+
     // if we have more than one, give them a name
     juce::String name;
     

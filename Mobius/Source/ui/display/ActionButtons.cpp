@@ -35,13 +35,18 @@ ActionButtons::~ActionButtons()
 {
 }
 
+Supervisor* ActionButtons::getSupervisor()
+{
+    return display->getSupervisor();
+}
+
 /**
  * Rebuild the buttons from the UIConfig, and add any script/sample
  * symbols that ask for buttons.
  */
 void ActionButtons::configure()
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = display->getSupervisor()->getUIConfig();
 
     // remember this for layout()
     // since this is just a raw text entry field, do some sanity checks on it
@@ -53,7 +58,7 @@ void ActionButtons::configure()
     
     buildButtons(config);
 
-    DynamicConfig* dynconfig = Supervisor::Instance->getDynamicConfig();
+    DynamicConfig* dynconfig = display->getSupervisor()->getDynamicConfig();
     dynamicConfigChanged(dynconfig);
 }
 
@@ -122,7 +127,7 @@ void ActionButtons::buildButtons(UIConfig* config)
     // add the UIConfig buttons
     ButtonSet* buttonSet = config->getActiveButtonSet();
     for (auto button : buttonSet->buttons) {
-        ActionButton* b = new ActionButton(button);
+        ActionButton* b = new ActionButton(this, button);
         addButton(b);
     }
     
@@ -179,13 +184,13 @@ void ActionButtons::dynamicConfigChanged(DynamicConfig* config)
     // now we use SymbolTable and look for BehaviorScript or BehaviorSample
     // symbols that have the auto-binding "button" flag set
     
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : getSupervisor()->getSymbols()->getSymbols()) {
         if ((symbol->script && symbol->script->button) ||
             (symbol->sample && symbol->sample->button)) {
             // did it we have it manually configured?
             // todo: if we start hiding prefixes this will be more complicated
             if (!thingsToKeep.contains(symbol->getName())) {
-                ActionButton* b = new ActionButton(symbol);
+                ActionButton* b = new ActionButton(this, symbol);
                 addButton(b);
                 changes = true;
             }
@@ -373,7 +378,7 @@ void ActionButtons::buttonClicked(juce::Button* src)
     auto modifiers = juce::ModifierKeys::getCurrentModifiers();
     if (modifiers.isRightButtonDown()) {
         // show the popup editor
-        popup.show(this, (ActionButton*)src);
+        popup.show((ActionButton*)src);
     }
     else {
         // todo: figure out of dynamic_cast has any performance implications
@@ -384,7 +389,7 @@ void ActionButtons::buttonClicked(juce::Button* src)
         action->sustain = enableSustain;
         action->sustainEnd = false;
     
-        Supervisor::Instance->doAction(action);
+        display->getSupervisor()->doAction(action);
     }
 }
 
@@ -493,7 +498,7 @@ void ActionButtons::buttonUp(ActionButton* b)
              (s->script != nullptr && s->script->sustainable))) {
 
             action->sustainEnd = true;
-            Supervisor::Instance->doAction(action);
+            display->getSupervisor()->doAction(action);
         }
     }
     b->setDownTracker(false, false);

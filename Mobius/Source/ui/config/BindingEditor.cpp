@@ -41,7 +41,7 @@
 
 #include "BindingEditor.h"
 
-BindingEditor::BindingEditor()
+BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s), targets(s)
 {
     setName("BindingEditor");
     
@@ -83,7 +83,7 @@ BindingEditor::~BindingEditor()
  */
 void BindingEditor::load()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
 
     maxTracks = config->getTracks();
     maxGroups = config->getTrackGroups();
@@ -202,10 +202,10 @@ void BindingEditor::save()
     // these we don't need any more
     revertBindingSets.clear();
 
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     // this also deletes the current list
     config->setBindingSets(setlist);
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 }
 
 /**
@@ -424,7 +424,7 @@ void BindingEditor::initForm()
     // context is not always set at this point so we have to go direct
     // to Supervisor to get to MobiusConfig, this sucks work out a more
     // orderly initialization sequence
-    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     maxTracks = config->getTracks();
     for (int i = 0 ; i < maxTracks ; i++)
       scopeNames.add("Track " + juce::String(i+1));

@@ -12,7 +12,7 @@
 
 #include "MidiEditor.h"
 
-MidiEditor::MidiEditor()
+MidiEditor::MidiEditor(Supervisor* s) : BindingEditor(s)
 {
     setName("MidiEditor");
     initForm();
@@ -21,7 +21,7 @@ MidiEditor::MidiEditor()
 MidiEditor::~MidiEditor()
 {
     // remove lingering listener from MidiTracker
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->removeMonitor(this);
 }
 
@@ -45,7 +45,7 @@ void MidiEditor::prepare()
  */
 void MidiEditor::showing()
 {
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->addMonitor(this);
 }
 
@@ -54,7 +54,7 @@ void MidiEditor::showing()
  */
 void MidiEditor::hiding()
 {
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->removeMonitor(this);
 }
 

@@ -275,7 +275,7 @@ void MobiusShell::reconfigure(MobiusConfig* config)
 
     if (container->isPlugin()) {
         // rebuild MIDI bindings
-        Binderator* binderator = new Binderator();
+        Binderator* binderator = new Binderator(container->getSymbols());
         binderator->configureMidi(configuration);
         sendKernelBinderator(binderator);
     }
@@ -297,9 +297,10 @@ void MobiusShell::reconfigure(MobiusConfig* config)
  */
 void MobiusShell::installActivationSymbols()
 {
-    // hide existing activation symbols 
+    SymbolTable* symbols = container->getSymbols();
+    // hide existing activation symbols
     // remove references to previously resolved SamplePlayers
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : symbols->getSymbols()) {
         if (symbol->behavior == BehaviorActivation) {
             symbol->hidden = true;
         }
@@ -309,7 +310,7 @@ void MobiusShell::installActivationSymbols()
     unsigned char ordinal = 0;
     while (setups != nullptr) {
         juce::String name = juce::String(ActivationPrefixSetup) + setups->getName();
-        Symbol* s = Symbols.intern(name);
+        Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
         s->id = ordinal;
         // unhide if it was hidden above
@@ -322,7 +323,7 @@ void MobiusShell::installActivationSymbols()
     ordinal = 0;
     while (presets != nullptr) {
         juce::String name = juce::String(ActivationPrefixPreset) + presets->getName();
-        Symbol* s = Symbols.intern(name);
+        Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
         s->id = ordinal;
         s->hidden = false;
@@ -1155,8 +1156,9 @@ void MobiusShell::sendSamples(SampleManager* manager, bool safeMode)
  */
 void MobiusShell::installSymbols(SampleManager* manager)
 {
+    SymbolTable* symbols = container->getSymbols();
     // remove references to previously resolved SamplePlayers
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : symbols->getSymbols()) {
         if (symbol->sample) {
             symbol->sample.reset(nullptr);
             // mark it hidden to keep it out of the binding UI
@@ -1179,7 +1181,7 @@ void MobiusShell::installSymbols(SampleManager* manager)
                 // used to do this for DynamicAction since file names are much less predictable
                 // than script names.  probably need a similar prefix for scripts
                 juce::String qualified = juce::String("Sample:") + leaf;
-                Symbol* s = Symbols.intern(qualified);
+                Symbol* s = symbols->intern(qualified);
                 if (s->behavior > 0 && s->behavior != BehaviorSample) {
                     // this is extremely unlikely since the names are prefixed
                     Trace(1, "MobiusShell: Conflicting symbol behavior installing sample %s\n", 
@@ -1375,8 +1377,10 @@ void MobiusShell::sendScripts(Scriptarian* scriptarian, bool safeMode)
  */
 void MobiusShell::installSymbols(Scriptarian* scriptarian)
 {
+    SymbolTable* symbols = container->getSymbols();
+    
     // remove references to previously resolved Scripts
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : symbols->getSymbols()) {
         if (symbol->script) {
             symbol->script.reset(nullptr);
             symbol->hidden = true;
@@ -1398,7 +1402,7 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
                     Trace(1, "MobiusShell: Unable to determine script name for dynamic action!\n");
                 }
                 else {
-                    Symbol* s = Symbols.intern(bindingName);
+                    Symbol* s = symbols->intern(bindingName);
                     if (s->behavior > 0 && s->behavior != BehaviorScript) {
                         // since we don't prefix these names like samples, a conflict
                         // is more likely

@@ -19,7 +19,7 @@ class SyncContent : public juce::Component, public juce::Button::Listener,
 {
   public:
 
-    SyncContent();
+    SyncContent(class Supervisor* s);
     ~SyncContent();
 
     void showing();
@@ -42,7 +42,7 @@ class SyncContent : public juce::Component, public juce::Button::Listener,
     void labelTextChanged(juce::Label* l) override;
     
   private:
-
+    class Supervisor* supervisor = nullptr;
     BasicButtonRow commandButtons;
     BasicForm form;
     
@@ -73,7 +73,7 @@ class SyncPanel : public BasePanel
 {
   public:
 
-    SyncPanel() {
+    SyncPanel(class Supervisor* s) : content(s) {
         setTitle("Synchronization Status");
         setContent(&content);
         setSize(800, 500);

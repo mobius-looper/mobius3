@@ -22,8 +22,9 @@
 
 #include "UpgradePanel.h"
 
-UpgradeContent::UpgradeContent()
+UpgradeContent::UpgradeContent(Supervisor* s)
 {
+    supervisor = s;
     addAndMakeVisible(commands);
     commands.setListener(this);
     commands.add(&loadCurrentButton);
@@ -146,7 +147,7 @@ void UpgradeContent::doLoadFile()
 void UpgradeContent::doFileChooser()
 {
     // start in the located file if we could find one, otherwise installation root
-    juce::File startPath(Supervisor::Instance->getRoot());
+    juce::File startPath(supervisor->getRoot());
     if (lastFolder.length() > 0)
       startPath = lastFolder;
 
@@ -290,7 +291,7 @@ bool UpgradeContent::addUpgradeButton(DisplayButton* db)
     // find or create the upgrade set
     if (newButtons == nullptr) {
         juce::String upgradeName ("Upgrade");
-        UIConfig* uiConfig = Supervisor::Instance->getUIConfig();
+        UIConfig* uiConfig = supervisor->getUIConfig();
         ButtonSet* upgrade = uiConfig->findButtonSet(upgradeName);
         if (upgrade == nullptr) {
             newButtons = new ButtonSet();
@@ -341,7 +342,7 @@ void UpgradeContent::loadMobiusConfig(juce::String xml)
             delete cxml;
         }
 
-        masterConfig = Supervisor::Instance->getMobiusConfig();
+        masterConfig = supervisor->getMobiusConfig();
 
         loadPresets();
         loadSetups();
@@ -787,7 +788,7 @@ Binding* UpgradeContent::upgradeBinding(Binding* src)
     Binding* copy = new Binding(src);
 
     juce::String name (src->getSymbolName());
-    Symbol* symbol = Symbols.find(name);
+    Symbol* symbol = supervisor->getSymbols()->find(name);
     
     if (symbol != nullptr &&
         (symbol->function != nullptr || symbol->parameter != nullptr)) {
@@ -915,10 +916,10 @@ void UpgradeContent::doInstall()
     else {
         log.add("");
                 
-        masterConfig = Supervisor::Instance->getMobiusConfig();
+        masterConfig = supervisor->getMobiusConfig();
 
         // quick and dirty undo
-        juce::File root = Supervisor::Instance->getRoot();
+        juce::File root = supervisor->getRoot();
         juce::File undo = root.getChildFile("mobius.xml.undo");
         XmlRenderer xr;
         char* cxml = xr.render(masterConfig);
@@ -926,7 +927,7 @@ void UpgradeContent::doInstall()
         delete cxml;
 
         juce::File uiundo = root.getChildFile("uiconfig.xml.undo");
-        UIConfig* uiconfig = Supervisor::Instance->getUIConfig();
+        UIConfig* uiconfig = supervisor->getUIConfig();
         juce::String xml = uiconfig->toXml();
         uiundo.replaceWithText(xml);
         
@@ -999,16 +1000,16 @@ void UpgradeContent::doInstall()
         // since we're not merging into a potentially existing
         // object, we just replace it every time
         if (newButtons != nullptr) {
-            UIConfig* config = Supervisor::Instance->getUIConfig();
+            UIConfig* config = supervisor->getUIConfig();
             ButtonSet* existing = config->findButtonSet(newButtons->name);
             if (existing != nullptr)
               config->buttonSets.removeObject(existing);
             config->buttonSets.add(newButtons);
             newButtons = nullptr;
-            Supervisor::Instance->updateUIConfig();
+            supervisor->updateUIConfig();
         }
 
-        Supervisor::Instance->updateMobiusConfig();
+        supervisor->updateMobiusConfig();
         
         log.add("MobiusConfig ugprade installed");
         log.add("You may revert these changes by returning to this panel and clicking \"Undo\"");
@@ -1045,7 +1046,7 @@ void UpgradeContent::mergeBindings(BindingSet* src, BindingSet* dest)
 void UpgradeContent::doUndo()
 {
     log.add("");
-    juce::File root = Supervisor::Instance->getRoot();
+    juce::File root = supervisor->getRoot();
     
     juce::File undo = root.getChildFile("mobius.xml.undo");
     if (!undo.existsAsFile()) {
@@ -1065,7 +1066,7 @@ void UpgradeContent::doUndo()
             }
             else {
                 dest.replaceWithText(xml);
-                Supervisor::Instance->reloadMobiusConfig();
+                supervisor->reloadMobiusConfig();
                 log.add("The previous mobius.xml installation has been undone");
 
                 // hmm, should we let this linger?
@@ -1093,7 +1094,7 @@ void UpgradeContent::doUndo()
             }
             else {
                 dest.replaceWithText(xml);
-                Supervisor::Instance->reloadUIConfig();
+                supervisor->reloadUIConfig();
                 log.add("The previous uiconfig.xml installation has been undone");
             }
         }

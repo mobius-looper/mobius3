@@ -123,7 +123,7 @@ void Actionator::doCoreAction(UIAction* action)
         // could have done this earlier but it's mostly for thigs like
         // activePreset->preset that don't happen often
         if (symbol->parameter->coreName != nullptr) {
-            Symbol* alt = Symbols.intern(symbol->parameter->coreName);
+            Symbol* alt = mMobius->getContainer()->getSymbols()->intern(symbol->parameter->coreName);
             if (alt->coreParameter) {
                 Parameter* p = (Parameter*)(alt->coreParameter);
                 doParameter(action, p);
@@ -1343,7 +1343,7 @@ bool Actionator::doQuery(Query* query)
             // usually one of the aliased parameters like activePreset/preset
             UIParameter* uip = s->parameter;
             if (uip != nullptr && uip->coreName != nullptr) {
-                Symbol* alt = Symbols.intern(uip->coreName);
+                Symbol* alt = mMobius->getContainer()->getSymbols()->intern(uip->coreName);
                 cp = (Parameter*)(alt->coreParameter);
             }
         }

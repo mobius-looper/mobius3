@@ -10,7 +10,7 @@
 
 #include "KeyboardEditor.h"
 
-KeyboardEditor::KeyboardEditor()
+KeyboardEditor::KeyboardEditor(Supervisor* s) : BindingEditor(s)
 {
     setName("KeyboardEditor");
     initForm();
@@ -19,7 +19,7 @@ KeyboardEditor::KeyboardEditor()
 KeyboardEditor::~KeyboardEditor()
 {
     // make sure this doesn't linger
-    context->getSupervisor()->getKeyTracker()->removeExclusiveListener(this);
+    supervisor->getKeyTracker()->removeExclusiveListener(this);
 }
 
 /**
@@ -35,7 +35,7 @@ void KeyboardEditor::showing()
     // use the newer "exclusive" listener to prevent Binderator
     // from going crazy while we capture key events
     //KeyTracker::addListener(this);
-    context->getSupervisor()->getKeyTracker()->setExclusiveListener(this);
+    supervisor->getKeyTracker()->setExclusiveListener(this);
 }
 
 /**
@@ -44,7 +44,7 @@ void KeyboardEditor::showing()
 void KeyboardEditor::hiding()
 {
     // KeyTracker::removeListener(this);
-    context->getSupervisor()->getKeyTracker()->removeExclusiveListener(this);
+    supervisor->getKeyTracker()->removeExclusiveListener(this);
 }
 
 /**

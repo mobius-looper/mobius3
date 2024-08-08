@@ -7,7 +7,7 @@ class BindingSummary : public juce::Component, public juce::TableListBoxModel
 {
   public:
 
-    BindingSummary();
+    BindingSummary(class Supervisor* s);
     ~BindingSummary();
 
     void prepare(bool midi);
@@ -25,6 +25,7 @@ class BindingSummary : public juce::Component, public juce::TableListBoxModel
     
   private:
 
+    class Supervisor* supervisor = nullptr;
     bool midi = false;
     juce::Array<class Binding*> things;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
@@ -40,7 +41,7 @@ class MidiSummaryPanel : public BasePanel
 {
   public:
     
-    MidiSummaryPanel() {
+    MidiSummaryPanel(class Supervisor* s) : content(s) {
         setTitle("MIDI Bindings");
         setContent(&content);
         setSize(600, 600);
@@ -58,7 +59,7 @@ class KeyboardSummaryPanel : public BasePanel
 {
   public:
     
-    KeyboardSummaryPanel() {
+    KeyboardSummaryPanel(class Supervisor* s) : content(s) {
         setTitle("Keyboard Bindings");
         setContent(&content);
         setSize(600, 600);

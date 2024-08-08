@@ -54,7 +54,7 @@ StripRotary::StripRotary(class TrackStrip* parent, StripElementDefinition* def) 
 
     // now that we have Symbol, don't need to be passing the UIParameter around
     // in the StripElementDefinition
-    action.symbol = Symbols.intern(definition->parameter->getName());
+    action.symbol = strip->getSupervisor()->getSymbols()->intern(definition->parameter->getName());
 
     // see if the slider can pass mouse events up
     // second arg is wantsEventsForAllNestedChildComponents

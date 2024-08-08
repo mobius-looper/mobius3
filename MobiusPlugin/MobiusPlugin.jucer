@@ -40,6 +40,10 @@
         <FILE id="HXhg6q" name="MslParser.h" compile="0" resource="0" file="../Mobius/Source/script/MslParser.h"/>
         <FILE id="Y8s5yQ" name="MslPools.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslPools.cpp"/>
         <FILE id="DnTdLG" name="MslPools.h" compile="0" resource="0" file="../Mobius/Source/script/MslPools.h"/>
+        <FILE id="gs9NRW" name="MslPreprocessor.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslPreprocessor.cpp"/>
+        <FILE id="aoFO3g" name="MslPreprocessor.h" compile="0" resource="0"
+              file="../Mobius/Source/script/MslPreprocessor.h"/>
         <FILE id="PP50zY" name="MslResult.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslResult.cpp"/>
         <FILE id="yg8cNS" name="MslResult.h" compile="0" resource="0" file="../Mobius/Source/script/MslResult.h"/>
         <FILE id="Y0IheP" name="MslScript.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslScript.cpp"/>

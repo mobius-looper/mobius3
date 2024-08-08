@@ -9,7 +9,7 @@ class MidiMonitorContent : public juce::Component
 {
   public:
 
-    MidiMonitorContent();
+    MidiMonitorContent(class Supervisor* s);
     ~MidiMonitorContent();
 
     void resized() override;
@@ -19,6 +19,7 @@ class MidiMonitorContent : public juce::Component
     MidiLog log;
     
   private:
+    class Supervisor* supervisor = nullptr;
 
 };
 
@@ -26,7 +27,7 @@ class MidiMonitorPanel : public BasePanel, public MidiManager::Monitor
 {
   public:
 
-    MidiMonitorPanel();
+    MidiMonitorPanel(class Supervisor* s);
     ~MidiMonitorPanel();
 
     void showing() override;
@@ -37,7 +38,7 @@ class MidiMonitorPanel : public BasePanel, public MidiManager::Monitor
     bool midiMonitorExclusive() override;
     
   private:
-
+    class Supervisor* supervisor = nullptr;
     MidiMonitorContent content;
     juce::TextButton clearButton {"Clear"};
 };

@@ -10,7 +10,7 @@
 #include "GlobalEditor.h"
 
 
-GlobalEditor::GlobalEditor()
+GlobalEditor::GlobalEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("GlobalEditor");
     render();
@@ -32,17 +32,17 @@ void GlobalEditor::prepare()
 
 void GlobalEditor::load()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     loadGlobal(config);
 }
 
 void GlobalEditor::save()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     saveGlobal(config);
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 
-    DeviceConfig* dc = context->getDeviceConfig();
+    DeviceConfig* dc = supervisor->getDeviceConfig();
 
     // actually don't need to display the standalone ports the way it's working now
     // it will auto-adjust to whatever ports were selected in AudioDevicesPanel
@@ -90,7 +90,7 @@ void GlobalEditor::loadGlobal(MobiusConfig* config)
     }
 
     // ports don't come from MobiusConfig
-    DeviceConfig* dc = Supervisor::Instance->getDeviceConfig();
+    DeviceConfig* dc = supervisor->getDeviceConfig();
 
     // actually don't need to expose these, we auto-adjust whenever
     // AudioDevicesPanel selects channels
@@ -224,7 +224,7 @@ void GlobalEditor::initForm()
 
 void GlobalEditor::addField(const char* tab, UIParameter* p)
 {
-    form.add(new ParameterField(p), tab, 0);
+    form.add(new ParameterField(supervisor, p), tab, 0);
 }
 
 /****************************************************************************/

@@ -29,10 +29,9 @@
 #include "Colors.h"
 #include "StatusArea.h"
 
-StatusArea::StatusArea(MobiusDisplay* parent)
+StatusArea::StatusArea(MobiusDisplay* parent) : display(parent)
 {
     setName("StatusArea");
-    display = parent;
 
     addElement(&mode);
     addElement(&beaters);
@@ -59,6 +58,11 @@ StatusArea::~StatusArea()
 {
 }
 
+Supervisor* StatusArea::getSupervisor()
+{
+    return display->getSupervisor();
+}
+
 /**
  * We'll only receive these if the mouse is not over a child component.
  * If this is a right mouse click, open the main popup menu.
@@ -66,7 +70,7 @@ StatusArea::~StatusArea()
 void StatusArea::mouseDown(const juce::MouseEvent& event)
 {
     if (event.mods.isRightButtonDown())
-      Supervisor::Instance->showMainPopupMenu();
+      display->getSupervisor()->showMainPopupMenu();
 }
 
 void StatusArea::update(MobiusState* state)
@@ -101,7 +105,7 @@ void StatusArea::paint(juce::Graphics& g)
  */
 void StatusArea::saveLocation(StatusElement* element)
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = display->getSupervisor()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
 
     if (captureConfiguration(layout, element))
@@ -121,7 +125,7 @@ void StatusArea::saveLocation(StatusElement* element)
  */
 void StatusArea::configure()
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = display->getSupervisor()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
 
     // the layout must have an element definition for all possible elements

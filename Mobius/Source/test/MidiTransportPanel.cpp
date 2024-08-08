@@ -20,8 +20,9 @@
 
 #include "MidiTransportPanel.h"
 
-MidiTransportContent::MidiTransportContent()
+MidiTransportContent::MidiTransportContent(Supervisor* s)
 {
+    supervisor = s;
     commandButtons.setListener(this);
     commandButtons.setCentered(true);
     commandButtons.add(&startButton);
@@ -51,7 +52,7 @@ void MidiTransportContent::showing()
 {
     // seemed to be having difficulty setting this at construction
     // so get it before showing, why?
-    realizer = Supervisor::Instance->getMidiRealizer();
+    realizer = supervisor->getMidiRealizer();
     outTempo.setText(juce::String(realizer->getTempo()));
     
     update();

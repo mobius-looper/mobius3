@@ -29,7 +29,7 @@
 class ScriptPanel : public ConfigPanel
 {
   public:
-    ScriptPanel() {
+    ScriptPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("ScriptPanel");
         setEditor(&editor);
     }
@@ -42,7 +42,7 @@ class ScriptPanel : public ConfigPanel
 class SamplePanel : public ConfigPanel
 {
   public:
-    SamplePanel() {
+    SamplePanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("SamplePanel");
         setEditor(&editor);
     }
@@ -55,7 +55,7 @@ class SamplePanel : public ConfigPanel
 class PresetPanel : public ConfigPanel
 {
   public:
-    PresetPanel() {
+    PresetPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("PresetPanel");
         setEditor(&editor);
     }
@@ -68,7 +68,7 @@ class PresetPanel : public ConfigPanel
 class SetupPanel : public ConfigPanel
 {
   public:
-    SetupPanel() {
+    SetupPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("SetupPanel");
         setEditor(&editor);
     }
@@ -81,7 +81,7 @@ class SetupPanel : public ConfigPanel
 class GlobalPanel : public ConfigPanel
 {
   public:
-    GlobalPanel() {
+    GlobalPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("GlobalPanel");
         setEditor(&editor);
     }
@@ -94,7 +94,7 @@ class GlobalPanel : public ConfigPanel
 class KeyboardPanel : public ConfigPanel
 {
   public:
-    KeyboardPanel() {
+    KeyboardPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("KeyboardPanel");
         setEditor(&editor);
     }
@@ -107,7 +107,7 @@ class KeyboardPanel : public ConfigPanel
 class MidiPanel : public ConfigPanel
 {
   public:
-    MidiPanel() {
+    MidiPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("MidiPanel");
         setEditor(&editor);
     }
@@ -120,7 +120,7 @@ class MidiPanel : public ConfigPanel
 class HostPanel : public ConfigPanel
 {
   public:
-    HostPanel() {
+    HostPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("HostPanel");
         setEditor(&editor);
     }
@@ -133,7 +133,7 @@ class HostPanel : public ConfigPanel
 class ButtonPanel : public ConfigPanel
 {
   public:
-    ButtonPanel() {
+    ButtonPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("ButtonPanel");
         setEditor(&editor);
     }
@@ -146,7 +146,7 @@ class ButtonPanel : public ConfigPanel
 class MidiDevicePanel : public ConfigPanel
 {
   public:
-    MidiDevicePanel() {
+    MidiDevicePanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("MidiDevicePanel");
         setEditor(&editor);
     }
@@ -159,7 +159,7 @@ class MidiDevicePanel : public ConfigPanel
 class AudioPanel : public ConfigPanel
 {
   public:
-    AudioPanel() {
+    AudioPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("AudioPanel");
         setEditor(&editor);
     }
@@ -172,7 +172,7 @@ class AudioPanel : public ConfigPanel
 class DisplayPanel : public ConfigPanel
 {
   public:
-    DisplayPanel() {
+    DisplayPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
         setName("DisplayPanel");
         setEditor(&editor);
     }

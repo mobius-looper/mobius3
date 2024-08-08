@@ -112,7 +112,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
 {
   public:
 
-    ConfigPanel();
+    ConfigPanel(class Supervisor* s);
     ~ConfigPanel() override;
 
     // called by the subclass during construction
@@ -136,17 +136,6 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
     int getSelectedObject() override;
     juce::String getSelectedObjectName() override;
     
-    class MobiusConfig* getMobiusConfig() override;
-    void saveMobiusConfig() override;
-
-    class UIConfig* getUIConfig() override;
-    void saveUIConfig() override;
-    
-    class DeviceConfig* getDeviceConfig() override;
-    void saveDeviceConfig() override;
-
-    class Supervisor* getSupervisor() override;
-    
     // BasePanel overloads
     void showing() override;
     void hiding() override;
@@ -155,6 +144,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
     void footerButton(juce::Button* b) override;
     
   private:
+    class Supervisor* supervisor = nullptr;
 
     ConfigEditorWrapper wrapper;
 

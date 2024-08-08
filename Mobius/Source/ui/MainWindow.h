@@ -79,8 +79,8 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     class Supervisor* supervisor;
 
-    MainMenu menu;
-    MobiusDisplay display {this};
+    MainMenu menu {this};
+    MobiusDisplay display;
     AlertPanel alertPanel;
     PanelFactory panelFactory {this};
     

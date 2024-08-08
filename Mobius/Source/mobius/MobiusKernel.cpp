@@ -149,7 +149,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
 
     // if we're a plugin, initialize the MIDI bindigns
     if (cont->isPlugin()) {
-        Binderator* b = new Binderator();
+        Binderator* b = new Binderator(container->getSymbols());
         b->configureMidi(configuration);
         Binderator* old = binderator.install(b);
         // shouldn't have one
@@ -166,7 +166,7 @@ void MobiusKernel::installSymbols()
 {
     Symbol* s;
 
-    s = Symbols.intern("SamplePlay");
+    s = container->getSymbols()->intern("SamplePlay");
     s->level = LevelKernel;
     s->behavior = BehaviorFunction;
     s->id = KernelSamplePlay;

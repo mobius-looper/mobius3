@@ -7,6 +7,7 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIParameter.h"
 #include "../../model/XmlRenderer.h"
+#include "../../Supervisor.h"
 
 #include "../common/Form.h"
 #include "../JuceUtil.h"
@@ -14,9 +15,8 @@
 #include "ParameterField.h"
 #include "PresetEditor.h"
 
-PresetEditor::PresetEditor()
+PresetEditor::PresetEditor(Supervisor* s) : ConfigEditor(s)
 {
-    // debugging hack
     setName("PresetEditor");
 }
 
@@ -51,7 +51,7 @@ void PresetEditor::load()
     // clone the Preset list into a local copy
     presets.clear();
     revertPresets.clear();
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     if (config != nullptr) {
         // convert the linked list to an OwnedArray
         Preset* plist = config->getPresets();
@@ -121,14 +121,14 @@ void PresetEditor::save()
     presets.clear(false);
     revertPresets.clear();
 
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     // this will also delete the current preset list
     config->setPresets(plist);
 
     // this flag is necessary to get the engine to pay attention
     config->presetsEdited = true;
     
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 }
 
 /**
@@ -374,7 +374,7 @@ void PresetEditor::initForm()
 
 void PresetEditor::addField(const char* tab, UIParameter* p, int col)
 {
-    form.add(new ParameterField(p), tab, col);
+    form.add(new ParameterField(supervisor, p), tab, col);
 }
 
 /****************************************************************************/

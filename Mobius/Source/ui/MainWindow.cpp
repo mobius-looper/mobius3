@@ -25,10 +25,9 @@
 
 #include "MainWindow.h"
 
-MainWindow::MainWindow(Supervisor* super)
+MainWindow::MainWindow(Supervisor* super) : supervisor(super), display(this), alertPanel(super) 
 {
     setName("MainWindow");
-    supervisor = super;
 
     // using a Listener pattern here but could just
     // pass this to the constructor like we do for the others
@@ -123,6 +122,8 @@ void MainWindow::showPanel(juce::String name)
 
 void MainWindow::mainMenuSelection(int id)
 {
+    SymbolTable* symbols = supervisor->getSymbols();
+    
     if (id == 0) {
         // can get here when using the PopupMenu
         // this means that the user released the mouse
@@ -131,28 +132,28 @@ void MainWindow::mainMenuSelection(int id)
     else if (id >= MainMenu::MenuPresetOffset && id <= MainMenu::MenuPresetMax) {
         int preset = id - MainMenu::MenuPresetOffset;
         UIAction action;
-        action.symbol = Symbols.intern("activePreset");
+        action.symbol = symbols->intern("activePreset");
         action.value = preset;
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuSetupOffset && id <= MainMenu::MenuSetupMax) {
         int setup = id - MainMenu::MenuSetupOffset;
         UIAction action;
-        action.symbol = Symbols.intern("activeSetup");
+        action.symbol = symbols->intern("activeSetup");
         action.value = setup;
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuLayoutOffset && id <= MainMenu::MenuLayoutMax) {
         int layoutOrdinal = id - MainMenu::MenuLayoutOffset;
         UIAction action;
-        action.symbol = Symbols.intern(UISymbols::ActiveLayout);
+        action.symbol = symbols->intern(UISymbols::ActiveLayout);
         action.value = layoutOrdinal;
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuButtonsOffset && id <= MainMenu::MenuButtonsMax) {
         int buttonsOrdinal = id - MainMenu::MenuButtonsOffset;
         UIAction action;
-        action.symbol = Symbols.intern(UISymbols::ActiveButtons);
+        action.symbol = symbols->intern(UISymbols::ActiveButtons);
         action.value = buttonsOrdinal;
         supervisor->doAction(&action);
     }
@@ -293,7 +294,7 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::TestInfo: {
-                Supervisor::Instance->alert("The test menu has development tools that will be hidden in normal releases.  They don't do anything partiuclarly useful.  You probably won't hurt anything if you use them.  Probably.");
+                supervisor->alert("The test menu has development tools that will be hidden in normal releases.  They don't do anything partiuclarly useful.  You probably won't hurt anything if you use them.  Probably.");
             }
                 break;
 

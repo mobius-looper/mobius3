@@ -9,8 +9,9 @@
 
 #include "ScriptTable.h"
 
-ScriptTable::ScriptTable()
+ScriptTable::ScriptTable(Supervisor* s)
 {
+    supervisor = s;
     setName("ScriptTable");
 
     initTable();
@@ -393,7 +394,7 @@ void ScriptTable::cellClicked(int rowNumber, int columnId, const juce::MouseEven
  */
 void ScriptTable::doFileChooser()
 {
-    juce::File startPath(Supervisor::Instance->getRoot());
+    juce::File startPath(supervisor->getRoot());
     if (lastFolder.length() > 0)
       startPath = lastFolder;
     

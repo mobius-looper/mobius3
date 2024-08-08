@@ -18,7 +18,7 @@ class TraceContent : public juce::Component,
 {
   public:
 
-    TraceContent();
+    TraceContent(class Supervisor* s);
     ~TraceContent();
 
     void showing();
@@ -36,6 +36,7 @@ class TraceContent : public juce::Component,
     
   private:
 
+    class Supervisor* supervisor = nullptr;
     BasicButtonRow commandButtons;
     BasicLog log;
     
@@ -48,7 +49,7 @@ class TracePanel : public BasePanel
 {
   public:
 
-    TracePanel() {
+    TracePanel(class Supervisor* s) : content(s) {
         setTitle("Trace Log");
         setContent(&content);
         setSize(400, 500);

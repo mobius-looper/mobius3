@@ -63,7 +63,7 @@
 
 #include "DisplayEditor.h"
 
-DisplayEditor::DisplayEditor()
+DisplayEditor::DisplayEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("DisplayEditor");
 
@@ -101,7 +101,7 @@ void DisplayEditor::prepare()
 
 void DisplayEditor::load()
 {
-    UIConfig* config = context->getUIConfig();
+    UIConfig* config = supervisor->getUIConfig();
 
     // make a local copy of the DisplayLayouts for editing
     layouts.clear();
@@ -153,7 +153,7 @@ void DisplayEditor::refreshObjectSelector()
 
 void DisplayEditor::save()
 {
-    UIConfig* config = context->getUIConfig();
+    UIConfig* config = supervisor->getUIConfig();
         
     saveLayout(selectedLayout);
 
@@ -165,7 +165,7 @@ void DisplayEditor::save()
         config->layouts.add(neu);
     }
 
-    context->saveUIConfig();
+    supervisor->updateUIConfig();
 }
 
 void DisplayEditor::cancel()
@@ -272,7 +272,7 @@ void DisplayEditor::loadLayout(int ordinal)
     floatingStrip.clear();
     instantParameters.clear();
 
-    UIConfig* config = context->getUIConfig();
+    UIConfig* config = supervisor->getUIConfig();
     trackRows.setText(config->get("trackRows"));
     loopRows.setText(config->get("loopRows"));
     buttonHeight.setText(config->get("buttonHeight"));
@@ -338,7 +338,7 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
     }
     else {
         // fall back to all of them, less easy to navigate but it's a start
-        for (auto symbol : Symbols.getSymbols()) {
+        for (auto symbol : supervisor->getSymbols()->getSymbols()) {
             if (symbol->behavior == BehaviorParameter)
               allowed.add(symbol->getDisplayName());
         }
@@ -355,7 +355,7 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
 
 void DisplayEditor::addParameterDisplayName(juce::String name, juce::StringArray& values)
 {
-    Symbol* s = Symbols.find(name);
+    Symbol* s = supervisor->getSymbols()->find(name);
     if (s == nullptr) {
         Trace(1, "DisplayEditor: Unresolved parameter %s\n", name.toUTF8());
     }
@@ -404,7 +404,7 @@ void DisplayEditor::saveLayout(int ordinal)
     layout->instantParameters = symbolNames;
 
     // this one is global
-    UIConfig* config = context->getUIConfig();
+    UIConfig* config = supervisor->getUIConfig();
 
     // todo: really need to be constraining this to an integer before saving
     // if we're just using a text field
@@ -509,7 +509,7 @@ Symbol* DisplayEditor::findSymbolWithDisplayName(juce::String dname)
 {
     Symbol* found = nullptr;
 
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         if (dname == symbol->getDisplayName()) {
             found = symbol;
             break;

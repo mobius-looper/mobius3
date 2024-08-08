@@ -14,7 +14,7 @@
 class HostEditor : public BindingEditor
 {
   public:
-    HostEditor();
+    HostEditor(class Supervisor* s);
     ~HostEditor();
 
     juce::String getTitle() override {return "Plugin Parameters";}

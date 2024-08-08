@@ -38,7 +38,7 @@ void Symbolizer::initialize()
     // these should have complete overlap with the new dynamically loaded symbols.xml definitions
     for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
         FunctionDefinition* def = FunctionDefinition::Instances[i];
-        Symbol* s = Symbols.intern(def->name);
+        Symbol* s = supervisor->getSymbols()->intern(def->name);
         s->behavior = BehaviorFunction;
         // start them out in core, Mobuis can change that
         s->level = LevelCore;
@@ -48,7 +48,7 @@ void Symbolizer::initialize()
         
     for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
         UIParameter* def = UIParameter::Instances[i];
-        Symbol* s = Symbols.intern(def->name);
+        Symbol* s = supervisor->getSymbols()->intern(def->name);
         s->behavior = BehaviorParameter;
         s->level = LevelCore;
         s->parameter = def;
@@ -119,7 +119,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
 
-        Symbol* s = Symbols.intern(name);
+        Symbol* s = supervisor->getSymbols()->intern(name);
         s->functionProperties.reset(func);
         // don't replace this yet, it will normally be set as a side effect of
         // instsalling core functions
@@ -239,7 +239,7 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
 
         props->coreName = el->getStringAttribute("coreName");
 
-        Symbol* s = Symbols.intern(name);
+        Symbol* s = supervisor->getSymbols()->intern(name);
         s->parameterProperties.reset(props);
     }
 }

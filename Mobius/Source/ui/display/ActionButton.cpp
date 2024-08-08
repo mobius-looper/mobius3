@@ -56,10 +56,12 @@
 #include "../../model/Symbol.h"
 
 #include "Colors.h"
+#include "ActionButtons.h"
 #include "ActionButton.h"
 
-ActionButton::ActionButton()
+ActionButton::ActionButton(ActionButtons* parent)
 {
+    actionButtons = parent;
     downTracker = false;
     downRight = false;
 }
@@ -70,10 +72,11 @@ ActionButton::ActionButton()
  * parenthesized arguments.  If a user-defined name is speified that
  * is used instead.
  */
-ActionButton::ActionButton(DisplayButton* src)
+ActionButton::ActionButton(ActionButtons* parent, DisplayButton* src)
 {
     setName("ActionButton");
-
+    actionButtons = parent;
+    
     // don't wait for mouse up
     setTriggeredOnMouseDown(true);
 
@@ -99,7 +102,7 @@ ActionButton::ActionButton(DisplayButton* src)
     color = src->color;
 
     if (symbolName.length() > 0) {
-        action.symbol = Symbols.intern(symbolName);
+        action.symbol = actionButtons->getSupervisor()->getSymbols()->intern(symbolName);
         CopyString(src->arguments.toUTF8(), action.arguments, sizeof(action.arguments));
 
         // kludge: This is what Binderator does for MIDI/key bindings
@@ -137,9 +140,10 @@ ActionButton::ActionButton(DisplayButton* src)
  * yet have a way to save color preferences, it would have to be something
  * in the ScriptProperties or SampleProperties
  */
-ActionButton::ActionButton(Symbol* src)
+ActionButton::ActionButton(ActionButtons* parent, Symbol* src)
 {
     setName("ActionButton");
+    actionButtons = parent;
     
     // don't wait for mouse up
     setTriggeredOnMouseDown(true);

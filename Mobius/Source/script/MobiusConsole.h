@@ -18,7 +18,7 @@ class MobiusConsole : public juce::Component,
 {
   public:
 
-    MobiusConsole(class ConsolePanel* panel);
+    MobiusConsole(class Supervisor* s, class ConsolePanel* panel);
     ~MobiusConsole();
 
     void showing();

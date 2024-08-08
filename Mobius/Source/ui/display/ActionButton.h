@@ -14,9 +14,9 @@ class ActionButton : public juce::TextButton
 {
   public:
 
-    ActionButton();
-    ActionButton(class DisplayButton* src);
-    ActionButton(class Symbol* src);
+    ActionButton(class ActionButtons* ab);
+    ActionButton(class ActionButtons* ab, class DisplayButton* src);
+    ActionButton(class ActionButtons* ab, class Symbol* src);
     ~ActionButton();
 
     int getPreferredWidth(int height);
@@ -47,6 +47,7 @@ class ActionButton : public juce::TextButton
     bool isDownRight();
     
   private:
+    class ActionButtons* actionButtons = nullptr;
 
     UIAction action;
     bool dynamic = false;

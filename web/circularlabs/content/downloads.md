@@ -20,34 +20,19 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 13
-- Fix long press with CCs
-- Fix anomolies in MIDI Devices panel showing previous devices in red
-- Fix MIDI clock sync problem causing immediate retrigger or "gap" in playback
-- Removed Update button from binding panels, added Copy
-- Make level meters green instead of red
-- Loop border in the loop stack is now red when it is a loop switch destination
-- Errors reading projects on Mac
-- Better error handling and reporting when loading projects
-- Project loading ignores old absolute paths, .wav files are assumed relative to .mob
-- Add MIDI Thru device selection
-- Instant parameter values may be changed by click-dragging up or down
-- New Trace Log panel to watch what is happening when you do the things
-- New console panel that you will one day be impressed by
-  
-## Build 12 
-- Projects
-- Single loop save/load with Quick Save
-- Bug fixes for sustain scripts
-- Bug fix setting colors on buttons that have action arguments
-- Keep button color popup visible when it is close to the right edge
-- Fix display of the focus lock button, track number/name is also a focus lock toggle
-- Fix active setup switching back to the first one after editing setups
-- LoadScripts and LoadSamples are now bindable functions
-- Upgrader will now import old setups with track names
-- Host parameters may be bound to functions and scripts
-- Improved binding panels, immediate updates to the table when changing fields without **Update** button
-- Bindings to scripts may now have arguments that are passed through to the script
+**NOTE** Build 15 is available for Windows only.  A Mac build will be available early the week of August 12th.
+
+## Build 15
+
+- Redesign host sync for stability in pattern-based hosts like FL Studio
+- Fix binding panels so changes in target selector have immediate effect on binding table
+- Fix dual row track strip layouts to have consistent sizes
+- Put back SyncMasterTrack function
+- Once some elements in the Main Elements section of the Edit Layouts panel were deselected (moving them to the right) they would disappear and could not be added back
+- Fixed help text related to floating strip element selection
+- Crash after adding and removing elements from the floating track strip  
+- Allow more than 8 tracks in the Scope selection menus in binding panels
+- Use the window size of the standalone application in the plugin editor window
 
 ## Windows Security
 
@@ -66,7 +51,4 @@ On MacOS, the standalone application will be installed in `/Applications`, VST3 
 
 The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
 
-
-
-
-
+## Release Notes

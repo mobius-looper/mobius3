@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditor::SampleEditor()
+SampleEditor::SampleEditor(Supervisor* s) : ConfigEditor(s), table(s)
 {
     setName("SampleEditor");
     addAndMakeVisible(table);
@@ -24,7 +24,7 @@ SampleEditor::~SampleEditor()
 
 void SampleEditor::load()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     SampleConfig* sconfig = config->getSampleConfig();
     if (sconfig != nullptr) {
         // this makes it's own copy
@@ -34,15 +34,15 @@ void SampleEditor::load()
 
 void SampleEditor::save()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     SampleConfig* newConfig = table.capture();
     config->setSampleConfig(newConfig);
 
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 
     // you almost always want scripts reloaded after editing
     // so force that now, samples are another story...
-    context->getSupervisor()->menuLoadSamples();
+    supervisor->menuLoadSamples();
 }
 
 void SampleEditor::cancel()

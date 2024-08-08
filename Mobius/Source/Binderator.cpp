@@ -98,8 +98,9 @@ const int BinderatorMaxIndex = 256;
 //
 //////////////////////////////////////////////////////////////////////
 
-Binderator::Binderator()
+Binderator::Binderator(SymbolTable* st)
 {
+    symbols = st;
 }
 
 Binderator::~Binderator()
@@ -476,7 +477,7 @@ UIAction* Binderator::buildAction(Binding* b)
         Trace(1, "Binderator: Ignoring Binding with no name\n");
     }
     else {
-        Symbol* symbol =  Symbols.intern(name);
+        Symbol* symbol =  symbols->intern(name);
         if (!looksResolved(symbol)) {
             Trace(1, "Binderator: Binding to unresolved symbol %s\n",
                   symbol->getName());
@@ -778,7 +779,7 @@ UIAction* Binderator::handleKeyEvent(int code, int modifiers, bool up)
 //
 //////////////////////////////////////////////////////////////////////
 
-ApplicationBinderator::ApplicationBinderator(Supervisor* super)
+ApplicationBinderator::ApplicationBinderator(Supervisor* super) : binderator(super->getSymbols())
 {
     supervisor = super;
 }

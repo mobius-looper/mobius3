@@ -42,7 +42,7 @@
 
 #include "MidiDeviceEditor.h"
 
-MidiDeviceEditor::MidiDeviceEditor()
+MidiDeviceEditor::MidiDeviceEditor(Supervisor* s) : ConfigEditor(s), log(s)
 {
     setName("MidiDeviceEditor");
     
@@ -80,7 +80,7 @@ MidiDeviceEditor::~MidiDeviceEditor()
  */
 void MidiDeviceEditor::showing()
 {
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->addMonitor(this);
 }
 
@@ -89,7 +89,7 @@ void MidiDeviceEditor::showing()
  */
 void MidiDeviceEditor::hiding()
 {
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->removeMonitor(this);
 }
 
@@ -117,12 +117,12 @@ void MidiDeviceEditor::midiMonitorMessage(juce::String msg)
 void MidiDeviceEditor::load()
 {
     // have to defer this post-construction
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     inputTable.init(mm, false);
     outputTable.init(mm, true);
 
     // pull out the MachineConfig for this machinea
-    DeviceConfig* config = context->getDeviceConfig();
+    DeviceConfig* config = supervisor->getDeviceConfig();
     MachineConfig* machine = config->getMachineConfig();
     
     inputTable.load(machine);
@@ -138,13 +138,13 @@ void MidiDeviceEditor::load()
 void MidiDeviceEditor::save()
 {
     // put table state back into the MachineConfig
-    DeviceConfig* config = context->getDeviceConfig();
+    DeviceConfig* config = supervisor->getDeviceConfig();
     MachineConfig* machine = config->getMachineConfig();
     inputTable.save(machine);
     outputTable.save(machine);
         
     // update the file
-    context->saveDeviceConfig();
+    supervisor->updateDeviceConfig();
 }
 
 /**
@@ -156,7 +156,7 @@ void MidiDeviceEditor::save()
  */
 void MidiDeviceEditor::cancel()
 {
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     mm->openDevices();
 }
 
@@ -189,7 +189,7 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
     // the device we touched
     MidiDeviceTable* mdt = static_cast<MidiDeviceTable*>(table);
     MidiDeviceTableRow* device = mdt->getRow(row);
-    bool plugin = context->getSupervisor()->isPlugin();
+    bool plugin = supervisor->isPlugin();
     MidiDeviceColumn mdcol = (MidiDeviceColumn)colid;
     
     // reflect the state in the DeviceTableRow model
@@ -279,7 +279,7 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
     }
 
     // now open/close the device with the derived usage
-    MidiManager* mm = context->getSupervisor()->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     if (doit) {
         if (output) {
             if (state)

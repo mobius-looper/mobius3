@@ -14,8 +14,9 @@
 
 #include "SyncPanel.h"
 
-SyncContent::SyncContent()
+SyncContent::SyncContent(Supervisor* s)
 {
+    supervisor = s;
     commandButtons.setListener(this);
     commandButtons.setCentered(true);
     //commandButtons.add(&startButton);
@@ -124,7 +125,7 @@ void SyncContent::labelTextChanged(juce::Label* l)
  */
 void SyncContent::update()
 {
-    MobiusInterface* mobius = Supervisor::Instance->getMobius();
+    MobiusInterface* mobius = supervisor->getMobius();
     MobiusState* state = mobius->getState();
     MobiusSyncState* sync = &(state->sync);
 

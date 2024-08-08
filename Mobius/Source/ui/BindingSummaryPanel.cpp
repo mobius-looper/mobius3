@@ -8,8 +8,9 @@
 
 #include "BindingSummaryPanel.h"
 
-BindingSummary::BindingSummary()
+BindingSummary::BindingSummary(Supervisor* s)
 {
+    supervisor = s;
     initTable();
     addAndMakeVisible(table);
 }
@@ -22,7 +23,7 @@ void BindingSummary::prepare(bool doMidi)
 {
     midi = doMidi;
     things.clear();
-    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     BindingSet* bindingSets = config->getBindingSets();
 
     // the first one is always added

@@ -21,7 +21,7 @@ class SetupEditor : public ConfigEditor,
 {
   public:
     
-    SetupEditor();
+    SetupEditor(class Supervisor* s);
     ~SetupEditor();
 
     juce::String getTitle() override {return "Setups";}
@@ -44,7 +44,7 @@ class SetupEditor : public ConfigEditor,
     void comboBoxChanged(juce::ComboBox* combo) override;
     
   private:
-
+    
     void refreshObjectSelector();
     void adjustTrackSelector();
     void render();

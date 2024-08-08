@@ -66,12 +66,12 @@ BeatersElement::BeatersElement(StatusArea* area) :
     loopBeater.decayMsec = BeaterDecayLong;
 
     // receive notifications of time boudaries closer to when they happen
-    Supervisor::Instance->addTimeListener(this);
+    area->getSupervisor()->addTimeListener(this);
 }
 
 BeatersElement::~BeatersElement()
 {
-    Supervisor::Instance->removeTimeListener(this);
+    statusArea->getSupervisor()->removeTimeListener(this);
 }
 
 /**
@@ -238,7 +238,7 @@ bool Beater::start()
     } 
     else {
         // we're currently off
-        startMsec = Supervisor::Instance->getMillisecondCounter();
+        startMsec = juce::Time::getMillisecondCounter();
         on = true;
         changed = true;
     }
@@ -254,7 +254,7 @@ bool Beater::tick()
     bool changed = false;
     
     if (on) {
-        int now = Supervisor::Instance->getMillisecondCounter();
+        int now = juce::Time::getMillisecondCounter();
         int delta = now - startMsec;
         if (delta > decayMsec) {
             on = false;

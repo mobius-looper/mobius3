@@ -14,8 +14,10 @@
 #include "ButtonPopup.h"
 
 
-ButtonPopup::ButtonPopup()
+ButtonPopup::ButtonPopup(ActionButtons* ab)
 {
+    actionButtons = ab;
+    
     addAndMakeVisible(&selector);
 
     commandButtons.setListener(this);
@@ -32,26 +34,25 @@ ButtonPopup::~ButtonPopup()
 {
 }
 
-void ButtonPopup::show(ActionButtons* buttons, ActionButton* button)
+void ButtonPopup::show(ActionButton* button)
 {
-    allButtons = buttons;
     targetButton = button;
     
     int argb = button->getColor();
     if (argb == 0)
       argb = MobiusBlue;
     
-    juce::OwnedArray<ActionButton>& current = allButtons->getButtons();
+    juce::OwnedArray<ActionButton>& current = actionButtons->getButtons();
     for (auto b : current) {
         selector.addSwatch(b->getColor());
     }
 
     selector.setCurrentColour(juce::Colour(argb));
     
-    juce::Point<int> point = buttons->getMouseXYRelative();
+    juce::Point<int> point = actionButtons->getMouseXYRelative();
 
     // this will be MobiusDisplay which has most of the UI
-    juce::Component* parent = buttons->getParentComponent();
+    juce::Component* parent = actionButtons->getParentComponent();
     parent->addAndMakeVisible(this);
 
     // when it fits, open it to the immediate right/under the current mouse location
@@ -75,8 +76,7 @@ void ButtonPopup::show(ActionButtons* buttons, ActionButton* button)
 
 void ButtonPopup::close()
 {
-    allButtons->getParentComponent()->removeChildComponent(this);
-    allButtons = nullptr;
+    actionButtons->getParentComponent()->removeChildComponent(this);
     targetButton = nullptr;
 }
 
@@ -96,7 +96,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
     // save current colors for undo
     if (command != &cancelButton && command != &undoButton) {
         juce::Array<int> newUndo;
-        juce::OwnedArray<ActionButton>& current = allButtons->getButtons();
+        juce::OwnedArray<ActionButton>& current = actionButtons->getButtons();
         for (auto b : current) {
             newUndo.add(b->getColor());
         }
@@ -107,7 +107,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
         change(targetButton, newColor);
     }
     else if (command == &sameButton) {
-        juce::OwnedArray<ActionButton>& buttons = allButtons->getButtons();
+        juce::OwnedArray<ActionButton>& buttons = actionButtons->getButtons();
         for (auto b : buttons) {
             if (b->getColor() == oldColor) {
                 change(b, newColor);
@@ -115,7 +115,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
         }
     }
     else if (command == &allButton) {
-        juce::OwnedArray<ActionButton>& buttons = allButtons->getButtons();
+        juce::OwnedArray<ActionButton>& buttons = actionButtons->getButtons();
         for (auto b : buttons) {
             change(b, newColor);
         }
@@ -123,7 +123,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
     else if (command == &undoButton) {
         if (undo.size() > 0) {
             juce::Array<int> lastUndo = undo.removeAndReturn(undo.size() - 1);
-            juce::OwnedArray<ActionButton>& buttons = allButtons->getButtons();
+            juce::OwnedArray<ActionButton>& buttons = actionButtons->getButtons();
             for (int i = 0 ; i < lastUndo.size() ; i++) {
                 int old = lastUndo[i];
                 ActionButton* b = buttons[i];
@@ -145,7 +145,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
  */
 void ButtonPopup::change(ActionButton* b, int color)
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = actionButtons->getSupervisor()->getUIConfig();
     ButtonSet* buttonSet = config->getActiveButtonSet();
 
     // if this is MobiusBlue, collapse back down to zero
@@ -171,7 +171,7 @@ void ButtonPopup::change(ActionButton* b, int color)
             // save it now
             db->color = color;
             config->dirty = true;
-            Supervisor::Instance->updateUIConfig();
+            actionButtons->getSupervisor()->updateUIConfig();
         }
     }
 }

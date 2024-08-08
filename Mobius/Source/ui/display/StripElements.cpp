@@ -31,7 +31,7 @@
 StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
 {
-    action.symbol = Symbols.intern("FocusLock");
+    action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
     action.scopeTrack = parent->getTrackIndex() + 1;
 }
 
@@ -75,7 +75,7 @@ void StripTrackNumber::update(MobiusState* state)
     // whenever the setup changes, refresh the name
     if (setupOrdinal != state->setupOrdinal) {
         trackName = "";
-        MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+        MobiusConfig* config = strip->getSupervisor()->getMobiusConfig();
         Setup* setup = config->getSetup(state->setupOrdinal);
         if (setup != nullptr) {
             SetupTrack* st = setup->getTrack(tracknum);
@@ -175,7 +175,7 @@ void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
         StripElement::mouseDown(event);
     }
     else {
-        Supervisor::Instance->doAction(&action);
+        strip->getSupervisor()->doAction(&action);
     }
 }
 
@@ -188,7 +188,7 @@ void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
 StripFocusLock::StripFocusLock(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionFocusLock)
 {
-    action.symbol = Symbols.intern("FocusLock");
+    action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
     // TrackStrip track numbers are zero based, should call
     // this TrackIndex!
     action.scopeTrack = parent->getTrackIndex() + 1;
@@ -252,7 +252,7 @@ void StripFocusLock::mouseDown(const class juce::MouseEvent& event)
     // select the track first?
     StripElement::mouseDown(event);
     
-    Supervisor::Instance->doAction(&action);
+    strip->getSupervisor()->doAction(&action);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -530,7 +530,7 @@ StripLoopStack::~StripLoopStack()
 void StripLoopStack::configure()
 {
     // todo, here is where we should allow the maximum loop display to be set
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = strip->getSupervisor()->getUIConfig();
     int max = config->getInt("loopRows");
     // no need to get extreme on this if they type in something wrong
     if (max > 0 && max <= 16)
@@ -756,7 +756,7 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
     int loop = getDropTarget(x, y);
     Trace(2, "StripLoopStack: filesDropped into track %d loop %d\n", tracknum, loop);
 
-    AudioClerk* clerk = Supervisor::Instance->getAudioClerk();
+    AudioClerk* clerk = strip->getSupervisor()->getAudioClerk();
     // track/loop numbers are 1 based, with zero meaning "active"
     // strip->followTrack and our loop index are zero based
     clerk->filesDropped(files, tracknum + 1, loop + 1);

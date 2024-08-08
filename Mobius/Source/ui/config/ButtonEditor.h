@@ -11,7 +11,7 @@
 class ButtonEditor : public BindingEditor
 {
   public:
-    ButtonEditor();
+    ButtonEditor(class Supervisor* s);
     ~ButtonEditor();
 
     juce::String getTitle() override {return juce::String("Button Sets");}

@@ -11,18 +11,17 @@ class ButtonPopup : public juce::Component, juce::Button::Listener
 {
   public:
 
-    ButtonPopup();
+    ButtonPopup(class ActionButtons* ab);
     ~ButtonPopup();
 
-    void show(class ActionButtons* buttons, class ActionButton* button);
+    void show(class ActionButton* button);
     void close();
 
     void resized();
     void buttonClicked(juce::Button* b);
 
   private:
-
-    class ActionButtons* allButtons = nullptr;
+    class ActionButtons* actionButtons = nullptr;
     class ActionButton* targetButton = nullptr;
 
     SwatchColorSelector selector;

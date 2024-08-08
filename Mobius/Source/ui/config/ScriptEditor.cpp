@@ -12,7 +12,7 @@
 
 #include "ScriptEditor.h"
 
-ScriptEditor::ScriptEditor()
+ScriptEditor::ScriptEditor(Supervisor* s) : ConfigEditor(s), table(s)
 {
     setName("ScriptEditor");
     addAndMakeVisible(table);
@@ -24,7 +24,7 @@ ScriptEditor::~ScriptEditor()
 
 void ScriptEditor::load()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
         // this makes it's own copy
@@ -34,15 +34,15 @@ void ScriptEditor::load()
 
 void ScriptEditor::save()
 {
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     ScriptConfig* newConfig = table.capture();
     config->setScriptConfig(newConfig);
 
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 
     // you almost always want scripts reloaded after editing
     // so force that now, samples are another story...
-    context->getSupervisor()->menuLoadScripts();
+    supervisor->menuLoadScripts();
 }
 
 void ScriptEditor::cancel()

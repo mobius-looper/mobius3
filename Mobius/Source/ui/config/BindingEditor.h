@@ -30,7 +30,7 @@ class BindingEditor : public ConfigEditor,
     virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
 
-    BindingEditor();
+    BindingEditor(class Supervisor* s);
     virtual ~BindingEditor();
 
     bool isCapturing();
@@ -65,7 +65,6 @@ class BindingEditor : public ConfigEditor,
     void fieldChanged(Field* field) override;
     
   protected:
-
     BindingTable bindings;
     BindingTargetSelector targets;
     Form form;

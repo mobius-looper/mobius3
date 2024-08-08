@@ -8,7 +8,7 @@ class SymbolTableContent : public juce::Component, public BasicTable::Model
 {
   public:
 
-    SymbolTableContent();
+    SymbolTableContent(class Supervisor* s);
     ~SymbolTableContent();
 
     void prepare();
@@ -19,7 +19,7 @@ class SymbolTableContent : public juce::Component, public BasicTable::Model
     juce::String getCellText(int row, int columnId) override;
 
   private:
-
+    class Supervisor* supervisor = nullptr;
     juce::Array<class Symbol*> symbols;
     BasicTable table;
 
@@ -29,7 +29,7 @@ class SymbolTablePanel : public BasePanel
 {
   public:
 
-    SymbolTablePanel() {
+    SymbolTablePanel(class Supervisor* s) : content(s) {
         setTitle("Symbols");
         setContent(&content);
         setSize(800, 600);

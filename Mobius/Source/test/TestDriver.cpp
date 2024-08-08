@@ -104,6 +104,11 @@ TestDriver::~TestDriver()
 {
 }
 
+Supervisor* TestDriver::getSupervisor()
+{
+    return supervisor;
+}
+
 void TestDriver::initialize(juce::Component* parent)
 {
     // add our control panel to the parent component
@@ -460,7 +465,7 @@ void TestDriver::cancel()
             // if the script is still active, cancel it by sending down
             // a GlobalReset
             UIAction action;
-            action.symbol = Symbols.intern("GlobalReset");
+            action.symbol = supervisor->getSymbols()->intern("GlobalReset");
             MobiusInterface* mobius = supervisor->getMobius();
             mobius->doAction(&action);
 

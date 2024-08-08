@@ -13,7 +13,7 @@ class UpgradeContent : public juce::Component, juce::Button::Listener
 {
   public:
 
-    UpgradeContent();
+    UpgradeContent(class Supervisor* s);
     ~UpgradeContent();
 
     void showing();
@@ -22,7 +22,8 @@ class UpgradeContent : public juce::Component, juce::Button::Listener
     void buttonClicked(juce::Button* b) override;
 
   private:
-
+    
+    class Supervisor* supervisor = nullptr;
     bool strict = false;
     juce::File expected;
     bool expectedVerified = false;
@@ -83,7 +84,7 @@ class UpgradePanel : public BasePanel
 {
   public:
 
-    UpgradePanel() {
+    UpgradePanel(class Supervisor* s) : content(s) {
         setTitle("Configuration File Upgrader");
         setContent(&content);
         setSize(800, 600);

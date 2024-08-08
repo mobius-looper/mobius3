@@ -70,7 +70,7 @@
 
 #include "AudioEditor.h"
 
-AudioEditor::AudioEditor()
+AudioEditor::AudioEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("AudioEditor");
 }
@@ -94,7 +94,7 @@ void AudioEditor::prepare()
 {
     // if we're a plugin we shouldn't be opened, but in case we are
     // verify that we actually have an AudioDeviceManager before using it
-    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = supervisor->getAudioDeviceManager();
     if (adm != nullptr) {
 
         audioSelector = new juce::AudioDeviceSelectorComponent(*adm,
@@ -132,7 +132,7 @@ void AudioEditor::prepare()
 void AudioEditor::showing()
 {
     // the tutorial adds a change listener and starts the timer
-    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = supervisor->getAudioDeviceManager();
     if (adm != nullptr) {
         adm->addChangeListener(this);
 
@@ -145,7 +145,7 @@ void AudioEditor::showing()
 
 void AudioEditor::hiding()
 {
-    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = supervisor->getAudioDeviceManager();
     if (adm != nullptr) {
         adm->removeChangeListener(this);
 
@@ -168,7 +168,7 @@ void AudioEditor::load()
 
 void AudioEditor::dumpDeviceSetup()
 {
-    juce::AudioDeviceManager* adm = context->getSupervisor()->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = supervisor->getAudioDeviceManager();
     if (adm != nullptr) {
         juce::AudioDeviceManager::AudioDeviceSetup setup = adm->getAudioDeviceSetup();
 
@@ -307,7 +307,7 @@ void AudioEditor::resized()
  */
 void AudioEditor::timerCallback()
 {
-    juce::AudioDeviceManager* adm = Supervisor::Instance->getAudioDeviceManager();
+    juce::AudioDeviceManager* adm = supervisor->getAudioDeviceManager();
     if (adm != nullptr) {
         auto cpu = adm->getCpuUsage() * 100;
         cpuUsageText.setText (juce::String (cpu, 6) + " %", juce::dontSendNotification);
@@ -339,7 +339,7 @@ juce::String AudioEditor::getListOfActiveBits (const juce::BigInteger& b)
 
 void AudioEditor::dumpDeviceInfo()
 {
-    juce::AudioDeviceManager* deviceManager = Supervisor::Instance->getAudioDeviceManager();
+    juce::AudioDeviceManager* deviceManager = supervisor->getAudioDeviceManager();
     if (deviceManager != nullptr) {
 
         logMessage ("--------------------------------------");

@@ -58,8 +58,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-ConfigPanel::ConfigPanel()
+ConfigPanel::ConfigPanel(Supervisor* s)
 {
+    supervisor = s;
     setName("ConfigPanel");
 
     // always replace the single "Ok" button from BasePanel
@@ -110,7 +111,9 @@ void ConfigPanel::enableObjectSelector() {
 
 void ConfigPanel::enableHelp(int height)
 {
-    wrapper.enableHelp(getSupervisor()->getHelpCatalog(), height);
+    // shit: this is the only thing that needs Supervisor now, really hating
+    // how this is wired together
+    wrapper.enableHelp(supervisor->getHelpCatalog(), height);
 }
 
 HelpArea* ConfigPanel::getHelpArea()
@@ -146,50 +149,6 @@ int ConfigPanel::getSelectedObject()
 void ConfigPanel::setSelectedObject(int ordinal)
 {
     wrapper.getObjectSelector()->setSelectedObject(ordinal);
-}
-
-//
-// ConfigEditor callbacks to access files
-//
-
-/**
- * Try to stop using Supervisor::Instance so much in code below this.
- * Pass this in the constructor so we don't have to.
- */
-Supervisor* ConfigPanel::getSupervisor()
-{
-    return Supervisor::Instance;
-}
-
-class MobiusConfig* ConfigPanel::getMobiusConfig()
-{
-    return getSupervisor()->getMobiusConfig();
-}
-
-void ConfigPanel::saveMobiusConfig()
-{
-    getSupervisor()->updateMobiusConfig();
-}
-
-
-class UIConfig* ConfigPanel::getUIConfig()
-{
-    return getSupervisor()->getUIConfig();
-}
-
-void ConfigPanel::saveUIConfig()
-{
-    getSupervisor()->updateUIConfig();
-}
-    
-class DeviceConfig* ConfigPanel::getDeviceConfig()
-{
-    return getSupervisor()->getDeviceConfig();
-}
-
-void ConfigPanel::saveDeviceConfig()
-{
-    getSupervisor()->updateDeviceConfig();
 }
 
 //

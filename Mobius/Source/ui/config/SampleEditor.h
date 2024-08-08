@@ -16,7 +16,7 @@ class SampleEditor : public ConfigEditor
 {
   public:
     
-    SampleEditor();
+    SampleEditor(class Supervisor* s);
     ~SampleEditor();
 
     juce::String getTitle() override {return "Samples";}

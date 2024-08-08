@@ -35,7 +35,7 @@ class SampleTable : public juce::Component, public juce::TableListBoxModel, publ
 {
   public:
     
-    SampleTable();
+    SampleTable(class Supervisor* s);
     ~SampleTable();
 
     /**
@@ -65,6 +65,7 @@ class SampleTable : public juce::Component, public juce::TableListBoxModel, publ
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
   private:
+    class Supervisor* supervisor = nullptr;
 
     juce::OwnedArray<class SampleFile> files;
     

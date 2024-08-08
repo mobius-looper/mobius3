@@ -20,15 +20,14 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/Setup.h"
 #include "../../model/XmlRenderer.h"
+#include "../../Supervisor.h"
 
 #include "../common/SimpleRadio.h"
-
-#include "../../Supervisor.h"
 
 #include "ParameterField.h"
 #include "SetupEditor.h"
 
-SetupEditor::SetupEditor()
+SetupEditor::SetupEditor(Supervisor* s) : ConfigEditor(s)
 {
     setName("SetupEditor");
     render();
@@ -64,7 +63,7 @@ void SetupEditor::load()
     // clone the Setup list into a local copy
     setups.clear();
     revertSetups.clear();
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     if (config != nullptr) {
         // convert the linked list to an OwnedArray
         Setup* plist = config->getSetups();
@@ -124,7 +123,7 @@ void SetupEditor::refreshObjectSelector()
  */
 void SetupEditor::adjustTrackSelector()
 {
-    MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     int ntracks = config->getTracks();
     if (ntracks > 8 && ntracks <= 32 && trackCombo == nullptr) {
 
@@ -187,14 +186,14 @@ void SetupEditor::save()
     setups.clear(false);
     revertSetups.clear();
     
-    MobiusConfig* config = context->getMobiusConfig();
+    MobiusConfig* config = supervisor->getMobiusConfig();
     // this will also delete the current setup list
     config->setSetups(plist);
 
     // this flag is necessary to get the engine to pay attention
     config->setupsEdited = true;
     
-    context->saveMobiusConfig();
+    supervisor->updateMobiusConfig();
 }
 
 /**
@@ -469,7 +468,7 @@ void SetupEditor::initForm()
 
 void SetupEditor::addField(const char* tab, UIParameter* p)
 {
-    form.add(new ParameterField(p), tab, 0);
+    form.add(new ParameterField(supervisor, p), tab, 0);
 }
 
 #if 0

@@ -24,6 +24,7 @@ class ActionButtons : public juce::Component,
 
     ActionButtons(class MobiusDisplay*);
     ~ActionButtons();
+    class Supervisor* getSupervisor();
 
     void configure();
     int getPreferredHeight(juce::Rectangle<int>);
@@ -42,7 +43,7 @@ class ActionButtons : public juce::Component,
     
   private:
 
-    ButtonPopup popup;
+    ButtonPopup popup {this};
     
     // experiment with sustainable buttons
     bool enableSustain = true;

@@ -20,10 +20,11 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Binding.h"
+#include "../../Supervisor.h"
 
 #include "ButtonEditor.h"
 
-ButtonEditor::ButtonEditor()
+ButtonEditor::ButtonEditor(Supervisor* s) : BindingEditor(s)
 {
     setName("ButtonEditor");
 
@@ -59,8 +60,8 @@ void ButtonEditor::prepare()
  */
 void ButtonEditor::load()
 {
-    MobiusConfig* mconfig = context->getMobiusConfig();
-    UIConfig* config = context->getUIConfig();
+    MobiusConfig* mconfig = supervisor->getMobiusConfig();
+    UIConfig* config = supervisor->getUIConfig();
 
     // BingingPanel::load normally does this but since we
     // overload load() we have to do it
@@ -130,7 +131,7 @@ void ButtonEditor::save()
 
     // build a new ButtonSet list and leave it in the
     // master config
-    UIConfig* config = context->getUIConfig();
+    UIConfig* config = supervisor->getUIConfig();
 
     config->activeButtonSet = (buttons[selectedButtons])->name;
     config->buttonSets.clear();
@@ -140,7 +141,7 @@ void ButtonEditor::save()
         config->buttonSets.add(neu);
     }
 
-    context->saveUIConfig();
+    supervisor->updateUIConfig();
 }
 
 void ButtonEditor::cancel()

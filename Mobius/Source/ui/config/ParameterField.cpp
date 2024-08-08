@@ -18,9 +18,10 @@
 
 static const char* ParameterFieldNone = "[None]";
 
-ParameterField::ParameterField(UIParameter* p) :
+ParameterField::ParameterField(Supervisor* s, UIParameter* p) :
     Field(p->getName(), p->getDisplayName(), convertParameterType(p->type))
 {
+    supervisor = s;
     parameter = p;
 
     setMulti(p->multi);
@@ -44,7 +45,7 @@ ParameterField::ParameterField(UIParameter* p) :
 
         // returns an old-school StringList for some reason, we never want that
         // why not just return juce::StringArray and be done with it?
-        StringList* list = p->getStructureNames(Supervisor::Instance->getMobiusConfig());
+        StringList* list = p->getStructureNames(supervisor->getMobiusConfig());
         juce::StringArray values;
 
         // always start with this?  for the first usage of selecting Preset names

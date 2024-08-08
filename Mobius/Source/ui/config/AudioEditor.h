@@ -31,7 +31,7 @@ class AudioEditor : public ConfigEditor,
                     public juce::Timer
 {
   public:
-    AudioEditor();
+    AudioEditor(class Supervisor* s);
     ~AudioEditor();
 
     juce::String getTitle() override {return juce::String("Audio Devices");}

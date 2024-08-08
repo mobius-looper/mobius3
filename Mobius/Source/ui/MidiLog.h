@@ -8,12 +8,16 @@ class MidiLog : public LogPanel
 {
   public:
 
-    MidiLog() {}
+    MidiLog(class Supervisor* s) {
+        supervisor = s;
+    }
     ~MidiLog() {}
 
     void midiMessage(const juce::MidiMessage& message, juce::String& source);
     void showOpen();
 
   private:
+
+    class Supervisor* supervisor = nullptr;
 
 };

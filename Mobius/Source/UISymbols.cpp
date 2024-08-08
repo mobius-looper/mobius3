@@ -7,6 +7,7 @@
 #include "model/ParameterProperties.h"
 #include "model/ExValue.h"
 
+#include "Supervisor.h"
 #include "UISymbols.h"
 
 void UISymbols::initialize()
@@ -32,7 +33,7 @@ void UISymbols::initialize()
  */
 void UISymbols::installDisplayFunction(const char* name, int symbolId)
 {
-    Symbol* s = Symbols.intern(name);
+    Symbol* s = supervisor->getSymbols()->intern(name);
     s->behavior = BehaviorFunction;
     s->id = (unsigned char)symbolId;
     s->level = LevelUI;
@@ -59,7 +60,7 @@ void UISymbols::installDisplayParameter(const char* name, const char* label, int
     p->type = TypeStructure;
     p->scope = ScopeUI;
     
-    Symbol* s = Symbols.intern(name);
+    Symbol* s = supervisor->getSymbols()->intern(name);
     s->behavior = BehaviorParameter;
     s->id = (unsigned char)symbolId;
     s->level = LevelUI;

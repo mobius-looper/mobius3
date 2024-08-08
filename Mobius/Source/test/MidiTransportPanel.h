@@ -18,7 +18,7 @@ class MidiTransportContent : public juce::Component, public juce::Button::Listen
 {
   public:
 
-    MidiTransportContent();
+    MidiTransportContent(class Supervisor* s);
     ~MidiTransportContent();
 
     void showing();
@@ -38,7 +38,7 @@ class MidiTransportContent : public juce::Component, public juce::Button::Listen
     void update();
     
   private:
-
+    class Supervisor* supervisor = nullptr;
     class MidiRealizer* realizer = nullptr;
     BasicButtonRow commandButtons;
     BasicForm form;
@@ -74,7 +74,7 @@ class MidiTransportPanel : public BasePanel
 {
   public:
 
-    MidiTransportPanel() {
+    MidiTransportPanel(class Supervisor* s) : content(s) {
         setTitle("MIDI Transport");
         setContent(&content);
         setSize(400, 500);

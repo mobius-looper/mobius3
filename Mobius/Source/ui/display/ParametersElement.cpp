@@ -42,14 +42,12 @@ ParametersElement::ParametersElement(StatusArea* area) :
     StatusElement(area, "ParametersElement")
 {
     // intercept our cursor actions
-    Supervisor* s = Supervisor::Instance;
-    s->addActionListener(this);
+    area->getSupervisor()->addActionListener(this);
 }
 
 ParametersElement::~ParametersElement()
 {
-    Supervisor* s = Supervisor::Instance;
-    s->removeActionListener(this);
+    statusArea->getSupervisor()->removeActionListener(this);
 }
 
 /**
@@ -61,7 +59,7 @@ ParametersElement::~ParametersElement()
  */
 void ParametersElement::configure()
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
 
     // remember the parameter the cursor was currently on
     Symbol* current = nullptr;
@@ -74,7 +72,7 @@ void ParametersElement::configure()
     DisplayLayout* layout = config->getActiveLayout();
     for (auto name : layout->instantParameters) {
         
-        Symbol* s = Symbols.find(name);
+        Symbol* s = statusArea->getSupervisor()->getSymbols()->find(name);
         if (s == nullptr ||
             // two ways to represent these now...
             (s->parameter == nullptr &&
@@ -186,7 +184,7 @@ void ParametersElement::update(MobiusState* state)
         int value = ps->value;
         Query q (ps->symbol);
         q.scope = state->activeTrack;
-        if (Supervisor::Instance->doQuery(&q))
+        if (statusArea->getSupervisor()->doQuery(&q))
           value = q.value;
             
         if (ps->value != value) {
@@ -239,7 +237,7 @@ void ParametersElement::paint(juce::Graphics& g)
               strValue = juce::String("false");
         }
         else if (type == TypeStructure) {
-            strValue = Supervisor::Instance->getParameterLabel(s, value);
+            strValue = statusArea->getSupervisor()->getParameterLabel(s, value);
         }
         else {
             strValue = juce::String(value);
@@ -303,12 +301,12 @@ bool ParametersElement::doAction(UIAction* action)
         case UISymbolParameterInc: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
-            int max = Supervisor::Instance->getParameterMax(ps->symbol);
+            int max = statusArea->getSupervisor()->getParameterMax(ps->symbol);
             if (value < max ) {
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
                 coreAction.value = value + 1;
-                Supervisor::Instance->doAction(&coreAction);
+                statusArea->getSupervisor()->doAction(&coreAction);
                 // avoid refresh lag and flicker by optimistically setting the value
                 // now and triggering an immediate repaint
                 ps->value = coreAction.value;
@@ -326,7 +324,7 @@ bool ParametersElement::doAction(UIAction* action)
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
                 coreAction.value = value - 1;
-                Supervisor::Instance->doAction(&coreAction);
+                statusArea->getSupervisor()->doAction(&coreAction);
                 ps->value = coreAction.value;
                 repaint();
             }
@@ -367,7 +365,7 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
 
         // max is almost always parameter->high, but structure parameters
         // are variable and we have to query them
-        valueDragMax = Supervisor::Instance->getParameterMax(ps->symbol);
+        valueDragMax = statusArea->getSupervisor()->getParameterMax(ps->symbol);
     }
 }
 
@@ -427,7 +425,7 @@ void ParametersElement::mouseDrag(const juce::MouseEvent& e)
             UIAction coreAction;
             coreAction.symbol = ps->symbol;
             coreAction.value = newValue;
-            Supervisor::Instance->doAction(&coreAction);
+            statusArea->getSupervisor()->doAction(&coreAction);
             // avoid refresh lag and flicker by optimistically setting the value
             // now and triggering an immediate repaint
             ps->value = coreAction.value;

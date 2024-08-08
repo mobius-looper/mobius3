@@ -26,12 +26,11 @@
 // tried to make this only require an MslContext but there is too much
 // going on here to be completely independent
 
-MobiusConsole::MobiusConsole(ConsolePanel* parent)
+MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
 {
+    supervisor = s;
     panel = parent;
-
-    // pass this down!
-    supervisor = Supervisor::Instance;
+    
     scriptenv = supervisor->getScriptEnvironment();
 
     // allocate a scriptlet session we can keep forever

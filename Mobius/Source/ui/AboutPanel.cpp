@@ -10,8 +10,9 @@
 #include "BasePanel.h"
 #include "AboutPanel.h"
 
-AboutContent::AboutContent()
+AboutContent::AboutContent(Supervisor* s)
 {
+    supervisor = s;
     // yes, folks, that mess is an umlat-o
     // see here why this is complicated
     // https://forum.juce.com/t/embedding-unicode-string-literals-in-your-cpp-files/12600    
@@ -33,7 +34,7 @@ AboutContent::AboutContent()
     addAndMakeVisible(build);
     
     juce::String rootText ("Configuration root: ");
-    rootText += Supervisor::Instance->getRoot().getFullPathName();
+    rootText += supervisor->getRoot().getFullPathName();
     root.setText(rootText, juce::NotificationType::dontSendNotification);
     addAndMakeVisible(root);
 }

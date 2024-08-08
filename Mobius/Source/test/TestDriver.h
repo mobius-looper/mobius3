@@ -30,6 +30,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
 
     TestDriver(class Supervisor* super);
     ~TestDriver();
+    class Supervisor* getSupervisor();
 
     void initialize(juce::Component* parent);
     void start();

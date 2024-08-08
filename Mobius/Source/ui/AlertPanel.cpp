@@ -56,8 +56,9 @@ void AlertPanel::show(juce::String message)
  * it would be better to have each in a filled paragraph with the entire paragraph
  * centered, rather than each line.
  */
-AlertContent::AlertContent()
+AlertContent::AlertContent(Supervisor* s)
 {
+    supervisor = s;
     text.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
     text.setFont(juce::Font(FontHeight));
     text.setJustificationType(juce::Justification::centred);

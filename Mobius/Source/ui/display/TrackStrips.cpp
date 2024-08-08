@@ -27,6 +27,11 @@ TrackStrips::~TrackStrips()
 {
 }
 
+Supervisor* TrackStrips::getSupervisor()
+{
+    return display->getSupervisor();
+}
+
 /**
  * Notified when either the MobiusConfig or UIConfig changes.
  * If this is during initialization, allocate the track array,
@@ -36,7 +41,7 @@ void TrackStrips::configure()
 {
     if (tracks.size() == 0) {
         // we're initializing
-        MobiusConfig* config = Supervisor::Instance->getMobiusConfig();
+        MobiusConfig* config = display->getSupervisor()->getMobiusConfig();
         int trackCount = config->getTracks();
         if (trackCount == 0)
           trackCount = 8;
@@ -50,7 +55,7 @@ void TrackStrips::configure()
 
         // decided to simplify this to just a dualRows boolean since it
         // can only ever be 1 or 2
-        UIConfig* uiconfig = Supervisor::Instance->getUIConfig();
+        UIConfig* uiconfig = display->getSupervisor()->getUIConfig();
         int rows = uiconfig->getInt("trackRows");
         dualTracks = (rows == 2);
     }

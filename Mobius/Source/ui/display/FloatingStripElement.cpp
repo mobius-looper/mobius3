@@ -23,6 +23,11 @@ FloatingStripElement::~FloatingStripElement()
 {
 }
 
+Supervisor* FloatingStripElement::getSupervisor()
+{
+    return statusArea->getSupervisor();
+}
+
 void FloatingStripElement::configure()
 {
     strip.configure();

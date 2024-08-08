@@ -100,7 +100,7 @@ class MidiDeviceEditor : public ConfigEditor,
                          public BasicTable::CheckboxListener
 {
   public:
-    MidiDeviceEditor();
+    MidiDeviceEditor(class Supervisor* s);
     ~MidiDeviceEditor();
 
     juce::String getTitle() override {return juce::String("MIDI Devices");}
@@ -122,7 +122,6 @@ class MidiDeviceEditor : public ConfigEditor,
     void tableCheckboxTouched(BasicTable* table, int row, int col, bool state) override;
     
   private:
-
     MidiLog log;
     BasicTabs tabs;
     MidiDeviceTable inputTable;

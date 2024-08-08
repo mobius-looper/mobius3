@@ -16,7 +16,7 @@
 class MidiEditor : public BindingEditor, public MidiManager::Monitor
 {
   public:
-    MidiEditor();
+    MidiEditor(class Supervisor* s);
     ~MidiEditor();
 
     juce::String getTitle() override {return juce::String("MIDI Bindings");}

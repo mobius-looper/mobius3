@@ -19,6 +19,8 @@ class TrackStrips : public juce::Component
     TrackStrips(class MobiusDisplay*);
     ~TrackStrips();
 
+    class Supervisor* getSupervisor();
+
     void configure();
     
     int getPreferredHeight();
@@ -31,7 +33,7 @@ class TrackStrips : public juce::Component
 
   private:
 
-    class MobiusDisplay* display;
+    class MobiusDisplay* display = nullptr;
     juce::OwnedArray<class TrackStrip> tracks;
     bool dualTracks = false;
     int dropTarget = -1;

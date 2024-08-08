@@ -11,7 +11,7 @@
 
 #include "HostEditor.h"
 
-HostEditor::HostEditor()
+HostEditor::HostEditor(Supervisor* s) : BindingEditor(s)
 {
     setName("HostEditor");
     // we don't need a trigger column

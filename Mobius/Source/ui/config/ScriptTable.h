@@ -36,7 +36,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
 {
   public:
     
-    ScriptTable();
+    ScriptTable(class Supervisor* s);
     ~ScriptTable();
 
     /**
@@ -66,6 +66,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
     void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
   private:
+    class Supervisor* supervisor = nullptr;
 
     juce::OwnedArray<class ScriptTableFile> files;
     

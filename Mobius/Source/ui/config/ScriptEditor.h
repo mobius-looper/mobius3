@@ -16,7 +16,7 @@ class ScriptEditor : public ConfigEditor
 {
   public:
     
-    ScriptEditor();
+    ScriptEditor(class Supervisor* s);
     ~ScriptEditor();
 
     juce::String getTitle() override {return "Scripts";}

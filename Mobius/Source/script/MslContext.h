@@ -137,6 +137,8 @@ class MslContext
     MslContext() {}
     virtual ~MslContext() {}
 
+    //virtual class SymbolTable* getSymbols() = 0;
+
     // the id of the context that is talking to the environment
     virtual MslContextId mslGetContextId() = 0;
 

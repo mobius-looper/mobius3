@@ -8,7 +8,7 @@ class EnvironmentContent : public juce::Component
 {
   public:
 
-    EnvironmentContent();
+    EnvironmentContent(class Supervisor* s);
     ~EnvironmentContent();
 
     void resized() override;
@@ -19,6 +19,8 @@ class EnvironmentContent : public juce::Component
     
   private:
 
+    class Supervisor* supervisor = nullptr;
+
     juce::String getListOfActiveBits (const juce::BigInteger& b);
 
 };
@@ -27,13 +29,12 @@ class EnvironmentPanel : public BasePanel
 {
   public:
 
-    EnvironmentPanel();
+    EnvironmentPanel(Supervisor* s);
     ~EnvironmentPanel();
 
     void showing() override;
     
   private:
-
     EnvironmentContent content;
 };
 

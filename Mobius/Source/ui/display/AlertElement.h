@@ -13,7 +13,7 @@ class AlertElement : public StatusElement, public Supervisor::AlertListener
 {
   public:
     
-    AlertElement(class StatusArea* area);
+    AlertElement(class StatusArea* a);
     ~AlertElement();
 
     void alertReceived(juce::String msg) override;

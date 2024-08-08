@@ -369,11 +369,13 @@ void Mobius::slamScriptarian(Scriptarian* neu)
  */
 void Mobius::installSymbols()
 {
+    SymbolTable* symbols = mContainer->getSymbols();
+    
     for (int i = 0 ; StaticFunctions[i] != nullptr ; i++) {
         Function* f = StaticFunctions[i];
-        Symbol* s = Symbols.find(f->getName());
+        Symbol* s = symbols->find(f->getName());
         if (s == nullptr) {
-            s = Symbols.intern(f->getName());
+            s = symbols->intern(f->getName());
             // we have a handful of scriptOnly functions that won't
             // have FunctionDefinitions
             if (f->scriptOnly) {
@@ -398,9 +400,9 @@ void Mobius::installSymbols()
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {
         Parameter* p = Parameters[i];
         const char* name = p->getName();
-        Symbol* s = Symbols.find(name);
+        Symbol* s = symbols->find(name);
         if (s == nullptr) {
-            s = Symbols.intern(name);
+            s = symbols->intern(name);
         }
         s->level = LevelCore;
         s->coreParameter = p;
@@ -575,11 +577,12 @@ void Mobius::propagateConfiguration()
  */
 void Mobius::propagateFunctionPreferences()
 {
+    SymbolTable* symbols = mContainer->getSymbols();
     StringList* focusNames = mConfig->getFocusLockFunctions();
 	StringList* muteCancelNames = mConfig->getMuteCancelFunctions();
 	StringList* confirmNames = mConfig->getConfirmationFunctions();
 
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : symbols->getSymbols()) {
 
         if (symbol->coreFunction != nullptr) {
 
@@ -1985,7 +1988,7 @@ void Mobius::dump(StructureDumper& d)
 
 void Mobius::dump(const char* name)
 {
-    // commented out when we started getting rid of Supervisor::Instance
+    // commented out when got rid of Supervisor::Instance
     // need to repackage the dumping tools
     (void)name;
 #if 0

@@ -392,6 +392,8 @@ class MobiusContainer
      */
     virtual juce::String getParameterLabel(class Symbol* s, int ordinal) = 0;
 
+    virtual class SymbolTable* getSymbols() = 0;
+
 };
 
 //////////////////////////////////////////////////////////////////////

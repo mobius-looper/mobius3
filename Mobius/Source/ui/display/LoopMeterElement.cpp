@@ -44,7 +44,7 @@ LoopMeterElement::LoopMeterElement(StatusArea* area) :
 
     // initialize the Query we use to dig out the runtime subcycles
     // parameter value
-    subcyclesQuery.symbol = Symbols.intern("subcycles");
+    subcyclesQuery.symbol = area->getSupervisor()->getSymbols()->intern("subcycles");
 }
 
 LoopMeterElement::~LoopMeterElement()
@@ -96,7 +96,7 @@ void LoopMeterElement::update(MobiusState* state)
     }
 
     int subcycles = 0;
-    if (Supervisor::Instance->doQuery(&subcyclesQuery))
+    if (statusArea->getSupervisor()->doQuery(&subcyclesQuery))
       subcycles = subcyclesQuery.value;
 
     if (subcycles == 0) {

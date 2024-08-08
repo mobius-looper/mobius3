@@ -91,7 +91,7 @@ void TestPanel::show()
 
     refreshTestButtons();
 
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = driver->getSupervisor()->getUIConfig();
     testName.setText(config->get("testName"));
     
     setVisible(true);
@@ -418,7 +418,7 @@ void TestPanel::refreshTestButtons()
       removeChildComponent(button);
     testButtons.clear();
 
-    for (auto symbol : Symbols.getSymbols()) {
+    for (auto symbol : driver->getSupervisor()->getSymbols()->getSymbols()) {
         if (symbol->script && symbol->script->test) {
             addTestButton(symbol);
         }

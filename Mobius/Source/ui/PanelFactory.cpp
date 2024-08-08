@@ -114,36 +114,37 @@ BasePanel* PanelFactory::findPanel(PanelId id)
 BasePanel* PanelFactory::createPanel(PanelId id)
 {
     BasePanel* panel = nullptr;
-
+    Supervisor* super = mainWindow->getSupervisor();
+    
     switch (id) {
 
-        case About: panel = new AboutPanel(); break;
-        case Environment: panel = new EnvironmentPanel(); break;
-        case MidiMonitor: panel = new MidiMonitorPanel(); break;
-        case MidiSummary: panel = new MidiSummaryPanel(); break;
-        case KeyboardSummary: panel = new KeyboardSummaryPanel(); break;
+        case About: panel = new AboutPanel(super); break;
+        case Environment: panel = new EnvironmentPanel(super); break;
+        case MidiMonitor: panel = new MidiMonitorPanel(super); break;
+        case MidiSummary: panel = new MidiSummaryPanel(super); break;
+        case KeyboardSummary: panel = new KeyboardSummaryPanel(super); break;
 
-        case Global: panel = new GlobalPanel(); break;
-        case Preset: panel = new PresetPanel(); break;
-        case Setup: panel = new SetupPanel(); break;
-        case Script: panel = new ScriptPanel(); break;
-        case Sample: panel = new SamplePanel(); break;
-        case Display: panel = new DisplayPanel(); break;
+        case Global: panel = new GlobalPanel(super); break;
+        case Preset: panel = new PresetPanel(super); break;
+        case Setup: panel = new SetupPanel(super); break;
+        case Script: panel = new ScriptPanel(super); break;
+        case Sample: panel = new SamplePanel(super); break;
+        case Display: panel = new DisplayPanel(super); break;
             
-        case Keyboard: panel = new KeyboardPanel(); break;
-        case Midi: panel = new MidiPanel(); break;
-        case Button: panel = new ButtonPanel(); break;
-        case Host: panel = new HostPanel(); break;
+        case Keyboard: panel = new KeyboardPanel(super); break;
+        case Midi: panel = new MidiPanel(super); break;
+        case Button: panel = new ButtonPanel(super); break;
+        case Host: panel = new HostPanel(super); break;
 
-        case Audio: panel = new AudioPanel(); break;
-        case MidiDevice: panel = new MidiDevicePanel(); break;
+        case Audio: panel = new AudioPanel(super); break;
+        case MidiDevice: panel = new MidiDevicePanel(super); break;
 
-        case SymbolTable: panel = new SymbolTablePanel(); break;
-        case MidiTransport: panel =  new MidiTransportPanel(); break;
-        case Sync: panel =  new SyncPanel(); break;
-        case Upgrade: panel =  new UpgradePanel(); break;
-        case Console: panel = new ConsolePanel(); break;
-        case TraceLog: panel = new TracePanel(); break;
+        case SymbolTable: panel = new SymbolTablePanel(super); break;
+        case MidiTransport: panel =  new MidiTransportPanel(super); break;
+        case Sync: panel =  new SyncPanel(super); break;
+        case Upgrade: panel =  new UpgradePanel(super); break;
+        case Console: panel = new ConsolePanel(super); break;
+        case TraceLog: panel = new TracePanel(super); break;
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);
             break;

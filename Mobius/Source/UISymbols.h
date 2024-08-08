@@ -45,12 +45,13 @@ class UISymbols
     constexpr static const char* ActiveButtons = "activeButtons";
     constexpr static const char* ActiveButtonsLabel = "Active Buttons";
     
-    UISymbols() {}
+    UISymbols(class Supervisor* s) {supervisor = s;}
     ~UISymbols() {}
 
     void initialize();
 
   private:
+    class Supervisor* supervisor = nullptr;
 
     void installDisplayFunction(const char* name, int symbolId);
     void installDisplayParameter(const char* name, const char* label, int symbolId);

@@ -116,7 +116,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         
         };
     
-    MainMenu();
+    MainMenu(class MainWindow* w);
     ~MainMenu() override;
 
     void resized() override;
@@ -139,6 +139,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     void menuItemSelected (int /*menuItemID*/, int /*topLevelMenuIndex*/) override;
 
   private:
+
+    class MainWindow* mainWindow = nullptr;
 
     // demo did it this way not sure why
     //std::unique_ptr<juce::MenuBarComponent> menuBar;

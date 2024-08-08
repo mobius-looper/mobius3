@@ -68,7 +68,7 @@ void MidiLog::midiMessage(const juce::MidiMessage& message, juce::String& source
 void MidiLog::showOpen()
 {
     // show what we have
-    MidiManager* mm = Supervisor::Instance->getMidiManager();
+    MidiManager* mm = supervisor->getMidiManager();
     juce::StringArray list = mm->getOpenInputDevices();
     if (list.size() > 0) {
         juce::String msg("Open inputs: " + list.joinIntoString(","));

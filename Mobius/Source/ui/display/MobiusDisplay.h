@@ -29,6 +29,8 @@ class MobiusDisplay : public juce::Component
     MobiusDisplay(class MainWindow* main);
     ~MobiusDisplay();
 
+    class Supervisor* getSupervisor();
+
     void configure();
     void captureConfiguration(class UIConfig* config);
     void update(class MobiusState* state);
@@ -46,7 +48,6 @@ class MobiusDisplay : public juce::Component
     
   private:
 
-    // could also use Component::getParent for the back pointer
     class MainWindow* mainWindow;
 
     ActionButtons buttons {this};

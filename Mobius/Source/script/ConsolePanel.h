@@ -13,7 +13,7 @@ class ConsolePanel : public BasePanel
 {
   public:
 
-    ConsolePanel() {
+    ConsolePanel(class Supervisor* s) : content(s, this) {
         setTitle("Mobius Console");
         setContent(&content);
         setSize(800, 500);
@@ -33,6 +33,5 @@ class ConsolePanel : public BasePanel
     }
     
   private:
-
-    MobiusConsole content {this};
+    MobiusConsole content;
 };

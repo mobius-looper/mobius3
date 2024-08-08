@@ -31,6 +31,8 @@ class StatusArea : public juce::Component
     StatusArea(class MobiusDisplay*);
     ~StatusArea();
 
+    class Supervisor* getSupervisor();
+
     void configure();
     void captureConfiguration(class UIConfig* config);
     

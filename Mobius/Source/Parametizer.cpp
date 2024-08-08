@@ -44,7 +44,7 @@ void Parametizer::initialize()
     Binding* binding = bindings->getBindings();
     while (binding != nullptr) {
         if (binding->trigger == TriggerHost) {
-            Symbol* s = Symbols.intern(binding->getSymbolName());
+            Symbol* s = supervisor->getSymbols()->intern(binding->getSymbolName());
             PluginParameter* p = new PluginParameter(s, binding);
             // we work top down from the PluginParameter to the Symbol
             // so we don't need to hang the PluginParameter on the Symbol
@@ -78,7 +78,7 @@ void Parametizer::initialize()
     if (vars != nullptr) {
         for (auto var : vars->variables) {
             if (var->getBool("automatable")) {
-                Symbol* s = Symbols.intern(var->name);
+                Symbol* s = supervisor->getSymbols()->intern(var->name);
                 PluginParameter* p = new PluginParameter(s, var);
                 if (p->getJuceParameter() == nullptr) {
                     Trace(1, "Parametizer: Ignoring incomplete parameter definition %s\n",

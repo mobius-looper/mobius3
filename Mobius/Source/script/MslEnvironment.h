@@ -71,7 +71,7 @@ class MslEnvironment
     MslEnvironment();
     ~MslEnvironment();
 
-    void initialize(class MslContext* c);
+    void initialize(class SymbolTable* st);
     void shutdown();
 
     //
@@ -178,6 +178,11 @@ class MslEnvironment
 
     // active scriptlet sessions
     juce::OwnedArray<class MslScriptletSession> scriptlets;
+
+    // hack for exporting Symbols
+    // this needs to be packaged into the MslContext better
+    class SymbolTable* symbols = nullptr;
+    
 
     //
     // internal library management

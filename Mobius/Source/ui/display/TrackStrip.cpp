@@ -34,7 +34,7 @@ TrackStrip::TrackStrip(TrackStrips* parent)
     // todo: need to refine the difference between activating a track
     // with and without "empty track actions"
     // maybe TrackSelect vs. TrackSwitch
-    trackSelectAction.symbol = Symbols.intern("SelectTrack");
+    trackSelectAction.symbol = strips->getSupervisor()->getSymbols()->intern("SelectTrack");
 }
 
 TrackStrip::TrackStrip(FloatingStripElement* parent)
@@ -46,6 +46,18 @@ TrackStrip::TrackStrip(FloatingStripElement* parent)
 
 TrackStrip::~TrackStrip()
 {
+}
+
+Supervisor* TrackStrip::getSupervisor()
+{
+    if (strips != nullptr)
+      return strips->getSupervisor();
+
+    if (floater != nullptr)
+      return floater->getSupervisor();
+
+    // someone is about to have a bad day
+    return nullptr;
 }
 
 /**
@@ -236,7 +248,7 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
         // for some reason, the UI uses 0 based numbers with -1 meaning active
         // I guess to make it easier to use the numbers as indexes into the MobiusState track array
         trackSelectAction.value = getTrackIndex() + 1;
-        Supervisor::Instance->doAction(&trackSelectAction);
+        getSupervisor()->doAction(&trackSelectAction);
     }
 }
 
@@ -266,7 +278,7 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
  */
 void TrackStrip::configure()
 {
-    UIConfig* config = Supervisor::Instance->getUIConfig();
+    UIConfig* config = getSupervisor()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
     DisplayStrip* strip = nullptr;
     
@@ -421,7 +433,7 @@ void TrackStrip::doAction(UIAction* action)
     // action is 0 based, but we use 0 meaning active elsewhere
     action->scopeTrack = followTrack + 1;
     
-    Supervisor::Instance->doAction(action);
+    getSupervisor()->doAction(action);
 }
 
 //
@@ -465,7 +477,7 @@ void TrackStrip::filesDropped(const juce::StringArray& files, int x, int y)
     Trace(2, "TrackStrip: filesDropped into track %d\n", followTrack);
     outerDropTarget = false;
     
-    AudioClerk* clerk = Supervisor::Instance->getAudioClerk();
+    AudioClerk* clerk = getSupervisor()->getAudioClerk();
     // track/loop numbers are 1 based, with zero meaning "active"
     // followTrack is zero based
     clerk->filesDropped(files, followTrack + 1, 0);

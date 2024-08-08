@@ -320,13 +320,6 @@ class SymbolTable
     
 };
 
-/**
- * The global symbol table.
- * This is the only one that can be used at the moment but
- * might have scoped tables at some point.
- */
-extern SymbolTable Symbols;
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

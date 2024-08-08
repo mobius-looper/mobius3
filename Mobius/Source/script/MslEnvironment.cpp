@@ -33,11 +33,13 @@ MslEnvironment::~MslEnvironment()
     Trace(2, "MslEnvironment: destructing");
 }
 
-void MslEnvironment::initialize(MslContext* c)
+/**
+ * Need to work out a better way to access the SymbolTable
+ * for exporting things, MslEnvironment shouldn't know what this is.
+ */
+void MslEnvironment::initialize(SymbolTable* st)
 {
-    (void)c;
-    // formerly we remembered things related to files here, so there
-    // isn't anything to do any more
+    symbols = st;
 }
 
 /**
@@ -254,7 +256,7 @@ void MslEnvironment::install(MslScript* script)
 
     if (!collision) {
         // export this as a Symbol for bindings
-        Symbol* s = Symbols.intern(name);
+        Symbol* s = symbols->intern(name);
         if (s->script != nullptr || s->behavior == BehaviorNone) {
             // can make this a script
             // todo: all sortts of things to check here, it could be a core script

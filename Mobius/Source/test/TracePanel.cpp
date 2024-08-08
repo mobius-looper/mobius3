@@ -9,8 +9,9 @@
 
 #include "TracePanel.h"
 
-TraceContent::TraceContent()
+TraceContent::TraceContent(Supervisor* s)
 {
+    supervisor = s;
     commandButtons.setListener(this);
     commandButtons.setCentered(true);
     commandButtons.add(&clearButton);

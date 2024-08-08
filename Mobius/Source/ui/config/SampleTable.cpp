@@ -9,8 +9,9 @@
 
 #include "SampleTable.h"
 
-SampleTable::SampleTable()
+SampleTable::SampleTable(Supervisor* s)
 {
+    supervisor = s;
     setName("SampleTable");
 
     initTable();
@@ -52,7 +53,7 @@ void SampleTable::setSamples(SampleConfig* config)
             // if there is a leading / Juce thinks it is absolute and throws an assertion
             if (path.startsWithChar('/') || path.startsWithChar('\\'))
               path = path.substring(1);
-            juce::File full = Supervisor::Instance->getRoot().getChildFile(path);
+            juce::File full = supervisor->getRoot().getChildFile(path);
             if (!full.existsAsFile())
               sf->missing = true;
         }
@@ -402,7 +403,7 @@ void SampleTable::cellClicked(int rowNumber, int columnId, const juce::MouseEven
  */
 void SampleTable::doFileChooser()
 {
-    juce::File startPath(Supervisor::Instance->getRoot());
+    juce::File startPath(supervisor->getRoot());
     if (lastFolder.length() > 0)
       startPath = lastFolder;
     

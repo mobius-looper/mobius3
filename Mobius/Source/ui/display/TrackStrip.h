@@ -21,6 +21,8 @@ class TrackStrip : public juce::Component,
     TrackStrip(class FloatingStripElement*);
     ~TrackStrip();
 
+    class Supervisor* getSupervisor();
+
     bool isDocked() {
         return (strips != nullptr);
     }

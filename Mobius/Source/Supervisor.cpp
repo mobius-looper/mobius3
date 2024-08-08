@@ -60,7 +60,7 @@
  * rather than walking all the way up the hierarchy.  But it does
  * prevent multi-instance plugins.
  */
-Supervisor* Supervisor::Instance = nullptr;
+//Supervisor* Supervisor::Instance = nullptr;
 int Supervisor::InstanceCount = 0;
 
 /**
@@ -74,7 +74,7 @@ Supervisor::Supervisor(juce::AudioAppComponent* main)
     // see comments above ~Supervisor for why we use InstanceCount
     // rather than testing nullness of Instance
     if (InstanceCount == 0) {
-        Instance = this;
+        //Instance = this;
     }
     else {
         // this really can't happen with the standalone app
@@ -99,13 +99,14 @@ Supervisor::Supervisor(juce::AudioProcessor* ap)
     // see comments above ~Supervisor for why we use InstanceCount
     // rather than testing nullness of Instance
     if (InstanceCount == 0) {
-        Instance = this;
+        //Instance = this;
     }
     else {
         // Host is trying to create another instance before deleting the last one
         // I don't think they're supposed to do that if we tell it to only allow one.
         // This secondary instance will be prevented from doing anything
-        Trace(1, "Supervisor: Host is creating another instance before deleting the last one\n");
+        // update: well, not any more, let it be
+        //Trace(1, "Supervisor: Host is creating another instance before deleting the last one\n");
     }
     InstanceCount++;
 
@@ -145,6 +146,7 @@ Supervisor::Supervisor(juce::AudioProcessor* ap)
  */
 Supervisor::~Supervisor()
 {
+#if 0    
     if (Instance == this) {
         // the normal case
         Trace(2, "Supervisor: Destructor\n");
@@ -155,6 +157,7 @@ Supervisor::~Supervisor()
         // must have been a second instance and the old one is still alive
         Trace(1, "Supervisor: Destructor of secondary disabled instance\n");
     }
+#endif
     
     // todo: check for proper termination?
     TraceFile.flush();
@@ -171,6 +174,7 @@ bool Supervisor::start()
     // Trace files set up
     trace("Supervisor::start\n");
 
+#if 0    
     if (InstanceCount != 1) {
         // should have already traced something scary in the constructor
         // terminate without initializing and it won't be in Instance
@@ -180,7 +184,8 @@ bool Supervisor::start()
         startPrevented = true;
         return false;
     }
-
+#endif
+    
     strcpy(meterName, "");
     meter("Start");
     
@@ -379,7 +384,7 @@ bool Supervisor::start()
     // prepare the script environment
     // move this higher if we ever need scripts accessible
     // by other internal compenents during startup
-    scriptenv.initialize(this);
+    scriptenv.initialize(&symbols);
         
     // temporary diagnostic dumps
     
@@ -511,7 +516,7 @@ void Supervisor::shutdown()
     // the SymbolTable early.
     // yeah, well, this is pretty damn important with multi-instance plugins
     // too, can't leave anything behind when Supervisor is dead
-    Symbols.clear();
+    //Symbols.clear();
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
@@ -527,7 +532,7 @@ int Supervisor::getActiveSetup()
 {
     int ordinal = -1;
     // !! where is the name constant for this?
-    Symbol* s = Symbols.intern("activeSetup");
+    Symbol* s = symbols.intern("activeSetup");
     if (s->parameter != nullptr) {
         Query q (s);
         if (mobius->doQuery(&q))
@@ -546,7 +551,7 @@ int Supervisor::getActivePreset()
     // todo: do we show the activePreset in the activeTrack
     // or do we show the defaultPreset in global config?
     // active makes the most sense
-    Symbol* s = Symbols.intern("activePreset");
+    Symbol* s = symbols.intern("activePreset");
     if (s->parameter != nullptr) {
         Query q(s);
         if (mobius->doQuery(&q))
@@ -1795,7 +1800,7 @@ void Supervisor::menuLoadSamples()
         mobius->installSamples(sconfig);
 
         int count = 0;
-        for (auto symbol : Symbols.getSymbols()) {
+        for (auto symbol : symbols.getSymbols()) {
             if (symbol->sample != nullptr)
               count++;
         }
@@ -1838,7 +1843,7 @@ void Supervisor::menuLoadScripts()
         // gather interesting stats for the alert
         // need MUCH more here
         int count = 0;
-        for (auto symbol : Symbols.getSymbols()) {
+        for (auto symbol : symbols.getSymbols()) {
             if (symbol->script != nullptr) 
               count++;
         }
@@ -1876,7 +1881,7 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 {
     bool success = false;
     
-    Symbol* s = Symbols.find(name);
+    Symbol* s = symbols.find(name);
     if (s != nullptr) {
 
         // filter out symbosl that don't represent functions or parameters

@@ -50,7 +50,7 @@ void VariableManager::install()
         // have to behave like Script symbols where we unresolve
         // some, update some, and add some
         for (auto variable : variables.variables) {
-            Symbol* s = Symbols.intern(variable->name.toUTF8());
+            Symbol* s = supervisor->getSymbols()->intern(variable->name.toUTF8());
             if (s->variable != nullptr) {
                 // shouldn't be here yet
                 Trace(1, "VariableManager: Replacing Symbol VariableDefinition\n");

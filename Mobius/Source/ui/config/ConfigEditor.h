@@ -91,20 +91,6 @@ class ConfigEditorContext {
     //
     //////////////////////////////////////////////////////////////////////
     
-    // read/write the various configuration object files
-
-    virtual class MobiusConfig* getMobiusConfig() = 0;
-    virtual void saveMobiusConfig() = 0;
-
-    virtual class UIConfig* getUIConfig() = 0;
-    virtual void saveUIConfig() = 0;
-    
-    virtual class DeviceConfig* getDeviceConfig() = 0;
-    virtual void saveDeviceConfig() = 0;
-    
-    // in a few cases editors need things beyond what the context provides
-    virtual class Supervisor* getSupervisor() = 0;
-
     // diddle the object selector
     virtual void setObjectNames(juce::StringArray names) = 0;
     virtual void addObjectName(juce::String name) = 0;
@@ -132,7 +118,9 @@ class ConfigEditor : public juce::Component {
     // you may wonder why we don't pass ConfigEditorContext to this constructor
     // rather than later in setContext, see comments at the top of ConfigPanel.cpp
     // for more on this
-    ConfigEditor() {}
+    ConfigEditor(class Supervisor* s) {
+        supervisor = s;
+    }
     virtual ~ConfigEditor() {}
 
     // called at a suitable time to connect the editor to it's context
@@ -257,6 +245,10 @@ class ConfigEditor : public juce::Component {
     virtual void objectSelectorNew(juce::String name) {
         (void)name;
     }
+
+  protected:
+
+    class Supervisor* supervisor = nullptr;
     
 };
 

@@ -25,6 +25,7 @@
 #include "../Function.h"
 #include "../Layer.h"
 #include "../Loop.h"
+#include "../../MobiusInterface.h"
 #include "../Mobius.h"
 #include "../Mode.h"
 #include "../ScriptInterpreter.h"
@@ -278,7 +279,7 @@ void ReloadScriptsFunction::invoke(Action* action, Mobius* m)
         // don't like how this is initialized with a raw name constant
         // Kernel defines ids for these but ids are not unique
         // needs thought
-        Symbol* s = Symbols.find("LoadScripts");
+        Symbol* s = m->getContainer()->getSymbols()->find("LoadScripts");
         if (s == nullptr) {
             Trace(1, "ReloadScriptsFuncion: LoadScripts symbol not found\n");
         }

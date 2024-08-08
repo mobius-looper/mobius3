@@ -21,7 +21,7 @@ class BindingTargetSelector : public SimpleTabPanel,
         virtual void bindingTargetClicked(BindingTargetSelector* bts) = 0;
     };
 
-    BindingTargetSelector();
+    BindingTargetSelector(class Supervisor* s);
     ~BindingTargetSelector();
 
     void setListener(Listener* l) {
@@ -45,6 +45,8 @@ class BindingTargetSelector : public SimpleTabPanel,
     void listBoxItemClicked(SimpleListBox* box, int row);
     
   private:
+
+    class Supervisor* supervisor = nullptr;
 
     void initBox(SimpleListBox* box);
     void deselectOtherTargets(SimpleListBox* active);

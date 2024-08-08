@@ -14,12 +14,12 @@ AlertElement::AlertElement(StatusArea* area) :
     StatusElement(area, "AlertElement")
 {
     mouseEnterIdentify = true;
-    Supervisor::Instance->addAlertListener(this);
+    area->getSupervisor()->addAlertListener(this);
 }
 
 AlertElement::~AlertElement()
 {
-    Supervisor::Instance->removeAlertListener(this);
+    statusArea->getSupervisor()->removeAlertListener(this);
 }
 
 /**

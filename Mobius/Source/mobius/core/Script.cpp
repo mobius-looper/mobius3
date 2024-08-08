@@ -63,6 +63,7 @@
 #include "../../model/ScriptConfig.h"
 #include "../../model/UserVariable.h"
 #include "../../model/Symbol.h"
+#include "../MobiusInterface.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -3109,7 +3110,8 @@ ScriptFunctionStatement::ScriptFunctionStatement(ScriptCompiler* comp,
     // in link() below.  While the SymbolTable may have BehaviorScript
     // symbols with a matching name, those are for the PREVIOUS script
     // complication and are about to be replaced once this complication finishes
-    for (auto symbol : Symbols.getSymbols()) {
+    SymbolTable* symbols = comp->getMobius()->getContainer()->getSymbols();
+    for (auto symbol : symbols->getSymbols()) {
         if (symbol->coreFunction != nullptr) {
             Function* f = (Function*)symbol->coreFunction;
             // note we use isMatch here to support aliases and display
@@ -3624,7 +3626,8 @@ ScriptStatement* ScriptWaitStatement::eval(ScriptInterpreter* si)
             // to just remember the Symbol since it can become unresolved 
             const char* name = mArgs[0];
             Function* f = nullptr;
-            for (auto symbol : Symbols.getSymbols()) {
+            SymbolTable* symbols = si->getMobius()->getContainer()->getSymbols();
+            for (auto symbol : symbols->getSymbols()) {
                 if (symbol->coreFunction != nullptr &&
                     StringEqual(name, symbol->getName())) {
                     f = (Function*)symbol->coreFunction;

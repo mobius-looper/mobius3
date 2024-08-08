@@ -51,7 +51,7 @@ class Binderator
         
     };
 
-    Binderator();
+    Binderator(class SymbolTable* st);
     ~Binderator();
 
     /**
@@ -80,6 +80,8 @@ class Binderator
     class UIAction* handleKeyEvent(int code, int modifiers, bool up);
 
     private:
+
+    class SymbolTable* symbols = nullptr;
 
     int controllerThreshold = 0;
     juce::OwnedArray<juce::OwnedArray<TableEntry>> keyActions;

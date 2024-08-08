@@ -23,7 +23,7 @@ class AlertContent : public juce::Component
     static const int FontHeight = 20;
     static const int TextHeight = 100;
 
-    AlertContent();
+    AlertContent(class Supervisor* s);
     ~AlertContent() {}
 
     void setMessage(juce::String msg);
@@ -32,6 +32,8 @@ class AlertContent : public juce::Component
     void resized() override;
 
   private:
+
+    class Supervisor* supervisor = nullptr;
 
     juce::Label text;
     // juce::StringArray messages;
@@ -42,7 +44,7 @@ class AlertPanel : public BasePanel
 {
   public:
 
-    AlertPanel() {
+    AlertPanel(class Supervisor* s) : content(s) {
         // don't really need a title on these
         // but without a title bar you don't get mouse
         // events for dragging

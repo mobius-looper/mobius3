@@ -37,6 +37,7 @@
 
 #include "../Supervisor.h"
 
+#include "MainWindow.h"
 #include "MainMenu.h"
 
 /**
@@ -51,9 +52,11 @@
  * I think because MenuComponent starts trying to use the model right away
  * and if you set it to {this} the object isn't done being constructed yet.
  */
-MainMenu::MainMenu()
+MainMenu::MainMenu(MainWindow* w)
 {
     setName("MainMenu");
+
+    mainWindow = w;
     
     // demo used a std::unique_ptr instead of just having a local object
     //menuBar.reset (new juce::MenuBarComponent (this));
@@ -145,7 +148,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         menu.addItem(LoadScripts, "Reload Scripts");
         menu.addItem(LoadSamples, "Reload Samples");
-        if (!Supervisor::Instance->isPlugin()) {
+        if (!mainWindow->getSupervisor()->isPlugin()) {
             menu.addSeparator();
             menu.addItem(Exit, "Exit");
         }
@@ -155,7 +158,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(TrackSetups, "Edit Setups...");
         menu.addSeparator();
         
-        Supervisor* supervisor = Supervisor::Instance;
+        Supervisor* supervisor = mainWindow->getSupervisor();
         int active = supervisor->getActiveSetup();
         MobiusConfig* config = supervisor->getMobiusConfig();
         Setup* setup = config->getSetups();
@@ -176,7 +179,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Presets, "Edit Presets...");
         menu.addSeparator();
 
-        Supervisor* supervisor = Supervisor::Instance;
+        Supervisor* supervisor = mainWindow->getSupervisor();
         int active = supervisor->getActivePreset();
         MobiusConfig* config = supervisor->getMobiusConfig();
         Preset* preset = config->getPresets();
@@ -196,7 +199,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Buttons, "Edit Buttons...");
         menu.addSeparator();
         
-        Supervisor* supervisor = Supervisor::Instance;
+        Supervisor* supervisor = mainWindow->getSupervisor();
         UIConfig* config = supervisor->getUIConfig();
 
         // Layouts
@@ -260,7 +263,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         menu.addItem(MidiDevices, "MIDI Devices");
         // don't show this if we're a plugin
-        if (!Supervisor::Instance->isPlugin())
+        if (!mainWindow->getSupervisor()->isPlugin())
           menu.addItem(AudioDevices, "Audio Devices");
         menu.addSeparator();
         menu.addItem(UpgradeConfig, "Upgrade Configuration");
@@ -280,7 +283,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         // todo: won't want to show this in released code
         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String("Test Mode"));
         item.setID(TestMode);
-        if (Supervisor::Instance->isTestMode())
+        if (mainWindow->getSupervisor()->isTestMode())
           item.setTicked(true);
         menu.addItem(item);
 

@@ -18,7 +18,7 @@ class DisplayEditor : public ConfigEditor
 {
   public:
     
-    DisplayEditor();
+    DisplayEditor(class Supervisor* s);
     ~DisplayEditor();
 
     juce::String getTitle() override {return juce::String("Display Layouts");}
