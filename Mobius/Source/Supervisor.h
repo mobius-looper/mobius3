@@ -49,6 +49,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     //static Supervisor* Instance;
     static int InstanceCount;
+    static int MaxInstanceCount;
     
     static const int BuildNumber = 15;
 

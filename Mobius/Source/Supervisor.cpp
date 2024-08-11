@@ -62,6 +62,7 @@
  */
 //Supervisor* Supervisor::Instance = nullptr;
 int Supervisor::InstanceCount = 0;
+int Supervisor::MaxInstanceCount = 0;
 
 /**
  * Start building the Supervisor when running as a standalone
@@ -81,6 +82,8 @@ Supervisor::Supervisor(juce::AudioAppComponent* main)
         Trace(1, "Instantiating more than one standalone Supervisor!");
     }
     InstanceCount++;
+    if (InstanceCount > MaxInstanceCount)
+      MaxInstanceCount = InstanceCount;
     
     mainComponent = main;
     
@@ -109,6 +112,8 @@ Supervisor::Supervisor(juce::AudioProcessor* ap)
         //Trace(1, "Supervisor: Host is creating another instance before deleting the last one\n");
     }
     InstanceCount++;
+    if (InstanceCount > MaxInstanceCount)
+      MaxInstanceCount = InstanceCount;
 
     audioProcessor = ap;
     

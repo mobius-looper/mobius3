@@ -57,7 +57,7 @@ void EnvironmentContent::showing()
 
     log.add("Mobius 3 Build " + juce::String(Supervisor::BuildNumber) +
             (supervisor->isPlugin() ? " Plugin" : " Standalone"));
-    
+
     log.add("Computer name: " + juce::SystemStats::getComputerName());
     log.add("Configuration path: " + supervisor->getRoot().getFullPathName());
     log.add("Audio block size: " + juce::String(supervisor->getBlockSize()));
@@ -80,6 +80,8 @@ void EnvironmentContent::showing()
         else if (wtype == juce::AudioProcessor::WrapperType::wrapperType_AudioUnit)
           typeName = "Audio Unit";
         log.add("Plugin type: " + juce::String(typeName));
+        log.add("Instances: " + juce::String(supervisor->InstanceCount) +
+                " Max instances: " + juce::String(supervisor->MaxInstanceCount));
         
         juce::AudioProcessor* ap = supervisor->getAudioProcessor();
         log.add("Input channels: " + juce::String(ap->getTotalNumInputChannels()));
