@@ -127,6 +127,7 @@
     <Button action="SyncMasterTrack"/>
     <Button action="Confirm"/>
     <Button action="SamplePlay" arguments="1"/>
+    <Button action="Shuffle"/>
   </ButtonSet>
   <Properties>
     <Property name="buttonHeight" value="25"/>
