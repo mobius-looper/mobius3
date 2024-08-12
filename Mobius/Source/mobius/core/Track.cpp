@@ -1236,6 +1236,8 @@ void Track::updateGlobalParameters(MobiusConfig* config)
     // will want to be using direct hardware monitoring
     // todo: this shouldn't be global, monitoring should be set per-track in the Setup
     mThroughMonitor = config->isMonitorAudio();
+    if (mThroughMonitor)
+      Trace(2, "Track: Enabling audio monitoring");
         
     // Loop caches a few global parameters too
     // do all of them even if they aren't currently active
