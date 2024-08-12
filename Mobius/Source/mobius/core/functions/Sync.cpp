@@ -165,7 +165,8 @@ SyncMasterFunction::SyncMasterFunction(bool track, bool midi)
 	else if (midi && !track) {
 		setName("SyncMasterMidi");
         // doesn't work yet so keep it hidden
-        scriptOnly = true;
+        // bert wants this too
+        //scriptOnly = true;
 	}
 	else {
 		setName("SyncMaster");

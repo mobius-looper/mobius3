@@ -246,6 +246,10 @@
           <FILE id="gIdban" name="PresetEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/PresetEditor.cpp"/>
           <FILE id="b2ZY1I" name="PresetEditor.h" compile="0" resource="0" file="Source/ui/config/PresetEditor.h"/>
+          <FILE id="a1eGSE" name="PropertiesEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/PropertiesEditor.cpp"/>
+          <FILE id="emfqEq" name="PropertiesEditor.h" compile="0" resource="0"
+                file="Source/ui/config/PropertiesEditor.h"/>
           <FILE id="gsYEsK" name="SampleEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/SampleEditor.cpp"/>
           <FILE id="ieBZsG" name="SampleEditor.h" compile="0" resource="0" file="Source/ui/config/SampleEditor.h"/>
@@ -719,8 +723,6 @@
       <FILE id="qYO2SW" name="Supervisor.h" compile="0" resource="0" file="Source/Supervisor.h"/>
       <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
       <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
-      <FILE id="Q1Cu7N" name="UISymbols.cpp" compile="1" resource="0" file="Source/UISymbols.cpp"/>
-      <FILE id="d2qdos" name="UISymbols.h" compile="0" resource="0" file="Source/UISymbols.h"/>
       <FILE id="zYypIv" name="VariableManager.cpp" compile="1" resource="0"
             file="Source/VariableManager.cpp"/>
       <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"

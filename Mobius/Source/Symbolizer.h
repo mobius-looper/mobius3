@@ -18,11 +18,10 @@ class Symbolizer
     Symbolizer(class Supervisor* s);
     ~Symbolizer();
 
-    /**
-     * Read the symbols.xml file and install things in the Symbol table.
-     */
     void initialize();
 
+    void saveSymbolProperties();
+    
   private:
 
     class Supervisor* supervisor = nullptr;
@@ -41,4 +40,48 @@ class Symbolizer
     juce::StringArray parseLabels(juce::String csv, juce::StringArray values);
     juce::String formatDisplayName(juce::String xmlName);
 
+    // Display symbols
+    void installUISymbols();
+    void installDisplayFunction(const char* name, int symbolId);
+    void installDisplayParameter(const char* name, const char* label, int symbolId);
+
+    // Properties
+    void loadSymbolProperties();
+    void parseProperty(juce::XmlElement* el);
+    bool isTruthy(juce::String value);
+    void addProperty(juce::XmlElement& root, class Symbol* s, juce::String name, juce::String value);
+
 };
+
+typedef enum {
+
+    // functions
+    UISymbolParameterUp = 1,
+    UISymbolParameterDown,
+    UISymbolParameterInc,
+    UISymbolParameterDec,
+    UISymbolReloadScripts,
+    UISymbolReloadSamples,
+    UISymbolShowPanel,
+    
+    // parameters
+    UISymbolActiveLayout,
+    UISymbolActiveButtons
+    
+} UISymbolId;
+
+class UISymbols
+{
+  public:
+
+    constexpr static const char* ActiveLayout = "activeLayout";
+    constexpr static const char* ActiveLayoutLabel = "Active Layout";
+    
+    constexpr static const char* ActiveButtons = "activeButtons";
+    constexpr static const char* ActiveButtonsLabel = "Active Buttons";
+    
+};
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

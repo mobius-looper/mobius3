@@ -41,11 +41,30 @@ class FunctionDefinition : public SystemConstant {
 	FunctionDefinition(const char* name);
     virtual ~FunctionDefinition();
 
+
+    // things copied from the core model into the outer one
+    // temporary until loading definitions from the symbols.xml file is fleshed out
+    
     /**
      * When true, this function may respond to a sustained action.
      */
     bool sustainable = false;
-    
+
+    /**
+     * When true, this function may be focus locked.
+     */
+    bool mayFocus = false;
+
+    /**
+     * Can the function operate as a switch confirmation.
+     */
+    bool mayConfirm = false;
+
+    /**
+     * Can the function cancel mute mode.
+     */
+    bool mayCancelMute = false;
+
     //////////////////////////////////////////////////////////////////////
     // Global Function Registry
     //////////////////////////////////////////////////////////////////////

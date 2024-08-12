@@ -194,7 +194,8 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
 
 
     juce::String getDeviceName(class MachineConfig* config, Usage usage);
-    juce::String getFirstName(juce::String csv);
+    juce::String getFirstName(juce::String csv, Usage usage);
+    juce::String getUsageName(Usage usage);
 
     void reconcileInputs(MachineConfig* config);
     juce::MidiInput* findInput(juce::String name);

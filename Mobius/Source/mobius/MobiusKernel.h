@@ -46,6 +46,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
      * Or just pulling it from the MobiusShell
      */
     void initialize(class MobiusContainer* cont, class MobiusConfig* config);
+    void propagateSymbolProperties();
 
     /**
      * Special mode enabling direct shell/kernel communication.

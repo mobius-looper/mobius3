@@ -25,6 +25,7 @@
 #include "MidiDeviceEditor.h"
 #include "AudioEditor.h"
 #include "DisplayEditor.h"
+#include "PropertiesEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -180,4 +181,17 @@ class DisplayPanel : public ConfigPanel
  
   private:
     DisplayEditor editor;
+};
+
+class PropertiesPanel : public ConfigPanel
+{
+  public:
+    PropertiesPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("PropertiesPanel");
+        setEditor(&editor);
+    }
+    ~PropertiesPanel() {}
+ 
+  private:
+    PropertiesEditor editor;
 };

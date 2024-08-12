@@ -25,7 +25,7 @@
 #include "../../model/Query.h"
 
 #include "../../Supervisor.h"
-#include "../../UISymbols.h"
+#include "../../Symbolizer.h"
 #include "../../mobius/MobiusInterface.h"
 
 #include "Colors.h"

@@ -253,6 +253,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(KeyboardControl, "Keyboard Control");
         menu.addSeparator();
         menu.addItem(GlobalParameters, "Global Parameters");
+        menu.addItem(Properties, "Function Properties");
         menu.addItem(HostParameters, "Plugin Parameters");
         menu.addSeparator();
         menu.addItem(Scripts, "Scripts");

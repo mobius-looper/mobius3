@@ -159,6 +159,11 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     installSymbols();
 }
 
+void MobiusKernel::propagateSymbolProperties()
+{
+    mCore->propagateSymbolProperties();
+}
+
 /**
  * Install kernel level symbols.
  */

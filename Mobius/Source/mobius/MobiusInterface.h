@@ -119,6 +119,12 @@ class MobiusInterface {
      * was modified by the UI.
      */
     virtual void reconfigure(class MobiusConfig* config) =  0;
+
+    /**
+     * Newer alternative to some things that used to be in MobiusConfig
+     * Driven from the SymbolTable
+     */
+    virtual void propagateSymbolProperties() = 0;
     
     /**
      * Return a state object that can be watched by the UI to display

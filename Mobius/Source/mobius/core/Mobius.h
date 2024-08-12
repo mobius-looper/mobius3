@@ -64,6 +64,8 @@ class Mobius
      */
     void reconfigure(class MobiusConfig* config);
 
+    void propagateSymbolProperties();
+
     /**
      * Called by Kernel at the begging of each audio block.
      * What we once called "the interrupt".

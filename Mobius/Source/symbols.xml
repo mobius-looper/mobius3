@@ -1,96 +1,105 @@
 <Symbols>
-  <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'/>
-  <Function name="Backward"/>
+  <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'
+            mayFocus='true' mayCancelMute='true'/>
+  <Function name="Backward" mayFocus='true' mayCancelMute='true'/>
   <Function name="Bounce"/>
-  <Function name="Checkpoint"/>
-  <Function name="Clear"/>
-  <Function name="Confirm"/>
-  <Function name="Divide"/>
-  <Function name="Divide3"/>
-  <Function name="Divide4"/>
+  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Clear" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Confirm" mayFocus='true'/>
+  <Function name="Divide" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Divide3" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Divide4" mayFocus='true' mayCancelMute='true'/>
   <Function name="FocusLock"/>
-  <Function name="Forward"/>
+  <Function name="Forward" mayFocus='true' mayCancelMute='true'/>
   <Function name="GlobalMute"/>
   <Function name="GlobalPause"/>
   <Function name="GlobalReset"/>
-  <Function name="Halfspeed"/>
-  <Function name="Insert"/>
-  <Function name="InstantMultiply"/>
+  <Function name="Halfspeed" mayFocus='true' mayCancelMute='true'/>
+  <!-- this was not sustainable at first, but it is in core, what does it mean? -->
+  <Function name="Insert" mayFocus='true' mayCancelMute='true'/>
+  <Function name="InstantMultiply" mayFocus='true'/>
   <!--
       these are similar to replicated functions but have been in use
       for a long time, think about this
       -->
-  <Function name="InstantMultiply3"/>
-  <Function name="InstantMultiply4"/>
+  <Function name="InstantMultiply3" mayFocus='true'/>
+  <Function name="InstantMultiply4" mayFocus='true'/>
 
   <!-- Formerly LoopN, Loop1, Loop2, etc. -->
-  <Function name="SelectLoop"
+  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true'
             argumentHelp="Loop Number: 1-8"/>
 
   <Function name="MidiStart"/>
   <Function name="MidiStop"/>
 
-  <Function name="Multiply" sustainable='true'/>
-  <Function name="Mute" sustainable='true'/>
-  <Function name="MuteRealign"/>
+  <Function name="Multiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Mute" sustainable='true' mayFocus='true'/>
+  <!-- core has this as a mayCancelMute, why? -->
+  <Function name="MuteRealign" mayFocus='true'/>
   <Function name="MuteMidiStart"/>
-  <Function name="NextLoop"/>
+  <Function name="NextLoop" mayFocus='true' mayCancelMute='true'/>
   <Function name="NextTrack"/>
-  <Function name="Overdub" sustainable='true'/>
-  <Function name="Pause" sustainable='true'/>
-  <Function name="PitchDown"/>
-  <Function name="PitchNext"/>
-  <Function name="PitchCancel"/>
-  <Function name="PitchPrev"/>
-  <Function name="PitchStep"/>
-  <Function name="PitchUp"/>
-  <Function name="Play"/>
-  <Function name="PrevLoop"/>
+  <Function name="Overdub" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Pause" sustainable='true' mayFocus='true'/>
+  <Function name="PitchDown" mayFocus='true' mayCancelMute='true'/>
+  <Function name="PitchNext" mayFocus='true' mayCancelMute='true'/>
+  <Function name="PitchCancel" mayFocus='true' mayCancelMute='true'/>
+  <Function name="PitchPrev" mayFocus='true' mayCancelMute='true'/>
+  <Function name="PitchStep" mayFocus='true' mayCancelMute='true'/>
+  <Function name="PitchUp" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Play" mayFocus='true'/>
+  <Function name="PrevLoop" mayFocus='true' mayCancelMute='true'/>
   <Function name="PrevTrack"/>
-  <Function name="Realign"/>
-  <Function name="Record" sustainable='true' longHelp='Long press becomes Reset'/>
-  <Function name="Redo"/>
-  <Function name="Rehearse" sustainable='true'/>
-  <Function name="Replace" sustainable='true'/>
-  <Function name="Reset"/>
-  <Function name="Restart"/>
-  <Function name="RestartOnce"/>
+  <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="Record" sustainable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <!-- core has this as mayConfirm, why? -->
+  <Function name="Reset" mayFocus='true'/>
+  <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="RestartOnce" mayFocus='true' mayCancelMute='true'/>
   <Function name="Reverse" sustainable='true'/>
+  <!-- core has this as mayFocus, don't think that's relevant -->
   <Function name="SaveCapture"/>
   <Function name="SaveLoop"/>
-  <Function name="Shuffle"/>
-  <Function name="SlipForward"/>
-  <Function name="SlipBackward"/>
-  <Function name="Solo"/>
-  <Function name="SpeedDown"/>
-  <Function name="SpeedNext"/>
-  <Function name="SpeedCancel"/>
-  <Function name="SpeedPrev"/>
-  <Function name="SpeedStep"/>
-  <Function name="SpeedUp"/>
-  <Function name="SpeedToggle" sustainable='true'/>
+  <Function name="Shuffle" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SlipForward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SlipBackward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Solo" mayFocus='true'/>
+  <Function name="SpeedDown" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedNext" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedCancel" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedPrev" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedStep" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedUp" mayFocus='true' mayCancelMute='true'/>
+  <!-- why is this sustainable? -->
+  <Function name="SpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <!-- core has this mayFocus -->
   <Function name="StartCapture"/>
-  <Function name="StartPoint"/>
+  <Function name="StartPoint" mayFocus='true' mayCancelMute='true'/>
+  <!-- core has this mayFocus -->
   <Function name="StopCapture"/>
-  <Function name="Stutter" sustainable='true'/>
-  <Function name="Substitute" sustainable='true'/>
+  <Function name="Stutter" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Substitute" sustainable='true' mayFocus='true' mayCancelMute='true'/>
 
-  <Function name="SUSInsert" sustainable='true'/>
-  <Function name="SUSMultiply" sustainable='true'/>
-  <Function name="SUSMute" sustainable='true'/>
-  <Function name="SUSMuteRestart" sustainable='true'/>
-  <Function name="SUSNextLoop" sustainable='true'/>
-  <Function name="SUSOverdub" sustainable='true'/>
-  <Function name="SUSPrevLoop" sustainable='true'/>
-  <Function name="SUSRecord" sustainable='true'/>
-  <Function name="SUSReplace" sustainable='true'/>
-  <Function name="SUSReverse" sustainable='true'/>
-  <Function name="SUSSpeedToggle" sustainable='true'/>
-  <Function name="SUSStutter" sustainable='true'/>
-  <Function name="SUSSubstitute" sustainable='true'/>
-  <Function name="SUSUnroundedInsert" sustainable='true'/>
-  <Function name="SUSUnroundedMultiply" sustainable='true'/>
-  <Function name="SyncStartPoint"/>
+  <Function name="SUSInsert" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+/>
+  <Function name="SUSMultiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSMute" sustainable='true' mayFocus='true'/>
+  <Function name="SUSMuteRestart" sustainable='true' mayFocus='true'/>
+  <Function name="SUSNextLoop" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSOverdub" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSPrevLoop" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSRecord" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSReplace" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSReverse" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSSpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSStutter" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSSubstitute" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSUnroundedInsert" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true'/>
   <Function name="SyncMasterTrack"/>
   
   <!-- Formerly TrackN, Track1, etc. -->
@@ -99,19 +108,20 @@
   
   <Function name="TrackCopy"/>
   <Function name="TrackCopyTiming"/>
-  <Function name="TrackGroup" sustainable='true'/>
-  <Function name="TrackReset"/>
-  <Function name="TrimEnd"/>
-  <Function name="TrimStart"/>
-  <Function name="Undo"/>
-  <Function name="WindowBackward"/>
-  <Function name="WindowForward"/>
-  <Function name="WindowStartBackward"/>
-  <Function name="WindowStartForward"/>
-  <Function name="WindowEndBackward"/>
-  <Function name="WindowEndForward"/>
+  <Function name="TrackGroup" sustainable='true' mayFocus='true'/>
+  <Function name="TrackReset" mayFocus='true'/>
+  <Function name="TrimEnd" mayFocus='true' mayCancelMute='true'/>
+  <Function name="TrimStart" mayFocus='true' mayCancelMute='true'/>
+  <Function name="Undo" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="WindowBackward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="WindowForward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="WindowStartBackward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="WindowStartForward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true'/>
 
   <!-- various diagnostic functions for testing -->
+  <!-- core has this as mayFocus -->
   <Function name="TraceStatus"/>
 
   <!--

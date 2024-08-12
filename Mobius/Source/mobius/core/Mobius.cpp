@@ -31,6 +31,7 @@
 #include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionDefinition.h"
+#include "../../model/FunctionProperties.h"
 
 // depenencies needed to handle MSL script waits
 #include "../../script/MslContext.h"
@@ -302,6 +303,12 @@ void Mobius::initialize(MobiusConfig* config)
     config->presetsEdited = false;
 
     installSymbols();
+    
+    // hmm, order annoyance here
+    // function properties were set by Supervisor during initialization
+    // here we copy those to the static Function definitions but this must
+    // be done after installSymbols
+    propagateSymbolProperties();
 }
 
 /**
@@ -393,8 +400,14 @@ void Mobius::installSymbols()
         s->behavior = BehaviorFunction;
         // until we get FunctionProperties fleshed out, copy the sustainable
         // flag from the Function to the FunctionDefinition so SUS functions work
-        if (s->function != nullptr)
-          s->function->sustainable = f->isSustainable();
+        // this is temporary, when symbols.xml has the necessary flags can
+        // get rid of these in FunctionDefinition
+        if (s->function != nullptr) {
+            s->function->sustainable = f->isSustainable();
+            s->function->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
+            s->function->mayConfirm = f->mayConfirm;
+            s->function->mayCancelMute = f->mayCancelMute;
+        }
     }
 
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {
@@ -507,6 +520,39 @@ void Mobius::reconfigure(class MobiusConfig* config)
 }
 
 /**
+ * New interface for SymbolTable driven function preferences.
+ */
+void Mobius::propagateSymbolProperties()
+{
+    // the new properties editor should be preventing irrelevant
+    // selections by looking at the "may" flags, but assume it doesn't yet
+
+    SymbolTable* symbols = mContainer->getSymbols();
+
+    for (auto symbol : symbols->getSymbols()) {
+        if (symbol->coreFunction != nullptr && symbol->functionProperties != nullptr) {
+            Function* f = (Function*)symbol->coreFunction;
+            
+            f->focusLockDisabled = false;
+            f->cancelMute = false;
+            f->confirms = false;
+
+            if (!f->noFocusLock && f->eventType != RunScriptEvent) {
+                f->focusLockDisabled = !symbol->functionProperties->focus;
+            }
+                
+            if (f->mayCancelMute) {
+                f->cancelMute = symbol->functionProperties->muteCancel;
+            }
+            
+            if (f->mayConfirm) {
+                f->confirms = symbol->functionProperties->confirmation;
+            }
+        }
+    }
+}
+
+/**
  * Propagate non-structural configuration to internal components that
  * cache things from MobiusConfig.
  * 
@@ -572,15 +618,16 @@ void Mobius::propagateConfiguration()
  * with multiple instances of the Mobius plugin, but the conflicts
  * aren't significant and that never happens in practice.
  *
- * Would like to move focusLock/group behavor up to the UI.
- * Now that we have SymbolTable, could hang them in an annotation there too.
+ * update: This should no longer be used.  Function name lists
+ * will have been upgraded to symbol properties and propagated
+ * with propagateSymbolProperties above.
  */
 void Mobius::propagateFunctionPreferences()
 {
     SymbolTable* symbols = mContainer->getSymbols();
     StringList* focusNames = mConfig->getFocusLockFunctions();
-	StringList* muteCancelNames = mConfig->getMuteCancelFunctions();
-	StringList* confirmNames = mConfig->getConfirmationFunctions();
+    StringList* muteCancelNames = mConfig->getMuteCancelFunctions();
+    StringList* confirmNames = mConfig->getConfirmationFunctions();
 
     for (auto symbol : symbols->getSymbols()) {
 
@@ -618,8 +665,8 @@ void Mobius::propagateFunctionPreferences()
             if (confirmNames != nullptr && f->mayConfirm) {
                 f->confirms = confirmNames->containsNoCase(fname);
             }
-		}
-	}
+        }
+    }
 }
 
 /**

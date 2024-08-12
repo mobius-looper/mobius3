@@ -2,9 +2,6 @@
  * Utility class to handle loading of the non-core symbol table.
  *
  * This is evolving to replace a number of older things.
- *
- * todo: Move what is now in UISymbols in here, and/or replace that with
- * things defined in the symbols file.
  */
 
 #include <JuceHeader.h>
@@ -30,12 +27,22 @@ Symbolizer::~Symbolizer()
 }
 
 /**
- * Read the standard symbols.xml file and install things in the symbol table.
+ * This does the following things:
+ *
+ * Interns symbols for the static FunctionDefinition and UIParameter objects.
+ * 
+ * Reads the symbols.xml file and interns function and parameter symbols and
+ * fleshes out the FunctionProperties and ParameterProperties objects.
+ * This will eventually replace the static definition objects.
+ *
+ * Interns a few UI symbols that are not defined in symbols.xml or with static
+ * objects.
+ *
+ * Reads the properties.xml file and adorns the Symbols with user-defined options.
  */
 void Symbolizer::initialize()
 {
-    // install the older static FunctionDefinition and UIParameter symbols
-    // these should have complete overlap with the new dynamically loaded symbols.xml definitions
+    // install the older static FunctionDefinitions
     for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
         FunctionDefinition* def = FunctionDefinition::Instances[i];
         Symbol* s = supervisor->getSymbols()->intern(def->name);
@@ -45,7 +52,8 @@ void Symbolizer::initialize()
         // we have an ordinal but that won't be used any more
         s->function = def;
     }
-        
+
+    // install older UIParameter definitions
     for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
         UIParameter* def = UIParameter::Instances[i];
         Symbol* s = supervisor->getSymbols()->intern(def->name);
@@ -54,8 +62,14 @@ void Symbolizer::initialize()
         s->parameter = def;
     }
 
-    // the new symbol table definition file
+    // load the new symbols.xml definition file
     loadSymbolDefinitions();
+    
+    // install newer symbols for UI functions and parameters
+    installUISymbols();
+
+    // install symbol properties
+    loadSymbolProperties();
 }
 
 void Symbolizer::loadSymbolDefinitions()
@@ -116,8 +130,13 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         FunctionProperties* func = new FunctionProperties();
         func->level = level;
         func->sustainable = root->getBoolAttribute("sustainable");
+        func->mayFocus = root->getBoolAttribute("mayFocus");
+        func->mayConfirm = root->getBoolAttribute("mayConfirm");
+        func->mayCancelMute = root->getBoolAttribute("mayCancelMute");
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
+
+        // todo: need mayFocus, mayConfirm, and mayMuteCancel in here too!
 
         Symbol* s = supervisor->getSymbols()->intern(name);
         s->functionProperties.reset(func);
@@ -281,6 +300,213 @@ juce::String Symbolizer::formatDisplayName(juce::String xmlName)
     }
 
     return displayName;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Properties
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Load the properties.xml file and adorn symbols.
+ * 
+ * This could be more general than it is, it exists currently for the function flags
+ * function flags like focus, confirmation, muteCancel that used to be Preset parameters.
+ *
+ * They could also go in symbols.xml but that has just the definitions and not user defined
+ * properties and I like keeping them seperate.
+ *
+ * Not entirely happy with modeling these as symbol properties, could also think of
+ * the symbol value being a "function" object with settable properties that would work
+ * for other object symbols as well.  But this gets the problem solved until it moves
+ * to something more general.
+ */
+void Symbolizer::loadSymbolProperties()
+{
+    juce::File root = supervisor->getRoot();
+    juce::File file = root.getChildFile("properties.xml");
+    if (!file.existsAsFile()) {
+        Trace(1, "Symbolizer: properties.xml not found\n");
+    }
+    else {
+        Trace(2, "Symbolizer: Reading symbol properties from %s\n", file.getFullPathName().toUTF8());
+        juce::String xml = file.loadFileAsString();
+        juce::XmlDocument doc(xml);
+        std::unique_ptr<juce::XmlElement> docel = doc.getDocumentElement();
+        if (docel == nullptr) {
+            xmlError("Parse parse error: %s\n", doc.getLastParseError());
+        }
+        else if (!docel->hasTagName("Properties")) {
+            xmlError("Unexpected XML tag name: %s\n", docel->getTagName());
+        }
+        else {
+            for (auto* el : docel->getChildIterator()) {
+                if (el->hasTagName("Property")) {
+                    parseProperty(el);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Parse a Property element and install things on FunctionProperties
+ * or ParameterProperties.
+ * This assumes that the symbols have already been installed
+ */
+void Symbolizer::parseProperty(juce::XmlElement* el)
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    
+    juce::String sname = el->getStringAttribute("symbol");
+    juce::String pname = el->getStringAttribute("name");
+    juce::String value = el->getStringAttribute("value");
+    
+    if (sname.length() == 0) {
+        Trace(1, "Symbolizer: Property without symbol name\n");
+    }
+    else if (pname.length() == 0) {
+        Trace(1, "Symbolizer: Property without property name\n");
+    }
+    else {
+        Symbol* s = symbols->find(sname);
+        if (s == nullptr) {
+            Trace(1, "Symbolizer: Undefined symbol %s\n", sname.toUTF8());
+        }
+        else if (s->functionProperties != nullptr) {
+            // todo: need name constants
+            bool bvalue = isTruthy(value);
+            if (pname == "focus") {
+                s->functionProperties->focus = bvalue;
+            }
+            else if (pname == "confirmation") {
+                s->functionProperties->confirmation = bvalue;
+            }
+            else if (pname == "muteCancel") {
+                s->functionProperties->muteCancel = bvalue;
+            }
+            else {
+                Trace(1, "Symbolizer: Undefined property name %s\n", pname.toUTF8());
+            }
+        }
+        else if (s->parameterProperties != nullptr) {
+            // here would be the place to do the "restore after reset" or whatever
+            // that's called
+        }
+    }
+}
+
+/**
+ * Extremely complex heuristic to determine what is truth.
+ */
+bool Symbolizer::isTruthy(juce::String value)
+{
+    return value.equalsIgnoreCase("true");
+}
+
+/**
+ * Capture the values of function and parameter properties and write them
+ * back to the properties.xml file.
+ *
+ * This works differently than mobius.xml and uiconfig.xml and is only updated
+ * on exit, though I suppose we could update it after every interactive editing session.
+ */
+void Symbolizer::saveSymbolProperties()
+{
+    juce::XmlElement xmlroot ("Properties");
+    
+    SymbolTable* symbols = supervisor->getSymbols();
+    for (auto symbol : symbols->getSymbols()) {
+        if (symbol->functionProperties != nullptr) {
+            if (symbol->functionProperties->focus)
+              addProperty(xmlroot, symbol, "focus", "true");
+            
+            if (symbol->functionProperties->confirmation)
+              addProperty(xmlroot, symbol, "confirmation", "true");
+            
+            if (symbol->functionProperties->muteCancel)
+              addProperty(xmlroot, symbol, "muteCancel", "true");
+        }
+    }
+
+    juce::String xml = xmlroot.toString();
+    
+    juce::File fileroot = supervisor->getRoot();
+    juce::File file = fileroot.getChildFile("properties.xml");
+    file.replaceWithText(xml);
+}
+
+void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String name, juce::String value)
+{
+    juce::XmlElement* prop = new juce::XmlElement("Property");
+    prop->setAttribute("symbol", s->name);
+    prop->setAttribute("name", name);
+    prop->setAttribute("value", value);
+    root.addChildElement(prop);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Display Symbols
+//
+//////////////////////////////////////////////////////////////////////
+
+void Symbolizer::installUISymbols()
+{
+    installDisplayFunction("UIParameterUp", UISymbolParameterUp);
+    installDisplayFunction("UIParameterDown", UISymbolParameterDown);
+    installDisplayFunction("UIParameterInc", UISymbolParameterInc);
+    installDisplayFunction("UIParameterDec", UISymbolParameterDec);
+    installDisplayFunction("ReloadScripts", UISymbolReloadScripts);
+    installDisplayFunction("ReloadSamples", UISymbolReloadSamples);
+    installDisplayFunction("ShowPanel", UISymbolShowPanel);
+    
+    // runtime parameter experiment
+    // I'd like to be able to create parameters at runtime
+    // without needing static definition objects
+
+    installDisplayParameter(UISymbols::ActiveLayout, UISymbols::ActiveLayoutLabel, UISymbolActiveLayout);
+    installDisplayParameter(UISymbols::ActiveButtons, UISymbols::ActiveButtonsLabel, UISymbolActiveButtons);
+}    
+
+/**
+ * A display function only needs a symbol.
+ */
+void Symbolizer::installDisplayFunction(const char* name, int symbolId)
+{
+    Symbol* s = supervisor->getSymbols()->intern(name);
+    s->behavior = BehaviorFunction;
+    s->id = (unsigned char)symbolId;
+    s->level = LevelUI;
+}
+
+/**
+ * Runtime defined parameters are defined by two things,
+ * a Symbol that reserves the name and a ParameterProperties that
+ * defines the characteristics of the parameter.
+ *
+ * There is some confusing overlap on the Symbol->level and
+ * ParameterProperties->scope.  As we move away from UIParameter/FunctionDefinition
+ * to the new ParameterProperties and FunctionProperties need to rethink this.
+ * ParameterProperties is derived from UIParameter where scopes include things
+ * like global, preset, setup, and UI.  This is not the same as Symbol->level but
+ * in the case of UI related things they're the same since there are no UI level
+ * parameters with Preset scope for example.  So it looks like duplication
+ * but it's kind of not.
+ */
+void Symbolizer::installDisplayParameter(const char* name, const char* label, int symbolId)
+{
+    ParameterProperties* p = new ParameterProperties();
+    p->displayName = juce::String(label);
+    p->type = TypeStructure;
+    p->scope = ScopeUI;
+    
+    Symbol* s = supervisor->getSymbols()->intern(name);
+    s->behavior = BehaviorParameter;
+    s->id = (unsigned char)symbolId;
+    s->level = LevelUI;
+    s->parameterProperties.reset(p);
 }
 
 /****************************************************************************/

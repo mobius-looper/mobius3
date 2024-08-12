@@ -95,6 +95,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Samples,
         MidiDevices,
         AudioDevices,
+        Properties,
 
         // Help
         KeyBindings,

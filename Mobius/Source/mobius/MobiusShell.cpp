@@ -281,6 +281,11 @@ void MobiusShell::reconfigure(MobiusConfig* config)
     }
 }
 
+void MobiusShell::propagateSymbolProperties()
+{
+    kernel.propagateSymbolProperties();
+}
+
 /**
  * On initialize() and reconfigure()
  * Add BehaviorActivation symbols for the Setups and Presets.

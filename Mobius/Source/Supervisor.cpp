@@ -14,6 +14,7 @@
 #include "util/TraceFile.h"
 #include "util/FileUtil.h"
 #include "util/Util.h"
+#include "util/List.h"
 
 #include "model/MobiusConfig.h"
 #include "model/UIConfig.h"
@@ -28,6 +29,7 @@
 #include "model/HelpCatalog.h"
 #include "model/UIParameterIds.h"
 #include "model/ScriptConfig.h"
+#include "model/FunctionProperties.h"
 
 #include "ui/MainWindow.h"
 
@@ -40,7 +42,6 @@
 
 #include "MainComponent.h"
 #include "RootLocator.h"
-#include "UISymbols.h"
 #include "Symbolizer.h"
 #include "AudioManager.h"
 #include "MidiManager.h"
@@ -253,9 +254,8 @@ bool Supervisor::start()
     // todo: Symbolizer should be handling all of this now
     // merge with UISymbols and maybe VariableManager
     
-    // install UI Symbols
+    // initialize symbol table
     symbolizer.initialize();
-    uiSymbols.initialize();
 
     // install variables
     variableManager.install();
@@ -510,6 +510,9 @@ void Supervisor::shutdown()
       audioManager.captureDeviceState(devconfig);
     
     writeDeviceConfig(devconfig);
+
+    // until the editing panels do this, save on exit
+    symbolizer.saveSymbolProperties();
 
     // Started getting a Juce leak detection on the StringArray
     // inside ScriptProperties on a Symbol when shutting down the app.
@@ -1001,6 +1004,8 @@ void Supervisor::upgrade(MobiusConfig* config)
         }
         config->setVersion(1);
     }
+
+    upgradeFunctionProperties(config);
 }
 
 int Supervisor::upgradePort(int number)
@@ -1038,6 +1043,44 @@ DeviceConfig* Supervisor::getDeviceConfig()
         deviceConfig.reset(neu);
     }
     return deviceConfig.get();
+}
+
+/**
+ * Convert the old function name lists into Symbol properties.
+ */
+void Supervisor::upgradeFunctionProperties(MobiusConfig* config)
+{
+    upgradeFunctionProperty(config->getFocusLockFunctions(), true, false, false);
+    // don't do this again
+    //config->setFocusLockFunctions(nullptr);
+
+    upgradeFunctionProperty(config->getConfirmationFunctions(), false, true, false);
+    //config->setConfirmationFunctions(nullptr);
+    
+    upgradeFunctionProperty(config->getMuteCancelFunctions(), false, false, true);
+    //config->setMuteCancelFunctions(nullptr);
+}
+
+void Supervisor::upgradeFunctionProperty(StringList* names, bool focus, bool confirm, bool muteCancel)
+{
+    if (names != nullptr) {
+        for (int i = 0 ; i < names->size() ; i++) {
+            const char* name = names->getString(i);
+            Symbol* s = symbols.find(name);
+            if (s == nullptr) {
+                Trace(1, "Supervisor::upgradeFunctionProperties Undefined function %s\n", name);
+            }
+            else if (s->functionProperties == nullptr) {
+                // symbols should have been loaded by now, don't bootstrap
+                Trace(1, "Supervisor::upgradeFunctionProperties Missing function properties for %s\n", name);
+            }
+            else {
+                if (focus) s->functionProperties->focus = true;
+                if (confirm) s->functionProperties->confirmation = true;
+                if (muteCancel) s->functionProperties->muteCancel = true;
+            }
+        }
+    }
 }
 
 /**
@@ -1082,6 +1125,11 @@ void Supervisor::updateMobiusConfig()
         
         configureBindings(config);
     }
+}
+
+void Supervisor::updateSymbolProperties()
+{
+    symbolizer.saveSymbolProperties();
 }
 
 /**

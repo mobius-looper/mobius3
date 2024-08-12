@@ -48,6 +48,7 @@ class PanelFactory
         Sample,
         Display,
         Button,
+        Properties,
 
         // Devices
         Audio,

@@ -38,6 +38,7 @@ class MobiusShell : public MobiusInterface
     void setListener(class MobiusListener* l) override;
     void setMidiListener(class MobiusMidiListener* l) override;
     void initialize(class MobiusConfig* config) override;
+    void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config) override;
     MobiusState* getState() override;    // also shared by the kernel
     void performMaintenance() override;

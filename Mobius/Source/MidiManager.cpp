@@ -212,27 +212,43 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
         if (usage == Input)
           name = config->pluginMidiInput;
         else if (usage == InputSync)
-          name = getFirstName(config->pluginMidiInputSync);
+          name = getFirstName(config->pluginMidiInputSync, usage);
         else if (usage == Output)
-          name = getFirstName(config->pluginMidiOutput);
+          name = getFirstName(config->pluginMidiOutput, usage);
         else if (usage == OutputSync)
-          name = getFirstName(config->pluginMidiOutputSync);
+          name = getFirstName(config->pluginMidiOutputSync, usage);
         else if (usage == Thru)
-          name = getFirstName(config->pluginMidiThru);
+          name = getFirstName(config->pluginMidiThru, usage);
     }
     else {
         if (usage == Input)
           name = config->midiInput;
         else if (usage == InputSync)
-          name = getFirstName(config->midiInputSync);
+          name = getFirstName(config->midiInputSync, usage);
         else if (usage == Output)
-          name = getFirstName(config->midiOutput);
+          name = getFirstName(config->midiOutput, usage);
         else if (usage == OutputSync)
-          name = getFirstName(config->midiOutputSync);
+          name = getFirstName(config->midiOutputSync, usage);
         else if (usage == Thru)
-          name = getFirstName(config->midiThru);
+          name = getFirstName(config->midiThru, usage);
     }
 
+    return name;
+}
+
+/**
+ * Return a displable string for a Usage
+ */
+juce::String MidiManager::getUsageName(Usage usage)
+{
+    juce::String name;
+    switch (usage) {
+        case Input: name = "Input"; break;
+        case InputSync: name = "Input Sync"; break;
+        case Output: name = "Output"; break;
+        case OutputSync: name = "Output Sync"; break;
+        case Thru: name = "Thur"; break;
+    }
     return name;
 }
 
@@ -242,13 +258,14 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
  * allowing one output device at a time since there isn't a way
  * to address them from within.
  */
-juce::String MidiManager::getFirstName(juce::String csv)
+juce::String MidiManager::getFirstName(juce::String csv, Usage usage)
 {
     juce::String name;
     juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
 
     if (list.size() > 1) {
-        juce::String msg = "Multiple devices configured but only one can be opened:" + csv;
+        juce::String uname = getUsageName(usage);
+        juce::String msg = "Multiple " + uname + " devices configured but only one can be opened:" + csv;
         somethingBadHappened(msg);
     }
     

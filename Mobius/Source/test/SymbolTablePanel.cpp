@@ -115,9 +115,13 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         }
     }
     else if (columnId == SymbolTableFlagsColumn) {
-        // expose interesting things
-        if (s->function != nullptr && s->function->sustainable)
-          cell = "sustainable";
+        // expose interesting things so we know to put them in FunctionProperties
+        if (s->function != nullptr) {
+            if (s->function->sustainable) cell = "sustainable ";
+            if (s->function->mayFocus) cell += "focus ";
+            if (s->function->mayConfirm) cell += "confirm ";
+            if (s->function->mayCancelMute) cell += "muteCancel ";
+        }
     }
     else if (columnId == SymbolTableWarnColumn) {
         if (s->coreFunction != nullptr && s->function == nullptr) {

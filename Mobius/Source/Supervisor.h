@@ -33,7 +33,6 @@
 #include "Parametizer.h"
 #include "VariableManager.h"
 #include "Alerter.h"
-#include "UISymbols.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
 #include "script/ScriptClerk.h"
@@ -190,6 +189,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     class UIConfig* getUIConfig();
     void updateUIConfig();
     void reloadUIConfig();
+    void updateSymbolProperties();
     
     class HelpCatalog* getHelpCatalog();
     class DynamicConfig* getDynamicConfig();
@@ -372,9 +372,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     std::unique_ptr<class DynamicConfig> dynamicConfig;
     std::unique_ptr<class HelpCatalog> helpCatalog;
 
-    // dynamic UI related parameters experiment
-    UISymbols uiSymbols {this};
-
     // testing subsystem
     TestDriver testDriver {this};
 
@@ -418,6 +415,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     void upgrade(class MobiusConfig* config);
     int upgradePort(int number);
+    void upgradeFunctionProperties(class MobiusConfig* config);
+    void upgradeFunctionProperty(class StringList* names, bool focus, bool confirm, bool muteCancel);
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);

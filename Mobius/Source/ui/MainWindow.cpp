@@ -18,7 +18,7 @@
 #include "../model/Symbol.h"
 
 #include "../Supervisor.h"
-#include "../UISymbols.h"
+#include "../Symbolizer.h"
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
@@ -192,6 +192,10 @@ void MainWindow::mainMenuSelection(int id)
 
             case MainMenu::GlobalParameters: {
                 panelFactory.show(PanelFactory::Global);
+            }
+                break;
+            case MainMenu::Properties: {
+                panelFactory.show(PanelFactory::Properties);
             }
                 break;
             case MainMenu::Presets: {

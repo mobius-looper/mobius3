@@ -148,7 +148,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='out'
+      syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -157,7 +157,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='track'
+      syncSource='out'
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
@@ -429,4 +429,10 @@
     <String>MuteRealign</String>
     <String>QuantMidiStartPoint</String>
   </FocusLockFunctions>
+  <ConfirmationFunctions>
+    <String>Undo</String>
+  </ConfirmationFunctions>
+  <MuteCancelFunctions>
+    <String>Overdub</String>
+  </MuteCancelFunctions>
 </MobiusConfig>

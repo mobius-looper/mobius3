@@ -135,6 +135,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Midi: panel = new MidiPanel(super); break;
         case Button: panel = new ButtonPanel(super); break;
         case Host: panel = new HostPanel(super); break;
+        case Properties: panel = new PropertiesPanel(super); break;
 
         case Audio: panel = new AudioPanel(super); break;
         case MidiDevice: panel = new MidiDevicePanel(super); break;

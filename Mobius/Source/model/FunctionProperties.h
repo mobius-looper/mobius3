@@ -33,10 +33,28 @@ class FunctionProperties
     SymbolLevel level = LevelNone;
 
 
-     /**
+    /**
      * When true, this function may respond to a sustained action.
      */
     bool sustainable = false;
+
+    /**
+     * When true, this function may obey focus lock.
+     * Whether it does or not is user configurable and the focus flag will be set.
+     */
+    bool mayFocus = false;
+    
+    /**
+     * When true, this function may act as a switch confirmation function.
+     * Whether it does or not is user configurable and the confirmation flag will be set.
+     */
+    bool mayConfirm = false;
+    
+    /**
+     * When true, this function may act as a mute mode cancel function.
+     * Whether it does or not is user configurable and the muteCancel flag will be set.
+     */
+    bool mayCancelMute = false;
 
     /**
      * Handle to a core object that implements this function.
@@ -58,6 +76,14 @@ class FunctionProperties
      */
     juce::String longHelp;
 
+    //
+    // User configurable properties
+    //
+
+    bool focus = false;
+    bool confirmation = false;
+    bool muteCancel = false;
+    
   private:
     
 };
