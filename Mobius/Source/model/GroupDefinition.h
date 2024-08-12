@@ -11,6 +11,7 @@ class GroupDefinition
   public:
 
     GroupDefinition();
+    GroupDefinition(GroupDefinition* src);
     ~GroupDefinition();
 
     /**

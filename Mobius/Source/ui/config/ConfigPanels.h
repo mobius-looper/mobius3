@@ -26,6 +26,7 @@
 #include "AudioEditor.h"
 #include "DisplayEditor.h"
 #include "PropertiesEditor.h"
+#include "GroupEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -194,4 +195,17 @@ class PropertiesPanel : public ConfigPanel
  
   private:
     PropertiesEditor editor;
+};
+
+class GroupPanel : public ConfigPanel
+{
+  public:
+    GroupPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("GroupPanel");
+        setEditor(&editor);
+    }
+    ~GroupPanel() {}
+ 
+  private:
+    GroupEditor editor;
 };

@@ -223,6 +223,8 @@
           <FILE id="RlXlKB" name="GlobalEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/GlobalEditor.cpp"/>
           <FILE id="Gjig9Y" name="GlobalEditor.h" compile="0" resource="0" file="Source/ui/config/GlobalEditor.h"/>
+          <FILE id="QsqaLh" name="GroupEditor.cpp" compile="1" resource="0" file="Source/ui/config/GroupEditor.cpp"/>
+          <FILE id="u7Aap2" name="GroupEditor.h" compile="0" resource="0" file="Source/ui/config/GroupEditor.h"/>
           <FILE id="KVy75i" name="HostEditor.cpp" compile="1" resource="0" file="Source/ui/config/HostEditor.cpp"/>
           <FILE id="GgP3FP" name="HostEditor.h" compile="0" resource="0" file="Source/ui/config/HostEditor.h"/>
           <FILE id="EYOICC" name="KeyboardEditor.cpp" compile="1" resource="0"

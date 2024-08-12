@@ -198,6 +198,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Properties);
             }
                 break;
+            case MainMenu::Groups: {
+                panelFactory.show(PanelFactory::Group);
+            }
+                break;
             case MainMenu::Presets: {
                 panelFactory.show(PanelFactory::Preset);
             }

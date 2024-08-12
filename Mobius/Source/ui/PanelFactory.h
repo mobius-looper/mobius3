@@ -49,6 +49,7 @@ class PanelFactory
         Display,
         Button,
         Properties,
+        Group,
 
         // Devices
         Audio,
