@@ -84,5 +84,8 @@ class XmlRenderer {
 
     void render(class XmlBuffer* b, class OscWatcher* w);
     void parse(class XmlElement* e, class OscWatcher* w);
+    
+    void render(class XmlBuffer* b, class GroupDefinition* g);
+    void parse(class XmlElement* e, class GroupDefinition* g);
 
 };

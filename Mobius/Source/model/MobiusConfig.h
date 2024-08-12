@@ -13,6 +13,9 @@
 #ifndef MOBIUS_CONFIG_H
 #define MOBIUS_CONFIG_H
 
+#include <JuceHeader.h>
+#include "GroupDefinition.h"
+
 /****************************************************************************
  *                                                                          *
  *                                 CONSTANTS                                *
@@ -370,6 +373,8 @@ class MobiusConfig {
     void setEdpisms(bool b);
     bool isEdpisms();
 
+    juce::OwnedArray<class GroupDefinition> groups;
+    
     //
     // Transient fields for testing
     //

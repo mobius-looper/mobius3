@@ -98,6 +98,10 @@
               file="Source/model/FunctionProperties.cpp"/>
         <FILE id="VOgufo" name="FunctionProperties.h" compile="0" resource="0"
               file="Source/model/FunctionProperties.h"/>
+        <FILE id="LqVCNH" name="GroupDefinition.cpp" compile="1" resource="0"
+              file="Source/model/GroupDefinition.cpp"/>
+        <FILE id="rMPucq" name="GroupDefinition.h" compile="0" resource="0"
+              file="Source/model/GroupDefinition.h"/>
         <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
         <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
         <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>

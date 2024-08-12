@@ -54,6 +54,7 @@
 #include "ScriptConfig.h"
 #include "SampleConfig.h"
 #include "UIParameter.h"
+#include "GroupDefinition.h"
 
 #include "XmlRenderer.h"
 
@@ -415,6 +416,8 @@ void XmlRenderer::parseStructure(XmlElement* e, Structure* structure)
 #define ATT_EDPISMS "edpisms"
 #define ATT_CC_THRESHOLD "controllerActionThreshold"
 
+#define EL_GROUP_DEFINITION "GroupDefinition"
+
 void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 {
 	b->addOpenStartTag(EL_MOBIUS_CONFIG);
@@ -486,7 +489,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	if (c->getSampleConfig() != nullptr)
       render(b, c->getSampleConfig());
 
-
+    for (auto group : c->groups)
+      render(b, group);
 #if 0
     // never really implemented these
 	for (ControlSurfaceConfig* cs = c->getControlSurfaces() ; cs != nullptr ; cs = cs->getNext())
@@ -584,6 +588,11 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 			SampleConfig* sc = new SampleConfig();
             parse(child, sc);
             c->setSampleConfig(sc);
+		}
+		else if (child->isName(EL_GROUP_DEFINITION)) {
+			GroupDefinition* gd = new GroupDefinition();
+            parse(child, gd);
+            c->groups.add(gd);
 		}
 
         // never did fully support this 
@@ -1217,6 +1226,41 @@ void XmlRenderer::parse(XmlElement* e, SampleConfig* c)
 	}
 
     c->setSamples(samples);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// GroupDefinition
+//
+//////////////////////////////////////////////////////////////////////
+
+// old name, now render EL_SAMPLE_CONFIG
+#define ATT_REPLICATED_FUNCTIONS "replicatedFunctions"
+#define ATT_COLOR "color"
+
+void XmlRenderer::render(XmlBuffer* b, GroupDefinition* g)
+{
+    // I changed the class name to SampleConfig but for backward
+    // compatibility the element and class name were originally Samples
+	b->addOpenStartTag(EL_GROUP_DEFINITION);
+
+    const char* name = g->name.toUTF8();
+    b->addAttribute(ATT_NAME, name);
+    b->addAttribute(ATT_COLOR, g->color);
+    if (g->replicatedFunctions.size() > 0) {
+        const char* csv = g->replicatedFunctions.joinIntoString(",").toUTF8();
+        b->addAttribute(ATT_REPLICATED_FUNCTIONS, csv);
+    }
+    b->add("/>\n");
+}
+
+void XmlRenderer::parse(XmlElement* e, GroupDefinition* g)
+{
+    g->name = juce::String(e->getAttribute(ATT_NAME));
+    g->color = e->getIntAttribute(ATT_COLOR);
+    juce::String csv = juce::String(e->getAttribute(ATT_REPLICATED_FUNCTIONS));
+    if (csv.length() > 0)
+      g->replicatedFunctions = juce::StringArray::fromTokens(csv, ",", "");
 }
 
 /****************************************************************************/
