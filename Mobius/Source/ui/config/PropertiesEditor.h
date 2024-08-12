@@ -21,8 +21,8 @@
 enum FunctionColumns {
     FunctionColumnName = 1,
     FunctionColumnFocus,
-    FunctionColumnConfirmation,
-    FunctionColumnMuteCancel
+    FunctionColumnMuteCancel,
+    FunctionColumnConfirmation
 };
 
 /**
@@ -37,7 +37,8 @@ class FunctionTableRow
     ~FunctionTableRow() {}
 
     juce::String name;
-
+    class Symbol* symbol = nullptr;
+    
     juce::Array<FunctionColumns> checks;
 };
 
@@ -57,6 +58,10 @@ class FunctionTable : public BasicTable, public BasicTable::Model
     }
     
     juce::String getName(int row);
+
+    // BasicTable override
+    // this arguably should be in the Model but I don't want to rewritie all of those
+    bool needsCheckbox(int row, int column) override;
 
     // BasicTable::Model
     int getNumRows() override;

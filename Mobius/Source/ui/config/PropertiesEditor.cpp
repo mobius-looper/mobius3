@@ -138,8 +138,8 @@ void FunctionTable::init(SymbolTable* symbols)
     if (!initialized) {
         addColumn("Name", FunctionColumnName);
         addColumnCheckbox("Focus", FunctionColumnFocus);
-        addColumnCheckbox("Confirmation", FunctionColumnConfirmation);
         addColumnCheckbox("Mute Cancel", FunctionColumnMuteCancel);
+        addColumnCheckbox("Confirmation", FunctionColumnConfirmation);
 
 
         juce::StringArray functionNames;
@@ -147,11 +147,29 @@ void FunctionTable::init(SymbolTable* symbols)
             if (symbol->functionProperties != nullptr) {
 
                 // weed out the ones that can't have any of the three checkboxes
-                // todo: need to suppress each checkbox
+                // force the may flag on if the option is set by other means
 
-                if (symbol->function->mayFocus ||
-                    symbol->function->mayConfirm ||
-                    symbol->function->mayCancelMute) {
+                if (!symbol->functionProperties->mayFocus &&
+                    symbol->functionProperties->focus) {
+                    Trace(1, "PropertiesEditor: Forcing mayFocus on for %s", symbol->getName());
+                    symbol->functionProperties->mayFocus = true;
+                }
+                
+                if (!symbol->functionProperties->mayConfirm &&
+                    symbol->functionProperties->confirmation) {
+                    Trace(1, "PropertiesEditor: Forcing mayConfirm on for %s", symbol->getName());
+                    symbol->functionProperties->mayConfirm = true;
+                }
+                
+                if (!symbol->functionProperties->mayCancelMute &&
+                    symbol->functionProperties->muteCancel) {
+                    Trace(1, "PropertiesEditor: Forcing mayCancelMute on for %s", symbol->getName());
+                    symbol->functionProperties->mayCancelMute = true;
+                }
+
+                if (symbol->functionProperties->mayFocus ||
+                    symbol->functionProperties->mayConfirm ||
+                    symbol->functionProperties->mayCancelMute) {
 
                     functionNames.add(symbol->name);
                 }
@@ -163,11 +181,36 @@ void FunctionTable::init(SymbolTable* symbols)
         for (auto name : functionNames) {
             FunctionTableRow* func = new FunctionTableRow();
             func->name = name;
+            // get back to the symbol after sorting
+            func->symbol = symbols->find(name);
             functions.add(func);
         }
 
         initialized = true;
     }
+}
+
+/**
+ * BasicTable overload to determine whether this cell needs a checkbox.
+ * Should be in the model.
+ */
+bool FunctionTable::needsCheckbox(int row, int column)
+{
+    bool needs = false;
+    
+    FunctionTableRow* func = functions[row];
+    if (func != nullptr && func->symbol != nullptr) {
+        if (column == FunctionColumnFocus) {
+            needs = func->symbol->functionProperties->mayFocus;
+        }
+        else if (column == FunctionColumnConfirmation) {
+            needs = func->symbol->functionProperties->mayConfirm;
+        }
+        else if (column == FunctionColumnMuteCancel) {
+            needs = func->symbol->functionProperties->mayCancelMute;
+        }
+    }
+    return needs;
 }
 
 /**
@@ -253,10 +296,6 @@ juce::String FunctionTable::getCellText(int row, int columnId)
     }
     else if (columnId == FunctionColumnName) {
         value = func->name;
-    }
-    else {
-        // these are all checkboxes, shouldn't be here
-        Trace(1, "FunctionTable::getCellText not supposed to be here\n");
     }
     return value;
 }

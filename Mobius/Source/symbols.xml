@@ -59,7 +59,7 @@
   <Function name="Reset" mayFocus='true'/>
   <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
   <Function name="RestartOnce" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Reverse" sustainable='true'/>
+  <Function name="Reverse" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
   <!-- core has this as mayFocus, don't think that's relevant -->
   <Function name="SaveCapture"/>
   <Function name="SaveLoop"/>
@@ -251,17 +251,20 @@
       Old project option, may not be used.
     </Parameter>
     
-<!-- StringList, also "Disaables" in the model
-    <Parameter name='altFeedbackDisable' type='bool'>
-      Diables secondary feedback
-      </Parameter>
+    <!-- StringList
+         This was a list of Mode names that don't want altFeedback applied.
+         There were only four possibilities: Multiply, Overdub, Stutter, Substitute
+         <Parameter name='altFeedbackDisables' type='string' multi='true'>
+         Diables secondary feedback in modes
+         </Parameter>
       -->
 
     <Parameter name='groupFocusLock' type='bool'>
       Still relevant?  Move to UI
     </Parameter>
 
-<!-- StringList
+    <!-- StringList
+         These are now implemented as FunctionProperties flags
     <Parameter name='focusLockFunctions' type='string' multi='true'>
     </Parameter>
     
@@ -270,7 +273,7 @@
     
     <Parameter name='confirmationFunctions' type='string' multi='true'>
     </Parameter>
--->
+    -->
 
     <Parameter name='trackCount' coreName='tracks' codeName='Tracks'>
       The number of tracks to configure internally and display in the UI
@@ -430,6 +433,8 @@
     <Parameter name='autoRecordBars' low='1' high='64' />
 
     <!-- StringList
+         List of functions that are sustainable.  Not configurable any more
+         but could make this a FunctionProperties flag like the three former global parameters.
          <Parameter name='sustainFunctions' type='string' multi='true' options='noBinding'/>
     -->
 
@@ -551,6 +556,7 @@
     </Parameter>
     
     <!-- StringList
+         Renamed this "resetRetains" at some point, still not visible in the UI
     <Parameter name='resetables' type='string' multi='true' options='noBinding,juceValues'>
          This was not defined formally in core, though it is a member of the Setup class.
          The SetupDialog handled it as a special case.  Since it wasn't a parameter

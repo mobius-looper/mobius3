@@ -295,6 +295,10 @@
           <FILE id="pjB2It" name="PresetEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/PresetEditor.cpp"/>
           <FILE id="sJpDbg" name="PresetEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/PresetEditor.h"/>
+          <FILE id="kGRFA6" name="PropertiesEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/PropertiesEditor.cpp"/>
+          <FILE id="lwrafw" name="PropertiesEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/PropertiesEditor.h"/>
           <FILE id="zI5i3t" name="SampleEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/SampleEditor.cpp"/>
           <FILE id="gw0WaR" name="SampleEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SampleEditor.h"/>
@@ -707,8 +711,6 @@
       <FILE id="plmiBN" name="SuperDumper.h" compile="0" resource="0" file="../Mobius/Source/SuperDumper.h"/>
       <FILE id="hwee0I" name="Supervisor.cpp" compile="1" resource="0" file="../Mobius/Source/Supervisor.cpp"/>
       <FILE id="Z1Vsvp" name="Supervisor.h" compile="0" resource="0" file="../Mobius/Source/Supervisor.h"/>
-      <FILE id="WtscqJ" name="UISymbols.cpp" compile="1" resource="0" file="../Mobius/Source/UISymbols.cpp"/>
-      <FILE id="B29Hp8" name="UISymbols.h" compile="0" resource="0" file="../Mobius/Source/UISymbols.h"/>
       <FILE id="z91kiw" name="VariableManager.cpp" compile="1" resource="0"
             file="../Mobius/Source/VariableManager.cpp"/>
       <FILE id="JMMQkt" name="VariableManager.h" compile="0" resource="0"

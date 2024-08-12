@@ -201,20 +201,24 @@ juce::Component* BasicTable::refreshComponentForCell (int rowNumber, int columnI
     if (needs) {
         BasicTableCheckbox* checkbox = static_cast<BasicTableCheckbox*> (existingComponentToUpdate);
 
-        if (checkbox == nullptr)
-          checkbox = new BasicTableCheckbox (*this);
+        if (checkbox == nullptr) {
+            //Trace(2, "BasicTable: Creating checkbox for %d %d\n", rowNumber, columnId);
+            checkbox = new BasicTableCheckbox (*this);
+        }
         else {
             //Trace(2, "Cell bounds: %d %d %d %d\n", checkbox->getX(), checkbox->getY(),
             //checkbox->getWidth(), checkbox->getHeight());
+            //Trace(2, "BasicTable: Reusing checkbox for %d %d\n", rowNumber, columnId);
             checkbox->setTopLeftPosition(checkbox->getX() + 30, checkbox->getY());
         }
+        // this tells the checkbox which row/column it is used for and refreshes check state
         checkbox->setRowAndColumn (rowNumber, columnId);
         custom = checkbox;
     }
     else if (existingComponentToUpdate != nullptr) {
-        // we didn't think this cell needed one, but the table
-        // has one, something went wrong
-        Trace(1, "BasicTable: Found a custom cell where it didn't belong\n");
+        // checkboxes for each cell are reused as the table scrolls
+        // if we don't want one in this cell any more delete it
+        delete existingComponentToUpdate;
     }
 
     return custom;

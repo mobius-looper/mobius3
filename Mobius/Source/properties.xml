@@ -14,7 +14,6 @@
   <Property symbol="InstantMultiply3" name="focus" value="true"/>
   <Property symbol="InstantMultiply4" name="focus" value="true"/>
   <Property symbol="Multiply" name="focus" value="true"/>
-  <Property symbol="Multiply" name="confirmation" value="true"/>
   <Property symbol="Multiply" name="muteCancel" value="true"/>
   <Property symbol="Mute" name="focus" value="true"/>
   <Property symbol="MuteRealign" name="focus" value="true"/>

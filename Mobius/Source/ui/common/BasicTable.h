@@ -63,6 +63,7 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
     // to using setBasicModel
     virtual int getNumRows() override;
     virtual juce::String getCellText(int row, int columnId);
+    virtual bool needsCheckbox(int row, int col);
 
     // BasicTableChedkbox callbacks
     bool getCheck(int row, int column);
@@ -88,7 +89,6 @@ class BasicTable : public juce::TableListBox, public juce::TableListBoxModel
     CheckboxListener* checkboxListener = nullptr;
     
     void setCheckboxFlag(int columnId, bool flag);
-    bool needsCheckbox(int row, int col);
 
 };
 
