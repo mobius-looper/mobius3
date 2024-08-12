@@ -347,6 +347,30 @@ void Mobius::initializeTracks()
 }
 
 /**
+ * Kludge added for the initialization sequence where initialize() can be called
+ * before the Juce audio stream is ready and the latencies are not known.
+ * This will be called by Kernel after it starts receiving audio blocks and monitors
+ * size changes.
+ *
+ * These can be overridden by MobiusConfig
+ */
+void Mobius::updateLatencies(int blockSize)
+{
+    int inputLatency = mConfig->getInputLatency();
+    if (inputLatency == 0)
+      inputLatency = blockSize;
+
+    int outputLatency = mConfig->getOutputLatency();
+    if (outputLatency == 0)
+      outputLatency = blockSize;
+
+	for (int i = 0 ; i < mTrackCount ; i++) {
+		Track* t = mTracks[i];
+		t->updateLatencies(inputLatency, outputLatency);
+	}
+}
+
+/**
  * Special accessor just for MobiusShell/UnitTests to slam in
  * a new Scriptarian without checking to see if we're busy or
  * sending back the old one.  This can only be called in
@@ -587,6 +611,11 @@ void Mobius::propagateConfiguration()
 		t->updateConfiguration(mConfig);
 	}
 
+    // latency overrides can come in here too without the block size that
+    // kernel is monitoring changing
+    // pretend we got notified by Kernel, this method will check for config overrides
+    updateLatencies(mContainer->getBlockSize());
+    
     // the only thing Track::updateConfiguration didn't
     // do that was in the setup was set the active track
     // not sure why, old code would now set the active track
@@ -1647,12 +1676,10 @@ int Mobius::getSampleRate()
  * so we just need to return it here.  This will be lost on reconfigure()
  * so the test scripts need to set it every time they run.
  *
- * NEW: It is unclear whether we need an override setting that turns latency
- * off entirely.  If you configure it to zero, it will fall back to the block size
- * so 1 would be the smallest latency you could configure.  I suppose we could
- * use negative numbers here but the UI doesn't allow that.
- * 
+ * NEW: Latency should now be passed in through updateLatencies
+ * Nothing should need these
  */
+#if 0
 int Mobius::getEffectiveInputLatency()
 {
     int latency = mConfig->getInputLatency();
@@ -1670,6 +1697,7 @@ int Mobius::getEffectiveOutputLatency()
     }
     return latency;
 }
+#endif
 
 //
 // Tracks

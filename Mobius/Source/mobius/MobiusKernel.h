@@ -188,6 +188,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class MobiusConfig* configuration = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
+
+    // important that we track changes in block sizes to adjust latency compensation
+    int lastBlockSize = 0;
     
     // these we own
     KernelEventPool eventPool;

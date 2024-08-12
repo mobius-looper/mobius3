@@ -407,7 +407,17 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
         suspendRequested = false;
     }
     if (suspended) return;
-    
+
+    // monitor changes to the block size and adjust latency compensation
+    // it is important that we watch for changes since it is unreliable during
+    // initialization since the audio thread operates independently of Supervisor
+    // probably need to be doing this with sampleRate as well if that's cached in core
+    int newBlockSize = container->getBlockSize();
+    if (newBlockSize != lastBlockSize) {
+        mCore->updateLatencies(newBlockSize);
+        lastBlockSize = newBlockSize;
+    }
+
     // save this here for the duration so we don't have to keep passing it around
     stream = argStream;
     

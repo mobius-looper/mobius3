@@ -1214,21 +1214,35 @@ void Track::updateConfiguration(MobiusConfig* config)
 }
 
 /**
+ * New method for Kernel to convey the current block size.
+ * Called whenver it detects that the block size changed.  Mobius
+ * will also factor in the latency overrides from MobiusConfig.
+ * We just trust it.
+ */
+void Track::updateLatencies(int inputLatency, int outputLatency)
+{
+    mInput->setLatency(inputLatency);
+    mOutput->setLatency(outputLatency);
+}
+
+/**
  * Refresh cached global parameters.
  * This is called by updateConfiguration to assimilate the complete
- * configuration and also by Mobiud::setParameter so scripts can set parameters
+ * configuration and also by Mobius::setParameter so scripts can set parameters
  * and have them immediately propagated to the tracks.
  *
  * It can also be called by Mobius for some reason, which won't hurt
  * since not much happens here, but still messies up the interface.
  *
  * I don't like how this is working, it's a kludgey special case.
+ *
+ * NEW: Latencies are very special and handled through updateLatencies
  */
 void Track::updateGlobalParameters(MobiusConfig* config)
 {
     // do NOT get latency from the config, Mobius calculates it
-    mInput->setLatency(mMobius->getEffectiveInputLatency());
-    mOutput->setLatency(mMobius->getEffectiveOutputLatency());
+    //mInput->setLatency(mMobius->getEffectiveInputLatency());
+    //mOutput->setLatency(mMobius->getEffectiveOutputLatency());
 
     // this enables through monitoring, echoing the input to the output
     // in addition to whatever the track might have to say

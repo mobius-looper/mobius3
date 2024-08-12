@@ -202,6 +202,11 @@ class Track : public TraceContext
 	void updateConfiguration(class MobiusConfig* config);
 
     /**
+     * Called by Mobius when the block size changes.
+     */
+    void updateLatencies(int inputLatency, int outputLatency);
+
+    /**
      * Special function called within the script interpreter to
      * assimilate just global parameter changes.
      */

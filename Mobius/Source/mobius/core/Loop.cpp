@@ -1589,6 +1589,14 @@ void Loop::playLocal()
 				}
 
 				// begin preplay of the last record layer
+                // !!! we have a bug here if latency is zero, a new record layer will have
+                // been shifted, but mPlayFrame is still at the end of the last play layer
+                // and we think we need to shift, if we were not playing ahead, this will cause
+                // pre-play of the brand new record layer which results in "doubling" of any
+                // recording that is taking place, this won't happen when latencies have normal
+                // positive values since we will have set up pre-play before the layer shift
+                // but it really should be smarter with latency zero for testing
+                //Trace(this, 2, "Loop: mPrePlay jumping to record layer %d", mRecord->getNumber());
 				mPrePlay = mRecord;
 				layer = mRecord;
 				//Trace(this, 4, "Loop: Playback jumping to record layer\n");
@@ -2085,7 +2093,7 @@ void Loop::addUndo(Layer* l)
     // new: I see a memory leak if you start and end a recording
     // in a loop that is already playing
     // mPlay will be nullptr, but mRecord->prev has the last play layer
-    if (l->getPrev() != nullptr) {
+    if (l->getPrev() != nullptr && l->getPrev() != mPlay) {
         Trace(1, "Probably leaking layer setting up undo!\n");
     }
     

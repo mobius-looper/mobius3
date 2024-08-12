@@ -52,6 +52,12 @@ class Mobius
     void initialize(class MobiusConfig* config);
 
     /**
+     * Called by the Kernel after any change to the audio block size is made
+     * so latencies can be cached.
+     */
+    void updateLatencies(int blockSize);
+
+    /**
      * Called by Kernel during application shutdown to release any resources.
      * Should be able to merge this with the destructor but need to think
      * through whether Mobius can be in a suspended state without being destroyed.
@@ -248,8 +254,8 @@ class Mobius
      */
     int getSampleRate();
     // may come from MobiusContainer or overridden in MobiusConfig
-	int getEffectiveInputLatency();
-	int getEffectiveOutputLatency();
+	//int getEffectiveInputLatency();
+	//int getEffectiveOutputLatency();
 
     // Tracks
     // used internally only

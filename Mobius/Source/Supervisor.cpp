@@ -35,6 +35,8 @@
 
 #include "mobius/MobiusInterface.h"
 #include "mobius/SampleReader.h"
+// for mobiusSaveCapture
+#include "mobius/AudioFile.h"
 // temporary for MobiusContainer::midiSend
 #include "midi/MidiEvent.h"
 #include "midi/MidiRealizer.h"
@@ -1541,6 +1543,24 @@ void Supervisor::mobiusMidiReceived(juce::MidiMessage& msg)
 {
     // must be in the special capture mode
     midiManager.mobiusMidiReceived(msg);
+}
+
+/**
+ * Handler for the SaveCapture function.
+ * This is mostly just for testing, but could be fleshed out to make more
+ * useful.  It's sort of like quicksave.
+ *
+ * This is called a lot in scripts, but up until recently was only intercepted
+ * by TestDriver.  Arguably should be inside ProjectFiler so we can prompt.
+ */
+void Supervisor::mobiusSaveCapture(Audio* content, juce::String fileName)
+{
+    // old code allowed the fileName to be unspecified and
+    // it defaulted to "testcapture"
+    if (fileName.length() == 0) fileName = "testcapture.wav";
+
+    juce::File file = getRoot().getChildFile(fileName);
+    AudioFile::write(file, content);
 }
 
 //////////////////////////////////////////////////////////////////////

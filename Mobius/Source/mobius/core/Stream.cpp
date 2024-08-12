@@ -202,6 +202,21 @@ int Stream::getNormalLatency()
  */
 void Stream::setLatency(int i)
 {
+    // NEW: There is some extremely subtle logic arounding shifting the play layer
+    // that expects it to be ahead of the record layer and reach the end first
+    // when latency is zero, an shift happens leaving the play layer at the end
+    // and it immediately tries to jump into the newly created record layer resulting
+    // in an odd "doubling" effect, that should be fixed there but it's crufty old code
+    // and I don't want to mess with it, prevent it from happening by forcing a minimum
+    // latency, this really can't happen unless something is wrong above and latency
+    // is not being conveyed properly
+    if (i == 0) {
+        // this can happen normally during initialization before JuceAudioStream starts
+        // pumping blocks, so don't complain
+        //Trace(1, "Stream: Received zero latency, making it sane");
+        i = 8;
+    }
+    
 	mNormalLatency = i;
 	adjustSpeedLatency();
 	
@@ -372,7 +387,7 @@ int Stream::getAdjustedLatency(int srcLatency)
 {
     // note this is different than the "latency" member
 	if (mSpeed != 1.0)
-	  srcLatency = (int)ceil(latency * mSpeed);
+	  srcLatency = (int)ceil(srcLatency * mSpeed);
 	return srcLatency;
 }
 
@@ -389,7 +404,7 @@ int Stream::getAdjustedLatency(int octave, int semitone, int bend,
 
     float rate = Resampler::getSpeed(octave, semitone, bend, stretch);
 	if (rate != 1.0)
-	  adjustedLatency = (int)ceil(latency * rate);
+	  adjustedLatency = (int)ceil(adjustedLatency * rate);
 
 	return adjustedLatency;
 }

@@ -239,6 +239,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void mobiusPrompt(class MobiusPrompt*) override;
     void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
+    void mobiusSaveCapture(Audio* content, juce::String fileName) override;
 
     //
     // MslContext
