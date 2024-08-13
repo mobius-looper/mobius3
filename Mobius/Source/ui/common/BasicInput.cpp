@@ -28,6 +28,19 @@ const int BasicInputDefaultHeight = 20;
 //const int BasicInputDefaultChars = 10;
 const int BasicInputLabelGap = 4;
 
+BasicInput::BasicInput(juce::String argLabel)
+{
+    charWidth = 0;
+    
+    label.setText(argLabel, juce::NotificationType::dontSendNotification);
+    // do we need to set a font?
+    // assume we're dark on light
+    label.setColour(juce::Label::textColourId, juce::Colours::black);
+    label.setJustificationType(juce::Justification::left);
+
+    addAndMakeVisible(label);
+}
+
 BasicInput::BasicInput(juce::String argLabel, int numChars, bool argReadOnly)
 {
     charWidth = numChars;
@@ -64,8 +77,8 @@ BasicInput::BasicInput(juce::String argLabel, int numChars, bool argReadOnly)
 void BasicInput::setLabelCharWidth(int numChars)
 {
     labelCharWidth = numChars;
-    if (labelCharWidth > 0)
-      autoSize();
+//    if (labelCharWidth > 0)
+//      autoSize();
 }
 
 void BasicInput::setLabelColor(juce::Colour c)
@@ -172,4 +185,126 @@ void BasicInput::setText(juce::String s)
 void BasicInput::setAndNotify(juce::String s)
 {
     text.setText(s, juce::NotificationType::sendNotification);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Checkbox
+//
+//////////////////////////////////////////////////////////////////////
+
+BasicCheckbox::BasicCheckbox(juce::String label) : BasicInput(label)
+{
+
+    // comments scraped from Field.cpp
+    
+    // for my checkboxes, textColourId doesn't seem to do anything, maybe because
+    // I'm managing labels a different way
+    checkbox.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    // this is the color of the checkmark
+    checkbox.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
+    // this is the color of the rounded rectangle surrounding the checkbox
+    checkbox.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
+
+    // make it big enough to be useful, might want to adapt to font size?
+    // seems to have a little padding on the left, is this what
+    // the setConnected edge flags do?
+    // ugh, button sizing is weird
+    // 10,10 is too small and the bounds it needs seems to be more than that and it
+    // gets clipped on the right
+    // these don't do anything, sounds like they're only hints for LookAndFeel
+    /*
+    int edgeFlags =
+        juce::Button::ConnectedEdgeFlags::ConnectedOnLeft |
+        juce::Button::ConnectedEdgeFlags::ConnectedOnRight |
+        juce::Button::ConnectedEdgeFlags::ConnectedOnTop |
+        juce::Button::ConnectedEdgeFlags::ConnectedOnBottom;
+    */
+    checkbox.setConnectedEdges(0);
+
+    // buttons are weird
+    // without a label and just a 20x20 component there are a few pixels of padding
+    // on the left and the right edge of the button overlaps with the test bounding rectangle
+    // we draw around the field that's fine on the right, but why the left?
+    // don't see a way to control that
+
+    // The clipping on the right seems to be caused by a checkbox having a required width
+    // 20x20 results in one pixel being shaved off the right edge 21x20 has a normal
+    // border. Seems to be a dimension requirement relative to the height.  +1 works
+    // here but may change if you make it taller
+    checkbox.setSize(21, 20);
+
+    addAndMakeVisible(checkbox);
+
+    autoSize();
+}
+
+BasicCheckbox::~BasicCheckbox()
+{
+}
+
+/**
+ * Calculate a reasonable size based on the label and width of the checkbox.
+ * !! Needs refactoring to share Label handling
+ */
+void BasicCheckbox::autoSize()
+{
+    // let the label breathe
+    juce::Font font (BasicInputDefaultHeight);
+
+    int emWidth = font.getStringWidth("e");
+    int labelWidth = 0;
+    if (labelCharWidth)
+      labelWidth = emWidth * labelCharWidth;
+    else
+      labelWidth = font.getStringWidth(label.getText());
+    
+    int totalWidth = labelWidth + BasicInputLabelGap + checkbox.getWidth();
+
+    setSize(totalWidth, BasicInputDefaultHeight);
+}
+
+void BasicCheckbox::resized()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    
+    juce::Font font ((float)getHeight());
+    // M is too large, experiment with e
+    int emWidth = font.getStringWidth("e");
+    int labelWidth = 0;
+    if (labelCharWidth)
+      labelWidth = emWidth * labelCharWidth;
+    else
+      labelWidth = font.getStringWidth(label.getText());
+
+    label.setBounds(area.removeFromLeft(labelWidth));
+    checkbox.setBounds(area.removeFromLeft(checkbox.getWidth()));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ColorChooser
+//
+//////////////////////////////////////////////////////////////////////
+
+BasicColorChooser::BasicColorChooser(juce::String label) : BasicInput(label)
+{
+    
+    text.setColour(juce::Label::textColourId, juce::Colours::white);
+    text.setColour(juce::Label::backgroundColourId, juce::Colours::black);
+
+    text.setText("Choose...", juce::NotificationType::dontSendNotification);
+
+    addAndMakeVisible(text);
+
+    text.addMouseListener(this, true);
+    
+    charWidth = 20;
+    autoSize();
+}
+
+void BasicColorChooser::mouseDown(const juce::MouseEvent& e)
+{
+    (void)e;
+    Trace(2, "BasicColorSelector::mouseDown");
 }

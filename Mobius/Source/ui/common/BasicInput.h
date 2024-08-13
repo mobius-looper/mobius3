@@ -16,6 +16,7 @@ class BasicInput : public juce::Component
 {
   public:
 
+    BasicInput(juce::String label);
     BasicInput(juce::String label, int numChars, bool readOnly = false);
     ~BasicInput();
     
@@ -35,7 +36,7 @@ class BasicInput : public juce::Component
 
     void addListener(juce::Label::Listener* l);
 
-  private:
+  protected:
     
     juce::Label label;
     juce::Label text;
@@ -43,5 +44,35 @@ class BasicInput : public juce::Component
     int labelCharWidth = 0;
     bool readOnly = false;
     
-    void autoSize();
+    virtual void autoSize();
+};
+
+class BasicCheckbox : public BasicInput
+{
+  public:
+
+    BasicCheckbox(juce::String label);
+    ~BasicCheckbox();
+
+    void resized() override;
+
+  protected:
+    
+    juce::ToggleButton checkbox;
+
+    void autoSize() override;
+};
+
+class BasicColorChooser : public BasicInput
+{
+  public:
+
+    BasicColorChooser(juce::String label);
+    ~BasicColorChooser() {}
+
+    //void resized() override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    
+  protected:
+    
 };

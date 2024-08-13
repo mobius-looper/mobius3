@@ -51,8 +51,8 @@ class GroupEditor : public ConfigEditor
     int selectedGroup = 0;
 
     BasicForm form;
-    BasicInput color {"Color", 20};
-    BasicInput replication {"Enable Replication", 20};
+    BasicColorChooser color {"Color"};
+    BasicCheckbox replication {"Enable Replication"};
     MultiSelectDrag functions;
     
 
