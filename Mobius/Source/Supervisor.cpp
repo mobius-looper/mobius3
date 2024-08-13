@@ -991,6 +991,8 @@ MobiusConfig* Supervisor::getMobiusConfig()
 /**
  * Kludge to adjust port numbers which were being incorrectly saved 1 based rather
  * than zero based.  Unfortunately this means imported Setups will have to be imported again.
+ *
+ * Also does the function properties conversion, and normalizes group names.
  */
 void Supervisor::upgrade(MobiusConfig* config)
 {
@@ -1008,6 +1010,7 @@ void Supervisor::upgrade(MobiusConfig* config)
     }
 
     upgradeFunctionProperties(config);
+    upgradeGroups(config);
 }
 
 int Supervisor::upgradePort(int number)
@@ -1082,6 +1085,72 @@ void Supervisor::upgradeFunctionProperty(StringList* names, bool focus, bool con
                 if (muteCancel) s->functionProperties->muteCancel = true;
             }
         }
+    }
+}
+
+/**
+ * Normalize GroupDefinitions and group name references.
+ */
+void Supervisor::upgradeGroups(MobiusConfig* config)
+{
+    // add names for prototype definitions that didn't have them
+    int ordinal = 0;
+    for (auto group : config->groups) {
+        if (group->name.length() == 0) {
+            group->name = GroupDefinition::getInternalName(ordinal);
+        }
+        ordinal++;
+    }
+    
+    // the original group definitions by number
+    // make sure we have a GroupDefinition object for all the numbers
+    int oldGroupCount = config->getTrackGroups();
+    // make sure we have at least 2 for some old expectations
+    if (oldGroupCount == 0)
+      oldGroupCount = 2;
+    
+    if (oldGroupCount > config->groups.size()) {
+        ordinal = config->groups.size();
+        while (ordinal < oldGroupCount) {
+            GroupDefinition* neu = new GroupDefinition();
+            neu->name = GroupDefinition::getInternalName(ordinal);
+            config->groups.add(neu);
+            ordinal++;
+        }
+    }
+
+    // setups used to reference groups by ordinal
+    Setup* setup = config->getSetups();
+    while (setup != nullptr) {
+        SetupTrack* track = setup->getTracks();
+        while (track != nullptr) {
+            int groupNumber = track->getGroupNumber();
+            if (groupNumber > 0) {
+                if (track->getGroupName().length() > 0) {
+                    // already upgraded, stop using the number
+                    // hmm, bindings would rather use ordinals, normalize the there too?
+                    track->setGroupNumber(0);
+                }
+                else {
+                    // this was an ordinal starting from 1
+                    int groupIndex = groupNumber - 1;
+                    if (groupIndex >= 0 && groupIndex < config->groups.size()) {
+                        GroupDefinition* def = config->groups[groupIndex];
+                        track->setGroupName(def->name);
+                    }
+                    else {
+                        // here we could treat these like the old maxGroups count
+                        // and synthesize new ones to match
+                        Trace(1, "Supervisor::upgradeGroups Setup group reference out of range %d",
+                              groupNumber);
+                    }
+                    // stop using the number
+                    track->setGroupNumber(0);
+                }
+            }
+            track = track->getNext();
+        }
+        setup = setup->getNextSetup();
     }
 }
 

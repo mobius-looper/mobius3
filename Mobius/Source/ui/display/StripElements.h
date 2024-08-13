@@ -33,6 +33,28 @@ class StripTrackNumber : public StripElement
     UIAction action;
 };
 
+class StripGroupName : public StripElement
+{
+  public:
+    
+    StripGroupName(class TrackStrip* parent);
+    ~StripGroupName();
+
+    void configure() override;
+    void update(MobiusState* state) override;
+
+    int getPreferredHeight() override;
+    int getPreferredWidth() override;
+    
+    void paint(juce::Graphics& g) override;
+    
+  private:
+
+    int setupOrdinal = -1;
+    juce::String groupName;
+    int groupColor;
+};
+
 class StripFocusLock : public StripElement
 {
   public:

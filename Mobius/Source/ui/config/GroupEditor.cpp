@@ -10,7 +10,8 @@
 #include "../../model/FunctionProperties.h"
 #include "../../Supervisor.h"
 
-#include "../common/Form.h"
+#include "../common/YanForm.h"
+#include "../common/YanField.h"
 #include "../JuceUtil.h"
 
 #include "GroupEditor.h"
@@ -31,11 +32,13 @@ void GroupEditor::prepare()
     context->enableRevert();
 
     form.setLabelColor(juce::Colours::orange);
-    form.setLabelCharWidth(10);
+    //form.setLabelCharWidth(10);
     form.setTopInset(12);
     form.add(&color);
     form.add(&replication);
     addAndMakeVisible(form);
+
+    color.setListener(this);
 
     juce::StringArray allowed;
     for (auto symbol : supervisor->getSymbols()->getSymbols()) {
@@ -44,8 +47,7 @@ void GroupEditor::prepare()
           allowed.add(symbol->name);
     }
 
-    juce::StringArray values;
-    functions.setValue(values, allowed);
+    functions.setAllowed(allowed);
     functions.setLabel("Replicated Functions");
 
     addAndMakeVisible(functions);
@@ -54,7 +56,8 @@ void GroupEditor::prepare()
 void GroupEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    form.setBounds(area.removeFromTop(100));
+    form.setBounds(area.removeFromTop(form.getPreferredHeight()));
+    area.removeFromTop(20);
     functions.setBounds(area.removeFromTop(200));
 }
 
@@ -63,45 +66,22 @@ void GroupEditor::resized()
  */
 void GroupEditor::load()
 {
-    // build a list of names for the object selector
     juce::Array<juce::String> names;
-    // clone the GroupDefinition list into a local copy
     groups.clear();
     revertGroups.clear();
     MobiusConfig* config = supervisor->getMobiusConfig();
-    if (config != nullptr) {
-        int ordinal = 0;
-        for (auto src : config->groups) {
+    for (auto src : config->groups) {
+        // Supervisor should have upgraded these by now
+        if (src->name.length() == 0) {
+            Trace(1, "GroupEditor: GroupDefinition with no name, bad Supervisor");
+        }
+        else {
             groups.add(new GroupDefinition(src));
             revertGroups.add(new GroupDefinition(src));
-
-            if (src->name.length() > 0)
-              names.add(src->name);
-            else {
-                // name them with the canonical letter
-                names.add(getInternalName(ordinal));
-            }
-            ordinal++;
-        }
-
-        // upgrade hack
-        int oldGroupCount = config->getTrackGroups();
-        // make sure we have at least 1, should have been handled already
-        if (oldGroupCount == 0)
-          oldGroupCount = 2;
-
-        // synthesize GroupDefinitions for the old group count
-        if (oldGroupCount > config->groups.size()) {
-            ordinal = config->groups.size();
-            while (ordinal < oldGroupCount) {
-                groups.add(new GroupDefinition());
-                revertGroups.add(new GroupDefinition());
-                names.add(getInternalName(ordinal));
-                ordinal++;
-            }
+            names.add(src->name);
         }
     }
-        
+    
     // this will also auto-select the first one
     context->setObjectNames(names);
 
@@ -111,17 +91,6 @@ void GroupEditor::load()
     loadGroup(selectedGroup);
 }
 
-juce::String GroupEditor::getInternalName(int ordinal)
-{
-    // passing a char to the String constructor didn't work,
-    // it rendered the numeric value of the character
-    // operator += works for some reason
-    // juce::String((char)('A' + i)));
-    juce::String letter;
-    letter += (char)('A' + ordinal);
-    return letter;
-}
-
 /**
  * Refresh the object selector on initial load and after any
  * objects are added or removed.
@@ -129,15 +98,8 @@ juce::String GroupEditor::getInternalName(int ordinal)
 void GroupEditor::refreshObjectSelector()
 {
     juce::Array<juce::String> names;
-    int ordinal = 0;
-    for (auto group : groups) {
-        if (group->name.length() > 0)
-          names.add(group->name);
-        else {
-            names.add(getInternalName(ordinal));
-        }
-        ordinal++;
-    }
+    for (auto group : groups)
+      names.add(group->name);
     context->setObjectNames(names);
     context->setSelectedObject(selectedGroup);
 }
@@ -209,8 +171,9 @@ void GroupEditor::objectSelectorNew(juce::String newName)
     int newOrdinal = groups.size();
     GroupDefinition* neu = new GroupDefinition();
 
-    // group names are optional and we'll add the letter prefix to the object selector
-    // neu->setName("[New]");
+    // names have historically been generated with a letter
+    // and the ObjectSelector won't pass in a new name anyway
+    neu->name = GroupDefinition::getInternalName(newOrdinal);
 
     groups.add(neu);
     // make another copy for revert
@@ -220,7 +183,7 @@ void GroupEditor::objectSelectorNew(juce::String newName)
     selectedGroup = newOrdinal;
     loadGroup(selectedGroup);
 
-    context->addObjectName(getInternalName(newOrdinal));
+    context->addObjectName(neu->name);
     context->setSelectedObject(newOrdinal);
 }
 
@@ -268,8 +231,15 @@ void GroupEditor::loadGroup(int index)
 {
     GroupDefinition* g = groups[index];
     if (g != nullptr) {
+        // name has already been handled by the object selector
+        // bootsrap the color if not set
+        int startcolor = g->color;
+        if (startcolor == 0)
+          startcolor = juce::Colours::white.getARGB();
+        color.setValue(startcolor);
 
-        // todo: load the fields
+        replication.setValue(g->replicationEnabled);
+        functions.setValue(g->replicatedFunctions);
     }
 }
 
@@ -286,7 +256,9 @@ void GroupEditor::saveGroup(int index)
     GroupDefinition* g = groups[index];
     if (g != nullptr) {
 
-        // todo: gather the form fields
+        g->color = color.getValue();
+        g->replicationEnabled = replication.getValue();
+        g->replicatedFunctions = functions.getValue();
     }
 }
 
@@ -306,12 +278,13 @@ GroupDefinition* GroupEditor::getSelectedGroup()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Form Rendering
+// Colors
 //
 //////////////////////////////////////////////////////////////////////
 
-void GroupEditor::initForm()
+void GroupEditor::colorSelected(int argb)
 {
+    (void)argb;
 }
 
 /****************************************************************************/

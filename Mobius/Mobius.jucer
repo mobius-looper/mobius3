@@ -368,6 +368,8 @@
           <FILE id="jWbMsE" name="BasicTabs.h" compile="0" resource="0" file="Source/ui/common/BasicTabs.h"/>
           <FILE id="UkLauY" name="ButtonBar.cpp" compile="1" resource="0" file="Source/ui/common/ButtonBar.cpp"/>
           <FILE id="lDGPJq" name="ButtonBar.h" compile="0" resource="0" file="Source/ui/common/ButtonBar.h"/>
+          <FILE id="KQFfxo" name="ColorPopup.cpp" compile="1" resource="0" file="Source/ui/common/ColorPopup.cpp"/>
+          <FILE id="c7U7R1" name="ColorPopup.h" compile="0" resource="0" file="Source/ui/common/ColorPopup.h"/>
           <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
                 file="Source/ui/common/ColorSelector.cpp"/>
           <FILE id="ZbSGBN" name="ColorSelector.h" compile="0" resource="0" file="Source/ui/common/ColorSelector.h"/>
@@ -401,6 +403,10 @@
                 file="Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="ywZEOE" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="qZv8U0" name="YanField.cpp" compile="1" resource="0" file="Source/ui/common/YanField.cpp"/>
+          <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
+          <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
+          <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

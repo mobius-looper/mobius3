@@ -173,6 +173,10 @@ class MultiSelectDrag : public juce::Component, public juce::DragAndDropContaine
     void setValue(juce::StringArray strings, juce::StringArray allowed);
     juce::StringArray getValue();
 
+    // new interface for reusing the same allowed values
+    void setAllowed(juce::StringArray allowed);
+    void setValue(juce::StringArray current);
+
     int getPreferredHeight();
     void resized() override;
     void paint(juce::Graphics& g) override;
@@ -192,6 +196,7 @@ class MultiSelectDrag : public juce::Component, public juce::DragAndDropContaine
     juce::String label;
     StringArrayListBox valueBox;
     StringArrayListBox availableBox;
+    juce::StringArray allAllowed;
 
     class HelpArea* helpArea = nullptr;
     juce::String helpPrefix;

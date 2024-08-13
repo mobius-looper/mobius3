@@ -417,6 +417,9 @@ StripElement* TrackStrip::createStripElement(StripElementDefinition* def)
     else if (def == StripDefinitionInputMeter) {
         el = new StripInputMeter(this);
     }
+    else if (def == StripDefinitionGroupName) {
+        el = new StripGroupName(this);
+    }
     else {
         Trace(1, "TrackStrip: Unsupported StripElementDefinition %s\n", def->getName());
     }

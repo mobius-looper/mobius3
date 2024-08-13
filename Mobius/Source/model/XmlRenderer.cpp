@@ -777,6 +777,7 @@ void XmlRenderer::parse(XmlElement* e, Preset* p)
 
 #define EL_SETUP_TRACK "SetupTrack"
 #define EL_VARIABLES "Variables"
+#define ATT_GROUP_NAME "groupName"
 
 void XmlRenderer::render(XmlBuffer* b, Setup* setup)
 {
@@ -877,7 +878,13 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     render(b, UIParameterTrackPreset, t->getTrackPresetName());
     render(b, UIParameterFocus, t->isFocusLock());
     render(b, UIParameterMono, t->isMono());
-    render(b, UIParameterGroup, t->getGroup());
+
+    // groups are now referenced by name
+    render(b, UIParameterGroup, t->getGroupNumber());
+    if (t->getGroupName().length() > 0) {
+        juce::String gname = t->getGroupName();
+        b->addAttribute(ATT_GROUP_NAME, (const char*)(gname.toUTF8()));
+    }
     render(b, UIParameterInput, t->getInputLevel());
     render(b, UIParameterOutput, t->getOutputLevel());
     render(b, UIParameterFeedback, t->getFeedback());
@@ -920,7 +927,13 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     t->setTrackPresetName(parseString(e, UIParameterTrackPreset));
     t->setFocusLock(parse(e, UIParameterFocus));
     t->setMono(parse(e, UIParameterMono));
-    t->setGroup(parse(e, UIParameterGroup));
+
+    // should stop having group numbers eventually
+    t->setGroupNumber(parse(e, UIParameterGroup));
+    const char* groupName = e->getAttribute(ATT_GROUP_NAME);
+    if (groupName != nullptr)
+      t->setGroupName(juce::String(groupName));
+    
     t->setInputLevel(parse(e, UIParameterInput));
     t->setOutputLevel(parse(e, UIParameterOutput));
     t->setFeedback(parse(e, UIParameterFeedback));
@@ -1248,8 +1261,8 @@ void XmlRenderer::render(XmlBuffer* b, GroupDefinition* g)
     b->addAttribute(ATT_NAME, name);
     b->addAttribute(ATT_COLOR, g->color);
     if (g->replicatedFunctions.size() > 0) {
-        const char* csv = g->replicatedFunctions.joinIntoString(",").toUTF8();
-        b->addAttribute(ATT_REPLICATED_FUNCTIONS, csv);
+        juce::String csv = g->replicatedFunctions.joinIntoString(",");
+        b->addAttribute(ATT_REPLICATED_FUNCTIONS, (const char*)(csv.toUTF8()));
     }
     b->add("/>\n");
 }

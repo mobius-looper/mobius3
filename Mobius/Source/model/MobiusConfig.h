@@ -374,6 +374,7 @@ class MobiusConfig {
     bool isEdpisms();
 
     juce::OwnedArray<class GroupDefinition> groups;
+    int getGroupOrdinal(juce::String name);
     
     //
     // Transient fields for testing

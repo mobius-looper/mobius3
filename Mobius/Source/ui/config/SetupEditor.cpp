@@ -426,7 +426,11 @@ void SetupEditor::initForm()
     addField("Tracks", UIParameterSyncSource);    // overrides default SyncSourceParameter
     addField("Tracks", UIParameterTrackSyncUnit);
     addField("Tracks", UIParameterTrackPreset);
-    addField("Tracks", UIParameterGroup);
+
+    // severe hackery to make group names look like Structures
+    //addField("Tracks", UIParameterGroup);
+    addField("Tracks", UIParameterGroupName);
+    
     addField("Tracks", UIParameterFocus);
     addField("Tracks", UIParameterInput);
     addField("Tracks", UIParameterOutput);

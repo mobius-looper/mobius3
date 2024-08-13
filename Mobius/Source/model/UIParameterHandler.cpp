@@ -374,7 +374,16 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdGroup:
-            value->setInt(((SetupTrack*)obj)->getGroup());
+            value->setInt(((SetupTrack*)obj)->getGroupNumber());
+            break;
+            
+        case UIParameterIdGroupName: {
+            juce::String gname = ((SetupTrack*)obj)->getGroupName();
+            if (gname.length() > 0)
+              value->setString((const char*)(gname.toUTF8()));
+            else
+              value->setNull();
+        }
             break;
             
         case UIParameterIdMono:
@@ -817,7 +826,11 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdGroup:
-            ((SetupTrack*)obj)->setGroup(value->getInt());
+            ((SetupTrack*)obj)->setGroupNumber(value->getInt());
+            break;
+            
+        case UIParameterIdGroupName:
+            ((SetupTrack*)obj)->setGroupName(value->getString());
             break;
             
         case UIParameterIdMono:

@@ -482,7 +482,9 @@ SetupTrack::SetupTrack(SetupTrack* src)
     setTrackPresetName(src->getTrackPresetName());
 
 	mFocusLock = src->isFocusLock();
-	mGroup = src->getGroup();
+    // shouldn't need to be dealing with group numbers any more
+	mGroup = src->getGroupNumber();
+    mGroupName = src->getGroupName();
 	mInputLevel = src->getInputLevel();
 	mOutputLevel = src->getOutputLevel();
 	mFeedback = src->getFeedback();
@@ -513,6 +515,7 @@ void SetupTrack::reset()
     setName(nullptr);
 	mFocusLock = false;
     mGroup = 0;
+    mGroupName = "";
 	mInputLevel = 127;
 	mOutputLevel = 127;
 	mFeedback = 127;
@@ -544,6 +547,7 @@ void SetupTrack::capture(MobiusState* state)
 
 	mFocusLock = t->focusLock;
 	mGroup = t->group;
+    mGroupName = ???
 	mInputLevel = t->inputLevel;
 	mOutputLevel = t->outputLevel;
 	mFeedback = t->feedback;
@@ -618,14 +622,24 @@ bool SetupTrack::isFocusLock()
 	return mFocusLock;
 }
 
-int SetupTrack::getGroup()
+int SetupTrack::getGroupNumber()
 {
     return mGroup;
 }
 
-void SetupTrack::setGroup(int i)
+void SetupTrack::setGroupNumber(int i)
 {
     mGroup = i;
+}
+
+juce::String SetupTrack::getGroupName()
+{
+    return mGroupName;
+}
+
+void SetupTrack::setGroupName(juce::String s)
+{
+    mGroupName = s;
 }
 
 void SetupTrack::setInputLevel(int i)

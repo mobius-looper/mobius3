@@ -1371,13 +1371,31 @@ void Track::propagateSetup(MobiusConfig* config, Setup* setup,
 
                 // I guess do these too...
                 setName(mSetupCache->getName());
-                setGroup(mSetupCache->getGroup());
+
+                // the SetupTrack used to reference groups by numbers starting
+                // from one, now it uses the name, but the number in the Track
+                // must still be one based
+                // setGroup(mSetupCache->getGroup());
+                setGroup(getGroupNumber(config, mSetupCache));
             }   
         }
     }
 
     // remember where we were
     mSetupOrdinal = setup->ordinal;
+}
+
+/**
+ * Convert the new group name references into an internal number starting
+ * from 1 like the old code did.
+ */
+int Track::getGroupNumber(MobiusConfig* config, SetupTrack* st)
+{
+    int groupNumber = 0;
+    int groupOrdinal = config->getGroupOrdinal(st->getGroupName());
+    if (groupOrdinal >= 0)
+      groupNumber = groupOrdinal + 1;
+    return groupNumber;
 }
 
 /**
@@ -1666,15 +1684,17 @@ void Track::loadProject(ProjectTrack* pt)
     // have a preset for this track then we should be falling back to
     // what is in the setup, then falling back to the global default
 
+    MobiusConfig* config = mMobius->getConfiguration();
 	const char* preset = pt->getPreset();
 	if (preset != NULL) {
-		MobiusConfig* config = mMobius->getConfiguration();
 		Preset* p = config->getPreset(preset);
 		if (p != NULL)
 		  refreshPreset(p);
 	}
 
+    // !! Projects still store group numbers rather than names, need to fix this
     setGroup(pt->getGroup());
+    
 	setFeedback(pt->getFeedback());
 	setAltFeedback(pt->getAltFeedback());
 	setInputLevel(pt->getInputLevel());
@@ -1886,8 +1906,10 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
 	if (global || !setup->isResetRetain(GroupParameter->getName())) {
 		if (st == NULL) 
 		  mGroup = 0;
-		else
-		  mGroup = st->getGroup();
+		else {
+            MobiusConfig* config = mMobius->getConfiguration();
+            mGroup = getGroupNumber(config, st);
+        }
 	}
 
     // setting the preset can be disabled in some code paths if it was already
@@ -1907,7 +1929,8 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
         resetPorts(st);
 
         // do we need to defer this?
-        setGroup(st->getGroup());
+        MobiusConfig* config = mMobius->getConfiguration();
+        setGroup(getGroupNumber(config, st));
 
         // Nice to track names right away since they can only
         // be changed by editing the preset.  But in that case we should

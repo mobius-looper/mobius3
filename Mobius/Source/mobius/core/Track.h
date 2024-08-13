@@ -292,6 +292,7 @@ class Track : public TraceContext
     
     void propagateSetup(MobiusConfig* config, Setup* setup, bool setupsEdited, bool presetsEdited);
     class Preset* getStartingPreset(MobiusConfig* config, Setup* setup, bool globalReset);
+    int getGroupNumber(class MobiusConfig* config, class SetupTrack* st);
 	void setupLoops();
 	void resetParameters(class Setup* setup, bool global, bool doPreset);
 	void resetPorts(class SetupTrack* st);

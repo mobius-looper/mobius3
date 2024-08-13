@@ -418,6 +418,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     int upgradePort(int number);
     void upgradeFunctionProperties(class MobiusConfig* config);
     void upgradeFunctionProperty(class StringList* names, bool focus, bool confirm, bool muteCancel);
+    void upgradeGroups(MobiusConfig* config);
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);

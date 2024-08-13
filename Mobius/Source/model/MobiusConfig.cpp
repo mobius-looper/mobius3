@@ -184,6 +184,20 @@ bool MobiusConfig::isDefault()
     return mDefault;
 }
 
+// GroupDefinitions aren't structdures which is kind of a pain
+int MobiusConfig::getGroupOrdinal(juce::String name)
+{
+    int ordinal = -1;
+    for (int i = 0 ; i < groups.size() ; i++) {
+        GroupDefinition* def = groups[i];
+        if (def->name == name) {
+            ordinal = i;
+            break;
+        }
+    }
+    return ordinal;
+}
+
 void MobiusConfig::setHistory(MobiusConfig* config)
 {
     mHistory = config;

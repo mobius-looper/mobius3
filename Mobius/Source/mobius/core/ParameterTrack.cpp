@@ -290,6 +290,10 @@ Parameter* FocusParameter = &FocusParameterTypeObj;
 //
 // Group
 //
+// This should no longer be used in core, though I suppose some old
+// test scripts may use it.  "group" the number is deprecated and
+// groups are referenced by name now.
+//
 //////////////////////////////////////////////////////////////////////
 
 class GroupParameterType : public TrackParameter
@@ -317,12 +321,13 @@ GroupParameterType::GroupParameterType() :
 
 void GroupParameterType::getValue(SetupTrack* t, ExValue* value)
 {
-    value->setInt(t->getGroup());
+    value->setInt(t->getGroupNumber());
 }
 
 void GroupParameterType::setValue(SetupTrack* t, ExValue* value)
 {
-    t->setGroup(value->getInt());
+    Trace(1, "GroupParameterType::setValue Who is calling this?");
+    t->setGroupNumber(value->getInt());
 }
 
 int GroupParameterType::getOrdinalValue(Track* t)
@@ -337,10 +342,17 @@ void GroupParameterType::getValue(Track* t, ExValue* value)
 
 void GroupParameterType::setValue(Track* t, ExValue* value)
 {
+    Trace(1, "GroupParameterType::setValue Who is calling this?");
+    
 	Mobius* m = t->getMobius();
     MobiusConfig* config = m->getConfiguration();
-	int maxGroup = config->getTrackGroups();
 
+	// int maxGroup = config->getTrackGroups();
+    int maxGroup = config->groups.size();
+
+    // this only sets number, if we have to support this in core
+    // should convert to the name
+    
 	int g = value->getInt();
 	if (g >= 0 && g <= maxGroup)
 	  t->setGroup(g);

@@ -1,5 +1,10 @@
 /**
  * Stupid utilities to deal with scope representations.
+ *
+ * This is all going out the window now that groups have names.
+ * Scopes need to be maintained as just symbolic names for most of
+ * their lifetime, and converted into track/group numbers late during
+ * processing.
  */
 
 #include <JuceHeader.h>

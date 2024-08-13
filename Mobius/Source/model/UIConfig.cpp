@@ -725,6 +725,7 @@ void UIConfig::hackDefinitions()
     definitions.add(new DisplayElementDefinition("pan", true));
     definitions.add(new DisplayElementDefinition("outputMeter", true));
     definitions.add(new DisplayElementDefinition("inputMeter", true));
+    definitions.add(new DisplayElementDefinition("groupName", true));
 
     // todo: derive the availableParameters list from Symbols marked
     // in some way or maybe just keep a static list

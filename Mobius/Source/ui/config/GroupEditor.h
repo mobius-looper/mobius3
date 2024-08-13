@@ -7,13 +7,13 @@
 
 #include <JuceHeader.h>
 
-#include "../common/BasicForm.h"
-#include "../common/BasicInput.h"
+#include "../common/YanField.h"
+#include "../common/YanForm.h"
 #include "MultiSelectDrag.h"
 
 #include "ConfigEditor.h"
 
-class GroupEditor : public ConfigEditor
+class GroupEditor : public ConfigEditor, public YanColorChooser::Listener
 {
   public:
     
@@ -35,6 +35,9 @@ class GroupEditor : public ConfigEditor
 
     void resized() override;
 
+    // YanColorChooser
+    void colorSelected(int argb) override;
+
   private:
 
     juce::String getInternalName(int ordinal);
@@ -50,10 +53,9 @@ class GroupEditor : public ConfigEditor
     juce::OwnedArray<class GroupDefinition> revertGroups;
     int selectedGroup = 0;
 
-    BasicForm form;
-    BasicColorChooser color {"Color"};
-    BasicCheckbox replication {"Enable Replication"};
+    YanForm form;
+    YanCheckbox replication {"Enable Replication"};
+    YanColorChooser color {"Color"};
     MultiSelectDrag functions;
     
-
 };

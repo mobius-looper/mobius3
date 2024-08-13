@@ -602,6 +602,13 @@ void Actionator::invoke(UIAction* action, Function* f, Track* t)
  *
  * After the Great UIAction Simplification we lost the trigger info,
  * but I don't think we need it any more.
+ *
+ * update: yes you do, for !controller scripts
+ *
+ * new: this is where scope parsing happens.  Up till now, scope was just
+ * a string, and now it needs to be resolved into track and group numbers.
+ * It would be better if Action didn't have scopes at all, just replicate them
+ * and give them a target track
  */
 Action* Actionator::convertAction(UIAction* src)
 {

@@ -181,6 +181,114 @@ void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
 
 //////////////////////////////////////////////////////////////////////
 //
+// GroupName
+//
+//////////////////////////////////////////////////////////////////////
+
+StripGroupName::StripGroupName(class TrackStrip* parent) :
+    StripElement(parent, StripDefinitionGroupName)
+{
+}
+
+StripGroupName::~StripGroupName()
+{
+}
+
+int StripGroupName::getPreferredWidth()
+{
+    // this is what we started with when just displaying a number
+    // make it wider for names
+    //return 60;
+    return 180;
+}
+
+int StripGroupName::getPreferredHeight()
+{
+    return 30;
+}
+
+/**
+ * In theory they do an action to change the track name
+ * and make it different than the Setup.  There isn't a good
+ * place to pull that right now, not even sure if Query works.
+ * But startingSetup will be enough for most.
+ */
+void StripGroupName::configure()
+{
+    // could refresh the name here, but just reset the setup ordinal
+    // so we pick it up on the next update
+    setupOrdinal = -1;
+}
+
+void StripGroupName::update(MobiusState* state)
+{
+    int tracknum = strip->getTrackIndex();
+
+    bool needsRepaint = false;
+
+    // whenever the setup changes, refresh the name
+    if (setupOrdinal != state->setupOrdinal) {
+        groupName = "";
+        groupColor = 0;
+        MobiusConfig* config = strip->getSupervisor()->getMobiusConfig();
+        Setup* setup = config->getSetup(state->setupOrdinal);
+        if (setup != nullptr) {
+            SetupTrack* st = setup->getTrack(tracknum);
+            if (st != nullptr) {
+
+                GroupDefinition* group = nullptr;
+                // these aren't Structures so we don't have any nice search tools
+                for (auto g : config->groups) {
+                    if (g->name == st->getGroupName()) {
+                        group = g;
+                        break;
+                    }
+                }
+                
+                if (group != nullptr) {
+                    groupName = group->name;
+                    groupColor = group->color;
+                }
+            }
+        }
+        setupOrdinal = state->setupOrdinal;
+        needsRepaint = true;
+    }
+    
+    if (needsRepaint)
+      repaint();
+}
+
+/**
+ * See StripTrackNumber for comments about drawFittedText
+ */
+void StripGroupName::paint(juce::Graphics& g)
+{
+    juce::Colour textColor = juce::Colour(MobiusGreen);
+    if (groupColor != 0)
+      textColor = juce::Colour(groupColor);
+    g.setColour(textColor);
+   
+    if (groupName.length() > 0) {
+        juce::Font font((float)getHeight());
+        // hacking around the unpredictable truncation, if the name is beyond
+        // a certain length, reduce the font height
+        if (groupName.length() >= 10)
+          font = juce::Font((float)(getHeight() * 0.75f));
+          
+        // not sure about font sizes, we're going to use fit so I think
+        // that will size down as necessary
+
+        g.setFont(font);
+        g.drawFittedText(groupName, 0, 0, getWidth(), getHeight(),
+                         juce::Justification::centred,
+                         1, // max lines
+                         1.0f);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // FocusLock
 //
 //////////////////////////////////////////////////////////////////////

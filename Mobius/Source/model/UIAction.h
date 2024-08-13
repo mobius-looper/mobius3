@@ -173,11 +173,6 @@ class UIAction : public PooledObject {
     // are sent to the currently active track or to all tracks with
     // "focus".  Setting a scope can override this.
     //
-    // The need for this is unclear.  Scopes can usually be handled during
-    // Binding processing, but for not for ad-hoc actions.  Perhaps this
-    // can be moved to the runtime environment.  Needs thought, keep it
-    // around for now.
-    //
     //////////////////////////////////////////////////////////////////////
 
     /**

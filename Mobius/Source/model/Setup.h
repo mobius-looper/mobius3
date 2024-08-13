@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+
 #include "ParameterConstants.h"
 #include "Structure.h"
 
@@ -260,8 +262,12 @@ class SetupTrack {
 	void setTrackPresetName(const char* preset);
 	const char* getTrackPresetName();
 
-    void setGroup(int i);
-    int getGroup();
+    // old way with ordinal
+    void setGroupNumber(int i);
+    int getGroupNumber();
+    // new way with name
+    void setGroupName(juce::String name);
+    juce::String getGroupName();
 
 	void setFocusLock(bool b);
 	bool isFocusLock();
@@ -315,6 +321,7 @@ class SetupTrack {
 	bool mFocusLock;
 	bool mMono;
     int mGroup;
+    juce::String mGroupName;
 	int mInputLevel;
 	int mOutputLevel;
 	int mFeedback;

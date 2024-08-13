@@ -126,6 +126,26 @@ void MultiSelectDrag::setValue(juce::StringArray current, juce::StringArray allo
 }
 
 /**
+ * Set the complete set of allowed values.
+ * Newer interface for multiselects that are reused with different values.
+ */
+void MultiSelectDrag::setAllowed(juce::StringArray allowed)
+{
+    allAllowed = allowed;
+}
+
+void MultiSelectDrag::setValue(juce::StringArray current)
+{
+    valueBox.setValue(current);
+
+    juce::StringArray allowed = allAllowed;
+    for (auto s : current)
+      allowed.removeString(s);
+    
+    availableBox.setValue(allowed);
+}
+
+/**
  * Put them side by side and leave a gap in between
  */
 void MultiSelectDrag::resized()

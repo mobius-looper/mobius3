@@ -152,8 +152,14 @@ int UIParameter::getDynamicHigh(MobiusConfig* container)
         dynamicHigh = container->getTrackGroups() - 1;
     }
     else if (type == TypeStructure) {
-        Structure* list = getStructureList(container);
-        dynamicHigh = Structure::count(list) - 1;
+        // kludge because GroupDefinitions are not Structures
+        if (this == UIParameterGroupName) {
+            dynamicHigh = container->groups.size();
+        }
+        else {
+            Structure* list = getStructureList(container);
+            dynamicHigh = Structure::count(list) - 1;
+        }
     }
     else if (type == TypeEnum) {
         // generated classes did not set high so have to get it fom
@@ -212,40 +218,73 @@ Structure* UIParameter::getStructureList(MobiusConfig* container)
 StringList* UIParameter::getStructureNames(MobiusConfig* container)
 {
     StringList* names = nullptr;
-    
-    Structure* list = getStructureList(container);
-    if (list != nullptr) {
-        names = new StringList();
-        while (list != nullptr) {
-            names->add(list->getName());
-            list = list->getNext();
+
+    // regretting these not being Structures
+    if (this == UIParameterGroupName) {
+        if (container->groups.size() > 0) {
+            names = new StringList();
+            for (auto group : container->groups) {
+                juce::String gname = group->name;
+                names->add((const char*)(gname.toUTF8()));
+            }
         }
     }
-
+    else {
+        Structure* list = getStructureList(container);
+        if (list != nullptr) {
+            names = new StringList();
+            while (list != nullptr) {
+                names->add(list->getName());
+                list = list->getNext();
+            }
+        }
+    }
+    
     return names;
 }
 
 int UIParameter::getStructureOrdinal(MobiusConfig* container, const char* structName)
 {
     int structOrdinal = -1;
-    Structure* list = getStructureList(container);
-    if (list != nullptr) {
-        structOrdinal = Structure::getOrdinal(list, structName);
-    }
 
+    if (this == UIParameterGroupName) {
+        for (int i = 0 ; i < container->groups.size() ; i++) {
+            juce::String gname = container->groups[i]->name;
+            if (gname == juce::String(structName)) {
+                structOrdinal = i;
+                break;
+            }
+        }
+    }
+    else {
+        Structure* list = getStructureList(container);
+        if (list != nullptr) {
+            structOrdinal = Structure::getOrdinal(list, structName);
+        }
+    }
+    
     return structOrdinal;
 }
 
 const char* UIParameter::getStructureName(MobiusConfig* container, int structOrdinal)
 {
     const char* structName = nullptr;
-    Structure* list = getStructureList(container);
-    if (list != nullptr) {
-        Structure* s = Structure::get(list, structOrdinal);
-        if (s != nullptr)
-          structName = s->getName();
-    }
 
+    if (this == UIParameterGroupName) {
+        if (structOrdinal >= 0 && structOrdinal < container->groups.size()) {
+            GroupDefinition* def = container->groups[structOrdinal];
+            // fuck, how constant are these names?
+            structName = (const char*)(def->name.toUTF8());
+        }
+    }
+    else {
+        Structure* list = getStructureList(container);
+        if (list != nullptr) {
+            Structure* s = Structure::get(list, structOrdinal);
+            if (s != nullptr)
+              structName = s->getName();
+        }
+    }
     return structName;
 }
 

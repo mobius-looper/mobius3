@@ -2623,6 +2623,8 @@ UIParameterFocusClass UIParameterFocusObj;
 UIParameter* UIParameterFocus = &UIParameterFocusObj;
 
 ////////////// Group
+// !! the generated code has been edited to use getGroupNumber instead
+// of the old getGroup to help weed out references
 
 class UIParameterGroupClass : public UIParameter
 {
@@ -2639,17 +2641,62 @@ UIParameterGroupClass::UIParameterGroupClass()
     type = TypeInt;
     dynamic = true;
     resetRetain = true;
+    // these are for temporary backward compatibility only
+    // so keep them out of bindings
+    noBinding = true;
 }
 void UIParameterGroupClass::getValue(void* obj, ExValue* value)
 {
-    value->setInt(((SetupTrack*)obj)->getGroup());
+    value->setInt(((SetupTrack*)obj)->getGroupNumber());
 }
 void UIParameterGroupClass::setValue(void* obj, ExValue* value)
 {
-    ((SetupTrack*)obj)->setGroup(value->getInt());
+    ((SetupTrack*)obj)->setGroupNumber(value->getInt());
 }
 UIParameterGroupClass UIParameterGroupObj;
 UIParameter* UIParameterGroup = &UIParameterGroupObj;
+
+//
+// groupName was not generated!!
+// this has no equivalent in core, the "group" number should no longer be used
+// it's similar to preset names but those are TypeStructure and these
+// aren't Structures
+//
+
+class UIParameterGroupNameClass : public UIParameter
+{
+  public:
+    UIParameterGroupNameClass();
+    void getValue(void* obj, class ExValue* value) override;
+    void setValue(void* obj, class ExValue* value) override;
+};
+UIParameterGroupNameClass::UIParameterGroupNameClass()
+{
+    name = "groupName";
+    displayName = "Group Name";
+    scope = ScopeTrack;
+    type = TypeStructure;
+    dynamic = true;
+}
+void UIParameterGroupNameClass::getValue(void* obj, ExValue* value)
+{
+    juce::String jname = ((SetupTrack*)obj)->getGroupName();
+    if (jname.length() > 0)
+      value->setString((const char*)(jname.toUTF8()));
+    else
+      value->setNull();
+}
+void UIParameterGroupNameClass::setValue(void* obj, ExValue* value)
+{
+    SetupTrack* dest = (SetupTrack*)obj;
+    const char* cname = value->getString();
+    if (cname != nullptr)
+      dest->setGroupName(juce::String(cname));
+    else
+      dest->setGroupName("");
+}
+UIParameterGroupNameClass UIParameterGroupNameObj;
+UIParameter* UIParameterGroupName = &UIParameterGroupNameObj;
 
 ////////////// Mono
 

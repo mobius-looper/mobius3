@@ -22,6 +22,7 @@
       <Element name="loopStack"/>
       <Element name="output"/>
       <Element name="outputMeter"/>
+      <Element name="groupName"/>
       <Element name="loopMeter" disabled="1"/>
     </Strip>
     <Strip name="Floating">

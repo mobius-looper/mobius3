@@ -108,6 +108,7 @@ typedef enum {
     UIParameterIdActivePreset,
     UIParameterIdFocus,
     UIParameterIdGroup,
+    UIParameterIdGroupName,
     UIParameterIdMono,
     UIParameterIdFeedback,
     UIParameterIdAltFeedback,

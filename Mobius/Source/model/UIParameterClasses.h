@@ -102,6 +102,7 @@ extern class UIParameter* UIParameterTrackPreset;
 extern class UIParameter* UIParameterActivePreset;
 extern class UIParameter* UIParameterFocus;
 extern class UIParameter* UIParameterGroup;
+extern class UIParameter* UIParameterGroupName;
 extern class UIParameter* UIParameterMono;
 extern class UIParameter* UIParameterFeedback;
 extern class UIParameter* UIParameterAltFeedback;
