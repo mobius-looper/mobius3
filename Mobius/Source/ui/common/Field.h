@@ -169,6 +169,7 @@ class Field : public juce::Component,
     
     void setAllowedValueLabels(const char** a);
     void setAllowedValueLabels(juce::StringArray& src);
+    void updateAllowedValues(juce::StringArray& allowed);
 
     void setValue(juce::var value);
     juce::var getValue();

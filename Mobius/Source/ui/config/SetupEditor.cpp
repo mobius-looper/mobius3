@@ -58,6 +58,9 @@ void SetupEditor::resized()
 
 void SetupEditor::load()
 {
+    // reflect changes to referenced object names
+    refreshAllowedValues();
+    
     // build a list of names for the object selector
     juce::Array<juce::String> names;
     // clone the Setup list into a local copy
@@ -90,6 +93,17 @@ void SetupEditor::load()
     // if we've had the panel open before, it will keep the radio
     // from the last time, have to put it back to match selectedTrack
     adjustTrackSelector();
+}
+
+/**
+ * Each time the form is loaded for a new session, we need to refresh
+ * the previously initialized Fields that have object names in them.
+ * For Setup this is the group name and track preset.
+ */
+void SetupEditor::refreshAllowedValues()
+{
+    if (groupField != nullptr)
+      groupField->refreshAllowedValues();
 }
 
 /**
@@ -429,7 +443,9 @@ void SetupEditor::initForm()
 
     // severe hackery to make group names look like Structures
     //addField("Tracks", UIParameterGroup);
-    addField("Tracks", UIParameterGroupName);
+    // this also needs to be refreshed on every load to track group renames
+    groupField = new ParameterField(supervisor, UIParameterGroupName);
+    form.add(groupField, "Tracks", 0);
     
     addField("Tracks", UIParameterFocus);
     addField("Tracks", UIParameterInput);

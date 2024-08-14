@@ -89,6 +89,7 @@ void BindingEditor::load()
     maxTracks = config->getTracks();
     maxGroups = config->groups.size();
 
+    refreshScopeNames();
     targets.load();
 
     // Though only MidiPanel supports overlays, handle all three
@@ -419,25 +420,10 @@ void BindingEditor::objectSelectorRename(juce::String newName)
 void BindingEditor::initForm()
 {
     // scope always goes first
-    juce::StringArray scopeNames;
-    scopeNames.add("Global");
-
-    // context is not always set at this point so we have to go direct
-    // to Supervisor to get to MobiusConfig, this sucks work out a more
-    // orderly initialization sequence
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    maxTracks = config->getTracks();
-    for (int i = 0 ; i < maxTracks ; i++)
-      scopeNames.add("Track " + juce::String(i+1));
-
-    for (auto group : config->groups) {
-        scopeNames.add("Group " + group->name);
-    }
-    
     scope = new Field("Scope", Field::Type::String);
-    scope->setAllowedValues(scopeNames);
     scope->addListener(this);
     form.add(scope);
+    refreshScopeNames();
 
     // subclass gets to add it's fields
     // it should always add "this" as the listener so we can
@@ -459,6 +445,30 @@ void BindingEditor::initForm()
     }
         
     form.render();
+}
+
+/**
+ * This needs to be done every time in order to track group renames.
+ */
+void BindingEditor::refreshScopeNames()
+{
+    // scope always goes first
+    juce::StringArray scopeNames;
+    scopeNames.add("Global");
+
+    // context is not always set at this point so we have to go direct
+    // to Supervisor to get to MobiusConfig, this sucks work out a more
+    // orderly initialization sequence
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    maxTracks = config->getTracks();
+    for (int i = 0 ; i < maxTracks ; i++)
+      scopeNames.add("Track " + juce::String(i+1));
+
+    for (auto group : config->groups) {
+        scopeNames.add("Group " + group->name);
+    }
+    
+    scope->updateAllowedValues(scopeNames);
 }
 
 /**

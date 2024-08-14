@@ -41,11 +41,32 @@ ParameterField::ParameterField(Supervisor* s, UIParameter* p) :
         }
     }
     else if (p->type == TypeStructure) {
+        refreshAllowedValuesInternal(false);
+    }
+
+    // hack, these look better if they're all the same size
+    // until we can be smarter about deriving this just pick
+    // a number that looks right for the current preset/setup panels
+    if (p->type == TypeEnum) {
+        // ugh, 20 is WAY too wide, sizing on these sucks "emwidth"
+        // isn't working well, might be font height problems
+        setWidthUnits(10);
+    }
+}
+
+/**
+ * Structure parameters need to refresh their allowed values to track object renames.
+ * Gag, this can be called in two contexts: during initialization before rendering where we
+ * just save the allowedValues and after rendering when we update them.
+ */
+void ParameterField::refreshAllowedValuesInternal(bool rendered)
+{
+    if (parameter->type == TypeStructure) {
         // these are combos (string + multi) but must have allowed values
 
         // returns an old-school StringList for some reason, we never want that
         // why not just return juce::StringArray and be done with it?
-        StringList* list = p->getStructureNames(supervisor->getMobiusConfig());
+        StringList* list = parameter->getStructureNames(supervisor->getMobiusConfig());
         juce::StringArray values;
 
         // always start with this?  for the first usage of selecting Preset names
@@ -58,18 +79,19 @@ ParameterField::ParameterField(Supervisor* s, UIParameter* p) :
             }
             delete list;
         }
-        setAllowedValues(values);
-    }
 
-    // hack, these look better if they're all the same size
-    // until we can be smarter about deriving this just pick
-    // a number that looks right for the current preset/setup panels
-    if (p->type == TypeEnum) {
-        // ugh, 20 is WAY too wide, sizing on these sucks "emwidth"
-        // isn't working well, might be font height problems
-        setWidthUnits(10);
+        // actually don't need this shit, just call updateAllowedValues for both?
+        if (rendered)
+          updateAllowedValues(values);
+        else
+          setAllowedValues(values);
     }
-}    
+}
+
+void ParameterField::refreshAllowedValues()
+{
+    refreshAllowedValuesInternal(true);
+}
 
 ParameterField::~ParameterField()
 {

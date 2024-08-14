@@ -186,6 +186,30 @@ void Field::setAnnotation(juce::String text)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This is normally done when first rendered, but for fields that are combo
+ * boxes of structure names, they need to be have their allowed values refreshed
+ * every time they are displayed.
+ */
+void Field::updateAllowedValues(juce::StringArray& src)
+{
+    allowedValues = src;
+    if (renderType == RenderType::Combo) {
+        combobox.clear();
+        int maxChars = 0;
+        for (int i = 0 ; i < allowedValues.size() ; i++) {
+            juce::String s = allowedValues[i];
+            if (s.length() > maxChars)
+              maxChars = s.length();
+            // note that item ids must be non-zero
+            combobox.addItem(s, i + 1);
+        }
+
+        // todo: in theory maxChars could be larger now and needs to make the field bigger
+        // forms aren't that responsive yet and it is ordinarilly long enough
+    }
+}
+
+/**
  * Once all properties of the field are specified, render
  * it with appropriate juce components and calculate initial
  * minimum display size.

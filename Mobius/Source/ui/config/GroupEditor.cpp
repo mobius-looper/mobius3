@@ -109,6 +109,12 @@ void GroupEditor::refreshObjectSelector()
  * 
  * Save all presets that have been edited during this session
  * back to the master configuration.
+ *
+ * !!TODO: Group names can be in SetupTracks and Bindings and if you
+ * rename them, the user will expect that those references are updated automatically.
+ * It's a little complex if you add/remove objects and the old count and the new count
+ * don't match and the names don't line up any more.  Will have to give each starting
+ * object a unique id we can use to check for name changes.
  */
 void GroupEditor::save()
 {

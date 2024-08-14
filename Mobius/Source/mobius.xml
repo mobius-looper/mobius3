@@ -177,6 +177,7 @@
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
+      groupName='Group1'
       input='127'
       output='127'
       feedback='127'
@@ -185,6 +186,7 @@
       syncSource='default'
       trackSyncUnit='default'/>
     <SetupTrack
+      groupName='Group1'
       input='127'
       output='127'
       feedback='127'
@@ -289,8 +291,6 @@
       trackSyncUnit='default'/>
   </Setup>
   <BindingSet name='Base'>
-    <Binding name='output' scope='1' trigger='host'/>
-    <Binding name='Record' trigger='host'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
     <Binding name='NextLoop' trigger='key' value='65576'/>
@@ -323,6 +323,7 @@
     <Binding name='Muteit' scope='3' trigger='note' value='6' channel='1'/>
     <Binding name='Muteit' scope='4' trigger='note' value='7' channel='1'/>
     <Binding name='Clear' scope='A' trigger='note'/>
+    <Binding name='output' scope='Group1' trigger='control' value='18' channel='1'/>
   </BindingSet>
   <BindingSet name='[New]'>
     <Binding name='Backward' trigger='note'/>
@@ -336,7 +337,7 @@
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>
-  <GroupDefinition name='Group1' color='-6608599' replicatedFunctions='WindowBackward,WindowStartBackward,WindowEndForward'/>
+  <GroupDefinition name='Groupuu' color='-6608599' replicatedFunctions='WindowBackward,WindowStartBackward,WindowEndForward'/>
   <GroupDefinition name='Group2' color='-6220468' replicatedFunctions='Confirm'/>
   <FocusLockFunctions>
     <String>Reset</String>

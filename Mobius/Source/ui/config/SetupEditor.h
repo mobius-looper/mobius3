@@ -44,7 +44,8 @@ class SetupEditor : public ConfigEditor,
     void comboBoxChanged(juce::ComboBox* combo) override;
     
   private:
-    
+
+    void refreshAllowedValues();
     void refreshObjectSelector();
     void adjustTrackSelector();
     void render();
@@ -70,5 +71,6 @@ class SetupEditor : public ConfigEditor,
     int trackCount = 0;
     
     Form form;
-
+    class ParameterField* groupField = nullptr;
+    
 };

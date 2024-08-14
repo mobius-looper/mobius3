@@ -17,6 +17,7 @@ class ParameterField : public Field
     ParameterField(class Supervisor* s, class UIParameter* p);
     ~ParameterField();
 
+    void refreshAllowedValues();
     static Field::Type convertParameterType(UIParameterType intype);
 
     UIParameter* getParameter() {
@@ -30,4 +31,5 @@ class ParameterField : public Field
     class Supervisor* supervisor = nullptr;
     UIParameter* parameter = nullptr;
 
+    void refreshAllowedValuesInternal(bool rendered);
 };

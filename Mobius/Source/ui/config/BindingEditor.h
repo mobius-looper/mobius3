@@ -86,6 +86,7 @@ class BindingEditor : public ConfigEditor,
     
   private:
 
+    void refreshScopeNames();
     void refreshObjectSelector();
     void render();
     void rebuildTable();
