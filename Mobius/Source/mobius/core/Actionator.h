@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../../model/Scope.h"
 
 class Actionator
 {
@@ -18,7 +19,7 @@ class Actionator
     ~Actionator();
     void dump();
 
-    void captureGroupNames(class MobiusConfig* config);
+    void refreshScopeCache(class MobiusConfig* config);
     
     //////////////////////////////////////////////////////////////////////
     // New Model
@@ -87,15 +88,8 @@ class Actionator
 
     int getParameter(Parameter* p, int trackNumber);
 
-    // group name cache
-    static const int MaxGroupName = 32;
-    static const int MaxGroupNames = 32;
-
-    char GroupNames[MaxGroupNames][MaxGroupName];
-    int GroupNameCount = 0;
-
     // scope parsing
-    int parseGroupNumber(const char* name);
+    ScopeCache scopes;
 
 };
 

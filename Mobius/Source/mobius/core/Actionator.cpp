@@ -426,7 +426,7 @@ void Actionator::doFunctionNew(UIAction* action, Function* f)
 void Actionator::doFunctionTracks(UIAction* action, Function* f)
 {
     // parse the scope, returns -1 if this is a group name
-    int scopeTrack = Scope::getScopeTrack(action->getScope());
+    int scopeTrack = Scope::parseTrackNumber(action->getScope());
     
     // old code was sensntive to a Track set directly on the action
     // "for rescheduling"  Not sure what that means but continue that
@@ -480,7 +480,7 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
         // when this becomes non-zero we need to start cloning the action
         int actionsSent = 0;
         Track* active = mMobius->getTrack();
-        int targetGroup = parseGroupNumber(action->getScope());
+        int targetGroup = scopes.parseGroupNumber(action->getScope());
         
         for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
             Track* t = mMobius->getTrack(i);
@@ -675,20 +675,17 @@ Action* Actionator::convertAction(UIAction* src)
     // Parsing of scope strings into track/group numbers is now deferred
     // until the Action is created
     // the group replication is still done after the conversion but it would
-    // be nice to raise that too
+    // be nice to raise up a level too
 
-    // old way
-    //coreAction->scopeTrack = src->scopeTrack;
-    //coreAction->scopeGroup = src->scopeGroup;
-
-    int trackNumber = src->getScopeTrack();
+    const char* scope = src->getScope();
+    int trackNumber = scopes.parseTrackNumber(scope);
     if (trackNumber >= 0)
       coreAction->scopeTrack = trackNumber;
     else {
         // must be a group name
-        const char* scope = src->getScope();
-        int groupNumber = parseGroupNumber(scope);
-        if (groupNumber >= 0)
+        // note that we use group NUMBER here rather than ordinal
+        int groupNumber = scopes.parseGroupNumber(scope);
+        if (groupNumber > 0)
           coreAction->scopeGroup = groupNumber;
         else
           Trace(1, "Actionator: Unresolved scope %s", scope);
@@ -697,39 +694,9 @@ Action* Actionator::convertAction(UIAction* src)
     return coreAction;
 }
 
-/**
- * Parsing group names requires knowning the names of all possible groups.
- * Avoiding juce::String and juce::StringArray here since we're in the audio thread
- * and are not supposed to be allocating memory.
- * Group names are capured in a fixed set of fixed length char buffers when the MobiusConfig
- * is propagated.
- */
-void Actionator::captureGroupNames(MobiusConfig* config)
+void Actionator::refreshScopeCache(MobiusConfig* config)
 {
-    int index = 0;
-    for (auto group : config->groups) {
-        const char* gname = group->name.toUTF8();
-        strncpy(GroupNames[index], gname, MaxGroupName-1);
-        index++;
-        if (index >= MaxGroupNames) {
-            if (config->groups.size() > MaxGroupNames)
-              Trace(1, "Actionator: Group name cache overflow");
-            break;
-        }
-    }
-    GroupNameCount = index;
-}
-
-int Actionator::parseGroupNumber(const char* name)
-{
-    int groupNumber = -1;
-    for (int index = 0 ; index < GroupNameCount ; index++) {
-        if (strcmp(name, GroupNames[index]) == 0) {
-            groupNumber = index + 1;
-            break;
-        }
-    }
-    return groupNumber;
+    scopes.refresh(config);
 }
 
 //////////////////////////////////////////////////////////////////////

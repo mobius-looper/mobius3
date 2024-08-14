@@ -30,6 +30,7 @@
 #include "../../util/Trace.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Binding.h"
+#include "../../model/Scope.h"
 #include "../common/Form.h"
 #include "../JuceUtil.h"
 
@@ -86,7 +87,7 @@ void BindingEditor::load()
     MobiusConfig* config = supervisor->getMobiusConfig();
 
     maxTracks = config->getTracks();
-    maxGroups = config->getTrackGroups();
+    maxGroups = config->groups.size();
 
     targets.load();
 
@@ -429,15 +430,8 @@ void BindingEditor::initForm()
     for (int i = 0 ; i < maxTracks ; i++)
       scopeNames.add("Track " + juce::String(i+1));
 
-    if (maxGroups == 0) maxGroups = 2;
-    for (int i = 0 ; i < maxGroups ; i++) {
-        // passing a char to the String constructor didn't work,
-        // it rendered the numeric value of the character
-        // operator += works
-        // juce::String((char)('A' + i)));
-        juce::String letter;
-        letter += (char)('A' + i);
-        scopeNames.add("Group " + letter);
+    for (auto group : config->groups) {
+        scopeNames.add("Group " + group->name);
     }
     
     scope = new Field("Scope", Field::Type::String);
@@ -530,24 +524,29 @@ void BindingEditor::resetFormAndTarget()
  */
 void BindingEditor::refreshForm(Binding* b)
 {
-    const char* scopeName = b->getScope();
-    if (scopeName == nullptr) {
-        scope->setValue(juce::var(0));
+    // if anything goes wrong parsing the scope string, leave the
+    // selection at "Global"
+    scope->setValue(juce::var(0));
+    
+    const char* scopeString = b->getScope();
+    int tracknum = Scope::parseTrackNumber(scopeString);
+    if (tracknum > maxTracks) {
+        // must be an old binding created before reducing
+        // the track count, it reverts to global, should
+        // have a more obvious warning in the UI
+        Trace(1, "BindingEditor: Binding scope track number out of range %d", tracknum);
+    }
+    else if (tracknum >= 0) {
+        // element 0 is "global" so track number works
+        scope->setValue(juce::var(tracknum));
     }
     else {
-        // can assume these have been set as a side effect
-        // of calling setScope(char), don't like this
-        // track and group numbers are 1 based if they are set
-        int tracknum = b->trackNumber;
-        if (tracknum > 0) {
-            // element 0 is "global" so track number works
-            scope->setValue(juce::var(tracknum));
-        }
-        else {
-            int groupnum = b->groupOrdinal;
-            if (groupnum > 0)
-              scope->setValue(juce::var(maxTracks + groupnum));
-        }
+        MobiusConfig* config = supervisor->getMobiusConfig();
+        int groupOrdinal = Scope::parseGroupOrdinal(config, scopeString);
+        if (groupOrdinal >= 0)
+          scope->setValue(juce::var(maxTracks + groupOrdinal));
+        else
+          Trace(1, "BindingEditor: Binding scope with unresolved group name %s", scopeString);
     }
     
     targets.select(b);
@@ -573,22 +572,25 @@ void BindingEditor::refreshForm(Binding* b)
  */
 void BindingEditor::captureForm(Binding* b, bool includeTarget)
 {
-    // item 0 global, tracks, groups
+    // item 0 is global, then tracks, then groups
     int item = scope->getIntValue();
     if (item == 0) {
-        // global, this ensures both track and group are cleared
+        // global
         b->setScope(nullptr);
     }
     else if (item <= maxTracks) {
-        // this will format the track letter
-        b->setTrack(item);
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%d", item);
+        b->setScope(buf);
     }
     else {
-        // the group number in the Binding starts with 1
-        b->setGroup(item - maxTracks);
+        // skip going back to the MobiusConfig for the names and
+        // just remove our prefix
+        juce::String itemName = scope->getStringValue();
+        juce::String groupName = itemName.fromFirstOccurrenceOf("Group ", false, false);
+        b->setScope(groupName.toUTF8());
     }
 
-    // todo: scope
     captureSubclassFields(b);
     
     juce::var value = arguments->getValue();

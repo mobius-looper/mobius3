@@ -659,7 +659,7 @@ void MobiusKernel::updateParameters()
             // these are only allowed to have track scope
             // which is less than what doParameter is allowing so might
             // want to catch group scope there too
-            int trackNumber = Scope::getScopeTrack(param->getScope());
+            int trackNumber = Scope::parseTrackNumber(param->getScope());
             if (trackNumber >= 0) {
                 Query q;
                 q.symbol = s;

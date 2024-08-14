@@ -111,7 +111,7 @@ void UIAction::setScopeTrack(int i)
  */
 int UIAction::getScopeTrack()
 {
-    return Scope::getScopeTrack(scope);
+    return Scope::parseTrackNumber(scope);
 }
 
 /****************************************************************************/
