@@ -317,14 +317,8 @@ DisplayButton* ButtonSet::getButton(UIAction* action)
 {
     DisplayButton* found = nullptr;
     if (action != nullptr && action->symbol != nullptr) {
-        // shit, Binding keeps scope as a string, but UIAction has that
-        // parsed out into scopeTrack and scopeGroup, so we need to undo
-        // the transformation for the search
-        // REALLY need to normalize this where tracks are positive and groups are
-        // negative so we can just pass an int around
-        juce::String scope = Scope::render(action->scopeTrack, action->scopeGroup);
-        
-        found = getButton(action->symbol->name, scope, juce::String(action->arguments));
+        const char* scope = action->getScope();
+        found = getButton(action->symbol->name, juce::String(scope), juce::String(action->arguments));
     }
     return found;
 }
@@ -339,8 +333,8 @@ DisplayButton* ButtonSet::getButton(Binding* binding)
         const char* symbolName = binding->getSymbolName();
         // can be null for new empty bindings
         if (symbolName != nullptr) {
-            juce::String scope = Scope::render(binding->trackNumber, binding->groupOrdinal);
-            found = getButton(juce::String(symbolName), scope, juce::String(binding->getArguments()));
+            const char* scope = binding->getScope();
+            found = getButton(juce::String(symbolName), juce::String(scope), juce::String(binding->getArguments()));
         }
     }
     return found;

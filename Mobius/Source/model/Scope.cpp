@@ -11,6 +11,29 @@
 #include "Scope.h"
 
 /**
+ * Parse a scope string to a track number.
+ * There can be at most 2 digits and if empty it is 0 meaning the active track.
+ * Anything else is considered a group name.
+ */
+int Scope::getScopeTrack(const char* scope)
+{
+    int trackNumber = -1;
+    if (scope != nullptr) {
+        size_t len = strlen(scope);
+        if (len > 0 && len < 3) {
+            if (juce::CharacterFunctions::isDigit(scope[0]) &&
+                (len == 1 || juce::CharacterFunctions::isDigit(scope[1]))) {
+                trackNumber = atoi(scope);
+            }
+        }
+    }
+    return trackNumber;
+}
+
+// old utilities from when we parsed them in the UI, remove when ready
+
+#if 0
+/**
  * Implementation of this is old and brouhgt over form Binding.
  * Tracks are expected to be identified with integers starting
  * from 1.  Groups are identified with upper case letters A-Z.
@@ -69,3 +92,4 @@ juce::String Scope::render(int track, int group)
 
     return scope;
 }
+#endif

@@ -100,6 +100,11 @@ const int UIActionSustainBaseKey = 1000;
  */
 const int UIActionArgMax = 128;
 
+/**
+ * Maximum length of a scope (group) name
+ */
+const int UIActionScopeMax = 32;
+
 class UIAction : public PooledObject {
 
   public:
@@ -171,23 +176,17 @@ class UIAction : public PooledObject {
     //
     // This limits where the action can be performed.  Typically actions
     // are sent to the currently active track or to all tracks with
-    // "focus".  Setting a scope can override this.
+    // "focus".  Setting a scope can override this.  Values are expected to
+    // be a two digit track number or the name of a GroupDefinition.
     //
     //////////////////////////////////////////////////////////////////////
 
-    /**
-     * Non-zero if the action is targeted to a specific track rather than
-     * globally, or for the selected track.
-     */
-    int scopeTrack =  0;
-
-    /**
-     * Non-zero if the action is targeted to a track group.
-     * todo: dislike having two of these, can we just have a single
-     * scope string and let it be parsed by the binding processor?
-     */
-    int scopeGroup = 0;
-
+    const char* getScope();
+    void setScope(const char* s);
+    
+    void setScopeTrack(int i);
+    int getScopeTrack();
+    
     //////////////////////////////////////////////////////////////////////
     // Sustain
     //////////////////////////////////////////////////////////////////////
@@ -300,6 +299,12 @@ class UIAction : public PooledObject {
     int coreEventFrame = 0;
     
   private:
+
+    /**
+     * Symbolic scope name.  Replaces the older scopeTrack and scopeGroup.
+     * Force this through the get/set methods for better buffer security
+     */
+    char scope[UIActionScopeMax];
 
 };
 

@@ -17,6 +17,8 @@ class Actionator
     Actionator(class Mobius* m);
     ~Actionator();
     void dump();
+
+    void captureGroupNames(class MobiusConfig* config);
     
     //////////////////////////////////////////////////////////////////////
     // New Model
@@ -84,6 +86,16 @@ class Actionator
     void doSetup(class Action* a);
 
     int getParameter(Parameter* p, int trackNumber);
+
+    // group name cache
+    static const int MaxGroupName = 32;
+    static const int MaxGroupNames = 32;
+
+    char GroupNames[MaxGroupNames][MaxGroupName];
+    int GroupNameCount = 0;
+
+    // scope parsing
+    int parseGroupNumber(const char* name);
 
 };
 

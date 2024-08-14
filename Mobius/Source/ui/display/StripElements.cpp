@@ -32,7 +32,7 @@ StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
 {
     action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
-    action.scopeTrack = parent->getTrackIndex() + 1;
+    action.setScopeTrack(parent->getTrackIndex() + 1);
 }
 
 StripTrackNumber::~StripTrackNumber()
@@ -299,7 +299,7 @@ StripFocusLock::StripFocusLock(class TrackStrip* parent) :
     action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
     // TrackStrip track numbers are zero based, should call
     // this TrackIndex!
-    action.scopeTrack = parent->getTrackIndex() + 1;
+    action.setScopeTrack(parent->getTrackIndex() + 1);
 }
 
 StripFocusLock::~StripFocusLock()

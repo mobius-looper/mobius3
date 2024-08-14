@@ -434,7 +434,7 @@ void TrackStrip::doAction(UIAction* action)
 {
     // sigh, TrackStrip.followTrack is -1 for active track
     // action is 0 based, but we use 0 meaning active elsewhere
-    action->scopeTrack = followTrack + 1;
+    action->setScopeTrack(followTrack + 1);
     
     getSupervisor()->doAction(action);
 }

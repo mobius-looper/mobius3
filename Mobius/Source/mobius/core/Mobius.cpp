@@ -587,6 +587,9 @@ void Mobius::propagateConfiguration()
     // cache various parameters directly on the Function objects
     propagateFunctionPreferences();
 
+    // let Actionator cache the group names
+    mActionator->captureGroupNames(mConfig);
+
     // Synchronizer needs maxSyncDrift, driftCheckPoint
     if (mSynchronizer != NULL)
       mSynchronizer->updateConfiguration(mConfig);

@@ -17,6 +17,10 @@
  * Scope REALLY needs redesign to either just consistently be a positive or negative
  * integer, or consistently be a string so we don't need these conversions.  It's also
  * kind of a pita when cloning or comparing UIActions to have to deal with two numbers.
+ *
+ * UPDATE: This has been simplified at the UI level to consistently represent scopes as
+ * strings and only convert them to track/group numbers down in core.  We still need
+ * basic utilities to do the parsing though, so here they are.
  */
 
 #pragma once
@@ -25,6 +29,10 @@ class Scope
 {
   public:
 
+    static int getScopeTrack(const char* scope);
+    
+    // old, remove
+#if 0    
     /**
      * Parse a scope string from a character buffer into the two numbers.
      */
@@ -39,6 +47,8 @@ class Scope
      * Render the two numbers as a String
      */
     static juce::String render(int track, int group);
+#endif
+
 
 };
     

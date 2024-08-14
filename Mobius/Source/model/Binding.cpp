@@ -34,8 +34,6 @@ Binding::Binding()
     triggerMode = nullptr;
     triggerValue =  0;
     midiChannel = 0;
-    trackNumber = 0;
-    groupOrdinal = 0;
     
 	mNext = nullptr;
     mSymbolName = nullptr;
@@ -76,10 +74,6 @@ Binding::Binding(Binding* src)
     setSymbolName(src->getSymbolName());
     setArguments(src->getArguments());
     setScope(src->getScope());
-
-    // trackNumber, groupOrdinal set as a side
-    // effect of setScope if we can, if not
-    // should we trust the src?
 
     // temporary transient fields for DisplayButton
     id = src->id;
@@ -136,46 +130,11 @@ void Binding::setScope(const char* s)
 {
     delete mScope;
     mScope = CopyString(s);
-    parseScope();
 }
 
 const char* Binding::getScope() 
 {
     return mScope;
-}
-
-/**
- * Parse a scope into track an group numbers.
- * Tracks are expected to be identified with integers starting
- * from 1.  Groups are identified with upper case letters A-Z.
- */
-void Binding::parseScope()
-{
-    // implementation moved to Scope so it can be shared
-    Scope::parse(mScope, &trackNumber, &groupOrdinal);
-}
-
-/**
- * If you call setTrack or setGroup rather
- * than setScope, it can set the other number
- * as a side effect.
- */
-void Binding::setTrack(int t) 
-{
-    if (t > 0) {
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "%d", t);
-        setScope(buffer);
-    }
-}
-
-void Binding::setGroup(int t) 
-{
-    if (t > 0) {
-        char buffer[32];
-        Scope::render(0, t, buffer, sizeof(buffer));
-        setScope(buffer);
-    }
 }
 
 //

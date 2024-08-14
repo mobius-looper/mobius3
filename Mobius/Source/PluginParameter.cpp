@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "util/Trace.h"
+#include "util/Util.h"
 #include "model/Symbol.h"
 #include "model/Binding.h"
 #include "model/UIParameter.h"
@@ -24,8 +25,7 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
     
     // capture binding args
     // todo: get the complex arg string too
-    scopeTrack = binding->trackNumber;
-    scopeGroup = binding->groupOrdinal;
+    setScope(binding->getScope());
 
     if (s->parameter != nullptr && s->coreParameter != nullptr) {
         UIParameter* p = s->parameter;
@@ -166,6 +166,16 @@ juce::AudioProcessorParameter* PluginParameter::getJuceParameter()
       return boolParameter;
     
     return choiceParameter;
+}
+
+const char* PluginParameter::getScope()
+{
+    return scope;
+}
+
+void PluginParameter::setScope(const char* s)
+{
+    CopyString(s, scope, sizeof(scope));
 }
 
 //////////////////////////////////////////////////////////////////////

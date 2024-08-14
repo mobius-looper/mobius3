@@ -17,6 +17,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/ScriptProperties.h"
 #include "../../model/UIAction.h"
+#include "../../model/Scope.h"
 #include "../../model/Query.h"
 #include "../../model/UIParameter.h"
 #include "../../model/FunctionDefinition.h"
@@ -424,6 +425,9 @@ void Actionator::doFunctionNew(UIAction* action, Function* f)
  */
 void Actionator::doFunctionTracks(UIAction* action, Function* f)
 {
+    // parse the scope, returns -1 if this is a group name
+    int scopeTrack = Scope::getScopeTrack(action->getScope());
+    
     // old code was sensntive to a Track set directly on the action
     // "for rescheduling"  Not sure what that means but continue that
     // and here the model merge gets messier, need to remember
@@ -439,8 +443,8 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
         // need to document what that meant
         // it is only set by TrackCopyFunction and TrackSelectFunction
         // I think because the action must be processed in the track that
-        // is the SOURCE of the copy? 
-        if (action->scopeTrack > 0) {
+        // is the SOURCE of the copy?
+        if (scopeTrack > 0) {
             // the action thought it was allowed to specify the tracks
             // but the function said no, probably should not allow this in bindings
             Trace(1, "Actionator: Ignoring action track scope for Function %s\n",
@@ -450,10 +454,10 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
         Track* track = mMobius->getTrack();
         doFunctionTrack(action, f, track, false);
     }
-    else if (action->scopeTrack > 0) {
+    else if (scopeTrack > 0) {
         // the action was scoped to a particular track
         // note that track numbers are 1 based and zero means "current"
-        int trackNumber = action->scopeTrack - 1;
+        int trackNumber = scopeTrack - 1;
         Track* track = mMobius->getTrack(trackNumber);
         if (track == nullptr) {
             Trace(1, "Actionator: Track scope number out of range %ld\n", (long)trackNumber);
@@ -476,7 +480,7 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
         // when this becomes non-zero we need to start cloning the action
         int actionsSent = 0;
         Track* active = mMobius->getTrack();
-        int targetGroup = action->scopeGroup;
+        int targetGroup = parseGroupNumber(action->getScope());
         
         for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
             Track* t = mMobius->getTrack(i);
@@ -648,10 +652,6 @@ Action* Actionator::convertAction(UIAction* src)
     coreAction->type = nullptr;
     strcpy(coreAction->actionName, src->symbol->getName());
 
-    // Scope
-    coreAction->scopeTrack = src->scopeTrack;
-    coreAction->scopeGroup = src->scopeGroup;
-
     // implementation we do NOT assimilate since our resolved model is different
 
     // Time
@@ -671,7 +671,65 @@ Action* Actionator::convertAction(UIAction* src)
     coreAction->arg.setInt(src->value);
     strcpy(coreAction->bindingArgs, src->arguments);
 
+    // Scope
+    // Parsing of scope strings into track/group numbers is now deferred
+    // until the Action is created
+    // the group replication is still done after the conversion but it would
+    // be nice to raise that too
+
+    // old way
+    //coreAction->scopeTrack = src->scopeTrack;
+    //coreAction->scopeGroup = src->scopeGroup;
+
+    int trackNumber = src->getScopeTrack();
+    if (trackNumber >= 0)
+      coreAction->scopeTrack = trackNumber;
+    else {
+        // must be a group name
+        const char* scope = src->getScope();
+        int groupNumber = parseGroupNumber(scope);
+        if (groupNumber >= 0)
+          coreAction->scopeGroup = groupNumber;
+        else
+          Trace(1, "Actionator: Unresolved scope %s", scope);
+    }
+    
     return coreAction;
+}
+
+/**
+ * Parsing group names requires knowning the names of all possible groups.
+ * Avoiding juce::String and juce::StringArray here since we're in the audio thread
+ * and are not supposed to be allocating memory.
+ * Group names are capured in a fixed set of fixed length char buffers when the MobiusConfig
+ * is propagated.
+ */
+void Actionator::captureGroupNames(MobiusConfig* config)
+{
+    int index = 0;
+    for (auto group : config->groups) {
+        const char* gname = group->name.toUTF8();
+        strncpy(GroupNames[index], gname, MaxGroupName-1);
+        index++;
+        if (index >= MaxGroupNames) {
+            if (config->groups.size() > MaxGroupNames)
+              Trace(1, "Actionator: Group name cache overflow");
+            break;
+        }
+    }
+    GroupNameCount = index;
+}
+
+int Actionator::parseGroupNumber(const char* name)
+{
+    int groupNumber = -1;
+    for (int index = 0 ; index < GroupNameCount ; index++) {
+        if (strcmp(name, GroupNames[index]) == 0) {
+            groupNumber = index + 1;
+            break;
+        }
+    }
+    return groupNumber;
 }
 
 //////////////////////////////////////////////////////////////////////

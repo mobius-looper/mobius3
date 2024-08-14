@@ -2145,7 +2145,7 @@ bool Supervisor::mslAction(MslAction* action)
           uia.value = action->arguments->getInt();
 
         // there is no group scope in MslAction
-        uia.scopeTrack = action->scope;
+        uia.setScopeTrack(action->scope);
     
         doAction(&uia);
 

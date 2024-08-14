@@ -13,6 +13,7 @@
 
 #include "Binding.h"
 #include "Symbol.h"
+#include "Scope.h"
 
 #include "UIAction.h"
 
@@ -21,6 +22,7 @@ UIAction::UIAction()
 {
     strcpy(arguments, "");
     strcpy(result, "");
+    strcpy(scope, "");
 }
 
 UIAction::~UIAction()
@@ -39,8 +41,7 @@ void UIAction::reset()
     value = 0;
     strcpy(arguments, "");
     strcpy(result, "");
-    scopeTrack = 0;
-    scopeGroup = 0;
+    strcpy(scope, "");
     sustain = false;
     sustainEnd = false;
     sustainId = 0;
@@ -69,8 +70,7 @@ void UIAction::copy(UIAction* src)
     symbol = src->symbol;
     value = src->value;
     strcpy(arguments, src->arguments);
-    scopeTrack = src->scopeTrack;
-    scopeGroup = src->scopeGroup;
+    strcpy(scope, src->scope);
     sustain = src->sustain;
     sustainEnd = src->sustainEnd;
     sustainId = src->sustainId;
@@ -87,6 +87,31 @@ void UIAction::copy(UIAction* src)
     strcpy(result, "");
     coreEvent = nullptr;
     coreEventFrame = 0;
+}
+
+const char* UIAction::getScope()
+{
+    return scope;
+}
+
+void UIAction::setScope(const char* s)
+{
+    CopyString(s, scope, sizeof(scope));
+}
+
+void UIAction::setScopeTrack(int i)
+{
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%d", i);
+    setScope(buf);
+}
+
+/**
+ * Parsing track numbers is relatively easy.  It has to be at most 2 digits.
+ */
+int UIAction::getScopeTrack()
+{
+    return Scope::getScopeTrack(scope);
 }
 
 /****************************************************************************/

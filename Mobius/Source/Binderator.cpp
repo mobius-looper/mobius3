@@ -487,9 +487,7 @@ UIAction* Binderator::buildAction(Binding* b)
         action = new UIAction();
         action->symbol = symbol;
 
-        // carry these over for now, but I don't like how scopes work
-        action->scopeTrack = b->trackNumber;
-        action->scopeGroup = b->groupOrdinal;
+        action->setScope(b->getScope());
         
         // if the binding has a simple numeric argument, promote that
         // to the action value

@@ -12,6 +12,7 @@
 #include "../model/FunctionDefinition.h"
 #include "../model/UIParameter.h"
 #include "../model/UIAction.h"
+#include "../model/Scope.h"
 #include "../model/Query.h"
 #include "../model/Symbol.h"
 #include "../model/SampleProperties.h"
@@ -566,7 +567,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
         action->reset();
         action->symbol = s;
         action->value = p->get();
-        action->scopeTrack = p->scopeTrack;
+        action->setScope(p->getScope());
         // todo: complex binding arguments
         action->next = coreActions;
         coreActions = action;
@@ -591,7 +592,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
                 // pool should do this!
                 action->reset();
                 action->symbol = s;
-                action->scopeTrack = p->scopeTrack;
+                action->setScope(p->getScope());
                 // todo: complex binding arguments
             
                 if (value > 0) {
@@ -617,7 +618,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
             UIAction* action = actionPool->newAction();
             action->reset();
             action->symbol = s;
-            action->scopeTrack = p->scopeTrack;
+            action->setScope(p->getScope());
             action->next = coreActions;
             coreActions = action;
         }
@@ -629,7 +630,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
             UIAction* action = actionPool->newAction();
             action->reset();
             action->symbol = s;
-            action->scopeTrack = p->scopeTrack;
+            action->setScope(p->getScope());
             action->next = coreActions;
             coreActions = action;
         }
@@ -654,12 +655,22 @@ void MobiusKernel::updateParameters()
         // though we should really support UI level and pass it up too...
         Symbol* s = param->symbol;
         if (s->parameter != nullptr) {
-            Query q;
-            q.symbol = s;
-            q.scope = param->scopeTrack;
-            if (mCore->doQuery(&q)) {
-                if (q.value != param->get())
-                  param->set(q.value);
+
+            // these are only allowed to have track scope
+            // which is less than what doParameter is allowing so might
+            // want to catch group scope there too
+            int trackNumber = Scope::getScopeTrack(param->getScope());
+            if (trackNumber >= 0) {
+                Query q;
+                q.symbol = s;
+                q.scope = trackNumber;
+                if (mCore->doQuery(&q)) {
+                    if (q.value != param->get())
+                      param->set(q.value);
+                }
+            }
+            else {
+                Trace(1, "MobiusKernel: Invalid parameter scope %s", s->getName());
             }
         }
     }
@@ -1288,7 +1299,8 @@ bool MobiusKernel::mslAction(MslAction* action)
           uia.value = action->arguments->getInt();
 
         // there is no group scope in MslAction
-        uia.scopeTrack = action->scope;
+        // !! why?  I guess the interpreter can do the group-to-tracks expansion
+        uia.setScopeTrack(action->scope);
 
         if (symbol->level == LevelCore) {
             // this is where all the interesting stuff happens

@@ -12,6 +12,8 @@
 
 #include <JuceHeader.h>
 
+#include "model/UIAction.h"
+
 class PluginParameter
 {
   public:
@@ -31,8 +33,9 @@ class PluginParameter
     void set(int neu);
     
     Symbol* symbol = nullptr;
-    int scopeTrack = 0;
-    int scopeGroup = 0;
+
+    void setScope(const char* s);
+    const char* getScope();
 
     // unique identifier used when the parameter is bound to a sustainable function
     // we're going to need something similar to tag AU parameters, can this be the same?
@@ -43,6 +46,8 @@ class PluginParameter
     
   private:
 
+    char scope[UIActionScopeMax];
+    
     // one of the various parameter types
     // don't need more than one of these but I don't want to mess with downcasting right now
     // Juce wraps convenient range normalization these

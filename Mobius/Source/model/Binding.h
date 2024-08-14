@@ -166,19 +166,12 @@ class Binding {
 	const char* getArguments();
 
 	// scope
+    // this used to be more complicated, parsing the scope string
+    // into track and group numbers, not scopes are maintained as strings
+    // until it reaches Actionator
 
     void setScope(const char* s);
     const char* getScope();
-
-    // parsed scopes
-    // !! won't be able to do this automatically once we allow
-    // groups to have user defined names
-    int trackNumber = 0;
-    int groupOrdinal = 0;
-
-    // utilities to take a number and convert it to a scope string
-    void setTrack(int t);
-    void setGroup(int g);
 
     // temporary DisplayButton kludge
     // Action buttons in the UI are sort of like bindings in that
