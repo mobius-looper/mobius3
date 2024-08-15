@@ -20,7 +20,11 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-**NOTE** Build 15 is available for Windows only.  A Mac build will be available early the week of August 12th.
+## Build 16
+- Support for multiple instances of the plugin, should fix mysterious host crashes
+- Restore track groups and add selective function replication
+- Fix "metalic" sounding overdubs and proper latency compensation
+- allow **Sync Master MIDI** to be a bindable function to change the Out sync master
 
 ## Build 15
 
