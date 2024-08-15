@@ -417,6 +417,8 @@
           <FILE id="XCLOXc" name="BasicTabs.h" compile="0" resource="0" file="../Mobius/Source/ui/common/BasicTabs.h"/>
           <FILE id="Syoz16" name="ButtonBar.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/ButtonBar.cpp"/>
           <FILE id="ZPyRV1" name="ButtonBar.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ButtonBar.h"/>
+          <FILE id="WpHUg0" name="ColorPopup.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/ColorPopup.cpp"/>
+          <FILE id="GMXdpK" name="ColorPopup.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ColorPopup.h"/>
           <FILE id="CQNzmt" name="ColorSelector.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/common/ColorSelector.cpp"/>
           <FILE id="f2vKZW" name="ColorSelector.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ColorSelector.h"/>
@@ -450,6 +452,10 @@
                 file="../Mobius/Source/ui/common/SimpleTabPanel.cpp"/>
           <FILE id="HWEAPD" name="SimpleTabPanel.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/common/SimpleTabPanel.h"/>
+          <FILE id="Nwk594" name="YanField.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/YanField.cpp"/>
+          <FILE id="wt7mGo" name="YanField.h" compile="0" resource="0" file="../Mobius/Source/ui/common/YanField.h"/>
+          <FILE id="wu8wFN" name="YanForm.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/YanForm.cpp"/>
+          <FILE id="rn5gqD" name="YanForm.h" compile="0" resource="0" file="../Mobius/Source/ui/common/YanForm.h"/>
         </GROUP>
         <FILE id="xlXCYm" name="AboutPanel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/AboutPanel.cpp"/>
         <FILE id="BnPHtw" name="AboutPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/AboutPanel.h"/>
