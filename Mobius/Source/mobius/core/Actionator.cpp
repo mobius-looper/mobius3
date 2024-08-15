@@ -516,6 +516,9 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
                 actionsSent++;
             }
         }
+
+        // !! when you get around to using this code, will need a similar style
+        // of group replication here
     }
 }
 
@@ -1096,6 +1099,56 @@ void Actionator::doFunction(Action* a)
                       completeAction(ta);
 
                     nactions++;
+                }
+            }
+
+            // hack for group replication
+            if (targetGroup == 0)
+              doGroupReplication(a, f);
+        }
+    }
+}
+
+/**
+ * New hack for group function replication.
+ * Action replication for group bindings and group replication should be done
+ * in the same way, but trying not to disrupt old code.  At this point we've
+ * done the action on the active track, and now need to look for replication
+ * defined in the GroupDefinition.
+ */
+void Actionator::doGroupReplication(Action* action, Function* function)
+{
+    // is the active track in a group?
+    Track* active = mMobius->getTrack();
+    int groupNumber = active->getGroup();
+    if (groupNumber > 0) {
+        // why yes it was
+        MobiusConfig* config = mMobius->getConfiguration();
+        int groupIndex = groupNumber - 1;
+        if (groupIndex >= 0 && groupIndex < config->groups.size()) {
+            GroupDefinition* def = config->groups[groupIndex];
+            if (def->replicationEnabled) {
+                // several ways to do this, could also look at the
+                // coreFunction pointer on the Symbol, but we've lost the Symbol
+                // at this point
+                bool replicateIt = false;
+                for (auto name : def->replicatedFunctions) {
+                    if (strcmp(function->getName(), name.toUTF8()) == 0) {
+                        replicateIt = true;
+                        break;
+                    }
+                }
+
+                if (replicateIt) {
+                    for (int i = 0 ; i < mMobius->getTrackCount() ; i++) {
+                        Track* t = mMobius->getTrack(i);
+                        if (t != active && t->getGroup() == groupNumber) {
+                            
+                            Action* ta = cloneAction(action);
+                            doFunction(ta, function, t);
+                            completeAction(ta);
+                        }
+                    }
                 }
             }
         }

@@ -14,6 +14,7 @@ GroupDefinition::GroupDefinition(GroupDefinition* src)
 {
     name = src->name;
     color = src->color;
+    replicationEnabled = src->replicationEnabled;
     replicatedFunctions = src->replicatedFunctions;
 }
 

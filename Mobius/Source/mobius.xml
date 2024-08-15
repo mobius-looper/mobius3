@@ -143,7 +143,7 @@
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'
-      groupName='Group1'
+      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'
@@ -153,12 +153,13 @@
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
+      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='out'
+      syncSource='none'
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'
@@ -337,7 +338,7 @@
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>
-  <GroupDefinition name='Groupuu' color='-6608599' replicatedFunctions='WindowBackward,WindowStartBackward,WindowEndForward'/>
+  <GroupDefinition name='Groupuu' color='-6608599' replicatedFunctions='WindowBackward,Mute'/>
   <GroupDefinition name='Group2' color='-6220468' replicatedFunctions='Confirm'/>
   <FocusLockFunctions>
     <String>Reset</String>

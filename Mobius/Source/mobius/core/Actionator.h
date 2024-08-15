@@ -73,6 +73,7 @@ class Actionator
     void doFunctionNew(UIAction* action, Function* f);
     void doFunctionTracks(UIAction* action, Function* f);
     void doFunctionTrack(UIAction* action, Function* f, Track* t, bool needsClone);
+    void doGroupReplication(Action* action, Function* f);
     class Action* convertAction(UIAction* src);
     void invoke(UIAction* action, Function* f);
     void invoke(UIAction* action, Function* f, Track* t);
