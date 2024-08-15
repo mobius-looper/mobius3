@@ -50,7 +50,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     static int InstanceCount;
     static int MaxInstanceCount;
     
-    static const int BuildNumber = 15;
+    static const int BuildNumber = 16;
 
     /**
      * Interface implemented by an internal component that wants
