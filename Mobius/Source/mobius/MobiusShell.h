@@ -53,7 +53,7 @@ class MobiusShell : public MobiusInterface
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
     bool mslResolve(juce::String name, class MslExternal* ext) override;
-    bool mslQuery(class MslQuery* q);
+    bool mslQuery(class MslQuery* q) override;
     
     juce::StringArray saveProject(juce::File dest) override;
     juce::StringArray loadProject(juce::File src) override;

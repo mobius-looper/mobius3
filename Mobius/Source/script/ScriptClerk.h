@@ -40,7 +40,7 @@ class ScriptClerk {
     void reload(class ScriptConfig* config);
 
     // Load a single file into the environment
-    void ScriptClerk::loadFile(juce::String path);
+    void loadFile(juce::String path);
 
     /**
      * Initialize previous load state.

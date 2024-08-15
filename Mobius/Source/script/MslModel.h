@@ -559,7 +559,7 @@ class MslEnd : public MslNode
 
     bool isEnd() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool operandable() {return false;}
+    bool operandable() override {return false;}
 };
 
 class MslEcho : public MslNode
@@ -575,7 +575,7 @@ class MslEcho : public MslNode
     
     bool isEcho() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool operandable() {return false;}
+    bool operandable() override {return false;}
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -604,7 +604,7 @@ class MslIn : public MslNode
     bool isIn() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 
-    bool wantsNode(MslNode* n) {
+    bool wantsNode(MslNode* n) override {
         (void)n;
         return (children.size() < 2);
     }
@@ -646,7 +646,7 @@ class MslContextNode : public MslNode
 
     bool isContext() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
-    bool operandable() {return false;}
+    bool operandable() override {return false;}
 
     // the default is kernel since where most things happen
     bool shell = false;

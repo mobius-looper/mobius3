@@ -31,7 +31,7 @@ class YanInput : public YanField
     YanInput(juce::String label, int charWidth = 0, bool readOnly = false);
     ~YanInput() {}
 
-    int getPreferredWidth();
+    int getPreferredWidth() override;
 
     void setValue(juce::String s);
     juce::String getValue();
@@ -56,7 +56,7 @@ class YanCheckbox : public YanField
     YanCheckbox(juce::String label);
     ~YanCheckbox() {}
 
-    int getPreferredWidth();
+    int getPreferredWidth() override;
     
     void setValue(bool b);
     bool getValue();
@@ -89,7 +89,7 @@ class YanColorChooser : public YanField, public ColorPopup::Listener
     void setValue(int i);
     int getValue();
 
-    int getPreferredWidth();
+    int getPreferredWidth() override;
     
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;

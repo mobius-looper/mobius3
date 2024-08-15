@@ -134,7 +134,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // also in MobiusContainer
     juce::File getRoot() override;
 
-    SymbolTable* getSymbols() {
+    SymbolTable* getSymbols() override {
         return &symbols;
     }
 
@@ -202,7 +202,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     
     // find the value of a parameter or variable
     bool doQuery(class Query* q);
-    juce::String getParameterLabel(class Symbol* s, int ordinal);
+    juce::String getParameterLabel(class Symbol* s, int ordinal) override;
     int getParameterMax(class Symbol* s);
 
     // special accessors for things deep within the engine
@@ -246,7 +246,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     //
 
     MslContextId mslGetContextId() override;
-    bool mslResolve(juce::String name, class MslExternal* ext);
+    bool mslResolve(juce::String name, class MslExternal* ext) override;
     bool mslQuery(MslQuery* query) override;
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;

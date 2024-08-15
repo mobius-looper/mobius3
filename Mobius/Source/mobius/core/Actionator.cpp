@@ -321,7 +321,7 @@ void Actionator::doFunctionOld(UIAction* action, Function* f)
     Event* coreEvent = coreAction->getEvent();
     if (coreEvent != nullptr) {
         action->coreEvent = coreEvent;
-        action->coreEventFrame = coreEvent->frame;
+        action->coreEventFrame = (int)(coreEvent->frame);
     }
 
     // Action can also have a pointer to a KernelEvent which

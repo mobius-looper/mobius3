@@ -855,7 +855,7 @@ void HostSyncState::advance(int frames,
     }
 
     // save state for the next interrupt
-    mLastBaseBeat = baseBeat;
+    mLastBaseBeat = (int)baseBeat;
     mLastSamplePosition = newSamplePosition;
     mLastBeatPosition = newBeatPosition;
     mLastBeatRange = newBeatRange;

@@ -222,7 +222,10 @@ void MobiusConsole::showLoad()
             console.add(mfe->path);
             for (auto err : mfe->errors) {
                 juce::String errline;
-                errline += "  Line " + juce::String(err->line) + " column " + juce::String(err->column) + ": " +  err->token + " " + err->details;;
+                // damn, Mac is really whiny about having char* combined with +
+                // have to juce::String wrap everything, why not Windows?
+                errline += juce::String("  Line ") + juce::String(err->line) + juce::String(" column ") + juce::String(err->column) +
+                    juce::String(": ") +  juce::String(err->token) + juce::String(" ") + juce::String(err->details);
                 console.add(errline);
             }
         }
@@ -286,8 +289,8 @@ void MobiusConsole::showErrors(juce::OwnedArray<MslError>* errors)
 {
     for (auto error : *errors) {
         juce::String msg = "Line " + juce::String(error->line) +
-            " column " + juce::String(error->column) + ": " +
-            error->token + ": " + error->details;
+            juce::String(" column ") + juce::String(error->column) + juce::String(": ") +
+            juce::String(error->token) + juce::String(": ") + juce::String(error->details);
         console.add(msg);
     }
 }
@@ -297,8 +300,8 @@ void MobiusConsole::showErrors(MslError* list)
 {
     for (MslError* error = list ; error != nullptr ; error = error->next) {
         juce::String msg = "Line " + juce::String(error->line) +
-            " column " + juce::String(error->column) + ": " +
-            error->token + ": " + error->details;
+            juce::String(" column ") + juce::String(error->column) + juce::String(": ") +
+            juce::String(error->token) + juce::String(": ") + juce::String(error->details);
         console.add(msg);
     }
 }
@@ -428,7 +431,7 @@ void MobiusConsole::doResults(juce::String arg)
                 console.add("No results for session " + juce::String(id));
             }
             else {
-                console.add("Session " + juce::String(id) + " " + result->name);
+                console.add("Session " + juce::String(id) + " " + juce::String(result->name));
                 showErrors(result->errors);
                 MslValue* value = result->value;
                 if (value != nullptr)

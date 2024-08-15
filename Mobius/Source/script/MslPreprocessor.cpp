@@ -1,7 +1,7 @@
 /**
  * Preprocessor for MSL source code prior to passing through the MslParser.
  *
- * The main thing this does is strip out /* block comments and
+ * The main thing this does is strip out / * block comments and
  * // end of line comments so the tokenizer and parser doesn't have to deal with them.
  * We'll also take the opportunity to parse and remove # directives.
  *

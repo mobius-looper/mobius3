@@ -2267,7 +2267,7 @@ void Mobius::loadProject(Project* p)
                             // !! Revisit this, it would be nice to handle
                             // these the same way
                             if (loop == track->getLoop())
-                                mSynchronizer->loadLoop(loop);
+                              mSynchronizer->loadLoop(loop);
                         }
                     }
                 }
@@ -2582,7 +2582,7 @@ int Mobius::calculateDurationFrame(MslWait* wait, Track* track)
 
     // figure out the loop we're operating within and how long it is
     Loop* loop = track->getLoop();
-    int loopFrames = loop->getFrames();
+    int loopFrames = (int)(loop->getFrames());
 
     switch (wait->duration) {
 
@@ -2604,7 +2604,7 @@ int Mobius::calculateDurationFrame(MslWait* wait, Track* track)
             
         case WaitDurationSubcycle: {
             if (loopFrames > 0) {
-                frame = loop->getSubCycleFrames() * wait->value;
+                frame = (int)(loop->getSubCycleFrames()) * wait->value;
             }
             else {
                 Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
@@ -2614,7 +2614,7 @@ int Mobius::calculateDurationFrame(MslWait* wait, Track* track)
             
         case WaitDurationCycle: {
             if (loopFrames > 0) {
-                frame = loop->getCycleFrames() * wait->value;
+                frame = (int)(loop->getCycleFrames()) * wait->value;
             }
             else {
                 Trace(1, "MSL: Wait duration Cycle is not evailable in an empty loop");
@@ -2802,13 +2802,13 @@ int Mobius::calculateLocationFrame(MslWait* wait, Track* track)
 
             // todo: if the loop is empty, this didn't work before but
             // we could be smarter now
-            frame = loop->getSubCycleFrames() * wait->value;
+            frame = (int)(loop->getSubCycleFrames()) * wait->value;
         }
             break;
 
         case WaitLocationCycle: {
             // same issues as Subcycle if the loop is empty
-            frame = loop->getCycleFrames() * wait->value;
+            frame = (int)(loop->getCycleFrames()) * wait->value;
         }
             break;
 
