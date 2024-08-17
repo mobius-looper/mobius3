@@ -197,8 +197,11 @@ bool KeyTracker::keyPressed(const juce::KeyPress& key, juce::Component* originat
             }
         }
     }
-    
-    return false;
+
+    // tell juce we "handled it" this seems to be necessary
+    // to prevent it from being passed to the peer which causes
+    // a supermely annoying beep
+    return true;
 }
 
 bool KeyTracker::keyStateChanged(bool isKeyDown, juce::Component* originator)
@@ -239,7 +242,7 @@ bool KeyTracker::keyStateChanged(bool isKeyDown, juce::Component* originator)
         }
     }
     
-    return false;
+    return true;
 }
 
 //////////////////////////////////////////////////////////////////////

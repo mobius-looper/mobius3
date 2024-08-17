@@ -48,7 +48,7 @@ void GroupEditor::prepare()
     }
 
     functions.setAllowed(allowed);
-    functions.setLabel("Replicated Functions");
+    functions.setLabel("Focus Lock Functions");
 
     addAndMakeVisible(functions);
 }
