@@ -20,6 +20,9 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 17
+- Fix intermittent crash on plugin loading when the number of input ports is more than 2
+
 ## Build 16
 - Support for multiple instances of the plugin, should fix mysterious host crashes
 - Restore track groups and add selective function replication
