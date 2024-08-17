@@ -105,14 +105,19 @@ void BusBoy::deriveLayout(PluginPort* port, juce::AudioChannelSet& set)
     // copies all the time
     set = juce::AudioChannelSet::stereo();
 
-    if (port->channels == 1) {
-      set = juce::AudioChannelSet::mono();
+    if (port == nullptr) {
+        trace("BusBoy: ERROR null PluginPort\n");
     }
-    else if (port->channels > 2) {
-        set = juce::AudioChannelSet();
-        for (int i = 0 ; i < port->channels ; i++) {
-            // is this the right way to do arbitary channels?
-            set.addChannel(juce::AudioChannelSet::ChannelType::discreteChannel0);
+    else {
+        if (port->channels == 1) {
+            set = juce::AudioChannelSet::mono();
+        }
+        else if (port->channels > 2) {
+            set = juce::AudioChannelSet();
+            for (int i = 0 ; i < port->channels ; i++) {
+                // is this the right way to do arbitary channels?
+                set.addChannel(juce::AudioChannelSet::ChannelType::discreteChannel0);
+            }
         }
     }
 }
@@ -154,30 +159,39 @@ void BusBoy::traceBusProperties(juce::AudioProcessor::BusProperties& props)
 void BusBoy::tracePluginBuses(juce::AudioProcessor* plugin)
 {
     trace("AudioProcessor Busses:\n");
-    
-    trace("  Input buses: %d\n", plugin->getBusCount(true));
-    for (int i = 0 ; i < plugin->getBusCount(true) ; i++) {
-        juce::AudioProcessor::Bus* bus = plugin->getBus(true, i);
-        traceBus(bus);
+    if (plugin == nullptr) {
+        trace("  ERROR: nullptr plugin\n");
     }
+    else {
+        trace("  Input buses: %d\n", plugin->getBusCount(true));
+        for (int i = 0 ; i < plugin->getBusCount(true) ; i++) {
+            juce::AudioProcessor::Bus* bus = plugin->getBus(true, i);
+            traceBus(bus, i);
+        }
 
-    trace("  Output buses: %d\n", plugin->getBusCount(false));
-    for (int i = 0 ; i < plugin->getBusCount(true) ; i++) {
-        juce::AudioProcessor::Bus* bus = plugin->getBus(false, i);
-        traceBus(bus);
+        trace("  Output buses: %d\n", plugin->getBusCount(false));
+        for (int i = 0 ; i < plugin->getBusCount(true) ; i++) {
+            juce::AudioProcessor::Bus* bus = plugin->getBus(false, i);
+            traceBus(bus, i);
+        }
     }
 }
 
-void BusBoy::traceBus(juce::AudioProcessor::Bus* bus)
+void BusBoy::traceBus(juce::AudioProcessor::Bus* bus, int number)
 {
-    trace("    Bus: %s\n", bus->getName().toUTF8());
-    trace("      isMain: %s\n", getTruth(bus->isMain()));
-    trace("      isEnabled: %s\n", getTruth(bus->isEnabled()));
-    trace("      isEnabledByDefault: %s\n", getTruth(bus->isEnabledByDefault()));
-    trace("      channels: %d\n", bus->getNumberOfChannels());
-    trace("      maxChannels: %d\n", bus->getMaxSupportedChannels());
-    trace("      CurrentLayout\n");
-    traceAudioChannelSet(bus->getCurrentLayout());
+    if (bus == nullptr) {
+        trace("    No bus definition for number %d\n", number);
+    }
+    else {
+        trace("    Bus: %s\n", bus->getName().toUTF8());
+        trace("      isMain: %s\n", getTruth(bus->isMain()));
+        trace("      isEnabled: %s\n", getTruth(bus->isEnabled()));
+        trace("      isEnabledByDefault: %s\n", getTruth(bus->isEnabledByDefault()));
+        trace("      channels: %d\n", bus->getNumberOfChannels());
+        trace("      maxChannels: %d\n", bus->getMaxSupportedChannels());
+        trace("      CurrentLayout\n");
+        traceAudioChannelSet(bus->getCurrentLayout());
+    }
 }
 
 void BusBoy::traceAudioChannelSet(const juce::AudioChannelSet& set)

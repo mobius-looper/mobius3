@@ -72,7 +72,7 @@ class BusBoy : public juce::AudioProcessor
 
     static void traceBusProperties(juce::String type, juce::Array<juce::AudioProcessor::BusProperties>& array);
     static void traceBusProperties(juce::AudioProcessor::BusProperties& props);
-    static void traceBus(juce::AudioProcessor::Bus* bus);
+    static void traceBus(juce::AudioProcessor::Bus* bus, int number);
     static void traceAudioChannelSet(const juce::AudioChannelSet& set);
     
     static const char* getTruth(bool b);
