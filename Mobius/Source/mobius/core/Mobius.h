@@ -295,10 +295,6 @@ class Mobius
     // needed for Script compilation
     class Parameter* getParameter(const char* name);
 
-    // needed by a few Parameter handlers to reflect changes
-    // made at runtime in Function flags
-    void refreshFunctionPreferences();
-
     //////////////////////////////////////////////////////////////////////
     // Global Function Handlers
     //////////////////////////////////////////////////////////////////////
@@ -360,7 +356,6 @@ class Mobius
 
     // reconfigure
     void propagateConfiguration();
-    void propagateFunctionPreferences();
     void propagateSetup();
     
     // audio buffers

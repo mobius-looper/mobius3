@@ -461,6 +461,7 @@ void Symbolizer::installUISymbols()
     installDisplayFunction("ReloadScripts", UISymbolReloadScripts);
     installDisplayFunction("ReloadSamples", UISymbolReloadSamples);
     installDisplayFunction("ShowPanel", UISymbolShowPanel);
+    installDisplayFunction("Message", UISymbolMessage);
     
     // runtime parameter experiment
     // I'd like to be able to create parameters at runtime

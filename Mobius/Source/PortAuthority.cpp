@@ -280,7 +280,7 @@ void PortAuthority::interleaveInput(int port, float* result)
     if (channelOffset >= maxChannels) {
         // desired port number is higher than what can be provided
         if (inputPortHostRangeErrors == 0)
-          Trace(1, "PortAuthority: Input port out of host range %d\n", port);
+          Trace(1, "PortAuthority: Input port out of range %d\n", port);
         inputPortHostRangeErrors++;
         clearInterleavedBuffer(result, blockSize);
     }

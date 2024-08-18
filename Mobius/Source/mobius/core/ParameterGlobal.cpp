@@ -1544,20 +1544,14 @@ void MuteCancelFunctionsParameterType::setValue(MobiusConfig* c, ExValue* value)
  *
  * Changing this in an action was removed see also
  * ConfirmationFunctionsParameterType
+ *
+ * update: This is no longer used, old values will be upgraded to the
+ * to be properties on the Symbol associated with each function.
  */
 void MuteCancelFunctionsParameterType::setValue(Action* action)
 {
-    // don't bother propagating to the interrupt
-    Mobius* m = (Mobius*)action->mobius;
-	MobiusConfig* config = m->getConfiguration();
-	if (action->arg.isNull())
-	  config->setMuteCancelFunctions(NULL);
-	else
-	  config->setMuteCancelFunctions(new StringList(action->arg.getString()));
-
-    // this one is unusual because we don't look at the parameter value
-    // we look at flags left on the Functions
-    m->refreshFunctionPreferences();
+    (void)action;
+    Trace(1, "MuteCancelFunctionsParameterType::setValue Who called this?");
 }
 
 MuteCancelFunctionsParameterType MuteCancelFunctionsParameterTypeObj;
@@ -1609,20 +1603,14 @@ void ConfirmationFunctionsParameterType::setValue(MobiusConfig* c, ExValue* valu
  * Binding this is impossible but we might set it in a test script.
  * For this to have any meaning we have to propagate it to the
  * Funtion class.
+ * 
+ * update: This is no longer used, old values will be upgraded to the
+ * to be properties on the Symbol associated with each function.
  */
 void ConfirmationFunctionsParameterType::setValue(Action* action)
 {
-    // don't bother propagating to the interrupt
-    Mobius* m = (Mobius*)action->mobius;
-	MobiusConfig* config = m->getConfiguration();
-	if (action->arg.isNull())
-	  config->setConfirmationFunctions(NULL);
-	else
-	  config->setConfirmationFunctions(new StringList(action->arg.getString()));
-
-    // this one is unusual because we don't look at the parameter value
-    // we look at flags left on the Functions
-    m->refreshFunctionPreferences();
+    (void)action;
+    Trace(1, "ConfirmationFunctionsParameterType::setValue Who called this?");
 }
 
 ConfirmationFunctionsParameterType ConfirmationFunctionsParameterTypeObj;

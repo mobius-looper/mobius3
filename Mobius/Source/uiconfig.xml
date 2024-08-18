@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
+<UIConfig windowWidth="1200" windowHeight="872" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>
@@ -11,7 +11,7 @@
     <Element name="ParametersElement" x="24" y="29" width="171"/>
     <Element name="AudioMeterElement" x="456" y="259"/>
     <Element name="LayerElement" x="439" y="287" width="300" height="108"/>
-    <Element name="AlertElement" x="365" y="431"/>
+    <Element name="AlertElement" x="361" y="384"/>
     <Element name="MinorModesElement" x="437" y="57"/>
     <Element name="TempoElement" x="438" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>
@@ -35,7 +35,7 @@
       <Element name="outputMeter" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activeLayout,activePreset,quantize,subcycles,switchQuantize,emptyLoopAction"/>
+    <InstantParameters names="activeLayout,activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,pluginInputPort,group"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -131,8 +131,12 @@
     <Button action="Shuffle"/>
     <Button action="StartCapture"/>
     <Button action="SaveCapture"/>
+    <Button action="ReloadScripts"/>
+    <Button action="Message" arguments="Hello!"/>
   </ButtonSet>
   <Properties>
+    <Property name="alertDuration" value="5"/>
+    <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
     <Property name="trackRows" value="1"/>
     <Property name="x" value="value of x"/>

@@ -15,6 +15,7 @@ class AlertElement : public StatusElement, public Supervisor::AlertListener
     
     AlertElement(class StatusArea* a);
     ~AlertElement();
+    void configure();
 
     void alertReceived(juce::String msg) override;
     
@@ -29,6 +30,7 @@ class AlertElement : public StatusElement, public Supervisor::AlertListener
 
     juce::String alert;
     int timeout = 0;
+    int alertDuration = 0;
     
 };
 

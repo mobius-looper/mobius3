@@ -73,6 +73,8 @@ DisplayEditor::DisplayEditor(Supervisor* s) : ConfigEditor(s)
     properties.add(&loopRows);
     properties.add(&trackRows);
     properties.add(&buttonHeight);
+    properties.add(&alertHeight);
+    properties.add(&alertDuration);
 
     tabs.add("Main Elements", &mainElements);
     tabs.add("Docked Track Strip", &dockedStrip);
@@ -276,6 +278,8 @@ void DisplayEditor::loadLayout(int ordinal)
     trackRows.setText(config->get("trackRows"));
     loopRows.setText(config->get("loopRows"));
     buttonHeight.setText(config->get("buttonHeight"));
+    alertHeight.setText(config->get("alertHeight"));
+    alertDuration.setText(config->get("alertDuration"));
     
     initElementSelector(&mainElements, config, layout->mainElements, false);
 
@@ -411,6 +415,8 @@ void DisplayEditor::saveLayout(int ordinal)
     config->put("trackRows", trackRows.getText());
     config->put("loopRows", loopRows.getText());
     config->put("buttonHeight", buttonHeight.getText());
+    config->put("alertHeight", alertHeight.getText());
+    config->put("alertDuration", alertDuration.getText());
 }
 
 /**

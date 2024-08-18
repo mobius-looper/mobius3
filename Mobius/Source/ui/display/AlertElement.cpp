@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 
 #include "../../model/MobiusState.h"
+#include "../../model/UIConfig.h"
 
 #include "../../Supervisor.h"
 
@@ -22,14 +23,31 @@ AlertElement::~AlertElement()
     statusArea->getSupervisor()->removeAlertListener(this);
 }
 
+void AlertElement::configure()
+{
+    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
+    //alertHeight = config->getInt("alertHeight");
+    alertDuration = config->getInt("alertDuration");
+}
+
 /**
  * AlertListener
  */
 void AlertElement::alertReceived(juce::String msg)
 {
     alert = msg;
-    // 5 seconds
-    timeout = 50;
+
+    // timeout is in tenths to match the maintenance thread interval
+    // should be using a millisecond counter
+    // let the visible parameter be specified in even seconds
+    if (alertDuration > 0 && alertDuration < 31) {
+        timeout = alertDuration * 10;
+    }
+    else {
+        // default 5 seconds
+        timeout = 50;
+    }
+    
     repaint();
 }
 
@@ -52,11 +70,18 @@ void AlertElement::update(MobiusState* state)
 
 int AlertElement::getPreferredHeight()
 {
-    return 20;
+    // unclear if configure() happens before this, get it directly from UIConfig
+    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
+    int alertHeight = config->getInt("alertHeight");
+    if (alertHeight < 20 || alertHeight > 100)
+      alertHeight = 20;
+    
+    return alertHeight;
 }
 
 int AlertElement::getPreferredWidth()
 {
+    // this should be proportional to height
     return 400;
 }
 

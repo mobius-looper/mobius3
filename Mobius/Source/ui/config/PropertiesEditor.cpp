@@ -76,10 +76,7 @@ void PropertiesEditor::load()
 void PropertiesEditor::save()
 {
     functionTable.save(supervisor->getSymbols());
-        
-    // update the file
-    // need to add access to Symbolizer
-    //supervisor->updateDeviceConfig();
+    supervisor->updateSymbolProperties();
 }
 
 /**
@@ -137,7 +134,7 @@ void FunctionTable::init(SymbolTable* symbols)
 {
     if (!initialized) {
         addColumn("Name", FunctionColumnName);
-        addColumnCheckbox("Focus", FunctionColumnFocus);
+        addColumnCheckbox("Focus Lock", FunctionColumnFocus);
         addColumnCheckbox("Mute Cancel", FunctionColumnMuteCancel);
         addColumnCheckbox("Confirmation", FunctionColumnConfirmation);
 

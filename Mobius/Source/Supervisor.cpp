@@ -514,7 +514,8 @@ void Supervisor::shutdown()
     writeDeviceConfig(devconfig);
 
     // until the editing panels do this, save on exit
-    symbolizer.saveSymbolProperties();
+    // make the editor call updateSymbolProperties, take this out
+    //symbolizer.saveSymbolProperties();
 
     // Started getting a Juce leak detection on the StringArray
     // inside ScriptProperties on a Symbol when shutting down the app.
@@ -1055,15 +1056,32 @@ DeviceConfig* Supervisor::getDeviceConfig()
  */
 void Supervisor::upgradeFunctionProperties(MobiusConfig* config)
 {
-    upgradeFunctionProperty(config->getFocusLockFunctions(), true, false, false);
-    // don't do this again
-    //config->setFocusLockFunctions(nullptr);
+    bool updated = false;
 
-    upgradeFunctionProperty(config->getConfirmationFunctions(), false, true, false);
-    //config->setConfirmationFunctions(nullptr);
+    StringList* list = config->getFocusLockFunctions();
+    if (list != nullptr && list->size() > 0) {
+        upgradeFunctionProperty(list, true, false, false);
+        // don't do this again
+        config->setFocusLockFunctions(nullptr);
+        updated = true;
+    }
+
+    list = config->getConfirmationFunctions();
+    if (list != nullptr && list->size() > 0) {
+        upgradeFunctionProperty(list, false, true, false);
+        config->setConfirmationFunctions(nullptr);
+        updated = true;
+    }
     
-    upgradeFunctionProperty(config->getMuteCancelFunctions(), false, false, true);
-    //config->setMuteCancelFunctions(nullptr);
+    list = config->getMuteCancelFunctions();
+    if (list != nullptr && list->size() > 0) {
+        upgradeFunctionProperty(list, false, false, true);
+        config->setMuteCancelFunctions(nullptr);
+        updated = true;
+    }
+    
+    if (updated)
+      writeMobiusConfig(config);
 }
 
 void Supervisor::upgradeFunctionProperty(StringList* names, bool focus, bool confirm, bool muteCancel)
@@ -1198,9 +1216,17 @@ void Supervisor::updateMobiusConfig()
     }
 }
 
+/**
+ * Called by PropertiesEditor after twiddling checkboxes.
+ * The properties are saved directly on the Symbol, here
+ * we write the properties.xml file and propagate the changes
+ * to the Mobius core.
+ */
 void Supervisor::updateSymbolProperties()
 {
     symbolizer.saveSymbolProperties();
+
+    mobius->propagateSymbolProperties();
 }
 
 /**
@@ -1730,16 +1756,20 @@ bool Supervisor::doUILevelAction(UIAction* action)
     else if (s->behavior == BehaviorFunction) {
         switch (s->id) {
             case UISymbolReloadScripts: {
-                menuLoadScripts();
+                menuLoadScripts(false);
                 handled = true;
             }
                 break;
             case UISymbolReloadSamples: {
-                menuLoadSamples();
+                menuLoadSamples(false);
                 handled = true;
             }
             case UISymbolShowPanel: {
                 mainWindow->showPanel(action->arguments);
+                handled = true;
+            }
+            case UISymbolMessage: {
+                mobiusMessage(juce::String(action->arguments));
                 handled = true;
             }
         }
@@ -1934,7 +1964,7 @@ int Supervisor::getParameterMax(Symbol* s)
  * The samples will be whatever is defined in the SampleConfig
  * inside MobiusConfig.  We retain ownership of the SampleConfig.
  */
-void Supervisor::menuLoadSamples()
+void Supervisor::menuLoadSamples(bool popup)
 {
     MobiusConfig* config = getMobiusConfig();
     SampleConfig* sconfig = config->getSampleConfig();
@@ -1946,7 +1976,12 @@ void Supervisor::menuLoadSamples()
             if (symbol->sample != nullptr)
               count++;
         }
-        alert(juce::String(count) + " samples loaded");
+        juce::String msg = juce::String(count) + " samples loaded";
+
+        if (popup)
+          alert(msg);
+        else
+          mobiusMessage(msg);
     }
 }
 
@@ -1967,12 +2002,11 @@ void Supervisor::menuLoadSamples()
  * which are handled by the mobius core, and one for new .msl scripts
  * which are handled by MslEnvironment.
  */
-void Supervisor::menuLoadScripts()
+void Supervisor::menuLoadScripts(bool popup)
 {
     MobiusConfig* config = getMobiusConfig();
     ScriptConfig* sconfig = config->getScriptConfig();
     if (sconfig != nullptr) {
-
 
         // ScriptClerk does file analysis, saves errors for later,
         // and passes what it can along to MslEnvironment
@@ -1995,7 +2029,10 @@ void Supervisor::menuLoadScripts()
         if (missing > 0)
           msg += "\n" + juce::String(missing.size()) + " missing files";
 
-        alert(msg);
+        if (popup)
+          alert(msg);
+        else
+          mobiusMessage(msg);
     }
 }
 

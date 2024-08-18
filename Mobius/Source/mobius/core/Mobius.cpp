@@ -584,9 +584,6 @@ void Mobius::propagateSymbolProperties()
  */
 void Mobius::propagateConfiguration()
 {
-    // cache various parameters directly on the Function objects
-    propagateFunctionPreferences();
-
     // let Actionator cache the group names
     mActionator->refreshScopeCache(mConfig);
 
@@ -640,79 +637,6 @@ void Mobius::propagateConfiguration()
     if (allReset) {
         setActiveTrack(mSetup->getActiveTrack());
     }
-}
-
-/**
- * Cache some function sensitivity flags from the MobiusConfig
- * directly on the Function objects for faster testing.
- *
- * Note that for the static Functions, this can have conflicts
- * with multiple instances of the Mobius plugin, but the conflicts
- * aren't significant and that never happens in practice.
- *
- * update: This should no longer be used.  Function name lists
- * will have been upgraded to symbol properties and propagated
- * with propagateSymbolProperties above.
- */
-void Mobius::propagateFunctionPreferences()
-{
-    SymbolTable* symbols = mContainer->getSymbols();
-    StringList* focusNames = mConfig->getFocusLockFunctions();
-    StringList* muteCancelNames = mConfig->getMuteCancelFunctions();
-    StringList* confirmNames = mConfig->getConfirmationFunctions();
-
-    for (auto symbol : symbols->getSymbols()) {
-
-        if (symbol->coreFunction != nullptr) {
-
-            Function* f = (Function*)symbol->coreFunction;
-            const char* fname = f->getName();
-            
-            f->focusLockDisabled = false;
-            f->cancelMute = false;
-            f->confirms = false;
-
-            if (focusNames != nullptr) {
-                // ugh, so many awkward double negatives
-                // 
-                // noFocusLock means the fuction will never respond to focus lock
-                // so we don't have to consider it, but then it shouldn't have been
-                // on the name list in the first place right?
-                //
-                // eventType != RunScriptEvent means to always allow script
-                // functions to have focus lock and ignore the config
-                // this seems wrong, why wouldn't you want to selectively
-                // allow scripts to disable focus lock?
-                if (!f->noFocusLock && f->eventType != RunScriptEvent) {
-                    f->focusLockDisabled = !(focusNames->containsNoCase(fname));
-                }
-            }
-
-            // Functions that can cancel Mute mode
-            if (muteCancelNames != nullptr && f->mayCancelMute) {
-                f->cancelMute = muteCancelNames->containsNoCase(fname);
-            }
-            
-            // Functions that can be used for Switch confirmation
-            if (confirmNames != nullptr && f->mayConfirm) {
-                f->confirms = confirmNames->containsNoCase(fname);
-            }
-        }
-    }
-}
-
-/**
- * This is a special access point for Parameter handlers to propagate
- * changes made at runtime to the Functions.  The first test that needed
- * this was mutetests and muteCancelFunctions.   Could be more targeted
- * but it's simple enough, just do all of them.
- *
- * Just calls propagateFunctionPreferences, but keep the methods different
- * in case we need to restrict these.
- */
-void Mobius::refreshFunctionPreferences()
-{
-    propagateFunctionPreferences();
 }
 
 /**
