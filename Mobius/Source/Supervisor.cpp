@@ -981,46 +981,14 @@ MobiusConfig* Supervisor::getMobiusConfig()
             // bootstrap one so we don't have to keep checking
             neu = new MobiusConfig();
         }
-        
-        upgrade(neu);
+
+        // adjust for model changes, may save the file
+        if (upgrader.upgrade(neu))
+          writeMobiusConfig(neu);
         
         mobiusConfig.reset(neu);
     }
     return mobiusConfig.get();
-}
-
-/**
- * Kludge to adjust port numbers which were being incorrectly saved 1 based rather
- * than zero based.  Unfortunately this means imported Setups will have to be imported again.
- *
- * Also does the function properties conversion, and normalizes group names.
- */
-void Supervisor::upgrade(MobiusConfig* config)
-{
-    if (config->getVersion() < 1) {
-        for (Setup* s = config->getSetups() ; s != nullptr ; s = s->getNextSetup()) {
-            // todo: only do this for the ones we know weren't upgraded?
-            for (SetupTrack* t = s->getTracks() ; t != nullptr ; t = t->getNext()) {
-                t->setAudioInputPort(upgradePort(t->getAudioInputPort()));
-                t->setAudioOutputPort(upgradePort(t->getAudioOutputPort()));
-                t->setPluginInputPort(upgradePort(t->getPluginInputPort()));
-                t->setPluginOutputPort(upgradePort(t->getPluginOutputPort()));
-            }
-        }
-        config->setVersion(1);
-    }
-
-    upgradeFunctionProperties(config);
-    upgradeGroups(config);
-}
-
-int Supervisor::upgradePort(int number)
-{
-    // if it's already zero then it has either been upgraded or it hasn't passed
-    // through the UI yet
-    if (number > 0)
-      number--;
-    return number;
 }
 
 /**
@@ -1051,131 +1019,6 @@ DeviceConfig* Supervisor::getDeviceConfig()
     return deviceConfig.get();
 }
 
-/**
- * Convert the old function name lists into Symbol properties.
- */
-void Supervisor::upgradeFunctionProperties(MobiusConfig* config)
-{
-    bool updated = false;
-
-    StringList* list = config->getFocusLockFunctions();
-    if (list != nullptr && list->size() > 0) {
-        upgradeFunctionProperty(list, true, false, false);
-        // don't do this again
-        config->setFocusLockFunctions(nullptr);
-        updated = true;
-    }
-
-    list = config->getConfirmationFunctions();
-    if (list != nullptr && list->size() > 0) {
-        upgradeFunctionProperty(list, false, true, false);
-        config->setConfirmationFunctions(nullptr);
-        updated = true;
-    }
-    
-    list = config->getMuteCancelFunctions();
-    if (list != nullptr && list->size() > 0) {
-        upgradeFunctionProperty(list, false, false, true);
-        config->setMuteCancelFunctions(nullptr);
-        updated = true;
-    }
-
-    // todo: there is one name list parameter property: resetRetains
-    // could handle that here too, but these were less common and it's actually
-    // a Setup parameter so there could be more than one, make the user think about
-    // and set the new properties manually
-
-    if (updated)
-      writeMobiusConfig(config);
-}
-
-void Supervisor::upgradeFunctionProperty(StringList* names, bool focus, bool confirm, bool muteCancel)
-{
-    if (names != nullptr) {
-        for (int i = 0 ; i < names->size() ; i++) {
-            const char* name = names->getString(i);
-            Symbol* s = symbols.find(name);
-            if (s == nullptr) {
-                Trace(1, "Supervisor::upgradeFunctionProperties Undefined function %s\n", name);
-            }
-            else if (s->functionProperties == nullptr) {
-                // symbols should have been loaded by now, don't bootstrap
-                Trace(1, "Supervisor::upgradeFunctionProperties Missing function properties for %s\n", name);
-            }
-            else {
-                if (focus) s->functionProperties->focus = true;
-                if (confirm) s->functionProperties->confirmation = true;
-                if (muteCancel) s->functionProperties->muteCancel = true;
-            }
-        }
-    }
-}
-
-/**
- * Normalize GroupDefinitions and group name references.
- */
-void Supervisor::upgradeGroups(MobiusConfig* config)
-{
-    // add names for prototype definitions that didn't have them
-    int ordinal = 0;
-    for (auto group : config->groups) {
-        if (group->name.length() == 0) {
-            group->name = GroupDefinition::getInternalName(ordinal);
-        }
-        ordinal++;
-    }
-    
-    // the original group definitions by number
-    // make sure we have a GroupDefinition object for all the numbers
-    int oldGroupCount = config->getTrackGroups();
-    // make sure we have at least 2 for some old expectations
-    if (oldGroupCount == 0)
-      oldGroupCount = 2;
-    
-    if (oldGroupCount > config->groups.size()) {
-        ordinal = config->groups.size();
-        while (ordinal < oldGroupCount) {
-            GroupDefinition* neu = new GroupDefinition();
-            neu->name = GroupDefinition::getInternalName(ordinal);
-            config->groups.add(neu);
-            ordinal++;
-        }
-    }
-
-    // setups used to reference groups by ordinal
-    Setup* setup = config->getSetups();
-    while (setup != nullptr) {
-        SetupTrack* track = setup->getTracks();
-        while (track != nullptr) {
-            int groupNumber = track->getGroupNumber();
-            if (groupNumber > 0) {
-                if (track->getGroupName().length() > 0) {
-                    // already upgraded, stop using the number
-                    // hmm, bindings would rather use ordinals, normalize the there too?
-                    track->setGroupNumber(0);
-                }
-                else {
-                    // this was an ordinal starting from 1
-                    int groupIndex = groupNumber - 1;
-                    if (groupIndex >= 0 && groupIndex < config->groups.size()) {
-                        GroupDefinition* def = config->groups[groupIndex];
-                        track->setGroupName(def->name);
-                    }
-                    else {
-                        // here we could treat these like the old maxGroups count
-                        // and synthesize new ones to match
-                        Trace(1, "Supervisor::upgradeGroups Setup group reference out of range %d",
-                              groupNumber);
-                    }
-                    // stop using the number
-                    track->setGroupNumber(0);
-                }
-            }
-            track = track->getNext();
-        }
-        setup = setup->getNextSetup();
-    }
-}
 
 /**
  * Save a modified MobiusConfig, and propagate changes

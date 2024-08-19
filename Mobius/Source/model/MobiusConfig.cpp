@@ -26,6 +26,7 @@
 #include "ScriptConfig.h"
 #include "SampleConfig.h"
 #include "XmlRenderer.h"
+#include "ValueSet.h"
 
 #include "MobiusConfig.h"
 

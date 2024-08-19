@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="Pmx2Ai" name="Upgrader.cpp" compile="1" resource="0" file="Source/Upgrader.cpp"/>
+      <FILE id="w8Jhmk" name="Upgrader.h" compile="0" resource="0" file="Source/Upgrader.h"/>
       <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
       <FILE id="dGcedr" name="SyncTrace.h" compile="0" resource="0" file="Source/SyncTrace.h"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -169,6 +171,8 @@
         <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
               file="Source/model/UserVariable.cpp"/>
         <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>
+        <FILE id="pf2sO3" name="ValueSet.cpp" compile="1" resource="0" file="Source/model/ValueSet.cpp"/>
+        <FILE id="MiPaWi" name="ValueSet.h" compile="0" resource="0" file="Source/model/ValueSet.h"/>
         <FILE id="OTK6EH" name="VariableDefinition.cpp" compile="1" resource="0"
               file="Source/model/VariableDefinition.cpp"/>
         <FILE id="Oi3yrZ" name="VariableDefinition.h" compile="0" resource="0"

@@ -29,6 +29,7 @@
 #include "MidiManager.h"
 #include "AudioManager.h"
 #include "RootLocator.h"
+#include "Upgrader.h"
 #include "Symbolizer.h"
 #include "Parametizer.h"
 #include "VariableManager.h"
@@ -349,6 +350,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     
     // various internal functionality managers
     RootLocator rootLocator;
+    Upgrader upgrader {this};
     AudioManager audioManager {this};
     MidiManager midiManager {this};
     MidiRealizer midiRealizer {this};
@@ -414,15 +416,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void notifyAlertListeners(juce::String msg);
     void notifyTimeListeners();
 
-    void upgrade(class MobiusConfig* config);
-    int upgradePort(int number);
-    void upgradeFunctionProperties(class MobiusConfig* config);
-    void upgradeFunctionProperty(class StringList* names, bool focus, bool confirm, bool muteCancel);
-    void upgradeGroups(MobiusConfig* config);
-
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
-    
-
     
 };
