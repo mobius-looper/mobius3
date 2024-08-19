@@ -191,6 +191,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void updateUIConfig();
     void reloadUIConfig();
     void updateSymbolProperties();
+
+    class MainConfig* getMainConfig();
+    void updateMainConfig();
+    void reloadMainConfig();
     
     class HelpCatalog* getHelpCatalog();
     class DynamicConfig* getDynamicConfig();
@@ -370,6 +374,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     // master copies of the configuration files
     std::unique_ptr<class DeviceConfig> deviceConfig;
+    std::unique_ptr<class MainConfig> mainConfig;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
     std::unique_ptr<class DynamicConfig> dynamicConfig;
@@ -404,6 +409,9 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     class DeviceConfig* readDeviceConfig();
     void writeDeviceConfig(class DeviceConfig* config);
     
+    class MainConfig* readMainConfig();
+    void writeMainConfig(class MainConfig* config);
+
     class MobiusConfig* readMobiusConfig();
     void writeMobiusConfig(class MobiusConfig* config);
     

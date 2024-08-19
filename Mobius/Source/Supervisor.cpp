@@ -17,6 +17,7 @@
 #include "util/List.h"
 
 #include "model/MobiusConfig.h"
+#include "model/MainConfig.h"
 #include "model/UIConfig.h"
 #include "model/XmlRenderer.h"
 #include "model/UIAction.h"
@@ -832,6 +833,7 @@ void Supervisor::advance()
 //////////////////////////////////////////////////////////////////////
 
 const char* DeviceConfigFile = "devices.xml";
+const char* MainConfigFile = "parameters.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
 const char* HelpFile = "help.xml";
@@ -877,6 +879,26 @@ DeviceConfig* Supervisor::readDeviceConfig()
     }
     else {
         config = new DeviceConfig();
+        config->parseXml(xml);
+    }
+
+    return config;
+}
+
+/**
+ * Read the main/parameters configuration file.
+ */
+MainConfig* Supervisor::readMainConfig()
+{
+    MainConfig* config = nullptr;
+    
+    juce::String xml = readConfigFile(MainConfigFile);
+    if (xml.length() == 0) {
+        Trace(2, "Supervisor: Bootstrapping %s\n", MainConfigFile);
+        config = new MainConfig();
+    }
+    else {
+        config = new MainConfig();
         config->parseXml(xml);
     }
 
@@ -931,6 +953,18 @@ void Supervisor::writeDeviceConfig(DeviceConfig* config)
     if (config != nullptr) {
         juce::String xml = config->toXml();
         writeConfigFile(DeviceConfigFile, xml.toUTF8());
+    }
+}
+
+/**
+ * Write a MainConfig back to the file system.
+ * Ownership of the config object does not transfer.
+ */
+void Supervisor::writeMainConfig(MainConfig* config)
+{
+    if (config != nullptr) {
+        juce::String xml = config->toXml();
+        writeConfigFile(MainConfigFile, xml.toUTF8());
     }
 }
 
@@ -1019,6 +1053,18 @@ DeviceConfig* Supervisor::getDeviceConfig()
     return deviceConfig.get();
 }
 
+MainConfig* Supervisor::getMainConfig()
+{
+    if (!mainConfig) {
+        MainConfig* neu = readMainConfig();
+        if (neu == nullptr) {
+            // bootstrap one so we don't have to keep checking
+            neu = new MainConfig();
+        }
+        mainConfig.reset(neu);
+    }
+    return mainConfig.get();
+}
 
 /**
  * Save a modified MobiusConfig, and propagate changes
@@ -1123,6 +1169,19 @@ void Supervisor::updateDeviceConfig()
     if (deviceConfig) {
         DeviceConfig* config = deviceConfig.get();
         writeDeviceConfig(config);
+    }
+}
+
+/**
+ * This will need to start behaving like MobiusConfig and
+ * propagating changes to the internal objects.
+ */
+void Supervisor::updateMainConfig()
+{
+    if (mainConfig) {
+        MainConfig* config = mainConfig.get();
+
+        writeMainConfig(config);
     }
 }
 
