@@ -480,9 +480,6 @@ void SetupEditor::initForm()
     addField("Other", UIParameterActiveTrack);
     addField("Other", UIParameterDefaultPreset);
 
-    // this one has special values
-    //form.add(buildResetablesField(), "Other");
-
     // Binding Overlay
 }
 
@@ -490,31 +487,6 @@ void SetupEditor::addField(const char* tab, UIParameter* p)
 {
     form.add(new ParameterField(supervisor, p), tab, 0);
 }
-
-#if 0
-Field* SetupEditor::buildResetablesField()
-{
-    Field* field = new ParameterField(UIParameterResetables);
-    juce::StringArray values;
-    juce::StringArray displayValues;
-    
-    // values are defined by Parameter flags
-	for (int i = 0 ; i < UIParameter::Parameters.size() ; i++) {
-        UIParameter* p = UIParameter::Parameters[i];
-        if (p->resettable) {
-            values.add(p->getName());
-            displayValues.add(p->getDisplayName());
-        }
-    }
-
-    // Mobius sorted the displayName list, should do the same!
-
-    field->setAllowedValues(values);
-    field->setAllowedValueLabels(displayValues);
-
-    return field;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //

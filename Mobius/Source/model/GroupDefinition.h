@@ -35,6 +35,11 @@ class GroupDefinition
     juce::StringArray replicatedFunctions;
 
     /**
+     * Parameters to auto-replicate to other group members.
+     */
+    juce::StringArray replicatedParameters;
+
+    /**
      * Internal ordinal - auto-assigned
      */
     int ordinal = 0;

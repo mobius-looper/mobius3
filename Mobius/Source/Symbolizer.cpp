@@ -258,6 +258,9 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
 
         props->coreName = el->getStringAttribute("coreName");
 
+        props->mayFocus = options.contains("mayFocus");
+        props->mayResetRetain = options.contains("resetRetain");
+        
         Symbol* s = supervisor->getSymbols()->intern(name);
         s->parameterProperties.reset(props);
     }
@@ -391,8 +394,13 @@ void Symbolizer::parseProperty(juce::XmlElement* el)
             }
         }
         else if (s->parameterProperties != nullptr) {
-            // here would be the place to do the "restore after reset" or whatever
-            // that's called
+            bool bvalue = isTruthy(value);
+            if (pname == "focus") {
+                s->parameterProperties->focus = bvalue;
+            }
+            else if (pname == "resetRetain") {
+                s->parameterProperties->resetRetain = bvalue;
+            }
         }
     }
 }
@@ -427,6 +435,13 @@ void Symbolizer::saveSymbolProperties()
             
             if (symbol->functionProperties->muteCancel)
               addProperty(xmlroot, symbol, "muteCancel", "true");
+        }
+        else if (symbol->parameterProperties != nullptr) {
+            if (symbol->parameterProperties->focus)
+              addProperty(xmlroot, symbol, "focus", "true");
+            
+            if (symbol->parameterProperties->resetRetain)
+              addProperty(xmlroot, symbol, "resetRetain", "true");
         }
     }
 

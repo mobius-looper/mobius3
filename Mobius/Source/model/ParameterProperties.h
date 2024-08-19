@@ -119,7 +119,28 @@ class ParameterProperties
      * it may not be necessary any more, except for correlating core parameters.
      */
     juce::String coreName;
-    
+
+    /**
+     * When true, this may be added to Focus Lock Parameters in the GroupDefinition.
+     * Not used for general binding focus yet but could be.
+     */
+    bool mayFocus = false;
+
+    /**
+     * When true, this is selected for group focus.
+     */
+    bool focus = false;
+
+    /**
+     * When true, this parameter may retain it's current value after track reset.
+     */
+    bool mayResetRetain = false;
+
+    /**
+     * When true, this parameter is selected to retain it's value after reset.
+     */
+    bool resetRetain = false;
+
     //////////////////////////////////////////////////////////////////////
     //
     // Enumeration Utilities

@@ -32,6 +32,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/FunctionDefinition.h"
 #include "../../model/FunctionProperties.h"
+#include "../../model/ParameterProperties.h"
 
 // depenencies needed to handle MSL script waits
 #include "../../script/MslContext.h"
@@ -572,6 +573,12 @@ void Mobius::propagateSymbolProperties()
             if (f->mayConfirm) {
                 f->confirms = symbol->functionProperties->confirmation;
             }
+        }
+        else if (symbol->coreParameter != nullptr && symbol->parameterProperties != nullptr) {
+            Parameter* p = (Parameter*)symbol->coreParameter;
+
+            // don't have a mayResetRetain on these
+            p->resetRetain = symbol->parameterProperties->resetRetain;
         }
     }
 }

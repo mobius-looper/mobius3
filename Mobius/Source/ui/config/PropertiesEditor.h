@@ -14,47 +14,48 @@
 #include "ConfigEditor.h"
 
 /**
- * Enumeration of column ids for the two tables.  Though one
- * table won't have all of these, it's nice to have a single number
+ * Enumeration of column ids for the two tables.  Though both tables
+ * won't have all of these, it's nice to have a single number
  * space to refer to both of them.
  */
-enum FunctionColumns {
-    FunctionColumnName = 1,
-    FunctionColumnFocus,
-    FunctionColumnMuteCancel,
-    FunctionColumnConfirmation
+enum PropertyColumns {
+    PropertyColumnName = 1,
+    PropertyColumnFocus,
+    PropertyColumnMuteCancel,
+    PropertyColumnConfirmation,
+    PropertyColumnResetRetain
 };
 
 /**
- * Each table row represents one input or output device.
+ * Each table row represents one function or parameter.
  * The checks array represents which of the columns are checked.
  */
-class FunctionTableRow
+class PropertyTableRow
 {
   public:
 
-    FunctionTableRow() {}
-    ~FunctionTableRow() {}
+    PropertyTableRow() {}
+    ~PropertyTableRow() {}
 
     juce::String name;
     class Symbol* symbol = nullptr;
     
-    juce::Array<FunctionColumns> checks;
+    juce::Array<PropertyColumns> checks;
 };
 
-class FunctionTable : public BasicTable, public BasicTable::Model
+class PropertyTable : public BasicTable, public BasicTable::Model
 {
   public:
 
-    FunctionTable();
-    ~FunctionTable() {}
+    PropertyTable();
+    ~PropertyTable() {}
 
-    void init(class SymbolTable* symbols);
+    void init(class SymbolTable* symbols, bool parameter);
     void load(class SymbolTable* symbols);
     void save(class SymbolTable* symbols);
     
-    FunctionTableRow* getRow(int row) {
-        return functions[row];;
+    PropertyTableRow* getRow(int row) {
+        return objects[row];;
     }
     
     juce::String getName(int row);
@@ -70,14 +71,12 @@ class FunctionTable : public BasicTable, public BasicTable::Model
     void setCellCheck(int row, int column, bool state) override;
     
   private:
+    bool isParameter = false;
     bool initialized = false;
 
-    juce::OwnedArray<FunctionTableRow> functions;
+    juce::OwnedArray<PropertyTableRow> objects;
 
-    FunctionTableRow* getRow(juce::String name);
-    //void loadFunctions(juce::String names, MidiDeviceColumn colid);
-    //juce::String getDevices(MidiDeviceColumn colid);
-
+    PropertyTableRow* getRow(juce::String name);
 };
     
 class PropertiesEditor : public ConfigEditor,
@@ -102,7 +101,8 @@ class PropertiesEditor : public ConfigEditor,
     
   private:
     BasicTabs tabs;
-    FunctionTable functionTable;
+    PropertyTable functionTable;
+    PropertyTable parameterTable;
 
 };
 

@@ -70,7 +70,7 @@ class Setup : public Structure {
 
 	void setResetRetains(const char* csv);
 	const char* getResetRetains();
-	bool isResetRetain(const char* parameterName);
+	//bool isResetRetain(const char* parameterName);
 
 	class SetupTrack* getTracks();
 	class SetupTrack* stealTracks();

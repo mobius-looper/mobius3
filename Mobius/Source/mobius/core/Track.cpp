@@ -1861,49 +1861,49 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
     // an unfortunate kludge because Setup was changed to use the new UIParameter
     // objects, but here we have the old ones
 
-	if (global || !setup->isResetRetain(InputLevelParameter->getName())) {
+	if (global || !InputLevelParameter->resetRetain) {
 		if (st == NULL)
 		  mInputLevel = 127;
 		else
 		  mInputLevel = st->getInputLevel();
 	}
 
-	if (global || !setup->isResetRetain(OutputLevelParameter->getName())) {
+	if (global || !OutputLevelParameter->resetRetain) {
 		if (st == NULL) 
 		  mOutputLevel = 127;
 		else
 		  mOutputLevel = st->getOutputLevel();
 	}
 
-	if (global || !setup->isResetRetain(FeedbackLevelParameter->getName())) {
+	if (global || !FeedbackLevelParameter->resetRetain) {
 		if (st == NULL) 
 		  mFeedbackLevel = 127;
 		else
 		  mFeedbackLevel = st->getFeedback();
 	}
 
-	if (global || !setup->isResetRetain(AltFeedbackLevelParameter->getName())) {
+	if (global || !AltFeedbackLevelParameter->resetRetain) {
 		if (st == NULL) 
 		  mAltFeedbackLevel = 127;
 		else
 		  mAltFeedbackLevel = st->getAltFeedback();
 	}
 
-	if (global || !setup->isResetRetain(PanParameter->getName())) {
+	if (global || !PanParameter->resetRetain) {
 		if (st == NULL) 
 		  mPan = 64;
 		else
 		  mPan = st->getPan();
 	}
 
-	if (global || !setup->isResetRetain(FocusParameter->getName())) {
+	if (global || !FocusParameter->resetRetain) {
 		if (st == NULL) 
 		  mFocusLock = false;
 		else
 		  mFocusLock = st->isFocusLock();
 	}
 
-	if (global || !setup->isResetRetain(GroupParameter->getName())) {
+	if (global || !GroupParameter->resetRetain) {
 		if (st == NULL) 
 		  mGroup = 0;
 		else {
@@ -1915,7 +1915,7 @@ void Track::resetParameters(Setup* setup, bool global, bool doPreset)
     // setting the preset can be disabled in some code paths if it was already
     // refreshed
     if (doPreset && 
-        (global || !setup->isResetRetain(TrackPresetParameter->getName()))) {
+        (global || !TrackPresetParameter->resetRetain)) {
 
         Preset* preset = getStartingPreset(mMobius->getConfiguration(), setup, global);
         refreshPreset(preset);

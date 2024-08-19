@@ -82,6 +82,11 @@ class Parameter : public SystemConstant {
     bool zeroCenter;
 
     /**
+     * When set, this parameter will retain it's value after track reset.
+     */
+    bool resetRetain = false;
+
+    /**
      * Control parameters  have a default value, usually either the 
      * upper end of the range or the center.
      */

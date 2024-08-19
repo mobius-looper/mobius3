@@ -557,6 +557,7 @@
     
     <!-- StringList
          Renamed this "resetRetains" at some point, still not visible in the UI
+         update: now a ParameterProperties flag
     <Parameter name='resetables' type='string' multi='true' options='noBinding,juceValues'>
          This was not defined formally in core, though it is a member of the Setup class.
          The SetupDialog handled it as a special case.  Since it wasn't a parameter
@@ -599,11 +600,11 @@
     <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
     <Parameter name='group' options='dynamic,resetRetain'/>
     <Parameter name='mono' type='bool' options='noBinding'/>
-    <Parameter name='feedback' high='127' options='control,resetRetain'/>
-    <Parameter name='altFeedback' high='127' options='control,resetRetain'/>
-    <Parameter name='input' codeName='InputLevel'high='127' options='control,resetRetain'/>
-    <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain'/>
-    <Parameter name='pan' high='127' options='control,resetRetain'/>
+    <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='input' codeName='InputLevel'high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
 
     <Parameter name='syncSource' values='default,none,track,out,host,midi' />
     <Parameter name='trackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'

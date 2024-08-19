@@ -193,6 +193,7 @@ class UIParameter : public SystemConstant
     /**
      * Indiciates that the value of current value of this parameter is to be retained
      * after a track is Reset.
+     * this is now a ParameterProperties flag
      */
     bool resetRetain;
 

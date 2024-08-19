@@ -12,6 +12,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/FunctionDefinition.h"
 #include "../../model/FunctionProperties.h"
+#include "../../model/ParameterProperties.h"
 
 #include "../../Supervisor.h"
 #include "../../Symbolizer.h"
@@ -27,9 +28,10 @@ PropertiesEditor::PropertiesEditor(Supervisor* s) : ConfigEditor(s)
     addAndMakeVisible(tabs);
 
     functionTable.setCheckboxListener(this);
-
+    parameterTable.setCheckboxListener(this);
+    
     tabs.add("Functions", &functionTable);
-    // tabs.add("Parameters", &parameterTable);
+    tabs.add("Parameters", &parameterTable);
 }
 
 PropertiesEditor::~PropertiesEditor()
@@ -65,8 +67,11 @@ void PropertiesEditor::hiding()
 void PropertiesEditor::load()
 {
     // merge these!
-    functionTable.init(supervisor->getSymbols());
+    functionTable.init(supervisor->getSymbols(), false);
     functionTable.load(supervisor->getSymbols());
+    
+    parameterTable.init(supervisor->getSymbols(), true);
+    parameterTable.load(supervisor->getSymbols());
 }
 
 /**
@@ -76,6 +81,7 @@ void PropertiesEditor::load()
 void PropertiesEditor::save()
 {
     functionTable.save(supervisor->getSymbols());
+    parameterTable.save(supervisor->getSymbols());
     supervisor->updateSymbolProperties();
 }
 
@@ -117,11 +123,11 @@ void PropertiesEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
 
 //////////////////////////////////////////////////////////////////////
 //
-// FunctionTable
+// PropertyTable
 //
 //////////////////////////////////////////////////////////////////////
 
-FunctionTable::FunctionTable()
+PropertyTable::PropertyTable()
 {
     // are our own model
     setBasicModel(this);
@@ -130,18 +136,26 @@ FunctionTable::FunctionTable()
 /**
  * Load the function properties into the table
  */
-void FunctionTable::init(SymbolTable* symbols)
+void PropertyTable::init(SymbolTable* symbols, bool parameter)
 {
     if (!initialized) {
-        addColumn("Name", FunctionColumnName);
-        addColumnCheckbox("Focus Lock", FunctionColumnFocus);
-        addColumnCheckbox("Mute Cancel", FunctionColumnMuteCancel);
-        addColumnCheckbox("Confirmation", FunctionColumnConfirmation);
+        isParameter = parameter;
+        
+        addColumn("Name", PropertyColumnName);
 
-
-        juce::StringArray functionNames;
+        if (parameter) {
+            //addColumnCheckbox("Focus Lock", PropertyColumnFocus);
+            addColumnCheckbox("Reset Retain", PropertyColumnResetRetain);
+        }
+        else {
+            addColumnCheckbox("Focus Lock", PropertyColumnFocus);
+            addColumnCheckbox("Mute Cancel", PropertyColumnMuteCancel);
+            addColumnCheckbox("Confirmation", PropertyColumnConfirmation);
+        }
+        
+        juce::StringArray objectNames;
         for (auto symbol : symbols->getSymbols()) {
-            if (symbol->functionProperties != nullptr) {
+            if (symbol->functionProperties != nullptr && !isParameter) {
 
                 // weed out the ones that can't have any of the three checkboxes
                 // force the may flag on if the option is set by other means
@@ -168,19 +182,39 @@ void FunctionTable::init(SymbolTable* symbols)
                     symbol->functionProperties->mayConfirm ||
                     symbol->functionProperties->mayCancelMute) {
 
-                    functionNames.add(symbol->name);
+                    objectNames.add(symbol->name);
+                }
+            }
+            else if (symbol->parameterProperties != nullptr && isParameter) {
+
+                if (!symbol->parameterProperties->mayFocus &&
+                    symbol->parameterProperties->focus) {
+                    Trace(1, "PropertiesEditor: Forcing mayFocus on for %s", symbol->getName());
+                    symbol->parameterProperties->mayFocus = true;
+                }
+                
+                if (!symbol->parameterProperties->mayResetRetain &&
+                    symbol->parameterProperties->resetRetain) {
+                    Trace(1, "PropertiesEditor: Forcing mayResetRetain on for %s", symbol->getName());
+                    symbol->parameterProperties->mayResetRetain = true;
+                }
+
+                if (symbol->parameterProperties->mayFocus ||
+                    symbol->parameterProperties->mayResetRetain) {
+                    
+                    objectNames.add(symbol->name);
                 }
             }
         }
 
-        functionNames.sort(false);
+        objectNames.sort(false);
         
-        for (auto name : functionNames) {
-            FunctionTableRow* func = new FunctionTableRow();
-            func->name = name;
+        for (auto name : objectNames) {
+            PropertyTableRow* obj = new PropertyTableRow();
+            obj->name = name;
             // get back to the symbol after sorting
-            func->symbol = symbols->find(name);
-            functions.add(func);
+            obj->symbol = symbols->find(name);
+            objects.add(obj);
         }
 
         initialized = true;
@@ -191,20 +225,31 @@ void FunctionTable::init(SymbolTable* symbols)
  * BasicTable overload to determine whether this cell needs a checkbox.
  * Should be in the model.
  */
-bool FunctionTable::needsCheckbox(int row, int column)
+bool PropertyTable::needsCheckbox(int row, int column)
 {
     bool needs = false;
     
-    FunctionTableRow* func = functions[row];
-    if (func != nullptr && func->symbol != nullptr) {
-        if (column == FunctionColumnFocus) {
-            needs = func->symbol->functionProperties->mayFocus;
+    PropertyTableRow* obj = objects[row];
+    if (obj != nullptr && obj->symbol != nullptr) {
+
+        if (obj->symbol->functionProperties != nullptr) {
+            if (column == PropertyColumnFocus) {
+                needs = obj->symbol->functionProperties->mayFocus;
+            }
+            else if (column == PropertyColumnConfirmation) {
+                needs = obj->symbol->functionProperties->mayConfirm;
+            }
+            else if (column == PropertyColumnMuteCancel) {
+                needs = obj->symbol->functionProperties->mayCancelMute;
+            }
         }
-        else if (column == FunctionColumnConfirmation) {
-            needs = func->symbol->functionProperties->mayConfirm;
-        }
-        else if (column == FunctionColumnMuteCancel) {
-            needs = func->symbol->functionProperties->mayCancelMute;
+        else if (obj->symbol->parameterProperties != nullptr) {
+            if (column == PropertyColumnFocus) {
+                needs = obj->symbol->parameterProperties->mayFocus;
+            }
+            else if (column == PropertyColumnResetRetain) {
+                needs = obj->symbol->parameterProperties->mayResetRetain;
+            }
         }
     }
     return needs;
@@ -213,10 +258,10 @@ bool FunctionTable::needsCheckbox(int row, int column)
 /**
  * Look up a device in the table by name.
  */
-FunctionTableRow* FunctionTable::getRow(juce::String name)
+PropertyTableRow* PropertyTable::getRow(juce::String name)
 {
-    FunctionTableRow* found = nullptr;
-    for (auto row : functions) {
+    PropertyTableRow* found = nullptr;
+    for (auto row : objects) {
         if (row->name == name) {
             found = row;
             break;
@@ -228,22 +273,36 @@ FunctionTableRow* FunctionTable::getRow(juce::String name)
 /**
  * Load the current symbol properties into the table.
  */
-void FunctionTable::load(SymbolTable* symbols)
+void PropertyTable::load(SymbolTable* symbols)
 {
     for (auto symbol : symbols->getSymbols()) {
-        if (symbol->functionProperties != nullptr) {
 
-            // not every function will have a row, some were suppressed
-            FunctionTableRow* row = getRow(symbol->name);
-            if (row != nullptr) {
-                if (symbol->functionProperties->focus)
-                  row->checks.add(FunctionColumnFocus);
+        if (isParameter) {
+            if (symbol->parameterProperties != nullptr) {
+                PropertyTableRow* row = getRow(symbol->name);
+                if (row != nullptr) {
+                    if (symbol->parameterProperties->focus)
+                      row->checks.add(PropertyColumnFocus);
 
-                if (symbol->functionProperties->confirmation)
-                  row->checks.add(FunctionColumnConfirmation);
+                    if (symbol->parameterProperties->resetRetain)
+                      row->checks.add(PropertyColumnResetRetain);
+                }
+            }
+        }
+        else {
+            if (symbol->functionProperties != nullptr) {
+                // not every function will have a row, some were suppressed
+                PropertyTableRow* row = getRow(symbol->name);
+                if (row != nullptr) {
+                    if (symbol->functionProperties->focus)
+                      row->checks.add(PropertyColumnFocus);
 
-                if (symbol->functionProperties->muteCancel)
-                  row->checks.add(FunctionColumnMuteCancel);
+                    if (symbol->functionProperties->confirmation)
+                      row->checks.add(PropertyColumnConfirmation);
+
+                    if (symbol->functionProperties->muteCancel)
+                      row->checks.add(PropertyColumnMuteCancel);
+                }
             }
         }
     }
@@ -255,22 +314,29 @@ void FunctionTable::load(SymbolTable* symbols)
 /**
  * Convert the table model back into the MachineConfig
  */
-void FunctionTable::save(SymbolTable* symbols)
+void PropertyTable::save(SymbolTable* symbols)
 {
-    for (auto func : functions) {
+    for (auto obj : objects) {
 
-        Symbol* s = symbols->find(func->name);
+        Symbol* s = symbols->find(obj->name);
         if (s != nullptr) {
-            FunctionProperties* props = s->functionProperties.get();
-            if (props != nullptr) {
-
-                props->focus = func->checks.contains(FunctionColumnFocus);
-                props->confirmation = func->checks.contains(FunctionColumnConfirmation);
-                props->muteCancel = func->checks.contains(FunctionColumnMuteCancel);
+            if (s->functionProperties != nullptr) {
+                FunctionProperties* props = s->functionProperties.get();
+                if (props != nullptr) {
+                    props->focus = obj->checks.contains(PropertyColumnFocus);
+                    props->confirmation = obj->checks.contains(PropertyColumnConfirmation);
+                    props->muteCancel = obj->checks.contains(PropertyColumnMuteCancel);
+                }
+            }
+            else if (s->parameterProperties != nullptr) {
+                ParameterProperties* props = s->parameterProperties.get();
+                if (props != nullptr) {
+                    props->focus = obj->checks.contains(PropertyColumnFocus);
+                    props->resetRetain = obj->checks.contains(PropertyColumnResetRetain);
+                }
             }
         }
     }
-    
 }
 
 //
@@ -278,50 +344,50 @@ void FunctionTable::save(SymbolTable* symbols)
 //
 
 
-int FunctionTable::getNumRows()
+int PropertyTable::getNumRows()
 {
-    return functions.size();
+    return objects.size();
 }
 
-juce::String FunctionTable::getCellText(int row, int columnId)
+juce::String PropertyTable::getCellText(int row, int columnId)
 {
     juce::String value;
     
-    FunctionTableRow* func = functions[row];
-    if (func == nullptr) {
-        Trace(1, "FunctionTable::getCellText row out of bounds %d\n", row);
+    PropertyTableRow* obj = objects[row];
+    if (obj == nullptr) {
+        Trace(1, "PropertyTable::getCellText row out of bounds %d\n", row);
     }
-    else if (columnId == FunctionColumnName) {
-        value = func->name;
+    else if (columnId == PropertyColumnName) {
+        value = obj->name;
     }
     return value;
 }
 
-bool FunctionTable::getCellCheck(int row, int columnId)
+bool PropertyTable::getCellCheck(int row, int columnId)
 {
     bool state = false;
     
-    FunctionTableRow* func = functions[row];
-    if (func == nullptr) {
-        Trace(1, "FunctionTable::getCellCheck row out of bounds %d\n", row);
+    PropertyTableRow* obj = objects[row];
+    if (obj == nullptr) {
+        Trace(1, "PropertyTable::getCellCheck row out of bounds %d\n", row);
     }
     else {
-        state = func->checks.contains((FunctionColumns)columnId);
+        state = obj->checks.contains((PropertyColumns)columnId);
     }
     return state;
 }
 
-void FunctionTable::setCellCheck(int row, int columnId, bool state)
+void PropertyTable::setCellCheck(int row, int columnId, bool state)
 {
-    FunctionTableRow* func = functions[row];
-    if (func == nullptr) {
-        Trace(1, "FunctionTable::setCellCheck row out of bounds %d\n", row);
+    PropertyTableRow* obj = objects[row];
+    if (obj == nullptr) {
+        Trace(1, "PropertyTable::setCellCheck row out of bounds %d\n", row);
     }
     else if (state) {
-        func->checks.add((FunctionColumns)columnId);
+        obj->checks.add((PropertyColumns)columnId);
     }
     else {
-        func->checks.removeAllInstancesOf((FunctionColumns)columnId);
+        obj->checks.removeAllInstancesOf((PropertyColumns)columnId);
     }
 }
 

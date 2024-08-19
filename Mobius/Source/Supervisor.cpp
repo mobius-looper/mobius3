@@ -1079,7 +1079,12 @@ void Supervisor::upgradeFunctionProperties(MobiusConfig* config)
         config->setMuteCancelFunctions(nullptr);
         updated = true;
     }
-    
+
+    // todo: there is one name list parameter property: resetRetains
+    // could handle that here too, but these were less common and it's actually
+    // a Setup parameter so there could be more than one, make the user think about
+    // and set the new properties manually
+
     if (updated)
       writeMobiusConfig(config);
 }

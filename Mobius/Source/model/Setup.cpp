@@ -302,12 +302,16 @@ const char* Setup::getResetRetains()
  * case now, but it's fragile.  The only edge case is "feedback" and
  * "altFeedback" which won't conflict as long as we're doing case insensntive
  * comparison.
+ *
+ * Update: not used any more, this is now a flag on ParameterProperties
  */
+#if 0
 bool Setup::isResetRetain(const char* parameterName)
 {
 	return (mResetRetains != nullptr &&
             IndexOf(mResetRetains, parameterName) >= 0);
 }
+#endif
 
 SyncSource Setup::getSyncSource()
 {

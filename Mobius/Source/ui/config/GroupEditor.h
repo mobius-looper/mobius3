@@ -56,6 +56,8 @@ class GroupEditor : public ConfigEditor, public YanColorChooser::Listener
     YanForm form;
     YanCheckbox replication {"Group has Focus Lock"};
     YanColorChooser color {"Color"};
+    BasicTabs tabs;
     MultiSelectDrag functions;
+    MultiSelectDrag parameters;
     
 };

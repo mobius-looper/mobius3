@@ -8,11 +8,14 @@
 #include "../../model/GroupDefinition.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
+#include "../../model/ParameterProperties.h"
 #include "../../Supervisor.h"
 
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
 #include "../JuceUtil.h"
+
+#include "MultiSelectDrag.h"
 
 #include "GroupEditor.h"
 
@@ -48,9 +51,19 @@ void GroupEditor::prepare()
     }
 
     functions.setAllowed(allowed);
-    functions.setLabel("Focus Lock Functions");
+    //functions.setLabel("Focus Lock Functions");
+    tabs.add("Focus Lock Functions", &functions);
 
-    addAndMakeVisible(functions);
+    allowed.clear();
+    for (auto symbol : supervisor->getSymbols()->getSymbols()) {
+        if (symbol->parameterProperties != nullptr &&
+            symbol->parameterProperties->mayFocus)
+          allowed.add(symbol->name);
+    }
+    parameters.setAllowed(allowed);
+    tabs.add("Focus Lock Parameters", &parameters);
+    
+    addAndMakeVisible(tabs);
 }
 
 void GroupEditor::resized()
@@ -58,7 +71,7 @@ void GroupEditor::resized()
     juce::Rectangle<int> area = getLocalBounds();
     form.setBounds(area.removeFromTop(form.getPreferredHeight()));
     area.removeFromTop(20);
-    functions.setBounds(area.removeFromTop(200));
+    tabs.setBounds(area.removeFromTop(200));
 }
 
 /**
@@ -246,6 +259,7 @@ void GroupEditor::loadGroup(int index)
 
         replication.setValue(g->replicationEnabled);
         functions.setValue(g->replicatedFunctions);
+        parameters.setValue(g->replicatedParameters);
     }
 }
 
