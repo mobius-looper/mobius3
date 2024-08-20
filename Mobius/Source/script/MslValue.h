@@ -97,6 +97,12 @@ class MslValue
         ival = 0;
         fval = 0.0f;
         string[0] = 0;
+        // these are more complicated,code that uses pooled values shold be reclaiming
+        // these before setting to null
+        delete next;
+        next = nullptr;
+        delete list;
+        list = nullptr;
     }
 
     bool isNull() {

@@ -153,10 +153,6 @@ class ParameterProperties
      *
      * This currently only supports internal names, not display names.
      * Do we have a reason to support display names?
-     *
-     * Original model getEnun would trace a warning if the value was
-     * not in the set of allowed values and returned zero.  This now
-     * does not trace and returns -1.
      */
     int getEnumOrdinal(const char* value);
 
@@ -187,7 +183,7 @@ class ParameterProperties
     // must be used in a larger context.
     //
     //////////////////////////////////////////////////////////////////////
-    
+#if 0    
     /**
      * Calculate the maximum ordinal value of a dynamic or structure parameter.
      */
@@ -222,7 +218,8 @@ class ParameterProperties
 
     class Structure* getStructureList(class MobiusConfig* container);
 
-
+#endif
+    
 };
 
 

@@ -6,10 +6,16 @@
 #include <JuceHeader.h>
 
 #include "util/List.h"
+
 #include "model/MobiusConfig.h"
+#include "model/MainConfig.h"
+#include "model/ValueSet.h"
+#include "model/UIParameterIds.h"
+#include "model/Preset.h"
 #include "model/Setup.h"
 #include "model/Symbol.h"
 #include "model/FunctionProperties.h"
+#include "model/ParameterProperties.h"
 
 #include "Supervisor.h"
 
@@ -19,7 +25,7 @@
  *
  * Also does the function properties conversion, and normalizes group names.
  */
-bool Upgrader::upgrade(MobiusConfig* config)
+bool Upgrader::upgrade(MobiusConfig* config, MainConfig* main)
 {
     bool updated = false;
     
@@ -41,6 +47,10 @@ bool Upgrader::upgrade(MobiusConfig* config)
       updated = true;
     
     if (upgradeGroups(config))
+      updated = true;
+
+    // not active yet, but start testing the conversion
+    if (refreshMainConfig(config, main))
       updated = true;
 
     return updated;
@@ -187,6 +197,266 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
     return updated;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// MainConfig Migration
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is test code for the migration from MobiusConfig to MainConfig and
+ * parameter sets.
+ *
+ * It only does model conversion right now so I can watch it, the MainConfig is
+ * not yet being used by anything.
+ *
+ * First obvious thing...we're going to need name constants for all these.
+ * They exist in UIParameterIds.h adapt that, but those don't have nice symbolic constants.
+ * we have an enum of ids but no fast way to search it.
+ *
+ */
+bool Upgrader::refreshMainConfig(MobiusConfig* old, MainConfig* neu)
+{
+    // wire this on for now
+    bool updated = true;
+
+    ValueSet* global = neu->getGlobals();
+    global->setInt(ParamInputLatency, old->getInputLatency());
+    global->setInt(ParamOutputLatency, old->getOutputLatency());
+    global->setInt(ParamNoiseFloor, old->getNoiseFloor());
+    global->setInt(ParamFadeFrames, old->getFadeFrames());
+    global->setInt(ParamMaxSyncDrift, old->getNoiseFloor());
+    global->setInt(ParamTrackCount, old->getTracks());
+    global->setInt(ParamMaxLoops, old->getMaxLoops());
+    global->setInt(ParamLongPress, old->getLongPress());
+    global->setInt(ParamSpreadRange, old->getSpreadRange());
+    global->setInt(ParamControllerActionThreshold, old->mControllerActionThreshold);
+    global->setBool(ParamMonitorAudio, old->isMonitorAudio());
+    global->setString(ParamQuickSave, old->getQuickSave());
+    global->setString(ParamActiveSetup, old->getStartingSetupName());
+    
+    // enumerations have been stored with symbolic names, which is all we really need
+    // but I'd like to test working backward to get the ordinals, need to streamline
+    // this process
+    convertEnum(ParamDriftCheckPoint, old->getDriftCheckPoint(), global);
+    convertEnum(ParamMidiRecordMode, old->getMidiRecordMode(), global);
+
+    Preset* preset = old->getPresets();
+    while (preset != nullptr) {
+        convertPreset(preset, neu);
+        preset = preset->getNextPreset();
+    }
+
+    Setup* setup = old->getSetups();
+    while (setup != nullptr) {
+        convertSetup(setup, neu);
+        setup = setup->getNextSetup();
+    }
+    
+    return updated;
+}
+
+/**
+ * Build the MslValue for an enumeration from this parameter name and ordinal
+ * and isntall it in the value set.
+ *
+ * This does some consnstency checking that isn't necessary but I want to detect
+ * when there are model inconsistencies while both still exist.
+ */
+void Upgrader::convertEnum(const char* name, int value, ValueSet* dest)
+{
+    // method 1: using UIParameter static objects
+    // this needs to go away
+    UIParameter* p = UIParameter::find(name);
+    const char* enumName = nullptr;
+    if (p == nullptr) {
+        Trace(1, "Upgrader: Unresolved old parameter %s", name);
+    }
+    else {
+        enumName = p->getEnumName(value);
+        if (enumName == nullptr)
+          Trace(1, "Upgrader: Unresolved old enumeration %s %d", name, value);
+    }
+
+    // method 2: using Symbol and ParameterProperties
+    Symbol* s = supervisor->getSymbols()->find(name);
+    if (s == nullptr) {
+        Trace(1, "Upgrader: Unresolved symbol %s", name);
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "Upgrader: Symbol not a parameter %s", name);
+    }
+    else {
+        const char* newEnumName = s->parameterProperties->getEnumName(value);
+        if (newEnumName == nullptr)
+          Trace(1, "Upgrader: Unresolved new enumeration %s %d", name, value);
+        else if (enumName != nullptr && strcmp(enumName, newEnumName) != 0)
+          Trace(1, "Upgrader: Enum name mismatch %s %s", enumName, newEnumName);
+
+        // so we can limp along, use the new name if the old one didn't match
+        if (enumName == nullptr)
+          enumName = newEnumName;
+    }
+
+    // if we were able to find a name from somewhere, install it
+    // otherwise something was traced
+    if (enumName != nullptr) {
+        MslValue* mv = new MslValue();
+        mv->setEnum(enumName, value);
+        MslValue* existing = dest->replace(name, mv);
+        if (existing != nullptr) {
+            // first time shouldn't have these, anything interesting to say here?
+            delete existing;
+        }
+    }
+}
+
+void Upgrader::convertPreset(Preset* preset, MainConfig* main)
+{
+    juce::String objname = juce::String("Preset:") + preset->getName();
+
+    ValueSet* neu = main->find(objname);
+    if (neu == nullptr) {
+        neu = new ValueSet();
+        neu->name = objname;
+        main->add(neu);
+    }
+
+    neu->setInt(ParamSubcycles, preset->getSubcycles());
+    convertEnum(ParamMultiplyMode, preset->getMultiplyMode(), neu);
+    convertEnum(ParamShuffleMode, preset->getShuffleMode(), neu);
+    neu->setBool(ParamAltFeedbackEnable, preset->isAltFeedbackEnable());
+    convertEnum(ParamEmptyLoopAction, preset->getEmptyLoopAction(), neu);
+    convertEnum(ParamEmptyTrackAction, preset->getEmptyTrackAction(), neu);
+    convertEnum(ParamTrackLeaveAction, preset->getTrackLeaveAction(), neu);
+    neu->setInt(ParamLoopCount, preset->getLoops());
+    convertEnum(ParamMuteMode, preset->getMuteMode(), neu);
+    convertEnum(ParamMuteCancel, preset->getMuteCancel(), neu);
+    neu->setBool(ParamOverdubQuantized, preset->isOverdubQuantized());
+    convertEnum(ParamQuantize, preset->getQuantize(), neu);
+    convertEnum(ParamBounceQuantize, preset->getBounceQuantize(), neu);
+    neu->setBool(ParamRecordResetsFeedback, preset->isRecordResetsFeedback());
+    neu->setBool(ParamSpeedRecord, preset->isSpeedRecord());
+    neu->setBool(ParamRoundingOverdub, preset->isRoundingOverdub());
+    convertEnum(ParamSwitchLocation, preset->getSwitchLocation(), neu);
+    convertEnum(ParamReturnLocation, preset->getReturnLocation(), neu);
+    convertEnum(ParamSwitchDuration, preset->getSwitchDuration(), neu);
+    convertEnum(ParamSwitchQuantize, preset->getSwitchQuantize(), neu);
+    convertEnum(ParamTimeCopyMode, preset->getTimeCopyMode(), neu);
+    convertEnum(ParamSoundCopyMode, preset->getSoundCopyMode(), neu);
+    neu->setInt(ParamRecordThreshold, preset->getRecordThreshold());
+    neu->setBool(ParamSwitchVelocity, preset->isSwitchVelocity());
+    neu->setInt(ParamMaxUndo, preset->getMaxUndo());
+    neu->setInt(ParamMaxRedo, preset->getMaxRedo());
+    neu->setBool(ParamNoFeedbackUndo, preset->isNoFeedbackUndo());
+    neu->setBool(ParamNoLayerFlattening, preset->isNoLayerFlattening());
+    neu->setBool(ParamSpeedShiftRestart, preset->isSpeedShiftRestart());
+    neu->setBool(ParamPitchShiftRestart, preset->isPitchShiftRestart());
+    neu->setInt(ParamSpeedStepRange, preset->getSpeedStepRange());
+    neu->setInt(ParamSpeedBendRange, preset->getSpeedBendRange());
+    neu->setInt(ParamPitchStepRange, preset->getPitchStepRange());
+    neu->setInt(ParamPitchBendRange, preset->getPitchBendRange());
+    neu->setInt(ParamTimeStretchRange, preset->getTimeStretchRange());
+    convertEnum(ParamSlipMode, preset->getSlipMode(), neu);
+    neu->setInt(ParamSlipTime, preset->getSlipTime());
+    neu->setInt(ParamAutoRecordTempo, preset->getAutoRecordTempo());
+    neu->setInt(ParamAutoRecordBars, preset->getAutoRecordBars());
+    convertEnum(ParamRecordTransfer, preset->getRecordTransfer(), neu);
+    convertEnum(ParamOverdubTransfer, preset->getOverdubTransfer(), neu);
+    convertEnum(ParamReverseTransfer, preset->getReverseTransfer(), neu);
+    convertEnum(ParamSpeedTransfer, preset->getSpeedTransfer(), neu);
+    convertEnum(ParamPitchTransfer, preset->getPitchTransfer(), neu);
+    convertEnum(ParamWindowSlideUnit, preset->getWindowSlideUnit(), neu);
+    convertEnum(ParamWindowEdgeUnit, preset->getWindowEdgeUnit(), neu);
+    neu->setInt(ParamWindowSlideAmount, preset->getWindowSlideAmount());
+    neu->setInt(ParamWindowEdgeAmount, preset->getWindowEdgeAmount());
+}
+
+void Upgrader::convertSetup(Setup* setup, MainConfig* main)
+{
+    juce::String objname = juce::String("Setup:") + setup->getName();
+
+    ValueSet* neu = main->find(objname);
+    if (neu == nullptr) {
+        neu = new ValueSet();
+        neu->name = objname;
+        main->add(neu);
+    }
+
+    neu->setString(ParamDefaultPreset, setup->getDefaultPresetName());
+    convertEnum(ParamDefaultSyncSource, setup->getSyncSource(), neu);
+    convertEnum(ParamDefaultTrackSyncUnit, setup->getSyncTrackUnit(), neu);
+    convertEnum(ParamSlaveSyncUnit, setup->getSyncUnit(), neu);
+    neu->setBool(ParamManualStart, setup->isManualStart());
+    neu->setInt(ParamMinTempo, setup->getMinTempo());
+    neu->setInt(ParamMaxTempo, setup->getMaxTempo());
+    neu->setInt(ParamBeatsPerBar, setup->getBeatsPerBar());
+    convertEnum(ParamMuteSyncMode, setup->getMuteSyncMode(), neu);
+    convertEnum(ParamResizeSyncAdjust, setup->getResizeSyncAdjust(), neu);
+    convertEnum(ParamSpeedSyncAdjust, setup->getSpeedSyncAdjust(), neu);
+    convertEnum(ParamRealignTime, setup->getRealignTime(), neu);
+    convertEnum(ParamOutRealign, setup->getOutRealignMode(), neu);
+    neu->setInt(ParamActiveTrack, setup->getActiveTrack());
+
+    SetupTrack* track = setup->getTracks();
+    int trackNumber = 1;
+    while (track != nullptr) {
+        convertSetupTrack(track, trackNumber, neu);
+        trackNumber++;
+        track = track->getNext();
+    }
+}
+
+void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* setup)
+{
+    ValueSet* tset = setup->getSubset(trackNumber);
+    if (tset == nullptr) {
+        tset = new ValueSet();
+        tset->scope = trackNumber;
+        setup->addSubset(tset, trackNumber);
+    }
+
+    tset->setString(ParamTrackName, track->getName());
+    tset->setString(ParamTrackPreset, track->getTrackPresetName());
+
+    // why is this a parameter?  it's transient
+    //tset->setString(ParamActivePreset, track->getActivePreset());
+
+    tset->setBool(ParamFocus, track->isFocusLock());
+
+    // should have been upgraded to a name by now
+    juce::String gname = track->getGroupName();
+    if (gname.length() > 0)
+      tset->setString(ParamGroup, gname.toUTF8());
+        
+    tset->setBool(ParamMono, track->isMono());
+    tset->setInt(ParamFeedback, track->getFeedback());
+    tset->setInt(ParamAltFeedback, track->getAltFeedback());
+    tset->setInt(ParamInput, track->getInputLevel());
+    tset->setInt(ParamOutput, track->getOutputLevel());
+    tset->setInt(ParamPan, track->getPan());
+    
+    convertEnum(ParamSyncSource, track->getSyncSource(), tset);
+    convertEnum(ParamTrackSyncUnit, track->getSyncTrackUnit(), tset);
+        
+    tset->setInt(ParamAudioInputPort, track->getAudioInputPort());
+    tset->setInt(ParamAudioOutputPort, track->getAudioOutputPort());
+    tset->setInt(ParamPluginInputPort, track->getPluginInputPort());
+    tset->setInt(ParamPluginOutputPort, track->getPluginOutputPort());
+
+    // these are defined as parameters but haven't been in the XML for some reason
+    /*
+    ParamSpeedOctave,
+    ParamSpeedStep,
+    ParamSpeedBend,
+    ParamPitchOctave,
+    ParamPitchStep,
+    ParamPitchBend,
+    ParamTimeStretch
+    */
+}    
+
+    
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

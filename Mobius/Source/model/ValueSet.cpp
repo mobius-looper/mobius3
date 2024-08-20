@@ -1,4 +1,4 @@
-
+ 
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
@@ -11,7 +11,7 @@ ValueSet::ValueSet()
 
 ValueSet::~ValueSet()
 {
-}
+    }
 
 /**
  * Container get is simple enough.  Null means unbound.
@@ -37,6 +37,12 @@ void ValueSet::set(juce::String key, MslValue& src)
 
 MslValue* ValueSet::alloc(juce::String key)
 {
+    // should only be calling this if we no there isn't one, but make sure
+    MslValue* current = map[key];
+    if (current != nullptr) {
+        Trace(1, "ValueSet: Not supposed to be replacing a value this way");
+        values.removeObject(current);
+    }
     MslValue* value = new MslValue();
     values.add(value);
     map.set(key, value);
@@ -50,15 +56,17 @@ MslValue* ValueSet::alloc(juce::String key)
 MslValue* ValueSet::replace(juce::String key, MslValue* value, bool deleteCurrent)
 {
     MslValue* current = map[key];
-    map.set(key, value);
-    // todo: see if it's already there
-    values.add(value);
-
-    if (deleteCurrent) {
-        delete current;
-        current = nullptr;
+    if (current != nullptr) {
+        values.removeObject(current, false);
+        if (deleteCurrent) {
+            delete current;
+            current = nullptr;
+        }
     }
-
+        
+    map.set(key, value);
+    values.add(value);
+    
     return current;
 }
 
@@ -128,16 +136,14 @@ void ValueSet::setBool(juce::String key, bool bval)
 
 /**
  * Return a subset for the given scope index.
- * Normaly these will be track numbers.  This will allocate memory
- * should be fully fleshed out by the shell before the kernel needs to access them.
+ * Normaly these will be track numbers.
+ * Should be fully fleshed out by the shell before the kernel needs to access them.
  */
 ValueSet* ValueSet::getSubset(int index)
 {
-    ValueSet* sub = subsets[index];
-    if (sub == nullptr) {
-        sub = new ValueSet();
-        addSubset(sub, index);
-    }
+    ValueSet* sub = nullptr;
+    if (index >= 0 && index < subsets.size())
+      sub = subsets[index];
     return sub;
 }
 
@@ -214,6 +220,11 @@ void ValueSet::render(juce::XmlElement* parent)
             }
         }
     }
+
+    for (auto sub : subsets) {
+        if (sub != nullptr)
+          sub->render(root);
+    }
 }
 
 /**
@@ -226,13 +237,13 @@ void ValueSet::parse(juce::XmlElement* root)
         Trace(1, "ValueSet: Asked to parse an element that was not ValueSet");
     }
     else {
+        name = root->getStringAttribute("name");
+        scope = root->getIntAttribute("scope");
+        
         for (auto* el : root->getChildIterator()) {
-            if (!el->hasTagName("Value")) {
-                Trace(1, "ValueSet: Encountered invalid element %s", el->getTagName().toUTF8());
-            }
-            else {
+            if (el->hasTagName("Value")) {
                 juce::String key = el->getStringAttribute("name");
-                MslValue* value = alloc(key);
+                MslValue* value = new MslValue();
                 
                 juce::String type = el->getStringAttribute("type");
 
@@ -259,13 +270,33 @@ void ValueSet::parse(juce::XmlElement* root)
                     // leave null
                     Trace(1, "ValueSet: Invalid value type %s", type.toUTF8());
                 }
-
+                
                 MslValue* existing = replace(key, value);
                 if (existing != nullptr) {
                     // must be parsing into an existin set, shouldn't happen
                     Trace(1, "ValueSet: Encountered existing value during parsing");
                     delete existing;
                 }
+            }
+            else if (el->hasTagName("ValueSet")) {
+                int trackNumber = el->getIntAttribute("scope");
+                if (trackNumber > 0) {
+                    ValueSet* sub = getSubset(trackNumber);
+                    if (sub == nullptr) {
+                        sub = new ValueSet();
+                        sub->scope = trackNumber;
+                        addSubset(sub, trackNumber);
+                    }
+                    sub->parse(el);
+                }
+                else {
+                    // todo: not expecting unnumbered sub scopes yet,
+                    // if we need to support this they must have a name
+                    Trace(1, "ValueSet: Subscope without scope number");
+                }
+            }
+            else {
+                Trace(1, "ValueSet: Encountered invalid element %s", el->getTagName().toUTF8());
             }
         }
     }

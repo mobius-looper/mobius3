@@ -124,6 +124,8 @@
         <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
         <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"
               file="Source/model/ParameterConstants.h"/>
+        <FILE id="JyBzf9" name="ParameterProperties.cpp" compile="1" resource="0"
+              file="Source/model/ParameterProperties.cpp"/>
         <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
         <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
         <FILE id="gNzjgL" name="SampleConfig.cpp" compile="1" resource="0"

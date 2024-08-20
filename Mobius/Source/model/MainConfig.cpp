@@ -2,8 +2,18 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "ValueSet.h"
 
 #include "MainConfig.h"
+
+MainConfig::MainConfig()
+{
+}
+
+MainConfig::~MainConfig()
+{
+}
+
 
 /**
  * Return the global parameter set.
@@ -35,6 +45,11 @@ ValueSet* MainConfig::find(juce::String name)
         }
     }
     return found;
+}
+
+void MainConfig::add(ValueSet* set)
+{
+    parameterSets.add(set);
 }
 
 //////////////////////////////////////////////////////////////////////

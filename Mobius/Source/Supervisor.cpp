@@ -254,14 +254,21 @@ bool Supervisor::start()
 
     meter("Initialize symbols");
 
-    // todo: Symbolizer should be handling all of this now
-    // merge with UISymbols and maybe VariableManager
-    
     // initialize symbol table
     symbolizer.initialize();
 
     // install variables
     variableManager.install();
+
+    // validate/upgrade the configuration files
+    // doing a gradual migration toward MainConfig from MobiusConfig
+    // this must be done after symbols are initialized
+    MobiusConfig* config = getMobiusConfig();
+    MainConfig* config2 = getMainConfig();
+    if (upgrader.upgrade(config, config2)) {
+        writeMobiusConfig(config);
+        writeMainConfig(config2);
+    }
     
     meter("MainWindow");
 
@@ -290,11 +297,11 @@ bool Supervisor::start()
         mainComponent->addAndMakeVisible(win);
 
         // get the size previoiusly used
-        UIConfig* config = getUIConfig();
+        UIConfig* uconfig = getUIConfig();
         int width = mainComponent->getWidth();
         int height = mainComponent->getHeight();
-        if (config->windowWidth > 0) width = config->windowWidth;
-        if (config->windowHeight > 0) height = config->windowHeight;
+        if (uconfig->windowWidth > 0) width = uconfig->windowWidth;
+        if (uconfig->windowHeight > 0) height = uconfig->windowHeight;
         mainComponent->setSize(width, height);
 
         // grab focus next ping
@@ -303,11 +310,11 @@ bool Supervisor::start()
     else {
         // plugins don't have the wrapper yet, so size the MainWindow
         // can't we just do this consistently in MainWindow for both?
-        UIConfig* config = getUIConfig();
+        UIConfig* uconfig = getUIConfig();
         int width = mainWindow->getWidth();
         int height = mainWindow->getHeight();
-        if (config->windowWidth > 0) width = config->windowWidth;
-        if (config->windowHeight > 0) height = config->windowHeight;
+        if (uconfig->windowWidth > 0) width = uconfig->windowWidth;
+        if (uconfig->windowHeight > 0) height = uconfig->windowHeight;
         mainWindow->setSize(width, height);
     }
     
@@ -333,7 +340,6 @@ bool Supervisor::start()
     // this is where the bulk of the engine initialization happens
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
-    MobiusConfig* config = getMobiusConfig();
     mobius->initialize(config);
 
     // listen for timing and config changes we didn't initiate
@@ -349,11 +355,8 @@ bool Supervisor::start()
 
     // prepare action bindings
     configureBindings(config);
-
-    
     
     meter("Devices");
-
     
     // initialize the audio device last if we're standalone after
     // everything is wired together and events can come in safely
@@ -394,27 +397,6 @@ bool Supervisor::start()
     // by other internal compenents during startup
     scriptenv.initialize(&symbols);
         
-    // temporary diagnostic dumps
-    
-    //Symbols.traceTable();
-    //Symbols.traceCorrespondence();
-    //DataModelDump();
-
-    //HelpCatalog* cat = getHelpCatalog();
-    //juce::String toxml = cat->toXml();
-    //TraceRaw("HelpCatalog XML\n");
-    //TraceRaw(toxml.toUTF8());
-
-    // test this
-#if 0    
-    SuperDumper sd {this};
-    // sd.test();
-    mobius->dump(sd);
-    sd.write("mobius.txt");
-    UIParameterName::dump();
-#endif
-
-    
     meter(nullptr);
 
     Trace(2, "Supervisor::start finished\n");
@@ -1016,10 +998,6 @@ MobiusConfig* Supervisor::getMobiusConfig()
             neu = new MobiusConfig();
         }
 
-        // adjust for model changes, may save the file
-        if (upgrader.upgrade(neu))
-          writeMobiusConfig(neu);
-        
         mobiusConfig.reset(neu);
     }
     return mobiusConfig.get();

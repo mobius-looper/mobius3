@@ -24,12 +24,13 @@ class MainConfig
 {
   public:
 
-    MainConfig() {}
-    ~MainConfig() {}
+    MainConfig();
+    ~MainConfig();
 
     class ValueSet* getGlobals();
     ValueSet* find(juce::String name);
-
+    void add(ValueSet* set);
+    
     juce::String toXml();
     void parseXml(juce::String xml);
 
