@@ -11,6 +11,16 @@
 
 #include "JuceUtil.h"
 
+juce::Font JuceUtil::getFont(int height)
+{
+    return juce::Font(juce::FontOptions((float)height));
+}
+
+juce::Font JuceUtil::getFontf(float height)
+{
+    return juce::Font(juce::FontOptions(height));
+}
+
 void JuceUtil::dumpComponent(const char* title, juce::Component* c, int indent)
 {
     trace("*** %s\n", title);
