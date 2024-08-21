@@ -68,7 +68,7 @@ int YanInput::getPreferredWidth()
     // todo: I have various calculatesion that use "M" width but this always results
     // in something way too large when using proportional fonts with mostly lower case
     // here let's try using e instead
-    juce::Font font((float)availableHeight);
+    juce::Font font(juce::FontOptions((float)availableHeight));
     int emWidth = font.getStringWidth("e");
     preferred = emWidth * chars;
 

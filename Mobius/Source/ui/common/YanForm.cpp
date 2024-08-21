@@ -36,7 +36,7 @@ void YanForm::add(class YanField* f)
     // if you want to add bold, should do it consistently everywyere and
     // it looks a little thick in smaller forms
     //label->setFont (juce::Font ((float)RowHeight, juce::Font::bold));
-    label->setFont (juce::Font ((float)RowHeight));
+    label->setFont (juce::Font (juce::FontOptions((float)RowHeight)));
     
     if (labelColor != juce::Colour())
       label->setColour(juce::Label::textColourId, labelColor);
@@ -58,7 +58,7 @@ int YanForm::getPreferredWidth()
 int YanForm::getLabelAreaWidth()
 {
     int areaWidth = 0;
-    juce::Font font ((float)RowHeight);
+    juce::Font font (juce::FontOptions((float)RowHeight));
     
     if (labelCharWidth > 0) {
         // todo: I have various calculatesion that use "M" width but this always results

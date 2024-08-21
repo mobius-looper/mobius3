@@ -208,7 +208,7 @@ void TestPanel::layoutButtonRow(juce::Array<juce::Button*>& buttons, juce::Recta
         if (width == 0) {
             //juce::Font font (area.getHeight() - 4);
             //juce::Font font (area.getHeight() * 0.75);
-            juce::Font font = juce::Font(area.getHeight() * 0.75f);
+            juce::Font font = juce::Font(juce::FontOptions(area.getHeight() * 0.75f));
             //width = font.getStringWidth(button->getButtonText()) + 20;
             width = font.getStringWidth(button->getButtonText());
         }
@@ -237,7 +237,7 @@ void TestPanel::layoutTestButtons(juce::Rectangle<int>& area, juce::OwnedArray<T
     int buttonLeft = area.getX();
     juce::Rectangle<int> testRow = area.removeFromTop(TestPanelTestButtonHeight);
     for (auto button : buttons) {
-        juce::Font font = juce::Font(testRow.getHeight() * 0.75f);
+        juce::Font font = juce::Font(juce::FontOptions(testRow.getHeight() * 0.75f));
         int width = font.getStringWidth(button->getButtonText());
         if (buttonLeft + width >= testRow.getWidth()) {
             // overflow, add another row
@@ -282,7 +282,7 @@ void TestPanel::paint(juce::Graphics& g)
     juce::Rectangle<int> header = area.removeFromTop(TestPanelHeaderHeight);
     g.setColour(juce::Colours::blue);
     g.fillRect(header);
-    juce::Font font (TestPanelHeaderHeight * 0.8f);
+    juce::Font font (juce::FontOptions(TestPanelHeaderHeight * 0.8f));
     g.setFont(font);
     g.setColour(juce::Colours::white);
     g.drawText(" Test Driver", header, juce::Justification::centred);

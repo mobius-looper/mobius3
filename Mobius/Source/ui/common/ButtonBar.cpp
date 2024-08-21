@@ -61,7 +61,7 @@ int ButtonBar::getMaxButtonWidth()
     // be an unknown percentage of the height given
     // but we'll err on the larger side
     // update: larger size gives too much side padding
-    juce::Font font = juce::Font(getHeight() * 0.75f);
+    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.75f));
     int maxWidth = 0;
 
     const juce::Array<Component*>& children = getChildren();

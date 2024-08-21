@@ -143,7 +143,7 @@ juce::String ParametersElement::getDisplayName(Symbol* s)
 
 int ParametersElement::getPreferredWidth()
 {
-    juce::Font font = juce::Font(ParametersRowHeight);
+    juce::Font font = juce::Font(juce::FontOptions((float)ParametersRowHeight));
 
     int maxName = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {
@@ -207,7 +207,7 @@ void ParametersElement::paint(juce::Graphics& g)
     StatusElement::paint(g);
     if (isIdentify()) return;
     
-    g.setFont(juce::Font(ParametersRowHeight));
+    g.setFont(juce::Font(juce::FontOptions((float)ParametersRowHeight)));
 
     int rowTop = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {

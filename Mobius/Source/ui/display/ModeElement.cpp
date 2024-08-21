@@ -76,7 +76,7 @@ void ModeElement::paint(juce::Graphics& g)
     g.setColour(juce::Colour(MobiusBlue));
     // do we need this?  drawText should make it fit
     // yes, if the current font is small it will be left small
-    juce::Font font = juce::Font(getHeight() * 0.8f);
+    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
     g.setFont(font);
     g.drawText(current, 0, 0, getWidth(), getHeight(), juce::Justification::left);
     

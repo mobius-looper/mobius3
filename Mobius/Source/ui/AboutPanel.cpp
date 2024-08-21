@@ -46,7 +46,7 @@ void AboutContent::resized()
     area.removeFromTop(10);
     juce::Rectangle productArea = area.removeFromTop(18);
 
-    juce::Font font ((float)(productArea.getHeight()));
+    juce::Font font (juce::FontOptions((float)(productArea.getHeight())));
     int productWidth = font.getStringWidth(product.getText());
     // there is still a gap between the product text and the hyperlink
     // not sure if the getStringWidth is inaccurate, or if there

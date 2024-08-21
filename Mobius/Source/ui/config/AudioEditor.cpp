@@ -283,7 +283,7 @@ void AudioEditor::resized()
     auto topLine (area.removeFromTop(20));
     
     // conversion from 'ValueType' to 'float', possible loss of data
-    int labelWidth = juce::Font((float)topLine.getHeight()).getStringWidth(cpuUsageLabel.getText());
+    int labelWidth = juce::Font(juce::FontOptions((float)topLine.getHeight())).getStringWidth(cpuUsageLabel.getText());
     cpuUsageLabel.setBounds(topLine.removeFromLeft(labelWidth));
     cpuUsageText.setBounds(topLine);
 

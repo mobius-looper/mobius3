@@ -193,7 +193,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
 
     // events
     // clear it out first?
-    juce::Font font(MarkerTextHeight);
+    juce::Font font(juce::FontOptions((float)MarkerTextHeight));
     g.setFont(font);
     int eventInfoLeft = thermoLeft;
     int eventInfoTop = (BorderThickness * 2) + MeterBarHeight;

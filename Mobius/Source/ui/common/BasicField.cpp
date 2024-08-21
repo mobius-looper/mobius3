@@ -42,7 +42,7 @@ void BasicField::setLabelRightJustify(bool b)
 void BasicField::autoSize()
 {
     // let the label breathe
-    juce::Font font (BasicFieldDefaultHeight);
+    juce::Font font (juce::FontOptions(BasicFieldDefaultHeight));
 
     // you typically want something wide enough for the thing
     // being typed in, numbers are a few characters and names are more
@@ -88,7 +88,7 @@ void BasicField::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    juce::Font font ((float)getHeight());
+    juce::Font font(juce::FontOptions((float)getHeight()));
     // M is too large, experiment with e
     int emWidth = font.getStringWidth("e");
     int textWidth = emWidth * charWidth;

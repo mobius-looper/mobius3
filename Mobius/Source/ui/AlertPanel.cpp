@@ -60,7 +60,7 @@ AlertContent::AlertContent(Supervisor* s)
 {
     supervisor = s;
     text.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
-    text.setFont(juce::Font(FontHeight));
+    text.setFont(juce::Font(juce::FontOptions(FontHeight)));
     text.setJustificationType(juce::Justification::centred);
     
     addAndMakeVisible(text);

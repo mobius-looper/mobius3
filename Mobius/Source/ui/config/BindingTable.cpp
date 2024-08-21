@@ -504,7 +504,7 @@ void BindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
     
     // how expensive is this, should we be caching it after the row height changes?
-    g.setFont(juce::Font(height * .66f));
+    g.setFont(juce::Font(juce::FontOptions(height * .66f)));
 
     juce::String cell = getCellText(rowNumber, columnId);
 

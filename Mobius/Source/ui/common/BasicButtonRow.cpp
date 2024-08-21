@@ -60,7 +60,7 @@ int BasicButtonRow::getPreferredHeight()
  */
 void BasicButtonRow::resized()
 {
-    juce::Font font((float)getHeight());
+    juce::Font font(juce::FontOptions((float)getHeight()));
 
     int maxWidth = 0;
     for (auto button : buttons) {

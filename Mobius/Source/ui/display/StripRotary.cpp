@@ -89,7 +89,7 @@ int StripRotary::getPreferredWidth()
     // Parameters should always have display names
     const char* label = definition->parameter->getDisplayableName();
     if (label != nullptr) {
-        juce::Font font(LabelFontHeight);
+        juce::Font font(juce::FontOptions((float)LabelFontHeight));
         maxWidth = font.getStringWidth(label);
     }
 
@@ -128,7 +128,7 @@ void StripRotary::paint(juce::Graphics& g)
     const char* label = definition->parameter->getDisplayableName();
     int top = RotaryDiameter + LabelGap;
     g.setColour(juce::Colour(MobiusBlue));
-    g.setFont(juce::Font(LabelFontHeight));
+    g.setFont(juce::Font(juce::FontOptions((float)LabelFontHeight)));
     g.drawText(juce::String(label), 0, top, getWidth(), LabelFontHeight,
                juce::Justification::centred);
 }

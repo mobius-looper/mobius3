@@ -23,7 +23,7 @@ AlertComponent::AlertComponent(Alerter* a, juce::String message)
 
     label.setText(text, juce::NotificationType::dontSendNotification);
     label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
-    label.setFont(juce::Font(AlertComponentFontHeight));
+    label.setFont(juce::Font(juce::FontOptions(AlertComponentFontHeight)));
     addAndMakeVisible(label);
                   
     okButton.addListener(this);

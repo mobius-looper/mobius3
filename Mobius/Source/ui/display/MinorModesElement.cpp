@@ -105,7 +105,7 @@ void MinorModesElement::paint(juce::Graphics& g)
     if (isIdentify()) return;
     
     g.setColour(juce::Colour((juce::uint32)MobiusBlue));
-    juce::Font font = juce::Font(getHeight() * 0.8f);
+    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
     g.setFont(font);
 
     juce::String modes;

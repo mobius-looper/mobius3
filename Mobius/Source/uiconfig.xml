@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1200" windowHeight="872" activeButtonSet="Default"
+<UIConfig windowWidth="1200" windowHeight="871" activeButtonSet="Default"
           activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="182"/>

@@ -27,11 +27,13 @@ const int CounterDigits = 13;
 
 const int BorderGap = 1;
 
+const int CounterFontHeight = CounterHeight - (BorderGap * 2);
+
 CounterElement::CounterElement(StatusArea* area) :
     StatusElement(area, "CounterElement")
 {
     // not sure if we should cache this
-    font = juce::Font(CounterHeight - (BorderGap * 2));
+    juce::Font font (juce::FontOptions((float)CounterFontHeight));
     digitWidth = font.getStringWidth("M");
 }
 
@@ -92,6 +94,7 @@ void CounterElement::paint(juce::Graphics& g)
     // loop number (1), gap (1), loop seconds (3) right, dot (1), loop tenths (1) left, gap (1),
     // cycle (2) right, slash (1), cycles (2) left
     // total 13
+    juce::Font font (juce::FontOptions((float)CounterFontHeight));
     g.setFont(font);
     g.setColour(juce::Colour(MobiusBlue));
     

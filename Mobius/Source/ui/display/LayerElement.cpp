@@ -177,7 +177,7 @@ void LayerElement::paint(juce::Graphics& g)
 
     int preLoss = view.getPreLoss();
     if (preLoss > 0) {
-        g.setFont(juce::Font(LayerLossHeight));
+        g.setFont(juce::Font(juce::FontOptions((float)LayerLossHeight)));
         g.setColour(juce::Colours::white);
         g.drawText(juce::String(preLoss),
                    LayerInset, LayerInset,
@@ -187,7 +187,7 @@ void LayerElement::paint(juce::Graphics& g)
 
     int postLoss = view.getPostLoss();
     if (postLoss) {
-        g.setFont(juce::Font(LayerLossHeight));
+        g.setFont(juce::Font(juce::FontOptions((float)LayerLossHeight)));
         g.setColour(juce::Colours::white);
         g.drawText(juce::String(postLoss),
                    getWidth() - LayerInset - 30, LayerInset,

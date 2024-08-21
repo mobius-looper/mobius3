@@ -35,7 +35,6 @@ class CounterElement : public StatusElement
     // to go back there
     int sampleRate = 0;
 
-    juce::Font font;
     int digitWidth = 0;
 };
 

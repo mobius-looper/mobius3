@@ -149,7 +149,7 @@ void Field::initLabel()
 
     // TODO: use JLabel and stop using attachments
     label.setText (getDisplayableName(), juce::dontSendNotification);
-    label.setFont (juce::Font (16.0f, juce::Font::bold));
+    label.setFont (juce::Font (juce::FontOptions(16.0f, juce::Font::bold)));
     label.setColour (juce::Label::textColourId, juce::Colours::orange);
     // the default is centeredLeft, I think this is used when the
     // label is given bounds larger than necessary to contain the font text
