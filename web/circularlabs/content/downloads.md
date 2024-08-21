@@ -20,6 +20,13 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 19
+- Dispay Layouts properties for alertHeight and alertDuration
+- Don't popup an alert when ReloadScripts is used from a binding
+- Fix function property propagation without requiring restart
+- Add Focus Locked Parameters to the GroupDefinition panel
+- Add selection table for "Reset Retain" option on parameters
+
 ## Build 17
 - Fix intermittent crash on plugin loading when the number of input ports is more than 2
 
