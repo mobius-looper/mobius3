@@ -15,7 +15,7 @@ class AlertElement : public StatusElement, public Supervisor::AlertListener
     
     AlertElement(class StatusArea* a);
     ~AlertElement();
-    void configure();
+    void configure() override;
 
     void alertReceived(juce::String msg) override;
     

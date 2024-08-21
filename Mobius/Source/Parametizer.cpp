@@ -41,7 +41,11 @@ void Parametizer::initialize()
     // start with Bindings
     MobiusConfig* mconfig = supervisor->getMobiusConfig();
     BindingSet* bindings = mconfig->getBindingSets();
-    Binding* binding = bindings->getBindings();
+    // bindings can be nullptr on a build with no install
+    Binding* binding = nullptr;
+    if (bindings != nullptr)
+      binding = bindings->getBindings();
+    
     while (binding != nullptr) {
         if (binding->trigger == TriggerHost) {
             Symbol* s = supervisor->getSymbols()->intern(binding->getSymbolName());

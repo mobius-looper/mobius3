@@ -12,6 +12,8 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="ThJsYd" name="Upgrader.cpp" compile="1" resource="0" file="../Mobius/Source/Upgrader.cpp"/>
+      <FILE id="BNxMVK" name="Upgrader.h" compile="0" resource="0" file="../Mobius/Source/Upgrader.h"/>
       <FILE id="PboNeQ" name="SyncTrace.cpp" compile="1" resource="0" file="../Mobius/Source/SyncTrace.cpp"/>
       <FILE id="rGQJAG" name="SyncTrace.h" compile="0" resource="0" file="../Mobius/Source/SyncTrace.h"/>
       <GROUP id="{488A10F9-CEDB-CDD4-A066-7B71391B0EFE}" name="script">
@@ -152,6 +154,8 @@
               file="../Mobius/Source/model/GroupDefinition.h"/>
         <FILE id="YdQfhl" name="HelpCatalog.cpp" compile="1" resource="0" file="../Mobius/Source/model/HelpCatalog.cpp"/>
         <FILE id="PExAa2" name="HelpCatalog.h" compile="0" resource="0" file="../Mobius/Source/model/HelpCatalog.h"/>
+        <FILE id="HK9jii" name="MainConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/MainConfig.cpp"/>
+        <FILE id="IHCjvP" name="MainConfig.h" compile="0" resource="0" file="../Mobius/Source/model/MainConfig.h"/>
         <FILE id="XLFumN" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/Messages.h"/>
         <FILE id="xhGhj4" name="MobiusConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/MobiusConfig.cpp"/>
@@ -168,6 +172,10 @@
         <FILE id="SjHrT6" name="OscConfig.h" compile="0" resource="0" file="../Mobius/Source/model/OscConfig.h"/>
         <FILE id="wMAPL6" name="ParameterConstants.h" compile="0" resource="0"
               file="../Mobius/Source/model/ParameterConstants.h"/>
+        <FILE id="oZ04ba" name="ParameterProperties.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/ParameterProperties.cpp"/>
+        <FILE id="fMicwR" name="ParameterProperties.h" compile="0" resource="0"
+              file="../Mobius/Source/model/ParameterProperties.h"/>
         <FILE id="gLFmjn" name="Preset.cpp" compile="1" resource="0" file="../Mobius/Source/model/Preset.cpp"/>
         <FILE id="bFBKiP" name="Preset.h" compile="0" resource="0" file="../Mobius/Source/model/Preset.h"/>
         <FILE id="tisuQ3" name="SampleConfig.cpp" compile="1" resource="0"
@@ -217,6 +225,8 @@
         <FILE id="IUOIE3" name="UserVariable.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/UserVariable.cpp"/>
         <FILE id="VSX9TG" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/UserVariable.h"/>
+        <FILE id="o3YV9K" name="ValueSet.cpp" compile="1" resource="0" file="../Mobius/Source/model/ValueSet.cpp"/>
+        <FILE id="KQlCc6" name="ValueSet.h" compile="0" resource="0" file="../Mobius/Source/model/ValueSet.h"/>
         <FILE id="ht00ZI" name="VariableDefinition.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/VariableDefinition.cpp"/>
         <FILE id="XUAlYr" name="VariableDefinition.h" compile="0" resource="0"
