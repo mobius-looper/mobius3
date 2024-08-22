@@ -660,6 +660,21 @@ void MslSession::mslVisit(MslProc* proc)
  * useful behavior where the LHS could be any expression that produces a name
  * literal string:    "x"=y  or foo()=y.  While possible and relatively easy
  * that's hard to explain.
+ *
+ * This became more complex with the introduction of default values/optional arguments
+ * and keyword arguments.
+ *
+ * In the argument declaration block of a proc, an assignment is used to declare
+ * an argument with a default value:
+ *
+ *     proc foo(a b c=1)
+ *
+ * When the stack frame for a call is pushed MslBindings are created for each argument
+ * as usual, then a frame is pushed to evaluate the assignment RHS for any arguments that
+ * have initializers.  The interpretation of the assignment is the same as for any other
+ * assignment, the assignment will reach the binding for the argument in the call which will
+ * be immediately above it on the stack.
+ *
  */
 void MslSession::mslVisit(MslAssignment* ass)
 {
