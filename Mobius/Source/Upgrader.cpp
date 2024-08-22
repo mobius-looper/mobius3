@@ -50,8 +50,11 @@ bool Upgrader::upgrade(MobiusConfig* config, MainConfig* main)
       updated = true;
 
     // not active yet, but start testing the conversion
-    if (refreshMainConfig(config, main))
-      updated = true;
+    bool convertValueSets = false;
+    if (convertValueSets) {
+        if (refreshMainConfig(config, main))
+          updated = true;
+    }
 
     return updated;
 }
