@@ -15,6 +15,7 @@
 #include "../../model/MobiusState.h"
 #include "../../model/Symbol.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "TrackStrip.h"
 #include "StripElement.h"
@@ -89,7 +90,7 @@ int StripRotary::getPreferredWidth()
     // Parameters should always have display names
     const char* label = definition->parameter->getDisplayableName();
     if (label != nullptr) {
-        juce::Font font(juce::FontOptions((float)LabelFontHeight));
+        juce::Font font(JuceUtil::getFont(LabelFontHeight));
         maxWidth = font.getStringWidth(label);
     }
 
@@ -128,7 +129,7 @@ void StripRotary::paint(juce::Graphics& g)
     const char* label = definition->parameter->getDisplayableName();
     int top = RotaryDiameter + LabelGap;
     g.setColour(juce::Colour(MobiusBlue));
-    g.setFont(juce::Font(juce::FontOptions((float)LabelFontHeight)));
+    g.setFont(JuceUtil::getFont(LabelFontHeight));
     g.drawText(juce::String(label), 0, top, getWidth(), LabelFontHeight,
                juce::Justification::centred);
 }

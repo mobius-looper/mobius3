@@ -168,7 +168,7 @@ void MultiSelectDrag::resized()
 void MultiSelectDrag::paint(juce::Graphics& g)
 {
     if (label.length() > 0) {
-        juce::Font font = juce::Font(juce::FontOptions((float)MultiSelectDragLabelHeight));
+        juce::Font font = juce::Font(JuceUtil::getFont(MultiSelectDragLabelHeight));
         g.setFont(font);
         g.setColour (juce::Colours::white);
         // The ListBox has a 1 pixel border for the drop highlight

@@ -6,6 +6,7 @@
 
 #include "../../model/MobiusState.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "LoopWindowElement.h"
@@ -61,7 +62,7 @@ void LoopWindowElement::paint(juce::Graphics& g)
     if (isIdentify()) return;
     
     g.setColour(juce::Colour(MobiusBlue));
-    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
+    juce::Font font (JuceUtil::getFontf(getHeight() * 0.8f));
     g.setFont(font);
 
     // don't remember what this was trying to show, keeping the old

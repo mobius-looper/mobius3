@@ -12,6 +12,7 @@
 
 #include "../../model/MobiusState.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "MinorModesElement.h"
@@ -105,7 +106,7 @@ void MinorModesElement::paint(juce::Graphics& g)
     if (isIdentify()) return;
     
     g.setColour(juce::Colour((juce::uint32)MobiusBlue));
-    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
+    juce::Font font (JuceUtil::getFontf(getHeight() * 0.8f));
     g.setFont(font);
 
     juce::String modes;

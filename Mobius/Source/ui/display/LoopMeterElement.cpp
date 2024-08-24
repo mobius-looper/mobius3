@@ -15,6 +15,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/Query.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "LoopMeterElement.h"
@@ -193,7 +194,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
 
     // events
     // clear it out first?
-    juce::Font font(juce::FontOptions((float)MarkerTextHeight));
+    juce::Font font(JuceUtil::getFont(MarkerTextHeight));
     g.setFont(font);
     int eventInfoLeft = thermoLeft;
     int eventInfoTop = (BorderThickness * 2) + MeterBarHeight;

@@ -6,6 +6,7 @@
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "TrackStrip.h"
 #include "StripElement.h"
@@ -132,7 +133,7 @@ void StripTrackNumber::paint(juce::Graphics& g)
     g.setColour(textColor);
     
     if (trackName.length() == 0) {
-        juce::Font font(juce::FontOptions((float)getHeight()));
+        juce::Font font(JuceUtil::getFont(getHeight()));
 
         g.setFont(font);
 
@@ -143,11 +144,11 @@ void StripTrackNumber::paint(juce::Graphics& g)
                    juce::Justification::centred);
     }
     else {
-        juce::Font font(juce::FontOptions((float)getHeight()));
+        juce::Font font(JuceUtil::getFont(getHeight()));
         // hacking around the unpredictable truncation, if the name is beyond
         // a certain length, reduce the font height
         if (trackName.length() >= 10)
-          font = juce::Font(juce::FontOptions((float)(getHeight() * 0.75f)));
+          font = JuceUtil::getFontf(getHeight() * 0.75f);
           
         // not sure about font sizes, we're going to use fit so I think
         // that will size down as necessary
@@ -270,11 +271,11 @@ void StripGroupName::paint(juce::Graphics& g)
     g.setColour(textColor);
    
     if (groupName.length() > 0) {
-        juce::Font font(juce::FontOptions((float)getHeight()));
+        juce::Font font(JuceUtil::getFont(getHeight()));
         // hacking around the unpredictable truncation, if the name is beyond
         // a certain length, reduce the font height
         if (groupName.length() >= 10)
-          font = juce::Font(juce::FontOptions((float)(getHeight() * 0.75f)));
+          font = JuceUtil::getFontf(getHeight() * 0.75f);
           
         // not sure about font sizes, we're going to use fit so I think
         // that will size down as necessary

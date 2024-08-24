@@ -151,7 +151,7 @@ void BasePanel::paint(juce::Graphics& g)
         //g.setColour(juce::Colour(0xFF1052E8));
         g.setColour(juce::Colour((juce::uint32)-15707416));
         g.fillRect(header);
-        juce::Font font (juce::FontOptions(HeaderHeight * 0.75f));
+        juce::Font font (JuceUtil::getFontf(HeaderHeight * 0.75f));
         // looks a little too thick without making the header taller
         //font.setBold(true);
         g.setFont(font);

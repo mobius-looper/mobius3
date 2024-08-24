@@ -54,6 +54,7 @@
 #include "../../model/UIConfig.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
+#include "../JuceUtil.h"
 
 #include "Colors.h"
 #include "ActionButtons.h"
@@ -189,7 +190,7 @@ int ActionButton::getPreferredWidth(int height)
 {
     // we're control Font now so don't need this
     // changeWidthToFitText(height);
-    juce::Font font = juce::Font(juce::FontOptions(height * 0.75f));
+    juce::Font font (JuceUtil::getFontf(height * 0.75f));
     int minWidth = font.getStringWidth(getButtonText());
     // add some padding around the edges
     minWidth += 20;
@@ -232,7 +233,7 @@ void ActionButton::paintButton(juce::Graphics& g, juce::Colour background, juce:
     g.fillRoundedRectangle((float)bounds.getX(), (float)bounds.getY(),
                            (float)bounds.getWidth(), (float)bounds.getHeight(), 8.0f);
     g.setColour(textColour);
-    g.setFont(juce::Font(juce::FontOptions(getHeight() * 0.75f)));
+    g.setFont(JuceUtil::getFontf(getHeight() * 0.75f));
     g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
 }    
 

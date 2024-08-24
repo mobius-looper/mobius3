@@ -13,6 +13,7 @@
 
 #include <JuceHeader.h>
 
+#include "../JuceUtil.h"
 #include "BasicButtonRow.h"
 
 BasicButtonRow::BasicButtonRow()
@@ -60,7 +61,7 @@ int BasicButtonRow::getPreferredHeight()
  */
 void BasicButtonRow::resized()
 {
-    juce::Font font(juce::FontOptions((float)getHeight()));
+    juce::Font font(JuceUtil::getFont(getHeight()));
 
     int maxWidth = 0;
     for (auto button : buttons) {

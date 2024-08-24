@@ -28,6 +28,7 @@
 #include "../../Symbolizer.h"
 #include "../../mobius/MobiusInterface.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 
@@ -143,7 +144,7 @@ juce::String ParametersElement::getDisplayName(Symbol* s)
 
 int ParametersElement::getPreferredWidth()
 {
-    juce::Font font = juce::Font(juce::FontOptions((float)ParametersRowHeight));
+    juce::Font font (JuceUtil::getFont(ParametersRowHeight));
 
     int maxName = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {
@@ -207,7 +208,7 @@ void ParametersElement::paint(juce::Graphics& g)
     StatusElement::paint(g);
     if (isIdentify()) return;
     
-    g.setFont(juce::Font(juce::FontOptions((float)ParametersRowHeight)));
+    g.setFont(JuceUtil::getFont(ParametersRowHeight));
 
     int rowTop = 0;
     for (int i = 0 ; i < parameters.size() ; i++) {

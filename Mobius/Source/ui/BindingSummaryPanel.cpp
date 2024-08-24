@@ -5,6 +5,7 @@
 #include "../model/MobiusConfig.h"
 #include "../model/Binding.h"
 #include "../Supervisor.h"
+#include "JuceUtil.h"
 
 #include "BindingSummaryPanel.h"
 
@@ -255,7 +256,7 @@ void BindingSummary::paintCell(juce::Graphics& g, int rowNumber, int columnId,
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
     
     // how expensive is this, should we be caching it after the row height changes?
-    g.setFont(juce::Font(juce::FontOptions(height * .66f)));
+    g.setFont(juce::Font(JuceUtil::getFontf(height * .66f)));
 
     juce::String cell = getCellText(rowNumber, columnId);
 

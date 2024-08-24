@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 
+#include "ui/JuceUtil.h"
 #include "Supervisor.h"
 #include "Alerter.h"
 
@@ -23,7 +24,7 @@ AlertComponent::AlertComponent(Alerter* a, juce::String message)
 
     label.setText(text, juce::NotificationType::dontSendNotification);
     label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::red);
-    label.setFont(juce::Font(juce::FontOptions(AlertComponentFontHeight)));
+    label.setFont(JuceUtil::getFont(AlertComponentFontHeight));
     addAndMakeVisible(label);
                   
     okButton.addListener(this);

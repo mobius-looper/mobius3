@@ -6,6 +6,7 @@
 
 #include "../../model/MobiusState.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "TempoElement.h"
@@ -105,7 +106,7 @@ void TempoElement::paint(juce::Graphics& g)
         }
 
         g.setColour(juce::Colour(MobiusBlue));
-        juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
+        juce::Font font (JuceUtil::getFontf(getHeight() * 0.8f));
         g.setFont(font);
         g.drawText(status, 0, 0, getWidth(), getHeight(), juce::Justification::left);
     }

@@ -22,6 +22,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../JuceUtil.h"
 #include "BasicInput.h"
 
 const int BasicInputDefaultHeight = 20;
@@ -101,7 +102,7 @@ void BasicInput::setLabelRightJustify(bool b)
 void BasicInput::autoSize()
 {
     // let the label breathe
-    juce::Font font (juce::Font(juce::FontOptions((float)BasicInputDefaultHeight)));
+    juce::Font font (JuceUtil::getFont(BasicInputDefaultHeight));
 
     // you typically want something wide enough for the thing
     // being typed in, numbers are a few characters and names are more
@@ -147,7 +148,7 @@ void BasicInput::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    juce::Font font (juce::Font(juce::FontOptions((float)getHeight())));
+    juce::Font font (JuceUtil::getFont(getHeight()));
     // M is too large, experiment with e
     int emWidth = font.getStringWidth("e");
     int textWidth = emWidth * charWidth;
@@ -250,7 +251,7 @@ BasicCheckbox::~BasicCheckbox()
 void BasicCheckbox::autoSize()
 {
     // let the label breathe
-    juce::Font font (juce::FontOptions((float)BasicInputDefaultHeight));
+    juce::Font font (JuceUtil::getFont(BasicInputDefaultHeight));
 
     int emWidth = font.getStringWidth("e");
     int labelWidth = 0;
@@ -268,7 +269,7 @@ void BasicCheckbox::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    juce::Font font (juce::Font(juce::FontOptions((float)getHeight())));
+    juce::Font font (JuceUtil::getFont(getHeight()));
     // M is too large, experiment with e
     int emWidth = font.getStringWidth("e");
     int labelWidth = 0;

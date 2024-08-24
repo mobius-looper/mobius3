@@ -282,8 +282,8 @@ void AudioEditor::resized()
     // carve out a 20 height region for the cpu label and text
     auto topLine (area.removeFromTop(20));
     
-    // conversion from 'ValueType' to 'float', possible loss of data
-    int labelWidth = juce::Font(juce::FontOptions((float)topLine.getHeight())).getStringWidth(cpuUsageLabel.getText());
+    juce::Font font (JuceUtil::getFont(topLine.getHeight()));
+    int labelWidth = font.getStringWidth(cpuUsageLabel.getText());
     cpuUsageLabel.setBounds(topLine.removeFromLeft(labelWidth));
     cpuUsageText.setBounds(topLine);
 

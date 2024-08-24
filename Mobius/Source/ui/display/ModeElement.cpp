@@ -6,6 +6,7 @@
 #include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "ModeElement.h"
@@ -76,7 +77,7 @@ void ModeElement::paint(juce::Graphics& g)
     g.setColour(juce::Colour(MobiusBlue));
     // do we need this?  drawText should make it fit
     // yes, if the current font is small it will be left small
-    juce::Font font = juce::Font(juce::FontOptions(getHeight() * 0.8f));
+    juce::Font font (JuceUtil::getFontf(getHeight() * 0.8f));
     g.setFont(font);
     g.drawText(current, 0, 0, getWidth(), getHeight(), juce::Justification::left);
     

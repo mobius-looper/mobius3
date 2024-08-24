@@ -25,7 +25,8 @@ void JLabel::init()
     // examples show this
     // this creates a font object with a size and style but not
     // a typeface.  Need to explore typefaces
-    label.setFont (juce::Font (juce::FontOptions(16.0f, juce::Font::bold)));
+    // label.setFont (juce::Font (juce::FontOptions(16.0f, juce::Font::bold)));
+    label.setFont (juce::Font (16.0f, juce::Font::bold));
 
     // I'm not seeing a way to explicitly say that a label background
     // is transparent, probably just not having a backgroundColourId

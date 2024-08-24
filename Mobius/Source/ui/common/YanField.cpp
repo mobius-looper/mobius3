@@ -2,7 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-
+#include "../JuceUtil.h"
 #include "ColorPopup.h"
 #include "YanField.h"
 #include "YanForm.h"
@@ -68,7 +68,7 @@ int YanInput::getPreferredWidth()
     // todo: I have various calculatesion that use "M" width but this always results
     // in something way too large when using proportional fonts with mostly lower case
     // here let's try using e instead
-    juce::Font font(juce::FontOptions((float)availableHeight));
+    juce::Font font(JuceUtil::getFont(availableHeight));
     int emWidth = font.getStringWidth("e");
     preferred = emWidth * chars;
 

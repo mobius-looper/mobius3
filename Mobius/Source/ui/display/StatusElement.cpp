@@ -3,6 +3,7 @@
 
 #include "../../util/Trace.h"
 
+#include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
 #include "StatusElement.h"
@@ -86,7 +87,7 @@ void StatusElement::paint(juce::Graphics& g)
         // with "Element" suffixed
         juce::String id = getComponentID();
         id = id.upToFirstOccurrenceOf("Element", false, false);
-        juce::Font font (juce::FontOptions((float)12));
+        juce::Font font (JuceUtil::getFont(12));
         g.setFont(font);
         g.drawText(id, 0, 0, getWidth(), getHeight(), juce::Justification::centred);
     }

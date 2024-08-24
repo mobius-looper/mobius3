@@ -6,6 +6,7 @@
 #include "../../util/MidiUtil.h"
 #include "../../model/Binding.h"
 #include "../common/ButtonBar.h"
+#include "../JuceUtil.h"
 
 #include "BindingTable.h"
 
@@ -504,7 +505,7 @@ void BindingTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
     
     // how expensive is this, should we be caching it after the row height changes?
-    g.setFont(juce::Font(juce::FontOptions(height * .66f)));
+    g.setFont(JuceUtil::getFontf(height * .66f));
 
     juce::String cell = getCellText(rowNumber, columnId);
 
