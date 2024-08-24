@@ -60,6 +60,7 @@ class MslScript {
     // I think no, use exported procs instead
 
     class MslProc* findProc(juce::String procname);
+    class MslVar* findVar(juce::String varname);
 
 };
 

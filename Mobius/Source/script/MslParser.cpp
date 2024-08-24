@@ -28,6 +28,7 @@
 #include "../util/Trace.h"
 
 #include "MslModel.h"
+#include "MslSymbol.h"
 #include "MslScript.h"
 #include "MslError.h"
 #include "MslParser.h"

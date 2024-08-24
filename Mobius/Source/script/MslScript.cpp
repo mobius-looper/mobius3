@@ -34,3 +34,22 @@ MslProc* MslScript::findProc(juce::String procname) {
     }
     return found;
 }
+
+/**
+ * Vars are not gathered into a list like procs.
+ */
+MslVar* MslScript::findVar(juce::String varname) {
+    MslVar* found = nullptr;
+    if (root != nullptr) {
+        for (auto node : root->children) {
+            if (node->isVar()) {
+                MslVar* var = static_cast<MslVar*>(node);
+                if (var->name == varname) {
+                    found = var;
+                    break;
+                }
+            }
+        }
+    }
+    return found;
+}

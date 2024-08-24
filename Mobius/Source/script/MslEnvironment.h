@@ -63,6 +63,7 @@ class MslLinkage
 class MslEnvironment
 {
     friend class MslSession;
+    friend class MslSymbol;
     friend class MslConductor;
     friend class MslScriptletSession;
     

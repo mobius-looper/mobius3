@@ -47,6 +47,7 @@ class MslVisitor
     virtual void mslVisit(class MslContextNode* obj) = 0;
     virtual void mslVisit(class MslIn* obj) = 0;
     virtual void mslVisit(class MslSequence* obj) = 0;
+    virtual void mslVisit(class MslArgument* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -148,16 +149,25 @@ class MslNode
     virtual bool isContext() {return false;}
     virtual bool isIn() {return false;}
     virtual bool isSequence() {return false;}
+    virtual bool isArgument() {return false;}
+    
+    virtual void link(class MslContext* context, class MslEnvironment* env, class MslScript* script) {
+        (void)context;
+        (void)env;
+        (void)script;
+    }
     
     virtual void visit(MslVisitor* visitor) = 0;
 
     // console tools
-
+    // what was this for?
+#if 0
     void detach() {
         if (parent != nullptr) {
             parent->remove(this);
         }
     }
+#endif
     
 };
 
@@ -281,41 +291,6 @@ class MslSequence : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
-//////////////////////////////////////////////////////////////////////
-//
-// Symbol
-//
-//////////////////////////////////////////////////////////////////////
-
-class MslSymbol : public MslNode
-{
-  public:
-    MslSymbol(MslToken& t) : MslNode(t) {}
-    virtual ~MslSymbol() {}
-
-    // symbols only allow () arguemnt blocks, which turns them into
-    // a parameterized reference, aka a "call"
-    // originally I allowed them to accept {} body blocks and magically
-    // become a proc, but I think no, require a proc keyword
-
-    bool wantsNode(MslNode* node) override {
-        bool wants = false;
-        if (node->token.value == "(" && children.size() == 0)
-          wants = true;
-        return wants;
-    }
-    
-    // runtime state
-    class MslProc* proc = nullptr;
-    class MslVar* var = nullptr;
-    class MslExternal* external = nullptr;
-    
-    bool isSymbol() override {return true;}
-    bool operandable() override {return true;}
-    void visit(MslVisitor* v) override {v->mslVisit(this);}
-
-
-};
 
 //////////////////////////////////////////////////////////////////////
 //
