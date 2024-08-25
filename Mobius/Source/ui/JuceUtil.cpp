@@ -13,14 +13,20 @@
 
 juce::Font JuceUtil::getFont(int height)
 {
-    // return juce::Font(juce::FontOptions((float)height));
+#if JUCE_MAJOR_VERSION > 7
+    return juce::Font(juce::FontOptions((float)height));
+#else    
     return juce::Font((float)height);
+#endif    
 }
 
 juce::Font JuceUtil::getFontf(float height)
 {
-    //return juce::Font(juce::FontOptions(height));
+#if JUCE_MAJOR_VERSION > 7
+    return juce::Font(juce::FontOptions(height));
+#else    
     return juce::Font(height);
+#endif    
 }
 
 void JuceUtil::dumpComponent(const char* title, juce::Component* c, int indent)

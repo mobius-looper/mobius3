@@ -76,17 +76,56 @@ class MslEnvironment
     void shutdown();
 
     //
-    // ScriptClerk Interface
+    // ScriptClerk Interface for file loading
     //
 
+    /**
+     * Install a script from a file
+     * MslEnvironment doesn't touch files, but it needs to know the path
+     * name if this came from a file because the leaf file name is the default
+     * name for the script if the script source doesn't declare a #name
+     *
+     * If there are parse errors in the file, they need to be conveyed to the user.
+     * Loading can happen in a non-interactive context, so something needs to store
+     * the original source and any errors for later display in the script console.
+     * This could be done by either ScriptClerk or MslEnvironment, I'm leaning toward
+     * script clerk.
+     */
     class MslParserResult* load(juce::String path, juce::String source);
+
+    /**
+     * Unload any scripts from files that are not included in the retain list.
+     * todo: This reconciles changes to ScriptConfig when you remove files.
+     * will likely need to change to have a few options like retain(keepThese)
+     * and remove(removeThese)
+     *
+     * Since this is a bulk operation, the environment will always do a full relink
+     * after unloading.
+     */
     void unload(juce::StringArray& retain);
 
+    /**
+     * Perfrorm the link phase to resolve references between scripts, resolve references
+     * to externals, and compile the argument lists for function calls.
+     *
+     * todo: in general the environment can contain things that have errors in them.
+     * link errors can be returned here, but we may be doing linking from a context that
+     * the user isn't interacting with.  Link errors need to be saved in the environment
+     * for display later in the script console. 
+     */
+    void link();
+    
     //
     // User initiated actions
     //
 
-    // normal file-based script actions
+    /**
+     * Normal running of file-based scripts
+     * !! todo: Should not be dependent on the UIAction here
+     * Either make the container build an MslAction or simply run a script
+     * by name with a list of MslValues as arguments, or an argument string that
+     * is parsed into individual arguments.  Probably the latter for bindings.
+     */
     void doAction(class MslContext* c, class UIAction* action);
 
     //

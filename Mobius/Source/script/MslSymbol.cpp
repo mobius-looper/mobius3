@@ -161,6 +161,10 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
             // a signature that resembles a proc declaration
             // "(a b (global1 global2))"
             // and then parse that into an MslProc node, punt for now
+
+            // todo: MslExternal can now have a signatureDefinition we should compile
+            // into an MslSignature
+            // should also be using MslSignature in procs
         }
     }
     if (procToLink != nullptr)
@@ -225,7 +229,7 @@ void MslSymbol::linkCall(MslProc* proc)
             else {
                 // add a argument for this name
                 juce::String name = argsym->token.value;
-                MslArgument* argref = new MslArgument();
+                MslArgumentNode* argref = new MslArgumentNode();
                 argref->name = name;
                 argref->position = position;
                 position++;
@@ -272,7 +276,7 @@ void MslSymbol::linkCall(MslProc* proc)
     if (error.length() == 0) {
         while (callargs.size() > 0) {
             MslNode* extra = callargs.removeAndReturn(0);
-            MslArgument* argref = nullptr;
+            MslArgumentNode* argref = nullptr;
         
             if (extra->isAssignment()) {
                 MslAssignment* argass = static_cast<MslAssignment*>(extra);
@@ -281,7 +285,7 @@ void MslSymbol::linkCall(MslProc* proc)
                     MslNode* node = argass->children[0];
                     if (node->isSymbol()) {
                         MslSymbol* argsym = static_cast<MslSymbol*>(node);
-                        argref = new MslArgument();
+                        argref = new MslArgumentNode();
                         argref->name = argsym->token.value;
                         if (argass->children.size() > 1)
                           argref->node = argass->children[1];
@@ -290,7 +294,7 @@ void MslSymbol::linkCall(MslProc* proc)
             }
             else {
                 // unnamed positional argument
-                argref = new MslArgument();
+                argref = new MslArgumentNode();
                 argref->node = extra;
             }
 
@@ -408,7 +412,7 @@ void MslSession::mslVisit(MslSymbol* snode)
     if (stack->proc != nullptr) {
         // we resolved to an internal or exported proc and are
         // back from the argument block or the body block
-        returnProc();
+        advanceProc();
     }
     else if (stack->external != nullptr) {
         // we resolved to an external model/Symbol and have completed
@@ -612,7 +616,7 @@ void MslSession::pushProc(MslLinkage* link)
  * frame to handle the body.  If this was the body frame we can return
  * from the call.
  */
-void MslSession::returnProc()
+void MslSession::advanceProc()
 {
     if (stack->phase == 1) {
         // we were waiting for arguments
@@ -647,7 +651,7 @@ void MslSession::pushCall()
 
 /**
  * Convert the arguments for a proc to a list of MslBindings
- * on the symbol node.  The names of the bindings come from
+ * on the symbol stack frame.  The names of the bindings come from
  * the proc definition.
  *
  * The values for the binding are in the stack->childResults.
@@ -718,7 +722,7 @@ void MslSession::addArgValue(MslBinding* b, int position, bool required)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Argument
+// ArgumentNode
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -726,7 +730,7 @@ void MslSession::addArgValue(MslBinding* b, int position, bool required)
  * These nodes are not parsed they are manufactured during symbol linking.
  * It simply passes along evaluation to the resolved argument value node.
  */
-void MslSession::mslVisit(MslArgument* node)
+void MslSession::mslVisit(MslArgumentNode* node)
 {
     if (node->node != nullptr)
       node->node->visit(this);

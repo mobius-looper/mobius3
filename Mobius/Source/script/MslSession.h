@@ -167,7 +167,7 @@ class MslSession : public MslVisitor
     void returnVar(class MslLinkage* link);
     void pushProc(MslProc* proc);
     void pushProc(class MslLinkage* link);
-    void returnProc();
+    void advanceProc();
     void pushCall();
     void bindArguments();
     MslBinding* makeArgBinding(MslNode* namenode);

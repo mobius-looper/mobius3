@@ -78,6 +78,8 @@
 
 #pragma once
 
+#include "MslSignature.h"
+
 class MslExternal
 {
   public:
@@ -94,6 +96,13 @@ class MslExternal
 
     // the behaviora of this external: Function or Variable
     bool isFunction = false;
+
+    // the signature specification supplied by the container
+    juce::String signatureDefinition; 
+    
+    // the compiled signature if this is a function
+    // this is optional but recommended
+    std::unique_ptr<MslSignature> signature;
 
     // the primary pointer to the application object that implements this symbol
     void *object = nullptr;

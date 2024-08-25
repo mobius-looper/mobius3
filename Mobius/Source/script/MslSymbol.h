@@ -20,7 +20,7 @@
  * Call argument
  * These are not pooled, they are constructured at link time.
  */
-class MslArgument : public MslNode
+class MslArgumentNode : public MslNode
 {
   public:
     MslArgument() : MslNode() {}
