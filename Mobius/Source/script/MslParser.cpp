@@ -19,7 +19,7 @@
  * out an actual Script with the entire line history in it.
  *
  * So now, it resets at the start of every consume() but it does retain top level
- * procs and vars.
+ * functions and variables.
  *
  */
 
@@ -114,7 +114,7 @@ MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
 }
 
 /**
- * After parsing, move any procs and vars encountered up to the
+ * After parsing, move any functions and variables encountered up to the
  * Script.  The node tree may then be disposed of while retaining
  * the definitions.
  *
@@ -123,7 +123,7 @@ MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
  * than allowing the top of the stack to be anywhere.
  *
  * Not entirely happy with this, but it gets this started.
- * Need a lot more thought into what procs in nested blocks mean.
+ * Need a lot more thought into what functions in nested blocks mean.
  * Vars in nested blocks are retained in position as the variable/symbol override
  * is active only during that block.
  *
@@ -134,9 +134,9 @@ void MslParser::sift()
     int index = 0;
     while (index < script->root->size()) {
         MslNode* node = script->root->get(index);
-        if (node->isProc()) {
+        if (node->isFunction()) {
             script->root->remove(node);
-            addProc(static_cast<MslProc*>(node));
+            addFunction(static_cast<MslFunction*>(node));
         }
         else {
             index++;
@@ -144,21 +144,21 @@ void MslParser::sift()
     }
 }
 
-void MslParser::addProc(MslProc* proc)
+void MslParser::addFunction(MslFunction* func)
 {
     // replace if it was defined again
-    MslProc* existing = nullptr;
-    for (auto p : script->procs) {
-        if (p->name == proc->name) {
+    MslFunction* existing = nullptr;
+    for (auto p : script->functions) {
+        if (p->name == func->name) {
             existing = p;
             break;
         }
     }
     if (existing != nullptr) {
-        Trace(2, "MslParser: Replacing proc definition %s", proc->name.toUTF8());
-        script->procs.removeObject(existing);
+        Trace(2, "MslParser: Replacing function definition %s", func->name.toUTF8());
+        script->functions.removeObject(existing);
     }
-    script->procs.add(proc);
+    script->functions.add(func);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -326,7 +326,7 @@ void MslParser::parseInner(juce::String source)
 
             case MslToken::Type::Operator: {
                 if (t.value == "=") {
-                    if (current->isVar()) {
+                    if (current->isVariable()) {
                         // these are weird, we don't need an assignment node, just
                         // wait for an expression
                     }
@@ -540,16 +540,19 @@ MslNode* MslParser::push(MslNode* node)
 
 /**
  * Convert a keyword token into a specific node class.
+ *
+ * Functions and variables are commonly aliased, could be using
+ * startsWith here too.
  */
 MslNode* MslParser::checkKeywords(MslToken& t)
 {
     MslNode* keyword = nullptr;
 
-    if (t.value == "var")
-      keyword = new MslVar(t);
+    if (t.value == "var" || t.value == "variable")
+      keyword = new MslVariable(t);
     
-    else if (t.value == "proc")
-      keyword = new MslProc(t);
+    else if (t.value == "function" || t.value == "func" || t.value == "proc")
+      keyword = new MslFunction(t);
     
     else if (t.value == "if")
       keyword = new MslIf(t);
@@ -563,8 +566,8 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     else if (t.value == "wait")
       keyword = new MslWaitNode(t);
     
-    else if (t.value == "echo")
-      keyword = new MslEcho(t);
+    else if (t.value == "print" || t.value == "echo")
+      keyword = new MslPrint(t);
     
     else if (t.value == "context")
       keyword = new MslContextNode(t);

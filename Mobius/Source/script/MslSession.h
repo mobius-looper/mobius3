@@ -89,18 +89,18 @@ class MslSession : public MslVisitor
     void mslVisit(class MslBlock* obj) override;
     void mslVisit(class MslOperator* obj) override;
     void mslVisit(class MslAssignment* obj) override;
-    void mslVisit(class MslVar* obj) override;
-    void mslVisit(class MslProc* obj) override;
+    void mslVisit(class MslVariable* obj) override;
+    void mslVisit(class MslFunction* obj) override;
     void mslVisit(class MslIf* obj) override;
     void mslVisit(class MslElse* obj) override;
     void mslVisit(class MslReference* obj) override;
     void mslVisit(class MslEnd* obj) override;
     void mslVisit(class MslWaitNode* obj) override;
-    void mslVisit(class MslEcho* obj) override;
+    void mslVisit(class MslPrint* obj) override;
     void mslVisit(class MslContextNode* obj) override;
     void mslVisit(class MslIn* obj) override;
     void mslVisit(class MslSequence* obj) override;
-    void mslVisit(class MslArgument* obj) override;
+    void mslVisit(class MslArgumentNode* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
@@ -124,7 +124,7 @@ class MslSession : public MslVisitor
     class MslResult* result = nullptr;
 
     // unique id generated for results tracking
-    // mostly for ScriptletSession
+    // mostly for MslScriptlet
     int sessionId = 0;
 
   private:
@@ -157,30 +157,28 @@ class MslSession : public MslVisitor
     void popStack(MslValue* v);
     void popStack();
 
+    // bindings
     MslBinding* findBinding(const char* name);
     MslBinding* findBinding(int position);
-
-    // refs and calls
-    void doAssignment(MslSymbol* namesym);
-    void returnUnresolved(MslSymbol* snode);
     void returnBinding(MslBinding* binding);
-    void returnVar(class MslLinkage* link);
-    void pushProc(MslProc* proc);
-    void pushProc(class MslLinkage* link);
-    void advanceProc();
-    void pushCall();
-    void bindArguments();
-    MslBinding* makeArgBinding(MslNode* namenode);
-    void addArgValue(MslBinding* b, int position, bool required);
-    
-    // symbol evaluation
-    bool doExternal(MslSymbol* snode);
-    class MslExternal* resolveExternal(MslSymbol* snode);
-    void returnExternal();
-    void doExternalAction(MslExternal* ext);
-    void doExternalQuery(MslExternal* ext);
-    int getTrackScope();
 
+    // symbol evaluation
+    // implementation broken out to MslSymbol.cpp
+    void returnUnresolved(MslSymbol* snode);
+    void returnVariable(MslSymbol* snode);
+    void pushArguments(MslSymbol* snode);
+    void pushCall(MslSymbol* snode);
+    void pushBody(MslSymbol* snode, MslBlock* body);
+    void bindArguments(MslSymbol* snode);
+    void returnQuery(MslSymbol* snode);
+    void callExternal(MslSymbol* snode);
+
+    // assignment
+    // also in MslSymbol.cpp
+    class MslSymbol* getAssignmentSymbol(MslAssignment* ass);
+    void doAssignment(MslAssignment* ass);
+    int getTrackScope();
+    
     // expressions
     MslValue* getArgument(int index);
     void doOperator(MslOperator* opnode);

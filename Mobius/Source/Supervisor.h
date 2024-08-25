@@ -255,7 +255,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     bool mslQuery(MslQuery* query) override;
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
-    void mslEcho(const char* msg) override;
+    void mslPrint(const char* msg) override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);

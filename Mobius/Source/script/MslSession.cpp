@@ -182,7 +182,7 @@ bool MslSession::isWaiting()
 }
 
 /**
- * Only for MslScriptletSession and the console
+ * Only for MslScriptlet and the console
  */
 MslWait* MslSession::getWait()
 {
@@ -401,7 +401,7 @@ void MslSession::popStack(MslValue* v)
         // save the final root block bindings back into the script
         // technically should only be doing this for static variables
         // and not locals
-        // or we could have the binding reset when the MslVar that defines
+        // or we could have the binding reset when the MslVariable that defines
         // them is encountered during evaluation
         script->bindings = stack->bindings;
         stack->bindings = nullptr;
@@ -579,7 +579,7 @@ void MslSession::mslVisit(MslBlock* block)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Var
+// Variable
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -590,7 +590,7 @@ void MslSession::mslVisit(MslBlock* block)
  * When the initializer has finished, place a Binding for this var and
  * it's value into the parent frame
  */
-void MslSession::mslVisit(MslVar* var)
+void MslSession::mslVisit(MslVariable* var)
 {
     // the parser should have only allowed one child, if there is more than
     // one we take the last value
@@ -602,14 +602,14 @@ void MslSession::mslVisit(MslVar* var)
         if (parent == nullptr) {
             // this shouldn't happen, there can be vars at the top level of a script
             // but the script body should have been surrounded by a containing block
-            addError(var, "Var encountered above root block");
+            addError(var, "Variable encountered above root block");
         }
         else if (!parent->node->isBlock()) {
             // the var was inside something other than a {} block
             // the parser allows this but it's unclear what that should mean, what use
             // would a var be inside an expression for example?  I suppose we could allow
             // this, but flag it for now until we find a compelling use case
-            addError(var, "Var encountered in non-block container");
+            addError(var, "Variable encountered in non-block container");
         }
         else {
             MslBinding* b = pool->allocBinding();
@@ -628,196 +628,20 @@ void MslSession::mslVisit(MslVar* var)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Proc
+// Function
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is the DECLARATION of a proc not a call.
- * Currently, procs are "sifted" by the parser and left on a special list
+ * This is the DECLARATION of a function not a call.
+ * Currently, functions are "sifted" by the parser and left on a special list
  * in the MslScript so we should not encounter them during evaluation.
  * If that ever changes, then you'll have to deal with them here.
- * In theory we could have scoped proc definitions like we do for vars.
+ * In theory we could have scoped function definitions like we do for vars.
  */
-void MslSession::mslVisit(MslProc* proc)
+void MslSession::mslVisit(MslFunction* func)
 {
-    addError(proc, "Encountered unsifted Proc");
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Assignment
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Assignments result from a statement of this form:
- *
- *     x=y
- *
- * Unlike Operator, the LHS is required to be a Symbol and the
- * RHS can be any expression.  The LHS symbol is NOT evaluated, it is
- * simply used as the name of the thing to be assigned.  It may be better
- * to have the parser consume the Symbol token and just leave the name behind
- * in the node as is done for proc and var.  But this does open up potentially
- * useful behavior where the LHS could be any expression that produces a name
- * literal string:    "x"=y  or foo()=y.  While possible and relatively easy
- * that's hard to explain.
- *
- * This became more complex with the introduction of default values/optional arguments
- * and keyword arguments.
- *
- * In the argument declaration block of a proc, an assignment is used to declare
- * an argument with a default value:
- *
- *     proc foo(a b c=1)
- *
- * When the stack frame for a call is pushed MslBindings are created for each argument
- * as usual, then a frame is pushed to evaluate the assignment RHS for any arguments that
- * have initializers.  The interpretation of the assignment is the same as for any other
- * assignment, the assignment will reach the binding for the argument in the call which will
- * be immediately above it on the stack.
- *
- */
-void MslSession::mslVisit(MslAssignment* ass)
-{
-    // verify we have a name symbol, only really need this on phase 0 but it doesn't
-    // hurt to look again
-    MslSymbol* namesym = nullptr;
-    MslNode* first = ass->get(0);
-    if (first == nullptr) {
-        addError(ass, "Malformed assignment, missing assignment symbol");
-    }
-    else if (!first->isSymbol()) {
-        addError(ass, "Malformed assignment, assignment to non-symbol");
-    }
-    else {
-        namesym = static_cast<MslSymbol*>(first);
-    }
-
-    // asssignment of this symbol may require thread transition,
-    // but so may the initializer so we have to do that first
-
-    if (namesym != nullptr) {
-        if (stack->phase == 0) {
-            // first time here, push the initializer
-            MslNode* second = ass->get(1);
-            if (second == nullptr) {
-                addError(ass, "Malformed assignment, missing initializer");
-            }
-            else {
-                // push the initializer
-                stack->phase++;
-                pushStack(second);
-            }
-        }
-        else {
-            // back from the initializer
-            if (stack->childResults == nullptr) {
-                // something weird like "x=var foo;" that that the parser
-                // could have caught
-                addError(ass, "Malformed assignment, initializer had no value");
-            }
-            else {
-                doAssignment(namesym);
-            }
-        }
-    }
-}
-
-/**
- * At this point, we've evaluated what we need, and are ready to make the assignment.
- * A thread transition may need to be made depending on the target symbol.
- * The stack childResults has the value to assign.
- *
- * If we have to do thread transition, we're going to end up looking for bindings twice,
- * could skip that with another stack phase but it shouldn't be too expensive.
- */
-void MslSession::doAssignment(MslSymbol* namesym)
-{
-    // resolve the target symbol, first look for var bindings
-    // todo: now that MslEnvironment has a link phase for MslExternals
-    // we could have done the local binding resolution there too?
-    MslBinding* binding = findBinding(namesym->token.value.toUTF8());
-    if (binding != nullptr) {
-        // transfer the value
-        pool->free(binding->value);
-        binding->value = stack->childResults;
-        stack->childResults = nullptr;
-
-        // and we are done, assignments do not have values though I suppose
-        // we could allow the initializer value to be the assignment node value
-        // as well, what does c++ do?
-        popStack(nullptr);
-    }
-    else {
-        MslExternal* external = resolveExternal(namesym);
-        if (external == nullptr) {
-            // unlike references, the name symbol of an assignment must resolve
-            addError(namesym, "Unresolved symbol");
-        }
-        else {
-            // symbol did not resolve internally, but there was an external
-            // local bindings always override externals
-
-            // assignments are currently expected to be synchronous and won't do transitions
-            // but that probably needs to change
-        
-            MslAction action;
-            action.external = external;
-            action.scope = getTrackScope();
-
-            if (stack->childResults == nullptr) {
-                // assignment with no value, I suppose this could mean "set to null"
-                // but it's most likely a syntax error
-                addError(stack->node, "Assignment with no value");
-            }
-            else {
-                // assignments are currently only to atomic values
-                // though the MslAction model says that the value can be a list
-                // chained with the next pointer
-                // if we ever get to the point where lists become usable data types
-                // then there will be ambiguity here between the child list as the list
-                // we want to pass vs. an element of the child list HAVING a list value
-                action.arguments = stack->childResults;
-
-                // here is the magic bean
-                context->mslAction(&action);
-
-                // assignment actions are not expected to have return value
-                // though they can have errors
-                // the MslContextError wrapper doesn't provide any purpose beyond the message
-                if (strlen(action.error.error) > 0) {
-                    // this will copy the string to the MslError
-                    addError(stack->node, action.error.error);
-                }
-            
-                popStack(nullptr);
-            }
-        }
-    }
-}
-
-/**
- * Look up the stack for a binding for "scope" which will be taken as the track
- * number to use when referenccingn externals.
- * One of these is created automatically by "in" but as a side effect of the way
- * that works you could also do this:
- *
- *    {var scope = 1 Record}
- *
- * Interesting...if we keep that might want a better name.
- */
-int MslSession::getTrackScope()
-{
-    int scope = 0;
-
-    MslBinding* b = findBinding("scope");
-    if (b != nullptr && b->value != nullptr) {
-        // need some sanity checks on the range
-        scope = b->value->getInt();
-    }
-    return scope;
+    addError(func, "Encountered unsifted Function");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -862,6 +686,26 @@ void MslSession::mslVisit(MslReference* ref)
     }
 }
 
+/**
+ * Here for a symbol or reference that resolved to an dynamic binding on the stack.
+ * The binding holds the value to be returned, but it must be copied.
+ */
+void MslSession::returnBinding(MslBinding* binding)
+{
+    MslValue* value = binding->value;
+    MslValue* copy = nullptr;
+    if (value == nullptr) {
+        // binding without a value, should this be ignored or does
+        // it hide other things?
+        copy = pool->allocValue();
+    }
+    else {
+        // bindings can be referenced multiple times, so need to copy
+        copy = pool->allocValue();
+        copy->copy(value);
+    }
+    popStack(copy);
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1507,13 +1351,13 @@ void MslSession::mslVisit(MslEnd* end)
     while (stack != nullptr) popStack();
 }
 
-void MslSession::mslVisit(MslEcho* echo)
+void MslSession::mslVisit(MslPrint* echo)
 {
     (void)echo;
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr) {
         if (stack->childResults != nullptr)
-          context->mslEcho(stack->childResults->getString());
+          context->mslPrint(stack->childResults->getString());
         // echo has no return value so we don't clutter up the console displaying it
         popStack(nullptr);
     }
@@ -1540,7 +1384,7 @@ void MslSession::debugNode(MslNode* n, juce::String& s)
       s += "block ";
     else if (n->isSymbol())
       s += "symbol ";
-    else if (n->isVar())
+    else if (n->isVariable())
       s += "var ";
     else
       s += "??? ";

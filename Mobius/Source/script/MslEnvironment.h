@@ -48,11 +48,11 @@ class MslLinkage
     // the script it currently resolves to
     class MslScript* script = nullptr;
 
-    // the exported proc within the script
-    class MslProc* proc = nullptr;
+    // the exported function within the script
+    class MslFunction* function = nullptr;
 
     // the exported var within the script
-    class MslVar* var = nullptr;
+    class MslVariable* variable = nullptr;
 
     // todo: for exported vars, where is the value?
     // could maintain it here, or in a MslBinding inside the
@@ -65,7 +65,7 @@ class MslEnvironment
     friend class MslSession;
     friend class MslSymbol;
     friend class MslConductor;
-    friend class MslScriptletSession;
+    friend class MslScriptlet;
     
   public:
 
@@ -135,14 +135,19 @@ class MslEnvironment
     // the scriptlet session is owned and tracked by the environment
     // caller does not need to delete it, but should tell the environment
     // when it is no longer needed so it can be reclaimed
-    class MslScriptletSession* newScriptletSession();
-    void releaseScriptletSession(class MslScriptletSession* s);
+    class MslScriptlet* newScriptlet();
+    void releaseScriptlet(class MslScriptlet* s);
+
+    // todo: after parsing the references in the scriptlet need to be linked
+    // with the environment.  Would be cleaner if the environment did both
+    // the parsing and the linking
+    void link(MslContext* c, MslScriptlet* scriptlet);
 
     juce::OwnedArray<class MslCollision>* getCollisions() {
         return &collisions;
     }
 
-    void launch(class MslContext* c, class MslScriptletSession* ss);
+    void launch(class MslContext* c, class MslScriptlet* scriptlet);
 
     //
     // Session results
@@ -217,7 +222,7 @@ class MslEnvironment
     juce::OwnedArray<class MslScript> inactive;
 
     // active scriptlet sessions
-    juce::OwnedArray<class MslScriptletSession> scriptlets;
+    juce::OwnedArray<class MslScriptlet> scriptlets;
 
     // hack for exporting Symbols
     // this needs to be packaged into the MslContext better
@@ -238,5 +243,13 @@ class MslEnvironment
     MslResult* makeResult(MslSession* s, bool finished);
     int generateSessionId();
     int sessionIds = 1;
+
+    //
+    // Linking
+    //
+
+    void linkScript(class MslContext* context, class MslScript* script);
+    void linkNode(class MslContext* context, class MslScript* script, class MslNode* node);
+    
 };
 

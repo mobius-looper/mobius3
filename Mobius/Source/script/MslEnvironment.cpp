@@ -20,7 +20,8 @@
 #include "MslSession.h"
 #include "MslResult.h"
 #include "MslExternal.h"
-#include "MslScriptletSession.h"
+#include "MslScriptlet.h"
+#include "MslSymbol.h"
 
 #include "MslEnvironment.h"
 
@@ -131,16 +132,16 @@ void MslEnvironment::unload(juce::StringArray& retain)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * ScriptletSession is fairly autonomous but I'd still like to get them
+ * Scriptlet is fairly autonomous but I'd still like to get them
  * through the environment in case we need to do tracking of them for some reason.
  *
  * The session should be returned with releaseScriptetSession() when no longer
  * necessary, but it is not necessary to delete it.  Any lingering sessions
  * will be reclaimed at shutdown.
  */
-MslScriptletSession* MslEnvironment::newScriptletSession()
+MslScriptlet* MslEnvironment::newScriptlet()
 {
-    MslScriptletSession* s = new MslScriptletSession(this);
+    MslScriptlet* s = new MslScriptlet(this);
     scriptlets.add(s);
     return s;
 }
@@ -150,10 +151,50 @@ MslScriptletSession* MslEnvironment::newScriptletSession()
  * Callers aren't required to do this but they'll leak and won't get reclained
  * till shutdown if you don't.
  */
-void MslEnvironment::releaseScriptletSession(MslScriptletSession* s)
+void MslEnvironment::releaseScriptlet(MslScriptlet* s)
 {
     // any internal cleanup to do?
     scriptlets.removeObject(s);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Internal MslScriptlet interface
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * After the MslScriptlet has parsed source, it needs to link it.
+ * Interface is messy.
+ *
+ * Scriptlets can't have any function or variable exports right now
+ * but they do need to have call arguments assembled.
+ *
+ */
+void MslEnvironment::link(MslContext* context, MslScriptlet* scriptlet)
+{
+    MslScript* script = scriptlet->getScript();
+    
+    linkScript(context, script);
+}
+
+void MslEnvironment::linkScript(MslContext* context, MslScript* script)
+{
+    linkNode(context, script, script->root);
+}
+
+void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* node)
+{
+    // first link any chiildren
+    for (auto child : node->children)
+      linkNode(context, script, child);
+
+    // now the hard part
+    // only symbols need special processing right now
+    if (node->isSymbol()) {
+        MslSymbol* sym = static_cast<MslSymbol*>(node);
+        sym->link(context, this, script);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -251,7 +292,7 @@ void MslEnvironment::install(MslScript* script)
     else {
         link->script = script;
         // just in case unlink misssed it
-        link->proc = nullptr;
+        link->function = nullptr;
     }
 
     if (!collision) {
@@ -312,7 +353,7 @@ void MslEnvironment::unlink(MslScript* script)
     for (auto link : linkages) {
         if (link->script == script) {
             link->script = nullptr;
-            link->proc = nullptr;
+            link->function = nullptr;
         }
     }
 }
@@ -465,9 +506,9 @@ void MslEnvironment::doAction(MslContext* c, UIAction* action)
         MslLinkage* link = static_cast<MslLinkage*>(s->script->mslLinkage);
         if (link->script == nullptr) {
             // not a script
-            if (link->proc != nullptr) {
+            if (link->function != nullptr) {
                 // todo: need extra packaging to make them look sessionable
-                Trace(1, "MslEnvironment: MSL Proc linkage not implemented");
+                Trace(1, "MslEnvironment: Function linkage not implemented");
             }
             else {
                 Trace(1, "MslEnvironment: Action with unresolved linkage");
@@ -558,7 +599,7 @@ int MslEnvironment::generateSessionId()
 }
 
 /**
- * Interface for MslScriptletSession.
+ * Interface for MslScriptlet.
  * Here we have a script that is not installed in the environment but we need
  * to launch a session and let it become asynchronous in a similar way.
  * Return a session id if it becomes asynchronous since the lifespan of the
@@ -569,14 +610,14 @@ int MslEnvironment::generateSessionId()
  * environment result list.
  *
  * Result transfer is awkward but I don't want to deal with yet another result object.
- * This will deposit the interesting results directly on the MslScriptletSession
+ * This will deposit the interesting results directly on the MslScriptlet
  * as a side effect.  Could be cleaner...
  */
-void MslEnvironment::launch(MslContext* c, MslScriptletSession* ss)
+void MslEnvironment::launch(MslContext* c, MslScriptlet* ss)
 {
     // todo: where to check concurrency, here or before the call?
 
-    // MslScriptletSession may have already done this but make sure
+    // MslScriptlet may have already done this but make sure
     ss->resetLaunchResults();
     
     MslSession* session = pool.allocSession();

@@ -2098,14 +2098,14 @@ bool Supervisor::mslWait(class MslWait* w, class MslContextError* error)
     return false;
 }
 
-void Supervisor::mslEcho(const char* msg)
+void Supervisor::mslPrint(const char* msg)
 {
     // normally used for debug messages
     // if the MobiusConsole is visible, forward there so it can be displayed
     if (mobiusConsole != nullptr)
-      mobiusConsole->mslEcho(msg);
+      mobiusConsole->mslPrint(msg);
     else
-      Trace(2, "Supervisor::mslEcho %s", msg);
+      Trace(2, "Supervisor::mslPrint %s", msg);
 }
 
 //

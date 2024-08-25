@@ -89,8 +89,8 @@ class MslParser
     void resetResult();
     void parseInner(juce::String source);
     void sift();
-    void addProc(class MslProc* proc);
-    void addVar(class MslVar* var);
+    void addFunction(class MslFunction* func);
+    void addVariable(class MslVariable* var);
     
     void errorSyntax(MslNode* node, juce::String details);
     bool matchBracket(MslToken& t, class MslNode* block);

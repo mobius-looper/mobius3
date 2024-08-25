@@ -36,7 +36,7 @@ class MobiusConsole : public juce::Component,
     void consoleEscape() override;
 
     // forwarded from Supervisor
-    void mslEcho(const char* msg);
+    void mslPrint(const char* msg);
 
   private:
 
@@ -44,7 +44,7 @@ class MobiusConsole : public juce::Component,
     class MslEnvironment* scriptenv = nullptr;
 
     // scriptlet session we maintain
-    class MslScriptletSession* session = nullptr;
+    class MslScriptlet* session = nullptr;
     int asyncSession = 0;
     
     class ConsolePanel* panel = nullptr;

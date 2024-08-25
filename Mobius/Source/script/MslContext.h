@@ -161,7 +161,7 @@ class MslContext
     // intended for diagnostic messages from the script
     // could model this with an action but it is used frequently and
     // can have a simpler interface
-    virtual void mslEcho(const char* msg) = 0;
+    virtual void mslPrint(const char* msg) = 0;
 
 };
 

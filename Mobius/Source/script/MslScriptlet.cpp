@@ -10,10 +10,10 @@
 #include "MslSession.h"
 #include "MslEnvironment.h"
 
-#include "MslScriptletSession.h"
+#include "MslScriptlet.h"
 
 
-MslScriptletSession::MslScriptletSession(MslEnvironment* env)
+MslScriptlet::MslScriptlet(MslEnvironment* env)
 {
     environment = env;
     script.reset(new MslScript());
@@ -24,14 +24,14 @@ MslScriptletSession::MslScriptletSession(MslEnvironment* env)
 /**
  * These are not pooled, but they can pool the things they contain.
  */
-MslScriptletSession::~MslScriptletSession()
+MslScriptlet::~MslScriptlet()
 {
     resetLaunchResults();
     // this one isn't pooled which is starting to be awkward
     delete parseResult;
 }
 
-void MslScriptletSession::reset()
+void MslScriptlet::reset()
 {
     resetLaunchResults();
     delete parseResult;
@@ -42,7 +42,7 @@ void MslScriptletSession::reset()
     script->name = name;
 }
 
-void MslScriptletSession::setName(juce::String s)
+void MslScriptlet::setName(juce::String s)
 {
     name = s;
     if (script != nullptr)
@@ -52,7 +52,7 @@ void MslScriptletSession::setName(juce::String s)
 /**
  * Reset launch state after a previous evaluation.
  */
-void MslScriptletSession::resetLaunchResults()
+void MslScriptlet::resetLaunchResults()
 {
     sessionId = 0;
     wasTransitioned = false;
@@ -73,7 +73,7 @@ void MslScriptletSession::resetLaunchResults()
 //
 //////////////////////////////////////////////////////////////////////
 
-bool MslScriptletSession::compile(juce::String source)
+bool MslScriptlet::compile(MslContext* context, juce::String source)
 {
     bool success = false;
 
@@ -90,9 +90,16 @@ bool MslScriptletSession::compile(juce::String source)
     parseResult = parser.parse(script.get(), source);
 
     // we own the result
-    if (parseResult->errors.size() == 0)
-      success = true;
+    if (parseResult->errors.size() == 0) {
+        success = true;
 
+        // special environment interface to link just this one script
+        // todo: will need a way to convey link errors back to the console
+        // since the user doesn't distinguish between parsing and linking errors
+        // the interface for both should be the same
+        environment->link(context, this);
+    }
+    
     return success;
 }
 
@@ -102,7 +109,7 @@ bool MslScriptletSession::compile(juce::String source)
  * to an MslScript, just the errors.
  * Could avoid the layer and just capture and return the MslError list instead.
  */
-MslParserResult* MslScriptletSession::getCompileErrors()
+MslParserResult* MslScriptlet::getCompileErrors()
 {
     return parseResult;
 }
@@ -116,7 +123,7 @@ MslParserResult* MslScriptletSession::getCompileErrors()
 /**
  * Evaluate a previously compiled scriptlet.
  */
-bool MslScriptletSession::eval(class MslContext* c)
+bool MslScriptlet::eval(class MslContext* c)
 {
     bool success = false;
 
@@ -147,27 +154,27 @@ bool MslScriptletSession::eval(class MslContext* c)
 //
 //////////////////////////////////////////////////////////////////////
 
-bool MslScriptletSession::isFinished()
+bool MslScriptlet::isFinished()
 {
     return (launchErrors == nullptr && sessionId == 0);
 }
 
-MslError* MslScriptletSession::getErrors()
+MslError* MslScriptlet::getErrors()
 {
     return launchErrors;
 }
 
-bool MslScriptletSession::isTransitioning()
+bool MslScriptlet::isTransitioning()
 {
     return wasTransitioned;
 }
 
-bool MslScriptletSession::isWaiting()
+bool MslScriptlet::isWaiting()
 {
     return wasWaiting;
 }
 
-int MslScriptletSession::getSessionId()
+int MslScriptlet::getSessionId()
 {
     return sessionId;
 }
@@ -176,7 +183,7 @@ int MslScriptletSession::getSessionId()
  * The result of the last launch.
  * Ownership is retained.
  */
-MslValue* MslScriptletSession::getResult()
+MslValue* MslScriptlet::getResult()
 {
     return launchResult;
 }
@@ -184,7 +191,7 @@ MslValue* MslScriptletSession::getResult()
 /**
  * Trace the full results for debugging.
  */
-juce::String MslScriptletSession::getFullResult()
+juce::String MslScriptlet::getFullResult()
 {
     juce::String s;
     getResultString(launchResult, s);
@@ -194,7 +201,7 @@ juce::String MslScriptletSession::getFullResult()
 /**
  * This should probably be an MslValue utility
  */
-void MslScriptletSession::getResultString(MslValue* v, juce::String& s)
+void MslScriptlet::getResultString(MslValue* v, juce::String& s)
 {
     if (v == nullptr) {
         s += "null";
@@ -224,15 +231,15 @@ void MslScriptletSession::getResultString(MslValue* v, juce::String& s)
 
 /**
  * Used by the console to show the results of a proc evaluation.
- * Proc definitions accumulate in the script after each evaluation.
+ * Function definitions accumulate in the script after each evaluation.
  * 
  * !! woah, need to revisit how this is maintained if the inner
  * session goes async.  Maybe not an issue except for the unusual
  * way the console uses scriptlets.
  */
-juce::OwnedArray<MslProc>* MslScriptletSession::getProcs()
+juce::OwnedArray<MslFunction>* MslScriptlet::getFunctions()
 {
-    return &(script->procs);
+    return &(script->functions);
 }
 
 /**
@@ -240,7 +247,7 @@ juce::OwnedArray<MslProc>* MslScriptletSession::getProcs()
  * These accumulate as Bindings on the script.
  * Another ugly hack for the console.
  */
-MslBinding* MslScriptletSession::getBindings()
+MslBinding* MslScriptlet::getBindings()
 {
     return script->bindings;
 }

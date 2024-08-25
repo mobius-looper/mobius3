@@ -12,7 +12,7 @@
 #include "MslParser.h"
 #include "MslError.h"
 #include "MslEnvironment.h"
-#include "MslScriptletSession.h"
+#include "MslScriptlet.h"
 #include "MslResult.h"
 #include "MslBinding.h"
 #include "MslFileError.h"
@@ -34,7 +34,7 @@ MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
     scriptenv = supervisor->getScriptEnvironment();
 
     // allocate a scriptlet session we can keep forever
-    session = scriptenv->newScriptletSession();
+    session = scriptenv->newScriptlet();
     session->setName("Console");
     
     addAndMakeVisible(&console);
@@ -45,7 +45,7 @@ MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
 
 MobiusConsole::~MobiusConsole()
 {
-    // environment owns the ScriptletSession
+    // environment owns the Scriptlet
     supervisor->removeMobiusConsole(this);
 }
 
@@ -56,7 +56,7 @@ void MobiusConsole::showing()
     //console.clear();
 
     // install ourselves as a sort of listener on the Supervisor to receive
-    // forwarded mslEcho calls when the scriptlet is pushed into the background
+    // forwarded mslPrint calls when the scriptlet is pushed into the background
     // and advanced on the maintenance thread
     supervisor->addMobiusConsole(this);
 }
@@ -101,7 +101,7 @@ void MobiusConsole::consoleEscape()
     panel->close();
 }
 
-void MobiusConsole::mslEcho(const char* msg)
+void MobiusConsole::mslPrint(const char* msg)
 {
     console.add(msg);
 }
@@ -315,16 +315,16 @@ void MobiusConsole::doList()
             console.add("  " + script->name);
         }
     }
-    juce::OwnedArray<MslProc>* procs = session->getProcs();
-    if (procs != nullptr && procs->size() > 0) {
-        console.add("Defined Procs");
-        for (auto proc : *procs) {
-            console.add("  " + proc->name);
+    juce::OwnedArray<MslFunction>* funcs = session->getFunctions();
+    if (funcs != nullptr && funcs->size() > 0) {
+        console.add("Defined Functions");
+        for (auto func : *funcs) {
+            console.add("  " + func->name);
         }
     }
     MslBinding* bindings = session->getBindings();
     if (bindings != nullptr) {
-        console.add("Defined Vars");
+        console.add("Defined Variables");
         while (bindings != nullptr) {
             console.add("  " + juce::String(bindings->name));
             bindings = bindings->next;
@@ -334,7 +334,7 @@ void MobiusConsole::doList()
  
 void MobiusConsole::doEval(juce::String line)
 {
-    if (!session->compile(line)) {
+    if (!session->compile(supervisor, line)) {
         MslParserResult *pr = session->getCompileErrors();
         if (pr != nullptr)
           showErrors(&(pr->errors));
@@ -477,13 +477,13 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isAssignment()) {
             line += "Assignment: " + node->token.value;
         }
-        else if (node->isVar()) {
-            MslVar* var = static_cast<MslVar*>(node);
-            line += "Var: " + var->name;
+        else if (node->isVariable()) {
+            MslVariable* var = static_cast<MslVariable*>(node);
+            line += "Variable: " + var->name;
         }
-        else if (node->isProc()) {
-            MslProc* proc = static_cast<MslProc*>(node);
-            line += "Proc: " + proc->name;
+        else if (node->isFunction()) {
+            MslFunction* func = static_cast<MslFunction*>(node);
+            line += "Function: " + func->name;
         }
         else if (node->isIf()) {
             //MslIf* ifnode = static_cast<MslIf*>(node);
@@ -499,8 +499,8 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isEnd()) {
             line += "End";
         }
-        else if (node->isEcho()) {
-            line += "Echo";
+        else if (node->isPrint()) {
+            line += "Print";
         }
         else if (node->isIn()) {
             line += "In";

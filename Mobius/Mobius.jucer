@@ -643,10 +643,9 @@
         <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
         <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
         <FILE id="dJ6rJt" name="MslScript.cpp" compile="1" resource="0" file="Source/script/MslScript.cpp"/>
-        <FILE id="QgNmVy" name="MslScriptletSession.cpp" compile="1" resource="0"
-              file="Source/script/MslScriptletSession.cpp"/>
-        <FILE id="A5T3LL" name="MslScriptletSession.h" compile="0" resource="0"
-              file="Source/script/MslScriptletSession.h"/>
+        <FILE id="fA1zVe" name="MslScriptlet.cpp" compile="1" resource="0"
+              file="Source/script/MslScriptlet.cpp"/>
+        <FILE id="zUKosy" name="MslScriptlet.h" compile="0" resource="0" file="Source/script/MslScriptlet.h"/>
         <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
         <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
         <FILE id="gJ3Lt9" name="MslStack.cpp" compile="1" resource="0" file="Source/script/MslStack.cpp"/>

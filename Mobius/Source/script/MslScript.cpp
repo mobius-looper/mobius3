@@ -24,11 +24,11 @@ MslScript::~MslScript()
     }
 }
 
-MslProc* MslScript::findProc(juce::String procname) {
-    MslProc* found = nullptr;
-    for (auto proc : procs) {
-        if (proc->name == procname) {
-            found = proc;
+MslFunction* MslScript::findFunction(juce::String fname) {
+    MslFunction* found = nullptr;
+    for (auto func : functions) {
+        if (func->name == fname) {
+            found = func;
             break;
         }
     }
@@ -38,12 +38,12 @@ MslProc* MslScript::findProc(juce::String procname) {
 /**
  * Vars are not gathered into a list like procs.
  */
-MslVar* MslScript::findVar(juce::String varname) {
-    MslVar* found = nullptr;
+MslVariable* MslScript::findVariable(juce::String varname) {
+    MslVariable* found = nullptr;
     if (root != nullptr) {
         for (auto node : root->children) {
-            if (node->isVar()) {
-                MslVar* var = static_cast<MslVar*>(node);
+            if (node->isVariable()) {
+                MslVariable* var = static_cast<MslVariable*>(node);
                 if (var->name == varname) {
                     found = var;
                     break;

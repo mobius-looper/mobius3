@@ -46,7 +46,7 @@ class MslScript {
     // this is however functioning as a history of prior definitions
     // when using the console and scriptlet sessions.  I'm starting
     // to not like doing that here since it is very specific to the console
-    juce::OwnedArray<class MslProc> procs;
+    juce::OwnedArray<class MslFunction> functions;
 
     // runtime cache of static variable bindings
     // this uses a pooled object linked list rather than OwnedArray
@@ -59,8 +59,8 @@ class MslScript {
     // todo: support the old concept of Labels ?
     // I think no, use exported procs instead
 
-    class MslProc* findProc(juce::String procname);
-    class MslVar* findVar(juce::String varname);
+    class MslFunction* findFunction(juce::String name);
+    class MslVariable* findVariable(juce::String name);
 
 };
 

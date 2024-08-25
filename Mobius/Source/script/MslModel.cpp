@@ -29,7 +29,7 @@ bool MslReference::wantsToken(MslParser* p, MslToken& t)
  * we'll end up with a bad parse tree that will have to be caught at runtime
  * update: added error returns in MslParser
  */
-bool MslVar::wantsToken(MslParser* p, MslToken& t)
+bool MslVariable::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
@@ -50,7 +50,7 @@ bool MslVar::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
-bool MslProc::wantsToken(MslParser* p, MslToken& t)
+bool MslFunction::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;

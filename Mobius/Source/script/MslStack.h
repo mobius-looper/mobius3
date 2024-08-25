@@ -51,10 +51,6 @@ class MslStack
     class MslBinding* bindings = nullptr;
     void addBinding(class MslBinding* b);
 
-    // phases for complex nodes
-    class MslProc* proc = nullptr;
-    class MslExternal* external = nullptr;
-
     // the information we convey to the MslContainer to set up the wait
     // this is only used once so don't need to pool them
     MslWait wait;

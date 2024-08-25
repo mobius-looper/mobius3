@@ -1,7 +1,7 @@
 /**
  * Model to describe the arguments to a function.
  * Built manually for MslExternal and MslExport.
- * Built automatically for MslProc
+ * Built automatically for MslFunction
  */
 
 #pragma once

@@ -1352,9 +1352,9 @@ bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
     return success;
 }
 
-void MobiusKernel::mslEcho(const char* msg)
+void MobiusKernel::mslPrint(const char* msg)
 {
-    Trace(2, "MobiusKernel::mslEcho %s", msg);
+    Trace(2, "MobiusKernel::mslPrint %s", msg);
 }
 
 //////////////////////////////////////////////////////////////////////

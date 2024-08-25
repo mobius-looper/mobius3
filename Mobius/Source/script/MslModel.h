@@ -36,18 +36,18 @@ class MslVisitor
     virtual void mslVisit(class MslBlock* obj) = 0;
     virtual void mslVisit(class MslOperator* obj) = 0;
     virtual void mslVisit(class MslAssignment* obj) = 0;
-    virtual void mslVisit(class MslVar* obj) = 0;
-    virtual void mslVisit(class MslProc* obj) = 0;
+    virtual void mslVisit(class MslVariable* obj) = 0;
+    virtual void mslVisit(class MslFunction* obj) = 0;
     virtual void mslVisit(class MslIf* obj) = 0;
     virtual void mslVisit(class MslElse* obj) = 0;
     virtual void mslVisit(class MslReference* obj) = 0;
     virtual void mslVisit(class MslEnd* obj) = 0;
     virtual void mslVisit(class MslWaitNode* obj) = 0;
-    virtual void mslVisit(class MslEcho* obj) = 0;
+    virtual void mslVisit(class MslPrint* obj) = 0;
     virtual void mslVisit(class MslContextNode* obj) = 0;
     virtual void mslVisit(class MslIn* obj) = 0;
     virtual void mslVisit(class MslSequence* obj) = 0;
-    virtual void mslVisit(class MslArgument* obj) = 0;
+    virtual void mslVisit(class MslArgumentNode* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -84,6 +84,10 @@ class MslNode
     // any future blocks, could proabbly handle this in the parser
     // but it's easy enough here
     bool locked = false;
+
+    void clear() {
+        children.clear();
+    }
     
     void add(MslNode* n) {
         n->parent = this;
@@ -138,14 +142,14 @@ class MslNode
     virtual bool isBlock() {return false;}
     virtual bool isOperator() {return false;}
     virtual bool isAssignment() {return false;}
-    virtual bool isVar() {return false;}
-    virtual bool isProc() {return false;}
+    virtual bool isVariable() {return false;}
+    virtual bool isFunction() {return false;}
     virtual bool isIf() {return false;}
     virtual bool isElse() {return false;}
     virtual bool isReference() {return false;}
     virtual bool isEnd() {return false;}
     virtual bool isWait() {return false;}
-    virtual bool isEcho() {return false;}
+    virtual bool isPrint() {return false;}
     virtual bool isContext() {return false;}
     virtual bool isIn() {return false;}
     virtual bool isSequence() {return false;}
@@ -168,6 +172,14 @@ class MslNode
         }
     }
 #endif
+
+    /**
+     * Return the name of the node token as a C string
+     * This is used all the time for trace messages.
+     */
+    const char* getName() {
+        return token.value.toUTF8();
+    }
     
 };
 
@@ -244,8 +256,8 @@ class MslBlock : public MslNode
     // blocks accumulate procs and vars defined within it outside of the
     // logic node tree
 
-    juce::OwnedArray<MslProc> procs;
-    juce::OwnedArray<MslVar> vars;
+    juce::OwnedArray<MslFunction> procs;
+    juce::OwnedArray<MslVariable> vars;
 
     bool isBlock() override {return true;}
     bool operandable() override {return true;}
@@ -374,15 +386,15 @@ class MslAssignment : public MslNode
     
 //////////////////////////////////////////////////////////////////////
 //
-// Var
+// Variable
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslVar : public MslNode
+class MslVariable : public MslNode
 {
   public:
-    MslVar(MslToken& t) : MslNode(t) {}
-    virtual ~MslVar() {}
+    MslVariable(MslToken& t) : MslNode(t) {}
+    virtual ~MslVariable() {}
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
@@ -399,21 +411,21 @@ class MslVar : public MslNode
 
     juce::String name;
 
-    bool isVar() override {return true;}
+    bool isVariable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
 };
 
 //////////////////////////////////////////////////////////////////////
 //
-// Proc
+// Function
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslProc : public MslNode
+class MslFunction : public MslNode
 {
   public:
-    MslProc(MslToken& t) : MslNode(t) {}
-    virtual ~MslProc() {}
+    MslFunction(MslToken& t) : MslNode(t) {}
+    virtual ~MslFunction() {}
 
     // same as var
     bool wantsToken(class MslParser* p, MslToken& t) override;
@@ -435,7 +447,7 @@ class MslProc : public MslNode
     bool hasArgs = false;
     bool hasBody = false;
     
-    bool isProc() override {return true;}
+    bool isFunction() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     MslBlock* getBody() {
         MslBlock* body = nullptr;
@@ -537,18 +549,18 @@ class MslEnd : public MslNode
     bool operandable() override {return false;}
 };
 
-class MslEcho : public MslNode
+class MslPrint : public MslNode
 {
   public:
-    MslEcho(MslToken& t) : MslNode(t) {}
-    ~MslEcho() {}
+    MslPrint(MslToken& t) : MslNode(t) {}
+    ~MslPrint() {}
 
     bool wantsNode(MslNode* node) override {
         (void)node;
         return (children.size() == 0);
     }
     
-    bool isEcho() override {return true;}
+    bool isPrint() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     bool operandable() override {return false;}
 };

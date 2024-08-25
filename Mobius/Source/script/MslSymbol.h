@@ -2,8 +2,8 @@
  * Implementation related to Symbol nodes.
  *
  * The symbol node is more complex than most as it requires linking.
- * Linking first attempts to resolve the symbol name to an an MslProc or
- * MslVar within the MslEnvironemnt.  If not found there, it will ask the
+ * Linking first attempts to resolve the symbol name to an an MslFunction or
+ * MslVariable within the MslEnvironemnt.  If not found there, it will ask the
  * context if there is an MslExternal with that name.
  *
  * Once the symbol has been resolved, if this represents a function call,
@@ -23,8 +23,8 @@
 class MslArgumentNode : public MslNode
 {
   public:
-    MslArgument() : MslNode() {}
-    virtual ~MslArgument() {}
+    MslArgumentNode() : MslNode() {}
+    virtual ~MslArgumentNode() {}
     
     bool isArgument() override {return true;}
     bool operandable() override {return false;}
@@ -33,7 +33,7 @@ class MslArgumentNode : public MslNode
     // the name of the argument we are satisfying
     juce::String name;
 
-    // the position of this argument
+    // the position of this argument, necessary?
     int position = 0;
 
     // true if this is an extra call argument that didn't match
@@ -74,18 +74,21 @@ class MslSymbol : public MslNode
     void link(class MslContext* contxt, class MslEnvironment* env, class MslScript* script) override;
     
     // link state
-    class MslProc* function = nullptr;
-    class MslVar* variable = nullptr;
+    // if a name resolves to more than one thing, only one of them will be set
+    class MslFunction* function = nullptr;
+    class MslVariable* variable = nullptr;
     class MslLinkage* linkage = nullptr;
     class MslExternal* external = nullptr;
 
-    juce::OwnedArray<class MslNode> arguments;
-
+    // compiled argument list for the resolved function
+    MslBlock arguments;
+    
   private:
 
-    void linkCall(class MslProc* proc);
+    void linkCall(class MslFunction* func);
     class MslAssignment* findCallKeyword(juce::Array<class MslNode*>& callargs, juce::String name);
     class MslNode* findCallPositional(juce::Array<class MslNode*>& callargs);
+    void linkAssignment(class MslContext* context, class MslEnvironment* env, class MslScript* script);
 
 };
 

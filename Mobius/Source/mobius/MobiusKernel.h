@@ -132,7 +132,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslQuery(MslQuery* query) override;
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
-    void mslEcho(const char* msg) override;
+    void mslPrint(const char* msg) override;
 
   protected:
     

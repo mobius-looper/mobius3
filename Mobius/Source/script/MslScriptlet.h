@@ -16,7 +16,7 @@
  * created and stored directly on whatever application objects need to run scripts
  * and evaluated at their discression.
  *
- * To use a scriptlet you start by allocating an MslScriptletSession which is created
+ * To use a scriptlet you start by allocating an MslScriptlet which is created
  * and owned by the MslEnvironment.  The scriptlet session will remain alive until
  * the application shuts down and the MslEnvironment is destructructed, or may be released
  * manually by the application when no longer needed.
@@ -57,7 +57,7 @@
 
 #include "MslValue.h"
 
-class MslScriptletSession {
+class MslScriptlet {
 
     friend class MslEnvironment;
     
@@ -71,7 +71,7 @@ class MslScriptletSession {
     // compile a fragment of MSL text
     // returns false if there were compilation errors
     // todo: will this need a MslContext, or should that only be required for evaluation?
-    bool compile(juce::String source);
+    bool compile(class MslContext* context, juce::String source);
     
     // information about errors encountered during compilation
     // this object is owned by the session and will be reclained on the next compile
@@ -123,9 +123,9 @@ class MslScriptletSession {
     // Accumulated results for the console
     //
 
-    // top-level procs encountered in the last eval()
+    // top-level functions encountered in the last eval()
     // these accumulate across calls to eval()
-    juce::OwnedArray<MslProc>* getProcs();
+    juce::OwnedArray<MslFunction>* getFunctions();
 
     // bindings representing the top-level script variables encountered during
     // evaluation
@@ -134,13 +134,13 @@ class MslScriptletSession {
     MslBinding* getBindings();
 
     // couldn't make this protected for some reason due to the OwnedArray in MslEnvironment
-    ~MslScriptletSession();
+    ~MslScriptlet();
     
   protected:
 
     // only for use by MslEnvironment
 
-    MslScriptletSession(class MslEnvironment* env);
+    MslScriptlet(class MslEnvironment* env);
     void resetLaunchResults();
     
     // the internal session id if one it had to be launched async

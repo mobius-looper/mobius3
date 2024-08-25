@@ -23,8 +23,6 @@ void MslStack::init()
     childIndex = -1;
     accumulator = false;
     bindings = nullptr;
-    proc = nullptr;
-    external = nullptr;
     inList = nullptr;
     inPtr = nullptr;
     wait.init();
