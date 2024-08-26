@@ -102,7 +102,7 @@ class ScriptProperties
      * For new MSL scripts, a pointer into the MslEnvironment for the
      * script or proc to be called.
      */
-    void *mslLinkage = nullptr;
+    class MslLinkage *mslLinkage = nullptr;
 
     
 };

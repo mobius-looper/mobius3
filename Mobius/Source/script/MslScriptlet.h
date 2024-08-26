@@ -135,6 +135,11 @@ class MslScriptlet {
 
     // couldn't make this protected for some reason due to the OwnedArray in MslEnvironment
     ~MslScriptlet();
+
+    // public so that the console can see directives that have been parsed
+    MslScript* getScript() {
+        return script.get();
+    }
     
   protected:
 
@@ -155,9 +160,6 @@ class MslScriptlet {
     MslValue* launchResult = nullptr;
     juce::String fullResult;
 
-    MslScript* getScript() {
-        return script.get();
-    }
 
   private:
 

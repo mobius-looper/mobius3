@@ -16,11 +16,13 @@
 #include "../model/Query.h"
 #include "../model/Symbol.h"
 #include "../model/SampleProperties.h"
+#include "../model/ScriptProperties.h"
 
 #include "../script/MslEnvironment.h"
 #include "../script/MslContext.h"
 #include "../script/MslExternal.h"
 #include "../script/MslWait.h"
+#include "../script/ActionAdapter.h"
 
 #include "../Binderator.h"
 #include "../PluginParameter.h"
@@ -812,6 +814,12 @@ void MobiusKernel::doAction(UIAction* action)
         // should not have made it this far without a symbol
         Trace(1, "MobiusKernel: Action without symbol!\n");
     }
+    else if (symbol->script != nullptr && symbol->script->mslLinkage != nullptr) {
+        // levels don't matter for these, just send it to the environment and
+        // let it figure out thread transitions
+        ActionAdapter aa;
+        aa.doAction(container->getMslEnvironment(), this, action);
+    }
     else if (symbol->level == LevelKernel) {
         doKernelAction(action);
     }
@@ -1355,6 +1363,16 @@ bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
 void MobiusKernel::mslPrint(const char* msg)
 {
     Trace(2, "MobiusKernel::mslPrint %s", msg);
+}
+
+/**
+ * Need to implement this since it is pure virtual but since we don't
+ * cause files to be loaded down here it should't be accessed?
+ */
+void MobiusKernel::mslExport(MslLinkage* link)
+{
+    (void)link;
+    Trace(1, "MobiusKernel::mslExport Not implemented");
 }
 
 //////////////////////////////////////////////////////////////////////

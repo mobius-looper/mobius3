@@ -20,7 +20,47 @@
 
 #include "MslValue.h"
 #include "MslPools.h"
+#include "MslContext.h"
 #include "MslConductor.h"
+
+/**
+ * Object similar to UIAction that is used to run a script.
+ * It is different enough from MslAction that goes the other direction
+ * that I decided to make it it's own thing rather than have a shared
+ * one with unused fields.
+ *
+ * The call can target either a script or a function exported from a script.
+ * Arguments are specified witha list of MslValues that must can be allocdated from
+ * the pool.
+ *
+ * MslLinkage is effectively the same as Symbol in a UIAction.
+ */
+class MslRequest
+{
+  public:
+
+    MslRequest() {}
+    ~MslRequest() {}
+
+    /**
+     * The function to call or the variable to set.
+     * Returned by a call 
+     */
+    class MslLinkage* linkage = nullptr;
+
+    /**
+     * For function/script calls, optional arguments to the script.
+     * For variable assignments, the value to assign.
+     */
+    MslValue* arguments = nullptr;
+
+    //
+    // Results
+    //
+
+    MslValue result;
+    MslContextError error;
+};
 
 /**
  * Represents a linkage between a reference in a script and something
@@ -72,7 +112,6 @@ class MslEnvironment
     MslEnvironment();
     ~MslEnvironment();
 
-    void initialize(class SymbolTable* st);
     void shutdown();
 
     //
@@ -91,7 +130,7 @@ class MslEnvironment
      * This could be done by either ScriptClerk or MslEnvironment, I'm leaning toward
      * script clerk.
      */
-    class MslScript* load(juce::String path, juce::String source);
+    class MslScript* load(class MslContext* c, juce::String path, juce::String source);
 
     /**
      * Unload any scripts from files that are not included in the retain list.
@@ -117,17 +156,16 @@ class MslEnvironment
     
     //
     // User initiated actions
+    // 
     //
 
-    /**
-     * Normal running of file-based scripts
-     * !! todo: Should not be dependent on the UIAction here
-     * Either make the container build an MslAction or simply run a script
-     * by name with a list of MslValues as arguments, or an argument string that
-     * is parsed into individual arguments.  Probably the latter for bindings.
-     */
-    void doAction(class MslContext* c, class UIAction* action);
+    MslLinkage* find(juce::String name);
+    MslValue* allocValue();
+    void free(MslValue* v);
 
+    void request(class MslContext* c, MslRequest* req);
+    void query(MslLinkage* linkage, MslValue* result);
+    
     //
     // Console/Scriptlet interface
     //
@@ -182,8 +220,6 @@ class MslEnvironment
         return &pool;
     }
 
-    MslLinkage* findLinkage(juce::String name);
-
     // for MslConductor
     void processSession(MslContext* c, MslSession* s);
 
@@ -223,17 +259,12 @@ class MslEnvironment
     // active scriptlet sessions
     juce::OwnedArray<class MslScriptlet> scriptlets;
 
-    // hack for exporting Symbols
-    // this needs to be packaged into the MslContext better
-    class SymbolTable* symbols = nullptr;
-    
-
     //
     // internal library management
     //
     
     void loadInternal(juce::String path);
-    void install(class MslScript* script);
+    void install(class MslContext* c, class MslScript* script);
     juce::String getScriptName(class MslScript* script);
     void unlink(class MslScript* script);
 

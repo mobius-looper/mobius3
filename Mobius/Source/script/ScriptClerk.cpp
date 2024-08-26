@@ -179,7 +179,7 @@ void ScriptClerk::loadInternal(juce::String path)
 
         // ask the environment to install it if it can
         MslEnvironment* env = supervisor->getMslEnvironment();
-        MslScript* result = env->load(path, source);
+        MslScript* result = env->load(supervisor, path, source);
  
         // if the parser returns errors, save them
         if (result->errors.size() > 0) {

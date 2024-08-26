@@ -133,7 +133,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
-
+    void mslExport(class MslLinkage* link) override;
+    
   protected:
     
     // hacky shit for unit test setup

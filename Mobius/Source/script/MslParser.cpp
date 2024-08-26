@@ -389,6 +389,10 @@ void MslParser::parseInner(juce::String source)
                         
                     }
                 }
+                else if (t.value == ":") {
+                    MslKeyword* k = new MslKeyword(t);
+                    current = push(k);
+                }
                 else {
                     errorSyntax(t, "Unexpected punctuation");
                 }
@@ -570,7 +574,7 @@ void MslParser::parseDirective(MslToken& t)
         script->name = remainder.trim();
     }
     else if (directive.equalsIgnoreCase("#arguments")) {
-        parseArgumentDirective(t, space, remainder);
+        parseArguments(t, space, remainder);
     }
     else {
         Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
@@ -578,29 +582,38 @@ void MslParser::parseDirective(MslToken& t)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Signatures
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * This is a bit of a hack to parse the #argument directive into what looks
+ * This is a bit of a hack to parse the #signature directive into what looks
  * like the argument declaration block of an MslFunction.  This allows
- * a script filei to be called with arguments as if it were wrapped in a
+ * a script file to be called with arguments as if it were wrapped in a
  * MslFunction which makes it easier for the MslSymbol evaluator to deal with.
  * Since the text isn't part of the text of the file currently being
  * parsed, we create a new parser just for this so we don't mess up the state
  * of the main parser.
  *
- * Typical syntax will be:
+ * This is evolving along with the notion of "options" and scripts as "classes".
  *
+ * Canonical syntax:
+ *
+ *    script foo (a b c) {
+ *    }
+ *
+ * Alternative:
+ *
+ *    script foo {
+ *      signature (a b c)
+ *      option (quantize, sustain)
+ *
+ * Directives:
+ *
+ *    #signature foo(a b c)
  *    #arguments a b c
- *
- * But allow this too since it's an easy assumption:
- *
- *    #arguments (a b c)
- *
- * Ugh, optional surrounding parens are going to be hard if they want to use
- * the nested list syntax to declare dynamic bindings:
- *
- *   func foo(a b c (something))
- *
- * But you only need that for external signatures.
  *
  * Script arguments are different than functions because they are usually optional
  * and it's inconvenient to make them type a=null b=null...
@@ -613,10 +626,10 @@ void MslParser::parseDirective(MslToken& t)
  * external functions.
  *
  */
-void MslParser::parseArgumentDirective(MslToken& t, int offset, juce::String remainder)
+void MslParser::parseArguments(MslToken& t, int offset, juce::String remainder)
 {
     MslParser p;
-    MslScript* s = p.parse(args);
+    MslScript* s = p.parse(remainder);
     if (s->errors.size() > 0) {
         errorSyntax(t, "Parse error in directive");
         while (s->errors.size() > 0) {
@@ -625,12 +638,14 @@ void MslParser::parseArgumentDirective(MslToken& t, int offset, juce::String rem
             // adjust the token location for the containing directive
             e->line = t.line;
             e->column += offset;
-            script->errors(add);
+            script->errors.add(e);
         }
     }
     else {
-        
-        
+        // the root block is the argument list, steal it from the transient script
+        // and leave it on the one we're parsing
+        script->arguments.reset(s->root);
+        s->root = nullptr;
     }
     delete s;
 }

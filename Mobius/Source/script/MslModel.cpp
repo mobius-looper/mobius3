@@ -11,13 +11,31 @@
 bool MslReference::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
-    if (t.type == MslToken::Type::Symbol ||
-        t.type == MslToken::Type::Int) {
-        name = t.value;
-        wants = true;
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol ||
+            t.type == MslToken::Type::Int) {
+            name = t.value;
+            wants = true;
+        }
+        else {
+            p->errorSyntax(t, "Invalid reference");
+        }
     }
-    else {
-        p->errorSyntax(t, "Invalid reference");
+    return wants;
+}
+
+bool MslKeyword::wantsToken(MslParser* p, MslToken& t)
+{
+    bool wants = false;
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            name = t.value;
+            wants = true;
+        }
+        else {
+            p->errorSyntax(t, "Invalid keyword");
+            // todo: could also check this against the set of known keywords
+        }
     }
     return wants;
 }

@@ -105,6 +105,10 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
     external = nullptr;
     arguments.clear();
 
+    // determining whether something is a function or not is annoying
+    // with the three different models
+    bool isFunction = false;
+
     // special case for symbols used in assignments
     if (parent->isAssignment() && parent->children.size() > 1 &&
         parent->children[0] == this) {
@@ -119,14 +123,17 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
     MslFunction* func = script->findFunction(token.value);
     if (func != nullptr) {
         function = func;
+        isFunction = true;
     }
     else {
         // todo: look for exported functions defined in the environment
         // precedence question: should script exports be able to mess up
         // external symbol resolution?
-        MslLinkage* link = env->findLinkage(token.value);
-        if (link != nullptr && link->function != nullptr)
-          linkage = link;
+        MslLinkage* link = env->find(token.value);
+        if (link != nullptr && (link->function != nullptr || link->script != nullptr)) {
+            linkage = link;
+            isFunction = true;
+        }
         else {
             // look for an external
             // do we need to attempt dynamic resolution?
@@ -138,6 +145,8 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
                     external = new MslExternal(retval);
                     external->name = token.value;
                     env->intern(external);
+
+                    isFunction = external->isFunction;
                 }
             }
         }
@@ -154,35 +163,39 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
             variable = var;
         }
         else {
-            MslLinkage* link = env->findLinkage(token.value);
+            MslLinkage* link = env->find(token.value);
             if (link != nullptr && link->variable != nullptr)
               linkage = link;
         }
     }
-    
-    // compile the call arguments from the function decclaration
-    MslFunction* funcToLink = function;
-    if (funcToLink == nullptr) {
-        // didn't have a local function
-        if (linkage != nullptr) {
-            // found an exported function in another acript
-            funcToLink = linkage->function;
+
+    // compile the call argument initializers by merging the
+    // call arguments with the function signature
+    if (isFunction) {
+        MslBlock* signature = nullptr;
+        if (function != nullptr) {
+            signature = function->getDeclaration();
         }
-        else if (external != nullptr && external->isFunction) {
-
-            // todo: here we need a way for the context to give us the signature
-            // for each external function, the easiest would be to provide
-            // a signature that resembles a function declaration
-            // "(a b (global1 global2))"
-            // and then parse that into an MslFunction node, punt for now
-
-            // todo: MslExternal can now have a signatureDefinition we should compile
-            // into an MslSignature
-            // should also be using MslSignature in functions
+        else if (linkage != nullptr) {
+            if (linkage->function != nullptr)
+              signature = linkage->function->getDeclaration();
+            else if (linkage->script != nullptr)
+              signature = linkage->script->getDeclaration();
+        }
+        else if (external != nullptr) {
+            // todo: eventually externals need signatures too
+        }
+        
+        linkCall(script, signature);
+    }
+    else {
+        // todo: this resolved to a variable, if we have call arguments
+        // should probably error now?
+        if (children.size() > 0) {
+            MslError* errobj = new MslError(this, "Variable symbol does not accept arguments");
+            script->errors.add(errobj);
         }
     }
-    if (funcToLink != nullptr)
-      linkCall(script, funcToLink);
 }
 
 /**
@@ -199,7 +212,7 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
  *        use the function
  *
  */
-void MslSymbol::linkCall(MslScript* script, MslFunction* func)
+void MslSymbol::linkCall(MslScript* script, MslBlock* signature)
 {
     juce::String error;
     
@@ -223,73 +236,97 @@ void MslSymbol::linkCall(MslScript* script, MslFunction* func)
     // remember the position of each argument added to the list
     // these are $x reference positions starting from 1
     int position = 1;
+    bool optional = false;
     
-    MslBlock* decl = func->getDeclaration();
-    if (decl != nullptr) {
-        for (auto arg : decl->children) {
-            MslSymbol* argsym = nullptr;
-            MslNode* initializer = nullptr;
-            if (arg->isSymbol()) {
-                // simple named argument
-                argsym = static_cast<MslSymbol*>(arg);
-            }
-            else if (arg->isAssignment()) {
-                MslAssignment* argass = static_cast<MslAssignment*>(arg);
-                // assignments have two children, LHS is the symbol to assign
-                // and RHS is the value expression
-                // would be nicer if the parser could simplify this
-                if (argass->children.size() > 0) {
-                    MslNode* node = argass->children[0];
-                    if (node->isSymbol()) {
-                        argsym = static_cast<MslSymbol*>(node);
-                        if (argass->children.size() > 1)
-                          initializer = argass->children[1];
-                    }
+    if (signature != nullptr) {
+        for (auto arg : signature->children) {
+
+            // deal with keywords for :optional and :include
+            if (arg->isKeyword()) {
+                MslKeyword* key = static_cast<MslKeyword*>(arg);
+                if (key->name == "optional") {
+                    optional = true;
+                }
+                else {
+                    error = "Invalid keyword";
                 }
             }
-
-            if (argsym == nullptr) {
-                // not a symbol or well-formed assignment in the delcaration
-                error = "Unable to determine function argument name";
-            }
             else {
-                // add a argument for this name
-                juce::String name = argsym->token.value;
-                MslArgumentNode* argref = new MslArgumentNode();
-                argref->name = name;
-                argref->position = position;
-                position++;
-                arguments.add(argref);
-
-                // is there a keyword argument for this in the call?
-                MslAssignment* callass = findCallKeyword(callargs, name);
-                if (callass != nullptr) {
-                    if (callass->children.size() > 1)
-                      argref->node = callass->children[1];
-                    else {
-                        // no rhs on the assignment, something like this
-                        // foo(... x =, ...) or foo(x=)
-                        // this is most likely an error, but it could also be used to indiciate
-                        // overriding a default from the function declaration with null
+                MslSymbol* argsym = nullptr;
+                MslNode* initializer = nullptr;
+                if (arg->isSymbol()) {
+                    // simple named argument
+                    argsym = static_cast<MslSymbol*>(arg);
+                }
+                else if (arg->isAssignment()) {
+                    MslAssignment* argass = static_cast<MslAssignment*>(arg);
+                    // assignments have two children, LHS is the symbol to assign
+                    // and RHS is the value expression
+                    // would be nicer if the parser could simplify this
+                    if (argass->children.size() > 0) {
+                        MslNode* node = argass->children[0];
+                        if (node->isSymbol()) {
+                            argsym = static_cast<MslSymbol*>(node);
+                            if (argass->children.size() > 1)
+                              initializer = argass->children[1];
+                        }
                     }
                 }
                 else {
-                    // use the next available positional argument
-                    MslNode* positional = findCallPositional(callargs);
-                    if (positional != nullptr) {
-                        argref->node = positional;
-                    }
-                    else if (initializer != nullptr) {
-                        // use the default initializer from the declaration
-                        argref->node = initializer;
+                    // this is probably an error, what else would it be?
+                }
+
+                if (argsym == nullptr) {
+                    // not a symbol or well-formed assignment in the delcaration
+                    error = "Unable to determine function argument name";
+                }
+                else {
+                    // add a argument for this name
+                    juce::String name = argsym->token.value;
+                    MslArgumentNode* argref = new MslArgumentNode();
+                    argref->name = name;
+                    argref->position = position;
+                    // remember this for later when binding the results
+                    argref->optional = optional;
+                    position++;
+                    arguments.add(argref);
+
+                    // is there a keyword argument for this in the call?
+                    MslAssignment* callass = findCallKeyword(callargs, name);
+                    if (callass != nullptr) {
+                        if (callass->children.size() > 1)
+                          argref->node = callass->children[1];
+                        else {
+                            // no rhs on the assignment, something like this
+                            // foo(... x =, ...) or foo(x=)
+                            // this is most likely an error, but it could also be used to indiciate
+                            // overriding a default from the function declaration with null
+                        }
                     }
                     else {
-                        // no initializer and ran out of positionals, something is missing
-                        error = juce::String("Missing function argument: ") + name;
+                        // use the next available positional argument
+                        MslNode* positional = findCallPositional(callargs);
+                        if (positional != nullptr) {
+                            argref->node = positional;
+                        }
+                        else if (initializer != nullptr) {
+                            // use the default initializer from the declaration
+                            argref->node = initializer;
+                        }
+                        else if (!optional) {
+                            // no initializer and ran out of positionals, something is missing
+                            error = juce::String("Missing function argument: ") + name;
+                        }
+                        else {
+                            // optional arg with no initializer, I guess leave it
+                            // in place with a null node, but could just keep it off
+                            // the list entirely so it doesn't make a gratuituous
+                            // binding.  Or perhaps that's what you want?
+                        }
                     }
                 }
             }
-
+            
             if (error.length() > 0)
               break;
         }
@@ -416,7 +453,7 @@ MslNode* MslSymbol::findCallPositional(juce::Array<MslNode*>& callargs)
 void MslSymbol::linkAssignment(MslContext* context, MslEnvironment* env, MslScript* script)
 {
     // look for an export
-    MslLinkage* link = env->findLinkage(token.value);
+    MslLinkage* link = env->find(token.value);
     if (link != nullptr && link->variable != nullptr) {
         // assign the exported variable
         linkage = link;
@@ -569,10 +606,7 @@ void MslSession::mslVisit(MslSymbol* snode)
             else if (snode->linkage != nullptr) {
                 // then globally
                 // same preference for functions over variables
-                if (snode->linkage->function != nullptr) {
-                    // !! this could be simplified, since compiling the argument list means
-                    // we must have made the local/export decision already, then we don't
-                    // need to be repeating the logic here
+                if (snode->linkage->function != nullptr || snode->linkage->script != nullptr) {
                     pushArguments(snode);
                 }
                 else if (snode->linkage->variable != nullptr) {
@@ -703,12 +737,15 @@ void MslSession::pushCall(MslSymbol* snode)
         pushBody(snode, snode->function->getBody());
     }
     else if (snode->linkage != nullptr) {
-        
-        if (snode->linkage->function == nullptr) {
-            addError(snode, "Call with invalid linkage");
+
+        if (snode->linkage->function != nullptr) {
+            pushBody(snode, snode->linkage->function->getBody());
+        }
+        else if (snode->linkage->script != nullptr) {
+            pushBody(snode, snode->linkage->script->root);
         }
         else {
-            pushBody(snode, snode->linkage->function->getBody());
+            addError(snode, "Call with invalid linkage");
         }
     }
     else if (snode->external != nullptr) {
@@ -761,9 +798,18 @@ void MslSession::bindArguments(MslSymbol* snode)
         b->setName(arg->name.toUTF8());
         // ownership of the value transfers
         if (stack->childResults == nullptr) {
-            // did not evaluate enough arguments, should not happen
-            // should this fail or move on?
-            addError(snode, "Not enough arguments to function call");
+            // this should only happen for :optional arguments
+            if (!arg->optional) {
+                // did not evaluate enough arguments, should not happen
+                // should this fail or move on?
+                addError(snode, "Not enough arguments to function call");
+            }
+            else {
+                // should this bind anything?  if we leave it on the stack
+                // it will shadow arguments bound above
+                // todo: unclear, feels like both are useful
+                // leave it null
+            }
         }
         else {
             b->value = stack->childResults;
@@ -804,8 +850,16 @@ void MslSession::bindArguments(MslSymbol* snode)
  */
 void MslSession::mslVisit(MslArgumentNode* node)
 {
-    if (node->node != nullptr)
-      node->node->visit(this);
+    if (node->node != nullptr) {
+        node->node->visit(this);
+    }
+    else {
+        // argument with no initializer
+        // this should only happen for optional arguments with
+        // nothing passed in the call
+        // leave a null here or just nothing?
+        popStack();
+    }
 }
  
 //////////////////////////////////////////////////////////////////////

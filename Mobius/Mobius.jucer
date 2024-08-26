@@ -609,6 +609,9 @@
         <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
       </GROUP>
       <GROUP id="{AF593FE0-3ECC-DDB4-DBDB-FC6DA34DEFDE}" name="script">
+        <FILE id="nn3BzH" name="ActionAdapter.cpp" compile="1" resource="0"
+              file="Source/script/ActionAdapter.cpp"/>
+        <FILE id="Vg0bmb" name="ActionAdapter.h" compile="0" resource="0" file="Source/script/ActionAdapter.h"/>
         <FILE id="U7Ep98" name="Console.cpp" compile="1" resource="0" file="Source/script/Console.cpp"/>
         <FILE id="cGY5Fr" name="Console.h" compile="0" resource="0" file="Source/script/Console.h"/>
         <FILE id="t6nx5O" name="ConsolePanel.h" compile="0" resource="0" file="Source/script/ConsolePanel.h"/>

@@ -61,5 +61,6 @@ class MslParser
     MslNode* subsume(MslNode* op, MslNode* operand);
 
     void parseDirective(MslToken& t);
-    
+    void parseArguments(MslToken& t, int offset, juce::String remainder);
+
 };

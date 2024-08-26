@@ -5,12 +5,7 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Util.h"
 #include "../util/Trace.h"
-#include "../model/MobiusConfig.h"
-#include "../model/Symbol.h"
-#include "../model/ScriptProperties.h"
-#include "../model/UIAction.h"
 
 #include "MslContext.h"
 #include "MslError.h"
@@ -35,15 +30,6 @@ MslEnvironment::~MslEnvironment()
 }
 
 /**
- * Need to work out a better way to access the SymbolTable
- * for exporting things, MslEnvironment shouldn't know what this is.
- */
-void MslEnvironment::initialize(SymbolTable* st)
-{
-    symbols = st;
-}
-
-/**
  * The object pools will be reclained during the destruction process,
  * which Supervisor has arranged to do last so other things have a chance
  * return objects to the pools as they destruct.
@@ -52,6 +38,131 @@ void MslEnvironment::initialize(SymbolTable* st)
  */
 void MslEnvironment::shutdown()
 {
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Application Interface
+//
+// These are the methods the containing application uses to run
+// scripts, retrieve variables and set variables.
+//
+// Conceptually similar to using UIAction and Query in Mobius but
+// not dependent on those models.  The ActionAdapter class may
+// be used to bridge the two runtime models.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Look up something in the script environment by name.
+ * This is essentially the symbol table for the script environment.
+ */
+MslLinkage* MslEnvironment::find(juce::String name)
+{
+    return library[name];
+}
+
+/**
+ * Allocate a value structure for use in an MslRequest.
+ */
+MslValue* MslEnvironment::allocValue()
+{
+    return pool.allocValue();
+}
+
+/**
+ * Reutrn a value to the pool.
+ * It may also be simply deleted if you are in shell context.
+ */
+void MslEnvironment::free(MslValue* v)
+{
+    if (v != nullptr) pool.free(v);
+}
+
+/**
+ * Access the value of a variable.
+ */
+void MslEnvironment::query(MslLinkage* linkage, MslValue* result)
+{
+    (void)linkage;
+    Trace(1, "MslEnvironment::query not implemented");
+    result->setNull();
+}
+
+/**
+ * Perform a request in response to a user initiated event.
+ * What the request does is dependent on what is on the other
+ * side of the linkage.  It will either start a session to run
+ * a script or function.  Or assign the value of a static variable.
+ */
+void MslEnvironment::request(MslContext* c, MslRequest* req)
+{
+    req->result.setNull();
+    
+    MslLinkage* link = req->linkage;
+    if (link == nullptr) {
+        Trace(1, "MslEnvironment::request Missing link");
+    }
+    else if (link->script != nullptr) {
+        MslSession* session = pool.allocSession();
+
+        // todo: need a way to pass request arguments into the session
+        session->start(c, link->script);
+
+        if (session->isFinished()) {
+
+            if (session->hasErrors()) {
+                // will want options to control the generation of a result since
+                // for actions there could be lot of them
+                (void)makeResult(session, true);
+
+                Trace(1, "MslEnvironment: Script returned with errors");
+                // todo: should have a way to convey at least an error flag in the action?
+
+                pool.free(session);
+            }
+            else {
+                // script/function return value was left on the session, copy it
+                // into the request
+                // may have interesting runtime statistics or complex result values as well
+
+                MslValue* result = session->getValue();
+                if (result != nullptr) {
+                    Trace(2, "MslEnvironment: Script returned %s", result->getString());
+
+                    // copy the value rather than the object so the caller doesn't have
+                    // to mess with reclamation
+                    req->result.setString(result->getString());
+                }
+                
+                // !! what about errors, they can be left behind on the session too
+                // for things like MIDI requests at most we need is a single line of text for
+                // an alert, the user can then go to the script console for details
+
+                pool.free(session);
+            }
+        }
+        else if (session->isTransitioning()) {
+            (void)makeResult(session, false);
+            conductor.addTransitioning(c, session);
+            // todo: put something in the request?
+        }
+        else if (session->isWaiting()) {
+            (void)makeResult(session, false);
+            conductor.addWaiting(c, session);
+            // todo: put something in the request?
+        }
+    }
+    else if (link->function != nullptr) {
+        Trace(1, "MslEnvironment: Function requsts not implemented");
+    }
+    else if (link->variable != nullptr) {
+        Trace(1, "MslEnvironment: Variable requsts not implemented");
+    }
+    else {
+        Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());
+        req->error.setError("Unresolved link");
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -78,7 +189,7 @@ void MslEnvironment::shutdown()
  * ScriptClerk should do that and pass in the name.  It is however nice
  * during debugging to know where this script came from.
  */
-MslScript* MslEnvironment::load(juce::String path, juce::String source)
+MslScript* MslEnvironment::load(MslContext* c, juce::String path, juce::String source)
 {
     MslParser parser;
     MslScript* script = parser.parse(source);
@@ -94,7 +205,7 @@ MslScript* MslEnvironment::load(juce::String path, juce::String source)
     }
     else {
         // defer linking until the end, but could do it each time too
-        install(script);
+        install(c, script);
     }
     
     return script;
@@ -222,8 +333,11 @@ void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* n
  * when detected are added to a collision list for display to the user.
  *
  * The scripts are still loaded, and the reference may be resolved later.
+ *
+ * This will call back to MslContext::mslExport to let the container register
+ * the script for reference.  For Mobius this is the SymbolTable.
  */
-void MslEnvironment::install(MslScript* script)
+void MslEnvironment::install(MslContext* context, MslScript* script)
 {
     // is it already there?
     // note that this is the authorative model for loaded scripts and is independent
@@ -289,20 +403,7 @@ void MslEnvironment::install(MslScript* script)
 
     if (!collision) {
         // export this as a Symbol for bindings
-        Symbol* s = symbols->intern(name);
-        if (s->script != nullptr || s->behavior == BehaviorNone) {
-            // can make this a script
-            // todo: all sortts of things to check here, it could be a core script
-            // what about all the flags that can be set in ScriptRef?
-            if (s->script == nullptr)
-              s->script.reset(new ScriptProperties());
-            s->script->mslLinkage = link;
-            s->level = LevelUI;
-            s->behavior = BehaviorScript;
-        }
-        else {
-            Trace(1, "MslEnvironment: Symbol conflict exporting script %s", name.toUTF8());
-        }
+        context->mslExport(link);
     }
 }
 
@@ -443,107 +544,9 @@ void MslEnvironment::intern(MslExternal* ext)
  
 //////////////////////////////////////////////////////////////////////
 //
-// Actions
+// Internal Request Handling
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Process an action on a symbol bound to an MSL script.
- *
- * !!! this has a dependency on the Mobius model that needs to be factored out.
- * Like MslExternal used to go from MSL to the outside world, we need another
- * abstraction for the outside world to push things into MSL that does not
- * need UIAction.
- *
- * This is what normally launches a new script session outside of a scriptlet.
- *
- * The context may be the shell when responding to a MIDI event or UI button
- * or it may be the kernel when responding to a MIDI event received
- * through the plugin interface or to an action generated by another
- * script session.
- *
- * You won't be here when a script just calls another script, that is
- * handled through direct linkage within the environment.
- * !! is it really?  need to verify that MslSymbols that resolve to
- * other scripts bypass the UIAction, because those are going to
- * launch asynchronous script sessions.
- *
- * The session starts in whichever context it is currently in, but it
- * may immediately transition to the other side.
- *
- * If the session runs to completion synchronously, without transitioning
- * or waiting it may either be discarded, or placed on the result list
- * for later inspection.  If the script has errors it is placed on the
- * result list so it can be shown in the ScriptConsole since the UIAction
- * does not have a way to return complex results.
- *
- * If the session suspends due to a wait or a transition, it is placed
- * on the appropriate session list by the MslConductor.
- *
- */
-void MslEnvironment::doAction(MslContext* c, UIAction* action)
-{
-    // same sanity checking that should have been done by now
-    Symbol* s = action->symbol;
-    if (s == nullptr) {
-        Trace(1, "MslEnironment: Action without symbol");
-    }
-    else if (s->script == nullptr) {
-        Trace(1, "MslEnironment: Action with non-script symbol");
-    }
-    else if (s->script->mslLinkage == nullptr) {
-        Trace(1, "MslEnironment: Action with non-MSL symbol");
-    }    
-    else {
-        MslLinkage* link = static_cast<MslLinkage*>(s->script->mslLinkage);
-        if (link->script == nullptr) {
-            // not a script
-            if (link->function != nullptr) {
-                // todo: need extra packaging to make them look sessionable
-                Trace(1, "MslEnvironment: Function linkage not implemented");
-            }
-            else {
-                Trace(1, "MslEnvironment: Action with unresolved linkage");
-            }
-        }
-        else {
-            MslSession* session = pool.allocSession();
-            session->start(c, link->script);
-
-            if (session->isFinished()) {
-
-                if (session->hasErrors()) {
-                    // will want options to control the generation of a result since
-                    // for actions there could be lot of them
-                    (void)makeResult(session, true);
-
-                    Trace(1, "MslEnvironment: Script returned with errors");
-                    // todo: should have a way to convey at least an error flag in the action?
-
-                    pool.free(session);
-                }
-                else {
-                    // we are free to discard it, any use in keeping these around?
-                    // may have interesting runtime statistics or complex result values
-                    // put what we can back into the action
-                    MslValue* result = session->captureValue();
-                    Trace(2, "MslEnvironment: Script returned %s", result->getString());
-                    CopyString(result->getString(), action->result, sizeof(action->result));
-                    pool.free(result);
-                    pool.free(session);
-                }
-            }
-            else if (session->isTransitioning()) {
-                (void)makeResult(session, false);
-                conductor.addTransitioning(c, session);
-            }
-            else if (session->isWaiting()) {
-                (void)makeResult(session, false);
-                conductor.addWaiting(c, session);
-            }
-        }
-    }
-}
 
 /**
  * Make a new MslResult for an asynchronous MslSession, or one that
@@ -730,17 +733,6 @@ MslResult* MslEnvironment::getResults()
 void MslEnvironment::pruneResults()
 {
     conductor.pruneResults();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Internal Utilities
-//
-//////////////////////////////////////////////////////////////////////
-
-MslLinkage* MslEnvironment::findLinkage(juce::String name)
-{
-    return library[name];
 }
 
 /****************************************************************************/

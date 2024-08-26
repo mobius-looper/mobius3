@@ -256,7 +256,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
-
+    void mslExport(class MslLinkage* link) override;
+    
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill);

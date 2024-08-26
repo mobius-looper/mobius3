@@ -39,9 +39,15 @@ class MslArgumentNode : public MslNode
     // true if this is an extra call argument that didn't match
     // an argument in the function declaration
     bool extra = false;
+
+    // true if this was after an :optional keyword and doesn't
+    // require a value
+    bool optional = false;
     
     // the thing we forward to
     MslNode* node = nullptr;
+
+    
 
 };
 
@@ -85,7 +91,7 @@ class MslSymbol : public MslNode
     
   private:
 
-    void linkCall(class MslScript* script, class MslFunction* func);
+    void linkCall(class MslScript* script, class MslBlock* signature);
     class MslAssignment* findCallKeyword(juce::Array<class MslNode*>& callargs, juce::String name);
     class MslNode* findCallPositional(juce::Array<class MslNode*>& callargs);
     void linkAssignment(class MslContext* context, class MslEnvironment* env, class MslScript* script);

@@ -156,6 +156,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("resume")) {
         doResume();
     }
+    else if (line.startsWith("signature")) {
+        doSignature();
+    }
     else {
         doEval(line);
     }
@@ -183,13 +186,23 @@ void MobiusConsole::doHelp()
 }
 
 /**
- * Reload the entire ScriptConfig or load an individual file.
+ * Reload portions of the script configuration.
+ *
+ *    load           - reload the MSL library
+ *    load <file>    - load a file
+ *    load config    - reload the ScriptConfig
+ *
  */
 void MobiusConsole::doLoad(juce::String line)
 {
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    
-    if (line.startsWith("config")) {
+
+    line = line.trim();
+
+    if (line.length() == 0) {
+        clerk->loadLibrary();
+    }
+    else if (line.startsWith("config")) {
         clerk->reload();
     }
     else {
@@ -444,6 +457,21 @@ void MobiusConsole::doResults(juce::String arg)
 }
 
 /**
+ * Test hack for directive parsing
+ * # directives are parsed into the scriptlet's MslScript like other statements
+ * but since they do not evaluate we have no way to look at them.
+ */
+void MobiusConsole::doSignature()
+{
+    MslScript* s = session->getScript();
+    if (s->arguments != nullptr) {
+        console.add("Arguments:");
+        traceNode(s->arguments.get(), 2);
+    }
+}
+
+
+/**
  * This needs to be packaged better into a utliity that is closer to the
  * nodes, and uses a visitor, and abstracts away the console dependency.
  */
@@ -522,6 +550,10 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isContext()) {
             MslContextNode* con = static_cast<MslContextNode*>(node);
             line += "Context: " + juce::String(con->shell ? "shell" : "kernel");
+        }
+        else if (node->isKeyword()) {
+            MslKeyword* key = static_cast<MslKeyword*>(node);
+            line += "Keyword: " + key->name;
         }
         else {
             line += "???: ";

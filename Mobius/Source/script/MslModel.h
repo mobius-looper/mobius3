@@ -48,6 +48,8 @@ class MslVisitor
     virtual void mslVisit(class MslIn* obj) = 0;
     virtual void mslVisit(class MslSequence* obj) = 0;
     virtual void mslVisit(class MslArgumentNode* obj) = 0;
+    virtual void mslVisit(class MslKeyword* obj) = 0;
+    
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -154,7 +156,8 @@ class MslNode
     virtual bool isIn() {return false;}
     virtual bool isSequence() {return false;}
     virtual bool isArgument() {return false;}
-    
+    virtual bool isKeyword() {return false;}
+       
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslScript* script) {
         (void)context;
         (void)env;
@@ -210,6 +213,36 @@ class MslLiteral : public MslNode
 
 //////////////////////////////////////////////////////////////////////
 //
+// Keyword
+//
+// Keywords have the form :name
+// Will eventually evolve into Qualified names of the form scope:name
+//
+// hmm, now that we have this, this could be merged with MslReference?
+//   $1 vs :1
+//
+// except that references always return something and :foo doesn't
+//
+//////////////////////////////////////////////////////////////////////
+
+class MslKeyword : public MslNode
+{
+  public:
+    MslKeyword(MslToken& t) : MslNode(t) {locked=true;}
+    virtual ~MslKeyword() {}
+
+    bool isKeyword() override {return true;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+
+    // take the next symbol
+    bool wantsToken(class MslParser* p, MslToken& t) override;
+    
+    juce::String name;
+
+};
+
+//////////////////////////////////////////////////////////////////////
+//
 // Reference
 //
 //////////////////////////////////////////////////////////////////////
@@ -256,8 +289,8 @@ class MslBlock : public MslNode
     // blocks accumulate procs and vars defined within it outside of the
     // logic node tree
 
-    juce::OwnedArray<MslFunction> procs;
-    juce::OwnedArray<MslVariable> vars;
+    juce::OwnedArray<MslFunction> functions;
+    juce::OwnedArray<MslVariable> variables;
 
     bool isBlock() override {return true;}
     bool operandable() override {return true;}

@@ -1333,6 +1333,15 @@ void MslSession::mslVisit(MslContextNode* con)
     popStack(nullptr);
 }
 
+/**
+ * Keywords have no value
+ */
+void MslSession::mslVisit(MslKeyword* key)
+{
+    (void)key;
+    popStack();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // End

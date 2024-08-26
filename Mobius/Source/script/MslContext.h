@@ -163,6 +163,15 @@ class MslContext
     // can have a simpler interface
     virtual void mslPrint(const char* msg) = 0;
 
+    // let the context know about the installation of a new access point
+    // this is where the linkage happens between script objects and the
+    // Mobius Symbol table, two ways to do this, let the environment tell
+    // the container or have the container ask for everything
+    // unclear what works best, since everything comes in through ScriptClerk
+    // it is also in a position to install symbols after loading files
+    virtual void mslExport(class MslLinkage* link) = 0;
+    
+
 };
 
 /****************************************************************************/

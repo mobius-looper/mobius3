@@ -31,6 +31,7 @@
 #include "model/UIParameterIds.h"
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
+#include "model/ScriptProperties.h"
 
 #include "ui/MainWindow.h"
 
@@ -55,6 +56,7 @@
 #include "script/MslEnvironment.h"
 #include "script/MobiusConsole.h"
 #include "script/MslExternal.h"
+#include "script/ActionAdapter.h"
 
 #include "Supervisor.h"
 
@@ -391,11 +393,6 @@ bool Supervisor::start()
         // then install them if we're a plugin
         parametizer.install();
     }
-
-    // prepare the script environment
-    // move this higher if we ever need scripts accessible
-    // by other internal compenents during startup
-    scriptenv.initialize(&symbols);
 
     // load the MSL files in the library
     scriptClerk.loadLibrary();
@@ -1672,7 +1669,8 @@ bool Supervisor::doUILevelAction(UIAction* action)
         }
     }
     else if (s->behavior == BehaviorScript) {
-        scriptenv.doAction(this, action);
+        ActionAdapter aa;
+        aa.doAction(&scriptenv, this, action);
         handled = true;
     }
     
@@ -2138,6 +2136,35 @@ void Supervisor::removeMobiusConsole(MobiusConsole* c)
 MslEnvironment* Supervisor::getMslEnvironment()
 {
     return &scriptenv;
+}
+
+/**
+ * Called by the environment as scripts are loaded and things
+ * are installed for use.
+ *
+ * This is similar to how Mobius core works, touchhing the symbol
+ * table as a side effect of loading its configuration. The alternative
+ * would be to have ScriptClerk ASK the environment for the public
+ * linkages and install them in bulk.
+ */
+void Supervisor::mslExport(MslLinkage* link)
+{
+    // export this as a Symbol for bindings
+    Symbol* s = symbols.intern(link->name);
+    if (s->script != nullptr || s->behavior == BehaviorNone) {
+        // can make this a script
+        // todo: all sortts of things to check here, it could be a core script
+        // what about all the flags that can be set in ScriptRef?
+        if (s->script == nullptr)
+          s->script.reset(new ScriptProperties());
+        s->script->mslLinkage = link;
+        s->level = LevelUI;
+        s->behavior = BehaviorScript;
+    }
+    else {
+        Trace(1, "Supervisor: Symbol conflict exporting MSL script %s",
+              link->name.toUTF8());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
