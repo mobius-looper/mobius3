@@ -26,11 +26,14 @@ class MslError
     MslError();
     // constructor used by the parser which likes juce::String
     MslError(int l, int c, juce::String t, juce::String d);
+    // constructor used by the linker
+    MslError(class MslNode* node, juce::String d);
     ~MslError();
 
     // initializer for the object pool
     void init();
-    // initializer used by MslSession interpreter
+    // initializer used by MslSession interpreter which
+    // uses pooled objects and string buffers
     void init(class MslNode* node, const char* details);
 
     int line = 0;

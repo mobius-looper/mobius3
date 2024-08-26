@@ -23,6 +23,14 @@ MslError::MslError(int l, int c, juce::String t, juce::String d)
 }
 
 /**
+ * Constructor used by the linker.
+ */
+MslError::MslError(MslNode* node, juce::String d)
+{
+    init(node, d.toUTF8());
+}
+
+/**
  * Initializer when using it in the pool.
  */
 void MslError::init()

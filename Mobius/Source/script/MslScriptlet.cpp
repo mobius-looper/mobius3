@@ -27,15 +27,11 @@ MslScriptlet::MslScriptlet(MslEnvironment* env)
 MslScriptlet::~MslScriptlet()
 {
     resetLaunchResults();
-    // this one isn't pooled which is starting to be awkward
-    delete parseResult;
 }
 
 void MslScriptlet::reset()
 {
     resetLaunchResults();
-    delete parseResult;
-    parseResult = nullptr;
 
     script.reset(new MslScript());
     // this is how we convey the logging name to the environment
@@ -73,45 +69,42 @@ void MslScriptlet::resetLaunchResults()
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Recompile the scriptlet with new source code.
+ *
+ * The interface is a little weird, but at least it's encapsulated.
+ * First the MslParser is used to parse the source and install the root block
+ * into an existing MslScript object that the scriptlet owns.
+ *
+ * If parsing succeeds, the MslEnvironment is then used to link references
+ * from the parsed script to the outside world.  If there are link errors, they
+ * are added to the MslScript error list so they can be conveyed back to the
+ * application as if parsing and linking were one operation.
+ */
 bool MslScriptlet::compile(MslContext* context, juce::String source)
 {
     bool success = false;
-
-    // reclaim the last parser result
-    // todo: if we're in kernel context this needs to be pooling
-    // but we can't be right now
-    delete parseResult;
-    parseResult = nullptr;
 
     // also reset evaluation state now, or wait till eval?
     
     // special parser interface where we manage the MslScript on the outside
     MslParser parser;
-    parseResult = parser.parse(script.get(), source);
-
-    // we own the result
-    if (parseResult->errors.size() == 0) {
-        success = true;
-
+    if (parser.parse(script.get(), source)) {
+        // passed parsing, now link it
+        
         // special environment interface to link just this one script
-        // todo: will need a way to convey link errors back to the console
-        // since the user doesn't distinguish between parsing and linking errors
-        // the interface for both should be the same
-        environment->link(context, this);
+        success = environment->linkScriptlet(context, script.get());
     }
     
     return success;
 }
 
 /**
- * Return the parser result for inspection.
- * Note that unlike normal script compilation the result will NOT contain a pointer
- * to an MslScript, just the errors.
- * Could avoid the layer and just capture and return the MslError list instead.
+ * Return errors encountered during parsing and linking.
  */
-MslParserResult* MslScriptlet::getCompileErrors()
+juce::OwnedArray<MslError>* MslScriptlet::getCompileErrors()
 {
-    return parseResult;
+    return &(script->errors);
 }
 
 //////////////////////////////////////////////////////////////////////

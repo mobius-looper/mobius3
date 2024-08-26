@@ -255,15 +255,15 @@ void MobiusConsole::showLoad()
 void MobiusConsole::doParse(juce::String line)
 {
     MslParser parser;
-    MslParserResult* res = parser.parse(line);
-    if (res != nullptr) {
+    MslScript* result = parser.parse(line);
+    if (result != nullptr) {
         // todo: error details display
-        showErrors(&(res->errors));
+        showErrors(&(result->errors));
 
-        if (res->script != nullptr)
-          traceNode(res->script->root, 0);
-
-        delete res;
+        if (result->root != nullptr)
+          traceNode(result->root, 0);
+        
+        delete result;
     }
 }
 
@@ -335,9 +335,9 @@ void MobiusConsole::doList()
 void MobiusConsole::doEval(juce::String line)
 {
     if (!session->compile(supervisor, line)) {
-        MslParserResult *pr = session->getCompileErrors();
-        if (pr != nullptr)
-          showErrors(&(pr->errors));
+        juce::OwnedArray<MslError>* errors = session->getCompileErrors();
+        if (errors != nullptr)
+          showErrors(errors);
     }
     else {
     

@@ -75,7 +75,7 @@ class MslScriptlet {
     
     // information about errors encountered during compilation
     // this object is owned by the session and will be reclained on the next compile
-    MslParserResult* getCompileErrors();
+    juce::OwnedArray<MslError>* getCompileErrors();
 
     // evaluate a script after it has been compiled
     // the context passed here is normally Supervisor or MobiusKernel
@@ -167,8 +167,6 @@ class MslScriptlet {
 
     // dynamic script maintained for this session
     std::unique_ptr<class MslScript> script = nullptr;
-
-    MslParserResult* parseResult = nullptr;
     
 };
 

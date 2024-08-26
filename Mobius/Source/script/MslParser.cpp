@@ -10,17 +10,6 @@
  * whatever it is the cool kids are using these days.  But if you have any suggestions
  * for an algorithm that accomplishes the same thing and pleases the
  * Parser Gods, let me know.
- *
- * dev notes:
- * I experimented a bit with allowing the parser to support incremental parsing
- * for the console where partial nodes would be retained between calls to consume()
- * and could be completed in the next console line.  This sort of worked
- * but led to unpredictable results, and I decided I don't like building
- * out an actual Script with the entire line history in it.
- *
- * So now, it resets at the start of every consume() but it does retain top level
- * functions and variables.
- *
  */
 
 #include <JuceHeader.h>
@@ -34,45 +23,38 @@
 #include "MslParser.h"
 
 /**
- * Main entry point for parsing files.
- * The result object and it's contents are owned by the receiver and must
- * be deleted.
+ * Main entry point for parsing.
+ * The source may come from a file or from scriptlet text in memory.
+ *
+ * An MslScript object is allocated and returned.  This becomes owned by
+ * the caller and must be deleted.  Currently these are not pooled.
+ *
+ * If there were parse errors, the script object will have no root block and
+ * errors will be left inside it.
  */
-MslParserResult* MslParser::parse(juce::String source)
+MslScript* MslParser::parse(juce::String source)
 {
-    if (result != nullptr) {
-        // lingering result from a previous parse, shouldn't happen
-        Trace(1, "MslParser: Someone didn't clean up a prior result, harm them.");
-        delete result;
-    }
-
-    result = new MslParserResult();
-
-    // flesh out a script skeleton
-    MslScript* neu = new MslScript();
-    neu->root = new MslBlock();
-    
-    result->script.reset(neu);
-
-    // these pointers are transient runtime state and
-    // do not imply ownership
+    // start with a new empty script
+    script = new MslScript();
+    script->root = new MslBlock();
 
     // the "stack"
-    script = neu;
-    current = neu->root;
+    current = script->root;
 
     parseInner(source);
 
-    // if there were fatal errors, do not return the partial script
-    if (result->errors.size() > 0)
-      result->script = nullptr;
+    // if errors were left in the script, don't return a partially constructed root block
+    if (script->errors.size() > 0) {
+        delete script->root;
+        script->root = nullptr;
+    }
+    
+    // shouldn't matter but don't retain pointers to things we're losing control over
+    MslScript* result = script;
+    script = nullptr;
+    current = nullptr;
 
-
-    // return what we built, but don't remember the old pointer between calls
-    MslParserResult* retval = result;
-    result = nullptr;
-
-    return retval;
+    return result;
 }
 
 /**
@@ -80,37 +62,36 @@ MslParserResult* MslParser::parse(juce::String source)
  * Here the MslScript is maintained outside the parser for an indefinite
  * period of time, and we can add to it.
  */
-MslParserResult* MslParser::parse(MslScript* scriptlet, juce::String source)
+bool MslParser::parse(MslScript* argScript, juce::String source)
 {
-    if (result != nullptr) {
-        // incremental parsing shouldn't see this either
-        Trace(1, "MslParser: Someone didn't clean up a prior result, harm them.");
-        delete result;
-    }
-    result = new MslParserResult();
+    bool success = false;
     
-    if (scriptlet == nullptr) {
-        Trace(1, "MslParser: Dynamic parse with no scriptlet");
+    // reset any lingering state from last time
+    // retain sifted function and variable definitions
+    script = argScript;
+    script->errors.clear();
+    delete script->root;
+    script->root = new MslBlock();
+    
+    current = script->root;
+    
+    parseInner(source);
+
+    if (script->errors.size() > 0) {
+        delete script->root;
+        script->root = nullptr;
     }
     else {
-        // reset parse state, the last block should already have been sifted
-        // todo: this needs MUCH more work
-        delete scriptlet->root;
-        scriptlet->root = new MslBlock();
-
-        // set up the stack
-        script = scriptlet;
-        current = scriptlet->root;
-        
-        parseInner(source);
-
+        // capture new functions and variables
         sift();
+        success = true;
     }
+    
+    // clean up transient pointers
+    script = nullptr;
+    current = nullptr;
 
-    // note that this result does not contain the script, only the error list
-    MslParserResult* retval = result;
-    result = nullptr;
-    return retval;
+    return success;
 }
 
 /**
@@ -174,7 +155,7 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
 {
     // would prefer to this be an array of objects
     MslError* e = new MslError(t.line, t.column, t.value, details);
-    result->errors.add(e);
+    script->errors.add(e);
 }
 
 /**
@@ -184,7 +165,7 @@ void MslParser::errorSyntax(MslToken& t, juce::String details)
 void MslParser::errorSyntax(MslNode* node, juce::String details)
 {
     MslError* e = new MslError(node->token.line, node->token.column, node->token.value, details);
-    result->errors.add(e);
+    script->errors.add(e);
 }
 
 /**
@@ -213,16 +194,13 @@ void MslParser::parseInner(juce::String source)
 {
     tokenizer.setContent(source);
 
-    // is this the right place for this?
-    result->errors.clear();
-
-    while (tokenizer.hasNext() && result->errors.size() == 0) {
+    while (tokenizer.hasNext() && script->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
         // some nodes consume tokens without creating more nodes
         // parser passed so the node can add an error if it wants to
         // ugly
-        if (current->wantsToken(this, t) || result->errors.size() > 0)
+        if (current->wantsToken(this, t) || script->errors.size() > 0)
           continue;
 
         // todo: if this is a keyword like "else" that doesn't

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "MslError.h"
+
 class MslScript {
   public:
     MslScript();
@@ -34,6 +36,12 @@ class MslScript {
      */
     // use std::unique_ptr here...
     class MslBlock* root = nullptr;
+
+    /**
+     * Errors encountered during parsing or linking.
+     */
+    juce::OwnedArray<class MslError> errors;
+    
 
     // proc definitions found within the script source
     // these are gathered here rather than left within the root block

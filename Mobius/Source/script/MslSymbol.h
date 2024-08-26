@@ -85,7 +85,7 @@ class MslSymbol : public MslNode
     
   private:
 
-    void linkCall(class MslFunction* func);
+    void linkCall(class MslScript* script, class MslFunction* func);
     class MslAssignment* findCallKeyword(juce::Array<class MslNode*>& callargs, juce::String name);
     class MslNode* findCallPositional(juce::Array<class MslNode*>& callargs);
     void linkAssignment(class MslContext* context, class MslEnvironment* env, class MslScript* script);

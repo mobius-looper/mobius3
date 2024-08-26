@@ -1,12 +1,7 @@
 /**
  * A parser for the MSL language.
  * 
- * The parser consumes a string of text, and produces either
- * an MslScript containing the parse tree, or a list of errors to be displayed.
- *
- * There is an experimental interface for incremental line-at-a-time parsing
- * for the MobiusConsole.
- *
+ * The parser consumes a string of text, and produces an MslScript object.
  * The parser lives at the shell level and does not need to use object pools.
  *
  */
@@ -20,43 +15,6 @@
 #include "MslScript.h"
 #include "MslError.h"
 
-/**
- * The parser may return two things: a finished MslScript object,
- * a list of errors encountered during parsing, or both.
- *
- * If a script is returned, it is suitable for installation and evaluation.
- * If an error list is returned, it should be retained and displayed to the user.
- *
- * If a fatal error is encountered, it will be in the error list and a script
- * is not returned.
- *
- * If only warnings are encountered, both a script and a warning list is returned.
- *
- * Currently there are no warnings.  You're going to jail son.
- *
- * The MslParserResult and it's contents are dynamically allocated and must
- * be disposed of by the receiver. 
- *
- */
-class MslParserResult
-{
-  public:
-
-    MslParserResult() {}
-    ~MslParserResult() {}
-
-    /**
-     * The script that was succesfully parsed.
-     */
-    std::unique_ptr<class MslScript> script = nullptr;
-
-    /**
-     * Errors encountered during parsing.
-     */
-    juce::OwnedArray<class MslError> errors;
-
-};
-
 class MslParser
 {
   public:
@@ -64,11 +22,13 @@ class MslParser
     MslParser() {}
     ~MslParser() {}
 
-    // usual file parsing interface
-    MslParserResult* parse(juce::String source);
+    // usual file and scriptlet parsing interface
+    MslScript* parse(juce::String source);
 
-    // parsing interface for scriptlets
-    MslParserResult* parse(class MslScript* scriptlet, juce::String source);
+    // incremental interface for the console
+    // this reuses an existing MslScript so function and variable definitions
+    // can be accumulated over multiple interactive console lines
+    bool parse(class MslScript* script, juce::String source);
 
     // make this public so the MslModel classes can add token errors
     void errorSyntax(MslToken& t, juce::String details);
@@ -77,9 +37,6 @@ class MslParser
 
     MslTokenizer tokenizer;
 
-    // resuilt being generated
-    MslParserResult* result = nullptr;
-    
     // script being parsed
     MslScript* script = nullptr;
 

@@ -1351,13 +1351,43 @@ void MslSession::mslVisit(MslEnd* end)
     while (stack != nullptr) popStack();
 }
 
+/**
+ * There are three ways print could work when there is more than one child node.
+ *
+ *    1) call the context's mslPrint once for each value
+ *    2) concatenate the value strings and make one mslPrint call
+ *    3) pass mslPrint a list of MslValues rather than one C string
+ *
+ * For eventual console debugging, we're going to need to capture print output
+ * and save it in the session's MslResult so an MslMessage pooled object would be
+ * helpful to handle both the capturing of results and conveying them to the context
+ * right away.
+ *
+ * MslPrint accepts a single child node so if you to print more than one thing you
+ * have to use a () block.  To make it look more like Lisp (print a b c) we would
+ * need to accept multiple nodes and require a delimiter "print a b c;"  Since it is
+ * most common to use this with single strings, don't require a delimiter.
+ */
 void MslSession::mslVisit(MslPrint* echo)
 {
     (void)echo;
+
+    // shold have a single child block
     MslStack* nextStack = pushNextChild();
-    if (nextStack == nullptr) {
-        if (stack->childResults != nullptr)
-          context->mslPrint(stack->childResults->getString());
+    if (nextStack != nullptr) {
+        // capture all results in the block
+        nextStack->accumulator = true;
+    }
+    else {
+        if (stack->childResults != nullptr) {
+            char buffer[1024];
+            strcpy(buffer, "");
+            for (MslValue* v = stack->childResults ; v != nullptr ; v = v->next) {
+                if (v != stack->childResults) AppendString(" ", buffer, sizeof(buffer));
+                AppendString(v->getString(), buffer, sizeof(buffer));
+            }
+            context->mslPrint(buffer);
+        }
         // echo has no return value so we don't clutter up the console displaying it
         popStack(nullptr);
     }

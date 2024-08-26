@@ -63,42 +63,41 @@ void MslEnvironment::shutdown()
 /**
  * Primary interface for ScriptClerk.
  * A file has been loaded and the source extracted.
- * Compile it and install it into the library if it comples.
- * Return parse errors if they were encountered.
+ * Compile it and install it into the library.
+ *
+ * A script object is returned which may contain parser or link errors.
+ * The script remains owned by the environment and must not be retained
+ * by the caller.  It should be used only for the conveyance of error messagegs
+ * which should be captured immediately before the next call to load().
+ * todo: think about this, perhaps the environment should retain an error
+ * list of failed script objects for the script console to examine?
  *
  * The path is supplied to annotate the MslScript object after it
  * has been compiled and also serves as the source for the default
  * script name.  Don't like this as it requires path parsing down here
  * ScriptClerk should do that and pass in the name.  It is however nice
  * during debugging to know where this script came from.
- *
- * The result is dynamically allocated and must be deleted by the caller.
  */
-MslParserResult* MslEnvironment::load(juce::String path, juce::String source)
+MslScript* MslEnvironment::load(juce::String path, juce::String source)
 {
     MslParser parser;
-    MslParserResult* result = parser.parse(source);
+    MslScript* script = parser.parse(source);
 
+    // annotate with path, which also provides the default reference name
+    script->path = path;
+    
     // if this parsed without error, install it in the library
-    if (result->errors.size() == 0) {
-        if (result->script != nullptr) {
-            // transfer ownership
-            MslScript* script = result->script.release();
-            // annotate with path, which also provides the default reference name
-            script->path = path;
-            install(script);
-        }
-        else {
-            // nothing was done, I suppose this could happen if the file was
-            // empty, is this worth saying anything about
-            Trace(1, "MslEnvironment: No parser results for file %s", path.toUTF8());
-        }
+    if (script->errors.size() > 0) {
+        // didn't parse, store it temporarily so the errors can be returned
+        // but don't install it
+        scriptFailures.add(script);
     }
-
-    // todo: if this was succesfull we don't need to return anything
-    // the only thing MslParserResult has in it is the MslError list so
-    // we could just return that instead
-    return result;
+    else {
+        // defer linking until the end, but could do it each time too
+        install(script);
+    }
+    
+    return script;
 }
 
 /**
@@ -157,12 +156,6 @@ void MslEnvironment::releaseScriptlet(MslScriptlet* s)
     scriptlets.removeObject(s);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Internal MslScriptlet interface
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
  * After the MslScriptlet has parsed source, it needs to link it.
  * Interface is messy.
@@ -171,16 +164,15 @@ void MslEnvironment::releaseScriptlet(MslScriptlet* s)
  * but they do need to have call arguments assembled.
  *
  */
-void MslEnvironment::link(MslContext* context, MslScriptlet* scriptlet)
+bool MslEnvironment::linkScriptlet(MslContext* context, MslScript* script)
 {
-    MslScript* script = scriptlet->getScript();
+    // we shouldn't try to link if we started with errors, but if we did
+    // only return failure if we added some new ones
+    int startErrors = script->errors.size();
     
-    linkScript(context, script);
-}
-
-void MslEnvironment::linkScript(MslContext* context, MslScript* script)
-{
     linkNode(context, script, script->root);
+
+    return (script->errors.size() == startErrors);
 }
 
 void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* node)

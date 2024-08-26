@@ -182,7 +182,7 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
         }
     }
     if (funcToLink != nullptr)
-      linkCall(funcToLink);
+      linkCall(script, funcToLink);
 }
 
 /**
@@ -199,7 +199,7 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
  *        use the function
  *
  */
-void MslSymbol::linkCall(MslFunction* func)
+void MslSymbol::linkCall(MslScript* script, MslFunction* func)
 {
     juce::String error;
     
@@ -285,7 +285,7 @@ void MslSymbol::linkCall(MslFunction* func)
                     }
                     else {
                         // no initializer and ran out of positionals, something is missing
-                        error = "Missing function argument " + name;
+                        error = juce::String("Missing function argument: ") + name;
                     }
                 }
             }
@@ -333,9 +333,9 @@ void MslSymbol::linkCall(MslFunction* func)
         }
     }
     
-    // !! todo: If we detected an error, need to convey this back to
-    // the compiler or environment
     if (error.length() > 0) {
+        MslError* errobj = new MslError(this, error);
+        script->errors.add(errobj);
         Trace(1, "MslSymbol: Link failure %s", error.toUTF8());
         arguments.clear();
     }

@@ -136,21 +136,22 @@ void ScriptClerk::loadInternal(juce::String path)
 
         // ask the environment to install it if it can
         MslEnvironment* env = supervisor->getMslEnvironment();
-        MslParserResult* result = env->load(path, source);
+        MslScript* result = env->load(path, source);
  
         // if the parser returns errors, save them
         if (result->errors.size() > 0) {
             MslFileErrors* fe = new MslFileErrors();
             // transfer ownership
             // todo: hate this
+            // the environment retains ownership of the script and will ordinally
+            // have kept it off the installed list, unclear if we should be allowed
+            // to take ownership of the error list or copy it
             MslError::transfer(&(result->errors), &(fe->errors));
             // annotate this with the file path so we know where it came from
             fe->path = path;
             fe->code = source;
             fileErrors.add(fe);
         }
-
-        delete result;
     }
 }
 

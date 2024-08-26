@@ -91,7 +91,7 @@ class MslEnvironment
      * This could be done by either ScriptClerk or MslEnvironment, I'm leaning toward
      * script clerk.
      */
-    class MslParserResult* load(juce::String path, juce::String source);
+    class MslScript* load(juce::String path, juce::String source);
 
     /**
      * Unload any scripts from files that are not included in the retain list.
@@ -137,12 +137,8 @@ class MslEnvironment
     // when it is no longer needed so it can be reclaimed
     class MslScriptlet* newScriptlet();
     void releaseScriptlet(class MslScriptlet* s);
-
-    // todo: after parsing the references in the scriptlet need to be linked
-    // with the environment.  Would be cleaner if the environment did both
-    // the parsing and the linking
-    void link(MslContext* c, MslScriptlet* scriptlet);
-
+    bool linkScriptlet(class MslContext* c, MslScript* script);
+    
     juce::OwnedArray<class MslCollision>* getCollisions() {
         return &collisions;
     }
@@ -209,6 +205,9 @@ class MslEnvironment
     // these don't pool things
     juce::OwnedArray<class MslScript> scripts;
 
+    // scripts that failed parsing and were not installed
+    juce::OwnedArray<class MslScript> scriptFailures;
+
     // the linkage table
     juce::OwnedArray<MslLinkage> linkages;
     juce::HashMap<juce::String,class MslLinkage*> library;
@@ -248,7 +247,6 @@ class MslEnvironment
     // Linking
     //
 
-    void linkScript(class MslContext* context, class MslScript* script);
     void linkNode(class MslContext* context, class MslScript* script, class MslNode* node);
     
 };
