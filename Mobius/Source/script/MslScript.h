@@ -38,6 +38,15 @@ class MslScript {
     class MslBlock* root = nullptr;
 
     /**
+     * Parsed argument declaration for this script.
+     * Helps the evaluator deal with scripts as if they were MslFunctions.
+     * Could also synthesize a MslFunction wrapper around the root block which
+     * is cleaner in some ways, messier in others.  Right now MslLinkage hides
+     * the difference between a top-level script and a function.
+     */
+    juce::OwnedArray<class MslNode> arguments;
+
+    /**
      * Errors encountered during parsing or linking.
      */
     juce::OwnedArray<class MslError> errors;

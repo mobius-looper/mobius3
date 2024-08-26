@@ -38,6 +38,49 @@ ScriptClerk::~ScriptClerk()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Do a full load of the library.
+ * There is currently only one library found under the installation folder
+ * in "scripts".  Could have configurable library folders someday.
+ * All .msl files found here are loaded.  .mos files are not yet loaded due
+ * to issues with the old interface being oriented around ScriptConfig and
+ * Mobius wanting to do it's own file access.  Fix someday.
+ *
+ * This may be called multiple times to reload the library.
+ *
+ * todo: need to combine this with ScriptConfig to allow random files
+ * that aren't stored in the standard library folder to be included.
+ */
+void ScriptClerk::loadLibrary()
+{
+    resetLoadResults();
+
+    juce::File root = supervisor->getRoot();
+    juce::File libdir = root.getChildFile("scripts");
+
+    if (libdir.isDirectory()) {
+        int types = juce::File::TypesOfFileToFind::findFiles;
+        juce::String extension = ".msl";
+        juce::String pattern = "*" + extension;
+        juce::Array<juce::File> files =
+            libdir.findChildFiles(types,
+                                  // searchRecursively   
+                                  false,
+                                  pattern,
+                                  // followSymlinks
+                                  juce::File::FollowSymlinks::no);
+    
+        for (auto file : files) {
+            juce::String path = file.getFullPathName();
+            // ignore .msl~ files left behind by emacs that get picked up
+            if (path.endsWithIgnoreCase(extension)) {
+                Trace(2, "ScriptClerk: Loading: %s", path.toUTF8());
+                loadInternal(path);
+            }
+        }
+    }
+}
+
+/**
  * Do a full reload of the old ScriptConfig from mobius.xml
  * This currentlly contains a combination of .msl and .mos files.
  * Paths are normalized and a transient ScriptConfig containing
@@ -320,6 +363,7 @@ juce::String ScriptClerk::normalizePath(juce::String src)
     // isn't there a "looks absolute" juce::File method?
     if (!path.startsWithChar('/') && !path.containsChar(':')) {
         // looks relative
+        juce::File root = supervisor->getRoot();
         juce::File f = root.getChildFile(path);
         path = f.getFullPathName();
     }
@@ -334,6 +378,7 @@ juce::String ScriptClerk::normalizePath(juce::String src)
 juce::String ScriptClerk::expandPath(juce::String src)
 {
     // todo: a Supervisor reference that needs to be factored out
+    juce::File root = supervisor->getRoot();
     juce::String rootPrefix = root.getFullPathName();
     return src.replace("$ROOT", rootPrefix);
 }

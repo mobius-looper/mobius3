@@ -569,10 +569,70 @@ void MslParser::parseDirective(MslToken& t)
     if (directive.equalsIgnoreCase("#name")) {
         script->name = remainder.trim();
     }
+    else if (directive.equalsIgnoreCase("#arguments")) {
+        parseArgumentDirective(t, space, remainder);
+    }
     else {
         Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
         errorSyntax(t, juce::String("Unknown directive ") + directive);
     }
+}
+
+/**
+ * This is a bit of a hack to parse the #argument directive into what looks
+ * like the argument declaration block of an MslFunction.  This allows
+ * a script filei to be called with arguments as if it were wrapped in a
+ * MslFunction which makes it easier for the MslSymbol evaluator to deal with.
+ * Since the text isn't part of the text of the file currently being
+ * parsed, we create a new parser just for this so we don't mess up the state
+ * of the main parser.
+ *
+ * Typical syntax will be:
+ *
+ *    #arguments a b c
+ *
+ * But allow this too since it's an easy assumption:
+ *
+ *    #arguments (a b c)
+ *
+ * Ugh, optional surrounding parens are going to be hard if they want to use
+ * the nested list syntax to declare dynamic bindings:
+ *
+ *   func foo(a b c (something))
+ *
+ * But you only need that for external signatures.
+ *
+ * Script arguments are different than functions because they are usually optional
+ * and it's inconvenient to make them type a=null b=null...
+ *
+ * Error handling is weird.  Add a general error about the directive itself
+ * to provide some context, then adjust the parse errors for the argument string
+ * so that the column numbers are offset by the length of the #arguments prefix.
+ *
+ * Work on this so the same thing can be used for argument signatures for
+ * external functions.
+ *
+ */
+void MslParser::parseArgumentDirective(MslToken& t, int offset, juce::String remainder)
+{
+    MslParser p;
+    MslScript* s = p.parse(args);
+    if (s->errors.size() > 0) {
+        errorSyntax(t, "Parse error in directive");
+        while (s->errors.size() > 0) {
+            // steal it
+            MslError* e = s->errors.removeAndReturn(0);
+            // adjust the token location for the containing directive
+            e->line = t.line;
+            e->column += offset;
+            script->errors(add);
+        }
+    }
+    else {
+        
+        
+    }
+    delete s;
 }
 
 /****************************************************************************/

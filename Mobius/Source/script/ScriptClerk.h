@@ -35,6 +35,8 @@ class ScriptClerk {
     // Supervisor Interfaces
     //
 
+    void loadLibrary();
+
     // Do a full reload of an old ScriptConfig.
     void reload();
     void reload(class ScriptConfig* config);
@@ -78,7 +80,6 @@ class ScriptClerk {
   private:
 
     class Supervisor* supervisor = nullptr;
-    juce::File root;
 
     // files round in the library folder
     juce::OwnedArray<class ScriptLibrary> library;

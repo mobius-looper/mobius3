@@ -396,6 +396,9 @@ bool Supervisor::start()
     // move this higher if we ever need scripts accessible
     // by other internal compenents during startup
     scriptenv.initialize(&symbols);
+
+    // load the MSL files in the library
+    scriptClerk.loadLibrary();
         
     meter(nullptr);
 
