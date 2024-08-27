@@ -82,7 +82,7 @@ class ScriptClerk {
     class Supervisor* supervisor = nullptr;
 
     // files round in the library folder
-    juce::OwnedArray<class ScriptLibrary> library;
+    //juce::OwnedArray<class ScriptLibrary> library;
 
     
     // list of .msl files after split

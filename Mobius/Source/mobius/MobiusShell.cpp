@@ -1267,8 +1267,6 @@ void MobiusShell::installScripts(ScriptConfig* config)
  * the compilation and link phases are not well seperated, and the code
  * is old and cranky.
  *
- * TODO: This should be substantially easier now with the SymbolTable
- *
  * It is safe as long as these rules are followed:
  *
  *    - the ScriptConfig we're dealing with cannot be assumed to

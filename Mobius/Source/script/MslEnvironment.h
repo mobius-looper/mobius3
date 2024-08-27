@@ -24,10 +24,14 @@
 #include "MslConductor.h"
 
 /**
- * Object similar to UIAction that is used to run a script.
- * It is different enough from MslAction that goes the other direction
- * that I decided to make it it's own thing rather than have a shared
- * one with unused fields.
+ * An object used by the application to ask the environment to do something,
+ * either run script code or change the value of a variable.
+ *
+ * Conceptually similar to UIAction in Mobius which always goes through
+ * ActionAdapter to do the model translation.
+ *
+ * It is different enough from MslAction  that I decided to make it it's own
+ * thing rather than have a shared one with unused fields.
  *
  * The call can target either a script or a function exported from a script.
  * Arguments are specified witha list of MslValues that must can be allocdated from
@@ -44,7 +48,6 @@ class MslRequest
 
     /**
      * The function to call or the variable to set.
-     * Returned by a call 
      */
     class MslLinkage* linkage = nullptr;
 
@@ -100,6 +103,9 @@ class MslLinkage
     
 };
 
+/**
+ * The master of the world of scripts.
+ */
 class MslEnvironment
 {
     friend class MslSession;
@@ -120,78 +126,81 @@ class MslEnvironment
 
     /**
      * Install a script from a file
-     * MslEnvironment doesn't touch files, but it needs to know the path
-     * name if this came from a file because the leaf file name is the default
-     * name for the script if the script source doesn't declare a #name
-     *
-     * If there are parse errors in the file, they need to be conveyed to the user.
-     * Loading can happen in a non-interactive context, so something needs to store
-     * the original source and any errors for later display in the script console.
-     * This could be done by either ScriptClerk or MslEnvironment, I'm leaning toward
-     * script clerk.
+     * The source is parsed and if possible the script is installed.
+     * The returned Info object conveys parser errors and other information
+     * about the script determined during parsing.  The application may
+     * retain a reference to this object as long as the environment is active.
      */
-    class MslScript* load(class MslContext* c, juce::String path, juce::String source);
+    class MslScriptInfo* load(class MslContext* c, juce::String path, juce::String source);
 
     /**
      * Unload any scripts from files that are not included in the retain list.
-     * todo: This reconciles changes to ScriptConfig when you remove files.
-     * will likely need to change to have a few options like retain(keepThese)
-     * and remove(removeThese)
-     *
-     * Since this is a bulk operation, the environment will always do a full relink
-     * after unloading.
+     * The array contains file paths that must match the paths used with
+     * the load() function.
      */
     void unload(juce::StringArray& retain);
 
     /**
-     * Perfrorm the link phase to resolve references between scripts, resolve references
-     * to externals, and compile the argument lists for function calls.
+     * Perform the link phase to resolve references between scripts, resolve references
+     * to externals, and compile the argument lists for function calls.   This may adjust
+     * the error lists contained in previously returned MslScriptInfo objects.
      *
-     * todo: in general the environment can contain things that have errors in them.
-     * link errors can be returned here, but we may be doing linking from a context that
-     * the user isn't interacting with.  Link errors need to be saved in the environment
-     * for display later in the script console. 
+     * todo: need to work more on how linking works
+     * Linking should normally be done after every load.  But this could be expensive
+     * and we might want to defer it until after a bulk load finishes.
      */
     void link();
     
     //
     // User initiated actions
-    // 
     //
 
+    /**
+     * Look up an object that may be touched by the application.
+     * A reference to the Linkage may be retained by the application for as
+     * long as the environment is active, but the things inside it may change.
+     */
     MslLinkage* find(juce::String name);
+
+    /**
+     * Allocate a value container for use in a request()
+     */
     MslValue* allocValue();
+
+    /**
+     * Return a value container to the object pool.
+     */
     void free(MslValue* v);
 
+    /**
+     * Call a script function or assign a variable.
+     */
     void request(class MslContext* c, MslRequest* req);
+
+    /**
+     * Retrieve the value of an exported variable.
+     */
     void query(MslLinkage* linkage, MslValue* result);
     
     //
     // Console/Scriptlet interface
     //
 
-    // the scriptlet session is owned and tracked by the environment
-    // caller does not need to delete it, but should tell the environment
-    // when it is no longer needed so it can be reclaimed
+    /**
+     * Allocate a object that may be used to submit dynamically
+     * compiled script fragments.  This object may be retained
+     * by the user for as long as the environment is active.
+     * If the application no longer needs the scriptlet, it should
+     * be released.  Releasing is not required, but it frees memory
+     * if you do.
+     */
     class MslScriptlet* newScriptlet();
+
+    /**
+     * Return resources used by the scriptlet to the object pool.
+     */
     void releaseScriptlet(class MslScriptlet* s);
-    bool linkScriptlet(class MslContext* c, MslScript* script);
-    
-    juce::OwnedArray<class MslCollision>* getCollisions() {
-        return &collisions;
-    }
 
-    void launch(class MslContext* c, class MslScriptlet* scriptlet);
-
-    //
-    // Session results
-    //
-
-    class MslResult* getResult(int id);
-    bool isWaiting(int id);
-    class MslResult* getResults();
-    void pruneResults();
-    
     //
     // Supervisor/MobiusKernel interfaces
     //
@@ -206,12 +215,20 @@ class MslEnvironment
     void resume(class MslContext* c, class MslWait* w);
 
     //
-    // Library
+    // Information
+    // todo: these are mostly for the console, needs more refinement
     //
-
+    
     juce::OwnedArray<class MslScript>* getScripts() {
         return &scripts;
     }
+
+    // Each time a script or scriptlet is run, it may leave results behind
+    // for inspection and diagnostics.
+    class MslResult* getResult(int id);
+    bool isWaiting(int id);
+    class MslResult* getResults();
+    void pruneResults();
 
   protected:
 
@@ -227,6 +244,10 @@ class MslEnvironment
     class MslExternal* getExternal(juce::String name);
     void intern(class MslExternal* ext);
     
+    // for MslScriptlet
+    bool linkScriptlet(class MslContext* c, MslScript* script);
+    void launch(class MslContext* c, class MslScriptlet* scriptlet);
+
   private:
 
     // note that this has to be first because things are destructed in reverse
@@ -237,17 +258,16 @@ class MslEnvironment
     // that are normally returned to the pool
     MslConductor conductor {this};
 
-    // the active loaded scripts
-    // these don't pool things
-    juce::OwnedArray<class MslScript> scripts;
+    // object representing script files shared between the environment and application
+    juce::OwnedArray<class MslScriptInfo> scriptInfos;
+    class MslScriptInfo* getInfo(juce::String& path);
 
-    // scripts that failed parsing and were not installed
-    juce::OwnedArray<class MslScript> scriptFailures;
+    // the active loaded scripts
+    juce::OwnedArray<class MslScript> scripts;
 
     // the linkage table
     juce::OwnedArray<MslLinkage> linkages;
     juce::HashMap<juce::String,class MslLinkage*> library;
-    juce::OwnedArray<class MslCollision> collisions;
 
     // the external link table
     juce::OwnedArray<class MslExternal> externals;
@@ -263,9 +283,7 @@ class MslEnvironment
     // internal library management
     //
     
-    void loadInternal(juce::String path);
-    void install(class MslContext* c, class MslScript* script);
-    juce::String getScriptName(class MslScript* script);
+    void install(class MslContext* c, class MslScriptInfo* info, class MslScript* script);
     void unlink(class MslScript* script);
 
     MslError* resolve(MslScript* script);

@@ -1,6 +1,5 @@
 /**
- * The global runtime environment for MSL scripts and sessions.
- *
+ * The global runtime environment for MSL scripts.
  */
 
 #include <JuceHeader.h>
@@ -174,41 +173,76 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
 /**
  * Primary interface for ScriptClerk.
  * A file has been loaded and the source extracted.
- * Compile it and install it into the library.
+ * Compile it and install it into the library if possible.
  *
- * A script object is returned which may contain parser or link errors.
- * The script remains owned by the environment and must not be retained
- * by the caller.  It should be used only for the conveyance of error messagegs
- * which should be captured immediately before the next call to load().
- * todo: think about this, perhaps the environment should retain an error
- * list of failed script objects for the script console to examine?
+ * A script "info" object is returned which has information about the script
+ * including any parser or linker errors.  The application may retain a reference
+ * to this object for as long as the envionment is alive.
  *
- * The path is supplied to annotate the MslScript object after it
- * has been compiled and also serves as the source for the default
- * script name.  Don't like this as it requires path parsing down here
- * ScriptClerk should do that and pass in the name.  It is however nice
- * during debugging to know where this script came from.
+ * The path is used as the unique identifier for this script between the
+ * environment and the application.  It also servies as the source for the
+ * default reference name of the script the file contains.
  */
-MslScript* MslEnvironment::load(MslContext* c, juce::String path, juce::String source)
+MslScriptInfo* MslEnvironment::load(MslContext* c, juce::String path, juce::String source)
 {
+    // make sure the path looks good before proceeding
+    // should never happen if we got to the point where we read source code
+    if (path.length() == 0) {
+        Trace(1, "MslEnvironment::load Invalid path");
+        return nullptr;
+    }
+    
+    juce::File file (path); 
+    juce::String defaultName = file.getFileNameWithoutExtension();
+    if (defaultName.length() == 0) {
+        Trace(1, "MslEnvironment::load Unable to derive file name from path");
+        return nullptr;
+    }
+    
+    // reuse an existing info object if we already loaded this one
+    MslScriptInfo* info = getInfo(path);
+    if (info != nullptr) {
+        // clear prior results
+        info->errors.clear();
+        info->collisions.clear();
+        info->exportedFunctions.clear();
+        info->exportedVariables.clear();
+    }
+    else {
+        // these don't need to be pooled, but they do need to be destroyed at shutdown
+        info = new MslScriptInfo();
+        scriptInfos.add(info);
+    }
+
+    // remember the source code for diagnostics
+    info->source = source;
+
+    // The parser conveys errors in a dynamically allocated script object we may
+    // choose to abandon.  Now that we have ScriptInfo should start using that
+    // consistently for all meta information about scripts beyond their runtime strucutre
     MslParser parser;
     MslScript* script = parser.parse(source);
+    // the reference name for the script is either the leaf file name from the path
+    // or a #name directive encountered during parsing
+    if (script->name.length() == 0)
+      script->name = defaultName;
 
-    // annotate with path, which also provides the default reference name
-    script->path = path;
-    
-    // if this parsed without error, install it in the library
+    // capture interesting parsed metadata in the info 
+    info->name = script->name;
+
     if (script->errors.size() > 0) {
-        // didn't parse, store it temporarily so the errors can be returned
-        // but don't install it
-        scriptFailures.add(script);
+        // transfer the errors to the Info
+        info->errors = script->errors;
+        // don't need this any more
+        delete script;
     }
     else {
         // defer linking until the end, but could do it each time too
-        install(c, script);
+        // installation will check for collisions which will also prevent installation
+        install(c, info, script);
     }
     
-    return script;
+    return info;
 }
 
 /**
@@ -307,6 +341,24 @@ void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* n
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Locate the info object for a previously loaded script.
+ * Paths can be long and this could take some time if you have a boatload
+ * of scripts, but should not be bad enough to warrant a hashmap yet.
+ */
+MslScriptInfo* MslEnvironment::getInfo(juce::String& path)
+{
+    MslScriptInfo* found = nullptr;
+
+    for (auto info : scriptInfos) {
+        if (info->path == path) {
+            found = info;
+            break;
+        }
+    }
+    return found;
+}
+
+/**
  * Install a freshly parsed script into the library.
  *
  * Here we need to add some thread safety.
@@ -324,34 +376,61 @@ void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* n
  * and reclained when all sessions have finished.
  *
  * References between scripts are handled through a local symbol table, this
- * is similar to Symbols but only deals with cross-script references and has
- * other state I don't want to clutter Symbol with.  This may change once this
- * settles down.
+ * is similar to Symbols but only deals with cross-script references.
  *
  * File paths are always unique identifiers, but the simplfied "reference name"
- * may not be.  Only one name may be added to the library symbol table, collisions
- * when detected are added to a collision list for display to the user.
+ * may not be.  Only one name may be added to the library symbol table.  If a collision
+ * occurs, an error is added to the ScriptInfo and the script is not installed.
  *
- * The scripts are still loaded, and the reference may be resolved later.
+ * todo: collisions are like link errors, if the user deletes or unloads the offending
+ * script it would add it to the library without having to go through the process
+ * of parsing it again.  !! think about a "pending" list
  *
  * This will call back to MslContext::mslExport to let the container register
  * the script for reference.  For Mobius this is the SymbolTable.
  */
-void MslEnvironment::install(MslContext* context, MslScript* script)
+void MslEnvironment::install(MslContext* context, MslScriptInfo* info, MslScript* script)
 {
-    // is it already there?
-    // note that this is the authorative model for loaded scripts and is independent
-    // of linkages
-    MslScript* existing = nullptr;
-    for (auto s : scripts) {
-        if (s->path == script->path) {
-            existing = s;
-            break;
-        }
-    }
+    // was it already installed?
+    MslLinkage* existing = info->linkage;
 
-    // if we're replacing one, move it to the inactive list
-    // todo: eventually do a usage check and reclaim it now rather than later
+    if (existing != nullptr) {
+
+        // todo: once we start exporting functions and variables from this script
+        // will need to unresolve all of those too
+        MslScript* old =  existing->script;
+        if (old == nullptr) {
+            // what the hell was this?
+            Trace(1, "MslEnvironment: Linkage anomoly 42");
+        }
+        else {
+            scripts.removeObject(old, false);
+            inactive.add(old);
+            existing->script = nullptr;
+            // also have to unlink any exports from this script
+            unlink(old);
+        }
+        
+/// resume this later
+there is a problem with Linkage
+    Linkage->script is where this came from and it can also
+    have a function and variable reference, but there can be many of those
+    if this is a library script it may not be installed as a named thing so the
+    script itself won't be in the table but functions might be                
+    
+    MslLinkage* link = library[script->name];
+
+
+
+
+    
+    // is it already there?
+    // hmm, we have the authoritative MslScript list but those don't have
+    // paths on them.  This is relying on tight control over the connection between
+    // the MslScriptInfo and the MslScript
+
+    // !! should we be doing this 
+    MslScript* existing = info->script;
     if (existing != nullptr) {
         scripts.removeObject(existing, false);
         inactive.add(existing);
@@ -405,36 +484,6 @@ void MslEnvironment::install(MslContext* context, MslScript* script)
         // export this as a Symbol for bindings
         context->mslExport(link);
     }
-}
-
-/**
- * Derive the name of the script for use in bindings and calls.
- */
-juce::String MslEnvironment::getScriptName(MslScript* script)
-{
-    juce::String name;
-
-    // this would have been set after parsing a #name directive
-    name = script->name;
-
-    if (name.length() == 0) {
-        // have to fall back to the leaf file name
-        if (script->path.length() > 0) {
-            juce::File file (script->path);
-            name = file.getFileNameWithoutExtension();
-        }
-        else {
-            // where did this come from?
-            Trace(1, "MslEnvironment: Installing script without name");
-            name = "Unnamed";
-        }
-
-        // remember this here so getScripts callers don't have to know any more
-        // beyond the Script
-        script->name = name;
-    }
-
-    return name;
 }
 
 /**

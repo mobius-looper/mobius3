@@ -16,12 +16,6 @@ class MslScript {
     ~MslScript();
 
     /**
-     * The file this came from if loaded from a file.
-     * If this is empty, it is a scriptlet.
-     */
-    juce::String path;
-
-    /**
      * The reference name for this script.  This is taken from the filename
      * unless the #name directive is found in the script source
      */
