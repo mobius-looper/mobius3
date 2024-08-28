@@ -364,9 +364,6 @@ bool Supervisor::start()
     // let the maintenance thread go
     uiThread.start();
 
-    // prepare action bindings
-    configureBindings(config);
-    
     meter("Devices");
     
     // initialize the audio device last if we're standalone after
@@ -406,6 +403,11 @@ bool Supervisor::start()
     // load the MSL files in the library
     scriptClerk.installMsl();
         
+    // prepare action bindings
+    // important to do this AFTER all the symbols are
+    // intstalled, including scripts
+    configureBindings(config);
+    
     meter(nullptr);
 
     Trace(2, "Supervisor::start finished\n");
