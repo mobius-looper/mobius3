@@ -31,6 +31,9 @@ class ScriptClerk {
     ScriptClerk(class Supervisor* s);
     ~ScriptClerk();
 
+    void initialize();
+    void saveRegistry();
+
     //
     // Supervisor Interfaces
     //
@@ -65,22 +68,19 @@ class ScriptClerk {
 
     //
     // Last load results
+    // Most results are not maintained in MslEnvironment in
+    // MslScriptUnit objects created as side effect of loading files
     //
     
     juce::StringArray& getMissingFiles() {
         return missingFiles;
     }
 
-    juce::OwnedArray<class MslFileErrors>* getFileErrors() {
-        return &fileErrors;
-    }
-
-    juce::OwnedArray<class MslCollision>* getCollisions();
-
   private:
 
     class Supervisor* supervisor = nullptr;
-
+    std::unique_ptr<class ScriptRegistry> registry;
+    
     // files round in the library folder
     //juce::OwnedArray<class ScriptLibrary> library;
 
@@ -93,7 +93,6 @@ class ScriptClerk {
 
     // last load state
     juce::StringArray missingFiles;
-    juce::OwnedArray<class MslFileErrors> fileErrors;
     juce::StringArray unloaded;
 
     /**

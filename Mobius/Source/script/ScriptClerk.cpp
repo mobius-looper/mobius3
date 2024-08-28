@@ -5,8 +5,9 @@
  * sessions, while the ScriptClerk deals with files, drag-and-rop, and the
  * split between new MSL scripts and old .mos scripts.
  *
- * ScriptClerk also deals with the gathering of file compilation errors returned
- * by MslEnvironment so they may be presented to the user.
+ * Files are loaded one at a time into the MslEnvironment then linked
+ * at the end.  The environment will hold a set of MslScriptUnits for each
+ * file containing parse status and errors.
  */
 
 #include <JuceHeader.h>
@@ -17,8 +18,7 @@
 #include "../Supervisor.h"
 
 #include "MslEnvironment.h"
-#include "MslParser.h"
-#include "MslFileError.h"
+#include "ScriptRegistry.h"
 
 #include "ScriptClerk.h"
 
@@ -36,6 +36,47 @@ ScriptClerk::~ScriptClerk()
 // Load
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Initialize the library on startup.
+ * This reads the scripts.xml registry file, then scans the library
+ * folders and reconciles it.
+ *
+ * It does not yet load anything.
+ */
+void ScriptClerk::initialize()
+{
+    ScriptRegistry* reg = new ScriptRegistry();
+    registry.reset(reg);
+    
+    juce::File root = supervisor->getRoot();
+    juce::File regfile = root.getChildFile("scripts.xml");
+    if (regfile.existsAsFile()) {
+        juce::String xml = regfile.loadFileAsString();
+        reg->parseXml(xml);
+    }
+
+    MobiusConfig* mconfig = supervisor->getMobiusConfig();
+    ScriptConfig* sconfig = mconfig->getScriptConfig();
+    if (sconfig != nullptr) {
+        if (reg->convert(sconfig)) {
+            saveRegistry();
+        }
+
+        // eventually this will be authoritative
+        //mconfig->setScriptConfig(nullptr);
+    }
+}
+
+void ScriptClerk::saveRegistry()
+{
+    if (registry != nullptr) {
+        juce::String xml = registry->toXml();
+        juce::File root = supervisor->getRoot();
+        juce::File file = root.getChildFile("scripts.xml");
+        file.replaceWithText(xml);
+    }
+}
 
 /**
  * Do a full load of the library.
@@ -130,7 +171,6 @@ void ScriptClerk::reload()
 void ScriptClerk::resetLoadResults()
 {
     missingFiles.clear();
-    fileErrors.clear();
     unloaded.clear();
 }
 
@@ -141,21 +181,6 @@ void ScriptClerk::resetLoadResults()
 void ScriptClerk::loadFile(juce::String path)
 {
     loadInternal(path);
-}
-
-/**
- * Return the collisions after a load.
- * This returns ALL of them, so might want somethign that just returns
- * the collisions that happened after the last loadFile.
- *
- * This doesn't really belong here, you can get the current collisions from
- * MslEnvironment any time, so really if Clerk returns collisions at all it
- * should just be the ones it caused.
- */
-juce::OwnedArray<class MslCollision>* ScriptClerk::getCollisions()
-{
-    MslEnvironment* env = supervisor->getMslEnvironment();
-    return env->getCollisions();
 }
 
 /**
@@ -179,22 +204,10 @@ void ScriptClerk::loadInternal(juce::String path)
 
         // ask the environment to install it if it can
         MslEnvironment* env = supervisor->getMslEnvironment();
-        MslScript* result = env->load(supervisor, path, source);
- 
-        // if the parser returns errors, save them
-        if (result->errors.size() > 0) {
-            MslFileErrors* fe = new MslFileErrors();
-            // transfer ownership
-            // todo: hate this
-            // the environment retains ownership of the script and will ordinally
-            // have kept it off the installed list, unclear if we should be allowed
-            // to take ownership of the error list or copy it
-            MslError::transfer(&(result->errors), &(fe->errors));
-            // annotate this with the file path so we know where it came from
-            fe->path = path;
-            fe->code = source;
-            fileErrors.add(fe);
-        }
+        MslScriptUnit* unit = env->load(supervisor, path, source);
+        
+        // todo: save the units somewhere or just keep going back to the environment for them?
+        (void)unit;
     }
 }
 

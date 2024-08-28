@@ -66,13 +66,12 @@ class MslRequest
 };
 
 /**
- * Represents a linkage between a reference in a script and something
- * in another script.  Cross-script references indirect through this table
- * so the script files can be reloaded or unloaded without damaging the
- * referencing script.
+ * Represents a named object that can be called from the outside world
+ * or referenced within the environment.  Any reference between scripts
+ * must go through a Linkage because the objects that implement the thing
+ * being referenced can change whenever compilation units are reloaded.
  *
- * This is conceptually similar to the Symbols table, but has more information
- * and extra logic around reference management.
+ * This is conceptually similar to the Symbols table in the Mobius application.
  *
  * todo: this table can drive the export of the environment to the Symbol table
  * so need the notion of "public" and "script local" references that can be
@@ -85,16 +84,27 @@ class MslLinkage
     MslLinkage() {}
     ~MslLinkage() {}
 
-    // the name that was referenced
+    // the name that can be referenced by an MslSymbol
     juce::String name;
 
-    // the script it currently resolves to
+    // the compilation unit that supplied the definition
+    class MslScriptUnit* unit = nullptr;
+
+    // the compiled script that contained the referenceable thing
+    class MslScript* compilation = nullptr;
+
+    //
+    // The next three are mutually exclusive
+    //
+    
+    // when the compilation unit is itself a callable entity
+    // this will be the same as container
     class MslScript* script = nullptr;
 
-    // the exported function within the script
+    // an exported function within the script
     class MslFunction* function = nullptr;
 
-    // the exported var within the script
+    // an exported var within the script
     class MslVariable* variable = nullptr;
 
     // todo: for exported vars, where is the value?
@@ -125,17 +135,17 @@ class MslEnvironment
     //
 
     /**
-     * Install a script from a file
+     * Install a script from a file or other compilation unit.
      * The source is parsed and if possible the script is installed.
-     * The returned Info object conveys parser errors and other information
+     * The returned Unit object conveys parser errors and other information
      * about the script determined during parsing.  The application may
      * retain a reference to this object as long as the environment is active.
      */
-    class MslScriptInfo* load(class MslContext* c, juce::String path, juce::String source);
+    class MslScriptUnit* load(class MslContext* c, juce::String path, juce::String source);
 
     /**
      * Unload any scripts from files that are not included in the retain list.
-     * The array contains file paths that must match the paths used with
+     * The array contains file paths that must match the unit identifiers used with
      * the load() function.
      */
     void unload(juce::StringArray& retain);
@@ -150,6 +160,13 @@ class MslEnvironment
      * and we might want to defer it until after a bulk load finishes.
      */
     void link();
+
+    /**
+     * Return units that have been loaded for inspection.
+     */
+    juce::OwnedArray<class MslScriptUnit>* getUnits() {
+        return &units;
+    }
     
     //
     // User initiated actions
@@ -259,8 +276,8 @@ class MslEnvironment
     MslConductor conductor {this};
 
     // object representing script files shared between the environment and application
-    juce::OwnedArray<class MslScriptInfo> scriptInfos;
-    class MslScriptInfo* getInfo(juce::String& path);
+    juce::OwnedArray<class MslScriptUnit> units;
+    class MslScriptUnit* findUnit(juce::String& path);
 
     // the active loaded scripts
     juce::OwnedArray<class MslScript> scripts;
@@ -283,10 +300,11 @@ class MslEnvironment
     // internal library management
     //
     
-    void install(class MslContext* c, class MslScriptInfo* info, class MslScript* script);
-    void unlink(class MslScript* script);
+    void install(class MslContext* c, class MslScriptUnit* unit, class MslScript* script);
+    void unlink(class MslScriptUnit* unit);
+    class MslLinkage* addLink(juce::String name, class MslScriptUnit* unit, class MslScript* compilation);
 
-    MslError* resolve(MslScript* script);
+    //MslError* resolve(MslScript* script);
 
     MslResult* makeResult(MslSession* s, bool finished);
     int generateSessionId();

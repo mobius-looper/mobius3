@@ -12,11 +12,11 @@
 #include "MslParser.h"
 #include "MslError.h"
 #include "MslEnvironment.h"
+#include "MslScriptUnit.h"
+#include "MslCollision.h"
 #include "MslScriptlet.h"
 #include "MslResult.h"
 #include "MslBinding.h"
-#include "MslFileError.h"
-#include "MslCollision.h"
 #include "MslPreprocessor.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
@@ -228,12 +228,12 @@ void MobiusConsole::showLoad()
         }
     }
 
-    juce::OwnedArray<class MslFileErrors>* ferrors = clerk->getFileErrors();
-    if (ferrors->size() > 0) {
-        console.add("File errors:");
-        for (auto mfe : *ferrors) {
-            console.add(mfe->path);
-            for (auto err : mfe->errors) {
+    juce::OwnedArray<class MslScriptUnit>* units = scriptenv->getUnits();
+    for (auto unit : *units) {
+        console.add(unit->path);
+        if (unit->errors.size() > 0) {
+            console.add("File errors:");
+            for (auto err : unit->errors) {
                 juce::String errline;
                 // damn, Mac is really whiny about having char* combined with +
                 // have to juce::String wrap everything, why not Windows?
@@ -242,27 +242,14 @@ void MobiusConsole::showLoad()
                 console.add(errline);
             }
         }
-    }
 
-    // this just passes through to MslEnvironment so we can get it there too
-    // it isn't the collisions on just this file yet
-    juce::OwnedArray<class MslCollision>* collisions = clerk->getCollisions();
-    if (collisions->size() > 0) {
-        console.add("Name Collisions:");
-        for (auto col : *collisions) {
-            console.add(col->name + " " + col->fromPath + " " + col->otherPath);
+        if (unit->collisions.size() > 0) {
+            console.add("Name collisions:");
+            for (auto col : unit->collisions) {
+                console.add(col->name + " " + col->fromPath + " " + col->otherPath);
+            }
         }
     }
-
-    // the actual scripts that were loaded come from the environment
-    juce::OwnedArray<class MslScript>* scripts = scriptenv->getScripts();
-    if (scripts->size() > 0) {
-        console.add("Scripts:");
-        for (auto s : *scripts) {
-            console.add(s->name + " " + s->path);
-        }
-    }
-
 }
 
 void MobiusConsole::doParse(juce::String line)

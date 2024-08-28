@@ -15,11 +15,25 @@ class MslScript {
     MslScript();
     ~MslScript();
 
+    //
+    // Parser artifacts
+    //
+
     /**
-     * The reference name for this script.  This is taken from the filename
-     * unless the #name directive is found in the script source
+     * The compilation unit this came from.
+     */
+    class MslScriptUnit* unit = nullptr;
+
+    /**
+     * The reference name for this script, taken from the #name directive.
      */
     juce::String name;
+
+    
+    /**
+     * True if this is a library script that is not itself a callable function.
+     */
+    bool library = false;
 
     /**
      * The root block.  MslNode objects representing the top-level statements
@@ -36,18 +50,19 @@ class MslScript {
      * Helps the evaluator deal with scripts as if they were MslFunctions.
      */
     std::unique_ptr<class MslBlock> arguments;
-
     class MslBlock* getDeclaration() {
         return arguments.get();
     }
 
     /**
      * Errors encountered during parsing or linking.
+     * This is temporary and normally immediately transferred to the
+     * MslScriptUnit
+     * todo: could get rid of this if the parser understood units
      */
     juce::OwnedArray<class MslError> errors;
-    
 
-    // proc definitions found within the script source
+    // function definitions found within the script source
     // these are gathered here rather than left within the root block
     // to make them easier to find when referenced
     // todo: may want the distinction between top-level and block-scoped

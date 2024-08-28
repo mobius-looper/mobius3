@@ -329,6 +329,9 @@ bool Supervisor::start()
     // !! revisit this, for plugins we don't control when blocks start
     // so it needs to be in a quiet state immediately
     audioStream.configure();
+
+    // load the script registry to do ScriptConfig conversion first
+    scriptClerk.initialize();
     
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
