@@ -347,6 +347,12 @@ bool Supervisor::start()
     // audio and midi streams
     mobius->initialize(config);
 
+    // ScriptConfig no longer goes in through MobiusConfig
+    // extract one from the new ScriptRegistry and send it down
+    ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
+    mobius->installScripts(oldScripts);
+    delete oldScripts;
+
     // listen for timing and config changes we didn't initiate
     mobius->setListener(this);
 
@@ -398,7 +404,7 @@ bool Supervisor::start()
     }
 
     // load the MSL files in the library
-    scriptClerk.loadLibrary();
+    scriptClerk.installMsl();
         
     meter(nullptr);
 
@@ -955,6 +961,8 @@ void Supervisor::writeMainConfig(MainConfig* config)
 
 /**
  * Write a MobiusConfig back to the file system.
+ * This should only be called to do surgical modifications
+ * to the file for an upgrade, it will NOT propagate changes.
  */
 void Supervisor::writeMobiusConfig(MobiusConfig* config)
 {
@@ -1088,6 +1096,19 @@ void Supervisor::updateMobiusConfig()
         config->presetsEdited = false;
         
         configureBindings(config);
+    }
+}
+
+/**
+ * Special back door for ScriptClerk that needs to do some upgrades
+ * without propagating changes via updateMobiusConfig since are not
+ * fully initialized yet.
+ */
+void Supervisor::writeMobiusConfig()
+{
+    if (mobiusConfig) {
+        MobiusConfig* config = mobiusConfig.get();
+        writeMobiusConfig(config);
     }
 }
 
@@ -1874,55 +1895,45 @@ void Supervisor::menuLoadSamples(bool popup)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Scripts
-//
-// Starting to consolidate all script activities in MslEnvironment...
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
  * Reload all of the configured scripts.  This may be called from
  * a main menu item, or by other things that need to force reloading
  * of scripts after the configuration changes.
  *
- * There are two paths for script management, one for older .mos scripts
- * which are handled by the mobius core, and one for new .msl scripts
- * which are handled by MslEnvironment.
+ * Formerly used ScriptConfig from MobiusConfig, now uses the ScriptClerk
+ * and ScriptRegistry.
  */
 void Supervisor::menuLoadScripts(bool popup)
 {
-    MobiusConfig* config = getMobiusConfig();
-    ScriptConfig* sconfig = config->getScriptConfig();
-    if (sconfig != nullptr) {
+    // ordinally don't need to do a full reload to pick up changes
+    // to files, but if they add something to the script library to
+    // auto-load have to look there too
+    scriptClerk.refresh();
+    
+    // old scripts for Mobius
+    ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
+    mobius->installScripts(oldScripts);
+    delete oldScripts;
 
-        // ScriptClerk does file analysis, saves errors for later,
-        // and passes what it can along to MslEnvironment
-        // The config is split between .msl and .mos files
-        scriptClerk.reload(sconfig);
+    // new MSL scripts
+    scriptClerk.installMsl();
 
-        // old files go down to Mobuius core
-        mobius->installScripts(scriptClerk.getOldConfig());
-
-        // gather interesting stats for the alert
-        // need MUCH more here
-        int count = 0;
-        for (auto symbol : symbols.getSymbols()) {
-            if (symbol->script != nullptr) 
-              count++;
-        }
-        juce::String msg = juce::String(count) + " scripts loaded";
-
-        juce::StringArray missing = scriptClerk.getMissingFiles();
-        if (missing > 0)
-          msg += "\n" + juce::String(missing.size()) + " missing files";
-
-        if (popup)
-          alert(msg);
-        else
-          mobiusMessage(msg);
+    // gather interesting stats for the alert
+    // need MUCH more here
+    int count = 0;
+    for (auto symbol : symbols.getSymbols()) {
+        if (symbol->script != nullptr) 
+          count++;
     }
+    juce::String msg = juce::String(count) + " scripts loaded";
+
+    // formerly had a "missing files" message as well but lost the interface
+    // to find that after the ScriptRegistry migration
+    
+    if (popup)
+      alert(msg);
+    else
+      mobiusMessage(msg);
 }
 
 //////////////////////////////////////////////////////////////////////

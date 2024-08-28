@@ -20,7 +20,8 @@
 
 #include <JuceHeader.h>
 
-#include "ScriptLibrary.h"
+//#include "ScriptLibrary.h"
+#include "ScriptRegistry.h"
 
 // have to include this so the unique_ptr can compile
 #include "../model/ScriptConfig.h"
@@ -31,70 +32,41 @@ class ScriptClerk {
     ScriptClerk(class Supervisor* s);
     ~ScriptClerk();
 
-    void initialize();
-    void saveRegistry();
-
     //
     // Supervisor Interfaces
     //
-
-    void loadLibrary();
-
-    // Do a full reload of an old ScriptConfig.
-    void reload();
-    void reload(class ScriptConfig* config);
-
-    // Load a single file into the environment
-    void loadFile(juce::String path);
-
-    /**
-     * Initialize previous load state.
-     * Used by the console when doing ineractive loading so it can
-     * only see the errors in the most recent file.
-     */
-    void resetLoadResults();
-
-    //
-    // ScriptConfig split results
-    //
-
-    juce::StringArray& getMslFiles() {
-        return mslFiles;
-    }
-
-    class ScriptConfig* getOldConfig() {
-        return oldConfig.get();
-    }
-
-    //
-    // Last load results
-    // Most results are not maintained in MslEnvironment in
-    // MslScriptUnit objects created as side effect of loading files
-    //
     
-    juce::StringArray& getMissingFiles() {
-        return missingFiles;
-    }
+    void initialize();
+    void refresh();
+    void saveRegistry();
+    void installMsl();
+
+    class ScriptConfig* getMobiusScriptConfig();
+
+    // ScriptEditor temporary interface
+    class ScriptConfig* getEditorScriptConfig();
+    void saveEditorScriptConfig(class ScriptConfig* config);
+
+    //
+    // Console Interfaces
+    //
+
+    class ScriptRegistry* getRegistry();
+    
+    class MslScriptUnit* loadFile(juce::String path);
 
   private:
 
     class Supervisor* supervisor = nullptr;
     std::unique_ptr<class ScriptRegistry> registry;
-    
-    // files round in the library folder
-    //juce::OwnedArray<class ScriptLibrary> library;
 
-    
-    // list of .msl files after split
-    juce::StringArray mslFiles;
+    void loadRegistry();
+    void reconcile();
+    void refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
+    void refreshFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
 
-    // filtered .mos ScriptConfig after split
-    std::unique_ptr<class ScriptConfig> oldConfig;
-
-    // last load state
-    juce::StringArray missingFiles;
-    juce::StringArray unloaded;
-
+    // old code: delete when ready
+#if 0    
     /**
      * Process the ScriptConfig and split it into two, one containing only
      * .mos files and one containing .msl files.
@@ -106,5 +78,7 @@ class ScriptClerk {
     juce::String normalizePath(juce::String src);
     juce::String expandPath(juce::String src);
     void loadInternal(juce::String path);
+#endif
+    
 
 };

@@ -5,18 +5,105 @@
 
 #include "ScriptRegistry.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Machine Management
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Find or bootstrap a Machine configuration for the local host.
+ */
+ScriptRegistry::Machine* ScriptRegistry::getMachine()
+{
+    juce::String name = juce::SystemStats::getComputerName();
+    Machine* machine = findMachine(name);
+
+    if (machine == nullptr) {
+        Trace(2, "ScriptRegistry: Bootstrapping ScriptRegistry for host %s\n", name.toUTF8());
+        machine = new Machine();
+        machine->name = name;
+        machines.add(machine);
+    }
+    return machine;
+}
+
+ScriptRegistry::Machine* ScriptRegistry::findMachine(juce::String& name)
+{
+    Machine* found = nullptr;
+    for (auto machine : machines) {
+        if (machine->name == name) {
+            found = machine;
+            break;
+        }
+    }
+    return found;
+}
+
+ScriptRegistry::File* ScriptRegistry::Machine::findFile(juce::String& path)
+{
+    File* found = nullptr;
+    for (auto file : files) {
+        if (file->path == path) {
+            found = file;
+            break;
+        }
+    }
+    return found;
+}
+
+/**
+ * Remove external entries if they have a path residing in the
+ * specified folder.  Used to take out redundant entries
+ * for files that are in the standard library folder.  Common
+ * when converting the old ScriptConfig.
+ */
+void ScriptRegistry::Machine::filterExternals(juce::String infolder)
+{
+    // really need to find the right way to both iterate and remove
+    // that doesn't involve indexes
+    juce::Array<External*> redundant;
+    for (auto ext : externals) {
+        if (ext->path.startsWith(infolder))
+          redundant.add(ext);
+    }
+    for (auto ext : redundant) {
+        Trace(2, "ScriptRegistry: Removing redundant external %s", ext->path.toUTF8());
+        externals.removeObject(ext, true);
+    }
+}
+
+juce::OwnedArray<ScriptRegistry::File>* ScriptRegistry::getFiles()
+{
+    Machine* machine = getMachine();
+    return &(machine->files);
+}
+        
+//////////////////////////////////////////////////////////////////////
+//
+// ScriptConfig Conversion
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * ScriptConfig was not multi-machine so it will be installed
+ * into the current machine.
+ */
 bool ScriptRegistry::convert(ScriptConfig* config)
 {
     bool changed = false;
-    
+
     if (config != nullptr) {
+        
+        Machine* machine = getMachine();
+        
         for (ScriptRef* ref = config->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
             juce::String path = juce::String(ref->getFile());
-            External* ext = findExternal(path);
+            External* ext = findExternal(machine, path);
             if (ext == nullptr) {
                 ext = new External();
                 ext->path = path;
-                externals.add(ext);
+                machine->externals.add(ext);
                 changed = true;
             }
         }
@@ -24,10 +111,10 @@ bool ScriptRegistry::convert(ScriptConfig* config)
     return changed;
 }
 
-ScriptRegistry::External* ScriptRegistry::findExternal(juce::String& path)
+ScriptRegistry::External* ScriptRegistry::findExternal(Machine* m, juce::String& path)
 {
     External* found = nullptr;
-    for (auto ext : externals) {
+    for (auto ext : m->externals) {
         if (ext->path == path) {
             found = ext;
             break;
@@ -57,31 +144,44 @@ void ScriptRegistry::parseXml(juce::String xml)
         // no, just keep it under the install folder for now
         
         for (auto* el : root->getChildIterator()) {
-            if (el->hasTagName("Externals")) {
+
+            if (el->hasTagName("Machine")) {
+
+                Machine* machine = new Machine();
+                machine->name = el->getStringAttribute("name");
+                machines.add(machine);
+                
                 for (auto* el2 : el->getChildIterator()) {
-                    if (el2->hasTagName("External")) {
-                        External* ext = new External();
-                        ext->path = el2->getStringAttribute("path");
-                        externals.add(ext);
+                    
+                    if (el2->hasTagName("Externals")) {
+                        for (auto* el3 : el2->getChildIterator()) {
+                            if (el3->hasTagName("External")) {
+                                External* ext = new External();
+                                ext->path = el3->getStringAttribute("path");
+                                machine->externals.add(ext);
+                            }
+                            else {
+                                xmlError("Unexpected XML tag name: %s\n", el3->getTagName());
+                            }
+                        }
                     }
-                    else {
-                        xmlError("Unexpected XML tag name: %s\n", el2->getTagName());
-                    }
-                }
-            }
-            else if (el->hasTagName("Files")) {
-                for (auto* el2 : el->getChildIterator()) {
-                    if (el2->hasTagName("File")) {
-                        File* s = new File();
-                        s->path = el2->getStringAttribute("path");
-                        s->name = el2->getStringAttribute("name");
-                        s->library = el2->getBoolAttribute("library");
-                        s->author = el2->getStringAttribute("author");
-                        s->old = el2->getBoolAttribute("old");
-                        s->added = parseTime(el2->getStringAttribute("added"));
-                        s->button = el2->getBoolAttribute("button");
-                        s->disabled = el2->getBoolAttribute("disabled");
-                        files.add(s);
+                    else if (el2->hasTagName("Files")) {
+                        for (auto* el3 : el2->getChildIterator()) {
+                            if (el3->hasTagName("File")) {
+                                File* s = new File();
+                                s->path = el3->getStringAttribute("path");
+                                s->name = el3->getStringAttribute("name");
+                                s->library = el3->getBoolAttribute("library");
+                                s->author = el3->getStringAttribute("author");
+                                s->added = parseTime(el3->getStringAttribute("added"));
+                                s->button = el3->getBoolAttribute("button");
+                                s->disabled = el3->getBoolAttribute("disabled");
+                                machine->files.add(s);
+                            }
+                            else {
+                                xmlError("Unexpected XML tag name: %s\n", el3->getTagName());
+                            }
+                        }
                     }
                     else {
                         xmlError("Unexpected XML tag name: %s\n", el2->getTagName());
@@ -108,38 +208,57 @@ juce::String ScriptRegistry::toXml()
 {
     juce::XmlElement root ("ScriptRegistry");
 
-    if (externals.size() > 0) {
-        juce::XmlElement* elExternals = new juce::XmlElement("Externals");
-        root.addChildElement(elExternals);
+    if (machines.size() > 0) {
+        for (auto machine : machines) {
+        
+            juce::XmlElement* elMachine = new juce::XmlElement("Machine");
+            root.addChildElement(elMachine);
+            elMachine->setAttribute("name", machine->name);
 
-        for (auto external : externals) {
-            juce::XmlElement* elExternal = new juce::XmlElement("External");
-            elExternals->addChildElement(elExternal);
+            if (machine->externals.size() > 0) {
+                juce::XmlElement* elExternals = new juce::XmlElement("Externals");
+                elMachine->addChildElement(elExternals);
+
+                for (auto external : machine->externals) {
+                    juce::XmlElement* elExternal = new juce::XmlElement("External");
+                    elExternals->addChildElement(elExternal);
             
-            elExternal->setAttribute("path", external->path);
-            // don't need to save missing or folder, those are set when loaded and verified
+                    elExternal->setAttribute("path", external->path);
+                    // don't need to save missing or folder, those are set when loaded and verified
+                }
+            }
+
+            if (machine->files.size() > 0) {
+                juce::XmlElement* elFiles = new juce::XmlElement("Files");
+                elMachine->addChildElement(elFiles);
+
+                for (auto file : machine->files) {
+                    juce::XmlElement* fe = new juce::XmlElement("File");
+                    elFiles->addChildElement(fe);
+
+                    fe->setAttribute("path", file->path);
+
+                    if (file->name.length() > 0)
+                      fe->setAttribute("name", file->name);
+                    
+                    if (file->author.length() > 0)
+                      fe->setAttribute("author", file->author);
+                    
+                    fe->setAttribute("added", renderTime(file->added));
+
+                    if (file->library)
+                      fe->setAttribute("library", file->library);
+
+                    if (file->button)
+                      fe->setAttribute("button", file->button);
+
+                    if (file->disabled)
+                      fe->setAttribute("disabled", file->disabled);
+                }
+            }
         }
     }
-
-    if (files.size() > 0) {
-        juce::XmlElement* elFiles = new juce::XmlElement("Files");
-        root.addChildElement(elFiles);
-
-        for (auto file : files) {
-            juce::XmlElement* fe = new juce::XmlElement("File");
-            elFiles->addChildElement(fe);
-            
-            fe->setAttribute("path", file->path);
-            fe->setAttribute("name", file->name);
-            fe->setAttribute("author", file->name);
-            fe->setAttribute("added", renderTime(file->added));
-            fe->setAttribute("library", file->library);
-            fe->setAttribute("old", file->old);
-            fe->setAttribute("button", file->button);
-            fe->setAttribute("disabled", file->disabled);
-        }
-    }
-
+    
     return root.toString();
 }
 

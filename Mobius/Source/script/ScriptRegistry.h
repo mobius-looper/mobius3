@@ -19,6 +19,7 @@ class ScriptRegistry
         juce::String path;
         bool missing = false;
         bool folder = false;
+        bool invalid = false;
     };
 
     /**
@@ -31,6 +32,10 @@ class ScriptRegistry
         ~File() {}
 
         juce::String path;
+        // time this file was discoverd
+        juce::Time added;
+
+        // things found during parsing
 
         // reference name if this is a callable file
         juce::String name;
@@ -38,28 +43,52 @@ class ScriptRegistry
         bool library = false;
         // where the file came from
         juce::String author;
-        // true if this is an older .mos file
-        bool old = false;
-        // time this file was discoverd
-        juce::Time added;
 
         // User defined options
+        
         bool button = false;
         bool disabled = false;
+
+        // transient runtime fields
+        
+        // true if a file could not be located
+        bool missing = false;
+        // true if this is an older .mos file
+        bool old = false;
+        // set if this file came from an External
+        External* external = nullptr;
+        
+    };
+    
+    /**
+     * When the scripts.xml file is shared by multiple machines, each
+     * has it's own configuration.
+     */
+    class Machine {
+      public:
+        juce::String name;
+        
+        /**
+         * Folders outside of the system folder to scan.
+         */
+        juce::OwnedArray<External> externals;
+    
+        /**
+         * Scanned files
+         */
+        juce::OwnedArray<File> files;
+
+        File* findFile(juce::String& name);
+        void filterExternals(juce::String folder);
     };
 
     ScriptRegistry() {}
     ~ScriptRegistry() {}
 
-    /**
-     * Folders outside of the system folder to scan.
-     */
-    juce::OwnedArray<External> externals;
-    
-    /**
-     * Scanned files
-     */
-    juce::OwnedArray<File> files;
+    juce::OwnedArray<Machine> machines;
+    Machine* getMachine();
+    Machine* findMachine(juce::String& name);
+    juce::OwnedArray<File>* getFiles();
 
     void parseXml(juce::String xml);
     juce::String toXml();
@@ -67,7 +96,7 @@ class ScriptRegistry
 
   private:
     
-    External* findExternal(juce::String& path);
+    External* findExternal(Machine* m, juce::String& path);
     
     void xmlError(const char* msg, juce::String arg);
     juce::String renderTime(juce::Time& t);

@@ -159,7 +159,7 @@ class MslEnvironment
      * Linking should normally be done after every load.  But this could be expensive
      * and we might want to defer it until after a bulk load finishes.
      */
-    void link();
+    void link(class MslContext* c);
 
     /**
      * Return units that have been loaded for inspection.

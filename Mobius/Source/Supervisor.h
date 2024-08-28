@@ -186,6 +186,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void updateDeviceConfig();
     class MobiusConfig* getMobiusConfig();
     void updateMobiusConfig();
+    void writeMobiusConfig();
     void reloadMobiusConfig();
     class UIConfig* getUIConfig();
     void updateUIConfig();

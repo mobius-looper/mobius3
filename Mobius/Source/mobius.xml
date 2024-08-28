@@ -333,9 +333,6 @@
     <Binding name='Checkpoint' trigger='note'/>
   </BindingSet>
   <ScriptConfig>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\test\scripts\first.msl'/>
-    <ScripRef file='c:\dev\mobius3\Mobius\Source\mute.mos'/>
   </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>

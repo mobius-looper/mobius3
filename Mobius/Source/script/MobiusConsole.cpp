@@ -190,7 +190,6 @@ void MobiusConsole::doHelp()
  *
  *    load           - reload the MSL library
  *    load <file>    - load a file
- *    load config    - reload the ScriptConfig
  *
  */
 void MobiusConsole::doLoad(juce::String line)
@@ -200,13 +199,10 @@ void MobiusConsole::doLoad(juce::String line)
     line = line.trim();
 
     if (line.length() == 0) {
-        clerk->loadLibrary();
-    }
-    else if (line.startsWith("config")) {
-        clerk->reload();
+        clerk->refresh();
+        clerk->installMsl();
     }
     else {
-        clerk->resetLoadResults();
         clerk->loadFile(line);
     }
 
@@ -219,20 +215,29 @@ void MobiusConsole::doLoad(juce::String line)
 void MobiusConsole::showLoad()
 {
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    
-    juce::StringArray& missing = clerk->getMissingFiles();
-    if (missing.size() > 0) {
+    ScriptRegistry* registry = clerk->getRegistry();
+    juce::OwnedArray<class ScriptRegistry::File>* files = registry->getFiles();
+
+    int missing = 0;
+    for (auto file : *files) {
+        if (file->missing)
+          missing++;
+    }
+
+    if (missing > 0) {
         console.add("Missing files:");
-        for (auto s : missing) {
-            console.add(s);
+        for (auto file : *files) {
+            if (file->missing)
+              console.add(file->path);
         }
     }
 
+    console.add("Files:");
     juce::OwnedArray<class MslScriptUnit>* units = scriptenv->getUnits();
     for (auto unit : *units) {
         console.add(unit->path);
         if (unit->errors.size() > 0) {
-            console.add("File errors:");
+            console.add("Errors:");
             for (auto err : unit->errors) {
                 juce::String errline;
                 // damn, Mac is really whiny about having char* combined with +

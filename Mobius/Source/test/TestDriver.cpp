@@ -826,9 +826,12 @@ void TestDriver::installTestConfiguration()
                 shell->sendSamples(manager, true);
 
                 // load and install the scripts
-                // note that since we're bypadding installScripts, we don't get
+                // note that since we're bypassing installScripts, we don't get
                 // expansion of directories.  The test overlay doresn't use those
                 // but it could be nice
+                // !! todo: this is all oriented around ScriptRegistry now, though
+                // these back doors still work, the entire test driver will need to
+                // be redesigned once the test scripts are ported to .msl
                 Scriptarian* scriptarian = shell->compileScripts(overlay->getScriptConfig());
                 shell->sendScripts(scriptarian, true);
 

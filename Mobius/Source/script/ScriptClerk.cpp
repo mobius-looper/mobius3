@@ -5,9 +5,13 @@
  * sessions, while the ScriptClerk deals with files, drag-and-rop, and the
  * split between new MSL scripts and old .mos scripts.
  *
+ * The ScriptRegistry provides a runtime and storage model for manging
+ * files and folders in the library.
+ *
  * Files are loaded one at a time into the MslEnvironment then linked
  * at the end.  The environment will hold a set of MslScriptUnits for each
  * file containing parse status and errors.
+ *
  */
 
 #include <JuceHeader.h>
@@ -18,6 +22,7 @@
 #include "../Supervisor.h"
 
 #include "MslEnvironment.h"
+#include "MslScriptUnit.h"
 #include "ScriptRegistry.h"
 
 #include "ScriptClerk.h"
@@ -31,24 +36,49 @@ ScriptClerk::~ScriptClerk()
 {
 }
 
+void ScriptClerk::initialize()
+{
+    loadRegistry();
+}
+
+void ScriptClerk::refresh()
+{
+    loadRegistry();
+}
+
+ScriptRegistry* ScriptClerk::getRegistry()
+{
+    return registry.get();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
-// Load
+// Registry
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Initialize the library on startup.
- * This reads the scripts.xml registry file, then scans the library
- * folders and reconciles it.
+ * Registry loading consists of the following phases.
  *
- * It does not yet load anything.
+ * Parsing the scripts.xml file to bring in the last saved contents
+ * of the registry.
+ *
+ * Conversion of the ScriptConfig from the old MobiusConfig into
+ * registry Externals.  This is normally done once.
+ *
+ * Reconciliation of the File list with the current state of the
+ * library folder and any external folders. Aka "scanning"
+ *
+ * The referenced script files are not installed, this only
+ * maintins the ScriptRegistry memory model.
+ *
  */
-void ScriptClerk::initialize()
+void ScriptClerk::loadRegistry()
 {
     ScriptRegistry* reg = new ScriptRegistry();
     registry.reset(reg);
-    
+
+    // load last known registry state
     juce::File root = supervisor->getRoot();
     juce::File regfile = root.getChildFile("scripts.xml");
     if (regfile.existsAsFile()) {
@@ -56,16 +86,23 @@ void ScriptClerk::initialize()
         reg->parseXml(xml);
     }
 
+    // upgrade ScriptConfig to registry entries
     MobiusConfig* mconfig = supervisor->getMobiusConfig();
     ScriptConfig* sconfig = mconfig->getScriptConfig();
     if (sconfig != nullptr) {
-        if (reg->convert(sconfig)) {
-            saveRegistry();
-        }
-
-        // eventually this will be authoritative
-        //mconfig->setScriptConfig(nullptr);
+        reg->convert(sconfig);
+        mconfig->setScriptConfig(nullptr);
+        // note well: this can't call supervisor->updateMobiusConfig()
+        // because if we're early in initialization that tries to
+        // propagate things and things aren't properly initialized yet
+        supervisor->writeMobiusConfig();
     }
+
+    // reconcile file references
+    reconcile();
+
+    // don't bother with dirty checking on this? it isn't big
+    saveRegistry();
 }
 
 void ScriptClerk::saveRegistry()
@@ -79,143 +116,276 @@ void ScriptClerk::saveRegistry()
 }
 
 /**
- * Do a full load of the library.
- * There is currently only one library found under the installation folder
- * in "scripts".  Could have configurable library folders someday.
- * All .msl files found here are loaded.  .mos files are not yet loaded due
- * to issues with the old interface being oriented around ScriptConfig and
- * Mobius wanting to do it's own file access.  Fix someday.
- *
- * This may be called multiple times to reload the library.
- *
- * todo: need to combine this with ScriptConfig to allow random files
- * that aren't stored in the standard library folder to be included.
+ * Reconcile script files
  */
-void ScriptClerk::loadLibrary()
+void ScriptClerk::reconcile()
 {
-    resetLoadResults();
+    ScriptRegistry::Machine* machine = registry->getMachine();
+    
+    // first mark all files as missing
+    // the flags will be cleared as files are located in the scan
+    for (auto file : machine->files)
+      file->missing = true;
 
+    // scan the standard folder
     juce::File root = supervisor->getRoot();
     juce::File libdir = root.getChildFile("scripts");
+    refreshFolder(machine, libdir, nullptr);
 
-    if (libdir.isDirectory()) {
-        int types = juce::File::TypesOfFileToFind::findFiles;
-        juce::String extension = ".msl";
-        juce::String pattern = "*" + extension;
-        juce::Array<juce::File> files =
-            libdir.findChildFiles(types,
-                                  // searchRecursively   
-                                  false,
-                                  pattern,
-                                  // followSymlinks
-                                  juce::File::FollowSymlinks::no);
+    // add external files and scan external folders
+
+    // hack: If they have paths into the standard library folder
+    // configured as externals, remove them since we will have
+    // already found those.  This is common when ScriptConfig
+    // is converted
+    machine->filterExternals(libdir.getFullPathName());
     
-        for (auto file : files) {
-            juce::String path = file.getFullPathName();
-            // ignore .msl~ files left behind by emacs that get picked up
-            if (path.endsWithIgnoreCase(extension)) {
-                Trace(2, "ScriptClerk: Loading: %s", path.toUTF8());
-                loadInternal(path);
-            }
+    for (auto ext : machine->externals) {
+
+        juce::File extfile = juce::File(ext->path);
+        if (extfile.isDirectory()) {
+            // make sure the flags are right
+            ext->missing = false;
+            ext->folder = true;
+            ext->invalid = false;
+            refreshFolder(machine, extfile, ext);
+        }
+        else if (extfile.existsAsFile()) {
+            ext->missing = false;
+            ext->folder = false;
+            // this will be set later during installation
+            // could check the file extensions now
+            ext->invalid = false;
+            refreshFile(machine, extfile, ext);
+        }
+        else {
+            // something was deleted out from under us, or
+            // they arranged to have invalid paths in the
+            // registry
+            ext->missing = true;
+            // leave folder/invalid flag set to the last value
         }
     }
 }
 
 /**
- * Do a full reload of the old ScriptConfig from mobius.xml
- * This currentlly contains a combination of .msl and .mos files.
- * Paths are normalized and a transient ScriptConfig containing
- * only the .mos file is created to be passed to Mobius by Supervisor
- * since it still needs to be in control of script compilation of
- * old scripts.
- *
- * For new MSL files, the clerk asks MslEnvironment to compile them
- * and captures any parse errors to be displayed later.  Files
- * that compile are installed in the MslEnvironment for use.
- *
- * This "reload" method is considered authoritative over all file-based
- * scripts in the environment, so if the user removed a file from
- * ScriptConfig is it removed from the environment as well and no
- * longer visible for bindings.
- *
- * If you want incremental file loading preserving the rest of the
- * environment use other methods (which don't in fact exist yet).
+ * Refresh the File entry for one file.
  */
-void ScriptClerk::reload(ScriptConfig* sconfig)
+void ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile,
+                              ScriptRegistry::External* ext)
 {
-    // split the config into old/new files
-    split(sconfig);
-
-    resetLoadResults();
-
-    for (auto path : mslFiles) {
-        loadInternal(path);
+    // this is assuming that getFullPathName is stable
+    juce::String path = jfile.getFullPathName();
+    ScriptRegistry::File* sfile = machine->findFile(path);
+    if (sfile == nullptr) {
+        sfile = new ScriptRegistry::File();
+        sfile->path = path;
+        sfile->added = juce::Time::getCurrentTime();
+        machine->files.add(sfile);
     }
-
-    // Unload any scripts that were not included in the new config
-    MslEnvironment* env = supervisor->getMslEnvironment();
-    env->unload(mslFiles);
-}
-
-void ScriptClerk::reload()
-{
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    ScriptConfig* sconfig = config->getScriptConfig();
-    if (sconfig != nullptr)
-      reload(sconfig);
+    
+    sfile->missing = false;
+    sfile->external = ext;
+    // saves having everyone do the same extension check
+    if (path.endsWithIgnoreCase(".mos"))
+      sfile->old = true;
 }
 
 /**
- * Reset last load state.
+ * Load files in a folder that look like scripts
  */
-void ScriptClerk::resetLoadResults()
+void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfolder,
+                                ScriptRegistry::External* ext)
 {
-    missingFiles.clear();
-    unloaded.clear();
+    // since we're asking for recursive, do we need AndDirectories
+    // or is just findFiles enough?
+    //int types = juce::File::TypesOfFileToFind::findFilesAndDirectories;
+    int types = juce::File::TypesOfFileToFind::findFiles;
+    bool recursive = true;
+    juce::String pattern = "*";
+    juce::Array<juce::File> files = jfolder.findChildFiles(types, recursive, pattern,
+                                                           juce::File::FollowSymlinks::no);
+    
+    for (auto file : files) {
+        juce::String path = file.getFullPathName();
+        if (path.endsWithIgnoreCase(".msl") ||
+            path.endsWithIgnoreCase(".mos")) {
+
+            refreshFile(machine, file, ext);
+        }
+    }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Installation
+//
+// There are two parts to this.  First all .msl files can be immediately
+// loaded into the MslEnvironment.
+//
+// Older .mos files need to converted back into a model/ScriptConfig object
+// that can be sent down to Mobius where the old code will do it's own
+// file access and installation.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * After reading and reconciling the ScriptRegistry, install new MSL
+ * files into the script environment.  This is a bulk operation where
+ * linking is deferred until all files have been installed.
+ *
+ * If any errors are encountered, the UI will need to ask MslEnvironment
+ * for all the MslScriptUnits and look at their errors.
+ */
+void ScriptClerk::installMsl()
+{
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    
+    if (registry != nullptr) {
+        ScriptRegistry::Machine* machine = registry->getMachine();
+        for (auto fileref : machine->files) {
+            if (!fileref->old && !fileref->missing && !fileref->disabled) {
+
+                juce::File file (fileref->path);
+                if (!file.existsAsFile()) {
+                    // this should have been caught during reconciliation
+                    Trace(1, "ScriptClerk: Invalid MSL file path encountered %s",
+                          fileref->path.toUTF8());
+                    fileref->missing = true;
+                }
+                else {
+                    juce::String source = file.loadFileAsString();
+                    MslScriptUnit* unit = env->load(supervisor, fileref->path, source);
+                    if (unit->errors.size() > 0) {
+                        // may want to soften this to a warning
+                        Trace(1, "ScriptClerk: Errors encountered loading file %s",
+                              fileref->path.toUTF8());
+                    }
+                }
+            }
+        }
+    }
+
+    // do deferred linking, this may also result in errors left beyind in
+    // the MslScriptUnits
+    env->link(supervisor);
+}
+
+/**
+ * For older scripts, convert the registry entries to a ScriptConfig that can
+ * be sent down to Mobius for processing.
+ * 
+ * All the old code in Mobius that deals with directory scanning and path normalization
+ * does not need to be done any more.
+ *
+ * The returned object is owned by the caller and must be deleted.
+ */
+ScriptConfig* ScriptClerk::getMobiusScriptConfig()
+{
+    ScriptConfig* config = new ScriptConfig();
+
+    if (registry != nullptr) {
+        ScriptRegistry::Machine* machine = registry->getMachine();
+        for (auto fileref : machine->files) {
+            if (fileref->old && !fileref->missing && !fileref->disabled) {
+                config->add(fileref->path.toUTF8());
+            }
+        }
+    }
+
+    return config;
+}
+
+/**
+ * For the ScriptPanel, synthesize a ScriptConfig object containing all of the
+ * Extenrals.  Eventually the panel will be rewritten to use ScriptRegistry directly
+ * but for now we have to fake it like it came from MobiusConfig.
+ */
+ScriptConfig* ScriptClerk::getEditorScriptConfig()
+{
+    ScriptConfig* config = new ScriptConfig();
+
+    if (registry != nullptr) {
+        ScriptRegistry::Machine* machine = registry->getMachine();
+
+        for (auto external : machine->externals) {
+            config->add(external->path.toUTF8());
+        }
+    }
+
+    return config;
+}
+
+/**
+ * After the ScriptEditor is done making changes to the old ScriptConfig
+ * model, convert it back into the registry and save it.
+ * Ownership of the object is NOT taken.
+ *
+ * This replaces the entire Externals list. 
+ */
+void ScriptClerk::saveEditorScriptConfig(ScriptConfig* config)
+{
+    // better have one of these by now
+    if (registry == nullptr) {
+        ScriptRegistry* reg = new ScriptRegistry();
+        registry.reset(reg);
+    }
+
+    ScriptRegistry::Machine* machine = registry->getMachine();
+
+    // editor doesn't have the full model for an External so don't
+    // try to merge them
+
+    machine->externals.clear();
+
+    for (ScriptRef* ref = config->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
+
+        ScriptRegistry::External* ext = new ScriptRegistry::External();
+        ext->path = juce::String(ref->getFile());
+        machine->externals.add(ext);
+    }
+
+    saveRegistry();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Console Interface
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Load an individual file
- * This is intended for use by the console and does not reset errors.
  */
-void ScriptClerk::loadFile(juce::String path)
+MslScriptUnit* ScriptClerk::loadFile(juce::String path)
 {
-    loadInternal(path);
-}
-
-/**
- * Load one file into the library.
- * Save parse errors if encountered.
- * 
- * Within the environment, if the script has already been loaded, it
- * is replaced and the old one is deleted.  If the replaced script is still
- * in use it is placed on the inactive list.
- */
-void ScriptClerk::loadInternal(juce::String path)
-{
+    MslScriptUnit* unit = nullptr;
+    
     juce::File file (path);
     
     if (!file.existsAsFile()) {
         // this should have been caught and saved by ScriptClerk by now
-        Trace(1, "ScriptClerk: loadInternal missing file %s", path.toUTF8());
+        Trace(1, "ScriptClerk: loadFile missing file %s", path.toUTF8());
     }
     else {
         juce::String source = file.loadFileAsString();
 
         // ask the environment to install it if it can
         MslEnvironment* env = supervisor->getMslEnvironment();
-        MslScriptUnit* unit = env->load(supervisor, path, source);
-        
-        // todo: save the units somewhere or just keep going back to the environment for them?
-        (void)unit;
+        unit = env->load(supervisor, path, source);
     }
+
+    return unit;
 }
 
 ///////////////////////////////////////////////////////////////////////
 //
 // ScriptConfig
 //
+// Old code: delete when ready
+//
 ///////////////////////////////////////////////////////////////////////
+#if 0
 
 /**
  * Split a ScriptConfig, normally directly from the MobiusConfig, into
@@ -395,6 +565,7 @@ juce::String ScriptClerk::expandPath(juce::String src)
     juce::String rootPrefix = root.getFullPathName();
     return src.replace("$ROOT", rootPrefix);
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

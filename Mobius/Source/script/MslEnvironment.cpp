@@ -210,6 +210,7 @@ MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::Stri
         unit->collisions.clear();
         unit->exportedFunctions.clear();
         unit->exportedVariables.clear();
+        // but KEEP the previous compilation result
     }
     else {
         // these don't need to be pooled, but they do need to be destroyed at shutdown
@@ -278,6 +279,54 @@ void MslEnvironment::unload(juce::StringArray& retain)
     // when those can be GC'd
 }
 
+/**
+ * Do a full relink after bulk file loading.
+ *
+ * The MslScripts list is the authoritative set of "installed" scripts that
+ * can be resolved.  The MslScriptUnit is where the errors live.  There
+ * is supposed to be a one-to-one on those, but it feels too fragile.
+ *
+ * You can't have parse errors and still have a compilation result so
+ * linking is free to overwrite the unit's error list.
+ *
+ * Handoff is messy.  MslSymbol wants to leave errors on the MslScript.
+ * Those need to be transferred to the Unit if we have any.  Need to make
+ * unit awareness go deeper.
+ */
+void MslEnvironment::link(MslContext* context)
+{
+    for (auto unit : units) {
+        MslScript* comp = unit->compilation;
+        
+        if (comp != nullptr) {
+
+            // reset the error list on the compilation and link it
+            comp->errors.clear();
+            linkNode(context, comp, comp->root);
+
+            // transfer the errors to the unit
+            unit->errors.clear();
+            while (comp->errors.size()) {
+                unit->errors.add(comp->errors.removeAndReturn(0));
+            }
+        }
+    }
+}
+
+void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* node)
+{
+    // first link any chiildren
+    for (auto child : node->children)
+      linkNode(context, script, child);
+
+    // now the hard part
+    // only symbols need special processing right now
+    if (node->isSymbol()) {
+        MslSymbol* sym = static_cast<MslSymbol*>(node);
+        sym->link(context, this, script);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MobiusConsole/Binderator Scriptlet Interface
@@ -329,20 +378,6 @@ bool MslEnvironment::linkScriptlet(MslContext* context, MslScript* script)
     return (script->errors.size() == startErrors);
 }
 
-void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* node)
-{
-    // first link any chiildren
-    for (auto child : node->children)
-      linkNode(context, script, child);
-
-    // now the hard part
-    // only symbols need special processing right now
-    if (node->isSymbol()) {
-        MslSymbol* sym = static_cast<MslSymbol*>(node);
-        sym->link(context, this, script);
-    }
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Library
@@ -374,15 +409,13 @@ MslScriptUnit* MslEnvironment::findUnit(juce::String& path)
  */
 void MslEnvironment::unlink(MslScriptUnit* unit)
 {
+    // this may be null if we're installing for the first time, or there
+    // were parse errors previously
     MslScript* compilation = unit->compilation;
     
-    // is it meaningful for this to be null?
-    if (compilation == nullptr)
-      Trace(1, "MslEnvironment::unlink Unlinking unit with no compilation result");
-        
     for (auto link : linkages) {
         if (link->unit == unit) {
-            if (link->compilation != compilation) {
+            if (compilation != nullptr && link->compilation != compilation) {
                 // this is probably fatal
                 // I suppose we could treat anything we find here as something
                 // to be moved to the inactive list but it shouldn't happen,

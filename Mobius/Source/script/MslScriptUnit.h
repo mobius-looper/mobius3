@@ -27,6 +27,9 @@
 
 #include <JuceHeader.h>
 
+#include "MslError.h"
+#include "MslCollision.h"
+
 class MslScriptUnit
 {
     friend class MslEnvironment;

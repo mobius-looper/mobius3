@@ -19,6 +19,7 @@
 #include "../model/ScriptConfig.h"
 
 #include "../Supervisor.h"
+#include "../script/ScriptClerk.h"
 
 #include "UpgradePanel.h"
 
@@ -459,7 +460,13 @@ void UpgradeContent::loadScripts()
     
     log.add("");
     log.add("Loading Scripts...");
-    ScriptConfig* masterScripts = masterConfig->getScriptConfig();
+
+    // masterScripts no longer are stored in the MobiusConfig,
+    // they are synthesized from ScriptRegistry
+    // ScriptConfig* masterScripts = masterConfig->getScriptConfig();
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    ScriptConfig* masterScripts = clerk->getEditorScriptConfig();
+    
     ScriptConfig* srcScripts = mobiusConfig->getScriptConfig();
     if (srcScripts != nullptr) {
         ScriptRef* ref = srcScripts->getScripts();
@@ -521,6 +528,9 @@ void UpgradeContent::loadScripts()
             ref = ref->getNext();
         }
     }
+
+    // this was allocated dynamically by ScriptClerk
+    delete masterScripts;
 
     log.add("Registered script names:");
     for (auto name : scriptNames)
@@ -941,17 +951,34 @@ void UpgradeContent::doInstall()
             masterConfig->addSetup(s);
         }
 
+        // the way scripts work with ScriptRegistry now, the new ones
+        // go directly in to scripts.xml as Externals, this means
+        // undo won't work since we didn't capture the previous version
+        // of scripts.xml, but that's not wher emost of the problems happen
+        // so just leave them there
         if (newScripts.size() > 0) {
+#if 0            
             ScriptConfig* masterScripts = masterConfig->getScriptConfig();
             if (masterScripts == nullptr) {
                 masterScripts = new ScriptConfig();
                 masterConfig->setScriptConfig(masterScripts);
             }
-
             while (newScripts.size() > 0) {
                 ScriptRef* ref = newScripts.removeAndReturn(0);
                 masterScripts->add(ref);
             }
+#endif
+            ScriptClerk* clerk = supervisor->getScriptClerk();
+            ScriptRegistry* registry = clerk->getRegistry();
+            ScriptRegistry::Machine* machine = registry->getMachine();
+            while (newScripts.size() > 0) {
+                ScriptRef* ref = newScripts.removeAndReturn(0);
+                ScriptRegistry::External* ext = new ScriptRegistry::External();
+                ext->path = juce::String(ref->getFile());
+                machine->externals.add(ext);
+                delete ref;
+            }
+            clerk->saveRegistry();
         }
 
         // these are more complicated

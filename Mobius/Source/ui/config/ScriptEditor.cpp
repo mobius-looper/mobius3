@@ -8,6 +8,7 @@
 //#include <sstream>
 
 #include "../../Supervisor.h"
+#include "../../script/ScriptClerk.h"
 #include "../../model/MobiusConfig.h"
 
 #include "ScriptEditor.h"
@@ -24,21 +25,26 @@ ScriptEditor::~ScriptEditor()
 
 void ScriptEditor::load()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    ScriptConfig* sconfig = config->getScriptConfig();
+    // todo: until this is retooled to work without ScriptConfig
+    // we have to synthesize one from the new ScriptRegistry
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    ScriptConfig* sconfig = clerk->getEditorScriptConfig();
     if (sconfig != nullptr) {
         // this makes it's own copy
         table.setScripts(sconfig);
     }
+    // this was derived from the ScriptRegistry and must be freed
+    delete sconfig;
 }
 
 void ScriptEditor::save()
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
     ScriptConfig* newConfig = table.capture();
-    config->setScriptConfig(newConfig);
 
-    supervisor->updateMobiusConfig();
+    // this no longer goes back into MobiusConfig
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    clerk->saveEditorScriptConfig(newConfig);
+    delete newConfig;
 
     // you almost always want scripts reloaded after editing
     // so force that now, samples are another story...

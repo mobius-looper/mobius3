@@ -1283,6 +1283,11 @@ Scriptarian* MobiusShell::compileScripts(ScriptConfig* src)
     // calling Scriptarian
     // note: ScriptRef has flags so use the copy constructor when
     // cloning it to get them
+
+    // UPDATE: With the introduction of ScriptRegistry, none of this
+    // file intelligence is necessary.  The ScriptConfig will contain a flat
+    // list of properly filtered .mos files
+    
     ScriptConfig* expanded = new ScriptConfig();
     if (src != nullptr) {
         ScriptRef* ref = src->getScripts();
