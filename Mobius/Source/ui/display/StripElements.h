@@ -49,8 +49,7 @@ class StripGroupName : public StripElement
     void paint(juce::Graphics& g) override;
     
   private:
-
-    int setupOrdinal = -1;
+    int groupNumber = -1;
     juce::String groupName;
     int groupColor;
 };

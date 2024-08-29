@@ -66,11 +66,11 @@ int LayerElement::getPreferredWidth()
         (LayerInset * 2);
 }
 
+/**
+ * This one doesn't resize though I suppose it could
+ */
 void LayerElement::resized()
 {
-    // StatusElement needs to adjust the Resizer
-    StatusElement::resized();
-    
     // no Component substructure
 }
 

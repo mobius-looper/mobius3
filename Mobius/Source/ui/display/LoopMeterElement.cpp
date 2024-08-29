@@ -32,6 +32,7 @@ const int MarkerArrowWidth = 8;
 const int MarkerArrowHeight = 8;
 
 const int MarkerTextHeight = 12;
+// the default, can be made larger
 const int MaxTextStack = 3;
 
 // We center the marker on a point along the loop meter bar
@@ -46,6 +47,7 @@ LoopMeterElement::LoopMeterElement(StatusArea* area) :
     // initialize the Query we use to dig out the runtime subcycles
     // parameter value
     subcyclesQuery.symbol = area->getSupervisor()->getSymbols()->intern("subcycles");
+    resizes = true;
 }
 
 LoopMeterElement::~LoopMeterElement()
@@ -117,6 +119,8 @@ void LoopMeterElement::update(MobiusState* state)
 
 void LoopMeterElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 /**
@@ -200,6 +204,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int eventInfoTop = (BorderThickness * 2) + MeterBarHeight;
     int nameStart = eventInfoLeft;
     int nameEnd = nameStart + MeterBarWidth;
+    int nameTop = eventInfoTop + MarkerArrowHeight;
     if (loop->eventCount > 0) {
         int lastEventFrame = -1;
         int stackCount = 0;
@@ -250,7 +255,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
             else if ((nameLeft + nameWidth) > nameEnd)
               nameLeft = nameEnd - nameWidth;
             
-            int textTop = eventInfoTop + MarkerArrowHeight + (MarkerTextHeight * stackCount);
+            int textTop = nameTop + (MarkerTextHeight * stackCount);
 
             g.drawText(juce::String(name),nameLeft, textTop,
                        nameWidth, MarkerTextHeight,

@@ -17,6 +17,7 @@ AlertElement::AlertElement(StatusArea* area) :
 {
     mouseEnterIdentify = true;
     area->getSupervisor()->addAlertListener(this);
+    resizes = true;
 }
 
 AlertElement::~AlertElement()

@@ -44,6 +44,9 @@ ParametersElement::ParametersElement(StatusArea* area) :
 {
     // intercept our cursor actions
     area->getSupervisor()->addActionListener(this);
+
+    // layout isn't responsive yet
+    //resizes = true;
 }
 
 ParametersElement::~ParametersElement()
@@ -200,6 +203,8 @@ void ParametersElement::update(MobiusState* state)
 
 void ParametersElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void ParametersElement::paint(juce::Graphics& g)

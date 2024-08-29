@@ -21,6 +21,7 @@ MinorModesElement::MinorModesElement(StatusArea* area) :
     StatusElement(area, "MinorModesElement")
 {
     mouseEnterIdentify = true;
+    resizes = true;
 }
 
 MinorModesElement::~MinorModesElement()
@@ -97,6 +98,8 @@ void MinorModesElement::update(MobiusState* state)
 
 void MinorModesElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void MinorModesElement::paint(juce::Graphics& g)

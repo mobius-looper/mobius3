@@ -14,6 +14,7 @@
 ModeElement::ModeElement(StatusArea* area) :
     StatusElement(area, "ModeElement")
 {
+    resizes = true;
 }
 
 ModeElement::~ModeElement()
@@ -66,6 +67,8 @@ int ModeElement::getPreferredWidth()
 
 void ModeElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void ModeElement::paint(juce::Graphics& g)

@@ -35,6 +35,9 @@ CounterElement::CounterElement(StatusArea* area) :
     // not sure if we should cache this
     juce::Font font (JuceUtil::getFont(CounterFontHeight));
     digitWidth = font.getStringWidth("M");
+
+    // not dynamically adjusting font yet
+    //resizes = true;
 }
 
 CounterElement::~CounterElement()
@@ -53,6 +56,8 @@ int CounterElement::getPreferredWidth()
 
 void CounterElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void CounterElement::update(MobiusState* state)

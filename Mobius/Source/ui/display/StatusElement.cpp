@@ -62,7 +62,8 @@ int StatusElement::getPreferredHeight()
 
 void StatusElement::resized()
 {
-    resizer.setBounds(getLocalBounds());
+    if (resizes)
+      resizer.setBounds(getLocalBounds());
 }
 
 /**

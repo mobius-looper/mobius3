@@ -209,56 +209,41 @@ int StripGroupName::getPreferredHeight()
 }
 
 /**
- * In theory they do an action to change the track name
- * and make it different than the Setup.  There isn't a good
- * place to pull that right now, not even sure if Query works.
- * But startingSetup will be enough for most.
+ * GroupDefinitions may have changed so force a refresh.
  */
 void StripGroupName::configure()
 {
     // could refresh the name here, but just reset the setup ordinal
     // so we pick it up on the next update
-    setupOrdinal = -1;
+    groupNumber = -1;
 }
 
 void StripGroupName::update(MobiusState* state)
 {
     int tracknum = strip->getTrackIndex();
-
-    bool needsRepaint = false;
-
-    // whenever the setup changes, refresh the name
-    if (setupOrdinal != state->setupOrdinal) {
+    MobiusTrackState* track = &(state->tracks[tracknum]);
+    
+    // whenever the setup changes, refresh the name even if the
+    // track's group number didn't
+    if (groupNumber != track->group) {
+        
+        groupNumber = track->group;
         groupName = "";
         groupColor = 0;
+        
         MobiusConfig* config = strip->getSupervisor()->getMobiusConfig();
-        Setup* setup = config->getSetup(state->setupOrdinal);
-        if (setup != nullptr) {
-            SetupTrack* st = setup->getTrack(tracknum);
-            if (st != nullptr) {
-
-                GroupDefinition* group = nullptr;
-                // these aren't Structures so we don't have any nice search tools
-                for (auto g : config->groups) {
-                    if (g->name == st->getGroupName()) {
-                        group = g;
-                        break;
-                    }
-                }
-                
-                if (group != nullptr) {
-                    groupName = group->name;
-                    groupColor = group->color;
-                }
-            }
+        
+        // ignore if out of range
+        if (groupNumber > 0 && groupNumber <= config->groups.size()) {
+            GroupDefinition* group = config->groups[groupNumber-1];
+            groupName = group->name;
+            groupColor = group->color;
         }
-        setupOrdinal = state->setupOrdinal;
-        needsRepaint = true;
+
+        repaint();
     }
-    
-    if (needsRepaint)
-      repaint();
 }
+
 
 /**
  * See StripTrackNumber for comments about drawFittedText

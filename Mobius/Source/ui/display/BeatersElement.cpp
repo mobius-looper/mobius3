@@ -67,6 +67,7 @@ BeatersElement::BeatersElement(StatusArea* area) :
 
     // receive notifications of time boudaries closer to when they happen
     area->getSupervisor()->addTimeListener(this);
+    resizes = true;
 }
 
 BeatersElement::~BeatersElement()

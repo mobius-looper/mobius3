@@ -20,7 +20,7 @@ class StatusElement : public juce::Component
     virtual void update(class MobiusState* state);
     virtual int getPreferredWidth();
     virtual int getPreferredHeight();
-
+    
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
     bool isIdentify();
@@ -31,10 +31,16 @@ class StatusElement : public juce::Component
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& e) override;
 
+    bool allowsResize() {
+        return resizes;
+    }
+    
   protected:
     
     class StatusArea* statusArea;
     bool mouseEnterIdentify = false;
+    // set by subclass if it wants to allow resizing
+    bool resizes = false;
 
   private:
 
