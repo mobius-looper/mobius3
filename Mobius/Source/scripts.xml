@@ -22,4 +22,10 @@
       <File path="c:\dev\mobius3\Mobius\Source\hack.msl" added="2147483647"/>
     </Files>
   </Machine>
+  <Machine name="Loki">
+    <Files>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" added="2147483647"/>
+    </Files>
+  </Machine>
 </ScriptRegistry>

@@ -143,10 +143,13 @@ void StatusArea::configure()
             el->setTopLeftPosition(element->x, element->y);
             // saved sizes are messed up for ParametersElement and FloatingStripElement
             // for some reason, since we don't support resizing yet, always use preferred size
-            //int width = (element->width > 0) ? element->width : el->getPreferredWidth();
-            //int height = (element->height > 0) ? element->height : el->getPreferredHeight();
-            int width = el->getPreferredWidth();
-            int height = el->getPreferredHeight();
+
+            // update: nah, give it a try
+            int width = (element->width > 0) ? element->width : el->getPreferredWidth();
+            int height = (element->height > 0) ? element->height : el->getPreferredHeight();
+            //int width = el->getPreferredWidth();
+            //int height = el->getPreferredHeight();
+            
             el->setSize(width, height);
             el->setVisible(!element->disabled);
         }

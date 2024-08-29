@@ -88,6 +88,8 @@ int AlertElement::getPreferredWidth()
 
 void AlertElement::resized()
 {
+    // necessary to get the resizer
+    StatusElement::resized();
 }
 
 void AlertElement::paint(juce::Graphics& g)
