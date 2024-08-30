@@ -42,7 +42,8 @@ void AlertElement::alertReceived(juce::String msg)
     // timeout is in tenths to match the maintenance thread interval
     // should be using a millisecond counter
     // let the visible parameter be specified in even seconds
-    if (alertDuration > 0 && alertDuration < 31) {
+    // twmm wants to allow this to be large, a day should be enough
+    if (alertDuration > 0 && alertDuration < 86400) {
         timeout = alertDuration * 10;
     }
     else {

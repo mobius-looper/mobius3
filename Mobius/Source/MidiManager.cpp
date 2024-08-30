@@ -650,6 +650,8 @@ void MidiManager::sendSync(juce::MidiMessage msg)
 {
     if (outputSyncDevice)
       outputSyncDevice->sendMessageNow(msg);
+    else if (outputDevice)
+      outputDevice->sendMessageNow(msg);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -176,7 +176,10 @@ void GlobalEditor::initForm()
 {
     // These are the most useful
     addField("General", UIParameterTrackCount);
-    addField("General", UIParameterGroupCount);
+
+    // this no longer exists, it is defined by the number
+    // of GroupDefinitions
+    //addField("General", UIParameterGroupCount);
 
     // this doesn't actually do anything in core code
     // loops-per-track has been set in the Preset which

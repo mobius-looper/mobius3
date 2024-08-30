@@ -1395,6 +1395,7 @@ MobiusMidiTransport* Supervisor::getMidiTransport()
 void Supervisor::midiSend(class MidiEvent* event)
 {
     juce::MidiMessage msg;
+    bool sync = false;
     
     int status = event->getStatus();
     int juceChannel = event->getChannel() + 1;
@@ -1410,7 +1411,11 @@ void Supervisor::midiSend(class MidiEvent* event)
 
     else if (status == MS_CONTROL)
       msg = juce::MidiMessage::controllerEvent(juceChannel, event->getController(), event->getValue());
-      
+    else if (status == MS_CLOCK || status == MS_START || status == MS_STOP || status == MS_CONTINUE) {
+        // would be better if MidiManager handled this
+        msg = juce::MidiMessage(status, 0, 0);
+        sync = true;
+    }
     else {
         // punt and hope the 3 byte constructor is smart enough to figure out how
         // many bytes the status actually needs
@@ -1418,8 +1423,11 @@ void Supervisor::midiSend(class MidiEvent* event)
         int byte1 = status | event->getChannel();
         msg = juce::MidiMessage(byte1, event->getKey(), event->getVelocity());
     }
-    
-    midiManager.send(msg);
+
+    if (sync)
+      midiManager.sendSync(msg);
+    else
+      midiManager.send(msg);
 }
 
 void Supervisor::setAudioListener(MobiusAudioListener* l)

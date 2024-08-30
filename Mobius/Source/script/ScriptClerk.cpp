@@ -240,6 +240,7 @@ void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfo
 void ScriptClerk::installMsl()
 {
     MslEnvironment* env = supervisor->getMslEnvironment();
+    int changes = 0;
     
     if (registry != nullptr) {
         ScriptRegistry::Machine* machine = registry->getMachine();
@@ -261,6 +262,13 @@ void ScriptClerk::installMsl()
                         Trace(1, "ScriptClerk: Errors encountered loading file %s",
                               fileref->path.toUTF8());
                     }
+
+                    // update the name after parsing
+                    if (unit->name != fileref->name) {
+                        fileref->name = unit->name;
+                        changes++;
+                    }
+                    
                 }
             }
         }
@@ -269,6 +277,9 @@ void ScriptClerk::installMsl()
     // do deferred linking, this may also result in errors left beyind in
     // the MslScriptUnits
     env->link(supervisor);
+
+    if (changes)
+      saveRegistry();
 }
 
 /**

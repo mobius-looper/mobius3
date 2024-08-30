@@ -13,6 +13,7 @@
 #include <string.h>
 #include <memory.h>
 
+#include "../../../util/Util.h"
 #include "../../../model/MobiusConfig.h"
 
 #include "../Action.h"
@@ -33,6 +34,9 @@ class TrackGroupFunction : public Function {
 	TrackGroupFunction();
 	Event* invoke(Action* action, Loop* l);
 	void invokeLong(Action* action, Loop* l);
+  private:
+    int parseBindingArgument(Track* t, MobiusConfig* config, const char* s);
+
 };
 
 TrackGroupFunction TrackGroupObj;
@@ -86,12 +90,14 @@ Event* TrackGroupFunction::invoke(Action* action, Loop* l)
 
         // the default is to unset the current group
         int group = 0;
-    
-        if (strlen(action->bindingArgs) > 0) {
 
+        // if we're still passing binding args here, obey it
+        if (strlen(action->bindingArgs) > 0) {
             group = parseBindingArgument(t, config, action->bindingArgs);
         }
         else if (action->arg.getType() == EX_INT) {
+            // UIAction converter decided to send this down as an int
+            // OR we're here from the old scrpt language
             int g = action->arg.getInt();
             if (g >= 0 && g <= config->groups.size()) {
                 group = g;
@@ -107,16 +113,19 @@ Event* TrackGroupFunction::invoke(Action* action, Loop* l)
             }
         }
         else if (action->arg.getType() == EX_STRING) {
-            // if bindingArgs didn't come through, and it wasn't treated as an EX_INT
-            // treat empty like zero and unset?
+            // must have stopped using bindingArgs for strings
+            // treat empty string like integer zero and clear the current group
             const char* s = action->arg.getString();
             if (strlen(s) > 0)
               group = parseBindingArgument(t, config, s);
         }
-    
+
+        // group left negative on error, don't change anything
         if (group >= 0)
           t->setGroup(group);
     }
+
+    return nullptr;
 }
 
 /**
@@ -131,39 +140,52 @@ int TrackGroupFunction::parseBindingArgument(Track* t, MobiusConfig* config, con
         int gnumber = 1;
         for (auto g : config->groups) {
             // what about case on these?
-            if (g->name.equalsIgnoreCase(action->arg.getString())) {
+            if (g->name.equalsIgnoreCase(s)) {
                 group = gnumber;
                 break;
             }
             gnumber++;
         }
+
+        if (group == 0) {
+            // see if it looks like a number in range
+            if (IsInteger(s)) {
+                group = ToInt(s);
+                if (group < 1 || group > config->groups.size()) {
+                    Trace(1, "TrackGroup: Group number out of range %d", group);
+                    group = -1;
+                }
+            }
+        }
         
         if (group == 0) {
             // name didn't match
-            // accept a few cycle keywords
-            group = parseCycle(t, config, s);
+            // accept a few cycle control keywords
+            int delta = 0;
+            if ((strcmp(s, "cycle") == 0) || (strcmp(s, "next") == 0)) {
+                delta = 1;
+            }
+            else if (strcmp(s, "prev") == 0) {
+                delta = -1;
+            }
+            else if (strcmp(s, "clear") == 0) {
+                // leave at zero to clear
+            }
+            else {
+                Trace(1, "TrackGroup: Invalid group name %s", s);
+                group = -1;
+            }
+
+            if (delta != 0) {
+                group = t->getGroup() + delta;
+                if (group > config->groups.size())
+                  group = 0;
+                else if (group < 0)
+                  group = config->groups.size();
+            }
         }
     }
-}
-
-int TrackGroupFunction::parseCycle(const char* token, MobiusConfig* config, Track* t)
-{
-    int delta = 0;
     
-    if ((strcmp(token, "cycle") == 0) || (strcmp(token, "next"))) {
-        delta = 1;
-    }
-    else if (strcmp(token, "prev")) {
-        delta = -1;
-    }
-
-    int group = t->getGroup() + delta;
-    
-    if (group > config->groups.size())
-      group = 0;
-    else if (group < 0)
-      group = config->groups.size();
-
     return group;
 }
 

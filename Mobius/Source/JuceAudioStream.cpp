@@ -158,18 +158,6 @@ juce::MidiBuffer* JuceAudioStream::getMidiMessages()
     return nextMidiMessages;
 }
 
-// hey, this was taken out of MobiusAudioStream and moved
-// to MobiusContainer, so we don't need this here any more
-
-void JuceAudioStream::midiSend(MidiEvent* msg)
-{
-    MidiManager* mm = supervisor->getMidiManager();
-    
-    juce::MidiMessage jmsg = juce::MidiMessage::noteOn(msg->getChannel(), msg->getKey(),
-                                                       (juce::uint8)msg->getVelocity());
-    mm->send(jmsg);
-}
-
 /**
  * This object provides Synchronizer with queued realtime events
  * and services for generating MIDI clocks.

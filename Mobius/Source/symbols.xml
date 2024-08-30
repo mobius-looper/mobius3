@@ -280,10 +280,12 @@
       Cannot be changed at runtime
     </Parameter>
 
+    <!-- this is now defined by the number of GroupDefinitions
     <Parameter name='groupCount' coreName='trackGroups' codeName='TrackGroups'>
       The number of focus groups defined.
       This should be entirely in Bindings now and doesn't need core mapping
-    </Parameter>
+      </Parameter>
+      -->
 
     <Parameter name='maxLoops'> 
       The maximum number of loops a track can have.

@@ -350,7 +350,7 @@ void MidiRealizer::advance()
             // we sent Start or Continue on the last cycle and now
             // send the first clock which officially starts things running
             // in the external device
-            midiManager->send(juce::MidiMessage::midiClock());
+            midiManager->sendSync(juce::MidiMessage::midiClock());
             outputQueue.add(MS_CLOCK, now);
             pulseWait = msecsPerPulse;
             // todo: if we had pendingContinue old code
@@ -365,7 +365,7 @@ void MidiRealizer::advance()
         else if (pendingStart) {
             if (SyncTraceEnabled)
               Trace(2, "Sync: Sending pending start msec %d", now);
-            midiManager->send(juce::MidiMessage::midiStart());
+            midiManager->sendSync(juce::MidiMessage::midiStart());
             outputQueue.add(MS_START, now);
             pendingStartClock = true;
 
@@ -374,7 +374,7 @@ void MidiRealizer::advance()
         else if (pendingContinue) {
             if (SyncTraceEnabled)
               Trace(2, "Sync: Sending pending continue msec %d", now);
-            midiManager->send(juce::MidiMessage::midiContinue());
+            midiManager->sendSync(juce::MidiMessage::midiContinue());
             outputQueue.add(MS_CONTINUE, now);
             // todo: this is where old code would look at mPendingSongPosition
             pendingStartClock = true;
@@ -385,7 +385,7 @@ void MidiRealizer::advance()
             if (SyncTraceEnabled)
               Trace(2, "Sync: Sending pending stop msec %d", now);
             // these we don't have to wait on
-            midiManager->send(juce::MidiMessage::midiStop());
+            midiManager->sendSync(juce::MidiMessage::midiStop());
             outputQueue.add(MS_STOP, now);
             pendingStop =  false;
             // optionally stop sending clocks
@@ -414,7 +414,7 @@ void MidiRealizer::advance()
                   Trace(2, "Sync: Sending clock msec %d pulseWait %d",
                         now, (int)(pulseWait * 100));
                 
-                midiManager->send(juce::MidiMessage::midiClock());
+                midiManager->sendSync(juce::MidiMessage::midiClock());
                 outputQueue.add(MS_CLOCK, now);
 
                 // todo: here is where old code would check for overage in the
