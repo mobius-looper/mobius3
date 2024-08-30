@@ -150,18 +150,6 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     mCore = new Mobius(this);
     mCore->initialize(configuration);
 
-    // if we're a plugin, initialize the MIDI bindigns
-    // NO! this will be assembled by Supervisor and come down later
-#if 0    
-    if (cont->isPlugin()) {
-        Binderator* b = new Binderator(container->getSymbols());
-        b->configureMidi(configuration);
-        Binderator* old = binderator.install(b);
-        // shouldn't have one
-        delete old;
-    }
-#endif    
-
     installSymbols();
 }
 

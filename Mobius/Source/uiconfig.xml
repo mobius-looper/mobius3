@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <UIConfig windowWidth="1200" windowHeight="896" activeButtonSet="Default"
-          activeLayout="Default">
+          activeLayout="Default" activeBindings="midi1" activeOverlays="midi3">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
     <Element name="BeatersElement" x="514" y="137" width="108" height="32"/>
@@ -137,6 +137,7 @@
     <Button action="TrackGroup" arguments="prev"/>
     <Button action="TrackGroup" arguments="-1"/>
     <Button action="Preset:Default"/>
+    <Button action="SetBindings"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

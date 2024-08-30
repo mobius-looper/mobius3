@@ -285,8 +285,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
                 for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
                     if (!set->isOverlay()) {
                         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
-                        item.setID(MenuBindingOffset + index);
-                        set->transientMenuId = index;
+                        int itemId = MenuBindingOffset + index;
+                        item.setID(itemId);
+                        set->transientMenuId = itemId;
                         if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
                           item.setTicked(true);
                         menu.addItem(item);
@@ -300,8 +301,9 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
                 for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
                     if (set->isOverlay()) {
                         juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
-                        item.setID(MenuBindingOffset + index);
-                        set->transientMenuId = index;
+                        int itemId = MenuBindingOffset + index;
+                        item.setID(itemId);
+                        set->transientMenuId = itemId;
                         if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
                           item.setTicked(true);
                         menu.addItem(item);

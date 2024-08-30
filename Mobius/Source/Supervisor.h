@@ -404,7 +404,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void showPendingAlert();
     
     // configure Binderator depending on where we are
-    void configureBindings(class MobiusConfig* config);
+    void configureBindings();
     
     // config file management
     juce::String readConfigFile(const char* name);

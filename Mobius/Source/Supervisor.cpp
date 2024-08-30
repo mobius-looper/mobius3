@@ -407,7 +407,7 @@ bool Supervisor::start()
     // prepare action bindings
     // important to do this AFTER all the symbols are
     // intstalled, including scripts
-    configureBindings(config);
+    configureBindings();
     
     meter(nullptr);
 
@@ -600,17 +600,17 @@ void Supervisor::saveSession()
  * the plugin can open it's own private devices in addition to receiving
  * MIDI messages through the host.
  */
-void Supervisor::configureBindings(MobiusConfig* config)
+void Supervisor::configureBindings()
 {
-    binderator.configure(config);
+    binderator.configure(getMobiusConfig(), getUIConfig(), &symbols);
     binderator.start();
 
     // also build one and send it down to the kernel
     if (isPlugin()) {
-        Binderator* coreBinderator = new Binderator(this);
+        Binderator* coreBinderator = new Binderator();
         // this now requires UIConfig and pulls it from Supervisor
         // so we don't need to be passing in config objects any more
-        coreBinderator->configureMidi(getMobiusConfig());
+        coreBinderator->configureMidi(getMobiusConfig(), getUIConfig(), &symbols);
 
         mobius->installBindings(coreBinderator);
     }
@@ -1109,9 +1109,8 @@ void Supervisor::updateMobiusConfig()
         config->setupsEdited = false;
         config->presetsEdited = false;
 
-        // bindings are no longer set as a side effect of config editing
-        // you do it from the menu
-        //configureBindings(config);
+        // bindings may have been edited
+        configureBindings();
     }
 }
 
@@ -1157,8 +1156,7 @@ void Supervisor::reloadMobiusConfig()
     if (mobius != nullptr)
       mobius->reconfigure(config);
         
-    // binding activation comes from the menus now
-    //configureBindings(config);
+    configureBindings();
 }
 
 void Supervisor::updateUIConfig()
@@ -1592,25 +1590,76 @@ void Supervisor::mobiusSaveCapture(Audio* content, juce::String fileName)
     AudioFile::write(file, content);
 }
 
-/**
- * Here after a tortured path from an old script statement "set bindings foo".
- */
-void Supervisor::mobiusActivateBindings(juce::String name)
-{
-    (void)name;
-    Trace(1, "Supervisor: Mobius wants to activate bindings %s", name.toUTF8());
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Bindings
 //
 //////////////////////////////////////////////////////////////////////
 
+
+/**
+ * Here via the tortured bindings menu that somehow managed to figure
+ * out which binding set to activate or deactivate.
+ *
+ * Add this to the active overlay list if it is an overlay, or set
+ * it as the active alternate binding set and refresh.
+ *
+ * Menus don't have state, we set the checkmark if was in the UIConfig
+ * and this notification acts as a toggle.
+ */
 void Supervisor::menuActivateBindings(BindingSet* set)
 {
-    (void)set;
-    Trace(1, "Supervisor: Menu wants to activate bindings %s", set->getName());
+    UIConfig* uiconfig = getUIConfig();
+    juce::String setname = juce::String(set->getName());
+    
+    if (set->isOverlay()) {
+        if (uiconfig->activeOverlays.contains(setname))
+          uiconfig->activeOverlays.removeString(setname);
+        else
+          uiconfig->activeOverlays.add(setname);
+    }
+    else {
+        // there can be only one alternate
+        if (uiconfig->activeBindings == setname)
+          uiconfig->activeBindings = "";
+        else
+          uiconfig->activeBindings = setname;
+    }
+
+    // refresh everything
+    configureBindings();
+}
+
+/**
+ * Here after a tortured path from an old script statement "set bindings foo".
+ * .mos scripts are only supposed to know about what are now call alternate bindings
+ * which it can only set or clear.
+ *
+ * overlayBindings are multivalued, don't make the boy think too hard.
+ */
+void Supervisor::mobiusActivateBindings(juce::String name)
+{
+    MobiusConfig* mconfig = getMobiusConfig();
+    UIConfig* uconfig = getUIConfig();
+
+    if (name.length() == 0) {
+        uconfig->activeBindings = "";
+    }
+    else {
+        BindingSet* set = (BindingSet*)Structure::find(mconfig->getBindingSets(), name.toUTF8());
+        if (set == nullptr) {
+            Trace(1, "Supervisor: Mobius script asked for an invalid binding set %s", name.toUTF8());
+        }
+        else if (set->isOverlay()) {
+            // hmm, I suppose we could allow this for activation but you
+            // can't deactivate it so don't muddy the waters
+        }
+        else {
+            uconfig->activeBindings = name;
+        }
+    }
+    
+    configureBindings();
 }
 
 //////////////////////////////////////////////////////////////////////

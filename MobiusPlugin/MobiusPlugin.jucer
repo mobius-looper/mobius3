@@ -17,6 +17,9 @@
       <FILE id="PboNeQ" name="SyncTrace.cpp" compile="1" resource="0" file="../Mobius/Source/SyncTrace.cpp"/>
       <FILE id="rGQJAG" name="SyncTrace.h" compile="0" resource="0" file="../Mobius/Source/SyncTrace.h"/>
       <GROUP id="{488A10F9-CEDB-CDD4-A066-7B71391B0EFE}" name="script">
+        <FILE id="SEvMQT" name="ActionAdapter.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/ActionAdapter.cpp"/>
+        <FILE id="Xc6tug" name="ActionAdapter.h" compile="0" resource="0" file="../Mobius/Source/script/ActionAdapter.h"/>
         <FILE id="HnexiE" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/script/Console.cpp"/>
         <FILE id="Oa9xwH" name="Console.h" compile="0" resource="0" file="../Mobius/Source/script/Console.h"/>
         <FILE id="yeMOj1" name="ConsolePanel.h" compile="0" resource="0" file="../Mobius/Source/script/ConsolePanel.h"/>
@@ -50,14 +53,15 @@
         <FILE id="yg8cNS" name="MslResult.h" compile="0" resource="0" file="../Mobius/Source/script/MslResult.h"/>
         <FILE id="Y0IheP" name="MslScript.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslScript.cpp"/>
         <FILE id="IkVdQ5" name="MslScript.h" compile="0" resource="0" file="../Mobius/Source/script/MslScript.h"/>
-        <FILE id="Ch9SrN" name="MslScriptletSession.cpp" compile="1" resource="0"
-              file="../Mobius/Source/script/MslScriptletSession.cpp"/>
-        <FILE id="rhNDht" name="MslScriptletSession.h" compile="0" resource="0"
-              file="../Mobius/Source/script/MslScriptletSession.h"/>
+        <FILE id="uCfy8T" name="MslScriptlet.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslScriptlet.cpp"/>
+        <FILE id="SfzmZE" name="MslScriptlet.h" compile="0" resource="0" file="../Mobius/Source/script/MslScriptlet.h"/>
         <FILE id="xAkXss" name="MslSession.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSession.cpp"/>
         <FILE id="IPJaMB" name="MslSession.h" compile="0" resource="0" file="../Mobius/Source/script/MslSession.h"/>
         <FILE id="hxXk5e" name="MslStack.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslStack.cpp"/>
         <FILE id="ADcUlj" name="MslStack.h" compile="0" resource="0" file="../Mobius/Source/script/MslStack.h"/>
+        <FILE id="t8xPMa" name="MslSymbol.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSymbol.cpp"/>
+        <FILE id="H7SXeO" name="MslSymbol.h" compile="0" resource="0" file="../Mobius/Source/script/MslSymbol.h"/>
         <FILE id="sxWlsd" name="MslTokenizer.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslTokenizer.cpp"/>
         <FILE id="fh2FOK" name="MslTokenizer.h" compile="0" resource="0" file="../Mobius/Source/script/MslTokenizer.h"/>
@@ -72,6 +76,10 @@
         <FILE id="G8tczM" name="ScriptLibrary.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ScriptLibrary.cpp"/>
         <FILE id="Xla9SN" name="ScriptLibrary.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptLibrary.h"/>
+        <FILE id="FiJ9fY" name="ScriptRegistry.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/ScriptRegistry.cpp"/>
+        <FILE id="IhoShr" name="ScriptRegistry.h" compile="0" resource="0"
+              file="../Mobius/Source/script/ScriptRegistry.h"/>
       </GROUP>
       <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
             file="../Mobius/Source/ProjectFiler.cpp"/>

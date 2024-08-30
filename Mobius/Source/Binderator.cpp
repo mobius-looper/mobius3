@@ -99,10 +99,8 @@ const int BinderatorMaxIndex = 256;
 //
 //////////////////////////////////////////////////////////////////////
 
-Binderator::Binderator(Supervisor* s)
+Binderator::Binderator()
 {
-    supervisor = s;
-    symbols = supervisor->getSymbols();
 }
 
 Binderator::~Binderator()
@@ -112,24 +110,24 @@ Binderator::~Binderator()
 /**
  * Build out binding tables for both keyboard and MIDI events.
  */
-void Binderator::configure(MobiusConfig* config)
+void Binderator::configure(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installKeyboardActions(config);
-    installMidiActions(config);
+    installKeyboardActions(mconfig, uconfig, symbols);
+    installMidiActions(mconfig, uconfig, symbols);
 
-    controllerThreshold = config->mControllerActionThreshold;
+    controllerThreshold = mconfig->mControllerActionThreshold;
     if (controllerThreshold == 0)
       controllerThreshold = 127;
 }
 
-void Binderator::configureKeyboard(MobiusConfig* config)
+void Binderator::configureKeyboard(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installKeyboardActions(config);
+    installKeyboardActions(mconfig, uconfig, symbols);
 }
 
-void Binderator::configureMidi(MobiusConfig* config)
+void Binderator::configureMidi(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    installMidiActions(config);
+    installMidiActions(mconfig, uconfig, symbols);
 }
 
 /**
@@ -303,11 +301,12 @@ unsigned int Binderator::getMidiQualifier(const juce::MidiMessage& msg)
  *
  * We don't support swapping BindingSets yet, just take the default set.
  */
-void Binderator::installKeyboardActions(MobiusConfig* config)
+void Binderator::installKeyboardActions(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
+    (void)uconfig;
     prepareArray(&keyActions);
     
-    BindingSet* baseBindings = config->getBindingSets();
+    BindingSet* baseBindings = mconfig->getBindingSets();
     if (baseBindings != nullptr) {
         Binding* binding = baseBindings->getBindings();
         while (binding != nullptr) {
@@ -321,7 +320,7 @@ void Binderator::installKeyboardActions(MobiusConfig* config)
                 else {
                     // code is the full qualifier returned by getKeyQualifier
                     // mask off the bottom byte for the array index
-                    UIAction* action = buildAction(binding);
+                    UIAction* action = buildAction(symbols, binding);
                     if (action != nullptr) {
                         int index = code & 0xFF;
                         addEntry(&keyActions, index, code, action);
@@ -348,31 +347,27 @@ void Binderator::installKeyboardActions(MobiusConfig* config)
  *    ignore - install only bindings for a specific channel (or all of them?)
  *       and ignore the trigger channel, matching only on the note number
  */
-void Binderator::installMidiActions(MobiusConfig* config)
+void Binderator::installMidiActions(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
     prepareArray(&noteActions);
     prepareArray(&programActions);
     prepareArray(&controlActions);
 
-    // we need this now, configure() shouldn't be requiring the objects
-    // to be passed down any more, just pull what you need from Supervisor
-    UIConfig* uiconfig = supervisor->getUIConfig();
-
     // always add base bindings
-    BindingSet* baseBindings = config->getBindingSets();
+    BindingSet* baseBindings = mconfig->getBindingSets();
     if (baseBindings != nullptr) {
-        installMidiActions(baseBindings);
+        installMidiActions(symbols, baseBindings);
         // plus any active overlays
         BindingSet* overlay = baseBindings->getNextBindingSet();
         while (overlay != nullptr) {
-            if (uiconfig->isActiveBindingSet(juce::String(overlay->getName()))) 
-              installMidiActions(overlay);
+            if (uconfig->isActiveBindingSet(juce::String(overlay->getName()))) 
+              installMidiActions(symbols, overlay);
             overlay = overlay->getNextBindingSet();
         }
     }
 }
 
-void Binderator::installMidiActions(BindingSet* set)
+void Binderator::installMidiActions(SymbolTable* symbols, BindingSet* set)
 {
     Binding* binding = set->getBindings();
     while (binding != nullptr) {
@@ -396,7 +391,7 @@ void Binderator::installMidiActions(BindingSet* set)
                 // todo: here is where we could be sensitive to a global option
                 // to ignore channels, but it's less necessary now with the "Any"
                 // channel in each binding
-                UIAction* action = buildAction(binding);
+                UIAction* action = buildAction(symbols, binding);
                 if (action != nullptr) {
                     // note that the Binding model uses MIDI channel 0 to mean
                     // "any" and specific channels are numbered from 1
@@ -474,7 +469,7 @@ UIAction* Binderator::getMidiAction(const juce::MidiMessage& message)
  * access to an ActionPool.  Okay since the actions will be allocated
  * once and resused for each trigger.
  */
-UIAction* Binderator::buildAction(Binding* b)
+UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
 {
     UIAction* action = nullptr;
 
@@ -783,7 +778,7 @@ UIAction* Binderator::handleKeyEvent(int code, int modifiers, bool up)
 //
 //////////////////////////////////////////////////////////////////////
 
-ApplicationBinderator::ApplicationBinderator(Supervisor* super) : binderator(super)
+ApplicationBinderator::ApplicationBinderator(Supervisor* super)
 {
     supervisor = super;
 }
@@ -812,14 +807,14 @@ void ApplicationBinderator::stop()
     }
 }
 
-void ApplicationBinderator::configure(MobiusConfig* config)
+void ApplicationBinderator::configure(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    binderator.configure(config);
+    binderator.configure(mconfig, uconfig, symbols);
 }
 
-void ApplicationBinderator::configureKeyboard(MobiusConfig* config)
+void ApplicationBinderator::configureKeyboard(MobiusConfig* mconfig, UIConfig* uconfig, SymbolTable* symbols)
 {
-    binderator.configureKeyboard(config);
+    binderator.configureKeyboard(mconfig, uconfig, symbols);
 }
 
 /**

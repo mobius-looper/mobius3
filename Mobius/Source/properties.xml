@@ -59,5 +59,4 @@
   <Property symbol="TrimStart" name="focus" value="true"/>
   <Property symbol="Undo" name="focus" value="true"/>
   <Property symbol="Undo" name="confirmation" value="true"/>
-  <Property symbol="focus" name="resetRetain" value="true"/>
 </Properties>

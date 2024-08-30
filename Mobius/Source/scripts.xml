@@ -11,15 +11,20 @@
       <External path="c:\dev\mobius3\Mobius\Source\bogus.mos"/>
     </Externals>
     <Files>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\argtest.msl" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\argtest.msl" name="argtest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" name="test"
+            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\test\scripts\first.msl" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\extscripts\ext1.msl" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\test\scripts\first.msl" name="MSLHello"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\extscripts\ext1.msl" name="ext1"
+            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\extscripts\subdir\ext2.mos"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\hack.msl" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\hack.msl" name="hack" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\setbindings.mos" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">

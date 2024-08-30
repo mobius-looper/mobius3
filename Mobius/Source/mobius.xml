@@ -310,33 +310,20 @@
     <Binding name='Undo' trigger='key' value='8'/>
     <Binding name='GlobalReset' trigger='key' value='71'/>
     <Binding name='Message' trigger='key' value='13' args='Return!'/>
-    <Binding name='Record' trigger='note' value='48'/>
     <Binding name='UIParameterUp' trigger='note' value='53'/>
     <Binding name='UIParameterDown' trigger='note' value='55'/>
-    <Binding name='Record' trigger='control' value='12' channel='2'/>
-    <Binding name='Overdub' trigger='program' channel='1'/>
-    <Binding name='Record' trigger='control' value='12' channel='1'/>
-    <Binding name='FocusLock' scope='1' trigger='control' channel='1'/>
-    <Binding name='FocusLock' scope='2' trigger='note' value='1' channel='1'/>
-    <Binding name='FocusLock' scope='3' trigger='note' value='2' channel='1'/>
-    <Binding name='FocusLock' scope='4' trigger='note' value='3' channel='1'/>
-    <Binding name='Muteit' scope='1' trigger='note' value='4' channel='1'/>
-    <Binding name='Muteit' scope='2' trigger='note' value='5' channel='1'/>
-    <Binding name='Muteit' scope='3' trigger='note' value='6' channel='1'/>
-    <Binding name='Muteit' scope='4' trigger='note' value='7' channel='1'/>
-    <Binding name='Clear' scope='A' trigger='note'/>
-    <Binding name='output' scope='Group1' trigger='control' value='18' channel='1'/>
-    <Binding name='ReloadScripts' trigger='note' value='72' channel='1'/>
+    <Binding name='Record' trigger='note' value='48' channel='1'/>
   </BindingSet>
   <BindingSet name='midi1'>
-    <Binding name='Backward' trigger='note'/>
-    <Binding name='Checkpoint' trigger='note'/>
+    <Binding name='Overdub' trigger='note' value='50' channel='1'/>
   </BindingSet>
   <BindingSet name='midi2'>
   </BindingSet>
   <BindingSet name='midi3' overlay='true'>
+    <Binding name='Reset' trigger='note' value='52' channel='1'/>
   </BindingSet>
   <BindingSet name='midi4' overlay='true'>
+    <Binding name='Restart' trigger='note' value='53' channel='1'/>
   </BindingSet>
   <ScriptConfig>
   </ScriptConfig>

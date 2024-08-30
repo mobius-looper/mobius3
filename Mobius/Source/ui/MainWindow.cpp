@@ -160,7 +160,6 @@ void MainWindow::mainMenuSelection(int id)
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuBindingOffset && id <= MainMenu::MenuBindingMax) {
-        int index = id - MainMenu::MenuButtonsOffset;
         // map this back into a particular BindingSet, sure would be nice to just
         // get the item name here
         // MainMenu left a kludgey transient menu id on the object
@@ -168,12 +167,11 @@ void MainWindow::mainMenuSelection(int id)
         BindingSet* sets = mconfig->getBindingSets();
         BindingSet* selected = nullptr;
         for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
-            if (set->transientMenuId == index) {
+            if (set->transientMenuId == id) {
                 selected = set;
                 break;
             }
         }
-
         // now we've worked our way back to a BindingSet, punt to Supervisor
         if (selected == nullptr)
           Trace(1, "MainWindow: BindingSet resolution failed, and so have you");
