@@ -70,6 +70,7 @@
 #include "util/Util.h"
 #include "model/Symbol.h"
 #include "model/MobiusConfig.h"
+#include "model/UIConfig.h"
 #include "model/UIAction.h"
 #include "model/FunctionDefinition.h"
 #include "model/UIParameter.h"
@@ -98,9 +99,10 @@ const int BinderatorMaxIndex = 256;
 //
 //////////////////////////////////////////////////////////////////////
 
-Binderator::Binderator(SymbolTable* st)
+Binderator::Binderator(Supervisor* s)
 {
-    symbols = st;
+    supervisor = s;
+    symbols = supervisor->getSymbols();
 }
 
 Binderator::~Binderator()
@@ -352,6 +354,10 @@ void Binderator::installMidiActions(MobiusConfig* config)
     prepareArray(&programActions);
     prepareArray(&controlActions);
 
+    // we need this now, configure() shouldn't be requiring the objects
+    // to be passed down any more, just pull what you need from Supervisor
+    UIConfig* uiconfig = supervisor->getUIConfig();
+
     // always add base bindings
     BindingSet* baseBindings = config->getBindingSets();
     if (baseBindings != nullptr) {
@@ -359,7 +365,7 @@ void Binderator::installMidiActions(MobiusConfig* config)
         // plus any active overlays
         BindingSet* overlay = baseBindings->getNextBindingSet();
         while (overlay != nullptr) {
-            if (overlay->isActive())
+            if (uiconfig->isActiveBindingSet(juce::String(overlay->getName()))) 
               installMidiActions(overlay);
             overlay = overlay->getNextBindingSet();
         }
@@ -777,7 +783,7 @@ UIAction* Binderator::handleKeyEvent(int code, int modifiers, bool up)
 //
 //////////////////////////////////////////////////////////////////////
 
-ApplicationBinderator::ApplicationBinderator(Supervisor* super) : binderator(super->getSymbols())
+ApplicationBinderator::ApplicationBinderator(Supervisor* super) : binderator(super)
 {
     supervisor = super;
 }

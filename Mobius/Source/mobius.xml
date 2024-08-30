@@ -328,9 +328,15 @@
     <Binding name='output' scope='Group1' trigger='control' value='18' channel='1'/>
     <Binding name='ReloadScripts' trigger='note' value='72' channel='1'/>
   </BindingSet>
-  <BindingSet name='[New]'>
+  <BindingSet name='midi1'>
     <Binding name='Backward' trigger='note'/>
     <Binding name='Checkpoint' trigger='note'/>
+  </BindingSet>
+  <BindingSet name='midi2'>
+  </BindingSet>
+  <BindingSet name='midi3' overlay='true'>
+  </BindingSet>
+  <BindingSet name='midi4' overlay='true'>
   </BindingSet>
   <ScriptConfig>
   </ScriptConfig>

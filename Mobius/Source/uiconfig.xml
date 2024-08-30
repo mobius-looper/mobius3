@@ -133,7 +133,10 @@
     <Button action="SaveCapture"/>
     <Button action="ReloadScripts"/>
     <Button action="Message" arguments="Hello!"/>
+    <Button action="TrackGroup" arguments="next"/>
+    <Button action="TrackGroup" arguments="prev"/>
     <Button action="TrackGroup" arguments="-1"/>
+    <Button action="Preset:Default"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

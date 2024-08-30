@@ -48,6 +48,7 @@ class MobiusShell : public MobiusInterface
     void installLoop(class Audio* a, int track, int loop) override;
     void installScripts(class ScriptConfig*) override;
     void installSamples(class SampleConfig*) override;
+    void installBindings(class Binderator*) override;
     class DynamicConfig* getDynamicConfig() override;
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;

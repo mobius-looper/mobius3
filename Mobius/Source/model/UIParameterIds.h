@@ -18,7 +18,6 @@
 //
 
 extern const char* ParamActiveSetup;
-extern const char* ParamActiveOverlay;
 extern const char* ParamFadeFrames;
 extern const char* ParamMaxSyncDrift;
 extern const char* ParamDriftCheckPoint;
@@ -156,7 +155,6 @@ typedef enum {
     /* Global */
     
     UIParameterIdActiveSetup,
-    UIParameterIdActiveOverlay,
     UIParameterIdFadeFrames,
     UIParameterIdMaxSyncDrift,
     UIParameterIdDriftCheckPoint,

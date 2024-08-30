@@ -53,10 +53,6 @@ class JuceAudioStream : public MobiusAudioStream
     juce::MidiBuffer* getMidiMessages();
     class MobiusMidiTransport* getMidiTransport();
     
-    // temporary old-school midi events
-    // synchronization message should all go through MobiusMidiTransport now
-    void midiSend(class MidiEvent* msg);
-    
     double getStreamTime();
     double getLastInterruptStreamTime();
     class AudioTime* getAudioTime();

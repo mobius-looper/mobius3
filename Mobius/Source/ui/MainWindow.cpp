@@ -16,6 +16,8 @@
 #include "../model/MobiusState.h"
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
+#include "../model/MobiusConfig.h"
+#include "../model/Binding.h"
 
 #include "../Supervisor.h"
 #include "../Symbolizer.h"
@@ -156,6 +158,27 @@ void MainWindow::mainMenuSelection(int id)
         action.symbol = symbols->intern(UISymbols::ActiveButtons);
         action.value = buttonsOrdinal;
         supervisor->doAction(&action);
+    }
+    else if (id >= MainMenu::MenuBindingOffset && id <= MainMenu::MenuBindingMax) {
+        int index = id - MainMenu::MenuButtonsOffset;
+        // map this back into a particular BindingSet, sure would be nice to just
+        // get the item name here
+        // MainMenu left a kludgey transient menu id on the object
+        MobiusConfig* mconfig = supervisor->getMobiusConfig();
+        BindingSet* sets = mconfig->getBindingSets();
+        BindingSet* selected = nullptr;
+        for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+            if (set->transientMenuId == index) {
+                selected = set;
+                break;
+            }
+        }
+
+        // now we've worked our way back to a BindingSet, punt to Supervisor
+        if (selected == nullptr)
+          Trace(1, "MainWindow: BindingSet resolution failed, and so have you");
+        else
+          supervisor->menuActivateBindings(selected);
     }
     else {
         switch (id) {

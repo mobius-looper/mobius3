@@ -51,7 +51,7 @@ class Binderator
         
     };
 
-    Binderator(class SymbolTable* st);
+    Binderator(class Supervisor* s);
     ~Binderator();
 
     /**
@@ -79,8 +79,10 @@ class Binderator
      */
     class UIAction* handleKeyEvent(int code, int modifiers, bool up);
 
-    private:
+  private:
 
+    // don't need this except during construction
+    class Supervisor* supervisor = nullptr;
     class SymbolTable* symbols = nullptr;
 
     int controllerThreshold = 0;

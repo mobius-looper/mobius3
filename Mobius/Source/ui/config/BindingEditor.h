@@ -73,8 +73,8 @@ class BindingEditor : public ConfigEditor,
     Field* capture = nullptr;
     int maxTracks = 0;
     int maxGroups = 0;
-    juce::ToggleButton activeButton {"Active"};
-    juce::ToggleButton mergeButton {"Merge with others"};
+    //juce::ToggleButton activeButton {"Active"};
+    juce::ToggleButton overlayButton {"Overlay"};
     BasicButtonRow activationButtons;
     
     void initForm();

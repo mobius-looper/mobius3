@@ -389,7 +389,8 @@ void XmlRenderer::parseStructure(XmlElement* e, Structure* structure)
 
 #define ATT_NO_SYNC_BEAT_ROUNDING "noSyncBeatRounding"
 
-#define ATT_OVERLAY_BINDINGS "overlayBindings"
+#define ATT_BINDINGS "bindings"
+#define ATT_BINDING_OVERLAYS "bindingOverlays"
 
 #define EL_FOCUS_LOCK_FUNCTIONS "FocusLockFunctions"
 // old name for FocusLockFunctions
@@ -461,9 +462,6 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // old notes say if the preset has been overridden this is not
     // saved in the config
     b->addAttribute(ATT_SETUP, c->getStartingSetupName());
-
-    // active binding overlay name
-    b->addAttribute(ATT_OVERLAY_BINDINGS, c->getOverlayBindings());
 
     // not an official Parameter yet
     if (c->isEdpisms())
@@ -625,7 +623,6 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
     // formerly had to do these last after the object lists
     // were built, now they're just names
     c->setStartingSetupName(e->getAttribute(ATT_SETUP));
-    c->setOverlayBindings(e->getAttribute(ATT_OVERLAY_BINDINGS));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -766,7 +763,6 @@ void XmlRenderer::parse(XmlElement* e, Preset* p)
 
 #define EL_SETUP "Setup"
 
-#define ATT_BINDINGS "bindings"
 #define ATT_MIDI_CONFIG "midiConfig"
 
 #define ATT_NAME "name"
@@ -1044,8 +1040,7 @@ void XmlRenderer::render(XmlBuffer* b, BindingSet* c)
 	b->addOpenStartTag(EL_BINDING_SET);
 
 	renderStructure(b, c);
-    b->addAttribute("merge", c->isMerge());
-    b->addAttribute("active", c->isActive());
+    b->addAttribute("overlay", c->isOverlay());
     
 	b->add(">\n");
 	b->incIndent();
@@ -1099,8 +1094,7 @@ void XmlRenderer::render(XmlBuffer* b, Binding* binding)
 void XmlRenderer::parse(XmlElement* e, BindingSet* c)
 {
 	parseStructure(e, c);
-    c->setMerge(e->getBoolAttribute("merge"));
-    c->setActive(e->getBoolAttribute("active"));
+    c->setOverlay(e->getBoolAttribute("overlay"));
 
 	for (XmlElement* child = e->getChildElement() ; child != nullptr ; 
 		 child = child->getNextElement()) {

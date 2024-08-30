@@ -17,6 +17,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Util.h"
+#include "../util/Trace.h"
 #include "../model/ExValue.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Preset.h"
@@ -63,33 +64,44 @@ void UIParameterActiveSetupClass::setValue(void* obj, ExValue* value)
 UIParameterActiveSetupClass UIParameterActiveSetupObj;
 UIParameter* UIParameterActiveSetup = &UIParameterActiveSetupObj;
 
-////////////// ActiveOverlay
+////////////// bindings
+//
+// new: this is not edited through the UIParameter but it does
+// need to behave like a structure for the binding editor
 
-class UIParameterActiveOverlayClass : public UIParameter
+class UIParameterBindingsClass : public UIParameter
 {
   public:
-    UIParameterActiveOverlayClass();
+    UIParameterBindingsClass();
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-UIParameterActiveOverlayClass::UIParameterActiveOverlayClass()
+UIParameterBindingsClass::UIParameterBindingsClass()
 {
-    name = "activeOverlay";
-    displayName = "Active Overlay";
+    name = "bindings";
+    displayName = "Bindings";
     coreName = "bindings";
     scope = ScopeGlobal;
     type = TypeStructure;
 }
-void UIParameterActiveOverlayClass::getValue(void* obj, ExValue* value)
+void UIParameterBindingsClass::getValue(void* obj, ExValue* value)
 {
-    value->setString(((MobiusConfig*)obj)->getOverlayBindings());
+    (void)obj;
+    (void)value;
+    // this is now in UIConfig
+    Trace(1, "UIParameterBindingsClass::getValue touched");
+    //value->setString(((MobiusConfig*)obj)->getBindings());
+    value->setNull();
 }
-void UIParameterActiveOverlayClass::setValue(void* obj, ExValue* value)
+void UIParameterBindingsClass::setValue(void* obj, ExValue* value)
 {
-    ((MobiusConfig*)obj)->setOverlayBindings(value->getString());
+    (void)obj;
+    (void)value;
+    Trace(1, "UIParameterBindingsClass::getValue touched");
+    // ((MobiusConfig*)obj)->setBindings(value->getString());
 }
-UIParameterActiveOverlayClass UIParameterActiveOverlayObj;
-UIParameter* UIParameterActiveOverlay = &UIParameterActiveOverlayObj;
+UIParameterBindingsClass UIParameterBindingsObj;
+UIParameter* UIParameterBindings = &UIParameterBindingsObj;
 
 ////////////// FadeFrames
 

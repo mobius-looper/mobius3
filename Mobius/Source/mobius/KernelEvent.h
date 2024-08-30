@@ -104,7 +104,10 @@ typedef enum {
 
     // sent by the script interpreter when a script finishes execution
     // used only by the TestDriver
-    EventScriptFinished
+    EventScriptFinished,
+
+    // handler for the old script parameter "set bindings <name>"
+    EventActivateBindings
 
 } KernelEventType;
 

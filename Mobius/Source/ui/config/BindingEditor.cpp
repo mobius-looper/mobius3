@@ -49,14 +49,15 @@ BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s), targets(s)
     // this one is selectively shown
     addChildComponent(activationButtons);
     
-    activeButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
-    activeButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
-    activeButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
-    activationButtons.add(&activeButton);
-    mergeButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
-    mergeButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
-    mergeButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
-    activationButtons.add(&mergeButton);
+    //activeButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    //activeButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
+    //activeButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
+    //activationButtons.add(&activeButton);
+    
+    overlayButton.setColour(juce::ToggleButton::ColourIds::textColourId, juce::Colours::white);
+    overlayButton.setColour(juce::ToggleButton::ColourIds::tickColourId, juce::Colours::red);
+    overlayButton.setColour(juce::ToggleButton::ColourIds::tickDisabledColourId, juce::Colours::white);
+    activationButtons.add(&overlayButton);
     
     bindings.setListener(this);
     addAndMakeVisible(bindings);
@@ -168,9 +169,10 @@ void BindingEditor::loadBindingSet(int index)
 
     // this is shown only when editing one of the overlay sets
     // hmm, think about adding an "active" here too, if you're editing
+    // update: no longer doing activation here, there is only the "overlay" flag
     activationButtons.setVisible(index > 0);
-    activeButton.setToggleState(set->isActive(), juce::NotificationType::dontSendNotification);
-    mergeButton.setToggleState(set->isMerge(), juce::NotificationType::dontSendNotification);
+    //activeButton.setToggleState(set->isActive(), juce::NotificationType::dontSendNotification);
+    overlayButton.setToggleState(set->isOverlay(), juce::NotificationType::dontSendNotification);
 }
 
 /**
@@ -227,20 +229,23 @@ void BindingEditor::saveBindingSet(int index)
         saveBindingSet(set);
 
         if (index > 0) {
-            set->setActive(activeButton.getToggleState());
-            set->setMerge(mergeButton.getToggleState());
+            //set->setActive(activeButton.getToggleState());
+            set->setOverlay(overlayButton.getToggleState());
             // if this is an exclusive overlay, turn off the
             // activation state of the others so the selection menus look right
             // when we're done
+            // update: activation is no longer done in the editor
+#if 0            
             if (set->isActive()) {
                 for (int i = 1 ; i < bindingSets.size() ; i++) {
                     if (i != index) {
                         BindingSet* other = bindingSets[i];
-                        if (!set->isMerge() && !other->isMerge())
+                        if (!set->isOverlay() && !other->isOverlay())
                           other->setActive(false);
                     }
                 }
             }
+#endif
         }
     }
 }
@@ -769,7 +774,7 @@ void BindingEditor::resized()
     // leave a little gap on the left
     area.removeFromLeft(10);
     
-    // leave some space at the top for the merge checkbox
+    // leave some space at the top for the overlay checkbox
     activationButtons.setBounds(area.removeFromTop(20));
 
     // let's fix the size of the table for now rather

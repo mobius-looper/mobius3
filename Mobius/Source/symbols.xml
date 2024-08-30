@@ -172,18 +172,15 @@
       in mobius.xml as "startingSetup".
     </Parameter>
 
-    <Parameter name='activeOverlay'
+    <Parameter name='bindings'
                type='structure' structureClass='BindingSet'
-               codeName='OverlayBindings'
-               coreName='bindings'
                >
-      Selects an optional overlay binding set.
-      Potentially bindable.
-      NOTE: The method named changed from core code which was
-      originally getOverlayBindingConfig with a return type of BindingConfig
-      which no longer exists.
-
-      This all needs a redesign.
+      Selects an optional alternate binding set.
+      This is what old Mobius called the "overlay bindings".
+      New Mobius calls this an "alternate binding" which is different from an overlay.
+      It exists in MobiusConfig but is not edited like a normal global parameter.
+      Need a formal declaration so it can behave as a Structure for the binding panels.
+      ?? do we really
     </Parameter>
 
     <Parameter name='fadeFrames' high='1024'>

@@ -306,6 +306,14 @@ class UIConfig
      */
     juce::HashMap<juce::String,juce::String> properties;
 
+    /**
+     * Names of binding overlays.
+     * The BindingSet model is still in MobiusConfig temporarily.
+     */
+    juce::String activeBindings;
+    juce::StringArray activeOverlays;
+    bool isActiveBindingSet(juce::String name);
+
     // flag set whenever this is modified at runtime
     // used during Supervisor shutdown to write the changes to the file
     // reset whenever the file is written

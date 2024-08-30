@@ -218,6 +218,11 @@ class MobiusInterface {
      * or relative to the $INSTALL path prefix.
      */
     virtual void installSamples(class SampleConfig* samples) = 0;
+
+    /**
+     * Install a set of MIDI bindings when running as a plugin.
+     */
+    virtual void installBindings(class Binderator* b) = 0;
     
     /**
      * Return information about dynamic configuration.  Should be called
@@ -581,6 +586,25 @@ class MobiusListener {
         (void)requestId;
     }
 
+    /**
+     * A script has asked to change the binding set with "set bindings foo".
+     * This used to be called the "binding overlay" and would select
+     * from a mutex of possible overlays.  Passing null deselected the
+     * current overlay.
+     *
+     * Binding sets work differently now, there are three classes:
+     *    global - always active
+     *    alternates - zero or one may be active and combined with global
+     *    overlays - zero or many may be active and combined with the others
+     *
+     * Since we only have one parameter to control this, the listener needs
+     * to use this only for alternates.  Overlays is a new concept and must
+     * be dealt with in the UI or in MSL.
+     */
+    virtual void mobiusActivateBindings(juce::String name) {
+        (void)name;
+    }
+    
     //////////////////////////////////////////////////////////////////////
     // Future
     //////////////////////////////////////////////////////////////////////

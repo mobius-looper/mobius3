@@ -20,10 +20,6 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
         case UIParameterIdActiveSetup:
             break;
             
-        case UIParameterIdActiveOverlay:
-            value->setString(((MobiusConfig*)obj)->getOverlayBindings());
-            break;
-            
         case UIParameterIdFadeFrames:
             value->setInt(((MobiusConfig*)obj)->getFadeFrames());
             break;
@@ -470,10 +466,6 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
         /* Global */
         
         case UIParameterIdActiveSetup:
-            break;
-            
-        case UIParameterIdActiveOverlay:
-            ((MobiusConfig*)obj)->setOverlayBindings(value->getString());
             break;
             
         case UIParameterIdFadeFrames:

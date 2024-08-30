@@ -239,12 +239,13 @@ BindingSet::BindingSet(BindingSet* src)
     }
 
     // assume that if you're starting with an overlay, the new one is also one
-    mMerge = src->isMerge();
+    mOverlay = src->isOverlay();
 
     // hmm, when cloning to create a new one, activation shouldn't be assumed
     // but when cloning to edit an existing one, activation is expected
     // to be retained
-    mActive = src->isActive();
+    // update: activation is no longer in here
+    //mActive = src->isActive();
 
     
 }

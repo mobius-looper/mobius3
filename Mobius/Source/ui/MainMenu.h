@@ -29,6 +29,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         menuIndexSetup,
         menuIndexPreset,
         menuIndexDisplay,
+        menuIndexBindings,
         menuIndexConfig,
         menuIndexHelp,
         menuIndexTest
@@ -37,7 +38,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Names of the top-level menu items
      */
-    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Configuration", "Help", "Test"};
+    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Bindings", "Configuration", "Help", "Test"};
 
     /**
      * Offset of menu item ids for the generated track setup items
@@ -66,9 +67,17 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     static const int MenuOptionsBorders = 500;
     static const int MenuOptionsIdentify = 501;
     
-        
+    /**
+     * Offsets of menu item ids for bindings.
+     */
+    static const int MenuBindingOffset = 600;
+    static const int MenuBindingMax = 699;
+    
     /**
      * These are menu item model ids which must begin from 1
+     *
+     * Menus for Setups, Preset, Bindings are special and generated
+     * with their own id ranges.
      */
     enum MenuItems {
         

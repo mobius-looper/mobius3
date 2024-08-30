@@ -226,6 +226,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void menuLoadLoop();
     void menuSaveLoop();
     void menuQuickSave();
+    void menuActivateBindings(BindingSet* set);
     
     // MobiusContainer
     int getSampleRate() override;
@@ -246,7 +247,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void mobiusMidiReceived(juce::MidiMessage& msg) override;
     void mobiusDynamicConfigChanged() override;
     void mobiusSaveCapture(Audio* content, juce::String fileName) override;
-
+    void mobiusActivateBindings(juce::String name) override;
+    
     //
     // MslContext
     //

@@ -218,6 +218,9 @@ class BindingSet : public Structure {
 
   public:
 
+    // the name of the global always-on binding set
+    constexpr static const char* GlobalName = "Global";
+
 	BindingSet();
 	BindingSet(BindingSet* src);
 	~BindingSet();
@@ -238,27 +241,21 @@ class BindingSet : public Structure {
 
     Binding* findBinding(Binding* b);
 
-    void setActive(bool b) {
-        mActive = b;
+    void setOverlay(bool b) {
+        mOverlay = b;
     }
 
-    bool isActive() {
-        return mActive;
+    bool isOverlay() {
+        return mOverlay;
     }
+
+    // kludge for the binding selection menu
+    int transientMenuId = 0;
   
-    void setMerge(bool b) {
-        mMerge = b;
-    }
-    
-    bool isMerge() {
-        return mMerge;
-    }
-
   private:
 
 	Binding* mBindings;
-    bool mActive = false;
-    bool mMerge = false;
+    bool mOverlay = false;
 	
 };
 

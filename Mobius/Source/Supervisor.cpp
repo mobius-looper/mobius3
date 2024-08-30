@@ -32,6 +32,7 @@
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
 #include "model/ScriptProperties.h"
+#include "model/Binding.h"
 
 #include "ui/MainWindow.h"
 
@@ -603,6 +604,16 @@ void Supervisor::configureBindings(MobiusConfig* config)
 {
     binderator.configure(config);
     binderator.start();
+
+    // also build one and send it down to the kernel
+    if (isPlugin()) {
+        Binderator* coreBinderator = new Binderator(this);
+        // this now requires UIConfig and pulls it from Supervisor
+        // so we don't need to be passing in config objects any more
+        coreBinderator->configureMidi(getMobiusConfig());
+
+        mobius->installBindings(coreBinderator);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -757,6 +768,7 @@ void Supervisor::menuQuickSave()
 {
     projectFiler.quickSave();
 }
+
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1096,8 +1108,10 @@ void Supervisor::updateMobiusConfig()
         // clear speical triggers for the engine now that it is done
         config->setupsEdited = false;
         config->presetsEdited = false;
-        
-        configureBindings(config);
+
+        // bindings are no longer set as a side effect of config editing
+        // you do it from the menu
+        //configureBindings(config);
     }
 }
 
@@ -1143,7 +1157,8 @@ void Supervisor::reloadMobiusConfig()
     if (mobius != nullptr)
       mobius->reconfigure(config);
         
-    configureBindings(config);
+    // binding activation comes from the menus now
+    //configureBindings(config);
 }
 
 void Supervisor::updateUIConfig()
@@ -1575,6 +1590,27 @@ void Supervisor::mobiusSaveCapture(Audio* content, juce::String fileName)
 
     juce::File file = getRoot().getChildFile(fileName);
     AudioFile::write(file, content);
+}
+
+/**
+ * Here after a tortured path from an old script statement "set bindings foo".
+ */
+void Supervisor::mobiusActivateBindings(juce::String name)
+{
+    (void)name;
+    Trace(1, "Supervisor: Mobius wants to activate bindings %s", name.toUTF8());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Bindings
+//
+//////////////////////////////////////////////////////////////////////
+
+void Supervisor::menuActivateBindings(BindingSet* set)
+{
+    (void)set;
+    Trace(1, "Supervisor: Menu wants to activate bindings %s", set->getName());
 }
 
 //////////////////////////////////////////////////////////////////////

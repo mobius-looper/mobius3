@@ -109,7 +109,7 @@ const char* UIParameter::getEnumLabel(int enumOrdinal)
  * a few integer parameters.
  *
  *   MobiusConfig::activeSetup
- *   MobiusConfig::activeOverlay
+ *   MobiusConfig::bindings
  *   SetupTrack::preset
  *
  *   MobiusConfig::activeTrack
@@ -196,8 +196,8 @@ Structure* UIParameter::getStructureList(MobiusConfig* container)
         
         list = container->getSetups();
     }
-    else if (this == UIParameterActiveOverlay) {
-        // this is a weird one, we keep overlays on the same list
+    else if (this == UIParameterBindings) {
+        // this is a weird one, we keep alternates and overlays on the same list
         // as the master binding set which cannot be deleted
         // this coincidentlly helps with the "none" ordinal problem
         // because ordinal zero will be the master binding set meaning

@@ -1,9 +1,11 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Util.h"
 #include "../util/MidiUtil.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Binding.h"
+#include "../model/UIConfig.h"
 #include "../Supervisor.h"
 #include "JuceUtil.h"
 
@@ -25,6 +27,7 @@ void BindingSummary::prepare(bool doMidi)
     midi = doMidi;
     things.clear();
     MobiusConfig* config = supervisor->getMobiusConfig();
+    UIConfig* uiconfig = supervisor->getUIConfig();
     BindingSet* bindingSets = config->getBindingSets();
 
     // the first one is always added
@@ -36,7 +39,7 @@ void BindingSummary::prepare(bool doMidi)
     // things
     bindingSets = bindingSets->getNextBindingSet();
     while (bindingSets != nullptr) {
-        if (bindingSets->isActive())
+        if (uiconfig->isActiveBindingSet(juce::String(bindingSets->getName())))
           addBindings(bindingSets);
         bindingSets = bindingSets->getNextBindingSet();
     }

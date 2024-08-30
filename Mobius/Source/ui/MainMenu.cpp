@@ -28,12 +28,14 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../util/Util.h"
 #include "../model/MobiusConfig.h"
 #include "../model/UIConfig.h"
 #include "../model/Setup.h"
 #include "../model/Preset.h"
 #include "../model/Symbol.h"
 #include "../model/Query.h"
+#include "../model/Binding.h"
 
 #include "../Supervisor.h"
 
@@ -247,11 +249,74 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
           item.setTicked(true);
         menu.addItem(item);
     }
+
+
+    else if (menuIndex == menuIndexBindings) {
+        // these have ids within the enumeration
+        menu.addItem(MidiControl, "Edit MIDI Bindings...");
+        menu.addItem(KeyboardControl, "Edit Keyboard Bindings...");
+        menu.addSeparator();
+        
+        Supervisor* supervisor = mainWindow->getSupervisor();
+        MobiusConfig* mconfig = supervisor->getMobiusConfig();
+        UIConfig* uiconfig = supervisor->getUIConfig();
+        BindingSet* sets = mconfig->getBindingSets();
+        // first one is always active and is not displayed
+        if (sets != nullptr) sets = sets->getNextBindingSet();
+        if (sets != nullptr) {
+            // count the numbers in each category
+            int alternates = 0;
+            int overlays = 0;
+            for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+                if (set->isOverlay())
+                  overlays++;
+                else
+                  alternates++;
+            }
+
+            // ugh, since we want to split the list we can't use the menu id as
+            // the structure ordinal, save it on the object so we can correlate, ugly
+            // would be nice if we could just get the damn menu item name from the id
+            // which we probably can but the Juce menu model makes me too fucking angry
+            int index = 0;
+            if (alternates > 0) {
+                menu.addSeparator();
+                menu.addSectionHeader(juce::String("Binding Sets"));
+                for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+                    if (!set->isOverlay()) {
+                        juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
+                        item.setID(MenuBindingOffset + index);
+                        set->transientMenuId = index;
+                        if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
+                          item.setTicked(true);
+                        menu.addItem(item);
+                        index++;
+                    }
+                }
+            }
+            if (overlays > 0) {
+                menu.addSeparator();
+                menu.addSectionHeader(juce::String("Overlays"));
+                for (BindingSet* set = sets ; set != nullptr ; set = set->getNextBindingSet()) {
+                    if (set->isOverlay()) {
+                        juce::PopupMenu::Item item = juce::PopupMenu::Item(juce::String(set->getName()));
+                        item.setID(MenuBindingOffset + index);
+                        set->transientMenuId = index;
+                        if (uiconfig->isActiveBindingSet(juce::String(set->getName())))
+                          item.setTicked(true);
+                        menu.addItem(item);
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+
     else if (menuIndex == menuIndexConfig)
     {
-        menu.addItem(MidiControl, "MIDI Control");
-        menu.addItem(KeyboardControl, "Keyboard Control");
-        menu.addSeparator();
+        //menu.addItem(MidiControl, "MIDI Control");
+        //menu.addItem(KeyboardControl, "Keyboard Control");
+        //menu.addSeparator();
         menu.addItem(GlobalParameters, "Global Parameters");
         menu.addItem(Properties, "Function Properties");
         menu.addItem(Groups, "Track Groups");

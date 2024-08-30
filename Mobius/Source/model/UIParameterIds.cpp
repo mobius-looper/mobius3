@@ -17,7 +17,7 @@
 //
 
 const char* ParamActiveSetup = "activeSetup";
-const char* ParamActiveOverlay = "activeOverlay";
+const char* ParamBindings = "bindings";
 const char* ParamFadeFrames = "fadeFrames";
 const char* ParamMaxSyncDrift = "maxSyncDrift";
 const char* ParamDriftCheckPoint = "driftCheckPoint";
@@ -142,7 +142,7 @@ const char* ParamTimeStretch = "timeStretch";
 UIParameterName UIParameterRegistry[] = {
 
     {ParamActiveSetup, UIParameterIdActiveSetup},
-    {ParamActiveOverlay, UIParameterIdActiveOverlay},
+    //{ParamBindings, UIParameterIdBindings},
     {ParamFadeFrames, UIParameterIdFadeFrames},
     {ParamMaxSyncDrift, UIParameterIdMaxSyncDrift},
     {ParamDriftCheckPoint, UIParameterIdDriftCheckPoint},

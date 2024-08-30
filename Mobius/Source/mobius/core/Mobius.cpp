@@ -2048,6 +2048,43 @@ bool Mobius::isGlobalReset()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Bindings
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is called when a script does "set bindings <arg>"
+ *
+ * Bindings are no longer managed at this level, it forwards
+ * up to Supervisor.
+ *
+ * There are several values in the Action but KernelEvent only has
+ * string arguments.
+ *
+ *     null - disable what used to be call the binding overlay
+ *     name - select an overlay by name
+ *     number - select an overlay by ordinal
+ *
+ * Since we only have a string arg, make everything a string
+ * and Supervisor will need to treat empty string as disable.
+ */
+void Mobius::activateBindings(Action* a)
+{
+    KernelEvent* e = newKernelEvent();
+    e->type = EventActivateBindings;
+    // this will copy the name to a static buffer on the event
+    // so no ownership issues of the string
+    e->setArg(0, a->arg.getString());
+
+    // most script actions that send KernelEvents also so this
+    // so the script can wait on them, not necessary here but why not
+    a->setKernelEvent(e);
+
+	sendKernelEvent(e);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Projects
 //
 //////////////////////////////////////////////////////////////////////

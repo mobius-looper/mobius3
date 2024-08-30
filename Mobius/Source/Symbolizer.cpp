@@ -484,6 +484,7 @@ void Symbolizer::installUISymbols()
 
     installDisplayParameter(UISymbols::ActiveLayout, UISymbols::ActiveLayoutLabel, UISymbolActiveLayout);
     installDisplayParameter(UISymbols::ActiveButtons, UISymbols::ActiveButtonsLabel, UISymbolActiveButtons);
+    installDisplayParameter(UISymbols::BindingOverlays, UISymbols::BindingOverlaysLabel, UISymbolBindingOverlays);
 }    
 
 /**

@@ -272,13 +272,15 @@ void MobiusShell::reconfigure(MobiusConfig* config)
     // clone it again and give it to the kernel
     MobiusConfig* kernelCopy = config->clone();
     sendKernelConfigure(kernelCopy);
+}
 
-    if (container->isPlugin()) {
-        // rebuild MIDI bindings
-        Binderator* binderator = new Binderator(container->getSymbols());
-        binderator->configureMidi(configuration);
-        sendKernelBinderator(binderator);
-    }
+/**
+ * When running as a plugin, MIDI bindings needs to be handled
+ * by the kernel.  The container must build this and pass it down.
+ */
+void MobiusShell::installBindings(Binderator* b)
+{
+    sendKernelBinderator(b);
 }
 
 void MobiusShell::propagateSymbolProperties()
@@ -772,6 +774,12 @@ void MobiusShell::doKernelEvent(KernelEvent* e)
             }
                 break;
 
+            case EventActivateBindings: {
+                if (listener != nullptr)
+                  listener->mobiusActivateBindings(juce::String(e->arg1));
+            }
+                break;
+                
             case EventUnitTestSetup:
                 // todo: this is no longer used, but old test scripts still
                 // call that statement which sends it, need to

@@ -530,6 +530,10 @@ Parameter* TrackParameter = &TrackParameterTypeObj;
 //
 //////////////////////////////////////////////////////////////////////
 
+// new: this is now a UI concept, with no implementation
+// down here, except that it needs to be a core parameter
+// so old scripts can still to "set bindings foo"
+
 /**
  * This is a funny one because ordinal value 0 means "no overlay"
  * and we want to show that and treat it as a valid value.
@@ -562,125 +566,47 @@ BindingsParameterType::BindingsParameterType() :
 int BindingsParameterType::getOrdinalValue(MobiusConfig* c)
 {
     (void)c;
-    int value = 0;
-
-    Trace(1, "BindingsParameterType touched\n");
-#if 0    
-	BindingConfig* bindings = c->getOverlayBindingConfig();
-    if (bindings != NULL) 
-      value = bindings->getNumber();
-#endif
-    return value;
+    Trace(1, "BindingsParameterType::getOrdinalValue touched\n");
+    return 0;
 }
 
-/**
- * This will return null to mean "no overlay".
- */
 void BindingsParameterType::getValue(MobiusConfig* c, ExValue* value)
 {
-    (void)c;
-    (void)value;
-    Trace(1, "BindingsParameterType touched\n");
-//	BindingConfig* bindings = c->getOverlayBindingConfig();
-//    if (bindings != NULL) 
-//	  value->setString(bindings->getName());
-//	else
-//      value->setNull();
+    Trace(1, "BindingsParameterType::getValue touched\n");
+    value->setNull();
 }
 
 void BindingsParameterType::setValue(MobiusConfig* c, ExValue* value)
 {
     (void)c;
     (void)value;
-    Trace(1, "BindingsParameterType touched\n");
-//    if (value->getType() == EX_INT) {
-//        // assume it's an int, these are numbered from zero but zero 
-//        // is always the base binding
-//        int index = value->getInt();
-//        c->setOverlayBindingConfig(index);
-//    }
-//    else {
-//        c->setOverlayBindingConfig(value->getString());
-//    }
+    Trace(1, "BindingsParameterType::setValue touched\n");
 }
 
 /**
- * Note that we call the setters on Mobius so it will also
- * update the configuration cache.
- *
- * This is one of the rare overloads to get to the Action
- * so we can have side effects on Mobius.
+ * new: Changing this in a script is complex because it has to be
+ * fowarded all the way back up to Supervisor.
  */
 void BindingsParameterType::setValue(Action* action)
 {
-    (void)action;
-    Trace(1, "BindingsParameterType touched\n");
-#if 0    
     Mobius* m = (Mobius*)action->mobius;
-	MobiusConfig* config = m->getConfiguration();
-
-    if (action->arg.isNull()) {
-        // clear the overlay
-        m->setOverlayBindings((BindingConfig*)NULL);
-    }
-    else if (action->arg.getType() == EX_STRING) {
-        BindingConfig* b = config->getBindingConfig(action->arg.getString());
-        // may be null to clear the overlay
-        m->setOverlayBindings(b);
-    }
-    else {
-        // assume it's an int, these are numbered from zero but zero 
-        // is always the base binding
-        BindingConfig* b = config->getBindingConfig(action->arg.getInt());
-        m->setOverlayBindings(b);
-    }
-#endif    
+    m->activateBindings(action);
 }
 
-/**
- * !! The max can change as bindings are added/removed.
- * Need to work out a way to convey that to ParameterEditor.
- */
 int BindingsParameterType::getHigh(Mobius* m)
 {
     (void)m;
-    Trace(1, "BindingsParameterType touched\n");
-#if 0    
-    int max = 0;
-
-	MobiusConfig* config = m->getConfiguration();
-    max = config->getBindingConfigCount();
-    // this is the number of configs, the max ordinal is zero based
-    max--;
-
-    return max;
-#endif
+    Trace(1, "BindingsParameterType::getHigh touched\n");
     return 0;
 }
 
-/**
- * Given an ordinal, map it into a display label.
- */
 void BindingsParameterType::getOrdinalLabel(Mobius* m,
-                                                   int i, ExValue* value)
+                                            int i, ExValue* value)
 {
     (void)m;
     (void)i;
     (void)value;
-    Trace(1, "BindingsParameterType touched\n");
-#if 0    
-	MobiusConfig* config = m->getConfiguration();
-	BindingConfig* bindings = config->getBindingConfig(i);
-    if (i == 0) {
-        // This will be "Common Bindings" but we want to display
-        // this as "No Overlay"
-        value->setString("No Overlay");
-    }
-    else if (bindings != NULL)
-	  value->setString(bindings->getName());
-	else
-	  value->setString("???");
-#endif    
+    Trace(1, "BindingsParameterType::getOrdinalLabel touched\n");
     value->setString("???");
 }
 

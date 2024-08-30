@@ -133,12 +133,6 @@
  */
 #define DEFAULT_MAX_REDO_INFO 10
 
-/**
- * The name to use for the set of common MIDI bindings that is
- * always in effect.  This binding set cannot be renamed.
- */
-#define MIDI_COMMON_BINDINGS_NAME "Common Bindings"
-
 /****************************************************************************
  *                                                                          *
  *                                ENUMERATIONS                              *
@@ -322,9 +316,6 @@ class MobiusConfig {
 	void addBindingSet(class BindingSet* bs);
     void setBindingSets(BindingSet* list);
 
-    const char* getOverlayBindings();
-    void setOverlayBindings(const char* name);
-
     class ScriptConfig* getScriptConfig();
     void setScriptConfig(class ScriptConfig* c);
     
@@ -439,14 +430,9 @@ class MobiusConfig {
 
 	class Preset* mPresets;
 
-    // there is always (and usually) a sigle BindingSet
-    // if there is more than one, those are considered "overlay"
-    // bindings that can be merged with the base set
-    // historically there could be only one overlay binding set
-    // but I'm moving this to a flag on the BindingSet to you
-    // can have more than one
-	class BindingSet* mBindings;
-    char* mOverlayBindings;
+	class BindingSet* mBindingSets;
+    char* mBindings;
+    char* mBindingOverlays;
 
     class ScriptConfig* mScriptConfig;
 	class SampleConfig* mSampleConfig;

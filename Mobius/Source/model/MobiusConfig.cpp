@@ -104,8 +104,8 @@ void MobiusConfig::init()
     mStartingSetupName = nullptr;
     mStartingSetup = nullptr;
     
-	mBindings = nullptr;
-    mOverlayBindings = nullptr;
+	mBindingSets = nullptr;
+    
     mScriptConfig = nullptr;
     mSampleConfig = nullptr;
 
@@ -156,8 +156,7 @@ MobiusConfig::~MobiusConfig()
 	delete mPresets;
     delete mSetups;
     delete mStartingSetupName;
-    delete mBindings;
-    delete mOverlayBindings;
+    delete mBindingSets;
     delete mScriptConfig;
 	delete mSampleConfig;
 }
@@ -771,21 +770,31 @@ Setup* MobiusConfig::getStartingSetup()
  *                                                                          *
  ****************************************************************************/
 /*
- * The first object on the list is always considered to be the "base"
- * configuration and is always active.  One additional "overlay"
- * configuration may also be selected.
+ * The first object on the list is always considered to be the "global"
+ * configuration and is always active.  One additional set may be selected
+ * that will be merged with the global bindings.  Any number of "overlays"
+ * may be added on top of that.
+ *
+ * This is a weird one because the concept of bindings is purely a UI level
+ * thing now. But we have historically managed those inside MobiusConfig and there
+ * is a core parameter named "bindings" that old scripts expect to use to change
+ * overlay bindings.
+ *
+ * This really should be made a purely UI thing in uiconfig.xml or broken out
+ * to bindings.xml
+ * 
  */
 
 BindingSet* MobiusConfig::getBindingSets()
 {
-	return mBindings;
+	return mBindingSets;
 }
 
 void MobiusConfig::setBindingSets(BindingSet* list)
 {
-    if (list != mBindings) {
-		delete mBindings;
-		mBindings = list;
+    if (list != mBindingSets) {
+		delete mBindingSets;
+		mBindingSets = list;
     }
 }
 
@@ -794,18 +803,7 @@ void MobiusConfig::setBindingSets(BindingSet* list)
 
 void MobiusConfig::addBindingSet(BindingSet* bs) 
 {
-    mBindings = (BindingSet*)Structure::append(mBindings, bs);
-}
-
-const char* MobiusConfig::getOverlayBindings()
-{
-	return mOverlayBindings;
-}
-
-void MobiusConfig::setOverlayBindings(const char* name)
-{
-    delete mOverlayBindings;
-    mOverlayBindings = CopyString(name);
+    mBindingSets = (BindingSet*)Structure::append(mBindingSets, bs);
 }
 
 /****************************************************************************/

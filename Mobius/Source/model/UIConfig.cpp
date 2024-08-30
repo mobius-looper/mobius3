@@ -136,6 +136,16 @@ int UIConfig::getButtonSetOrdinal(juce::String name)
     return ordinal;
 }
 
+/**
+ * True if this binding set is active.
+ * Handles both the single alternate binding and
+ * any number of overlay bindings.
+ */
+bool UIConfig::isActiveBindingSet(juce::String name)
+{
+    return (name == activeBindings || activeOverlays.contains(name));
+}
+
 //
 // Properties
 //
@@ -362,6 +372,9 @@ void UIConfig::parseXml(juce::String xml)
         
         activeButtonSet = root->getStringAttribute("activeButtonSet");
         activeLayout = root->getStringAttribute("activeLayout");
+        activeBindings = root->getStringAttribute("activeBindings");
+        juce::String csv = root->getStringAttribute("activeOverlays");
+        activeOverlays = juce::StringArray::fromTokens(csv, ",", "");
         
         for (auto* el : root->getChildIterator()) {
             if (el->hasTagName("Layout")) {
@@ -508,6 +521,12 @@ juce::String UIConfig::toXml()
 
     if (activeLayout.length() > 0)
       root.setAttribute("activeLayout", activeLayout);
+    
+    if (activeBindings.length() > 0)
+      root.setAttribute("activeBindings", activeBindings);
+
+    if (activeOverlays.size() > 0)
+      root.setAttribute("activeOverlays", activeOverlays.joinIntoString(","));
     
     if (showBorders)
       root.setAttribute("showBorders", showBorders);

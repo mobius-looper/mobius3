@@ -67,8 +67,11 @@ typedef enum {
     
     // parameters
     UISymbolActiveLayout,
-    UISymbolActiveButtons
-    
+    UISymbolActiveButtons,
+
+    // need this?  how will MSL scripts deal with binding overlays
+    UISymbolBindingOverlays
+
 } UISymbolId;
 
 class UISymbols
@@ -80,6 +83,10 @@ class UISymbols
     
     constexpr static const char* ActiveButtons = "activeButtons";
     constexpr static const char* ActiveButtonsLabel = "Active Buttons";
+
+    constexpr static const char* BindingOverlays = "bindingOverlays";
+    constexpr static const char* BindingOverlaysLabel = "Binding Overlays";
+    
     
 };
 
