@@ -20,6 +20,8 @@
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
+#include "MobiusPools.h"
+#include "Notifier.h"
 
 /**
  * Function ids for the things handled by the kernel.
@@ -136,6 +138,14 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void mslExport(class MslLinkage* link) override;
     
   protected:
+
+    class MobiusPools* getPools() {
+        return &mobiusPools;
+    }
+
+    class Notifier* getNotifier() {
+        return &notifier;
+    }
     
     // hacky shit for unit test setup
     class SampleManager* getSampleManager() {
@@ -189,13 +199,15 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class MobiusConfig* configuration = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
-
+    
     // important that we track changes in block sizes to adjust latency compensation
     int lastBlockSize = 0;
     
     // these we own
     KernelEventPool eventPool;
     KernelBinderator binderator {this};
+    MobiusPools mobiusPools;
+    Notifier notifier;
     
     // internal state
 

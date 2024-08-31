@@ -572,6 +572,7 @@ int BindingsParameterType::getOrdinalValue(MobiusConfig* c)
 
 void BindingsParameterType::getValue(MobiusConfig* c, ExValue* value)
 {
+    (void)c;
     Trace(1, "BindingsParameterType::getValue touched\n");
     value->setNull();
 }

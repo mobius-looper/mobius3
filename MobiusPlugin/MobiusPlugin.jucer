@@ -651,8 +651,13 @@
         <FILE id="xWTLgo" name="MobiusKernel.h" compile="0" resource="0" file="../Mobius/Source/mobius/MobiusKernel.h"/>
         <FILE id="qc0mj0" name="MobiusMidiTransport.h" compile="0" resource="0"
               file="../Mobius/Source/mobius/MobiusMidiTransport.h"/>
+        <FILE id="MtePh9" name="MobiusPools.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/MobiusPools.cpp"/>
+        <FILE id="HBhl06" name="MobiusPools.h" compile="0" resource="0" file="../Mobius/Source/mobius/MobiusPools.h"/>
         <FILE id="evPFPx" name="MobiusShell.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/MobiusShell.cpp"/>
         <FILE id="Xz9oVn" name="MobiusShell.h" compile="0" resource="0" file="../Mobius/Source/mobius/MobiusShell.h"/>
+        <FILE id="HgyErQ" name="Notification.h" compile="0" resource="0" file="../Mobius/Source/mobius/Notification.h"/>
+        <FILE id="PS6PtR" name="Notifier.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/Notifier.cpp"/>
+        <FILE id="e4XtMa" name="Notifier.h" compile="0" resource="0" file="../Mobius/Source/mobius/Notifier.h"/>
         <FILE id="WkaMqB" name="ProjectManager.cpp" compile="1" resource="0"
               file="../Mobius/Source/mobius/ProjectManager.cpp"/>
         <FILE id="DyreOL" name="ProjectManager.h" compile="0" resource="0"

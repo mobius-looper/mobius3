@@ -17,6 +17,8 @@
 // needed for TrackState
 #include "../../model/MobiusState.h"
 
+#include "../Notification.h"
+
 /****************************************************************************
  *                                                                          *
  *                                   TRACK                                  *
@@ -267,6 +269,13 @@ class Track : public TraceContext
 
     //void dump(TraceBuffer* b);
 
+    // Notificiation Management
+    class Notification* Track::allocNotification(NotificationId id);
+    void add(class Notification* n);
+    void notify(NotificationId id);
+    void notifyModeStart(class MobiusMode* mode);
+    void notifyModeEnd(class MobiusMode* mode);
+
   protected:
 
     void setLoop(class Loop* l);
@@ -319,6 +328,7 @@ class Track : public TraceContext
     char mName[MAX_TRACK_NAME];
 
 	class Mobius* mMobius;
+    class Notifier* mNotifier = nullptr;
 	class Synchronizer* mSynchronizer;
     class SyncState*  mSyncState;
     class SetupTrack* mSetupCache = nullptr;

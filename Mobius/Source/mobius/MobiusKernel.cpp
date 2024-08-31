@@ -68,6 +68,7 @@ MobiusKernel::MobiusKernel(MobiusShell* argShell, KernelCommunicator* comm)
     // something we did for leak debugging
     Mobius::initStaticObjects();
     coreActions = nullptr;
+    notifier.setPool(&mobiusPools);
 }
 
 void MobiusKernel::setTestMode(bool b)
@@ -459,6 +460,7 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     }
 
     updateParameters();
+    notifier.afterBlock();
 
     // this becomes invalid till next time
     stream = nullptr;

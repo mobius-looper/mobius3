@@ -51,6 +51,9 @@
 #include "../../model/Setup.h"
 
 #include "../MobiusInterface.h"
+#include "../MobiusPools.h"
+#include "../Notification.h"
+#include "../Notifier.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -91,6 +94,7 @@ void Track::init(Mobius* m, Synchronizer* sync, int number)
     strcpy(mName, "");
 
     mMobius = m;
+    mNotifier = m->getNotifier();
 	mSynchronizer = sync;
     mSyncState = NEW1(SyncState, this);
     mSetupCache = nullptr;
@@ -317,6 +321,46 @@ bool Track::isUISignal()
 	bool signal = mUISignal;
 	mUISignal = false;
 	return signal;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Notifications
+//
+//////////////////////////////////////////////////////////////////////
+
+Notification* Track::allocNotification(NotificationId id)
+{
+    Notification* n = mNotifier->alloc();
+    n->id = id;
+    n->trackNumber = mRawNumber + 1;
+    n->loopFrame = mLoop->getFrame();
+    return n;
+}
+
+void Track::add(Notification* n)
+{
+    mNotifier->add(n);
+}
+
+void Track::notify(NotificationId id)
+{
+    Notification* n = allocNotification(id);
+    mNotifier->add(n);
+}
+
+void Track::notifyModeStart(MobiusMode* mode)
+{
+    Notification* n = allocNotification(NotificationModeStart);
+    n->mode = mode;
+    mNotifier->add(n);
+
+}
+void Track::notifyModeEnd(MobiusMode* mode)
+{
+    Notification* n = allocNotification(NotificationModeEnd);
+    n->mode = mode;
+    mNotifier->add(n);
 }
 
 /****************************************************************************

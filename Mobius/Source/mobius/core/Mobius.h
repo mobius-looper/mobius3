@@ -198,6 +198,17 @@ class Mobius
     class MobiusContainer* getContainer();
 
     /**
+     * Object pool used within the kernel
+     */
+    class MobiusPools* getPools() {
+        return mPools;
+    }
+
+    class Notifier* getNotifier() {
+        return mNotifier;
+    }
+    
+    /**
      * Used by a small number of internal function handlers that forward
      * things back up to the kernel.
      */
@@ -380,8 +391,11 @@ class Mobius
     // Supplied by Kernel
     class MobiusKernel* mKernel;
     class MobiusContainer* mContainer;
+    class MobiusPools* mPools = nullptr;
+    class Notifier* mNotifier = nullptr;
     // the stream we are currently processing
     class MobiusAudioStream* mStream = nullptr;
+
 
     class AudioPool* mAudioPool;
 

@@ -90,6 +90,8 @@ Mobius::Mobius(MobiusKernel* kernel)
     mStream = nullptr;
     mContainer = kernel->getContainer();
     mAudioPool = kernel->getAudioPool();
+    mPools = kernel->getPools();
+    mNotifier = kernel->getNotifier();
     
     // Kernel may not have a MobiusConfig yet so have to wait
     // to do anything until initialize() is called

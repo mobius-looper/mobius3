@@ -591,8 +591,13 @@
         <FILE id="jXxZsV" name="MobiusKernel.h" compile="0" resource="0" file="Source/mobius/MobiusKernel.h"/>
         <FILE id="a53xaP" name="MobiusMidiTransport.h" compile="0" resource="0"
               file="Source/mobius/MobiusMidiTransport.h"/>
+        <FILE id="EXVMFi" name="MobiusPools.cpp" compile="1" resource="0" file="Source/mobius/MobiusPools.cpp"/>
+        <FILE id="LTcPBB" name="MobiusPools.h" compile="0" resource="0" file="Source/mobius/MobiusPools.h"/>
         <FILE id="RZNLnz" name="MobiusShell.cpp" compile="1" resource="0" file="Source/mobius/MobiusShell.cpp"/>
         <FILE id="TK5FKu" name="MobiusShell.h" compile="0" resource="0" file="Source/mobius/MobiusShell.h"/>
+        <FILE id="Izsj8S" name="Notification.h" compile="0" resource="0" file="Source/mobius/Notification.h"/>
+        <FILE id="kMr0Q7" name="Notifier.cpp" compile="1" resource="0" file="Source/mobius/Notifier.cpp"/>
+        <FILE id="gI6aVN" name="Notifier.h" compile="0" resource="0" file="Source/mobius/Notifier.h"/>
         <FILE id="EZDnZh" name="ProjectManager.cpp" compile="1" resource="0"
               file="Source/mobius/ProjectManager.cpp"/>
         <FILE id="Uc4aGH" name="ProjectManager.h" compile="0" resource="0"

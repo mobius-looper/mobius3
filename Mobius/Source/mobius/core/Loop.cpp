@@ -512,7 +512,12 @@ void Loop::setMode(MobiusMode* m)
 			mMode != ResetMode && mMode != SynchronizeMode)
 		  Trace(this, 1, "Loop: Entering Play mode without a layer!\n");
 
-		mMode = m;	
+
+        mTrack->notifyModeEnd(mMode);
+        
+		mMode = m;
+        
+        mTrack->notifyModeStart(mMode);
 	}
 }
 
@@ -2161,7 +2166,7 @@ void Loop::reset(Action* action)
     (void)action;
 	clear();
 
-	mMode = ResetMode;
+	setMode(ResetMode);
 	mRecording = false;
 	mOverdub = false;
 	mPause = false;
@@ -5397,7 +5402,7 @@ void Loop::switchEvent(Event* event)
 		// hmm, avoid full blown reset() since there is state
 		// we may want to keep since we technically never left reset?
         // YES: reset() calls Synchronizer::loopRest which we don't want here
-		mMode = ResetMode;
+		setMode(ResetMode);
 		setFrame(-mInput->latency);
 	}
 
