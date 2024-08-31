@@ -17,6 +17,53 @@
 
 #include "Symbolizer.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// UISymbols
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * format: id, name, public, signature
+ */
+UISymbols::Function UISymbols::Functions[] = {
+
+    // public
+    {ParameterUp,   "UIParameterUp",    true, nullptr},
+    {ParameterDown, "UIParameterDown",  true, nullptr},
+    {ParameterInc,  "UIParameterInc",   true, nullptr},
+    {ParameterDec,  "UIParameterDec",   true, nullptr},
+    {ReloadScripts, "ReloadScripts",    true, nullptr},
+    {ReloadSamples, "ReloadSamples",    true, nullptr},
+    {ShowPanel,     "ShowPanel",        true, nullptr},
+    {Message,       "Message",          true, nullptr},
+    
+    // scripts
+    {ScriptAddButton, "AddButton", false, nullptr},
+    {ScriptListen, "Listen", false, nullptr},
+    
+    {IdNone, nullptr}
+};
+
+/**
+ * format: id, name, displayName, public
+ */
+UISymbols::Parameter UISymbols::Parameters[] = {
+
+    // public
+    {ActiveLayout, "activeLayout", "Active Layout", true},
+    {ActiveButtons, "activeButtons", "Active Buttons", true},
+    {BindingOverlays, "bindingOverlays", "Binding Overlays", true};
+    
+    {IdNone, nullptr}
+};
+
+//////////////////////////////////////////////////////////////////////
+//
+// Symbolizer
+//
+//////////////////////////////////////////////////////////////////////
+
 Symbolizer::Symbolizer(Supervisor* s)
 {
     supervisor = s;
@@ -36,7 +83,8 @@ Symbolizer::~Symbolizer()
  * This will eventually replace the static definition objects.
  *
  * Interns a few UI symbols that are not defined in symbols.xml or with static
- * objects.
+ * objects.  This is the way I'd like to do most things that are simple and don't
+ * need field tweaking of the definition.
  *
  * Reads the properties.xml file and adorns the Symbols with user-defined options.
  */
@@ -463,68 +511,43 @@ void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String nam
 
 //////////////////////////////////////////////////////////////////////
 //
-// Display Symbols
+// New Static Definitions
 //
 //////////////////////////////////////////////////////////////////////
 
 void Symbolizer::installUISymbols()
 {
-    installDisplayFunction("UIParameterUp", UISymbolParameterUp);
-    installDisplayFunction("UIParameterDown", UISymbolParameterDown);
-    installDisplayFunction("UIParameterInc", UISymbolParameterInc);
-    installDisplayFunction("UIParameterDec", UISymbolParameterDec);
-    installDisplayFunction("ReloadScripts", UISymbolReloadScripts);
-    installDisplayFunction("ReloadSamples", UISymbolReloadSamples);
-    installDisplayFunction("ShowPanel", UISymbolShowPanel);
-    installDisplayFunction("Message", UISymbolMessage);
+    for (int i = 0 ; UISymbols::Functions[i].name != nullptr ; i++) {
+        UISymbols::Function* f = &(UISymbols::Functions[i]);
+        
+        Symbol* s = supervisor->getSymbols()->intern(f->name);
+        s->behavior = BehaviorFunction;
+        s->id = (unsigned char)f->id;
+        s->level = LevelUI;
+        if (!f->visible)
+          s->hidden = true;
+    }
     
-    // runtime parameter experiment
-    // I'd like to be able to create parameters at runtime
-    // without needing static definition objects
+    for (int i = 0 ; UISymbols::Parameters[i].name != nullptr ; i++) {
+        UISymbols::Parameter* p = &(UISymbols::Parameters[i]);
+        
+        Symbol* s = supervisor->getSymbols()->intern(p->name);
+        s->behavior = BehaviorParameter;
+        s->id = (unsigned char)p->id;
+        s->level = LevelUI;
+        if (!f->visible)
+          s->hidden = true;
 
-    installDisplayParameter(UISymbols::ActiveLayout, UISymbols::ActiveLayoutLabel, UISymbolActiveLayout);
-    installDisplayParameter(UISymbols::ActiveButtons, UISymbols::ActiveButtonsLabel, UISymbolActiveButtons);
-    installDisplayParameter(UISymbols::BindingOverlays, UISymbols::BindingOverlaysLabel, UISymbolBindingOverlays);
+        // !! the assumption right now is that these are all structures
+        // but that won't always be true, need more of a definition structure
+        ParameterProperties* props = new ParameterProperties();
+        if (p->displayName != nullptr)
+          props->displayName = juce::String(p->displayName);
+        props->type = TypeStructure;
+        props->scope = ScopeUI;
+        s->parameterProperties.reset(props);
+    }
 }    
-
-/**
- * A display function only needs a symbol.
- */
-void Symbolizer::installDisplayFunction(const char* name, int symbolId)
-{
-    Symbol* s = supervisor->getSymbols()->intern(name);
-    s->behavior = BehaviorFunction;
-    s->id = (unsigned char)symbolId;
-    s->level = LevelUI;
-}
-
-/**
- * Runtime defined parameters are defined by two things,
- * a Symbol that reserves the name and a ParameterProperties that
- * defines the characteristics of the parameter.
- *
- * There is some confusing overlap on the Symbol->level and
- * ParameterProperties->scope.  As we move away from UIParameter/FunctionDefinition
- * to the new ParameterProperties and FunctionProperties need to rethink this.
- * ParameterProperties is derived from UIParameter where scopes include things
- * like global, preset, setup, and UI.  This is not the same as Symbol->level but
- * in the case of UI related things they're the same since there are no UI level
- * parameters with Preset scope for example.  So it looks like duplication
- * but it's kind of not.
- */
-void Symbolizer::installDisplayParameter(const char* name, const char* label, int symbolId)
-{
-    ParameterProperties* p = new ParameterProperties();
-    p->displayName = juce::String(label);
-    p->type = TypeStructure;
-    p->scope = ScopeUI;
-    
-    Symbol* s = supervisor->getSymbols()->intern(name);
-    s->behavior = BehaviorParameter;
-    s->id = (unsigned char)symbolId;
-    s->level = LevelUI;
-    s->parameterProperties.reset(p);
-}
 
 /****************************************************************************/
 /****************************************************************************/
