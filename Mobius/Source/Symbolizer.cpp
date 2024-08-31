@@ -53,7 +53,7 @@ UISymbols::Parameter UISymbols::Parameters[] = {
     // public
     {ActiveLayout, "activeLayout", "Active Layout", true},
     {ActiveButtons, "activeButtons", "Active Buttons", true},
-    {BindingOverlays, "bindingOverlays", "Binding Overlays", true};
+    {BindingOverlays, "bindingOverlays", "Binding Overlays", true},
     
     {IdNone, nullptr}
 };
@@ -535,7 +535,7 @@ void Symbolizer::installUISymbols()
         s->behavior = BehaviorParameter;
         s->id = (unsigned char)p->id;
         s->level = LevelUI;
-        if (!f->visible)
+        if (!p->visible)
           s->hidden = true;
 
         // !! the assumption right now is that these are all structures

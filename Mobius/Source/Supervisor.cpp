@@ -1718,7 +1718,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
         // no subcomponents are listening on parameters at the moment
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbolActiveLayout: {
+            case UISymbols::ActiveLayout: {
                 // again with the fucking object list iteration
                 int ordinal = action->value;
                 for (int i = 0 ; i < config->layouts.size() ; i++) {
@@ -1739,7 +1739,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 handled = true;
             }
                 break;
-            case UISymbolActiveButtons: {
+            case UISymbols::ActiveButtons: {
                 int ordinal = action->value;
                 for (int i = 0 ; i < config->buttonSets.size() ; i++) {
                     if (i == ordinal) {
@@ -1759,20 +1759,20 @@ bool Supervisor::doUILevelAction(UIAction* action)
     }
     else if (s->behavior == BehaviorFunction) {
         switch (s->id) {
-            case UISymbolReloadScripts: {
+            case UISymbols::ReloadScripts: {
                 menuLoadScripts(false);
                 handled = true;
             }
                 break;
-            case UISymbolReloadSamples: {
+            case UISymbols::ReloadSamples: {
                 menuLoadSamples(false);
                 handled = true;
             }
-            case UISymbolShowPanel: {
+            case UISymbols::ShowPanel: {
                 mainWindow->showPanel(action->arguments);
                 handled = true;
             }
-            case UISymbolMessage: {
+            case UISymbols::Message: {
                 mobiusMessage(juce::String(action->arguments));
                 handled = true;
             }
@@ -1830,7 +1830,7 @@ bool Supervisor::doQuery(Query* query)
         UIConfig* config = getUIConfig();
         int value = -1;
         switch (s->id) {
-            case UISymbolActiveLayout: {
+            case UISymbols::ActiveLayout: {
                 int index = 0;
                 for (auto layout : config->layouts) {
                     if (layout->name == config->activeLayout) {
@@ -1847,7 +1847,7 @@ bool Supervisor::doQuery(Query* query)
             }
                 break;
                 
-            case UISymbolActiveButtons: {
+            case UISymbols::ActiveButtons: {
                 // gag, there has to be a way to generalize this with OwnedArray in the fucking way
                 int index = 0;
                 for (auto set : config->buttonSets) {
@@ -1896,12 +1896,12 @@ juce::String Supervisor::getParameterLabel(Symbol* s, int ordinal)
         // it's one of ours
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbolActiveLayout: {
+            case UISymbols::ActiveLayout: {
                 if (ordinal >= 0 && ordinal < config->layouts.size())
                   label = config->layouts[ordinal]->name;
             }
                 break;
-            case UISymbolActiveButtons: {
+            case UISymbols::ActiveButtons: {
                 if (ordinal >= 0 && ordinal < config->buttonSets.size())
                   label = config->buttonSets[ordinal]->name;
             }
@@ -1934,11 +1934,11 @@ int Supervisor::getParameterMax(Symbol* s)
     if (s->level == LevelUI) {
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbolActiveLayout:
+            case UISymbols::ActiveLayout:
                 max = config->layouts.size() - 1;
                 break;
 
-            case UISymbolActiveButtons:
+            case UISymbols::ActiveButtons:
                 max = config->buttonSets.size() - 1;
                 break;
                 

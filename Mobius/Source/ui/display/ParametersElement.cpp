@@ -286,7 +286,7 @@ bool ParametersElement::doAction(UIAction* action)
 
     switch (action->symbol->id) {
         
-        case UISymbolParameterUp: {
+        case UISymbols::ParameterUp: {
             if (cursor > 0) {
                 cursor--;
                 repaint();
@@ -295,7 +295,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbolParameterDown: {
+        case UISymbols::ParameterDown: {
             if (cursor < (parameters.size() - 1)) {
                 cursor++;
                 repaint();
@@ -304,7 +304,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbolParameterInc: {
+        case UISymbols::ParameterInc: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
             int max = statusArea->getSupervisor()->getParameterMax(ps->symbol);
@@ -322,7 +322,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbolParameterDec: {
+        case UISymbols::ParameterDec: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
             // can assume that the minimum will always be zero

@@ -148,14 +148,14 @@ void MainWindow::mainMenuSelection(int id)
     else if (id >= MainMenu::MenuLayoutOffset && id <= MainMenu::MenuLayoutMax) {
         int layoutOrdinal = id - MainMenu::MenuLayoutOffset;
         UIAction action;
-        action.symbol = symbols->intern(UISymbols::ActiveLayout);
+        action.symbol = symbols->intern("activeLayout");
         action.value = layoutOrdinal;
         supervisor->doAction(&action);
     }
     else if (id >= MainMenu::MenuButtonsOffset && id <= MainMenu::MenuButtonsMax) {
         int buttonsOrdinal = id - MainMenu::MenuButtonsOffset;
         UIAction action;
-        action.symbol = symbols->intern(UISymbols::ActiveButtons);
+        action.symbol = symbols->intern("activeButtons");
         action.value = buttonsOrdinal;
         supervisor->doAction(&action);
     }
