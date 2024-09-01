@@ -45,6 +45,9 @@ class MslScript {
     // use std::unique_ptr here...
     class MslBlock* root = nullptr;
 
+    // this is what root should do
+    std::unique_ptr<MslNode> init = nullptr;
+
     /**
      * Parsed argument declaration for this script.
      * Helps the evaluator deal with scripts as if they were MslFunctions.

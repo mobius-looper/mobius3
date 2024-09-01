@@ -115,6 +115,46 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
 }
 
 /**
+ * Entry point for evaluating the initializer block.
+ *
+ * Based on start() refactor to share more...
+ */
+void MslSession::runInitializer(MslContext* argContext, MslScript* argScript)
+{
+    if (argScript->init != nullptr) {
+        // MslInit doesn't implment the visitor so we have to get it's child block
+        // would be cooler if it did
+        if (argScript->init->children.size() > 0) {
+            MslNode* initblock = argScript->init->children[0];
+        
+            // should be clean out of the pool but make sure
+            pool->free(errors);
+            errors = nullptr;
+            pool->free(rootValue);
+            rootValue = nullptr;
+            pool->freeList(stack);
+            stack = nullptr;
+    
+            script = argScript;
+            stack = pool->allocStack();
+
+            // this is the only real difference between start and initialize
+        
+            stack->node = initblock;
+
+            // todo: if the script had static bindings, restore those here?
+            // !! I see a flaw, static bindings probably need to live across reloads
+            // since we're starting with a new MslScript object they won't
+            //stack->bindings = script->bindings;
+            //script->bindings = nullptr;
+
+            context = argContext;
+            run();
+        }
+    }
+}
+
+/**
  * Name to use in the MslResult and for logging.
  */
 const char* MslSession::getName()

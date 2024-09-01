@@ -303,6 +303,7 @@ class MslEnvironment
     void install(class MslContext* c, class MslScriptUnit* unit, class MslScript* script);
     void unlink(class MslScriptUnit* unit);
     class MslLinkage* addLink(juce::String name, class MslScriptUnit* unit, class MslScript* compilation);
+    void initialize(MslContext* c, MslScript* s);
 
     //MslError* resolve(MslScript* script);
 

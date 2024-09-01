@@ -49,6 +49,10 @@ class MslVisitor
     virtual void mslVisit(class MslSequence* obj) = 0;
     virtual void mslVisit(class MslArgumentNode* obj) = 0;
     virtual void mslVisit(class MslKeyword* obj) = 0;
+    // this one doesn't need a visitor
+    virtual void mslVisit(class MslInit* obj) {
+        (void)obj;
+    }
     
 };
 
@@ -157,6 +161,7 @@ class MslNode
     virtual bool isSequence() {return false;}
     virtual bool isArgument() {return false;}
     virtual bool isKeyword() {return false;}
+    virtual bool isInit() {return false;}
        
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslScript* script) {
         (void)context;
@@ -502,6 +507,26 @@ class MslFunction : public MslNode
         }
         return decl;
     }
+};
+
+/**
+ * An init is basicall a nameless function
+ * Reconsider how this is modeled, a "named block" might
+ * be more generally useful.
+ */
+class MslInit : public MslNode
+{
+  public:
+    MslInit(MslToken& t) : MslNode(t) {}
+    virtual ~MslInit() {}
+
+    bool wantsNode(MslNode* node) override {
+        (void)node;
+        return (children.size() != 1);
+    }
+    
+    bool isInit() override {return true;}
+    void visit(MslVisitor* v) override {(void)v;}
 };
 
 //////////////////////////////////////////////////////////////////////

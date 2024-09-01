@@ -215,6 +215,7 @@ MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::Stri
     else {
         // these don't need to be pooled, but they do need to be destroyed at shutdown
         unit = new MslScriptUnit();
+        unit->path = path;
         units.add(unit);
     }
 
@@ -424,6 +425,7 @@ void MslEnvironment::unlink(MslScriptUnit* unit)
             }
             
             // unresolve the link
+            link->unit = nullptr;
             link->compilation = nullptr;
             link->script = nullptr;
             link->function = nullptr;
@@ -537,7 +539,7 @@ void MslEnvironment::install(MslContext* context, MslScriptUnit* unit, MslScript
         // install everything
         unit->compilation = script;
         scripts.add(script);
-        
+
         if (!script->library) {
             MslLinkage* link = addLink(script->name, unit, script);
             link->script = script;
@@ -549,6 +551,8 @@ void MslEnvironment::install(MslContext* context, MslScriptUnit* unit, MslScript
             link->function = func;
             context->mslExport(link);
         }
+
+        initialize(context, script);
     }
     else {
         // will not be installing this
@@ -556,6 +560,53 @@ void MslEnvironment::install(MslContext* context, MslScriptUnit* unit, MslScript
         // other script is unloaded
         // as it stands, the ScriptClerk will have to load it again
         delete script;
+    }
+}
+
+/**
+ * Immediately after installing, run the initializer.
+ * This may result in errors but it doesn't prevent installation.
+ * Since we can't roll back an initializer side effects it feels better
+ * to leave it in place as would be the case if there was a runtime
+ * error inthe script body.
+ *
+ * The logic here is almost identical to request()
+ * factor out something we can share.
+ */
+void MslEnvironment::initialize(MslContext* c, MslScript* script)
+{
+    if (script->init != nullptr) {
+        MslSession* session = pool.allocSession();
+        session->runInitializer(c, script);
+
+        if (session->isFinished()) {
+
+            if (session->hasErrors()) {
+                // will want options to control the generation of a result since
+                // for actions there could be lot of them
+                (void)makeResult(session, true);
+
+                Trace(1, "MslEnvironment: Initializer returned with errors");
+                // todo: should have a way to convey at least an error flag in the action?
+
+                pool.free(session);
+            }
+            else {
+                // there is nothing meaningful todo with the return value?
+                pool.free(session);
+            }
+        }
+        else if (session->isTransitioning()) {
+            // initializers really shouldn't need a kernel transition?
+            (void)makeResult(session, false);
+            conductor.addTransitioning(c, session);
+            // todo: put something in the request?
+        }
+        else if (session->isWaiting()) {
+            // !! Initializers really shouldn't wait, probably best to cancel it
+            (void)makeResult(session, false);
+            conductor.addWaiting(c, session);
+        }
     }
 }
 

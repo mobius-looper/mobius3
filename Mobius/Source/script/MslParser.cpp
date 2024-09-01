@@ -48,6 +48,9 @@ MslScript* MslParser::parse(juce::String source)
         delete script->root;
         script->root = nullptr;
     }
+    else {
+        sift();
+    }
     
     // shouldn't matter but don't retain pointers to things we're losing control over
     MslScript* result = script;
@@ -118,6 +121,11 @@ void MslParser::sift()
         if (node->isFunction()) {
             script->root->remove(node);
             addFunction(static_cast<MslFunction*>(node));
+        }
+        else if (node->isInit()) {
+            script->root->remove(node);
+            // todo: if there is more than one, accumulate them?
+            script->init.reset(node);
         }
         else {
             index++;
@@ -535,6 +543,9 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     
     else if (t.value == "function" || t.value == "func" || t.value == "proc")
       keyword = new MslFunction(t);
+    
+    else if (t.value == "init")
+      keyword = new MslInit(t);
     
     else if (t.value == "if")
       keyword = new MslIf(t);
