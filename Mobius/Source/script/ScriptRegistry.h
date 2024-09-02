@@ -57,6 +57,9 @@ class ScriptRegistry
         bool old = false;
         // set if this file came from an External
         External* external = nullptr;
+
+        // when loaded the compilation unit from the environment
+        class MslScriptUnit* unit = nullptr;
         
     };
     

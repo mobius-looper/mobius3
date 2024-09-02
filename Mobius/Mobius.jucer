@@ -272,6 +272,10 @@
           <FILE id="JYjnre" name="ScriptEditor.cpp" compile="1" resource="0"
                 file="Source/ui/config/ScriptEditor.cpp"/>
           <FILE id="tWAqbG" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/config/ScriptEditor.h"/>
+          <FILE id="j1KMkU" name="ScriptFileDetails.cpp" compile="1" resource="0"
+                file="Source/ui/config/ScriptFileDetails.cpp"/>
+          <FILE id="R3GD5u" name="ScriptFileDetails.h" compile="0" resource="0"
+                file="Source/ui/config/ScriptFileDetails.h"/>
           <FILE id="spcdSd" name="ScriptLibraryTable.cpp" compile="1" resource="0"
                 file="Source/ui/config/ScriptLibraryTable.cpp"/>
           <FILE id="vcccUb" name="ScriptLibraryTable.h" compile="0" resource="0"

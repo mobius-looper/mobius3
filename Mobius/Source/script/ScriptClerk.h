@@ -64,6 +64,7 @@ class ScriptClerk {
     void reconcile();
     void refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
     void refreshFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
+    void refreshOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
 
     // old code: delete when ready
 #if 0    

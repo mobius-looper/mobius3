@@ -16,15 +16,16 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" name="test"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
-            added="2147483647"/>
+            name="BindingArgTest" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\first.msl" name="MSLHello"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\extscripts\ext1.msl" name="ext1"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\extscripts\subdir\ext2.mos"
-            added="2147483647"/>
+            name="ext2" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\hack.msl" name="hack" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\setbindings.mos" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\setbindings.mos" name="SetBindings"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">
@@ -38,7 +39,7 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\extscript.msl" name="extscript"
-            added="1725299568992"/>
+            added="2147483647"/>
     </Files>
   </Machine>
 </ScriptRegistry>

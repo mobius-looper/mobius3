@@ -8,6 +8,9 @@
 
 #include "../common/ButtonBar.h"
 #include "../../script/ScriptRegistry.h"
+#include "../../script/MslScriptUnit.h"
+
+#include "ScriptFileDetails.h"
 
 /**
  * Represents one file in the library.
@@ -24,6 +27,11 @@ class ScriptLibraryTableFile
     }
 
     ScriptRegistry::File* file = nullptr;
+
+    bool hasErrors() {
+        return (file->unit != nullptr && file->unit->errors.size() > 0);
+    }
+    
 };
 
 class ScriptLibraryTable : public juce::Component,
@@ -31,6 +39,10 @@ class ScriptLibraryTable : public juce::Component,
                            public ButtonBar::Listener
 {
   public:
+
+    const int ColumnName = 1;
+    const int ColumnStatus = 2;
+    const int ColumnPath = 3;
     
     ScriptLibraryTable(class Supervisor* s);
     ~ScriptLibraryTable();
@@ -58,7 +70,9 @@ class ScriptLibraryTable : public juce::Component,
     void paintRowBackground (juce::Graphics& g, int rowNumber, int /*width*/, int /*height*/, bool rowIsSelected) override;
     void paintCell (juce::Graphics& g, int rowNumber, int columnId,
                     int width, int height, bool rowIsSelected) override;
-    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    //void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
+    void selectedRowsChanged(int lastRowSelected);
 
   private:
     class Supervisor* supervisor = nullptr;
@@ -68,7 +82,8 @@ class ScriptLibraryTable : public juce::Component,
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
 
-    int fileColumn = 0;
+    ScriptFileDetails details;
+    
 
     void initTable();
     void initColumns();

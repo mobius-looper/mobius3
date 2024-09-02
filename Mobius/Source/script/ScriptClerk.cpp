@@ -166,6 +166,17 @@ void ScriptClerk::reconcile()
             // leave folder/invalid flag set to the last value
         }
     }
+
+    // remove any previous file entries for files we didn't encounter
+    // on this scan
+    int index = 0;
+    while (index < machine->files.size()) {
+        ScriptRegistry::File* file = machine->files[index];
+        if (file->missing)
+          machine->files.removeObject(file);
+        else
+          index++;
+    }
 }
 
 /**
@@ -187,8 +198,10 @@ void ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile
     sfile->missing = false;
     sfile->external = ext;
     // saves having everyone do the same extension check
-    if (path.endsWithIgnoreCase(".mos"))
-      sfile->old = true;
+    if (path.endsWithIgnoreCase(".mos")) {
+        sfile->old = true;
+        refreshOldFile(sfile, jfile);
+    }
 }
 
 /**
@@ -214,6 +227,35 @@ void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfo
             refreshFile(machine, file, ext);
         }
     }
+}
+
+/**
+ * For an old .mos file, derive the name that will be installed.
+ * We dont' control the parsing of these to the same degree as MSL
+ * files so without some back chatter from the core compiler there
+ * won't be any error status.
+ */
+void ScriptClerk::refreshOldFile(ScriptRegistry::File* sfile, juce::File jfile)
+{
+    juce::String name;
+    
+    juce::String source = jfile.loadFileAsString();
+    int index = source.indexOf("!name");
+    if (index >= 0) {
+        index += 5;
+        int newline = source.indexOf(index, "\n");
+        if (newline > 0)
+          name = source.substring(index, newline);
+        else
+          name = source.substring(index);
+        name = name.trim();
+    }
+
+    if (name.length() == 0)
+      name = jfile.getFileNameWithoutExtension();
+        
+    sfile->name = name;
+    sfile->old = true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -257,16 +299,24 @@ void ScriptClerk::installMsl()
                 else {
                     juce::String source = file.loadFileAsString();
                     MslScriptUnit* unit = env->load(supervisor, fileref->path, source);
+
+                    // remember the loaded unit, this is supposed to be the same
+                    // every time as long as  the path doesn't change, verify this
+                    if (fileref->unit != nullptr && fileref->unit != unit)
+                      Trace(1, "ScriptClerk: Unit is changing, and you don't know what that means");
+                    fileref->unit = unit;
+                    
+                    // name may have changed after parsing
+                    if (unit->name != fileref->name) {
+                        fileref->name = unit->name;
+                        changes++;
+                    }
+
+                    // don't need this now that we have the script library panel
                     if (unit->errors.size() > 0) {
                         // may want to soften this to a warning
                         Trace(1, "ScriptClerk: Errors encountered loading file %s",
                               fileref->path.toUTF8());
-                    }
-
-                    // update the name after parsing
-                    if (unit->name != fileref->name) {
-                        fileref->name = unit->name;
-                        changes++;
                     }
                     
                 }

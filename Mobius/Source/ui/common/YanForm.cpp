@@ -24,6 +24,11 @@ void YanForm::setLabelColor(juce::Colour c)
       label->setColour(juce::Label::textColourId, c);
 }
 
+void YanForm::setFillWidth(bool b)
+{
+    fillWidth = b;
+}
+
 void YanForm::add(class YanField* f)
 {
     fields.add(f);
@@ -121,9 +126,12 @@ void YanForm::resized()
     rowTop = topInset;
     for (auto field : fields) {
         // squash width but not height
-        int fwidth = field->getPreferredWidth();
-        if (fwidth > area.getWidth())
-          fwidth = area.getWidth();
+        int fwidth = area.getWidth();
+        if (!fillWidth) {
+            int pwidth = field->getPreferredWidth();
+            if (pwidth < fwidth)
+              fwidth = pwidth;
+        }
         field->setBounds(area.getX(), rowTop, fwidth, RowHeight);
         rowTop += RowHeight;
     }

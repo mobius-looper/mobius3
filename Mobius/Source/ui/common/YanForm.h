@@ -21,7 +21,8 @@ class YanForm : public juce::Component
     void setTopInset(int size);
     void setLabelCharWidth(int chars);
     void setLabelColor(juce::Colour color);
-
+    void setFillWidth(bool b);
+    
     // fields
     void add(class YanField* f);
 
@@ -44,7 +45,8 @@ class YanForm : public juce::Component
     int topInset = 0;
     int labelCharWidth = 0;
     juce::Colour labelColor;
-
+    bool fillWidth = false;
+    
     int getLabelAreaWidth();
     int getFieldAreaWidth();
     

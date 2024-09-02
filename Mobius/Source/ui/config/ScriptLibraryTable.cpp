@@ -1,3 +1,11 @@
+/**
+ * The library table is read only with the following columns:
+ *
+ *     name - the reference name of the script
+ *     status - enabled, disabled, error
+ *     path - full path name
+ *
+ */
 
 #include <JuceHeader.h>
 
@@ -5,10 +13,14 @@
 #include "../../util/Util.h"
 #include "../../model/ScriptConfig.h"
 #include "../../Supervisor.h"
+
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
-#include "../../script/ScriptRegistry.h"
 
+#include "../../script/ScriptRegistry.h"
+#include "../../script/MslScriptUnit.h"
+
+#include "ScriptFileDetails.h"
 #include "ScriptLibraryTable.h"
 
 ScriptLibraryTable::ScriptLibraryTable(Supervisor* s)
@@ -26,6 +38,8 @@ ScriptLibraryTable::ScriptLibraryTable(Supervisor* s)
     commands.addListener(this);
 
     addAndMakeVisible(commands);
+
+    addChildComponent(details);
 }
 
 ScriptLibraryTable::~ScriptLibraryTable()
@@ -116,8 +130,6 @@ void ScriptLibraryTable::initColumns()
     
     juce::TableHeaderComponent& header = table.getHeader();
 
-    fileColumn = 1;
-    
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
     // minWidth defaults to 30
     // maxWidth to -1
@@ -126,9 +138,9 @@ void ScriptLibraryTable::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("File"), fileColumn,
-                     450, 30, -1,
-                     columnFlags);
+    header.addColumn(juce::String("Name"), ColumnName,  200, 30, -1, columnFlags);
+    header.addColumn(juce::String("Status"), ColumnStatus, 100, 30, -1, columnFlags);
+    // leave the path out here, put it in details
 }
 
 const int CommandButtonGap = 10;
@@ -177,12 +189,17 @@ void ScriptLibraryTable::resized()
  */
 void ScriptLibraryTable::buttonClicked(juce::String name)
 {
-    // is this the best way to compare them?
     if (name == juce::String("Enable")) {
     }
     else if (name == juce::String("Disable")) {
     }
     else if (name == juce::String("Details")) {
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            ScriptLibraryTableFile* tfile = files[row];
+            if (tfile->file != nullptr)
+              details.show(tfile->file);
+        }
     }
 }
 
@@ -192,12 +209,44 @@ void ScriptLibraryTable::buttonClicked(juce::String name)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * For the status column there are some combinations:
+ *
+ * disabled
+ *  This means the file will not have been loaded, HOWEVER
+ *  it could be set after loading failed and there could
+ *  be errors left behind that are interesting.  In that case
+ *  the status could be "disabled/errors".  Really disabled
+ *  should be a checkbox independent of the status
+ *
+ */
 juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
 {
-    (void)columnId;
-    // only one column
-    //juce::String cell = files[rowNumber]->path;
     juce::String cell;
+    
+    ScriptLibraryTableFile* tfile = files[rowNumber];
+    ScriptRegistry::File* file = tfile->file;
+    
+    if (columnId == ColumnName) {
+        cell = file->name;
+    }
+    else if (columnId == ColumnPath) {
+        cell = file->name;
+    }
+    else if (columnId == ColumnStatus) {
+        if (file->disabled)
+          cell = "disabled";
+        else if (file->old) {
+            // don't have any insight into these yet
+            cell = "old";
+        }
+        else if (file->unit == nullptr)
+          cell = "unloaded";
+        else if (file->unit->errors.size() > 0)
+          cell = "errors";
+        else
+          cell = "enabled";
+    }
     
     return cell;
 }
@@ -256,9 +305,9 @@ void ScriptLibraryTable::paintCell(juce::Graphics& g, int rowNumber, int columnI
     // what the tutorial did
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
 
-    // if we didn't find it, make it glow
-    //if (file->missing)
-    //g.setColour(juce::Colours::red);
+    // highlight errors
+    if (columnId == ColumnStatus && file->hasErrors())
+      g.setColour(juce::Colours::red);
     
     // how expensive is this, should we be caching it after the row height changes?
     g.setFont(JuceUtil::getFontf(height * .66f));
@@ -269,8 +318,10 @@ void ScriptLibraryTable::paintCell(juce::Graphics& g, int rowNumber, int columnI
     // same on the right with the width reduction
     // height was expected to be tall enough
     // centeredLeft means "centered vertically but placed on the left hand side"
+
+    juce::String cell = getCellText(rowNumber, columnId);
     
-    g.drawText (file->file->path, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+    g.drawText (cell, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
 
     // this is odd, it fills a little rectangle on the right edge 1 pixel wide with
     // the background color, I'm guessing if the text is long enough, perhaps with elippses,
@@ -287,11 +338,60 @@ void ScriptLibraryTable::paintCell(juce::Graphics& g, int rowNumber, int columnI
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
+// commented out because it doesn't respond to keyboard row selection
+#if 0
 void ScriptLibraryTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+{
+    (void)columnId;
+    (void)event;
+
+    if (details.isVisible()) {
+        ScriptLibraryTableFile* tfile = files[rowNumber];
+        if (details.isVisible()) {
+            details.show(tfile->file);
+        }
+    }
+}
+#endif
+
+/**
+ * Chicken and egg here.
+ * selectedRowsChanged will be called first, then this one.
+ * So when this starts invisible, selectedRowsChanged won't have done anything
+ * and we have to both make it visible and refresh the contents.
+ *
+ * If it is already visible we don't have to do anything. 
+ */
+void ScriptLibraryTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;
     (void)event;
+
+    if (!details.isVisible()) {
+        ScriptLibraryTableFile* tfile = files[rowNumber];
+        if (tfile->file != nullptr)
+          details.show(tfile->file);
+    }
+}
+
+/**
+ * Alternative to cellClicked that picks up selection changes
+ * when you use the arrow keys on the keyboard.
+ */
+void ScriptLibraryTable::selectedRowsChanged(int lastRowSelected)
+{
+    (void)lastRowSelected;
+
+    if (details.isVisible()) {
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            ScriptLibraryTableFile* tfile = files[row];
+            if (details.isVisible()) {
+                details.show(tfile->file);
+            }
+        }
+    }
 }
 
 /****************************************************************************/
