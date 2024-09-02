@@ -322,6 +322,17 @@ void MidiRealizer::advance()
         // can be more accurate.  It returns a float however which complicates things.
         // Explore this someday
         int now = juce::Time::getMillisecondCounter();
+        if (lastMillisecondCounter == 0) {
+            // first time here, one of the pending flags needs to have been set
+            // to force it through the pulse reset logic
+            if (!pendingStartClock && !pendingStart && !pendingContinue && !pendingStop) {
+                Trace(1, "MidiRealizer: Forcing pendingStartClock");
+                pendingStartClock = true;
+            }
+            // in this case delta is 0 since we're just starting the tracking
+            // but we won't use delta since pendingStartClock is on
+            lastMillisecondCounter = now;
+        }
         int delta = now - lastMillisecondCounter;
         lastMillisecondCounter = now;
 
@@ -350,6 +361,9 @@ void MidiRealizer::advance()
             // we sent Start or Continue on the last cycle and now
             // send the first clock which officially starts things running
             // in the external device
+            // also here when sending the first clock after starting the timer
+            // and ManualStart was on, in that case we won't have xxx
+            
             midiManager->sendSync(juce::MidiMessage::midiClock());
             outputQueue.add(MS_CLOCK, now);
             pulseWait = msecsPerPulse;
@@ -370,6 +384,11 @@ void MidiRealizer::advance()
             pendingStartClock = true;
 
             // todo: process pending tempo changes like old code?
+            // todo: spec says there needs to be a 1ms gap between Start
+            // and the first clock, we're not doing that exactly, just waiting
+            // until the next block.  This could result in minor jitter in some
+            // devices, unclear if we need to send the first clock immediately
+            // in some cases
         }
         else if (pendingContinue) {
             if (SyncTraceEnabled)
@@ -452,13 +471,27 @@ void MidiRealizer::advance()
 //
 
 /**
- * Start sending clocks at the current tempo.
+ * Start sending clocks at the current tempo without sending MIDI Start.
  */
 void MidiRealizer::startClocks()
 {
     if (SyncTraceEnabled)
       Trace(2, "MidiRealizer::startClocks");
-    
+
+    if (!running) {
+        // crucial that you set this too so advance() knows to send the
+        // first clock and reset the pulseWidth tracking state
+        pendingStartClock = true;
+        startClocksInternal();
+    }
+}
+
+/**
+ * Once running is set true, advance() will start doing it's thing and it is
+ * crucial that all the little state flags be set up properly.  
+ */
+void MidiRealizer::startClocksInternal()
+{
     if (!running) {
         // once the thread starts, it won't stop unless asked, but
         // "running" controls whether we send clocks
@@ -504,7 +537,7 @@ void MidiRealizer::start()
     }
     else {
         pendingStart = true;
-        startClocks();
+        startClocksInternal();
     }
 }
 
@@ -522,7 +555,7 @@ void MidiRealizer::midiContinue()
     }
     else {
         pendingContinue = true;
-        startClocks();
+        startClocksInternal();
     }
 }
 

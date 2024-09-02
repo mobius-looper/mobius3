@@ -138,6 +138,8 @@
     <Button action="TrackGroup" arguments="-1"/>
     <Button action="Preset:Default"/>
     <Button action="SetBindings"/>
+    <Button action="MidiStop"/>
+    <Button action="MidiStart"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

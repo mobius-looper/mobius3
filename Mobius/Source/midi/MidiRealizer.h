@@ -1,6 +1,10 @@
 /**
  * An implementation of MobiusMidiTransport that provides MIDI synchronization
  * services to the Mobius engine.
+ *
+ * todo: generalize this so that it can be packaged as a standalone MIDI services
+ * utility for other plugins.  Part of a synchronization library that also pulls
+ * in HostSyncState and possibly parts of what is now mobius/core/SyncTaracker
  */
 
 #pragma once
@@ -104,6 +108,8 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
     void setTempoNow(float newTempo);
     
   private:
+    
+    void startClocksInternal();
 
     class Supervisor* supervisor = nullptr;
     class MidiManager* midiManager = nullptr;

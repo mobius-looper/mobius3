@@ -1,4 +1,8 @@
 /*
+ * todo: the mapping between core EventType and this one for exposure
+ * to the UI is too fragile.  The names MUST match exactly or Mapper
+ * will leave a null type in the MobiusState
+ *
  * System constants that define the types of events
  * that can be scheduled internally on the loop timeline
  * and returned in the MobiusState.
@@ -156,7 +160,7 @@ UIEventType UIRealignEventObj {"Realign", "Rl"};
 UIEventType* UIRealignEventType = &UIRealignEventObj;
 
 // probably only in scripts, but might be nice to see
-UIEventType UIMidiStartEventObj {"MIDIStart", "Ms"};
+UIEventType UIMidiStartEventObj {"MidiStart", "Ms"};
 UIEventType* UIMidiStartEventType = &UIMidiStartEventObj;
 
 // these are common and really need an icon
@@ -196,11 +200,7 @@ UIEventType* UIMoveEventType = &UIMoveEventObj;
 UIEventType UIShuffleEventObj {"Shuffle", "Sh"};
 UIEventType* UIShuffleEventType = &UIShuffleEventObj;
 
-// I think just somethign I use for debugging
-UIEventType UISyncCheckEventObj {"SyncCheck", "?"};
-UIEventType* UISyncCheckEventType = &UISyncCheckEventObj;
-
-UIEventType UIMidiOutEventObj {"MIDIOut", "Mo"};
+UIEventType UIMidiOutEventObj {"MidiOut", "Mo"};
 UIEventType* UIMidiOutEventType = &UIMidiOutEventObj;
 
 /****************************************************************************/

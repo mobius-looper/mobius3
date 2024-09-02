@@ -44,7 +44,14 @@
  */
 UIEventType* MapEventType(EventType* src)
 {
-    return (src != nullptr) ? UIEventType::find(src->name) : nullptr;
+    UIEventType* uit = nullptr;
+    if (src != nullptr) {
+        uit = UIEventType::find(src->name);
+        if (uit == nullptr) {
+            Trace(1, "Mapper::MapEventType Unable to map type %s", src->name);
+        }
+    }
+    return uit;
 }
 
 /**

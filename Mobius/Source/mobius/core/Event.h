@@ -167,7 +167,6 @@ extern EventType* SyncEvent;
 extern EventType* SlipEvent;
 extern EventType* MoveEvent;
 extern EventType* ShuffleEvent;
-extern EventType* SyncCheckEvent;
 extern EventType* MidiOutEvent;
 
 /****************************************************************************

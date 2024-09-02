@@ -92,7 +92,6 @@ extern UIEventType* UISyncEventType;
 extern UIEventType* UISlipEventType;
 extern UIEventType* UIMoveEventType;
 extern UIEventType* UIShuffleEventType;
-extern UIEventType* UISyncCheckEventType;
 extern UIEventType* UIMidiOutEventType;
 
 /****************************************************************************/

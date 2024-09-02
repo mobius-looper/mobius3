@@ -234,7 +234,10 @@ void LoopMeterElement::paint(juce::Graphics& g)
             
             // full names look better
             // const char* symbol = ev->type->timelineSymbol;
-            const char* name = ev->type->getName();
+            const char* name = nullptr;
+            if (ev->type != nullptr)
+              name = ev->type->getName();
+            
             // if there is an argument, include it, for loop switch this will
             // be the loop number, what other event types use arguments?  may
             // want this only for switch events
