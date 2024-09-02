@@ -48,6 +48,7 @@ MainWindow::MainWindow(Supervisor* super) : supervisor(super), display(this), al
 
 MainWindow::~MainWindow()
 {
+    closeWindows();
 }
 
 /**
@@ -307,6 +308,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::TraceLog);
                 break;
                 
+            case MainMenu::ScriptEditor:
+                showScriptEditor();
+                break;
+                
             case MainMenu::UpgradeConfig:
                 panelFactory.show(PanelFactory::Upgrade);
                 break;
@@ -439,6 +444,74 @@ void MainWindow::filesDropped(const juce::StringArray& files, int x, int y)
     
     AudioClerk* clerk = supervisor->getAudioClerk();
     clerk->filesDropped(files, 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Secondary Windows
+//
+//////////////////////////////////////////////////////////////////////
+
+void MainWindow::closeWindows()
+{
+    scriptEditor.deleteAndZero();
+}
+
+void MainWindow::showScriptEditor()
+{
+    if (scriptEditor == nullptr) {
+        ScriptWindow* w = new ScriptWindow ("Script Editor", juce::Colours::black,
+                                            juce::DocumentWindow::allButtons);
+        scriptEditor = juce::Component::SafePointer<juce::Component>(w);
+
+        // bounds of the entire display, reduced by a comfortable edge
+        juce::Rectangle<int> displayArea = getDisplayArea();
+        Trace(2, "MainWindow: Display area %d %d %d %d",
+              displayArea.getX(), displayArea.getY(), displayArea.getWidth(), displayArea.getHeight());
+        
+        // demo uses a RectanglePlacement to more easily orient things the top left
+        // or bottom right corners, this seems useful but unnecessary if you always
+        // want it top left, UNLESS it's possible for the display area to have an origin
+        // other than 0,0, use it anyway as an example
+
+        // the size you want the window to be
+        juce::Rectangle<int> area (0, 20, 300, 400);
+
+        // from the demo, orient it relative to the display area
+        juce::RectanglePlacement placement (juce::RectanglePlacement::xLeft
+                                            | juce::RectanglePlacement::yTop
+                                            | juce::RectanglePlacement::doNotResize);
+
+        // apply the desired size within the display area
+        auto result = placement.appliedTo (area, displayArea);
+
+        // play around with native vs. non-native window adornment
+        // kinda liking the way Juce title bars look, not thrilled with
+        // the corner drag widget
+        bool native = false;
+        
+        // it appears that when you ask for a native title bar, it is displayed ABOVE
+        // the origin of the window area, even the demo clipped that
+        // 20 was a guess, it still looks closer to the top than the non-native title bar
+        // might be a way to query what the native height actually is
+        if (native)
+          result.setY(result.getY() + 20);
+        
+        Trace(2, "MainWindow: Placement %d %d %d %d",
+              result.getX(), result.getY(), result.getWidth(), result.getHeight());
+        
+        w->setBounds (result);
+
+        // second arg is useBottomRightCornerResizer
+        w->setResizable (true, !native);
+        w->setUsingNativeTitleBar (native);
+        w->setVisible (true);
+    }
+}
+
+juce::Rectangle<int> MainWindow::getDisplayArea()
+{
+    return juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->userArea.reduced (20);
 }
 
 /****************************************************************************/

@@ -77,7 +77,14 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     
   private:
 
-    class Supervisor* supervisor;
+    class Supervisor* supervisor = nullptr;
+
+    // demo used SafePointer because the child windows deleted themselves
+    // don't necessarily need that here, but it's good to be safe
+    juce::Component::SafePointer<juce::Component> scriptEditor;
+    void showScriptEditor();
+    void closeWindows();
+    juce::Rectangle<int> getDisplayArea();
 
     MainMenu menu {this};
     MobiusDisplay display;
@@ -89,3 +96,27 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 #endif
     
 };    
+
+class ScriptWindow final : public juce::DocumentWindow
+{
+  public:
+    ScriptWindow (const juce::String& name, juce::Colour backgroundColour, int buttonsNeeded)
+        : DocumentWindow (name, backgroundColour, buttonsNeeded)
+    {
+    }
+
+    ~ScriptWindow()
+    {
+    }
+
+    void closeButtonPressed()
+    {
+        // this is what the demos do, but for me I think I want to keep it alive
+        // holding state 
+        delete this;
+    }
+
+private:
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScriptWindow)
+};

@@ -361,6 +361,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(SymbolTable, "Symbol Table");
         menu.addItem(Console, "Console");
         menu.addItem(TraceLog, "Trace Log");
+        menu.addItem(ScriptEditor, "Script Editor");
         // this never did work right
         //menu.addItem(DiagnosticWindow, "Diagnostic Window");
     }

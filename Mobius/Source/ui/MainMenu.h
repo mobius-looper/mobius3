@@ -123,7 +123,8 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         DiagnosticWindow,
         UpgradeConfig,
         Console,
-        TraceLog
+        TraceLog,
+        ScriptEditor
         
         };
     
