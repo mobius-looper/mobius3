@@ -11,6 +11,7 @@
 
 #include "ConfigEditor.h"
 #include "ScriptTable.h"
+#include "ScriptLibraryTable.h"
 
 class ScriptEditor : public ConfigEditor
 {
@@ -29,6 +30,9 @@ class ScriptEditor : public ConfigEditor
 
   private:
 
-    ScriptTable table;
+    BasicTabs tabs;
+    ScriptLibraryTable library;
+    ScriptTable externals;
 
+    
 };

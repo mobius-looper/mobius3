@@ -13,10 +13,14 @@
 
 #include "ScriptEditor.h"
 
-ScriptEditor::ScriptEditor(Supervisor* s) : ConfigEditor(s), table(s)
+ScriptEditor::ScriptEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s)
 {
     setName("ScriptEditor");
-    addAndMakeVisible(table);
+
+    tabs.add("Library", &library);
+    tabs.add("External Files", &externals);
+    
+    addAndMakeVisible(&tabs);
 }
 
 ScriptEditor::~ScriptEditor()
@@ -31,15 +35,19 @@ void ScriptEditor::load()
     ScriptConfig* sconfig = clerk->getEditorScriptConfig();
     if (sconfig != nullptr) {
         // this makes it's own copy
-        table.setScripts(sconfig);
+        externals.setScripts(sconfig);
     }
+
+    ScriptRegistry* reg = clerk->getRegistry();
+    library.load(reg);
+    
     // this was derived from the ScriptRegistry and must be freed
     delete sconfig;
 }
 
 void ScriptEditor::save()
 {
-    ScriptConfig* newConfig = table.capture();
+    ScriptConfig* newConfig = externals.capture();
 
     // this no longer goes back into MobiusConfig
     ScriptClerk* clerk = supervisor->getScriptClerk();
@@ -53,7 +61,7 @@ void ScriptEditor::save()
 
 void ScriptEditor::cancel()
 {
-    table.clear();
+    externals.clear();
 }
 
 void ScriptEditor::resized()
@@ -67,10 +75,7 @@ void ScriptEditor::resized()
     area.removeFromLeft(10);
     area.removeFromRight(20);
 
-    // obey the table's default height
-    area.setHeight(table.getPreferredHeight());
-    
-    table.setBounds(area);
+    tabs.setBounds(area);
 }    
 
 /****************************************************************************/
