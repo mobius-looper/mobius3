@@ -24,7 +24,7 @@
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
-#include "ScriptWindow.h"
+#include "script/ScriptWindow.h"
 
 #include "MainWindow.h"
 

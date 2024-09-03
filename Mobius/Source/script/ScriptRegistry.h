@@ -72,7 +72,9 @@ class ScriptRegistry
                     (unit != nullptr &&
                      (unit->errors.size() > 0 || unit->collisions.size() > 0)));
         }
-        
+
+        // make a copy for the ScriptEditor
+        File* cloneForEditor();
         
     };
     

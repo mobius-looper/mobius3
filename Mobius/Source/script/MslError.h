@@ -24,6 +24,7 @@ class MslError
   public:
 
     MslError();
+    MslError(MslError* src);
     // constructor used by the parser which likes juce::String
     MslError(int l, int c, juce::String t, juce::String d);
     // constructor used by the linker

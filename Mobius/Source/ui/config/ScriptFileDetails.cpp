@@ -11,7 +11,7 @@
 #include "../../script/MslScriptUnit.h"
 #include "../../script/MslError.h"
 
-#include "../ScriptDetails.h"
+#include "../script/ScriptDetails.h"
 
 #include "ScriptFileDetails.h"
 

@@ -10,6 +10,15 @@ MslError::MslError()
     init();
 }
 
+MslError::MslError(MslError* src)
+{
+    init();
+    line = src->line;
+    column = src->column;
+    setToken(src->token);
+    setDetails(src->details);
+}
+
 /**
  * Constructor used by the parser.
  */

@@ -3,8 +3,8 @@
 
 #include "../../util/Trace.h"
 #include "../../script/ScriptRegistry.h"
+#include "../JuceUtil.h"
 
-#include "JuceUtil.h"
 #include "ScriptDetails.h"
 #include "ScriptWindow.h"
 
@@ -34,8 +34,8 @@ ScriptWindow::ScriptWindow() :
 
     // play around with native vs. non-native window adornment
     // kinda liking the way Juce title bars look, not thrilled with
-    // the corner drag widget
-    bool native = false;
+    // the corner drag widget, leave as native to match the main window
+    bool native = true;
         
     // it appears that when you ask for a native title bar, it is displayed ABOVE
     // the origin of the window area, even the demo clipped that
@@ -54,7 +54,9 @@ ScriptWindow::ScriptWindow() :
     setUsingNativeTitleBar (native);
     //setVisible (true);
 
-    setContentOwned(&content, false);
+    // the demo seems to be wrong, it calls setContentOwned on a member
+    // ColorSelector object, why?  one forum post also agrees it is wrong
+    setContentNonOwned(&content, false);
 
     juce::Rectangle<int> contentArea = getLocalBounds();
     // skip over the title bar, must be a better way to get this

@@ -7,7 +7,7 @@
 #include <JuceHeader.h>
 
 #include "../common/BasicButtonRow.h"
-#include "../ScriptDetails.h"
+#include "../script/ScriptDetails.h"
 
 class ScriptFileDetails : public juce::Component, public juce::Button::Listener
 {

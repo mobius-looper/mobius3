@@ -186,6 +186,9 @@
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
         <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
+          <FILE id="kozMp5" name="CustomEditor.cpp" compile="1" resource="0"
+                file="Source/ui/script/CustomEditor.cpp"/>
+          <FILE id="WOsMf3" name="CustomEditor.h" compile="0" resource="0" file="Source/ui/script/CustomEditor.h"/>
           <FILE id="zBRWmp" name="ScriptDetails.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptDetails.cpp"/>
           <FILE id="cad45K" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/script/ScriptDetails.h"/>
@@ -280,9 +283,10 @@
           <FILE id="ieBZsG" name="SampleEditor.h" compile="0" resource="0" file="Source/ui/config/SampleEditor.h"/>
           <FILE id="d9dR5l" name="SampleTable.cpp" compile="1" resource="0" file="Source/ui/config/SampleTable.cpp"/>
           <FILE id="zM7JM5" name="SampleTable.h" compile="0" resource="0" file="Source/ui/config/SampleTable.h"/>
-          <FILE id="JYjnre" name="ScriptEditor.cpp" compile="1" resource="0"
-                file="Source/ui/config/ScriptEditor.cpp"/>
-          <FILE id="tWAqbG" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/config/ScriptEditor.h"/>
+          <FILE id="iQJouz" name="ScriptConfigEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/ScriptConfigEditor.cpp"/>
+          <FILE id="E0ZfGU" name="ScriptConfigEditor.h" compile="0" resource="0"
+                file="Source/ui/config/ScriptConfigEditor.h"/>
           <FILE id="j1KMkU" name="ScriptFileDetails.cpp" compile="1" resource="0"
                 file="Source/ui/config/ScriptFileDetails.cpp"/>
           <FILE id="R3GD5u" name="ScriptFileDetails.h" compile="0" resource="0"
