@@ -41,10 +41,10 @@
     shuffleMode='reverse'
     slipMode='subCycle'
     soundCopyMode='play'
-    subcycles='1'
+    subcycles='4'
     switchDuration='permanent'
     switchLocation='follow'
-    switchQuantize='off'
+    switchQuantize='loop'
     timeCopyMode='play'
     trackLeaveAction='none'
     windowEdgeAmount='1'
@@ -150,7 +150,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='out'
+      syncSource='host'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -160,7 +160,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='none'
+      syncSource='track'
       trackSyncUnit='default'/>
     <SetupTrack
       input='127'

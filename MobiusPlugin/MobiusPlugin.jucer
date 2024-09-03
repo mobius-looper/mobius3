@@ -243,6 +243,12 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="ZM3UBq" name="ScriptDetails.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/ScriptDetails.cpp"/>
+        <FILE id="Vyvr3u" name="ScriptDetails.h" compile="0" resource="0" file="../Mobius/Source/ui/ScriptDetails.h"/>
+        <FILE id="yQGFa1" name="ScriptWindow.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/ScriptWindow.cpp"/>
+        <FILE id="VFHhyH" name="ScriptWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/ScriptWindow.h"/>
         <FILE id="TytWBR" name="BindingSummaryPanel.cpp" compile="1" resource="0"
               file="../Mobius/Source/ui/BindingSummaryPanel.cpp"/>
         <FILE id="A9BMMy" name="BindingSummaryPanel.h" compile="0" resource="0"
@@ -331,6 +337,14 @@
           <FILE id="dJXJm1" name="ScriptEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/ScriptEditor.cpp"/>
           <FILE id="KPZdQO" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptEditor.h"/>
+          <FILE id="St4eI4" name="ScriptFileDetails.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptFileDetails.cpp"/>
+          <FILE id="aEPhHP" name="ScriptFileDetails.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ScriptFileDetails.h"/>
+          <FILE id="ks7jD5" name="ScriptLibraryTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptLibraryTable.cpp"/>
+          <FILE id="wdHVPs" name="ScriptLibraryTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ScriptLibraryTable.h"/>
           <FILE id="IxoqUK" name="ScriptTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ScriptTable.cpp"/>
           <FILE id="TiRXAt" name="ScriptTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptTable.h"/>
           <FILE id="YImupE" name="SetupEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupEditor.cpp"/>
