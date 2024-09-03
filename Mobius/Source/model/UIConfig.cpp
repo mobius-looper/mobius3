@@ -184,6 +184,108 @@ bool UIConfig::getBool(juce::String name)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Locations
+//
+//////////////////////////////////////////////////////////////////////
+
+UILocation::UILocation(juce::String csv)
+{
+    fromCsv(csv);
+}
+
+UILocation::UILocation(juce::Component* c)
+{
+    if (c != nullptr) {
+        x = c->getX();
+        y = c->getY();
+        width = c->getWidth();
+        height = c->getHeight();
+    }
+}
+
+juce::String UILocation::toCsv()
+{
+    juce::StringArray a;
+    a.add(juce::String(x));
+    a.add(juce::String(y));
+    a.add(juce::String(width));
+    a.add(juce::String(height));
+    return a.joinIntoString(",");
+}
+
+void UILocation::fromCsv(juce::String csv)
+{
+    x = 0;
+    y = 0;
+    width = 0;
+    height = 0;
+    
+    juce::StringArray list = juce::StringArray::fromTokens(csv, ",", "");
+    if (list.size() == 4) {
+        x = list[0].getIntValue();
+        y = list[1].getIntValue();
+        width = list[2].getIntValue();
+        height = list[3].getIntValue();
+    }
+    else if (list.size() > 0) {
+        Trace(1, "UIConfig: Malformed location string %s", csv.toUTF8());
+    }
+}
+
+/**
+ * Carefully adjust bounds for a component.  Only set the fields
+ * we know are interesting.
+ */
+void UILocation::adjustBounds(juce::Rectangle<int>& bounds)
+{
+    if (x > 0) bounds.setX(x);
+    if (y > 0) bounds.setY(y);
+    if (width > 0) bounds.setWidth(width);
+    if (height > 0) bounds.setHeight(height);
+}
+    
+/**
+ * We started storing just the width and height and the window
+ * was centered on the display.  Unclear how much control over plugin
+ * editor windows there was.
+ */
+UILocation UIConfig::getWindowLocation()
+{
+    UILocation loc;
+    loc.x = 0;
+    loc.y = 0;
+    loc.width = windowWidth;
+    loc.height = windowHeight;
+    return loc;
+}
+
+/**
+ * This one is stored in a new way in properties as a csv which
+ * is easier.
+ */
+UILocation UIConfig::getScriptWindowLocation()
+{
+    return UILocation(get("scriptWindow"));
+}
+
+void UIConfig::captureLocations(juce::Component* main, juce::Component* script)
+{
+    // todo: use the old properties for awhile
+    windowWidth = main->getWidth();
+    windowHeight = main->getHeight();
+
+    // ! ahh the problem here is that MainWindow is not a DocumentWindow
+    // so the origin is always 0,0, need to locate the containing root window
+    // this might be awkward with plugineditors
+    put("mainWindow", UILocation(main).toCsv());
+
+    // this is commonly not open so don't reset to zero
+    if (script != nullptr)
+      put("scriptWindow", UILocation(script).toCsv());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // DisplayLayout
 //
 //////////////////////////////////////////////////////////////////////

@@ -145,6 +145,8 @@
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
+    <Property name="mainWindow" value="0,0,1200,896"/>
+    <Property name="scriptWindow" value="21,218,651,930"/>
     <Property name="trackRows" value="1"/>
     <Property name="x" value="value of x"/>
     <Property name="y" value="42"/>

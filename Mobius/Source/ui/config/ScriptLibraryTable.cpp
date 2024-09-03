@@ -374,11 +374,18 @@ void ScriptLibraryTable::cellDoubleClicked(int rowNumber, int columnId, const ju
     (void)columnId;
     (void)event;
 
+    // old way, show details
+    /*
     if (!details.isVisible()) {
         ScriptLibraryTableFile* tfile = files[rowNumber];
         if (tfile->file != nullptr)
           details.show(tfile->file);
     }
+    */
+    // new way, just bring up the editor already
+    ScriptLibraryTableFile* tfile = files[rowNumber];
+    if (tfile->file != nullptr)
+      supervisor->getMainWindow()->editScript(tfile->file);
 }
 
 /**

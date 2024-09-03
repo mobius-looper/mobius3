@@ -185,12 +185,17 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
-        <FILE id="JkuzGM" name="ScriptDetails.cpp" compile="1" resource="0"
-              file="Source/ui/ScriptDetails.cpp"/>
-        <FILE id="Ozg8Y3" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/ScriptDetails.h"/>
-        <FILE id="f4OiC1" name="ScriptWindow.cpp" compile="1" resource="0"
-              file="Source/ui/ScriptWindow.cpp"/>
-        <FILE id="cYCajP" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/ScriptWindow.h"/>
+        <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
+          <FILE id="zBRWmp" name="ScriptDetails.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptDetails.cpp"/>
+          <FILE id="cad45K" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/script/ScriptDetails.h"/>
+          <FILE id="DEj2yw" name="ScriptEditor.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptEditor.cpp"/>
+          <FILE id="rTX48Z" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/script/ScriptEditor.h"/>
+          <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptWindow.cpp"/>
+          <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>
+        </GROUP>
         <FILE id="LOuXbq" name="BindingSummaryPanel.cpp" compile="1" resource="0"
               file="Source/ui/BindingSummaryPanel.cpp"/>
         <FILE id="giC76s" name="BindingSummaryPanel.h" compile="0" resource="0"

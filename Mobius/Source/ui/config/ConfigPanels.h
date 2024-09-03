@@ -16,7 +16,7 @@
 #include "GlobalEditor.h"
 #include "PresetEditor.h"
 #include "SetupEditor.h"
-#include "ScriptEditor.h"
+#include "ScriptConfigEditor.h"
 #include "SampleEditor.h"
 #include "KeyboardEditor.h"
 #include "MidiEditor.h"
@@ -38,7 +38,7 @@ class ScriptPanel : public ConfigPanel
     ~ScriptPanel() {}
  
   private:
-    ScriptEditor editor;
+    ScriptConfigEditor editor;
 };
 
 class SamplePanel : public ConfigPanel

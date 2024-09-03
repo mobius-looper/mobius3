@@ -15,6 +15,9 @@ class ScriptDetails : public juce::Component
     ScriptDetails();
     ~ScriptDetails();
 
+    void setIncludeAll(bool b);
+    int getPreferredHeight();
+    
     void resized() override;
     void paint(juce::Graphics& g) override;
 
@@ -22,6 +25,7 @@ class ScriptDetails : public juce::Component
 
   private:
 
+    bool includeAll = false;
     class ScriptRegistry::File* regfile = nullptr;
     
     void paintDetail(juce::Graphics& g, juce::Rectangle<int>& area,

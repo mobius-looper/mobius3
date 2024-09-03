@@ -372,10 +372,8 @@ void MainWindow::mainMenuSelection(int id)
  */
 void MainWindow::captureConfiguration(UIConfig* config)
 {
-    config->windowWidth = getWidth();
-    config->windowHeight = getHeight();
-    // todo: should we save the screen origin X/Y?
-    
+    config->captureLocations(this, scriptEditor);
+
     display.captureConfiguration(config);
 }
 
@@ -463,6 +461,12 @@ void MainWindow::showScriptEditor()
     if (scriptEditor == nullptr) {
         ScriptWindow* w = new ScriptWindow();
         scriptEditor = juce::Component::SafePointer<ScriptWindow>(w);
+        
+        UIConfig* config = supervisor->getUIConfig();
+        UILocation loc = config->getScriptWindowLocation();
+        juce::Rectangle<int> bounds = scriptEditor->getBounds();
+        loc.adjustBounds(bounds);
+        scriptEditor->setBounds(bounds);
     }
 
     scriptEditor->setVisible(true);

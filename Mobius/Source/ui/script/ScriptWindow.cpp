@@ -1,8 +1,8 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../script/ScriptRegistry.h"
+#include "../../util/Trace.h"
+#include "../../script/ScriptRegistry.h"
 
 #include "JuceUtil.h"
 #include "ScriptDetails.h"
@@ -99,15 +99,8 @@ void ScriptWindow::load(ScriptRegistry::File* file)
 
 ScriptWindowContent::ScriptWindowContent()
 {
-    addAndMakeVisible(details);
-
-    editor.setMultiLine(true);
-    editor.setReadOnly(false);
-    editor.setScrollbarsShown(true);
-    editor.setCaretVisible(true);
     addAndMakeVisible(editor);
 }
-
 
 ScriptWindowContent::~ScriptWindowContent()
 {
@@ -115,23 +108,12 @@ ScriptWindowContent::~ScriptWindowContent()
 
 void ScriptWindowContent::load(ScriptRegistry::File* file)
 {
-    details.load(file);
-
-    if (file->unit != nullptr) {
-        editor.setText(file->unit->source);
-    }
-    else if (file->old) {
-        juce::File f (file->path);
-        juce::String source = f.loadFileAsString();
-        editor.setText(source);
-    }
+    editor.load(file);
 }
 
 void ScriptWindowContent::resized()
 {
-    juce::Rectangle<int> area = getLocalBounds();
-    details.setBounds(area.removeFromTop(200));
-    editor.setBounds(area);
+    editor.setBounds(getLocalBounds());
 }
 
 /****************************************************************************/

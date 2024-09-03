@@ -263,6 +263,30 @@ class ButtonSet
 };
 
 /**
+ * Transient object used to consistently convey positions of things
+ * Initially for the main window and script window.
+ */
+class UILocation {
+  public:
+
+    UILocation() {}
+    UILocation(juce::String csv);
+    UILocation(juce::Component* c);
+    ~UILocation() {}
+
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+
+    juce::String toCsv();
+    void fromCsv(juce::String csv);
+
+    void adjustBounds(juce::Rectangle<int>& bounds);
+    
+};
+
+/**
  * The UIConfig is the root object that wraps all the other display-related
  * objects and is stored in the uiconfig.xml file.
  */
@@ -277,6 +301,11 @@ class UIConfig
     int windowWidth = 0;
     int windowHeight = 0;
 
+    // new interface for this
+    UILocation getWindowLocation();
+    UILocation getScriptWindowLocation();
+    void captureLocations(juce::Component* main, juce::Component* script);
+    
     // the definitions of the elements that can be displayed
     juce::OwnedArray<DisplayElementDefinition> definitions;
 

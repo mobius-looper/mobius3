@@ -13,12 +13,12 @@
 #include "ScriptTable.h"
 #include "ScriptLibraryTable.h"
 
-class ScriptEditor : public ConfigEditor
+class ScriptConfigEditor : public ConfigEditor
 {
   public:
     
-    ScriptEditor(class Supervisor* s);
-    ~ScriptEditor();
+    ScriptConfigEditor(class Supervisor* s);
+    ~ScriptConfigEditor();
 
     juce::String getTitle() override {return "Scripts";}
     

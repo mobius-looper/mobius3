@@ -11,11 +11,11 @@
 #include "../../script/ScriptClerk.h"
 #include "../../model/MobiusConfig.h"
 
-#include "ScriptEditor.h"
+#include "ScriptConfigEditor.h"
 
-ScriptEditor::ScriptEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s)
+ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s)
 {
-    setName("ScriptEditor");
+    setName("ScriptConfigEditor");
 
     tabs.add("Library", &library);
     tabs.add("External Files", &externals);
@@ -23,11 +23,11 @@ ScriptEditor::ScriptEditor(Supervisor* s) : ConfigEditor(s), library(s), externa
     addAndMakeVisible(&tabs);
 }
 
-ScriptEditor::~ScriptEditor()
+ScriptConfigEditor::~ScriptConfigEditor()
 {
 }
 
-void ScriptEditor::load()
+void ScriptConfigEditor::load()
 {
     // todo: until this is retooled to work without ScriptConfig
     // we have to synthesize one from the new ScriptRegistry
@@ -45,7 +45,7 @@ void ScriptEditor::load()
     delete sconfig;
 }
 
-void ScriptEditor::save()
+void ScriptConfigEditor::save()
 {
     ScriptConfig* newConfig = externals.capture();
 
@@ -59,12 +59,12 @@ void ScriptEditor::save()
     supervisor->menuLoadScripts();
 }
 
-void ScriptEditor::cancel()
+void ScriptConfigEditor::cancel()
 {
     externals.clear();
 }
 
-void ScriptEditor::resized()
+void ScriptConfigEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
