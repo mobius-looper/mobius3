@@ -30,5 +30,9 @@ class JuceUtil
     static int getCenterLeft(juce::Component* container, juce::Component* c);
     static int getCenterTop(juce::Component* container, juce::Component* c);
     static void centerInParent(juce::Component* c);
+
+    // popup windows
+
+    static juce::Rectangle<int> getDisplayArea();
     
 };

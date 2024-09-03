@@ -149,6 +149,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     juce::AudioDeviceManager* getAudioDeviceManager();
 
+    class MainWindow* getMainWindow();
+    
     class KeyTracker* getKeyTracker() {
         return &keyTracker;
     }

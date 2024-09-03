@@ -237,9 +237,6 @@ void MobiusShell::initialize(MobiusConfig* config)
 
     MobiusConfig* kernelCopy = config->clone();
     kernel.initialize(container, kernelCopy);
-
-    // load the initial set of scripts, this may also add symbols
-    initializeScripts();
 }
 
 /**
@@ -1228,19 +1225,6 @@ void MobiusShell::installSymbols(SampleManager* manager)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Load the scripts during the initialize() phase.  Unlike samples
- * we always want these immediately so don't require a user action.
- * Here we're allowed to slam in the new Scriptarian without
- * going through the KernelCommunicator.
- */
-void MobiusShell::initializeScripts()
-{
-    ScriptConfig* sconfig = configuration->getScriptConfig();
-    Scriptarian* scriptarian =  compileScripts(sconfig);
-    sendScripts(scriptarian, true);
-}
-
-/**
  * Install a set of scripts provided by the UI.
  * 
  * This is a relatively heavy thing to be doing in the UI thread and requires
@@ -1284,69 +1268,17 @@ void MobiusShell::installScripts(ScriptConfig* config)
  *      side effects on the Mobius object it is given, it is only
  *      allowed to use it to look up static Function and Parameter
  *      definitions
+ *
+ * The ScriptConfig is now allowed to be bi-directional with error messages
+ * left in the ScriptRefs.  It is safe to modify, it no longer comes out of
+ * MobiusConfig.
  */
 Scriptarian* MobiusShell::compileScripts(ScriptConfig* src)
 {
-    // expand directories into the contained files before
-    // calling Scriptarian
-    // note: ScriptRef has flags so use the copy constructor when
-    // cloning it to get them
-
-    // UPDATE: With the introduction of ScriptRegistry, none of this
-    // file intelligence is necessary.  The ScriptConfig will contain a flat
-    // list of properly filtered .mos files
-    
-    ScriptConfig* expanded = new ScriptConfig();
-    if (src != nullptr) {
-        ScriptRef* ref = src->getScripts();
-        while (ref != nullptr) {
-            const char* cpath = ref->getFile();
-
-            // ignore .msl files until we retool Supervisor to
-            // pass down the bifurcated ScriptConfig
-            if (!EndsWith(cpath, ".msl")) {
-            
-                juce::File f (cpath);
-                if (!f.isDirectory()) {
-                    ScriptRef* copy = new ScriptRef(ref);
-                    expanded->add(copy);
-                }
-                else {
-                    // todo: I suppose if the directory ref had test=true
-                    // or any other flag set, then all of the child files
-                    // should too?
-                    int types = juce::File::TypesOfFileToFind::findFiles;
-                    juce::String pattern ("*.mos");
-                    juce::Array<juce::File> files =
-                        f.findChildFiles(types,
-                                         // searchRecursively   
-                                         false,
-                                         pattern,
-                                         // followSymlinks
-                                         juce::File::FollowSymlinks::no);
-                    for (auto file : files) {
-                        // hmm, I had a case where a renamed .mos file left
-                        // an emacs save file with the .mos~ extension and this
-                        // passed the *.mos filter, seems like a bug
-                        juce::String path = file.getFullPathName();
-                        if (path.endsWithIgnoreCase(".mos")) {
-                            ScriptRef* copy = new ScriptRef(path.toUTF8());
-                            expanded->add(copy);
-                        }
-                    }
-                }
-            }
-            
-            ref = ref->getNext();
-        }
-    }
-    
     // dig deep and get the bad boy
     Mobius* mobius = kernel.getCore();
     Scriptarian *scriptarian = new Scriptarian(mobius);
-    scriptarian->compile(expanded);
-
-    delete expanded;
+    scriptarian->compile(src);
 
     return scriptarian;
 }

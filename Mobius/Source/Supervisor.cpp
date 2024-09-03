@@ -352,6 +352,7 @@ bool Supervisor::start()
     // extract one from the new ScriptRegistry and send it down
     ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
     mobius->installScripts(oldScripts);
+    scriptClerk.saveErrors(oldScripts);
     delete oldScripts;
 
     // listen for timing and config changes we didn't initiate
@@ -526,6 +527,11 @@ void Supervisor::shutdown()
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
+}
+
+MainWindow* Supervisor::getMainWindow()
+{
+    return mainWindow.get();
 }
 
 /**
@@ -2008,6 +2014,7 @@ void Supervisor::menuLoadScripts(bool popup)
     // old scripts for Mobius
     ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
     mobius->installScripts(oldScripts);
+    scriptClerk.saveErrors(oldScripts);
     delete oldScripts;
 
     // new MSL scripts

@@ -832,7 +832,8 @@ void TestDriver::installTestConfiguration()
                 // !! todo: this is all oriented around ScriptRegistry now, though
                 // these back doors still work, the entire test driver will need to
                 // be redesigned once the test scripts are ported to .msl
-                Scriptarian* scriptarian = shell->compileScripts(overlay->getScriptConfig());
+                Scriptarian* scriptarian = shell->compileScripts(overlay->getScriptConfigObsolete());
+                // todo: we have a way to return errors in the ScriptConfig now, should report them
                 shell->sendScripts(scriptarian, true);
 
                 // if we decide to defer DynamicConfigChanged notification
@@ -935,7 +936,7 @@ MobiusConfig* TestDriver::readConfigOverlay()
         }
 
         // same for scripts
-        ScriptConfig* scripts = overlay->getScriptConfig();
+        ScriptConfig* scripts = overlay->getScriptConfigObsolete();
         if (scripts != nullptr) {
             ScriptRef* script = scripts->getScripts();
             while (script != nullptr) {

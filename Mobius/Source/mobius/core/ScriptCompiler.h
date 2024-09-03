@@ -91,6 +91,9 @@ class ScriptCompiler {
 	// the unmodified line we're parsing
 	char mLine[SCRIPT_MAX_LINE + 4];
 
+    // new: the ScriptRef we're parsing, used to deposit error messages
+    ScriptRef* mScriptRef = nullptr;
+    void addError(const char* msg, int line = 0);
 
 };
 

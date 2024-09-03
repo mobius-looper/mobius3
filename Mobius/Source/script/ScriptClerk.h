@@ -42,6 +42,7 @@ class ScriptClerk {
     void installMsl();
 
     class ScriptConfig* getMobiusScriptConfig();
+    void saveErrors(class ScriptConfig* c);
 
     // ScriptEditor temporary interface
     class ScriptConfig* getEditorScriptConfig();

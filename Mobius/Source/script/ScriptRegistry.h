@@ -6,6 +6,9 @@
 
 #include <JuceHeader.h>
 
+#include "MslError.h"
+#include "MslScriptUnit.h"
+
 class ScriptRegistry
 {
   public:
@@ -60,6 +63,16 @@ class ScriptRegistry
 
         // when loaded the compilation unit from the environment
         class MslScriptUnit* unit = nullptr;
+
+        // for old scripts that don't have an MslScriptUnit, capture errors here
+        juce::OwnedArray<MslError> oldErrors;
+
+        bool hasErrors() {
+            return (oldErrors.size() > 0 ||
+                    (unit != nullptr &&
+                     (unit->errors.size() > 0 || unit->collisions.size() > 0)));
+        }
+        
         
     };
     

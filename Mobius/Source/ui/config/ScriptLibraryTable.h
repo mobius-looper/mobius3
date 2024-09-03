@@ -29,7 +29,7 @@ class ScriptLibraryTableFile
     ScriptRegistry::File* file = nullptr;
 
     bool hasErrors() {
-        return (file->unit != nullptr && file->unit->errors.size() > 0);
+        return file->hasErrors();
     }
     
 };

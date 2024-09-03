@@ -88,10 +88,10 @@ void ScriptClerk::loadRegistry()
 
     // upgrade ScriptConfig to registry entries
     MobiusConfig* mconfig = supervisor->getMobiusConfig();
-    ScriptConfig* sconfig = mconfig->getScriptConfig();
-    if (sconfig != nullptr) {
+    ScriptConfig* sconfig = mconfig->getScriptConfigObsolete();
+    if (sconfig != nullptr && sconfig->getScripts() != nullptr) {
         reg->convert(sconfig);
-        mconfig->setScriptConfig(nullptr);
+        mconfig->setScriptConfigObsolete(nullptr);
         // note well: this can't call supervisor->updateMobiusConfig()
         // because if we're early in initialization that tries to
         // propagate things and things aren't properly initialized yet
@@ -355,6 +355,39 @@ ScriptConfig* ScriptClerk::getMobiusScriptConfig()
     }
 
     return config;
+}
+
+/**
+ * For older scripts, the compiler now captures errors in the ScriptRefs.
+ * MSL script compilation saved errors in the MslScriptUnit.  Old scripts
+ * don't have the same unit concept so just put the errors directly
+ * on the registry.  The object is normally the same one returned
+ * by getMobiusScriptConfig above.
+ */
+void ScriptClerk::saveErrors(ScriptConfig* config)
+{
+    if (config != nullptr && registry != nullptr) {
+
+        ScriptRegistry::Machine* machine = registry->getMachine();
+
+        for (ScriptRef* ref = config->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
+            juce::String jpath (ref->getFile());
+            ScriptRegistry::File* file = machine->findFile(jpath);
+            if (file == nullptr) {
+                // shouldn't happen if the path isn't being trashed
+                Trace(1, "ScriptClerk: Matching file not found after compilation %s",
+                      ref->getFile());
+            }
+            else {
+                file->oldErrors.clear();
+                // transfer ownership of the errors
+                while (ref->errors.size() > 0) {
+                    MslError* err = ref->errors.removeAndReturn(0);
+                    file->oldErrors.add(err);
+                }
+            }
+        }
+    }
 }
 
 /**

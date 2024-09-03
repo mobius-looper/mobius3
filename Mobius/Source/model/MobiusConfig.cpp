@@ -434,14 +434,12 @@ DriftCheckPoint MobiusConfig::getDriftCheckPoint()
 	return mDriftCheckPoint;
 }
 
-ScriptConfig* MobiusConfig::getScriptConfig()
+ScriptConfig* MobiusConfig::getScriptConfigObsolete()
 {
-    if (mScriptConfig == nullptr)
-      mScriptConfig = new ScriptConfig();
     return mScriptConfig;
 }
 
-void MobiusConfig::setScriptConfig(ScriptConfig* dc)
+void MobiusConfig::setScriptConfigObsolete(ScriptConfig* dc)
 {
     if (dc != mScriptConfig) {
         delete mScriptConfig;

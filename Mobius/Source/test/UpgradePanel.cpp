@@ -467,7 +467,7 @@ void UpgradeContent::loadScripts()
     ScriptClerk* clerk = supervisor->getScriptClerk();
     ScriptConfig* masterScripts = clerk->getEditorScriptConfig();
     
-    ScriptConfig* srcScripts = mobiusConfig->getScriptConfig();
+    ScriptConfig* srcScripts = mobiusConfig->getScriptConfigObsolete();
     if (srcScripts != nullptr) {
         ScriptRef* ref = srcScripts->getScripts();
         while (ref != nullptr) {
@@ -958,7 +958,7 @@ void UpgradeContent::doInstall()
         // so just leave them there
         if (newScripts.size() > 0) {
 #if 0            
-            ScriptConfig* masterScripts = masterConfig->getScriptConfig();
+            ScriptConfig* masterScripts = masterConfig->getScriptConfigObsolete();
             if (masterScripts == nullptr) {
                 masterScripts = new ScriptConfig();
                 masterConfig->setScriptConfig(masterScripts);

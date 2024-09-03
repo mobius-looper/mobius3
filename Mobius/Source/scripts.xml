@@ -35,10 +35,13 @@
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" name="test"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
+            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\extscript.msl" name="extscript"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\shit.mos" name="shit"
             added="2147483647"/>
     </Files>
   </Machine>

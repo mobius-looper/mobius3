@@ -16,6 +16,7 @@
 
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
+#include "../MainWindow.h"
 
 #include "../../script/ScriptRegistry.h"
 #include "../../script/MslScriptUnit.h"
@@ -33,6 +34,7 @@ ScriptLibraryTable::ScriptLibraryTable(Supervisor* s)
 
     commands.add("Enable");
     commands.add("Disable");
+    commands.add("Edit");
     commands.add("Details");
     commands.autoSize();
     commands.addListener(this);
@@ -189,16 +191,22 @@ void ScriptLibraryTable::resized()
  */
 void ScriptLibraryTable::buttonClicked(juce::String name)
 {
-    if (name == juce::String("Enable")) {
-    }
-    else if (name == juce::String("Disable")) {
-    }
-    else if (name == juce::String("Details")) {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            ScriptLibraryTableFile* tfile = files[row];
-            if (tfile->file != nullptr)
-              details.show(tfile->file);
+    int row = table.getSelectedRow();
+    if (row >= 0) {
+        ScriptRegistry::File* file = files[row]->file;
+        if (file != nullptr) {
+
+            if (name == juce::String("Enable")) {
+            }
+            else if (name == juce::String("Disable")) {
+            }
+            else if (name == juce::String("Details")) {
+                details.show(file);
+            }
+            else if (name == juce::String("Edit")) {
+                MainWindow* win = supervisor->getMainWindow();
+                win->editScript(file);
+            }
         }
     }
 }
@@ -236,14 +244,12 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
     else if (columnId == ColumnStatus) {
         if (file->disabled)
           cell = "disabled";
-        else if (file->old) {
-            // don't have any insight into these yet
-            cell = "old";
-        }
+        else if (file->hasErrors())
+          cell = "error";
+        else if (file->old)
+          cell = "old";
         else if (file->unit == nullptr)
           cell = "unloaded";
-        else if (file->unit->errors.size() > 0)
-          cell = "errors";
         else
           cell = "enabled";
     }

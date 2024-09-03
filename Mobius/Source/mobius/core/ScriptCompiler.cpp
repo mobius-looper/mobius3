@@ -24,6 +24,7 @@
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
 #include "../../model/ScriptConfig.h"
+#include "../../script/MslError.h"
 
 #include "Mobius.h"
 #include "Script.h"
@@ -200,6 +201,7 @@ void ScriptCompiler::parse(ScriptRef* ref)
 	else {
         FILE* fp = fopen(filename, "r");
         if (fp == NULL) {
+            // file validation should have been done at a higher level now
 			Trace(1, "Unable to open file: %s\n", filename);
 		}
         else {
@@ -222,6 +224,9 @@ void ScriptCompiler::parse(ScriptRef* ref)
                 script->setDirectoryNoCopy(CopyString(filename, psn));
             }
 
+            // new: leave this here so the code under parse() can put error messages there
+            mScriptRef = ref;
+
             if (parse(fp, script)) {
                 if (mScripts == NULL)
                   mScripts = script;
@@ -237,6 +242,8 @@ void ScriptCompiler::parse(ScriptRef* ref)
 
             // new way of marking test scripts
             script->setTest(ref->isTest());
+
+            mScriptRef = nullptr;
         }
     }
 }
@@ -269,6 +276,8 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
                 // probably handle these but skip them for now
                 Trace(1, "Script %s: Script appears to contain multi-byte unicode\n", 
                       script->getTraceName());
+                // new error passing
+                addError("Script appears to contain multi-byte unicode");
                 break;
             }
         }
@@ -390,6 +399,12 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
                               msg = "Script %s: Mismatched Param/Endparam line %ld\n";
 
                             Trace(1, msg, script->getTraceName(), (long)mLineNumber);
+
+                            if (s->isEndproc())
+                              msg = "Mismatched Proc/Endproc";
+                            else
+                              msg = "Mismatched Param/Endparam";
+                            addError(msg);
                         }
 
                         // we don't actually need these since the statements 
@@ -623,6 +638,8 @@ void ScriptCompiler::parseDeclaration(const char* keyword, const char* args)
         // error, mismatched block end
         Trace(1, "Script %s: Declaration found outside block, line %ld\n",
               mScript->getTraceName(), (long)mLineNumber);
+
+        addError("Declaration found outside block");
     }
 }
 
@@ -725,6 +742,10 @@ ExNode* ScriptCompiler::parseExpression(ScriptStatement* stmt,
         if (strlen(mLine) > 0)
           Trace(1, "--> line: %s", mLine);
 		Trace(1, "--> expression: %s\n", src);
+
+        // this one is harder to retrofit
+        // will need to look at one of these to pick the right formatting
+        addError(buffer, line);
 	}
 
 	return expr;
@@ -746,6 +767,17 @@ void ScriptCompiler::syntaxError(ScriptStatement* stmt, const char* msg)
     // we'll have this during parsing but not linking!
     if (strlen(mLine) > 0)
       Trace(1, "--> line: %s", mLine);
+
+
+    addError(msg, line);
+}
+
+void ScriptCompiler::addError(const char* msg, int line)
+{
+    if (mScriptRef != nullptr) {
+        MslError* err = new MslError(line, 0, "", juce::String(msg));
+        mScriptRef->errors.add(err);
+    }
 }
 
 /**

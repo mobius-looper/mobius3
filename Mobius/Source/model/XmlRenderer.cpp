@@ -481,8 +481,8 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	for (BindingSet* bs = c->getBindingSets() ; bs != nullptr ; bs = (BindingSet*)(bs->getNext()))
 	  render(b, bs);
 
-	if (c->getScriptConfig() != nullptr)
-      render(b, c->getScriptConfig());
+	if (c->getScriptConfigObsolete() != nullptr)
+      render(b, c->getScriptConfigObsolete());
 
 	if (c->getSampleConfig() != nullptr)
       render(b, c->getSampleConfig());
@@ -580,7 +580,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 		else if (child->isName(EL_SCRIPT_CONFIG)) {
 			ScriptConfig* sc = new ScriptConfig();
             parse(child, sc);
-            c->setScriptConfig(sc);
+            c->setScriptConfigObsolete(sc);
 		}
 		else if (child->isName(EL_SAMPLE_CONFIG)) {
 			SampleConfig* sc = new SampleConfig();
@@ -1138,6 +1138,9 @@ void XmlRenderer::parse(XmlElement* e, Binding* b)
 
 void XmlRenderer::render(XmlBuffer* b, ScriptConfig* c)
 {
+    // should not be seeing these any more
+    Trace(1, "XmlRenderer: Serializing a ScriptConfig for some reason");
+    
     b->addStartTag(EL_SCRIPT_CONFIG);
     b->incIndent();
 

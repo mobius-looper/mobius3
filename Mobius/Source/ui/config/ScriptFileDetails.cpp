@@ -8,14 +8,16 @@
 
 #include "../JuceUtil.h"
 #include "../../script/ScriptRegistry.h"
+#include "../../script/MslScriptUnit.h"
+#include "../../script/MslError.h"
+
+#include "../ScriptDetails.h"
 
 #include "ScriptFileDetails.h"
 
 #define BorderWidth 2
 #define FooterHeight 24
 #define FooterPad 4
-#define RowHeight 20
-#define LabelWidth 40
 
 ScriptFileDetails::ScriptFileDetails()
 {
@@ -23,6 +25,9 @@ ScriptFileDetails::ScriptFileDetails()
     closeButtons.setCentered(true);
     closeButtons.add(&okButton);
     addAndMakeVisible(closeButtons);
+
+    details.addMouseListener(this, true);
+    addAndMakeVisible(details);
 
     // be smarter about sizing
     setBounds(0, 0, 500, 200);
@@ -44,6 +49,8 @@ void ScriptFileDetails::resized()
     // a little air between the buttons and the border
     footerArea.removeFromBottom(FooterPad);
     closeButtons.setBounds(footerArea);
+
+    details.setBounds(area);
 }
 
 void ScriptFileDetails::paint(juce::Graphics& g)
@@ -53,43 +60,6 @@ void ScriptFileDetails::paint(juce::Graphics& g)
     g.fillAll (juce::Colours::black);
     g.setColour(juce::Colours::white);
     g.drawRect(area, BorderWidth);
-
-    // same adjustments as resized()
-    area = area.reduced(BorderWidth);
-    area.removeFromBottom(FooterHeight + FooterPad);
-
-    if (regfile != nullptr) {
-        
-        paintDetail(g, area, "Name", regfile->name);
-        area.removeFromTop(RowHeight);
-        
-        paintDetail(g, area, "Path", regfile->path);
-        area.removeFromTop(RowHeight);
-        
-        juce::String added = regfile->added.toString(true, true, false, false);
-        paintDetail(g, area,  "Added", added);
-        area.removeFromTop(RowHeight);
-        
-        paintDetail(g, area, "Author", regfile->author);
-        area.removeFromTop(RowHeight);
-        
-    }
-}
-
-void ScriptFileDetails::paintDetail(juce::Graphics& g, juce::Rectangle<int> area,
-                                    juce::String label, juce::String text)
-{
-    int top = area.getY();
-    int labelLeft = area.getX();
-    int textLeft = LabelWidth + 8;
-    int textWidth = area.getWidth() - textLeft;
-    
-    g.setColour(juce::Colours::orange);
-    g.drawText (label, labelLeft, top, LabelWidth, RowHeight, juce::Justification::centredRight, true);
-
-    g.setColour(juce::Colours::white);
-    g.drawText (text, textLeft, top, textWidth, RowHeight, juce::Justification::centredLeft, true);
-    
 }
 
 void ScriptFileDetails::buttonClicked(juce::Button* b)
@@ -100,7 +70,7 @@ void ScriptFileDetails::buttonClicked(juce::Button* b)
 
 void ScriptFileDetails::show(ScriptRegistry::File* file)
 {
-    regfile = file;
+    details.load(file);
     
     if (!isVisible()) {
         if (!shownOnce) 

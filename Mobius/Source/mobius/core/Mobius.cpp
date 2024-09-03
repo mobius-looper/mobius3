@@ -484,12 +484,13 @@ void Mobius::installScripts(Scriptarian* neu)
         Trace(1, "This may indiciate a hung script\n");
     }
 
-    if (mScriptarian->isBusy()) {
+    if (mScriptarian != nullptr && mScriptarian->isBusy()) {
         // wait, beginAudioInterrupt will install it when it can
         mPendingScriptarian = neu;
     }
     else {
-        mKernel->returnScriptarian(mScriptarian);
+        if (mScriptarian != nullptr)
+          mKernel->returnScriptarian(mScriptarian);
         mScriptarian = neu;
     }
 }

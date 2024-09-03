@@ -316,8 +316,8 @@ class MobiusConfig {
 	void addBindingSet(class BindingSet* bs);
     void setBindingSets(BindingSet* list);
 
-    class ScriptConfig* getScriptConfig();
-    void setScriptConfig(class ScriptConfig* c);
+    class ScriptConfig* getScriptConfigObsolete();
+    void setScriptConfigObsolete(class ScriptConfig* c);
     
 	void setSampleConfig(class SampleConfig* s);
 	class SampleConfig* getSampleConfig();

@@ -6,9 +6,8 @@
 
 #include <JuceHeader.h>
 
-#include "../common/YanForm.h"
-#include "../common/YanField.h"
 #include "../common/BasicButtonRow.h"
+#include "../ScriptDetails.h"
 
 class ScriptFileDetails : public juce::Component, public juce::Button::Listener
 {
@@ -31,7 +30,7 @@ class ScriptFileDetails : public juce::Component, public juce::Button::Listener
     
   private:
 
-    class ScriptRegistry::File* regfile = nullptr;
+    ScriptDetails details;
     
     BasicButtonRow closeButtons;
     juce::TextButton okButton {"Close"};
@@ -41,8 +40,4 @@ class ScriptFileDetails : public juce::Component, public juce::Button::Listener
     juce::ComponentBoundsConstrainer dragConstrainer;
     bool dragging = false;
     
-    void paintDetail(juce::Graphics& g, juce::Rectangle<int> area,
-                     juce::String label, juce::String text);
-
-
 };

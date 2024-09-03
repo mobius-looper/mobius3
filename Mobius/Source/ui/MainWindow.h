@@ -23,6 +23,7 @@
 #include "display/MobiusDisplay.h"
 #include "AlertPanel.h"
 #include "PanelFactory.h"
+//#include "ScriptWindow.h"
 
 #ifdef USE_FFMETERS
 #include "../ff_meters/ff_meters.h"
@@ -74,6 +75,9 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     }
 
     void alert(juce::String msg);
+
+    // pop up a script editor
+    void editScript(class ScriptRegistry::File* file);
     
   private:
 
@@ -81,7 +85,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     // demo used SafePointer because the child windows deleted themselves
     // don't necessarily need that here, but it's good to be safe
-    juce::Component::SafePointer<juce::Component> scriptEditor;
+    juce::Component::SafePointer<class ScriptWindow> scriptEditor;
     void showScriptEditor();
     void closeWindows();
     juce::Rectangle<int> getDisplayArea();
@@ -97,26 +101,3 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     
 };    
 
-class ScriptWindow final : public juce::DocumentWindow
-{
-  public:
-    ScriptWindow (const juce::String& name, juce::Colour backgroundColour, int buttonsNeeded)
-        : DocumentWindow (name, backgroundColour, buttonsNeeded)
-    {
-    }
-
-    ~ScriptWindow()
-    {
-    }
-
-    void closeButtonPressed()
-    {
-        // this is what the demos do, but for me I think I want to keep it alive
-        // holding state 
-        delete this;
-    }
-
-private:
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScriptWindow)
-};

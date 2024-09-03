@@ -176,7 +176,7 @@ void JuceUtil::center(juce::Component* comp)
 
 //
 // Newer centering tools
-
+//
 int JuceUtil::getCenterLeft(juce::Component* container, juce::Component* c)
 {
     return (container->getWidth() / 2) - (c->getWidth() / 2);
@@ -192,3 +192,13 @@ void JuceUtil::centerInParent(juce::Component* c)
     juce::Component* parent = c->getParentComponent();
     c->setTopLeftPosition(getCenterLeft(parent, c), getCenterTop(parent, c));
 }    
+
+//
+// Popup windows
+//
+
+juce::Rectangle<int> JuceUtil::getDisplayArea()
+{
+    return juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->userArea.reduced (20);
+}
+
