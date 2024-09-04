@@ -34,9 +34,15 @@ class ScriptRegistry
         File() {}
         ~File() {}
 
+        // unique path when reading and installing files
+        // empty when this is a new file in the editor
         juce::String path;
+        
         // time this file was discoverd
         juce::Time added;
+        
+        // source code after reading, or when creating new files
+        juce::String source
 
         // things found during parsing
 
@@ -58,17 +64,31 @@ class ScriptRegistry
         bool missing = false;
         // true if this is an older .mos file
         bool old = false;
+        
         // set if this file came from an External
+        // !! this mayh not be reliable, rethink this
         External* external = nullptr;
 
-        // when loaded the compilation unit from the environment
+        // the compiled compilation unit, possibly with errors
+        // this will be interned if it was installed in the MslEnvironment
+        // if this was an old script or a temporary new file unit it
+        // will be the same as ownedUnit
         class MslScriptUnit* unit = nullptr;
 
-        // for old scripts that don't have an MslScriptUnit, capture errors here
+        // when dealing with MOS files or uninstalled new files
+        // the unit will be dynamically allocated and owned here
+        std::unique_ptr<MslScriptUnit> ownedUnit;
+
+        // compilation and link errors captured from unit
+        // temporary, neds to go in the ownedUnit
         juce::OwnedArray<MslError> oldErrors;
 
+        // only for temporary files in the editor
+        bool isNew = false;
+
         bool hasErrors() {
-            return (oldErrors.size() > 0 ||
+            return (errors.size() > 0 ||
+                    collisions.size() > 0 ||
                     (unit != nullptr &&
                      (unit->errors.size() > 0 || unit->collisions.size() > 0)));
         }

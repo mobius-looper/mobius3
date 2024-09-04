@@ -50,13 +50,6 @@ class MslScriptUnit
     // 
 
     /**
-     * The source code that was parsed.
-     * This is retained so the UI can present errors with syntax highlighting,
-     * it is not used at runtime.
-     */
-    juce::String source;
-
-    /**
      * The reference name for this unit/script.
      * This defaults to the leaf file name from the path.
      * It may be replaced during parsing if a #name directive is encountered

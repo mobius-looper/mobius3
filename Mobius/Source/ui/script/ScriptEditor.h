@@ -31,11 +31,13 @@ class ScriptEditorFile : public juce::Component
     void refresh(class ScriptRegistry::File* src);
     
     void resized() override;
+
+    ScriptRegistry::File* getFile();
     
   private:
 
     class ScriptEditor* parent = nullptr;
-    std::unique_ptr<ScriptRegistry::File> file;
+    std::unique_ptr<ScriptRegistry::File> ownedFile;
     
     ScriptDetails details;
     CustomEditor editor;
@@ -75,9 +77,11 @@ class ScriptEditor : public juce::Component, public juce::Button::Listener
     juce::TextButton saveButton {"Save"};
     juce::TextButton compileButton {"Compile"};
     juce::TextButton revertButton {"Revert"};
+    juce::TextButton newButton {"New"};
     juce::TextButton cancelButton {"Cancel"};
     
     juce::OwnedArray<ScriptEditorFile> files;
+    juce::OwnedArray<ScriptRegistry::File> newFiles;
     
 };
 

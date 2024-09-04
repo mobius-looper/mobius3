@@ -36,16 +36,6 @@ ScriptClerk::~ScriptClerk()
 {
 }
 
-void ScriptClerk::initialize()
-{
-    loadRegistry();
-}
-
-void ScriptClerk::refresh()
-{
-    loadRegistry();
-}
-
 ScriptRegistry* ScriptClerk::getRegistry()
 {
     return registry.get();
@@ -58,6 +48,8 @@ ScriptRegistry* ScriptClerk::getRegistry()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Initialization of the registry at startup.
+ *
  * Registry loading consists of the following phases.
  *
  * Parsing the scripts.xml file to bring in the last saved contents
@@ -73,7 +65,7 @@ ScriptRegistry* ScriptClerk::getRegistry()
  * maintins the ScriptRegistry memory model.
  *
  */
-void ScriptClerk::loadRegistry()
+void ScriptClerk::initialize()
 {
     ScriptRegistry* reg = new ScriptRegistry();
     registry.reset(reg);
@@ -98,6 +90,39 @@ void ScriptClerk::loadRegistry()
         supervisor->writeMobiusConfig();
     }
 
+    // hack: If they have paths into the standard library folder
+    // configured as externals, remove them since we will have
+    // already found those.  This is common when ScriptConfig
+    // is converted
+    ScriptConfig::Machine* machine = registry->getMachine();
+    machine->filterExternals(libdir.getFullPathName());
+
+    // reconcile file references
+    reconcile();
+
+    // remove any previous file entries for files we didn't encounter
+    // on this scan
+    int index = 0;
+    while (index < machine->files.size()) {
+        ScriptRegistry::File* file = machine->files[index];
+        if (file->missing)
+          machine->files.removeObject(file);
+        else
+          index++;
+    }
+
+    // don't bother with dirty checking on this? it isn't big
+    saveRegistry();
+}
+
+/**
+ * Refresh the registry after initialization
+ * This re-reads the files and does missing detection but does NOT
+ * prune any missing files.  Once a File is created after inititlize()
+ * it must not be deleted because it may be shared with the ScriptEditor.
+ */
+void ScriptClerk::refresh()
+{
     // reconcile file references
     reconcile();
 
@@ -133,13 +158,6 @@ void ScriptClerk::reconcile()
     refreshFolder(machine, libdir, nullptr);
 
     // add external files and scan external folders
-
-    // hack: If they have paths into the standard library folder
-    // configured as externals, remove them since we will have
-    // already found those.  This is common when ScriptConfig
-    // is converted
-    machine->filterExternals(libdir.getFullPathName());
-    
     for (auto ext : machine->externals) {
 
         juce::File extfile = juce::File(ext->path);
@@ -167,16 +185,6 @@ void ScriptClerk::reconcile()
         }
     }
 
-    // remove any previous file entries for files we didn't encounter
-    // on this scan
-    int index = 0;
-    while (index < machine->files.size()) {
-        ScriptRegistry::File* file = machine->files[index];
-        if (file->missing)
-          machine->files.removeObject(file);
-        else
-          index++;
-    }
 }
 
 /**

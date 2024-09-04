@@ -181,6 +181,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
  * to this object for as long as the envionment is alive.
  *
  * The unit identifier must be unique and is normally a fully qualified file path.
+ * The returned unit is interned and will remain valid for as long as the environment.
  */
 MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::String source)
 {
@@ -219,9 +220,6 @@ MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::Stri
         units.add(unit);
     }
 
-    // remember the source code for diagnostics
-    unit->source = source;
-
     // The parser conveys errors in a dynamically allocated script object we may
     // choose to abandon.  Now that we have ScriptInfo should start using that
     // consistently for all meta information about scripts beyond their runtime strucutre
@@ -256,6 +254,43 @@ MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::Stri
     
     return unit;
 }
+
+/**
+ * Compile but do not install a unit.
+ *
+ * Unload load() the unit is passed in order to return results and may or may not
+ * be interned.  The application can allocate a free floating unit to represent
+ * a file that has not yet been saved and has no path.
+ */
+void MslEivnronment::compile(MslScriptUnit* unit, juce::String source)
+{
+    // The parser conveys errors in a dynamically allocated script object we may
+    // choose to abandon.  Now that we have ScriptInfo should start using that
+    // consistently for all meta information about scripts beyond their runtime strucutre
+    MslParser parser;
+    MslScript* script = parser.parse(source);
+    // the reference name for the script is either the leaf file name from the path
+    // or a #name directive encountered during parsing
+    if (script->name.length() == 0)
+      script->name = defaultName;
+
+    // capture interesting parsed metadata in the unit
+    unit->name = script->name;
+
+    if (script->errors.size() > 0) {
+        // transfer the errors to the Info
+        // for reasons I don't understand about C++ can't do this
+        // unit->errors = script->errors;
+        // avoid this shit of MslParser just left them on the unit to begin with
+        while (script->errors.size() > 0) {
+            MslError* err = script->errors.removeAndReturn(0);
+            unit->errors.add(err);
+        }
+        
+        // don't need this any more
+        delete script;
+}
+
 
 /**
  * Unload any script units that are no longer needed by the application.

@@ -15,6 +15,7 @@ ScriptEditor::ScriptEditor()
     buttons.add(&saveButton);
     buttons.add(&compileButton);
     buttons.add(&revertButton);
+    buttons.add(&newButton);
     buttons.add(&cancelButton);
     addAndMakeVisible(buttons);
 }
@@ -27,7 +28,7 @@ void ScriptEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     (void)area.removeFromBottom(4);
-    buttons.setBounds(area.removeFromBottom(20));
+    buttons.setBounds(area.removeFromBottom(24));
     tabs.setBounds(getLocalBounds());
 }
 
@@ -53,25 +54,34 @@ void ScriptEditor::load(ScriptRegistry::File* file)
     else {
         ScriptEditorFile* neu = new ScriptEditorFile(this, file);
         files.add(neu);
-        tabs.add(file->name, neu);
-
-        // show the one we just added
-        int index = tabs.getNumTabs() - 1;
-        tabs.show(index);
-
-        // add a close button
-        juce::TabBarButton* tbb = tabs.getTabbedButtonBar().getTabButton(index);
-        tbb->setExtraComponent(new ScriptEditorTabButton(this, neu), juce::TabBarButton::afterText);
+        addTab(neu);
     }
 }
 
-void ScriptEditor::close(ScriptEditorFile* file)
+void ScriptEditor::addTab(ScriptEditorFile* efile)
+{
+    juce::String name = efile->file->name:
+    if (name.length() == 0)
+      name = "New";
+
+    tabs.add(, efile);
+
+    // show the one we just added
+    int index = tabs.getNumTabs() - 1;
+    tabs.show(index);
+
+    // add a close button
+    juce::TabBarButton* tbb = tabs.getTabbedButtonBar().getTabButton(index);
+    tbb->setExtraComponent(new ScriptEditorTabButton(this, efile), juce::TabBarButton::afterText);
+}
+
+void ScriptEditor::close(ScriptEditorFile* efile)
 {
     // find the tab it is in
     ScriptEditorFile* found = nullptr;
     int index = 0;
     for (auto f : files) {
-        if (f == file) {
+        if (f == efile) {
             found = f;
             break;
         }
@@ -81,8 +91,8 @@ void ScriptEditor::close(ScriptEditorFile* file)
     if (found != nullptr) {
         // todo: see if it was modified and prompt
         tabs.removeTab(index);
-        files.removeObject(file, false);
-        delete file;
+        files.removeObject(found, false);
+        delete found;
 
         // removing a tab doesn't appear to auto select a different tab
         int ntabs = tabs.getNumTabs();
@@ -94,7 +104,81 @@ void ScriptEditor::close(ScriptEditorFile* file)
 
 void ScriptEditor::buttonClicked(juce::Button* b)
 {
-    (void)b;
+    if (b == &saveButton) {
+        save();
+    }
+    else if (b == &compileButton) {
+        compile();
+    }
+    else if (b == &revertButton) {
+        revert();
+    }
+    else if (b == &newButton) {
+        newFile();
+    }
+    else if (b == &cancelButton) {
+        cancel();
+    }
+}
+
+ScriptEditorFile* ScriptEditor::getCurrentFile()
+{
+    ScriptEditorFile* efile = nullptr;
+    int index = tabs.getCurrentTabIndex();
+    if (index >= 0)
+      efile = files[index];
+    return efile;
+}
+
+void ScriptEditor::newFile()
+{
+    // fake up a registry file so new and existing can work close to the same
+    ScriptRegistry::File* rfile = new ScriptRegistry::File();
+    rfile->isNew = true;
+    newFiles.add(rfile);
+
+    ScriptEditorFile* efile = new ScriptEditorFile(this, rfile);
+    files.add(efile);
+    addTab(efile);
+}
+
+void ScriptEditor::cancel()
+{
+    int index = tabs.getCurrentTabIndex();
+    if (index >= 0) {
+        ScriptRegistry::File* tempFile = nullptr;
+        efile = files[index];
+        if (efile->file->isNew)
+          tempFile = efile->file;
+        
+        // dispose of the editry, this also makes efile invalide
+        close(efile);
+
+        // and the temporary
+        if (tempFile != nullptr)
+          newFiles.removeObject(tempFile, true);
+    }
+}
+
+void ScriptEditor::compile()
+{
+    ScriptEditorFile* efile = getCurrentFile();
+    if (efile != nullptr) {
+    }
+}
+
+void ScriptEditor::revert()
+{
+    ScriptEditorFile* efile = getCurrentFile();
+    if (efile != nullptr)
+      efile->revert();
+}
+
+void ScriptEditor::save()
+{
+    ScriptEditorFile* efile = getCurrentFile();
+    if (efile != nullptr) {
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -171,6 +255,11 @@ ScriptEditorFile::~ScriptEditorFile()
 {
 }
 
+ScriptRegistry::File* ScriptEditorFile::getFile()
+{
+    return file.get();
+}
+
 /**
  * Here we were initialized once with the same path, but the
  * contents may have changed.
@@ -191,6 +280,12 @@ void ScriptEditorFile::refresh(ScriptRegistry::File* src)
         juce::String source = f.loadFileAsString();
         editor.setText(source);
     }
+}
+
+void ScriptEditorFile::revert()
+{
+    if (file != nullptr)
+      editor.setText(file->source);
 }
 
 bool ScriptEditorFile::hasFile(ScriptRegistry::File* src)
