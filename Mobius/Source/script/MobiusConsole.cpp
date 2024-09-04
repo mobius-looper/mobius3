@@ -320,7 +320,7 @@ void MobiusConsole::doList()
             console.add("  " + script->name);
         }
     }
-    juce::OwnedArray<MslFunction>* funcs = session->getFunctions();
+    juce::OwnedArray<MslFunctionNode>* funcs = session->getFunctions();
     if (funcs != nullptr && funcs->size() > 0) {
         console.add("Defined Functions");
         for (auto func : *funcs) {
@@ -502,7 +502,7 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             line += "Variable: " + var->name;
         }
         else if (node->isFunction()) {
-            MslFunction* func = static_cast<MslFunction*>(node);
+            MslFunctionNode* func = static_cast<MslFunctionNode*>(node);
             line += "Function: " + func->name;
         }
         else if (node->isIf()) {

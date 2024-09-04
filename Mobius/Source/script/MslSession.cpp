@@ -679,7 +679,7 @@ void MslSession::mslVisit(MslVariable* var)
  * If that ever changes, then you'll have to deal with them here.
  * In theory we could have scoped function definitions like we do for vars.
  */
-void MslSession::mslVisit(MslFunction* func)
+void MslSession::mslVisit(MslFunctionNode* func)
 {
     addError(func, "Encountered unsifted Function");
 }

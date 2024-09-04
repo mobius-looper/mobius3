@@ -96,7 +96,8 @@
  * child block in the call.   The nuances around this are larger than can go in a file comment
  * see the design docs for more.
  */
-void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script)
+void MslSymbol::link(MslContext* context, MslEnvironment* env,
+                     MslResolutionContext* resolver, MslCompilation* compilation)
 {
     // clear prior resolution
     function = nullptr;
@@ -113,14 +114,16 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
     if (parent->isAssignment() && parent->children.size() > 1 &&
         parent->children[0] == this) {
         // we're the LHS of an assignment, special resolution applies
-        linkAssignment(context, env, script);
+        linkAssignment(context, env, resolver, compilation);
         return;
     }
 
     // first resolve to functions
     
     // look for local functions, these could be cached on the MslSymbol
-    MslFunction* func = script->findFunction(token.value);
+
+    // new model uses MslFunction packaged in the MslCompilation
+    MslFunctionNode* func = script->findFunction(token.value);
     if (func != nullptr) {
         function = func;
         isFunction = true;
@@ -130,7 +133,7 @@ void MslSymbol::link(MslContext* context, MslEnvironment* env, MslScript* script
         // precedence question: should script exports be able to mess up
         // external symbol resolution?
         MslLinkage* link = env->find(token.value);
-        if (link != nullptr && (link->function != nullptr || link->script != nullptr)) {
+        if (link != nullptr && (link->function != nullptr)) {
             linkage = link;
             isFunction = true;
         }
@@ -999,7 +1002,7 @@ void MslSession::callExternal(MslSymbol* snode)
  * RHS can be any expression.  The LHS symbol is NOT evaluated, it is
  * simply used as the name of the thing to be assigned.  It may be better
  * to have the parser consume the Symbol token and just leave the name behind
- * in the node as is done for MslFunction and MslVariable.  But this does open up potentially
+ * in the node as is done for MslFunctionNode and MslVariable.  But this does open up potentially
  * useful behavior where the LHS could be any expression that produces a name
  * literal string:    "x"=y  or foo()=y.  While possible and relatively easy
  * that's hard to explain.

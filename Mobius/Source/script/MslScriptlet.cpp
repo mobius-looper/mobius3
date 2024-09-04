@@ -230,7 +230,7 @@ void MslScriptlet::getResultString(MslValue* v, juce::String& s)
  * session goes async.  Maybe not an issue except for the unusual
  * way the console uses scriptlets.
  */
-juce::OwnedArray<MslFunction>* MslScriptlet::getFunctions()
+juce::OwnedArray<MslFunctionNode>* MslScriptlet::getFunctions()
 {
     return &(script->functions);
 }

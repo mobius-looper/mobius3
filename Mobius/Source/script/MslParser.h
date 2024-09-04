@@ -46,7 +46,7 @@ class MslParser
     void resetResult();
     void parseInner(juce::String source);
     void sift();
-    void addFunction(class MslFunction* func);
+    void addFunction(class MslFunctionNode* func);
     void addVariable(class MslVariable* var);
     
     void errorSyntax(MslNode* node, juce::String details);

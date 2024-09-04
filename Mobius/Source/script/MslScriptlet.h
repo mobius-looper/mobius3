@@ -125,7 +125,7 @@ class MslScriptlet {
 
     // top-level functions encountered in the last eval()
     // these accumulate across calls to eval()
-    juce::OwnedArray<MslFunction>* getFunctions();
+    juce::OwnedArray<MslFunctionNode>* getFunctions();
 
     // bindings representing the top-level script variables encountered during
     // evaluation

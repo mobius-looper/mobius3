@@ -77,13 +77,24 @@ class MslSymbol : public MslNode
         return wants;
     }
 
-    void link(class MslContext* contxt, class MslEnvironment* env, class MslScript* script) override;
+    void link(class MslContext* context, class MslEnvironment* env,
+              class MslResolutionContext* rc, class MslCompilation* comp) override;
     
     // link state
     // if a name resolves to more than one thing, only one of them will be set
-    class MslFunction* function = nullptr;
+
+    // things resolved within the MslCompilation (i.e. in the same script)
+    // think about this...it would be easier in some ways to have non interned
+    // linkages in the MslCompilation so we could represent these the same way
+    class MslFunctionNode* function = nullptr;
     class MslVariable* variable = nullptr;
+
+    // reference resolved within the environment or resolution context
     class MslLinkage* linkage = nullptr;
+
+    // reference resolved to an external
+    // same thing with external that have a signature
+    // factor out an MslCallable that has all these things
     class MslExternal* external = nullptr;
 
     // compiled argument list for the resolved function

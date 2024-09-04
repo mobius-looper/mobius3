@@ -66,54 +66,6 @@ class MslRequest
 };
 
 /**
- * Represents a named object that can be called from the outside world
- * or referenced within the environment.  Any reference between scripts
- * must go through a Linkage because the objects that implement the thing
- * being referenced can change whenever compilation units are reloaded.
- *
- * This is conceptually similar to the Symbols table in the Mobius application.
- *
- * todo: this table can drive the export of the environment to the Symbol table
- * so need the notion of "public" and "script local" references that can be
- * called from scripts but don't show up in bindings.
- */
-class MslLinkage
-{
-  public:
-
-    MslLinkage() {}
-    ~MslLinkage() {}
-
-    // the name that can be referenced by an MslSymbol
-    juce::String name;
-
-    // the compilation unit that supplied the definition
-    class MslScriptUnit* unit = nullptr;
-
-    // the compiled script that contained the referenceable thing
-    class MslScript* compilation = nullptr;
-
-    //
-    // The next three are mutually exclusive
-    //
-    
-    // when the compilation unit is itself a callable entity
-    // this will be the same as container
-    class MslScript* script = nullptr;
-
-    // an exported function within the script
-    class MslFunction* function = nullptr;
-
-    // an exported var within the script
-    class MslVariable* variable = nullptr;
-
-    // todo: for exported vars, where is the value?
-    // could maintain it here, or in a MslBinding inside the
-    // containing Script
-    
-};
-
-/**
  * The master of the world of scripts.
  */
 class MslEnvironment
@@ -131,43 +83,36 @@ class MslEnvironment
     void shutdown();
 
     //
-    // ScriptClerk Interface for file loading
+    // Compilation
     //
 
-    /**
-     * Install a script from a file or other compilation unit.
-     * The source is parsed and if possible the script is installed.
-     * The returned Unit object conveys parser errors and other information
-     * about the script determined during parsing.  The application may
-     * retain a reference to this object as long as the environment is active.
-     */
-    class MslScriptUnit* load(class MslContext* c, juce::String path, juce::String source);
+    class MslResolutionContext* registerResolutionContext();
+    void dispose(class MslResolutionContext* c);
 
-    /**
-     * Unload any scripts from files that are not included in the retain list.
-     * The array contains file paths that must match the unit identifiers used with
-     * the load() function.
-     */
-    void unload(juce::StringArray& retain);
+    class MslCompilation* compile(class MslContext* c, MslResolutionContext* rc,
+                                  juce::String source);
+
+    //
+    // Installation
+    //
+
+    class MslInstallation* install(class MslContext* c, class MslCompilation* comp);
+
+    // unload everything previously installed
+    // must use the id returned in MslInstallation
+    void uninstall(juce::String id);
+    
+    //
+    // Relink
+    // 
 
     /**
      * Perform the link phase to resolve references between scripts, resolve references
      * to externals, and compile the argument lists for function calls.   This may adjust
-     * the error lists contained in previously returned MslScriptInfo objects.
-     *
-     * todo: need to work more on how linking works
-     * Linking should normally be done after every load.  But this could be expensive
-     * and we might want to defer it until after a bulk load finishes.
+     * the error lists contained in previously returned MslInstallations
      */
     void link(class MslContext* c);
 
-    /**
-     * Return units that have been loaded for inspection.
-     */
-    juce::OwnedArray<class MslScriptUnit>* getUnits() {
-        return &units;
-    }
-    
     //
     // User initiated actions
     //
@@ -177,7 +122,7 @@ class MslEnvironment
      * A reference to the Linkage may be retained by the application for as
      * long as the environment is active, but the things inside it may change.
      */
-    MslLinkage* find(juce::String name);
+    class MslLinkage* find(juce::String name);
 
     /**
      * Allocate a value container for use in a request()
@@ -197,27 +142,8 @@ class MslEnvironment
     /**
      * Retrieve the value of an exported variable.
      */
-    void query(MslLinkage* linkage, MslValue* result);
+    void query(class MslLinkage* linkage, MslValue* result);
     
-    //
-    // Console/Scriptlet interface
-    //
-
-    /**
-     * Allocate a object that may be used to submit dynamically
-     * compiled script fragments.  This object may be retained
-     * by the user for as long as the environment is active.
-     * If the application no longer needs the scriptlet, it should
-     * be released.  Releasing is not required, but it frees memory
-     * if you do.
-     */
-    class MslScriptlet* newScriptlet();
-
-    /**
-     * Return resources used by the scriptlet to the object pool.
-     */
-    void releaseScriptlet(class MslScriptlet* s);
-
     //
     // Supervisor/MobiusKernel interfaces
     //
@@ -235,12 +161,8 @@ class MslEnvironment
     // Information
     // todo: these are mostly for the console, needs more refinement
     //
-    
-    juce::OwnedArray<class MslScript>* getScripts() {
-        return &scripts;
-    }
 
-    // Each time a script or scriptlet is run, it may leave results behind
+    // Each time a function is run, it may leave results behind
     // for inspection and diagnostics.
     class MslResult* getResult(int id);
     bool isWaiting(int id);
@@ -260,10 +182,6 @@ class MslEnvironment
     // for MslSession
     class MslExternal* getExternal(juce::String name);
     void intern(class MslExternal* ext);
-    
-    // for MslScriptlet
-    bool linkScriptlet(class MslContext* c, MslScript* script);
-    void launch(class MslContext* c, class MslScriptlet* scriptlet);
 
   private:
 
@@ -275,26 +193,25 @@ class MslEnvironment
     // that are normally returned to the pool
     MslConductor conductor {this};
 
-    // object representing script files shared between the environment and application
-    juce::OwnedArray<class MslScriptUnit> units;
-    class MslScriptUnit* findUnit(juce::String& path);
+    // garbage waiting to be collected
+    MslGarbage garbage;
+    
+    // table of installed compilation units
+    juce::OwnedArray<class MslCompliation> compilations;
+    juce::HashMap<juce::String,class MslCompilation> compilationMap;
+    
+    // unique id generator for anonymous compilation units (scriptlets)
+    int idGenerator = 1;
 
-    // the active loaded scripts
-    juce::OwnedArray<class MslScript> scripts;
-
-    // the linkage table
-    juce::OwnedArray<MslLinkage> linkages;
-    juce::HashMap<juce::String,class MslLinkage*> library;
+    // the internal link table
+    MslResolutionContext library {garbage};
 
     // the external link table
     juce::OwnedArray<class MslExternal> externals;
     juce::HashMap<juce::String,class MslExternal*> externalMap;
 
-    // the scripts that were in use at the time of re-parsing and replacement
-    juce::OwnedArray<class MslScript> inactive;
-
-    // active scriptlet sessions
-    juce::OwnedArray<class MslScriptlet> scriptlets;
+    // application managed symbol tables
+    juce::OwnedArray<class MslResolutionContext> externalLibraries;
 
     //
     // internal library management

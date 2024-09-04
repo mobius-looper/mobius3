@@ -24,8 +24,8 @@ MslScript::~MslScript()
     }
 }
 
-MslFunction* MslScript::findFunction(juce::String fname) {
-    MslFunction* found = nullptr;
+MslFunctionNode* MslScript::findFunction(juce::String fname) {
+    MslFunctionNode* found = nullptr;
     for (auto func : functions) {
         if (func->name == fname) {
             found = func;

@@ -120,7 +120,7 @@ void MslParser::sift()
         MslNode* node = script->root->get(index);
         if (node->isFunction()) {
             script->root->remove(node);
-            addFunction(static_cast<MslFunction*>(node));
+            addFunction(static_cast<MslFunctionNode*>(node));
         }
         else if (node->isInit()) {
             script->root->remove(node);
@@ -133,10 +133,10 @@ void MslParser::sift()
     }
 }
 
-void MslParser::addFunction(MslFunction* func)
+void MslParser::addFunction(MslFunctionNode* func)
 {
     // replace if it was defined again
-    MslFunction* existing = nullptr;
+    MslFunctionNode* existing = nullptr;
     for (auto p : script->functions) {
         if (p->name == func->name) {
             existing = p;
@@ -542,7 +542,7 @@ MslNode* MslParser::checkKeywords(MslToken& t)
       keyword = new MslVariable(t);
     
     else if (t.value == "function" || t.value == "func" || t.value == "proc")
-      keyword = new MslFunction(t);
+      keyword = new MslFunctionNode(t);
     
     else if (t.value == "init")
       keyword = new MslInit(t);
@@ -601,9 +601,9 @@ void MslParser::parseDirective(MslToken& t)
 
 /**
  * This is a bit of a hack to parse the #signature directive into what looks
- * like the argument declaration block of an MslFunction.  This allows
+ * like the argument declaration block of an MslFunctionNode.  This allows
  * a script file to be called with arguments as if it were wrapped in a
- * MslFunction which makes it easier for the MslSymbol evaluator to deal with.
+ * MslFunctionNode which makes it easier for the MslSymbol evaluator to deal with.
  * Since the text isn't part of the text of the file currently being
  * parsed, we create a new parser just for this so we don't mess up the state
  * of the main parser.

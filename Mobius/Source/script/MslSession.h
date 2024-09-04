@@ -91,7 +91,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslOperator* obj) override;
     void mslVisit(class MslAssignment* obj) override;
     void mslVisit(class MslVariable* obj) override;
-    void mslVisit(class MslFunction* obj) override;
+    void mslVisit(class MslFunctionNode* obj) override;
     void mslVisit(class MslIf* obj) override;
     void mslVisit(class MslElse* obj) override;
     void mslVisit(class MslReference* obj) override;

@@ -50,7 +50,7 @@ class MslScript {
 
     /**
      * Parsed argument declaration for this script.
-     * Helps the evaluator deal with scripts as if they were MslFunctions.
+     * Helps the evaluator deal with scripts as if they were MslFunctionNodes.
      */
     std::unique_ptr<class MslBlock> arguments;
     class MslBlock* getDeclaration() {
@@ -76,9 +76,9 @@ class MslScript {
     // this is however functioning as a history of prior definitions
     // when using the console and scriptlet sessions.  I'm starting
     // to not like doing that here since it is very specific to the console
-    juce::OwnedArray<class MslFunction> functions;
+    juce::OwnedArray<class MslFunctionNode> functions;
 
-    // runtime cache of static variable bindings
+    // Runtime cache of static variable bindings
     // this uses a pooled object linked list rather than OwnedArray
     // to avoid memory at runtime and be like MslStack
     // think about a smart pointer variant that can deal with pooled objects
@@ -89,7 +89,7 @@ class MslScript {
     // todo: support the old concept of Labels ?
     // I think no, use exported procs instead
 
-    class MslFunction* findFunction(juce::String name);
+    class MslFunctionNode* findFunction(juce::String name);
     class MslVariable* findVariable(juce::String name);
 
 };

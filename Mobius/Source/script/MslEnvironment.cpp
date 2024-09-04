@@ -59,7 +59,7 @@ void MslEnvironment::shutdown()
  */
 MslLinkage* MslEnvironment::find(juce::String name)
 {
-    return library[name];
+    return library.find(name);
 }
 
 /**
@@ -103,11 +103,11 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     if (link == nullptr) {
         Trace(1, "MslEnvironment::request Missing link");
     }
-    else if (link->script != nullptr) {
+    else if (link->function != nullptr) {
         MslSession* session = pool.allocSession();
 
         // todo: need a way to pass request arguments into the session
-        session->start(c, link->script);
+        session->start(c, link->function);
 
         if (session->isFinished()) {
 
@@ -153,9 +153,6 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
             // todo: put something in the request?
         }
     }
-    else if (link->function != nullptr) {
-        Trace(1, "MslEnvironment: Function requsts not implemented");
-    }
     else if (link->variable != nullptr) {
         Trace(1, "MslEnvironment: Variable requsts not implemented");
     }
@@ -167,9 +164,102 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
 
 //////////////////////////////////////////////////////////////////////
 //
-// ScriptClerk Interface
+// ScriptEditor/Console Interface
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Allocate a resolution context for use by the application.
+ * This is only used by the console but could be used by the editor.
+ *
+ * Essentially this maintains a private table of function and variable
+ * definitions that script fragments can resolve to during compilation.
+ * It must be returned for garbage collection by calling dispose()
+ */
+class MslResolutionContext* MslEnvironment::registerResolutionContext()
+{
+    juce::String id = juce::String(idGenerator++);
+    MslResolutionContext* rc = new MslResolutionContext(garbage);
+    rc->id = id;
+    externalLibraries.add(rc);
+    return rc;
+}
+
+void MslEnvironment::dispose(class MslResolutionContext* rc)
+{
+    garbage.add(rc);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Compilation
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Compile but do not install a compilation unit.
+ *
+ * The returned MslCompilation is owned by the caller and must either
+ * be deleted or installed with install()
+ */
+MslCompilation* MslEnvironment::compile(MslContext* c, MslResolutionContext* resolver,
+                                        juce::String source)
+{
+    MslParser parser;
+    MslCompilation* comp = parser.parse(source);
+
+    if (!comp->hasErrors())
+      link(c, resolver, comp);
+
+    return comp;
+}
+
+/**
+ * Link each of the segmented parser results.
+ *
+ * Errors are left behind in the MslCompilation
+ */
+void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
+                          MslCompilation* comp)
+{
+    link(c, resolver, comp, comp->init.get());
+    link(c, resolver, comp, comp->body.get());
+
+    for (auto func : comp->functions)
+      link(c, resolver, comp, func);
+
+    // variables don't need linking
+    // wait...what if they have an initializer?
+    // the whole notion of variable initializers is like the
+    // init block, it runs on install
+}
+
+void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
+                          MslCompilation* comp, MslFunction* func)
+{
+    link(c, resolver, comp, func->node.get());
+}
+
+void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
+                          MslCompilation* comp, MslNode* node)
+{
+    // first link any chiildren
+    for (auto child : node->children)
+      link(c, resolver, comp, child);
+
+    // now the hard part
+    // only symbols need special processing right now
+    if (node->isSymbol()) {
+        MslSymbol* sym = static_cast<MslSymbol*>(node);
+        sym->link(c, resolver, comp, this);
+    }
+}
+
+
+
+
+
+
 
 /**
  * Primary interface for ScriptClerk.
@@ -255,41 +345,6 @@ MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::Stri
     return unit;
 }
 
-/**
- * Compile but do not install a unit.
- *
- * Unload load() the unit is passed in order to return results and may or may not
- * be interned.  The application can allocate a free floating unit to represent
- * a file that has not yet been saved and has no path.
- */
-void MslEivnronment::compile(MslScriptUnit* unit, juce::String source)
-{
-    // The parser conveys errors in a dynamically allocated script object we may
-    // choose to abandon.  Now that we have ScriptInfo should start using that
-    // consistently for all meta information about scripts beyond their runtime strucutre
-    MslParser parser;
-    MslScript* script = parser.parse(source);
-    // the reference name for the script is either the leaf file name from the path
-    // or a #name directive encountered during parsing
-    if (script->name.length() == 0)
-      script->name = defaultName;
-
-    // capture interesting parsed metadata in the unit
-    unit->name = script->name;
-
-    if (script->errors.size() > 0) {
-        // transfer the errors to the Info
-        // for reasons I don't understand about C++ can't do this
-        // unit->errors = script->errors;
-        // avoid this shit of MslParser just left them on the unit to begin with
-        while (script->errors.size() > 0) {
-            MslError* err = script->errors.removeAndReturn(0);
-            unit->errors.add(err);
-        }
-        
-        // don't need this any more
-        delete script;
-}
 
 
 /**
@@ -362,6 +417,13 @@ void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* n
         sym->link(context, this, script);
     }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Installation
+//
+//////////////////////////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////////////////////////////
 //

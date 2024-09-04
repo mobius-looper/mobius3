@@ -37,7 +37,7 @@ class MslVisitor
     virtual void mslVisit(class MslOperator* obj) = 0;
     virtual void mslVisit(class MslAssignment* obj) = 0;
     virtual void mslVisit(class MslVariable* obj) = 0;
-    virtual void mslVisit(class MslFunction* obj) = 0;
+    virtual void mslVisit(class MslFunctionNode* obj) = 0;
     virtual void mslVisit(class MslIf* obj) = 0;
     virtual void mslVisit(class MslElse* obj) = 0;
     virtual void mslVisit(class MslReference* obj) = 0;
@@ -163,10 +163,11 @@ class MslNode
     virtual bool isKeyword() {return false;}
     virtual bool isInit() {return false;}
        
-    virtual void link(class MslContext* context, class MslEnvironment* env, class MslScript* script) {
+    virtual void link(class MslContext* context, class MslEnvironment* env, class MslResolutionContext* rc, class MslCompilation* comp) {
         (void)context;
         (void)env;
-        (void)script;
+        (void)rc;
+        (void)comp;
     }
     
     virtual void visit(MslVisitor* visitor) = 0;
@@ -294,7 +295,7 @@ class MslBlock : public MslNode
     // blocks accumulate procs and vars defined within it outside of the
     // logic node tree
 
-    juce::OwnedArray<MslFunction> functions;
+    juce::OwnedArray<MslFunctionNode> functions;
     juce::OwnedArray<MslVariable> variables;
 
     bool isBlock() override {return true;}
@@ -459,11 +460,11 @@ class MslVariable : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslFunction : public MslNode
+class MslFunctionNode : public MslNode
 {
   public:
-    MslFunction(MslToken& t) : MslNode(t) {}
-    virtual ~MslFunction() {}
+    MslFunctionNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslFunctionNode() {}
 
     // same as var
     bool wantsToken(class MslParser* p, MslToken& t) override;
