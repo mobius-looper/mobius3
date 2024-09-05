@@ -1,3 +1,4 @@
+
 /**
  * Class used to hold the results of a compilation.
  * This includes both parsing into an MslNode tree and at least partial linking
@@ -44,7 +45,7 @@ class MslCompilation
      * Names of unresolved symbols.
      * There should also be errors for these, but this makes it easier to present
      */
-    juce::StringArray unresolvedSymbols;
+    juce::StringArray unresolved;
     
     /**
      * This list has information about name collisions between this script and other

@@ -13,6 +13,7 @@
 class MslFunction
 {
     friend class MslEnvironment;
+    friend class MslLinker;
     
   public:
 

@@ -47,8 +47,6 @@ class MslArgumentNode : public MslNode
     // the thing we forward to
     MslNode* node = nullptr;
 
-    
-
 };
 
 /**
