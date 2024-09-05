@@ -16,6 +16,81 @@
 
 #include "MslModel.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Resolution
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Helper class to deal with all the various resolution targets
+ * when resolving symbols.  One of these is embedded within each MslSymbol
+ * Besides maintaining state while searching for things during linking it also
+ * hides the details of the various object models at runtime to simplify code
+ * in the interpreter.
+ *
+ * This is kind of a mess right now so I'm encapsulating as much of it as
+ * possible here so we can tinker with the model without disrupting the
+ * linker and interpreter.
+ *
+ */
+class MslResolution
+{
+  public:
+
+    MslResolution() {}
+    ~MslResolution() {}
+
+    // a local variable defined somewhere in the tree
+    // this is by far the most common
+    class MslVariable* localVariable = nullptr;
+
+    // an "inner" function definition
+    // these are not fully supported yet but prepare for it
+    class MslFunctionNode* innerFunction = nullptr;
+
+    // a top-level local function, these are common
+    class MslFunction* localFunction = nullptr;
+
+    // a link to an exported function or variable from another script
+    class MslLinkage* linkage = nullptr;
+
+    // an external function or variable defined by the contraining application
+    class MslExternal* external = nullptr;
+
+    void reset() {
+        localVariable = nullptr;
+        innerFunction = nullptr;
+        localFunction = nullptr;
+        linkage = nullptr;
+        externa = nullptr;
+    }
+
+    // true if we found something
+    bool isResolved() {
+        return (localVariable != nullptr ||
+                innerFunction != nullptr ||
+                localFunction != nullptr ||
+                linkage != nullptr ||
+                external != nullptr);
+    }
+
+    // true if what we found is a function
+    bool isFunction() {
+        (innerFunction != nullptr ||
+         localFunction != nullptr ||
+         (linkage != nullptr && linkage->function != nullptr) ||
+         (external != nullptr && external->isFunction));
+    }
+    
+};
+
+//////////////////////////////////////////////////////////////////////
+//
+// Call Arguments
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Call argument
  * These are not pooled, they are constructured at link time.
@@ -49,6 +124,12 @@ class MslArgumentNode : public MslNode
 
 };
 
+//////////////////////////////////////////////////////////////////////
+//
+// Symbol
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Symbol node
  */
@@ -75,35 +156,15 @@ class MslSymbol : public MslNode
         return wants;
     }
 
-    void link(class MslContext* context, class MslEnvironment* env,
-              class MslResolutionContext* rc, class MslCompilation* comp) override;
-    
     // link state
-    // if a name resolves to more than one thing, only one of them will be set
-
-    // things resolved within the MslCompilation (i.e. in the same script)
-    // think about this...it would be easier in some ways to have non interned
-    // linkages in the MslCompilation so we could represent these the same way
-    class MslFunctionNode* function = nullptr;
-    class MslVariable* variable = nullptr;
-
-    // reference resolved within the environment or resolution context
-    class MslLinkage* linkage = nullptr;
-
-    // reference resolved to an external
-    // same thing with external that have a signature
-    // factor out an MslCallable that has all these things
-    class MslExternal* external = nullptr;
-
+    MslResolution resolution;
+    bool isResolved() {resolution.isResolved();}
+    
     // compiled argument list for the resolved function
     MslBlock arguments;
     
-  private:
-
-    void linkCall(class MslScript* script, class MslBlock* signature);
-    class MslAssignment* findCallKeyword(juce::Array<class MslNode*>& callargs, juce::String name);
-    class MslNode* findCallPositional(juce::Array<class MslNode*>& callargs);
-    void linkAssignment(class MslContext* context, class MslEnvironment* env, class MslScript* script);
-
 };
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

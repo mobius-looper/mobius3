@@ -1,7 +1,7 @@
 /**
  * A parser for the MSL language.
  * 
- * The parser consumes a string of text, and produces an MslScript object.
+ * The parser consumes a string of text, and produces an MslCompilation object.
  * The parser lives at the shell level and does not need to use object pools.
  *
  */
@@ -12,8 +12,7 @@
 
 #include "MslTokenizer.h"
 #include "MslModel.h"
-#include "MslScript.h"
-#include "MslError.h"
+#include "MslCompilation.h"
 
 class MslParser
 {
@@ -23,12 +22,7 @@ class MslParser
     ~MslParser() {}
 
     // usual file and scriptlet parsing interface
-    MslScript* parse(juce::String source);
-
-    // incremental interface for the console
-    // this reuses an existing MslScript so function and variable definitions
-    // can be accumulated over multiple interactive console lines
-    bool parse(class MslScript* script, juce::String source);
+    MslCompilation* parse(juce::String source);
 
     // make this public so the MslModel classes can add token errors
     void errorSyntax(MslToken& t, juce::String details);
@@ -37,18 +31,22 @@ class MslParser
 
     MslTokenizer tokenizer;
 
-    // script being parsed
-    MslScript* script = nullptr;
+    // the results being accumulated
+    class MslCompilation* script = nullptr;
+    
+    // the root block of the parse
+    class MslBlock* root = nullptr;
 
     // the parse stack
-    MslNode* current = nullptr;
+    class MslNode* current = nullptr;
 
-    void resetResult();
-    void parseInner(juce::String source);
+    void init();
     void sift();
-    void addFunction(class MslFunctionNode* func);
-    void addVariable(class MslVariable* var);
+    void functionize(class MslFunctionNode* node);
+    void functionize(class MslInitNode* node);
+    void embody();
     
+    void parseInner(juce::String source);
     void errorSyntax(MslNode* node, juce::String details);
     bool matchBracket(MslToken& t, class MslNode* block);
 

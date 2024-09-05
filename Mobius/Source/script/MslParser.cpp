@@ -1,4 +1,10 @@
 /**
+ * The MSL language parser.
+ * 
+ * It parses a string of text and produces the MslCompilation which
+ * contains the parse trees broken up into several components.
+ * See MslCompilation.h for what those are.
+ *
  * If you're a "language guy" you will probably notice that I am not one.
  *
  * I didn't follow any of the usual Rules For Parser Construction, that
@@ -10,6 +16,10 @@
  * whatever it is the cool kids are using these days.  But if you have any suggestions
  * for an algorithm that accomplishes the same thing and pleases the
  * Parser Gods, let me know.
+ *
+ * Roughly speaking the language is C-like with a memory model and interpreter
+ * that resembles Lisp.  The primary objects are the block (list) and the symbol.
+ * 
  */
 
 #include <JuceHeader.h>
@@ -17,8 +27,8 @@
 #include "../util/Trace.h"
 
 #include "MslModel.h"
+#include "MslCompilation.h"
 #include "MslSymbol.h"
-#include "MslScript.h"
 #include "MslError.h"
 #include "MslParser.h"
 
@@ -26,128 +36,209 @@
  * Main entry point for parsing.
  * The source may come from a file or from scriptlet text in memory.
  *
- * An MslScript object is allocated and returned.  This becomes owned by
+ * An MslCompilation object is allocated and returned.  This becomes owned by
  * the caller and must be deleted.  Currently these are not pooled.
  *
- * If there were parse errors, the script object will have no root block and
- * errors will be left inside it.
+ * If there were parse errors, the compilation object will containa list of
+ * error messages, and the various node fields will be empty to prevent
+ * accidental evaluation.
+ *
+ * The text is first parsed into a "root block" which represents the top-level
+ * statements.  If the parse was succesfull the root block is reorganized to
+ * break apart the raw parse tree into various independent components.
  */
-MslScript* MslParser::parse(juce::String source)
+MslCompilation* MslParser::parse(juce::String source)
 {
-    // start with a new empty script
-    script = new MslScript();
-    script->root = new MslBlock();
+    init();
+    
+    script = new MslCompilation();
+    root = new MslBlock();
 
     // the "stack"
-    current = script->root;
+    current = root;
 
     parseInner(source);
 
-    // if errors were left in the script, don't return a partially constructed root block
-    if (script->errors.size() > 0) {
-        delete script->root;
-        script->root = nullptr;
-    }
-    else {
+    if (script->errors.size() == 0) {
         sift();
     }
-    
-    // shouldn't matter but don't retain pointers to things we're losing control over
-    MslScript* result = script;
-    script = nullptr;
-    current = nullptr;
+    else {
+        delete root;
+        root = nullptr;
+    }
 
+    // capture the result and clear out intermediate state
+    MslCompilation* result = script;
+    script = nullptr;
+    root = nullptr;
+    current = nullptr;
+    
     return result;
 }
 
 /**
- * Entry point for dynamic "scriptlet sessions".
- * Here the MslScript is maintained outside the parser for an indefinite
- * period of time, and we can add to it.
+ * Clear out any lingering parse state before or after parsing.
+ * The parser is normally a one-use stack object so this shouldn't be necessary.
  */
-bool MslParser::parse(MslScript* argScript, juce::String source)
+void MslParser::init()
 {
-    bool success = false;
-    
-    // reset any lingering state from last time
-    // retain sifted function and variable definitions
-    script = argScript;
-    script->errors.clear();
-    delete script->root;
-    script->root = new MslBlock();
-    
-    current = script->root;
-    
-    parseInner(source);
-
-    if (script->errors.size() > 0) {
-        delete script->root;
-        script->root = nullptr;
-    }
-    else {
-        // capture new functions and variables
-        sift();
-        success = true;
-    }
-    
-    // clean up transient pointers
-    script = nullptr;
+    delete script;
+    script =  nullptr;
+    delete root;
+    root = nullptr;
     current = nullptr;
-
-    return success;
 }
 
 /**
- * After parsing, move any functions and variables encountered up to the
- * Script.  The node tree may then be disposed of while retaining
- * the definitions.
+ * After parsing, reorganize the raw parse tree into various independent
+ * components.
  *
- * This is difficuclt to do during parsing due to the simplicity
- * of the stack being maintained as the node->parent reference rather
- * than allowing the top of the stack to be anywhere.
+ * The "body" of the script are any top-level statements in the root block
+ * that may be evaluated.  These are repackaged into an MslFunction so the
+ * body block can be used by the interpreter in the same way as declared functions.
  *
- * Not entirely happy with this, but it gets this started.
- * Need a lot more thought into what functions in nested blocks mean.
- * Vars in nested blocks are retained in position as the variable/symbol override
- * is active only during that block.
+ * Top-level function definitions are extracted from the body and left on a list
+ * since these are not evaluated in lexical order.
+ * todo: once local function declarations are possible, this sifting should be
+ * done on each MslBlock instead.  The only things that need special extraction
+ * are functions declared as exported.
  *
- * Only doing one level of sifting till we work that out.
+ * declarations will have been removed at this point and left in the MslCompilation
+ * eventually may want a declaration block.
  */
 void MslParser::sift()
 {
     int index = 0;
-    while (index < script->root->size()) {
+    while (index < root->size()) {
         MslNode* node = script->root->get(index);
+        
         if (node->isFunction()) {
+            MslFunctionNode* f = static_cast<MslFunctionNode*>(node);
             script->root->remove(node);
-            addFunction(static_cast<MslFunctionNode*>(node));
+            functionize(f);
         }
         else if (node->isInit()) {
+            MslInit* i = static_cast<MslInit*>(node);
             script->root->remove(node);
-            // todo: if there is more than one, accumulate them?
-            script->init.reset(node);
+            functionize(i);
         }
         else {
             index++;
         }
     }
+
+    // what remains becomes the body block for the script
+    // which may be evaluated if it has a reference name
+    embody();
 }
 
-void MslParser::addFunction(MslFunctionNode* func)
+/**
+ * Convert an MslFunctionNode into an MslFunction.
+ * It has already been removed from the parse tree.
+ *
+ * The body block is moved from the OwnedArray in the node
+ * to the unique_ptr in the Function.  Same for the declaration
+ * block.
+ *
+ * The empty node husk is then discarded.
+ *
+ * On it's own this doesn't do much more than the node model did
+ * but MslFunction is used for other things and this gives them
+ * a common interface.
+ */
+void MslParser::functionize(MslFunctionNode* node)
 {
-    // replace if it was defined again
-    MslFunctionNode* existing = nullptr;
-    for (auto p : script->functions) {
-        if (p->name == func->name) {
+    MslFunction* function = new MslFunction();
+
+    function->name = node->name;
+
+    MslBlock* decl = node->getDeclaration();
+    if (decl != nullptr) {
+        node->children.remove(decl);
+        function->declaration = decl;
+    }
+    
+    MslBlock* body =  node->getBody();
+    if (body != nullptr) {
+        node->children.remove(body);
+        function->body = body;
+    }
+
+    // if there was already a definition for this function
+    // replace it, this could be considered an error
+    MslFunction* existing = nullptr;
+    for (auto f : script->functions) {
+        if (f->name == function->name) {
             existing = p;
             break;
         }
     }
+    
     if (existing != nullptr) {
-        Trace(2, "MslParser: Replacing function definition %s", func->name.toUTF8());
+        Trace(2, "MslParser: Replacing function definition %s", function->name.toUTF8());
         script->functions.removeObject(existing);
     }
     script->functions.add(func);
+}
+
+/**
+ * Convert an MslInitNode into an MslFunction.
+ * It has already been removed from the parse tree.
+ *
+ * Initialization blocks are packaged like functions so they
+ * may be evaluated consistently, but they do not have names.
+ *
+ * Unlike function definitions, if we encounter more than one
+ * init block in the text, they are merged.
+ *
+ * For mergers, this could go two ways.  We can unwrap the child
+ * nodes and make it look like they were in a single block
+ * or keep this as a block of blocks that would allow local
+ * declarations to shadow things.  I think it's more useful
+ * to unwrap them so in theory a function defined in one block
+ * could be used in another.
+ */
+void MslParser::functionize(MslInitNode* node)
+{
+    MslFunction* init = script->init.get();
+    if (init == nullptr) {
+        init = new MslFunction();
+        script->init.reset(init);
+    }
+    
+    MslBlock* body = init->body.get();
+    if (body == nullptr) {
+        body = new MslBlock();
+        init->body.reset(body);
+    }
+
+    // transfer the children
+    while (node->children.size() > 0) {
+        MslNode* child = node->children.removeAndRetain(0);
+        body.add(child);
+    }
+}
+
+/**
+ * Convert the remaining top-level nodes into a function.
+ * The function name is taken from the name declaration if
+ * one was present.
+ */
+void MslParser::embody()
+{
+    MslFunction* f = new MslFunction();
+    f->name = script->name;
+
+    // todo: script file argument should eventually be defined
+    // with a declaration of some kind
+
+    // there should be nothing left in the root block at this point
+    // that needs sifting put the entire thing in the function
+    f->body.reset(root);
+    root = nullptr;
+
+    // this function then becomes the body function for the compilation unit
+    script->body = f;
 }
 
 //////////////////////////////////////////////////////////////////////

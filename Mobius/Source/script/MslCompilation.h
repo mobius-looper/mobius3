@@ -17,10 +17,17 @@ class MslCompilation
     MslCompilation();
     ~MslCompilation();
 
+    // unique id for this unit once it has been installed
+    juce::String id;
+
     //
     // Interesting information about the compilation
     // accessible to the application (ScriptClerk, ScriptEditor)
     //
+
+    // various declaration results
+    // todo: needs more
+    juce::String name;
 
     // the initialization block found within the source
     std::unique_ptr<class MslFunction> init;
@@ -40,6 +47,12 @@ class MslCompilation
      * Errors encountered during parsing or linking.
      */
     juce::OwnedArray<class MslError> errors;
+
+    /**
+     * Non fatal, but unusual things the developer should now about.
+     */
+    juce::OwnedArray<class MslError> warnings;
+    
 
     /**
      * Names of unresolved symbols.

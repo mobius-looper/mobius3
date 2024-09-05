@@ -13,6 +13,7 @@
 class MslFunction
 {
     friend class MslEnvironment;
+    friend class MslParser;
     friend class MslLinker;
     
   public:
@@ -29,8 +30,9 @@ class MslFunction
 
   protected:
 
-    // the parse tree for the function definition
-    std::unique_ptr<class MslFunctionNode> node;
+    // extracted parse trees for the delcaration and body
+    std::unique_ptr<class MslBlock> declaration;
+    std::unique_ptr<class MslBlock> body;
 
 };
 

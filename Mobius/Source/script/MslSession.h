@@ -58,9 +58,8 @@ class MslSession : public MslVisitor
     ~MslSession();
     void init();
     
-    // begin evaluation of a script, it will complete or reach a wait state
-    void start(class MslContext* context, class MslScript* script);
-    void runInitializer(class MslContext* context, class MslScript* script);
+    // begin evaluation of a function, it will complete or reach a wait state
+    void start(class MslContext* context, class MslFunction* func);
     
     // name for logging, usually the MslScript name
     const char* getName();

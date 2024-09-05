@@ -164,35 +164,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
 
 //////////////////////////////////////////////////////////////////////
 //
-// ScriptEditor/Console Interface
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Allocate a resolution context for use by the application.
- * This is only used by the console but could be used by the editor.
- *
- * Essentially this maintains a private table of function and variable
- * definitions that script fragments can resolve to during compilation.
- * It must be returned for garbage collection by calling dispose()
- */
-class MslResolutionContext* MslEnvironment::registerResolutionContext()
-{
-    juce::String id = juce::String(idGenerator++);
-    MslResolutionContext* rc = new MslResolutionContext(garbage);
-    rc->id = id;
-    externalLibraries.add(rc);
-    return rc;
-}
-
-void MslEnvironment::dispose(class MslResolutionContext* rc)
-{
-    garbage.add(rc);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Compilation
+// Compilation and Linking
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -202,220 +174,153 @@ void MslEnvironment::dispose(class MslResolutionContext* rc)
  * The returned MslCompilation is owned by the caller and must either
  * be deleted or installed with install()
  */
-MslCompilation* MslEnvironment::compile(MslContext* c, MslResolutionContext* resolver,
-                                        juce::String source)
+MslCompilation* MslEnvironment::compile(MslContext* c, juce::String source)
 {
     MslParser parser;
     MslCompilation* comp = parser.parse(source);
 
-    if (!comp->hasErrors())
-      link(c, resolver, comp);
+    if (!comp->hasErrors()) {
+        MslLinker linker;
+        linker.link(c, this, comp);
+        
+        ponderLinkErrors(comp);
+    }
 
     return comp;
 }
 
 /**
- * Link each of the segmented parser results.
+ * Compilation for the console or anything else that wants to extend
+ * a previously compiled unit.  First the source string is parsed.
+ * Then the function declarations from the base unit are copied into
+ * the new unit so that they may be seen during linking.
  *
- * Errors are left behind in the MslCompilation
- */
-void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
-                          MslCompilation* comp)
-{
-    link(c, resolver, comp, comp->init.get());
-    link(c, resolver, comp, comp->body.get());
-
-    for (auto func : comp->functions)
-      link(c, resolver, comp, func);
-
-    // variables don't need linking
-    // wait...what if they have an initializer?
-    // the whole notion of variable initializers is like the
-    // init block, it runs on install
-}
-
-void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
-                          MslCompilation* comp, MslFunction* func)
-{
-    link(c, resolver, comp, func->node.get());
-}
-
-void MslEnvironment::link(MslContext* c, MslResolutionContext* resolver,
-                          MslCompilation* comp, MslNode* node)
-{
-    // first link any chiildren
-    for (auto child : node->children)
-      link(c, resolver, comp, child);
-
-    // now the hard part
-    // only symbols need special processing right now
-    if (node->isSymbol()) {
-        MslSymbol* sym = static_cast<MslSymbol*>(node);
-        sym->link(c, resolver, comp, this);
-    }
-}
-
-
-
-
-
-
-
-/**
- * Primary interface for ScriptClerk.
- * A file has been loaded and the source extracted.
- * Compile it and install it into the library if possible.
+ * It is not possible to share objects in the base unit since the
+ * two units have independent lifespan and the references cannot use
+ * MslLinkage if they are local definitions and won't have interned linkages.
+ * Could find a way to share but it's messy and error prone.  It's easier to
+ * copy which makes it sort of like a compile-time closure.
  *
- * A script Unit object is returned which has information about the script
- * including any parser or linker errors.  The application may retain a reference
- * to this object for as long as the envionment is alive.
- *
- * The unit identifier must be unique and is normally a fully qualified file path.
- * The returned unit is interned and will remain valid for as long as the environment.
+ * For this to work, parsing the source string can't make any assumptions
+ * about the declarations of functions and variables in the base unit.  i.e.
+ * it can't try to be smart about parsing symbols if they resolve to a function.
+ * This will become a problem if you ever decide to do "argument assimilation" since
+ * knowing whether to take unblocked adjacent nodes requires looking at the
+ * signature of the function being called.  Should this become necessary
+ * the parser will need to be modified to take an existing MslCompilation with
+ * pre-installed MslFunctions rather than creating one from scratch.  Or I suppose
+ * we could serialize the base unit functions back to text and inject it at the
+ * front of the source string, then parse it normally.
  */
-MslScriptUnit* MslEnvironment::load(MslContext* c, juce::String path, juce::String source)
+MslCompilation* MslEnvironment::compile(MslContext* c, juce::String baseUnitId,
+                                        juce::String source)
 {
-    // make sure the path looks good before proceeding
-    // should never happen if we got to the point where we read source code
-    if (path.length() == 0) {
-        Trace(1, "MslEnvironment::load Invalid path");
-        return nullptr;
-    }
+    MslCompilation* result = nullptr;
+    MslCompilation* base = nullptr;
 
-    // if this identifier looks like a path name, extract the leaf file to be used
-    // as the default reference name
-    juce::File file (path); 
-    juce::String defaultName = file.getFileNameWithoutExtension();
-    if (defaultName.length() == 0) {
-        // bail for now if this isn't a path, as we probably have other issues
-        // for non-path unit identifiers
-        Trace(1, "MslEnvironment::load Unable to derive file name from path");
-        return nullptr;
-    }
-    
-    // reuse an existing unit object if we already loaded this one
-    MslScriptUnit* unit = findUnit(path);
-    if (unit != nullptr) {
-        // clear prior results
-        unit->errors.clear();
-        unit->collisions.clear();
-        unit->exportedFunctions.clear();
-        unit->exportedVariables.clear();
-        // but KEEP the previous compilation result
-    }
-    else {
-        // these don't need to be pooled, but they do need to be destroyed at shutdown
-        unit = new MslScriptUnit();
-        unit->path = path;
-        units.add(unit);
-    }
-
-    // The parser conveys errors in a dynamically allocated script object we may
-    // choose to abandon.  Now that we have ScriptInfo should start using that
-    // consistently for all meta information about scripts beyond their runtime strucutre
-    MslParser parser;
-    MslScript* script = parser.parse(source);
-    // the reference name for the script is either the leaf file name from the path
-    // or a #name directive encountered during parsing
-    if (script->name.length() == 0)
-      script->name = defaultName;
-
-    // capture interesting parsed metadata in the unit
-    unit->name = script->name;
-
-    if (script->errors.size() > 0) {
-        // transfer the errors to the Info
-        // for reasons I don't understand about C++ can't do this
-        // unit->errors = script->errors;
-        // avoid this shit of MslParser just left them on the unit to begin with
-        while (script->errors.size() > 0) {
-            MslError* err = script->errors.removeAndReturn(0);
-            unit->errors.add(err);
-        }
-        
-        // don't need this any more
-        delete script;
-    }
-    else {
-        // defer linking until the end, but could do it each time too
-        // installation will check for collisions which will also prevent installation
-        install(c, unit, script);
-    }
-    
-    return unit;
-}
-
-
-
-/**
- * Unload any script units that are no longer needed by the application.
- * The application passes a list of "retains" which are unit ids it
- * wants to keep.
- */
-void MslEnvironment::unload(juce::StringArray& retain)
-{
-    for (auto unit : units) {
-        if (!retain.contains(unit->path)) {
-            unlink(unit);
-            // shouldn't need this any more either, might just confuse things
-            // compilations on the inactive list will be deleted as soon as the
-            // active sessions are finished so we don't want to leave lingering pointers
-            unit->compilation = nullptr;
+    if (baseUnitId.length > 0) {
+        base = findUnit(baseUnitId);
+        if (base == nullptr) {
+            // this is most likely an error though we could proceed without
+            // it if the source text doesn't reference anything from the base
+            result = new MslCompilation();
+            result.errors.add(juce::String("Invalid base unit id ") + baseUnitId);
         }
     }
 
-    // could also delete the Unit, but unclear when the application is ready
-    // to give that up so leave them around
-    // could also move it to an inactive list like MslScripts but we don't know
-    // when those can be GC'd
-}
+    if (result == nullptr) {
+        MslParser parser;
+        result = parser.parse(source);
 
-/**
- * Do a full relink after bulk file loading.
- *
- * The MslScripts list is the authoritative set of "installed" scripts that
- * can be resolved.  The MslScriptUnit is where the errors live.  There
- * is supposed to be a one-to-one on those, but it feels too fragile.
- *
- * You can't have parse errors and still have a compilation result so
- * linking is free to overwrite the unit's error list.
- *
- * Handoff is messy.  MslSymbol wants to leave errors on the MslScript.
- * Those need to be transferred to the Unit if we have any.  Need to make
- * unit awareness go deeper.
- */
-void MslEnvironment::link(MslContext* context)
-{
-    for (auto unit : units) {
-        MslScript* comp = unit->compilation;
-        
-        if (comp != nullptr) {
+        if (!result->hasErrors()) {
 
-            // reset the error list on the compilation and link it
-            comp->errors.clear();
-            linkNode(context, comp, comp->root);
-
-            // transfer the errors to the unit
-            unit->errors.clear();
-            while (comp->errors.size()) {
-                unit->errors.add(comp->errors.removeAndReturn(0));
+            // here comes the magic
+            // copy over the function definitions
+            // todo: should only be copying non-exported functions, those
+            // can be accessed via MslLinkage
+            // todo: need to do something about static variables
+            for (auto f : base->functions) {
+                MslFunction* copy = copyFunction(f);
+                result->functions.add(copy);
             }
+            
+            MslLinker linker;
+            linker.link(c, this, result);
+
+            ponderLinkErrors(result);
         }
     }
+    
+    return result;
 }
 
-void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* node)
+/**
+ * After linking think about errors encountered and whether they should prevent
+ * installation of the unit.
+ *
+ * There are various ways to approach this.  Linking mostly encounters
+ * unresolved symbols and name collisions.
+ *
+ * Both of those situations could be resolved later by loading or
+ * unloading other script units, and is a state a unit can get into
+ * normally after it has been instealled.
+ *
+ * However when used during interactive editing, it's best to be strict
+ * to catch things like "if switchQuantize == cycle" which will be common
+ * since users aren't accustomed to using the :cycle keyword symbol. And they
+ * should be writing scripts after library loading and we want to catch
+ * misspelled references.
+ *
+ * During bulk file loading by ScriptClerk, it's best to be tolerant because
+ * files can be loaded in random order and function libraries may come in after
+ * the files that reference them.
+ *
+ * There could be a "strictMode" option to compile() or we could split errors
+ * into error and warnings, or the result could have an "installable" flag.
+ * to indiciate that errors during linking could be tolerated.  Going with the last
+ * one for now.
+ */
+void MslEnvironment::ponderLinkErrors(MslCompilation* comp)
 {
-    // first link any chiildren
-    for (auto child : node->children)
-      linkNode(context, script, child);
+    // we don't have a good way to tell if something on the error
+    // list represents a resolution or collision error or it's a more
+    // fundamental linker error that should be fatal
+    // since we don't have function libraries yet, let's punt and assume
+    // any error needs to be dealt with
+    // update: add a warning list, look at that here too?
 
-    // now the hard part
-    // only symbols need special processing right now
-    if (node->isSymbol()) {
-        MslSymbol* sym = static_cast<MslSymbol*>(node);
-        sym->link(context, this, script);
+    if (comp->errors.size())
+      cleanse();
+}
+
+/**
+ * After deciding that a compilation unit errors should prevent installation
+ * of the unit, reclaim any of the compilation artifacts and just return
+ * the errors.
+ */
+void MslEnvironment::cleanse(MslCompilation* comp)
+{
+    comp.init = nullptr;
+    comp.body = nullptr;
+    comp.functions.clear();
+    comp.variables.clear();
+}
+
+/**
+ * Do a full relink of the environment.
+ * Normally this is called automatically as a side effect of
+ * Unloading or reloading units.
+ */
+void MslEnvironment::link(MslContext* c)
+{
+    MslLinker linker;
+    
+    for (auto unit : compilations) {
+        linker.link(c, this, unit);
     }
+
+    // todo: need to auto-publish units that no longer have name collisions
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -424,244 +329,217 @@ void MslEnvironment::linkNode(MslContext* context, MslScript* script, MslNode* n
 //
 //////////////////////////////////////////////////////////////////////
 
-
-//////////////////////////////////////////////////////////////////////
-//
-// MobiusConsole/Binderator Scriptlet Interface
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
- * Scriptlet is fairly autonomous but I'd still like to get them
- * through the environment in case we need to do tracking of them for some reason.
+ * Install a compilation unit after it has been compiled and linked.
+ * It is expected to be free of errors.  Results are returned in the MslInstallation.
  *
- * The session should be returned with releaseScriptetSession() when no longer
- * necessary, but it is not necessary to delete it.  Any lingering sessions
- * will be reclaimed at shutdown.
- */
-MslScriptlet* MslEnvironment::newScriptlet()
-{
-    MslScriptlet* s = new MslScriptlet(this);
-    scriptlets.add(s);
-    return s;
-}
-
-/**
- * Return a scriptlet session when it is no longer necessary.
- * Callers aren't required to do this but they'll leak and won't get reclained
- * till shutdown if you don't.
- */
-void MslEnvironment::releaseScriptlet(MslScriptlet* s)
-{
-    // any internal cleanup to do?
-    scriptlets.removeObject(s);
-}
-
-/**
- * After the MslScriptlet has parsed source, it needs to link it.
- * Interface is messy.
+ * The unit will be added to the unit registry but it will not be "published"
+ * if there are any name collisions.
  *
- * Scriptlets can't have any function or variable exports right now
- * but they do need to have call arguments assembled.
- *
+ * Publishing is the process of creating MslLinkage objects for the referencable
+ * things inside the unit.  If the unit had been previously published, but
+ * now contains name collisions, it will be unpublished and can no longer be used
+ * until the collisions are fixed.  I think this is better than leaving the old one
+ * in place.  Whatever is attempting to install things should have prevent that
+ * from being attempted.
  */
-bool MslEnvironment::linkScriptlet(MslContext* context, MslScript* script)
+MslInstallation* MslEnvironment::install(MslContext* c, juce::String unitId,
+                                         MslCompilation* unit)
 {
-    // we shouldn't try to link if we started with errors, but if we did
-    // only return failure if we added some new ones
-    int startErrors = script->errors.size();
+    MslInstallation* result = new MslInstallation();
     
-    linkNode(context, script, script->root);
+    // todo: if there are any lingering errors, prevent installation
+    // allow if there are link errors which may be resolved later
+    if (unit->errors.size() > 0) {
+        result->errors.add(juce::String("Unable to install compilation unit with errors"));
+    }
+    else {
+        if (unitId.length() == 0) {
+            // must be a scriptlet or console session, generate an id
+            unitId = juce::String(idGenerator++);
+            Trace(2, "MslEnvironment: Generating unit id %s", unitId.toUTF8());
+            result->id = unitId;
+        }
 
-    return (script->errors.size() == startErrors);
-}
+        // replace the previous compilation of this unit
+        MslCompiliation* existing = compilationMap[unitId];
+        if (existing != nullptr)
+          uninstall(existing);
 
-//////////////////////////////////////////////////////////////////////
-//
-// Library
-//
-//////////////////////////////////////////////////////////////////////
+        // install the new one
+        compilations.add(unit);
+        compilationMap.set(unitId, unit);
+        
+        // since time may have passed between compilation and installing
+        // check for collisions again
+        // we actuall should do a full relink here too since we can't control
+        // the time between compilation and installation
+        MslLinker linker;
+        linker.checkCollisions(this, unit);
+        if (unit->collisions.size() > 0) {
+            inst->errors.add(juce::String("Unable to publish with name collisions"));
+            // todo: the user isn't allowed to have access to the Compilation
+            // once it has been isntalled, need to copy the collisions to the result
+            result->copyCollisions(comp->collisions);
+        }
+        
+        if (unit->collisions.size() == 0) {
+            
+            publish(unit);
 
-/**
- * Locate the unit for a previously loaded script.
- * Paths can be long and this could take some time if you have a boatload
- * of scripts, but should not be bad enough to warrant a hashmap yet.
- */
-MslScriptUnit* MslEnvironment::findUnit(juce::String& path)
-{
-    MslScriptUnit* found = nullptr;
+            // tell the container about the things it can call
+            exportLinkages(c, unit);
 
-    for (auto unit : units) {
-        if (unit->path == path) {
-            found = unit;
-            break;
+            // if the unit had an initialization block, run it
+            // todo: this can have evaluation errors, should
+            // capture them and leave them in the result
+            initialize(c, unit);
         }
     }
-    return found;
+    return result;
 }
 
 /**
- * When a Unit is reloaded or unloaded, clear out any previously resolved
- * linkages to things that came from this this unit.  They may be immediately
- * put back, or not if names within the unit changed.
+ * After publishing, inform the MslContext of the things it can now touch.
+ * We are not telling it about things that were unresolved, the MslLinkage
+ * it had before will just become unresolved.
+ *
+ * Sigh, publishing just had all the MslLinkages we needed, but we've lost
+ * that context.
  */
-void MslEnvironment::unlink(MslScriptUnit* unit)
+void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
 {
-    // this may be null if we're installing for the first time, or there
-    // were parse errors previously
-    MslScript* compilation = unit->compilation;
-    
+
+    if (unit->body != nullptr) {
+        MslLinkage* link = addLink(script->name, unit, script);
+        link->script = script;
+        context->mslExport(link);
+    }
+
+            for (auto func : script->functions) {
+                
+                MslLinkage* link = addLink(func->name, unit, script);
+                link->function = func;
+                context->mslExport(link);
+            }
+
+}
+
+
+
+/**
+ * Uninstall a previous compilation unit.
+ * Any MslLinkages that referenced this unit are unresolved,
+ * the unit is removed from the registry list, and placed into the garbage collector.
+ */
+void MslEnvironment::uninstall(MslCompilation* unit)
+{
     for (auto link : linkages) {
         if (link->unit == unit) {
-            if (compilation != nullptr && link->compilation != compilation) {
-                // this is probably fatal
-                // I suppose we could treat anything we find here as something
-                // to be moved to the inactive list but it shouldn't happen,
-                // it will likely leak
-                Trace(1, "MslEnvironment::unlink Inconsistent installation of compilatin unit");
-            }
-            
             // unresolve the link
             link->unit = nullptr;
-            link->compilation = nullptr;
-            link->script = nullptr;
             link->function = nullptr;
             link->variable = nullptr;
         }
     }
 
-    if (compilation != nullptr) {
-        // remove the compiled script from the active list and place it
-        // on the inactive list for later reclamation
-        scripts.removeObject(compilation, false);
-        inactive.add(compilation);
-    }
+    compilations.removeObject(unit, false);
+    garbage.add(unit);
 }
 
 /**
- * Add an empty linkage for this unit with the given name.
- * Collision checking has already been performed so we're free to track
- * an existing one if we find it.
+ * Uninstall a previous unit with an id.
+ * This is visible for the application that may wish to uninstall
+ * previous installations after a file is deleted, or a binding is removed.
  */
-MslLinkage* MslEnvironment::addLink(juce::String name, MslScriptUnit* unit,
-                                    MslScript* compilation)
+void MslEnvironment::uninstall(juce::String id)
 {
-    MslLinkage* link = library[name];
-    if (link == nullptr) {
-        link = new MslLinkage();
-        link->name = name;
-        linkages.add(link);
-        library.set(name, link);
-    }
-    else {
-        // should have checked this by now
-        if (link->unit != nullptr && link->unit != unit)
-          Trace(1, "MslEnvironment::addLink Trahing a link with a rogue unit");
-    }
+    MslCompilation* unit = compilations[id];
+    if (unit != nullptr)
+      uninstall(unit);
+    else
+      Trace(1, "MslEnvironment::uninstall Invalid unit id %s", id.toUTF8());
+}
+
+/**
+ * Publish an installed compilation unit.
+ * This creates the MslLinkages so the things in the unit can be referenced.
+ * Collision detection is expected to have happened by now.
+ */
+void MslEnvironment::publish(MslCompilation* unit)
+{
+    if (unit->body != nullptr)
+      publish(unit, unit->body.get());
+        
+    for (auto func : unit->functions)
+      publish(unit, func);
+
+    for (auto var : unit->variables)
+      publish(unit, var);
+
+}
+
+void MslEnvironment::publish(MslCompilation* unit, MslFunction* f)
+{
+    MslLinkage* link = internLinkage(unit, f->name);
+    if (link != nullptr)
+      link->function = f;
+}
+
+void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v)
+{
+    MslLinkage* link = internLinkage(unit, v->getName());
+    if (link != nullptr)
+      link->variable = v;
+}
+
+/**
+ * Locate or install a new linkage with a name.
+ * The linkage is expected to have been unresolved by now.  If it
+ * isn't it either means the uninstallation of the previous version of this
+ * unit was broken.  Or there is a name collision with another unit which
+ * should have been checked by now.
+ *
+ * This will prevent the publishing of the link, which may lead to runtime
+ * inconsistencies.  This really shouldn't happen, if it does do we need
+ * another error list on the Compilation?
+ */
+MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String name)
+{
+    MslLinkage* found = nullptr;
     
-    link->unit = unit;
-    link->compilation = compilation;
-
-    return link;
-}
-            
-/**
- * Install a freshly parsed script unit into the library.
- *
- * Here we need to add some thread safety.
- * Initially only the Supervisor/UI can do this so we don't have
- * to worry about it but eventually the maintenance thread might need to.
- *
- * There are several forms of "linking" that cause complications here:
- * replacement of scripts that are currently in use, resolving references
- * between scripts, and name collisions when multiple scripts have the
- * same name either for the root script or an exported proc or var.
- *
- * When there are active sessions, the session can have pointers to anything
- * that is currently in the library, so nothing is allowed to be deleted while
- * sessions exist.  Instead reloaded scripts must be moved to an "inactive" list
- * and reclained when all sessions have finished.
- *
- * References between scripts are handled through a local symbol table, this
- * is similar to Symbols but only deals with cross-script references.
- *
- * File paths are always unique identifiers, but the simplfied "reference name"
- * may not be.  Only one name may be added to the library symbol table.  If a collision
- * occurs, an error is added to the Unit and the script is not installed.
- *
- * todo: collisions are like link errors, if the user deletes or unloads the offending
- * script it would add it to the library without having to go through the process
- * of parsing it again.  !! think about a "pending" list
- *
- * This will call back to MslContext::mslExport to let the container register
- * the script for reference.  For Mobius this is the SymbolTable.
- */
-void MslEnvironment::install(MslContext* context, MslScriptUnit* unit, MslScript* script)
-{
-    // unlink any references to the unit contents that were previously installed
-    unlink(unit);
-
-    // determine the names of things we want to install
-    juce::StringArray exports;
-    if (!script->library)
-      exports.add(script->name);
-
-    // add exported functions
-    // todo: this will just get all of them, need a formal export keyword
-    for (auto func : script->functions) {
-        // if (func->export)
-        exports.add(func->name);
-    }
-
-    // todo: same with exported variables
-
-    // look for collisions
-    // we could be strict or loose here, but it feels dangerous to allow only
-    // portions of the script to be loaded, it must certainly fail if the
-    // top level script can't be installed
-    // could also leave the old unit in place while they fix problems in the new unit
-    // by moving the unlink()?
-    for (auto name : exports) {
-        MslLinkage* link = library[name];
-        if (link != nullptr && link->unit != nullptr) {
-            MslCollision* col = new MslCollision();
-            col->name = name;
-            col->fromPath = unit->path;
-            col->otherPath = link->unit->path;
-            unit->collisions.add(col);
-        }
-    }
-
-    if (unit->collisions.size() == 0) {
-        // install everything
-        unit->compilation = script;
-        scripts.add(script);
-
-        if (!script->library) {
-            MslLinkage* link = addLink(script->name, unit, script);
-            link->script = script;
-            context->mslExport(link);
-        }
-
-        for (auto func : script->functions) {
-            MslLinkage* link = addLink(func->name, unit, script);
-            link->function = func;
-            context->mslExport(link);
-        }
-
-        initialize(context, script);
+    if (name.length() == 0) {
+        Trace(1, "MslEnvironment: Attempt to publish link without a name");
     }
     else {
-        // will not be installing this
-        // todo: we could keep it around and then auto-install it if the
-        // other script is unloaded
-        // as it stands, the ScriptClerk will have to load it again
-        delete script;
-    }
-}
+        MslLinkage* link = linkMap[f->name];
+        if (link == nullptr) {
+            link = new MslLinkage();
+            link->name = name;
+            linkages.add(link);
+            linkMap.set(name, link);
+        }
+        
+        if (link->unit != nullptr) {
+            Trace(1, "MslEnvironment: Collision on link %s", name);
+        }
+        else {
+            link->unit = unit;
+            // should also be unresolved, but make sure
+            link->function = nullptr;
+            link->variable = nulptr;
+            found = link;
+        }
 
+    }
+
+    return found;
+}
+    
 /**
- * Immediately after installing, run the initializer.
+ * Immediately after installing and publishing a compliation unit,
+ * run the initializer.
+ *
  * This may result in errors but it doesn't prevent installation.
  * Since we can't roll back an initializer side effects it feels better
  * to leave it in place as would be the case if there was a runtime
@@ -670,11 +548,12 @@ void MslEnvironment::install(MslContext* context, MslScriptUnit* unit, MslScript
  * The logic here is almost identical to request()
  * factor out something we can share.
  */
-void MslEnvironment::initialize(MslContext* c, MslScript* script)
+void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
 {
-    if (script->init != nullptr) {
+    if (unit->init != nullptr) {
         MslSession* session = pool.allocSession();
-        session->runInitializer(c, script);
+
+        session->start(c, unit->init);
 
         if (session->isFinished()) {
 
@@ -754,34 +633,8 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Once an MslScript has been sucessfully parsed it is "linked" to resolve
- * MslSymbols in the source code to the concrete things that implement them.
- *
- * Primarily this locates and interns MslExternals and caches them on the symbol
- * node for use at runtime.
- *
- * Now that we have a link phase, we may as well do resolution to internal procs
- * and vars too, but that is still being done at runtime.  Would be better to do
- * it up front so we can warn the user about unresolved symbols before they run
- * the script.
- *
- * This was added after MslLinkage which is used for cross script references
- * to scripts and exported procs.  There are similarities, see if we can settle
- * on a common linkage model.
- *
- * Yeah, we're doing linking two ways now, internal script linkages are done
- * at run time.  We could do all of this at compile time.
- *
- */
-#if 0
-MslError* MslEnvironment::resolve(MslScript* script)
-{
-    //MslError* errors = nullptr;
-    (void)script;
-    return nullptr;
-}
-#endif
+// todo: move the calls to MslContext to resolve externals here
+// from the MslLinker?
 
 MslExternal* MslEnvironment::getExternal(juce::String name)
 {

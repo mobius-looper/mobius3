@@ -16,6 +16,9 @@ class MslLinkage
     // the name that can be referenced by an MslSymbol
     juce::String name;
 
+    // the compilation unit this came from
+    class MslCompilation* unit = nullptr;
+
     // the resolved target of the link
     class MslFunction* function =  nullptr;
     class MslVariableExport* variable = nullptr;

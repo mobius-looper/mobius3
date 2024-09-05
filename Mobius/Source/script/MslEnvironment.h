@@ -234,7 +234,7 @@ class MslEnvironment
     // for MslConductor
     void processSession(MslContext* c, MslSession* s);
 
-    // for MslSession
+    // for MslLinker
     class MslExternal* getExternal(juce::String name);
     void intern(class MslExternal* ext);
 
@@ -259,10 +259,11 @@ class MslEnvironment
     // unique id generator for anonymous compilation units (scriptlets)
     int idGenerator = 1;
 
-    // the internal link table
-    MslResolutionContext library {garbage};
+    // exported links
+    juce::OwnedArray<class MslLinkage> linkages;
+    juce::HashMap<juce::String,class MslLinkage*> linkMap;
 
-    // the external link table
+    // external links
     juce::OwnedArray<class MslExternal> externals;
     juce::HashMap<juce::String,class MslExternal*> externalMap;
 
