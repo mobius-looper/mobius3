@@ -68,7 +68,7 @@ bool MslVariable::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
-bool MslFunction::wantsToken(MslParser* p, MslToken& t)
+bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;

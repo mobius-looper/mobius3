@@ -50,7 +50,7 @@ class MslVisitor
     virtual void mslVisit(class MslArgumentNode* obj) = 0;
     virtual void mslVisit(class MslKeyword* obj) = 0;
     // this one doesn't need a visitor
-    virtual void mslVisit(class MslInit* obj) {
+    virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
     }
     
@@ -515,11 +515,11 @@ class MslFunctionNode : public MslNode
  * Reconsider how this is modeled, a "named block" might
  * be more generally useful.
  */
-class MslInit : public MslNode
+class MslInitNode : public MslNode
 {
   public:
-    MslInit(MslToken& t) : MslNode(t) {}
-    virtual ~MslInit() {}
+    MslInitNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslInitNode() {}
 
     bool wantsNode(MslNode* node) override {
         (void)node;

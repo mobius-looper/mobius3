@@ -22,6 +22,7 @@
 #include "MslPools.h"
 #include "MslContext.h"
 #include "MslConductor.h"
+#include "MslGarbage.h"
 
 /**
  * An object used by the application to ask the environment to do something,
@@ -81,42 +82,30 @@ class MslEnvironment
     void shutdown();
 
     //
-    // Compilation
-    //
-
-    /**
-     * Normal compilation.
-     * Compile and link a string of source code, may be from a file or scriptlet.
-     * The returned compilation unit may be inspected for errors and side effects.
-     * It is owned by the caller and must be deleted or returned to install()
-     */
-    class MslCompilation* compile(class MslContext* c, juce::String source);
-
-    /**
-     * Compilation for the console or anything else that wants to extend
-     * a previously compiled unit.  The top-level function and variable definitions
-     * from the referenced unit are first copied into the new unit, then the source
-     * string is compled, allowing resolution to things defined in the other unit.
-     */
-    class MslCompilation* compile(class MslContext* c, juce::String baseUnit,
-                                  juce::String source);
-    
-
-    //
     // Installation
     //
 
     /**
-     * Install a previously compiled unit.  The unit must be free of errors.
-     * The returned status object has the id if the new interned unit that may be
-     * used for evaluation if this is a callable unit.  The information object is owned
-     * by the caller and must be deleted.  Typically the id is stored for later use.
-     * If name collisions are returned the unit will still be installed, but it may
-     * not be evaluated.
+     * Diagnostic compilation.
+     * Compile and link a string of source code, but do not install it.
+     * The returned details object may contain errors and other compilation results.
      *
-     * The Compilation unit must have a unique identifier.  If the unit was compiled
-     * from a file this is typically the file path name.  If one is not supplied an
-     * new unique identifier is generated and returned.
+     * This is typically used only by the editor or an application that wants to
+     * check for compiler errors in source code without actually using the
+     * compiled object.
+     *
+     * The returned object is owned by the caller and must be deleted.
+     */
+    class MslDetails* compile(class MslContext* c, juce::String source);
+
+    /**
+     * Compile and install.
+     * This is the interface normally used to load script files and scriptlets.
+     *
+     * This creates what is known internally as a "compilation unit".  Every unit
+     * must have a unique id which is passed as an argument.  For files this
+     * must be the full path name.  If the id is empty, this is assumed to
+     * be a "scriptlet" and an id will be generated and returned in the details.
      *
      * If a unit with this id already exists, it is replaced and the old unit is
      * sent to the garbage collector.  A full environment link will take place that
@@ -128,9 +117,33 @@ class MslEnvironment
      * by this unit.  When doing bulk loading (ScriptClerk) this may be deferred
      * with link() called manually after all files are loaded.
      */
-    class MslInstallation* install(class MslContext* c, juce::String unitId,
-                                   class MslCompilation* comp,
-                                   bool relinkNow=true);
+    class MslDetails* install(class MslContext* c, juce::String unitId,
+                              juce::String source, bool relinkNow=true);
+
+    /**
+     * Speical interface for the console or anything else that wants to extend
+     * a previously compiled unit.  The top-level function and variable definitions
+     * from the referenced unit are first copied into the new unit, then the source
+     * string is compled, allowing resolution to things defined in the other unit.
+     * A new unit is created with the alterations and the old one is sent to the
+     * garbagae collector.
+     */
+    class MslDetails* extend(class MslContext* c, juce::String baseUnit,
+                             juce::String source);
+
+    /**
+     * Uninstall a previoiusly installed compilation unit.   This will result in a
+     * full relink of the environment.  If the unit contained things that were
+     * referenced by other units, this may result in unresolved references.
+     *
+     * This should be called whenever script files are removed from the library
+     * or whenever scriptlets are removed from Bindings.
+     */
+    bool uninstall(class MslContext* c, juce::String unitId, bool relinkNow=true);
+    
+    //
+    // Installation Details
+    //
 
     /**
      * Return information about a previously insttalled unit.
@@ -141,18 +154,13 @@ class MslEnvironment
      * The object may also return a subset of the most recent runtime errors.
      * THe returned object is owned by the caller and must be deleted.
      */
-    class MslInstallation* getInstallationStatus(juce::String unitId);
+    class MslDetails* getDetails(juce::String unitId);
 
     /**
-     * Uninstall a previoiusly installed compilation unit.   This will result in a
-     * full relink of the environment.  If the unit contained things that were
-     * referenced by other units, this may result in unresolved references.
-     *
-     * This should be called whenever script files are removed from the library
-     * or whenever scriptlets are removed from Bindings.
+     * Return the list of all unit ids.
      */
-    bool uninstall(juce::String unitId, bool relinkNow=true);
-    
+    juce::StringArray getUnits();
+
     //
     // Relink
     // 
@@ -195,6 +203,13 @@ class MslEnvironment
      * with a result that must be reclaimed.
      */
     void request(class MslContext* c, MslRequest* req);
+
+    /**
+     * Evaluate a scriptlet.
+     * ugh, this is supposed to be accessible in the kernel, but we're
+     * taking a juce::String, revisit
+     */
+    MslResult* eval(class MslContext* c, juce::String id);
 
     /**
      * Retrieve the value of an exported variable.
@@ -253,12 +268,12 @@ class MslEnvironment
     MslConductor conductor {this};
 
     // garbage waiting to be collected
-    MslGarbage garbage {pool};
+    MslGarbage garbage {&pool};
     
     // registry of installed compilation units
-    juce::OwnedArray<class MslCompliation> compilations;
+    juce::OwnedArray<class MslCompilation> compilations;
     // lookup table of units keyed by id
-    juce::HashMap<juce::String,class MslCompilation> compilationMap;
+    juce::HashMap<juce::String,class MslCompilation*> compilationMap;
     
     // unique id generator for anonymous compilation units (scriptlets)
     int idGenerator = 1;
@@ -275,20 +290,27 @@ class MslEnvironment
     // internal library management
     //
 
-    void ponderLinkErrors(class MslCompilation* comp);
-    void cleanse(class MslCompilation* comp);
-    void exportLinkages(class MslContext* c, class MslCompilation* unit, class MslInstallation* install);
-    void uninstall(class MslCompilation* unit, bool relinkNow);
-    void publish(class MslCompilation* unit, class MslInstallation* result);
-    void publish(class MslCompilation* unit, class MslFunction* f, class MslInstallation* result);
-    void publish(class MslCompilation* unit, class MslVariableExport* v, class MslInstallation* result);
+    void install(class MslContext* c, class MslCompilation* unit, class MslDetails* result,
+                 bool relinkNow);
+    
+    void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
+    bool ponderLinkErrors(class MslCompilation* comp);
+    void exportLinkages(MslContext* c, MslCompilation* unit, juce::Array<MslLinkage*>& links);
+    
+    void uninstall(class MslContext* c, class MslCompilation* unit, bool relinkNow);
+    
+    void publish(class MslCompilation* unit, juce::Array<class MslLinkage*>& links);
+
+    void publish(class MslCompilation* unit, class MslFunction* f, juce::Array<class MslLinkage*>& links);
+    void publish(class MslCompilation* unit, class MslVariableExport* v, juce::Array<class MslLinkage*>& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
-    void initialize(class MslContext* c, class MslCompilation* unit, class MslInstallation* result);
+    void initialize(class MslContext* c, class MslCompilation* unit);
 
     //
     // session management
     //
     
+    void addError(MslResult* result, const char* msg);
     class MslResult* makeResult(class MslSession* s, bool finished);
     int generateSessionId();
     int sessionIds = 1;

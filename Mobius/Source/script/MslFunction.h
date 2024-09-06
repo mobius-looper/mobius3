@@ -12,9 +12,13 @@
 
 class MslFunction
 {
+    // why again is the body protected if we need this may friends?
     friend class MslEnvironment;
     friend class MslParser;
     friend class MslLinker;
+    friend class MobiusConsole;
+    friend class MslSession;
+    friend class MslResolution;
     
   public:
 

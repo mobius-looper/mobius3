@@ -33,6 +33,7 @@ class ScriptEditorFile : public juce::Component
     void resized() override;
 
     ScriptRegistry::File* getFile();
+    void revert();
     
   private:
 
@@ -70,6 +71,13 @@ class ScriptEditor : public juce::Component, public juce::Button::Listener
 
     void close(ScriptEditorFile* f);
     
+    ScriptEditorFile* getCurrentFile();
+    void newFile();
+    void cancel();
+    void compile();
+    void revert();
+    void save();
+
   private:
 
     BasicTabs tabs;
@@ -83,5 +91,6 @@ class ScriptEditor : public juce::Component, public juce::Button::Listener
     juce::OwnedArray<ScriptEditorFile> files;
     juce::OwnedArray<ScriptRegistry::File> newFiles;
     
+    void addTab(ScriptEditorFile* efile);
 };
 

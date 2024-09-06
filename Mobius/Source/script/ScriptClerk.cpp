@@ -9,8 +9,8 @@
  * files and folders in the library.
  *
  * Files are loaded one at a time into the MslEnvironment then linked
- * at the end.  The environment will hold a set of MslScriptUnits for each
- * file containing parse status and errors.
+ * at the end.  The environment will hold a set of "compilation units" for each file
+ * details of each unit are returned in MslDetails.
  *
  */
 
@@ -22,7 +22,7 @@
 #include "../Supervisor.h"
 
 #include "MslEnvironment.h"
-#include "MslScriptUnit.h"
+#include "MslDetails.h"
 #include "ScriptRegistry.h"
 
 #include "ScriptClerk.h"
@@ -67,6 +67,8 @@ ScriptRegistry* ScriptClerk::getRegistry()
  */
 void ScriptClerk::initialize()
 {
+    environment = supervisor->getMslEnvironment();
+    
     ScriptRegistry* reg = new ScriptRegistry();
     registry.reset(reg);
 
@@ -94,7 +96,8 @@ void ScriptClerk::initialize()
     // configured as externals, remove them since we will have
     // already found those.  This is common when ScriptConfig
     // is converted
-    ScriptConfig::Machine* machine = registry->getMachine();
+    juce::File libdir = root.getChildFile("scripts");
+    ScriptRegistry::Machine* machine = registry->getMachine();
     machine->filterExternals(libdir.getFullPathName());
 
     // reconcile file references
@@ -285,7 +288,7 @@ void ScriptClerk::refreshOldFile(ScriptRegistry::File* sfile, juce::File jfile)
  * linking is deferred until all files have been installed.
  *
  * If any errors are encountered, the UI will need to ask MslEnvironment
- * for all the MslScriptUnits and look at their errors.
+ * for all the MslDetails and look at their errors.
  */
 void ScriptClerk::installMsl()
 {
@@ -306,16 +309,13 @@ void ScriptClerk::installMsl()
                 }
                 else {
                     juce::String source = file.loadFileAsString();
-                    MslScriptUnit* unit = env->load(supervisor, fileref->path, source);
 
-                    // remember the loaded unit, this is supposed to be the same
-                    // every time as long as  the path doesn't change, verify this
-                    if (fileref->unit != nullptr && fileref->unit != unit)
-                      Trace(1, "ScriptClerk: Unit is changing, and you don't know what that means");
-                    fileref->unit = unit;
+                    // note that we defer linking
+                    MslDetails* unit = env->install(supervisor, fileref->path, source, false);
+                    fileref->unit.reset(unit);
                     
                     // name may have changed after parsing
-                    if (unit->name != fileref->name) {
+                    if (unit->name.length() > 0 && unit->name != fileref->name) {
                         fileref->name = unit->name;
                         changes++;
                     }
@@ -332,8 +332,9 @@ void ScriptClerk::installMsl()
         }
     }
 
-    // do deferred linking, this may also result in errors left beyind in
-    // the MslScriptUnits
+    // do the full relink of the environment, this can result in resolution
+    // changes in units that won't be reflected in the details we just
+    // saved, could refresh them all again
     env->link(supervisor);
 
     if (changes)
@@ -367,10 +368,11 @@ ScriptConfig* ScriptClerk::getMobiusScriptConfig()
 
 /**
  * For older scripts, the compiler now captures errors in the ScriptRefs.
- * MSL script compilation saved errors in the MslScriptUnit.  Old scripts
- * don't have the same unit concept so just put the errors directly
- * on the registry.  The object is normally the same one returned
- * by getMobiusScriptConfig above.
+ * MSL script compilation saved errors in the MslDetails.  Old scripts
+ * don't have the same unit concept so we fake up an MslDetails and
+ * put the errors in it.
+ *
+ * The object is normally the same one returned by getMobiusScriptConfig above.
  */
 void ScriptClerk::saveErrors(ScriptConfig* config)
 {
@@ -387,12 +389,14 @@ void ScriptClerk::saveErrors(ScriptConfig* config)
                       ref->getFile());
             }
             else {
-                file->oldErrors.clear();
-                // transfer ownership of the errors
+                // transfer ownership of the errors to the container
+                // used by MSL scripts
+                MslDetails* details = new MslDetails();
                 while (ref->errors.size() > 0) {
                     MslError* err = ref->errors.removeAndReturn(0);
-                    file->oldErrors.add(err);
+                    details->errors.add(err);
                 }
+                file->unit.reset(details);
             }
         }
     }
@@ -458,26 +462,33 @@ void ScriptClerk::saveEditorScriptConfig(ScriptConfig* config)
 
 /**
  * Load an individual file
+ *
+ * These need not be in the registry and will not be added to it if they
+ * aren't.
+ *
+ * todo: for the console it could be nice to have commands to add/remove
+ * Externals in the registry so they persist.
+ *
+ * The returned installation info is owned by the caller and must be deleted.
  */
-MslScriptUnit* ScriptClerk::loadFile(juce::String path)
+MslDetails* ScriptClerk::loadFile(juce::String path)
 {
-    MslScriptUnit* unit = nullptr;
+    MslDetails* result = nullptr;
     
     juce::File file (path);
     
     if (!file.existsAsFile()) {
-        // this should have been caught and saved by ScriptClerk by now
-        Trace(1, "ScriptClerk: loadFile missing file %s", path.toUTF8());
+        // environment doesn't deal with files, but we can use the same
+        // details object to convey file errors
+        result = new MslDetails();
+        result->addError("File does not exist: " + path);
     }
     else {
         juce::String source = file.loadFileAsString();
-
-        // ask the environment to install it if it can
-        MslEnvironment* env = supervisor->getMslEnvironment();
-        unit = env->load(supervisor, path, source);
+        result = environment->install(supervisor, path, source);
     }
 
-    return unit;
+    return result;
 }
 
 ///////////////////////////////////////////////////////////////////////

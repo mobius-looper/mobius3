@@ -60,11 +60,11 @@ void ScriptEditor::load(ScriptRegistry::File* file)
 
 void ScriptEditor::addTab(ScriptEditorFile* efile)
 {
-    juce::String name = efile->file->name:
+    juce::String name = efile->getFile()->name;
     if (name.length() == 0)
       name = "New";
 
-    tabs.add(, efile);
+    tabs.add(name, efile);
 
     // show the one we just added
     int index = tabs.getNumTabs() - 1;
@@ -147,9 +147,9 @@ void ScriptEditor::cancel()
     int index = tabs.getCurrentTabIndex();
     if (index >= 0) {
         ScriptRegistry::File* tempFile = nullptr;
-        efile = files[index];
-        if (efile->file->isNew)
-          tempFile = efile->file;
+        ScriptEditorFile* efile = files[index];
+        if (efile->getFile()->isNew)
+          tempFile = efile->getFile();
         
         // dispose of the editry, this also makes efile invalide
         close(efile);
@@ -170,8 +170,10 @@ void ScriptEditor::compile()
 void ScriptEditor::revert()
 {
     ScriptEditorFile* efile = getCurrentFile();
-    if (efile != nullptr)
-      efile->revert();
+    if (efile != nullptr) {
+        efile->revert();
+    }
+    
 }
 
 void ScriptEditor::save()
@@ -257,7 +259,7 @@ ScriptEditorFile::~ScriptEditorFile()
 
 ScriptRegistry::File* ScriptEditorFile::getFile()
 {
-    return file.get();
+    return ownedFile.get();
 }
 
 /**
@@ -268,15 +270,15 @@ ScriptRegistry::File* ScriptEditorFile::getFile()
  */
 void ScriptEditorFile::refresh(ScriptRegistry::File* src)
 {
-    file.reset(src->cloneForEditor());
+    ownedFile.reset(src->cloneForEditor());
     
-    details.load(file.get());
+    details.load(ownedFile.get());
 
-    if (file->unit != nullptr) {
-        editor.setText(file->unit->source);
+    if (ownedFile->unit != nullptr) {
+        editor.setText(ownedFile->source);
     }
-    else if (file->old) {
-        juce::File f (file->path);
+    else if (ownedFile->old) {
+        juce::File f (ownedFile->path);
         juce::String source = f.loadFileAsString();
         editor.setText(source);
     }
@@ -284,13 +286,13 @@ void ScriptEditorFile::refresh(ScriptRegistry::File* src)
 
 void ScriptEditorFile::revert()
 {
-    if (file != nullptr)
-      editor.setText(file->source);
+    if (ownedFile != nullptr)
+      editor.setText(ownedFile->source);
 }
 
 bool ScriptEditorFile::hasFile(ScriptRegistry::File* src)
 {
-    return file->path == src->path;
+    return ownedFile->path == src->path;
 }
 
 void ScriptEditorFile::resized()

@@ -653,6 +653,7 @@
               file="Source/script/MslConductor.cpp"/>
         <FILE id="NNSWtD" name="MslConductor.h" compile="0" resource="0" file="Source/script/MslConductor.h"/>
         <FILE id="hAbJ2X" name="MslContext.h" compile="0" resource="0" file="Source/script/MslContext.h"/>
+        <FILE id="BC7kAK" name="MslDetails.h" compile="0" resource="0" file="Source/script/MslDetails.h"/>
         <FILE id="rl8nR0" name="MslEnvironment.cpp" compile="1" resource="0"
               file="Source/script/MslEnvironment.cpp"/>
         <FILE id="kMdC7i" name="MslEnvironment.h" compile="0" resource="0"
@@ -673,10 +674,6 @@
               file="Source/script/MslPreprocessor.h"/>
         <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
         <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
-        <FILE id="dJ6rJt" name="MslScript.cpp" compile="1" resource="0" file="Source/script/MslScript.cpp"/>
-        <FILE id="fA1zVe" name="MslScriptlet.cpp" compile="1" resource="0"
-              file="Source/script/MslScriptlet.cpp"/>
-        <FILE id="zUKosy" name="MslScriptlet.h" compile="0" resource="0" file="Source/script/MslScriptlet.h"/>
         <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
         <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
         <FILE id="gJ3Lt9" name="MslStack.cpp" compile="1" resource="0" file="Source/script/MslStack.cpp"/>
@@ -691,11 +688,6 @@
         <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
-        <FILE id="VynjNQ" name="ScriptFile.cpp" compile="1" resource="0" file="Source/script/ScriptFile.cpp"/>
-        <FILE id="ijvESz" name="ScriptFile.h" compile="0" resource="0" file="Source/script/ScriptFile.h"/>
-        <FILE id="VF5Qmh" name="ScriptLibrary.cpp" compile="1" resource="0"
-              file="Source/script/ScriptLibrary.cpp"/>
-        <FILE id="rB58Nv" name="ScriptLibrary.h" compile="0" resource="0" file="Source/script/ScriptLibrary.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"

@@ -57,6 +57,9 @@ MslCompilation* MslParser::parse(juce::String source)
     // the "stack"
     current = root;
 
+    // prepare the body function in case we find an argument declaration
+    script->body.reset(new MslFunction());
+
     parseInner(source);
 
     if (script->errors.size() == 0) {
@@ -110,16 +113,16 @@ void MslParser::sift()
 {
     int index = 0;
     while (index < root->size()) {
-        MslNode* node = script->root->get(index);
+        MslNode* node = root->get(index);
         
         if (node->isFunction()) {
             MslFunctionNode* f = static_cast<MslFunctionNode*>(node);
-            script->root->remove(node);
+            root->remove(node);
             functionize(f);
         }
         else if (node->isInit()) {
-            MslInit* i = static_cast<MslInit*>(node);
-            script->root->remove(node);
+            MslInitNode* i = static_cast<MslInitNode*>(node);
+            root->remove(node);
             functionize(i);
         }
         else {
@@ -154,14 +157,14 @@ void MslParser::functionize(MslFunctionNode* node)
 
     MslBlock* decl = node->getDeclaration();
     if (decl != nullptr) {
-        node->children.remove(decl);
-        function->declaration = decl;
+        node->remove(decl);
+        function->declaration.reset(decl);
     }
     
     MslBlock* body =  node->getBody();
     if (body != nullptr) {
-        node->children.remove(body);
-        function->body = body;
+        node->remove(body);
+        function->body.reset(body);
     }
 
     // if there was already a definition for this function
@@ -169,7 +172,7 @@ void MslParser::functionize(MslFunctionNode* node)
     MslFunction* existing = nullptr;
     for (auto f : script->functions) {
         if (f->name == function->name) {
-            existing = p;
+            existing = f;
             break;
         }
     }
@@ -178,7 +181,7 @@ void MslParser::functionize(MslFunctionNode* node)
         Trace(2, "MslParser: Replacing function definition %s", function->name.toUTF8());
         script->functions.removeObject(existing);
     }
-    script->functions.add(func);
+    script->functions.add(function);
 }
 
 /**
@@ -214,8 +217,8 @@ void MslParser::functionize(MslInitNode* node)
 
     // transfer the children
     while (node->children.size() > 0) {
-        MslNode* child = node->children.removeAndRetain(0);
-        body.add(child);
+        MslNode* child = node->children.removeAndReturn(0);
+        body->add(child);
     }
 }
 
@@ -223,10 +226,18 @@ void MslParser::functionize(MslInitNode* node)
  * Convert the remaining top-level nodes into a function.
  * The function name is taken from the name declaration if
  * one was present.
+ *
+ * We may have allocated the MslFunction if we had to save
+ * an argument declaration.
  */
 void MslParser::embody()
 {
-    MslFunction* f = new MslFunction();
+    MslFunction* f = script->body.get();
+    if (f == nullptr) {
+        f = new MslFunction();
+        script->body.reset(f);
+    }
+    
     f->name = script->name;
 
     // todo: script file argument should eventually be defined
@@ -236,9 +247,6 @@ void MslParser::embody()
     // that needs sifting put the entire thing in the function
     f->body.reset(root);
     root = nullptr;
-
-    // this function then becomes the body function for the compilation unit
-    script->body = f;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -636,7 +644,7 @@ MslNode* MslParser::checkKeywords(MslToken& t)
       keyword = new MslFunctionNode(t);
     
     else if (t.value == "init")
-      keyword = new MslInit(t);
+      keyword = new MslInitNode(t);
     
     else if (t.value == "if")
       keyword = new MslIf(t);
@@ -727,16 +735,23 @@ void MslParser::parseDirective(MslToken& t)
  * Work on this so the same thing can be used for argument signatures for
  * external functions.
  *
+ * ugh, since we're using the parser in an unusual way, it's doing a lot of
+ * work that we don't want.  We just want the root block, but with the
+ * new interface, that gets packaged up in a sifted MslCompilation and
+ * we have to dig it out.
+ *
+ * Really need some kind of backdoor parser for this...
+ *
  */
 void MslParser::parseArguments(MslToken& t, int offset, juce::String remainder)
 {
     MslParser p;
-    MslScript* s = p.parse(remainder);
-    if (s->errors.size() > 0) {
+    MslCompilation* c = p.parse(remainder);
+    if (c->errors.size() > 0) {
         errorSyntax(t, "Parse error in directive");
-        while (s->errors.size() > 0) {
+        while (c->errors.size() > 0) {
             // steal it
-            MslError* e = s->errors.removeAndReturn(0);
+            MslError* e = c->errors.removeAndReturn(0);
             // adjust the token location for the containing directive
             e->line = t.line;
             e->column += offset;
@@ -744,12 +759,25 @@ void MslParser::parseArguments(MslToken& t, int offset, juce::String remainder)
         }
     }
     else {
-        // the root block is the argument list, steal it from the transient script
-        // and leave it on the one we're parsing
-        script->arguments.reset(s->root);
-        s->root = nullptr;
+        // begin the walk of shame down to the damn thing we need
+        // this is an MslFunction
+        if (c->body != nullptr) {
+            // this is the root block of the function
+            if (c->body->body != nullptr) {
+                MslBlock* sig = c->body->body.release();
+
+                // where this goes is in the declaration block
+                // of the body function for this compilation unit, whew
+                MslFunction* f = script->body.get();
+                if (f == nullptr) {
+                    f = new MslFunction();
+                    script->body.reset(f);
+                }
+                f->declaration.reset(sig);
+            }
+        }            
     }
-    delete s;
+    delete c;
 }
 
 /****************************************************************************/

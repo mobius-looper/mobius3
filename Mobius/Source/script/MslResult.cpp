@@ -50,6 +50,11 @@ bool MslResult::isWaiting()
     return (session != nullptr && session->isWaiting());
 }
 
+bool MslResult::isTransitioning()
+{
+    return (session != nullptr && session->isTransitioning());
+}
+
 void MslResult::setName(const char* s)
 {
     strncpy(name, s, sizeof(name));

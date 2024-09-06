@@ -45,8 +45,9 @@ class MslResult
     
     // true if this session is still running
     bool isRunning();
+    bool isTransitioning();
     bool isWaiting();
-    
+
   protected:
 
     // the chain pointer for the environment's result list

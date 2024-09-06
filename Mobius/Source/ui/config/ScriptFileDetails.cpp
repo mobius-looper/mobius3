@@ -8,7 +8,7 @@
 
 #include "../JuceUtil.h"
 #include "../../script/ScriptRegistry.h"
-#include "../../script/MslScriptUnit.h"
+#include "../../script/MslDetails.h"
 #include "../../script/MslError.h"
 
 #include "../script/ScriptDetails.h"

@@ -80,6 +80,9 @@
 
 #include "MslSignature.h"
 
+// dragging way too much shit in for this
+#include "MslContext.h"
+
 class MslExternal
 {
   public:

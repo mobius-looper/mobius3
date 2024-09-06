@@ -11,478 +11,11 @@
 
 #include "MslModel.h"
 #include "MslSymbol.h"
-#include "MslScript.h"
 #include "MslContext.h"
 #include "MslEnvironment.h"
 #include "MslSession.h"
 #include "MslStack.h"
 #include "MslExternal.h"
-
-//////////////////////////////////////////////////////////////////////
-//
-// Linking
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Linking
- *
- * See commentary in MslSession::visit(MslSymbol) below for more relevant discussion
- * on precedence if a function and a variable have the same names.
- *
- * Linking for variable/parameter references can be done to a degree, but we don't
- * error if a symbol is unresolved at link time.  There are two reasons for this, first
- * scripts can eventually reference variables defined in other scripts, and lacking any
- * "extern" declaration at the moment, we have to wait for the other script to be loaded
- * before it can be resolved.
- *
- * Because of dynamic binding, the values of variable references don't  "live" on a symbol
- * or an MslNode, they are found in MslBindings that live on the stack at runtime.
- * 
- * The actual variable to use may be defined by the execution context rather than the lexical context.
- *
- * func foo(a) {
- *    print a b
- * }
- *
- * "b" is a free or "special" reference that may be bound at runtime like this:
- *
- * {var b = 1 foo(2)}  --> 2 1
- *
- * This is not used often but is allowed.
- * Actually it isn't the variable that's unresolved it's the binding.  If a script file
- * wants to reference a variable that is not defined in that unit, it needs to declare
- * it:
- *
- *     extern b
- *
- * External parameter symbols are implicitly declared extern.
- *
- * A more common use for unresolved symbols is in comparison of enumerated parameters
- *
- *     if switchQuantize == loop
- *
- * Here the value of the symbol is expected to be the name of the symbol.  In Lisp this
- * would normally be done by quoting the symbol 'loop but we don't have quote syntax and
- * I'm not convinced we need it here.  It will be confusing to explain.
- * How we deal nicely with enumerations is complex, and I won't belabor it here.  See design notes...
- *
- * Linking for function references can be done at compile time.  We do not support dynamic
- * binding of functions.  You can however establish a variable binding on the call stack with
- * the same name as a function.  Some Lisp dialects allow a symbol to have both a value and
- * a function binding, and you select between them with an explicit function call syntax.
- * I would like to avoid that.  If a symbol parses with call syntax:
- *
- *      foo(x)
- *
- * then it must resolve to a function.  But it is extremely common not to use an arguemnt list:
- *
- *      Record
- *
- * For a language with this limited execution environment, I don't think we need to mess
- * with defining variables with the same name as a function.  If you define a Var and the name
- * resoles to a function within the same compilation unit, it is an error.  At minimum during
- * linking, if there is both a Var/Extern and a Function with the same name, the Function is preferred.
- *
- * The most complex part of symbol linking is the construction of the function call argument
- * expressions.  This is formed by combining several things.
- * 
- *      - default argument values defined in the function definition
- *      - positional arguments passed in the call
- *      - keyword arguments passed in the call
- *
- * Because of flexibility in ordering and simplicity of syntax compared to most languages,
- * Evaluating the argument values to a function call isn't simply a matter of eveluating the
- * child block in the call.   The nuances around this are larger than can go in a file comment
- * see the design docs for more.
- */
-void MslSymbol::link(MslContext* context, MslEnvironment* env,
-                     MslResolutionContext* resolver, MslCompilation* compilation)
-{
-    // clear prior resolution
-    function = nullptr;
-    variable = nullptr;
-    linkage = nullptr;
-    external = nullptr;
-    arguments.clear();
-
-    // determining whether something is a function or not is annoying
-    // with the three different models
-    bool isFunction = false;
-
-    // special case for symbols used in assignments
-    if (parent->isAssignment() && parent->children.size() > 1 &&
-        parent->children[0] == this) {
-        // we're the LHS of an assignment, special resolution applies
-        linkAssignment(context, env, resolver, compilation);
-        return;
-    }
-
-    // first resolve to functions
-    
-    // look for local functions, these could be cached on the MslSymbol
-
-    // new model uses MslFunction packaged in the MslCompilation
-    MslFunctionNode* func = script->findFunction(token.value);
-    if (func != nullptr) {
-        function = func;
-        isFunction = true;
-    }
-    else {
-        // todo: look for exported functions defined in the environment
-        // precedence question: should script exports be able to mess up
-        // external symbol resolution?
-        MslLinkage* link = env->find(token.value);
-        if (link != nullptr && (link->function != nullptr)) {
-            linkage = link;
-            isFunction = true;
-        }
-        else {
-            // look for an external
-            // do we need to attempt dynamic resolution?
-            external = env->getExternal(token.value);
-            if (external == nullptr) {
-                MslExternal retval;
-                if (context->mslResolve(token.value, &retval)) {
-                    // make one we can intern
-                    external = new MslExternal(retval);
-                    external->name = token.value;
-                    env->intern(external);
-
-                    isFunction = external->isFunction;
-                }
-            }
-        }
-    }
-
-    // if we couldn't find a function, look for variables
-    // externals can't have overlap between variables and functions
-    // so we'll already have found that
-
-    if (function == nullptr && linkage == nullptr && external == nullptr) {
-        
-        MslVariable* var = script->findVariable(token.value);
-        if (var != nullptr) {
-            variable = var;
-        }
-        else {
-            MslLinkage* link = env->find(token.value);
-            if (link != nullptr && link->variable != nullptr)
-              linkage = link;
-        }
-    }
-
-    // compile the call argument initializers by merging the
-    // call arguments with the function signature
-    if (isFunction) {
-        MslBlock* signature = nullptr;
-        if (function != nullptr) {
-            signature = function->getDeclaration();
-        }
-        else if (linkage != nullptr) {
-            if (linkage->function != nullptr)
-              signature = linkage->function->getDeclaration();
-            else if (linkage->script != nullptr)
-              signature = linkage->script->getDeclaration();
-        }
-        else if (external != nullptr) {
-            // todo: eventually externals need signatures too
-        }
-        
-        linkCall(script, signature);
-    }
-    else {
-        // todo: this resolved to a variable, if we have call arguments
-        // should probably error now?
-        if (children.size() > 0) {
-            MslError* errobj = new MslError(this, "Variable symbol does not accept arguments");
-            script->errors.add(errobj);
-        }
-    }
-}
-
-/**
- * Construct the call argument block for an MSL function
- *
- * The basic algorithm is:
- *
- * for each argument defined in the function
- *    is there an assignment for it in the call
- *        use the call assignment
- *    else is there an available non-assignment arg in the call
- *        use the call arg
- *    else is there an assignment in the function (a default)
- *        use the function
- *
- */
-void MslSymbol::linkCall(MslScript* script, MslBlock* signature)
-{
-    juce::String error;
-    
-    // this isn't parsed so it won't start out with a parent pointer,
-    // make sure it always has one
-    arguments.parent = this;
-    arguments.clear();
-
-    // copy the call args and whittle away at them
-    // the child list of a symbol is expected to be a single () block
-    juce::Array<MslNode*> callargs;
-    if (children.size() > 0) {
-        MslNode* first = children[0];
-        if (first->isBlock()) {
-            for (auto child : first->children) {
-                callargs.add(child);
-            }
-        }
-    }
-
-    // remember the position of each argument added to the list
-    // these are $x reference positions starting from 1
-    int position = 1;
-    bool optional = false;
-    
-    if (signature != nullptr) {
-        for (auto arg : signature->children) {
-
-            // deal with keywords for :optional and :include
-            if (arg->isKeyword()) {
-                MslKeyword* key = static_cast<MslKeyword*>(arg);
-                if (key->name == "optional") {
-                    optional = true;
-                }
-                else {
-                    error = "Invalid keyword";
-                }
-            }
-            else {
-                MslSymbol* argsym = nullptr;
-                MslNode* initializer = nullptr;
-                if (arg->isSymbol()) {
-                    // simple named argument
-                    argsym = static_cast<MslSymbol*>(arg);
-                }
-                else if (arg->isAssignment()) {
-                    MslAssignment* argass = static_cast<MslAssignment*>(arg);
-                    // assignments have two children, LHS is the symbol to assign
-                    // and RHS is the value expression
-                    // would be nicer if the parser could simplify this
-                    if (argass->children.size() > 0) {
-                        MslNode* node = argass->children[0];
-                        if (node->isSymbol()) {
-                            argsym = static_cast<MslSymbol*>(node);
-                            if (argass->children.size() > 1)
-                              initializer = argass->children[1];
-                        }
-                    }
-                }
-                else {
-                    // this is probably an error, what else would it be?
-                }
-
-                if (argsym == nullptr) {
-                    // not a symbol or well-formed assignment in the delcaration
-                    error = "Unable to determine function argument name";
-                }
-                else {
-                    // add a argument for this name
-                    juce::String name = argsym->token.value;
-                    MslArgumentNode* argref = new MslArgumentNode();
-                    argref->name = name;
-                    argref->position = position;
-                    // remember this for later when binding the results
-                    argref->optional = optional;
-                    position++;
-                    arguments.add(argref);
-
-                    // is there a keyword argument for this in the call?
-                    MslAssignment* callass = findCallKeyword(callargs, name);
-                    if (callass != nullptr) {
-                        if (callass->children.size() > 1)
-                          argref->node = callass->children[1];
-                        else {
-                            // no rhs on the assignment, something like this
-                            // foo(... x =, ...) or foo(x=)
-                            // this is most likely an error, but it could also be used to indiciate
-                            // overriding a default from the function declaration with null
-                        }
-                    }
-                    else {
-                        // use the next available positional argument
-                        MslNode* positional = findCallPositional(callargs);
-                        if (positional != nullptr) {
-                            argref->node = positional;
-                        }
-                        else if (initializer != nullptr) {
-                            // use the default initializer from the declaration
-                            argref->node = initializer;
-                        }
-                        else if (!optional) {
-                            // no initializer and ran out of positionals, something is missing
-                            error = juce::String("Missing function argument: ") + name;
-                        }
-                        else {
-                            // optional arg with no initializer, I guess leave it
-                            // in place with a null node, but could just keep it off
-                            // the list entirely so it doesn't make a gratuituous
-                            // binding.  Or perhaps that's what you want?
-                        }
-                    }
-                }
-            }
-            
-            if (error.length() > 0)
-              break;
-        }
-    }
-
-    // anything left over are not in the function declaration
-    // go ahead and pass them, they may be referenced with positional
-    // references $1 in the function body, or may just represent temporary
-    // symbol bindings
-    if (error.length() == 0) {
-        while (callargs.size() > 0) {
-            MslNode* extra = callargs.removeAndReturn(0);
-            MslArgumentNode* argref = nullptr;
-        
-            if (extra->isAssignment()) {
-                MslAssignment* argass = static_cast<MslAssignment*>(extra);
-                // foo(...x=y)  becomes a local binding for this symbol
-                if (argass->children.size() > 0) {
-                    MslNode* node = argass->children[0];
-                    if (node->isSymbol()) {
-                        MslSymbol* argsym = static_cast<MslSymbol*>(node);
-                        argref = new MslArgumentNode();
-                        argref->name = argsym->token.value;
-                        if (argass->children.size() > 1)
-                          argref->node = argass->children[1];
-                    }
-                }
-            }
-            else {
-                // unnamed positional argument
-                argref = new MslArgumentNode();
-                argref->node = extra;
-            }
-
-            if (argref != nullptr) {
-                argref->extra = true;
-                argref->position = position;
-                position++;
-                arguments.add(argref);
-            }
-        }
-    }
-    
-    if (error.length() > 0) {
-        MslError* errobj = new MslError(this, error);
-        script->errors.add(errobj);
-        Trace(1, "MslSymbol: Link failure %s", error.toUTF8());
-        arguments.clear();
-    }
-}
-
-/**
- * Find the call argument with a matching assignment name and remove
- * it from the consideration list.
- */
-MslAssignment* MslSymbol::findCallKeyword(juce::Array<MslNode*>& callargs, juce::String name)
-{
-    MslAssignment* found = nullptr;
-
-    for (auto arg : callargs) {
-        if (arg->isAssignment()) {
-            MslAssignment* argass = static_cast<MslAssignment*>(arg);
-            if (argass->children.size() > 0) {
-                MslNode* node = argass->children[0];
-                if (node->isSymbol()) {
-                    MslSymbol* argsym = static_cast<MslSymbol*>(node);
-                    if (argsym->token.value == name) {
-                        found = argass;
-                        // why the fuck is it whining about this, are the docs wrong?
-                        //callargs.remove(arg);
-                        callargs.remove(callargs.indexOf(arg));
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return found;
-}
-
-/**
- * Find the next positional non-keyword argument and remove it
- * from the consideration list.
- */
-MslNode* MslSymbol::findCallPositional(juce::Array<MslNode*>& callargs)
-{
-    MslNode* found = nullptr;
-
-    for (auto arg : callargs) {
-        if (!arg->isAssignment()) {
-            found = arg;
-            // again, wtf??
-            //callargs.remove(arg);
-            callargs.remove(callargs.indexOf(arg));
-            break;
-        }
-    }
-
-    return found;
-}
-
-/**
- * Here for a symbol used in the LHS of an assignment.
- * These can only resolve to a script variable or an external variable.
- *
- * Since we're not evaluating these, it doesn't really matter if we have both
- * a function and a variable with the same name because it only makes sense to
- * use the variable.  Still could check for that and raise an error since it is
- * likely to get an error later when you try to use the symbol being assigned.
- *
- * Like non-assignment symbol references, if there is a binding for this name
- * on the stack at runtime it will always be used.  Here we look for what
- * it could be if it were not bound.  The precedence is:
- *
- *    - locally declared Variables
- *    - exported Varialbes from other scripts
- *    - externals
- *
- * Like functions we prefer local definitions over externals so the addition
- * of new externals in the future doesn't break older scripts.
- *
- */
-void MslSymbol::linkAssignment(MslContext* context, MslEnvironment* env, MslScript* script)
-{
-    // look for an export
-    MslLinkage* link = env->find(token.value);
-    if (link != nullptr && link->variable != nullptr) {
-        // assign the exported variable
-        linkage = link;
-    }
-    else {
-        // look for a local declaration in the "closure"
-        // !! is this really necessary?  should this always shadown an external?
-        MslVariable* var = script->findVariable(token.value);
-        if (var != nullptr) {
-            variable = var;
-        }
-        else {
-            // look for an external
-            external = env->getExternal(token.value);
-            if (external == nullptr) {
-                MslExternal retval;
-                if (context->mslResolve(token.value, &retval)) {
-                    // make one we can intern
-                    external = new MslExternal(retval);
-                    external->name = token.value;
-                    env->intern(external);
-                }
-            }
-        }
-    }
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -582,57 +115,45 @@ void MslSession::mslVisit(MslSymbol* snode)
     }
     else if (snode->arguments.size() > 0) {
         // set up a function call
-        pushArguments(snode);
+        // linker should already have verified this resolved to a function
+        if (!snode->resolution.isFunction())
+          addError(snode, "Call syntax for a symbol that was not resolved to a function");
+        else
+          pushArguments(snode);
     }
     else {
         // a variable reference or a function with no arguments
         // always prefer a dynamic binding on the stack
+        // !! I don't think this is what the new MslLinker expects and it should
+        // have errored at this point
         MslBinding* binding = findBinding(snode->token.value.toUTF8());
         if (binding != nullptr) {
+
+            if (snode->resolution.isResolved() && snode->resolution.isFunction())
+              addError(snode, "Conflict between variable binding and resolved function");
+            
             returnBinding(binding);    
         }
-        else {
-            // for function calls and exported variables the link() phase has already decided
-            // the precidence on these, it looks like we're doing precidence here but only
-            // one of these snode values will be set
+        else if (!snode->resolution.isResolved()) {
             
-            // look locally
-            if (snode->function != nullptr) {
-                // function call with no arguments, push the call
-                pushCall(snode);
-            }
-            else if (snode->variable != nullptr) {
-                // there is a local variable with no binding, meaning it is uninitialized
-                // see code comments about why we don't fall back to exports here
-                returnUnresolved(snode);
-            }
-            else if (snode->linkage != nullptr) {
-                // then globally
-                // same preference for functions over variables
-                if (snode->linkage->function != nullptr || snode->linkage->script != nullptr) {
-                    pushArguments(snode);
-                }
-                else if (snode->linkage->variable != nullptr) {
-                    returnVariable(snode);
-                }
-                else {
-                    // linker didn't do it's job
-                    addError(snode, "Linkage with no sunshine");
-                }
-            }
-            else if (snode->external != nullptr) {
-                if (snode->external->isFunction) {
-                    pushCall(snode);
-                }
-                else {
-                    returnQuery(snode);
-                }
-            }
+            returnUnresolved(snode);
+        }
+        else if (!snode->resolution.isFunction()) {
+            // must be a variable
+            if (snode->resolution.external != nullptr)
+              returnQuery(snode);
+            
+            else if (snode->resolution.linkage->variable != nullptr)
+              returnVariable(snode);
+
             else {
-                // unresolved
-                // see annoying commentary about enumeration symbols
-                returnUnresolved(snode);
+                // should have found the binding from above?
+                addError(snode, "Bindings failed us");
             }
+        }
+        else {
+            // it's a function call with no arguments
+            pushCall(snode);
         }
     }
 
@@ -735,27 +256,15 @@ void MslSession::pushArguments(MslSymbol* snode)
  */
 void MslSession::pushCall(MslSymbol* snode)
 {
-    if (snode->function != nullptr) {
-        
-        pushBody(snode, snode->function->getBody());
-    }
-    else if (snode->linkage != nullptr) {
-
-        if (snode->linkage->function != nullptr) {
-            pushBody(snode, snode->linkage->function->getBody());
-        }
-        else if (snode->linkage->script != nullptr) {
-            pushBody(snode, snode->linkage->script->root);
-        }
-        else {
-            addError(snode, "Call with invalid linkage");
-        }
-    }
-    else if (snode->external != nullptr) {
+    if (snode->resolution.external != nullptr) {
         callExternal(snode);
     }
     else {
-        addError(snode, "Call with nowhere to go");
+        MslBlock* body = snode->resolution.getBody();
+        if (body != nullptr)
+          pushBody(snode, body);
+        else
+          addError(snode, "Call with nowhere to go");
     }
 }
 
@@ -885,17 +394,19 @@ void MslSession::mslVisit(MslArgumentNode* node)
  */
 void MslSession::returnQuery(MslSymbol* snode)
 {
+    MslExternal* external = snode->resolution.external;
+    
     // error checks that should have been done by now
-    if (snode->external == nullptr) {
+    if (external == nullptr) {
         addError(snode, "Attempting to query on something that isn't an external");
     }
-    else if (snode->external->isFunction) {
+    else if (external->isFunction) {
         addError(snode, "Attempting to query on an external function");
     }
     else {
         MslQuery query;
 
-        query.external = snode->external;
+        query.external = external;
         query.scope = getTrackScope();
 
         if (!context->mslQuery(&query)) {
@@ -931,7 +442,7 @@ void MslSession::returnQuery(MslSymbol* snode)
  */
 void MslSession::callExternal(MslSymbol* snode)
 {
-    MslExternal* external = snode->external;
+    MslExternal* external = snode->resolution.external;
     
     // error checks that should have been done by now
     if (external == nullptr) {
@@ -1098,17 +609,17 @@ void MslSession::doAssignment(MslAssignment* ass)
             // as well, Lisp does that, not sure what c++ does
             popStack(nullptr);
         }
-        else if (namesym->linkage != nullptr) {
+        else if (namesym->resolution.linkage != nullptr) {
             // assignment of exported variable in another script
             // not implemented
             addError(ass, "Exported variable assignment not implemented");
         }
-        else if (namesym->external != nullptr) {
+        else if (namesym->resolution.external != nullptr) {
             // assignments are currently expected to be synchronous and won't do transitions
             // but that probably needs to change
         
             MslAction action;
-            action.external = namesym->external;
+            action.external = namesym->resolution.external;
             action.scope = getTrackScope();
 
             if (stack->childResults == nullptr) {

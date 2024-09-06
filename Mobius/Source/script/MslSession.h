@@ -103,6 +103,7 @@ class MslSession : public MslVisitor
     void mslVisit(class MslSequence* obj) override;
     void mslVisit(class MslArgumentNode* obj) override;
     void mslVisit(class MslKeyword* obj) override;
+    void mslVisit(class MslInitNode* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just

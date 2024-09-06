@@ -15,6 +15,9 @@
 #include <JuceHeader.h>
 
 #include "MslModel.h"
+#include "MslLinkage.h"
+#include "MslExternal.h"
+#include "MslFunction.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -63,7 +66,7 @@ class MslResolution
         innerFunction = nullptr;
         localFunction = nullptr;
         linkage = nullptr;
-        externa = nullptr;
+        external = nullptr;
     }
 
     // true if we found something
@@ -77,10 +80,27 @@ class MslResolution
 
     // true if what we found is a function
     bool isFunction() {
-        (innerFunction != nullptr ||
-         localFunction != nullptr ||
-         (linkage != nullptr && linkage->function != nullptr) ||
-         (external != nullptr && external->isFunction));
+        return (innerFunction != nullptr ||
+                localFunction != nullptr ||
+                (linkage != nullptr && linkage->function != nullptr) ||
+                (external != nullptr && external->isFunction));
+    }
+
+    // return the function body to evaluate from wherever it may roam
+    MslBlock* getBody() {
+        MslBlock* body = nullptr;
+        
+        if (innerFunction != nullptr) {
+            body = innerFunction->getBody();
+        }
+        else if (localFunction != nullptr) {
+            body = localFunction->body.get();
+        }
+        else if (linkage != nullptr) {
+            if (linkage->function != nullptr)
+              body = linkage->function->body.get();
+        }
+        return body;
     }
     
 };

@@ -7,7 +7,7 @@
 #include <JuceHeader.h>
 
 #include "MslError.h"
-#include "MslScriptUnit.h"
+#include "MslDetails.h"
 
 class ScriptRegistry
 {
@@ -42,7 +42,7 @@ class ScriptRegistry
         juce::Time added;
         
         // source code after reading, or when creating new files
-        juce::String source
+        juce::String source;
 
         // things found during parsing
 
@@ -69,32 +69,20 @@ class ScriptRegistry
         // !! this mayh not be reliable, rethink this
         External* external = nullptr;
 
-        // the compiled compilation unit, possibly with errors
-        // this will be interned if it was installed in the MslEnvironment
-        // if this was an old script or a temporary new file unit it
-        // will be the same as ownedUnit
-        class MslScriptUnit* unit = nullptr;
-
-        // when dealing with MOS files or uninstalled new files
-        // the unit will be dynamically allocated and owned here
-        std::unique_ptr<MslScriptUnit> ownedUnit;
-
-        // compilation and link errors captured from unit
-        // temporary, neds to go in the ownedUnit
-        juce::OwnedArray<MslError> oldErrors;
+        // information about the compiled compilation unit, possibly with errors
+        std::unique_ptr<class MslDetails> unit;
 
         // only for temporary files in the editor
         bool isNew = false;
 
         bool hasErrors() {
-            return (errors.size() > 0 ||
-                    collisions.size() > 0 ||
-                    (unit != nullptr &&
+            return ((unit != nullptr &&
                      (unit->errors.size() > 0 || unit->collisions.size() > 0)));
         }
 
         // make a copy for the ScriptEditor
         File* cloneForEditor();
+        class MslDetails* cloneDetails(class MslDetails* src);
         
     };
     

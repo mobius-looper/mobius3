@@ -288,16 +288,16 @@ juce::Time ScriptRegistry::parseTime(juce::String src)
  * deleted out from under it if the registry is refreshed and and
  * a native file was deleted.
  *
- * The owned error list is the hard part.  The MslScriptUnit is
- * ensured to live as long as the application.
+ * The MslDetails is the hard part.
  *
  * The External reference is a problem since those can be deleted too.
  * Do not copy that.
  *
  * Much if this isn't necessary but be thorough.
  *
- * Might be nice if we treated File like Unit and let them live forever
- * but be marked missing.  Hmm, liking that more and more.
+ * Might be nice if we treated File as an interned thing that could live
+ * forever.  Hmm, liking that more and more.  Just mark it "missing" rather
+ * than deleting it.
  */
 ScriptRegistry::File* ScriptRegistry::File::cloneForEditor()
 {
@@ -315,13 +315,16 @@ ScriptRegistry::File* ScriptRegistry::File::cloneForEditor()
     // skip external
 
     // unit lives long and propspers
-    clone->unit = unit;
-
-    // this has the usual owned array copy problem
-    for (auto err : oldErrors)
-      clone->oldErrors.add(new MslError(err));
+    if (unit != nullptr)
+      clone->unit.reset(cloneDetails(unit.get()));
 
     return clone;
+}
+
+MslDetails* ScriptRegistry::File::cloneDetails(MslDetails* src)
+{
+    // ugh, this is huge and complicated
+    Trace(1, "ScriptRegistry::File::cloneDetails not implmeented");
 }
 
 /****************************************************************************/

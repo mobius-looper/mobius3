@@ -18,10 +18,11 @@
 #include "MslError.h"
 #include "MslModel.h"
 #include "MslSymbol.h"
-#include "MslScript.h"
+#include "MslDetails.h"
 #include "MslStack.h"
 #include "MslBinding.h"
 #include "MslExternal.h"
+#include "MslCompilation.h"
 #include "MslEnvironment.h"
 
 #include "MslSession.h"
@@ -93,23 +94,25 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     rootValue = nullptr;
     pool->freeList(stack);
     stack = nullptr;
+
+    context = argContext;
+    unit = argUnit;
     
-    unit = argScript;
     stack = pool->allocStack();
-    stack->node = script->root;
+    stack->node = argFunction->body.get();
 
     // put the saved static bindings in the root block stack frame
     // !! todo: potential thread issues
     // it is rare to have concurrent evaluations of the same script and still
     // rarer to be doing it from both the UI thread and the audio thread at the same time
     // but it can happen
-    // if static bindings are maintained on the MslScript and copied to the MslStack,
+    // if static bindings are maintained on the MslCompilation and copied to the MslStack,
     // any new values won't be "seen" by other threads until this session ends
     // also, the last thread to execute overwrite the values of the previous ones
     // todo this the Right Way, static variable bindings need to be more like exported
     // bindings and managed in a single shared location with csects around access
-    stack->bindings = script->bindings;
-    script->bindings = nullptr;
+    stack->bindings = unit->bindings;
+    unit->bindings = nullptr;
 
     context = argContext;
     run();
@@ -404,7 +407,7 @@ void MslSession::popStack(MslValue* v)
         // and not locals
         // or we could have the binding reset when the MslVariable that defines
         // them is encountered during evaluation
-        script->bindings = stack->bindings;
+        unit->bindings = stack->bindings;
         stack->bindings = nullptr;
     }
     else if (!parent->accumulator) {
@@ -492,8 +495,8 @@ MslBinding* MslSession::findBinding(const char* name)
     // if we make it to the top of the stack, look in the static bindings
     // !! potential thread issues here
     if (found == nullptr) {
-        if (script->bindings != nullptr)
-          found = script->bindings->find(name);
+        if (unit->bindings != nullptr)
+          found = unit->bindings->find(name);
     }
 
     return found;
@@ -515,8 +518,8 @@ MslBinding* MslSession::findBinding(int position)
     // if we make it to the top of the stack, look in the static bindings
     // !! potential thread issues here
     if (found == nullptr) {
-        if (script->bindings != nullptr)
-          found = script->bindings->find(position);
+        if (unit->bindings != nullptr)
+          found = unit->bindings->find(position);
     }
 
     return found;

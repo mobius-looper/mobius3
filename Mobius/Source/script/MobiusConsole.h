@@ -44,7 +44,7 @@ class MobiusConsole : public juce::Component,
     class MslEnvironment* scriptenv = nullptr;
 
     // scriptlet session we maintain
-    juce::String scriptletId;
+    juce::String scriptlet;
     int asyncSession = 0;
     
     class ConsolePanel* panel = nullptr;
@@ -56,8 +56,15 @@ class MobiusConsole : public juce::Component,
     void doHelp();
     
     void doLoad(juce::String line);
+    void doUnload(juce::String line);
     void showLoad();
-
+    void showDetails(class MslDetails* details);
+    void doLocal();
+    void doShow(juce::String line);
+    void doRegistry(juce::String line);
+    void doListUnits();
+    void doDetails(juce::String line);
+    
     void doParse(juce::String line);
     void doPreproc(juce::String line);
     void doList();
@@ -66,6 +73,8 @@ class MobiusConsole : public juce::Component,
     void doResults(juce::String arg);
     
     void doEval(juce::String line);
+    void showResult(class MslResult* result);
+    void showValue(class MslValue* value);
     void traceNode(class MslNode* node, int indent);
 
     void doSignature();

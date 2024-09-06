@@ -26,5 +26,12 @@ class MslCollision
 
     // todo remember whether this was a collision on the outer script
     // name or an exported proc/var inside it
+
+    MslCollision(MslCollision* src) {
+        name = src->name;
+        fromPath = src->fromPath;
+        otherPath = src->otherPath;
+    }
+    
 };
 

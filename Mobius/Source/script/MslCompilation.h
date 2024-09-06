@@ -10,6 +10,9 @@
 
 #include <JuceHeader.h>
 
+#include "MslFunction.h"
+#include "MslVariable.h"
+
 class MslCompilation
 {
   public:
@@ -29,6 +32,9 @@ class MslCompilation
     // todo: needs more
     juce::String name;
 
+    // true if this was published
+    bool published = false;
+
     // the initialization block found within the source
     std::unique_ptr<class MslFunction> init;
 
@@ -41,13 +47,13 @@ class MslCompilation
     juce::OwnedArray<MslFunction> functions;
 
     // variable exports for each exported variable
-    juce::OwnedArray<MslVarialbeExport> variables;
+    juce::OwnedArray<MslVariableExport> variables;
 
     /**
      * Errors encountered during parsing or linking.
      */
     juce::OwnedArray<class MslError> errors;
-
+    
     /**
      * Non fatal, but unusual things the developer should now about.
      */
@@ -64,6 +70,21 @@ class MslCompilation
      * scripts that have already been loaded.
      */
     juce::OwnedArray<class MslCollision> collisions;
+
+    bool hasErrors() {
+        return (errors.size() > 0);
+    }
+
+    //
+    // Runtime state
+    //
+
+    /**
+     * The unit is currently the holder of the bindings of static variables
+     * defined within the body.  This is only valid once the script has been evaluated.
+     * It must use pooled objects.
+     */
+    class MslBinding* bindings = nullptr;
     
 };
 

@@ -2,8 +2,9 @@
 #include <JuceHeader.h>
 
 #include "../../script/ScriptRegistry.h"
-#include "../../script/MslScriptUnit.h"
+#include "../../script/MslDetails.h"
 #include "../../script/MslError.h"
+#include "../../script/MslCollision.h"
 
 #include "ScriptDetails.h"
 
@@ -40,7 +41,6 @@ int ScriptDetails::getPreferredHeight()
 
     int nerrors = 0;
     if (regfile != nullptr) {
-        nerrors += regfile->oldErrors.size();
         if (regfile->unit != nullptr) {
             nerrors += regfile->unit->errors.size();
             nerrors += regfile->unit->collisions.size();
@@ -80,8 +80,6 @@ void ScriptDetails::paint(juce::Graphics& g)
             juce::OwnedArray<MslError>* errors = nullptr;
             if (regfile->unit != nullptr)
               errors = &(regfile->unit->errors);
-            else
-              errors = &(regfile->oldErrors);
 
             if (errors != nullptr) {
                 for (auto error : *errors)

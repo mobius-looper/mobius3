@@ -15,16 +15,18 @@ class MslGarbage
 {
   public:
 
-    MslGarbage();
+    MslGarbage(class MslPools* p);
     ~MslGarbage();
 
     void add(class MslCompilation* unit) {
-        units.add(f);
+        units.add(unit);
     }
 
   protected:
 
-    juce::OwnedArray<MslCompilation> units;
+    class MslPools* pool = nullptr;
+
+    juce::OwnedArray<class MslCompilation> units;
 
 };
 

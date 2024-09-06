@@ -20,7 +20,6 @@
 
 #include <JuceHeader.h>
 
-//#include "ScriptLibrary.h"
 #include "ScriptRegistry.h"
 
 // have to include this so the unique_ptr can compile
@@ -54,11 +53,12 @@ class ScriptClerk {
 
     class ScriptRegistry* getRegistry();
     
-    class MslScriptUnit* loadFile(juce::String path);
+    class MslDetails* loadFile(juce::String path);
 
   private:
 
     class Supervisor* supervisor = nullptr;
+    class MslEnvironment* environment = nullptr;
     std::unique_ptr<class ScriptRegistry> registry;
 
     void loadRegistry();

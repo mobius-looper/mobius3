@@ -19,7 +19,7 @@
 #include "../MainWindow.h"
 
 #include "../../script/ScriptRegistry.h"
-#include "../../script/MslScriptUnit.h"
+#include "../../script/MslDetails.h"
 
 #include "ScriptFileDetails.h"
 #include "ScriptLibraryTable.h"

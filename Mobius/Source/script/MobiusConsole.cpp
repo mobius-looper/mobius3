@@ -12,18 +12,13 @@
 #include "MslParser.h"
 #include "MslError.h"
 #include "MslEnvironment.h"
-#include "MslScriptUnit.h"
+#include "MslDetails.h"
 #include "MslCollision.h"
 #include "MslResult.h"
 #include "MslBinding.h"
 #include "MslPreprocessor.h"
 #include "ConsolePanel.h"
 #include "MobiusConsole.h"
-
-// !! need a Supervisor link, either at construction
-// or during a later initialization
-// tried to make this only require an MslContext but there is too much
-// going on here to be completely independent
 
 MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
 {
@@ -80,11 +75,14 @@ void MobiusConsole::buttonClicked(juce::Button* b)
 
 /**
  * Called during Supervisor's advance() in the maintenance thread.
- * Refresh the whole damn thing if anything changes.
  */
 void MobiusConsole::update()
 {
 }
+
+//
+// Console callbacks
+//
 
 void MobiusConsole::consoleLine(juce::String line)
 {
@@ -118,18 +116,24 @@ void MobiusConsole::doLine(juce::String line)
     else if (line == "quit" || line == "exit") {
         panel->close();
     }
-    else if (line.startsWith("parse")) {
-        doParse(withoutCommand(line));
+
+    else if (line.startsWith("list")) {
+        doList();
     }
-    else if (line.startsWith("preproc")) {
-        doPreproc(withoutCommand(line));
+    else if (line.startsWith("show")) {
+        doShow(withoutCommand(line));
     }
     else if (line.startsWith("load")) {
         doLoad(withoutCommand(line));
     }
-    else if (line.startsWith("list")) {
-        doList();
+    else if (line.startsWith("unload")) {
+        doUnload(withoutCommand(line));
     }
+
+    else if (line.startsWith("registry")) {
+        doRegistry(withoutCommand(line));
+    }
+    
     else if (line.startsWith("status")) {
         doStatus(withoutCommand(line));
     }
@@ -138,6 +142,13 @@ void MobiusConsole::doLine(juce::String line)
     }
     else if (line.startsWith("resume")) {
         doResume();
+    }
+    
+    else if (line.startsWith("parse")) {
+        doParse(withoutCommand(line));
+    }
+    else if (line.startsWith("preproc")) {
+        doPreproc(withoutCommand(line));
     }
     else if (line.startsWith("signature")) {
         doSignature();
@@ -157,21 +168,37 @@ void MobiusConsole::doHelp()
     console.add("?         help");
     console.add("clear     clear display");
     console.add("quit      close the console");
-    console.add("trace     toggle trace mode");
-    console.add("load      load a script file");
-    console.add("parse     parse a line of script");
+
+    // contents of the environment
     console.add("list      list loaded scripts and symbols");
-    console.add("show      show proc structure");
+    console.add("show      show details of an object");
+    console.add("load      load a script file");
+    console.add("unload    unload a script file");
+
+    // contents of the registry
+    console.add("registry  show status of the script registry");
+    
+    // sessions
     console.add("status    show the status of an async session");
     console.add("resume    resume the last scriptlet after a wait");
     console.add("results   show prior evaluation results");
+    
+    console.add("parse     parse a line of MSL text");
+    console.add("preproc   test the preprocessor");
+    console.add("signature test the signature parser");
     console.add("<text>    evaluate a line of mystery");
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Environment Information
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * Reload portions of the script configuration.
+ * Reload portions of the script environment.
  *
- *    load           - reload the MSL library
+ *    load           - reload the entire MSL library
  *    load <file>    - load a file
  *
  */
@@ -184,19 +211,65 @@ void MobiusConsole::doLoad(juce::String line)
     if (line.length() == 0) {
         clerk->refresh();
         clerk->installMsl();
+        showLoad();
     }
     else {
-        clerk->loadFile(line);
+        MslDetails* details = clerk->loadFile(line);
+        showDetails(details);
+        delete details;
+    }
+}
+
+void MobiusConsole::doUnload(juce::String line)
+{
+    console.add("Not implemented");
+}
+
+/**
+ * Display details of a compilation unit in the console.
+ */
+void MobiusConsole::showDetails(MslDetails* details)
+{
+    if (details->errors.size() > 0) {
+        console.add("Errors:");
+        showErrors(&(details->errors));
+    }
+    if (details->warnings.size() > 0) {
+        console.add("Warnings:");
+        showErrors(&(details->warnings));
+    }
+    
+    console.add("Details:");
+    console.add("  id: " + details->id);
+    console.add("  name: " + details->name);
+    juce::String published ((details->published) ? "true" : "false");
+    console.add("  published: " + published);
+
+    if (details->unresolved.size() > 0) {
+        console.add("Unresolved:");
+        for (auto name : details->unresolved) {
+            console.add("  " + name);
+        }
     }
 
-    showLoad();
+    if (details->collisions.size() > 0) {
+        console.add("Collisions:");
+        for (auto col : details->collisions) {
+            console.add("  " + col->name + ":" + col->otherPath);
+        }
+    }
 }
 
 /**
  * Emit the status of the last load including errors to the console.
+ *
+ * todo: this is showing the REGISTRY which is similar to but not the
+ * same as the loaded units in the environment.  Will want both.
  */
 void MobiusConsole::showLoad()
 {
+    console.add("Needs work...");
+#if 0    
     ScriptClerk* clerk = supervisor->getScriptClerk();
     ScriptRegistry* registry = clerk->getRegistry();
     juce::OwnedArray<class ScriptRegistry::File>* files = registry->getFiles();
@@ -238,38 +311,7 @@ void MobiusConsole::showLoad()
             }
         }
     }
-}
-
-void MobiusConsole::doParse(juce::String line)
-{
-    MslParser parser;
-    MslScript* result = parser.parse(line);
-    if (result != nullptr) {
-        // todo: error details display
-        showErrors(&(result->errors));
-
-        if (result->root != nullptr)
-          traceNode(result->root, 0);
-        
-        delete result;
-    }
-}
-
-void MobiusConsole::doPreproc(juce::String line)
-{
-    MslPreprocessor preproc;
-
-    juce::File root = supervisor->getRoot();
-    juce::File file = root.getChildFile(line);
-    if (!file.existsAsFile()) {
-        console.add("File does not exist: " + juce::String(line));
-    }
-    else {
-        juce::String src = file.loadFileAsString();
-        juce::String result = preproc.process(src);
-        console.add("Preprocessor results:");
-        console.add(result);
-    }
+#endif    
 }
 
 // show shell-level errors maintained in an OwnedArray
@@ -294,8 +336,37 @@ void MobiusConsole::showErrors(MslError* list)
     }
 }
 
-void MobiusConsole::doList()
+/**
+ * List the ids of all installed compilation units.
+ */
+void MobiusConsole::doListUnits()
 {
+    juce::StringArray ids = scriptenv->getUnits();
+    console.add("Installed compilation units:");
+    for (auto id : ids)
+      console.add("  " + id);
+}
+
+void MobiusConsole::doDetails(juce::String line)
+{
+    juce::String id = line.trim();
+    MslDetails* details = scriptenv->getDetails(id);
+    if (details != nullptr) {
+        showDetails(details);
+        delete details;
+    }
+}
+
+/**
+ * Display information about the locally defined
+ * functions and variables in this scriptlet session.
+ * Requires a backdoor into the MslCompilation unit
+ * that most applications won't get.
+ */
+void MobiusConsole::doLocal()
+{
+    console.add("Not implemented");
+#if 0    
     juce::OwnedArray<MslScript>* scripts = scriptenv->getScripts();
     if (scripts != nullptr && scripts->size() > 0) {
         console.add("Loaded Scripts");
@@ -318,48 +389,105 @@ void MobiusConsole::doList()
             bindings = bindings->next;
         }
     }
+#endif    
 }
- 
-void MobiusConsole::doEval(juce::String line)
+
+void MobiusConsole::doShow(juce::String line)
 {
-    if (!session->compile(supervisor, line)) {
-        juce::OwnedArray<MslError>* errors = session->getCompileErrors();
-        if (errors != nullptr)
-          showErrors(errors);
+    console.add("Not implemented");
+}
+
+void MobiusConsole::doRegistry(juce::String line)
+{
+    console.add("Not implemented");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parsing and Evaluation
+//
+//////////////////////////////////////////////////////////////////////
+
+void MobiusConsole::doParse(juce::String line)
+{
+    MslParser parser;
+    MslCompilation* unit = parser.parse(line);
+    if (unit != nullptr) {
+        // todo: error details display
+        showErrors(&(unit->errors));
+
+        if (unit->body != nullptr)
+          traceNode(unit->body->body.get(), 2);
+        
+        delete unit;
+    }
+}
+
+void MobiusConsole::doPreproc(juce::String line)
+{
+    MslPreprocessor preproc;
+
+    juce::File root = supervisor->getRoot();
+    juce::File file = root.getChildFile(line);
+    if (!file.existsAsFile()) {
+        console.add("File does not exist: " + juce::String(line));
     }
     else {
-    
-        (void)session->eval(supervisor);
-
-        // side effect of an evaluation is a list of errors and a result
-        MslError* errors = session->getErrors();
-        if (errors != nullptr) {
-            showErrors(errors);
-        }
-        else {
-            // temporary debugging
-            bool fullResult = false;
-            if (fullResult) {
-                juce::String full = session->getFullResult();
-                console.add(full);
-            }
-            else {
-                MslValue* v = session->getResult();
-                if (v != nullptr)
-                  console.add(juce::String(v->getString()));
-            }
-        }
-
-        asyncSession = 0;
-        if (session->isWaiting()) {
-            asyncSession = session->getSessionId();
-            console.add("Session " + juce::String(asyncSession) + " is waiting");
-        }
-        if (session->isTransitioning()) {
-            asyncSession = session->getSessionId();
-            console.add("Session " + juce::String(asyncSession) + " is transitioning");
-        }
+        juce::String src = file.loadFileAsString();
+        juce::String result = preproc.process(src);
+        console.add("Preprocessor results:");
+        console.add(result);
     }
+}
+
+void MobiusConsole::doEval(juce::String line)
+{
+    bool success = false;
+    
+    // establish a new scriptlet "unit" if we don't have one
+    if (scriptlet.length() == 0) {
+        MslDetails* details = scriptenv->install(supervisor, "", line);
+        showDetails(details);
+        // remember the id for next time if it didn't fail
+        scriptlet = details->id;
+        success = details->errors.size() == 0;
+        delete details;
+    }
+    else {
+        MslDetails* details = scriptenv->extend(supervisor, scriptlet, line);
+        showDetails(details);
+        success = details->errors.size() == 0;
+        delete details;
+    }
+
+    if (success) {
+        MslResult* result = scriptenv->eval(supervisor, scriptlet);
+        showResult(result);
+        delete result;
+    }
+}
+
+void MobiusConsole::showResult(MslResult* result)
+{
+    showErrors(result->errors);
+    showValue(result->value);
+    
+    asyncSession = 0;
+    
+    if (result->isWaiting()) {
+        asyncSession = result->sessionId;
+        console.add("Session " + juce::String(asyncSession) + " is waiting");
+    }
+    if (result->isTransitioning()) {
+        asyncSession = result->sessionId;
+        console.add("Session " + juce::String(asyncSession) + " is transitioning");
+    }
+}
+
+void MobiusConsole::showValue(MslValue* value)
+{
+    if (value != nullptr)
+      console.add(juce::String(value->getString()));
 }
 
 void MobiusConsole::doStatus(juce::String line)
@@ -438,11 +566,16 @@ void MobiusConsole::doResults(juce::String arg)
  */
 void MobiusConsole::doSignature()
 {
+    // new: this will need a back door to get to the MslCompilation
+    // either that or return it in the details
+    console.add("doSignature is broken");
+#if 0
     MslScript* s = session->getScript();
     if (s->arguments != nullptr) {
         console.add("Arguments:");
         traceNode(s->arguments.get(), 2);
     }
+#endif    
 }
 
 

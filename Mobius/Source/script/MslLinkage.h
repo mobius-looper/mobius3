@@ -6,6 +6,11 @@
  * This is conceptually similar to the Symbols table in the Mobius application.
  *
  */
+
+#pragma once
+
+#include <JuceHeader.h>
+
 class MslLinkage
 {
   public:

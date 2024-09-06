@@ -8,7 +8,7 @@
 
 #include "../common/ButtonBar.h"
 #include "../../script/ScriptRegistry.h"
-#include "../../script/MslScriptUnit.h"
+#include "../../script/MslDetails.h"
 
 #include "ScriptFileDetails.h"
 
