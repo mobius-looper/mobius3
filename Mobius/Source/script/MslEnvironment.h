@@ -71,9 +71,7 @@ class MslRequest
 class MslEnvironment
 {
     friend class MslSession;
-    friend class MslSymbol;
     friend class MslConductor;
-    friend class MslScriptlet;
     
   public:
 
@@ -124,9 +122,15 @@ class MslEnvironment
      * sent to the garbage collector.  A full environment link will take place that
      * will re-resolve references into the new unit.  If the new unit lost exported symbols,
      * this may result in unresolved references in other units.
+     *
+     * By default, installing a new unit results in a full environment relink to
+     * address any unresolved symbol errors in other units that may now be provided
+     * by this unit.  When doing bulk loading (ScriptClerk) this may be deferred
+     * with link() called manually after all files are loaded.
      */
     class MslInstallation* install(class MslContext* c, juce::String unitId,
-                                   class MslCompilation* comp);
+                                   class MslCompilation* comp,
+                                   bool relinkNow=true);
 
     /**
      * Return information about a previously insttalled unit.
@@ -137,7 +141,7 @@ class MslEnvironment
      * The object may also return a subset of the most recent runtime errors.
      * THe returned object is owned by the caller and must be deleted.
      */
-    class MslInstallation* getInstallation(juce::String unitId);
+    class MslInstallation* getInstallationStatus(juce::String unitId);
 
     /**
      * Uninstall a previoiusly installed compilation unit.   This will result in a
@@ -147,7 +151,7 @@ class MslEnvironment
      * This should be called whenever script files are removed from the library
      * or whenever scriptlets are removed from Bindings.
      */
-    bool uninstall(juce::String unitId);
+    bool uninstall(juce::String unitId, bool relinkNow=true);
     
     //
     // Relink
@@ -270,21 +274,24 @@ class MslEnvironment
     //
     // internal library management
     //
-    
-    void install(class MslContext* c, class MslScriptUnit* unit, class MslScript* script);
-    void unlink(class MslScriptUnit* unit);
-    class MslLinkage* addLink(juce::String name, class MslScriptUnit* unit, class MslScript* compilation);
-    void initialize(MslContext* c, MslScript* s);
 
-    MslResult* makeResult(MslSession* s, bool finished);
+    void ponderLinkErrors(class MslCompilation* comp);
+    void cleanse(class MslCompilation* comp);
+    void exportLinkages(class MslContext* c, class MslCompilation* unit, class MslInstallation* install);
+    void uninstall(class MslCompilation* unit, bool relinkNow);
+    void publish(class MslCompilation* unit, class MslInstallation* result);
+    void publish(class MslCompilation* unit, class MslFunction* f, class MslInstallation* result);
+    void publish(class MslCompilation* unit, class MslVariableExport* v, class MslInstallation* result);
+    class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
+    void initialize(class MslContext* c, class MslCompilation* unit, class MslInstallation* result);
+
+    //
+    // session management
+    //
+    
+    class MslResult* makeResult(class MslSession* s, bool finished);
     int generateSessionId();
     int sessionIds = 1;
-
-    //
-    // Linking
-    //
-
-    void linkNode(class MslContext* context, class MslScript* script, class MslNode* node);
     
 };
 

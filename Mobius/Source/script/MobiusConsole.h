@@ -44,7 +44,7 @@ class MobiusConsole : public juce::Component,
     class MslEnvironment* scriptenv = nullptr;
 
     // scriptlet session we maintain
-    class MslScriptlet* session = nullptr;
+    juce::String scriptletId;
     int asyncSession = 0;
     
     class ConsolePanel* panel = nullptr;

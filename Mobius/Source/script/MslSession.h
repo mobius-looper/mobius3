@@ -59,9 +59,10 @@ class MslSession : public MslVisitor
     void init();
     
     // begin evaluation of a function, it will complete or reach a wait state
-    void start(class MslContext* context, class MslFunction* func);
+    void start(class MslContext* context, class MslCompilation* unit,
+               class MslFunction* func);
     
-    // name for logging, usually the MslScript name
+    // name for logging, usually the MslFunction name
     const char* getName();
 
     // state after starting or resuming
@@ -125,14 +126,15 @@ class MslSession : public MslVisitor
     class MslResult* result = nullptr;
 
     // unique id generated for results tracking
-    // mostly for MslScriptlet
+    // mostly for the console
     int sessionId = 0;
 
   private:
 
     class MslEnvironment* environment = nullptr;
     class MslPools* pool = nullptr;
-    class MslScript* script = nullptr;
+    class MslCompilation* unit = nullptr;
+    class MslFunction* function = nullptr;
     class MslContext* context = nullptr;
 
     class MslStack* stack = nullptr;

@@ -72,7 +72,7 @@ void MslSession::init()
     next = nullptr;
     result = nullptr;
     sessionId = 0;
-    script = nullptr;
+    unit = nullptr;
     context = nullptr;
     stack = nullptr;
     transitioning = false;
@@ -83,7 +83,8 @@ void MslSession::init()
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslContext* argContext, MslScript* argScript)
+void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
+                       MslFunction* argFunction)
 {
     // should be clean out of the pool but make sure
     pool->free(errors);
@@ -93,7 +94,7 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
     pool->freeList(stack);
     stack = nullptr;
     
-    script = argScript;
+    unit = argScript;
     stack = pool->allocStack();
     stack->node = script->root;
 
@@ -115,53 +116,13 @@ void MslSession::start(MslContext* argContext, MslScript* argScript)
 }
 
 /**
- * Entry point for evaluating the initializer block.
- *
- * Based on start() refactor to share more...
- */
-void MslSession::runInitializer(MslContext* argContext, MslScript* argScript)
-{
-    if (argScript->init != nullptr) {
-        // MslInit doesn't implment the visitor so we have to get it's child block
-        // would be cooler if it did
-        if (argScript->init->children.size() > 0) {
-            MslNode* initblock = argScript->init->children[0];
-        
-            // should be clean out of the pool but make sure
-            pool->free(errors);
-            errors = nullptr;
-            pool->free(rootValue);
-            rootValue = nullptr;
-            pool->freeList(stack);
-            stack = nullptr;
-    
-            script = argScript;
-            stack = pool->allocStack();
-
-            // this is the only real difference between start and initialize
-        
-            stack->node = initblock;
-
-            // todo: if the script had static bindings, restore those here?
-            // !! I see a flaw, static bindings probably need to live across reloads
-            // since we're starting with a new MslScript object they won't
-            //stack->bindings = script->bindings;
-            //script->bindings = nullptr;
-
-            context = argContext;
-            run();
-        }
-    }
-}
-
-/**
  * Name to use in the MslResult and for logging.
  */
 const char* MslSession::getName()
 {
     const char* s = nullptr;
-    if (script != nullptr)
-      s = script->name.toUTF8();
+    if (unit != nullptr)
+      s = unit->name.toUTF8();
     return s;
 }
 

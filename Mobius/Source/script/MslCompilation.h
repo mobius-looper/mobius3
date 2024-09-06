@@ -52,7 +52,6 @@ class MslCompilation
      * Non fatal, but unusual things the developer should now about.
      */
     juce::OwnedArray<class MslError> warnings;
-    
 
     /**
      * Names of unresolved symbols.

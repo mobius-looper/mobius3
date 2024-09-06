@@ -14,7 +14,6 @@
 #include "MslEnvironment.h"
 #include "MslScriptUnit.h"
 #include "MslCollision.h"
-#include "MslScriptlet.h"
 #include "MslResult.h"
 #include "MslBinding.h"
 #include "MslPreprocessor.h"
@@ -33,10 +32,6 @@ MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
     
     scriptenv = supervisor->getScriptEnvironment();
 
-    // allocate a scriptlet session we can keep forever
-    session = scriptenv->newScriptlet();
-    session->setName("Console");
-    
     addAndMakeVisible(&console);
     console.setListener(this);
     console.add("Shall we play a game?");
@@ -123,18 +118,6 @@ void MobiusConsole::doLine(juce::String line)
     else if (line == "quit" || line == "exit") {
         panel->close();
     }
-#if 0    
-    else if (line == "trace") {
-        if (session.trace) {
-            console.add("Trace disabled");
-            session.trace = false;
-        }
-        else {
-            console.add("Trace enabled");
-            session.trace = true;
-        }
-    }
-#endif
     else if (line.startsWith("parse")) {
         doParse(withoutCommand(line));
     }

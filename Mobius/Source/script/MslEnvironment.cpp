@@ -344,7 +344,8 @@ void MslEnvironment::link(MslContext* c)
  * from being attempted.
  */
 MslInstallation* MslEnvironment::install(MslContext* c, juce::String unitId,
-                                         MslCompilation* unit)
+                                         MslCompilation* unit,
+                                         bool relinkNow)
 {
     MslInstallation* result = new MslInstallation();
     
@@ -382,19 +383,28 @@ MslInstallation* MslEnvironment::install(MslContext* c, juce::String unitId,
             // once it has been isntalled, need to copy the collisions to the result
             result->copyCollisions(comp->collisions);
         }
-        
+
         if (unit->collisions.size() == 0) {
             
-            publish(unit);
-
+            publish(unit, result);
+            
             // tell the container about the things it can call
-            exportLinkages(c, unit);
+            exportLinkages(c, unit, result);
 
             // if the unit had an initialization block, run it
             // todo: this can have evaluation errors, should
             // capture them and leave them in the result
             initialize(c, unit);
+
+            // do a full relink of the environment unless deferred
+            if (relinkNow)
+              link();
         }
+
+        // unresolved references are allowed under some conditions and expected
+        // to be fixed by a later install
+        // do this after a relink if one occurred
+        result->unresolved = comp->unresolved;
     }
     return result;
 }
@@ -404,39 +414,37 @@ MslInstallation* MslEnvironment::install(MslContext* c, juce::String unitId,
  * We are not telling it about things that were unresolved, the MslLinkage
  * it had before will just become unresolved.
  *
- * Sigh, publishing just had all the MslLinkages we needed, but we've lost
- * that context.
+ * Making use of the array of linkages left behind in the MslInstallation
+ * by publish()
+ *
+ * This is how I started getting the Mobius Symbols generated, by pushing
+ * them from the environment during installation.  We could also make the
+ * ScriptClerk intern the symbols using the linkage list returned
+ * in the MslInstallation.
  */
-void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
+void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit,
+                                    MslInstallation* install)
 {
-
-    if (unit->body != nullptr) {
-        MslLinkage* link = addLink(script->name, unit, script);
-        link->script = script;
-        context->mslExport(link);
+    // could also be leaving the array on the unit and just copying it?
+    (void)unit;
+    for (auto link : install->linkages) {
+        c->mslExport(link);
     }
-
-            for (auto func : script->functions) {
-                
-                MslLinkage* link = addLink(func->name, unit, script);
-                link->function = func;
-                context->mslExport(link);
-            }
-
 }
-
-
 
 /**
  * Uninstall a previous compilation unit.
  * Any MslLinkages that referenced this unit are unresolved,
  * the unit is removed from the registry list, and placed into the garbage collector.
+ *
+ * todo: This normally can't result in errors so it doesn't return anything.
+ * But since uninstall could cause unresolved references in other units,
+ * might want to return something to describe the side effects.
  */
-void MslEnvironment::uninstall(MslCompilation* unit)
+void MslEnvironment::uninstall(MslCompilation* unit, bool relinkNow)
 {
     for (auto link : linkages) {
         if (link->unit == unit) {
-            // unresolve the link
             link->unit = nullptr;
             link->function = nullptr;
             link->variable = nullptr;
@@ -445,6 +453,9 @@ void MslEnvironment::uninstall(MslCompilation* unit)
 
     compilations.removeObject(unit, false);
     garbage.add(unit);
+
+    if (relinkNow)
+      link();
 }
 
 /**
@@ -452,11 +463,11 @@ void MslEnvironment::uninstall(MslCompilation* unit)
  * This is visible for the application that may wish to uninstall
  * previous installations after a file is deleted, or a binding is removed.
  */
-void MslEnvironment::uninstall(juce::String id)
+void MslEnvironment::uninstall(juce::String id, bool relinkNow)
 {
     MslCompilation* unit = compilations[id];
     if (unit != nullptr)
-      uninstall(unit);
+      uninstall(unit, relinkNow);
     else
       Trace(1, "MslEnvironment::uninstall Invalid unit id %s", id.toUTF8());
 }
@@ -465,32 +476,41 @@ void MslEnvironment::uninstall(juce::String id)
  * Publish an installed compilation unit.
  * This creates the MslLinkages so the things in the unit can be referenced.
  * Collision detection is expected to have happened by now.
+ *
+ * Leave the results in the MslInstallation
+ * todo: why not just leave this on the unit, could be handy.
  */
-void MslEnvironment::publish(MslCompilation* unit)
+void MslEnvironment::publish(MslCompilation* unit, MslInstallation* result)
 {
     if (unit->body != nullptr)
-      publish(unit, unit->body.get());
+      publish(unit, unit->body.get(), result);
         
     for (auto func : unit->functions)
-      publish(unit, func);
+      publish(unit, func, result);
 
     for (auto var : unit->variables)
-      publish(unit, var);
+      publish(unit, var, result);
 
+    unit->published = true;
+    result->publilshed = true;
 }
 
-void MslEnvironment::publish(MslCompilation* unit, MslFunction* f)
+void MslEnvironment::publish(MslCompilation* unit, MslFunction* f, MslInstallation* result)
 {
     MslLinkage* link = internLinkage(unit, f->name);
-    if (link != nullptr)
-      link->function = f;
+    if (link != nullptr) {
+        link->function = f;
+        result->linkages.add(link);
+    }
 }
 
-void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v)
+void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v, MslInstallation* result)
 {
     MslLinkage* link = internLinkage(unit, v->getName());
-    if (link != nullptr)
-      link->variable = v;
+    if (link != nullptr) {
+        link->variable = v;
+        result->linkages.add(link);
+    }
 }
 
 /**
@@ -548,7 +568,8 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
  * The logic here is almost identical to request()
  * factor out something we can share.
  */
-void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
+void MslEnvironment::initialize(MslContext* c, MslCompilation* unit,
+                                MslInstallation* result)
 {
     if (unit->init != nullptr) {
         MslSession* session = pool.allocSession();
@@ -558,12 +579,25 @@ void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
         if (session->isFinished()) {
 
             if (session->hasErrors()) {
+
+                // leave the errors on the installation result
+                // this makes a copy since makeResult() needs them too
+                // and will remove them
+                // this is actually the most useful way to return initialization
+                // errors since the caller can respond to them immediately as opposed
+                // to user initiated requests
+                MslError* errors = session->getErrors();
+                while (errors != nullptr) {
+                    MslError* copy = new MslError(errors);
+                    result->errors.add(copy);
+                }
+                
                 // will want options to control the generation of a result since
                 // for actions there could be lot of them
+                // todo: this may not be that useful for unit initializers, skip it?
                 (void)makeResult(session, true);
 
                 Trace(1, "MslEnvironment: Initializer returned with errors");
-                // todo: should have a way to convey at least an error flag in the action?
 
                 pool.free(session);
             }
@@ -584,6 +618,36 @@ void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
             conductor.addWaiting(c, session);
         }
     }
+}
+
+/**
+ * Once a unit is installed, the application may ask about the state
+ * of it so it can display possible name collisions, unresolved references
+ * or other anomolies tht can prevent the script from functioning properly.
+ *
+ * todo: rather than generating this on every call, could just keep the
+ * MslCompilation up to date and copy it.
+ */
+MslInstallation* MslEnvironment::getInstallationStatus(juce::String id)
+{
+    MslInstallation* result = new MslInstallation();
+
+    MslCompilation* unit = compilationMap[id];
+    if (unit == nullptr) {
+        result.errors.add(juce::String("Invalid compilation unit id %s", id.toUTF8()));
+    }
+    else {
+        result.id = id;
+        result->published = unit->published;
+
+        // what errors or warnings would we have at this point?
+        
+        // collisions and unresolveds will be kept up to date on the unit
+        result->copyCollisions(unit->collisions);
+        result->unresolved = juce::StringArray(unit->unresolved);
+    }
+
+    return result;
 }
 
 ///////////////////////////////////////////////////////////////////////
