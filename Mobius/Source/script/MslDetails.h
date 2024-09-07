@@ -28,7 +28,11 @@ class MslDetails
     MslDetails() {}
     ~MslDetails() {}
 
-    // every call may return errors and some return warnings
+    //
+    // Errors encountered during the MslEnvironment method call
+    // or associated with a compilation unit
+    //
+
     juce::OwnedArray<class MslError> errors;
     juce::OwnedArray<class MslError> warnings;
 
@@ -49,10 +53,6 @@ class MslDetails
     // if there are name collisions that have not been resolved
     bool published = false;
 
-    // the linkages that have been published for this unit
-    // these represent the functions and variables exported by the unit
-    juce::Array<class MslLinkage*> linkages;
-    
     // current name collisions that prevent it from being published
     juce::OwnedArray<class MslCollision> collisions;
 
@@ -61,6 +61,15 @@ class MslDetails
     // may cause references in other units to become unresolved
     juce::StringArray unresolved;
 
+    // linkages represent the functions and variables exported by the unit
+    // that may be used in other scripts, or touched by the application
+    juce::Array<class MslLinkage*> linkages;
+
+    // for published install() results only, the changes made to previous links
+    // published for this unit
+    juce::StringArray linksAdded;
+    juce::StringArray linksRemoved;
+    
     /**
      * Package a random installation error up in the MslError wrapper
      */

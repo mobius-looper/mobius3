@@ -140,7 +140,7 @@ class MslEnvironment
      * This should be called whenever script files are removed from the library
      * or whenever scriptlets are removed from Bindings.
      */
-    bool uninstall(class MslContext* c, juce::String unitId, bool relinkNow=true);
+    class MslDetails* uninstall(class MslContext* c, juce::String unitId, bool relinkNow=true);
     
     //
     // Installation Details
@@ -233,12 +233,14 @@ class MslEnvironment
     void resume(class MslContext* c, class MslWait* w);
 
     //
-    // Information
+    // Session Information
     // todo: these are mostly for the console, needs more refinement
     //
 
-    // Each time a function is run, it may leave results behind
-    // for inspection and diagnostics.
+    /**
+     * When a function runs it may leave results behind for inspection
+     * of runtime errors.  
+     */
     class MslResult* getResult(int id);
     bool isWaiting(int id);
     class MslResult* getResults();
@@ -291,22 +293,21 @@ class MslEnvironment
     // internal library management
     //
 
-    void install(class MslContext* c, class MslCompilation* unit, class MslDetails* result,
-                 bool relinkNow);
+    void install(class MslContext* c, class MslCompilation* unit, bool relinkNow);
     void ensureUnitName(juce::String unitId, class MslCompilation* unit);
     
-    void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
     bool ponderLinkErrors(class MslCompilation* comp);
-    void exportLinkages(MslContext* c, MslCompilation* unit, juce::Array<MslLinkage*>& links);
-    
-    void uninstall(class MslContext* c, class MslCompilation* unit, bool relinkNow);
-    
+    void uninstall(class MslContext* c, class MslCompilation* unit, juce::StringArray& links);
+
     void publish(class MslCompilation* unit, juce::Array<class MslLinkage*>& links);
 
     void publish(class MslCompilation* unit, class MslFunction* f, juce::Array<class MslLinkage*>& links);
     void publish(class MslCompilation* unit, class MslVariableExport* v, juce::Array<class MslLinkage*>& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
     void initialize(class MslContext* c, class MslCompilation* unit);
+
+    void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
+    void exportLinkages(MslContext* c, MslCompilation* unit);
 
     //
     // session management

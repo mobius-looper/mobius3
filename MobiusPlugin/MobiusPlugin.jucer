@@ -32,13 +32,17 @@
         <FILE id="Bin4RT" name="MslConductor.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslConductor.cpp"/>
         <FILE id="Apzfms" name="MslConductor.h" compile="0" resource="0" file="../Mobius/Source/script/MslConductor.h"/>
+        <FILE id="N6NfMf" name="MslDetails.h" compile="0" resource="0" file="../Mobius/Source/script/MslDetails.h"/>
         <FILE id="w9Rqhd" name="MslEnvironment.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslEnvironment.cpp"/>
         <FILE id="n5tTof" name="MslEnvironment.h" compile="0" resource="0"
               file="../Mobius/Source/script/MslEnvironment.h"/>
         <FILE id="RTEJr4" name="MslError.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslError.cpp"/>
         <FILE id="Dq1mlk" name="MslError.h" compile="0" resource="0" file="../Mobius/Source/script/MslError.h"/>
-        <FILE id="UP6F9a" name="MslFileError.h" compile="0" resource="0" file="../Mobius/Source/script/MslFileError.h"/>
+        <FILE id="SMAnEQ" name="MslGarbage.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslGarbage.cpp"/>
+        <FILE id="cvFP6f" name="MslGarbage.h" compile="0" resource="0" file="../Mobius/Source/script/MslGarbage.h"/>
+        <FILE id="XIwAr6" name="MslLinker.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslLinker.cpp"/>
+        <FILE id="QGp65S" name="MslLinker.h" compile="0" resource="0" file="../Mobius/Source/script/MslLinker.h"/>
         <FILE id="ICgOuB" name="MslModel.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslModel.cpp"/>
         <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
         <FILE id="AGNZ7d" name="MslParser.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslParser.cpp"/>
@@ -51,11 +55,6 @@
               file="../Mobius/Source/script/MslPreprocessor.h"/>
         <FILE id="PP50zY" name="MslResult.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslResult.cpp"/>
         <FILE id="yg8cNS" name="MslResult.h" compile="0" resource="0" file="../Mobius/Source/script/MslResult.h"/>
-        <FILE id="Y0IheP" name="MslScript.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslScript.cpp"/>
-        <FILE id="IkVdQ5" name="MslScript.h" compile="0" resource="0" file="../Mobius/Source/script/MslScript.h"/>
-        <FILE id="uCfy8T" name="MslScriptlet.cpp" compile="1" resource="0"
-              file="../Mobius/Source/script/MslScriptlet.cpp"/>
-        <FILE id="SfzmZE" name="MslScriptlet.h" compile="0" resource="0" file="../Mobius/Source/script/MslScriptlet.h"/>
         <FILE id="xAkXss" name="MslSession.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSession.cpp"/>
         <FILE id="IPJaMB" name="MslSession.h" compile="0" resource="0" file="../Mobius/Source/script/MslSession.h"/>
         <FILE id="hxXk5e" name="MslStack.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslStack.cpp"/>
@@ -72,10 +71,6 @@
         <FILE id="xTMPD5" name="MslWaitNode.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWaitNode.cpp"/>
         <FILE id="v0yPX5" name="ScriptClerk.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptClerk.cpp"/>
         <FILE id="tp2f5F" name="ScriptClerk.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptClerk.h"/>
-        <FILE id="sFaXwC" name="ScriptFile.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptFile.cpp"/>
-        <FILE id="G8tczM" name="ScriptLibrary.cpp" compile="1" resource="0"
-              file="../Mobius/Source/script/ScriptLibrary.cpp"/>
-        <FILE id="Xla9SN" name="ScriptLibrary.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptLibrary.h"/>
         <FILE id="FiJ9fY" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ScriptRegistry.cpp"/>
         <FILE id="IhoShr" name="ScriptRegistry.h" compile="0" resource="0"
@@ -243,12 +238,20 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
-        <FILE id="ZM3UBq" name="ScriptDetails.cpp" compile="1" resource="0"
-              file="../Mobius/Source/ui/ScriptDetails.cpp"/>
-        <FILE id="Vyvr3u" name="ScriptDetails.h" compile="0" resource="0" file="../Mobius/Source/ui/ScriptDetails.h"/>
-        <FILE id="yQGFa1" name="ScriptWindow.cpp" compile="1" resource="0"
-              file="../Mobius/Source/ui/ScriptWindow.cpp"/>
-        <FILE id="VFHhyH" name="ScriptWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/ScriptWindow.h"/>
+        <GROUP id="{219AC869-1E28-1A98-D3E3-341109F451EB}" name="script">
+          <FILE id="wljLAb" name="CustomEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/CustomEditor.cpp"/>
+          <FILE id="CUY225" name="CustomEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/CustomEditor.h"/>
+          <FILE id="nLqOqH" name="ScriptDetails.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptDetails.cpp"/>
+          <FILE id="k9x61E" name="ScriptDetails.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptDetails.h"/>
+          <FILE id="dm8tIe" name="ScriptEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptEditor.cpp"/>
+          <FILE id="DGfl42" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptEditor.h"/>
+          <FILE id="QfiLki" name="ScriptWindow.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptWindow.cpp"/>
+          <FILE id="TFpqtC" name="ScriptWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptWindow.h"/>
+        </GROUP>
         <FILE id="TytWBR" name="BindingSummaryPanel.cpp" compile="1" resource="0"
               file="../Mobius/Source/ui/BindingSummaryPanel.cpp"/>
         <FILE id="A9BMMy" name="BindingSummaryPanel.h" compile="0" resource="0"
@@ -334,9 +337,10 @@
           <FILE id="gw0WaR" name="SampleEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SampleEditor.h"/>
           <FILE id="u7w0dd" name="SampleTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SampleTable.cpp"/>
           <FILE id="zSERJn" name="SampleTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SampleTable.h"/>
-          <FILE id="dJXJm1" name="ScriptEditor.cpp" compile="1" resource="0"
-                file="../Mobius/Source/ui/config/ScriptEditor.cpp"/>
-          <FILE id="KPZdQO" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptEditor.h"/>
+          <FILE id="wgypfL" name="ScriptConfigEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptConfigEditor.cpp"/>
+          <FILE id="BtriNp" name="ScriptConfigEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ScriptConfigEditor.h"/>
           <FILE id="St4eI4" name="ScriptFileDetails.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/ScriptFileDetails.cpp"/>
           <FILE id="aEPhHP" name="ScriptFileDetails.h" compile="0" resource="0"
