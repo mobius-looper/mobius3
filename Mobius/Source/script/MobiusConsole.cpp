@@ -18,6 +18,10 @@
 #include "MslBinding.h"
 #include "MslPreprocessor.h"
 #include "ConsolePanel.h"
+
+// not supposed to see this, but we're special
+#include "MslCompilation.h"
+
 #include "MobiusConsole.h"
 
 MobiusConsole::MobiusConsole(Supervisor* s, ConsolePanel* parent)
@@ -120,8 +124,8 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("list")) {
         doList(withoutCommand(line));
     }
-    else if (line.startsWith("show")) {
-        doShow(withoutCommand(line));
+    else if (line.startsWith("show") || line.startsWith("details")) {
+        doDetails(withoutCommand(line));
     }
     else if (line.startsWith("load")) {
         doLoad(withoutCommand(line));
@@ -343,10 +347,28 @@ void MobiusConsole::showErrors(MslError* list)
  */
 void MobiusConsole::doList(juce::String line)
 {
-    juce::StringArray ids = scriptenv->getUnits();
-    console.add(juce::String(ids.size()) + " compilation units:");
-    for (auto id : ids)
-      console.add("  " + id);
+    juce::String type = line.trim();
+    if (type == "") {
+        juce::StringArray ids = scriptenv->getUnits();
+        console.add(juce::String(ids.size()) + " compilation units:");
+        for (auto id : ids)
+          console.add("  " + id);
+    }
+    else if (type.startsWith("link")) {
+        juce::Array<MslLinkage*> links = scriptenv->getLinks();
+        console.add(juce::String(links.size()) + " links:");
+        for (auto link : links) {
+            juce::String details;
+            if (link->function != nullptr)
+              details = "function";
+            else if (link->variable != nullptr)
+              details = "variable";
+            else
+              details = "unresolved";
+            console.add("Link " + link->name + ": " + details +
+                        " unit: " + link->unit->id);
+        }
+    }
 }
 
 void MobiusConsole::doDetails(juce::String line)

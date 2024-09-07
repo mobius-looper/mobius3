@@ -260,6 +260,7 @@ MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
 void MslEnvironment::addError(MslResult* result, const char* msg)
 {
     MslError* error = pool.allocError();
+    error->source = MslSourceEnvironment;
     error->setDetails(msg);
     error->next = result->errors;
     result->errors = error;
@@ -344,7 +345,7 @@ MslDetails* MslEnvironment::install(MslContext* c, juce::String unitId,
 
     if (installed) {
         // always want this?
-        exportLinkages(unit);
+        exportLinkages(c, unit);
     }
     else {
         delete unit;
@@ -377,7 +378,8 @@ void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
         idGenerated = true;
     }
     unit->id = unitId;
-
+    unit->name = unitId;
+    
     // function libraries may not have a body function and are not callable
     MslFunction* bf = unit->getBodyFunction();
     if (bf != nullptr) {
@@ -457,15 +459,24 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
             // since this is a clone, the unit id must remain the same
             // scriptlets don't normally have reference names, but I suppose
             // you might want to extend normal script libraries too?
+            // gak, names are a mess
             unit->id = baseUnitId;
+            unit->name = baseUnitId;
             if (base->name.length() > 0 && base->name != baseUnitId)
               Trace(2, "MslEnvironment: Extending a unit with an alternate reference name, why?");
             unit->name = base->name;
             MslFunction* bf = unit->getBodyFunction();
             if (bf != nullptr) {
-                if (bf->name.length() > 0 && bf->name != base->name)
-                  Trace(2, "MslEnvironment: Declaring a new reference name while extending, why?");
-                unit->name = bf->name;
+                if (bf->name.length() == 0) {
+                    // first time bootstrapping a body function, the link
+                    // requires a name
+                    bf->name = unit->name;
+                }
+                else {
+                    if (bf->name != base->name)
+                      Trace(2, "MslEnvironment: Declaring a new reference name while extending, why?");
+                    unit->name = bf->name;
+                }
             }
 
             // here comes the magic (well, that's one word for it)
@@ -609,11 +620,11 @@ void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* re
         // look mom, it's set theory
         int index = 0;
         while (index < linksAdded.size()) {
-            Juce::String name = linksAdded[index];
+            juce::String name = linksAdded[index];
             if (linksRemoved.contains(name)) {
                 // we put this one back
-                linkdAdded.remove(name);
-                linksRemoved.remove(name);
+                linksAdded.removeString(name);
+                linksRemoved.removeString(name);
             }
             else {
                 // this one is new
@@ -646,6 +657,7 @@ void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* re
  */
 void MslEnvironment::uninstall(MslContext* c, MslCompilation* unit, juce::StringArray& links)
 {
+    (void)c;
     for (auto link : linkages) {
         if (link->unit == unit) {
             link->unit = nullptr;
@@ -721,28 +733,31 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
     if (name.length() == 0) {
         Trace(1, "MslEnvironment: Attempt to publish link without a name");
     }
+    else if (unit == nullptr) {
+        Trace(1, "MslEnvironment: Attempt to publish link without a unit");
+    }
     else {
         MslLinkage* link = linkMap[name];
-        if (link == nullptr) {
-            link = new MslLinkage();
-            link->name = name;
-            linkages.add(link);
-            linkMap.set(name, link);
-        }
-        
-        if (link->unit != nullptr) {
+        if (link != nullptr && link->unit != nullptr &&
+            link->unit->id != unit->id) {
             Trace(1, "MslEnvironment: Collision on link %s", name.toUTF8());
         }
         else {
+            // clear to launch
+            if (link == nullptr) {
+                link = new MslLinkage();
+                link->name = name;
+                linkages.add(link);
+                linkMap.set(name, link);
+            }
+
             link->unit = unit;
-            // should also be unresolved, but make sure
             link->function = nullptr;
             link->variable = nullptr;
             found = link;
         }
-
     }
-
+    
     return found;
 }
     
@@ -966,6 +981,13 @@ MslDetails* MslEnvironment::getDetails(juce::String id)
 
     MslCompilation* unit = compilationMap[id];
     if (unit == nullptr) {
+        // allow the user to pass the reference name as well
+        MslLinkage* link = linkMap[id];
+        if (link != nullptr)
+          unit = link->unit;
+    }
+
+    if (unit == nullptr) {
         result->addError(juce::String("Invalid compilation unit " +  id));
     }
     else {
@@ -984,6 +1006,21 @@ juce::StringArray MslEnvironment::getUnits()
     for (auto unit : compilations)
       ids.add(unit->id);
     return ids;
+}
+
+/**
+ * Return a list of all published links.
+ * Not efficient, if we start having lots of these return a ref
+ * to the owned array so we don't have to copy every time.
+ */
+juce::Array<MslLinkage*> MslEnvironment::getLinks()
+{
+    juce::Array<MslLinkage*> links;
+
+    for (auto link : linkages) {
+        links.add(link);
+    }
+    return links;
 }
 
 ///////////////////////////////////////////////////////////////////////

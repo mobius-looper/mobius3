@@ -10,6 +10,29 @@
 
 #pragma once
 
+/**
+ * An enumeration saying where the error came from.
+ * Can be used to adjust the presentation.
+ */
+typedef enum {
+
+    MslSourceNone,
+
+    // error happened during parsing
+    MslSourceCompiler,
+
+    // error happened during linking
+    MslSourceLinker,
+
+    // error happened when the script was run
+    MslSourceRuntime,
+
+    // random API error not associated with a unit
+    // invalid arguments, etc.
+    MslSourceEnvironment
+
+} MslSource;
+
 /** 
  * Represents a single error found in a string of MSL text.
  * The error has the line and column numbers within the source,
@@ -37,6 +60,8 @@ class MslError
     // uses pooled objects and string buffers
     void init(class MslNode* node, const char* details);
 
+    MslSource source = MslSourceNone;
+    
     int line = 0;
     int column = 0;
 

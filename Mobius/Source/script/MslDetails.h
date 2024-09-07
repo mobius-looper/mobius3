@@ -69,6 +69,19 @@ class MslDetails
     // published for this unit
     juce::StringArray linksAdded;
     juce::StringArray linksRemoved;
+
+
+    //
+    // Object specific details
+    // if the id given to getDetails identifies a function or variable
+    // then it won't return full unit information, just this
+    // kludgey, but I don't a dozen different details objects for different
+    // things.  Maybe a MslDetailsType enumeration would help
+    //
+
+    bool objectDetails = false;
+    bool isFunction = false;
+    bool isVariable = false;
     
     /**
      * Package a random installation error up in the MslError wrapper

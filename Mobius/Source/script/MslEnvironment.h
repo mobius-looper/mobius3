@@ -162,6 +162,11 @@ class MslEnvironment
      */
     juce::StringArray getUnits();
 
+    /**
+     * Return all of the published links.
+     */
+    juce::Array<MslLinkage*> getLinks();
+
     //
     // Relink
     // 
@@ -293,16 +298,17 @@ class MslEnvironment
     // internal library management
     //
 
-    void install(class MslContext* c, class MslCompilation* unit, bool relinkNow);
+    void install(class MslContext* c, class MslCompilation* unit,
+                 class MslDetails* d, bool relinkNow);
     void ensureUnitName(juce::String unitId, class MslCompilation* unit);
     
     bool ponderLinkErrors(class MslCompilation* comp);
     void uninstall(class MslContext* c, class MslCompilation* unit, juce::StringArray& links);
 
-    void publish(class MslCompilation* unit, juce::Array<class MslLinkage*>& links);
+    void publish(class MslCompilation* unit, juce::StringArray& links);
 
-    void publish(class MslCompilation* unit, class MslFunction* f, juce::Array<class MslLinkage*>& links);
-    void publish(class MslCompilation* unit, class MslVariableExport* v, juce::Array<class MslLinkage*>& links);
+    void publish(class MslCompilation* unit, class MslFunction* f, juce::StringArray& links);
+    void publish(class MslCompilation* unit, class MslVariableExport* v, juce::StringArray& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
     void initialize(class MslContext* c, class MslCompilation* unit);
 

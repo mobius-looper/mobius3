@@ -13,6 +13,7 @@ MslError::MslError()
 MslError::MslError(MslError* src)
 {
     init();
+    source = MslSourceNone;
     line = src->line;
     column = src->column;
     setToken(src->token);
@@ -25,6 +26,7 @@ MslError::MslError(MslError* src)
 MslError::MslError(int l, int c, juce::String t, juce::String d)
 {
     next = nullptr;
+    source = MslSourceCompiler;
     line = l;
     column = c;
     setToken(t.toUTF8());
@@ -37,6 +39,7 @@ MslError::MslError(int l, int c, juce::String t, juce::String d)
 MslError::MslError(MslNode* node, juce::String d)
 {
     init(node, d.toUTF8());
+    source = MslSourceLinker;
 }
 
 /**
@@ -45,6 +48,7 @@ MslError::MslError(MslNode* node, juce::String d)
 void MslError::init()
 {
     next = nullptr;
+    source = MslSourceNone;
     line = 0;
     column = 0;
     strcpy(token, "");
@@ -63,6 +67,7 @@ void MslError::init(MslNode* node, const char* deets)
     column = node->token.column;
     setToken(node->token.value.toUTF8());
     setDetails(deets);
+    source = MslSourceRuntime;
 }
 
 /**
