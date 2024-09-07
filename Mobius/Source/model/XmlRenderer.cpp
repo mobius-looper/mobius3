@@ -1138,21 +1138,23 @@ void XmlRenderer::parse(XmlElement* e, Binding* b)
 
 void XmlRenderer::render(XmlBuffer* b, ScriptConfig* c)
 {
-    // should not be seeing these any more
-    Trace(1, "XmlRenderer: Serializing a ScriptConfig for some reason");
+    if (c->getScripts() != nullptr) {
+        // should not be seeing these any more
+        Trace(1, "XmlRenderer: Serializing a ScriptConfig for some reason");
     
-    b->addStartTag(EL_SCRIPT_CONFIG);
-    b->incIndent();
+        b->addStartTag(EL_SCRIPT_CONFIG);
+        b->incIndent();
 
-    for (ScriptRef* ref = c->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
-        b->addOpenStartTag(EL_SCRIPT_REF);
-        b->addAttribute(ATT_FILE, ref->getFile());
-        b->addAttribute("test", ref->isTest());
-        b->add("/>\n");
+        for (ScriptRef* ref = c->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
+            b->addOpenStartTag(EL_SCRIPT_REF);
+            b->addAttribute(ATT_FILE, ref->getFile());
+            b->addAttribute("test", ref->isTest());
+            b->add("/>\n");
+        }
+
+        b->decIndent();
+        b->addEndTag(EL_SCRIPT_CONFIG);
     }
-
-    b->decIndent();
-    b->addEndTag(EL_SCRIPT_CONFIG);
 }
 
 void XmlRenderer::parse(XmlElement* e, ScriptConfig* c)

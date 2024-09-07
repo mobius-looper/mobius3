@@ -38,7 +38,7 @@ ScriptClerk::~ScriptClerk()
 
 ScriptRegistry* ScriptClerk::getRegistry()
 {
-    return registry.get();
+    return (registry != nullptr) ? registry.get() : nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -309,10 +309,12 @@ void ScriptClerk::installMsl()
                 }
                 else {
                     juce::String source = file.loadFileAsString();
+                    // save a copy so we don't have to keep hitting the file
+                    fileref->source = source;
 
                     // note that we defer linking
                     MslDetails* unit = env->install(supervisor, fileref->path, source, false);
-                    fileref->unit.reset(unit);
+                    fileref->setDetails(unit);
                     
                     // name may have changed after parsing
                     if (unit->name.length() > 0 && unit->name != fileref->name) {
@@ -396,7 +398,7 @@ void ScriptClerk::saveErrors(ScriptConfig* config)
                     MslError* err = ref->errors.removeAndReturn(0);
                     details->errors.add(err);
                 }
-                file->unit.reset(details);
+                file->setDetails(details);
             }
         }
     }

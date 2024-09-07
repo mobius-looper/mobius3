@@ -48,6 +48,9 @@ class MslResolution
     // this is by far the most common
     class MslVariable* localVariable = nullptr;
 
+    // a function argument declared within the containing function definition
+    bool functionArgument = false;
+
     // an "inner" function definition
     // these are not fully supported yet but prepare for it
     class MslFunctionNode* innerFunction = nullptr;
@@ -63,6 +66,7 @@ class MslResolution
 
     void reset() {
         localVariable = nullptr;
+        functionArgument = false;
         innerFunction = nullptr;
         localFunction = nullptr;
         linkage = nullptr;
@@ -72,6 +76,7 @@ class MslResolution
     // true if we found something
     bool isResolved() {
         return (localVariable != nullptr ||
+                functionArgument ||
                 innerFunction != nullptr ||
                 localFunction != nullptr ||
                 linkage != nullptr ||
@@ -94,11 +99,11 @@ class MslResolution
             body = innerFunction->getBody();
         }
         else if (localFunction != nullptr) {
-            body = localFunction->body.get();
+            body = localFunction->getBody();
         }
         else if (linkage != nullptr) {
             if (linkage->function != nullptr)
-              body = linkage->function->body.get();
+              body = linkage->function->getBody();
         }
         return body;
     }
@@ -178,7 +183,7 @@ class MslSymbol : public MslNode
 
     // link state
     MslResolution resolution;
-    bool isResolved() {resolution.isResolved();}
+    bool isResolved() {return resolution.isResolved();}
     
     // compiled argument list for the resolved function
     MslBlock arguments;

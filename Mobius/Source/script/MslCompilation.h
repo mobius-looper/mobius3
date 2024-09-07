@@ -12,13 +12,15 @@
 
 #include "MslFunction.h"
 #include "MslVariable.h"
+#include "MslCollision.h"
+#include "MslError.h"
 
 class MslCompilation
 {
   public:
 
-    MslCompilation();
-    ~MslCompilation();
+    MslCompilation() {}
+    ~MslCompilation() {}
 
     // unique id for this unit once it has been installed
     juce::String id;
@@ -35,12 +37,22 @@ class MslCompilation
     // true if this was published
     bool published = false;
 
-    // the initialization block found within the source
-    std::unique_ptr<class MslFunction> init;
+    // no direct access to the unique_ptrs because they are a fucking pita
+    MslFunction* getInitFunction() {
+        return (initFunction != nullptr) ? initFunction.get() : nullptr;
+    }
 
-    // a function parse tree representing the outer script code
-    // if it had any, nullptr if this is a library file
-    std::unique_ptr<class MslFunction> body;
+    void setInitFunction(MslFunction* f) {
+        initFunction.reset(f);
+    }
+    
+    MslFunction* getBodyFunction() {
+        return (bodyFunction != nullptr) ? bodyFunction.get() : nullptr;
+    }
+
+    void setBodyFunction(MslFunction* f) {
+        bodyFunction.reset(f);
+    }
 
     // function exports for each function within the compilation
     // unit that was exported
@@ -85,6 +97,16 @@ class MslCompilation
      * It must use pooled objects.
      */
     class MslBinding* bindings = nullptr;
+
+  private:
+    
+    // the initialization block found within the source
+    std::unique_ptr<class MslFunction> initFunction;
+
+    // a function parse tree representing the outer script code
+    // if it had any, nullptr if this is a library file
+    std::unique_ptr<class MslFunction> bodyFunction;
+
     
 };
 

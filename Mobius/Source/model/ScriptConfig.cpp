@@ -3,6 +3,7 @@
  */
 
 #include "../util/Util.h"
+#include "../util/Trace.h"
 
 #include "ScriptConfig.h"
 
@@ -138,6 +139,9 @@ ScriptRef::ScriptRef(ScriptRef* src)
     init();
     setFile(src->getFile());
     mTest = src->mTest;
+
+    if (src->errors.size() > 0)
+      Trace(1, "ScriptConfig: Not cloning a ScriptRef error list");
 }
 
 void ScriptRef::init()

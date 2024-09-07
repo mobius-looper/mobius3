@@ -9,7 +9,7 @@
  *
  * For code layering, ScriptClerk is allowed access to Supervisor, MobiusConfig
  * and other things specific to the Mobius application so that MslEnvironment can
- * be more self contain and easier to reuse elsewhere.  Some of what ScriptClerk
+ * be more self contained and easier to reuse.  Some of what ScriptClerk
  * does is however reusable so consider another round of refactoring at some point
  * to remove dependencies on MobiusConfig and other things that might be different
  * in other contexts.

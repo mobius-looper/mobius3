@@ -228,10 +228,16 @@ MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
             pool.free(session);
         }
         else {
-            // it's unusual for scriptlets to suspend, but it's allowed
-            // we already preallocated a result, so release that one
-            pool.free(result);
-            result = makeResult(session, false);
+            // scriplets can suspend if they call externals
+            // the result returned from this function will be deleted
+            // it won't be the actual suspended session result
+            // todo: this is a special case for the console, should really have
+            // a different MslEvalResult to make it clear that this is different
+            // since this is not connected to s session, we don't have a way to return
+            // transitioning status, think...
+            
+            MslResult* sessionResult = makeResult(session, false);
+            result->sessionId = sessionResult->sessionId;
         
             if (session->isTransitioning()) {
                 conductor.addTransitioning(c, session);
@@ -322,19 +328,15 @@ MslDetails* MslEnvironment::install(MslContext* c, juce::String unitId,
     bool installed = false;
     
     if (!unit->hasErrors()) {
+
+        ensureUnitName(unitId, unit);
+
         MslLinker linker;
         linker.link(c, this, unit);
 
         // todo: need more options here
         if (ponderLinkErrors(unit)) {
     
-            if (unitId.length() == 0) {
-                // must be a scriptlet or console session, generate an id
-                unitId = juce::String(idGenerator++);
-                Trace(2, "MslEnvironment: Generating unit id %s", unitId.toUTF8());
-            }
-            unit->id = unitId;
-
             install(c, unit, result, relinkNow);
             installed = true;
         }
@@ -344,6 +346,52 @@ MslDetails* MslEnvironment::install(MslContext* c, juce::String unitId,
       delete unit;
     
     return result;
+}
+
+/**
+ * Here after compiling was succesful and we're about to link.  Part of linking
+ * is to do collision detection.  It is important that the body block of the
+ * compilation unit have a name before linking, since that will become the reference
+ * name for the script file.  If there was a name declaration in the file, the
+ * body function should have that name.  Otherwise we have historically taken
+ * it from the leaf file name of the path which was passed as the unit id.
+ *
+ * We're not supposed to know about file paths here, but that's the only thing
+ * that can come in right now.  Scriptlets will let the environment auto-generate
+ * a unit id which will become the function name.
+ *
+ * This assumption isn't great, but it's all we're going to encounter.
+ */
+void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
+{
+    // always capture the unit id
+    // if this is a scriptlet, generate one
+    bool generated = false;
+    if (unitId.length() == 0) {
+        unitId = juce::String(idGenerator++);
+        Trace(2, "MslEnvironment: Generating unit id %s", unitId.toUTF8());
+        unit->id = unitId;
+        generated = true;
+    }
+    
+    MslFunction* bf = unit->getBodyFunction();
+    if (bf != nullptr && bf->name.length() == 0) {
+        if (generated) {
+            // not a file so just use the generated id
+            bf->name = unitId;
+        }
+        else if (juce::File::isAbsolutePath(unitId)) {
+            juce::File file(unitId);
+            juce::String refname = file.getFileNameWithoutExtension();
+            bf->name = refname;
+            unit->name = refname;
+        }
+        else {
+            // not generated and didn't look like a path, punt and assume that's
+            // the reference name
+            bf->name = unitId;
+        }
+    }
 }
 
 /**
@@ -391,6 +439,10 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
 
         if (!unit->hasErrors()) {
             unit->id = baseUnitId;
+            // this also becomes the name of the body function for collision detection
+            MslFunction* bf = unit->getBodyFunction();
+            if (bf != nullptr && bf->name.length() == 0)
+              bf->name = baseUnitId;
             
             // here comes the magic (well, that's one word for it)
             // doing a true copy of a compiled function is hard and I don't want to
@@ -420,7 +472,14 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                 // so this isn't good...
                 unit->bindings = base->bindings;
                 base->bindings = nullptr;
-                
+
+                // why would we want a full relink here?
+                // we've already linked the scriptlet within itself,
+                // if the scriptlet exported something that would now resolve a reference
+                // in another script that could be useful, but would be nice to optimize
+                // the extra link out if it didn't, which it almost never will
+                // install should be smarter and only cause a relink if the installation
+                // changed something that might trigger it
                 install(c, unit, result, true);
                 installed = true;
             }
@@ -484,6 +543,8 @@ bool MslEnvironment::ponderLinkErrors(MslCompilation* comp)
 
 /**
  * Install and attempt to publish a unit after it has been compiled and linked.
+ * todo: this is causing unnecessary relinks, be smarter about noticing any changes
+ * to the linkages table that could resolve or unresolve something in another script
  */
 void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* result,
                              bool relinkNow)
@@ -494,6 +555,8 @@ void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* re
       uninstall(c, existing, false);
 
     // install the new one
+    if (unit->id.length() == 0)
+      Trace(1, "MslEnvironment: Installing a unit with no id, you lose");
     compilations.add(unit);
     compilationMap.set(unit->id, unit);
 
@@ -605,9 +668,10 @@ bool MslEnvironment::uninstall(MslContext* c, juce::String id, bool relinkNow)
  */
 void MslEnvironment::publish(MslCompilation* unit, juce::Array<MslLinkage*>& links)
 {
-    if (unit->body != nullptr)
-      publish(unit, unit->body.get(), links);
-        
+    MslFunction* f = unit->getBodyFunction();
+    if (f != nullptr) {
+        publish(unit, f, links);
+    }
     for (auto func : unit->functions)
       publish(unit, func, links);
 
@@ -696,10 +760,11 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
  */
 void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
 {
-    if (unit->init != nullptr) {
+    MslFunction* init = unit->getInitFunction();
+    if (init != nullptr) {
         MslSession* session = pool.allocSession();
 
-        session->start(c, unit, unit->init.get());
+        session->start(c, unit, init);
 
         if (session->isFinished()) {
 

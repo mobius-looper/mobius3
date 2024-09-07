@@ -87,12 +87,16 @@
      
 #include <JuceHeader.h>
 
+#include "../util/Trace.h"
+
 #include "MslContext.h"
 #include "MslEnvironment.h"
 #include "MslCompilation.h"
 #include "MslModel.h"
 #include "MslSymbol.h"
 #include "MslError.h"
+
+#include "MslLinker.h"
 
 /**
  * Link everything in a compilation unit.
@@ -109,8 +113,8 @@ void MslLinker::link(MslContext* c, MslEnvironment* e, MslCompilation* u)
     unit->collisions.clear();
     unit->unresolved.clear();
 
-    link(unit->init.get());
-    link(unit->body.get());
+    link(unit->getInitFunction());
+    link(unit->getBodyFunction());
 
     for (auto func : unit->functions)
       link(func);
@@ -125,36 +129,38 @@ void MslLinker::link(MslContext* c, MslEnvironment* e, MslCompilation* u)
 
 void MslLinker::link(MslFunction* f)
 {
-    link(f->node.get());
+    if (f != nullptr) 
+      link(f->getBody());
 }
 
 void MslLinker::link(MslNode* node)
 {
-{
-    // first link any chiildren
-    for (auto child : node->children) {
-        link(child);
-        // todo: break on errors or keep going?
-    }
+    if (node != nullptr) {
+        // first link any chiildren
+        for (auto child : node->children) {
+            link(child);
+            // todo: break on errors or keep going?
+        }
 
-    // now the hard part
-    // only symbols need special processing right now
-    if (node->isSymbol()) {
-        MslSymbol* sym = static_cast<MslSymbol*>(node);
-        link(sym);
+        // now the hard part
+        // only symbols need special processing right now
+        if (node->isSymbol()) {
+            MslSymbol* sym = static_cast<MslSymbol*>(node);
+            link(sym);
+        }
     }
 }
 
-void MslLinker::addError(MslSymbol* sym, juce::String msg)
+void MslLinker::addError(MslNode* node, juce::String msg)
 {
-    MslError* errobj = new MslError(syn, msg);
+    MslError* errobj = new MslError(node, msg);
     unit->errors.add(errobj);
     Trace(1, "MslLInker: Link failure %s", msg.toUTF8());
 }
 
-void MslLinker::addWarning(MslSymbol* sym, juce::String msg)
+void MslLinker::addWarning(MslNode* node, juce::String msg)
 {
-    MslError* errobj = new MslError(syn, msg);
+    MslError* errobj = new MslError(node, msg);
     unit->warnings.add(errobj);
     Trace(2, "MslLInker: Link warning %s", msg.toUTF8());
 }
@@ -180,8 +186,9 @@ void MslLinker::addWarning(MslSymbol* sym, juce::String msg)
 void MslLinker::checkCollisions()
 {
     // first the script body function
-    if (unit->body != nullptr) {
-        checkCollision(unit->body->name);
+    MslFunction* f = unit->getBodyFunction();
+    if (f != nullptr) {
+        checkCollision(f->name);
     }
     
     // then the exported functions
@@ -198,7 +205,10 @@ void MslLinker::checkCollision(juce::String name)
     MslLinkage* link = environment->find(name);
     if (link != nullptr &&
         link->unit != nullptr &&
-        link->unit != unit) {
+        // note that it isn't enough to compare unit pointers, when
+        // we're replacing or extending will have a new unit that will
+        // overwrite the old one
+        link->unit->id != unit->id) {
 
         MslCollision* col = new MslCollision();
         col->name = name;
@@ -310,7 +320,7 @@ void MslLinker::resolve(MslSymbol* sym)
         
     // first look locally
     resolveLocal(sym);
-    if (!sym->isResolved) {
+    if (!sym->isResolved()) {
         // then within other units in the environment
         resolveEnvironment(sym);
         if (!sym->isResolved()) {
@@ -323,8 +333,8 @@ void MslLinker::resolve(MslSymbol* sym)
         // todo: here is where we could try to be smart about
         // the "if switchQuantize == loop" problem and issue a more helpful
         // warning about using keyword symbols
-        addWarning(sym, juce::String("Unresolved symbol " + refname));
-        unit->unresolved.add(refname);
+        addWarning(sym, juce::String("Unresolved symbol ") + sym->token.value);
+        unit->unresolved.add(sym->token.value);
     }
 }
 
@@ -350,41 +360,83 @@ void MslLinker::resolveLocal(MslSymbol* sym)
  */
 void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
 {
-    MslFunctionNode* func = nullptr;
-    MslVariable *var = nullptr;
-    
-
-    for (auto child : node->children()) {
+    if (node->isFunction()) {
+        // we're inside a function definition, function signature symbols
+        // will have bindings at runtime
+        MslFunctionNode* def = static_cast<MslFunctionNode*>(node);
+        resolveFunctionArgument(sym, def);
+    }
+    else {
+        for (auto child : node->children) {
         
-        if (child->isFunction())
-          func = static_cast<MslFunctionNode*>(child);
-        
-        else if (child->isVariable())
-          var = static_cast<MslVariable*>(child);
+            MslFunctionNode* func = nullptr;
+            MslVariable *var = nullptr;
 
-        if (func != nullptr && var != nullptr) {
-            // a block had both a function and a variable with the same name
-            // I think we can consider this an error rather than picking one at random
-            // in this case the node with the location should be one of the two
-            // things causing the conflict, not the symbol node
-            addError(func, juce::String("Ambiguous definitions: " + sym->token.value));
-            break;
-        }
-        else if (func != nullptr) {
-            sym->resolution.innerFunction = func;
-            break;
-        }
-        else if (var != nullptr) {
-            sym->resolution.localVariable = var;
-            break;
+            if (child->isFunction())
+              func = static_cast<MslFunctionNode*>(child);
+        
+            else if (child->isVariable())
+              var = static_cast<MslVariable*>(child);
+
+            if (func != nullptr && var != nullptr) {
+                // a block had both a function and a variable with the same name
+                // I think we can consider this an error rather than picking one at random
+                // in this case the node with the location should be one of the two
+                // things causing the conflict, not the symbol node
+                addError(func, juce::String("Ambiguous definitions: " + sym->token.value));
+                break;
+            }
+            else if (func != nullptr) {
+                sym->resolution.innerFunction = func;
+                break;
+            }
+            else if (var != nullptr) {
+                sym->resolution.localVariable = var;
+                break;
+            }
         }
     }
-
+    
     if (!sym->isResolved()) {
         // recurse up
         MslNode* parent = node->parent;
         if (parent != nullptr)
           resolveLocal(sym, parent);
+    }
+}
+
+/**
+ * Attempt to resolve the symbol to the argument of a conatining function definition.
+ * This can get quite complicated if there are keyword arguments and special
+ * keyword symbols.  Might be nice to compile this and leave it on the MslFunction
+ */
+void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslFunctionNode* def)
+{
+    MslBlock* decl = def->getDeclaration();
+    if (decl != nullptr) {
+        for (auto arg : decl->children) {
+            MslSymbol* argsym = nullptr;
+            if (arg->isSymbol()) {
+                argsym = static_cast<MslSymbol*>(arg);
+            }
+            else if (arg->isAssignment()) {
+                // it's a default argument, LHS must be a symbol
+                if (arg->children.size() > 0) {
+                    MslNode* first = arg->children[0];
+                    if (first->isSymbol())
+                      argsym = static_cast<MslSymbol*>(first);
+                }
+            }
+
+            if (argsym != nullptr && argsym->token.value == sym->token.value) {
+                // okay it resolves to an argument in the declaration, these
+                // are just raw symbols, they don't have MslVariableNodes around them
+                // just remember that fact that it did resolve, and look for a binding
+                // at runtime
+                sym->resolution.functionArgument = true;
+                break;
+            }
+        }
     }
 }
 
@@ -410,7 +462,7 @@ void MslLinker::resolveExternal(MslSymbol* sym)
 {
     juce::String refname = sym->token.value;
     
-    MslExternal* ext = environment->getExternal(refname);
+    MslExternal* external = environment->getExternal(refname);
     if (external == nullptr) {
 
         // haven't seen this one before, ask the container
@@ -426,6 +478,8 @@ void MslLinker::resolveExternal(MslSymbol* sym)
             // a special "null" external?
         }
     }
+
+    sym->resolution.external = external;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -455,12 +509,12 @@ void MslLinker::compileArguments(MslSymbol* sym)
         signature = sym->resolution.innerFunction->getDeclaration();
     }
     else if (sym->resolution.localFunction != nullptr) {
-        signature = sym->resolution.localFunction->declaration;
+        signature = sym->resolution.localFunction->getDeclaration();
     }
     else if (sym->resolution.linkage != nullptr) {
         if (sym->resolution.linkage->function != nullptr)
           // whew, how many levels does it take to get to a signature
-          signature = sym->resolution.linkage->function->declaration;
+          signature = sym->resolution.linkage->function->getDeclaration();
     }
     else if (sym->resolution.external != nullptr) {
         // todo: eventually externals need signatures too
@@ -485,13 +539,13 @@ void MslLinker::compileArguments(MslSymbol* sym)
  *        use the function
  *
  */
-void MslLinker::compleArguments(MslSymbol* sym, MslBlock* signature)
+void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
 {
     bool error = false;
     
     // this isn't parsed so it won't start out with a parent pointer,
     // make sure it always has one
-    sym->arguments.parent = this;
+    sym->arguments.parent = sym;
     sym->arguments.clear();
 
     // copy the call args and whittle away at them

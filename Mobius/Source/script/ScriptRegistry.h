@@ -70,20 +70,25 @@ class ScriptRegistry
         External* external = nullptr;
 
         // information about the compiled compilation unit, possibly with errors
-        std::unique_ptr<class MslDetails> unit;
-
+        class MslDetails* getDetails() {
+            return (details != nullptr) ? details.get() : nullptr;
+        }
+        void setDetails(class MslDetails* d) {
+            details.reset(d);
+        }
+        
         // only for temporary files in the editor
         bool isNew = false;
 
         bool hasErrors() {
-            return ((unit != nullptr &&
-                     (unit->errors.size() > 0 || unit->collisions.size() > 0)));
+            return ((details != nullptr &&
+                     (details->errors.size() > 0 || details->collisions.size() > 0)));
         }
 
-        // make a copy for the ScriptEditor
-        File* cloneForEditor();
-        class MslDetails* cloneDetails(class MslDetails* src);
-        
+      private:
+            
+        std::unique_ptr<class MslDetails> details;
+
     };
     
     /**

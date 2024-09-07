@@ -277,56 +277,6 @@ juce::Time ScriptRegistry::parseTime(juce::String src)
     return juce::Time(src.getIntValue());
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// File
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * The ScriptEditor needs a private copy of the File that won't be
- * deleted out from under it if the registry is refreshed and and
- * a native file was deleted.
- *
- * The MslDetails is the hard part.
- *
- * The External reference is a problem since those can be deleted too.
- * Do not copy that.
- *
- * Much if this isn't necessary but be thorough.
- *
- * Might be nice if we treated File as an interned thing that could live
- * forever.  Hmm, liking that more and more.  Just mark it "missing" rather
- * than deleting it.
- */
-ScriptRegistry::File* ScriptRegistry::File::cloneForEditor()
-{
-    File* clone = new ScriptRegistry::File();
-    clone->path = path;
-    clone->added = added;
-    clone->name = name;
-    clone->library = library;
-    clone->author = author;
-    clone->button = button;
-    clone->disabled = disabled;
-    clone->missing = missing;
-    clone->old = old;
-
-    // skip external
-
-    // unit lives long and propspers
-    if (unit != nullptr)
-      clone->unit.reset(cloneDetails(unit.get()));
-
-    return clone;
-}
-
-MslDetails* ScriptRegistry::File::cloneDetails(MslDetails* src)
-{
-    // ugh, this is huge and complicated
-    Trace(1, "ScriptRegistry::File::cloneDetails not implmeented");
-}
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

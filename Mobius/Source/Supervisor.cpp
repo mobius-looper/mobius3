@@ -354,7 +354,7 @@ bool Supervisor::start()
     mobius->installScripts(oldScripts);
     scriptClerk.saveErrors(oldScripts);
     delete oldScripts;
-
+    
     // listen for timing and config changes we didn't initiate
     mobius->setListener(this);
 

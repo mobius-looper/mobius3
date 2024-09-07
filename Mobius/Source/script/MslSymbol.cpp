@@ -143,11 +143,14 @@ void MslSession::mslVisit(MslSymbol* snode)
             if (snode->resolution.external != nullptr)
               returnQuery(snode);
             
-            else if (snode->resolution.linkage->variable != nullptr)
+            else if (snode->resolution.linkage != nullptr)
               returnVariable(snode);
 
             else {
-                // should have found the binding from above?
+                // it's either a functionArgument or a localVariable
+                // should have found a binding from findBindings above, if not
+                // it's a missing argument which should have been caught by now
+                // or something else I missed
                 addError(snode, "Bindings failed us");
             }
         }
@@ -162,7 +165,7 @@ void MslSession::mslVisit(MslSymbol* snode)
     // or pushed a new frame and are waiting for the result
     // if neither happened it is a logic error, and the evaluator will
     // hang if you don't catch this
-    if (errors == nullptr && startStack == stack) {
+    if (errors == nullptr && startStack == stack && !transitioning) {
         addError(snode, "Like your dreams, the symbol evaluator is broken");
     }
 }

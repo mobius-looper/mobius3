@@ -37,12 +37,14 @@ void ScriptEditor::resized()
  * The name may have collisions which is why we're here to fix it.
  * This can result in two tabs with the same name.  Should be
  * coloring them to indiciate this.
+ *
+ * Actually, now that Files are interned, can just compare pointers too.
  */
 void ScriptEditor::load(ScriptRegistry::File* file)
 {
     ScriptEditorFile* existing = nullptr;
     for (auto efile : files) {
-        if (efile->hasFile(file)) {
+        if (efile->file->path == file->path) {
             existing = efile;
             break;
         }
@@ -60,7 +62,7 @@ void ScriptEditor::load(ScriptRegistry::File* file)
 
 void ScriptEditor::addTab(ScriptEditorFile* efile)
 {
-    juce::String name = efile->getFile()->name;
+    juce::String name = efile->file->name;
     if (name.length() == 0)
       name = "New";
 
@@ -148,8 +150,8 @@ void ScriptEditor::cancel()
     if (index >= 0) {
         ScriptRegistry::File* tempFile = nullptr;
         ScriptEditorFile* efile = files[index];
-        if (efile->getFile()->isNew)
-          tempFile = efile->getFile();
+        if (efile->file->isNew)
+          tempFile = efile->file;
         
         // dispose of the editry, this also makes efile invalide
         close(efile);
@@ -257,42 +259,36 @@ ScriptEditorFile::~ScriptEditorFile()
 {
 }
 
-ScriptRegistry::File* ScriptEditorFile::getFile()
-{
-    return ownedFile.get();
-}
-
 /**
  * Here we were initialized once with the same path, but the
  * contents may have changed.
  *
- * Really HATING how File has to be copied.
+ * File objects are interned so we should have the same
+ * object in both places.
  */
 void ScriptEditorFile::refresh(ScriptRegistry::File* src)
 {
-    ownedFile.reset(src->cloneForEditor());
+    if (file != src)
+      Trace(1, "ScriptEditor: File internment seems to be broken");
     
-    details.load(ownedFile.get());
+    file = src;
+    
+    details.load(file);
 
-    if (ownedFile->unit != nullptr) {
-        editor.setText(ownedFile->source);
+    if (file->source.length() == 0) {
+        // ScriptClerk isnt maintaining the source code for old .mos files
+        // it should...
+        juce::File f (file->path);
+        file->source = f.loadFileAsString();
     }
-    else if (ownedFile->old) {
-        juce::File f (ownedFile->path);
-        juce::String source = f.loadFileAsString();
-        editor.setText(source);
-    }
+    
+    editor.setText(file->source);
 }
 
 void ScriptEditorFile::revert()
 {
-    if (ownedFile != nullptr)
-      editor.setText(ownedFile->source);
-}
-
-bool ScriptEditorFile::hasFile(ScriptRegistry::File* src)
-{
-    return ownedFile->path == src->path;
+    if (file != nullptr)
+      editor.setText(file->source);
 }
 
 void ScriptEditorFile::resized()

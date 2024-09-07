@@ -21,6 +21,8 @@ class MslGarbage
     void add(class MslCompilation* unit) {
         units.add(unit);
     }
+    
+    void flush();
 
   protected:
 

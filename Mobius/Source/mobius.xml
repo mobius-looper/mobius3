@@ -150,7 +150,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='host'
+      syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -326,8 +326,6 @@
   <BindingSet name='midi4' overlay='true'>
     <Binding name='Restart' trigger='note' value='53' channel='1'/>
   </BindingSet>
-  <ScriptConfig>
-  </ScriptConfig>
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>

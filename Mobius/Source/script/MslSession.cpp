@@ -99,7 +99,7 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     unit = argUnit;
     
     stack = pool->allocStack();
-    stack->node = argFunction->body.get();
+    stack->node = argFunction->getBody();
 
     // put the saved static bindings in the root block stack frame
     // !! todo: potential thread issues
@@ -1344,6 +1344,15 @@ void MslSession::mslVisit(MslKeyword* key)
 {
     (void)key;
     popStack();
+}
+
+/**
+ * Won't see these but have to overload it for the visitor
+ */
+void MslSession::mslVisit(MslInitNode* init)
+{
+    (void)init;
+    addError(init, "Encountered init mode in the main body");
 }
 
 //////////////////////////////////////////////////////////////////////

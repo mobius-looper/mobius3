@@ -248,7 +248,7 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
           cell = "error";
         else if (file->old)
           cell = "old";
-        else if (file->unit == nullptr)
+        else if (file->getDetails() == nullptr)
           cell = "unloaded";
         else
           cell = "enabled";

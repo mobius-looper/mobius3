@@ -968,7 +968,11 @@ void Mobius::beginAudioInterrupt(MobiusAudioStream* stream, UIAction* actions)
 
     // phase in a new scriptarian if we're not busy
     if (mPendingScriptarian != nullptr) {
-        if (!mScriptarian->isBusy()) {
+        if (mScriptarian == nullptr) {
+            mScriptarian = mPendingScriptarian;
+            mPendingScriptarian = nullptr;
+        }
+        else if (!mScriptarian->isBusy()) {
             mKernel->returnScriptarian(mScriptarian);
             mScriptarian = mPendingScriptarian;
             mPendingScriptarian = nullptr;
@@ -999,7 +1003,8 @@ void Mobius::beginAudioInterrupt(MobiusAudioStream* stream, UIAction* actions)
     mActionator->doInterruptActions(actions, stream->getInterruptFrames());
 
 	// process scripts
-    mScriptarian->doScriptMaintenance();
+    if (mScriptarian != nullptr)
+      mScriptarian->doScriptMaintenance();
 
     // process MSL scripts
     // should these be before or after old scripts?
@@ -1726,7 +1731,8 @@ void Mobius::kernelEventCompleted(KernelEvent* e)
     // gets finished
     if (e->type != EventTimeBoundary) {
 
-        mScriptarian->finishEvent(e);
+        if (mScriptarian != nullptr)
+          mScriptarian->finishEvent(e);
     }
 }
 
@@ -1890,17 +1896,20 @@ const char* Mobius::getCustomMode()
 void Mobius::runScript(Action* action)
 {
     // everything is now encapsulated in here
-    mScriptarian->runScript(action);
+    if (mScriptarian != nullptr)
+      mScriptarian->runScript(action);
 }
 
 void Mobius::resumeScript(Track* t, Function* f)
 {
-    mScriptarian->resumeScript(t, f);
+    if (mScriptarian != nullptr)
+      mScriptarian->resumeScript(t, f);
 }
 
 void Mobius::cancelScripts(Action* action, Track* t)
 {
-    mScriptarian->cancelScripts(action, t);
+    if (mScriptarian != nullptr)
+      mScriptarian->cancelScripts(action, t);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2044,7 +2053,7 @@ bool Mobius::isGlobalReset()
 
     // check scripts
     if (allReset)
-      allReset = !mScriptarian->isBusy();
+      allReset = (mScriptarian == nullptr || !mScriptarian->isBusy());
 
     return allReset;
 }

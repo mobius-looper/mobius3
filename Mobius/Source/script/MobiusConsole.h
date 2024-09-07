@@ -62,12 +62,11 @@ class MobiusConsole : public juce::Component,
     void doLocal();
     void doShow(juce::String line);
     void doRegistry(juce::String line);
-    void doListUnits();
     void doDetails(juce::String line);
+    void doList(juce::String line);
     
     void doParse(juce::String line);
     void doPreproc(juce::String line);
-    void doList();
     void doResume();
     void doStatus(juce::String line);
     void doResults(juce::String arg);

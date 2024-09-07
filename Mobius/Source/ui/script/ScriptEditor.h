@@ -27,18 +27,20 @@ class ScriptEditorFile : public juce::Component
     ScriptEditorFile(class ScriptEditor* e, class ScriptRegistry::File* src);
     ~ScriptEditorFile();
 
-    bool hasFile(class ScriptRegistry::File* src);
     void refresh(class ScriptRegistry::File* src);
+    void revert();
+
+    // the file from the registry being edited
+    // this assumes File objects are interned and will not be deleted
+    // for the duration of the application
+    // they may however be marked missing
+    ScriptRegistry::File* file = nullptr;
     
     void resized() override;
-
-    ScriptRegistry::File* getFile();
-    void revert();
     
   private:
 
     class ScriptEditor* parent = nullptr;
-    std::unique_ptr<ScriptRegistry::File> ownedFile;
     
     ScriptDetails details;
     CustomEditor editor;

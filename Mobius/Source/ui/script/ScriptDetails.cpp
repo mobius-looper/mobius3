@@ -1,3 +1,15 @@
+/**
+ * Details panel for the script editor.
+ *
+ * This shows things in the MslDetails object attached to the regisry File.
+ * !! there is potential danger here if the MslDetails are replaced due
+ * to reloading at the same moment this component is painting.  The old
+ * details will be deleted.
+ *
+ * It would be best if the editor copied the details and refreshed them
+ * periodically.  Alternately put a csect around it, or keep old versions
+ * around and GC them.
+ */
 
 #include <JuceHeader.h>
 
@@ -41,9 +53,10 @@ int ScriptDetails::getPreferredHeight()
 
     int nerrors = 0;
     if (regfile != nullptr) {
-        if (regfile->unit != nullptr) {
-            nerrors += regfile->unit->errors.size();
-            nerrors += regfile->unit->collisions.size();
+        MslDetails* details = regfile->getDetails();
+        if (details != nullptr) {
+            nerrors += details->errors.size();
+            nerrors += details->collisions.size();
         }
     }
     if (nerrors > 0) {
@@ -77,18 +90,13 @@ void ScriptDetails::paint(juce::Graphics& g)
 
         if (regfile->hasErrors()) {
             area.removeFromTop(RowHeight);
-            juce::OwnedArray<MslError>* errors = nullptr;
-            if (regfile->unit != nullptr)
-              errors = &(regfile->unit->errors);
+            MslDetails* details = regfile->getDetails();
+            if (details != nullptr) {
 
-            if (errors != nullptr) {
-                for (auto error : *errors)
+                for (auto error : details->errors)
                   paintError(g, area, error);
-            }
-
-            // collisions
-            if (regfile->unit != nullptr) {
-                for (auto collision : regfile->unit->collisions)
+                
+                for (auto collision : details->collisions)
                   paintCollision(g, area, collision);
             }
         }

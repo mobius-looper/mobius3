@@ -118,7 +118,7 @@ void MobiusConsole::doLine(juce::String line)
     }
 
     else if (line.startsWith("list")) {
-        doList();
+        doList(withoutCommand(line));
     }
     else if (line.startsWith("show")) {
         doShow(withoutCommand(line));
@@ -338,11 +338,13 @@ void MobiusConsole::showErrors(MslError* list)
 
 /**
  * List the ids of all installed compilation units.
+ *
+ * todo: recognize args to list other things
  */
-void MobiusConsole::doListUnits()
+void MobiusConsole::doList(juce::String line)
 {
     juce::StringArray ids = scriptenv->getUnits();
-    console.add("Installed compilation units:");
+    console.add(juce::String(ids.size()) + " compilation units:");
     for (auto id : ids)
       console.add("  " + id);
 }
@@ -416,8 +418,9 @@ void MobiusConsole::doParse(juce::String line)
         // todo: error details display
         showErrors(&(unit->errors));
 
-        if (unit->body != nullptr)
-          traceNode(unit->body->body.get(), 2);
+        MslFunction* f = unit->getBodyFunction();
+        if (f != nullptr)
+          traceNode(f->getBody(), 2);
         
         delete unit;
     }
@@ -447,16 +450,18 @@ void MobiusConsole::doEval(juce::String line)
     // establish a new scriptlet "unit" if we don't have one
     if (scriptlet.length() == 0) {
         MslDetails* details = scriptenv->install(supervisor, "", line);
-        showDetails(details);
+        success = details->errors.size() == 0;
+        if (details->errors.size() > 0 || details->warnings.size() > 0)
+          showDetails(details);
         // remember the id for next time if it didn't fail
         scriptlet = details->id;
-        success = details->errors.size() == 0;
         delete details;
     }
     else {
         MslDetails* details = scriptenv->extend(supervisor, scriptlet, line);
-        showDetails(details);
         success = details->errors.size() == 0;
+        if (details->errors.size() > 0 || details->warnings.size() > 0)
+          showDetails(details);
         delete details;
     }
 

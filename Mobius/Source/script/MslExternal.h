@@ -103,10 +103,6 @@ class MslExternal
     // the signature specification supplied by the container
     juce::String signatureDefinition; 
     
-    // the compiled signature if this is a function
-    // this is optional but recommended
-    std::unique_ptr<MslSignature> signature;
-
     // the primary pointer to the application object that implements this symbol
     void *object = nullptr;
 
@@ -125,6 +121,12 @@ class MslExternal
         object = src.object;
         type = src.type;
     }
+
+  private:
+    
+    // the compiled signature if this is a function
+    // this is optional but recommended
+    std::unique_ptr<MslSignature> signature;
 
 };
 

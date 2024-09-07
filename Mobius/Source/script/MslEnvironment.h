@@ -71,6 +71,7 @@ class MslRequest
  */
 class MslEnvironment
 {
+    friend class MslLinker;
     friend class MslSession;
     friend class MslConductor;
     
@@ -292,6 +293,7 @@ class MslEnvironment
 
     void install(class MslContext* c, class MslCompilation* unit, class MslDetails* result,
                  bool relinkNow);
+    void ensureUnitName(juce::String unitId, class MslCompilation* unit);
     
     void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
     bool ponderLinkErrors(class MslCompilation* comp);

@@ -57,9 +57,6 @@ MslCompilation* MslParser::parse(juce::String source)
     // the "stack"
     current = root;
 
-    // prepare the body function in case we find an argument declaration
-    script->body.reset(new MslFunction());
-
     parseInner(source);
 
     if (script->errors.size() == 0) {
@@ -155,17 +152,7 @@ void MslParser::functionize(MslFunctionNode* node)
 
     function->name = node->name;
 
-    MslBlock* decl = node->getDeclaration();
-    if (decl != nullptr) {
-        node->remove(decl);
-        function->declaration.reset(decl);
-    }
-    
-    MslBlock* body =  node->getBody();
-    if (body != nullptr) {
-        node->remove(body);
-        function->body.reset(body);
-    }
+    function->setNode(node);
 
     // if there was already a definition for this function
     // replace it, this could be considered an error
@@ -203,16 +190,16 @@ void MslParser::functionize(MslFunctionNode* node)
  */
 void MslParser::functionize(MslInitNode* node)
 {
-    MslFunction* init = script->init.get();
+    MslFunction* init = script->getInitFunction();
     if (init == nullptr) {
         init = new MslFunction();
-        script->init.reset(init);
+        script->setInitFunction(init);
     }
     
-    MslBlock* body = init->body.get();
+    MslBlock* body = init->getBody();
     if (body == nullptr) {
         body = new MslBlock();
-        init->body.reset(body);
+        init->setBody(body);
     }
 
     // transfer the children
@@ -220,6 +207,7 @@ void MslParser::functionize(MslInitNode* node)
         MslNode* child = node->children.removeAndReturn(0);
         body->add(child);
     }
+    delete node;
 }
 
 /**
@@ -232,20 +220,20 @@ void MslParser::functionize(MslInitNode* node)
  */
 void MslParser::embody()
 {
-    MslFunction* f = script->body.get();
-    if (f == nullptr) {
-        f = new MslFunction();
-        script->body.reset(f);
+    MslFunction* bodyfunc = script->getBodyFunction();
+    if (bodyfunc == nullptr) {
+        bodyfunc = new MslFunction();
+        script->setBodyFunction(bodyfunc);
     }
     
-    f->name = script->name;
+    bodyfunc->name = script->name;
 
     // todo: script file argument should eventually be defined
     // with a declaration of some kind
 
     // there should be nothing left in the root block at this point
     // that needs sifting put the entire thing in the function
-    f->body.reset(root);
+    bodyfunc->setBody(root);
     root = nullptr;
 }
 
@@ -761,21 +749,20 @@ void MslParser::parseArguments(MslToken& t, int offset, juce::String remainder)
     else {
         // begin the walk of shame down to the damn thing we need
         // this is an MslFunction
-        if (c->body != nullptr) {
-            // this is the root block of the function
-            if (c->body->body != nullptr) {
-                MslBlock* sig = c->body->body.release();
+        MslFunction* f = c->getBodyFunction();
+        if (f != nullptr) {
+            // this is the root block of the function, which will become the signature block
+            MslBlock* sig = f->releaseBody();
 
-                // where this goes is in the declaration block
-                // of the body function for this compilation unit, whew
-                MslFunction* f = script->body.get();
-                if (f == nullptr) {
-                    f = new MslFunction();
-                    script->body.reset(f);
-                }
-                f->declaration.reset(sig);
+            // where this goes is in the declaration block
+            // of the body function for this compilation unit, whew
+            f = script->getBodyFunction();
+            if (f == nullptr) {
+                f = new MslFunction();
+                script->setBodyFunction(f);
             }
-        }            
+            f->setDeclaration(sig);
+        }
     }
     delete c;
 }
