@@ -24,7 +24,6 @@
 
 #include "JuceUtil.h"
 #include "MainMenu.h"
-#include "script/ScriptWindow.h"
 
 #include "MainWindow.h"
 
@@ -49,7 +48,6 @@ MainWindow::MainWindow(Supervisor* super) : supervisor(super), display(this), al
 
 MainWindow::~MainWindow()
 {
-    closeWindows();
 }
 
 /**
@@ -113,9 +111,29 @@ int MainWindow::getPreferredHeight()
     return 800;
 }
 
+/**
+ * This handles both panels and windows so nothing
+ * else needs to know the difference.  Should allow these
+ * to configure themselves one way or the other.
+ * Kludge on the name since we don't have a common namespace
+ * or id mapping for these yet.
+ */
 void MainWindow::showPanel(juce::String name)
 {
-    panelFactory.show(name);
+    if (!panelFactory.show(name)) {
+        // wasn't a panel, try a window
+        windowFactory.show(name);
+    }
+}
+
+/**
+ * Script editor is special because it takes an argument.
+ * This is unlike panels which initialize themselves.
+ * Need to refine generic ways to open things with arguments.
+ */
+void MainWindow::editScript(ScriptRegistry::File* file)
+{
+    windowFactory.editScript(file);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -310,7 +328,7 @@ void MainWindow::mainMenuSelection(int id)
                 break;
                 
             case MainMenu::ScriptEditor:
-                showScriptEditor();
+                windowFactory.show(WindowFactory::ScriptEditor);
                 break;
                 
             case MainMenu::UpgradeConfig:
@@ -372,9 +390,8 @@ void MainWindow::mainMenuSelection(int id)
  */
 void MainWindow::captureConfiguration(UIConfig* config)
 {
-    config->captureLocations(this, scriptEditor);
-
     display.captureConfiguration(config);
+    windowFactory.captureConfiguration(config);
 }
 
 /**
@@ -470,39 +487,6 @@ void MainWindow::filesDropped(const juce::StringArray& files, int x, int y)
         ScriptClerk* clerk = supervisor->getScriptClerk();
         clerk->filesDropped(scriptFiles);
     }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Secondary Windows
-//
-//////////////////////////////////////////////////////////////////////
-
-void MainWindow::closeWindows()
-{
-    scriptEditor.deleteAndZero();
-}
-
-void MainWindow::showScriptEditor()
-{
-    if (scriptEditor == nullptr) {
-        ScriptWindow* w = new ScriptWindow();
-        scriptEditor = juce::Component::SafePointer<ScriptWindow>(w);
-        
-        UIConfig* config = supervisor->getUIConfig();
-        UILocation loc = config->getScriptWindowLocation();
-        juce::Rectangle<int> bounds = scriptEditor->getBounds();
-        loc.adjustBounds(bounds);
-        scriptEditor->setBounds(bounds);
-    }
-
-    scriptEditor->setVisible(true);
-}
-
-void MainWindow::editScript(ScriptRegistry::File* file)
-{
-    showScriptEditor();
-    scriptEditor->load(file);
 }
 
 /****************************************************************************/

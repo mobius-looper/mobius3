@@ -15,6 +15,14 @@
             name="BindingArgTest" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\first.msl" name="MSLHello"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\editornew.msl" name="editornew"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\anotherone.msl" name="anotherone"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\asd.msl" name="asd"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\something.msl" name="something"
+            added="1725838292554"/>
     </Files>
   </Machine>
   <Machine name="Loki">

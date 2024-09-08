@@ -23,7 +23,7 @@
 #include "display/MobiusDisplay.h"
 #include "AlertPanel.h"
 #include "PanelFactory.h"
-//#include "ScriptWindow.h"
+#include "WindowFactory.h"
 
 #ifdef USE_FFMETERS
 #include "../ff_meters/ff_meters.h"
@@ -57,7 +57,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     // called by Supervisor to show a panel
     void showPanel(juce::String name);
-
+    
     // FileDragAndDropTarget
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void fileDragEnter(const juce::StringArray& files, int x, int y) override;
@@ -83,17 +83,11 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     class Supervisor* supervisor = nullptr;
 
-    // demo used SafePointer because the child windows deleted themselves
-    // don't necessarily need that here, but it's good to be safe
-    juce::Component::SafePointer<class ScriptWindow> scriptEditor;
-    void showScriptEditor();
-    void closeWindows();
-    juce::Rectangle<int> getDisplayArea();
-
     MainMenu menu {this};
     MobiusDisplay display;
     AlertPanel alertPanel;
     PanelFactory panelFactory {this};
+    WindowFactory windowFactory {supervisor};
     
 #ifdef USE_FFMETERS
     foleys::LevelMeter levelMeter;

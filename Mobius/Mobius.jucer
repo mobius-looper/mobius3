@@ -185,6 +185,9 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="lrrI1w" name="WindowFactory.cpp" compile="1" resource="0"
+              file="Source/ui/WindowFactory.cpp"/>
+        <FILE id="LfilVy" name="WindowFactory.h" compile="0" resource="0" file="Source/ui/WindowFactory.h"/>
         <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
           <FILE id="kozMp5" name="CustomEditor.cpp" compile="1" resource="0"
                 file="Source/ui/script/CustomEditor.cpp"/>
@@ -195,6 +198,8 @@
           <FILE id="DEj2yw" name="ScriptEditor.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptEditor.cpp"/>
           <FILE id="rTX48Z" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/script/ScriptEditor.h"/>
+          <FILE id="iy2tV5" name="ScriptLog.cpp" compile="1" resource="0" file="Source/ui/script/ScriptLog.cpp"/>
+          <FILE id="XBvv4o" name="ScriptLog.h" compile="0" resource="0" file="Source/ui/script/ScriptLog.h"/>
           <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>

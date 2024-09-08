@@ -182,11 +182,16 @@ PanelFactory::PanelId PanelFactory::mapPanelName(juce::String name)
 /**
  * Show a panel by name.
  */
-void PanelFactory::show(juce::String name)
+bool PanelFactory::show(juce::String name)
 {
+    bool found = false;
+    
     PanelFactory::PanelId id =  mapPanelName(name);
-    if (id != None)
-      show(id);
+    if (id != None) {
+        show(id);
+        found = true;
+    }
+    return found;
 }
 
 /****************************************************************************/

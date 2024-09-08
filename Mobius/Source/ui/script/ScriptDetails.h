@@ -15,18 +15,24 @@ class ScriptDetails : public juce::Component
     ScriptDetails();
     ~ScriptDetails();
 
-    void setIncludeAll(bool b);
+    void setIncludeExtra(bool b);
+    void setIncludeErrors(bool b);
+    
     int getPreferredHeight();
     
     void resized() override;
     void paint(juce::Graphics& g) override;
 
     void load(class ScriptRegistry::File* file);
-
+    void setNameOverride(juce::String name);
+    
   private:
 
-    bool includeAll = false;
+    bool includeExtra = true;
+    bool includeErrors = true;
+
     class ScriptRegistry::File* regfile = nullptr;
+    juce::String nameOverride;
     
     void paintDetail(juce::Graphics& g, juce::Rectangle<int>& area,
                      juce::String label, juce::String text);

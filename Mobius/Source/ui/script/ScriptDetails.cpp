@@ -31,9 +31,19 @@ ScriptDetails::~ScriptDetails()
 {
 }
 
-void ScriptDetails::setIncludeAll(bool b)
+void ScriptDetails::setIncludeExtra(bool b)
 {
-    includeAll = b;
+    includeExtra = b;
+}
+
+void ScriptDetails::setIncludeErrors(bool b)
+{
+    includeErrors = b;
+}
+
+void ScriptDetails::setNameOverride(juce::String name)
+{
+    nameOverride = name;
 }
 
 void ScriptDetails::load(ScriptRegistry::File* file)
@@ -46,21 +56,23 @@ int ScriptDetails::getPreferredHeight()
 {
     // always name, path
     int height = RowHeight * 2;
-    if (includeAll) {
+    if (includeExtra) {
         // dates, Author
         height += (RowHeight * 2);
     }
 
-    int nerrors = 0;
-    if (regfile != nullptr) {
-        MslDetails* details = regfile->getDetails();
-        if (details != nullptr) {
-            nerrors += details->errors.size();
-            nerrors += details->collisions.size();
+    if (includeErrors) {
+        int nerrors = 0;
+        if (regfile != nullptr) {
+            MslDetails* details = regfile->getDetails();
+            if (details != nullptr) {
+                nerrors += details->errors.size();
+                nerrors += details->collisions.size();
+            }
         }
+        if (nerrors > 0)
+          height += (RowHeight * nerrors);
     }
-    if (nerrors > 0)
-      height += (RowHeight * nerrors);
     
     return height;
 }
@@ -76,16 +88,17 @@ void ScriptDetails::paint(juce::Graphics& g)
     g.fillAll (juce::Colours::black);
 
     if (regfile != nullptr) {
-        
-        paintDetail(g, area, "Name", regfile->name);
+
+        juce::String displayName = (nameOverride.length() > 0) ? nameOverride : regfile->name;
+        paintDetail(g, area, "Name", displayName);
         paintDetail(g, area, "Path", regfile->path);
-        if (includeAll) {
+        if (includeExtra) {
             juce::String added = regfile->added.toString(true, true, false, false);
             paintDetail(g, area,  "Added", added);
             paintDetail(g, area, "Author", regfile->author);
         }
 
-        if (regfile->hasErrors()) {
+        if (includeErrors && regfile->hasErrors()) {
             //area.removeFromTop(RowHeight);
             MslDetails* details = regfile->getDetails();
             if (details != nullptr) {

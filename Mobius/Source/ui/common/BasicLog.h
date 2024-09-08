@@ -15,5 +15,6 @@ class BasicLog : public juce::TextEditor
     ~BasicLog();
 
     void add(const juce::String& m);
+    void append(const juce::String& m);
     
 };

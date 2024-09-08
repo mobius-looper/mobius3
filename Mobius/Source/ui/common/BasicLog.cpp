@@ -50,3 +50,9 @@ void BasicLog::add(const juce::String& m)
         insertTextAtCaret(juce::newLine);
     }
 }
+
+void BasicLog::append(const juce::String& m)
+{
+    moveCaretToEnd();
+    insertTextAtCaret(m);
+}

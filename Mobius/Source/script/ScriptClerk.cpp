@@ -42,6 +42,66 @@ ScriptRegistry* ScriptClerk::getRegistry()
     return (registry != nullptr) ? registry.get() : nullptr;
 }
 
+void ScriptClerk::addListener(Listener* l)
+{
+    if (!listeners.contains(l))
+      listeners.add(l);
+}
+
+void ScriptClerk::removeListener(Listener* l)
+{
+    // why tf doesn't this work?
+    //listeners.remove(l);
+    listeners.removeAllInstancesOf(l);
+}
+
+/**
+ * Special interface for the ScriptEditor
+ * It has been building a new File object and has now saved it.
+ * Add it to the registry, it has already been installed in the
+ * environment.
+ *
+ * todo: a lot of what ScriptEditorFile is doing should be moved in
+ * here.
+ */
+void ScriptClerk::addFile(ScriptRegistry::File* file)
+{
+    ScriptRegistry::Machine* machine = registry->getMachine();
+    machine->files.add(file);
+    saveRegistry();
+
+    for (auto l : listeners)
+      l->scriptFileAdded(file);
+}
+
+/**
+ * File objects have been considered interned and not to be deleted
+ * while the application is alive.  There are two consumers of these
+ * the ScriptEditor and the ScriptLibraryTable.
+ *
+ * It's awkward coordinating with them over deleting a file, so mark
+ * it deleted and it is expected to be hidden from the UI.
+ */
+void ScriptClerk::deleteFile(ScriptRegistry::File* file)
+{
+    file->deleted = true;
+
+    // if this was an external we can actually remove the entry safely
+    if (file->external != nullptr) {
+        ScriptRegistry::Machine* machine = registry->getMachine();
+        machine->externals.removeObject(file->external);
+        file->external = nullptr;
+    }
+    saveRegistry();
+
+    // this can only come from the editor right now, but usually
+    // the ScriptLibrary table is also visible and it is confusing
+    // to have that showing the file
+
+    for (auto l : listeners)
+      l->scriptFileDeleted(file);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Registry

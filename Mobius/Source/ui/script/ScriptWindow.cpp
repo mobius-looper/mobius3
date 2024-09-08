@@ -8,9 +8,11 @@
 #include "ScriptDetails.h"
 #include "ScriptWindow.h"
 
-ScriptWindow::ScriptWindow() :
+ScriptWindow::ScriptWindow(Supervisor* s) : content(s),
     juce::DocumentWindow("Script Editor", juce::Colours::black, juce::DocumentWindow::allButtons)
 {
+    supervisor = s;
+    
     // bounds of the entire display, reduced by a comfortable edge
     juce::Rectangle<int> displayArea = JuceUtil::getDisplayArea();
     Trace(2, "ScriptWindow: Display area %d %d %d %d",
@@ -99,7 +101,7 @@ void ScriptWindow::load(ScriptRegistry::File* file)
 //
 //////////////////////////////////////////////////////////////////////
 
-ScriptWindowContent::ScriptWindowContent()
+ScriptWindowContent::ScriptWindowContent(Supervisor* s) : editor(s)
 {
     addAndMakeVisible(editor);
 }

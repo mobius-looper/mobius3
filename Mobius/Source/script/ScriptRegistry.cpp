@@ -243,29 +243,34 @@ juce::String ScriptRegistry::toXml()
             if (machine->files.size() > 0) {
                 juce::XmlElement* elFiles = new juce::XmlElement("Files");
                 elMachine->addChildElement(elFiles);
-
+                
                 for (auto file : machine->files) {
-                    juce::XmlElement* fe = new juce::XmlElement("File");
-                    elFiles->addChildElement(fe);
 
-                    fe->setAttribute("path", file->path);
-
-                    if (file->name.length() > 0)
-                      fe->setAttribute("name", file->name);
+                    // this is where we effectively delete files from the editor
+                    if (!file->deleted) {
                     
-                    if (file->author.length() > 0)
-                      fe->setAttribute("author", file->author);
+                        juce::XmlElement* fe = new juce::XmlElement("File");
+                        elFiles->addChildElement(fe);
+
+                        fe->setAttribute("path", file->path);
+
+                        if (file->name.length() > 0)
+                          fe->setAttribute("name", file->name);
                     
-                    fe->setAttribute("added", renderTime(file->added));
+                        if (file->author.length() > 0)
+                          fe->setAttribute("author", file->author);
+                    
+                        fe->setAttribute("added", renderTime(file->added));
 
-                    if (file->library)
-                      fe->setAttribute("library", file->library);
+                        if (file->library)
+                          fe->setAttribute("library", file->library);
 
-                    if (file->button)
-                      fe->setAttribute("button", file->button);
+                        if (file->button)
+                          fe->setAttribute("button", file->button);
 
-                    if (file->disabled)
-                      fe->setAttribute("disabled", file->disabled);
+                        if (file->disabled)
+                          fe->setAttribute("disabled", file->disabled);
+                    }
                 }
             }
         }

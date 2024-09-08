@@ -76,7 +76,7 @@ class PanelFactory
     /**
      * Named panels is used for bindings.
      */
-    void show(juce::String name);
+    bool show(juce::String name);
 
     /**
      * Hide a panel.

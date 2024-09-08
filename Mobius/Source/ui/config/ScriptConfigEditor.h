@@ -9,11 +9,13 @@
 
 #include <JuceHeader.h>
 
+#include "../../script/ScriptClerk.h"
+
 #include "ConfigEditor.h"
 #include "ScriptTable.h"
 #include "ScriptLibraryTable.h"
 
-class ScriptConfigEditor : public ConfigEditor
+class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
 {
   public:
     
@@ -21,12 +23,18 @@ class ScriptConfigEditor : public ConfigEditor
     ~ScriptConfigEditor();
 
     juce::String getTitle() override {return "Scripts";}
-    
+
+    void showing() override;
+    void hiding() override;
     void load() override;
     void save() override;
     void cancel() override;
 
     void resized() override;
+
+    // clerk listener
+    void scriptFileAdded(class ScriptRegistry::File* file) override;
+    void scriptFileDeleted(class ScriptRegistry::File* file) override;
 
   private:
 

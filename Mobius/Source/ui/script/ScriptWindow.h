@@ -1,4 +1,4 @@
-/**
+ /**
  * ScriptWindow is a DocumentWindow which works differently than other components.
  * DocumentWindow is a component but you don't just addAndMakeVisible on it.
  * It is supposed to have a single content component set with setContentOwned()
@@ -21,7 +21,7 @@ class ScriptWindowContent : public juce::Component
 {
   public:
 
-    ScriptWindowContent();
+    ScriptWindowContent(class Supervisor* s);
     ~ScriptWindowContent();
 
     void resized() override;
@@ -36,7 +36,7 @@ class ScriptWindowContent : public juce::Component
 class ScriptWindow : public juce::DocumentWindow
 {
   public:
-    ScriptWindow();
+    ScriptWindow(class Supervisor* s);
     ~ScriptWindow();
     //void resized() override;
 
@@ -44,7 +44,8 @@ class ScriptWindow : public juce::DocumentWindow
     void load(class ScriptRegistry::File* file);
 
   private:
-
+    
+    class Supervisor* supervisor = nullptr;
     ScriptWindowContent content;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScriptWindow)

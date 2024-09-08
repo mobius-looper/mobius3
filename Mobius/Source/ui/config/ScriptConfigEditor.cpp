@@ -25,6 +25,36 @@ ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), library
 
 ScriptConfigEditor::~ScriptConfigEditor()
 {
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    clerk->removeListener(this);
+}
+
+void ScriptConfigEditor::showing()
+{
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    clerk->addListener(this);
+}
+
+void ScriptConfigEditor::hiding()
+{
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    clerk->removeListener(this);
+}
+
+/**
+ * ScriptClerk::Listener overrides
+ */
+void ScriptConfigEditor::scriptFileAdded(class ScriptRegistry::File* file)
+{
+    (void)file;
+    load();
+    // in this case we could try to auto-select the one that was added
+}
+
+void ScriptConfigEditor::scriptFileDeleted(class ScriptRegistry::File* file)
+{
+    (void)file;
+    load();
 }
 
 void ScriptConfigEditor::load()

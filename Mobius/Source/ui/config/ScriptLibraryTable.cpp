@@ -51,14 +51,14 @@ ScriptLibraryTable::~ScriptLibraryTable()
 /**
  * Populate internal state with a list of Scripts from a ScriptConfig.
  */
-
 void ScriptLibraryTable::load(ScriptRegistry* reg)
 {
     files.clear();
 
     ScriptRegistry::Machine* machine = reg->getMachine();
     for (auto file : machine->files) {
-        files.add(new ScriptLibraryTableFile(file));
+        if (!file->deleted)
+          files.add(new ScriptLibraryTableFile(file));
     }
 
     table.updateContent();

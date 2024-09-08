@@ -62,6 +62,10 @@ class ScriptRegistry
         
         // true if a file could not be located
         bool missing = false;
+        // true if this file was deleted in the UI
+        // we keep the File handle around since it is interned, but stop showing it
+        bool deleted = false;
+        
         // true if this is an older .mos file
         bool old = false;
         
@@ -77,9 +81,6 @@ class ScriptRegistry
             details.reset(d);
         }
         
-        // only for temporary files in the editor
-        bool isNew = false;
-
         bool hasErrors() {
             return ((details != nullptr &&
                      (details->errors.size() > 0 || details->collisions.size() > 0)));

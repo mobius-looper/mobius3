@@ -28,6 +28,13 @@
 class ScriptClerk {
   public:
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void scriptFileAdded(class ScriptRegistry::File* file) = 0;
+        virtual void scriptFileDeleted(class ScriptRegistry::File* file) = 0;
+    };
+
     ScriptClerk(class Supervisor* s);
     ~ScriptClerk();
 
@@ -43,13 +50,21 @@ class ScriptClerk {
     class ScriptConfig* getMobiusScriptConfig();
     void saveErrors(class ScriptConfig* c);
 
-    // ScriptEditor temporary interface
+    // ScriptConfigEditor temporary interface
     class ScriptConfig* getEditorScriptConfig();
     void saveEditorScriptConfig(class ScriptConfig* config);
 
     // file drop from MainWindow
     void filesDropped(juce::StringArray& files);
 
+    // ScriptEditor interface
+    void addFile(class ScriptRegistry::File* file);
+    void deleteFile(class ScriptRegistry::File* file);
+
+    // configuartion UI listeners
+    void addListener(Listener* l);
+    void removeListener(Listener* l);
+    
     //
     // Console Interfaces
     //
@@ -63,7 +78,8 @@ class ScriptClerk {
     class Supervisor* supervisor = nullptr;
     class MslEnvironment* environment = nullptr;
     std::unique_ptr<class ScriptRegistry> registry;
-
+    juce::Array<Listener*> listeners;
+    
     void loadRegistry();
     void reconcile();
     ScriptRegistry::File* refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
