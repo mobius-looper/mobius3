@@ -92,6 +92,12 @@ class MslDetails
         errors.add(err);
     }
 
+    bool hasErrors() {
+        return (errors.size() > 0 ||
+                collisions.size() > 0 ||
+                unresolved.size() > 0);
+    }
+
 };
 
     

@@ -18,6 +18,7 @@
 
 #include "../util/Trace.h"
 #include "../model/MobiusConfig.h"
+#include "../model/UIConfig.h"
 #include "../model/ScriptConfig.h"
 #include "../Supervisor.h"
 
@@ -177,7 +178,7 @@ void ScriptClerk::reconcile()
             // this will be set later during installation
             // could check the file extensions now
             ext->invalid = false;
-            refreshFile(machine, extfile, ext);
+            (void)refreshFile(machine, extfile, ext);
         }
         else {
             // something was deleted out from under us, or
@@ -193,8 +194,8 @@ void ScriptClerk::reconcile()
 /**
  * Refresh the File entry for one file.
  */
-void ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile,
-                              ScriptRegistry::External* ext)
+ScriptRegistry::File* ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile,
+                                               ScriptRegistry::External* ext)
 {
     // this is assuming that getFullPathName is stable
     juce::String path = jfile.getFullPathName();
@@ -213,6 +214,8 @@ void ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile
         sfile->old = true;
         refreshOldFile(sfile, jfile);
     }
+
+    return sfile;
 }
 
 /**
@@ -235,7 +238,7 @@ void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfo
         if (path.endsWithIgnoreCase(".msl") ||
             path.endsWithIgnoreCase(".mos")) {
 
-            refreshFile(machine, file, ext);
+            (void)refreshFile(machine, file, ext);
         }
     }
 }
@@ -314,21 +317,8 @@ void ScriptClerk::installMsl()
 
                     // note that we defer linking
                     MslDetails* unit = env->install(supervisor, fileref->path, source, false);
-                    fileref->setDetails(unit);
-                    
-                    // name may have changed after parsing
-                    if (unit->name.length() > 0 && unit->name != fileref->name) {
-                        fileref->name = unit->name;
-                        changes++;
-                    }
-
-                    // don't need this now that we have the script library panel
-                    if (unit->errors.size() > 0) {
-                        // may want to soften this to a warning
-                        Trace(1, "ScriptClerk: Errors encountered loading file %s",
-                              fileref->path.toUTF8());
-                    }
-                    
+                    updateDetails(fileref, unit);
+                    // errors will have already been traced by env
                 }
             }
         }
@@ -341,6 +331,20 @@ void ScriptClerk::installMsl()
 
     if (changes)
       saveRegistry();
+}
+
+/**
+ * After installing or reinstalling a file, save the installation details
+ * returned by the environment.
+ */
+void ScriptClerk::updateDetails(ScriptRegistry::File* regfile, MslDetails* details)
+{
+    // save the whole thing
+    regfile->setDetails(details);
+
+    // the compiler will have determined the reference name to use, save it here
+    // so we can display nice without details
+    regfile->name = details->name;
 }
 
 /**
@@ -491,6 +495,169 @@ MslDetails* ScriptClerk::loadFile(juce::String path)
     }
 
     return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drag and Drop
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Add files to the library.  The paths have already been filtered
+ * to include only .msl and .mos files.
+ *
+ * There are two parts to this.  First copy the file to the library or
+ * add it to the Externals list.  Second refresh the File structure to have
+ * information about the file.
+ */
+void ScriptClerk::filesDropped(juce::StringArray& files)
+{
+    chooseDropStyle(files);
+}
+
+/**
+ * There are two ways to add files, copying them into the library
+ * folder (importing) or adding them to the external list.
+ * During drag-and-drop, ask which style they want, with global settings
+ * to force it one way without asking.
+ */
+void ScriptClerk::chooseDropStyle(juce::StringArray files)
+{
+    UIConfig* config = supervisor->getUIConfig();
+    juce::String style = config->get("fileDropBehavior");
+
+    if (style == "import" || style == "external") {
+        // already choosen
+        doFilesDropped(files, style);
+    }
+    else {
+        // launch an async dialog box that calls the lambda when finished
+        juce::MessageBoxOptions options = juce::MessageBoxOptions()
+            .withIconType (juce::MessageBoxIconType::QuestionIcon)
+            .withTitle ("Install Script Files")
+            .withMessage ("Would you like to import the files into the script library folder or register them as external files?")
+            .withButton ("Import")
+            .withButton ("External")
+            .withButton ("Cancel")
+            //.withAssociatedComponent (myComp)
+            ;
+        
+        juce::AlertWindow::showAsync (options, [this,files] (int button) {
+            juce::String style;
+            if (button == 1)
+              style = "import";
+            else if (button == 2)
+              style = "external";
+            doFilesDropped(files, style);
+        });
+    }
+}
+
+void ScriptClerk::doFilesDropped(juce::StringArray files, juce::String style)
+{
+    ScriptRegistry* reg = getRegistry();
+    ScriptRegistry::Machine* machine = reg->getMachine();
+    int mosFilesDropped = 0;
+    juce::StringArray mslFilesDropped;
+    
+    if (style == "cancel" || style == "")
+      return;
+    
+    if (style == "import") {
+        juce::File root = supervisor->getRoot();
+        juce::File libdir = root.getChildFile("scripts");
+        
+        for (auto file : files) {
+            juce::File src(file);
+            juce::String fname = src.getFileName();
+            juce::File dest = libdir.getChildFile(fname);
+            // note that capturing the UTF8 of getFullPathName early is not stable
+            // have to use it immediately
+            if (dest.existsAsFile())
+              Trace(2, "ScriptClerk: Replacing library file %s", dest.getFullPathName().toUTF8());
+            else
+              Trace(2, "ScriptClerk: Adding library file %s", dest.getFullPathName().toUTF8());              
+            if (!src.copyFileTo(dest)) {
+                // todo: return this somehow
+                Trace(1, "ScriptClerk: Unable to copy library file %s", dest.getFullPathName().toUTF8());
+            }
+
+            // add it to the registry
+            (void)refreshFile(machine, dest, nullptr);
+            // remember for incremental reload
+            if (dest.getFileExtension() == ".mos")
+              mosFilesDropped++;
+            else
+              mslFilesDropped.add(dest.getFullPathName());
+        }
+    }
+    else {
+        for (auto file : files) {
+            if (machine->findExternal(file) != nullptr) {
+                Trace(2, "ScriptClerk: Dropped external already registered: %s",
+                      file.toUTF8());
+            }
+            else {
+                ScriptRegistry::External* ext = new ScriptRegistry::External();
+                ext->path = file;
+                machine->externals.add(ext);
+                (void)refreshFile(machine, file, ext);
+            }
+
+            // even if already registered do an incremental load
+            // if they bothered to drag it over it may have changed
+            juce::File f(file);
+            if (f.getFileExtension() == ".mos")
+              mosFilesDropped++;
+            else
+              mslFilesDropped.add(file);
+        }
+    }
+
+    int total = mosFilesDropped + mslFilesDropped.size();
+    supervisor->alert(juce::String(total) + " scripts loaded");
+
+    if (mosFilesDropped > 0) {
+        // these have to be done in bulk by Supervisor
+        supervisor->reloadMobiusScripts();
+    }
+    if (mslFilesDropped.size() > 0) {
+        // these we can do incrementally
+        for (auto f : mslFilesDropped)
+          reload(f);
+    }
+
+    saveRegistry();
+}
+
+/**
+ * Refresh a single MSL file, already in the registry.
+ */
+void ScriptClerk::reload(juce::String path)
+{
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    ScriptRegistry* reg = getRegistry();
+    ScriptRegistry::Machine* machine = reg->getMachine();
+    ScriptRegistry::File* regfile = machine->findFile(path);
+    
+    if (regfile != nullptr) {
+        if (regfile->old) {
+            Trace(1, "ScriptClerk::reload Can't incrementally reload .mos files");
+        }
+        else {
+            juce::File f(path);
+            juce::String source = f.loadFileAsString();
+            regfile->source = source;
+
+            MslDetails* unit = env->install(supervisor, path, source);
+            updateDetails(regfile, unit);
+        }
+    }
+    else {
+        Trace(2, "ScriptClerk::reload Path is not in the registry %s",
+              path.toUTF8());
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////

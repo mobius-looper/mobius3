@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../util/Util.h"
 #include "../ui/JuceUtil.h"
 #include "../Supervisor.h"
 
@@ -134,10 +135,6 @@ void MobiusConsole::doLine(juce::String line)
         doUnload(withoutCommand(line));
     }
 
-    else if (line.startsWith("registry")) {
-        doRegistry(withoutCommand(line));
-    }
-    
     else if (line.startsWith("status")) {
         doStatus(withoutCommand(line));
     }
@@ -169,28 +166,27 @@ juce::String MobiusConsole::withoutCommand(juce::String line)
 
 void MobiusConsole::doHelp()
 {
-    console.add("?         help");
-    console.add("clear     clear display");
-    console.add("quit      close the console");
-
+    console.add("?            help");
+    console.add("clear        clear display");
+    console.add("quit         close the console");
+    console.add("");
     // contents of the environment
-    console.add("list      list loaded scripts and symbols");
-    console.add("show      show details of an object");
-    console.add("load      load a script file");
-    console.add("unload    unload a script file");
-
-    // contents of the registry
-    console.add("registry  show status of the script registry");
-    
+    console.add("list         list compilation units");
+    console.add("list links   list exported links");
+    console.add("list files   list script registry files");
+    console.add("show <id>    show details of a compilation unit");
+    console.add("load <path>  load a script file");
+    console.add("unload <id>  unload a compilation unit");
+    console.add("");
     // sessions
-    console.add("status    show the status of an async session");
-    console.add("resume    resume the last scriptlet after a wait");
-    console.add("results   show prior evaluation results");
-    
-    console.add("parse     parse a line of MSL text");
-    console.add("preproc   test the preprocessor");
-    console.add("signature test the signature parser");
-    console.add("<text>    evaluate a line of mystery");
+    console.add("status       show the status of an async session");
+    console.add("resume       resume the last scriptlet after a wait");
+    console.add("results      show prior evaluation results");
+    console.add("");
+    console.add("parse        parse a line of MSL text");
+    console.add("preproc      test the preprocessor");
+    console.add("signature    test the signature parser");
+    console.add("<text>       evaluate a line of mystery");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -234,6 +230,22 @@ void MobiusConsole::doUnload(juce::String line)
  */
 void MobiusConsole::showDetails(MslDetails* details)
 {
+    console.add("Unit: " + details->id);
+    console.add("Reference name: " + details->name);
+    juce::String published ((details->published) ? "true" : "false");
+    console.add("Published: " + published);
+    if (details->unresolved.size() > 0) {
+        console.add("Unresolved:");
+        for (auto name : details->unresolved) {
+            console.add("  " + name);
+        }
+    }
+    if (details->collisions.size() > 0) {
+        console.add("Collisions:");
+        for (auto col : details->collisions) {
+            console.add("  \"" + col->name + "\" with " + col->otherPath);
+        }
+    }
     if (details->errors.size() > 0) {
         console.add("Errors:");
         showErrors(&(details->errors));
@@ -241,26 +253,6 @@ void MobiusConsole::showDetails(MslDetails* details)
     if (details->warnings.size() > 0) {
         console.add("Warnings:");
         showErrors(&(details->warnings));
-    }
-    
-    console.add("Details:");
-    console.add("  id: " + details->id);
-    console.add("  name: " + details->name);
-    juce::String published ((details->published) ? "true" : "false");
-    console.add("  published: " + published);
-
-    if (details->unresolved.size() > 0) {
-        console.add("Unresolved:");
-        for (auto name : details->unresolved) {
-            console.add("  " + name);
-        }
-    }
-
-    if (details->collisions.size() > 0) {
-        console.add("Collisions:");
-        for (auto col : details->collisions) {
-            console.add("  " + col->name + ":" + col->otherPath);
-        }
     }
 }
 
@@ -341,32 +333,62 @@ void MobiusConsole::showErrors(MslError* list)
 }
 
 /**
- * List the ids of all installed compilation units.
- *
- * todo: recognize args to list other things
+ * List the ids of all installed compilation units or
+ * the list of exported links for all units.
  */
 void MobiusConsole::doList(juce::String line)
 {
-    juce::String type = line.trim();
-    if (type == "") {
+    juce::String ltype = line.trim();
+    if (ltype == "" || ltype.startsWith("unit")) {
+        console.add("Compilation Units");
         juce::StringArray ids = scriptenv->getUnits();
-        console.add(juce::String(ids.size()) + " compilation units:");
-        for (auto id : ids)
-          console.add("  " + id);
+        int number = 1;
+        for (auto id : ids) {
+            console.add(juce::String(number) + ": " + id);
+            number++;
+        }
     }
-    else if (type.startsWith("link")) {
+    else if (ltype.startsWith("link")) {
+        console.add("Exported Links");
         juce::Array<MslLinkage*> links = scriptenv->getLinks();
-        console.add(juce::String(links.size()) + " links:");
         for (auto link : links) {
-            juce::String details;
+            juce::String type;
             if (link->function != nullptr)
-              details = "function";
+              type = "function";
             else if (link->variable != nullptr)
-              details = "variable";
+              type = "variable";
             else
-              details = "unresolved";
-            console.add("Link " + link->name + ": " + details +
-                        " unit: " + link->unit->id);
+              type = "unresolved";
+            console.add("Link \"" + link->name + "\"" +
+                        " type=" + type + 
+                        " unit=" + link->unit->id);
+        }
+    }
+    else if (ltype.startsWith("reg") || ltype.startsWith("file") || ltype.startsWith("lib")) {
+        console.add("Script Library");
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        ScriptRegistry* reg = clerk->getRegistry();
+        ScriptRegistry::Machine* machine = reg->getMachine();
+        for (auto file : machine->files) {
+            console.add("File: " + file->path + "  \"" + file->name + "\"");
+            //console.add("  reference name: " + file->name);
+            juce::String options;
+            if (file->missing) options += "missing ";
+            if (file->disabled) options += "disabled ";
+            if (file->external != nullptr) options += "external ";
+            if (file->button) options += "button ";
+            if (file->library) options += "library ";
+            if (options.length() > 0)
+              console.add("  flags: " + options);
+            MslDetails* details = file->getDetails();
+            if (details != nullptr && details->hasErrors())
+              console.add("  Has Errors");
+        }
+        if (machine->externals.size() > 0) {
+            console.add("External File Registry");
+            for (auto ext : machine->externals) {
+                console.add("External: " + ext->path);
+            }
         }
     }
 }
@@ -374,10 +396,26 @@ void MobiusConsole::doList(juce::String line)
 void MobiusConsole::doDetails(juce::String line)
 {
     juce::String id = line.trim();
-    MslDetails* details = scriptenv->getDetails(id);
-    if (details != nullptr) {
-        showDetails(details);
-        delete details;
+
+    // hack: if you type #n then use that as an index to the id list
+    // as returned by doList, since typing paths is annoying
+    if (IsInteger(id.toUTF8())) {
+        int index = id.getIntValue() - 1;
+        juce::StringArray ids = scriptenv->getUnits();
+        if (index >= 0 && index < ids.size())
+          id = ids[index];
+        else {
+            console.add(juce::String("Invalid unit list number.  Must be between 1 and ") + juce::String(ids.size()));
+            id = "";
+        }
+    }
+
+    if (id.length() > 0) {
+        MslDetails* details = scriptenv->getDetails(id);
+        if (details != nullptr) {
+            showDetails(details);
+            delete details;
+        }
     }
 }
 
@@ -417,11 +455,6 @@ void MobiusConsole::doLocal()
 }
 
 void MobiusConsole::doShow(juce::String line)
-{
-    console.add("Not implemented");
-}
-
-void MobiusConsole::doRegistry(juce::String line)
 {
     console.add("Not implemented");
 }

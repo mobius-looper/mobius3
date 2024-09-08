@@ -296,6 +296,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     class MslEnvironment* getScriptEnvironment() {
         return &scriptenv;
     }
+
+    void reloadMobiusScripts();
     
 #ifdef USE_FFMETERS
     class foleys::LevelMeterSource* getLevelMeterSource() {

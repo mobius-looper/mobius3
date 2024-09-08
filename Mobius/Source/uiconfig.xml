@@ -140,6 +140,7 @@
     <Button action="SetBindings"/>
     <Button action="MidiStop"/>
     <Button action="MidiStart"/>
+    <Button action="droptest"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

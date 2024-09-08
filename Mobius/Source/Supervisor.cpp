@@ -2038,6 +2038,18 @@ void Supervisor::menuLoadScripts(bool popup)
       mobiusMessage(msg);
 }
 
+/**
+ * Called by ScriptClerk to reload just the Mobius scripts
+ * after dragn and drop.
+ */
+void Supervisor::reloadMobiusScripts()
+{
+    ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
+    mobius->installScripts(oldScripts);
+    scriptClerk.saveErrors(oldScripts);
+    delete oldScripts;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MslContext

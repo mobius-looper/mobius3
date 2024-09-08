@@ -47,6 +47,9 @@ class ScriptClerk {
     class ScriptConfig* getEditorScriptConfig();
     void saveEditorScriptConfig(class ScriptConfig* config);
 
+    // file drop from MainWindow
+    void filesDropped(juce::StringArray& files);
+
     //
     // Console Interfaces
     //
@@ -63,10 +66,15 @@ class ScriptClerk {
 
     void loadRegistry();
     void reconcile();
-    void refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
+    ScriptRegistry::File* refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
     void refreshFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
     void refreshOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
+    void updateDetails(class ScriptRegistry::File* regfile, class MslDetails* details);
 
+    void chooseDropStyle(juce::StringArray files);
+    void doFilesDropped(juce::StringArray files, juce::String style);
+    void reload(juce::String path);
+    
     // old code: delete when ready
 #if 0    
     /**

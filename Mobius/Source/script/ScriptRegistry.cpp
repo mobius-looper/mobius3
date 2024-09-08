@@ -52,6 +52,18 @@ ScriptRegistry::File* ScriptRegistry::Machine::findFile(juce::String& path)
     return found;
 }
 
+ScriptRegistry::External* ScriptRegistry::Machine::findExternal(juce::String& path)
+{
+    External* found = nullptr;
+    for (auto ext : externals) {
+        if (ext->path == path) {
+            found = ext;
+            break;
+        }
+    }
+    return found;
+}
+
 /**
  * Remove external entries if they have a path residing in the
  * specified folder.  Used to take out redundant entries

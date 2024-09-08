@@ -20,6 +20,7 @@
   <Machine name="Loki">
     <Externals>
       <External path="c:\dev\mobius3\Mobius\Source\extscript.msl"/>
+      <External path="C:\dev\mobius3\Mobius\Source\droptest.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -30,6 +31,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\droptest.msl" added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\droptest.msl" added="2147483647"/>
     </Files>
   </Machine>
 </ScriptRegistry>

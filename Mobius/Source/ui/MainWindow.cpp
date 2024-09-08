@@ -429,20 +429,47 @@ void MainWindow::fileDragExit(const juce::StringArray& files)
     //Trace(2, "MainWindow: fileDragExit\n");
 }
 
+/**
+ * Respond to drops of script files and audio files.
+ * Script files have an .msl or .mos extension.
+ * AudioClerk should be more accepting, but currently just forwards
+ * to Mobius which only reads .wav files.
+ *
+ * Targeting of specific tracks and loops is handled by more granular
+ * drop targets, if we get them here, the mouse is over the main display area.
+ * Since granular targets could be accidentally receivers of script files
+ * figure out a way to chain them so if they find a script file they can forward
+ * here, or factor out a file distributor all the targets can share.
+ */
+
 void MainWindow::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    (void)files;
     (void)x;
     (void)y;
     Trace(2, "MainWindow: filesDropped\n");
-
-    // todo: for now just pass the files to AudioClerk and let
-    // it figure out where they go.  Would be nice to look at the
-    // x/y location and allow specific tracks/loops to be targeted
-    // if you drop over the track strip or loop stack
     
-    AudioClerk* clerk = supervisor->getAudioClerk();
-    clerk->filesDropped(files, 0, 0);
+    juce::StringArray audioFiles;
+    juce::StringArray scriptFiles;
+
+    for (auto path : files) {
+        juce::File f (path);
+        juce::String ext = f.getFileExtension();
+
+        if (ext == juce::String(".wav"))
+          audioFiles.add(path);
+        else if (ext == juce::String(".mos") || ext == juce::String(".msl"))
+          scriptFiles.add(path);
+    }
+    
+    if (audioFiles.size() > 0) {
+        AudioClerk* clerk = supervisor->getAudioClerk();
+        clerk->filesDropped(audioFiles, 0, 0);
+     }
+
+    if (scriptFiles.size() > 0) {
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        clerk->filesDropped(scriptFiles);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

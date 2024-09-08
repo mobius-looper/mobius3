@@ -298,6 +298,8 @@ class MslEnvironment
     // internal library management
     //
 
+    void traceInteresting(juce::String type, class MslDetails* details);
+    
     void install(class MslContext* c, class MslCompilation* unit,
                  class MslDetails* d, bool relinkNow);
     void ensureUnitName(juce::String unitId, class MslCompilation* unit);

@@ -110,6 +110,7 @@ class ScriptRegistry
         juce::OwnedArray<File> files;
 
         File* findFile(juce::String& name);
+        External* findExternal(juce::String& path);
         void filterExternals(juce::String folder);
     };
 

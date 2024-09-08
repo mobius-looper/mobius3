@@ -350,8 +350,32 @@ MslDetails* MslEnvironment::install(MslContext* c, juce::String unitId,
     else {
         delete unit;
     }
+
+    // UI doesn't always show these right away, so trace it now
+    traceInteresting("install", result);
     
     return result;
+}
+
+void MslEnvironment::traceInteresting(juce::String type, MslDetails* details)
+{
+    Trace(2, "MslEnvironment: Unit %s %s", type.toUTF8(), details->id.toUTF8());
+    if (details->errors.size() > 0) {
+        for (auto err : details->errors)
+          Trace(2, "  Error: %s", err->details);
+    }
+    if (details->warnings.size() > 0) {
+        for (auto err : details->errors)
+          Trace(2, "  Warning: %s", err->details);
+    }
+    if (details->collisions.size() > 0) {
+        for (auto col : details->collisions)
+          Trace(2, "  Collision: %s", col->name.toUTF8());
+    }
+    if (details->unresolved.size() > 0) {
+        for (auto unres : details->unresolved)
+          Trace(2, "  Unresolved: %s", unres.toUTF8());
+    }
 }
 
 /**
@@ -373,7 +397,7 @@ void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
     // if this is a scriptlet, generate an id
     bool idGenerated = false;
     if (unitId.length() == 0) {
-        unitId = juce::String(idGenerator++);
+        unitId = "scriptlet:" + juce::String(idGenerator++);
         Trace(2, "MslEnvironment: Generating unit id %s", unitId.toUTF8());
         idGenerated = true;
     }
@@ -528,6 +552,8 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
         if (!installed)
           delete unit;
     }
+
+    traceInteresting("extend", result);
 
     return result;
 }
@@ -908,6 +934,9 @@ MslDetails* MslEnvironment::uninstall(MslContext* c, juce::String id, bool relin
               link(c);
         }
     }
+
+    traceInteresting("uninstall", result);
+    
     return result;
 }
 

@@ -59,14 +59,11 @@ int ScriptDetails::getPreferredHeight()
             nerrors += details->collisions.size();
         }
     }
-    if (nerrors > 0) {
-        // gap plus line per error
-        height += (RowHeight * (nerrors + 1));
-    }
+    if (nerrors > 0)
+      height += (RowHeight * nerrors);
     
     return height;
 }
-
 
 void ScriptDetails::resized()
 {
@@ -89,10 +86,9 @@ void ScriptDetails::paint(juce::Graphics& g)
         }
 
         if (regfile->hasErrors()) {
-            area.removeFromTop(RowHeight);
+            //area.removeFromTop(RowHeight);
             MslDetails* details = regfile->getDetails();
             if (details != nullptr) {
-
                 for (auto error : details->errors)
                   paintError(g, area, error);
                 
@@ -147,7 +143,7 @@ void ScriptDetails::paintCollision(juce::Graphics& g, juce::Rectangle<int>& area
     int width = area.getWidth() - left;
     char buffer[1024];
     
-    snprintf(buffer, sizeof(buffer), "Name collision on %s with file %s",
+    snprintf(buffer, sizeof(buffer), "Name collision on \"%s\" with file %s",
              (const char*)col->name.toUTF8(), (const char*)col->otherPath.toUTF8());
 
     g.setColour(juce::Colours::red);
