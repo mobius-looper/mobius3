@@ -57,6 +57,9 @@ ScriptRegistry::Machine* ScriptClerk::getLocalRegistry()
     return reg->getMachine();
 }
 
+/**
+ * Listeners for the script editor and the summary tables.
+ */
 void ScriptClerk::addListener(Listener* l)
 {
     if (!listeners.contains(l))
@@ -72,219 +75,7 @@ void ScriptClerk::removeListener(Listener* l)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Script Editor Interfaces
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Save an existing file.
- * The file->source has been updated.  Write it to the file
- * and install it in the environment.  Installation details
- * in the File are refreshed.
- */
-bool ScriptClerk::saveFile(Listener* source, ScriptRegistry::File* file)
-{
-    juce::File f (file->path);
-    bool success = f.replaceWithText(file->source);
-    if (success) {
-        MslEnvironment* env = supervisor->getMslEnvironment();
-        MslDetails* details = env->install(supervisor, file->path, file->source);
-        file->name = details->name;
-        file->setDetails(details);
-        saveRegistry();
-
-        // inform all the listeners except the one that asked for it
-        for (auto l : listeners) {
-            if (l != source)
-              l->scriptFileSaved(file);
-        }
-    }
-    return success;
-}
-
-/**
- * The editor has been building a new File object and now wants to save it.
- * Save the file, add it to the registry, and install it in the
- * environment.
- *
- * Returns false if the file could not be saved for some reason.
- * Updates the File and Details.
- *
- * Ownership of the File transfers.
- */
-bool ScriptClerk::addFile(Listener* source, ScriptRegistry::File* file)
-{
-    juce::File f (file->path);
-    bool success = f.replaceWithText(file->source);
-    if (success) {
-        ScriptRegistry::Machine* machine = registry->getMachine();
-        machine->files.add(file);
-
-        installNewFile(source, file);
-        saveRegistry();
-    }
-    return success;
-}
-
-void ScriptClerk::installNewFile(Listener* source, ScriptRegistry::File* file)
-{
-    MslEnvironment* env = supervisor->getMslEnvironment();
-    MslDetails* details = env->install(supervisor, file->path, file->source);
-    file->name = details->name;
-    file->setDetails(details);
-        
-    // inform all the listeners except the one that asked for it
-    for (auto l : listeners) {
-        if (l != source)
-          l->scriptFileAdded(file);
-    }
-}
-
-/**
- * File objects have been considered interned and not to be deleted
- * while the application is alive.  There are two consumers of these
- * the ScriptEditor and the ScriptLibraryTable.
- *
- * It's awkward coordinating with them over deleting a file, so mark
- * it deleted and it is expected to be hidden from the UI.
- */
-bool ScriptClerk::deleteFile(Listener* source, ScriptRegistry::File* file)
-{
-    juce::File f (file->path);
-    bool success = f.deleteFile();
-    if (success) {
-        unregisterFile(source, file);
-        saveRegistry();
-    }
-    return success;
-}
-
-/**
- * Uninstall a file and inform the listeners it is no longer in the registry.
- * The only thing that cares is ScriptEditor which will close tabs.
- * This does NOT delete the file contents.  Removing an external only
- * unlinks the file.
- */
-void ScriptClerk::unregisterFile(Listener* source, ScriptRegistry::File* file)
-{
-    file->deleted = true;
-
-    MslEnvironment* env = supervisor->getMslEnvironment();
-    MslDetails* details = env->uninstall(supervisor, file->path);
-    file->setDetails(details);
-
-    // if this was an external we can actually remove the entry safely
-    if (file->external != nullptr) {
-        if (!file->external->folder) {
-            ScriptRegistry::Machine* machine = registry->getMachine();
-            // unlike Files, Externals are NOT interned and can be deleted
-            // the only UI that would care is ScriptConfigEditor/ScriptTable
-            // and it converts the Externals list to a StringArray
-            machine->externals.removeObject(file->external);
-            file->external = nullptr;
-        }
-        else {
-            // the associated external was a folder, leave it in place
-        }
-    }
-    // inform all the listeners except the one that asked for it
-    for (auto l : listeners) {
-        if (l != source)
-          l->scriptFileDeleted(file);
-    }
-}
-
-/**
- * ScriptConfigEditor works differently than ScriptEditor.  It edits
- * the entire list of external paths, then passes back what it wants
- * to be the new list.  Paths may have been added and removed.
- *
- * This is complex because externals can be folders which are associated
- * with many registry Files.  We have to do a reconcile() to figure out the
- * differences.
- *
- * This is considiered authoritative over the environment, files no longer
- * within the configuration are uninstalled.
- *
- * To inform the ScriptEditor about deleted (or rather unlinked) externals
- * so it can close tabs we have to find the external files that were removed.
- *
- * todo: these kinds of bulk operations will relink the entire environment
- * on every change unless we defer it.  Since this can result in a lot of resolution
- * churn, it would also be nice to refresh the details in the registry.
- *
- * ugh, think about this...bulk operations need to refresh all the details
- * in the memory registry!!
- */
-void ScriptClerk::saveExternals(juce::StringArray newPaths)
-{
-    ScriptRegistry::Machine* machine = getLocalRegistry();
-
-    // remove externals from all files, and mark the files with extetnals
-    // as pending delete
-    for (auto file : machine->files) {
-        if (file->external != nullptr)
-          file->isRemoving = true;
-        file->external = nullptr;
-    }
-
-    // rebuild the Externals list, these are not interned so UI can have
-    // no lingering references to them
-    machine->externals.clear();
-    for (auto path : newPaths) {
-        ScriptRegistry::External* ext = new ScriptRegistry::External(path);
-        machine->externals.add(ext);
-    }
-
-    // reconcile will update the deleted flags we just put on files
-    // uses the tagNew flag for files added due to new externals
-    reconcile(true);
-
-    // every File that has he deleted flag still set can be uninstalled
-    // and ever File that has isNew set can be installed
-    int nRemoved = 0;
-    int nInstalled = 0;
-    for (auto file : machine->files) {
-        if (file->isRemoving) {
-            // this is what ScriptEditor would call minus actually deleting
-            // the file, it does the uninstall and informs the listeners
-            unregisterFile(nullptr, file);
-            // promote the pending remove to a deleted
-            file->deleted = true;
-            file->isRemoving = false;
-            nRemoved++;
-        }
-        else if (file->isNew) {
-            // this file was new during the reconciliation scan
-            // pretend it was added from the editor
-
-            // installNewFile epects the source to be there
-            juce::File file (file->path);
-            if (!file.existsAsFile()) {
-                // this should have been caught during reconciliation
-                Trace(1, "ScriptClerk: Invalid MSL file path encountered %s",
-                      fileref->path.toUTF8());
-                fileref->missing = true;
-            }
-            else {
-                juce::String source = file.loadFileAsString();
-                // save a copy so we don't have to keep hitting the file
-                fileref->source = source;
-                installNewFile(nullptr, file);
-                nInstalled++;
-            }
-        }
-    }
-
-    // todo: ask Supervisor to show an alert with the adds and removes
-    // todo: refresh all the details to pick up resolution changes
-
-    saveRegistry();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Registry
+// Supervisor Interface
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -303,8 +94,8 @@ void ScriptClerk::saveExternals(juce::StringArray newPaths)
  * library folder and any external folders. Aka "scanning"
  *
  * The referenced script files are not installed, this only
- * maintins the ScriptRegistry memory model.
- *
+ * maintins the ScriptRegistry memory model.  When they are ready
+ * to be installed, Supervisor calls installMsl.
  */
 void ScriptClerk::initialize()
 {
@@ -389,12 +180,18 @@ void ScriptClerk::saveRegistry()
  */
 void ScriptClerk::reconcile()
 {
-    ScriptRegistry::Machine* machine = registry->getMachine();
-    
-    // first mark all files as missing
-    // the flags will be cleared as files are located in the scan
-    for (auto file : machine->files)
-      file->missing = true;
+    ScriptRegistry::Machine* machine = getLocalMachine();
+
+    // initialize flags containing scan result
+    machine->externalOverlapDetected = false;
+    for (auto file : machine->files) {
+        file->missing = true;
+        file->externalAdd = false;
+        if (file->wasExternal != nullptr)
+          file->externalRemove = true;
+        else
+          file->externalRemove = false;
+    }
 
     // scan the standard folder
     juce::File root = supervisor->getRoot();
@@ -409,61 +206,27 @@ void ScriptClerk::reconcile()
             // make sure the flags are right
             ext->missing = false;
             ext->folder = true;
-            ext->invalid = false;
-            refreshFolder(machine, extfile, ext);
+            scanFolder(machine, extfile, ext);
         }
         else if (extfile.existsAsFile()) {
             ext->missing = false;
             ext->folder = false;
-            // this will be set later during installation
-            // could check the file extensions now
-            ext->invalid = false;
             (void)refreshFile(machine, extfile, ext);
         }
         else {
             // something was deleted out from under us, or
-            // they arranged to have invalid paths in the
-            // registry
+            // they have invalid paths in the registry
             ext->missing = true;
-            // leave folder/invalid flag set to the last value
+            // leave folder flag set to the last value
         }
     }
-
-}
-
-/**
- * Refresh the File entry for one file.
- */
-ScriptRegistry::File* ScriptClerk::refreshFile(ScriptRegistry::Machine* machine, juce::File jfile,
-                                               ScriptRegistry::External* ext)
-{
-    // this is assuming that getFullPathName is stable
-    juce::String path = jfile.getFullPathName();
-    ScriptRegistry::File* sfile = machine->findFile(path);
-    if (sfile == nullptr) {
-        sfile = new ScriptRegistry::File();
-        sfile->path = path;
-        sfile->added = juce::Time::getCurrentTime();
-        machine->files.add(sfile);
-    }
-    
-    sfile->missing = false;
-    sfile->deleted = false;
-    sfile->external = ext;
-    // saves having everyone do the same extension check
-    if (path.endsWithIgnoreCase(".mos")) {
-        sfile->old = true;
-        refreshOldFile(sfile, jfile);
-    }
-
-    return sfile;
 }
 
 /**
  * Load files in a folder that look like scripts
  */
-void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfolder,
-                                ScriptRegistry::External* ext)
+void ScriptClerk::scanFolder(ScriptRegistry::Machine* machine, juce::File jfolder,
+                             ScriptRegistry::External* ext)
 {
     // since we're asking for recursive, do we need AndDirectories
     // or is just findFiles enough?
@@ -479,8 +242,77 @@ void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfo
         if (path.endsWithIgnoreCase(".msl") ||
             path.endsWithIgnoreCase(".mos")) {
 
-            (void)refreshFile(machine, file, ext);
+            scanFile(machine, file, ext);
         }
+    }
+}
+
+/**
+ * Refresh the File entry for one file.
+ * This just verifies that the file exists, it does not read it,
+ * install it, or touch the other metadata associated with the file.
+ */
+ScriptRegistry::File* ScriptClerk::refreshFile(ScriptRegistry::Machine* machine,
+                                               juce::File jfile,
+                                               ScriptRegistry::External* ext)
+{
+    // this is assuming that getFullPathName is stable
+    juce::String path = jfile.getFullPathName();
+    ScriptRegistry::File* sfile = machine->findFile(path);
+    if (sfile == nullptr) {
+        sfile = new ScriptRegistry::File();
+        sfile->path = path;
+        sfile->added = juce::Time::getCurrentTime();
+        sfile->external = ext;
+        if (ext != nullptr)
+          sfile->externalAdd = true;
+        machine->files.add(sfile);
+    }
+
+    // clear this that was set before the scan
+    sfile->missing = false;
+    sfile->externalRemove = false;
+
+    if (sfile->deleted) {
+        // the file was marked deleted by the UI, but we still found it during the scan
+        // normally the actual file should have been deleted, so either that failed
+        // or the user put it back in the intterum
+        // clear the flag so it shows up in the UI again, this isn't a big problem
+        // but I'd like to know when it happens
+        Trace(1, "ScriptClerk: Encountered supposedly deleted file during scan");
+        sfile->deleted = false;
+    }
+    
+    // the disabled flag remains ON once set
+
+    if (ext != nullptr) {
+        // we're scanning an external folder or file
+        if (sfile->external != nullptr && sfile->external != ext) {
+            // the file was already added by a different external,
+            // this could happen if they had two folders registered
+            // in the same hierarchy e.g. both "/foo/bar" and "/foo/bar/baz"
+            // or if they had both a folder "/foo/bar" and a file "/foo/bar/script.msl"
+            // not really a problem but it causes redundant scanning
+            // should try to catch this in the UI when external folders or files are added
+            // this could generate many trace messages so just flag it when it happens
+            // if you really want to help, should remember the External somewhere for analysis
+            machine->externalOverlapDetected = true;
+        }
+        sfile->external = ext;
+    }
+    
+    // validate extension and pull in some information from the file
+    if (path.endsWithIgnoreCase(".msl")) {
+        // shouldn't be on but make sure
+        sfile->old = false;
+    }
+    else if (path.endsWithIgnoreCase(".mos")) {
+        sfile->old = true;
+        // pull in some metadata we won't get otherwise
+        scanOldFile(sfile, jfile);
+    }
+    else {
+        Trace(1, "ScriptClerk: You may ask yourself, well, how did I get here?");
     }
 }
 
@@ -490,7 +322,7 @@ void ScriptClerk::refreshFolder(ScriptRegistry::Machine* machine, juce::File jfo
  * files so without some back chatter from the core compiler there
  * won't be any error status.
  */
-void ScriptClerk::refreshOldFile(ScriptRegistry::File* sfile, juce::File jfile)
+void ScriptClerk::scanOldFile(ScriptRegistry::File* sfile, juce::File jfile)
 {
     juce::String name;
     
@@ -518,61 +350,90 @@ void ScriptClerk::refreshOldFile(ScriptRegistry::File* sfile, juce::File jfile)
 //
 // Installation
 //
-// There are two parts to this.  First all .msl files can be immediately
-// loaded into the MslEnvironment.
-//
-// Older .mos files need to converted back into a model/ScriptConfig object
-// that can be sent down to Mobius where the old code will do it's own
-// file access and installation.
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
- * After reading and reconciling the ScriptRegistry, install new MSL
+ * After reading and reconciling the ScriptRegistry, install all the MSL
  * files into the script environment.  This is a bulk operation where
  * linking is deferred until all files have been installed.
- *
- * If any errors are encountered, the UI will need to ask MslEnvironment
- * for all the MslDetails and look at their errors.
  */
 void ScriptClerk::installMsl()
 {
+    ScriptRegistry::Machine* machine = registry->getMachine();
     MslEnvironment* env = supervisor->getMslEnvironment();
-    int changes = 0;
     
-    if (registry != nullptr) {
-        ScriptRegistry::Machine* machine = registry->getMachine();
-        for (auto fileref : machine->files) {
-            if (!fileref->old && !fileref->missing && !fileref->deleted && !fileref->disabled) {
+    for (auto fileref : machine->files) {
 
-                juce::File file (fileref->path);
-                if (!file.existsAsFile()) {
-                    // this should have been caught during reconciliation
-                    Trace(1, "ScriptClerk: Invalid MSL file path encountered %s",
-                          fileref->path.toUTF8());
-                    fileref->missing = true;
-                }
-                else {
-                    juce::String source = file.loadFileAsString();
-                    // save a copy so we don't have to keep hitting the file
-                    fileref->source = source;
+        if (isInstallable(fileref)) {
 
-                    // note that we defer linking
-                    MslDetails* unit = env->install(supervisor, fileref->path, source, false);
-                    updateDetails(fileref, unit);
-                    // errors will have already been traced by env
-                }
+            juce::File file (fileref->path);
+            if (!file.existsAsFile()) {
+                // file was deleted out from under us
+                Trace(1, "ScriptClerk: Expected file evaporated %s",
+                      fileref->path.toUTF8());
+                fileref->missing = true;
+            }
+            else {
+                juce::String source = file.loadFileAsString();
+                fileref->source = source;
+
+                // note that we defer linking
+                MslDetails* unit = env->install(supervisor, fileref->path, source, false);
+                updateDetails(fileref, unit);
             }
         }
     }
 
     // do the full relink of the environment, this can result in resolution
-    // changes in units that won't be reflected in the details we just
-    // saved, could refresh them all again
+    // changes in units that won't be reflected in the details we just capatured
     env->link(supervisor);
 
-    if (changes)
-      saveRegistry();
+    // refresh all the details after everything has been loaded and all the
+    // cross-script references have been resolved
+    // to avoid memory churn, we could defer install() returning a details object
+    // if we're just going to throw it away and get it again
+    refreshDetails();
+
+    saveRegistry();
+}
+
+bool ScriptClerk::isInstallable(ScriptRegistry::File* file)
+{
+    return (!fileref->old && !fileref->missing && !fileref->deleted && !fileref->disabled);
+}
+
+/**
+ * Refresh all the file details from the environment.
+ * Useful after bulk-installing lots of files that may have cross references
+ * that will not necessarily be resolved in order.
+ *
+ * !! This is causing a lot of needless memory churn for cross-script references
+ * which aren't going to be used much if at all by actual users.
+ * Would be better if the environment could be smarter about telling us which
+ * things to refresh or something...
+ */
+void ScriptClerk::refreshDetails()
+{
+    ScriptRegistry::Machine* machine = registry->getMachine();
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    
+    for (auto file : machine->files) {
+
+        if (isInstallable(file)) {
+
+            MslDetails* details = env->getDetails(file->path);
+            if (details == nullptr) {
+                // file was not installed in the environment
+                // this is not necessarily a problem, if you think details refresh
+                // should be independent of installation
+                Trace(2, "ScriptClerk: Details not refreshed for unisntalled file %s",
+                      file->path->toUTF8())
+            }
+            else {
+                updateDetails(file, details);
+            }
+        }
+    }
 }
 
 /**
@@ -581,13 +442,18 @@ void ScriptClerk::installMsl()
  */
 void ScriptClerk::updateDetails(ScriptRegistry::File* regfile, MslDetails* details)
 {
-    // save the whole thing
-    regfile->setDetails(details);
-
-    // the compiler will have determined the reference name to use, save it here
-    // so we can display nice without details
-    regfile->name = details->name;
+    if (details != nullptr) {
+        regfile->setDetails(details);
+        // the compiler will have determined the reference name to use
+        regfile->name = details->name;
+    }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Old File Installation
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * For older scripts, convert the registry entries to a ScriptConfig that can
@@ -633,7 +499,7 @@ void ScriptClerk::saveErrors(ScriptConfig* config)
             ScriptRegistry::File* file = machine->findFile(jpath);
             if (file == nullptr) {
                 // shouldn't happen if the path isn't being trashed
-                Trace(1, "ScriptClerk: Matching file not found after compilation %s",
+                Trace(1, "ScriptClerk: Matching .mos file not found after compilation %s",
                       ref->getFile());
             }
             else {
@@ -644,10 +510,247 @@ void ScriptClerk::saveErrors(ScriptConfig* config)
                     MslError* err = ref->errors.removeAndReturn(0);
                     details->errors.add(err);
                 }
+                // note we don't use updateDetails here because the details
+                // wasn't created by the compiler and won't have the reference name
                 file->setDetails(details);
             }
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// External Editing
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * ScriptConfigEditor works differently than ScriptEditor.  It edits
+ * the entire list of external paths, then passes back what it wants
+ * to be the new list.  Paths may have been added and removed.
+ *
+ * This is complex because externals can be folders which are associated
+ * with many registry Files.  We have to do a reconcile() to figure out the
+ * differences.
+ *
+ * This is more than just adjusting the registry, it is also considered
+ * authoritative over the installations in the environment.  Files no longer
+ * configured are uninstalled, and files added are installed.
+ *
+ * Unlike ScriptEditor this does NOT DELETE files, it only unregisters them.
+ *
+ * This is another bulk operation so linking is deferred until all of the
+ * isntallations and unninstallations have been made.
+ */
+void ScriptClerk::installExternals(Listener* source, juce::StringArray newPaths)
+{
+    ScriptRegistry::Machine* machine = getLocalRegistry();
+
+    // we're going to delete the External objects so remove all references
+    // from the Files, but reconcile() needs to know if these were extenral
+    // in order to set the externalRemoved flag, so set that
+    for (auto file : machine->files) {
+        if (file->external != nullptr) {
+            file->external = nullptr;
+            file->wasExternal = true;
+        }
+    }
+
+    // rebuild the Externals list
+    machine->externals.clear();
+    for (auto path : newPaths) {
+        ScriptRegistry::External* ext = new ScriptRegistry::External(path);
+        machine->externals.add(ext);
+    }
+
+    // this does the analysis and sets the externalAdded and externalRemoved flags
+    reconcile();
+
+    // every File with externalAdded was newly encountered during the scan
+    // and will be installed
+    // every File with externalREmoved was not encountered during the scan
+    // and will be uninstalled
+
+    int numAdded = 0;
+    int numRemoved = 0;
+    for (auto file : machine->files) {
+
+        if (file->externalRemove) {
+            // this is what ScriptEditor would call minus actually deleting
+            // the file, it does the uninstall and informs the listeners
+            
+            uninstallFile(listener, file, false);
+            // promote the remove a deleted so it stops being shown in the UI
+            file->deleted = true;
+            numRemoved++;
+        }
+        else if (file->externalAdd) {
+            // this file was new during the reconciliation scan
+            
+            // installNewFile epects the source to be there
+            juce::File file (file->path);
+            if (!file.existsAsFile()) {
+                // this should have been caught during reconciliation
+                Trace(1, "ScriptClerk: Invalid MSL file path encountered %s",
+                      fileref->path.toUTF8());
+                fileref->missing = true;
+            }
+            else {
+                juce::String source = file.loadFileAsString();
+                fileref->source = source;
+                installNewFile(listener, file, false);
+                numAdded++;
+            }
+        }
+    }
+
+    // do the full relink of the environment
+    env->link(supervisor);
+
+    // refresh all the details after everything has been loaded and all the
+    // cross-script references have been resolved
+    refreshDetails();
+    
+    // todo: ask Supervisor to show an alert with the adds and removes
+    // todo: refresh all the details to pick up resolution changes
+
+    saveRegistry();
+}
+
+/**
+ * Uninstall a file and inform the listeners it is no longer in the registry.
+ * The only thing that cares is ScriptEditor which will close tabs.
+ * This does NOT delete the file contents.  Removing an external only
+ * unlinks the file.
+ */
+void ScriptClerk::uninstallFile(Listener* source, ScriptRegistry::File* file, bool linkNow)
+{
+    file->deleted = true;
+
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    MslDetails* details = env->uninstall(supervisor, file->path, linkNow);
+    file->setDetails(details);
+
+    // if this was an external we can actually remove the entry safely
+    if (file->external != nullptr) {
+        if (!file->external->folder) {
+            ScriptRegistry::Machine* machine = registry->getMachine();
+            // unlike Files, Externals are NOT interned and can be deleted
+            // the only UI that would care is ScriptConfigEditor/ScriptTable
+            // and it converts the Externals list to a StringArray
+            machine->externals.removeObject(file->external);
+            file->external = nullptr;
+        }
+        else {
+            // the associated external was a folder, leave it in place
+        }
+    }
+    
+    // inform all the listeners except the one that asked for it
+    for (auto l : listeners) {
+        if (l != source)
+          l->scriptFileDeleted(file);
+    }
+}
+
+void ScriptClerk::installNewFile(Listener* source, ScriptRegistry::File* file, bool linkNow)
+{
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    MslDetails* details = env->install(supervisor, file->path, file->source, linkNow);
+    updateDetails(file, details);
+        
+    // inform all the listeners except the one that asked for it
+    for (auto l : listeners) {
+        if (l != source)
+          l->scriptFileAdded(file);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Script Editor Interface
+//
+// Unlike External reconciliation these ACTUALLY DELETE files if
+// you ask them to be deleted.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Save an existing file.
+ * The file->source has been updated.  Write it to the file
+ * and install it in the environment.  Installation details
+ * in the File are refreshed.
+ */
+bool ScriptClerk::saveFile(Listener* source, ScriptRegistry::File* file)
+{
+    juce::File f (file->path);
+    bool success = f.replaceWithText(file->source);
+    if (success) {
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        MslDetails* details = env->install(supervisor, file->path, file->source, true);
+        updateDetails(file, details);
+        saveRegistry();
+
+        // inform all the listeners except the one that asked for it
+        for (auto l : listeners) {
+            if (l != source)
+              l->scriptFileSaved(file);
+        }
+    }
+
+    // saving a file could clear up unresolveds in other files
+    // so refresh details
+    refreshDetails();
+    
+    return success;
+}
+
+/**
+ * The editor has been building a new File object and now wants to save it.
+ * Save the file, add it to the registry, and install it in the
+ * environment.
+ *
+ * Returns false if the file could not be saved for some reason.
+ * Updates the File and Details.
+ *
+ * Ownership of the File transfers on success.
+ */
+bool ScriptClerk::addFile(Listener* source, ScriptRegistry::File* file)
+{
+    juce::File f (file->path);
+    bool success = f.replaceWithText(file->source);
+    if (success) {
+        ScriptRegistry::Machine* machine = registry->getMachine();
+        machine->files.add(file);
+
+        installNewFile(source, file, true);
+        saveRegistry();
+    }
+
+    // saving a file could clear up unresolveds in other files
+    // so refresh details
+    refreshDetails();
+    
+    return success;
+}
+
+/**
+ * The editor wants to delete a file.
+ * Uninstall it from the environment and relink
+ */
+bool ScriptClerk::deleteFile(Listener* source, ScriptRegistry::File* file)
+{
+    juce::File f (file->path);
+    bool success = f.deleteFile();
+    if (success) {
+        uninstallFile(source, file, true);
+        saveRegistry();
+    }
+
+    // uninstalling could cause unresolved in other files so refresh details
+    refreshDetails();
+    
+    return success;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -852,112 +955,15 @@ void ScriptClerk::reload(juce::String path)
 
 ///////////////////////////////////////////////////////////////////////
 //
-// ScriptConfig
-//
-// Old code: delete when ready
-//
-///////////////////////////////////////////////////////////////////////
-#if 0
-
-/**
- * Split a ScriptConfig, normally directly from the MobiusConfig, into
- * two parts, a list of .msl file names, and a ScriptConfig containing
- * only .mos files that can be passed down to the core.
- *
- * Normalize the paths to reflect machine architecture and cleanup for
- * development environments.
- *
- * Recurse into directories.
- */
-void ScriptClerk::split(ScriptConfig* src)
-{
-    // reset state from last time
-    mslFiles.clear();
-    oldConfig.reset(new ScriptConfig());
-    missingFiles.clear();
-
-    if (src != nullptr) {
-        for (ScriptRef* ref = src->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
-            juce::String path = juce::String(ref->getFile());
-
-            path = normalizePath(path);
-            if (path.length() == 0) {
-                // a syntax error in the path, unusual
-                Trace(1, "ScriptClerk: Unable to normalize path %s", path.toUTF8());
-                missingFiles.add(path);
-            }
-            else {
-                juce::File f (path);
-                if (f.isDirectory()) {
-                    splitDirectory(f);
-                }
-                else {
-                    splitFile(f);
-                }
-            }
-        }
-    }
-}
-
-void ScriptClerk::splitFile(juce::File f)
-{
-    if (!f.existsAsFile()) {
-        missingFiles.add(f.getFullPathName());
-    }
-    else if (f.getFileExtension() == ".msl") {
-        mslFiles.add(f.getFullPathName());
-    }
-    else {
-        oldConfig->add(new ScriptRef(f.getFullPathName().toUTF8()));
-    }
-}
-
-/**
- * Discover all the script files in a directory.
- * This does not recurse more than one level, but it could easily.
- *
- * Unclear whether the fileChildFiles pattern can have or's in it
- * so we call it twice.  
- */
-void ScriptClerk::splitDirectory(juce::File dir)
-{
-    splitDirectory(dir, ".msl");
-    splitDirectory(dir, ".mos");
-}
-
-void ScriptClerk::splitDirectory(juce::File dir, juce::String extension)
-{
-    int types = juce::File::TypesOfFileToFind::findFiles;
-    juce::String pattern = "*" + extension;
-    juce::Array<juce::File> files =
-        dir.findChildFiles(types,
-                           // searchRecursively   
-                           false,
-                           pattern,
-                           // followSymlinks
-                           juce::File::FollowSymlinks::no);
-    
-    for (auto file : files) {
-        // hmm, I had a case where a renamed .mos file left
-        // an emacs save file with the .mos~ extension and this
-        // passed the *.mos filter, seems like a bug
-        juce::String path = file.getFullPathName();
-        if (!path.endsWithIgnoreCase(extension)) {
-            Trace(2, "ScriptClerk: Ignoring file with qualified extension %s",
-                  file.getFullPathName().toUTF8());
-        }
-        else {
-            splitFile(file);
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////
-//
 // Path Normalization
 //
+// Old, and used when we tried to shared the same file with
+// mac and pc.  No longer necessary with multiple Machine sections.
+// Keep around as an example of path translation.
+//
 ///////////////////////////////////////////////////////////////////////
 
+#if 0
 /**
  * Make adjustments to the path for cross-machine compatibility.
  * This is not necessary in normal use, but I hit this all the time

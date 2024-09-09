@@ -13,6 +13,9 @@ class ScriptRegistry
 {
   public:
 
+    ScriptRegistry() {}
+    ~ScriptRegistry() {}
+
     /**
      * Memory model to represent the path to an external file or folder
      * that is outside the standard library.
@@ -22,7 +25,6 @@ class ScriptRegistry
         juce::String path;
         bool missing = false;
         bool folder = false;
-        bool invalid = false;
     };
 
     /**
@@ -34,6 +36,14 @@ class ScriptRegistry
         File() {}
         ~File() {}
 
+        // set by the UI to keep the file in the registry but not to install it
+        bool disabled = false;
+        
+        // true if this file was deleted in the UI
+        // we keep the File handle around since it is interned, but will stop showing it
+        // the File will not be saved in the .xml and will be removed on restart
+        bool deleted = false;
+
         // unique path when reading and installing files
         // empty when this is a new file in the editor
         juce::String path;
@@ -44,39 +54,48 @@ class ScriptRegistry
         // source code after reading, or when creating new files
         juce::String source;
 
-        // things found during parsing
+        // set if this file came from an External
+        External* external = nullptr;
+        
+        //
+        // metadata found during parsing
+        //
+        
+        // true if this is an older .mos file
+        bool old = false;
 
         // reference name if this is a callable file
         juce::String name;
+        
         // true if this is a library file
         bool library = false;
+        
         // where the file came from
         juce::String author;
 
         // User defined options
-        
         bool button = false;
-        bool disabled = false;
 
-        // transient runtime fields
+        //
+        // transient runtime fields set during scanning
+        //
         
         // true if a file could not be located
         bool missing = false;
-        // true if this file was deleted in the UI
-        // we keep the File handle around since it is interned, but stop showing it
-        bool deleted = false;
-        // true if this was tagged as a new file during external reconciliation
-        bool isNew = false;
-        // true if this was tagged as possibly deleted during external reconciliation
-        bool isRemoving = false;
-        
-        // true if this is an older .mos file
-        bool old = false;
-        
-        // set if this file came from an External
-        // !! this mayh not be reliable, rethink this
-        External* external = nullptr;
 
+        // true if this was an external before external reconciliation
+        bool wasExternal = false;
+        
+        // true if this was discovered during external reconciliation
+        bool externalAdd = false;
+        
+        // true if this was tagged for removal during external reconciliation
+        bool externalRemove = false;
+
+        //
+        // Complex compilation information
+        //
+        
         // information about the compiled compilation unit, possibly with errors
         class MslDetails* getDetails() {
             return (details != nullptr) ? details.get() : nullptr;
@@ -102,37 +121,39 @@ class ScriptRegistry
      */
     class Machine {
       public:
+
+        // host name
         juce::String name;
         
-        /**
-         * Folders outside of the system folder to scan.
-         */
+        // Folders outside of the system folder to scan.
         juce::OwnedArray<External> externals;
     
-        /**
-         * Scanned files
-         */
+        // Scan results
+        // Once created, File objects are interned and will not be removed
+        // until restart.  Application is allowed to reference them at any time
         juce::OwnedArray<File> files;
 
         File* findFile(juce::String& name);
         External* findExternal(juce::String& path);
+        
         void filterExternals(juce::String folder);
     };
 
-    ScriptRegistry() {}
-    ~ScriptRegistry() {}
-
-    juce::OwnedArray<Machine> machines;
+    /**
+     * Return the object representing the local machine.
+     */
     Machine* getMachine();
     Machine* findMachine(juce::String& name);
-    juce::OwnedArray<File>* getFiles();
 
     void parseXml(juce::String xml);
     juce::String toXml();
-    bool convert(class ScriptConfig* config);
 
   private:
     
+    juce::OwnedArray<Machine> machines;
+
+    bool convert(class ScriptConfig* config);
+
     External* findExternal(Machine* m, juce::String& path);
     
     void xmlError(const char* msg, juce::String arg);

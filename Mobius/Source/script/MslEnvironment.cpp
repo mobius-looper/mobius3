@@ -1001,12 +1001,11 @@ void MslEnvironment::extractDetails(MslCompilation* src, MslDetails* dest, bool 
  * of it so it can display possible name collisions, unresolved references
  * or other anomolies tht can prevent the script from functioning properly.
  *
- * todo: rather than generating this on every call, could just keep the
- * MslCompilation up to date and copy it.
+ * Returns nullptr if the unit is is invalid.
  */
 MslDetails* MslEnvironment::getDetails(juce::String id)
 {
-    MslDetails* result = new MslDetails();
+    MslDetails* result = nullptr;
 
     MslCompilation* unit = compilationMap[id];
     if (unit == nullptr) {
@@ -1016,10 +1015,8 @@ MslDetails* MslEnvironment::getDetails(juce::String id)
           unit = link->unit;
     }
 
-    if (unit == nullptr) {
-        result->addError(juce::String("Invalid compilation unit " +  id));
-    }
-    else {
+    if (unit != nullptr) {
+        MslDetails* result = new MslDetails();
         extractDetails(unit, result);
     }
 

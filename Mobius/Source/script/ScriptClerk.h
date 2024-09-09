@@ -31,22 +31,33 @@ class ScriptClerk {
     class Listener {
       public:
         virtual ~Listener() {}
+        // tables should respond after the editor changes names or metadata
         virtual void scriptFileSaved(class ScriptRegistry::File* file) = 0;
+        
+        // tables should adjust for new things from the editor
         virtual void scriptFileAdded(class ScriptRegistry::File* file) = 0;
+        
+        // tables should adjust for things deleted from the editor
+        // editor should close tabs for things deleted from the tables
         virtual void scriptFileDeleted(class ScriptRegistry::File* file) = 0;
     };
 
     ScriptClerk(class Supervisor* s);
     ~ScriptClerk();
 
+    // configuartion UI listeners
+    void addListener(Listener* l);
+    void removeListener(Listener* l);
+    
+    
     //
-    // Supervisor Interfaces
+    // Supervisor Interface
     //
     
     void initialize();
     void refresh();
-    void saveRegistry();
     void installMsl();
+    void saveRegistry();
 
     class ScriptConfig* getMobiusScriptConfig();
     void saveErrors(class ScriptConfig* c);
@@ -54,25 +65,26 @@ class ScriptClerk {
     // file drop from MainWindow
     void filesDropped(juce::StringArray& files);
 
-    // ScriptEditor interface
+    //
+    // ScriptEditor Interface
+    //
+
     bool saveFile(Listener* source, class ScriptRegistry::File* file);
     bool addFile(Listener* source, class ScriptRegistry::File* file);
     bool deleteFile(Listener* source, class ScriptRegistry::File* file);
 
-    // ScriptConfigEditor interface
+    //
+    // ScriptConfigEditor Interface
+    //
+
     void saveExternals(juce::StringArray paths);
 
-    // configuartion UI listeners
-    void addListener(Listener* l);
-    void removeListener(Listener* l);
-    
     //
     // Console/UI Interfaces
     //
 
     class ScriptRegistry* getRegistry();
     class ScriptRegistry::Machine* getLocalRegistry();
-    
     class MslDetails* loadFile(juce::String path);
 
   private:
@@ -81,12 +93,17 @@ class ScriptClerk {
     class MslEnvironment* environment = nullptr;
     std::unique_ptr<class ScriptRegistry> registry;
     juce::Array<Listener*> listeners;
+
+    //
+    // Fundamental Registry Management
+    //
     
     void loadRegistry();
     void reconcile(bool tagNew=false);
-    ScriptRegistry::File* refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
-    void refreshFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
-    void refreshOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
+    void scanFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
+    void scanFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
+    void scanOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
+
     void updateDetails(class ScriptRegistry::File* regfile, class MslDetails* details);
 
     void chooseDropStyle(juce::StringArray files);
