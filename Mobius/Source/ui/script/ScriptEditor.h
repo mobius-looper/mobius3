@@ -14,6 +14,8 @@
 #include "../common/BasicTabs.h"
 #include "../common/BasicButtonRow.h"
 #include "../../script/ScriptRegistry.h"
+#include "../../script/ScriptClerk.h"
+
 #include "ScriptDetails.h"
 #include "ScriptLog.h"
 #include "CustomEditor.h"
@@ -56,7 +58,7 @@ class ScriptEditorFile : public juce::Component
     int getTabIndex() {
         return tabIndex;
     }
-    
+
   private:
 
     class Supervisor* supervisor = nullptr;
@@ -110,7 +112,8 @@ class ScriptEditorTabButton : public juce::Component
 //
 //////////////////////////////////////////////////////////////////////
 
-class ScriptEditor : public juce::Component, public juce::Button::Listener
+class ScriptEditor : public juce::Component, public juce::Button::Listener,
+                     public ScriptClerk::Listener                     
 {
   public:
 
@@ -132,8 +135,12 @@ class ScriptEditor : public juce::Component, public juce::Button::Listener
     void save();
 
     void changeTabName(int index, juce::String name);
-    void forceResize();
     
+    // ScriptClerk::Listener
+    void scriptFileSaved(class ScriptRegistry::File* file) override;
+    void scriptFileAdded(class ScriptRegistry::File* file) override;
+    void scriptFileDeleted(class ScriptRegistry::File* file) override;
+
   private:
 
     class Supervisor* supervisor = nullptr;

@@ -33,6 +33,7 @@ class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
     void resized() override;
 
     // clerk listener
+    void scriptFileSaved(class ScriptRegistry::File* file) override;
     void scriptFileAdded(class ScriptRegistry::File* file) override;
     void scriptFileDeleted(class ScriptRegistry::File* file) override;
 

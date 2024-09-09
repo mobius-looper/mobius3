@@ -65,6 +65,10 @@ class ScriptRegistry
         // true if this file was deleted in the UI
         // we keep the File handle around since it is interned, but stop showing it
         bool deleted = false;
+        // true if this was tagged as a new file during external reconciliation
+        bool isNew = false;
+        // true if this was tagged as possibly deleted during external reconciliation
+        bool isRemoving = false;
         
         // true if this is an older .mos file
         bool old = false;

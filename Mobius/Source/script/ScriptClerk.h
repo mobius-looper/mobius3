@@ -31,6 +31,7 @@ class ScriptClerk {
     class Listener {
       public:
         virtual ~Listener() {}
+        virtual void scriptFileSaved(class ScriptRegistry::File* file) = 0;
         virtual void scriptFileAdded(class ScriptRegistry::File* file) = 0;
         virtual void scriptFileDeleted(class ScriptRegistry::File* file) = 0;
     };
@@ -50,26 +51,27 @@ class ScriptClerk {
     class ScriptConfig* getMobiusScriptConfig();
     void saveErrors(class ScriptConfig* c);
 
-    // ScriptConfigEditor temporary interface
-    class ScriptConfig* getEditorScriptConfig();
-    void saveEditorScriptConfig(class ScriptConfig* config);
-
     // file drop from MainWindow
     void filesDropped(juce::StringArray& files);
 
     // ScriptEditor interface
-    void addFile(class ScriptRegistry::File* file);
-    void deleteFile(class ScriptRegistry::File* file);
+    bool saveFile(Listener* source, class ScriptRegistry::File* file);
+    bool addFile(Listener* source, class ScriptRegistry::File* file);
+    bool deleteFile(Listener* source, class ScriptRegistry::File* file);
+
+    // ScriptConfigEditor interface
+    void saveExternals(juce::StringArray paths);
 
     // configuartion UI listeners
     void addListener(Listener* l);
     void removeListener(Listener* l);
     
     //
-    // Console Interfaces
+    // Console/UI Interfaces
     //
 
     class ScriptRegistry* getRegistry();
+    class ScriptRegistry::Machine* getLocalRegistry();
     
     class MslDetails* loadFile(juce::String path);
 
@@ -81,7 +83,7 @@ class ScriptClerk {
     juce::Array<Listener*> listeners;
     
     void loadRegistry();
-    void reconcile();
+    void reconcile(bool tagNew=false);
     ScriptRegistry::File* refreshFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
     void refreshFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
     void refreshOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
@@ -90,6 +92,9 @@ class ScriptClerk {
     void chooseDropStyle(juce::StringArray files);
     void doFilesDropped(juce::StringArray files, juce::String style);
     void reload(juce::String path);
+    void unregisterFile(Listener* source, class ScriptRegistry::File* file);
+    void installNewFile(Listener* source, class ScriptRegistry::File* file);
+
     
     // old code: delete when ready
 #if 0    

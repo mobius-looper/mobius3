@@ -1,5 +1,7 @@
 /**
- * ConfigEditor for editing the script file registry.
+ * ConfigEditor for displaying a summary of the script library
+ * and for editing the list of externals.
+ * To edit individual scripts, it pops up the ScriptWindow
  */
 
 #include <JuceHeader.h>
@@ -41,9 +43,20 @@ void ScriptConfigEditor::hiding()
     clerk->removeListener(this);
 }
 
-/**
- * ScriptClerk::Listener overrides
- */
+//
+// ScriptClerk::Listener overrides
+// Here we're being called because the ScriptEditor is doing things
+//
+
+void ScriptConfigEditor::scriptFileSaved(class ScriptRegistry::File* file)
+{
+    (void)file;
+    // the only thing that can happen of interst here is the name changing
+    load();
+    // since this is often the one currently selected, could keep it selected
+    // after load() resets the selection
+}
+
 void ScriptConfigEditor::scriptFileAdded(class ScriptRegistry::File* file)
 {
     (void)file;
@@ -59,14 +72,18 @@ void ScriptConfigEditor::scriptFileDeleted(class ScriptRegistry::File* file)
 
 void ScriptConfigEditor::load()
 {
-    // todo: until this is retooled to work without ScriptConfig
-    // we have to synthesize one from the new ScriptRegistry
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    ScriptConfig* sconfig = clerk->getEditorScriptConfig();
-    if (sconfig != nullptr) {
-        // this makes it's own copy
-        externals.setScripts(sconfig);
+
+    // dig out just the Files that represent Externals
+    // since we don't need anything beyond the path and the table
+    // can test for missing files it's own self, just model this
+    // with a list of paths
+    juce::StringArray externals;
+    ScriptRegistry::Machine* reg = clerk->getLocalRegistry();
+    for (auto ext : reg->externals) {
+        externals.add(ext->path);
     }
+    externals.setPaths(externals);
 
     ScriptRegistry* reg = clerk->getRegistry();
     library.load(reg);
@@ -75,18 +92,24 @@ void ScriptConfigEditor::load()
     delete sconfig;
 }
 
+/**
+ * Here we've added or deleted ScriptRegistry::Externals
+ * from memory, now we need to reflect the changes back into
+ * the registry.
+ *
+ * This will trigger listener callbacks which we can ignore
+ * since we've hiding the panel on save.
+ *
+ * The ScriptClerk interface is different than the one ScriptEditor
+ * uses since we're delaign with several files rather than one at a time.
+ * This may trigger multiple adds and delets for the listeners.
+ */
 void ScriptConfigEditor::save()
 {
-    ScriptConfig* newConfig = externals.capture();
+    juce::StringArray newPaths = externals.getResult();
 
-    // this no longer goes back into MobiusConfig
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    clerk->saveEditorScriptConfig(newConfig);
-    delete newConfig;
-
-    // you almost always want scripts reloaded after editing
-    // so force that now, samples are another story...
-    supervisor->menuLoadScripts();
+    clerk->saveExternals(newPaths);
 }
 
 void ScriptConfigEditor::cancel()

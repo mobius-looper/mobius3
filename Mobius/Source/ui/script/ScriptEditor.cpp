@@ -242,23 +242,18 @@ void ScriptEditorFile::save()
         startSaveNew();
     }
     else {
-        juce::File f (file->path);
-        bool success = f.replaceWithText(editor.getText());
-        if (!success) {
+        // put the new source on the File and ask Clerk to save it
+        file->source = editor.getText();
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        bool saved = clerk->saveFile(parent, file);
+        if (!saved) {
+            // this means there was something wrong with actually touching
+            // the file, which would have prevented installation
             logError("File save failed");
         }
         else {
-            // probably should be enapsulating things like this in ScriptClerk
-            // rather than twiddling it's data structures?
-            // will also want some level of undo or versioning
-            file->source = editor.getText();
-
-            MslEnvironment* env = supervisor->getMslEnvironment();
-            MslDetails* details = env->install(supervisor, file->path, file->source);
-            file->setDetails(details);
-            ScriptClerk* clerk = supervisor->getScriptClerk();
-            clerk->saveRegistry();
-            
+            // details will have been refreshed
+            MslDetails* details = file->getDetails();
             if (!details->hasErrors())
               log.add("Save successful");
             logDetails(details);
@@ -311,32 +306,19 @@ void ScriptEditorFile::startSaveNew()
  */
 void ScriptEditorFile::finishSaveNew(juce::File dest)
 {
-    bool success = dest.replaceWithText(editor.getText());
-    if (!success) {
+    file->path = dest.getFullPathName();
+    file->source = editor.getText();
+
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    bool saved = clerk->addFile(parent, file);
+    if (!saved) {
         logError("File save failed");
     }
     else {
-        // probably should be enapsulating things like this in ScriptClerk
-        // rather than twiddling it's data structures?
-        // will also want some level of undo or versioning
-
-        file->path = dest.getFullPathName();
-        file->source = editor.getText();
-        // todo: could set added now
-        
-        MslEnvironment* env = supervisor->getMslEnvironment();
-        MslDetails* details = env->install(supervisor, file->path, file->source);
-        file->name = details->name;
-        file->setDetails(details);
-
-        // release the private file we've been editing
-        // and pass it to the clerk
-        // newFile and and point to the same object, newFile is just there
-        // for delete protection
+        // ownership of the File has transferred
         (void)newFile.release();
-        ScriptClerk* clerk = supervisor->getScriptClerk();
-        clerk->addFile(file);
-            
+
+        MslDetails* details = file->getDetails();
         if (!details->hasErrors())
           log.add("Save successful");
         logDetails(details);
@@ -396,32 +378,24 @@ void ScriptEditorFile::startDeleteFile()
 void ScriptEditorFile::finishDeleteFile(int button)
 {
     if (button == 1) {
-        juce::File f (file->path);
-        bool success = f.deleteFile();
-        if (!success) {
+
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        bool deleted = clerk->deleteFile(parent, file);
+        if (!deleted) {
             logError("File delete failed");
         }
         else {
-            // probably should be enapsulating things like this in ScriptClerk
-            // rather than twiddling it's data structures?
-            // will also want some level of undo or versioning
-
-            MslEnvironment* env = supervisor->getMslEnvironment();
-            MslDetails* details = env->uninstall(supervisor, file->path);
-            ScriptClerk* clerk = supervisor->getScriptClerk();
-            clerk->deleteFile(file);
-            
-            bool closeme = true;
-            if (details->hasErrors()) {
-                logDetails(details);
-                closeme = false;
-            }
-            delete details;
-
-            if (closeme)
+            // not much should go wrong during the uninstall
+            // this could cause unresolved in other scripts
+            // but that won't prevent closing the tab
+            // if there are any serious errors, keep the tab open
+            MslDetails* details = file->getDetails();
+            if (details->hasErrors())
+              logDetails(details);
+            else
               parent->close(this);
         }
-    }
+    }   
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -443,10 +417,18 @@ ScriptEditor::ScriptEditor(Supervisor* s)
     buttons.add(&newButton);
     buttons.add(&deleteButton);
     addAndMakeVisible(buttons);
+
+    // unlike most things that add/remove listeners when they are shown and hidden
+    // we don't have show/hide hooks, just leave the listener on all the time
+    // but ignore the callbacks if we're not visible
+    ScriptClerk* clerk = s->getScriptClerk();
+    clerk->addListener(this);
 }
 
 ScriptEditor::~ScriptEditor()
 {
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    clerk->removeListener(this);
 }
 
 void ScriptEditor::resized()
@@ -604,6 +586,44 @@ void ScriptEditor::deleteFile()
     ScriptEditorFile* efile = getCurrentFile();
     if (efile != nullptr)
       efile->deleteFile();
+}
+
+//
+// ScriptClerk::Listener overrides
+//
+
+/**
+ * ScriptConfigEditor can't modify files so this shouldn't be triggered
+ */
+void ScriptEditor::scriptFileSaved(class ScriptRegistry::File* file)
+{
+    (void)file;
+    Trace(1, "ScriptEditor::scriptFileSaved Why is this being called?");
+}
+
+/**
+ * ScriptConfigEditor can add new Externals, so this would be triggered
+ * Since the editor doesn't track new files it can be ignored
+ */
+void ScriptEditor::scriptFileAdded(class ScriptRegistry::File* file)
+{
+    (void)file;
+}
+
+/**
+ * ScriptConfigEditor can delete Externals
+ * If we have a tab open for one, close it.
+ *
+ * We could "are you sure?" if there are unsaved edits on this file.
+ * It will still have been removed from the external file list but
+ * at least we could save what was being done.
+ *
+ * Note that since we're permanently installed as a clerk listener,
+ * we'll be called even when we're not visible.
+ */
+void ScriptEditor::scriptFileDeleted(class ScriptRegistry::File* file)
+{
+    (void)file;
 }
 
 //////////////////////////////////////////////////////////////////////

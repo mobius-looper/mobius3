@@ -322,6 +322,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // put this first since it contains object pools that the things below may
     // need to use during the destruction sequence
     MslEnvironment scriptenv;
+    // it is important that this be close to the end so the UI can unregister
+    // listeners before it is destroyed
     ScriptClerk scriptClerk {this};
 
     // symbol table for this application/plugin instance
