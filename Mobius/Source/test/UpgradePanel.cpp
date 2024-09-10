@@ -465,13 +465,15 @@ void UpgradeContent::loadScripts()
     // they are synthesized from ScriptRegistry
     // ScriptConfig* masterScripts = masterConfig->getScriptConfig();
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    ScriptConfig* masterScripts = clerk->getEditorScriptConfig();
+    ScriptRegistry::Machine* machine = clerk->getMachine();
+    juce::StringArray masterExternals = machine->getExternalPaths();
     
     ScriptConfig* srcScripts = mobiusConfig->getScriptConfigObsolete();
     if (srcScripts != nullptr) {
         ScriptRef* ref = srcScripts->getScripts();
         while (ref != nullptr) {
             count++;
+            juce::String newPath = juce::String(ref->getFile());
             bool skipValidation = false;
             // this is a testing convenience for Mac files loaded on Windows
             // avoid a Juce assertion if we know the path isn't going to go anywhere
@@ -481,10 +483,9 @@ void UpgradeContent::loadScripts()
               skipValidation = true;
 #endif
             if (skipValidation) {
-                ScriptRef* existing = masterScripts->get(ref->getFile());
-                if (existing == nullptr) {
-                    log.add("Adding script: " + juce::String(ref->getFile()));
-                    newScripts.add(new ScriptRef(ref));
+                if (!masterExternals.contains(newPath)) {
+                    log.add("Adding script: " + newPath);
+                    newScripts.add(newPath);
                 }
                 else {
                     // this doesn't really help much and adds clutter
@@ -492,14 +493,13 @@ void UpgradeContent::loadScripts()
                 }
             }
             else {
-                juce::File file (ref->getFile());
+                juce::File file (newPath);
                 if (file.isDirectory()) {
-                    log.add("Verified script directory: " + juce::String(ref->getFile()));
+                    log.add("Verified script directory: " + newPath);
                     // we keep the reference, but need to descend into it to
                     // register what it contains for binding resolution
-                    ScriptRef* existing = masterScripts->get(ref->getFile());
-                    if (existing == nullptr) {
-                        newScripts.add(new ScriptRef(ref));
+                    if (!masterExternals.contains(newPath)) {
+                        newScripts.add(newPath);
                     }
                     else {
                         //log.add("Script path already exists: " + juce::String(ref->getFile()));
@@ -512,9 +512,8 @@ void UpgradeContent::loadScripts()
                     juce::String scriptName = verifyScript(ref);
                     if (scriptName.length() > 0) {
                         // but only add it to the pending list if it isn't already there
-                        ScriptRef* existing = masterScripts->get(ref->getFile());
-                        if (existing == nullptr) {
-                            newScripts.add(new ScriptRef(ref));
+                        if (!masterExternals.contains(newPath)) {
+                            newScripts.add(newPath);
                         }
                         else {
                             // log.add("Script path already exists: " + juce::String(ref->getFile()));
@@ -528,9 +527,6 @@ void UpgradeContent::loadScripts()
             ref = ref->getNext();
         }
     }
-
-    // this was allocated dynamically by ScriptClerk
-    delete masterScripts;
 
     log.add("Registered script names:");
     for (auto name : scriptNames)
@@ -969,14 +965,11 @@ void UpgradeContent::doInstall()
             }
 #endif
             ScriptClerk* clerk = supervisor->getScriptClerk();
-            ScriptRegistry* registry = clerk->getRegistry();
-            ScriptRegistry::Machine* machine = registry->getMachine();
-            while (newScripts.size() > 0) {
-                ScriptRef* ref = newScripts.removeAndReturn(0);
+            ScriptRegistry::Machine* machine = clerk->getMachine();
+            for (auto newPath : newScripts) {
                 ScriptRegistry::External* ext = new ScriptRegistry::External();
-                ext->path = juce::String(ref->getFile());
+                ext->path = newPath;
                 machine->externals.add(ext);
-                delete ref;
             }
             clerk->saveRegistry();
         }

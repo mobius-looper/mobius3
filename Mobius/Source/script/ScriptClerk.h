@@ -65,6 +65,9 @@ class ScriptClerk {
     // file drop from MainWindow
     void filesDropped(juce::StringArray& files);
 
+    // special for UpgradePanel
+    juce::StringArray getExternalPaths();
+
     //
     // ScriptEditor Interface
     //
@@ -77,14 +80,14 @@ class ScriptClerk {
     // ScriptConfigEditor Interface
     //
 
-    void saveExternals(juce::StringArray paths);
+    void installExternals(Listener* source, juce::StringArray newPaths);
 
     //
     // Console/UI Interfaces
     //
 
     class ScriptRegistry* getRegistry();
-    class ScriptRegistry::Machine* getLocalRegistry();
+    class ScriptRegistry::Machine* getMachine();
     class MslDetails* loadFile(juce::String path);
 
   private:
@@ -99,18 +102,22 @@ class ScriptClerk {
     //
     
     void loadRegistry();
-    void reconcile(bool tagNew=false);
+    void reconcile();
     void scanFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
     void scanFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
     void scanOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
 
+    bool isInstallable(class ScriptRegistry::File* file);
+    void refreshDetails();
     void updateDetails(class ScriptRegistry::File* regfile, class MslDetails* details);
-
+    
     void chooseDropStyle(juce::StringArray files);
     void doFilesDropped(juce::StringArray files, juce::String style);
     void reload(juce::String path);
-    void unregisterFile(Listener* source, class ScriptRegistry::File* file);
-    void installNewFile(Listener* source, class ScriptRegistry::File* file);
+
+    
+    void uninstallFile(Listener* source, class ScriptRegistry::File* file, bool linkNow);
+    void installNewFile(Listener* source, class ScriptRegistry::File* file, bool linkNow);
 
     
     // old code: delete when ready

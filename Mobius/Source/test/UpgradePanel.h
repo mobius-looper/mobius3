@@ -33,7 +33,7 @@ class UpgradeContent : public juce::Component, juce::Button::Listener
 
     juce::OwnedArray<class Preset> newPresets;
     juce::OwnedArray<class Setup> newSetups;
-    juce::OwnedArray<class ScriptRef> newScripts;
+    juce::StringArray newScripts;
     juce::Array<juce::String> scriptNames;
     juce::OwnedArray<class BindingSet> newBindingSets;
     class ButtonSet* newButtons = nullptr;

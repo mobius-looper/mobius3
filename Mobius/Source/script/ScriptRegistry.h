@@ -127,6 +127,7 @@ class ScriptRegistry
         
         // Folders outside of the system folder to scan.
         juce::OwnedArray<External> externals;
+        bool externalOverlapDetected = false;
     
         // Scan results
         // Once created, File objects are interned and will not be removed
@@ -135,6 +136,7 @@ class ScriptRegistry
 
         File* findFile(juce::String& name);
         External* findExternal(juce::String& path);
+        juce::StringArray getExternalPaths();
         
         void filterExternals(juce::String folder);
     };
@@ -147,12 +149,11 @@ class ScriptRegistry
 
     void parseXml(juce::String xml);
     juce::String toXml();
+    bool convert(class ScriptConfig* config);
 
   private:
     
     juce::OwnedArray<Machine> machines;
-
-    bool convert(class ScriptConfig* config);
 
     External* findExternal(Machine* m, juce::String& path);
     

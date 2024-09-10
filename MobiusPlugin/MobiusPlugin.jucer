@@ -238,6 +238,9 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="A0Abxy" name="WindowFactory.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/WindowFactory.cpp"/>
+        <FILE id="mRKMcf" name="WindowFactory.h" compile="0" resource="0" file="../Mobius/Source/ui/WindowFactory.h"/>
         <GROUP id="{219AC869-1E28-1A98-D3E3-341109F451EB}" name="script">
           <FILE id="wljLAb" name="CustomEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/CustomEditor.cpp"/>
@@ -248,6 +251,8 @@
           <FILE id="dm8tIe" name="ScriptEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/ScriptEditor.cpp"/>
           <FILE id="DGfl42" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptEditor.h"/>
+          <FILE id="wHZSxI" name="ScriptLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/ScriptLog.cpp"/>
+          <FILE id="VRUGIU" name="ScriptLog.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptLog.h"/>
           <FILE id="QfiLki" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="TFpqtC" name="ScriptWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptWindow.h"/>

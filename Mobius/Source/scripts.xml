@@ -22,7 +22,7 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\asd.msl" name="asd"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\something.msl" name="something"
-            added="1725838292554"/>
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">
@@ -39,8 +39,10 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\droptest.msl" added="2147483647"/>
-      <File path="C:\dev\mobius3\Mobius\Source\droptest.msl" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\droptest.msl" name="droptest"
+            added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\droptest.msl" name="droptest"
+            added="2147483647"/>
     </Files>
   </Machine>
 </ScriptRegistry>

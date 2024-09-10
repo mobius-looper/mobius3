@@ -36,13 +36,11 @@ ScriptTable::~ScriptTable()
  * Populate internal state with a list of Scripts from a ScriptConfig.
  */
 
-void ScriptTable::setScripts(ScriptConfig* config)
+void ScriptTable::setPaths(juce::StringArray paths)
 {
     files.clear();
 
-    ScriptRef* script = config->getScripts();
-    while (script != nullptr) {
-        juce::String path = juce::String(script->getFile());
+    for (auto path : paths) {
         ScriptTableFile* sf = new ScriptTableFile(path);
         files.add(sf);
         // color it red if it doesn't exist
@@ -53,8 +51,6 @@ void ScriptTable::setScripts(ScriptConfig* config)
         juce::File file (path);
         if (!file.existsAsFile() && !file.isDirectory())
           sf->missing = true;
-        
-        script = script->getNext();
     }
     table.updateContent();
 }
@@ -64,21 +60,16 @@ void ScriptTable::updateContent()
     table.updateContent();
 }
 
-/**
- * Reconstructes a ScriptConfig from the ScriptTableFiles
- * Ownership of the ScriptConfig passes to the caller.
- */
-ScriptConfig* ScriptTable::capture()
+juce::StringArray ScriptTable::getResult()
 {
-    ScriptConfig* config = new ScriptConfig();
+    juce::StringArray paths;
     for (int i = 0 ; i < files.size() ; i++) {
         ScriptTableFile* sf = files[i];
         if (sf->path.length() > 0) {
-            ScriptRef* script = new ScriptRef(sf->path.toUTF8());
-            config->add(script);
+            paths.add(sf->path);
         }
     }
-    return config;
+    return paths;
 }
 
 /**

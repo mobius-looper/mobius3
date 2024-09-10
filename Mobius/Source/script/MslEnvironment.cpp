@@ -1016,7 +1016,7 @@ MslDetails* MslEnvironment::getDetails(juce::String id)
     }
 
     if (unit != nullptr) {
-        MslDetails* result = new MslDetails();
+        result = new MslDetails();
         extractDetails(unit, result);
     }
 

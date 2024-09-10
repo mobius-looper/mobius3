@@ -78,18 +78,12 @@ void ScriptConfigEditor::load()
     // since we don't need anything beyond the path and the table
     // can test for missing files it's own self, just model this
     // with a list of paths
-    juce::StringArray externals;
-    ScriptRegistry::Machine* reg = clerk->getLocalRegistry();
-    for (auto ext : reg->externals) {
-        externals.add(ext->path);
-    }
-    externals.setPaths(externals);
+    ScriptRegistry::Machine* machine = clerk->getMachine();
+    juce::StringArray paths = machine->getExternalPaths();
+    externals.setPaths(paths);
 
     ScriptRegistry* reg = clerk->getRegistry();
     library.load(reg);
-    
-    // this was derived from the ScriptRegistry and must be freed
-    delete sconfig;
 }
 
 /**
@@ -109,7 +103,7 @@ void ScriptConfigEditor::save()
     juce::StringArray newPaths = externals.getResult();
 
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    clerk->saveExternals(newPaths);
+    clerk->installExternals(this, newPaths);
 }
 
 void ScriptConfigEditor::cancel()

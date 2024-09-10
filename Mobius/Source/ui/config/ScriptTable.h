@@ -43,7 +43,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
      * Build the table from a ScriptConfig
      * Ownership is not taken.
      */
-    void setScripts(juce::StringArray paths);
+    void setPaths(juce::StringArray paths);
     void updateContent();
     void clear();
     juce::StringArray getResult();

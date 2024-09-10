@@ -84,13 +84,22 @@ void ScriptRegistry::Machine::filterExternals(juce::String infolder)
         externals.removeObject(ext, true);
     }
 }
-
+/*
 juce::OwnedArray<ScriptRegistry::File>* ScriptRegistry::getFiles()
 {
     Machine* machine = getMachine();
     return &(machine->files);
 }
-        
+*/
+
+juce::StringArray ScriptRegistry::Machine::getExternalPaths()
+{
+    juce::StringArray paths;
+    for (auto ext : externals)
+      paths.add(ext->path);
+    return paths;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // ScriptConfig Conversion
