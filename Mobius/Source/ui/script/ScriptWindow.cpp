@@ -8,8 +8,9 @@
 #include "ScriptDetails.h"
 #include "ScriptWindow.h"
 
-ScriptWindow::ScriptWindow(Supervisor* s) : content(s),
-    juce::DocumentWindow("Script Editor", juce::Colours::black, juce::DocumentWindow::allButtons)
+ScriptWindow::ScriptWindow(Supervisor* s) : 
+    juce::DocumentWindow("Script Editor", juce::Colours::black, juce::DocumentWindow::allButtons),
+    content(s)
 {
     supervisor = s;
     

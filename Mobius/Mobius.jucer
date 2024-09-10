@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
+            file="Source/BlueSphere-10-40.png"/>
       <FILE id="Pmx2Ai" name="Upgrader.cpp" compile="1" resource="0" file="Source/Upgrader.cpp"/>
       <FILE id="w8Jhmk" name="Upgrader.h" compile="0" resource="0" file="Source/Upgrader.h"/>
       <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
@@ -823,7 +825,7 @@
       </MODULEPATHS>
     </VS2022>
     <XCODE_MAC targetFolder="Builds/MacOSX" applicationCategory="public.app-category.music"
-               smallIcon="" bigIcon="ZTzR5l" customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;&#10;&lt;plist version=&quot;1.0&quot;&gt;&#10;&lt;dict&gt;&#10;&#9;&lt;key&gt;CFBundleName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&#9;&lt;key&gt;CFBundleDisplayName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&lt;/dict&gt;&#10;&lt;/plist&gt;&#10;"
+               smallIcon="" bigIcon="f8egPq" customPList="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#10;&lt;!DOCTYPE plist PUBLIC &quot;-//Apple//DTD PLIST 1.0//EN&quot; &quot;http://www.apple.com/DTDs/PropertyList-1.0.dtd&quot;&gt;&#10;&lt;plist version=&quot;1.0&quot;&gt;&#10;&lt;dict&gt;&#10;&#9;&lt;key&gt;CFBundleName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&#9;&lt;key&gt;CFBundleDisplayName&lt;/key&gt;&#10;&#9;&lt;string&gt;M&#246;bius&lt;/string&gt;&#10;&lt;/dict&gt;&#10;&lt;/plist&gt;&#10;"
                microphonePermissionNeeded="1" xcodeValidArchs="arm64,x86_64">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Mobius"/>

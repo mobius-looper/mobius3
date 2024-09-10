@@ -8,6 +8,9 @@
 
 namespace BinaryData
 {
+    extern const char*   BlueSphere1040_png;
+    const int            BlueSphere1040_pngSize = 4172;
+
     extern const char*   mobius_png;
     const int            mobius_pngSize = 2597;
 
@@ -15,7 +18,7 @@ namespace BinaryData
     const int            BlueSphere10_pngSize = 2054;
 
     // Number of elements in the namedResourceList and originalFileNames arrays.
-    const int namedResourceListSize = 2;
+    const int namedResourceListSize = 3;
 
     // Points to the start of a list of resource names.
     extern const char* namedResourceList[];

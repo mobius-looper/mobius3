@@ -72,7 +72,7 @@ class ScriptLibraryTable : public juce::Component,
                     int width, int height, bool rowIsSelected) override;
     //void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
     void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
-    void selectedRowsChanged(int lastRowSelected);
+    void selectedRowsChanged(int lastRowSelected) override;
 
   private:
     class Supervisor* supervisor = nullptr;

@@ -270,7 +270,7 @@ class Track : public TraceContext
     //void dump(TraceBuffer* b);
 
     // Notificiation Management
-    class Notification* Track::allocNotification(NotificationId id);
+    class Notification* allocNotification(NotificationId id);
     void add(class Notification* n);
     void notify(NotificationId id);
     void notifyModeStart(class MobiusMode* mode);

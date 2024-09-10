@@ -45,4 +45,12 @@
             added="2147483647"/>
     </Files>
   </Machine>
+  <Machine name="frigg.lan">
+    <Files>
+      <File path="/Users/jeff/dev/mobius3/Mobius/Source/scripts/notifyrec.mos"
+            name="NotifyRecord" added="1726010933444"/>
+      <File path="/Users/jeff/dev/mobius3/Mobius/Source/scripts/inittest.msl"
+            name="inittest" added="1726010933444"/>
+    </Files>
+  </Machine>
 </ScriptRegistry>

@@ -334,7 +334,7 @@ Notification* Track::allocNotification(NotificationId id)
     Notification* n = mNotifier->alloc();
     n->id = id;
     n->trackNumber = mRawNumber + 1;
-    n->loopFrame = mLoop->getFrame();
+    n->loopFrame = (int)(mLoop->getFrame());
     return n;
 }
 
