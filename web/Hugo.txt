@@ -64,6 +64,43 @@ and then referenced deep within the Spectral code.  I don't know how common
 this is, but it's convenient since Spectral is hella complex.
 
 ----------------------------------------------------------------------
+List Pages
+----------------------------------------------------------------------
+
+Had to hack around with Spectral to get the list pages
+
+In spectral/layouts/_default/list.html
+
+  <header {{ with .Params.image }}style="background-image: url('{{ . }}')"{{ end }}>
+    <!--
+        <h2>{{ i18n "allarticles" }}</h2>
+        -->
+    <h2>{{ .Params.title }}</h2>
+
+Substitute an i18n lookup of "allarticles" to a parameter named "title"
+
+The title is then set by putting an _index.md in the directory containing the
+list files:
+
++++
+#aliases = ["posts", "articles", "blog", "showcase", "docs"]
+title = "Feature Notes"
+author = "Jeff"
+tags = ["index"]
++++
+
+
+The default Spectral list page also had dates.  To remove those comment out this line:
+
++++ b/web/circularlabs/themes/spectral/layouts/partials/summary.html
+@@ -1,7 +1,7 @@
+ <section class="wrapper style5">
+ 	<div class="inner">
+     <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
+-    <time class="icon fa-clock-o">{{ .Date.Format "02.01.2006 15:04" }}</time>
++<!--    <time class="icon fa-clock-o">{{ .Date.Format "02.01.2006 15:04" }}</time> -->
+
+----------------------------------------------------------------------
 Download Problem
 ----------------------------------------------------------------------
 
