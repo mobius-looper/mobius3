@@ -174,6 +174,9 @@ void ScriptLibraryTable::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
+    // leave some air between the two rows of buttons
+    area.removeFromBottom(12);
+    
     commands.setBounds(area.removeFromBottom(commands.getHeight()));
     area.removeFromBottom(CommandButtonGap);
  
@@ -197,8 +200,17 @@ void ScriptLibraryTable::buttonClicked(juce::String name)
         if (file != nullptr) {
 
             if (name == juce::String("Enable")) {
+                ScriptClerk* clerk = supervisor->getScriptClerk();
+                clerk->enable(file);
+                table.updateContent();
+                // updateContent isn't enough, figure out why
+                table.repaint();
             }
             else if (name == juce::String("Disable")) {
+                ScriptClerk* clerk = supervisor->getScriptClerk();
+                clerk->disable(file);
+                table.updateContent();
+                table.repaint();
             }
             else if (name == juce::String("Details")) {
                 details.show(file);

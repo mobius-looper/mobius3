@@ -118,24 +118,29 @@ void ScriptEditorFile::revert()
 
 void ScriptEditorFile::compile()
 {
-    MslEnvironment* env = supervisor->getMslEnvironment();
-    MslDetails* result = env->compile(supervisor, editor.getText());
+    if (file->old) {
+        log.add("Compilation of .mos files not supported yet");
+    }
+    else {
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        MslDetails* result = env->compile(supervisor, editor.getText());
 
-    log.clear();
-    if (result != nullptr) {
-        if (!result->hasErrors())
-          log.add("Compile successful");
-        else
-          logDetails(result);
+        log.clear();
+        if (result != nullptr) {
+            if (!result->hasErrors())
+              log.add("Compile successful");
+            else
+              logDetails(result);
 
-        // if we compiled a #name directive, it's nice to show that
-        // in the details header so they can see that it worked
-        if (result->name.length() > 0 && result->name != file->name) {
-            detailsHeader.setNameOverride(result->name);
-            detailsHeader.repaint();
-        }
+            // if we compiled a #name directive, it's nice to show that
+            // in the details header so they can see that it worked
+            if (result->name.length() > 0 && result->name != file->name) {
+                detailsHeader.setNameOverride(result->name);
+                detailsHeader.repaint();
+            }
         
-        delete result;
+            delete result;
+        }
     }
 }
 

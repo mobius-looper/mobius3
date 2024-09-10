@@ -81,6 +81,9 @@ class ScriptClerk {
     //
 
     void installExternals(Listener* source, juce::StringArray newPaths);
+    void enable(class ScriptRegistry::File* file);
+    void disable(class ScriptRegistry::File* file);
+    
 
     //
     // Console/UI Interfaces
@@ -88,6 +91,7 @@ class ScriptClerk {
 
     class ScriptRegistry* getRegistry();
     class ScriptRegistry::Machine* getMachine();
+    class ScriptRegistry::File* getFile(juce::String path);
     class MslDetails* loadFile(juce::String path);
 
   private:

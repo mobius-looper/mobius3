@@ -5,6 +5,9 @@
 #include "../../util/Util.h"
 #include "../../model/ScriptConfig.h"
 #include "../../Supervisor.h"
+#include "../MainWindow.h"
+#include "../../script/ScriptClerk.h"
+#include "../../script/ScriptRegistry.h"
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
 
@@ -18,10 +21,8 @@ ScriptTable::ScriptTable(Supervisor* s)
     initTable();
     addAndMakeVisible(table);
 
-    commands.add("New");
-    commands.add("Delete");
-    commands.add("Move Up");
-    commands.add("Move Down");
+    commands.add("Add External");
+    commands.add("Remove External");
     commands.autoSize();
     commands.addListener(this);
 
@@ -179,6 +180,9 @@ void ScriptTable::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
+    // leave some air between the two rows of buttons
+    area.removeFromBottom(12);
+
     commands.setBounds(area.removeFromBottom(commands.getHeight()));
     area.removeFromBottom(CommandButtonGap);
  
@@ -197,33 +201,15 @@ void ScriptTable::resized()
 void ScriptTable::buttonClicked(juce::String name)
 {
     // is this the best way to compare them?
-    if (name == juce::String("New")) {
+    if (name == juce::String("Add External")) {
         doFileChooser();
     }
-    else if (name == juce::String("Delete")) {
+    else if (name == juce::String("Remove External")) {
         int row = table.getSelectedRow();
         if (row >= 0) {
             files.remove(row);
             table.updateContent();
             // auto-select the one after it?
-        }
-    }
-    else if (name == juce::String("Move Up")) {
-        int row = table.getSelectedRow();
-        if (row >= 1) {
-            ScriptTableFile* other = files[row-1];
-            files.set(row-1, files[row], false);
-            files.set(row, other, false);
-            table.selectRow(row-1);
-        }
-    }
-    else if (name == juce::String("Move Down")) {
-        int row = table.getSelectedRow();
-        if (row >= 0 && row < (files.size() - 1)) {
-            ScriptTableFile* other = files[row+1];
-            files.set(row+1, files[row], false);
-            files.set(row, other, false);
-            table.selectRow(row+1);
         }
     }
 }
@@ -331,6 +317,22 @@ void ScriptTable::cellClicked(int rowNumber, int columnId, const juce::MouseEven
     (void)rowNumber;
     (void)columnId;
     (void)event;
+}
+
+/**
+ * Like ScriptLibraryTable allow double click to bring up the editor.
+ */
+void ScriptTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+{
+    (void)rowNumber;
+    (void)columnId;
+    (void)event;
+    
+    ScriptTableFile* tfile = files[rowNumber];
+    ScriptClerk* clerk = supervisor->getScriptClerk();
+    ScriptRegistry::File* file = clerk->getFile(tfile->path);
+    if (file != nullptr)
+      supervisor->getMainWindow()->editScript(file);
 }
 
 //////////////////////////////////////////////////////////////////////

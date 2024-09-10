@@ -696,6 +696,7 @@ void MslEnvironment::uninstall(MslContext* c, MslCompilation* unit, juce::String
 
     unit->published = false;
     compilations.removeObject(unit, false);
+    compilationMap.set(unit->id, nullptr);
     garbage.add(unit);
 }
 

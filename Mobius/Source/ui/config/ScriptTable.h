@@ -53,6 +53,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
 
     // ButtonBar::Listener
     void buttonClicked(juce::String name) override;
+    void cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event) override;
 
     // Component
     void resized() override;

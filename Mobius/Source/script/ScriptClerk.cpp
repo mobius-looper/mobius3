@@ -57,6 +57,12 @@ ScriptRegistry::Machine* ScriptClerk::getMachine()
     return reg->getMachine();
 }
 
+ScriptRegistry::File* ScriptClerk::getFile(juce::String path)
+{
+    ScriptRegistry::Machine* machine = getMachine();
+    return machine->findFile(path);
+}
+
 /**
  * Listeners for the script editor and the summary tables.
  */
@@ -524,6 +530,32 @@ void ScriptClerk::saveErrors(ScriptConfig* config)
 
 //////////////////////////////////////////////////////////////////////
 //
+// ScriptLibraryTable
+//
+//////////////////////////////////////////////////////////////////////
+
+void ScriptClerk::enable(class ScriptRegistry::File* file)
+{
+    if (file->disabled) {
+        file->disabled = false;
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        MslDetails* details = env->install(supervisor, file->path, file->source, true);
+        updateDetails(file, details);
+    }
+}
+
+void ScriptClerk::disable(class ScriptRegistry::File* file)
+{
+    if (!file->disabled) {
+        file->disabled = true;
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        MslDetails* details = env->uninstall(supervisor, file->path, true);
+        file->setDetails(details);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // External Editing
 //
 //////////////////////////////////////////////////////////////////////
@@ -628,6 +660,10 @@ void ScriptClerk::installExternals(Listener* lsource, juce::StringArray newPaths
  * The only thing that cares is ScriptEditor which will close tabs.
  * This does NOT delete the file contents.  Removing an external only
  * unlinks the file.
+ *
+ * The name here is unfortunate because this does more than just uninstall it.
+ * It is used both when the file is deleted in the editor and when it is
+ * removed from the externals list.
  */
 void ScriptClerk::uninstallFile(Listener* source, ScriptRegistry::File* file, bool linkNow)
 {

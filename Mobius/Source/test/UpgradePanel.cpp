@@ -971,7 +971,7 @@ void UpgradeContent::doInstall()
                 ext->path = newPath;
                 machine->externals.add(ext);
             }
-            clerk->saveRegistry();
+            clerk->refresh();
         }
 
         // these are more complicated
