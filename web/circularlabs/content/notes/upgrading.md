@@ -1,6 +1,7 @@
 +++
 title = 'Upgrading from 2.5'
 draft = false
+summary = 'Instructions for importing Mobius 2.5 configuration files'
 +++
 
 ## Upgrading Old Installations

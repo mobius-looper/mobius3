@@ -20,6 +20,8 @@ is the [Forum](../forum/public).
 The installation process is different than it was in 2.5.  The configuration of MIDI and
 audio devices is different but relatively self explanatory.
 
+OSC is not yet supported in Mobius 3.
+
 - [Installation](../olddocs/installation.htm)
 - [Getting Started](../olddocs/starting.htm)
 - [Exploring](../olddocs/exploring.htm)
@@ -28,5 +30,5 @@ audio devices is different but relatively self explanatory.
 - [Reference](../olddocs/reference.htm)
 - [Scripting](../olddocs/scripts.htm)
 - [OSC](../olddocs/osc.htm)
-- [EDP Comparison](../olddocs/osc.htm)
+- [EDP Comparison](../olddocs/edp.htm)
 

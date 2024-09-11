@@ -14,7 +14,7 @@ rclone config
   15 for storage option, FTP
 
   host name: ftp.mobiuslooper.com
-  username: email address, seriously
+  username: mobiuslo
   port: nothing, default 21
   password: y to type one in
   enter password
@@ -28,7 +28,13 @@ that worked
 
 cd to c:/dev/mobius3/web/circularlabs
 
+
 rclone copy public mobiuslooper:public_html/
+
+Note that YOU MUST USE "copy" and not "clone".  Clone will wipe out anything that does
+not exist in the source folder.
+
+
 
 
 
