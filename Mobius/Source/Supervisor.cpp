@@ -412,6 +412,9 @@ bool Supervisor::start()
     
     meter(nullptr);
 
+    // argument is intervalInMilliseconds
+    startTimer(100);
+
     Trace(2, "Supervisor::start finished\n");
     return true;
 }
@@ -447,6 +450,8 @@ void Supervisor::meter(const char* name)
  */
 void Supervisor::shutdown()
 {
+    stopTimer();
+    
     Trace(2, "Supervisor::shutdown\n");
 
     if (startPrevented) {
@@ -527,6 +532,25 @@ void Supervisor::shutdown()
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
+}
+
+/**
+ * juce:Timer callback
+ * This is only here for the wantsFocus kludge which started out in life
+ * on the MainThread maintenance thread but generated great gobs of breakpoints
+ * on the Mac about peer components being called on a thread other than
+ * the UI thread.
+ *
+ * Actually should reconsider doing all UI updates from the maintenance thread
+ * now that we have this?
+ */
+void Supervisor::timerCallback()
+{
+    // hack to get focus when the window is first opened, may have other uses
+    if (wantsFocus) {
+        mainWindow->grabKeyboardFocus();
+        wantsFocus = false;
+    }
 }
 
 MainWindow* Supervisor::getMainWindow()
@@ -827,12 +851,6 @@ void Supervisor::advance()
 
     // display the next alert queued from the audio thread
     showPendingAlert();
-
-    // hack to get focus when the window is first opened, may have other uses
-    if (wantsFocus) {
-        mainWindow->grabKeyboardFocus();
-        wantsFocus = false;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

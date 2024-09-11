@@ -33,24 +33,16 @@
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\shit.mos" name="shit"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\test.msl" name="test"
-            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\droptest.msl" name="droptest"
-            added="2147483647"/>
-      <File path="C:\dev\mobius3\Mobius\Source\droptest.msl" name="droptest"
             added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">
     <Files>
       <File path="/Users/jeff/dev/mobius3/Mobius/Source/scripts/notifyrec.mos"
-            name="NotifyRecord" added="1726010933444"/>
+            name="NotifyRecord" added="2147483647"/>
       <File path="/Users/jeff/dev/mobius3/Mobius/Source/scripts/inittest.msl"
-            name="inittest" added="1726010933444"/>
+            name="inittest" added="2147483647"/>
     </Files>
   </Machine>
 </ScriptRegistry>

@@ -43,7 +43,8 @@
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
 
-class Supervisor : public MobiusContainer, public MobiusListener, public MslContext
+class Supervisor : public MobiusContainer, public MobiusListener, public MslContext,
+                   juce::Timer
 {
   public:
 
@@ -101,6 +102,9 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     
     ~Supervisor();
 
+    // juce::Timer
+    void timerCallback() override;
+    
     // this called by the application/plugin container
     bool start();
     void shutdown();
