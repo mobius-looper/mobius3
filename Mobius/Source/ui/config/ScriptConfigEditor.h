@@ -23,7 +23,8 @@ class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
     ~ScriptConfigEditor();
 
     juce::String getTitle() override {return "Scripts";}
-
+    bool isImmediate() override {return true;}
+    
     void showing() override;
     void hiding() override;
     void load() override;
@@ -37,6 +38,9 @@ class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
     void scriptFileAdded(class ScriptRegistry::File* file) override;
     void scriptFileDeleted(class ScriptRegistry::File* file) override;
 
+    // ScriptTable callback
+    void scriptTableChanged();
+    
   private:
 
     BasicTabs tabs;

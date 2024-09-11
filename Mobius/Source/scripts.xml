@@ -27,14 +27,14 @@
   </Machine>
   <Machine name="Loki">
     <Externals>
-      <External path="c:\dev\mobius3\Mobius\Source\extscript.msl"/>
-      <External path="C:\dev\mobius3\Mobius\Source\droptest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\test.mos"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\test.mos" name="MOSTEST" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

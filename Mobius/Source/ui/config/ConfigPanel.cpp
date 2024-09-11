@@ -84,6 +84,14 @@ void ConfigPanel::setEditor(ConfigEditor* editor)
 {
     // set the BasePanel title 
     setTitle(editor->getTitle());
+
+    // ScriptConfigEditor works differently than the others, it has immediate
+    // effect and doesn't do save/cancel so just show a single "Done" or "Ok"
+    // button instead.  AudioEditor works the same way so retrofit that too
+    if (editor->isImmediate()) {
+        resetButtons();
+        addButton(&doneButton);
+    }
     
     // put the editor inside the wrapper between the ObjectSelector and HelpArea
     wrapper.setEditor(editor);
@@ -199,6 +207,11 @@ void ConfigPanel::footerButton(juce::Button* b)
         // this resets load
         loaded = false;
     }
+    else if (b == &doneButton) {
+        // the ConfigEditor set isImmediate and expects save() without cancel()
+        wrapper.getEditor()->save();
+        loaded = false;
+    }
     else if (b == &revertButton) {
         wrapper.getEditor()->revert();
         // this does not reset load
@@ -210,7 +223,7 @@ void ConfigPanel::footerButton(juce::Button* b)
     }
 
     // save and cancel close the panel, revert keeps it going
-    if (b == &saveButton || b == &cancelButton)
+    if (b == &saveButton || b == &cancelButton ||  &doneButton)
       close();
 }
 

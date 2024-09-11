@@ -151,6 +151,7 @@ class ConfigPanel : public BasePanel, public ConfigEditorContext
     juce::TextButton saveButton {"Save"};
     juce::TextButton cancelButton {"Cancel"};
     juce::TextButton revertButton {"Revert"};
+    juce::TextButton doneButton {"Done"};
 
     bool loaded = false;
 };

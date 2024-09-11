@@ -15,7 +15,7 @@
 
 #include "ScriptConfigEditor.h"
 
-ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s)
+ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s, this)
 {
     setName("ScriptConfigEditor");
 
@@ -87,28 +87,51 @@ void ScriptConfigEditor::load()
 }
 
 /**
- * Here we've added or deleted ScriptRegistry::Externals
- * from memory, now we need to reflect the changes back into
- * the registry.
+ * In the original implementation, additions and removals from
+ * the list were deferred and we sent them in bulk to ScriptClerk.
+ * Now, changes are immediate so we don't do anything for save/cancel.
  *
  * This will trigger listener callbacks which we can ignore
  * since we've hiding the panel on save.
- *
- * The ScriptClerk interface is different than the one ScriptEditor
- * uses since we're delaign with several files rather than one at a time.
- * This may trigger multiple adds and delets for the listeners.
  */
 void ScriptConfigEditor::save()
 {
-    juce::StringArray newPaths = externals.getResult();
-
-    ScriptClerk* clerk = supervisor->getScriptClerk();
-    clerk->installExternals(this, newPaths);
+    if (!isImmediate()) {
+        // old way, can delete eventually
+        juce::StringArray newPaths = externals.getResult();
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        clerk->installExternals(this, newPaths);
+    }
+    else {
+        // new "Done" button, just leave
+    }
 }
 
+/**
+ * This won't be called any more now that isImmediate is true
+ */
 void ScriptConfigEditor::cancel()
 {
     externals.clear();
+}
+
+/**
+ * Callback from the ScriptTable as things are added or removed.
+ * This takes the place of the older deferred installation
+ * with save/cancel.
+ *
+ * ScriptTable is old and path-oriented, it should be redesigned
+ * to work directly with the new ScriptRegistry::External model
+ * and convey incremental changes.  But for now, I'm making it look
+ * to ScriptClerk like we're still doing things in bulk.
+ */
+void ScriptConfigEditor::scriptTableChanged()
+{
+    if (isImmediate()) {
+        juce::StringArray newPaths = externals.getResult();
+        ScriptClerk* clerk = supervisor->getScriptClerk();
+        clerk->installExternals(this, newPaths);
+    }
 }
 
 void ScriptConfigEditor::resized()

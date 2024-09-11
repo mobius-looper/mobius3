@@ -142,6 +142,7 @@
     <Button action="MidiStart"/>
     <Button action="droptest"/>
     <Button action="ShowPanel" arguments="scriptEditor"/>
+    <Button action="MOSTEST"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

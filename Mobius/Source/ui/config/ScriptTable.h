@@ -36,7 +36,7 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
 {
   public:
     
-    ScriptTable(class Supervisor* s);
+    ScriptTable(class Supervisor* s, class ScriptConfigEditor* parent);
     ~ScriptTable();
 
     /**
@@ -68,7 +68,8 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
 
   private:
     class Supervisor* supervisor = nullptr;
-
+    class ScriptConfigEditor* parent = nullptr;
+    
     juce::OwnedArray<class ScriptTableFile> files;
     
     ButtonBar commands;

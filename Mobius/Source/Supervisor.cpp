@@ -58,6 +58,7 @@
 #include "script/MobiusConsole.h"
 #include "script/MslExternal.h"
 #include "script/ActionAdapter.h"
+#include "script/ScriptRegistry.h"
 
 #include "Supervisor.h"
 
@@ -551,6 +552,9 @@ void Supervisor::timerCallback()
         mainWindow->grabKeyboardFocus();
         wantsFocus = false;
     }
+
+    // display the next alert queued from the audio thread
+    showPendingAlert();
 }
 
 MainWindow* Supervisor::getMainWindow()
@@ -848,9 +852,6 @@ void Supervisor::advance()
 
     // let MidiMonitors display things queued from the plugin
     midiManager.performMaintenance();
-
-    // display the next alert queued from the audio thread
-    showPendingAlert();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1989,9 +1990,7 @@ int Supervisor::getParameterMax(Symbol* s)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Tell Mobius to compile and install a pack of samples.
- * The samples will be whatever is defined in the SampleConfig
- * inside MobiusConfig.  We retain ownership of the SampleConfig.
+ * Reload the samples.
  */
 void Supervisor::menuLoadSamples(bool popup)
 {
@@ -2015,12 +2014,19 @@ void Supervisor::menuLoadSamples(bool popup)
 }
 
 /**
- * Reload all of the configured scripts.  This may be called from
- * a main menu item, or by other things that need to force reloading
- * of scripts after the configuration changes.
+ * Reload all of the configured scripts.
  *
- * Formerly used ScriptConfig from MobiusConfig, now uses the ScriptClerk
- * and ScriptRegistry.
+ * The need for this is diminishing after the introduction of the
+ * script library and trying to maintain the loaded state after editing
+ * in ScriptConfigPanel and the ScriptEditor.
+ *
+ * It is still necessary for users that like to do it the old way and
+ * edit files with their own text editor outside the library.
+ *
+ * Technically we should only need to refresh things that are registered
+ * as externals since those are the only file paths the user will normally
+ * know about.  But refresh the entire registry, which might be useful to
+ * clear up inconsistencies.
  */
 void Supervisor::menuLoadScripts(bool popup)
 {
@@ -2030,25 +2036,39 @@ void Supervisor::menuLoadScripts(bool popup)
     scriptClerk.refresh();
     
     // old scripts for Mobius
+    int oldInstalled = 0;
     ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
+    for (ScriptRef* ref = oldScripts->getScripts() ; ref != nullptr ; ref = ref->getNext())
+      oldInstalled++;
     mobius->installScripts(oldScripts);
     scriptClerk.saveErrors(oldScripts);
     delete oldScripts;
 
     // new MSL scripts
-    scriptClerk.installMsl();
+    int mslInstalled = scriptClerk.installMsl();
 
     // gather interesting stats for the alert
-    // need MUCH more here
-    int count = 0;
-    for (auto symbol : symbols.getSymbols()) {
-        if (symbol->script != nullptr) 
-          count++;
-    }
-    juce::String msg = juce::String(count) + " scripts loaded";
+    // this could be MUCH more informative but it could explode if there
+    // were a lot of errors
+    // easiest thing is to say how many files had errors and lead them
+    // to one of the UI to investigate
+    
+    juce::String msg = juce::String(oldInstalled + mslInstalled) + " scripts loaded";
 
-    // formerly had a "missing files" message as well but lost the interface
-    // to find that after the ScriptRegistry migration
+    int errors = 0;
+    int missing = 0;
+    ScriptRegistry::Machine* machine = scriptClerk.getMachine();
+    for (auto file : machine->files) {
+        if (file->hasErrors())
+          errors++;
+        if (file->missing)
+          missing++;
+    }
+    if (errors > 0)
+      msg += "\n" + juce::String(errors) + " scripts have errors";
+    
+    if (missing > 0)
+      msg += "\n" + juce::String(errors) + " script files could not be found";
     
     if (popup)
       alert(msg);

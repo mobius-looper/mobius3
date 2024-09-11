@@ -317,7 +317,9 @@ void ScriptEditorFile::finishSaveNew(juce::File dest)
     ScriptClerk* clerk = supervisor->getScriptClerk();
     bool saved = clerk->addFile(parent, file);
     if (!saved) {
-        logError("File save failed");
+        logError("File save failed, possible permissions problem");
+        // must have been a permission problem or something
+        // ownership of the File was not transferred, keep it and try again
     }
     else {
         // ownership of the File has transferred

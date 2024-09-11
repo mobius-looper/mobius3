@@ -11,11 +11,13 @@
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
 
+#include "ScriptConfigEditor.h"
 #include "ScriptTable.h"
 
-ScriptTable::ScriptTable(Supervisor* s)
+ScriptTable::ScriptTable(Supervisor* s, ScriptConfigEditor* sce)
 {
     supervisor = s;
+    parent = sce;
     setName("ScriptTable");
 
     initTable();
@@ -210,6 +212,10 @@ void ScriptTable::buttonClicked(juce::String name)
             files.remove(row);
             table.updateContent();
             // auto-select the one after it?
+
+            // notify the containing editor that a file was removed
+            if (parent != nullptr)
+              parent->scriptTableChanged();
         }
     }
 }
@@ -330,7 +336,7 @@ void ScriptTable::cellDoubleClicked(int rowNumber, int columnId, const juce::Mou
     
     ScriptTableFile* tfile = files[rowNumber];
     ScriptClerk* clerk = supervisor->getScriptClerk();
-    ScriptRegistry::File* file = clerk->getFile(tfile->path);
+    ScriptRegistry::File* file = clerk->findFile(tfile->path);
     if (file != nullptr)
       supervisor->getMainWindow()->editScript(file);
 }
@@ -431,6 +437,9 @@ void ScriptTable::doFileChooser()
             table.updateContent();
             // select it, it will be the last
             table.selectRow(files.size() - 1);
+
+            if (parent != nullptr)
+              parent->scriptTableChanged();
         }
         
     });

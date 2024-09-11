@@ -140,6 +140,14 @@ class ConfigEditor : public juce::Component {
     virtual juce::String getTitle() = 0;
 
     /**
+     * Return true if this editor wants a single "Done" button rather
+     * than Save/Cancel.
+     */
+    virtual bool isImmediate() {
+        return false;
+    }
+
+    /**
      * Instructs the editor to load the current state of an object.
      * Any pending editing state is caneled.  This is normally called
      * when displaying an editor for the first time or after it had been

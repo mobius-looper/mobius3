@@ -141,7 +141,7 @@ void ScriptLibraryTable::initColumns()
     // example used 1 based column ids, is that necessary?
 
     header.addColumn(juce::String("Name"), ColumnName,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Status"), ColumnStatus, 100, 30, -1, columnFlags);
+    header.addColumn(juce::String("Status"), ColumnStatus, 200, 30, -1, columnFlags);
     // leave the path out here, put it in details
 }
 
@@ -254,16 +254,25 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
         cell = file->name;
     }
     else if (columnId == ColumnStatus) {
-        if (file->disabled)
-          cell = "disabled";
-        else if (file->hasErrors())
-          cell = "error";
-        else if (file->old)
-          cell = "old";
-        else if (file->getDetails() == nullptr)
-          cell = "unloaded";
+        MslDetails* fdetails = file->getDetails();
+
+        if (!file->old)
+          cell += "MSL ";
         else
-          cell = "enabled";
+          cell += "MOS ";
+
+        if (file->external != nullptr)
+          cell += "external ";
+        
+        if (file->disabled)
+          cell += "disabled ";
+        else if (!file->old && (fdetails == nullptr || !fdetails->published))
+          cell += "unloaded ";
+        else
+          cell += "enabled ";
+          
+        if (file->hasErrors())
+          cell = "errors ";
     }
     
     return cell;

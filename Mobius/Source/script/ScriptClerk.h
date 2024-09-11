@@ -48,7 +48,13 @@ class ScriptClerk {
     // configuartion UI listeners
     void addListener(Listener* l);
     void removeListener(Listener* l);
-    
+
+    // looking for things
+    class ScriptRegistry* getRegistry();
+    class ScriptRegistry::Machine* getMachine();
+    juce::File getLibraryFolder();
+    class ScriptRegistry::File* findFile(juce::String path);
+    bool isInLibraryFolder(juce::String path);
     
     //
     // Supervisor Interface
@@ -56,18 +62,24 @@ class ScriptClerk {
     
     void initialize();
     void refresh();
-    void installMsl();
     void saveRegistry();
+    int installMsl();
 
+    // translation for old scripts
     class ScriptConfig* getMobiusScriptConfig();
     void saveErrors(class ScriptConfig* c);
 
     // file drop from MainWindow
     void filesDropped(juce::StringArray& files);
 
-    // special for UpgradePanel
-    juce::StringArray getExternalPaths();
+    //
+    // ScriptConfigEditor Interface
+    //
 
+    void enable(class ScriptRegistry::File* file);
+    void disable(class ScriptRegistry::File* file);
+    void installExternals(Listener* source, juce::StringArray newPaths);
+    
     //
     // ScriptEditor Interface
     //
@@ -76,68 +88,34 @@ class ScriptClerk {
     bool addFile(Listener* source, class ScriptRegistry::File* file);
     bool deleteFile(Listener* source, class ScriptRegistry::File* file);
 
-    //
-    // ScriptConfigEditor Interface
-    //
-
-    void installExternals(Listener* source, juce::StringArray newPaths);
-    void enable(class ScriptRegistry::File* file);
-    void disable(class ScriptRegistry::File* file);
-    
 
     //
     // Console/UI Interfaces
     //
 
-    class ScriptRegistry* getRegistry();
-    class ScriptRegistry::Machine* getMachine();
-    class ScriptRegistry::File* getFile(juce::String path);
     class MslDetails* loadFile(juce::String path);
 
   private:
 
     class Supervisor* supervisor = nullptr;
-    class MslEnvironment* environment = nullptr;
     std::unique_ptr<class ScriptRegistry> registry;
     juce::Array<Listener*> listeners;
 
-    //
-    // Fundamental Registry Management
-    //
-    
-    void loadRegistry();
+    // Registry housekeeping
     void reconcile();
     void scanFolder(class ScriptRegistry::Machine* machine, juce::File jfolder, class ScriptRegistry::External* ext);
-    void scanFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
+    ScriptRegistry::File* scanFile(class ScriptRegistry::Machine* machine, juce::File jfile, class ScriptRegistry::External* ext);
     void scanOldFile(class ScriptRegistry::File* sfile, juce::File jfile);
 
+    // installation support
     bool isInstallable(class ScriptRegistry::File* file);
     void refreshDetails();
     void updateDetails(class ScriptRegistry::File* regfile, class MslDetails* details);
-    
+    void notifyFileDeleted(Listener* listener, class ScriptRegistry::File* file);
+    void notifyFileAdded(Listener* listener, class ScriptRegistry::File* file);
+
     void chooseDropStyle(juce::StringArray files);
     void doFilesDropped(juce::StringArray files, juce::String style);
-    void reload(juce::String path);
 
     
-    void uninstallFile(Listener* source, class ScriptRegistry::File* file, bool linkNow);
-    void installNewFile(Listener* source, class ScriptRegistry::File* file, bool linkNow);
-
-    
-    // old code: delete when ready
-#if 0    
-    /**
-     * Process the ScriptConfig and split it into two, one containing only
-     * .mos files and one containing .msl files.
-     */
-    void split(class ScriptConfig* src);
-    void splitFile(juce::File f);
-    void splitDirectory(juce::File dir);
-    void splitDirectory(juce::File dir, juce::String extension);
-    juce::String normalizePath(juce::String src);
-    juce::String expandPath(juce::String src);
-    void loadInternal(juce::String path);
-#endif
-    
-
 };
