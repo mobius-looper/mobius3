@@ -20,6 +20,20 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 20
+- Fix issue where long-press scripts didn't work until after editing the configuration
+- Fix crash changing button colors with "All" and "Some"
+- Alert display element and a few others can now be corner resized
+- Loop Meter element can be resized to allow for more stacked events
+- Remove "Alert Height" layout property
+- Fix TrackGroup function for changing group assignments with bindings
+- Increase maximum alert duration to infinity, and beyond
+- The configured sync output device will now be used for MIDI clocks
+- Reorganization of binding set selection, now with menus
+- Fix calculations and trace log flood when using ManualStart with OutSync mode
+- Add the concept of the Script Library with drag-and-drop file loading
+- Add the Script Editor for in application script inspection
+  
 ## Build 19
 - Dispay Layouts properties for alertHeight and alertDuration
 - Don't popup an alert when ReloadScripts is used from a binding
