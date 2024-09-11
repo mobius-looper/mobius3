@@ -98,7 +98,7 @@
     <InstantParameters names="activePreset,activeButtons,quantize,activeLayout,subcycles,switchQuantize,emptyLoopAction"/>
   </Layout>
   <ButtonSet name="Default">
-    <Button action="GlobalReset" color="-13969235"/>
+    <Button action="GlobalReset" color="-15707416"/>
     <Button action="TrackReset"/>
     <Button action="Reset"/>
     <Button action="Record"/>
@@ -117,7 +117,7 @@
     <Button action="BindingArgTest"/>
     <Button action="MainTap Track1"/>
     <Button action="Setup Name Test"/>
-    <Button action="ReloadScripts"/>
+    <Button action="ReloadScripts" color="-1440250"/>
     <Button action="MainTap Track1"/>
     <Button action="Pause" arguments="noquant"/>
     <Button action="GlobalPause"/>
@@ -131,7 +131,6 @@
     <Button action="Shuffle"/>
     <Button action="StartCapture"/>
     <Button action="SaveCapture"/>
-    <Button action="ReloadScripts"/>
     <Button action="Message" arguments="Hello!"/>
     <Button action="TrackGroup" arguments="next"/>
     <Button action="TrackGroup" arguments="prev"/>
@@ -142,7 +141,7 @@
     <Button action="MidiStart"/>
     <Button action="droptest"/>
     <Button action="ShowPanel" arguments="scriptEditor"/>
-    <Button action="MOSTEST"/>
+    <Button action="MOSTEST" color="-1440250"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

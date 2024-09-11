@@ -133,6 +133,10 @@ void ButtonPopup::buttonClicked(juce::Button* command)
         }
     }
 
+    // updating UIConfig will indirectly regenerate ActionButtons.buttons list so you
+    // must not be iterating over them after this
+    actionButtons->getSupervisor()->updateUIConfig();
+
     close();
 }
 
@@ -164,14 +168,13 @@ void ButtonPopup::change(ActionButton* b, int color)
             Trace(1, "ActionButtons: Can't color unmatched button %s\n", action->symbol->getName());
         }
         else {
+            // save it both locally and in the UIConfig
+            // really only UIConfig is important because once we're done changing
+            // colors this will update the UIConfig and cause propagation back to
+            // ActionButtons which rebuilds the ActionButton list with the stored colors
             b->setColor(color);
-            // always save it or wait for shutdown?
-            // setting dirty doesn't work, and is unreliable anyway
-            // because something else can cause UIConfig to get reloaded
-            // save it now
             db->color = color;
             config->dirty = true;
-            actionButtons->getSupervisor()->updateUIConfig();
         }
     }
 }
