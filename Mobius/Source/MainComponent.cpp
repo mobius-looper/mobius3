@@ -23,6 +23,11 @@ MainComponent::MainComponent() :
     // Jeff's component tree debugging hack
     setName("MainComponent");
 
+    // experiment
+    // !! examples say that if you set this you
+    // need to set it to nullptr when destroyed
+    //juce::LookAndFeel::setDefaultLookAndFeel(&laf);
+
     // Startup can do a lot of thigns, perhais we should have different
     // phases, first to load any configuration related to the initial window size
     // and device configuration, and then another to start up the engine.

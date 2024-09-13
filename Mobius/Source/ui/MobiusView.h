@@ -46,6 +46,11 @@ class MobiusViewEvent {
      * True if this is a pending event without specific frame
      */
     bool pending = false;
+
+    /**
+     * Numeric name qualifier
+     */
+    int argument = 0;
 };
 
 /**
@@ -62,6 +67,12 @@ class MobiusViewLoop
      */
     int frames;
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Track
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The state of one track.
@@ -81,7 +92,8 @@ class MobiusViewTrack {
      * Symbolic name if the track has one.
      */
     juce::String name;
-
+    bool refreshName = false;
+    
     /**
      * True if this is a midi track.  Could evolve into a more
      * general type enumeration.
@@ -142,7 +154,7 @@ class MobiusViewTrack {
      * The major mode the loop is in.
      */
     juce::String mode;
-    bool modeRefresh = false;
+    bool refreshMode = false;
 
     /**
      * The minor modes the loop is in.
@@ -152,7 +164,7 @@ class MobiusViewTrack {
      * Leave as strings for now until MIDI modes settle down.
      */
     juce::StringArray minorModes;
-    bool minorModesRefresh = false;
+    bool refreshMinorModes = false;
 
     /**
      * True if the loop is in any recording mode
@@ -197,7 +209,7 @@ class MobiusViewTrack {
      */
 	bool 	beatLoop = false;
 	bool	beatCycle = false;
-	bool 	beatSubCycle = false;
+	bool 	beatSubcycle = false;
 
     /**
      * Loop window state
@@ -221,14 +233,14 @@ class MobiusViewTrack {
     /**
      * The total number of layers
      */
-    int layers = 0;
+    int layerCount = 0;
 
     /**
      * The active layer.  If this is less than the number of layers, then
      * the ones following this one are the redo layers.  The ones preceeding
      * it are the undo layers.
      */
-    int layer;
+    int activeLayer = 0;
 
     /**
      * Layer numbers that are checkpoints.
@@ -238,7 +250,7 @@ class MobiusViewTrack {
      */
     juce::Array<int> checkpoints;
 
-    bool layersRefresh = false;
+    bool refreshLayers = false;
 
     //
     // Events
@@ -249,7 +261,9 @@ class MobiusViewTrack {
 
     int eventCount = 0;
     juce::OwnedArray<MobiusViewEvent> events;
-    bool eventsRefresh = false;
+    bool refreshEvents = false;
+
+  private:
 
 };
 
@@ -267,6 +281,12 @@ class MobiusView
     MobiusViewTrack* track = nullptr;
 
     // todo: SyncState
+
+    void reset();
+    
+  private:
+    
+    
 };
 
 /****************************************************************************/

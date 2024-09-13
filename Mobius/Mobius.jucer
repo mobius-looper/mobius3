@@ -187,6 +187,11 @@
         <FILE id="lTQjDK" name="XmlRenderer.h" compile="0" resource="0" file="Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{65649B8C-FFE3-B772-6B79-EF729D3BCE34}" name="ui">
+        <FILE id="hLBOHa" name="MobiusView.cpp" compile="1" resource="0" file="Source/ui/MobiusView.cpp"/>
+        <FILE id="GkrLrx" name="MobiusViewer.cpp" compile="1" resource="0"
+              file="Source/ui/MobiusViewer.cpp"/>
+        <FILE id="SsOTEl" name="MobiusViewer.h" compile="0" resource="0" file="Source/ui/MobiusViewer.h"/>
+        <FILE id="ZPbdmr" name="MobiusView.h" compile="0" resource="0" file="Source/ui/MobiusView.h"/>
         <FILE id="lrrI1w" name="WindowFactory.cpp" compile="1" resource="0"
               file="Source/ui/WindowFactory.cpp"/>
         <FILE id="LfilVy" name="WindowFactory.h" compile="0" resource="0" file="Source/ui/WindowFactory.h"/>

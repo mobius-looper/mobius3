@@ -830,6 +830,10 @@ void Supervisor::advance()
         if (mainComponent != nullptr || pluginEditorOpen) {
         
             // traverse the display components telling then to reflect changes in the engine
+
+            // eventual replacement for MobiusState
+            mobiusViewer.refresh(mobius, &mobiusView);
+            
             MobiusState* state = mobius->getState();
 
             // was doing this directly in mobiusTimeBoundary but that

@@ -43,6 +43,9 @@
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
 
+#include "ui/MobiusView.h"
+#include "ui/MobiusViewer.h"
+
 class Supervisor : public MobiusContainer, public MobiusListener, public MslContext,
                    juce::Timer
 {
@@ -169,6 +172,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     class MobiusInterface* getMobius() {
         return mobius;
+    }
+
+    class MobiusView* getMobiusView() {
+        return &mobiusView;
     }
     
     // !! these should just return references
@@ -359,6 +366,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // I took that out so it could be, but I'm letting Supervisor handle
     // that for awhile to prevent disruption
     class MobiusInterface* mobius = nullptr;
+
+    // view of above
+    MobiusView mobiusView;
+    MobiusViewer mobiusViewer {this};
     
     // the root of the user interface
     std::unique_ptr<class MainWindow> mainWindow;
