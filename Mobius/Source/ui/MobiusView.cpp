@@ -11,11 +11,14 @@ void MobiusView::reset()
     trackCount = 0;
     track = nullptr;
     for (auto t : tracks) {
+        t->forceRefresh = false;
         t->number = 0;
         t->name = "";
         t->refreshName = false;
         t->midi = false;
-        t->groups.clear();
+        t->groupOrdinal = -1;
+        t->groupName = "";
+        t->groupColor = 0;
         t->focused = false;
         t->inputLevel = 0;
         t->outputLevel = 0;
@@ -25,7 +28,8 @@ void MobiusView::reset()
         t->solo = false;
         t->inputMonitorLevel = 0;
         t->outputMonitorLevel = 0;
-        t->loopNumber = 0;
+        t->loopCount = 0;
+        t->activeLoop = 0;
         t->mode = "";
         t->refreshMode = false;
         t->minorModes.clear();
@@ -47,18 +51,17 @@ void MobiusView::reset()
         t->beatSubcycle = false;
         t->windowOffset;
         t->historyFrames;
-        
-        t->layerCount = 0;
-        t->activeLayer = 0;
-        t->refreshLayers = false;
-    
-        t->loopCount = 0;
+
         // don't need to clear it as long as count goes zero
         //t->loops.clear();
-        t->checkpoints.clear();
         
+        t->refreshLayers = false;
+        t->layerCount = 0;
+        t->activeLayer = 0;
+        t->checkpoints.clear();
+    
+        t->refreshEvents = false;
         t->eventCount = 0;
         //t->events.clear();
-        t->refreshEvents = false;
     }
 }

@@ -1,11 +1,20 @@
 /**
- * Intermediary to refresh the MobiusView from Mobius internal state
- * including the emerging MIDI tracks.
+ * The purpose of the view/viewer is to provide a cleaner base model for the
+ * UI to refresh itself and hide the old MobiusState and a few other core classes
+ * as those are redesigned.
+ *
+ * It also does some useful difference detection which could grow into the foundation
+ * for MIDI export and OSC export.
+ *
+ * And finally it combines old Mobius audio tracks with new MIDI tracks so the
+ * UI doesn't have to care about the differences.
  */
 
 #pragma once
 
 #include <JuceHeader.h>
+
+#include "../model/Query.h"
 
 class MobiusViewer
 {
@@ -19,16 +28,26 @@ class MobiusViewer
   private:
 
     class Supervisor* supervisor = nullptr;
+    Query subcyclesQuery;
     
-    // various state maintained for difference detection
-    // might be better to have these in the view itself?
-    int setupOrdinal = -1;
-    int setupVersion = -1;
+    void refreshTrack(class MobiusState* state, class MobiusTrackState* tstate,
+                      class MobiusView* mview, class MobiusViewTrack* vt,
+                      bool active);
 
-    void refreshTrack(class MobiusState* state, class MobiusTrackState* tstate, bool active,
-                      class MobiusViewTrack* vt);
+    void refreshTrackName(class MobiusState* state, class MobiusTrackState* tstate,
+                          class MobiusView* mview, class MobiusViewTrack* tview);
 
-    void refreshTrackName(class MobiusState* state, class MobiusTrackState* tstate, class MobiusViewTrack* tview);
-    void refreshMode(class MobiusTrackState* track, class MobiusViewTrack* vt);
+    void refreshTrackProperties(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshTrackGroups(class MobiusTrackState* tstate,  class MobiusViewTrack* tview);
+    void refreshInactiveLoops(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshActiveLoop(class MobiusTrackState* tstate, class MobiusLoopState* lstate,
+                           bool activeTrack, class MobiusViewTrack* tview);
+    void refreshMode(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshSubcycles(class MobiusViewTrack* tview);
+    void refreshLayers(class MobiusLoopState* lstate, class MobiusViewTrack* tview);
+    void refreshEvents(class MobiusLoopState* lstate, class MobiusViewTrack* tview);
+    void refreshMinorModes(class MobiusTrackState* tstate, class MobiusLoopState* lstate,
+                           class MobiusViewTrack* tview);
 
+    
 };

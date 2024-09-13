@@ -26,6 +26,12 @@
 
 #include <JuceHeader.h>
 
+//////////////////////////////////////////////////////////////////////
+//
+// Events & Inactive Loops
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * The state of one event
  */
@@ -66,6 +72,10 @@ class MobiusViewLoop
      * The old model had a lot more in here, not sure why.
      */
     int frames;
+
+    // old model had flags for active and pending
+    // but we can figure those out from the track view
+    
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -79,7 +89,16 @@ class MobiusViewLoop
  * This may be either an audio or MIDI track.
  */
 class MobiusViewTrack {
+    
+    friend class MobiusViewer;
+    
   public:
+
+    /**
+     * Flag to force a full refresh of everything
+     */
+    bool forceRefresh = false;
+   
 
     /**
      * 1 based track number
@@ -103,10 +122,14 @@ class MobiusViewTrack {
     /**
      * Groups this track is in
      * Currently a track can only be in one group but that will change.
-     * Groups have names
+     * Groups have names and colors.
      */
-    juce::StringArray groups;
-
+    // juce::StringArray groups;
+    int groupOrdinal = -1;
+    juce::String groupName;
+    int groupColor = 0;
+    bool refreshGroup = false;
+    
     /**
      * True if the track has action focus.
      */
@@ -146,9 +169,9 @@ class MobiusViewTrack {
     int loopCount = 0;
 
     /**
-     * The 1 based number of the active loop.
+     * The 0 based index of the active loop
      */
-    int loopNumber = 0;
+    int activeLoop = 0;
 
     /**
      * The major mode the loop is in.
@@ -217,6 +240,26 @@ class MobiusViewTrack {
     long    windowOffset;
     long    historyFrames;
 
+    //
+    // Minor Modes
+    //
+	bool overdub = false;
+    int speedToggle = 0;
+    int speedOctave = 0;
+	int speedStep = 0;
+	int speedBend = 0;
+    int pitchOctave = 0;
+	int pitchStep = 0;
+	int pitchBend = 0;
+	int timeStretch = 0;
+	bool trackSyncMaster = false;
+	bool outSyncMaster = false;
+    bool window = false;
+
+    // where do these belong?
+    bool globalMute = false;
+    bool globalPause = false;
+    
     /**
      * Summaries for inactive loops
      * This may be larger than loopCount when the user is changing
@@ -229,6 +272,8 @@ class MobiusViewTrack {
     //
     // Layers
     //
+
+    bool refreshLayers = false;
 
     /**
      * The total number of layers
@@ -250,8 +295,6 @@ class MobiusViewTrack {
      */
     juce::Array<int> checkpoints;
 
-    bool refreshLayers = false;
-
     //
     // Events
     // These are somewhat complex and dynamic
@@ -259,24 +302,34 @@ class MobiusViewTrack {
     // ones with valid state are the ones below eventCount
     //
 
+    bool refreshEvents = false;
     int eventCount = 0;
     juce::OwnedArray<MobiusViewEvent> events;
-    bool refreshEvents = false;
 
-  private:
+  protected:
 
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Root View
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The root view of the mobius engine
  */
 class MobiusView
 {
+    friend class MobiusViewer;
+    
   public:
 
     juce::OwnedArray<MobiusViewTrack> tracks;
 
-    int trackCount;
+    int trackCount = 0;
+    int audioTracks = 0;
+    int midiTracks = 0;
 
     MobiusViewTrack* track = nullptr;
 
@@ -284,7 +337,11 @@ class MobiusView
 
     void reset();
     
-  private:
+  protected:
+
+    // various state maintained for difference detection
+    int setupOrdinal = -1;
+    int setupVersion = -1;
     
     
 };
