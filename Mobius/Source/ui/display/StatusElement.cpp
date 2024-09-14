@@ -47,6 +47,11 @@ void StatusElement::update(class MobiusView* view)
     (void)view;
 }
 
+MobiusView* StatusElement::getMobiusView()
+{
+    return statusArea->getSupervisor()->getMobiusView();
+}
+
 // these should probably be pure virtual
 // any useful thing to do in a default implementation?
 

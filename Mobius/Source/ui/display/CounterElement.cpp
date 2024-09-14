@@ -13,7 +13,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -64,20 +63,16 @@ void CounterElement::resized()
 
 void CounterElement::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+    MobiusViewTrack* track = view->track;
+    
+    if (view->trackChanged || track->loopChanged ||
+        lastFrame != track->frame ||
+        lastCycle != track->cycle ||
+        lastCycles != track->cycles) {
 
-    // has anything changed?
-    if (loopNumber != loop->number ||
-        loopFrame != loop->frame ||
-        cycle != loop->cycle ||
-        cycles != loop->cycles) {
-
-        loopNumber = loop->number;
-        loopFrame = (int)(loop->frame);
-        cycle = loop->cycle;
-        cycles = loop->cycles;
+        lastFrame = track->frame;
+        lastCycle = track->cycle;
+        lastCycles = track->cycles;
 
         repaint();
     }
@@ -85,6 +80,9 @@ void CounterElement::update(MobiusView* view)
 
 void CounterElement::paint(juce::Graphics& g)
 {
+    MobiusView* view = getMobiusView();
+    MobiusViewTrack* track = view->track;
+    
     // borders, labels, etc.
     StatusElement::paint(g);
     if (isIdentify()) return;
@@ -108,16 +106,14 @@ void CounterElement::paint(juce::Graphics& g)
     
     // loop number
     // this is already 1 based
-    g.drawText(juce::String(loopNumber), area.removeFromLeft(digitWidth),
+    g.drawText(juce::String(track->activeLoop + 1), area.removeFromLeft(digitWidth),
                juce::Justification::centredLeft);
 
     // gap
     area.removeFromLeft(digitWidth);
 
     // seconds . tenths
-    // !! need to be capturing sampleRate from the config
-    int hackSampleRate = 44100;
-    int totalTenths = loopFrame / (hackSampleRate / 10);
+    int totalTenths = track->frame / (view->sampleRate / 10);
     int tenths = totalTenths % 10;
     int seconds = totalTenths / 10;
     
@@ -137,8 +133,8 @@ void CounterElement::paint(juce::Graphics& g)
     // cycle is one based
     // some comments thought that cycles would be zero if the loop was empty
     // but I think this is wrong
-    int cycleToDraw = cycle;
-    int cyclesToDraw = (cycles > 0) ? cycles : 1;
+    int cycleToDraw = track->cycle;
+    int cyclesToDraw = (track->cycles > 0) ? track->cycles : 1;
     
     g.drawText(juce::String(cycleToDraw), area.removeFromLeft(digitWidth * 2),
                juce::Justification::centredRight);

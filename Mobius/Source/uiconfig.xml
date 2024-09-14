@@ -110,39 +110,8 @@
     <Button action="Reverse"/>
     <Button action="Halfspeed"/>
     <Button action="Multiply"/>
-    <Button action="SamplePlay" arguments="1"/>
-    <Button action="SuSTest"/>
-    <Button action="ClickTest"/>
-    <Button action="BindingArgTest" arguments="asdf,x,y,z"/>
-    <Button action="BindingArgTest"/>
-    <Button action="MainTap Track1"/>
-    <Button action="Setup Name Test"/>
-    <Button action="ReloadScripts" color="-1440250"/>
-    <Button action="MainTap Track1"/>
-    <Button action="Pause" arguments="noquant"/>
-    <Button action="GlobalPause"/>
-    <Button action="GlobalMute"/>
-    <Button action="AutoRecord"/>
-    <Button action="MainTap Track25"/>
-    <Button action="Muteit"/>
-    <Button action="SyncMasterTrack"/>
-    <Button action="Confirm"/>
-    <Button action="SamplePlay" arguments="1"/>
-    <Button action="Shuffle"/>
-    <Button action="StartCapture"/>
-    <Button action="SaveCapture"/>
-    <Button action="Message" arguments="Hello!"/>
-    <Button action="TrackGroup" arguments="next"/>
-    <Button action="TrackGroup" arguments="prev"/>
-    <Button action="TrackGroup" arguments="-1"/>
-    <Button action="Preset:Default"/>
-    <Button action="SetBindings"/>
-    <Button action="MidiStop"/>
-    <Button action="MidiStart"/>
-    <Button action="droptest"/>
-    <Button action="ShowPanel" arguments="scriptEditor"/>
-    <Button action="MOSTEST" color="-1440250"/>
-    <Button action="BindingSet2"/>
+    <Button action="Redo"/>
+    <Button action="Redo"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

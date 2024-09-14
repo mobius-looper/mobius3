@@ -4,8 +4,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/MobiusState.h"
-
 #include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
@@ -36,17 +34,15 @@ int LoopWindowElement::getPreferredWidth()
  */
 void LoopWindowElement::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+    MobiusViewTrack* track = view->track;
 
-    if (mWindowOffset != loop->windowOffset ||
-        mWindowFrames != loop->frames ||
-        mHistoryFrames != loop->historyFrames) {
+    if (mWindowOffset != track->windowOffset ||
+        mWindowFrames != track->frames ||
+        mHistoryFrames != track->windowHistoryFrames) {
 
-		mWindowOffset = (int)(loop->windowOffset);
-        mWindowFrames = (int)(loop->frames);
-        mHistoryFrames = (int)(loop->historyFrames);
+		mWindowOffset = track->windowOffset;
+        mWindowFrames = track->frames;
+        mHistoryFrames = track->windowHistoryFrames;
 
         repaint();
 	}

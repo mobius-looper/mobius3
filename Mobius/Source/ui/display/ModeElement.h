@@ -24,7 +24,6 @@ class ModeElement : public StatusElement
 
   private:
 
-    juce::String current;
 };
 
     

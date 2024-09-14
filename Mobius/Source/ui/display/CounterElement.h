@@ -24,18 +24,14 @@ class CounterElement : public StatusElement
 
   private:
 
-    // numbers currently being displayed
-
-    int loopNumber = 0;
-    int loopFrame = 0;
-    int cycle = 0;
-    int cycles = 0;
-
-    // captured this from config, I guess to keep from having
-    // to go back there
-    int sampleRate = 0;
-
+    // cached width for paint
     int digitWidth = 0;
+
+    // repaint difference detection
+    int lastFrame = 0;
+    int lastCycle = 0;
+    int lastCycles = 0;
+
 };
 
     

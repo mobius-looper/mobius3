@@ -85,6 +85,9 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusVi
     // one so the old code can still get to it
     view->oldState = state;
 
+    // Counter needs this
+    view->sampleRate = supervisor->getSampleRate();
+
     resetRefreshTriggers(view);
 
     // detect active Setup changes
@@ -117,6 +120,7 @@ void MobiusViewer::resetRefreshTriggers(MobiusView* view)
     for (auto t : view->tracks) {
         t->refreshName = false;
         t->refreshGroup = false;
+        t->loopChanged = false;
         t->refreshMode = false;
         t->refreshMinorModes = false;
         t->refreshLayers = false;
@@ -307,8 +311,7 @@ void MobiusViewer::refreshTrackGroups(MobiusTrackState* tstate,  MobiusViewTrack
 void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->loopCount = tstate->loopCount;
-    tview->activeLoop = tstate->activeLoop;
-    
+
     for (int i = 0 ; i < tstate->loopCount ; i++) {
         MobiusLoopState* lstate = &(tstate->loops[i]);
         // grow the loop views as necessary
@@ -344,8 +347,11 @@ void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrac
 void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* lstate,
                                      bool activeTrack, MobiusViewTrack* tview)
 {
-    tview->activeLoop = tstate->activeLoop;
-
+    if (tstate->activeLoop != tview->activeLoop) {
+        tview->activeLoop = tstate->activeLoop;
+        tview->loopChanged = true;
+    }
+    
     // things important for both the main display and the track strips
     tview->recording = lstate->recording;
     tview->pause = lstate->paused;
@@ -383,7 +389,7 @@ void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* 
     
     // various
     tview->windowOffset = lstate->windowOffset;
-    tview->historyFrames = lstate->historyFrames;
+    tview->windowHistoryFrames = lstate->historyFrames;
 
     if (activeTrack)
       refreshLayers(lstate, tview);
@@ -580,7 +586,11 @@ void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview
             const char* newName = "???";
             if (estate->type != nullptr) newName = estate->type->getName();
 
-            ve->name = juce::String(newName) + " " + juce::String(ve->argument);
+            ve->name = juce::String(newName);
+            // the argument is only visible if it is non-zero
+            if (ve->argument > 0)
+              ve->name += " " + juce::String(ve->argument);
+            
             ve->frame = estate->frame;
             ve->pending = estate->pending;
             ve->argument = estate->argument;
@@ -689,8 +699,8 @@ void MobiusViewer::refreshMinorModes(MobiusTrackState* tstate, MobiusLoopState* 
         tview->windowOffset = lstate->windowOffset;
         refresh = true;
     }
-    if (lstate->historyFrames != tview->historyFrames) {
-        tview->historyFrames = lstate->historyFrames;
+    if (lstate->historyFrames != tview->windowHistoryFrames) {
+        tview->windowHistoryFrames = lstate->historyFrames;
         refresh = true;
     }
         

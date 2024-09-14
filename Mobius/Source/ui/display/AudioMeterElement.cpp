@@ -15,7 +15,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
 #include "../MobiusView.h"
 
@@ -55,16 +54,7 @@ const int AudioMeterElementInset = 2;
 
 void AudioMeterElement::update(MobiusView* view)
 {
-    int value = 0;
-    bool oldWay = false;
-    if (oldWay) {
-        MobiusState* state = view->oldState;
-        MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-        value = track->inputMonitorLevel;
-    }
-    else {
-        value = view->track->inputMonitorLevel;
-    }
+    int value = view->track->inputMonitorLevel;
     
 	if (savedValue != value && value >= 0 && value <= range) {
 		savedValue = value;

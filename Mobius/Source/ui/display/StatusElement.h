@@ -34,6 +34,8 @@ class StatusElement : public juce::Component
     bool allowsResize() {
         return resizes;
     }
+
+    class MobiusView* getMobiusView();
     
   protected:
     

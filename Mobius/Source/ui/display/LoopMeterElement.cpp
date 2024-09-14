@@ -10,7 +10,6 @@
 #include "../../util/Trace.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
-#include "../../model/MobiusState.h"
 #include "../../model/UIEventType.h"
 #include "../../model/Symbol.h"
 #include "../../model/Query.h"
@@ -45,10 +44,6 @@ const int MarkerOverhang = MarkerArrowWidth / 2;
 LoopMeterElement::LoopMeterElement(StatusArea* area) :
     StatusElement(area, "LoopMeterElement")
 {
-
-    // initialize the Query we use to dig out the runtime subcycles
-    // parameter value
-    subcyclesQuery.symbol = area->getSupervisor()->getSymbols()->intern("subcycles");
     resizes = true;
 }
 
@@ -69,55 +64,27 @@ int LoopMeterElement::getPreferredWidth()
 }
 
 /**
- * This one is unusual because the event list is complcated
- * and we can't easilly do difference detection to trigger repaing.
- * Instead, let the advance of the play frame trigger repaint,
- * and repaint all the events every time.
+ * This one is unusual because there is quite a lot in here and several
+ * things trigger repaints.
  *
- * To avoid copying the event list, remember a pointer into
- * the MobiusState which is known to live between calls.
- *
- * This one is also unusual because the tick marks are sensitive
- * to the subcycles value from the Preset so we have to dig that out
- * every time, even if the loop is not advancing.
+ * Since the thermometer and events are two different things
+ * they can be repainted independently, but have to trigger repaint for both.
  */
 void LoopMeterElement::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = state->activeTrack;
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-    MobiusLoopState* activeLoop = &(track->loops[track->activeLoop]);
+    MobiusViewTrack* track = view->track;
 
-    bool doRepaint = false;
-    
-    // full repaint if we changed to another loop since the last one
-    if (loop != activeLoop ||
-        lastFrames != loop->frames ||
-        lastFrame != loop->frame) {
+    if (view->trackChanged || track->loopChanged || track->refreshEvents ||
+        
+        lastFrames != track->frames ||
+        lastFrame != track->frame ||
+        lastSubcycles != track->subcycles) {
 
-        loop = activeLoop;
-        lastFrames = loop->frames;
-        lastFrame = loop->frame;
-        doRepaint = true;
+        lastFrame = track->frame;
+        lastFrames = track->frames;
+        lastSubcycles = track->subcycles;
+        repaint();
     }
-
-    int subcycles = 0;
-    if (statusArea->getSupervisor()->doQuery(&subcyclesQuery))
-      subcycles = subcyclesQuery.value;
-
-    if (subcycles == 0) {
-        // this comes from the Preset, so something bad happened
-        Trace(1, "LoopMeterElement: Subcycles query came back zero\n");
-        subcycles = 4;
-    }
-    
-    if (lastSubcycles != subcycles) {
-        lastSubcycles = subcycles;
-        doRepaint = true;
-    }
-
-    if (doRepaint)
-      repaint();
 }
 
 void LoopMeterElement::resized()
@@ -134,13 +101,12 @@ void LoopMeterElement::resized()
  */
 void LoopMeterElement::paint(juce::Graphics& g)
 {
+    MobiusViewTrack* track = getMobiusView()->track;
+    
     // borders, labels, etc.
     StatusElement::paint(g);
     if (isIdentify()) return;
     
-    // bypass if we don't have a loop, fringe testing case
-    if (loop == nullptr) return;
-
     // outer border around the meter bar
     int borderLeft = MarkerOverhang;
     int borderWidth = MeterBarWidth + BorderThickness * 2;
@@ -152,9 +118,8 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int thermoTop = BorderThickness;
     int thermoLeft = MarkerOverhang + BorderThickness;
 
-    // this is configurable so we have to go back to the Preset every time
-    int subcycles = lastSubcycles;
-    int cycles = loop->cycles;
+    int subcycles = track->subcycles;
+    int cycles = track->cycles;
     int totalSubcycles = subcycles * cycles;
     if (totalSubcycles == 0) {
         // saw this after deleting and readding a plugin
@@ -192,9 +157,9 @@ void LoopMeterElement::paint(juce::Graphics& g)
     }
     
     // meter bar
-    if (loop->frames > 0) {
-        int width = getMeterOffset(loop->frame);
-        g.setColour(Colors::getLoopColor(loop));
+    if (track->frames > 0) {
+        int width = getMeterOffset(track->frame, track->frames);
+        g.setColour(Colors::getLoopColor(track));
         g.fillRect((float)thermoLeft, (float)BorderThickness,
                    (float)width, (float)MeterBarHeight);
     }
@@ -208,12 +173,16 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int nameStart = eventInfoLeft;
     int nameEnd = nameStart + MeterBarWidth;
     int nameTop = eventInfoTop + MarkerArrowHeight;
-    if (loop->eventCount > 0) {
+
+    // optimization: only need to repaint events if they changed
+    // !! actually can't do this since the entire area is blanked on repaint
+    // fix that
+    //if (track->events.size() > 0 && track->refreshEvents) {
+    if (track->events.size() > 0) {
         int lastEventFrame = -1;
         int stackCount = 0;
-        for (int i = 0 ; i < loop->eventCount ; i++) {
-            MobiusEventState* ev = &(loop->events[i]);
-            int eventOffset = getMeterOffset(ev->frame);
+        for (auto ev : track->events) {
+            int eventOffset = getMeterOffset(ev->frame, track->frames);
             int eventCenter = eventInfoLeft + eventOffset;
             // should also stack if "close enough"
             // should really be testing the scaled location of the markers
@@ -235,26 +204,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
             
             g.setColour(juce::Colours::white);
             
-            // full names look better
-            // const char* symbol = ev->type->timelineSymbol;
-            const char* name = nullptr;
-            if (ev->type != nullptr)
-              name = ev->type->getName();
-            
-            // if there is an argument, include it, for loop switch this will
-            // be the loop number, what other event types use arguments?  may
-            // want this only for switch events
-            char fullname[256];
-            if (ev->argument > 0) {
-                snprintf(fullname, sizeof(fullname), "%s %d", name, (int)(ev->argument));
-                name = fullname;
-            }
-            
-            if (name == nullptr) {
-                name = "?";
-                Trace(1, "LoopMeter: Event with no name %s\n", ev->type->name);
-            }
-            int nameWidth = font.getStringWidth(name);
+            int nameWidth = font.getStringWidth(ev->name);
             int nameLeft = eventCenter - (nameWidth / 2);
             if (nameLeft < nameStart)
               nameLeft = nameStart;
@@ -263,7 +213,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
             
             int textTop = nameTop + (MarkerTextHeight * stackCount);
 
-            g.drawText(juce::String(name),nameLeft, textTop,
+            g.drawText(juce::String(ev->name),nameLeft, textTop,
                        nameWidth, MarkerTextHeight,
                        juce::Justification::left);
             stackCount++;
@@ -279,18 +229,18 @@ void LoopMeterElement::paint(juce::Graphics& g)
  * We're insetting the colored meter bar by 2 to give it a border.
  * Event markers need to track that too.
  */
-int LoopMeterElement::getMeterOffset(long frame)
+int LoopMeterElement::getMeterOffset(int frame, int frames)
 {
     int offset = 0;
 
-    if (loop->frames == 0) {
+    if (frames == 0) {
         // happened during testing, might happen if
         // we pre-schedule events before recording,
         // should push them to the end
     }
     else {
         // the percentage of the frame within the loop
-        float fraction = (float)frame / (float)(loop->frames);
+        float fraction = (float)frame / (float)frames;
 
         // the width we have available minus insets
         int width = MeterBarWidth;

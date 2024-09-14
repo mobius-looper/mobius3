@@ -39,7 +39,7 @@
  * So mLevel is the width of the level rectangle to draw taken as a
  * raction of the actual width times the value
  *
- * The value in MobiusState is calculated down in Stream as:
+ * The value in MobiusView is calculated down in Stream as:
  *  int OutputStream::getMonitorLevel()
  *  {
  *   	// convert to 16 bit integer

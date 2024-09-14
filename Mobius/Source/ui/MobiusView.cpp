@@ -59,8 +59,8 @@ void MobiusView::reset()
         t->beatLoop = false;
         t->beatCycle = false;
         t->beatSubcycle = false;
-        t->windowOffset;
-        t->historyFrames;
+        t->windowOffset = 0;
+        t->windowHistoryFrames = 0;
 
         // don't need to clear it as long as count goes zero
         //t->loops.clear();

@@ -172,7 +172,8 @@ class MobiusViewTrack {
      * The 0 based index of the active loop
      */
     int activeLoop = 0;
-
+    bool loopChanged = false;
+    
     /**
      * The major mode the loop is in.
      */
@@ -239,7 +240,7 @@ class MobiusViewTrack {
      * Loop window state
      */
     long    windowOffset;
-    long    historyFrames;
+    long    windowHistoryFrames;
 
     //
     // Minor Modes
@@ -349,6 +350,9 @@ class MobiusView
      * This impacts a few things like track names.
      */
     bool setupChanged = false;
+
+    // Counter needs this for time calculations
+    int sampleRate = 44100;
     
     // todo: SyncState
 
