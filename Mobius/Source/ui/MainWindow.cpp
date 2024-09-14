@@ -13,7 +13,6 @@
 
 #include "../util/Trace.h"
 #include "../model/UIConfig.h"
-#include "../model/MobiusState.h"
 #include "../model/UIAction.h"
 #include "../model/Symbol.h"
 #include "../model/MobiusConfig.h"
@@ -397,9 +396,9 @@ void MainWindow::captureConfiguration(UIConfig* config)
 /**
  * The periodic ping from MainThread to refresh the display.
  */
-void MainWindow::update(MobiusState* state)
+void MainWindow::update(class MobiusView* view)
 {
-    display.update(state);
+    display.update(view);
 
     // A few visible panels need to do periodic refreshes as well
     panelFactory.update();

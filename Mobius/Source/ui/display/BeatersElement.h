@@ -56,9 +56,9 @@ class BeatersElement : public StatusElement, public Supervisor::TimeListener
     ~BeatersElement();
 
     // Supervisor::TimeListener
-    void timeBoundary(class MobiusState* state) override;
+    void timeBoundary(class MobiusState* view) override;
     
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     
     int getPreferredWidth() override;
     int getPreferredHeight() override;

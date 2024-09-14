@@ -2,7 +2,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/MobiusState.h"
 #include "../../model/UIConfig.h"
 
 #include "../../Supervisor.h"
@@ -55,13 +54,13 @@ void AlertElement::alertReceived(juce::String msg)
 }
 
 /**
- * There is nothing in MobiusState that we need to watch
+ * There is nothing in MobiusView that we need to watch
  * but we will use the udpate call to implement the timeout.
  * Assumig every 1/10th second
  */
-void AlertElement::update(MobiusState* state)
+void AlertElement::update(class MobiusView* view)
 {
-    (void)state;
+    (void)view;
     if (timeout > 0) {
         timeout = timeout - 1;
         if (timeout == 0) {

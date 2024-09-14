@@ -149,9 +149,10 @@ void StripRotary::sliderDragEnded(juce::Slider*)
  * compare it to our current value and if different, update
  * the slider and repaint.
  */
-void StripRotary::update(MobiusState* state)
+void StripRotary::update(MobiusView* view)
 {
     if (!dragging) {
+        MobiusState* state = view->oldState;
         int tracknum = strip->getTrackIndex();
         MobiusTrackState* track = &(state->tracks[tracknum]);
 

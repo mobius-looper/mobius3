@@ -1,5 +1,6 @@
 
 #include "../../model/MobiusState.h"
+#include "../MobiusView.h"
 
 #include "Colors.h"
 
@@ -60,6 +61,27 @@ juce::Colour Colors::getLoopColor(MobiusLoopState* loop)
         c = juce::Colours::grey;
     }
     else if (loop->frames > 0) {
+        c = juce::Colour(MobiusGreen);
+    }
+
+    return c;
+}
+
+juce::Colour Colors::getLoopColor(MobiusViewTrack* track)
+{
+    juce::Colour c = juce::Colours::black;
+
+    // not sure why there were two flags
+    if (track->recording || track->overdub) {
+        c = juce::Colour(MobiusRed);
+    }
+    else if (track->mute) {
+        c = juce::Colours::blue;
+    }
+    else if (track->anySpeed) {
+        c = juce::Colours::grey;
+    }
+    else if (track->frames > 0) {
         c = juce::Colour(MobiusGreen);
     }
 

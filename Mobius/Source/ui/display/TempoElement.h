@@ -16,7 +16,7 @@ class TempoElement : public StatusElement
     TempoElement(class StatusArea* area);
     ~TempoElement();
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

@@ -11,8 +11,8 @@
 
 #include "../../model/UIConfig.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/MobiusState.h"
 #include "../../Supervisor.h"
+
 #include "MobiusDisplay.h"
 #include "TrackStrip.h"
 #include "TrackStrips.h"
@@ -64,11 +64,11 @@ void TrackStrips::configure()
       strip->configure();
 }
 
-void TrackStrips::update(MobiusState* state)
+void TrackStrips::update(class MobiusView* view)
 {
     for (int i = 0 ; i < tracks.size() ; i++) {
         TrackStrip* strip = tracks[i];
-        strip->update(state);
+        strip->update(view);
     }
 }
 

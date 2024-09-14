@@ -27,6 +27,8 @@
 #include "../../Supervisor.h"
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "LayerModel.h"
@@ -118,8 +120,9 @@ void LayerElement::resized()
  * but the lost numbers would change.
  * 
  */
-void LayerElement::update(MobiusState* state)
+void LayerElement::update(MobiusView* mview)
 {
+    MobiusState* state = mview->oldState;
     MobiusTrackState* track = &(state->tracks[state->activeTrack]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 

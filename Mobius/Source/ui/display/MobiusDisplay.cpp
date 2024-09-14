@@ -53,10 +53,10 @@ void MobiusDisplay::captureConfiguration(UIConfig* config)
     statusArea.captureConfiguration(config);
 }
 
-void MobiusDisplay::update(MobiusState* state)
+void MobiusDisplay::update(class MobiusView* view)
 {
-    statusArea.update(state);
-    strips.update(state);
+    statusArea.update(view);
+    strips.update(view);
 }
 
 void MobiusDisplay::resized()

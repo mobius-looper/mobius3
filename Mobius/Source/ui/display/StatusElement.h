@@ -17,7 +17,7 @@ class StatusElement : public juce::Component
     ~StatusElement();
 
     virtual void configure();
-    virtual void update(class MobiusState* state);
+    virtual void update(class MobiusView* view);
     virtual int getPreferredWidth();
     virtual int getPreferredHeight();
     

@@ -34,8 +34,9 @@ int LoopWindowElement::getPreferredWidth()
 /**
  * Annoyingly large number of things to track here.
  */
-void LoopWindowElement::update(MobiusState* state)
+void LoopWindowElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     MobiusTrackState* track = &(state->tracks[state->activeTrack]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 

@@ -22,7 +22,7 @@ class LayerElement : public StatusElement, public Supervisor::ActionListener
     LayerElement(class StatusArea* area);
     ~LayerElement();
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

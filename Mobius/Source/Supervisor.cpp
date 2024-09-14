@@ -390,7 +390,8 @@ bool Supervisor::start()
     // initial display update if we're standalone
     if (mainComponent != nullptr) {
         MobiusState* state = mobius->getState();
-        win->update(state);
+        mobiusViewer.refresh(mobius, state, &mobiusView);
+        win->update(&mobiusView);
     }
 
     meter("Parameters");
@@ -830,11 +831,10 @@ void Supervisor::advance()
         if (mainComponent != nullptr || pluginEditorOpen) {
         
             // traverse the display components telling then to reflect changes in the engine
+            MobiusState* state = mobius->getState();
 
             // eventual replacement for MobiusState
-            mobiusViewer.refresh(mobius, &mobiusView);
-            
-            MobiusState* state = mobius->getState();
+            mobiusViewer.refresh(mobius, state, &mobiusView);
 
             // was doing this directly in mobiusTimeBoundary but that
             // caused deadlocks, if we have to do this in the normal maintenance
@@ -842,7 +842,7 @@ void Supervisor::advance()
             // TimeListeners
             notifyTimeListeners();
             
-            mainWindow->update(state);
+            mainWindow->update(&mobiusView);
         }
     }
 

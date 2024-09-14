@@ -22,7 +22,7 @@ class FloatingStripElement : public StatusElement
     juce::String name;
     
     void configure() override;
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

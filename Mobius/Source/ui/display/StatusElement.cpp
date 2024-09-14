@@ -42,9 +42,9 @@ void StatusElement::configure()
 {
 }
 
-void StatusElement::update(MobiusState* state)
+void StatusElement::update(class MobiusView* view)
 {
-    (void)state;
+    (void)view;
 }
 
 // these should probably be pure virtual

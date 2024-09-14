@@ -24,7 +24,7 @@ class StripRotary : public StripElement, public juce::Slider::Listener
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
 
     void resized() override;
     void paint(juce::Graphics& g) override;

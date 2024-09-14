@@ -191,9 +191,9 @@ StripElement::~StripElement()
 {
 }
 
-void StripElement::update(MobiusState* state)
+void StripElement::update(MobiusView* view)
 {
-    (void)state;
+    (void)view;
 }
 
 // these should probably be pure virtual

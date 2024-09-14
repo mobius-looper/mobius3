@@ -33,7 +33,7 @@ class ParametersElement : public StatusElement,
     ~ParametersElement();
 
     void configure() override;
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     
     int getPreferredWidth() override;
     int getPreferredHeight() override;

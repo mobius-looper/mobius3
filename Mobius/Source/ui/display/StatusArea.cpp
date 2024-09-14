@@ -73,12 +73,12 @@ void StatusArea::mouseDown(const juce::MouseEvent& event)
       display->getSupervisor()->showMainPopupMenu();
 }
 
-void StatusArea::update(MobiusState* state)
+void StatusArea::update(class MobiusView* view)
 {
     for (int i = 0 ; i < elements.size() ; i++) {
         StatusElement* el = elements[i];
         if (el->isVisible())
-          el->update(state);
+          el->update(view);
     }
 }
 

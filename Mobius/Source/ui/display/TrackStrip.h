@@ -40,7 +40,7 @@ class TrackStrip : public juce::Component,
     int getPreferredHeight();
     
     void configure();
-    void update(class MobiusState* state);
+    void update(class MobiusView* view);
 
     void resized() override;
     void paint(juce::Graphics& g) override;

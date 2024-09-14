@@ -4,7 +4,6 @@
  */
 #include <JuceHeader.h>
 
-#include "../../model/MobiusState.h"
 #include "../../model/UIAction.h"
 
 #include "Colors.h"
@@ -33,9 +32,9 @@ void FloatingStripElement::configure()
     strip.configure();
 }
 
-void FloatingStripElement::update(MobiusState* state)
+void FloatingStripElement::update(class MobiusView* view)
 {
-    strip.update(state);
+    strip.update(view);
 }
 
 int FloatingStripElement::getPreferredHeight()

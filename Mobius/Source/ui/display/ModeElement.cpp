@@ -5,6 +5,7 @@
 #include "../../util/Util.h"
 #include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
+#include "../MobiusView.h"
 
 #include "../JuceUtil.h"
 #include "Colors.h"
@@ -21,36 +22,50 @@ ModeElement::~ModeElement()
 {
 }
 
-void ModeElement::update(MobiusState* state)
+void ModeElement::update(MobiusView* view)
 {
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
-    ModeDefinition* mode = loop->mode;
+    MobiusState* state = view->oldState;
+    bool oldWay = false;
 
-    // the engine does not actually set UIPauseMode, the loop will be
-    // in UIMuteMode with the paused flag set in the state
-    // would be better if the engine just used the pseudo mode instead
+    if (oldWay) {
+        MobiusTrackState* track = &(state->tracks[state->activeTrack]);
+        MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+        ModeDefinition* mode = loop->mode;
 
-    // unclear what the priority of these is or if they can be combined
-    // can you be in GlobalMute and Pause at the same time?
-    // favor Pause
-    // also why are these on the Track?  They should be on the root State
-    if (track->globalMute)
-      mode = UIGlobalMuteMode;
+        // the engine does not actually set UIPauseMode, the loop will be
+        // in UIMuteMode with the paused flag set in the state
+        // would be better if the engine just used the pseudo mode instead
 
-    if (loop->paused)
-      mode = UIPauseMode;
+        // unclear what the priority of these is or if they can be combined
+        // can you be in GlobalMute and Pause at the same time?
+        // favor Pause
+        // also why are these on the Track?  They should be on the root State
+        if (track->globalMute)
+          mode = UIGlobalMuteMode;
 
-    // seem to have lost conveyance of GlobalPause
-    if (track->globalPause)
-      mode = UIGlobalPauseMode;
+        if (loop->paused)
+          mode = UIPauseMode;
+
+        // seem to have lost conveyance of GlobalPause
+        if (track->globalPause)
+          mode = UIGlobalPauseMode;
     
-    if (mode == nullptr) {
-        // could interpret this to mean Reset?
+        if (mode == nullptr) {
+            // could interpret this to mean Reset?
+        }
+        else if (!StringEqual(mode->getName(), current.toUTF8())) {
+            current = mode->getName();
+            repaint();
+        }
     }
-    else if (!StringEqual(mode->getName(), current.toUTF8())) {
-        current = mode->getName();
-        repaint();
+    else {
+        if (view->trackChanged || view->track->refreshMode) {
+            // todo: could simplify this further by just havnig
+            // paint get the value from MobiusView
+            current = view->track->mode;
+            repaint();
+            view->track->refreshMode = false;
+        }
     }
 }
 
@@ -83,6 +98,7 @@ void ModeElement::paint(juce::Graphics& g)
     juce::Font font (JuceUtil::getFontf(getHeight() * 0.8f));
     g.setFont(font);
     g.drawText(current, 0, 0, getWidth(), getHeight(), juce::Justification::left);
+    //Trace(2, "ModeElement::paint");
     
 }
 

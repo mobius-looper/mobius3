@@ -15,6 +15,7 @@
 #include "../../model/UIConfig.h"
 #include "../../model/MobiusState.h"
 #include "../../model/Symbol.h"
+#include "../MobiusView.h"
 
 #include "Colors.h"
 #include "StripElement.h"
@@ -175,8 +176,10 @@ void TrackStrip::resized()
     }
 }
 
-void TrackStrip::update(MobiusState* state)
+void TrackStrip::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
+    
     // kludge: consume this flag to force a refresh
     // in elements that have complex difference detection
     // and might miss something, not liking this but it's
@@ -191,7 +194,7 @@ void TrackStrip::update(MobiusState* state)
     
     for (int i = 0 ; i < elements.size() ; i++) {
         StripElement* el = elements[i];
-        el->update(state);
+        el->update(view);
     }
 
     if (needsRefresh ||

@@ -16,7 +16,7 @@ class StripTrackNumber : public StripElement
     ~StripTrackNumber();
 
     void configure() override;
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
 
     int getPreferredHeight() override;
     int getPreferredWidth() override;
@@ -41,7 +41,7 @@ class StripGroupName : public StripElement
     ~StripGroupName();
 
     void configure() override;
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
 
     int getPreferredHeight() override;
     int getPreferredWidth() override;
@@ -64,7 +64,7 @@ class StripFocusLock : public StripElement
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
     void paint(juce::Graphics& g) override;
     
     void mouseDown(const class juce::MouseEvent& event) override;
@@ -84,7 +84,7 @@ class StripLoopRadar : public StripElement
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
     void paint(juce::Graphics& g) override;
 
   private:
@@ -104,7 +104,7 @@ class StripLoopThermometer : public StripElement
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
     void paint(juce::Graphics& g) override;
 
   private:
@@ -125,7 +125,7 @@ class StripOutputMeter : public StripElement
     int getPreferredWidth() override;
 
     void resized() override;
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
 
   private:
 
@@ -143,7 +143,7 @@ class StripInputMeter : public StripElement
     int getPreferredWidth() override;
 
     void resized() override;
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
 
   private:
 
@@ -163,7 +163,7 @@ class StripLoopStack : public StripElement, public juce::FileDragAndDropTarget
     int getPreferredHeight() override;
     int getPreferredWidth() override;
 
-    void update(MobiusState* state) override;
+    void update(MobiusView* view) override;
     void paint(juce::Graphics& g) override;
     
     // FileDragAndDropTarget

@@ -18,7 +18,7 @@ class AudioMeterElement : public StatusElement
     AudioMeterElement(class StatusArea* area);
     ~AudioMeterElement();
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

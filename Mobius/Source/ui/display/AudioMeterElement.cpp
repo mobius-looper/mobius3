@@ -17,6 +17,7 @@
 #include "../../util/Trace.h"
 #include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
+#include "../MobiusView.h"
 
 #include "Colors.h"
 #include "StatusArea.h"
@@ -52,10 +53,18 @@ void AudioMeterElement::resized()
 
 const int AudioMeterElementInset = 2;
 
-void AudioMeterElement::update(MobiusState* state)
+void AudioMeterElement::update(MobiusView* view)
 {
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    int value = track->inputMonitorLevel;
+    int value = 0;
+    bool oldWay = false;
+    if (oldWay) {
+        MobiusState* state = view->oldState;
+        MobiusTrackState* track = &(state->tracks[state->activeTrack]);
+        value = track->inputMonitorLevel;
+    }
+    else {
+        value = view->track->inputMonitorLevel;
+    }
     
 	if (savedValue != value && value >= 0 && value <= range) {
 		savedValue = value;

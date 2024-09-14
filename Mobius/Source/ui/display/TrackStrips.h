@@ -26,7 +26,7 @@ class TrackStrips : public juce::Component
     int getPreferredHeight();
     int getPreferredWidth();
     
-    void update(class MobiusState* state);
+    void update(class MobiusView* view);
 
     void resized() override;
     void paint(juce::Graphics& g) override;

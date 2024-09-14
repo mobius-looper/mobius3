@@ -15,7 +15,7 @@ class CounterElement : public StatusElement
     CounterElement(class StatusArea* area);
     ~CounterElement();
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

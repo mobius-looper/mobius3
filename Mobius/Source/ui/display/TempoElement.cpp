@@ -7,6 +7,8 @@
 #include "../../model/MobiusState.h"
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "TempoElement.h"
@@ -31,8 +33,9 @@ int TempoElement::getPreferredWidth()
     return 200;
 }
 
-void TempoElement::update(MobiusState* state)
+void TempoElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     MobiusTrackState* track = &(state->tracks[state->activeTrack]);
 	bool doBeat = false;
 	bool doBar = false;

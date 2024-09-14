@@ -7,6 +7,8 @@
 #include "../../model/UIConfig.h"
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "TrackStrip.h"
 #include "StripElement.h"
@@ -66,8 +68,9 @@ void StripTrackNumber::configure()
     setupOrdinal = -1;
 }
 
-void StripTrackNumber::update(MobiusState* state)
+void StripTrackNumber::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
@@ -218,8 +221,9 @@ void StripGroupName::configure()
     groupNumber = -1;
 }
 
-void StripGroupName::update(MobiusState* state)
+void StripGroupName::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
     
@@ -302,8 +306,9 @@ int StripFocusLock::getPreferredHeight()
     return 14;
 }
 
-void StripFocusLock::update(MobiusState* state)
+void StripFocusLock::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
@@ -378,8 +383,9 @@ int StripLoopRadar::getPreferredHeight()
     return LoopRadarDiameter + (LoopRadarPadding * 2);
 }
 
-void StripLoopRadar::update(MobiusState* state)
+void StripLoopRadar::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
@@ -478,8 +484,9 @@ int StripLoopThermometer::getPreferredHeight()
     return 10;
 }
 
-void StripLoopThermometer::update(MobiusState* state)
+void StripLoopThermometer::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
@@ -538,8 +545,9 @@ int StripOutputMeter::getPreferredHeight()
     return 10;
 }
 
-void StripOutputMeter::update(MobiusState* state)
+void StripOutputMeter::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
@@ -577,8 +585,9 @@ int StripInputMeter::getPreferredHeight()
     return 10;
 }
 
-void StripInputMeter::update(MobiusState* state)
+void StripInputMeter::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
     MobiusTrackState* track = &(state->tracks[tracknum]);
 
@@ -656,8 +665,9 @@ int StripLoopStack::getPreferredHeight()
  * parent strip.  Used to detect when a file drop finishes since
  * we're not very thorough doing change detection on non-active tracks.
  */
-void StripLoopStack::update(MobiusState* state)
+void StripLoopStack::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = strip->getTrackIndex();
 
     bool needsRefresh = (strip != nullptr && strip->needsRefresh);

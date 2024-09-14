@@ -16,6 +16,8 @@
 #include "../../model/Query.h"
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "LoopMeterElement.h"
@@ -79,8 +81,9 @@ int LoopMeterElement::getPreferredWidth()
  * to the subcycles value from the Preset so we have to dig that out
  * every time, even if the loop is not advancing.
  */
-void LoopMeterElement::update(MobiusState* state)
+void LoopMeterElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     int tracknum = state->activeTrack;
     MobiusTrackState* track = &(state->tracks[tracknum]);
     MobiusLoopState* activeLoop = &(track->loops[track->activeLoop]);

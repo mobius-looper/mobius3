@@ -13,6 +13,8 @@
 #include "../../model/MobiusState.h"
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "MinorModesElement.h"
@@ -45,8 +47,9 @@ int MinorModesElement::getPreferredWidth()
 /**
  * Annoyingly large number of things to track here.
  */
-void MinorModesElement::update(MobiusState* state)
+void MinorModesElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     MobiusTrackState* track = &(state->tracks[state->activeTrack]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 

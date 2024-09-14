@@ -33,7 +33,7 @@ class MobiusDisplay : public juce::Component
 
     void configure();
     void captureConfiguration(class UIConfig* config);
-    void update(class MobiusState* state);
+    void update(class MobiusView* view);
 
     void resized() override;
     void paint (juce::Graphics& g) override;

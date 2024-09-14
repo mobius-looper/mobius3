@@ -15,7 +15,7 @@ class MinorModesElement : public StatusElement
     MinorModesElement(class StatusArea* area);
     ~MinorModesElement();
 
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

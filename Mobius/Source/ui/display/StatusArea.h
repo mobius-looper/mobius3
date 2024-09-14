@@ -36,7 +36,7 @@ class StatusArea : public juce::Component
     void configure();
     void captureConfiguration(class UIConfig* config);
     
-    void update(class MobiusState* state);
+    void update(class MobiusView* view);
     
     // element callback to save location changes after dragging
     void saveLocation(StatusElement* e);

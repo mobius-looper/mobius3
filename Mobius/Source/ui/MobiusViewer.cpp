@@ -38,15 +38,29 @@ MobiusViewer::~MobiusViewer()
  * the model and sets various flags when something that is more complex
  * changes so the UI can optimize out repaints when nothing is changing.
  */
-void MobiusViewer::refresh(MobiusInterface* mobius, MobiusView* view)
+void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusView* view)
 {
+    (void)mobius;
+
+    // as we transition gradually to the new view model, keep the old
+    // one so the old code can still get to it
+    view->oldState = state;
+
+    // reset this from the last time
+    view->trackChanged = false;
+    
     // the old state object, which has it's own refresh interval
-    MobiusState* state = mobius->getState();
+    // no!  calling getState will do a refresh which Supervisor has already done, make
+    // it be passed in
+    //MobiusState* state = mobius->getState();
     
     // grow and refresh the tracks
-    view->trackCount = state->trackCount;
+    // MobiusState.trackCount does not appear to be set reliably, it's
+    // supposed to be assumed to follow MobiusConfig I guess, seems dangerous
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    view->trackCount = config->getTracks();
     
-    for (int i = 0 ; i < state->trackCount ; i++) {
+    for (int i = 0 ; i < view->trackCount ; i++) {
         MobiusTrackState* tstate = &(state->tracks[i]);
         MobiusViewTrack* tview;
         if (i < view->tracks.size())
@@ -62,12 +76,24 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusView* view)
         bool active = (i == state->activeTrack);
         refreshTrack(state, tstate, view, tview, active);
         
-        if (active)
-          view->track = tview;
+        if (active) {
+            view->track = tview;
+            if (view->activeTrack != i) {
+
+                // not liking how track changes are hard to detect
+                // each track view will see the same thing, but if you change
+                // the active track all of the main display elements need to force
+                // refresh since they were displaying the previous track
+                view->trackChanged = true;
+                view->activeTrack = i;
+            }
+        }
     }
 
+    // setup ordinal changes must be detected for all tracks, so only
+    // capture it at the end
+    view->setupOrdinal = state->setupOrdinal;
 }
-
 
 /**
  * Refresh a track
@@ -115,7 +141,6 @@ void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate
             if (st != nullptr)
               tview->name = juce::String(st->getName());
         }
-        mview->setupOrdinal = state->setupOrdinal;
         tview->refreshName = true;
     }
 }
@@ -316,7 +341,9 @@ void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
     if (mode == nullptr) mode = UIResetMode;
 
     const char* newMode = mode->getName();
-    if (strcmp(tview->mode.toUTF8(), newMode)) {
+    const char* oldMode = tview->mode.toUTF8();
+    int diff = strcmp(oldMode, newMode);
+    if (diff) {
         tview->mode = juce::String(newMode);
         tview->refreshMode = true;
     }
@@ -439,6 +466,10 @@ void MobiusViewer::refreshMinorModes(MobiusTrackState* tstate, MobiusLoopState* 
         tview->mute = lstate->mute;
         refresh = true;
     }
+
+    // not really a minor mode but convenitnt for some things
+    tview->anySpeed = lstate->speed;
+    tview->anyPitch = lstate->pitch;
     
     if (tstate->speedToggle != tview->speedToggle) {
         tview->speedToggle = tstate->speedToggle;

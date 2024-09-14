@@ -256,6 +256,10 @@ class MobiusViewTrack {
 	bool outSyncMaster = false;
     bool window = false;
 
+    // consolidations for coloring
+    bool anySpeed = false;
+    bool anyPitch = false;
+
     // where do these belong?
     bool globalMute = false;
     bool globalPause = false;
@@ -325,14 +329,21 @@ class MobiusView
     
   public:
 
+    MobiusView();
+    ~MobiusView() {}
+
+    class MobiusState* oldState = nullptr;
+    
     juce::OwnedArray<MobiusViewTrack> tracks;
 
     int trackCount = 0;
     int audioTracks = 0;
     int midiTracks = 0;
-
+    int activeTrack = -1;
+    
     MobiusViewTrack* track = nullptr;
-
+    bool trackChanged = false;
+    
     // todo: SyncState
 
     void reset();

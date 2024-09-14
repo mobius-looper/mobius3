@@ -19,7 +19,7 @@ class AlertElement : public StatusElement, public Supervisor::AlertListener
 
     void alertReceived(juce::String msg) override;
     
-    void update(class MobiusState* state) override;
+    void update(class MobiusView* view) override;
     int getPreferredWidth() override;
     int getPreferredHeight() override;
 

@@ -27,6 +27,7 @@
 #include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
 #include "../../Supervisor.h"
+#include "../MobiusView.h"
 
 #include "Colors.h"
 #include "StatusArea.h"
@@ -182,10 +183,9 @@ void BeatersElement::timeBoundary(MobiusState* state)
  * Notify the beaters that time has passed and repaint if
  * they've grown tired of life.
  */
-void BeatersElement::update(MobiusState* state)
+void BeatersElement::update(MobiusView* view)
 {
-    (void)state;
-
+    MobiusState* state = view->oldState;
     bool anyChanged = false;
 
     // detect missed timeBoundaries, this shouldn't be necessary

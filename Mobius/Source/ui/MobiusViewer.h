@@ -23,7 +23,7 @@ class MobiusViewer
     MobiusViewer(class Supervisor* s);
     ~MobiusViewer();
 
-    void refresh(class MobiusInterface* mobius, class MobiusView* v);
+    void refresh(class MobiusInterface* mobius, class MobiusState* state, class MobiusView* v);
 
   private:
 

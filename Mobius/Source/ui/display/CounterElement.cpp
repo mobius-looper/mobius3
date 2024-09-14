@@ -16,6 +16,8 @@
 #include "../../model/MobiusState.h"
 #include "../../model/ModeDefinition.h"
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "CounterElement.h"
@@ -60,8 +62,9 @@ void CounterElement::resized()
     StatusElement::resized();
 }
 
-void CounterElement::update(MobiusState* state)
+void CounterElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     MobiusTrackState* track = &(state->tracks[state->activeTrack]);
     MobiusLoopState* loop = &(track->loops[track->activeLoop]);
 

@@ -23,4 +23,5 @@ class Colors
   public:
 
     static juce::Colour getLoopColor(class MobiusLoopState* loop);
+    static juce::Colour getLoopColor(class MobiusViewTrack* track);
 };

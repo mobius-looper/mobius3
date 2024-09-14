@@ -28,6 +28,7 @@
 #include "../../Symbolizer.h"
 #include "../../mobius/MobiusInterface.h"
 
+#include "../MobiusView.h"
 #include "../JuceUtil.h"
 #include "Colors.h"
 #include "StatusArea.h"
@@ -177,8 +178,9 @@ int ParametersElement::getPreferredWidth()
  * Since we save them for difference detection we also don't need
  * to go back through Supervisor to get them in paint().
  */
-void ParametersElement::update(MobiusState* state)
+void ParametersElement::update(MobiusView* view)
 {
+    MobiusState* state = view->oldState;
     bool changes = false;
     
     for (int i = 0 ; i < parameters.size() ; i++) {

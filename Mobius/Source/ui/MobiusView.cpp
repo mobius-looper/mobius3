@@ -3,6 +3,16 @@
 
 #include "MobiusView.h"
 
+MobiusView::MobiusView()
+{
+    // start this off with one track so we don't have
+    // to make everything check the track pointer during initialization
+    // before it has been refreshed
+    MobiusViewTrack* vt = new MobiusViewTrack();
+    tracks.add(vt);
+    track = vt;
+}
+
 /**
  * Put the view into a known empty state.
  */
