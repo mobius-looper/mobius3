@@ -246,6 +246,8 @@ class MobiusConfig {
 
 	void setTracks(int i);
 	int getTracks();
+	void setMidiTracks(int i);
+	int getMidiTracks();
 	void setTrackGroups(int i);
 	int getTrackGroups();
 	void setMaxLoops(int i);
@@ -409,6 +411,7 @@ class MobiusConfig {
 	int mFadeFrames;
 	int mMaxSyncDrift;
 	int mTracks;
+    int mMidiTracks;
     int mTrackGroups;
     int mMaxLoops;
 	int mLongPress;

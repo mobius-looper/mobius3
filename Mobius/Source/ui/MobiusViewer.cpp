@@ -1,6 +1,45 @@
 /**
  * Translation between the old MobiusState and the new MobiusView,
  * plus additions and simpliciations.
+ *
+ * Most of the information is contained in the MobiusViewTrack which drives the display of both
+ * the main Status Area in the center, and the list of Track Strips at the bottom.  The Status Area
+ * is able to show everything about the track, the Track Strips will have a subset.  This distinction
+ * is a minor optimization that should not be assumed to last forever.
+ *
+ * The refrsh process is assembling the view from several sources.  Most of it comes from MobiusState
+ * which was the original way to communicate state from the engine to the UI.  Some is pulled from configuration
+ * objects like Setup and GroupDefinition based on references in MoibusState.  And some is made by
+ * querying the engine for a few real-time parameter values.
+ *
+ * Beyond the capture of engine state, the view also contains support for analyzing complex changes that
+ * trigger a refresh of portions of the UI.  For many UI components it is enough to simply remember the last
+ * displayed value and compare it with the current value and trigger a repaint if they differ.
+ *
+ * Some like MinorModesElement require an analysis of many things to produce the displayed result. Where different
+ * detection is more than just comparison of old/new values, the logic is being moved here, making it easier to
+ * modify the UI without losing the difference detection code.  The UI can test a few "refreshFoo" flags to
+ * see if something needs to be refreshed.  These should be considered extensions of the view model that
+ * are only there for convenience, not a fundamental part of the model.
+ *
+ * The process of periodic UI refresh must proceed like this:
+ *
+ *      - maintenance thread reaches a refresh interval
+ *      - current MobiusState is obtained from the engine
+ *      - refresh trigger flags in the view are cleared
+ *      - the view is refreshed, trigger flags are set
+ *      - the UI refresh scan is performed, this uses any combination
+ *        of old/new values in the view and the refresh flags to determine
+ *        whether repaint is necessary
+ *      - the current view values are moved to the previous state for difference
+ *        detection on the next cycle
+ *
+ * Components only get one pass to decide whether to repaint before refresh flags
+ * are cleared and the difference state is moved for the next cycle.  In a few (one?)
+ * cases, the refresh flags are "latching" and must be cleared by the UI components
+ * themselves after they have repainted.  The only example right now is Beaters since
+ * for reasons I'm forgetting, revisit this...
+ *
  */
 
 #include <JuceHeader.h>
@@ -46,53 +85,100 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusVi
     // one so the old code can still get to it
     view->oldState = state;
 
-    // reset this from the last time
+    resetRefreshTriggers(view);
+
+    // detect active Setup changes
+    // do this before track refresh so our own refresh process can be optimized
+    // this impacts refresh of the track names, maybe others
+    // !! this is not enough, you can edit the setup and change the names but the
+    // ordinal will stay the same, need to increment a version number on each edit
+    // how to did pre-view code detect this?
+    if (view->setupOrdinal != state->setupOrdinal) {
+        view->setupChanged = true;
+        view->setupOrdinal = state->setupOrdinal;
+    }
+
+    refreshAudioTracks(mobius, state, view);
+
+    // MIDI Tracks are glued onto the end of the audio tracks
+    refreshMidiTracks(mobius, view);
+}
+
+/**
+ * Called at the beginning of every refresh cycle to reset the refresh
+ * trigger flags.  Some components may clear these as a side effect of paint
+ * but this should not be required.
+ */
+void MobiusViewer::resetRefreshTriggers(MobiusView* view)
+{
     view->trackChanged = false;
+    view->setupChanged = false;
     
-    // the old state object, which has it's own refresh interval
-    // no!  calling getState will do a refresh which Supervisor has already done, make
-    // it be passed in
-    //MobiusState* state = mobius->getState();
-    
-    // grow and refresh the tracks
+    for (auto t : view->tracks) {
+        t->refreshName = false;
+        t->refreshGroup = false;
+        t->refreshMode = false;
+        t->refreshMinorModes = false;
+        t->refreshLayers = false;
+        t->refreshEvents = false;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Audio Track Refresh
+//
+//////////////////////////////////////////////////////////////////////
+
+void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* state, MobiusView* view)
+{
+    (void)mobius;
+
     // MobiusState.trackCount does not appear to be set reliably, it's
     // supposed to be assumed to follow MobiusConfig I guess, seems dangerous
+    // note that since MobiusState doesn't set trackCount, the only way we knod
+    // how many tracks will be in it is from MobiusConfig, these MUST be in sync
+    // don't like it
     MobiusConfig* config = supervisor->getMobiusConfig();
+
+    // need to keep a refrseh trigger on track counts?
+    // MobiusState has a trackCount but it is not set, need to go to the config
     view->trackCount = config->getTracks();
-    
+    view->audioTracks = view->trackCount;
+
     for (int i = 0 ; i < view->trackCount ; i++) {
         MobiusTrackState* tstate = &(state->tracks[i]);
+
+        // obtain track view, growing if necessary
         MobiusViewTrack* tview;
         if (i < view->tracks.size())
           tview = view->tracks[i];
         else {
             tview = new MobiusViewTrack();
-            // number is 1 based
+            // track number is 1 based
             tview->number = i + 1;
-            tview->midi = false;
             view->tracks.add(tview);
         }
-        
+
+        // if this is the active track, extra refresh options are enabled
         bool active = (i == state->activeTrack);
         refreshTrack(state, tstate, view, tview, active);
-        
-        if (active) {
-            view->track = tview;
-            if (view->activeTrack != i) {
 
-                // not liking how track changes are hard to detect
-                // each track view will see the same thing, but if you change
-                // the active track all of the main display elements need to force
-                // refresh since they were displaying the previous track
+        // detect whether the active track changed from the last refresh
+        // UI componenents that are sensitive to the active track MUST
+        // test this, because the refresh flags within each track view
+        // may not be different
+        if (active) {
+            
+            // cache a pointer to the active track
+            view->track = tview;
+            
+            if (view->activeTrack != i) {
                 view->trackChanged = true;
                 view->activeTrack = i;
             }
         }
     }
-
-    // setup ordinal changes must be detected for all tracks, so only
-    // capture it at the end
-    view->setupOrdinal = state->setupOrdinal;
 }
 
 /**
@@ -110,27 +196,21 @@ void MobiusViewer::refreshTrack(MobiusState* state, MobiusTrackState* tstate,
     refreshTrackName(state, tstate, mview, tview);
     refreshInactiveLoops(tstate, tview);
     refreshTrackProperties(tstate, tview);
+    refreshMode(tstate, tview);
     
     MobiusLoopState* lstate = &(tstate->loops[tstate->activeLoop]);
     refreshActiveLoop(tstate, lstate, active, tview);
-    
-    refreshMode(tstate, tview);
 }
 
 /**
  * Track name
  * 
  * These are not in MobiusTrackState, they are pulled from the active Setup.
- * Monitoring is awkward because we have to follow the active Setup ordinal
- * and the Setup version since you can edit the setup to change the name without
- * selecting a different one.
- *
- * !! how did pre-view refresh handle this?
  */
 void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate,
                                     MobiusView* mview, MobiusViewTrack* tview)
 {
-    if (mview->setupOrdinal != state->setupOrdinal) {
+    if (mview->setupChanged) {
 
         tview->name = "";
         MobiusConfig* config = supervisor->getMobiusConfig();
@@ -146,7 +226,7 @@ void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate
 }
 
 /**
- * Refresh various properties of each track, not related to
+ * Refresh various simple properties of each track that are not related to
  * a particular loop.
  */
 void MobiusViewer::refreshTrackProperties(MobiusTrackState* tstate, MobiusViewTrack* tview)
@@ -194,6 +274,8 @@ void MobiusViewer::refreshTrackGroups(MobiusTrackState* tstate,  MobiusViewTrack
 
         // could just make the display work from the ordinal, but we might
         // as well go get the name/color to make it easier
+        // should do others this way, let the view defined what to display
+        // so the UI components don't have to keep a copy
         tview->groupName = "";
         tview->groupColor = 0;
         
@@ -221,9 +303,6 @@ void MobiusViewer::refreshTrackGroups(MobiusTrackState* tstate,  MobiusViewTrack
  *
  * The old model called these the "loop summaries" which was merged
  * with MobiusLoopState during 3 development.
- *
- * The loop view array starts out at zero and grows over time as the
- * loop count in the track increases.  
  */
 void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrack* tview)
 {
@@ -232,6 +311,7 @@ void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrac
     
     for (int i = 0 ; i < tstate->loopCount ; i++) {
         MobiusLoopState* lstate = &(tstate->loops[i]);
+        // grow the loop views as necessary
         MobiusViewLoop* lview;
         if (i < tview->loops.size())
           lview = tview->loops[i];
@@ -340,6 +420,9 @@ void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
     // shouldn't happen
     if (mode == nullptr) mode = UIResetMode;
 
+    // had some difficulty using strcmp with the toUTF8 result
+    // without first brining it to a const char*, might have been
+    // a dream, but if you change this watch for false positives
     const char* newMode = mode->getName();
     const char* oldMode = tview->mode.toUTF8();
     int diff = strcmp(oldMode, newMode);
@@ -347,8 +430,6 @@ void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
         tview->mode = juce::String(newMode);
         tview->refreshMode = true;
     }
-
-    
 }
 
 /**
@@ -359,6 +440,8 @@ void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
  * can be changed dynamically at runtime.
  *
  * This is only necessary for the active loop to support the LoopMeter
+ * If you ever need to get subcycles for all tracks, the scope in the Query
+ * will need to be changed to include the track number.
  *
  */
 void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
@@ -380,53 +463,127 @@ void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
  * Layers
  * 
  * Unlike the old model, only care about layers in the active loop
- * the MobiusState layer model is insanely complicated thinking that
+ * the MobiusState layer model is insanely complicated, thinking that
  * there needed to be a model for each layer, actually don't need anything
  * but checkpoint flags.  Sizes might be nice, bit a pita to maintain.
  */
 void MobiusViewer::refreshLayers(MobiusLoopState* lstate, MobiusViewTrack* tview)
 {
-    tview->layerCount = lstate->layerCount + lstate->lostLayers + lstate->redoCount + lstate->lostRedo;
-    tview->activeLayer = lstate->layerCount + lstate->lostLayers;
+    // trigger refresh if the layer count changes, or the active layer changes
+    int newCount = lstate->layerCount + lstate->lostLayers + lstate->redoCount + lstate->lostRedo;
+    int newActive = (lstate->layerCount + lstate->lostLayers) - 1;
 
-    // todo: checkpoint detection will be hard
-    // a Bigint could be handy here
-    // tview->checkpointsp.add(???
+    if (newCount != tview->layerCount) {
+        tview->layerCount = newCount;
+        tview->refreshLayers = true;
+    }
+
+    if (newActive != tview->activeLayer) {
+        tview->activeLayer = newActive;
+        tview->refreshLayers = true;
+    }
+
+    // checkpoint detection could be better but it's annoying due to the rare but
+    // theoretically unbounded number of them
+    // a juce::Bigint would be handy here
+    // note that if there was a checkpoint in a "lost" layer we won't be able to show that
+    int newChecks = 0;
+    for (int i = 0 ; i < lstate->layerCount ; i++) {
+        MobiusLayerState* ystate = &(lstate->layers[i]);
+        if (ystate->checkpoint)
+          newChecks++;
+    }
+
+    // until we can be smart about detecting checkpoint changes in each layer
+    // just trigger refresh if the number of them changes, the user will almost always
+    // be adding new checkpoints, or clearing the checkpoint in the active layer
+    // what this doesn't detect is pairs: clearing a checkpoint in an old layer AND
+    // setting one in a different layer.  I don't think you can even do that
+    int oldChecks = tview->checkpoints.size();
+    if (newChecks != oldChecks) {
+
+        tview->checkpoints.clear();
+        
+        for (int i = 0 ; i < lstate->layerCount ; i++) {
+            MobiusLayerState* ystate = &(lstate->layers[i]);
+            if (ystate->checkpoint) {
+                // the layer number here is the index of this layer in the logical layer
+                // view that includes the "lost" layers from the state
+                int layerIndex = i + lstate->lostLayers;
+                tview->checkpoints.add(layerIndex);
+            }
+        }
+
+        tview->refreshLayers = true;
+    }
+
+    // !! what about redo layers?  you can have checkpoints in those too
+    // visualizing those aren't important UNLESS there is a "redo to checkpoint"
+    // function, which I think there is...
 }
 
 /**
  * Events
+ *
+ * Difference detection for events is complex because we're dealing with
+ * lists of objects.  Do the difference detection at the same time as the refresh.
+ * Not trying to be smart about reusing event views and modifying them in place.
+ * If anything changes about events, rebuild the entire event view.  There won't be
+ * many of these and add/remove is relatively rare.
  */
 void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview)
 {
-    for (int i = 0 ; i < lstate->eventCount ; i++) {
-        MobiusEventState* estate = &(lstate->events[i]);
-        MobiusViewEvent* ve;
+    int newCount = lstate->eventCount;
+    int oldCount = tview->events.size();
 
-        if (i < tview->events.size())
-          ve = tview->events[i];
-        else {
-            ve = new MobiusViewEvent();
-            tview->events.add(ve);
-        }
+    if (newCount != oldCount)
+      tview->refreshEvents = true;
+    else {
+        // counts didn't change but the contents may have
+        for (int i = 0 ; i < lstate->eventCount ; i++) {
+            MobiusEventState* estate = &(lstate->events[i]);
+            MobiusViewEvent* ve = tview->events[i];
         
-        const char* newName = nullptr;
-        if (estate->type != nullptr)
-          newName = estate->type->getName();
-        else
-          newName = "???";
+            const char* newName = nullptr;
+            if (estate->type != nullptr)
+              newName = estate->type->getName();
+            else
+              newName = "???";
 
-        // LoopMeter will display both the event type name and the argument
-        // number for things like "LoopSwitch 2"
-        if (strncmp(ve->name.toUTF8(), newName, strlen(newName)) ||
-            ve->argument != estate->argument ||
-            ve->frame != estate->frame || ve->pending != estate->pending) {
+            // LoopMeter will display both the event type name and the argument
+            // number for things like "LoopSwitch 2" so when doing name
+            // comparisons, use strncmp to only compare the name without the argument
+            
+            // more weirdness around the lifespan of toUTF8()
+            const char* oldName = ve->name.toUTF8();
+            if (strncmp(oldName, newName, strlen(newName)) ||
+                ve->argument != estate->argument ||
+                ve->frame != estate->frame ||
+                ve->pending != estate->pending) {
 
+                tview->refreshEvents = true;
+                break;
+            }
+        }
+    }
+    
+    // if after all that we detected a difference, rebuild the event view
+    if (tview->refreshEvents) {
+        tview->events.clear();
+
+        for (int i = 0 ; i < lstate->eventCount ; i++) {
+            MobiusEventState* estate = &(lstate->events[i]);
+            MobiusViewEvent* ve = new MobiusViewEvent();
+            tview->events.add(ve);
+
+            // sigh, repeat this little dance
+            const char* newName = "???";
+            if (estate->type != nullptr) newName = estate->type->getName();
+
+            ve->name = juce::String(newName) + " " + juce::String(ve->argument);
             ve->frame = estate->frame;
             ve->pending = estate->pending;
             ve->argument = estate->argument;
-            ve->name = juce::String(newName) + " " + juce::String(ve->argument);
-            tview->refreshEvents = true;
         }
     }
 }
@@ -538,6 +695,101 @@ void MobiusViewer::refreshMinorModes(MobiusTrackState* tstate, MobiusLoopState* 
     }
         
     tview->refreshMinorModes = refresh;
+
+    if (refresh)
+      assembleMinorModes(tview);
+}
+
+/**
+ * As a convenience for the MinorModesElemenet, assemble the value to display
+ * since we have all the information here, and don't want to duplicate all these
+ * flags in the element.
+ */
+void MobiusViewer::assembleMinorModes(MobiusViewTrack* tview)
+{
+    tview->minorModes.clear();
+
+    if (tview->overdub) addMinorMode(tview, "Overdub");
+    if (tview->mute) addMinorMode(tview, "Mute");
+    if (tview->reverse) addMinorMode(tview, "Reverse");
+    
+    if (tview->speedOctave != 0) addMinorMode(tview, "SpeedOct", tview->speedOctave);
+    if (tview->speedStep != 0) {
+        // factor out the toggle since they
+        // are percived at different things
+        int step = tview->speedStep - tview->speedToggle;
+        if (step != 0)
+          addMinorMode(tview, "SpeedStep", step);
+    }
+    if (tview->speedToggle != 0) addMinorMode(tview, "SpeedToggle", tview->speedToggle);
+    // This can also be a knob so we don't need
+    // this but I'm not sure people want to waste
+    // space for a knob that's too fine grained
+    // to use from the UI anyway.
+    if (tview->speedBend != 0) addMinorMode(tview, "SpeedBend", tview->speedBend);
+    
+    if (tview->pitchOctave != 0) addMinorMode(tview, "PitchOctave", tview->pitchOctave);
+    if (tview->pitchStep != 0) addMinorMode(tview, "PitchStep", tview->pitchStep);
+    if (tview->pitchBend != 0) addMinorMode(tview, "PitchBend", tview->pitchBend);
+    
+    if (tview->timeStretch != 0) addMinorMode(tview, "TimeStretch", tview->timeStretch);
+
+    // forget why I had the combo here, and why they're a mutex
+    if (tview->trackSyncMaster && tview->outSyncMaster) {
+        addMinorMode(tview, "Sync Master");
+    }
+    else if (tview->trackSyncMaster) {
+        addMinorMode(tview, "Track Sync Master");
+    }
+    else if (tview->outSyncMaster) {
+        addMinorMode(tview, "MIDI Sync Master");
+    }
+    
+    // the state flag has been "recording" but the mode was displayed
+    // as "Capture" so this must have only been used for Capture/Bounce
+    if (tview->recording) addMinorMode(tview, "Capture");
+
+    // this would be better as something in the track strip like DAWs do
+    if (tview->solo) addMinorMode(tview, "Solo");
+
+    // this is a weird one, it will be set during Solo too...
+    if (tview->globalMute && !tview->solo) addMinorMode(tview, "Global Mute");
+
+    if (tview->globalPause) addMinorMode(tview, "Global Pause");
+    
+    // this is "loop window" mode
+    if (tview->windowOffset > 0) addMinorMode(tview, "Windowing");
+
+    // this is what the UI wants to display at the moment
+    // don't need both but I'd like to leave it open to display them
+    // independently
+    tview->minorModesString = tview->minorModes.joinIntoString(" ");
+}
+
+/**
+ * Helper for minor mode gatherer that deals with the changes in string models.
+ */
+void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode)
+{
+    tview->minorModes.add(juce::String(mode));
+}
+
+void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int arg)
+{
+    tview->minorModes.add(juce::String(mode) + " " + juce::String(arg));
+}
+    
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Tracks
+//
+//////////////////////////////////////////////////////////////////////
+
+void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
+{
+    (void)mobius;
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    view->midiTracks = config->getMidiTracks();
 }
 
 /****************************************************************************/

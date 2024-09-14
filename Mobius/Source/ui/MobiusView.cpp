@@ -71,7 +71,6 @@ void MobiusView::reset()
         t->checkpoints.clear();
     
         t->refreshEvents = false;
-        t->eventCount = 0;
         //t->events.clear();
     }
 }

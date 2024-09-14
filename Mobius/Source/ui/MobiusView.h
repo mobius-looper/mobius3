@@ -187,6 +187,7 @@ class MobiusViewTrack {
      * Leave as strings for now until MIDI modes settle down.
      */
     juce::StringArray minorModes;
+    juce::String minorModesString;
     bool refreshMinorModes = false;
 
     /**
@@ -307,7 +308,6 @@ class MobiusViewTrack {
     //
 
     bool refreshEvents = false;
-    int eventCount = 0;
     juce::OwnedArray<MobiusViewEvent> events;
 
   protected:
@@ -343,6 +343,12 @@ class MobiusView
     
     MobiusViewTrack* track = nullptr;
     bool trackChanged = false;
+
+    /**
+     * Set when the active Setup changes.
+     * This impacts a few things like track names.
+     */
+    bool setupChanged = false;
     
     // todo: SyncState
 

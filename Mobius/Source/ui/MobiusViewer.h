@@ -30,6 +30,9 @@ class MobiusViewer
     class Supervisor* supervisor = nullptr;
     Query subcyclesQuery;
     
+    void resetRefreshTriggers(class MobiusView* view);
+
+    void refreshAudioTracks(class MobiusInterface* mobius, class MobiusState* state, class MobiusView* view);
     void refreshTrack(class MobiusState* state, class MobiusTrackState* tstate,
                       class MobiusView* mview, class MobiusViewTrack* vt,
                       bool active);
@@ -48,6 +51,10 @@ class MobiusViewer
     void refreshEvents(class MobiusLoopState* lstate, class MobiusViewTrack* tview);
     void refreshMinorModes(class MobiusTrackState* tstate, class MobiusLoopState* lstate,
                            class MobiusViewTrack* tview);
+    void assembleMinorModes(class MobiusViewTrack* tview);
+    void addMinorMode(class MobiusViewTrack* tview, const char* mode);
+    void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
 
+    void refreshMidiTracks(class MobiusInterface* mobius, class MobiusView* view);
     
 };
