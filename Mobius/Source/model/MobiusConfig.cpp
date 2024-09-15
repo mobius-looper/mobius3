@@ -89,7 +89,6 @@ void MobiusConfig::init()
 	mFadeFrames = AUDIO_DEFAULT_FADE_FRAMES;
 	mMaxSyncDrift = DEFAULT_MAX_SYNC_DRIFT;
 	mTracks = DEFAULT_TRACKS;
-    mMidiTracks = 0;
     mTrackGroups = DEFAULT_TRACK_GROUPS;
     mMaxLoops = DEFAULT_MAX_LOOPS;
     mLongPress = DEFAULT_LONG_PRESS_MSECS;
@@ -328,16 +327,6 @@ void MobiusConfig::setTracks(int i)
 {
 	if (i == 0) i = DEFAULT_TRACKS;
 	mTracks = i;
-}
-
-int MobiusConfig::getMidiTracks()
-{
-	return mMidiTracks;
-}
-
-void MobiusConfig::setMidiTracks(int i)
-{
-	mMidiTracks = i;
 }
 
 int MobiusConfig::getTrackGroups()

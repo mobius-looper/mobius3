@@ -207,11 +207,11 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is test code for the migration from MobiusConfig to MainConfig and
- * parameter sets.
+ * This does partial migration of MoibusConfig into MainConfig so code
+ * that needs global variables can start using MainConfig.
  *
- * It only does model conversion right now so I can watch it, the MainConfig is
- * not yet being used by anything.
+ * Actually....stubbing this out until we can address the name constant issues.
+ *
  *
  * First obvious thing...we're going to need name constants for all these.
  * They exist in UIParameterIds.h adapt that, but those don't have nice symbolic constants.

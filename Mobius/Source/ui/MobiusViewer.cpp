@@ -81,10 +81,6 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusVi
 {
     (void)mobius;
 
-    // as we transition gradually to the new view model, keep the old
-    // one so the old code can still get to it
-    view->oldState = state;
-
     // Counter needs this
     view->sampleRate = supervisor->getSampleRate();
 
@@ -126,6 +122,7 @@ void MobiusViewer::resetRefreshTriggers(MobiusView* view)
         t->refreshLayers = false;
         t->refreshEvents = false;
         t->refreshSwitch = false;
+        t->refreshLoopContent = false;
     }
 }
 
@@ -148,6 +145,7 @@ void MobiusViewer::forceRefresh(MobiusView* view)
         t->refreshLayers = true;
         t->refreshEvents = true;
         t->refreshSwitch = true;
+        t->refreshLoopContent = true;
     }
 }
 
@@ -430,6 +428,17 @@ void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* 
     if (tview->returnLoopNumber != lstate->returnLoop) {
         tview->returnLoopNumber = lstate->returnLoop;
         tview->refreshSwitch = true;
+    }
+
+    // this flag is set after some form of loop loading happens
+    // that can change the sizes of inactive loops,
+    // there might be other uses for this in the  future, if so
+    // change the name to be more generic, like oh say, needsRefresh
+    if (tstate->needsRefresh) {
+        tview->refreshLoopContent = true;
+        // this is "latching" and we are required to clear it when
+        // the UI is prepared to deal with it
+        tstate->needsRefresh = false;
     }
 
     if (activeTrack)

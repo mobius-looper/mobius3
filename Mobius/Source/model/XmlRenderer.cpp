@@ -435,7 +435,6 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	//render(UIParameterFadeFrames, c->getFadeFrames());
     render(b, UIParameterMaxSyncDrift, c->getMaxSyncDrift());
     render(b, UIParameterTrackCount, c->getTracks());
-    b->addAttribute("midiTracks", c->getMidiTracks());
     render(b, UIParameterGroupCount, c->getTrackGroups());
     render(b, UIParameterMaxLoops, c->getMaxLoops());
     render(b, UIParameterLongPress, c->getLongPress());
@@ -525,7 +524,6 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	c->setOutputLatency(parse(e, UIParameterOutputLatency));
 	c->setMaxSyncDrift(parse(e, UIParameterMaxSyncDrift));
 	c->setTracks(parse(e, UIParameterTrackCount));
-    c->setMidiTracks(e->getIntAttribute("midiTracks"));
 	c->setTrackGroups(parse(e, UIParameterGroupCount));
 	c->setMaxLoops(parse(e, UIParameterMaxLoops));
 	c->setLongPress(parse(e, UIParameterLongPress));

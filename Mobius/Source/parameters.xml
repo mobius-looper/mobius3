@@ -17,5 +17,6 @@
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="spreadRange" value="48" type="int"/>
     <Value name="trackCount" value="8" type="int"/>
+    <Value name="midiTracks" value="2"  type="int"/>
   </ValueSet>
 </MainConfig>

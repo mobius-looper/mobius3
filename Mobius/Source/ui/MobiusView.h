@@ -239,7 +239,14 @@ class MobiusViewTrack {
     int nextLoopNumber = 0;
     int returnLoopNumber = 0;
     bool refreshSwitch = false;
-       
+
+    /**
+     * Set when a loop was loaded outside of the usual
+     * recording process (menus, drag and drop) and the
+     * loop stack needs to adjust for the presence of content.
+     */
+    bool refreshLoopContent = false;
+    
     /**
      * Beat detection
      * These are latching refresh flags
@@ -344,8 +351,6 @@ class MobiusView
     MobiusView();
     ~MobiusView() {}
 
-    class MobiusState* oldState = nullptr;
-    
     juce::OwnedArray<MobiusViewTrack> tracks;
     MobiusViewTrack* getTrack(int index);
 

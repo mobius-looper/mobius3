@@ -381,8 +381,7 @@ void ActionButtons::buttonClicked(juce::Button* src)
         popup.show((ActionButton*)src);
     }
     else {
-        // todo: figure out of dynamic_cast has any performance implications
-        ActionButton* ab = (ActionButton*)src;
+        ActionButton* ab = static_cast<ActionButton*>(src);
         UIAction* action = ab->getAction();
 
         // if we're configured to allow sustain, then make it look like we can

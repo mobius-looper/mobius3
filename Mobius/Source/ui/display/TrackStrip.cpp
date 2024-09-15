@@ -13,7 +13,6 @@
 #include "../../Supervisor.h"
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
-#include "../../model/MobiusState.h"
 #include "../../model/Symbol.h"
 #include "../MobiusView.h"
 
@@ -199,38 +198,25 @@ void TrackStrip::resized()
 
 void TrackStrip::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    
-    // kludge: consume this flag to force a refresh
-    // in elements that have complex difference detection
-    // and might miss something, not liking this but it's
-    // wasy and reasonably effective
-    // only do this for docked strips
-    // this is only set by project loading, or is it the drag-and-drop loader?
-    
-    if (strips != nullptr) {
-        int tracknum = getTrackIndex();
-        MobiusTrackState* tstate = &(state->tracks[tracknum]);
-        needsRefresh = tstate->needsRefresh;
-        tstate->needsRefresh = false;
-    }
-    
+    // sub elements track changes themselves
     for (int i = 0 ; i < elements.size() ; i++) {
         StripElement* el = elements[i];
         el->update(view);
     }
 
-    if (needsRefresh ||
-        activeTrack != state->activeTrack ||
+    // outer strip container may need to repaint
+    // if it needs border changes
+    // this will also request repaints of all the children
+    // which may have already requested a repaint
+    // todo: verify that this doesn't cause children
+    // to be repainted twice
+    if (activeTrack != view->activeTrack ||
         lastDropTarget != outerDropTarget) {
         
-        activeTrack = state->activeTrack;
+        activeTrack = view->activeTrack;
         lastDropTarget = outerDropTarget;
         repaint();
     }
-
-    // children should have captured this by now
-    needsRefresh = false;
 }
 
 void TrackStrip::paint(juce::Graphics& g)
@@ -272,7 +258,8 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
     if (isDocked()) {
         // action argument is the track number, 1 based
         // for some reason, the UI uses 0 based numbers with -1 meaning active
-        // I guess to make it easier to use the numbers as indexes into the MobiusState track array
+        // I guess to make it easier to use the numbers as indexes into
+        // the MobiusView/MobiusState track array
         trackSelectAction.value = getTrackIndex() + 1;
         getSupervisor()->doAction(&trackSelectAction);
     }

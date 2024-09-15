@@ -585,21 +585,27 @@ int StripLoopStack::getPreferredHeight()
 
 /**
  * Like LoopMeter, we've got a more complex than usual substructure
- * so it is harder to do difference detection.
- * Update whenever the loop is moving for now.  This also gives us
- * a way to do progress bars if desired.
+ * so it is harder to do difference detection due to potential canges
+ * inactive loops.   MobiusView now handles most of that and sets these
+ * flags:
  *
- * This is the only thing right now that uses the kludgey needsRefresh
- * flag from MobiusTrackState which will have been saved in the
- * parent strip.  Used to detect when a file drop finishes since
- * we're not very thorough doing change detection on non-active tracks.
+ *     refreshSwitch
+ *        the loop number of the next loop has changed, this requires
+ *        redrawing a highlight around the target loop which is currently
+ *        inactive
+ *
+ *     refreshLoopContent
+ *       some form of loading happened into a loop that was inactive
+ *       and possibly empty, since we draw empty vs. full loops differently
+ *       need to refresh the stack
+ *
  */
 void StripLoopStack::update(MobiusView* view)
 {
     MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
-    bool needsRefresh = (strip != nullptr && strip->needsRefresh);
     
-    if (needsRefresh || track->refreshSwitch ||
+    if (track->refreshSwitch ||
+        track->refreshLoopContent ||
         trackLoops != track->loopCount ||
         lastActive != track->activeLoop ||
         dropTarget != lastDropTarget) {
