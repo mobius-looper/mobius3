@@ -238,6 +238,11 @@
         <FILE id="Yxp3rh" name="XmlRenderer.h" compile="0" resource="0" file="../Mobius/Source/model/XmlRenderer.h"/>
       </GROUP>
       <GROUP id="{140C682E-160C-A2B0-367A-23A10BE8B62B}" name="ui">
+        <FILE id="uVAhEX" name="MobiusView.cpp" compile="1" resource="0" file="../Mobius/Source/ui/MobiusView.cpp"/>
+        <FILE id="BnSchx" name="MobiusView.h" compile="0" resource="0" file="../Mobius/Source/ui/MobiusView.h"/>
+        <FILE id="RVp8oI" name="MobiusViewer.cpp" compile="1" resource="0"
+              file="../Mobius/Source/ui/MobiusViewer.cpp"/>
+        <FILE id="iP9XBA" name="MobiusViewer.h" compile="0" resource="0" file="../Mobius/Source/ui/MobiusViewer.h"/>
         <FILE id="A0Abxy" name="WindowFactory.cpp" compile="1" resource="0"
               file="../Mobius/Source/ui/WindowFactory.cpp"/>
         <FILE id="mRKMcf" name="WindowFactory.h" compile="0" resource="0" file="../Mobius/Source/ui/WindowFactory.h"/>
@@ -394,8 +399,6 @@
           <FILE id="qaK3Ap" name="LayerElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/LayerElement.cpp"/>
           <FILE id="nHTby9" name="LayerElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/LayerElement.h"/>
-          <FILE id="HSDcQE" name="LayerModel.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/LayerModel.cpp"/>
-          <FILE id="zJssnX" name="LayerModel.h" compile="0" resource="0" file="../Mobius/Source/ui/display/LayerModel.h"/>
           <FILE id="DnnjOi" name="LoopMeterElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/LoopMeterElement.cpp"/>
           <FILE id="zKDIuh" name="LoopMeterElement.h" compile="0" resource="0"

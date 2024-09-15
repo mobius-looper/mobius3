@@ -7,9 +7,15 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/MobiusState.h"
+
+// temporary test hack
+#include "../../Supervisor.h"
+
+#include "LayerModel.h"
 #include "StatusElement.h"
 
-class LayerElement : public StatusElement
+class LayerElement : public StatusElement, public Supervisor::ActionListener
 {
   public:
     
@@ -23,25 +29,30 @@ class LayerElement : public StatusElement
     void resized() override;
     void paint(juce::Graphics& g) override;
 
+    // intercept some of the ActionButtons to simulate layer state
+    bool doAction(class UIAction* a) override;
+    
   private:
 
-    // repaint change detection state
+    // change detection state
+    int lastTrack = 0;
+    int lastLoop = 0;
     int lastLayerCount = 0;
-    int lastActive = -1;
-    int lastCheckpointCount = 0;
-    int lastViewBase = 0;
+    int lastLostCount = 0;
+    bool lastCheckpoint = false;
+
+    // model/view helper
+    LayerView view;
 
     // view base the last time we were displayed
-    int viewBase = 0;
+    int lastViewBase = 0;
+    
+    // redirected loop state for testing
+    MobiusLoopState testLoop;
+    bool doTest = false;
 
-    // tranient results from orient()
-    int preLoss = 0;
-    int postLoss = 0;
-
-    void orient(class MobiusViewTrack* track);
-    bool isCheckpoint(class MobiusViewTrack* track, int layerIndex);
-    bool isVoid(class MobiusViewTrack* track, int layerIndex);
-    bool isActive(class MobiusViewTrack* track, int layerIndex);
+    // the last loop state used by update()
+    MobiusLoopState* sourceLoop = nullptr;
     
 };
 
