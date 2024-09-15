@@ -12,7 +12,6 @@
 #include "../../util/Trace.h"
 #include "../../Supervisor.h"
 #include "../../model/UIParameter.h"
-#include "../../model/MobiusState.h"
 #include "../../model/Symbol.h"
 
 #include "../JuceUtil.h"
@@ -145,16 +144,15 @@ void StripRotary::sliderDragEnded(juce::Slider*)
 }
 
 /**
- * Ask the subclass to pull the current value from MobiusState
+ * Ask the subclass to pull the current value from MobiusViewTrack
  * compare it to our current value and if different, update
  * the slider and repaint.
  */
 void StripRotary::update(MobiusView* view)
 {
+    (void)view;
     if (!dragging) {
-        MobiusState* state = view->oldState;
-        int tracknum = strip->getTrackIndex();
-        MobiusTrackState* track = &(state->tracks[tracknum]);
+        MobiusViewTrack* track = getTrackView();
 
         // subclass implements this
         int current = getCurrentValue(track);
@@ -191,7 +189,7 @@ void StripRotary::sliderValueChanged(juce::Slider* obj)
 // Parameter Rotaries
 //
 // Only need these because Parameter doesn't know how to get things
-// out of a MobiusTrackState.
+// out of a MobiusViewTrack.
 //
 // TODO: This sucks as usual as it means that it means that only
 // a few things can be rotaries.  We should be able to use these for
@@ -207,7 +205,7 @@ StripOutput::StripOutput(class TrackStrip* parent) :
 {
 }
 
-int StripOutput::getCurrentValue(MobiusTrackState* track)
+int StripOutput::getCurrentValue(MobiusViewTrack* track)
 {
     return track->outputLevel;
 }
@@ -219,7 +217,7 @@ StripInput::StripInput(class TrackStrip* parent) :
 {
 }
 
-int StripInput::getCurrentValue(MobiusTrackState* track)
+int StripInput::getCurrentValue(MobiusViewTrack* track)
 {
     return track->inputLevel;
 }
@@ -231,7 +229,7 @@ StripFeedback::StripFeedback(class TrackStrip* parent) :
 {
 }
 
-int StripFeedback::getCurrentValue(MobiusTrackState* track)
+int StripFeedback::getCurrentValue(MobiusViewTrack* track)
 {
     return track->feedback;
 }
@@ -243,7 +241,7 @@ StripAltFeedback::StripAltFeedback(class TrackStrip* parent) :
 {
 }
 
-int StripAltFeedback::getCurrentValue(MobiusTrackState* track)
+int StripAltFeedback::getCurrentValue(MobiusViewTrack* track)
 {
     return track->altFeedback;
 }
@@ -255,7 +253,7 @@ StripPan::StripPan(class TrackStrip* parent) :
 {
 }
 
-int StripPan::getCurrentValue(MobiusTrackState* track)
+int StripPan::getCurrentValue(MobiusViewTrack* track)
 {
     return track->pan;
 }

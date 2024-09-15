@@ -5,7 +5,7 @@
  *
  * Most of the strip elements are Parameter rotaries so we can
  * reduce almost of all the logic into the base class.   Subclasses
- * just provide ways to get/set the underlying value from MobiusState.
+ * just provide ways to get/set the underlying value from MobiusViewTrack.
  */
 
 #pragma once
@@ -36,7 +36,7 @@ class StripRotary : public StripElement, public juce::Slider::Listener
     void sliderDragStarted(juce::Slider* slider) override;
     void sliderDragEnded(juce::Slider* slider) override;
 
-    virtual int getCurrentValue(class MobiusTrackState* track) = 0;
+    virtual int getCurrentValue(class MobiusViewTrack* track) = 0;
     
     // can we do this without messing up the Slider
     // will we even get here?
@@ -62,7 +62,7 @@ class StripOutput : public StripRotary
   public:
     StripOutput(class TrackStrip* parent);
     ~StripOutput() {};
-    int getCurrentValue(class MobiusTrackState* track);
+    int getCurrentValue(class MobiusViewTrack* track);
 };
     
 class StripInput : public StripRotary
@@ -70,7 +70,7 @@ class StripInput : public StripRotary
   public:
     StripInput(class TrackStrip* parent);
     ~StripInput() {};
-    int getCurrentValue(class MobiusTrackState* track);
+    int getCurrentValue(class MobiusViewTrack* track);
 };
     
 class StripFeedback : public StripRotary
@@ -78,7 +78,7 @@ class StripFeedback : public StripRotary
   public:
     StripFeedback(class TrackStrip* parent);
     ~StripFeedback() {};
-    int getCurrentValue(class MobiusTrackState* track);
+    int getCurrentValue(class MobiusViewTrack* track);
 };
     
 class StripAltFeedback : public StripRotary
@@ -86,7 +86,7 @@ class StripAltFeedback : public StripRotary
   public:
     StripAltFeedback(class TrackStrip* parent);
     ~StripAltFeedback() {};
-    int getCurrentValue(class MobiusTrackState* track);
+    int getCurrentValue(class MobiusViewTrack* track);
 };
     
 class StripPan : public StripRotary
@@ -94,7 +94,7 @@ class StripPan : public StripRotary
   public:
     StripPan(class TrackStrip* parent);
     ~StripPan() {};
-    int getCurrentValue(class MobiusTrackState* track);
+    int getCurrentValue(class MobiusViewTrack* track);
 };
 
 /****************************************************************************/

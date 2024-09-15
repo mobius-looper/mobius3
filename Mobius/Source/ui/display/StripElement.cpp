@@ -6,6 +6,7 @@
 
 #include "../../util/Util.h"
 #include "../../model/UIParameter.h"
+#include "../MobiusView.h"
 
 #include "Colors.h"
 #include "TrackStrip.h"
@@ -189,6 +190,16 @@ StripElement::StripElement(TrackStrip* parent, StripElementDefinition* def)
         
 StripElement::~StripElement()
 {
+}
+
+MobiusView* StripElement::getMobiusView()
+{
+    return strip->getMobiusView();
+}
+
+MobiusViewTrack* StripElement::getTrackView()
+{
+    return strip->getTrackView();
 }
 
 void StripElement::update(MobiusView* view)

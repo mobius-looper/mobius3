@@ -175,6 +175,16 @@ class MobiusViewTrack {
     bool loopChanged = false;
     
     /**
+     * Summaries for inactive loops
+     * This may be larger than loopCount when the user is changing
+     * loop counts or has different counts in different tracks.
+     * Over time it will become the maximum number required, but the
+     * only ones with valid state are defined by loopCount
+     */
+    juce::OwnedArray<MobiusViewLoop> loops;
+    MobiusViewLoop* getLoop(int index);
+    
+    /**
      * The major mode the loop is in.
      */
     juce::String mode;
@@ -224,10 +234,12 @@ class MobiusViewTrack {
 
     /**
      * Pending transitions
+     * 1 based with 0 meaning not switching
      */
-    int nextLoop = 0;
-    int returnLoop = 0;
-
+    int nextLoopNumber = 0;
+    int returnLoopNumber = 0;
+    bool refreshSwitch = false;
+       
     /**
      * Beat detection
      * These are latching refresh flags
@@ -239,9 +251,17 @@ class MobiusViewTrack {
     /**
      * Loop window state
      */
-    long    windowOffset;
-    long    windowHistoryFrames;
+    int    windowOffset;
+    int    windowHistoryFrames;
 
+    //
+    // Synchronization
+    //
+    float syncTempo = 0.0f;
+    int syncBeat = 0;
+    int syncBar = 0;
+    bool syncShowBeat = false;
+    
     //
     // Minor Modes
     //
@@ -265,15 +285,6 @@ class MobiusViewTrack {
     // where do these belong?
     bool globalMute = false;
     bool globalPause = false;
-    
-    /**
-     * Summaries for inactive loops
-     * This may be larger than loopCount when the user is changing
-     * loop counts or has different counts in different tracks.
-     * Over time it will become the maximum number required, but the
-     * only ones with valid state are defined by loopCount
-     */
-    juce::OwnedArray<MobiusViewLoop> loops;
     
     //
     // Layers
@@ -336,6 +347,7 @@ class MobiusView
     class MobiusState* oldState = nullptr;
     
     juce::OwnedArray<MobiusViewTrack> tracks;
+    MobiusViewTrack* getTrack(int index);
 
     int trackCount = 0;
     int audioTracks = 0;

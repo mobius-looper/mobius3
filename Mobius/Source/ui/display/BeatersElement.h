@@ -48,16 +48,13 @@ class Beater : public juce::Component
     void mouseUp(const juce::MouseEvent& e) override;
 };
 
-class BeatersElement : public StatusElement, public Supervisor::TimeListener
+class BeatersElement : public StatusElement
 {
   public:
     
     BeatersElement(class StatusArea* area);
     ~BeatersElement();
 
-    // Supervisor::TimeListener
-    void timeBoundary(class MobiusState* view) override;
-    
     void update(class MobiusView* view) override;
     
     int getPreferredWidth() override;

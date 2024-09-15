@@ -15,7 +15,6 @@ class StripTrackNumber : public StripElement
     StripTrackNumber(class TrackStrip* parent);
     ~StripTrackNumber();
 
-    void configure() override;
     void update(MobiusView* view) override;
 
     int getPreferredHeight() override;
@@ -28,8 +27,6 @@ class StripTrackNumber : public StripElement
   private:
 
     bool focusLock = false;
-    int setupOrdinal = -1;
-    juce::String trackName;
     UIAction action;
 };
 
@@ -40,7 +37,6 @@ class StripGroupName : public StripElement
     StripGroupName(class TrackStrip* parent);
     ~StripGroupName();
 
-    void configure() override;
     void update(MobiusView* view) override;
 
     int getPreferredHeight() override;
@@ -49,9 +45,7 @@ class StripGroupName : public StripElement
     void paint(juce::Graphics& g) override;
     
   private:
-    int groupNumber = -1;
-    juce::String groupName;
-    int groupColor;
+
 };
 
 class StripFocusLock : public StripElement
@@ -182,9 +176,7 @@ class StripLoopStack : public StripElement, public juce::FileDragAndDropTarget
     // the first loop being displayed
     int firstLoop = 0;
     
-    class MobiusTrackState* track = nullptr;
     int lastActive = -1;
-    long lastFrame = 0;
     int lastDropTarget = -1;
     int dropTarget = -1;
     

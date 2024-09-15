@@ -107,6 +107,9 @@ class StripElement : public juce::Component
     StripElement(class TrackStrip*, StripElementDefinition* def);
     ~StripElement();
 
+    class MobiusView* getMobiusView();
+    class MobiusViewTrack* getTrackView();
+    
     virtual void configure() {
     }
     
@@ -125,6 +128,7 @@ class StripElement : public juce::Component
     
     // transient display order
     int position = 0;
+
     
   protected:
     

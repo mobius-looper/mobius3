@@ -17,7 +17,6 @@
 #include "../../model/UIConfig.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
-#include "../../model/MobiusState.h"
 #include "../../model/UIParameter.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/UIAction.h"
@@ -180,25 +179,29 @@ int ParametersElement::getPreferredWidth()
  */
 void ParametersElement::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
     bool changes = false;
-    
-    for (int i = 0 ; i < parameters.size() ; i++) {
-        ParameterState* ps = parameters[i];
-        // don't need this any more, can use the symbol
-        // UIParameter* p = ps->parameter;
-        int value = ps->value;
-        Query q (ps->symbol);
-        q.scope = state->activeTrack;
-        if (statusArea->getSupervisor()->doQuery(&q))
-          value = q.value;
+
+    // skip detailed queries if we know the track changed
+    if (view->trackChanged) {
+        changes = true;
+    }
+    else {
+        for (int i = 0 ; i < parameters.size() ; i++) {
+            ParameterState* ps = parameters[i];
+            int value = ps->value;
+            Query q (ps->symbol);
+            // activeTrack is zero based, Query scope is 1 based
+            q.scope = view->activeTrack + 1;
+            if (statusArea->getSupervisor()->doQuery(&q))
+              value = q.value;
             
-        if (ps->value != value) {
-            ps->value = value;
-            changes = true;
+            if (ps->value != value) {
+                ps->value = value;
+                changes = true;
+            }
         }
     }
-
+    
     if (changes)
       repaint();
 }

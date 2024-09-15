@@ -1,5 +1,4 @@
 
-#include "../../model/MobiusState.h"
 #include "../MobiusView.h"
 
 #include "Colors.h"
@@ -45,27 +44,6 @@
  * Loop bar was green, red, blue, grey, or black if empty.
  *
  */
-
-juce::Colour Colors::getLoopColor(MobiusLoopState* loop)
-{
-    juce::Colour c = juce::Colours::black;
-
-    // not sure why there were two flags
-    if (loop->recording || loop->overdub) {
-        c = juce::Colour(MobiusRed);
-    }
-    else if (loop->mute) {
-        c = juce::Colours::blue;
-    }
-    else if (loop->speed) {
-        c = juce::Colours::grey;
-    }
-    else if (loop->frames > 0) {
-        c = juce::Colour(MobiusGreen);
-    }
-
-    return c;
-}
 
 juce::Colour Colors::getLoopColor(MobiusViewTrack* track)
 {

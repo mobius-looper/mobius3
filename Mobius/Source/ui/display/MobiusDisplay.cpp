@@ -34,6 +34,11 @@ Supervisor* MobiusDisplay::getSupervisor()
     return mainWindow->getSupervisor();
 }
 
+class MobiusView* MobiusDisplay::getMobiusView()
+{
+    return getSupervisor()->getMobiusView();
+}
+
 /**
  * Inform sensitive children that the configuration has changed.
  * They'll still see the old configuration on the weekends though.

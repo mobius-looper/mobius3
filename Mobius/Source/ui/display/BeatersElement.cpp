@@ -5,27 +5,14 @@
  * reaching a subcycle, cycle, or loop boundary.  When a beater is turned on,
  * it will display highlighted for a period of time then turn off.
  *
- * Originally used maintenance thread intervals to turn these on and off
- * but with a 1/10th cycle it's just too jittery to look right.
- *
- * We're taking the unusual step of letting the audio thread
- * call MobiusInterface::mobiusTimeBoundary directly which
- * ends up in Supervisor::TimeListener::timeBoundary below.
- *
- * The only thing we're allowed to do is check beater state
- * and call repaint() to ask the UI thread to refresh.
- *
- * The maintenance thread will still be responsible for turning
- * beaters off, which will still have jitter but doesn't look
- * as bad as not seeing them turn on.
+ * To make these look responsive, the maintenance thread is broken out of its
+ * wait state by a special engine callback mobiusTimeBoundary.
  * 
  */
 
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MobiusState.h"
-#include "../../model/ModeDefinition.h"
 #include "../../Supervisor.h"
 #include "../MobiusView.h"
 
@@ -66,14 +53,11 @@ BeatersElement::BeatersElement(StatusArea* area) :
     cycleBeater.decayMsec = BeaterDecayLong;
     loopBeater.decayMsec = BeaterDecayLong;
 
-    // receive notifications of time boudaries closer to when they happen
-    area->getSupervisor()->addTimeListener(this);
     resizes = true;
 }
 
 BeatersElement::~BeatersElement()
 {
-    statusArea->getSupervisor()->removeTimeListener(this);
 }
 
 /**
@@ -123,46 +107,40 @@ void BeatersElement::paint(juce::Graphics& g)
 }
 
 /**
- * Newer interface to receive notifications from
- * the engine via MobiusListener::mobiusTimeBoundary
- * close to when a subcycle/cycle/loop boundary was crossed.
+ * Maintenance thread refresh.
+ * Notify the beaters that time has passed and repaint if
+ * they've grown tired of life.
  *
- * NOTE WELL: This is called from the AUDIO THREAD so the only
- * thing you can do is twiddle memory and call repaint().
- * See MobiusKernel::coreTimeBoundary for more commentary.
- *
- * Capture the latched state of the beats from MobiusState
- * and reset the latch.  See file comments for why this
- * has to be a latch.
- *
- * !! I've noticed the cycle beater not turning on with short loops
- * and more rarely loop beater.  This seemed to happen after
- * the conversion to using MobiusTimeBoundary exclusively to
- * turn things on.  So Mobius logic to set the beat flags may
- * have a roundoff error.
+ * For a time the three beat flags were "latching" meaning they
+ * stayed on until the UI (us) turned them off.  This was from when we
+ * tried to set them directly in the audio thread which caused probelms so
+ * they should be able to be cleared by MobiusViewer like all the other
+ * refresh flags.
  */
-void BeatersElement::timeBoundary(MobiusState* state)
+void BeatersElement::update(MobiusView* view)
 {
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
-
+    MobiusViewTrack* track = view->track;
     bool anyChanged = false;
 
-    if (loop->beatSubCycle) {
+    if (track->beatSubcycle) {
         if (subcycleBeater.start())
           anyChanged = true;
-        loop->beatSubCycle = false;
+        track->beatSubcycle = false;
     }
+    else if (subcycleBeater.tick())
+      anyChanged = true;
 
-    // beatCycle doesn't seem to be turning on for shorter loops
+    // beatCycle doesn't seem to be turning on for shorter loops?
     // weird...
-    if (loop->beatCycle) {
+    if (track->beatCycle) {
         if (cycleBeater.start())
           anyChanged = true;
-        loop->beatCycle = false;
+        track->beatCycle = false;
     }
+    else if (cycleBeater.tick())
+      anyChanged = true;
     
-    if (loop->beatLoop) {
+    if (track->beatLoop) {
         if (loopBeater.start())
           anyChanged = true;
 
@@ -171,47 +149,11 @@ void BeatersElement::timeBoundary(MobiusState* state)
         if (cycleBeater.start())
           anyChanged = true;
         
-        loop->beatLoop = false;
+        track->beatLoop = false;
     }
+    else if (loopBeater.tick())
+      anyChanged = true;
         
-    if (anyChanged)
-      repaint();
-}
-
-/**
- * Maintenance thread refresh.
- * Notify the beaters that time has passed and repaint if
- * they've grown tired of life.
- */
-void BeatersElement::update(MobiusView* view)
-{
-    MobiusState* state = view->oldState;
-    bool anyChanged = false;
-
-    // detect missed timeBoundaries, this shouldn't be necessary
-    // and means that Mobius must not be setting the flags
-    // correctly under some buffer conditions
-    // since both the audio thread and maintenance thread are in play
-    // here there are race conditions on the state flags so don't clear them
-    MobiusTrackState* track = &(state->tracks[state->activeTrack]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
-
-    // in brief testing, I did hit missed loop but not cycle
-    if (loop->beatCycle && !cycleBeater.on) {
-        Trace(2, "BeatersElement: missed a cycle\n");
-    }
-    if (loop->beatLoop && !loopBeater.on) {
-        Trace(2, "BeatersElement: missed a loop\n");
-    }
-
-    if (subcycleBeater.tick())
-      anyChanged = true;
-    
-    if (cycleBeater.tick())
-      anyChanged = true;
-
-    if (loopBeater.tick())
-      anyChanged = true;
         
     if (anyChanged)
       repaint();

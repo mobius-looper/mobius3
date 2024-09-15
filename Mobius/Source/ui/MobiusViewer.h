@@ -24,7 +24,8 @@ class MobiusViewer
     ~MobiusViewer();
 
     void refresh(class MobiusInterface* mobius, class MobiusState* state, class MobiusView* v);
-
+    void forceRefresh(MobiusView* v);
+    
   private:
 
     class Supervisor* supervisor = nullptr;
@@ -41,6 +42,7 @@ class MobiusViewer
                           class MobiusView* mview, class MobiusViewTrack* tview);
 
     void refreshTrackProperties(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshSync(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class MobiusTrackState* tstate,  class MobiusViewTrack* tview);
     void refreshInactiveLoops(class MobiusTrackState* tstate, class MobiusViewTrack* tview);
     void refreshActiveLoop(class MobiusTrackState* tstate, class MobiusLoopState* lstate,

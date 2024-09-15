@@ -391,6 +391,8 @@ bool Supervisor::start()
     if (mainComponent != nullptr) {
         MobiusState* state = mobius->getState();
         mobiusViewer.refresh(mobius, state, &mobiusView);
+        // nothing has been displayed set so turn on all the flags
+        mobiusViewer.forceRefresh(&mobiusView);
         win->update(&mobiusView);
     }
 
@@ -835,12 +837,6 @@ void Supervisor::advance()
 
             // eventual replacement for MobiusState
             mobiusViewer.refresh(mobius, state, &mobiusView);
-
-            // was doing this directly in mobiusTimeBoundary but that
-            // caused deadlocks, if we have to do this in the normal maintenance
-            // cycle, by breaking MainThread out of the wait early, then we don't need
-            // TimeListeners
-            notifyTimeListeners();
             
             mainWindow->update(&mobiusView);
         }
@@ -1353,27 +1349,6 @@ void Supervisor::message(juce::String msg)
     notifyAlertListeners(msg);
 }
 
-void Supervisor::addTimeListener(TimeListener* l)
-{
-    if (!timeListeners.contains(l))
-      timeListeners.add(l);
-}
-
-void Supervisor::removeTimeListener(TimeListener* l)
-{
-    timeListeners.removeFirstMatchingValue(l);
-}
-
-void Supervisor::notifyTimeListeners()
-{
-    MobiusState* state = mobius->getState();
-        
-    for (int i = 0 ; i < timeListeners.size() ; i++) {
-        TimeListener* l = timeListeners[i];
-        l->timeBoundary(state);
-    }
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Mobius Container
@@ -1491,30 +1466,12 @@ void Supervisor::setAudioListener(MobiusAudioListener* l)
  * Called when the engine advances past a subcycle, cycle, loop boundary
  * and would like the UI to be refreshed early to make it look snappy.
  *
- * This is unusual because we're called from the audio thread so Beaters
- * can call repaint() ASAP after a time boundary.  Juce will assert unless
- * you get a MessageManagerLock like MainThread does.  See
- * MobiusKernel::coreTimeBoundary for more commentary.
+ * This is called from the audio thread, so all we do is signal the maintenance
+ * thread to break out of it's wait early, then we go through the normal
+ * refresh process.
  */
 void Supervisor::mobiusTimeBoundary()
 {
-    // seems to cause deadlocks since we're in the audio thread
-#if 0    
-    if (timeListeners.size() > 0) {
-        const juce::MessageManagerLock mml (juce::Thread::getCurrentThread());
-        if (!mml.lockWasGained()) {
-            // tutorial comments:
-            // if something is trying to kill this job the lock will fail
-            // in which case we better return
-            return;
-        }
-
-        notifyTimeListeners();
-    }
-#endif
-
-    // try this instead which is supposed to get MainThread out of it's wait state
-    // and make it do an immediate refresh
     uiThread.notify();
 }
 

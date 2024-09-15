@@ -49,6 +49,26 @@ TrackStrip::~TrackStrip()
 {
 }
 
+MobiusView* TrackStrip::getMobiusView()
+{
+    MobiusView* view = nullptr;
+    
+    if (strips != nullptr)
+      view = strips->getMobiusView();
+    else if (floater != nullptr)
+      view = floater->getMobiusView();
+    else {
+        // can't happen, bad day
+    }
+    return view;
+}
+
+MobiusViewTrack* TrackStrip::getTrackView()
+{
+    MobiusView* view = getMobiusView();
+    return view->getTrack(followTrack);
+}
+          
 Supervisor* TrackStrip::getSupervisor()
 {
     if (strips != nullptr)
@@ -65,7 +85,8 @@ Supervisor* TrackStrip::getSupervisor()
  * Set the track to follow, -1 means the active track.
  * For floaters, could give them a component to select the track.
  * Note that unlike Mobius core and binding scopes, track numbers
- * are zero based here, so they can be used as indexes into MobiusState.
+ * are zero based here, so they can be used as indexes into track array
+ * in MobiusView.
  */
 void TrackStrip::setFollowTrack(int t)
 {
@@ -185,6 +206,8 @@ void TrackStrip::update(MobiusView* view)
     // and might miss something, not liking this but it's
     // wasy and reasonably effective
     // only do this for docked strips
+    // this is only set by project loading, or is it the drag-and-drop loader?
+    
     if (strips != nullptr) {
         int tracknum = getTrackIndex();
         MobiusTrackState* tstate = &(state->tracks[tracknum]);

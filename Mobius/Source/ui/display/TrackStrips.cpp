@@ -32,6 +32,11 @@ Supervisor* TrackStrips::getSupervisor()
     return display->getSupervisor();
 }
 
+class MobiusView* TrackStrips::getMobiusView()
+{
+    return display->getMobiusView();
+}
+
 /**
  * Notified when either the MobiusConfig or UIConfig changes.
  * If this is during initialization, allocate the track array,

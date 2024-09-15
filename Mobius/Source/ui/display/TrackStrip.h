@@ -22,6 +22,8 @@ class TrackStrip : public juce::Component,
     ~TrackStrip();
 
     class Supervisor* getSupervisor();
+    class MobiusView* getMobiusView();
+    class MobiusViewTrack* getTrackView();
 
     bool isDocked() {
         return (strips != nullptr);

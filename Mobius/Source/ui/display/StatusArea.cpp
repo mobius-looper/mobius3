@@ -63,6 +63,11 @@ Supervisor* StatusArea::getSupervisor()
     return display->getSupervisor();
 }
 
+class MobiusView* StatusArea::getMobiusView()
+{
+    return display->getMobiusView();
+}
+
 /**
  * We'll only receive these if the mouse is not over a child component.
  * If this is a right mouse click, open the main popup menu.

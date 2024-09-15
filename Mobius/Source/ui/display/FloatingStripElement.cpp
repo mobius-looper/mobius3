@@ -27,6 +27,11 @@ Supervisor* FloatingStripElement::getSupervisor()
     return statusArea->getSupervisor();
 }
 
+class MobiusView* FloatingStripElement::getMobiusView()
+{
+    return statusArea->getMobiusView();
+}
+
 void FloatingStripElement::configure()
 {
     strip.configure();

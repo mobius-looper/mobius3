@@ -1,7 +1,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MobiusState.h"
 #include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
@@ -20,17 +19,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-// This formerly also functioned as the focus lock widget
-// Might be nice to have that by clicking on it rather than making
-// them take up space with the FocusLock button, but clicking on
-// the number is also a very common way to select tracks with the mouse
-// so not sure...
-
-// number vs. name
-// Old code displayed either the number or the track name if one was
-// set in the Setup.  Since names are variable, the preferred size
-// needs to be reasonably wide.
-
+/**
+ * This formerly also functioned as the focus lock widget
+ * Might be nice to have that by clicking on it rather than making
+ * them take up space with the FocusLock button, but clicking on
+ * the number is also a very common way to select tracks with the mouse
+ * so not sure...
+ *
+ * number vs. name
+ * Old code displayed either the number or the track name if one was
+ * set in the Setup.  Since names are variable, the preferred size
+ * needs to be reasonably wide.
+ */
 StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
 {
@@ -55,48 +55,17 @@ int StripTrackNumber::getPreferredHeight()
     return 30;
 }
 
-/**
- * In theory they do an action to change the track name
- * and make it different than the Setup.  There isn't a good
- * place to pull that right now, not even sure if Query works.
- * But startingSetup will be enough for most.
- */
-void StripTrackNumber::configure()
-{
-    // could refresh the name here, but just reset the setup ordinal
-    // so we pick it up on the next update
-    setupOrdinal = -1;
-}
-
 void StripTrackNumber::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
+    (void)view;
+    // it's easier to let the containing strip handle it since it knows the track index to follow
+    MobiusViewTrack* track = strip->getTrackView();
+    if (track->refreshName ||
+        track->focused != focusLock) {
 
-    bool needsRepaint = false;
-
-    // whenever the setup changes, refresh the name
-    if (setupOrdinal != state->setupOrdinal) {
-        trackName = "";
-        MobiusConfig* config = strip->getSupervisor()->getMobiusConfig();
-        Setup* setup = config->getSetup(state->setupOrdinal);
-        if (setup != nullptr) {
-            SetupTrack* st = setup->getTrack(tracknum);
-            if (st != nullptr)
-              trackName = juce::String(st->getName());
-        }
-        setupOrdinal = state->setupOrdinal;
-        needsRepaint = true;
+        focusLock = track->focused;
+        repaint();
     }
-    
-    if (track->focusLock != focusLock) {
-        focusLock = track->focusLock;
-        needsRepaint = true;
-    }
-
-    if (needsRepaint)
-      repaint();
 }
 
 /**
@@ -129,13 +98,15 @@ void StripTrackNumber::update(MobiusView* view)
  */
 void StripTrackNumber::paint(juce::Graphics& g)
 {
+    MobiusViewTrack* track = strip->getTrackView();
+    
     juce::Colour textColor = juce::Colour(MobiusGreen);
     if (focusLock)
       textColor = juce::Colour(MobiusRed);
 
     g.setColour(textColor);
-    
-    if (trackName.length() == 0) {
+
+    if (track->name.length() == 0) {
         juce::Font font(JuceUtil::getFont(getHeight()));
 
         g.setFont(font);
@@ -150,14 +121,14 @@ void StripTrackNumber::paint(juce::Graphics& g)
         juce::Font font(JuceUtil::getFont(getHeight()));
         // hacking around the unpredictable truncation, if the name is beyond
         // a certain length, reduce the font height
-        if (trackName.length() >= 10)
+        if (track->name.length() >= 10)
           font = JuceUtil::getFontf(getHeight() * 0.75f);
           
         // not sure about font sizes, we're going to use fit so I think
         // that will size down as necessary
 
         g.setFont(font);
-        g.drawFittedText(trackName, 0, 0, getWidth(), getHeight(),
+        g.drawFittedText(track->name, 0, 0, getWidth(), getHeight(),
                          juce::Justification::centred,
                          1, // max lines
                          1.0f);
@@ -211,41 +182,11 @@ int StripGroupName::getPreferredHeight()
     return 30;
 }
 
-/**
- * GroupDefinitions may have changed so force a refresh.
- */
-void StripGroupName::configure()
-{
-    // could refresh the name here, but just reset the setup ordinal
-    // so we pick it up on the next update
-    groupNumber = -1;
-}
-
 void StripGroupName::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-    
-    // whenever the setup changes, refresh the name even if the
-    // track's group number didn't
-    if (groupNumber != track->group) {
-        
-        groupNumber = track->group;
-        groupName = "";
-        groupColor = 0;
-        
-        MobiusConfig* config = strip->getSupervisor()->getMobiusConfig();
-        
-        // ignore if out of range
-        if (groupNumber > 0 && groupNumber <= config->groups.size()) {
-            GroupDefinition* group = config->groups[groupNumber-1];
-            groupName = group->name;
-            groupColor = group->color;
-        }
-
-        repaint();
-    }
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
+    if (track->refreshGroup)
+      repaint();
 }
 
 
@@ -254,23 +195,25 @@ void StripGroupName::update(MobiusView* view)
  */
 void StripGroupName::paint(juce::Graphics& g)
 {
+    MobiusViewTrack* track = strip->getTrackView();
+    
     juce::Colour textColor = juce::Colour(MobiusGreen);
-    if (groupColor != 0)
-      textColor = juce::Colour(groupColor);
+    if (track->groupColor != 0)
+      textColor = juce::Colour(track->groupColor);
     g.setColour(textColor);
    
-    if (groupName.length() > 0) {
+    if (track->groupName.length() > 0) {
         juce::Font font(JuceUtil::getFont(getHeight()));
         // hacking around the unpredictable truncation, if the name is beyond
         // a certain length, reduce the font height
-        if (groupName.length() >= 10)
+        if (track->groupName.length() >= 10)
           font = JuceUtil::getFontf(getHeight() * 0.75f);
           
         // not sure about font sizes, we're going to use fit so I think
         // that will size down as necessary
 
         g.setFont(font);
-        g.drawFittedText(groupName, 0, 0, getWidth(), getHeight(),
+        g.drawFittedText(track->groupName, 0, 0, getWidth(), getHeight(),
                          juce::Justification::centred,
                          1, // max lines
                          1.0f);
@@ -308,12 +251,9 @@ int StripFocusLock::getPreferredHeight()
 
 void StripFocusLock::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-
-    if (track->focusLock != focusLock) {
-        focusLock = track->focusLock;
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
+    if (track->focused != focusLock) {
+        focusLock = track->focused;
         repaint();
     }
 }
@@ -385,18 +325,16 @@ int StripLoopRadar::getPreferredHeight()
 
 void StripLoopRadar::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
+    
+    juce::Colour color = Colors::getLoopColor(track);
 
-    juce::Colour color = Colors::getLoopColor(loop);
-
-    if (loop->frame != loopFrame ||
-        loop->frames != loopFrames ||
+    if (track->frame != loopFrame ||
+        track->frames != loopFrames ||
         color != loopColor) {
-        loopFrame = loop->frame;
-        loopFrames = loop->frames;
+        
+        loopFrame = track->frame;
+        loopFrames = track->frames;
         loopColor = color;
         repaint();
     }
@@ -486,16 +424,13 @@ int StripLoopThermometer::getPreferredHeight()
 
 void StripLoopThermometer::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
 
-    if (loop->frame != loopFrame ||
-        loop->frames != loopFrames) {
+    if (track->frame != loopFrame ||
+        track->frames != loopFrames) {
 
-        loopFrame = loop->frame;
-        loopFrames = loop->frames;
+        loopFrame = track->frame;
+        loopFrames = track->frames;
         repaint();
     }
 }
@@ -547,10 +482,7 @@ int StripOutputMeter::getPreferredHeight()
 
 void StripOutputMeter::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
     meter.update(track->outputMonitorLevel);
 }
 
@@ -587,10 +519,7 @@ int StripInputMeter::getPreferredHeight()
 
 void StripInputMeter::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-    MobiusTrackState* track = &(state->tracks[tracknum]);
-
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
     meter.update(track->inputMonitorLevel);
 }
 
@@ -667,24 +596,16 @@ int StripLoopStack::getPreferredHeight()
  */
 void StripLoopStack::update(MobiusView* view)
 {
-    MobiusState* state = view->oldState;
-    int tracknum = strip->getTrackIndex();
-
+    MobiusViewTrack* track = view->getTrack(strip->getTrackIndex());
     bool needsRefresh = (strip != nullptr && strip->needsRefresh);
     
-    // paint needs the entire track so save it locally
-    track = &(state->tracks[tracknum]);
-    MobiusLoopState* activeLoop = &(track->loops[track->activeLoop]);
-
-    if (needsRefresh ||
+    if (needsRefresh || track->refreshSwitch ||
         trackLoops != track->loopCount ||
         lastActive != track->activeLoop ||
-        activeLoop->frame != lastFrame ||
         dropTarget != lastDropTarget) {
 
         trackLoops = track->loopCount;
         lastActive = track->activeLoop;
-        lastFrame = activeLoop->frame;
         lastDropTarget = dropTarget;
         repaint();
     }
@@ -696,12 +617,7 @@ void StripLoopStack::update(MobiusView* view)
  */
 void StripLoopStack::paint(juce::Graphics& g)
 {
-    // don't paint until an update() has happened and we've saved
-    // the TrackState we're supposed to be dealing with
-    // must have saved this in update
-    if (track == nullptr) {
-        return;
-    }
+    MobiusViewTrack* track = strip->getTrackView();
 
     // determine the origin of the loops to display
     // normally this is zero, but can be larger if the track
@@ -724,11 +640,10 @@ void StripLoopStack::paint(juce::Graphics& g)
     // there was a little "R" somewhere, here we don't care
     // nextLoop and returnLoop are 1 based
     int switchDestination = -1;
-    MobiusLoopState* loop = &(track->loops[track->activeLoop]);
-    if (loop->nextLoop >= 0)
-      switchDestination = loop->nextLoop - 1;
-    else if (loop->returnLoop >= 0)
-      switchDestination = loop->returnLoop - 1;
+    if (track->nextLoopNumber > 0)
+      switchDestination = track->nextLoopNumber - 1;
+    else if (track->returnLoopNumber > 0)
+      switchDestination = track->returnLoopNumber - 1;
     
     for (int row = 0 ; row < maxLoops ; row++) {
 
@@ -737,8 +652,8 @@ void StripLoopStack::paint(juce::Graphics& g)
             // nothing more to display
             break;
         }
-            
-        loop = &(track->loops[loopIndex]);
+
+        MobiusViewLoop* loop = track->getLoop(loopIndex);
 
         int rowTop = (LoopStackRowHeight + LoopStackVerticalGap) * row;
         
@@ -798,7 +713,7 @@ void StripLoopStack::paint(juce::Graphics& g)
                 color = juce::Colours::darkgrey;
             }
             else {
-                color = Colors::getLoopColor(loop);
+                color = Colors::getLoopColor(track);
             }
             
             g.setColour(color);

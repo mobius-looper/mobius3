@@ -20,6 +20,7 @@ class TrackStrips : public juce::Component
     ~TrackStrips();
 
     class Supervisor* getSupervisor();
+    class MobiusView* getMobiusView();
 
     void configure();
     

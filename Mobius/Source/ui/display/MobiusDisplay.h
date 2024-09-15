@@ -30,7 +30,8 @@ class MobiusDisplay : public juce::Component
     ~MobiusDisplay();
 
     class Supervisor* getSupervisor();
-
+    class MobiusView* getMobiusView();
+    
     void configure();
     void captureConfiguration(class UIConfig* config);
     void update(class MobiusView* view);

@@ -28,8 +28,7 @@ class TempoElement : public StatusElement
 	int mTempo = 0;
 	int mBeat = 0;
 	int mBar = 0;
-	bool mDoBeat = false;
-	bool mDoBar = false;
+    bool mShowBeat = false;
 
 };
 

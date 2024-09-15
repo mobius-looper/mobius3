@@ -32,7 +32,8 @@ class StatusArea : public juce::Component
     ~StatusArea();
 
     class Supervisor* getSupervisor();
-
+    class MobiusView* getMobiusView();
+    
     void configure();
     void captureConfiguration(class UIConfig* config);
     

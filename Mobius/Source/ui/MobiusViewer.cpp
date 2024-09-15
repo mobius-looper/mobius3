@@ -125,6 +125,29 @@ void MobiusViewer::resetRefreshTriggers(MobiusView* view)
         t->refreshMinorModes = false;
         t->refreshLayers = false;
         t->refreshEvents = false;
+        t->refreshSwitch = false;
+    }
+}
+
+/**
+ * When ready for the initial display, force everything on since there
+ * was no valid prior state to compare against.  Not all of these may
+ * be necessary, but it gets the ball rolling.
+ */
+void MobiusViewer::forceRefresh(MobiusView* view)
+{
+    view->trackChanged = true;
+    view->setupChanged = true;
+    
+    for (auto t : view->tracks) {
+        t->refreshName = true;
+        t->refreshGroup = true;
+        t->loopChanged = true;
+        t->refreshMode = true;
+        t->refreshMinorModes = true;
+        t->refreshLayers = true;
+        t->refreshEvents = true;
+        t->refreshSwitch = true;
     }
 }
 
@@ -159,7 +182,7 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
           tview = view->tracks[i];
         else {
             tview = new MobiusViewTrack();
-            // track number is 1 based
+            // number for display is 1 based
             tview->number = i + 1;
             view->tracks.add(tview);
         }
@@ -200,6 +223,7 @@ void MobiusViewer::refreshTrack(MobiusState* state, MobiusTrackState* tstate,
     refreshTrackName(state, tstate, mview, tview);
     refreshInactiveLoops(tstate, tview);
     refreshTrackProperties(tstate, tview);
+    refreshSync(tstate, tview);
     refreshMode(tstate, tview);
     
     MobiusLoopState* lstate = &(tstate->loops[tstate->activeLoop]);
@@ -210,6 +234,8 @@ void MobiusViewer::refreshTrack(MobiusState* state, MobiusTrackState* tstate,
  * Track name
  * 
  * These are not in MobiusTrackState, they are pulled from the active Setup.
+ * These can't be changed with actions, though that might be interesting for
+ * more dynamic names.
  */
 void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate,
                                     MobiusView* mview, MobiusViewTrack* tview)
@@ -220,8 +246,10 @@ void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate
         MobiusConfig* config = supervisor->getMobiusConfig();
         Setup* setup = config->getSetup(state->setupOrdinal);
         if (setup != nullptr) {
-            // "numbers" are 1 based "indexes" are 0 based
-            SetupTrack* st = setup->getTrack(tstate->number - 1);
+            // note that MobiusTrackState has an inconsistent use of "number"
+            // that usually means 1 based but here it is the "raw number" which is
+            // the zero based index, sad
+            SetupTrack* st = setup->getTrack(tstate->number);
             if (st != nullptr)
               tview->name = juce::String(st->getName());
         }
@@ -247,6 +275,27 @@ void MobiusViewer::refreshTrackProperties(MobiusTrackState* tstate, MobiusViewTr
 
     refreshTrackGroups(tstate, tview);
 }
+
+/**
+ * Refresh things related to the sync source for a track
+ *
+ * Tempo will be shown if it is non-zero, this applies to both slave
+ * sync and master sync.
+ *
+ * Beats and bars have only been shown if the syncSource is SYNC_MIDI or SYNC_HOST
+ * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
+ * 
+ */
+void MobiusViewer::refreshSync(MobiusTrackState* tstate, MobiusViewTrack* tview)
+{
+    tview->syncTempo = tstate->tempo;
+    tview->syncBeat = tstate->beat;
+    tview->syncBar = tstate->bar;
+    
+    // whether we pay attention to those or not depends on the syncSource
+    SyncSource src = tstate->syncSource;
+    tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
+}    
 
 /**
  * Refresh the group(s) a track can belong to.
@@ -374,17 +423,30 @@ void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* 
     // in the view since that's what it mostly deals with, only if it
     // contains the word "number" is it 1 based
     // the old state model uses 1 based numbers here
-    tview->nextLoop = lstate->nextLoop - 1;
-    tview->returnLoop = lstate->returnLoop - 1;
+    if (tview->nextLoopNumber != lstate->nextLoop) {
+        tview->nextLoopNumber = lstate->nextLoop;
+        tview->refreshSwitch = true;
+    }
+    if (tview->returnLoopNumber != lstate->returnLoop) {
+        tview->returnLoopNumber = lstate->returnLoop;
+        tview->refreshSwitch = true;
+    }
 
     if (activeTrack)
       refreshMinorModes(tstate, lstate, tview);
 
-    // latching beaters
+    // beaters
     if (activeTrack) {
         tview->beatSubcycle = lstate->beatSubCycle;
         tview->beatCycle = lstate->beatCycle;
         tview->beatLoop = lstate->beatLoop;
+
+        // these are "latching" meaning they will remain
+        // set until the UI turned them off, don't need this any more
+        // was an abandoned attempt to capture them from the audio thread
+        lstate->beatSubCycle = false;
+        lstate->beatCycle = false;
+        lstate->beatLoop = false;
     }
     
     // various

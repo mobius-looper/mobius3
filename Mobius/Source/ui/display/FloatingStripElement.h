@@ -17,7 +17,8 @@ class FloatingStripElement : public StatusElement
     ~FloatingStripElement();
 
     class Supervisor* getSupervisor();
-
+    class MobiusView* getMobiusView();
+    
     // if we have more than one, give them a name
     juce::String name;
     

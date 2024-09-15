@@ -78,17 +78,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     };
 
     /**
-     * For display components that are sensitive to loop
-     * time boundaries and need to refresh at a more accurate
-     * interval than the maintenance thread.
-     */
-    class TimeListener {
-      public:
-        virtual ~TimeListener() {}
-        virtual void timeBoundary(class MobiusState* state) = 0;
-    };
-    
-    /**
      * Standalone Supervisor is statically constructed by MainComponent.
      * MainComponent must call start() at a suitable time during
      * it's construction.
@@ -120,9 +109,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void addAlertListener(AlertListener* l);
     void removeAlertListener(AlertListener* l);
     
-    void addTimeListener(TimeListener* l);
-    void removeTimeListener(TimeListener* l);
-
     // this isn't really a listener, but it wants to be informed of things
     // if we ever have more the one console-like thing (MobiusConsole and ScriptConsole)
     // then may want multiples
@@ -394,7 +380,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;
     juce::Array<AlertListener*> alertListeners;
-    juce::Array<TimeListener*> timeListeners;
     class MobiusConsole* mobiusConsole = nullptr;
 
     // master copies of the configuration files
@@ -447,7 +432,6 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     // Listener notification
     void notifyAlertListeners(juce::String msg);
-    void notifyTimeListeners();
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
