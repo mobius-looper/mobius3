@@ -270,11 +270,11 @@ void Mobius::initialize(MobiusConfig* config)
 
     // Sanity check on some important parameters
     // TODO: Need more of these...
-    if (mConfig->getTracks() <= 0) {
+    if (mConfig->getCoreTracks() <= 0) {
         // don't see a need to be more flexible here
         int newCount = 1;
         Trace(1, "Mobius::initialize Missing track count, adjusting to %d\n", newCount);
-        mConfig->setTracks(newCount);
+        mConfig->setCoreTracks(newCount);
     }
 
     // having difficulty getting Setup and Preset ordinals set reliably,
@@ -325,7 +325,7 @@ void Mobius::initialize(MobiusConfig* config)
  */
 void Mobius::initializeTracks()
 {
-    int count = mConfig->getTracks();
+    int count = mConfig->getCoreTracks();
 
     // should have caught misconfigured count earlier
     if (count > 0) {

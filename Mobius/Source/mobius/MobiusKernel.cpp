@@ -9,6 +9,7 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/MobiusConfig.h"
+#include "../model/MainConfig.h"
 #include "../model/FunctionDefinition.h"
 #include "../model/UIParameter.h"
 #include "../model/UIAction.h"
@@ -152,6 +153,14 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     mCore->initialize(configuration);
 
     installSymbols();
+
+    audioTracks = config->getCoreTracks();
+    MainConfig* main = cont->getMainConfig();
+    midiTracks = main->getGlobals()->getInt("midiTracks");
+
+    mMidi.reset(new MidiTracker(cont, this));
+    mMidi->initialize();
+    
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -1059,8 +1068,19 @@ void MobiusKernel::coreTimeBoundary()
 bool MobiusKernel::doQuery(Query* q)
 {
     bool success = false;
-    if (mCore != nullptr)
-      success = mCore->doQuery(q);
+
+    if (q->scope >= audioTracks) {
+        int saveScope = q->scope;
+        q->scope = q->scope - audioTracks;
+        
+        success = mMidi->doQuery(q);
+        
+        q->scope = saveScope;
+    }
+    else {
+        if (mCore != nullptr)
+          success = mCore->doQuery(q);
+    }
     return success;
 }
 

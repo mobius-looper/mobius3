@@ -118,7 +118,14 @@ class MobiusViewTrack {
      * general type enumeration.
      */
     bool midi = false;
-        
+
+    /**
+     * True if this is considered the active track of this type.
+     * This is relevant only for audio tracks.
+     * It is NOT the same as the view's "focused" track.
+     */
+    bool active = false;
+    
     /**
      * Groups this track is in
      * Currently a track can only be in one group but that will change.
@@ -354,10 +361,11 @@ class MobiusView
     juce::OwnedArray<MobiusViewTrack> tracks;
     MobiusViewTrack* getTrack(int index);
 
-    int trackCount = 0;
     int audioTracks = 0;
+    int activeAudioTrack = 0;
     int midiTracks = 0;
-    int activeTrack = -1;
+    int totalTracks = 0;
+    int focusedTrack = -1;
     
     MobiusViewTrack* track = nullptr;
     bool trackChanged = false;
@@ -372,8 +380,6 @@ class MobiusView
     int sampleRate = 44100;
     
     // todo: SyncState
-
-    void reset();
     
   protected:
 

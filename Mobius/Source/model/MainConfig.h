@@ -20,11 +20,6 @@
 
 #include "ValueSet.h"
 
-/**
- * Evolving name constants for keys in the MainConfig
- */
-const char* MainMidiTracks = "midiTracks";
-
 class MainConfig
 {
   public:

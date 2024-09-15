@@ -22,6 +22,7 @@
 #include "KernelBinderator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
+#include "midi/MidiTracker.h"
 
 /**
  * Function ids for the things handled by the kernel.
@@ -211,6 +212,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     // internal state
 
+    int audioTracks = 0;
+    int midiTracks = 0;
+
     // the stream we are currently processing in processAudioStream
     MobiusAudioStream* stream;
 
@@ -223,6 +227,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // see if we can make this a stack object at some point
     class Mobius* mCore = nullptr;
     class UIAction* coreActions = nullptr;
+
+    std::unique_ptr<MidiTracker> mMidi;
 
     // special mode for TestDriver
     bool testMode = false;

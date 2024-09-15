@@ -434,7 +434,7 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     // don't bother saving this until it can have a more useful range
 	//render(UIParameterFadeFrames, c->getFadeFrames());
     render(b, UIParameterMaxSyncDrift, c->getMaxSyncDrift());
-    render(b, UIParameterTrackCount, c->getTracks());
+    render(b, UIParameterTrackCount, c->getCoreTracks());
     render(b, UIParameterGroupCount, c->getTrackGroups());
     render(b, UIParameterMaxLoops, c->getMaxLoops());
     render(b, UIParameterLongPress, c->getLongPress());
@@ -523,7 +523,7 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	c->setInputLatency(parse(e, UIParameterInputLatency));
 	c->setOutputLatency(parse(e, UIParameterOutputLatency));
 	c->setMaxSyncDrift(parse(e, UIParameterMaxSyncDrift));
-	c->setTracks(parse(e, UIParameterTrackCount));
+	c->setCoreTracks(parse(e, UIParameterTrackCount));
 	c->setTrackGroups(parse(e, UIParameterGroupCount));
 	c->setMaxLoops(parse(e, UIParameterMaxLoops));
 	c->setLongPress(parse(e, UIParameterLongPress));

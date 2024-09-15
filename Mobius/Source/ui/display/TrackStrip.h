@@ -35,7 +35,7 @@ class TrackStrip : public juce::Component,
     int getTrackIndex();
     
     bool isActive() {  
-        return (followTrack < 0 || activeTrack == followTrack);
+        return (followTrack < 0 || focusedTrack == followTrack);
     }
     
     int getPreferredWidth();
@@ -75,10 +75,12 @@ class TrackStrip : public juce::Component,
     // the floating configuration to use, 0 is the first
     int floatingConfig = 0;
 
-    // if we're a floating strip, update needs to remember the
-    // selected track here
-    // if we're a docked strip, this controls the border highlighting
-    int activeTrack = 0;
+    // the last focused track, used to draw a white border or
+    // to refresh the floating strip
+    int focusedTrack = 0;
+
+    // the last state of the audio track activation border
+    bool lastActive = false;
 
     // true if we're an "outer" drop target, meaning any available
     // loop may be dropped into, if the strip contains a LoopStack

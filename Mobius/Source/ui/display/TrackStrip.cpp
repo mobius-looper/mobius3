@@ -116,7 +116,7 @@ int TrackStrip::getTrackIndex()
     }
     else {
         // update needs to have saved it
-        tnum = activeTrack;
+        tnum = focusedTrack;
     }
     return tnum;
 }
@@ -210,10 +210,14 @@ void TrackStrip::update(MobiusView* view)
     // which may have already requested a repaint
     // todo: verify that this doesn't cause children
     // to be repainted twice
-    if (activeTrack != view->activeTrack ||
+    MobiusViewTrack* track = getTrackView();
+    
+    if (focusedTrack != view->focusedTrack ||
+        lastActive != track->active ||
         lastDropTarget != outerDropTarget) {
         
-        activeTrack = view->activeTrack;
+        focusedTrack = view->focusedTrack;
+        lastActive = track->active;
         lastDropTarget = outerDropTarget;
         repaint();
     }
@@ -227,9 +231,16 @@ void TrackStrip::paint(juce::Graphics& g)
             g.setColour(juce::Colours::red);
             g.drawRect(getLocalBounds(), 2);
         }
-        else if (activeTrack == followTrack) {
-            g.setColour(juce::Colours::white);
-            g.drawRect(getLocalBounds(), 2);
+        else {
+            MobiusViewTrack* tview = getTrackView();
+            if (focusedTrack == followTrack) {
+                g.setColour(juce::Colours::white);
+                g.drawRect(getLocalBounds(), 2);
+            }
+            else if (tview->active) {
+                g.setColour(juce::Colours::grey);
+                g.drawRect(getLocalBounds(), 2);
+            }
         }
     }
     else {

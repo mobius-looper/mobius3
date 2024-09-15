@@ -73,7 +73,8 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdTrackCount:
-            value->setInt(((MobiusConfig*)obj)->getTracks());
+            // as with so many others, this shouldn't be a UIParameter
+            value->setInt(((MobiusConfig*)obj)->getCoreTracks());
             break;
             
         case UIParameterIdGroupCount:
@@ -521,7 +522,7 @@ void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
             break;
             
         case UIParameterIdTrackCount:
-            ((MobiusConfig*)obj)->setTracks(value->getInt());
+            ((MobiusConfig*)obj)->setCoreTracks(value->getInt());
             break;
             
         case UIParameterIdGroupCount:

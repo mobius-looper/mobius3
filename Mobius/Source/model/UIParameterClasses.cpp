@@ -485,11 +485,11 @@ UIParameterTrackCountClass::UIParameterTrackCountClass()
 }
 void UIParameterTrackCountClass::getValue(void* obj, ExValue* value)
 {
-    value->setInt(((MobiusConfig*)obj)->getTracks());
+    value->setInt(((MobiusConfig*)obj)->getCoreTracks());
 }
 void UIParameterTrackCountClass::setValue(void* obj, ExValue* value)
 {
-    ((MobiusConfig*)obj)->setTracks(value->getInt());
+    ((MobiusConfig*)obj)->setCoreTracks(value->getInt());
 }
 UIParameterTrackCountClass UIParameterTrackCountObj;
 UIParameter* UIParameterTrackCount = &UIParameterTrackCountObj;

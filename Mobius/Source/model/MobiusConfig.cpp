@@ -88,7 +88,7 @@ void MobiusConfig::init()
 	mOutputLatency = 0;
 	mFadeFrames = AUDIO_DEFAULT_FADE_FRAMES;
 	mMaxSyncDrift = DEFAULT_MAX_SYNC_DRIFT;
-	mTracks = DEFAULT_TRACKS;
+	mCoreTracks = DEFAULT_TRACKS;
     mTrackGroups = DEFAULT_TRACK_GROUPS;
     mMaxLoops = DEFAULT_MAX_LOOPS;
     mLongPress = DEFAULT_LONG_PRESS_MSECS;
@@ -318,15 +318,15 @@ void MobiusConfig::setNoiseFloor(int i)
 	mNoiseFloor = i;
 }
 
-int MobiusConfig::getTracks()
+int MobiusConfig::getCoreTracks()
 {
-	return mTracks;
+	return mCoreTracks;
 }
 
-void MobiusConfig::setTracks(int i)
+void MobiusConfig::setCoreTracks(int i)
 {
 	if (i == 0) i = DEFAULT_TRACKS;
-	mTracks = i;
+	mCoreTracks = i;
 }
 
 int MobiusConfig::getTrackGroups()

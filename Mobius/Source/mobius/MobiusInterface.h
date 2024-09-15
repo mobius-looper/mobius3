@@ -108,7 +108,7 @@ class MobiusInterface {
      *
      * Ownership of the MobiusConfig is retained by the caller.
      *
-     * TODO: the engine may want to return error messages if it doesn't like
+     * todo: the engine may want to return error messages if it doesn't like
      * something about the configuration
      */
     virtual void initialize(class MobiusConfig* config) = 0;
@@ -337,6 +337,17 @@ class MobiusContainer
      * Need for this should diminish as file handlering is moved out of the engine
      */
     virtual juce::File getRoot() = 0;
+
+    /**
+     * Return a new object containing configuration parameters.
+     * This is where the configuration for MIDI tracks lives and where
+     * we will be gradually migrating global parameters and other things
+     * that live in MobiusConfig.
+     *
+     * I'm liking the pull model better than pushing MobiusConfig down
+     * into initialize() and reconfigure()
+     */
+    virtual class MainConfig* getMainConfig() = 0;
     
     /**
      * Return true if the Mobius engine is running as a plugin.

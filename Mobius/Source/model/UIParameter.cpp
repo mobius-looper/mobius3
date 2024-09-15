@@ -141,9 +141,12 @@ int UIParameter::getDynamicHigh(MobiusConfig* container)
     // move to lambdas!
     
     if (this == UIParameterActiveTrack) {
-        // inconsistency, track ordinals should be zero based
-        // are for loops, but this is
-        dynamicHigh = container->getTracks() - 1;
+        // !! this isn't correct for the view model with MIDI tracks,
+        // but I don't think it matters since no one treats trackCount
+        // as a bindable parameter, and it shouldn't even BE a UIParameter,
+        // it's just a global preference
+        // don't have access to Supervisor so we can't get the view, just use core tracks
+        dynamicHigh = container->getCoreTracks() - 1;
     }
     else if (this == UIParameterLoopCount) {
         dynamicHigh = container->getMaxLoops() - 1;

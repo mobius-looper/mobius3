@@ -5,11 +5,13 @@ class MidiTrack
 {
   public:
 
-    MidiTrack();
+    MidiTrack(class MidiTracker* t);
     ~MidiTrack();
 
-    void doAction(UIAction* a);
+    void doAction(class UIAction* a);
 
   private:
+
+    class MidiTracker* tracker;
 
 };

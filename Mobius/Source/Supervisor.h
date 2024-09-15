@@ -192,7 +192,8 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     void reloadUIConfig();
     void updateSymbolProperties();
 
-    class MainConfig* getMainConfig();
+    // this is override because it is also part of MobiusContainer
+    class MainConfig* getMainConfig() override;
     void updateMainConfig();
     void reloadMainConfig();
     
@@ -435,5 +436,9 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
+
+    // MIDI track nonesense
+    void kludgeCoreSymbols();
+    void doTrackSelectAction(UIAction* a);
     
 };

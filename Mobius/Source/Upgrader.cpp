@@ -229,7 +229,7 @@ bool Upgrader::refreshMainConfig(MobiusConfig* old, MainConfig* neu)
     global->setInt(ParamNoiseFloor, old->getNoiseFloor());
     global->setInt(ParamFadeFrames, old->getFadeFrames());
     global->setInt(ParamMaxSyncDrift, old->getNoiseFloor());
-    global->setInt(ParamTrackCount, old->getTracks());
+    global->setInt("coreTracks", old->getCoreTracks());
     global->setInt(ParamMaxLoops, old->getMaxLoops());
     global->setInt(ParamLongPress, old->getLongPress());
     global->setInt(ParamSpreadRange, old->getSpreadRange());

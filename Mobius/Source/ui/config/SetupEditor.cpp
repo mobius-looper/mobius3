@@ -138,7 +138,10 @@ void SetupEditor::refreshObjectSelector()
 void SetupEditor::adjustTrackSelector()
 {
     MobiusConfig* config = supervisor->getMobiusConfig();
-    int ntracks = config->getTracks();
+
+    // setups only apply to core tracks so it is permissible to use this
+    // rather than view->totalTracks
+    int ntracks = config->getCoreTracks();
     if (ntracks > 8 && ntracks <= 32 && trackCombo == nullptr) {
 
         // it has been a radio

@@ -46,8 +46,10 @@ void TrackStrips::configure()
 {
     if (tracks.size() == 0) {
         // we're initializing
-        MobiusConfig* config = display->getSupervisor()->getMobiusConfig();
-        int trackCount = config->getTracks();
+        MobiusView* view = display->getSupervisor()->getMobiusView();
+        int trackCount = view->totalTracks;
+
+        // !! shouldn't be doing this?
         if (trackCount == 0)
           trackCount = 8;
         

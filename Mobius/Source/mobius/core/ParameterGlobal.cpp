@@ -1631,12 +1631,18 @@ TracksParameterType::TracksParameterType() :
 
 void TracksParameterType::getValue(MobiusConfig* c, ExValue* value)
 {
-	value->setInt(c->getTracks());
+    // note that this won't be accurate with the introduction of MIDI tracks,
+    // but it would only be used by old scripts that can't deal with
+    // midi tracks anyway
+	value->setInt(c->getCoreTracks());
 }
 
 void TracksParameterType::setValue(MobiusConfig* c, ExValue* value)
 {
-	c->setTracks(value->getInt());
+    // can't set this at runtime, and scripts shouldn't try
+    // not used for structure editing any more
+    Trace(1, "TracksParameterType::setValue You should not be here");
+	//c->setTracks(value->getInt());
 }
 
 TracksParameterType TracksParameterTypeObj;

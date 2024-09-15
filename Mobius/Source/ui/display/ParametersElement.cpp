@@ -190,8 +190,8 @@ void ParametersElement::update(MobiusView* view)
             ParameterState* ps = parameters[i];
             int value = ps->value;
             Query q (ps->symbol);
-            // activeTrack is zero based, Query scope is 1 based
-            q.scope = view->activeTrack + 1;
+            // focusedTrack is zero based, Query scope is 1 based
+            q.scope = view->focusedTrack + 1;
             if (statusArea->getSupervisor()->doQuery(&q))
               value = q.value;
             

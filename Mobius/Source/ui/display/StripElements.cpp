@@ -99,10 +99,12 @@ void StripTrackNumber::update(MobiusView* view)
 void StripTrackNumber::paint(juce::Graphics& g)
 {
     MobiusViewTrack* track = strip->getTrackView();
-    
+
     juce::Colour textColor = juce::Colour(MobiusGreen);
     if (focusLock)
       textColor = juce::Colour(MobiusRed);
+    else if (track->midi)
+      textColor = juce::Colour(MobiusPink);
 
     g.setColour(textColor);
 

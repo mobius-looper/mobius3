@@ -33,6 +33,7 @@
 #include "../../model/Scope.h"
 #include "../common/Form.h"
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
 
 // temporary until we can get the initialization order sorted out
 #include "../../Supervisor.h"
@@ -86,8 +87,9 @@ BindingEditor::~BindingEditor()
 void BindingEditor::load()
 {
     MobiusConfig* config = supervisor->getMobiusConfig();
+    MobiusView* view = supervisor->getMobiusView();
 
-    maxTracks = config->getTracks();
+    maxTracks = view->totalTracks;
     maxGroups = config->groups.size();
 
     refreshScopeNames();
@@ -465,7 +467,8 @@ void BindingEditor::refreshScopeNames()
     // to Supervisor to get to MobiusConfig, this sucks work out a more
     // orderly initialization sequence
     MobiusConfig* config = supervisor->getMobiusConfig();
-    maxTracks = config->getTracks();
+    MobiusView* view = supervisor->getMobiusView();
+    maxTracks = view->totalTracks;
     for (int i = 0 ; i < maxTracks ; i++)
       scopeNames.add("Track " + juce::String(i+1));
 
