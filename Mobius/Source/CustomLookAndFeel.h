@@ -1,3 +1,8 @@
+/**
+ * An experiment based on the tutorial
+ * I set this as the default look and feel, but it's better to subclass juce::Slider and
+ * let it be in control
+ */
 
 #include <JuceHeader.h>
 

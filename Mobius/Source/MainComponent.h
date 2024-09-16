@@ -49,9 +49,6 @@ class MainComponent  : public juce::AudioAppComponent
     juce::AudioDeviceManager customAudioDeviceManager;
 
     Supervisor supervisor {this};
-    //juce::LookAndFeel_V3 laf;
-    juce::LookAndFeel_V2 laf;
-    CustomLookAndFeel customLaf;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

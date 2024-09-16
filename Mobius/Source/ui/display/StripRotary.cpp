@@ -37,7 +37,9 @@ StripRotary::StripRotary(class TrackStrip* parent, StripElementDefinition* def) 
     StripElement(parent, def)
 {
     // these always correspond to Parameters with a 0-127 range
-    slider.setRange((float)def->parameter->low, (float)def->parameter->high); 
+    slider.setRange((float)def->parameter->low, (float)def->parameter->high);
+
+    // some of these are now defaults in CustomRotary
     slider.setColour(juce::Slider::ColourIds::textBoxTextColourId, juce::Colours::black);
     slider.setSliderStyle(juce::Slider::SliderStyle::Rotary);
     // position, readOnly, width, height

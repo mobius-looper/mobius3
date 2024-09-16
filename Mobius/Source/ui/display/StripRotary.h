@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 
 #include "../../model/UIAction.h"
+#include "../common/CustomRotary.h"
 
 class StripRotary : public StripElement, public juce::Slider::Listener
 {
@@ -45,7 +46,8 @@ class StripRotary : public StripElement, public juce::Slider::Listener
 
   protected:
 
-    juce::Slider slider;
+    // juce::Slider slider;
+    CustomRotary slider;
     UIAction action;
     
     int value;

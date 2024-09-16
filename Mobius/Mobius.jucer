@@ -416,6 +416,9 @@
           <FILE id="qEnT6l" name="ColorSelector.cpp" compile="1" resource="0"
                 file="Source/ui/common/ColorSelector.cpp"/>
           <FILE id="ZbSGBN" name="ColorSelector.h" compile="0" resource="0" file="Source/ui/common/ColorSelector.h"/>
+          <FILE id="w11puN" name="CustomRotary.cpp" compile="1" resource="0"
+                file="Source/ui/common/CustomRotary.cpp"/>
+          <FILE id="VRPeJA" name="CustomRotary.h" compile="0" resource="0" file="Source/ui/common/CustomRotary.h"/>
           <FILE id="vyeo6h" name="Field.cpp" compile="1" resource="0" file="Source/ui/common/Field.cpp"/>
           <FILE id="RjFLPv" name="Field.h" compile="0" resource="0" file="Source/ui/common/Field.h"/>
           <FILE id="tceRTv" name="FieldGrid.cpp" compile="1" resource="0" file="Source/ui/common/FieldGrid.cpp"/>
