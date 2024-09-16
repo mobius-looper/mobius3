@@ -394,7 +394,7 @@ class MobiusContainer
      * This is still under redesign.  The MidiEvent class is old
      * and will eventually be replaced by juce::MidiMessage
      */
-    virtual void midiSend(class MidiEvent* e) = 0;
+    virtual void midiSend(class OldMidiEvent* e) = 0;
 
     /**
      * Object that provides MIDI synchronization services.

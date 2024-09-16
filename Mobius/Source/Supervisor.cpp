@@ -41,7 +41,7 @@
 // for mobiusSaveCapture
 #include "mobius/AudioFile.h"
 // temporary for MobiusContainer::midiSend
-#include "midi/MidiEvent.h"
+#include "midi/OldMidiEvent.h"
 #include "midi/MidiRealizer.h"
 #include "test/TestDriver.h"
 
@@ -1413,7 +1413,7 @@ MobiusMidiTransport* Supervisor::getMidiTransport()
  *
  * This conversion looks harder than it should be.
  */
-void Supervisor::midiSend(class MidiEvent* event)
+void Supervisor::midiSend(class OldMidiEvent* event)
 {
     juce::MidiMessage msg;
     bool sync = false;

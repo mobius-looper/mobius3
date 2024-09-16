@@ -18,7 +18,7 @@
 #include "../../../util/Util.h"
 
 #include "../../../midi/MidiByte.h"
-#include "../../../midi/MidiEvent.h"
+#include "../../../midi/OldMidiEvent.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -415,8 +415,8 @@ void MidiOutFunction::invoke(Action* action, Mobius* m)
         // midi->send(mevent);
         // mevent->free();
         
-        // new way, need a MidiEvent pool
-        MidiEvent* event = new MidiEvent();
+        // !! get rid of this shit and start using the new event pool
+        OldMidiEvent* event = new OldMidiEvent();
         event->setStatus(status);
         event->setChannel(channel);
         event->setKey(value);

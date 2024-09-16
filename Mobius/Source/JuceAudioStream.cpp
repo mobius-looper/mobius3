@@ -48,9 +48,6 @@
 
 #include "mobius/MobiusInterface.h"
 
-// temporary 
-#include "midi/MidiEvent.h"
-
 #include "Supervisor.h"
 
 #include "JuceAudioStream.h"

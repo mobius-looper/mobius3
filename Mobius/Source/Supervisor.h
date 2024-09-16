@@ -233,7 +233,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     int getBlockSize() override;
     int getMillisecondCounter() override;
     void sleep(int millis) override;
-    void midiSend(class MidiEvent* event) override;
+    void midiSend(class OldMidiEvent* event) override;
     void setAudioListener(class MobiusAudioListener* l) override;
     class MslEnvironment* getMslEnvironment() override;
     
