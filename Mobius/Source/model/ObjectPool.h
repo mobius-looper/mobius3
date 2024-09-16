@@ -32,6 +32,9 @@ class PooledObject {
     PooledObject();
     virtual ~PooledObject();
 
+    // called when something leaves the pool to put it in a clean state
+    virtual void init() = 0;
+
     /**
      * Return an object to the pool it came from.
      * Not required, but convenient for deep code that

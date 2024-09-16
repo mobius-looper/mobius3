@@ -84,6 +84,8 @@ PooledObject* ObjectPool::checkout()
         poolSize--;
         if (poolSize < minSize)
           minSize = poolSize;
+
+        obj->init();
     }
     else {
         // subclass must overload this
@@ -114,6 +116,10 @@ void ObjectPool::checkin(PooledObject* obj)
             obj->setPooled(true);
             obj->setPool(this);
         }
+
+        // keep it clean in the pool for debugging
+        obj->init();
+        
         totalReturned++;
     }
 }

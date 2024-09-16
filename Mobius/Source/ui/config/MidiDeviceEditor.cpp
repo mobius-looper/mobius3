@@ -26,6 +26,24 @@
  * Now that this has immediate impact on the devices, we don't need Save/Cancel buttons
  * here either.
  *
+ * What the boxes mean...
+ *
+ * This was originally more restrictive about multiple devices being open at a time.
+ * With the introduction of MidiTracks it is more relaxed and some of the logic might
+ * be confusing.   Basically you can have any number of input and output devices selected.
+ *
+ * In addition you can select inputs and outputs for a paricular "usage".  This is what the
+ * system uses to determine which one of several devices is to be used for some purpose
+ * like MIDI export, synchronization, or Thru.  For a given usage there can only be one selection.
+ *
+ * What is different is that before there could only be a single output selected for any purpose,
+ * now there can be multiples.  The code also makes it look like an input/output can be deselected
+ * but selected for a particular use.  That isn't true, if you select any usage, it is always selected
+ * for general use.
+ *
+ * It might be clearer to skip the checkbox wall and instead just allow selecting multiple
+ * input and output devices.  Then for usage provide a combo box to select which of the opened
+ * device should be used for that purpose.
  */
 
 #include <JuceHeader.h>

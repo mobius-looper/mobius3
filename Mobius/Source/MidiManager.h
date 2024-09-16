@@ -47,6 +47,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
         Input,
         InputSync,
         Output,
+        OutputExport,
         OutputSync,
         Thru
     };
@@ -162,7 +163,8 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // used to maintain configured selections when deselecting individual devices
     // the MidiDevicesPanel
     juce::StringArray inputNames;
-    juce::String inputSyncName;
+    juce::String inputSyncName; // get rid of this, use inputSyncDevice
+    juce::StringArray outputNames;
 
     // pointers to open devices
     // this isn't the way you're supposed to do it, but I fucking

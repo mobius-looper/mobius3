@@ -9,19 +9,9 @@
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
             name="BindingArgTest" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\editornew.msl" name="editornew"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\anotherone.msl" name="anotherone"
-            added="2147483647" disabled="1"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\asd.msl" name="asd"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\something.msl" name="something"
-            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\upgrade.mos" name="Upgraded Thing"
             added="2147483647"/>
     </Files>
   </Machine>

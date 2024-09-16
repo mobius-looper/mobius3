@@ -30,6 +30,14 @@ UIAction::~UIAction()
 }
 
 /**
+ * Initializer used by the ObjectPool
+ */
+void UIAction::init()
+{
+    reset();
+}
+
+/**
  * Clear action state after it has been used.
  */
 void UIAction::reset()

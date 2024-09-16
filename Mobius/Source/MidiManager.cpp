@@ -44,6 +44,28 @@
  * configurations for multiple machines.  This is something I use all the time during
  * development with .xml files that are in source control, but normal users will normally
  * have only one machine.
+ *
+ * What the configurations mean...
+ *
+ * This was originally more restrictive about multiple devices being open at a time.
+ * With the introduction of MidiTracks it is more relaxed and some of the logic might
+ * be confusing.   Basically you can have any number of input and output devices selected.
+ *
+ * In addition you can select inputs and outputs for a paricular "usage".  This is what the
+ * system uses to determine which one of several devices is to be used for some purpose
+ * like MIDI export, synchronization, or Thru.  For a given usage there can only be one selection.
+ *
+ * What is different is that before there could only be a single output selected for any purpose,
+ * now there can be multiples.  The code also makes it look like an input/output can be deselected
+ * but selected for a particular use.  That isn't true, if you select any usage, it is always selected
+ * for general use.
+ *
+ * In the UI it might be clearer to skip the checkbox wall and instead just allow selecting multiple
+ * input and output devices.  Then for usage provide a combo box to select which of the opened
+ * device should be used for that purpose.
+ *
+ * Here we're reinforcing this by making sure the inputDevices and outputDevices list contain the
+ * names of all devices we're opening, whether or not they are selected for a usage.
  */
 
 #include <JuceHeader.h>
@@ -209,26 +231,41 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
     juce::String name;
     
     if (supervisor->isPlugin()) {
+        
         if (usage == Input)
           name = config->pluginMidiInput;
+        
         else if (usage == InputSync)
           name = getFirstName(config->pluginMidiInputSync, usage);
+        
         else if (usage == Output)
-          name = getFirstName(config->pluginMidiOutput, usage);
+          name = config->pluginMidiOutput;
+        
+        else if (usage == OutputExport)
+          name = getFirstName(config->pluginMidiOutputExport, usage);
+        
         else if (usage == OutputSync)
           name = getFirstName(config->pluginMidiOutputSync, usage);
+        
         else if (usage == Thru)
           name = getFirstName(config->pluginMidiThru, usage);
     }
     else {
         if (usage == Input)
           name = config->midiInput;
+        
         else if (usage == InputSync)
           name = getFirstName(config->midiInputSync, usage);
+        
         else if (usage == Output)
-          name = getFirstName(config->midiOutput, usage);
+          name = config->midiOutput;
+        
+        else if (usage == OutputExport)
+          name = getFirstName(config->midiOutputExport, usage);
+        
         else if (usage == OutputSync)
           name = getFirstName(config->midiOutputSync, usage);
+        
         else if (usage == Thru)
           name = getFirstName(config->midiThru, usage);
     }
@@ -246,8 +283,9 @@ juce::String MidiManager::getUsageName(Usage usage)
         case Input: name = "Input"; break;
         case InputSync: name = "Input Sync"; break;
         case Output: name = "Output"; break;
+        case OutputExport: name = "Output Export"; break;
         case OutputSync: name = "Output Sync"; break;
-        case Thru: name = "Thur"; break;
+        case Thru: name = "Thu"; break;
     }
     return name;
 }
@@ -285,19 +323,19 @@ juce::String MidiManager::getFirstName(juce::String csv, Usage usage)
  */
 void MidiManager::reconcileInputs(MachineConfig* config)
 {
-    // since we only have one usage pointer, capture the name for incremental close
     juce::String csv = getDeviceName(config, Input);
-    // we don't have usage pointers for inputs like we do for outputs
-    // so remember the configured names, broken out of the csv
     inputNames = juce::StringArray::fromTokens(csv, ",", "");
+    
+    // upgrade old configurations that kept this out of the main name list
     inputSyncName = getDeviceName(config, InputSync);
+    if (!inputNames.contains(inputSyncName))
+      inputNames.add(inputSyncName);
 
-    // normal inputs
     for (auto name : inputNames) {
         (void)findOrOpenInput(name);
     }
 
-    // special sync input
+    // get a handle to the special sync input
     if (inputSyncName.length() > 0)
       inputSyncDevice = findOrOpenInput(inputSyncName);
 
@@ -368,28 +406,29 @@ juce::MidiInput* MidiManager::findOrOpenInput(juce::String name)
  */
 void MidiManager::openInput(juce::String name, Usage usage)
 {
-    if (usage == Input) {
-        if (!inputNames.contains(name))
-          inputNames.add(name);
-        (void)findOrOpenInput(name);
-    }
-    else if (usage == InputSync) {
+    if (!inputNames.contains(name))
+      inputNames.add(name);
+    (void)findOrOpenInput(name);
+    
+    if (usage == InputSync) {
         inputSyncName = name;
         inputSyncDevice = findOrOpenInput(name);
+        // change the sync device doesn't automatically unselect it
+        // for general use any more
         closeUnusedInputs();
     }
 }
 
 /**
  * Close one of the input devices.
- * This is designed to be called from MidiDevicesPanel when aa device is unchecked.
- * If the device isn't needed for a different usage it is closed.
- * The name is removed from the name cache to track the selections in the panel.
+ * Removing a usage doesn't remove the device from the main list.
  */
 void MidiManager::closeInput(juce::String name, Usage usage)
 {
     if (usage == Input) {
-        inputNames.removeString(name);
+        // if this is also selected for another usage, it can't be closed
+        if (name != inputSyncName)
+            inputNames.removeString(name);
     }
     else if (usage == InputSync) {
         // igmore if this isn't the one we had selected for sync
@@ -458,30 +497,63 @@ void MidiManager::closeAllInputs()
 //
 // Output Devices
 //
-// Management of these is more complex than inputs because we have
-// three different types, there can only be one of each type,
-// and we have usage pointers to each one.
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Open the output devices configured, and close the ones that are not.
+ *
+ * Formerly allowed only one output device and had a complicated dependency
+ * on the specific use devices.  Now there is just a list of devices to
+ * open, and if a usage device isn't on the main list it is added back.
+ *
+ * The rules here are subtle and different from what they first were.
+ * The MidiDeviceEditor should never assume anything about which devices
+ * are open or closed after asking MidiManager to do anything because
+ * I don't want to keep the rules in sync.
  */
 void MidiManager::reconcileOutputs(MachineConfig* config)
 {
-    openOutputInternal(getDeviceName(config, Output), Output);
-    openOutputInternal(getDeviceName(config, OutputSync), OutputSync);
-    openOutputInternal(getDeviceName(config, Thru), Thru);
+    juce::String csv = getDeviceName(config, Output);
+    outputNames = juce::StringArray::fromTokens(csv, ",", "");
+
+    juce::String export = getDeviceName(config, OutputExport);
+    juce::String sync = getDeviceName(config, OutputSync);
+    juce::String thru = getDeviceName(config, OutputThru);
+    
+    // upgrade old configurations to put the usage-specific devices
+    // on the main list
+    if (!outputNames.contains(export)) outputNames.add(export);
+    if (!outputNames.contains(sync)) outputNames.add(sync);
+    if (!outputNames.contains(thru)) outputNames.add(thru);
+
+    // open them all
+    for (auto name : outputNames) {
+        (void)findOrOpenOutput(name);
+    }
+
+    // get device handles for the usages
+    openOutputInternal(name, OutputExport);
+    openOutputInternal(name, OutputSync);
+    openOutputInternal(name, OutputThru);
+    
     closeUnusedOutputs();
 }
 
 /**
  * Open a device for a particular usage.
  * This is intended for use by the MidiDevicesPanel when checking a box in the grid.
+ * The device is added to the main output list if it isn't already there and assigned
+ * to the usage handle after it is opened.
  */
 void MidiManager::openOutput(juce::String name, Usage usage)
 {
+    // always goes on the master list
+    if (!outputNames.contains(name))
+      outputNames.add(name);
+    
     openOutputInternal(name, usage);
+    // this won't actually close anything now since changing a usage
+    // doesn't mean it is taken off the main list
     closeUnusedOutputs();
 }
 
@@ -490,8 +562,12 @@ void MidiManager::openOutput(juce::String name, Usage usage)
  */
 void MidiManager::openOutputInternal(juce::String name, Usage usage)
 {
-    if (usage == Output)
-      outputDevice = findOrOpenOutput(name);
+    if (usage == Output) {
+        // just a general unspecific output
+        (void)findOrOpenOutput(name);
+    }
+    else if (usage == OutputExport)
+      exportDevice = findOrOpenOutput(name);
     else if (usage == OutputSync)
       outputSyncDevice = findOrOpenOutput(name);
     else if (usage == Thru)
@@ -500,14 +576,38 @@ void MidiManager::openOutputInternal(juce::String name, Usage usage)
 
 /**
  * Close the output device with the given usage if it not used for something else.
- * This will actually close ALL unused devices, not just the one requested.
- * Don't need to differentiate between this yet.
+ * This works differently than the first release, closing a usage device won't
+ * take it off the main list.
+ *
+ * This could work two ways (so could inputs).
+ * If you ask to close one of the general Output devices it could automatically
+ * make that unavailable for the other usages.  Or if the device is still selected
+ * for a usage, it prevents the output from being closed.
+ * Not sure which is less confusing.
  */
 void MidiManager::closeOutput(juce::String name, Usage usage)
 {
     if (usage == Output) {
-        if (outputDevice != nullptr && outputDevice->getName() == name) {
-            outputDevice = nullptr;
+
+        if (outputNames.contains(name)) {
+            outputNames.remove(name);
+            
+            // method 2, deselecting it from the main list, deselects it from all others
+            if (exportDevice != nullptr && exportDevice->getName() == name)
+              exportDevice = nullptr;
+        
+            if (outputSyncDevice != nullptr && outputSyncDevice->getName() == name)
+              outputSyncDevice = nullptr;
+        
+            if (thruDevice != nullptr && thruDevice->getName() == name)
+              thruDevice = nullptr;
+            
+            closeUnusedOutputs();
+        }
+    }
+    else if (usage == OutputExport) {
+        if (exportDevice != nullptr && exportDevice->getName() == name) {
+            outputSyncDevice = nullptr;
             closeUnusedOutputs();
         }
     }

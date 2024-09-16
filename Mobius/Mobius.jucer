@@ -71,11 +71,16 @@
       </GROUP>
       <GROUP id="{95DE79DE-EE25-804C-123F-4D4433BA69CB}" name="midi">
         <FILE id="V405w4" name="MidiByte.h" compile="0" resource="0" file="Source/midi/MidiByte.h"/>
+        <FILE id="xqoels" name="MidiEvent.cpp" compile="1" resource="0" file="Source/midi/MidiEvent.cpp"/>
+        <FILE id="mA6nVC" name="MidiEvent.h" compile="0" resource="0" file="Source/midi/MidiEvent.h"/>
         <FILE id="FqPEgq" name="MidiQueue.cpp" compile="1" resource="0" file="Source/midi/MidiQueue.cpp"/>
         <FILE id="zPpRNa" name="MidiQueue.h" compile="0" resource="0" file="Source/midi/MidiQueue.h"/>
         <FILE id="LzUaVM" name="MidiRealizer.cpp" compile="1" resource="0"
               file="Source/midi/MidiRealizer.cpp"/>
         <FILE id="VnWN2i" name="MidiRealizer.h" compile="0" resource="0" file="Source/midi/MidiRealizer.h"/>
+        <FILE id="GQqoeU" name="MidiSequence.cpp" compile="1" resource="0"
+              file="Source/midi/MidiSequence.cpp"/>
+        <FILE id="hZQULr" name="MidiSequence.h" compile="0" resource="0" file="Source/midi/MidiSequence.h"/>
         <FILE id="pe7gGA" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/midi/MidiSyncEvent.h"/>
         <FILE id="RkyeW9" name="OldMidiEvent.cpp" compile="1" resource="0"
               file="Source/midi/OldMidiEvent.cpp"/>
