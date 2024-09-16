@@ -29,10 +29,15 @@ class MobiusMidiState
 
     class Track {
       public:
+        int index = 0;
 
         // play position
-        int frames;
-        int frame;
+        int frames = 0;
+        int frame = 0;
+        int subcycles = 0;
+        int subcycle = 0;
+        int cycles = 0;
+        int cycle = 0;
 
         juce::String mode;
 

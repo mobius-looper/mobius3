@@ -1699,7 +1699,7 @@ void Supervisor::doAction(UIAction* action)
         if (strlen(action->getScope()) == 0) {
             if (mobiusView.focusedTrack >= mobiusView.audioTracks) {
                 // temporary trace
-                Trace(2, "Supervisor: Forcing MIDI track scope");
+                //Trace(2, "Supervisor: Forcing MIDI track scope");
                 action->setScopeTrack(mobiusView.focusedTrack + 1);
                 trashedScope = true;
             }
@@ -1867,18 +1867,25 @@ void Supervisor::kludgeCoreSymbols()
  */
 void Supervisor::doTrackSelectAction(UIAction* a)
 {
+    int prevFocused = mobiusView.focusedTrack;
+    bool relative = false;
+    
     // ugh, will want a better way to do this
     if (a->symbol == symbols.find("NextTrack")) {
         int next = mobiusView.focusedTrack + 1;
         if (next >= mobiusView.totalTracks)
           next = 0;
         mobiusView.focusedTrack = next;
+        mobiusView.trackChanged = true;
+        relative = true;
     }
     else if (a->symbol == symbols.find("PrevTrack")) {
         int next = mobiusView.focusedTrack - 1;
         if (next < 0)
           next = mobiusView.totalTracks - 1;
         mobiusView.focusedTrack = next;
+        mobiusView.trackChanged = true;
+        relative = true;
     }
     else if (a->symbol == symbols.find("SelectTrack")) {
         // argument is 1 based
@@ -1888,6 +1895,7 @@ void Supervisor::doTrackSelectAction(UIAction* a)
         }
         else {
             mobiusView.focusedTrack = next;
+            mobiusView.trackChanged = true;
         }
     }
     else {
@@ -1896,8 +1904,29 @@ void Supervisor::doTrackSelectAction(UIAction* a)
     
     // if we move over midi tracks, we're done, otherwise send it down
     if (mobiusView.focusedTrack < mobiusView.audioTracks) {
+
+        // now it gets weirder, if we were previously on a midi track
+        // and move back in to an audio track with next/prev, we don't actually
+        // want to send next/prev to the core, it becomes a SelectTrack
+        // of the desired index, either the last or the first
+        // if you don't do this, it skips an extra track
+        // todo: should we just always do this conversion?  the active track may
+        // already be there but that can happen normally so it can't mess anything up
+        // to ask for it redundantly
+        Symbol* saveSymbol = a->symbol;
+        int saveValue = a->value;
+        if (prevFocused >= mobiusView.audioTracks && relative) {
+            // don't trash the source action which usually comes from
+            // a binding.  two options: save/restore or copy it to a temp
+            a->symbol = symbols.find("SelectTrack");
+            a->value = mobiusView.focusedTrack + 1;
+        }
+        
         if (mobius != nullptr)
           mobius->doAction(a);
+
+        a->symbol = saveSymbol;
+        a->value = saveValue;
     }
 }
 

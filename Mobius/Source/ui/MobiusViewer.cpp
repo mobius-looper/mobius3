@@ -47,6 +47,7 @@
 #include "../Supervisor.h"
 
 #include "../model/MobiusState.h"
+#include "../model/MobiusMidiState.h"
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
 #include "../model/MobiusConfig.h"
@@ -112,12 +113,14 @@ void MobiusViewer::initialize(MobiusView* view)
     // in the view that matches that type
     for (int i = 0 ; i < view->audioTracks ; i++) {
         MobiusViewTrack* vt = new MobiusViewTrack();
+        vt->index = i;
         view->tracks.add(vt);
     }
 
     for (int i = 0 ; i < view->midiTracks ; i++) {
         MobiusViewTrack* vt = new MobiusViewTrack();
         vt->midi = true;
+        vt->index = view->audioTracks + i;
         view->tracks.add(vt);
     }
 
@@ -229,15 +232,13 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
     for (int i = 0 ; i < view->audioTracks ; i++) {
         MobiusTrackState* tstate = &(state->tracks[i]);
 
-        // obtain track view, growing if necessary
-        MobiusViewTrack* tview;
+        MobiusViewTrack* tview = nullptr;
         if (i < view->tracks.size())
           tview = view->tracks[i];
         else {
-            tview = new MobiusViewTrack();
-            // number for display is 1 based
-            tview->number = i + 1;
-            view->tracks.add(tview);
+            // something is messed up, there should always be one at this index
+            Trace(1, "MobiusViewer: View track array is hosed, and so are you");
+            break;
         }
 
         // only audio tracks have the concept of an active track
@@ -269,6 +270,7 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
                     // we're warping, trace just to see if it happens as I expect
                     //Trace(2, "MobiusViewer: Where the Mobius Track leads, I follow");
                     view->focusedTrack = i;
+                    view->trackChanged = true;
                 }
                 // else, Mobius is following focus, which is normal since it takes awhile
                 // for the Kernel to catch up
@@ -610,8 +612,10 @@ void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
 void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
 {
     int subcycles = 0;
-    if (supervisor->doQuery(&subcyclesQuery))
-      subcycles = subcyclesQuery.value;
+    if (supervisor->doQuery(&subcyclesQuery)) {
+        subcyclesQuery.scope = tview->index + 1;
+        subcycles = subcyclesQuery.value;
+    }
 
     if (subcycles == 0) {
         // this comes from the Preset, so something bad happened
@@ -954,10 +958,43 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 
 void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 {
-    (void)mobius;
-    (void)view;
-    //MobiusConfig* config = supervisor->getMobiusConfig();
-    //view->midiTracks = config->getMidiTracks();
+    MobiusMidiState* state = mobius->getMidiState();
+
+    if (view->midiTracks != state->tracks.size()) {
+        // likely to generate very many messages
+        Trace(1, "MobiusViewer: MIDI track count mismatch %d in the view and %d in the state",
+              view->midiTracks, state->tracks.size());
+    }
+
+    int index = 0;
+    while (index < state->tracks.size() && index < view->midiTracks) {
+        MobiusMidiState::Track* tstate = state->tracks[index];
+        int vtrackIndex = index + view->audioTracks;
+        if (vtrackIndex < view->tracks.size()) {
+            MobiusViewTrack* tview = view->tracks[vtrackIndex];
+            refreshMidiTrack(tstate, tview);
+        }
+        else {
+            Trace(1, "MobiusViweer: MIDI view tracks are fucked");
+            break;
+        }
+        index++;
+    }
+}
+
+void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+{
+    tview->frame = tstate->frame;
+    tview->frames = tstate->frames;
+
+    tview->subcycles = tstate->subcycles;
+    tview->subcycle = tstate->subcycle;
+    tview->cycles = tstate->cycles;
+    tview->cycle = tstate->cycle;
+    
+    // fake these up to avoid warnings in LoopMeterElement and LoopStackElement
+    if (tview->cycle == 0) tview->cycle = 1;
+    if (tview->subcycles == 0) tview->subcycles = 4;
 }
 
 /****************************************************************************/

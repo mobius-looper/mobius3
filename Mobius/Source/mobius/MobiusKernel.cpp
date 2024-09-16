@@ -207,6 +207,11 @@ MobiusState* MobiusKernel::getState()
     return (mCore != nullptr) ? mCore->getState() : nullptr;
 }
 
+MobiusMidiState* MobiusKernel::getMidiState()
+{
+    return mMidi->getState();
+}
+
 /**
  * Consume any messages from the shell at the beginning of each
  * audio listener interrupt.
@@ -826,10 +831,16 @@ void MobiusKernel::doAction(UIAction* action)
         doKernelAction(action);
     }
     else if (symbol->level == LevelCore) {
-        // not ours, pass to the core
-        action->next = coreActions;
-        coreActions = action;
-        passed = true;
+        int scope = action->getScopeTrack();
+        if (scope > audioTracks) {
+            doMidiActionRescoped(action, scope);
+        }
+        else {
+            // not ours, pass to the core
+            action->next = coreActions;
+            coreActions = action;
+            passed = true;
+        }
     }
     else {
         // this one needs to go up
@@ -847,6 +858,20 @@ void MobiusKernel::doAction(UIAction* action)
       actionPool->checkin(action);
 }
 
+/**
+ * After receiving a UIAction with a scope in the range of the midi
+ * tracks, adjust the scope downward and pass it to the MidiTracker
+ */
+void MobiusKernel::doMidiActionRescoped(UIAction* a, int scope)
+{
+    int adjusted = scope - audioTracks;
+    a->setScopeTrack(adjusted);
+
+    mMidi->doAction(a);
+
+    a->setScopeTrack(scope);
+}
+    
 /**
  * Process one of our local Kernel level ations.
  *
@@ -887,6 +912,10 @@ void MobiusKernel::doKernelAction(UIAction* action)
  * todo: now that doAction has to handle passing actions in both directions
  * we don't really need this like I intended.  Can just have Mobius call doAction
  * and let that pass it up.
+ *
+ * Since the core code doesn't know about MIDI tracks, it can't target one?
+ * I suppose an old script could use "for 9" to go beyond the audio tracks
+ * but make them use MSL for this.
  */
 void MobiusKernel::doActionFromCore(UIAction* action)
 {
@@ -1069,8 +1098,14 @@ bool MobiusKernel::doQuery(Query* q)
 {
     bool success = false;
 
-    if (q->scope >= audioTracks) {
+    // note index math, since Query.scope is 1 based
+    // it may be equal to audioTracks, when it goes over it
+    // is a midi track
+    if (q->scope > audioTracks) {
         int saveScope = q->scope;
+        // there is "zero means active track" concept for MIDI tracks
+        // but I don't want the scope number meaning to be different
+        // so continue using 1 based 
         q->scope = q->scope - audioTracks;
         
         success = mMidi->doQuery(q);
@@ -1324,9 +1359,12 @@ bool MobiusKernel::mslAction(MslAction* action)
         uia.setScopeTrack(action->scope);
 
         if (symbol->level == LevelCore) {
-            // this is where all the interesting stuff happens
-            mCore->doAction(&uia);
 
+            // we need to allow MSL to target MIDI tracks so support re-scoping here
+            if (action->scope > audioTracks)
+              doMidiActionRescoped(&uia, action->scope);
+            else
+              mCore->doAction(&uia);
         }
         else {
             // the script is calling a kernel or UI level action

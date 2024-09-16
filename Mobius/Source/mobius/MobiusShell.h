@@ -41,6 +41,7 @@ class MobiusShell : public MobiusInterface
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config) override;
     MobiusState* getState() override;    // also shared by the kernel
+    class MobiusMidiState* getMidiState() override;
     void performMaintenance() override;
     void doAction(class UIAction* action) override;
     bool doQuery(class Query* query) override;

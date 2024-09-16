@@ -544,6 +544,11 @@ MobiusState* MobiusShell::getState()
     return kernel.getState();
 }
 
+MobiusMidiState* MobiusShell::getMidiState()
+{
+    return kernel.getMidiState();
+}
+
 /**
  * Expected to be called at regular small intervals by a thread
  * managed in the UI, usually 1/10 second.

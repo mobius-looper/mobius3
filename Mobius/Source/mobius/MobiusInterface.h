@@ -139,6 +139,11 @@ class MobiusInterface {
     virtual class MobiusState* getState() = 0;
 
     /**
+     * Ditto for MIDI
+     */
+    virtual class MobiusMidiState* getMidiState() = 0;
+    
+    /**
      * Do periodic housekeeping tasks within the maintenance thread.
      * This may include checking the status of pending actions,
      * processing automatic exports, and managing communication

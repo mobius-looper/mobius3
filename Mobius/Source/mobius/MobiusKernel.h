@@ -86,7 +86,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     }
 
     class MobiusState* getState();
-
+    class MobiusMidiState* getMidiState();
+    
     class AudioPool* getAudioPool() {
         return audioPool;
     }
@@ -260,6 +261,12 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void playSample(UIAction* action);
 
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
+
+    // midi stuff
+    void doMidiActionRescoped(class UIAction* a, int scope);
+
+
+    
 };
 
 /****************************************************************************/

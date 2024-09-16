@@ -101,11 +101,12 @@ class MobiusViewTrack {
    
 
     /**
-     * 1 based track number
+     * 0 based track index
      * The number space for audio and midi tracks is combined.
-     * This is not the same as binding scope, it is just the number to display
+     * To use in Query.scope or UIAction.scope you need to add 1
+     * since zero means "none" or "active track".
      */
-    int number = 0;
+    int index = 0;
 
     /**
      * Symbolic name if the track has one.
@@ -365,7 +366,7 @@ class MobiusView
     int activeAudioTrack = 0;
     int midiTracks = 0;
     int totalTracks = 0;
-    int focusedTrack = -1;
+    int focusedTrack = 0;
     
     MobiusViewTrack* track = nullptr;
     bool trackChanged = false;

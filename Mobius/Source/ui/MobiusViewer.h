@@ -15,6 +15,7 @@
 #include <JuceHeader.h>
 
 #include "../model/Query.h"
+#include "../model/MobiusMidiState.h"
 
 class MobiusViewer
 {
@@ -59,5 +60,6 @@ class MobiusViewer
     void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
 
     void refreshMidiTracks(class MobiusInterface* mobius, class MobiusView* view);
+    void refreshMidiTrack(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
     
 };
