@@ -69,14 +69,7 @@ ObjectPool::~ObjectPool()
     // full stats when debugging, could simplify to
     // just tracing anomolies when things stabalize
     traceStatistics();
-
-    // delete any lingering objects still in the pool
-    while (pool != nullptr) {
-        PooledObject* next = pool->getPoolChain();
-        pool->setPoolChain(nullptr);
-        delete pool;
-        pool = next;
-    }
+    flush();
 }
 
 PooledObject* ObjectPool::checkout()
@@ -99,6 +92,7 @@ PooledObject* ObjectPool::checkout()
     }
     obj->setPool(this);
     obj->setPooled(false);
+    totalRequested++;
     
     return obj;
 }
@@ -120,6 +114,7 @@ void ObjectPool::checkin(PooledObject* obj)
             obj->setPooled(true);
             obj->setPool(this);
         }
+        totalReturned++;
     }
 }
 
@@ -127,7 +122,7 @@ void ObjectPool::checkin(PooledObject* obj)
  * Ensure that the pool has a comfortable number of objects
  * available for use.
  */
-void ObjectPool::checkCapacity()
+void ObjectPool::fluff()
 {
     if (totalCreated == 0) {
         // we're initialzing
@@ -147,6 +142,22 @@ void ObjectPool::checkCapacity()
             checkin(obj);
         }
         extensions++;
+    }
+}
+
+/**
+ * Return all object in the pool to the system memory manager
+ * This is intended only for the shutdown phase and must not
+ * be called on the audio thread or when there could be
+ * any pool contention.
+ */
+void ObjectPool::flush()
+{
+    while (pool != nullptr) {
+        PooledObject* next = pool->getPoolChain();
+        pool->setPoolChain(nullptr);
+        delete pool;
+        pool = next;
     }
 }
 
@@ -178,7 +189,7 @@ void ObjectPool::traceStatistics()
 UIActionPool::UIActionPool()
 {
     setName("UIAction");
-    checkCapacity();
+    fluff();
 }
 
 UIActionPool::~UIActionPool()

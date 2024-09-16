@@ -12,6 +12,8 @@
  * This is a newer class, intended to be gradually replace all the older
  * pooled objects so they may be maintained consistently.
  *
+ * todo: use some form of lockless pool management so we don't need a csect
+ *
  */
 
 #pragma once
@@ -69,7 +71,7 @@ class PooledObject {
      * nullptr when the object was simply created with new.
      *
      * An object may be returned to the original pool by calling
-     * return() but this is not required.
+     * checkin() but this is not required.
      */
     class ObjectPool* mPool = nullptr;
 
@@ -142,7 +144,12 @@ class ObjectPool
     /**
      * Extend the pool when necessary.
      */
-    void checkCapacity();
+    void fluff();
+
+    /**
+     * Delete all objects in the pool
+     */
+    void flush();
 
     /**
      * How was your day?
@@ -175,9 +182,18 @@ class ObjectPool
     // subclass better name this
     const char* name = "???";
 
-    // the total number of message objects created with alloc()
+    // the total number of objects created with alloc()
     // normally also maxPool
     int totalCreated = 0;
+
+    // the total number of objects requsted with checkout()
+    int totalRequested = 0;
+
+    // the total number of objects returned with return()
+    int totalReturned = 0;
+    
+    // the total number of objects deleted during flush
+    int totalDeleted = 0;
 
     // free pool
     PooledObject* pool = nullptr;

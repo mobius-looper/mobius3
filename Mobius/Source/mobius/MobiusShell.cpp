@@ -566,7 +566,7 @@ void MobiusShell::performMaintenance()
     communicator.checkCapacity();
 
     // fluff other pools
-    actionPool.checkCapacity();
+    actionPool.fluff();
 
     // todo: all object pool fluffing should be done here now too
     // need to redesign the old pools to be consistent and allow
