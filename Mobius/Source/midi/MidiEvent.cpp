@@ -1,5 +1,6 @@
 //
-// Should no longer be used
+// The 2.5 MIDI event structure, used in a small number of places
+// being migrated 
 //
 
 /**
@@ -27,7 +28,7 @@
 #include "../util/Util.h"
 
 #include "MidiByte.h"
-#include "MidiEvent.h"
+#include "OldMidiEvent.h"
 
 // tool I started using in mobius/core, think about a better home for this
 #include "../mobius/core/Mem.h"
@@ -41,7 +42,7 @@
 /**
  * Allocate a new event object.
  */
-MidiEvent::MidiEvent()
+OldMidiEvent::OldMidiEvent()
 {
 	init();
 }
@@ -49,7 +50,7 @@ MidiEvent::MidiEvent()
 /**
  * Initialize a new event.
  */
-void MidiEvent::init()
+void OldMidiEvent::init()
 {
     mManager	= nullptr;
     mNext		= nullptr;
@@ -74,7 +75,7 @@ void MidiEvent::init()
  * Also do not clear the env field or else we won't know how
  * to return ourselves to the pool.
  */
-void MidiEvent::reinit(void)
+void OldMidiEvent::reinit(void)
 {
 	mStack 		= nullptr;
 	mClock 		= 0;
@@ -98,9 +99,9 @@ void MidiEvent::reinit(void)
  * This is normally not called by an application, use the free()
  * method instead to allow the events to be returned to the manager's pool.
  */
-MidiEvent::~MidiEvent(void)
+OldMidiEvent::~OldMidiEvent(void)
 {
-	MidiEvent *el, *nextel;
+	OldMidiEvent *el, *nextel;
 
 	// release attached storage
 	reinit();
@@ -118,7 +119,7 @@ MidiEvent::~MidiEvent(void)
  * If these events were created with new, rather than 
  * from a MidiEventManager, then they're just deleted.
  */
-void MidiEvent::free(void)
+void OldMidiEvent::free(void)
 {
 	if (mManager != nullptr)
 	  mManager->freeMidiEvents(this);
@@ -129,14 +130,14 @@ void MidiEvent::free(void)
 /**
  * Copy an event, uses the same event pool if we have one.
  */
-MidiEvent *MidiEvent::copy(void)
+OldMidiEvent *OldMidiEvent::copy(void)
 {
-	MidiEvent *e = nullptr;
+	OldMidiEvent *e = nullptr;
 
 	if (mManager != nullptr)
 	  e = mManager->newMidiEvent();
 	else
-	  e = NEW(MidiEvent);
+	  e = NEW(OldMidiEvent);
 
 	if (e != nullptr) {
 
@@ -178,7 +179,7 @@ MidiEvent *MidiEvent::copy(void)
 // commented out since printf is useless these days and I don't want to
 // port it to something else right now
 #if 0
-void MidiEvent::dump(bool simple)
+void OldMidiEvent::dump(bool simple)
 {
 	int i;
   
@@ -280,10 +281,10 @@ void MidiEvent::dump(bool simple)
  * Find the last event in the list with a particular status.
  * If stauts is zero, the last event in the list is returned.
  */
-MidiEvent *MidiEvent::getLast(int status)
+OldMidiEvent *OldMidiEvent::getLast(int status)
 {
-    MidiEvent* last = nullptr;
-    for (MidiEvent* e = this ; e != nullptr ; e = e->getNext()) {
+    OldMidiEvent* last = nullptr;
+    for (OldMidiEvent* e = this ; e != nullptr ; e = e->getNext()) {
 		if (status == 0 || status == e->getStatus()) {
             last = e;
             break;
@@ -295,9 +296,9 @@ MidiEvent *MidiEvent::getLast(int status)
 /**
  * Finds the next event of the same type as this one in the list.
  */
-MidiEvent *MidiEvent::getNextEvent(void)
+OldMidiEvent *OldMidiEvent::getNextEvent(void)
 {
-	MidiEvent *next;
+	OldMidiEvent *next;
 
 	next = nullptr;
 	if (this != nullptr) {
@@ -324,9 +325,9 @@ MidiEvent *MidiEvent::getNextEvent(void)
  * any additional work.
  * 
  */
-MidiEvent *MidiEvent::insert(MidiEvent *neu)
+OldMidiEvent *OldMidiEvent::insert(OldMidiEvent *neu)
 {
-	MidiEvent *list, *event, *prev;
+	OldMidiEvent *list, *event, *prev;
 
 	list 	= this;
 	prev	= nullptr;
@@ -376,9 +377,9 @@ MidiEvent *MidiEvent::insert(MidiEvent *neu)
  * This cannot be used for MS_CMD_LOOP events, if you try, it
  * will call the normal insert() method.
  */
-MidiEvent *MidiEvent::replace(MidiEvent *neu)
+OldMidiEvent *OldMidiEvent::replace(OldMidiEvent *neu)
 {
-	MidiEvent *list, *event, *prev, *next;
+	OldMidiEvent *list, *event, *prev, *next;
 	int found;
 
 	// no such thing as loop override, do a normal insert
@@ -450,9 +451,9 @@ MidiEvent *MidiEvent::replace(MidiEvent *neu)
  * The event is NOT deleted, that's up to the caller.
  * "This" is the head of the list, the new list head is returned.
  */
-MidiEvent *MidiEvent::remove(MidiEvent *e)
+OldMidiEvent *OldMidiEvent::remove(OldMidiEvent *e)
 {
-	MidiEvent *list, *ev, *prev;
+	OldMidiEvent *list, *ev, *prev;
 
 	list = this;
 	for (ev = list ; ev != nullptr && ev != e ; ev = ev->mNext)
@@ -528,7 +529,7 @@ MidiEvent *MidiEvent::remove(MidiEvent *e)
 /**
  * Initialize an event object from XML.
  */
-MidiEvent::MidiEvent(XmlElement* e) 
+OldMidiEvent::OldMidiEvent(XmlElement* e) 
 {
 	init();
 	parseXml(e);
@@ -560,7 +561,7 @@ MidiEvent::MidiEvent(XmlElement* e)
 #define ATT_VALUE "v"
 #define ATT_MODE "m"
 
-void MidiEvent::parseXml(XmlElement* e)
+void OldMidiEvent::parseXml(XmlElement* e)
 {
 	mClock = e->getIntAttribute(ATT_TIME);
 	mChannel = e->getIntAttribute(ATT_CHANNEL);
@@ -630,7 +631,7 @@ void MidiEvent::parseXml(XmlElement* e)
 	}
 }
 
-void MidiEvent::toXml(XmlBuffer* b)
+void OldMidiEvent::toXml(XmlBuffer* b)
 {
 	if (mStatus == MS_NOTEON) {
 		b->addOpenStartTag(EL_NOTE);

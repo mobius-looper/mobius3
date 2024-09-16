@@ -19,13 +19,13 @@
 /**
  * Interface of something that owns the event, used when freeing events.
  */
-class MidiEventManager {
+class OldMidiEventManager {
 
   public:
-    virtual ~MidiEventManager() {}
+    virtual ~OldMidiEventManager() {}
 
-	virtual class MidiEvent* newMidiEvent() = 0;
-	virtual void freeMidiEvents(class MidiEvent* list) = 0;
+	virtual class OldMidiEvent* newMidiEvent() = 0;
+	virtual void freeMidiEvents(class OldMidiEvent* list) = 0;
 
 };
 
@@ -86,7 +86,7 @@ class MidiEventManager {
  * These are normally created by the MidiEnv::newEvent method and 
  * maintained in a pool.
  */
-class MidiEvent { 
+class OldMidiEvent { 
 
   public:
 
@@ -94,22 +94,22 @@ class MidiEvent {
     // Constructors
     //
 
-	MidiEvent();
-	//MidiEvent(class XmlElement* e);
-	~MidiEvent();
-    MidiEvent* copy();
+	OldMidiEvent();
+	//OldMidiEvent(class XmlElement* e);
+	~OldMidiEvent();
+    OldMidiEvent* copy();
 	void reinit();
     void free();
 
-	void setManager(MidiEventManager* man) {
+	void setManager(OldMidiEventManager* man) {
 		mManager = man;
 	}
 
-	void setNext(MidiEvent *n) {
+	void setNext(OldMidiEvent *n) {
 		mNext = n;
 	}
 
-	void setStack(MidiEvent *s) {
+	void setStack(OldMidiEvent *s) {
 		mStack = s;
 	}
 
@@ -152,11 +152,11 @@ class MidiEvent {
     void dump(bool simple);
 	void printType(char* buffer);
 
-	MidiEvent *getNext(void) {
+	OldMidiEvent *getNext(void) {
 		return mNext;
 	}
 
-	MidiEvent *getStack(void) {
+	OldMidiEvent *getStack(void) {
 		return mStack;
 	}
 
@@ -241,20 +241,20 @@ class MidiEvent {
     // I think I'd rather these be MidiSequence methods
     //
 
-    MidiEvent *getLast(int status);
-	MidiEvent *getNextEvent(void);
-	MidiEvent *insert(MidiEvent *neu);
-	MidiEvent *replace(MidiEvent *neu);
-	MidiEvent *remove(MidiEvent *e);
+    OldMidiEvent *getLast(int status);
+	OldMidiEvent *getNextEvent(void);
+	OldMidiEvent *insert(OldMidiEvent *neu);
+	OldMidiEvent *replace(OldMidiEvent *neu);
+	OldMidiEvent *remove(OldMidiEvent *e);
 
   private:
 
 	void init();
 
-	MidiEventManager* mManager;
+	OldMidiEventManager* mManager;
 
-	MidiEvent* 	mNext;		// list link
-	MidiEvent*	mStack;	// for the sequencer only
+	OldMidiEvent* 	mNext;		// list link
+	OldMidiEvent*	mStack;	// for the sequencer only
 
 	// most of these can be "byte"
 
