@@ -27,6 +27,7 @@ MainComponent::MainComponent() :
     // !! examples say that if you set this you
     // need to set it to nullptr when destroyed
     //juce::LookAndFeel::setDefaultLookAndFeel(&laf);
+    juce::LookAndFeel::setDefaultLookAndFeel(&customLaf);
 
     // Startup can do a lot of thigns, perhais we should have different
     // phases, first to load any configuration related to the initial window size
@@ -50,6 +51,16 @@ MainComponent::MainComponent() :
 MainComponent::~MainComponent()
 {
     Trace(2, "MainComponent: Destructing\n");
+
+    // interesting, doing this seems to cause the window to redisplay on shutdown
+    // must be triggering a repaint for some reason, maybe do this earlier to prevent that
+    // forum chatter strongly recommends setting this to nullptr on the way out
+    //juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+    
+    // yes, commenting this avoid prevents the redraw and doesn't crash but I guess only
+    // because we're close to the end and nothing else happens that would try to
+    // repaint the sliders, better to subclass a slider and only set it for them
+    
     
     // Projucer: This shuts down the audio device and clears the audio source.
     // Docs:
