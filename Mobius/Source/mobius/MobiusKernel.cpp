@@ -10,12 +10,13 @@
 
 #include "../model/MobiusConfig.h"
 #include "../model/MainConfig.h"
-#include "../model/FunctionDefinition.h"
 #include "../model/UIParameter.h"
 #include "../model/UIAction.h"
 #include "../model/Scope.h"
 #include "../model/Query.h"
 #include "../model/Symbol.h"
+#include "../model/SymbolId.h"
+#include "../model/FunctionProperties.h"
 #include "../model/SampleProperties.h"
 #include "../model/ScriptProperties.h"
 
@@ -170,17 +171,20 @@ void MobiusKernel::propagateSymbolProperties()
 
 /**
  * Install kernel level symbols.
+ * The symbols have already been interned during Symbolizer initialzation.
+ * Here we adjust the level and behavior.
  */
 void MobiusKernel::installSymbols()
 {
     Symbol* s;
 
-    s = container->getSymbols()->intern("SamplePlay");
-    s->level = LevelKernel;
-    s->behavior = BehaviorFunction;
-    s->id = KernelSamplePlay;
-
-    // Mobius will add theirs in Mobius::initialize
+    s = container->getSymbols()->getSymbol(FuncSamplePlay);
+    if (s == nullptr)
+      Trace(1, "MobiusKernel: SamplePlay symbol not found");
+    else {
+        s->level = LevelKernel;
+        s->behavior = BehaviorFunction;
+    }
 }
 
 void MobiusKernel::dump(StructureDumper& d)
@@ -585,7 +589,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
         action->next = coreActions;
         coreActions = action;
     }
-    else if (s->function != nullptr && s->coreFunction != nullptr) {
+    else if (s->functionProperties != nullptr && s->coreFunction != nullptr) {
         // functions are exposed as booleans, should only be here with 0 and 1
         // and should be supressing duplicate values
         int value = p->get();
@@ -600,7 +604,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
         // to return 1 we're "on"
         bool enableSustainable = false;
         if (enableSustainable) {
-            if (value > 0 || s->function->sustainable) {
+            if (value > 0 || s->functionProperties->sustainable) {
                 UIAction* action = actionPool->newAction();
                 // pool should do this!
                 action->reset();
@@ -610,7 +614,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
             
                 if (value > 0) {
                     // we're down
-                    if (s->function->sustainable) {
+                    if (s->functionProperties->sustainable) {
                         action->sustain = true;
                         action->sustainId = p->sustainId;
                     }
@@ -964,7 +968,6 @@ UIAction* MobiusKernel::newUIAction()
  */
 void MobiusKernel::playSample(UIAction* action)
 {
-    // FunctionDefinition doesn't have a sustainable flag yet so filter up actions
     if (sampleManager != nullptr) {
         Symbol* s = action->symbol;
         if (s->sample) {

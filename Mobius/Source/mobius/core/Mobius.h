@@ -340,9 +340,6 @@ class Mobius
     //
     //////////////////////////////////////////////////////////////////////
 
-	void setCustomMode(const char* s);
-	const char* getCustomMode();
-
     // trace
 	void logStatus();
 
@@ -415,7 +412,6 @@ class Mobius
     
 	class MobiusConfig *mConfig;
     class Setup* mSetup;
-	char mCustomMode[MAX_CUSTOM_MODE];
     
 	// state related to realtime audio capture
 	Audio* mCaptureAudio;

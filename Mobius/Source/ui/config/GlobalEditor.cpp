@@ -177,10 +177,6 @@ void GlobalEditor::initForm()
     // These are the most useful
     addField("General", UIParameterTrackCount);
 
-    // this no longer exists, it is defined by the number
-    // of GroupDefinitions
-    //addField("General", UIParameterGroupCount);
-
     // this doesn't actually do anything in core code
     // loops-per-track has been set in the Preset which
     // isn't ideal
@@ -206,22 +202,11 @@ void GlobalEditor::initForm()
     // support lost, could be useful
     //addField("Advanced", UIParameterSpreadRange);
     
-    // support for this got lost
-    // might be useful to resurrect
-    //addField("General", UIParameterIntegerWaveFile);
-
     // this one is obscure and either needs to be removed
     // or implemented properly, new Actionator doesn't handle it
     //addField("Miscellaneous", UIParameterGroupFocusLock);
 
-    // these exist as booleans in the model, but I'm doing export a different way now
-    //addField("Miscellaneous", UIParameterMidiExport);
-    //addField("Miscellaneous", UIParameterHostMidiExport);
-
     // these are StringList and need rework
-    //addField("Functions", UIParameterFocusLockFunctions);
-    //addField("Functions", UIParameterMuteCancelFunctions);
-    //addField("Functions", UIParameterConfirmationFunctions);
     // addField("Modes", UIParameterAltFeedbackDisable);
 }
 

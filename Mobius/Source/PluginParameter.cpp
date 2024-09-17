@@ -64,7 +64,7 @@ PluginParameter::PluginParameter(Symbol* s, Binding* binding)
         Trace(1, "PluginParameter: Binding to Symbol %s that had no core Parameter\n",
               s->getName());
     }
-    else if (s->function != nullptr) {
+    else if (s->functionProperties != nullptr) {
         // Hosts have not historically had the notion of a "momentary button" parameter type
         // and neither does Juce
         // Old Mobius exposed these as booleans

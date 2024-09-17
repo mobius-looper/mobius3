@@ -263,8 +263,8 @@ class SetupTrack {
 	const char* getTrackPresetName();
 
     // old way with ordinal
-    void setGroupNumber(int i);
-    int getGroupNumber();
+    void setGroupNumberDeprecated(int i);
+    int getGroupNumberDeprecated();
     // new way with name
     void setGroupName(juce::String name);
     juce::String getGroupName();

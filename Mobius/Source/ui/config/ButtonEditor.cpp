@@ -61,14 +61,13 @@ void ButtonEditor::prepare()
  */
 void ButtonEditor::load()
 {
-    MobiusConfig* mconfig = supervisor->getMobiusConfig();
     MobiusView* view = supervisor->getMobiusView();
     UIConfig* config = supervisor->getUIConfig();
 
     // BingingPanel::load normally does this but since we
     // overload load() we have to do it
     maxTracks = view->totalTracks;
-    maxGroups = mconfig->getTrackGroups();
+    //maxGroups = mconfig->getTrackGroups();
     targets.load();
     resetForm();
 

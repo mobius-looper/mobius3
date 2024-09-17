@@ -146,7 +146,9 @@ class MobiusEventState
     class UIEventType* type;
     
     // set when type is InvokeEvent
-    class FunctionDefinition* function;
+    // not used in the view, and I think the type should be enough
+    // besides FunctionDefinition is gone and mapping Function to a Symbol will be awkward
+    // class FunctionDefinition* function;
 
     // option function arg, usually for replicated functions
     long      argument;

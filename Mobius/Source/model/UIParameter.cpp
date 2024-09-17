@@ -9,6 +9,7 @@
 
 // some string utils
 #include "../util/Util.h"
+#include "../util/Trace.h"
 // for StringList
 #include "../util/List.h"
 
@@ -152,7 +153,9 @@ int UIParameter::getDynamicHigh(MobiusConfig* container)
         dynamicHigh = container->getMaxLoops() - 1;
     }
     else if (this == UIParameterGroup) {
-        dynamicHigh = container->getTrackGroups() - 1;
+        // this isn't in here any more, who calls this?
+        Trace(1, "UIPaameter::getDynamicHigh UIParameterGroup Who called this?");
+        dynamicHigh = container->groups.size();
     }
     else if (type == TypeStructure) {
         // kludge because GroupDefinitions are not Structures

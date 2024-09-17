@@ -16,31 +16,6 @@
  *
  * Functions and Parameters have display names too, and these have been left on
  * the Symbol.displayName.
- *
- * Reallly, FunctionDefinition and UIParameter serve
- * the same purpose, to provide a set of behavioral properties for something
- * defined in core code without exposing internall classes that implement them.
- * The UI uses those properties to interact with the core code: creating
- * bindings, editing saved values, building actions.
- *
- * This feels like a good thing to start generalizing.  Scripts will start becomming
- * more like functions with sustainability options and argument lists.
- *
- * Also like this as a way for the core to publish behavior.  If we did that for
- * Functions we wouldn't need FunctionDefinition with static constant objects at all
- * in the model.  Just let Mobius publish symbols for each internal Function and hang
- * a FunctionProperties on the symbol that describes what it does.
- *
- * Parameter could be done much the same way except that we still need a class to
- * implement the get/set code for the configuration editor.  
- *
- * Ownership of properties objects is annoying.
- * Symbol could own them which is nice since we have to dispose of the Symbols anyway.
- * The thing that installed them (MobiusShell/Supervisor) can also have an OwnedArray
- * of them, that's what DisplayParameter is doing.  But you have to duplicate this
- * OwnedArray in several places.
- *
- * For Scripts/Symbols start letting Symbol manage it and see how this shakes out.
  */
 
 #pragma once

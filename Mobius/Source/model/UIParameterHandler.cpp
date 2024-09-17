@@ -1,380 +1,373 @@
 
-#include "UIParameterIds.h"
-#include "UIParameterHandler.h"
+#include "SymbolId.h"
 #include "MobiusConfig.h"
 #include "Preset.h"
 #include "Setup.h"
 #include "ExValue.h"
 
-void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
+#include "UIParameterHandler.h"
+
+void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
 {
     value->setNull();
 
     switch (id) {
 
-        case UIParameterIdNone:
+        case SymbolIdNone:
             break;
 
         /* Global */
         
-        case UIParameterIdActiveSetup:
+        case ParamActiveSetup:
             break;
             
-        case UIParameterIdFadeFrames:
+        case ParamFadeFrames:
             value->setInt(((MobiusConfig*)obj)->getFadeFrames());
             break;
             
-        case UIParameterIdMaxSyncDrift:
+        case ParamMaxSyncDrift:
             value->setInt(((MobiusConfig*)obj)->getMaxSyncDrift());
             break;
             
-        case UIParameterIdDriftCheckPoint:
+        case ParamDriftCheckPoint:
             value->setInt(((MobiusConfig*)obj)->getDriftCheckPoint());
             break;
             
-        case UIParameterIdLongPress:
+        case ParamLongPress:
             value->setInt(((MobiusConfig*)obj)->getLongPress());
             break;
             
-        case UIParameterIdSpreadRange:
+        case ParamSpreadRange:
             value->setInt(((MobiusConfig*)obj)->getSpreadRange());
             break;
             
-        case UIParameterIdTraceLevel:
+        case ParamTraceLevel:
             value->setInt(((MobiusConfig*)obj)->getTraceDebugLevel());
             break;
             
-        case UIParameterIdAutoFeedbackReduction:
+        case ParamAutoFeedbackReduction:
             value->setBool(((MobiusConfig*)obj)->isAutoFeedbackReduction());
             break;
             
-        case UIParameterIdIsolateOverdubs:
+        case ParamIsolateOverdubs:
             value->setBool(((MobiusConfig*)obj)->isIsolateOverdubs());
             break;
             
-        case UIParameterIdMonitorAudio:
+        case ParamMonitorAudio:
             value->setBool(((MobiusConfig*)obj)->isMonitorAudio());
             break;
             
-        case UIParameterIdSaveLayers:
+        case ParamSaveLayers:
             value->setBool(((MobiusConfig*)obj)->isSaveLayers());
             break;
             
-        case UIParameterIdQuickSave:
+        case ParamQuickSave:
             value->setString(((MobiusConfig*)obj)->getQuickSave());
             break;
             
-        case UIParameterIdIntegerWaveFile:
+        case ParamIntegerWaveFile:
             value->setBool(((MobiusConfig*)obj)->isIntegerWaveFile());
             break;
             
-        case UIParameterIdGroupFocusLock:
+        case ParamGroupFocusLock:
             value->setBool(((MobiusConfig*)obj)->isGroupFocusLock());
             break;
             
-        case UIParameterIdTrackCount:
+        case ParamTrackCount:
             // as with so many others, this shouldn't be a UIParameter
             value->setInt(((MobiusConfig*)obj)->getCoreTracks());
             break;
             
-        case UIParameterIdGroupCount:
-            value->setInt(((MobiusConfig*)obj)->getTrackGroups());
-            break;
-            
-        case UIParameterIdMaxLoops:
+        case ParamMaxLoops:
             value->setInt(((MobiusConfig*)obj)->getMaxLoops());
             break;
             
-        case UIParameterIdInputLatency:
+        case ParamInputLatency:
             value->setInt(((MobiusConfig*)obj)->getInputLatency());
             break;
             
-        case UIParameterIdOutputLatency:
+        case ParamOutputLatency:
             value->setInt(((MobiusConfig*)obj)->getOutputLatency());
             break;
 
-        case UIParameterIdNoiseFloor:
+        case ParamNoiseFloor:
             value->setInt(((MobiusConfig*)obj)->getNoiseFloor());
             break;
             
-        case UIParameterIdMidiRecordMode:
+        case ParamMidiRecordMode:
             value->setInt(((MobiusConfig*)obj)->getMidiRecordMode());
             break;
 
             /* Preset */
     
-        case UIParameterIdSubcycles:
+        case ParamSubcycles:
             value->setInt(((Preset*)obj)->getSubcycles());
             break;
             
-        case UIParameterIdMultiplyMode:
+        case ParamMultiplyMode:
             value->setInt(((Preset*)obj)->getMultiplyMode());
             break;
             
-        case UIParameterIdShuffleMode:
+        case ParamShuffleMode:
             value->setInt(((Preset*)obj)->getShuffleMode());
             break;
             
-        case UIParameterIdAltFeedbackEnable:
+        case ParamAltFeedbackEnable:
             value->setBool(((Preset*)obj)->isAltFeedbackEnable());
             break;
             
-        case UIParameterIdEmptyLoopAction:
+        case ParamEmptyLoopAction:
             value->setInt(((Preset*)obj)->getEmptyLoopAction());
             break;
             
-        case UIParameterIdEmptyTrackAction:
+        case ParamEmptyTrackAction:
             value->setInt(((Preset*)obj)->getEmptyTrackAction());
             break;
             
-        case UIParameterIdTrackLeaveAction:
+        case ParamTrackLeaveAction:
             value->setInt(((Preset*)obj)->getTrackLeaveAction());
             break;
             
-        case UIParameterIdLoopCount:
+        case ParamLoopCount:
             value->setInt(((Preset*)obj)->getLoops());
             break;
             
-        case UIParameterIdMuteMode:
+        case ParamMuteMode:
             value->setInt(((Preset*)obj)->getMuteMode());
             break;
             
-        case UIParameterIdMuteCancel:
+        case ParamMuteCancel:
             value->setInt(((Preset*)obj)->getMuteCancel());
             break;
             
-        case UIParameterIdOverdubQuantized:
+        case ParamOverdubQuantized:
             value->setBool(((Preset*)obj)->isOverdubQuantized());
             break;
             
-        case UIParameterIdQuantize:
+        case ParamQuantize:
             value->setInt(((Preset*)obj)->getQuantize());
             break;
             
-        case UIParameterIdBounceQuantize:
+        case ParamBounceQuantize:
             value->setInt(((Preset*)obj)->getBounceQuantize());
             break;
             
-        case UIParameterIdRecordResetsFeedback:
+        case ParamRecordResetsFeedback:
             value->setBool(((Preset*)obj)->isRecordResetsFeedback());
             break;
             
-        case UIParameterIdSpeedRecord:
+        case ParamSpeedRecord:
             value->setBool(((Preset*)obj)->isSpeedRecord());
             break;
             
-        case UIParameterIdRoundingOverdub:
+        case ParamRoundingOverdub:
             value->setBool(((Preset*)obj)->isRoundingOverdub());
             break;
             
-        case UIParameterIdSwitchLocation:
+        case ParamSwitchLocation:
             value->setInt(((Preset*)obj)->getSwitchLocation());
             break;
             
-        case UIParameterIdReturnLocation:
+        case ParamReturnLocation:
             value->setInt(((Preset*)obj)->getReturnLocation());
             break;
             
-        case UIParameterIdSwitchDuration:
+        case ParamSwitchDuration:
             value->setInt(((Preset*)obj)->getSwitchDuration());
             break;
             
-        case UIParameterIdSwitchQuantize:
+        case ParamSwitchQuantize:
             value->setInt(((Preset*)obj)->getSwitchQuantize());
             break;
             
-        case UIParameterIdTimeCopyMode:
+        case ParamTimeCopyMode:
             value->setInt(((Preset*)obj)->getTimeCopyMode());
             break;
             
-        case UIParameterIdSoundCopyMode:
+        case ParamSoundCopyMode:
             value->setInt(((Preset*)obj)->getSoundCopyMode());
             break;
             
-        case UIParameterIdRecordThreshold:
+        case ParamRecordThreshold:
             value->setInt(((Preset*)obj)->getRecordThreshold());
             break;
             
-        case UIParameterIdSwitchVelocity:
+        case ParamSwitchVelocity:
             value->setBool(((Preset*)obj)->isSwitchVelocity());
             break;
             
-        case UIParameterIdMaxUndo:
+        case ParamMaxUndo:
             value->setInt(((Preset*)obj)->getMaxUndo());
             break;
             
-        case UIParameterIdMaxRedo:
+        case ParamMaxRedo:
             value->setInt(((Preset*)obj)->getMaxRedo());
             break;
             
-        case UIParameterIdNoFeedbackUndo:
+        case ParamNoFeedbackUndo:
             value->setBool(((Preset*)obj)->isNoFeedbackUndo());
             break;
             
-        case UIParameterIdNoLayerFlattening:
+        case ParamNoLayerFlattening:
             value->setBool(((Preset*)obj)->isNoLayerFlattening());
             break;
             
-        case UIParameterIdSpeedShiftRestart:
+        case ParamSpeedShiftRestart:
             value->setBool(((Preset*)obj)->isSpeedShiftRestart());
             break;
             
-        case UIParameterIdPitchShiftRestart:
+        case ParamPitchShiftRestart:
             value->setBool(((Preset*)obj)->isPitchShiftRestart());
             break;
             
-        case UIParameterIdSpeedStepRange:
+        case ParamSpeedStepRange:
             value->setInt(((Preset*)obj)->getSpeedStepRange());
             break;
             
-        case UIParameterIdSpeedBendRange:
+        case ParamSpeedBendRange:
             value->setInt(((Preset*)obj)->getSpeedBendRange());
             break;
             
-        case UIParameterIdPitchStepRange:
+        case ParamPitchStepRange:
             value->setInt(((Preset*)obj)->getPitchStepRange());
             break;
             
-        case UIParameterIdPitchBendRange:
+        case ParamPitchBendRange:
             value->setInt(((Preset*)obj)->getPitchBendRange());
             break;
             
-        case UIParameterIdTimeStretchRange:
+        case ParamTimeStretchRange:
             value->setInt(((Preset*)obj)->getTimeStretchRange());
             break;
             
-        case UIParameterIdSlipMode:
+        case ParamSlipMode:
             value->setInt(((Preset*)obj)->getSlipMode());
             break;
             
-        case UIParameterIdSlipTime:
+        case ParamSlipTime:
             value->setInt(((Preset*)obj)->getSlipTime());
             break;
             
-        case UIParameterIdAutoRecordTempo:
+        case ParamAutoRecordTempo:
             value->setInt(((Preset*)obj)->getAutoRecordTempo());
             break;
             
-        case UIParameterIdAutoRecordBars:
+        case ParamAutoRecordBars:
             value->setInt(((Preset*)obj)->getAutoRecordBars());
             break;
             
-        case UIParameterIdRecordTransfer:
+        case ParamRecordTransfer:
             value->setInt(((Preset*)obj)->getRecordTransfer());
             break;
             
-        case UIParameterIdOverdubTransfer:
+        case ParamOverdubTransfer:
             value->setInt(((Preset*)obj)->getOverdubTransfer());
             break;
             
-        case UIParameterIdReverseTransfer:
+        case ParamReverseTransfer:
             value->setInt(((Preset*)obj)->getReverseTransfer());
             break;
             
-        case UIParameterIdSpeedTransfer:
+        case ParamSpeedTransfer:
             value->setInt(((Preset*)obj)->getSpeedTransfer());
             break;
             
-        case UIParameterIdPitchTransfer:
+        case ParamPitchTransfer:
             value->setInt(((Preset*)obj)->getPitchTransfer());
             break;
             
-        case UIParameterIdWindowSlideUnit:
+        case ParamWindowSlideUnit:
             value->setInt(((Preset*)obj)->getWindowSlideUnit());
             break;
             
-        case UIParameterIdWindowEdgeUnit:
+        case ParamWindowEdgeUnit:
             value->setInt(((Preset*)obj)->getWindowEdgeUnit());
             break;
             
-        case UIParameterIdWindowSlideAmount:
+        case ParamWindowSlideAmount:
             value->setInt(((Preset*)obj)->getWindowSlideAmount());
             break;
             
-        case UIParameterIdWindowEdgeAmount:
+        case ParamWindowEdgeAmount:
             value->setInt(((Preset*)obj)->getWindowEdgeAmount());
             break;
 
             /* Setup */
     
-        case UIParameterIdDefaultPreset:
+        case ParamDefaultPreset:
             value->setString(((Setup*)obj)->getDefaultPresetName());
             break;
             
-        case UIParameterIdDefaultSyncSource:
+        case ParamDefaultSyncSource:
             value->setInt(((Setup*)obj)->getSyncSource());
             break;
             
-        case UIParameterIdDefaultTrackSyncUnit:
+        case ParamDefaultTrackSyncUnit:
             value->setInt(((Setup*)obj)->getSyncTrackUnit());
             break;
             
-        case UIParameterIdSlaveSyncUnit:
+        case ParamSlaveSyncUnit:
             value->setInt(((Setup*)obj)->getSyncUnit());
             break;
             
-        case UIParameterIdManualStart:
+        case ParamManualStart:
             value->setBool(((Setup*)obj)->isManualStart());
             break;
             
-        case UIParameterIdMinTempo:
+        case ParamMinTempo:
             value->setInt(((Setup*)obj)->getMinTempo());
             break;
             
-        case UIParameterIdMaxTempo:
+        case ParamMaxTempo:
             value->setInt(((Setup*)obj)->getMaxTempo());
             break;
             
-        case UIParameterIdBeatsPerBar:
+        case ParamBeatsPerBar:
             value->setInt(((Setup*)obj)->getBeatsPerBar());
             break;
             
-        case UIParameterIdMuteSyncMode:
+        case ParamMuteSyncMode:
             value->setInt(((Setup*)obj)->getMuteSyncMode());
             break;
             
-        case UIParameterIdResizeSyncAdjust:
+        case ParamResizeSyncAdjust:
             value->setInt(((Setup*)obj)->getResizeSyncAdjust());
             break;
             
-        case UIParameterIdSpeedSyncAdjust:
+        case ParamSpeedSyncAdjust:
             value->setInt(((Setup*)obj)->getSpeedSyncAdjust());
             break;
             
-        case UIParameterIdRealignTime:
+        case ParamRealignTime:
             value->setInt(((Setup*)obj)->getRealignTime());
             break;
             
-        case UIParameterIdOutRealign:
+        case ParamOutRealign:
             value->setInt(((Setup*)obj)->getOutRealignMode());
             break;
             
-        case UIParameterIdActiveTrack:
+        case ParamActiveTrack:
             value->setInt(((Setup*)obj)->getActiveTrack());
             break;
             
             /* Track */
     
-        case UIParameterIdTrackName:
+        case ParamTrackName:
             value->setString(((SetupTrack*)obj)->getName());
             break;
             
-        case UIParameterIdTrackPreset:
+        case ParamTrackPreset:
             value->setString(((SetupTrack*)obj)->getTrackPresetName());
             break;
             
-        case UIParameterIdActivePreset:
+        case ParamActivePreset:
             break;
             
-        case UIParameterIdFocus:
+        case ParamFocus:
             value->setBool(((SetupTrack*)obj)->isFocusLock());
             break;
             
-        case UIParameterIdGroup:
-            value->setInt(((SetupTrack*)obj)->getGroupNumber());
-            break;
-            
-        case UIParameterIdGroupName: {
+        case ParamGroupName: {
             juce::String gname = ((SetupTrack*)obj)->getGroupName();
             if (gname.length() > 0)
               value->setString((const char*)(gname.toUTF8()));
@@ -383,517 +376,513 @@ void UIParameterHandler::get(UIParameterId id, void* obj, ExValue* value)
         }
             break;
             
-        case UIParameterIdMono:
+        case ParamMono:
             value->setBool(((SetupTrack*)obj)->isMono());
             break;
             
-        case UIParameterIdFeedback:
+        case ParamFeedback:
             value->setInt(((SetupTrack*)obj)->getFeedback());
             break;
             
-        case UIParameterIdAltFeedback:
+        case ParamAltFeedback:
             value->setInt(((SetupTrack*)obj)->getAltFeedback());
             break;
             
-        case UIParameterIdInput:
+        case ParamInput:
             value->setInt(((SetupTrack*)obj)->getInputLevel());
             break;
             
-        case UIParameterIdOutput:
+        case ParamOutput:
             value->setInt(((SetupTrack*)obj)->getOutputLevel());
             break;
             
-        case UIParameterIdPan:
+        case ParamPan:
             value->setInt(((SetupTrack*)obj)->getPan());
             break;
             
-        case UIParameterIdSyncSource:
+        case ParamSyncSource:
             value->setInt(((SetupTrack*)obj)->getSyncSource());
             break;
             
-        case UIParameterIdTrackSyncUnit:
+        case ParamTrackSyncUnit:
             value->setInt(((SetupTrack*)obj)->getSyncTrackUnit());
             break;
             
-        case UIParameterIdAudioInputPort:
+        case ParamAudioInputPort:
             value->setInt(((SetupTrack*)obj)->getAudioInputPort());
             break;
             
-        case UIParameterIdAudioOutputPort:
+        case ParamAudioOutputPort:
             value->setInt(((SetupTrack*)obj)->getAudioOutputPort());
             break;
             
-        case UIParameterIdPluginInputPort:
+        case ParamPluginInputPort:
             value->setInt(((SetupTrack*)obj)->getPluginInputPort());
             break;
             
-        case UIParameterIdPluginOutputPort:
+        case ParamPluginOutputPort:
             value->setInt(((SetupTrack*)obj)->getPluginOutputPort());
             break;
             
-        case UIParameterIdSpeedOctave:
+        case ParamSpeedOctave:
             break;
             
-        case UIParameterIdSpeedStep:
+        case ParamSpeedStep:
             break;
             
-        case UIParameterIdSpeedBend:
+        case ParamSpeedBend:
             break;
             
-        case UIParameterIdPitchOctave:
+        case ParamPitchOctave:
             break;
             
-        case UIParameterIdPitchStep:
+        case ParamPitchStep:
             break;
             
-        case UIParameterIdPitchBend:
+        case ParamPitchBend:
             break;
             
-        case UIParameterIdTimeStretch:
+        case ParamTimeStretch:
             break;
             
     }
 }
 
-void UIParameterHandler::set(UIParameterId id, void* obj, ExValue* value)
+void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
 {
     value->setNull();
 
     switch (id) {
 
-        case UIParameterIdNone:
+        case SymbolIdNone:
             break;
         
         /* Global */
         
-        case UIParameterIdActiveSetup:
+        case ParamActiveSetup:
             break;
             
-        case UIParameterIdFadeFrames:
+        case ParamFadeFrames:
             ((MobiusConfig*)obj)->setFadeFrames(value->getInt());
             break;
             
-        case UIParameterIdMaxSyncDrift:
+        case ParamMaxSyncDrift:
             ((MobiusConfig*)obj)->setMaxSyncDrift(value->getInt());
             break;
             
-        case UIParameterIdDriftCheckPoint:
+        case ParamDriftCheckPoint:
             ((MobiusConfig*)obj)->setDriftCheckPoint((DriftCheckPoint)value->getInt());
             break;
             
-        case UIParameterIdLongPress:
+        case ParamLongPress:
             ((MobiusConfig*)obj)->setLongPress(value->getInt());
             break;
             
-        case UIParameterIdSpreadRange:
+        case ParamSpreadRange:
             ((MobiusConfig*)obj)->setSpreadRange(value->getInt());
             break;
             
-        case UIParameterIdTraceLevel:
+        case ParamTraceLevel:
             ((MobiusConfig*)obj)->setTraceDebugLevel(value->getInt());
             break;
             
-        case UIParameterIdAutoFeedbackReduction:
+        case ParamAutoFeedbackReduction:
             ((MobiusConfig*)obj)->setAutoFeedbackReduction(value->getBool());
             break;
             
-        case UIParameterIdIsolateOverdubs:
+        case ParamIsolateOverdubs:
             ((MobiusConfig*)obj)->setIsolateOverdubs(value->getBool());
             break;
             
-        case UIParameterIdMonitorAudio:
+        case ParamMonitorAudio:
             ((MobiusConfig*)obj)->setMonitorAudio(value->getBool());
             break;
             
-        case UIParameterIdSaveLayers:
+        case ParamSaveLayers:
             ((MobiusConfig*)obj)->setSaveLayers(value->getBool());
             break;
             
-        case UIParameterIdQuickSave:
+        case ParamQuickSave:
             ((MobiusConfig*)obj)->setQuickSave(value->getString());
             break;
             
-        case UIParameterIdIntegerWaveFile:
+        case ParamIntegerWaveFile:
             ((MobiusConfig*)obj)->setIntegerWaveFile(value->getBool());
             break;
             
-        case UIParameterIdGroupFocusLock:
+        case ParamGroupFocusLock:
             ((MobiusConfig*)obj)->setGroupFocusLock(value->getBool());
             break;
             
-        case UIParameterIdTrackCount:
+        case ParamTrackCount:
             ((MobiusConfig*)obj)->setCoreTracks(value->getInt());
             break;
             
-        case UIParameterIdGroupCount:
-            ((MobiusConfig*)obj)->setTrackGroups(value->getInt());
-            break;
-            
-        case UIParameterIdMaxLoops:
+        case ParamMaxLoops:
             ((MobiusConfig*)obj)->setMaxLoops(value->getInt());
             break;
             
-        case UIParameterIdInputLatency:
+        case ParamInputLatency:
             ((MobiusConfig*)obj)->setInputLatency(value->getInt());
             break;
             
-        case UIParameterIdOutputLatency:
+        case ParamOutputLatency:
             ((MobiusConfig*)obj)->setOutputLatency(value->getInt());
             break;
 
-        case UIParameterIdNoiseFloor:
+        case ParamNoiseFloor:
             ((MobiusConfig*)obj)->setNoiseFloor(value->getInt());
             break;
             
-        case UIParameterIdMidiRecordMode:
+        case ParamMidiRecordMode:
             ((MobiusConfig*)obj)->setMidiRecordMode((MidiRecordMode)value->getInt());
             break;
 
             /* Preset */
     
-        case UIParameterIdSubcycles:
+        case ParamSubcycles:
             ((Preset*)obj)->setSubcycles(value->getInt());
             break;
             
-        case UIParameterIdMultiplyMode:
+        case ParamMultiplyMode:
             ((Preset*)obj)->setMultiplyMode((ParameterMultiplyMode)value->getInt());
             break;
             
-        case UIParameterIdShuffleMode:
+        case ParamShuffleMode:
             ((Preset*)obj)->setShuffleMode((ShuffleMode)value->getInt());
             break;
             
-        case UIParameterIdAltFeedbackEnable:
+        case ParamAltFeedbackEnable:
             ((Preset*)obj)->setAltFeedbackEnable(value->getBool());
             break;
             
-        case UIParameterIdEmptyLoopAction:
+        case ParamEmptyLoopAction:
             ((Preset*)obj)->setEmptyLoopAction((EmptyLoopAction)value->getInt());
             break;
             
-        case UIParameterIdEmptyTrackAction:
+        case ParamEmptyTrackAction:
             ((Preset*)obj)->setEmptyTrackAction((EmptyLoopAction)value->getInt());
             break;
             
-        case UIParameterIdTrackLeaveAction:
+        case ParamTrackLeaveAction:
             ((Preset*)obj)->setTrackLeaveAction((TrackLeaveAction)value->getInt());
             break;
             
-        case UIParameterIdLoopCount:
+        case ParamLoopCount:
             ((Preset*)obj)->setLoops(value->getInt());
             break;
             
-        case UIParameterIdMuteMode:
+        case ParamMuteMode:
             ((Preset*)obj)->setMuteMode((ParameterMuteMode)value->getInt());
             break;
             
-        case UIParameterIdMuteCancel:
+        case ParamMuteCancel:
             ((Preset*)obj)->setMuteCancel((MuteCancel)value->getInt());
             break;
             
-        case UIParameterIdOverdubQuantized:
+        case ParamOverdubQuantized:
             ((Preset*)obj)->setOverdubQuantized(value->getBool());
             break;
             
-        case UIParameterIdQuantize:
+        case ParamQuantize:
             ((Preset*)obj)->setQuantize((QuantizeMode)value->getInt());
             break;
             
-        case UIParameterIdBounceQuantize:
+        case ParamBounceQuantize:
             ((Preset*)obj)->setBounceQuantize((QuantizeMode)value->getInt());
             break;
             
-        case UIParameterIdRecordResetsFeedback:
+        case ParamRecordResetsFeedback:
             ((Preset*)obj)->setRecordResetsFeedback(value->getBool());
             break;
             
-        case UIParameterIdSpeedRecord:
+        case ParamSpeedRecord:
             ((Preset*)obj)->setSpeedRecord(value->getBool());
             break;
             
-        case UIParameterIdRoundingOverdub:
+        case ParamRoundingOverdub:
             ((Preset*)obj)->setRoundingOverdub(value->getBool());
             break;
             
-        case UIParameterIdSwitchLocation:
+        case ParamSwitchLocation:
             ((Preset*)obj)->setSwitchLocation((SwitchLocation)value->getInt());
             break;
             
-        case UIParameterIdReturnLocation:
+        case ParamReturnLocation:
             ((Preset*)obj)->setReturnLocation((SwitchLocation)value->getInt());
             break;
             
-        case UIParameterIdSwitchDuration:
+        case ParamSwitchDuration:
             ((Preset*)obj)->setSwitchDuration((SwitchDuration)value->getInt());
             break;
             
-        case UIParameterIdSwitchQuantize:
+        case ParamSwitchQuantize:
             ((Preset*)obj)->setSwitchQuantize((SwitchQuantize)value->getInt());
             break;
             
-        case UIParameterIdTimeCopyMode:
+        case ParamTimeCopyMode:
             ((Preset*)obj)->setTimeCopyMode((CopyMode)value->getInt());
             break;
             
-        case UIParameterIdSoundCopyMode:
+        case ParamSoundCopyMode:
             ((Preset*)obj)->setSoundCopyMode((CopyMode)value->getInt());
             break;
             
-        case UIParameterIdRecordThreshold:
+        case ParamRecordThreshold:
             ((Preset*)obj)->setRecordThreshold(value->getInt());
             break;
             
-        case UIParameterIdSwitchVelocity:
+        case ParamSwitchVelocity:
             ((Preset*)obj)->setSwitchVelocity(value->getBool());
             break;
             
-        case UIParameterIdMaxUndo:
+        case ParamMaxUndo:
             ((Preset*)obj)->setMaxUndo(value->getInt());
             break;
             
-        case UIParameterIdMaxRedo:
+        case ParamMaxRedo:
             ((Preset*)obj)->setMaxRedo(value->getInt());
             break;
             
-        case UIParameterIdNoFeedbackUndo:
+        case ParamNoFeedbackUndo:
             ((Preset*)obj)->setNoFeedbackUndo(value->getBool());
             break;
             
-        case UIParameterIdNoLayerFlattening:
+        case ParamNoLayerFlattening:
             ((Preset*)obj)->setNoLayerFlattening(value->getBool());
             break;
             
-        case UIParameterIdSpeedShiftRestart:
+        case ParamSpeedShiftRestart:
             ((Preset*)obj)->setSpeedShiftRestart(value->getBool());
             break;
             
-        case UIParameterIdPitchShiftRestart:
+        case ParamPitchShiftRestart:
             ((Preset*)obj)->setPitchShiftRestart(value->getBool());
             break;
             
-        case UIParameterIdSpeedStepRange:
+        case ParamSpeedStepRange:
             ((Preset*)obj)->setSpeedStepRange(value->getInt());
             break;
             
-        case UIParameterIdSpeedBendRange:
+        case ParamSpeedBendRange:
             ((Preset*)obj)->setSpeedBendRange(value->getInt());
             break;
             
-        case UIParameterIdPitchStepRange:
+        case ParamPitchStepRange:
             ((Preset*)obj)->setPitchStepRange(value->getInt());
             break;
             
-        case UIParameterIdPitchBendRange:
+        case ParamPitchBendRange:
             ((Preset*)obj)->setPitchBendRange(value->getInt());
             break;
             
-        case UIParameterIdTimeStretchRange:
+        case ParamTimeStretchRange:
             ((Preset*)obj)->setTimeStretchRange(value->getInt());
             break;
             
-        case UIParameterIdSlipMode:
+        case ParamSlipMode:
             ((Preset*)obj)->setSlipMode((SlipMode)value->getInt());
             break;
             
-        case UIParameterIdSlipTime:
+        case ParamSlipTime:
             ((Preset*)obj)->setSlipTime(value->getInt());
             break;
             
-        case UIParameterIdAutoRecordTempo:
+        case ParamAutoRecordTempo:
             ((Preset*)obj)->setAutoRecordTempo(value->getInt());
             break;
             
-        case UIParameterIdAutoRecordBars:
+        case ParamAutoRecordBars:
             ((Preset*)obj)->setAutoRecordBars(value->getInt());
             break;
             
-        case UIParameterIdRecordTransfer:
+        case ParamRecordTransfer:
             ((Preset*)obj)->setRecordTransfer((TransferMode)value->getInt());
             break;
             
-        case UIParameterIdOverdubTransfer:
+        case ParamOverdubTransfer:
             ((Preset*)obj)->setOverdubTransfer((TransferMode)value->getInt());
             break;
             
-        case UIParameterIdReverseTransfer:
+        case ParamReverseTransfer:
             ((Preset*)obj)->setReverseTransfer((TransferMode)value->getInt());
             break;
             
-        case UIParameterIdSpeedTransfer:
+        case ParamSpeedTransfer:
             ((Preset*)obj)->setSpeedTransfer((TransferMode)value->getInt());
             break;
             
-        case UIParameterIdPitchTransfer:
+        case ParamPitchTransfer:
             ((Preset*)obj)->setPitchTransfer((TransferMode)value->getInt());
             break;
             
-        case UIParameterIdWindowSlideUnit:
+        case ParamWindowSlideUnit:
             ((Preset*)obj)->setWindowSlideUnit((WindowUnit)value->getInt());
             break;
             
-        case UIParameterIdWindowEdgeUnit:
+        case ParamWindowEdgeUnit:
             ((Preset*)obj)->setWindowEdgeUnit((WindowUnit)value->getInt());
             break;
             
-        case UIParameterIdWindowSlideAmount:
+        case ParamWindowSlideAmount:
             ((Preset*)obj)->setWindowSlideAmount(value->getInt());
             break;
             
-        case UIParameterIdWindowEdgeAmount:
+        case ParamWindowEdgeAmount:
             ((Preset*)obj)->setWindowEdgeAmount(value->getInt());
             break;
 
             /* Setup */
     
-        case UIParameterIdDefaultPreset:
+        case ParamDefaultPreset:
             ((Setup*)obj)->setDefaultPresetName(value->getString());
             break;
             
-        case UIParameterIdDefaultSyncSource:
+        case ParamDefaultSyncSource:
             ((Setup*)obj)->setSyncSource((SyncSource)value->getInt());
             break;
             
-        case UIParameterIdDefaultTrackSyncUnit:
+        case ParamDefaultTrackSyncUnit:
             ((Setup*)obj)->setSyncTrackUnit((SyncTrackUnit)value->getInt());
             break;
             
-        case UIParameterIdSlaveSyncUnit:
+        case ParamSlaveSyncUnit:
             ((Setup*)obj)->setSyncUnit((SyncUnit)value->getInt());
             break;
             
-        case UIParameterIdManualStart:
+        case ParamManualStart:
             ((Setup*)obj)->setManualStart(value->getBool());
             break;
             
-        case UIParameterIdMinTempo:
+        case ParamMinTempo:
             ((Setup*)obj)->setMinTempo(value->getInt());
             break;
             
-        case UIParameterIdMaxTempo:
+        case ParamMaxTempo:
             ((Setup*)obj)->setMaxTempo(value->getInt());
             break;
             
-        case UIParameterIdBeatsPerBar:
+        case ParamBeatsPerBar:
             ((Setup*)obj)->setBeatsPerBar(value->getInt());
             break;
             
-        case UIParameterIdMuteSyncMode:
+        case ParamMuteSyncMode:
             ((Setup*)obj)->setMuteSyncMode((MuteSyncMode)value->getInt());
             break;
             
-        case UIParameterIdResizeSyncAdjust:
+        case ParamResizeSyncAdjust:
             ((Setup*)obj)->setResizeSyncAdjust((SyncAdjust)value->getInt());
             break;
             
-        case UIParameterIdSpeedSyncAdjust:
+        case ParamSpeedSyncAdjust:
             ((Setup*)obj)->setSpeedSyncAdjust((SyncAdjust)value->getInt());
             break;
             
-        case UIParameterIdRealignTime:
+        case ParamRealignTime:
             ((Setup*)obj)->setRealignTime((RealignTime)value->getInt());
             break;
             
-        case UIParameterIdOutRealign:
+        case ParamOutRealign:
             ((Setup*)obj)->setOutRealignMode((OutRealignMode)value->getInt());
             break;
             
-        case UIParameterIdActiveTrack:
+        case ParamActiveTrack:
             ((Setup*)obj)->setActiveTrack(value->getInt());
             break;
             
             /* Track */
     
-        case UIParameterIdTrackName:
+        case ParamTrackName:
             ((SetupTrack*)obj)->setName(value->getString());
             break;
             
-        case UIParameterIdTrackPreset:
+        case ParamTrackPreset:
             ((SetupTrack*)obj)->setTrackPresetName(value->getString());
             break;
             
-        case UIParameterIdActivePreset:
+        case ParamActivePreset:
             break;
             
-        case UIParameterIdFocus:
+        case ParamFocus:
             ((SetupTrack*)obj)->setFocusLock(value->getBool());
             break;
             
-        case UIParameterIdGroup:
-            ((SetupTrack*)obj)->setGroupNumber(value->getInt());
-            break;
-            
-        case UIParameterIdGroupName:
+        case ParamGroupName:
             ((SetupTrack*)obj)->setGroupName(value->getString());
             break;
             
-        case UIParameterIdMono:
+        case ParamMono:
             ((SetupTrack*)obj)->setMono(value->getBool());
             break;
             
-        case UIParameterIdFeedback:
+        case ParamFeedback:
             ((SetupTrack*)obj)->setFeedback(value->getInt());
             break;
             
-        case UIParameterIdAltFeedback:
+        case ParamAltFeedback:
             ((SetupTrack*)obj)->setAltFeedback(value->getInt());
             break;
             
-        case UIParameterIdInput:
+        case ParamInput:
             ((SetupTrack*)obj)->setInputLevel(value->getInt());
             break;
             
-        case UIParameterIdOutput:
+        case ParamOutput:
             ((SetupTrack*)obj)->setOutputLevel(value->getInt());
             break;
             
-        case UIParameterIdPan:
+        case ParamPan:
             ((SetupTrack*)obj)->setPan(value->getInt());
             break;
             
-        case UIParameterIdSyncSource:
+        case ParamSyncSource:
             ((SetupTrack*)obj)->setSyncSource((SyncSource)value->getInt());
             break;
             
-        case UIParameterIdTrackSyncUnit:
+        case ParamTrackSyncUnit:
             ((SetupTrack*)obj)->setSyncTrackUnit((SyncTrackUnit)value->getInt());
             break;
             
-        case UIParameterIdAudioInputPort:
+        case ParamAudioInputPort:
             ((SetupTrack*)obj)->setAudioInputPort(value->getInt());
             break;
             
-        case UIParameterIdAudioOutputPort:
+        case ParamAudioOutputPort:
             ((SetupTrack*)obj)->setAudioOutputPort(value->getInt());
             break;
             
-        case UIParameterIdPluginInputPort:
+        case ParamPluginInputPort:
             ((SetupTrack*)obj)->setPluginInputPort(value->getInt());
             break;
             
-        case UIParameterIdPluginOutputPort:
+        case ParamPluginOutputPort:
             ((SetupTrack*)obj)->setPluginOutputPort(value->getInt());
             break;
             
-        case UIParameterIdSpeedOctave:
+        case ParamSpeedOctave:
             break;
             
-        case UIParameterIdSpeedStep:
+        case ParamSpeedStep:
             break;
             
-        case UIParameterIdSpeedBend:
+        case ParamSpeedBend:
             break;
             
-        case UIParameterIdPitchOctave:
+        case ParamPitchOctave:
             break;
             
-        case UIParameterIdPitchStep:
+        case ParamPitchStep:
             break;
             
-        case UIParameterIdPitchBend:
+        case ParamPitchBend:
             break;
             
-        case UIParameterIdTimeStretch:
+        case ParamTimeStretch:
             break;
             
     }
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

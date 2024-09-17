@@ -246,8 +246,8 @@ class MobiusConfig {
 
 	void setCoreTracks(int i);
 	int getCoreTracks();
-	void setTrackGroups(int i);
-	int getTrackGroups();
+	void setTrackGroupsDeprecated(int i);
+	int getTrackGroupsDeprecated();
 	void setMaxLoops(int i);
 	int getMaxLoops();
 
@@ -348,12 +348,6 @@ class MobiusConfig {
 
     void setDualPluginWindow(bool b);
     bool isDualPluginWindow();
-
-    void setMidiExport(bool b);
-    bool isMidiExport();
-
-    void setHostMidiExport(bool b);
-    bool isHostMidiExport();
 
     void setGroupFocusLock(bool b);
     bool isGroupFocusLock();
@@ -529,23 +523,6 @@ class MobiusConfig {
      * historically forced on for Windows but is now configurable.
      */
     bool mDualPluginWindow;
-
-    /**
-     * When true, parameters and controls that are bound to MIDI
-     * continuous control events will have a corresponding event
-     * sent to the MIDI output device whenever the parameter/control
-     * changes.  This is used with bi-directional control surfaces
-     * to track changes to the control made in the UI or a script.
-     */
-    bool mMidiExport;
-
-    /**
-     * Like mMidiExport except that the tracking messages are
-     * sent to the VST or AU host and routed as appropriate in the host.
-     * This is usuallky an alternate to opening a MIDI output device
-     * for feedabck, though both can be used at the same time.
-     */
-    bool mHostMidiExport;
 
     /**
      * When true, track groups have focus lock.  This means

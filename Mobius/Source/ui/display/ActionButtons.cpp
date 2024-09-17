@@ -475,10 +475,8 @@ void ActionButtons::buttonStateChanged(juce::Button* b)
  * things like this, so we don't load Symbol up with a bunch of random stuff.
  *
  * If the symbol is not associated with a coreFunction, assume not sustainable.
- * Most coreFunctions won't be sustainable either, but we don't have the
- * Function class accessible here, and FunctionDefinition doesn't have anything
- * in it yet.  
- * 
+ * If the UI functions evern need to support sustainability will need to
+ * flag that in FunctionProperties.
  */
 void ActionButtons::buttonUp(ActionButton* b)
 {

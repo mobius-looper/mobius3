@@ -182,6 +182,9 @@ void SymbolTable::traceTable()
 
 void SymbolTable::traceCorrespondence()
 {
+    // this is changing, what it did is interesting but revisit
+    // after the definition models settle down
+#if 0    
     Trace(2, "Function Correspondence\n");
     for (int i = 0 ; i < symbols.size() ; i++) {
         Symbol* s = symbols[i];
@@ -219,7 +222,7 @@ void SymbolTable::traceCorrespondence()
             }
         }
     }
-                  
+#endif
 }
 
 /**
@@ -242,7 +245,7 @@ void SymbolTable::buildIdMap()
 
 Symbol* SymbolTable::getSymbol(SymbolId id)
 {
-    return idMap[(int)id];
+    return idMap[id];
 }
 
 juce::String SymbolTable::getName(SymbolId id)

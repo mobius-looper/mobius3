@@ -90,7 +90,7 @@ void BindingEditor::load()
     MobiusView* view = supervisor->getMobiusView();
 
     maxTracks = view->totalTracks;
-    maxGroups = config->groups.size();
+    //maxGroups = config->groups.size();
 
     refreshScopeNames();
     targets.load();

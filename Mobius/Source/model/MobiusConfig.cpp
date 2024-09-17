@@ -121,8 +121,6 @@ void MobiusConfig::init()
 	mSaveLayers = false;
 	mDriftCheckPoint = DRIFT_CHECK_LOOP;
 	mMidiRecordMode = MIDI_TEMPO_AVERAGE;
-    mMidiExport = false;
-    mHostMidiExport = false;
     mGroupFocusLock = false;
 
     mNoPresetChanges = false;
@@ -329,12 +327,12 @@ void MobiusConfig::setCoreTracks(int i)
 	mCoreTracks = i;
 }
 
-int MobiusConfig::getTrackGroups()
+int MobiusConfig::getTrackGroupsDeprecated()
 {
 	return mTrackGroups;
 }
 
-void MobiusConfig::setTrackGroups(int i)
+void MobiusConfig::setTrackGroupsDeprecated(int i)
 {
 	mTrackGroups = i;
 }
@@ -529,22 +527,6 @@ void MobiusConfig::setDualPluginWindow(bool b) {
 
 bool MobiusConfig::isDualPluginWindow() {
 	return mDualPluginWindow;
-}
-
-void MobiusConfig::setMidiExport(bool b) {
-	mMidiExport = b;
-}
-
-bool MobiusConfig::isMidiExport() {
-	return mMidiExport;
-}
-
-void MobiusConfig::setHostMidiExport(bool b) {
-	mHostMidiExport = b;
-}
-
-bool MobiusConfig::isHostMidiExport() {
-	return mHostMidiExport;
 }
 
 void MobiusConfig::setGroupFocusLock(bool b) {

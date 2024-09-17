@@ -2037,7 +2037,8 @@ void EventManager::getEventSummary(MobiusLoopState* s, Event* e, bool stacked)
         // MobiusState now uses UIEventType so have to map the old type
         sum->type = MapEventType(e->type);
         // and also FunctionDefinition rather than Function
-        sum->function = MapFunction(e->function);
+        // update: don't need this in MobiusViewer and FunctionDefinition is gone
+        //sum->function = MapFunction(e->function);
 
         //Trace(mTrack, 2, "Adding event summary %s\n", e->function->name);
 

@@ -238,7 +238,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameTrackPreset, ParamTrackPreset},
     {ParamNameActivePreset, ParamActivePreset},
     {ParamNameFocus, ParamFocus},
-    {ParamNameGroup, ParamGroup},
+    {"groupName", ParamGroupName},
     {ParamNameMono, ParamMono},
     {ParamNameFeedback, ParamFeedback},
     {ParamNameAltFeedback, ParamAltFeedback},
@@ -357,6 +357,11 @@ SymbolDefinition SymbolDefinitions[] = {
     {"WindowEndBackward", FuncWindowEndBackward},
     {"WindowEndForward", FuncWindowEndForward},
     {"TraceStatus", FuncTraceStatus},
+ 
+    //
+    // Sampler
+    //
+    {"SamplePlay", FuncSamplePlay},
 
     //
     // UI

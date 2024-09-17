@@ -149,7 +149,6 @@ typedef enum {
     ParamTrackPreset,
     ParamActivePreset,
     ParamFocus,
-    ParamGroup,
     ParamGroupName,
     ParamMono,
     ParamFeedback,
@@ -301,6 +300,12 @@ typedef enum {
     ParamActiveButtons,
     // need this?  how will MSL scripts deal with binding overlays
     ParamBindingOverlays,
+
+    //
+    // Sampler Functions
+    //
+
+    FuncSamplePlay,
 
     //
     // UI Functions

@@ -36,9 +36,6 @@
  *     model/UIParameterClasses
  *       older static objects that defined parameters
  *
- *     model/FunctionDefinition
- *       older static objects that defined functions
- *
  */
 
 #pragma once

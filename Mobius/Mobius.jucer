@@ -102,10 +102,6 @@
         <FILE id="a9NMlH" name="DynamicConfig.h" compile="0" resource="0" file="Source/model/DynamicConfig.h"/>
         <FILE id="azEsBL" name="ExValue.cpp" compile="1" resource="0" file="Source/model/ExValue.cpp"/>
         <FILE id="km0fDA" name="ExValue.h" compile="0" resource="0" file="Source/model/ExValue.h"/>
-        <FILE id="I1rPMU" name="FunctionDefinition.cpp" compile="1" resource="0"
-              file="Source/model/FunctionDefinition.cpp"/>
-        <FILE id="tzGQOW" name="FunctionDefinition.h" compile="0" resource="0"
-              file="Source/model/FunctionDefinition.h"/>
         <FILE id="am0Lis" name="FunctionProperties.cpp" compile="1" resource="0"
               file="Source/model/FunctionProperties.cpp"/>
         <FILE id="VOgufo" name="FunctionProperties.h" compile="0" resource="0"

@@ -6,8 +6,6 @@
 
 extern class UIEventType* MapEventType(class EventType* src);
 
-extern class FunctionDefinition* MapFunction(class Function* src);
-
 extern class ModeDefinition* MapMode(class MobiusMode* mode);
 
 // used only by Project.cpp, redesign

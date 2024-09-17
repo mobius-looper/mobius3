@@ -137,9 +137,6 @@ class SyncMasterFunction : public Function {
 	bool mMidi;
 };
 
-SyncMasterFunction SyncMasterObj {true, true};
-Function* SyncMaster = &SyncMasterObj;
-
 SyncMasterFunction SyncMasterTrackObj {true, false};
 Function* SyncMasterTrack = &SyncMasterTrackObj;
 
@@ -168,11 +165,6 @@ SyncMasterFunction::SyncMasterFunction(bool track, bool midi)
         // bert wants this too
         //scriptOnly = true;
 	}
-	else {
-		setName("SyncMaster");
-        // doesn't work yet so keep it hidden
-        scriptOnly = true;
-	}
 }
 
 /**
@@ -198,11 +190,6 @@ void SyncMasterFunction::invoke(Action* action, Mobius* m)
         }
         else if (mMidi) {
             Trace(2, "Setting out sync master to %ld", (long)track->getDisplayNumber());
-            sync->setOutSyncMaster(track);
-        }
-        else {
-            Trace(2, "Setting track and out sync master to %ld", (long)track->getDisplayNumber());
-            sync->setTrackSyncMaster(track);
             sync->setOutSyncMaster(track);
         }
     }

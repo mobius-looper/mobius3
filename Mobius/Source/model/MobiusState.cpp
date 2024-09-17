@@ -13,7 +13,7 @@ void MobiusLayerState::init()
 void MobiusEventState::init()
 {
     type = nullptr;
-    function = nullptr;
+    //function = nullptr;
     argument = 0;
     frame = 0;
     pending = false;

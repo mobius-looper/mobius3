@@ -4,12 +4,11 @@
  * A track will always be in one of the major modes and
  * may be in zero or more minor modes.
  *
- * Like FunctionDefinition, the engine will subclass or map this
- * add mode specific properties and behavior.
- *
  * Need different constant object pointer names to avoid conflicts
  * with core.  Need to start being consistent and use the UI prefix
  * for both classes and pointer names.
+ *
+ * update: need for this is dimished after MobiusViewer
  */
 
 #pragma once

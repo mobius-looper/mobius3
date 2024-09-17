@@ -42,11 +42,11 @@ MobiusViewTrack* MobiusView::getTrack(int index)
     return result;
 }
 
-MobiusViewLoop* MobiusViewTrack::getLoop(int index)
+MobiusViewLoop* MobiusViewTrack::getLoop(int loopIndex)
 {
     MobiusViewLoop* result = nullptr;
-    if (index >= 0 && index < loops.size()) {
-        result = loops[index];
+    if (loopIndex >= 0 && loopIndex < loops.size()) {
+        result = loops[loopIndex];
     }
     else {
         // shouldn't happen, misconfiguration, don't crash

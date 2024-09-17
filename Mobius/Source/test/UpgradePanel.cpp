@@ -797,7 +797,7 @@ Binding* UpgradeContent::upgradeBinding(Binding* src)
     Symbol* symbol = supervisor->getSymbols()->find(name);
     
     if (symbol != nullptr &&
-        (symbol->function != nullptr || symbol->parameter != nullptr)) {
+        (symbol->functionProperties != nullptr || symbol->parameter != nullptr)) {
         // a standard name
     }
     else if (name.startsWith("Loop")) {

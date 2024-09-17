@@ -20,7 +20,6 @@
 #include "../../model/Scope.h"
 #include "../../model/Query.h"
 #include "../../model/UIParameter.h"
-#include "../../model/FunctionDefinition.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Trigger.h"
 
@@ -270,19 +269,35 @@ void Actionator::doActivation(UIAction* action)
 
     // MobiusShell installs these with prefixes and the id set to the structure ordinal
     if (symbol->name.startsWith(MobiusShell::ActivationPrefixPreset)) {
-        mMobius->setActivePreset(symbol->id);
+
+        // kludge: the way activations are dealt with all needs a redesign
+        // formerly stored the structure ordinal in the symbol id but that can't
+        // be done now that it is a SymbolId enumeration
+        // extract the preset name from the symbol and find the ordinal the hard way
+        juce::String pname = symbol->name.fromFirstOccurrenceOf(MobiusShell::ActivationPrefixPreset, false, false);
+        MobiusConfig* config = mMobius->getConfiguration();
+        int ordinal = Structure::getOrdinal(config->getPresets(), pname.toUTF8());
+        if (ordinal >= 0)
+          mMobius->setActivePreset(ordinal);
+        
         char buf[1024];
         // ugh, this generates a warning about char* to juce::CharPointer_UTF8 conversion
         // but it seems to work?
         // have to add getAddress(), jesus this is a lot of work,
         // add Symbol::getCharName or juce::String concatenation or something
-        snprintf(buf, sizeof(buf), "%s activated", symbol->name.toUTF8().getAddress());
+        // todo: also needs redesign
+        snprintf(buf, sizeof(buf), "%s activated", pname.toUTF8().getAddress());
         mMobius->sendMobiusMessage(buf);
     }
     else if (symbol->name.startsWith(MobiusShell::ActivationPrefixSetup)) {
-        mMobius->setActiveSetup(symbol->id);
+
+        juce::String sname = symbol->name.fromFirstOccurrenceOf(MobiusShell::ActivationPrefixSetup, false, false);
+        MobiusConfig* config = mMobius->getConfiguration();
+        int ordinal = Structure::getOrdinal(config->getPresets(), sname.toUTF8());
+        if (ordinal >= 0)
+          mMobius->setActiveSetup(ordinal);
         char buf[1024];
-        snprintf(buf, sizeof(buf), "%s activated", symbol->name.toUTF8().getAddress());
+        snprintf(buf, sizeof(buf), "%s activated", sname.toUTF8().getAddress());
         mMobius->sendMobiusMessage(buf);
     }
     else {

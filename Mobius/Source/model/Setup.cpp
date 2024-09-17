@@ -487,7 +487,7 @@ SetupTrack::SetupTrack(SetupTrack* src)
 
 	mFocusLock = src->isFocusLock();
     // shouldn't need to be dealing with group numbers any more
-	mGroup = src->getGroupNumber();
+	mGroup = src->getGroupNumberDeprecated();
     mGroupName = src->getGroupName();
 	mInputLevel = src->getInputLevel();
 	mOutputLevel = src->getOutputLevel();
@@ -626,12 +626,12 @@ bool SetupTrack::isFocusLock()
 	return mFocusLock;
 }
 
-int SetupTrack::getGroupNumber()
+int SetupTrack::getGroupNumberDeprecated()
 {
     return mGroup;
 }
 
-void SetupTrack::setGroupNumber(int i)
+void SetupTrack::setGroupNumberDeprecated(int i)
 {
     mGroup = i;
 }

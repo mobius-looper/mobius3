@@ -38,10 +38,6 @@ The parameters not yet displayed in the Instant Parameters status element.</Help
   The number of tracks to display in the track strips at the bottom.  The application or plugin must be restarted after this is changed.
 </Help>
 
-<Help name='groupCount'>
-  The number of groups that may be assigned to tracks and used in bindings.  Groups are referenced in bindings by letter, so for a Group Count of 4 the group names will be A, B, C, and D.
-</Help>
-
 <Help name='maxLoops'>
   The maximum number of loops to allow in each track.  The actual number used by each track may be lower if specified in the Track Setup.
 </Help>

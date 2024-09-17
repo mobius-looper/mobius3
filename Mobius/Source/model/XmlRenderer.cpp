@@ -435,7 +435,13 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
 	//render(UIParameterFadeFrames, c->getFadeFrames());
     render(b, UIParameterMaxSyncDrift, c->getMaxSyncDrift());
     render(b, UIParameterTrackCount, c->getCoreTracks());
-    render(b, UIParameterGroupCount, c->getTrackGroups());
+    
+    // UIParameter is gone, and this shouldn't be used any more, but the
+    // upgrader still needs to parse it?
+    //render(b, UIParameterGroupCount, c->getTrackGroupsDeprecated());
+    if (c->getTrackGroupsDeprecated() > 0)
+      b->addAttribute("groupCount", c->getTrackGroupsDeprecated());
+    
     render(b, UIParameterMaxLoops, c->getMaxLoops());
     render(b, UIParameterLongPress, c->getLongPress());
     render(b, UIParameterMonitorAudio, c->isMonitorAudio());
@@ -443,15 +449,12 @@ void XmlRenderer::render(XmlBuffer* b, MobiusConfig* c)
     render(b, UIParameterAutoFeedbackReduction, c->isAutoFeedbackReduction());
     // don't allow this to be persisted any more, can only be set in scripts
 	//render(IsolateOverdubsParameter->getName(), mIsolateOverdubs);
-    render(b, UIParameterIntegerWaveFile, c->isIntegerWaveFile());
     render(b, UIParameterSpreadRange, c->getSpreadRange());
     render(b, UIParameterTraceLevel, c->getTraceDebugLevel());
     render(b, UIParameterSaveLayers, c->isSaveLayers());
     render(b, UIParameterDriftCheckPoint, c->getDriftCheckPoint());
 
     render(b, UIParameterMidiRecordMode, c->getMidiRecordMode());
-    //render(b, UIParameterMidiExport, c->isMidiExport());
-    //render(b, UIParameterHostMidiExport, c->isHostMidiExport());
     render(b, UIParameterGroupFocusLock, c->isGroupFocusLock());
 
     b->addAttribute(ATT_NO_SYNC_BEAT_ROUNDING, c->isNoSyncBeatRounding());
@@ -524,7 +527,10 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 	c->setOutputLatency(parse(e, UIParameterOutputLatency));
 	c->setMaxSyncDrift(parse(e, UIParameterMaxSyncDrift));
 	c->setCoreTracks(parse(e, UIParameterTrackCount));
-	c->setTrackGroups(parse(e, UIParameterGroupCount));
+    
+	//c->setTrackGroupsDeprecated(parse(e, UIParameterGroupCount));
+	c->setTrackGroupsDeprecated(e->getIntAttribute("groupCount"));
+    
 	c->setMaxLoops(parse(e, UIParameterMaxLoops));
 	c->setLongPress(parse(e, UIParameterLongPress));
 
@@ -534,15 +540,12 @@ void XmlRenderer::parse(XmlElement* e, MobiusConfig* c)
 
     // don't allow this to be persisted any more, can only be set in scripts
 	//setIsolateOverdubs(e->getBoolAttribute(IsolateOverdubsParameter->getName()));
-	c->setIntegerWaveFile(parse(e, UIParameterIntegerWaveFile));
 	c->setSpreadRange(parse(e, UIParameterSpreadRange));
 	//c->setTracePrintLevel(parse(e, UIParameterTracePrintLevel));
 	c->setTraceDebugLevel(parse(e, UIParameterTraceLevel));
 	c->setSaveLayers(parse(e, UIParameterSaveLayers));
 	c->setDriftCheckPoint((DriftCheckPoint)parse(e, UIParameterDriftCheckPoint));
 	c->setMidiRecordMode((MidiRecordMode)parse(e, UIParameterMidiRecordMode));
-    //c->setMidiExport(parse(e, UIParameterMidiExport));
-    //c->setHostMidiExport(parse(e, UIParameterHostMidiExport));
 
 
     // this isn't a parameter yet
@@ -876,7 +879,7 @@ void XmlRenderer::render(XmlBuffer* b, SetupTrack* t)
     render(b, UIParameterMono, t->isMono());
 
     // groups are now referenced by name
-    render(b, UIParameterGroup, t->getGroupNumber());
+    render(b, UIParameterGroup, t->getGroupNumberDeprecated());
     if (t->getGroupName().length() > 0) {
         juce::String gname = t->getGroupName();
         b->addAttribute(ATT_GROUP_NAME, (const char*)(gname.toUTF8()));
@@ -925,7 +928,7 @@ void XmlRenderer::parse(XmlElement* e, SetupTrack* t)
     t->setMono(parse(e, UIParameterMono));
 
     // should stop having group numbers eventually
-    t->setGroupNumber(parse(e, UIParameterGroup));
+    t->setGroupNumberDeprecated(parse(e, UIParameterGroup));
     const char* groupName = e->getAttribute(ATT_GROUP_NAME);
     if (groupName != nullptr)
       t->setGroupName(juce::String(groupName));

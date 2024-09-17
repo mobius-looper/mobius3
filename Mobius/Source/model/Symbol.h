@@ -101,15 +101,9 @@ typedef enum {
  * function model where the function is RunScript or PlaySample and the argument
  * is the name of the script/sample.  Think...
  *
- * todo: I'm not liking this.  What I've been using this for is mostly to define
- * what the coreImplementation propertyPointer does.  Really shouldn't need a behavior
- * enumeration at all.  Behavior is defined by the properties on the symbol.  If the
- * symbol has a FunctionDefinition property, then it will behave like a function.
- * Revisit how Lisp did this, something about variable-type and function-type on symbols.
- * There were some fundamental symbol types indiciating which symbols could be called
- * as functions and which were value containers.  Or what it the symbol value could be
- * a function object?  It's been a long time...
- *
+ * todo: I'm not liking this.  As this has evolved to FunctionProperties and
+ * ParamameterProperties objects hanging on the symbol, behavior is implicit.
+ * What would not have those annotations?
  */
 typedef enum {
 
@@ -192,23 +186,12 @@ class Symbol
     SymbolLevel level = LevelNone;
     
     /**
-     * Symbols not associated with more concrete definitions like
-     * Funtions or Parameters may have a numeric identifier for use
-     * in code to identify them without doing a string comparison on the
-     * name or a pointer comparison on the Symbol object address.  This is purely
-     * for C++ convenience with optimized switch() compilation.  The id will
-     * normally be the value of an enumeration defined at each level.
-     * 
-     * Ids are not unique within the global set of all symbols but
-     * they are usually unique within the set of symbols at a particular level.
-     * In cases where multiple levels need to process the same symbol
-     * in different ways, a level-specific id may be defined.
-     *
-     * UPDATE: No, symbol ids should be unique, because they are used in
-     * code for some things rather than names.  Revisit the comments
-     * around this and make this a SymbolId rather than an unsigned char
+     * Most built-in symbols will also have a unique numeric identifier.
+     * User defined symbols will not have ids.
+     * Old core functions/parameters that are interned will also not have
+     * ids.
      */
-    unsigned char id = 0;
+    SymbolId id = SymbolIdNone;
 
     //
     // Now it starts to become an almalgam of random
@@ -228,8 +211,6 @@ class Symbol
      */
     class VariableDefinition* variable = nullptr;
     
-    class FunctionDefinition* function = nullptr;
-    // eventual replacement for FunctionDefinition
     std::unique_ptr<class FunctionProperties> functionProperties;
 
     class UIParameter* parameter = nullptr;
@@ -238,6 +219,8 @@ class Symbol
     
     // don't seem to be using this!?
     // probably makes sense since Preset/Setup can be deleted at any time
+    // !! replace this with ActivationProperties or StructureProperties if
+    // this is the way you want to go
     class Structure* structure = nullptr;
     
     std::unique_ptr<class ScriptProperties> script;

@@ -5,7 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../model/Symbol.h"
-#include "../model/FunctionDefinition.h"
+#include "../model/FunctionProperties.h"
 
 #include "../ui/common/BasicTable.h"
 #include "../ui/BasePanel.h"
@@ -69,7 +69,7 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         if (s->variable != nullptr) {
             cell = "Variable";
         }
-        else if (s->function != nullptr) {
+        else if (s->functionProperties != nullptr) {
             cell = "Function";
         }
         else if (s->parameter != nullptr) {
@@ -85,7 +85,7 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
             cell = "Sample";
         }
         else if (s->coreFunction != nullptr) {
-            // internal function without FunctionDefinition
+            // internal function without FunctionProperties
             cell = "Core Function";
         }
         else if (s->coreParameter != nullptr) {
@@ -116,19 +116,21 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
     }
     else if (columnId == SymbolTableFlagsColumn) {
         // expose interesting things so we know to put them in FunctionProperties
-        if (s->function != nullptr) {
-            if (s->function->sustainable) cell = "sustainable ";
-            if (s->function->mayFocus) cell += "focus ";
-            if (s->function->mayConfirm) cell += "confirm ";
-            if (s->function->mayCancelMute) cell += "muteCancel ";
+        if (s->functionProperties != nullptr) {
+            if (s->functionProperties->sustainable) cell = "sustainable ";
+            if (s->functionProperties->mayFocus) cell += "focus ";
+            if (s->functionProperties->mayConfirm) cell += "confirm ";
+            if (s->functionProperties->mayCancelMute) cell += "muteCancel ";
         }
     }
     else if (columnId == SymbolTableWarnColumn) {
-        if (s->coreFunction != nullptr && s->function == nullptr) {
+        if (s->coreFunction != nullptr && s->functionProperties == nullptr) {
             // core function not exposed in bindings
+            // !! I don't think this works any more now that Mobius bootstraps
+            // FunctionProperties, should leave a flag instead
             cell = "Core function not exposed";
         }
-        else if (s->function != nullptr && s->level == LevelCore && s->coreFunction == nullptr) {
+        else if (s->functionProperties != nullptr && s->level == LevelCore && s->coreFunction == nullptr) {
             cell = "Core function not implemented";
         }
         else if (s->coreParameter != nullptr && s->parameter == nullptr) {
@@ -136,12 +138,6 @@ juce::String SymbolTableContent::getCellText(int row, int columnId)
         }
         else if (s->parameter != nullptr && s->level == LevelCore && s->coreParameter == nullptr) {
             cell = "Core parameter not implemented";
-        }
-        else if (s->function != nullptr && s->functionProperties == nullptr) {
-            cell = "Function without FunctionProperties";
-        }
-        else if (s->function == nullptr && s->functionProperties != nullptr) {
-            cell = "FunctionProperties without function definition";
         }
         else if (s->parameter != nullptr && s->parameterProperties == nullptr) {
             cell = "UIParameter without ParameterProperties";

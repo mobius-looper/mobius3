@@ -1917,43 +1917,6 @@ void AutoRecordBarsParameterType::setValue(Preset* p, ExValue* value)
 AutoRecordBarsParameterType AutoRecordBarsParameterTypeObj;
 Parameter* AutoRecordBarsParameter = &AutoRecordBarsParameterTypeObj;
 
-//////////////////////////////////////////////////////////////////////
-//
-// SustainFunctions
-//
-//////////////////////////////////////////////////////////////////////
-
-class SustainFunctionsParameterType : public PresetParameter
-{
-  public:
-	SustainFunctionsParameterType();
-	void getValue(Preset* p, ExValue* value);
-	void setValue(Preset* p, ExValue* value);
-};
-
-SustainFunctionsParameterType::SustainFunctionsParameterType() :
-    PresetParameter("sustainFunctions")
-{
-    // not bindable
-	type = TYPE_STRING;
-}
-
-void SustainFunctionsParameterType::getValue(Preset* p, ExValue* value)
-{
-	value->setString(p->getSustainFunctions());
-}
-
-/**
- * This can only be set as a string.
- */
-void SustainFunctionsParameterType::setValue(Preset* p, ExValue* value)
-{
-	p->setSustainFunctions(value->getString());
-}
-
-SustainFunctionsParameterType SustainFunctionsParameterTypeObj;
-Parameter* SustainFunctionsParameter = &SustainFunctionsParameterTypeObj;
-
 /****************************************************************************
  *                                                                          *
  *   						PRESET TRANSFER MODES                           *

@@ -10,7 +10,6 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
-#include "../../model/FunctionDefinition.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
 

@@ -432,7 +432,7 @@ extern Function* WindowEndBackward;
 extern Function* WindowEndForward;
 
 // Functions only callable from scripts
-// Will not have corresponding FunctionDefinitions
+// Will not have corresponding FunctionProperties on the symbol
 // and cannot join in any Binding games
 //
 // Most (all?) of these are only necessary until
@@ -463,7 +463,6 @@ extern Function* SpeedRestore;
 extern Function* TimeStretch;
 
 // probably useful but broken
-extern Function* SyncMaster;
 extern Function* SyncMasterTrack;
 extern Function* SyncMasterMidi;
 

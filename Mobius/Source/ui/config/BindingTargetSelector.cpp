@@ -12,7 +12,6 @@
 #include "../../util/List.h"
 
 #include "../../model/ActionType.h"
-#include "../../model/FunctionDefinition.h"
 #include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
@@ -85,10 +84,9 @@ void BindingTargetSelector::load()
     for (auto symbol : supervisor->getSymbols()->getSymbols()) {
         
         if (symbol->behavior == BehaviorFunction) {
-            // only allow bindings to functions that we define,
-            // will filter out the few remaining missing fuctions
-            // and the hidden core functions
-            if ((symbol->function != nullptr || symbol->id > 0)
+            // only allow bindings to functions that have fleshed out definitions
+            // this hides some of the few remaining missing and hidden core functions
+            if ((symbol->functionProperties != nullptr || symbol->id > 0)
                 && !symbol->hidden) {
                 functions.add(symbol->getName());
             }

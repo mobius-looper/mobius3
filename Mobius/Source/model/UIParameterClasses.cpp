@@ -411,34 +411,6 @@ void UIParameterQuickSaveClass::setValue(void* obj, ExValue* value)
 UIParameterQuickSaveClass UIParameterQuickSaveObj;
 UIParameter* UIParameterQuickSave = &UIParameterQuickSaveObj;
 
-////////////// IntegerWaveFile
-
-class UIParameterIntegerWaveFileClass : public UIParameter
-{
-  public:
-    UIParameterIntegerWaveFileClass();
-    void getValue(void* obj, class ExValue* value) override;
-    void setValue(void* obj, class ExValue* value) override;
-};
-UIParameterIntegerWaveFileClass::UIParameterIntegerWaveFileClass()
-{
-    name = "integerWaveFile";
-    displayName = "Integer Wave File";
-    coreName = "16BitWaveFile";
-    scope = ScopeGlobal;
-    type = TypeBool;
-}
-void UIParameterIntegerWaveFileClass::getValue(void* obj, ExValue* value)
-{
-    value->setBool(((MobiusConfig*)obj)->isIntegerWaveFile());
-}
-void UIParameterIntegerWaveFileClass::setValue(void* obj, ExValue* value)
-{
-    ((MobiusConfig*)obj)->setIntegerWaveFile(value->getBool());
-}
-UIParameterIntegerWaveFileClass UIParameterIntegerWaveFileObj;
-UIParameter* UIParameterIntegerWaveFile = &UIParameterIntegerWaveFileObj;
-
 ////////////// GroupFocusLock
 
 class UIParameterGroupFocusLockClass : public UIParameter
@@ -496,6 +468,8 @@ UIParameter* UIParameterTrackCount = &UIParameterTrackCountObj;
 
 ////////////// GroupCount
 
+// this is now gone
+#if 0
 class UIParameterGroupCountClass : public UIParameter
 {
   public:
@@ -521,6 +495,7 @@ void UIParameterGroupCountClass::setValue(void* obj, ExValue* value)
 }
 UIParameterGroupCountClass UIParameterGroupCountObj;
 UIParameter* UIParameterGroupCount = &UIParameterGroupCountObj;
+#endif
 
 ////////////// MaxLoops
 
@@ -2656,14 +2631,18 @@ UIParameterGroupClass::UIParameterGroupClass()
     // these are for temporary backward compatibility only
     // so keep them out of bindings
     noBinding = true;
+
+    // keep this out of the symbol table and don't warn about it
+    deprecated = true;
+    
 }
 void UIParameterGroupClass::getValue(void* obj, ExValue* value)
 {
-    value->setInt(((SetupTrack*)obj)->getGroupNumber());
+    value->setInt(((SetupTrack*)obj)->getGroupNumberDeprecated());
 }
 void UIParameterGroupClass::setValue(void* obj, ExValue* value)
 {
-    ((SetupTrack*)obj)->setGroupNumber(value->getInt());
+    ((SetupTrack*)obj)->setGroupNumberDeprecated(value->getInt());
 }
 UIParameterGroupClass UIParameterGroupObj;
 UIParameter* UIParameterGroup = &UIParameterGroupObj;

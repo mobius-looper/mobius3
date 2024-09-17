@@ -520,7 +520,6 @@ void Parameter::initParameters()
         add(SlipTimeParameter);
         add(SoundCopyParameter);
         add(SubCycleParameter);
-        add(SustainFunctionsParameter);
         add(SwitchDurationParameter);
         add(SwitchLocationParameter);
         add(SwitchQuantizeParameter);
@@ -596,23 +595,16 @@ void Parameter::initParameters()
         add(AltFeedbackDisableParameter);
         add(AutoFeedbackReductionParameter);
         add(BindingsParameter);
-        add(ConfirmationFunctionsParameter);
-        add(CustomModeParameter);
         add(DriftCheckPointParameter);
         add(FadeFramesParameter);
-        add(FocusLockFunctionsParameter);
         add(GroupFocusLockParameter);
-        add(HostMidiExportParameter);
         add(InputLatencyParameter);
-        add(IntegerWaveFileParameter);
         add(IsolateOverdubsParameter);
         add(LongPressParameter);
         add(MaxLoopsParameter);
         add(MaxSyncDriftParameter);
-        add(MidiExportParameter);
         add(MidiRecordModeParameter);
         add(MonitorAudioParameter);
-        add(MuteCancelFunctionsParameter);
         add(NoiseFloorParameter);
         add(OutputLatencyParameter);
         add(QuickSaveParameter);
@@ -620,9 +612,7 @@ void Parameter::initParameters()
         add(SetupNameParameter);
         add(SetupNumberParameter);
         add(SpreadRangeParameter);
-        add(TrackGroupsParameter);
         add(TrackParameter);
-        add(TracksParameter);
         add(EdpismsParameter);
 
         // sanity check on scopes since they're critical

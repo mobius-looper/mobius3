@@ -321,13 +321,14 @@ GroupParameterType::GroupParameterType() :
 
 void GroupParameterType::getValue(SetupTrack* t, ExValue* value)
 {
-    value->setInt(t->getGroupNumber());
+    Trace(1, "GroupParameterType::getValue Who is calling this?");
+    value->setInt(t->getGroupNumberDeprecated());
 }
 
 void GroupParameterType::setValue(SetupTrack* t, ExValue* value)
 {
     Trace(1, "GroupParameterType::setValue Who is calling this?");
-    t->setGroupNumber(value->getInt());
+    t->setGroupNumberDeprecated(value->getInt());
 }
 
 int GroupParameterType::getOrdinalValue(Track* t)
@@ -376,9 +377,15 @@ void GroupParameterType::setValue(Track* t, ExValue* value)
  */
 int GroupParameterType::getHigh(Mobius* m)
 {
+    // should not be used any more
+    (void)m;
+    Trace(1, "GroupParameterType::getHigh Who called this?");
+#if 0    
 	MobiusConfig* config = m->getConfiguration();
     int max = config->getTrackGroups();
     return max;
+#endif
+    return 0;
 }
 
 /**

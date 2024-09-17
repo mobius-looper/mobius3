@@ -55,6 +55,9 @@ extern ActionType* ActionActivation;
  * In old code this was, used to send down notification
  * of the completion of a ThreadEvent (now KernelEvent)
  * we don't do this using Actions any more.
+ *
+ * !! is any of that commentary still relevant?  FunctionDefinitions are gone
+ * and script invocations should be handled with function symbols
  */
 extern ActionType* ActionScript;
 

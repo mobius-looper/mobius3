@@ -18,6 +18,7 @@
 #include "../../../util/Util.h"
 #include "../../../model/Trigger.h"
 #include "../../../model/Symbol.h"
+#include "../../../model/SymbolId.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -249,9 +250,8 @@ Event* ResumeScriptFunction::invoke(Action* action, Loop* l)
 /**
  * Reload all script files.
  *
- *
- * Temporary until Scripts understand the full Symbol model
- * and don't need Function objects for everything they want to call.
+ * This is here only for old scripts, the script reloading process is now
+ * implemented in the UI which we make happen through a UIAction
  */
 class ReloadScriptsFunction : public Function {
   public:
@@ -262,8 +262,9 @@ class ReloadScriptsFunction : public Function {
 ReloadScriptsFunction ReloadScriptsObj;
 Function* ReloadScripts = &ReloadScriptsObj;
 
+// note: the name changed from LoadScripts to ReloadScripts to match the new symbol
 ReloadScriptsFunction::ReloadScriptsFunction() :
-    Function("LoadScripts")
+    Function("ReloadScripts")
 {
     global = true;
 	noFocusLock = true;
@@ -279,7 +280,7 @@ void ReloadScriptsFunction::invoke(Action* action, Mobius* m)
         // don't like how this is initialized with a raw name constant
         // Kernel defines ids for these but ids are not unique
         // needs thought
-        Symbol* s = m->getContainer()->getSymbols()->find("LoadScripts");
+        Symbol* s = m->getContainer()->getSymbols()->getSymbol(FuncReloadScripts);
         if (s == nullptr) {
             Trace(1, "ReloadScriptsFuncion: LoadScripts symbol not found\n");
         }

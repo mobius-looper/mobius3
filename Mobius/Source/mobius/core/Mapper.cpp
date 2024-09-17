@@ -5,7 +5,6 @@
 #include "../../util/Trace.h"
 
 #include "../../model/UIEventType.h"
-#include "../../model/FunctionDefinition.h"
 #include "../../model/UIParameter.h"
 #include "../../model/ModeDefinition.h"
 #include "../../model/MobiusConfig.h"
@@ -52,19 +51,6 @@ UIEventType* MapEventType(EventType* src)
         }
     }
     return uit;
-}
-
-/**
- * Used by EventManager::getEventSummary to build the MobiusState
- *
- * Core Event objects can reference a Function and we want to display
- * The function name associated with the event.
- *
- * This one can use ordinals when we get the mapping vector built out.
- */
-class FunctionDefinition* MapFunction(class Function* src)
-{
-    return (src != nullptr) ? FunctionDefinition::find(src->name) : nullptr;
 }
 
 /**

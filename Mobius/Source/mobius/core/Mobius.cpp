@@ -30,7 +30,6 @@
 #include "../../model/UIAction.h"
 #include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
-#include "../../model/FunctionDefinition.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ParameterProperties.h"
 
@@ -115,7 +114,6 @@ Mobius::Mobius(MobiusKernel* kernel)
 	mCapturing = false;
 	mCaptureOffset = 0;
 
-	mCustomMode[0] = 0;
 	mHalting = false;
 
     // initialize the static object tables
@@ -393,13 +391,16 @@ void Mobius::slamScriptarian(Scriptarian* neu)
 }
 
 /**
- * Initialize the symbol table with static functions and parameters.
- * Scripts are installed later by the Shell.
+ * Annotate function and parameter Symbols with things from the old
+ * static definitions.
  *
- * At the moment, Supervisor will have interned symbols
- * for all UI level FunctionDefinitions which have mostly complete
- * coverage of the internal Functions.  If we don't find one, warn
- * so we can see whether they need to be removed.
+ * Most symbols should already have been interned during Symbolizer initialization.
+ * The ones that aren't are either deprecated or hidden "script only"
+ * functions still needed for the old scripts.
+ *
+ * !! Still need to revisit whether these should be in the symbol table at all
+ * but they have been for awhile, and I'm worried about breaking things
+ * as we continue the model transition.
  */
 void Mobius::installSymbols()
 {
@@ -408,41 +409,74 @@ void Mobius::installSymbols()
     for (int i = 0 ; StaticFunctions[i] != nullptr ; i++) {
         Function* f = StaticFunctions[i];
         Symbol* s = symbols->find(f->getName());
+        FunctionProperties* props = nullptr;
+
         if (s == nullptr) {
+            // wasn't defined as a public symbol
+            // for some time we've allowed this for special script functions
             s = symbols->intern(f->getName());
-            // we have a handful of scriptOnly functions that won't
-            // have FunctionDefinitions
             if (f->scriptOnly) {
+                // I like to see this during development but not interesting for installations
+                Trace(2, "Mobus: Interning scriptOnly symbol %s", f->getName());
                 s->hidden = true;
             }
+            else {
+                // these are more serious
+                Trace(1, "Mobius: Interned missing symbol for %s", f->getName());
+            }
+
+            props = new FunctionProperties();
+            s->functionProperties.reset(props);
         }
-        else if (f->scriptOnly) {
-            // why did we have this already?
-            Trace(1, "Unexpected scriptOnly function found interned %s\n",
-                  s->getName());
+        else {
+            if (f->scriptOnly) {
+                // a symbol was already there, but we thought it was supposed to be hidden
+                // figure out why
+                Trace(1, "Mobius: Unexpected scriptOnly function found interned %s\n",
+                      s->getName());
+            }
+
+            props = s->functionProperties.get();
+            if (props == nullptr) {
+                // if Symbolizer did this, it was supposed to leave behind properties
+                Trace(1, "Mobius: Bootstrapping FunctionProperties for %s", f->getName());
+                props = new FunctionProperties();
+                s->functionProperties.reset(props);
+            }
         }
-        
+
+        // adjust the level
         s->level = LevelCore;
-        s->coreFunction = f;
+        // unclear why we need the level duplicated here
+        props->level = LevelCore;
+
+        // some things still check behavior though should be testing FunctionProperties
         s->behavior = BehaviorFunction;
-        // until we get FunctionProperties fleshed out, copy the sustainable
-        // flag from the Function to the FunctionDefinition so SUS functions work
-        // this is temporary, when symbols.xml has the necessary flags can
-        // get rid of these in FunctionDefinition
-        if (s->function != nullptr) {
-            s->function->sustainable = f->isSustainable();
-            s->function->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
-            s->function->mayConfirm = f->mayConfirm;
-            s->function->mayCancelMute = f->mayCancelMute;
-        }
+
+        // originally the core pointer went here, should move to only using FunctionProperties
+        s->coreFunction = f;
+        props->coreFunction = f;
+
+        // copy over some internal options
+        // !! these can be coming from symbols.xml too, should make sure they're in sync
+        props->sustainable = f->isSustainable();
+        props->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
+        props->mayConfirm = f->mayConfirm;
+        props->mayCancelMute = f->mayCancelMute;
     }
 
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {
         Parameter* p = Parameters[i];
         const char* name = p->getName();
         Symbol* s = symbols->find(name);
+
+        // these are supposed to be entirely defined in symbols.xml now
+        // so we don't need to copy any of the old definition
         if (s == nullptr) {
             s = symbols->intern(name);
+            Trace(1, "Mobius: Interned missing symbol for %s", p->getName());
+            // todo: could bootstrap a ParameterProperties for these too,
+            // but not supposed to see them
         }
         s->level = LevelCore;
         s->coreParameter = p;
@@ -1792,8 +1826,6 @@ Parameter* Mobius::getParameter(const char* name)
 MobiusState* Mobius::getState()
 {
 	// why not just keep it here?
-    // this got lost, if you want it back just let this be the main location for it
-	//strcpy(mState.customMode, mCustomMode);
 
 	mState.globalRecording = mCapturing;
 
@@ -1858,29 +1890,6 @@ void Mobius::logStatus()
 
     fflush(stdout);
 #endif    
-}
-
-/**
- * Intended for use in scripts to override the usual mode display
- * if the script enters some arbitrary user-defined mode.
- * !! should this be persisted?
- */
-void Mobius::setCustomMode(const char* s)
-{
-	strcpy(mCustomMode, "");
-	if (s != NULL) {
-		int len = (int)strlen(s);
-		if (len < MAX_CUSTOM_MODE - 1) 
-		  strcpy(mCustomMode, s);
-	}
-}
-
-const char* Mobius::getCustomMode()
-{
-	const char* mode = NULL;
-	if (mCustomMode[0] != 0)
-	  mode = mCustomMode;
-	return mode;
 }
 
 //////////////////////////////////////////////////////////////////////

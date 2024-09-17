@@ -147,7 +147,7 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
     
     // the original group definitions by number
     // make sure we have a GroupDefinition object for all the numbers
-    int oldGroupCount = config->getTrackGroups();
+    int oldGroupCount = config->getTrackGroupsDeprecated();
     // make sure we have at least 2 for some old expectations
     if (oldGroupCount == 0)
       oldGroupCount = 2;
@@ -168,12 +168,12 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
     while (setup != nullptr) {
         SetupTrack* track = setup->getTracks();
         while (track != nullptr) {
-            int groupNumber = track->getGroupNumber();
+            int groupNumber = track->getGroupNumberDeprecated();
             if (groupNumber > 0) {
                 if (track->getGroupName().length() > 0) {
                     // already upgraded, stop using the number
                     // hmm, bindings would rather use ordinals, normalize the there too?
-                    track->setGroupNumber(0);
+                    track->setGroupNumberDeprecated(0);
                 }
                 else {
                     // this was an ordinal starting from 1
@@ -189,7 +189,7 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
                               groupNumber);
                     }
                     // stop using the number
-                    track->setGroupNumber(0);
+                    track->setGroupNumberDeprecated(0);
                 }
                 updated = true;
             }
@@ -444,7 +444,7 @@ void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* s
     // should have been upgraded to a name by now
     juce::String gname = track->getGroupName();
     if (gname.length() > 0)
-      tset->setString(symbols->getName(ParamGroup), gname.toUTF8());
+      tset->setString(symbols->getName(ParamGroupName), gname.toUTF8());
         
     tset->setBool(symbols->getName(ParamMono), track->isMono());
     tset->setInt(symbols->getName(ParamFeedback), track->getFeedback());

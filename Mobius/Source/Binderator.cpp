@@ -72,7 +72,7 @@
 #include "model/MobiusConfig.h"
 #include "model/UIConfig.h"
 #include "model/UIAction.h"
-#include "model/FunctionDefinition.h"
+#include "model/FunctionProperties.h"
 #include "model/UIParameter.h"
 #include "model/Binding.h"
 #include "model/ScriptProperties.h"
@@ -561,14 +561,14 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
         // actions and long press tracking for functions that will just
         // end up ignoring up transitions
         // the core model is more complex than a the single flag we
-        // have on FunctionDefinition but it shouldn't need to be
+        // have on FunctionProperties but it shouldn't need to be
 
         bool sustainableTarget = false;
 
-        // note this only works if the FunctionDefinition symbols are
+        // note this only works if the FunctionProperties symbols are
         // interned BEFORE the Binderator is initialized
-        if (symbol->function != nullptr) {
-            sustainableTarget = symbol->function->sustainable;
+        if (symbol->functionProperties != nullptr) {
+            sustainableTarget = symbol->functionProperties->sustainable;
         }
         else if (symbol->script != nullptr) {
             // this won't actually be set since ScriptCompler doesn't remember
@@ -596,8 +596,10 @@ bool Binderator::looksResolved(Symbol* s)
 {
     return (s->id > 0 ||
             s->variable != nullptr ||
-            s->function != nullptr ||
+            //s->function != nullptr ||
+            s->functionProperties != nullptr ||
             s->parameter != nullptr ||
+            s->parameterProperties != nullptr ||
             s->structure != nullptr ||
             s->sample != nullptr ||
             s->script != nullptr);

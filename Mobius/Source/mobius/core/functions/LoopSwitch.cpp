@@ -319,6 +319,10 @@ LoopTriggerFunction::LoopTriggerFunction(int i, bool sus, bool relative)
         // an older longer name, keep for backward compatibility
 		snprintf(fullAlias1, sizeof(fullAlias1), "LoopTrigger%d", i + 1);
 		alias1 = fullAlias1;
+
+        // set this so we don't complain about missing symbols
+        // during installation
+        scriptOnly = true;
 	}
 }
 

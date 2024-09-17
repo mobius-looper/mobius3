@@ -101,6 +101,7 @@
   <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
   <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true'/>
   <Function name="SyncMasterTrack"/>
+  <Function name="SyncMasterMidi"/>
   
   <!-- Formerly TrackN, Track1, etc. -->
   <Function name="SelectTrack"
@@ -243,11 +244,6 @@
       Move to UI
     </Parameter>
 
-    <Parameter name='integerWaveFile' type='bool'
-               coreName='16BitWaveFile'>
-      Old project option, may not be used.
-    </Parameter>
-    
     <!-- StringList
          This was a list of Mode names that don't want altFeedback applied.
          There were only four possibilities: Multiply, Overdub, Stutter, Substitute
@@ -260,29 +256,10 @@
       Still relevant?  Move to UI
     </Parameter>
 
-    <!-- StringList
-         These are now implemented as FunctionProperties flags
-    <Parameter name='focusLockFunctions' type='string' multi='true'>
-    </Parameter>
-    
-    <Parameter name='muteCancelFunctions' type='string' multi='true'>
-    </Parameter>
-    
-    <Parameter name='confirmationFunctions' type='string' multi='true'>
-    </Parameter>
-    -->
-
     <Parameter name='trackCount' coreName='tracks' codeName='Tracks'>
       The number of tracks to configure internally and display in the UI
       Cannot be changed at runtime
     </Parameter>
-
-    <!-- this is now defined by the number of GroupDefinitions
-    <Parameter name='groupCount' coreName='trackGroups' codeName='TrackGroups'>
-      The number of focus groups defined.
-      This should be entirely in Bindings now and doesn't need core mapping
-      </Parameter>
-      -->
 
     <Parameter name='maxLoops'> 
       The maximum number of loops a track can have.
@@ -309,8 +286,6 @@
     <Parameter name='midiRecordMode' values='average,smooth,pulsed' options='noBinding'/>
 
     <!-- Things that still exist in the model but probably want to move them somewhere else
-         midiExport
-         hostMidiExport
          oscInputPort
          oscOutputPort
          oscOutputHost
@@ -597,7 +572,13 @@
     </Parameter>
     
     <Parameter name='focus' codeName='FocusLock' type='bool' options='resetRetain,noBinding'/>
+
+    <!-- this used to be a number
     <Parameter name='group' options='dynamic,resetRetain'/>
+    -->
+    <!-- ugh, unclear how core is dealing with this -->
+    <Parameter name='groupName' options='dynamic,resetRetain'/>
+    
     <Parameter name='mono' type='bool' options='noBinding'/>
     <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>

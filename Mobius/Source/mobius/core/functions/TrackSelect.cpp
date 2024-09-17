@@ -144,6 +144,10 @@ TrackSelectFunction::TrackSelectFunction(int i, bool relative)
 		// the older name 
 		snprintf(fullAlias1, sizeof(fullAlias1), "TrackSelect%d", i + 1);
 		alias1 = fullAlias1;
+
+        // these are not exposed
+        // set this so it won't trace an error during symbol initialization
+        scriptOnly = true;
 	}
 }
 

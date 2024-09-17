@@ -298,12 +298,15 @@ void MobiusShell::propagateSymbolProperties()
  * that hides the type and the id is overloaded as the ordinal.  It works
  * but feels hacky.  Better would be a more concrete definition object
  * that could hold these and maybe other things about the structure.
+ *
+ * !! can't this go up in Symbolizer?
+ * it could except the hacky prefix convention is used by Actionator
  */
 void MobiusShell::installActivationSymbols()
 {
     SymbolTable* symbols = container->getSymbols();
     // hide existing activation symbols
-    // remove references to previously resolved SamplePlayers
+    // remove references to previously resolved presets and setups
     for (auto symbol : symbols->getSymbols()) {
         if (symbol->behavior == BehaviorActivation) {
             symbol->hidden = true;
@@ -316,7 +319,8 @@ void MobiusShell::installActivationSymbols()
         juce::String name = juce::String(ActivationPrefixSetup) + setups->getName();
         Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
-        s->id = ordinal;
+        // can't do this any more
+        // s->id = ordinal;
         // unhide if it was hidden above
         s->hidden = false;
         ordinal++;
@@ -329,7 +333,7 @@ void MobiusShell::installActivationSymbols()
         juce::String name = juce::String(ActivationPrefixPreset) + presets->getName();
         Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
-        s->id = ordinal;
+        // s->id = ordinal;
         s->hidden = false;
         ordinal++;
         presets = presets->getNextPreset();

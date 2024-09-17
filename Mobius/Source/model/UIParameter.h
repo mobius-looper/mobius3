@@ -79,6 +79,13 @@ class UIParameter : public SystemConstant
 	~UIParameter();
 
     /**
+     * True if this is considered a deprecated parameter that is kept around
+     * for the XmlRenderer and Upgrader, but should not be interned or
+     * visible to the user.
+     */
+    bool deprecated = false;
+
+    /**
      * For configuration parameters, indidicates which structdure this
      * parameter lives in.  Global=MobiusConfig, Preset=Preset, etc.
      */

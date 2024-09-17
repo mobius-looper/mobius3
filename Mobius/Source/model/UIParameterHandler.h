@@ -1,12 +1,21 @@
+/**
+ * Class containing the mapping between a parameter symbol id
+ * and a pair of get/set methods that access it from one of the
+ * old configuration objects: MobiusConfig, Preset, Setup
+ *
+ * This is temporary as we transition away from the old configuration
+ * model to generic ValueSets that don't need structure access methods.
+ *
+ */
 
 #pragma once
 
-#include "UIParameterIds.h"
+#include "SymbolId.h"
 
 class UIParameterHandler
 {
   public:
-    void get(UIParameterId id, void* obj, class ExValue* value);
-    void set(UIParameterId id, void* obj, class ExValue* value);
+    void get(SymbolId id, void* obj, class ExValue* value);
+    void set(SymbolId id, void* obj, class ExValue* value);
 };
 
