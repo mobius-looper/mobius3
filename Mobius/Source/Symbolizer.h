@@ -12,7 +12,7 @@
  * The first phase of symbol table initialization is the installation
  * or "interning" of all built-in symbols with their names and ids.  The name/id
  * association is defined by the model/SymbolId enumeration and the
- * model/SymbolDefinition class.  Static instances of SymbolDefinition are held
+ * SymbolDefinition class.  Static instances of SymbolDefinition are held
  * in the SymbolDefinitions array.
  *
  * After this initial population of the symbols, each symbol may be further
@@ -49,6 +49,8 @@
 #include "model/UIParameter.h"
 // for SymbolLevel
 #include "model/Symbol.h"
+// for SymbolId
+#include "model/SymbolId.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -56,60 +58,33 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * These are used to define properties of function and parameter symbols
+ * related to the UI.  These will be converted to ParameterProperties and
+ * FunctionProperties attached to Symbols during initialization.
+ */
 class UISymbols
 {
   public:
 
     /**
-     * Symbol ids for the functions and parameters defined by the UI.
-     */
-    typedef enum {
-
-        IdNone = 0,
-
-        // public functions
-        ParameterUp,
-        ParameterDown,
-        ParameterInc,
-        ParameterDec,
-        ReloadScripts,
-        ReloadSamples,
-        ShowPanel,
-        Message,
-
-        // public parameters
-        ActiveLayout,
-        ActiveButtons,
-        // need this?  how will MSL scripts deal with binding overlays
-        BindingOverlays,
-
-        //
-        // private script externals
-        //
-
-        ScriptAddButton,
-        ScriptListen
-        
-
-    } SymbolId;
-
-    /**
-     * Struct used to define the id/name mapping table for parameters.
+     * Struct used to add display names and visibility control to UI parameter symbols.
      * By convention, if a display name is nullptr, this means it is a private
      * symbol that will not be exposed in bindings.
      */
     class Parameter {
       public:
         SymbolId id;
-        const char* name;
         const char* displayName;
-        bool visible;
     };
-    
+
+    /**
+     * Struct use to add visibility control and script argument signatures to
+     * UI function symbols.
+     */
     class Function {
       public:
         SymbolId id;
-        const char* name;
         bool visible;
         const char* signature;
     };
@@ -132,13 +107,21 @@ class Symbolizer
     ~Symbolizer();
 
     void initialize();
-
     void saveSymbolProperties();
+    
+    Symbol* getSymbol(SymbolId id);
+    juce::String getName(SymbolId id);
     
   private:
 
     class Supervisor* supervisor = nullptr;
+    juce::Array<class Symbol*> idmap;
     
+    void internSymbols();
+    void installUISymbols();
+    void installOldDefinitions();
+    
+    // symbols.xml parsing
     void loadSymbolDefinitions();
     void xmlError(const char* msg, juce::String arg);
     
@@ -152,9 +135,6 @@ class Symbolizer
     juce::StringArray parseStringList(juce::String csv);
     juce::StringArray parseLabels(juce::String csv, juce::StringArray values);
     juce::String formatDisplayName(juce::String xmlName);
-
-    // Static symbol definitions
-    void installUISymbols();
 
     // Properties
     void loadSymbolProperties();

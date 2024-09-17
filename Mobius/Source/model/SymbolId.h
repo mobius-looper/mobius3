@@ -12,9 +12,14 @@
  * The names of the constants reflect what they are, the prefix "Param" is used for
  * parameters and "Func" for functions.
  *
- * Not eveverything that can appear in a ValueSet is a parameter, some are just named values.
- * That will be accessed by name and won't necessarily have bindable or actionable symbols.
+ * Not eveverything that can appear in a ValueSet is a parameter, some are just named values
+ * that will be accessed by name and won't necessarily have bindable or actionable symbols.
  * But since configuration editors are driven from Symbols, those are very rare.
+ * Those will have name constants.
+ *
+ * There are a bunch of name constants in here too, because I had them and
+ * didn't want to retype them, but code shouldn't be relying on them any more.
+ * Use the Ids.
  *
  */
 
@@ -34,7 +39,7 @@ typedef enum {
     // Global Parameters
     //
     // These are things that have historically been defined in MobiusConfig
-    // and are not related to tracks.  Some are deprecating.
+    // and are not related to Mobius tracks.  Some are deprecating.
     //
     
     ParamActiveSetup,
@@ -57,10 +62,11 @@ typedef enum {
     ParamOutputLatency,
     ParamNoiseFloor,
     ParamMidiRecordMode,
+    ParamControllerActionThreshold,
 
     //
     // Preset Parameters
-    // These have historically been organized in to objects called Presets but
+    // These have historically been organized into Preset objects but 
     // as a container concept that is going away.  Still it's useful to think
     // of them as being from a Preset when reviewing old code.
     //
@@ -168,6 +174,7 @@ typedef enum {
     //
     // Mobius Functions
     //
+    
     FuncAutoRecord,
     FuncBackward,
     FuncBounce,
@@ -185,12 +192,13 @@ typedef enum {
     FuncHalfspeed,
     FuncInsert,
     FuncInstantMultiply,
-// these are similar to replicated functions but have been in use
-// for a long time, think about this
+    
+    // these are similar to replicated functions but have been in use
+    // for a long time, think about this
     FuncInstantMultiply3,
     FuncInstantMultiply4,
 
-// Formerly LoopN, Loop1, Loop2, etc.
+    // Formerly LoopN, Loop1, Loop2, etc.
     FuncSelectLoop,
 
     FuncMidiStart,
@@ -265,6 +273,7 @@ typedef enum {
 
     // Formerly TrackN, Track1, etc.
     FuncSelectTrack,
+    
     FuncTrackCopy,
     FuncTrackCopyTiming,
     FuncTrackGroup,
@@ -308,15 +317,28 @@ typedef enum {
 
     //
     // Script Externals
+    // These are not accessed by id (really?) but need to have
+    // unique names for MSL scripts.  To ensure they do not overlap
+    // with normal functions they are in the symbol registry though do not
+    // have to be interned as symbols
     //
     FuncScriptAddButton,
-    FuncScriptListen
-    
+    FuncScriptListen,
+
+    SymbolIdMax
 
 } SymbolId;
 
+//////////////////////////////////////////////////////////////////////
+//
+// SymbolDefinition
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Structure that associate a symbol id with it's unique name
+ * This forms the fundamental definition of a standard symbol.
+ * Everything else is attached later.
  */
 class SymbolDefinition
 {

@@ -158,6 +158,8 @@
         <FILE id="UvI59d" name="Structure.h" compile="0" resource="0" file="Source/model/Structure.h"/>
         <FILE id="F539YC" name="Symbol.cpp" compile="1" resource="0" file="Source/model/Symbol.cpp"/>
         <FILE id="PNgWm3" name="Symbol.h" compile="0" resource="0" file="Source/model/Symbol.h"/>
+        <FILE id="VvS8a7" name="SymbolId.cpp" compile="1" resource="0" file="Source/model/SymbolId.cpp"/>
+        <FILE id="FPoE0Y" name="SymbolId.h" compile="0" resource="0" file="Source/model/SymbolId.h"/>
         <FILE id="JZYXKm" name="SystemConstant.h" compile="0" resource="0"
               file="Source/model/SystemConstant.h"/>
         <FILE id="Gs8SHl" name="Trigger.cpp" compile="1" resource="0" file="Source/model/Trigger.cpp"/>
@@ -178,10 +180,6 @@
               file="Source/model/UIParameterHandler.cpp"/>
         <FILE id="eekiKa" name="UIParameterHandler.h" compile="0" resource="0"
               file="Source/model/UIParameterHandler.h"/>
-        <FILE id="a1ENbP" name="UIParameterIds.cpp" compile="1" resource="0"
-              file="Source/model/UIParameterIds.cpp"/>
-        <FILE id="cDq1yW" name="UIParameterIds.h" compile="0" resource="0"
-              file="Source/model/UIParameterIds.h"/>
         <FILE id="wa9W4M" name="UserVariable.cpp" compile="1" resource="0"
               file="Source/model/UserVariable.cpp"/>
         <FILE id="JU2prp" name="UserVariable.h" compile="0" resource="0" file="Source/model/UserVariable.h"/>

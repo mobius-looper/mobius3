@@ -85,11 +85,14 @@ SymbolTable::~SymbolTable()
 
 /**
  * Empty the symbol table, it's like it never happened.
+ * !! Who calls this?  
  */
 void SymbolTable::clear()
 {
+    Trace(1, "SymbolTable::clear Who calls this!?");
     symbols.clear();
-    symbolMap.clear();
+    nameMap.clear();
+    idMap.clear();
 }
 
 /**
@@ -122,7 +125,7 @@ Symbol* SymbolTable::find(juce::String name)
         }
     }
     else {
-        found = symbolMap[name];
+        found = nameMap[name];
     }
     
     return found;
@@ -140,7 +143,7 @@ void SymbolTable::intern(Symbol* s)
         }
         else {
             symbols.add(s);
-            symbolMap.set(s->name, s);
+            nameMap.set(s->name, s);
         }
     }
 }
@@ -154,7 +157,7 @@ Symbol* SymbolTable::intern(juce::String name)
         s->name = name;
         // symbols.push_back(s);
         symbols.add(s);
-        symbolMap.set(s->name, s);
+        nameMap.set(s->name, s);
     }
     return s;
 }
@@ -176,7 +179,6 @@ void SymbolTable::traceTable()
         Trace(2, "  %s %s\n", behavior, s->getName());
     }
 }
-
 
 void SymbolTable::traceCorrespondence()
 {
@@ -218,6 +220,38 @@ void SymbolTable::traceCorrespondence()
         }
     }
                   
+}
+
+/**
+ * AFTER the Symbol table has been fully populated, build an array to map
+ * id numbers to Symbols.  Can't do this as they are interned, because
+ * those are done in different steps, and not all symbols need ids.
+ */
+void SymbolTable::buildIdMap()
+{
+    idMap.clear();
+    for (auto symbol : symbols) {
+        if (symbol->id > 0) {
+            // the usual problem with juce::Array capacity pre-fill
+            for (int i = idMap.size() ; i <= symbol->id ; i++)
+              idMap.set(i, nullptr);
+            idMap.set(symbol->id, symbol);
+        }
+    }
+}
+
+Symbol* SymbolTable::getSymbol(SymbolId id)
+{
+    return idMap[(int)id];
+}
+
+juce::String SymbolTable::getName(SymbolId id)
+{
+    juce::String name;
+    Symbol* s = getSymbol(id);
+    if (s != nullptr)
+      name = s->name;
+    return name;
 }
 
 /****************************************************************************/

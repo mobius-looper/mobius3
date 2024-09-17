@@ -10,13 +10,14 @@
 #include "model/MobiusConfig.h"
 #include "model/MainConfig.h"
 #include "model/ValueSet.h"
-#include "model/UIParameterIds.h"
 #include "model/Preset.h"
 #include "model/Setup.h"
 #include "model/Symbol.h"
+#include "model/SymbolId.h"
 #include "model/FunctionProperties.h"
 #include "model/ParameterProperties.h"
 
+#include "Symbolizer.h"
 #include "Supervisor.h"
 
 /**
@@ -220,29 +221,31 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
  */
 bool Upgrader::refreshMainConfig(MobiusConfig* old, MainConfig* neu)
 {
+    SymbolTable* symbols = supervisor->getSymbols();
+    
     // wire this on for now
     bool updated = true;
 
     ValueSet* global = neu->getGlobals();
-    global->setInt(ParamInputLatency, old->getInputLatency());
-    global->setInt(ParamOutputLatency, old->getOutputLatency());
-    global->setInt(ParamNoiseFloor, old->getNoiseFloor());
-    global->setInt(ParamFadeFrames, old->getFadeFrames());
-    global->setInt(ParamMaxSyncDrift, old->getNoiseFloor());
+    global->setInt(symbols->getName(ParamInputLatency), old->getInputLatency());
+    global->setInt(symbols->getName(ParamOutputLatency), old->getOutputLatency());
+    global->setInt(symbols->getName(ParamNoiseFloor), old->getNoiseFloor());
+    global->setInt(symbols->getName(ParamFadeFrames), old->getFadeFrames());
+    global->setInt(symbols->getName(ParamMaxSyncDrift), old->getNoiseFloor());
     global->setInt("coreTracks", old->getCoreTracks());
-    global->setInt(ParamMaxLoops, old->getMaxLoops());
-    global->setInt(ParamLongPress, old->getLongPress());
-    global->setInt(ParamSpreadRange, old->getSpreadRange());
-    global->setInt(ParamControllerActionThreshold, old->mControllerActionThreshold);
-    global->setBool(ParamMonitorAudio, old->isMonitorAudio());
-    global->setString(ParamQuickSave, old->getQuickSave());
-    global->setString(ParamActiveSetup, old->getStartingSetupName());
+    global->setInt(symbols->getName(ParamMaxLoops), old->getMaxLoops());
+    global->setInt(symbols->getName(ParamLongPress), old->getLongPress());
+    global->setInt(symbols->getName(ParamSpreadRange), old->getSpreadRange());
+    global->setInt(symbols->getName(ParamControllerActionThreshold), old->mControllerActionThreshold);
+    global->setBool(symbols->getName(ParamMonitorAudio), old->isMonitorAudio());
+    global->setString(symbols->getName(ParamQuickSave), old->getQuickSave());
+    global->setString(symbols->getName(ParamActiveSetup), old->getStartingSetupName());
     
     // enumerations have been stored with symbolic names, which is all we really need
     // but I'd like to test working backward to get the ordinals, need to streamline
     // this process
-    convertEnum(ParamDriftCheckPoint, old->getDriftCheckPoint(), global);
-    convertEnum(ParamMidiRecordMode, old->getMidiRecordMode(), global);
+    convertEnum(symbols->getName(ParamDriftCheckPoint), old->getDriftCheckPoint(), global);
+    convertEnum(symbols->getName(ParamMidiRecordMode), old->getMidiRecordMode(), global);
 
     Preset* preset = old->getPresets();
     while (preset != nullptr) {
@@ -266,33 +269,34 @@ bool Upgrader::refreshMainConfig(MobiusConfig* old, MainConfig* neu)
  * This does some consnstency checking that isn't necessary but I want to detect
  * when there are model inconsistencies while both still exist.
  */
-void Upgrader::convertEnum(const char* name, int value, ValueSet* dest)
+void Upgrader::convertEnum(juce::String name, int value, ValueSet* dest)
 {
     // method 1: using UIParameter static objects
     // this needs to go away
-    UIParameter* p = UIParameter::find(name);
+    const char* cname = name.toUTF8();
+    UIParameter* p = UIParameter::find(cname);
     const char* enumName = nullptr;
     if (p == nullptr) {
-        Trace(1, "Upgrader: Unresolved old parameter %s", name);
+        Trace(1, "Upgrader: Unresolved old parameter %s", cname);
     }
     else {
         enumName = p->getEnumName(value);
         if (enumName == nullptr)
-          Trace(1, "Upgrader: Unresolved old enumeration %s %d", name, value);
+          Trace(1, "Upgrader: Unresolved old enumeration %s %d", cname, value);
     }
 
     // method 2: using Symbol and ParameterProperties
     Symbol* s = supervisor->getSymbols()->find(name);
     if (s == nullptr) {
-        Trace(1, "Upgrader: Unresolved symbol %s", name);
+        Trace(1, "Upgrader: Unresolved symbol %s", cname);
     }
     else if (s->parameterProperties == nullptr) {
-        Trace(1, "Upgrader: Symbol not a parameter %s", name);
+        Trace(1, "Upgrader: Symbol not a parameter %s", cname);
     }
     else {
         const char* newEnumName = s->parameterProperties->getEnumName(value);
         if (newEnumName == nullptr)
-          Trace(1, "Upgrader: Unresolved new enumeration %s %d", name, value);
+          Trace(1, "Upgrader: Unresolved new enumeration %s %d", cname, value);
         else if (enumName != nullptr && strcmp(enumName, newEnumName) != 0)
           Trace(1, "Upgrader: Enum name mismatch %s %s", enumName, newEnumName);
 
@@ -314,8 +318,14 @@ void Upgrader::convertEnum(const char* name, int value, ValueSet* dest)
     }
 }
 
+/**
+ * These are the rare cases where parameter name constants are necessary.
+ * Use GetParameterName
+ */
 void Upgrader::convertPreset(Preset* preset, MainConfig* main)
 {
+    SymbolTable* symbols = supervisor->getSymbols();
+    
     juce::String objname = juce::String("Preset:") + preset->getName();
 
     ValueSet* neu = main->find(objname);
@@ -325,58 +335,60 @@ void Upgrader::convertPreset(Preset* preset, MainConfig* main)
         main->add(neu);
     }
 
-    neu->setInt(ParamSubcycles, preset->getSubcycles());
-    convertEnum(ParamMultiplyMode, preset->getMultiplyMode(), neu);
-    convertEnum(ParamShuffleMode, preset->getShuffleMode(), neu);
-    neu->setBool(ParamAltFeedbackEnable, preset->isAltFeedbackEnable());
-    convertEnum(ParamEmptyLoopAction, preset->getEmptyLoopAction(), neu);
-    convertEnum(ParamEmptyTrackAction, preset->getEmptyTrackAction(), neu);
-    convertEnum(ParamTrackLeaveAction, preset->getTrackLeaveAction(), neu);
-    neu->setInt(ParamLoopCount, preset->getLoops());
-    convertEnum(ParamMuteMode, preset->getMuteMode(), neu);
-    convertEnum(ParamMuteCancel, preset->getMuteCancel(), neu);
-    neu->setBool(ParamOverdubQuantized, preset->isOverdubQuantized());
-    convertEnum(ParamQuantize, preset->getQuantize(), neu);
-    convertEnum(ParamBounceQuantize, preset->getBounceQuantize(), neu);
-    neu->setBool(ParamRecordResetsFeedback, preset->isRecordResetsFeedback());
-    neu->setBool(ParamSpeedRecord, preset->isSpeedRecord());
-    neu->setBool(ParamRoundingOverdub, preset->isRoundingOverdub());
-    convertEnum(ParamSwitchLocation, preset->getSwitchLocation(), neu);
-    convertEnum(ParamReturnLocation, preset->getReturnLocation(), neu);
-    convertEnum(ParamSwitchDuration, preset->getSwitchDuration(), neu);
-    convertEnum(ParamSwitchQuantize, preset->getSwitchQuantize(), neu);
-    convertEnum(ParamTimeCopyMode, preset->getTimeCopyMode(), neu);
-    convertEnum(ParamSoundCopyMode, preset->getSoundCopyMode(), neu);
-    neu->setInt(ParamRecordThreshold, preset->getRecordThreshold());
-    neu->setBool(ParamSwitchVelocity, preset->isSwitchVelocity());
-    neu->setInt(ParamMaxUndo, preset->getMaxUndo());
-    neu->setInt(ParamMaxRedo, preset->getMaxRedo());
-    neu->setBool(ParamNoFeedbackUndo, preset->isNoFeedbackUndo());
-    neu->setBool(ParamNoLayerFlattening, preset->isNoLayerFlattening());
-    neu->setBool(ParamSpeedShiftRestart, preset->isSpeedShiftRestart());
-    neu->setBool(ParamPitchShiftRestart, preset->isPitchShiftRestart());
-    neu->setInt(ParamSpeedStepRange, preset->getSpeedStepRange());
-    neu->setInt(ParamSpeedBendRange, preset->getSpeedBendRange());
-    neu->setInt(ParamPitchStepRange, preset->getPitchStepRange());
-    neu->setInt(ParamPitchBendRange, preset->getPitchBendRange());
-    neu->setInt(ParamTimeStretchRange, preset->getTimeStretchRange());
-    convertEnum(ParamSlipMode, preset->getSlipMode(), neu);
-    neu->setInt(ParamSlipTime, preset->getSlipTime());
-    neu->setInt(ParamAutoRecordTempo, preset->getAutoRecordTempo());
-    neu->setInt(ParamAutoRecordBars, preset->getAutoRecordBars());
-    convertEnum(ParamRecordTransfer, preset->getRecordTransfer(), neu);
-    convertEnum(ParamOverdubTransfer, preset->getOverdubTransfer(), neu);
-    convertEnum(ParamReverseTransfer, preset->getReverseTransfer(), neu);
-    convertEnum(ParamSpeedTransfer, preset->getSpeedTransfer(), neu);
-    convertEnum(ParamPitchTransfer, preset->getPitchTransfer(), neu);
-    convertEnum(ParamWindowSlideUnit, preset->getWindowSlideUnit(), neu);
-    convertEnum(ParamWindowEdgeUnit, preset->getWindowEdgeUnit(), neu);
-    neu->setInt(ParamWindowSlideAmount, preset->getWindowSlideAmount());
-    neu->setInt(ParamWindowEdgeAmount, preset->getWindowEdgeAmount());
+    neu->setInt(symbols->getName(ParamSubcycles), preset->getSubcycles());
+    convertEnum(symbols->getName(ParamMultiplyMode), preset->getMultiplyMode(), neu);
+    convertEnum(symbols->getName(ParamShuffleMode), preset->getShuffleMode(), neu);
+    neu->setBool(symbols->getName(ParamAltFeedbackEnable), preset->isAltFeedbackEnable());
+    convertEnum(symbols->getName(ParamEmptyLoopAction), preset->getEmptyLoopAction(), neu);
+    convertEnum(symbols->getName(ParamEmptyTrackAction), preset->getEmptyTrackAction(), neu);
+    convertEnum(symbols->getName(ParamTrackLeaveAction), preset->getTrackLeaveAction(), neu);
+    neu->setInt(symbols->getName(ParamLoopCount), preset->getLoops());
+    convertEnum(symbols->getName(ParamMuteMode), preset->getMuteMode(), neu);
+    convertEnum(symbols->getName(ParamMuteCancel), preset->getMuteCancel(), neu);
+    neu->setBool(symbols->getName(ParamOverdubQuantized), preset->isOverdubQuantized());
+    convertEnum(symbols->getName(ParamQuantize), preset->getQuantize(), neu);
+    convertEnum(symbols->getName(ParamBounceQuantize), preset->getBounceQuantize(), neu);
+    neu->setBool(symbols->getName(ParamRecordResetsFeedback), preset->isRecordResetsFeedback());
+    neu->setBool(symbols->getName(ParamSpeedRecord), preset->isSpeedRecord());
+    neu->setBool(symbols->getName(ParamRoundingOverdub), preset->isRoundingOverdub());
+    convertEnum(symbols->getName(ParamSwitchLocation), preset->getSwitchLocation(), neu);
+    convertEnum(symbols->getName(ParamReturnLocation), preset->getReturnLocation(), neu);
+    convertEnum(symbols->getName(ParamSwitchDuration), preset->getSwitchDuration(), neu);
+    convertEnum(symbols->getName(ParamSwitchQuantize), preset->getSwitchQuantize(), neu);
+    convertEnum(symbols->getName(ParamTimeCopyMode), preset->getTimeCopyMode(), neu);
+    convertEnum(symbols->getName(ParamSoundCopyMode), preset->getSoundCopyMode(), neu);
+    neu->setInt(symbols->getName(ParamRecordThreshold), preset->getRecordThreshold());
+    neu->setBool(symbols->getName(ParamSwitchVelocity), preset->isSwitchVelocity());
+    neu->setInt(symbols->getName(ParamMaxUndo), preset->getMaxUndo());
+    neu->setInt(symbols->getName(ParamMaxRedo), preset->getMaxRedo());
+    neu->setBool(symbols->getName(ParamNoFeedbackUndo), preset->isNoFeedbackUndo());
+    neu->setBool(symbols->getName(ParamNoLayerFlattening), preset->isNoLayerFlattening());
+    neu->setBool(symbols->getName(ParamSpeedShiftRestart), preset->isSpeedShiftRestart());
+    neu->setBool(symbols->getName(ParamPitchShiftRestart), preset->isPitchShiftRestart());
+    neu->setInt(symbols->getName(ParamSpeedStepRange), preset->getSpeedStepRange());
+    neu->setInt(symbols->getName(ParamSpeedBendRange), preset->getSpeedBendRange());
+    neu->setInt(symbols->getName(ParamPitchStepRange), preset->getPitchStepRange());
+    neu->setInt(symbols->getName(ParamPitchBendRange), preset->getPitchBendRange());
+    neu->setInt(symbols->getName(ParamTimeStretchRange), preset->getTimeStretchRange());
+    convertEnum(symbols->getName(ParamSlipMode), preset->getSlipMode(), neu);
+    neu->setInt(symbols->getName(ParamSlipTime), preset->getSlipTime());
+    neu->setInt(symbols->getName(ParamAutoRecordTempo), preset->getAutoRecordTempo());
+    neu->setInt(symbols->getName(ParamAutoRecordBars), preset->getAutoRecordBars());
+    convertEnum(symbols->getName(ParamRecordTransfer), preset->getRecordTransfer(), neu);
+    convertEnum(symbols->getName(ParamOverdubTransfer), preset->getOverdubTransfer(), neu);
+    convertEnum(symbols->getName(ParamReverseTransfer), preset->getReverseTransfer(), neu);
+    convertEnum(symbols->getName(ParamSpeedTransfer), preset->getSpeedTransfer(), neu);
+    convertEnum(symbols->getName(ParamPitchTransfer), preset->getPitchTransfer(), neu);
+    convertEnum(symbols->getName(ParamWindowSlideUnit), preset->getWindowSlideUnit(), neu);
+    convertEnum(symbols->getName(ParamWindowEdgeUnit), preset->getWindowEdgeUnit(), neu);
+    neu->setInt(symbols->getName(ParamWindowSlideAmount), preset->getWindowSlideAmount());
+    neu->setInt(symbols->getName(ParamWindowEdgeAmount), preset->getWindowEdgeAmount());
 }
 
 void Upgrader::convertSetup(Setup* setup, MainConfig* main)
 {
+    SymbolTable* symbols = supervisor->getSymbols();
+    
     juce::String objname = juce::String("Setup:") + setup->getName();
 
     ValueSet* neu = main->find(objname);
@@ -386,20 +398,20 @@ void Upgrader::convertSetup(Setup* setup, MainConfig* main)
         main->add(neu);
     }
 
-    neu->setString(ParamDefaultPreset, setup->getDefaultPresetName());
-    convertEnum(ParamDefaultSyncSource, setup->getSyncSource(), neu);
-    convertEnum(ParamDefaultTrackSyncUnit, setup->getSyncTrackUnit(), neu);
-    convertEnum(ParamSlaveSyncUnit, setup->getSyncUnit(), neu);
-    neu->setBool(ParamManualStart, setup->isManualStart());
-    neu->setInt(ParamMinTempo, setup->getMinTempo());
-    neu->setInt(ParamMaxTempo, setup->getMaxTempo());
-    neu->setInt(ParamBeatsPerBar, setup->getBeatsPerBar());
-    convertEnum(ParamMuteSyncMode, setup->getMuteSyncMode(), neu);
-    convertEnum(ParamResizeSyncAdjust, setup->getResizeSyncAdjust(), neu);
-    convertEnum(ParamSpeedSyncAdjust, setup->getSpeedSyncAdjust(), neu);
-    convertEnum(ParamRealignTime, setup->getRealignTime(), neu);
-    convertEnum(ParamOutRealign, setup->getOutRealignMode(), neu);
-    neu->setInt(ParamActiveTrack, setup->getActiveTrack());
+    neu->setString(symbols->getName(ParamDefaultPreset), setup->getDefaultPresetName());
+    convertEnum(symbols->getName(ParamDefaultSyncSource), setup->getSyncSource(), neu);
+    convertEnum(symbols->getName(ParamDefaultTrackSyncUnit), setup->getSyncTrackUnit(), neu);
+    convertEnum(symbols->getName(ParamSlaveSyncUnit), setup->getSyncUnit(), neu);
+    neu->setBool(symbols->getName(ParamManualStart), setup->isManualStart());
+    neu->setInt(symbols->getName(ParamMinTempo), setup->getMinTempo());
+    neu->setInt(symbols->getName(ParamMaxTempo), setup->getMaxTempo());
+    neu->setInt(symbols->getName(ParamBeatsPerBar), setup->getBeatsPerBar());
+    convertEnum(symbols->getName(ParamMuteSyncMode), setup->getMuteSyncMode(), neu);
+    convertEnum(symbols->getName(ParamResizeSyncAdjust), setup->getResizeSyncAdjust(), neu);
+    convertEnum(symbols->getName(ParamSpeedSyncAdjust), setup->getSpeedSyncAdjust(), neu);
+    convertEnum(symbols->getName(ParamRealignTime), setup->getRealignTime(), neu);
+    convertEnum(symbols->getName(ParamOutRealign), setup->getOutRealignMode(), neu);
+    neu->setInt(symbols->getName(ParamActiveTrack), setup->getActiveTrack());
 
     SetupTrack* track = setup->getTracks();
     int trackNumber = 1;
@@ -412,6 +424,8 @@ void Upgrader::convertSetup(Setup* setup, MainConfig* main)
 
 void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* setup)
 {
+    SymbolTable* symbols = supervisor->getSymbols();
+    
     ValueSet* tset = setup->getSubset(trackNumber);
     if (tset == nullptr) {
         tset = new ValueSet();
@@ -419,33 +433,33 @@ void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* s
         setup->addSubset(tset, trackNumber);
     }
 
-    tset->setString(ParamTrackName, track->getName());
-    tset->setString(ParamTrackPreset, track->getTrackPresetName());
+    tset->setString(symbols->getName(ParamTrackName), track->getName());
+    tset->setString(symbols->getName(ParamTrackPreset), track->getTrackPresetName());
 
     // why is this a parameter?  it's transient
     //tset->setString(ParamActivePreset, track->getActivePreset());
 
-    tset->setBool(ParamFocus, track->isFocusLock());
+    tset->setBool(symbols->getName(ParamFocus), track->isFocusLock());
 
     // should have been upgraded to a name by now
     juce::String gname = track->getGroupName();
     if (gname.length() > 0)
-      tset->setString(ParamGroup, gname.toUTF8());
+      tset->setString(symbols->getName(ParamGroup), gname.toUTF8());
         
-    tset->setBool(ParamMono, track->isMono());
-    tset->setInt(ParamFeedback, track->getFeedback());
-    tset->setInt(ParamAltFeedback, track->getAltFeedback());
-    tset->setInt(ParamInput, track->getInputLevel());
-    tset->setInt(ParamOutput, track->getOutputLevel());
-    tset->setInt(ParamPan, track->getPan());
+    tset->setBool(symbols->getName(ParamMono), track->isMono());
+    tset->setInt(symbols->getName(ParamFeedback), track->getFeedback());
+    tset->setInt(symbols->getName(ParamAltFeedback), track->getAltFeedback());
+    tset->setInt(symbols->getName(ParamInput), track->getInputLevel());
+    tset->setInt(symbols->getName(ParamOutput), track->getOutputLevel());
+    tset->setInt(symbols->getName(ParamPan), track->getPan());
     
-    convertEnum(ParamSyncSource, track->getSyncSource(), tset);
-    convertEnum(ParamTrackSyncUnit, track->getSyncTrackUnit(), tset);
+    convertEnum(symbols->getName(ParamSyncSource), track->getSyncSource(), tset);
+    convertEnum(symbols->getName(ParamTrackSyncUnit), track->getSyncTrackUnit(), tset);
         
-    tset->setInt(ParamAudioInputPort, track->getAudioInputPort());
-    tset->setInt(ParamAudioOutputPort, track->getAudioOutputPort());
-    tset->setInt(ParamPluginInputPort, track->getPluginInputPort());
-    tset->setInt(ParamPluginOutputPort, track->getPluginOutputPort());
+    tset->setInt(symbols->getName(ParamAudioInputPort), track->getAudioInputPort());
+    tset->setInt(symbols->getName(ParamAudioOutputPort), track->getAudioOutputPort());
+    tset->setInt(symbols->getName(ParamPluginInputPort), track->getPluginInputPort());
+    tset->setInt(symbols->getName(ParamPluginOutputPort), track->getPluginOutputPort());
 
     // these are defined as parameters but haven't been in the XML for some reason
     /*

@@ -42,6 +42,8 @@
 #include <vector>
 #include <JuceHeader.h>
 
+#include "SymbolId.h"
+
 /**
  * Symbols are normally associated with the code at various
  * levels of the system architecture.  The levels are not necessary
@@ -201,6 +203,10 @@ class Symbol
      * they are usually unique within the set of symbols at a particular level.
      * In cases where multiple levels need to process the same symbol
      * in different ways, a level-specific id may be defined.
+     *
+     * UPDATE: No, symbol ids should be unique, because they are used in
+     * code for some things rather than names.  Revisit the comments
+     * around this and make this a SymbolId rather than an unsigned char
      */
     unsigned char id = 0;
 
@@ -311,12 +317,17 @@ class SymbolTable
      */
     void clear();
 
+    void buildIdMap();
+    Symbol* getSymbol(SymbolId id);
+    juce::String getName(SymbolId id);
+
   private:
 
     // the set of defined symbols
     // std::vector<Symbol*> symbols;
     juce::OwnedArray<Symbol> symbols;
-    juce::HashMap<juce::String, Symbol*> symbolMap;
+    juce::HashMap<juce::String, Symbol*> nameMap;
+    juce::Array<Symbol*> idMap;
     
 };
 

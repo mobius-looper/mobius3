@@ -22,13 +22,13 @@
 #include "model/XmlRenderer.h"
 #include "model/UIAction.h"
 #include "model/Query.h"
-#include "model/UIParameter.h"
+//#include "model/UIParameter.h"
 #include "model/MobiusState.h"
 #include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
+#include "model/SymbolId.h"
 #include "model/HelpCatalog.h"
-#include "model/UIParameterIds.h"
 #include "model/ScriptConfig.h"
 #include "model/FunctionProperties.h"
 #include "model/ScriptProperties.h"
@@ -259,6 +259,7 @@ bool Supervisor::start()
     meter("Initialize symbols");
 
     // initialize symbol table
+    // this MUST be done before Upgrader
     symbolizer.initialize();
 
     // install variables
@@ -1736,7 +1737,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
         // no subcomponents are listening on parameters at the moment
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbols::ActiveLayout: {
+            case ParamActiveLayout: {
                 // again with the fucking object list iteration
                 int ordinal = action->value;
                 for (int i = 0 ; i < config->layouts.size() ; i++) {
@@ -1757,7 +1758,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 handled = true;
             }
                 break;
-            case UISymbols::ActiveButtons: {
+            case ParamActiveButtons: {
                 int ordinal = action->value;
                 for (int i = 0 ; i < config->buttonSets.size() ; i++) {
                     if (i == ordinal) {
@@ -1777,20 +1778,20 @@ bool Supervisor::doUILevelAction(UIAction* action)
     }
     else if (s->behavior == BehaviorFunction) {
         switch (s->id) {
-            case UISymbols::ReloadScripts: {
+            case FuncReloadScripts: {
                 menuLoadScripts(false);
                 handled = true;
             }
                 break;
-            case UISymbols::ReloadSamples: {
+            case FuncReloadSamples: {
                 menuLoadSamples(false);
                 handled = true;
             }
-            case UISymbols::ShowPanel: {
+            case FuncShowPanel: {
                 mainWindow->showPanel(action->arguments);
                 handled = true;
             }
-            case UISymbols::Message: {
+            case FuncMessage: {
                 mobiusMessage(juce::String(action->arguments));
                 handled = true;
             }
@@ -1845,6 +1846,7 @@ void Supervisor::kludgeCoreSymbols()
     names.add("NextTrack");
     names.add("PrevTrack");
     names.add("SelectTrack");
+
     for (auto name : names) {
         Symbol* s = symbols.find(name);
         if (s == nullptr) {
@@ -1957,7 +1959,7 @@ bool Supervisor::doQuery(Query* query)
         UIConfig* config = getUIConfig();
         int value = -1;
         switch (s->id) {
-            case UISymbols::ActiveLayout: {
+            case ParamActiveLayout: {
                 int index = 0;
                 for (auto layout : config->layouts) {
                     if (layout->name == config->activeLayout) {
@@ -1974,7 +1976,7 @@ bool Supervisor::doQuery(Query* query)
             }
                 break;
                 
-            case UISymbols::ActiveButtons: {
+            case ParamActiveButtons: {
                 // gag, there has to be a way to generalize this with OwnedArray in the fucking way
                 int index = 0;
                 for (auto set : config->buttonSets) {
@@ -2023,12 +2025,12 @@ juce::String Supervisor::getParameterLabel(Symbol* s, int ordinal)
         // it's one of ours
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbols::ActiveLayout: {
+            case ParamActiveLayout: {
                 if (ordinal >= 0 && ordinal < config->layouts.size())
                   label = config->layouts[ordinal]->name;
             }
                 break;
-            case UISymbols::ActiveButtons: {
+            case ParamActiveButtons: {
                 if (ordinal >= 0 && ordinal < config->buttonSets.size())
                   label = config->buttonSets[ordinal]->name;
             }
@@ -2061,11 +2063,11 @@ int Supervisor::getParameterMax(Symbol* s)
     if (s->level == LevelUI) {
         UIConfig* config = getUIConfig();
         switch (s->id) {
-            case UISymbols::ActiveLayout:
+            case ParamActiveLayout:
                 max = config->layouts.size() - 1;
                 break;
 
-            case UISymbols::ActiveButtons:
+            case ParamActiveButtons:
                 max = config->buttonSets.size() - 1;
                 break;
                 

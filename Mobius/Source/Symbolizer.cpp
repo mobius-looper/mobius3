@@ -8,13 +8,13 @@
 
 #include "util/Trace.h"
 #include "model/Symbol.h"
+#include "model/SymbolId.h"
 #include "model/FunctionDefinition.h"
 #include "model/FunctionProperties.h"
 #include "model/UIParameter.h"
 #include "model/ParameterProperties.h"
 
 #include "Supervisor.h"
-
 #include "Symbolizer.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -24,38 +24,40 @@
 //////////////////////////////////////////////////////////////////////
 
 /**
- * format: id, name, public, signature
+ * Functions
+ * format: id, public, signature
  */
 UISymbols::Function UISymbols::Functions[] = {
 
     // public
-    {ParameterUp,   "UIParameterUp",    true, nullptr},
-    {ParameterDown, "UIParameterDown",  true, nullptr},
-    {ParameterInc,  "UIParameterInc",   true, nullptr},
-    {ParameterDec,  "UIParameterDec",   true, nullptr},
-    {ReloadScripts, "ReloadScripts",    true, nullptr},
-    {ReloadSamples, "ReloadSamples",    true, nullptr},
-    {ShowPanel,     "ShowPanel",        true, nullptr},
-    {Message,       "Message",          true, nullptr},
+    {FuncParameterUp, true, nullptr},
+    {FuncParameterDown, true, nullptr},
+    {FuncParameterInc, true, nullptr},
+    {FuncParameterDec, true, nullptr},
+    {FuncReloadScripts, true, nullptr},
+    {FuncReloadSamples, true, nullptr},
+    {FuncShowPanel, true, nullptr},
+    {FuncMessage, true, nullptr},
     
     // scripts
-    {ScriptAddButton, "AddButton", false, nullptr},
-    {ScriptListen, "Listen", false, nullptr},
+    {FuncScriptAddButton, false, nullptr},
+    {FuncScriptListen, false, nullptr},
     
-    {IdNone, nullptr}
+    {SymbolIdNone, nullptr}
 };
 
 /**
- * format: id, name, displayName, public
+ * Parameters
+ * format: id, displayname
  */
 UISymbols::Parameter UISymbols::Parameters[] = {
 
     // public
-    {ActiveLayout, "activeLayout", "Active Layout", true},
-    {ActiveButtons, "activeButtons", "Active Buttons", true},
-    {BindingOverlays, "bindingOverlays", "Binding Overlays", true},
+    {ParamActiveLayout, "Active Layout"},
+    {ParamActiveButtons, "Active Buttons"},
+    {ParamBindingOverlays, "Binding Overlays"},
     
-    {IdNone, nullptr}
+    {SymbolIdNone, nullptr}
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -76,49 +78,190 @@ Symbolizer::~Symbolizer()
 /**
  * This does the following things:
  *
- * Interns symbols for the static FunctionDefinition and UIParameter objects.
- * 
- * Reads the symbols.xml file and interns function and parameter symbols and
- * fleshes out the FunctionProperties and ParameterProperties objects.
- * This will eventually replace the static definition objects.
+ * Interns symbols for the static SymbolDefinitions in model/SymbolId
  *
- * Interns a few UI symbols that are not defined in symbols.xml or with static
- * objects.  This is the way I'd like to do most things that are simple and don't
- * need field tweaking of the definition.
+ * Adds Symbol annotations defined by static UISymbols above.  This style of using
+ * static objects is what I would like to use for most simple Symbols that
+ * don't need user tweaking of the definitions.
+ *
+ * Adds Symbol annotations defined by the static model/UIParameter and
+ * model/FunctionDefinition objects.  This is the old model for definitions
+ * that is being phased out.
+ * 
+ * Reads the symbols.xml file and adds symbol annotations for both functions
+ * and parameters. This will eventually replace the static definition objects.
+ * Externalizing the symbol definitions in a file allows the me or the user
+ * to tweak definitions after installation.
  *
  * Reads the properties.xml file and adorns the Symbols with user-defined options.
+ * These are not part of the symbol definition, they are more like user preferences
+ * and have a UI so that users don't have to edit XML.  Still not entirely
+ * happy with this.
+ *
+ * For the upgrader, and possibly others, it builds a lookup table for mapping
+ * parameter id numbers to names.
  */
 void Symbolizer::initialize()
 {
-    // install the older static FunctionDefinitions
-    for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
-        FunctionDefinition* def = FunctionDefinition::Instances[i];
-        Symbol* s = supervisor->getSymbols()->intern(def->name);
-        s->behavior = BehaviorFunction;
-        // start them out in core, Mobuis can change that
-        s->level = LevelCore;
-        // we have an ordinal but that won't be used any more
-        s->function = def;
-    }
-
-    // install older UIParameter definitions
-    for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
-        UIParameter* def = UIParameter::Instances[i];
-        Symbol* s = supervisor->getSymbols()->intern(def->name);
-        s->behavior = BehaviorParameter;
-        s->level = LevelCore;
-        s->parameter = def;
-    }
-
-    // load the new symbols.xml definition file
-    loadSymbolDefinitions();
+    internSymbols();
     
-    // install newer symbols for UI functions and parameters
     installUISymbols();
 
-    // install symbol properties
+    installOldDefinitions();
+    
+    loadSymbolDefinitions();
+    
     loadSymbolProperties();
 }
+
+/**
+ * Start the internment of symbols by iterating over the SymbolDefinition
+ * objects defined in model/SymbolId.cpp.
+ *
+ * Also builds a table for quickly mapping ids to symbols.
+ */
+void Symbolizer::internSymbols()
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+
+    // Symbol represents ids as an unsigned char, while the code always
+    // deals with the SymbolId enumeration, until that is fixed make damn
+    // sure that SymbolId will fit
+    int idmax = (int)SymbolIdMax; // avoids the compiler warning about "conditional expression is constant"
+    if (idmax > 200)
+      Trace(1, "Symbolizer: Getting really close to id overflow");
+
+    for (int i = 0 ; SymbolDefinitions[i].name != nullptr ; i++) {
+        SymbolDefinition* def = &(SymbolDefinitions[i]);
+        Symbol* s = symbols->find(def->name);
+        if (s != nullptr) {
+            // should not have duplicates in this array
+            Trace(1, "Symbolizer: Multiple definitions for symbol %s", def->name);
+        }
+        else {
+            s = symbols->intern(def->name);
+            s->id = (unsigned char)(def->id);
+        }
+    }
+
+    // now that they are all there, build the id/name mapping table
+    symbols->buildIdMap();
+    
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// UI Symbols
+//
+//////////////////////////////////////////////////////////////////////
+
+void Symbolizer::installUISymbols()
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    
+    for (int i = 0 ; UISymbols::Functions[i].id != SymbolIdNone ; i++) {
+        UISymbols::Function* f = &(UISymbols::Functions[i]);
+        
+        Symbol* s = symbols->getSymbol(f->id);
+        if (s == nullptr) {
+            Trace(1, "Symbolizer: Missing SymbolDefinition for function %d", f->id);
+        }
+        else {
+            s->behavior = BehaviorFunction;
+            s->level = LevelUI;
+            if (!f->visible)
+              s->hidden = true;
+            // todo: parse and store the signature
+            // atm, these don't need full blown FunctionProperties annotations
+        }
+    }
+    
+    for (int i = 0 ; UISymbols::Parameters[i].id != SymbolIdNone ; i++) {
+        UISymbols::Parameter* p = &(UISymbols::Parameters[i]);
+        
+        Symbol* s = symbols->getSymbol(p->id);
+        if (s == nullptr) {
+            Trace(1, "Symbolizer: Missing SymbolDefinition for parameter %d", p->id);
+        }
+        else {
+            s->behavior = BehaviorParameter;
+            s->level = LevelUI;
+            if (p->displayName == nullptr)
+              s->hidden = true;
+
+            // !! the assumption right now is that these are all TypeStructure
+            // but that won't always be true, need more of a definition structure
+            ParameterProperties* props = new ParameterProperties();
+            if (p->displayName != nullptr)
+              props->displayName = juce::String(p->displayName);
+            props->type = TypeStructure;
+            props->scope = ScopeUI;
+            s->parameterProperties.reset(props);
+        }
+    }
+}    
+
+//////////////////////////////////////////////////////////////////////
+//
+// Old Static Definitions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Adorn Symbols using the old FunctionDefinition and UIParameter
+ * static objects.  There should be complete overlap now with things
+ * defined in the symbols.xml file.
+ *
+ * These do not use FunctionProperties and ParameterProperties, they
+ * use the older convention of putting a pointer to the FunctionDefinition
+ * and ParameterDefinition directly on the symbol.  When symbols.xml is loaded
+ * the symbols will get properties objects that should match.
+ *
+ * Soon, this will all go away but we have to rewrite the ui/config classes
+ * to use symbols instead of UIParameters.
+ */
+void Symbolizer::installOldDefinitions()
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    
+    // adorn Symbols from the older static FunctionDefinitions
+    // !! this needs to be replaced with a FunctionProperties object
+    for (int i = 0 ; i < FunctionDefinition::Instances.size() ; i++) {
+        FunctionDefinition* def = FunctionDefinition::Instances[i];
+        Symbol* s = symbols->find(def->name);
+        if (s == nullptr) {
+            // something was missing in SymbolDefinitions
+            Trace(1, "Symbolizer: Missing SymbolDefinition for %s", def->name);
+        }
+        else {
+            s->behavior = BehaviorFunction;
+            // start them out in core, Mobuis can change that
+            s->level = LevelCore;
+            // we have an ordinal but that won't be used any more
+            s->function = def;
+        }
+    }
+    
+    // adorn Symbols fromolder UIParameter definitions
+    for (int i = 0 ; i < UIParameter::Instances.size() ; i++) {
+        UIParameter* def = UIParameter::Instances[i];
+        Symbol* s = symbols->find(def->name);
+        if (s == nullptr) {
+            Trace(1, "Symbolizer: Missing SymbolDefinition for %s", def->name);
+        }
+        else {
+            s->behavior = BehaviorParameter;
+            s->level = LevelCore;
+            s->parameter = def;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// symbols.xml File Loading
+//
+//////////////////////////////////////////////////////////////////////
 
 void Symbolizer::loadSymbolDefinitions()
 {
@@ -159,12 +302,6 @@ void Symbolizer::xmlError(const char* msg, juce::String arg)
     else
       Trace(1, fullmsg.toUTF8(), arg.toUTF8());
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Functions
-//
-//////////////////////////////////////////////////////////////////////
 
 void Symbolizer::parseFunction(juce::XmlElement* root)
 {
@@ -214,12 +351,6 @@ SymbolLevel Symbolizer::parseLevel(juce::String lname)
 
     return slevel;
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Parameters
-//
-//////////////////////////////////////////////////////////////////////
 
 void Symbolizer::parseParameterScope(juce::XmlElement* el)
 {
@@ -508,46 +639,6 @@ void Symbolizer::addProperty(juce::XmlElement& root, Symbol* s, juce::String nam
     prop->setAttribute("value", value);
     root.addChildElement(prop);
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// New Static Definitions
-//
-//////////////////////////////////////////////////////////////////////
-
-void Symbolizer::installUISymbols()
-{
-    for (int i = 0 ; UISymbols::Functions[i].name != nullptr ; i++) {
-        UISymbols::Function* f = &(UISymbols::Functions[i]);
-        
-        Symbol* s = supervisor->getSymbols()->intern(f->name);
-        s->behavior = BehaviorFunction;
-        s->id = (unsigned char)f->id;
-        s->level = LevelUI;
-        if (!f->visible)
-          s->hidden = true;
-    }
-    
-    for (int i = 0 ; UISymbols::Parameters[i].name != nullptr ; i++) {
-        UISymbols::Parameter* p = &(UISymbols::Parameters[i]);
-        
-        Symbol* s = supervisor->getSymbols()->intern(p->name);
-        s->behavior = BehaviorParameter;
-        s->id = (unsigned char)p->id;
-        s->level = LevelUI;
-        if (!p->visible)
-          s->hidden = true;
-
-        // !! the assumption right now is that these are all structures
-        // but that won't always be true, need more of a definition structure
-        ParameterProperties* props = new ParameterProperties();
-        if (p->displayName != nullptr)
-          props->displayName = juce::String(p->displayName);
-        props->type = TypeStructure;
-        props->scope = ScopeUI;
-        s->parameterProperties.reset(props);
-    }
-}    
 
 /****************************************************************************/
 /****************************************************************************/

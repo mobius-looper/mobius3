@@ -17,10 +17,10 @@
 #include "../../model/UIConfig.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/Preset.h"
-#include "../../model/UIParameter.h"
 #include "../../model/ParameterProperties.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
+#include "../../model/SymbolId.h"
 #include "../../model/Query.h"
 
 #include "../../Supervisor.h"
@@ -291,7 +291,7 @@ bool ParametersElement::doAction(UIAction* action)
 
     switch (action->symbol->id) {
         
-        case UISymbols::ParameterUp: {
+        case FuncParameterUp: {
             if (cursor > 0) {
                 cursor--;
                 repaint();
@@ -300,7 +300,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbols::ParameterDown: {
+        case FuncParameterDown: {
             if (cursor < (parameters.size() - 1)) {
                 cursor++;
                 repaint();
@@ -309,7 +309,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbols::ParameterInc: {
+        case FuncParameterInc: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
             int max = statusArea->getSupervisor()->getParameterMax(ps->symbol);
@@ -327,7 +327,7 @@ bool ParametersElement::doAction(UIAction* action)
         }
             break;
             
-        case UISymbols::ParameterDec: {
+        case FuncParameterDec: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
             // can assume that the minimum will always be zero
@@ -342,6 +342,7 @@ bool ParametersElement::doAction(UIAction* action)
             handled = true;
         }
             break;
+        default: break;
     }
     
     return handled;
