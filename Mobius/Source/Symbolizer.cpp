@@ -129,7 +129,7 @@ void Symbolizer::internSymbols()
     // sure that SymbolId will fit
     int idmax = (int)SymbolIdMax; // avoids the compiler warning about "conditional expression is constant"
     if (idmax > 200)
-      Trace(1, "Symbolizer: Getting really close to id overflow");
+      Trace(1, "Symbolizer: Symbol id overflow %d", idmax);
 
     for (int i = 0 ; SymbolDefinitions[i].name != nullptr ; i++) {
         SymbolDefinition* def = &(SymbolDefinitions[i]);
