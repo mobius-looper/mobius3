@@ -241,8 +241,8 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
         else if (usage == Output)
           name = config->pluginMidiOutput;
         
-        else if (usage == OutputExport)
-          name = getFirstName(config->pluginMidiOutputExport, usage);
+        else if (usage == Export)
+          name = getFirstName(config->pluginMidiExport, usage);
         
         else if (usage == OutputSync)
           name = getFirstName(config->pluginMidiOutputSync, usage);
@@ -260,8 +260,8 @@ juce::String MidiManager::getDeviceName(MachineConfig* config, Usage usage)
         else if (usage == Output)
           name = config->midiOutput;
         
-        else if (usage == OutputExport)
-          name = getFirstName(config->midiOutputExport, usage);
+        else if (usage == Export)
+          name = getFirstName(config->midiExport, usage);
         
         else if (usage == OutputSync)
           name = getFirstName(config->midiOutputSync, usage);
@@ -283,7 +283,7 @@ juce::String MidiManager::getUsageName(Usage usage)
         case Input: name = "Input"; break;
         case InputSync: name = "Input Sync"; break;
         case Output: name = "Output"; break;
-        case OutputExport: name = "Output Export"; break;
+        case Export: name = "Export"; break;
         case OutputSync: name = "Output Sync"; break;
         case Thru: name = "Thu"; break;
     }
@@ -327,17 +327,16 @@ void MidiManager::reconcileInputs(MachineConfig* config)
     inputNames = juce::StringArray::fromTokens(csv, ",", "");
     
     // upgrade old configurations that kept this out of the main name list
-    inputSyncName = getDeviceName(config, InputSync);
-    if (!inputNames.contains(inputSyncName))
-      inputNames.add(inputSyncName);
+    juce::String syncName = getDeviceName(config, InputSync);
+    if (syncName.length() > 0 && !inputNames.contains(syncName))
+      inputNames.add(syncName);
 
-    for (auto name : inputNames) {
-        (void)findOrOpenInput(name);
-    }
+    for (auto name : inputNames)
+      (void)findOrOpenInput(name);
 
     // get a handle to the special sync input
-    if (inputSyncName.length() > 0)
-      inputSyncDevice = findOrOpenInput(inputSyncName);
+    if (syncName.length() > 0)
+      inputSyncDevice = findInput(syncName);
 
     closeUnusedInputs();
 }
@@ -402,7 +401,8 @@ juce::MidiInput* MidiManager::findOrOpenInput(juce::String name)
 /**
  * Open an input device if not already open.
  * This is designed to be called from MidiDevicesPanel when aa device is checked.
- * The name is added to the name list for this usage to reflect the panel.
+ * The device is always added to the main input list, opened for the usage,
+ * and saved in the usage pointer.
  */
 void MidiManager::openInput(juce::String name, Usage usage)
 {
@@ -411,10 +411,9 @@ void MidiManager::openInput(juce::String name, Usage usage)
     (void)findOrOpenInput(name);
     
     if (usage == InputSync) {
-        inputSyncName = name;
         inputSyncDevice = findOrOpenInput(name);
         // change the sync device doesn't automatically unselect it
-        // for general use any more
+        // for general use any more, so this should do nothing
         closeUnusedInputs();
     }
 }
@@ -422,21 +421,21 @@ void MidiManager::openInput(juce::String name, Usage usage)
 /**
  * Close one of the input devices.
  * Removing a usage doesn't remove the device from the main list.
+ *
+ * If you deselect one of the main devices, it is also deselected
+ * for any usages.
  */
 void MidiManager::closeInput(juce::String name, Usage usage)
 {
     if (usage == Input) {
-        // if this is also selected for another usage, it can't be closed
-        if (name != inputSyncName)
-            inputNames.removeString(name);
+        inputNames.removeString(name);
+        
+        if (inputSyncDevice != nullptr && inputSyncDevice->getName() == name)
+          inputSyncDevice = nullptr;
     }
     else if (usage == InputSync) {
-        // igmore if this isn't the one we had selected for sync
-        if (inputSyncName == name) {
-            // unpin the name reference
-            inputSyncName = "";
-            inputSyncDevice = nullptr;
-        }
+        if (inputSyncDevice != nullptr && inputSyncDevice->getName() == name)
+          inputSyncDevice = nullptr;
     }
     closeUnusedInputs();
 }
@@ -446,7 +445,7 @@ void MidiManager::closeUnusedInputs()
     int index = 0;
     while (index < inputDevices.size()) {
         juce::MidiInput* dev = inputDevices[index];
-        if (inputNames.contains(dev->getName()) || dev->getName() == inputSyncName) {
+        if (inputNames.contains(dev->getName())) {
             // still need this one
             index++;
         }
@@ -515,16 +514,21 @@ void MidiManager::reconcileOutputs(MachineConfig* config)
 {
     juce::String csv = getDeviceName(config, Output);
     outputNames = juce::StringArray::fromTokens(csv, ",", "");
-
-    juce::String export = getDeviceName(config, OutputExport);
-    juce::String sync = getDeviceName(config, OutputSync);
-    juce::String thru = getDeviceName(config, OutputThru);
+    
+    juce::String exportName = getDeviceName(config, Export);
+    juce::String syncName = getDeviceName(config, OutputSync);
+    juce::String thruName = getDeviceName(config, Thru);
     
     // upgrade old configurations to put the usage-specific devices
     // on the main list
-    if (!outputNames.contains(export)) outputNames.add(export);
-    if (!outputNames.contains(sync)) outputNames.add(sync);
-    if (!outputNames.contains(thru)) outputNames.add(thru);
+    if (exportName.length() > 0 && !outputNames.contains(exportName))
+      outputNames.add(exportName);
+    
+    if (syncName.length() > 0 && !outputNames.contains(syncName))
+      outputNames.add(syncName);
+    
+    if (thruName.length() > 0 && !outputNames.contains(thruName))
+      outputNames.add(thruName);
 
     // open them all
     for (auto name : outputNames) {
@@ -532,9 +536,9 @@ void MidiManager::reconcileOutputs(MachineConfig* config)
     }
 
     // get device handles for the usages
-    openOutputInternal(name, OutputExport);
-    openOutputInternal(name, OutputSync);
-    openOutputInternal(name, OutputThru);
+    openOutputInternal(exportName, Export);
+    openOutputInternal(syncName, OutputSync);
+    openOutputInternal(thruName, Thru);
     
     closeUnusedOutputs();
 }
@@ -566,10 +570,12 @@ void MidiManager::openOutputInternal(juce::String name, Usage usage)
         // just a general unspecific output
         (void)findOrOpenOutput(name);
     }
-    else if (usage == OutputExport)
+    else if (usage == Export)
       exportDevice = findOrOpenOutput(name);
+    
     else if (usage == OutputSync)
       outputSyncDevice = findOrOpenOutput(name);
+    
     else if (usage == Thru)
       thruDevice = findOrOpenOutput(name);
 }
@@ -590,9 +596,9 @@ void MidiManager::closeOutput(juce::String name, Usage usage)
     if (usage == Output) {
 
         if (outputNames.contains(name)) {
-            outputNames.remove(name);
+            outputNames.removeString(name);
             
-            // method 2, deselecting it from the main list, deselects it from all others
+            // method 2, deselecting it from the main list, deselects it from all usages
             if (exportDevice != nullptr && exportDevice->getName() == name)
               exportDevice = nullptr;
         
@@ -605,9 +611,9 @@ void MidiManager::closeOutput(juce::String name, Usage usage)
             closeUnusedOutputs();
         }
     }
-    else if (usage == OutputExport) {
+    else if (usage == Export) {
         if (exportDevice != nullptr && exportDevice->getName() == name) {
-            outputSyncDevice = nullptr;
+            exportDevice = nullptr;
             closeUnusedOutputs();
         }
     }
@@ -685,21 +691,21 @@ void MidiManager::closeUnusedOutputs()
     int index = 0;
     while (index < outputDevices.size()) {
         juce::MidiOutput* dev = outputDevices[index];
-        if (inUse(dev))
-          index++;
+        if (outputNames.contains(dev->getName())) {
+            // still need this one
+            index++;
+        }
         else {
+            // close and delete this one
             monitorMessage("Closing output " + dev->getName());
+            
+            if (dev == exportDevice) exportDevice = nullptr;
+            if (dev == outputSyncDevice) outputSyncDevice = nullptr;
+            if (dev == thruDevice) thruDevice = nullptr;
+            
             outputDevices.removeObject(dev, true);
         }
     }
-}
-
-/**
- * Return true if the output device is in use.
- */
-bool MidiManager::inUse(juce::MidiOutput* dev)
-{
-    return (dev == outputDevice || dev == outputSyncDevice || dev == thruDevice);
 }
 
 /**
@@ -711,7 +717,7 @@ void MidiManager::closeAllOutputs()
       monitorMessage("Closing output " + dev->getName());
 
     outputDevices.clear();
-    outputDevice = nullptr;
+    exportDevice = nullptr;
     outputSyncDevice = nullptr;
     thruDevice = nullptr;
 }
@@ -735,23 +741,35 @@ juce::StringArray MidiManager::getOpenOutputDevices()
 //
 //////////////////////////////////////////////////////////////////////
 
-bool MidiManager::hasOutputDevice()
+bool MidiManager::hasOutputDevice(Usage usage)
 {
-    return (outputDevice != nullptr);
+    bool has = false;
+
+    if (usage == Export)
+      has = (exportDevice != nullptr);
+    
+    else if (usage == OutputSync)
+      has = (outputSyncDevice != nullptr) || (exportDevice != nullptr);
+    
+    else if (usage == Thru)
+      has = (thruDevice != nullptr);
+
+    return has;
 }
 
 void MidiManager::send(juce::MidiMessage msg)
 {
-    if (outputDevice)
-      outputDevice->sendMessageNow(msg);
+    if (exportDevice)
+      exportDevice->sendMessageNow(msg);
 }
 
 void MidiManager::sendSync(juce::MidiMessage msg)
 {
     if (outputSyncDevice)
       outputSyncDevice->sendMessageNow(msg);
-    else if (outputDevice)
-      outputDevice->sendMessageNow(msg);
+    
+    else if (exportDevice)
+      exportDevice->sendMessageNow(msg);
 }
 
 //////////////////////////////////////////////////////////////////////

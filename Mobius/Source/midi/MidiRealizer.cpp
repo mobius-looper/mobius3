@@ -518,7 +518,7 @@ void MidiRealizer::start()
     if (SyncTraceEnabled)
       Trace(2, "MidiRealizer::start Set pendingStart");
     
-    if (!midiManager->hasOutputDevice()) {
+    if (!midiManager->hasOutputDevice(MidiManager::OutputSync)) {
         Trace(1, "MidiTransport: No MIDI Output device\n");
         // note that if you call Supervisor::alert here it will
         // try to show the AlertPanel which we can't do without

@@ -44,6 +44,9 @@
  * It might be clearer to skip the checkbox wall and instead just allow selecting multiple
  * input and output devices.  Then for usage provide a combo box to select which of the opened
  * device should be used for that purpose.
+ *
+ * Because the rules for device dependency are not simple, don't try to enforce them here.
+ * As we open/close devices rebuild the table to reflect what the MidiManager actually has.
  */
 
 #include <JuceHeader.h>
@@ -212,13 +215,53 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
     
     // reflect the state in the DeviceTableRow model
     if (state) {
-        // All columns except Input allow only one device to be selected
-        // so unckeck the other ones.  This has to be kept in sync with what
-        // MidiManager does when you call openOutput since we're only doing
-        // checkbox state here, the mutex of the open devices is done
-        // by MidiManager
-        if (mdcol != MidiColumnInput && mdcol != MidiColumnPluginInput)
-          mdt->uncheckOthers(mdcol, row);
+        // when turning on a checkbox, all columns except the primary input/output
+        // devices are mutually exclusive
+        // todo: it would be better if we let MidiManager do what it does and just
+        // reload the tables to reflect that state, but that requires a load() variant
+        // that operates from MidiManager rather than DeviceConfig since DeviceConfig
+        // hasn't been updated yet
+        // OR just always use MidiManager and assume it is following DeviceConfig
+        // probelem is that MidiManager only uses half of the config, either app or plugin
+        // and expects editor to manage the other half
+        if (mdcol != MidiColumnInput && mdcol != MidiColumnPluginInput &&
+            mdcol != MidiColumnOutput && mdcol != MidiColumnPluginOutput) {
+            
+            mdt->uncheckOthers(mdcol, row);
+            
+            // checking any of these forces the device on the main list
+            if (mdcol == MidiColumnInputSync)
+              mdt->forceCheck(MidiColumnInput, row);
+
+            else if (mdcol == MidiColumnPluginInputSync)
+              mdt->forceCheck(MidiColumnPluginInput, row);
+              
+            else if (mdcol == MidiColumnExport || mdcol == MidiColumnOutputSync || mdcol == MidiColumnThru)
+              mdt->forceCheck(MidiColumnOutput, row);
+            
+            else 
+              mdt->forceCheck(MidiColumnPluginOutput, row);
+        }
+    }
+    else {
+        // when turning off a checkbox, if this is one if the primary devices then
+        // the usages also all turn off
+        if (mdcol == MidiColumnInput) {
+            mdt->forceUncheck(MidiColumnInputSync, row);
+        }
+        else if (mdcol == MidiColumnPluginInput) {
+            mdt->forceUncheck(MidiColumnPluginInputSync, row);
+        }
+        if (mdcol == MidiColumnOutput) {
+            mdt->forceUncheck(MidiColumnExport, row);
+            mdt->forceUncheck(MidiColumnOutputSync, row);
+            mdt->forceUncheck(MidiColumnThru, row);
+        }
+        else if (mdcol == MidiColumnPluginOutput) {
+            mdt->forceUncheck(MidiColumnPluginExport, row);
+            mdt->forceUncheck(MidiColumnPluginOutputSync, row);
+            mdt->forceUncheck(MidiColumnPluginThru, row);
+        }
     }
     
     // reflect the state in the open devices
@@ -242,6 +285,12 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
             break;
         case MidiColumnOutput: {
             usage = MidiManager::Usage::Output;
+            output = true;
+            doit = !plugin;
+        }
+            break;
+        case MidiColumnExport: {
+            usage = MidiManager::Usage::Export;
             output = true;
             doit = !plugin;
         }
@@ -271,6 +320,12 @@ void MidiDeviceEditor::tableCheckboxTouched(BasicTable* table, int row, int coli
             break;
         case MidiColumnPluginOutput: {
             usage = MidiManager::Usage::Output;
+            output = true;
+            doit = plugin;
+        }
+            break;
+        case MidiColumnPluginExport: {
+            usage = MidiManager::Usage::Export;
             output = true;
             doit = plugin;
         }
@@ -335,18 +390,20 @@ void MidiDeviceTable::init(MidiManager* mm, bool output)
         isOutput = output;
         if (isOutput) {
             addColumn("Name", MidiColumnName);
-            addColumnCheckbox("App Export", MidiColumnOutput);
+            addColumnCheckbox("App Enable", MidiColumnOutput);
+            addColumnCheckbox("App Export", MidiColumnExport);
             addColumnCheckbox("App Sync", MidiColumnOutputSync);
             addColumnCheckbox("App Thru", MidiColumnThru);
-            addColumnCheckbox("Plugin Export", MidiColumnPluginOutput);
+            addColumnCheckbox("Plugin Enable", MidiColumnPluginOutput);
+            addColumnCheckbox("Plugin Export", MidiColumnPluginExport);
             addColumnCheckbox("Plugin Sync", MidiColumnPluginOutputSync);
             addColumnCheckbox("Plugin Thru", MidiColumnPluginThru);
         }
         else {
             addColumn("Name", MidiColumnName);
-            addColumnCheckbox("App Control", MidiColumnInput);
+            addColumnCheckbox("App Enable", MidiColumnInput);
             addColumnCheckbox("App Sync", MidiColumnInputSync);
-            addColumnCheckbox("Plugin Control", MidiColumnPluginInput);
+            addColumnCheckbox("Plugin Enable", MidiColumnPluginInput);
             addColumnCheckbox("Plugin Sync", MidiColumnPluginInputSync);
         }
     
@@ -396,9 +453,11 @@ void MidiDeviceTable::load(MachineConfig* config)
     if (config != nullptr) {
         if (isOutput) {
             loadDevices(config->midiOutput, MidiColumnOutput);
+            loadDevices(config->midiExport, MidiColumnExport);
             loadDevices(config->midiOutputSync, MidiColumnOutputSync);
             loadDevices(config->midiThru, MidiColumnThru);
             loadDevices(config->pluginMidiOutput, MidiColumnPluginOutput);
+            loadDevices(config->pluginMidiOutput, MidiColumnPluginExport);
             loadDevices(config->pluginMidiOutputSync, MidiColumnPluginOutputSync);
             loadDevices(config->pluginMidiThru, MidiColumnPluginThru);
         }
@@ -439,9 +498,11 @@ void MidiDeviceTable::save(MachineConfig* config)
 {
     if (isOutput) {
         config->midiOutput = getDevices(MidiColumnOutput);
+        config->midiExport = getDevices(MidiColumnExport);
         config->midiOutputSync = getDevices(MidiColumnOutputSync);
         config->midiThru = getDevices(MidiColumnThru);
         config->pluginMidiOutput = getDevices(MidiColumnPluginOutput);
+        config->pluginMidiExport = getDevices(MidiColumnPluginExport);
         config->pluginMidiOutputSync = getDevices(MidiColumnPluginOutputSync);
         config->pluginMidiThru = getDevices(MidiColumnPluginThru);
     }
@@ -485,6 +546,25 @@ void MidiDeviceTable::uncheckOthers(MidiDeviceColumn colid, int selectedRow)
         if (i != selectedRow)
           row->checks.removeAllInstancesOf(colid);
     }
+    // this was a non-interactive model change so have to refresh
+    updateContent();
+}
+
+void MidiDeviceTable::forceCheck(MidiDeviceColumn colid, int selectedRow)
+{
+    MidiDeviceTableRow* row = devices[selectedRow];
+    if (!row->checks.contains(colid))
+      row->checks.add(colid);
+
+    // this was a non-interactive model change so have to refresh
+    updateContent();
+}
+
+void MidiDeviceTable::forceUncheck(MidiDeviceColumn colid, int selectedRow)
+{
+    MidiDeviceTableRow* row = devices[selectedRow];
+    row->checks.removeAllInstancesOf(colid);
+
     // this was a non-interactive model change so have to refresh
     updateContent();
 }

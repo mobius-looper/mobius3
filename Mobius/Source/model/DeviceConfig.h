@@ -144,12 +144,14 @@ class MachineConfig
     juce::String midiInput;
     juce::String midiInputSync;
     juce::String midiOutput;
+    juce::String midiExport;
     juce::String midiOutputSync;
     juce::String midiThru;
     
     juce::String pluginMidiInput;
     juce::String pluginMidiInputSync;
     juce::String pluginMidiOutput;
+    juce::String pluginMidiExport;
     juce::String pluginMidiOutputSync;
     juce::String pluginMidiThru;
     

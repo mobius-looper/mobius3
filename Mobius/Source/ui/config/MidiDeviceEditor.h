@@ -26,11 +26,13 @@ enum MidiDeviceColumn {
     MidiColumnInput,
     MidiColumnInputSync,
     MidiColumnOutput,
+    MidiColumnExport,
     MidiColumnOutputSync,
     MidiColumnThru,
     MidiColumnPluginInput,
     MidiColumnPluginInputSync,
     MidiColumnPluginOutput,
+    MidiColumnPluginExport,
     MidiColumnPluginOutputSync,
     MidiColumnPluginThru
 };
@@ -68,6 +70,8 @@ class MidiDeviceTable : public BasicTable, public BasicTable::Model
     void load(class MachineConfig* config);
     void save(class MachineConfig* config);
     void uncheckOthers(MidiDeviceColumn colid, int selectedRow);
+    void forceCheck(MidiDeviceColumn colid, int selectedRow);
+    void forceUncheck(MidiDeviceColumn colid, int selectedRow);
     
     MidiDeviceTableRow* getRow(int row) {
         return devices[row];;

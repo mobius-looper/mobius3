@@ -7,11 +7,9 @@
  * callback are forward to one or more listeners.
  *
  * It is primarily used when running as a standalone application,
- * but can be used in a more limited way by a plugin to send MIDI clocks
- * to a single private output device outside the host application's control.
- * It is unclear after all these years if this still needs to be done,
- * I did it originally to reduce clock jitter but these days things may be
- * fast enough just to pass clocks through the usual host MIDI streams.
+ * but can be used in a more limited way by a plugin to do MIDI things when
+ * inside hosts that don't provide enough flexibility.  A notable use is
+ * when sending low-jitter MIDI clocks to an external device.
  *
  * There are two types of listeners that can be installed:
  * 
@@ -19,7 +17,7 @@
  *   monitoring listeners
  *
  * A processing listener handles events received directly from a MidiInput
- * opened in the standalone application and normally maps those to actions.
+ * and normally maps those to actions.
  *
  * A monitoring listener is used to display information about the MIDI being
  * received but does not always want them to be processed.
@@ -41,13 +39,13 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
   public:
 
     /**
-     * Internal usage indiciator when opening and closing devices.
+     * Internal usage indiciators for devices tagged for some special purpose.
      */
     enum Usage {
         Input,
         InputSync,
         Output,
-        OutputExport,
+        Export,
         OutputSync,
         Thru
     };
@@ -103,6 +101,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void openDevices();
 
     // open and close devices individually
+    // intended for use by the MidiDeviceEditor as selections are made
     void openInput(juce::String name, Usage usage);
     void closeInput(juce::String name,Usage usage);
     void openOutput(juce::String name, Usage usage);
@@ -123,8 +122,13 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // Close devices and remove callbacks
     void shutdown();
 
-    bool hasOutputDevice();
+    bool hasOutputDevice(Usage usage);
+
+    // used for MIDI state export and the MidiOut script statement
+    // uses the device configured for Export usage
     void send(juce::MidiMessage msg);
+    
+    // used for MIDI clocks, uses the device configured for OutputSync usage
     void sendSync(juce::MidiMessage msg);
 
     // Available device information
@@ -146,6 +150,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // needs to be public so it can be called from a CallbackMessage
     void notifyListeners(const juce::MidiMessage& message, juce::String& source);
 
+    // called in the audio thread as events are received by the plugin
     bool mobiusMidiReceived(juce::MidiMessage& msg) override;
     
   private:
@@ -159,23 +164,20 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     // error messages from the last time openDevices was called
     juce::StringArray errors;
 
-    // device names captured from the MachineConfig
-    // used to maintain configured selections when deselecting individual devices
-    // the MidiDevicesPanel
+    // device names captured from the MachineConfig and used to
+    // open devices, these are authorative over which devices are open
     juce::StringArray inputNames;
-    juce::String inputSyncName; // get rid of this, use inputSyncDevice
     juce::StringArray outputNames;
 
     // pointers to open devices
-    // this isn't the way you're supposed to do it, but I fucking
-    // hate dealing with unique_ptr, I don't need my goddam dick held for me
+    // these may be out of sync with the name arrays and will
+    // be brought back into sync by opening and closing devices
     juce::OwnedArray<juce::MidiInput> inputDevices;
     juce::OwnedArray<juce::MidiOutput> outputDevices;
 
-    // usage pointers for objects in the inputDevices list
+    // usage pointers for devices in one of the two device lists
     juce::MidiInput* inputSyncDevice = nullptr;
-    // usage pointers for objects in the outputDevices list
-    juce::MidiOutput* outputDevice = nullptr;
+    juce::MidiOutput* exportDevice = nullptr;
     juce::MidiOutput* outputSyncDevice = nullptr;
     juce::MidiOutput* thruDevice = nullptr;
     
@@ -194,7 +196,6 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     juce::String getInputDeviceId(juce::String name);
     juce::String getOutputDeviceId(juce::String name);
 
-
     juce::String getDeviceName(class MachineConfig* config, Usage usage);
     juce::String getFirstName(juce::String csv, Usage usage);
     juce::String getUsageName(Usage usage);
@@ -212,7 +213,6 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     juce::MidiOutput* findOrOpenOutput(juce::String name);
     void openOutputInternal(juce::String name, Usage usage);
     void closeUnusedOutputs();
-    bool inUse(juce::MidiOutput* dev);
     void closeAllOutputs();
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
