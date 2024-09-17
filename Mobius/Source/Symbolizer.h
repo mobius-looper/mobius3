@@ -1,21 +1,43 @@
 /**
- * Utility class to handle loading of the non-core symbol table.
+ * Utility class to handle initialization of the application symbol table.
  *
  * This is a mess due to months worth of experimentation on how to deal with
- * function and parameter definitions.  For most of the symbols needed to control
- * the UI or provide special operations for MSL scripts, the definitions are derived
- * from a simple structure UISymbols::Definition.
+ * function and parameter definitions.
  *
- * This class has a few fields that are inspected during startup to build out the
- * Symbol, FunctionProperties and ParameterProperties  objects that are then used
- * at runtime.
+ * The most fundamental property of all symbols is a unique name.
+ * All built-in symbols (not user defined) will also have a unique numeric
+ * identifier.  The number space for This "symbol id" is small and suitable
+ * for use as array indexes and optimized switch() statement compilation.
  *
- * Before that I experimented with defining these in the symbols.xml file which is
- * now being used as a replacement for the static class definitions in model/UIParamterClasses.cpp
- * Those static objects are still necessary for the old configuration editors, but once
- * the editors can be retooled to work from Symbols, they can go away.
+ * The first phase of symbol table initialization is the installation
+ * or "interning" of all built-in symbols with their names and ids.  The name/id
+ * association is defined by the model/SymbolId enumeration and the
+ * model/SymbolDefinition class.  Static instances of SymbolDefinition are held
+ * in the SymbolDefinitions array.
  *
- * Any new symbols should use the first method.
+ * After this initial population of the symbols, each symbol may be further
+ * annotated with "properties" that have more information about how the symbol
+ * behaves.  These have been defined in a few ways, but are moving toward consistently
+ * representing them with the ParameterProperties and FunctionProperties objects
+ * attached to each Symbol.
+ *
+ * Where these Properties objects come from is in a state of evolution.  Some are
+ * defined using the symbols.xml file which is parsed on startup.  Some are defined
+ * with static objects.
+ *
+ * Related classes:
+ *
+ *     model/FunctionProperties
+ *       the standard way to define functions
+ *
+ *     model/ParameterProperties
+ *       the standard way to define parameters
+ *
+ *     model/UIParameterClasses
+ *       older static objects that defined parameters
+ *
+ *     model/FunctionDefinition
+ *       older static objects that defined functions
  *
  */
 

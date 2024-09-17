@@ -465,6 +465,10 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // tell core it has audio and some actions to do
     mCore->processAudioStream(stream, coreActions);
 
+    // tell midi tracks to advance, when we get to audio/midi track sync, there will
+    // no doubt be some order dependencies here
+    mMidi->processAudioStream(stream);
+
     // return the queued core ations to the pool
     UIAction* next = nullptr;
     while (coreActions != nullptr) {

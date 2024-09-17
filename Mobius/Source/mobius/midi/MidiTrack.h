@@ -8,6 +8,7 @@ class MidiTrack
     MidiTrack(class MidiTracker* t);
     ~MidiTrack();
 
+    void processAudioStream(class MobiusAudioStream* argStream);
     void doAction(class UIAction* a);
 
     int index = 0;

@@ -6,6 +6,7 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 
+#include "../MobiusInterface.h"
 #include "MidiTracker.h"
 #include "MidiTrack.h"
 
@@ -16,6 +17,11 @@ MidiTrack::MidiTrack(MidiTracker* t)
 
 MidiTrack::~MidiTrack()
 {
+}
+
+void MidiTrack::processAudioStream(MobiusAudioStream* stream)
+{
+    (void)stream;
 }
 
 void MidiTrack::doAction(UIAction* a)
@@ -37,3 +43,4 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->subcycles = 4;
     state->subcycle = 0;
 }
+

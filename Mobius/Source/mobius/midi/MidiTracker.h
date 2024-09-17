@@ -15,6 +15,8 @@ class MidiTracker
     void initialize();
     void reconfigure();
 
+    void processAudioStream(class MobiusAudioStream* argStream);
+    
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
 

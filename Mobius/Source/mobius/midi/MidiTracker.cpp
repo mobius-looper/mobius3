@@ -55,6 +55,12 @@ void MidiTracker::reconfigure()
 {
 }
 
+void MidiTracker::processAudioStream(MobiusAudioStream* stream)
+{
+    for (auto track : tracks)
+      track->processAudioStream(stream);
+}
+
 /**
  * Like audio tracks, the scope is 1 based and adjusted down from the
  * logical number space used by MobiusView.  Since we have no concept
