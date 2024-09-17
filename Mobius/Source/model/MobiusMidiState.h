@@ -18,6 +18,14 @@ class MobiusMidiState
 {
   public:
 
+    // modes a track can be in
+    typedef enum {
+        ModeReset,
+        ModeRecord,
+        ModeOverdub,
+        ModePlay
+    } Mode;
+
     MobiusMidiState() {}
     ~MobiusMidiState() {}
 
@@ -39,7 +47,7 @@ class MobiusMidiState
         int cycles = 0;
         int cycle = 0;
 
-        juce::String mode;
+        Mode mode = ModeReset;
 
     };
 

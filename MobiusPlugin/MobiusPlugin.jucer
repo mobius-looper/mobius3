@@ -130,6 +130,9 @@
               file="../Mobius/Source/midi/MidiRealizer.cpp"/>
         <FILE id="dsYDXU" name="MidiRealizer.h" compile="0" resource="0" file="../Mobius/Source/midi/MidiRealizer.h"/>
         <FILE id="H2CMir" name="MidiSyncEvent.h" compile="0" resource="0" file="../Mobius/Source/midi/MidiSyncEvent.h"/>
+        <FILE id="QkdIKh" name="OldMidiEvent.cpp" compile="1" resource="0"
+              file="../Mobius/Source/midi/OldMidiEvent.cpp"/>
+        <FILE id="AEg2h2" name="OldMidiEvent.h" compile="0" resource="0" file="../Mobius/Source/midi/OldMidiEvent.h"/>
         <FILE id="dKjUpw" name="TempoMonitor.cpp" compile="1" resource="0"
               file="../Mobius/Source/midi/TempoMonitor.cpp"/>
         <FILE id="XBHQVv" name="TempoMonitor.h" compile="0" resource="0" file="../Mobius/Source/midi/TempoMonitor.h"/>
@@ -147,10 +150,6 @@
         <FILE id="Dw8eqC" name="DynamicConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DynamicConfig.h"/>
         <FILE id="jtAsrG" name="ExValue.cpp" compile="1" resource="0" file="../Mobius/Source/model/ExValue.cpp"/>
         <FILE id="luXHmM" name="ExValue.h" compile="0" resource="0" file="../Mobius/Source/model/ExValue.h"/>
-        <FILE id="vQSXVg" name="FunctionDefinition.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/FunctionDefinition.cpp"/>
-        <FILE id="NUjRQC" name="FunctionDefinition.h" compile="0" resource="0"
-              file="../Mobius/Source/model/FunctionDefinition.h"/>
         <FILE id="WT58wO" name="GroupDefinition.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/GroupDefinition.cpp"/>
         <FILE id="YlB31N" name="GroupDefinition.h" compile="0" resource="0"
@@ -201,6 +200,8 @@
         <FILE id="C4fMLk" name="Structure.h" compile="0" resource="0" file="../Mobius/Source/model/Structure.h"/>
         <FILE id="WEigo3" name="Symbol.cpp" compile="1" resource="0" file="../Mobius/Source/model/Symbol.cpp"/>
         <FILE id="bWMkbO" name="Symbol.h" compile="0" resource="0" file="../Mobius/Source/model/Symbol.h"/>
+        <FILE id="AyjBao" name="SymbolId.cpp" compile="1" resource="0" file="../Mobius/Source/model/SymbolId.cpp"/>
+        <FILE id="Es984A" name="SymbolId.h" compile="0" resource="0" file="../Mobius/Source/model/SymbolId.h"/>
         <FILE id="U9JHYO" name="SystemConstant.h" compile="0" resource="0"
               file="../Mobius/Source/model/SystemConstant.h"/>
         <FILE id="LDwuZR" name="Trigger.cpp" compile="1" resource="0" file="../Mobius/Source/model/Trigger.cpp"/>
@@ -221,10 +222,6 @@
               file="../Mobius/Source/model/UIParameterHandler.cpp"/>
         <FILE id="RBBENk" name="UIParameterHandler.h" compile="0" resource="0"
               file="../Mobius/Source/model/UIParameterHandler.h"/>
-        <FILE id="lMJsNh" name="UIParameterIds.cpp" compile="1" resource="0"
-              file="../Mobius/Source/model/UIParameterIds.cpp"/>
-        <FILE id="aWbbcv" name="UIParameterIds.h" compile="0" resource="0"
-              file="../Mobius/Source/model/UIParameterIds.h"/>
         <FILE id="IUOIE3" name="UserVariable.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/UserVariable.cpp"/>
         <FILE id="VSX9TG" name="UserVariable.h" compile="0" resource="0" file="../Mobius/Source/model/UserVariable.h"/>
@@ -466,6 +463,9 @@
           <FILE id="CQNzmt" name="ColorSelector.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/common/ColorSelector.cpp"/>
           <FILE id="f2vKZW" name="ColorSelector.h" compile="0" resource="0" file="../Mobius/Source/ui/common/ColorSelector.h"/>
+          <FILE id="pBPT0O" name="CustomRotary.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/common/CustomRotary.cpp"/>
+          <FILE id="XQguhB" name="CustomRotary.h" compile="0" resource="0" file="../Mobius/Source/ui/common/CustomRotary.h"/>
           <FILE id="Dzkodv" name="Field.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/Field.cpp"/>
           <FILE id="x2Mdf8" name="Field.h" compile="0" resource="0" file="../Mobius/Source/ui/common/Field.h"/>
           <FILE id="M7p1Y6" name="FieldGrid.cpp" compile="1" resource="0" file="../Mobius/Source/ui/common/FieldGrid.cpp"/>
@@ -511,6 +511,12 @@
         <FILE id="lEcdBG" name="MainWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{9EED59CE-20A8-984F-2766-AAF0F27339C9}" name="mobius">
+        <GROUP id="{2604F741-E637-CC59-72EB-4DD5ED5AACB9}" name="midi">
+          <FILE id="kX9Yxr" name="MidiTrack.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiTrack.cpp"/>
+          <FILE id="So9x8h" name="MidiTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiTrack.h"/>
+          <FILE id="DgLkYs" name="MidiTracker.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiTracker.cpp"/>
+          <FILE id="mriQlF" name="MidiTracker.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiTracker.h"/>
+        </GROUP>
         <GROUP id="{84947BF8-F409-48C1-B34A-A2531697189A}" name="core">
           <GROUP id="{62CCE299-734C-3CE7-29ED-34FC7C5D415D}" name="functions">
             <FILE id="qZ12N8" name="Alert.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/functions/Alert.cpp"/>

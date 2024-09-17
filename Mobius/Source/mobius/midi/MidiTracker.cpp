@@ -68,18 +68,23 @@ void MidiTracker::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTracker::doAction(UIAction* a)
 {
-    int scope = a->getScopeTrack();
-    if (scope <= 0) {
-        Trace(1, "MidiTracker: Invalid action scope %d", scope);
+    if (a->symbol == nullptr) {
+        Trace(1, "MidiTracker: UIAction without symbol, you had one job");
     }
     else {
-        int trackIndex = scope - 1;
-        if (trackIndex < tracks.size()) {
-            MidiTrack* track = tracks[trackIndex];
-            track->doAction(a);
+        int scope = a->getScopeTrack();
+        if (scope <= 0) {
+            Trace(1, "MidiTracker: Invalid action scope %d", scope);
         }
         else {
-            Trace(1, "MidiTracker: Track number out of range %d", scope);
+            int trackIndex = scope - 1;
+            if (trackIndex < tracks.size()) {
+                MidiTrack* track = tracks[trackIndex];
+                track->doAction(a);
+            }
+            else {
+                Trace(1, "MidiTracker: Track number out of range %d", scope);
+            }
         }
     }
 }
