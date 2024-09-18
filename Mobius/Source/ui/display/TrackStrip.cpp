@@ -456,9 +456,16 @@ StripElement* TrackStrip::createStripElement(StripElementDefinition* def)
  */
 void TrackStrip::doAction(UIAction* action)
 {
-    // sigh, TrackStrip.followTrack is -1 for active track
-    // action is 0 based, but we use 0 meaning active elsewhere
-    action->setScopeTrack(followTrack + 1);
+    int scope;
+    if (followTrack == -1) {
+        MobiusViewTrack* tv = getTrackView();
+        scope = tv->index + 1;
+    }
+    else {
+        scope = followTrack + 1;
+    }
+    
+    action->setScopeTrack(scope);
     
     getSupervisor()->doAction(action);
 }

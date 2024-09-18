@@ -44,8 +44,10 @@ class MidiEventPool : public ObjectPool
     MidiEventPool();
     virtual ~MidiEventPool();
 
-    virtual PooledObject* alloc() override;
-    
     class MidiEvent* newEvent();
 
+  protected:
+    
+    virtual PooledObject* alloc() override;
+    
 };

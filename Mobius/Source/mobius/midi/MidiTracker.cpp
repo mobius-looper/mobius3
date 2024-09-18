@@ -7,6 +7,9 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 
+#include "../../midi/MidiEvent.h"
+#include "../../midi/MidiSequence.h"
+
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
 
@@ -29,20 +32,13 @@ MidiTracker::~MidiTracker()
  */
 void MidiTracker::initialize()
 {
-    SymbolTable* table = container->getSymbols();
-    symSubcycles = table->intern("subcycles");
-    symRecord = table->intern("Record");
-    symOverdub = table->intern("Overdub");
-    symReset = table->intern("Reset");
-    symTrackReset = table->intern("TrackReset");
-    symGlobalReset = table->intern("GlobalReset");
-
     MainConfig* main = container->getMainConfig();
     int trackCount = main->getGlobals()->getInt("midiTracks");
     for (int i = 0 ; i < trackCount ; i++) {
         MidiTrack* mt = new MidiTrack(this);
         mt->index = i;
         tracks.add(mt);
+        mt->initialize();
 
         // make sure the carpet matches the drapes
         MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
@@ -71,6 +67,10 @@ void MidiTracker::doAction(UIAction* a)
     if (a->symbol == nullptr) {
         Trace(1, "MidiTracker: UIAction without symbol, you had one job");
     }
+    else if (a->symbol->id == FuncGlobalReset) {
+        for (auto track : tracks)
+          track->doAction(a);
+    }
     else {
         int scope = a->getScopeTrack();
         if (scope <= 0) {
@@ -91,16 +91,65 @@ void MidiTracker::doAction(UIAction* a)
 
 bool MidiTracker::doQuery(Query* q)
 {
-    // now the notion of a symbol id enumeration would really come in handy
-    // since midi tracks won't have handler functions to hang off FunctionProperties
-
-    if (q->symbol == symSubcycles) {
-        // LoopMeterElement complains if this is zero so return something reasonable
-        // until this can actually be configured
-        q->value = 4;
+    if (q->symbol == nullptr) {
+        Trace(1, "MidiTracker: UIAction without symbol, you had one job");
     }
-    
+    else {
+        int scope = q->scope;
+        if (scope <= 0) {
+            Trace(1, "MidiTracker: Invalid action scope %d", scope);
+        }
+        else {
+            int trackIndex = scope - 1;
+            if (trackIndex < tracks.size()) {
+                MidiTrack* track = tracks[trackIndex];
+                track->doQuery(q);
+            }
+            else {
+                Trace(1, "MidiTracker: Track number out of range %d", scope);
+            }
+        }
+    }
     return true;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Recording
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTracker::midiEvent(MidiEvent* event)
+{
+    bool consumed = false;
+    
+    // todo: need to support multiple tracks recording and duplicate the event
+    for (auto track : tracks) {
+        if (track->isRecording()) {
+            track->midiEvent(event);
+            consumed = true;
+            break;
+        }
+    }
+
+    if (!consumed)
+      eventPool.checkin(event);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Event Pools
+//
+//////////////////////////////////////////////////////////////////////
+
+MidiEventPool* MidiTracker::getEventPool()
+{
+    return &eventPool;
+}
+
+MidiSequencePool* MidiTracker::getSequencePool()
+{
+    return &sequencePool;
 }
 
 //////////////////////////////////////////////////////////////////////

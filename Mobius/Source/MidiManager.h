@@ -33,6 +33,7 @@
 
 #include "model/DeviceConfig.h"
 #include "mobius/MobiusInterface.h"
+#include "midi/MidiEvent.h"
 
 class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
 {
@@ -86,6 +87,8 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     
     MidiManager(class Supervisor* super);
     ~MidiManager();
+
+    void configure();
 
     void addListener(Listener* l);
     void removeListener(Listener* l);
@@ -156,7 +159,10 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
   private:
 
     class Supervisor* supervisor = nullptr;
-
+    
+    bool recordable = false;
+    MidiEventPool eventPool;
+    
     class juce::Array<Listener*> listeners;
     class juce::Array<RealtimeListener*> realtimeListeners;
     class juce::Array<Monitor*> monitors;
@@ -216,6 +222,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void closeAllOutputs();
 
     void postListenerMessage (const juce::MidiMessage& message, juce::String& source);
+    void record(const juce::MidiMessage& message, juce::String& source);
 
     // experiments
 #if 0    

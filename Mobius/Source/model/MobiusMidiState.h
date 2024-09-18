@@ -22,7 +22,6 @@ class MobiusMidiState
     typedef enum {
         ModeReset,
         ModeRecord,
-        ModeOverdub,
         ModePlay
     } Mode;
 
@@ -47,8 +46,18 @@ class MobiusMidiState
         int cycles = 0;
         int cycle = 0;
 
-        Mode mode = ModeReset;
+        int input = 0;
+        int output = 0;
+        int feedback = 0;
+        int pan = 0;
 
+        Mode mode = ModeReset;
+        bool overdub = false;
+        bool reverse = false;
+        bool mute = false;
+        bool recording = false;
+        bool pause = false;
+        
     };
 
     juce::OwnedArray<Track> tracks;

@@ -827,7 +827,7 @@ void MobiusViewer::refreshMinorModes(MobiusTrackState* tstate, MobiusLoopState* 
         tview->pitchBend = tstate->pitchBend;
         refresh = true;
     }
-    if (tstate->timeStretch != tview->timeStretch) {
+     if (tstate->timeStretch != tview->timeStretch) {
         tview->timeStretch = tstate->timeStretch;
         refresh = true;
     }
@@ -986,17 +986,73 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
 {
     tview->frame = tstate->frame;
     tview->frames = tstate->frames;
-
     tview->subcycles = tstate->subcycles;
     tview->subcycle = tstate->subcycle;
     tview->cycles = tstate->cycles;
     tview->cycle = tstate->cycle;
+
+    tview->inputLevel = tstate->input;
+    tview->outputLevel = tstate->output;
+    tview->feedback = tstate->feedback;
+    tview->pan = tstate->pan;
     
     // fake these up to avoid warnings in LoopMeterElement and LoopStackElement
     if (tview->cycle == 0) tview->cycle = 1;
     if (tview->subcycles == 0) tview->subcycles = 4;
+    
+    tview->recording = tstate->recording;
+    tview->pause = tstate->pause;
+
+    juce::String newMode;
+    switch (tstate->mode) {
+        case MobiusMidiState::ModeReset: newMode = "Reset"; break;
+        case MobiusMidiState::ModeRecord: newMode = "Record"; break;
+        case MobiusMidiState::ModePlay: {
+            if (tstate->overdub)
+              newMode = "Overdub";
+            else
+              newMode = "Play";
+        }
+            break;
+        default:
+            // shouldn't happen
+            newMode = "???";
+            break;
+    }
+    if (newMode != tview->mode) {
+        tview->mode = newMode;
+        tview->refreshMode = true;
+    }
+
+    refreshMidiMinorModes(tstate, tview);
 }
 
+void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 
+                                         MobiusViewTrack* tview)
+{
+    bool refresh = false;
+
+    if (tstate->reverse != tview->reverse) {
+        tview->reverse =  tstate->reverse;
+        refresh = true;
+    }
+
+    if (tstate->overdub != tview->overdub) {
+        tview->overdub = tstate->overdub;
+        refresh = true;
+    }
+
+    if (tstate->mute != tview->mute) {
+        tview->mute = tstate->mute;
+        refresh = true;
+    }
+
+    if (refresh) {
+        assembleMinorModes(tview);
+        tview->refreshMinorModes = true;
+    }
+}
+    
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

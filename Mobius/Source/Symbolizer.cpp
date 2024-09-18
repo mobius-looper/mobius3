@@ -141,8 +141,8 @@ void Symbolizer::internSymbols()
         }
         else {
             s = symbols->intern(def->name);
-            s->id = def->id;
         }
+        s->id = def->id;
     }
 
     // now that they are all there, build the id/name mapping table

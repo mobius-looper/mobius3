@@ -298,6 +298,9 @@ class MobiusInterface {
     virtual bool mslResolve(juce::String name, class MslExternal* ext) = 0;
     virtual bool mslQuery(class MslQuery* q) = 0;
 
+    // midi!
+    virtual void midiEvent(class MidiEvent* e) = 0;
+
   private:
 
     

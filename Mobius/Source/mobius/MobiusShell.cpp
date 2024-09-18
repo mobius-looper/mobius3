@@ -372,6 +372,20 @@ bool MobiusShell::isGlobalReset()
     return kernel.isGlobalReset();
 }
 
+void MobiusShell::midiEvent(MidiEvent* e)
+{
+    KernelMessage* msg = communicator.shellAlloc();
+    if (msg != nullptr) {
+        msg->type = MsgMidi;
+        msg->object.midi = e;
+        communicator.shellSend(msg);
+    }
+    else {
+        // shit's hitting the fan
+        delete e;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Action Handling

@@ -382,6 +382,7 @@ bool Supervisor::start()
 
     // setup MIDI devices
     // if an input device is configured, Binderator may start receiving events
+    midiManager.configure();
     midiManager.openDevices();
     midiRealizer.initialize();
 

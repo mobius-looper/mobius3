@@ -3,6 +3,9 @@
 
 #include "../../model/MobiusMidiState.h"
 
+#include "../../midi/MidiEvent.h"
+#include "../../midi/MidiSequence.h"
+
 #include "MidiTrack.h"
 
 class MidiTracker
@@ -15,12 +18,16 @@ class MidiTracker
     void initialize();
     void reconfigure();
 
+    void midiEvent(class MidiEvent* event);
     void processAudioStream(class MobiusAudioStream* argStream);
     
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
 
     class MobiusMidiState* getState();
+
+    class MidiEventPool* getEventPool();
+    class MidiSequencePool* getSequencePool();
     
   private:
 
@@ -29,15 +36,9 @@ class MidiTracker
 
     juce::OwnedArray<MidiTrack> tracks;
 
-    // temporary
-    // cached symbols for queries and actions
-    class Symbol* symSubcycles = nullptr;
-    class Symbol* symRecord = nullptr;
-    class Symbol* symReset = nullptr;
-    class Symbol* symTrackReset = nullptr;
-    class Symbol* symGlobalReset = nullptr;
-    class Symbol* symOverdub = nullptr;
-
+    MidiEventPool eventPool;
+    MidiSequencePool sequencePool;
+    
     MobiusMidiState state;
     void refreshState();
 

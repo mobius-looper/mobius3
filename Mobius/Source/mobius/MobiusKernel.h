@@ -246,6 +246,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void doAction(KernelMessage* msg);
     void doEvent(KernelMessage* msg);
     void doLoadLoop(KernelMessage* msg);
+    void doMidi(KernelMessage* msg);
     
     void clearExternalInput();
     void consumeMidiMessages();

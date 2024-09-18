@@ -238,6 +238,7 @@ void MobiusKernel::consumeCommunications()
             case MsgAction: doAction(msg); break;
             case MsgEvent: doEvent(msg); break;
             case MsgLoadLoop: doLoadLoop(msg); break;
+            case MsgMidi: doMidi(msg); break;
         }
         
         msg = communicator->kernelReceive();
@@ -1191,6 +1192,24 @@ void MobiusKernel::doEvent(KernelMessage* msg)
         eventPool.returnEvent(e);
     }
     
+    // nothing to send back
+    communicator->kernelAbandon(msg);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Recording
+//
+//////////////////////////////////////////////////////////////////////
+
+// this gets it there, but might want a more direct path
+// that doesn't involve so much message passing
+void MobiusKernel::doMidi(KernelMessage* msg)
+{
+    MidiEvent* event = msg->object.midi;
+    if (event != nullptr) {
+        mMidi->midiEvent(event);
+    }
     // nothing to send back
     communicator->kernelAbandon(msg);
 }

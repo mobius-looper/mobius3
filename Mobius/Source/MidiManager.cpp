@@ -72,6 +72,7 @@
 
 #include "util/Trace.h"
 #include "model/DeviceConfig.h"
+#include "model/MainConfig.h"
 
 #include "Supervisor.h"
 #include "MidiManager.h"
@@ -93,6 +94,17 @@ MidiManager::MidiManager(Supervisor* super)
 MidiManager::~MidiManager()
 {
     shutdown();
+}
+
+/**
+ * Called during initialization and after modifying MainConfig
+ * We watch the allocation of MIDI tracks, and if there are any enable recording.
+ */
+void MidiManager::configure()
+{
+    MainConfig* main = supervisor->getMainConfig();
+    if (main->getGlobals()->getInt("midiTracks") > 0)
+      recordable = true;
 }
 
 /**
@@ -1092,10 +1104,41 @@ void MidiManager::notifyListeners(const juce::MidiMessage& message, juce::String
         }
         
         if (processIt) {
+
+            // now that we have MIDI tracks, there will be conflict over who gets
+            // to own it, Binderator or MidiTracker
+            // if binderator chooses to handle an event it shold probably not
+            // be sent down
+            // alternately, just send it to all the listeners and handle the ownership
+            // at a higher level with channels or something
             for (auto listener : listeners)
               listener->midiMessage(message, source);
+
+            if (recordable)
+              record(message, source);
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Recording
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * If we decide something could be recorded, send it to the kernel.
+ */
+void MidiManager::record(const juce::MidiMessage& message, juce::String& source)
+{
+    // need to share this pool!
+    MidiEvent* e = eventPool.newEvent();
+    e->juceMessage = message;
+    // todo: pass the source down too so tracks can be sensitive to different devices
+    // nice if it wasn't a big long variable string though
+    (void)source;
+    MobiusInterface* mobius = supervisor->getMobius();
+    mobius->midiEvent(e);
 }
 
 //////////////////////////////////////////////////////////////////////

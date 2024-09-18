@@ -9,19 +9,32 @@
 
 #include <JuceHeader.h>
 
+#include "../util/Trace.h"
 #include "../model/ObjectPool.h"
 
 class MidiSequence : public PooledObject
 {
   public:
 
+    MidiSequence();
+    ~MidiSequence();
+
+    // only for the pool, don't like the name, make this poolInit
+    void init() override;
+    void clear(MidiEventPool* pool);
+    void add(class MidiEvent* e);
+
+    int size();
+
+  private:
+    
     // evolving, for now just the list of events
     // will need various ways to traverse this efficiently
 
     class MidiEvent* events = nullptr;
-
-    void init() override;
-
+    class MidiEvent* tail = nullptr;
+    int size = 0;
+    
 };
 
 class MidiSequencePool : public ObjectPool
@@ -31,8 +44,10 @@ class MidiSequencePool : public ObjectPool
     MidiSequencePool();
     virtual ~MidiSequencePool();
 
-    virtual PooledObject* alloc() override;
-    
     class MidiSequence* newSequence();
 
+  protected:
+    
+    virtual PooledObject* alloc() override;
+    
 };

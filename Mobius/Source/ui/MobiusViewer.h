@@ -61,5 +61,11 @@ class MobiusViewer
 
     void refreshMidiTracks(class MobiusInterface* mobius, class MobiusView* view);
     void refreshMidiTrack(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
+
+    //
+    // MIDI Tracks
+    //
     
+    void refreshMidiMinorModes(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
+
 };
