@@ -3,8 +3,12 @@
 
 #include "../../model/MobiusMidiState.h"
 
+#include "MidiPlayer.h"
+
 class MidiTrack
 {
+    friend class MidiPlayer;
+    
   public:
 
     MidiTrack(class MidiTracker* t);
@@ -21,11 +25,24 @@ class MidiTrack
 
     void refreshState(class MobiusMidiState::Track* state);
 
+  protected:
+
+    class MobiusContainer* getContainer();
+    
+    class MidiSequence* getPlaySequence() {
+        return playing;
+    }
+
+    int getLoopFrames() {
+        return frames;
+    }
+
   private:
 
     class MidiTracker* tracker = nullptr;
     class MidiEventPool* eventPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
+    MidiPlayer player {this};
     
     // loop state
     int frame = 0;

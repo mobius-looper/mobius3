@@ -1459,6 +1459,20 @@ void Supervisor::setAudioListener(MobiusAudioListener* l)
     audioStream.setAudioListener(l);
 }
 
+/**
+ * New interface for MidiTracks using MidiEvent
+ *
+ * Think about how the target device should be specified, as an argument
+ * or in the event.
+ *
+ * This is called from the AUDIO thread and must not do anything
+ * dangerous.  Ownership of the object is retained by the caller.
+ */
+void Supervisor::midiSend(const juce::MidiMessage& msg, int deviceId)
+{
+    midiManager.send(msg, deviceId);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MobiusListener

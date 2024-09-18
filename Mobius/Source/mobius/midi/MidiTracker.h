@@ -28,6 +28,10 @@ class MidiTracker
 
     class MidiEventPool* getEventPool();
     class MidiSequencePool* getSequencePool();
+
+    MobiusContainer* getContainer() {
+        return container;
+    }
     
   private:
 

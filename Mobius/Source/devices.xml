@@ -9,8 +9,8 @@
            pluginMidiInputSync="Bome MIDI Translator 3"/>
   <Machine hostName="Thor" inputPorts="3" outputPorts="1" audioDeviceType="ASIO"
            audioInput="ASIO Fireface USB" inputChannels="111111" audioOutput="ASIO Fireface USB"
-           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="Arturia MiniLab mkII"
-           midiOutput="UC Midi Port 1" midiOutputSync="UC Midi Port 1"/>
+           outputChannels="11" sampleRate="44100" blockSize="256" midiInput="OP-1"
+           midiOutput="OP-1"/>
   <Machine hostName="Frigg" inputPorts="1" outputPorts="1" audioDeviceType="CoreAudio"
            audioInput="Universal Audio Thunderbolt" inputChannels="11" audioOutput="Universal Audio Thunderbolt"
            outputChannels="11" sampleRate="44100" blockSize="256"/>

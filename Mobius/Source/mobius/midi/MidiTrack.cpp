@@ -63,7 +63,12 @@ void MidiTrack::initialize()
 {
     eventPool = tracker->getEventPool();
     sequencePool = tracker->getSequencePool();
+    player.initialize();
     doReset(nullptr);
+}
+
+MobiusContainer* MidiTrack::getContainer() {
+    return tracker->getContainer();
 }
 
 bool MidiTrack::isRecording()
@@ -92,148 +97,6 @@ void MidiTrack::doAction(UIAction* a)
             }
         }
     }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Advance
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Don't have anything to record, but can advance the record frame.
- * All incomming MIDI events have been processed by now.
- */
-void MidiTrack::processAudioStream(MobiusAudioStream* stream)
-{
-    int newFrames = stream->getInterruptFrames();
-    
-    // todo: should be "isExtending" or something
-    if (mode == MobiusMidiState::ModeRecord) {
-        frames += newFrames;
-        frame += newFrames;
-    }
-    else {
-        // "play"
-        frame += newFrames;
-        if (frame > frames)
-          frame -= frames;
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Sequence Management
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::reclaim(MidiSequence* seq)
-{
-    if (seq != nullptr)
-      seq->clear(eventPool);
-    sequencePool->checkin(seq);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Record
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doRecord(UIAction* a)
-{
-    if (mode == MobiusMidiState::ModeRecord)
-      stopRecording(a);
-    else
-      startRecording(a);
-}
-
-void MidiTrack::startRecording(UIAction* a)
-{
-    (void)a;
-
-    if (recording != nullptr)
-      recording->clear(eventPool);
-    else
-      recording = sequencePool->newSequence();
-    
-    frames = 0;
-    frame = 0;
-    mode = MobiusMidiState::ModeRecord;
-    Trace(2, "MidiTrack: Starting recording");
-    
-}
-
-void MidiTrack::stopRecording(UIAction* a)
-{
-    (void)a;
-
-    reclaim(playing);
-    playing = recording;
-    recording = nullptr;
-    
-    mode = MobiusMidiState::ModePlay;
-
-    Trace(2, "MidiTrack: Finished recording with %d events", playing->size());
-}
-
-/**
- * A MIDI event was received from the beyond...
- */
-void MidiTrack::midiEvent(MidiEvent* e)
-{
-    if (recording != nullptr) {
-        e->frame = frame;
-        recording->add(e);
-    }
-    else {
-        eventPool->checkin(e);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Overdub
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doOverdub(UIAction* a)
-{
-    (void)a;
-    overdub = !overdub;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Reset
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doReset(UIAction* a)
-{
-    (void)a;
-    mode = MobiusMidiState::ModeReset;
-
-    reclaim(playing);
-    playing = nullptr;
-    reclaim(recording);
-    recording = nullptr;
-    
-    frames = 0;
-    frame = 0;
-    cycles = 1;
-    cycle = 0;
-    subcycles = 4;
-    subcycle = 0;
-    
-    overdub = false;
-    mute = false;
-    reverse = false;
-
-    input = 127;
-    output = 127;
-    feedback = 127;
-    pan = 64;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -310,6 +173,156 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 
     state->recording = (recording != nullptr);
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Don't have anything to record, but can advance the record frame.
+ * All incomming MIDI events have been processed by now.
+ */
+void MidiTrack::processAudioStream(MobiusAudioStream* stream)
+{
+    int newFrames = stream->getInterruptFrames();
+
+    // todo: should be "isExtending" or something
+    if (mode == MobiusMidiState::ModeRecord) {
+        frames += newFrames;
+        frame += newFrames;
+    }
+    else if (frames > 0) {
+        // "play"
+        player.play(newFrames);
+        frame += newFrames;
+        if (frame > frames)
+          frame -= frames;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sequence Management
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::reclaim(MidiSequence* seq)
+{
+    if (seq != nullptr)
+      seq->clear(eventPool);
+    sequencePool->checkin(seq);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Reset
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doReset(UIAction* a)
+{
+    (void)a;
+    mode = MobiusMidiState::ModeReset;
+
+    player.reset();
+
+    reclaim(playing);
+    playing = nullptr;
+    reclaim(recording);
+    recording = nullptr;
+    
+    frames = 0;
+    frame = 0;
+    cycles = 1;
+    cycle = 0;
+    subcycles = 4;
+    subcycle = 0;
+    
+    overdub = false;
+    mute = false;
+    reverse = false;
+
+    input = 127;
+    output = 127;
+    feedback = 127;
+    pan = 64;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Record
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doRecord(UIAction* a)
+{
+    if (mode == MobiusMidiState::ModeRecord)
+      stopRecording(a);
+    else
+      startRecording(a);
+}
+
+void MidiTrack::startRecording(UIAction* a)
+{
+    (void)a;
+
+    player.reset();
+    
+    if (recording != nullptr)
+      recording->clear(eventPool);
+    else
+      recording = sequencePool->newSequence();
+    
+    frames = 0;
+    frame = 0;
+    mode = MobiusMidiState::ModeRecord;
+    Trace(2, "MidiTrack: Starting recording");
+}
+
+void MidiTrack::stopRecording(UIAction* a)
+{
+    (void)a;
+
+    reclaim(playing);
+    playing = recording;
+    recording = nullptr;
+
+    // should already be in reset
+    player.reset();
+    
+    mode = MobiusMidiState::ModePlay;
+
+    Trace(2, "MidiTrack: Finished recording with %d events", playing->size());
+}
+
+/**
+ * A MIDI event was received from the beyond...
+ */
+void MidiTrack::midiEvent(MidiEvent* e)
+{
+    if (recording != nullptr) {
+        e->frame = frame;
+        recording->add(e);
+    }
+    else {
+        eventPool->checkin(e);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Overdub
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doOverdub(UIAction* a)
+{
+    (void)a;
+    overdub = !overdub;
+}
+
 
 /****************************************************************************/
 /****************************************************************************/

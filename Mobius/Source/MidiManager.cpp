@@ -749,6 +749,27 @@ juce::StringArray MidiManager::getOpenOutputDevices()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Internal Device Ids
+//
+// For messages that pass into and out of the engine, I want to refer
+// to devices using a simple numeric identiifer that is easy to embed
+// and copy without comparing long strings, allocating memory for strings,
+// or directly touching the MIDI device object pointers.
+//
+// This id is assigned on startup as devices are opened, but once assigned
+// needs to be stable for the duration of the engine.  Reconfiguring
+// by opening and closing devices should not disrupt this making indexes
+// into the inputDevices and outputDevices arrays unusable.
+//
+// MIDI track configuration will save device references by name, so on startup
+// and after MIDI reconfiguration a mapping between names and ids is needed.
+//
+//////////////////////////////////////////////////////////////////////
+
+// lots to do here...
+
+//////////////////////////////////////////////////////////////////////
+//
 // Output Messages
 //
 //////////////////////////////////////////////////////////////////////
@@ -769,13 +790,23 @@ bool MidiManager::hasOutputDevice(Usage usage)
     return has;
 }
 
-void MidiManager::send(juce::MidiMessage msg)
+void MidiManager::send(const juce::MidiMessage& msg)
 {
     if (exportDevice)
       exportDevice->sendMessageNow(msg);
 }
 
-void MidiManager::sendSync(juce::MidiMessage msg)
+void MidiManager::send(const juce::MidiMessage& msg, int deviceId)
+{
+    (void)deviceId;
+    // todo: figure out where it goes
+    if (outputDevices.size() > 0) {
+        juce::MidiOutput* dev = outputDevices[0];
+        dev->sendMessageNow(msg);
+    }
+}
+
+void MidiManager::sendSync(const juce::MidiMessage& msg)
 {
     if (outputSyncDevice)
       outputSyncDevice->sendMessageNow(msg);

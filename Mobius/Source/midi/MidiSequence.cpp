@@ -25,7 +25,7 @@ void MidiSequence::init()
 {
     events = nullptr;
     tail = nullptr;
-    size = 0;
+    count = 0;
 }
 
 void MidiSequence::clear(MidiEventPool* pool)
@@ -40,7 +40,7 @@ void MidiSequence::clear(MidiEventPool* pool)
         events = next;
     }
     tail = nullptr;
-    size = 0;
+    count = 0;
 }
 
 void MidiSequence::add(MidiEvent* e)
@@ -56,8 +56,13 @@ void MidiSequence::add(MidiEvent* e)
             tail->next = e;
             tail = e;
         }
-        size++;
+        count++;
     }
+}
+
+int MidiSequence::size()
+{
+    return count;
 }
 
 //////////////////////////////////////////////////////////////////////

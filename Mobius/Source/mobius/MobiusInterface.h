@@ -400,6 +400,11 @@ class MobiusContainer
     virtual void midiSend(class OldMidiEvent* e) = 0;
 
     /**
+     * New MIDI event sender
+     */
+    virtual void midiSend(const juce::MidiMessage& msg, int deviceId) = 0;
+
+    /**
      * Object that provides MIDI synchronization services.
      * Not sure where I want this to live.  It needs to be accessed on
      * every audio block, but it is more convenient for Synchronizer to have

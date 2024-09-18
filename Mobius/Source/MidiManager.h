@@ -84,6 +84,21 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
         virtual bool midiMonitorExclusive() = 0;
         virtual void midiMonitorMessage(juce::String msg) {}
     };
+
+    /**
+     * Structure for maintaing an association between abstract device identifiers
+     * and the objects opened for them.
+     */
+    class DeviceRegistry {
+      public:
+        // name of the device as defined by Juce
+        juce::String name;
+        // internal id generated for this device at runtime
+        int id = 0;
+        // the internal device objects
+        juce::MidiOutput* output = nullptr;
+        juce::MidiInput* input = nullptr;
+    };
     
     MidiManager(class Supervisor* super);
     ~MidiManager();
@@ -129,10 +144,14 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
 
     // used for MIDI state export and the MidiOut script statement
     // uses the device configured for Export usage
-    void send(juce::MidiMessage msg);
+    void send(const juce::MidiMessage& msg);
     
     // used for MIDI clocks, uses the device configured for OutputSync usage
-    void sendSync(juce::MidiMessage msg);
+    void sendSync(const juce::MidiMessage& msg);
+
+    // new interface, send to a specific device
+    void send(const juce::MidiMessage &msg, int deviceId);
+    
 
     // Available device information
     juce::StringArray getInputDevices();
