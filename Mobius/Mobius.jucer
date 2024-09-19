@@ -464,6 +464,10 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <FILE id="B4uK8i" name="TrackSynchronizer.cpp" compile="1" resource="0"
+              file="Source/mobius/TrackSynchronizer.cpp"/>
+        <FILE id="ebYhSU" name="TrackSynchronizer.h" compile="0" resource="0"
+              file="Source/mobius/TrackSynchronizer.h"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>

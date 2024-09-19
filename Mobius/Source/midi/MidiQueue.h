@@ -16,6 +16,17 @@ class MidiQueue
 {
   public:
 
+    class Iterator {
+        friend class MidiQueue;
+      public:
+        Iterator() {}
+        ~Iterator() {}
+        MidiSyncEvent* next();
+      protected:
+        MidiQueue* queue = nullptr;
+        int eventTail = 0;
+    };
+
     /**
      * Maximum number of MidiSyncEvents we can hold.
      * This will be filled by the MIDI device thread as events come in,
@@ -65,6 +76,16 @@ class MidiQueue
      * Ownership is not transferred.
      */
     MidiSyncEvent* popEvent();
+
+    /**
+     * Start iterating over the event list
+     */
+    void iterate(Iterator& iterator);
+
+    /**
+     * Return the next event in the queue without popping
+     */
+    MidiSyncEvent* next(Iterator& iterator);
 
     void flushEvents();
 

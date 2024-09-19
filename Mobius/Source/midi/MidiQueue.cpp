@@ -29,6 +29,7 @@
 
 #include "MidiByte.h"
 #include "MidiSyncEvent.h"
+
 #include "MidiQueue.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -140,6 +141,29 @@ bool MidiQueue::hasEvents()
 {
     return (eventHead != eventTail);
 }
+
+/**
+ * Initialize an iterator into the event list.  An alternative to popEvent
+ * as we phase in the TrackSynchronizer and need to iterate over the event list
+ * twice.
+ */
+void MidiQueue::iterate(Iterator& iterator)
+{
+    iterator.queue = this;
+    iterator.eventTail = eventTail;
+}
+
+MidiSyncEvent* MidiQueue::Iterator::next()
+{
+    MidiSyncEvent* event = nullptr;
+    if (eventTail != queue->eventHead) {
+		event = &(queue->events[eventTail]);
+		eventTail++;
+		if (eventTail >= MaxSyncEvents)
+		  eventTail = 0;
+    }
+    return event;
+}    
 
 /**
  * Return the next event in the queue.

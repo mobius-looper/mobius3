@@ -89,6 +89,8 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
     int getSongClock() override;
 
     MidiSyncEvent* nextOutputEvent() override;
+    // new non-destrictive iterator
+    void iterateOutput(MidiQueue::Iterator& it);
     
     // Input Sync
 
@@ -101,6 +103,7 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
     bool isInputStarted() override;
     
     MidiSyncEvent* nextInputEvent() override;
+    void iterateInput(MidiQueue::Iterator& it) override;
     
   protected:
 

@@ -159,6 +159,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     MainConfig* main = cont->getMainConfig();
     midiTracks = main->getGlobals()->getInt("midiTracks");
 
+    synchronizer.initialize();
+
     mMidi.reset(new MidiTracker(cont, this));
     mMidi->initialize();
     

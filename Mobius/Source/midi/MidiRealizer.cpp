@@ -724,6 +724,11 @@ MidiSyncEvent* MidiRealizer::nextOutputEvent()
     return outputQueue.popEvent();
 }
 
+void MidiRealizer::iterateOutput(MidiQueue::Iterator& iterator)
+{
+    outputQueue.iterate(iterator);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Input Sync
@@ -794,6 +799,11 @@ bool MidiRealizer::isInputStarted()
 MidiSyncEvent* MidiRealizer::nextInputEvent()
 {
     return inputQueue.popEvent();
+}
+
+void MidiRealizer::iterateInput(MidiQueue::Iterator& iterator)
+{
+    inputQueue.iterate(iterator);
 }
 
 //////////////////////////////////////////////////////////////////////
