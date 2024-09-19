@@ -114,7 +114,7 @@
 #include "../../SyncTrace.h"
 
 #include "../../midi/MidiByte.h"
-#include "../../midi/MidiSyncEvent.h"
+#include "../../sync/MidiSyncEvent.h"
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/MobiusState.h"

@@ -46,16 +46,17 @@ class JuceAudioStream : public MobiusAudioStream
     int getBlockSize();
     
     // MobiusAudioStream interface
-	long getInterruptFrames();
+	long getInterruptFrames() override;
 	void getInterruptBuffers(int inport, float** input, 
-                                     int outport, float** output);
+                             int outport, float** output) override;
 
-    juce::MidiBuffer* getMidiMessages();
-    class MobiusMidiTransport* getMidiTransport();
+    juce::MidiBuffer* getMidiMessages() override;
+    class MobiusMidiTransport* getMidiTransport() override;
+    class Pulsator* getPulsator() override;
     
-    double getStreamTime();
-    double getLastInterruptStreamTime();
-    class AudioTime* getAudioTime();
+    double getStreamTime() override;
+    double getLastInterruptStreamTime() override;
+    class AudioTime* getAudioTime() override;
     
 #ifdef USE_FFMETERS
     foleys::LevelMeterSource* getLevelMeterSource() {
@@ -66,6 +67,9 @@ class JuceAudioStream : public MobiusAudioStream
   private:
 
     class Supervisor* supervisor = nullptr;
+    // owned by Supervisor, but since we're the primary user does it make
+    // sense to define it here?
+    class Pulsator* pulsator = nullptr;
     class DeviceConfigurator* deviceConfigurator = nullptr;
     class MobiusAudioListener* audioListener = nullptr;
 

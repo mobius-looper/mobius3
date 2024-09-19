@@ -571,6 +571,10 @@ MobiusMidiTransport* TestDriver::getMidiTransport()
     return nullptr;
 }
 
+Pulsator* TestDriver::getPulsator()
+{
+    return nullptr;
+}
 
 //
 // Stream Time

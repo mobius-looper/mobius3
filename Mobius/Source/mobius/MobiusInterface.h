@@ -774,6 +774,12 @@ class MobiusAudioStream
      */
     virtual class MobiusMidiTransport* getMidiTransport() = 0;
 
+    /**
+     * New alternative to MidiTransport for MIDI tracks until we get more formal
+     * about how this should look.
+     */
+    virtual class Pulsator* getPulsator() = 0;
+
     //
     // Stream Time
     // This is all stubbed right now, revisit when we get to synchronization

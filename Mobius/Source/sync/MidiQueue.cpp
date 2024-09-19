@@ -27,7 +27,7 @@
 #include "../util/Trace.h"
 #include "../SyncTrace.h"
 
-#include "MidiByte.h"
+#include "../midi/MidiByte.h"
 #include "MidiSyncEvent.h"
 
 #include "MidiQueue.h"
@@ -144,23 +144,23 @@ bool MidiQueue::hasEvents()
 
 /**
  * Initialize an iterator into the event list.  An alternative to popEvent
- * as we phase in the TrackSynchronizer and need to iterate over the event list
+ * as we phase in the Pulsator and need to iterate over the event list
  * twice.
  */
-void MidiQueue::iterate(Iterator& iterator)
+void MidiQueue::iterateStart()
 {
-    iterator.queue = this;
-    iterator.eventTail = eventTail;
+    iterateTail = eventTail;
+    iterateHead = eventHead;
 }
 
-MidiSyncEvent* MidiQueue::Iterator::next()
+MidiSyncEvent* MidiQueue::iterateNext()
 {
     MidiSyncEvent* event = nullptr;
-    if (eventTail != queue->eventHead) {
-		event = &(queue->events[eventTail]);
-		eventTail++;
-		if (eventTail >= MaxSyncEvents)
-		  eventTail = 0;
+    if (iterateTail != iterateHead) {
+		event = &(events[iterateTail]);
+		iterateTail++;
+		if (iterateTail >= MaxSyncEvents)
+		  iterateTail = 0;
     }
     return event;
 }    

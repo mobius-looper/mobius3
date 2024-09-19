@@ -15,7 +15,7 @@
 #include <JuceHeader.h>
 
 #include "../Supervisor.h"
-#include "../midi/MidiRealizer.h"
+#include "../sync/MidiRealizer.h"
 #include "../ui/JuceUtil.h"
 
 #include "MidiTransportPanel.h"

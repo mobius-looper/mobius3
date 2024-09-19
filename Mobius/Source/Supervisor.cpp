@@ -42,7 +42,7 @@
 #include "mobius/AudioFile.h"
 // temporary for MobiusContainer::midiSend
 #include "midi/OldMidiEvent.h"
-#include "midi/MidiRealizer.h"
+#include "sync/MidiRealizer.h"
 #include "test/TestDriver.h"
 
 #include "MainComponent.h"
@@ -374,17 +374,17 @@ bool Supervisor::start()
 
     meter("Devices");
     
-    // initialize the audio device last if we're standalone after
-    // everything is wired together and events can come in safely
-    if (mainComponent != nullptr) {
-        audioManager.openDevices();
-    }
-
     // setup MIDI devices
     // if an input device is configured, Binderator may start receiving events
     midiManager.configure();
     midiManager.openDevices();
     midiRealizer.initialize();
+    
+    // initialize the audio device last if we're standalone after
+    // everything is wired together and events can come in safely
+    if (mainComponent != nullptr) {
+        audioManager.openDevices();
+    }
 
     // allow accumulation of MidiSyncMessage, I think Mobius is up enough
     // to start consuming these, but if not JuceAudioStream will flush the

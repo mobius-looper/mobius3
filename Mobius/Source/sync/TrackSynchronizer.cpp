@@ -2,18 +2,16 @@
 
 #include <JuceHeader.h>
 
-#include "../midi/MidiSyncEvent.h"
-#include "../midi/MidiQueue.h"
+#include "../Supervisor.h"
 
-#include "MobiusMidiTransport.h"
-
-#include "MobiusKernel.h"
+#include "MidiSyncEvent.h"
+#include "MidiQueue.h"
 
 #include "TrackSynchronizer.h"
 
-TrackSynchronizer::TrackSynchronizer(MobiusKernel* k)
+TrackSynchronizer::TrackSynchronizer(Supervisor* s)
 {
-    kernel = k;
+    supervisor = s;
 }
 
 TrackSynchronizer::~TrackSynchronizer()
@@ -27,7 +25,7 @@ void TrackSynchronizer::initialize()
     // a MobiusMidiTransport
     // when you factor out a general sync library, this could probably
     // be owned by the synchronizer
-    midiTransport = kernel->getContainer()->getMidiTransport();
+    midiTransport = supervisor->getMidiRealizer();
 
 }
 

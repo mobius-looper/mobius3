@@ -40,7 +40,8 @@
 #include "script/MslContext.h"
 #include "script/MslEnvironment.h"
 
-#include "midi/MidiRealizer.h"
+#include "sync/MidiRealizer.h"
+#include "sync/Pulsator.h"
 #include "test/TestDriver.h"
 
 #include "ui/MobiusView.h"
@@ -154,6 +155,10 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     class MidiRealizer* getMidiRealizer() {
         return &midiRealizer;
+    }
+
+    class Pulsator* getPulsator() {
+        return &pulsator;
     }
 
     class MobiusInterface* getMobius() {
@@ -371,6 +376,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
     AudioManager audioManager {this};
     MidiManager midiManager {this};
     MidiRealizer midiRealizer {this};
+    Pulsator pulsator {this};
     VariableManager variableManager {this};
     Parametizer parametizer {this};
     Alerter alerter {this};

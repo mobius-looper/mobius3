@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include "../midi/MidiQueue.h"
-
 class MobiusMidiTransport
 {
   public:
@@ -104,14 +102,12 @@ class MobiusMidiTransport
     virtual void midiContinue() = 0;
 
     virtual class MidiSyncEvent* nextOutputEvent() = 0;
-    virtual void iterateOutput(MidiQueue::Iterator& iterator) = 0;
     
     //////////////////////////////////////////////////////////////////////
     // Input Sync
     //////////////////////////////////////////////////////////////////////
     
     virtual class MidiSyncEvent* nextInputEvent() = 0;
-    virtual void iterateInput(MidiQueue::Iterator& iterator) = 0;
     
     /**
      * An accurate millisecond counter provided by the container.

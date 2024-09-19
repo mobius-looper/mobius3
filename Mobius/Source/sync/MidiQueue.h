@@ -16,17 +16,6 @@ class MidiQueue
 {
   public:
 
-    class Iterator {
-        friend class MidiQueue;
-      public:
-        Iterator() {}
-        ~Iterator() {}
-        MidiSyncEvent* next();
-      protected:
-        MidiQueue* queue = nullptr;
-        int eventTail = 0;
-    };
-
     /**
      * Maximum number of MidiSyncEvents we can hold.
      * This will be filled by the MIDI device thread as events come in,
@@ -74,19 +63,26 @@ class MidiQueue
     /**
      * Remove and return the next event in the queue.
      * Ownership is not transferred.
+     * This is the original interface used by core/Synchronizer
      */
     MidiSyncEvent* popEvent();
 
     /**
-     * Start iterating over the event list
+     * Start iterating over the event list without popping them.
+     * This is the new interface used by Pulsator.  Iteration
+     * state is maintained internall, so there can only be one
+     * iteration happening at a time.
      */
-    void iterate(Iterator& iterator);
+    void iterateStart();
 
     /**
      * Return the next event in the queue without popping
      */
-    MidiSyncEvent* next(Iterator& iterator);
+    MidiSyncEvent* iterateNext();
 
+    /**
+     * Release accumulated dangling events at the end of the interrupt.
+     */
     void flushEvents();
 
     /**
@@ -132,11 +128,13 @@ class MidiQueue
      * Index into the event list where new events are placed.
      */
 	int eventHead = 0;
-
+    int iterateHead = 0;
+    
     /**
      * Index into the event list where old events are consumed.
      */
 	int eventTail = 0;
+    int iterateTail = 0;
 
     /**
      * Number of events we were unable to save due to buffer overflow.

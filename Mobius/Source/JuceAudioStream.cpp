@@ -55,6 +55,7 @@
 JuceAudioStream::JuceAudioStream(Supervisor* s)
 {
     supervisor = s;
+    pulsator = s->getPulsator();
 }
 
 JuceAudioStream::~JuceAudioStream()
@@ -162,6 +163,12 @@ juce::MidiBuffer* JuceAudioStream::getMidiMessages()
 MobiusMidiTransport* JuceAudioStream::getMidiTransport()
 {
     return supervisor->getMidiRealizer();
+}
+
+// new alternative to MobiusMidiTransport 
+Pulsator* JuceAudioStream::getPulsator()
+{
+    return pulsator;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -402,6 +409,10 @@ void JuceAudioStream::getNextAudioBlockForReal (const juce::AudioSourceChannelIn
     
     portAuthority.prepare(bufferToFill);
 
+    // this is where synchronization thoughts need to start going
+    // don't make MobiusKernel worry about it
+    pulsator->interruptStart(this);
+    
     if (audioListener != nullptr)
       audioListener->processAudioStream(this);
 
@@ -490,6 +501,10 @@ void JuceAudioStream::processBlockPlugin(juce::AudioBuffer<float>& buffer, juce:
     
         portAuthority.prepare(buffer);
         
+        // this is where synchronization thoughts need to start going
+        // don't make MobiusKernel worry about it
+        pulsator->interruptStart(this);
+    
         if (audioListener != nullptr)
           audioListener->processAudioStream(this);
 

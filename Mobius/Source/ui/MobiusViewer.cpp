@@ -98,6 +98,10 @@ void MobiusViewer::initialize(MobiusView* view)
 {
     MobiusConfig* config = supervisor->getMobiusConfig();
     view->audioTracks = config->getCoreTracks();
+    if (view->audioTracks == 0) {
+        // crashy if we don't have at least one, force it
+        view->audioTracks = 1;
+    }
 
     // all things MIDI come from here
     MainConfig* main = supervisor->getMainConfig();
@@ -127,6 +131,7 @@ void MobiusViewer::initialize(MobiusView* view)
     // always start on the first one
     // this may conflict with the Setup on the first refresh
     view->focusedTrack = 0;
+    view->track = view->tracks[0];
 }
 
 /**

@@ -5,9 +5,7 @@ MidiEvent has been renamed OldMidiEvent and will be phased away
 The new MidiEvent is designed for the new MidiTracks.  It wraps a juce::MidiMessage
 and adds additional state.  It may be pooled.  
 
-
-
-
+Synchronization related code has been moved to $root/sync
 
 ----------
 

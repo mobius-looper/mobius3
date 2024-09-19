@@ -8,7 +8,7 @@
 #include "../Supervisor.h"
 #include "../util/Trace.h"
 #include "../model/MobiusState.h"
-#include "../midi/MidiRealizer.h"
+#include "../sync/MidiRealizer.h"
 #include "../mobius/MobiusInterface.h"
 #include "../ui/JuceUtil.h"
 

@@ -110,7 +110,7 @@
 #include "../Supervisor.h"
 #include "../MidiManager.h"
 
-#include "MidiByte.h"
+#include "../midi/MidiByte.h"
 #include "MidiQueue.h"
 #include "MidiSyncEvent.h"
 #include "TempoMonitor.h"
@@ -724,9 +724,14 @@ MidiSyncEvent* MidiRealizer::nextOutputEvent()
     return outputQueue.popEvent();
 }
 
-void MidiRealizer::iterateOutput(MidiQueue::Iterator& iterator)
+void MidiRealizer::iterateOutputStart()
 {
-    outputQueue.iterate(iterator);
+    outputQueue.iterateStart();
+}
+
+MidiSyncEvent* MidiRealizer::iterateOutputNext()
+{
+    return outputQueue.iterateNext();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -801,9 +806,14 @@ MidiSyncEvent* MidiRealizer::nextInputEvent()
     return inputQueue.popEvent();
 }
 
-void MidiRealizer::iterateInput(MidiQueue::Iterator& iterator)
+void MidiRealizer::iterateInputStart()
 {
-    inputQueue.iterate(iterator);
+    inputQueue.iterateStart();
+}
+
+MidiSyncEvent* MidiRealizer::iterateInputNext()
+{
+    return inputQueue.iterateNext();
 }
 
 //////////////////////////////////////////////////////////////////////

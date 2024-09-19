@@ -13,7 +13,7 @@
 #ifndef SYNCHRONIZER_H
 #define SYNCHRONIZER_H
 
-#include "../../midi/MidiQueue.h"
+#include "../../sync/MidiQueue.h"
 
 // necessary for DriftCheckPoint
 #include "../../model/MobiusConfig.h"

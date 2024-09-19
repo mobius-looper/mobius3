@@ -4,6 +4,8 @@
  *
  * Not specifically related to any "track" concept, consider generalizing the names
  * and interfaces.  What tracks really are are another form of sync source.
+ *
+ * 
  */
 
 #pragma once
@@ -58,7 +60,7 @@ class TrackSynchronizer
         int frame = 0;
     };
 
-    TrackSynchronizer(class MobiusKernel* k);
+    TrackSynchronizer(class Supervisor* s);
     ~TrackSynchronizer();
 
     void initialize();
@@ -66,8 +68,8 @@ class TrackSynchronizer
     
   private:
 
-    class MobiusKernel* kernel = nullptr;
-    class MobiusMidiTransport* midiTransport = nullptr;
+    class Supervisor* supervisor = nullptr;
+    class MidiRealizer* midiTransport = nullptr;
 
     // random statistics
     int lastInterruptMsec = 0;

@@ -7,6 +7,19 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
+        <FILE id="DmwDFl" name="MidiQueue.cpp" compile="1" resource="0" file="Source/sync/MidiQueue.cpp"/>
+        <FILE id="gJLcbw" name="MidiQueue.h" compile="0" resource="0" file="Source/sync/MidiQueue.h"/>
+        <FILE id="YQpF3E" name="MidiRealizer.cpp" compile="1" resource="0"
+              file="Source/sync/MidiRealizer.cpp"/>
+        <FILE id="TbaOqY" name="MidiRealizer.h" compile="0" resource="0" file="Source/sync/MidiRealizer.h"/>
+        <FILE id="BvMR0q" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/sync/MidiSyncEvent.h"/>
+        <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
+        <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
+        <FILE id="r8b1tS" name="TempoMonitor.cpp" compile="1" resource="0"
+              file="Source/sync/TempoMonitor.cpp"/>
+        <FILE id="gYiqBB" name="TempoMonitor.h" compile="0" resource="0" file="Source/sync/TempoMonitor.h"/>
+      </GROUP>
       <FILE id="tM1zxN" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
@@ -73,21 +86,12 @@
         <FILE id="V405w4" name="MidiByte.h" compile="0" resource="0" file="Source/midi/MidiByte.h"/>
         <FILE id="xqoels" name="MidiEvent.cpp" compile="1" resource="0" file="Source/midi/MidiEvent.cpp"/>
         <FILE id="mA6nVC" name="MidiEvent.h" compile="0" resource="0" file="Source/midi/MidiEvent.h"/>
-        <FILE id="FqPEgq" name="MidiQueue.cpp" compile="1" resource="0" file="Source/midi/MidiQueue.cpp"/>
-        <FILE id="zPpRNa" name="MidiQueue.h" compile="0" resource="0" file="Source/midi/MidiQueue.h"/>
-        <FILE id="LzUaVM" name="MidiRealizer.cpp" compile="1" resource="0"
-              file="Source/midi/MidiRealizer.cpp"/>
-        <FILE id="VnWN2i" name="MidiRealizer.h" compile="0" resource="0" file="Source/midi/MidiRealizer.h"/>
         <FILE id="GQqoeU" name="MidiSequence.cpp" compile="1" resource="0"
               file="Source/midi/MidiSequence.cpp"/>
         <FILE id="hZQULr" name="MidiSequence.h" compile="0" resource="0" file="Source/midi/MidiSequence.h"/>
-        <FILE id="pe7gGA" name="MidiSyncEvent.h" compile="0" resource="0" file="Source/midi/MidiSyncEvent.h"/>
         <FILE id="RkyeW9" name="OldMidiEvent.cpp" compile="1" resource="0"
               file="Source/midi/OldMidiEvent.cpp"/>
         <FILE id="uzPNcj" name="OldMidiEvent.h" compile="0" resource="0" file="Source/midi/OldMidiEvent.h"/>
-        <FILE id="upm6Bb" name="TempoMonitor.cpp" compile="1" resource="0"
-              file="Source/midi/TempoMonitor.cpp"/>
-        <FILE id="DRPHZb" name="TempoMonitor.h" compile="0" resource="0" file="Source/midi/TempoMonitor.h"/>
       </GROUP>
       <GROUP id="{35F5BDA4-4F12-7FE6-B25F-7B2965D913CF}" name="model">
         <FILE id="jPc72V" name="ActionType.cpp" compile="1" resource="0" file="Source/model/ActionType.cpp"/>
@@ -464,10 +468,6 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
-        <FILE id="B4uK8i" name="TrackSynchronizer.cpp" compile="1" resource="0"
-              file="Source/mobius/TrackSynchronizer.cpp"/>
-        <FILE id="ebYhSU" name="TrackSynchronizer.h" compile="0" resource="0"
-              file="Source/mobius/TrackSynchronizer.h"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>

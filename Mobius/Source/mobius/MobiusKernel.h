@@ -22,7 +22,7 @@
 #include "KernelBinderator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
-#include "TrackSynchronizer.h"
+//#include "TrackSynchronizer.h"
 #include "midi/MidiTracker.h"
 
 /**
@@ -211,7 +211,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     KernelBinderator binderator {this};
     MobiusPools mobiusPools;
     Notifier notifier;
-    TrackSynchronizer synchronizer {this};
+//    TrackSynchronizer synchronizer {this};
     
     // internal state
 
