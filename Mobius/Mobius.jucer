@@ -7,6 +7,7 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
         <FILE id="DmwDFl" name="MidiQueue.cpp" compile="1" resource="0" file="Source/sync/MidiQueue.cpp"/>
         <FILE id="gJLcbw" name="MidiQueue.h" compile="0" resource="0" file="Source/sync/MidiQueue.h"/>

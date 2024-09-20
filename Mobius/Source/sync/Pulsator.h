@@ -60,6 +60,8 @@ class Pulsator
      * to respond one of these.
      */
     typedef enum {
+        // used within a Pulse to indiciate that the pulse has not been detected
+        SourceNone,
         SourceMidiIn,
         SourceMidiOut,
         SourceHost,
@@ -109,7 +111,7 @@ class Pulsator
         Pulse() {}
         ~Pulse() {}
 
-        Source source = SourceInternal;
+        Source source = SourceNone;
         Type type = PulseBeat;
 
         // the system millisecond at which this pulse was received
@@ -151,12 +153,69 @@ class Pulsator
             continuePulse = 0;
         }
     };
-    
-    Pulsator(class Supervisor* s);
-    ~Pulsator();
 
+    /**
+     * Each track or other entity interested in following sync pulses is allocated
+     * a Follower.
+     */
+    class Follower {
+      public:
+        Follower() {}
+        ~Follower() {}
+
+        // the unique follower id, normally a track number
+        int id = 0;
+        
+        // true if this follow is enabled, when false the follower is freewheeling
+        bool enabled = false;
+
+        // true when this follow is locked and begins drift monitoring
+        bool locked = false;
+
+        // the source this follower is following
+        Source source = SourceNone;
+
+        // the type of pulse to follow
+        Type type = PulseBeat;
+
+        // for SourceInternal an optional specific leader
+        // if left zero, a designated common leader is used
+        int leader = 0;
+
+        // the number of pulses in the follower's "loop"
+        int pulses = 0;
+
+        // the number of frames in the followers loop
+        int frames = 0;
+
+        // after locking, the current pulse count being monitored
+        int pulse = 0;
+
+        // after locking, the current frame position being monitored
+        int frame = 0;
+
+        // last calculated drift
+        int drift = 0;
+
+        // used when the follower can also provide internal pulses
+        // for others to follow, in that case it is a "leader"
+        Pulse internal;
+    };
+    
+    Pulsator(class Provider* p);
+    ~Pulsator();
+    void configure();
+    
     void interruptStart(class MobiusAudioStream* stream);
-    void addInternal(int frameOffset, Type type);
+    juce::Array<int>* getInternalLeaders();
+    int getPulseFrame(int follower, Type type);
+
+    void follow(int follower, Source source, Type type);
+    void follow(int follower, int leader, Type type);
+    void lock(int follower, int frames);
+    void unfollow(int follower);
+    void setOutSyncMaster(int follower, int frames);
+    void addInternalPulse(int follower, Type type, int frameOffset);
 
     float getTempo(Source src);
     int getBeat(Source src);
@@ -165,8 +224,13 @@ class Pulsator
     
   private:
 
-    class Supervisor* supervisor = nullptr;
+    class Provider* provider = nullptr;
     class MidiRealizer* midiTransport = nullptr;
+    juce::OwnedArray<Follower> followers;
+    juce::Array<int> leaders;
+    
+    // configuration
+    int driftThreshold = 1000;
     
     // random statistics
     int lastMillisecond = 0;
@@ -186,7 +250,6 @@ class Pulsator
     int hostBar = 0;
     int hostBeatsPerBar = 0;
     Pulse hostPulse;
-    bool hostPulseDetected = false;
     
     //
     // MIDI sync state
@@ -196,29 +259,21 @@ class Pulsator
     int midiInBar = 0;
     int midiInBeatsPerBar = 0;
     Pulse midiInPulse;
-    bool midiInPulseDetected = false;
     
     int midiOutBeat = 0;
     int midiOutBar = 0;
     int midiOutBeatsPerBar = 0;
     Pulse midiOutPulse;
-    bool midiOutPulseDetected = false;
 
-    //
-    // Internal sync state
-    // todo: actually may need several of these if there can be
-    // more than one track sync master
-    //
-
-    Pulse internalPulse;
-    bool internalPulseDetected = false;
-    
     void reset();
     
     void gatherHost(class MobiusAudioStream* stream);
     void gatherMidi();
     bool detectMidiBeat(class MidiSyncEvent* mse, Source src, Pulse* pulse);
     int getBar(int beat, int bpb);
+    int getPulseFrame(Pulse* p, Type type);
+    void orderInternalLeaders();
+    void advance(int blockFrames);
     
     void trace();
     void trace(Pulse& p);

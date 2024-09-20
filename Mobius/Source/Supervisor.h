@@ -47,7 +47,9 @@
 #include "ui/MobiusView.h"
 #include "ui/MobiusViewer.h"
 
-class Supervisor : public MobiusContainer, public MobiusListener, public MslContext,
+#include "Provider.h"
+
+class Supervisor : public Provider, public MobiusContainer, public MobiusListener, public MslContext,
                    juce::Timer
 {
   public:
@@ -149,7 +151,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
         return &keyTracker;
     }
     
-    class MidiManager* getMidiManager() {
+    class MidiManager* getMidiManager() override {
         return &midiManager;
     }
 
@@ -188,7 +190,7 @@ class Supervisor : public MobiusContainer, public MobiusListener, public MslCont
 
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
-    class MobiusConfig* getMobiusConfig();
+    class MobiusConfig* getMobiusConfig() override;
     void updateMobiusConfig();
     void writeMobiusConfig();
     void reloadMobiusConfig();

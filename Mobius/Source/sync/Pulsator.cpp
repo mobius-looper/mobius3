@@ -12,22 +12,56 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../model/MobiusConfig.h"
+#include "../model/MainConfig.h"
 
-#include "../Supervisor.h"
+#include "../Provider.h"
+#include "../mobius/MobiusInterface.h"
 
+#include "MidiRealizer.h"
 #include "MidiSyncEvent.h"
 #include "MidiQueue.h"
 
 #include "Pulsator.h"
 
-Pulsator::Pulsator(Supervisor* s)
+Pulsator::Pulsator(Provider* p)
 {
-    supervisor = s;
-    midiTransport = supervisor->getMidiRealizer();
+    provider = p;
+    midiTransport = provider->getMidiRealizer();
 }
 
 Pulsator::~Pulsator()
 {
+}
+
+/**
+ * Called during initialization and after anything changes that might
+ * impact the follower count.  Ensure that the Follow array is large enough.
+ * todo: Could avoid config model dependencies by making the caller pass down
+ * the follower count instead.
+ */
+void Pulsator::configure()
+{
+    int numFollowers = 0;
+    MobiusConfig* config = provider->getMobiusConfig();
+    numFollowers = config->getCoreTracks();
+    
+    MainConfig* main = provider->getMainConfig();
+    numFollowers += main->getGlobals()->getInt("midiTracks");
+
+    // ensure the array is big enough
+    // !! this is potentially dangerous if tracks are actively registering
+    // follows and the array needs to be resized.  Would be best to allow this
+    // only when in a state of GlobalReset
+    // +1 is because follower ids are 1 based and are array indexes
+    // follower id 0 is reserved
+    for (int i = followers.size() ; i < numFollowers + 1 ; i++) {
+        Follower* f = new Follower();
+        f->id = i;
+        followers.add(f);
+    }
+
+    leaders.ensureStorageAllocated(numFollowers+1);
 }
 
 void Pulsator::interruptStart(MobiusAudioStream* stream)
@@ -40,42 +74,45 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
     reset();
     
     gatherHost(stream);
-
     gatherMidi();
-
     // internals are added as the tracks advance
+
+    // advance follow state for external sources
+    advance(interruptFrames);
+    
     trace();
+}
+
+juce::Array<int>* Pulsator::getInternalLeaders()
+{
+    return &leaders;
+}
+
+void Pulsator::orderInternalLeaders()
+{
+    // empty but keep storage
+    leaders.clearQuick();
+
+    // ugh, hard in the general case since leaders can depend on other leaders
+    // and they would need to be done in dependency order, and there could be cycles
+    for (int i = 1 ; i < followers.size() ; i++) {
+        Follower* f = followers[i];
+        if (f->enabled && f->source == SourceInternal && f->leader > 0) {
+            if (!leaders.contains(f->leader))
+              leaders.add(f->leader);
+        }
+    }
 }
 
 void Pulsator::reset()
 {
-    hostPulseDetected = false;
-    midiInPulseDetected = false;
-    midiOutPulseDetected = false;
-    internalPulseDetected = false;
-}
-
-/**
- * Called by tracks or other internal objects to register the crossing
- * of a synchronization boundary after they were allowed to consume
- * this audio block.
- *
- * These "master" tracks must be processed first so they can register
- * sync events that the other tracks will follow.
- *
- * At the moment, there can only be one TrackSyncMaster so we only need
- * one pulse event, but in the future may want any track to follow any
- * other tracks and they'll all want to register events.
- */
-void Pulsator::addInternal(int frameOffset, Type type)
-{
-    if (internalPulseDetected)
-      Trace(1, "Pulsator: More than one master tried to register an internal pulse");
-    
-    internalPulse.reset(SourceInternal, millisecond);
-    internalPulse.type = type;
-    internalPulse.frame = frameOffset;
-    internalPulseDetected = true;
+    hostPulse.source = SourceNone;
+    midiInPulse.source = SourceNone;
+    midiOutPulse.source = SourceNone;
+    for (int i = 1 ; i < followers.size() ; i++) {
+        Follower* f = followers[i];
+        f->internal.source = SourceNone;
+    }
 }
 
 /**
@@ -170,10 +207,14 @@ int Pulsator::getBeatsPerBar(Source src)
 
 void Pulsator::trace()
 {
-    if (hostPulseDetected) trace(hostPulse);
-    if (midiInPulseDetected) trace(midiInPulse);
-    if (midiOutPulseDetected) trace(midiOutPulse);
-    if (internalPulseDetected) trace(internalPulse);
+    if (hostPulse.source != SourceNone) trace(hostPulse);
+    if (midiInPulse.source != SourceNone) trace(midiInPulse);
+    if (midiOutPulse.source != SourceNone) trace(midiOutPulse);
+    for (int i = 1 ; i < followers.size() ; i++) {
+        Follower* f = followers[i];
+        if (f->internal.source != SourceNone)
+          trace(f->internal);
+    }
 }
 
 void Pulsator::trace(Pulse& p)
@@ -215,6 +256,13 @@ void Pulsator::trace(Pulse& p)
  * Unlike MIDI events which are quantized by the MidiQueue, these
  * will have been created in the *same* interrupt and will have frame
  * values that are offsets into the current interrupt.
+ *
+ * It's actually a bit more complicated than this, the "ppqpos" changed the
+ * integer value during this block, but when we detect the difference this
+ * is a few frames AFTER the pulse actually happened.  So technically we should
+ * have caught it on the previous block and anticipated the change.  The delta is
+ * so small not to matter though and it will balance out because both the start
+ * and end pulses of a loop will be delayed by similar amounts.
  */
 void Pulsator::gatherHost(MobiusAudioStream* stream)
 {
@@ -236,7 +284,8 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
 
         // trace these since I want to know which hosts can provide them
         if (hostTempo != hostTime->tempo) {
-            hostTempo = hostTime->tempo;
+            // historically this has been a double, not necessary
+            hostTempo = (float)(hostTime->tempo);
             Trace(2, "Pulsator: Host tempo %d (x100)", (int)(hostTempo * 100));
         }
         if (hostBeatsPerBar != hostTime->beatsPerBar) {
@@ -257,7 +306,6 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
             // doesn't really matter what this is
             hostPulse.type = PulseBeat;
             hostPulse.stop = true;
-            hostPulseDetected = true;
             hostPlaying = false;
         }
         else if (!hostPlaying && hostTime->playing) {
@@ -290,7 +338,6 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
             // blow off continue, too hard
             hostPulse.start = starting;
             hostPulse.stop = stopping;
-            hostPulseDetected = true;
         }
     }
 }
@@ -389,6 +436,254 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
     }
     
 	return detected;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Followers
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Start following a sync source
+ */
+void Pulsator::follow(int followerId, Source source, Type type)
+{
+    if (followerId >= followers.size()) {
+        // could grow this, but we're in the audio thread and not supposed to
+        // should have been caught during configuration
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        if (f->enabled) {
+            Trace(2, "Pulsator: Follower %d is already following something", followerId);
+        }
+        else {
+            f->enabled = true;
+            f->locked = false;
+            f->source = source;
+            f->type = type;
+            f->pulses = 0;
+            f->frames = 0;
+        }
+    }
+}
+
+/**
+ * Start following another track
+ */
+void Pulsator::follow(int followerId, int leaderId, Type type)
+{
+    if (followerId >= followers.size()) {
+        // could grow this, but we're in the audio thread and not supposed to
+        // should have been caught during configuration
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else if (leaderId >= followers.size()) {
+        // could grow this, but we're in the audio thread and not supposed to
+        // should have been caught during configuration
+        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        if (f->enabled) {
+            Trace(2, "Pulsator: Follower id is already following something");
+        }
+        else {
+            f->enabled = true;
+            f->locked = false;
+            f->source = SourceInternal;
+            f->type = type;
+            f->leader = leaderId;
+            f->pulses = 0;
+            f->frames = 0;
+
+            orderInternalLeaders();
+        }
+    }
+}
+
+/**
+ * Stop the follow and begin drift monitoring.
+ * The frames argument has the length of the follower, it will normally
+ * be the same as the frames accumulated during the follow.
+ */
+void Pulsator::lock(int followerId, int frames)
+{
+    if (followerId >= followers.size()) {
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        if (!f->enabled) {
+            Trace(1, "Pulsator: Follower not enabled %d", followerId);
+        }
+        else if (f->locked) {
+            Trace(1, "Pulsator: Follower is already locked %d", followerId);
+        }
+        else {
+            Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
+                  followerId, f->pulses, f->frames);
+            Trace(2, "Pulsator: Locked frame length %d", frames);
+            // todo: need to be clear in the differences allowed between the
+            // frames accumulated during the follow, and the length the follower
+            // ended up with
+            f->frames = frames;
+            f->frame = 0;
+            f->pulse = 0;
+        }
+    }
+}
+
+void Pulsator::unfollow(int followerId)
+{
+    if (followerId >= followers.size()) {
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        if (!f->enabled) {
+            Trace(1, "Pulsator: Follower not enabled %d", followerId);
+        }
+        else {
+            bool wasInternal = (f->source == SourceInternal);
+            f->enabled = false;
+            f->locked = false;
+            f->source = SourceNone;
+            f->leader = 0;
+            f->frames = 0;
+            f->pulses = 0;
+            f->frame = 0;
+            f->pulse = 0;
+            if (wasInternal)
+              orderInternalLeaders();
+        }
+    }
+}
+
+/**
+ * Called by followers (tracks or other internal objects) to register the crossing
+ * of a synchronization boundary after they were allowed to consume
+ * this audio block.
+ *
+ * This is similar to the old Synchronizer::trackSyncEvent
+ */
+void Pulsator::addInternalPulse(int followerId, Type type, int frameOffset)
+{
+    if (followerId >= followers.size()) {
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        f->internal.reset(SourceInternal, millisecond);
+        f->internal.type = type;
+        f->internal.frame = frameOffset;
+    }
+}
+
+int Pulsator::getPulseFrame(int followerId, Type type)
+{
+    int frame = -1;
+    
+    if (followerId >= followers.size()) {
+        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    }
+    else {
+        Follower* f = followers[followerId];
+        switch (f->source) {
+            case SourceNone: /* nothing to say */ break;
+            case SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
+            case SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
+            case SourceHost: frame = getPulseFrame(&hostPulse, type); break;
+            case SourceInternal: {
+                if (f->leader > 0) {
+                    if (f->leader >= followers.size()) {
+                        Trace(1, "Pulsator: Leader id out of range %d", f->leader);
+                    }
+                    else {
+                        Follower* l = followers[f->leader];
+                        frame = getPulseFrame(&(l->internal), type);
+                    }
+                }
+            }
+                break;
+        }
+    }
+    return frame;
+}
+
+int Pulsator::getPulseFrame(Pulse* p, Type type)
+{
+    int frame = -1;
+    if (p->source != SourceNone && p->type == type) {
+        frame = p->frame;
+    }
+    return frame;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Out Sync Master
+//
+//////////////////////////////////////////////////////////////////////
+
+void Pulsator::setOutSyncMaster(int followerId, int frames)
+{
+    (void)followerId;
+    (void)frames;
+    Trace(1, "Pulsator::setOutSyncMaster not implemented");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drift
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Advance follower state for the non-internal followers.
+ * Once locked, internal followers are assumed to stay in sync
+ * since they were frame aligned.  Might still want to drift check
+ * track sync followers just in case there were round off errors
+ * calculating loop length.
+ */
+void Pulsator::advance(int blockFrames)
+{
+    for (int i = 1 ; i < followers.size() ; i++) {
+        Follower* f = followers[i];
+        if (f->enabled && f->source != SourceInternal) {
+            int offset = getPulseFrame(i, f->type);
+            if (offset >= 0)
+              f->pulse += 1;
+            f->frame += blockFrames;
+
+            // wrap the pulse
+            bool checkpoint = false;
+            if (f->pulse >= f->pulses) {
+                f->pulse = 0;
+                checkpoint = true;
+                // the pulse wrapped, calculate drift
+                // if the frame is beyond the end it is rushing
+                // if beyind the end it is lagging
+                f->drift = f->frame - f->frames;
+            }
+
+            // wrap the frame
+            if (f->frame >= f->frames) {
+                f->frame = f->frame - f->frames;
+            }
+
+            if (checkpoint) {
+                if (f->drift > driftThreshold) {
+                    Trace(1, "Pulsator: Drift threshold exceeded %d", f->drift);
+                }
+                else {
+                    Trace(2, "Pulsator: Drift checkpoint %d drift %d", i, f->drift);
+                }
+            }
+        }
+    }
 }
 
 /****************************************************************************/
