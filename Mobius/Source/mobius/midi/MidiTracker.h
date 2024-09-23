@@ -16,7 +16,7 @@ class MidiTracker
     ~MidiTracker();
 
     void initialize();
-    void reconfigure();
+    void configure();
 
     void midiEvent(class MidiEvent* event);
     void processAudioStream(class MobiusAudioStream* argStream);

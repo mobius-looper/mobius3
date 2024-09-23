@@ -42,9 +42,12 @@
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
+#include "../../model/ValueSet.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
+#include "../../sync/Pulsator.h"
+
 
 #include "../MobiusInterface.h"
 #include "MidiTracker.h"
@@ -67,7 +70,22 @@ void MidiTrack::initialize()
     doReset(nullptr);
 }
 
-MobiusContainer* MidiTrack::getContainer() {
+void MidiTrack::configure(ValueSet* mconfig, ValueSet* tconfig)
+{
+    (void)mconfig;
+
+    syncLeader = 0;
+    juce::String syncSource = tconfig->get("syncSource");
+    if (syncSource == "midiTrack") {
+        int tnum = tconfig->get("syncTrack");
+        if (tnum > 0) {
+            syncLeader = tnum;
+        }
+    }
+}
+
+MobiusContainer* MidiTrack::getContainer()
+{
     return tracker->getContainer();
 }
 
@@ -233,6 +251,13 @@ void MidiTrack::doReset(UIAction* a)
     reclaim(recording);
     recording = nullptr;
     
+    synchronizing = false;
+    if (syncLeader > 0) {
+        Pulsator* p = container->getPulsator();
+        // hating the numberspace of track identifiers
+        p->unfollow(tracker->trackBase + index);
+    }
+      
     frames = 0;
     frame = 0;
     cycles = 1;

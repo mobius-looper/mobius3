@@ -45,10 +45,34 @@ void MidiTracker::initialize()
         tstate->index = i;
         state.tracks.add(tstate);
     }
+
+    ValueSet* midiconfig = main->getSubset("Midi");
+    if (midiconfig != nullptr) {
+        for (auto track : tracks) {
+            juce::String setname(track->index);
+            ValueSet* tconfig = midiconfig->getSubset(setname);
+            if (tconfig != nullptr)
+              track->configure(midiconfig, tconfig);
+        }
+    }
 }
 
-void MidiTracker::reconfigure()
+void MidiTracker::configure()
 {
+    MainConfig* main = container->getMainConfig();
+    
+    // todo: add/remove tracks
+    // then make initialize and configure be the same thing
+    
+    ValueSet* midiconfig = main->getSubset("Midi");
+    if (midiconfig != nullptr) {
+        for (auto track : tracks) {
+            juce::String setname(track->index);
+            ValueSet* tconfig = midiconfig->getSubset(setname);
+            if (tconfig != nullptr)
+              track->configure(midiconfig, tconfig);
+        }
+    }
 }
 
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)

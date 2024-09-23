@@ -59,7 +59,8 @@ class ValueSet
 
     ValueSet();
     ~ValueSet();
-
+    ValueSet(ValueSet* src);
+    
     /**
      * Sets may have a name for management in a UI
      */
@@ -113,12 +114,17 @@ class ValueSet
     bool getBool(juce::String name);
     void setBool(juce::String name, bool bval);
 
+    juce::StringArray getKeys();
+
     //
     // Subset access
     //
 
     ValueSet* getSubset(int index);
+    ValueSet* getSubset(juce::String name);
     void addSubset(ValueSet* sub, int index);
+
+    juce::OwnedArray<ValueSet>& getSubsets();
 
     //
     // XML

@@ -14,7 +14,8 @@ class MidiTrack
     MidiTrack(class MidiTracker* t);
     ~MidiTrack();
     void initialize();
-
+    void configure(class ValueSet* mconfig, class ValueSet* tconfig);
+    
     bool isRecording();
     void midiEvent(class MidiEvent* e);
     void processAudioStream(class MobiusAudioStream* argStream);
@@ -43,6 +44,7 @@ class MidiTrack
     class MidiEventPool* eventPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
     MidiPlayer player {this};
+    int syncLeader = 0;
     
     // loop state
     int frame = 0;
@@ -65,7 +67,8 @@ class MidiTrack
 
     class MidiSequence* recording = nullptr;
     class MidiSequence* playing = nullptr;
-
+    bool synchronizing = false;
+    
     void reclaim(class MidiSequence* seq);
     
     void doRecord(class UIAction* a);

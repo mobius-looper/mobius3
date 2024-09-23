@@ -153,6 +153,8 @@
               file="Source/model/ScriptProperties.cpp"/>
         <FILE id="glMQJM" name="ScriptProperties.h" compile="0" resource="0"
               file="Source/model/ScriptProperties.h"/>
+        <FILE id="YR9r54" name="Session.cpp" compile="1" resource="0" file="Source/model/Session.cpp"/>
+        <FILE id="CsEfK5" name="Session.h" compile="0" resource="0" file="Source/model/Session.h"/>
         <FILE id="OZh5wr" name="Setup.cpp" compile="1" resource="0" file="Source/model/Setup.cpp"/>
         <FILE id="I3HQ2E" name="Setup.h" compile="0" resource="0" file="Source/model/Setup.h"/>
         <FILE id="RWjxQk" name="Structure.cpp" compile="1" resource="0" file="Source/model/Structure.cpp"/>

@@ -11,7 +11,34 @@ ValueSet::ValueSet()
 
 ValueSet::~ValueSet()
 {
-    }
+}
+
+ValueSet::ValueSet(ValueSet* src)
+{
+    name = src->name;
+    scope = src->scope;
+
+    juce::StringArray keys = src->getKeys();
+    for (auto key : keys)
+      set(key, *(src->get(key)));
+
+    juce::OwnedArray<ValueSet>& subs = src->getSubsets();
+    for (auto sub : subs)
+      subsets.add(new ValueSet(sub));
+}
+
+juce::StringArray ValueSet::getKeys()
+{
+    juce::StringArray keys;
+    for (juce::HashMap<String,MslValue*>::Iterator i(map) ; i.next();)
+      keys.add(i.getKey());
+    return keys;
+}
+
+juce::OwnedArray<ValueSet>& ValueSet::getSubsets()
+{
+    return subsets;
+}
 
 /**
  * Container get is simple enough.  Null means unbound.
@@ -154,6 +181,48 @@ void ValueSet::addSubset(ValueSet* sub, int index)
       subsets.set(i, nullptr);
 
     subsets.set(index, sub);
+}
+
+//
+// Name access
+// I think this is better, reconsider indexed access
+//
+
+ValueSet* ValueSet::getSubset(juce::String setname)
+{
+    ValueSet* found = nullptr;
+    for (auto sub : subsets) {
+        if (sub->name == setname) {
+            found = sub;
+            break;
+        }
+    }
+    return found;
+}
+
+/**
+ * When adding a value set with a name, it replaces the
+ * one with the previous name.
+ */
+ValueSet* ValueSet::addSubset(ValueSet* child)
+{
+    if (child->name.length() == 0) {
+        // can't use this interface without a name?
+        Trace(1, "ValueSet: Attempt to add ValueSet without a name");
+    }
+    else {
+        int currentIndex = -1;
+        for (int i = 0 ; i < subsets.size() ; i++) {
+            ValueSet* sub = subsets[i];
+            if (sub->name == child->name) {
+                currentIndex = i;
+                break;
+            }
+        }
+        if (currentIndex >= 0) {
+            subsets.set(currentIndex, child);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

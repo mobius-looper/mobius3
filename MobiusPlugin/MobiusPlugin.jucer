@@ -202,6 +202,8 @@
               file="../Mobius/Source/model/ScriptProperties.cpp"/>
         <FILE id="qR6rDw" name="ScriptProperties.h" compile="0" resource="0"
               file="../Mobius/Source/model/ScriptProperties.h"/>
+        <FILE id="Ze6wwW" name="Session.cpp" compile="1" resource="0" file="../Mobius/Source/model/Session.cpp"/>
+        <FILE id="HVwlHy" name="Session.h" compile="0" resource="0" file="../Mobius/Source/model/Session.h"/>
         <FILE id="gUPJrL" name="Setup.cpp" compile="1" resource="0" file="../Mobius/Source/model/Setup.cpp"/>
         <FILE id="J4bzxZ" name="Setup.h" compile="0" resource="0" file="../Mobius/Source/model/Setup.h"/>
         <FILE id="GefmGv" name="Structure.cpp" compile="1" resource="0" file="../Mobius/Source/model/Structure.cpp"/>

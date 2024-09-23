@@ -19,4 +19,12 @@
     <Value name="trackCount" value="8" type="int"/>
     <Value name="midiTracks" value="2"  type="int"/>
   </ValueSet>
+  <ValueSet name="Midi">
+    <ValueSet name="1">
+    </ValueSet>
+    <ValueSet name="2">
+      <Value name="syncSource" value="midiTrack"/>
+      <Value name="syncTrack" value="1"/>
+    </ValueSet>
+  </ValueSet>
 </MainConfig>
