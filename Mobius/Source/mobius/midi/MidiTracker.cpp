@@ -6,6 +6,7 @@
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
+#include "../../model/Session.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -27,50 +28,55 @@ MidiTracker::~MidiTracker()
 }
 
 /**
- * Intern the Symbols we want to recognize for queries and actions for faster lookup by
- * pointer rather than name.
+ * Originally looked at MainConfig and initialized tracks but
+ * I want to do that with Sessions
  */
 void MidiTracker::initialize()
 {
-    MainConfig* main = container->getMainConfig();
-    int trackCount = main->getGlobals()->getInt("midiTracks");
-    for (int i = 0 ; i < trackCount ; i++) {
-        MidiTrack* mt = new MidiTrack(this);
-        mt->index = i;
-        tracks.add(mt);
-        mt->initialize();
-
-        // make sure the carpet matches the drapes
-        MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
-        tstate->index = i;
-        state.tracks.add(tstate);
-    }
-
-    ValueSet* midiconfig = main->getSubset("Midi");
-    if (midiconfig != nullptr) {
-        for (auto track : tracks) {
-            juce::String setname(track->index);
-            ValueSet* tconfig = midiconfig->getSubset(setname);
-            if (tconfig != nullptr)
-              track->configure(midiconfig, tconfig);
-        }
-    }
 }
 
+/**
+ * todo: will need a way to edit configuration parameters and pass them down
+ * without doing a full Session reload
+ */
 void MidiTracker::configure()
 {
-    MainConfig* main = container->getMainConfig();
-    
-    // todo: add/remove tracks
-    // then make initialize and configure be the same thing
-    
-    ValueSet* midiconfig = main->getSubset("Midi");
-    if (midiconfig != nullptr) {
-        for (auto track : tracks) {
-            juce::String setname(track->index);
-            ValueSet* tconfig = midiconfig->getSubset(setname);
-            if (tconfig != nullptr)
-              track->configure(midiconfig, tconfig);
+}
+
+/**
+ * Experimental way to configure tracks.
+ * We're faking this right now, Supervisor will get a desired number
+ * of MIDI tracks from somewhere like MainConfig, build a Session and send it down.
+ * Here we pretend like this came from an actual session file.
+ *
+ * Until the Mobius side of things can start using Sessions, track numbering and
+ * order is fixed.  MIDI tracks will come after the audio tracks and we don't need
+ * to mess with reordering at the moment.
+ */
+void MidiTracker::loadSession(Session* session)
+{
+    int trackBase = session->audioTracks + 1;
+
+    int index = 0;
+    for (auto trackdef : session->tracks) {
+        if (trackdef->type == Session::TypeMidi) {
+            // todo: the order of tracks in the session defines the reference number
+            // the "id" of the track defines where it lives in our track array
+            // e.g. m1 is element 0, m2 is element 1, etc.
+            MidiTrack* mt = new MidiTrack(this, trackdef);
+            mt->index = index;
+            mt->number = trackBase + index;
+            tracks.add(mt);
+            // necessary?
+            mt->initialize();
+
+            // allocate a parallel state structure
+            // don't like this, consider passing the view down and updating
+            // it directly
+            MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
+            tstate->index = index;
+            tstate->number = mt->number;
+            state.tracks.add(tstate);
         }
     }
 }

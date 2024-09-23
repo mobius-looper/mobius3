@@ -69,15 +69,6 @@ class ValueSet
     // standard set names, move these outside?
     const char* GlobalSet = "Global";
 
-    /**
-     * For nested sets, the scope identiifer which must be a small integer.
-     * For Mobius this is a track number beginning from 1.
-     * Could just have another HashMap here and allow symbolic scope names but
-     * the only use for this is track bindings so an array is marginally more efficient
-     * and helps me sleep.
-     */
-    int scope = 0;
-
     //
     // Various forms of value access
     //
@@ -120,9 +111,8 @@ class ValueSet
     // Subset access
     //
 
-    ValueSet* getSubset(int index);
     ValueSet* getSubset(juce::String name);
-    void addSubset(ValueSet* sub, int index);
+    void addSubset(ValueSet* sub);
 
     juce::OwnedArray<ValueSet>& getSubsets();
 

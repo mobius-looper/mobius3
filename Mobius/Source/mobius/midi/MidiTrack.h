@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../../model/MobiusMidiState.h"
+#include "../../model/Session.h"
 
 #include "MidiPlayer.h"
 
@@ -11,10 +12,9 @@ class MidiTrack
     
   public:
 
-    MidiTrack(class MidiTracker* t);
+    MidiTrack(class MidiTracker* t, class Session::Track* def);
     ~MidiTrack();
     void initialize();
-    void configure(class ValueSet* mconfig, class ValueSet* tconfig);
     
     bool isRecording();
     void midiEvent(class MidiEvent* e);
@@ -22,7 +22,11 @@ class MidiTrack
     void doAction(class UIAction* a);
     void doQuery(class Query* q);
     
+    // the track number in "reference space"
+    int number = 0;
+    // the track index within the MidiTracker, need this?
     int index = 0;
+    
 
     void refreshState(class MobiusMidiState::Track* state);
 
@@ -41,11 +45,12 @@ class MidiTrack
   private:
 
     class MidiTracker* tracker = nullptr;
+    class Pulsator* pulsator = nullptr;
     class MidiEventPool* eventPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
     MidiPlayer player {this};
     int syncLeader = 0;
-    
+
     // loop state
     int frame = 0;
     int frames = 0;

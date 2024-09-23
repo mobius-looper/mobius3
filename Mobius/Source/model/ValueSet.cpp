@@ -16,7 +16,6 @@ ValueSet::~ValueSet()
 ValueSet::ValueSet(ValueSet* src)
 {
     name = src->name;
-    scope = src->scope;
 
     juce::StringArray keys = src->getKeys();
     for (auto key : keys)
@@ -27,10 +26,13 @@ ValueSet::ValueSet(ValueSet* src)
       subsets.add(new ValueSet(sub));
 }
 
+/**
+ * Only here for the copy constructor, could have a better way to do this.
+ */
 juce::StringArray ValueSet::getKeys()
 {
     juce::StringArray keys;
-    for (juce::HashMap<String,MslValue*>::Iterator i(map) ; i.next();)
+    for (juce::HashMap<juce::String,MslValue*>::Iterator i(map) ; i.next();)
       keys.add(i.getKey());
     return keys;
 }
@@ -162,32 +164,26 @@ void ValueSet::setBool(juce::String key, bool bval)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Return a subset for the given scope index.
- * Normaly these will be track numbers.
- * Should be fully fleshed out by the shell before the kernel needs to access them.
+ * Nexted sets must have a unique name.
+ * Adding one that already has that name replaces it.
  */
-ValueSet* ValueSet::getSubset(int index)
+void ValueSet::addSubset(ValueSet* sub)
 {
-    ValueSet* sub = nullptr;
-    if (index >= 0 && index < subsets.size())
-      sub = subsets[index];
-    return sub;
+    if (sub->name.length() == 0) {
+        Trace(1, "ValueSet: Can't add a subset without a reference name");
+    }
+    else {
+        ValueSet* found = getSubset(sub->name);
+        if (found != nullptr)
+          subsets.removeObject(found);
+        subsets.add(sub);
+    }
 }
 
-void ValueSet::addSubset(ValueSet* sub, int index)
-{
-    // the sparse array problem with Juce
-    for (int i = subsets.size() ; i <= index ; i++)
-      subsets.set(i, nullptr);
-
-    subsets.set(index, sub);
-}
-
-//
-// Name access
-// I think this is better, reconsider indexed access
-//
-
+/**
+ * Obtain a subset by name.
+ * Consider a HashMap index if there can be a lot of these.
+ */
 ValueSet* ValueSet::getSubset(juce::String setname)
 {
     ValueSet* found = nullptr;
@@ -198,31 +194,6 @@ ValueSet* ValueSet::getSubset(juce::String setname)
         }
     }
     return found;
-}
-
-/**
- * When adding a value set with a name, it replaces the
- * one with the previous name.
- */
-ValueSet* ValueSet::addSubset(ValueSet* child)
-{
-    if (child->name.length() == 0) {
-        // can't use this interface without a name?
-        Trace(1, "ValueSet: Attempt to add ValueSet without a name");
-    }
-    else {
-        int currentIndex = -1;
-        for (int i = 0 ; i < subsets.size() ; i++) {
-            ValueSet* sub = subsets[i];
-            if (sub->name == child->name) {
-                currentIndex = i;
-                break;
-            }
-        }
-        if (currentIndex >= 0) {
-            subsets.set(currentIndex, child);
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -242,9 +213,6 @@ void ValueSet::render(juce::XmlElement* parent)
 
     if (name.length() > 0) 
       root->setAttribute("name", name);
-
-    if (scope > 0)
-      root->setAttribute("scope", scope);
 
     // XML serialization in HashMap::Iterator order is unstable across machines
     // which leads to xml file differences when they are under source control
@@ -307,7 +275,6 @@ void ValueSet::parse(juce::XmlElement* root)
     }
     else {
         name = root->getStringAttribute("name");
-        scope = root->getIntAttribute("scope");
         
         for (auto* el : root->getChildIterator()) {
             if (el->hasTagName("Value")) {
@@ -348,20 +315,14 @@ void ValueSet::parse(juce::XmlElement* root)
                 }
             }
             else if (el->hasTagName("ValueSet")) {
-                int trackNumber = el->getIntAttribute("scope");
-                if (trackNumber > 0) {
-                    ValueSet* sub = getSubset(trackNumber);
-                    if (sub == nullptr) {
-                        sub = new ValueSet();
-                        sub->scope = trackNumber;
-                        addSubset(sub, trackNumber);
-                    }
-                    sub->parse(el);
+                juce::String setname = el->getStringAttribute("name");
+                if (setname.length() == 0) {
+                    Trace(1, "ValueSet: Subset without name");
                 }
                 else {
-                    // todo: not expecting unnumbered sub scopes yet,
-                    // if we need to support this they must have a name
-                    Trace(1, "ValueSet: Subscope without scope number");
+                    ValueSet* sub = new ValueSet();
+                    sub->parse(el);
+                    subsets.add(sub);
                 }
             }
             else {

@@ -240,6 +240,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     void installSymbols();
 
+    // experimental
+    void loadSession(class Session* s);
+
     // KernelMessage handling
     void reconfigure(class KernelMessage*);
     void installSamples(class KernelMessage* msg);

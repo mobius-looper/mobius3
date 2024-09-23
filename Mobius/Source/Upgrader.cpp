@@ -425,12 +425,15 @@ void Upgrader::convertSetup(Setup* setup, MainConfig* main)
 void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* setup)
 {
     SymbolTable* symbols = supervisor->getSymbols();
+
+    // just to get started, the name of this subset is the track number
+    juce::String tname = juce::String(trackNumber);
     
-    ValueSet* tset = setup->getSubset(trackNumber);
+    ValueSet* tset = setup->getSubset(tname);
     if (tset == nullptr) {
         tset = new ValueSet();
-        tset->scope = trackNumber;
-        setup->addSubset(tset, trackNumber);
+        tset->name = tname;
+        setup->addSubset(tset);
     }
 
     tset->setString(symbols->getName(ParamTrackName), track->getName());

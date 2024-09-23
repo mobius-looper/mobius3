@@ -386,6 +386,18 @@ void MobiusShell::midiEvent(MidiEvent* e)
     }
 }
 
+/**
+ * Emerging Session concept.
+ * Currently this is only used for configuring MIDI tracks, eventually
+ * this will take the place of Setups and MobiusConfig.
+ */
+void MobiusShell::loadSession(Session* session)
+{
+    // skip kernel transition for now, so we don't have to mess with lifespan
+    // should only allow session loading when the engine is in a state of rest
+    kernel.loadSession(session);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Action Handling

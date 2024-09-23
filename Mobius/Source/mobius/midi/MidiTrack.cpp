@@ -43,6 +43,7 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 #include "../../model/ValueSet.h"
+#include "../../model/Session.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -53,9 +54,13 @@
 #include "MidiTracker.h"
 #include "MidiTrack.h"
 
-MidiTrack::MidiTrack(MidiTracker* t)
+MidiTrack::MidiTrack(MidiTracker* t, Session::Track* def)
 {
     tracker = t;
+    pulsator = tracker->getContainer()->getPulsator();
+
+    // here remember the number and other parameters from the Session
+    (void)def;
 }
 
 MidiTrack::~MidiTrack()
@@ -68,12 +73,9 @@ void MidiTrack::initialize()
     sequencePool = tracker->getSequencePool();
     player.initialize();
     doReset(nullptr);
-}
 
-void MidiTrack::configure(ValueSet* mconfig, ValueSet* tconfig)
-{
-    (void)mconfig;
-
+    // old sync experiment, get this from the Session
+#if 0    
     syncLeader = 0;
     juce::String syncSource = tconfig->get("syncSource");
     if (syncSource == "midiTrack") {
@@ -82,6 +84,7 @@ void MidiTrack::configure(ValueSet* mconfig, ValueSet* tconfig)
             syncLeader = tnum;
         }
     }
+#endif
 }
 
 MobiusContainer* MidiTrack::getContainer()
@@ -253,9 +256,8 @@ void MidiTrack::doReset(UIAction* a)
     
     synchronizing = false;
     if (syncLeader > 0) {
-        Pulsator* p = container->getPulsator();
         // hating the numberspace of track identifiers
-        p->unfollow(tracker->trackBase + index);
+        pulsator->unfollow(number);
     }
       
     frames = 0;

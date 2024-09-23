@@ -121,6 +121,12 @@ class MobiusInterface {
     virtual void reconfigure(class MobiusConfig* config) =  0;
 
     /**
+     * Emerging Session concept...
+     */
+    virtual void loadSession(class Session* s) = 0;
+    
+
+    /**
      * Newer alternative to some things that used to be in MobiusConfig
      * Driven from the SymbolTable
      */
@@ -391,6 +397,12 @@ class MobiusContainer
      * plugin host parameters.
      */
     virtual class Parametizer* getParametizer() = 0;
+
+    /**
+     * New alternative to MidiTransport for MIDI tracks until we get more formal
+     * about how this should look.
+     */
+    virtual class Pulsator* getPulsator() = 0;
 
     /**
      * Send a MIDI event somewhere.
@@ -777,6 +789,7 @@ class MobiusAudioStream
     /**
      * New alternative to MidiTransport for MIDI tracks until we get more formal
      * about how this should look.
+     * !! This is better in MobiusContainer than the stream
      */
     virtual class Pulsator* getPulsator() = 0;
 

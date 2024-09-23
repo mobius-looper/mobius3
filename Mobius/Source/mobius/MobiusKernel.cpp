@@ -172,6 +172,17 @@ void MobiusKernel::propagateSymbolProperties()
 }
 
 /**
+ * Emerging replacement for MobiusConfig and Setup
+ * This is allowed to be called only during the initialization phase
+ * and is called directly from the UI thread.
+ */
+void MobiusKernel::loadSession(Session* s)
+{
+    // Mobius doesn't do anything with this yet, but MidiTracker does
+    mMidi->loadSession(s);
+}
+
+/**
  * Install kernel level symbols.
  * The symbols have already been interned during Symbolizer initialzation.
  * Here we adjust the level and behavior.

@@ -12,19 +12,18 @@ Session::~Session()
 {
 }
 
-void Session::Session(Session* src)
+Session::Session(Session* src)
 {
     for (auto track : src->tracks) {
         tracks.add(new Track(track));
     }
 
-    ValueSet* g = &(src->globals);
-    globals = new ValueSet(g);
+    globals.reset(new ValueSet(src->globals.get()));
 }
 
-void Session::Track::Track(Session::Track* src)
+Session::Track::Track(Session::Track* src)
 {
     type = src->type;
     name = src->name;
-    parameters = new ValueSet(&(src->parameters));
+    parameters.reset(new ValueSet(src->parameters.get()));
 }

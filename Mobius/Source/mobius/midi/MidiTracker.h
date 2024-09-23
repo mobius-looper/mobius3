@@ -17,6 +17,7 @@ class MidiTracker
 
     void initialize();
     void configure();
+    void loadSession(class Session* s);
 
     void midiEvent(class MidiEvent* event);
     void processAudioStream(class MobiusAudioStream* argStream);
@@ -31,6 +32,10 @@ class MidiTracker
 
     MobiusContainer* getContainer() {
         return container;
+    }
+
+    class MobiusKernel* getKernel() {
+        return kernel;
     }
     
   private:

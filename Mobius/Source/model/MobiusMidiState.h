@@ -37,7 +37,8 @@ class MobiusMidiState
     class Track {
       public:
         int index = 0;
-
+        int number = 0;
+        
         // play position
         int frames = 0;
         int frame = 0;

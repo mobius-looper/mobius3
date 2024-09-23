@@ -40,6 +40,7 @@ class MobiusShell : public MobiusInterface
     void initialize(class MobiusConfig* config) override;
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config) override;
+    void loadSession(class Session* s) override;
     MobiusState* getState() override;    // also shared by the kernel
     class MobiusMidiState* getMidiState() override;
     void performMaintenance() override;

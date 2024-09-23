@@ -11,6 +11,8 @@
 
 #include <JuceHeader.h>
 
+#include "ValueSet.h"
+
 class Session
 {
   public:
@@ -35,14 +37,17 @@ class Session
         // should this be a first-class member or inside the value set?
         juce::String name;
 
-        ValueSet parameters;
+        std::unique_ptr<ValueSet> parameters;
 
     };
 
     juce::OwnedArray<Track> tracks;
 
     // global parameters
-    ValueSet globals;
+    std::unique_ptr<ValueSet> globals;
+
+    // until we get audio tracks in here, just remember how many there are
+    int audioTracks = 0;
 
   private:
 };
