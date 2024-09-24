@@ -111,20 +111,14 @@ class MobiusInterface {
      * todo: the engine may want to return error messages if it doesn't like
      * something about the configuration
      */
-    virtual void initialize(class MobiusConfig* config) = 0;
+    virtual void initialize(class MobiusConfig* config, class Session* session) = 0;
 
     /**
      * Reconfigure the Mobius engine.
      * Called after the engine has been running and the configuration
      * was modified by the UI.
      */
-    virtual void reconfigure(class MobiusConfig* config) =  0;
-
-    /**
-     * Emerging Session concept...
-     */
-    virtual void loadSession(class Session* s) = 0;
-    
+    virtual void reconfigure(class MobiusConfig* config, class Session* session) =  0;
 
     /**
      * Newer alternative to some things that used to be in MobiusConfig
@@ -352,17 +346,6 @@ class MobiusContainer
      */
     virtual juce::File getRoot() = 0;
 
-    /**
-     * Return a new object containing configuration parameters.
-     * This is where the configuration for MIDI tracks lives and where
-     * we will be gradually migrating global parameters and other things
-     * that live in MobiusConfig.
-     *
-     * I'm liking the pull model better than pushing MobiusConfig down
-     * into initialize() and reconfigure()
-     */
-    virtual class MainConfig* getMainConfig() = 0;
-    
     /**
      * Return true if the Mobius engine is running as a plugin.
      * Used only by Track to select which audio stream ports

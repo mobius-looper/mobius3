@@ -49,7 +49,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
      * is kind of arbitrary, consider doing it one way or the other.
      * Or just pulling it from the MobiusShell
      */
-    void initialize(class MobiusContainer* cont, class MobiusConfig* config);
+    void initialize(class MobiusContainer* cont, class MobiusConfig* config, class Session* session);
     void propagateSymbolProperties();
 
     /**
@@ -95,6 +95,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     class MobiusConfig* getMobiusConfig() {
         return configuration;
+    }
+    
+    class Session* getSession() {
+        return session;
     }
 
     // for a small number of things that live dangerously
@@ -200,6 +204,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class KernelCommunicator* communicator = nullptr;
     class MobiusContainer* container = nullptr;
     class MobiusConfig* configuration = nullptr;
+    class Session* session = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
     
@@ -240,11 +245,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     void installSymbols();
 
-    // experimental
-    void loadSession(class Session* s);
-
     // KernelMessage handling
     void reconfigure(class KernelMessage*);
+    void loadSession(class KernelMessage*);
     void installSamples(class KernelMessage* msg);
     void installScripts(class KernelMessage* msg);
     void installBinderator(class KernelMessage* msg);

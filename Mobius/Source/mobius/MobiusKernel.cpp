@@ -9,7 +9,7 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/MobiusConfig.h"
-#include "../model/MainConfig.h"
+#include "../model/Session.h"
 #include "../model/UIParameter.h"
 #include "../model/UIAction.h"
 #include "../model/Scope.h"
@@ -106,7 +106,9 @@ MobiusKernel::~MobiusKernel()
       Mobius::freeStaticObjects();
 
     // we do not own shell, communicator, or container
+    // use a unique_ptr here!!
     delete configuration;
+    delete session;
 
     // stop listening
     if (container != nullptr)
@@ -131,7 +133,8 @@ MobiusKernel::~MobiusKernel()
  * by a later MsgConfigure
  *
  */
-void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
+void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config,
+                              Session* ses)
 {
     Trace(2, "MobiusKernel::initialize\n");
     
@@ -140,6 +143,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     audioPool = shell->getAudioPool();
     actionPool = shell->getActionPool();
     configuration = config;
+    session = ses;
 
     // register ourselves as the audio listener
     // unclear when things start pumping in, but do this last
@@ -156,8 +160,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
     installSymbols();
 
     audioTracks = config->getCoreTracks();
-    MainConfig* main = cont->getMainConfig();
-    midiTracks = main->getGlobals()->getInt("midiTracks");
+    // todo: cound the actual number of midi tracks
+    midiTracks = ses->tracks.size();
 
     //synchronizer.initialize();
 
@@ -169,17 +173,6 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config)
 void MobiusKernel::propagateSymbolProperties()
 {
     mCore->propagateSymbolProperties();
-}
-
-/**
- * Emerging replacement for MobiusConfig and Setup
- * This is allowed to be called only during the initialization phase
- * and is called directly from the UI thread.
- */
-void MobiusKernel::loadSession(Session* s)
-{
-    // Mobius doesn't do anything with this yet, but MidiTracker does
-    mMidi->loadSession(s);
 }
 
 /**
@@ -245,6 +238,7 @@ void MobiusKernel::consumeCommunications()
         switch (msg->type) {
             case MsgNone: break;
             case MsgConfigure: reconfigure(msg); break;
+            case MsgSession: loadSession(msg); break;
             case MsgSamples: installSamples(msg); break;
             case MsgScripts: installScripts(msg); break;
             case MsgBinderator: installBinderator(msg); break;
@@ -288,6 +282,23 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // this is NOT where track configuration comes in
     if (mCore != nullptr)
       mCore->reconfigure(configuration);
+}
+
+void MobiusKernel::loadSession(KernelMessage* msg)
+{
+    Session* old = session;
+
+    // take the new one
+    session = msg->object.session;
+    
+    // reuse the request message to respond with the
+    // old one to be deleted
+    msg->object.session = old;
+
+    // send the old one back
+    communicator->kernelSend(msg);
+
+    // todo: send this to MidiTracker
 }
 
 //////////////////////////////////////////////////////////////////////

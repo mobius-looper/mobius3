@@ -13,7 +13,7 @@
 
 #include "../util/Trace.h"
 #include "../model/MobiusConfig.h"
-#include "../model/MainConfig.h"
+#include "../model/Session.h"
 
 #include "../Provider.h"
 #include "../mobius/MobiusInterface.h"
@@ -46,8 +46,8 @@ void Pulsator::configure()
     MobiusConfig* config = provider->getMobiusConfig();
     numFollowers = config->getCoreTracks();
     
-    MainConfig* main = provider->getMainConfig();
-    numFollowers += main->getGlobals()->getInt("midiTracks");
+    Session* session = provider->getSession();
+    numFollowers += session->tracks.size();
 
     // ensure the array is big enough
     // !! this is potentially dangerous if tracks are actively registering

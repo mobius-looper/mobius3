@@ -72,7 +72,7 @@
 
 #include "util/Trace.h"
 #include "model/DeviceConfig.h"
-#include "model/MainConfig.h"
+#include "model/Session.h"
 
 #include "Supervisor.h"
 #include "MidiManager.h"
@@ -97,13 +97,14 @@ MidiManager::~MidiManager()
 }
 
 /**
- * Called during initialization and after modifying MainConfig
+ * Called during initialization and after modifying the Session
  * We watch the allocation of MIDI tracks, and if there are any enable recording.
  */
 void MidiManager::configure()
 {
-    MainConfig* main = supervisor->getMainConfig();
-    if (main->getGlobals()->getInt("midiTracks") > 0)
+    Session* session = supervisor->getSession();
+    // assume for now that if there are any they're midi
+    if (session->tracks.size() > 0)
       recordable = true;
 }
 

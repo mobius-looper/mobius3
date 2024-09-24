@@ -200,9 +200,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void updateSymbolProperties();
 
     // this is override because it is also part of MobiusContainer
-    class MainConfig* getMainConfig() override;
-    void updateMainConfig();
-    void reloadMainConfig();
+    class Session* getSession() override;
+    void updateSession();
     
     class HelpCatalog* getHelpCatalog();
     class DynamicConfig* getDynamicConfig();
@@ -394,7 +393,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // master copies of the configuration files
     std::unique_ptr<class DeviceConfig> deviceConfig;
-    std::unique_ptr<class MainConfig> mainConfig;
+    std::unique_ptr<class Session> session;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
     std::unique_ptr<class DynamicConfig> dynamicConfig;
@@ -429,8 +428,11 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class DeviceConfig* readDeviceConfig();
     void writeDeviceConfig(class DeviceConfig* config);
     
-    class MainConfig* readMainConfig();
-    void writeMainConfig(class MainConfig* config);
+    class Session* readDefaultSession();
+    void writeDefaultSession(class Session* session);
+    class Session* bootstrapDefaultSession();
+    void upgradeSession(class MobiusConfig* old, class Session* ses);
+    void convertEnum(juce::String name, int value, class ValueSet* dest);
 
     class MobiusConfig* readMobiusConfig();
     void writeMobiusConfig(class MobiusConfig* config);

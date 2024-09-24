@@ -16,7 +16,7 @@ class Provider
     virtual ~Provider() {}
 
     virtual class MobiusConfig* getMobiusConfig() = 0;
-    virtual class MainConfig* getMainConfig() = 0;
+    virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;
     virtual class MobiusMidiTransport* getMidiTransport() = 0;
     virtual class MidiRealizer* getMidiRealizer() = 0;

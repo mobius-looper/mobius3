@@ -150,9 +150,11 @@ MobiusShell::MobiusShell(MobiusContainer* cont)
 MobiusShell::~MobiusShell()
 {
     Trace(2, "MobiusShell: Destructing\n");
-    
-    delete configuration;
 
+    // use a unique_ptr here!
+    delete configuration;
+    delete session;
+    
     audioPool.dump();
 
     Instances--;
@@ -200,7 +202,7 @@ bool MobiusShell::mslQuery(class MslQuery* q)
  * Two copies are made, one for the shell and one for the kernel.
  * We could probably share them, but safer not to.
  */
-void MobiusShell::initialize(MobiusConfig* config)
+void MobiusShell::initialize(MobiusConfig* config, Session* ses)
 {
     Trace(2, "MobiusShell::initialize\n");
     
@@ -214,6 +216,14 @@ void MobiusShell::initialize(MobiusConfig* config)
     // todo: give this class a proper clone() method so we don't have to use XML
     configuration = config->clone();
 
+    if (session != nullptr) {
+        Trace(1, "MobiusShell::initialize Session already initialized!\n");
+        delete session;
+        session = nullptr;
+    }
+
+    session = new Session(ses);
+    
     // start tracking internal runtime changes that the UI may be interested in
     // update: not used any more
     initDynamicConfig();
@@ -236,7 +246,8 @@ void MobiusShell::initialize(MobiusConfig* config)
     // in the constructor, but not all like audioPool and config
 
     MobiusConfig* kernelCopy = config->clone();
-    kernel.initialize(container, kernelCopy);
+    Session* kernelSession = new Session(ses);
+    kernel.initialize(container, kernelCopy, kernelSession);
 }
 
 /**
@@ -255,7 +266,7 @@ void MobiusShell::installSymbols()
 /**
  * Reconfigure the engine after MobiusConfig has been edited.
  */
-void MobiusShell::reconfigure(MobiusConfig* config)
+void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
 {
     Trace(2, "MobiusShell::reconfigure\n");
     
@@ -263,12 +274,17 @@ void MobiusShell::reconfigure(MobiusConfig* config)
     delete configuration;
     configuration = config->clone();
 
+    delete session;
+    session = new Session(ses);
+
     // todo: reload scripts whenever the config changes?
     installActivationSymbols();
 
     // clone it again and give it to the kernel
     MobiusConfig* kernelCopy = config->clone();
+    Session* kernelSession = new Session(ses);
     sendKernelConfigure(kernelCopy);
+    sendKernelSession(kernelSession);
 }
 
 /**
@@ -384,18 +400,6 @@ void MobiusShell::midiEvent(MidiEvent* e)
         // shit's hitting the fan
         delete e;
     }
-}
-
-/**
- * Emerging Session concept.
- * Currently this is only used for configuring MIDI tracks, eventually
- * this will take the place of Setups and MobiusConfig.
- */
-void MobiusShell::loadSession(Session* session)
-{
-    // skip kernel transition for now, so we don't have to mess with lifespan
-    // should only allow session loading when the engine is in a state of rest
-    kernel.loadSession(session);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -642,6 +646,17 @@ void MobiusShell::sendKernelConfigure(MobiusConfig* config)
     // else, pool exhaustion, already traced
 }
 
+void MobiusShell::sendKernelSession(Session* ses)
+{
+    KernelMessage* msg = communicator.shellAlloc();
+    if (msg != nullptr) {
+        msg->type = MsgSession;
+        msg->object.session = ses;
+        communicator.shellSend(msg);
+    }
+    // else, pool exhaustion, already traced
+}
+
 /**
  * Send a new MIDI binding handler down.
  */
@@ -681,6 +696,12 @@ void MobiusShell::consumeCommunications()
             case MsgConfigure: {
                 // kernel is done with the previous configuration
                 delete msg->object.configuration;
+            }
+                break;
+                
+            case MsgSession: {
+                // kernel is done with the previous configuration
+                delete msg->object.session;
             }
                 break;
                 

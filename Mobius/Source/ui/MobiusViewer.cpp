@@ -51,7 +51,7 @@
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
 #include "../model/MobiusConfig.h"
-#include "../model/MainConfig.h"
+#include "../model/Session.h"
 
 #include "../mobius/MobiusInterface.h"
 
@@ -104,8 +104,8 @@ void MobiusViewer::initialize(MobiusView* view)
     }
 
     // all things MIDI come from here
-    MainConfig* main = supervisor->getMainConfig();
-    view->midiTracks = main->getGlobals()->getInt("midiTracks");
+    Session* session = supervisor->getSession();
+    view->midiTracks = session->tracks.size();
 
     // stub this out till we're ready
     //view->midiTracks = 0;

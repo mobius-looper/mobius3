@@ -3,6 +3,8 @@
  *
  * There will always be one default value, and an optional
  * override value for each track.
+ *
+ * UPDATE: This is not used, nor will it be...
  */
 
 #pragma once

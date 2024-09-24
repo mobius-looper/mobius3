@@ -20,6 +20,9 @@ class Session
     Session(Session* src);
     ~Session();
 
+    int getAudioTrackCount();
+    int getMidiTrackCount();
+
     typedef enum {
         TypeAudio,
         TypeMidi,
@@ -49,7 +52,15 @@ class Session
     // until we get audio tracks in here, just remember how many there are
     int audioTracks = 0;
 
+    void parseXml(juce::String xml);
+    juce::String toXml();
+
   private:
+
+    void xmlError(const char* msg, juce::String arg);
+    Track* parseTrack(juce::XmlElement* root);
+    void renderTrack(juce::XmlElement* parent, Track* track);
+    
 };
 
 

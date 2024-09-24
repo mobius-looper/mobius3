@@ -17,12 +17,12 @@
 #include "util/List.h"
 
 #include "model/MobiusConfig.h"
-#include "model/MainConfig.h"
+#include "model/Session.h"
 #include "model/UIConfig.h"
 #include "model/XmlRenderer.h"
 #include "model/UIAction.h"
 #include "model/Query.h"
-//#include "model/UIParameter.h"
+#include "model/ParameterProperties.h"
 #include "model/MobiusState.h"
 #include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
@@ -266,14 +266,16 @@ bool Supervisor::start()
     variableManager.install();
 
     // validate/upgrade the configuration files
-    // doing a gradual migration toward MainConfig from MobiusConfig
+    // doing a gradual migration toward Session from MobiusConfig
     // this must be done after symbols are initialized
     MobiusConfig* config = getMobiusConfig();
-    MainConfig* config2 = getMainConfig();
-    if (upgrader.upgrade(config, config2)) {
+    Session* ses = getSession();
+    if (upgrader.upgrade(config, ses)) {
         writeMobiusConfig(config);
-        writeMainConfig(config2);
     }
+    // do this unconditionally for awhile
+    upgradeSession(config, ses);
+    writeDefaultSession(ses);
 
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
@@ -351,7 +353,7 @@ bool Supervisor::start()
     // this is where the bulk of the engine initialization happens
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
-    mobius->initialize(config);
+    mobius->initialize(config, ses);
     kludgeCoreSymbols();
 
     // ScriptConfig no longer goes in through MobiusConfig
@@ -869,11 +871,10 @@ void Supervisor::advance()
 //////////////////////////////////////////////////////////////////////
 
 const char* DeviceConfigFile = "devices.xml";
-const char* MainConfigFile = "parameters.xml";
 const char* MobiusConfigFile = "mobius.xml";
 const char* UIConfigFile = "uiconfig.xml";
 const char* HelpFile = "help.xml";
-
+    
 /**
  * Read the XML for a configuration file.
  */
@@ -921,25 +922,6 @@ DeviceConfig* Supervisor::readDeviceConfig()
     return config;
 }
 
-/**
- * Read the main/parameters configuration file.
- */
-MainConfig* Supervisor::readMainConfig()
-{
-    MainConfig* config = nullptr;
-    
-    juce::String xml = readConfigFile(MainConfigFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Bootstrapping %s\n", MainConfigFile);
-        config = new MainConfig();
-    }
-    else {
-        config = new MainConfig();
-        config->parseXml(xml);
-    }
-
-    return config;
-}
 
 /**
  * Read the MobiusConfig from.
@@ -989,18 +971,6 @@ void Supervisor::writeDeviceConfig(DeviceConfig* config)
     if (config != nullptr) {
         juce::String xml = config->toXml();
         writeConfigFile(DeviceConfigFile, xml.toUTF8());
-    }
-}
-
-/**
- * Write a MainConfig back to the file system.
- * Ownership of the config object does not transfer.
- */
-void Supervisor::writeMainConfig(MainConfig* config)
-{
-    if (config != nullptr) {
-        juce::String xml = config->toXml();
-        writeConfigFile(MainConfigFile, xml.toUTF8());
     }
 }
 
@@ -1087,19 +1057,6 @@ DeviceConfig* Supervisor::getDeviceConfig()
     return deviceConfig.get();
 }
 
-MainConfig* Supervisor::getMainConfig()
-{
-    if (!mainConfig) {
-        MainConfig* neu = readMainConfig();
-        if (neu == nullptr) {
-            // bootstrap one so we don't have to keep checking
-            neu = new MainConfig();
-        }
-        mainConfig.reset(neu);
-    }
-    return mainConfig.get();
-}
-
 /**
  * Save a modified MobiusConfig, and propagate changes
  * to the interested components.
@@ -1133,8 +1090,10 @@ void Supervisor::updateMobiusConfig()
         propagateConfiguration();
 
         // send it down to the engine
-        if (mobius != nullptr)
-          mobius->reconfigure(config);
+        if (mobius != nullptr) {
+            Session* ses = getSession();
+            mobius->reconfigure(config, ses);
+        }
 
         // clear speical triggers for the engine now that it is done
         config->setupsEdited = false;
@@ -1184,8 +1143,9 @@ void Supervisor::reloadMobiusConfig()
     propagateConfiguration();
         
     MobiusConfig* config = mobiusConfig.get();
+    Session* ses = session.get();
     if (mobius != nullptr)
-      mobius->reconfigure(config);
+      mobius->reconfigure(config, ses);
         
     configureBindings();
 }
@@ -1217,19 +1177,6 @@ void Supervisor::updateDeviceConfig()
     if (deviceConfig) {
         DeviceConfig* config = deviceConfig.get();
         writeDeviceConfig(config);
-    }
-}
-
-/**
- * This will need to start behaving like MobiusConfig and
- * propagating changes to the internal objects.
- */
-void Supervisor::updateMainConfig()
-{
-    if (mainConfig) {
-        MainConfig* config = mainConfig.get();
-
-        writeMainConfig(config);
     }
 }
 
@@ -1267,6 +1214,164 @@ DynamicConfig* Supervisor::getDynamicConfig()
 void Supervisor::propagateConfiguration()
 {
     mainWindow->configure();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sessions
+//
+//////////////////////////////////////////////////////////////////////
+
+const char* DefaultSessionFile = "session.xml";
+
+Session* Supervisor::readDefaultSession()
+{
+    Session* ses = nullptr;
+    
+    juce::String xml = readConfigFile(DefaultSessionFile);
+    if (xml.length() == 0) {
+        Trace(2, "Supervisor: Bootstrapping %s\n", DefaultSessionFile);
+        ses = bootstrapDefaultSession();
+    }
+    else {
+        ses = new Session();
+        ses->parseXml(xml);
+
+        // todo: copy globals from MobiusConfig into Session here?
+    }
+
+    return ses;
+}
+
+/**
+ * Write a MainConfig back to the file system.
+ * Ownership of the config object does not transfer.
+ */
+void Supervisor::writeDefaultSession(Session* ses)
+{
+    if (ses != nullptr) {
+        juce::String xml = ses->toXml();
+        writeConfigFile(DefaultSessionFile, xml.toUTF8());
+    }
+}
+
+Session* Supervisor::getSession()
+{
+    if (!session) {
+        Session* neu = readDefaultSession();
+        session.reset(neu);
+    }
+    return session.get();
+}
+
+/**
+ * This will need to start behaving like MobiusConfig and
+ * propagating changes to the internal objects.
+ */
+void Supervisor::updateSession()
+{
+    if (session) {
+        Session* s = session.get();
+        // todo: if this wasn't the default session, remember where it came from
+        writeDefaultSession(s);
+    }
+}
+
+Session* Supervisor::bootstrapDefaultSession()
+{
+    Session* s = new Session();
+    MobiusConfig* config = getMobiusConfig();
+
+    s->audioTracks = config->getCoreTracks();
+
+    return s;
+}
+
+void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
+{
+    // this one is special
+    ses->audioTracks = old->getCoreTracks();
+    
+    ValueSet* global = ses->globals.get();
+    if (global == nullptr) {
+        global = new ValueSet();
+        ses->globals.reset(global);
+    }
+    
+    global->setInt(symbols.getName(ParamInputLatency), old->getInputLatency());
+    global->setInt(symbols.getName(ParamOutputLatency), old->getOutputLatency());
+    global->setInt(symbols.getName(ParamNoiseFloor), old->getNoiseFloor());
+    global->setInt(symbols.getName(ParamFadeFrames), old->getFadeFrames());
+    global->setInt(symbols.getName(ParamMaxSyncDrift), old->getNoiseFloor());
+    global->setInt(symbols.getName(ParamMaxLoops), old->getMaxLoops());
+    global->setInt(symbols.getName(ParamLongPress), old->getLongPress());
+    global->setInt(symbols.getName(ParamSpreadRange), old->getSpreadRange());
+    global->setInt(symbols.getName(ParamControllerActionThreshold), old->mControllerActionThreshold);
+    global->setBool(symbols.getName(ParamMonitorAudio), old->isMonitorAudio());
+    global->setString(symbols.getName(ParamQuickSave), old->getQuickSave());
+    global->setString(symbols.getName(ParamActiveSetup), old->getStartingSetupName());
+    
+    // enumerations have been stored with symbolic names, which is all we really need
+    // but I'd like to test working backward to get the ordinals, need to streamline
+    // this process
+    convertEnum(symbols.getName(ParamDriftCheckPoint), old->getDriftCheckPoint(), global);
+    convertEnum(symbols.getName(ParamMidiRecordMode), old->getMidiRecordMode(), global);
+}
+
+/**
+ * Build the MslValue for an enumeration from this parameter name and ordinal
+ * and isntall it in the value set.
+ *
+ * This does some consnstency checking that isn't necessary but I want to detect
+ * when there are model inconsistencies while both still exist.
+ */
+void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
+{
+    // method 1: using UIParameter static objects
+    // this needs to go away
+    const char* cname = name.toUTF8();
+    UIParameter* p = UIParameter::find(cname);
+    const char* enumName = nullptr;
+    if (p == nullptr) {
+        Trace(1, "Upgrader: Unresolved old parameter %s", cname);
+    }
+    else {
+        enumName = p->getEnumName(value);
+        if (enumName == nullptr)
+          Trace(1, "Upgrader: Unresolved old enumeration %s %d", cname, value);
+    }
+
+    // method 2: using Symbol and ParameterProperties
+    Symbol* s = symbols.find(name);
+    if (s == nullptr) {
+        Trace(1, "Upgrader: Unresolved symbol %s", cname);
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "Upgrader: Symbol not a parameter %s", cname);
+    }
+    else {
+        const char* newEnumName = s->parameterProperties->getEnumName(value);
+        if (newEnumName == nullptr)
+          Trace(1, "Upgrader: Unresolved new enumeration %s %d", cname, value);
+        else if (enumName != nullptr && strcmp(enumName, newEnumName) != 0)
+          Trace(1, "Upgrader: Enum name mismatch %s %s", enumName, newEnumName);
+
+        // so we can limp along, use the new name if the old one didn't match
+        if (enumName == nullptr)
+          enumName = newEnumName;
+    }
+
+    // if we were able to find a name from somewhere, install it
+    // otherwise something was traced
+    if (enumName != nullptr) {
+        MslValue* mv = new MslValue();
+        mv->setEnum(enumName, value);
+        MslValue* existing = dest->replace(name, mv);
+        if (existing != nullptr) {
+            // first time shouldn't have these, anything interesting to say here?
+            delete existing;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

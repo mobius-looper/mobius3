@@ -117,8 +117,6 @@
               file="Source/model/GroupDefinition.h"/>
         <FILE id="BIekug" name="HelpCatalog.cpp" compile="1" resource="0" file="Source/model/HelpCatalog.cpp"/>
         <FILE id="smiwwb" name="HelpCatalog.h" compile="0" resource="0" file="Source/model/HelpCatalog.h"/>
-        <FILE id="rJWSTF" name="MainConfig.cpp" compile="1" resource="0" file="Source/model/MainConfig.cpp"/>
-        <FILE id="hhBtdc" name="MainConfig.h" compile="0" resource="0" file="Source/model/MainConfig.h"/>
         <FILE id="FZEt89" name="Messages.h" compile="0" resource="0" file="Source/model/Messages.h"/>
         <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
               file="Source/model/MobiusConfig.cpp"/>

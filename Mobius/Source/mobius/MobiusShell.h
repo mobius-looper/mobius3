@@ -37,10 +37,9 @@ class MobiusShell : public MobiusInterface
     // MobiusInterface
     void setListener(class MobiusListener* l) override;
     void setMidiListener(class MobiusMidiListener* l) override;
-    void initialize(class MobiusConfig* config) override;
+    void initialize(class MobiusConfig* config, class Session* session) override;
     void propagateSymbolProperties() override;
-    void reconfigure(class MobiusConfig* config) override;
-    void loadSession(class Session* s) override;
+    void reconfigure(class MobiusConfig* config, class Session* session) override;
     MobiusState* getState() override;    // also shared by the kernel
     class MobiusMidiState* getMidiState() override;
     void performMaintenance() override;
@@ -116,6 +115,7 @@ class MobiusShell : public MobiusInterface
     class MobiusContainer* container = nullptr;
     MobiusListener* listener = nullptr;
     class MobiusConfig* configuration = nullptr;
+    class Session* session = nullptr;
     
     MobiusState simulatorState;
     DynamicConfig dynamicConfig;
@@ -176,6 +176,7 @@ class MobiusShell : public MobiusInterface
     
     void consumeCommunications();
     void sendKernelConfigure(class MobiusConfig* config);
+    void sendKernelSession(class Session* s);
     void sendKernelBinderator(class Binderator* b);
     void sendKernelAction(UIAction* action);
     void doKernelAction(UIAction* action);

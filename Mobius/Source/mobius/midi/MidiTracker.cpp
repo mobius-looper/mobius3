@@ -2,11 +2,10 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../model/MainConfig.h"
+#include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
-#include "../../model/Session.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"

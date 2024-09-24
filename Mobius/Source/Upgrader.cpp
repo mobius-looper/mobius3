@@ -8,7 +8,7 @@
 #include "util/List.h"
 
 #include "model/MobiusConfig.h"
-#include "model/MainConfig.h"
+#include "model/Session.h"
 #include "model/ValueSet.h"
 #include "model/Preset.h"
 #include "model/Setup.h"
@@ -26,8 +26,9 @@
  *
  * Also does the function properties conversion, and normalizes group names.
  */
-bool Upgrader::upgrade(MobiusConfig* config, MainConfig* main)
+bool Upgrader::upgrade(MobiusConfig* config, Session* session)
 {
+    (void)session;
     bool updated = false;
     
     if (config->getVersion() < 1) {
@@ -51,12 +52,14 @@ bool Upgrader::upgrade(MobiusConfig* config, MainConfig* main)
       updated = true;
 
     // not active yet, but start testing the conversion
+#if 0    
     bool convertValueSets = false;
     if (convertValueSets) {
-        if (refreshMainConfig(config, main))
+        if (refreshMainConfig(config, session))
           updated = true;
     }
 
+#endif
     return updated;
 }
 
@@ -206,7 +209,7 @@ bool Upgrader::upgradeGroups(MobiusConfig* config)
 // MainConfig Migration
 //
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 /**
  * This does partial migration of MoibusConfig into MainConfig so code
  * that needs global variables can start using MainConfig.
@@ -475,6 +478,7 @@ void Upgrader::convertSetupTrack(SetupTrack* track, int trackNumber, ValueSet* s
     ParamTimeStretch
     */
 }    
+#endif
 
     
 /****************************************************************************/

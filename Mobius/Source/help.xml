@@ -79,7 +79,7 @@ The parameters not yet displayed in the Instant Parameters status element.</Help
   When true, audio being received by the track input port is echoed automatically to the track output port.  This is not normally used except during testing.  It is commonly referred to as "through monitoring" and can introduce significant latency delays.  It is always best to use hardware or direct monitoring of the live audio signal.
 </Help>
 
-<!-- others defined in parameters.xml that aren't displayed -->
+<!-- others defined in symbols.xml that aren't displayed -->
 <!--
 name='fadeFrames'
 name='driftCheckPoint'
