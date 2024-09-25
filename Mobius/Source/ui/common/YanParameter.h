@@ -21,7 +21,14 @@ class YanParameter : public YanField
 
     int getPreferredWidth() override;
     void resized() override;
-    
+
+    Symbol* getSymbol() {
+        return symbol;
+    }
+
+    void load(class MslValue* v);
+    void save(class MslValue* v);
+
   private:
 
     Symbol* symbol = nullptr;

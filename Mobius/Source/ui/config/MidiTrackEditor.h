@@ -12,7 +12,7 @@
 #include "../../model/Session.h"
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
-#include "../common/YanParameter.h"
+#include "YanParameterForm.h"
 
 #include "ConfigEditor.h"
 
@@ -49,15 +49,13 @@ class MidiTrackEditor : public ConfigEditor,
     void loadSession();
     void loadTrack(int index);
     void saveSession();
+    void saveTrack(int index);
 
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
 
-    YanForm form;
+    YanParameterForm form;
     YanInput trackCount {"Active Tracks"};
     YanRadio trackSelector {"Tracks"};
-    YanCombo syncSource {"Sync Source"};
-
-    YanParameter parameterTest{"Sync Source2"};
     
 };

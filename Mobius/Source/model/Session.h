@@ -46,13 +46,22 @@ class Session
 
     };
 
-    juce::OwnedArray<Track> tracks;
-
-    // global parameters
-    std::unique_ptr<ValueSet> globals;
-
     // until we get audio tracks in here, just remember how many there are
     int audioTracks = 0;
+
+    // the number of active midi tracks
+    // there can be entries in the tracks array that are higher than this
+    // they are kept around in case they hold useful state, but are ignored
+    int midiTracks = 0;
+
+    // fleshed out track definitions, may be sparse or 
+    juce::OwnedArray<Track> tracks;
+    Track* getTrack(TrackType type, int index);
+    Track* ensureTrack(TrackType type, int index);
+    void clearTracks(TrackType type);
+    
+    // global parameters
+    std::unique_ptr<ValueSet> globals;
 
     void parseXml(juce::String xml);
     juce::String toXml();

@@ -17,6 +17,7 @@ Session::~Session()
 Session::Session(Session* src)
 {
     audioTracks = src->audioTracks;
+    midiTracks = src->midiTracks;
     
     for (auto track : src->tracks) {
         tracks.add(new Track(track));
@@ -33,12 +34,67 @@ int Session::getAudioTrackCount()
 
 int Session::getMidiTrackCount()
 {
+    return midiTracks;
+}
+
+/**
+ * Return the definition of this track if we have one.
+ */
+Session::Track* Session::getTrack(TrackType type, int index)
+{
+    Track* found = nullptr;
     int count = 0;
     for (auto track : tracks) {
-        if (track->type == TypeMidi)
-          count++;
+        if (track->type == type) {
+            if (count == index) {
+                found = track;
+                break;
+            }
+            count++;
+        }
     }
-    return count;
+    return found;
+}
+
+/**
+ * Find or create a definition for this track index.
+ * Because the indexes are expected to match array indexes,
+ * need to flesh out preceeding tracks if they don't exist.
+ */
+Session::Track* Session::ensureTrack(TrackType type, int index)
+{
+    Track* found = nullptr;
+
+    int count = 0;
+    for (auto track : tracks) {
+        if (track->type == type) {
+            if (count == index) {
+                found = track;
+                break;
+            }
+            count++;
+        }
+    }
+
+    if (found == nullptr) {
+        for (int i = count ; i < index ; i++) {
+            found = new Session::Track();
+            found->type = type;
+            tracks.add(found);
+        }
+    }
+
+    return found;
+}
+
+void Session::clearTracks(TrackType type)
+{
+    for (int i = 0 ; i < tracks.size() ; i++) {
+        Track* t = tracks[i];
+        if (t->type == type) {
+            (void)tracks.remove(i, true);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -81,6 +137,7 @@ void Session::parseXml(juce::String xml)
     }
     else {
         audioTracks = root->getIntAttribute("audioTracks");
+        midiTracks = root->getIntAttribute("midiTracks");
         
         for (auto* el : root->getChildIterator()) {
             if (el->hasTagName(ValueSet::XmlElement)) {
@@ -146,6 +203,9 @@ juce::String Session::toXml()
 
     if (audioTracks > 0)
       root.setAttribute("audioTracks", audioTracks);
+    
+    if (midiTracks > 0)
+      root.setAttribute("midiTracks", midiTracks);
 
     for (auto track : tracks)
       renderTrack(&root, track);
@@ -169,7 +229,8 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
       root->setAttribute("type", "???");
     
 
-    root->setAttribute("name", track->name);
+    if (track->name.length() > 0)
+      root->setAttribute("name", track->name);
     
     if (track->parameters != nullptr)
       track->parameters->render(root);

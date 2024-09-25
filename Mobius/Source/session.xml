@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Session audioTracks="8">
-  <Track type="midi" name=""/>
+<Session audioTracks="8" midiTracks="1">
+  <Track type="midi">
+    <ValueSet>
+      <Value name="beatsPerBar" value="4"/>
+      <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="cycle" type="enum" ordinal="2"/>
+    </ValueSet>
+  </Track>
   <ValueSet>
     <Value name="activeSetup" value="Default"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>

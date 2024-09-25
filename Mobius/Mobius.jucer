@@ -322,6 +322,10 @@
           <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
+          <FILE id="JFauUG" name="YanParameterForm.cpp" compile="1" resource="0"
+                file="Source/ui/config/YanParameterForm.cpp"/>
+          <FILE id="UEwkkd" name="YanParameterForm.h" compile="0" resource="0"
+                file="Source/ui/config/YanParameterForm.h"/>
         </GROUP>
         <GROUP id="{506F264E-A601-E29C-91E6-134CCA9C4AAA}" name="display">
           <FILE id="NZymdN" name="ActionButton.cpp" compile="1" resource="0"

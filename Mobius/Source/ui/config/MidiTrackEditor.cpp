@@ -12,7 +12,7 @@
 
 #include "MidiTrackEditor.h"
 
-MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s)
+MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), form(s)
 {
     setName("MidiTrackEditor");
     render();
@@ -115,6 +115,18 @@ void MidiTrackEditor::save()
     // need to also do this when the selected setup is changed
     saveSession();
 
+    Session* master = supervisor->getSession();
+    // transfer the track count and the track definitions
+    master->midiTracks = session->midiTracks;
+    master->clearTracks(Session::TypeMidi);
+    for (int i = 0 ; i < session->tracks.size() ; i++) {
+        Session::Track* t = session->tracks[i];
+        if (t->type == Session::TypeMidi) {
+            (void)session->tracks.removeAndReturn(i);
+            master->tracks.add(t);
+        }
+    }
+
     supervisor->updateSession();
 
     session.reset(nullptr);
@@ -147,25 +159,34 @@ void MidiTrackEditor::revert()
  */
 void MidiTrackEditor::loadSession()
 {
-    trackCount.setInt(session->getMidiTrackCount());
-
+    trackCount.setInt(session->midiTracks);
     loadTrack(0);
 }
 
 void MidiTrackEditor::loadTrack(int index)
 {
-    (void)index;
-#if 0
-    if (index >= 0 && index < session->tracks.size()) {
-        Session::Track* track = session->tracks[index];
-        // syncSource
-        //MslValue* v = track->get("syncSource");
+    Session::Track* track = session->getTrack(Session::TypeMidi, index);
+    if (track != nullptr) {
+        form.load(track->parameters.get());
     }
-#endif    
+    else {
+        // didn't have a definition for this one, reset the fields to initial values
+        form.load(nullptr);
+    }
 }
 
 void MidiTrackEditor::saveSession()
 {
+    session->midiTracks = trackCount.getInt();
+    saveTrack(0);
+}
+
+void MidiTrackEditor::saveTrack(int index)
+{
+    Session::Track* track = session->ensureTrack(Session::TypeMidi, index);
+    if (track->parameters == nullptr)
+      track->parameters.reset(new ValueSet());
+    form.save(track->parameters.get());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -184,18 +205,10 @@ void MidiTrackEditor::render()
     trackSelector.setListener(this);
     form.add(&trackSelector);
 
-    juce::StringArray syncSources;
-    syncSources.add("None");
-    syncSources.add("Track");
-    syncSources.add("Host");
-    syncSources.add("MIDI In");
-    syncSources.add("MIDI Out");
-    syncSource.setItems(syncSources);
-    syncSource.setListener(this);
-    form.add(&syncSource);
-
-    form.add(&parameterTest);
-    parameterTest.init(supervisor->getSymbols()->find("syncSource"));
+    form.addField(ParamSyncSource);
+    form.addField(ParamTrackSyncUnit);
+    form.addField(ParamSlaveSyncUnit);
+    form.addField(ParamBeatsPerBar);
     
     addAndMakeVisible(form);
 }
