@@ -39,33 +39,43 @@ class MobiusView* TrackStrips::getMobiusView()
 
 /**
  * Notified when either the MobiusConfig or UIConfig changes.
- * If this is during initialization, allocate the track array,
- * after that you have to restart to change track count.
+ * With the introduction of MIDI tracks, the number of tracks can
+ * grow or shrink as tracks are configured.  Eventually audio
+ * tracks should allow this but they can't right now.  For display
+ * purposes, it doesn't really matter what the tracks underneath are.
  */
 void TrackStrips::configure()
 {
-    if (tracks.size() == 0) {
-        // we're initializing
-        MobiusView* view = display->getSupervisor()->getMobiusView();
-        int trackCount = view->totalTracks;
+    MobiusView* view = display->getSupervisor()->getMobiusView();
+    int trackCount = view->totalTracks;
 
-        // !! shouldn't be doing this?
-        if (trackCount == 0)
-          trackCount = 8;
+    // prevent crashes
+    if (trackCount == 0) {
+        Trace(1, "TrackStrips: Got here with empty tracks, what's the deal");
+        trackCount = 1;
+    }
         
-        for (int i = 0 ; i < trackCount ; i++) {
+    if (trackCount > tracks.size()) {
+        for (int i = tracks.size() ; i < trackCount ; i++) {
             TrackStrip* strip = new TrackStrip(this);
             strip->setFollowTrack(i);
             tracks.add(strip);
             addAndMakeVisible(strip);
         }
-
-        // decided to simplify this to just a dualRows boolean since it
-        // can only ever be 1 or 2
-        UIConfig* uiconfig = display->getSupervisor()->getUIConfig();
-        int rows = uiconfig->getInt("trackRows");
-        dualTracks = (rows == 2);
     }
+    else if (trackCount < tracks.size()) {
+        while (tracks.size() != trackCount) {
+            TrackStrip* strip = tracks[trackCount];
+            removeChildComponent(strip);
+            tracks.removeObject(strip, true);
+        }
+    }
+
+    // decided to simplify this to just a dualRows boolean since it
+    // can only ever be 1 or 2
+    UIConfig* uiconfig = display->getSupervisor()->getUIConfig();
+    int rows = uiconfig->getInt("trackRows");
+    dualTracks = (rows == 2);
 
     for (auto strip : tracks)
       strip->configure();

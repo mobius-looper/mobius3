@@ -44,6 +44,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/ValueSet.h"
 #include "../../model/Session.h"
+#include "../../model/Enumerator.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -85,19 +86,20 @@ MidiTrack::~MidiTrack()
  */
 void MidiTrack::configure(Session::Track* def)
 {
-    (void)def;
-    // old sync experiment, get this from the Session
-#if 0    
-    syncLeader = 0;
-    juce::String syncSource = tconfig->get("syncSource");
-    if (syncSource == "midiTrack") {
-        int tnum = tconfig->get("syncTrack");
-        if (tnum > 0) {
-            syncLeader = tnum;
-        }
-    }
-#endif
+    syncSource = (SyncSource)Enumerator::getOrdinal(container->getSymbols(),
+                                                    ParamSyncSource,
+                                                    def->parameters.get(),
+                                                    SYNC_NONE);
+}
 
+/**
+ * Initialize the track and release any resources.
+ * This is called by MidiTracker when it de-activates tracks.
+ * It is not necessarily the same as the Reset function handler.
+ */
+void MidiTrack::reset()
+{
+    doReset(nullptr);
 }
 
 bool MidiTrack::isRecording()
@@ -204,6 +206,13 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->pan = pan;
 
     state->recording = (recording != nullptr);
+
+    // only one loop right now, duplicate the frame counter
+    MobiusMidiState::Loop* lstate = state->loops[0];
+    if (lstate == nullptr)
+      Trace(1, "MidiTrack: MobiusMidiState loop array too small");
+    else
+      lstate->frames = frames;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -253,6 +262,10 @@ void MidiTrack::reclaim(MidiSequence* seq)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Action may be nullptr if we're resetting the track for other reasons
+ * besides user action.
+ */
 void MidiTrack::doReset(UIAction* a)
 {
     (void)a;

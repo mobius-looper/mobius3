@@ -8,9 +8,9 @@
  * is a minor optimization that should not be assumed to last forever.
  *
  * The refrsh process is assembling the view from several sources.  Most of it comes from MobiusState
- * which was the original way to communicate state from the engine to the UI.  Some is pulled from configuration
- * objects like Setup and GroupDefinition based on references in MoibusState.  And some is made by
- * querying the engine for a few real-time parameter values.
+ * which was the original way to communicate state from the engine to the UI.  Some is pulled
+ * from configuration objects like Setup and GroupDefinition based on references in MoibusState.
+ * And some is made by querying the engine for a few real-time parameter values.
  *
  * Beyond the capture of engine state, the view also contains support for analyzing complex changes that
  * trigger a refresh of portions of the UI.  For many UI components it is enough to simply remember the last
@@ -39,6 +39,18 @@
  * cases, the refresh flags are "latching" and must be cleared by the UI components
  * themselves after they have repainted.  The only example right now is Beaters since
  * for reasons I'm forgetting, revisit this...
+ *
+ * MIDI tracks are presented through the view the same as audio tracks.  The UI should mostly
+ * not care what type of track this is.
+ *
+ * Tracks can be added or removed by editing the session.  Because there is a lag between
+ * sending the session down to the kernel and the updated track configuration, the engine
+ * may send back MobiusState and MobiusMidiState results that do not match the session.  Always
+ * trust the state objects.
+ *
+ * Once created a MobiusViewTrack will remain in memory for the duration of the application.
+ * If track counts are lowered, they are left behind for possible reuse.  The track view array
+ * will grow as necessary to match the engine state.
  *
  */
 
@@ -105,7 +117,7 @@ void MobiusViewer::initialize(MobiusView* view)
     }
 
     // all things MIDI come from here
-    view->midiTracks = session->getMidiTrackCount();
+    view->midiTracks = session->midiTracks;
 
     // stub this out till we're ready
     //view->midiTracks = 0;
@@ -135,6 +147,53 @@ void MobiusViewer::initialize(MobiusView* view)
 }
 
 /**
+ * Reconfigure the view after changing the track counts.
+ * This has unfortunate race conditions with the kernel since it won't
+ * reconfigure itself until the next audio interrupt.  If you change
+ * the view then hit a refresh cycle before kernel had a chance to adapt
+ * there will be a mismatch between the view and the state objects returned
+ * by the engine.  This actually doesn't matter much to the display, it just
+ * may cause a little flicker as the tracks change out from under it.
+ *
+ * For MIDI tracks, always obey the track count that come from the engine,
+ * not the session.  Audio tracks are fixed at startup for now, but this
+ * will change eventually.
+ *
+ * The only thing this needs to do then is move the focused track, if the track
+ * under it was taken away.
+ */
+void MobiusViewer::configure(MobiusView* view)
+{
+    Session* session = supervisor->getSession();
+    
+    if (view->audioTracks != session->audioTracks) {
+        Trace(1, "MobiusViewer: Audio track counts changed, this might be a problem");
+    }
+    
+    view->audioTracks = session->audioTracks;
+    if (view->audioTracks == 0) {
+        // crashy if we don't have at least one, force it
+        view->audioTracks = 1;
+    }
+
+    // all things MIDI come from here
+    view->midiTracks = session->midiTracks;
+
+    // stub this out till we're ready
+    //view->midiTracks = 0;
+
+    // need this?  get rid of it
+    view->totalTracks = view->audioTracks + view->midiTracks;
+
+
+    if (view->focusedTrack >= view->totalTracks) {
+        // go to the highest or the first?
+        view->focusedTrack = view->totalTracks - 1;
+        view->track = view->tracks[view->focusedTrack];
+    }
+}
+
+/**
  * The root of the periodic full refresh.
  *
  * This is expected to be called once every 1/10th second by the
@@ -148,12 +207,14 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusVi
 
     // if state ever does get around to passing this back, whine if they're out of sync
     if (state->trackCount > 0 && state->trackCount != view->audioTracks)
-      Trace(1, "MobiusViewer: Mismatched track counts in view and Mobius");
+      Trace(1, "MobiusViewer: Mismatched audio track counts in view and Mobius");
 
     // Counter needs this
     view->sampleRate = supervisor->getSampleRate();
 
     // move the track view to the one that has focus
+    // !! now that tracks can be higher than the configured number to use, may
+    // need to constrain focus here?
     if (view->focusedTrack >= 0 && view->focusedTrack < view->tracks.size()) 
       view->track = view->tracks[view->focusedTrack];
     else
@@ -234,6 +295,8 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
 {
     (void)mobius;
 
+    // !! MobiusState has no way to tell us how many tracks are in the state
+    // have to trust the view, this is bad
     for (int i = 0 ; i < view->audioTracks ; i++) {
         MobiusTrackState* tstate = &(state->tracks[i]);
 
@@ -969,6 +1032,8 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 {
     MobiusMidiState* state = mobius->getMidiState();
 
+    // 
+
     if (view->midiTracks != state->activeTracks) {
         // likely to generate very many messages
         Trace(1, "MobiusViewer: MIDI track count mismatch %d in the view and %d in the state",
@@ -1037,6 +1102,24 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     }
 
     refreshMidiMinorModes(tstate, tview);
+
+    // inactive loop state, can grow these dynamically
+    // note that the MobiusMidiState::Loop array may be larger than the loopCount
+    for (int i = tview->loops.size() ; i <= tstate->loopCount ; i++) {
+        MobiusViewLoop* vl = new MobiusViewLoop();
+        tview->loops.add(vl);
+    }
+
+    for (int i = 0 ; i < tstate->loopCount ; i++) {
+        MobiusViewLoop* vl = tview->loops[i];
+        MobiusMidiState::Loop* lstate = tstate->loops[i];
+        if (lstate == nullptr) {
+            Trace(1, "MidiViewer: MobiusMidiState loop array too small");
+        }
+        else {
+            vl->frames = lstate->frames;
+        }
+    }
 }
 
 void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 

@@ -1,9 +1,11 @@
 /**
- * Various constant values for parameters.  Parameter values are
- * normally stored and set with ordinal integers, but code should
- * use enumerations for clarity.
+ * Definitions for various enumerations found within the old MobiusConfig, Preset and Setup
+ * models.  As we transition toward ValueSets those three containers will go away, but it is
+ * still convenient for the code to deal with the parameter values as enumerations.
  *
- * Formerly inside Preset and Setup.
+ * Most of the enumerations are still be necessary with ValueSets.  Some of the constants
+ * will go away along with their contraining objects.
+ *
  */
 
 #pragma once
@@ -68,7 +70,62 @@
 
 //////////////////////////////////////////////////////////////////////
 //
-// Enumerations
+// Things formerly in MobiusConfig
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Values for the driftCheckPoint parameter.
+ * Made this an enumeration instead of a boolean in case we
+ * want to introduce more granular check points like DRIFT_CHECK_CYCLE
+ * or even DRIFT_CHECK_SUBCYCLE.  Seems like overkill though.
+ */
+typedef enum {
+
+	// check at the Mobius loop start point
+	DRIFT_CHECK_LOOP,
+
+	// check at the external loop start point
+	DRIFT_CHECK_EXTERNAL
+
+} DriftCheckPoint;
+
+/**
+ * Values for the midiRecordMode paramter.
+ * This an internal parameter used for experimenting with styles
+ * of calculating the optimal loop length when using MIDI sync.
+ * The default is MIDI_AVERAGE_TEMPO and this should not normallyu
+ * be changed.  Once we've had some time to experiment with these
+ * options in the field, this should be removed and hard coded into
+ * Synchronizer.
+ */
+typedef enum {
+
+    // average tempo calculated by MidiInput
+    MIDI_TEMPO_AVERAGE,
+
+    // smooth tempo calculated by MidiInput, accurate to 1/10th BPM
+    MIDI_TEMPO_SMOOTH,
+
+    // end exactly on a MIDI clock pulse
+    MIDI_RECORD_PULSED
+
+} MidiRecordMode;
+
+/**
+ * Sample rate could be an integer, but it's easier to prevent
+ * crazy values if we use an enumeration.
+ */
+typedef enum {
+
+	SAMPLE_RATE_44100,
+	SAMPLE_RATE_48000
+
+} AudioSampleRate;
+
+//////////////////////////////////////////////////////////////////////
+//
+// Things used by Preset
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -194,7 +251,11 @@ typedef enum {
     WINDOW_UNIT_INVALID
 } WindowUnit;
 
-// setup
+//////////////////////////////////////////////////////////////////////
+//
+// Things used by Setup
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * An eumeration defining the possible synchronization sources.
@@ -294,4 +355,6 @@ typedef enum {
 
 } OutRealignMode;
 
-
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

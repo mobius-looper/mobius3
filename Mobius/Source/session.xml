@@ -3,10 +3,10 @@
 <Session audioTracks="8" midiTracks="1">
   <Track type="midi" index="0">
     <ValueSet>
-      <Value name="beatsPerBar" value="1"/>
+      <Value name="beatsPerBar" value="4"/>
       <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="default" type="enum" ordinal="0"/>
-      <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="cycle" type="enum" ordinal="2"/>
     </ValueSet>
   </Track>
   <Track type="midi" index="1">

@@ -28,12 +28,29 @@ class MobiusMidiState
     MobiusMidiState() {}
     ~MobiusMidiState() {}
 
-    // I want to avoid the notion of the "active track" for MIDI and make this a UI level thing
-    // the only time core needs to know whether something is active is when dispatching
-    // unscoped events, doing track switch with track-copy semantics
-    // for MIDI, I'd like to have all actions be scoped to the track they want and if we need
-    // track copy then include that as an argument to the action
+    /**
+     * State for one loop in a track.
+     * This is for both the active and inactive loops.  Full state
+     * for the active loop is directly on the track.
+     *
+     * All the UI really needs to know right now is whether there is anything
+     * in it, so just the frame length.
+     */
+    class Loop {
+      public:
+        int index = 0;
+        int number = 0;
+        int frames = 0;
+    };
 
+    /**
+     * State for one track
+     * I want to avoid the notion of the "active track" for MIDI and make this a UI level thing
+     * the only time core needs to know whether something is active is when dispatching
+     * unscoped events, doing track switch with track-copy semantics
+     * for MIDI, I'd like to have all actions be scoped to the track they want and if we need
+     * track copy then include that as an argument to the action
+     */
     class Track {
       public:
         int index = 0;
@@ -62,6 +79,8 @@ class MobiusMidiState
         bool mute = false;
         bool recording = false;
         bool pause = false;
+
+        juce::OwnedArray<Loop> loops;
         
     };
 

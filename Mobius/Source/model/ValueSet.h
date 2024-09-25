@@ -52,6 +52,7 @@
 
 // model for values
 #include "../script/MslValue.h"
+#include "SymbolId.h"
 
 class ValueSet
 {
@@ -78,6 +79,11 @@ class ValueSet
      * most values are integers or enum ordinals.  Reconsider.
      */
     MslValue* get(juce::String name);
+
+    /**
+     * The most common for accessing parameters by id.
+     */
+    MslValue* get(class SymbolTable* symbols, SymbolId id);
 
     /**
      * Set is always by a copy of the source object to the internal object.

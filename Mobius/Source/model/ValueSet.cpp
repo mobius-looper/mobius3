@@ -3,6 +3,9 @@
 
 #include "../util/Trace.h"
 #include "../script/MslValue.h"
+
+#include "Symbol.h"
+#include "SymbolId.h"
 #include "ValueSet.h"
 
 ValueSet::ValueSet()
@@ -48,6 +51,23 @@ juce::OwnedArray<ValueSet>& ValueSet::getSubsets()
 MslValue* ValueSet::get(juce::String key)
 {
     return map[key];
+}
+
+/**
+ * Parameter lookup using SymbolIds.  This is what most code
+ * should use so we don't have to hard code names everywhere.
+ */
+MslValue* ValueSet::get(SymbolTable* symbols, SymbolId id)
+{
+    MslValue* value = nullptr;
+    Symbol* s = symbols->getSymbol(id);
+    if (s == nullptr) {
+        Trace(1, "ValueSet: Invalid symbol id %d", id);
+    }
+    else {
+        value = get(s->name);
+    }
+    return value;
 }
 
 /**

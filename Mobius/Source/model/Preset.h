@@ -12,6 +12,7 @@
 
 #include "ParameterConstants.h"
 #include "Structure.h"
+#include "ParameterEnums.h"
 
 /****************************************************************************
  *                                                                          *

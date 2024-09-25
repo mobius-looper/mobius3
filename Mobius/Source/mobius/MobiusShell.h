@@ -115,7 +115,7 @@ class MobiusShell : public MobiusInterface
     class MobiusContainer* container = nullptr;
     MobiusListener* listener = nullptr;
     class MobiusConfig* configuration = nullptr;
-    class Session* session = nullptr;
+    //class Session* session = nullptr;
     
     MobiusState simulatorState;
     DynamicConfig dynamicConfig;

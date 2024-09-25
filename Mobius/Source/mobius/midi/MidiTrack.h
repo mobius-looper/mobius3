@@ -3,6 +3,7 @@
 
 #include "../../model/MobiusMidiState.h"
 #include "../../model/Session.h"
+#include "../../model/ParameterConstants.h"
 
 #include "MidiPlayer.h"
 
@@ -16,6 +17,7 @@ class MidiTrack
     ~MidiTrack();
 
     void configure(class Session::Track* def);
+    void reset();
     
     bool isRecording();
     void midiEvent(class MidiEvent* e);
@@ -49,6 +51,9 @@ class MidiTrack
     class MidiEventPool* eventPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
     MidiPlayer player {this};
+
+    // sync status
+    SyncSource syncSource = SYNC_NONE;
     int syncLeader = 0;
 
     // loop state

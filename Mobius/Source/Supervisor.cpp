@@ -1265,8 +1265,9 @@ Session* Supervisor::getSession()
 }
 
 /**
- * This will need to start behaving like MobiusConfig and
- * propagating changes to the internal objects.
+ * Write the default session after editing.
+ * The only thing sensitive to this right now is MobiusKernel
+ * and MidiTracker.
  */
 void Supervisor::updateSession()
 {
@@ -1274,6 +1275,8 @@ void Supervisor::updateSession()
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
         writeDefaultSession(s);
+
+        mobius->reconfigure(getMobiusConfig(), s);
     }
 }
 

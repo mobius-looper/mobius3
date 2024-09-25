@@ -28,6 +28,17 @@
 #include "MidiTrack.h"
 #include "MidiTracker.h"
 
+/**
+ * The number of tracks we pre-allocate so they can move the track count
+ * up or down without requiring memory allocation.
+ */
+const int MidiTrackerMaxTracks = 8;
+
+/**
+ * Maximum number of loops per track
+ */
+const int MidiTrackerMaxLoops = 8;
+
 MidiTracker::MidiTracker(MobiusContainer* c, MobiusKernel* k)
 {
     container = c;
@@ -45,7 +56,7 @@ MidiTracker::~MidiTracker()
 void MidiTracker::initialize(Session* s)
 {
     audioTracks = s->audioTracks;
-    allocateTracks(audioTracks + 1, 8);
+    allocateTracks(audioTracks + 1, MidiTrackerMaxTracks);
     loadSession(s);
 }
 
@@ -67,6 +78,13 @@ void MidiTracker::allocateTracks(int baseNumber, int count)
         tstate->index = i;
         tstate->number = baseNumber + i;
         state.tracks.add(tstate);
+
+        for (int l = 0 ; l < MidiTrackerMaxLoops ; l++) {
+            MobiusMidiState::Loop* loop = new MobiusMidiState::Loop();
+            loop->index = l;
+            loop->number = l + 1;
+            tstate->loops.add(loop);
+        }
     }
 }
 
@@ -76,27 +94,40 @@ void MidiTracker::allocateTracks(int baseNumber, int count)
  * Until the Mobius side of things can start using Sessions, track numbering and
  * order is fixed.  MIDI tracks will come after the audio tracks and we don't need
  * to mess with reordering at the moment.
+ *
+ * Note that the UI now allows "hidden" Session::Track definitions so you can turn down the
+ * active track count without losing prior definitions.  The number of tracks to use
+ * is in session->midiTracks which may be smaller than the Track list size.  It can be larger
+ * too in which case we're supposed to use a default configuration.
  */
 void MidiTracker::loadSession(Session* session) 
 {
-    int total = 0;
-
-    for (auto track : session->tracks) {
-        if (track->type == Session::TypeMidi) {
-            total++;
-            if (total == tracks.size()) {
-                // todo: will want a way to display this, maybe leave a mesasge in the view
-                Trace(1, "MIDI track count exceeded");
-            }
-            else {
-                MidiTrack* mt = tracks[total-1];
-                mt->configure(track);
-            }
-        }
+    activeTracks = session->midiTracks;
+    if (activeTracks > MidiTrackerMaxTracks) {
+        Trace(1, "MidiTracker: Session had too many tracks %d", session->midiTracks);
+        activeTracks = MidiTrackerMaxTracks;
     }
 
-    activeTracks = total;
-    state.activeTracks = total;
+    for (int i = 0 ; i < activeTracks ; i++) {
+        // this may be nullptr if they upped the track count without configuring it
+        Session::Track* track = session->getTrack(Session::TypeMidi, i);
+        MidiTrack* mt = tracks[i];
+        if (mt == nullptr)
+          Trace(1, "MidiTracker: Track array too small, and so are you");
+        else
+          mt->configure(track);
+    }
+
+    // if they made activeTracks smaller, clear any residual state in the
+    // inactive tracks
+    for (int i = activeTracks ; i < MidiTrackerMaxTracks ; i++) {
+        MidiTrack* mt = tracks[i];
+        if (mt != nullptr)
+          mt->reset();
+    }
+
+    // make the curtains match the drapes
+    state.activeTracks = activeTracks;
 }
 
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)
@@ -209,10 +240,15 @@ MobiusMidiState* MidiTracker::getState()
 
 void MidiTracker::refreshState()
 {
+    state.activeTracks = activeTracks;
+    
     for (int i = 0 ; i < activeTracks ; i++) {
         MidiTrack* track = tracks[i];
-        MobiusMidiState::Track* tstate = state.tracks[i];
-        track->refreshState(tstate);
+        if (track != nullptr) {
+            MobiusMidiState::Track* tstate = state.tracks[i];
+            if (tstate != nullptr)
+              track->refreshState(tstate);
+        }
     }
 }
 

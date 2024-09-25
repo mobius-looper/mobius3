@@ -153,7 +153,7 @@ MobiusShell::~MobiusShell()
 
     // use a unique_ptr here!
     delete configuration;
-    delete session;
+    //delete session;
     
     audioPool.dump();
 
@@ -216,13 +216,17 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
     // todo: give this class a proper clone() method so we don't have to use XML
     configuration = config->clone();
 
+    // shell doesn't need a copy of the Session, if it needs anything in there
+    // pull out the pieces
+    /*
     if (session != nullptr) {
         Trace(1, "MobiusShell::initialize Session already initialized!\n");
         delete session;
         session = nullptr;
     }
-
     session = new Session(ses);
+    */
+
     
     // start tracking internal runtime changes that the UI may be interested in
     // update: not used any more
@@ -274,8 +278,8 @@ void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
     delete configuration;
     configuration = config->clone();
 
-    delete session;
-    session = new Session(ses);
+    //delete session;
+    //session = new Session(ses);
 
     // todo: reload scripts whenever the config changes?
     installActivationSymbols();
