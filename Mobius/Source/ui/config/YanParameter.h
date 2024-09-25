@@ -8,6 +8,8 @@
 
 #include <JuceHeader.h>
 
+#include "../common/YanField.h"
+
 class YanParameter : public YanField
 {
   public:

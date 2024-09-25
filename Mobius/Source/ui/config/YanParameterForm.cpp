@@ -8,10 +8,10 @@
 #include "../../model/ValueSet.h"
 
 #include "../common/YanForm.h"
-#include "../common/YanParameter.h"
 
 #include "../../Provider.h"
 
+#include "YanParameter.h"
 #include "YanParameterForm.h"
 
 YanParameterForm::YanParameterForm(Provider* p)

@@ -6,7 +6,8 @@
 #include "../../model/ParameterProperties.h"
 #include "../../script/MslValue.h"
 
-#include "YanField.h"
+#include "../common/YanField.h"
+
 #include "YanParameter.h"
 
 YanParameter::YanParameter(juce::String label) : YanField(label)
@@ -71,12 +72,7 @@ void YanParameter::resized()
 void YanParameter::load(MslValue* v)
 {
     if (v == nullptr) {
-        // !! problem
-        // we need a missing value to mean initialize the field
-        // but if we start loading forms from multiple ValueSets where
-        // some fields pull from one and some from another, then we need
-        // a way to determine whether the set was relevant for this field
-        // probably belongs in YanParameterForm
+        // no current value, initialize fields to suitable defaults
         if (isCombo)
           combo.setSelection(0);
         else
