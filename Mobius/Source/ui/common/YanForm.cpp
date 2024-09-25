@@ -39,11 +39,11 @@ void YanForm::add(class YanField* f)
     //label->setJustificationType(juce::Justification::centredLeft);
     label->setJustificationType(juce::Justification::centredRight);
 
-    // if you want to add bold, should do it consistently everywyere and
-    // it looks a little thick in smaller forms
-    //label->setFont (juce::Font ((float)RowHeight, juce::Font::bold));
-    label->setFont (JuceUtil::getFont(RowHeight));
-    
+    // make them look like the old Form/Fields
+    // notes say bold can make it look too think in smaller forms
+    label->setFont (juce::Font (16.0f, juce::Font::bold));
+    label->setColour (juce::Label::textColourId, juce::Colours::orange);
+
     if (labelColor != juce::Colour())
       label->setColour(juce::Label::textColourId, labelColor);
 

@@ -39,7 +39,7 @@ class Session
 
         // should this be a first-class member or inside the value set?
         juce::String name;
-
+        int index = 0;
         std::unique_ptr<ValueSet> parameters;
 
         MslValue* get(juce::String name);

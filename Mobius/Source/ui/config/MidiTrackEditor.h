@@ -42,7 +42,6 @@ class MidiTrackEditor : public ConfigEditor,
     
   private:
 
-    void adjustTrackSelector();
     void render();
     void initForm();
     
@@ -57,5 +56,6 @@ class MidiTrackEditor : public ConfigEditor,
     YanParameterForm form;
     YanInput trackCount {"Active Tracks"};
     YanRadio trackSelector {"Tracks"};
+    int selectedTrack = 0;
     
 };

@@ -43,62 +43,10 @@ void MidiTrackEditor::load()
     session.reset(new Session(src));
     revertSession.reset(new Session(src));
     
+    selectedTrack = 0;
+    trackSelector.setSelection(selectedTrack);
+    
     loadSession();
-
-    // if we've had the panel open before, it will keep the radio
-    // from the last time, have to put it back to match selectedTrack
-    adjustTrackSelector();
-}
-
-/**
- * [notes copied from SetupEditor]
- *
- * Adjust the track selector Radio prior to loading to reflect
- * changes to the configured track count.  During static initialization
- * this was built out for 8 tracks.
- * ugh, this doesn't work, the radio just keeps going into the void and doesn't
- * size down, and the labels don't gain a 10th digit
- * probably an issue with the old SimpleRadio, but rather than trying to fix that
- * just switch over to a combo box if the size is more than 8.
- *
- * This transition only happens once, then it's combo all the way.
- * This is really ugly, but it gets the one user that needs more than 8 tracks
- * something usable.
- */
-void MidiTrackEditor::adjustTrackSelector()
-{
-#if 0
-    // setups only apply to core tracks so it is permissible to use this
-    // rather than view->totalTracks
-    int ntracks = session->getMidiTrackCount();
-    if (ntracks > 8 && ntracks <= 32 && trackCombo == nullptr) {
-
-        // it has been a radio
-        // gak, Form/FormPanel is a mess, it requires a dynamic object that it
-        // takes ownership of
-        // SimpleRadio had it's own label, but since we're not in control of
-        // layout, it's easier just to put the "label" in the item names
-        trackCombo =  new juce::ComboBox();
-        for (int i = 1 ; i <= ntracks ; i++) {
-            trackCombo->addItem("Track " + juce::String(i), i);
-        }
-        trackCombo->addListener(this);
-
-        // shit, Form/Field was built in the days where components sized themselves
-        // raw ComboBox doesn't do that
-        trackCombo->setSize(100, 20);
-
-        // this will also delete the former trackSelector radio
-        FormPanel* formPanel = form.getPanel("Tracks");
-        formPanel->replaceHeader(trackCombo);
-        trackSelector = nullptr;
-    }
-
-    if (trackSelector != nullptr)
-      trackSelector->setSelection(selectedTrack);
-    else if (trackCombo != nullptr)
-      trackCombo->setSelectedId(selectedTrack + 1);
-#endif
 }
 
 /**
@@ -119,11 +67,15 @@ void MidiTrackEditor::save()
     // transfer the track count and the track definitions
     master->midiTracks = session->midiTracks;
     master->clearTracks(Session::TypeMidi);
-    for (int i = 0 ; i < session->tracks.size() ; i++) {
-        Session::Track* t = session->tracks[i];
+    int index = 0;
+    while (index < session->tracks.size()) {
+        Session::Track* t = session->tracks[index];
         if (t->type == Session::TypeMidi) {
-            (void)session->tracks.removeAndReturn(i);
+            (void)session->tracks.removeAndReturn(index);
             master->tracks.add(t);
+        }
+        else {
+            index++;
         }
     }
 
@@ -160,7 +112,7 @@ void MidiTrackEditor::revert()
 void MidiTrackEditor::loadSession()
 {
     trackCount.setInt(session->midiTracks);
-    loadTrack(0);
+    loadTrack(selectedTrack);
 }
 
 void MidiTrackEditor::loadTrack(int index)
@@ -178,7 +130,7 @@ void MidiTrackEditor::loadTrack(int index)
 void MidiTrackEditor::saveSession()
 {
     session->midiTracks = trackCount.getInt();
-    saveTrack(0);
+    saveTrack(selectedTrack);
 }
 
 void MidiTrackEditor::saveTrack(int index)
@@ -225,7 +177,9 @@ void MidiTrackEditor::render()
 void MidiTrackEditor::radioSelected(YanRadio* r, int index)
 {
     (void)r;
-    Trace(2, "MidiTrackEditor: Track selected %d", index);
+    saveTrack(selectedTrack);
+    selectedTrack = index;
+    loadTrack(selectedTrack);
 }
 
 void MidiTrackEditor::comboSelected(class YanCombo* c, int index)

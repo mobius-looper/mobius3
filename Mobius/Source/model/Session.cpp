@@ -77,8 +77,9 @@ Session::Track* Session::ensureTrack(TrackType type, int index)
     }
 
     if (found == nullptr) {
-        for (int i = count ; i < index ; i++) {
+        for (int i = count ; i <= index ; i++) {
             found = new Session::Track();
+            found->index = i;
             found->type = type;
             tracks.add(found);
         }
@@ -89,11 +90,14 @@ Session::Track* Session::ensureTrack(TrackType type, int index)
 
 void Session::clearTracks(TrackType type)
 {
-    for (int i = 0 ; i < tracks.size() ; i++) {
-        Track* t = tracks[i];
+    int index = 0;
+    while (index < tracks.size()) {
+        Track* t = tracks[index];
         if (t->type == type) {
-            (void)tracks.remove(i, true);
+            (void)tracks.remove(index, true);
         }
+        else
+          index++;
     }
 }
 
@@ -107,6 +111,7 @@ Session::Track::Track(Session::Track* src)
 {
     type = src->type;
     name = src->name;
+    index = src->index;
     if (src->parameters != nullptr)
       parameters.reset(new ValueSet(src->parameters.get()));
 }
@@ -152,6 +157,13 @@ void Session::parseXml(juce::String xml)
                 Trace(1, "Session: Invalid XML element %s", el->getTagName().toUTF8());
             }
         }
+
+        // re-index the tracks, looks better in the debugger
+        int index = 0;
+        for (auto track : tracks) {
+            track->index = index;
+            index++;
+        }
     }
 }
 
@@ -170,7 +182,7 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
 
     // todo: should be "id" ?
     track->name = root->getStringAttribute("name");
-
+    
     juce::String typeString = root->getStringAttribute("type");
     if (typeString == juce::String("audio")) {
         track->type = Session::TypeAudio;
@@ -227,7 +239,8 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
       root->setAttribute("type", "midi");
     else
       root->setAttribute("type", "???");
-    
+
+    root->setAttribute("index", track->index);
 
     if (track->name.length() > 0)
       root->setAttribute("name", track->name);

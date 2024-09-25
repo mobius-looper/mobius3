@@ -366,6 +366,11 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
     }
     else {
         ParameterProperties* props = new ParameterProperties();
+
+        props->displayName = el->getStringAttribute("displayName");
+        if (props->displayName.length() == 0)
+          props->displayName = formatDisplayName(name);
+        
         props->scope = scope;
         props->type = parseType(el->getStringAttribute("type"));
         // todo: structureClass?
