@@ -54,26 +54,38 @@
 #include "MidiTracker.h"
 #include "MidiTrack.h"
 
-MidiTrack::MidiTrack(MidiTracker* t, Session::Track* def)
+/**
+ * Construction just initializes the basic state but does not
+ * prepare it for use.  MidiTracker will pre-allocate tracks during
+ * initialization and may not use all of them.  When necessary
+ * tracks are enabled for use by calling configure() passing
+ * the track definition from the session.
+ */
+MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 {
+    container = c;
     tracker = t;
-    pulsator = tracker->getContainer()->getPulsator();
+    pulsator = container->getPulsator();
+    eventPool = tracker->getEventPool();
+    sequencePool = tracker->getSequencePool();
 
-    // here remember the number and other parameters from the Session
-    (void)def;
+    player.initialize(container);
+
+    doReset(nullptr);
 }
 
 MidiTrack::~MidiTrack()
 {
 }
 
-void MidiTrack::initialize()
+/**
+ * The things we should do here are adjust sync options,
+ * do NOT reset the track.  If it is active it should be able to
+ * keep playing during minor adjustments to the session.
+ */
+void MidiTrack::configure(Session::Track* def)
 {
-    eventPool = tracker->getEventPool();
-    sequencePool = tracker->getSequencePool();
-    player.initialize();
-    doReset(nullptr);
-
+    (void)def;
     // old sync experiment, get this from the Session
 #if 0    
     syncLeader = 0;
@@ -85,11 +97,7 @@ void MidiTrack::initialize()
         }
     }
 #endif
-}
 
-MobiusContainer* MidiTrack::getContainer()
-{
-    return tracker->getContainer();
 }
 
 bool MidiTrack::isRecording()
@@ -175,6 +183,9 @@ void MidiTrack::doParameter(UIAction* a)
 
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
+    state->loopCount = 1;
+    state->activeLoop = 0;
+    
     state->frames = frames;
     state->frame = frame;
     state->cycles = 1;

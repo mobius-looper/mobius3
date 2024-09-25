@@ -266,19 +266,9 @@ void Pulsator::trace(Pulse& p)
  */
 void Pulsator::gatherHost(MobiusAudioStream* stream)
 {
+    // this will come back nullptr if we're not a plugin
 	AudioTime* hostTime = stream->getAudioTime();
-    if (hostTime == NULL) {
-        // can this happen, reset everyting or leave it where it was?
-        /*
-        mHostTempo = 0.0f;
-        mHostBeat = 0;
-        mHostBeatsPerBar = 0;
-        mHostTransport = false;
-        mHostTransportPending = false;
-        */
-        Trace(1, "Pulsator: Unexpected null AudioTime");
-    }
-    else {
+    if (hostTime != nullptr) {
 		hostBeat = hostTime->beat;
         hostBar = hostTime->bar;
 

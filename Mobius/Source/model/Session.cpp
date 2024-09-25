@@ -16,6 +16,8 @@ Session::~Session()
 
 Session::Session(Session* src)
 {
+    audioTracks = src->audioTracks;
+    
     for (auto track : src->tracks) {
         tracks.add(new Track(track));
     }
@@ -51,6 +53,14 @@ Session::Track::Track(Session::Track* src)
     name = src->name;
     if (src->parameters != nullptr)
       parameters.reset(new ValueSet(src->parameters.get()));
+}
+
+MslValue* Session::Track::get(juce::String pname)
+{
+    MslValue* v = nullptr;
+    if (parameters != nullptr)
+      v = parameters->get(pname);
+    return v;
 }
 
 //////////////////////////////////////////////////////////////////////

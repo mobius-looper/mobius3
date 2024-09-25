@@ -158,6 +158,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
     else if (menuIndex == menuIndexSetup)
     {
         menu.addItem(TrackSetups, "Edit Setups...");
+        menu.addItem(MidiTracks, "Edit MIDI Tracks...");
         menu.addSeparator();
         
         Supervisor* supervisor = mainWindow->getSupervisor();

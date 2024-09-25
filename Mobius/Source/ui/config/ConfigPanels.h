@@ -27,6 +27,7 @@
 #include "DisplayEditor.h"
 #include "PropertiesEditor.h"
 #include "GroupEditor.h"
+#include "MidiTrackEditor.h"
 
 class ScriptPanel : public ConfigPanel
 {
@@ -208,4 +209,17 @@ class GroupPanel : public ConfigPanel
  
   private:
     GroupEditor editor;
+};
+
+class MidiTrackPanel : public ConfigPanel
+{
+  public:
+    MidiTrackPanel(class Supervisor* s) : ConfigPanel(s), editor(s) {
+        setName("MIDI Tracks");
+        setEditor(&editor);
+    }
+    ~MidiTrackPanel() {}
+ 
+  private:
+    MidiTrackEditor editor;
 };

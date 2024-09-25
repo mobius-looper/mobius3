@@ -50,6 +50,7 @@ class PanelFactory
         Button,
         Properties,
         Group,
+        MidiTracks,
 
         // Devices
         Audio,

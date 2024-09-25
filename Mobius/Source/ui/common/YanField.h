@@ -24,13 +24,31 @@ class YanField : public juce::Component
 
 };
 
-class YanInput : public YanField
+class YanSpacer : public YanField
+{
+  public:
+
+    YanSpacer();
+    ~YanSpacer();
+
+    int getPreferredWidth();
+};
+
+
+class YanInput : public YanField, public juce::Label::Listener
 {
   public:
     
     YanInput(juce::String label, int charWidth = 0, bool readOnly = false);
     ~YanInput() {}
 
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void inputChanged(YanInput* src) = 0;
+    };
+    void setListener(Listener* l);
+    
     int getPreferredWidth() override;
 
     void setValue(juce::String s);
@@ -41,9 +59,11 @@ class YanInput : public YanField
     void setInt(int i);
 
     void resized() override;
+    void labelTextChanged(juce::Label* l) override;
 
   private:
-    
+
+    Listener* listener = nullptr;
     juce::Label text;
     int charWidth = 0;
     bool readOnly = false;
@@ -103,3 +123,76 @@ class YanColorChooser : public YanField, public ColorPopup::Listener
     int color = 0;
 };
   
+class YanRadio : public YanField, public juce::Button::Listener
+{
+  public:
+
+    YanRadio(juce::String label);
+    ~YanRadio();
+
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void radioSelected(YanRadio* r, int selection) = 0;
+    };
+    void setListener(Listener* l);
+
+    void setButtonLabels(juce::StringArray labels);
+    void setButtonCount(int count);
+    
+    void setSelection(int index);
+    int getSelection();
+
+    int getPreferredWidth() override;
+    
+    void resized() override;
+    void buttonClicked(juce::Button* b) override;
+
+  private:
+
+    Listener* listener = nullptr;
+    int initialSelection = -1;
+
+    juce::OwnedArray<juce::ToggleButton> buttons;
+    
+};
+
+class YanCombo : public YanField, public juce::ComboBox::Listener
+{
+  public:
+
+    YanCombo(juce::String label);
+    ~YanCombo();
+
+    class Listener {
+      public:
+        virtual ~Listener() {}
+        virtual void comboSelected(YanCombo* c, int selection) = 0;
+    };
+    void setListener(Listener* l);
+
+    void setWidthUnits(int units);
+    void setItems(juce::StringArray names);
+    void setSelection(int index);
+    int getSelection();
+
+    int getPreferredWidth() override;
+    
+    void resized() override;
+    void comboBoxChanged(juce::ComboBox* box) override;
+    
+  private:
+
+    Listener* listener = nullptr;
+    int initialSelection = -1;
+    int widthUnits = 0;
+    juce::ComboBox combobox;
+    
+};
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
+
+    
+    

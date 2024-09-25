@@ -15,8 +15,7 @@ class MidiTracker
     MidiTracker(class MobiusContainer* c, class MobiusKernel* k);
     ~MidiTracker();
 
-    void initialize();
-    void configure();
+    void initialize(class Session* s);
     void loadSession(class Session* s);
 
     void midiEvent(class MidiEvent* event);
@@ -42,13 +41,16 @@ class MidiTracker
 
     class MobiusContainer* container = nullptr;
     class MobiusKernel* kernel = nullptr;
+    int audioTracks = 0;
 
     juce::OwnedArray<MidiTrack> tracks;
+    MobiusMidiState state;
+    int activeTracks = 0;
 
     MidiEventPool eventPool;
     MidiSequencePool sequencePool;
     
-    MobiusMidiState state;
+    void allocateTracks(int baseNumber, int count);
     void refreshState();
 
 };

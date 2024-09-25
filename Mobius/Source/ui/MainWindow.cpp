@@ -250,6 +250,10 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::Setup);
             }
                 break;
+            case MainMenu::MidiTracks: {
+                panelFactory.show(PanelFactory::MidiTracks);
+            }
+                break;
             case MainMenu::MidiControl: {
                 panelFactory.show(PanelFactory::Midi);
             }

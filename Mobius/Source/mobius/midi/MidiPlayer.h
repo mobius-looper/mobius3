@@ -12,7 +12,7 @@ class MidiPlayer
     
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
-    void initialize();
+    void initialize(MobiusContainer* c);
     
     // initialize state for playing the track
     void reset();

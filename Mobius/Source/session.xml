@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Session audioTracks="8">
+  <Track type="midi" name=""/>
+  <ValueSet>
+    <Value name="activeSetup" value="Default"/>
+    <Value name="controllerActionThreshold" value="64" type="int"/>
+    <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
+    <Value name="fadeFrames" value="128" type="int"/>
+    <Value name="inputLatency" value="0" type="int"/>
+    <Value name="longPress" value="500" type="int"/>
+    <Value name="maxLoops" value="2" type="int"/>
+    <Value name="maxSyncDrift" value="13" type="int"/>
+    <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
+    <Value name="monitorAudio" value="false" type="bool"/>
+    <Value name="noiseFloor" value="13" type="int"/>
+    <Value name="outputLatency" value="0" type="int"/>
+    <Value name="quickSave" value="mobiusloop"/>
+    <Value name="spreadRange" value="48" type="int"/>
+  </ValueSet>
+</Session>

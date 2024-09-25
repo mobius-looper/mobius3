@@ -42,6 +42,8 @@ class Session
 
         std::unique_ptr<ValueSet> parameters;
 
+        MslValue* get(juce::String name);
+
     };
 
     juce::OwnedArray<Track> tracks;

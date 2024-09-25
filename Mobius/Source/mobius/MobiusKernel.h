@@ -271,10 +271,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
 
-    // midi stuff
-    void doMidiActionRescoped(class UIAction* a, int scope);
-
-
     
 };
 

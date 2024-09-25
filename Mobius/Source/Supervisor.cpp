@@ -1992,8 +1992,7 @@ void Supervisor::doTrackSelectAction(UIAction* a)
     int prevFocused = mobiusView.focusedTrack;
     bool relative = false;
     
-    // ugh, will want a better way to do this
-    if (a->symbol == symbols.find("NextTrack")) {
+    if (a->symbol->id == FuncNextTrack) {
         int next = mobiusView.focusedTrack + 1;
         if (next >= mobiusView.totalTracks)
           next = 0;
@@ -2001,7 +2000,7 @@ void Supervisor::doTrackSelectAction(UIAction* a)
         mobiusView.trackChanged = true;
         relative = true;
     }
-    else if (a->symbol == symbols.find("PrevTrack")) {
+    else if (a->symbol->id == FuncPrevTrack) {
         int next = mobiusView.focusedTrack - 1;
         if (next < 0)
           next = mobiusView.totalTracks - 1;
@@ -2009,7 +2008,7 @@ void Supervisor::doTrackSelectAction(UIAction* a)
         mobiusView.trackChanged = true;
         relative = true;
     }
-    else if (a->symbol == symbols.find("SelectTrack")) {
+    else if (a->symbol->id == FuncSelectTrack) {
         // argument is 1 based
         int next = a->value - 1;
         if (next < 0) {

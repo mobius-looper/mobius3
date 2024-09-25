@@ -1,3 +1,15 @@
+/**
+ * Midi tracks are configured with the newer Session model.
+ * A default session will be passed down during the initialize() phase at startup
+ * and users may load new sessions at any time after that.
+ *
+ * Track ordering is currently fixed, and track numbers will immediately follow
+ * Mobius audio tracks.
+ *
+ * To avoid memory allocation in the audio thread if track counts are raised, it
+ * will pre-allocate a fixed number of track objects but only use the configured number.
+ * If you want to get fancy, MobiusShell could allocate them and pass them down.
+ */
 
 #include <JuceHeader.h>
 
@@ -27,69 +39,75 @@ MidiTracker::~MidiTracker()
 }
 
 /**
- * Originally looked at MainConfig and initialized tracks but
- * I want to do that with Sessions
+ * Startup initialization.  Session here is normally the default
+ * session, a different one may come down later via loadSession()
  */
-void MidiTracker::initialize()
+void MidiTracker::initialize(Session* s)
 {
+    audioTracks = s->audioTracks;
+    allocateTracks(audioTracks + 1, 8);
+    loadSession(s);
 }
 
 /**
- * todo: will need a way to edit configuration parameters and pass them down
- * without doing a full Session reload
+ * Allocate track memory during the initialization phase.
  */
-void MidiTracker::configure()
+void MidiTracker::allocateTracks(int baseNumber, int count)
 {
+    for (int i = 0 ; i < count ; i++) {
+        MidiTrack* mt = new MidiTrack(container, this);
+        mt->index = i;
+        mt->number = baseNumber + i;
+        tracks.add(mt);
+
+        // allocate a parallel state structure
+        // don't like this, consider passing the view down and updating
+        // it directly
+        MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
+        tstate->index = i;
+        tstate->number = baseNumber + i;
+        state.tracks.add(tstate);
+    }
 }
 
 /**
- * Experimental way to configure tracks.
- * We're faking this right now, Supervisor will get a desired number
- * of MIDI tracks from somewhere like MainConfig, build a Session and send it down.
- * Here we pretend like this came from an actual session file.
+ * Reconfigure the MIDI tracks based on information in the session.
  *
  * Until the Mobius side of things can start using Sessions, track numbering and
  * order is fixed.  MIDI tracks will come after the audio tracks and we don't need
  * to mess with reordering at the moment.
  */
-void MidiTracker::loadSession(Session* session)
+void MidiTracker::loadSession(Session* session) 
 {
-    int trackBase = session->audioTracks + 1;
+    int total = 0;
 
-    int index = 0;
-    for (auto trackdef : session->tracks) {
-        if (trackdef->type == Session::TypeMidi) {
-            // todo: the order of tracks in the session defines the reference number
-            // the "id" of the track defines where it lives in our track array
-            // e.g. m1 is element 0, m2 is element 1, etc.
-            MidiTrack* mt = new MidiTrack(this, trackdef);
-            mt->index = index;
-            mt->number = trackBase + index;
-            tracks.add(mt);
-            // necessary?
-            mt->initialize();
-
-            // allocate a parallel state structure
-            // don't like this, consider passing the view down and updating
-            // it directly
-            MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
-            tstate->index = index;
-            tstate->number = mt->number;
-            state.tracks.add(tstate);
+    for (auto track : session->tracks) {
+        if (track->type == Session::TypeMidi) {
+            total++;
+            if (total == tracks.size()) {
+                // todo: will want a way to display this, maybe leave a mesasge in the view
+                Trace(1, "MIDI track count exceeded");
+            }
+            else {
+                MidiTrack* mt = tracks[total-1];
+                mt->configure(track);
+            }
         }
     }
+
+    activeTracks = total;
+    state.activeTracks = total;
 }
 
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 {
-    for (auto track : tracks)
-      track->processAudioStream(stream);
+    for (int i = 0 ; i < activeTracks ; i++)
+      tracks[i]->processAudioStream(stream);
 }
 
 /**
- * Like audio tracks, the scope is 1 based and adjusted down from the
- * logical number space used by MobiusView.  Since we have no concept
- * of an "active track" with MIDI, scope zero doesn't mean anything.
+ * Scope is a 1 based track number including the audio tracks.
+ * The local track index is scaled down to remove the preceeding audio tracks.
  */
 void MidiTracker::doAction(UIAction* a)
 {
@@ -97,23 +115,21 @@ void MidiTracker::doAction(UIAction* a)
         Trace(1, "MidiTracker: UIAction without symbol, you had one job");
     }
     else if (a->symbol->id == FuncGlobalReset) {
-        for (auto track : tracks)
-          track->doAction(a);
+        for (int i = 0 ; i < activeTracks ; i++)
+          tracks[i]->doAction(a);
     }
     else {
-        int scope = a->getScopeTrack();
-        if (scope <= 0) {
-            Trace(1, "MidiTracker: Invalid action scope %d", scope);
+        // convert the visible track number to a local array index
+        // this is where we will need some sort of mapping table
+        // if you allow tracks to be reordered in the UI
+        int actionScope = a->getScopeTrack();
+        int localIndex = actionScope - audioTracks - 1;
+        if (localIndex < 0 || localIndex >= activeTracks) {
+            Trace(1, "MidiTracker: Invalid action scope %d", actionScope);
         }
         else {
-            int trackIndex = scope - 1;
-            if (trackIndex < tracks.size()) {
-                MidiTrack* track = tracks[trackIndex];
-                track->doAction(a);
-            }
-            else {
-                Trace(1, "MidiTracker: Track number out of range %d", scope);
-            }
+            MidiTrack* track = tracks[localIndex];
+            track->doAction(a);
         }
     }
 }
@@ -124,19 +140,16 @@ bool MidiTracker::doQuery(Query* q)
         Trace(1, "MidiTracker: UIAction without symbol, you had one job");
     }
     else {
-        int scope = q->scope;
-        if (scope <= 0) {
-            Trace(1, "MidiTracker: Invalid action scope %d", scope);
+        // convert the visible track number to a local array index
+        // this is where we will need some sort of mapping table
+        // if you allow tracks to be reordered in the UI
+        int localIndex = q->scope - audioTracks - 1;
+        if (localIndex < 0 || localIndex >= activeTracks) {
+            Trace(1, "MidiTracker: Invalid query scope %d", q->scope);
         }
         else {
-            int trackIndex = scope - 1;
-            if (trackIndex < tracks.size()) {
-                MidiTrack* track = tracks[trackIndex];
-                track->doQuery(q);
-            }
-            else {
-                Trace(1, "MidiTracker: Track number out of range %d", scope);
-            }
+            MidiTrack* track = tracks[localIndex];
+            track->doQuery(q);
         }
     }
     return true;
@@ -153,7 +166,8 @@ void MidiTracker::midiEvent(MidiEvent* event)
     bool consumed = false;
     
     // todo: need to support multiple tracks recording and duplicate the event
-    for (auto track : tracks) {
+    for (int i = 0 ; i < activeTracks ; i++) {
+        MidiTrack* track = tracks[i];
         if (track->isRecording()) {
             track->midiEvent(event);
             consumed = true;
@@ -195,10 +209,13 @@ MobiusMidiState* MidiTracker::getState()
 
 void MidiTracker::refreshState()
 {
-    for (int i = 0 ; i < tracks.size() ; i++) {
+    for (int i = 0 ; i < activeTracks ; i++) {
         MidiTrack* track = tracks[i];
         MobiusMidiState::Track* tstate = state.tracks[i];
         track->refreshState(tstate);
     }
 }
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

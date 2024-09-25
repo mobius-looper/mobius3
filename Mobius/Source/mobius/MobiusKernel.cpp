@@ -133,8 +133,7 @@ MobiusKernel::~MobiusKernel()
  * by a later MsgConfigure
  *
  */
-void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config,
-                              Session* ses)
+void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Session* ses)
 {
     Trace(2, "MobiusKernel::initialize\n");
     
@@ -161,13 +160,12 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config,
 
     audioTracks = config->getCoreTracks();
     // todo: cound the actual number of midi tracks
-    midiTracks = ses->tracks.size();
+    midiTracks = ses->getMidiTrackCount();
 
     //synchronizer.initialize();
 
     mMidi.reset(new MidiTracker(cont, this));
-    mMidi->initialize();
-    
+    mMidi->initialize(ses);
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -284,6 +282,9 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
       mCore->reconfigure(configuration);
 }
 
+/**
+ * New post-initialize interface for adapting to Session changes.
+ */
 void MobiusKernel::loadSession(KernelMessage* msg)
 {
     Session* old = session;
@@ -298,7 +299,8 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // send the old one back
     communicator->kernelSend(msg);
 
-    // todo: send this to MidiTracker
+    if (mMidi != nullptr)
+      mMidi->loadSession(session);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -866,7 +868,7 @@ void MobiusKernel::doAction(UIAction* action)
     else if (symbol->level == LevelCore) {
         int scope = action->getScopeTrack();
         if (scope > audioTracks) {
-            doMidiActionRescoped(action, scope);
+            mMidi->doAction(action);
         }
         else {
             // not ours, pass to the core
@@ -891,20 +893,6 @@ void MobiusKernel::doAction(UIAction* action)
       actionPool->checkin(action);
 }
 
-/**
- * After receiving a UIAction with a scope in the range of the midi
- * tracks, adjust the scope downward and pass it to the MidiTracker
- */
-void MobiusKernel::doMidiActionRescoped(UIAction* a, int scope)
-{
-    int adjusted = scope - audioTracks;
-    a->setScopeTrack(adjusted);
-
-    mMidi->doAction(a);
-
-    a->setScopeTrack(scope);
-}
-    
 /**
  * Process one of our local Kernel level ations.
  *
@@ -1134,15 +1122,7 @@ bool MobiusKernel::doQuery(Query* q)
     // it may be equal to audioTracks, when it goes over it
     // is a midi track
     if (q->scope > audioTracks) {
-        int saveScope = q->scope;
-        // there is "zero means active track" concept for MIDI tracks
-        // but I don't want the scope number meaning to be different
-        // so continue using 1 based 
-        q->scope = q->scope - audioTracks;
-        
         success = mMidi->doQuery(q);
-        
-        q->scope = saveScope;
     }
     else {
         if (mCore != nullptr)
@@ -1412,7 +1392,7 @@ bool MobiusKernel::mslAction(MslAction* action)
 
             // we need to allow MSL to target MIDI tracks so support re-scoping here
             if (action->scope > audioTracks)
-              doMidiActionRescoped(&uia, action->scope);
+              mMidi->doAction(&uia);
             else
               mCore->doAction(&uia);
         }

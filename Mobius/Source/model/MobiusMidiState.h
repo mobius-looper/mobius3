@@ -38,6 +38,10 @@ class MobiusMidiState
       public:
         int index = 0;
         int number = 0;
+
+        // loop state
+        int loopCount = 0;
+        int activeLoop = 0;
         
         // play position
         int frames = 0;
@@ -62,6 +66,8 @@ class MobiusMidiState
     };
 
     juce::OwnedArray<Track> tracks;
+    // there may be more in the array than actually configured for use
+    int activeTracks = 0;
     
   private:
     

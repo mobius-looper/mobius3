@@ -25,9 +25,9 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize()
+void MidiPlayer::initialize(MobiusContainer* c)
 {
-    container = track->getContainer();
+    container = c;
 }
 
 /**

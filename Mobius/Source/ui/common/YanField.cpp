@@ -9,6 +9,28 @@
 
 //////////////////////////////////////////////////////////////////////
 //
+// Spacer
+//
+//////////////////////////////////////////////////////////////////////
+
+// sign, wish we could sprinkle these without needing an actual object
+// but the location in the OwnedArray is awkward
+
+YanSpacer::YanSpacer() : YanField("")
+{
+}
+
+YanSpacer::~YanSpacer()
+{
+}
+
+int YanSpacer::getPreferredWidth()
+{
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Input
 //
 //////////////////////////////////////////////////////////////////////
@@ -18,6 +40,7 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
     charWidth = argCharWidth;
     readOnly = argReadOnly;
 
+    text.addListener(this);
     text.setColour(juce::Label::textColourId, juce::Colours::white);
     text.setColour(juce::Label::backgroundColourId, juce::Colours::black);
     
@@ -35,6 +58,11 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
     }
 
     addAndMakeVisible(text);
+}
+
+void YanInput::setListener(Listener* l)
+{
+    listener = l;
 }
 
 void YanInput::setValue(juce::String value)
@@ -55,6 +83,11 @@ juce::String YanInput::getValue()
 int YanInput::getInt()
 {
     return text.getText().getIntValue();
+}
+
+void YanInput::setInt(int i)
+{
+    text.setText(juce::String(i), juce::NotificationType::dontSendNotification);
 }
 
 int YanInput::getPreferredWidth()
@@ -78,6 +111,13 @@ int YanInput::getPreferredWidth()
 void YanInput::resized()
 {
     text.setBounds(getLocalBounds());
+}
+
+void YanInput::labelTextChanged(juce::Label* l)
+{
+    (void)l;
+    if (listener != nullptr)
+      listener->inputChanged(this);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -230,6 +270,249 @@ void YanColorChooser::colorSelected(int argb)
 
     // until we show a color box change the text color
     text.setColour(juce::Label::textColourId, juce::Colour(argb));
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Radio
+//
+//////////////////////////////////////////////////////////////////////
+
+YanRadio::YanRadio(juce::String label) : YanField(label)
+{
+}
+
+YanRadio::~YanRadio()
+{
+}
+
+void YanRadio::setListener(YanRadio::Listener* l)
+{
+    listener = l;
+}
+
+void YanRadio::setButtonLabels(juce::StringArray labels)
+{
+    // todo: allow reconfiguration
+    if (buttons.size() > 0) {
+        Trace(1, "YanRadio: Can't reconfigure button labels");
+    }
+    else if (labels.size() > 0) {
+
+        int index = 0;
+        for (auto name : labels) {
+            juce::ToggleButton* b = new juce::ToggleButton(name);
+            addAndMakeVisible(b);
+            buttons.add(b);
+
+            // SimpleRadio comments said "unable to make b->onClick work, see comments at the top"
+            // not sure what that meant
+            b->addListener(this);
+
+            // assume for now that we want a mutex radio, could be optional
+            // comments from SimpleRadio:
+            // what is the scope of the radio group id, just within this component
+            // or global to the whole application?
+            // "To find other buttons with the same ID, this button will search through its sibling components for ToggleButtons, so all the buttons for a particular group must be placed inside the same parent component.
+            // so it seems to be local which is good
+            b->setRadioGroupId(1);
+
+            // SimpleRadio wasn't smart since it was only used for numbers
+            // we could do better
+            int guessWidth = 50;
+            b->setSize(guessWidth, 20);
+
+            if (initialSelection == index)
+              b->setToggleState(true, juce::dontSendNotification);
+            index++;
+        }
+    }
+}
+
+void YanRadio::setButtonCount(int count)
+{
+    if (count > 0) {
+        juce::StringArray labels;
+        for (int i = 0 ; i < count ; i++) {
+            labels.add(juce::String(i + 1));
+        }
+        setButtonLabels(labels);
+    }
+}
+
+int YanRadio::getPreferredWidth()
+{
+    int width = 0;
+    for (auto button : buttons)
+      width += button->getWidth();
+    return width;
+}
+
+/**
+ * By default button lables are painted on the right.
+ * No obvious way to change that to the left.  Chatter suggests
+ * overriding the paint method but it's not that hard to manage
+ * an array of labels oursleves.  Someday...
+ */
+void YanRadio::resized()
+{
+    int buttonOffset = 0;
+    for (auto button : buttons) {
+        // ugh, arguments are x,y not top,left
+        button->setTopLeftPosition(buttonOffset, 0);
+        buttonOffset += button->getWidth();
+    }
+}
+
+void YanRadio::setSelection(int index)
+{
+    if (buttons.size() == 0) {
+        // haven't rendered yet
+        initialSelection = index;
+    }
+    else if (index >= 0 && index < buttons.size()) {
+        juce::ToggleButton* b = buttons[index];
+        b->setToggleState(true, juce::dontSendNotification);
+    }
+    else {
+        Trace(1, "YanRadio: Index out of range %d", index);
+    }
+}
+
+int YanRadio::getSelection()
+{
+    int selection = -1;
+    for (int i = 0 ; i < buttons.size() ; i++) {
+        juce::ToggleButton* b = buttons[i];
+        if (b->getToggleState()) {
+            selection = i;
+            break;
+        }
+    }
+    return selection;
+}
+
+/**
+ * We are not really interested in buttonClicked, the thing
+ * that created this wrapper component is.  Yet another level
+ * of listener, really need to explore lambdas someday.
+ *
+ * Weird...when dealing with a radio group we get buttonClicked
+ * twice, apparently once when turning off the current button
+ * and again when turning another one on.  In the first state
+ * none of the buttons will have toggle state true, don't call
+ * the listener in that case.
+ */
+void YanRadio::buttonClicked(juce::Button* b)
+{
+    (void)b;
+    // could be smarter about tracking selections without iterating
+    // over the button list
+    int selection = getSelection();
+    // ignore notifications of turning a button off
+    if (selection >= 0) {
+        if (listener != nullptr)
+          listener->radioSelected(this, selection);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Combo
+//
+//////////////////////////////////////////////////////////////////////
+
+YanCombo::YanCombo(juce::String label) : YanField(label)
+{
+    combobox.addListener(this);
+
+    // various junk from Field
+    
+    // figure out how to make this transparent
+    combobox.setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::white);
+    combobox.setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::black);
+    combobox.setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::black);
+    // "base color for the button", what's this?
+    // combobox.setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::black);
+    combobox.setColour(juce::ComboBox::ColourIds::arrowColourId, juce::Colours::black);
+    combobox.setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::red);
+    
+    addAndMakeVisible(combobox);
+}
+
+YanCombo::~YanCombo()
+{
+}
+
+void YanCombo::setListener(YanCombo::Listener* l)
+{
+    listener = l;
+}
+
+void YanCombo::setWidthUnits(int units)
+{
+    widthUnits = units;
+}
+
+void YanCombo::setItems(juce::StringArray names)
+{
+    // todo: detect if this was already added
+    combobox.clear();
+    int id = 1;
+    int maxChars = 0;
+    for (auto name : names) {
+        combobox.addItem(name, id);
+        id++;
+
+        if (name.length() > maxChars)
+          maxChars = name.length();
+    }
+
+    // the box also needs to be wide enough to show the pull-down chevron on the right
+    // not sure how wide the default is
+    int arrowWidth = 24;
+
+    // override the maxChars calculated from the values if the user
+    // pass down a desired width
+    if (widthUnits > 0)
+      maxChars = widthUnits;
+
+    // the usual guessing game
+    int charWidth = 12;
+
+    setSize((maxChars * charWidth) + arrowWidth, 12);
+
+    combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
+}
+
+int YanCombo::getPreferredWidth()
+{
+    // calculated when the items were added
+    return getWidth();
+}
+
+void YanCombo::setSelection(int index)
+{
+    combobox.setSelectedId(index + 1);
+}
+
+int YanCombo::getSelection()
+{
+    return combobox.getSelectedId() - 1;
+}
+
+void YanCombo::resized()
+{
+    combobox.setBounds(getLocalBounds());
+}
+
+void YanCombo::comboBoxChanged(juce::ComboBox* box)
+{
+    (void)box;
+    if (listener != nullptr) {
+        int selection = getSelection();
+        listener->comboSelected(this, selection);
+    }
 }
 
 /****************************************************************************/

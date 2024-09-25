@@ -12,9 +12,10 @@ class MidiTrack
     
   public:
 
-    MidiTrack(class MidiTracker* t, class Session::Track* def);
+    MidiTrack(class MobiusContainer* c, class MidiTracker* t);
     ~MidiTrack();
-    void initialize();
+
+    void configure(class Session::Track* def);
     
     bool isRecording();
     void midiEvent(class MidiEvent* e);
@@ -32,8 +33,6 @@ class MidiTrack
 
   protected:
 
-    class MobiusContainer* getContainer();
-    
     class MidiSequence* getPlaySequence() {
         return playing;
     }
@@ -44,6 +43,7 @@ class MidiTrack
 
   private:
 
+    class MobiusContainer* container = nullptr;
     class MidiTracker* tracker = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiEventPool* eventPool = nullptr;

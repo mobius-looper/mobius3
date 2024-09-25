@@ -278,6 +278,10 @@
                 file="Source/ui/config/MidiDeviceEditor.h"/>
           <FILE id="cLSRUC" name="MidiEditor.cpp" compile="1" resource="0" file="Source/ui/config/MidiEditor.cpp"/>
           <FILE id="KlGcL4" name="MidiEditor.h" compile="0" resource="0" file="Source/ui/config/MidiEditor.h"/>
+          <FILE id="EAPV6a" name="MidiTrackEditor.cpp" compile="1" resource="0"
+                file="Source/ui/config/MidiTrackEditor.cpp"/>
+          <FILE id="Q90H6M" name="MidiTrackEditor.h" compile="0" resource="0"
+                file="Source/ui/config/MidiTrackEditor.h"/>
           <FILE id="CqcHvV" name="MultiSelectDrag.cpp" compile="1" resource="0"
                 file="Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="DzO444" name="MultiSelectDrag.h" compile="0" resource="0"
@@ -458,6 +462,9 @@
           <FILE id="xYsipx" name="YanField.h" compile="0" resource="0" file="Source/ui/common/YanField.h"/>
           <FILE id="f2zY9Q" name="YanForm.cpp" compile="1" resource="0" file="Source/ui/common/YanForm.cpp"/>
           <FILE id="QtLbZf" name="YanForm.h" compile="0" resource="0" file="Source/ui/common/YanForm.h"/>
+          <FILE id="xotvdq" name="YanParameter.cpp" compile="1" resource="0"
+                file="Source/ui/common/YanParameter.cpp"/>
+          <FILE id="OEAoKX" name="YanParameter.h" compile="0" resource="0" file="Source/ui/common/YanParameter.h"/>
         </GROUP>
         <FILE id="i40dnE" name="AboutPanel.cpp" compile="1" resource="0" file="Source/ui/AboutPanel.cpp"/>
         <FILE id="Cgk0He" name="AboutPanel.h" compile="0" resource="0" file="Source/ui/AboutPanel.h"/>

@@ -96,16 +96,16 @@ MobiusViewer::~MobiusViewer()
  */
 void MobiusViewer::initialize(MobiusView* view)
 {
-    MobiusConfig* config = supervisor->getMobiusConfig();
-    view->audioTracks = config->getCoreTracks();
+    Session* session = supervisor->getSession();
+    
+    view->audioTracks = session->audioTracks;
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
         view->audioTracks = 1;
     }
 
     // all things MIDI come from here
-    Session* session = supervisor->getSession();
-    view->midiTracks = session->tracks.size();
+    view->midiTracks = session->getMidiTrackCount();
 
     // stub this out till we're ready
     //view->midiTracks = 0;
@@ -618,6 +618,10 @@ void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
 {
     int subcycles = 0;
     if (supervisor->doQuery(&subcyclesQuery)) {
+
+        // todo: view indexes are assumed to correspond directly to track
+        // numbers. Once we support track reorder this will need to change
+        // and should be using track ids "a3", "m2", etc.
         subcyclesQuery.scope = tview->index + 1;
         subcycles = subcyclesQuery.value;
     }
@@ -965,14 +969,14 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 {
     MobiusMidiState* state = mobius->getMidiState();
 
-    if (view->midiTracks != state->tracks.size()) {
+    if (view->midiTracks != state->activeTracks) {
         // likely to generate very many messages
         Trace(1, "MobiusViewer: MIDI track count mismatch %d in the view and %d in the state",
-              view->midiTracks, state->tracks.size());
+              view->midiTracks, state->activeTracks);
     }
 
     int index = 0;
-    while (index < state->tracks.size() && index < view->midiTracks) {
+    while (index < state->activeTracks && index < view->midiTracks) {
         MobiusMidiState::Track* tstate = state->tracks[index];
         int vtrackIndex = index + view->audioTracks;
         if (vtrackIndex < view->tracks.size()) {
@@ -989,6 +993,9 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 
 void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
 {
+    tview->loopCount = tstate->loopCount;
+    tview->activeLoop = tstate->activeLoop;
+    
     tview->frame = tstate->frame;
     tview->frames = tstate->frames;
     tview->subcycles = tstate->subcycles;

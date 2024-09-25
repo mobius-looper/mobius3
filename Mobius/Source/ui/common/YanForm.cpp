@@ -51,6 +51,15 @@ void YanForm::add(class YanField* f)
     addAndMakeVisible(label);
 }
 
+void YanForm::addSpacer()
+{
+    fields.add(&spacer);
+
+    // sigh, label array and field array are expected to match
+    juce::Label* label = new juce::Label();
+    labels.add(label);
+}
+
 int YanForm::getPreferredHeight()
 {
     return (RowHeight * fields.size()) + topInset;

@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "YanField.h"
+
 class YanForm : public juce::Component
 {
   public:
@@ -25,6 +27,7 @@ class YanForm : public juce::Component
     
     // fields
     void add(class YanField* f);
+    void addSpacer();
 
     // rendering
     int getPreferredHeight();
@@ -41,6 +44,8 @@ class YanForm : public juce::Component
 
     // generated labels for the fields, think about just using paint() for this
     juce::OwnedArray<juce::Label> labels;
+
+    YanSpacer spacer;
 
     int topInset = 0;
     int labelCharWidth = 0;
