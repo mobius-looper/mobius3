@@ -36,9 +36,8 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
     MainWindow(class Supervisor* super);
     ~MainWindow();
 
-    class Supervisor* getSupervisor() {
-        return supervisor;
-    }
+    class Supervisor* getSupervisor();
+    class Provider* getProvider();
         
     int getPreferredWidth();
     int getPreferredHeight();

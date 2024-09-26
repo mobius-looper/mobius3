@@ -47,6 +47,7 @@ class MidiTrack
 
     class MobiusContainer* container = nullptr;
     class MidiTracker* tracker = nullptr;
+    class ParameterFinder* finder = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiEventPool* eventPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;

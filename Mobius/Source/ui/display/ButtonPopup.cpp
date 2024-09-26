@@ -4,6 +4,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
 #include "../common/ColorSelector.h"
@@ -135,7 +136,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
 
     // updating UIConfig will indirectly regenerate ActionButtons.buttons list so you
     // must not be iterating over them after this
-    actionButtons->getSupervisor()->updateUIConfig();
+    actionButtons->getProvider()->updateUIConfig();
 
     close();
 }
@@ -149,7 +150,7 @@ void ButtonPopup::buttonClicked(juce::Button* command)
  */
 void ButtonPopup::change(ActionButton* b, int color)
 {
-    UIConfig* config = actionButtons->getSupervisor()->getUIConfig();
+    UIConfig* config = actionButtons->getProvider()->getUIConfig();
     ButtonSet* buttonSet = config->getActiveButtonSet();
 
     // if this is MobiusBlue, collapse back down to zero

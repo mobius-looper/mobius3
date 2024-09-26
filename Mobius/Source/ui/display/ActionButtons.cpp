@@ -7,7 +7,8 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../util/Trace.h"
+#include "../../Provider.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Binding.h"
 #include "../../model/DynamicConfig.h"
@@ -35,9 +36,9 @@ ActionButtons::~ActionButtons()
 {
 }
 
-Supervisor* ActionButtons::getSupervisor()
+Provider* ActionButtons::getProvider()
 {
-    return display->getSupervisor();
+    return display->getProvider();
 }
 
 /**
@@ -46,7 +47,7 @@ Supervisor* ActionButtons::getSupervisor()
  */
 void ActionButtons::configure()
 {
-    UIConfig* config = display->getSupervisor()->getUIConfig();
+    UIConfig* config = display->getProvider()->getUIConfig();
 
     // remember this for layout()
     // since this is just a raw text entry field, do some sanity checks on it
@@ -58,8 +59,7 @@ void ActionButtons::configure()
     
     buildButtons(config);
 
-    DynamicConfig* dynconfig = display->getSupervisor()->getDynamicConfig();
-    dynamicConfigChanged(dynconfig);
+    dynamicConfigChanged();
 }
 
 void ActionButtons::addButton(ActionButton* b)
@@ -151,9 +151,8 @@ void ActionButtons::buildButtons(UIConfig* config)
  * DynamicConfig is still passed but it will be empty now.  We derive
  * the script/sample buttons from the Symbols table.
  */
-void ActionButtons::dynamicConfigChanged(DynamicConfig* config)
+void ActionButtons::dynamicConfigChanged()
 {
-    (void)config;
     bool changes = false;
     
     // don't like iteration index assumptions so build
@@ -184,7 +183,7 @@ void ActionButtons::dynamicConfigChanged(DynamicConfig* config)
     // now we use SymbolTable and look for BehaviorScript or BehaviorSample
     // symbols that have the auto-binding "button" flag set
     
-    for (auto symbol : getSupervisor()->getSymbols()->getSymbols()) {
+    for (auto symbol : getProvider()->getSymbols()->getSymbols()) {
         if ((symbol->script && symbol->script->button) ||
             (symbol->sample && symbol->sample->button)) {
             // did it we have it manually configured?
@@ -388,7 +387,7 @@ void ActionButtons::buttonClicked(juce::Button* src)
         action->sustain = enableSustain;
         action->sustainEnd = false;
     
-        display->getSupervisor()->doAction(action);
+        display->getProvider()->doAction(action);
     }
 }
 
@@ -495,7 +494,7 @@ void ActionButtons::buttonUp(ActionButton* b)
              (s->script != nullptr && s->script->sustainable))) {
 
             action->sustainEnd = true;
-            display->getSupervisor()->doAction(action);
+            display->getProvider()->doAction(action);
         }
     }
     b->setDownTracker(false, false);

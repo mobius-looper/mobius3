@@ -16,7 +16,7 @@ class FloatingStripElement : public StatusElement
     FloatingStripElement(class StatusArea* area);
     ~FloatingStripElement();
 
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
     class MobiusView* getMobiusView();
     
     // if we have more than one, give them a name

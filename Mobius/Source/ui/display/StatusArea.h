@@ -9,8 +9,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
-
 #include "ModeElement.h"
 #include "BeatersElement.h"
 #include "LoopMeterElement.h"
@@ -31,7 +29,7 @@ class StatusArea : public juce::Component
     StatusArea(class MobiusDisplay*);
     ~StatusArea();
 
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
     class MobiusView* getMobiusView();
     
     void configure();

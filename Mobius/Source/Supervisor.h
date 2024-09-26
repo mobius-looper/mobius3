@@ -47,6 +47,7 @@
 #include "ui/MobiusView.h"
 #include "ui/MobiusViewer.h"
 
+#include "ParameterFinder.h"
 #include "Provider.h"
 
 class Supervisor : public Provider, public MobiusContainer, public MobiusListener, public MslContext,
@@ -59,26 +60,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     static int MaxInstanceCount;
     
     static const int BuildNumber = 21;
-
-    /**
-     * Interface implemented by an internal component that wants
-     * to handle UI level actions.  There are not many of these so
-     * a listener style is easier than a "walk down" style.
-     */
-    class ActionListener {
-      public:
-        virtual ~ActionListener() {}
-        virtual bool doAction(UIAction* action) = 0;
-    };
-
-    /**
-     * For display components that want to receive alerts.
-     */
-    class AlertListener {
-      public:
-        virtual ~AlertListener() {}
-        virtual void alertReceived(juce::String msg) = 0;
-    };
 
     /**
      * Standalone Supervisor is statically constructed by MainComponent.
@@ -106,11 +87,11 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::Component* getPluginEditorComponent();
     void closePluginEditor();
     
-    void addActionListener(ActionListener* l);
-    void removeActionListener(ActionListener* l);
+    void addActionListener(ActionListener* l) override;
+    void removeActionListener(ActionListener* l) override;
 
-    void addAlertListener(AlertListener* l);
-    void removeAlertListener(AlertListener* l);
+    void addAlertListener(AlertListener* l) override;
+    void removeAlertListener(AlertListener* l) override;
     
     // this isn't really a listener, but it wants to be informed of things
     // if we ever have more the one console-like thing (MobiusConsole and ScriptConsole)
@@ -123,7 +104,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // also in MobiusContainer
     bool isPlugin() override;
         
-    void showMainPopupMenu();
+    void showMainPopupMenu() override;
 
     // Various resources managed by Supervisor that internal
     // components need
@@ -155,7 +136,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &midiManager;
     }
 
-    class MidiRealizer* getMidiRealizer() {
+    class MidiRealizer* getMidiRealizer() override {
         return &midiRealizer;
     }
 
@@ -167,7 +148,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return mobius;
     }
 
-    class MobiusView* getMobiusView() {
+    class MobiusView* getMobiusView() override {
         return &mobiusView;
     }
     
@@ -183,8 +164,11 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // part of MobiusContainer
     Parametizer* getParametizer() override;
     class MobiusMidiTransport* getMidiTransport() override;
+    ParameterFinder* getParameterFinder() override {
+        return &finder;
+    }
     
-    AudioClerk* getAudioClerk() {
+    AudioClerk* getAudioClerk() override {
         return &audioClerk;
     }
 
@@ -194,8 +178,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void updateMobiusConfig();
     void writeMobiusConfig();
     void reloadMobiusConfig();
-    class UIConfig* getUIConfig();
-    void updateUIConfig();
+    class UIConfig* getUIConfig() override;
+    void updateUIConfig() override;
     void reloadUIConfig();
     void updateSymbolProperties();
 
@@ -207,15 +191,15 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class DynamicConfig* getDynamicConfig();
 
     // propagate an action to either MobiusInterface or MainWindow
-    void doAction(class UIAction*);
+    void doAction(class UIAction*) override;
     void alert(juce::String message);
     void addAlert(juce::String message);
     void message(juce::String message);
     
     // find the value of a parameter or variable
-    bool doQuery(class Query* q);
+    bool doQuery(class Query* q) override;
     juce::String getParameterLabel(class Symbol* s, int ordinal) override;
-    int getParameterMax(class Symbol* s);
+    int getParameterMax(class Symbol* s) override;
 
     // special accessors for things deep within the engine
     int getActiveSetup();
@@ -353,6 +337,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // Symbol table loader
     Symbolizer symbolizer {this};
+
+    // parameter lookup services for the kernel
+    ParameterFinder finder {this};
     
     // the Mobius "engine"
     // this started as a singleton managed by MobiusInterface

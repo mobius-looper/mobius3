@@ -10,7 +10,8 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../model/UIAction.h"
+#include "../../Provider.h"
 
 class TrackStrip : public juce::Component,
                    public juce::FileDragAndDropTarget
@@ -21,7 +22,7 @@ class TrackStrip : public juce::Component,
     TrackStrip(class FloatingStripElement*);
     ~TrackStrip();
 
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
     class MobiusView* getMobiusView();
     class MobiusViewTrack* getTrackView();
 

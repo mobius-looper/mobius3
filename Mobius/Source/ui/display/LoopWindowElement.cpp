@@ -5,6 +5,8 @@
 #include <JuceHeader.h>
 
 #include "../JuceUtil.h"
+#include "../MobiusView.h"
+
 #include "Colors.h"
 #include "StatusArea.h"
 #include "LoopWindowElement.h"

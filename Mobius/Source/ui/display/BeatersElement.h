@@ -6,7 +6,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
 #include "StatusElement.h"
 
 #define BEAT_DECAY 150

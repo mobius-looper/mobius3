@@ -7,11 +7,11 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "StatusElement.h"
 
 class ParametersElement : public StatusElement,
-                          public Supervisor::ActionListener
+                          public Provider::ActionListener
 {
   public:
 

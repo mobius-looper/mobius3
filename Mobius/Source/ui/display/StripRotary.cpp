@@ -10,9 +10,10 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "../../model/UIParameter.h"
 #include "../../model/Symbol.h"
+#include "../../ui/MobiusView.h"
 
 #include "../JuceUtil.h"
 #include "Colors.h"
@@ -56,7 +57,7 @@ StripRotary::StripRotary(class TrackStrip* parent, StripElementDefinition* def) 
 
     // now that we have Symbol, don't need to be passing the UIParameter around
     // in the StripElementDefinition
-    action.symbol = strip->getSupervisor()->getSymbols()->intern(definition->parameter->getName());
+    action.symbol = strip->getProvider()->getSymbols()->intern(definition->parameter->getName());
 
     // see if the slider can pass mouse events up
     // second arg is wantsEventsForAllNestedChildComponents
@@ -182,7 +183,7 @@ void StripRotary::sliderValueChanged(juce::Slider* obj)
     
     action.value = value;
 
-    // this will add track scope and pass to Supervisor
+    // this will add track scope and pass to Provider
     strip->doAction(&action);
 }
 

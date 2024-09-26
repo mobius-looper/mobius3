@@ -103,7 +103,7 @@ ActionButton::ActionButton(ActionButtons* parent, DisplayButton* src)
     color = src->color;
 
     if (symbolName.length() > 0) {
-        action.symbol = actionButtons->getSupervisor()->getSymbols()->intern(symbolName);
+        action.symbol = actionButtons->getProvider()->getSymbols()->intern(symbolName);
         CopyString(src->arguments.toUTF8(), action.arguments, sizeof(action.arguments));
 
         // kludge: This is what Binderator does for MIDI/key bindings

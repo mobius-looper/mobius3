@@ -5,7 +5,7 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "../../model/UIConfig.h"
 #include "../JuceUtil.h"
 #include "../MainWindow.h"
@@ -29,14 +29,14 @@ MobiusDisplay::~MobiusDisplay()
 {
 }
 
-Supervisor* MobiusDisplay::getSupervisor()
+Provider* MobiusDisplay::getProvider()
 {
-    return mainWindow->getSupervisor();
+    return mainWindow->getProvider();
 }
 
 class MobiusView* MobiusDisplay::getMobiusView()
 {
-    return getSupervisor()->getMobiusView();
+    return getProvider()->getMobiusView();
 }
 
 /**

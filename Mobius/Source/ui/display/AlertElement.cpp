@@ -4,7 +4,7 @@
 
 #include "../../model/UIConfig.h"
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "../JuceUtil.h"
 
 #include "Colors.h"
@@ -15,18 +15,18 @@ AlertElement::AlertElement(StatusArea* area) :
     StatusElement(area, "AlertElement")
 {
     mouseEnterIdentify = true;
-    area->getSupervisor()->addAlertListener(this);
+    area->getProvider()->addAlertListener(this);
     resizes = true;
 }
 
 AlertElement::~AlertElement()
 {
-    statusArea->getSupervisor()->removeAlertListener(this);
+    statusArea->getProvider()->removeAlertListener(this);
 }
 
 void AlertElement::configure()
 {
-    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
+    UIConfig* config = statusArea->getProvider()->getUIConfig();
     //alertHeight = config->getInt("alertHeight");
     alertDuration = config->getInt("alertDuration");
 }
@@ -73,7 +73,7 @@ void AlertElement::update(class MobiusView* view)
 int AlertElement::getPreferredHeight()
 {
     // unclear if configure() happens before this, get it directly from UIConfig
-    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
+    UIConfig* config = statusArea->getProvider()->getUIConfig();
     int alertHeight = config->getInt("alertHeight");
     if (alertHeight < 20 || alertHeight > 100)
       alertHeight = 20;

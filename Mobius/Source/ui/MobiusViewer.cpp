@@ -1030,7 +1030,6 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
         view->tracks.add(vt);
     }
     
-    int index = 0;
     for (int i = 0 ; i < state->activeTracks ; i++) {
         MobiusMidiState::Track* tstate = state->tracks[i];
         int vtrackIndex = view->audioTracks + i;

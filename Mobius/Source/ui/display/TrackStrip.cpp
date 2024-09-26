@@ -10,7 +10,9 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
+#include "../../AudioClerk.h"
+
 #include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
@@ -34,7 +36,7 @@ TrackStrip::TrackStrip(TrackStrips* parent)
     // todo: need to refine the difference between activating a track
     // with and without "empty track actions"
     // maybe TrackSelect vs. TrackSwitch
-    trackSelectAction.symbol = strips->getSupervisor()->getSymbols()->intern("SelectTrack");
+    trackSelectAction.symbol = strips->getProvider()->getSymbols()->intern("SelectTrack");
 }
 
 TrackStrip::TrackStrip(FloatingStripElement* parent)
@@ -68,13 +70,13 @@ MobiusViewTrack* TrackStrip::getTrackView()
     return view->getTrack(followTrack);
 }
           
-Supervisor* TrackStrip::getSupervisor()
+Provider* TrackStrip::getProvider()
 {
     if (strips != nullptr)
-      return strips->getSupervisor();
+      return strips->getProvider();
 
     if (floater != nullptr)
-      return floater->getSupervisor();
+      return floater->getProvider();
 
     // someone is about to have a bad day
     return nullptr;
@@ -272,7 +274,7 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
         // I guess to make it easier to use the numbers as indexes into
         // the MobiusView/MobiusState track array
         trackSelectAction.value = getTrackIndex() + 1;
-        getSupervisor()->doAction(&trackSelectAction);
+        getProvider()->doAction(&trackSelectAction);
     }
 }
 
@@ -302,7 +304,7 @@ void TrackStrip::mouseDown(const juce::MouseEvent& event)
  */
 void TrackStrip::configure()
 {
-    UIConfig* config = getSupervisor()->getUIConfig();
+    UIConfig* config = getProvider()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
     DisplayStrip* strip = nullptr;
     
@@ -467,7 +469,7 @@ void TrackStrip::doAction(UIAction* action)
     
     action->setScopeTrack(scope);
     
-    getSupervisor()->doAction(action);
+    getProvider()->doAction(action);
 }
 
 //
@@ -511,7 +513,7 @@ void TrackStrip::filesDropped(const juce::StringArray& files, int x, int y)
     Trace(2, "TrackStrip: filesDropped into track %d\n", followTrack);
     outerDropTarget = false;
     
-    AudioClerk* clerk = getSupervisor()->getAudioClerk();
+    AudioClerk* clerk = getProvider()->getAudioClerk();
     // track/loop numbers are 1 based, with zero meaning "active"
     // followTrack is zero based
     clerk->filesDropped(files, followTrack + 1, 0);

@@ -13,7 +13,6 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
-#include "../../Supervisor.h"
 #include "../MobiusView.h"
 
 #include "Colors.h"

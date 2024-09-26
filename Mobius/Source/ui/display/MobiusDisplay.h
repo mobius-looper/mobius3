@@ -17,7 +17,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
 #include "ActionButtons.h"
 #include "StatusArea.h"
 #include "TrackStrips.h"
@@ -29,7 +28,7 @@ class MobiusDisplay : public juce::Component
     MobiusDisplay(class MainWindow* main);
     ~MobiusDisplay();
 
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
     class MobiusView* getMobiusView();
     
     void configure();

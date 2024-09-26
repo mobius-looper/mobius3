@@ -9,9 +9,11 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
 #include "../../model/UIConfig.h"
 #include "../../model/MobiusConfig.h"
-#include "../../Supervisor.h"
+#include "../../Provider.h"
+#include "../MobiusView.h"
 
 #include "MobiusDisplay.h"
 #include "TrackStrip.h"
@@ -27,9 +29,9 @@ TrackStrips::~TrackStrips()
 {
 }
 
-Supervisor* TrackStrips::getSupervisor()
+Provider* TrackStrips::getProvider()
 {
-    return display->getSupervisor();
+    return display->getProvider();
 }
 
 class MobiusView* TrackStrips::getMobiusView()
@@ -46,7 +48,7 @@ class MobiusView* TrackStrips::getMobiusView()
  */
 void TrackStrips::configure()
 {
-    MobiusView* view = display->getSupervisor()->getMobiusView();
+    MobiusView* view = display->getProvider()->getMobiusView();
     int trackCount = view->totalTracks;
 
     // prevent crashes
@@ -78,7 +80,7 @@ void TrackStrips::configure()
     
     // decided to simplify this to just a dualRows boolean since it
     // can only ever be 1 or 2
-    UIConfig* uiconfig = display->getSupervisor()->getUIConfig();
+    UIConfig* uiconfig = display->getProvider()->getUIConfig();
     int rows = uiconfig->getInt("trackRows");
     bool needsDual = (rows == 2);
     if (needsDual != dualTracks)

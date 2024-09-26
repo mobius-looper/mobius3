@@ -22,9 +22,9 @@ FloatingStripElement::~FloatingStripElement()
 {
 }
 
-Supervisor* FloatingStripElement::getSupervisor()
+Provider* FloatingStripElement::getProvider()
 {
-    return statusArea->getSupervisor();
+    return statusArea->getProvider();
 }
 
 class MobiusView* FloatingStripElement::getMobiusView()

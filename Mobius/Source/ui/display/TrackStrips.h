@@ -10,8 +10,6 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
-
 class TrackStrips : public juce::Component
 {
   public:
@@ -19,7 +17,7 @@ class TrackStrips : public juce::Component
     TrackStrips(class MobiusDisplay*);
     ~TrackStrips();
 
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
     class MobiusView* getMobiusView();
 
     void configure();

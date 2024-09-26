@@ -4,6 +4,9 @@
 #include "../../model/UIParameter.h"
 #include "../../model/MobiusConfig.h"
 #include "../../model/UIConfig.h"
+#include "../../model/Symbol.h"
+
+#include "../../AudioClerk.h"
 
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -34,7 +37,7 @@
 StripTrackNumber::StripTrackNumber(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionTrackNumber)
 {
-    action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
+    action.symbol = strip->getProvider()->getSymbols()->intern("FocusLock");
     action.setScopeTrack(parent->getTrackIndex() + 1);
 }
 
@@ -152,7 +155,7 @@ void StripTrackNumber::mouseDown(const class juce::MouseEvent& event)
         StripElement::mouseDown(event);
     }
     else {
-        strip->getSupervisor()->doAction(&action);
+        strip->getProvider()->doAction(&action);
     }
 }
 
@@ -231,7 +234,7 @@ void StripGroupName::paint(juce::Graphics& g)
 StripFocusLock::StripFocusLock(class TrackStrip* parent) :
     StripElement(parent, StripDefinitionFocusLock)
 {
-    action.symbol = strip->getSupervisor()->getSymbols()->intern("FocusLock");
+    action.symbol = strip->getProvider()->getSymbols()->intern("FocusLock");
     // TrackStrip track numbers are zero based, should call
     // this TrackIndex!
     action.setScopeTrack(parent->getTrackIndex() + 1);
@@ -293,7 +296,7 @@ void StripFocusLock::mouseDown(const class juce::MouseEvent& event)
     // select the track first?
     StripElement::mouseDown(event);
     
-    strip->getSupervisor()->doAction(&action);
+    strip->getProvider()->doAction(&action);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -564,7 +567,7 @@ StripLoopStack::~StripLoopStack()
 void StripLoopStack::configure()
 {
     // todo, here is where we should allow the maximum loop display to be set
-    UIConfig* config = strip->getSupervisor()->getUIConfig();
+    UIConfig* config = strip->getProvider()->getUIConfig();
     int max = config->getInt("loopRows");
     // no need to get extreme on this if they type in something wrong
     if (max > 0 && max <= 16)
@@ -783,7 +786,7 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
     int loop = getDropTarget(x, y);
     Trace(2, "StripLoopStack: filesDropped into track %d loop %d\n", tracknum, loop);
 
-    AudioClerk* clerk = strip->getSupervisor()->getAudioClerk();
+    AudioClerk* clerk = strip->getProvider()->getAudioClerk();
     // track/loop numbers are 1 based, with zero meaning "active"
     // strip->followTrack and our loop index are zero based
     clerk->filesDropped(files, tracknum + 1, loop + 1);

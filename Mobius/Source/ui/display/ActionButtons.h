@@ -10,8 +10,7 @@
 
 #include <JuceHeader.h>
 
-// for DynamicConfigListener
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "ButtonPopup.h"
 #include "ActionButton.h"
 
@@ -24,7 +23,7 @@ class ActionButtons : public juce::Component,
 
     ActionButtons(class MobiusDisplay*);
     ~ActionButtons();
-    class Supervisor* getSupervisor();
+    class Provider* getProvider();
 
     void configure();
     int getPreferredHeight(juce::Rectangle<int>);
@@ -54,7 +53,7 @@ class ActionButtons : public juce::Component,
     class MobiusDisplay* display;
     juce::OwnedArray<class ActionButton> buttons;
 
-    void dynamicConfigChanged(class DynamicConfig* config);
+    void dynamicConfigChanged();
     void centerRow(int start, int end, int rowWidth, int availableWidth);
 
     void addButton(ActionButton* b);

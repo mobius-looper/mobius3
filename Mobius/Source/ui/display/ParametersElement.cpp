@@ -23,7 +23,7 @@
 #include "../../model/SymbolId.h"
 #include "../../model/Query.h"
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "../../Symbolizer.h"
 #include "../../mobius/MobiusInterface.h"
 
@@ -43,7 +43,7 @@ ParametersElement::ParametersElement(StatusArea* area) :
     StatusElement(area, "ParametersElement")
 {
     // intercept our cursor actions
-    area->getSupervisor()->addActionListener(this);
+    area->getProvider()->addActionListener(this);
 
     // layout isn't responsive yet
     //resizes = true;
@@ -51,7 +51,7 @@ ParametersElement::ParametersElement(StatusArea* area) :
 
 ParametersElement::~ParametersElement()
 {
-    statusArea->getSupervisor()->removeActionListener(this);
+    statusArea->getProvider()->removeActionListener(this);
 }
 
 /**
@@ -63,7 +63,7 @@ ParametersElement::~ParametersElement()
  */
 void ParametersElement::configure()
 {
-    UIConfig* config = statusArea->getSupervisor()->getUIConfig();
+    UIConfig* config = statusArea->getProvider()->getUIConfig();
 
     // remember the parameter the cursor was currently on
     Symbol* current = nullptr;
@@ -76,7 +76,7 @@ void ParametersElement::configure()
     DisplayLayout* layout = config->getActiveLayout();
     for (auto name : layout->instantParameters) {
         
-        Symbol* s = statusArea->getSupervisor()->getSymbols()->find(name);
+        Symbol* s = statusArea->getProvider()->getSymbols()->find(name);
         if (s == nullptr ||
             // two ways to represent these now...
             (s->parameter == nullptr &&
@@ -175,7 +175,7 @@ int ParametersElement::getPreferredWidth()
 /**
  * Save the values of the parameters for display.
  * Since we save them for difference detection we also don't need
- * to go back through Supervisor to get them in paint().
+ * to go back through Provider to get them in paint().
  */
 void ParametersElement::update(MobiusView* view)
 {
@@ -192,7 +192,7 @@ void ParametersElement::update(MobiusView* view)
             Query q (ps->symbol);
             // focusedTrack is zero based, Query scope is 1 based
             q.scope = view->focusedTrack + 1;
-            if (statusArea->getSupervisor()->doQuery(&q))
+            if (statusArea->getProvider()->doQuery(&q))
               value = q.value;
             
             if (ps->value != value) {
@@ -248,7 +248,7 @@ void ParametersElement::paint(juce::Graphics& g)
               strValue = juce::String("false");
         }
         else if (type == TypeStructure) {
-            strValue = statusArea->getSupervisor()->getParameterLabel(s, value);
+            strValue = statusArea->getProvider()->getParameterLabel(s, value);
         }
         else {
             strValue = juce::String(value);
@@ -312,12 +312,12 @@ bool ParametersElement::doAction(UIAction* action)
         case FuncParameterInc: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
-            int max = statusArea->getSupervisor()->getParameterMax(ps->symbol);
+            int max = statusArea->getProvider()->getParameterMax(ps->symbol);
             if (value < max ) {
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
                 coreAction.value = value + 1;
-                statusArea->getSupervisor()->doAction(&coreAction);
+                statusArea->getProvider()->doAction(&coreAction);
                 // avoid refresh lag and flicker by optimistically setting the value
                 // now and triggering an immediate repaint
                 ps->value = coreAction.value;
@@ -335,7 +335,7 @@ bool ParametersElement::doAction(UIAction* action)
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
                 coreAction.value = value - 1;
-                statusArea->getSupervisor()->doAction(&coreAction);
+                statusArea->getProvider()->doAction(&coreAction);
                 ps->value = coreAction.value;
                 repaint();
             }
@@ -377,7 +377,7 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
 
         // max is almost always parameter->high, but structure parameters
         // are variable and we have to query them
-        valueDragMax = statusArea->getSupervisor()->getParameterMax(ps->symbol);
+        valueDragMax = statusArea->getProvider()->getParameterMax(ps->symbol);
     }
 }
 
@@ -437,7 +437,7 @@ void ParametersElement::mouseDrag(const juce::MouseEvent& e)
             UIAction coreAction;
             coreAction.symbol = ps->symbol;
             coreAction.value = newValue;
-            statusArea->getSupervisor()->doAction(&coreAction);
+            statusArea->getProvider()->doAction(&coreAction);
             // avoid refresh lag and flicker by optimistically setting the value
             // now and triggering an immediate repaint
             ps->value = coreAction.value;

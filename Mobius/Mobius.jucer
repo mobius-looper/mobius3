@@ -7,7 +7,9 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
+      <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
+            file="Source/BlueSphere-10-40.png"/>
+      <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
         <FILE id="DmwDFl" name="MidiQueue.cpp" compile="1" resource="0" file="Source/sync/MidiQueue.cpp"/>
         <FILE id="gJLcbw" name="MidiQueue.h" compile="0" resource="0" file="Source/sync/MidiQueue.h"/>
@@ -21,15 +23,6 @@
               file="Source/sync/TempoMonitor.cpp"/>
         <FILE id="gYiqBB" name="TempoMonitor.h" compile="0" resource="0" file="Source/sync/TempoMonitor.h"/>
       </GROUP>
-      <FILE id="tM1zxN" name="CustomLookAndFeel.h" compile="0" resource="0"
-            file="Source/CustomLookAndFeel.h"/>
-      <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
-            file="Source/BlueSphere-10-40.png"/>
-      <FILE id="Pmx2Ai" name="Upgrader.cpp" compile="1" resource="0" file="Source/Upgrader.cpp"/>
-      <FILE id="w8Jhmk" name="Upgrader.h" compile="0" resource="0" file="Source/Upgrader.h"/>
-      <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
-      <FILE id="dGcedr" name="SyncTrace.h" compile="0" resource="0" file="Source/SyncTrace.h"/>
-      <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>
         <FILE id="QGYdos" name="ff_meters.h" compile="0" resource="0" file="Source/ff_meters/ff_meters.h"/>
@@ -776,6 +769,8 @@
       <FILE id="Gc0Vst" name="BlueSphere-10.png" compile="0" resource="1"
             file="Source/BlueSphere-10.png"/>
       <FILE id="oyuBTW" name="Conditionals.h" compile="0" resource="0" file="Source/Conditionals.h"/>
+      <FILE id="tM1zxN" name="CustomLookAndFeel.h" compile="0" resource="0"
+            file="Source/CustomLookAndFeel.h"/>
       <FILE id="NNPAXk" name="DiagnosticWindow.cpp" compile="1" resource="0"
             file="Source/DiagnosticWindow.cpp"/>
       <FILE id="Hk9F8Y" name="DiagnosticWindow.h" compile="0" resource="0"
@@ -797,6 +792,10 @@
       <FILE id="Q7CcHg" name="MainThread.h" compile="0" resource="0" file="Source/MainThread.h"/>
       <FILE id="gYasMO" name="MidiManager.cpp" compile="1" resource="0" file="Source/MidiManager.cpp"/>
       <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
+      <FILE id="CQDvVn" name="ParameterFinder.cpp" compile="1" resource="0"
+            file="Source/ParameterFinder.cpp"/>
+      <FILE id="C60aE1" name="ParameterFinder.h" compile="0" resource="0"
+            file="Source/ParameterFinder.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
       <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
       <FILE id="Zfd5Mq" name="PluginParameter.cpp" compile="1" resource="0"
@@ -809,6 +808,7 @@
       <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
             file="Source/ProjectFiler.cpp"/>
       <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>
+      <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
       <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
       <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>
       <FILE id="eOUyrZ" name="SuperDumper.cpp" compile="1" resource="0" file="Source/SuperDumper.cpp"/>
@@ -817,6 +817,10 @@
       <FILE id="qYO2SW" name="Supervisor.h" compile="0" resource="0" file="Source/Supervisor.h"/>
       <FILE id="BkIRFB" name="Symbolizer.cpp" compile="1" resource="0" file="Source/Symbolizer.cpp"/>
       <FILE id="acBTSd" name="Symbolizer.h" compile="0" resource="0" file="Source/Symbolizer.h"/>
+      <FILE id="hn2XN9" name="SyncTrace.cpp" compile="1" resource="0" file="Source/SyncTrace.cpp"/>
+      <FILE id="dGcedr" name="SyncTrace.h" compile="0" resource="0" file="Source/SyncTrace.h"/>
+      <FILE id="Pmx2Ai" name="Upgrader.cpp" compile="1" resource="0" file="Source/Upgrader.cpp"/>
+      <FILE id="w8Jhmk" name="Upgrader.h" compile="0" resource="0" file="Source/Upgrader.h"/>
       <FILE id="zYypIv" name="VariableManager.cpp" compile="1" resource="0"
             file="Source/VariableManager.cpp"/>
       <FILE id="YymWkL" name="VariableManager.h" compile="0" resource="0"

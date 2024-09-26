@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 
 #include "../../script/ScriptClerk.h"
+#include "../common/BasicTabs.h"
 
 #include "ConfigEditor.h"
 #include "ScriptTable.h"

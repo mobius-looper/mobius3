@@ -6,10 +6,10 @@
 
 #include <JuceHeader.h>
 
-#include "../../Supervisor.h"
+#include "../../Provider.h"
 #include "StatusElement.h"
 
-class AlertElement : public StatusElement, public Supervisor::AlertListener
+class AlertElement : public StatusElement, public Provider::AlertListener
 {
   public:
     

@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "../script/ScriptRegistry.h"
+
 class WindowFactory
 {
   public:
@@ -48,7 +50,7 @@ class WindowFactory
     
     void captureConfiguration(class UIConfig* config);
     
-    void editScript(class ScriptRegistry::File* file);
+    void editScript(ScriptRegistry::File* file);
     
   private:
 

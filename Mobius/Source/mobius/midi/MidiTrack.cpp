@@ -49,7 +49,7 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 #include "../../sync/Pulsator.h"
-
+#include "../../ParameterFinder.h"
 
 #include "../MobiusInterface.h"
 #include "MidiTracker.h"
@@ -67,6 +67,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     container = c;
     tracker = t;
     pulsator = container->getPulsator();
+    finder = container->getParameterFinder();
     eventPool = tracker->getEventPool();
     sequencePool = tracker->getSequencePool();
 
@@ -86,10 +87,7 @@ MidiTrack::~MidiTrack()
  */
 void MidiTrack::configure(Session::Track* def)
 {
-    syncSource = (SyncSource)Enumerator::getOrdinal(container->getSymbols(),
-                                                    ParamSyncSource,
-                                                    def->parameters.get(),
-                                                    SYNC_NONE);
+    syncSource = finder->getSyncSource(def, SYNC_NONE);
 }
 
 /**

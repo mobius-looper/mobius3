@@ -49,7 +49,7 @@ void StatusElement::update(class MobiusView* view)
 
 MobiusView* StatusElement::getMobiusView()
 {
-    return statusArea->getSupervisor()->getMobiusView();
+    return statusArea->getProvider()->getMobiusView();
 }
 
 // these should probably be pure virtual

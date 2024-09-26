@@ -49,6 +49,16 @@ MainWindow::~MainWindow()
 {
 }
 
+Supervisor* MainWindow::getSupervisor()
+{
+    return supervisor;
+}
+    
+Provider* MainWindow::getProvider()
+{
+    return supervisor;
+}
+
 /**
  * Inform child components of configuration changes.
  * The various PanelFactory popup panels are not currently sensitive.

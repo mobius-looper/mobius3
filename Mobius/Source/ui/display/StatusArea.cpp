@@ -58,9 +58,9 @@ StatusArea::~StatusArea()
 {
 }
 
-Supervisor* StatusArea::getSupervisor()
+Provider* StatusArea::getProvider()
 {
-    return display->getSupervisor();
+    return display->getProvider();
 }
 
 class MobiusView* StatusArea::getMobiusView()
@@ -75,7 +75,7 @@ class MobiusView* StatusArea::getMobiusView()
 void StatusArea::mouseDown(const juce::MouseEvent& event)
 {
     if (event.mods.isRightButtonDown())
-      display->getSupervisor()->showMainPopupMenu();
+      display->getProvider()->showMainPopupMenu();
 }
 
 void StatusArea::update(class MobiusView* view)
@@ -110,7 +110,7 @@ void StatusArea::paint(juce::Graphics& g)
  */
 void StatusArea::saveLocation(StatusElement* element)
 {
-    UIConfig* config = display->getSupervisor()->getUIConfig();
+    UIConfig* config = display->getProvider()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
 
     if (captureConfiguration(layout, element))
@@ -130,7 +130,7 @@ void StatusArea::saveLocation(StatusElement* element)
  */
 void StatusArea::configure()
 {
-    UIConfig* config = display->getSupervisor()->getUIConfig();
+    UIConfig* config = display->getProvider()->getUIConfig();
     DisplayLayout* layout = config->getActiveLayout();
 
     // the layout must have an element definition for all possible elements
