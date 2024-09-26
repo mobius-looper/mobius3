@@ -6,6 +6,7 @@
 #include "../../model/ParameterConstants.h"
 
 #include "MidiPlayer.h"
+#include "TrackEvent.h"
 
 class MidiTrack
 {
@@ -49,8 +50,11 @@ class MidiTrack
     class MidiTracker* tracker = nullptr;
     class ParameterFinder* finder = nullptr;
     class Pulsator* pulsator = nullptr;
-    class MidiEventPool* eventPool = nullptr;
+    class MidiEventPool* midiPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
+    class TrackEventPool* eventPool = nullptr;
+    
+    TrackEventList events;
     MidiPlayer player {this};
 
     // sync status

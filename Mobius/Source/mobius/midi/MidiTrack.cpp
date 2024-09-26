@@ -66,13 +66,17 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 {
     container = c;
     tracker = t;
+    
     pulsator = container->getPulsator();
     finder = container->getParameterFinder();
-    eventPool = tracker->getEventPool();
+    
+    midiPool = tracker->getMidiPool();
     sequencePool = tracker->getSequencePool();
+    eventPool = tracker->getEventPool();
 
     player.initialize(container);
-
+    events.initialize(eventPool);
+    
     doReset(nullptr);
 }
 
@@ -250,7 +254,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 void MidiTrack::reclaim(MidiSequence* seq)
 {
     if (seq != nullptr)
-      seq->clear(eventPool);
+      seq->clear(midiPool);
     sequencePool->checkin(seq);
 }
 
@@ -320,7 +324,7 @@ void MidiTrack::startRecording(UIAction* a)
     player.reset();
     
     if (recording != nullptr)
-      recording->clear(eventPool);
+      recording->clear(midiPool);
     else
       recording = sequencePool->newSequence();
     
@@ -356,7 +360,7 @@ void MidiTrack::midiEvent(MidiEvent* e)
         recording->add(e);
     }
     else {
-        eventPool->checkin(e);
+        midiPool->checkin(e);
     }
 }
 

@@ -207,23 +207,28 @@ void MidiTracker::midiEvent(MidiEvent* event)
     }
 
     if (!consumed)
-      eventPool.checkin(event);
+      midiPool.checkin(event);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Event Pools
+// Object Pools
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiEventPool* MidiTracker::getEventPool()
+MidiEventPool* MidiTracker::getMidiPool()
 {
-    return &eventPool;
+    return &midiPool;
 }
 
 MidiSequencePool* MidiTracker::getSequencePool()
 {
     return &sequencePool;
+}
+
+TrackEventPool* MidiTracker::getEventPool()
+{
+    return &eventPool;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -6,6 +6,8 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+#include "TrackEvent.h"
+
 #include "MidiTrack.h"
 
 class MidiTracker
@@ -26,9 +28,10 @@ class MidiTracker
 
     class MobiusMidiState* getState();
 
-    class MidiEventPool* getEventPool();
+    class MidiEventPool* getMidiPool();
     class MidiSequencePool* getSequencePool();
-
+    class TrackEventPool* getEventPool();
+    
     MobiusContainer* getContainer() {
         return container;
     }
@@ -47,8 +50,9 @@ class MidiTracker
     MobiusMidiState state;
     int activeTracks = 0;
 
-    MidiEventPool eventPool;
+    MidiEventPool midiPool;
     MidiSequencePool sequencePool;
+    TrackEventPool eventPool;
     
     void allocateTracks(int baseNumber, int count);
     void refreshState();
