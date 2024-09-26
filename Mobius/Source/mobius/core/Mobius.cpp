@@ -1825,15 +1825,14 @@ Parameter* Mobius::getParameter(const char* name)
  */
 MobiusState* Mobius::getState()
 {
-	// why not just keep it here?
-
+    mState.trackCount = mTrackCount;
+    
 	mState.globalRecording = mCapturing;
 
     mSynchronizer->getState(&mState);
 
     // OG Mobius only refreshed the active track, now we do all of them
     // since the TrackStrips will want most things
-    
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
         MobiusTrackState* tstate = &(mState.tracks[i]);

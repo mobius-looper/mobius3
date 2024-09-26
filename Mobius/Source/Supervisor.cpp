@@ -1276,7 +1276,15 @@ void Supervisor::updateSession()
         // todo: if this wasn't the default session, remember where it came from
         writeDefaultSession(s);
 
+        // tell the engine to reorganize tracks, this will lag till the next interrupt
         mobius->reconfigure(getMobiusConfig(), s);
+        
+        // tell the view to prepare for track changes
+        mobiusViewer.configure(&mobiusView);
+
+        // the only thing that cares about this is TrackStrips but we don't have
+        // a way to reach only that one
+        propagateConfiguration();
     }
 }
 

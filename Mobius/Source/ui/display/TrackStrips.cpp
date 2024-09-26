@@ -54,7 +54,10 @@ void TrackStrips::configure()
         Trace(1, "TrackStrips: Got here with empty tracks, what's the deal");
         trackCount = 1;
     }
-        
+    
+    // technically should repaint if tracks were changed from audio to midi
+    // without changing the number of them
+    bool needsRefresh = false;
     if (trackCount > tracks.size()) {
         for (int i = tracks.size() ; i < trackCount ; i++) {
             TrackStrip* strip = new TrackStrip(this);
@@ -62,6 +65,7 @@ void TrackStrips::configure()
             tracks.add(strip);
             addAndMakeVisible(strip);
         }
+        needsRefresh = true;
     }
     else if (trackCount < tracks.size()) {
         while (tracks.size() != trackCount) {
@@ -69,16 +73,26 @@ void TrackStrips::configure()
             removeChildComponent(strip);
             tracks.removeObject(strip, true);
         }
+        needsRefresh = true;
     }
-
+    
     // decided to simplify this to just a dualRows boolean since it
     // can only ever be 1 or 2
     UIConfig* uiconfig = display->getSupervisor()->getUIConfig();
     int rows = uiconfig->getInt("trackRows");
-    dualTracks = (rows == 2);
+    bool needsDual = (rows == 2);
+    if (needsDual != dualTracks)
+      needsRefresh = true;
+    dualTracks = needsDual;
 
     for (auto strip : tracks)
       strip->configure();
+
+    if (needsRefresh) {
+        // repaint() isn't enough, it needs to have a full resized()
+        // to regenerate the layout
+        resized();
+    }
 }
 
 void TrackStrips::update(class MobiusView* view)

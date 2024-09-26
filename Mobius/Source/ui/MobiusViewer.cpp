@@ -90,7 +90,8 @@ MobiusViewer::~MobiusViewer()
  *
  * The number of audio tracks is controlled by MobiusConfig.tracks which is used
  * by the core during initialization.  The core does not respond to changes in track counts
- * until a restart, so once initialized the view must not change audio tracks.
+ * until a restart, but it will someday so always obey the trackCount returned in the
+ * MobiusState.
  *
  * Midi tracks are allowed to be dynamic at runtime.
  *
@@ -109,34 +110,23 @@ MobiusViewer::~MobiusViewer()
 void MobiusViewer::initialize(MobiusView* view)
 {
     Session* session = supervisor->getSession();
-    
+
     view->audioTracks = session->audioTracks;
     if (view->audioTracks == 0) {
         // crashy if we don't have at least one, force it
         view->audioTracks = 1;
     }
 
-    // all things MIDI come from here
     view->midiTracks = session->midiTracks;
-
-    // stub this out till we're ready
-    //view->midiTracks = 0;
 
     view->totalTracks = view->audioTracks + view->midiTracks;
 
-    // flesh these out ahead of time to ensure there
-    // is a correspondence between the logical track numbers and an object
-    // in the view that matches that type
-    for (int i = 0 ; i < view->audioTracks ; i++) {
+    // flesh these out ahead of time, they can grow if configuration is changed
+    // but start with enough for the current session
+    // whether these are midi or not is set during refresh
+    for (int i = 0 ; i < view->totalTracks ; i++) {
         MobiusViewTrack* vt = new MobiusViewTrack();
         vt->index = i;
-        view->tracks.add(vt);
-    }
-
-    for (int i = 0 ; i < view->midiTracks ; i++) {
-        MobiusViewTrack* vt = new MobiusViewTrack();
-        vt->midi = true;
-        vt->index = view->audioTracks + i;
         view->tracks.add(vt);
     }
 
@@ -155,11 +145,7 @@ void MobiusViewer::initialize(MobiusView* view)
  * by the engine.  This actually doesn't matter much to the display, it just
  * may cause a little flicker as the tracks change out from under it.
  *
- * For MIDI tracks, always obey the track count that come from the engine,
- * not the session.  Audio tracks are fixed at startup for now, but this
- * will change eventually.
- *
- * The only thing this needs to do then is move the focused track, if the track
+ * The only thing this needs to do is move the focused track, if the track
  * under it was taken away.
  */
 void MobiusViewer::configure(MobiusView* view)
@@ -176,15 +162,10 @@ void MobiusViewer::configure(MobiusView* view)
         view->audioTracks = 1;
     }
 
-    // all things MIDI come from here
     view->midiTracks = session->midiTracks;
 
-    // stub this out till we're ready
-    //view->midiTracks = 0;
-
-    // need this?  get rid of it
+    // need this?
     view->totalTracks = view->audioTracks + view->midiTracks;
-
 
     if (view->focusedTrack >= view->totalTracks) {
         // go to the highest or the first?
@@ -205,10 +186,11 @@ void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusVi
 {
     (void)mobius;
 
-    // if state ever does get around to passing this back, whine if they're out of sync
-    if (state->trackCount > 0 && state->trackCount != view->audioTracks)
-      Trace(1, "MobiusViewer: Mismatched audio track counts in view and Mobius");
-
+    if (state->trackCount != view->audioTracks) {
+        Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
+        view->audioTracks = state->trackCount;
+    }
+    
     // Counter needs this
     view->sampleRate = supervisor->getSampleRate();
 
@@ -297,7 +279,7 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
 
     // !! MobiusState has no way to tell us how many tracks are in the state
     // have to trust the view, this is bad
-    for (int i = 0 ; i < view->audioTracks ; i++) {
+    for (int i = 0 ; i < state->trackCount ; i++) {
         MobiusTrackState* tstate = &(state->tracks[i]);
 
         MobiusViewTrack* tview = nullptr;
@@ -308,6 +290,9 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
             Trace(1, "MobiusViewer: View track array is hosed, and so are you");
             break;
         }
+
+        // clear this incase it was midi in a past life
+        tview->midi = false;
 
         // only audio tracks have the concept of an active track
         // this is NOT the same as the view's focused track
@@ -1032,18 +1017,23 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 {
     MobiusMidiState* state = mobius->getMidiState();
 
-    // 
-
     if (view->midiTracks != state->activeTracks) {
-        // likely to generate very many messages
-        Trace(1, "MobiusViewer: MIDI track count mismatch %d in the view and %d in the state",
-              view->midiTracks, state->activeTracks);
+        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->activeTracks);
+        view->midiTracks = state->activeTracks;
     }
 
+    // add new ones
+    int required = view->audioTracks + view->midiTracks;
+    while (required > view->tracks.size()) {
+        MobiusViewTrack *vt = new MobiusViewTrack();
+        vt->index = view->tracks.size();
+        view->tracks.add(vt);
+    }
+    
     int index = 0;
-    while (index < state->activeTracks && index < view->midiTracks) {
-        MobiusMidiState::Track* tstate = state->tracks[index];
-        int vtrackIndex = index + view->audioTracks;
+    for (int i = 0 ; i < state->activeTracks ; i++) {
+        MobiusMidiState::Track* tstate = state->tracks[i];
+        int vtrackIndex = view->audioTracks + i;
         if (vtrackIndex < view->tracks.size()) {
             MobiusViewTrack* tview = view->tracks[vtrackIndex];
             refreshMidiTrack(tstate, tview);
@@ -1052,12 +1042,12 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
             Trace(1, "MobiusViweer: MIDI view tracks are fucked");
             break;
         }
-        index++;
     }
 }
 
 void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
 {
+    tview->midi = true;
     tview->loopCount = tstate->loopCount;
     tview->activeLoop = tstate->activeLoop;
     

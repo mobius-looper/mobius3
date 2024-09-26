@@ -185,12 +185,14 @@ void MidiTrackEditor::radioSelected(YanRadio* r, int index)
 void MidiTrackEditor::comboSelected(class YanCombo* c, int index)
 {
     (void)c;
-    Trace(2, "MidiTrackEditor: Sync source selected %d", index);
+    (void)index;
+    //Trace(2, "MidiTrackEditor: Sync source selected %d", index);
 }
 
 void MidiTrackEditor::inputChanged(class YanInput* input)
 {
-    Trace(2, "MidiTrackEditor: Track count changed %d", input->getInt());
+    (void)input;
+    //Trace(2, "MidiTrackEditor: Track count changed %d", input->getInt());
 }
 
 /****************************************************************************/
