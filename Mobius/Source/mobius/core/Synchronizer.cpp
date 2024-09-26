@@ -4987,6 +4987,12 @@ void Synchronizer::setTrackSyncMaster(Track* master)
 	}
 
 	mTrackSyncMaster = master;
+
+    // Pulsator now wants to know this too
+    int leader = 0;
+    if (mTrackSyncMaster != nullptr)
+      leader = mTrackSyncMaster->getDisplayNumber();
+    mPulsator->setTrackSyncMaster(leader);
 }
 
 /**

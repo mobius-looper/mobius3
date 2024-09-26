@@ -21,6 +21,7 @@ class MobiusMidiState
     // modes a track can be in
     typedef enum {
         ModeReset,
+        ModeSynchronize,
         ModeRecord,
         ModePlay
     } Mode;

@@ -18,7 +18,7 @@ class TrackEvent : public PooledObject
 
     typedef enum {
         EventNone,
-        EventReset,
+        EventPulse,
         EventRecord
     } Type;
     
@@ -37,6 +37,9 @@ class TrackEvent : public PooledObject
 
     // when where is unknown
     bool pending = false;
+
+    // when it is waiting for a sync pulse
+    bool pulsed = false;
 
 };
 
@@ -63,8 +66,11 @@ class TrackEventList
     ~TrackEventList();
 
     void initialize(TrackEventPool* pool);
-    void add(TrackEvent* e);
+    void add(TrackEvent* e, bool priority = false);
     void flush();
+
+    TrackEvent* consume(int startFrame, int blockFrames);
+    TrackEvent* consumePulsed();
     
   private:
 

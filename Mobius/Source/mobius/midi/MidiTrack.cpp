@@ -91,7 +91,48 @@ MidiTrack::~MidiTrack()
  */
 void MidiTrack::configure(Session::Track* def)
 {
-    syncSource = finder->getSyncSource(def, SYNC_NONE);
+    // convert sync options into a Pulsator follow
+    // ugly mappings but I want to keep use of the old constants limited
+    SyncSource ss = finder->getSyncSource(def, SYNC_NONE);
+    SyncUnit su = finder->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
+
+    // set this up for host and midi, track sync will be different
+    Pulse::Type ptype = Pulse::PulseBeat;
+    if (su == SYNC_UNIT_BAR)
+      ptype = Pulse::PulseBar;
+    
+    if (ss == SYNC_TRACK) {
+        // track sync uses a different unit parameter
+        // default for this one is the entire loop
+        SyncTrackUnit stu = finder->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
+        ptype = Pulse::PulseLoop;
+        if (stu == TRACK_UNIT_SUBCYCLE)
+          ptype = Pulse::PulseBeat;
+        else if (stu == TRACK_UNIT_CYCLE)
+          ptype = Pulse::PulseBar;
+          
+        // no specific track leader yet...
+        int leader = 0;
+        syncSource = Pulse::SourceLeader;
+        pulsator->follow(number, leader, ptype);
+    }
+    else if (ss == SYNC_OUT) {
+        Trace(1, "MidiTrack: MIDI tracks can't do OutSync yet");
+        syncSource = Pulse::SourceNone;
+    }
+    else if (ss == SYNC_HOST) {
+        syncSource = Pulse::SourceHost;
+        pulsator->follow(number, syncSource, ptype);
+    }
+    else if (ss == SYNC_MIDI) {
+        syncSource = Pulse::SourceMidiIn;
+        pulsator->follow(number, syncSource, ptype);
+    }
+    else {
+        pulsator->unfollow(number);
+        syncSource = Pulse::SourceNone;
+    }
+    
 }
 
 /**
@@ -108,6 +149,12 @@ bool MidiTrack::isRecording()
 {
     return (recording != nullptr);
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
 
 void MidiTrack::doAction(UIAction* a)
 {
@@ -215,6 +262,10 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
       Trace(1, "MidiTrack: MobiusMidiState loop array too small");
     else
       lstate->frames = frames;
+
+    // special pseudo mode
+    if (synchronizing)
+      state->mode = MobiusMidiState::ModeSynchronize;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -231,6 +282,46 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 {
     int newFrames = stream->getInterruptFrames();
 
+    // locate a sync pulse we follow within this block
+    if (syncSource != Pulse::SourceNone) {
+        int pulseOffset = pulsator->getPulseFrame(number);
+        // sanity check before we do the math
+        if (pulseOffset >= newFrames) {
+            Trace(1, "MidiTrack: Pulse frame is fucked");
+            pulseOffset = newFrames - 1;
+        }
+        // it dramatically cleans up the carving logic if we make this look
+        // like a scheduled event
+        TrackEvent* pulseEvent = eventPool->newEvent();
+        pulseEvent->frame = frame + pulseOffset;
+        pulseEvent->type = TrackEvent::EventPulse;
+        // note priority flag so it goes before others on this frame
+        events.add(pulseEvent, true);
+    }
+
+    // carve up the block for the events within it
+    int remainder = newFrames;
+    TrackEvent* e = events.consume(frame, remainder);
+    while (e != nullptr) {
+
+        int eventAdvance = e->frame - frame;
+        if (eventAdvance > remainder) {
+            Trace(1, "MidiTrack: Advance math is fucked");
+            eventAdvance = remainder;
+        }
+        
+        advance(eventAdvance);
+        doEvent(e);
+        
+        remainder -= eventAdvance;
+        e = events.consume(frame, remainder);
+    }
+    
+    advance(remainder);
+}
+
+void MidiTrack::advance(int newFrames)
+{
     // todo: should be "isExtending" or something
     if (mode == MobiusMidiState::ModeRecord) {
         frames += newFrames;
@@ -242,6 +333,69 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
         frame += newFrames;
         if (frame > frames)
           frame -= frames;
+    }
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Events
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doEvent(TrackEvent* e)
+{
+    switch (e->type) {
+        case TrackEvent::EventNone: {
+            Trace(1, "MidiTrack: Event with nothing to do");
+        }
+            break;
+
+        case TrackEvent::EventPulse: doPulse(e); break;
+        case TrackEvent::EventRecord: doRecord(e); break;
+    }
+
+    eventPool->checkin(e);
+}
+
+/**
+ * We should only be injecting pulse events if we are following
+ * something, and have been waiting on a record start or stop pulse.
+ * Events that are waiting for a pulse are called "pulsed" events.
+ *
+ * As usual, what will actually happen in practice is simpler than what
+ * the code was designed for to allow for future extensions.  Right now,
+ * there can only be one pending pulsed event, and it must be for record start
+ * or stop.
+ *
+ * In theory there could be any number of pulsed events, they are processed
+ * in order, one per pulse.
+ * todo: rethink this, why not activate all of them, which is more useful?
+ *
+ * When a pulse comes in a pulse event is "activated" which means it becomes
+ * not pending and is given a location equal to where the pulse frame.
+ * Again in theory, this could be in front of other scheduled events and because
+ * events must be in order, it is removed and reinserted after giving it a frame.
+ */
+void MidiTrack::doPulse(TrackEvent* e)
+{
+    (void)e;
+    
+    TrackEvent* pulsed = events.consumePulsed();
+    if (pulsed != nullptr) {
+        Trace(2, "MidiTrack: Activating pulsed event");
+        // activate it on this frame and insert it back into the list
+        pulsed->frame = frame;
+        pulsed->pending = false;
+        pulsed->pulsed = false;
+        events.add(pulsed);
+    }
+    else {
+        // no event to activate
+        // This is normal if we haven't received a Record action yet, or
+        // if the loop is finished recording and is playing
+        // ignore it
+        Trace(2, "MidiTrack: Follower pulse");
     }
 }
 
@@ -281,10 +435,6 @@ void MidiTrack::doReset(UIAction* a)
     recording = nullptr;
     
     synchronizing = false;
-    if (syncLeader > 0) {
-        // hating the numberspace of track identifiers
-        pulsator->unfollow(number);
-    }
       
     frames = 0;
     frame = 0;
@@ -309,18 +459,51 @@ void MidiTrack::doReset(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Action handler, either do it now or schedule a sync event
+ */
 void MidiTrack::doRecord(UIAction* a)
 {
-    if (mode == MobiusMidiState::ModeRecord)
-      stopRecording(a);
-    else
-      startRecording(a);
+    (void)a;
+    
+    if (syncSource == SYNC_NONE) {
+        toggleRecording();
+    }
+    else {
+        TrackEvent* e = eventPool->newEvent();
+        e->type = TrackEvent::EventRecord;
+        e->pending = true;
+        e->pulsed = true;
+        events.add(e);
+        synchronizing = true;
+    }
 }
 
-void MidiTrack::startRecording(UIAction* a)
+/**
+ * Event handler when we are synchronizing
+ */
+void MidiTrack::doRecord(TrackEvent* e)
 {
-    (void)a;
+    (void)e;
+    toggleRecording();
+}
 
+void MidiTrack::toggleRecording()
+{
+    if (mode == MobiusMidiState::ModeRecord)
+      stopRecording();
+    else
+      startRecording();
+
+    // todo: can't happen right now, but if it is possible to pre-schedule
+    // a record end event at the same time as the start, then we should
+    // keep synchronizing, perhaps a better way to determine this is to
+    // just look for the presence of any pulsed events in the list
+    synchronizing = false;
+}
+
+void MidiTrack::startRecording()
+{
     player.reset();
     
     if (recording != nullptr)
@@ -334,10 +517,8 @@ void MidiTrack::startRecording(UIAction* a)
     Trace(2, "MidiTrack: Starting recording");
 }
 
-void MidiTrack::stopRecording(UIAction* a)
+void MidiTrack::stopRecording()
 {
-    (void)a;
-
     reclaim(playing);
     playing = recording;
     recording = nullptr;

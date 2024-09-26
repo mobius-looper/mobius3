@@ -66,7 +66,7 @@ class Pulsator
     
     void interruptStart(class MobiusAudioStream* stream);
     juce::Array<int>* getOrderedLeaders();
-    int getPulseFrame(int follower, Pulse::Type type);
+    int getPulseFrame(int follower);
 
     // register a follow for an external sync source
     void follow(int follower, Pulse::Source source, Pulse::Type type);
@@ -80,8 +80,11 @@ class Pulsator
     // stop following the source
     void unfollow(int follower);
 
-    // declare one of the followers as the MIDI output sync master
+    // declare one of the tracks as the MIDI output sync master
     void setOutSyncMaster(int follower, int frames);
+
+    // declare one of the tracks as the default track sync leader
+    void setTrackSyncMaster(int leader);
 
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
@@ -110,6 +113,10 @@ class Pulsator
     int lastMillisecond = 0;
     int millisecond = 0;
     int interruptFrames = 0;
+
+    // master tracks
+    int outSyncMaster = 0;
+    int defaultLeader = 0;
 
     //
     // Host sync state

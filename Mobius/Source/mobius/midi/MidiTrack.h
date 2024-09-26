@@ -5,6 +5,8 @@
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
+#include "../../sync/Pulse.h"
+
 #include "MidiPlayer.h"
 #include "TrackEvent.h"
 
@@ -58,7 +60,7 @@ class MidiTrack
     MidiPlayer player {this};
 
     // sync status
-    SyncSource syncSource = SYNC_NONE;
+    Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
 
     // loop state
@@ -83,12 +85,18 @@ class MidiTrack
     class MidiSequence* recording = nullptr;
     class MidiSequence* playing = nullptr;
     bool synchronizing = false;
+
+    void advance(int newFrames);
+    void doEvent(TrackEvent* e);
+    void doPulse(TrackEvent* e);
     
     void reclaim(class MidiSequence* seq);
     
     void doRecord(class UIAction* a);
-    void startRecording(class UIAction* a);
-    void stopRecording(class UIAction* a);
+    void doRecord(class TrackEvent* e);
+    void toggleRecording();
+    void startRecording();
+    void stopRecording();
     
     void doReset(class UIAction* a);
     void doOverdub(class UIAction* a);

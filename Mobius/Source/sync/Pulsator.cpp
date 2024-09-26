@@ -456,9 +456,16 @@ void Pulsator::orderLeaders()
 
     for (int i = 1 ; i < followers.size() ; i++) {
         Follower* f = followers[i];
-        if (f->enabled && f->source == Pulse::SourceLeader && f->leader > 0) {
-            if (!orderedLeaders.contains(f->leader))
-              orderedLeaders.add(f->leader);
+        if (f->enabled && f->source == Pulse::SourceLeader) {
+            
+            int leader = f->leader;
+            if (leader == 0)
+              leader = defaultLeader;
+
+            if (leader > 0) {
+                if (!orderedLeaders.contains(leader))
+                  orderedLeaders.add(leader);
+            }
         }
     }
 }
@@ -618,11 +625,8 @@ void Pulsator::unfollow(int followerId)
 /**
  * Called by a follower at the beginning of it's block advance
  * to see if there were any sync pulses in this block.
- *
- * !! Why was Type passed here.  If you have to pass a Type when calling
- * follow() then we can just use that type.
  */
-int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
+int Pulsator::getPulseFrame(int followerId)
 {
     int frame = -1;
     
@@ -632,23 +636,23 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
     else {
         Follower* f = followers[followerId];
 
-        // sanity check, see method comments
-        if (f->type != type)
-          Trace(1, "Pulsator::getPulseFrame Pulse type mismatch");
-        
         switch (f->source) {
             case Pulse::SourceNone: /* nothing to say */ break;
-            case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
-            case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
-            case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, type); break;
+            case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, f->type); break;
+            case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, f->type); break;
+            case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, f->type); break;
             case Pulse::SourceLeader: {
-                if (f->leader > 0) {
-                    if (f->leader >= leaders.size()) {
-                        Trace(1, "Pulsator: Leader id out of range %d", f->leader);
+                int leader = f->leader;
+                if (leader == 0)
+                  leader = defaultLeader;
+                
+                if (leader > 0) {
+                    if (leader >= leaders.size()) {
+                        Trace(1, "Pulsator: Leader id out of range %d", leader);
                     }
                     else {
-                        Leader* l = leaders[f->leader];
-                        frame = getPulseFrame(&(l->pulse), type);
+                        Leader* l = leaders[leader];
+                        frame = getPulseFrame(&(l->pulse), f->type);
                     }
                 }
             }
@@ -661,12 +665,44 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
 /**
  * Test to see if a pulse was detected and if it was
  * a given type.
+ *
+ * The Pulse from the source will be Beat, Bar or Loop.
+ * When the pulse type of the follower is smaller than the
+ * source pulse it matches even though the types aren't exact.
+ *
+ * For example is something is following Beat pulses, it will
+ * also match Bar or Loop pulses from the source since those
+ * are always beats.
+ *
+ * For track sync, Bar also matches Loop.
+ *
  */
-int Pulsator::getPulseFrame(Pulse* p, Pulse::Type type)
+int Pulsator::getPulseFrame(Pulse* p, Pulse::Type followType)
 {
     int frame = -1;
-    if (p->source != Pulse::SourceNone && p->type == type) {
-        frame = p->blockFrame;
+    if (p->source != Pulse::SourceNone) {
+        // there was a pulse from this source
+        bool accept = false;
+        if (followType == Pulse::PulseBeat) {
+            // anything is a beat
+            accept = true;
+        }
+        else if (followType == Pulse::PulseBar) {
+            // loops are also bars
+            accept = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
+        }
+        else {
+            // only loops will do
+            // this makes sense only when following internal leaders, if this
+            // pulse didn't come from a Leader, treat it like Bar
+            if (p->source == Pulse::SourceLeader)
+              accept = (p->type == Pulse::PulseLoop);
+            else
+              accept = (p->type == Pulse::PulseBar || p->type == Pulse::PulseLoop);
+        }
+
+        if (accept)
+          frame = p->blockFrame;
     }
     return frame;
 }
@@ -682,6 +718,21 @@ void Pulsator::setOutSyncMaster(int followerId, int frames)
     (void)followerId;
     (void)frames;
     Trace(1, "Pulsator::setOutSyncMaster not implemented");
+}
+
+/**
+ * Set the default leader track when using track sync and the follower
+ * didn't specify a specific leader.
+ *
+ * What the old system called the "track sync master".
+ * Note: This can change randomly.  If a track starts out following
+ * one track, then is reset and records again, it needs to sync to
+ * the new default leader.  For that to happen, leave the Follower.leader
+ * field at zero.
+ */
+void Pulsator::setTrackSyncMaster(int leaderId)
+{
+    defaultLeader = leaderId;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -702,7 +753,7 @@ void Pulsator::advance(int blockFrames)
     for (int i = 1 ; i < followers.size() ; i++) {
         Follower* f = followers[i];
         if (f->enabled && f->source != Pulse::SourceLeader) {
-            int offset = getPulseFrame(i, f->type);
+            int offset = getPulseFrame(i);
             if (offset >= 0)
               f->pulse += 1;
             f->frame += blockFrames;

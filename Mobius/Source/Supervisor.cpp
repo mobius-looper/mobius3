@@ -340,6 +340,9 @@ bool Supervisor::start()
 
     // load the script registry to do ScriptConfig conversion first
     scriptClerk.initialize();
+
+    // setup Pulsator before the Mobius tracks start to register followers
+    pulsator.configure();
     
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning

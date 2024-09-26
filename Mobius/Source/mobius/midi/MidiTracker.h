@@ -46,13 +46,15 @@ class MidiTracker
     class MobiusKernel* kernel = nullptr;
     int audioTracks = 0;
 
-    juce::OwnedArray<MidiTrack> tracks;
-    MobiusMidiState state;
-    int activeTracks = 0;
-
+    // pools must be before tracks so they can return
+    // things to the pool
     MidiEventPool midiPool;
     MidiSequencePool sequencePool;
     TrackEventPool eventPool;
+
+    juce::OwnedArray<MidiTrack> tracks;
+    MobiusMidiState state;
+    int activeTracks = 0;
     
     void allocateTracks(int baseNumber, int count);
     void refreshState();

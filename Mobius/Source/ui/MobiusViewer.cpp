@@ -1072,6 +1072,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     juce::String newMode;
     switch (tstate->mode) {
         case MobiusMidiState::ModeReset: newMode = "Reset"; break;
+        case MobiusMidiState::ModeSynchronize: newMode = "Synchronize"; break;
         case MobiusMidiState::ModeRecord: newMode = "Record"; break;
         case MobiusMidiState::ModePlay: {
             if (tstate->overdub)
