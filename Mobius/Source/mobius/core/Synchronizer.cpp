@@ -138,6 +138,10 @@
 #include "SyncTracker.h"
 #include "Track.h"
 
+// new
+#include "../../sync/Pulse.h"
+#include "../../sync/Pulsator.h"
+
 #include "Synchronizer.h"
 
 /****************************************************************************
@@ -155,6 +159,7 @@
 Synchronizer::Synchronizer(Mobius* mob)
 {
 	mMobius = mob;
+    mPulsator = mob->getContainer()->getPulsator();
 
     // todo: think about where we get this
     // it would be more consisent if this came through MobiusAudioStream like
@@ -2394,6 +2399,15 @@ void Synchronizer::interruptEnd()
  */
 void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 {
+    // new: Pulsator is interested in all potential leaders,
+    // their hopes and their dreams
+    Pulse::Type pulsatorType = Pulse::PulseBeat;
+    if (type == LoopEvent) 
+      pulsatorType = Pulse::PulseLoop;
+    else if (type == CycleEvent) 
+      pulsatorType = Pulse::PulseBar;
+    mPulsator->addLeaderPulse(t->getDisplayNumber(), pulsatorType, offset);
+    
     if (t == mTrackSyncMaster) {
 
         EventPool* pool = mMobius->getEventPool();

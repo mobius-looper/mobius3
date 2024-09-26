@@ -158,9 +158,11 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
 
     installSymbols();
 
+    // supposed to be the same now
+    if (config->getCoreTracks() != ses->audioTracks)
+      Trace(1, "MobiusKernel: Session audio tracks not right");
     audioTracks = config->getCoreTracks();
-    // todo: cound the actual number of midi tracks
-    midiTracks = ses->getMidiTrackCount();
+    midiTracks = ses->midiTracks;
 
     //synchronizer.initialize();
 

@@ -8,9 +8,9 @@
  * core class Synchronizer which is too horribly complex for words.
  *
  * Pulsator does it's analysis at the begining of each audio block, consuming events
- * for MIDI clocks (MidiRealizer) and the plugin host (HostSyncState).  It may
- * later have pulses added to it by the audio/midi tracks as they cross synchronization
- * boundaries during their block advance.
+ * for MIDI clocks (MidiRealizer) and the plugin host (HostSyncState).
+ * It may later have pulses added to it by the audio/midi tracks as they cross synchronization
+ * boundaries during their block advance.  These are called Followers and Leaders.
  *
  * Things that want to respond to sync pulses typically ask the Pulsator for the
  * locations of pulses of a given type within the block, then segment their block
@@ -33,13 +33,14 @@
  * the pulses over time to guess at the desired tempo is also prone to round off errors
  * and will rarely be exact.
  *
- * What Pulsator does is allow the internal tracks to register a "pulse tracker".  A tracker
+ * What Pulsator does is allow the internal tracks to register a Follower.  A follwer
  * is given the size of a unit of audio data in samples (e.g. the loop length) and the number
- * of pulses that unit contained while it was being recorded.  As future audio blocks are received
- * it compares the rate at which samples are being received against the rate at which pulses
- * are being received and if they start to diverge it calculates the amount of drift.
- * When this drift exceeds a threshold, it can inform the track that it needs to adjust
- * it's playback position to remain in alignment with the external pulse generator.
+ * of pulses that unit contained while it was being recorded.  As future audio blocks are
+ * received it compares the rate at which samples are being received against the rate
+ * at which pulses are being received and if they start to diverge it calculates the
+ * amount of drift. When this drift exceeds a threshold, it can inform the track that
+ * it needs to adjust it's playback position to remain in alignment with the external
+ * pulse generator.
  *
  * While conceptually pulses may be very small, such as individual MIDI clocks, in practice
  * loop tracks only care about coarse grained "beat" pulses.  Since you can't in practice
@@ -51,185 +52,58 @@
 
 #include <JuceHeader.h>
 
+#include "Pulse.h"
+#include "Leader.h"
+#include "Follower.h"
+
 class Pulsator
 {
   public:
 
-    /**
-     * Several types of pulses are monitored.  An internal track may choose
-     * to respond one of these.
-     */
-    typedef enum {
-        // used within a Pulse to indiciate that the pulse has not been detected
-        SourceNone,
-        SourceMidiIn,
-        SourceMidiOut,
-        SourceHost,
-        SourceInternal
-    } Source;
-
-    /**
-     * Each source may generate several types of pulses.  While logically
-     * every pulse represents a "beat" some beat pulses have more
-     * significance than others.
-     */
-    typedef enum {
-        // the smallest pulse a source can provide
-        // for Midi this is determined by the PPQ of the clocks
-        // for Host this is determined by ppqPosition from the host
-        // for internal Mobius tracks, this corresponds to the Subcycle
-        PulseBeat,
-
-        // the pulse represents the location of a time signature bar if
-        // the source can supply a time signature
-        // for internal Mobius tracks, this corresponds to the Cycle
-        PulseBar,
-
-        // the pulse represents the end of a larger collection of beats or bars
-        // that has a known length in pulses
-        // for internal Mobius tracks, this corresponds to the end of a loop
-        // there is no correspondence in MIDI or host pulses
-        PulseLoop
-    } Type;
-    
-    /**
-     * When a pulse is detected that a track wants to follow, detailed
-     * information about the pulse is conveyed in this structure.
-     *
-     * The frameOffset into the audio block is the most important.
-     *
-     * The other fields have additional information that internal may
-     * wish to respond to but are not required.
-     * todo: reconsider whether to even bother with these, intelligent
-     * following of external song position or transport location is enormously
-     * complex.  For all practical purposes the followers shouldn't really
-     * care about whether the transport starts and stops, but Pulsator does
-     * so it can decide whether it is worth monitoring drift.
-     */
-    class Pulse {
-      public:
-        Pulse() {}
-        ~Pulse() {}
-
-        Source source = SourceNone;
-        Type type = PulseBeat;
-
-        // the system millisecond at which this pulse was received
-        int millisecond = 0;
-
-        // the sample/frame offset into the current audio block where this
-        // pulse logically happened
-        int frame = 0;
-
-        // the beat and bar numbers of the external transport if known
-        int beat = 0;
-        int bar = 0;
-
-        // this pulse also represents the host transport or MIDI clocks
-        // moving to their start point
-        bool start = false;
-
-        // this pulse also represents the external transport stopping
-        // not really a pulse but conveyed as one
-        bool stop = false;
-
-        // this pulse also represents the movement of the external transport
-        // to a random location
-        bool mcontinue = false;
-
-        // when continue is true, the logical pulse in the external sequence
-        // we're continuing from
-        int continuePulse = 0;
-
-        void reset(Source s, int msec) {
-            source = s;
-            millisecond = msec;
-            frame = 0;
-            beat = 0;
-            bar = 0;
-            start = false;
-            stop = false;
-            mcontinue = false;
-            continuePulse = 0;
-        }
-    };
-
-    /**
-     * Each track or other entity interested in following sync pulses is allocated
-     * a Follower.
-     */
-    class Follower {
-      public:
-        Follower() {}
-        ~Follower() {}
-
-        // the unique follower id, normally a track number
-        int id = 0;
-        
-        // true if this follow is enabled, when false the follower is freewheeling
-        bool enabled = false;
-
-        // true when this follow is locked and begins drift monitoring
-        bool locked = false;
-
-        // the source this follower is following
-        Source source = SourceNone;
-
-        // the type of pulse to follow
-        Type type = PulseBeat;
-
-        // for SourceInternal an optional specific leader
-        // if left zero, a designated common leader is used
-        int leader = 0;
-
-        // the number of pulses in the follower's "loop"
-        int pulses = 0;
-
-        // the number of frames in the followers loop
-        int frames = 0;
-
-        // after locking, the current pulse count being monitored
-        int pulse = 0;
-
-        // after locking, the current frame position being monitored
-        int frame = 0;
-
-        // last calculated drift
-        int drift = 0;
-
-        // used when the follower can also provide internal pulses
-        // for others to follow, in that case it is a "leader"
-        Pulse internal;
-    };
-    
     Pulsator(class Provider* p);
     ~Pulsator();
     void configure();
     
     void interruptStart(class MobiusAudioStream* stream);
-    juce::Array<int>* getInternalLeaders();
-    int getPulseFrame(int follower, Type type);
+    juce::Array<int>* getOrderedLeaders();
+    int getPulseFrame(int follower, Pulse::Type type);
 
-    void follow(int follower, Source source, Type type);
-    void follow(int follower, int leader, Type type);
+    // register a follow for an external sync source
+    void follow(int follower, Pulse::Source source, Pulse::Type type);
+
+    // register a follow for an internal leader
+    void follow(int follower, int leader, Pulse::Type type);
+
+    // lock the follower to a specific frame count
     void lock(int follower, int frames);
-    void unfollow(int follower);
-    void setOutSyncMaster(int follower, int frames);
-    void addInternalPulse(int follower, Type type, int frameOffset);
 
-    float getTempo(Source src);
-    int getBeat(Source src);
-    int getBar(Source src);
-    int getBeatsPerBar(Source src);
+    // stop following the source
+    void unfollow(int follower);
+
+    // declare one of the followers as the MIDI output sync master
+    void setOutSyncMaster(int follower, int frames);
+
+    // called by leaders to register a pulse in this block
+    void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
+
+    //
+    // State of the various sources
+    //
+
+    float getTempo(Pulse::Source src);
+    int getBeat(Pulse::Source src);
+    int getBar(Pulse::Source src);
+    int getBeatsPerBar(Pulse::Source src);
     
   private:
 
     class Provider* provider = nullptr;
     class MidiRealizer* midiTransport = nullptr;
+    juce::OwnedArray<Leader> leaders;
     juce::OwnedArray<Follower> followers;
-    juce::Array<int> leaders;
+    juce::Array<int> orderedLeaders;
     
-    // configuration
+    // captured configuration
     int driftThreshold = 1000;
     
     // random statistics
@@ -266,14 +140,14 @@ class Pulsator
     Pulse midiOutPulse;
 
     void reset();
+    void orderLeaders();
+    void advance(int blockFrames);
     
     void gatherHost(class MobiusAudioStream* stream);
     void gatherMidi();
-    bool detectMidiBeat(class MidiSyncEvent* mse, Source src, Pulse* pulse);
+    bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
     int getBar(int beat, int bpb);
-    int getPulseFrame(Pulse* p, Type type);
-    void orderInternalLeaders();
-    void advance(int blockFrames);
+    int getPulseFrame(Pulse* p, Pulse::Type type);
     
     void trace();
     void trace(Pulse& p);

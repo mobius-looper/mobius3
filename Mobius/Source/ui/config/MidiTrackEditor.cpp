@@ -51,33 +51,19 @@ void MidiTrackEditor::load()
 
 /**
  * Called by the Save button in the footer.
- * 
- * Save all setups that have been edited during this session
- * back to the master configuration.
  *
- * Tell the ConfigEditor we are done.
+ * Replace the Session::Tracks in the master Session with
+ * ones in the edited Session.
+ *
+ * This only includes the MIDI tracks right now.
  */
 void MidiTrackEditor::save()
 {
-    // copy visible state back into the object
-    // need to also do this when the selected setup is changed
     saveSession();
 
     Session* master = supervisor->getSession();
-    // transfer the track count and the track definitions
-    master->midiTracks = session->midiTracks;
-    master->clearTracks(Session::TypeMidi);
-    int index = 0;
-    while (index < session->tracks.size()) {
-        Session::Track* t = session->tracks[index];
-        if (t->type == Session::TypeMidi) {
-            (void)session->tracks.removeAndReturn(index);
-            master->tracks.add(t);
-        }
-        else {
-            index++;
-        }
-    }
+    
+    master->replaceMidiTracks(session.get());
 
     supervisor->updateSession();
 
@@ -119,7 +105,7 @@ void MidiTrackEditor::loadTrack(int index)
 {
     Session::Track* track = session->getTrack(Session::TypeMidi, index);
     if (track != nullptr) {
-        form.load(track->parameters.get());
+        form.load(track->getParameters());
     }
     else {
         // didn't have a definition for this one, reset the fields to initial values
@@ -136,9 +122,8 @@ void MidiTrackEditor::saveSession()
 void MidiTrackEditor::saveTrack(int index)
 {
     Session::Track* track = session->ensureTrack(Session::TypeMidi, index);
-    if (track->parameters == nullptr)
-      track->parameters.reset(new ValueSet());
-    form.save(track->parameters.get());
+    ValueSet* params = track->ensureParameters();
+    form.save(params);
 }
 
 //////////////////////////////////////////////////////////////////////

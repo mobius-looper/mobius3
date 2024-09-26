@@ -22,6 +22,9 @@
 #include "MidiSyncEvent.h"
 #include "MidiQueue.h"
 
+#include "Pulse.h"
+#include "Leader.h"
+#include "Follower.h"
 #include "Pulsator.h"
 
 Pulsator::Pulsator(Provider* p)
@@ -36,9 +39,12 @@ Pulsator::~Pulsator()
 
 /**
  * Called during initialization and after anything changes that might
- * impact the follower count.  Ensure that the Follow array is large enough.
- * todo: Could avoid config model dependencies by making the caller pass down
- * the follower count instead.
+ * impact the leader or follower count.  Ensure that the arrays are large enough
+ * to accept any registration of followers or leaders.
+ *
+ * In current use, followers and leaders are always audio or midi tracks
+ * and ids are always track numbers.  This simplification may not always
+ * hold true.
  */
 void Pulsator::configure()
 {
@@ -47,7 +53,7 @@ void Pulsator::configure()
     numFollowers = config->getCoreTracks();
     
     Session* session = provider->getSession();
-    numFollowers += session->tracks.size();
+    numFollowers += session->midiTracks;
 
     // ensure the array is big enough
     // !! this is potentially dangerous if tracks are actively registering
@@ -61,7 +67,24 @@ void Pulsator::configure()
         followers.add(f);
     }
 
-    leaders.ensureStorageAllocated(numFollowers+1);
+    // leaders are the same as followers
+    int numLeaders = numFollowers;
+    for (int i = leaders.size() ; i < numLeaders + 1 ; i++) {
+        Leader* l = new Leader();
+        l->id = i;
+        leaders.add(l);
+    }
+
+    orderedLeaders.ensureStorageAllocated(numLeaders+1);
+}
+
+void Pulsator::reset()
+{
+    hostPulse.source = Pulse::SourceNone;
+    midiInPulse.source = Pulse::SourceNone;
+    midiOutPulse.source = Pulse::SourceNone;
+    for (auto leader : leaders)
+      leader->reset();
 }
 
 void Pulsator::interruptStart(MobiusAudioStream* stream)
@@ -75,45 +98,20 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
     
     gatherHost(stream);
     gatherMidi();
-    // internals are added as the tracks advance
+    
+    // leader pulses are added as the tracks advance
 
-    // advance follow state for external sources
+    // advance drift detectors
     advance(interruptFrames);
     
     trace();
 }
 
-juce::Array<int>* Pulsator::getInternalLeaders()
-{
-    return &leaders;
-}
-
-void Pulsator::orderInternalLeaders()
-{
-    // empty but keep storage
-    leaders.clearQuick();
-
-    // ugh, hard in the general case since leaders can depend on other leaders
-    // and they would need to be done in dependency order, and there could be cycles
-    for (int i = 1 ; i < followers.size() ; i++) {
-        Follower* f = followers[i];
-        if (f->enabled && f->source == SourceInternal && f->leader > 0) {
-            if (!leaders.contains(f->leader))
-              leaders.add(f->leader);
-        }
-    }
-}
-
-void Pulsator::reset()
-{
-    hostPulse.source = SourceNone;
-    midiInPulse.source = SourceNone;
-    midiOutPulse.source = SourceNone;
-    for (int i = 1 ; i < followers.size() ; i++) {
-        Follower* f = followers[i];
-        f->internal.source = SourceNone;
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Source state
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * For the track monitoring UI, return information about the sync source this
@@ -122,14 +120,14 @@ void Pulsator::reset()
  * For MIDI do we want to return the fluxuating tempo or smooth tempo
  * with only one decimal place?
  */
-float Pulsator::getTempo(Source src)
+float Pulsator::getTempo(Pulse::Source src)
 {
     float tempo = 0.0f;
     switch (src) {
-        case SourceHost: tempo = hostTempo; break;
+        case Pulse::SourceHost: tempo = hostTempo; break;
             //case SourceMidiIn: tempo = midiTransport->getInputSmoothTempo(); break;
-        case SourceMidiIn: tempo = midiTransport->getInputTempo(); break;
-        case SourceMidiOut: tempo = midiTransport->getTempo(); break;
+        case Pulse::SourceMidiIn: tempo = midiTransport->getInputTempo(); break;
+        case Pulse::SourceMidiOut: tempo = midiTransport->getTempo(); break;
         default: break;
     }
     return tempo;
@@ -140,13 +138,13 @@ float Pulsator::getTempo(Source src)
  * I suppose when it registered the events for subcycle/cycle it could also
  * register the subcycle/cycle numbers.
  */
-int Pulsator::getBeat(Source src)
+int Pulsator::getBeat(Pulse::Source src)
 {
     int beat = 0;
     switch (src) {
-        case SourceHost: beat = hostBeat; break;
-        case SourceMidiIn: beat = midiTransport->getInputRawBeat(); break;
-        case SourceMidiOut: beat = midiTransport->getRawBeat(); break;
+        case Pulse::SourceHost: beat = hostBeat; break;
+        case Pulse::SourceMidiIn: beat = midiTransport->getInputRawBeat(); break;
+        case Pulse::SourceMidiOut: beat = midiTransport->getRawBeat(); break;
         default: break;
     }
     return beat;
@@ -155,13 +153,13 @@ int Pulsator::getBeat(Source src)
 /**
  * Bar numbers depend on a reliable BeatsPerBar, punt
  */
-int Pulsator::getBar(Source src)
+int Pulsator::getBar(Pulse::Source src)
 {
     int bar = 0;
     switch (src) {
-        case SourceHost: bar = hostBar; break;
-        case SourceMidiIn: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
-        case SourceMidiOut: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
+        case Pulse::SourceHost: bar = hostBar; break;
+        case Pulse::SourceMidiIn: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
+        case Pulse::SourceMidiOut: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
         default: break;
     }
     return bar;
@@ -193,13 +191,13 @@ int Pulsator::getBar(int beat, int bpb)
  *
  * Only host can tell us what this is, and even then some hosts may not.
  */
-int Pulsator::getBeatsPerBar(Source src)
+int Pulsator::getBeatsPerBar(Pulse::Source src)
 {
     int bar = 0;
     switch (src) {
-        case SourceHost: bar = hostBeatsPerBar; break;
-        case SourceMidiIn: bar = 4; break;
-        case SourceMidiOut: bar = 4; break;
+        case Pulse::SourceHost: bar = hostBeatsPerBar; break;
+        case Pulse::SourceMidiIn: bar = 4; break;
+        case Pulse::SourceMidiOut: bar = 4; break;
         default: break;
     }
     return bar;
@@ -207,13 +205,12 @@ int Pulsator::getBeatsPerBar(Source src)
 
 void Pulsator::trace()
 {
-    if (hostPulse.source != SourceNone) trace(hostPulse);
-    if (midiInPulse.source != SourceNone) trace(midiInPulse);
-    if (midiOutPulse.source != SourceNone) trace(midiOutPulse);
-    for (int i = 1 ; i < followers.size() ; i++) {
-        Follower* f = followers[i];
-        if (f->internal.source != SourceNone)
-          trace(f->internal);
+    if (hostPulse.source != Pulse::SourceNone) trace(hostPulse);
+    if (midiInPulse.source != Pulse::SourceNone) trace(midiInPulse);
+    if (midiOutPulse.source != Pulse::SourceNone) trace(midiOutPulse);
+    for (auto leader : leaders) {
+        if (leader->pulse.source != Pulse::SourceNone)
+          trace(leader->pulse);
     }
 }
 
@@ -221,16 +218,16 @@ void Pulsator::trace(Pulse& p)
 {
     juce::String msg("Pulsator: ");
     switch (p.source) {
-        case SourceMidiIn: msg += "MidiIn "; break;
-        case SourceMidiOut: msg += "MidiOut "; break;
-        case SourceHost: msg += "Host "; break;
-        case SourceInternal: msg += "Internal "; break;
+        case Pulse::SourceMidiIn: msg += "MidiIn "; break;
+        case Pulse::SourceMidiOut: msg += "MidiOut "; break;
+        case Pulse::SourceHost: msg += "Host "; break;
+        case Pulse::SourceLeader: msg += "Internal "; break;
     }
 
     switch (p.type) {
-        case PulseBeat: msg += "Beat "; break;
-        case PulseBar: msg += "Bar "; break;
-        case PulseLoop: msg += "Loop "; break;
+        case Pulse::PulseBeat: msg += "Beat "; break;
+        case Pulse::PulseBar: msg += "Bar "; break;
+        case Pulse::PulseLoop: msg += "Loop "; break;
     }
 
     if (p.start) msg += "Start ";
@@ -291,10 +288,10 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
             // the host transport stopped
             stopping = true;
             // generate a pulse for this, may be replace if there is also a beat here
-            hostPulse.reset(SourceHost, millisecond);
-            hostPulse.frame = 0;
+            hostPulse.reset(Pulse::SourceHost, millisecond);
+            hostPulse.blockFrame = 0;
             // doesn't really matter what this is
-            hostPulse.type = PulseBeat;
+            hostPulse.type = Pulse::PulseBeat;
             hostPulse.stop = true;
             hostPlaying = false;
         }
@@ -314,12 +311,12 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
         // but since we can't keep more than one pulse per block, just overwrite it
         if (hostTime->beatBoundary || hostTime->barBoundary) {
 
-            hostPulse.reset(SourceHost, millisecond);
-            hostPulse.frame = hostTime->boundaryOffset;
+            hostPulse.reset(Pulse::SourceHost, millisecond);
+            hostPulse.blockFrame = hostTime->boundaryOffset;
             if (hostTime->barBoundary)
-              hostPulse.type = PulseBar;
+              hostPulse.type = Pulse::PulseBar;
             else
-              hostPulse.type = PulseBeat;
+              hostPulse.type = Pulse::PulseBeat;
 
             hostPulse.beat = hostTime->beat;
             hostPulse.bar = hostTime->bar;
@@ -349,7 +346,7 @@ void Pulsator::gatherMidi()
     midiTransport->iterateInputStart();
     MidiSyncEvent* mse = midiTransport->iterateInputNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, SourceMidiIn, &midiInPulse))
+        if (detectMidiBeat(mse, Pulse::SourceMidiIn, &midiInPulse))
           break;
         else
           mse = midiTransport->iterateInputNext();
@@ -359,7 +356,7 @@ void Pulsator::gatherMidi()
     midiTransport->iterateOutputStart();
     mse = midiTransport->iterateOutputNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, SourceMidiOut, &midiOutPulse))
+        if (detectMidiBeat(mse, Pulse::SourceMidiOut, &midiOutPulse))
           break;
         else
           mse = midiTransport->iterateOutputNext();
@@ -374,13 +371,13 @@ void Pulsator::gatherMidi()
  * Note that here the MidiSyncEvent capture it's own millisecond counter so we
  * don't use the one we got at the start of this block.
  */
-bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
+bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse)
 {
     bool detected = false;
     
     if (mse->isStop) {
         pulse->reset(src, mse->millisecond);
-        pulse->type = PulseBeat;
+        pulse->type = Pulse::PulseBeat;
         pulse->stop = true;
         detected = true;
     }
@@ -388,7 +385,7 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
         // MidiRealizer deferred this until the first clock
         // after the start message, so it is a true beat
         pulse->reset(src, mse->millisecond);
-        pulse->type = PulseBeat;
+        pulse->type = Pulse::PulseBeat;
         pulse->start = true;
         pulse->beat = mse->beat;
         detected = true;
@@ -398,7 +395,7 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
         // not sure if this will work, but I don't want to fuck with continue right now
         if (mse->isBeat) {
             pulse->reset(src, mse->millisecond);
-            pulse->type = PulseBeat;
+            pulse->type = Pulse::PulseBeat;
             pulse->beat = mse->beat;
             pulse->mcontinue = true;
             // what the hell is this actually, it won't be a pulse count so
@@ -412,7 +409,7 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
         // ignore if this isn't also a beat
         if (mse->isBeat) {
             pulse->reset(src, mse->millisecond);
-            pulse->type = PulseBeat;
+            pulse->type = Pulse::PulseBeat;
             pulse->beat = mse->beat;
             detected = true;
         }
@@ -422,10 +419,68 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
     if (detected && !pulse->stop) {
         int bpb = getBeatsPerBar(src);
         if (bpb > 0 && ((pulse->beat % bpb) == 0))
-          pulse->type = PulseBar;
+          pulse->type = Pulse::PulseBar;
     }
     
 	return detected;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Leaders
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is an array of leader ids in dependency order
+ * The component responsible for advancing tracks during each
+ * audio block is required to advance the leaders first so they
+ * may register pulses that followers want to follow.
+ */
+juce::Array<int>* Pulsator::getOrderedLeaders()
+{
+    return &orderedLeaders;
+}
+
+/**
+ * Analyze the Leader/Follower relationships and determine the
+ * order in which tracks need to be advanced.
+ *
+ * This is hard in the general case since leaders can in theory follow
+ * other leaders and there can be cycles in the dependency chain.
+ */
+void Pulsator::orderLeaders()
+{
+    // empty but keep storage
+    orderedLeaders.clearQuick();
+
+    for (int i = 1 ; i < followers.size() ; i++) {
+        Follower* f = followers[i];
+        if (f->enabled && f->source == Pulse::SourceLeader && f->leader > 0) {
+            if (!orderedLeaders.contains(f->leader))
+              orderedLeaders.add(f->leader);
+        }
+    }
+}
+
+/**
+ * Called by Leaders (tracks or other internal objects) to register the crossing
+ * of a synchronization boundary after they were allowed to consume
+ * this audio block.
+ *
+ * This is similar to the old Synchronizer::trackSyncEvent
+ */
+void Pulsator::addLeaderPulse(int leaderId, Pulse::Type type, int frameOffset)
+{
+    if (leaderId >= leaders.size()) {
+        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
+    }
+    else {
+        Leader* l = leaders[leaderId];
+        l->pulse.reset(Pulse::SourceLeader, millisecond);
+        l->pulse.type = type;
+        l->pulse.blockFrame = frameOffset;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -437,7 +492,7 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Source src, Pulse* pulse)
 /**
  * Start following a sync source
  */
-void Pulsator::follow(int followerId, Source source, Type type)
+void Pulsator::follow(int followerId, Pulse::Source source, Pulse::Type type)
 {
     if (followerId >= followers.size()) {
         // could grow this, but we're in the audio thread and not supposed to
@@ -463,14 +518,14 @@ void Pulsator::follow(int followerId, Source source, Type type)
 /**
  * Start following another track
  */
-void Pulsator::follow(int followerId, int leaderId, Type type)
+void Pulsator::follow(int followerId, int leaderId, Pulse::Type type)
 {
     if (followerId >= followers.size()) {
         // could grow this, but we're in the audio thread and not supposed to
         // should have been caught during configuration
         Trace(1, "Pulsator: Follower id out of range %d", followerId);
     }
-    else if (leaderId >= followers.size()) {
+    else if (leaderId >= leaders.size()) {
         // could grow this, but we're in the audio thread and not supposed to
         // should have been caught during configuration
         Trace(1, "Pulsator: Leader id out of range %d", leaderId);
@@ -483,13 +538,13 @@ void Pulsator::follow(int followerId, int leaderId, Type type)
         else {
             f->enabled = true;
             f->locked = false;
-            f->source = SourceInternal;
+            f->source = Pulse::SourceLeader;
             f->type = type;
             f->leader = leaderId;
             f->pulses = 0;
             f->frames = 0;
 
-            orderInternalLeaders();
+            orderLeaders();
         }
     }
 }
@@ -526,6 +581,10 @@ void Pulsator::lock(int followerId, int frames)
     }
 }
 
+/**
+ * Stop following and begin freewheeling
+ * Typically done when the follower is reset
+ */
 void Pulsator::unfollow(int followerId)
 {
     if (followerId >= followers.size()) {
@@ -537,42 +596,33 @@ void Pulsator::unfollow(int followerId)
             Trace(1, "Pulsator: Follower not enabled %d", followerId);
         }
         else {
-            bool wasInternal = (f->source == SourceInternal);
+            bool wasInternal = (f->source == Pulse::SourceLeader);
             f->enabled = false;
             f->locked = false;
-            f->source = SourceNone;
+            f->source = Pulse::SourceNone;
+            f->type = Pulse::PulseBeat;
             f->leader = 0;
             f->frames = 0;
             f->pulses = 0;
             f->frame = 0;
             f->pulse = 0;
-            if (wasInternal)
-              orderInternalLeaders();
+            if (wasInternal) {
+                // once we stop following a track, the leader dependency
+                // order may simplify
+                orderLeaders();
+            }
         }
     }
 }
 
 /**
- * Called by followers (tracks or other internal objects) to register the crossing
- * of a synchronization boundary after they were allowed to consume
- * this audio block.
+ * Called by a follower at the beginning of it's block advance
+ * to see if there were any sync pulses in this block.
  *
- * This is similar to the old Synchronizer::trackSyncEvent
+ * !! Why was Type passed here.  If you have to pass a Type when calling
+ * follow() then we can just use that type.
  */
-void Pulsator::addInternalPulse(int followerId, Type type, int frameOffset)
-{
-    if (followerId >= followers.size()) {
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
-    }
-    else {
-        Follower* f = followers[followerId];
-        f->internal.reset(SourceInternal, millisecond);
-        f->internal.type = type;
-        f->internal.frame = frameOffset;
-    }
-}
-
-int Pulsator::getPulseFrame(int followerId, Type type)
+int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
 {
     int frame = -1;
     
@@ -581,19 +631,24 @@ int Pulsator::getPulseFrame(int followerId, Type type)
     }
     else {
         Follower* f = followers[followerId];
+
+        // sanity check, see method comments
+        if (f->type != type)
+          Trace(1, "Pulsator::getPulseFrame Pulse type mismatch");
+        
         switch (f->source) {
-            case SourceNone: /* nothing to say */ break;
-            case SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
-            case SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
-            case SourceHost: frame = getPulseFrame(&hostPulse, type); break;
-            case SourceInternal: {
+            case Pulse::SourceNone: /* nothing to say */ break;
+            case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
+            case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
+            case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, type); break;
+            case Pulse::SourceLeader: {
                 if (f->leader > 0) {
-                    if (f->leader >= followers.size()) {
+                    if (f->leader >= leaders.size()) {
                         Trace(1, "Pulsator: Leader id out of range %d", f->leader);
                     }
                     else {
-                        Follower* l = followers[f->leader];
-                        frame = getPulseFrame(&(l->internal), type);
+                        Leader* l = leaders[f->leader];
+                        frame = getPulseFrame(&(l->pulse), type);
                     }
                 }
             }
@@ -603,11 +658,15 @@ int Pulsator::getPulseFrame(int followerId, Type type)
     return frame;
 }
 
-int Pulsator::getPulseFrame(Pulse* p, Type type)
+/**
+ * Test to see if a pulse was detected and if it was
+ * a given type.
+ */
+int Pulsator::getPulseFrame(Pulse* p, Pulse::Type type)
 {
     int frame = -1;
-    if (p->source != SourceNone && p->type == type) {
-        frame = p->frame;
+    if (p->source != Pulse::SourceNone && p->type == type) {
+        frame = p->blockFrame;
     }
     return frame;
 }
@@ -642,7 +701,7 @@ void Pulsator::advance(int blockFrames)
 {
     for (int i = 1 ; i < followers.size() ; i++) {
         Follower* f = followers[i];
-        if (f->enabled && f->source != SourceInternal) {
+        if (f->enabled && f->source != Pulse::SourceLeader) {
             int offset = getPulseFrame(i, f->type);
             if (offset >= 0)
               f->pulse += 1;

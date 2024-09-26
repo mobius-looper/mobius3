@@ -24,7 +24,7 @@ SyncSource ParameterFinder::getSyncSource(Session::Track* trackdef, SyncSource d
 {
     return (SyncSource)Enumerator::getOrdinal(provider->getSymbols(),
                                               ParamSyncSource,
-                                              trackdef->parameters.get(),
+                                              trackdef->getParameters(),
                                               dflt);
 }
 
@@ -32,7 +32,7 @@ SyncTrackUnit ParameterFinder::getTrackSyncUnit(Session::Track* trackdef, SyncTr
 {
     return (SyncTrackUnit)Enumerator::getOrdinal(provider->getSymbols(),
                                                  ParamTrackSyncUnit,
-                                                 trackdef->parameters.get(),
+                                                 trackdef->getParameters(),
                                                  dflt);
 }
 
@@ -40,7 +40,7 @@ SyncUnit ParameterFinder::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit df
 {
     return (SyncUnit)Enumerator::getOrdinal(provider->getSymbols(),
                                             ParamSlaveSyncUnit,
-                                            trackdef->parameters.get(),
+                                            trackdef->getParameters(),
                                             dflt);
 }
 

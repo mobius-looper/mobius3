@@ -27,16 +27,6 @@ Session::Session(Session* src)
       globals.reset(new ValueSet(src->globals.get()));
 }
 
-int Session::getAudioTrackCount()
-{
-    return audioTracks;
-}
-
-int Session::getMidiTrackCount()
-{
-    return midiTracks;
-}
-
 /**
  * Return the definition of this track if we have one.
  */
@@ -88,6 +78,32 @@ Session::Track* Session::ensureTrack(TrackType type, int index)
     return found;
 }
 
+/**
+ * Move the tracks from one session to another.
+ * Used by MidiTrackEditor
+ */
+void Session::replaceMidiTracks(Session* src)
+{
+    clearTracks(TypeMidi);
+    
+    int index = 0;
+    while (index < src->tracks.size()) {
+        Session::Track* t = src->tracks[index];
+        if (t->type == Session::TypeMidi) {
+            (void)src->tracks.removeAndReturn(index);
+            tracks.add(t);
+        }
+        else {
+            index++;
+        }
+    }
+
+    // this is authoritative over how many tracks there logically are
+    // the Track array may be sparse or have extras
+    midiTracks = src->midiTracks;
+}
+
+
 void Session::clearTracks(TrackType type)
 {
     int index = 0;
@@ -99,6 +115,18 @@ void Session::clearTracks(TrackType type)
         else
           index++;
     }
+}
+
+ValueSet* Session::getGlobals()
+{
+    return globals.get();
+}
+
+ValueSet* Session::ensureGlobals()
+{
+    if (globals == nullptr)
+      globals.reset(new ValueSet());
+    return globals.get();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -114,6 +142,18 @@ Session::Track::Track(Session::Track* src)
     index = src->index;
     if (src->parameters != nullptr)
       parameters.reset(new ValueSet(src->parameters.get()));
+}
+
+ValueSet* Session::Track::getParameters()
+{
+    return parameters.get();
+}
+
+ValueSet* Session::Track::ensureParameters()
+{
+    if (parameters == nullptr)
+      parameters.reset(new ValueSet());
+    return parameters.get();
 }
 
 MslValue* Session::Track::get(juce::String pname)
@@ -197,9 +237,8 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
     for (auto* el : root->getChildIterator()) {
 
         if (el->hasTagName(ValueSet::XmlElement)) {
-            ValueSet* set = new ValueSet();
+            ValueSet* set = track->ensureParameters();
             set->parse(el);
-            track->parameters.reset(set);
         }
         else {
             xmlError("Invalid XML element %s", el->getTagName().toUTF8());
@@ -245,8 +284,9 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
     if (track->name.length() > 0)
       root->setAttribute("name", track->name);
     
-    if (track->parameters != nullptr)
-      track->parameters->render(root);
+    ValueSet* params = track->getParameters();
+    if (params != nullptr)
+      params->render(root);
 }
 
 /****************************************************************************/

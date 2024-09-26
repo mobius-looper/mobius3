@@ -8,6 +8,8 @@
  * is needed in a few places in the core.  This can also serve as the accessor for the
  * eventual HashMap or juce::ValueTree as we migrate away from Preset and Setup.
  *
+ * !! I don't think this was ever used.  Provider now provides the isolation
+ *
  */
 
 #pragma once

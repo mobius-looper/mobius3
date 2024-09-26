@@ -1300,14 +1300,11 @@ Session* Supervisor::bootstrapDefaultSession()
 
 void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
 {
-    // this one is special
+    // we don't keep audio track definitions in the session yet so
+    // copy this over so it can be known with only the Session
     ses->audioTracks = old->getCoreTracks();
     
-    ValueSet* global = ses->globals.get();
-    if (global == nullptr) {
-        global = new ValueSet();
-        ses->globals.reset(global);
-    }
+    ValueSet* global = ses->ensureGlobals();
     
     global->setInt(symbols.getName(ParamInputLatency), old->getInputLatency());
     global->setInt(symbols.getName(ParamOutputLatency), old->getOutputLatency());

@@ -1,5 +1,5 @@
 /**
- * Model for a Mobius session.  Sessions conttain tracn configurations and
+ * Model for a Mobius session.  Sessions contain track definitions and
  * parameter preferences for the entire Mobius engine.  This will replace
  * the old Setup and portions of MobiusConfig.
  *
@@ -20,9 +20,6 @@ class Session
     Session(Session* src);
     ~Session();
 
-    int getAudioTrackCount();
-    int getMidiTrackCount();
-
     typedef enum {
         TypeAudio,
         TypeMidi,
@@ -39,14 +36,21 @@ class Session
 
         // should this be a first-class member or inside the value set?
         juce::String name;
-        int index = 0;
-        std::unique_ptr<ValueSet> parameters;
 
+        // maybe not necessary, but convenient in the debugger
+        // and looking at XML
+        int index = 0;
+
+        ValueSet* getParameters();
+        ValueSet* ensureParameters();
         MslValue* get(juce::String name);
+
+      private:
+        std::unique_ptr<ValueSet> parameters;
 
     };
 
-    // until we get audio tracks in here, just remember how many there are
+    // until we get audio tracks in here, copy this from MobiusConfig
     int audioTracks = 0;
 
     // the number of active midi tracks
@@ -54,20 +58,23 @@ class Session
     // they are kept around in case they hold useful state, but are ignored
     int midiTracks = 0;
 
-    // fleshed out track definitions, may be sparse or 
-    juce::OwnedArray<Track> tracks;
     Track* getTrack(TrackType type, int index);
     Track* ensureTrack(TrackType type, int index);
+    void replaceMidiTracks(Session* src);
     void clearTracks(TrackType type);
     
     // global parameters
-    std::unique_ptr<ValueSet> globals;
-
+    ValueSet* getGlobals();
+    ValueSet* ensureGlobals();
+    
     void parseXml(juce::String xml);
     juce::String toXml();
 
   private:
 
+    juce::OwnedArray<Track> tracks;
+    std::unique_ptr<ValueSet> globals;
+    
     void xmlError(const char* msg, juce::String arg);
     Track* parseTrack(juce::XmlElement* root);
     void renderTrack(juce::XmlElement* parent, Track* track);

@@ -295,6 +295,9 @@ class Synchronizer {
 	// our leader
 	class Mobius* mMobius;
 
+    // our eventual upstart replacement, the ass kissing bastard
+    class Pulsator* mPulsator = nullptr;
+
     // MIDI services from the container
     class MobiusMidiTransport* mTransport;
 
