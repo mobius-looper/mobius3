@@ -12,6 +12,7 @@
 
 class MidiTrack
 {
+    friend class MidiLoop;
     friend class MidiPlayer;
     
   public:
@@ -32,12 +33,13 @@ class MidiTrack
     int number = 0;
     // the track index within the MidiTracker, need this?
     int index = 0;
-    
 
     void refreshState(class MobiusMidiState::Track* state);
 
   protected:
 
+    class MidiTracker* getMidiTracker();
+    
     class MidiSequence* getPlaySequence() {
         return playing;
     }
@@ -56,6 +58,9 @@ class MidiTrack
     class MidiSequencePool* sequencePool = nullptr;
     class TrackEventPool* eventPool = nullptr;
     
+    juce::OwnedArray<class MidiLoop> loops;
+    int activeLoops = 0;
+    int loopIndex = 0;
     TrackEventList events;
     MidiPlayer player {this};
 
@@ -82,8 +87,8 @@ class MidiTrack
     int feedback = 127;
     int pan = 64;
 
-    class MidiSequence* recording = nullptr;
-    class MidiSequence* playing = nullptr;
+    class MidiLayer* recordLayer = nullptr;
+    bool recording = false;
     bool synchronizing = false;
 
     void advance(int newFrames);
@@ -99,8 +104,12 @@ class MidiTrack
     void startRecording();
     void stopRecording();
     
-    void doReset(class UIAction* a);
+    void doReset(class UIAction* a, bool full);
     void doOverdub(class UIAction* a);
     
     void doParameter(class UIAction* a);
+    
+    class MidiLayer* prepLayer();
+    void reclaimLayer(class MidiLayer* layer);
+    
 };

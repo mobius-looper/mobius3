@@ -7,7 +7,7 @@
 #include "../../midi/MidiSequence.h"
 
 #include "TrackEvent.h"
-
+#include "MidiLayer.h"
 #include "MidiTrack.h"
 
 class MidiTracker
@@ -31,6 +31,7 @@ class MidiTracker
     class MidiEventPool* getMidiPool();
     class MidiSequencePool* getSequencePool();
     class TrackEventPool* getEventPool();
+    class MidiLayerPool* getLayerPool();
     
     MobiusContainer* getContainer() {
         return container;
@@ -50,6 +51,7 @@ class MidiTracker
     // things to the pool
     MidiEventPool midiPool;
     MidiSequencePool sequencePool;
+    MidiLayerPool layerPool;
     TrackEventPool eventPool;
 
     juce::OwnedArray<MidiTrack> tracks;

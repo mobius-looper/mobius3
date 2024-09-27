@@ -479,6 +479,10 @@
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
+          <FILE id="r4vAR1" name="MidiLayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLayer.cpp"/>
+          <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
+          <FILE id="MLMR7A" name="MidiLoop.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLoop.cpp"/>
+          <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
           <FILE id="yJf44l" name="MidiTrack.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiTrack.cpp"/>

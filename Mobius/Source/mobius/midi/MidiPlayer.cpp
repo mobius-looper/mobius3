@@ -39,7 +39,55 @@ void MidiPlayer::reset()
     alloff();
     playFrame = 0;
     loopFrames = 0;
+    layer = nullptr;
     sequence = nullptr;
+}
+
+/**
+ * Install a layer to play.
+ * If the layer was already playing it will turn off held notes
+ * unless it is known that the new sequence was "seamless" and will
+ * turn the notes off.
+ * todo: that part may be tricky, this might need to be part of the Layer state
+ * "the notes that were held when I was entered".  If a sequence ends with held notes
+ * and enters a sequence that turns on those notes, but was created with held notes,
+ * the notes can just continue being held and do not need to be retriggered.
+ */
+void MidiPlayer::setLayer(MidiLayer* l)
+{
+    // until we get transitions worked out, changing a layer always closes notes
+    alloff();
+
+    layer = l;
+    sequence = layer->getSequence();
+    
+    // attempt to keep the same relative location
+    loopFrames = layer->getFrames();
+    
+    if (loopFrames == 0) {
+        playFrame = 0;
+    }
+    else if (playFrame > 0) {
+        playFrame = playFrame % loopFrames;
+    }
+
+    // run up to the first event on or after the play frame
+    // need a more efficent way to do this sort of thing
+    if (sequence == nullptr) {
+        Trace(1, "MidiPlayer: Layer without sequence");
+        position = nullptr;
+    }
+    else {
+        position = sequence->getFirst();
+        while (position != nullptr && position->frame < playFrame)
+          position = position->next;
+
+        if (position == nullptr) {
+            // ran off the end, put it back to the start for when
+            // the playFrame comes back around
+            position = sequence->getFirst();
+        }
+    }
 }
 
 /**
@@ -48,55 +96,44 @@ void MidiPlayer::reset()
  */
 void MidiPlayer::play(int blockFrames)
 {
-    if (sequence == nullptr) {
-        // waking up after reset
-        orient();
-    }
+    if (loopFrames > 0) {
 
-    // not enough, in the fringe case, the block could actually be larger than the loop
-    // in which case we should technically cycle over it several times
-    // could handle that but it confuses the logic and won't happen
-    if (blockFrames > loopFrames) {
-        Trace(1, "MidiPlayer: Extremely short loop or extremely large block, take your pick");
-        reset();
-    }
-    else {
-        int endFrame = playFrame + blockFrames;
+        if (blockFrames > loopFrames) {
+            
+            // sequence was not empty but was extremely short
+            // technically we should cycle over the layer more than once, but this
+            // complicates things and is most likely an error
+            Trace(1, "MidiPlayer: Extremely short loop or extremely large block, take your pick");
+            loopFrames = 0;
+        }
+        else {
+            int endFrame = playFrame + blockFrames;
 
-        while (position != nullptr) {
-
-            if (position->frame >= playFrame && position->frame < endFrame) {
-                send(position);
-                position = position->next;
-                if (position == nullptr)
-                  position = sequence->getFirst();
-            }
-            else {
-                // nothing in range, did we loop?
-                if (endFrame >= loopFrames) {
-                    playFrame = 0;
-                    endFrame -= loopFrames;
+            // the position != nullptr here means the layer has length but
+            // no events, if it does have events, this should loop until the break;
+            while (position != nullptr) {
+                if (position->frame >= playFrame && position->frame < endFrame) {
+                    send(position);
+                    position = position->next;
+                    if (position == nullptr)
+                      position = sequence->getFirst();
                 }
                 else {
-                    // no
-                    break;
+                    // nothing in range, did we loop?
+                    if (endFrame >= loopFrames) {
+                        playFrame = 0;
+                        endFrame -= loopFrames;
+                    }
+                    else {
+                        // no, stop
+                        break;
+                    }
                 }
             }
+            
+            playFrame = endFrame;
         }
-
-        playFrame = endFrame;
     }
-}
-
-void MidiPlayer::orient()
-{
-    sequence = track->getPlaySequence();
-    if (sequence != nullptr) 
-      position = sequence->getFirst();
-    else
-      position = nullptr;
-    playFrame = 0;
-    loopFrames = track->getLoopFrames();
 }
 
 void MidiPlayer::send(MidiEvent* e)

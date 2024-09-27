@@ -53,7 +53,10 @@
 
 #include "../MobiusInterface.h"
 #include "MidiTracker.h"
+#include "MidiLoop.h"
 #include "MidiTrack.h"
+
+const int MidiTrackMaxLoops = 8;
 
 /**
  * Construction just initializes the basic state but does not
@@ -76,12 +79,25 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 
     player.initialize(container);
     events.initialize(eventPool);
+
+    for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
+        MidiLoop* l = new MidiLoop(this);
+        l->number = i + 1;
+        loops.add(l);
+    }
+    activeLoops = 2;
+    loopIndex = 0;
     
-    doReset(nullptr);
+    doReset(nullptr, true);
 }
 
 MidiTrack::~MidiTrack()
 {
+}
+
+MidiTracker* MidiTrack::getMidiTracker()
+{
+    return tracker;
 }
 
 /**
@@ -132,6 +148,8 @@ void MidiTrack::configure(Session::Track* def)
         pulsator->unfollow(number);
         syncSource = Pulse::SourceNone;
     }
+
+    // todo: loopsPerTrack from somewhere
     
 }
 
@@ -142,12 +160,14 @@ void MidiTrack::configure(Session::Track* def)
  */
 void MidiTrack::reset()
 {
-    doReset(nullptr);
+    doReset(nullptr, true);
 }
 
 bool MidiTrack::isRecording()
 {
-    return (recording != nullptr);
+    // can't just test for recording != nullptr since that's always there
+    // waiting for an overdub
+    return recording;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -167,9 +187,9 @@ void MidiTrack::doAction(UIAction* a)
     }
     else {
         switch (a->symbol->id) {
-            case FuncReset: doReset(a); break;
-            case FuncTrackReset: doReset(a); break;
-            case FuncGlobalReset: doReset(a); break;
+            case FuncReset: doReset(a, false); break;
+            case FuncTrackReset: doReset(a, true); break;
+            case FuncGlobalReset: doReset(a, true); break;
             case FuncRecord: doRecord(a); break;
             case FuncOverdub: doOverdub(a); break;
             default: {
@@ -234,8 +254,8 @@ void MidiTrack::doParameter(UIAction* a)
 
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
-    state->loopCount = 1;
-    state->activeLoop = 0;
+    state->loopCount = activeLoops;
+    state->activeLoop = loopIndex + 1;
     
     state->frames = frames;
     state->frame = frame;
@@ -254,7 +274,8 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->feedback = feedback;
     state->pan = pan;
 
-    state->recording = (recording != nullptr);
+    // not the same as mode=Record, can be any type of recording
+    state->recording = recording;
 
     // only one loop right now, duplicate the frame counter
     MobiusMidiState::Loop* lstate = state->loops[0];
@@ -438,18 +459,15 @@ void MidiTrack::reclaim(MidiSequence* seq)
  * Action may be nullptr if we're resetting the track for other reasons
  * besides user action.
  */
-void MidiTrack::doReset(UIAction* a)
+void MidiTrack::doReset(UIAction* a, bool full)
 {
     (void)a;
     mode = MobiusMidiState::ModeReset;
 
     player.reset();
-
-    reclaim(playing);
-    playing = nullptr;
-    reclaim(recording);
-    recording = nullptr;
-    
+    reclaimLayer(recordLayer);
+    recordLayer = nullptr;
+    recording = false;
     synchronizing = false;
       
     frames = 0;
@@ -467,6 +485,16 @@ void MidiTrack::doReset(UIAction* a)
     output = 127;
     feedback = 127;
     pan = 64;
+
+    if (full) {
+        for (auto loop : loops)
+          loop->reset();
+        loopIndex = 0;
+    }
+    else {
+        MidiLoop* loop = loops[loopIndex];
+        loop->reset();
+    }
 
     pulsator->unlock(number);
 }
@@ -567,14 +595,18 @@ void MidiTrack::startRecording()
 {
     player.reset();
     
-    if (recording != nullptr)
-      recording->clear(midiPool);
+    MidiLoop* loop = loops[activeLoop];
+    loop->reset();
+    
+    if (recordLayer == nullptr)
+      recordLayer = prepLayer();
     else
-      recording = sequencePool->newSequence();
+      recordLayer->clear(sequencePool, midiPool);
     
     frames = 0;
     frame = 0;
     mode = MobiusMidiState::ModeRecord;
+    recording = true;
 
     pulsator->start(number);
     
@@ -583,18 +615,42 @@ void MidiTrack::startRecording()
 
 void MidiTrack::stopRecording()
 {
-    reclaim(playing);
-    playing = recording;
-    recording = nullptr;
-
-    // should already be in reset
-    player.reset();
+    MidiLoop* loop = loops[activeLoop];
+    
+    recordLayer->frames = frames;
+    loop->add(recordLayer);
+    player.setLayer(recordLayer);
+    
+    // prep another for overdubs
+    recordLayer = prepLayer();
     
     mode = MobiusMidiState::ModePlay;
-
+    recording = false;
+    
     pulsator->lock(number, frames);
 
     Trace(2, "MidiTrack: Finished recording with %d events", playing->size());
+}
+
+/**
+ * Build a layer/sequence combo.
+ * Above MidiLayer to minimize pool dependencies but it has this for clear()
+ * so maybe just give it a pool and let it deal with the sequence?
+ */
+MidiLayer* MidiTrack::prepLayer()
+{
+    MidiLayer* layer = layerPool->newLayer();
+    MidiSequence* seq = sequencePool->newSequence();
+    layer->setSequence(seq);
+    return layer;
+}
+
+void MidiTrack::reclaimLayer(MidiLayer* layer)
+{
+    if (layer != nullptr) {
+        layer->clear(sequencePool, midiPool);
+        layerPool->checkin(layer);
+    }
 }
 
 /**
@@ -602,9 +658,9 @@ void MidiTrack::stopRecording()
  */
 void MidiTrack::midiEvent(MidiEvent* e)
 {
-    if (recording != nullptr) {
+    if (recording) {
         e->frame = frame;
-        recording->add(e);
+        recordLayer->add(e);
     }
     else {
         midiPool->checkin(e);

@@ -231,6 +231,11 @@ TrackEventPool* MidiTracker::getEventPool()
     return &eventPool;
 }
 
+MidiLayerPool* MidiTracker::getLayerPool()
+{
+    return &layerPool;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
