@@ -103,8 +103,13 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
 
     // advance drift detectors
     advance(interruptFrames);
-    
-    trace();
+
+    // this is good for debugging sources, but adds clutter
+    // when things are working
+    // watch out for the weird track sync "beat" pulses that only display
+    // if they are marked pending because trace happens before the
+    // audio tracks advance and have a chance to deposit leader pulses
+    //trace();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -234,9 +239,11 @@ void Pulsator::trace(Pulse& p)
     if (p.stop) msg += "Stop ";
     if (p.mcontinue) msg += "Continue ";
 
-    msg += juce::String(p.beat);
-    if (p.bar > 0)
-      msg += " bar " + juce::String(p.bar);
+    if (p.type != Pulse::PulseLoop) {
+        msg += juce::String(p.beat);
+        if (p.bar > 0)
+          msg += " bar " + juce::String(p.bar);
+    }
     
     Trace(2, "%s", msg.toUTF8());
 }
@@ -431,6 +438,20 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
 //
 //////////////////////////////////////////////////////////////////////
 
+Leader* Pulsator::getLeader(int leaderId)
+{
+    Leader* l = nullptr;
+
+    // note that leader zero doesn't exist, it means default
+    if (leaderId <= 0 || leaderId >= leaders.size()) {
+        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
+    }
+    else {
+        l = leaders[leaderId];
+    }
+    return l;
+}
+
 /**
  * This is an array of leader ids in dependency order
  * The component responsible for advancing tracks during each
@@ -456,11 +477,11 @@ void Pulsator::orderLeaders()
 
     for (int i = 1 ; i < followers.size() ; i++) {
         Follower* f = followers[i];
-        if (f->enabled && f->source == Pulse::SourceLeader) {
+        if (f->source == Pulse::SourceLeader) {
             
             int leader = f->leader;
             if (leader == 0)
-              leader = defaultLeader;
+              leader = trackSyncMaster;
 
             if (leader > 0) {
                 if (!orderedLeaders.contains(leader))
@@ -476,17 +497,41 @@ void Pulsator::orderLeaders()
  * this audio block.
  *
  * This is similar to the old Synchronizer::trackSyncEvent
+ *
+ * It is quite common for old Mobius to pass in a frameOffset that is 1+ the
+ * last bufrfer frame, especially for Loop events where the input latency is the
+ * same as the block size resulting in a loop that exactly a block multiple.  I
+ * can't figure out why that is, and it's too crotchety to mess with.  So for
+ * a block of 256, frameOffset will be 256 while the last addressable frame
+ * is 255.  This is related to whether events on the loop boundary happen before
+ * or after the loop wraps.  For sizing loops it shouldn't matter but if this
+ * becomes a more general event scheduler, may need before/after flags.
+ *
+ * Adjusting it down to the last frame doesn't work because it will split at that
+ * point with the event happening BEFORE the last frame.  The event really needs
+ * to be processed at frame zero of the next buffer.
  */
 void Pulsator::addLeaderPulse(int leaderId, Pulse::Type type, int frameOffset)
 {
-    if (leaderId >= leaders.size()) {
-        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
-    }
-    else {
-        Leader* l = leaders[leaderId];
+    Leader* l = getLeader(leaderId);
+    if (l != nullptr) {
         l->pulse.reset(Pulse::SourceLeader, millisecond);
         l->pulse.type = type;
         l->pulse.blockFrame = frameOffset;
+
+        if (frameOffset >= interruptFrames) {
+            // leave it pending and adjust for the next block
+            l->pulse.pending = true;
+            int wrapped = frameOffset - interruptFrames;
+            l->pulse.blockFrame = wrapped;
+            if (wrapped != 0){
+                // went beyond just the end of the block, I don't
+                // think this should happen
+                Trace(1, "Pulsator: Leader wants a pulse deep into the next block");
+                // might be okay if it will still happen in the next block but if this
+                // is larger than the block size, it's a serious error
+            }
+        }
     }
 }
 
@@ -496,128 +541,341 @@ void Pulsator::addLeaderPulse(int leaderId, Pulse::Type type, int frameOffset)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Start following a sync source
- */
-void Pulsator::follow(int followerId, Pulse::Source source, Pulse::Type type)
+Follower* Pulsator::getFollower(int followerId, bool warn)
 {
+    Follower* f = nullptr;
+
     if (followerId >= followers.size()) {
         // could grow this, but we're in the audio thread and not supposed to
         // should have been caught during configuration
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+        if (warn)
+          Trace(1, "Pulsator: Follower id out of range %d", followerId);
     }
     else {
-        Follower* f = followers[followerId];
-        if (f->enabled) {
-            Trace(2, "Pulsator: Follower %d is already following something", followerId);
+        f = followers[followerId];
+    }
+    return f;
+}
+
+/**
+ * Register intent to following a sync source
+ *
+ * Registering a follower is normally done as soon as a track is configured to
+ * have a sync source.  For most sources, simply registering does nothing.
+ * When following another track "leader", this causes that track to be processed
+ * before the follower in each audio block so that the leader has a chance to
+ * deposit leader pulses that the follower wants.
+ *
+ * When the follower is ready to start a synchronied recording, it calls start().
+ * When the follower has finished a synchronized recording, it calls lock().
+ *
+ * Once a follow has been started or locked the source should not be changed as it
+ * would confuse the meaning of pulse monitoring and drift detection.  The track
+ * will continue to follow the original source until it is restarted or unlocked.
+ * hen the new source request is activated.
+ */
+void Pulsator::follow(int followerId, Pulse::Source source, Pulse::Type type)
+{
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+        
+        if (f->started) {
+            traceFollowChange(f, source, 0, type);
         }
         else {
-            f->enabled = true;
-            f->locked = false;
+            bool wasInternal = (f->source == Pulse::SourceLeader);
+        
             f->source = source;
+            f->leader = 0;
             f->type = type;
-            f->pulses = 0;
-            f->frames = 0;
+
+            // if we stopped following a leader, may simplify leader order
+            if (wasInternal)
+              orderLeaders();
+
+            char tracebuf[1024];
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d following %s pulse %s",
+                     followerId, getSourceName(source), getPulseName(type));
+            Trace(2, tracebuf);
         }
     }
 }
 
 /**
- * Start following another track
+ * Register following an internal sync leader
  */
 void Pulsator::follow(int followerId, int leaderId, Pulse::Type type)
 {
-    if (followerId >= followers.size()) {
-        // could grow this, but we're in the audio thread and not supposed to
-        // should have been caught during configuration
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
-    }
-    else if (leaderId >= leaders.size()) {
-        // could grow this, but we're in the audio thread and not supposed to
-        // should have been caught during configuration
-        Trace(1, "Pulsator: Leader id out of range %d", leaderId);
-    }
-    else {
-        Follower* f = followers[followerId];
-        if (f->enabled) {
-            Trace(2, "Pulsator: Follower id is already following something");
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+        // leaderId may be zero to mean "default" so don't call getLeader()
+        if (leaderId >= leaders.size()) {
+            Trace(1, "Pulsator::follow Leader %d out of range", leaderId);
+            leaderId = 0;
+        }
+        
+        if (f->started) {
+            traceFollowChange(f, Pulse::SourceLeader, leaderId, type);
+            // allow pulse type to be changed in case they want to start
+            // on Bar but end on Beat, might be useful
+            f->type = type;
         }
         else {
-            f->enabled = true;
-            f->locked = false;
-            f->source = Pulse::SourceLeader;
-            f->type = type;
-            f->leader = leaderId;
-            f->pulses = 0;
-            f->frames = 0;
+            char tracebuf[1024];
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d following Leader %d pulse %s",
+                     followerId, leaderId, getPulseName(type));
+            Trace(2, tracebuf);
 
+            f->source = Pulse::SourceLeader;
+            f->leader = leaderId;
+            f->type = type;
+    
             orderLeaders();
         }
     }
 }
 
 /**
- * Stop the follow and begin drift monitoring.
- * The frames argument has the length of the follower, it will normally
- * be the same as the frames accumulated during the follow.
+ * When attempting to change a follow source after a recording has started
+ * we defer the change until after the follower is unlocked.
+ * This is unusual but allowed, say something about it.
  */
-void Pulsator::lock(int followerId, int frames)
+void Pulsator::traceFollowChange(Follower* f, Pulse::Source source, int leaderId,
+                                 Pulse::Type type)
 {
-    if (followerId >= followers.size()) {
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
-    }
-    else {
-        Follower* f = followers[followerId];
-        if (!f->enabled) {
-            Trace(1, "Pulsator: Follower not enabled %d", followerId);
+    char tracebuf[1024];
+    strcpy(tracebuf, "");
+
+    if (f->started) {
+
+        if (leaderId == 0)
+          leaderId = trackSyncMaster;
+
+        if (f->lockedSource != source) {
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d deferring locked source change from %s to %s",
+                     f->id, getSourceName(f->lockedSource), getSourceName(source));
         }
-        else if (f->locked) {
-            Trace(1, "Pulsator: Follower is already locked %d", followerId);
+        else if (f->lockedSource == Pulse::SourceLeader && f->lockedLeader != leaderId) {
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d deferring locked leader change from %d to %d",
+                     f->id, f->lockedLeader, leaderId);
+        }
+        else if (f->type != type) {
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d changing pulse type from %s to %s",
+                     f->id, getPulseName(f->type), getPulseName(type));
+        }
+
+        if (tracebuf[0] != 0)
+          Trace(2, tracebuf);
+    }
+}
+
+const char* Pulsator::getSourceName(Pulse::Source source)
+{
+    const char* name = "???";
+    switch (source) {
+        case Pulse::SourceNone: name = "None"; break;
+        case Pulse::SourceMidiIn: name = "MidiIn"; break;
+        case Pulse::SourceMidiOut: name = "MidiOut"; break;
+        case Pulse::SourceHost: name = "Host"; break;
+        case Pulse::SourceLeader: name = "Leader"; break;
+    }
+    return name;
+}
+
+const char* Pulsator::getPulseName(Pulse::Type type)
+{
+    const char* name = "???";
+    switch (type) {
+        case Pulse::PulseBeat: name = "Beat"; break;
+        case Pulse::PulseBar: name = "Bar"; break;
+        case Pulse::PulseLoop: name = "Loop"; break;
+    }
+    return name;
+}    
+
+/**
+ * A follower wants to beging recording
+ *
+ * At this point the source is locked and can't be changed
+ * We beging keeping track of beat pulses
+ */
+void Pulsator::start(int followerId)
+{
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        if (f->source == Pulse::SourceNone) {
+            // not following anything, common for tracks to call start()
+            // unconditionally so ignore it
         }
         else {
-            Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
-                  followerId, f->pulses, f->frames);
-            Trace(2, "Pulsator: Locked frame length %d", frames);
-            // todo: need to be clear in the differences allowed between the
-            // frames accumulated during the follow, and the length the follower
-            // ended up with
-            f->frames = frames;
-            f->frame = 0;
+        
+            if (f->started) {
+                // this is most likely a coding error in the follower
+                // it is supposed to call unlock() if it resets and stops recording
+                Trace(1, "Pulsator: Restarting follower %d", followerId);
+            }
+
+            // determine the track sync leader if we want one
+            bool sourceAvailable = true;
+            int leader = 0;
+            if (f->source == Pulse::SourceLeader) {
+                leader = f->leader;
+                if (leader == 0)
+                  leader = trackSyncMaster;
+                if (leader == 0)
+                  sourceAvailable = false;
+            }
+
+            if (sourceAvailable) {
+                // the source is now locked
+                f->lockedSource = f->source;
+                f->lockedLeader = leader;
+            }
+            else {
+                // we wanted track sync but there aren't any masters
+                // this means we get to be free and will probably become
+                // master, follow thyself
+                f->lockedSource = f->source;
+                f->lockedLeader = followerId;
+                Trace(2, "Pulsator: Follower %d wanted a leader but there was none, lead thyself",
+                      followerId);
+            }
+
+            // since we were called on a pulse, the lock starts with 1 pulse
+            f->locked = false;
             f->pulse = 0;
+            f->frames = 0;
+            f->frame = 0;
+            f->started = true;
+
+            // if we actually were tracking pulses then start with 1
+            if (sourceAvailable) {
+                f->pulses = 1;
+                Trace(2, "Pulsator: Follower %d starting", followerId);
+            }
         }
     }
 }
 
 /**
- * Stop following and begin freewheeling
- * Typically done when the follower is reset
+ * A follower has finished recording
+ * 
+ * The frames argument has the length of the follower, it will normally
+ * be the same as the frames accumulated during the follow.
+ */
+void Pulsator::lock(int followerId, int frames)
+{
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        if (f->source == Pulse::SourceNone) {
+            // not following anything, common for this to be called unconditionally
+            // when it might be following so ignore it
+        }
+        else {
+        
+            if (!f->started) {
+                Trace(1, "Pulsator: Follower %d not started and can't be locked", followerId);
+            }
+            else if (f->locked) {
+                Trace(1, "Pulsator: Follower %d is already locked", followerId);
+            }
+            else {
+                Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
+                      followerId, f->pulses, frames);
+
+                if (f->source == Pulse::SourceLeader)
+                  Trace(2, "Pulsator: Track sync master frames were %d", trackSyncMasterFrames);
+
+                // reset drift state
+                f->frames = frames;
+                f->frame = 0;
+                f->pulse = 0;
+                f->locked = true;
+            }
+        }
+    }
+}
+
+/**
+ * Cancel drift monitoring and return to an unstarted state
+ *
+ * Follower is supposed to call this after a reset or re-record
+ * NOTE: MidiTracker resets tracks that aren't actually active so the
+ * follower number may be higher than what was registered.  Pass false
+ * to getFollower to suppress the warning.
+ */
+void Pulsator::unlock(int followerId)
+{
+    Follower* f = getFollower(followerId, false);
+    if (f != nullptr) {
+
+        if (!f->started) {
+            // this is okay, may just be reconfiguring and making sure
+            // the follower is unlocked
+        }
+        else {
+            Trace(2, "Pulsator: Unlocking follower %d", followerId);
+        }
+
+        f->started = false;
+        f->lockedSource = Pulse::SourceNone;
+        f->lockedLeader = 0;
+        f->locked = false;
+        f->pulses = 0;
+        f->pulse = 0;
+        f->frames = 0;
+        f->frame = 0;
+        f->drift = 0;
+        f->shouldCheckDrift = false;
+    }
+}
+
+/**
+ * Stop following something after track reconfiguration
+ *
+ * This is mostly the same as unlocking, except that if this was following
+ * an internal track it can also result in simplification of the leader
+ * order dependencies.  There is no hard requirement to do this but
+ * it is best.  Be best.
  */
 void Pulsator::unfollow(int followerId)
 {
-    if (followerId >= followers.size()) {
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
-    }
-    else {
-        Follower* f = followers[followerId];
-        if (!f->enabled) {
-            Trace(1, "Pulsator: Follower not enabled %d", followerId);
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        if (f->source != Pulse::SourceNone) {
+            char tracebuf[1024];
+            snprintf(tracebuf, sizeof(tracebuf),
+                     "Pulsator: Follower %d unfollowing %s",
+                     followerId, getSourceName(f->source));
+            Trace(2, tracebuf);
         }
-        else {
-            bool wasInternal = (f->source == Pulse::SourceLeader);
-            f->enabled = false;
-            f->locked = false;
-            f->source = Pulse::SourceNone;
-            f->type = Pulse::PulseBeat;
-            f->leader = 0;
-            f->frames = 0;
-            f->pulses = 0;
-            f->frame = 0;
-            f->pulse = 0;
-            if (wasInternal) {
-                // once we stop following a track, the leader dependency
-                // order may simplify
-                orderLeaders();
-            }
+        
+        bool wasInternal = (f->source == Pulse::SourceLeader);
+        f->source = Pulse::SourceNone;
+        f->leader = 0;
+        f->type = Pulse::PulseBeat;
+        f->started = false;
+        f->lockedSource = Pulse::SourceNone;
+        f->lockedLeader = 0;
+        f->locked = false;
+        f->pulses = 0;
+        f->frames = 0;
+        f->pulse = 0;
+        f->frame = 0;
+        f->drift = 0;
+        f->shouldCheckDrift = false;
+        if (wasInternal) {
+            // once we stop following a track, the leader dependency
+            // order may simplify
+            orderLeaders();
         }
     }
 }
@@ -625,38 +883,66 @@ void Pulsator::unfollow(int followerId)
 /**
  * Called by a follower at the beginning of it's block advance
  * to see if there were any sync pulses in this block.
+ *
+ * This interface uses the pulse type that was registered with follow()
+ * The other one allows the follower to pass in a pulse type which may change
+ * between start and lock.  Don't need both, probably just the second one.
  */
 int Pulsator::getPulseFrame(int followerId)
 {
     int frame = -1;
     
-    if (followerId >= followers.size()) {
-        Trace(1, "Pulsator: Follower id out of range %d", followerId);
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+        frame = getPulseFrame(followerId, f->type);
     }
-    else {
-        Follower* f = followers[followerId];
+    return frame;
+}
 
-        switch (f->source) {
-            case Pulse::SourceNone: /* nothing to say */ break;
-            case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, f->type); break;
-            case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, f->type); break;
-            case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, f->type); break;
-            case Pulse::SourceLeader: {
-                int leader = f->leader;
-                if (leader == 0)
-                  leader = defaultLeader;
-                
-                if (leader > 0) {
-                    if (leader >= leaders.size()) {
-                        Trace(1, "Pulsator: Leader id out of range %d", leader);
-                    }
-                    else {
-                        Leader* l = leaders[leader];
-                        frame = getPulseFrame(&(l->pulse), f->type);
+int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
+{
+    int frame = -1;
+    
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        // once the follower is locked, you can't change the source out
+        // from under it
+        Pulse::Source source = f->source;
+        int leader = 0;
+        if (f->lockedSource != Pulse::SourceNone) {
+            source = f->lockedSource;
+            leader = f->lockedLeader;
+        }
+        else if (f->source == Pulse::SourceLeader) {
+            leader = f->leader;
+            if (leader == 0)
+              leader = trackSyncMaster;
+        }
+
+        // special case, if the leader is the follower, it means we couldn't find
+        // a leader after starting which means it self-leads and won't have pulses
+        if (leader != followerId) {
+        
+            switch (source) {
+                case Pulse::SourceNone: /* nothing to say */ break;
+                case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
+                case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
+                case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, type); break;
+                case Pulse::SourceLeader: {
+
+                    // leader can be zero here if there was no track sync leader
+                    // in which case there won't be a pulse
+                    // don't call getLeader with zero or it traces an error
+                    if (leader > 0) {
+                        Leader* l = getLeader(leader);
+                        if (l != nullptr) {
+                            frame = getPulseFrame(&(l->pulse), type);
+                        }
                     }
                 }
+                    break;
             }
-                break;
         }
     }
     return frame;
@@ -680,7 +966,7 @@ int Pulsator::getPulseFrame(int followerId)
 int Pulsator::getPulseFrame(Pulse* p, Pulse::Type followType)
 {
     int frame = -1;
-    if (p->source != Pulse::SourceNone) {
+    if (!p->pending && p->source != Pulse::SourceNone) {
         // there was a pulse from this source
         bool accept = false;
         if (followType == Pulse::PulseBeat) {
@@ -718,6 +1004,12 @@ void Pulsator::setOutSyncMaster(int followerId, int frames)
     (void)followerId;
     (void)frames;
     Trace(1, "Pulsator::setOutSyncMaster not implemented");
+    outSyncMaster = followerId;
+}
+
+int Pulsator::getOutSyncMaster()
+{
+    return outSyncMaster;
 }
 
 /**
@@ -730,9 +1022,20 @@ void Pulsator::setOutSyncMaster(int followerId, int frames)
  * the new default leader.  For that to happen, leave the Follower.leader
  * field at zero.
  */
-void Pulsator::setTrackSyncMaster(int leaderId)
+void Pulsator::setTrackSyncMaster(int leaderId, int leaderFrames)
 {
-    defaultLeader = leaderId;
+    trackSyncMaster = leaderId;
+    trackSyncMasterFrames = leaderFrames;
+}
+
+/**
+ * Tracks would call this to see if there is a track sync master
+ * if they want to follow one, and if there isn't it can decide whether
+ * to wait (unlikely) or just proceed and maybe become the master.
+ */
+int Pulsator::getTrackSyncMaster()
+{
+    return trackSyncMaster;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -742,20 +1045,33 @@ void Pulsator::setTrackSyncMaster(int leaderId)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Advance follower state for the non-internal followers.
- * Once locked, internal followers are assumed to stay in sync
- * since they were frame aligned.  Might still want to drift check
- * track sync followers just in case there were round off errors
- * calculating loop length.
+ * Advance locked follower state for one block
+ *
+ * For pulse counting, we always track the smallest unit of beats
+ * even though the follower may be syncing on bars or loops.
  */
 void Pulsator::advance(int blockFrames)
 {
     for (int i = 1 ; i < followers.size() ; i++) {
         Follower* f = followers[i];
-        if (f->enabled && f->source != Pulse::SourceLeader) {
-            int offset = getPulseFrame(i);
+
+        // hack, if the track is locked for Leader sync, and there was
+        // no leader at the time, it is self-leading
+        // then we don't accumululate pulses or drift
+        // this feels crotchety, need to clarify this special state
+        bool selfLeading = (f->locked &&
+                            f->lockedSource == Pulse::SourceLeader &&
+                            f->lockedLeader == i);
+        
+        if (f->locked && !selfLeading) {
+
+            // was there a beat in this block?
+            int offset = getPulseFrame(i, Pulse::PulseBeat);
             if (offset >= 0)
               f->pulse += 1;
+
+            // this is how long the follower will advance
+            // when it gets around to processing the block
             f->frame += blockFrames;
 
             // wrap the pulse
@@ -775,14 +1091,94 @@ void Pulsator::advance(int blockFrames)
             }
 
             if (checkpoint) {
-                if (f->drift > driftThreshold) {
-                    Trace(1, "Pulsator: Drift threshold exceeded %d", f->drift);
+                if (f->drift < driftThreshold) {
+                    // these can be noisy in the logs so may want to
+                    // disable it if the drift is small
+                    Trace(2, "Pulsator: Follower %d drift %d", i, f->drift);
                 }
                 else {
-                    Trace(2, "Pulsator: Drift checkpoint %d drift %d", i, f->drift);
+                    Trace(1, "Pulsator: Follower %d drift threshold exceeded %d", f->drift);
+                    f->shouldCheckDrift = true;
+
+                    // this is the point where old Mobius would retrigger the loop to
+                    // bring it back into alignment
+                    // how should we signal that?
+                    // could register a callback or just make the track
+                    // ask for the drift and do the ajustments?
                 }
             }
         }
+    }
+}
+
+/**
+ * Expected to be called by the follower on every block to
+ * see if we're ready to drift correct.
+ * Old Mobius had a lot of complex options about where the correction
+ * could happen, now it just happens on the loop boundary.
+ * It can call getDrift and corrrectDrift at any time though.
+ */
+bool Pulsator::shouldCheckDrift(int followerId)
+{
+    bool should = false;
+    Follower* f = getFollower(followerId);
+    if (f != nullptr)
+      should = f->shouldCheckDrift;
+    return should;
+}
+
+/**
+ * Expected to be called by the followeer at the start of it's block processing
+ * If it decides to realign, it needs to call back to correctDrift()
+ * to tell us what it did.
+ */
+int Pulsator::getDrift(int followerId)
+{
+    int drift = 0;
+    
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        if (f->locked) {
+            drift = f->drift;
+        }
+    }
+    return drift;
+}
+
+/**
+ * Expected to be called by the follower after it decides there was enough
+ * drift and it did a correction.
+ *
+ * todo: here we have a lot of math to do
+ * We could just trust that the track did something appropriate and
+ * reset our state. Or we could make the track pass in the frame adjustment
+ * and assimilate that.  
+ */
+void Pulsator::correctDrift(int followerId, int frames)
+{
+    Follower* f = getFollower(followerId);
+    if (f != nullptr) {
+
+        if (!f->locked) {
+            Trace(1, "Pulsator: Follower %d not locked, ignoring drift correction",
+                  followerId);
+        }
+        else if (frames == 0) {
+            // it didn't say, assume it knows what it's doing
+            f->pulse = 0;
+            f->frame = 0;
+            f->drift = 0;
+        }
+        else {
+            f->pulse = 0;
+            f->frame += frames;
+            f->drift = f->frame - f->frames;
+            Trace(2, "Pulsator: Follower %d correct drift to %d, does this look right?",
+                  f->drift);
+        }
+
+        f->shouldCheckDrift = false;
     }
 }
 

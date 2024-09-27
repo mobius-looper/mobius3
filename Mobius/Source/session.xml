@@ -6,7 +6,7 @@
       <Value name="beatsPerBar" value="4"/>
       <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
-      <Value name="trackSyncUnit" value="cycle" type="enum" ordinal="2"/>
+      <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>
   <Track type="midi" index="1">

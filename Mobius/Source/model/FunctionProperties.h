@@ -27,6 +27,14 @@ class FunctionProperties
      */
     SymbolLevel level = LevelNone;
 
+    /**
+     * When true, this is a global function, meaning it is not specific
+     * to any one track scope.  Became necessary with MIDI tracks to get things
+     * like GlobalReset targeted to both track sets.  Core Function also has a global
+     * flag but it is not reliable, and some things that are global for Mobius core
+     * are not relevant for MIDI tracks.  This must be set in symbols.xml
+     */
+    bool global = false;
 
     /**
      * When true, this function may respond to a sustained action.

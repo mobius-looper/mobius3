@@ -4900,7 +4900,8 @@ void Synchronizer::loadProject(Project* p)
 
     mOutSyncMaster = NULL;
     mTrackSyncMaster = NULL;
-
+    mPulsator->setTrackSyncMaster(0, 0);
+    
     mOutTracker->reset();
     mHostTracker->reset();
     mMidiTracker->reset();
@@ -4990,9 +4991,14 @@ void Synchronizer::setTrackSyncMaster(Track* master)
 
     // Pulsator now wants to know this too
     int leader = 0;
-    if (mTrackSyncMaster != nullptr)
-      leader = mTrackSyncMaster->getDisplayNumber();
-    mPulsator->setTrackSyncMaster(leader);
+    int frames = 0;
+    if (mTrackSyncMaster != nullptr) {
+        leader = mTrackSyncMaster->getDisplayNumber();
+        // initial frame count only interesting for debugging since
+        // this can change at any time
+        frames = mTrackSyncMaster->getLoop()->getFrames();
+    }
+    mPulsator->setTrackSyncMaster(leader, frames);
 }
 
 /**

@@ -868,11 +868,20 @@ void MobiusKernel::doAction(UIAction* action)
         doKernelAction(action);
     }
     else if (symbol->level == LevelCore) {
+
+        // kludge: most of the functions can be directed to the specified
+        // track bank, but the few global functions like GlobalReset need to
+        // be sent to both since they don't know about each other's tracks
+        bool global = false;
+        if (symbol->functionProperties != nullptr)
+          global = symbol->functionProperties->global;
+
         int scope = action->getScopeTrack();
-        if (scope > audioTracks) {
+        if (scope > audioTracks || global) {
             mMidi->doAction(action);
         }
-        else {
+
+        if (scope <= audioTracks || global) {
             // not ours, pass to the core
             action->next = coreActions;
             coreActions = action;

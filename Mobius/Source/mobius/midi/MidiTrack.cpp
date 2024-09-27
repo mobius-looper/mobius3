@@ -282,23 +282,39 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 {
     int newFrames = stream->getInterruptFrames();
 
-    // locate a sync pulse we follow within this block
-    if (syncSource != Pulse::SourceNone) {
-        int pulseOffset = pulsator->getPulseFrame(number);
-        // sanity check before we do the math
-        if (pulseOffset >= newFrames) {
-            Trace(1, "MidiTrack: Pulse frame is fucked");
-            pulseOffset = newFrames - 1;
-        }
-        // it dramatically cleans up the carving logic if we make this look
-        // like a scheduled event
-        TrackEvent* pulseEvent = eventPool->newEvent();
-        pulseEvent->frame = frame + pulseOffset;
-        pulseEvent->type = TrackEvent::EventPulse;
-        // note priority flag so it goes before others on this frame
-        events.add(pulseEvent, true);
+    // here is where we need to ask Pulsator about drift
+    // and do a correction if necessary
+    if (pulsator->shouldCheckDrift(number)) {
+        int drift = pulsator->getDrift(number);
+        (void)drift;
+        //  magic happens
+        pulsator->correctDrift(number, 0);
     }
 
+    // locate a sync pulse we follow within this block
+    if (syncSource != Pulse::SourceNone) {
+
+        // todo: you can also pass the pulse type go getPulseFrame
+        // and it will obey it rather than the one passed to follow()
+        // might be useful if you want to change pulse types during
+        // recording
+        int pulseOffset = pulsator->getPulseFrame(number);
+        if (pulseOffset >= 0) {
+            // sanity check before we do the math
+            if (pulseOffset >= newFrames) {
+                Trace(1, "MidiTrack: Pulse frame is fucked");
+                pulseOffset = newFrames - 1;
+            }
+            // it dramatically cleans up the carving logic if we make this look
+            // like a scheduled event
+            TrackEvent* pulseEvent = eventPool->newEvent();
+            pulseEvent->frame = frame + pulseOffset;
+            pulseEvent->type = TrackEvent::EventPulse;
+            // note priority flag so it goes before others on this frame
+            events.add(pulseEvent, true);
+        }
+    }
+    
     // carve up the block for the events within it
     int remainder = newFrames;
     TrackEvent* e = events.consume(frame, remainder);
@@ -395,7 +411,7 @@ void MidiTrack::doPulse(TrackEvent* e)
         // This is normal if we haven't received a Record action yet, or
         // if the loop is finished recording and is playing
         // ignore it
-        Trace(2, "MidiTrack: Follower pulse");
+        //Trace(2, "MidiTrack: Follower pulse");
     }
 }
 
@@ -451,6 +467,8 @@ void MidiTrack::doReset(UIAction* a)
     output = 127;
     feedback = 127;
     pan = 64;
+
+    pulsator->unlock(number);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -466,7 +484,7 @@ void MidiTrack::doRecord(UIAction* a)
 {
     (void)a;
     
-    if (syncSource == SYNC_NONE) {
+    if (!needsRecordSync()) {
         toggleRecording();
     }
     else {
@@ -475,8 +493,50 @@ void MidiTrack::doRecord(UIAction* a)
         e->pending = true;
         e->pulsed = true;
         events.add(e);
+        Trace(2, "MidiTrack: %d begin synchronization", number);
         synchronizing = true;
     }
+}
+
+/**
+ * Determine whether the start or stop of a recording
+ * needs to be synchronized.
+ *
+ * !! record stop can be requsted by alternate endings
+ * that don't to through doAction and they will need the
+ * same sync logic when ending
+ */
+bool MidiTrack::needsRecordSync()
+{
+    bool doSync = false;
+     
+    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
+        //the easy one, always sync
+        doSync = true;
+    }
+    else if (syncSource == Pulse::SourceLeader) {
+        // if we're following track sync, and did not request a specific
+        // track to follow, and Pulsator wasn't given one, then we freewheel
+        int master = pulsator->getTrackSyncMaster();
+        // sync if there is a master and it isn't us
+        doSync = (master > 0 && master != number);
+    }
+    else if (syncSource == Pulse::SourceMidiOut) {
+        // if another track is already the out sync master, then
+        // we have in the past switched this to track sync
+        // unclear if we should have more options around this
+        int outMaster = pulsator->getOutSyncMaster();
+        if (outMaster > 0 && outMaster != number) {
+
+            // the out sync master is normally also the track sync
+            // master, but it doesn't have to be
+            // !! this is a weird form of follow that Pulsator
+            // isn't doing right, any logic we put here needs
+            // to match Pulsator, it shold own it
+            doSync = true;
+        }
+    }
+    return doSync;
 }
 
 /**
@@ -499,6 +559,7 @@ void MidiTrack::toggleRecording()
     // a record end event at the same time as the start, then we should
     // keep synchronizing, perhaps a better way to determine this is to
     // just look for the presence of any pulsed events in the list
+    Trace(2, "MidiTrack: %d end synchronization", number);
     synchronizing = false;
 }
 
@@ -514,6 +575,9 @@ void MidiTrack::startRecording()
     frames = 0;
     frame = 0;
     mode = MobiusMidiState::ModeRecord;
+
+    pulsator->start(number);
+    
     Trace(2, "MidiTrack: Starting recording");
 }
 
@@ -527,6 +591,8 @@ void MidiTrack::stopRecording()
     player.reset();
     
     mode = MobiusMidiState::ModePlay;
+
+    pulsator->lock(number, frames);
 
     Trace(2, "MidiTrack: Finished recording with %d events", playing->size());
 }

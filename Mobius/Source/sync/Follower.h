@@ -29,24 +29,35 @@ class Follower
     // the unique follower id, normally a track number
     int id = 0;
         
-    // true if this follow is enabled, when false the follower is freewheeling
-    // todo: need this?  Could just test for SourceNone
-    bool enabled = false;
-
-    // the source this follower is following
+    // the source this follower wants to follow
     Pulse::Source source = Pulse::SourceNone;
 
-    // the type of pulse to follow
-    Pulse::Type type = Pulse::PulseBeat;
-
     // for SourceInternal an optional specific leader id
-    // if left zero, a designated common leader is used
+    // if left zero, a designated default leader is used (aka. the TrackSyncMaster)
     int leader = 0;
 
-    // true when this follow is locked and begins drift monitoring
+    // the type of pulse to follow
+    // todo: rather than having this as part of the follower registration,
+    // the tracks could just ask for a partiuclar beat type as they record,
+    // that would make it possible to start the record on one pulse type and
+    // end it on another?
+    // once started, the tracker will always count the smallest unit, beats
+    Pulse::Type type = Pulse::PulseBeat;
+
+    // true when the follower has begun recording on a pulse
+    // once started the source may not be changed until the follow is stopped
+    bool started = false;
+
+    // the source information captured when the follow was started
+    // the follower may ask to follow something else while the recording
+    // is in progress, but this will not be used
+    Pulse::Source lockedSource = Pulse::SourceNone;
+    int lockedLeader = 0;
+
+    // true when this follow has finished recording and drift checking begins
     bool locked = false;
 
-    // the number of pulses in the follower's "loop"
+    // the number of beat pulses in the follower's "loop"
     int pulses = 0;
 
     // the number of frames in the followers loop
@@ -60,6 +71,7 @@ class Follower
 
     // last calculated drift
     int drift = 0;
-    
+    bool shouldCheckDrift = false;
+
 };
 

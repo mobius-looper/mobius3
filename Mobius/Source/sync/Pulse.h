@@ -77,6 +77,9 @@ class Pulse
     // pulse logically happened
     int blockFrame = 0;
 
+    // special flag for sync events that happen just after the end of the block
+    bool pending = false;
+
     // the beat and bar numbers of the external transport if known
     int beat = 0;
     int bar = 0;
@@ -101,6 +104,7 @@ class Pulse
         source = s;
         millisecond = msec;
         blockFrame = 0;
+        pending = false;
         beat = 0;
         bar = 0;
         start = false;

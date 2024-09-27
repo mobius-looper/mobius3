@@ -11,9 +11,9 @@
   <Function name="Divide4" mayFocus='true' mayCancelMute='true'/>
   <Function name="FocusLock"/>
   <Function name="Forward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="GlobalMute"/>
-  <Function name="GlobalPause"/>
-  <Function name="GlobalReset"/>
+  <Function name="GlobalMute" global='true'/>
+  <Function name="GlobalPause" global='true'/>
+  <Function name="GlobalReset" global='true'/>
   <Function name="Halfspeed" mayFocus='true' mayCancelMute='true'/>
   <!-- this was not sustainable at first, but it is in core, what does it mean? -->
   <Function name="Insert" mayFocus='true' mayCancelMute='true'/>

@@ -67,6 +67,7 @@ class Pulsator
     void interruptStart(class MobiusAudioStream* stream);
     juce::Array<int>* getOrderedLeaders();
     int getPulseFrame(int follower);
+    int getPulseFrame(int followerId, Pulse::Type type);
 
     // register a follow for an external sync source
     void follow(int follower, Pulse::Source source, Pulse::Type type);
@@ -74,18 +75,25 @@ class Pulsator
     // register a follow for an internal leader
     void follow(int follower, int leader, Pulse::Type type);
 
-    // lock the follower to a specific frame count
+    void start(int follower);
     void lock(int follower, int frames);
-
+    void unlock(int follower);
+    
     // stop following the source
     void unfollow(int follower);
 
+    bool shouldCheckDrift(int follower);
+    int getDrift(int follower);
+    void correctDrift(int follower, int frames);
+
     // declare one of the tracks as the MIDI output sync master
-    void setOutSyncMaster(int follower, int frames);
-
+    void setOutSyncMaster(int leaderId, int leaderFrames);
+    int getOutSyncMaster();
+    
     // declare one of the tracks as the default track sync leader
-    void setTrackSyncMaster(int leader);
-
+    void setTrackSyncMaster(int leader, int leaderFrames);
+    int getTrackSyncMaster();
+    
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
 
@@ -116,8 +124,9 @@ class Pulsator
 
     // master tracks
     int outSyncMaster = 0;
-    int defaultLeader = 0;
-
+    int trackSyncMaster = 0;
+    int trackSyncMasterFrames = 0;
+    
     //
     // Host sync state
     //
@@ -147,6 +156,8 @@ class Pulsator
     Pulse midiOutPulse;
 
     void reset();
+    Leader* getLeader(int id);
+    Follower* getFollower(int id, bool warn = true);
     void orderLeaders();
     void advance(int blockFrames);
     
@@ -158,6 +169,9 @@ class Pulsator
     
     void trace();
     void trace(Pulse& p);
+    void traceFollowChange(Follower* f, Pulse::Source source, int leader,Pulse::Type type);
+    const char* getSourceName(Pulse::Source source);
+    const char* getPulseName(Pulse::Type type);
 
 };
 

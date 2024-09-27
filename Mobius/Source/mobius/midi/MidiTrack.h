@@ -94,6 +94,7 @@ class MidiTrack
     
     void doRecord(class UIAction* a);
     void doRecord(class TrackEvent* e);
+    bool needsRecordSync();
     void toggleRecording();
     void startRecording();
     void stopRecording();

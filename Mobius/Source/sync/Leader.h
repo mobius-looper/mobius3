@@ -32,7 +32,14 @@ class Leader
     Pulse pulse;
 
     void reset() {
-        pulse.source = Pulse::SourceNone;
+        // if the pulse was marked pending, leave it active at the start
+        // of the next block
+        if (pulse.pending) {
+            pulse.pending = false;
+        }
+        else {
+            pulse.source = Pulse::SourceNone;
+        }
     }
     
   private:
