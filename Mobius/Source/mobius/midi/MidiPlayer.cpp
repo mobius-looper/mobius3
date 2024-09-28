@@ -86,12 +86,34 @@ void MidiPlayer::setLayer(MidiLayer* l)
 }
 
 /**
+ * Unlike setLayer, we expect this to have contunity with the last
+ * layer so don't need to force notes off.  Any other differences?
+ * Can simplify if not.
+ */
+void MidiPlayer::shift(MidiLayer* l)
+{
+    layer = l;
+    playFrame = 0;
+    layer->resetPlayState();
+}
+
+/**
+ * Here after playing to the end and the track decided not to
+ * shift a new layer.  Just start over from the beginning.
+ */
+void MidiPlayer::restart()
+{
+    playFrame = 0;
+    layer->resetPlayState();
+}
+
+/**
  * Play anything from the current position forward until the end
  * of the play region.
  */
 void MidiPlayer::play(int blockFrames)
 {
-    if (loopFrames > 0) {
+    if (blockFrames > 0 && loopFrames > 0) {
 
         if (blockFrames > loopFrames) {
             
@@ -110,7 +132,7 @@ void MidiPlayer::play(int blockFrames)
             currentEvents.clearQuick();
             layer->gather(&currentEvents, playFrame, endFrame);
 
-            for (int i = 0 ; i currentEvents.size() ; i++) {
+            for (int i = 0 ; i < currentEvents.size() ; i++) {
                 send(currentEvents[i]);
             
             playFrame = endFrame;

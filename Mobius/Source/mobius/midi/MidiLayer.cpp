@@ -6,6 +6,8 @@
 #include "../../midi/MidiEvent.h"
 
 #include "MidiLoop.h"
+#include "MidiSegment.h"
+
 #include "MidiLayer.h"
 
 MidiLayer::MidiLayer()
@@ -25,7 +27,8 @@ void MidiLayer::init()
     sequencePool = nullptr;
     midiPool = nullptr;
     sequence = nullptr;
-    frames = 0;
+    layerFrames = 0;
+    changes = 0;
     playFrame = 0;
     nextEvent = nullptr;
     currentSegment = nullptr;
@@ -55,13 +58,14 @@ void MidiLayer::clear()
     }
 
     while (segments != nullptr) {
-        MidiSegment* next = segments->next;
+        MidiSegment* nextseg = segments->next;
         segments->next = nullptr;
         segmentPool->checkin(segments);
-        segments = next;
+        segments = nextseg;
     }
     
-    frames = 0;
+    layerFrames = 0;
+    changes = 0;
     resetPlayState();
 }
 
@@ -71,7 +75,10 @@ void MidiLayer::add(MidiEvent* e)
         Trace(1, "MidiLayer: Can't add event without a sequence");
     }
     else {
+        // todo: to implement the audio loop's "noise floor" we could monitor
+        // note velocities
         sequence->add(e);
+        changes++;
     }
 }
 
@@ -97,20 +104,35 @@ void MidiLayer::add(MidiSegment* neu)
         seg->next = prev->next;
         prev->next = seg;
     }
+
+    changes++;
 }
 
-void MidiLayer::setFrames(int argFrames)
+/**
+ * After doing surgical edits to the segments, surgeon must bump the change count
+ * to cause a shift.
+ */
+void MidiLayer::incChanges()
 {
-    frames = argFrames;
+    changes++;
+}
+
+bool MidiLayer::hasChanges()
+{
+    return (changes > 0);
+}
+
+void MidiLayer::setFrames(int frames)
+{
+    layerFrames = frames;
     // todo: this would normally be called after finishing the segment
     // should verify that all the internal sizes make sense
 }
 
-// why would this be different than frames?
 int MidiLayer::size()
 {
     //return (sequence != nullptr) ? sequence->size() : 0;
-    return frames;
+    return layerFrames;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -137,7 +159,7 @@ void MidiLayer::resetPlayState()
  * and waits for reorientation.  
  */
 void MidiLayer::gather(juce::Array<class MidiEvent*> events,
-                       int startFrame, int frames)
+                       int startFrame, int blockFrames)
 {
     if (playFrame != startFrame) {
         // play cursor moved or is being reset, reorient
@@ -150,7 +172,7 @@ void MidiLayer::gather(juce::Array<class MidiEvent*> events,
     // currentSegment will be the first (and only since they can't overlap) segment
     // whose range includes or is after the play frame
         
-    int lastFrame = startFrame + frames - 1;  // may be beyond the loop length, it's okay
+    int lastFrame = startFrame + blockFrames - 1;  // may be beyond the loop length, it's okay
     while (nextEvent != nullptr) {
 
         if (nextEvent->frame <= lastFrame) {

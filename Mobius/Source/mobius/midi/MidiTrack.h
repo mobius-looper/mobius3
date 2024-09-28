@@ -89,6 +89,7 @@ class MidiTrack
     bool synchronizing = false;
 
     void advance(int newFrames);
+    void shift(bool initialRecording);
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
     

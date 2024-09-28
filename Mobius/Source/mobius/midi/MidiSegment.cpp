@@ -12,6 +12,7 @@ MidiSegment::MidiSegment()
 
 MidiSegment::~MidiSegment()
 {
+    // segments do NOT own the layer they reference
 }
 
 /**

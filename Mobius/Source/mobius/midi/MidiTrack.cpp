@@ -52,8 +52,12 @@
 #include "../../ParameterFinder.h"
 
 #include "../MobiusInterface.h"
+
 #include "MidiTracker.h"
 #include "MidiLoop.h"
+#include "MidiLayer.h"
+#include "MidiSegment.h"
+
 #include "MidiTrack.h"
 
 const int MidiTrackMaxLoops = 8;
@@ -297,8 +301,10 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Don't have anything to record, but can advance the record frame.
- * All incomming MIDI events have been processed by now.
+ * Called by MidiKernel AFTER actions have been passed down.
+ * If we're waiting on sync pulses, recording may start or stop here.
+ *
+ * After events have been processed, advance the play layer.
  */
 void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 {
@@ -358,23 +364,118 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
     advance(remainder);
 }
 
+/**
+ * Here after any actions and events have been processed.
+ * Advance the play state.  If the loop point is encountered,
+ * do a layer shift.
+ *
+ * "recording" has already happened as well with MidiKernel passing
+ * the MidiEvents it received from the device or the host before
+ * calling processAudioStream.
+ *
+ * These situations exist:
+ *    - reset
+ *    - recording
+ *    - extending
+ *    - looping
+ *
+ * In the Reset mode, the track contents are empty and the advance does nothing.
+ * 
+ * In the Record mode, the active loop in the track is being recorded for the first
+ * time.  There is nothing playing, and the frame will advance without bound
+ * until the record is ended.
+ *
+ * In an extension mode, the record layer will grow until the extension ends, and while
+ * this is happening the last play layer will loop over and over.
+ *
+ * In looping mode, the play layer is playing, and the record layer is accumulating
+ * overdubs or edits.  When the play frame reaches the loop point, the record layer
+ * is "shifted" and becomes the play layer and a new record layer is created.
+ */
 void MidiTrack::advance(int newFrames)
 {
-    // todo: should be "isExtending" or something
-    if (mode == MobiusMidiState::ModeRecord) {
-        frames += newFrames;
-        frame += newFrames;
+    if (mode == MobiusMidiState::ModeReset) {
+        // nothing to do
     }
-    else if (frames > 0) {
-        // "play"
-        player.play(newFrames);
-        frame += newFrames;
-        if (frame > frames)
-          frame -= frames;
+    else if (mode == MobiusMidistate::ModeRecord) {
+        advanceRecord(newFrames);
     }
-
+    else if (isExtending()) {
+        extend(newFrames);
+    }
+    else {
+        // a normal looping block
+        int nextFrame = frame + newFrames;
+        if (nextFrame < frames) {
+            // we will not reach the loop point
+            player.play(newFrames);
+            frame += newFrames;
+        }
+        else {
+            // we hit the loop point in this block
+            // now it gets complicated
+            advanceAndLoop(newFrames);
+        }
+    }
 }
 
+/**
+ * Here on a block during record mode.  Since actions and events
+ * are processed at the beginning of the block, if we're still in record mode
+ * we consume the entire block.  By definition there is nothing to play
+ * so we don't have to mess with the play cursor.
+ */
+void MidiTrack::advanceRecord(int newFrames)
+{
+    frames += newFrames;
+    frame += newFrames;
+}
+
+bool MidiTrack::isExtending()
+{
+    return false;
+}
+
+void MidiTrack::extend(int newFrames)
+{
+    (void)newFrames;
+}
+
+/**
+ * We've hit the loop point in this block, armegeddon.
+ * This is absolutely fraught with off-by-one errors so touch
+ * this code VERY carefully.
+ *
+ * Events quantized on the loop point have the usual before/after problem
+ * especiall if they're extenders.  Needs work...
+ *
+ * Script waits on the loop point are similar, punt
+ *
+ */
+void MidiTrack::advanceAndLoop(int newFrames)
+{
+    // let the player play to the end
+    int included = frames - frame;
+    int remainder = newFrames - inluded;
+
+    player.play(included);
+    if (player.getFrame() != frames) {
+        // we were expecting this to have reached the end, why didn't it
+        Trace(1, "MidiTrack: Player didn't reach the end, why?");
+    }
+
+    if (recordLayer.hasChanges()) {
+        shift(false);
+    }
+    else {
+        Trace(2, "MidiTrack: Squelching record layer");
+        recordLayer.resetChanges();
+        player.restart();
+    }
+
+    player.play(remainder);
+}    
+        
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -616,19 +717,7 @@ void MidiTrack::startRecording()
 
 void MidiTrack::stopRecording()
 {
-    MidiLoop* loop = loops[loopIndex];
-    
-    recordLayer->setFrames(frames);
-    loop->add(recordLayer);
-    player.setLayer(recordLayer);
-    int eventCount = recordLayer->size();
-    
-    // prep another for overdubs
-    MidiLayer* next = prepLayer();
-    MidiSegment* seg = segmentPool->newSegment();
-    seg->init(reordLayer);
-    next->add(seg);
-    recordLayer = next;
+    shift(true);
     
     mode = MobiusMidiState::ModePlay;
     recording = false;
@@ -636,6 +725,37 @@ void MidiTrack::stopRecording()
     pulsator->lock(number, frames);
 
     Trace(2, "MidiTrack: Finished recording with %d events", eventCount);
+}
+
+void MidiTrack::shift(bool initialRecording)
+{
+    Trace(2, "MidiTrack: Shifting record layer");
+    MidiLoop* loop = loops[loopIndex];
+
+    if (initialRecording) {
+        recordLayer->setFrames(frames);
+    }
+    else if (recordLayer->getFrames() != frames) {
+        Trace(1, "MidiTrack: Layer shift frame anomoly");
+        recordLayer->setFrames(frames);
+    }
+    
+    loop->add(recordLayer);
+    player.shift(recordLayer);
+    int eventCount = recordLayer->size();
+        
+    MidiSegment* seg = segmentPool->newSegment();
+    seg->layer = recordLayer;
+    seg->startFrame = 0;
+    seg->frames = frames;
+    seg->referenceStartFrame = 0;
+        
+    recordLayer = prepLayer();
+    recordLayer->add(seg);
+    recordLayer->setFrames(frames);
+
+    // adding the segment bumped the change count, clear it
+    recordLayer->resetChanges();
 }
 
 /**
