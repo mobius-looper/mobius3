@@ -76,7 +76,8 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     midiPool = tracker->getMidiPool();
     sequencePool = tracker->getSequencePool();
     eventPool = tracker->getEventPool();
-
+    layerPool = tracker->getLayerPool();
+    
     player.initialize(container);
     events.initialize(eventPool);
 
@@ -255,7 +256,7 @@ void MidiTrack::doParameter(UIAction* a)
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
     state->loopCount = activeLoops;
-    state->activeLoop = loopIndex + 1;
+    state->activeLoop = loopIndex;
     
     state->frames = frames;
     state->frame = frame;
@@ -595,13 +596,13 @@ void MidiTrack::startRecording()
 {
     player.reset();
     
-    MidiLoop* loop = loops[activeLoop];
+    MidiLoop* loop = loops[loopIndex];
     loop->reset();
     
     if (recordLayer == nullptr)
       recordLayer = prepLayer();
     else
-      recordLayer->clear(sequencePool, midiPool);
+      recordLayer->clear();
     
     frames = 0;
     frame = 0;
@@ -615,21 +616,26 @@ void MidiTrack::startRecording()
 
 void MidiTrack::stopRecording()
 {
-    MidiLoop* loop = loops[activeLoop];
+    MidiLoop* loop = loops[loopIndex];
     
-    recordLayer->frames = frames;
+    recordLayer->setFrames(frames);
     loop->add(recordLayer);
     player.setLayer(recordLayer);
+    int eventCount = recordLayer->size();
     
     // prep another for overdubs
-    recordLayer = prepLayer();
+    MidiLayer* next = prepLayer();
+    MidiSegment* seg = segmentPool->newSegment();
+    seg->init(reordLayer);
+    next->add(seg);
+    recordLayer = next;
     
     mode = MobiusMidiState::ModePlay;
     recording = false;
     
     pulsator->lock(number, frames);
 
-    Trace(2, "MidiTrack: Finished recording with %d events", playing->size());
+    Trace(2, "MidiTrack: Finished recording with %d events", eventCount);
 }
 
 /**
@@ -640,15 +646,14 @@ void MidiTrack::stopRecording()
 MidiLayer* MidiTrack::prepLayer()
 {
     MidiLayer* layer = layerPool->newLayer();
-    MidiSequence* seq = sequencePool->newSequence();
-    layer->setSequence(seq);
+    layer->prepare(sequencePool, midiPool);
     return layer;
 }
 
 void MidiTrack::reclaimLayer(MidiLayer* layer)
 {
     if (layer != nullptr) {
-        layer->clear(sequencePool, midiPool);
+        layer->clear();
         layerPool->checkin(layer);
     }
 }

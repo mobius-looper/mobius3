@@ -40,10 +40,6 @@ class MidiTrack
 
     class MidiTracker* getMidiTracker();
     
-    class MidiSequence* getPlaySequence() {
-        return playing;
-    }
-
     int getLoopFrames() {
         return frames;
     }
@@ -57,6 +53,7 @@ class MidiTrack
     class MidiEventPool* midiPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
     class TrackEventPool* eventPool = nullptr;
+    class MidiLayerPool* layerPool = nullptr;
     
     juce::OwnedArray<class MidiLoop> loops;
     int activeLoops = 0;

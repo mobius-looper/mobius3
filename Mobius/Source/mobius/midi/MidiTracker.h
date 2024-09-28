@@ -32,6 +32,7 @@ class MidiTracker
     class MidiSequencePool* getSequencePool();
     class TrackEventPool* getEventPool();
     class MidiLayerPool* getLayerPool();
+    class MidiSegmentPool* getSegmentPool();
     
     MobiusContainer* getContainer() {
         return container;
@@ -52,8 +53,9 @@ class MidiTracker
     MidiEventPool midiPool;
     MidiSequencePool sequencePool;
     MidiLayerPool layerPool;
+    MidiSegmentPool segmentPool;
     TrackEventPool eventPool;
-
+    
     juce::OwnedArray<MidiTrack> tracks;
     MobiusMidiState state;
     int activeTracks = 0;

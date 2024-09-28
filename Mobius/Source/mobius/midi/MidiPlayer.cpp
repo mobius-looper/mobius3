@@ -10,11 +10,22 @@
 #include "../MobiusInterface.h"
 
 #include "MidiTrack.h"
+#include "MidiLayer.h"
+
 #include "MidiPlayer.h"
+
+/**
+ * The maximum number of events we will accumulate in one block for playback
+ * This determines the pre-allocated size of the playback bucket and should be
+ * large enough to avoid memory allocation.
+ */
+const int MidiPlayerMaxEvents = 256;
+
 
 MidiPlayer::MidiPlayer(class MidiTrack* t)
 {
     track = t;
+    currentEvents.ensureStorageAllocated(MidiPlayerMaxEvents);
 }
 
 MidiPlayer::~MidiPlayer()
@@ -37,10 +48,11 @@ void MidiPlayer::initialize(MobiusContainer* c)
 void MidiPlayer::reset()
 {
     alloff();
+    
+    layer = nullptr;
     playFrame = 0;
     loopFrames = 0;
-    layer = nullptr;
-    sequence = nullptr;
+    currentEvents.clearQuick();
 }
 
 /**
@@ -59,7 +71,6 @@ void MidiPlayer::setLayer(MidiLayer* l)
     alloff();
 
     layer = l;
-    sequence = layer->getSequence();
     
     // attempt to keep the same relative location
     loopFrames = layer->getFrames();
@@ -71,23 +82,7 @@ void MidiPlayer::setLayer(MidiLayer* l)
         playFrame = playFrame % loopFrames;
     }
 
-    // run up to the first event on or after the play frame
-    // need a more efficent way to do this sort of thing
-    if (sequence == nullptr) {
-        Trace(1, "MidiPlayer: Layer without sequence");
-        position = nullptr;
-    }
-    else {
-        position = sequence->getFirst();
-        while (position != nullptr && position->frame < playFrame)
-          position = position->next;
-
-        if (position == nullptr) {
-            // ran off the end, put it back to the start for when
-            // the playFrame comes back around
-            position = sequence->getFirst();
-        }
-    }
+    layer->resetPlayState();
 }
 
 /**
@@ -109,27 +104,14 @@ void MidiPlayer::play(int blockFrames)
         else {
             int endFrame = playFrame + blockFrames;
 
-            // the position != nullptr here means the layer has length but
-            // no events, if it does have events, this should loop until the break;
-            while (position != nullptr) {
-                if (position->frame >= playFrame && position->frame < endFrame) {
-                    send(position);
-                    position = position->next;
-                    if (position == nullptr)
-                      position = sequence->getFirst();
-                }
-                else {
-                    // nothing in range, did we loop?
-                    if (endFrame >= loopFrames) {
-                        playFrame = 0;
-                        endFrame -= loopFrames;
-                    }
-                    else {
-                        // no, stop
-                        break;
-                    }
-                }
-            }
+            // todo: rather than gathering could have the event
+            // walk just play them, but I kind of like the intermedate
+            // gather, might be good to apply processing
+            currentEvents.clearQuick();
+            layer->gather(&currentEvents, playFrame, endFrame);
+
+            for (int i = 0 ; i currentEvents.size() ; i++) {
+                send(currentEvents[i]);
             
             playFrame = endFrame;
         }

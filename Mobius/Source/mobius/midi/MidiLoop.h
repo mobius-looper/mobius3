@@ -22,8 +22,6 @@ class MidiLoop
   private:
 
     class MidiTrack* track = nullptr;
-    class MidiEventPool* eventPool = nullptr;
-    class MidiSequencePool* sequencePool = nullptr;
     class MidiLayerPool* layerPool = nullptr;
 
     // the active layer (head) and undo layers
