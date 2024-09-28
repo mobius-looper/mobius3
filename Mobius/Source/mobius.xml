@@ -293,9 +293,6 @@
       trackSyncUnit='default'/>
   </Setup>
   <BindingSet name='Base'>
-    <Binding name='UIParameterUp' trigger='note' value='53'/>
-    <Binding name='UIParameterDown' trigger='note' value='55'/>
-    <Binding name='Record' trigger='note' value='48' channel='1'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
     <Binding name='NextLoop' trigger='key' value='65576'/>

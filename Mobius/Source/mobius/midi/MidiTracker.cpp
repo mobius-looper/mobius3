@@ -236,6 +236,11 @@ MidiLayerPool* MidiTracker::getLayerPool()
     return &layerPool;
 }
 
+MidiSegmentPool* MidiTracker::getSegmentPool()
+{
+    return &segmentPool;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State

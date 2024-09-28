@@ -50,10 +50,12 @@ class MidiTrack
     class MidiTracker* tracker = nullptr;
     class ParameterFinder* finder = nullptr;
     class Pulsator* pulsator = nullptr;
+    
     class MidiEventPool* midiPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
-    class TrackEventPool* eventPool = nullptr;
     class MidiLayerPool* layerPool = nullptr;
+    class MidiSegmentPool* segmentPool = nullptr;
+    class TrackEventPool* eventPool = nullptr;
     
     juce::OwnedArray<class MidiLoop> loops;
     int activeLoops = 0;
@@ -89,7 +91,12 @@ class MidiTrack
     bool synchronizing = false;
 
     void advance(int newFrames);
+    void advanceRecord(int newFrames);
+    bool isExtending();
+    void extend(int newFrames);
+    void advanceAndLoop(int newFrames);
     void shift(bool initialRecording);
+    
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
     
@@ -104,7 +111,9 @@ class MidiTrack
     
     void doReset(class UIAction* a, bool full);
     void doOverdub(class UIAction* a);
-    
+    void doUndo(class UIAction* a);
+    void doRedo(class UIAction* a);
+
     void doParameter(class UIAction* a);
     
     class MidiLayer* prepLayer();

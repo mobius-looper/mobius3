@@ -7,6 +7,7 @@
 #include "../../midi/MidiSequence.h"
 
 #include "TrackEvent.h"
+#include "MidiSegment.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
 

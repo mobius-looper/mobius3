@@ -787,12 +787,17 @@ void Pulsator::lock(int followerId, int frames)
                 Trace(1, "Pulsator: Follower %d is already locked", followerId);
             }
             else {
-                Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
-                      followerId, f->pulses, frames);
+                if (f->source == Pulse::SourceLeader && f->leader == followerId) {
+                    // we were self leading, don't bother with trace
+                }
+                else {
+                    Trace(2, "Pulsator: Follower %d locking after %d pulses %d frames",
+                          followerId, f->pulses, frames);
 
-                if (f->source == Pulse::SourceLeader)
-                  Trace(2, "Pulsator: Track sync master frames were %d", trackSyncMasterFrames);
-
+                    if (f->source == Pulse::SourceLeader)
+                      Trace(2, "Pulsator: Track sync master frames were %d", trackSyncMasterFrames);
+                }
+                
                 // reset drift state
                 f->frames = frames;
                 f->frame = 0;

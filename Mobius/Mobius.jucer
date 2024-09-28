@@ -485,6 +485,8 @@
           <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
+          <FILE id="Fd2CaO" name="MidiSegment.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiSegment.cpp"/>
+          <FILE id="NioJTm" name="MidiSegment.h" compile="0" resource="0" file="Source/mobius/midi/MidiSegment.h"/>
           <FILE id="yJf44l" name="MidiTrack.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiTrack.cpp"/>
           <FILE id="lx27gA" name="MidiTrack.h" compile="0" resource="0" file="Source/mobius/midi/MidiTrack.h"/>
           <FILE id="g5UCcE" name="MidiTracker.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiTracker.cpp"/>

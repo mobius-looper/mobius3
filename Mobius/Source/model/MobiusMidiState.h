@@ -60,6 +60,8 @@ class MobiusMidiState
         // loop state
         int loopCount = 0;
         int activeLoop = 0;
+        int layerCount = 0;
+        int activeLayer = 0;
         
         // play position
         int frames = 0;

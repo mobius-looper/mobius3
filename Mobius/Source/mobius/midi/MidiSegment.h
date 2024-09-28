@@ -13,18 +13,21 @@ class MidiSegment : public PooledObject
     ~MidiSegment();
     void init() override;
     
+    void gather(juce::Array<class MidiEvent*>* events,
+                int playFrame, int blockFrames);
+    
     MidiSegment* next = nullptr;
-    MidiLayer* layer = nullptr;
+    class MidiLayer* layer = nullptr;
 
     // the logical start frame in the containing layer
-    int startFrame = 0;
+    int originFrame = 0;
 
     // the logical length of this segment in both the containint
     // layer and the referenced layer
-    int frames = 0;
+    int segmentFrames = 0;
 
     // the logical start frame within the referenced layer
-    int referenceStartFrame = 0;
+    int referenceFrame = 0;
 
     // Segment play cursor
     int playFrame = 0;

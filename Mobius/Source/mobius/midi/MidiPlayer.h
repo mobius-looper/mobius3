@@ -17,7 +17,12 @@ class MidiPlayer
     // initialize state for playing the track
     void reset();
     void setLayer(class MidiLayer* l);
+    void shift(class MidiLayer* l);
+    void restart();
+    
     void play(int frames);
+    int getFrame();
+    int getFrames();
 
   private:
 

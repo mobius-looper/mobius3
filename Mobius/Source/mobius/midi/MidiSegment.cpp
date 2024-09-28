@@ -22,10 +22,26 @@ void MidiSegment::init()
 {
     next = nullptr;
     layer = nullptr;
-    startFrame = 0;
-    frames = 0;
-    referenceStartFrame = 0;
+    originFrame = 0;
+    segmentFrames = 0;
+    referenceFrame = 0;
     playFrame = 0;
+}
+
+/**
+ * Segment gather is interesting because if we advance past the end
+ * of the segment, notes held need to be turned off.
+ */
+void MidiSegment::gather(juce::Array<MidiEvent*>* events,
+                         int startFrame, int blockFrames)
+{
+    if (layer == nullptr) {
+        Trace(1, "MidiSegment: No layer, what am I supposed to do?");
+    }
+    else {
+        int adjustedStart = startFrame + referenceFrame;
+        layer->gather(events, adjustedStart, blockFrames);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

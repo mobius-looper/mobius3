@@ -24,14 +24,18 @@ MidiLayer::~MidiLayer()
 void MidiLayer::init()
 {
     next = nullptr;
+    
     sequencePool = nullptr;
     midiPool = nullptr;
+    segmentPool = nullptr;
+    
     sequence = nullptr;
+    segments = nullptr;
     layerFrames = 0;
     changes = 0;
     playFrame = 0;
     nextEvent = nullptr;
-    currentSegment = nullptr;
+    nextSegment = nullptr;
 }
 
 void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegmentPool* segpool)
@@ -40,6 +44,7 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
     midiPool = epool;
     segmentPool = segpool;
 
+    // make sure it starts out clean, but it should already be
     if (sequence != nullptr)
       Trace(1, "MidiLayer::prepare Already had a sequence");
 
@@ -47,6 +52,8 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
       Trace(1, "MidiLayer::prepare Already had segments");
 
     clear();
+
+    sequence = sequencePool->newSequence();
 }
 
 void MidiLayer::clear()
@@ -67,6 +74,13 @@ void MidiLayer::clear()
     layerFrames = 0;
     changes = 0;
     resetPlayState();
+}
+
+void MidiLayer::resetPlayState()
+{
+    playFrame = -1;
+    nextEvent = nullptr;
+    nextSegment = nullptr;
 }
 
 void MidiLayer::add(MidiEvent* e)
@@ -91,18 +105,18 @@ void MidiLayer::add(MidiSegment* neu)
 {
     MidiSegment* prev = nullptr;
     MidiSegment* seg = segments;
-    while (seg != nullptr && seg->startFrame < neu->startFrame) {
+    while (seg != nullptr && seg->originFrame < neu->originFrame) {
         prev = seg;
         seg = seg->next;
     }
 
     if (prev == nullptr) {
-        seg->next = segments;
-        segments = seg;
+        neu->next = segments;
+        segments = neu;
     }
     else {
-        seg->next = prev->next;
-        prev->next = seg;
+        neu->next = prev->next;
+        prev->next = neu;
     }
 
     changes++;
@@ -122,6 +136,11 @@ bool MidiLayer::hasChanges()
     return (changes > 0);
 }
 
+void MidiLayer::resetChanges()
+{
+    changes = 0;
+}
+
 void MidiLayer::setFrames(int frames)
 {
     layerFrames = frames;
@@ -129,10 +148,14 @@ void MidiLayer::setFrames(int frames)
     // should verify that all the internal sizes make sense
 }
 
-int MidiLayer::size()
+int MidiLayer::getFrames()
 {
-    //return (sequence != nullptr) ? sequence->size() : 0;
     return layerFrames;
+}
+
+int MidiLayer::getEventCount()
+{
+    return (sequence != nullptr) ? sequence->size() : 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -140,13 +163,6 @@ int MidiLayer::size()
 // Gather
 //
 //////////////////////////////////////////////////////////////////////
-
-void MidiLayer::resetPlayState()
-{
-    playFrame = -1;
-    nextEvent = nullptr;
-    currentSegment = nullptr;
-}
 
 /**
  * This is the crux of MIDI playback.
@@ -158,7 +174,7 @@ void MidiLayer::resetPlayState()
  * the play cursor does not loop back to the beginning, it simply stops
  * and waits for reorientation.  
  */
-void MidiLayer::gather(juce::Array<class MidiEvent*> events,
+void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
                        int startFrame, int blockFrames)
 {
     if (playFrame != startFrame) {
@@ -172,11 +188,11 @@ void MidiLayer::gather(juce::Array<class MidiEvent*> events,
     // currentSegment will be the first (and only since they can't overlap) segment
     // whose range includes or is after the play frame
         
-    int lastFrame = startFrame + blockFrames - 1;  // may be beyond the loop length, it's okay
+    int lastFrame = playFrame + blockFrames - 1;  // may be beyond the loop length, it's okay
     while (nextEvent != nullptr) {
 
         if (nextEvent->frame <= lastFrame) {
-            events.add(nextEvent);
+            events->add(nextEvent);
             nextEvent = nextEvent->next;
         }
         else {
@@ -187,26 +203,30 @@ void MidiLayer::gather(juce::Array<class MidiEvent*> events,
 
     // now the segments
 
-    while (currentSegment != nullptr) {
+    while (nextSegment != nullptr) {
 
-        int segstart = currentSegment->startFrame;
-        int seglast = segstart + currentSegment->frames - 1;
+        int segstart = nextSegment->originFrame;
+        int seglast = segstart + nextSegment->segmentFrames - 1;
 
-        if (segStart > playFrame) {
+        if (segstart > playFrame) {
             // haven't reached this segment yet, wait for the next block
             break;
         }
         else if (seglast < playFrame) {
             // this segment has passed, seek must be broken
             Trace(1, "MidiLayer: Unexpected past segment in cursor");
-            currentSegment = nullptr;
+            nextSegment = nullptr;
         }
         else {
             // segment in range
-            currentSegment->gather(events, playFrame, lastFrame);
+            nextSegment->gather(events, playFrame, blockFrames);
             if (seglast <= lastFrame) {
                 // segment has been consumed, move to the next one
-                currentSegment = currentSegment->next;
+                nextSegment = nextSegment->next;
+            }
+            else {
+                // more to go in this segment
+                break;
             }
         }
     }
@@ -232,10 +252,10 @@ void MidiLayer::seek(int startFrame)
     MidiSegment* seg = segments;
     while (seg != nullptr) {
 
-        int segstart = currentSegment->startFrame;
-        int seglast = segstart + currentSegment->frames - 1;
+        int segstart = seg->originFrame;
+        int seglast = segstart + seg->segmentFrames - 1;
 
-        if (segLast < startFrame) {
+        if (seglast < startFrame) {
             // segment is in the past
             seg = seg->next;
         }
@@ -244,7 +264,7 @@ void MidiLayer::seek(int startFrame)
             break;
         }
     }
-    currentSegment = seg;
+    nextSegment = seg;
 
     playFrame = startFrame;
 }

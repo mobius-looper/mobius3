@@ -975,7 +975,9 @@ void MobiusViewer::assembleMinorModes(MobiusViewTrack* tview)
     
     // the state flag has been "recording" but the mode was displayed
     // as "Capture" so this must have only been used for Capture/Bounce
-    if (tview->recording) addMinorMode(tview, "Capture");
+    // no, recording means any type of recording which is used to color things red
+    // capture/Bounce is something else, need a different flag for that
+    //if (tview->recording) addMinorMode(tview, "Capture");
 
     // this would be better as something in the track strip like DAWs do
     if (tview->solo) addMinorMode(tview, "Solo");
@@ -1110,6 +1112,11 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
             vl->frames = lstate->frames;
         }
     }
+
+    tview->layerCount = tstate->layerCount;
+    tview->activeLayer = tstate->activeLayer;
+    // checkpoints not implemented yet
+    
 }
 
 void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 

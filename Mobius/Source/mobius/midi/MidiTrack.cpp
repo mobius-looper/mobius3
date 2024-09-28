@@ -79,14 +79,15 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     
     midiPool = tracker->getMidiPool();
     sequencePool = tracker->getSequencePool();
-    eventPool = tracker->getEventPool();
     layerPool = tracker->getLayerPool();
+    segmentPool = tracker->getSegmentPool();
+    eventPool = tracker->getEventPool();
     
     player.initialize(container);
     events.initialize(eventPool);
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
-        MidiLoop* l = new MidiLoop(this);
+        MidiLoop* l = new MidiLoop(this, layerPool);
         l->number = i + 1;
         loops.add(l);
     }
@@ -197,6 +198,8 @@ void MidiTrack::doAction(UIAction* a)
             case FuncGlobalReset: doReset(a, true); break;
             case FuncRecord: doRecord(a); break;
             case FuncOverdub: doOverdub(a); break;
+            case FuncUndo: doUndo(a); break;
+            case FuncRedo: doRedo(a); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
             }
@@ -282,6 +285,16 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     // not the same as mode=Record, can be any type of recording
     state->recording = recording;
 
+    for (int i = 0 ; i < activeLoops ; i++) {
+        MidiLoop* loop = loops[i];
+        MobiusMidiState::Loop* lstate = state->loops[0];
+        
+        if (lstate == nullptr)
+          Trace(1, "MidiTrack: MobiusMidiState loop array too small");
+        else
+          lstate->frames = loop->getFrames();
+    }
+
     // only one loop right now, duplicate the frame counter
     MobiusMidiState::Loop* lstate = state->loops[0];
     if (lstate == nullptr)
@@ -292,6 +305,13 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     // special pseudo mode
     if (synchronizing)
       state->mode = MobiusMidiState::ModeSynchronize;
+
+    // skip checkpoints for awhile, really thinking we should just
+    // pass MobiusView down here and let us fill it in
+    MidiLoop* loop = loops[loopIndex];
+    int layerCount = loop->getLayerCount();
+    state->activeLayer = layerCount - 1;
+    state->layerCount = layerCount + loop->getRedoCount();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -397,7 +417,7 @@ void MidiTrack::advance(int newFrames)
     if (mode == MobiusMidiState::ModeReset) {
         // nothing to do
     }
-    else if (mode == MobiusMidistate::ModeRecord) {
+    else if (mode == MobiusMidiState::ModeRecord) {
         advanceRecord(newFrames);
     }
     else if (isExtending()) {
@@ -456,26 +476,61 @@ void MidiTrack::advanceAndLoop(int newFrames)
 {
     // let the player play to the end
     int included = frames - frame;
-    int remainder = newFrames - inluded;
+    int remainder = newFrames - included;
 
     player.play(included);
-    if (player.getFrame() != frames) {
-        // we were expecting this to have reached the end, why didn't it
-        Trace(1, "MidiTrack: Player didn't reach the end, why?");
-    }
 
-    if (recordLayer.hasChanges()) {
+    // temporary sanity check on player
+    if (player.getFrames() > 0) {
+        if (player.getFrame() != frames) {
+            // we were expecting this to have reached the end, why didn't it
+            Trace(1, "MidiTrack: Player didn't reach the end, why?");
+        }
+    }
+    
+    if (recordLayer->hasChanges()) {
         shift(false);
     }
     else {
-        Trace(2, "MidiTrack: Squelching record layer");
-        recordLayer.resetChanges();
+        //Trace(2, "MidiTrack: Squelching record layer");
+        recordLayer->resetChanges();
         player.restart();
     }
 
     player.play(remainder);
+    frame = 0;
 }    
         
+void MidiTrack::shift(bool initialRecording)
+{
+    Trace(2, "MidiTrack: Shifting record layer");
+    MidiLoop* loop = loops[loopIndex];
+
+    if (initialRecording) {
+        recordLayer->setFrames(frames);
+    }
+    else if (recordLayer->getFrames() != frames) {
+        Trace(1, "MidiTrack: Layer shift frame anomoly");
+        recordLayer->setFrames(frames);
+    }
+    
+    loop->add(recordLayer);
+    player.shift(recordLayer);
+        
+    MidiSegment* seg = segmentPool->newSegment();
+    seg->layer = recordLayer;
+    seg->originFrame = 0;
+    seg->segmentFrames = frames;
+    seg->referenceFrame = 0;
+        
+    recordLayer = prepLayer();
+    recordLayer->add(seg);
+    recordLayer->setFrames(frames);
+
+    // adding the segment bumped the change count, clear it
+    recordLayer->resetChanges();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -712,50 +767,22 @@ void MidiTrack::startRecording()
 
     pulsator->start(number);
     
-    Trace(2, "MidiTrack: Starting recording");
+    Trace(2, "MidiTrack: %d Recording", number);
 }
 
 void MidiTrack::stopRecording()
 {
+    int eventCount = recordLayer->getEventCount();
+    
     shift(true);
     
     mode = MobiusMidiState::ModePlay;
     recording = false;
+    frame = 0;
     
     pulsator->lock(number, frames);
 
-    Trace(2, "MidiTrack: Finished recording with %d events", eventCount);
-}
-
-void MidiTrack::shift(bool initialRecording)
-{
-    Trace(2, "MidiTrack: Shifting record layer");
-    MidiLoop* loop = loops[loopIndex];
-
-    if (initialRecording) {
-        recordLayer->setFrames(frames);
-    }
-    else if (recordLayer->getFrames() != frames) {
-        Trace(1, "MidiTrack: Layer shift frame anomoly");
-        recordLayer->setFrames(frames);
-    }
-    
-    loop->add(recordLayer);
-    player.shift(recordLayer);
-    int eventCount = recordLayer->size();
-        
-    MidiSegment* seg = segmentPool->newSegment();
-    seg->layer = recordLayer;
-    seg->startFrame = 0;
-    seg->frames = frames;
-    seg->referenceStartFrame = 0;
-        
-    recordLayer = prepLayer();
-    recordLayer->add(seg);
-    recordLayer->setFrames(frames);
-
-    // adding the segment bumped the change count, clear it
-    recordLayer->resetChanges();
+    Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 
 /**
@@ -766,7 +793,7 @@ void MidiTrack::shift(bool initialRecording)
 MidiLayer* MidiTrack::prepLayer()
 {
     MidiLayer* layer = layerPool->newLayer();
-    layer->prepare(sequencePool, midiPool);
+    layer->prepare(sequencePool, midiPool, segmentPool);
     return layer;
 }
 
@@ -802,8 +829,61 @@ void MidiTrack::doOverdub(UIAction* a)
 {
     (void)a;
     overdub = !overdub;
+    recording = overdub;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Undo/Redo
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Ignoring undoing of events and Record mode right now
+ *
+ * At this moment, we have recordLayer that hasn't been shifted into the loop
+ * and is accumulating edits.  Meanwhile, the Loop has what is currently playing
+ * at the top of the layer stack, and MidiPlayer is doing it.
+ *
+ * There are two cases:
+ *
+ * 1) if the loop does not have any layers underneath the current play layer
+ *    we reset the recordLayer to throw away any pending changes
+ *
+ * 2) if the loop DOES have an undo layer, we reclaim the current recordLayer,
+ *    ask the loop to shift the current play layer to the redo list, and change
+ *    the Player to play the restored layer
+ *
+ */
+void MidiTrack::doUndo(UIAction* a)
+{
+    (void)a;
+    MidiLoop* loop = loops[loopIndex];
+    MidiLayer* playing = loop->getPlayLayer();
+    MidiLayer* restored = loop->undo();
+    if (playing == restored) {
+        // there was nothing to undo, leave the player alone
+    }
+    else {
+        player.setLayer(restored);
+    }
+    recordLayer->clear();
+}
+
+void MidiTrack::doRedo(UIAction* a)
+{
+    (void)a;
+    MidiLoop* loop = loops[loopIndex];
+    MidiLayer* playing = loop->getPlayLayer();
+    MidiLayer* restored = loop->redo();
+    if (playing == restored) {
+        // there was nothing to undo, leave the player alone
+    }
+    else {
+        player.setLayer(restored);
+    }
+    recordLayer->clear();
+}
 
 /****************************************************************************/
 /****************************************************************************/

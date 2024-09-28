@@ -20,14 +20,15 @@ class MidiLayer : public PooledObject
     void add(class MidiEvent* e);
     void add(class MidiSegment* s);
     void setFrames(int frames);
-    int size();
+    int getFrames();
 
     void resetPlayState();
-    void gather(juce::Array<class MidiEvent*> events, int startFrame, int endFrame);
+    void gather(juce::Array<class MidiEvent*>* events, int startFrame, int endFrame);
 
     bool hasChanges();
     void resetChanges();
     void incChanges();
+    int getEventCount();
 
   private:
 
@@ -46,7 +47,7 @@ class MidiLayer : public PooledObject
     
     int playFrame = -1;
     class MidiEvent* nextEvent = nullptr;
-    class MidiSegment* currentSegment = nullptr;
+    class MidiSegment* nextSegment = nullptr;
     
     void seek(int startFrame);
     

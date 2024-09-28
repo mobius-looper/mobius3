@@ -71,10 +71,9 @@ void MidiPlayer::setLayer(MidiLayer* l)
     alloff();
 
     layer = l;
-    
-    // attempt to keep the same relative location
     loopFrames = layer->getFrames();
     
+    // attempt to keep the same relative location
     if (loopFrames == 0) {
         playFrame = 0;
     }
@@ -85,6 +84,16 @@ void MidiPlayer::setLayer(MidiLayer* l)
     layer->resetPlayState();
 }
 
+int MidiPlayer::getFrame()
+{
+    return playFrame;
+}
+
+int MidiPlayer::getFrames()
+{
+    return loopFrames;
+}
+
 /**
  * Unlike setLayer, we expect this to have contunity with the last
  * layer so don't need to force notes off.  Any other differences?
@@ -93,6 +102,7 @@ void MidiPlayer::setLayer(MidiLayer* l)
 void MidiPlayer::shift(MidiLayer* l)
 {
     layer = l;
+    loopFrames = layer->getFrames();
     playFrame = 0;
     layer->resetPlayState();
 }
@@ -113,10 +123,12 @@ void MidiPlayer::restart()
  */
 void MidiPlayer::play(int blockFrames)
 {
-    if (blockFrames > 0 && loopFrames > 0) {
+    if (blockFrames > 0) {
 
-        if (blockFrames > loopFrames) {
-            
+        if (loopFrames == 0) {
+            // empty layer
+        }
+        else if (blockFrames > loopFrames) {
             // sequence was not empty but was extremely short
             // technically we should cycle over the layer more than once, but this
             // complicates things and is most likely an error
@@ -124,18 +136,17 @@ void MidiPlayer::play(int blockFrames)
             loopFrames = 0;
         }
         else {
-            int endFrame = playFrame + blockFrames;
-
             // todo: rather than gathering could have the event
             // walk just play them, but I kind of like the intermedate
             // gather, might be good to apply processing
             currentEvents.clearQuick();
-            layer->gather(&currentEvents, playFrame, endFrame);
-
+            layer->gather(&currentEvents, playFrame, blockFrames);
+            
             for (int i = 0 ; i < currentEvents.size() ; i++) {
                 send(currentEvents[i]);
+            }
             
-            playFrame = endFrame;
+            playFrame += blockFrames;
         }
     }
 }
