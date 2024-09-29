@@ -75,6 +75,7 @@ MidiLayer* MidiLoop::undo()
         layerCount--;
 
         undone->next = redoLayers;
+        redoLayers = undone;
         redoCount++;
 
         // todo: configurable redo limit
