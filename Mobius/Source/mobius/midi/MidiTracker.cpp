@@ -241,6 +241,11 @@ MidiSegmentPool* MidiTracker::getSegmentPool()
     return &segmentPool;
 }
 
+MidiNotePool* MidiTracker::getNotePool()
+{
+    return &notePool;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State

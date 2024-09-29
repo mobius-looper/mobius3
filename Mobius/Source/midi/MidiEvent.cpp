@@ -16,6 +16,7 @@ void MidiEvent::poolInit()
     next = nullptr;
     frame = 0;
     duration = 0;
+    releaseVelocity = 0;
     // just leave juce message alone
 }
 

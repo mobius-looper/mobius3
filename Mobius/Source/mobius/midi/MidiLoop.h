@@ -10,7 +10,7 @@ class MidiLoop
 {
   public:
 
-    MidiLoop(class MidiTrack* t, class MidiLayerPool* p);
+    MidiLoop(class MidiLayerPool* p);
     ~MidiLoop();
 
     void reset();
@@ -28,7 +28,6 @@ class MidiLoop
     
   private:
 
-    class MidiTrack* track = nullptr;
     class MidiLayerPool* layerPool = nullptr;
 
     // the active layer (head) and undo layers

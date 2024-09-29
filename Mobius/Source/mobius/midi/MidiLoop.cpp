@@ -5,9 +5,8 @@
 #include "MidiTrack.h"
 #include "MidiLoop.h"
 
-MidiLoop::MidiLoop(MidiTrack* argTrack, MidiLayerPool* pool)
+MidiLoop::MidiLoop(MidiLayerPool* pool)
 {
-    track = argTrack;
     layerPool = pool;
 }
 

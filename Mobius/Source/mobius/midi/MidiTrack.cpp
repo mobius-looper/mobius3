@@ -20,9 +20,7 @@
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
-#include "../../model/ValueSet.h"
 #include "../../model/Session.h"
-#include "../../model/Enumerator.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -54,34 +52,37 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     
     pulsator = container->getPulsator();
     finder = container->getParameterFinder();
-    
+
     midiPool = tracker->getMidiPool();
-    sequencePool = tracker->getSequencePool();
-    layerPool = tracker->getLayerPool();
-    segmentPool = tracker->getSegmentPool();
     eventPool = tracker->getEventPool();
+
+    MidiLayerPool* layerPool = tracker->getLayerPool();
+
+    recorder.initialize(layerPool,
+                        tracker->getSequencePool(),
+                        midiPool,
+                        tracker->getSegmentPool(),
+                        tracker->getNotePool());
     
-    player.initialize(container);
+    player.initialize(container, tracker->getNotePool());
+    
     events.initialize(eventPool);
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
-        MidiLoop* l = new MidiLoop(this, layerPool);
+        MidiLoop* l = new MidiLoop(layerPool);
         l->number = i + 1;
         loops.add(l);
     }
     activeLoops = 2;
     loopIndex = 0;
     
+    // todo: worried about this since it is called at runtime
+    // and may do things not available at static initialization time
     doReset(nullptr, true);
 }
 
 MidiTrack::~MidiTrack()
 {
-}
-
-MidiTracker* MidiTrack::getMidiTracker()
-{
-    return tracker;
 }
 
 /**
@@ -134,6 +135,16 @@ void MidiTrack::configure(Session::Track* def)
     }
 
     // todo: loopsPerTrack from somewhere
+
+    // hack to test durations
+    MslValue* v = def->get("durationMode");
+    if (v != nullptr && v->getBool())
+      durationMode = true;
+    else
+      durationMode = false;
+
+    recorder.setDurationMode(durationMode);
+    player.setDurationMode(durationMode);
     
 }
 
@@ -392,6 +403,15 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTrack::advance(int newFrames)
 {
+    // whatever shenanigans we do with modes and extensions,
+    // if recorder is watching any held notes it needs to advance
+    // really only necessary if we're in one of the recording modes
+    // but in that case the held list should be empty
+    // easier to do it up here before we start messing with layer shifting
+    // which alters recorder state
+    // hmm, think
+    recorder.advance(newFrames);
+    
     if (mode == MobiusMidiState::ModeReset) {
         // nothing to do
     }
@@ -466,12 +486,11 @@ void MidiTrack::advanceAndLoop(int newFrames)
         }
     }
     
-    if (recordLayer->hasChanges()) {
-        shift(false);
+    if (recorder.hasChanges()) {
+        shift();
     }
     else {
         //Trace(2, "MidiTrack: Squelching record layer");
-        recordLayer->resetChanges();
         player.restart();
     }
 
@@ -479,34 +498,13 @@ void MidiTrack::advanceAndLoop(int newFrames)
     frame = 0;
 }    
         
-void MidiTrack::shift(bool initialRecording)
+void MidiTrack::shift()
 {
     Trace(2, "MidiTrack: Shifting record layer");
     MidiLoop* loop = loops[loopIndex];
-
-    if (initialRecording) {
-        recordLayer->setFrames(frames);
-    }
-    else if (recordLayer->getFrames() != frames) {
-        Trace(1, "MidiTrack: Layer shift frame anomoly");
-        recordLayer->setFrames(frames);
-    }
-    
-    loop->add(recordLayer);
-    player.shift(recordLayer);
-        
-    MidiSegment* seg = segmentPool->newSegment();
-    seg->layer = recordLayer;
-    seg->originFrame = 0;
-    seg->segmentFrames = frames;
-    seg->referenceFrame = 0;
-        
-    recordLayer = prepLayer();
-    recordLayer->add(seg);
-    recordLayer->setFrames(frames);
-
-    // adding the segment bumped the change count, clear it
-    recordLayer->resetChanges();
+    MidiLayer* neu = recorder.commit(frames, recording);
+    loop->add(neu);
+    player.shift(neu);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -573,19 +571,6 @@ void MidiTrack::doPulse(TrackEvent* e)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Sequence Management
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::reclaim(MidiSequence* seq)
-{
-    if (seq != nullptr)
-      seq->clear(midiPool);
-    sequencePool->checkin(seq);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // Reset
 //
 //////////////////////////////////////////////////////////////////////
@@ -599,12 +584,11 @@ void MidiTrack::doReset(UIAction* a, bool full)
     (void)a;
     mode = MobiusMidiState::ModeReset;
 
+    recorder.reset();
     player.reset();
-    reclaimLayer(recordLayer);
-    recordLayer = nullptr;
+    
     recording = false;
     synchronizing = false;
-      
     frames = 0;
     frame = 0;
     cycles = 1;
@@ -728,15 +712,11 @@ void MidiTrack::toggleRecording()
 
 void MidiTrack::startRecording()
 {
+    recorder.reset();
     player.reset();
     
     MidiLoop* loop = loops[loopIndex];
     loop->reset();
-    
-    if (recordLayer == nullptr)
-      recordLayer = prepLayer();
-    else
-      recordLayer->clear();
     
     frames = 0;
     frame = 0;
@@ -750,37 +730,21 @@ void MidiTrack::startRecording()
 
 void MidiTrack::stopRecording()
 {
-    int eventCount = recordLayer->getEventCount();
-    
-    shift(true);
+    int eventCount = recorder.getEventCount();
+
+    // subtlty, shift passes the current "recording" flag to
+    // Recorder as an indiciating whether to close off held notes,
+    // here is where we would need to check for an Overdub "alternate ending"
+    // to Record and keep it on
+    recording = false;
+    shift();
     
     mode = MobiusMidiState::ModePlay;
-    recording = false;
     frame = 0;
     
     pulsator->lock(number, frames);
 
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
-}
-
-/**
- * Build a layer/sequence combo.
- * Above MidiLayer to minimize pool dependencies but it has this for clear()
- * so maybe just give it a pool and let it deal with the sequence?
- */
-MidiLayer* MidiTrack::prepLayer()
-{
-    MidiLayer* layer = layerPool->newLayer();
-    layer->prepare(sequencePool, midiPool, segmentPool);
-    return layer;
-}
-
-void MidiTrack::reclaimLayer(MidiLayer* layer)
-{
-    if (layer != nullptr) {
-        layer->clear();
-        layerPool->checkin(layer);
-    }
 }
 
 /**
@@ -790,7 +754,7 @@ void MidiTrack::midiEvent(MidiEvent* e)
 {
     if (recording) {
         e->frame = frame;
-        recordLayer->add(e);
+        recorder.add(e);
     }
     else {
         midiPool->checkin(e);
@@ -808,6 +772,11 @@ void MidiTrack::doOverdub(UIAction* a)
     (void)a;
     overdub = !overdub;
     recording = overdub;
+
+    if (!recording) {
+        // when turning overdub off, need to close any held notes being recorded
+        recorder.finalizeHeld();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -819,7 +788,7 @@ void MidiTrack::doOverdub(UIAction* a)
 /**
  * Ignoring undoing of events and Record mode right now
  *
- * At this moment, we have recordLayer that hasn't been shifted into the loop
+ * At this moment, MidiRecorder has a layer that hasn't been shifted into the loop
  * and is accumulating edits.  Meanwhile, the Loop has what is currently playing
  * at the top of the layer stack, and MidiPlayer is doing it.
  *
@@ -845,7 +814,7 @@ void MidiTrack::doUndo(UIAction* a)
     else {
         player.setLayer(restored);
     }
-    recordLayer->clear();
+    recorder.reset();
 }
 
 void MidiTrack::doRedo(UIAction* a)
@@ -860,7 +829,7 @@ void MidiTrack::doRedo(UIAction* a)
     else {
         player.setLayer(restored);
     }
-    recordLayer->clear();
+    recorder.reset();
 }
 
 /****************************************************************************/

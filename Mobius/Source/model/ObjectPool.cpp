@@ -175,11 +175,12 @@ void ObjectPool::flush()
  */
 void ObjectPool::traceStatistics()
 {
-    Trace(2, "ObjectPool %s statistics\n", name);
-    Trace(2, "  Created %ld\n", (long)totalCreated);
-    Trace(2, "  Pool size %ld\n", (long)poolSize);
-    Trace(2, "  Min pool %d\n", (long)minSize);
-    Trace(2, "  Extensions %ld\n", (long)extensions);
+    char tracebuf[1024];
+    snprintf(tracebuf, sizeof(tracebuf),
+             "ObjectPool %s: Created %d Pool %d Min %d Extensions %d",
+             name, totalCreated, poolSize, minSize, extensions);
+
+    Trace(2, tracebuf);
 }
 
 //////////////////////////////////////////////////////////////////////

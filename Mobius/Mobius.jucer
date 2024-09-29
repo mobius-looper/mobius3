@@ -478,13 +478,20 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <FILE id="LEbwIQ" name="Notification.cpp" compile="1" resource="0"
+              file="Source/mobius/Notification.cpp"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="r4vAR1" name="MidiLayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLayer.cpp"/>
           <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
           <FILE id="MLMR7A" name="MidiLoop.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLoop.cpp"/>
           <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
+          <FILE id="usC1om" name="MidiNote.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiNote.cpp"/>
+          <FILE id="xnFNZu" name="MidiNote.h" compile="0" resource="0" file="Source/mobius/midi/MidiNote.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
+          <FILE id="wpIvqU" name="MidiRecorder.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/MidiRecorder.cpp"/>
+          <FILE id="aKlMto" name="MidiRecorder.h" compile="0" resource="0" file="Source/mobius/midi/MidiRecorder.h"/>
           <FILE id="Fd2CaO" name="MidiSegment.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiSegment.cpp"/>
           <FILE id="NioJTm" name="MidiSegment.h" compile="0" resource="0" file="Source/mobius/midi/MidiSegment.h"/>
           <FILE id="yJf44l" name="MidiTrack.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiTrack.cpp"/>

@@ -33,6 +33,11 @@ class MidiEvent : public PooledObject
     int duration = 0;
 
     /**
+     * For notes, the release velocity if tracking duration
+     */
+    int releaseVelocity = 0;
+
+    /**
      * The wrapped Juce message
      */
     juce::MidiMessage juceMessage;

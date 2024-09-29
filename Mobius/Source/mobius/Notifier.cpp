@@ -22,7 +22,7 @@ void Notifier::setPool(class MobiusPools* p)
 
 Notification* Notifier::alloc()
 {
-    return pool->allocNotification();
+    return pool->newNotification();
 }
 
 void Notifier::add(Notification* n)
@@ -48,7 +48,7 @@ void Notifier::flush()
     while (head != nullptr) {
         Notification* next = head->next;
         head->next = nullptr;
-        pool->free(head);
+        pool->checkin(head);
         head = next;
     }
     tail = nullptr;

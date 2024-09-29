@@ -7,14 +7,12 @@
 
 #include "../../sync/Pulse.h"
 
+#include "MidiRecorder.h"
 #include "MidiPlayer.h"
 #include "TrackEvent.h"
 
 class MidiTrack
 {
-    friend class MidiLoop;
-    friend class MidiPlayer;
-    
   public:
 
     MidiTrack(class MobiusContainer* c, class MidiTracker* t);
@@ -36,14 +34,6 @@ class MidiTrack
 
     void refreshState(class MobiusMidiState::Track* state);
 
-  protected:
-
-    class MidiTracker* getMidiTracker();
-    
-    int getLoopFrames() {
-        return frames;
-    }
-
   private:
 
     class MobiusContainer* container = nullptr;
@@ -52,15 +42,13 @@ class MidiTrack
     class Pulsator* pulsator = nullptr;
     
     class MidiEventPool* midiPool = nullptr;
-    class MidiSequencePool* sequencePool = nullptr;
-    class MidiLayerPool* layerPool = nullptr;
-    class MidiSegmentPool* segmentPool = nullptr;
     class TrackEventPool* eventPool = nullptr;
     
     juce::OwnedArray<class MidiLoop> loops;
     int activeLoops = 0;
     int loopIndex = 0;
     TrackEventList events;
+    MidiRecorder recorder {this};
     MidiPlayer player {this};
 
     // sync status
@@ -86,21 +74,19 @@ class MidiTrack
     int feedback = 127;
     int pan = 64;
 
-    class MidiLayer* recordLayer = nullptr;
     bool recording = false;
     bool synchronizing = false;
-
+    bool durationMode = false;
+    
     void advance(int newFrames);
     void advanceRecord(int newFrames);
     bool isExtending();
     void extend(int newFrames);
     void advanceAndLoop(int newFrames);
-    void shift(bool initialRecording);
+    void shift();
     
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
-    
-    void reclaim(class MidiSequence* seq);
     
     void doRecord(class UIAction* a);
     void doRecord(class TrackEvent* e);
@@ -115,8 +101,5 @@ class MidiTrack
     void doRedo(class UIAction* a);
 
     void doParameter(class UIAction* a);
-    
-    class MidiLayer* prepLayer();
-    void reclaimLayer(class MidiLayer* layer);
     
 };

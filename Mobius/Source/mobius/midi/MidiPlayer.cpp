@@ -11,6 +11,7 @@
 
 #include "MidiTrack.h"
 #include "MidiLayer.h"
+#include "MidiNote.h"
 
 #include "MidiPlayer.h"
 
@@ -36,9 +37,23 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize(MobiusContainer* c)
+void MidiPlayer::initialize(MobiusContainer* c, MidiNotePool* pool)
 {
     container = c;
+    notePool = pool;
+}
+
+/**
+ * Test hack to enable duration mode playing.
+ * Recorder is always saving note durations when it records as well
+ * as NoteOffs.
+ *
+ * For player when this is enabled we will ignore NoteOffs and instead
+ * start tracking durations.
+ */
+void MidiPlayer::setDurationMode(bool b)
+{
+    durationMode = b;
 }
 
 /**
@@ -53,6 +68,17 @@ void MidiPlayer::reset()
     playFrame = 0;
     loopFrames = 0;
     currentEvents.clearQuick();
+    flushHeld();
+}
+
+void MidiPlayer::flushHeld()
+{
+    while (heldNotes != nullptr) {
+        MidiNote* next = heldNotes->next;
+        heldNotes->next = nullptr;
+        notePool->checkin(heldNotes);
+        heldNotes = next;
+    }
 }
 
 /**
@@ -153,12 +179,33 @@ void MidiPlayer::play(int blockFrames)
 
 void MidiPlayer::send(MidiEvent* e)
 {
-    if (e->juceMessage.isNoteOn())
-      trackNoteOn(e);
-    else if (e->juceMessage.isNoteOff())
-      trackNoteOff(e);
+    if (!durationMode) {
+        if (e->juceMessage.isNoteOn())
+          trackNoteOn(e);
+        else if (e->juceMessage.isNoteOff())
+          trackNoteOff(e);
+        
+        container->midiSend(e->juceMessage, 0);
+    }
+    else {
+        if (e->juceMessage.isNoteOn()) {
+            container->midiSend(e->juceMessage, 0);
 
-    container->midiSend(e->juceMessage, 0);
+            MidiNote* note = notePool->newNote();
+            // todo: resume work here
+            // rather than copying the channel whatever,
+            // is it safe to just remember the MidiEvent we dug out of
+            // the layer hierarchy?  it can't go away out from under the player
+            // right?
+            
+            
+        }
+        else if (e->juceMessage.isNoteOff()) {
+            // ignore these in duration mode
+            // but could do some consistency checks to make sure it went off
+        }
+    }
+    
 }
 
 //////////////////////////////////////////////////////////////////////

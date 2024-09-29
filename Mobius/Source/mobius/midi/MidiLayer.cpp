@@ -52,10 +52,11 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
       Trace(1, "MidiLayer::prepare Already had segments");
 
     clear();
-
-    sequence = sequencePool->newSequence();
 }
 
+/**
+ * These are pooled so it is important that clear get rid of everything
+ */
 void MidiLayer::clear()
 {
     if (sequence != nullptr) {
@@ -85,15 +86,13 @@ void MidiLayer::resetPlayState()
 
 void MidiLayer::add(MidiEvent* e)
 {
-    if (sequence == nullptr) {
-        Trace(1, "MidiLayer: Can't add event without a sequence");
-    }
-    else {
-        // todo: to implement the audio loop's "noise floor" we could monitor
-        // note velocities
-        sequence->add(e);
-        changes++;
-    }
+    if (sequence == nullptr)
+      sequence = sequencePool->newSequence();
+
+    // todo: to implement the audio loop's "noise floor" we could monitor
+    // note velocities
+    sequence->add(e);
+    changes++;
 }
 
 /**
@@ -240,14 +239,19 @@ void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
  */
 void MidiLayer::seek(int startFrame)
 {
-    MidiEvent* event = sequence->getFirst();
-    while (event != nullptr) {
-        if (event->frame < startFrame)
-          event = event->next;
-        else
-          break;
+    nextEvent = nullptr;
+    nextSegment = nullptr;
+    
+    if (sequence != nullptr) {
+        MidiEvent* event = sequence->getFirst();
+        while (event != nullptr) {
+            if (event->frame < startFrame)
+              event = event->next;
+            else
+              break;
+        }
+        nextEvent = event;
     }
-    nextEvent = event;
 
     MidiSegment* seg = segments;
     while (seg != nullptr) {

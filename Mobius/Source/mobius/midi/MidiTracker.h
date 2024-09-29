@@ -7,6 +7,7 @@
 #include "../../midi/MidiSequence.h"
 
 #include "TrackEvent.h"
+#include "MidiNote.h"
 #include "MidiSegment.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
@@ -34,6 +35,7 @@ class MidiTracker
     class TrackEventPool* getEventPool();
     class MidiLayerPool* getLayerPool();
     class MidiSegmentPool* getSegmentPool();
+    class MidiNotePool* getNotePool();
     
     MobiusContainer* getContainer() {
         return container;
@@ -56,6 +58,7 @@ class MidiTracker
     MidiLayerPool layerPool;
     MidiSegmentPool segmentPool;
     TrackEventPool eventPool;
+    MidiNotePool notePool;
     
     juce::OwnedArray<MidiTrack> tracks;
     MobiusMidiState state;

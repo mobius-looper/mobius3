@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "Notification.h"
+
 class MobiusPools
 {
   public:
@@ -20,21 +22,12 @@ class MobiusPools
     // if they dip below their pool threshold
     void fluff();
 
-    class Notification* allocNotification();
-    void free(class Notification* n);
-
-    void traceStatistics();
+    class Notification* newNotification();
+    void checkin(class Notification* n);
 
   private:
-    
-    class Notification* notificationPool = nullptr;
 
-    int notificationsCreated = 0;
-    int notificationsRequested = 0;
-    int notificationsReturned = 0;
-    int notificationsDeleted = 0;
-    
-    void flushNotifications();
+    NotificationPool notificationPool;
     
 };
 
