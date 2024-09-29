@@ -11,10 +11,11 @@
 /**
  * Pool cleanser
  */
-void MidiEvent::init()
+void MidiEvent::poolInit()
 {
     next = nullptr;
     frame = 0;
+    duration = 0;
     // just leave juce message alone
 }
 

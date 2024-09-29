@@ -13,7 +13,7 @@ class MidiLayer : public PooledObject
     ~MidiLayer();
     MidiLayer* next = nullptr;
     
-    void init() override;
+    void poolInit() override;
     void prepare(class MidiSequencePool* spool, class MidiEventPool* epool, class MidiSegmentPool* segpool);
     
     void clear();

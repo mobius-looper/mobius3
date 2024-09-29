@@ -32,7 +32,7 @@ UIAction::~UIAction()
 /**
  * Initializer used by the ObjectPool
  */
-void UIAction::init()
+void UIAction::poolInit()
 {
     reset();
 }

@@ -21,7 +21,7 @@ MidiLayer::~MidiLayer()
 /**
  * Pool cleanser
  */
-void MidiLayer::init()
+void MidiLayer::poolInit()
 {
     next = nullptr;
     

@@ -28,12 +28,17 @@ class MidiEvent : public PooledObject
     int frame = 0;
 
     /**
+     * For notes, the duration in frames.
+     */
+    int duration = 0;
+
+    /**
      * The wrapped Juce message
      */
     juce::MidiMessage juceMessage;
 
     // PooledObject overrides
-    void init() override;
+    void poolInit() override;
 
 };
 

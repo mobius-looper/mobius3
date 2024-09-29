@@ -44,7 +44,7 @@ PooledObject* PooledObject::getPoolChain()
  * If the object doesn't know, could delete it, but if we're in the audio
  * thread it may be better to leak it.  Not supposed to happen.
  */
-void PooledObject::checkin()
+void PooledObject::poolCheckin()
 {
     if (mPool == nullptr) {
         Trace(1, "PooledObject: I have no pool and I must scream\n");
@@ -85,7 +85,7 @@ PooledObject* ObjectPool::checkout()
         if (poolSize < minSize)
           minSize = poolSize;
 
-        obj->init();
+        obj->poolInit();
     }
     else {
         // subclass must overload this
@@ -118,7 +118,7 @@ void ObjectPool::checkin(PooledObject* obj)
         }
 
         // keep it clean in the pool for debugging
-        obj->init();
+        obj->poolInit();
         
         totalReturned++;
     }

@@ -24,7 +24,7 @@ class TrackEvent : public PooledObject
     
     TrackEvent();
     ~TrackEvent();
-    void init();
+    void poolInit() override;
     
     // chain pointer for an event list
     TrackEvent* next = nullptr;

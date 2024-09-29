@@ -19,8 +19,7 @@ class MidiSequence : public PooledObject
     MidiSequence();
     ~MidiSequence();
 
-    // only for the pool, don't like the name, make this poolInit
-    void init() override;
+    void poolInit() override;
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);
 

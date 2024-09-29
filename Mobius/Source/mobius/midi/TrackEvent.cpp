@@ -22,7 +22,7 @@ TrackEvent::~TrackEvent()
 /**
  * Pool cleanser
  */
-void TrackEvent::init()
+void TrackEvent::poolInit()
 {
     next = nullptr;
     type = EventNone;

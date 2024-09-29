@@ -113,7 +113,7 @@ class UIAction : public PooledObject {
     UIAction(UIAction* src);
 	~UIAction();
 
-    void init() override;
+    void poolInit() override;
     void init(class Binding* b);
     void copy(UIAction* src);
     void reset();

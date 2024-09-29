@@ -11,7 +11,7 @@ class MidiSegment : public PooledObject
 
     MidiSegment();
     ~MidiSegment();
-    void init() override;
+    void poolInit() override;
     
     void gather(juce::Array<class MidiEvent*>* events,
                 int playFrame, int blockFrames);

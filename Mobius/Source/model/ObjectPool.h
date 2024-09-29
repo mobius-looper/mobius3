@@ -33,7 +33,7 @@ class PooledObject {
     virtual ~PooledObject();
 
     // called when something leaves the pool to put it in a clean state
-    virtual void init() = 0;
+    virtual void poolInit() = 0;
 
     /**
      * Return an object to the pool it came from.
@@ -41,7 +41,7 @@ class PooledObject {
      * may not have direct access to the pool.  If the mPool
      * poitner is null, the object will simply be deleted.
      */
-    void checkin();
+    void poolCheckin();
 
   protected:
 

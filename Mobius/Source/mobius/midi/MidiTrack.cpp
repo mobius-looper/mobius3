@@ -1,26 +1,4 @@
 /**
- * Play notes
- *
- * In the simplest single sequence case, on each audio block
- *
- *    for each event with a frame witin range of frame to frame + block size
- *    send to midi output device
- *
- * Will need a handle directly to the output device, don't know if these are thread safe
- * A special form of non-intrusive event list may be needed here, to accumulate sublists
- * of events to play then play them all at once?  Or just a fixed size array, shouldn't be many
- * more than a 100 per block.
- *
- * Will want a cursor to the last event played for the next block.
- *
- * Play cursor will need to jump and play in reverse so double link will be needed eventually
- * may as well just make sequence double linked?
- *
- * Player needs to keep track of every note on and off.   On reset or context switch needs
- * to be able to bulk send offs.
- *
- * devices will have to be arranged in pairs, or just have them both handed to the tracks.
- *
  *
  * Jules from 2014
  *  In all my apps I use a single thread to post midi messages to a particular device, which is often the only way to do it because you need to time the messages anyway. If you have a more ad-hoc system where you need multiple threads to all send messages, I'd probably recommend you use your own mutex to be on the safe side.

@@ -21,7 +21,7 @@ MidiSequence::~MidiSequence()
 /**
  * Pool cleanser
  */
-void MidiSequence::init()
+void MidiSequence::poolInit()
 {
     events = nullptr;
     tail = nullptr;

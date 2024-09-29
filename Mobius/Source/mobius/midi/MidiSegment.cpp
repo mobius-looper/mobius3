@@ -18,7 +18,7 @@ MidiSegment::~MidiSegment()
 /**
  * Pool cleanser
  */
-void MidiSegment::init()
+void MidiSegment::poolInit()
 {
     next = nullptr;
     layer = nullptr;
