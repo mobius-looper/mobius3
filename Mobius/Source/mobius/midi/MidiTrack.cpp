@@ -137,11 +137,11 @@ void MidiTrack::configure(Session::Track* def)
     // todo: loopsPerTrack from somewhere
 
     // hack to test durations
+    // this will be on by default unless you specify a value in the session track definition
+    durationMode = true;
     MslValue* v = def->get("durationMode");
-    if (v != nullptr && v->getBool())
-      durationMode = true;
-    else
-      durationMode = false;
+    if (v != nullptr)
+      durationMode = v->getBool();
 
     recorder.setDurationMode(durationMode);
     player.setDurationMode(durationMode);

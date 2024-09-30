@@ -172,6 +172,8 @@ void MidiPlayer::play(int blockFrames)
                 send(currentEvents[i]);
             }
             
+            advanceHeld(blockFrames);
+            
             playFrame += blockFrames;
         }
     }
@@ -193,19 +195,84 @@ void MidiPlayer::send(MidiEvent* e)
 
             MidiNote* note = notePool->newNote();
             // todo: resume work here
-            // rather than copying the channel whatever,
+            // rather than copying the channel and whatever,
             // is it safe to just remember the MidiEvent we dug out of
             // the layer hierarchy?  it can't go away out from under the player
             // right?
+            // any layer can only contain Segment references to layers beneath it and
+            // those layers can't be reclaimed until the referencing layer has been
+            // reclaimed, think more
+            note->channel = e->juceMessage.getChannel();
+            note->number = e->juceMessage.getNoteNumber();
+            note->velocity = e->releaseVelocity;
+            // experiment with this
+            note->event = e;
+            note->next = heldNotes;
+            heldNotes = note;
+            // this part we DO need to copy
+            // take the adjusted duration, not originalDuration
+            if (e->duration == 0) {
+                Trace(1, "MidiPlayer: Note event without duration");
+                e->duration = 256;
+            }
             
-            
+            note->duration = e->duration;
+            note->remaining = note->duration;
         }
         else if (e->juceMessage.isNoteOff()) {
             // ignore these in duration mode
             // but could do some consistency checks to make sure it went off
         }
     }
-    
+}
+
+/**
+ * Think about when we advance for notes we just added to the list in the
+ * current block.  Do those advance now or on the next block?
+ */
+void MidiPlayer::advanceHeld(int blockFrames)
+{
+    MidiNote* prev = nullptr;
+    MidiNote* held = heldNotes;
+    while (held != nullptr) {
+        MidiNote* next = held->next;
+
+        held->remaining -= blockFrames;
+        if (held->remaining <= 0) {
+            sendOff(held);
+            if (prev == nullptr)
+              heldNotes = next;
+            else
+              prev->next = next;
+            held->next = nullptr;
+            notePool->checkin(held);
+        }
+        else {
+            prev = held;
+        }
+
+        held = next;
+    }
+}
+
+void MidiPlayer::forceHeld()
+{
+    while (heldNotes != nullptr) {
+        sendOff(heldNotes);
+        MidiNote* next = heldNotes->next;
+        heldNotes->next = nullptr;
+        notePool->checkin(heldNotes);
+        heldNotes = next;
+    }
+}
+
+void MidiPlayer::sendOff(MidiNote* note)
+{
+    juce::MidiMessage msg = juce::MidiMessage::noteOff(note->channel,
+                                                       note->number,
+                                                       (juce::uint8)(note->velocity));
+    // todo: include the device id as second arg
+    container->midiSend(msg, 0);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -251,6 +318,10 @@ void MidiPlayer::trackNoteOff(MidiEvent* e)
 
 void MidiPlayer::alloff()
 {
+    // this is where they are in durationMode
+    forceHeld();
+
+    // this is where there are in NoteOff mode
     for (int i = 0 ; i < notesOn.size() ; i++) {
         MidiEvent* on = notesOn[i];
         if (on == nullptr) {

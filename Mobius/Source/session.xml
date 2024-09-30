@@ -4,6 +4,7 @@
   <Track type="midi" index="0">
     <ValueSet>
       <Value name="beatsPerBar" value="4"/>
+      <Value name="durationMode" value="1" type="int"/>
       <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>

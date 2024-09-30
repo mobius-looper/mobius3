@@ -204,10 +204,13 @@ void MidiRecorder::finalizeHold(MidiNote* note, MidiEvent* e)
  */
 void MidiRecorder::add(MidiEvent* e)
 {
-    recordLayer->add(e);
-
     if (e->juceMessage.isNoteOn()) {
+        recordLayer->add(e);
         MidiNote* note = notePool->newNote();
+
+        // todo: like MidiPlayer I think we can just reference the MidiEvent here
+        // rather than copying things from it since the MidiEvent can't be reclaimed
+        // without also reclaiming the layer, right?
         note->channel = e->juceMessage.getChannel();
         note->number = e->juceMessage.getNoteNumber();
         note->event = e;
@@ -215,6 +218,10 @@ void MidiRecorder::add(MidiEvent* e)
         heldNotes = note;
     }
     else if (e->juceMessage.isNoteOff()) {
+        
+        if (!durationMode)
+          recordLayer->add(e);
+        
         MidiNote* note = removeNote(e);
         if (note == nullptr) {
             // note must have been on before the recording started
@@ -228,6 +235,10 @@ void MidiRecorder::add(MidiEvent* e)
             finalizeHold(note, e);
             notePool->checkin(note);
         }
+    }
+    else {
+        // something other than a note, durations do not apply
+        recordLayer->add(e);
     }
 }
 

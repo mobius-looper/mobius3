@@ -41,11 +41,16 @@ class MidiPlayer
     juce::Array<class MidiEvent*> currentEvents;
     juce::Array<class MidiEvent*> notesOn;
     
-    void send(MidiEvent* e);
+    void send(class MidiEvent* e);
+    void flushHeld();
+    void advanceHeld(int blockFrames);
+    void forceHeld();
+    void sendOff(class MidiNote* note);
+
+    // tracking when durationMode is off
     void trackNoteOn(class MidiEvent* e);
     void trackNoteOff(class MidiEvent* e);
     void alloff();
-    void flushHeld();
 
     const int MaxNotes = 64;
 
