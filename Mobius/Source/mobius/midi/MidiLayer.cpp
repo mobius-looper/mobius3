@@ -152,6 +152,11 @@ int MidiLayer::getFrames()
     return layerFrames;
 }
 
+int MidiLayer::getCycles()
+{
+    return layerCycles;
+}
+
 int MidiLayer::getEventCount()
 {
     return (sequence != nullptr) ? sequence->size() : 0;

@@ -97,17 +97,42 @@ void MidiPlayer::setLayer(MidiLayer* l)
     alloff();
 
     layer = l;
-    loopFrames = layer->getFrames();
+    
+    if (layer == nullptr) {
+        loopFrames = 0;
+        cycles = 0;
+    }
+    else {
+        loopFrames = layer->getFrames();
+        cycles = layer->getCycles();
+    }
     
     // attempt to keep the same relative location
+    // may be quickly overridden by another call to setFrames()
+    setFrame(playFrame);
+    
+    if (layer != nullptr)
+      layer->resetPlayState();
+}
+
+/**
+ * Set the playback position
+ */
+void MidiPlayer::setFrame(int frame)
+{
     if (loopFrames == 0) {
+        // doesn't matter what they asked for
         playFrame = 0;
     }
-    else if (playFrame > 0) {
-        playFrame = playFrame % loopFrames;
+    else {
+        playFrame = frame % loopFrames;
     }
 
-    layer->resetPlayState();
+    // todo: here calculate cycle number, or let Track figure
+    // that out like subcycles?
+
+    if (layer != nullptr)
+      layer->resetPlayState();
 }
 
 int MidiPlayer::getFrame()
@@ -127,10 +152,15 @@ int MidiPlayer::getFrames()
  */
 void MidiPlayer::shift(MidiLayer* l)
 {
-    layer = l;
-    loopFrames = layer->getFrames();
-    playFrame = 0;
-    layer->resetPlayState();
+    if (l == nullptr) {
+        Trace(1, "MidiPlayer: Can't shift a null layer");
+    }
+    else {
+        layer = l;
+        loopFrames = layer->getFrames();
+        playFrame = 0;
+        layer->resetPlayState();
+    }
 }
 
 /**
@@ -140,7 +170,8 @@ void MidiPlayer::shift(MidiLayer* l)
 void MidiPlayer::restart()
 {
     playFrame = 0;
-    layer->resetPlayState();
+    if (layer != nullptr)
+      layer->resetPlayState();
 }
 
 /**
@@ -149,7 +180,7 @@ void MidiPlayer::restart()
  */
 void MidiPlayer::play(int blockFrames)
 {
-    if (blockFrames > 0) {
+    if (blockFrames > 0 && layer != nullptr) {
 
         if (loopFrames == 0) {
             // empty layer

@@ -73,7 +73,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
         l->number = i + 1;
         loops.add(l);
     }
-    activeLoops = 2;
+    loopCount = 2;
     loopIndex = 0;
     
     // todo: worried about this since it is called at runtime
@@ -162,7 +162,7 @@ bool MidiTrack::isRecording()
 {
     // can't just test for recording != nullptr since that's always there
     // waiting for an overdub
-    return recording;
+    return recorder.isRecording();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -189,6 +189,9 @@ void MidiTrack::doAction(UIAction* a)
             case FuncOverdub: doOverdub(a); break;
             case FuncUndo: doUndo(a); break;
             case FuncRedo: doRedo(a); break;
+            case FuncNextLoop: doSwitch(a, 1); break;
+            case FuncPrevLoop: doSwitch(a, -1); break;
+            case FuncSelectLoop: doSwitch(a, 0); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
             }
@@ -251,14 +254,19 @@ void MidiTrack::doParameter(UIAction* a)
 
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
-    state->loopCount = activeLoops;
+    state->loopCount = loopCount;
     state->activeLoop = loopIndex;
-    
-    state->frames = frames;
-    state->frame = frame;
-    state->cycles = 1;
-    state->cycle = 1;
+
+    state->frames = recorder.getFrames();
+    state->frame = recorder.getFrame();
+    state->cycles = recorder.getCycles();
+
+    // eventually this needs to come from the recorder
+    state->cycle = 0;
+
+    // this needs to be calculated from the current frame and subcycles parameter 
     state->subcycles = subcycles;
+    // todo: calculate this!
     state->subcycle = 0;
 
     state->mode = mode;
@@ -272,9 +280,9 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->pan = pan;
 
     // not the same as mode=Record, can be any type of recording
-    state->recording = recording;
+    state->recording = recorder.isRecording();
 
-    for (int i = 0 ; i < activeLoops ; i++) {
+    for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
         MobiusMidiState::Loop* lstate = state->loops[0];
         
@@ -289,7 +297,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     if (lstate == nullptr)
       Trace(1, "MidiTrack: MobiusMidiState loop array too small");
     else
-      lstate->frames = frames;
+      lstate->frames = recorder.getFrames();
 
     // special pseudo mode
     if (synchronizing)
@@ -313,7 +321,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
  * Called by MidiKernel AFTER actions have been passed down.
  * If we're waiting on sync pulses, recording may start or stop here.
  *
- * After events have been processed, advance the play layer.
+ * After events have been processed, advance the recorder and player.
  */
 void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 {
@@ -327,6 +335,8 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
         //  magic happens
         pulsator->correctDrift(number, 0);
     }
+
+    int currentFrame = recorder.getFrame();
 
     // locate a sync pulse we follow within this block
     if (syncSource != Pulse::SourceNone) {
@@ -345,7 +355,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
             // it dramatically cleans up the carving logic if we make this look
             // like a scheduled event
             TrackEvent* pulseEvent = eventPool->newEvent();
-            pulseEvent->frame = frame + pulseOffset;
+            pulseEvent->frame = currentFrame + pulseOffset;
             pulseEvent->type = TrackEvent::EventPulse;
             // note priority flag so it goes before others on this frame
             events.add(pulseEvent, true);
@@ -354,10 +364,10 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
     
     // carve up the block for the events within it
     int remainder = newFrames;
-    TrackEvent* e = events.consume(frame, remainder);
+    TrackEvent* e = events.consume(currentFrame, remainder);
     while (e != nullptr) {
 
-        int eventAdvance = e->frame - frame;
+        int eventAdvance = e->frame - currentFrame;
         if (eventAdvance > remainder) {
             Trace(1, "MidiTrack: Advance math is fucked");
             eventAdvance = remainder;
@@ -367,7 +377,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
         doEvent(e);
         
         remainder -= eventAdvance;
-        e = events.consume(frame, remainder);
+        e = events.consume(currentFrame, remainder);
     }
     
     advance(remainder);
@@ -375,7 +385,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 
 /**
  * Here after any actions and events have been processed.
- * Advance the play state.  If the loop point is encountered,
+ * Advance the record/play state.  If the loop point is encountered,
  * do a layer shift.
  *
  * "recording" has already happened as well with MidiKernel passing
@@ -403,106 +413,69 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTrack::advance(int newFrames)
 {
-    // whatever shenanigans we do with modes and extensions,
-    // if recorder is watching any held notes it needs to advance
-    // really only necessary if we're in one of the recording modes
-    // but in that case the held list should be empty
-    // easier to do it up here before we start messing with layer shifting
-    // which alters recorder state
-    // hmm, think
-    recorder.advance(newFrames);
+    // whatever shenanigans we do with modes and extensions
+    // recorder always advances note holding state
+    // todo: pause may mess with this?
+    recorder.advanceHeld(newFrames);
     
     if (mode == MobiusMidiState::ModeReset) {
         // nothing to do
     }
-    else if (mode == MobiusMidiState::ModeRecord) {
-        advanceRecord(newFrames);
-    }
-    else if (isExtending()) {
-        extend(newFrames);
-    }
     else {
-        // a normal looping block
-        int nextFrame = frame + newFrames;
-        if (nextFrame < frames) {
-            // we will not reach the loop point
-            player.play(newFrames);
-            frame += newFrames;
+        
+        int nextFrame = recorder.getFrame() + newFrames;
+        if (recorder.isExtending() || nextFrame < recorder.getFrames()) {
+            recorder.advance(newFrames);
+            advancePlayer(newFrames);
         }
         else {
             // we hit the loop point in this block
-            // now it gets complicated
-            advanceAndLoop(newFrames);
+            // the recorder gets to control where the player is
+            int included = recorder->getFrames() - recorder.getFrame();
+            int remainder = newFrames - included;
+            recorder.advance(included);
+            player.advance(included);
+
+            if (recorder.hasChanges()) {
+                shift();
+            }
+            else {
+                // squelching the record layer
+                recorder.setFrame(0);
+            }
+            
+            player.restart();
+            player.play(remainder);
+            recorder.advance(remainder);
         }
     }
 }
 
 /**
- * Here on a block during record mode.  Since actions and events
- * are processed at the beginning of the block, if we're still in record mode
- * we consume the entire block.  By definition there is nothing to play
- * so we don't have to mess with the play cursor.
+ * When the recorder is in an extension mode, the player
+ * loops on itself.
  */
-void MidiTrack::advanceRecord(int newFrames)
+void MidiTrack::advancePlayer(int newFrames)
 {
-    frames += newFrames;
-    frame += newFrames;
-}
-
-bool MidiTrack::isExtending()
-{
-    return false;
-}
-
-void MidiTrack::extend(int newFrames)
-{
-    (void)newFrames;
-}
-
-/**
- * We've hit the loop point in this block, armegeddon.
- * This is absolutely fraught with off-by-one errors so touch
- * this code VERY carefully.
- *
- * Events quantized on the loop point have the usual before/after problem
- * especiall if they're extenders.  Needs work...
- *
- * Script waits on the loop point are similar, punt
- *
- */
-void MidiTrack::advanceAndLoop(int newFrames)
-{
-    // let the player play to the end
-    int included = frames - frame;
-    int remainder = newFrames - included;
-
-    player.play(included);
-
-    // temporary sanity check on player
-    if (player.getFrames() > 0) {
-        if (player.getFrame() != frames) {
-            // we were expecting this to have reached the end, why didn't it
-            Trace(1, "MidiTrack: Player didn't reach the end, why?");
+    if (player.getFrames() >= 0) {
+        int nextFrame = player.getFrame() + newFrames;
+        if (nextFrame < player.getFrames()) {
+            player.advance(newFrames);
+        }
+        else {
+            // we hit the loop point in this block
+            int included = player.getFrames() - player.getFrame();
+            int remainder = newFrames - included;
+            player.advance(included);
         }
     }
-    
-    if (recorder.hasChanges()) {
-        shift();
-    }
-    else {
-        //Trace(2, "MidiTrack: Squelching record layer");
-        player.restart();
-    }
+}
 
-    player.play(remainder);
-    frame = 0;
-}    
-        
 void MidiTrack::shift()
 {
     Trace(2, "MidiTrack: Shifting record layer");
     MidiLoop* loop = loops[loopIndex];
-    MidiLayer* neu = recorder.commit(frames, recording);
+    MidiLayer* neu = recorder.commit(overdub);
     loop->add(neu);
     player.shift(neu);
 }
@@ -555,7 +528,7 @@ void MidiTrack::doPulse(TrackEvent* e)
     if (pulsed != nullptr) {
         Trace(2, "MidiTrack: Activating pulsed event");
         // activate it on this frame and insert it back into the list
-        pulsed->frame = frame;
+        pulsed->frame = recorder.getFrame();
         pulsed->pending = false;
         pulsed->pulsed = false;
         events.add(pulsed);
@@ -587,15 +560,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
     recorder.reset();
     player.reset();
     
-    recording = false;
     synchronizing = false;
-    frames = 0;
-    frame = 0;
-    cycles = 1;
-    cycle = 0;
-    subcycles = 4;
-    subcycle = 0;
-    
     overdub = false;
     mute = false;
     reverse = false;
@@ -718,10 +683,8 @@ void MidiTrack::startRecording()
     MidiLoop* loop = loops[loopIndex];
     loop->reset();
     
-    frames = 0;
-    frame = 0;
     mode = MobiusMidiState::ModeRecord;
-    recording = true;
+    recorder.setExtending(true);
 
     pulsator->start(number);
     
@@ -732,17 +695,11 @@ void MidiTrack::stopRecording()
 {
     int eventCount = recorder.getEventCount();
 
-    // subtlty, shift passes the current "recording" flag to
-    // Recorder as an indiciating whether to close off held notes,
-    // here is where we would need to check for an Overdub "alternate ending"
-    // to Record and keep it on
-    recording = false;
     shift();
     
     mode = MobiusMidiState::ModePlay;
-    frame = 0;
     
-    pulsator->lock(number, frames);
+    pulsator->lock(number, recorder.getFrames());
 
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
@@ -752,13 +709,7 @@ void MidiTrack::stopRecording()
  */
 void MidiTrack::midiEvent(MidiEvent* e)
 {
-    if (recording) {
-        e->frame = frame;
-        recorder.add(e);
-    }
-    else {
-        midiPool->checkin(e);
-    }
+    recorder.add(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -771,9 +722,15 @@ void MidiTrack::doOverdub(UIAction* a)
 {
     (void)a;
     overdub = !overdub;
-    recording = overdub;
 
-    if (!recording) {
+    // don't just slam overdub over the recorder's recording flag,
+    // it may already be in a state of recording
+    // todo: does it need more mode awareness?
+    if (overdub)
+      recorder.setRecording(true);
+
+    // yeah, modes are getting messy
+    if (!overdub && !recorder.isExtending()) {
         // when turning overdub off, need to close any held notes being recorded
         recorder.finalizeHeld();
     }
@@ -810,11 +767,13 @@ void MidiTrack::doUndo(UIAction* a)
     MidiLayer* restored = loop->undo();
     if (playing == restored) {
         // there was nothing to undo, leave the player alone
+        // but clear the recorder
+        recorder.clear();
     }
     else {
         player.setLayer(restored);
+        recorder.clear();
     }
-    recorder.reset();
 }
 
 void MidiTrack::doRedo(UIAction* a)
@@ -825,11 +784,99 @@ void MidiTrack::doRedo(UIAction* a)
     MidiLayer* restored = loop->redo();
     if (playing == restored) {
         // there was nothing to undo, leave the player alone
+        recorder.clear();
     }
     else {
         player.setLayer(restored);
+        recorder.clear();
     }
-    recorder.reset();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Loop Switch
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doSwitch(UIAction* a, int delta)
+{
+    int target = loopIndex;
+    if (delta == 1) {
+        target = loopIndex + 1;
+        if (target >= loopCount)
+          target = 0;
+    }
+    else if (delta == -1) {
+        target = loopIndex - 1;
+        if (target < 0)
+          target = loopCount - 1;
+    }
+    else {
+        if (a->value < 1 || a->value > loopCount)
+          Trace(1, "MidiTrack: Loop switch number out of range %d", target);
+        else
+          target = a->value - 1;
+    }
+
+    // remind me, if you do SelectLoop on the SAME loop what does it do?
+    // I suppose if SwitchLocation=Start it could retrigger
+    if (target != loopIndex) {
+
+        // todo: check switchQuantize and schedule an event
+        doSwitchNow(target);
+    }
+}
+
+void MidiTrack::doSwitchNow(int newIndex)
+{
+    if (recording)
+      finishRecordingMode();
+            
+    loopIndex = newIndex;
+        
+    MidiLoop* loop = loops[newIndex];
+    MidiLayer* playing = loop->getPlayLayer();
+    player.setLayer(playing);
+    
+    if (playing == nullptr || playing->getFrames() == 0) {
+        recorder.reset();
+        mode = MobiusMidiState::ModeReset;
+    }
+    else {
+        // todo: LoopLocation=follow, restore, start, random
+        // follow requires modulo of the current frame with the destination frames
+        // start just goes to zero
+        // restore requires that we saved the previous play position in the Loop
+        // random is just crazy
+        // let's start with start
+        // seeing an annoying pattern with these variables, need to push this into
+        // the player
+        recorder.clear();
+        recoorder.setFrame(0);
+        player.setFrame(0);
+        mode = MobiusMidiState::ModePlay;
+    }
+}
+
+/**
+ * If we're in the middle of a recording mode and a loop switch
+ * happens, cleanly finish what we've been doing.
+ */
+void MidiTrack::finishRecordingMode()
+{
+    shift();
+
+    overdub = false;
+    recording = false;
+    mode = MobiusMidiState::ModePlay;
+
+    // I'm confident there are several issues at this point with
+    // Pulsator if we're the OutSyncMaster
+    // If this was the initial recording, it didn't end the usuall way
+    // with stopRecording so Pulsator won't start clocks.
+    // If we were already the sync master when you change loops, I think
+    // audio tracks would adjust the tempo, but that can't happen till after
+    // copySound/copyTiming are working
 }
 
 /****************************************************************************/

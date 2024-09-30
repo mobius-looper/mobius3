@@ -18,12 +18,14 @@ class MidiPlayer
     // initialize state for playing the track
     void reset();
     void setLayer(class MidiLayer* l);
+    void setFrame(int frame);
     void shift(class MidiLayer* l);
     void restart();
     
     void play(int frames);
     int getFrame();
     int getFrames();
+    int getCycles();
 
   private:
 
@@ -37,6 +39,7 @@ class MidiPlayer
     
     int playFrame = 0;
     int loopFrames = 0;
+    int cycles = 0;
 
     juce::Array<class MidiEvent*> currentEvents;
     juce::Array<class MidiEvent*> notesOn;

@@ -18,11 +18,20 @@ class MidiRecorder
 
 
     void reset();
+    void clear();
+    bool isRecording();
+    void setRecording(bool b);
+    int getFrames();
+    int getFrame();
+    int getCycles();
+    int getCycle();
     bool hasChanges();
     int getEventCount();
+    
+    void advanceHeld(int blockFrames);
     void advance(int frames);
     void add(class MidiEvent* e);
-    class MidiLayer* commit(int frames, bool continueHolding);
+    class MidiLayer* commit(bool continueHolding);
     void finalizeHeld();
 
     // test hack
@@ -36,6 +45,11 @@ class MidiRecorder
     class MidiEventPool* midiPool = nullptr;
     class MidiSegmentPool* segmentPool = nullptr;
     class MidiNotePool* notePool = nullptr;
+
+    bool recording = false;
+    int frame = 0;
+    int frames = 0;
+    int cycles = 1;
     
     class MidiLayer* recordLayer = nullptr;
     class MidiNote* heldNotes = nullptr;

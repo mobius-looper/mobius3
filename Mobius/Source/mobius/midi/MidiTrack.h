@@ -45,7 +45,7 @@ class MidiTrack
     class TrackEventPool* eventPool = nullptr;
     
     juce::OwnedArray<class MidiLoop> loops;
-    int activeLoops = 0;
+    int loopCount = 0;
     int loopIndex = 0;
     TrackEventList events;
     MidiRecorder recorder {this};
@@ -55,14 +55,6 @@ class MidiTrack
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
 
-    // loop state
-    int frame = 0;
-    int frames = 0;
-    int cycle = 0;
-    int cycles = 0;
-    int subcycle = 0;
-    int subcycles = 0;
-    
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
     bool overdub = false;
     bool reverse = false;
@@ -73,16 +65,13 @@ class MidiTrack
     int output = 127;
     int feedback = 127;
     int pan = 64;
+    int subcycles = 4;
 
-    bool recording = false;
     bool synchronizing = false;
     bool durationMode = false;
     
     void advance(int newFrames);
-    void advanceRecord(int newFrames);
-    bool isExtending();
-    void extend(int newFrames);
-    void advanceAndLoop(int newFrames);
+    void advancePlayer(int newFrames);
     void shift();
     
     void doEvent(TrackEvent* e);
@@ -99,6 +88,11 @@ class MidiTrack
     void doOverdub(class UIAction* a);
     void doUndo(class UIAction* a);
     void doRedo(class UIAction* a);
+
+    void doSwitch(class UIAction* a, int delta);
+    void doSwitchNow(int target);
+    void finishRecordingMode();
+    
 
     void doParameter(class UIAction* a);
     
