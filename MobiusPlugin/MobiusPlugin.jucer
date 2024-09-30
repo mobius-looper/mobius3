@@ -12,6 +12,10 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="AdV69n" name="ParameterFinder.cpp" compile="1" resource="0"
+            file="../Mobius/Source/ParameterFinder.cpp"/>
+      <FILE id="rRu0G9" name="ParameterFinder.h" compile="0" resource="0"
+            file="../Mobius/Source/ParameterFinder.h"/>
       <FILE id="ZyvhBY" name="Provider.h" compile="0" resource="0" file="../Mobius/Source/Provider.h"/>
       <FILE id="ThJsYd" name="Upgrader.cpp" compile="1" resource="0" file="../Mobius/Source/Upgrader.cpp"/>
       <GROUP id="{7E4F6DE8-BEDA-A57D-B5AA-F850B2E3CC96}" name="sync">
@@ -156,6 +160,8 @@
         <FILE id="DBIXJ7" name="DynamicConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/DynamicConfig.cpp"/>
         <FILE id="Dw8eqC" name="DynamicConfig.h" compile="0" resource="0" file="../Mobius/Source/model/DynamicConfig.h"/>
+        <FILE id="m1sYs0" name="Enumerator.cpp" compile="1" resource="0" file="../Mobius/Source/model/Enumerator.cpp"/>
+        <FILE id="cYaKES" name="Enumerator.h" compile="0" resource="0" file="../Mobius/Source/model/Enumerator.h"/>
         <FILE id="jtAsrG" name="ExValue.cpp" compile="1" resource="0" file="../Mobius/Source/model/ExValue.cpp"/>
         <FILE id="luXHmM" name="ExValue.h" compile="0" resource="0" file="../Mobius/Source/model/ExValue.h"/>
         <FILE id="WT58wO" name="GroupDefinition.cpp" compile="1" resource="0"
@@ -164,8 +170,6 @@
               file="../Mobius/Source/model/GroupDefinition.h"/>
         <FILE id="YdQfhl" name="HelpCatalog.cpp" compile="1" resource="0" file="../Mobius/Source/model/HelpCatalog.cpp"/>
         <FILE id="PExAa2" name="HelpCatalog.h" compile="0" resource="0" file="../Mobius/Source/model/HelpCatalog.h"/>
-        <FILE id="HK9jii" name="MainConfig.cpp" compile="1" resource="0" file="../Mobius/Source/model/MainConfig.cpp"/>
-        <FILE id="IHCjvP" name="MainConfig.h" compile="0" resource="0" file="../Mobius/Source/model/MainConfig.h"/>
         <FILE id="XLFumN" name="Messages.h" compile="0" resource="0" file="../Mobius/Source/model/Messages.h"/>
         <FILE id="xhGhj4" name="MobiusConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/MobiusConfig.cpp"/>
@@ -330,6 +334,10 @@
                 file="../Mobius/Source/ui/config/MidiDeviceEditor.h"/>
           <FILE id="XNLX6q" name="MidiEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/MidiEditor.cpp"/>
           <FILE id="CFcVNt" name="MidiEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/MidiEditor.h"/>
+          <FILE id="qj0lk5" name="MidiTrackEditor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/MidiTrackEditor.cpp"/>
+          <FILE id="G7aGrZ" name="MidiTrackEditor.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/MidiTrackEditor.h"/>
           <FILE id="HmIkCz" name="MultiSelectDrag.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/MultiSelectDrag.cpp"/>
           <FILE id="j3Tmoy" name="MultiSelectDrag.h" compile="0" resource="0"
@@ -370,6 +378,13 @@
           <FILE id="TiRXAt" name="ScriptTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptTable.h"/>
           <FILE id="YImupE" name="SetupEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupEditor.cpp"/>
           <FILE id="f6jy1c" name="SetupEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SetupEditor.h"/>
+          <FILE id="vAZyhZ" name="YanParameter.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/YanParameter.cpp"/>
+          <FILE id="xETFoK" name="YanParameter.h" compile="0" resource="0" file="../Mobius/Source/ui/config/YanParameter.h"/>
+          <FILE id="cNiBt6" name="YanParameterForm.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/YanParameterForm.cpp"/>
+          <FILE id="AT1cFQ" name="YanParameterForm.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/YanParameterForm.h"/>
         </GROUP>
         <GROUP id="{E80D8487-832C-A0E8-B891-7BCC1131D657}" name="display">
           <FILE id="Ma44Sv" name="ActionButton.cpp" compile="1" resource="0"
@@ -521,13 +536,28 @@
         <FILE id="lEcdBG" name="MainWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{9EED59CE-20A8-984F-2766-AAF0F27339C9}" name="mobius">
+        <FILE id="HYaETG" name="Notification.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mobius/Notification.cpp"/>
         <GROUP id="{2604F741-E637-CC59-72EB-4DD5ED5AACB9}" name="midi">
+          <FILE id="Xnw6x1" name="MidiLayer.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiLayer.cpp"/>
+          <FILE id="mMc7zG" name="MidiLayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLayer.h"/>
+          <FILE id="lddC2p" name="MidiLoop.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.cpp"/>
+          <FILE id="BFCPey" name="MidiLoop.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.h"/>
+          <FILE id="W69tgu" name="MidiNote.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiNote.cpp"/>
+          <FILE id="KHQU9H" name="MidiNote.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiNote.h"/>
           <FILE id="wfkQMR" name="MidiPlayer.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="nvvZYi" name="MidiPlayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.h"/>
+          <FILE id="bsPTiN" name="MidiRecorder.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/midi/MidiRecorder.cpp"/>
+          <FILE id="ymEbSZ" name="MidiRecorder.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiRecorder.h"/>
+          <FILE id="eeeWFi" name="MidiSegment.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiSegment.cpp"/>
+          <FILE id="DgfKFe" name="MidiSegment.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiSegment.h"/>
           <FILE id="kX9Yxr" name="MidiTrack.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiTrack.cpp"/>
           <FILE id="So9x8h" name="MidiTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiTrack.h"/>
           <FILE id="DgLkYs" name="MidiTracker.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiTracker.cpp"/>
           <FILE id="mriQlF" name="MidiTracker.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiTracker.h"/>
+          <FILE id="ryQil5" name="TrackEvent.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/TrackEvent.cpp"/>
+          <FILE id="ZTawO2" name="TrackEvent.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/TrackEvent.h"/>
         </GROUP>
         <GROUP id="{84947BF8-F409-48C1-B34A-A2531697189A}" name="core">
           <GROUP id="{62CCE299-734C-3CE7-29ED-34FC7C5D415D}" name="functions">

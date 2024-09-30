@@ -457,7 +457,7 @@ void MidiDeviceTable::load(MachineConfig* config)
             loadDevices(config->midiOutputSync, MidiColumnOutputSync);
             loadDevices(config->midiThru, MidiColumnThru);
             loadDevices(config->pluginMidiOutput, MidiColumnPluginOutput);
-            loadDevices(config->pluginMidiOutput, MidiColumnPluginExport);
+            loadDevices(config->pluginMidiExport, MidiColumnPluginExport);
             loadDevices(config->pluginMidiOutputSync, MidiColumnPluginOutputSync);
             loadDevices(config->pluginMidiThru, MidiColumnPluginThru);
         }
