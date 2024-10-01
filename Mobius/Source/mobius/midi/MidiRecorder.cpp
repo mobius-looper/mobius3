@@ -1,4 +1,18 @@
-
+/**
+ * A conceptual model I'd like to take with MIDI layers is what the database world
+ * calls a "transaction".  What Recorder does is maintain a transaction of changes to
+ * a backing layer that can be "committed" or "rolled back".  The commit normally happens
+ * when the recording reaches the endpoint of the backing layer, but can be forced
+ * in the middle.  commit returns the layer that was being edited, and starts a new
+ * transaction on the layer it just committed.  The returned layer is expected to
+ * be saved somewhere and will remain valid for the duration of the new layer.
+ *
+ * The transaction may also be rolled back, removing any changes made during this
+ * transaction and restoring the recording to just the original backing layer.
+ * This does not result in the generation of a new layer.
+ *
+ */
+ 
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -10,9 +24,14 @@
 
 #include "MidiRecorder.h"
 
-MidiRecorder::MidiRecorder(MidiTrack* t)
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
+MidiRecorder::MidiRecorder()
 {
-    track = t;
 }
 
 MidiRecorder::~MidiRecorder()
@@ -50,36 +69,95 @@ void MidiRecorder::setDurationMode(bool b)
     durationMode = b;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Transaction Management
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * Clear the contents of the recorder and reset the record position
- * back to the beginning.
+ * Clear all recorder content.  This is typically done when the entire Track is reset.
  */
 void MidiRecorder::reset()
 {
-    clear();
+    backingLayer = nullptr;
+    if (recordLayer != nullptr) {
+        recordLayer->clear();
+        layerPool->checkin(recordLayer);
+        recordLayer = nullptr;
+    }
+    recordFrames = 0;
+    recordFrame = 0;
+    recordCycles = 1;
+    cycleFrames = 0;
+    recording = false;
+    extending = false;
 
-    frame = 0;
-    frames = 0;
-    cycles = 1;
+    flushHeld();
 }
 
 /**
- * Differs from reset() in that we throw away any recording
- * but keep the current location.
- *
- * Recording and extending states must be re-armed by the caller.
+ * Begin the initial recording without a backing layer.
  */
-void MidiRecorder::clear()
+void MidiRecorder::begin()
 {
+    reset();
+    recordLayer = prepLayer();
+    recording = true;
+    extending = true;
+}
+
+/**
+ * Begin a transaction on a backing layer.
+ * All current state is lost.
+ * In database terminology, this is "start transaction".
+ */
+void MidiRecorder::resume(MidiLayer* layer)
+{
+    reset();
+    if (layer == nullptr)
+      Trace(1, "MidiRecorder: Resume with null layer");
+    else
+      assimilate(layer);
+}
+
+/**
+ * The fundamental initialization of the backing layer.
+ * Used by both resume() and rollback()
+ */
+void MidiRecorder::assimilate(MidiLayer* layer)
+{
+    backingLayer = layer;
+    
     if (recordLayer == nullptr)
       recordLayer = prepLayer();
     else
       recordLayer->clear();
     
-    flushHeld();
+    recordFrames = layer->getFrames();
+    recordCycles = layer->getCycles();
     
-    recording = false;
-    extending = false;
+    // the layer is not expected to be empty, when would that happen?
+    if (recordFrames == 0)
+      Trace(1, "MidiRecorder: Resuming transaction on empty layer");
+    
+    if (recordCycles == 0) {
+        Trace(1, "MidiRecorder: Resuming layer with 0 cycles");
+        // don't crash
+        recordCycles = 1;
+    }
+    cycleFrames = (int)(recordFrames / recordCycles);
+
+    // the full width segment into the backing layer
+    MidiSegment* seg = segmentPool->newSegment();
+    seg->layer = backingLayer;
+    seg->originFrame = 0;
+    seg->segmentFrames = recordFrames;
+    seg->referenceFrame = 0;
+
+    recordLayer->add(seg);
+    // adding a segment bumps the change counter
+    recordLayer->resetChanges();
 }
 
 /**
@@ -95,78 +173,152 @@ MidiLayer* MidiRecorder::prepLayer()
 }
 
 /**
- * Return the held note detection objeccts back to the pool
+ * Rollback changes made in this transaction
  */
-void MidiRecorder::flushHeld()
+void MidiRecorder::rollback()
 {
-    while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
-        heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
-        heldNotes = next;
+    if (recordLayer == nullptr) {
+        // still in Reset, ignore
+    }
+    else if (backingLayer == nullptr) {
+        // still in the initial recording
+        recordLayer->clear();
+        recordFrames = 0;
+        recordCycles = 1;
+        cycleFrames = 0;
+    }
+    else {
+        assimilate(backingLayer);
+    }
+
+    // location and recording options reset and must be
+    // restored by the caller
+    recordFrame = 0;
+    recording = false;
+    extending = false;
+
+    flushHeld();
+}
+
+/**
+ * Finalize the current record layer and prepare the
+ * next one with a segment referencing the old one.
+ * If the continueHolding flag is off, any held notes are
+ * finalized with their current duration and we stop tracking them.
+ * If true, it means that an overdub or other recording is in progress
+ * over the shift and we should keep duration tracking.
+ *
+ * The current layer is returned for shifting.
+ */
+MidiLayer* MidiRecorder::commit(bool continueHolding)
+{
+    if (recordFrames == 0) {
+        // shouldn't happen, right?
+        Trace(1, "MidiRecorder: Finalizing an empty record layer");
+    }
+
+    if (recordFrame != recordFrames) {
+        Trace(1, "MidiRecorder: Finalizing record layer early, why?");
+    }
+    
+    if (!continueHolding)
+      finalizeHeld();
+    
+    recordLayer->setFrames(recordFrames);
+    recordLayer->setCycles(recordCycles);
+
+    // assimilate rests the recorLayer so remove it first
+    MidiLayer* commitLayer = recordLayer;
+    recordLayer = nullptr;
+    assimilate(commitLayer);
+
+    // turn off extension mode, track has to turn it back on if necessary
+    extending = false;
+    
+    // hmm, kind of a misnomer, it really means continueRecording
+    if (!continueHolding)
+      recording = false;
+    
+    // start the next layer back at zero
+    // frame count stays the same
+    recordFrame = 0;
+
+    return commitLayer;
+}
+
+/**
+ * Change the recording location.
+ *
+ * This is normally done only when a transaction has been started
+ * and the location is back at zero and there are no held notes.
+ * Typically after a LoopSwitch or Undo where we need to reorient
+ * the recording.
+ *
+ * If there are accumulated edits and recorded events, this could
+ * be complicated, because the holds have a frame position that may be
+ * far behind or in front of the new location.  Those should have
+ * been committed by now.
+ */
+void MidiRecorder::setFrame(int newFrame)
+{
+    if (newFrame != recordFrame) {
+        
+        if (recordLayer == nullptr) {
+            Trace(1, "MidiRecorder: Setting frame without a record layer");
+        }
+        else if (recordLayer->getEventCount() > 0) {
+            Trace(1, "MidiRecorder: Setting frame after event accumulation");
+        }
+        
+        if (heldNotes != nullptr)
+          Trace(1, "MidiRecorder: Setting frame with held notes");
+
+        if (recordFrames == 0) {
+            // I don't think this can happen but in theory we could start the
+            // initial recording with an offset?
+            Trace(1, "MidiRecorder: Setting frame in an empty layer");
+            recordFrame = newFrame;
+        }
+        else {
+            // it is expected after undo() to try and restore a record
+            // frame that is larger than the restored layer, it wraps
+            if (newFrame > recordFrames) {
+                int adjustedFrame = newFrame % recordFrames;
+                Trace(2, "MidiRecorder: Wrapping record frame from %d to %d",
+                      newFrame, adjustedFrame);
+                newFrame = adjustedFrame;
+            }
+
+            recordFrame = newFrame;
+        }
     }
 }
 
-/**
- * Setting the recording flag enables the acccumulation
- * of incomming MidiEvents into the record layer sequence.
- */
-void MidiRecorder::setRecording(bool b)
-{
-    recording = b;
-    if (!recording)
-      finalizeHeld();
-}
-
-bool MidiRecorder::isRecording()
-{
-    return recording;
-}
-
-/**
- * SEtting the extending flag allows the record layer to grow
- * by one cycle when the record location reaches the end
- * of the layer.  Without extension, recording will stop and
- * wait for the track to perform a layer shift.
- */
-void MidiRecorder::setExtending(bool b)
-{
-    extending = b;
-}
-
-bool MidiRecorder::isExtending()
-{
-    return extending;
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Transaction State
+//
+//////////////////////////////////////////////////////////////////////
 
 int MidiRecorder::getFrames()
 {
-    return frames;
+    return recordFrames;
 }
 
 int MidiRecorder::getFrame()
 {
-    return frame;
-}
-
-void MidiRecorder::setFrame(int newFrame)
-{
-    if (newFrame >= frames)
-      Trace(1, "MidiRecorder: Setting frame out of range");
-    frame = newFrame;
+    return recordFrame;
 }
 
 int MidiRecorder::getCycles()
 {
-    return cycles;
+    return recordCycles;
 }
 
 int MidiRecorder::getCycleFrames()
 {
-    Trace(1, "MidiRecorder::getCycleFrames is wrong");
     return cycleFrames;
 }
-
 
 bool MidiRecorder::hasChanges()
 {
@@ -180,9 +332,108 @@ int MidiRecorder::getEventCount()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Advance
+// Transaction Edits
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Setting the recording flag enables the acccumulation
+ * of incomming MidiEvents into the record layer sequence.
+ * If you turn it off, then any held note tracking becomes
+ * irrelevant.
+ *
+ * This is called by MidiTrack when an overdubbing mode is turned on
+ * and off.
+ *
+ * If we are in the initial recording it doesn't matter what this
+ * is, we continue to record until the first commmit().
+ *
+ * Audio tracks use Overdub/Multiply as an "alternate ending" to the
+ * Record mode, if MidiTrack is doing that it would have done the
+ * commit() and passed continueHolding true to stay in recording mode.
+ * I suppose we could make overdub just be something you can turn on and off
+ * independent of the initial recording, then with it ends we stay
+ * in recording mode.  Track gets to decide.
+ *
+ * Here, if we are not currently recording, recording is enabled.
+ * !! todo: If there are any held notes, we need to synthensize NoteOn
+ * events for them at the current frame and adjust their durations
+ * relative to that frame since the note would logically be included in
+ * this overdub.
+ *
+ * If we are currently recording the initial layer, then turning off overdub
+ * does nothing.
+ *
+ * If we are recording over an exsting layer, turning off overdubbing finalizes
+ * any held notes.
+ */
+void MidiRecorder::setRecording(bool b)
+{
+    if (backingLayer == nullptr) {
+        // we're in the initial recording or in reset
+        if (!recording) {
+            Trace(1, "MidiRecorder: Why are you twiddling the record flag now?");
+        }
+        else if (b) {
+            // normally this would be an alternate ending
+            Trace(1, "MidiRecorder: Overdub requested while recording first layer");
+        }
+        else {
+            Trace(1, "MidiRecorder: This isn't the way you end a recording");
+        }
+    }
+    else if (b) {
+        if (!recording) {
+            // todo: this is where we need to inject currently held notes
+            recording = true;
+        }
+        else {
+            // why would you ask me that?
+            Trace(1, "MidiRecorder: Redundant overdub enable");
+        }
+    }
+    else if (recording) {
+        if (extending) {
+            // unusual, we're in Multiply/Insert mode and they're toggling
+            // overdub off, normally this would be an alternative ending
+            // to the extension mode
+            Trace(1, "MidiRecorder: Overdub disable requested during extension");
+        }
+        else {
+            // normal overdub off
+            finalizeHeld();
+            recording = false;
+        }
+    }
+    else {
+        Trace(1, "MidiRecorder: Redundant overdub disable");
+    }
+}
+
+bool MidiRecorder::isRecording()
+{
+    return recording;
+}
+
+/**
+ * Setting the extending flag allows the record layer to grow
+ * by one cycle when the record location reaches the end
+ * of the layer.  Without extension, recording will stop and
+ * wait for the track to perform a layer shift.
+ *
+ * This is normally set when recording the initial layer.
+ * When recording over a backing layer it is set when entering
+ * an extension mode like Multiply or Insert.
+ */
+void MidiRecorder::setExtending(bool b)
+{
+    extending = b;
+}
+
+bool MidiRecorder::isExtending()
+{
+    return extending;
+}
 
 /**
  * Advance the record state.
@@ -201,17 +452,108 @@ void MidiRecorder::advance(int blockFrames)
     // remember this for duration hacking
     lastBlockFrames = blockFrames;
 
-    int nextFrame = frame + blockFrames;
-    if (!extending && nextFrame > frames) {
+    int nextFrame = recordFrame + blockFrames;
+    if (!extending && nextFrame > recordFrames) {
         // Track was supposed to prevent this
         Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");
     }
     
-    frame = nextFrame;
+    recordFrame = nextFrame;
     if (extending)
-      frames += blockFrames;
+      recordFrames += blockFrames;
 
     advanceHeld(blockFrames);
+}
+
+/**
+ * Add an event to the recorded layer sequence if we are recording.
+ * 
+ * If this is a NoteOn, we add the event with a zero duration
+ * and begin tracking duration.
+ *
+ * The ordering of add() and advance() is subtle.
+ * At the beginning of every block we accumulate events that were received since
+ * the last block and advance the play state.  There is ambiguity whether the
+ * current block represents duration of any held notes, or if that duration was
+ * added on the previous block and the current block only adds duration to
+ * new events.
+ *
+ * Currently, MobiusKernel processes MIDI events BEFORE the calls to
+ * processAudioStream for the tracks.  This is the same time as UIActions
+ * are processed.  So add() will always be called before advance().
+ *
+ * In the unlikely case of short notes that go off on the next block after they started,
+ * the duration either needs to have the length of the block when it was added,
+ * or the length of the block when it is turned off, but not necessarily both.
+ * Need to think more about where we are in actual time here since blocks can be
+ * sporadic.  Juce timestamps the events with the system millisecond so that could
+ * be converted to a frame duration as well, though it will still be block quantized.
+ * The jitter involved will be very subtle but keeps me up at night, so revisit this.
+ */
+void MidiRecorder::add(MidiEvent* e)
+{
+    if (!recording) {
+        midiPool->checkin(e);
+    }
+    else {
+        e->frame = recordFrame;
+        
+        if (e->juceMessage.isNoteOn()) {
+            recordLayer->add(e);
+            MidiNote* note = notePool->newNote();
+
+            // todo: like MidiPlayer I think we can just reference the MidiEvent here
+            // rather than copying things from it since the MidiEvent can't be reclaimed
+            // without also reclaiming the layer, right?
+            note->channel = e->juceMessage.getChannel();
+            note->number = e->juceMessage.getNoteNumber();
+            note->event = e;
+            note->next = heldNotes;
+            heldNotes = note;
+        }
+        else if (e->juceMessage.isNoteOff()) {
+        
+            if (!durationMode)
+              recordLayer->add(e);
+        
+            MidiNote* note = removeHeld(e);
+            if (note == nullptr) {
+                // note must have been on before the recording started
+                // we could synthesize an event for it and stick it at the beginning
+                // of the layer, or we could have the recorder constantly monitoring notes
+                // even if recording isn't enabled and include the note only if the
+                // on event is sufficitily close to the start of the recording
+                Trace(2, "MidiRecorder: Unmatched NoteOff, work to do");
+            }
+            else {
+                finalizeHold(note, e);
+                notePool->checkin(note);
+            }
+        }
+        else {
+            // something other than a note, durations do not apply
+            recordLayer->add(e);
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////////////
+//
+// Held Note Management
+//
+///////////////////////////////////////////////////////////////////////
+
+/**
+ * Return the held note detection objeccts back to the pool
+ */
+void MidiRecorder::flushHeld()
+{
+    while (heldNotes != nullptr) {
+        MidiNote* next = heldNotes->next;
+        heldNotes->next = nullptr;
+        notePool->checkin(heldNotes);
+        heldNotes = next;
+    }
 }
 
 /**
@@ -230,83 +572,41 @@ void MidiRecorder::advanceHeld(int blockFrames)
 }
 
 /**
- * Finalize the current record layer and prepare the
- * next one with a segment referencing the old one.
- * If the continueHolding flag is off, any held notes are
- * finalized with their current duration and we stop tracking them.
- * If true, it means that an overdub or other recording is in progress
- * over the shift and we should keep duration tracking.
+ * Remove a matching MidiNote from the held note list when a NoteOff
+ * message is received.  In the unusual case where there are overlapping
+ * notes, a duplicate NoteOn receieved before the NoteOff for the last one,
+ * this will behave as a LIFO.  Not sure that matters and is a situation that
+ * can't happen with human fingers, though could happen with a sequencer.
  *
- * The current layer is returned for shifting.
+ * todo: note tracking needs to start understanding the device it came from!!
  */
-MidiLayer* MidiRecorder::commit(bool continueHolding)
+MidiNote* MidiRecorder::removeHeld(MidiEvent* e)
 {
-    if (frames == 0) {
-        // shouldn't happen, right?
-        Trace(1, "MidiRecorder: Finalizing an empty record layer");
+    MidiNote* note = nullptr;
+    
+    if (heldNotes != nullptr) {
+        int channel = e->juceMessage.getChannel();
+        int number = e->juceMessage.getNoteNumber();
+
+        MidiNote* prev = nullptr;
+        note = heldNotes;
+        while (note != nullptr) {
+            if (note->channel == channel && note->number == number)
+              break;
+            else {
+                prev = note;
+                note = note->next;
+            }
+        }
+        if (note != nullptr) {
+            if (prev == nullptr)
+              heldNotes = note->next;
+            else
+              prev->next = note->next;
+            note->next = nullptr;
+        }
     }
-
-    if (frame != frames) {
-        Trace(1, "MidiRecorder: Finalizing record layer early, why?");
-    }
-    
-    if (!continueHolding)
-      finalizeHeld();
-    
-    recordLayer->setFrames(frames);
-    
-    MidiSegment* seg = segmentPool->newSegment();
-    seg->layer = recordLayer;
-    seg->originFrame = 0;
-    seg->segmentFrames = frames;
-    seg->referenceFrame = 0;
-
-    MidiLayer* newLayer = prepLayer();
-    newLayer->add(seg);
-    // doesn't matter since we can extend it later
-    newLayer->setFrames(frames);
-    // adding the segment bumped the change count, clear it
-    newLayer->resetChanges();
-
-    // swap the old layer for the new one
-    MidiLayer* retval = recordLayer;
-    recordLayer = newLayer;
-
-    // turn off extension mode, track has to turn it back on if necessary
-    extending = false;
-    // hmm, kind of a misnomer, it really means continueRecording
-    if (!continueHolding)
-      recording = false;
-    // start the next layer back at zero
-    // frames stays the same
-    frame = 0;
-
-    return retval;
-}
-
-/**
- * Resume recording on top of an existing layer.
- * This is what happens on a loop switch.
- */
-void MidiRecorder::resume(MidiLayer* layer)
-{
-    reset();
-    
-    frames = layer->getFrames();
-    
-    MidiSegment* seg = segmentPool->newSegment();
-    seg->layer = layer;
-    seg->originFrame = 0;
-    seg->segmentFrames = frames;
-    seg->referenceFrame = 0;
-
-    recordLayer->add(seg);
-    recordLayer->resetChanges();
-    recordLayer->setFrames(frames);
-
-    // turn off extension mode, track has to turn it back on if necessary
-    extending = false;
-    recording = false;
+    return note;
 }
 
 /**
@@ -353,116 +653,6 @@ void MidiRecorder::finalizeHold(MidiNote* note, MidiEvent* e)
             }
         }
     }
-}
-
-/**
- * Add an event to the recorded layer sequence if we are recording.
- * 
- * If this is a NoteOn, we add the event with a zero duration
- * and begin tracking duration.
- *
- * The ordering of add() and advance() is subtle.
- * At the beginning of every block we accumulate events that were received since
- * the last block and advance the play state.  There is ambiguity whether the
- * current block represents duration of any held notes, or if that duration was
- * added on the previous block and the current block only adds duration to
- * new events.
- *
- * Currently, MobiusKernel processes MIDI events BEFORE the calls to
- * processAudioStream for the tracks.  This is the same time as UIActions
- * are processed.  So add() will always be called before advance().
- *
- * In the unlikely case of short notes that go off on the next block after they started,
- * the duration either needs to have the length of the block when it was added,
- * or the length of the block when it is turned off, but not necessarily both.
- * Need to think more about where we are in actual time here since blocks can be
- * sporadic.  Juce timestamps the events with the system millisecond so that could
- * be converted to a frame duration as well, though it will still be block quantized.
- * The jitter involved will be very subtle but keeps me up at night, so revisit this.
- */
-void MidiRecorder::add(MidiEvent* e)
-{
-    if (!recording) {
-        midiPool->checkin(e);
-    }
-    else {
-        e->frame = frame;
-        
-        if (e->juceMessage.isNoteOn()) {
-            recordLayer->add(e);
-            MidiNote* note = notePool->newNote();
-
-            // todo: like MidiPlayer I think we can just reference the MidiEvent here
-            // rather than copying things from it since the MidiEvent can't be reclaimed
-            // without also reclaiming the layer, right?
-            note->channel = e->juceMessage.getChannel();
-            note->number = e->juceMessage.getNoteNumber();
-            note->event = e;
-            note->next = heldNotes;
-            heldNotes = note;
-        }
-        else if (e->juceMessage.isNoteOff()) {
-        
-            if (!durationMode)
-              recordLayer->add(e);
-        
-            MidiNote* note = removeNote(e);
-            if (note == nullptr) {
-                // note must have been on before the recording started
-                // we could synthesize an event for it and stick it at the beginning
-                // of the layer, or we could have the recorder constantly monitoring notes
-                // even if recording isn't enabled and include the note only if the
-                // on event is sufficitily close to the start of the recording
-                Trace(2, "MidiRecorder: Unmatched NoteOff, work to do");
-            }
-            else {
-                finalizeHold(note, e);
-                notePool->checkin(note);
-            }
-        }
-        else {
-            // something other than a note, durations do not apply
-            recordLayer->add(e);
-        }
-    }
-}
-
-/**
- * Remove a matching MidiNote from the held note list when a NoteOff
- * message is received.  In the unusual case where there are overlapping
- * notes, a duplicate NoteOn receieved before the NoteOff for the last one,
- * this will behave as a LIFO.  Not sure that matters and is a situation that
- * can't happen with human fingers, though could happen with a sequencer.
- *
- * todo: note tracking needs to start understanding the device it came from!!
- */
-MidiNote* MidiRecorder::removeNote(MidiEvent* e)
-{
-    MidiNote* note = nullptr;
-    
-    if (heldNotes != nullptr) {
-        int channel = e->juceMessage.getChannel();
-        int number = e->juceMessage.getNoteNumber();
-
-        MidiNote* prev = nullptr;
-        note = heldNotes;
-        while (note != nullptr) {
-            if (note->channel == channel && note->number == number)
-              break;
-            else {
-                prev = note;
-                note = note->next;
-            }
-        }
-        if (note != nullptr) {
-            if (prev == nullptr)
-              heldNotes = note->next;
-            else
-              prev->next = note->next;
-            note->next = nullptr;
-        }
-    }
-    return note;
 }
 
 /****************************************************************************/

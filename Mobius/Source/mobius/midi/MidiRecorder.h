@@ -4,6 +4,7 @@
  * The recorder is responsible for accumulating midi events that
  * come into a track and managing the adjustment to baking segments
  * as they become occluded by a new overdubs.
+ *
  */
 
 #pragma once
@@ -14,66 +15,90 @@ class MidiRecorder
 {
   public:
 
-    MidiRecorder(class MidiTrack* track);
+    //
+    // Configuration
+    //
+    
+    MidiRecorder();
     ~MidiRecorder();
-    void initialize(class MidiLayerPool* lpool, class MidiSequencePool* spool,
-                    class MidiEventPool* epool, class MidiSegmentPool* segpool,
+    void initialize(class MidiLayerPool* lpool,
+                    class MidiSequencePool* spool,
+                    class MidiEventPool* epool,
+                    class MidiSegmentPool* segpool,
                     class MidiNotePool* npool);
+    
+    // test hack
+    void setDurationMode(bool durationMode);
 
-
-    // release all state held by the recorder and reset the location
+    //
+    // Transaction Management
+    //
+    
     void reset();
-
-    // release resources held by recorder but keep the location
+    void begin();
+    void resume(MidiLayer* layer);
+    void rollback();
     void clear();
-    
-    bool isRecording();
-    void setRecording(bool b);
-    bool isExtending();
-    void setExtending(bool b);
-    
+    MidiLayer* commit(bool continueHolding);
+    void setFrame(int newFrame);
+
+    //
+    // Transaction State
+    //
+
     int getFrames();
     int getFrame();
-    void setFrame(int newFrame);
     int getCycles();
     int getCycleFrames();
     bool hasChanges();
     int getEventCount();
-    
-    void advanceHeld(int blockFrames);
+
+    //
+    // Edits
+    //
+
+    bool isRecording();
+    void setRecording(bool b);
+    bool isExtending();
+    void setExtending(bool b);
     void advance(int frames);
     void add(class MidiEvent* e);
-    class MidiLayer* commit(bool continueHolding);
-    void finalizeHeld();
-    void resume(MidiLayer* layer);
-
-    // test hack
-    void setDurationMode(bool durationMode);
 
   private:
 
-    class MidiTrack* track = nullptr;
+    // provided resources
     class MidiLayerPool* layerPool = nullptr;
     class MidiSequencePool* sequencePool = nullptr;
     class MidiEventPool* midiPool = nullptr;
     class MidiSegmentPool* segmentPool = nullptr;
     class MidiNotePool* notePool = nullptr;
 
-    bool recording = false;
-    bool extending = false;
-    int frame = 0;
-    int frames = 0;
-    int cycles = 1;
-    int cycleFrames = 0;
-    
-    class MidiLayer* recordLayer = nullptr;
-    class MidiNote* heldNotes = nullptr;
-    int lastBlockFrames = 0;
+    // configuration options
     bool durationMode = false;
     
+    // the backing layer for the transaction
+    class MidiLayer* backingLayer = nullptr;
+
+    // the transaction in progress
+    class MidiLayer* recordLayer = nullptr;
+    int recordFrames = 0;
+    int recordFrame = 0;
+    int recordCycles = 1;
+    int cycleFrames = 0;
+    bool recording = false;
+    bool extending = false;
+    
+    // held note tracking
+    class MidiNote* heldNotes = nullptr;
+    int lastBlockFrames = 0;
+
+    void assimilate(class MidiLayer* layer);
     class MidiLayer* prepLayer();
+    
     void flushHeld();
-    class MidiNote* removeNote(class MidiEvent* e);
+    void advanceHeld(int blockFrames);
+    class MidiNote* removeHeld(class MidiEvent* e);
+    void finalizeHeld();
     void finalizeHold(class MidiNote* note, class MidiEvent* e);
     
 };

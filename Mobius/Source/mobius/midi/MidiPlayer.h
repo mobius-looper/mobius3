@@ -1,5 +1,5 @@
 /**
- * Helper class for MidiTrack to manage state related to playing.
+ * Manages the MIDI playback process for a MidiTrack
  */
 
 #pragma once
@@ -9,55 +9,76 @@
 class MidiPlayer
 {
   public:
-    
-    MidiPlayer(class MidiTrack* t);
+
+    //
+    // Configuration
+    //
+    MidiPlayer();
     ~MidiPlayer();
     void initialize(class MobiusContainer* c, class MidiNotePool* pool);
     void setDurationMode(bool durationMode);
-    
-    // initialize state for playing the track
+
+    //
+    // Layer Management
+    //
+
     void reset();
     void setLayer(class MidiLayer* l);
     void setFrame(int frame);
-    void shift(class MidiLayer* l);
     void restart();
+    void shift(class MidiLayer* l);
+
+    //
+    // Play State
+    //
     
-    void play(int frames);
     int getFrame();
     int getFrames();
-    int getCycles();
+
+    //
+    // Play Advance
+    //
+
+    void alloff();
+    void play(int frames);
 
   private:
 
+    // configuration
     class MobiusContainer* container = nullptr;
     class MidiNotePool* notePool = nullptr;
-    class MidiTrack* track = nullptr;
-    class MidiLayer* layer = nullptr;
-
-    class MidiNote* heldNotes = nullptr;
     bool durationMode = false;
-    
+
+    // play state
+    class MidiLayer* playLayer = nullptr;
     int playFrame = 0;
     int loopFrames = 0;
-    int cycles = 0;
 
+    // transient buffer used during event gathering
     juce::Array<class MidiEvent*> currentEvents;
+
+    // new duration tracking state
+    class MidiNote* heldNotes = nullptr;
+    
+    // old on/off tracking state
     juce::Array<class MidiEvent*> notesOn;
     
     void send(class MidiEvent* e);
+
+    // duration based tracking
     void flushHeld();
     void advanceHeld(int blockFrames);
     void forceHeld();
     void sendOff(class MidiNote* note);
 
     // tracking when durationMode is off
+    const int MaxNotes = 64;
     void trackNoteOn(class MidiEvent* e);
     void trackNoteOff(class MidiEvent* e);
-    void alloff();
-
-    const int MaxNotes = 64;
-
-    
+    void allNotesOff();
 };
 
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/
 

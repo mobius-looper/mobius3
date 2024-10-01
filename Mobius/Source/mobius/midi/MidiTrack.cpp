@@ -36,6 +36,12 @@
 
 #include "MidiTrack.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
 const int MidiTrackMaxLoops = 8;
 
 /**
@@ -158,99 +164,18 @@ void MidiTrack::reset()
     doReset(nullptr, true);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// State
+//
+//////////////////////////////////////////////////////////////////////
+
 bool MidiTrack::isRecording()
 {
     // can't just test for recording != nullptr since that's always there
     // waiting for an overdub
     return recorder.isRecording();
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Actions
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doAction(UIAction* a)
-{
-    if (a->sustainEnd) {
-        // no up transitions right now
-        //Trace(2, "MidiTrack: Action %s track %d up", a->symbol->getName(), index + 1);
-    }
-    else if (a->symbol->parameterProperties) {
-        doParameter(a);
-    }
-    else {
-        switch (a->symbol->id) {
-            case FuncReset: doReset(a, false); break;
-            case FuncTrackReset: doReset(a, true); break;
-            case FuncGlobalReset: doReset(a, true); break;
-            case FuncRecord: doRecord(a); break;
-            case FuncOverdub: doOverdub(a); break;
-            case FuncUndo: doUndo(a); break;
-            case FuncRedo: doRedo(a); break;
-            case FuncNextLoop: doSwitch(a, 1); break;
-            case FuncPrevLoop: doSwitch(a, -1); break;
-            case FuncSelectLoop: doSwitch(a, 0); break;
-            default: {
-                Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
-            }
-        }
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Query
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doQuery(Query* q)
-{
-    switch (q->symbol->id) {
-        case ParamSubcycles: q->value = subcycles; break;
-        case ParamInput: q->value = input; break;
-        case ParamOutput: q->value = output; break;
-        case ParamFeedback: q->value = feedback; break;
-        case ParamPan: q->value = pan; break;
-        default: q->value = 0; break;
-    }
-}    
-
-//////////////////////////////////////////////////////////////////////
-//
-// Parameters
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doParameter(UIAction* a)
-{
-    switch (a->symbol->id) {
-        case ParamSubcycles: {
-            if (a->value > 0)
-              subcycles = a->value;
-            else
-              subcycles = 1;
-        }
-            break;
-            
-        case ParamInput: input = a->value; break;
-        case ParamOutput: output = a->value; break;
-        case ParamFeedback: feedback = a->value; break;
-        case ParamPan: pan = a->value; break;
-            
-        default: {
-            Trace(2, "MidiTrack: Unsupported parameter %s", a->symbol->getName());
-        }
-            break;
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// State
-//
-//////////////////////////////////////////////////////////////////////
 
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
@@ -309,6 +234,75 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     int layerCount = loop->getLayerCount();
     state->activeLayer = layerCount - 1;
     state->layerCount = layerCount + loop->getRedoCount();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Stimuli
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doAction(UIAction* a)
+{
+    if (a->sustainEnd) {
+        // no up transitions right now
+        //Trace(2, "MidiTrack: Action %s track %d up", a->symbol->getName(), index + 1);
+    }
+    else if (a->symbol->parameterProperties) {
+        doParameter(a);
+    }
+    else {
+        switch (a->symbol->id) {
+            case FuncReset: doReset(a, false); break;
+            case FuncTrackReset: doReset(a, true); break;
+            case FuncGlobalReset: doReset(a, true); break;
+            case FuncRecord: doRecord(a); break;
+            case FuncOverdub: doOverdub(a); break;
+            case FuncUndo: doUndo(a); break;
+            case FuncRedo: doRedo(a); break;
+            case FuncNextLoop: doSwitch(a, 1); break;
+            case FuncPrevLoop: doSwitch(a, -1); break;
+            case FuncSelectLoop: doSwitch(a, 0); break;
+            default: {
+                Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
+            }
+        }
+    }
+}
+
+void MidiTrack::doQuery(Query* q)
+{
+    switch (q->symbol->id) {
+        case ParamSubcycles: q->value = subcycles; break;
+        case ParamInput: q->value = input; break;
+        case ParamOutput: q->value = output; break;
+        case ParamFeedback: q->value = feedback; break;
+        case ParamPan: q->value = pan; break;
+        default: q->value = 0; break;
+    }
+}    
+
+void MidiTrack::doParameter(UIAction* a)
+{
+    switch (a->symbol->id) {
+        case ParamSubcycles: {
+            if (a->value > 0)
+              subcycles = a->value;
+            else
+              subcycles = 1;
+        }
+            break;
+            
+        case ParamInput: input = a->value; break;
+        case ParamOutput: output = a->value; break;
+        case ParamFeedback: feedback = a->value; break;
+        case ParamPan: pan = a->value; break;
+            
+        default: {
+            Trace(2, "MidiTrack: Unsupported parameter %s", a->symbol->getName());
+        }
+            break;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -424,9 +418,9 @@ void MidiTrack::advance(int newFrames)
         }
         else {
             // we hit the loop point in this block
-            // the recorder gets to control where the player is
             int included = recorder.getFrames() - recorder.getFrame();
             int remainder = newFrames - included;
+            
             recorder.advance(included);
             player.play(included);
 
@@ -435,8 +429,7 @@ void MidiTrack::advance(int newFrames)
             }
             else {
                 // squelching the record layer
-                recorder.clear();
-                recorder.setFrame(0);
+                recorder.rollback();
             }
             
             player.restart();
@@ -472,8 +465,10 @@ void MidiTrack::shift()
 {
     Trace(2, "MidiTrack: Shifting record layer");
     MidiLoop* loop = loops[loopIndex];
+    
     MidiLayer* neu = recorder.commit(overdub);
     loop->add(neu);
+    
     player.shift(neu);
 }
 
@@ -562,11 +557,15 @@ void MidiTrack::doReset(UIAction* a, bool full)
     overdub = false;
     mute = false;
     reverse = false;
-
+    pause = false;
+    
     input = 127;
     output = 127;
     feedback = 127;
     pan = 64;
+
+    // todo: pull this from ParameterFinder
+    subcycles = 4;
 
     if (full) {
         for (auto loop : loops)
@@ -613,7 +612,7 @@ void MidiTrack::doRecord(UIAction* a)
  * needs to be synchronized.
  *
  * !! record stop can be requsted by alternate endings
- * that don't to through doAction and they will need the
+ * that don't go through doAction and they will need the
  * same sync logic when ending
  */
 bool MidiTrack::needsRecordSync()
@@ -675,15 +674,14 @@ void MidiTrack::toggleRecording()
 
 void MidiTrack::startRecording()
 {
-    recorder.reset();
     player.reset();
+    recorder.reset();
     
     MidiLoop* loop = loops[loopIndex];
     loop->reset();
     
     mode = MobiusMidiState::ModeRecord;
-    recorder.setRecording(true);
-    recorder.setExtending(true);
+    recorder.begin();
 
     pulsator->start(number);
     
@@ -694,6 +692,7 @@ void MidiTrack::stopRecording()
 {
     int eventCount = recorder.getEventCount();
 
+    // this does recorder.commit and player.shift to start playing
     shift();
     
     mode = MobiusMidiState::ModePlay;
@@ -720,19 +719,12 @@ void MidiTrack::midiEvent(MidiEvent* e)
 void MidiTrack::doOverdub(UIAction* a)
 {
     (void)a;
+
+    // toggle our state 
     overdub = !overdub;
 
-    // don't just slam overdub over the recorder's recording flag,
-    // it may already be in a state of recording
-    // todo: does it need more mode awareness?
-    if (overdub)
-      recorder.setRecording(true);
-
-    // yeah, modes are getting messy
-    if (!overdub && !recorder.isExtending()) {
-        // when turning overdub off, need to close any held notes being recorded
-        recorder.finalizeHeld();
-    }
+    // tell the recorder to do it's thing about overdubs
+    recorder.setRecording(overdub);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -742,60 +734,129 @@ void MidiTrack::doOverdub(UIAction* a)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Ignoring undoing of events and Record mode right now
- *
  * At this moment, MidiRecorder has a layer that hasn't been shifted into the loop
  * and is accumulating edits.  Meanwhile, the Loop has what is currently playing
  * at the top of the layer stack, and MidiPlayer is doing it.
  *
- * There are two cases:
+ * There are these cases:
  *
- * 1) if the loop does not have any layers underneath the current play layer
- *    we reset the recordLayer to throw away any pending changes
+ * 1) If there are any pending events, they are removed one at a time
+ *    !! this isn't implemented
  *
- * 2) if the loop DOES have an undo layer, we reclaim the current recordLayer,
- *    ask the loop to shift the current play layer to the redo list, and change
- *    the Player to play the restored layer
+ * 2) If we're in the initial recording, the loop is reset
+ *
+ * 3) If the loop is editing a backing layer, the changes are rolled back
+ *
+ * 4) If the loop has no changes the previous layer is restored
+ *
+ * !! think about what happens to minor modes like overdub/reverse/speed
+ * Touching the recorder is going to cancel most state, we need to track
+ * that or tell it what we want
  *
  */
 void MidiTrack::doUndo(UIAction* a)
 {
     (void)a;
 
-    // todo: I think this is wrong, if the current record layer has events
-    // undo should first throw those away but not back up a layer, if you
-    // do it again, then it shoudl back up, I guess it's the same though?
-    // might be consusing if the user doesn't see something happen,
-    // but the eror will be that the uncommitted overdub will be put on the
-    // redo layer and can be recovered, not sure what is right
+    // here is where we should start chipping away at events
     
-    MidiLoop* loop = loops[loopIndex];
-    MidiLayer* playing = loop->getPlayLayer();
-    MidiLayer* restored = loop->undo();
-    if (playing == restored) {
-        // there was nothing to undo, leave the player alone
-        // but clear the recorder
-        recorder.clear();
+    if (mode == MobiusMidiState::ModeRecord) {
+        // we're in the initial recording
+        // I seem to remember the EDP used this as an alternate ending
+        // reset the current loop only
+        doReset(nullptr, false);
+    }
+    else if (recorder.hasChanges()) {
+        // rollback resets the position, keep it
+        // todo: this might be confusing if the user has no visual indiciation that
+        // something happened
+        int frame = recorder.getFrame();
+        recorder.rollback();
+        recorder.setFrame(frame);
+        // Player is not effected
     }
     else {
-        player.setLayer(restored);
-        recorder.clear();
+        MidiLoop* loop = loops[loopIndex];
+        MidiLayer* playing = loop->getPlayLayer();
+        MidiLayer* restored = loop->undo();
+        if (playing == restored) {
+            // we're at the first layer, there is nothing to undo
+            Trace(2, "MidiTrack: Nothing to undo");
+        }
+        else {
+            // resume resets the location, try to keep it, wrap if necessary
+            player.setLayer(restored);
+            int frame = recorder.getFrame();
+            recorder.resume(restored);
+            recorder.setFrame(frame);
+        }
+    }
+
+    if (mode != MobiusMidiState::ModeReset) {
+        // a whole lot to think about regarding what happens
+        // to major and minor modes here
+        overdub = false;
+        mode = MobiusMidiState::ModePlay;
     }
 }
 
+/**
+ * Redo has all the same issues as overdub regarding mode canceleation
+ *
+ * If there is no redo layer, nothing happens, though I suppose we could
+ * behave like Undo and throw away any accumulated edits.
+ *
+ * If there is something to redo, and there are edits they are lost.
+ */
 void MidiTrack::doRedo(UIAction* a)
 {
     (void)a;
-    MidiLoop* loop = loops[loopIndex];
-    MidiLayer* playing = loop->getPlayLayer();
-    MidiLayer* restored = loop->redo();
-    if (playing == restored) {
-        // there was nothing to undo, leave the player alone
-        recorder.clear();
+
+    if (mode == MobiusMidiState::ModeReset) {
+        // ignore
+    }
+    else if (mode == MobiusMidiState::ModeRecord) {
+        // we're in the initial recording
+        // What would redo do?
+        Trace(2, "MidiTrack: Redo ignored during initial recording");
     }
     else {
-        player.setLayer(restored);
-        recorder.clear();
+        MidiLoop* loop = loops[loopIndex];
+        if (loop->getRedoCount() == 0) {
+            // I suppose we could use this to rollback changes?
+            Trace(2, "MidiTrack: Nothing to redo");
+        }
+        else {
+            // try to restore the current position
+            int currentFrame = recorder.getFrame();
+            
+            MidiLayer* playing = loop->getPlayLayer();
+            MidiLayer* restored = loop->redo();
+            if (playing == restored) {
+                // there was nothing to redo, should have caught this
+                // when checking RedoCount above
+                Trace(1, "MidiTrack: Redo didn't do what it was supposed to do");
+            }
+            else {
+                if (recorder.hasChanges()) {
+                    // recorder is going to do the work of resetting the last record
+                    // layer, but we might want to do warn or something first
+                    Trace(2, "MidiTrack: Redo is abandoning layer changes");
+                }
+
+                player.setLayer(restored);
+                player.setFrame(currentFrame);
+                
+                recorder.resume(restored);
+                recorder.setFrame(currentFrame);
+            }
+        }
+    }
+
+    // like undo, we've got a world of though around what happens to modes
+    if (mode != MobiusMidiState::ModeReset) {
+        overdub = false;
+        mode = MobiusMidiState::ModePlay;
     }
 }
 
@@ -805,8 +866,13 @@ void MidiTrack::doRedo(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * The action first figures out where the switch needs to go
+ * and whether it needs to be quantized.
+ */
 void MidiTrack::doSwitch(UIAction* a, int delta)
 {
+    // where does it go?
     int target = loopIndex;
     if (delta == 1) {
         target = loopIndex + 1;
@@ -855,6 +921,7 @@ void MidiTrack::doSwitch(UIAction* a, int delta)
                 break;
         }
 
+        // it's now or later
         if (event == nullptr) {
             doSwitchNow(target);
         }
@@ -902,6 +969,10 @@ QuantizeMode MidiTrack::convert(SwitchQuantize squant)
     return qmode;
 }
 
+/**
+ * Use the common utility for quantization frame after converting
+ * the silly enum.
+ */
 int MidiTrack::getQuantizeFrame(SwitchQuantize squant)
 {
     QuantizeMode qmode = convert(squant);
@@ -937,13 +1008,18 @@ void MidiTrack::doSwitch(TrackEvent* e)
     }
 }
 
+/**
+ * Finally we're ready to do the switch.
+ */
 void MidiTrack::doSwitchNow(int newIndex)
 {
-    if (recorder.isRecording())
-      finishRecordingMode();
+    // loop switch with a recording active has historically
+    // committed the changes rather then behaving like undo
+    finishRecordingMode();
 
     MidiLoop* loop = loops[loopIndex];
     MidiLayer* playing = loop->getPlayLayer();
+    // remember this for SwitchLocation=Restore
     playing->setLastPlayFrame(recorder.getFrame());
             
     loopIndex = newIndex;
@@ -952,6 +1028,7 @@ void MidiTrack::doSwitchNow(int newIndex)
     player.setLayer(playing);
     
     if (playing == nullptr || playing->getFrames() == 0) {
+        // we switched to an empty loop
         recorder.reset();
         mode = MobiusMidiState::ModeReset;
     }
@@ -986,7 +1063,9 @@ void MidiTrack::doSwitchNow(int newIndex)
             recorder.setFrame(random);
             player.setFrame(random);
         }
-        
+
+        // the usual ambiguity about what happens to minor modes
+        overdub = false;
         mode = MobiusMidiState::ModePlay;
     }
 }
@@ -997,7 +1076,9 @@ void MidiTrack::doSwitchNow(int newIndex)
  */
 void MidiTrack::finishRecordingMode()
 {
-    shift();
+    if (recorder.hasChanges()) 
+      shift();
+    
     overdub = false;
     mode = MobiusMidiState::ModePlay;
 

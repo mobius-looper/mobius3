@@ -32,6 +32,7 @@ void MidiLayer::poolInit()
     sequence = nullptr;
     segments = nullptr;
     layerFrames = 0;
+    layerCycles = 1;
     changes = 0;
     playFrame = 0;
     nextEvent = nullptr;
@@ -73,6 +74,7 @@ void MidiLayer::clear()
     }
     
     layerFrames = 0;
+    layerCycles = 1;
     changes = 0;
     resetPlayState();
 }
@@ -150,6 +152,11 @@ void MidiLayer::setFrames(int frames)
 int MidiLayer::getFrames()
 {
     return layerFrames;
+}
+
+void MidiLayer::setCycles(int cycles)
+{
+    layerCycles = cycles;
 }
 
 int MidiLayer::getCycles()

@@ -1,5 +1,16 @@
 /**
- * Play state related to MidiTracks
+ * Manages the MIDI playback process for a MidiTrack
+ *
+ * Closely associated with, but not dependent on MidiRecorder.
+ * MidiTrack manages the coordination between the two.
+ *
+ * The Player is much simpler than the Recorder.  Playback position
+ * can jump around freely, any internal "cursor" state is expected to
+ * adapt to changes in position.
+ *
+ * The Player is always playing a MidiLayer, and this layer can be changed
+ * at any time.  Player does not own the Layer.
+ *
  */
 
 #include <JuceHeader.h>
@@ -7,13 +18,19 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+// for midiSend
 #include "../MobiusInterface.h"
 
-#include "MidiTrack.h"
 #include "MidiLayer.h"
 #include "MidiNote.h"
 
 #include "MidiPlayer.h"
+
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * The maximum number of events we will accumulate in one block for playback
@@ -23,9 +40,8 @@
 const int MidiPlayerMaxEvents = 256;
 
 
-MidiPlayer::MidiPlayer(class MidiTrack* t)
+MidiPlayer::MidiPlayer()
 {
-    track = t;
     currentEvents.ensureStorageAllocated(MidiPlayerMaxEvents);
 }
 
@@ -56,63 +72,63 @@ void MidiPlayer::setDurationMode(bool b)
     durationMode = b;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Layer Management
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Reset all play state.
  * The position returns to zero, and any held notes are turned off.
  */
 void MidiPlayer::reset()
 {
+    // make sure everything we sent in the past is off
     alloff();
     
-    layer = nullptr;
+    playLayer = nullptr;
     playFrame = 0;
     loopFrames = 0;
+    
     currentEvents.clearQuick();
-    flushHeld();
-}
-
-void MidiPlayer::flushHeld()
-{
-    while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
-        heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
-        heldNotes = next;
-    }
 }
 
 /**
  * Install a layer to play.
- * If the layer was already playing it will turn off held notes
- * unless it is known that the new sequence was "seamless" and will
- * turn the notes off.
- * todo: that part may be tricky, this might need to be part of the Layer state
+ * 
+ * If a layer was already playing it will turn off held notes.
+ *
+ * todo: need more thought around "seamless" layer transitions where the next
+ * layer can handle NoteOffs for things turned on in this layer.
+ * That part may be tricky, this might need to be part of the Layer state
  * "the notes that were held when I was entered".  If a sequence ends with held notes
  * and enters a sequence that turns on those notes, but was created with held notes,
  * the notes can just continue being held and do not need to be retriggered.
+ *
+ * hmm, don't overthink this, let that be handled in shift() ?
  */
-void MidiPlayer::setLayer(MidiLayer* l)
+void MidiPlayer::setLayer(MidiLayer* layer)
 {
     // until we get transitions worked out, changing a layer always closes notes
     alloff();
 
-    layer = l;
+    playLayer = layer;
     
     if (layer == nullptr) {
         loopFrames = 0;
-        cycles = 0;
     }
     else {
         loopFrames = layer->getFrames();
-        cycles = layer->getCycles();
     }
     
     // attempt to keep the same relative location
     // may be quickly overridden by another call to setFrames()
     setFrame(playFrame);
-    
-    if (layer != nullptr)
-      layer->resetPlayState();
+
+    // we now own the play cursor in this layer
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
 }
 
 /**
@@ -125,15 +141,57 @@ void MidiPlayer::setFrame(int frame)
         playFrame = 0;
     }
     else {
-        playFrame = frame % loopFrames;
+        // wrap within the available frames
+        int adjustedFrame = frame;
+        if (frame > loopFrames) {
+            adjustedFrame = frame % loopFrames;
+            Trace(2, "MidiPlayer: Wrapping play frame from %d to %d",
+                  frame, adjustedFrame);
+        }
+        
+        playFrame = adjustedFrame;
     }
 
-    // todo: here calculate cycle number, or let Track figure
-    // that out like subcycles?
-
-    if (layer != nullptr)
-      layer->resetPlayState();
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
 }
+
+/**
+ * Here after playing to the end and the track decided not to
+ * shift a new layer.  Just start over from the beginning.
+ */
+void MidiPlayer::restart()
+{
+    playFrame = 0;
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
+}
+
+/**
+ * Unlike setLayer, we expect this to have contunity with the last
+ * layer so don't need to force notes off.
+ *
+ * Playback position is set back to zero, Track needs to move it if necessary.
+ */
+void MidiPlayer::shift(MidiLayer* layer)
+{
+    if (layer == nullptr) {
+        Trace(1, "MidiPlayer: Can't shift a null layer");
+    }
+    else {
+        playLayer = layer;
+        loopFrames = layer->getFrames();
+
+        playFrame = 0;
+        playLayer->resetPlayState();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Play State
+//
+//////////////////////////////////////////////////////////////////////
 
 int MidiPlayer::getFrame()
 {
@@ -145,42 +203,31 @@ int MidiPlayer::getFrames()
     return loopFrames;
 }
 
-/**
- * Unlike setLayer, we expect this to have contunity with the last
- * layer so don't need to force notes off.  Any other differences?
- * Can simplify if not.
- */
-void MidiPlayer::shift(MidiLayer* l)
-{
-    if (l == nullptr) {
-        Trace(1, "MidiPlayer: Can't shift a null layer");
-    }
-    else {
-        layer = l;
-        loopFrames = layer->getFrames();
-        playFrame = 0;
-        layer->resetPlayState();
-    }
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Play/Advance
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
- * Here after playing to the end and the track decided not to
- * shift a new layer.  Just start over from the beginning.
+ * Turn off any held notes, using either of the two tracking methods.
  */
-void MidiPlayer::restart()
+void MidiPlayer::alloff()
 {
-    playFrame = 0;
-    if (layer != nullptr)
-      layer->resetPlayState();
-}
+    // when using duration mode
+    forceHeld();
 
+    // when using on/off mode
+    allNotesOff();
+}
+    
 /**
  * Play anything from the current position forward until the end
  * of the play region.
  */
 void MidiPlayer::play(int blockFrames)
 {
-    if (blockFrames > 0 && layer != nullptr) {
+    if (blockFrames > 0 && playLayer != nullptr) {
 
         if (loopFrames == 0) {
             // empty layer
@@ -197,7 +244,7 @@ void MidiPlayer::play(int blockFrames)
             // walk just play them, but I kind of like the intermedate
             // gather, might be good to apply processing
             currentEvents.clearQuick();
-            layer->gather(&currentEvents, playFrame, blockFrames);
+            playLayer->gather(&currentEvents, playFrame, blockFrames);
             
             for (int i = 0 ; i < currentEvents.size() ; i++) {
                 send(currentEvents[i]);
@@ -257,7 +304,33 @@ void MidiPlayer::send(MidiEvent* e)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Note Duration Tracking
+//
+// This is an alternative to NoteOn/NoteOff tracking that is working out
+// better for many things.  Once this is certain can remove support
+// for On/Off tracking.
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
+ * Release the state of any held note tracking without sending NoteOffs
+ */
+void MidiPlayer::flushHeld()
+{
+    while (heldNotes != nullptr) {
+        MidiNote* next = heldNotes->next;
+        heldNotes->next = nullptr;
+        notePool->checkin(heldNotes);
+        heldNotes = next;
+    }
+}
+
+/**
+ * Decrease the hold duration for any "on" notes, and when the duration is
+ * reached, send a NoteOff.
+ *
  * Think about when we advance for notes we just added to the list in the
  * current block.  Do those advance now or on the next block?
  */
@@ -286,6 +359,9 @@ void MidiPlayer::advanceHeld(int blockFrames)
     }
 }
 
+/**
+ * Force all currently held notes off.
+ */
 void MidiPlayer::forceHeld()
 {
     while (heldNotes != nullptr) {
@@ -297,6 +373,11 @@ void MidiPlayer::forceHeld()
     }
 }
 
+/**
+ * Send a NoteOff to the device
+ *
+ * !! todo: this needs to start remembering the device to send it to
+ */
 void MidiPlayer::sendOff(MidiNote* note)
 {
     juce::MidiMessage msg = juce::MidiMessage::noteOff(note->channel,
@@ -308,11 +389,14 @@ void MidiPlayer::sendOff(MidiNote* note)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Note Tracking
+// NoteOn/NoteOff Tracking
 //
 // This is quick and dirty and needs to be much smarter and more efficient
 // I don't like resizing arrays after element removal but maintaining
 // an above-model doubly-linked list of some kind with pooling is annoying.
+//
+// This implementation pre-dates note duration tracking in the Recorder
+// and can be removed once we decide this style is no longer necessary.
 // 
 //////////////////////////////////////////////////////////////////////
 
@@ -347,12 +431,8 @@ void MidiPlayer::trackNoteOff(MidiEvent* e)
       Trace(1, "MidiPlayer: NoteOff did not match a NoteOn");
 }
 
-void MidiPlayer::alloff()
+void MidiPlayer::allNotesOff()
 {
-    // this is where they are in durationMode
-    forceHeld();
-
-    // this is where there are in NoteOff mode
     for (int i = 0 ; i < notesOn.size() ; i++) {
         MidiEvent* on = notesOn[i];
         if (on == nullptr) {
@@ -371,6 +451,3 @@ void MidiPlayer::alloff()
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
-
-
-        

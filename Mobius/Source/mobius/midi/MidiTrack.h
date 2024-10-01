@@ -16,24 +16,35 @@ class MidiTrack
 {
   public:
 
+    //
+    // Configuration
+    //
+
     MidiTrack(class MobiusContainer* c, class MidiTracker* t);
     ~MidiTrack();
-
     void configure(class Session::Track* def);
     void reset();
-    
-    bool isRecording();
-    void midiEvent(class MidiEvent* e);
-    void processAudioStream(class MobiusAudioStream* argStream);
-    void doAction(class UIAction* a);
-    void doQuery(class Query* q);
-    
+
     // the track number in "reference space"
     int number = 0;
     // the track index within the MidiTracker, need this?
     int index = 0;
-
+    
+    //
+    // State
+    //
+    
+    bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
+
+    //
+    // Stimuli
+    //
+    
+    void doAction(class UIAction* a);
+    void doQuery(class Query* q);
+    void processAudioStream(class MobiusAudioStream* argStream);
+    void midiEvent(class MidiEvent* e);
 
   private:
 
@@ -44,19 +55,27 @@ class MidiTrack
     
     class MidiEventPool* midiPool = nullptr;
     class TrackEventPool* eventPool = nullptr;
-    
-    juce::OwnedArray<class MidiLoop> loops;
-    int loopCount = 0;
-    int loopIndex = 0;
-    TrackEventList events;
-    MidiRecorder recorder {this};
-    MidiPlayer player {this};
 
-    // sync status
+    // configuration
+    bool durationMode = false;
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
 
+    // loops
+    juce::OwnedArray<class MidiLoop> loops;
+    int loopCount = 0;
+    int loopIndex = 0;
+
+    // events
+    TrackEventList events;
+
+    // the meat
+    MidiRecorder recorder;
+    MidiPlayer player;
+
+    // state
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
+    bool synchronizing = false;
     bool overdub = false;
     bool reverse = false;
     bool mute = false;
@@ -68,15 +87,21 @@ class MidiTrack
     int pan = 64;
     int subcycles = 4;
 
-    bool synchronizing = false;
-    bool durationMode = false;
-    
+    // advance
     void advance(int newFrames);
     void advancePlayer(int newFrames);
     void shift();
-    
+
+    // actions/events
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
+    void doParameter(class UIAction* a);
+
+    //
+    // Function Handlers
+    //
+    
+    void doReset(class UIAction* a, bool full);
     
     void doRecord(class UIAction* a);
     void doRecord(class TrackEvent* e);
@@ -85,7 +110,6 @@ class MidiTrack
     void startRecording();
     void stopRecording();
     
-    void doReset(class UIAction* a, bool full);
     void doOverdub(class UIAction* a);
     void doUndo(class UIAction* a);
     void doRedo(class UIAction* a);
@@ -97,7 +121,5 @@ class MidiTrack
     void doSwitch(class TrackEvent* e);
     void doSwitchNow(int target);
     void finishRecordingMode();
-    
-    void doParameter(class UIAction* a);
     
 };

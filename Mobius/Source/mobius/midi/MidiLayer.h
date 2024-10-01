@@ -21,6 +21,7 @@ class MidiLayer : public PooledObject
     void add(class MidiSegment* s);
     void setFrames(int frames);
     int getFrames();
+    void setCycles(int cycles);
     int getCycles();
     void setLastPlayFrame(int frame);
     int getLastPlayFrame();
