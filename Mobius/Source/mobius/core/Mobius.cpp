@@ -757,6 +757,12 @@ void Mobius::propagateSetup()
 void Mobius::setActivePreset(int ordinal)
 {
     mTrack->changePreset(ordinal);
+
+    // this is horrible, but the way presets are selected starts within the core
+    // and until MIDI tracks, only the core needed to know about it
+    // now MIDI tracks need to get things from the Preset until we can burn that
+    // and move to parameter sets
+    mKernel->setActivePreset(ordinal);
 }
 
 //////////////////////////////////////////////////////////////////////

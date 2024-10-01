@@ -37,8 +37,14 @@ class ParameterFinder
     SyncSource getSyncSource(Session::Track* trackdef, SyncSource dflt);
     SyncTrackUnit getTrackSyncUnit(Session::Track* trackdef, SyncTrackUnit dflt);
     SyncUnit getSlaveSyncUnit(Session::Track* trackdef, SyncUnit dflt);
-    
-  private:
+
+    //
+    // Group 2, used by MIDI tracks without full Sessions
+    //
+    SwitchLocation getSwitchLocation(class MidiTracker* t, SwitchLocation dflt);
+    SwitchQuantize getSwitchQuantize(class MidiTracker* t, SwitchQuantize dflt);
+
+    private:
 
     class Provider* provider = nullptr;
 

@@ -29,6 +29,7 @@ void TrackEvent::poolInit()
     frame = 0;
     pending = false;
     pulsed = false;
+    switchTarget = 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -186,6 +187,121 @@ TrackEvent* TrackEventList::consumePulsed()
     }
     return found;
 }    
+
+//////////////////////////////////////////////////////////////////////
+//
+// Utilieies
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Relatively general utility to calculate quantization boundaries.
+ * Adapted from core/EventManager.cpp
+ *
+ * TODO: Here is where we need to add some form of "gravity" to bring
+ * quantization back to the previous boundary rather than the next one
+ * if we're within a few milliseonds of the previous one.
+ * new: this is an old note and I never did this.  It can be hard in the
+ * general case since you have to go back in time and unwind things that
+ * may have already been done.  No one compalined about it, so it sits
+ * on a shelf.
+ *
+ * If "after" is false, we'll return the current frame if it is already
+ * on a quantization boundary, otherwise we advance to the next one.
+ * 
+ * Subcycle quant is harder because the Subcycles divisor can result
+ * in a roundoff error where subCycleFrames * subcycles != cycleFrames
+ * Example:
+ *
+ *     cycleFrames = 10000
+ *     subcycles = 7
+ *     subCycleFrames = 1428.57, rounds to 1428
+ *     cycleFrames * subcycles = 1428 * 7 = 9996
+ * 
+ * So when quantizing after the last subcycle, we won't get to the 
+ * true end of the cycle.  Rather than the usual arithmetic, we just
+ * special case when subCycle == subcycles.  This will mean that the
+ * last subcycle will be slightly longer than the others but I don't
+ * think this should be audible.  
+ *
+ * But note that for loops with many cycles, this calculation needs to be
+ * performed within each cycle, rather than leaving it for the last
+ * subcycle in the loop.  Leaving it to the last subcycle would result
+ * in a multiplication of the roundoff error which could be quite audible,
+ * and furthermore would result in noticeable shifting of the 
+ * later subcycles.
+ * 
+ * This isn't a problem for cycle quant since a loop is always by definition
+ * an even multiply of the cycle frames.
+ * 
+ */
+int TrackEvent::getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
+                                  int subcycles, QuantizeMode q, bool after)
+{
+    long qframe = currentFrame;
+
+	// if loopFrames is zero, then we haven't ended the record yet
+	// so there is no quantization
+	if (loopFrames > 0) {
+
+		switch (q) {
+			case QUANTIZE_CYCLE: {
+				int cycle = (int)(currentFrame / cycleFrames);
+				if (after || ((cycle * cycleFrames) != currentFrame))
+
+
+				  qframe = (cycle + 1) * cycleFrames;
+			}
+			break;
+
+			case QUANTIZE_SUBCYCLE: {
+				// this is harder due to float roudning
+				// all subcycles except the last are the same size,
+				// the last may need to be adjusted so that the combination
+				// of all subcycles is equal to the cycle size
+
+				// sanity check to avoid divide by zero
+				if (subcycles == 0) subcycles = 1;
+				long subcycleFrames = cycleFrames / subcycles;
+
+				// determine which cycle we're in
+				int cycle = (int)(currentFrame / cycleFrames);
+				long cycleBase = cycle * cycleFrames;
+				
+				// now calculate which subcycle we're in
+				long relativeFrame = currentFrame - cycleBase;
+				int subcycle = (int)(relativeFrame / subcycleFrames);
+				long subcycleBase = subcycle * subcycleFrames;
+
+				if (after || (subcycleBase != relativeFrame)) {
+					int nextSubcycle = subcycle + 1;
+					if (nextSubcycle < subcycles)
+					  qframe = nextSubcycle * subcycleFrames;
+					else {
+						// special case wrap to true end of cycle
+						qframe = cycleFrames;
+					}
+					// we just did a relative quant, now restore the base
+					qframe += cycleBase;
+				}
+			}
+			break;
+
+			case QUANTIZE_LOOP: {
+				int loopCount = (int)(currentFrame / loopFrames);
+				if (after || ((loopCount * loopFrames) != currentFrame))
+				  qframe = (loopCount + 1) * loopFrames;
+			}
+			break;
+			
+			case QUANTIZE_OFF: {
+			}
+			break;
+		}
+	}
+
+    return qframe;
+}
 
 /****************************************************************************/
 /****************************************************************************/

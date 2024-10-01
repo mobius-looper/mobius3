@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../../model/ObjectPool.h"
+#include "../../model/ParameterConstants.h"
 
 class TrackEvent : public PooledObject
 {
@@ -19,7 +20,8 @@ class TrackEvent : public PooledObject
     typedef enum {
         EventNone,
         EventPulse,
-        EventRecord
+        EventRecord,
+        EventSwitch
     } Type;
     
     TrackEvent();
@@ -40,6 +42,14 @@ class TrackEvent : public PooledObject
 
     // when it is waiting for a sync pulse
     bool pulsed = false;
+
+    // switch arguments
+    int switchTarget = 0;
+    SwitchQuantize switchQuantize = SWITCH_QUANT_OFF;
+    
+    static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
+                                 int subcycles, QuantizeMode q, bool after);
+    
 
 };
 

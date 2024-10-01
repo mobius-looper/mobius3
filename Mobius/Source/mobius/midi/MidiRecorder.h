@@ -1,5 +1,9 @@
 /**
  * Manages the MIDI recording process for one track.
+ *
+ * The recorder is responsible for accumulating midi events that
+ * come into a track and managing the adjustment to baking segments
+ * as they become occluded by a new overdubs.
  */
 
 #pragma once
@@ -17,14 +21,22 @@ class MidiRecorder
                     class MidiNotePool* npool);
 
 
+    // release all state held by the recorder and reset the location
     void reset();
+
+    // release resources held by recorder but keep the location
     void clear();
+    
     bool isRecording();
     void setRecording(bool b);
+    bool isExtending();
+    void setExtending(bool b);
+    
     int getFrames();
     int getFrame();
+    void setFrame(int newFrame);
     int getCycles();
-    int getCycle();
+    int getCycleFrames();
     bool hasChanges();
     int getEventCount();
     
@@ -33,6 +45,7 @@ class MidiRecorder
     void add(class MidiEvent* e);
     class MidiLayer* commit(bool continueHolding);
     void finalizeHeld();
+    void resume(MidiLayer* layer);
 
     // test hack
     void setDurationMode(bool durationMode);
@@ -47,9 +60,11 @@ class MidiRecorder
     class MidiNotePool* notePool = nullptr;
 
     bool recording = false;
+    bool extending = false;
     int frame = 0;
     int frames = 0;
     int cycles = 1;
+    int cycleFrames = 0;
     
     class MidiLayer* recordLayer = nullptr;
     class MidiNote* heldNotes = nullptr;

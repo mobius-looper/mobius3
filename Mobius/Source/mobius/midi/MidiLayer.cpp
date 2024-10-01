@@ -162,6 +162,19 @@ int MidiLayer::getEventCount()
     return (sequence != nullptr) ? sequence->size() : 0;
 }
 
+/**
+ * Remember the last position for SwitchLoation=Restore
+ */
+void MidiLayer::setLastPlayFrame(int frame)
+{
+    lastPlayFrame = frame;
+}
+
+int MidiLayer::getLastPlayFrame()
+{
+    return lastPlayFrame;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Gather

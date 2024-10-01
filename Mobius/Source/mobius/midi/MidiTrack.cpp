@@ -413,16 +413,10 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTrack::advance(int newFrames)
 {
-    // whatever shenanigans we do with modes and extensions
-    // recorder always advances note holding state
-    // todo: pause may mess with this?
-    recorder.advanceHeld(newFrames);
-    
     if (mode == MobiusMidiState::ModeReset) {
         // nothing to do
     }
     else {
-        
         int nextFrame = recorder.getFrame() + newFrames;
         if (recorder.isExtending() || nextFrame < recorder.getFrames()) {
             recorder.advance(newFrames);
@@ -431,16 +425,17 @@ void MidiTrack::advance(int newFrames)
         else {
             // we hit the loop point in this block
             // the recorder gets to control where the player is
-            int included = recorder->getFrames() - recorder.getFrame();
+            int included = recorder.getFrames() - recorder.getFrame();
             int remainder = newFrames - included;
             recorder.advance(included);
-            player.advance(included);
+            player.play(included);
 
             if (recorder.hasChanges()) {
                 shift();
             }
             else {
                 // squelching the record layer
+                recorder.clear();
                 recorder.setFrame(0);
             }
             
@@ -460,13 +455,15 @@ void MidiTrack::advancePlayer(int newFrames)
     if (player.getFrames() >= 0) {
         int nextFrame = player.getFrame() + newFrames;
         if (nextFrame < player.getFrames()) {
-            player.advance(newFrames);
+            player.play(newFrames);
         }
         else {
             // we hit the loop point in this block
             int included = player.getFrames() - player.getFrame();
             int remainder = newFrames - included;
-            player.advance(included);
+            player.play(included);
+            player.restart();
+            player.play(remainder);
         }
     }
 }
@@ -496,6 +493,7 @@ void MidiTrack::doEvent(TrackEvent* e)
 
         case TrackEvent::EventPulse: doPulse(e); break;
         case TrackEvent::EventRecord: doRecord(e); break;
+        case TrackEvent::EventSwitch: doSwitch(e); break;
     }
 
     eventPool->checkin(e);
@@ -684,6 +682,7 @@ void MidiTrack::startRecording()
     loop->reset();
     
     mode = MobiusMidiState::ModeRecord;
+    recorder.setRecording(true);
     recorder.setExtending(true);
 
     pulsator->start(number);
@@ -762,6 +761,14 @@ void MidiTrack::doOverdub(UIAction* a)
 void MidiTrack::doUndo(UIAction* a)
 {
     (void)a;
+
+    // todo: I think this is wrong, if the current record layer has events
+    // undo should first throw those away but not back up a layer, if you
+    // do it again, then it shoudl back up, I guess it's the same though?
+    // might be consusing if the user doesn't see something happen,
+    // but the eror will be that the uncommitted overdub will be put on the
+    // redo layer and can be recovered, not sure what is right
+    
     MidiLoop* loop = loops[loopIndex];
     MidiLayer* playing = loop->getPlayLayer();
     MidiLayer* restored = loop->undo();
@@ -822,20 +829,126 @@ void MidiTrack::doSwitch(UIAction* a, int delta)
     // I suppose if SwitchLocation=Start it could retrigger
     if (target != loopIndex) {
 
-        // todo: check switchQuantize and schedule an event
-        doSwitchNow(target);
+        SwitchQuantize squant = finder->getSwitchQuantize(tracker, SWITCH_QUANT_OFF);
+        TrackEvent* event = nullptr;
+        
+        switch (squant) {
+            case SWITCH_QUANT_OFF: break;
+                
+            case SWITCH_QUANT_SUBCYCLE:
+            case SWITCH_QUANT_CYCLE:
+            case SWITCH_QUANT_LOOP: {
+                int frame = getQuantizeFrame(squant);
+                event = newSwitchEvent(target, frame);
+                event->switchQuantize = SWITCH_QUANT_OFF;
+                
+            }
+                break;
+            case SWITCH_QUANT_CONFIRM:
+            case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+            case SWITCH_QUANT_CONFIRM_CYCLE:
+            case SWITCH_QUANT_CONFIRM_LOOP: {
+                event = newSwitchEvent(target, 0);
+                event->pending = true;
+                event->switchQuantize = squant;
+            }
+                break;
+        }
+
+        if (event == nullptr) {
+            doSwitchNow(target);
+        }
+        else {
+            events.add(event);
+        }
+    }
+}
+
+TrackEvent* MidiTrack::newSwitchEvent(int target, int frame)
+{
+    TrackEvent* event = eventPool->newEvent();
+    event->type = TrackEvent::EventSwitch;
+    event->switchTarget = target;
+    event->frame = frame;
+    return event;
+}
+
+/**
+ * Convert the SwitchQuantize enum value into a QuantizeMode value
+ * so we can use just one enum after factoring out the confirmation
+ * options.
+ */
+QuantizeMode MidiTrack::convert(SwitchQuantize squant)
+{
+    QuantizeMode qmode = QUANTIZE_OFF;
+    switch (squant) {
+        case SWITCH_QUANT_SUBCYCLE:
+        case SWITCH_QUANT_CONFIRM_SUBCYCLE: {
+            qmode = QUANTIZE_SUBCYCLE;
+        }
+            break;
+        case SWITCH_QUANT_CYCLE:
+        case SWITCH_QUANT_CONFIRM_CYCLE: {
+            qmode = QUANTIZE_CYCLE;
+        }
+            break;
+        case SWITCH_QUANT_LOOP:
+        case SWITCH_QUANT_CONFIRM_LOOP: {
+            qmode = QUANTIZE_LOOP;
+        }
+            break;
+        default: qmode = QUANTIZE_OFF; break;
+    }
+    return qmode;
+}
+
+int MidiTrack::getQuantizeFrame(SwitchQuantize squant)
+{
+    QuantizeMode qmode = convert(squant);
+    int qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
+                                               recorder.getCycleFrames(),
+                                               recorder.getFrame(),
+                                               subcycles,
+                                               qmode,
+                                               false);  // "after" is this right?
+    return qframe;
+}
+
+/**
+ * Here after a quantized switch.
+ * If the event has no switchQuantize argument, we've already been
+ * quantized and can just do it now.
+ *
+ * If the event has a switchQuantize, it means this was one of the Confirm modes,
+ * the confirm has happened, and we need to quantize based on where we are now.
+ * Not sure what Mobius does here, it might try to reuse the event.
+ * We'll schedule another one for now, but when we get to stacking might not
+ * want to do that.
+ */
+void MidiTrack::doSwitch(TrackEvent* e)
+{
+    if (e->switchQuantize == SWITCH_QUANT_OFF) {
+        doSwitchNow(e->switchTarget);
+    }
+    else {
+        int qframe = getQuantizeFrame(e->switchQuantize);
+        TrackEvent* next = newSwitchEvent(e->switchTarget, qframe);
+        events.add(next);
     }
 }
 
 void MidiTrack::doSwitchNow(int newIndex)
 {
-    if (recording)
+    if (recorder.isRecording())
       finishRecordingMode();
+
+    MidiLoop* loop = loops[loopIndex];
+    MidiLayer* playing = loop->getPlayLayer();
+    playing->setLastPlayFrame(recorder.getFrame());
             
     loopIndex = newIndex;
-        
-    MidiLoop* loop = loops[newIndex];
-    MidiLayer* playing = loop->getPlayLayer();
+    loop = loops[newIndex];
+    playing = loop->getPlayLayer();
     player.setLayer(playing);
     
     if (playing == nullptr || playing->getFrames() == 0) {
@@ -843,17 +956,37 @@ void MidiTrack::doSwitchNow(int newIndex)
         mode = MobiusMidiState::ModeReset;
     }
     else {
-        // todo: LoopLocation=follow, restore, start, random
-        // follow requires modulo of the current frame with the destination frames
-        // start just goes to zero
-        // restore requires that we saved the previous play position in the Loop
-        // random is just crazy
-        // let's start with start
-        // seeing an annoying pattern with these variables, need to push this into
-        // the player
-        recorder.clear();
-        recoorder.setFrame(0);
+        int currentFrame = recorder.getFrame();
+        
+        recorder.resume(playing);
+        
+        SwitchLocation location = finder->getSwitchLocation(tracker, SWITCH_START);
+        // default is at the start
+        recorder.setFrame(0);
         player.setFrame(0);
+        
+        if (location == SWITCH_FOLLOW) {
+            // if the destination is smaller, have to modulo down
+            // todo: ambiguity where this shold be if there are multiple
+            // cycles, the first one, or the highest cycle?
+            int followFrame = currentFrame;
+            if (followFrame >= recorder.getFrames())
+              followFrame = currentFrame % recorder.getFrames();
+            recorder.setFrame(followFrame);
+            player.setFrame(followFrame);
+        }
+        else if (location == SWITCH_RESTORE) {
+            recorder.setFrame(playing->getLastPlayFrame());
+            player.setFrame(playing->getLastPlayFrame());
+        }
+        else if (location == SWITCH_RANDOM) {
+            // might be nicer to have this be a random subcycle or
+            // another rhythmically ineresting unit
+            int random = Random(0, player.getFrames() - 1);
+            recorder.setFrame(random);
+            player.setFrame(random);
+        }
+        
         mode = MobiusMidiState::ModePlay;
     }
 }
@@ -865,9 +998,7 @@ void MidiTrack::doSwitchNow(int newIndex)
 void MidiTrack::finishRecordingMode()
 {
     shift();
-
     overdub = false;
-    recording = false;
     mode = MobiusMidiState::ModePlay;
 
     // I'm confident there are several issues at this point with

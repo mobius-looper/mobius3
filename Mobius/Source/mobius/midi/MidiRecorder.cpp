@@ -50,6 +50,10 @@ void MidiRecorder::setDurationMode(bool b)
     durationMode = b;
 }
 
+/**
+ * Clear the contents of the recorder and reset the record position
+ * back to the beginning.
+ */
 void MidiRecorder::reset()
 {
     clear();
@@ -62,6 +66,8 @@ void MidiRecorder::reset()
 /**
  * Differs from reset() in that we throw away any recording
  * but keep the current location.
+ *
+ * Recording and extending states must be re-armed by the caller.
  */
 void MidiRecorder::clear()
 {
@@ -88,6 +94,9 @@ MidiLayer* MidiRecorder::prepLayer()
     return layer;
 }
 
+/**
+ * Return the held note detection objeccts back to the pool
+ */
 void MidiRecorder::flushHeld()
 {
     while (heldNotes != nullptr) {
@@ -98,19 +107,36 @@ void MidiRecorder::flushHeld()
     }
 }
 
+/**
+ * Setting the recording flag enables the acccumulation
+ * of incomming MidiEvents into the record layer sequence.
+ */
+void MidiRecorder::setRecording(bool b)
+{
+    recording = b;
+    if (!recording)
+      finalizeHeld();
+}
+
 bool MidiRecorder::isRecording()
 {
     return recording;
 }
 
-void MidiRecorder::setRecording(bool b)
-{
-    recording = b;
-}
-
+/**
+ * SEtting the extending flag allows the record layer to grow
+ * by one cycle when the record location reaches the end
+ * of the layer.  Without extension, recording will stop and
+ * wait for the track to perform a layer shift.
+ */
 void MidiRecorder::setExtending(bool b)
 {
     extending = b;
+}
+
+bool MidiRecorder::isExtending()
+{
+    return extending;
 }
 
 int MidiRecorder::getFrames()
@@ -120,6 +146,14 @@ int MidiRecorder::getFrames()
 
 int MidiRecorder::getFrame()
 {
+    return frame;
+}
+
+void MidiRecorder::setFrame(int newFrame)
+{
+    if (newFrame >= frames)
+      Trace(1, "MidiRecorder: Setting frame out of range");
+    frame = newFrame;
 }
 
 int MidiRecorder::getCycles()
@@ -127,10 +161,12 @@ int MidiRecorder::getCycles()
     return cycles;
 }
 
-int MidiRecorder::getCycle()
+int MidiRecorder::getCycleFrames()
 {
-    return cycle;
+    Trace(1, "MidiRecorder::getCycleFrames is wrong");
+    return cycleFrames;
 }
+
 
 bool MidiRecorder::hasChanges()
 {
@@ -142,28 +178,44 @@ int MidiRecorder::getEventCount()
     return recordLayer->getEventCount();
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Advance the record state.
- * 
- * This is the main source of what the UI percieves as the loop location
- * even when we're not actually recording anything.  The reason is that in
- * extension modes like multiply the record layer can become larger than what
- * the player is playing and the UI needs to show the pending record state.
+ *
+ * The record layer's size and location is what the UI perceives as the
+ * loop location rather than what the Player is doing. The player may be slightly
+ * ahead of the recording if it is doing latency compensation.  And the record
+ * layer position is what determines when scheduled events happen.
+ *
+ * When the advance reaches the end of the the layer, and extension is disabled
+ * the recorder stops accumulating.  It is the responsibility of MidiTrack to
+ * detect this and perform a layer shift.
  */
 void MidiRecorder::advance(int blockFrames)
 {
+    // remember this for duration hacking
     lastBlockFrames = blockFrames;
 
-    frame += blockFrames;
+    int nextFrame = frame + blockFrames;
+    if (!extending && nextFrame > frames) {
+        // Track was supposed to prevent this
+        Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");
+    }
+    
+    frame = nextFrame;
     if (extending)
       frames += blockFrames;
-    
+
+    advanceHeld(blockFrames);
 }
 
 /**
  * Advance note holds.
- * 
- * See commentary above add() for why duration calculations are weird.
  *
  * Hmm, since during recording we have to remember the MidiEvent that was
  * added to the sequence we could just be updating the duration there rather
@@ -184,6 +236,8 @@ void MidiRecorder::advanceHeld(int blockFrames)
  * finalized with their current duration and we stop tracking them.
  * If true, it means that an overdub or other recording is in progress
  * over the shift and we should keep duration tracking.
+ *
+ * The current layer is returned for shifting.
  */
 MidiLayer* MidiRecorder::commit(bool continueHolding)
 {
@@ -191,12 +245,16 @@ MidiLayer* MidiRecorder::commit(bool continueHolding)
         // shouldn't happen, right?
         Trace(1, "MidiRecorder: Finalizing an empty record layer");
     }
+
+    if (frame != frames) {
+        Trace(1, "MidiRecorder: Finalizing record layer early, why?");
+    }
     
     if (!continueHolding)
       finalizeHeld();
     
     recordLayer->setFrames(frames);
-
+    
     MidiSegment* seg = segmentPool->newSegment();
     seg->layer = recordLayer;
     seg->originFrame = 0;
@@ -210,15 +268,45 @@ MidiLayer* MidiRecorder::commit(bool continueHolding)
     // adding the segment bumped the change count, clear it
     newLayer->resetChanges();
 
+    // swap the old layer for the new one
     MidiLayer* retval = recordLayer;
     recordLayer = newLayer;
 
     // turn off extension mode, track has to turn it back on if necessary
     extending = false;
+    // hmm, kind of a misnomer, it really means continueRecording
+    if (!continueHolding)
+      recording = false;
     // start the next layer back at zero
+    // frames stays the same
     frame = 0;
-    
+
     return retval;
+}
+
+/**
+ * Resume recording on top of an existing layer.
+ * This is what happens on a loop switch.
+ */
+void MidiRecorder::resume(MidiLayer* layer)
+{
+    reset();
+    
+    frames = layer->getFrames();
+    
+    MidiSegment* seg = segmentPool->newSegment();
+    seg->layer = layer;
+    seg->originFrame = 0;
+    seg->segmentFrames = frames;
+    seg->referenceFrame = 0;
+
+    recordLayer->add(seg);
+    recordLayer->resetChanges();
+    recordLayer->setFrames(frames);
+
+    // turn off extension mode, track has to turn it back on if necessary
+    extending = false;
+    recording = false;
 }
 
 /**

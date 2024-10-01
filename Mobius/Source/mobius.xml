@@ -43,7 +43,7 @@
     soundCopyMode='play'
     subcycles='4'
     switchDuration='permanent'
-    switchLocation='start'
+    switchLocation='follow'
     switchQuantize='loop'
     timeCopyMode='play'
     trackLeaveAction='none'

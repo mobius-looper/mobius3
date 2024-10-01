@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "../../util/Util.h"
 #include "../../model/MobiusMidiState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
@@ -90,10 +91,13 @@ class MidiTrack
     void doRedo(class UIAction* a);
 
     void doSwitch(class UIAction* a, int delta);
+    class TrackEvent* newSwitchEvent(int target, int framee);
+    QuantizeMode convert(SwitchQuantize squant);
+    int getQuantizeFrame(SwitchQuantize squant);
+    void doSwitch(class TrackEvent* e);
     void doSwitchNow(int target);
     void finishRecordingMode();
     
-
     void doParameter(class UIAction* a);
     
 };

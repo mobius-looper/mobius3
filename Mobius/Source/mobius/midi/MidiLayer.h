@@ -22,6 +22,8 @@ class MidiLayer : public PooledObject
     void setFrames(int frames);
     int getFrames();
     int getCycles();
+    void setLastPlayFrame(int frame);
+    int getLastPlayFrame();
     
     void resetPlayState();
     void gather(juce::Array<class MidiEvent*>* events, int startFrame, int endFrame);
@@ -42,6 +44,7 @@ class MidiLayer : public PooledObject
     int layerFrames = 0;
     int layerCycles = 1;
     int changes = 0;
+    int lastPlayFrame = 0;
     
     //
     // the playback "cursor"
