@@ -1,6 +1,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
+
 #include "../../model/ObjectPool.h"
 
 #include "TrackEvent.h"
@@ -160,6 +162,36 @@ TrackEvent* TrackEventList::consume(int startFrame, int blockFrames)
         found->next = nullptr;
     }
     return found;
+}
+
+/**
+ * Shift any events that are not pending down by some amount.
+ * This is used in the case of events scheduled AFTER the end of the loop,
+ * normally just loopFrames or 1+ the maxFrame calculated by consume()
+ * I don't think we want consume() to take 1 beyond the block size because this
+ * would pull ordinary events in a block early, but then without a shift the
+ * end of loop event will never be reached.  Forget what audio loops do.
+ *
+ * Really don't like this.  The loop could in theory grow or shrink while
+ * this is scheduled, so if that happens the previous event frame needs
+ * to be adjusted 
+ */
+void TrackEventList::shift(int delta)
+{
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (!e->pending && !e->pulsed) {
+            e->frame = e->frame - delta;
+            if (e->frame < 0) {
+                Trace(1, "TrackEvent: Event shift underflow");
+                e->frame = 0;
+            }
+            else if (e->frame > 0) {
+                // it is not expected that these be scheduled more than one frame beond
+                // the end
+                Trace(1, "TrackEvent: Event shift anomoly");
+            }
+        }
+    }
 }
 
 TrackEvent* TrackEventList::consumePulsed()

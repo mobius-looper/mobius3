@@ -431,6 +431,10 @@ void MidiTrack::advance(int newFrames)
                 // squelching the record layer
                 recorder.rollback();
             }
+
+            // shift events waiting for the loop end
+            // don't like this
+            events.shift(recorder.getFrames());
             
             player.restart();
             player.play(remainder);
@@ -683,6 +687,10 @@ void MidiTrack::startRecording()
     mode = MobiusMidiState::ModeRecord;
     recorder.begin();
 
+    // we may not have gone through a formal reset process
+    // so make sure pulsator is unlocked first to prevent a log error
+    // !! this feels wrong, who is forgetting to unlock
+    //pulsator->unlock(number);
     pulsator->start(number);
     
     Trace(2, "MidiTrack: %d Recording", number);
@@ -1018,9 +1026,11 @@ void MidiTrack::doSwitchNow(int newIndex)
     finishRecordingMode();
 
     MidiLoop* loop = loops[loopIndex];
+
+    // remember the location for SwitchLocation=Restore
     MidiLayer* playing = loop->getPlayLayer();
-    // remember this for SwitchLocation=Restore
-    playing->setLastPlayFrame(recorder.getFrame());
+    if (playing != nullptr)
+      playing->setLastPlayFrame(recorder.getFrame());
             
     loopIndex = newIndex;
     loop = loops[newIndex];
@@ -1030,9 +1040,11 @@ void MidiTrack::doSwitchNow(int newIndex)
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
         recorder.reset();
+        pulsator->unlock(number);
         mode = MobiusMidiState::ModeReset;
     }
     else {
+        int currentFrames = recorder.getFrames();
         int currentFrame = recorder.getFrame();
         
         recorder.resume(playing);
@@ -1067,6 +1079,14 @@ void MidiTrack::doSwitchNow(int newIndex)
         // the usual ambiguity about what happens to minor modes
         overdub = false;
         mode = MobiusMidiState::ModePlay;
+
+        if (recorder.getFrames() != currentFrames) {
+            // we switched to a loop of a different size
+            // if we were synchronizing this is important, especially if
+            // we're the out sync master
+            // let it continue with the old tempo for now
+            // but need to revisit this
+        }
     }
 }
 
@@ -1076,19 +1096,20 @@ void MidiTrack::doSwitchNow(int newIndex)
  */
 void MidiTrack::finishRecordingMode()
 {
-    if (recorder.hasChanges()) 
-      shift();
+    if (mode == MobiusMidiState::ModeRecord) {
+        // this was an initial recording
+        // go through the same process as a normal record ending
+        // so we get Pulsator locked
+        stopRecording();
+    }
+    else {
+        // if we were overdubbing capture them
+        if (recorder.hasChanges()) 
+          shift();
     
-    overdub = false;
-    mode = MobiusMidiState::ModePlay;
-
-    // I'm confident there are several issues at this point with
-    // Pulsator if we're the OutSyncMaster
-    // If this was the initial recording, it didn't end the usuall way
-    // with stopRecording so Pulsator won't start clocks.
-    // If we were already the sync master when you change loops, I think
-    // audio tracks would adjust the tempo, but that can't happen till after
-    // copySound/copyTiming are working
+        overdub = false;
+        mode = MobiusMidiState::ModePlay;
+    }
 }
 
 /****************************************************************************/

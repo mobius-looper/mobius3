@@ -752,7 +752,7 @@ Track* Actionator::resolveTrack(Action* action)
             if (tnum > 0) {
                 track = mMobius->getTrack(tnum - 1);
                 if (track == NULL) {
-                    Trace(1, "Track index out of range");
+                    Trace(1, "Actionator: Track index out of range");
                     // could either return NULL or force it to the lowest
                     // or higest
                     track = mMobius->getTrack();

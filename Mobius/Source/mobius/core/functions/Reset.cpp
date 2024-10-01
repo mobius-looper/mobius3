@@ -82,6 +82,10 @@ ResetFunction::ResetFunction(bool gen, bool glob)
 	else if (glob) {
 		setName("GlobalReset");
 		noFocusLock = true;
+        // new: why the fuck was this never global=true?
+        // oh shit, it's the "deferred to audio interrupt shit
+        // that should no longer apply but I'm afraid of touching it
+        // handle globalization in the symbol table for new code
 	}
 	else {
 		setName("Reset");

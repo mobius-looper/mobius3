@@ -80,6 +80,7 @@ class TrackEventList
     void flush();
 
     TrackEvent* consume(int startFrame, int blockFrames);
+    void shift(int delta);
     TrackEvent* consumePulsed();
     
   private:

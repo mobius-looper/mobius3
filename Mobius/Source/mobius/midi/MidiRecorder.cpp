@@ -212,36 +212,43 @@ void MidiRecorder::rollback()
  */
 MidiLayer* MidiRecorder::commit(bool continueHolding)
 {
-    if (recordFrames == 0) {
-        // shouldn't happen, right?
-        Trace(1, "MidiRecorder: Finalizing an empty record layer");
+    MidiLayer* commitLayer = nullptr;
+    
+    if (recordLayer == nullptr) {
+        Trace(1, "MidiRecorder: Commit without a layer");
     }
+    else {
+        if (recordFrames == 0) {
+            // shouldn't happen, right?
+            Trace(1, "MidiRecorder: Finalizing an empty record layer");
+        }
 
-    if (recordFrame != recordFrames) {
-        Trace(1, "MidiRecorder: Finalizing record layer early, why?");
+        if (recordFrame != recordFrames) {
+            Trace(1, "MidiRecorder: Finalizing record layer early, why?");
+        }
+    
+        if (!continueHolding)
+          finalizeHeld();
+    
+        recordLayer->setFrames(recordFrames);
+        recordLayer->setCycles(recordCycles);
+
+        // assimilate rests the recorLayer so remove it first
+        commitLayer = recordLayer;
+        recordLayer = nullptr;
+        assimilate(commitLayer);
+
+        // turn off extension mode, track has to turn it back on if necessary
+        extending = false;
+    
+        // hmm, kind of a misnomer, it really means continueRecording
+        if (!continueHolding)
+          recording = false;
+    
+        // start the next layer back at zero
+        // frame count stays the same
+        recordFrame = 0;
     }
-    
-    if (!continueHolding)
-      finalizeHeld();
-    
-    recordLayer->setFrames(recordFrames);
-    recordLayer->setCycles(recordCycles);
-
-    // assimilate rests the recorLayer so remove it first
-    MidiLayer* commitLayer = recordLayer;
-    recordLayer = nullptr;
-    assimilate(commitLayer);
-
-    // turn off extension mode, track has to turn it back on if necessary
-    extending = false;
-    
-    // hmm, kind of a misnomer, it really means continueRecording
-    if (!continueHolding)
-      recording = false;
-    
-    // start the next layer back at zero
-    // frame count stays the same
-    recordFrame = 0;
 
     return commitLayer;
 }
@@ -322,12 +329,12 @@ int MidiRecorder::getCycleFrames()
 
 bool MidiRecorder::hasChanges()
 {
-    return recordLayer->hasChanges();
+    return (recordLayer != nullptr) ? recordLayer->hasChanges() : false;
 }
 
 int MidiRecorder::getEventCount()
 {
-    return recordLayer->getEventCount();
+    return (recordLayer != nullptr) ? recordLayer->getEventCount() : 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -492,6 +499,12 @@ void MidiRecorder::advance(int blockFrames)
  */
 void MidiRecorder::add(MidiEvent* e)
 {
+    if (recordLayer == nullptr) {
+        Trace(1, "MidiRecorder: add without record layer");
+        midiPool->checkin(e);
+        return;
+    }
+    
     if (!recording) {
         midiPool->checkin(e);
     }

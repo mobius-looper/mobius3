@@ -876,6 +876,13 @@ void MobiusKernel::doAction(UIAction* action)
         if (symbol->functionProperties != nullptr)
           global = symbol->functionProperties->global;
 
+        // if this is a global it will usually have the UI track number in it
+        // because the action is sent into both track bank, the number needs to
+        // be adjusted so that it fits within the bank size to avoid range errors
+        // it doesn't matter what track it actually targets since it is a global function
+        if (global)
+          action->setScopeTrack(0);
+
         int scope = action->getScopeTrack();
         if (scope > audioTracks || global) {
             mMidi->doAction(action);

@@ -285,6 +285,12 @@ void AddTrace(TraceContext* context, int level,
 	// only queue if it falls within the interesting levels
 	if (level <= TracePrintLevel || level <= TraceDebugLevel) {
 
+        if (level == 1) {
+            // this is where you would set a breakpoint
+            int x = level;
+            (void)x;
+        }
+
         // must csect this, the TraceTail can't advance
         // until we've fully initialized the record or else
         // the flush thread can try to render a partially
