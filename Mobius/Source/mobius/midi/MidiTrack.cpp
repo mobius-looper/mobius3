@@ -21,6 +21,7 @@
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
+#include "../../model/SymbolId.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -177,6 +178,13 @@ bool MidiTrack::isRecording()
     return recorder.isRecording();
 }
 
+void MidiTrack::refreshImportant(MobiusMidiState::Track* state)
+{
+    state->frames = recorder.getFrames();
+    state->frame = recorder.getFrame();
+    state->cycles = recorder.getCycles();
+}
+
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
     state->loopCount = loopCount;
@@ -186,10 +194,12 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->frame = recorder.getFrame();
     state->cycles = recorder.getCycles();
 
-    // eventually this needs to come from the recorder
-    state->cycle = 0;
+    int cycleFrames = recorder.getCycleFrames();
+    if (cycleFrames == 0)
+      state->cycle = 1;
+    else
+      state->cycle = (int)(state->frame / cycleFrames) + 1;
 
-    // this needs to be calculated from the current frame and subcycles parameter 
     state->subcycles = subcycles;
     // todo: calculate this!
     state->subcycle = 0;
@@ -234,6 +244,47 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     int layerCount = loop->getLayerCount();
     state->activeLayer = layerCount - 1;
     state->layerCount = layerCount + loop->getRedoCount();
+
+    // loop switch, can only be one of these
+    state->nextLoop = 0;
+    TrackEvent* e = events.find(TrackEvent::EventSwitch);
+    if (e != nullptr)
+      state->nextLoop = (e->switchTarget + 1);
+
+    // turn this off while we refresh
+    state->eventCount = 0;
+    int count = 0;
+    for (e = events.getEvents() ; e != nullptr ; e = e->next) {
+        MobiusMidiState::Event* estate = state->events[count];
+        bool addit = true;
+        int arg = 0;
+        switch (e->type) {
+            case TrackEvent::EventRecord: estate->name = "Record"; break;
+            case TrackEvent::EventSwitch: {
+                estate->name = "Switch";
+                arg = e->switchTarget + 1;
+                
+            }
+                break;
+            case TrackEvent::EventFunction: {
+                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
+                if (s != nullptr)
+                  estate->name = s->name;
+            }
+                break;
+            default: addit = false; break;
+        }
+        
+        if (addit) {
+            estate->frame = e->frame;
+            estate->pending = e->pending;
+            estate->argument = arg;
+            count++;
+            if (count >= state->events.size())
+              break;
+        }
+    }
+    state->eventCount = count;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -263,6 +314,7 @@ void MidiTrack::doAction(UIAction* a)
             case FuncNextLoop: doSwitch(a, 1); break;
             case FuncPrevLoop: doSwitch(a, -1); break;
             case FuncSelectLoop: doSwitch(a, 0); break;
+            case FuncMultiply: doMultiply(a); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
             }
@@ -493,6 +545,7 @@ void MidiTrack::doEvent(TrackEvent* e)
         case TrackEvent::EventPulse: doPulse(e); break;
         case TrackEvent::EventRecord: doRecord(e); break;
         case TrackEvent::EventSwitch: doSwitch(e); break;
+        case TrackEvent::EventFunction: doFunction(e); break;
     }
 
     eventPool->checkin(e);
@@ -537,6 +590,12 @@ void MidiTrack::doPulse(TrackEvent* e)
         // ignore it
         //Trace(2, "MidiTrack: Follower pulse");
     }
+}
+
+void MidiTrack::doFunction(TrackEvent* e)
+{
+    if (e->symbolId == FuncMultiply)
+      doMultiply(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1110,6 +1169,61 @@ void MidiTrack::finishRecordingMode()
         overdub = false;
         mode = MobiusMidiState::ModePlay;
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Multiply
+//
+//////////////////////////////////////////////////////////////////////
+
+int MidiTrack::getQuantizeFrame(QuantizeMode qmode)
+{
+    int qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
+                                               recorder.getCycleFrames(),
+                                               recorder.getFrame(),
+                                               subcycles,
+                                               qmode,
+                                               false);  // "after" is this right?
+    return qframe;
+}
+
+void MidiTrack::doMultiply(UIAction* a)
+{
+    (void)a;
+
+    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    if (quant == QUANTIZE_OFF) {
+        doMultiplyNow();
+    }
+    else {
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventFunction;
+        event->symbolId = FuncMultiply;
+        event->frame = getQuantizeFrame(quant);
+        events.add(event);
+    }
+}
+
+void MidiTrack::doMultiply(TrackEvent* e)
+{
+    (void)e;
+    doMultiplyNow();
+}
+
+void MidiTrack::doMultiplyNow()
+{
+    if (mode == MobiusMidiState::ModeMultiply) {
+        mode = MobiusMidiState::ModePlay;
+        recorder.setRecording(false);
+        recorder.setExtending(false);
+    }
+    else if (mode == MobiusMidiState::ModePlay) {
+        mode = MobiusMidiState::ModeMultiply;
+        recorder.setExtending(true);
+        recorder.setRecording(true);
+    }
+
 }
 
 /****************************************************************************/

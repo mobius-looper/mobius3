@@ -56,7 +56,11 @@ MidiTracker::~MidiTracker()
 void MidiTracker::initialize(Session* s)
 {
     audioTracks = s->audioTracks;
-    allocateTracks(audioTracks + 1, MidiTrackerMaxTracks);
+    int baseNumber = audioTracks + 1;
+    allocateTracks(baseNumber, MidiTrackerMaxTracks);
+    prepareState(&state1, baseNumber, MidiTrackerMaxTracks);
+    prepareState(&state2, baseNumber, MidiTrackerMaxTracks);
+    statePhase = 0;
     loadSession(s);
 }
 
@@ -70,20 +74,32 @@ void MidiTracker::allocateTracks(int baseNumber, int count)
         mt->index = i;
         mt->number = baseNumber + i;
         tracks.add(mt);
+    }
+}
 
-        // allocate a parallel state structure
-        // don't like this, consider passing the view down and updating
-        // it directly
+/**
+ * Prepare one of the two state objects.
+ */
+void MidiTracker::prepareState(MobiusMidiState* state, int baseNumber, int count)
+{
+    for (int i = 0 ; i < count ; i++) {
         MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
         tstate->index = i;
         tstate->number = baseNumber + i;
-        state.tracks.add(tstate);
+        state->tracks.add(tstate);
 
         for (int l = 0 ; l < MidiTrackerMaxLoops ; l++) {
             MobiusMidiState::Loop* loop = new MobiusMidiState::Loop();
             loop->index = l;
             loop->number = l + 1;
             tstate->loops.add(loop);
+        }
+
+        // enough for a few events
+        int maxEvents = 5;
+        for (int e = 0 ; e < maxEvents ; e++) {
+            MobiusMidiState::Event* event = new MobiusMidiState::Event();
+            tstate->events.add(event);
         }
     }
 }
@@ -127,13 +143,21 @@ void MidiTracker::loadSession(Session* session)
     }
 
     // make the curtains match the drapes
-    state.activeTracks = activeTracks;
+    // !! is this the place to be fucking with this?
+    state1.activeTracks = activeTracks;
+    state2.activeTracks = activeTracks;
 }
 
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 {
     for (int i = 0 ; i < activeTracks ; i++)
       tracks[i]->processAudioStream(stream);
+
+    stateRefreshCounter++;
+    if (stateRefreshCounter > stateRefreshThreshold) {
+        refreshState();
+        stateRefreshCounter = 0;
+    }
 }
 
 /**
@@ -254,22 +278,56 @@ MidiNotePool* MidiTracker::getNotePool()
 
 MobiusMidiState* MidiTracker::getState()
 {
-    refreshState();
-    return &state;
+    MobiusMidiState* state;
+    if (statePhase == 0)
+      state = &state1;
+    else
+      state = &state2;
+
+    // the most important one to loop crisp is the frame counter
+    // since that's reliable to read, always refresh that one
+    for (int i = 0 ; i < activeTracks ; i++) {
+        MidiTrack* track = tracks[i];
+        if (track != nullptr) {
+            MobiusMidiState::Track* tstate = state->tracks[i];
+            if (tstate != nullptr)
+              track->refreshImportant(tstate);
+        }
+    }
+    
+    return state;
 }
 
 void MidiTracker::refreshState()
 {
-    state.activeTracks = activeTracks;
+    // the opposite of what getState does
+    MobiusMidiState* state;
+    if (statePhase == 0)
+      state = &state2;
+    else
+      state = &state1;
+    
+    state->activeTracks = activeTracks;
     
     for (int i = 0 ; i < activeTracks ; i++) {
         MidiTrack* track = tracks[i];
         if (track != nullptr) {
-            MobiusMidiState::Track* tstate = state.tracks[i];
+            MobiusMidiState::Track* tstate = state->tracks[i];
             if (tstate != nullptr)
               track->refreshState(tstate);
         }
     }
+
+
+    // ugh, this isn't reliable either, UI can be using the old one after
+    // we've swapped in the new one and if we hit another refresh before it
+    // is done we corrupt
+
+    // swap phases
+    if (statePhase == 0)
+      statePhase = 1;
+    else
+      statePhase = 0;
 }
 
 /****************************************************************************/

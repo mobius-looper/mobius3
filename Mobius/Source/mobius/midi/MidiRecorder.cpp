@@ -92,6 +92,7 @@ void MidiRecorder::reset()
     cycleFrames = 0;
     recording = false;
     extending = false;
+    extensions = 0;
 
     flushHeld();
 }
@@ -196,6 +197,7 @@ void MidiRecorder::rollback()
     recordFrame = 0;
     recording = false;
     extending = false;
+    extensions = 0;
 
     flushHeld();
 }
@@ -248,6 +250,7 @@ MidiLayer* MidiRecorder::commit(bool continueHolding)
         // start the next layer back at zero
         // frame count stays the same
         recordFrame = 0;
+        extensions = 0;
     }
 
     return commitLayer;
@@ -329,7 +332,14 @@ int MidiRecorder::getCycleFrames()
 
 bool MidiRecorder::hasChanges()
 {
-    return (recordLayer != nullptr) ? recordLayer->hasChanges() : false;
+    bool changes = false;
+    if (recordLayer != nullptr)
+      changes = recordLayer->hasChanges();
+
+    if (!changes)
+      changes = (extensions > 0);
+
+    return changes;
 }
 
 int MidiRecorder::getEventCount()
@@ -460,14 +470,26 @@ void MidiRecorder::advance(int blockFrames)
     lastBlockFrames = blockFrames;
 
     int nextFrame = recordFrame + blockFrames;
-    if (!extending && nextFrame > recordFrames) {
-        // Track was supposed to prevent this
-        Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");
+    if (nextFrame > recordFrames) {
+        if (!extending) {
+            // Track was supposed to prevent this
+            Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");
+        }
+        else {
+            if (backingLayer != nullptr) {
+                // multiply/insert
+                recordCycles++;
+                recordFrames += cycleFrames;
+                extensions++;
+            }
+            else {
+                // initial recording
+                recordFrames += blockFrames;
+            }
+        }
     }
     
     recordFrame = nextFrame;
-    if (extending)
-      recordFrames += blockFrames;
 
     advanceHeld(blockFrames);
 }

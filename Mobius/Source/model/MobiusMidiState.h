@@ -23,7 +23,11 @@ class MobiusMidiState
         ModeReset,
         ModeSynchronize,
         ModeRecord,
-        ModePlay
+        ModePlay,
+        ModeOverdub,
+        ModeMultiply,
+        ModeInsert,
+        ModeReplace
     } Mode;
 
     MobiusMidiState() {}
@@ -44,6 +48,14 @@ class MobiusMidiState
         int frames = 0;
     };
 
+    class Event {
+      public:
+        juce::String name;
+        int frame;
+        bool pending;
+        int argument;
+    };
+
     /**
      * State for one track
      * I want to avoid the notion of the "active track" for MIDI and make this a UI level thing
@@ -62,6 +74,7 @@ class MobiusMidiState
         int activeLoop = 0;
         int layerCount = 0;
         int activeLayer = 0;
+        int nextLoop = 0;
         
         // play position
         int frames = 0;
@@ -84,6 +97,8 @@ class MobiusMidiState
         bool pause = false;
 
         juce::OwnedArray<Loop> loops;
+        juce::OwnedArray<Event> events;
+        int eventCount = 0;
         
     };
 

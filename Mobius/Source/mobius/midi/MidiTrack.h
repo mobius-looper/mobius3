@@ -36,6 +36,7 @@ class MidiTrack
     
     bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
+    void refreshImportant(class MobiusMidiState::Track* state);
 
     //
     // Stimuli
@@ -96,6 +97,7 @@ class MidiTrack
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
     void doParameter(class UIAction* a);
+    void doFunction(class TrackEvent* e);
 
     //
     // Function Handlers
@@ -121,5 +123,10 @@ class MidiTrack
     void doSwitch(class TrackEvent* e);
     void doSwitchNow(int target);
     void finishRecordingMode();
+
+    int getQuantizeFrame(QuantizeMode qmode);
+    void doMultiply(class UIAction* a);
+    void doMultiply(class TrackEvent* e);
+    void doMultiplyNow();
     
 };

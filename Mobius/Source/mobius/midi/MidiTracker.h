@@ -61,11 +61,22 @@ class MidiTracker
     MidiNotePool notePool;
     
     juce::OwnedArray<MidiTrack> tracks;
-    MobiusMidiState state;
+    MobiusMidiState state1;
+    MobiusMidiState state2;
+    char statePhase = 0;
+    
     int activeTracks = 0;
     
     void allocateTracks(int baseNumber, int count);
     void refreshState();
+
+    // kludge: revisit
+    int stateRefreshCounter = 0;
+    
+    // at 44100 samples per second, it takes 172 256 block to fill a second
+    // 1/10 second would then be 17 blocks
+    int stateRefreshThreshold = 17;
+    void prepareState(class MobiusMidiState* state, int baseNumber, int count);
 
 };
 

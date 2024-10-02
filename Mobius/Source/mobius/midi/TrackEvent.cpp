@@ -137,6 +137,18 @@ void TrackEventList::add(TrackEvent* e, bool priority)
     }
 }
 
+TrackEvent* TrackEventList::find(TrackEvent::Type type)
+{
+    TrackEvent* found = nullptr;
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->type == type) {
+            found = e;
+            break;
+        }
+    }
+    return found;
+}
+
 TrackEvent* TrackEventList::consume(int startFrame, int blockFrames)
 {
     TrackEvent* found = nullptr;

@@ -44,6 +44,8 @@ class ParameterFinder
     SwitchLocation getSwitchLocation(class MidiTracker* t, SwitchLocation dflt);
     SwitchQuantize getSwitchQuantize(class MidiTracker* t, SwitchQuantize dflt);
 
+    QuantizeMode getQuantizeMode(class MidiTracker* t, QuantizeMode dflt);
+
     private:
 
     class Provider* provider = nullptr;

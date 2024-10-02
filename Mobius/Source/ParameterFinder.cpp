@@ -93,3 +93,19 @@ SwitchQuantize ParameterFinder::getSwitchQuantize(MidiTracker* t, SwitchQuantize
     return result;
 }
 
+QuantizeMode ParameterFinder::getQuantizeMode(MidiTracker* t, QuantizeMode dflt)
+{
+    QuantizeMode result = dflt;
+    
+    MobiusKernel* kernel = t->getKernel();
+    MobiusConfig* config = kernel->getMobiusConfig();
+    int activePreset = kernel->getActivePreset();
+    Preset* preset = config->getPreset(activePreset);
+    if (preset == nullptr)
+      Trace(1, "ParameterFinder: Unable to determine Preset");
+    else
+      result = preset->getQuantize();
+
+    return result;
+}
+

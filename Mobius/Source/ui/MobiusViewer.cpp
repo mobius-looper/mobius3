@@ -806,8 +806,8 @@ void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview
 
             ve->name = juce::String(newName);
             // the argument is only visible if it is non-zero
-            if (ve->argument > 0)
-              ve->name += " " + juce::String(ve->argument);
+            if (estate->argument > 0)
+              ve->name += " " + juce::String(estate->argument);
             
             ve->frame = estate->frame;
             ve->pending = estate->pending;
@@ -1071,11 +1071,19 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->recording = tstate->recording;
     tview->pause = tstate->pause;
 
+    if (tview->nextLoopNumber != tstate->nextLoop) {
+        tview->nextLoopNumber = tstate->nextLoop;
+        tview->refreshSwitch = true;
+    }
+
     juce::String newMode;
     switch (tstate->mode) {
         case MobiusMidiState::ModeReset: newMode = "Reset"; break;
         case MobiusMidiState::ModeSynchronize: newMode = "Synchronize"; break;
         case MobiusMidiState::ModeRecord: newMode = "Record"; break;
+        case MobiusMidiState::ModeMultiply: newMode = "Multiply"; break;
+        case MobiusMidiState::ModeInsert: newMode = "Insert"; break;
+        case MobiusMidiState::ModeReplace: newMode = "Replace"; break;
         case MobiusMidiState::ModePlay: {
             if (tstate->overdub)
               newMode = "Overdub";
@@ -1116,7 +1124,8 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->layerCount = tstate->layerCount;
     tview->activeLayer = tstate->activeLayer;
     // checkpoints not implemented yet
-    
+
+    refreshMidiEvents(tstate, tview);
 }
 
 void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 
@@ -1145,6 +1154,59 @@ void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate,
     }
 }
     
+void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+{
+    int newCount = tstate->eventCount;
+    int oldCount = tview->events.size();
+
+    if (newCount != oldCount)
+      tview->refreshEvents = true;
+    else {
+        // counts didn't change but the contents may have
+        for (int i = 0 ; i < tstate->eventCount ; i++) {
+            MobiusMidiState::Event* estate = tstate->events[i];
+            MobiusViewEvent* ve = tview->events[i];
+        
+            // LoopMeter will display both the event type name and the argument
+            // number for things like "LoopSwitch 2" so when doing name
+            // comparisons, use strncmp to only compare the name without the argument
+            const char* newName = estate->name.toUTF8();
+            
+            // more weirdness around the lifespan of toUTF8()
+            const char* oldName = ve->name.toUTF8();
+            if (strncmp(oldName, newName, strlen(newName)) ||
+                ve->argument != estate->argument ||
+                ve->frame != estate->frame ||
+                ve->pending != estate->pending) {
+
+                tview->refreshEvents = true;
+                break;
+            }
+        }
+    }
+    
+    // if after all that we detected a difference, rebuild the event view
+    // sweet jesus this is horrible, memory allocations every damn time !?
+    if (tview->refreshEvents) {
+        tview->events.clear();
+
+        for (int i = 0 ; i < tstate->eventCount ; i++) {
+            MobiusMidiState::Event* estate = tstate->events[i];
+            MobiusViewEvent* ve = new MobiusViewEvent();
+            tview->events.add(ve);
+            
+            ve->name = estate->name;
+            // the argument is only visible if it is non-zero
+            if (estate->argument > 0)
+              ve->name += " " + juce::String(estate->argument);
+            
+            ve->frame = estate->frame;
+            ve->pending = estate->pending;
+            ve->argument = estate->argument;
+        }
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

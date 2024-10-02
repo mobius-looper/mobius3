@@ -12,6 +12,7 @@
 
 #include "../../model/ObjectPool.h"
 #include "../../model/ParameterConstants.h"
+#include "../../model/SymbolId.h"
 
 class TrackEvent : public PooledObject
 {
@@ -21,7 +22,8 @@ class TrackEvent : public PooledObject
         EventNone,
         EventPulse,
         EventRecord,
-        EventSwitch
+        EventSwitch,
+        EventFunction
     } Type;
     
     TrackEvent();
@@ -46,6 +48,9 @@ class TrackEvent : public PooledObject
     // switch arguments
     int switchTarget = 0;
     SwitchQuantize switchQuantize = SWITCH_QUANT_OFF;
+
+    // function arguments
+    SymbolId symbolId = SymbolIdNone;
     
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);
@@ -77,11 +82,16 @@ class TrackEventList
 
     void initialize(TrackEventPool* pool);
     void add(TrackEvent* e, bool priority = false);
+    TrackEvent* find(TrackEvent::Type type);
     void flush();
 
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);
     TrackEvent* consumePulsed();
+
+    TrackEvent* getEvents() {
+        return events;
+    }
     
   private:
 

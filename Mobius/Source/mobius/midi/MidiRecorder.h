@@ -87,6 +87,7 @@ class MidiRecorder
     int cycleFrames = 0;
     bool recording = false;
     bool extending = false;
+    int extensions = 0;
     
     // held note tracking
     class MidiNote* heldNotes = nullptr;
