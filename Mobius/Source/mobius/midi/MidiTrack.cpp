@@ -165,6 +165,15 @@ void MidiTrack::reset()
     doReset(nullptr, true);
 }
 
+/**
+ * Used by Recorder to do held note injection, forward to the tracker
+ * that has the shared tracking state.
+ */
+MidiNote* MidiTrack::getHeldNotes()
+{
+    return tracker->getHeldNotes();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -266,6 +275,12 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
                 
             }
                 break;
+            case TrackEvent::EventReturn: {
+                estate->name = "Return";
+                arg = e->switchTarget + 1;
+                
+            }
+                break;
             case TrackEvent::EventFunction: {
                 Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
                 if (s != nullptr)
@@ -315,6 +330,7 @@ void MidiTrack::doAction(UIAction* a)
             case FuncPrevLoop: doSwitch(a, -1); break;
             case FuncSelectLoop: doSwitch(a, 0); break;
             case FuncMultiply: doMultiply(a); break;
+            case FuncMute: doMute(a); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
             }
@@ -545,6 +561,7 @@ void MidiTrack::doEvent(TrackEvent* e)
         case TrackEvent::EventPulse: doPulse(e); break;
         case TrackEvent::EventRecord: doRecord(e); break;
         case TrackEvent::EventSwitch: doSwitch(e); break;
+        case TrackEvent::EventReturn: doSwitch(e); break;
         case TrackEvent::EventFunction: doFunction(e); break;
     }
 
@@ -596,6 +613,8 @@ void MidiTrack::doFunction(TrackEvent* e)
 {
     if (e->symbolId == FuncMultiply)
       doMultiply(e);
+    else if (e->symbolId == FuncMute)
+      doMute(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -769,12 +788,20 @@ void MidiTrack::stopRecording()
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Event Handling
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * A MIDI event was received from the beyond...
+ * First touchpoint for event processing, called by MidiTracker after
+ * it passes the event through the shared watcher.
+ * Pass it along to the Recorder which may do it's own watching.
  */
 void MidiTrack::midiEvent(MidiEvent* e)
 {
-    recorder.add(e);
+    recorder.midiEvent(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1084,23 +1111,40 @@ void MidiTrack::doSwitchNow(int newIndex)
     // committed the changes rather then behaving like undo
     finishRecordingMode();
 
-    MidiLoop* loop = loops[loopIndex];
+    MidiLoop* currentLoop = loops[loopIndex];
 
     // remember the location for SwitchLocation=Restore
-    MidiLayer* playing = loop->getPlayLayer();
+    MidiLayer* playing = currentLoop->getPlayLayer();
     if (playing != nullptr)
       playing->setLastPlayFrame(recorder.getFrame());
             
     loopIndex = newIndex;
-    loop = loops[newIndex];
+    MidiLoop* loop = loops[newIndex];
     playing = loop->getPlayLayer();
     player.setLayer(playing);
     
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
-        recorder.reset();
-        pulsator->unlock(number);
-        mode = MobiusMidiState::ModeReset;
+        EmptyLoopAction action = finder->getEmptyLoopAction(tracker, EMPTY_LOOP_NONE);
+        if (action == EMPTY_LOOP_NONE) {
+            recorder.reset();
+            pulsator->unlock(number);
+            mode = MobiusMidiState::ModeReset;
+        }
+        else if (action == EMPTY_LOOP_RECORD) {
+            startRecording();
+        }
+        else if (action == EMPTY_LOOP_COPY) {
+            recorder.reset();
+            recorder.setFrames(currentLoop->getFrames());
+            recorder.setCycles(currentLoop->getCycles());
+            // todo: copy the content
+        }
+        else if (action == EMPTY_LOOP_TIMING) {
+            recorder.reset();
+            recorder.setFrames(currentLoop->getFrames());
+            recorder.setCycles(currentLoop->getCycles());
+        }
     }
     else {
         int currentFrames = recorder.getFrames();
@@ -1147,6 +1191,34 @@ void MidiTrack::doSwitchNow(int newIndex)
             // but need to revisit this
         }
     }
+
+    SwitchDuration duration = finder->getSwitchDuration(tracker, SWITCH_PERMANENT);
+    switch (duration) {
+        case SWITCH_ONCE: {
+            TrackEvent* event = eventPool->newEvent();
+            event->type = TrackEvent::EventFunction;
+            event->symbolId = FuncMute;
+            event->frame = recorder.getFrames();
+            events.add(event);
+        }
+            break;
+        case SWITCH_ONCE_RETURN: {
+            TrackEvent* event = eventPool->newEvent();
+            event->type = TrackEvent::EventReturn;
+            event->switchTarget = currentLoop->number - 1;
+            event->frame = recorder.getFrames();
+            events.add(event);
+        }
+            break;
+        case SWITCH_SUSTAIN: {
+        }
+            break;
+        case SWITCH_SUSTAIN_RETURN: {
+        }
+            break;
+        case SWITCH_PERMANENT: break;
+    }
+    
 }
 
 /**
@@ -1224,6 +1296,49 @@ void MidiTrack::doMultiplyNow()
         recorder.setRecording(true);
     }
 
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Mute
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doMute(UIAction* a)
+{
+    (void)a;
+
+    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    if (quant == QUANTIZE_OFF) {
+        doMuteNow();
+    }
+    else {
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventFunction;
+        event->symbolId = FuncMute;
+        event->frame = getQuantizeFrame(quant);
+        events.add(event);
+    }
+}
+
+void MidiTrack::doMute(TrackEvent* e)
+{
+    (void)e;
+    doMuteNow();
+}
+
+void MidiTrack::doMuteNow()
+{
+    if (mode == MobiusMidiState::ModeMute) {
+        mode = MobiusMidiState::ModePlay;
+        player.setMute(false);
+        mute = false;
+    }
+    else if (mode == MobiusMidiState::ModePlay) {
+        mode = MobiusMidiState::ModeMute;
+        player.setMute(true);
+        mute = true;
+    }
 }
 
 /****************************************************************************/

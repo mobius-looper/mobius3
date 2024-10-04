@@ -43,11 +43,15 @@ class ParameterFinder
     //
     SwitchLocation getSwitchLocation(class MidiTracker* t, SwitchLocation dflt);
     SwitchQuantize getSwitchQuantize(class MidiTracker* t, SwitchQuantize dflt);
-
+    SwitchDuration getSwitchDuration(class MidiTracker* t, SwitchDuration dflt);
+    
     QuantizeMode getQuantizeMode(class MidiTracker* t, QuantizeMode dflt);
+    EmptyLoopAction getEmptyLoopAction(class MidiTracker* t, EmptyLoopAction dflt);
 
-    private:
+  private:
 
     class Provider* provider = nullptr;
+
+    class Preset* getPreset(class MidiTracker* t);
 
 };

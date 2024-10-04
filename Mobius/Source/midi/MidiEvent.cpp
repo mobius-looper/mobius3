@@ -14,10 +14,21 @@
 void MidiEvent::poolInit()
 {
     next = nullptr;
+    device = 0;
     frame = 0;
     duration = 0;
     releaseVelocity = 0;
-    // just leave juce message alone
+    // just leave juce message alone?
+}
+
+void MidiEvent::copy(MidiEvent* src)
+{
+    device = src->device;
+    juceMessage = src->juceMessage;
+    frame = src->frame;
+    duration = src->duration;
+    releaseVelocity = src->releaseVelocity;
+    juceMessage = src->juceMessage;
 }
 
 MidiEventPool::MidiEventPool()

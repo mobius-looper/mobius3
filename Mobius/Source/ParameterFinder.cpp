@@ -61,51 +61,64 @@ SyncUnit ParameterFinder::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit df
 // and another that just deals with configuration objects like Session
 //
 
-SwitchLocation ParameterFinder::getSwitchLocation(MidiTracker* t, SwitchLocation dflt)
+Preset* ParameterFinder::getPreset(MidiTracker* t)
 {
-    SwitchLocation result = dflt;
-    
+    Preset* preset = nullptr;
     MobiusKernel* kernel = t->getKernel();
     MobiusConfig* config = kernel->getMobiusConfig();
     int activePreset = kernel->getActivePreset();
-    Preset* preset = config->getPreset(activePreset);
+    preset = config->getPreset(activePreset);
     if (preset == nullptr)
       Trace(1, "ParameterFinder: Unable to determine Preset");
-    else
-      result = preset->getSwitchLocation();
+    return preset;
+}
 
+
+SwitchLocation ParameterFinder::getSwitchLocation(MidiTracker* t, SwitchLocation dflt)
+{
+    SwitchLocation result = dflt;
+    Preset* preset = getPreset(t);
+    if (preset != nullptr)
+      result = preset->getSwitchLocation();
+    return result;
+}
+
+SwitchDuration ParameterFinder::getSwitchDuration(MidiTracker* t, SwitchDuration dflt)
+{
+    SwitchDuration result = dflt;
+    Preset* preset = getPreset(t);
+    if (preset != nullptr)
+      result = preset->getSwitchDuration();
     return result;
 }
 
 SwitchQuantize ParameterFinder::getSwitchQuantize(MidiTracker* t, SwitchQuantize dflt)
 {
     SwitchQuantize result = dflt;
-    
-    MobiusKernel* kernel = t->getKernel();
-    MobiusConfig* config = kernel->getMobiusConfig();
-    int activePreset = kernel->getActivePreset();
-    Preset* preset = config->getPreset(activePreset);
-    if (preset == nullptr)
-      Trace(1, "ParameterFinder: Unable to determine Preset");
-    else
+    Preset* preset = getPreset(t);
+    if (preset != nullptr)
       result = preset->getSwitchQuantize();
-
     return result;
 }
 
 QuantizeMode ParameterFinder::getQuantizeMode(MidiTracker* t, QuantizeMode dflt)
 {
     QuantizeMode result = dflt;
-    
-    MobiusKernel* kernel = t->getKernel();
-    MobiusConfig* config = kernel->getMobiusConfig();
-    int activePreset = kernel->getActivePreset();
-    Preset* preset = config->getPreset(activePreset);
-    if (preset == nullptr)
-      Trace(1, "ParameterFinder: Unable to determine Preset");
-    else
+    Preset* preset = getPreset(t);
+    if (preset != nullptr)
       result = preset->getQuantize();
-
     return result;
 }
 
+EmptyLoopAction ParameterFinder::getEmptyLoopAction(MidiTracker* t, EmptyLoopAction dflt)
+{
+    EmptyLoopAction result = dflt;
+    Preset* preset = getPreset(t);
+    if (preset != nullptr)
+      result = preset->getEmptyLoopAction();
+    return result;
+}
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

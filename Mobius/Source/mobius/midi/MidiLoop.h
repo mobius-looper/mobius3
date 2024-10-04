@@ -16,6 +16,7 @@ class MidiLoop
     void reset();
     void add(class MidiLayer* l);
     int getFrames();
+    int getCycles();
 
     class MidiLayer* undo();
     class MidiLayer* redo();

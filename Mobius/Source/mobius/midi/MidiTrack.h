@@ -45,7 +45,17 @@ class MidiTrack
     void doAction(class UIAction* a);
     void doQuery(class Query* q);
     void processAudioStream(class MobiusAudioStream* argStream);
+
+    void noteOn(class MidiEvent* e, class MidiNote* note);
+    void noteOff(class MidiEvent* e, class MidiNote* note);
     void midiEvent(class MidiEvent* e);
+
+    //
+    // Support for Recorder
+    //
+
+    class MidiNote* getHeldNotes();
+    class MidiNote* copyNote(class MidiNote* src);
 
   private:
 
@@ -71,8 +81,8 @@ class MidiTrack
     TrackEventList events;
 
     // the meat
-    MidiRecorder recorder;
-    MidiPlayer player;
+    MidiRecorder recorder {this};
+    MidiPlayer player {this};
 
     // state
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
@@ -129,4 +139,10 @@ class MidiTrack
     void doMultiply(class TrackEvent* e);
     void doMultiplyNow();
     
+    void doMute(class UIAction* a);
+    void doMute(class TrackEvent* e);
+    void doMuteNow();
+    
+
+
 };

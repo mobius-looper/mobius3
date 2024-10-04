@@ -1,15 +1,36 @@
 /**
- * State transfer object between the Mobius engine and the UI that has information
- * about MIDI tracks.
+ * State transfer object between the Mobius engine and the UI.
  *
- * Same concept as MobiusState but for MIDI.
+ * The engine will update a state object periodically and send it to the UI
+ * for display.  The UI will poll for state refreshes and display it.  This is
+ * an evolution of the older OldMidiState object that supports both audio
+ * and MIDI tracks.  Core code should eventually retooled to use this one.
  *
- * I really didn't want to go down this path again, but there is just so much stuff to convey
- * that it's really awkward to use individual notifications or queries for dozens of things
- * every refresh cycle.
+ * There are two objects for conveying runtime state.  MobiusState contains the
+ * full state including complex variable length objects such as Loops, Layers,
+ * and Events.  It is refreshed at relatively coarse intervals.
+ *
+ * The MobiusPriorityState object contains a smaller amount of information
+ * intended for things that need to be refreshed at a higher resolution.  This
+ * includes the playback position and the status of the subcycle/cycle/loop
+ * beaters.
+ *
+ * Because MobiusState must be assembled in stages care must be taken to avoid
+ * contention between the audio thread which assembles it and the UI thread
+ * that processes it.
+ *
+ * MobiusPriorityState contains only a fixed number of atomic integer values
+ * and is shared directly between the audio and UI threads.
+ *
+ * Both state objects are very closely related to the MobiusView.  The MobiusView
+ * is managed entirely by the UI, it contains almost all of the same information
+ * as MobiusState, with some transformations and additional support for optimizing
+ * the way the UI redraws components.  The duplication is unfortunate, and needs
+ * rethinking, but works well enough for now.  It is important the MobiusState
+ * have a stable structure in the long term.  MobiusView can evolve as necessary
+ * without disruption of engine code.
  *
  */
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -27,7 +48,8 @@ class MobiusMidiState
         ModeOverdub,
         ModeMultiply,
         ModeInsert,
-        ModeReplace
+        ModeReplace,
+        ModeMute
     } Mode;
 
     MobiusMidiState() {}

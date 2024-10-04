@@ -11,6 +11,7 @@
 #include "MidiSegment.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
+#include "MidiWatcher.h"
 
 class MidiTracker
 {
@@ -44,6 +45,8 @@ class MidiTracker
     class MobiusKernel* getKernel() {
         return kernel;
     }
+
+    class MidiNote* getHeldNotes();
     
   private:
 
@@ -59,7 +62,8 @@ class MidiTracker
     MidiSegmentPool segmentPool;
     TrackEventPool eventPool;
     MidiNotePool notePool;
-    
+
+    MidiWatcher watcher;
     juce::OwnedArray<MidiTrack> tracks;
     MobiusMidiState state1;
     MobiusMidiState state2;

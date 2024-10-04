@@ -212,28 +212,36 @@ bool MidiTracker::doQuery(Query* q)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Recording
+// Incomming Events
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTracker::midiEvent(MidiEvent* event)
+MidiNote* MidiTracker::getHeldNotes()
 {
-    bool consumed = false;
-    
-    // todo: need to support multiple tracks recording and duplicate the event
-    for (int i = 0 ; i < activeTracks ; i++) {
-        MidiTrack* track = tracks[i];
-        if (track->isRecording()) {
-            track->midiEvent(event);
-            consumed = true;
-            break;
-        }
-    }
-
-    if (!consumed)
-      midiPool.checkin(event);
+    return watcher.getHeldNotes();
 }
 
+/**
+ * An event comes in from one of the MIDI devices, or the host.
+ * For notes, a shared hold state is maintained in Tracker and can be used
+ * by each track to include notes in a record region that went down before they
+ * were recording, and are still held when they start recording.
+ *
+ * The event is passed to all tracks, if a track wants to record the event
+ * it must make a copy.
+ */
+void MidiTracker::midiEvent(MidiEvent* e)
+{
+    watcher.midiEvent(e);
+
+    for (int i = 0 ; i < activeTracks ; i++) {
+        MidiTrack* track = tracks[i];
+        track->midiEvent(e);
+    }
+    
+    midiPool.checkin(e);
+}
+    
 //////////////////////////////////////////////////////////////////////
 //
 // Object Pools

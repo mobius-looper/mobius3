@@ -15,11 +15,25 @@ class MidiEvent : public PooledObject
 {
   public:
 
+    void poolInit() override;
+    void copy(MidiEvent* src);
+
     /**
      * Chain pointer for sequences.
      * Not the same as the pool chain.
      */
     MidiEvent* next = nullptr;
+
+    /**
+     * The device id this event came from.
+     * Ids start from 1 and are assigned at runtime.
+     */
+    int device = 0;
+
+    /**
+     * The wrapped Juce message
+     */
+    juce::MidiMessage juceMessage;
 
     /**
      * The position in the audio stream where this
@@ -36,14 +50,6 @@ class MidiEvent : public PooledObject
      * For notes, the release velocity if tracking duration
      */
     int releaseVelocity = 0;
-
-    /**
-     * The wrapped Juce message
-     */
-    juce::MidiMessage juceMessage;
-
-    // PooledObject overrides
-    void poolInit() override;
 
 };
 

@@ -60,6 +60,14 @@ int MidiLoop::getFrames()
     return frames;
 }
 
+int MidiLoop::getCycles()
+{
+    int cycles = 0;
+    if (layers != nullptr)
+      cycles = layers->getCycles();
+    return cycles;
+}
+
 MidiLayer* MidiLoop::undo()
 {
     if (layers == nullptr) {

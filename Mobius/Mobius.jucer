@@ -498,6 +498,8 @@
           <FILE id="lx27gA" name="MidiTrack.h" compile="0" resource="0" file="Source/mobius/midi/MidiTrack.h"/>
           <FILE id="g5UCcE" name="MidiTracker.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiTracker.cpp"/>
           <FILE id="v49kWc" name="MidiTracker.h" compile="0" resource="0" file="Source/mobius/midi/MidiTracker.h"/>
+          <FILE id="DjLNB0" name="MidiWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiWatcher.cpp"/>
+          <FILE id="QmMmv7" name="MidiWatcher.h" compile="0" resource="0" file="Source/mobius/midi/MidiWatcher.h"/>
           <FILE id="Kf6cIP" name="TrackEvent.cpp" compile="1" resource="0" file="Source/mobius/midi/TrackEvent.cpp"/>
           <FILE id="IzyBty" name="TrackEvent.h" compile="0" resource="0" file="Source/mobius/midi/TrackEvent.h"/>
         </GROUP>

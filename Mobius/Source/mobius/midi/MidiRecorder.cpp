@@ -21,6 +21,7 @@
 #include "MidiNote.h"
 #include "MidiLayer.h"
 #include "MidiSegment.h"
+#include "MidiTrack.h"
 
 #include "MidiRecorder.h"
 
@@ -30,8 +31,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiRecorder::MidiRecorder()
+MidiRecorder::MidiRecorder(MidiTrack* t)
 {
+    track = t;
 }
 
 MidiRecorder::~MidiRecorder()
@@ -63,6 +65,8 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
  * some NoteOffs and player will have stuck notes.  Not really a problem but
  * it would be more reliable to just always record the NoteOffs and leave it
  * up to player whether it pays attention to them.
+ *
+ * !! this is no longer relevant, we're always in duration mode
  */
 void MidiRecorder::setDurationMode(bool b)
 {
@@ -94,7 +98,19 @@ void MidiRecorder::reset()
     extending = false;
     extensions = 0;
 
-    flushHeld();
+    watcher.flushHeld();
+}
+
+void MidiRecorder::setFrames(int frames)
+{
+    (void)frames;
+    Trace(1, "MidiRecorder::setFrames not implemented");
+}
+
+void MidiRecorder::setCycles(int cycles)
+{
+    (void)cycles;
+    Trace(1, "MidiRecorder::setCycles not implemented");
 }
 
 /**
@@ -106,6 +122,7 @@ void MidiRecorder::begin()
     recordLayer = prepLayer();
     recording = true;
     extending = true;
+    injectHeld();
 }
 
 /**
@@ -199,7 +216,7 @@ void MidiRecorder::rollback()
     extending = false;
     extensions = 0;
 
-    flushHeld();
+    watcher.flushHeld();
 }
 
 /**
@@ -280,7 +297,7 @@ void MidiRecorder::setFrame(int newFrame)
             Trace(1, "MidiRecorder: Setting frame after event accumulation");
         }
         
-        if (heldNotes != nullptr)
+        if (watcher.getHeldNotes() != nullptr)
           Trace(1, "MidiRecorder: Setting frame with held notes");
 
         if (recordFrames == 0) {
@@ -491,16 +508,43 @@ void MidiRecorder::advance(int blockFrames)
     
     recordFrame = nextFrame;
 
-    advanceHeld(blockFrames);
+    watcher.advanceHeld(blockFrames);
 }
 
 /**
- * Add an event to the recorded layer sequence if we are recording.
- * 
- * If this is a NoteOn, we add the event with a zero duration
- * and begin tracking duration.
+ * Add an event to the recorded layer sequence.
+ */
+void MidiRecorder::add(MidiEvent* e)
+{
+    e->frame = recordFrame;
+    recordLayer->add(e);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Events
+//
+//////////////////////////////////////////////////////////////////////
+
+MidiEvent* MidiRecorder::copyEvent(MidiEvent* src)
+{
+    MidiEvent* e = midiPool->newEvent();
+    e->copy(src);
+    return e;
+}
+
+MidiNote* MidiRecorder::copyNote(MidiNote* src)
+{
+    MidiNote* n = notePool->newNote();
+    n->copy(src);
+    return n;
+}
+
+/**
+ * Pass the event through the watcher which will call back out
+ * to the notify methods.
  *
- * The ordering of add() and advance() is subtle.
+ * The ordering of midiEvent() and advance() is subtle.
  * At the beginning of every block we accumulate events that were received since
  * the last block and advance the play state.  There is ambiguity whether the
  * current block represents duration of any held notes, or if that duration was
@@ -519,129 +563,60 @@ void MidiRecorder::advance(int blockFrames)
  * be converted to a frame duration as well, though it will still be block quantized.
  * The jitter involved will be very subtle but keeps me up at night, so revisit this.
  */
-void MidiRecorder::add(MidiEvent* e)
+void MidiRecorder::midiEvent(MidiEvent* e)
 {
-    if (recordLayer == nullptr) {
-        Trace(1, "MidiRecorder: add without record layer");
-        midiPool->checkin(e);
-        return;
-    }
-    
-    if (!recording) {
-        midiPool->checkin(e);
-    }
-    else {
-        e->frame = recordFrame;
-        
-        if (e->juceMessage.isNoteOn()) {
-            recordLayer->add(e);
-            MidiNote* note = notePool->newNote();
-
-            // todo: like MidiPlayer I think we can just reference the MidiEvent here
-            // rather than copying things from it since the MidiEvent can't be reclaimed
-            // without also reclaiming the layer, right?
-            note->channel = e->juceMessage.getChannel();
-            note->number = e->juceMessage.getNoteNumber();
-            note->event = e;
-            note->next = heldNotes;
-            heldNotes = note;
-        }
-        else if (e->juceMessage.isNoteOff()) {
-        
-            if (!durationMode)
-              recordLayer->add(e);
-        
-            MidiNote* note = removeHeld(e);
-            if (note == nullptr) {
-                // note must have been on before the recording started
-                // we could synthesize an event for it and stick it at the beginning
-                // of the layer, or we could have the recorder constantly monitoring notes
-                // even if recording isn't enabled and include the note only if the
-                // on event is sufficitily close to the start of the recording
-                Trace(2, "MidiRecorder: Unmatched NoteOff, work to do");
-            }
-            else {
-                finalizeHold(note, e);
-                notePool->checkin(note);
-            }
-        }
-        else {
-            // something other than a note, durations do not apply
-            recordLayer->add(e);
-        }
-    }
-}
-
-///////////////////////////////////////////////////////////////////////
-//
-// Held Note Management
-//
-///////////////////////////////////////////////////////////////////////
-
-/**
- * Return the held note detection objeccts back to the pool
- */
-void MidiRecorder::flushHeld()
-{
-    while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
-        heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
-        heldNotes = next;
-    }
+    // only bother with this if we're recording
+    // the shared watcher will track everything
+    if (recording)
+      watcher.midiEvent(e);
 }
 
 /**
- * Advance note holds.
- *
- * Hmm, since during recording we have to remember the MidiEvent that was
- * added to the sequence we could just be updating the duration there rather
- * than the MidiNote and copying it to the event later when add() receives
- * the NoteOff.  Doesn't really matter.
+ * Back from the watcher after it starts following a NoteOn.
  */
-void MidiRecorder::advanceHeld(int blockFrames)
+void MidiRecorder::watchedNoteOn(MidiEvent* e, MidiNote* n)
 {
-    for (MidiNote* note = heldNotes ; note != nullptr ; note = note->next) {
-        note->duration += blockFrames;
-    }
+    MidiEvent* localEvent = copyEvent(e);
+    n->event = localEvent;
+    add(localEvent);
 }
 
 /**
- * Remove a matching MidiNote from the held note list when a NoteOff
- * message is received.  In the unusual case where there are overlapping
- * notes, a duplicate NoteOn receieved before the NoteOff for the last one,
- * this will behave as a LIFO.  Not sure that matters and is a situation that
- * can't happen with human fingers, though could happen with a sequencer.
- *
- * todo: note tracking needs to start understanding the device it came from!!
+ * Back from the watcher after it finishes following a note.
  */
-MidiNote* MidiRecorder::removeHeld(MidiEvent* e)
+void MidiRecorder::watchedNoteOff(MidiEvent* e, MidiNote* n)
 {
-    MidiNote* note = nullptr;
-    
-    if (heldNotes != nullptr) {
-        int channel = e->juceMessage.getChannel();
-        int number = e->juceMessage.getNoteNumber();
+    finalizeHold(n, e);
+}
 
-        MidiNote* prev = nullptr;
-        note = heldNotes;
-        while (note != nullptr) {
-            if (note->channel == channel && note->number == number)
-              break;
-            else {
-                prev = note;
-                note = note->next;
-            }
-        }
-        if (note != nullptr) {
-            if (prev == nullptr)
-              heldNotes = note->next;
-            else
-              prev->next = note->next;
-            note->next = nullptr;
-        }
+void MidiRecorder::watchedEvent(MidiEvent* e)
+{
+    MidiEvent* localEvent = copyEvent(e);
+    add(localEvent);
+}
+
+/**
+ * When we begin a record region, ask the shared note tracker for
+ * any notes currently being held and inject events into the sequence
+ * as if they had been played the moment the recording started.
+ */
+void MidiRecorder::injectHeld()
+{
+    MidiNote* holds = track->getHeldNotes();
+    for (MidiNote* held = holds ; held != nullptr ; held = held->next) {
+
+        MidiNote* localNote = copyNote(held);
+        localNote->duration = 0;
+        watcher.add(localNote);
+
+        MidiEvent* localEvent = midiPool->newEvent();
+        localEvent->device = held->device;
+        localEvent->juceMessage = juce::MidiMessage::noteOn(held->channel,
+                                                            held->number,
+                                                            (juce::uint8)(held->velocity));
+        localNote->event = localEvent;
+        add(localEvent);
     }
-    return note;
 }
 
 /**
@@ -650,14 +625,14 @@ MidiNote* MidiRecorder::removeHeld(MidiEvent* e)
  */
 void MidiRecorder::finalizeHeld()
 {
-    while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
-        heldNotes->next = nullptr;
-
-        finalizeHold(heldNotes, nullptr);
-
-        heldNotes = next;
+    MidiNote* held = watcher.getHeldNotes();
+    
+    while (held != nullptr) {
+        finalizeHold(held, nullptr);
+        held = held->next;
     }
+
+    watcher.flushHeld();
 }
 
 void MidiRecorder::finalizeHold(MidiNote* note, MidiEvent* e)

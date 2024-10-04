@@ -16,6 +16,7 @@ MidiNote::~MidiNote()
 void MidiNote::poolInit()
 {
     next = nullptr;
+    device = 0;
     channel = 0;
     number = 0;
     velocity = 0;
@@ -24,6 +25,17 @@ void MidiNote::poolInit()
     remaining = 0;
     layer = nullptr;
     event = nullptr;
+}
+
+/**
+ * Only need to copy the fundamental MIDI event definition
+ */
+void MidiNote::copy(MidiNote* src)
+{
+    device = src->device;
+    channel = src->channel;
+    number = src->number;
+    velocity = src->velocity;
 }
 
 MidiNotePool::MidiNotePool()

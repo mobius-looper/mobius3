@@ -18,10 +18,14 @@ class MidiNote : public PooledObject
     MidiNote();
     ~MidiNote();
     void poolInit();
+    void copy(MidiNote* src);
 
     // player chain pointer
     MidiNote* next = nullptr;
-
+    
+    // device id
+    int device = 0;
+    
     // midi channel number
     // uses Juce convention of 1 based for specific channels
     // 0 means "unspecified" and might be set for host MIDI events

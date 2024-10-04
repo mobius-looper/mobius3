@@ -13,7 +13,7 @@ class MidiPlayer
     //
     // Configuration
     //
-    MidiPlayer();
+    MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
     void initialize(class MobiusContainer* c, class MidiNotePool* pool);
     void setDurationMode(bool durationMode);
@@ -27,7 +27,8 @@ class MidiPlayer
     void setFrame(int frame);
     void restart();
     void shift(class MidiLayer* l);
-
+    void setMute(bool b);
+    
     //
     // Play State
     //
@@ -47,13 +48,15 @@ class MidiPlayer
     // configuration
     class MobiusContainer* container = nullptr;
     class MidiNotePool* notePool = nullptr;
+    class MidiTrack* track = nullptr;
     bool durationMode = false;
 
     // play state
     class MidiLayer* playLayer = nullptr;
     int playFrame = 0;
     int loopFrames = 0;
-
+    bool mute = false;
+    
     // transient buffer used during event gathering
     juce::Array<class MidiEvent*> currentEvents;
 
@@ -64,6 +67,7 @@ class MidiPlayer
     juce::Array<class MidiEvent*> notesOn;
     
     void send(class MidiEvent* e);
+    void unmute();
 
     // duration based tracking
     void flushHeld();

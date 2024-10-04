@@ -23,6 +23,7 @@ class TrackEvent : public PooledObject
         EventPulse,
         EventRecord,
         EventSwitch,
+        EventReturn,
         EventFunction
     } Type;
     

@@ -23,6 +23,7 @@
 
 #include "MidiLayer.h"
 #include "MidiNote.h"
+#include "MidiTrack.h"
 
 #include "MidiPlayer.h"
 
@@ -40,8 +41,9 @@
 const int MidiPlayerMaxEvents = 256;
 
 
-MidiPlayer::MidiPlayer()
+MidiPlayer::MidiPlayer(MidiTrack* t)
 {
+    track = t;
     currentEvents.ensureStorageAllocated(MidiPlayerMaxEvents);
 }
 
@@ -203,6 +205,28 @@ int MidiPlayer::getFrames()
     return loopFrames;
 }
 
+void MidiPlayer::setMute(bool b)
+{
+    mute = b;
+    if (mute) {
+        // todo: either turn everything off then tack on
+        // or set volume CC to 0 then back to the previous value
+        allNotesOff();
+    }
+    else {
+        unmute();
+    }
+}
+
+void MidiPlayer::unmute()
+{
+    MidiNote* held = track->getHeldNotes();
+    while (held != nullptr) {
+        send(held->event);
+        held = held->next;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Play/Advance
@@ -259,47 +283,49 @@ void MidiPlayer::play(int blockFrames)
 
 void MidiPlayer::send(MidiEvent* e)
 {
-    if (!durationMode) {
-        if (e->juceMessage.isNoteOn())
-          trackNoteOn(e);
-        else if (e->juceMessage.isNoteOff())
-          trackNoteOff(e);
+    if (e != nullptr) {
+        if (!durationMode) {
+            if (e->juceMessage.isNoteOn())
+              trackNoteOn(e);
+            else if (e->juceMessage.isNoteOff())
+              trackNoteOff(e);
         
-        container->midiSend(e->juceMessage, 0);
-    }
-    else {
-        if (e->juceMessage.isNoteOn()) {
             container->midiSend(e->juceMessage, 0);
-
-            MidiNote* note = notePool->newNote();
-            // todo: resume work here
-            // rather than copying the channel and whatever,
-            // is it safe to just remember the MidiEvent we dug out of
-            // the layer hierarchy?  it can't go away out from under the player
-            // right?
-            // any layer can only contain Segment references to layers beneath it and
-            // those layers can't be reclaimed until the referencing layer has been
-            // reclaimed, think more
-            note->channel = e->juceMessage.getChannel();
-            note->number = e->juceMessage.getNoteNumber();
-            note->velocity = e->releaseVelocity;
-            // experiment with this
-            note->event = e;
-            note->next = heldNotes;
-            heldNotes = note;
-            // this part we DO need to copy
-            // take the adjusted duration, not originalDuration
-            if (e->duration == 0) {
-                Trace(1, "MidiPlayer: Note event without duration");
-                e->duration = 256;
-            }
-            
-            note->duration = e->duration;
-            note->remaining = note->duration;
         }
-        else if (e->juceMessage.isNoteOff()) {
-            // ignore these in duration mode
-            // but could do some consistency checks to make sure it went off
+        else {
+            if (e->juceMessage.isNoteOn()) {
+                container->midiSend(e->juceMessage, 0);
+
+                MidiNote* note = notePool->newNote();
+                // todo: resume work here
+                // rather than copying the channel and whatever,
+                // is it safe to just remember the MidiEvent we dug out of
+                // the layer hierarchy?  it can't go away out from under the player
+                // right?
+                // any layer can only contain Segment references to layers beneath it and
+                // those layers can't be reclaimed until the referencing layer has been
+                // reclaimed, think more
+                note->channel = e->juceMessage.getChannel();
+                note->number = e->juceMessage.getNoteNumber();
+                note->velocity = e->releaseVelocity;
+                // experiment with this
+                note->event = e;
+                note->next = heldNotes;
+                heldNotes = note;
+                // this part we DO need to copy
+                // take the adjusted duration, not originalDuration
+                if (e->duration == 0) {
+                    Trace(1, "MidiPlayer: Note event without duration");
+                    e->duration = 256;
+                }
+            
+                note->duration = e->duration;
+                note->remaining = note->duration;
+            }
+            else if (e->juceMessage.isNoteOff()) {
+                // ignore these in duration mode
+                // but could do some consistency checks to make sure it went off
+            }
         }
     }
 }
