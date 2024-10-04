@@ -119,14 +119,16 @@
         <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
               file="Source/model/MobiusConfig.cpp"/>
         <FILE id="rrRIuQ" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/MobiusConfig.h"/>
-        <FILE id="ZkQ3jU" name="MobiusState.cpp" compile="1" resource="0" file="Source/model/MobiusState.cpp"/>
-        <FILE id="PhGxLv" name="MobiusState.h" compile="0" resource="0" file="Source/model/MobiusState.h"/>
         <FILE id="aasR6n" name="ModeDefinition.cpp" compile="1" resource="0"
               file="Source/model/ModeDefinition.cpp"/>
         <FILE id="yuqq72" name="ModeDefinition.h" compile="0" resource="0"
               file="Source/model/ModeDefinition.h"/>
         <FILE id="bGX9AO" name="ObjectPool.cpp" compile="1" resource="0" file="Source/model/ObjectPool.cpp"/>
         <FILE id="rppXvP" name="ObjectPool.h" compile="0" resource="0" file="Source/model/ObjectPool.h"/>
+        <FILE id="OItCK6" name="OldMobiusState.cpp" compile="1" resource="0"
+              file="Source/model/OldMobiusState.cpp"/>
+        <FILE id="dLX1dk" name="OldMobiusState.h" compile="0" resource="0"
+              file="Source/model/OldMobiusState.h"/>
         <FILE id="sWgU5q" name="OscConfig.cpp" compile="1" resource="0" file="Source/model/OscConfig.cpp"/>
         <FILE id="RfFrrM" name="OscConfig.h" compile="0" resource="0" file="Source/model/OscConfig.h"/>
         <FILE id="C3L3uT" name="ParameterConstants.h" compile="0" resource="0"

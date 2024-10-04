@@ -1025,7 +1025,7 @@ StreamState* Loop::getRestoreState()
  *
  * Some like recording and paused are really more Track state.
  */
-void Loop::refreshState(MobiusLoopState* s, bool active)
+void Loop::refreshState(OldMobiusLoopState* s, bool active)
 {
     s->active = active;
     // let Track set this
@@ -1158,14 +1158,14 @@ void Loop::refreshState(MobiusLoopState* s, bool active)
         int added = 0;
         int lost = 0;
         if (mRecord != NULL)
-          getLayerState(mRecord->getPrev(), s->layers, MobiusStateMaxLayers,
+          getLayerState(mRecord->getPrev(), s->layers, OldMobiusStateMaxLayers,
                         &added, &lost);
 
         s->layerCount = added;
         s->lostLayers = lost;
 
         // same for redo layers
-        getLayerState(mRedo, s->redoLayers, MobiusStateMaxRedoLayers, &added, &lost);
+        getLayerState(mRedo, s->redoLayers, OldMobiusStateMaxRedoLayers, &added, &lost);
         s->redoCount = added;
         s->lostRedo = lost;
     }
@@ -1222,7 +1222,7 @@ void Loop::refreshState(MobiusLoopState* s, bool active)
  *
  * The redo layers are in the order in which they will be redone.
  */
-void Loop::getLayerState(Layer* layers, MobiusLayerState* states, int max,
+void Loop::getLayerState(Layer* layers, OldMobiusLayerState* states, int max,
 								 int *retAdded, int* retLost)
 {
 	int added = 0;

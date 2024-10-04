@@ -7,7 +7,7 @@
 
 #include "../Supervisor.h"
 #include "../util/Trace.h"
-#include "../model/MobiusState.h"
+#include "../model/OldMobiusState.h"
 #include "../sync/MidiRealizer.h"
 #include "../mobius/MobiusInterface.h"
 #include "../ui/JuceUtil.h"
@@ -126,8 +126,8 @@ void SyncContent::labelTextChanged(juce::Label* l)
 void SyncContent::update()
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    MobiusState* state = mobius->getState();
-    MobiusSyncState* sync = &(state->sync);
+    OldMobiusState* state = mobius->getState();
+    OldMobiusSyncState* sync = &(state->sync);
 
     // same pattern repeats three times, factor something that can be reused
     if (!sync->inStarted) {

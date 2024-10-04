@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../model/MobiusState.h"
+#include "../model/OldMobiusState.h"
 #include "../model/DynamicConfig.h"
 #include "../model/ObjectPool.h"
 
@@ -40,7 +40,7 @@ class MobiusShell : public MobiusInterface
     void initialize(class MobiusConfig* config, class Session* session) override;
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config, class Session* session) override;
-    MobiusState* getState() override;    // also shared by the kernel
+    OldMobiusState* getState() override;    // also shared by the kernel
     class MobiusMidiState* getMidiState() override;
     void performMaintenance() override;
     void doAction(class UIAction* action) override;
@@ -117,7 +117,7 @@ class MobiusShell : public MobiusInterface
     class MobiusConfig* configuration = nullptr;
     //class Session* session = nullptr;
     
-    MobiusState simulatorState;
+    OldMobiusState simulatorState;
     DynamicConfig dynamicConfig;
 
     // kernel communication and shared state

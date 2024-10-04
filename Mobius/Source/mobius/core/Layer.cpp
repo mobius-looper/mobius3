@@ -328,7 +328,7 @@
 #include "Loop.h"
 #include "Mobius.h"
 #include "../../model/MobiusConfig.h"
-#include "../../model/MobiusState.h"
+#include "../../model/OldMobiusState.h"
 #include "Mode.h"
 #include "Project.h"
 #include "Script.h"
@@ -1389,7 +1389,7 @@ Layer* Layer::getTail()
  * Helper for Loop::getState.
  * Return interesting things about this layer.
  */
-void Layer::getState(MobiusLayerState* s)
+void Layer::getState(OldMobiusLayerState* s)
 {
 	s->checkpoint = isCheckpoint();
 }

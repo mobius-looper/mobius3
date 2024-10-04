@@ -1,4 +1,7 @@
 /*
+ * NOTE: This class is now obsolete and in the process of being replaced
+ * by the new MobiusState that has adjustments necessary for MIDI tracks.
+ * ---
  * Object capturing the runtime state of the Mobius engine.
  * This is the primary means of communication between the engine and the UI
  * since the internal structures are hidden and difficult to access across the
@@ -83,19 +86,19 @@
  * The maximum number of tracks we support.
  * Limit defined so we don't have to dynamically allocate.
  */
-const int MobiusStateMaxTracks = 32;
+const int OldMobiusStateMaxTracks = 32;
 
 /**
  * The maximum number of loops per track.
   */
-const int MobiusStateMaxLoops = 32;
+const int OldMobiusStateMaxLoops = 32;
 
 /**
  * The maximum number of layers in a loop for which we'll keep state.
  * This is one case where we can in theory overflow, if so
  * the lostLayers value will be set.
  */
-const int MobiusStateMaxLayers = 32;
+const int OldMobiusStateMaxLayers = 32;
 
 
 /**
@@ -103,22 +106,22 @@ const int MobiusStateMaxLayers = 32;
  * Think about this, can't we just have a single layer state array
  * with a redo index into it?
  */
-const int MobiusStateMaxRedoLayers = 10;
+const int OldMobiusStateMaxRedoLayers = 10;
 
 /**
  * The maximum number of schedule events we'll maintain.
  */
-const int MobiusStateMaxEvents = 10;
+const int OldMobiusStateMaxEvents = 10;
 
 /**
  * Layer state
  * If all we have is checkpoint, might be able to simplify this.
  */
-class MobiusLayerState
+class OldMobiusLayerState
 {
   public:
 
-    MobiusLayerState() {
+    OldMobiusLayerState() {
         init();
     }
     
@@ -133,11 +136,11 @@ class MobiusLayerState
 /**
  * Information about a scheduled event.
  */
-class MobiusEventState
+class OldMobiusEventState
 {
   public:
 
-    MobiusEventState() {
+    OldMobiusEventState() {
         init();
     }
     
@@ -160,7 +163,7 @@ class MobiusEventState
     bool pending;
 
     // todo: some things like the next loop after a loop
-    // switch are stored on MobiusLoopState rather than the
+    // switch are stored on OldMobiusLoopState rather than the
     // event where they really area, consider moving?
     // or also show as the argument
 
@@ -169,11 +172,11 @@ class MobiusEventState
 /**
  * State for one loop within a track.
  */
-class MobiusLoopState
+class OldMobiusLoopState
 {
   public:
 
-    MobiusLoopState() {
+    OldMobiusLoopState() {
         init();
     }
 
@@ -217,18 +220,18 @@ class MobiusLoopState
     // it can happen in practice to be worth bothering with
     // an overflow indiciator
     // !! does this belong here or in TrackState?
-    MobiusEventState events[MobiusStateMaxEvents];
+    OldMobiusEventState events[OldMobiusStateMaxEvents];
 	int		eventCount;
 
     // this is more likely to overflow so keep track
     // of the number of layers we can't show
-    MobiusLayerState layers[MobiusStateMaxLayers];
+    OldMobiusLayerState layers[OldMobiusStateMaxLayers];
 	int		layerCount;
 	int 	lostLayers;
 
     // would be nice if we could keep arrays the same
     // and just have the redo point an index within it
-    MobiusLayerState redoLayers[MobiusStateMaxRedoLayers];
+    OldMobiusLayerState redoLayers[OldMobiusStateMaxRedoLayers];
 	int		redoCount;
 	int 	lostRedo;
 
@@ -237,11 +240,11 @@ class MobiusLoopState
 /**
  * State for one track.
  */
-class MobiusTrackState
+class OldMobiusTrackState
 {
   public:
 
-    MobiusTrackState() {
+    OldMobiusTrackState() {
         init();
     }
     
@@ -300,11 +303,11 @@ class MobiusTrackState
     int activeLoop;
 
     // array of loop state, upper bound is defined by "loops" above
-    MobiusLoopState loops[MobiusStateMaxLoops];
+    OldMobiusLoopState loops[OldMobiusStateMaxLoops];
 
     // Flag set by the engine to suggest that state for this track be redrawn.
     // Once set it will not be cleared by the engine, the UI is expected
-    // to clear it after it refreshes.  This is the only thing in MobiusState
+    // to clear it after it refreshes.  This is the only thing in OldMobiusState
     // the UI is allowed to modify.
     // Sort of a kludge originally to handle drag and drop.
     // A track strip can display a lot of stuff and doing difference detection
@@ -331,7 +334,7 @@ class MobiusTrackState
  *     outSyncMaster
  *     trackSyncMaster
  */
-class MobiusSyncState
+class OldMobiusSyncState
 {
   public:
 
@@ -355,11 +358,11 @@ class MobiusSyncState
 /**
  * Overall state of the engine.
  */
-class MobiusState
+class OldMobiusState
 {
   public:
 
-    MobiusState() {
+    OldMobiusState() {
         init();
     }
     
@@ -387,15 +390,15 @@ class MobiusState
     int setupOrdinal = 0;
 
     // state for each track
-    MobiusTrackState tracks[MobiusStateMaxTracks];
+    OldMobiusTrackState tracks[OldMobiusStateMaxTracks];
 
     // state for the shared synchronizer
-    MobiusSyncState sync;
+    OldMobiusSyncState sync;
 
     // testing
-    void simulate(MobiusState* state);
-    void simulate(MobiusTrackState* track);
-    void simulate(MobiusLoopState* loop);
+    void simulate(OldMobiusState* state);
+    void simulate(OldMobiusTrackState* track);
+    void simulate(OldMobiusLoopState* loop);
 
 };
 

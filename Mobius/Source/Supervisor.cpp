@@ -23,7 +23,7 @@
 #include "model/UIAction.h"
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
-#include "model/MobiusState.h"
+#include "model/OldMobiusState.h"
 #include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
@@ -400,7 +400,7 @@ bool Supervisor::start()
     
     // initial display update if we're standalone
     if (mainComponent != nullptr) {
-        MobiusState* state = mobius->getState();
+        OldMobiusState* state = mobius->getState();
         mobiusViewer.refresh(mobius, state, &mobiusView);
         // nothing has been displayed set so turn on all the flags
         mobiusViewer.forceRefresh(&mobiusView);
@@ -844,9 +844,8 @@ void Supervisor::advance()
         if (mainComponent != nullptr || pluginEditorOpen) {
         
             // traverse the display components telling then to reflect changes in the engine
-            MobiusState* state = mobius->getState();
+            OldMobiusState* state = mobius->getState();
 
-            // eventual replacement for MobiusState
             mobiusViewer.refresh(mobius, state, &mobiusView);
             
             mainWindow->update(&mobiusView);

@@ -113,7 +113,7 @@ void Loader::loadLoop(Audio* audio, int trackNumber, int loopNumber)
             // kludge: set this goofy flag to tell the UI that it better
             // pay closer attention to this track and do a full refresh
             int trackIndex = track->getRawNumber();
-            MobiusTrackState* tstate = mobius->getTrackState(trackIndex);
+            OldMobiusTrackState* tstate = mobius->getTrackState(trackIndex);
             tstate->needsRefresh = true;
 
             // some old comments from Mobius::loadProjectInternal

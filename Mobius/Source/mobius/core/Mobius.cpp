@@ -1829,7 +1829,7 @@ Parameter* Mobius::getParameter(const char* name)
  * We could just let the internal MobiusState object be retained by the
  * caller but this still serves as the mechanism to refresh it.
  */
-MobiusState* Mobius::getState()
+OldMobiusState* Mobius::getState()
 {
     mState.trackCount = mTrackCount;
     
@@ -1841,7 +1841,7 @@ MobiusState* Mobius::getState()
     // since the TrackStrips will want most things
     for (int i = 0 ; i < mTrackCount ; i++) {
         Track* t = mTracks[i];
-        MobiusTrackState* tstate = &(mState.tracks[i]);
+        OldMobiusTrackState* tstate = &(mState.tracks[i]);
         t->getState(tstate);
     }
     
@@ -1854,7 +1854,7 @@ MobiusState* Mobius::getState()
 // kludge for drag and drop
 // let internal components put things in here early before
 // the next call to getState which does a full state refresh
-MobiusTrackState* Mobius::getTrackState(int index)
+OldMobiusTrackState* Mobius::getTrackState(int index)
 {
     return &(mState.tracks[index]);
 }
@@ -2046,7 +2046,7 @@ void Mobius::dump(const char* name, Loop* l)
 
 /**
  * Used by TestDriver to easilly know this without digging through
- * MobiusState.  Mostly this makes sure that the active loop in all
+ * OldMobiusState.  Mostly this makes sure that the active loop in all
  * tracks are in Reset, and that there aren't any scripts running.
  * There might be other things to test here, we don't have a formal
  * testable mode for this.

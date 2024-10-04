@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../../model/MobiusState.h"
+#include "../../model/OldMobiusState.h"
 #include "Loader.h"
 
 /**
@@ -133,7 +133,7 @@ class Mobius
     /**
      * Refresh and return state for the engine and the active track.
      */
-    class MobiusState* getState();
+    class OldMobiusState* getState();
 
     /**
      * Install a freshly minted Scriptarian when scripts are reloaded
@@ -276,7 +276,7 @@ class Mobius
     int getActiveTrack();
     class Track* getTrack();
     class Track* getTrack(int index);
-    MobiusTrackState* getTrackState(int index);
+    OldMobiusTrackState* getTrackState(int index);
 
 	class MobiusMode* getMode();
 	long getFrame();
@@ -419,7 +419,7 @@ class Mobius
 	long mCaptureOffset;
 	
 	// state exposed to the outside world
-	MobiusState mState;
+	OldMobiusState mState;
 
     // new loop/project load helper
     Loader mLoader {this};

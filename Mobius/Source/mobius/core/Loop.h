@@ -14,7 +14,7 @@
 
 #include "../../util/Trace.h"
 
-#include "../../model/MobiusState.h"
+#include "../../model/OldMobiusState.h"
 #include "../../model/Preset.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -156,7 +156,7 @@ class Loop : public TraceContext {
     // Status
     //
 
-	void refreshState(class MobiusLoopState* s, bool active);
+	void refreshState(class OldMobiusLoopState* s, bool active);
 
     class StreamState* getRestoreState();
 	class MobiusMode* getMode();
@@ -335,7 +335,7 @@ class Loop : public TraceContext {
 	long getModeInsertedFrames(class Event* endEvent);
 	long getModeEndFrame(class Event* event);
 
-	void getLayerState(class Layer* layers, class MobiusLayerState* states, int max,
+	void getLayerState(class Layer* layers, class OldMobiusLayerState* states, int max,
 					   int *retAdded, int* retLost);
     long reflectFrame(long frame);
 

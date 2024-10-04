@@ -1984,7 +1984,7 @@ void EventManager::cleanReturnEvents()
  * TODO: We're leaving this in a LoopState but really this belongs
  * in TrackState.
  */
-void EventManager::getEventSummary(MobiusLoopState* s)
+void EventManager::getEventSummary(OldMobiusLoopState* s)
 {
 	s->eventCount = 0;
 	Event* events = mEvents->getEvents();
@@ -1992,7 +1992,7 @@ void EventManager::getEventSummary(MobiusLoopState* s)
         mTrack->enterCriticalSection("getEventSummary");
         events = mEvents->getEvents();
         if (events != NULL) {
-            for (Event* e = events ; e != NULL && s->eventCount < MobiusStateMaxEvents ; 
+            for (Event* e = events ; e != NULL && s->eventCount < OldMobiusStateMaxEvents ; 
                  e = e->getNext()) {
 
                 getEventSummary(s, e, false);
@@ -2005,7 +2005,7 @@ void EventManager::getEventSummary(MobiusLoopState* s)
                     s->nextLoop = nextLoop->getNumber();
                     // and the events stacked after the switch
                     for (Event* se = e->getChildren() ; 
-                         se != NULL && s->eventCount < MobiusStateMaxEvents ;
+                         se != NULL && s->eventCount < OldMobiusStateMaxEvents ;
                          se = se->getSibling())
                       getEventSummary(s, se, true);
                 }
@@ -2029,12 +2029,12 @@ void EventManager::getEventSummary(MobiusLoopState* s)
  * specific frame.  These aren't quantized, but they do need to be visible.
  *
  */
-void EventManager::getEventSummary(MobiusLoopState* s, Event* e, bool stacked)
+void EventManager::getEventSummary(OldMobiusLoopState* s, Event* e, bool stacked)
 {
     if (isEventVisible(e, stacked)) {
 
-        MobiusEventState* sum = &(s->events[s->eventCount]);
-        // MobiusState now uses UIEventType so have to map the old type
+        OldMobiusEventState* sum = &(s->events[s->eventCount]);
+        // OldMobiusState now uses UIEventType so have to map the old type
         sum->type = MapEventType(e->type);
         // and also FunctionDefinition rather than Function
         // update: don't need this in MobiusViewer and FunctionDefinition is gone

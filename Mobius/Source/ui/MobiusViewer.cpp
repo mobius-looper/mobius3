@@ -1,4 +1,7 @@
 /**
+ * NOTE: This is in a transition between OldMobiusState and the new MobiusState
+ * that will be shared by both audio and midi tracks.
+ *
  * Translation between the old MobiusState and the new MobiusView,
  * plus additions and simpliciations.
  *
@@ -58,7 +61,7 @@
 
 #include "../Supervisor.h"
 
-#include "../model/MobiusState.h"
+#include "../model/OldMobiusState.h"
 #include "../model/MobiusMidiState.h"
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
@@ -182,7 +185,7 @@ void MobiusViewer::configure(MobiusView* view)
  * the model and sets various flags when something that is more complex
  * changes so the UI can optimize out repaints when nothing is changing.
  */
-void MobiusViewer::refresh(MobiusInterface* mobius, MobiusState* state, MobiusView* view)
+void MobiusViewer::refresh(MobiusInterface* mobius, OldMobiusState* state, MobiusView* view)
 {
     (void)mobius;
 
@@ -273,14 +276,14 @@ void MobiusViewer::forceRefresh(MobiusView* view)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* state, MobiusView* view)
+void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, OldMobiusState* state, MobiusView* view)
 {
     (void)mobius;
 
-    // !! MobiusState has no way to tell us how many tracks are in the state
+    // !! OldMobiusState has no way to tell us how many tracks are in the state
     // have to trust the view, this is bad
     for (int i = 0 ; i < state->trackCount ; i++) {
-        MobiusTrackState* tstate = &(state->tracks[i]);
+        OldMobiusTrackState* tstate = &(state->tracks[i]);
 
         MobiusViewTrack* tview = nullptr;
         if (i < view->tracks.size())
@@ -355,7 +358,7 @@ void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, MobiusState* stat
  * Anything that might be used by track strip elements needs to
  * always be refreshed.
  */
-void MobiusViewer::refreshTrack(MobiusState* state, MobiusTrackState* tstate,
+void MobiusViewer::refreshTrack(OldMobiusState* state, OldMobiusTrackState* tstate,
                                 MobiusView* mview, MobiusViewTrack* tview,
                                 bool active)
 {
@@ -365,18 +368,18 @@ void MobiusViewer::refreshTrack(MobiusState* state, MobiusTrackState* tstate,
     refreshSync(tstate, tview);
     refreshMode(tstate, tview);
     
-    MobiusLoopState* lstate = &(tstate->loops[tstate->activeLoop]);
+    OldMobiusLoopState* lstate = &(tstate->loops[tstate->activeLoop]);
     refreshActiveLoop(tstate, lstate, active, tview);
 }
 
 /**
  * Track name
  * 
- * These are not in MobiusTrackState, they are pulled from the active Setup.
+ * These are not in OldMobiusTrackState, they are pulled from the active Setup.
  * These can't be changed with actions, though that might be interesting for
  * more dynamic names.
  */
-void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate,
+void MobiusViewer::refreshTrackName(OldMobiusState* state, OldMobiusTrackState* tstate,
                                     MobiusView* mview, MobiusViewTrack* tview)
 {
     if (mview->setupChanged) {
@@ -385,7 +388,7 @@ void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate
         MobiusConfig* config = supervisor->getMobiusConfig();
         Setup* setup = config->getSetup(state->setupOrdinal);
         if (setup != nullptr) {
-            // note that MobiusTrackState has an inconsistent use of "number"
+            // note that OldMobiusTrackState has an inconsistent use of "number"
             // that usually means 1 based but here it is the "raw number" which is
             // the zero based index, sad
             SetupTrack* st = setup->getTrack(tstate->number);
@@ -400,7 +403,7 @@ void MobiusViewer::refreshTrackName(MobiusState* state, MobiusTrackState* tstate
  * Refresh various simple properties of each track that are not related to
  * a particular loop.
  */
-void MobiusViewer::refreshTrackProperties(MobiusTrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshTrackProperties(OldMobiusTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->focused = tstate->focusLock;
     tview->inputLevel = tstate->inputLevel;
@@ -425,7 +428,7 @@ void MobiusViewer::refreshTrackProperties(MobiusTrackState* tstate, MobiusViewTr
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
  * 
  */
-void MobiusViewer::refreshSync(MobiusTrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshSync(OldMobiusTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->syncTempo = tstate->tempo;
     tview->syncBeat = tstate->beat;
@@ -442,7 +445,7 @@ void MobiusViewer::refreshSync(MobiusTrackState* tstate, MobiusViewTrack* tview)
  * change in the future.
  *
  * The group a core track is in is identified by the "group ordinal" which
- * is 1 based in MobiusState with 0 meaning that the track is not assigned
+ * is 1 based in OldMobiusState with 0 meaning that the track is not assigned
  * to a group.
  *
  * The names now come from the GroupDefinition objects.
@@ -457,7 +460,7 @@ void MobiusViewer::refreshSync(MobiusTrackState* tstate, MobiusViewTrack* tview)
  *    - have the configuration UI call back to the viewer to reset the last
  *      known state so we trigger a diff next time
  */
-void MobiusViewer::refreshTrackGroups(MobiusTrackState* tstate,  MobiusViewTrack* tview)
+void MobiusViewer::refreshTrackGroups(OldMobiusTrackState* tstate,  MobiusViewTrack* tview)
 {
     int newNumber = tstate->group;
     
@@ -494,14 +497,14 @@ void MobiusViewer::refreshTrackGroups(MobiusTrackState* tstate,  MobiusViewTrack
  * highlighting.
  *
  * The old model called these the "loop summaries" which was merged
- * with MobiusLoopState during 3 development.
+ * with OldMobiusLoopState during 3 development.
  */
-void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshInactiveLoops(OldMobiusTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->loopCount = tstate->loopCount;
 
     for (int i = 0 ; i < tstate->loopCount ; i++) {
-        MobiusLoopState* lstate = &(tstate->loops[i]);
+        OldMobiusLoopState* lstate = &(tstate->loops[i]);
         // grow the loop views as necessary
         MobiusViewLoop* lview;
         if (i < tview->loops.size())
@@ -532,7 +535,7 @@ void MobiusViewer::refreshInactiveLoops(MobiusTrackState* tstate, MobiusViewTrac
  * like the scheduled loop events and loop layers since those will
  * not be shown in the track strips.
  */
-void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* lstate,
+void MobiusViewer::refreshActiveLoop(OldMobiusTrackState* tstate, OldMobiusLoopState* lstate,
                                      bool activeTrack, MobiusViewTrack* tview)
 {
     if (tstate->activeLoop != tview->activeLoop) {
@@ -624,9 +627,9 @@ void MobiusViewer::refreshActiveLoop(MobiusTrackState* tstate, MobiusLoopState* 
  * Weirdly globalMute and globalPause are on the TrackState rather
  * than in the root state.
  */
-void MobiusViewer::refreshMode(MobiusTrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshMode(OldMobiusTrackState* tstate, MobiusViewTrack* tview)
 {
-    MobiusLoopState* loop = &(tstate->loops[tstate->activeLoop]);
+    OldMobiusLoopState* loop = &(tstate->loops[tstate->activeLoop]);
     ModeDefinition* mode = loop->mode;
 
     if (tstate->globalMute) mode = UIGlobalMuteMode;
@@ -687,11 +690,11 @@ void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
  * Layers
  * 
  * Unlike the old model, only care about layers in the active loop
- * the MobiusState layer model is insanely complicated, thinking that
+ * the OldMobiusState layer model is insanely complicated, thinking that
  * there needed to be a model for each layer, actually don't need anything
  * but checkpoint flags.  Sizes might be nice, bit a pita to maintain.
  */
-void MobiusViewer::refreshLayers(MobiusLoopState* lstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshLayers(OldMobiusLoopState* lstate, MobiusViewTrack* tview)
 {
     // trigger refresh if the layer count changes, or the active layer changes
     int newCount = lstate->layerCount + lstate->lostLayers + lstate->redoCount + lstate->lostRedo;
@@ -713,7 +716,7 @@ void MobiusViewer::refreshLayers(MobiusLoopState* lstate, MobiusViewTrack* tview
     // note that if there was a checkpoint in a "lost" layer we won't be able to show that
     int newChecks = 0;
     for (int i = 0 ; i < lstate->layerCount ; i++) {
-        MobiusLayerState* ystate = &(lstate->layers[i]);
+        OldMobiusLayerState* ystate = &(lstate->layers[i]);
         if (ystate->checkpoint)
           newChecks++;
     }
@@ -729,7 +732,7 @@ void MobiusViewer::refreshLayers(MobiusLoopState* lstate, MobiusViewTrack* tview
         tview->checkpoints.clear();
         
         for (int i = 0 ; i < lstate->layerCount ; i++) {
-            MobiusLayerState* ystate = &(lstate->layers[i]);
+            OldMobiusLayerState* ystate = &(lstate->layers[i]);
             if (ystate->checkpoint) {
                 // the layer number here is the index of this layer in the logical layer
                 // view that includes the "lost" layers from the state
@@ -755,7 +758,7 @@ void MobiusViewer::refreshLayers(MobiusLoopState* lstate, MobiusViewTrack* tview
  * If anything changes about events, rebuild the entire event view.  There won't be
  * many of these and add/remove is relatively rare.
  */
-void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshEvents(OldMobiusLoopState* lstate, MobiusViewTrack* tview)
 {
     int newCount = lstate->eventCount;
     int oldCount = tview->events.size();
@@ -765,7 +768,7 @@ void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview
     else {
         // counts didn't change but the contents may have
         for (int i = 0 ; i < lstate->eventCount ; i++) {
-            MobiusEventState* estate = &(lstate->events[i]);
+            OldMobiusEventState* estate = &(lstate->events[i]);
             MobiusViewEvent* ve = tview->events[i];
         
             const char* newName = nullptr;
@@ -796,7 +799,7 @@ void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview
         tview->events.clear();
 
         for (int i = 0 ; i < lstate->eventCount ; i++) {
-            MobiusEventState* estate = &(lstate->events[i]);
+            OldMobiusEventState* estate = &(lstate->events[i]);
             MobiusViewEvent* ve = new MobiusViewEvent();
             tview->events.add(ve);
 
@@ -824,7 +827,7 @@ void MobiusViewer::refreshEvents(MobiusLoopState* lstate, MobiusViewTrack* tview
  *
  * Go ahead and assemble the value too, though that should be up to the element?
  */
-void MobiusViewer::refreshMinorModes(MobiusTrackState* tstate, MobiusLoopState* lstate,
+void MobiusViewer::refreshMinorModes(OldMobiusTrackState* tstate, OldMobiusLoopState* lstate,
                                      MobiusViewTrack* tview)
 {
     bool refresh = false;

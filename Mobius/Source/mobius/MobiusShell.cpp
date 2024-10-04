@@ -43,7 +43,7 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/MobiusConfig.h"
-#include "../model/MobiusState.h"
+#include "../model/OldMobiusState.h"
 #include "../model/UIParameter.h"
 #include "../model/Setup.h"
 #include "../model/Preset.h"
@@ -577,7 +577,7 @@ DynamicConfig* MobiusShell::getDynamicConfig()
  * Needs redesign, but this is old and it's all over the core so it will
  * be sensitive.
  */
-MobiusState* MobiusShell::getState()
+OldMobiusState* MobiusShell::getState()
 {
     return kernel.getState();
 }

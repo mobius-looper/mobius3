@@ -1,6 +1,6 @@
 /**
- * A simplified model of the state of the Mobius engine for use
- * under the user interface components.
+ * A transformation of the MobiusState object built by the engine
+ * for use under the UI components.
  *
  * The UI should pull most of it's information from the view and
  * expect that it be refreshed at useful time intervals.  Some parts

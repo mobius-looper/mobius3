@@ -15,7 +15,7 @@
 #include "../../util/Trace.h"
 
 // needed for TrackState
-#include "../../model/MobiusState.h"
+#include "../../model/OldMobiusState.h"
 
 #include "../Notification.h"
 
@@ -179,7 +179,7 @@ class Track : public TraceContext
     
 	MobiusMode* getMode();
 	long getFrame();
-    void getState(class MobiusTrackState* s);
+    void getState(class OldMobiusTrackState* s);
 	int getCurrentLevel();
 	bool isTrackSyncMaster();
 

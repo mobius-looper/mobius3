@@ -3,14 +3,14 @@
  */
 
 #include "ModeDefinition.h"
-#include "MobiusState.h"
+#include "OldMobiusState.h"
 
-void MobiusLayerState::init()
+void OldMobiusLayerState::init()
 {
     checkpoint = false;
 }
 
-void MobiusEventState::init()
+void OldMobiusEventState::init()
 {
     type = nullptr;
     //function = nullptr;
@@ -19,7 +19,7 @@ void MobiusEventState::init()
     pending = false;
 }
 
-void MobiusLoopState::init()
+void OldMobiusLoopState::init()
 {
     number = 0;
     mode = UIResetMode;
@@ -51,24 +51,24 @@ void MobiusLoopState::init()
     summary = false;
     
     eventCount = 0;
-    for (int i = 0 ; i < MobiusStateMaxEvents ; i++)
+    for (int i = 0 ; i < OldMobiusStateMaxEvents ; i++)
       events[i].init();
     
     layerCount = 0;
     lostLayers = 0;
-    for (int i = 0 ; i < MobiusStateMaxLayers ; i++)
+    for (int i = 0 ; i < OldMobiusStateMaxLayers ; i++)
       layers[i].init();
     
     redoCount = 0;
     lostRedo = 0;
-    for (int i = 0 ; i < MobiusStateMaxRedoLayers ; i++)
+    for (int i = 0 ; i < OldMobiusStateMaxRedoLayers ; i++)
       redoLayers[i].init();
 };
 
 /**
  * State for one track.
  */
-void  MobiusTrackState::init()
+void  OldMobiusTrackState::init()
 {
 	number = 0;
 	preset = 0;
@@ -108,17 +108,17 @@ void  MobiusTrackState::init()
 	trackSyncMaster = false;
 
     activeLoop = 0;
-    for (int i = 0 ; i < MobiusStateMaxLoops ; i++)
+    for (int i = 0 ; i < OldMobiusStateMaxLoops ; i++)
       loops[i].init();
 };
 
-void MobiusState::init()
+void OldMobiusState::init()
 {
     globalRecording = false;
     activeTrack = 0;
     trackCount = 0;
     setupOrdinal = 0;
-    for (int i = 0 ; i < MobiusStateMaxTracks ; i++)
+    for (int i = 0 ; i < OldMobiusStateMaxTracks ; i++)
       tracks[i].init();
 };
 
@@ -129,16 +129,16 @@ void MobiusState::init()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Mock up a MobiusState with interesting data for UI testing.
+ * Mock up a OldMobiusState with interesting data for UI testing.
  */
-void MobiusState::simulate(MobiusState* state)
+void OldMobiusState::simulate(OldMobiusState* state)
 {
     state->init();
     state->trackCount = 8;
     state->activeTrack = 1;
 
     for (int t = 0 ; t < state->trackCount ; t++) {
-        MobiusTrackState& track = state->tracks[t];
+        OldMobiusTrackState& track = state->tracks[t];
         // !! internally track/loop numbers are 1 based
         // don't like the inconsistency
         track.number = t;

@@ -117,7 +117,7 @@
 #include "../../sync/MidiSyncEvent.h"
 
 #include "../../model/MobiusConfig.h"
-#include "../../model/MobiusState.h"
+#include "../../model/OldMobiusState.h"
 // TriggerScript
 #include "../../model/Trigger.h"
 
@@ -880,7 +880,7 @@ long Synchronizer::getMidiSongClock(SyncSource src)
  * update: added MobiusSyncState for common state for all tracks.
  * Need to refactor TrackState.
  */
-void Synchronizer::getState(MobiusTrackState* state, Track* t)
+void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 {
 	SyncState* syncState = t->getSyncState();
     SyncSource source = syncState->getEffectiveSyncSource();
@@ -949,9 +949,9 @@ void Synchronizer::getState(MobiusTrackState* state, Track* t)
 /**
  * Newer state shared by all tracks.
  */
-void Synchronizer::getState(MobiusState* state)
+void Synchronizer::getState(OldMobiusState* state)
 {
-    MobiusSyncState* sync = &(state->sync);
+    OldMobiusSyncState* sync = &(state->sync);
 
     // MIDI output sync
 

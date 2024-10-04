@@ -755,7 +755,7 @@ void Track::doFunction(Action* action)
  * Formerly owned the MobiusTrackState, filled it in and returned it.
  * Now we're given one from above.
  */
-void Track::getState(MobiusTrackState* s)
+void Track::getState(OldMobiusTrackState* s)
 {
     // model no longer has this, can get it from the Setup if the UI wants it
     //s->name = mName;
@@ -812,10 +812,10 @@ void Track::getState(MobiusTrackState* s)
     // could be deleted
 
     // refresh state for each loop
-	int max = (mLoopCount < MobiusStateMaxLoops) ? mLoopCount : MobiusStateMaxLoops;
+	int max = (mLoopCount < OldMobiusStateMaxLoops) ? mLoopCount : OldMobiusStateMaxLoops;
 	for (int i = 0 ; i < max ; i++) {
 		Loop* l = mLoops[i];
-        MobiusLoopState* lstate = &(s->loops[i]);
+        OldMobiusLoopState* lstate = &(s->loops[i]);
         bool active = (l == mLoop);
 
         l->refreshState(lstate, active);
@@ -825,13 +825,13 @@ void Track::getState(MobiusTrackState* s)
 
     // this is 1 based!
     int loopIndex = mLoop->getNumber() - 1;
-    if (loopIndex < 0 || loopIndex >= MobiusStateMaxLoops) {
+    if (loopIndex < 0 || loopIndex >= OldMobiusStateMaxLoops) {
         Trace(1, "Track::getState loop index %d out of range!\n", loopIndex);
         // give it something within range, state will be garbage
         s->activeLoop = 0;
     }
     else {
-        MobiusLoopState* lstate = &(s->loops[loopIndex]);
+        OldMobiusLoopState* lstate = &(s->loops[loopIndex]);
 
         // KLUDGE: If we're switching, override the percieved mode
         Event* switche = mEventManager->getSwitchEvent();
