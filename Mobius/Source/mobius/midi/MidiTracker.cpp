@@ -43,6 +43,7 @@ MidiTracker::MidiTracker(MobiusContainer* c, MobiusKernel* k)
 {
     container = c;
     kernel = k;
+    watcher.initialize(&notePool);
 }
 
 MidiTracker::~MidiTracker()

@@ -16,7 +16,6 @@ class MidiPlayer
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
     void initialize(class MobiusContainer* c, class MidiNotePool* pool);
-    void setDurationMode(bool durationMode);
 
     //
     // Layer Management
@@ -40,16 +39,17 @@ class MidiPlayer
     // Play Advance
     //
 
-    void alloff();
     void play(int frames);
 
+    // need this to send on all channels all devices
+    //void allNotesOff();
+    
   private:
 
     // configuration
     class MobiusContainer* container = nullptr;
     class MidiNotePool* notePool = nullptr;
     class MidiTrack* track = nullptr;
-    bool durationMode = false;
 
     // play state
     class MidiLayer* playLayer = nullptr;
@@ -60,26 +60,15 @@ class MidiPlayer
     // transient buffer used during event gathering
     juce::Array<class MidiEvent*> currentEvents;
 
-    // new duration tracking state
+    // note duration tracking state
     class MidiNote* heldNotes = nullptr;
     
-    // old on/off tracking state
-    juce::Array<class MidiEvent*> notesOn;
-    
-    void send(class MidiEvent* e);
-    void unmute();
-
-    // duration based tracking
+    void play(class MidiEvent* e);
+    void sendOn(class MidiNote* e);
     void flushHeld();
     void advanceHeld(int blockFrames);
-    void forceHeld();
+    void forceOff();
     void sendOff(class MidiNote* note);
-
-    // tracking when durationMode is off
-    const int MaxNotes = 64;
-    void trackNoteOn(class MidiEvent* e);
-    void trackNoteOff(class MidiEvent* e);
-    void allNotesOff();
 };
 
 /****************************************************************************/

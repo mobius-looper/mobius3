@@ -48,6 +48,10 @@ class ParameterFinder
     QuantizeMode getQuantizeMode(class MidiTracker* t, QuantizeMode dflt);
     EmptyLoopAction getEmptyLoopAction(class MidiTracker* t, EmptyLoopAction dflt);
 
+    int getParameterOrdinal(MidiTracker* t, SymbolId id);
+
+    ParameterMuteMode getMuteMode(MidiTracker* t);
+    
   private:
 
     class Provider* provider = nullptr;

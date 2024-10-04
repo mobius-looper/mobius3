@@ -123,6 +123,7 @@ class MidiTrack
     void stopRecording();
     
     void doOverdub(class UIAction* a);
+    bool inRecordingMode();
     void doUndo(class UIAction* a);
     void doRedo(class UIAction* a);
 

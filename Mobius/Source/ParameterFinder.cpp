@@ -6,6 +6,11 @@
 #include "model/MobiusConfig.h"
 #include "model/Preset.h"
 #include "model/Structure.h"
+#include "model/UIParameter.h"
+#include "model/UIParameterHandler.h"
+#include "model/Symbol.h"
+#include "model/ParameterProperties.h"
+#include "model/ExValue.h"
 
 // early attempt at this, probably should merge with the finder
 #include "model/Enumerator.h"
@@ -61,18 +66,19 @@ SyncUnit ParameterFinder::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit df
 // and another that just deals with configuration objects like Session
 //
 
+/**
+ * MIDI tracks don't have the concepts of "default preset" and "active preset".
+ * Just use the first or default preset from MobiusConfig
+ */
 Preset* ParameterFinder::getPreset(MidiTracker* t)
 {
-    Preset* preset = nullptr;
     MobiusKernel* kernel = t->getKernel();
     MobiusConfig* config = kernel->getMobiusConfig();
-    int activePreset = kernel->getActivePreset();
-    preset = config->getPreset(activePreset);
+    Preset* preset = config->getPresets();
     if (preset == nullptr)
       Trace(1, "ParameterFinder: Unable to determine Preset");
     return preset;
 }
-
 
 SwitchLocation ParameterFinder::getSwitchLocation(MidiTracker* t, SwitchLocation dflt)
 {
@@ -117,6 +123,83 @@ EmptyLoopAction ParameterFinder::getEmptyLoopAction(MidiTracker* t, EmptyLoopAct
     if (preset != nullptr)
       result = preset->getEmptyLoopAction();
     return result;
+}
+
+/**
+ * This is for Query in MIDI tracks.
+ * Here what is being requested is specified by the user.
+ * In the future this will need to handle parameter set hierarchies for bindings
+ * as all other parameter accessors will, but for now it falls back to the Preset
+ * and Setup.
+ *
+ * The rest of the ones above should be re-implemented to use this.
+ *
+ * Since most Querys come from the InstantParameters element which is used for
+ * both audio and MIDI tracks, if MidiTrack didn't intercept the query, don't emit
+ * a trace error since it will happen all the time.
+ */
+int ParameterFinder::getParameterOrdinal(MidiTracker* t, SymbolId id)
+{
+    int ordinal = 0;
+    
+    Symbol* s = provider->getSymbols()->getSymbol(id);
+    if (s == nullptr) {
+        Trace(1, "ParameterFinder: Unmapped symbol id %d", id);
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "ParameterFinder: Symbol %s is not a parameter", s->getName());
+    }
+    else {
+        switch (s->parameterProperties->scope) {
+            case ScopeGlobal: {
+                // MidiTrack should be getting these from the Session
+                //Trace(1, "ParameterFinder: Kernel attempt to access global parameter %s",
+                //s->getName());
+            }
+                break;
+            case ScopePreset: {
+                Preset* p = getPreset(t);
+                if (p != nullptr) {
+                    ExValue value;
+                    UIParameterHandler::get(id, p, &value);
+                    ordinal = value.getInt();
+                }
+                
+            }
+                break;
+            case ScopeSetup: {
+                // if 
+                // not sure why MidiTrack would want things here
+                //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
+                //s->getName());
+            }
+                break;
+            case ScopeTrack: {
+                // mostly for levels which MidiTrack should be intercepting
+                //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
+                //s->getName());
+            }
+                break;
+            case ScopeUI: {
+                // not expecting this from kernel tracks
+                //Trace(1, "ParameterFinder: Kernel attempt to access UI parameter %s",
+                //s->getName());
+            }
+                break;
+            case ScopeNone: {
+                Trace(1, "ParameterFinder: Kernel attempt to access unscoped parameter %s",
+                      s->getName());
+            }
+                break;
+        }
+    }
+
+    return ordinal;
+}
+
+ParameterMuteMode ParameterFinder::getMuteMode(MidiTracker* t)
+{
+    return (ParameterMuteMode)getParameterOrdinal(t, ParamMuteMode);
 }
 
 /****************************************************************************/

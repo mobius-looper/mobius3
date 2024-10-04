@@ -132,11 +132,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // to send something up levels
     class UIAction* newUIAction();
 
-    // called by Mobius when it processes an action to change presets
-    // Kernel needs to know this so it can tell MidiTracker about it
-    void setActivePreset(int ordinal);
-    int getActivePreset();
-    
     //
     // MslContext
     //

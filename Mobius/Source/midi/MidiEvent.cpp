@@ -28,7 +28,6 @@ void MidiEvent::copy(MidiEvent* src)
     frame = src->frame;
     duration = src->duration;
     releaseVelocity = src->releaseVelocity;
-    juceMessage = src->juceMessage;
 }
 
 MidiEventPool::MidiEventPool()

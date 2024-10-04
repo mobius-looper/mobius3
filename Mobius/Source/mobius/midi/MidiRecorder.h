@@ -29,9 +29,6 @@ class MidiRecorder : public MidiWatcher::Listener
                     class MidiSegmentPool* segpool,
                     class MidiNotePool* npool);
     
-    // test hack
-    void setDurationMode(bool durationMode);
-
     //
     // Transaction Management
     //
@@ -41,7 +38,7 @@ class MidiRecorder : public MidiWatcher::Listener
     void setCycles(int cycles);
     void begin();
     void resume(MidiLayer* layer);
-    void rollback();
+    void rollback(bool overdub);
     void clear();
     MidiLayer* commit(bool continueHolding);
     void setFrame(int newFrame);
@@ -90,9 +87,6 @@ class MidiRecorder : public MidiWatcher::Listener
     class MidiEventPool* midiPool = nullptr;
     class MidiSegmentPool* segmentPool = nullptr;
     class MidiNotePool* notePool = nullptr;
-
-    // configuration options
-    bool durationMode = false;
 
     // held note monitor
     MidiWatcher watcher;

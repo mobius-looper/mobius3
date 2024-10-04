@@ -142,17 +142,6 @@ void MidiTrack::configure(Session::Track* def)
     }
 
     // todo: loopsPerTrack from somewhere
-
-    // hack to test durations
-    // this will be on by default unless you specify a value in the session track definition
-    durationMode = true;
-    MslValue* v = def->get("durationMode");
-    if (v != nullptr)
-      durationMode = v->getBool();
-
-    recorder.setDurationMode(durationMode);
-    player.setDurationMode(durationMode);
-    
 }
 
 /**
@@ -224,8 +213,12 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->pan = pan;
 
     // not the same as mode=Record, can be any type of recording
-    state->recording = recorder.isRecording();
-
+    bool nowRecording = recorder.isRecording();
+    if (!nowRecording && state->recording) {
+        Trace(2, "MidiTrack: Recording state going off");
+    }
+    state->recording = nowRecording;
+    
     for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
         MobiusMidiState::Loop* lstate = state->loops[0];
@@ -346,7 +339,12 @@ void MidiTrack::doQuery(Query* q)
         case ParamOutput: q->value = output; break;
         case ParamFeedback: q->value = feedback; break;
         case ParamPan: q->value = pan; break;
-        default: q->value = 0; break;
+        default: {
+            // toss it back to ParameterFinder which will get things out of the
+            // default preset, doesn't handle globals or Setup yet
+            q->value = finder->getParameterOrdinal(tracker, q->symbol->id);
+        }
+            break;
     }
 }    
 
@@ -497,7 +495,7 @@ void MidiTrack::advance(int newFrames)
             }
             else {
                 // squelching the record layer
-                recorder.rollback();
+                recorder.rollback(overdub);
             }
 
             // shift events waiting for the loop end
@@ -646,8 +644,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
     feedback = 127;
     pan = 64;
 
-    // todo: pull this from ParameterFinder
-    subcycles = 4;
+    subcycles = finder->getParameterOrdinal(tracker, ParamSubcycles);
 
     if (full) {
         for (auto loop : loops)
@@ -817,8 +814,23 @@ void MidiTrack::doOverdub(UIAction* a)
     // toggle our state 
     overdub = !overdub;
 
-    // tell the recorder to do it's thing about overdubs
-    recorder.setRecording(overdub);
+    if (!inRecordingMode()) {
+        recorder.setRecording(overdub);
+    }
+}
+
+/**
+ * Used by overdub toggling to know whether to tell the recorder
+ * to stop recording.  Recorder stops only if we're not in a major
+ * mode that trumps the minor mode.
+ */
+bool MidiTrack::inRecordingMode()
+{
+    bool recording = (mode == MobiusMidiState::ModeRecord ||
+                      mode == MobiusMidiState::ModeMultiply ||
+                      mode == MobiusMidiState::ModeInsert ||
+                      mode == MobiusMidiState::ModeReplace);
+    return recording;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -865,7 +877,8 @@ void MidiTrack::doUndo(UIAction* a)
         // todo: this might be confusing if the user has no visual indiciation that
         // something happened
         int frame = recorder.getFrame();
-        recorder.rollback();
+        // do we retain overdub on undo?
+        recorder.rollback(overdub);
         recorder.setFrame(frame);
         // Player is not effected
     }
@@ -1287,7 +1300,7 @@ void MidiTrack::doMultiplyNow()
 {
     if (mode == MobiusMidiState::ModeMultiply) {
         mode = MobiusMidiState::ModePlay;
-        recorder.setRecording(false);
+        recorder.setRecording(overdub);
         recorder.setExtending(false);
     }
     else if (mode == MobiusMidiState::ModePlay) {
@@ -1329,6 +1342,8 @@ void MidiTrack::doMute(TrackEvent* e)
 
 void MidiTrack::doMuteNow()
 {
+    // todo: ParameterMuteMode
+    
     if (mode == MobiusMidiState::ModeMute) {
         mode = MobiusMidiState::ModePlay;
         player.setMute(false);

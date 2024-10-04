@@ -1481,14 +1481,32 @@ bool Supervisor::isPlugin()
     return (audioProcessor != nullptr);
 }
         
+/**
+ * When the audio device fails to open, audioStream will not be receiving
+ * anything and will not have updated the sample rate.  Some things use
+ * the sample rate in divisions, so to avoid divide by zero exceptions always
+ * set this to something.
+ */
 int Supervisor::getSampleRate()
 {
-    return audioStream.getSampleRate();
+    int sampleRate = audioStream.getSampleRate();
+    if (sampleRate == 0)
+      sampleRate = 44100;
+    return sampleRate;
 }
 
+/**
+ * Like sample rate, if the audio device is misconfigured audioStream won't
+ * have a block size either.  I don't think this is used for division, but
+ * it's hard to say what might freak out with a block size of zero so make
+ * sure it has a positive value.
+ */
 int Supervisor::getBlockSize()
 {
-    return audioStream.getBlockSize();
+    int blockSize = audioStream.getBlockSize();
+    if (blockSize == 0)
+      blockSize = 256;
+    return blockSize;
 }
 
 int Supervisor::getMillisecondCounter()

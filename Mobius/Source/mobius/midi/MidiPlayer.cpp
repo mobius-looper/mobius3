@@ -61,19 +61,6 @@ void MidiPlayer::initialize(MobiusContainer* c, MidiNotePool* pool)
     notePool = pool;
 }
 
-/**
- * Test hack to enable duration mode playing.
- * Recorder is always saving note durations when it records as well
- * as NoteOffs.
- *
- * For player when this is enabled we will ignore NoteOffs and instead
- * start tracking durations.
- */
-void MidiPlayer::setDurationMode(bool b)
-{
-    durationMode = b;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Layer Management
@@ -87,7 +74,7 @@ void MidiPlayer::setDurationMode(bool b)
 void MidiPlayer::reset()
 {
     // make sure everything we sent in the past is off
-    alloff();
+    forceOff();
     
     playLayer = nullptr;
     playFrame = 0;
@@ -113,7 +100,7 @@ void MidiPlayer::reset()
 void MidiPlayer::setLayer(MidiLayer* layer)
 {
     // until we get transitions worked out, changing a layer always closes notes
-    alloff();
+    forceOff();
 
     playLayer = layer;
     
@@ -205,25 +192,36 @@ int MidiPlayer::getFrames()
     return loopFrames;
 }
 
+/**
+ * Changing mute modes is awkward because the things we call to implement
+ * it are sensitive to the current value of the mute field.  So the must flag
+ * must be set after forceOff and before resending held notes.
+ */
 void MidiPlayer::setMute(bool b)
 {
-    mute = b;
-    if (mute) {
+    if (b) {
+        // turning mute on
         // todo: either turn everything off then tack on
         // or set volume CC to 0 then back to the previous value
-        allNotesOff();
+        // currently turning off then on
+        // note that we don't use forceOff here since that also removes
+        // them from the tracking list
+        MidiNote* held = heldNotes;
+        while (held != nullptr) {
+            sendOff(held);
+            held = held->next;
+        }
+        mute = b;
     }
     else {
-        unmute();
-    }
-}
-
-void MidiPlayer::unmute()
-{
-    MidiNote* held = track->getHeldNotes();
-    while (held != nullptr) {
-        send(held->event);
-        held = held->next;
+        // turning mute off
+        // turn on any notes that are still being (silently) held
+        mute = b;
+        MidiNote* held = heldNotes;
+        while (held != nullptr) {
+            sendOn(held);
+            held = held->next;
+        }
     }
 }
 
@@ -233,18 +231,6 @@ void MidiPlayer::unmute()
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Turn off any held notes, using either of the two tracking methods.
- */
-void MidiPlayer::alloff()
-{
-    // when using duration mode
-    forceHeld();
-
-    // when using on/off mode
-    allNotesOff();
-}
-    
 /**
  * Play anything from the current position forward until the end
  * of the play region.
@@ -271,7 +257,7 @@ void MidiPlayer::play(int blockFrames)
             playLayer->gather(&currentEvents, playFrame, blockFrames);
             
             for (int i = 0 ; i < currentEvents.size() ; i++) {
-                send(currentEvents[i]);
+                play(currentEvents[i]);
             }
             
             advanceHeld(blockFrames);
@@ -281,62 +267,78 @@ void MidiPlayer::play(int blockFrames)
     }
 }
 
-void MidiPlayer::send(MidiEvent* e)
+/**
+ * Send an event if we are not in mute mode.
+ * Continue note duration tracking even if we are in mute mode so that
+ * if mute is turned off before we've reached the duration it can be
+ * turned back on for the remainder.
+ * This will obviously have the attack envelope problem.
+ */
+void MidiPlayer::play(MidiEvent* e)
 {
     if (e != nullptr) {
-        if (!durationMode) {
-            if (e->juceMessage.isNoteOn())
-              trackNoteOn(e);
-            else if (e->juceMessage.isNoteOff())
-              trackNoteOff(e);
-        
-            container->midiSend(e->juceMessage, 0);
-        }
-        else {
-            if (e->juceMessage.isNoteOn()) {
-                container->midiSend(e->juceMessage, 0);
+        if (e->juceMessage.isNoteOn()) {
 
-                MidiNote* note = notePool->newNote();
-                // todo: resume work here
-                // rather than copying the channel and whatever,
-                // is it safe to just remember the MidiEvent we dug out of
-                // the layer hierarchy?  it can't go away out from under the player
-                // right?
-                // any layer can only contain Segment references to layers beneath it and
-                // those layers can't be reclaimed until the referencing layer has been
-                // reclaimed, think more
-                note->channel = e->juceMessage.getChannel();
-                note->number = e->juceMessage.getNoteNumber();
-                note->velocity = e->releaseVelocity;
-                // experiment with this
-                note->event = e;
-                note->next = heldNotes;
-                heldNotes = note;
-                // this part we DO need to copy
-                // take the adjusted duration, not originalDuration
-                if (e->duration == 0) {
-                    Trace(1, "MidiPlayer: Note event without duration");
-                    e->duration = 256;
-                }
+            MidiNote* note = notePool->newNote();
+            // todo: resume work here
+            // rather than copying the channel and whatever,
+            // is it safe to just remember the MidiEvent we dug out of
+            // the layer hierarchy?  it can't go away out from under the player
+            // right?
+            // any layer can only contain Segment references to layers beneath it and
+            // those layers can't be reclaimed until the referencing layer has been
+            // reclaimed, think more
+            note->channel = e->juceMessage.getChannel();
+            note->number = e->juceMessage.getNoteNumber();
+            note->velocity = e->releaseVelocity;
+            // experiment with this
+            note->event = e;
+            note->next = heldNotes;
+            heldNotes = note;
+            // this part we DO need to copy
+            // take the adjusted duration, not originalDuration
+            if (e->duration == 0) {
+                Trace(1, "MidiPlayer: Note event without duration");
+                e->duration = 256;
+            }
             
-                note->duration = e->duration;
-                note->remaining = note->duration;
-            }
-            else if (e->juceMessage.isNoteOff()) {
-                // ignore these in duration mode
-                // but could do some consistency checks to make sure it went off
-            }
+            note->duration = e->duration;
+            note->remaining = note->duration;
+
+            sendOn(note);
         }
+        else if (e->juceMessage.isNoteOff()) {
+            // these can be ignored if durations are being handled
+            // properly, but could do some consistency checks
+        }
+    }
+}
+
+/**
+ * Inner sender used by both send() and setMute()
+ * This just sends the NoteOn event and doesn't mess with durations which
+ * in the case of setMute are already being tracked.
+ */
+void MidiPlayer::sendOn(MidiNote* note)
+{
+    if (!mute) {
+        // unlike sendOff, let's test being able to reliably get back to the
+        // MidiEvent rather than using state captured in the Note, assumign this works,
+        // be consistent about this
+
+        // the way SendOff does it
+        //juce::MidiMessage msg = juce::MidiMessage::noteOn(note->channel,
+        //note->number,
+        //(juce::uint8)(note->velocity));
+
+        // the way we should be able to do it
+        container->midiSend(note->event->juceMessage, 0);
     }
 }
 
 //////////////////////////////////////////////////////////////////////
 //
 // Note Duration Tracking
-//
-// This is an alternative to NoteOn/NoteOff tracking that is working out
-// better for many things.  Once this is certain can remove support
-// for On/Off tracking.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -388,7 +390,7 @@ void MidiPlayer::advanceHeld(int blockFrames)
 /**
  * Force all currently held notes off.
  */
-void MidiPlayer::forceHeld()
+void MidiPlayer::forceOff()
 {
     while (heldNotes != nullptr) {
         sendOff(heldNotes);
@@ -406,72 +408,18 @@ void MidiPlayer::forceHeld()
  */
 void MidiPlayer::sendOff(MidiNote* note)
 {
-    juce::MidiMessage msg = juce::MidiMessage::noteOff(note->channel,
-                                                       note->number,
-                                                       (juce::uint8)(note->velocity));
-    // todo: include the device id as second arg
-    container->midiSend(msg, 0);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// NoteOn/NoteOff Tracking
-//
-// This is quick and dirty and needs to be much smarter and more efficient
-// I don't like resizing arrays after element removal but maintaining
-// an above-model doubly-linked list of some kind with pooling is annoying.
-//
-// This implementation pre-dates note duration tracking in the Recorder
-// and can be removed once we decide this style is no longer necessary.
-// 
-//////////////////////////////////////////////////////////////////////
-
-void MidiPlayer::trackNoteOn(MidiEvent* e)
-{
-    if (notesOn.size() > MaxNotes) {
-        Trace(1, "MidiPlayer: Note tracker overflow");
+    // is it safe to test mute mode or should we just send a redundant off
+    // every time?  when entering mute mode it is supposed to have
+    // forced everything off, we continue tracking so we can restore notes
+    // when mute is turned off which will call down to sendOff when the (silent)
+    // note finishes durating
+    if (!mute) {
+        juce::MidiMessage msg = juce::MidiMessage::noteOff(note->channel,
+                                                           note->number,
+                                                           (juce::uint8)(note->velocity));
+        // todo: include the device id as second arg
+        container->midiSend(msg, 0);
     }
-    else {
-        notesOn.add(e);
-    }
-}
-
-void MidiPlayer::trackNoteOff(MidiEvent* e)
-{
-    bool found = false;
-
-    for (int i = 0 ; i < notesOn.size() ; i++) {
-        MidiEvent* on = notesOn[i];
-        if (on == nullptr) {
-            Trace(1, "MidiPlayer: Holes in the tracker list");
-        }
-        else if ((on->juceMessage.getNoteNumber() == e->juceMessage.getNoteNumber()) &&
-                 (on->juceMessage.getChannel() == e->juceMessage.getChannel())) {
-            found = true;
-            notesOn.remove(i);
-            break;
-        }
-    }
-
-    if (!found)
-      Trace(1, "MidiPlayer: NoteOff did not match a NoteOn");
-}
-
-void MidiPlayer::allNotesOff()
-{
-    for (int i = 0 ; i < notesOn.size() ; i++) {
-        MidiEvent* on = notesOn[i];
-        if (on == nullptr) {
-            Trace(1, "MidiPlayer: Holes in the tracker list");
-        }
-        else {
-            juce::MidiMessage off = juce::MidiMessage::noteOff(on->juceMessage.getChannel(),
-                                                               on->juceMessage.getNoteNumber(),
-                                                               (juce::uint8)0);
-            container->midiSend(off, 0);
-        }
-    }
-    notesOn.clear();
 }
 
 /****************************************************************************/

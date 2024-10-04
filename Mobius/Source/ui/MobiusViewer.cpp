@@ -1070,8 +1070,12 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     // fake these up to avoid warnings in LoopMeterElement and LoopStackElement
     if (tview->cycle == 0) tview->cycle = 1;
     if (tview->subcycles == 0) tview->subcycles = 4;
+
+    if (tview->recording != tstate->recording) {
+        tview->recording = tstate->recording;
+        tview->refreshLoopContent = true;
+    }
     
-    tview->recording = tstate->recording;
     tview->pause = tstate->pause;
 
     if (tview->nextLoopNumber != tstate->nextLoop) {
@@ -1087,6 +1091,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
         case MobiusMidiState::ModeMultiply: newMode = "Multiply"; break;
         case MobiusMidiState::ModeInsert: newMode = "Insert"; break;
         case MobiusMidiState::ModeReplace: newMode = "Replace"; break;
+        case MobiusMidiState::ModeMute: newMode = "Mute"; break;
         case MobiusMidiState::ModePlay: {
             if (tstate->overdub)
               newMode = "Overdub";

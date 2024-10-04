@@ -1078,22 +1078,6 @@ long MobiusKernel::getLastSampleFrames()
     return sampleManager->getLastSampleFrames();
 }
 
-/**
- * Called by core when it processes a preset selection.
- * Need to remember this so that MIdiTrack can use ParameterFinder to
- * pull things from the same Preset that core is using.
- * Too horrible for words...
- */
-void MobiusKernel::setActivePreset(int ordinal)
-{
-    activePreset = ordinal;
-}
-
-int MobiusKernel::getActivePreset()
-{
-    return activePreset;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Core Time Boundary

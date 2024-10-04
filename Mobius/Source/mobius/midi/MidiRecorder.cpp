@@ -54,23 +54,8 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
     midiPool = epool;
     segmentPool = segpool;
     notePool = npool;
-}
-
-/**
- * If this goes off while we're active we will have recorded NoteOffs
- * in the sequence, but player will ignore them.
- *
- * If this goes ON while we're active, then if we stop saving NoteOffs
- * and then turn it back off quickly you can end up with a layer missing
- * some NoteOffs and player will have stuck notes.  Not really a problem but
- * it would be more reliable to just always record the NoteOffs and leave it
- * up to player whether it pays attention to them.
- *
- * !! this is no longer relevant, we're always in duration mode
- */
-void MidiRecorder::setDurationMode(bool b)
-{
-    durationMode = b;
+    watcher.initialize(notePool);
+    watcher.setListener(this);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -193,7 +178,7 @@ MidiLayer* MidiRecorder::prepLayer()
 /**
  * Rollback changes made in this transaction
  */
-void MidiRecorder::rollback()
+void MidiRecorder::rollback(bool overdub)
 {
     if (recordLayer == nullptr) {
         // still in Reset, ignore
@@ -212,11 +197,16 @@ void MidiRecorder::rollback()
     // location and recording options reset and must be
     // restored by the caller
     recordFrame = 0;
-    recording = false;
+
+    // keep recording on if we're still in overdub mode
+    recording = overdub;
+
+    // but can't be in an extension mode?
     extending = false;
     extensions = 0;
 
-    watcher.flushHeld();
+    if (!overdub)
+      watcher.flushHeld();
 }
 
 /**
@@ -418,8 +408,8 @@ void MidiRecorder::setRecording(bool b)
     }
     else if (b) {
         if (!recording) {
-            // todo: this is where we need to inject currently held notes
             recording = true;
+            injectHeld();
         }
         else {
             // why would you ask me that?

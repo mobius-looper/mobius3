@@ -15,7 +15,7 @@
 class UIParameterHandler
 {
   public:
-    void get(SymbolId id, void* obj, class ExValue* value);
-    void set(SymbolId id, void* obj, class ExValue* value);
+    static void get(SymbolId id, void* obj, class ExValue* value);
+    static void set(SymbolId id, void* obj, class ExValue* value);
 };
 
