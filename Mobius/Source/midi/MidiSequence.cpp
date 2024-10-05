@@ -60,6 +60,43 @@ void MidiSequence::add(MidiEvent* e)
     }
 }
 
+void MidiSequence::insert(MidiEvent* e)
+{
+    if (insertPosition == nullptr) {
+        // never inserted before, start at the beginning
+        insertPosition = events;
+    }
+    else if (insertPosition->frame > e->frame) {
+        // last insert position was after the new event, start over
+        // since we can't go backward yet
+        insertPosition = events;
+    }
+    
+    MidiEvent* prev = nullptr;
+    MidiEvent* ptr = insertPosition;
+    while (ptr != nullptr && ptr->frame <= e->frame) {
+        prev = ptr;
+        ptr = ptr->next;
+    }
+
+    if (prev == nullptr) {
+        // inserting at the head
+        e->next = events;
+        events = e;
+    }
+    else {
+        MidiEvent* next = prev->next;
+        prev->next = e;
+        e->next = next;
+        if (next == nullptr)
+          tail = e;
+    }
+
+    // remember this for next time so we don't have to keep scanning from the front
+    // when inserting layer sequences
+    insertPosition = e;
+}
+
 int MidiSequence::size()
 {
     return count;

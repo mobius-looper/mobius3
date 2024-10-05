@@ -35,7 +35,7 @@
       <Element name="outputMeter" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activeLayout,activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,pluginInputPort"/>
+    <InstantParameters names="quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -103,13 +103,12 @@
     <Button action="Reset"/>
     <Button action="Record"/>
     <Button action="Overdub" color="-15707416"/>
-    <Button action="Undo" color="-1440250"/>
-    <Button action="Mute"/>
     <Button action="NextLoop"/>
     <Button action="PrevLoop"/>
     <Button action="Reverse"/>
     <Button action="Halfspeed"/>
     <Button action="Multiply"/>
+    <Button action="Insert"/>
     <Button action="Undo"/>
     <Button action="Redo"/>
     <Button action="Checkpoint"/>

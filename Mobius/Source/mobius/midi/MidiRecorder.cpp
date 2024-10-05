@@ -212,14 +212,14 @@ void MidiRecorder::rollback(bool overdub)
 /**
  * Finalize the current record layer and prepare the
  * next one with a segment referencing the old one.
- * If the continueHolding flag is off, any held notes are
+ * If the overdub flag is off, any held notes are
  * finalized with their current duration and we stop tracking them.
  * If true, it means that an overdub or other recording is in progress
  * over the shift and we should keep duration tracking.
  *
  * The current layer is returned for shifting.
  */
-MidiLayer* MidiRecorder::commit(bool continueHolding)
+MidiLayer* MidiRecorder::commit(bool overdub)
 {
     MidiLayer* commitLayer = nullptr;
     
@@ -236,7 +236,7 @@ MidiLayer* MidiRecorder::commit(bool continueHolding)
             Trace(1, "MidiRecorder: Finalizing record layer early, why?");
         }
     
-        if (!continueHolding)
+        if (!overdub)
           finalizeHeld();
     
         recordLayer->setFrames(recordFrames);
@@ -250,8 +250,7 @@ MidiLayer* MidiRecorder::commit(bool continueHolding)
         // turn off extension mode, track has to turn it back on if necessary
         extending = false;
     
-        // hmm, kind of a misnomer, it really means continueRecording
-        if (!continueHolding)
+        if (!overdub)
           recording = false;
     
         // start the next layer back at zero
@@ -309,6 +308,75 @@ void MidiRecorder::setFrame(int newFrame)
             recordFrame = newFrame;
         }
     }
+}
+
+void MidiRecorder::startMultiply()
+{
+    multiplyFrame = recordFrame;
+    multiply = true;
+    extending = true;
+    setRecording(true);
+}
+
+void MidiRecorder::endMultiply(bool overdub, bool unrounded)
+{
+    (void)unrounded;
+    // todo: rounding, this will need to schedule an event
+    // do that here or make MidiTrack handle it?
+    multiply = false;
+    extending = false;
+    setRecording(overdub);
+}
+
+void MidiRecorder::startInsert()
+{
+    multiplyFrame = recordFrame;
+    extending = true;
+    setRecording(true);
+}
+
+void MidiRecorder::endInsert(bool overdub)
+{
+    // todo: rounding, this will need to schedule an event
+    // do that here or make MidiTrack handle it?
+    extending = false;
+    setRecording(overdub);
+}
+
+/**
+ * Implementation for LoopSwitch with time or event copy mode.
+ * A source layer is supplied, which provides both the length in
+ * frames and the number of cycles.
+ *
+ * If includeContent is true, we also copy the layer contents.
+ * Simply adding a Segment reference to the other layer doesn't work
+ * here because it breaks the rule that the layer referenced by a segment
+ * will always remain valid for the lifetime of the segment.  This won't
+ * be the case if the loop containing the layer is reset.
+ *
+ * Could add some sort of complex reference counting on the layers but
+ * it's easier and fast enough to just do a full copy, which also flattens
+ * as a side effect.
+ *
+ * Retain the same relative record frame.
+ *
+ */
+void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
+{
+    if (recordLayer == nullptr)
+      recordLayer = prepLayer();
+    else
+      recordLayer->clear();
+
+    recordFrames = srcLayer->getFrames();
+    recordCycles = srcLayer->getCycles();
+
+    if (includeEvents) {
+        recordLayer->copy(srcLayer);
+    }
+
+    if (recordFrame > recordFrames)
+      recordFrame = recordFrame % recordFrames;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -374,7 +442,7 @@ int MidiRecorder::getEventCount()
  *
  * Audio tracks use Overdub/Multiply as an "alternate ending" to the
  * Record mode, if MidiTrack is doing that it would have done the
- * commit() and passed continueHolding true to stay in recording mode.
+ * commit() and passed overdub true to stay in recording mode.
  * I suppose we could make overdub just be something you can turn on and off
  * independent of the initial recording, then with it ends we stay
  * in recording mode.  Track gets to decide.
@@ -410,10 +478,6 @@ void MidiRecorder::setRecording(bool b)
         if (!recording) {
             recording = true;
             injectHeld();
-        }
-        else {
-            // why would you ask me that?
-            Trace(1, "MidiRecorder: Redundant overdub enable");
         }
     }
     else if (recording) {
@@ -485,6 +549,15 @@ void MidiRecorder::advance(int blockFrames)
         else {
             if (backingLayer != nullptr) {
                 // multiply/insert
+                if (multiply) {
+                    // todo: will need to be smarter about which cycle the multiply started from
+                    MidiSegment* seg = segmentPool->newSegment();
+                    seg->layer = backingLayer;
+                    seg->segmentFrames = cycleFrames;
+                    seg->referenceFrame = 0;
+                    seg->originFrame = recordFrames;
+                    recordLayer->add(seg);
+                }
                 recordCycles++;
                 recordFrames += cycleFrames;
                 extensions++;

@@ -18,7 +18,7 @@
     autoRecordBars='1'
     autoRecordTempo='60'
     bounceQuantize='off'
-    emptyLoopAction='none'
+    emptyLoopAction='copy'
     emptyTrackAction='none'
     loopCount='4'
     maxRedo='2'

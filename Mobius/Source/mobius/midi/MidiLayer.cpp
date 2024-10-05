@@ -243,7 +243,11 @@ void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
         }
         else {
             // segment in range
-            nextSegment->gather(events, playFrame, blockFrames);
+            // drop the segment play position by the origin
+            // could also make the Segment do this as it adjusts for
+            // referenceFrame?
+            int segplay = playFrame - segstart;
+            nextSegment->gather(events, segplay, blockFrames);
             if (seglast <= lastFrame) {
                 // segment has been consumed, move to the next one
                 nextSegment = nextSegment->next;
@@ -254,6 +258,8 @@ void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
             }
         }
     }
+
+    playFrame += blockFrames;
 }
 
 /**
@@ -296,6 +302,51 @@ void MidiLayer::seek(int startFrame)
     nextSegment = seg;
 
     playFrame = startFrame;
+}
+
+/**
+ * Copy the flattened contents of one layer into this one
+ */
+void MidiLayer::copy(MidiLayer* src)
+{
+    if (sequence == nullptr)
+      sequence = sequencePool->newSequence();
+    copy(src, 0, src->getFrames(), 0);
+}
+
+void MidiLayer::copy(MidiLayer* src, int start, int end, int origin)
+{
+    // first the sequence
+    copy(src->getSequence(), start, end, origin);
+    
+    // then the segments
+    MidiSegment* seg = src->getSegments();
+    while (seg != nullptr) {
+        int segorigin = origin + seg->originFrame;
+        copy(seg, segorigin);
+        seg = seg->next;
+    }
+}
+
+void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
+{
+    MidiEvent* event = src->getFirst();
+    while (event != nullptr) {
+        if (event->frame >= end)
+          break;
+        else if (event->frame >= start) {
+            MidiEvent* ce = midiPool->newEvent();
+            ce->copy(event);
+            ce->frame = ce->frame + origin;
+            sequence->insert(ce);
+        }
+        event = event->next;
+    }
+}
+
+void MidiLayer::copy(MidiSegment* seg, int origin)
+{
+    copy(seg->layer, seg->referenceFrame, seg->referenceFrame + seg->segmentFrames, origin);
 }
 
 //////////////////////////////////////////////////////////////////////

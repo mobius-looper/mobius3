@@ -323,6 +323,7 @@ void MidiTrack::doAction(UIAction* a)
             case FuncPrevLoop: doSwitch(a, -1); break;
             case FuncSelectLoop: doSwitch(a, 0); break;
             case FuncMultiply: doMultiply(a); break;
+            case FuncInsert: doInsert(a); break;
             case FuncMute: doMute(a); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
@@ -611,6 +612,8 @@ void MidiTrack::doFunction(TrackEvent* e)
 {
     if (e->symbolId == FuncMultiply)
       doMultiply(e);
+    else if (e->symbolId == FuncInsert)
+      doInsert(e);
     else if (e->symbolId == FuncMute)
       doMute(e);
 }
@@ -1127,13 +1130,13 @@ void MidiTrack::doSwitchNow(int newIndex)
     MidiLoop* currentLoop = loops[loopIndex];
 
     // remember the location for SwitchLocation=Restore
-    MidiLayer* playing = currentLoop->getPlayLayer();
-    if (playing != nullptr)
-      playing->setLastPlayFrame(recorder.getFrame());
+    MidiLayer* currentPlaying = currentLoop->getPlayLayer();
+    if (currentPlaying != nullptr)
+      currentPlaying->setLastPlayFrame(recorder.getFrame());
             
     loopIndex = newIndex;
     MidiLoop* loop = loops[newIndex];
-    playing = loop->getPlayLayer();
+    MidiLayer* playing = loop->getPlayLayer();
     player.setLayer(playing);
     
     if (playing == nullptr || playing->getFrames() == 0) {
@@ -1148,15 +1151,22 @@ void MidiTrack::doSwitchNow(int newIndex)
             startRecording();
         }
         else if (action == EMPTY_LOOP_COPY) {
-            recorder.reset();
-            recorder.setFrames(currentLoop->getFrames());
-            recorder.setCycles(currentLoop->getCycles());
-            // todo: copy the content
+            if (currentPlaying == nullptr)
+              recorder.reset();
+            else {
+                recorder.copy(currentPlaying, true);
+                // commit the copy to the Loop and prep another one
+                shift();
+            }
         }
         else if (action == EMPTY_LOOP_TIMING) {
-            recorder.reset();
-            recorder.setFrames(currentLoop->getFrames());
-            recorder.setCycles(currentLoop->getCycles());
+            if (currentPlaying == nullptr)
+              recorder.reset();
+            else {
+                recorder.copy(currentPlaying, false);
+                // commit the copy to the Loop and prep another one
+                shift();
+            }
         }
     }
     else {
@@ -1300,13 +1310,53 @@ void MidiTrack::doMultiplyNow()
 {
     if (mode == MobiusMidiState::ModeMultiply) {
         mode = MobiusMidiState::ModePlay;
-        recorder.setRecording(overdub);
-        recorder.setExtending(false);
+        recorder.endMultiply(overdub, false);
     }
     else if (mode == MobiusMidiState::ModePlay) {
         mode = MobiusMidiState::ModeMultiply;
-        recorder.setExtending(true);
-        recorder.setRecording(true);
+        recorder.startMultiply();
+    }
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Insert
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doInsert(UIAction* a)
+{
+    (void)a;
+
+    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    if (quant == QUANTIZE_OFF) {
+        doInsertNow();
+    }
+    else {
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventFunction;
+        event->symbolId = FuncInsert;
+        event->frame = getQuantizeFrame(quant);
+        events.add(event);
+    }
+}
+
+void MidiTrack::doInsert(TrackEvent* e)
+{
+    (void)e;
+    doInsertNow();
+}
+
+void MidiTrack::doInsertNow()
+{
+    if (mode == MobiusMidiState::ModeInsert) {
+        mode = MobiusMidiState::ModePlay;
+        recorder.endInsert(overdub);
+    }
+    else if (mode == MobiusMidiState::ModePlay) {
+        mode = MobiusMidiState::ModeInsert;
+        recorder.startInsert();
     }
 
 }

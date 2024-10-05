@@ -139,6 +139,9 @@ class MidiTrack
     void doMultiply(class UIAction* a);
     void doMultiply(class TrackEvent* e);
     void doMultiplyNow();
+    void doInsert(class UIAction* a);
+    void doInsert(class TrackEvent* e);
+    void doInsertNow();
     
     void doMute(class UIAction* a);
     void doMute(class TrackEvent* e);

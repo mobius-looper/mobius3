@@ -28,11 +28,21 @@ class MidiLayer : public PooledObject
     
     void resetPlayState();
     void gather(juce::Array<class MidiEvent*>* events, int startFrame, int endFrame);
+    void copy(class MidiLayer* src);
 
     bool hasChanges();
     void resetChanges();
     void incChanges();
     int getEventCount();
+
+    // copy support
+    class MidiSequence* getSequence() {
+        return sequence;
+    }
+
+    class MidiSegment* getSegments() {
+        return segments;
+    }
 
   private:
 
@@ -56,6 +66,10 @@ class MidiLayer : public PooledObject
     class MidiSegment* nextSegment = nullptr;
     
     void seek(int startFrame);
+
+    void copy(class MidiLayer* src, int start, int end, int origin);
+    void copy(class MidiSequence* src, int start, int end, int origin);
+    void copy(class MidiSegment* seg, int origin);
     
 };
         

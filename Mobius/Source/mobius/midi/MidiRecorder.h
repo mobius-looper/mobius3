@@ -40,9 +40,17 @@ class MidiRecorder : public MidiWatcher::Listener
     void resume(MidiLayer* layer);
     void rollback(bool overdub);
     void clear();
-    MidiLayer* commit(bool continueHolding);
+    MidiLayer* commit(bool overdub);
     void setFrame(int newFrame);
 
+    void startMultiply();
+    void endMultiply(bool overdub, bool unrounded);
+    
+    void startInsert();
+    void endInsert(bool overdub);
+
+    void copy(MidiLayer* srcLayer, bool includeEvents);
+    
     //
     // Transaction State
     //
@@ -102,6 +110,8 @@ class MidiRecorder : public MidiWatcher::Listener
     int cycleFrames = 0;
     bool recording = false;
     bool extending = false;
+    bool multiply = false;
+    int multiplyFrame = 0;
     int extensions = 0;
 
     int lastBlockFrames = 0;

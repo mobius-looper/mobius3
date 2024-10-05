@@ -22,7 +22,8 @@ class MidiSequence : public PooledObject
     void poolInit() override;
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);
-
+    void insert(class MidiEvent* e);
+    
     MidiEvent* getFirst() {
         return events;
     }
@@ -36,6 +37,7 @@ class MidiSequence : public PooledObject
 
     class MidiEvent* events = nullptr;
     class MidiEvent* tail = nullptr;
+    class MidiEvent* insertPosition = nullptr;
     int count = 0;
     
 };
