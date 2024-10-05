@@ -424,8 +424,6 @@ class MobiusContainer
 
     virtual class SymbolTable* getSymbols() = 0;
 
-    virtual class ParameterFinder* getParameterFinder() = 0;
-
 };
 
 //////////////////////////////////////////////////////////////////////

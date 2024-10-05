@@ -100,6 +100,7 @@ MobiusShell::MobiusShell(MobiusContainer* cont)
     // see notes below on destructor subtleties
     // keep this on the stack rather than the heap
     // audioPool = new AudioPool();
+
 }
 
 /**
@@ -251,7 +252,15 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
 
     MobiusConfig* kernelCopy = config->clone();
     Session* kernelSession = new Session(ses);
+
+    // does it matter which copy we share here?  this can be used by both
+    // shell and kernel, kernel is probably safer, though atm it doesn't
+    // retain a pointer
+    // must be done before Kernel
+    valuator.initialize(kernelCopy, kernelSession);
+
     kernel.initialize(container, kernelCopy, kernelSession);
+
 }
 
 /**
@@ -289,6 +298,10 @@ void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
     Session* kernelSession = new Session(ses);
     sendKernelConfigure(kernelCopy);
     sendKernelSession(kernelSession);
+
+    // starting to hate the ownership of Valuator, if it is mainly
+    // for Kernel, then let it do this
+    valuator.reconfigure(kernelCopy, kernelSession);
 }
 
 /**

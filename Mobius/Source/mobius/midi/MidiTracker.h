@@ -46,6 +46,8 @@ class MidiTracker
         return kernel;
     }
 
+    class Valuator* getValuator();
+    
     class MidiNote* getHeldNotes();
     
   private:

@@ -26,8 +26,8 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 #include "../../sync/Pulsator.h"
-#include "../../ParameterFinder.h"
 
+#include "../Valuator.h"
 #include "../MobiusInterface.h"
 
 #include "MidiTracker.h"
@@ -58,7 +58,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     tracker = t;
     
     pulsator = container->getPulsator();
-    finder = container->getParameterFinder();
+    valuator = t->getValuator();
 
     midiPool = tracker->getMidiPool();
     eventPool = tracker->getEventPool();
@@ -82,10 +82,6 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     }
     loopCount = 2;
     loopIndex = 0;
-    
-    // todo: worried about this since it is called at runtime
-    // and may do things not available at static initialization time
-    doReset(nullptr, true);
 }
 
 MidiTrack::~MidiTrack()
@@ -101,8 +97,8 @@ void MidiTrack::configure(Session::Track* def)
 {
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
-    SyncSource ss = finder->getSyncSource(def, SYNC_NONE);
-    SyncUnit su = finder->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
+    SyncSource ss = valuator->getSyncSource(def, SYNC_NONE);
+    SyncUnit su = valuator->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
 
     // set this up for host and midi, track sync will be different
     Pulse::Type ptype = Pulse::PulseBeat;
@@ -112,7 +108,7 @@ void MidiTrack::configure(Session::Track* def)
     if (ss == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
-        SyncTrackUnit stu = finder->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
+        SyncTrackUnit stu = valuator->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
         ptype = Pulse::PulseLoop;
         if (stu == TRACK_UNIT_SUBCYCLE)
           ptype = Pulse::PulseBeat;
@@ -141,6 +137,8 @@ void MidiTrack::configure(Session::Track* def)
         syncSource = Pulse::SourceNone;
     }
 
+    subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
+    
     // todo: loopsPerTrack from somewhere
 }
 
@@ -163,15 +161,6 @@ MidiNote* MidiTrack::getHeldNotes()
     return tracker->getHeldNotes();
 }
 
-/**
- * Used by ParameterFinder to get the Preset currently in use
- * for this track.
- */
-int MidiTrack::getActivePreset()
-{
-    return activePreset;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -183,11 +172,6 @@ bool MidiTrack::isRecording()
     // can't just test for recording != nullptr since that's always there
     // waiting for an overdub
     return recorder.isRecording();
-}
-
-MslValue* MidiTrack::getParameter(juce::String name)
-{
-    return parameters.get(name);
 }
 
 void MidiTrack::refreshImportant(MobiusMidiState::Track* state)
@@ -355,27 +339,39 @@ void MidiTrack::doAction(UIAction* a)
     }
 }
 
+/**
+ * Query uses Valuator for most things but doesn't
+ * for the controllers and a few important parameters which are
+ * cached in local members.
+ */
 void MidiTrack::doQuery(Query* q)
 {
     switch (q->symbol->id) {
+
+        // local caches
         case ParamSubcycles: q->value = subcycles; break;
         case ParamInput: q->value = input; break;
         case ParamOutput: q->value = output; break;
         case ParamFeedback: q->value = feedback; break;
         case ParamPan: q->value = pan; break;
-        case ParamActivePreset: q->value = activePreset; break;
+
         default: {
-            // toss it back to ParameterFinder which will get things out of the
-            // default preset, doesn't handle globals or Setup yet
-            q->value = finder->getParameterOrdinal(this, q->symbol->id);
+            // everything else gets passed over to Valuator
+            // todo: need to be smarter about non-ordinal parameters
+            q->value = valuator->getParameterOrdinal(number, q->symbol->id);
         }
             break;
     }
 }    
 
+/**
+ * Actions on a few important parameters are cached locally,
+ * the rest are held in Valuator until the next reset
+ */
 void MidiTrack::doParameter(UIAction* a)
 {
     switch (a->symbol->id) {
+        
         case ParamSubcycles: {
             if (a->value > 0)
               subcycles = a->value;
@@ -388,13 +384,9 @@ void MidiTrack::doParameter(UIAction* a)
         case ParamOutput: output = a->value; break;
         case ParamFeedback: feedback = a->value; break;
         case ParamPan: pan = a->value; break;
-        case ParamActivePreset: activePreset = a->value; break;
             
-        default: {
-            MslValue v;
-            v.setInt(a->value);
-            parameters.set(a->symbol->name, v);
-        }
+        default:
+            valuator->bindParameter(number, a);
             break;
     }
 }
@@ -674,7 +666,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
     feedback = 127;
     pan = 64;
 
-    subcycles = finder->getParameterOrdinal(this, ParamSubcycles);
+    subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
 
     if (full) {
         for (auto loop : loops)
@@ -686,8 +678,9 @@ void MidiTrack::doReset(UIAction* a, bool full)
         loop->reset();
     }
 
-    // no more parameter overrides
-    parameters.clear();
+    // clear parameter bindings
+    // todo: that whole "reset retains" thing
+    valuator->clearBindings(number);
 
     pulsator->unlock(number);
 }
@@ -1035,7 +1028,7 @@ void MidiTrack::doSwitch(UIAction* a, int delta)
     // I suppose if SwitchLocation=Start it could retrigger
     if (target != loopIndex) {
 
-        SwitchQuantize squant = finder->getSwitchQuantize(this);
+        SwitchQuantize squant = valuator->getSwitchQuantize(number);
         TrackEvent* event = nullptr;
         
         switch (squant) {
@@ -1171,7 +1164,7 @@ void MidiTrack::doSwitchNow(int newIndex)
     
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
-        EmptyLoopAction action = finder->getEmptyLoopAction(this);
+        EmptyLoopAction action = valuator->getEmptyLoopAction(number);
         if (action == EMPTY_LOOP_NONE) {
             recorder.reset();
             pulsator->unlock(number);
@@ -1205,7 +1198,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         
         recorder.resume(playing);
         
-        SwitchLocation location = finder->getSwitchLocation(this);
+        SwitchLocation location = valuator->getSwitchLocation(number);
         // default is at the start
         recorder.setFrame(0);
         player.setFrame(0);
@@ -1245,7 +1238,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         }
     }
 
-    SwitchDuration duration = finder->getSwitchDuration(this);
+    SwitchDuration duration = valuator->getSwitchDuration(number);
     switch (duration) {
         case SWITCH_ONCE: {
             TrackEvent* event = eventPool->newEvent();
@@ -1317,7 +1310,7 @@ void MidiTrack::doMultiply(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(this);
+    QuantizeMode quant = valuator->getQuantizeMode(number);
     if (quant == QUANTIZE_OFF) {
         doMultiplyNow();
     }
@@ -1359,7 +1352,7 @@ void MidiTrack::doInsert(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(this);
+    QuantizeMode quant = valuator->getQuantizeMode(number);
     if (quant == QUANTIZE_OFF) {
         doInsertNow();
     }
@@ -1401,7 +1394,7 @@ void MidiTrack::doMute(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(this);
+    QuantizeMode quant = valuator->getQuantizeMode(number);
     if (quant == QUANTIZE_OFF) {
         doMuteNow();
     }

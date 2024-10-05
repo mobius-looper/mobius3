@@ -480,8 +480,6 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
-        <FILE id="LEbwIQ" name="Notification.cpp" compile="1" resource="0"
-              file="Source/mobius/Notification.cpp"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="r4vAR1" name="MidiLayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLayer.cpp"/>
           <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
@@ -674,6 +672,8 @@
         <FILE id="LTcPBB" name="MobiusPools.h" compile="0" resource="0" file="Source/mobius/MobiusPools.h"/>
         <FILE id="RZNLnz" name="MobiusShell.cpp" compile="1" resource="0" file="Source/mobius/MobiusShell.cpp"/>
         <FILE id="TK5FKu" name="MobiusShell.h" compile="0" resource="0" file="Source/mobius/MobiusShell.h"/>
+        <FILE id="LEbwIQ" name="Notification.cpp" compile="1" resource="0"
+              file="Source/mobius/Notification.cpp"/>
         <FILE id="Izsj8S" name="Notification.h" compile="0" resource="0" file="Source/mobius/Notification.h"/>
         <FILE id="kMr0Q7" name="Notifier.cpp" compile="1" resource="0" file="Source/mobius/Notifier.cpp"/>
         <FILE id="gI6aVN" name="Notifier.h" compile="0" resource="0" file="Source/mobius/Notifier.h"/>
@@ -689,6 +689,8 @@
         <FILE id="JOsfQX" name="SampleReader.cpp" compile="1" resource="0"
               file="Source/mobius/SampleReader.cpp"/>
         <FILE id="RDP88j" name="SampleReader.h" compile="0" resource="0" file="Source/mobius/SampleReader.h"/>
+        <FILE id="b5NDV8" name="Valuator.cpp" compile="1" resource="0" file="Source/mobius/Valuator.cpp"/>
+        <FILE id="UxFgK7" name="Valuator.h" compile="0" resource="0" file="Source/mobius/Valuator.h"/>
         <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>
         <FILE id="F6kToV" name="WaveFile.h" compile="0" resource="0" file="Source/mobius/WaveFile.h"/>
       </GROUP>
@@ -814,10 +816,6 @@
       <FILE id="Q7CcHg" name="MainThread.h" compile="0" resource="0" file="Source/MainThread.h"/>
       <FILE id="gYasMO" name="MidiManager.cpp" compile="1" resource="0" file="Source/MidiManager.cpp"/>
       <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
-      <FILE id="CQDvVn" name="ParameterFinder.cpp" compile="1" resource="0"
-            file="Source/ParameterFinder.cpp"/>
-      <FILE id="C60aE1" name="ParameterFinder.h" compile="0" resource="0"
-            file="Source/ParameterFinder.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
       <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
       <FILE id="Zfd5Mq" name="PluginParameter.cpp" compile="1" resource="0"

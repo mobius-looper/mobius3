@@ -211,6 +211,11 @@ bool MidiTracker::doQuery(Query* q)
     return true;
 }
 
+Valuator* MidiTracker::getValuator()
+{
+    return kernel->getValuator();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Incomming Events

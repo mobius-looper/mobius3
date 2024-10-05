@@ -47,7 +47,6 @@
 #include "ui/MobiusView.h"
 #include "ui/MobiusViewer.h"
 
-#include "ParameterFinder.h"
 #include "Provider.h"
 
 class Supervisor : public Provider, public MobiusContainer, public MobiusListener, public MslContext,
@@ -164,9 +163,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // part of MobiusContainer
     Parametizer* getParametizer() override;
     class MobiusMidiTransport* getMidiTransport() override;
-    ParameterFinder* getParameterFinder() override {
-        return &finder;
-    }
     
     AudioClerk* getAudioClerk() override {
         return &audioClerk;
@@ -338,9 +334,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // Symbol table loader
     Symbolizer symbolizer {this};
 
-    // parameter lookup services for the kernel
-    ParameterFinder finder {this};
-    
     // the Mobius "engine"
     // this started as a singleton managed by MobiusInterface
     // with getMobius and shutdown() which is why it isn't a unique_ptr

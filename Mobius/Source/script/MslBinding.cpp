@@ -33,6 +33,7 @@ void MslBinding::init()
     strcpy(name, "");
     value = nullptr;
     position = 0;
+    symbolId = 0;
 }
 
 void MslBinding::setName(const char* s)

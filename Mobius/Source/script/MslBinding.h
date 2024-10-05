@@ -29,6 +29,10 @@ class MslBinding
     // of Var declaration
     static const int MaxBindingName = 128;
     char name[MaxBindingName];
+
+    // when the binding is used by Valuator, this is the associated Symbol id that
+    // can be as an alternative to name comparisions
+    int symbolId = 0;
     
     // bindings usually have a value, though it is not set until an assignment
     // node is reached during evaluation

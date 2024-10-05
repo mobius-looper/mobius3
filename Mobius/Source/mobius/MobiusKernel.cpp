@@ -305,6 +305,14 @@ void MobiusKernel::loadSession(KernelMessage* msg)
       mMidi->loadSession(session);
 }
 
+/**
+ * Used by internal components to get the Valuator.
+ */
+Valuator* MobiusKernel::getValuator()
+{
+    return shell->getValuator();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Suspend/Resume

@@ -237,6 +237,10 @@ class MslEnvironment
     // resume a session after a scheduled wait has completed
     void resume(class MslContext* c, class MslWait* w);
 
+    // allocate a binding for use within the Valuator
+    MslBinding* allocBinding();
+    void free(MslBinding* b);
+
     //
     // Session Information
     // todo: these are mostly for the console, needs more refinement

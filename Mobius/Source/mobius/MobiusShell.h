@@ -16,6 +16,7 @@
 #include "MobiusInterface.h"
 #include "KernelEventHandler.h"
 #include "ProjectManager.h"
+#include "Valuator.h"
 
 class MobiusShell : public MobiusInterface
 {
@@ -86,6 +87,10 @@ class MobiusShell : public MobiusInterface
         return listener;
     }
 
+    class Valuator* getValuator() {
+        return &valuator;
+    }
+
   protected:
     
     // accessors for the Kernel only
@@ -131,6 +136,9 @@ class MobiusShell : public MobiusInterface
 
     // ActionPool is also shared with Kernel
     class UIActionPool actionPool;
+
+    // newer parameter manager shared with Kernel
+    Valuator valuator {this};
     
     // the kernel itself
     // todo: try to avoid passing this down, can we do

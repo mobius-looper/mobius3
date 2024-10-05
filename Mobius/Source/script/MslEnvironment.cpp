@@ -41,6 +41,28 @@ void MslEnvironment::shutdown()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Valuator Interface
+//
+// Valuator needs a way to temporarily bind parameter values and this
+// provides a convenient structure for that even though the two aren't
+// closely related.  Rethink, might be better if Valuator had it's own
+// objecte and pool, then again a lot of parameter bindings are going to
+// come from scripts so this fits.
+//
+//////////////////////////////////////////////////////////////////////
+
+MslBinding* MslEnvironment::allocBinding()
+{
+    return pool.allocBinding();
+}
+
+void MslEnvironment::free(MslBinding* b)
+{
+    if (b != nullptr) pool.free(b);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Application Interface
 //
 // These are the methods the containing application uses to run
