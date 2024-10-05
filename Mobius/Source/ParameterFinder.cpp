@@ -70,11 +70,12 @@ SyncUnit ParameterFinder::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit df
 
 Preset* ParameterFinder::getPreset(MidiTrack* t)
 {
+    Preset* preset = nullptr;
     int ordinal = t->getActivePreset();
     MobiusKernel* kernel = t->getTracker()->getKernel();
     MobiusConfig* config = kernel->getMobiusConfig();
     if (ordinal >= 0)
-      Preset* preset = config->getPreset(ordinal);
+      preset = config->getPreset(ordinal);
     
     if (preset == nullptr) {
         // fall back to the default
