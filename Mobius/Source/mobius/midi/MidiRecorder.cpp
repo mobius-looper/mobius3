@@ -380,6 +380,18 @@ void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
       recordFrame = recordFrame % recordFrames;
 }
 
+void MidiRecorder::startReplace()
+{
+    replace = false;
+}
+
+void MidiRecorder::endReplace(bool overdub)
+{
+    replace = false;
+    if (!overdub)
+      recording = false;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Transaction State

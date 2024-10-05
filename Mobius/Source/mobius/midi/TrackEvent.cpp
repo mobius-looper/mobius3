@@ -149,6 +149,17 @@ TrackEvent* TrackEventList::find(TrackEvent::Type type)
     return found;
 }
 
+TrackEvent* TrackEventList::findLast(SymbolId sym)
+{
+    TrackEvent* found = nullptr;
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->type == TrackEvent::EventFunction && e->symbolId == sym) {
+            found = e;
+        }
+    }
+    return found;
+}
+
 TrackEvent* TrackEventList::consume(int startFrame, int blockFrames)
 {
     TrackEvent* found = nullptr;

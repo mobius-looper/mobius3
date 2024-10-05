@@ -50,6 +50,9 @@ class MidiRecorder : public MidiWatcher::Listener
     void endInsert(bool overdub);
 
     void copy(MidiLayer* srcLayer, bool includeEvents);
+
+    void startReplace();
+    void endReplace(bool overdub);
     
     //
     // Transaction State
@@ -113,6 +116,7 @@ class MidiRecorder : public MidiWatcher::Listener
     bool multiply = false;
     int multiplyFrame = 0;
     int extensions = 0;
+    bool replace = false;
 
     int lastBlockFrames = 0;
 

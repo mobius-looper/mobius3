@@ -84,6 +84,7 @@ class TrackEventList
     void initialize(TrackEventPool* pool);
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
+    TrackEvent* findLast(SymbolId id);
     void flush();
 
     TrackEvent* consume(int startFrame, int blockFrames);

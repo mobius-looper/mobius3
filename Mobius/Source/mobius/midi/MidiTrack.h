@@ -151,6 +151,9 @@ class MidiTrack
     void doMute(class TrackEvent* e);
     void doMuteNow();
     
-
+    int getQuantizeFrame(SymbolId func, QuantizeMode qmode);
+    void doReplace(class UIAction* a);
+    void doReplace(class TrackEvent* e);
+    void doReplaceNow();
 
 };

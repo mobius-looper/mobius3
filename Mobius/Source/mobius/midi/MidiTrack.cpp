@@ -332,6 +332,7 @@ void MidiTrack::doAction(UIAction* a)
             case FuncMultiply: doMultiply(a); break;
             case FuncInsert: doInsert(a); break;
             case FuncMute: doMute(a); break;
+            case FuncReplace: doReplace(a); break;
             default: {
                 Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
             }
@@ -635,6 +636,8 @@ void MidiTrack::doFunction(TrackEvent* e)
       doInsert(e);
     else if (e->symbolId == FuncMute)
       doMute(e);
+    else if (e->symbolId == FuncReplace)
+      doReplace(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1428,6 +1431,96 @@ void MidiTrack::doMuteNow()
         mute = true;
     }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Replace
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Calculate the quantization frame for a function advancing to the next
+ * quantization point if there is already a schedule event for this function.
+ *
+ * This can push events beyond the loop end point, which relies on
+ * event shift to bring them down.
+ *
+ * I don't remember how audio tracks work, this could keep going forever
+ * if you keep punching that button.  Or you could use the second press as
+ * an "escape" mechanism that cancels quant and starts it immediately.
+ *
+ */
+int MidiTrack::getQuantizeFrame(SymbolId func, QuantizeMode qmode)
+{
+    // means it can't be scheduled
+    int qframe = -1;
+    int relativeTo = recorder.getFrame();
+    bool allow = true;
+    
+    // is there already an event for this function?
+    TrackEvent* last = events.findLast(func);
+    if (last != nullptr) {
+        // relies on this having a frame and not being marked pending
+        if (last->pending) {
+            // I think this is where some functions use it as an escape
+            // LoopSwitch was one
+            Trace(1, "MidiTrack: Can't stack another event after pending");
+            allow = false;
+        }
+        else {
+            relativeTo = last->frame;
+        }
+    }
+
+    if (allow)
+      qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
+                                             recorder.getCycleFrames(),
+                                             relativeTo,
+                                             subcycles,
+                                             qmode,
+                                             false);  // "after" is this right?
+    return qframe;
+}
+
+void MidiTrack::doReplace(UIAction* a)
+{
+    (void)a;
+
+    QuantizeMode quant = valuator->getQuantizeMode(number);
+    if (quant == QUANTIZE_OFF) {
+        doReplaceNow();
+    }
+    else {
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventFunction;
+        event->symbolId = FuncReplace;
+        event->frame = getQuantizeFrame(FuncReplace, quant);
+        events.add(event);
+    }
+}
+
+void MidiTrack::doReplace(TrackEvent* e)
+{
+    (void)e;
+    doReplaceNow();
+}
+
+void MidiTrack::doReplaceNow()
+{
+    // todo: ParameterReplaceMode
+    
+    if (mode == MobiusMidiState::ModeReplace) {
+        mode = MobiusMidiState::ModePlay;
+        // audio tracks would shift the layer now, we'll let it go
+        // till the end and accumulate more changes
+        recorder.endReplace(overdub);
+    }
+    else if (mode == MobiusMidiState::ModePlay) {
+        mode = MobiusMidiState::ModeReplace;
+        recorder.startReplace();
+    }
+}
+
 
 /****************************************************************************/
 /****************************************************************************/
