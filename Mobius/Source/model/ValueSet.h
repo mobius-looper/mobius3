@@ -86,6 +86,11 @@ class ValueSet
     MslValue* get(class SymbolTable* symbols, SymbolId id);
 
     /**
+     * Clear the table
+     */
+    void clear();
+
+    /**
      * Set is always by a copy of the source object to the internal object.
      * todo: If the value does not exist within the set, one will be created with "new".
      * If this can happen while in the audio thread will need to provide a pool or require

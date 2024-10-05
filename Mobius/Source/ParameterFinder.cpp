@@ -11,6 +11,7 @@
 #include "model/Symbol.h"
 #include "model/ParameterProperties.h"
 #include "model/ExValue.h"
+#include "script/MslValue.h"
 
 // early attempt at this, probably should merge with the finder
 #include "model/Enumerator.h"
@@ -19,6 +20,7 @@
 
 // severe hackery
 #include "mobius/midi/MidiTracker.h"
+#include "mobius/midi/MidiTrack.h"
 #include "mobius/MobiusKernel.h"
 
 #include "ParameterFinder.h"
@@ -66,63 +68,21 @@ SyncUnit ParameterFinder::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit df
 // and another that just deals with configuration objects like Session
 //
 
-/**
- * MIDI tracks don't have the concepts of "default preset" and "active preset".
- * Just use the first or default preset from MobiusConfig
- */
-Preset* ParameterFinder::getPreset(MidiTracker* t)
+Preset* ParameterFinder::getPreset(MidiTrack* t)
 {
-    MobiusKernel* kernel = t->getKernel();
+    int ordinal = t->getActivePreset();
+    MobiusKernel* kernel = t->getTracker()->getKernel();
     MobiusConfig* config = kernel->getMobiusConfig();
-    Preset* preset = config->getPresets();
-    if (preset == nullptr)
-      Trace(1, "ParameterFinder: Unable to determine Preset");
+    if (ordinal >= 0)
+      Preset* preset = config->getPreset(ordinal);
+    
+    if (preset == nullptr) {
+        // fall back to the default
+        // !! should be in the Session
+        preset = config->getPresets();
+    }
+    
     return preset;
-}
-
-SwitchLocation ParameterFinder::getSwitchLocation(MidiTracker* t, SwitchLocation dflt)
-{
-    SwitchLocation result = dflt;
-    Preset* preset = getPreset(t);
-    if (preset != nullptr)
-      result = preset->getSwitchLocation();
-    return result;
-}
-
-SwitchDuration ParameterFinder::getSwitchDuration(MidiTracker* t, SwitchDuration dflt)
-{
-    SwitchDuration result = dflt;
-    Preset* preset = getPreset(t);
-    if (preset != nullptr)
-      result = preset->getSwitchDuration();
-    return result;
-}
-
-SwitchQuantize ParameterFinder::getSwitchQuantize(MidiTracker* t, SwitchQuantize dflt)
-{
-    SwitchQuantize result = dflt;
-    Preset* preset = getPreset(t);
-    if (preset != nullptr)
-      result = preset->getSwitchQuantize();
-    return result;
-}
-
-QuantizeMode ParameterFinder::getQuantizeMode(MidiTracker* t, QuantizeMode dflt)
-{
-    QuantizeMode result = dflt;
-    Preset* preset = getPreset(t);
-    if (preset != nullptr)
-      result = preset->getQuantize();
-    return result;
-}
-
-EmptyLoopAction ParameterFinder::getEmptyLoopAction(MidiTracker* t, EmptyLoopAction dflt)
-{
-    EmptyLoopAction result = dflt;
-    Preset* preset = getPreset(t);
-    if (preset != nullptr)
-      result = preset->getEmptyLoopAction();
-    return result;
 }
 
 /**
@@ -138,7 +98,7 @@ EmptyLoopAction ParameterFinder::getEmptyLoopAction(MidiTracker* t, EmptyLoopAct
  * both audio and MIDI tracks, if MidiTrack didn't intercept the query, don't emit
  * a trace error since it will happen all the time.
  */
-int ParameterFinder::getParameterOrdinal(MidiTracker* t, SymbolId id)
+int ParameterFinder::getParameterOrdinal(MidiTrack* t, SymbolId id)
 {
     int ordinal = 0;
     
@@ -150,56 +110,86 @@ int ParameterFinder::getParameterOrdinal(MidiTracker* t, SymbolId id)
         Trace(1, "ParameterFinder: Symbol %s is not a parameter", s->getName());
     }
     else {
-        switch (s->parameterProperties->scope) {
-            case ScopeGlobal: {
-                // MidiTrack should be getting these from the Session
-                //Trace(1, "ParameterFinder: Kernel attempt to access global parameter %s",
-                //s->getName());
-            }
-                break;
-            case ScopePreset: {
-                Preset* p = getPreset(t);
-                if (p != nullptr) {
-                    ExValue value;
-                    UIParameterHandler::get(id, p, &value);
-                    ordinal = value.getInt();
+        MslValue* v = t->getParameter(s->name);
+        if (v != nullptr)
+          ordinal = v->getInt();
+        else {
+            switch (s->parameterProperties->scope) {
+                case ScopeGlobal: {
+                    // MidiTrack should be getting these from the Session
+                    //Trace(1, "ParameterFinder: Kernel attempt to access global parameter %s",
+                    //s->getName());
                 }
+                    break;
+                case ScopePreset: {
+                    Preset* p = getPreset(t);
+                    if (p != nullptr) {
+                        ExValue value;
+                        UIParameterHandler::get(id, p, &value);
+                        ordinal = value.getInt();
+                    }
                 
+                }
+                    break;
+                case ScopeSetup: {
+                    // if 
+                            // not sure why MidiTrack would want things here
+                            //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
+                            //s->getName());
+                            }
+                    break;
+                case ScopeTrack: {
+                    // mostly for levels which MidiTrack should be intercepting
+                    //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
+                    //s->getName());
+                }
+                    break;
+                case ScopeUI: {
+                    // not expecting this from kernel tracks
+                    //Trace(1, "ParameterFinder: Kernel attempt to access UI parameter %s",
+                    //s->getName());
+                }
+                    break;
+                case ScopeNone: {
+                    Trace(1, "ParameterFinder: Kernel attempt to access unscoped parameter %s",
+                          s->getName());
+                }
+                    break;
             }
-                break;
-            case ScopeSetup: {
-                // if 
-                // not sure why MidiTrack would want things here
-                //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
-                //s->getName());
-            }
-                break;
-            case ScopeTrack: {
-                // mostly for levels which MidiTrack should be intercepting
-                //Trace(1, "ParameterFinder: Kernel attempt to access track parameter %s",
-                //s->getName());
-            }
-                break;
-            case ScopeUI: {
-                // not expecting this from kernel tracks
-                //Trace(1, "ParameterFinder: Kernel attempt to access UI parameter %s",
-                //s->getName());
-            }
-                break;
-            case ScopeNone: {
-                Trace(1, "ParameterFinder: Kernel attempt to access unscoped parameter %s",
-                      s->getName());
-            }
-                break;
         }
     }
-
+    
     return ordinal;
 }
 
-ParameterMuteMode ParameterFinder::getMuteMode(MidiTracker* t)
+ParameterMuteMode ParameterFinder::getMuteMode(MidiTrack* t)
 {
     return (ParameterMuteMode)getParameterOrdinal(t, ParamMuteMode);
+}
+
+SwitchLocation ParameterFinder::getSwitchLocation(MidiTrack* t)
+{
+    return (SwitchLocation)getParameterOrdinal(t, ParamSwitchLocation);
+}
+
+SwitchDuration ParameterFinder::getSwitchDuration(MidiTrack* t)
+{
+    return (SwitchDuration)getParameterOrdinal(t, ParamSwitchDuration);
+}
+
+SwitchQuantize ParameterFinder::getSwitchQuantize(MidiTrack* t)
+{
+    return (SwitchQuantize)getParameterOrdinal(t, ParamSwitchQuantize);
+}
+
+QuantizeMode ParameterFinder::getQuantizeMode(MidiTrack* t)
+{
+    return (QuantizeMode)getParameterOrdinal(t, ParamQuantize);
+}
+
+EmptyLoopAction ParameterFinder::getEmptyLoopAction(MidiTrack* t)
+{
+    return (EmptyLoopAction)getParameterOrdinal(t, ParamEmptyLoopAction);
 }
 
 /****************************************************************************/

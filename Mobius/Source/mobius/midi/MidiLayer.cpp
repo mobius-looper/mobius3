@@ -309,6 +309,7 @@ void MidiLayer::seek(int startFrame)
  */
 void MidiLayer::copy(MidiLayer* src)
 {
+    Trace(2, "MidiLayer: Beginning copy");
     if (sequence == nullptr)
       sequence = sequencePool->newSequence();
     copy(src, 0, src->getFrames(), 0);
@@ -316,6 +317,7 @@ void MidiLayer::copy(MidiLayer* src)
 
 void MidiLayer::copy(MidiLayer* src, int start, int end, int origin)
 {
+    Trace(2, "MidiLayer: Copy layer %d %d %d", start, end, origin);
     // first the sequence
     copy(src->getSequence(), start, end, origin);
     
@@ -323,6 +325,8 @@ void MidiLayer::copy(MidiLayer* src, int start, int end, int origin)
     MidiSegment* seg = src->getSegments();
     while (seg != nullptr) {
         int segorigin = origin + seg->originFrame;
+        Trace(2, "MidiLayer: Copy segment origin %d adjusted %d",
+              seg->originFrame, segorigin);
         copy(seg, segorigin);
         seg = seg->next;
     }
@@ -330,17 +334,22 @@ void MidiLayer::copy(MidiLayer* src, int start, int end, int origin)
 
 void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
 {
-    MidiEvent* event = src->getFirst();
-    while (event != nullptr) {
-        if (event->frame >= end)
-          break;
-        else if (event->frame >= start) {
-            MidiEvent* ce = midiPool->newEvent();
-            ce->copy(event);
-            ce->frame = ce->frame + origin;
-            sequence->insert(ce);
+    if (src != nullptr) {
+        MidiEvent* event = src->getFirst();
+        while (event != nullptr) {
+            if (event->frame >= end)
+              break;
+            else if (event->frame >= start) {
+                MidiEvent* ce = midiPool->newEvent();
+                ce->copy(event);
+                int adjustedFrame = ce->frame + origin;
+                Trace(2, "MidiLayer: Event adjusted from %d to %d",
+                      ce->frame, adjustedFrame);
+                ce->frame = adjustedFrame;
+                sequence->insert(ce);
+            }
+            event = event->next;
         }
-        event = event->next;
     }
 }
 

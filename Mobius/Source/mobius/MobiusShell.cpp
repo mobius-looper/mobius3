@@ -339,6 +339,7 @@ void MobiusShell::installActivationSymbols()
         juce::String name = juce::String(ActivationPrefixSetup) + setups->getName();
         Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
+        s->level = LevelCore;
         // can't do this any more
         // s->id = ordinal;
         // unhide if it was hidden above
@@ -353,6 +354,7 @@ void MobiusShell::installActivationSymbols()
         juce::String name = juce::String(ActivationPrefixPreset) + presets->getName();
         Symbol* s = symbols->intern(name);
         s->behavior = BehaviorActivation;
+        s->level = LevelCore;
         // s->id = ordinal;
         s->hidden = false;
         ordinal++;

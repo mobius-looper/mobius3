@@ -163,6 +163,15 @@ MidiNote* MidiTrack::getHeldNotes()
     return tracker->getHeldNotes();
 }
 
+/**
+ * Used by ParameterFinder to get the Preset currently in use
+ * for this track.
+ */
+int MidiTrack::getActivePreset()
+{
+    return activePreset;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -174,6 +183,11 @@ bool MidiTrack::isRecording()
     // can't just test for recording != nullptr since that's always there
     // waiting for an overdub
     return recorder.isRecording();
+}
+
+MslValue* MidiTrack::getParameter(juce::String name)
+{
+    return parameters.get(name);
 }
 
 void MidiTrack::refreshImportant(MobiusMidiState::Track* state)
@@ -214,10 +228,19 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 
     // not the same as mode=Record, can be any type of recording
     bool nowRecording = recorder.isRecording();
-    if (!nowRecording && state->recording) {
-        Trace(2, "MidiTrack: Recording state going off");
-    }
+    // leftover bug investigation
+    //if (!nowRecording && state->recording) {
+    //Trace(2, "MidiTrack: Recording state going off");
+    //}
     state->recording = nowRecording;
+
+    // verify that lingering overdub always gets back to the recorder
+    if (overdub && !nowRecording)
+      Trace(1, "MidiTrack: Refresh state found overdub/record inconsistency");
+
+    // ditto mute mode
+    if (mute && !player.isMute())
+      Trace(1, "MidiTrack: Refresh state found mute inconsistency");
     
     for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
@@ -340,10 +363,11 @@ void MidiTrack::doQuery(Query* q)
         case ParamOutput: q->value = output; break;
         case ParamFeedback: q->value = feedback; break;
         case ParamPan: q->value = pan; break;
+        case ParamActivePreset: q->value = activePreset; break;
         default: {
             // toss it back to ParameterFinder which will get things out of the
             // default preset, doesn't handle globals or Setup yet
-            q->value = finder->getParameterOrdinal(tracker, q->symbol->id);
+            q->value = finder->getParameterOrdinal(this, q->symbol->id);
         }
             break;
     }
@@ -364,9 +388,12 @@ void MidiTrack::doParameter(UIAction* a)
         case ParamOutput: output = a->value; break;
         case ParamFeedback: feedback = a->value; break;
         case ParamPan: pan = a->value; break;
+        case ParamActivePreset: activePreset = a->value; break;
             
         default: {
-            Trace(2, "MidiTrack: Unsupported parameter %s", a->symbol->getName());
+            MslValue v;
+            v.setInt(a->value);
+            parameters.set(a->symbol->name, v);
         }
             break;
     }
@@ -647,7 +674,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
     feedback = 127;
     pan = 64;
 
-    subcycles = finder->getParameterOrdinal(tracker, ParamSubcycles);
+    subcycles = finder->getParameterOrdinal(this, ParamSubcycles);
 
     if (full) {
         for (auto loop : loops)
@@ -658,6 +685,9 @@ void MidiTrack::doReset(UIAction* a, bool full)
         MidiLoop* loop = loops[loopIndex];
         loop->reset();
     }
+
+    // no more parameter overrides
+    parameters.clear();
 
     pulsator->unlock(number);
 }
@@ -1005,7 +1035,7 @@ void MidiTrack::doSwitch(UIAction* a, int delta)
     // I suppose if SwitchLocation=Start it could retrigger
     if (target != loopIndex) {
 
-        SwitchQuantize squant = finder->getSwitchQuantize(tracker, SWITCH_QUANT_OFF);
+        SwitchQuantize squant = finder->getSwitchQuantize(this);
         TrackEvent* event = nullptr;
         
         switch (squant) {
@@ -1141,7 +1171,7 @@ void MidiTrack::doSwitchNow(int newIndex)
     
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
-        EmptyLoopAction action = finder->getEmptyLoopAction(tracker, EMPTY_LOOP_NONE);
+        EmptyLoopAction action = finder->getEmptyLoopAction(this);
         if (action == EMPTY_LOOP_NONE) {
             recorder.reset();
             pulsator->unlock(number);
@@ -1175,7 +1205,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         
         recorder.resume(playing);
         
-        SwitchLocation location = finder->getSwitchLocation(tracker, SWITCH_START);
+        SwitchLocation location = finder->getSwitchLocation(this);
         // default is at the start
         recorder.setFrame(0);
         player.setFrame(0);
@@ -1215,7 +1245,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         }
     }
 
-    SwitchDuration duration = finder->getSwitchDuration(tracker, SWITCH_PERMANENT);
+    SwitchDuration duration = finder->getSwitchDuration(this);
     switch (duration) {
         case SWITCH_ONCE: {
             TrackEvent* event = eventPool->newEvent();
@@ -1287,7 +1317,7 @@ void MidiTrack::doMultiply(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    QuantizeMode quant = finder->getQuantizeMode(this);
     if (quant == QUANTIZE_OFF) {
         doMultiplyNow();
     }
@@ -1329,7 +1359,7 @@ void MidiTrack::doInsert(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    QuantizeMode quant = finder->getQuantizeMode(this);
     if (quant == QUANTIZE_OFF) {
         doInsertNow();
     }
@@ -1371,7 +1401,7 @@ void MidiTrack::doMute(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = finder->getQuantizeMode(tracker, QUANTIZE_OFF);
+    QuantizeMode quant = finder->getQuantizeMode(this);
     if (quant == QUANTIZE_OFF) {
         doMuteNow();
     }

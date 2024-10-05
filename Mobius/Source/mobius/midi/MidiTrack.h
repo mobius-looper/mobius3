@@ -5,6 +5,7 @@
 #include "../../model/MobiusMidiState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
+#include "../../model/ValueSet.h"
 
 #include "../../sync/Pulse.h"
 
@@ -25,6 +26,10 @@ class MidiTrack
     void configure(class Session::Track* def);
     void reset();
 
+    class MidiTracker* getTracker() {
+        return tracker;
+    }
+    
     // the track number in "reference space"
     int number = 0;
     // the track index within the MidiTracker, need this?
@@ -37,7 +42,9 @@ class MidiTrack
     bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
     void refreshImportant(class MobiusMidiState::Track* state);
-
+    MslValue* getParameter(juce::String name);
+    int getActivePreset();
+    
     //
     // Stimuli
     //
@@ -71,7 +78,9 @@ class MidiTrack
     bool durationMode = false;
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
-
+    ValueSet parameters;
+    int activePreset = -1;;
+    
     // loops
     juce::OwnedArray<class MidiLoop> loops;
     int loopCount = 0;

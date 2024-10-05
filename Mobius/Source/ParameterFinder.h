@@ -41,21 +41,20 @@ class ParameterFinder
     //
     // Group 2, used by MIDI tracks without full Sessions
     //
-    SwitchLocation getSwitchLocation(class MidiTracker* t, SwitchLocation dflt);
-    SwitchQuantize getSwitchQuantize(class MidiTracker* t, SwitchQuantize dflt);
-    SwitchDuration getSwitchDuration(class MidiTracker* t, SwitchDuration dflt);
-    
-    QuantizeMode getQuantizeMode(class MidiTracker* t, QuantizeMode dflt);
-    EmptyLoopAction getEmptyLoopAction(class MidiTracker* t, EmptyLoopAction dflt);
+    SwitchLocation getSwitchLocation(class MidiTrack* t);
+    SwitchQuantize getSwitchQuantize(class MidiTrack* t);
+    SwitchDuration getSwitchDuration(class MidiTrack* t);
+    QuantizeMode getQuantizeMode(class MidiTrack* t);
+    EmptyLoopAction getEmptyLoopAction(class MidiTrack* t);
 
-    int getParameterOrdinal(MidiTracker* t, SymbolId id);
+    int getParameterOrdinal(MidiTrack* t, SymbolId id);
 
-    ParameterMuteMode getMuteMode(MidiTracker* t);
+    ParameterMuteMode getMuteMode(MidiTrack* t);
     
   private:
 
     class Provider* provider = nullptr;
 
-    class Preset* getPreset(class MidiTracker* t);
+    class Preset* getPreset(class MidiTrack* t);
 
 };

@@ -177,6 +177,13 @@ void ValueSet::setBool(juce::String key, bool bval)
     value->setBool(bval);
 }
 
+void ValueSet::clear()
+{
+    map.clear();
+    values.clear();
+    subsets.clear();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Subsets

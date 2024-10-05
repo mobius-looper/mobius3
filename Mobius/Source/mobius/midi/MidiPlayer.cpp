@@ -67,9 +67,16 @@ void MidiPlayer::initialize(MobiusContainer* c, MidiNotePool* pool)
 //
 //////////////////////////////////////////////////////////////////////
 
+bool MidiPlayer::isMute()
+{
+    return mute;
+}
+
 /**
  * Reset all play state.
  * The position returns to zero, and any held notes are turned off.
+ *
+ * !! what about mute mode?
  */
 void MidiPlayer::reset()
 {

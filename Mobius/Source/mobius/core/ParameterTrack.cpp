@@ -1356,13 +1356,23 @@ void TrackPresetParameterType::setValue(Action* action)
 	MobiusConfig* config = m->getConfiguration();
 
 	// value may be string or int, ints are used in the
-	// ParameterDisplay component 
+	// ParameterDisplay component
+    // !! this isn't comming through properly
+    // if the argument is a string it is left in bindingArgs but
+    // ont in the ExValue arg which will always be left zero
 	Preset* preset = NULL;
-	if (action->arg.getType() == EX_INT)
-	  preset = config->getPreset(action->arg.getInt());
-	else 
-	  preset = config->getPreset(action->arg.getString());
+    if (strlen(action->bindingArgs) > 0) {
+        preset = config->getPreset(action->bindingArgs);
+    }
 
+    if (preset == nullptr) {
+        // fall back to the old way
+        if (action->arg.getType() == EX_INT)
+          preset = config->getPreset(action->arg.getInt());
+        else 
+          preset = config->getPreset(action->arg.getString());
+    }
+    
 	if (preset != NULL) {
         Track* t = action->getResolvedTrack();
         t->changePreset(preset->ordinal);

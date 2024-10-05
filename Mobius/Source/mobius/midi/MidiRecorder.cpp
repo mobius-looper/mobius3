@@ -232,7 +232,8 @@ MidiLayer* MidiRecorder::commit(bool overdub)
             Trace(1, "MidiRecorder: Finalizing an empty record layer");
         }
 
-        if (recordFrame != recordFrames) {
+        // see recordFrame 0 most of the time rather than after the end
+        if (recordFrame != 0 && recordFrame != recordFrames) {
             Trace(1, "MidiRecorder: Finalizing record layer early, why?");
         }
     

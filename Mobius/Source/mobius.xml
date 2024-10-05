@@ -311,7 +311,7 @@
     <Binding name='GlobalReset' trigger='key' value='71'/>
     <Binding name='Message' trigger='key' value='13' args='Return!'/>
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
-    <Binding name='Record' trigger='note' value='76' channel='1'/>
+    <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

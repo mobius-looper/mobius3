@@ -27,6 +27,7 @@ class MidiPlayer
     void restart();
     void shift(class MidiLayer* l);
     void setMute(bool b);
+    bool isMute();
     
     //
     // Play State
