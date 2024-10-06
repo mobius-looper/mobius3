@@ -106,7 +106,8 @@ class MidiTrack
     void advance(int newFrames);
     void advancePlayer(int newFrames);
     void shift();
-
+    void shiftCut();
+    
     // actions/events
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);

@@ -149,7 +149,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='host'
+      syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
@@ -292,6 +292,7 @@
       trackSyncUnit='default'/>
   </Setup>
   <BindingSet name='Base'>
+    <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
     <Binding name='NextLoop' trigger='key' value='65576'/>
@@ -311,7 +312,7 @@
     <Binding name='GlobalReset' trigger='key' value='71'/>
     <Binding name='Message' trigger='key' value='13' args='Return!'/>
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
-    <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
+    <Binding name='Undo' trigger='key' value='85'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

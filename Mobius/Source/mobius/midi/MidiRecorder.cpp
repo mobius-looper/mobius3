@@ -264,6 +264,60 @@ MidiLayer* MidiRecorder::commit(bool overdub)
 }
 
 /**
+ * Commit variant for unrounded multiply aka "cut"
+ *
+ * This one is complicated because it requires adjustment to the current
+ * sequence and segments which may reduce their size and change their origin.
+ * The layer has potentially been accumulating overdubs in the sequence,
+ * and segments for Replace or what have you, but after a cut, any edits
+ * before the cut are thrown away, and any segments after the cut are removed.
+ * Segments that span the cut off point are shortened.
+ */
+MidiLayer* MidiRecorder::commitCut(bool overdub)
+{
+    MidiLayer* commitLayer = nullptr;
+    
+    if (recordLayer == nullptr) {
+        Trace(1, "MidiRecorder: Cut without a layer");
+    }
+    else if (!multiply) {
+        // not supposed to happen if this isn't in multiply mode
+        // I suppose it could but we would have to pass in the start and end points
+        Trace(1, "MidiRecorder: Asked for cut outside of multiply mode");
+        commitLayer = commit(overdub);
+    }
+    else {
+        int cutStart = multiplyFrame;
+        int cutEnd = recordFrame;
+
+        if (!overdub)
+          finalizeHeld();
+        
+        recordLayer->cut(cutStart, cutEnd);
+
+        commitLayer = recordLayer;
+        recordLayer = nullptr;
+        assimilate(commitLayer);
+
+        recordFrames = recordLayer->getFrames();
+        recordCycles = 1;
+        multiply = false;
+        multiplyFrame = 0;
+        extending = false;
+    
+        if (!overdub)
+          recording = false;
+    
+        // start the next layer back at zero
+        // frame count stays the same
+        recordFrame = 0;
+        extensions = 0;
+    }
+
+    return commitLayer;
+}
+
+/**
  * Change the recording location.
  *
  * This is normally done only when a transaction has been started

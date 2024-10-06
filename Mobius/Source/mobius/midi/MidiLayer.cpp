@@ -7,6 +7,7 @@
 
 #include "MidiLoop.h"
 #include "MidiSegment.h"
+#include "MidiHarvester.h"
 
 #include "MidiLayer.h"
 
@@ -37,6 +38,7 @@ void MidiLayer::poolInit()
     playFrame = 0;
     nextEvent = nullptr;
     nextSegment = nullptr;
+    segmentExtending.clearQuick();
 }
 
 void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegmentPool* segpool)
@@ -51,6 +53,10 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
 
     if (segments != nullptr)
       Trace(1, "MidiLayer::prepare Already had segments");
+
+    // don't have to go crazy with this one
+    // hate this
+    segmentExtending.ensureStorageAllocated(32);
 
     clear();
 }
@@ -198,8 +204,8 @@ int MidiLayer::getLastPlayFrame()
  * the play cursor does not loop back to the beginning, it simply stops
  * and waits for reorientation.  
  */
-void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
-                       int startFrame, int blockFrames)
+void MidiLayer::gather(MidiHarvester* harvester, int startFrame, int blockFrames,
+                       int maxExtent)
 {
     if (playFrame != startFrame) {
         // play cursor moved or is being reset, reorient
@@ -216,7 +222,9 @@ void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
     while (nextEvent != nullptr) {
 
         if (nextEvent->frame <= lastFrame) {
-            events->add(nextEvent);
+
+            harvester->add(nextEvent, maxExtent);
+            
             nextEvent = nextEvent->next;
         }
         else {
@@ -243,11 +251,7 @@ void MidiLayer::gather(juce::Array<class MidiEvent*>* events,
         }
         else {
             // segment in range
-            // drop the segment play position by the origin
-            // could also make the Segment do this as it adjusts for
-            // referenceFrame?
-            int segplay = playFrame - segstart;
-            nextSegment->gather(events, segplay, blockFrames);
+            nextSegment->gather(harvester, playFrame, blockFrames, maxExtent);
             if (seglast <= lastFrame) {
                 // segment has been consumed, move to the next one
                 nextSegment = nextSegment->next;
@@ -356,6 +360,186 @@ void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
 void MidiLayer::copy(MidiSegment* seg, int origin)
 {
     copy(seg->layer, seg->referenceFrame, seg->referenceFrame + seg->segmentFrames, origin);
+}
+
+////////////////////////////////////////////////////////////////////
+//
+// Cut
+//
+////////////////////////////////////////////////////////////////////
+
+/**
+ * Inner implementation for unrounded multiply.
+ * Toss any overdubbed events in the sequence prior to the cut point
+ * and adjust the segments to fit within the new size.
+ *
+ * The hard part here is handling notes that are logically on at the beginning
+ * of the segment, but whose NoteOn events preceed the segment and would not be
+ * included in gather().  To get those, we have to "roll up" from the beginning
+ * of the layer and find notes that would be held into to the start of the segment.
+ * MidiEvents for those notes are then manufactured and placed at the beginning
+ * of this layer's sequence as if they had been recorded there.  Might want to make
+ * this something held inside the Segment instead?  That would make it easier to
+ * change the left edge of the segment afterward since the notes that need to be
+ * adjusted could be identified.  By putting them in the layer sequence we can't tell
+ * the difference between injected notes and recorded notes.
+ */
+void MidiLayer::cut(int start, int end)
+{
+    cutSequence(start, end);
+    cutSegments(start, end);
+}
+
+void MidiLayer::cutSequence(int start, int end)
+{
+    // dispose of or adjust recorded events
+    if (sequence != nullptr) {
+        MidiEvent* events = sequence->getFirst();
+        MidiEvent* prev = nullptr;
+        MidiEvent* event = events;
+        while (event != nullptr) {
+            MidiEvent* nextevent = event->next;
+            int eventLast = event->frame + event->duration;
+            if (event->frame < start) {
+                // the event started before the cut point, but may extend into it
+                if (eventLast < start) {
+                    // this one goes away
+                    if (prev == nullptr)
+                      events = nextevent;
+                    else
+                      prev->next = nextevent;
+                    event->next = nullptr;
+                    midiPool->checkin(event);
+                }
+                else {
+                    // this one extends into the clipped layer
+                    // adjust the start frame and the duration
+                    event->frame = 0;
+                    event->duration = eventLast - start;
+                    if (event->duration <= 0) {
+                        // feels like we can have an off by one error here, shouldn't have
+                        // accepted it if it was on the edge, actually should have a parameter
+                        // that specifies a threshold for how much it needs to extend before
+                        // it is retained
+                        Trace(1, "MidiLayer: Cut duration anomoly");
+                        event->duration = 1;
+                    }
+                    prev = event;
+                }
+            }
+            else if (event->frame < end) {
+                // event starts in the new region, but it may be too long
+                if (eventLast > end)
+                  event->duration = end - event->frame;
+                prev = event;
+            }
+            else {
+                // we're beyond the end of events to include
+                // free the remainder of the list
+                if (prev == nullptr)
+                  events = nullptr;
+                else
+                  prev->next = nullptr;
+                while (event != nullptr) {
+                    nextevent = event->next;
+                    event->next = nullptr;
+                    midiPool->checkin(event);
+                    event = nextevent;
+                }
+                nextevent = nullptr;
+            }
+            
+            event = nextevent;
+        }
+
+        // put the possibly trimmed list back into the sequence
+        sequence->setEvents(events);
+    }
+}
+
+void MidiLayer::cutSegments(int start, int end)
+{
+    MidiSegment* prev = nullptr;
+    MidiSegment* seg = segments;
+    while (seg != nullptr) {
+        MidiSegment* nextseg = seg->next;
+        
+        int seglast = seg->originFrame + seg->segmentFrames;
+
+        if (seg->originFrame < start) {
+            if (seglast < start) {
+                // segment is completely out of scope
+                if (prev == nullptr)
+                  segments = nextseg;
+                else
+                  prev->next = nextseg;
+                seg->next = nullptr;
+                segmentPool->checkin(seg);
+            }
+            else {
+                // right half of the segment is included
+                // this is the "roll forward" problem
+                injectSegmentHolds(seg, start, end);
+                prev = seg;
+            }
+        }
+        else if (seg->originFrame < end) {
+            // segment is included in the new region but may be too long
+            // truncation is easy
+            if (seglast > end)
+              seg->segmentFrames = end - seg->originFrame;
+            prev = seg;
+        }
+        else {
+            // we're beyond the end of segments to include
+            // this is assuming that these are inserted in order and
+            // there can't be overlaps
+            if (prev == nullptr)
+              segments = nullptr;
+            else
+              prev->next = nullptr;
+            while (seg != nullptr) {
+                nextseg = seg->next;
+                seg->next = nullptr;
+                segmentPool->checkin(seg);
+                seg = nextseg;
+            }
+            nextseg = nullptr;
+        }
+
+        seg = nextseg;
+    }
+}
+
+/**
+ * When cutting the leading half of a segment, need to
+ * find notes that don't start within the new region but
+ * extend into it and make it look like they were recorded into this
+ * layer.
+ */
+void MidiLayer::injectSegmentHolds(MidiSegment* seg, int start, int end)
+{
+    // !! why did you think you needed to pass end here?
+    (void)end;
+    
+    // wait, do we do this here or during playback with Harvester?
+    // this is somewhat like what Harvester does but more constrained
+    segmentExtending.clearQuick();
+    seg->getExtending(&segmentExtending, start);
+    for (int i = 0 ; i < segmentExtending.size() ; i++) {
+        MidiEvent* e = segmentExtending[i];
+        MidiEvent* copy = midiPool->newEvent();
+        copy->copy(e);
+        int lost = start - copy->frame;
+        copy->frame = 0;
+        copy->duration = copy->duration - lost;
+        if (copy->duration <= 0) {
+            // must have the math wrong
+            Trace(1, "MidiLayer::injectSegmentHolds math is hard");
+            copy->duration = 1;
+        }
+        sequence->insert(copy);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

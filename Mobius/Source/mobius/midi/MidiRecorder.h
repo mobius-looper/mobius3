@@ -41,6 +41,7 @@ class MidiRecorder : public MidiWatcher::Listener
     void rollback(bool overdub);
     void clear();
     MidiLayer* commit(bool overdub);
+    MidiLayer* commitCut(bool overdub);
     void setFrame(int newFrame);
 
     void startMultiply();

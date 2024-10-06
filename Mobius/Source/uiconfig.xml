@@ -112,6 +112,7 @@
     <Button action="Undo"/>
     <Button action="Redo"/>
     <Button action="Checkpoint"/>
+    <Button action="Replace"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

@@ -97,6 +97,17 @@ void MidiSequence::insert(MidiEvent* e)
     insertPosition = e;
 }
 
+void MidiSequence::setEvents(MidiEvent* list)
+{
+    events = list;
+    tail = list;
+    count = 0;
+    while (tail != nullptr && tail->next != nullptr) {
+        tail = tail->next;
+        count++;
+    }
+}
+
 int MidiSequence::size()
 {
     return count;

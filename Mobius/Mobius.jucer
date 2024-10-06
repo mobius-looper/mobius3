@@ -483,6 +483,9 @@
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="a1SAjP" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/LongWatcher.cpp"/>
           <FILE id="tOds4k" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/midi/LongWatcher.h"/>
+          <FILE id="VR0osY" name="MidiHarvester.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/MidiHarvester.cpp"/>
+          <FILE id="DZBLTg" name="MidiHarvester.h" compile="0" resource="0" file="Source/mobius/midi/MidiHarvester.h"/>
           <FILE id="r4vAR1" name="MidiLayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLayer.cpp"/>
           <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
           <FILE id="MLMR7A" name="MidiLoop.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLoop.cpp"/>

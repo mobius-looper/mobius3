@@ -582,6 +582,23 @@ void MidiTrack::shift()
     player.shift(neu);
 }
 
+/**
+ * Shift variant for unrounded multiply.
+ * Here a section of the loop is cut out between
+ * the start of the multiply mode and the current frame.
+ * Recorder remembered the region.
+ */
+void MidiTrack::shiftCut()
+{
+    Trace(2, "MidiTrack: Shifting cut layer");
+    MidiLoop* loop = loops[loopIndex];
+    
+    MidiLayer* neu = recorder.commitCut(overdub);
+    loop->add(neu);
+    
+    player.shift(neu);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -723,10 +740,10 @@ void MidiTrack::doRecord(UIAction* a)
     (void)a;
 
     if (mode == MobiusMidiState::ModeMultiply) {
-        // todo: this won't be enough, need to shift first
-        // while keeping the start/end points
-        reocorder.endMultiply(overdub, true);
-        shift();
+        // unrounded multiply or "cut"
+        // first shift accumulated changes before the cut
+        shiftCut();
+        mode = MobiusMidiState::ModePlay;
     }
     else if (!needsRecordSync()) {
         toggleRecording();

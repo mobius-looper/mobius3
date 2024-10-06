@@ -33,18 +33,9 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * The maximum number of events we will accumulate in one block for playback
- * This determines the pre-allocated size of the playback bucket and should be
- * large enough to avoid memory allocation.
- */
-const int MidiPlayerMaxEvents = 256;
-
-
 MidiPlayer::MidiPlayer(MidiTrack* t)
 {
     track = t;
-    currentEvents.ensureStorageAllocated(MidiPlayerMaxEvents);
 }
 
 MidiPlayer::~MidiPlayer()
@@ -59,6 +50,7 @@ void MidiPlayer::initialize(MobiusContainer* c, MidiNotePool* pool)
 {
     container = c;
     notePool = pool;
+    harvester.initialize(notePool);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -86,8 +78,8 @@ void MidiPlayer::reset()
     playLayer = nullptr;
     playFrame = 0;
     loopFrames = 0;
-    
-    currentEvents.clearQuick();
+
+    harvester.reset();
 }
 
 /**
@@ -260,11 +252,22 @@ void MidiPlayer::play(int blockFrames)
             // todo: rather than gathering could have the event
             // walk just play them, but I kind of like the intermedate
             // gather, might be good to apply processing
-            currentEvents.clearQuick();
-            playLayer->gather(&currentEvents, playFrame, blockFrames);
-            
-            for (int i = 0 ; i < currentEvents.size() ; i++) {
-                play(currentEvents[i]);
+            harvester.reset();
+            playLayer->gather(&harvester, playFrame, blockFrames, 0);
+
+            // these just spray out without fuss
+            juce::Array<MidiEvent*>& events = harvester.getEvents();
+            for (int i = 0 ; i < events.size() ; i++) {
+                MidiEvent* e = events[i];
+                // todo: device id
+                container->midiSend(e->juceMessage, 0);
+            }
+
+            // these require thought
+            juce::Array<MidiNote*>& notes = harvester.getNotes();
+            for (int i = 0 ; i < notes.size() ; i++) {
+                MidiNote* note = notes[i];
+                play(note);
             }
             
             advanceHeld(blockFrames);
@@ -275,49 +278,23 @@ void MidiPlayer::play(int blockFrames)
 }
 
 /**
- * Send an event if we are not in mute mode.
+ * Begin tracking a note and send it to the device if we're not muted.
  * Continue note duration tracking even if we are in mute mode so that
  * if mute is turned off before we've reached the duration it can be
  * turned back on for the remainder.
  * This will obviously have the attack envelope problem.
+ *
+ * The notes will have been gathered by MidiHarvester and we take
+ * ownership of them.
  */
-void MidiPlayer::play(MidiEvent* e)
+void MidiPlayer::play(MidiNote* note)
 {
-    if (e != nullptr) {
-        if (e->juceMessage.isNoteOn()) {
+    if (note != nullptr) {
 
-            MidiNote* note = notePool->newNote();
-            // todo: resume work here
-            // rather than copying the channel and whatever,
-            // is it safe to just remember the MidiEvent we dug out of
-            // the layer hierarchy?  it can't go away out from under the player
-            // right?
-            // any layer can only contain Segment references to layers beneath it and
-            // those layers can't be reclaimed until the referencing layer has been
-            // reclaimed, think more
-            note->channel = e->juceMessage.getChannel();
-            note->number = e->juceMessage.getNoteNumber();
-            note->velocity = e->releaseVelocity;
-            // experiment with this
-            note->event = e;
-            note->next = heldNotes;
-            heldNotes = note;
-            // this part we DO need to copy
-            // take the adjusted duration, not originalDuration
-            if (e->duration == 0) {
-                Trace(1, "MidiPlayer: Note event without duration");
-                e->duration = 256;
-            }
-            
-            note->duration = e->duration;
-            note->remaining = note->duration;
+        note->next = heldNotes;
+        heldNotes = note;
 
-            sendOn(note);
-        }
-        else if (e->juceMessage.isNoteOff()) {
-            // these can be ignored if durations are being handled
-            // properly, but could do some consistency checks
-        }
+        sendOn(note);
     }
 }
 

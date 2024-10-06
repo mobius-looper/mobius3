@@ -6,6 +6,8 @@
 
 #include <JuceHeader.h>
 
+#include "MidiHarvester.h"
+
 class MidiPlayer
 {
   public:
@@ -58,13 +60,13 @@ class MidiPlayer
     int loopFrames = 0;
     bool mute = false;
     
-    // transient buffer used during event gathering
-    juce::Array<class MidiEvent*> currentEvents;
+    // transient buffers used during event gathering
+    MidiHarvester harvester;
 
     // note duration tracking state
     class MidiNote* heldNotes = nullptr;
     
-    void play(class MidiEvent* e);
+    void play(class MidiNote* n);
     void sendOn(class MidiNote* e);
     void flushHeld();
     void advanceHeld(int blockFrames);

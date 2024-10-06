@@ -28,6 +28,10 @@ class MidiSequence : public PooledObject
         return events;
     }
 
+    // used only by MidiRecorder or something else that does careful
+    // surgery on the entire event list
+    void setEvents(MidiEvent* list);
+
     int size();
 
   private:

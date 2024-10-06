@@ -27,9 +27,10 @@ class MidiLayer : public PooledObject
     int getLastPlayFrame();
     
     void resetPlayState();
-    void gather(juce::Array<class MidiEvent*>* events, int startFrame, int endFrame);
+    void gather(class MidiHarvester* harvester, int startFrame, int blockFrames, int maxExtent);
     void copy(class MidiLayer* src);
-
+    void cut(int start, int end);
+    
     bool hasChanges();
     void resetChanges();
     void incChanges();
@@ -64,6 +65,9 @@ class MidiLayer : public PooledObject
     int playFrame = -1;
     class MidiEvent* nextEvent = nullptr;
     class MidiSegment* nextSegment = nullptr;
+
+    // temp buffer used when trimming segments
+    juce::Array<MidiEvent*> segmentExtending;
     
     void seek(int startFrame);
 
@@ -71,6 +75,10 @@ class MidiLayer : public PooledObject
     void copy(class MidiSequence* src, int start, int end, int origin);
     void copy(class MidiSegment* seg, int origin);
     
+    void cutSequence(int start, int end);
+    void cutSegments(int start, int end);
+    void injectSegmentHolds(class MidiSegment* seg, int start, int end);
+
 };
         
 class MidiLayerPool : public ObjectPool
