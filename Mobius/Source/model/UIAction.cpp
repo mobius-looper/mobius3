@@ -54,6 +54,7 @@ void UIAction::reset()
     sustainEnd = false;
     sustainId = 0;
     longPress = false;
+    longPressCount = 0;
     noQuantize = false;
     noLatency = false;
     noSynchronization = false;
@@ -83,6 +84,7 @@ void UIAction::copy(UIAction* src)
     sustainEnd = src->sustainEnd;
     sustainId = src->sustainId;
     longPress = src->longPress;
+    longPressCount = src->longPressCount;
     noQuantize = src->noQuantize;
     noLatency = src->noLatency;
     noSynchronization = src->noSynchronization;

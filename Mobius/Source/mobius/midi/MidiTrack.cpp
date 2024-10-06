@@ -314,6 +314,25 @@ void MidiTrack::doAction(UIAction* a)
         // no up transitions right now
         //Trace(2, "MidiTrack: Action %s track %d up", a->symbol->getName(), index + 1);
     }
+    else if (a->longPress) {
+        // don't have many of these
+        if (a->symbol->id == FuncRecord) {
+            if (a->longPressCount == 0)
+              // loop reset
+              doReset(a, false);
+            else if (a->longPressCount == 1)
+              // track reset
+              doReset(a, true);
+            else {
+                // would be nice to have this be GlobalReset but
+                // would have to throw that back to Kernel
+            }
+        }
+        else {
+            Trace(1, "MidiTrack: Unsupported long press function %s",
+                  a->symbol->getName());
+        }
+    }
     else if (a->symbol->parameterProperties) {
         doParameter(a);
     }
@@ -696,12 +715,20 @@ void MidiTrack::doReset(UIAction* a, bool full)
 
 /**
  * Action handler, either do it now or schedule a sync event
+ *
+ * Record while in Multiply does unrounded multiply
  */
 void MidiTrack::doRecord(UIAction* a)
 {
     (void)a;
-    
-    if (!needsRecordSync()) {
+
+    if (mode == MobiusMidiState::ModeMultiply) {
+        // todo: this won't be enough, need to shift first
+        // while keeping the start/end points
+        reocorder.endMultiply(overdub, true);
+        shift();
+    }
+    else if (!needsRecordSync()) {
         toggleRecording();
     }
     else {

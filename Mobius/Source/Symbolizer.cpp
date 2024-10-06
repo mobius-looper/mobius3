@@ -266,6 +266,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->level = level;
         func->global = root->getBoolAttribute("global");
         func->sustainable = root->getBoolAttribute("sustainable");
+        func->longPressable = root->getBoolAttribute("longPressable");
         func->mayFocus = root->getBoolAttribute("mayFocus");
         func->mayConfirm = root->getBoolAttribute("mayConfirm");
         func->mayCancelMute = root->getBoolAttribute("mayCancelMute");

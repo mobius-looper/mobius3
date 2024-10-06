@@ -217,6 +217,14 @@ class UIAction : public PooledObject {
      */
     bool longPress = false;
 
+    /**
+     * If the long press detector is configured to support it,
+     * and the trigger continues to be held, the counter will reset
+     * and the long press action may fire more than once.  This
+     * is the number of times it has been fired.
+     */
+    int longPressCount = 0;
+
     //////////////////////////////////////////////////////////////////////
     // Processing Options
     // These are normally set only by scripts.

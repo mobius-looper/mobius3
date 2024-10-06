@@ -51,7 +51,7 @@
   <Function name="PrevLoop" mayFocus='true' mayCancelMute='true'/>
   <Function name="PrevTrack"/>
   <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
-  <Function name="Record" sustainable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true'/>
+  <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true'/>
   <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
   <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'/>
   <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true'/>

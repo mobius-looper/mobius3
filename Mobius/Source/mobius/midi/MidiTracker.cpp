@@ -63,6 +63,11 @@ void MidiTracker::initialize(Session* s)
     prepareState(&state2, baseNumber, MidiTrackerMaxTracks);
     statePhase = 0;
     loadSession(s);
+
+    // start with this here, but should move to Kernel once
+    // Mobius can use it too
+    longWatcher.initialize(s, container->getSampleRate());
+    longWatcher.setListener(this);
 }
 
 /**
@@ -147,10 +152,16 @@ void MidiTracker::loadSession(Session* session)
     // !! is this the place to be fucking with this?
     state1.activeTracks = activeTracks;
     state2.activeTracks = activeTracks;
+
+    longWatcher.initialize(session, container->getSampleRate());
 }
 
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 {
+    // advance the long press detector, this may call back
+    // to longPressDetected to fire an action
+    longWatcher.advance(stream->getInterruptFrames());
+    
     for (int i = 0 ; i < activeTracks ; i++)
       tracks[i]->processAudioStream(stream);
 
@@ -159,6 +170,16 @@ void MidiTracker::processAudioStream(MobiusAudioStream* stream)
         refreshState();
         stateRefreshCounter = 0;
     }
+}
+
+/**
+ * Listener callback for LongWatcher.
+ * We're inside processAudioStream and one of the watchers
+ * has crossed the threshold
+ */
+void MidiTracker::longPressDetected(UIAction* a)
+{
+    doAction(a);
 }
 
 /**
@@ -175,6 +196,9 @@ void MidiTracker::doAction(UIAction* a)
           tracks[i]->doAction(a);
     }
     else {
+        // watch this if it isn't already a longPress
+        if (!a->longPress) longWatcher.watch(a);
+        
         // convert the visible track number to a local array index
         // this is where we will need some sort of mapping table
         // if you allow tracks to be reordered in the UI

@@ -75,6 +75,15 @@ class FunctionProperties
     juce::String sustainHelp;
 
     /**
+     * Set when this function has long press behavior.
+     * Implies sustainable if that is not set.
+     * The core Function definition has a pointer to the associated
+     * Function a long press becomes, in new code, that's left up
+     * to the action handler.
+     */
+    bool longPressable = false;
+
+    /**
      * Text describing what a long-press of a trigger does.
      */
     juce::String longHelp;

@@ -12,8 +12,9 @@
 #include "MidiLayer.h"
 #include "MidiTrack.h"
 #include "MidiWatcher.h"
+#include "LongWatcher.h"
 
-class MidiTracker
+class MidiTracker : public LongWatcher::Listener
 {
   public:
 
@@ -49,6 +50,9 @@ class MidiTracker
     class Valuator* getValuator();
     
     class MidiNote* getHeldNotes();
+
+    // LongWatcher::Listener
+    void longPressDetected(class UIAction* a);
     
   private:
 
@@ -65,6 +69,7 @@ class MidiTracker
     TrackEventPool eventPool;
     MidiNotePool notePool;
 
+    LongWatcher longWatcher;
     MidiWatcher watcher;
     juce::OwnedArray<MidiTrack> tracks;
     MobiusMidiState state1;
