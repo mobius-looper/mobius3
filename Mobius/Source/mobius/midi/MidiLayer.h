@@ -7,6 +7,8 @@
 
 class MidiLayer : public PooledObject
 {
+    friend class MidiHarvester;
+    
   public:
 
     MidiLayer();
@@ -45,6 +47,16 @@ class MidiLayer : public PooledObject
         return segments;
     }
 
+  protected:
+    
+    //
+    // the playback "cursor"
+    //
+    
+    int seekFrame = -1;
+    class MidiEvent* seekNextEvent = nullptr;
+    class MidiSegment* seekNextSegment = nullptr;
+
   private:
 
     class MidiSequencePool* sequencePool = nullptr;
@@ -56,15 +68,9 @@ class MidiLayer : public PooledObject
     int layerFrames = 0;
     int layerCycles = 1;
     int changes = 0;
+
+    // not to be confused with playFrame which is used for the Harvester
     int lastPlayFrame = 0;
-    
-    //
-    // the playback "cursor"
-    //
-    
-    int playFrame = -1;
-    class MidiEvent* nextEvent = nullptr;
-    class MidiSegment* nextSegment = nullptr;
 
     // temp buffer used when trimming segments
     juce::Array<MidiEvent*> segmentExtending;

@@ -1,22 +1,15 @@
 /**
  * Utility class that traverses the layer/segment hierarchy gathering
- * events that are to be played within the current audio block.
+ * events.
  *
- * The traversal logic is mostly inside the MidiLayer and MidiSegment classes,
- * Harvester just provides the place to put results.
+ * This is used for two things: to gather events for playback on each audio block,
+ * and to calculate the "segment prefix" containing notes that are being held into
+ * a segment, but do not start in that segment.
  *
- * I kind of wanted Harvester to have the traversal logic as well but this requires
- * direct access to internal structures in the layer/segment and especially complicates
- * the maintenance of the layer's "play cursor" which keeps track of where the last
- * gather happened so we can avoid starting from the front every time.
+ * One of these will be maintained by MidiPlayer for playback and by MidiRecorder
+ * for segment prefixes.
  *
- * One of these will be maintained by each MidiPlayer.  Besides providing the arrays
- * to deposit events, it also provides access to the object pools which segments need
- * when depositing Notes.
- *
- * The split between Note events and all others is necessary so that each segment
- * can do note duration adjustments without modifying the original MidiEvent.
- *
+ * It could also become a general purpose "flattener" should layer flatting become a thing.
  */
 
 #pragma once
@@ -33,29 +26,41 @@ class MidiHarvester
      * large enough to avoid memory allocation.  Harvester will allow this to be
      * exceeded, but it should be rare and it will whine in the log about it.
      */
-    const int MaxEvents = 256;
+    const int DefaultCapacity = 256;
 
     MidiHarvester();
     ~MidiHarvester();
-    void initialize(class MidiNotePool* npool);
+    void initialize(class MidiEventPool* epool, int capacity);
 
     void reset();
 
-    void add(class MidiEvent* e, int maxExtent);
+    /**
+     * Obtain the events in a Layer within the given range.
+     * The range frame numbers relative to the layer itself, with zero being
+     * the start of the layer.  The events gathered will also have layer relative
+     * frames.  These events are always copies of the underlying recorded events
+     * and may be adjusted.
+     */
+    void harvest(MidiLayer* layer, int startFrame, int endFrame);
     
+    juce::Array<class MidiEvent*>& getNotes() {
+        return notes;
+    }
+
     juce::Array<class MidiEvent*>& getEvents() {
         return events;
     }
     
-    juce::Array<class MidiNote*>& getNotes() {
-        return notes;
-    }
-
   private:
 
-    class MidiNotePool* notePool = nullptr;
+    class MidiEventPool* eventPool = nullptr;
+    int noteCapacity = 0;
     
+    juce::Array<class MidiEvent*> notes;
     juce::Array<class MidiEvent*> events;
-    juce::Array<class MidiNote*> notes;
+
+    void seek(class MidiLayer* layer, int startFrame);
+    void harvest(class MidiSegment* segment, int startFrame, int endFrame);
+
 };
     

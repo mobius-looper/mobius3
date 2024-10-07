@@ -51,6 +51,12 @@ class MidiEvent : public PooledObject
      */
     int releaseVelocity = 0;
 
+    //
+    // Held note state
+    //
+
+    int remaining = 0;
+
 };
 
 class MidiEventPool : public ObjectPool

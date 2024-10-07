@@ -18,6 +18,7 @@ void MidiEvent::poolInit()
     frame = 0;
     duration = 0;
     releaseVelocity = 0;
+    remaining = 0;
     // just leave juce message alone?
 }
 
@@ -28,6 +29,7 @@ void MidiEvent::copy(MidiEvent* src)
     frame = src->frame;
     duration = src->duration;
     releaseVelocity = src->releaseVelocity;
+    remaining = src->remaining;
 }
 
 MidiEventPool::MidiEventPool()
