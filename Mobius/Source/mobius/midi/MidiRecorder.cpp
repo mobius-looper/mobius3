@@ -56,6 +56,7 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
     notePool = npool;
     watcher.initialize(notePool);
     watcher.setListener(this);
+    segmentCompiler.initialize(midiPool);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -292,8 +293,9 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
 
         if (!overdub)
           finalizeHeld();
-        
-        recordLayer->cut(cutStart, cutEnd);
+
+        segmentCompiler.reset();
+        recordLayer->cut(&segmentCompiler, cutStart, cutEnd);
 
         commitLayer = recordLayer;
         recordLayer = nullptr;

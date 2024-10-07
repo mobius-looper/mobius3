@@ -113,6 +113,91 @@ int MidiSequence::size()
     return count;
 }
 
+/**
+ * Trim the left/right edges of a sequence.
+ * Used for "unrounded multiply"
+ *
+ * Events that fall completely outside the range are removed.
+ * Events that start before the range but extend into are included and
+ * have their duration shortened.
+ *
+ * Events that start within the range and extend beyond it have their
+ * duration shortened.
+ *
+ * All events are are reoriented starting from zero.
+ * The start and end frames are inclusive.
+ *
+ */
+void MidiLayer::cut(MidiEventPool* pool, int start, int end)
+{
+    MidiEvent* prev = nullptr;
+    MidiEvent* event = events;
+    while (event != nullptr) {
+        MidiEvent* next = event->next;
+        
+        int eventLast = event->frame + event->duration - 1;
+        if (event->frame < start) {
+            // the event started before the cut point, but may extend into it
+            if (eventLast < start) {
+                // this one goes away
+                if (prev == nullptr)
+                  events = next;
+                else
+                  prev->next = next;
+                event->next = nullptr;
+                pool->checkin(event);
+            }
+            else {
+                // this one extends into the clipped layer
+                // adjust the start frame and the duration
+                event->frame = 0;
+                event->duration = eventLast - start + 1
+                if (event->duration <= 0) {
+                    // calculations such as this are prone to off-by-one errors
+                    // at the edges so check
+                    // actually should have a parameter that specifies a threshold
+                    // for how much it needs to extend before it is retained
+                    Trace(1, "MisiSequence: Cut duration anomoly");
+                    event->duration = 1;
+                }
+                prev = event;
+            }
+        }
+        else if (event->frame <= end) {
+            // event starts in the new region, but it may be too long
+            if (eventLast > end)
+              event->duration = end - event->frame + 1;
+            event->frame -= start;
+            prev = event;
+        }
+        else {
+            // we're beyond the end of events to include
+            // free the remainder of the list
+            if (prev == nullptr)
+              events = nullptr;
+            else
+              prev->next = nullptr;
+            
+            while (event != nullptr) {
+                next = event->next;
+                event->next = nullptr;
+                pool->checkin(event);
+                event = next;
+            }
+            next = nullptr;
+        }
+        
+        event = next;
+    }
+
+    // reset the tail
+    // could have done this in the middle of the previous surgery but
+    // makes an already messy mess, messier
+    tail = events;
+    while (tail != nullptr && tail->next != nullptr)
+      tail = tail->next;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pool

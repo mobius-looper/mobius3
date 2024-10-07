@@ -386,85 +386,17 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
  */
 void MidiLayer::cut(int start, int end)
 {
-    cutSequence(start, end);
-    cutSegments(start, end);
-}
+    // first the sequence
+    if (sequence != nullptr)
+      sequence->cut(midiPool, start, end);
 
-void MidiLayer::cutSequence(int start, int end)
-{
-    // dispose of or adjust recorded events
-    if (sequence != nullptr) {
-        MidiEvent* events = sequence->getFirst();
-        MidiEvent* prev = nullptr;
-        MidiEvent* event = events;
-        while (event != nullptr) {
-            MidiEvent* nextevent = event->next;
-            int eventLast = event->frame + event->duration;
-            if (event->frame < start) {
-                // the event started before the cut point, but may extend into it
-                if (eventLast < start) {
-                    // this one goes away
-                    if (prev == nullptr)
-                      events = nextevent;
-                    else
-                      prev->next = nextevent;
-                    event->next = nullptr;
-                    midiPool->checkin(event);
-                }
-                else {
-                    // this one extends into the clipped layer
-                    // adjust the start frame and the duration
-                    event->frame = 0;
-                    event->duration = eventLast - start;
-                    if (event->duration <= 0) {
-                        // feels like we can have an off by one error here, shouldn't have
-                        // accepted it if it was on the edge, actually should have a parameter
-                        // that specifies a threshold for how much it needs to extend before
-                        // it is retained
-                        Trace(1, "MidiLayer: Cut duration anomoly");
-                        event->duration = 1;
-                    }
-                    prev = event;
-                }
-            }
-            else if (event->frame < end) {
-                // event starts in the new region, but it may be too long
-                if (eventLast > end)
-                  event->duration = end - event->frame;
-                prev = event;
-            }
-            else {
-                // we're beyond the end of events to include
-                // free the remainder of the list
-                if (prev == nullptr)
-                  events = nullptr;
-                else
-                  prev->next = nullptr;
-                while (event != nullptr) {
-                    nextevent = event->next;
-                    event->next = nullptr;
-                    midiPool->checkin(event);
-                    event = nextevent;
-                }
-                nextevent = nullptr;
-            }
-            
-            event = nextevent;
-        }
-
-        // put the possibly trimmed list back into the sequence
-        sequence->setEvents(events);
-    }
-}
-
-void MidiLayer::cutSegments(int start, int end)
-{
+    // then the segments
     MidiSegment* prev = nullptr;
     MidiSegment* seg = segments;
     while (seg != nullptr) {
         MidiSegment* nextseg = seg->next;
         
-        int seglast = seg->originFrame + seg->segmentFrames;
+        int seglast = seg->originFrame + seg->segmentFrames - 1;
 
         if (seg->originFrame < start) {
             if (seglast < start) {
@@ -478,16 +410,30 @@ void MidiLayer::cutSegments(int start, int end)
             }
             else {
                 // right half of the segment is included
-                // this is the "roll forward" problem
-                injectSegmentHolds(seg, start, end);
+                // but needs to have the prefix reculated
+                segment->segmentFrames = seglast - start + 1;
+                if (segment->segmentFrames <= 0) {
+                    // sanity check on boundary case
+                    Trace(1, "MidiLayer: Cut segment duration anomoly");
+                    segment->segmentFrames = 1;
+                }
+                
+                int loss = start - segment->originFrame;
+                segment->originFrame = 0;
+                
+                segmentCompiler.leftLoss(segment, loss);
+                
                 prev = seg;
             }
         }
-        else if (seg->originFrame < end) {
+        else if (seg->originFrame <= end) {
             // segment is included in the new region but may be too long
-            // truncation is easy
+            // note truncation is handled by Harvester
             if (seglast > end)
-              seg->segmentFrames = end - seg->originFrame;
+              seg->segmentFrames = end - seg->originFrame + 1;
+
+            // slide the whole thing down
+            seg->originFrame -= start;
             prev = seg;
         }
         else {
@@ -498,47 +444,17 @@ void MidiLayer::cutSegments(int start, int end)
               segments = nullptr;
             else
               prev->next = nullptr;
+            
             while (seg != nullptr) {
                 nextseg = seg->next;
                 seg->next = nullptr;
-                segmentPool->checkin(seg);
+                reclaim(seg);
                 seg = nextseg;
             }
             nextseg = nullptr;
         }
 
         seg = nextseg;
-    }
-}
-
-/**
- * When cutting the leading half of a segment, need to
- * find notes that don't start within the new region but
- * extend into it and make it look like they were recorded into this
- * layer.
- */
-void MidiLayer::injectSegmentHolds(MidiSegment* seg, int start, int end)
-{
-    // !! why did you think you needed to pass end here?
-    (void)end;
-    
-    // wait, do we do this here or during playback with Harvester?
-    // this is somewhat like what Harvester does but more constrained
-    segmentExtending.clearQuick();
-    seg->getExtending(&segmentExtending, start);
-    for (int i = 0 ; i < segmentExtending.size() ; i++) {
-        MidiEvent* e = segmentExtending[i];
-        MidiEvent* copy = midiPool->newEvent();
-        copy->copy(e);
-        int lost = start - copy->frame;
-        copy->frame = 0;
-        copy->duration = copy->duration - lost;
-        if (copy->duration <= 0) {
-            // must have the math wrong
-            Trace(1, "MidiLayer::injectSegmentHolds math is hard");
-            copy->duration = 1;
-        }
-        sequence->insert(copy);
     }
 }
 

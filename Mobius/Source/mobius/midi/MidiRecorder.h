@@ -102,6 +102,8 @@ class MidiRecorder : public MidiWatcher::Listener
 
     // held note monitor
     MidiWatcher watcher;
+    // segment prefix analyzer
+    MidiSegmentCompiler segmentCompiler;
     
     // the backing layer for the transaction
     class MidiLayer* backingLayer = nullptr;

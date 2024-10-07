@@ -23,14 +23,11 @@ class MidiSequence : public PooledObject
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);
     void insert(class MidiEvent* e);
+    void cut(class MidiEventPool* pool, int start, int end);
     
     MidiEvent* getFirst() {
         return events;
     }
-
-    // used only by MidiRecorder or something else that does careful
-    // surgery on the entire event list
-    void setEvents(MidiEvent* list);
 
     int size();
 
