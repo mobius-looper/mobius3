@@ -216,6 +216,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     //Trace(2, "MidiTrack: Recording state going off");
     //}
     state->recording = nowRecording;
+    state->modified = recorder.hasChanges();
 
     // verify that lingering overdub always gets back to the recorder
     if (overdub && !nowRecording)

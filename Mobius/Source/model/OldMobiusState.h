@@ -185,6 +185,7 @@ class OldMobiusLoopState
     int number;         // need this?  it's the same as it's position in the array
     class ModeDefinition* mode;
     bool	recording;
+    bool    modified;
 	bool	paused;
     long    frame;
     // !! this is new, original engine did not maintain a subcycle

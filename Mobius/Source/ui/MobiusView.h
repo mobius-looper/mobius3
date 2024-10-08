@@ -215,6 +215,11 @@ class MobiusViewTrack {
     bool recording = false;
 
     /**
+     * True if the loop has uncommitted changes.
+     */
+    bool modified = false;
+
+    /**
      * True if the loop is in any form of mute.
      */
     bool mute = false;

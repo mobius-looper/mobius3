@@ -545,6 +545,7 @@ void MobiusViewer::refreshActiveLoop(OldMobiusTrackState* tstate, OldMobiusLoopS
     
     // things important for both the main display and the track strips
     tview->recording = lstate->recording;
+    tview->modified = lstate->modified;
     tview->pause = lstate->paused;
     tview->frames = lstate->frames;
     tview->frame = lstate->frame;
@@ -1074,6 +1075,11 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     if (tview->recording != tstate->recording) {
         tview->recording = tstate->recording;
         tview->refreshLoopContent = true;
+    }
+
+    if (tview->modified != tstate->modified) {
+        tview->modified = tstate->modified;
+        tview->refreshLoopContent =  true;
     }
     
     tview->pause = tstate->pause;

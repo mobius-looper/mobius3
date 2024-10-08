@@ -59,6 +59,9 @@ juce::Colour Colors::getLoopColor(MobiusViewTrack* track)
     else if (track->anySpeed) {
         c = juce::Colours::grey;
     }
+    else if (track->modified) {
+        c = juce::Colours::yellow;
+    }
     else if (track->frames > 0) {
         c = juce::Colour(MobiusGreen);
     }

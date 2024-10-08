@@ -4,7 +4,8 @@
  * The engine will update a state object periodically and send it to the UI
  * for display.  The UI will poll for state refreshes and display it.  This is
  * an evolution of the older OldMidiState object that supports both audio
- * and MIDI tracks.  Core code should eventually retooled to use this one.
+ * and MIDI tracks.  Core code should eventually retooled to use this one
+ * and OldMidiState can be removed.
  *
  * There are two objects for conveying runtime state.  MobiusState contains the
  * full state including complex variable length objects such as Loops, Layers,
@@ -26,7 +27,7 @@
  * is managed entirely by the UI, it contains almost all of the same information
  * as MobiusState, with some transformations and additional support for optimizing
  * the way the UI redraws components.  The duplication is unfortunate, and needs
- * rethinking, but works well enough for now.  It is important the MobiusState
+ * rethinking, but works well enough for now.  It is important that MobiusState
  * have a stable structure in the long term.  MobiusView can evolve as necessary
  * without disruption of engine code.
  *
@@ -39,7 +40,7 @@ class MobiusMidiState
 {
   public:
 
-    // modes a track can be in
+    // major modes a track can be in
     typedef enum {
         ModeReset,
         ModeSynchronize,
@@ -49,7 +50,24 @@ class MobiusMidiState
         ModeMultiply,
         ModeInsert,
         ModeReplace,
-        ModeMute
+        ModeMute,
+
+        ModeConfirm,
+        ModePause,
+        ModeStutter,
+        ModeSubstitute,
+        ModeThreshold,
+
+        // old Mobius modes, may not need
+        ModeRehearse,
+        ModeRehearseRecord,
+        ModeRun, // what does this mean?
+        ModeSwitch, // why is this a mode?
+
+        // derived multi-track modes
+        ModeGlobalReset,
+        ModeGlobalPause
+        
     } Mode;
 
     MobiusMidiState() {}
@@ -70,6 +88,12 @@ class MobiusMidiState
         int frames = 0;
     };
 
+    /**
+     * State for one visible event scheduled in a track
+     * !! Events need to have a displayable name but juce::String
+     * has potential allocations.  Can we get this to using an enum
+     * for event types then let the view do the string mapping?
+     */
     class Event {
       public:
         juce::String name;
@@ -80,11 +104,12 @@ class MobiusMidiState
 
     /**
      * State for one track
-     * I want to avoid the notion of the "active track" for MIDI and make this a UI level thing
-     * the only time core needs to know whether something is active is when dispatching
-     * unscoped events, doing track switch with track-copy semantics
-     * for MIDI, I'd like to have all actions be scoped to the track they want and if we need
-     * track copy then include that as an argument to the action
+     * I want to avoid the notion of the "active track" for MIDI and make this a
+     * UI level thing.  The only time core needs to know whether something is
+     * active is when dispatching unscoped events, doing track switch with
+     * track-copy semantics for MIDI, I'd like to have all actions be scoped
+     * to the track they want and if we need track copy then include that as
+     * an argument to the action
      */
     class Track {
       public:
@@ -106,17 +131,20 @@ class MobiusMidiState
         int cycles = 0;
         int cycle = 0;
 
+        // main control parameters
         int input = 0;
         int output = 0;
         int feedback = 0;
         int pan = 0;
 
+        // major and minor modes
         Mode mode = ModeReset;
         bool overdub = false;
         bool reverse = false;
         bool mute = false;
-        bool recording = false;
         bool pause = false;
+        bool recording = false;
+        bool modified = false;
 
         juce::OwnedArray<Loop> loops;
         juce::OwnedArray<Event> events;

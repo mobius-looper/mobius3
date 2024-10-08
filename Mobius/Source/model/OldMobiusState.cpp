@@ -24,6 +24,7 @@ void OldMobiusLoopState::init()
     number = 0;
     mode = UIResetMode;
     recording = false;
+    modified = false;
     // this is a qualifier for Mute mode, it would be better
     // if the engine just set UIPauseMode instead
     paused = false;
