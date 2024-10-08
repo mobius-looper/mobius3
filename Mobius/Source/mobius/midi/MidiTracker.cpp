@@ -179,7 +179,10 @@ void MidiTracker::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTracker::longPressDetected(UIAction* a)
 {
-    doAction(a);
+    (void)a;
+    // this is extremely annoying during debugging
+    // need a session flag for this!!
+    //doAction(a);
 }
 
 /**
@@ -194,6 +197,11 @@ void MidiTracker::doAction(UIAction* a)
     else if (a->symbol->id == FuncGlobalReset) {
         for (int i = 0 ; i < activeTracks ; i++)
           tracks[i]->doAction(a);
+
+        // having some trouble with stuck notes in the watcher
+        // maybe only during debugging, but it's annoying when it happens to
+        // make sure to clear them 
+        watcher.flushHeld();
     }
     else {
         // watch this if it isn't already a longPress

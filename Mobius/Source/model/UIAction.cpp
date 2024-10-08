@@ -124,6 +124,39 @@ int UIAction::getScopeTrack()
     return Scope::parseTrackNumber(scope);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Pool
+//
+//////////////////////////////////////////////////////////////////////
+
+UIActionPool::UIActionPool()
+{
+    setName("UIAction");
+    setObjectSize(sizeof(UIAction));
+    fluff();
+}
+
+UIActionPool::~UIActionPool()
+{
+}
+
+/**
+ * ObjectPool overload to create a new pooled object.
+ */
+PooledObject* UIActionPool::alloc()
+{
+    return new UIAction();
+}
+
+/**
+ * Accessor for most of the code that does the convenient downcast.
+ */
+UIAction* UIActionPool::newAction()
+{
+    return (UIAction*)checkout();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

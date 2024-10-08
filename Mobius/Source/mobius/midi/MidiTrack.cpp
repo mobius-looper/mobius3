@@ -17,6 +17,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../util/StructureDumper.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
@@ -338,6 +339,7 @@ void MidiTrack::doAction(UIAction* a)
     }
     else {
         switch (a->symbol->id) {
+            case FuncDump: doDump(a); break;
             case FuncReset: doReset(a, false); break;
             case FuncTrackReset: doReset(a, true); break;
             case FuncGlobalReset: doReset(a, true); break;
@@ -353,7 +355,7 @@ void MidiTrack::doAction(UIAction* a)
             case FuncMute: doMute(a); break;
             case FuncReplace: doReplace(a); break;
             default: {
-                Trace(2, "MidiTrack: Unsupport action %s", a->symbol->getName());
+                Trace(2, "MidiTrack: Unsupported action %s", a->symbol->getName());
             }
         }
     }
@@ -577,6 +579,8 @@ void MidiTrack::shift()
     MidiLoop* loop = loops[loopIndex];
     
     MidiLayer* neu = recorder.commit(overdub);
+    int layers = loop->getLayerCount();
+    neu->number = layers + 1;
     loop->add(neu);
     
     player.shift(neu);
@@ -594,6 +598,8 @@ void MidiTrack::shiftCut()
     MidiLoop* loop = loops[loopIndex];
     
     MidiLayer* neu = recorder.commitCut(overdub);
+    int layers = loop->getLayerCount();
+    neu->number = layers + 1;
     loop->add(neu);
     
     player.shift(neu);
@@ -1152,17 +1158,14 @@ QuantizeMode MidiTrack::convert(SwitchQuantize squant)
 /**
  * Use the common utility for quantization frame after converting
  * the silly enum.
+ *
+ * Final boolean arg is "after".  When false this means to stay on this
+ * frame if the current frame is also a quantization point.
  */
 int MidiTrack::getQuantizeFrame(SwitchQuantize squant)
 {
     QuantizeMode qmode = convert(squant);
-    int qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
-                                               recorder.getCycleFrames(),
-                                               recorder.getFrame(),
-                                               subcycles,
-                                               qmode,
-                                               false);  // "after" is this right?
-    return qframe;
+    return getQuantizeFrame(qmode);
 }
 
 /**
@@ -1380,7 +1383,7 @@ void MidiTrack::doMultiplyNow()
 {
     if (mode == MobiusMidiState::ModeMultiply) {
         mode = MobiusMidiState::ModePlay;
-        recorder.endMultiply(overdub, false);
+        recorder.endMultiply(overdub);
     }
     else if (mode == MobiusMidiState::ModePlay) {
         mode = MobiusMidiState::ModeMultiply;
@@ -1522,7 +1525,7 @@ int MidiTrack::getQuantizeFrame(SymbolId func, QuantizeMode qmode)
                                              relativeTo,
                                              subcycles,
                                              qmode,
-                                             false);  // "after" is this right?
+                                             true);  // "after" means move beyond the current frame
     return qframe;
 }
 
@@ -1565,6 +1568,27 @@ void MidiTrack::doReplaceNow()
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Dump
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doDump(UIAction* a)
+{
+    (void)a;
+    StructureDumper d;
+
+    d.start("MidiTrack:");
+    d.add("number", number);
+    d.newline();
+    
+    d.inc();
+    recorder.dump(d);
+    d.dec();
+    
+    container->writeDump(juce::String("MidiTrack.txt"), d.getText());
+}
 
 /****************************************************************************/
 /****************************************************************************/

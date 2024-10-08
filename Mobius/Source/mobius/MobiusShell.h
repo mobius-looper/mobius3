@@ -8,6 +8,7 @@
 #include "../model/OldMobiusState.h"
 #include "../model/DynamicConfig.h"
 #include "../model/ObjectPool.h"
+#include "../model/UIAction.h"
 
 #include "MobiusInterface.h"
 #include "KernelCommunicator.h"

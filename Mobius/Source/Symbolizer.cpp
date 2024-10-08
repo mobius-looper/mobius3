@@ -260,10 +260,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         xmlError("Function with no name", "");
     }
     else {
-        SymbolLevel level = parseLevel(root->getStringAttribute("level"));
-        
         FunctionProperties* func = new FunctionProperties();
-        func->level = level;
         func->global = root->getBoolAttribute("global");
         func->sustainable = root->getBoolAttribute("sustainable");
         func->longPressable = root->getBoolAttribute("longPressable");
@@ -277,10 +274,18 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
 
         Symbol* s = supervisor->getSymbols()->intern(name);
         s->functionProperties.reset(func);
-        // don't replace this yet, it will normally be set as a side effect of
-        // instsalling core functions
-        // s->level = level;
+        s->behavior = BehaviorFunction;
 
+        // only set level if was specified in the XML
+        // most functions have their levels set as a side effect during
+        // core symbol installation
+        juce::String levelValue = root->getStringAttribute("level");
+        if (levelValue.length() > 0) {
+            SymbolLevel level = parseLevel(levelValue);
+            func->level = level;
+            s->level = level;
+        }
+        
         // Trace(2, "Symbolizer: Installed function %s\n", name.toUTF8());
     }
 }

@@ -2690,6 +2690,23 @@ void Supervisor::cancelListenerOverrides()
     mobius->setListener(this);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Dump
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Part of MobiusContainer to let deep code write dump files.
+ *
+ * Takes the place of the old SuperDumper which can go away now.
+ */
+void Supervisor::writeDump(juce::String file, juce::String content)
+{
+    juce::File dumpfile = getRoot().getChildFile(file);
+    dumpfile.replaceWithText(content);
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -304,15 +304,11 @@
     <Binding name='UIParameterInc' trigger='key' value='327719'/>
     <Binding name='UIParameterDec' trigger='key' value='327717'/>
     <Binding name='Play' trigger='key' value='32'/>
-    <Binding name='Pause' trigger='key' value='80'/>
     <Binding name='Overdub' trigger='key' value='79'/>
     <Binding name='ShowPanel' trigger='key' value='262211' args='console'/>
-    <Binding name='Confirm' trigger='key' value='71'/>
-    <Binding name='Undo' trigger='key' value='8'/>
     <Binding name='GlobalReset' trigger='key' value='71'/>
-    <Binding name='Message' trigger='key' value='13' args='Return!'/>
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
-    <Binding name='Undo' trigger='key' value='85'/>
+    <Binding name='Multiply' trigger='key' value='77'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

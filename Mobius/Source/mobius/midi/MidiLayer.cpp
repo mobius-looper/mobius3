@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../util/StructureDumper.h"
 #include "../../midi/MidiSequence.h"
 #include "../../midi/MidiEvent.h"
 
@@ -339,6 +340,8 @@ void MidiLayer::cut(int start, int end)
 
         seg = nextseg;
     }
+
+    layerFrames = end - start + 1;
 }
 
 void MidiLayer::reclaim(MidiSegment* seg)
@@ -346,8 +349,8 @@ void MidiLayer::reclaim(MidiSegment* seg)
     if (seg->prefix != nullptr) {
         seg->prefix->clear(midiPool);
         sequencePool->checkin(seg->prefix);
-        segmentPool->checkin(seg);
     }
+    segmentPool->checkin(seg);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -359,6 +362,7 @@ void MidiLayer::reclaim(MidiSegment* seg)
 MidiLayerPool::MidiLayerPool()
 {
     setName("MidiLayer");
+    setObjectSize(sizeof(MidiLayer));
     fluff();
 }
 
@@ -380,6 +384,35 @@ PooledObject* MidiLayerPool::alloc()
 MidiLayer* MidiLayerPool::newLayer()
 {
     return (MidiLayer*)checkout();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Dump
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiLayer::dump(StructureDumper& d)
+{
+    d.start("Layer:");
+    d.add("number", number);
+    d.add("frames", layerFrames);
+    d.add("cycles", layerCycles);
+    if (lastPlayFrame > 0)
+      d.add("lastPlayFrame", lastPlayFrame);
+    d.newline();
+    
+    d.inc();
+    
+    if (sequence != nullptr) {
+        sequence->dump(d);
+    }
+
+    for (MidiSegment* seg = segments ; seg != nullptr ; seg = seg->next) {
+        seg->dump(d);
+    }
+    
+    d.dec();
 }
 
 /****************************************************************************/

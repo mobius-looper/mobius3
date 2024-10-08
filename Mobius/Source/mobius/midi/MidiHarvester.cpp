@@ -179,7 +179,27 @@ void MidiHarvester::harvest(MidiLayer* layer, int startFrame, int endFrame)
         }
         else {
             // segment in range
-            harvest(nextSegment, startFrame, endFrame);
+            // scale the start/end into the segment
+            int segStartOffset = startFrame - nextSegment->originFrame;
+            if (segStartOffset < 0) {
+                // the harvest frame is a little before the segment, since
+                // segments can't overlap, this is dead space we can skip over
+                segStartOffset = 0;
+                startFrame = nextSegment->originFrame;
+            }
+                
+            int segEndOffset = endFrame - nextSegment->originFrame;
+
+            if (segEndOffset > seglast) {
+                // this segment is too short for the requested region
+                segEndOffset = seglast;
+            }
+            
+            harvest(nextSegment, segStartOffset, segEndOffset);
+
+            // advance the harvest start frame for what we took from this
+            // segment
+            startFrame += (segEndOffset - segStartOffset + 1);
 
             if (seglast <= endFrame) {
                 // segment has been consumed, move to the next one
@@ -243,7 +263,7 @@ void MidiHarvester::seek(MidiLayer* layer, int startFrame)
  * Harvest events covered by a segment.
  * Now it gets more complex.
  * 
- * startFrame and endFrame are relative to the containing layer.
+ * startFrame and endFrame are relative to the segment.
  * This range must be converted to the corresponding range in the underlying layer
  * relative to the Segment's referenceFrame.
  *
@@ -261,7 +281,13 @@ void MidiHarvester::seek(MidiLayer* layer, int startFrame)
  */
 void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame)
 {
-    if (startFrame <= segment->originFrame) {
+    // math sanity checks
+    if (startFrame < 0)
+      Trace(1, "MidiHarvester: Segment start frame went negative, like your popularity");
+    if (endFrame > segment->segmentFrames)
+      Trace(1, "MidiHarvester: Segment end frame is beyond where it should be");
+    
+    if (startFrame == 0) {
         // we've entered the segment, here comes the prefix
         if (segment->prefix != nullptr) {
             MidiEvent* event = segment->prefix->getFirst();
@@ -279,9 +305,9 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame)
     // on to the segment's layer
     // here we recurse and harvest the layer with start/end frames adjusted
     // for the segment's reference offset
-    int layerStart = segment->referenceFrame;
-    int askDelta = endFrame - startFrame;
-    int layerEnd = layerStart + askDelta;
+    
+    int layerStart = segment->referenceFrame + startFrame;
+    int layerEnd = segment->referenceFrame + endFrame;
     // remember the start of the added notes
     int firstNoteIndex = notes.size();
     int firstOtherIndex = events.size();

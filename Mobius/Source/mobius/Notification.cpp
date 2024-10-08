@@ -25,6 +25,7 @@ void Notification::poolInit()
 NotificationPool::NotificationPool()
 {
     setName("Notification");
+    setObjectSize(sizeof(Notification));
     fluff();
 }
 

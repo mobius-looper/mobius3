@@ -15,6 +15,7 @@ class MidiEvent : public PooledObject
 {
   public:
 
+    void dump(class StructureDumper& d);
     void poolInit() override;
     void copy(MidiEvent* src);
 

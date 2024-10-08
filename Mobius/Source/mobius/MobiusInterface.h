@@ -424,6 +424,8 @@ class MobiusContainer
 
     virtual class SymbolTable* getSymbols() = 0;
 
+    virtual void writeDump(juce::String file, juce::String content) = 0;
+
 };
 
 //////////////////////////////////////////////////////////////////////

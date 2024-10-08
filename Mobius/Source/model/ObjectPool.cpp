@@ -177,46 +177,10 @@ void ObjectPool::traceStatistics()
 {
     char tracebuf[1024];
     snprintf(tracebuf, sizeof(tracebuf),
-             "ObjectPool %s: Created %d Pool %d Min %d Extensions %d",
-             name, totalCreated, poolSize, minSize, extensions);
+             "ObjectPool %s: Created %d Pool %d Min %d Extensions %d Size %d",
+             name, totalCreated, poolSize, minSize, extensions, objectSize);
 
     Trace(2, tracebuf);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// UIActionPool
-//
-// This is the first one that started the pooling trend.
-// Had to move to model so it could subclass PooledObject, though
-// only MoboiusShell should need a pool.
-//
-//////////////////////////////////////////////////////////////////////
-
-UIActionPool::UIActionPool()
-{
-    setName("UIAction");
-    fluff();
-}
-
-UIActionPool::~UIActionPool()
-{
-}
-
-/**
- * ObjectPool overload to create a new pooled object.
- */
-PooledObject* UIActionPool::alloc()
-{
-    return new UIAction();
-}
-
-/**
- * Accessor for most of the code that does the convenient downcast.
- */
-UIAction* UIActionPool::newAction()
-{
-    return (UIAction*)checkout();
 }
 
 /****************************************************************************/

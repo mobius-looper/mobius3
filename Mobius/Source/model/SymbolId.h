@@ -289,6 +289,7 @@ typedef enum {
 
     // various diagnostic functions for testing
     FuncTraceStatus,
+    FuncDump,
     
     //
     // UI Parameters

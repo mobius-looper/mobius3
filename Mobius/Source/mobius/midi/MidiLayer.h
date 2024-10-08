@@ -13,8 +13,11 @@ class MidiLayer : public PooledObject
 
     MidiLayer();
     ~MidiLayer();
-    MidiLayer* next = nullptr;
     
+    MidiLayer* next = nullptr;
+    int number = 0;
+    
+    void dump(class StructureDumper& d);
     void poolInit() override;
     void prepare(class MidiSequencePool* spool, class MidiEventPool* epool, class MidiSegmentPool* segpool);
     

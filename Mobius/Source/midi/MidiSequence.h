@@ -19,6 +19,7 @@ class MidiSequence : public PooledObject
     MidiSequence();
     ~MidiSequence();
 
+    void dump(class StructureDumper& d);
     void poolInit() override;
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);

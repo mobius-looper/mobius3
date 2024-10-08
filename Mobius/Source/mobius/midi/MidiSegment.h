@@ -11,6 +11,8 @@ class MidiSegment : public PooledObject
 
     MidiSegment();
     ~MidiSegment();
+
+    void dump(class StructureDumper& d);
     void poolInit() override;
     
     MidiSegment* next = nullptr;

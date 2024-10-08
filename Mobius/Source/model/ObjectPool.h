@@ -170,6 +170,10 @@ class ObjectPool
         name = argName;
     }
 
+    void setObjectSize(int size) {
+        objectSize = size;
+    }
+    
   private:
 
     /**
@@ -184,6 +188,10 @@ class ObjectPool
 
     // subclass better name this
     const char* name = "???";
+
+    // size of one object, not necessary but useful when detecting
+    // memory leaks, expected to be set by the subclass
+    int objectSize = 0;
 
     // the total number of objects created with alloc()
     // normally also maxPool
@@ -215,23 +223,6 @@ class ObjectPool
     
 };    
     
-/**
- * Pool for UIActions
- * Doesn't belong here, but it's the first and only one.
- * Move later.
- */
-class UIActionPool : public ObjectPool
-{
-  public:
-
-    UIActionPool();
-    virtual ~UIActionPool();
-
-    class UIAction* newAction();
-
-    virtual PooledObject* alloc() override;
-};
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

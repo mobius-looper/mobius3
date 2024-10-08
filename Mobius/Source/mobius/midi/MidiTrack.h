@@ -157,4 +157,6 @@ class MidiTrack
     void doReplace(class TrackEvent* e);
     void doReplaceNow();
 
+    void doDump(class UIAction* a);
+
 };

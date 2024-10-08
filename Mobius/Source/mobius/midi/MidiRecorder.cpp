@@ -16,6 +16,7 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../util/StructureDumper.h"
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
@@ -55,6 +56,21 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
     watcher.initialize(midiPool);
     watcher.setListener(this);
     harvester.initialize(midiPool, 0);
+}
+
+void MidiRecorder::dump(StructureDumper& d)
+{
+    d.start("MidiRecorder:");
+    d.add("frames", recordFrames);
+    d.add("frame", recordFrame);
+    d.add("cycles", recordCycles);
+    d.add("cycleFrames", cycleFrames);
+    d.add("extensions", extensions);
+    d.newline();
+
+    d.inc();
+    recordLayer->dump(d);
+    d.dec();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -418,9 +434,8 @@ void MidiRecorder::startMultiply()
     setRecording(true);
 }
 
-void MidiRecorder::endMultiply(bool overdub, bool unrounded)
+void MidiRecorder::endMultiply(bool overdub)
 {
-    (void)unrounded;
     // todo: rounding, this will need to schedule an event
     // do that here or make MidiTrack handle it?
     multiply = false;
@@ -661,18 +676,7 @@ void MidiRecorder::advance(int blockFrames)
         else {
             if (backingLayer != nullptr) {
                 // multiply/insert
-                if (multiply) {
-                    // todo: will need to be smarter about which cycle the multiply started from
-                    MidiSegment* seg = segmentPool->newSegment();
-                    seg->layer = backingLayer;
-                    seg->segmentFrames = cycleFrames;
-                    seg->referenceFrame = 0;
-                    seg->originFrame = recordFrames;
-                    recordLayer->add(seg);
-                }
-                recordCycles++;
-                recordFrames += cycleFrames;
-                extensions++;
+                extend();
             }
             else {
                 // initial recording
@@ -685,6 +689,43 @@ void MidiRecorder::advance(int blockFrames)
 
     watcher.advanceHeld(blockFrames);
 }
+
+/**
+ * Extend the layer by another cycle
+ * Used for Multiply and Insert.
+ *
+ * The difference is that Insert adds empty cycles and multiply
+ * needs to create new segments to include existing content in the
+ * backing layer.
+ */
+void MidiRecorder::extend()
+{
+    // multiply/insert
+    if (multiply) {
+        MidiSegment* seg = segmentPool->newSegment();
+        seg->layer = backingLayer;
+        seg->segmentFrames = cycleFrames;
+        seg->originFrame = cycleFrames * recordCycles;
+
+        int backingCycles = backingLayer->getCycles();
+        if (backingCycles == 1) {
+            // the easy part
+            seg->referenceFrame = 0;
+        }
+        else {
+            // what cycle am I in?
+            int currentCycle = recordFrame / cycleFrames;
+            // where is that relative to the backing layer?
+            int backingCycle = currentCycle % backingCycles;
+            seg->referenceFrame = backingCycle * cycleFrames;
+        }
+        
+        recordLayer->add(seg);
+    }
+    recordCycles++;
+    recordFrames += cycleFrames;
+    extensions++;
+}    
 
 /**
  * Add an event to the recorded layer sequence.

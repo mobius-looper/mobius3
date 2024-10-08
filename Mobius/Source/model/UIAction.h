@@ -317,6 +317,23 @@ class UIAction : public PooledObject {
 
 };
 
+/**
+ * Pool for UIActions
+ * Doesn't belong here, but it's the first and only one.
+ * Move later.
+ */
+class UIActionPool : public ObjectPool
+{
+  public:
+
+    UIActionPool();
+    virtual ~UIActionPool();
+
+    class UIAction* newAction();
+
+    virtual PooledObject* alloc() override;
+};
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

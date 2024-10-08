@@ -122,9 +122,13 @@
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true'/>
 
   <!-- various diagnostic functions for testing -->
+  
   <!-- core has this as mayFocus -->
   <Function name="TraceStatus"/>
 
+  <!-- new one for MIDI structure dumping -->
+  <Function name="Dump" level="core"/>
+  
   <!--
   Parameter type=int is assumed unless specified
   scope=global implies noBinding unless bindable is on

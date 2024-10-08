@@ -357,7 +357,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {"WindowEndBackward", FuncWindowEndBackward},
     {"WindowEndForward", FuncWindowEndForward},
     {"TraceStatus", FuncTraceStatus},
- 
+    {"Dump", FuncDump},
+    
     //
     // Sampler
     //

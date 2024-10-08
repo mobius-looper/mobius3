@@ -43,6 +43,7 @@ void TrackEvent::poolInit()
 TrackEventPool::TrackEventPool()
 {
     setName("TrackEvent");
+    setObjectSize(sizeof(TrackEvent));
     fluff();
 }
 
@@ -155,6 +156,7 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
     for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
         if (e->type == TrackEvent::EventFunction && e->symbolId == sym) {
             found = e;
+            break;
         }
     }
     return found;

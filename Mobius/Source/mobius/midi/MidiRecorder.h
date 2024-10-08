@@ -28,6 +28,8 @@ class MidiRecorder : public MidiWatcher::Listener
                     class MidiSequencePool* spool,
                     class MidiEventPool* epool,
                     class MidiSegmentPool* segpool);
+
+    void dump(class StructureDumper& d);
     
     //
     // Transaction Management
@@ -45,7 +47,7 @@ class MidiRecorder : public MidiWatcher::Listener
     void setFrame(int newFrame);
 
     void startMultiply();
-    void endMultiply(bool overdub, bool unrounded);
+    void endMultiply(bool overdub);
     
     void startInsert();
     void endInsert(bool overdub);
@@ -122,6 +124,7 @@ class MidiRecorder : public MidiWatcher::Listener
 
     int lastBlockFrames = 0;
 
+    void extend();
     void assimilate(class MidiLayer* layer);
     class MidiLayer* prepLayer();
     

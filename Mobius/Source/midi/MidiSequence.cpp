@@ -4,6 +4,7 @@
 
 #include <JuceHeader.h>
 
+#include "../util/StructureDumper.h"
 #include "../model/ObjectPool.h"
 
 #include "MidiEvent.h"
@@ -16,6 +17,18 @@ MidiSequence::MidiSequence()
 MidiSequence::~MidiSequence()
 {
     clear(nullptr);
+}
+
+void MidiSequence::dump(StructureDumper& d)
+{
+    d.start("Sequence:");
+    d.add("count", count);
+    d.newline();
+    
+    d.inc();
+    for (MidiEvent* e = events ; e != nullptr ; e = e->next)
+      e->dump(d);
+    d.dec();
 }
 
 /**
@@ -217,6 +230,7 @@ void MidiSequence::cut(MidiEventPool* pool, int start, int end, bool includeHold
 MidiSequencePool::MidiSequencePool()
 {
     setName("MidiSequence");
+    setObjectSize(sizeof(MidiSequence));
     fluff();
 }
 

@@ -4,9 +4,29 @@
 
 #include <JuceHeader.h>
 
+#include "../util/StructureDumper.h"
 #include "../model/ObjectPool.h"
 
 #include "MidiEvent.h"
+
+void MidiEvent::dump(StructureDumper& d)
+{
+    d.start("Event:");
+    d.add("device", device);
+    d.add("frame", frame);
+    if (releaseVelocity > 0)
+      d.add("releaseVelocity", releaseVelocity);
+    
+    if (juceMessage.isNoteOn()) {
+        d.add("note", juceMessage.getNoteNumber());
+        d.add("velocity", juceMessage.getVelocity());
+        d.add("duration", duration);
+    }
+    else {
+        d.add("other");
+    }
+    d.newline();
+}
 
 /**
  * Pool cleanser
@@ -38,6 +58,7 @@ void MidiEvent::copy(MidiEvent* src)
 MidiEventPool::MidiEventPool()
 {
     setName("MidiEvent");
+    setObjectSize(sizeof(MidiEvent));
     fluff();
 }
 
