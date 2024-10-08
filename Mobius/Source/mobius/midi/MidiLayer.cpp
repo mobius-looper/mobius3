@@ -266,24 +266,17 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
  *
  * This does not add the held note prefix, that is doene after this
  * by MidiRecorder with Harvester results.
- *
- * older notes:
- * The hard part here is handling notes that are logically on at the beginning
- * of the segment, but whose NoteOn events preceed the segment and would not be
- * included in gather().  To get those, we have to "roll up" from the beginning
- * of the layer and find notes that would be held into to the start of the segment.
- * MidiEvents for those notes are then manufactured and placed at the beginning
- * of this layer's sequence as if they had been recorded there.  Might want to make
- * this something held inside the Segment instead?  That would make it easier to
- * change the left edge of the segment afterward since the notes that need to be
- * adjusted could be identified.  By putting them in the layer sequence we can't tell
- * the difference between injected notes and recorded notes.
  */
 void MidiLayer::cut(int start, int end)
 {
     // first the sequence
-    if (sequence != nullptr)
-      sequence->cut(midiPool, start, end);
+    if (sequence != nullptr) {
+        // note well: the includeHeld flag is false here because
+        // Harvester will already have done held note detection on the
+        // layer's sequence, don't like the duplication, perhaps harvester
+        // should ignore the root layer sequence and assume we'll do that job?
+        sequence->cut(midiPool, start, end, false);
+    }
 
     // then the segments
     MidiSegment* prev = nullptr;

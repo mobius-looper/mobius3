@@ -42,6 +42,13 @@ class MidiHarvester
      * and may be adjusted.
      */
     void harvest(MidiLayer* layer, int startFrame, int endFrame);
+
+    /**
+     * Harvest variant that only finds notes that extend past the
+     * threshold.  Used to find notes preceeding a segment that are held
+     * into that segment.
+     */
+    void harvestHeld(MidiLayer* layer, int startFrame, int endFrame);
     
     juce::Array<class MidiEvent*>& getNotes() {
         return notes;
@@ -55,6 +62,7 @@ class MidiHarvester
 
     class MidiEventPool* eventPool = nullptr;
     int noteCapacity = 0;
+    bool heldNotesOnly = false;
     
     juce::Array<class MidiEvent*> notes;
     juce::Array<class MidiEvent*> events;

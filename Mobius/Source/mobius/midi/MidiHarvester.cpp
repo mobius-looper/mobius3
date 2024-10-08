@@ -54,6 +54,62 @@ void MidiHarvester::reset()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * The intent here was to save time and memory churn by only returining
+ * notes that are still being held past a segment boundary.
+ *
+ * It doesn't actually work because the root layer's endFrame is not known
+ * by the nested segments, without more calculations during segment harvesting
+ * to make them aware of where the events they contain would be placed in the
+ * flattened layer.  That's not a bad thing, and would also eliminate the post
+ * processing we do after segment harvesting but adds complications I don't
+ * want to deal with now.
+ *
+ * To make it look like this works to Recorder, we'll post process the final
+ * harvested list up here before returning it.  Ugh, no, this would do the
+ * juce::Array restructuring thing I want to avoid.  REALLY need a more flexible
+ * doubly linked MidiEvent list that uses pooled nodes.
+ *
+ * What this CAN do at least is filter out events that are not notes.
+ *
+ * todo: This is going to do held note harvesting on the root layer's
+ * sequence since we use the same harvest implementation for all layers.
+ * Recorder can do that it's own self though with MidiSequence::cut so we
+ * could suppress that here.  Both can't do it or else we'll get duplicate notes.
+ * At the moment, Harvester is doing it and Recorder prevents MidiSequence::cut
+ * from adjusting held notes.
+ */
+void MidiHarvester::harvestHeld(MidiLayer* layer, int startFrame, int endFrame)
+{
+    heldNotesOnly = true;
+    
+    harvest(layer, startFrame, endFrame);
+
+    // filter the notes that don't extend
+    for (int i = 0 ; i < notes.size() ; i++) {
+        // are these guaranteed to be orrdered by start frame?
+        MidiEvent* note = notes[i];
+        if (note->frame < endFrame) {
+            if (note->frame + note->duration <= endFrame) {
+                // this one does not extend
+                // rather than mess with array shifting, just leave null there
+                // it isn't as nice as true filtering, but at least Recorder
+                // doesn't have to do the duration checking
+                notes.set(i, nullptr);
+                eventPool->checkin(note);
+            }
+        }
+        else {
+            // note is after the cut point, shouldn't be here?
+            Trace(1, "MidiHarvester::harvestHeld Something is wrong, you know what it is");
+            notes.set(i, nullptr);
+            eventPool->checkin(note);
+        }
+    }
+    
+    heldNotesOnly = false;
+}
+
+/**
  * Obtain the events in a Layer within the given range.
  * The range frame numbers relative to the layer itself, with zero being
  * the start of the layer.  The events gathered will also have layer relative
@@ -275,14 +331,19 @@ MidiEvent* MidiHarvester::add(MidiEvent* e)
             // durations isntead
             Trace(1, "MidiHarvester: Encountered NoteOff event, what's the deal?");
         }
-        else {
+        else if (e->juceMessage.isNoteOn()) {
+            // this is where I'd like to filter notes that don't extend beyond
+            // the segment start frame, but when descending into nested segments
+            // we don't have enough information at this point to know what location
+            // this event will be in at the end
             copy = eventPool->newEvent();
             copy->copy(e);
-
-            if (e->juceMessage.isNoteOn())
-              notes.add(copy);
-            else
-              events.add(copy);
+            notes.add(copy);
+        }
+        else if (!heldNotesOnly) {
+            copy = eventPool->newEvent();
+            copy->copy(e);
+            events.add(copy);
         }
     }
     return copy;

@@ -295,11 +295,9 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
         // do note extension analysis for the eventual segment prefix
         harvester.reset();
         // this effectively flattens the layer up to the cut point
-        // todo: need a flag to ignore notes that don't extend past the
-        // cut point
         // todo: some sort of threshold on how far notes have to extend
         // into the new segment before they are included?
-        harvester.harvest(recordLayer, 0, cutStart);
+        harvester.harvestHeld(recordLayer, 0, cutStart);
 
         // !! where does the overdub that happened during the multiply go?
         // if there were overdubs or replaces prior to that should they
@@ -312,35 +310,33 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
 
         // now inject the sustained notes into the sequence
         // hmm, I was thinking we would use segment prefixes for these but
-        // can just put them at the beginning of the cut layer sequence
+        // that's not the way it worked out, what harvester has effectively
+        // done is calculate the flattened list of held notes for ALL segments
+        // and the layer's sequence, though in practice it will only include
+        // events from the first spanning segment
+        // !! make sure recordLayer->cut isn't also doing held note adjustments
+        // or else we'll get doubles
+        //
+        // putting the held notes on the segment would require more messy logic
+        // in harvester, it's easier to put them on the Layer, though we can't
+        // now tell the difference between a held note and a normally recorded
+        // note.   If this holds together, then we can get rid rid of the
+        // Segment::prefix
+        // however, putting them in the segment makes it easier to recalculate
+        // holds for just that segment if you need to change the segment's
+        // left edge during flattening
+
+        // put held notes at the beginning of the cut layer sequence
         MidiSequence* seq = recordLayer->ensureSequence();
         juce::Array<MidiEvent*> notes = harvester.getNotes();
         for (int i = 0 ; i < notes.size() ; i++) {
-            // are these guaranteed to be orrdered by start frame?
             MidiEvent* note = notes[i];
-            if (note->frame < cutStart) {
-                if (note->frame + note->duration > cutStart) {
-                    // this one we keep
-                    notes.set(i, nullptr);
-                    note->frame = 0;
-                    note->next = nullptr;
-                    seq->insert(note);
-                }
-                else {
-                    // doesn't encroach
-                }
+            if (note != nullptr) {
+                notes.set(i, nullptr);
+                note->frame = 0;
+                note->next = nullptr;
+                seq->insert(note);
             }
-            else {
-                // note is after the cut point, we can break now if
-                // these are ordered
-            }
-        }
-
-        // release the ones we didn't take
-        for (int i = 0 ; i < notes.size() ; i++) {
-            MidiEvent* note = notes[i];
-            if (note != nullptr)
-              midiPool->checkin(note);
         }
 
         harvester.reset();

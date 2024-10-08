@@ -128,7 +128,7 @@ int MidiSequence::size()
  * The start and end frames are inclusive.
  *
  */
-void MidiSequence::cut(MidiEventPool* pool, int start, int end)
+void MidiSequence::cut(MidiEventPool* pool, int start, int end, bool includeHolds)
 {
     MidiEvent* prev = nullptr;
     MidiEvent* event = events;
@@ -147,7 +147,7 @@ void MidiSequence::cut(MidiEventPool* pool, int start, int end)
                 event->next = nullptr;
                 pool->checkin(event);
             }
-            else {
+            else if (includeHolds) {
                 // this one extends into the clipped layer
                 // adjust the start frame and the duration
                 event->frame = 0;
@@ -161,6 +161,16 @@ void MidiSequence::cut(MidiEventPool* pool, int start, int end)
                     event->duration = 1;
                 }
                 prev = event;
+            }
+            else {
+                // extends but not included
+                // ugh, really need that doubly linked list
+                if (prev == nullptr)
+                  events = next;
+                else
+                  prev->next = next;
+                event->next = nullptr;
+                pool->checkin(event);
             }
         }
         else if (event->frame <= end) {
