@@ -73,7 +73,7 @@ void MidiLayer::clear()
     while (segments != nullptr) {
         MidiSegment* nextseg = segments->next;
         segments->next = nullptr;
-        segmentPool->checkin(segments);
+        reclaim(segments);
         segments = nextseg;
     }
     
@@ -88,6 +88,13 @@ void MidiLayer::resetPlayState()
     seekFrame = -1;
     seekNextEvent = nullptr;
     seekNextSegment = nullptr;
+}
+
+MidiSequence* MidiLayer::ensureSequence()
+{
+    if (sequence == nullptr)
+      sequence = sequencePool->newSequence();
+    return sequence;
 }
 
 void MidiLayer::add(MidiEvent* e)
@@ -188,11 +195,9 @@ int MidiLayer::getLastPlayFrame()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Gather
+// Copy
 //
 //////////////////////////////////////////////////////////////////////
-
-// !! old - rewrite to use Harvester?
 
 /**
  * Copy the flattened contents of one layer into this one
@@ -254,13 +259,15 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
 //
 ////////////////////////////////////////////////////////////////////
 
-// !! old - revisit to use Harvester
-
 /**
  * Inner implementation for unrounded multiply.
  * Toss any overdubbed events in the sequence prior to the cut point
  * and adjust the segments to fit within the new size.
  *
+ * This does not add the held note prefix, that is doene after this
+ * by MidiRecorder with Harvester results.
+ *
+ * older notes:
  * The hard part here is handling notes that are logically on at the beginning
  * of the segment, but whose NoteOn events preceed the segment and would not be
  * included in gather().  To get those, we have to "roll up" from the beginning
@@ -274,9 +281,6 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
  */
 void MidiLayer::cut(int start, int end)
 {
-    (void)start;
-    (void)end;
-#if 0    
     // first the sequence
     if (sequence != nullptr)
       sequence->cut(midiPool, start, end);
@@ -297,22 +301,17 @@ void MidiLayer::cut(int start, int end)
                 else
                   prev->next = nextseg;
                 seg->next = nullptr;
-                segmentPool->checkin(seg);
+                reclaim(seg);
             }
             else {
                 // right half of the segment is included
                 // but needs to have the prefix reculated
-                segment->segmentFrames = seglast - start + 1;
-                if (segment->segmentFrames <= 0) {
+                seg->segmentFrames = seglast - start + 1;
+                if (seg->segmentFrames <= 0) {
                     // sanity check on boundary case
                     Trace(1, "MidiLayer: Cut segment duration anomoly");
-                    segment->segmentFrames = 1;
+                    seg->segmentFrames = 1;
                 }
-                
-                int loss = start - segment->originFrame;
-                segment->originFrame = 0;
-                
-                segmentCompiler.leftLoss(segment, loss);
                 
                 prev = seg;
             }
@@ -347,7 +346,15 @@ void MidiLayer::cut(int start, int end)
 
         seg = nextseg;
     }
-#endif    
+}
+
+void MidiLayer::reclaim(MidiSegment* seg)
+{
+    if (seg->prefix != nullptr) {
+        seg->prefix->clear(midiPool);
+        sequencePool->checkin(seg->prefix);
+        segmentPool->checkin(seg);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

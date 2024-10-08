@@ -17,6 +17,7 @@
 
 #include "../../util/Trace.h"
 #include "../../midi/MidiEvent.h"
+#include "../../midi/MidiSequence.h"
 
 #include "MidiLayer.h"
 #include "MidiSegment.h"
@@ -291,15 +292,66 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
         if (!overdub)
           finalizeHeld();
 
+        // do note extension analysis for the eventual segment prefix
         harvester.reset();
-        //recordLayer->cut(&segmentCompiler, cutStart, cutEnd);
+        // this effectively flattens the layer up to the cut point
+        // todo: need a flag to ignore notes that don't extend past the
+        // cut point
+        // todo: some sort of threshold on how far notes have to extend
+        // into the new segment before they are included?
+        harvester.harvest(recordLayer, 0, cutStart);
 
+        // !! where does the overdub that happened during the multiply go?
+        // if there were overdubs or replaces prior to that should they
+        // be committed?  If you want that you would have to shift twice here
+        // since to get the edits prior to the new region, and again after
+        // as it stands now, they will be lost since we'll cut them out
+        // of the layer sequence, seems reasonable, should have let it play
+        // once if you wanted it
+        recordLayer->cut(cutStart, cutEnd);
+
+        // now inject the sustained notes into the sequence
+        // hmm, I was thinking we would use segment prefixes for these but
+        // can just put them at the beginning of the cut layer sequence
+        MidiSequence* seq = recordLayer->ensureSequence();
+        juce::Array<MidiEvent*> notes = harvester.getNotes();
+        for (int i = 0 ; i < notes.size() ; i++) {
+            // are these guaranteed to be orrdered by start frame?
+            MidiEvent* note = notes[i];
+            if (note->frame < cutStart) {
+                if (note->frame + note->duration > cutStart) {
+                    // this one we keep
+                    notes.set(i, nullptr);
+                    note->frame = 0;
+                    note->next = nullptr;
+                    seq->insert(note);
+                }
+                else {
+                    // doesn't encroach
+                }
+            }
+            else {
+                // note is after the cut point, we can break now if
+                // these are ordered
+            }
+        }
+
+        // release the ones we didn't take
+        for (int i = 0 ; i < notes.size() ; i++) {
+            MidiEvent* note = notes[i];
+            if (note != nullptr)
+              midiPool->checkin(note);
+        }
+
+        harvester.reset();
+
+        // shift
         commitLayer = recordLayer;
         recordLayer = nullptr;
         assimilate(commitLayer);
 
         recordFrames = recordLayer->getFrames();
-        recordCycles = 1;
+        recordCycles = recordLayer->getCycles();
         multiply = false;
         multiplyFrame = 0;
         extending = false;
@@ -307,8 +359,6 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
         if (!overdub)
           recording = false;
     
-        // start the next layer back at zero
-        // frame count stays the same
         recordFrame = 0;
         extensions = 0;
     }

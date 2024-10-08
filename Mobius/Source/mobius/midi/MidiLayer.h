@@ -41,10 +41,12 @@ class MidiLayer : public PooledObject
     class MidiSequence* getSequence() {
         return sequence;
     }
-
+    
     class MidiSegment* getSegments() {
         return segments;
     }
+
+    class MidiSequence* ensureSequence();
 
   protected:
     
@@ -83,6 +85,7 @@ class MidiLayer : public PooledObject
     void cutSequence(int start, int end);
     void cutSegments(int start, int end);
     void injectSegmentHolds(class MidiSegment* seg, int start, int end);
+    void reclaim(class MidiSegment* seg);
 
 };
         
