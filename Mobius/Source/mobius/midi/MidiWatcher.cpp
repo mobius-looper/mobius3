@@ -3,7 +3,6 @@
 
 #include "../../util/Trace.h"
 #include "../../midi/MidiEvent.h"
-#include "MidiNote.h"
 
 #include "MidiWatcher.h"
 
@@ -17,9 +16,9 @@ MidiWatcher::~MidiWatcher()
     flushHeld();
 }
 
-void MidiWatcher::initialize(MidiNotePool* npool)
+void MidiWatcher::initialize(MidiEventPool* epool)
 {
-    notePool = npool;
+    midiPool = epool;
 }
 
 void MidiWatcher::setListener(Listener* l)
@@ -27,7 +26,7 @@ void MidiWatcher::setListener(Listener* l)
     listener = l;
 }
 
-MidiNote* MidiWatcher::getHeldNotes()
+MidiEvent* MidiWatcher::getHeldNotes()
 {
     return heldNotes;
 }
@@ -36,7 +35,7 @@ MidiNote* MidiWatcher::getHeldNotes()
  * When the watcher is used within each Recorder, inject a watched note
  * copied from the shared watcher.
  */
-void MidiWatcher::add(MidiNote* note)
+void MidiWatcher::add(MidiEvent* note)
 {
     note->next = heldNotes;
     heldNotes = note;
@@ -44,39 +43,41 @@ void MidiWatcher::add(MidiNote* note)
 
 /**
  * An event comes in from one of the MIDI devices, or the host.
- * For notes, a shared hold state is maintained in Tracker and can be used
- * by each track to include notes in a record region that went down before they
- * were recording, and are still held when they start recording.
+ * For NoteOn, a copy is made for tracking.
+ * For NoteOff, a copy is not made but the previous NoteOn is located
+ * in the tracker and passed to the listener.
  *
- * The event is passed to all tracks, if a track wants to record the event
- * it must make a copy.
+ * Sigh, this needs to make a private copy in order to maintain it
+ * on a list with the next pointer.  Could use a juce::Array instead but this
+ * would need to be resized randomly which is also annoying.
  */
 void MidiWatcher::midiEvent(MidiEvent* e)
 {
     if (e->juceMessage.isNoteOn()) {
-        MidiNote* note = notePool->newNote();
-        note->device = e->device;
-        note->channel = e->juceMessage.getChannel();
-        note->number = e->juceMessage.getNoteNumber();
-        note->velocity = e->juceMessage.getVelocity();
+        MidiEvent* note = midiPool->newEvent();
+        note->copy(e);
         note->next = heldNotes;
         heldNotes = note;
 
         if (listener != nullptr)
-          listener->watchedNoteOn(e, note);
+          listener->watchedNoteOn(note);
     }
     else if (e->juceMessage.isNoteOff()) {
-        MidiNote* note = removeHeld(e);
+        MidiEvent* note = removeHeld(e);
         if (note == nullptr) {
             Trace(2, "MidiWatcher: Unmatched NoteOff");
         }
         else {
             if (listener != nullptr)
-              listener->watchedNoteOff(e, note);
-            notePool->checkin(note);
+              listener->watchedNoteOff(note, e);
+
+            // reclaim it if ownership was not passed
+            midiPool->checkin(note);
         }
     }
     else {
+        // copies are NOT made of non-note events, though we might
+        // need to if we want to track CC values over time
         if (listener != nullptr)
           listener->watchedEvent(e);
     }
@@ -88,9 +89,9 @@ void MidiWatcher::midiEvent(MidiEvent* e)
 void MidiWatcher::flushHeld()
 {
     while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
+        MidiEvent* next = heldNotes->next;
         heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
+        midiPool->checkin(heldNotes);
         heldNotes = next;
     }
 }
@@ -98,18 +99,18 @@ void MidiWatcher::flushHeld()
 /**
  * Advance note holds.
  * I don't think this is really necessary for the shared hold tracker.
- * Each track if it wants to record the note will maintain it's own MidiNote
+ * Each track if it wants to record the note will maintain it's own MidiEvent
  * with a local duration, but still, this might be useful at some point.
  */
 void MidiWatcher::advanceHeld(int blockFrames)
 {
-    for (MidiNote* note = heldNotes ; note != nullptr ; note = note->next) {
+    for (MidiEvent* note = heldNotes ; note != nullptr ; note = note->next) {
         note->duration += blockFrames;
     }
 }
 
 /**
- * Remove a matching MidiNote from the held note list when a NoteOff
+ * Remove a matching MidiEvent from the held note list when a NoteOff
  * message is received.  In the unusual case where there are overlapping
  * notes, a duplicate NoteOn receieved before the NoteOff for the last one,
  * this will behave as a LIFO.  Not sure that matters and is a situation that
@@ -117,18 +118,19 @@ void MidiWatcher::advanceHeld(int blockFrames)
  *
  * todo: note tracking needs to start understanding the device it came from!!
  */
-MidiNote* MidiWatcher::removeHeld(MidiEvent* e)
+MidiEvent* MidiWatcher::removeHeld(MidiEvent* e)
 {
-    MidiNote* note = nullptr;
+    MidiEvent* note = nullptr;
     
     if (heldNotes != nullptr) {
         int channel = e->juceMessage.getChannel();
         int number = e->juceMessage.getNoteNumber();
 
-        MidiNote* prev = nullptr;
+        MidiEvent* prev = nullptr;
         note = heldNotes;
         while (note != nullptr) {
-            if (note->channel == channel && note->number == number)
+            if (note->juceMessage.getChannel() == channel &&
+                note->juceMessage.getNoteNumber() == number)
               break;
             else {
                 prev = note;

@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "MidiWatcher.h"
+#include "MidiHarvester.h"
 
 class MidiRecorder : public MidiWatcher::Listener
 {
@@ -26,8 +27,7 @@ class MidiRecorder : public MidiWatcher::Listener
     void initialize(class MidiLayerPool* lpool,
                     class MidiSequencePool* spool,
                     class MidiEventPool* epool,
-                    class MidiSegmentPool* segpool,
-                    class MidiNotePool* npool);
+                    class MidiSegmentPool* segpool);
     
     //
     // Transaction Management
@@ -70,8 +70,8 @@ class MidiRecorder : public MidiWatcher::Listener
     // MIDI events
     //
 
-    void noteOn(class MidiEvent* e, MidiNote* n);
-    void noteOff(class MidiEvent* e, MidiNote* n);
+    void noteOn(class MidiEvent* e);
+    void noteOff(class MidiEvent* e);
     void midiEvent(class MidiEvent* e);
 
     //
@@ -85,8 +85,8 @@ class MidiRecorder : public MidiWatcher::Listener
     void advance(int frames);
     void add(class MidiEvent* e);
 
-    void watchedNoteOn(class MidiEvent* e, class MidiNote* n) override;
-    void watchedNoteOff(class MidiEvent* e, class MidiNote* n) override;
+    void watchedNoteOn(class MidiEvent* e) override;
+    void watchedNoteOff(class MidiEvent* on, class MidiEvent* off) override;
     void watchedEvent(class MidiEvent* e) override;
     
   private:
@@ -98,12 +98,11 @@ class MidiRecorder : public MidiWatcher::Listener
     class MidiSequencePool* sequencePool = nullptr;
     class MidiEventPool* midiPool = nullptr;
     class MidiSegmentPool* segmentPool = nullptr;
-    class MidiNotePool* notePool = nullptr;
 
     // held note monitor
     MidiWatcher watcher;
     // segment prefix analyzer
-    MidiSegmentCompiler segmentCompiler;
+    MidiHarvester harvester;
     
     // the backing layer for the transaction
     class MidiLayer* backingLayer = nullptr;
@@ -127,10 +126,9 @@ class MidiRecorder : public MidiWatcher::Listener
     class MidiLayer* prepLayer();
     
     class MidiEvent* copyEvent(class MidiEvent* src);
-    class MidiNote* copyNote(class MidiNote* src);
 
     void injectHeld();
     void finalizeHeld();
-    void finalizeHold(class MidiNote* note, class MidiEvent* e);
+    void finalizeHold(class MidiEvent* note, class MidiEvent* off);
     
 };

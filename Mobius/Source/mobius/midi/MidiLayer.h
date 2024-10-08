@@ -29,7 +29,6 @@ class MidiLayer : public PooledObject
     int getLastPlayFrame();
     
     void resetPlayState();
-    void gather(class MidiHarvester* harvester, int startFrame, int blockFrames, int maxExtent);
     void copy(class MidiLayer* src);
     void cut(int start, int end);
     

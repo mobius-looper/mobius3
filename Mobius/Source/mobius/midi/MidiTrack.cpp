@@ -68,10 +68,9 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     recorder.initialize(layerPool,
                         tracker->getSequencePool(),
                         midiPool,
-                        tracker->getSegmentPool(),
-                        tracker->getNotePool());
+                        tracker->getSegmentPool());
     
-    player.initialize(container, tracker->getNotePool());
+    player.initialize(container, midiPool);
     
     events.initialize(eventPool);
 
@@ -156,7 +155,7 @@ void MidiTrack::reset()
  * Used by Recorder to do held note injection, forward to the tracker
  * that has the shared tracking state.
  */
-MidiNote* MidiTrack::getHeldNotes()
+MidiEvent* MidiTrack::getHeldNotes()
 {
     return tracker->getHeldNotes();
 }

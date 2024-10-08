@@ -61,6 +61,7 @@ class MidiHarvester
 
     void seek(class MidiLayer* layer, int startFrame);
     void harvest(class MidiSegment* segment, int startFrame, int endFrame);
+    class MidiEvent* add(class MidiEvent* e);
 
 };
     

@@ -16,41 +16,29 @@ class MidiWatcher
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void watchedNoteOn(class MidiEvent* e, class MidiNote* n) = 0;
-        virtual void watchedNoteOff(class MidiEvent* e, class MidiNote* n) = 0;
+        virtual void watchedNoteOn(class MidiEvent* e) = 0;
+        virtual void watchedNoteOff(class MidiEvent* on, class MidiEvent* off) = 0;
         virtual void watchedEvent(class MidiEvent* e) = 0;
     };
 
     MidiWatcher();
     ~MidiWatcher();
 
-    void initialize(class MidiNotePool* npool);
+    void initialize(class MidiEventPool* pool);
     void setListener(Listener* l);
 
     void midiEvent(class MidiEvent* e);
-    void add(class MidiNote* n);
+    void add(class MidiEvent* n);
     void advanceHeld(int blockFrames);
     void flushHeld();
-    class MidiNote* getHeldNotes();
-
-    virtual void notifyNoteOn(class MidiEvent* e, class MidiNote* n) {
-        (void)e;
-        (void)n;
-    }
-    virtual void notifyNoteOff(class MidiEvent* e, class MidiNote* n) {
-        (void)e;
-        (void)n;
-    }
-    virtual void notifyMidiEvent(class MidiEvent* e) {
-        (void)e;
-    }
+    class MidiEvent* getHeldNotes();
 
   private:
 
-    class MidiNotePool* notePool = nullptr;
+    class MidiEventPool* midiPool = nullptr;
     class Listener* listener = nullptr;
-    class MidiNote* heldNotes = nullptr;
+    class MidiEvent* heldNotes = nullptr;
     
-    MidiNote* removeHeld(class MidiEvent* e);
+    MidiEvent* removeHeld(class MidiEvent* e);
     
 };    

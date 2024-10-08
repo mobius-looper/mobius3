@@ -490,8 +490,6 @@
           <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
           <FILE id="MLMR7A" name="MidiLoop.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLoop.cpp"/>
           <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
-          <FILE id="usC1om" name="MidiNote.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiNote.cpp"/>
-          <FILE id="xnFNZu" name="MidiNote.h" compile="0" resource="0" file="Source/mobius/midi/MidiNote.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
           <FILE id="wpIvqU" name="MidiRecorder.cpp" compile="1" resource="0"

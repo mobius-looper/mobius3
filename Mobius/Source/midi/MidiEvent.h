@@ -56,6 +56,7 @@ class MidiEvent : public PooledObject
     //
 
     int remaining = 0;
+    MidiEvent* peer = nullptr;
 
 };
 

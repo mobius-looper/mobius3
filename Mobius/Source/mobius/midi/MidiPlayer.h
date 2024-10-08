@@ -17,7 +17,7 @@ class MidiPlayer
     //
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
-    void initialize(class MobiusContainer* c, class MidiNotePool* pool);
+    void initialize(class MobiusContainer* c, class MidiEventPool* pool);
 
     //
     // Layer Management
@@ -51,7 +51,7 @@ class MidiPlayer
 
     // configuration
     class MobiusContainer* container = nullptr;
-    class MidiNotePool* notePool = nullptr;
+    class MidiEventPool* midiPool = nullptr;
     class MidiTrack* track = nullptr;
 
     // play state
@@ -64,14 +64,14 @@ class MidiPlayer
     MidiHarvester harvester;
 
     // note duration tracking state
-    class MidiNote* heldNotes = nullptr;
+    class MidiEvent* heldNotes = nullptr;
     
-    void play(class MidiNote* n);
-    void sendOn(class MidiNote* e);
+    void play(class MidiEvent* n);
+    void sendOn(class MidiEvent* e);
     void flushHeld();
     void advanceHeld(int blockFrames);
     void forceOff();
-    void sendOff(class MidiNote* note);
+    void sendOff(class MidiEvent* note);
 };
 
 /****************************************************************************/

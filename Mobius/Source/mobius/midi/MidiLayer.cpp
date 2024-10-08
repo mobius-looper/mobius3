@@ -35,10 +35,8 @@ void MidiLayer::poolInit()
     layerFrames = 0;
     layerCycles = 1;
     changes = 0;
-    playFrame = 0;
-    nextEvent = nullptr;
-    nextSegment = nullptr;
     segmentExtending.clearQuick();
+    resetPlayState();
 }
 
 void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegmentPool* segpool)
@@ -87,9 +85,9 @@ void MidiLayer::clear()
 
 void MidiLayer::resetPlayState()
 {
-    playFrame = -1;
-    nextEvent = nullptr;
-    nextSegment = nullptr;
+    seekFrame = -1;
+    seekNextEvent = nullptr;
+    seekNextSegment = nullptr;
 }
 
 void MidiLayer::add(MidiEvent* e)
@@ -194,119 +192,7 @@ int MidiLayer::getLastPlayFrame()
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * This is the crux of MIDI playback.
- * Given a logical range of events, walk over the local sequence
- * and any referenced segments, gathering the events that are within
- * this range.
- *
- * At the loop boundary the frame count may be longer than the layer,
- * the play cursor does not loop back to the beginning, it simply stops
- * and waits for reorientation.  
- */
-void MidiLayer::gather(MidiHarvester* harvester, int startFrame, int blockFrames,
-                       int maxExtent)
-{
-    if (playFrame != startFrame) {
-        // play cursor moved or is being reset, reorient
-        seek(startFrame);
-    }
-
-    // at this point playFrame will be equal to startFrame
-    // nextEvent will be the first event from the local sequence that is
-    // at or beyond playFrame or null if we've reached the end of the sequence
-    // currentSegment will be the first (and only since they can't overlap) segment
-    // whose range includes or is after the play frame
-        
-    int lastFrame = playFrame + blockFrames - 1;  // may be beyond the loop length, it's okay
-    while (nextEvent != nullptr) {
-
-        if (nextEvent->frame <= lastFrame) {
-
-            harvester->add(nextEvent, maxExtent);
-            
-            nextEvent = nextEvent->next;
-        }
-        else {
-            // next not in range, stop
-            break;
-        }
-    }
-
-    // now the segments
-
-    while (nextSegment != nullptr) {
-
-        int segstart = nextSegment->originFrame;
-        int seglast = segstart + nextSegment->segmentFrames - 1;
-
-        if (segstart > playFrame) {
-            // haven't reached this segment yet, wait for the next block
-            break;
-        }
-        else if (seglast < playFrame) {
-            // this segment has passed, seek must be broken
-            Trace(1, "MidiLayer: Unexpected past segment in cursor");
-            nextSegment = nullptr;
-        }
-        else {
-            // segment in range
-            nextSegment->gather(harvester, playFrame, blockFrames, maxExtent);
-            if (seglast <= lastFrame) {
-                // segment has been consumed, move to the next one
-                nextSegment = nextSegment->next;
-            }
-            else {
-                // more to go in this segment
-                break;
-            }
-        }
-    }
-
-    playFrame += blockFrames;
-}
-
-/**
- * Orient the play cursor to include the given range.
- *
- * todo: here is where we may want to keep track of held notes during
- * the scan and force them on as a side effect of the seek?
- */
-void MidiLayer::seek(int startFrame)
-{
-    nextEvent = nullptr;
-    nextSegment = nullptr;
-    
-    if (sequence != nullptr) {
-        MidiEvent* event = sequence->getFirst();
-        while (event != nullptr) {
-            if (event->frame < startFrame)
-              event = event->next;
-            else
-              break;
-        }
-        nextEvent = event;
-    }
-
-    MidiSegment* seg = segments;
-    while (seg != nullptr) {
-
-        int segstart = seg->originFrame;
-        int seglast = segstart + seg->segmentFrames - 1;
-
-        if (seglast < startFrame) {
-            // segment is in the past
-            seg = seg->next;
-        }
-        else {
-            // segment is either in the future or spans the play frame
-            break;
-        }
-    }
-    nextSegment = seg;
-
-    playFrame = startFrame;
-}
+// !! old - rewrite to use Harvester?
 
 /**
  * Copy the flattened contents of one layer into this one
@@ -368,6 +254,8 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
 //
 ////////////////////////////////////////////////////////////////////
 
+// !! old - revisit to use Harvester
+
 /**
  * Inner implementation for unrounded multiply.
  * Toss any overdubbed events in the sequence prior to the cut point
@@ -386,6 +274,9 @@ void MidiLayer::copy(MidiSegment* seg, int origin)
  */
 void MidiLayer::cut(int start, int end)
 {
+    (void)start;
+    (void)end;
+#if 0    
     // first the sequence
     if (sequence != nullptr)
       sequence->cut(midiPool, start, end);
@@ -456,6 +347,7 @@ void MidiLayer::cut(int start, int end)
 
         seg = nextseg;
     }
+#endif    
 }
 
 //////////////////////////////////////////////////////////////////////

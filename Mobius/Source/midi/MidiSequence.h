@@ -24,6 +24,7 @@ class MidiSequence : public PooledObject
     void add(class MidiEvent* e);
     void insert(class MidiEvent* e);
     void cut(class MidiEventPool* pool, int start, int end);
+    void setEvents(class MidiEvent* list);
     
     MidiEvent* getFirst() {
         return events;

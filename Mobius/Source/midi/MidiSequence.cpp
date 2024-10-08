@@ -128,7 +128,7 @@ int MidiSequence::size()
  * The start and end frames are inclusive.
  *
  */
-void MidiLayer::cut(MidiEventPool* pool, int start, int end)
+void MidiSequence::cut(MidiEventPool* pool, int start, int end)
 {
     MidiEvent* prev = nullptr;
     MidiEvent* event = events;
@@ -151,7 +151,7 @@ void MidiLayer::cut(MidiEventPool* pool, int start, int end)
                 // this one extends into the clipped layer
                 // adjust the start frame and the duration
                 event->frame = 0;
-                event->duration = eventLast - start + 1
+                event->duration = eventLast - start + 1;
                 if (event->duration <= 0) {
                     // calculations such as this are prone to off-by-one errors
                     // at the edges so check

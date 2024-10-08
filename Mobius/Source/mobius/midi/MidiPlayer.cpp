@@ -22,7 +22,6 @@
 #include "../MobiusInterface.h"
 
 #include "MidiLayer.h"
-#include "MidiNote.h"
 #include "MidiTrack.h"
 
 #include "MidiPlayer.h"
@@ -46,11 +45,11 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize(MobiusContainer* c, MidiNotePool* pool)
+void MidiPlayer::initialize(MobiusContainer* c, MidiEventPool* pool)
 {
     container = c;
-    notePool = pool;
-    harvester.initialize(notePool);
+    midiPool = pool;
+    harvester.initialize(midiPool, 0);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -205,7 +204,7 @@ void MidiPlayer::setMute(bool b)
         // currently turning off then on
         // note that we don't use forceOff here since that also removes
         // them from the tracking list
-        MidiNote* held = heldNotes;
+        MidiEvent* held = heldNotes;
         while (held != nullptr) {
             sendOff(held);
             held = held->next;
@@ -216,7 +215,7 @@ void MidiPlayer::setMute(bool b)
         // turning mute off
         // turn on any notes that are still being (silently) held
         mute = b;
-        MidiNote* held = heldNotes;
+        MidiEvent* held = heldNotes;
         while (held != nullptr) {
             sendOn(held);
             held = held->next;
@@ -253,7 +252,7 @@ void MidiPlayer::play(int blockFrames)
             // walk just play them, but I kind of like the intermedate
             // gather, might be good to apply processing
             harvester.reset();
-            playLayer->gather(&harvester, playFrame, blockFrames, 0);
+            harvester.harvest(playLayer, playFrame, playFrame + blockFrames - 1);
 
             // these just spray out without fuss
             juce::Array<MidiEvent*>& events = harvester.getEvents();
@@ -261,14 +260,19 @@ void MidiPlayer::play(int blockFrames)
                 MidiEvent* e = events[i];
                 // todo: device id
                 container->midiSend(e->juceMessage, 0);
+                midiPool->checkin(e);
             }
 
             // these require thought
-            juce::Array<MidiNote*>& notes = harvester.getNotes();
+            juce::Array<MidiEvent*>& notes = harvester.getNotes();
             for (int i = 0 ; i < notes.size() ; i++) {
-                MidiNote* note = notes[i];
+                MidiEvent* note = notes[i];
                 play(note);
             }
+
+            // we took ownership or reclaimed all the events so don't
+            // leave them behnid and confuse things
+            harvester.reset();
             
             advanceHeld(blockFrames);
             
@@ -287,10 +291,11 @@ void MidiPlayer::play(int blockFrames)
  * The notes will have been gathered by MidiHarvester and we take
  * ownership of them.
  */
-void MidiPlayer::play(MidiNote* note)
+void MidiPlayer::play(MidiEvent* note)
 {
     if (note != nullptr) {
 
+        note->remaining = note->duration;
         note->next = heldNotes;
         heldNotes = note;
 
@@ -303,20 +308,10 @@ void MidiPlayer::play(MidiNote* note)
  * This just sends the NoteOn event and doesn't mess with durations which
  * in the case of setMute are already being tracked.
  */
-void MidiPlayer::sendOn(MidiNote* note)
+void MidiPlayer::sendOn(MidiEvent* note)
 {
     if (!mute) {
-        // unlike sendOff, let's test being able to reliably get back to the
-        // MidiEvent rather than using state captured in the Note, assumign this works,
-        // be consistent about this
-
-        // the way SendOff does it
-        //juce::MidiMessage msg = juce::MidiMessage::noteOn(note->channel,
-        //note->number,
-        //(juce::uint8)(note->velocity));
-
-        // the way we should be able to do it
-        container->midiSend(note->event->juceMessage, 0);
+        container->midiSend(note->juceMessage, 0);
     }
 }
 
@@ -332,9 +327,9 @@ void MidiPlayer::sendOn(MidiNote* note)
 void MidiPlayer::flushHeld()
 {
     while (heldNotes != nullptr) {
-        MidiNote* next = heldNotes->next;
+        MidiEvent* next = heldNotes->next;
         heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
+        midiPool->checkin(heldNotes);
         heldNotes = next;
     }
 }
@@ -348,10 +343,10 @@ void MidiPlayer::flushHeld()
  */
 void MidiPlayer::advanceHeld(int blockFrames)
 {
-    MidiNote* prev = nullptr;
-    MidiNote* held = heldNotes;
+    MidiEvent* prev = nullptr;
+    MidiEvent* held = heldNotes;
     while (held != nullptr) {
-        MidiNote* next = held->next;
+        MidiEvent* next = held->next;
 
         held->remaining -= blockFrames;
         if (held->remaining <= 0) {
@@ -361,7 +356,7 @@ void MidiPlayer::advanceHeld(int blockFrames)
             else
               prev->next = next;
             held->next = nullptr;
-            notePool->checkin(held);
+            midiPool->checkin(held);
         }
         else {
             prev = held;
@@ -378,9 +373,9 @@ void MidiPlayer::forceOff()
 {
     while (heldNotes != nullptr) {
         sendOff(heldNotes);
-        MidiNote* next = heldNotes->next;
+        MidiEvent* next = heldNotes->next;
         heldNotes->next = nullptr;
-        notePool->checkin(heldNotes);
+        midiPool->checkin(heldNotes);
         heldNotes = next;
     }
 }
@@ -390,7 +385,7 @@ void MidiPlayer::forceOff()
  *
  * !! todo: this needs to start remembering the device to send it to
  */
-void MidiPlayer::sendOff(MidiNote* note)
+void MidiPlayer::sendOff(MidiEvent* note)
 {
     // is it safe to test mute mode or should we just send a redundant off
     // every time?  when entering mute mode it is supposed to have
@@ -398,9 +393,10 @@ void MidiPlayer::sendOff(MidiNote* note)
     // when mute is turned off which will call down to sendOff when the (silent)
     // note finishes durating
     if (!mute) {
-        juce::MidiMessage msg = juce::MidiMessage::noteOff(note->channel,
-                                                           note->number,
-                                                           (juce::uint8)(note->velocity));
+        juce::MidiMessage msg =
+            juce::MidiMessage::noteOff(note->juceMessage.getChannel(),
+                                       note->juceMessage.getNoteNumber(),
+                                       (juce::uint8)(note->releaseVelocity));
         // todo: include the device id as second arg
         container->midiSend(msg, 0);
     }

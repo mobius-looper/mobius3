@@ -50,16 +50,16 @@ class MidiTrack
     void doQuery(class Query* q);
     void processAudioStream(class MobiusAudioStream* argStream);
 
-    void noteOn(class MidiEvent* e, class MidiNote* note);
-    void noteOff(class MidiEvent* e, class MidiNote* note);
+    void noteOn(class MidiEvent* e);
+    void noteOff(class MidiEvent* e);
     void midiEvent(class MidiEvent* e);
 
     //
     // Support for Recorder
     //
 
-    class MidiNote* getHeldNotes();
-    class MidiNote* copyNote(class MidiNote* src);
+    class MidiEvent* getHeldNotes();
+    class MidiEvent* copyNote(class MidiEvent* src);
 
   private:
 

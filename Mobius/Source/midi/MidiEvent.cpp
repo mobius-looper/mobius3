@@ -19,6 +19,7 @@ void MidiEvent::poolInit()
     duration = 0;
     releaseVelocity = 0;
     remaining = 0;
+    peer = nullptr;
     // just leave juce message alone?
 }
 
@@ -30,6 +31,8 @@ void MidiEvent::copy(MidiEvent* src)
     duration = src->duration;
     releaseVelocity = src->releaseVelocity;
     remaining = src->remaining;
+    // do NOT copy the peer, but it shouldn't have one
+    peer = nullptr;
 }
 
 MidiEventPool::MidiEventPool()

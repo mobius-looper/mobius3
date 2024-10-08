@@ -7,6 +7,10 @@
  
 #include "../../util/Trace.h"
 #include "../../midi/MidiEvent.h"
+#include "../../midi/MidiSequence.h"
+
+#include "MidiLayer.h"
+#include "MidiSegment.h"
 
 #include "MidiHarvester.h"
 
@@ -27,7 +31,7 @@ void MidiHarvester::initialize(MidiEventPool* epool, int capacity)
 {
     eventPool = epool;
 
-    int noteCapacity = capacity;
+    noteCapacity = capacity;
     if (noteCapacity == 0)
       noteCapacity = DefaultCapacity;
 
@@ -101,7 +105,7 @@ void MidiHarvester::harvest(MidiLayer* layer, int startFrame, int endFrame)
     }
 
     // now the segments
-    MidiEvent* nextSegment = layer->seekNextSegment;
+    MidiSegment* nextSegment = layer->seekNextSegment;
 
     while (nextSegment != nullptr) {
 
@@ -143,8 +147,7 @@ void MidiHarvester::harvest(MidiLayer* layer, int startFrame, int endFrame)
  */
 void MidiHarvester::seek(MidiLayer* layer, int startFrame)
 {
-    nextEvent = nullptr;
-    nextSegment = nullptr;
+    MidiEvent* nextEvent = nullptr;
     
     MidiSequence* sequence = layer->getSequence();
     if (sequence != nullptr) {
@@ -204,9 +207,8 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame)
 {
     if (startFrame <= segment->originFrame) {
         // we've entered the segment, here comes the prefix
-        MidiSequence* seq = segment->getPrefix();
-        if (seq != nullptr) {
-            MidiEvent* event = seq->getFirst();
+        if (segment->prefix != nullptr) {
+            MidiEvent* event = segment->prefix->getFirst();
             while (event != nullptr) {
                 // the frame on these is usually zero but may be offset within the segment
                 MidiEvent* copy = add(event);

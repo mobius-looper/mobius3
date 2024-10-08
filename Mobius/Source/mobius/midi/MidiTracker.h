@@ -7,7 +7,6 @@
 #include "../../midi/MidiSequence.h"
 
 #include "TrackEvent.h"
-#include "MidiNote.h"
 #include "MidiSegment.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
@@ -37,7 +36,6 @@ class MidiTracker : public LongWatcher::Listener
     class TrackEventPool* getEventPool();
     class MidiLayerPool* getLayerPool();
     class MidiSegmentPool* getSegmentPool();
-    class MidiNotePool* getNotePool();
     
     MobiusContainer* getContainer() {
         return container;
@@ -49,7 +47,7 @@ class MidiTracker : public LongWatcher::Listener
 
     class Valuator* getValuator();
     
-    class MidiNote* getHeldNotes();
+    class MidiEvent* getHeldNotes();
 
     // LongWatcher::Listener
     void longPressDetected(class UIAction* a);
@@ -67,7 +65,6 @@ class MidiTracker : public LongWatcher::Listener
     MidiLayerPool layerPool;
     MidiSegmentPool segmentPool;
     TrackEventPool eventPool;
-    MidiNotePool notePool;
 
     LongWatcher longWatcher;
     MidiWatcher watcher;

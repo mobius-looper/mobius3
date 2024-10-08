@@ -43,7 +43,7 @@ MidiTracker::MidiTracker(MobiusContainer* c, MobiusKernel* k)
 {
     container = c;
     kernel = k;
-    watcher.initialize(&notePool);
+    watcher.initialize(&midiPool);
 }
 
 MidiTracker::~MidiTracker()
@@ -246,7 +246,7 @@ Valuator* MidiTracker::getValuator()
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiNote* MidiTracker::getHeldNotes()
+MidiEvent* MidiTracker::getHeldNotes()
 {
     return watcher.getHeldNotes();
 }
@@ -262,6 +262,7 @@ MidiNote* MidiTracker::getHeldNotes()
  */
 void MidiTracker::midiEvent(MidiEvent* e)
 {
+    // watch it first since tracks may reach a state that needs it
     watcher.midiEvent(e);
 
     for (int i = 0 ; i < activeTracks ; i++) {
@@ -301,11 +302,6 @@ MidiLayerPool* MidiTracker::getLayerPool()
 MidiSegmentPool* MidiTracker::getSegmentPool()
 {
     return &segmentPool;
-}
-
-MidiNotePool* MidiTracker::getNotePool()
-{
-    return &notePool;
 }
 
 //////////////////////////////////////////////////////////////////////

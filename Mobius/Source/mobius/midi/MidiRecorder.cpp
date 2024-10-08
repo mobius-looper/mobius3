@@ -18,7 +18,6 @@
 #include "../../util/Trace.h"
 #include "../../midi/MidiEvent.h"
 
-#include "MidiNote.h"
 #include "MidiLayer.h"
 #include "MidiSegment.h"
 #include "MidiTrack.h"
@@ -46,17 +45,15 @@ MidiRecorder::~MidiRecorder()
 }
 
 void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
-                              MidiEventPool* epool, MidiSegmentPool* segpool,
-                              MidiNotePool* npool)
+                              MidiEventPool* epool, MidiSegmentPool* segpool)
 {
     layerPool = lpool;
     sequencePool = spool;
     midiPool = epool;
     segmentPool = segpool;
-    notePool = npool;
-    watcher.initialize(notePool);
+    watcher.initialize(midiPool);
     watcher.setListener(this);
-    segmentCompiler.initialize(midiPool);
+    harvester.initialize(midiPool, 0);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -294,8 +291,8 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
         if (!overdub)
           finalizeHeld();
 
-        segmentCompiler.reset();
-        recordLayer->cut(&segmentCompiler, cutStart, cutEnd);
+        harvester.reset();
+        //recordLayer->cut(&segmentCompiler, cutStart, cutEnd);
 
         commitLayer = recordLayer;
         recordLayer = nullptr;
@@ -665,13 +662,6 @@ MidiEvent* MidiRecorder::copyEvent(MidiEvent* src)
     return e;
 }
 
-MidiNote* MidiRecorder::copyNote(MidiNote* src)
-{
-    MidiNote* n = notePool->newNote();
-    n->copy(src);
-    return n;
-}
-
 /**
  * Pass the event through the watcher which will call back out
  * to the notify methods.
@@ -705,22 +695,31 @@ void MidiRecorder::midiEvent(MidiEvent* e)
 
 /**
  * Back from the watcher after it starts following a NoteOn.
+ * This will make ANOTHER copy that can be stored in the sequence.
+ * Unfortunate since the watcher already made a copy but it needs
+ * to use the next pointer for it's own list.  
  */
-void MidiRecorder::watchedNoteOn(MidiEvent* e, MidiNote* n)
+void MidiRecorder::watchedNoteOn(MidiEvent* e)
 {
     MidiEvent* localEvent = copyEvent(e);
-    n->event = localEvent;
+    // remember this so we can correlate the watched event and the
+    // one stired in the sequence
+    e->peer = localEvent;
     add(localEvent);
 }
 
 /**
  * Back from the watcher after it finishes following a note.
  */
-void MidiRecorder::watchedNoteOff(MidiEvent* e, MidiNote* n)
+void MidiRecorder::watchedNoteOff(MidiEvent* on, MidiEvent* off)
 {
-    finalizeHold(n, e);
+    finalizeHold(on, off);
 }
 
+/**
+ * Back from the watcher after it finishes examining a non-note event.
+ * Make another copy and "record" it.
+ */
 void MidiRecorder::watchedEvent(MidiEvent* e)
 {
     MidiEvent* localEvent = copyEvent(e);
@@ -731,22 +730,27 @@ void MidiRecorder::watchedEvent(MidiEvent* e)
  * When we begin a record region, ask the shared note tracker for
  * any notes currently being held and inject events into the sequence
  * as if they had been played the moment the recording started.
+ *
+ * Sign, have to make two copies, one for the duration tracker and one
+ * to put in the sequence.  Hating this.
  */
 void MidiRecorder::injectHeld()
 {
-    MidiNote* holds = track->getHeldNotes();
-    for (MidiNote* held = holds ; held != nullptr ; held = held->next) {
+    MidiEvent* holds = track->getHeldNotes();
+    for (MidiEvent* held = holds ; held != nullptr ; held = held->next) {
 
-        MidiNote* localNote = copyNote(held);
-        localNote->duration = 0;
-        watcher.add(localNote);
+        MidiEvent* watchedEvent = copyEvent(held);
+        watchedEvent->duration = 0;
+        watcher.add(watchedEvent);
 
         MidiEvent* localEvent = midiPool->newEvent();
         localEvent->device = held->device;
-        localEvent->juceMessage = juce::MidiMessage::noteOn(held->channel,
-                                                            held->number,
-                                                            (juce::uint8)(held->velocity));
-        localNote->event = localEvent;
+        // frame stays at zero
+        localEvent->juceMessage =
+            juce::MidiMessage::noteOn(held->juceMessage.getChannel(),
+                                      held->juceMessage.getNoteNumber(),
+                                      (juce::uint8)(held->juceMessage.getVelocity()));
+        watchedEvent->peer = localEvent;
         add(localEvent);
     }
 }
@@ -757,7 +761,7 @@ void MidiRecorder::injectHeld()
  */
 void MidiRecorder::finalizeHeld()
 {
-    MidiNote* held = watcher.getHeldNotes();
+    MidiEvent* held = watcher.getHeldNotes();
     
     while (held != nullptr) {
         finalizeHold(held, nullptr);
@@ -767,7 +771,16 @@ void MidiRecorder::finalizeHeld()
     watcher.flushHeld();
 }
 
-void MidiRecorder::finalizeHold(MidiNote* note, MidiEvent* e)
+/**
+ * Finalize a note duration.
+ * The passed note came from the MidiWatcher which has been tracking
+ * the duration.  This duration is copied to it's "peer" in the sequence.
+ *
+ * If an "off" event is passed it will be from the Watcher and have
+ * release velocity.  If it is nullptr, these are truncated notes and
+ * won't have a release velocity.
+ */
+void MidiRecorder::finalizeHold(MidiEvent* note, MidiEvent* off)
 {
     if (note->duration == 0) {
         // weird case of an extremely short note that didn't see any advance()
@@ -777,18 +790,18 @@ void MidiRecorder::finalizeHold(MidiNote* note, MidiEvent* e)
         note->duration = lastBlockFrames;
     }
             
-    if (note->event == nullptr) {
-        Trace(1, "MidiRecorder: MidiNote lacked a MidiEvent and gumption");
+    if (note->peer == nullptr) {
+        Trace(1, "MidiRecorder: Tracked note lacked a peer and gumption");
     }
     else {
         // copy the accumulated duration back to the event
         // could also have just done this in the adance
-        note->event->duration = note->duration;
+        note->peer->duration = note->duration;
 
-        if (e != nullptr) {
+        if (off != nullptr) {
             // this must be a NoteOff, remember the release velocity
-            if (e->juceMessage.isNoteOff()) {
-                note->event->releaseVelocity = e->juceMessage.getVelocity();
+            if (off->juceMessage.isNoteOff()) {
+                note->peer->releaseVelocity = off->juceMessage.getVelocity();
             }
             else {
                 Trace(1, "MidiRecorder::finalizeHold didn't have a NoteOff message");

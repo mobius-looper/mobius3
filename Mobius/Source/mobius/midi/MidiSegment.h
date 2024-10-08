@@ -13,14 +13,10 @@ class MidiSegment : public PooledObject
     ~MidiSegment();
     void poolInit() override;
     
-    void gather(class MidiHarvester* harvester,
-                int playFrame, int blockFrames, int maxExtent);
-
-    void getExtending(juce::Array<MidiEvent*>* extending, int start);
-    
     MidiSegment* next = nullptr;
     class MidiLayer* layer = nullptr;
-
+    class MidiSequence* prefix = nullptr;
+    
     // the logical start frame in the containing layer
     int originFrame = 0;
 
