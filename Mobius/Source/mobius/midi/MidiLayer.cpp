@@ -40,6 +40,11 @@ void MidiLayer::poolInit()
     resetPlayState();
 }
 
+/**
+ * Reconsider the need to pass pools down here, we'll only be built by
+ * MidiRecorder, it can handle the pools.  The only convenient need for
+ * these is when clearing it, but the pools could be passed in to clear
+ */
 void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegmentPool* segpool)
 {
     sequencePool = spool;
@@ -65,18 +70,10 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
  */
 void MidiLayer::clear()
 {
-    if (sequence != nullptr) {
-        sequence->clear(midiPool);
-        sequencePool->checkin(sequence);
-        sequence = nullptr;
-    }
+    reclaim(sequence);
+    sequence = nullptr;
 
-    while (segments != nullptr) {
-        MidiSegment* nextseg = segments->next;
-        segments->next = nullptr;
-        reclaim(segments);
-        segments = nextseg;
-    }
+    clearSegments();
     
     layerFrames = 0;
     layerCycles = 1;
@@ -84,18 +81,43 @@ void MidiLayer::clear()
     resetPlayState();
 }
 
+void MidiLayer::clearSegments()
+{
+    while (segments != nullptr) {
+        MidiSegment* nextseg = segments->next;
+        segments->next = nullptr;
+        reclaim(segments);
+        segments = nextseg;
+    }
+}
+
+void MidiLayer::reclaim(MidiSegment* seg)
+{
+    if (seg != nullptr) {
+        reclaim(seg->prefix);
+        segmentPool->checkin(seg);
+    }
+}
+
+void MidiLayer::reclaim(MidiSequence* seq)
+{
+    if (seq != nullptr) {
+        seq->clear(midiPool);
+        sequencePool->checkin(seq);
+    }
+}
+
+void MidiLayer::replaceSegments(MidiSegment* list)
+{
+    clearSegments();
+    segments = list;
+}
+
 void MidiLayer::resetPlayState()
 {
     seekFrame = -1;
     seekNextEvent = nullptr;
     seekNextSegment = nullptr;
-}
-
-MidiSequence* MidiLayer::ensureSequence()
-{
-    if (sequence == nullptr)
-      sequence = sequencePool->newSequence();
-    return sequence;
 }
 
 void MidiLayer::add(MidiEvent* e)
@@ -252,105 +274,6 @@ void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
 void MidiLayer::copy(MidiSegment* seg, int origin)
 {
     copy(seg->layer, seg->referenceFrame, seg->referenceFrame + seg->segmentFrames, origin);
-}
-
-////////////////////////////////////////////////////////////////////
-//
-// Cut
-//
-////////////////////////////////////////////////////////////////////
-
-/**
- * Inner implementation for unrounded multiply.
- * Toss any overdubbed events in the sequence prior to the cut point
- * and adjust the segments to fit within the new size.
- *
- * This does not add the held note prefix, that is doene after this
- * by MidiRecorder with Harvester results.
- */
-void MidiLayer::cut(int start, int end)
-{
-    // first the sequence
-    if (sequence != nullptr) {
-        // note well: the includeHeld flag is false here because
-        // Harvester will already have done held note detection on the
-        // layer's sequence, don't like the duplication, perhaps harvester
-        // should ignore the root layer sequence and assume we'll do that job?
-        sequence->cut(midiPool, start, end, false);
-    }
-
-    // then the segments
-    MidiSegment* prev = nullptr;
-    MidiSegment* seg = segments;
-    while (seg != nullptr) {
-        MidiSegment* nextseg = seg->next;
-        
-        int seglast = seg->originFrame + seg->segmentFrames - 1;
-
-        if (seg->originFrame < start) {
-            if (seglast < start) {
-                // segment is completely out of scope
-                if (prev == nullptr)
-                  segments = nextseg;
-                else
-                  prev->next = nextseg;
-                seg->next = nullptr;
-                reclaim(seg);
-            }
-            else {
-                // right half of the segment is included
-                // but needs to have the prefix reculated
-                seg->segmentFrames = seglast - start + 1;
-                if (seg->segmentFrames <= 0) {
-                    // sanity check on boundary case
-                    Trace(1, "MidiLayer: Cut segment duration anomoly");
-                    seg->segmentFrames = 1;
-                }
-                
-                prev = seg;
-            }
-        }
-        else if (seg->originFrame <= end) {
-            // segment is included in the new region but may be too long
-            // note truncation is handled by Harvester
-            if (seglast > end)
-              seg->segmentFrames = end - seg->originFrame + 1;
-
-            // slide the whole thing down
-            seg->originFrame -= start;
-            prev = seg;
-        }
-        else {
-            // we're beyond the end of segments to include
-            // this is assuming that these are inserted in order and
-            // there can't be overlaps
-            if (prev == nullptr)
-              segments = nullptr;
-            else
-              prev->next = nullptr;
-            
-            while (seg != nullptr) {
-                nextseg = seg->next;
-                seg->next = nullptr;
-                reclaim(seg);
-                seg = nextseg;
-            }
-            nextseg = nullptr;
-        }
-
-        seg = nextseg;
-    }
-
-    layerFrames = end - start + 1;
-}
-
-void MidiLayer::reclaim(MidiSegment* seg)
-{
-    if (seg->prefix != nullptr) {
-        seg->prefix->clear(midiPool);
-        sequencePool->checkin(seg->prefix);
-    }
-    segmentPool->checkin(seg);
 }
 
 //////////////////////////////////////////////////////////////////////

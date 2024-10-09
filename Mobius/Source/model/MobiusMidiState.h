@@ -95,6 +95,11 @@ class MobiusMidiState
      * !! Events need to have a displayable name but juce::String
      * has potential allocations.  Can we get this to using an enum
      * for event types then let the view do the string mapping?
+     * basically that means moving the TrackEvent type enum up to the
+     * state object, like we do for modes.  Unfortunately there
+     * need to be internal events that are not exported in State so the
+     * enum in State would have a lot of junk or we have two and map
+     * between them.
      */
     class Event {
       public:

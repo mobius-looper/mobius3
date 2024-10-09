@@ -291,6 +291,16 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
                   estate->name = s->name;
             }
                 break;
+
+            case TrackEvent::EventRound: {
+                // horrible to be doing formatting down here
+                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
+                estate->name = "End ";
+                if (s != nullptr) 
+                  estate->name += s->name;
+            }
+                break;
+                
             default: addit = false; break;
         }
         
@@ -602,17 +612,17 @@ void MidiTrack::shift()
 }
 
 /**
- * Shift variant for unrounded multiply.
+ * Shift variant for remultiply and unrounded multiply.
  * Here a section of the loop is cut out between
  * the start of the multiply mode and the current frame.
  * Recorder remembered the region.
  */
-void MidiTrack::shiftCut()
+void MidiTrack::shiftMultiply(bool unrounded)
 {
     Trace(2, "MidiTrack: Shifting cut layer");
     MidiLoop* loop = loops[loopIndex];
     
-    MidiLayer* neu = recorder.commitCut(overdub);
+    MidiLayer* neu = recorder.commitMultiply(overdub, unrounded);
     int layers = loop->getLayerCount();
     neu->number = layers + 1;
     loop->add(neu);
@@ -639,6 +649,7 @@ void MidiTrack::doEvent(TrackEvent* e)
         case TrackEvent::EventSwitch: doSwitch(e); break;
         case TrackEvent::EventReturn: doSwitch(e); break;
         case TrackEvent::EventFunction: doFunction(e); break;
+        case TrackEvent::EventRound: doRound(e); break;
     }
 
     eventPool->checkin(e);
@@ -815,8 +826,7 @@ void MidiTrack::doRecord(UIAction* a)
 
     if (mode == MobiusMidiState::ModeMultiply) {
         // unrounded multiply or "cut"
-        // first shift accumulated changes before the cut
-        shiftCut();
+        shiftMultiply(true);
         mode = MobiusMidiState::ModePlay;
     }
     else if (!needsRecordSync()) {
@@ -1453,14 +1463,51 @@ void MidiTrack::doMultiply(TrackEvent* e)
 void MidiTrack::doMultiplyNow()
 {
     if (mode == MobiusMidiState::ModeMultiply) {
-        mode = MobiusMidiState::ModePlay;
-        recorder.endMultiply(overdub);
+
+        // ending an unrounded multiply quantizes the end frame
+        // so that the cycle length can be preserved
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventRound;
+        event->symbolId = FuncMultiply;
+        event->frame = getRoundedFrame();
+        events.add(event);
     }
     else if (mode == MobiusMidiState::ModePlay) {
         mode = MobiusMidiState::ModeMultiply;
         recorder.startMultiply();
     }
+}
 
+void MidiTrack::doRound(TrackEvent* e)
+{
+    if (e->symbolId == FuncMultiply) {
+        shiftMultiply(false);
+        mode = MobiusMidiState::ModePlay;
+    }
+    else if (e->symbolId == FuncInsert) {
+        // todo
+    }
+    else {
+        Trace(1, "MidiTrack: Rouding event with invalid symbol");
+    }
+    
+    mode = MobiusMidiState::ModePlay;
+}
+
+/**
+ * For multiply/insert
+ */
+int MidiTrack::getRoundedFrame()
+{
+    int modeStart = recorder.getMultiplyFrame();
+    int recordFrame = recorder.getFrame();
+    int delta = recordFrame - modeStart;
+    int cycleFrames = recorder.getCycleFrames();
+    int cycles = delta / cycleFrames;
+    if ((delta % cycleFrames) > 0)
+      cycles++;
+
+    return cycles * cycleFrames;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1468,6 +1515,8 @@ void MidiTrack::doMultiplyNow()
 // Insert
 //
 //////////////////////////////////////////////////////////////////////
+
+// todo: needs lots of work to round like multiply
 
 void MidiTrack::doInsert(UIAction* a)
 {

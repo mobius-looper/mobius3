@@ -49,6 +49,8 @@ class MidiHarvester
      * into that segment.
      */
     void harvestHeld(MidiLayer* layer, int startFrame, int endFrame);
+
+    void harvestPrefix(class MidiSegment* prev, class MidiSegment* segment);
     
     juce::Array<class MidiEvent*>& getNotes() {
         return notes;

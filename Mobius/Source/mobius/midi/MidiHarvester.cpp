@@ -375,6 +375,48 @@ MidiEvent* MidiHarvester::add(MidiEvent* e)
     return copy;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Hold Harvest
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The previous one is bogus, this will be the new one
+ *
+ * If we don't have a previous segment we harvest from the beginning
+ * of the backing layer.
+ *
+ * If we do have a previous segment and it is contiguous, we include the
+ * prefix from the previous segment.
+ *
+ * If we have a previoius segment and it is not contiguous, we include the
+ * prefix from the previous PLUS any notes from the backing layer's sequence
+ * that went down between the two segments.
+ */
+void MidiHarvester::harvestPrefix(MidiSegment* prev, MidiSegment* segment)
+{
+    (void)prev;
+    (void)sequence;
+#if 0
+    if (prev == nullptr) {
+        // have to start from the beginning of the backing layer
+        MidiLayer* layer = segment->layer;
+        harvestPrefix(layer, segment->originFrame);
+    }
+    else {
+        // can start with whatever was held from the previous segemnt
+        harvestPrefix(prev, segment->originFrame);
+        // then anything in the backing layer's sequence between the two segments
+        // normally relevant only for insert
+        MidiSequence* seq = segment->layer->getSequence();
+        if (seq != nullptr)
+          harvestPrefix(seq, 
+    }
+#endif
+              
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -20,27 +20,7 @@ class MidiLayer : public PooledObject
     void dump(class StructureDumper& d);
     void poolInit() override;
     void prepare(class MidiSequencePool* spool, class MidiEventPool* epool, class MidiSegmentPool* segpool);
-    
-    void clear();
-    void add(class MidiEvent* e);
-    void add(class MidiSegment* s);
-    void setFrames(int frames);
-    int getFrames();
-    void setCycles(int cycles);
-    int getCycles();
-    void setLastPlayFrame(int frame);
-    int getLastPlayFrame();
-    
-    void resetPlayState();
-    void copy(class MidiLayer* src);
-    void cut(int start, int end);
-    
-    bool hasChanges();
-    void resetChanges();
-    void incChanges();
-    int getEventCount();
 
-    // copy support
     class MidiSequence* getSequence() {
         return sequence;
     }
@@ -48,8 +28,31 @@ class MidiLayer : public PooledObject
     class MidiSegment* getSegments() {
         return segments;
     }
-
-    class MidiSequence* ensureSequence();
+    
+    void clear();
+    void clearSegments();
+    void add(class MidiEvent* e);
+    void add(class MidiSegment* s);
+    void replaceSegments(class MidiSegment* list);
+    
+    int getFrames();
+    void setFrames(int frames);
+    
+    int getCycles();
+    void setCycles(int cycles);
+    
+    int getLastPlayFrame();
+    void setLastPlayFrame(int frame);
+    
+    void resetPlayState();
+    
+    void copy(class MidiLayer* src);
+    void cut(int start, int end);
+    
+    bool hasChanges();
+    void resetChanges();
+    void incChanges();
+    int getEventCount();
 
   protected:
     
@@ -89,6 +92,7 @@ class MidiLayer : public PooledObject
     void cutSegments(int start, int end);
     void injectSegmentHolds(class MidiSegment* seg, int start, int end);
     void reclaim(class MidiSegment* seg);
+    void reclaim(class MidiSequence* seq);
 
 };
         

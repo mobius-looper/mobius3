@@ -24,7 +24,8 @@ class TrackEvent : public PooledObject
         EventRecord,
         EventSwitch,
         EventReturn,
-        EventFunction
+        EventFunction,
+        EventRound,
     } Type;
     
     TrackEvent();

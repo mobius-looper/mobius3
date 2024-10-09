@@ -254,6 +254,9 @@ MidiLayer* MidiRecorder::commit(bool overdub)
     
         if (!overdub)
           finalizeHeld();
+
+        // for consistency, should restructure the segments
+        // and calculate prefixes just like we do for cuts?
     
         recordLayer->setFrames(recordFrames);
         recordLayer->setCycles(recordCycles);
@@ -279,21 +282,26 @@ MidiLayer* MidiRecorder::commit(bool overdub)
 }
 
 /**
- * Commit variant for unrounded multiply aka "cut"
+ * Commit a "remultiply" or unrounded multiply layer.
+ * multiplyFrame is the start of the multiply, this may or may not
+ * have been quantized.  The current recordFrame is the end.
  *
- * This one is complicated because it requires adjustment to the current
- * sequence and segments which may reduce their size and change their origin.
- * The layer has potentially been accumulating overdubs in the sequence,
- * and segments for Replace or what have you, but after a cut, any edits
- * before the cut are thrown away, and any segments after the cut are removed.
- * Segments that span the cut off point are shortened.
+ * For remultiply the distance between the start and end frames is supposed
+ * to have been scheduled to be an even number of cycles.
+ *
+ * For unrounded, the distance doesn't matter and will result in a layer of
+ * one cycle.
+ *
+ * The segments are reorganized to have the minimum number necessary to
+ * represent contiguous regions in the backing layer and held note prefixes
+ * are calcualted for each.
  */
-MidiLayer* MidiRecorder::commitCut(bool overdub)
+MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
 {
     MidiLayer* commitLayer = nullptr;
     
     if (recordLayer == nullptr) {
-        Trace(1, "MidiRecorder: Cut without a layer");
+        Trace(1, "MidiRecorder: Remultiply without a layer");
     }
     else if (!multiply) {
         // not supposed to happen if this isn't in multiply mode
@@ -303,77 +311,80 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
     }
     else {
         int cutStart = multiplyFrame;
-        int cutEnd = recordFrame;
+        int cutEnd = recordFrame - 1;
+        
+        int newFrames = recordFrame - multiplyFrame;
+        int newCycles = recordCycles;
+        int newCycleFrames = cycleFrames;
+        if (unrounded) {
+            newCycles = 1;
+            newCycleFrames = newFrames;
+        }
+        else {
+            // sanity check on cycle preservation
+            newCycles = newFrames / cycleFrames;  // this will round
+            int checkFrames = newCycles * cycleFrames;
+            if (newFrames != checkFrames) {
+                // there was an error scheduling the end of the multiply
+                // and/or roundoff errors due to odd cycle lengths
+                // should really try to make adjustments to preserve
+                // the cycle length, either pull the ending back to shorten
+                // or push the start back to lenghten
+                Trace(1, "MidiRecorder: Cycle length miscalculation on remultiply %d vs %d",
+                      newFrames, checkFrames);
+            }
+        }
 
         if (!overdub)
           finalizeHeld();
 
-        // do note extension analysis for the eventual segment prefix
-        harvester.reset();
-        // this effectively flattens the layer up to the cut point
-        // todo: some sort of threshold on how far notes have to extend
-        // into the new segment before they are included?
-        // update: if segments consistently manage their hold list, then
-        // all this has to do is find holds in the layer sequence, and holds
-        // in the first segment that spans the cut, if segments are adjacent
-        // they will have overlapping hold prefixes so you only need to look
-        // at the closest one
-        harvester.harvestHeld(recordLayer, 0, cutStart);
+        MidiSegment* segments = rebuildSegments(cutStart, cutEnd);
 
-        // !! where does the overdub that happened during the multiply go?
-        // if there were overdubs or replaces prior to that should they
-        // be committed?  If you want that you would have to shift twice here
-        // since to get the edits prior to the new region, and again after
-        // as it stands now, they will be lost since we'll cut them out
-        // of the layer sequence, seems reasonable, should have let it play
-        // once if you wanted it
-        recordLayer->cut(cutStart, cutEnd);
+        // for each segment, calculate the hold prefix
+        MidiSegment* prev = nullptr;
+        for (MidiSegment* s = segments ; s != nullptr ; s = s->next) {
 
-        // now inject the sustained notes into the sequence
-        // hmm, I was thinking we would use segment prefixes for these but
-        // that's not the way it worked out, what harvester has effectively
-        // done is calculate the flattened list of held notes for ALL segments
-        // and the layer's sequence, though in practice it will only include
-        // events from the first spanning segment
-        // !! make sure recordLayer->cut isn't also doing held note adjustments
-        // or else we'll get doubles
-        //
-        // putting the held notes on the segment would require more messy logic
-        // in harvester, it's easier to put them on the Layer, though we can't
-        // now tell the difference between a held note and a normally recorded
-        // note.   If this holds together, then we can get rid rid of the
-        // Segment::prefix
-        // however, putting them in the segment makes it easier to recalculate
-        // holds for just that segment if you need to change the segment's
-        // left edge during flattening
-        // update: no you're thinking wrong, what recordLayer has is a sequence
-        // that can be cut with hold adjustments and a set of segments we could
-        // just do held note detection on the first segment and leave the result
-        // there as we're not moving the cycle locations
-        // look at remultiply
+            harvester.reset();
+            harvester.harvestPrefix(prev, s);
 
-        // put held notes at the beginning of the cut layer sequence
-        MidiSequence* seq = recordLayer->ensureSequence();
-        juce::Array<MidiEvent*> notes = harvester.getNotes();
-        for (int i = 0 ; i < notes.size() ; i++) {
-            MidiEvent* note = notes[i];
-            if (note != nullptr) {
-                notes.set(i, nullptr);
-                note->frame = 0;
-                note->next = nullptr;
-                seq->insert(note);
+            juce::Array<MidiEvent*>& notes = harvester.getNotes();
+            if (notes.size() > 0) {
+                for (int i = 0 ; i < notes.size() ; i++) {
+                    MidiEvent* note = notes[i];
+                    if (note != nullptr) {
+                        notes.set(i, nullptr);
+                        note->frame = 0;
+                        note->next = nullptr;
+                        if (s->prefix == nullptr)
+                          s->prefix = sequencePool->newSequence();
+                        s->prefix->add(note);
+                    }
+                }
             }
         }
-
         harvester.reset();
+        
+        recordLayer->replaceSegments(segments);
+
+        // cut the recorded sequence
+        MidiSequence* sequence = recordLayer->getSequence();
+        if (sequence != nullptr)
+          sequence->cut(midiPool, cutStart, cutEnd, true);
+ 
+        // restructure the layer
+        recordLayer->setFrames(newFrames);
+        recordLayer->setCycles(newCycles);
+        //recordLayer->setCycleFrames(newCycleFrames);
 
         // shift
         commitLayer = recordLayer;
         recordLayer = nullptr;
         assimilate(commitLayer);
 
-        recordFrames = recordLayer->getFrames();
-        recordCycles = recordLayer->getCycles();
+        recordFrames = newFrames;
+        recordCycles = newCycles;
+        cycleFrames = newCycleFrames;
+        
         multiply = false;
         multiplyFrame = 0;
         extending = false;
@@ -389,128 +400,84 @@ MidiLayer* MidiRecorder::commitCut(bool overdub)
 }
 
 /**
- * Commit a "remultiply" layer.
- * multiplyFrame is the start of the multiply, this may or may not
- * have been quantized.  The current recordFrame is the end, and this
- * will normally have been scheduled such that distance from the start frame
- * is an even multiple of the cycle length.
+ * Rebuild the segment list from the recorded segment list to reflect
+ * changes in the start and end points.  The recorded segments were created
+ * incrementally during recording and will reference cycles in the backing
+ * layer using the selection logic in extend().  This is currently "EDP style"
+ * where successive cycles from the start point are chosen, looping back to the
+ * beginning and continuing.  I'd like to support other cycle selection styles
+ * though, so when we get the end the segment rebuilder should not make any
+ * assumptions about which cycles in the backing layer each segment references.
  *
- * The segments are reorganized so that the loop contains segments whose
- * size equals the cycle legth, but whose start/end are relative to the
- * multiplyFrame and may be different than the original segments.
- * This is the "EDP way" of doing multiply.
+ * It will create the fewest numbers of cycles as possible to cover continuous
+ * regions of the backing layer.  The new segments will start at origin frame zero.
  *
- * Since each Segment may start in a random place relative to the backing
- * layer, held note havesting needs to be performed 
+ * assumptions:
+ *   segments are ordered by ascending originFrame
+ *   segments do not overlap
+ *   segments reference the same backing layer
  */
-MidiLayer* MidiRecorder::commitCut(bool overdub)
+MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
 {
-    MidiLayer* commitLayer = nullptr;
+    MidiSegment* segments = nullptr;
+    MidiSegment* segment = nullptr;
     
-    if (recordLayer == nullptr) {
-        Trace(1, "MidiRecorder: Remultiply without a layer");
-    }
-    else if (!multiply) {
-        // not supposed to happen if this isn't in multiply mode
-        // I suppose it could but we would have to pass in the start and end points
-        Trace(1, "MidiRecorder: Asked for cut outside of multiply mode");
-        commitLayer = commit(overdub);
-    }
-    else {
-        int cutStart = multiplyFrame;
-        int cutEnd = recordFrame;
+    MidiSegment* recorded = recordLayer->getSegments();
+    while (recorded != nullptr) {
 
-        // sanity check on cycle preservation
-        int totalFrames = recordFrame - multiplyFrame + 1;
-        int resultCycles = totalFrames / cycleFrames;  // this will round
-        int checkFrames = resultCycles * cycleFrames;
-        if (totalFrames != checkFrames) {
-            // there was an error scheduling the end of the multiply
-            // and/or roundoff errors due to odd cycle lengths
-            // should really try to make adjustments to preserve
-            // the cycle length, either pull the ending back to shorten
-            // or push the start back to lenghten
-            Trace(1, "MidiRecorder: Cycle length miscalculation on remultiply %d vs %d",
-                  totalFrames, checkFrames);
-        }
+        int reclast = recorded->originFrame + recorded->segmentFrames - 1;
+        if (reclast >= startFrame) {
+            if (segment == nullptr) {
+                // first segment, consume the recorded segment that is in range
+                segment = segmentPool->newSegment();
+                segment->layer = recorded->layer;
+                segment->originFrame = startFrame;
+                int leftLoss = startFrame - recorded->originFrame;
+                segment->referenceFrame = recorded->referenceFrame + leftLoss;
+                segment->segmentFrames = recorded->segmentFrames - leftLoss;
+            }
+            else {
+                // appending to an existing segment
+                // is this segment contiguous with the one we're building?
+                if (((segment->originFrame + segment->segmentFrames) ==
+                     recorded->originFrame) &&
+                    ((segment->referenceFrame + segment->segmentFrames) ==
+                     recorded->referenceFrame)) {
+                    // subsume it
+                    segment->segmentFrames += recorded->segmentFrames;
+                }
+                else {
+                    // gap, make a new segment
+                    MidiSegment* neu = segmentPool->newSegment();
+                    neu->layer = recorded->layer;
+                    neu->originFrame = recorded->originFrame;
+                    neu->referenceFrame = recorded->referenceFrame;
+                    neu->segmentFrames = recorded->segmentFrames;
+                    segment->next = neu;
+                    segment = neu;
+                }
+            }
 
-        if (!overdub)
-          finalizeHeld();
-
-        // build a new Segment list
-        
-        
-
-        // do note extension analysis for the eventual segment prefix
-        harvester.reset();
-        // this effectively flattens the layer up to the cut point
-        // todo: some sort of threshold on how far notes have to extend
-        // into the new segment before they are included?
-        harvester.harvestHeld(recordLayer, 0, cutStart);
-
-        // !! where does the overdub that happened during the multiply go?
-        // if there were overdubs or replaces prior to that should they
-        // be committed?  If you want that you would have to shift twice here
-        // since to get the edits prior to the new region, and again after
-        // as it stands now, they will be lost since we'll cut them out
-        // of the layer sequence, seems reasonable, should have let it play
-        // once if you wanted it
-        recordLayer->cut(cutStart, cutEnd);
-
-        // now inject the sustained notes into the sequence
-        // hmm, I was thinking we would use segment prefixes for these but
-        // that's not the way it worked out, what harvester has effectively
-        // done is calculate the flattened list of held notes for ALL segments
-        // and the layer's sequence, though in practice it will only include
-        // events from the first spanning segment
-        // !! make sure recordLayer->cut isn't also doing held note adjustments
-        // or else we'll get doubles
-        //
-        // putting the held notes on the segment would require more messy logic
-        // in harvester, it's easier to put them on the Layer, though we can't
-        // now tell the difference between a held note and a normally recorded
-        // note.   If this holds together, then we can get rid rid of the
-        // Segment::prefix
-        // however, putting them in the segment makes it easier to recalculate
-        // holds for just that segment if you need to change the segment's
-        // left edge during flattening
-
-        // put held notes at the beginning of the cut layer sequence
-        MidiSequence* seq = recordLayer->ensureSequence();
-        juce::Array<MidiEvent*> notes = harvester.getNotes();
-        for (int i = 0 ; i < notes.size() ; i++) {
-            MidiEvent* note = notes[i];
-            if (note != nullptr) {
-                notes.set(i, nullptr);
-                note->frame = 0;
-                note->next = nullptr;
-                seq->insert(note);
+            // if we've consumed till the end, trunicate the final segment
+            // and stop
+            int last = segment->originFrame + segment->segmentFrames - 1;
+            if (last >= endFrame) {
+                segment->segmentFrames -= (last - endFrame);
+                break;
             }
         }
-
-        harvester.reset();
-
-        // shift
-        commitLayer = recordLayer;
-        recordLayer = nullptr;
-        assimilate(commitLayer);
-
-        recordFrames = recordLayer->getFrames();
-        recordCycles = recordLayer->getCycles();
-        multiply = false;
-        multiplyFrame = 0;
-        extending = false;
-    
-        if (!overdub)
-          recording = false;
-    
-        recordFrame = 0;
-        extensions = 0;
+            
+        recorded = recorded->next;
     }
 
-    return commitLayer;
+    // new list has origin frames relative to to the full layer
+    // the assumption here is that this is used for clipping so
+    // drop them all by startFrame to make them relative to zero
+    for (MidiSegment* s = segments ; s != nullptr ; s = s->next)
+      s->originFrame -= startFrame;
+
+    return segments;
 }
-#endif
 
 /**
  * Change the recording location.
@@ -575,6 +542,11 @@ void MidiRecorder::endMultiply(bool overdub)
     multiply = false;
     extending = false;
     setRecording(overdub);
+}
+
+int MidiRecorder::getMultiplyFrame()
+{
+    return multiplyFrame;
 }
 
 void MidiRecorder::startInsert()

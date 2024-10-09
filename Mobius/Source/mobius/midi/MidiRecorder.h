@@ -43,11 +43,12 @@ class MidiRecorder : public MidiWatcher::Listener
     void rollback(bool overdub);
     void clear();
     MidiLayer* commit(bool overdub);
-    MidiLayer* commitCut(bool overdub);
+    MidiLayer* commitMultiply(bool overdub, bool unrounded);
     void setFrame(int newFrame);
 
     void startMultiply();
     void endMultiply(bool overdub);
+    int getMultiplyFrame();
     
     void startInsert();
     void endInsert(bool overdub);
@@ -125,6 +126,8 @@ class MidiRecorder : public MidiWatcher::Listener
     int lastBlockFrames = 0;
 
     void extend();
+    MidiSegment* rebuildSegments(int startFrame,  int endFame);
+    
     void assimilate(class MidiLayer* layer);
     class MidiLayer* prepLayer();
     

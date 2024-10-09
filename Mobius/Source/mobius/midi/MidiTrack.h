@@ -108,7 +108,7 @@ class MidiTrack
     void advance(int newFrames);
     void advancePlayer(int newFrames);
     void shift();
-    void shiftCut();
+    void shiftMultiply(bool unrounded);
     
     // actions/events
     void doEvent(TrackEvent* e);
@@ -148,8 +148,10 @@ class MidiTrack
     void finishRecordingMode();
 
     int getQuantizeFrame(QuantizeMode qmode);
+    int getRoundedFrame();
     void doMultiply(class UIAction* a);
     void doMultiply(class TrackEvent* e);
+    void doRound(class TrackEvent* e);
     void doMultiplyNow();
     void doInsert(class UIAction* a);
     void doInsert(class TrackEvent* e);
