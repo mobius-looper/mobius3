@@ -40,6 +40,8 @@ class MobiusMidiState
 {
   public:
 
+    static const int MaxRegions = 10;
+    
     // major modes a track can be in
     typedef enum {
         ModeReset,
@@ -103,6 +105,16 @@ class MobiusMidiState
     };
 
     /**
+     * State for a region within the loop
+     */
+    class Region {
+      public:
+        int startFrame = 0;
+        int endFrame = 0;
+        bool active = false;
+    };
+
+    /**
      * State for one track
      * I want to avoid the notion of the "active track" for MIDI and make this a
      * UI level thing.  The only time core needs to know whether something is
@@ -149,6 +161,8 @@ class MobiusMidiState
         juce::OwnedArray<Loop> loops;
         juce::OwnedArray<Event> events;
         int eventCount = 0;
+
+        juce::Array<Region> regions;
         
     };
 

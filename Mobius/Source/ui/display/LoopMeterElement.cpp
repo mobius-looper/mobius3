@@ -131,18 +131,61 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int subcycleWidth = MeterBarWidth / totalSubcycles;
     int ticksToDraw = totalSubcycles + 1;
 
+    // meter bar
+    int meterWidth = getMeterOffset(track->frame, track->frames);
+    if (track->frames > 0) {
+        // method 1: full width
+        //g.setColour(Colors::getLoopColor(track));
+        //g.fillRect((float)thermoLeft, (float)BorderThickness,
+        //(float)meterWidth, (float)MeterBarHeight);
+
+        // method 2: thin
+        g.setColour(Colors::getLoopColor(track));
+        int cursorLeft = thermoLeft + meterWidth - 1;
+        int cursorWidth = 3;
+        g.fillRect((float)cursorLeft, (float)BorderThickness,
+                   (float)cursorWidth, (float)MeterBarHeight);
+    }
+    
+    // regions
+    for (int i = 0 ; i < track->regions.size() ; i++) {
+        MobiusMidiState::Region& region = track->regions.getReference(i);
+        int regionLeft = getMeterOffset(region.startFrame, track->frames);
+        int regionRight = getMeterOffset(region.endFrame, track->frames);
+        if (region.active)
+          g.setColour(juce::Colours::red);
+        else
+          g.setColour(juce::Colours::yellow);
+
+        int regionWidth = regionRight - regionLeft + 1;
+        g.fillRect((float)regionLeft, (float)BorderThickness,
+                   (float)regionWidth, (float)MeterBarHeight);
+    }
+    
+
     // lines in the bar to indiciate subcycles and cycles
     // looks better inside the box than as ruler markks under it
     int tickTop = thermoTop + MeterBarHeight / 4;
     int tickHeight = MeterBarHeight / 2;
     int subcycleCount = 0;
     int subcycleLeft = thermoLeft;
+    int meterRight = thermoLeft + meterWidth;
     for (int i = 0 ; i < ticksToDraw ; i++) {
-        if (subcycleCount > 0) {
-            g.setColour(juce::Colours::grey);
+        if (subcycleLeft < meterRight) {
+            if (subcycleCount > 0) {
+                g.setColour(juce::Colours::grey);
+            }
+            else {
+                g.setColour(juce::Colours::black);
+            }
         }
         else {
-            g.setColour(juce::Colours::white);
+            if (subcycleCount > 0) {
+                g.setColour(juce::Colours::grey);
+            }
+            else {
+                g.setColour(juce::Colours::white);
+            }
         }
         // ignore edges
         if (i > 0 && i < ticksToDraw - 1)
@@ -156,14 +199,6 @@ void LoopMeterElement::paint(juce::Graphics& g)
         subcycleLeft += subcycleWidth;
     }
     
-    // meter bar
-    if (track->frames > 0) {
-        int width = getMeterOffset(track->frame, track->frames);
-        g.setColour(Colors::getLoopColor(track));
-        g.fillRect((float)thermoLeft, (float)BorderThickness,
-                   (float)width, (float)MeterBarHeight);
-    }
-
     // events
     // clear it out first?
     juce::Font font(JuceUtil::getFont(MarkerTextHeight));

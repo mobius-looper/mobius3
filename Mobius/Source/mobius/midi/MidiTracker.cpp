@@ -107,6 +107,9 @@ void MidiTracker::prepareState(MobiusMidiState* state, int baseNumber, int count
             MobiusMidiState::Event* event = new MobiusMidiState::Event();
             tstate->events.add(event);
         }
+
+        // loop regions
+        tstate->regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
     }
 }
 

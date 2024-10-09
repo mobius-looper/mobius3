@@ -87,7 +87,9 @@ class MidiTrack
     // the meat
     MidiRecorder recorder {this};
     MidiPlayer player {this};
-
+    juce::Array<MobiusMidiState::Region> regions;
+    int activeRegion = -1;
+    
     // state
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
     bool synchronizing = false;
@@ -126,6 +128,11 @@ class MidiTrack
     void toggleRecording();
     void startRecording();
     void stopRecording();
+
+    void resetRegions();
+    void startOverdubRegion();
+    void stopOverdubRegion();
+    void advanceRegion(int frames);
     
     void doOverdub(class UIAction* a);
     bool inRecordingMode();

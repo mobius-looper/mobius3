@@ -26,6 +26,8 @@
 
 #include <JuceHeader.h>
 
+#include "../model/MobiusMidiState.h"
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events & Inactive Loops
@@ -93,6 +95,10 @@ class MobiusViewTrack {
     friend class MobiusViewer;
     
   public:
+
+    MobiusViewTrack() {
+        regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
+    }
 
     /**
      * Flag to force a full refresh of everything
@@ -342,6 +348,8 @@ class MobiusViewTrack {
     bool refreshEvents = false;
     juce::OwnedArray<MobiusViewEvent> events;
 
+    juce::Array<MobiusMidiState::Region> regions;
+    
   protected:
 
 };

@@ -82,6 +82,9 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     }
     loopCount = 2;
     loopIndex = 0;
+
+    regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
+    activeRegion = -1;
 }
 
 MidiTrack::~MidiTrack()
@@ -301,6 +304,13 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
         }
     }
     state->eventCount = count;
+
+    state->regions.clearQuick();
+    for (int i = 0 ; i < regions.size() && i < MobiusMidiState::MaxRegions ; i++) {
+        MobiusMidiState::Region& region = regions.getReference(i);
+        state->regions.add(region);
+    }
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -523,6 +533,7 @@ void MidiTrack::advance(int newFrames)
         if (recorder.isExtending() || nextFrame < recorder.getFrames()) {
             recorder.advance(newFrames);
             advancePlayer(newFrames);
+            advanceRegion(newFrames);
         }
         else {
             // we hit the loop point in this block
@@ -539,6 +550,9 @@ void MidiTrack::advance(int newFrames)
                 // squelching the record layer
                 recorder.rollback(overdub);
             }
+            // restart the overdub region if we're still in it
+            resetRegions();
+            if (overdub) startOverdubRegion();
 
             // shift events waiting for the loop end
             // don't like this
@@ -547,6 +561,7 @@ void MidiTrack::advance(int newFrames)
             player.restart();
             player.play(remainder);
             recorder.advance(remainder);
+            advanceRegion(remainder);
         }
     }
 }
@@ -684,6 +699,58 @@ void MidiTrack::doFunction(TrackEvent* e)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Regions
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::resetRegions()
+{
+    activeRegion = -1;
+    regions.clearQuick();
+}
+
+void MidiTrack::startOverdubRegion()
+{
+    if (activeRegion >= 0) {
+        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        region.active = false;
+        activeRegion = -1;
+    }
+    
+    if (regions.size() < MobiusMidiState::MaxRegions) {
+        activeRegion = regions.size();
+        MobiusMidiState::Region region;
+        region.active = true;
+        region.startFrame = recorder.getFrame();
+        region.endFrame = recorder.getFrame();
+        regions.add(region);
+    }
+    overdub = true;
+}
+
+void MidiTrack::stopOverdubRegion()
+{
+    if (overdub) {
+        if (activeRegion >= 0) {
+            // were in the middle of one already
+            MobiusMidiState::Region& region = regions.getReference(activeRegion);
+            region.active = false;
+        }
+        activeRegion = -1;
+        overdub = false;
+    }
+}
+
+void MidiTrack::advanceRegion(int frames)
+{
+    if (activeRegion >= 0) {
+        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        region.endFrame += frames;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Reset
 //
 //////////////////////////////////////////////////////////////////////
@@ -699,6 +766,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
 
     recorder.reset();
     player.reset();
+    resetRegions();
     
     synchronizing = false;
     overdub = false;
@@ -890,8 +958,11 @@ void MidiTrack::doOverdub(UIAction* a)
 {
     (void)a;
 
-    // toggle our state 
-    overdub = !overdub;
+    // toggle our state
+    if (overdub)
+      stopOverdubRegion();
+    else
+      startOverdubRegion();
 
     if (!inRecordingMode()) {
         recorder.setRecording(overdub);
@@ -981,7 +1052,7 @@ void MidiTrack::doUndo(UIAction* a)
     if (mode != MobiusMidiState::ModeReset) {
         // a whole lot to think about regarding what happens
         // to major and minor modes here
-        overdub = false;
+        stopOverdubRegion();
         mode = MobiusMidiState::ModePlay;
     }
 }

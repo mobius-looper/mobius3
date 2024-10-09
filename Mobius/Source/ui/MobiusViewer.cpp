@@ -1140,6 +1140,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     // checkpoints not implemented yet
 
     refreshMidiEvents(tstate, tview);
+    refreshRegions(tstate, tview);
 }
 
 void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 
@@ -1218,6 +1219,16 @@ void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewT
             ve->pending = estate->pending;
             ve->argument = estate->argument;
         }
+    }
+}
+
+void MobiusViewer::refreshRegions(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+{
+    // yet ANOTHER copy of this
+    tview->regions.clearQuick();
+    for (int i = 0 ; i < tstate->regions.size() && i < MobiusMidiState::MaxRegions ; i++) {
+        MobiusMidiState::Region& src = tstate->regions.getReference(i);
+        tview->regions.add(src);
     }
 }
 
