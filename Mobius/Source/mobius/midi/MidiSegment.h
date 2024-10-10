@@ -16,6 +16,8 @@ class MidiSegment : public PooledObject
     void poolInit() override;
     
     MidiSegment* next = nullptr;
+    MidiSegment* prev = nullptr;
+    
     class MidiLayer* layer = nullptr;
     class MidiSequence* prefix = nullptr;
     
@@ -28,7 +30,7 @@ class MidiSegment : public PooledObject
 
     // the logical start frame within the referenced layer
     int referenceFrame = 0;
-    
+
   private:
     
 };

@@ -127,6 +127,31 @@ int MidiSequence::size()
 }
 
 /**
+ * Take the contents of one sequence and append it to another.
+ * This is assuming the events are sorted or that order doesn't matter
+ */
+void MidiSequence::append(MidiSequence* other)
+{
+    MidiEvent* otherFirst = other->getFirst();
+    MidiEvent* otherTail = other->getTail();
+    tail->next = otherFirst;
+    tail = otherTail;
+    count += other->size();
+    other->eventsStolen();
+}
+
+/**
+ * Make this sequence empty assuming something else has taken ownership
+ * of the events.
+ */
+void MidiSequence::eventsStolen()
+{
+    events = nullptr;
+    tail = nullptr;
+    count = 0;
+}
+
+/**
  * Trim the left/right edges of a sequence.
  * Used for "unrounded multiply"
  *

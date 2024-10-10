@@ -30,9 +30,25 @@ class MidiHarvester
 
     MidiHarvester();
     ~MidiHarvester();
-    void initialize(class MidiEventPool* epool, int capacity);
+    void initialize(class MidiEventPool* epool, class MidiSequencePool* spool, int capacity);
 
     void reset();
+
+    juce::Array<class MidiEvent*>& getNotes() {
+        return notes;
+    }
+
+    juce::Array<class MidiEvent*>& getEvents() {
+        return events;
+    }
+
+    class MidiSequence* getPlayNotes() {
+        return playNotes;
+    }
+
+    class MidiSequence* getPlayEvents() {
+        return playEvents;
+    }
 
     /**
      * Obtain the events in a Layer within the given range.
@@ -43,33 +59,45 @@ class MidiHarvester
      */
     void harvest(MidiLayer* layer, int startFrame, int endFrame);
 
-    /**
-     * Harvest variant that only finds notes that extend past the
-     * threshold.  Used to find notes preceeding a segment that are held
-     * into that segment.
-     */
-    void harvestHeld(MidiLayer* layer, int startFrame, int endFrame);
-
-    void harvestPrefix(class MidiSegment* prev, class MidiSegment* segment);
+    //
+    // New Interface, replace the older play interface eventually
+    //
     
-    juce::Array<class MidiEvent*>& getNotes() {
-        return notes;
-    }
-
-    juce::Array<class MidiEvent*>& getEvents() {
-        return events;
-    }
+    void harvestPlay(class MidiLayer* layer, int startFrame, int endFrame);
+    void harvestPrefix(class MidiSegment* segment);
     
   private:
 
-    class MidiEventPool* eventPool = nullptr;
+    class MidiEventPool* midiPool = nullptr;
+    class MidiSequencePool* sequencePool = nullptr;
     int noteCapacity = 0;
     bool heldNotesOnly = false;
     
     juce::Array<class MidiEvent*> notes;
     juce::Array<class MidiEvent*> events;
+    class MidiSequence *playNotes = nullptr;
+    class MidiSequence *playEvents = nullptr;
+
+    void harvestRange(class MidiLayer* layer, int startFrame, int endFrame,
+                      bool heldOnly, bool forceFirstPrefix,
+                      class MidiSequence* noteResult, class MidiSequence* eventResult);
 
     void seek(class MidiLayer* layer, int startFrame);
+    
+    void harvest(class MidiSegment* segment, int startFrame, int endFrame,
+                 bool heldOnly, bool forceFirstPrefix,
+                 class MidiSequence* noteResult, class MidiSequence* eventResult);
+    
+    bool hasContinuity(class MidiSegment* segment);
+    
+    class MidiEvent* add(class MidiEvent* e, bool heldOnly,
+                         class MidiSequence* noteResult, class MidiSequence* eventResult);
+    
+    void reclaim(class MidiSequence* seq);
+    void decay(class MidiSequence* seq, int blockSize);
+
+    // old, temporary
+
     void harvest(class MidiSegment* segment, int startFrame, int endFrame);
     class MidiEvent* add(class MidiEvent* e);
 

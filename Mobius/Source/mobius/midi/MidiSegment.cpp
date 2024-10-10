@@ -24,6 +24,7 @@ MidiSegment::~MidiSegment()
 void MidiSegment::poolInit()
 {
     next = nullptr;
+    prev = nullptr;
     layer = nullptr;
     prefix = nullptr;
     originFrame = 0;
@@ -50,6 +51,8 @@ void MidiSegment::dump(StructureDumper& d)
         layer->dump(d);
         d.dec();
     }
+
+    // maybe say something if there is continuity with the previous segment
 }
 
 //////////////////////////////////////////////////////////////////////

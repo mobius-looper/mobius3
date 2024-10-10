@@ -45,11 +45,12 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize(MobiusContainer* c, MidiEventPool* pool)
+void MidiPlayer::initialize(MobiusContainer* c, MidiEventPool* epool, MidiSequencePool* spool)
 {
     container = c;
-    midiPool = pool;
-    harvester.initialize(midiPool, 0);
+    midiPool = epool;
+    sequencePool = spool;
+    harvester.initialize(midiPool, sequencePool, 0);
 }
 
 //////////////////////////////////////////////////////////////////////

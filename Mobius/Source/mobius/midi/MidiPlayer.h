@@ -17,7 +17,8 @@ class MidiPlayer
     //
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
-    void initialize(class MobiusContainer* c, class MidiEventPool* pool);
+    void initialize(class MobiusContainer* c, class MidiEventPool* epool,
+                    class MidiSequencePool* spool);
 
     //
     // Layer Management
@@ -52,6 +53,7 @@ class MidiPlayer
     // configuration
     class MobiusContainer* container = nullptr;
     class MidiEventPool* midiPool = nullptr;
+    class MidiSequencePool* sequencePool = nullptr;
     class MidiTrack* track = nullptr;
 
     // play state

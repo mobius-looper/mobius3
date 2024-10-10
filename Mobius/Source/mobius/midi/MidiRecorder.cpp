@@ -55,7 +55,7 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
     segmentPool = segpool;
     watcher.initialize(midiPool);
     watcher.setListener(this);
-    harvester.initialize(midiPool, 0);
+    harvester.initialize(midiPool, sequencePool, 0);
 }
 
 void MidiRecorder::dump(StructureDumper& d)
@@ -341,28 +341,8 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
         MidiSegment* segments = rebuildSegments(cutStart, cutEnd);
 
         // for each segment, calculate the hold prefix
-        MidiSegment* prev = nullptr;
-        for (MidiSegment* s = segments ; s != nullptr ; s = s->next) {
-
-            harvester.reset();
-            harvester.harvestPrefix(prev, s);
-
-            juce::Array<MidiEvent*>& notes = harvester.getNotes();
-            if (notes.size() > 0) {
-                for (int i = 0 ; i < notes.size() ; i++) {
-                    MidiEvent* note = notes[i];
-                    if (note != nullptr) {
-                        notes.set(i, nullptr);
-                        note->frame = 0;
-                        note->next = nullptr;
-                        if (s->prefix == nullptr)
-                          s->prefix = sequencePool->newSequence();
-                        s->prefix->add(note);
-                    }
-                }
-            }
-        }
-        harvester.reset();
+        for (MidiSegment* s = segments ; s != nullptr ; s = s->next)
+          harvester.harvestPrefix(s);
         
         recordLayer->replaceSegments(segments);
 
@@ -454,6 +434,7 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
                     neu->referenceFrame = recorded->referenceFrame;
                     neu->segmentFrames = recorded->segmentFrames;
                     segment->next = neu;
+                    neu->prev = segment;
                     segment = neu;
                 }
             }
@@ -466,7 +447,7 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
                 break;
             }
         }
-            
+
         recorded = recorded->next;
     }
 

@@ -109,6 +109,7 @@ class MidiTrack
     void advancePlayer(int newFrames);
     void shift();
     void shiftMultiply(bool unrounded);
+    void shiftInsert(bool unrounded);
     
     // actions/events
     void doEvent(TrackEvent* e);

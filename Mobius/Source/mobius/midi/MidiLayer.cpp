@@ -111,6 +111,7 @@ void MidiLayer::replaceSegments(MidiSegment* list)
 {
     clearSegments();
     segments = list;
+    // assumes the prev pointers are valid
 }
 
 void MidiLayer::resetPlayState()
@@ -150,8 +151,11 @@ void MidiLayer::add(MidiSegment* neu)
         segments = neu;
     }
     else {
+        neu->prev = prev;
         neu->next = prev->next;
         prev->next = neu;
+        if (neu->next != nullptr)
+          neu->next->prev = neu;
     }
 
     changes++;

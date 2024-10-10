@@ -71,7 +71,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
                         midiPool,
                         tracker->getSegmentPool());
     
-    player.initialize(container, midiPool);
+    player.initialize(container, midiPool, tracker->getSequencePool());
     
     events.initialize(eventPool);
 
@@ -630,6 +630,22 @@ void MidiTrack::shiftMultiply(bool unrounded)
     player.shift(neu);
 }
 
+/**
+ * Should these shift immediately or accumulate?
+ */
+void MidiTrack::shiftInsert(bool unrounded)
+{
+    Trace(2, "MidiTrack: Shifting insert layer");
+    MidiLoop* loop = loops[loopIndex];
+    
+    MidiLayer* neu = recorder.commitMultiply(overdub, unrounded);
+    int layers = loop->getLayerCount();
+    neu->number = layers + 1;
+    loop->add(neu);
+    
+    player.shift(neu);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -827,6 +843,11 @@ void MidiTrack::doRecord(UIAction* a)
     if (mode == MobiusMidiState::ModeMultiply) {
         // unrounded multiply or "cut"
         shiftMultiply(true);
+        mode = MobiusMidiState::ModePlay;
+    }
+    else if (mode == MobiusMidiState::ModeInsert) {
+        // unrounded insert
+        shiftInsert(true);
         mode = MobiusMidiState::ModePlay;
     }
     else if (!needsRecordSync()) {
@@ -1485,7 +1506,8 @@ void MidiTrack::doRound(TrackEvent* e)
         mode = MobiusMidiState::ModePlay;
     }
     else if (e->symbolId == FuncInsert) {
-        // todo
+        shiftInsert(false);
+        mode = MobiusMidiState::ModePlay;
     }
     else {
         Trace(1, "MidiTrack: Rouding event with invalid symbol");
@@ -1544,8 +1566,13 @@ void MidiTrack::doInsert(TrackEvent* e)
 void MidiTrack::doInsertNow()
 {
     if (mode == MobiusMidiState::ModeInsert) {
-        mode = MobiusMidiState::ModePlay;
-        recorder.endInsert(overdub);
+        // ending an unrounded multiply quantizes the end frame
+        // so that the cycle length can be preserved
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventRound;
+        event->symbolId = FuncInsert;
+        event->frame = getRoundedFrame();
+        events.add(event);
     }
     else if (mode == MobiusMidiState::ModePlay) {
         mode = MobiusMidiState::ModeInsert;
