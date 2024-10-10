@@ -16,6 +16,10 @@ MidiSegment::MidiSegment()
 MidiSegment::~MidiSegment()
 {
     // segments do NOT own the layer they reference
+
+    // the prefix could be troublesome
+    if (prefix.size() > 0)
+      Trace(1, "MidiSegment: Prefix events leaking at destruction");
 }
 
 /**
@@ -26,7 +30,6 @@ void MidiSegment::poolInit()
     next = nullptr;
     prev = nullptr;
     layer = nullptr;
-    prefix = nullptr;
     originFrame = 0;
     segmentFrames = 0;
     referenceFrame = 0;
@@ -40,18 +43,18 @@ void MidiSegment::dump(StructureDumper& d)
     d.add("referenceFrame", referenceFrame);
     d.newline();
 
-    if (prefix != nullptr) {
-        d.inc();
-        prefix->dump(d);
-        d.dec();
+    d.inc();
+    
+    if (prefix.size() > 0) {
+        d.line("Prefix:");
+        prefix.dump(d);
     }
     
     if (layer != nullptr) {
-        d.inc();
         layer->dump(d);
-        d.dec();
     }
 
+    d.dec();
     // maybe say something if there is continuity with the previous segment
 }
 

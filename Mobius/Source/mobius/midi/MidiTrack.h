@@ -72,7 +72,6 @@ class MidiTrack
     class TrackEventPool* eventPool = nullptr;
 
     // configuration
-    bool durationMode = false;
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
     
@@ -109,6 +108,7 @@ class MidiTrack
     void advancePlayer(int newFrames);
     void shift();
     void shiftMultiply(bool unrounded);
+    void endInsert(bool unrounded);
     void shiftInsert(bool unrounded);
     
     // actions/events

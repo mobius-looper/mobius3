@@ -20,91 +20,82 @@ MidiHarvester::MidiHarvester()
 
 MidiHarvester::~MidiHarvester()
 {
-    if (notes.size() > 0)
-      Trace(1, "MidiHarvester: Uncollected notes remaining");
-    
-    if (events.size() > 0)
-      Trace(1, "MidiHarvester: Uncollected events remaining");
-
-    reclaim(playNotes);
-    reclaim(playEvents);
+    // probably not errors, but things should be keeping this clean
+    if (playNotes.size() > 0)
+      Trace(1, "MidiHarverster: Lingering notes at destruction");
+        
+    if (playEvents.size() > 0)
+      Trace(1, "MidiHarverster: Lingering events at destruction");
+      
+    if (midiPool != nullptr) {
+        playNotes.clear(midiPool);
+        playEvents.clear(midiPool);
+    }
 }
 
-void MidiHarvester::initialize(MidiEventPool* epool, MidiSequencePool* spool, int capacity)
+void MidiHarvester::initialize(MidiEventPool* epool, MidiSequencePool* spool)
 {
     midiPool = epool;
     sequencePool = spool;
-    
-    noteCapacity = capacity;
-    if (noteCapacity == 0)
-      noteCapacity = DefaultCapacity;
-
-    // use the same caps for both
-    events.ensureStorageAllocated(noteCapacity);
-    notes.ensureStorageAllocated(noteCapacity);
 }
 
 void MidiHarvester::reset()
 {
-    // makes the array of zero size without releasing memory
-    events.clearQuick();
-    notes.clearQuick();
-
-    // new sequence
-    reclaim(playNotes);
-    playNotes = nullptr;
-    reclaim(playEvents);
-    playEvents = nullptr;
+    playNotes.clear(midiPool);
+    playEvents.clear(midiPool);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Play Traversal - first implementation
+// Range Harvest
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Obtain the events in a Layer within the given range.
- * The range frame numbers relative to the layer itself, with zero being
- * the start of the layer.  The events gathered will also have layer relative
- * frames.  These events are always copies of the underlying recorded events
- * and may be adjusted.
+ * Harvest a block of events in a layer leaving results in a sequence.
+ * This does not do hold detection from prior ranges.
  *
- * startFrame and endFrame are inclusive, meaning if the loop length is 256
- * then the final endFrame will be 255.
+ * This is the core harvesting implementation used by both harvestPlay
+ * and harvestPrefix.
  *
- * This may be called recursively and will append to the accumulation lists.
+ * The heldOnly flag will cause the filtering of notes that do not carry over the
+ * end of the region.  This is set only for prefix calculation.
  *
- * A Layer has two things, a MidiSequenece containing events recorded (or flattened into)
- * the layer, and a list of MidiSegments containing references to other layers.
+ * The forceFirstPrefix is used to force inclusion of the first segment prefix
+ * even if the previous one was adjacent.  This is set for prefix calculation
+ * and for playback when the play cursor moves to a random location.
  *
- * I want to keep the traversal logic out of MidiLayer and MidiSegment since they are
- * so closely related and need to be seen together.  To prevent having to search from the
- * beginning each time, this maintains a "seek cache" in the layer since playback
- * will harvest successive regions.  Would be nicer to have a doubly linked
- * list for MidiEvent and MidiSegment.
  */
-void MidiHarvester::harvest(MidiLayer* layer, int startFrame, int endFrame)
+void MidiHarvester::harvestRange(MidiLayer* layer, int startFrame, int endFrame,
+                                 bool heldOnly, bool forceFirstPrefix,
+                                 MidiSequence* noteResult, MidiSequence* eventResult)
 {
+    // first the layer sequence
     if (layer->seekFrame != startFrame) {
         // cursor moved or is being reset, reorient
         seek(layer, startFrame);
     }
 
-    // at this point layer->seekFrame will be equal to startFrame
-    // layer->seekNextEvent will be the first event from the local sequence that is
-    // at or beyond startFrame or null if we've reached the end of the sequence
-    // layer->seekNextSegment will be the first (and only since they can't overlap) segment
-    // whose range includes or is after startFrame
-
     MidiEvent* nextEvent = layer->seekNextEvent;
-    
     while (nextEvent != nullptr) {
 
         if (nextEvent->frame <= endFrame) {
 
-            // the layer sequence has 0 relative frames so they go right in
-            (void)add(nextEvent);
+            int eventLast = nextEvent->frame + nextEvent->duration - 1;
+
+            if (heldOnly) {
+                // only if it extends beyond this block
+                // this is kind of unnecessary, the block size for prefix
+                // evaluation will tend to be short and the note will extend anway
+                // if you avoid this check, it just means very short held notes will almost
+                // immediately decay anyway
+                if (eventLast > endFrame)
+                  (void)add(nextEvent, heldOnly, noteResult, eventResult);
+            }
+            else {
+                // always add it
+                (void)add(nextEvent, heldOnly, noteResult, eventResult);
+            }
             
             nextEvent = nextEvent->next;
         }
@@ -149,7 +140,11 @@ void MidiHarvester::harvest(MidiLayer* layer, int startFrame, int endFrame)
                 segEndOffset = seglast;
             }
             
-            harvest(nextSegment, segStartOffset, segEndOffset);
+            harvest(nextSegment, segStartOffset, segEndOffset, heldOnly, forceFirstPrefix,
+                    noteResult, eventResult);
+
+            // this now goes off
+            forceFirstPrefix = false;
 
             // advance the harvest start frame for what we took from this
             // segment
@@ -225,253 +220,6 @@ void MidiHarvester::seek(MidiLayer* layer, int startFrame)
  * the segment.
  *
  * Events returned have their duration adjusted so they do not exceed the bounds
- * of the segment.
- *
- * This calls harvest(layer) recursively to do the traversal, then post processes
- * the events that were added to make the adjustments.
- *
- * If the segment has a prefix, all of those are added since they logically happen
- * at the beginning of the segment.
- */
-void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame)
-{
-    // math sanity checks
-    if (startFrame < 0)
-      Trace(1, "MidiHarvester: Segment start frame went negative, like your popularity");
-    if (endFrame > segment->segmentFrames)
-      Trace(1, "MidiHarvester: Segment end frame is beyond where it should be");
-    
-    if (startFrame == 0) {
-        // we've entered the segment, here comes the prefix
-        if (segment->prefix != nullptr) {
-            MidiEvent* event = segment->prefix->getFirst();
-            while (event != nullptr) {
-                // the frame on these is usually zero but may be offset within the segment
-                MidiEvent* copy = add(event);
-                copy->frame += segment->originFrame;
-                // we shouldn't have to worry about duration here, since the segment
-                // owned it it should already be clipped
-                event = event->next;
-            }
-        }
-    }
-
-    // on to the segment's layer
-    // here we recurse and harvest the layer with start/end frames adjusted
-    // for the segment's reference offset
-    
-    int layerStart = segment->referenceFrame + startFrame;
-    int layerEnd = segment->referenceFrame + endFrame;
-    // remember the start of the added notes
-    int firstNoteIndex = notes.size();
-    int firstOtherIndex = events.size();
-    harvest(segment->layer, layerStart, layerEnd);
-
-    // the events that were just added were relative to the referenced layer
-    // these now need to be pushed upward to be relative to the segment
-    // within the containing layer
-    // also too, clip any durations that extend past the segment
-    // again, I'm preferring inclusive frame numbers rather than "one after the end"
-    // just to be consistent 
-    int seglast = segment->originFrame + segment->segmentFrames - 1;
-    for (int i = firstNoteIndex ; i < notes.size() ; i++) {
-        MidiEvent* note = notes[i];
-        note->frame += segment->originFrame;
-        // the frame containing the last lingering of this note
-        int noteLast = note->frame + note->duration - 1;
-        if (noteLast > seglast) {
-            // it went past the segment boundary, back it up
-            note->duration = seglast - note->frame + 1;
-            // sanity check because you're bad at math or left zero length things behind
-            if (note->duration <= 0) {
-                Trace(1, "MidiHarvester: Correcting collapsed duration because you suck at math");
-                note->duration = 1;
-            }
-        }
-    }
-
-    // same for cc events except we don't have to mess with durations
-    for (int i = firstOtherIndex ; i < events.size() ; i++) {
-        MidiEvent* event = events[i];
-        event->frame += segment->originFrame;
-    }
-}
-
-/**
- * Add an event to one of the arrays.
- * Frame and duration adjustments happen later in harvest(segment)
- */
-MidiEvent* MidiHarvester::add(MidiEvent* e)
-{
-    MidiEvent* copy = nullptr;
-    
-    if (e != nullptr) {
-        if (e->juceMessage.isNoteOff()) {
-            // shouldn't be recording these any more, Recorder must be tracking
-            // durations isntead
-            Trace(1, "MidiHarvester: Encountered NoteOff event, what's the deal?");
-        }
-        else if (e->juceMessage.isNoteOn()) {
-            // this is where I'd like to filter notes that don't extend beyond
-            // the segment start frame, but when descending into nested segments
-            // we don't have enough information at this point to know what location
-            // this event will be in at the end
-            copy = midiPool->newEvent();
-            copy->copy(e);
-            notes.add(copy);
-        }
-        else if (!heldNotesOnly) {
-            copy = midiPool->newEvent();
-            copy->copy(e);
-            events.add(copy);
-        }
-    }
-    return copy;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Play Traversal - new implementation
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiHarvester::harvestPlay(MidiLayer* layer, int startFrame, int endFrame)
-{
-    if (playNotes == nullptr)
-      playNotes = sequencePool->newSequence();
-    else
-      playNotes->clear(midiPool);
-    
-    if (playEvents == nullptr)
-      playEvents = sequencePool->newSequence();
-    else
-      playEvents->clear(midiPool);
-
-    // !! forceFirstPrefix needs to be passed if we're jumping
-    // the play frame
-    harvestRange(layer, startFrame, endFrame, false, false,
-                 playNotes, playEvents);
-
-    // todo: the two sequences need to be in the harvester to be useful
-}
-    
-//////////////////////////////////////////////////////////////////////
-//
-// Range Harvest
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Harvest a block of events in a layer leaving results in a sequence.
- * This does not do hold detection from prior ranges.
- *
- * The heldOnly flag will cause the filtering of notes that do not carry over the
- * end of the region.
- *
- * This is the common harvesting core used by both play harvesting and
- * held note harvesting.
- */
-void MidiHarvester::harvestRange(MidiLayer* layer, int startFrame, int endFrame,
-                                 bool heldOnly, bool forceFirstPrefix,
-                                 MidiSequence* noteResult, MidiSequence* eventResult)
-{
-    // first the layer sequence
-    if (layer->seekFrame != startFrame) {
-        // cursor moved or is being reset, reorient
-        seek(layer, startFrame);
-    }
-
-    MidiEvent* nextEvent = layer->seekNextEvent;
-    while (nextEvent != nullptr) {
-
-        if (nextEvent->frame <= endFrame) {
-
-            int eventLast = nextEvent->frame + nextEvent->duration - 1;
-            if (!heldOnly ||eventLast <= endFrame)
-              (void)add(nextEvent, heldOnly, noteResult, eventResult);
-            
-            nextEvent = nextEvent->next;
-        }
-        else {
-            // next not in range, stop
-            break;
-        }
-    }
-
-    // now the segments
-    MidiSegment* nextSegment = layer->seekNextSegment;
-
-    while (nextSegment != nullptr) {
-
-        int segstart = nextSegment->originFrame;
-        int seglast = segstart + nextSegment->segmentFrames - 1;
-
-        if (segstart > startFrame) {
-            // haven't reached this segment yet, wait for the next block
-            break;
-        }
-        else if (seglast < startFrame) {
-            // this segment has passed, seek must be broken
-            Trace(1, "MidiHarvester: Unexpected past segment in cursor");
-            nextSegment = nullptr;
-        }
-        else {
-            // segment in range
-            // scale the start/end into the segment
-            int segStartOffset = startFrame - nextSegment->originFrame;
-            if (segStartOffset < 0) {
-                // the harvest frame is a little before the segment, since
-                // segments can't overlap, this is dead space we can skip over
-                segStartOffset = 0;
-                startFrame = nextSegment->originFrame;
-            }
-                
-            int segEndOffset = endFrame - nextSegment->originFrame;
-
-            if (segEndOffset > seglast) {
-                // this segment is too short for the requested region
-                segEndOffset = seglast;
-            }
-            
-            harvest(nextSegment, segStartOffset, segEndOffset, heldOnly, forceFirstPrefix,
-                    noteResult, eventResult);
-
-            // this now goes off
-            forceFirstPrefix = false;
-
-            // advance the harvest start frame for what we took from this
-            // segment
-            startFrame += (segEndOffset - segStartOffset + 1);
-
-            if (seglast <= endFrame) {
-                // segment has been consumed, move to the next one
-                nextSegment = nextSegment->next;
-            }
-            else {
-                // more to go in this segment
-                break;
-            }
-        }
-    }
-
-    // remember the seek advance for next time
-    layer->seekFrame = endFrame + 1;
-    layer->seekNextEvent = nextEvent;
-    layer->seekNextSegment = nextSegment;
-}
-
-/**
- * Harvest events covered by a segment.
- * Now it gets more complex.
- * 
- * startFrame and endFrame are relative to the segment.
- * This range must be converted to the corresponding range in the underlying layer
- * relative to the Segment's referenceFrame.
- *
- * Events returned have their frame adjusted to be relative to the layer containing
- * the segment.
- *
- * Events returned have their duration adjusted so they do not exceed the bounds
  * of the segment UNLESS the segment after this one is logically adjacent in time.
  *
  * This calls harvest(layer) recursively to do the traversal, then post processes
@@ -491,16 +239,56 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
     if (endFrame > segment->segmentFrames)
       Trace(1, "MidiHarvester: Segment end frame is beyond where it should be");
     
+    int seglast = segment->originFrame + segment->segmentFrames - 1;
+    
     if (startFrame == 0) {
         // we've entered the segment, add the prefix unless there was continunity
         // with the previous segment, or this the first one after some kind of jump
-        if (segment->prefix != nullptr && (forcePrefix || !hasContinuity(segment))) {
-            MidiEvent* event = segment->prefix->getFirst();
+        if (segment->prefix.size() > 0 && (forcePrefix || !hasContinuity(segment))) {
+            MidiEvent* event = segment->prefix.getFirst();
             while (event != nullptr) {
                 // the frame on these is usually zero but may be offset within the segment
+
                 MidiEvent* copy = add(event, heldOnly, noteResult, eventResult);
-                if (copy != nullptr)
-                  copy->frame += segment->originFrame;
+                if (copy != nullptr) {
+                    // why would a prefix note have a non-zero frame?
+                    copy->frame += segment->originFrame;
+
+                    // kludge: prefix notes aren't post-processed like the nestedNotes
+                    // below to clip them on a segment boundary
+                    // we could move nestedNotes up and make them all behave the same (sounds right)
+                    // or we could say that prefix notes should have been clipped even
+                    // before we got here (good idea, but hard to control), had a bug
+                    // with cascading replace where shortening a segment didn't also adjust
+                    // the prefix duration
+                    //
+                    // but if we clip here, then we don't really need to decay during
+                    // prefix calculation at all, they're really just continuations of the
+                    // original note?  hmm, not really because the did have their start
+                    // frame logically moved, whatever the decision there it is important
+                    // that we clip prefix notes like nested notes
+                    //
+                    // update: no, I like leaving the note in it's original calculated duration
+                    // and clipping it here, it makes sense because it's like the note
+                    // was played at the beginning of this segment and it has whatever duration
+                    // it had, but is clipped
+                    // rework this so that clipping is handled consistently at the end
+
+                    if (!hasContinuity(segment)) {
+                        // the frame containing the last lingering of this note
+                        int noteLast = copy->frame + copy->duration - 1;
+                        if (noteLast > seglast) {
+                            // it went past the segment boundary, back it up
+                            copy->duration = seglast - copy->frame + 1;
+                            // sanity check because you're bad at math or left zero length things behind
+                            if (copy->duration <= 0) {
+                                Trace(1, "MidiHarvester: Correcting collapsed duration because you suck at math");
+                                copy->duration = 1;
+                            }
+                        }
+                    }
+                }
+                    
                 event = event->next;
             }
         }
@@ -529,8 +317,6 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
     // continuity with the next segment
     // again, I'm preferring inclusive frame numbers rather than "one after the end"
     // just to be consistent 
-    int seglast = segment->originFrame + segment->segmentFrames - 1;
-    bool continuity = hasContinuity(segment->next);
     MidiEvent* nested = nestedNotes.getFirst();
     while (nested != nullptr) {
         nested->frame += segment->originFrame;
@@ -547,6 +333,7 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
                 }
             }
         }
+        nested = nested->next;
     }
     noteResult->append(&nestedNotes);
 
@@ -555,6 +342,7 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
         nested = nestedEvents.getFirst();
         while (nested != nullptr) {
             nested->frame += segment->originFrame;
+            nested = nested->next;
         }
         eventResult->append(&nestedEvents);
     }
@@ -612,6 +400,26 @@ MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
 
 //////////////////////////////////////////////////////////////////////
 //
+// Playback Harvest
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This interface is used by MidiPlayer to harvest successive ranges
+ * of events as each auto block comes in.
+ */
+void MidiHarvester::harvestPlay(MidiLayer* layer, int startFrame, int endFrame)
+{
+    reset();
+    
+    // !! forceFirstPrefix needs to be passed if we're jumping
+    // the play frame
+    harvestRange(layer, startFrame, endFrame, false, false,
+                 &playNotes, &playEvents);
+}
+    
+//////////////////////////////////////////////////////////////////////
+//
 // Prefix Harvest
 //
 //////////////////////////////////////////////////////////////////////
@@ -629,6 +437,8 @@ MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
  */
 void MidiHarvester::harvestPrefix(MidiSegment* segment)
 {
+    reset();
+    
     int startFrame = 0;
     if (segment->prev != nullptr)
       startFrame = segment->prev->originFrame;
@@ -641,66 +451,53 @@ void MidiHarvester::harvestPrefix(MidiSegment* segment)
     int blockSize = 1024;
     int remaining = endFrame - startFrame + 1;
 
-    MidiSequence* heldNotes = sequencePool->newSequence();
+    MidiSequence heldNotes;
     while (remaining > 0) {
 
         if (remaining < blockSize)
           blockSize = remaining;
 
         // decay previous notes
-        decay(heldNotes, blockSize);
+        decay(&heldNotes, blockSize);
 
         // add new ones
         harvestRange(segment->layer, startFrame, startFrame + blockSize - 1,
-                     true, true, heldNotes, nullptr);
+                     true, true, &heldNotes, nullptr);
 
         startFrame += blockSize;
         remaining -= blockSize;
     }
     
     // what remains is the segment prefix
-    reclaim(segment->prefix);
-    if (heldNotes->size() > 0) {
-        // this looks weird, but setEvents recalculates the tail and count as a side effect
-        // not really necessary for the prefix, but keep this looking like other sequences
-        heldNotes->setEvents(heldNotes->getFirst());
-        segment->prefix = heldNotes;
-    }
-    else
-      reclaim(heldNotes);
-}
+    segment->prefix.clear(midiPool);
+    if (heldNotes.size() > 0) {
 
-void MidiHarvester::reclaim(MidiSequence* seq)
-{
-    if (seq != nullptr) {
-        seq->clear(midiPool);
-        sequencePool->checkin(seq);
+        // the prefix notes will all start at frame 0 relative
+        // to the segment, and the duration will be the remainder of the decay
+        // we used MidiEvent::remaining for the decay like Player does but
+        // we could have just as well used duration
+        MidiEvent* held = heldNotes.getFirst();
+        while (held != nullptr) {
+            held->frame = 0;
+            held->duration = held->remaining;
+            held->remaining = 0;
+            held = held->next;
+        }
+        
+        segment->prefix.append(&heldNotes);
     }
 }
 
 void MidiHarvester::decay(MidiSequence* seq, int blockSize)
 {
-    MidiEvent* first = seq->getFirst();
-    MidiEvent* note = first;
-    MidiEvent* prev = nullptr;
-    
+    MidiEvent* note = seq->getFirst();
     while (note != nullptr) {
         MidiEvent* next = note->next;
         note->remaining -= blockSize;
-        if (note->remaining <= 0) {
-            if (prev != nullptr)
-              prev->next = next;
-            else
-              first = next;
-            
-            note->next = nullptr;
-            midiPool->checkin(note);
-        }
+        if (note->remaining <= 0)
+          seq->remove(midiPool, note);
         note = next;
     }
-
-    // reset the list which also recalculates the tail and count
-    seq->setEvents(first);
 }
 
 /****************************************************************************/

@@ -91,10 +91,18 @@ void MidiLayer::clearSegments()
     }
 }
 
+MidiSegment* MidiLayer::getLastSegment()
+{
+    MidiSegment* result = segments;
+    while (result != nullptr && result->next != nullptr)
+      result = result->next;
+    return result;
+}
+
 void MidiLayer::reclaim(MidiSegment* seg)
 {
     if (seg != nullptr) {
-        reclaim(seg->prefix);
+        seg->prefix.clear(midiPool);
         segmentPool->checkin(seg);
     }
 }

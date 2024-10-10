@@ -32,6 +32,7 @@ class StructureDumper
     
     void add(juce::String name, juce::String value);
     void add(juce::String name, int value);
+    void addb(juce::String name, bool value);
 
     
     void setRoot(juce::File r);

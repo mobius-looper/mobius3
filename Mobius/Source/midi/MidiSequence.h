@@ -24,20 +24,23 @@ class MidiSequence : public PooledObject
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);
     void insert(class MidiEvent* e);
+    void remove(class MidiEventPool* pool, class MidiEvent* e);
     void cut(class MidiEventPool* pool, int start, int end, bool includeHolds);
-    void setEvents(class MidiEvent* list);
     void append(MidiSequence* other);
-    void eventsStolen();
     
     MidiEvent* getFirst() {
         return events;
     }
 
+    MidiEvent* steal();
+
+    int size();
+
+  protected:
+    
     MidiEvent* getTail() {
         return tail;
     }
-
-    int size();
 
   private:
     
@@ -48,6 +51,8 @@ class MidiSequence : public PooledObject
     class MidiEvent* tail = nullptr;
     class MidiEvent* insertPosition = nullptr;
     int count = 0;
+
+    void reset();
     
 };
 

@@ -89,6 +89,12 @@ void StructureDumper::add(juce::String name, int value)
     add(name, juce::String(value));
 }
 
+void StructureDumper::addb(juce::String name, bool value)
+{
+    if (value)
+      add(name);
+}
+
 void StructureDumper::setRoot(juce::File r)
 {
     root = r;

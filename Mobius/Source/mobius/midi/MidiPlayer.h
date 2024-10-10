@@ -19,7 +19,8 @@ class MidiPlayer
     ~MidiPlayer();
     void initialize(class MobiusContainer* c, class MidiEventPool* epool,
                     class MidiSequencePool* spool);
-
+    void dump(StructureDumper& d);
+    
     //
     // Layer Management
     //

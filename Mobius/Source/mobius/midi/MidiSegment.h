@@ -19,7 +19,7 @@ class MidiSegment : public PooledObject
     MidiSegment* prev = nullptr;
     
     class MidiLayer* layer = nullptr;
-    class MidiSequence* prefix = nullptr;
+    class MidiSequence prefix;
     
     // the logical start frame in the containing layer
     int originFrame = 0;

@@ -36,11 +36,25 @@ void MidiSequence::dump(StructureDumper& d)
  */
 void MidiSequence::poolInit()
 {
+    reset();
+}
+
+/**
+ * Reset the contained state without reclaiming anything.
+ * Used when initial state is unkown or after events have
+ * been stolen.
+ */
+void MidiSequence::reset()
+{
     events = nullptr;
     tail = nullptr;
+    insertPosition = nullptr;
     count = 0;
 }
 
+/**
+ * Clear the contents of the sequence and reclaim events
+ */
 void MidiSequence::clear(MidiEventPool* pool)
 {
     while (events != nullptr) {
@@ -52,8 +66,14 @@ void MidiSequence::clear(MidiEventPool* pool)
           delete events;
         events = next;
     }
-    tail = nullptr;
-    count = 0;
+    reset();
+}
+
+MidiEvent* MidiSequence::steal()
+{
+    MidiEvent* result = events;
+    reset();
+    return result;
 }
 
 void MidiSequence::add(MidiEvent* e)
@@ -75,49 +95,77 @@ void MidiSequence::add(MidiEvent* e)
 
 void MidiSequence::insert(MidiEvent* e)
 {
-    if (insertPosition == nullptr) {
-        // never inserted before, start at the beginning
-        insertPosition = events;
-    }
-    else if (insertPosition->frame > e->frame) {
-        // last insert position was after the new event, start over
-        // since we can't go backward yet
-        insertPosition = events;
-    }
+    if (e != nullptr) {
+        if (insertPosition == nullptr) {
+            // never inserted before, start at the beginning
+            insertPosition = events;
+        }
+        else if (insertPosition->frame > e->frame) {
+            // last insert position was after the new event, start over
+            // since we can't go backward yet
+            insertPosition = events;
+        }
     
-    MidiEvent* prev = nullptr;
-    MidiEvent* ptr = insertPosition;
-    while (ptr != nullptr && ptr->frame <= e->frame) {
-        prev = ptr;
-        ptr = ptr->next;
-    }
+        MidiEvent* prev = nullptr;
+        MidiEvent* ptr = insertPosition;
+        while (ptr != nullptr && ptr->frame <= e->frame) {
+            prev = ptr;
+            ptr = ptr->next;
+        }
 
-    if (prev == nullptr) {
-        // inserting at the head
-        e->next = events;
-        events = e;
-    }
-    else {
-        MidiEvent* next = prev->next;
-        prev->next = e;
-        e->next = next;
-        if (next == nullptr)
-          tail = e;
-    }
+        if (prev == nullptr) {
+            // inserting at the head
+            e->next = events;
+            events = e;
+        }
+        else {
+            MidiEvent* next = prev->next;
+            prev->next = e;
+            e->next = next;
+            if (next == nullptr)
+              tail = e;
+        }
 
-    // remember this for next time so we don't have to keep scanning from the front
-    // when inserting layer sequences
-    insertPosition = e;
+        // remember this for next time so we don't have to keep scanning from the front
+        // when inserting layer sequences
+        insertPosition = e;
+
+        count++;
+    }
 }
 
-void MidiSequence::setEvents(MidiEvent* list)
+/**
+ * Remove an event from the sequence.
+ * This is sucking because we don't have a previous pointer, but is
+ * currently only used for very short sequences like the held notes
+ * in the Harvester.
+ */
+void MidiSequence::remove(MidiEventPool* pool, MidiEvent* e)
 {
-    events = list;
-    tail = list;
-    count = 0;
-    while (tail != nullptr && tail->next != nullptr) {
-        tail = tail->next;
-        count++;
+    MidiEvent* prev = nullptr;
+    MidiEvent* found = events;
+    while (found != nullptr) {
+        if (found == e)
+          break;
+        prev = found;
+        found = found->next;
+    }
+
+    if (found == nullptr) {
+        Trace(1, "MidiSequence: Remove with event not in sequence");
+    }
+    else {
+        if (prev == nullptr)
+          events = found->next;
+        else
+          prev->next = found->next;
+
+        if (found == tail)
+          tail = prev;
+        
+        found->next = nullptr;
+        pool->checkin(found);
+        count--;
     }
 }
 
@@ -132,23 +180,29 @@ int MidiSequence::size()
  */
 void MidiSequence::append(MidiSequence* other)
 {
+    // todo: don't like exposing getTail here but it saves
+    // having to traverse the list again
     MidiEvent* otherFirst = other->getFirst();
     MidiEvent* otherTail = other->getTail();
-    tail->next = otherFirst;
-    tail = otherTail;
-    count += other->size();
-    other->eventsStolen();
-}
 
-/**
- * Make this sequence empty assuming something else has taken ownership
- * of the events.
- */
-void MidiSequence::eventsStolen()
-{
-    events = nullptr;
-    tail = nullptr;
-    count = 0;
+    if (otherFirst != nullptr) {
+    
+        if (tail != nullptr)
+          tail->next = otherFirst;
+        else
+          events = otherFirst;
+    
+        if (otherTail != nullptr)
+          tail = otherTail;
+        else {
+            Trace(1, "MidiSequence: Malformed sequence, missing tail");
+            tail = otherFirst;
+            while (tail->next != nullptr) tail = tail->next;
+        }
+        
+        count += other->size();
+    }
+    other->reset();
 }
 
 /**
@@ -238,12 +292,15 @@ void MidiSequence::cut(MidiEventPool* pool, int start, int end, bool includeHold
         event = next;
     }
 
-    // reset the tail
+    // reset the tail and count
     // could have done this in the middle of the previous surgery but
     // makes an already messy mess, messier
     tail = events;
     while (tail != nullptr && tail->next != nullptr)
       tail = tail->next;
+
+    // this is usually invalid too
+    insertPosition = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////

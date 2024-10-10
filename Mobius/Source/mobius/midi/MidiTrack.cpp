@@ -847,7 +847,7 @@ void MidiTrack::doRecord(UIAction* a)
     }
     else if (mode == MobiusMidiState::ModeInsert) {
         // unrounded insert
-        shiftInsert(true);
+        endInsert(true);
         mode = MobiusMidiState::ModePlay;
     }
     else if (!needsRecordSync()) {
@@ -1506,7 +1506,7 @@ void MidiTrack::doRound(TrackEvent* e)
         mode = MobiusMidiState::ModePlay;
     }
     else if (e->symbolId == FuncInsert) {
-        shiftInsert(false);
+        endInsert(false);
         mode = MobiusMidiState::ModePlay;
     }
     else {
@@ -1579,6 +1579,16 @@ void MidiTrack::doInsertNow()
         recorder.startInsert();
     }
 
+}
+
+/**
+ * Rounding event handler for insert.
+ * Two options: we can shift now like we do for multiply, or just
+ * keep going like we do for replace.  
+ */
+void MidiTrack::endInsert(bool unrounded)
+{
+    shiftInsert(unrounded);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1728,10 +1738,13 @@ void MidiTrack::doDump(UIAction* a)
 
     d.start("MidiTrack:");
     d.add("number", number);
+    d.add("loops", loopCount);
+    d.add("loopIndex", loopIndex);
     d.newline();
     
     d.inc();
     recorder.dump(d);
+    player.dump(d);
     d.dec();
     
     container->writeDump(juce::String("MidiTrack.txt"), d.getText());

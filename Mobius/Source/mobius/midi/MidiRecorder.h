@@ -118,10 +118,11 @@ class MidiRecorder : public MidiWatcher::Listener
     int cycleFrames = 0;
     bool recording = false;
     bool extending = false;
-    bool multiply = false;
-    int multiplyFrame = 0;
     int extensions = 0;
+    int modeStartFrame = 0;
     bool replace = false;
+    bool multiply = false;
+    bool insert = false;
 
     int lastBlockFrames = 0;
 

@@ -15,6 +15,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/StructureDumper.h"
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
@@ -50,7 +51,20 @@ void MidiPlayer::initialize(MobiusContainer* c, MidiEventPool* epool, MidiSequen
     container = c;
     midiPool = epool;
     sequencePool = spool;
-    harvester.initialize(midiPool, sequencePool, 0);
+    harvester.initialize(midiPool, sequencePool);
+}
+
+void MidiPlayer::dump(StructureDumper& d)
+{
+    d.start("MidiPlayer:");
+    d.add("frames", loopFrames);
+    d.add("frame", playFrame);
+    d.addb("mute", mute);
+    d.newline();
+
+    d.inc();
+    playLayer->dump(d);
+    d.dec();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -249,30 +263,29 @@ void MidiPlayer::play(int blockFrames)
             loopFrames = 0;
         }
         else {
-            // todo: rather than gathering could have the event
-            // walk just play them, but I kind of like the intermedate
-            // gather, might be good to apply processing
-            harvester.reset();
-            harvester.harvest(playLayer, playFrame, playFrame + blockFrames - 1);
+            harvester.harvestPlay(playLayer, playFrame, playFrame + blockFrames - 1);
 
             // these just spray out without fuss
-            juce::Array<MidiEvent*>& events = harvester.getEvents();
-            for (int i = 0 ; i < events.size() ; i++) {
-                MidiEvent* e = events[i];
-                // todo: device id
-                container->midiSend(e->juceMessage, 0);
-                midiPool->checkin(e);
+            MidiSequence* events = harvester.getEvents();
+            if (events != nullptr) {
+                for (MidiEvent* e = events->getFirst() ; e != nullptr ; e = e->next) {
+                    // todo: device id
+                    container->midiSend(e->juceMessage, 0);
+                }
             }
 
-            // these require thought
-            juce::Array<MidiEvent*>& notes = harvester.getNotes();
-            for (int i = 0 ; i < notes.size() ; i++) {
-                MidiEvent* note = notes[i];
-                play(note);
+            // ownership of held notes will be transferred for duration tracking
+            MidiSequence* noteseq = harvester.getNotes();
+            if (noteseq != nullptr) {
+                MidiEvent* notes = noteseq->steal();
+                while (notes != nullptr) {
+                    MidiEvent* next = notes->next;
+                    play(notes);
+                    notes = next;
+                }
             }
 
-            // we took ownership or reclaimed all the events so don't
-            // leave them behnid and confuse things
+            // keep this clean between calls
             harvester.reset();
             
             advanceHeld(blockFrames);

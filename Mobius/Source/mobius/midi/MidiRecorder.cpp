@@ -55,7 +55,7 @@ void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
     segmentPool = segpool;
     watcher.initialize(midiPool);
     watcher.setListener(this);
-    harvester.initialize(midiPool, sequencePool, 0);
+    harvester.initialize(midiPool, sequencePool);
 }
 
 void MidiRecorder::dump(StructureDumper& d)
@@ -66,9 +66,19 @@ void MidiRecorder::dump(StructureDumper& d)
     d.add("cycles", recordCycles);
     d.add("cycleFrames", cycleFrames);
     d.add("extensions", extensions);
+    if (modeStartFrame > 0)
+      d.line("modeStartFrame:", modeStartFrame);
     d.newline();
 
     d.inc();
+    d.start("flags:");
+    d.addb("recording", recording);
+    d.addb("extending", extending);
+    d.addb("multiply", multiply);
+    d.addb("insert", insert);
+    d.addb("replace", replace);
+    d.newline();
+    
     recordLayer->dump(d);
     d.dec();
 }
@@ -310,10 +320,10 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
         commitLayer = commit(overdub);
     }
     else {
-        int cutStart = multiplyFrame;
+        int cutStart = modeStartFrame;
         int cutEnd = recordFrame - 1;
         
-        int newFrames = recordFrame - multiplyFrame;
+        int newFrames = recordFrame - modeStartFrame;
         int newCycles = recordCycles;
         int newCycleFrames = cycleFrames;
         if (unrounded) {
@@ -366,7 +376,7 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
         cycleFrames = newCycleFrames;
         
         multiply = false;
-        multiplyFrame = 0;
+        modeStartFrame = 0;
         extending = false;
     
         if (!overdub)
@@ -510,12 +520,22 @@ void MidiRecorder::setFrame(int newFrame)
 
 void MidiRecorder::startMultiply()
 {
-    multiplyFrame = recordFrame;
+    // maybe better to just have a mode enum, though it is an error
+    // to have left this in an unclosed mode
+    if (insert || replace) Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
+    
+    modeStartFrame = recordFrame;
     multiply = true;
+    insert = false;
+    replace = false;
     extending = true;
     setRecording(true);
 }
 
+/**
+ * This isn't actually called, ending a multiply always shifts a new
+ * layer with commitMultiply
+ */
 void MidiRecorder::endMultiply(bool overdub)
 {
     // todo: rounding, this will need to schedule an event
@@ -527,12 +547,16 @@ void MidiRecorder::endMultiply(bool overdub)
 
 int MidiRecorder::getMultiplyFrame()
 {
-    return multiplyFrame;
+    return modeStartFrame;
 }
 
 void MidiRecorder::startInsert()
 {
-    multiplyFrame = recordFrame;
+    if (multiply || replace) Trace(1, "MidiRecorder: Starting insert with unclosed mode");
+    modeStartFrame = recordFrame;
+    insert = true;
+    multiply = false;
+    replace = false;
     extending = true;
     setRecording(true);
 }
@@ -541,6 +565,7 @@ void MidiRecorder::endInsert(bool overdub)
 {
     // todo: rounding, this will need to schedule an event
     // do that here or make MidiTrack handle it?
+    insert = false;
     extending = false;
     setRecording(overdub);
 }
@@ -583,12 +608,51 @@ void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
 
 void MidiRecorder::startReplace()
 {
-    replace = false;
+    if (multiply || insert) Trace(1, "MidiRecorder: Starting replace with unclosed mode");
+    modeStartFrame = recordFrame;
+    replace = true;
+    multiply = false;
+    insert = false;
+    extending = false;
+    recording = true;
 }
 
+/**
+ * Ending a replace splits the segment and injects a dead zone that
+ * may have been filled with an overdub.  Replace does not immediately shift a
+ * new layer, they accumulate.
+ * Replace assumes that the replace region is currently "over" a single segment.
+ * It is not currently possible to create a situation where the replace region
+ * can span multiply layers, doing so would mean the recordFrame went back in time
+ * or something did a segment restructuring and did not shift.
+ */
 void MidiRecorder::endReplace(bool overdub)
 {
+    if (!replace) {
+        Trace(1, "MidiRecorder: Ending replace not in replace mode");
+    }
+    else {
+        MidiSegment* seg = recordLayer->getLastSegment();
+        if (seg == nullptr || seg->originFrame > modeStartFrame ||
+            recordFrame >= (seg->originFrame + seg->segmentFrames)) {
+            Trace(1, "MidiRecorder: Replace region spans multiple segments");
+        }
+        else {
+            // backing segment gets truncated
+            seg->segmentFrames = modeStartFrame - seg->originFrame;
+            // new one gets the remainder
+            MidiSegment* neu = segmentPool->newSegment();
+            neu->layer = backingLayer;
+            neu->originFrame = recordFrame;
+            neu->referenceFrame = recordFrame;
+            neu->segmentFrames = recordFrames - recordFrame;
+            harvester.harvestPrefix(neu);
+            recordLayer->add(neu);
+        }
+    }
+    
     replace = false;
+    modeStartFrame = 0;
     if (!overdub)
       recording = false;
 }
@@ -788,7 +852,7 @@ void MidiRecorder::advance(int blockFrames)
 void MidiRecorder::extend()
 {
     // multiply/insert
-    if (multiply) {
+    if (multiply || insert) {
         MidiSegment* seg = segmentPool->newSegment();
         seg->layer = backingLayer;
         seg->segmentFrames = cycleFrames;

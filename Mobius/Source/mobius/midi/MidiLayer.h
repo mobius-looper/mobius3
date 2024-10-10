@@ -34,6 +34,7 @@ class MidiLayer : public PooledObject
     void add(class MidiEvent* e);
     void add(class MidiSegment* s);
     void replaceSegments(class MidiSegment* list);
+    MidiSegment* getLastSegment();
     
     int getFrames();
     void setFrames(int frames);
