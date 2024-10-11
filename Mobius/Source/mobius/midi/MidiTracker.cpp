@@ -251,6 +251,11 @@ Valuator* MidiTracker::getValuator()
     return kernel->getValuator();
 }
 
+void MidiTracker::alert(const char* msg)
+{
+    kernel->sendMobiusMessage(msg);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Incomming Events

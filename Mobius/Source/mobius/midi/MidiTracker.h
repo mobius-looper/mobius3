@@ -50,6 +50,9 @@ class MidiTracker : public LongWatcher::Listener
     // LongWatcher::Listener
     void longPressDetected(class UIAction* a);
     
+    // Internal components use this to get a message to the UI
+    void alert(const char* msg);
+    
   private:
 
     class MobiusContainer* container = nullptr;

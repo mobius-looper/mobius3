@@ -114,7 +114,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     }
 
     void sendEvent(KernelEvent* e);
-
+    void sendMobiusMessage(const char* msg);
+    
     // called by Mobius when it has finished activating a new Scriptarian
     // return the old one to the shell
     void returnScriptarian(class Scriptarian* old);

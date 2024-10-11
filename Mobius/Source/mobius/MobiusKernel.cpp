@@ -313,6 +313,18 @@ Valuator* MobiusKernel::getValuator()
     return shell->getValuator();
 }
 
+/**
+ * Used by internal components that want to show a message in the UI.
+ */
+void MobiusKernel::sendMobiusMessage(const char* msg)
+{
+
+    KernelEvent* e = newEvent();
+    e->type = EventMessage;
+    CopyString(msg, e->arg1, sizeof(e->arg1));
+    sendEvent(e);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Suspend/Resume

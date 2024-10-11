@@ -40,6 +40,8 @@ class MidiSequence : public PooledObject
     void transferFrom(MidiSequence* src);
     
     void cut(class MidiEventPool* pool, int start, int end, bool includeHolds);
+    void insertTime(class MidiEventPool* pool, int startFrame, int insertFrames);
+    int removeTime(class MidiEventPool* pool, int startFrame, int removeFrames);
 
   protected:
     

@@ -42,12 +42,18 @@ class MidiRecorder : public MidiWatcher::Listener
     MidiLayer* commitMultiply(bool overdub, bool unrounded);
     void setFrame(int newFrame);
 
+    int getModeStartFrame();
+    int getModeEndFrame();
+
     void startMultiply();
+    void extendMultiply();
+    void reduceMultiply();
     void endMultiply(bool overdub);
-    int getMultiplyFrame();
     
     void startInsert();
-    void endInsert(bool overdub);
+    void extendInsert();
+    void reduceInsert();
+    void endInsert(bool overdub, bool unrounded);
 
     void copy(MidiLayer* srcLayer, bool includeEvents);
 
@@ -113,6 +119,7 @@ class MidiRecorder : public MidiWatcher::Listener
     bool extending = false;
     int extensions = 0;
     int modeStartFrame = 0;
+    int modeEndFrame = 0;
     bool replace = false;
     bool multiply = false;
     bool insert = false;

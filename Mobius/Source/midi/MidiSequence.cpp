@@ -359,6 +359,134 @@ void MidiSequence::cut(MidiEventPool* pool, int start, int end, bool includeHold
 
 //////////////////////////////////////////////////////////////////////
 //
+// Time Insertion
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is what underlies Insert mode for MIDI tracks.
+ * Insert empty space in the middle of the sequence.  Notes that
+ * are held across the insert point are split and continued after the
+ * the end of the inserted space.
+ */
+void MidiSequence::insertTime(MidiEventPool* pool, int startFrame, int insertFrames)
+{
+    MidiEvent* splits = nullptr;
+
+    // whip up to the insert point, truncating along the way
+    MidiEvent* event = events;
+    MidiEvent* prev = nullptr;
+    while (event != nullptr && event->frame < startFrame) {
+        if (event->duration > 0) {
+            int lastFrame = event->frame + event->duration - 1;
+            if (lastFrame >= startFrame) {
+                // it splits
+                MidiEvent* remainder = pool->newEvent();
+                remainder->copy(event);
+                remainder->duration = lastFrame - startFrame + 1;
+                remainder->frame = startFrame + insertFrames;
+                remainder->next = splits;
+                splits = remainder;
+            }
+        }
+        prev = event;
+        event = event->next;
+    }
+
+    // inject the split remainders
+    if (splits != nullptr) {
+        if (prev == nullptr)
+          events = splits;
+        else
+          prev->next = splits;
+
+        // find the last split and bump the count
+        count++;
+        while (splits->next != nullptr) {
+            count++;
+            splits = splits->next;
+        }
+        splits->next =  event;
+    }
+
+    // everything after this gets their frame pushed
+    while (event != nullptr) {
+        event->frame += insertFrames;
+        event = event->next;
+    }
+}
+
+/**
+ * Remove a block of empty space.
+ * This is intended for unrounded insert to remove a time push
+ * added by insertTime, in that case there should be no events within
+ * the empty region.  I'm making it more general though in case it because
+ * interesting to cut something out of the middle of a layer whereas cut() trims
+ * the edges.
+ *
+ * If an event extends into the insert region, they have their durations shortened.
+ * This also shouldn't happen for unrounded insert.
+ */
+int MidiSequence::removeTime(MidiEventPool* pool, int startFrame, int removeFrames)
+{
+    int adjustments = 0;
+    
+    MidiEvent* event = events;
+    MidiEvent* prev = nullptr;
+    while (event != nullptr && event->frame < startFrame) {
+        if (event->duration > 0) {
+            int lastFrame = event->frame + event->duration - 1;
+            if (lastFrame >= startFrame) {
+                // it truncates
+                event->duration = startFrame - event->frame;
+                adjustments++;
+            }
+        }
+        prev = event;
+        event = event->next;
+    }
+
+    // everything from this point up to the "empty" space is removed
+    // actually if an event starts in this region, but extends beyond it
+    // it logically still exists and should be moved to the end of the region
+    // with an abbreviated duration
+    
+    int lastEmpty = startFrame + removeFrames - 1;
+    while (event != nullptr && event->frame <= lastEmpty) {
+        MidiEvent* next = event->next;
+        int lastFrame = event->frame + event->duration - 1;
+        if (lastFrame > lastEmpty) {
+            // it moves and truncates
+            event->frame = lastEmpty + 1;
+            event->duration = lastFrame - lastEmpty;
+            adjustments++;
+            prev = event;
+        }
+        else {
+            // this is removed entirely
+            if (prev == nullptr)
+              events = next;
+            else
+              prev->next = next;
+            event->next = nullptr;
+            pool->checkin(event);
+            adjustments++;
+            // prev stays where it is
+        }
+        event = next;
+    }
+
+    // finally the remainder gets shifted down
+    while (event != nullptr) {
+        event->frame -= removeFrames;
+        event = event->next;
+    }
+
+    return adjustments;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Pool
 //
 //////////////////////////////////////////////////////////////////////

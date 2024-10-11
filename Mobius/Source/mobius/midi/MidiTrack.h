@@ -110,6 +110,7 @@ class MidiTrack
     void shiftInsert(bool unrounded);
     
     // actions/events
+    void alert(const char* msg);
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
     void doParameter(class UIAction* a);

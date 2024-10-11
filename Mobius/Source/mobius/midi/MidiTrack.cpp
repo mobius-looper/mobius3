@@ -157,6 +157,16 @@ MidiEvent* MidiTrack::getHeldNotes()
     return tracker->getHeldNotes();
 }
 
+/**
+ * Send an alert back to the UI, somehow
+ * Starting to use this method for MIDI tracks rather than the trace log
+ * since the user needs to know right away when something isn't implemented.
+ */
+void MidiTrack::alert(const char* msg)
+{
+    tracker->alert(msg);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -343,8 +353,12 @@ void MidiTrack::doAction(UIAction* a)
             }
         }
         else {
-            Trace(1, "MidiTrack: Unsupported long press function %s",
-                  a->symbol->getName());
+            // these are good to show to the user
+            char msgbuf[128];
+            snprintf(msgbuf, sizeof(msgbuf), "Unsupported long press function: %s",
+                     a->symbol->getName());
+            alert(msgbuf);
+            Trace(1, "MidiTrack: %s", msgbuf);
         }
     }
     else if (a->symbol->parameterProperties) {
@@ -368,7 +382,11 @@ void MidiTrack::doAction(UIAction* a)
             case FuncMute: doMute(a); break;
             case FuncReplace: doReplace(a); break;
             default: {
-                Trace(2, "MidiTrack: Unsupported action %s", a->symbol->getName());
+                char msgbuf[128];
+                snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
+                         a->symbol->getName());
+                alert(msgbuf);
+                Trace(1, "MidiTrack: %s", msgbuf);
             }
         }
     }
@@ -1461,16 +1479,23 @@ void MidiTrack::doMultiply(UIAction* a)
 {
     (void)a;
 
-    QuantizeMode quant = valuator->getQuantizeMode(number);
-    if (quant == QUANTIZE_OFF) {
-        doMultiplyNow();
+    // until we work out how overlappings modes work
+    // prevent this
+    if (mode != MobiusMidiState::ModePlay && mode != MobiusMidiState::ModeMultiply) {
+        alert("Multiply must start in Play mode");
     }
     else {
-        TrackEvent* event = pools->newTrackEvent();
-        event->type = TrackEvent::EventFunction;
-        event->symbolId = FuncMultiply;
-        event->frame = getQuantizeFrame(quant);
-        events.add(event);
+        QuantizeMode quant = valuator->getQuantizeMode(number);
+        if (quant == QUANTIZE_OFF) {
+            doMultiplyNow();
+        }
+        else {
+            TrackEvent* event = pools->newTrackEvent();
+            event->type = TrackEvent::EventFunction;
+            event->symbolId = FuncMultiply;
+            event->frame = getQuantizeFrame(quant);
+            events.add(event);
+        }
     }
 }
 
@@ -1520,7 +1545,7 @@ void MidiTrack::doRound(TrackEvent* e)
  */
 int MidiTrack::getRoundedFrame()
 {
-    int modeStart = recorder.getMultiplyFrame();
+    int modeStart = recorder.getModeStartFrame();
     int recordFrame = recorder.getFrame();
     int delta = recordFrame - modeStart;
     int cycleFrames = recorder.getCycleFrames();
@@ -1587,7 +1612,9 @@ void MidiTrack::doInsertNow()
  */
 void MidiTrack::endInsert(bool unrounded)
 {
-    shiftInsert(unrounded);
+    // don't shift an insert right away like multiply, let it accumulate
+    // shiftInsert(unrounded);
+    recorder.endInsert(overdub, unrounded);
 }
 
 //////////////////////////////////////////////////////////////////////

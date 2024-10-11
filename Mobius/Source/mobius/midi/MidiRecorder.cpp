@@ -65,7 +65,7 @@ void MidiRecorder::dump(StructureDumper& d)
     d.add("cycleFrames", cycleFrames);
     d.add("extensions", extensions);
     if (modeStartFrame > 0)
-      d.line("modeStartFrame:", modeStartFrame);
+      d.line("modeStartFrame", modeStartFrame);
     d.newline();
 
     d.inc();
@@ -351,6 +351,14 @@ void MidiRecorder::startMultiply()
     if (insert || replace) Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
     
     modeStartFrame = recordFrame;
+    modeEndFrame = recordFrame + cycleFrames;
+
+    // audio loops handle this weird
+    // if you're in the final cycle, it won't add another cycle until you actually
+    // cross the loop boundary, I think that works here too,
+    // if the modeStartFrame isn't already on a cycle boundary, the cycle is added
+    // and the roudoff period will be before the end of the added cycle, which is okay
+    
     multiply = true;
     insert = false;
     replace = false;
@@ -371,9 +379,31 @@ void MidiRecorder::endMultiply(bool overdub)
     setRecording(overdub);
 }
 
-int MidiRecorder::getMultiplyFrame()
+/**
+ * They did Multiply again during the roundoff period.
+ * This adds another cycle.
+ * Since we add cycles as we cross the loop boundary for multiply
+ * this doesn't need to do anything, just adjust where we think
+ * it should end.
+ */
+void MidiRecorder::extendMultiply()
 {
-    return modeStartFrame;
+    modeEndFrame += cycleFrames;
+}
+
+/**
+ * They did Undo during the roundoff period.
+ * Track should have determined if this is even possible
+ */
+void MidiRecorder::reduceMultiply()
+{
+    // can't go beyond the first cycle, that would become a cancelation
+    // of the entire multiply, which I guess we could handle here too
+    modeEndFrame -= cycleFrames;
+    if (modeEndFrame <= modeStartFrame) {
+        Trace(1, "MidiRecorder: Attempt to reduce the first multiply cycle");
+        modeEndFrame = modeStartFrame + cycleFrames;
+    }
 }
 
 /**
@@ -394,6 +424,9 @@ int MidiRecorder::getMultiplyFrame()
 MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
 {
     MidiLayer* commitLayer = nullptr;
+
+    if (!unrounded && recordFrame != modeEndFrame)
+      Trace(1, "MidiRecorder: Rounded multiply didn't end where expected");
     
     if (recordLayer == nullptr) {
         Trace(1, "MidiRecorder: Remultiply without a layer");
@@ -579,7 +612,7 @@ void MidiRecorder::startInsert()
 
     // insert a segment between the others, splitting the spanning segment
     int newCycleLast = modeStartFrame + cycleFrames - 1;
-    for (MidiSegment* seg = segments ; seg != nullptr ; seg = seg->next) {
+    for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
         int seglast = seg->originFrame + seg->segmentFrames - 1;
         if (seglast < modeStartFrame) {
             // unaffected
@@ -593,7 +626,7 @@ void MidiRecorder::startInsert()
             MidiSegment* rightHalf = pools->copy(seg);
             // shorten the left half
             int leftCut = seglast - modeStartFrame + 1;
-            seg->segmentFames -= leftCut;
+            seg->segmentFrames -= leftCut;
             // shorten the right half
             int rightCut = modeStartFrame - seg->originFrame;
             rightHalf->segmentFrames -= rightCut;
@@ -603,7 +636,7 @@ void MidiRecorder::startInsert()
             // finally sticl a cycle in the sequence
             MidiSequence* sequence = recordLayer->getSequence();
             if (sequence != nullptr)
-              sequence->insertTime(modeStartFrame, cycleFrames);
+              sequence->insertTime(pools->getMidiPool(), modeStartFrame, cycleFrames);
         }
     }
     
@@ -619,7 +652,19 @@ void MidiRecorder::startInsert()
  */
 void MidiRecorder::extendInsert()
 {
-    Trace(1, "MidiRecorder: not implemented");
+    Trace(1, "MidiRecorder: extendInsert not implemented");
+}
+
+/**
+ * They did Undo during the roundoff period.
+ * Track should have determined if this is even possible
+ *
+ * Since Insert actually inserts new segments each time you invoke it
+ * We need to shift everything down that we shifted in extendInsert.
+  */
+void MidiRecorder::reduceInsert()
+{
+    Trace(1, "MidiRecorder: reduceInsert not implemented");
 }
 
 /**
@@ -633,17 +678,36 @@ void MidiRecorder::extendInsert()
  */
 void MidiRecorder::endInsert(bool overdub, bool unrounded)
 {
+    if (!unrounded && recordFrame != modeEndFrame)
+      Trace(1, "MidiRecorder: Rounded insert end frame mismatch");
+    
     if (unrounded) {
 
-        int wasted  
+        int wasted = modeStartFrame - recordFrame;
+        if (wasted > 0) {
+            // take the extra inserted time out of the sequence
+            // not expecting to have to change anything since we
+            // didn't get far enough into it to add anything
+            MidiSequence* sequence = recordLayer->getSequence();
+            if (sequence != nullptr) {
+                int adjustments = sequence->removeTime(pools->getMidiPool(), recordFrame, wasted);
+                if (adjustments > 0)
+                  Trace(1, "MidiRecorder: Unexpected event adjusted required after unrounded insert");
+            }
 
-        MidiSequence* sequence = recordLayer->getSequence();
-        if (sequence != nullptr)
-          sequence->removeTime(modeStartFrame, cycleFrames);
+            // move the segments down
+            for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
+                if (seg->originFrame >= modeEndFrame)
+                  seg->originFrame -= wasted;
+            }
+            recordFrames -= wasted;
+        }
 
-
-        
+        // EDP style is to have the result be the new cycle length
+        cycleFrames = recordFrames;
+        recordCycles = 1;
     }
+    
     insert = false;
     extending = false;
     setRecording(overdub);
@@ -790,6 +854,16 @@ bool MidiRecorder::hasChanges()
 int MidiRecorder::getEventCount()
 {
     return (recordLayer != nullptr) ? recordLayer->getEventCount() : 0;
+}
+
+int MidiRecorder::getModeStartFrame()
+{
+    return modeStartFrame;
+}
+
+int MidiRecorder::getModeEndFrame()
+{
+    return modeEndFrame;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -327,6 +327,11 @@ class MobiusInterface {
  * services.  The exceptions are setAudioListener where the engine gives a listener
  * object to the container and midiSend where the engine wants to send a MIDI
  * event.
+ *
+ * todo: More than once I've confused MobiusContainer and MobiusListener.
+ * It's common to have MobiusContainer accessible deep in the core but not MobiusListener
+ * Consider merging them, they're always both Supervisor we might as well make
+ * this bi-directional.
  * 
  */
 class MobiusContainer
