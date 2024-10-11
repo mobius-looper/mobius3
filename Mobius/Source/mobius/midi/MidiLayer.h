@@ -19,7 +19,7 @@ class MidiLayer : public PooledObject
     
     void dump(class StructureDumper& d);
     void poolInit() override;
-    void prepare(class MidiSequencePool* spool, class MidiEventPool* epool, class MidiSegmentPool* segpool);
+    void prepare(class MidiPools* pools);
 
     class MidiSequence* getSequence() {
         return sequence;
@@ -35,6 +35,10 @@ class MidiLayer : public PooledObject
     void add(class MidiSegment* s);
     void replaceSegments(class MidiSegment* list);
     MidiSegment* getLastSegment();
+
+    void clearFragments();
+    class MidiFragment* getNearestCheckpoint(int frame);
+    void add(class MidiFragment* f);
     
     int getFrames();
     void setFrames(int frames);
@@ -67,12 +71,10 @@ class MidiLayer : public PooledObject
 
   private:
 
-    class MidiSequencePool* sequencePool = nullptr;
-    class MidiEventPool* midiPool = nullptr;
-    class MidiSegmentPool* segmentPool = nullptr;
-    
+    class MidiPools* pools = nullptr;
     class MidiSequence* sequence = nullptr;
     class MidiSegment* segments = nullptr;
+    class MidiFragment* fragments = nullptr;
     int layerFrames = 0;
     int layerCycles = 1;
     int changes = 0;
@@ -80,9 +82,6 @@ class MidiLayer : public PooledObject
     // not to be confused with playFrame which is used for the Harvester
     int lastPlayFrame = 0;
 
-    // temp buffer used when trimming segments
-    juce::Array<MidiEvent*> segmentExtending;
-    
     void seek(int startFrame);
 
     void copy(class MidiLayer* src, int start, int end, int origin);
@@ -92,8 +91,6 @@ class MidiLayer : public PooledObject
     void cutSequence(int start, int end);
     void cutSegments(int start, int end);
     void injectSegmentHolds(class MidiSegment* seg, int start, int end);
-    void reclaim(class MidiSegment* seg);
-    void reclaim(class MidiSequence* seq);
 
 };
         

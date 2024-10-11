@@ -43,7 +43,7 @@ MidiTracker::MidiTracker(MobiusContainer* c, MobiusKernel* k)
 {
     container = c;
     kernel = k;
-    watcher.initialize(&midiPool);
+    watcher.initialize(&(pools.midiPool));
 }
 
 MidiTracker::~MidiTracker()
@@ -281,7 +281,7 @@ void MidiTracker::midiEvent(MidiEvent* e)
         track->midiEvent(e);
     }
     
-    midiPool.checkin(e);
+    pools.checkin(e);
 }
     
 //////////////////////////////////////////////////////////////////////
@@ -290,29 +290,9 @@ void MidiTracker::midiEvent(MidiEvent* e)
 //
 //////////////////////////////////////////////////////////////////////
 
-MidiEventPool* MidiTracker::getMidiPool()
+MidiPools* MidiTracker::getPools()
 {
-    return &midiPool;
-}
-
-MidiSequencePool* MidiTracker::getSequencePool()
-{
-    return &sequencePool;
-}
-
-TrackEventPool* MidiTracker::getEventPool()
-{
-    return &eventPool;
-}
-
-MidiLayerPool* MidiTracker::getLayerPool()
-{
-    return &layerPool;
-}
-
-MidiSegmentPool* MidiTracker::getSegmentPool()
-{
-    return &segmentPool;
+    return &pools;
 }
 
 //////////////////////////////////////////////////////////////////////

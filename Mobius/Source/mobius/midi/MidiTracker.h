@@ -6,12 +6,14 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+#include "MidiPools.h"
 #include "TrackEvent.h"
 #include "MidiSegment.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
 #include "MidiWatcher.h"
 #include "LongWatcher.h"
+#include "MidiFragment.h"
 
 class MidiTracker : public LongWatcher::Listener
 {
@@ -31,11 +33,7 @@ class MidiTracker : public LongWatcher::Listener
 
     class MobiusMidiState* getState();
 
-    class MidiEventPool* getMidiPool();
-    class MidiSequencePool* getSequencePool();
-    class TrackEventPool* getEventPool();
-    class MidiLayerPool* getLayerPool();
-    class MidiSegmentPool* getSegmentPool();
+    class MidiPools* getPools();
     
     MobiusContainer* getContainer() {
         return container;
@@ -59,13 +57,8 @@ class MidiTracker : public LongWatcher::Listener
     int audioTracks = 0;
 
     // pools must be before tracks so they can return
-    // things to the pool
-    MidiEventPool midiPool;
-    MidiSequencePool sequencePool;
-    MidiLayerPool layerPool;
-    MidiSegmentPool segmentPool;
-    TrackEventPool eventPool;
-
+    MidiPools pools;
+    
     LongWatcher longWatcher;
     MidiWatcher watcher;
     juce::OwnedArray<MidiTrack> tracks;

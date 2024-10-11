@@ -483,6 +483,9 @@
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="a1SAjP" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/LongWatcher.cpp"/>
           <FILE id="tOds4k" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/midi/LongWatcher.h"/>
+          <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/MidiFragment.cpp"/>
+          <FILE id="xdZZo9" name="MidiFragment.h" compile="0" resource="0" file="Source/mobius/midi/MidiFragment.h"/>
           <FILE id="VR0osY" name="MidiHarvester.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiHarvester.cpp"/>
           <FILE id="DZBLTg" name="MidiHarvester.h" compile="0" resource="0" file="Source/mobius/midi/MidiHarvester.h"/>
@@ -492,6 +495,8 @@
           <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
+          <FILE id="yoEz7A" name="MidiPools.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPools.cpp"/>
+          <FILE id="pz5Wzm" name="MidiPools.h" compile="0" resource="0" file="Source/mobius/midi/MidiPools.h"/>
           <FILE id="wpIvqU" name="MidiRecorder.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiRecorder.cpp"/>
           <FILE id="aKlMto" name="MidiRecorder.h" compile="0" resource="0" file="Source/mobius/midi/MidiRecorder.h"/>

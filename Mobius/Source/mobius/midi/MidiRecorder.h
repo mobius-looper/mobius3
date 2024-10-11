@@ -24,11 +24,7 @@ class MidiRecorder : public MidiWatcher::Listener
     
     MidiRecorder(class MidiTrack* t);
     ~MidiRecorder();
-    void initialize(class MidiLayerPool* lpool,
-                    class MidiSequencePool* spool,
-                    class MidiEventPool* epool,
-                    class MidiSegmentPool* segpool);
-
+    void initialize(class MidiPools* p);
     void dump(class StructureDumper& d);
     
     //
@@ -97,10 +93,7 @@ class MidiRecorder : public MidiWatcher::Listener
     class MidiTrack* track = nullptr;
     
     // provided resources
-    class MidiLayerPool* layerPool = nullptr;
-    class MidiSequencePool* sequencePool = nullptr;
-    class MidiEventPool* midiPool = nullptr;
-    class MidiSegmentPool* segmentPool = nullptr;
+    class MidiPools* pools = nullptr;
 
     // held note monitor
     MidiWatcher watcher;

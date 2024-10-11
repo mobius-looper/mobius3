@@ -9,8 +9,10 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+#include "MidiPools.h"
 #include "MidiLayer.h"
 #include "MidiSegment.h"
+#include "MidiFragment.h"
 
 #include "MidiHarvester.h"
 
@@ -27,22 +29,21 @@ MidiHarvester::~MidiHarvester()
     if (playEvents.size() > 0)
       Trace(1, "MidiHarverster: Lingering events at destruction");
       
-    if (midiPool != nullptr) {
-        playNotes.clear(midiPool);
-        playEvents.clear(midiPool);
+    if (pools != nullptr) {
+        pools->clear(&playNotes);
+        pools->clear(&playEvents);
     }
 }
 
-void MidiHarvester::initialize(MidiEventPool* epool, MidiSequencePool* spool)
+void MidiHarvester::initialize(MidiPools* p)
 {
-    midiPool = epool;
-    sequencePool = spool;
+    pools = p;
 }
 
 void MidiHarvester::reset()
 {
-    playNotes.clear(midiPool);
-    playEvents.clear(midiPool);
+    pools->clear(&playNotes);
+    pools->clear(&playEvents);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -378,7 +379,7 @@ MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
             Trace(1, "MidiHarvester: Encountered NoteOff event, what's the deal?");
         }
         else if (e->juceMessage.isNoteOn()) {
-            copy = midiPool->newEvent();
+            copy = pools->newEvent();
             copy->copy(e);
             copy->peer = e;
 
@@ -390,7 +391,7 @@ MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
             noteResult->add(copy);
         }
         else if (eventResult != nullptr) {
-            copy = midiPool->newEvent();
+            copy = pools->newEvent();
             copy->copy(e);
             eventResult->add(copy);
         }
@@ -469,7 +470,7 @@ void MidiHarvester::harvestPrefix(MidiSegment* segment)
     }
     
     // what remains is the segment prefix
-    segment->prefix.clear(midiPool);
+    pools->clear(&(segment->prefix));
     if (heldNotes.size() > 0) {
 
         // the prefix notes will all start at frame 0 relative
@@ -495,9 +496,22 @@ void MidiHarvester::decay(MidiSequence* seq, int blockSize)
         MidiEvent* next = note->next;
         note->remaining -= blockSize;
         if (note->remaining <= 0)
-          seq->remove(midiPool, note);
+          seq->remove(pools->getMidiPool(), note);
         note = next;
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Checkpoints
+//
+//////////////////////////////////////////////////////////////////////
+
+MidiFragment* MidiHarvester::harvestCheckpoint(MidiLayer* layer, int frame)
+{
+    (void)layer;
+    (void)frame;
+    return nullptr;
 }
 
 /****************************************************************************/

@@ -67,9 +67,7 @@ class MidiTrack
     class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiTracker* tracker = nullptr;
-    
-    class MidiEventPool* midiPool = nullptr;
-    class TrackEventPool* eventPool = nullptr;
+    class MidiPools* pools = nullptr;
 
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;

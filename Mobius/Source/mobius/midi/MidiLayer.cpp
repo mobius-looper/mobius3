@@ -9,6 +9,8 @@
 #include "MidiLoop.h"
 #include "MidiSegment.h"
 #include "MidiHarvester.h"
+#include "MidiFragment.h"
+#include "MidiPools.h"
 
 #include "MidiLayer.h"
 
@@ -26,17 +28,13 @@ MidiLayer::~MidiLayer()
 void MidiLayer::poolInit()
 {
     next = nullptr;
-    
-    sequencePool = nullptr;
-    midiPool = nullptr;
-    segmentPool = nullptr;
-    
+    pools = nullptr;
     sequence = nullptr;
     segments = nullptr;
+    fragments = nullptr;
     layerFrames = 0;
     layerCycles = 1;
     changes = 0;
-    segmentExtending.clearQuick();
     resetPlayState();
 }
 
@@ -45,11 +43,9 @@ void MidiLayer::poolInit()
  * MidiRecorder, it can handle the pools.  The only convenient need for
  * these is when clearing it, but the pools could be passed in to clear
  */
-void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegmentPool* segpool)
+void MidiLayer::prepare(MidiPools* p)
 {
-    sequencePool = spool;
-    midiPool = epool;
-    segmentPool = segpool;
+    pools = p;
 
     // make sure it starts out clean, but it should already be
     if (sequence != nullptr)
@@ -57,10 +53,6 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
 
     if (segments != nullptr)
       Trace(1, "MidiLayer::prepare Already had segments");
-
-    // don't have to go crazy with this one
-    // hate this
-    segmentExtending.ensureStorageAllocated(32);
 
     clear();
 }
@@ -70,10 +62,11 @@ void MidiLayer::prepare(MidiSequencePool* spool, MidiEventPool* epool, MidiSegme
  */
 void MidiLayer::clear()
 {
-    reclaim(sequence);
+    pools->reclaim(sequence);
     sequence = nullptr;
 
     clearSegments();
+    clearFragments();
     
     layerFrames = 0;
     layerCycles = 1;
@@ -86,8 +79,45 @@ void MidiLayer::clearSegments()
     while (segments != nullptr) {
         MidiSegment* nextseg = segments->next;
         segments->next = nullptr;
-        reclaim(segments);
+        pools->reclaim(segments);
         segments = nextseg;
+    }
+}
+
+void MidiLayer::clearFragments()
+{
+    while (fragments != nullptr) {
+        MidiFragment* nextfrag = fragments->next;
+        fragments->next = nullptr;
+        pools->reclaim(fragments);
+        fragments = nextfrag;
+    }
+}
+
+MidiFragment* MidiLayer::getNearestCheckpoint(int frame)
+{
+    MidiFragment* found = nullptr;
+    for (MidiFragment* f = fragments ; f != nullptr ; f = f->next) {
+        if (f->frame <= frame) {
+            if (found == nullptr)
+              found = f;
+            else {
+                int oldDelta = frame - found->frame;
+                int newDelta = frame - f->frame;
+                if (newDelta < oldDelta)
+                  found = f;
+            }
+        }
+    }
+    return found;
+}
+
+void MidiLayer::add(MidiFragment* f)
+{
+    if (f != nullptr) {
+        // don't need to order these, won't have many
+        f->next = fragments;
+        fragments = f;
     }
 }
 
@@ -97,22 +127,6 @@ MidiSegment* MidiLayer::getLastSegment()
     while (result != nullptr && result->next != nullptr)
       result = result->next;
     return result;
-}
-
-void MidiLayer::reclaim(MidiSegment* seg)
-{
-    if (seg != nullptr) {
-        seg->prefix.clear(midiPool);
-        segmentPool->checkin(seg);
-    }
-}
-
-void MidiLayer::reclaim(MidiSequence* seq)
-{
-    if (seq != nullptr) {
-        seq->clear(midiPool);
-        sequencePool->checkin(seq);
-    }
 }
 
 void MidiLayer::replaceSegments(MidiSegment* list)
@@ -132,7 +146,7 @@ void MidiLayer::resetPlayState()
 void MidiLayer::add(MidiEvent* e)
 {
     if (sequence == nullptr)
-      sequence = sequencePool->newSequence();
+      sequence = pools->newSequence();
 
     // todo: to implement the audio loop's "noise floor" we could monitor
     // note velocities
@@ -241,7 +255,7 @@ void MidiLayer::copy(MidiLayer* src)
 {
     Trace(2, "MidiLayer: Beginning copy");
     if (sequence == nullptr)
-      sequence = sequencePool->newSequence();
+      sequence = pools->newSequence();
     copy(src, 0, src->getFrames(), 0);
 }
 
@@ -270,7 +284,7 @@ void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
             if (event->frame >= end)
               break;
             else if (event->frame >= start) {
-                MidiEvent* ce = midiPool->newEvent();
+                MidiEvent* ce = pools->newEvent();
                 ce->copy(event);
                 int adjustedFrame = ce->frame + origin;
                 Trace(2, "MidiLayer: Event adjusted from %d to %d",

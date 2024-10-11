@@ -32,6 +32,7 @@
 #include "../MobiusInterface.h"
 
 #include "MidiTracker.h"
+#include "MidiPools.h"
 #include "MidiLoop.h"
 #include "MidiLayer.h"
 #include "MidiSegment.h"
@@ -61,22 +62,14 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     pulsator = container->getPulsator();
     valuator = t->getValuator();
 
-    midiPool = tracker->getMidiPool();
-    eventPool = tracker->getEventPool();
+    pools = tracker->getPools();
 
-    MidiLayerPool* layerPool = tracker->getLayerPool();
-
-    recorder.initialize(layerPool,
-                        tracker->getSequencePool(),
-                        midiPool,
-                        tracker->getSegmentPool());
-    
-    player.initialize(container, midiPool, tracker->getSequencePool());
-    
-    events.initialize(eventPool);
+    recorder.initialize(pools);
+    player.initialize(container, pools);
+    events.initialize(&(pools->eventPool));
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
-        MidiLoop* l = new MidiLoop(layerPool);
+        MidiLoop* l = new MidiLoop(pools);
         l->number = i + 1;
         loops.add(l);
     }
@@ -476,7 +469,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
             }
             // it dramatically cleans up the carving logic if we make this look
             // like a scheduled event
-            TrackEvent* pulseEvent = eventPool->newEvent();
+            TrackEvent* pulseEvent = pools->newTrackEvent();
             pulseEvent->frame = currentFrame + pulseOffset;
             pulseEvent->type = TrackEvent::EventPulse;
             // note priority flag so it goes before others on this frame
@@ -668,7 +661,7 @@ void MidiTrack::doEvent(TrackEvent* e)
         case TrackEvent::EventRound: doRound(e); break;
     }
 
-    eventPool->checkin(e);
+    pools->checkin(e);
 }
 
 /**
@@ -854,7 +847,7 @@ void MidiTrack::doRecord(UIAction* a)
         toggleRecording();
     }
     else {
-        TrackEvent* e = eventPool->newEvent();
+        TrackEvent* e = pools->newTrackEvent();
         e->type = TrackEvent::EventRecord;
         e->pending = true;
         e->pulsed = true;
@@ -1221,7 +1214,7 @@ void MidiTrack::doSwitch(UIAction* a, int delta)
 
 TrackEvent* MidiTrack::newSwitchEvent(int target, int frame)
 {
-    TrackEvent* event = eventPool->newEvent();
+    TrackEvent* event = pools->newTrackEvent();
     event->type = TrackEvent::EventSwitch;
     event->switchTarget = target;
     event->frame = frame;
@@ -1393,7 +1386,7 @@ void MidiTrack::doSwitchNow(int newIndex)
     SwitchDuration duration = valuator->getSwitchDuration(number);
     switch (duration) {
         case SWITCH_ONCE: {
-            TrackEvent* event = eventPool->newEvent();
+            TrackEvent* event = pools->newTrackEvent();
             event->type = TrackEvent::EventFunction;
             event->symbolId = FuncMute;
             event->frame = recorder.getFrames();
@@ -1401,7 +1394,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         }
             break;
         case SWITCH_ONCE_RETURN: {
-            TrackEvent* event = eventPool->newEvent();
+            TrackEvent* event = pools->newTrackEvent();
             event->type = TrackEvent::EventReturn;
             event->switchTarget = currentLoop->number - 1;
             event->frame = recorder.getFrames();
@@ -1467,7 +1460,7 @@ void MidiTrack::doMultiply(UIAction* a)
         doMultiplyNow();
     }
     else {
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventFunction;
         event->symbolId = FuncMultiply;
         event->frame = getQuantizeFrame(quant);
@@ -1487,7 +1480,7 @@ void MidiTrack::doMultiplyNow()
 
         // ending an unrounded multiply quantizes the end frame
         // so that the cycle length can be preserved
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventRound;
         event->symbolId = FuncMultiply;
         event->frame = getRoundedFrame();
@@ -1549,7 +1542,7 @@ void MidiTrack::doInsert(UIAction* a)
         doInsertNow();
     }
     else {
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventFunction;
         event->symbolId = FuncInsert;
         event->frame = getQuantizeFrame(quant);
@@ -1568,7 +1561,7 @@ void MidiTrack::doInsertNow()
     if (mode == MobiusMidiState::ModeInsert) {
         // ending an unrounded multiply quantizes the end frame
         // so that the cycle length can be preserved
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventRound;
         event->symbolId = FuncInsert;
         event->frame = getRoundedFrame();
@@ -1606,7 +1599,7 @@ void MidiTrack::doMute(UIAction* a)
         doMuteNow();
     }
     else {
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventFunction;
         event->symbolId = FuncMute;
         event->frame = getQuantizeFrame(quant);
@@ -1695,7 +1688,7 @@ void MidiTrack::doReplace(UIAction* a)
         doReplaceNow();
     }
     else {
-        TrackEvent* event = eventPool->newEvent();
+        TrackEvent* event = pools->newTrackEvent();
         event->type = TrackEvent::EventFunction;
         event->symbolId = FuncReplace;
         event->frame = getQuantizeFrame(FuncReplace, quant);

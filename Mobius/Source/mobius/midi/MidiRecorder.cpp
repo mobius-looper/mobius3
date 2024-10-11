@@ -20,6 +20,7 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+#include "MidiPools.h"
 #include "MidiLayer.h"
 #include "MidiSegment.h"
 #include "MidiTrack.h"
@@ -41,21 +42,18 @@ MidiRecorder::~MidiRecorder()
 {
     if (recordLayer != nullptr) {
         recordLayer->clear();
-        layerPool->checkin(recordLayer);
+        if (pools != nullptr)
+          pools->checkin(recordLayer);
         recordLayer = nullptr;
     }
 }
 
-void MidiRecorder::initialize(MidiLayerPool* lpool, MidiSequencePool* spool,
-                              MidiEventPool* epool, MidiSegmentPool* segpool)
+void MidiRecorder::initialize(MidiPools* p)
 {
-    layerPool = lpool;
-    sequencePool = spool;
-    midiPool = epool;
-    segmentPool = segpool;
-    watcher.initialize(midiPool);
+    pools = p;
+    watcher.initialize(&(pools->midiPool));
     watcher.setListener(this);
-    harvester.initialize(midiPool, sequencePool);
+    harvester.initialize(p);
 }
 
 void MidiRecorder::dump(StructureDumper& d)
@@ -97,7 +95,7 @@ void MidiRecorder::reset()
     backingLayer = nullptr;
     if (recordLayer != nullptr) {
         recordLayer->clear();
-        layerPool->checkin(recordLayer);
+        pools->checkin(recordLayer);
         recordLayer = nullptr;
     }
     recordFrames = 0;
@@ -177,7 +175,7 @@ void MidiRecorder::assimilate(MidiLayer* layer)
     cycleFrames = (int)(recordFrames / recordCycles);
 
     // the full width segment into the backing layer
-    MidiSegment* seg = segmentPool->newSegment();
+    MidiSegment* seg = pools->newSegment();
     seg->layer = backingLayer;
     seg->originFrame = 0;
     seg->segmentFrames = recordFrames;
@@ -195,8 +193,8 @@ void MidiRecorder::assimilate(MidiLayer* layer)
  */
 MidiLayer* MidiRecorder::prepLayer()
 {
-    MidiLayer* layer = layerPool->newLayer();
-    layer->prepare(sequencePool, midiPool, segmentPool);
+    MidiLayer* layer = pools->newLayer();
+    layer->prepare(pools);
     return layer;
 }
 
@@ -359,7 +357,7 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
         // cut the recorded sequence
         MidiSequence* sequence = recordLayer->getSequence();
         if (sequence != nullptr)
-          sequence->cut(midiPool, cutStart, cutEnd, true);
+          sequence->cut(pools->getMidiPool(), cutStart, cutEnd, true);
  
         // restructure the layer
         recordLayer->setFrames(newFrames);
@@ -419,7 +417,7 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
         if (reclast >= startFrame) {
             if (segment == nullptr) {
                 // first segment, consume the recorded segment that is in range
-                segment = segmentPool->newSegment();
+                segment = pools->newSegment();
                 segment->layer = recorded->layer;
                 segment->originFrame = startFrame;
                 int leftLoss = startFrame - recorded->originFrame;
@@ -438,7 +436,7 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
                 }
                 else {
                     // gap, make a new segment
-                    MidiSegment* neu = segmentPool->newSegment();
+                    MidiSegment* neu = pools->newSegment();
                     neu->layer = recorded->layer;
                     neu->originFrame = recorded->originFrame;
                     neu->referenceFrame = recorded->referenceFrame;
@@ -641,7 +639,7 @@ void MidiRecorder::endReplace(bool overdub)
             // backing segment gets truncated
             seg->segmentFrames = modeStartFrame - seg->originFrame;
             // new one gets the remainder
-            MidiSegment* neu = segmentPool->newSegment();
+            MidiSegment* neu = pools->newSegment();
             neu->layer = backingLayer;
             neu->originFrame = recordFrame;
             neu->referenceFrame = recordFrame;
@@ -853,7 +851,7 @@ void MidiRecorder::extend()
 {
     // multiply/insert
     if (multiply || insert) {
-        MidiSegment* seg = segmentPool->newSegment();
+        MidiSegment* seg = pools->newSegment();
         seg->layer = backingLayer;
         seg->segmentFrames = cycleFrames;
         seg->originFrame = cycleFrames * recordCycles;
@@ -895,7 +893,7 @@ void MidiRecorder::add(MidiEvent* e)
 
 MidiEvent* MidiRecorder::copyEvent(MidiEvent* src)
 {
-    MidiEvent* e = midiPool->newEvent();
+    MidiEvent* e = pools->newEvent();
     e->copy(src);
     return e;
 }
@@ -981,7 +979,7 @@ void MidiRecorder::injectHeld()
         watchedEvent->duration = 0;
         watcher.add(watchedEvent);
 
-        MidiEvent* localEvent = midiPool->newEvent();
+        MidiEvent* localEvent = pools->newEvent();
         localEvent->device = held->device;
         // frame stays at zero
         localEvent->juceMessage =

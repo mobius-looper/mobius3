@@ -22,7 +22,7 @@ class MidiHarvester
 
     MidiHarvester();
     ~MidiHarvester();
-    void initialize(class MidiEventPool* epool, class MidiSequencePool* spool);
+    void initialize(class MidiPools* pools);
 
     void reset();
 
@@ -49,11 +49,15 @@ class MidiHarvester
      * for a segment.
      */
     void harvestPrefix(class MidiSegment* segment);
+
+    /**
+     * Similar to a prefix, need to share more
+     */
+    class MidiFragment* harvestCheckpoint(class MidiLayer* layer, int frame);
     
   private:
 
-    class MidiEventPool* midiPool = nullptr;
-    class MidiSequencePool* sequencePool = nullptr;
+    class MidiPools* pools = nullptr;
 
     // always need these so don't bother with the pool
     class MidiSequence playNotes;

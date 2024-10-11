@@ -22,8 +22,10 @@
 // for midiSend
 #include "../MobiusInterface.h"
 
+#include "MidiPools.h"
 #include "MidiLayer.h"
 #include "MidiTrack.h"
+#include "MidiFragment.h"
 
 #include "MidiPlayer.h"
 
@@ -46,12 +48,11 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize(MobiusContainer* c, MidiEventPool* epool, MidiSequencePool* spool)
+void MidiPlayer::initialize(MobiusContainer* c, MidiPools* p)
 {
     container = c;
-    midiPool = epool;
-    sequencePool = spool;
-    harvester.initialize(midiPool, sequencePool);
+    pools = p;
+    harvester.initialize(p);
 }
 
 void MidiPlayer::dump(StructureDumper& d)
@@ -331,6 +332,24 @@ void MidiPlayer::sendOn(MidiEvent* note)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Checkpoints
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiPlayer::checkpoint()
+{
+    MidiFragment* frag = playLayer->getNearestCheckpoint(playFrame);
+    if (frag != nullptr && frag->frame == playFrame) {
+        // already have one at this location, won't have changed
+    }
+    else {
+        frag = harvester.harvestCheckpoint(playLayer, playFrame);
+        playLayer->add(frag);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Note Duration Tracking
 //
 //////////////////////////////////////////////////////////////////////
@@ -343,7 +362,7 @@ void MidiPlayer::flushHeld()
     while (heldNotes != nullptr) {
         MidiEvent* next = heldNotes->next;
         heldNotes->next = nullptr;
-        midiPool->checkin(heldNotes);
+        pools->checkin(heldNotes);
         heldNotes = next;
     }
 }
@@ -370,7 +389,7 @@ void MidiPlayer::advanceHeld(int blockFrames)
             else
               prev->next = next;
             held->next = nullptr;
-            midiPool->checkin(held);
+            pools->checkin(held);
         }
         else {
             prev = held;
@@ -389,7 +408,7 @@ void MidiPlayer::forceOff()
         sendOff(heldNotes);
         MidiEvent* next = heldNotes->next;
         heldNotes->next = nullptr;
-        midiPool->checkin(heldNotes);
+        pools->checkin(heldNotes);
         heldNotes = next;
     }
 }

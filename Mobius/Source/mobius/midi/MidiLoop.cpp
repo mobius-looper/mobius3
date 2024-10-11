@@ -4,10 +4,11 @@
 #include "MidiTracker.h"
 #include "MidiTrack.h"
 #include "MidiLoop.h"
+#include "MidiPools.h"
 
-MidiLoop::MidiLoop(MidiLayerPool* pool)
+MidiLoop::MidiLoop(MidiPools* p)
 {
-    layerPool = pool;
+    pools = p;
 }
 
 MidiLoop::~MidiLoop()
@@ -30,7 +31,7 @@ void MidiLoop::reclaimLayers(MidiLayer* list)
         MidiLayer* next = list->next;
         list->clear();
         list->next = nullptr;
-        layerPool->checkin(list);
+        pools->checkin(list);
         list = next;
     }
 }

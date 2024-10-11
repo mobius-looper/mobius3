@@ -17,8 +17,7 @@ class MidiPlayer
     //
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
-    void initialize(class MobiusContainer* c, class MidiEventPool* epool,
-                    class MidiSequencePool* spool);
+    void initialize(class MobiusContainer* c, class MidiPools* pools);
     void dump(StructureDumper& d);
     
     //
@@ -48,13 +47,16 @@ class MidiPlayer
 
     // need this to send on all channels all devices
     //void allNotesOff();
+
+    // store a playback checkpoint at the current frame
+    void checkpoint();
     
   private:
 
     // configuration
     class MobiusContainer* container = nullptr;
-    class MidiEventPool* midiPool = nullptr;
-    class MidiSequencePool* sequencePool = nullptr;
+    class MidiPools* pools = nullptr;
+    
     class MidiTrack* track = nullptr;
 
     // play state
