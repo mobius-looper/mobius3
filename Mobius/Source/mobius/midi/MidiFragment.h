@@ -25,7 +25,8 @@ class MidiFragment : public PooledObject
 
     void poolInit();
     void dump(class StructureDumper& d);
-    void clear(class MidiEventPool* p);
+    void clear(class MidiPools* p);
+    void copy(class MidiPools* pools, MidiFragment* src);
     
     MidiFragment* next = nullptr;
     MidiFragment* prev = nullptr;

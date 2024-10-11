@@ -341,27 +341,40 @@ MidiLayer* MidiLayerPool::newLayer()
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiLayer::dump(StructureDumper& d)
+void MidiLayer::dump(StructureDumper& d, bool primary)
 {
-    d.start("Layer:");
-    d.add("number", number);
-    d.add("frames", layerFrames);
-    d.add("cycles", layerCycles);
-    if (lastPlayFrame > 0)
-      d.add("lastPlayFrame", lastPlayFrame);
-    d.newline();
-    
-    d.inc();
-    
-    if (sequence != nullptr) {
-        sequence->dump(d);
+    if (d.isVisited(number) || !primary) {
+        d.start("Layer:");
+        d.add("number", number);
+        d.newline();
     }
+    else {
+        d.start("Layer:");
+        d.add("number", number);
+        d.add("frames", layerFrames);
+        d.add("cycles", layerCycles);
+        if (lastPlayFrame > 0)
+          d.add("lastPlayFrame", lastPlayFrame);
+        d.newline();
+    
+        d.inc();
+    
+        if (sequence != nullptr) {
+            sequence->dump(d);
+        }
 
-    for (MidiSegment* seg = segments ; seg != nullptr ; seg = seg->next) {
-        seg->dump(d);
-    }
+        for (MidiSegment* seg = segments ; seg != nullptr ; seg = seg->next) {
+            seg->dump(d);
+        }
     
-    d.dec();
+        for (MidiFragment* frag = fragments ; frag != nullptr ; frag = frag->next) {
+            frag->dump(d);
+        }
+    
+        d.dec();
+
+        d.visit(number);
+    }
 }
 
 /****************************************************************************/

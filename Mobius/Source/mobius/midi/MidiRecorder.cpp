@@ -76,8 +76,9 @@ void MidiRecorder::dump(StructureDumper& d)
     d.addb("insert", insert);
     d.addb("replace", replace);
     d.newline();
-    
-    recordLayer->dump(d);
+
+    // this is always a primary layer since it hasn't been shifted yet
+    recordLayer->dump(d, true);
     d.dec();
 }
 

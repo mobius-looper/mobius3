@@ -17,7 +17,7 @@ class MidiLayer : public PooledObject
     MidiLayer* next = nullptr;
     int number = 0;
     
-    void dump(class StructureDumper& d);
+    void dump(class StructureDumper& d, bool primary = false);
     void poolInit() override;
     void prepare(class MidiPools* pools);
 

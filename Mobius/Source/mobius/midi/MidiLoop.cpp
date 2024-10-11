@@ -1,6 +1,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/StructureDumper.h"
+
 #include "MidiTracker.h"
 #include "MidiTrack.h"
 #include "MidiLoop.h"
@@ -13,6 +15,26 @@ MidiLoop::MidiLoop(MidiPools* p)
 
 MidiLoop::~MidiLoop()
 {
+}
+
+void MidiLoop::dump(StructureDumper& d)
+{
+    d.start("Loop:");
+    d.add("number", number);
+    d.newline();
+
+    d.inc();
+    if (layers != nullptr) {
+        for (MidiLayer* l = layers ; l != nullptr ; l = l->next)
+          l->dump(d, true);
+    }
+
+    if (redoLayers != nullptr) {
+        d.line("Redo:");
+        for (MidiLayer* l = redoLayers ; l != nullptr ; l = l->next)
+          l->dump(d, true);
+    }
+    d.dec();
 }
 
 void MidiLoop::reset()

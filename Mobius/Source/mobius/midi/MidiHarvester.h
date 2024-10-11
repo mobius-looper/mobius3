@@ -75,8 +75,8 @@ class MidiHarvester
     
     bool hasContinuity(class MidiSegment* segment);
     
-    class MidiEvent* add(class MidiEvent* e, bool heldOnly,
-                         class MidiSequence* noteResult, class MidiSequence* eventResult);
+    class MidiEvent* add(class MidiEvent* e, class MidiSequence* noteResult,
+                         class MidiSequence* eventResult);
     
     void decay(class MidiSequence* seq, int blockSize);
 

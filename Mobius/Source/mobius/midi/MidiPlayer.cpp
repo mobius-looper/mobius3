@@ -95,68 +95,8 @@ void MidiPlayer::reset()
     loopFrames = 0;
 
     harvester.reset();
-}
-
-/**
- * Install a layer to play.
- * 
- * If a layer was already playing it will turn off held notes.
- *
- * todo: need more thought around "seamless" layer transitions where the next
- * layer can handle NoteOffs for things turned on in this layer.
- * That part may be tricky, this might need to be part of the Layer state
- * "the notes that were held when I was entered".  If a sequence ends with held notes
- * and enters a sequence that turns on those notes, but was created with held notes,
- * the notes can just continue being held and do not need to be retriggered.
- *
- * hmm, don't overthink this, let that be handled in shift() ?
- */
-void MidiPlayer::setLayer(MidiLayer* layer)
-{
-    // until we get transitions worked out, changing a layer always closes notes
-    forceOff();
-
-    playLayer = layer;
-    
-    if (layer == nullptr) {
-        loopFrames = 0;
-    }
-    else {
-        loopFrames = layer->getFrames();
-    }
-    
-    // attempt to keep the same relative location
-    // may be quickly overridden by another call to setFrames()
-    setFrame(playFrame);
-
-    // we now own the play cursor in this layer
-    if (playLayer != nullptr)
-      playLayer->resetPlayState();
-}
-
-/**
- * Set the playback position
- */
-void MidiPlayer::setFrame(int frame)
-{
-    if (loopFrames == 0) {
-        // doesn't matter what they asked for
-        playFrame = 0;
-    }
-    else {
-        // wrap within the available frames
-        int adjustedFrame = frame;
-        if (frame > loopFrames) {
-            adjustedFrame = frame % loopFrames;
-            Trace(2, "MidiPlayer: Wrapping play frame from %d to %d",
-                  frame, adjustedFrame);
-        }
-        
-        playFrame = adjustedFrame;
-    }
-
-    if (playLayer != nullptr)
-      playLayer->resetPlayState();
+    pools->reclaim(restoredHeld);
+    restoredHeld = nullptr;
 }
 
 /**
@@ -188,6 +128,153 @@ void MidiPlayer::shift(MidiLayer* layer)
         playFrame = 0;
         playLayer->resetPlayState();
     }
+}
+
+/**
+ * Install a layer to play.
+ * Unlike shift() this is not expected to be a seamless transition.
+ * Typically done when using undo, redo, or loop switch.
+ * 
+ * If a layer was already playing it will turn off held notes.
+ *
+ * todo: need more thought around "seamless" layer transitions where the next
+ * layer can handle NoteOffs for things turned on in this layer.
+ * That part may be tricky, this might need to be part of the Layer state
+ * "the notes that were held when I was entered".  If a sequence ends with held notes
+ * and enters a sequence that turns on those notes, but was created with held notes,
+ * the notes can just continue being held and do not need to be retriggered.
+ *
+ * hmm, don't overthink this, let that be handled in shift() ?
+ */
+void MidiPlayer::change(MidiLayer* layer, int newFrame)
+{
+    // checkpoint held notes in case we return here
+    saveHeld();
+    
+    // until we get transitions worked out, changing a layer always closes notes
+    forceOff();
+
+    playLayer = layer;
+    
+    if (layer == nullptr) {
+        loopFrames = 0;
+    }
+    else {
+        loopFrames = layer->getFrames();
+    }
+
+    if (newFrame == -1) {
+        // attempt to keep the same relative location
+        newFrame = playFrame;
+    }
+    
+    setFrame(newFrame);
+
+    // we now own the play cursor in this layer
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
+}
+
+/**
+ * When chcanging from one layer to another while playing, capture the current held notes
+ * and save them as a layer "checkpoint" so that if we return to that layer we can
+ * more easily determine what held notes need to be turned back on.
+ *
+ * todo: should also be tracking and remembering the last value of any CCs so they
+ * too can be restored?  Hmm, maybe not, if they're using CCs as a performance control
+ * may want those to just carry over as they bounce between loops and layers.
+ */
+void MidiPlayer::saveHeld()
+{
+    if (playLayer != nullptr && heldNotes != nullptr) {
+
+        MidiFragment* existing = playLayer->getNearestCheckpoint(playFrame);
+        if (existing != nullptr && existing->frame == playFrame) {
+            // already have a checkpoint here, play layers can't change without
+            // going back through Recorder which will reset checkpoints
+            // so just leave the one there
+        }
+        else {
+            MidiFragment* frag = pools->newFragment();
+            for (MidiEvent* e = heldNotes ; e != nullptr ; e = e->next) {
+                MidiEvent* copy = pools->newEvent();
+                copy->copy(e);
+                // the peer is not copied for some reasson, I think it is safe here
+                copy->peer = e->peer;
+                frag->sequence.add(copy);
+            }
+
+            frag->frame = playFrame;
+
+            // todo: might want a governor on how many of these we can accumulate
+            // should normally be small unless they are rapidily bouncing between layers
+            // or loops as a performance technique
+            playLayer->add(frag);
+        }
+    }
+}
+
+/**
+ * Set the playback position
+ * This is usually combined with change() for undo/redo/switch.
+ * This can also be used to jump around in the play layer without changing it.
+ *
+ * todo: this hasn't been shutting notes off, it will need to if this becomes
+ * a more general play mover.
+ */
+void MidiPlayer::setFrame(int frame)
+{
+    // todo: should we make a checkpoint here?
+    // setFrame is called in more situations than change() so I think no, but
+    // in those cases heldNotes should be empty
+    
+    if (loopFrames == 0) {
+        // doesn't matter what they asked for
+        playFrame = 0;
+    }
+    else {
+        // wrap within the available frames
+        int adjustedFrame = frame;
+        if (frame > loopFrames) {
+            adjustedFrame = frame % loopFrames;
+            Trace(2, "MidiPlayer: Wrapping play frame from %d to %d",
+                  frame, adjustedFrame);
+        }
+        
+        playFrame = adjustedFrame;
+    }
+
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
+
+    // determine white notes would be held at this position
+    prepareHeld();
+}
+
+/**
+ * After changing the playback location, usually after also calling change()
+ * determine which notes would have been held if this layer had been playing
+ * normally.
+ */
+void MidiPlayer::prepareHeld()
+{
+    MidiFragment* held = nullptr;
+    
+    // todo: should also be including previous segments in this analysis
+    // since the segment preset is in effect a held checkpoint
+    MidiFragment* checkpoint = playLayer->getNearestCheckpoint(playFrame);
+    if (checkpoint != nullptr && checkpoint->frame == playFrame) {
+        // we're lucky, returning to the same location we left
+        held = pools->copy(checkpoint);
+    }
+    else {
+        // wait, don't need to be looking for checkpoints out here, harvester
+        // will use them
+        held = harvester.harvestCheckpoint(playLayer, playFrame);
+    }
+
+    pools->reclaim(restoredHeld);
+    restoredHeld = held;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -273,6 +360,18 @@ void MidiPlayer::play(int blockFrames)
                     // todo: device id
                     container->midiSend(e->juceMessage, 0);
                 }
+            }
+
+            // add the restoredHeld notes if we were jumping
+            if (restoredHeld != nullptr) {
+                MidiEvent* notes = restoredHeld->sequence.steal();
+                while (notes != nullptr) {
+                    MidiEvent* next = notes->next;
+                    play(notes);
+                    notes = next;
+                }
+                pools->reclaim(restoredHeld);
+                restoredHeld = nullptr;
             }
 
             // ownership of held notes will be transferred for duration tracking

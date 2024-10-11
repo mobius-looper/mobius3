@@ -55,6 +55,13 @@ void MidiEvent::copy(MidiEvent* src)
     peer = nullptr;
 }
 
+MidiEvent* MidiEvent::copy(MidiEventPool* pool)
+{
+    MidiEvent* neu = pool->newEvent();
+    neu->copy(this);
+    return neu;
+}
+
 MidiEventPool::MidiEventPool()
 {
     setName("MidiEvent");

@@ -21,24 +21,29 @@ class MidiSequence : public PooledObject
 
     void dump(class StructureDumper& d);
     void poolInit() override;
+
+    class MidiEvent* getFirst() {
+        return events;
+    }
+    class MidiEvent* steal();
+    int size();
+    
     void clear(class MidiEventPool* pool);
     void add(class MidiEvent* e);
     void insert(class MidiEvent* e);
     void remove(class MidiEventPool* pool, class MidiEvent* e);
-    void cut(class MidiEventPool* pool, int start, int end, bool includeHolds);
-    void append(MidiSequence* other);
     
-    MidiEvent* getFirst() {
-        return events;
-    }
-
-    MidiEvent* steal();
-
-    int size();
+    MidiSequence* copy(class MidiSequencePool* spool, class MidiEventPool* epool,
+                       MidiSequence* src);
+    void copyFrom(class MidiEventPool* pool, MidiSequence* src);
+    void copyTo(class MidiEventPool* pool, MidiSequence* dest);
+    void transferFrom(MidiSequence* src);
+    
+    void cut(class MidiEventPool* pool, int start, int end, bool includeHolds);
 
   protected:
     
-    MidiEvent* getTail() {
+    class MidiEvent* getTail() {
         return tail;
     }
 

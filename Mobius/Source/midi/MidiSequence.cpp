@@ -52,6 +52,18 @@ void MidiSequence::reset()
     count = 0;
 }
 
+int MidiSequence::size()
+{
+    return count;
+}
+
+MidiEvent* MidiSequence::steal()
+{
+    MidiEvent* result = events;
+    reset();
+    return result;
+}
+
 /**
  * Clear the contents of the sequence and reclaim events
  */
@@ -67,13 +79,6 @@ void MidiSequence::clear(MidiEventPool* pool)
         events = next;
     }
     reset();
-}
-
-MidiEvent* MidiSequence::steal()
-{
-    MidiEvent* result = events;
-    reset();
-    return result;
 }
 
 void MidiSequence::add(MidiEvent* e)
@@ -169,21 +174,64 @@ void MidiSequence::remove(MidiEventPool* pool, MidiEvent* e)
     }
 }
 
-int MidiSequence::size()
+//////////////////////////////////////////////////////////////////////
+//
+// Copy and Transfer
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Copy the entire sequence.
+ */
+MidiSequence* MidiSequence::copy(MidiSequencePool* spool, MidiEventPool* epool,
+                                 MidiSequence* src)
 {
-    return count;
+    MidiSequence* neu = nullptr;
+    if (src != nullptr) {
+        neu = spool->newSequence();
+        neu->copyFrom(epool, src);
+    }
+    return neu;
 }
 
 /**
- * Take the contents of one sequence and append it to another.
- * This is assuming the events are sorted or that order doesn't matter
+ * Since sequences are frequenly member objects rather than pooled
+ * objects, copy usually means content copy, not container copy.
  */
-void MidiSequence::append(MidiSequence* other)
+void MidiSequence::copyFrom(MidiEventPool* pool, MidiSequence* src)
+{
+    clear(pool);
+    if (src != nullptr) {
+        MidiEvent* e = src->getFirst();
+        while (e != nullptr) {
+            add(e->copy(pool));
+            e = e->next;
+        }
+    }
+}
+
+void MidiSequence::copyTo(MidiEventPool* pool, MidiSequence* dest)
+{
+    dest->clear(pool);
+    MidiEvent* e = events;
+    while (e != nullptr) {
+        dest->add(e->copy(pool));
+        e = e->next;
+    }
+}
+
+/**
+ * transfer has two implications
+ *   - the objects are moved from one container to another
+ *   - the objects are assumed to be ordered and higher than the
+ *     objects in the receiver, or that order does not matter
+ */
+void MidiSequence::transferFrom(MidiSequence* src)
 {
     // todo: don't like exposing getTail here but it saves
     // having to traverse the list again
-    MidiEvent* otherFirst = other->getFirst();
-    MidiEvent* otherTail = other->getTail();
+    MidiEvent* otherFirst = src->getFirst();
+    MidiEvent* otherTail = src->getTail();
 
     if (otherFirst != nullptr) {
     
@@ -200,10 +248,16 @@ void MidiSequence::append(MidiSequence* other)
             while (tail->next != nullptr) tail = tail->next;
         }
         
-        count += other->size();
+        count += src->size();
     }
-    other->reset();
+    src->reset();
 }
+    
+//////////////////////////////////////////////////////////////////////
+//
+// Cut
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Trim the left/right edges of a sequence.

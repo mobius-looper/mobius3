@@ -25,7 +25,7 @@ class MidiPlayer
     //
 
     void reset();
-    void setLayer(class MidiLayer* l);
+    void change(class MidiLayer* l, int newFrame = -1);
     void setFrame(int frame);
     void restart();
     void shift(class MidiLayer* l);
@@ -64,6 +64,7 @@ class MidiPlayer
     int playFrame = 0;
     int loopFrames = 0;
     bool mute = false;
+    class MidiFragment* restoredHeld = nullptr;
     
     // transient buffers used during event gathering
     MidiHarvester harvester;
@@ -77,6 +78,8 @@ class MidiPlayer
     void advanceHeld(int blockFrames);
     void forceOff();
     void sendOff(class MidiEvent* note);
+    void saveHeld();
+    void prepareHeld();
 };
 
 /****************************************************************************/

@@ -33,19 +33,22 @@ class StructureDumper
     void add(juce::String name, juce::String value);
     void add(juce::String name, int value);
     void addb(juce::String name, bool value);
-
     
     void setRoot(juce::File r);
     void write(juce::File file);
     virtual void write(juce::String filename);
     void test();
 
+    void clearVisited();
+    void visit(int i);
+    bool isVisited(int i);
+
   private:
 
     juce::File root;
     juce::String buffer;
     int indent = 0;
-    
+    juce::Array<int> visited;
 };
     
     

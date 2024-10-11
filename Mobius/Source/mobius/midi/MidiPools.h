@@ -1,6 +1,29 @@
 /**
  * Packages the various object pools related to MIDI processing.
  *
+ * This makes it easier for the different classes to do things that require
+ * pooled objects without having to pass many different pools around during initialization.
+ *
+ * The pool also provides a set of convenience methods for allocating, clearing, and
+ * reclaiming objects.  It isn't required those be used, but it reduces
+ * the amount of code callers need when dealing with pooled objects.
+ *
+ * Each object in the pool is expected to have these methods:
+ *
+ *      clear(MidiPools* pools)
+ *         - returns any objects allocated within this object back to the pool
+ *
+ *      copy(MidiPools* pools, <class> source)
+ *         - makes a copy of another object of the same class using the pools for allocation
+ *
+ * MidiPools then provides these methods for all pooled object classes:
+ *
+ *       newFoo       - allocate a new empty object
+ *       checkin(Foo) - returns an empty object to the pool but does not empty it
+ *       copy(Foo)    - returns a copy of another object
+ *       clear(Foo)   - returns objects inside another to the pool but retains the container
+ *       reclaim(Foo) - clears the object, then returns the object to the pool
+ *
  */
 
 #pragma once
@@ -20,17 +43,22 @@ class MidiPools
     MidiPools();
     ~MidiPools();
 
-    // pools to be defined in dependency order so pools can return things
+    //
+    // Pools must be defined in dependency order so pools can return things
     // to pools defined above during destruction
+    //
 
     MidiEventPool midiPool;
     MidiSequencePool sequencePool;
     MidiLayerPool layerPool;
     MidiSegmentPool segmentPool;
     MidiFragmentPool fragmentPool;
-    TrackEventPool eventPool;
+    TrackEventPool trackEventPool;
 
-    // sometimes more convenient to get it this way
+    //
+    // MidiEvent
+    //
+
     MidiEventPool* getMidiPool() {
         return &midiPool;
     }
@@ -40,12 +68,36 @@ class MidiPools
     void checkin(MidiEvent* e) {
         midiPool.checkin(e);
     }
+    MidiEvent* copy(MidiEvent* src) {
+        if (src == nullptr) return nullptr;
+        MidiEvent* neu = midiPool.newEvent();
+        neu->copy(src);
+        return neu;
+    }
+    void clear(MidiEvent* src) {
+        // events have no content atm
+        (void)src;
+    }
+    void reclaim(MidiEvent* src) {
+        clear(src);
+        midiPool.checkin(src);
+    }
+    
+    //
+    // MidiSequence
+    //
 
     MidiSequence* newSequence() {
         return sequencePool.newSequence();
     }
     void checkin(MidiSequence* s) {
         sequencePool.checkin(s);
+    }
+    MidiSequence* copy(MidiSequence* src) {
+        if (src == nullptr) return nullptr;
+        MidiSequence* neu = sequencePool.newSequence();
+        neu->copyFrom(&midiPool, src);
+        return neu;
     }
     void clear(MidiSequence* s) {
         if (s != nullptr) s->clear(&midiPool);
@@ -57,6 +109,10 @@ class MidiPools
         }
     }
 
+    //
+    // MidiLayer
+    //
+    
     MidiLayer* newLayer() {
         return layerPool.newLayer();
     }
@@ -64,18 +120,37 @@ class MidiPools
         layerPool.checkin(l);
     }
     
+    // layer copy/clear/reclaim is more complex than others
+
+    //
+    // MidiSegment
+    //
+    
     MidiSegment* newSegment() {
         return segmentPool.newSegment();
     }
     void checkin(MidiSegment* l) {
         segmentPool.checkin(l);
     }
+    MidiSegment* copy(MidiSegment* src) {
+        if (src == nullptr) return nullptr;
+        MidiSegment* neu = segmentPool.newSegment();
+        neu->copy(this, src);
+        return neu;
+    }
+    void clear(MidiSegment* s) {
+        if (s != nullptr) s->clear(this);
+    }
     void reclaim(MidiSegment* s) {
         if (s != nullptr) {
-            clear(&(s->prefix));
+            clear(s);
             checkin(s);
         }
     }
+
+    //
+    // Fragment
+    //
     
     MidiFragment* newFragment() {
         return fragmentPool.newFragment();
@@ -83,10 +158,14 @@ class MidiPools
     void checkin(MidiFragment* f) {
         fragmentPool.checkin(f);
     }
+    MidiFragment* copy(MidiFragment* src) {
+        if (src == nullptr) return nullptr;
+        MidiFragment* neu = fragmentPool.newFragment();
+        neu->copy(this, src);
+        return neu;
+    }
     void clear(MidiFragment* f) {
-        if (f != nullptr) {
-            clear(&(f->sequence));
-        }
+        if (f != nullptr) f->clear(this);
     }
     void reclaim(MidiFragment* f) {
         if (f != nullptr) {
@@ -95,12 +174,18 @@ class MidiPools
         }
     }
 
+    //
+    // TrackEvent
+    //
+
     TrackEvent* newTrackEvent() {
-        return eventPool.newEvent();
+        return trackEventPool.newEvent();
     }
     void checkin(TrackEvent* e) {
-        eventPool.checkin(e);
+        trackEventPool.checkin(e);
     }
+
+    // don't need the others atm
 
   private:
 

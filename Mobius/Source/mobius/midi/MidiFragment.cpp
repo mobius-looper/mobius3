@@ -2,10 +2,9 @@
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
 
-#include "../../midi/MidiEvent.h"
-#include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 
+#include "MidiPools.h"
 #include "MidiFragment.h"
 
 MidiFragment::MidiFragment()
@@ -38,9 +37,16 @@ void MidiFragment::dump(StructureDumper& d)
     }
 }
 
-void MidiFragment::clear(MidiEventPool* pool)
+void MidiFragment::clear(MidiPools* pools)
 {
-    sequence.clear(pool);
+    pools->clear(&sequence);
+}
+
+void MidiFragment::copy(MidiPools* pools, MidiFragment* src)
+{
+    clear(pools);
+    frame = src->frame;
+    sequence.copyFrom(&(pools->midiPool), &(src->sequence));
 }
 
 //////////////////////////////////////////////////////////////////////

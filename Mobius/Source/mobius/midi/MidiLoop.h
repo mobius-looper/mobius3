@@ -13,6 +13,7 @@ class MidiLoop
     MidiLoop(class MidiPools* p);
     ~MidiLoop();
 
+    void dump(class StructureDumper& d);
     void reset();
     void add(class MidiLayer* l);
     int getFrames();

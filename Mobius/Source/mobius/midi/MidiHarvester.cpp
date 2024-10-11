@@ -86,16 +86,12 @@ void MidiHarvester::harvestRange(MidiLayer* layer, int startFrame, int endFrame,
 
             if (heldOnly) {
                 // only if it extends beyond this block
-                // this is kind of unnecessary, the block size for prefix
-                // evaluation will tend to be short and the note will extend anway
-                // if you avoid this check, it just means very short held notes will almost
-                // immediately decay anyway
                 if (eventLast > endFrame)
-                  (void)add(nextEvent, heldOnly, noteResult, eventResult);
+                  (void)add(nextEvent, noteResult, eventResult);
             }
             else {
                 // always add it
-                (void)add(nextEvent, heldOnly, noteResult, eventResult);
+                (void)add(nextEvent, noteResult, eventResult);
             }
             
             nextEvent = nextEvent->next;
@@ -250,7 +246,7 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
             while (event != nullptr) {
                 // the frame on these is usually zero but may be offset within the segment
 
-                MidiEvent* copy = add(event, heldOnly, noteResult, eventResult);
+                MidiEvent* copy = add(event, noteResult, eventResult);
                 if (copy != nullptr) {
                     // why would a prefix note have a non-zero frame?
                     copy->frame += segment->originFrame;
@@ -336,7 +332,7 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
         }
         nested = nested->next;
     }
-    noteResult->append(&nestedNotes);
+    noteResult->transferFrom(&nestedNotes);
 
     // same for cc events except we don't have to mess with durations
     if (eventResult != nullptr) {
@@ -345,7 +341,7 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
             nested->frame += segment->originFrame;
             nested = nested->next;
         }
-        eventResult->append(&nestedEvents);
+        eventResult->transferFrom(&nestedEvents);
     }
 }
 
@@ -367,8 +363,7 @@ bool MidiHarvester::hasContinuity(MidiSegment* segment)
  * Add an event to one of the arrays.
  * Frame and duration adjustments happen later in harvest(segment)
  */
-MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
-                              MidiSequence* noteResult, MidiSequence* eventResult)
+MidiEvent* MidiHarvester::add(MidiEvent* e, MidiSequence* noteResult, MidiSequence* eventResult)
 {
     MidiEvent* copy = nullptr;
     
@@ -382,12 +377,6 @@ MidiEvent* MidiHarvester::add(MidiEvent* e, bool heldOnly,
             copy = pools->newEvent();
             copy->copy(e);
             copy->peer = e;
-
-            if (heldOnly) {
-                // we're doing prefix calculation, set the decay
-                copy->remaining = copy->duration;
-            }
-            
             noteResult->add(copy);
         }
         else if (eventResult != nullptr) {
@@ -475,17 +464,13 @@ void MidiHarvester::harvestPrefix(MidiSegment* segment)
 
         // the prefix notes will all start at frame 0 relative
         // to the segment, and the duration will be the remainder of the decay
-        // we used MidiEvent::remaining for the decay like Player does but
-        // we could have just as well used duration
         MidiEvent* held = heldNotes.getFirst();
         while (held != nullptr) {
             held->frame = 0;
-            held->duration = held->remaining;
-            held->remaining = 0;
             held = held->next;
         }
         
-        segment->prefix.append(&heldNotes);
+        segment->prefix.transferFrom(&heldNotes);
     }
 }
 
@@ -494,8 +479,8 @@ void MidiHarvester::decay(MidiSequence* seq, int blockSize)
     MidiEvent* note = seq->getFirst();
     while (note != nullptr) {
         MidiEvent* next = note->next;
-        note->remaining -= blockSize;
-        if (note->remaining <= 0)
+        note->duration -= blockSize;
+        if (note->duration <= 0)
           seq->remove(pools->getMidiPool(), note);
         note = next;
     }
@@ -509,9 +494,34 @@ void MidiHarvester::decay(MidiSequence* seq, int blockSize)
 
 MidiFragment* MidiHarvester::harvestCheckpoint(MidiLayer* layer, int frame)
 {
-    (void)layer;
-    (void)frame;
-    return nullptr;
+    MidiFragment* fragment = nullptr;
+    reset();
+
+    // todo: find the nearest segment before the frame and
+    // start the scan there to pick up it's prefix
+    int startFrame = 0;
+    int endFrame = frame;
+
+    // update: blockSize doesn't really matter as long as we don't bother to
+    // add and decay notes that don't exceed the block size, just harvest
+    // the entire range, assume this works do prefix harvesting the same way
+    int blockSize = endFrame - startFrame + 1;
+
+    MidiSequence heldNotes;
+    harvestRange(layer, startFrame, startFrame + blockSize - 1,
+                 true, true, &heldNotes, nullptr);
+
+    // shorten their duration
+    decay(&heldNotes, blockSize);
+
+    // unlike segment prefix harvesting, checkpoints don't need to
+    // adjust the start frame
+    if (heldNotes.size() > 0) {
+        fragment = pools->newFragment();
+        fragment->sequence.transferFrom(&heldNotes);
+    }
+    
+    return fragment;
 }
 
 /****************************************************************************/

@@ -17,8 +17,9 @@ class MidiEvent : public PooledObject
 
     void dump(class StructureDumper& d);
     void poolInit() override;
+    MidiEvent* copy(class MidiEventPool* pool);
     void copy(MidiEvent* src);
-
+    
     /**
      * Chain pointer for sequences.
      * Not the same as the pool chain.

@@ -114,6 +114,7 @@
     <Button action="Checkpoint"/>
     <Button action="Replace"/>
     <Button action="Dump"/>
+    <Button action="Mute"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

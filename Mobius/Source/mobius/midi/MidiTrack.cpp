@@ -66,7 +66,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 
     recorder.initialize(pools);
     player.initialize(container, pools);
-    events.initialize(&(pools->eventPool));
+    events.initialize(&(pools->trackEventPool));
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
         MidiLoop* l = new MidiLoop(pools);
@@ -1066,7 +1066,7 @@ void MidiTrack::doUndo(UIAction* a)
         }
         else {
             // resume resets the location, try to keep it, wrap if necessary
-            player.setLayer(restored);
+            player.change(restored);
             int frame = recorder.getFrame();
             recorder.resume(restored);
             recorder.setFrame(frame);
@@ -1125,8 +1125,7 @@ void MidiTrack::doRedo(UIAction* a)
                     Trace(2, "MidiTrack: Redo is abandoning layer changes");
                 }
 
-                player.setLayer(restored);
-                player.setFrame(currentFrame);
+                player.change(restored);
                 
                 recorder.resume(restored);
                 recorder.setFrame(currentFrame);
@@ -1305,7 +1304,9 @@ void MidiTrack::doSwitchNow(int newIndex)
     loopIndex = newIndex;
     MidiLoop* loop = loops[newIndex];
     MidiLayer* playing = loop->getPlayLayer();
-    player.setLayer(playing);
+    // wayt till we know the frame
+    //player.change(playing);
+    int newPlayFrame = 0;
     
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
@@ -1346,7 +1347,7 @@ void MidiTrack::doSwitchNow(int newIndex)
         SwitchLocation location = valuator->getSwitchLocation(number);
         // default is at the start
         recorder.setFrame(0);
-        player.setFrame(0);
+        newPlayFrame = 0;
         
         if (location == SWITCH_FOLLOW) {
             // if the destination is smaller, have to modulo down
@@ -1356,18 +1357,18 @@ void MidiTrack::doSwitchNow(int newIndex)
             if (followFrame >= recorder.getFrames())
               followFrame = currentFrame % recorder.getFrames();
             recorder.setFrame(followFrame);
-            player.setFrame(followFrame);
+            newPlayFrame = followFrame;
         }
         else if (location == SWITCH_RESTORE) {
-            recorder.setFrame(playing->getLastPlayFrame());
-            player.setFrame(playing->getLastPlayFrame());
+            newPlayFrame = playing->getLastPlayFrame();
+            recorder.setFrame(newPlayFrame);
         }
         else if (location == SWITCH_RANDOM) {
             // might be nicer to have this be a random subcycle or
             // another rhythmically ineresting unit
             int random = Random(0, player.getFrames() - 1);
             recorder.setFrame(random);
-            player.setFrame(random);
+            newPlayFrame = random;
         }
 
         // the usual ambiguity about what happens to minor modes
@@ -1382,6 +1383,11 @@ void MidiTrack::doSwitchNow(int newIndex)
             // but need to revisit this
         }
     }
+
+    // now adjust the player after we've determined the play frame
+    // important to do both layer change and play frame at the same
+    // time to avoid redundant held note analysis
+    player.change(playing, newPlayFrame);
 
     SwitchDuration duration = valuator->getSwitchDuration(number);
     switch (duration) {
@@ -1736,6 +1742,11 @@ void MidiTrack::doDump(UIAction* a)
     d.newline();
     
     d.inc();
+
+    for (int i = 0 ; i < loopCount ; i++) {
+        MidiLoop* loop = loops[i];
+        loop->dump(d);
+    }
     recorder.dump(d);
     player.dump(d);
     d.dec();
