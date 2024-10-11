@@ -115,6 +115,7 @@
     <Button action="Replace"/>
     <Button action="Dump"/>
     <Button action="Mute"/>
+    <Button action="SUSUnroundedInsert"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

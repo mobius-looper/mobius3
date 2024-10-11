@@ -291,6 +291,92 @@ MidiLayer* MidiRecorder::commit(bool overdub)
 }
 
 /**
+ * Change the recording location.
+ *
+ * This is normally done only when a transaction has been started
+ * and the location is back at zero and there are no held notes.
+ * Typically after a LoopSwitch or Undo where we need to reorient
+ * the recording.
+ *
+ * If there are accumulated edits and recorded events, this could
+ * be complicated, because the holds have a frame position that may be
+ * far behind or in front of the new location.  Those should have
+ * been committed by now.
+ */
+void MidiRecorder::setFrame(int newFrame)
+{
+    if (newFrame != recordFrame) {
+        
+        if (recordLayer == nullptr) {
+            Trace(1, "MidiRecorder: Setting frame without a record layer");
+        }
+        else if (recordLayer->getEventCount() > 0) {
+            Trace(1, "MidiRecorder: Setting frame after event accumulation");
+        }
+        
+        if (watcher.getHeldNotes() != nullptr)
+          Trace(1, "MidiRecorder: Setting frame with held notes");
+
+        if (recordFrames == 0) {
+            // I don't think this can happen but in theory we could start the
+            // initial recording with an offset?
+            Trace(1, "MidiRecorder: Setting frame in an empty layer");
+            recordFrame = newFrame;
+        }
+        else {
+            // it is expected after undo() to try and restore a record
+            // frame that is larger than the restored layer, it wraps
+            if (newFrame > recordFrames) {
+                int adjustedFrame = newFrame % recordFrames;
+                Trace(2, "MidiRecorder: Wrapping record frame from %d to %d",
+                      newFrame, adjustedFrame);
+                newFrame = adjustedFrame;
+            }
+
+            recordFrame = newFrame;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Multiply
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiRecorder::startMultiply()
+{
+    // maybe better to just have a mode enum, though it is an error
+    // to have left this in an unclosed mode
+    if (insert || replace) Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
+    
+    modeStartFrame = recordFrame;
+    multiply = true;
+    insert = false;
+    replace = false;
+    extending = true;
+    setRecording(true);
+}
+
+/**
+ * This isn't actually called, ending a multiply always shifts a new
+ * layer with commitMultiply
+ */
+void MidiRecorder::endMultiply(bool overdub)
+{
+    // todo: rounding, this will need to schedule an event
+    // do that here or make MidiTrack handle it?
+    multiply = false;
+    extending = false;
+    setRecording(overdub);
+}
+
+int MidiRecorder::getMultiplyFrame()
+{
+    return modeStartFrame;
+}
+
+/**
  * Commit a "remultiply" or unrounded multiply layer.
  * multiplyFrame is the start of the multiply, this may or may not
  * have been quantized.  The current recordFrame is the end.
@@ -469,90 +555,58 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
     return segments;
 }
 
-/**
- * Change the recording location.
- *
- * This is normally done only when a transaction has been started
- * and the location is back at zero and there are no held notes.
- * Typically after a LoopSwitch or Undo where we need to reorient
- * the recording.
- *
- * If there are accumulated edits and recorded events, this could
- * be complicated, because the holds have a frame position that may be
- * far behind or in front of the new location.  Those should have
- * been committed by now.
- */
-void MidiRecorder::setFrame(int newFrame)
-{
-    if (newFrame != recordFrame) {
-        
-        if (recordLayer == nullptr) {
-            Trace(1, "MidiRecorder: Setting frame without a record layer");
-        }
-        else if (recordLayer->getEventCount() > 0) {
-            Trace(1, "MidiRecorder: Setting frame after event accumulation");
-        }
-        
-        if (watcher.getHeldNotes() != nullptr)
-          Trace(1, "MidiRecorder: Setting frame with held notes");
-
-        if (recordFrames == 0) {
-            // I don't think this can happen but in theory we could start the
-            // initial recording with an offset?
-            Trace(1, "MidiRecorder: Setting frame in an empty layer");
-            recordFrame = newFrame;
-        }
-        else {
-            // it is expected after undo() to try and restore a record
-            // frame that is larger than the restored layer, it wraps
-            if (newFrame > recordFrames) {
-                int adjustedFrame = newFrame % recordFrames;
-                Trace(2, "MidiRecorder: Wrapping record frame from %d to %d",
-                      newFrame, adjustedFrame);
-                newFrame = adjustedFrame;
-            }
-
-            recordFrame = newFrame;
-        }
-    }
-}
-
-void MidiRecorder::startMultiply()
-{
-    // maybe better to just have a mode enum, though it is an error
-    // to have left this in an unclosed mode
-    if (insert || replace) Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
-    
-    modeStartFrame = recordFrame;
-    multiply = true;
-    insert = false;
-    replace = false;
-    extending = true;
-    setRecording(true);
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Insert
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
- * This isn't actually called, ending a multiply always shifts a new
- * layer with commitMultiply
+ * Starting an rounded insert in the audio world always injects a new
+ * cycle at the modeStartFrame and rounds to the end of it.
+ * If you press insert again, another cycle is inserted.  The extra cycles
+ * can be undone if the extension was done by accident.
+ *
+ * SUSUnroundedInsert also does this but it won't end up committing the entire cycle.
+ * I guess just to have something to show.  Ideally the loop meter would show this grown
+ * incrementally without jumping.  I guess just make it look like a rounded insert then
+ * unround at the end.  SUSUnroundedMultiply also works that way.
  */
-void MidiRecorder::endMultiply(bool overdub)
-{
-    // todo: rounding, this will need to schedule an event
-    // do that here or make MidiTrack handle it?
-    multiply = false;
-    extending = false;
-    setRecording(overdub);
-}
-
-int MidiRecorder::getMultiplyFrame()
-{
-    return modeStartFrame;
-}
-
 void MidiRecorder::startInsert()
 {
     if (multiply || replace) Trace(1, "MidiRecorder: Starting insert with unclosed mode");
     modeStartFrame = recordFrame;
+
+    // insert a segment between the others, splitting the spanning segment
+    int newCycleLast = modeStartFrame + cycleFrames - 1;
+    for (MidiSegment* seg = segments ; seg != nullptr ; seg = seg->next) {
+        int seglast = seg->originFrame + seg->segmentFrames - 1;
+        if (seglast < modeStartFrame) {
+            // unaffected
+        }
+        else if (seg->originFrame > newCycleLast) {
+            // beyond the new segment, doesn't split but needs to be pushed
+            seg->originFrame += cycleFrames;
+        }
+        else {
+            // needs to split
+            MidiSegment* rightHalf = pools->copy(seg);
+            // shorten the left half
+            int leftCut = seglast - modeStartFrame + 1;
+            seg->segmentFames -= leftCut;
+            // shorten the right half
+            int rightCut = modeStartFrame - seg->originFrame;
+            rightHalf->segmentFrames -= rightCut;
+            // and push
+            rightHalf->originFrame += cycleFrames;
+
+            // finally sticl a cycle in the sequence
+            MidiSequence* sequence = recordLayer->getSequence();
+            if (sequence != nullptr)
+              sequence->insertTime(modeStartFrame, cycleFrames);
+        }
+    }
+    
     insert = true;
     multiply = false;
     replace = false;
@@ -560,50 +614,47 @@ void MidiRecorder::startInsert()
     setRecording(true);
 }
 
-void MidiRecorder::endInsert(bool overdub)
+/**
+ * Add another cycle to to the inserted region.
+ */
+void MidiRecorder::extendInsert()
 {
-    // todo: rounding, this will need to schedule an event
-    // do that here or make MidiTrack handle it?
+    Trace(1, "MidiRecorder: not implemented");
+}
+
+/**
+ * Ending an insert just stops recording if we're rounding.
+ * It's up to MidiTrack to schedule the endInsert for the end of the
+ * new cycle.
+ *
+ * If this is an unrounded insert, the empty space between the current
+ * frame and the end of the injected cycle(s) is removed and the segments
+ * we shifted before are shifted back down.
+ */
+void MidiRecorder::endInsert(bool overdub, bool unrounded)
+{
+    if (unrounded) {
+
+        int wasted  
+
+        MidiSequence* sequence = recordLayer->getSequence();
+        if (sequence != nullptr)
+          sequence->removeTime(modeStartFrame, cycleFrames);
+
+
+        
+    }
     insert = false;
     extending = false;
     setRecording(overdub);
 }
 
-/**
- * Implementation for LoopSwitch with time or event copy mode.
- * A source layer is supplied, which provides both the length in
- * frames and the number of cycles.
- *
- * If includeContent is true, we also copy the layer contents.
- * Simply adding a Segment reference to the other layer doesn't work
- * here because it breaks the rule that the layer referenced by a segment
- * will always remain valid for the lifetime of the segment.  This won't
- * be the case if the loop containing the layer is reset.
- *
- * Could add some sort of complex reference counting on the layers but
- * it's easier and fast enough to just do a full copy, which also flattens
- * as a side effect.
- *
- * Retain the same relative record frame.
- *
- */
-void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
-{
-    if (recordLayer == nullptr)
-      recordLayer = prepLayer();
-    else
-      recordLayer->clear();
+//////////////////////////////////////////////////////////////////////
+//
+// Replace
+//
+//////////////////////////////////////////////////////////////////////
 
-    recordFrames = srcLayer->getFrames();
-    recordCycles = srcLayer->getCycles();
-
-    if (includeEvents) {
-        recordLayer->copy(srcLayer);
-    }
-
-    if (recordFrame > recordFrames)
-      recordFrame = recordFrame % recordFrames;
-}
 
 void MidiRecorder::startReplace()
 {
@@ -654,6 +705,48 @@ void MidiRecorder::endReplace(bool overdub)
     modeStartFrame = 0;
     if (!overdub)
       recording = false;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// LoopSwitch/Copy
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Implementation for LoopSwitch with time or event copy mode.
+ * A source layer is supplied, which provides both the length in
+ * frames and the number of cycles.
+ *
+ * If includeContent is true, we also copy the layer contents.
+ * Simply adding a Segment reference to the other layer doesn't work
+ * here because it breaks the rule that the layer referenced by a segment
+ * will always remain valid for the lifetime of the segment.  This won't
+ * be the case if the loop containing the layer is reset.
+ *
+ * Could add some sort of complex reference counting on the layers but
+ * it's easier and fast enough to just do a full copy, which also flattens
+ * as a side effect.
+ *
+ * Retain the same relative record frame.
+ *
+ */
+void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
+{
+    if (recordLayer == nullptr)
+      recordLayer = prepLayer();
+    else
+      recordLayer->clear();
+
+    recordFrames = srcLayer->getFrames();
+    recordCycles = srcLayer->getCycles();
+
+    if (includeEvents) {
+        recordLayer->copy(srcLayer);
+    }
+
+    if (recordFrame > recordFrames)
+      recordFrame = recordFrame % recordFrames;
 }
 
 //////////////////////////////////////////////////////////////////////
