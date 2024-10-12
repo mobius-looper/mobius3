@@ -486,6 +486,9 @@
           <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiFragment.cpp"/>
           <FILE id="xdZZo9" name="MidiFragment.h" compile="0" resource="0" file="Source/mobius/midi/MidiFragment.h"/>
+          <FILE id="rkRSaZ" name="MidiFunctions.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/MidiFunctions.cpp"/>
+          <FILE id="tzfl2n" name="MidiFunctions.h" compile="0" resource="0" file="Source/mobius/midi/MidiFunctions.h"/>
           <FILE id="VR0osY" name="MidiHarvester.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiHarvester.cpp"/>
           <FILE id="DZBLTg" name="MidiHarvester.h" compile="0" resource="0" file="Source/mobius/midi/MidiHarvester.h"/>

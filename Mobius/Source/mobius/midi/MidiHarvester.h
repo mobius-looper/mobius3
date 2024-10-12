@@ -16,6 +16,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../midi/MidiSequence.h"
+
 class MidiHarvester
 {
   public:

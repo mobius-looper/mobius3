@@ -10,10 +10,13 @@
 
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
+#include "MidiFunctions.h"
 #include "TrackEvent.h"
 
 class MidiTrack
 {
+    friend class TrackScheduler;
+    
   public:
 
     //
@@ -41,9 +44,9 @@ class MidiTrack
     bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
     void refreshImportant(class MobiusMidiState::Track* state);
-    
+
     //
-    // Stimuli
+    // stimuli
     //
     
     void doAction(class UIAction* a);
@@ -55,11 +58,49 @@ class MidiTrack
     void midiEvent(class MidiEvent* e);
 
     //
+    // Support for function handlers
+    //
+
+    
+    //
     // Support for Recorder
     //
 
+    MobiusMidiState::Mode getMode();
+    
     class MidiEvent* getHeldNotes();
     class MidiEvent* copyNote(class MidiEvent* src);
+
+  protected:
+
+    //
+    // TrackScheduler Interface
+    //
+
+    class TrackEventPool* getTrackEventPool();
+    class Pulsator* getPulsator();
+    
+    MobiusMidiState::Mode getMode();
+    void setMode(MobiusMidiState::Mode mode);
+    int getLoopFrames();
+    int getFrame();
+    int getCycleFrames();
+    int getCycles();
+    int getSubcycles();
+    int getModeStartFrame();
+    int getModeEndFrame();
+    QuantizeMode getQuantizeMode();
+    Pulse::Source getSyncSource();
+    
+    void alert(const char* msg);
+    void doParameter(class UIAction* a);
+    void doReset(class UIAction* a, bool full);
+
+    // weed these...
+    MidiRecorder* getRecorder();
+    TrackEvent* scheduleQuantized(SymbolId function);
+    TrackEvent* scheduleRounding(SymbolId function);
+    TrackEvent* getRoundingEvent(SymbolId function);
 
   private:
 
@@ -84,6 +125,7 @@ class MidiTrack
     // the meat
     MidiRecorder recorder {this};
     MidiPlayer player {this};
+    MidiFunctions functions {this};
     juce::Array<MobiusMidiState::Region> regions;
     int activeRegion = -1;
     
@@ -110,17 +152,13 @@ class MidiTrack
     void shiftInsert(bool unrounded);
     
     // actions/events
-    void alert(const char* msg);
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
-    void doParameter(class UIAction* a);
     void doFunction(class TrackEvent* e);
 
     //
     // Function Handlers
     //
-    
-    void doReset(class UIAction* a, bool full);
     
     void doRecord(class UIAction* a);
     void doRecord(class TrackEvent* e);
@@ -149,10 +187,7 @@ class MidiTrack
 
     int getQuantizeFrame(QuantizeMode qmode);
     int getRoundedFrame();
-    void doMultiply(class UIAction* a);
-    void doMultiply(class TrackEvent* e);
     void doRound(class TrackEvent* e);
-    void doMultiplyNow();
     void doInsert(class UIAction* a);
     void doInsert(class TrackEvent* e);
     void doInsertNow();

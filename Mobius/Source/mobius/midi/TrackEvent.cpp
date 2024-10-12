@@ -34,6 +34,20 @@ void TrackEvent::poolInit()
     switchTarget = 0;
 }
 
+void TrackEvent::addStack(TrackEvent* e)
+{
+    TrackEvent* prev = nullptr;
+    TrackEvent* event = stack;
+    while (event != nullptr) {
+        prev = event;
+        event = event->next:
+    }
+    if (prev == nullptr)
+      stack = e;
+    else
+      prev->next = e;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pool
@@ -155,6 +169,18 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
     TrackEvent* found = nullptr;
     for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
         if (e->type == TrackEvent::EventFunction && e->symbolId == sym) {
+            found = e;
+            break;
+        }
+    }
+    return found;
+}
+
+TrackEvent* TrackEventList::findRounding(SymbolId sym)
+{
+    TrackEvent* found = nullptr;
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->type == TrackEvent::EventRound && e->symbolId == sym) {
             found = e;
             break;
         }

@@ -47,12 +47,20 @@ class TrackEvent : public PooledObject
     // when it is waiting for a sync pulse
     bool pulsed = false;
 
+    // true for rounding events to convey the multiples
+    int multiples = 0;
+
     // switch arguments
     int switchTarget = 0;
     SwitchQuantize switchQuantize = SWITCH_QUANT_OFF;
 
     // function arguments
     SymbolId symbolId = SymbolIdNone;
+
+    // stacked events
+    TrackEvent* stack = nullptr;
+
+    void addStack(TrackEvent* e);
     
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);
@@ -86,6 +94,7 @@ class TrackEventList
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
+    TrackEvent* findRounding(SymbolId id);
     void flush();
 
     TrackEvent* consume(int startFrame, int blockFrames);
