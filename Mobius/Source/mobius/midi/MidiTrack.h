@@ -16,6 +16,7 @@
 class MidiTrack
 {
     friend class TrackScheduler;
+    friend class MidiFunctions;
     
   public:
 
@@ -80,7 +81,6 @@ class MidiTrack
     class TrackEventPool* getTrackEventPool();
     class Pulsator* getPulsator();
     
-    MobiusMidiState::Mode getMode();
     void setMode(MobiusMidiState::Mode mode);
     int getLoopFrames();
     int getFrame();

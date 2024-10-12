@@ -38,6 +38,9 @@ class TrackEvent : public PooledObject
     // what it is
     Type type = EventNone;
 
+    // true if this represents the ending of a mode
+    bool ending = false;
+
     // where it is
     int frame = 0;
 
@@ -57,9 +60,13 @@ class TrackEvent : public PooledObject
     // function arguments
     SymbolId symbolId = SymbolIdNone;
 
-    // stacked events
-    TrackEvent* stack = nullptr;
+    // stacked actions
+    class UIAction* actions = nullptr;
 
+    // stacked events
+    TrackEvent* events = nullptr;
+
+    void addStack(class UIAction* a);
     void addStack(TrackEvent* e);
     
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
@@ -95,7 +102,7 @@ class TrackEventList
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
     TrackEvent* findRounding(SymbolId id);
-    void flush();
+    void clear();
 
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);

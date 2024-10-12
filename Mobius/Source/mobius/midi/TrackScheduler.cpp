@@ -98,6 +98,188 @@ void TrackScheduler::doAction(UIAction* a)
     }
 }
 
+/**
+ * Determine when an action may take place.  The options are:
+ *
+ *     - immediate
+ *     - on a quantization boundary
+ *     - after a sync pulse
+ *     - after the current mode ends
+ *
+ * The mode is consulted first.  Some actions may end a mode, some
+ * might allow it to continue.  
+ */
+void TrackScheduler::doAction(UIAction* a)
+{
+    if (syncEvent != nullptr) {
+        // we're waiting for a record start/stop sync pulse
+        // and they're pushing buttons, this is similar to a mode end action
+        schedulePostSync(a);
+    }
+    else if (isRecord(a)) {
+        scheduleRecord(a);
+    }
+    else if (modeRequiresEnding(a)) {
+        scheduleModeEnd(mode, a);
+    }
+    else if (isPulsed(a)) {
+        schedulePulsed(a);
+    }
+    else if (isQuantized(a)) {
+        scheduleQuantized(a);
+    }
+    else {
+        track->doActionNow(a);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Record
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Test to see if an action represents a new recording.
+ * These are special and take precedence over other scheduling options.
+ * Record does not wait to end any existing modes, it resets the track
+ * and starts a new recording, but it may wait for a sync pulse.
+ */
+bool TrackScheduler::isRecord(UIAction* a)
+{
+    SymbolId id = a->symbol->id;
+    return (id == FuncRecord || id == FuncAutoRecord);
+}
+
+/**
+ * If record synchronization is enabled, schedule an event to wait
+ * for the appropriate sync pulse.
+ *
+ * We may or may not already be in ModeRecord.  It doesn't matter atm
+ * as they wait for the same sync pulse.
+ *
+ * AutoRecord will complicate this.
+ */
+void TrackScheduler::scheduleRecord(UIAction* a)
+{
+    if (isRecordSynced()) {
+        TrackEvent* e = eventPool->newTrackEvent();
+        e->type = TrackEvent::EventRecord;
+        if (getMode() == MobiusMidiState::ModeRecord) {
+            // we're currently recording, this is an ending
+            e->ending = true;
+        }
+        e->pending = true;
+        e->pulsed = true;
+        events.add(e);
+        Trace(2, "TrackScheduler: %d begin synchronization", track->number);
+        syncEvent = e;
+    }
+    else {
+        track->doActionNow(a);
+    }
+}
+
+/**
+ * Determine whether the start or stop of a recording needs to be synchronized.
+ */
+bool TrackScheduler::needsRecordSync()
+{
+    bool doSync = false;
+
+    // since we're the only thing that needs it, move this down here
+    Pulse::Source syncSource = track->getSyncSource();
+
+    // same with this if nothing else needs it
+    Pulsator* pulsator = track->getPulsator();
+    
+    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
+        //the easy one, always sync
+        doSync = true;
+    }
+    else if (syncSource == Pulse::SourceLeader) {
+        // if we're following track sync, and did not request a specific
+        // track to follow, and Pulsator wasn't given one, then we freewheel
+        int master = pulsator->getTrackSyncMaster();
+        // sync if there is a master and it isn't us
+        doSync = (master > 0 && master != number);
+    }
+    else if (syncSource == Pulse::SourceMidiOut) {
+        // if another track is already the out sync master, then
+        // we have in the past switched this to track sync
+        // unclear if we should have more options around this
+        int outMaster = pulsator->getOutSyncMaster();
+        if (outMaster > 0 && outMaster != number) {
+
+            // the out sync master is normally also the track sync
+            // master, but it doesn't have to be
+            // !! this is a weird form of follow that Pulsator
+            // isn't doing right, any logic we put here needs
+            // to match Pulsator, it shold own it
+            doSync = true;
+        }
+    }
+    return doSync;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Synchronizing
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * We're currently in synchronization mode waiting for either
+ * the start or end of a recording.
+ *
+ * Before the start is an unusual period because there isn't much that makes
+ * sense.  Minor modes like Overdub could happen immediately but can also stack.
+ * Speed adjustments might need to be early.
+ *
+ * Most other things would be considered record ending actions which don't make sense
+ * unless the ending is also synchronized, or it's AutoRecord.
+ */
+void TrackScheduler::schedulePostSync(UIAction* a)
+{
+    if (syncEvent == nullptr) {
+        Trace(1, "TrackScheduler: No syncEvent, bad call");
+    }
+    else {
+        // todo: test for things that don't need to stack?
+        syncEvent->addStack(a);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Mode Ending
+//
+//////////////////////////////////////////////////////////////////////
+
+bool TrackScheduler::modeRequiresEnding(UIAction* a)
+{
+    auto mode = track->getMode();
+
+    // Stutter probably belongs here
+    // Threshold is odd, another form of Record?
+    // blow off Rehearse
+    // Pause is interesting
+    return (mode == MobiusMidiState::ModeRecord ||
+            mode == MobiusMidiState::ModeMultiply ||
+            mode == MobiusMidiState::ModeInsert ||
+            mode == MobiusMidiState::ModeSwitch ||
+            mode == MobiusMidiState::ModeConfirm);
+}
+
+void TrackScheduler::scheduleModeEnd(UIAction* a)
+{
+    TrackEvent* ending = findModeEnding(a);
+    if (ending == nullptr) {
+        
+        
+    
+
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -331,48 +513,6 @@ TrackEvent* MidiTrack::scheduleRecordStop(UIAction* action)
     return event;
 }
 
-/**
- * Determine whether the start or stop of a recording
- * needs to be synchronized.
- */
-bool MidiTrack::needsRecordSync()
-{
-    bool doSync = false;
-
-    // since we're the only thing that needs it, move this down here
-    Pulse::Source syncSource = track->getSyncSource();
-
-    // same with this if nothing else needs it
-    Pulsator* pulsator = track->getPulsator();
-    
-    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
-        //the easy one, always sync
-        doSync = true;
-    }
-    else if (syncSource == Pulse::SourceLeader) {
-        // if we're following track sync, and did not request a specific
-        // track to follow, and Pulsator wasn't given one, then we freewheel
-        int master = pulsator->getTrackSyncMaster();
-        // sync if there is a master and it isn't us
-        doSync = (master > 0 && master != number);
-    }
-    else if (syncSource == Pulse::SourceMidiOut) {
-        // if another track is already the out sync master, then
-        // we have in the past switched this to track sync
-        // unclear if we should have more options around this
-        int outMaster = pulsator->getOutSyncMaster();
-        if (outMaster > 0 && outMaster != number) {
-
-            // the out sync master is normally also the track sync
-            // master, but it doesn't have to be
-            // !! this is a weird form of follow that Pulsator
-            // isn't doing right, any logic we put here needs
-            // to match Pulsator, it shold own it
-            doSync = true;
-        }
-    }
-    return doSync;
-}
 
 ///////////////////////////////////////////////////////////////////////
 //

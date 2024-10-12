@@ -276,7 +276,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->eventCount = 0;
     int count = 0;
     for (e = events.getEvents() ; e != nullptr ; e = e->next) {
-        TracckEvent* next = e->next;
+        TrackEvent* next = e->next;
         MobiusMidiState::Event* estate = state->events[count];
         bool addit = true;
         int arg = 0;
@@ -323,14 +323,17 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
             if (count >= state->events.size()) {
                 next = nullptr;
             }
-            else if (e->stack != nullptr) {
+            else if (e->events != nullptr) {
                 // make the stack look like more events on this frame
-                TrackEvent* stacked = e->etack;
+                // todo: will need to handle the action stack and move
+                // all this to TrackScheduler
+                TrackEvent* stacked = e->events;
                 while (stacked != nullptr) {
-                    MobiusMidiState::Event* estate = state->events[count];
+                    estate = state->events[count];
                     estate->frame = e->frame;
                     estate->pending = e->pending;
-                    estate->name = getEventName(stacked);
+                    // estate->name = getEventName(stacked);
+                    estate->name = juce::String("???");
                     count++;
                     if (count >= state->events.size()) {
                         next = nullptr;
@@ -694,7 +697,7 @@ void MidiTrack::shiftInsert(bool unrounded)
 
 TrackEventPool* MidiTrack::getTrackEventPool()
 {
-    return &(pools.trackEventPool);
+    return &(pools->trackEventPool);
 }
 
 Pulsator* MidiTrack::getPulsator()
@@ -743,7 +746,7 @@ int MidiTrack::getModeEndFrame()
 
 QuantizeMode MidiTrack::getQuantizeMode()
 {
-    valuator->getQuantizeMode(number);
+    return valuator->getQuantizeMode(number);
 }
 
 Pulse::Source MidiTrack::getSyncSource()
@@ -885,52 +888,7 @@ int MidiTrack::getRoundedFrame()
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Explore what attempting to evaluate a function does when in a certain mode.
- * Returns an event if the a mode ending event had to be scheduled
- */
-TrackEvent* MidiTrack::scheduleModeStop(UIAction* action)
-{
-    TrackEvent * event = nullptr;
-    
-    switch (mode) {
-        // these have no special end processing
-        case MobiusMidiState::Reset:
-        case MobiusMidiState::Play:
-        case MobiusMidiState::Overdub:
-            break;
-            
-        case MobiusMidiState::Record:
-            event = scheduleRecordStop(action);
-            break;
-    }
-
-    return event;
-}
-
-/**
- * Stop recording now if we can, if synchronized schedule an record stop
- * event and stack this one on it.
- */
-TrackEvent* MidiTrack::scheduleRecordStop(UIAction* action)
-{
-    TrackEvent* event = nullptr;
-    
-    if (needsRecordSync()) {
-        event = pools->newTrackEvent();
-        event->type = TrackEvent::EventRecord;
-        event->pending = true;
-        event->pulsed = true;
-        events.add(e);
-        Trace(2, "MidiTrack: %d record end synchronization", number);
-        synchronizing = true;
-
-    }
-    
-
-        
-            
-
+// temporary, moving this to TrackScheduler
 
 /**
  * Determine whether the start or stop of a recording
@@ -1163,8 +1121,6 @@ void MidiTrack::doReset(UIAction* a, bool full)
     }
 
     events.clear();
-    eventCount = 0;
-    
 
     // clear parameter bindings
     // todo: that whole "reset retains" thing
@@ -1916,7 +1872,7 @@ void MidiTrack::doDump(UIAction* a)
         loop->dump(d);
     }
     
-    scheduler.dump(d);
+    //scheduler.dump(d);
     recorder.dump(d);
     player.dump(d);
     

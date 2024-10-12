@@ -41,7 +41,7 @@ class TrackScheduler
     MidiTrack* track = nullptr;
     TrackEventList events;
     TrackEventPool* eventPool = nullptr;
-    bool synchronizing = false;
+    TrackEvent* syncEvent = nullptr;
     
     // function handlers
 

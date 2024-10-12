@@ -4,6 +4,7 @@
 #include "../../util/Trace.h"
 
 #include "../../model/ObjectPool.h"
+#include "../../model/UIAction.h"
 
 #include "TrackEvent.h"
 
@@ -28,22 +29,42 @@ void TrackEvent::poolInit()
 {
     next = nullptr;
     type = EventNone;
+    ending = false;
     frame = 0;
     pending = false;
     pulsed = false;
+    multiples = 0;
     switchTarget = 0;
+    switchQuantize = SWITCH_QUANT_OFF;
+    symbolId = SymbolIdNone;
+    actions = nullptr;
+    events = nullptr;
+}
+
+void TrackEvent::addStack(UIAction* a)
+{
+    UIAction* prev = nullptr;
+    UIAction* action = actions;
+    while (action != nullptr) {
+        prev = action;
+        action = action->next;
+    }
+    if (prev == nullptr)
+      actions = a;
+    else
+      prev->next = a;
 }
 
 void TrackEvent::addStack(TrackEvent* e)
 {
     TrackEvent* prev = nullptr;
-    TrackEvent* event = stack;
+    TrackEvent* event = events;
     while (event != nullptr) {
         prev = event;
-        event = event->next:
+        event = event->next;
     }
     if (prev == nullptr)
-      stack = e;
+      events = e;
     else
       prev->next = e;
 }
@@ -93,7 +114,7 @@ TrackEventList::TrackEventList()
 
 TrackEventList::~TrackEventList()
 {
-    flush();
+    clear();
 }
 
 void TrackEventList::initialize(TrackEventPool* p)
@@ -101,7 +122,7 @@ void TrackEventList::initialize(TrackEventPool* p)
     pool = p;
 }
 
-void TrackEventList::flush()
+void TrackEventList::clear()
 {
     while (events != nullptr) {
         TrackEvent* next = events->next;
