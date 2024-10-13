@@ -55,6 +55,9 @@ class MidiPools
     MidiFragmentPool fragmentPool;
     TrackEventPool trackEventPool;
 
+    // this one we don't own
+    class UIActionPool* actionPool = nullptr;
+
     //
     // MidiEvent
     //
@@ -187,6 +190,19 @@ class MidiPools
 
     // don't need the others atm
 
+    //
+    // UIAction
+    //
+
+    // free a list of actions
+    void reclaim(UIAction* actions) {
+        while (actions != nullptr) {
+            UIAction* next = actions->next;
+            actionPool->checkin(actions);
+            actions = next;
+        }
+    }
+    
   private:
 
 };

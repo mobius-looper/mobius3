@@ -1,5 +1,4 @@
 /**
- *
  * Jules from 2014
  *  In all my apps I use a single thread to post midi messages to a particular device, which is often the only way to do it because you need to time the messages anyway. If you have a more ad-hoc system where you need multiple threads to all send messages, I'd probably recommend you use your own mutex to be on the safe side.
  *
@@ -10,7 +9,6 @@
  * Isolate this in a Player class.  Just feed Midievents into it, but then have lifespan issues
  * if you reset a sequence and return events to a pool.  Better to have the player just deal
  * with juce::MidiMessage at that point.
- * 
  * 
  */
 
@@ -30,6 +28,8 @@
 
 #include "../Valuator.h"
 #include "../MobiusInterface.h"
+
+#include "TrackScheduler.h"
 
 #include "MidiTracker.h"
 #include "MidiPools.h"
@@ -63,9 +63,9 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     valuator = t->getValuator();
     pools = t->getPools();
 
+    scheduler.initialize(&(pools->trackEventPool), pools->actionPool, pulsator, valuator);
     recorder.initialize(pools);
     player.initialize(container, pools);
-    events.initialize(&(pools->trackEventPool));
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
         MidiLoop* l = new MidiLoop(pools);
@@ -87,50 +87,14 @@ MidiTrack::~MidiTrack()
  * The things we should do here are adjust sync options,
  * do NOT reset the track.  If it is active it should be able to
  * keep playing during minor adjustments to the session.
+ *
+ * todo: should this be here or should we let TrackScheduler deal with.
+ * 
  */
 void MidiTrack::configure(Session::Track* def)
 {
-    // convert sync options into a Pulsator follow
-    // ugly mappings but I want to keep use of the old constants limited
-    SyncSource ss = valuator->getSyncSource(def, SYNC_NONE);
-    SyncUnit su = valuator->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
-
-    // set this up for host and midi, track sync will be different
-    Pulse::Type ptype = Pulse::PulseBeat;
-    if (su == SYNC_UNIT_BAR)
-      ptype = Pulse::PulseBar;
-    
-    if (ss == SYNC_TRACK) {
-        // track sync uses a different unit parameter
-        // default for this one is the entire loop
-        SyncTrackUnit stu = valuator->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
-        ptype = Pulse::PulseLoop;
-        if (stu == TRACK_UNIT_SUBCYCLE)
-          ptype = Pulse::PulseBeat;
-        else if (stu == TRACK_UNIT_CYCLE)
-          ptype = Pulse::PulseBar;
-          
-        // no specific track leader yet...
-        int leader = 0;
-        syncSource = Pulse::SourceLeader;
-        pulsator->follow(number, leader, ptype);
-    }
-    else if (ss == SYNC_OUT) {
-        Trace(1, "MidiTrack: MIDI tracks can't do OutSync yet");
-        syncSource = Pulse::SourceNone;
-    }
-    else if (ss == SYNC_HOST) {
-        syncSource = Pulse::SourceHost;
-        pulsator->follow(number, syncSource, ptype);
-    }
-    else if (ss == SYNC_MIDI) {
-        syncSource = Pulse::SourceMidiIn;
-        pulsator->follow(number, syncSource, ptype);
-    }
-    else {
-        pulsator->unfollow(number);
-        syncSource = Pulse::SourceNone;
-    }
+    // capture sync options
+    scheduler.configure(def);
 
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
     
@@ -272,87 +236,13 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     if (e != nullptr)
       state->nextLoop = (e->switchTarget + 1);
 
-    // turn this off while we refresh
-    state->eventCount = 0;
-    int count = 0;
-    for (e = events.getEvents() ; e != nullptr ; e = e->next) {
-        TrackEvent* next = e->next;
-        MobiusMidiState::Event* estate = state->events[count];
-        bool addit = true;
-        int arg = 0;
-        switch (e->type) {
-            case TrackEvent::EventRecord: estate->name = "Record"; break;
-            case TrackEvent::EventSwitch: {
-                estate->name = "Switch";
-                arg = e->switchTarget + 1;
-                
-            }
-                break;
-            case TrackEvent::EventReturn: {
-                estate->name = "Return";
-                arg = e->switchTarget + 1;
-                
-            }
-                break;
-            case TrackEvent::EventFunction: {
-                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
-                if (s != nullptr)
-                  estate->name = s->name;
-            }
-                break;
-
-            case TrackEvent::EventRound: {
-                // horrible to be doing formatting down here
-                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
-                estate->name = "End ";
-                if (s != nullptr) 
-                  estate->name += s->name;
-                if (e->multiples)
-                  estate->name += juce::String(e->multiples);
-            }
-                break;
-                
-            default: addit = false; break;
-        }
-        
-        if (addit) {
-            estate->frame = e->frame;
-            estate->pending = e->pending;
-            estate->argument = arg;
-            count++;
-            if (count >= state->events.size()) {
-                next = nullptr;
-            }
-            else if (e->events != nullptr) {
-                // make the stack look like more events on this frame
-                // todo: will need to handle the action stack and move
-                // all this to TrackScheduler
-                TrackEvent* stacked = e->events;
-                while (stacked != nullptr) {
-                    estate = state->events[count];
-                    estate->frame = e->frame;
-                    estate->pending = e->pending;
-                    // estate->name = getEventName(stacked);
-                    estate->name = juce::String("???");
-                    count++;
-                    if (count >= state->events.size()) {
-                        next = nullptr;
-                        break;
-                    }
-                }
-            }
-            
-        }
-        e = next;
-    }
-    state->eventCount = count;
-
     state->regions.clearQuick();
     for (int i = 0 ; i < regions.size() && i < MobiusMidiState::MaxRegions ; i++) {
         MobiusMidiState::Region& region = regions.getReference(i);
         state->regions.add(region);
     }
     
+    scheduler.refreshState(state);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -361,6 +251,24 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 //
 //////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////
+//
+// MIDI Event Handling
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::midiEvent(MidiEvent* e)
+{
+    recorder.midiEvent(e);
+}
+
+/**
+ * First level action handler.
+ * Handle a few special cases of actions that don't need synchronization
+ * or scheduling or are alternate endings for modes.
+ * If none of those it passes through Scheduler which will clone it, possibly
+ * schedule it, and eventually call doActionNow.
+ */
 void MidiTrack::doAction(UIAction* a)
 {
     if (a->sustainEnd) {
@@ -393,32 +301,67 @@ void MidiTrack::doAction(UIAction* a)
     else if (a->symbol->parameterProperties) {
         doParameter(a);
     }
+    else if (a->symbol->id == FuncRecord) {
+        // record has special meaning, before scheduler gets it
+
+        if (mode == MobiusMidiState::ModeMultiply) {
+            // unrounded multiply or "cut"
+            shiftMultiply(true);
+            mode = MobiusMidiState::ModePlay;
+        }
+        else if (mode == MobiusMidiState::ModeInsert) {
+            // unrounded insert
+            endInsert(true);
+            mode = MobiusMidiState::ModePlay;
+        }
+        else {
+            scheduler.doAction(a);
+       }
+    }
     else {
-        switch (a->symbol->id) {
-            case FuncDump: doDump(a); break;
-            case FuncReset: doReset(a, false); break;
-            case FuncTrackReset: doReset(a, true); break;
-            case FuncGlobalReset: doReset(a, true); break;
-            case FuncRecord: doRecord(a); break;
-            case FuncOverdub: doOverdub(a); break;
-            case FuncUndo: doUndo(a); break;
-            case FuncRedo: doRedo(a); break;
-            case FuncNextLoop: doSwitch(a, 1); break;
-            case FuncPrevLoop: doSwitch(a, -1); break;
-            case FuncSelectLoop: doSwitch(a, 0); break;
-            case FuncMultiply: functions.doMultiply(a); break;
-            case FuncInsert: doInsert(a); break;
-            case FuncMute: doMute(a); break;
-            case FuncReplace: doReplace(a); break;
-            default: {
-                char msgbuf[128];
-                snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
-                         a->symbol->getName());
-                alert(msgbuf);
-                Trace(1, "MidiTrack: %s", msgbuf);
-            }
+        // scheduler gets to decide
+        scheduler.doAction(a);
+    }
+}
+
+/**
+ * Called by TrackScheduler after it reaches an action event
+ * or decides not to schedule one.
+ *
+ * We've already gone through doAction() above to handle long presses
+ * and other things scheduler doesn't know about.
+ *
+ * The UIAction at this point is a copy of what Kernel/Tracker gave us and
+ * must be reclaimed.
+ */
+void MidiTrack::doActionNow(UIAction* a)
+{
+    switch (a->symbol->id) {
+        case FuncDump: doDump(a); break;
+        case FuncReset: doReset(a, false); break;
+        case FuncTrackReset: doReset(a, true); break;
+        case FuncGlobalReset: doReset(a, true); break;
+        case FuncRecord: doRecord(a); break;
+        case FuncOverdub: doOverdub(a); break;
+        case FuncUndo: doUndo(a); break;
+        case FuncRedo: doRedo(a); break;
+        case FuncNextLoop: doSwitch(a, 1); break;
+        case FuncPrevLoop: doSwitch(a, -1); break;
+        case FuncSelectLoop: doSwitch(a, 0); break;
+        case FuncMultiply: functions.doMultiply(a); break;
+        case FuncInsert: doInsert(a); break;
+        case FuncMute: doMute(a); break;
+        case FuncReplace: doReplace(a); break;
+        default: {
+            char msgbuf[128];
+            snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
+                     a->symbol->getName());
+            alert(msgbuf);
+            Trace(1, "MidiTrack: %s", msgbuf);
         }
     }
+
+    pools->reclaim(action);
 }
 
 /**
@@ -484,71 +427,18 @@ void MidiTrack::doParameter(UIAction* a)
  * If we're waiting on sync pulses, recording may start or stop here.
  *
  * After events have been processed, advance the recorder and player.
+ *
+ * Scheduler controls the splitting of the block between events and
+ * handling events.
  */
 void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 {
-    int newFrames = stream->getInterruptFrames();
-
-    // here is where we need to ask Pulsator about drift
-    // and do a correction if necessary
-    if (pulsator->shouldCheckDrift(number)) {
-        int drift = pulsator->getDrift(number);
-        (void)drift;
-        //  magic happens
-        pulsator->correctDrift(number, 0);
-    }
-
-    int currentFrame = recorder.getFrame();
-
-    // locate a sync pulse we follow within this block
-    if (syncSource != Pulse::SourceNone) {
-
-        // todo: you can also pass the pulse type go getPulseFrame
-        // and it will obey it rather than the one passed to follow()
-        // might be useful if you want to change pulse types during
-        // recording
-        int pulseOffset = pulsator->getPulseFrame(number);
-        if (pulseOffset >= 0) {
-            // sanity check before we do the math
-            if (pulseOffset >= newFrames) {
-                Trace(1, "MidiTrack: Pulse frame is fucked");
-                pulseOffset = newFrames - 1;
-            }
-            // it dramatically cleans up the carving logic if we make this look
-            // like a scheduled event
-            TrackEvent* pulseEvent = pools->newTrackEvent();
-            pulseEvent->frame = currentFrame + pulseOffset;
-            pulseEvent->type = TrackEvent::EventPulse;
-            // note priority flag so it goes before others on this frame
-            events.add(pulseEvent, true);
-        }
-    }
-    
-    // carve up the block for the events within it
-    int remainder = newFrames;
-    TrackEvent* e = events.consume(currentFrame, remainder);
-    while (e != nullptr) {
-
-        int eventAdvance = e->frame - currentFrame;
-        if (eventAdvance > remainder) {
-            Trace(1, "MidiTrack: Advance math is fucked");
-            eventAdvance = remainder;
-        }
-        
-        advance(eventAdvance);
-
-        // scheduler.doEvent...
-        doEvent(e);
-        
-        remainder -= eventAdvance;
-        e = events.consume(currentFrame, remainder);
-    }
-    
-    advance(remainder);
+    scheduler.advance(stream);
 }
 
 /**
- * Here after any actions and events have been processed.
+ * Here after Scheduler has isolated a section of the audio stream block
+ * between two events.
  * Advance the record/play state.  If the loop point is encountered,
  * do a layer shift.
  *
@@ -690,31 +580,16 @@ void MidiTrack::shiftInsert(bool unrounded)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Scheduling
+// TrackScheduler Support
 //
 // These are the callbacks TrackScheduler will use during action analysis
 // and to cause things to happen.
 //
 //////////////////////////////////////////////////////////////////////
 
-TrackEventPool* MidiTrack::getTrackEventPool()
-{
-    return &(pools->trackEventPool);
-}
-
-Pulsator* MidiTrack::getPulsator()
-{
-    return pulsator;
-}
-
 MobiusMidiState::Mode MidiTrack::getMode()
 {
     return mode;
-}
-
-void MidiTrack::setMode(MobiusMidiState::Mode m)
-{
-    mode = m;
 }
 
 int MidiTrack::getLoopFrames()
@@ -746,132 +621,10 @@ int MidiTrack::getModeEndFrame()
     return recorder.getModeEndFrame();
 }
 
-QuantizeMode MidiTrack::getQuantizeMode()
-{
-    return valuator->getQuantizeMode(number);
-}
-
-Pulse::Source MidiTrack::getSyncSource()
-{
-    return syncSource;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Quantization
-//
-//////////////////////////////////////////////////////////////////////
-
-int MidiTrack::getQuantizeFrame(QuantizeMode qmode)
-{
-    int qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
-                                               recorder.getCycleFrames(),
-                                               recorder.getFrame(),
-                                               subcycles,
-                                               qmode,
-                                               false);  // "after" is this right?
-    return qframe;
-}
-
-/**
- * Use the common utility for quantization frame after converting
- * the silly enum.
- */
-int MidiTrack::getQuantizeFrame(SwitchQuantize squant)
-{
-    QuantizeMode qmode = convert(squant);
-    return getQuantizeFrame(qmode);
-}
-
-/**
- * Calculate the quantization frame for a function advancing to the next
- * quantization point if there is already a schedule event for this function.
- *
- * This can push events beyond the loop end point, which relies on
- * event shift to bring them down.
- *
- * I don't remember how audio tracks work, this could keep going forever
- * if you keep punching that button.  Or you could use the second press as
- * an "escape" mechanism that cancels quant and starts it immediately.
- *
- */
-int MidiTrack::getQuantizeFrame(SymbolId func, QuantizeMode qmode)
-{
-    // means it can't be scheduled
-    int qframe = -1;
-    int relativeTo = recorder.getFrame();
-    bool allow = true;
-    
-    // is there already an event for this function?
-    TrackEvent* last = events.findLast(func);
-    if (last != nullptr) {
-        // relies on this having a frame and not being marked pending
-        if (last->pending) {
-            // I think this is where some functions use it as an escape
-            // LoopSwitch was one
-            Trace(1, "MidiTrack: Can't stack another event after pending");
-            allow = false;
-        }
-        else {
-            relativeTo = last->frame;
-        }
-    }
-
-    if (allow)
-      qframe = TrackEvent::getQuantizedFrame(recorder.getFrames(),
-                                             recorder.getCycleFrames(),
-                                             relativeTo,
-                                             subcycles,
-                                             qmode,
-                                             true);  // "after" means move beyond the current frame
-    return qframe;
-}
-
-/**
- * Called by function handlers immediately when receiving a UIAction.
- * If this function is quantized, schedule an event for that function.
- * Returning null means the function can be done now.
- */
-TrackEvent* MidiTrack::scheduleQuantized(SymbolId function)
-{
-    TrackEvent* event = nullptr;
-    
-    QuantizeMode quant = valuator->getQuantizeMode(number);
-    if (quant != QUANTIZE_OFF) {
-        event = pools->newTrackEvent();
-        event->type = TrackEvent::EventFunction;
-        event->symbolId = function;
-        event->frame = getQuantizeFrame(quant);
-        events.add(event);
-    }
-
-    return event;
-}
-
-TrackEvent* MidiTrack::scheduleRounding(SymbolId function)
-{
-    TrackEvent* event = pools->newTrackEvent();
-    event->type = TrackEvent::EventRound;
-    event->symbolId = function;
-    event->frame = getRoundedFrame();
-    events.add(event);
-    return event;
-}
-
-TrackEvent* MidiTrack::getRoundingEvent(SymbolId function)
-{
-    return events.findRounding(function);
-}
-
-MidiRecorder* MidiTrack::getRecorder()
-{
-    return &recorder;
-}
-
 /**
  * For multiply/insert
  */
-int MidiTrack::getRoundedFrame()
+int MidiTrack::getRoundingFrames()
 {
     int modeStart = recorder.getModeStartFrame();
     int recordFrame = recorder.getFrame();
@@ -882,80 +635,6 @@ int MidiTrack::getRoundedFrame()
       cycles++;
 
     return cycles * cycleFrames;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Modes
-//
-//////////////////////////////////////////////////////////////////////
-
-// temporary, moving this to TrackScheduler
-
-/**
- * Determine whether the start or stop of a recording
- * needs to be synchronized.
- *
- * !! record stop can be requsted by alternate endings
- * that don't go through doAction and they will need the
- * same sync logic when ending
- */
-bool MidiTrack::needsRecordSync()
-{
-    bool doSync = false;
-     
-    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
-        //the easy one, always sync
-        doSync = true;
-    }
-    else if (syncSource == Pulse::SourceLeader) {
-        // if we're following track sync, and did not request a specific
-        // track to follow, and Pulsator wasn't given one, then we freewheel
-        int master = pulsator->getTrackSyncMaster();
-        // sync if there is a master and it isn't us
-        doSync = (master > 0 && master != number);
-    }
-    else if (syncSource == Pulse::SourceMidiOut) {
-        // if another track is already the out sync master, then
-        // we have in the past switched this to track sync
-        // unclear if we should have more options around this
-        int outMaster = pulsator->getOutSyncMaster();
-        if (outMaster > 0 && outMaster != number) {
-
-            // the out sync master is normally also the track sync
-            // master, but it doesn't have to be
-            // !! this is a weird form of follow that Pulsator
-            // isn't doing right, any logic we put here needs
-            // to match Pulsator, it shold own it
-            doSync = true;
-        }
-    }
-    return doSync;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Events
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doEvent(TrackEvent* e)
-{
-    switch (e->type) {
-        case TrackEvent::EventNone: {
-            Trace(1, "MidiTrack: Event with nothing to do");
-        }
-            break;
-
-        case TrackEvent::EventPulse: doPulse(e); break;
-        case TrackEvent::EventRecord: doRecord(e); break;
-        case TrackEvent::EventSwitch: doSwitch(e); break;
-        case TrackEvent::EventReturn: doSwitch(e); break;
-        case TrackEvent::EventFunction: doFunction(e); break;
-        case TrackEvent::EventRound: doRound(e); break;
-    }
-
-    pools->checkin(e);
 }
 
 void MidiTrack::doRound(TrackEvent* e)
@@ -973,59 +652,6 @@ void MidiTrack::doRound(TrackEvent* e)
     }
     
     mode = MobiusMidiState::ModePlay;
-}
-
-/**
- * We should only be injecting pulse events if we are following
- * something, and have been waiting on a record start or stop pulse.
- * Events that are waiting for a pulse are called "pulsed" events.
- *
- * As usual, what will actually happen in practice is simpler than what
- * the code was designed for to allow for future extensions.  Right now,
- * there can only be one pending pulsed event, and it must be for record start
- * or stop.
- *
- * In theory there could be any number of pulsed events, they are processed
- * in order, one per pulse.
- * todo: rethink this, why not activate all of them, which is more useful?
- *
- * When a pulse comes in a pulse event is "activated" which means it becomes
- * not pending and is given a location equal to where the pulse frame.
- * Again in theory, this could be in front of other scheduled events and because
- * events must be in order, it is removed and reinserted after giving it a frame.
- */
-void MidiTrack::doPulse(TrackEvent* e)
-{
-    (void)e;
-    
-    TrackEvent* pulsed = events.consumePulsed();
-    if (pulsed != nullptr) {
-        Trace(2, "MidiTrack: Activating pulsed event");
-        // activate it on this frame and insert it back into the list
-        pulsed->frame = recorder.getFrame();
-        pulsed->pending = false;
-        pulsed->pulsed = false;
-        events.add(pulsed);
-    }
-    else {
-        // no event to activate
-        // This is normal if we haven't received a Record action yet, or
-        // if the loop is finished recording and is playing
-        // ignore it
-        //Trace(2, "MidiTrack: Follower pulse");
-    }
-}
-
-void MidiTrack::doFunction(TrackEvent* e)
-{
-    if (e->symbolId == FuncMultiply)
-      functions.doMultiply(e);
-    else if (e->symbolId == FuncInsert)
-      doInsert(e);
-    else if (e->symbolId == FuncMute)
-      doMute(e);
-    else if (e->symbolId == FuncReplace)
-      doReplace(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1122,7 +748,7 @@ void MidiTrack::doReset(UIAction* a, bool full)
         loop->reset();
     }
 
-    events.clear();
+    scheduler.reset();
 
     // clear parameter bindings
     // todo: that whole "reset retains" thing
@@ -1138,36 +764,25 @@ void MidiTrack::doReset(UIAction* a, bool full)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Action handler, either do it now or schedule a sync event
+ * Action handler, before or after synchronization.
+ * Multiply/Insert alternate endings have been handled before this.
+ * If this was synchronized, there may be several stacked actions on a list.
  *
- * Record while in Multiply does unrounded multiply
+ * 
  */
 void MidiTrack::doRecord(UIAction* a)
 {
-    (void)a;
+    UIAction* remainder = a->actions;
+    a->actions = nullptr;
 
-    if (mode == MobiusMidiState::ModeMultiply) {
-        // unrounded multiply or "cut"
-        shiftMultiply(true);
-        mode = MobiusMidiState::ModePlay;
-    }
-    else if (mode == MobiusMidiState::ModeInsert) {
-        // unrounded insert
-        endInsert(true);
-        mode = MobiusMidiState::ModePlay;
-    }
-    else if (!needsRecordSync()) {
-        toggleRecording();
-    }
-    else {
-        TrackEvent* e = pools->newTrackEvent();
-        e->type = TrackEvent::EventRecord;
-        e->pending = true;
-        e->pulsed = true;
-        events.add(e);
-        Trace(2, "MidiTrack: %d begin synchronization", number);
-        synchronizing = true;
-    }
+    xxx
+    
+
+
+
+
+
+    
 }
 
 /**
@@ -1236,22 +851,6 @@ void MidiTrack::stopRecording()
 void MidiTrack::endRecording(UIAction* a)
 {
     (void)a;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// MIDI Event Handling
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * First touchpoint for event processing, called by MidiTracker after
- * it passes the event through the shared watcher.
- * Pass it along to the Recorder which may do it's own watching.
- */
-void MidiTrack::midiEvent(MidiEvent* e)
-{
-    recorder.midiEvent(e);
 }
 
 //////////////////////////////////////////////////////////////////////

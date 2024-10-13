@@ -153,6 +153,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
         return &mobiusPools;
     }
 
+    class UIActionPool* getActionPool() {
+        return actionPool;
+    }
+    
     class Notifier* getNotifier() {
         return &notifier;
     }

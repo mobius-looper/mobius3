@@ -11,7 +11,6 @@
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
 #include "MidiFunctions.h"
-#include "TrackEvent.h"
 
 class MidiTrack
 {
@@ -51,6 +50,7 @@ class MidiTrack
     //
     
     void doAction(class UIAction* a);
+    void doActionNow(class UIAction* a);
     void doQuery(class Query* q);
     void processAudioStream(class MobiusAudioStream* argStream);
 
@@ -78,10 +78,6 @@ class MidiTrack
     // TrackScheduler Interface
     //
 
-    class TrackEventPool* getTrackEventPool();
-    class Pulsator* getPulsator();
-    
-    void setMode(MobiusMidiState::Mode mode);
     int getLoopFrames();
     int getFrame();
     int getCycleFrames();
@@ -89,20 +85,10 @@ class MidiTrack
     int getSubcycles();
     int getModeStartFrame();
     int getModeEndFrame();
-    QuantizeMode getQuantizeMode();
-    Pulse::Source getSyncSource();
     
     void alert(const char* msg);
-    void doParameter(class UIAction* a);
-    void doReset(class UIAction* a, bool full);
-
+    
     void endRecording(class UIAction* a);
-
-    // weed these...
-    MidiRecorder* getRecorder();
-    TrackEvent* scheduleQuantized(SymbolId function);
-    TrackEvent* scheduleRounding(SymbolId function);
-    TrackEvent* getRoundingEvent(SymbolId function);
 
   private:
 
@@ -112,17 +98,10 @@ class MidiTrack
     class MidiTracker* tracker = nullptr;
     class MidiPools* pools = nullptr;
 
-    // configuration
-    Pulse::Source syncSource = Pulse::SourceNone;
-    int syncLeader = 0;
-    
     // loops
     juce::OwnedArray<class MidiLoop> loops;
     int loopCount = 0;
     int loopIndex = 0;
-
-    // events
-    TrackEventList events;
 
     // the meat
     MidiRecorder recorder {this};
@@ -156,7 +135,8 @@ class MidiTrack
     // actions/events
     void doEvent(TrackEvent* e);
     void doPulse(TrackEvent* e);
-    void doFunction(class TrackEvent* e);
+    void doParameter(class UIAction* a);
+    void doReset(class UIAction* a, bool full);
 
     //
     // Function Handlers

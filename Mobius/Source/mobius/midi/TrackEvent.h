@@ -59,18 +59,19 @@ class TrackEvent : public PooledObject
     void stack(class UIAction* a);
     
     //
-    // Extra state to display
+    // Extra state 
     //
     
-    // true for rounding events to convey the multiples
+    // for EventRound, this identifies the type of function
+    // that is rounding, used for both display and for Scheduler/Track interaction
+    SymbolId symbolId = SymbolIdNone;
+
+    // positive for rounding events to convey the multiples
+    // used only for display
     int multiples = 0;
 
-    // switch arguments
+    // for EventSwitch, the index of the target loop
     int switchTarget = 0;
-    SwitchQuantize switchQuantize = SWITCH_QUANT_OFF;
-
-    // function arguments
-    SymbolId symbolId = SymbolIdNone;
 
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);

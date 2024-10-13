@@ -21,16 +21,18 @@
 
 #pragma once
 
+#include "../../sync/Pulse.h"
 #include "TrackEvent.h"
 
 class TrackScheduler
 {
   public:
 
-    TrackScheduler(MidiTrack* t);
+    TrackScheduler(class MidiTrack* t);
     ~TrackScheduler();
     
-    void initialize();
+    void initialize(class TrackEventPool* epool, class UIActionPool* apool,
+                    class Pulsator* p, class Valuator* v);
     void dump(class StructureDumper& d);
     void reset();
     
@@ -39,16 +41,21 @@ class TrackScheduler
 
   private:
 
-    MidiTrack* track = nullptr;
-    TrackEventPool* eventPool = nullptr;
+    class MidiTrack* track = nullptr;
+    class TrackEventPool* eventPool = nullptr;
+    class UIActionPool* actionPool = nullptr;
+    class Pulsator* pulsator = nullptr;
+    class Valuator* valuator = nullptr;
     
+    // configuration
+    Pulse::Source syncSource = Pulse::SourceNone;
+    int syncLeader = 0;
+
     TrackEventList events;
     
     // function handlers
 
     void doReset(class UIAction a, bool full);
-
-    
 
 };
 

@@ -56,6 +56,10 @@ MidiTracker::~MidiTracker()
  */
 void MidiTracker::initialize(Session* s)
 {
+    // this isn't owned by MidiPools, but it's convenient to bundle
+    // it up with the others
+    pools.actionPool = kernel->getActionPool();
+    
     audioTracks = s->audioTracks;
     int baseNumber = audioTracks + 1;
     allocateTracks(baseNumber, MidiTrackerMaxTracks);
