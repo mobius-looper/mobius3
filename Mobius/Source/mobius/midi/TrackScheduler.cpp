@@ -27,7 +27,16 @@ void TrackScheduler::initialize()
 {
     // pools we need, avoid access to the full MidiPools
     eventPool = track->getTrackEventPool();
-    
+}
+
+void TrackScheduler::reset()
+{
+    events.clear();
+}
+
+void TrackScheduler::dump(StructureDumper& d)
+{
+    d.line("TrackScheduler:");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -36,100 +45,43 @@ void TrackScheduler::initialize()
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackScheduler::doAction(UIAction* a)
-{
-    if (a->sustainEnd) {
-        // no up transitions right now
-        //Trace(2, "TrackScheduler: Action %s track %d up", a->symbol->getName(), index + 1);
-    }
-    else if (a->longPress) {
-        // don't have many of these
-        if (a->symbol->id == FuncRecord) {
-            if (a->longPressCount == 0)
-              // loop reset
-              track->doReset(a, false);
-            else if (a->longPressCount == 1)
-              // track reset
-              track->doReset(a, true);
-            else {
-                // would be nice to have this be GlobalReset but
-                // would have to throw that back to Kernel
-            }
-        }
-        else {
-            // these are good to show to the user
-            char msgbuf[128];
-            snprintf(msgbuf, sizeof(msgbuf), "Unsupported long press function: %s",
-                     a->symbol->getName());
-            track->alert(msgbuf);
-            Trace(1, "TrackScheduler: %s", msgbuf);
-        }
-    }
-    else if (a->symbol->parameterProperties) {
-        // eventually parameter assignment may need scheduling
-        // some of the ones related to pitch/rate shifting did
-        track->doParameter(a);
-    }
-    else {
-        switch (a->symbol->id) {
-            case FuncDump: track->doDump(a); break;
-            case FuncReset: doReset(a, false); break;
-            case FuncTrackReset: doReset(a, true); break;
-            case FuncGlobalReset: doReset(a, true); break;
-            case FuncRecord: doRecord(a); break;
-            case FuncOverdub: doOverdub(a); break;
-            case FuncUndo: doUndo(a); break;
-            case FuncRedo: doRedo(a); break;
-            case FuncNextLoop: doSwitch(a, 1); break;
-            case FuncPrevLoop: doSwitch(a, -1); break;
-            case FuncSelectLoop: doSwitch(a, 0); break;
-            case FuncMultiply: doMultiply(a); break;
-            case FuncInsert: doInsert(a); break;
-            case FuncMute: doMute(a); break;
-            case FuncReplace: doReplace(a); break;
-            default: {
-                char msgbuf[128];
-                snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
-                         a->symbol->getName());
-                track->alert(msgbuf);
-                Trace(1, "TrackScheduler: %s", msgbuf);
-            }
-        }
-    }
-}
-
 /**
  * Determine when an action may take place.  The options are:
  *
  *     - immediate
- *     - on a quantization boundary
  *     - after a sync pulse
+ *     - on a quantization boundary
  *     - after the current mode ends
  *
- * The mode is consulted first.  Some actions may end a mode, some
- * might allow it to continue.  
+ * This will either call Track::doActionNow or schedule an event to
+ * do it later.
  */
 void TrackScheduler::doAction(UIAction* a)
 {
-    if (syncEvent != nullptr) {
-        // we're waiting for a record start/stop sync pulse
-        // and they're pushing buttons, this is similar to a mode end action
-        schedulePostSync(a);
-    }
-    else if (isRecord(a)) {
+    if (isRecord(a)) {
         scheduleRecord(a);
     }
-    else if (modeRequiresEnding(a)) {
-        scheduleModeEnd(mode, a);
-    }
-    else if (isPulsed(a)) {
-        schedulePulsed(a);
-    }
-    else if (isQuantized(a)) {
-        scheduleQuantized(a);
-    }
     else {
-        track->doActionNow(a);
+        TrackEvent* recordEvent = events.find(TrackEvent::EventRecord);
+        if (recordEvent != nullptr) {
+            // we're waiting for a record start sync pulse
+            // and they're pushing buttons, can extend or stack
+            extendRecord(a, recordEvent);
+        }
+        else {
+            // not in initial recording, the mode decides
+            auto mode = track->getMode();
+
+            if (isModeEnding(mode)) {
+                scheduleModeEnd(a, mode);
+            }
+            else if (isQuantized(a)) {
+                scheduleQuantized(a);
+            }
+            else {
+                track->doActionNow(a);
+            }
+        }
     }
 }
 
@@ -155,35 +107,48 @@ bool TrackScheduler::isRecord(UIAction* a)
  * If record synchronization is enabled, schedule an event to wait
  * for the appropriate sync pulse.
  *
- * We may or may not already be in ModeRecord.  It doesn't matter atm
- * as they wait for the same sync pulse.
+ * We may or may not already be in ModeRecord.  It doesn't matter at the moment
+ * as they both wait for the same sync pulse.
  *
  * AutoRecord will complicate this.
  */
 void TrackScheduler::scheduleRecord(UIAction* a)
 {
-    if (isRecordSynced()) {
-        TrackEvent* e = eventPool->newTrackEvent();
-        e->type = TrackEvent::EventRecord;
-        if (getMode() == MobiusMidiState::ModeRecord) {
-            // we're currently recording, this is an ending
-            e->ending = true;
-        }
-        e->pending = true;
-        e->pulsed = true;
-        events.add(e);
-        Trace(2, "TrackScheduler: %d begin synchronization", track->number);
-        syncEvent = e;
+    TrackEvent* recordEvent = events.find(TrackEvent::EventRecord);
+    if (recordEvent != nullptr) {
+        // we're already in Synchronize mode waiting for pulse and they did it again
+        // if this was AutoRecord, then it should add bars to the eventual record length
+        // if this was single Record, then it schedules a second Record event to end
+        // the recording on the next pulse
+        // we don't need to check isRecordSynced because having an existing event
+        // means it must be synced
+        (void)scheduleRecordEvent();
+    }
+    else if (isRecordSynced()) {
+        // schedule the first record event
+        (void)scheduleRecordEvent();
     }
     else {
+        // normal unsynchronized record
         track->doActionNow(a);
     }
+}
+
+TrackEvent* TrackScheduler::scheduleRecordEvent()
+{
+    TrackEvent* e = eventPool->newTrackEvent();
+    e->type = TrackEvent::EventRecord;
+    e->pending = true;
+    e->pulsed = true;
+    e->stack(a);
+    events.add(e);
+    return e;
 }
 
 /**
  * Determine whether the start or stop of a recording needs to be synchronized.
  */
-bool TrackScheduler::needsRecordSync()
+bool TrackScheduler::isRecordSynced()
 {
     bool doSync = false;
 
@@ -222,44 +187,34 @@ bool TrackScheduler::needsRecordSync()
     return doSync;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Synchronizing
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
- * We're currently in synchronization mode waiting for either
- * the start or end of a recording.
+ * We have a Record event scheduled, and something other than another Record came in.
+ * Actually, now that we specifically test for Record functions first, this
+ * can't extend, it can only stack.
  *
- * Before the start is an unusual period because there isn't much that makes
- * sense.  Minor modes like Overdub could happen immediately but can also stack.
- * Speed adjustments might need to be early.
- *
- * Most other things would be considered record ending actions which don't make sense
- * unless the ending is also synchronized, or it's AutoRecord.
+ * May be some interesting logic Track would like to insert here since the
+ * "waiting for record" is kind of a special mode.  Might want to set
+ * ModeRecord early?
  */
-void TrackScheduler::schedulePostSync(UIAction* a)
+void TrackScheduler::extendRecord(UIAction* a, TrackEvent* recordEvent)
 {
-    if (syncEvent == nullptr) {
-        Trace(1, "TrackScheduler: No syncEvent, bad call");
-    }
-    else {
-        // todo: test for things that don't need to stack?
-        syncEvent->addStack(a);
-    }
+    trackEvent->add(a);
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Mode Ending
+// Rounding
 //
 //////////////////////////////////////////////////////////////////////
 
-bool TrackScheduler::modeRequiresEnding(UIAction* a)
+/**
+ * Returns true if this mode requires special ending behavior.
+ * The "waiting for record pulse" is similar to a mode but it will
+ * have been caught by now.  We are beyond the initial recording
+ * or are in Reset.
+ */
+bool TrackScheduler::isModeEnding(MobiusMidiState::Mode mode)
 {
-    auto mode = track->getMode();
-
     // Stutter probably belongs here
     // Threshold is odd, another form of Record?
     // blow off Rehearse
@@ -268,41 +223,97 @@ bool TrackScheduler::modeRequiresEnding(UIAction* a)
             mode == MobiusMidiState::ModeMultiply ||
             mode == MobiusMidiState::ModeInsert ||
             mode == MobiusMidiState::ModeSwitch ||
+            // is this a real mode or just an annotated form of Switch?
             mode == MobiusMidiState::ModeConfirm);
 }
 
-void TrackScheduler::scheduleModeEnd(UIAction* a)
+/**
+ * Schedule a mode ending event if we don't already have one.
+ * In both cases stack the action on the ending event.
+ */
+void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
 {
-    TrackEvent* ending = findModeEnding(a);
-    if (ending == nullptr) {
+    if (mode == MobiusMidiState::ModeRecord) {
+        // have to end the record first
+        // here we may need to inject recording extension options, but
+        // curr
+xxx
         
-        
-    
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// Events
-//
-//////////////////////////////////////////////////////////////////////
-
-void TrackScheduler::doEvent(TrackEvent* e)
-{
-    switch (e->type) {
-        case TrackEvent::EventNone: {
-            Trace(1, "TrackScheduler: Event with nothing to do");
+        // Record mode uses a special type
+        if (isRecordSynced()) {
+            scheduleRecord(a);
         }
-            break;
-
-        case TrackEvent::EventPulse: doPulse(e); break;
-        case TrackEvent::EventRecord: doRecord(e); break;
-        case TrackEvent::EventSwitch: doSwitch(e); break;
-        case TrackEvent::EventReturn: doSwitch(e); break;
-        case TrackEvent::EventFunction: doFunction(e); break;
-        case TrackEvent::EventRound: doRound(e); break;
+        else {
+            track->doActionNow(a);
+        }
     }
+    else if (mode == MobiusMidiState::ModeMultiply ||
+             mode == MobiusMidiState::ModeInsert) {
 
-    eventPool->checkin(e);
+        // these have been using a special Rounding event type
+        TrackEvent* event = events.find(TrackEvent::TypeRound);
+        if (event != nullptr) {
+            if (a->symbol->id == event->symbolId) {
+                // the same function was used during the rounding
+                // period, this extends the rounding
+                int extension = track->extendRounding();
+                if (event->multiples == 0)
+                  event->multiples = 2;
+                else
+                  event->multiples++;
+                event->frame += rec->getCycleFrames();
+            }
+            else {
+                // stack it after the rounding is over
+                event->add(a);
+            }
+        }
+        else {
+            // rounding has not been scheduled
+            TrackEvent* event = pools->newTrackEvent();
+            event->type = TrackEvent::EventRound;
+            // ugh
+            if (mode == MobiusMidiState::ModeMultiply)
+              event->symbolId = FuncMultiply;
+            else
+              event->symbolId = FuncInsert;
+
+            int roundFrames = track->getRoundingFrames();
+            event->frame = track->getFrame() + roundFrames;
+
+            // if we started rounding with something other
+            // than the mode function, it is stacked
+            if (a->symbolId != event->symbolId)
+              event->add(a);
+            
+            events.add(event);
+        }
+    }
+    else {
+        // must be Switch or Confirm
+        // both are EventSwitch events, Confirm mode is indiciated by
+        // it being pending
+        // the difference here doesn't really matter, they both
+        // stack the action 
+        TrackEvent* ending = events.find(TrackEvent::TypeSwitch);
+        if (ending != nullptr) {
+            SymbolId sid = a->symbol->id;
+            if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
+                // what happens when you do a loop switch function again while
+                // you're already in the switch quantize zone?
+                // probably change the event->switchTarget?
+                Trace(1, "TrackScheduler: Yo dawg, I heard you like loop switch");
+            }
+            else {
+                ending->add(a);
+            }
+        }
+        else {
+            // this is an error, loop switch isn't a start/end mode it's
+            // more like quantize
+            Trace(1, "TrackScheduler: Switch mode without a switch event");
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -411,229 +422,140 @@ int TrackScheduler::getQuantizeFrame(SymbolId func, QuantizeMode qmode)
 }
 
 /**
+ * Return true if this function is sensitive to quantization.
+ */
+bool TrackScheduler::isQuantized(UIAction* a)
+{
+    bool quantized = false;
+    SymbolId sid = a->symbol->id;
+
+    // need a much more robust lookup table
+    if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
+        QuantizeMode q = track->getQuantizeMode();
+        quantized = (q 1= QUANTIZE_OFF);
+    }
+    else if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
+        SwitchQuantize q = track->getSwitchQuantize();
+        quantized = (q 1= SWITCH_QUANT_OFF);
+        
+    }
+    return quantized;
+}
+
+/**
  * Called by function handlers immediately when receiving a UIAction.
  * If this function is quantized, schedule an event for that function.
  * Returning null means the function can be done now.
  */
-TrackEvent* TrackScheduler::scheduleQuantized(SymbolId function)
+void TrackScheduler::scheduleQuantized(UIAction* a)
 {
     TrackEvent* event = nullptr;
-    
-    QuantizeMode quant = track->getQuantizeMode();
-    if (quant != QUANTIZE_OFF) {
-        event = eventPool->newTrackEvent();
-        event->type = TrackEvent::EventFunction;
-        event->symbolId = function;
-        event->frame = getQuantizedFrame(quant);
-        events.add(event);
-    }
+    SymbolId sid = a->symbol->id;
 
-    return event;
-}
-
-TrackEvent* TrackScheduler::scheduleRounding(SymbolId function)
-{
-    TrackEvent* event = eventPool->newTrackEvent();
-    event->type = TrackEvent::EventRound;
-    event->symbolId = function;
-    event->frame = getRoundedFrame();
-    events.add(event);
-    return event;
-}
-
-TrackEvent* TrackScheduler::getRoundingEvent(SymbolId function)
-{
-    return events.findRounding(function);
-}
-
-/**
- * For multiply/insert
- */
-int TrackScheduler::getRoundedFrame()
-{
-    int modeStart = track->getModeStartFrame();
-    int recordFrame = track->getFrame();
-    int delta = recordFrame - modeStart;
-    int cycleFrames = track->getCycleFrames();
-    int cycles = delta / cycleFrames;
-    if ((delta % cycleFrames) > 0)
-      cycles++;
-
-    return cycles * cycleFrames;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Modes
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Explore what attempting to evaluate a function does when in a certain mode.
- * Returns an event if the a mode ending event had to be scheduled
- */
-TrackEvent* MidiTrack::scheduleModeStop(UIAction* action)
-{
-    TrackEvent* event = nullptr;
-
-    auto mode = track->getMode();
-    switch (mode) {
-        // these have no special end processing
-        case MobiusMidiState::Reset:
-        case MobiusMidiState::Play:
-        case MobiusMidiState::Overdub:
-            break;
-            
-        case MobiusMidiState::Record:
-            event = scheduleRecordStop(action);
-            break;
-    }
-
-    return event;
-}
-
-/**
- * Stop recording now if we can, if synchronized schedule an record stop
- * event and stack this one on it.
- */
-TrackEvent* MidiTrack::scheduleRecordStop(UIAction* action)
-{
-    TrackEvent* event = nullptr;
-    
-    if (needsRecordSync()) {
-        event = eventPool->newTrackEvent();
-        event->type = TrackEvent::EventRecord;
-        event->pending = true;
-        event->pulsed = true;
-        events.add(e);
-        Trace(2, "MidiTrack: %d record end synchronization", number);
-        synchronizing = true;
-    }
-
-    return event;
-}
-
-
-///////////////////////////////////////////////////////////////////////
-//
-// Reset, Dump
-//
-///////////////////////////////////////////////////////////////////////
-
-/**
- * Track does most of the work, here we can clear the event list.
- */
-void TrackScheduler::doReset(UIAction a, bool full)
-{
-    events.clear();
-    synchronzing = false;
-    
-    track->doReset(a, full);
-}
-
-/**
- * Called indirectly by Track to add our state to the diagnistic dump
- */
-void TrackScheduler::dump(StructureDumper& d)
-{
-    d.line("TrackScheduler:");
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Record
-//
-//////////////////////////////////////////////////////////////////////
-   
-/**
- * Action handler, either do it now or schedule a sync event
- *
- * Record while in Multiply does unrounded multiply
- */
-void MidiTrack::doRecord(UIAction* a)
-{
-    (void)a;
-
-    if (mode == MobiusMidiState::ModeMultiply) {
-        // unrounded multiply or "cut"
-        shiftMultiply(true);
-        mode = MobiusMidiState::ModePlay;
-    }
-    else if (mode == MobiusMidiState::ModeInsert) {
-        // unrounded insert
-        endInsert(true);
-        mode = MobiusMidiState::ModePlay;
-    }
-    else if (!needsRecordSync()) {
-        toggleRecording();
+    if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
+        scheduleSwitchQuantized(a);
     }
     else {
-        TrackEvent* e = pools->newTrackEvent();
-        e->type = TrackEvent::EventRecord;
-        e->pending = true;
-        e->pulsed = true;
-        events.add(e);
-        Trace(2, "MidiTrack: %d begin synchronization", number);
-        synchronizing = true;
+        QuantizeMode quant = track->getQuantizeMode();
+        if (quant != QUANTIZE_OFF) {
+            event = eventPool->newTrackEvent();
+            event->type = TrackEvent::EventAction;
+            event->frame = getQuantizedFrame(quant);
+            event->add(a);
+            events.add(event);
+        }
+        else {
+            track->doActionNow(a);
+        }
     }
 }
 
+void TrackScheduler::scheduleSwitchQuantized(UIAction* a)
+{
+    // annotate the event with the switch target for display
+    int switchTarget = track->getSwitchTarget(a);
+    // remind me, if you do SelectLoop on the SAME loop what does it do?
+    // I suppose if SwitchLocation=Start it could retrigger
+    if (target != loopIndex) {
+
+        SwitchQuantize squant = track->getSwitchQuantize();
+        TrackEvent* event = nullptr;
+        
+        switch (squant) {
+            case SWITCH_QUANT_OFF: break;
+                
+            case SWITCH_QUANT_SUBCYCLE:
+            case SWITCH_QUANT_CYCLE:
+            case SWITCH_QUANT_LOOP: {
+                int frame = getQuantizeFrame(squant);
+                event = newSwitchEvent(target, frame);
+                event->switchQuantize = SWITCH_QUANT_OFF;
+                
+            }
+                break;
+            case SWITCH_QUANT_CONFIRM:
+            case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+            case SWITCH_QUANT_CONFIRM_CYCLE:
+            case SWITCH_QUANT_CONFIRM_LOOP: {
+                event = newSwitchEvent(target, 0);
+                event->pending = true;
+                event->switchQuantize = squant;
+            }
+                break;
+        }
+
+        // it's now or later
+        if (event == nullptr) {
+            doSwitchNow(a);
+        }
+        else {
+            events.add(event);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Events
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
- * Event handler when we are synchronizing
+ * So what we're learning here is that while something is scheduled, other
+ * things can be stacked on the event besides the action that started this.
+ * Track needs to do all of them on the list.
  */
-void MidiTrack::doRecord(TrackEvent* e)
+void TrackScheduler::doEvent(TrackEvent* e)
 {
-    (void)e;
-    toggleRecording();
-}
+    switch (e->type) {
+        case TrackEvent::EventNone: {
+            Trace(1, "TrackScheduler: Event with nothing to do");
+        }
+            break;
 
-void MidiTrack::toggleRecording()
-{
-    if (mode == MobiusMidiState::ModeRecord)
-      stopRecording();
-    else
-      startRecording();
+        case TrackEvent::EventAction:
+        case TrackEvent::EventRecord:
+        case TrackEvent::EventSwitch: {
+            // back from quantization, mode ending, or sync pulse
+            UIAction* a = e->actions;
+            e->actions = nullptr;
+            track->doActionNow(a);
+        }
+            break;
 
-    // todo: can't happen right now, but if it is possible to pre-schedule
-    // a record end event at the same time as the start, then we should
-    // keep synchronizing, perhaps a better way to determine this is to
-    // just look for the presence of any pulsed events in the list
-    Trace(2, "MidiTrack: %d end synchronization", number);
-    synchronizing = false;
-}
+        default: {
+            Trace(1, "TrackScheduler: Unsupported event type %d",
+                  e->type);
+        }
+            break;
+            
+    }
 
-void MidiTrack::startRecording()
-{
-    player.reset();
-    recorder.reset();
-    
-    MidiLoop* loop = loops[loopIndex];
-    loop->reset();
-    
-    mode = MobiusMidiState::ModeRecord;
-    recorder.begin();
+    // todo: cleanse any lingering actions
+    if (e->actions)
+      Trace(1, "TrackScheduler: Leaking actions");
 
-    // we may not have gone through a formal reset process
-    // so make sure pulsator is unlocked first to prevent a log error
-    // !! this feels wrong, who is forgetting to unlock
-    //pulsator->unlock(number);
-    pulsator->start(number);
-    
-    Trace(2, "MidiTrack: %d Recording", number);
-}
-
-void MidiTrack::stopRecording()
-{
-    int eventCount = recorder.getEventCount();
-
-    // this does recorder.commit and player.shift to start playing
-    shift();
-    
-    mode = MobiusMidiState::ModePlay;
-    
-    pulsator->lock(number, recorder.getFrames());
-
-    Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
+    eventPool->checkin(e);
 }
 
 /****************************************************************************/

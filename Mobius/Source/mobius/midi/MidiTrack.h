@@ -96,6 +96,8 @@ class MidiTrack
     void doParameter(class UIAction* a);
     void doReset(class UIAction* a, bool full);
 
+    void endRecording(class UIAction* a);
+
     // weed these...
     MidiRecorder* getRecorder();
     TrackEvent* scheduleQuantized(SymbolId function);

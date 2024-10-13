@@ -29,19 +29,20 @@ class TrackScheduler
 
     TrackScheduler(MidiTrack* t);
     ~TrackScheduler();
-    void dump(class StructureDumper& d);
     
     void initialize();
-
+    void dump(class StructureDumper& d);
+    void reset();
+    
     // the main entry point from the track to get things going
     void doAction(class UIAction* a);
 
   private:
 
     MidiTrack* track = nullptr;
-    TrackEventList events;
     TrackEventPool* eventPool = nullptr;
-    TrackEvent* syncEvent = nullptr;
+    
+    TrackEventList events;
     
     // function handlers
 

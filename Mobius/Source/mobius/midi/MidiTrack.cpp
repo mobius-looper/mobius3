@@ -536,6 +536,8 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
         }
         
         advance(eventAdvance);
+
+        // scheduler.doEvent...
         doEvent(e);
         
         remainder -= eventAdvance;
@@ -1226,6 +1228,16 @@ void MidiTrack::stopRecording()
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 
+/**
+ * Scheduler calls when an action is received during record mode.  If
+ * recording is synced, it will already have waited for the ending pulse.
+ * The action here is the function that provoked the recording to end.
+ */
+void MidiTrack::endRecording(UIAction* a)
+{
+    (void)a;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MIDI Event Handling
@@ -1416,7 +1428,26 @@ void MidiTrack::doRedo(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
-// todo: needs lots of work to round like multiply
+/**
+ * Called by Scheduler when Multiply or Insert (or in theory any other rounding mode)
+ * is used while in the rounding period.  This adds another cycle to the rounding.
+ * Return the number of frames to add to the rounding event.
+ */
+int MidiTrack::extendRounding()
+{
+    int addition = 0;
+    
+    MidiRecorder* rec = track->getRecorder();
+    if (mode == MobiusMidiState::ModeMultiply)
+      rec->extendMultiply();
+    else if (mode == MobiusMidiState::ModeMultiply)
+      rec->extendInsert();
+    else
+      Trace(1, "MidiTrack: Invalid call to extendRounding");
+
+    addition = rec->getCycleFrames();
+    return addition;
+}
 
 void MidiTrack::doInsert(UIAction* a)
 {

@@ -21,11 +21,18 @@ class TrackEvent : public PooledObject
     typedef enum {
         EventNone,
         EventPulse,
+        EventSync,
         EventRecord,
+        EventAction,
+        EventRound,
         EventSwitch,
+        
+        // weed
+        EventRecord,
         EventReturn,
         EventFunction,
         EventRound,
+
     } Type;
     
     TrackEvent();
@@ -38,9 +45,6 @@ class TrackEvent : public PooledObject
     // what it is
     Type type = EventNone;
 
-    // true if this represents the ending of a mode
-    bool ending = false;
-
     // where it is
     int frame = 0;
 
@@ -50,6 +54,14 @@ class TrackEvent : public PooledObject
     // when it is waiting for a sync pulse
     bool pulsed = false;
 
+    // stacked actions
+    class UIAction* actions = nullptr;
+    void stack(class UIAction* a);
+    
+    //
+    // Extra state to display
+    //
+    
     // true for rounding events to convey the multiples
     int multiples = 0;
 
@@ -60,19 +72,9 @@ class TrackEvent : public PooledObject
     // function arguments
     SymbolId symbolId = SymbolIdNone;
 
-    // stacked actions
-    class UIAction* actions = nullptr;
-
-    // stacked events
-    TrackEvent* events = nullptr;
-
-    void addStack(class UIAction* a);
-    void addStack(TrackEvent* e);
-    
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);
     
-
 };
 
 class TrackEventPool : public ObjectPool
@@ -96,22 +98,22 @@ class TrackEventList
 
     TrackEventList();
     ~TrackEventList();
-
     void initialize(TrackEventPool* pool);
+    
+    void clear();
+    TrackEvent* getEvents() {
+        return events;
+    }
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
+    
     TrackEvent* findLast(SymbolId id);
     TrackEvent* findRounding(SymbolId id);
-    void clear();
 
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);
     TrackEvent* consumePulsed();
 
-    TrackEvent* getEvents() {
-        return events;
-    }
-    
   private:
 
     TrackEventPool* pool = nullptr;

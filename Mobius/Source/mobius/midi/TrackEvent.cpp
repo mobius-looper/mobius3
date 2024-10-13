@@ -1,5 +1,4 @@
 
-#include <JuceHeader.h>
 
 #include "../../util/Trace.h"
 
@@ -10,7 +9,7 @@
 
 //////////////////////////////////////////////////////////////////////
 //
-// Event
+// TrackEvent
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -29,19 +28,18 @@ void TrackEvent::poolInit()
 {
     next = nullptr;
     type = EventNone;
-    ending = false;
     frame = 0;
     pending = false;
     pulsed = false;
+    actions = nullptr;
+    
     multiples = 0;
     switchTarget = 0;
     switchQuantize = SWITCH_QUANT_OFF;
     symbolId = SymbolIdNone;
-    actions = nullptr;
-    events = nullptr;
 }
 
-void TrackEvent::addStack(UIAction* a)
+void TrackEvent::stack(UIAction* a)
 {
     UIAction* prev = nullptr;
     UIAction* action = actions;
@@ -53,20 +51,6 @@ void TrackEvent::addStack(UIAction* a)
       actions = a;
     else
       prev->next = a;
-}
-
-void TrackEvent::addStack(TrackEvent* e)
-{
-    TrackEvent* prev = nullptr;
-    TrackEvent* event = events;
-    while (event != nullptr) {
-        prev = event;
-        event = event->next;
-    }
-    if (prev == nullptr)
-      events = e;
-    else
-      prev->next = e;
 }
 
 //////////////////////////////////////////////////////////////////////
