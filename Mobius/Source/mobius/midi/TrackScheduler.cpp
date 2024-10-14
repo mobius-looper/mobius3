@@ -122,8 +122,12 @@ void TrackScheduler::shiftEvents(int frames)
  * This will either call Track::doActionNow or schedule an event to
  * do it later.
  */
-void TrackScheduler::doAction(UIAction* a)
+void TrackScheduler::doAction(UIAction* action)
 {
+    // from here on down, we're dealing with a copy of the action
+    UIAction* a = actionPool->newAction();
+    a->copy(action);
+    
     if (isRecord(a)) {
         scheduleRecord(a);
     }
