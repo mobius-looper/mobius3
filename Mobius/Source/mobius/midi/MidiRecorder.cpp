@@ -425,8 +425,14 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
 {
     MidiLayer* commitLayer = nullptr;
 
-    if (!unrounded && recordFrame != modeEndFrame)
-      Trace(1, "MidiRecorder: Rounded multiply didn't end where expected");
+    if (!unrounded && recordFrame != modeEndFrame) {
+        // this is okay if we ended before the loop point, should
+        // be exactly on the loop frame
+        if (recordFrame != recordFrames)
+          Trace(1, "MidiRecorder: Rounded multiply didn't end where expected");
+        else
+          Trace(2, "MidiRecorder: Terminating multiply before loop boundary");
+    }
     
     if (recordLayer == nullptr) {
         Trace(1, "MidiRecorder: Remultiply without a layer");

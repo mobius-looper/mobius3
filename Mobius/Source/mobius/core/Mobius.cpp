@@ -474,7 +474,7 @@ void Mobius::installSymbols()
         // so we don't need to copy any of the old definition
         if (s == nullptr) {
             s = symbols->intern(name);
-            Trace(1, "Mobius: Interned missing symbol for %s", p->getName());
+            //Trace(2, "Mobius: Interned missing symbol for %s", p->getName());
             // todo: could bootstrap a ParameterProperties for these too,
             // but not supposed to see them
         }

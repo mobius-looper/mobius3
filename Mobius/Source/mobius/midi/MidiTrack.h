@@ -43,13 +43,13 @@ class MidiTrack
     bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
     void refreshImportant(class MobiusMidiState::Track* state);
+    MobiusMidiState::Mode getMode();
 
     //
     // stimuli
     //
     
     void doAction(class UIAction* a);
-    void doActionNow(class UIAction* a);
     void doQuery(class Query* q);
     void processAudioStream(class MobiusAudioStream* argStream);
 
@@ -58,15 +58,8 @@ class MidiTrack
     void midiEvent(class MidiEvent* e);
 
     //
-    // Support for function handlers
-    //
-
-    
-    //
     // Support for Recorder
     //
-
-    MobiusMidiState::Mode getMode();
     
     class MidiEvent* getHeldNotes();
     class MidiEvent* copyNote(class MidiEvent* src);
@@ -87,14 +80,30 @@ class MidiTrack
     int getCycles();
     int getSubcycles();
     int getModeStartFrame();
+    //int getRoundingFrames();
     int getModeEndFrame();
-    int getRoundingFrames();
+    int extendRounding();
 
-    // modal endings
-    void finishRecord(class UIAction* actions);
-    void finishMultiply(class UIAction* actions);
-    void finishInsert(class UIAction* actions);
-    void finishSwitch(class UIAction* actions, int target);
+    // mode transitions
+    
+    void startRecord();
+    void finishRecord();
+
+    void startMultiply();
+    void finishMultiply();
+
+    void startInsert();
+    void finishInsert();
+
+    void startReplace();
+    void finishReplace();
+
+    void toggleOverdub();
+    void toggleMute();
+
+    void finishSwitch(int target);
+    
+    void advance(int newFrames);
     
   private:
 
@@ -119,7 +128,6 @@ class MidiTrack
     
     // state
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
-    bool synchronizing = false;
     bool overdub = false;
     bool reverse = false;
     bool mute = false;
@@ -132,42 +140,30 @@ class MidiTrack
     int subcycles = 4;
 
     // advance
-    void advance(int newFrames);
     void advancePlayer(int newFrames);
     void shift();
     void shiftMultiply(bool unrounded);
     void shiftInsert(bool unrounded);
+    bool checkMultiplyTermination();
     
     // actions/events
     void doParameter(class UIAction* a);
-    void doReset(class UIAction* a, bool full);
-    void doUndo(class UIAction* a);
-    void doRedo(class UIAction* a);
-    void doDump(class UIAction* a);
+    void doReset(bool full);
+    void doUndo();
+    void doRedo();
+    void doDump();
 
     //
     // Function Handlers
     //
-    
-    void doRecord(class UIAction* a);
-    void doStacked(UIAction* actions);
     
     void resetRegions();
     void startOverdubRegion();
     void stopOverdubRegion();
     void advanceRegion(int frames);
     
-    void doOverdub(class UIAction* a);
     bool inRecordingMode();
-
-    void doMultiply(UIAction* a);
     void unroundedMultiply();
-
-    void doInsert(class UIAction* a);
     void unroundedInsert();
-    
-    void doMute(class UIAction* a);
-    void doReplace(class UIAction* a);
-
 
 };

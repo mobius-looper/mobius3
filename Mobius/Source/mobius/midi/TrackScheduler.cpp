@@ -112,6 +112,20 @@ void TrackScheduler::shiftEvents(int frames)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Start the action process with an action send from outside.
+ * From here down, code expects to be dealing with a copy of the
+ * original action that may be modified, and must be reclaimed
+ * when done.
+ */
+void TrackScheduler::doAction(UIAction* src)
+{
+    UIAction* a = actionPool->newAction();
+    a->copy(src);
+    
+    doActionInternal(a);
+}
+
+/**
  * Determine when an action may take place.  The options are:
  *
  *     - immediate
@@ -119,15 +133,11 @@ void TrackScheduler::shiftEvents(int frames)
  *     - on a quantization boundary
  *     - after the current mode ends
  *
- * This will either call Track::doActionNow or schedule an event to
- * do it later.
+ * This will either call doActionNow or schedule an event to
+ * do it later.  Various functions have more complex scheduling than others.
  */
-void TrackScheduler::doAction(UIAction* action)
+void TrackScheduler::doActionInternal(UIAction* a)
 {
-    // from here on down, we're dealing with a copy of the action
-    UIAction* a = actionPool->newAction();
-    a->copy(action);
-    
     if (isRecord(a)) {
         scheduleRecord(a);
     }
@@ -136,7 +146,7 @@ void TrackScheduler::doAction(UIAction* action)
         if (recordEvent != nullptr) {
             // we're waiting for a record start sync pulse
             // and they're pushing buttons, can extend or stack
-            extendRecord(a, recordEvent);
+            stackRecord(recordEvent, a);
         }
         else {
             // not in initial recording, the mode decides
@@ -153,11 +163,298 @@ void TrackScheduler::doAction(UIAction* action)
             }
             else {
                 // fuck it, we'll do it live
-                track->doActionNow(a);
+                doActionNow(a);
             }
         }
     }
 }
+
+/**
+ * Here from various function handlers that have a rounding period where
+ * stacked actions can accumulate.  Once the function behavior has been
+ * performed by the Track, we then pass each stacked action through the
+ * scheduling process.
+ *
+ * This is where we could inject some intelligence into action merging
+ * or side effects.
+ *
+ */
+void TrackScheduler::doStacked(TrackEvent* e) 
+{
+    if (e != nullptr) {
+        UIAction* action = e->stacked;
+    
+        while (action != nullptr) {
+            UIAction* next = action->next;
+            action->next = nullptr;
+
+            // note that this doesn't use doActionNow, the functions
+            // behave as if they had been done immediately after the mode ending
+            // and may be scheduled, might need some nuance around this...
+            doActionInternal(action);
+
+            action = next;
+        }
+
+        // don't leave the list on the event so they doin't get reclaimed 
+        e->stacked = nullptr;
+    }
+}
+
+/**
+ * Convert an action into calls to the Track to actually do something.
+ * Forwards to the function handlers in the large section below.
+ */
+void TrackScheduler::doActionNow(UIAction* a)
+{
+    switch (a->symbol->id) {
+
+        case FuncReset: track->doReset(false); break;
+        case FuncTrackReset: track->doReset(true); break;
+        case FuncGlobalReset: track->doReset(true); break;
+
+            // these we're going to want more control over eventually
+        case FuncUndo: track->doUndo(); break;
+        case FuncRedo: track->doRedo(); break;
+
+            // not expecting these to be here, should have gone through
+            // scheduleSwitch
+            /*
+        case FuncNextLoop: doSwitch(a); break;
+        case FuncPrevLoop: doSwitch(a); break;
+        case FuncSelectLoop: doSwitch(a); break;
+            */
+            
+        case FuncRecord: doRecord(nullptr); break;
+            
+        case FuncOverdub: doOverdub(a); break;
+        case FuncMultiply: doMultiply(a); break;
+        case FuncInsert: doInsert(a); break;
+        case FuncMute: doMute(a); break;
+        case FuncReplace: doReplace(a); break;
+            
+        default: {
+            char msgbuf[128];
+            snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
+                     a->symbol->getName());
+            track->alert(msgbuf);
+            Trace(1, "TrackScheduler: %s", msgbuf);
+        }
+    }
+
+    actionPool->checkin(a);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Advance the event list for one audio block.
+ *
+ * The block is broken up into multiple sections between each scheduled
+ * event that is within range of this block.  We handle processing of the
+ * events, and Track handles the advance between each event and advances
+ * the recorder and player.
+ *
+ * Actions queued for this block have already been processed.
+ * May want to defer that so we can at least do processing first
+ * which may activate a Record, before other events are scheduled, but really
+ * those should be stacked on the pulsed record anway.  Something to think about...
+ */
+void TrackScheduler::advance(MobiusAudioStream* stream)
+{
+    int newFrames = stream->getInterruptFrames();
+
+    // here is where we need to ask Pulsator about drift
+    // and do a correction if necessary
+    int number = track->number;
+    if (pulsator->shouldCheckDrift(number)) {
+        int drift = pulsator->getDrift(number);
+        (void)drift;
+        //  track->doSomethingMagic()
+        pulsator->correctDrift(number, 0);
+    }
+
+    int currentFrame = track->getFrame();
+
+    // locate a sync pulse we follow within this block
+    if (syncSource != Pulse::SourceNone) {
+
+        // todo: you can also pass the pulse type to getPulseFrame
+        // and it will obey it rather than the one passed to follow()
+        // might be useful if you want to change pulse types during
+        // recording
+        int pulseOffset = pulsator->getPulseFrame(number);
+        if (pulseOffset >= 0) {
+            // sanity check before we do the math
+            if (pulseOffset >= newFrames) {
+                Trace(1, "TrackScheduler: Pulse frame is fucked");
+                pulseOffset = newFrames - 1;
+            }
+            // it dramatically cleans up the carving logic if we make this look
+            // like a scheduled event
+            TrackEvent* pulseEvent = eventPool->newEvent();
+            pulseEvent->frame = currentFrame + pulseOffset;
+            pulseEvent->type = TrackEvent::EventPulse;
+            // note priority flag so it goes before others on this frame
+            events.add(pulseEvent, true);
+        }
+    }
+    
+    // carve up the block for the events within it
+    int remainder = newFrames;
+    TrackEvent* e = events.consume(currentFrame, remainder);
+    while (e != nullptr) {
+
+        int eventAdvance = e->frame - currentFrame;
+        if (eventAdvance > remainder) {
+            Trace(1, "TrackScheduler: Advance math is fucked");
+            eventAdvance = remainder;
+        }
+
+        // let track consume a block of frames
+        track->advance(eventAdvance);
+
+        // then we inject event handling
+        doEvent(e);
+        
+        remainder -= eventAdvance;
+        e = events.consume(currentFrame, remainder);
+    }
+    
+    track->advance(remainder);
+}
+
+/**
+ * Process an event that has been reached or activated after a pulse.
+ */
+void TrackScheduler::doEvent(TrackEvent* e)
+{
+    switch (e->type) {
+        case TrackEvent::EventNone: {
+            Trace(1, "TrackScheduler: Event with nothing to do");
+        }
+            break;
+
+        case TrackEvent::EventPulse: {
+            doPulse(e);
+        }
+            break;
+
+        case TrackEvent::EventSync: {
+            Trace(1, "TrackScheduler: Not expecting sync event");
+        }
+            break;
+            
+        case TrackEvent::EventRecord: doRecord(e); break;
+
+        case TrackEvent::EventAction: {
+            if (e->primary == nullptr)
+              Trace(1, "TrackScheduler: EventAction without an action");
+            else {
+                doActionNow(e->primary);
+                // ownership was transferred, don't dispose again
+                e->primary = nullptr;
+            }
+            // quantized events are not expected to have stacked actions
+            // does that ever make sense?
+            if (e->stacked != nullptr)
+              Trace(1, "TrackScheduler: Unexpected action stack on EventAction");
+        }
+            break;
+            
+        case TrackEvent::EventRound: {
+            // end of a Multiply or Insert
+            // actions that came in during the rounding period were stacked
+            auto mode = track->getMode();
+            if (mode == MobiusMidiState::ModeMultiply)
+              track->finishMultiply();
+            else if (mode == MobiusMidiState::ModeInsert)
+              track->finishInsert();
+            else
+              Trace(1, "TrackScheduler: EventRound encountered unexpected track mode");
+
+            doStacked(e);
+
+        }
+            break;
+
+        case TrackEvent::EventSwitch: {
+            doSwitch(e);
+        }
+            break;
+
+    }
+
+    dispose(e);
+}
+
+/**
+ * Dispose of an event, including any stacked actions.
+ * Normally the actions have been removed, but if we hit an error condition
+ * don't leak them.
+ */
+void TrackScheduler::dispose(TrackEvent* e)
+{
+    if (e->primary != nullptr)
+      actionPool->checkin(e->primary);
+    
+    UIAction* stack = e->stacked;
+    while (stack != nullptr) {
+        UIAction* next = stack->next;
+        actionPool->checkin(stack);
+        stack = next;
+    }
+    
+    e->stacked = nullptr;
+    eventPool->checkin(e);
+}
+
+/**
+ * We should only be injecting pulse events if we are following
+ * something, and have been waiting on a record start or stop pulse.
+ * Events that are waiting for a pulse are called "pulsed" events.
+ *
+ * As usual, what will actually happen in practice is simpler than what
+ * the code was designed for to allow for future extensions.  Right now,
+ * there can only be one pending pulsed event, and it must be for record start
+ * or stop.
+ *
+ * In theory there could be any number of pulsed events, they are processed
+ * in order, one per pulse.
+ * todo: rethink this, why not activate all of them, which is more useful?
+ *
+ * When a pulse comes in a pulse event is "activated" which means it becomes
+ * not pending and is given a location equal to where the pulse frame.
+ * Again in theory, this could be in front of other scheduled events and because
+ * events must be in order, it is removed and reinserted after giving it a frame.
+ */
+void TrackScheduler::doPulse(TrackEvent* e)
+{
+    (void)e;
+    
+    // todo: there could be more than one thing waiting on a pulse?
+    TrackEvent* pulsed = events.consumePulsed();
+    if (pulsed != nullptr) {
+        Trace(2, "TrackScheduler: Activating pulsed event");
+        // activate it on this frame and insert it back into the list
+        pulsed->frame = track->getFrame();
+        pulsed->pending = false;
+        pulsed->pulsed = false;
+        events.add(pulsed);
+    }
+}
+
+/****************************************************************************/
+/****************************************************************************/
+
+// Function Handlers
+
+/****************************************************************************/
+/****************************************************************************/
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -203,8 +500,7 @@ void TrackScheduler::scheduleRecord(UIAction* a)
         (void)scheduleRecordEvent(a);
     }
     else {
-        // normal unsynchronized record
-        track->doActionNow(a);
+        doRecord(nullptr);
     }
 }
 
@@ -214,7 +510,7 @@ TrackEvent* TrackScheduler::scheduleRecordEvent(UIAction* a)
     e->type = TrackEvent::EventRecord;
     e->pending = true;
     e->pulsed = true;
-    e->stack(a);
+    e->primary = a;
     events.add(e);
     return e;
 }
@@ -265,9 +561,20 @@ bool TrackScheduler::isRecordSynced()
  * "waiting for record" is kind of a special mode.  Might want to set
  * ModeRecord early?
  */
-void TrackScheduler::extendRecord(UIAction* a, TrackEvent* recordEvent)
+void TrackScheduler::stackRecord(TrackEvent* recordEvent, UIAction* a)
 {
     recordEvent->stack(a);
+}
+
+void TrackScheduler::doRecord(TrackEvent* e)
+{
+    auto mode = track->getMode();
+    if (mode == MobiusMidiState::ModeRecord)
+      track->finishRecord();
+    else
+      track->startRecord();
+
+    doStacked(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -309,35 +616,37 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         // is the only extender
         
         if (isRecordSynced()) {
-            TrackEvent* rec = scheduleRecordEvent(a);
-            // what were we supposed to do with this??
-            (void)rec;
+            (void)scheduleRecordEvent(a);
         }
         else {
-            // what happens now needs to be consistent
-            // with the handler for EventRecord if we scheduled one
-            // tell track to stop recording, and give it the ending event
-            // could also synthesize a UIAction with the Record symbol
-            // and stack this one
-            track->finishRecord(a);
+            // what happens here needs to be consistent with what
+            // doRecord(TrackEvent) does after an event
+            track->finishRecord();
+            actionPool->checkin(a);
         }
     }
     else if (mode == MobiusMidiState::ModeMultiply ||
              mode == MobiusMidiState::ModeInsert) {
 
+        // If the function that started this mode comes in, it means to
+        // extend the rounding period.
+        // Not handling other functions in the "family" like SUSUnroundedMultiply
+        // ActionTransformer needs to deal with that and give us
+        // just the fundamental functions
+
+        SymbolId function;
+        if (mode == MobiusMidiState::ModeMultiply)
+          function = FuncMultiply;
+        else
+          function = FuncInsert;
+        
         // there can only be one rounding event at any time
         TrackEvent* event = events.find(TrackEvent::EventRound);
         if (event != nullptr) {
-
-            // !! this isn't enough, it needs to check the "family" of functions
-            // e.g. start with Multiply and then do SUSUnroundedMultiply
-            // or are those different things?
-            // interesting: use of SUS in any rounding period is debatable
-            
-            if (a->symbol->id == event->symbolId) {
-                // the same function was used during the rounding
-                // period, this extends the rounding
-                // maintain a multiplier to show in the UI
+            if (a->symbol->id == function) {
+                // extend the rounding period
+                // the multiplier is used by refreshState so the UI can
+                // show how many times this will be extended
                 // zero means 1 which is not shown, any other
                 // positive number is shown
                 // cleaner if this just counted up from zero
@@ -345,8 +654,8 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
                   event->multiples = 2;
                 else
                   event->multiples++;
-                event->frame += track->getRoundingFrames();
-                dispose(a);
+                event->frame = track->extendRounding();
+                actionPool->checkin(a);
             }
             else {
                 // a random function stacks after rounding is over
@@ -357,23 +666,13 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
             // rounding has not been scheduled
             event = eventPool->newEvent();
             event->type = TrackEvent::EventRound;
-            // ugh, need to know what type of function wanted
-            // the rounding, Track doesn't need this but we do above
-            // to detect mode extension
-            if (mode == MobiusMidiState::ModeMultiply)
-              event->symbolId = FuncMultiply;
-            else
-              event->symbolId = FuncInsert;
+            event->frame = track->getModeEndFrame();
 
-            int roundFrames = track->getRoundingFrames();
-            event->frame = track->getFrame() + roundFrames;
-
-            // if we started rounding with something other
-            // than the mode function, it is stacked
-            if (a->symbol->id != event->symbolId)
+            // if this is something other than the mode function it is stacked
+            if (a->symbol->id != function)
               event->stack(a);
             else
-              dispose(a);
+              actionPool->checkin(a);
             
             events.add(event);
         }
@@ -382,6 +681,89 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         // Switch or Confirm, keep the switch code together
         stackSwitch(a);
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Various Mode Starts
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here for the start of a Multiply, either immediate or after quantization.
+ * Once the mode has established, ending it will go through the mode end
+ * rounding process.
+ */
+void TrackScheduler::doMultiply(UIAction* a)
+{
+    (void)a;
+    track->startMultiply();
+}
+
+/**
+ * Kludge for early multiply termination on the loop boundary.
+ */
+bool TrackScheduler::hasRoundingScheduled()
+{
+    return (events.find(TrackEvent::EventRound) != nullptr);
+}
+
+void TrackScheduler::cancelRounding()
+{
+    TrackEvent* e = events.remove(TrackEvent::EventRound);
+    if (e == nullptr)
+      Trace(1, "TrackScheduler: Expecting to find a rounding event to cancel");
+    else {
+        // Track will have handled the behavior we would ordinally do here
+        // finishMultiply but we get to do the stacked events
+        // might be better for US to call track->finishMultiply to make
+        // that path consistent but this is already pretty terrible.
+        doStacked(e);
+        dispose(e);
+    }
+}
+
+/**
+ * Here for the start of an Insert.
+ * Once the mode has established, ending it will go through the mode end
+ * rounding process.
+ */
+void TrackScheduler::doInsert(UIAction* a)
+{
+    (void)a;
+    track->startInsert();
+}
+
+/**
+ * Replace is not a mode ending function right now,
+ * this needs to change.
+ */
+void TrackScheduler::doReplace(UIAction* a)
+{
+    (void)a;
+    auto mode = track->getMode();
+    if (mode == MobiusMidiState::ModeReplace)
+      track->finishReplace();
+    else
+      track->startReplace();
+}
+
+/**
+ * Overdub is not quantized and just toggles.
+ */
+void TrackScheduler::doOverdub(UIAction* a)
+{
+    (void)a;
+    track->toggleOverdub();
+}
+
+/**
+ * Mute is more complex than overdub, need more here...
+ */
+void TrackScheduler::doMute(UIAction* a)
+{
+    (void)a;
+    track->toggleMute();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -421,13 +803,13 @@ void TrackScheduler::scheduleQuantized(UIAction* a)
 
     QuantizeMode quant = valuator->getQuantizeMode(track->number);
     if (quant == QUANTIZE_OFF) {
-        track->doActionNow(a);
+        doActionNow(a);
     }
     else {
         event = eventPool->newEvent();
         event->type = TrackEvent::EventAction;
         event->frame = getQuantizedFrame(a->symbol->id, quant);
-        event->stack(a);
+        event->primary = a;
         events.add(event);
     }
 }
@@ -527,7 +909,7 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
     SwitchQuantize q = valuator->getSwitchQuantize(track->number);
     if (q == SWITCH_QUANT_OFF) {
         // todo: might be some interesting action argument we need to convey as well?
-        track->finishSwitch(nullptr, target);
+        doSwitch(target);
     }
     else {
         TrackEvent* event = eventPool->newEvent();
@@ -633,7 +1015,7 @@ void TrackScheduler::stackSwitch(UIAction* a)
         // this is an error, you can't be in Switch mode without having
         // a pending or quantized event schedued
         Trace(1, "TrackScheduler: Switch mode without a switch event");
-        dispose(a);
+        actionPool->checkin(a);
     }
     else {
         SymbolId sid = a->symbol->id;
@@ -660,6 +1042,7 @@ void TrackScheduler::stackSwitch(UIAction* a)
                 else
                   ending->switchTarget = target;
             }
+            actionPool->checkin(a);
         }
         else {
             // we're in the switch quantize period with a random function,
@@ -668,6 +1051,31 @@ void TrackScheduler::stackSwitch(UIAction* a)
             ending->stack(a);
         }
     }
+}
+
+/**
+ * Do a loop switch after waiting for a quantization boundary or confirmation.
+ * The target loop is in the event and may have been modified from the
+ * original action.
+ */
+void TrackScheduler::doSwitch(TrackEvent* e)
+{
+    if (e != nullptr) {
+        doSwitch(e->switchTarget);
+    }
+    doStacked(e);
+}
+
+/**
+ * After waiting and deciding which loop to switch to, tell track to do
+ * the switch, and also schedule post-switch events if the SwitchDuration
+ * parameter is set.
+ */
+void TrackScheduler::doSwitch(int target)
+{
+    int currentLoop = track->getLoopIndex();
+    track->finishSwitch(target);
+    scheduleSwitchDuration(currentLoop);
 }
 
 /**
@@ -683,7 +1091,7 @@ void TrackScheduler::scheduleSwitchDuration(int currentLoopIndex)
             event->type = TrackEvent::EventAction;
             UIAction* action = actionPool->newAction();
             action->symbol = symbols->getSymbol(FuncMute); 
-            event->actions = action;
+            event->primary = action;
             event->frame = track->getLoopFrames();
             events.add(event);
         }
@@ -708,211 +1116,6 @@ void TrackScheduler::scheduleSwitchDuration(int currentLoopIndex)
     
 //////////////////////////////////////////////////////////////////////
 //
-// Advance
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Advance the event list for one audio block.
- *
- * The block is broken up into multiple sections between each scheduled
- * event that is within range of this block.  We handle processing of the
- * events, and Track handles the advance between each event and advances
- * the recorder and player.
- *
- * Actions queued for this block have already been processed.
- * May want to defer that so we can at least do processing first
- * which may activate a Record, before other events are scheduled, but really
- * those should be stacked on the pulsed record anway.  Something to think about...
- */
-void TrackScheduler::advance(MobiusAudioStream* stream)
-{
-    int newFrames = stream->getInterruptFrames();
-
-    // here is where we need to ask Pulsator about drift
-    // and do a correction if necessary
-    int number = track->number;
-    if (pulsator->shouldCheckDrift(number)) {
-        int drift = pulsator->getDrift(number);
-        (void)drift;
-        //  track->doSomethingMagic()
-        pulsator->correctDrift(number, 0);
-    }
-
-    int currentFrame = track->getFrame();
-
-    // locate a sync pulse we follow within this block
-    if (syncSource != Pulse::SourceNone) {
-
-        // todo: you can also pass the pulse type to getPulseFrame
-        // and it will obey it rather than the one passed to follow()
-        // might be useful if you want to change pulse types during
-        // recording
-        int pulseOffset = pulsator->getPulseFrame(number);
-        if (pulseOffset >= 0) {
-            // sanity check before we do the math
-            if (pulseOffset >= newFrames) {
-                Trace(1, "TrackScheduler: Pulse frame is fucked");
-                pulseOffset = newFrames - 1;
-            }
-            // it dramatically cleans up the carving logic if we make this look
-            // like a scheduled event
-            TrackEvent* pulseEvent = eventPool->newEvent();
-            pulseEvent->frame = currentFrame + pulseOffset;
-            pulseEvent->type = TrackEvent::EventPulse;
-            // note priority flag so it goes before others on this frame
-            events.add(pulseEvent, true);
-        }
-    }
-    
-    // carve up the block for the events within it
-    int remainder = newFrames;
-    TrackEvent* e = events.consume(currentFrame, remainder);
-    while (e != nullptr) {
-
-        int eventAdvance = e->frame - currentFrame;
-        if (eventAdvance > remainder) {
-            Trace(1, "TrackScheduler: Advance math is fucked");
-            eventAdvance = remainder;
-        }
-
-        // let track consume a block of frames
-        track->advance(eventAdvance);
-
-        // then we inject event handling
-        doEvent(e);
-        
-        remainder -= eventAdvance;
-        e = events.consume(currentFrame, remainder);
-    }
-    
-    track->advance(remainder);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Events Handlers
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Process an event that has been reached or activated after a pulse.
- */
-void TrackScheduler::doEvent(TrackEvent* e)
-{
-    switch (e->type) {
-        case TrackEvent::EventNone: {
-            Trace(1, "TrackScheduler: Event with nothing to do");
-        }
-            break;
-
-        case TrackEvent::EventPulse: {
-            doPulse(e);
-        }
-            break;
-
-        case TrackEvent::EventSync: {
-            Trace(1, "TrackScheduler: Not expecting sync event");
-        }
-            break;
-        case TrackEvent::EventRecord: {
-            // we have reached a synchronized record event
-            track->finishRecord(e->actions);
-            // ownership transferred
-            e->actions = nullptr;
-            
-        }
-            break;
-        case TrackEvent::EventAction: {
-            track->doActionNow(e->actions);
-            e->actions = nullptr;
-        }
-            break;
-        case TrackEvent::EventRound: {
-            // these may have happened for a number of reasons, the actions
-            // that came in during the rounding period were stacked and now
-            // passed to Track
-            if (e->symbolId == FuncMultiply)
-              track->finishMultiply(e->actions);
-            else if (e->symbolId == FuncInsert)
-              track->finishInsert(e->actions);
-            e->actions = nullptr;
-
-        }
-            break;
-
-        case TrackEvent::EventSwitch: {
-            int currentLoop = track->getLoopIndex();
-            track->finishSwitch(e->actions, e->switchTarget);
-            e->actions = nullptr;
-            scheduleSwitchDuration(currentLoop);
-        }
-            break;
-
-    }
-
-    dispose(e);
-}
-
-/**
- * Dispose of an event, including any stacked actions.
- * Normally the actions have been removed, but if we hit an error condition
- * don't leak them.
- */
-void TrackScheduler::dispose(TrackEvent* e)
-{
-    UIAction* actions = e->actions;
-    while (actions != nullptr) {
-        UIAction* next = actions->next;
-        dispose(actions);
-        actions = next;
-    }
-    e->actions = nullptr;
-    eventPool->checkin(e);
-}
-
-void TrackScheduler::dispose(UIAction* a)
-{
-    actionPool->checkin(a);
-}
-
-/**
- * We should only be injecting pulse events if we are following
- * something, and have been waiting on a record start or stop pulse.
- * Events that are waiting for a pulse are called "pulsed" events.
- *
- * As usual, what will actually happen in practice is simpler than what
- * the code was designed for to allow for future extensions.  Right now,
- * there can only be one pending pulsed event, and it must be for record start
- * or stop.
- *
- * In theory there could be any number of pulsed events, they are processed
- * in order, one per pulse.
- * todo: rethink this, why not activate all of them, which is more useful?
- *
- * When a pulse comes in a pulse event is "activated" which means it becomes
- * not pending and is given a location equal to where the pulse frame.
- * Again in theory, this could be in front of other scheduled events and because
- * events must be in order, it is removed and reinserted after giving it a frame.
- */
-void TrackScheduler::doPulse(TrackEvent* e)
-{
-    (void)e;
-    
-    // todo: there could be more than one thing waiting on a pulse?
-    TrackEvent* pulsed = events.consumePulsed();
-    if (pulsed != nullptr) {
-        Trace(2, "TrackScheduler: Activating pulsed event");
-        // activate it on this frame and insert it back into the list
-        pulsed->frame = track->getFrame();
-        pulsed->pending = false;
-        pulsed->pulsed = false;
-        events.add(pulsed);
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // State
 //
 //////////////////////////////////////////////////////////////////////
@@ -923,12 +1126,13 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
     state->eventCount = 0;
     int count = 0;
     for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
-        TrackEvent* next = e->next;
         MobiusMidiState::Event* estate = state->events[count];
         bool addit = true;
         int arg = 0;
         switch (e->type) {
+            
             case TrackEvent::EventRecord: estate->name = "Record"; break;
+                
             case TrackEvent::EventSwitch: {
                 estate->name = "Switch";
                 arg = e->switchTarget + 1;
@@ -942,18 +1146,19 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
             }
                 break;
             case TrackEvent::EventAction: {
-                if (e->actions != nullptr && e->actions->symbol != nullptr)
-                  estate->name = e->actions->symbol->getName();
+                if (e->primary != nullptr && e->primary->symbol != nullptr)
+                  estate->name = e->primary->symbol->getName();
             }
                 break;
 
             case TrackEvent::EventRound: {
                 // horrible to be doing formatting down here
-                Symbol* s = symbols->getSymbol(e->symbolId);
-                estate->name = "End ";
-                if (s != nullptr) 
-                  estate->name += s->name;
-                if (e->multiples)
+                auto mode = track->getMode();
+                if (mode == MobiusMidiState::ModeMultiply)
+                  estate->name = "End Multiply";
+                else
+                  estate->name = "End Insert";
+                if (e->multiples > 0)
                   estate->name += juce::String(e->multiples);
             }
                 break;
@@ -967,7 +1172,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
             estate->argument = arg;
             count++;
 
-            UIAction* stack = e->actions;
+            UIAction* stack = e->stacked;
             while (stack != nullptr && count < state->events.size()) {
                 estate = state->events[count];
                 estate->frame = e->frame;
@@ -980,8 +1185,6 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
 
         if (count >= state->events.size())
           break;
-        
-        e = next;
     }
     state->eventCount = count;
 
@@ -990,6 +1193,12 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
     TrackEvent* e = events.find(TrackEvent::EventSwitch);
     if (e != nullptr)
       state->nextLoop = (e->switchTarget + 1);
+
+    // special pseudo mode
+    e = events.find(TrackEvent::EventRecord);
+    if (e != nullptr && e->pulsed)
+      state->mode = MobiusMidiState::ModeSynchronize;
+
 }
 
 /****************************************************************************/

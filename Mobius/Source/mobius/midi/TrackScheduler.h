@@ -48,6 +48,10 @@ class TrackScheduler
     void doAction(class UIAction* a);
     void advance(class MobiusAudioStream* stream);
 
+    // Track callbacks for that awful multiply termination mode
+    bool hasRoundingScheduled();
+    void cancelRounding();
+
   private:
 
     class MidiTrack* track = nullptr;
@@ -62,34 +66,51 @@ class TrackScheduler
     int syncLeader = 0;
 
     TrackEventList events;
-    
-    // function handlers
-    bool isRecord(class UIAction* a);
-    void scheduleRecord(class UIAction* a);
-    class TrackEvent* scheduleRecordEvent(class UIAction* a);
-    bool isRecordSynced();
-    void extendRecord(class UIAction* a, class TrackEvent* recordEvent);
 
+    // generic action processing
+    void doActionInternal(class UIAction* a);
+    void doStacked(class TrackEvent* actions);
+    void doActionNow(class UIAction* a);
+
+    // advance and events
+    void doEvent(class TrackEvent* e);
+    void dispose(class TrackEvent* e);
+    void dispose(class UIAction* a);
+    void doPulse(class TrackEvent* e);
+
+    // Rounding and Quantization
     bool isModeEnding(MobiusMidiState::Mode mode);
     void scheduleModeEnd(class UIAction* a, MobiusMidiState::Mode mode);
-
     bool isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* a);
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
     
+    // Record
+    bool isRecord(class UIAction* a);
+    void scheduleRecord(class UIAction* a);
+    class TrackEvent* scheduleRecordEvent(class UIAction* a);
+    bool isRecordSynced();
+    void stackRecord(class TrackEvent* recordEvent, class UIAction* a);
+    void doRecord(class TrackEvent* e);
+
+    // Various
+    void doMultiply(class UIAction* a);
+    void doInsert(class UIAction* a);
+    void doReplace(class UIAction* a);
+    void doOverdub(class UIAction* a);
+    void doMute(class UIAction* a);
+
+    // Switch
     bool isLoopSwitch(class UIAction* a);
     void scheduleSwitch(class UIAction* a);
     int getSwitchTarget(class UIAction* a);
     int getQuantizedFrame(SwitchQuantize squant);
     QuantizeMode convert(SwitchQuantize squant);
     void stackSwitch(class UIAction* a);
+    void doSwitch(class TrackEvent* e);
+    void doSwitch(int target);
     void scheduleSwitchDuration(int currentIndex);
-
-    void doEvent(class TrackEvent* e);
-    void dispose(class TrackEvent* e);
-    void dispose(class UIAction* a);
-    void doPulse(class TrackEvent* e);
 
 };
 

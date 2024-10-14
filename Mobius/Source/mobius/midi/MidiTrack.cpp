@@ -109,7 +109,7 @@ void MidiTrack::configure(Session::Track* def)
  */
 void MidiTrack::reset()
 {
-    doReset(nullptr, true);
+    doReset(true);
 }
 
 /**
@@ -220,10 +220,6 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     else
       lstate->frames = recorder.getFrames();
 
-    // special pseudo mode
-    if (synchronizing)
-      state->mode = MobiusMidiState::ModeSynchronize;
-
     // skip checkpoints for awhile, really thinking we should just
     // pass MobiusView down here and let us fill it in
     MidiLoop* loop = loops[loopIndex];
@@ -261,6 +257,8 @@ void MidiTrack::midiEvent(MidiEvent* e)
  * or scheduling or are alternate endings for modes.
  * If none of those it passes through Scheduler which will clone it, possibly
  * schedule it, and eventually call doActionNow.
+ *
+ * !! this needs to be moved to ActionTransformer
  */
 void MidiTrack::doAction(UIAction* a)
 {
@@ -278,19 +276,19 @@ void MidiTrack::doAction(UIAction* a)
     
     // handle a few non scheduled functions before we get too far
     else if (sid == FuncDump) {
-        doDump(a);
+        doDump();
     }
     else if (sid == FuncUndo) {
-        doUndo(a);
+        doUndo();
     }
     else if (sid == FuncRedo) {
-        doRedo(a);
+        doRedo();
     }
     else if (sid == FuncReset) {
-        doReset(a, false);
+        doReset(false);
     }
     else if (sid == FuncTrackReset || sid == FuncGlobalReset) {
-        doReset(a, true);
+        doReset(true);
     }
     
     else if (a->longPress) {
@@ -298,10 +296,10 @@ void MidiTrack::doAction(UIAction* a)
         if (a->symbol->id == FuncRecord) {
             if (a->longPressCount == 0)
               // loop reset
-              doReset(a, false);
+              doReset(false);
             else if (a->longPressCount == 1)
               // track reset
-              doReset(a, true);
+              doReset(true);
             else {
                 // would be nice to have this be GlobalReset but
                 // would have to throw that back to Kernel
@@ -336,60 +334,6 @@ void MidiTrack::doAction(UIAction* a)
         // scheduler gets to decide
         scheduler.doAction(a);
     }
-}
-
-/**
- * Called by TrackScheduler after it reaches an action event
- * or decides not to schedule one.
- *
- * We've already gone through doAction() above to handle long presses
- * and other things scheduler doesn't know about.
- *
- * The UIAction at this point is a copy of what Kernel/Tracker gave us and
- * must be reclaimed.
- *
- * doRecord, doMultiply and the other modal functions that have complex endings
- * or roundoff periods will only be called at the beginning of the mode.  Once the
- * mode is established Scheduler will close the mode using many possible endings
- * and call one of the mode end functions, finishRecord, finishMultiply etc. with
- * any actions that were stacked during the roundoff or quantization period.
- * 
- */
-void MidiTrack::doActionNow(UIAction* a)
-{
-    switch (a->symbol->id) {
-
-        // these should have been caught before the scheduler was involved
-        case FuncReset:
-        case FuncTrackReset:
-        case FuncGlobalReset:
-        case FuncUndo:
-        case FuncRedo:
-        case FuncNextLoop: 
-        case FuncPrevLoop: 
-        case FuncSelectLoop: {
-            Trace(1, "MidiTrack: Unexpected action from scheduler %s",
-                  a->symbol->getName());
-        }
-            break;
-            
-        case FuncRecord: doRecord(a); break;
-        case FuncOverdub: doOverdub(a); break;
-        case FuncMultiply: doMultiply(a); break;
-        case FuncInsert: doInsert(a); break;
-        case FuncMute: doMute(a); break;
-        case FuncReplace: doReplace(a); break;
-            
-        default: {
-            char msgbuf[128];
-            snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
-                     a->symbol->getName());
-            alert(msgbuf);
-            Trace(1, "MidiTrack: %s", msgbuf);
-        }
-    }
-
-    pools->reclaim(a);
 }
 
 /**
@@ -513,13 +457,17 @@ void MidiTrack::advance(int newFrames)
             recorder.advance(included);
             player.play(included);
 
-            if (recorder.hasChanges()) {
-                shift();
+            // kludge
+            if (!checkMultiplyTermination()) {
+                if (recorder.hasChanges()) {
+                    shift();
+                }
+                else {
+                    // squelching the record layer
+                    recorder.rollback(overdub);
+                }
             }
-            else {
-                // squelching the record layer
-                recorder.rollback(overdub);
-            }
+             
             // restart the overdub region if we're still in it
             resetRegions();
             if (overdub) startOverdubRegion();
@@ -534,6 +482,41 @@ void MidiTrack::advance(int newFrames)
             advanceRegion(remainder);
         }
     }
+}
+
+/**
+ * Kludge for Multiply early termination.
+ * Old audio tracks will not add a new cycle until the loop boundary is reached.
+ * When you end multiply it schedules an event one cycle beyond the mode start frame
+ * but it won't actually get there unless you allow it to record past the loop boundary
+ * to add the cycle.  It will always stop at the end of the current loop.
+ *
+ * Two ways to do this: Let Scheduler schedule it normally one cycle away, than cancel
+ * that event if we hit the loop point during the roundoff period.
+ * Or, have Scheduler schedule the round point to the end of the loop, then if you cross it,
+ * adjust the frame to be what would have been the end of the (relative) cycle.
+ * Both suck in different ways.
+ *
+ * Both require Track->Scheduler communication which is unusual, either to cancel or
+ * adjust an event, unless we teach Scheduler about loop boundaries, which is not a bad thing.
+ *
+ * Taking approach 1 just to have something to start with.
+ *
+ * Returns true if we did premature termination and have handled the multiply shift.
+ *
+ */
+bool MidiTrack::checkMultiplyTermination()
+{
+    bool terminated = false;
+
+    if (mode == MobiusMidiState::ModeMultiply) {
+        if (scheduler.hasRoundingScheduled()) {
+            finishMultiply();
+            scheduler.cancelRounding();
+            terminated = true;
+        }
+    }
+    return terminated;
 }
 
 /**
@@ -654,26 +637,6 @@ int MidiTrack::getModeStartFrame()
 {
     return recorder.getModeStartFrame();
 }
-int MidiTrack::getModeEndFrame()
-{
-    return recorder.getModeEndFrame();
-}
-
-/**
- * For multiply/insert
- */
-int MidiTrack::getRoundingFrames()
-{
-    int modeStart = recorder.getModeStartFrame();
-    int recordFrame = recorder.getFrame();
-    int delta = recordFrame - modeStart;
-    int cycleFrames = recorder.getCycleFrames();
-    int cycles = delta / cycleFrames;
-    if ((delta % cycleFrames) > 0)
-      cycles++;
-
-    return cycles * cycleFrames;
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -737,16 +700,14 @@ void MidiTrack::advanceRegion(int frames)
  * Action may be nullptr if we're resetting the track for other reasons
  * besides user action.
  */
-void MidiTrack::doReset(UIAction* a, bool full)
+void MidiTrack::doReset(bool full)
 {
-    (void)a;
     mode = MobiusMidiState::ModeReset;
 
     recorder.reset();
     player.reset();
     resetRegions();
     
-    synchronizing = false;
     overdub = false;
     mute = false;
     reverse = false;
@@ -785,22 +746,10 @@ void MidiTrack::doReset(UIAction* a, bool full)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Action handler, before or after synchronization.
- * Multiply/Insert alternate endings have been handled before this.
- * If this was synchronized, there may be several stacked actions on a list.
- *
- * This is only called by Scheduler on the beginning pulse of a recording.
- * Once record mode is established, Scheduler closes the mode like other
- * rounding modes and calls finishRecord.
- *
- * If there are stacked actions, this must have been a synchronized recording
- * and other actions came in before the starting pulse.
+ * Called eventually by Scheduler to begin recording.
  */
-void MidiTrack::doRecord(UIAction* a)
+void MidiTrack::startRecord()
 {
-    UIAction* remainder = a->next;
-    a->next = nullptr;
-    
     player.reset();
     recorder.reset();
     
@@ -819,18 +768,12 @@ void MidiTrack::doRecord(UIAction* a)
     pulsator->start(number);
     
     Trace(2, "MidiTrack: %d Recording", number);
-
-    doStacked(remainder);
 }
 
 /**
- * Called by scheduler when record mode finishes.  This may
- * be immediately after receipt of an ending action, or
- * after a pulsed ending event.
- *
- * The actions here were stacked during the synchronization period.
+ * Called by scheduler when record mode finishes.
  */
-void MidiTrack::finishRecord(UIAction* actions)
+void MidiTrack::finishRecord()
 {
     int eventCount = recorder.getEventCount();
 
@@ -846,28 +789,6 @@ void MidiTrack::finishRecord(UIAction* actions)
     pulsator->lock(number, recorder.getFrames());
 
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
-
-    // execute stacked actions
-    doStacked(actions);
-}
-
-/**
- * Here from various function handlers that have a rounding period where
- * stacked actions can accumulate.
- */
-void MidiTrack::doStacked(UIAction* actions)
-{
-    while (actions != nullptr) {
-        UIAction* next = actions->next;
-
-        // note that this doesn't use doActionNow, the functions
-        // behave as if they had been done immediately after the mode ending
-        // and may be scheduled, might need some nuance around this...
-        doAction(actions);
-        
-        pools->reclaim(actions);
-        actions = next;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -877,13 +798,10 @@ void MidiTrack::doStacked(UIAction* actions)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Overdub is a minor mode and does not need a mode ending period.
- * It may however be quantized.
+ * Called by Scheduler to toggle overdubbing.
  */
-void MidiTrack::doOverdub(UIAction* a)
+void MidiTrack::toggleOverdub()
 {
-    (void)a;
-
     // toggle our state
     if (overdub)
       stopOverdubRegion();
@@ -936,17 +854,15 @@ bool MidiTrack::inRecordingMode()
  * that or tell it what we want
  *
  */
-void MidiTrack::doUndo(UIAction* a)
+void MidiTrack::doUndo()
 {
-    (void)a;
-
     // here is where we should start chipping away at events
     
     if (mode == MobiusMidiState::ModeRecord) {
         // we're in the initial recording
         // I seem to remember the EDP used this as an alternate ending
         // reset the current loop only
-        doReset(nullptr, false);
+        doReset(false);
     }
     else if (recorder.hasChanges()) {
         // rollback resets the position, keep it
@@ -991,10 +907,8 @@ void MidiTrack::doUndo(UIAction* a)
  *
  * If there is something to redo, and there are edits they are lost.
  */
-void MidiTrack::doRedo(UIAction* a)
+void MidiTrack::doRedo()
 {
-    (void)a;
-
     if (mode == MobiusMidiState::ModeReset) {
         // ignore
     }
@@ -1051,22 +965,19 @@ void MidiTrack::doRedo(UIAction* a)
 /**
  * Called indirectly by Scheduler to begin multiply mode.
  */
-void MidiTrack::doMultiply(UIAction* a)
+void MidiTrack::startMultiply()
 {
-    (void)a;
     mode = MobiusMidiState::ModeMultiply;
     recorder.startMultiply();
 }
 
 /**
- * Called directly bby Scheduler after the multiple rounding period.
+ * Called directly by Scheduler after the multiple rounding period.
  */
-void MidiTrack::finishMultiply(UIAction* actions)
+void MidiTrack::finishMultiply()
 {
     shiftMultiply(false);
     mode = MobiusMidiState::ModePlay;
-
-    doStacked(actions);
 }
 
 void MidiTrack::unroundedMultiply()
@@ -1074,6 +985,60 @@ void MidiTrack::unroundedMultiply()
     shiftMultiply(true);
     mode = MobiusMidiState::ModePlay;
 }
+
+/**
+ * When Scheduler wants to schedule the rounding event for multiply/insert
+ * it asks us for the frame that should end the mode.
+ *
+ * This is weird to match how audio loops work.  Old Mobius will stop multiply
+ * mode early if the end point happened before the loop boundary, you had to actually
+ * cross the boundary to get a cycle added.  But if you DO cross the boundary
+ * it expects to see an end event at the right location, one (or multiple) cycles
+ * beyond where it started.  So we can schedule the mode end frame at it's "correct"
+ * location, and extend it.
+ *
+ * But once we're in rounding mode if we reach the loop point we end early.  
+ * 
+ */
+int MidiTrack::getModeEndFrame()
+{
+    return recorder.getModeEndFrame();
+}
+
+
+
+/**
+ * When Scheduler sees another Multiply/Insert come in during the rounding
+ * period, it normally extends the rounding by one cycle.
+ */
+int MidiTrack::extendRounding()
+{
+    if (mode == MobiusMidiState::ModeMultiply)
+      recorder.extendMultiply();
+    else
+      recorder.extendInsert();
+    return recorder.getModeEndFrame();
+}
+
+/**
+ * For multiply/insert
+ */
+// this was old, should be using the previous two but I want to keep the
+// math for awhile
+#if 0
+int MidiTrack::getRoundingFrames()
+{
+    int modeStart = recorder.getModeStartFrame();
+    int recordFrame = recorder.getFrame();
+    int delta = recordFrame - modeStart;
+    int cycleFrames = recorder.getCycleFrames();
+    int cycles = delta / cycleFrames;
+    if ((delta % cycleFrames) > 0)
+      cycles++;
+
+    return cycles * cycleFrames;
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1084,9 +1049,8 @@ void MidiTrack::unroundedMultiply()
 /**
  * Called indirectly by Scheduler to begin multiply mode.
  */
-void MidiTrack::doInsert(UIAction* a)
+void MidiTrack::startInsert()
 {
-    (void)a;
     mode = MobiusMidiState::ModeInsert;
     recorder.startInsert();
 }
@@ -1094,14 +1058,12 @@ void MidiTrack::doInsert(UIAction* a)
 /**
  * Called directly bby Scheduler after the multiple rounding period.
  */
-void MidiTrack::finishInsert(UIAction* actions)
+void MidiTrack::finishInsert()
 {
     // don't shift an insert right away like multiply, let it accumulate
     // shiftInsert(unrounded);
     recorder.endInsert(overdub, false);
     mode = MobiusMidiState::ModePlay;
-
-    doStacked(actions);
 }
 
 void MidiTrack::unroundedInsert()
@@ -1123,7 +1085,7 @@ void MidiTrack::unroundedInsert()
  * the original action that triggered it has been consumed and the actions
  * passed here if any will be those stacked after the switch.
  */
-void MidiTrack::finishSwitch(UIAction* actions, int newIndex)
+void MidiTrack::finishSwitch(int newIndex)
 {
     MidiLoop* currentLoop = loops[loopIndex];
 
@@ -1138,6 +1100,10 @@ void MidiTrack::finishSwitch(UIAction* actions, int newIndex)
     // wayt till we know the frame
     //player.change(playing);
     int newPlayFrame = 0;
+
+    // todo: consider having Scheduler deal with this part since
+    // it's already dealing with Return events?  Or else move
+    // Return handling out here
     
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
@@ -1225,8 +1191,6 @@ void MidiTrack::finishSwitch(UIAction* actions, int newIndex)
     // important to do both layer change and play frame at the same
     // time to avoid redundant held note analysis
     player.change(playing, newPlayFrame);
-
-    doStacked(actions);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1239,7 +1203,7 @@ void MidiTrack::finishSwitch(UIAction* actions, int newIndex)
  * Here from scheduler after possible quantization.
  * This is not a rounding mode so here for both start and stop.
  */
-void MidiTrack::doMute(UIAction* a)
+void MidiTrack::toggleMute()
 {
     // todo: ParameterMuteMode
 
@@ -1256,12 +1220,6 @@ void MidiTrack::doMute(UIAction* a)
         player.setMute(true);
         mute = true;
     }
-
-    // more work to do 
-    if (a->next != nullptr)
-      Trace(1, "MidiTrack: Stacked actions after Mute");
-
-    pools->reclaim(a);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1270,31 +1228,18 @@ void MidiTrack::doMute(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::doReplace(UIAction* a)
+void MidiTrack::startReplace()
 {
-    // todo: ParameterReplaceMode
-    
-    // !! feels like there is more here, can't just assume
-    // we'll be transitioning to/from Play mode?
-    // yes, Overdub and Mute are about the only thing that doesn't need anything special
-    // Replace needs to call recorder.endReplace consistently so it needs
-    // to have mode ending scheduling
-    if (mode == MobiusMidiState::ModeReplace) {
-        mode = MobiusMidiState::ModePlay;
-        // audio tracks would shift the layer now, we'll let it go
-        // till the end and accumulate more changes
-        recorder.endReplace(overdub);
-    }
-    else if (mode == MobiusMidiState::ModePlay) {
-        mode = MobiusMidiState::ModeReplace;
-        recorder.startReplace();
-    }
+    mode = MobiusMidiState::ModeReplace;
+    recorder.startReplace();
+}
 
-    // more work to do 
-    if (a->next != nullptr)
-      Trace(1, "MidiTrack: Stacked actions after Mute");
-
-    pools->reclaim(a);
+void MidiTrack::finishReplace()
+{
+    mode = MobiusMidiState::ModePlay;
+    // audio tracks would shift the layer now, we'll let it go
+    // till the end and accumulate more changes
+    recorder.endReplace(overdub);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1303,9 +1248,8 @@ void MidiTrack::doReplace(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::doDump(UIAction* a)
+void MidiTrack::doDump()
 {
-    (void)a;
     StructureDumper d;
 
     d.start("MidiTrack:");

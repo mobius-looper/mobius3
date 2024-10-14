@@ -32,9 +32,9 @@ void TrackEvent::poolInit()
     frame = 0;
     pending = false;
     pulsed = false;
-    actions = nullptr;
+    primary = nullptr;
+    stacked = nullptr;
     
-    symbolId = SymbolIdNone;
     multiples = 0;
     switchTarget = 0;
 }
@@ -42,13 +42,13 @@ void TrackEvent::poolInit()
 void TrackEvent::stack(UIAction* a)
 {
     UIAction* prev = nullptr;
-    UIAction* action = actions;
+    UIAction* action = stacked;
     while (action != nullptr) {
         prev = action;
         action = action->next;
     }
     if (prev == nullptr)
-      actions = a;
+      stacked = a;
     else
       prev->next = a;
 }
@@ -169,13 +169,37 @@ TrackEvent* TrackEventList::find(TrackEvent::Type type)
     return found;
 }
 
+TrackEvent* TrackEventList::remove(TrackEvent::Type type)
+{
+    TrackEvent* found = nullptr;
+    TrackEvent* prev = nullptr;
+    
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->type == type) {
+            found = e;
+            break;
+        }
+        prev = e;
+    }
+
+    if (found != nullptr) {
+        if (prev == nullptr)
+          events->next = found->next;
+        else
+          prev->next = found->next;
+        found->next = nullptr;
+    }
+
+    return found;
+}
+
 TrackEvent* TrackEventList::findLast(SymbolId sym)
 {
     TrackEvent* found = nullptr;
     for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
         if (e->type == TrackEvent::EventAction &&
-            e->actions != nullptr &&
-            e->actions->symbol->id == sym) {
+            e->primary != nullptr &&
+            e->primary->symbol->id == sym) {
             found = e;
             break;
         }
@@ -230,11 +254,6 @@ void TrackEventList::shift(int delta)
             if (e->frame < 0) {
                 Trace(1, "TrackEvent: Event shift underflow");
                 e->frame = 0;
-            }
-            else if (e->frame > 0) {
-                // it is not expected that these be scheduled more than one frame beond
-                // the end
-                Trace(1, "TrackEvent: Event shift anomoly");
             }
         }
     }

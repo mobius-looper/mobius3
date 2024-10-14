@@ -49,17 +49,14 @@ class TrackEvent : public PooledObject
     bool pulsed = false;
 
     // stacked actions
-    class UIAction* actions = nullptr;
+    class UIAction* primary = nullptr;
+    class UIAction* stacked = nullptr;
     void stack(class UIAction* a);
     
     //
     // Extra state 
     //
     
-    // for EventRound, this identifies the type of function
-    // that is rounding, used for both display and for Scheduler/Track interaction
-    SymbolId symbolId = SymbolIdNone;
-
     // positive for rounding events to convey the multiples
     // used only for display
     int multiples = 0;
@@ -102,6 +99,7 @@ class TrackEventList
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
+    TrackEvent* remove(TrackEvent::Type type);
 
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);
