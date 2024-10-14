@@ -43,6 +43,9 @@
 #include "core/Parameter.h"
 #include "core/Mem.h"
 
+// and the lesser bitch
+#include "midi/MidiTracker.h"
+
 #include "MobiusKernel.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -10,13 +10,12 @@
 
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
-#include "MidiFunctions.h"
+#include "TrackScheduler.h"
 
 class MidiTrack
 {
     friend class TrackScheduler;
-    friend class MidiFunctions;
-    
+
   public:
 
     //
@@ -78,18 +77,25 @@ class MidiTrack
     // TrackScheduler Interface
     //
 
+    void alert(const char* msg);
+    int getLoopIndex();
+    int getLoopCount();
     int getLoopFrames();
     int getFrame();
+    int getFrames();
     int getCycleFrames();
     int getCycles();
     int getSubcycles();
     int getModeStartFrame();
     int getModeEndFrame();
-    
-    void alert(const char* msg);
-    
-    void endRecording(class UIAction* a);
+    int getRoundingFrames();
 
+    // modal endings
+    void finishRecord(class UIAction* actions);
+    void finishMultiply(class UIAction* actions);
+    void finishInsert(class UIAction* actions);
+    void finishSwitch(class UIAction* actions, int target);
+    
   private:
 
     class MobiusContainer* container = nullptr;
@@ -106,7 +112,8 @@ class MidiTrack
     // the meat
     MidiRecorder recorder {this};
     MidiPlayer player {this};
-    MidiFunctions functions {this};
+    TrackScheduler scheduler {this};
+    
     juce::Array<MobiusMidiState::Region> regions;
     int activeRegion = -1;
     
@@ -129,26 +136,22 @@ class MidiTrack
     void advancePlayer(int newFrames);
     void shift();
     void shiftMultiply(bool unrounded);
-    void endInsert(bool unrounded);
     void shiftInsert(bool unrounded);
     
     // actions/events
-    void doEvent(TrackEvent* e);
-    void doPulse(TrackEvent* e);
     void doParameter(class UIAction* a);
     void doReset(class UIAction* a, bool full);
+    void doUndo(class UIAction* a);
+    void doRedo(class UIAction* a);
+    void doDump(class UIAction* a);
 
     //
     // Function Handlers
     //
     
     void doRecord(class UIAction* a);
-    void doRecord(class TrackEvent* e);
-    bool needsRecordSync();
-    void toggleRecording();
-    void startRecording();
-    void stopRecording();
-
+    void doStacked(UIAction* actions);
+    
     void resetRegions();
     void startOverdubRegion();
     void stopOverdubRegion();
@@ -156,33 +159,15 @@ class MidiTrack
     
     void doOverdub(class UIAction* a);
     bool inRecordingMode();
-    void doUndo(class UIAction* a);
-    void doRedo(class UIAction* a);
 
-    void doSwitch(class UIAction* a, int delta);
-    class TrackEvent* newSwitchEvent(int target, int framee);
-    QuantizeMode convert(SwitchQuantize squant);
-    int getQuantizeFrame(SwitchQuantize squant);
-    void doSwitch(class TrackEvent* e);
-    void doSwitchNow(int target);
-    void finishRecordingMode();
+    void doMultiply(UIAction* a);
+    void unroundedMultiply();
 
-    int getQuantizeFrame(QuantizeMode qmode);
-    int getRoundedFrame();
-    void doRound(class TrackEvent* e);
     void doInsert(class UIAction* a);
-    void doInsert(class TrackEvent* e);
-    void doInsertNow();
+    void unroundedInsert();
     
     void doMute(class UIAction* a);
-    void doMute(class TrackEvent* e);
-    void doMuteNow();
-    
-    int getQuantizeFrame(SymbolId func, QuantizeMode qmode);
     void doReplace(class UIAction* a);
-    void doReplace(class TrackEvent* e);
-    void doReplaceNow();
 
-    void doDump(class UIAction* a);
 
 };

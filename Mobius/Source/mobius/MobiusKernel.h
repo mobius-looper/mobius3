@@ -37,6 +37,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     friend class MobiusShell;
     friend class SampleFunction;
     friend class Mobius;
+    friend class MidiTracker;
     
   public:
 

@@ -9,6 +9,9 @@
 #include "../../model/UIAction.h"
 #include "../../model/MobiusMidiState.h"
 
+#include "../../sync/Pulsator.h"
+#include "../Valuator.h"
+#include "../MobiusInterface.h"
 #include "TrackEvent.h"
 #include "MidiTrack.h"
 
@@ -24,13 +27,14 @@ TrackScheduler::~TrackScheduler()
 }
 
 void TrackScheduler::initialize(TrackEventPool* epool, UIActionPool* apool,
-                                Pulsator* p, Valuator* v);
+                                Pulsator* p, Valuator* v, SymbolTable* st)
 {
     eventPool = epool;
     actionPool = apool;
     pulsator = p;
     valuator = v;
-
+    symbols = st;
+    
     events.initialize(eventPool);
 }
 
@@ -62,22 +66,22 @@ void TrackScheduler::configure(Session::Track* def)
         // no specific track leader yet...
         int leader = 0;
         syncSource = Pulse::SourceLeader;
-        pulsator->follow(number, leader, ptype);
+        pulsator->follow(track->number, leader, ptype);
     }
     else if (ss == SYNC_OUT) {
-        Trace(1, "MidiTrack: MIDI tracks can't do OutSync yet");
+        Trace(1, "TrackScheduler: MIDI tracks can't do OutSync yet");
         syncSource = Pulse::SourceNone;
     }
     else if (ss == SYNC_HOST) {
         syncSource = Pulse::SourceHost;
-        pulsator->follow(number, syncSource, ptype);
+        pulsator->follow(track->number, syncSource, ptype);
     }
     else if (ss == SYNC_MIDI) {
         syncSource = Pulse::SourceMidiIn;
-        pulsator->follow(number, syncSource, ptype);
+        pulsator->follow(track->number, syncSource, ptype);
     }
     else {
-        pulsator->unfollow(number);
+        pulsator->unfollow(track->number);
         syncSource = Pulse::SourceNone;
     }
 }
@@ -90,6 +94,15 @@ void TrackScheduler::reset()
 void TrackScheduler::dump(StructureDumper& d)
 {
     d.line("TrackScheduler:");
+}
+
+/**
+ * Called by track on a loop boundary to shift events
+ * scheduled beyond the loop boundary down.
+ */
+void TrackScheduler::shiftEvents(int frames)
+{
+    events.shift(frames);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -193,7 +206,7 @@ void TrackScheduler::scheduleRecord(UIAction* a)
 
 TrackEvent* TrackScheduler::scheduleRecordEvent(UIAction* a)
 {
-    TrackEvent* e = eventPool->newTrackEvent();
+    TrackEvent* e = eventPool->newEvent();
     e->type = TrackEvent::EventRecord;
     e->pending = true;
     e->pulsed = true;
@@ -208,10 +221,8 @@ TrackEvent* TrackScheduler::scheduleRecordEvent(UIAction* a)
 bool TrackScheduler::isRecordSynced()
 {
     bool doSync = false;
-
-    // since we're the only thing that needs it, move this down here
-    Pulse::Source syncSource = track->getSyncSource();
-
+    int number = track->number;
+    
     if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
         //the easy one, always sync
         doSync = true;
@@ -252,7 +263,7 @@ bool TrackScheduler::isRecordSynced()
  */
 void TrackScheduler::extendRecord(UIAction* a, TrackEvent* recordEvent)
 {
-    trackEvent->add(a);
+    recordEvent->stack(a);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -295,6 +306,8 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         
         if (isRecordSynced()) {
             TrackEvent* rec = scheduleRecordEvent(a);
+            // what were we supposed to do with this??
+            (void)rec;
         }
         else {
             // what happens now needs to be consistent
@@ -302,19 +315,24 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
             // tell track to stop recording, and give it the ending event
             // could also synthesize a UIAction with the Record symbol
             // and stack this one
-            track->stopRecording(a);
+            track->finishRecord(a);
         }
     }
     else if (mode == MobiusMidiState::ModeMultiply ||
              mode == MobiusMidiState::ModeInsert) {
 
         // there can only be one rounding event at any time
-        TrackEvent* event = events.find(TrackEvent::TypeRound);
+        TrackEvent* event = events.find(TrackEvent::EventRound);
         if (event != nullptr) {
+
+            // !! this isn't enough, it needs to check the "family" of functions
+            // e.g. start with Multiply and then do SUSUnroundedMultiply
+            // or are those different things?
+            // interesting: use of SUS in any rounding period is debatable
+            
             if (a->symbol->id == event->symbolId) {
                 // the same function was used during the rounding
                 // period, this extends the rounding
-                int extension = track->getRoundingFrames();
                 // maintain a multiplier to show in the UI
                 // zero means 1 which is not shown, any other
                 // positive number is shown
@@ -323,20 +341,21 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
                   event->multiples = 2;
                 else
                   event->multiples++;
-                event->frame += rec->getCycleFrames();
+                event->frame += track->getRoundingFrames();
                 dispose(a);
             }
             else {
                 // a random function stacks after rounding is over
-                event->add(a);
+                event->stack(a);
             }
         }
         else {
             // rounding has not been scheduled
-            TrackEvent* event = pools->newTrackEvent();
+            event = eventPool->newEvent();
             event->type = TrackEvent::EventRound;
             // ugh, need to know what type of function wanted
-            // the rounding
+            // the rounding, Track doesn't need this but we do above
+            // to detect mode extension
             if (mode == MobiusMidiState::ModeMultiply)
               event->symbolId = FuncMultiply;
             else
@@ -347,8 +366,8 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
 
             // if we started rounding with something other
             // than the mode function, it is stacked
-            if (a->symbolId != event->symbolId)
-              event->add(a);
+            if (a->symbol->id != event->symbolId)
+              event->stack(a);
             else
               dispose(a);
             
@@ -378,7 +397,7 @@ bool TrackScheduler::isQuantized(UIAction* a)
 
     // need a much more robust lookup table
     if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
-        QuantizeMode q = valuator->getQuantizeMode();
+        QuantizeMode q = valuator->getQuantizeMode(track->number);
         quantized = (q != QUANTIZE_OFF);
     }
     return quantized;
@@ -395,17 +414,16 @@ bool TrackScheduler::isQuantized(UIAction* a)
 void TrackScheduler::scheduleQuantized(UIAction* a)
 {
     TrackEvent* event = nullptr;
-    SymbolId sid = a->symbol->id;
 
-    QuantizeMode quant = valuator->getQuantizeMode();
+    QuantizeMode quant = valuator->getQuantizeMode(track->number);
     if (quant == QUANTIZE_OFF) {
         track->doActionNow(a);
     }
     else {
-        event = eventPool->newTrackEvent();
+        event = eventPool->newEvent();
         event->type = TrackEvent::EventAction;
-        event->frame = getQuantizedFrame(quant, a->symbol->id);
-        event->add(a);
+        event->frame = getQuantizedFrame(a->symbol->id, quant);
+        event->stack(a);
         events.add(event);
     }
 }
@@ -501,51 +519,64 @@ bool TrackScheduler::isLoopSwitch(UIAction* a)
  */
 void TrackScheduler::scheduleSwitch(UIAction* a)
 {
-    SwitchQuantize q = track->getSwitchQuantize();
+    int target = getSwitchTarget(a);
+    SwitchQuantize q = valuator->getSwitchQuantize(track->number);
     if (q == SWITCH_QUANT_OFF) {
-        track->doActionNow(a);
+        // todo: might be some interesting action argument we need to convey as well?
+        track->finishSwitch(nullptr, target);
     }
     else {
-        // annotate the event with the switch target for display
-        // since we're attaching the action, it isn't necessary but easier to
-        // deal with than digging it out of the action every time
-        int switchTarget = a->value - 1;
-        if (a < 0 || a >= track->getLoopCount()) {
-            Trace(1, "TrackScheduler: Switch target out of range %d", a->value);
-            dispose(a);
-        }
-        else if (switchTarget == track->getLoopIndex()) {
-            // remind me, if you do SelectLoop on the SAME loop what does it do?
-            // I suppose if SwitchLocation=Start it could retrigger
-            Trace(2, "TrackScheduler: Ignoring switch to the same loop %d", a->value);
-            dispose(a);
-        }
-        else {
-            TrackEvent* event = pools->newTrackEvent();
-            event->type = TrackEvent::EventSwitch;
-            event->switchTarget = switchTarget;
-            event->add(a);
+        TrackEvent* event = eventPool->newEvent();
+        event->type = TrackEvent::EventSwitch;
+        event->switchTarget = target;
+        event->stack(a);
 
-            switch (q) {
-                case SWITCH_QUANT_SUBCYCLE:
-                case SWITCH_QUANT_CYCLE:
-                case SWITCH_QUANT_LOOP: {
-                    event->frame = getQuantizedFrame(q);
+        switch (q) {
+            case SWITCH_QUANT_SUBCYCLE:
+            case SWITCH_QUANT_CYCLE:
+            case SWITCH_QUANT_LOOP: {
+                event->frame = getQuantizedFrame(q);
                 
-                }
-                    break;
-                case SWITCH_QUANT_CONFIRM:
-                case SWITCH_QUANT_CONFIRM_SUBCYCLE:
-                case SWITCH_QUANT_CONFIRM_CYCLE:
-                case SWITCH_QUANT_CONFIRM_LOOP: {
-                    event->pending = true;
-                }
-                    break;
             }
-
-            events.add(event);
+                break;
+            case SWITCH_QUANT_CONFIRM:
+            case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+            case SWITCH_QUANT_CONFIRM_CYCLE:
+            case SWITCH_QUANT_CONFIRM_LOOP: {
+                event->pending = true;
+            }
+                break;
         }
+
+        events.add(event);
     }
+}
+
+/**
+ * Derive the loop switch target loop from the action that started it
+ */
+int TrackScheduler::getSwitchTarget(UIAction* a)
+{
+    SymbolId sid = a->symbol->id;
+    int target = track->getLoopIndex();
+    
+    if (sid == FuncPrevLoop) {
+        target = target - 1;
+        if (target < 0)
+          target = track->getLoopCount() - 1;
+    }
+    else if (sid == FuncNextLoop) {
+        target = target + 1;
+        if (target >= track->getLoopCount())
+          target = 0;
+    }
+    else {
+        if (a->value < 1 || a->value > track->getLoopCount())
+          Trace(1, "TrackScheduler: Loop switch number out of range %d", target);
+        else
+          target = a->value - 1;
+    }
+    return target;
 }
 
 /**
@@ -593,7 +624,7 @@ QuantizeMode TrackScheduler::convert(SwitchQuantize squant)
  */
 void TrackScheduler::stackSwitch(UIAction* a)
 {
-    TrackEvent* ending = events.find(TrackEvent::TypeSwitch);
+    TrackEvent* ending = events.find(TrackEvent::EventSwitch);
     if (ending == nullptr) {
         // this is an error, you can't be in Switch mode without having
         // a pending or quantized event schedued
@@ -614,14 +645,14 @@ void TrackScheduler::stackSwitch(UIAction* a)
             else if (sid == FuncPrevLoop) {
                 int next = ending->switchTarget - 1;
                 if (next < 0)
-                  next = track->getLoopCount - 1;
+                  next = track->getLoopCount() - 1;
                 ending->switchTarget = next;
             }
             else {
                 // the number in the action is 1 based, in the event 0 based
                 int target = a->value - 1;
-                if (target < 0 || target >= track->getLoopCount)
-                  Trace(1, "MidiTrack: Loop switch number out of range %d", a->value);
+                if (target < 0 || target >= track->getLoopCount())
+                  Trace(1, "TrackScheduler: Loop switch number out of range %d", a->value);
                 else
                   ending->switchTarget = target;
             }
@@ -630,11 +661,47 @@ void TrackScheduler::stackSwitch(UIAction* a)
             // we're in the switch quantize period with a random function,
             // it stacks
             // audio loops have a lot of complexity here
-            ending->add(a);
+            ending->stack(a);
         }
     }
 }
 
+/**
+ * After we've asked Track to perform the switch, look at the duration
+ * parameter and schedule a return event.
+ */
+void TrackScheduler::scheduleSwitchDuration(int currentLoopIndex)
+{
+    SwitchDuration duration = valuator->getSwitchDuration(track->number);
+    switch (duration) {
+        case SWITCH_ONCE: {
+            TrackEvent* event = eventPool->newEvent();
+            event->type = TrackEvent::EventAction;
+            UIAction* action = actionPool->newAction();
+            action->symbol = symbols->getSymbol(FuncMute); 
+            event->actions = action;
+            event->frame = track->getLoopFrames();
+            events.add(event);
+        }
+            break;
+        case SWITCH_ONCE_RETURN: {
+            TrackEvent* event = eventPool->newEvent();
+            event->type = TrackEvent::EventReturn;
+            event->switchTarget = currentLoopIndex;
+            event->frame = track->getLoopFrames();
+            events.add(event);
+        }
+            break;
+        case SWITCH_SUSTAIN: {
+        }
+            break;
+        case SWITCH_SUSTAIN_RETURN: {
+        }
+            break;
+        case SWITCH_PERMANENT: break;
+    }
+}
+    
 //////////////////////////////////////////////////////////////////////
 //
 // Advance
@@ -686,7 +753,7 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
             }
             // it dramatically cleans up the carving logic if we make this look
             // like a scheduled event
-            TrackEvent* pulseEvent = eventPool->newTrackEvent();
+            TrackEvent* pulseEvent = eventPool->newEvent();
             pulseEvent->frame = currentFrame + pulseOffset;
             pulseEvent->type = TrackEvent::EventPulse;
             // note priority flag so it goes before others on this frame
@@ -718,9 +785,6 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
     track->advance(remainder);
 }
 
-
-
-
 //////////////////////////////////////////////////////////////////////
 //
 // Events Handlers
@@ -749,19 +813,7 @@ void TrackScheduler::doEvent(TrackEvent* e)
             break;
         case TrackEvent::EventRecord: {
             // we have reached a synchronized record event
-            // this can be scheduled by any function, and have stacked actions
-            UIAction* stack = e->actions;
-            if (stack == nullptr ||
-                (stack->symbol->id != FuncRecord && stack->symbol->id != FuncAutoRecord)) {
-                // we ended recording with another function,
-                // fake up a Record action just so Track has a consistent way
-                // of dealing with it
-                UIAction* rec = actionPool->newAction();
-                rec->symbol = symbols->getSymbol(FuncRecord);
-                rec->next = stack;
-                stack = rec;
-            }
-            track->doActionNow(stack);
+            track->finishRecord(e->actions);
             // ownership transferred
             e->actions = nullptr;
             
@@ -773,15 +825,23 @@ void TrackScheduler::doEvent(TrackEvent* e)
         }
             break;
         case TrackEvent::EventRound: {
-            // these should have been handled by now?
-            // like we do for Record, if the mode was ended by something other
-            // than Multiply/Insert, make one that goes in front of the stack
-xxx            
+            // these may have happened for a number of reasons, the actions
+            // that came in during the rounding period were stacked and now
+            // passed to Track
+            if (e->symbolId == FuncMultiply)
+              track->finishMultiply(e->actions);
+            else if (e->symbolId == FuncInsert)
+              track->finishInsert(e->actions);
+            e->actions = nullptr;
+
         }
             break;
 
         case TrackEvent::EventSwitch: {
-            // these should have been handled by now?
+            int currentLoop = track->getLoopIndex();
+            track->finishSwitch(e->actions, e->switchTarget);
+            e->actions = nullptr;
+            scheduleSwitchDuration(currentLoop);
         }
             break;
 
@@ -804,7 +864,7 @@ void TrackScheduler::dispose(TrackEvent* e)
         actions = next;
     }
     e->actions = nullptr;
-    eventPool->chheckin(e);
+    eventPool->checkin(e);
 }
 
 void TrackScheduler::dispose(UIAction* a)
@@ -831,14 +891,14 @@ void TrackScheduler::dispose(UIAction* a)
  * Again in theory, this could be in front of other scheduled events and because
  * events must be in order, it is removed and reinserted after giving it a frame.
  */
-void MidiTrack::doPulse(TrackEvent* e)
+void TrackScheduler::doPulse(TrackEvent* e)
 {
     (void)e;
     
     // todo: there could be more than one thing waiting on a pulse?
     TrackEvent* pulsed = events.consumePulsed();
     if (pulsed != nullptr) {
-        Trace(2, "MidiTrack: Activating pulsed event");
+        Trace(2, "TrackScheduler: Activating pulsed event");
         // activate it on this frame and insert it back into the list
         pulsed->frame = track->getFrame();
         pulsed->pending = false;
@@ -858,7 +918,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
     // turn this off while we refresh
     state->eventCount = 0;
     int count = 0;
-    for (e = events.getEvents() ; e != nullptr ; e = e->next) {
+    for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
         TrackEvent* next = e->next;
         MobiusMidiState::Event* estate = state->events[count];
         bool addit = true;
@@ -877,16 +937,15 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
                 
             }
                 break;
-            case TrackEvent::EventFunction: {
-                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
-                if (s != nullptr)
-                  estate->name = s->name;
+            case TrackEvent::EventAction: {
+                if (e->actions != nullptr && e->actions->symbol != nullptr)
+                  estate->name = e->actions->symbol->getName();
             }
                 break;
 
             case TrackEvent::EventRound: {
                 // horrible to be doing formatting down here
-                Symbol* s = container->getSymbols()->getSymbol(e->symbolId);
+                Symbol* s = symbols->getSymbol(e->symbolId);
                 estate->name = "End ";
                 if (s != nullptr) 
                   estate->name += s->name;
@@ -903,32 +962,30 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
             estate->pending = e->pending;
             estate->argument = arg;
             count++;
-            if (count >= state->events.size()) {
-                next = nullptr;
+
+            UIAction* stack = e->actions;
+            while (stack != nullptr && count < state->events.size()) {
+                estate = state->events[count];
+                estate->frame = e->frame;
+                estate->pending = e->pending;
+                // estate->name = getEventName(stacked);
+                estate->name = juce::String("???");
+                count++;
             }
-            else if (e->events != nullptr) {
-                // make the stack look like more events on this frame
-                // todo: will need to handle the action stack and move
-                // all this to TrackScheduler
-                TrackEvent* stacked = e->events;
-                while (stacked != nullptr) {
-                    estate = state->events[count];
-                    estate->frame = e->frame;
-                    estate->pending = e->pending;
-                    // estate->name = getEventName(stacked);
-                    estate->name = juce::String("???");
-                    count++;
-                    if (count >= state->events.size()) {
-                        next = nullptr;
-                        break;
-                    }
-                }
-            }
-            
         }
+
+        if (count >= state->events.size())
+          break;
+        
         e = next;
     }
     state->eventCount = count;
+
+    // loop switch, can only be one of these
+    state->nextLoop = 0;
+    TrackEvent* e = events.find(TrackEvent::EventSwitch);
+    if (e != nullptr)
+      state->nextLoop = (e->switchTarget + 1);
 }
 
 /****************************************************************************/

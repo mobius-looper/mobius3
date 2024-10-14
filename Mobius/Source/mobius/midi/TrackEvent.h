@@ -26,13 +26,7 @@ class TrackEvent : public PooledObject
         EventAction,
         EventRound,
         EventSwitch,
-        
-        // weed
-        EventRecord,
-        EventReturn,
-        EventFunction,
-        EventRound,
-
+        EventReturn
     } Type;
     
     TrackEvent();
@@ -107,9 +101,7 @@ class TrackEventList
     }
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
-    
     TrackEvent* findLast(SymbolId id);
-    TrackEvent* findRounding(SymbolId id);
 
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);

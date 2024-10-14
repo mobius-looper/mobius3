@@ -4,6 +4,7 @@
 
 #include "../../model/ObjectPool.h"
 #include "../../model/UIAction.h"
+#include "../../model/Symbol.h"
 
 #include "TrackEvent.h"
 
@@ -33,10 +34,9 @@ void TrackEvent::poolInit()
     pulsed = false;
     actions = nullptr;
     
+    symbolId = SymbolIdNone;
     multiples = 0;
     switchTarget = 0;
-    switchQuantize = SWITCH_QUANT_OFF;
-    symbolId = SymbolIdNone;
 }
 
 void TrackEvent::stack(UIAction* a)
@@ -173,19 +173,9 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
 {
     TrackEvent* found = nullptr;
     for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
-        if (e->type == TrackEvent::EventFunction && e->symbolId == sym) {
-            found = e;
-            break;
-        }
-    }
-    return found;
-}
-
-TrackEvent* TrackEventList::findRounding(SymbolId sym)
-{
-    TrackEvent* found = nullptr;
-    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
-        if (e->type == TrackEvent::EventRound && e->symbolId == sym) {
+        if (e->type == TrackEvent::EventAction &&
+            e->actions != nullptr &&
+            e->actions->symbol->id == sym) {
             found = e;
             break;
         }

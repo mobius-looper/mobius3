@@ -22,6 +22,11 @@
 #pragma once
 
 #include "../../sync/Pulse.h"
+#include "../../model/MobiusMidiState.h"
+#include "../../model/Session.h"
+#include "../../model/ParameterConstants.h"
+#include "../../model/SymbolId.h"
+
 #include "TrackEvent.h"
 
 class TrackScheduler
@@ -32,12 +37,16 @@ class TrackScheduler
     ~TrackScheduler();
     
     void initialize(class TrackEventPool* epool, class UIActionPool* apool,
-                    class Pulsator* p, class Valuator* v);
+                    class Pulsator* p, class Valuator* v, class SymbolTable* st);
+    void configure(Session::Track* def);
     void dump(class StructureDumper& d);
     void reset();
+    void shiftEvents(int frames);
+    void refreshState(class MobiusMidiState::Track* state);
     
     // the main entry point from the track to get things going
     void doAction(class UIAction* a);
+    void advance(class MobiusAudioStream* stream);
 
   private:
 
@@ -46,6 +55,7 @@ class TrackScheduler
     class UIActionPool* actionPool = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
+    class SymbolTable* symbols = nullptr;
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -54,8 +64,32 @@ class TrackScheduler
     TrackEventList events;
     
     // function handlers
+    bool isRecord(class UIAction* a);
+    void scheduleRecord(class UIAction* a);
+    class TrackEvent* scheduleRecordEvent(class UIAction* a);
+    bool isRecordSynced();
+    void extendRecord(class UIAction* a, class TrackEvent* recordEvent);
 
-    void doReset(class UIAction a, bool full);
+    bool isModeEnding(MobiusMidiState::Mode mode);
+    void scheduleModeEnd(class UIAction* a, MobiusMidiState::Mode mode);
+
+    bool isQuantized(class UIAction* a);
+    void scheduleQuantized(class UIAction* a);
+    int getQuantizedFrame(QuantizeMode qmode);
+    int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
+    
+    bool isLoopSwitch(class UIAction* a);
+    void scheduleSwitch(class UIAction* a);
+    int getSwitchTarget(class UIAction* a);
+    int getQuantizedFrame(SwitchQuantize squant);
+    QuantizeMode convert(SwitchQuantize squant);
+    void stackSwitch(class UIAction* a);
+    void scheduleSwitchDuration(int currentIndex);
+
+    void doEvent(class TrackEvent* e);
+    void dispose(class TrackEvent* e);
+    void dispose(class UIAction* a);
+    void doPulse(class TrackEvent* e);
 
 };
 

@@ -486,9 +486,6 @@
           <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiFragment.cpp"/>
           <FILE id="xdZZo9" name="MidiFragment.h" compile="0" resource="0" file="Source/mobius/midi/MidiFragment.h"/>
-          <FILE id="rkRSaZ" name="MidiFunctions.cpp" compile="1" resource="0"
-                file="Source/mobius/midi/MidiFunctions.cpp"/>
-          <FILE id="tzfl2n" name="MidiFunctions.h" compile="0" resource="0" file="Source/mobius/midi/MidiFunctions.h"/>
           <FILE id="VR0osY" name="MidiHarvester.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiHarvester.cpp"/>
           <FILE id="DZBLTg" name="MidiHarvester.h" compile="0" resource="0" file="Source/mobius/midi/MidiHarvester.h"/>
@@ -513,6 +510,10 @@
           <FILE id="QmMmv7" name="MidiWatcher.h" compile="0" resource="0" file="Source/mobius/midi/MidiWatcher.h"/>
           <FILE id="Kf6cIP" name="TrackEvent.cpp" compile="1" resource="0" file="Source/mobius/midi/TrackEvent.cpp"/>
           <FILE id="IzyBty" name="TrackEvent.h" compile="0" resource="0" file="Source/mobius/midi/TrackEvent.h"/>
+          <FILE id="an5GW1" name="TrackScheduler.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/TrackScheduler.cpp"/>
+          <FILE id="X5INeC" name="TrackScheduler.h" compile="0" resource="0"
+                file="Source/mobius/midi/TrackScheduler.h"/>
         </GROUP>
         <GROUP id="{8E4BAFF4-3AEF-CED4-3179-55768C778B1C}" name="core">
           <GROUP id="{7F4264E6-7D7C-D713-8A19-178DDC4B82F9}" name="functions">

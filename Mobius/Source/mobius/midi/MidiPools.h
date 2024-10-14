@@ -30,6 +30,8 @@
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
+#include "../../model/UIAction.h"
+
 #include "MidiLayer.h"
 #include "MidiSegment.h"
 #include "MidiFragment.h"
