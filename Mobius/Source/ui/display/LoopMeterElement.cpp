@@ -132,19 +132,23 @@ void LoopMeterElement::paint(juce::Graphics& g)
     int ticksToDraw = totalSubcycles + 1;
 
     // meter bar
+    bool thinBar = true;
     int meterWidth = getMeterOffset(track->frame, track->frames);
     if (track->frames > 0) {
-        // method 1: full width
-        //g.setColour(Colors::getLoopColor(track));
-        //g.fillRect((float)thermoLeft, (float)BorderThickness,
-        //(float)meterWidth, (float)MeterBarHeight);
-
-        // method 2: thin
-        g.setColour(Colors::getLoopColor(track));
-        int cursorLeft = thermoLeft + meterWidth - 1;
-        int cursorWidth = 3;
-        g.fillRect((float)cursorLeft, (float)BorderThickness,
-                   (float)cursorWidth, (float)MeterBarHeight);
+        if (!thinBar) {
+            // method 1: full width
+            g.setColour(Colors::getLoopColor(track));
+            g.fillRect((float)thermoLeft, (float)BorderThickness,
+                       (float)meterWidth, (float)MeterBarHeight);
+        }
+        else {
+            // method 2: thin
+            g.setColour(Colors::getLoopColor(track));
+            int cursorLeft = thermoLeft + meterWidth - 1;
+            int cursorWidth = 3;
+            g.fillRect((float)cursorLeft, (float)BorderThickness,
+                       (float)cursorWidth, (float)MeterBarHeight);
+        }
     }
     
     // regions
@@ -152,8 +156,12 @@ void LoopMeterElement::paint(juce::Graphics& g)
         MobiusMidiState::Region& region = track->regions.getReference(i);
         int regionLeft = getMeterOffset(region.startFrame, track->frames);
         int regionRight = getMeterOffset(region.endFrame, track->frames);
-        if (region.active)
-          g.setColour(juce::Colours::red);
+        if (region.active) {
+            g.setColour(juce::Colours::red);
+            // for some reason this is lagging the track frame and leaves
+            // a gap, are regions not being refreshed properly?
+            regionRight = thermoLeft + meterWidth - 1;
+        }
         else
           g.setColour(juce::Colours::yellow);
 
@@ -176,7 +184,10 @@ void LoopMeterElement::paint(juce::Graphics& g)
                 g.setColour(juce::Colours::grey);
             }
             else {
-                g.setColour(juce::Colours::black);
+                if (thinBar)
+                  g.setColour(juce::Colours::white);
+                else
+                  g.setColour(juce::Colours::black);
             }
         }
         else {

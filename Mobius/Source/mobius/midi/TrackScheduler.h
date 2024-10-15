@@ -41,7 +41,7 @@ class TrackScheduler
     void configure(Session::Track* def);
     void dump(class StructureDumper& d);
     void reset();
-    void shiftEvents(int frames);
+    void shiftEvents(int frames, int remainder);
     void refreshState(class MobiusMidiState::Track* state);
     
     // the main entry point from the track to get things going

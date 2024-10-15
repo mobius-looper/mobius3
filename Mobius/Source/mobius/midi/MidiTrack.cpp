@@ -390,9 +390,15 @@ void MidiTrack::advance(int newFrames)
             // we have now consumed enough frames to fill the layer, before
             // we shift, check for extension modes
 
-            // not that we're careful about the loop boundary, don't necessarily
+            // note that we're careful about the loop boundary, don't necessarily
             // need the recorder.isExtending flag, could just let it auto extend if we ask it
-            bool earlyTermination = isMultiplyEndScheduled();
+            // update: Decided to handle this shit in TrackScheduler where it should
+            // be rather than make it messy down here, if a multiply end event is scheduled
+            // it will be where it should be, not beyond and making Track figure
+            // out early termination, TrackScheduler will have put it at the end
+            // of the loop if that's where it wanted it
+            //bool earlyTermination = isMultiplyEndScheduled();
+            bool earlyTermination = false;
             bool extending = (recorder.isExtending() && !earlyTermination);
 
             if (extending) {
@@ -419,7 +425,7 @@ void MidiTrack::advance(int newFrames)
 
                 // shift events waiting for the loop end
                 // don't like this
-                scheduler.shiftEvents(recorder.getFrames());
+                scheduler.shiftEvents(recorder.getFrames(), remainder);
             
                 player.restart();
                 player.play(remainder);
@@ -1065,14 +1071,10 @@ void MidiTrack::finishSwitch(int newIndex)
     loopIndex = newIndex;
     MidiLoop* loop = loops[newIndex];
     MidiLayer* playing = loop->getPlayLayer();
-    // wayt till we know the frame
-    //player.change(playing);
-    int newPlayFrame = 0;
 
     // todo: consider having Scheduler deal with this part since
     // it's already dealing with Return events?  Or else move
     // Return handling out here
-    
     if (playing == nullptr || playing->getFrames() == 0) {
         // we switched to an empty loop
         EmptyLoopAction action = valuator->getEmptyLoopAction(number);
@@ -1121,7 +1123,7 @@ void MidiTrack::finishSwitch(int newIndex)
         SwitchLocation location = valuator->getSwitchLocation(number);
         // default is at the start
         recorder.setFrame(0);
-        newPlayFrame = 0;
+        int newPlayFrame = 0;
         
         if (location == SWITCH_FOLLOW) {
             // if the destination is smaller, have to modulo down
@@ -1156,12 +1158,13 @@ void MidiTrack::finishSwitch(int newIndex)
             // let it continue with the old tempo for now
             // but need to revisit this
         }
+        
+        // now adjust the player after we've determined the play frame
+        // important to do both layer change and play frame at the same
+        // time to avoid redundant held note analysis
+        player.change(playing, newPlayFrame);
     }
 
-    // now adjust the player after we've determined the play frame
-    // important to do both layer change and play frame at the same
-    // time to avoid redundant held note analysis
-    player.change(playing, newPlayFrame);
 }
 
 //////////////////////////////////////////////////////////////////////

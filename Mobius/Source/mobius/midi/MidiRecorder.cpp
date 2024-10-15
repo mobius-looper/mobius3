@@ -409,31 +409,26 @@ void MidiRecorder::reduceMultiply()
 /**
  * Commit a "remultiply" or unrounded multiply layer.
  * multiplyFrame is the start of the multiply, this may or may not
- * have been quantized.  The current recordFrame is the end.
+ * have been quantized.
  *
- * For remultiply the distance between the start and end frames is supposed
- * to have been scheduled to be an even number of cycles.
+ * How this behaves is still highly debatable after all these years, I'm
+ * going with this.
  *
- * For unrounded, the distance doesn't matter and will result in a layer of
- * one cycle.
+ * For "first multiply" starting from one cycle, it doesn't matter where the
+ * modeStartFrame was, it just rounds the ending up to the end of the current cycle.
+ * In effect, it pushes modeStartFrame to the beginning of the containing cycle.
+ * 
+ * For "remultiply" it can go two ways.  First like First Multiply, it can round
+ * down the modeStartFrame to the cycle start, then round the end up to the cycle end
+ * and cut those cycles.
  *
- * The segments are reorganized to have the minimum number necessary to
- * represent contiguous regions in the backing layer and held note prefixes
- * are calcualted for each.
+ * Second, and probably what the EDP does is round to an even cycle relative to the
+ * modeStartFrame, and cut those.
  */
 MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
 {
     MidiLayer* commitLayer = nullptr;
 
-    if (!unrounded && recordFrame != modeEndFrame) {
-        // this is okay if we ended before the loop point, should
-        // be exactly on the loop frame
-        if (recordFrame != recordFrames)
-          Trace(1, "MidiRecorder: Rounded multiply didn't end where expected");
-        else
-          Trace(2, "MidiRecorder: Terminating multiply before loop boundary");
-    }
-    
     if (recordLayer == nullptr) {
         Trace(1, "MidiRecorder: Remultiply without a layer");
     }
@@ -444,65 +439,62 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
         commitLayer = commit(overdub);
     }
     else {
-        int cutStart = modeStartFrame;
-        int cutEnd = recordFrame - 1;
+        // here is what we need to figure out
+        int cutStart;
+        int cutEnd;
         int newFrames;
         int newCycles;
         int newCycleFrames;
 
         if (unrounded) {
+            cutStart = modeStartFrame;
+            cutEnd = recordFrame - 1;
             newFrames = recordFrame - modeStartFrame;
             newCycles = 1;
             newCycleFrames = newFrames;
         }
-        else if (recordFrame == modeEndFrame) {
-            // ended where it normally would be after full rounding
-            newFrames = recordFrame - modeStartFrame;
-            newCycles = newFrames / cycleFrames;
-            if (newCycles == 0) newCycles = 1;
-            newCycleFrames = cycleFrames;
+        else if (recordCycles == 1) {
+            // started and stopped in the initial cycle
+            // everything stays the same
+            cutStart = 0;
+            cutEnd = recordFrames - 1;
+            newFrames = recordFrames;
+            newCycles = 1;
+            newCycleFrames = recordFrames;
         }
         else {
-            // ended early, recordFrame is normally right at the end
-            // back the start up one cycle if this is remultiply
-            // I can see why EDP people would hate this
-            
-            // beginning cycle of modeStartFrame
-            cutStart = (modeStartFrame / cycleFrames) * cycleFrames;
-
-            // ending cycle of recordFrame
+            // the "remultiply" problem
+            // solving this with option 2 above requires coordination
+            // with the scheduler, since the scheduler told us to end now
+            // work backward to determine the cutStart
             if (recordFrame == recordFrames) {
-                // expected roundoff to the last cycle
+                // we clipped on the right edge, go back to the start
+                // of the cycle containing the modeStartFrame
+                int modeStartCycle = modeStartFrame / cycleFrames;
+                cutStart = modeStartCycle * cycleFrames;
                 cutEnd = recordFrames - 1;
                 newFrames = recordFrames - cutStart;
+                newCycles = newFrames / cycleFrames;
+                if (newCycles == 0) {
+                    Trace(1, "MidiRecorder: Remultiply math error");
+                    newCycles = 1;
+                }
+                newCycleFrames = cycleFrames;
             }
             else {
-                // unexpected, terminated early but not on the edge
-                // round the end up to the cycle boundary
-                Trace(2, "MidiRecorder: Adjusting weird multiply end point");
-                int thisCycle = recordFrame / cycleFrames;
-                int nextCycleFrame = (thisCycle + 1) * cycleFrames;
-                cutEnd = nextCycleFrame - 1;
-                newFrames = nextCycleFrame - cutStart;
-            }
-
-            newCycles = newFrames / cycleFrames;
-            newCycleFrames = cycleFrames;
-        
-            // sanity check on cycle preservation
-            newCycles = newFrames / cycleFrames;  // this will round
-            int checkFrames = newCycles * cycleFrames;
-            if (newFrames != checkFrames) {
-                // there was an error scheduling the end of the multiply
-                // and/or roundoff errors due to odd cycle lengths
-                // should really try to make adjustments to preserve
-                // the cycle length, either pull the ending back to shorten
-                // or push the start back to lenghten
-                Trace(1, "MidiRecorder: Cycle length miscalculation on remultiply %d vs %d",
-                      newFrames, checkFrames);
+                // we extended beyond the loop boundary, but didn't make it to the end
+                // this is a modeStartFrame relative cut
+                cutStart = modeStartFrame;
+                // could do math, but this is easier
+                cutEnd = cutStart + cycleFrames;
+                while (cutEnd < recordFrame)
+                  cutEnd += cycleFrames;
+                newFrames = cutEnd - cutStart + 1;
+                newCycles = newFrames / cycleFrames;
+                newCycleFrames = cycleFrames;
             }
         }
-
+        
         if (!overdub)
           finalizeHeld();
 
@@ -578,6 +570,7 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
             if (segment == nullptr) {
                 // first segment, consume the recorded segment that is in range
                 segment = pools->newSegment();
+                segments = segment;
                 segment->layer = recorded->layer;
                 segment->originFrame = startFrame;
                 int leftLoss = startFrame - recorded->originFrame;

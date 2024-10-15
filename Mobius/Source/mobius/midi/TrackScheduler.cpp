@@ -99,10 +99,73 @@ void TrackScheduler::dump(StructureDumper& d)
 /**
  * Called by track on a loop boundary to shift events
  * scheduled beyond the loop boundary down.
+ *
+ * This got extremely subtle and points out why letting Track handle the loop
+ * boundary sucks.  Track has just reached the loop end point and returned to
+ * frame zero, it needs Scheduler to shift the events down so they will be encountered
+ * on this pass.  HOWEVER, Track is about to advance by the remainder in this block.  If
+ * the shifted event is zero (common) or somewhere less than remainder (less common) the
+ * events won't fire because on the next block the track frame will be remainder past zero
+ * and we think those events are out of range.
+ *
+ * TrackEventList will try to shift them and get a negative frame, trace an error, and clamp
+ * them at zero, and this pattern repeats on the next shift.
+ *
+ * Some options:
+ *
+ * 1) Fire any events that have become within range after the shift, between 0 and remainder.
+ * This is complicated because we ordinarilly want to carve up the block between events and
+ * have Track advance only in between those.  If the shifted frame is zero we can do it here
+ * and have it make sense, but if the shifted frame is say 10 with a remainder of 100, the
+ * track should only advance 10, then toss back to Scheduler to do the event, then continue.
+ * For most things the difference doesn't matter but when we get to frame-specific script
+ * events that will be a problem.
+ *
+ * 2) Leave the events for the next pass, but prevent shift from making them going negative
+ * if they're already within the loop boundary they don't need to be shifted.  That's safe
+ * and should be done anyway since scripts can schedule events that happen in the past and
+ * we don't want those shifted.  But if they were scheduled by the time we reach the loop end then
+ * they're supposed to be done on THIS pass, not the next one.  So we're back with option 1
+ * with timing irregularities.
+ *
+ * Unfortunately this means we need to know the difference between an event that was scheduled
+ * on a low frame and one that was high and was shifted down, and TrackEventList doesn't
+ * give us that. This won't be a problem until we get scripts involved.  And really, the events
+ * in question I don't think should have been there in the first place.
+ *
  */
-void TrackScheduler::shiftEvents(int frames)
+void TrackScheduler::shiftEvents(int frames, int remainder)
 {
     events.shift(frames);
+
+    // kludge: do events that may have been shifted down that exist between zero and the
+    // block remainder
+
+    int currentFrame = 0;
+    TrackEvent* e = events.consume(currentFrame, remainder);
+    while (e != nullptr) {
+
+        int eventAdvance = e->frame - currentFrame;
+        if (eventAdvance > remainder) {
+            Trace(1, "TrackScheduler: Advance math is fucked");
+            eventAdvance = remainder;
+        }
+
+        // let track consume a block of frames
+        // we would need something like this since it is already in
+        // it's normal advance() method
+        // track->kludgeAdvance(eventAdvance);
+
+        // then we inject event handling
+        Trace(1, "TrackScheduler: Doing weird event after the loop boundary");
+        doEvent(e);
+
+        remainder -= eventAdvance;
+        currentFrame += eventAdvance;
+        e = events.consume(currentFrame, remainder);
+    }
+    
+    // track->kludgeAdvance(remainder);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -275,7 +338,7 @@ void TrackScheduler::doActionNow(UIAction* a)
             snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
                      a->symbol->getName());
             track->alert(msgbuf);
-            Trace(1, "TrackScheduler: %s", msgbuf);
+            Trace(2, "TrackScheduler: %s", msgbuf);
         }
     }
 
@@ -359,6 +422,7 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
         doEvent(e);
         
         remainder -= eventAdvance;
+        currentFrame = track->getFrame();
         e = events.consume(currentFrame, remainder);
     }
     
@@ -602,6 +666,7 @@ bool TrackScheduler::isRecordSynced()
  */
 void TrackScheduler::stackRecord(TrackEvent* recordEvent, UIAction* a)
 {
+    Trace(2, "TrackScheduler: Stacking %s after Record", a->symbol->getName());
     recordEvent->stack(a);
 }
 
@@ -672,6 +737,7 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         
         if (isRecordSynced()) {
             TrackEvent* e = scheduleRecordEvent(nullptr);
+            Trace(2, "TrackScheduler: Stacking %s after Record End", stack->symbol->getName());
             e->stack(stack);
         }
         else {
@@ -716,18 +782,33 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
             }
             else {
                 // a random function stacks after rounding is over
+                Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
                 event->stack(a);
             }
         }
         else {
             // rounding has not been scheduled
+            // todo: this is where we have two options on how rounding works
+            // always round relative to the modeStartFrame or round just to the
+            // end of the current cycle
+            
             event = eventPool->newEvent();
             event->type = TrackEvent::EventRound;
-            event->frame = track->getModeEndFrame();
+
+            bool roundRelative = false;
+            if (roundRelative) {
+                event->frame = track->getModeEndFrame();
+            }
+            else {
+                int currentCycle = track->getFrame() / track->getCycleFrames();
+                event->frame = (currentCycle + 1) * track->getCycleFrames();
+            }
 
             // if this is something other than the mode function it is stacked
-            if (a->symbol->id != function)
-              event->stack(a);
+            if (a->symbol->id != function) {
+                Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
+                event->stack(a);
+            }
             else
               actionPool->checkin(a);
             
@@ -968,7 +1049,6 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
         TrackEvent* event = eventPool->newEvent();
         event->type = TrackEvent::EventSwitch;
         event->switchTarget = target;
-        event->stack(a);
 
         switch (q) {
             case SWITCH_QUANT_SUBCYCLE:
@@ -1101,6 +1181,7 @@ void TrackScheduler::stackSwitch(UIAction* a)
             // we're in the switch quantize period with a random function,
             // it stacks
             // audio loops have a lot of complexity here
+            Trace(2, "TrackScheduler: Stacking %s after switch", a->symbol->getName());
             ending->stack(a);
         }
     }
@@ -1230,8 +1311,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
                 estate = state->events[count];
                 estate->frame = e->frame;
                 estate->pending = e->pending;
-                // estate->name = getEventName(stacked);
-                estate->name = juce::String("???");
+                estate->name = stack->symbol->name;
                 count++;
             }
         }

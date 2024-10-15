@@ -308,28 +308,36 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
     harvestRange(segment->layer, layerStart, layerEnd, heldOnly, false, &nestedNotes, nestedEventResult);
 
     // the events that were just added were relative to the referenced layer
-    // these now need to be pushed upward to be relative to the segment
-    // within the containing layer
+    // these now need to be adjusted so they are relative to the segment within the
+    // containing layer
     // also too, clip any durations that extend past the segment if there is NOT
     // continuity with the next segment
     // again, I'm preferring inclusive frame numbers rather than "one after the end"
     // just to be consistent 
     MidiEvent* nested = nestedNotes.getFirst();
     while (nested != nullptr) {
-        nested->frame += segment->originFrame;
+
+        // make it relative to the start of the segment
+        int segmentRelativeFrame = nested->frame - segment->referenceFrame;
+        // then make it relative to the containing layer
+        int containingLayerFrame = segmentRelativeFrame + segment->originFrame;
+        // may clip
+        int durationInSegment = nested->duration;
         if (!hasContinuity(segment)) {
             // the frame containing the last lingering of this note
-            int noteLast = nested->frame + nested->duration - 1;
+            int noteLast = containingLayerFrame + nested->duration - 1;
             if (noteLast > seglast) {
                 // it went past the segment boundary, back it up
-                nested->duration = seglast - nested->frame + 1;
+                durationInSegment = seglast - containingLayerFrame + 1;
                 // sanity check because you're bad at math or left zero length things behind
-                if (nested->duration <= 0) {
+                if (durationInSegment <= 0) {
                     Trace(1, "MidiHarvester: Correcting collapsed duration because you suck at math");
-                    nested->duration = 1;
+                    durationInSegment = 1;
                 }
             }
         }
+        nested->frame = containingLayerFrame;
+        nested->duration = durationInSegment;
         nested = nested->next;
     }
     noteResult->transferFrom(&nestedNotes);

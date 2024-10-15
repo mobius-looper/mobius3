@@ -64,7 +64,8 @@ void MidiPlayer::dump(StructureDumper& d)
     d.newline();
 
     d.inc();
-    playLayer->dump(d);
+    if (playLayer != nullptr)
+      playLayer->dump(d);
     d.dec();
 }
 
@@ -245,8 +246,8 @@ void MidiPlayer::setFrame(int frame)
     }
 
     if (playLayer != nullptr)
-      playLayer->resetPlayState();
-
+        playLayer->resetPlayState();
+    
     // determine white notes would be held at this position
     prepareHeld();
 }
@@ -260,19 +261,22 @@ void MidiPlayer::prepareHeld()
 {
     MidiFragment* held = nullptr;
     
-    // todo: should also be including previous segments in this analysis
-    // since the segment preset is in effect a held checkpoint
-    MidiFragment* checkpoint = playLayer->getNearestCheckpoint(playFrame);
-    if (checkpoint != nullptr && checkpoint->frame == playFrame) {
-        // we're lucky, returning to the same location we left
-        held = pools->copy(checkpoint);
-    }
-    else {
-        // wait, don't need to be looking for checkpoints out here, harvester
-        // will use them
-        held = harvester.harvestCheckpoint(playLayer, playFrame);
-    }
+    if (playLayer != nullptr) {
+        // todo: should also be including previous segments in this analysis
+        // since the segment preset is in effect a held checkpoint
+        MidiFragment* checkpoint = playLayer->getNearestCheckpoint(playFrame);
+        if (checkpoint != nullptr && checkpoint->frame == playFrame) {
+            // we're lucky, returning to the same location we left
+            held = pools->copy(checkpoint);
+        }
+        else {
+            // wait, don't need to be looking for checkpoints out here, harvester
+            // will use them
+            held = harvester.harvestCheckpoint(playLayer, playFrame);
+        }
 
+    }
+    
     pools->reclaim(restoredHeld);
     restoredHeld = held;
 }

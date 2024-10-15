@@ -252,10 +252,10 @@ void TrackEventList::shift(int delta)
 {
     for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
         if (!e->pending && !e->pulsed) {
-            e->frame = e->frame - delta;
-            if (e->frame < 0) {
-                Trace(1, "TrackEvent: Event shift underflow");
-                e->frame = 0;
+            // only shift events that are beyond the loop frame
+            // it isn't obvious but "delta" is loopFrames
+            if (e->frame >= delta) {
+                e->frame = e->frame - delta;
             }
         }
     }
