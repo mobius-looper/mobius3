@@ -908,6 +908,7 @@ void MobiusKernel::doAction(UIAction* action)
 
         int scope = action->getScopeTrack();
         if (scope > audioTracks || global) {
+            //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
             mMidi->doAction(action);
         }
 

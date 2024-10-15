@@ -41,16 +41,18 @@ void TrackEvent::poolInit()
 
 void TrackEvent::stack(UIAction* a)
 {
-    UIAction* prev = nullptr;
-    UIAction* action = stacked;
-    while (action != nullptr) {
-        prev = action;
-        action = action->next;
+    if (a != nullptr) {
+        UIAction* prev = nullptr;
+        UIAction* action = stacked;
+        while (action != nullptr) {
+            prev = action;
+            action = action->next;
+        }
+        if (prev == nullptr)
+          stacked = a;
+        else
+          prev->next = a;
     }
-    if (prev == nullptr)
-      stacked = a;
-    else
-      prev->next = a;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -184,7 +186,7 @@ TrackEvent* TrackEventList::remove(TrackEvent::Type type)
 
     if (found != nullptr) {
         if (prev == nullptr)
-          events->next = found->next;
+          events = found->next;
         else
           prev->next = found->next;
         found->next = nullptr;

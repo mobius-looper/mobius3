@@ -3,10 +3,11 @@
 
 #include "../../util/Trace.h"
 #include "../../model/UIAction.h"
-#include "../../model/SymbolIds.h"
+#include "../../model/SymbolId.h"
 #include "../../model/Symbol.h"
 
 #include "TrackScheduler.h"
+#include "MidiTrack.h"
 
 #include "ActionTransformer.h"
 
@@ -16,9 +17,14 @@ ActionTransformer::ActionTransformer(MidiTrack* t, TrackScheduler* s)
     scheduler = s;
 }
 
-void ActionTransformer::initialize(UIActionPool* apool)
+ActionTransformer::~ActionTransformer()
+{
+}
+
+void ActionTransformer::initialize(UIActionPool* apool, SymbolTable* st)
 {
     actionPool = apool;
+    symbols = st;
 }
 
 void ActionTransformer::doKernelActions(UIAction* actions)
@@ -26,7 +32,7 @@ void ActionTransformer::doKernelActions(UIAction* actions)
     doActions(actions, false);
 }
 
-void ActionTransformer::doSchedulerActions(UIActions* actions)
+void ActionTransformer::doSchedulerActions(UIAction* actions)
 {
     doActions(actions, true);
 }
@@ -48,12 +54,14 @@ void ActionTransformer::doSchedulerActions(UIActions* actions)
  */
 void ActionTransformer::doActions(UIAction* list, bool owned)
 {
+    (void)owned;
     // todo: examine the entire list and do filtering or transformation
 
     for (UIAction* a = list ; a != nullptr ; a = a->next) {
 
-        UIAction* copy = actionPool->newAction();
-        copy->copy(a);
+        // don't copy yet, let Scheduler do it
+        //UIAction* copy = actionPool->newAction();
+        //copy->copy(a);
 
         doOneAction(a);
     }
@@ -61,15 +69,34 @@ void ActionTransformer::doActions(UIAction* list, bool owned)
 
 void ActionTransformer::doOneAction(UIAction* a)
 {
-    if (a->longPress) {
+    //Trace(2, "ActionTransformer::doOneAction %s", a->symbol->getName());
+    
+    if (a->symbol->parameterProperties) {
+        // a parameter assignment, no transformations yet
+        // scheduler may quantize these
+        scheduler->doParameter(a);
+    }
+    else if (a->sustainEnd) {
+        // filter these out for now, no SUS functions yet so don't confuse things
+        //Trace(2, "ActionTransformer: Filtering sustain end action");
+    }
+    else if (a->longPress) {
         // don't have many of these
         if (a->symbol->id == FuncRecord) {
-            if (a->longPressCount == 0)
-              // loop reset
-              doReset(a, false);
-            else if (a->longPressCount == 1)
-              // track reset
-              doReset(a, true);
+            if (a->longPressCount == 0) {
+                // loop reset
+                Trace(2, "ActionTransformer: Long Record to Reset");
+                UIAction temp;
+                temp.symbol = symbols->getSymbol(FuncReset);
+                scheduler->doAction(&temp);
+            }
+            else if (a->longPressCount == 1) {
+                // track reset
+                Trace(2, "ActionTransformer: LongLong Record to TrackReset");
+                UIAction temp;
+                temp.symbol = symbols->getSymbol(FuncTrackReset);
+                scheduler->doAction(&temp);
+            }
             else {
                 // would be nice to have this be GlobalReset but
                 // would have to throw that back to Kernel
@@ -80,8 +107,34 @@ void ActionTransformer::doOneAction(UIAction* a)
             char msgbuf[128];
             snprintf(msgbuf, sizeof(msgbuf), "Unsupported long press function: %s",
                      a->symbol->getName());
-            alert(msgbuf);
-            Trace(1, "MidiTrack: %s", msgbuf);
+            track->alert(msgbuf);
+            Trace(1, "ActionTransformer: %s", msgbuf);
         }
     }
+    else if (a->symbol->id == FuncRecord) {
+        // record has special meaning, before scheduler gets it
+        auto mode = track->getMode();
+        
+        if (mode == MobiusMidiState::ModeMultiply) {
+            UIAction temp;
+            temp.symbol = symbols->getSymbol(FuncUnroundedMultiply);
+            scheduler->doAction(&temp);
+        }
+        else if (mode == MobiusMidiState::ModeInsert) {
+            // unrounded insert
+            UIAction temp;
+            temp.symbol = symbols->getSymbol(FuncUnroundedInsert);
+            scheduler->doAction(&temp);
+        }
+        else {
+            scheduler->doAction(a);
+        }
+    }
+    else {
+        scheduler->doAction(a);
+    }
 }
+
+/****************************************************************************/
+/****************************************************************************/
+/****************************************************************************/

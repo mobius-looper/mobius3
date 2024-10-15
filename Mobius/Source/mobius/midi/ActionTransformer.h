@@ -15,20 +15,19 @@ class ActionTransformer
     ActionTransformer(class MidiTrack* t, class TrackScheduler* s);
     ~ActionTransformer();
 
-    void initialize(class UIActionPool* ap);
+    void initialize(class UIActionPool* ap, class SymbolTable* st);
 
-    /**
-     * Analyze a single or list of actions.
-     */
-    void doActions(class UIAction* actions);
+    void doKernelActions(class UIAction* actions);
+    void doSchedulerActions(class UIAction* actions);
 
   private:
 
     class MidiTrack* track = nullptr;
     class TrackScheduler* scheduler = nullptr;
     class UIActionPool* actionPool = nullptr;
+    class SymbolTable* symbols = nullptr;
 
-
-
+    void doActions(class UIAction* list, bool owned);
+    void doOneAction(class UIAction* a);
     
 };

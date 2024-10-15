@@ -1057,6 +1057,11 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->activeLoop = tstate->activeLoop;
     
     tview->frame = tstate->frame;
+
+    // having trouble tracking reset for some reason
+    if (tview->frames > 0 && tstate->frames == 0)
+      tview->refreshLoopContent = true;
+    
     tview->frames = tstate->frames;
     tview->subcycles = tstate->subcycles;
     tview->subcycle = tstate->subcycle;

@@ -46,6 +46,7 @@ class TrackScheduler
     
     // the main entry point from the track to get things going
     void doAction(class UIAction* a);
+    void doParameter(class UIAction* a);
     void advance(class MobiusAudioStream* stream);
 
     // Track callbacks for that awful multiply termination mode

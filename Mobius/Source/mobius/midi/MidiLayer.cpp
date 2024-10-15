@@ -216,6 +216,11 @@ int MidiLayer::getFrames()
 
 void MidiLayer::setCycles(int cycles)
 {
+    if (cycles <= 0) {
+        // prevent divide by zero
+        Trace(1, "MidiLayer::Invalid cycles number");
+        cycles = 1;
+    }
     layerCycles = cycles;
 }
 

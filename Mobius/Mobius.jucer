@@ -481,6 +481,10 @@
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
+          <FILE id="GQRAM1" name="ActionTransformer.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/ActionTransformer.cpp"/>
+          <FILE id="Uho2Nb" name="ActionTransformer.h" compile="0" resource="0"
+                file="Source/mobius/midi/ActionTransformer.h"/>
           <FILE id="a1SAjP" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/LongWatcher.cpp"/>
           <FILE id="tOds4k" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/midi/LongWatcher.h"/>
           <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"

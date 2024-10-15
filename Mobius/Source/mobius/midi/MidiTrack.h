@@ -11,9 +11,11 @@
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
 #include "TrackScheduler.h"
+#include "ActionTransformer.h"
 
 class MidiTrack
 {
+    friend class ActionTransformer;
     friend class TrackScheduler;
 
   public:
@@ -95,13 +97,18 @@ class MidiTrack
     void startInsert();
     void finishInsert();
 
-    void startReplace();
-    void finishReplace();
-
     void toggleOverdub();
     void toggleMute();
+    void toggleReplace();
 
     void finishSwitch(int target);
+    
+    // simple one-shot actions
+    void doParameter(class UIAction* a);
+    void doReset(bool full);
+    void doUndo();
+    void doRedo();
+    void doDump();
     
     void advance(int newFrames);
     
@@ -122,6 +129,7 @@ class MidiTrack
     MidiRecorder recorder {this};
     MidiPlayer player {this};
     TrackScheduler scheduler {this};
+    ActionTransformer transformer {this, &scheduler};
     
     juce::Array<MobiusMidiState::Region> regions;
     int activeRegion = -1;
@@ -144,14 +152,9 @@ class MidiTrack
     void shift();
     void shiftMultiply(bool unrounded);
     void shiftInsert(bool unrounded);
-    bool checkMultiplyTermination();
+    bool isMultiplyEndScheduled();
+    void doMultiplyEarlyTermination();
     
-    // actions/events
-    void doParameter(class UIAction* a);
-    void doReset(bool full);
-    void doUndo();
-    void doRedo();
-    void doDump();
 
     //
     // Function Handlers

@@ -274,14 +274,22 @@ int LoopMeterElement::getMeterOffset(int frame, int frames)
         // should push them to the end
     }
     else {
-        // the percentage of the frame within the loop
-        float fraction = (float)frame / (float)frames;
+        // multiply events and possibly others can extend
+        // beyond the loop length, clamp it down, could also adjust
+        // it to a right arrow or something
+        if (frame > frames) {
+            offset = MeterBarWidth;
+        }
+        else {
+            // the percentage of the frame within the loop
+            float fraction = (float)frame / (float)frames;
 
-        // the width we have available minus insets
-        int width = MeterBarWidth;
+            // the width we have available minus insets
+            int width = MeterBarWidth;
 
-        // offset within the meter of that frame
-        offset = (int)((float)width * fraction);
+            // offset within the meter of that frame
+            offset = (int)((float)width * fraction);
+        }
     }
     
     return offset;

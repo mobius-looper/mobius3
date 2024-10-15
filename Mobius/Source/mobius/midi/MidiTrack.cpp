@@ -65,6 +65,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 
     scheduler.initialize(&(pools->trackEventPool), pools->actionPool, pulsator, valuator,
                          container->getSymbols());
+    transformer.initialize(pools->actionPool, container->getSymbols());
     recorder.initialize(pools);
     player.initialize(container, pools);
 
@@ -253,86 +254,38 @@ void MidiTrack::midiEvent(MidiEvent* e)
 
 /**
  * First level action handler.
- * Handle a few special cases of actions that don't need synchronization
- * or scheduling or are alternate endings for modes.
- * If none of those it passes through Scheduler which will clone it, possibly
- * schedule it, and eventually call doActionNow.
- *
- * !! this needs to be moved to ActionTransformer
+ * Pass immediately to ActionTransformer which then passes it to TrackScheduler,
+ * then eventually back to us.
  */
 void MidiTrack::doAction(UIAction* a)
 {
-    SymbolId sid = a->symbol->id;
-    
-    if (a->symbol->parameterProperties) {
-        // parameters never involve the scheduler
-        // though some of the old rate/pitch shifts did
-        doParameter(a);
-    }
-    else if (a->sustainEnd) {
-        // no up transitions right now
-        //Trace(2, "MidiTrack: Action %s track %d up", a->symbol->getName(), index + 1);
-    }
-    
-    // handle a few non scheduled functions before we get too far
-    else if (sid == FuncDump) {
-        doDump();
-    }
-    else if (sid == FuncUndo) {
-        doUndo();
-    }
-    else if (sid == FuncRedo) {
-        doRedo();
-    }
-    else if (sid == FuncReset) {
-        doReset(false);
-    }
-    else if (sid == FuncTrackReset || sid == FuncGlobalReset) {
-        doReset(true);
-    }
-    
-    else if (a->longPress) {
-        // don't have many of these
-        if (a->symbol->id == FuncRecord) {
-            if (a->longPressCount == 0)
-              // loop reset
-              doReset(false);
-            else if (a->longPressCount == 1)
-              // track reset
-              doReset(true);
-            else {
-                // would be nice to have this be GlobalReset but
-                // would have to throw that back to Kernel
-            }
-        }
-        else {
-            // these are good to show to the user
-            char msgbuf[128];
-            snprintf(msgbuf, sizeof(msgbuf), "Unsupported long press function: %s",
-                     a->symbol->getName());
-            alert(msgbuf);
-            Trace(1, "MidiTrack: %s", msgbuf);
-        }
-    }
-    
-    else if (a->symbol->id == FuncRecord) {
-        // record has special meaning, before scheduler gets it
+    transformer.doSchedulerActions(a);
+}
 
-        if (mode == MobiusMidiState::ModeMultiply) {
-            // unrounded multiply or "cut"
-            unroundedMultiply();
+/**
+ * Actions on a few important parameters are cached locally,
+ * the rest are held in Valuator until the next reset.
+ */
+void MidiTrack::doParameter(UIAction* a)
+{
+    switch (a->symbol->id) {
+        
+        case ParamSubcycles: {
+            if (a->value > 0)
+              subcycles = a->value;
+            else
+              subcycles = 1;
         }
-        else if (mode == MobiusMidiState::ModeInsert) {
-            // unrounded insert
-            unroundedInsert();
-        }
-        else {
-            scheduler.doAction(a);
-       }
-    }
-    else {
-        // scheduler gets to decide
-        scheduler.doAction(a);
+            break;
+            
+        case ParamInput: input = a->value; break;
+        case ParamOutput: output = a->value; break;
+        case ParamFeedback: feedback = a->value; break;
+        case ParamPan: pan = a->value; break;
+            
+        default:
+            valuator->bindParameter(number, a);
+            break;
     }
 }
 
@@ -360,33 +313,6 @@ void MidiTrack::doQuery(Query* q)
             break;
     }
 }    
-
-/**
- * Actions on a few important parameters are cached locally,
- * the rest are held in Valuator until the next reset
- */
-void MidiTrack::doParameter(UIAction* a)
-{
-    switch (a->symbol->id) {
-        
-        case ParamSubcycles: {
-            if (a->value > 0)
-              subcycles = a->value;
-            else
-              subcycles = 1;
-        }
-            break;
-            
-        case ParamInput: input = a->value; break;
-        case ParamOutput: output = a->value; break;
-        case ParamFeedback: feedback = a->value; break;
-        case ParamPan: pan = a->value; break;
-            
-        default:
-            valuator->bindParameter(number, a);
-            break;
-    }
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -443,43 +369,63 @@ void MidiTrack::advance(int newFrames)
         // nothing to do
     }
     else {
-        int nextFrame = recorder.getFrame() + newFrames;
-        if (recorder.isExtending() || nextFrame < recorder.getFrames()) {
-            recorder.advance(newFrames);
-            advancePlayer(newFrames);
-            advanceRegion(newFrames);
-        }
-        else {
-            // we hit the loop point in this block
-            int included = recorder.getFrames() - recorder.getFrame();
-            int remainder = newFrames - included;
-            
-            recorder.advance(included);
-            player.play(included);
+        // the loop point is mystical, I'd rather Scheduler be dealing with this
+        int included = newFrames;
+        int remainder = 0;
+        int currentFrame = recorder.getFrame();
+        int loopFrames = recorder.getFrames();
+        int nextFrame = currentFrame + newFrames;
 
-            // kludge
-            if (!checkMultiplyTermination()) {
-                if (recorder.hasChanges()) {
+        if (nextFrame >= loopFrames) {
+            included = loopFrames - currentFrame;
+            remainder = newFrames - included;
+        }
+
+        // consume up to the the final frame in the loop, but not after
+        recorder.advance(included);
+        advancePlayer(included);
+        advanceRegion(included);
+
+        if (remainder > 0) {
+            // we have now consumed enough frames to fill the layer, before
+            // we shift, check for extension modes
+
+            // not that we're careful about the loop boundary, don't necessarily
+            // need the recorder.isExtending flag, could just let it auto extend if we ask it
+            bool earlyTermination = isMultiplyEndScheduled();
+            bool extending = (recorder.isExtending() && !earlyTermination);
+
+            if (extending) {
+                recorder.advance(remainder);
+                advancePlayer(remainder);
+                advanceRegion(remainder);
+            }
+            else {
+                // shift in some way
+                if (earlyTermination) {
+                    doMultiplyEarlyTermination();
+                }
+                else if (recorder.hasChanges()) {
                     shift();
                 }
                 else {
                     // squelching the record layer
                     recorder.rollback(overdub);
                 }
-            }
-             
-            // restart the overdub region if we're still in it
-            resetRegions();
-            if (overdub) startOverdubRegion();
-
-            // shift events waiting for the loop end
-            // don't like this
-            scheduler.shiftEvents(recorder.getFrames());
             
-            player.restart();
-            player.play(remainder);
-            recorder.advance(remainder);
-            advanceRegion(remainder);
+                // restart the overdub region if we're still in it
+                resetRegions();
+                if (overdub) startOverdubRegion();
+
+                // shift events waiting for the loop end
+                // don't like this
+                scheduler.shiftEvents(recorder.getFrames());
+            
+                player.restart();
+                player.play(remainder);
+                recorder.advance(remainder);
+                advanceRegion(remainder);
+            }
         }
     }
 }
@@ -502,21 +448,17 @@ void MidiTrack::advance(int newFrames)
  *
  * Taking approach 1 just to have something to start with.
  *
- * Returns true if we did premature termination and have handled the multiply shift.
- *
+ * Returns true if we're going to do early termination.
  */
-bool MidiTrack::checkMultiplyTermination()
+bool MidiTrack::isMultiplyEndScheduled()
 {
-    bool terminated = false;
+    return (mode == MobiusMidiState::ModeMultiply && scheduler.hasRoundingScheduled());
+}
 
-    if (mode == MobiusMidiState::ModeMultiply) {
-        if (scheduler.hasRoundingScheduled()) {
-            finishMultiply();
-            scheduler.cancelRounding();
-            terminated = true;
-        }
-    }
-    return terminated;
+void MidiTrack::doMultiplyEarlyTermination()
+{
+    finishMultiply();
+    scheduler.cancelRounding();
 }
 
 /**
@@ -562,7 +504,7 @@ void MidiTrack::shift()
  */
 void MidiTrack::shiftMultiply(bool unrounded)
 {
-    Trace(2, "MidiTrack: Shifting cut layer");
+    Trace(2, "MidiTrack: Shifting multiply layer");
     MidiLoop* loop = loops[loopIndex];
     
     MidiLayer* neu = recorder.commitMultiply(overdub, unrounded);
@@ -702,6 +644,11 @@ void MidiTrack::advanceRegion(int frames)
  */
 void MidiTrack::doReset(bool full)
 {
+    if (full)
+      Trace(2, "MidiTrack: TrackReset");
+    else
+      Trace(2, "MidiTrack: Reset");
+      
     mode = MobiusMidiState::ModeReset;
 
     recorder.reset();
@@ -802,6 +749,11 @@ void MidiTrack::finishRecord()
  */
 void MidiTrack::toggleOverdub()
 {
+    if (overdub)
+      Trace(2, "MidiTrck: Stopping Overdub");
+    else
+      Trace(2, "MidiTrck: Starting Overdub");
+    
     // toggle our state
     if (overdub)
       stopOverdubRegion();
@@ -856,6 +808,8 @@ bool MidiTrack::inRecordingMode()
  */
 void MidiTrack::doUndo()
 {
+    Trace(2, "MidiTrack: Undo");
+    
     // here is where we should start chipping away at events
     
     if (mode == MobiusMidiState::ModeRecord) {
@@ -909,6 +863,8 @@ void MidiTrack::doUndo()
  */
 void MidiTrack::doRedo()
 {
+    Trace(2, "MidiTrack: Redo");
+    
     if (mode == MobiusMidiState::ModeReset) {
         // ignore
     }
@@ -967,6 +923,7 @@ void MidiTrack::doRedo()
  */
 void MidiTrack::startMultiply()
 {
+    Trace(2, "MidiTrack: Start Multiply");
     mode = MobiusMidiState::ModeMultiply;
     recorder.startMultiply();
 }
@@ -976,12 +933,14 @@ void MidiTrack::startMultiply()
  */
 void MidiTrack::finishMultiply()
 {
+    Trace(2, "MidiTrack: Finish Multiply");
     shiftMultiply(false);
     mode = MobiusMidiState::ModePlay;
 }
 
 void MidiTrack::unroundedMultiply()
 {
+    Trace(2, "MidiTrack: Unrounded Multiply");
     shiftMultiply(true);
     mode = MobiusMidiState::ModePlay;
 }
@@ -1013,10 +972,14 @@ int MidiTrack::getModeEndFrame()
  */
 int MidiTrack::extendRounding()
 {
-    if (mode == MobiusMidiState::ModeMultiply)
-      recorder.extendMultiply();
-    else
-      recorder.extendInsert();
+    if (mode == MobiusMidiState::ModeMultiply) {
+        Trace(2, "MidiTrack: Extending Multiply");
+        recorder.extendMultiply();
+    }
+    else {
+        Trace(2, "MidiTrack: Extending Insert");
+        recorder.extendInsert();
+    }
     return recorder.getModeEndFrame();
 }
 
@@ -1051,6 +1014,7 @@ int MidiTrack::getRoundingFrames()
  */
 void MidiTrack::startInsert()
 {
+    Trace(2, "MidiTrack: Start Insert");
     mode = MobiusMidiState::ModeInsert;
     recorder.startInsert();
 }
@@ -1060,6 +1024,7 @@ void MidiTrack::startInsert()
  */
 void MidiTrack::finishInsert()
 {
+    Trace(2, "MidiTrack: Finish Insert");
     // don't shift an insert right away like multiply, let it accumulate
     // shiftInsert(unrounded);
     recorder.endInsert(overdub, false);
@@ -1068,6 +1033,7 @@ void MidiTrack::finishInsert()
 
 void MidiTrack::unroundedInsert()
 {
+    Trace(2, "MidiTrack: Unrounded Insert");
     recorder.endInsert(overdub, true);
     mode = MobiusMidiState::ModePlay;
 }
@@ -1087,6 +1053,8 @@ void MidiTrack::unroundedInsert()
  */
 void MidiTrack::finishSwitch(int newIndex)
 {
+    Trace(2, "MidiTrack: Switch %d", newIndex);
+
     MidiLoop* currentLoop = loops[loopIndex];
 
     // remember the location for SwitchLocation=Restore
@@ -1116,6 +1084,7 @@ void MidiTrack::finishSwitch(int newIndex)
             // !! feels like Scheduler may want to know about this?
         }
         else if (action == EMPTY_LOOP_RECORD) {
+            Trace(2, "MidiTrack: Empty loop record");
             // this may need to synchronize on a pulse so pass it through the
             // scheduler as if a Reord action  had been received
             UIAction a;
@@ -1123,6 +1092,7 @@ void MidiTrack::finishSwitch(int newIndex)
             scheduler.doAction(&a);
         }
         else if (action == EMPTY_LOOP_COPY) {
+            Trace(2, "MidiTrack: Empty loop copy");
             if (currentPlaying == nullptr)
               recorder.reset();
             else {
@@ -1132,6 +1102,7 @@ void MidiTrack::finishSwitch(int newIndex)
             }
         }
         else if (action == EMPTY_LOOP_TIMING) {
+            Trace(2, "MidiTrack: Empty loop time copy");
             if (currentPlaying == nullptr)
               recorder.reset();
             else {
@@ -1211,11 +1182,13 @@ void MidiTrack::toggleMute()
     // we'll be transitioning to/from Play mode?
     
     if (mode == MobiusMidiState::ModeMute) {
+        Trace(2, "MidiTrack: Stopping Mute");
         mode = MobiusMidiState::ModePlay;
         player.setMute(false);
         mute = false;
     }
     else if (mode == MobiusMidiState::ModePlay) {
+        Trace(2, "MidiTrack: Starting Mute");
         mode = MobiusMidiState::ModeMute;
         player.setMute(true);
         mute = true;
@@ -1228,18 +1201,20 @@ void MidiTrack::toggleMute()
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::startReplace()
+void MidiTrack::toggleReplace()
 {
-    mode = MobiusMidiState::ModeReplace;
-    recorder.startReplace();
-}
-
-void MidiTrack::finishReplace()
-{
-    mode = MobiusMidiState::ModePlay;
-    // audio tracks would shift the layer now, we'll let it go
-    // till the end and accumulate more changes
-    recorder.endReplace(overdub);
+    if (mode == MobiusMidiState::ModeReplace) {
+        Trace(2, "MidiTrack: Stopping Replace");
+        // audio tracks would shift the layer now, we'll let it go
+        // till the end and accumulate more changes
+        recorder.endReplace(overdub);
+        mode = MobiusMidiState::ModePlay;
+    }
+    else {
+        Trace(2, "MidiTrack: Starting Replace");
+        mode = MobiusMidiState::ModeReplace;
+        recorder.startReplace();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

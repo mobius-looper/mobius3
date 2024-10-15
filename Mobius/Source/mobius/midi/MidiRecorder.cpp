@@ -446,15 +446,49 @@ MidiLayer* MidiRecorder::commitMultiply(bool overdub, bool unrounded)
     else {
         int cutStart = modeStartFrame;
         int cutEnd = recordFrame - 1;
-        
-        int newFrames = recordFrame - modeStartFrame;
-        int newCycles = recordCycles;
-        int newCycleFrames = cycleFrames;
+        int newFrames;
+        int newCycles;
+        int newCycleFrames;
+
         if (unrounded) {
+            newFrames = recordFrame - modeStartFrame;
             newCycles = 1;
             newCycleFrames = newFrames;
         }
+        else if (recordFrame == modeEndFrame) {
+            // ended where it normally would be after full rounding
+            newFrames = recordFrame - modeStartFrame;
+            newCycles = newFrames / cycleFrames;
+            if (newCycles == 0) newCycles = 1;
+            newCycleFrames = cycleFrames;
+        }
         else {
+            // ended early, recordFrame is normally right at the end
+            // back the start up one cycle if this is remultiply
+            // I can see why EDP people would hate this
+            
+            // beginning cycle of modeStartFrame
+            cutStart = (modeStartFrame / cycleFrames) * cycleFrames;
+
+            // ending cycle of recordFrame
+            if (recordFrame == recordFrames) {
+                // expected roundoff to the last cycle
+                cutEnd = recordFrames - 1;
+                newFrames = recordFrames - cutStart;
+            }
+            else {
+                // unexpected, terminated early but not on the edge
+                // round the end up to the cycle boundary
+                Trace(2, "MidiRecorder: Adjusting weird multiply end point");
+                int thisCycle = recordFrame / cycleFrames;
+                int nextCycleFrame = (thisCycle + 1) * cycleFrames;
+                cutEnd = nextCycleFrame - 1;
+                newFrames = nextCycleFrame - cutStart;
+            }
+
+            newCycles = newFrames / cycleFrames;
+            newCycleFrames = cycleFrames;
+        
             // sanity check on cycle preservation
             newCycles = newFrames / cycleFrames;  // this will round
             int checkFrames = newCycles * cycleFrames;

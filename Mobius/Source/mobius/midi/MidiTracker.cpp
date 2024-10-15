@@ -180,19 +180,6 @@ void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 }
 
 /**
- * Listener callback for LongWatcher.
- * We're inside processAudioStream and one of the watchers
- * has crossed the threshold
- */
-void MidiTracker::longPressDetected(UIAction* a)
-{
-    (void)a;
-    // this is extremely annoying during debugging
-    // need a session flag for this!!
-    //doAction(a);
-}
-
-/**
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
@@ -213,21 +200,38 @@ void MidiTracker::doAction(UIAction* a)
     else {
         // watch this if it isn't already a longPress
         if (!a->longPress) longWatcher.watch(a);
-        
-        // convert the visible track number to a local array index
-        // this is where we will need some sort of mapping table
-        // if you allow tracks to be reordered in the UI
-        int actionScope = a->getScopeTrack();
-        int localIndex = actionScope - audioTracks - 1;
-        if (localIndex < 0 || localIndex >= activeTracks) {
-            Trace(1, "MidiTracker: Invalid action scope %d", actionScope);
-        }
-        else {
-            MidiTrack* track = tracks[localIndex];
-            track->doAction(a);
-        }
+
+        doTrackAction(a);
     }
 }
+
+/**
+ * Listener callback for LongWatcher.
+ * We're inside processAudioStream and one of the watchers
+ * has crossed the threshold
+ */
+void MidiTracker::longPressDetected(UIAction* a)
+{
+    //Trace(2, "MidiTracker::longPressDetected %s", a->symbol->getName());
+    doTrackAction(a);
+}
+
+void MidiTracker::doTrackAction(UIAction* a)
+{
+    //Trace(2, "MidiTracker::doTrackAction %s", a->symbol->getName());
+    // convert the visible track number to a local array index
+    // this is where we will need some sort of mapping table
+    // if you allow tracks to be reordered in the UI
+    int actionScope = a->getScopeTrack();
+    int localIndex = actionScope - audioTracks - 1;
+    if (localIndex < 0 || localIndex >= activeTracks) {
+        Trace(1, "MidiTracker: Invalid action scope %d", actionScope);
+    }
+    else {
+        MidiTrack* track = tracks[localIndex];
+        track->doAction(a);
+    }
+}    
 
 bool MidiTracker::doQuery(Query* q)
 {

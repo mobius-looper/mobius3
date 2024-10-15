@@ -290,6 +290,10 @@ typedef enum {
     // various diagnostic functions for testing
     FuncTraceStatus,
     FuncDump,
+
+    // internal functions derived from other things
+    FuncUnroundedMultiply,
+    FuncUnroundedInsert,
     
     //
     // UI Parameters

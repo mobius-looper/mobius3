@@ -73,6 +73,7 @@ class MidiTracker : public LongWatcher::Listener
     
     void allocateTracks(int baseNumber, int count);
     void refreshState();
+    void doTrackAction(class UIAction* a);
 
     // kludge: revisit
     int stateRefreshCounter = 0;

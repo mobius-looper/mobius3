@@ -126,6 +126,20 @@ void TrackScheduler::doAction(UIAction* src)
 }
 
 /**
+ * Called by action transformer to set a parameter.
+ * Normally just a pass-through.
+ *
+ * We can in theory quantize parameter assignment.  Old Mobius does
+ * some parameter to function conversion for this for rate and pitch
+ * parameters.
+ * Not implemented yet.
+ */
+void TrackScheduler::doParameter(UIAction* src)
+{
+    track->doParameter(src);
+}
+
+/**
  * Determine when an action may take place.  The options are:
  *
  *     - immediate
@@ -138,32 +152,49 @@ void TrackScheduler::doAction(UIAction* src)
  */
 void TrackScheduler::doActionInternal(UIAction* a)
 {
-    if (isRecord(a)) {
-        scheduleRecord(a);
-    }
-    else {
-        TrackEvent* recordEvent = events.find(TrackEvent::EventRecord);
-        if (recordEvent != nullptr) {
-            // we're waiting for a record start sync pulse
-            // and they're pushing buttons, can extend or stack
-            stackRecord(recordEvent, a);
+    // these always go through immediately and are not mode ending
+    // hating this
+    SymbolId sid = a->symbol->id;
+    switch (sid) {
+        case FuncReset:
+        case FuncTrackReset:
+        case FuncGlobalReset:
+        case FuncDump:
+        case FuncUndo:
+        case FuncRedo: {
+            doActionNow(a);
         }
-        else {
-            // not in initial recording, the mode decides
-            auto mode = track->getMode();
+            break;
 
-            if (isModeEnding(mode)) {
-                scheduleModeEnd(a, mode);
-            }
-            else if (isLoopSwitch(a)) {
-                scheduleSwitch(a);
-            }
-            else if (isQuantized(a)) {
-                scheduleQuantized(a);
+        default: {
+            if (isRecord(a)) {
+                scheduleRecord(a);
             }
             else {
-                // fuck it, we'll do it live
-                doActionNow(a);
+                TrackEvent* recordEvent = events.find(TrackEvent::EventRecord);
+                if (recordEvent != nullptr) {
+                    // we're waiting for a record start sync pulse
+                    // and they're pushing buttons, can extend or stack
+                    stackRecord(recordEvent, a);
+                }
+                else {
+                    // not in initial recording, the mode decides
+                    auto mode = track->getMode();
+
+                    if (isModeEnding(mode)) {
+                        scheduleModeEnd(a, mode);
+                    }
+                    else if (isLoopSwitch(a)) {
+                        scheduleSwitch(a);
+                    }
+                    else if (isQuantized(a)) {
+                        scheduleQuantized(a);
+                    }
+                    else {
+                        // fuck it, we'll do it live
+                        doActionNow(a);
+                    }
+                }
             }
         }
     }
@@ -232,6 +263,12 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncInsert: doInsert(a); break;
         case FuncMute: doMute(a); break;
         case FuncReplace: doReplace(a); break;
+
+        case FuncDump: track->doDump(); break;
+
+            // internal functions from ActionTransformer
+        case FuncUnroundedMultiply: track->unroundedMultiply(); break;
+        case FuncUnroundedInsert: track->unroundedInsert(); break;
             
         default: {
             char msgbuf[128];
@@ -501,11 +538,13 @@ void TrackScheduler::scheduleRecord(UIAction* a)
     }
     else {
         doRecord(nullptr);
+        actionPool->checkin(a);
     }
 }
 
 TrackEvent* TrackScheduler::scheduleRecordEvent(UIAction* a)
 {
+    (void)a;
     TrackEvent* e = eventPool->newEvent();
     e->type = TrackEvent::EventRecord;
     e->pending = true;
@@ -574,7 +613,11 @@ void TrackScheduler::doRecord(TrackEvent* e)
     else
       track->startRecord();
 
-    doStacked(e);
+    if (e != nullptr) {
+        doStacked(e);
+        if (e->primary != nullptr)
+          actionPool->checkin(e->primary);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -614,15 +657,29 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         // here we may need to inject recording extension options, but
         // currently Record/Record is handled by scheduleRecord which
         // is the only extender
+
+        // hmm, event needs to have the ending action on the stacked list
+        // in order for it to be executed, but only if this is something
+        // other than the record function, which it has to be to get to scheduleModeEnd
+        UIAction* stack = nullptr;
+        if (a->symbol->id == FuncRecord || a->symbol->id == FuncAutoRecord) {
+            Trace(1, "TrackScheduler: Not supposed to be here");
+            actionPool->checkin(a);
+        }
+        else {
+            stack = a;
+        }
         
         if (isRecordSynced()) {
-            (void)scheduleRecordEvent(a);
+            TrackEvent* e = scheduleRecordEvent(nullptr);
+            e->stack(stack);
         }
         else {
             // what happens here needs to be consistent with what
             // doRecord(TrackEvent) does after an event
             track->finishRecord();
-            actionPool->checkin(a);
+            if (stack != nullptr)
+              doActionNow(stack);
         }
     }
     else if (mode == MobiusMidiState::ModeMultiply ||
@@ -741,11 +798,7 @@ void TrackScheduler::doInsert(UIAction* a)
 void TrackScheduler::doReplace(UIAction* a)
 {
     (void)a;
-    auto mode = track->getMode();
-    if (mode == MobiusMidiState::ModeReplace)
-      track->finishReplace();
-    else
-      track->startReplace();
+    track->toggleReplace();
 }
 
 /**
