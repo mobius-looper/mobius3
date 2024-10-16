@@ -418,7 +418,8 @@ void MidiTrack::advance(int newFrames)
             
                 // restart the overdub region if we're still in it
                 resetRegions();
-                if (overdub) startOverdubRegion();
+                if (overdub)
+                  startOverdubRegion();
 
                 // shift events waiting for the loop end
                 // don't like this
@@ -976,8 +977,6 @@ int MidiTrack::getModeEndFrame()
     return recorder.getModeEndFrame();
 }
 
-
-
 /**
  * When Scheduler sees another Multiply/Insert come in during the rounding
  * period, it normally extends the rounding by one cycle.
@@ -1022,7 +1021,7 @@ int MidiTrack::getRoundingFrames()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called indirectly by Scheduler to begin multiply mode.
+ * Called indirectly by Scheduler to begin insert mode.
  */
 void MidiTrack::startInsert()
 {
@@ -1030,6 +1029,17 @@ void MidiTrack::startInsert()
     mode = MobiusMidiState::ModeInsert;
     player.pause();
     recorder.startInsert();
+}
+
+/**
+ * Handler for the extension event scheduled at the start and
+ * Returns the new frame for the event which is retained.
+ */
+int MidiTrack::extendInsert()
+{
+    Trace(2, "MidiTrack: Extend Insert");
+    recorder.extendInsert();
+    return recorder.getModeEndFrame();
 }
 
 /**

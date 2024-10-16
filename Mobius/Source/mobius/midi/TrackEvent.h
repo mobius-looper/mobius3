@@ -48,6 +48,9 @@ class TrackEvent : public PooledObject
     // when it is waiting for a sync pulse
     bool pulsed = false;
 
+    // for Round events, indiciates this is an extension point
+    bool extension = false;
+
     // stacked actions
     class UIAction* primary = nullptr;
     class UIAction* stacked = nullptr;

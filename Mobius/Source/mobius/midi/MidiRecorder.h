@@ -48,7 +48,6 @@ class MidiRecorder : public MidiWatcher::Listener
     void startMultiply();
     void extendMultiply();
     void reduceMultiply();
-    void endMultiply(bool overdub);
     
     void startInsert();
     void extendInsert();
@@ -126,7 +125,8 @@ class MidiRecorder : public MidiWatcher::Listener
 
     int lastBlockFrames = 0;
 
-    void extend();
+    void resetFlags();
+    void addMultiplyCycle();
     MidiSegment* rebuildSegments(int startFrame,  int endFame);
     
     void assimilate(class MidiLayer* layer);

@@ -65,18 +65,15 @@ void MidiSegment::clear(MidiPools* pools)
     poolInit();
 }
 
-MidiSegment* MidiSegment::copy(MidiPools* pools, MidiSegment* src)
+void MidiSegment::copyFrom(MidiPools* pools, MidiSegment* src)
 {
-    MidiSegment* neu = nullptr;
     if (src != nullptr) {
-        neu = pools->newSegment();
-        neu->layer = src->layer;
-        neu->prefix.copyFrom(&(pools->midiPool), &(src->prefix));
-        neu->originFrame = src->originFrame;
-        neu->segmentFrames = src->segmentFrames;
-        neu->referenceFrame = src->referenceFrame;
+        layer = src->layer;
+        prefix.copyFrom(&(pools->midiPool), &(src->prefix));
+        originFrame = src->originFrame;
+        segmentFrames = src->segmentFrames;
+        referenceFrame = src->referenceFrame;
     }
-    return neu;
 }
 
 //////////////////////////////////////////////////////////////////////

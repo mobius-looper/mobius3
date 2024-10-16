@@ -87,6 +87,7 @@ class TrackScheduler
     void scheduleQuantized(class UIAction* a);
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
+    void addExtensionEvent(int frame);
     
     // Record
     bool isRecord(class UIAction* a);

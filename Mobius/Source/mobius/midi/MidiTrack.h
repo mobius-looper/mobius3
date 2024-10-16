@@ -97,6 +97,7 @@ class MidiTrack : public AbstractTrack
     void unroundedMultiply() override;
 
     void startInsert() override;
+    int extendInsert() override;
     void finishInsert() override;
     void unroundedInsert() override;
 

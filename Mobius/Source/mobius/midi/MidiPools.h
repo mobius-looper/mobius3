@@ -139,8 +139,9 @@ class MidiPools
     }
     MidiSegment* copy(MidiSegment* src) {
         if (src == nullptr) return nullptr;
+        // this one doesn't do an in-place copy, it makes a new one
         MidiSegment* neu = segmentPool.newSegment();
-        neu->copy(this, src);
+        neu->copyFrom(this, src);
         return neu;
     }
     void clear(MidiSegment* s) {

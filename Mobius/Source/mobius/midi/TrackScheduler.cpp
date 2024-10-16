@@ -497,12 +497,25 @@ void TrackScheduler::doEvent(TrackEvent* e)
             auto mode = track->getMode();
             if (mode == MobiusMidiState::ModeMultiply)
               track->finishMultiply();
-            else if (mode == MobiusMidiState::ModeInsert)
-              track->finishInsert();
+            else if (mode == MobiusMidiState::ModeInsert) {
+                if (!e->extension)
+                  track->finishInsert();
+                else {
+                    track->extendInsert();
+                    // extensions are special because they reschedule themselves for the
+                    // next boundary, the event was already removed from the list,
+                    // change the frame and add it back
+                    e->frame = track->getModeEndFrame();
+                    events.add(e);
+                    // prevent it from being disposed
+                    e = nullptr;
+                }
+            }
             else
               Trace(1, "TrackScheduler: EventRound encountered unexpected track mode");
 
-            doStacked(e);
+            if (e != nullptr)
+              doStacked(e);
 
         }
             break;
@@ -514,7 +527,8 @@ void TrackScheduler::doEvent(TrackEvent* e)
 
     }
 
-    dispose(e);
+    if (e != nullptr) 
+      dispose(e);
 }
 
 /**
@@ -799,21 +813,33 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
         TrackEvent* event = events.find(TrackEvent::EventRound);
         if (event != nullptr) {
             if (a->symbol->id == function) {
-                // extend the rounding period
-                // the multiplier is used by refreshState so the UI can
-                // show how many times this will be extended
-                // zero means 1 which is not shown, any other
-                // positive number is shown
-                // cleaner if this just counted up from zero
-                if (event->multiples == 0)
-                  event->multiples = 2;
-                else
-                  event->multiples++;
-                event->frame = track->extendRounding();
+                // the same function that scheduled the rounding is being used again
+
+                if (event->extension) {
+                    // if this is an extension event, using the function again
+                    // simply stops extensions and converts it to a normal rounded ending
+                    event->extension = false;
+                }
+                else {
+                    // extend the rounding period
+                    // the multiplier is used by refreshState so the UI can
+                    // show how many times this will be extended
+                    // zero means 1 which is not shown, any other
+                    // positive number is shown
+                    // cleaner if this just counted up from zero
+                    if (event->multiples == 0)
+                      event->multiples = 2;
+                    else
+                      event->multiples++;
+                    event->frame = track->extendRounding();
+                }
                 actionPool->checkin(a);
             }
             else {
                 // a random function stacks after rounding is over
+                // if this was an auto-extender (Insert) it stops and becomes
+                // a normal ending
+                event->extension = false;
                 Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
                 event->stack(a);
             }
@@ -828,6 +854,8 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
             // todo: this is where we have two options on how rounding works
             // always round relative to the modeStartFrame or round just to the
             // end of the current cycle
+            // update: because of addExtensionEvent we should never get here
+            // with Insert any more
             
             event = eventPool->newEvent();
             event->type = TrackEvent::EventRound;
@@ -914,6 +942,39 @@ void TrackScheduler::checkModeCancel(UIAction* a)
     }
 }
 
+/**
+ * Schedule an extension event for Insert
+ *
+ * Insert does not auto-extend like Multiply, it asks that the rounding event
+ * be pre-scheduled and when it is reached it will extend the insert rather
+ * than finish it.
+ *
+ * Could do the same for Multiply, but it is more important for Insert since
+ * it isn't obvious where the extenion point is, whereas with Multiply it's
+ * always at the loop endpoint (assuming simple extension mode).
+ *
+ * This also simplifies Recorder since it doesn't have to monitor block transitions
+ * over the insert end frame.
+ *
+ * In hindsight I like having scheduler do this, and it would be nice if it could
+ * handle multiply extensions as well as loop transitions as well.
+ */
+void TrackScheduler::addExtensionEvent(int frame)
+{
+    // there can only be one rounding event at any time
+    TrackEvent* event = events.find(TrackEvent::EventRound);
+    if (event != nullptr)
+      Trace(1, "TrackScheduler: Insert extension event already scheduled");
+    else {
+        event = eventPool->newEvent();
+        event->type = TrackEvent::EventRound;
+        event->frame = frame;
+        event->extension = true;
+            
+        events.add(event);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Various Mode Starts
@@ -963,6 +1024,8 @@ void TrackScheduler::doInsert(UIAction* a)
 {
     (void)a;
     track->startInsert();
+    // pre-allocate the round off event so we have something to see
+    addExtensionEvent(track->getModeEndFrame());
 }
 
 /**
@@ -1383,8 +1446,12 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
                 auto mode = track->getMode();
                 if (mode == MobiusMidiState::ModeMultiply)
                   estate->name = "End Multiply";
-                else
-                  estate->name = "End Insert";
+                else {
+                    if (e->extension)
+                      estate->name = "Insert";
+                    else
+                      estate->name = "End Insert";
+                }
                 if (e->multiples > 0)
                   estate->name += juce::String(e->multiples);
             }

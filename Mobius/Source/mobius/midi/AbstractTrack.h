@@ -42,6 +42,7 @@ class AbstractTrack
     virtual void unroundedMultiply() = 0;
     
     virtual void startInsert() = 0;
+    virtual int extendInsert() = 0;
     virtual void finishInsert() = 0;
     virtual void unroundedInsert() = 0;
 

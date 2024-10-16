@@ -66,6 +66,8 @@ void MidiRecorder::dump(StructureDumper& d)
     d.add("extensions", extensions);
     if (modeStartFrame > 0)
       d.line("modeStartFrame", modeStartFrame);
+    if (modeEndFrame > 0)
+      d.line("modeEndFrame", modeEndFrame);
     d.newline();
 
     d.inc();
@@ -103,10 +105,9 @@ void MidiRecorder::reset()
     recordFrame = 0;
     recordCycles = 1;
     cycleFrames = 0;
-    recording = false;
-    extending = false;
-    extensions = 0;
 
+    resetFlags();
+    
     watcher.flushHeld();
 }
 
@@ -222,15 +223,29 @@ void MidiRecorder::rollback(bool overdub)
     // restored by the caller
     recordFrame = 0;
 
+    resetFlags();
+    
     // keep recording on if we're still in overdub mode
     recording = overdub;
 
-    // but can't be in an extension mode?
-    extending = false;
-    extensions = 0;
-
     if (!overdub)
       watcher.flushHeld();
+}
+
+/**
+ * Reset the various special recording flags when
+ * preparing for a new layer.
+ */
+void MidiRecorder::resetFlags()
+{
+    recording = false;
+    extending = false;
+    extensions = 0;
+    insert = false;
+    multiply = false;
+    replace = false;
+    modeStartFrame = 0;
+    modeEndFrame = 0;
 }
 
 /**
@@ -276,15 +291,13 @@ MidiLayer* MidiRecorder::commit(bool overdub)
         assimilate(commitLayer);
 
         // turn off extension mode, track has to turn it back on if necessary
-        extending = false;
-    
+        resetFlags();
         if (!overdub)
           recording = false;
     
         // start the next layer back at zero
         // frame count stays the same
         recordFrame = 0;
-        extensions = 0;
     }
 
     return commitLayer;
@@ -344,11 +357,19 @@ void MidiRecorder::setFrame(int newFrame)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Begin a multiply region.
+ * There isn't much to do, just remember where this started
+ * and enable overdub
+ */
 void MidiRecorder::startMultiply()
 {
     // maybe better to just have a mode enum, though it is an error
     // to have left this in an unclosed mode
-    if (insert || replace) Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
+    if (insert || replace || multiply) {
+        Trace(1, "MidiRecorder: Starting multiply with unclosed mode");
+        resetFlags();
+    }
     
     modeStartFrame = recordFrame;
     modeEndFrame = recordFrame + cycleFrames;
@@ -360,23 +381,8 @@ void MidiRecorder::startMultiply()
     // and the roudoff period will be before the end of the added cycle, which is okay
     
     multiply = true;
-    insert = false;
-    replace = false;
     extending = true;
     setRecording(true);
-}
-
-/**
- * This isn't actually called, ending a multiply always shifts a new
- * layer with commitMultiply
- */
-void MidiRecorder::endMultiply(bool overdub)
-{
-    // todo: rounding, this will need to schedule an event
-    // do that here or make MidiTrack handle it?
-    multiply = false;
-    extending = false;
-    setRecording(overdub);
 }
 
 /**
@@ -634,16 +640,30 @@ MidiSegment* MidiRecorder::rebuildSegments(int startFrame, int endFrame)
  * can be undone if the extension was done by accident.
  *
  * SUSUnroundedInsert also does this but it won't end up committing the entire cycle.
- * I guess just to have something to show.  Ideally the loop meter would show this grown
- * incrementally without jumping.  I guess just make it look like a rounded insert then
- * unround at the end.  SUSUnroundedMultiply also works that way.
+ * Ideally the loop meter would show this grow incrementally without jumping but that's
+ * hard, just inject the cycle and trim it later.
+ *
+ * Unlike Multiply, Recorder does not auto extend insert cycles.  Track is expected
+ * to have scheduled an event for the round point and will call back to extendInsert
+ * when it is reached.  
  */
 void MidiRecorder::startInsert()
 {
-    if (multiply || replace) Trace(1, "MidiRecorder: Starting insert with unclosed mode");
+    if (multiply || replace || insert) {
+        Trace(1, "MidiRecorder: Starting insert with unclosed mode");
+        resetFlags();
+    }
+    
     modeStartFrame = recordFrame;
 
-    // insert a segment between the others, splitting the spanning segment
+    // Insert a segment between the others, splitting the spanning segment.
+    // Prefix calculation for the right half of any split segment is subtle.
+    // To know what notes will extend into the right half before the split we
+    // can't truncate the left half before caculating the prefix for the right half.
+    // This results in three passes, one to just find the split segments,
+    // another to calculate the right half prefix, and another to truncate the left half.
+
+    MidiSegment* rightSplits = nullptr;
     int newCycleLast = modeStartFrame + cycleFrames - 1;
     for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
         int seglast = seg->originFrame + seg->segmentFrames - 1;
@@ -655,29 +675,56 @@ void MidiRecorder::startInsert()
             seg->originFrame += cycleFrames;
         }
         else {
+            int leftCut = seglast - modeStartFrame + 1;
+            int rightCut = modeStartFrame - seg->originFrame;
+            
             // needs to split
             MidiSegment* rightHalf = pools->copy(seg);
-            // shorten the left half
-            int leftCut = seglast - modeStartFrame + 1;
-            seg->segmentFrames -= leftCut;
-            // shorten the right half
-            int rightCut = modeStartFrame - seg->originFrame;
             rightHalf->segmentFrames -= rightCut;
-            // and push
-            rightHalf->originFrame += cycleFrames;
-
+            rightHalf->originFrame = modeStartFrame + cycleFrames;
+            // right half reference frame is the original reference frame plus the amount
+            // we will leave in it after cutting
+            rightHalf->referenceFrame = seg->referenceFrame + (seg->segmentFrames - leftCut);
+            // save it for later
+            rightHalf->next = rightSplits;
+            rightSplits = rightHalf;
+            
+            // leave the left half at it's original lenght till after prefix calculation
         }
     }
-    
+
+    // Now add the right halfs and calculate their prefix
+    while (rightSplits != nullptr) {
+        MidiSegment* next = rightSplits->next;
+        rightSplits->next = nullptr;
+        recordLayer->add(rightSplits);
+        harvester.harvestPrefix(rightSplits);
+        rightSplits = next;
+    }
+
+    // finally truncate the left splits
+    for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
+        int seglast = seg->originFrame + seg->segmentFrames - 1;
+        if (seglast < modeStartFrame) {
+            // unaffected
+        }
+        else if (seg->originFrame <= newCycleLast) {
+            // this would have been split in the first loop
+            int leftCut = seglast - modeStartFrame + 1;
+            seg->segmentFrames -= leftCut;
+        }
+    }
+            
     // finally stick a cycle in the sequence
     MidiSequence* sequence = recordLayer->getSequence();
     if (sequence != nullptr)
       sequence->insertTime(pools->getMidiPool(), modeStartFrame, cycleFrames);
-            
+
+    modeEndFrame = modeStartFrame + cycleFrames;
+    recordFrames += cycleFrames;
+    recordCycles++;
+    
     insert = true;
-    multiply = false;
-    replace = false;
-    extending = true;
     setRecording(true);
 }
 
@@ -689,6 +736,8 @@ void MidiRecorder::startInsert()
  */
 void MidiRecorder::extendInsert()
 {
+    if (!insert)
+      Trace(1, "MidiRecorder: Asked to extend insert but not in insert mode");
 
     // segment management is easier on an extension, the segment spanning
     // the insert will already have been split, we just need to push the ones that
@@ -718,6 +767,8 @@ void MidiRecorder::extendInsert()
       sequence->insertTime(pools->getMidiPool(), modeEndFrame, cycleFrames);
     
     modeEndFrame = modeEndFrame + cycleFrames;
+    recordFrames += cycleFrames;
+    recordCycles++;
 }
 
 /**
@@ -729,6 +780,9 @@ void MidiRecorder::extendInsert()
  */
 void MidiRecorder::reduceInsert()
 {
+    if (!insert)
+      Trace(1, "MidiRecorder: Asked to extend insert but not in insert mode");
+    
     int newModeEndFrame = modeEndFrame - cycleFrames;
     if (newModeEndFrame <= modeStartFrame) {
         // can't collapse to zero, Track should have treated this as a full Undo
@@ -827,10 +881,15 @@ void MidiRecorder::endInsert(bool overdub, bool unrounded)
         cycleFrames = recordFrames;
         recordCycles = 1;
     }
-    
-    insert = false;
-    extending = false;
-    setRecording(overdub);
+
+    resetFlags();
+    if (!overdub)
+      recording = false;
+
+    // at minimum we need to bump this here, in case they're inserting silence
+    // could be bumping it on every cycle insertion, but then you have to remember
+    // to decrement it if you let it reduce to nothing
+    extensions++;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -842,12 +901,13 @@ void MidiRecorder::endInsert(bool overdub, bool unrounded)
 
 void MidiRecorder::startReplace()
 {
-    if (multiply || insert) Trace(1, "MidiRecorder: Starting replace with unclosed mode");
+    if (multiply || insert || replace) {
+        Trace(1, "MidiRecorder: Starting replace with unclosed mode");
+        resetFlags();
+    }
+    
     modeStartFrame = recordFrame;
     replace = true;
-    multiply = false;
-    insert = false;
-    extending = false;
     recording = true;
 }
 
@@ -885,8 +945,7 @@ void MidiRecorder::endReplace(bool overdub)
         }
     }
     
-    replace = false;
-    modeStartFrame = 0;
+    resetFlags();
     if (!overdub)
       recording = false;
 }
@@ -1106,23 +1165,25 @@ void MidiRecorder::advance(int blockFrames)
 
     int nextFrame = recordFrame + blockFrames;
 
-    // subtle math, it is >modeEndFrame rather than >= because nextFrame is one beyond
-    // where we'll record, if insert end is quantized we don't add another
-    // cycle if we reach the end but don't go beyond it
     if (insert && nextFrame > modeEndFrame) {
-        // we've crossed the insert mode cycle boundary in this block
-        // and there wasn't a rounding event to break the block up so the insert continues
-        extendInsert();
-    }        
-    else if (nextFrame > recordFrames) {
+        // this isn't supposd to happen
+        // Track is responsible for scheduling an insert extension event which
+        // should have been processed by now and added another cycle
+        Trace(1, "MidiRecorder: Reached insert endpoint without an extension");
+    }
+    
+    if (nextFrame > recordFrames) {
+        // crossed the loop boundary
         if (!extending) {
             // Track was supposed to prevent this
             Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");
         }
         else {
             if (backingLayer != nullptr) {
-                // multiply/insert
-                extend();
+                if (multiply)
+                  addMultiplyCycle();
+                else
+                  Trace(1, "MidiRecorder: Extending without multiplying just isn't right");
             }
             else {
                 // initial recording
@@ -1137,37 +1198,32 @@ void MidiRecorder::advance(int blockFrames)
 }
 
 /**
- * Extend the layer by another cycle
- * Used for Multiply and Insert.
- *
- * The difference is that Insert adds empty cycles and multiply
- * needs to create new segments to include existing content in the
- * backing layer.
+ * Extend the layer by another cycle during multiply mode.
+ * A new segment is created that contains content from the next
+ * source location in the backing layer.
  */
-void MidiRecorder::extend()
+void MidiRecorder::addMultiplyCycle()
 {
-    // multiply/insert
-    if (multiply || insert) {
-        MidiSegment* seg = pools->newSegment();
-        seg->layer = backingLayer;
-        seg->segmentFrames = cycleFrames;
-        seg->originFrame = cycleFrames * recordCycles;
+    MidiSegment* seg = pools->newSegment();
+    seg->layer = backingLayer;
+    seg->segmentFrames = cycleFrames;
+    seg->originFrame = cycleFrames * recordCycles;
 
-        int backingCycles = backingLayer->getCycles();
-        if (backingCycles == 1) {
-            // the easy part
-            seg->referenceFrame = 0;
-        }
-        else {
-            // what cycle am I in?
-            int currentCycle = recordFrame / cycleFrames;
-            // where is that relative to the backing layer?
-            int backingCycle = currentCycle % backingCycles;
-            seg->referenceFrame = backingCycle * cycleFrames;
-        }
-        
-        recordLayer->add(seg);
+    int backingCycles = backingLayer->getCycles();
+    if (backingCycles == 1) {
+        // the easy part
+        seg->referenceFrame = 0;
     }
+    else {
+        // what cycle am I in?
+        int currentCycle = recordFrame / cycleFrames;
+        // where is that relative to the backing layer?
+        int backingCycle = currentCycle % backingCycles;
+        seg->referenceFrame = backingCycle * cycleFrames;
+    }
+        
+    recordLayer->add(seg);
+
     recordCycles++;
     recordFrames += cycleFrames;
     extensions++;

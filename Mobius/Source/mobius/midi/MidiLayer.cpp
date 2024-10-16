@@ -20,6 +20,10 @@ MidiLayer::MidiLayer()
 
 MidiLayer::~MidiLayer()
 {
+    if (segments != nullptr)
+      Trace(1, "MidiLayer: Destructing leaking segments");
+    if (sequence != nullptr)
+      Trace(1, "MidiLayer: Destructing leaking sequence");
 }
 
 /**

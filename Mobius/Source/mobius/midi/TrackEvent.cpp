@@ -32,6 +32,7 @@ void TrackEvent::poolInit()
     frame = 0;
     pending = false;
     pulsed = false;
+    extension = false;
     primary = nullptr;
     stacked = nullptr;
     

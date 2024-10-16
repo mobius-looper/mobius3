@@ -15,7 +15,7 @@ class MidiSegment : public PooledObject
     void dump(class StructureDumper& d);
     void poolInit() override;
     void clear(class MidiPools* pools);
-    MidiSegment* copy(class MidiPools* pools, MidiSegment* src);
+    void copyFrom(class MidiPools* pools, MidiSegment* src);
     
     MidiSegment* next = nullptr;
     MidiSegment* prev = nullptr;
