@@ -60,7 +60,8 @@ void MidiPlayer::dump(StructureDumper& d)
     d.start("MidiPlayer:");
     d.add("frames", loopFrames);
     d.add("frame", playFrame);
-    d.addb("mute", mute);
+    d.addb("muted", muted);
+    d.addb("paused", paused);
     d.newline();
 
     d.inc();
@@ -74,11 +75,6 @@ void MidiPlayer::dump(StructureDumper& d)
 // Layer Management
 //
 //////////////////////////////////////////////////////////////////////
-
-bool MidiPlayer::isMute()
-{
-    return mute;
-}
 
 /**
  * Reset all play state.
@@ -98,6 +94,11 @@ void MidiPlayer::reset()
     harvester.reset();
     pools->reclaim(restoredHeld);
     restoredHeld = nullptr;
+
+    // hmm, what about these, pause definately goes off but
+    // mute might be something that needs to linger like a minor mode?
+    //muted = false;
+    paused = false;
 }
 
 /**
@@ -106,6 +107,8 @@ void MidiPlayer::reset()
  */
 void MidiPlayer::restart()
 {
+    if (paused) return;
+    
     playFrame = 0;
     if (playLayer != nullptr)
       playLayer->resetPlayState();
@@ -119,6 +122,12 @@ void MidiPlayer::restart()
  */
 void MidiPlayer::shift(MidiLayer* layer)
 {
+    // this is not supposed to happen in pause mode
+    // either the entire track is paused and won't be recording
+    // or we're in Insert mode and won't be shifting
+    if (paused)
+      Trace(1, "MidiPlayer: Shift requested in Pause mode");
+    
     if (layer == nullptr) {
         Trace(1, "MidiPlayer: Can't shift a null layer");
     }
@@ -297,12 +306,31 @@ int MidiPlayer::getFrames()
     return loopFrames;
 }
 
+bool MidiPlayer::isMuted()
+{
+    return muted;
+}
+
+bool MidiPlayer::isPaused()
+{
+    return paused;
+}
+
 /**
- * Changing mute modes is awkward because the things we call to implement
- * it are sensitive to the current value of the mute field.  So the must flag
- * must be set after forceOff and before resending held notes.
+ * Enter a state of Mute.
+ * Held notes are turned off and the mute flag is set.
+ * This differs from Pause mode because the note durations are allowed
+ * to advance.  The setMute/setMuteIternal distinction is just to control
+ * setting the muted flag which is what determines whether the track is in
+ * Mute mode and will be colored blue.  When paused for either Pause or Insert
+ * we are NOT in Mute mode and don't set that flag.
  */
 void MidiPlayer::setMute(bool b)
+{
+    setMuteInternal(b, true);
+}
+ 
+void MidiPlayer::setMuteInternal(bool b, bool setMuteMode)
 {
     if (b) {
         // turning mute on
@@ -316,17 +344,58 @@ void MidiPlayer::setMute(bool b)
             sendOff(held);
             held = held->next;
         }
-        mute = b;
+        if (setMuteMode)
+          muted = b;
     }
     else {
         // turning mute off
         // turn on any notes that are still being (silently) held
-        mute = b;
+        if (setMuteMode)
+          muted = b;
         MidiEvent* held = heldNotes;
         while (held != nullptr) {
             sendOn(held);
             held = held->next;
         }
+    }
+}
+
+/**
+ * Put the player in a state of pause.
+ * This can happen for two reasons:
+ *    - the Pause function
+ *    - the track entering Insert mode
+ *
+ * In the first case, the track should cease advancing and play() and
+ * shift() will not be called.
+ *
+ * In the second case shift() should not be called but play() might be
+ * and should be ignored.
+ *
+ * When resume() is called player picks up where it left off.  If any notes
+ * were being held at the time of pause they are restored.  This works using
+ * the same mechanism as setMute(true) which sends NoteOff messages but does
+ * not remove notes from the hold list.  As long as play() is ignored, they
+ * won't advance their durations, and will be restored when unpaused.
+ */
+void MidiPlayer::pause()
+{
+    if (!paused) {
+        paused = true;
+        setMuteInternal(true, false);
+    }
+}
+
+/**
+ * When resuming from a pause we can continue from the last seek position.
+ * In both the Pause and Insert cases ideally we should determine the notes
+ * that were held at the time of pause and restore them.
+ */
+void MidiPlayer::unpause()
+{
+    if (paused) {
+        paused = false;
+        setMuteInternal(true, false);
     }
 }
 
@@ -342,6 +411,9 @@ void MidiPlayer::setMute(bool b)
  */
 void MidiPlayer::play(int blockFrames)
 {
+    // ignored in pause mode
+    if (paused) return;
+    
     if (blockFrames > 0 && playLayer != nullptr) {
 
         if (loopFrames == 0) {
@@ -428,7 +500,7 @@ void MidiPlayer::play(MidiEvent* note)
  */
 void MidiPlayer::sendOn(MidiEvent* note)
 {
-    if (!mute) {
+    if (!muted) {
         container->midiSend(note->juceMessage, 0);
     }
 }
@@ -528,7 +600,7 @@ void MidiPlayer::sendOff(MidiEvent* note)
     // forced everything off, we continue tracking so we can restore notes
     // when mute is turned off which will call down to sendOff when the (silent)
     // note finishes durating
-    if (!mute) {
+    if (!muted) {
         juce::MidiMessage msg =
             juce::MidiMessage::noteOff(note->juceMessage.getChannel(),
                                        note->juceMessage.getNoteNumber(),

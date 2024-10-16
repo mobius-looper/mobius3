@@ -309,6 +309,7 @@
     <Binding name='GlobalReset' trigger='key' value='71'/>
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
     <Binding name='Multiply' trigger='key' value='77'/>
+    <Binding name='Insert' trigger='key' value='73'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

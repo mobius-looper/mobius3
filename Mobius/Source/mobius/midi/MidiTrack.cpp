@@ -181,7 +181,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->mode = mode;
     state->overdub = overdub;
     state->reverse = reverse;
-    state->mute = player.isMute();
+    state->mute = player.isMuted();
     
     state->input = input;
     state->output = output;
@@ -1028,6 +1028,7 @@ void MidiTrack::startInsert()
 {
     Trace(2, "MidiTrack: Start Insert");
     mode = MobiusMidiState::ModeInsert;
+    player.pause();
     recorder.startInsert();
 }
 
@@ -1039,6 +1040,7 @@ void MidiTrack::finishInsert()
     Trace(2, "MidiTrack: Finish Insert");
     // don't shift an insert right away like multiply, let it accumulate
     // shiftInsert(unrounded);
+    player.unpause();
     recorder.endInsert(overdub, false);
     resumePlay();
 }
@@ -1046,6 +1048,7 @@ void MidiTrack::finishInsert()
 void MidiTrack::unroundedInsert()
 {
     Trace(2, "MidiTrack: Unrounded Insert");
+    player.unpause();
     recorder.endInsert(overdub, true);
     resumePlay();
 }
@@ -1191,7 +1194,7 @@ void MidiTrack::finishSwitch(int newIndex)
 void MidiTrack::toggleMute()
 {
     // todo: ParameterMuteMode
-    if (player.isMute()) {
+    if (player.isMuted()) {
         Trace(2, "MidiTrack: Stopping Mute");
         if (mode != MobiusMidiState::ModeMute) {
             Trace(1, "MidiTrack: Player muted but not in MuteMode, why?");

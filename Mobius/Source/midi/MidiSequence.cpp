@@ -485,6 +485,31 @@ int MidiSequence::removeTime(MidiEventPool* pool, int startFrame, int removeFram
     return adjustments;
 }
 
+/**
+ * Remove all events after the given frame.
+ */
+void MidiSequence::truncate(MidiEventPool* pool, int startFrame)
+{
+    MidiEvent* event = events;
+    MidiEvent* prev = nullptr;
+    while (event != nullptr && event->frame < startFrame) {
+        prev = event;
+        event = event->next;
+    }
+
+    MidiEvent* garbage = event;
+    if (prev == nullptr)
+      events = nullptr;
+    else
+      prev->next = nullptr;
+
+    while (garbage != nullptr) {
+        MidiEvent* next = garbage->next;
+        pool->checkin(event);
+        event = next;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pool

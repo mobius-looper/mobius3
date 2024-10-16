@@ -666,13 +666,14 @@ void MidiRecorder::startInsert()
             // and push
             rightHalf->originFrame += cycleFrames;
 
-            // finally sticl a cycle in the sequence
-            MidiSequence* sequence = recordLayer->getSequence();
-            if (sequence != nullptr)
-              sequence->insertTime(pools->getMidiPool(), modeStartFrame, cycleFrames);
         }
     }
     
+    // finally stick a cycle in the sequence
+    MidiSequence* sequence = recordLayer->getSequence();
+    if (sequence != nullptr)
+      sequence->insertTime(pools->getMidiPool(), modeStartFrame, cycleFrames);
+            
     insert = true;
     multiply = false;
     replace = false;
@@ -682,10 +683,41 @@ void MidiRecorder::startInsert()
 
 /**
  * Add another cycle to to the inserted region.
+ * This can be called when recording reaches the last modeEndFrame
+ * which automaticlly injects a new cycle, or when pressing Insert again
+ * during the rouding period.
  */
 void MidiRecorder::extendInsert()
 {
-    Trace(1, "MidiRecorder: extendInsert not implemented");
+
+    // segment management is easier on an extension, the segment spanning
+    // the insert will already have been split, we just need to push the ones that
+    // come after it
+
+    int newCycleLast = modeEndFrame + cycleFrames - 1;
+
+    for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
+        int seglast = seg->originFrame + seg->segmentFrames - 1;
+        if (seglast < modeStartFrame) {
+            // unaffected
+        }
+        else if (seg->originFrame > newCycleLast) {
+            // beyond the new segment, doesn't split but needs to be pushed
+            seg->originFrame += cycleFrames;
+        }
+        else {
+            // a segment exists spanning the insert region,
+            // this should not happen once we're in Insert mode
+            Trace(1, "MidiRecorder: Segment encountered within insert region during extension");
+        }
+    }
+
+    // and stick a cycle in the sequence
+    MidiSequence* sequence = recordLayer->getSequence();
+    if (sequence != nullptr)
+      sequence->insertTime(pools->getMidiPool(), modeEndFrame, cycleFrames);
+    
+    modeEndFrame = modeEndFrame + cycleFrames;
 }
 
 /**
@@ -694,10 +726,47 @@ void MidiRecorder::extendInsert()
  *
  * Since Insert actually inserts new segments each time you invoke it
  * We need to shift everything down that we shifted in extendInsert.
-  */
+ */
 void MidiRecorder::reduceInsert()
 {
-    Trace(1, "MidiRecorder: reduceInsert not implemented");
+    int newModeEndFrame = modeEndFrame - cycleFrames;
+    if (newModeEndFrame <= modeStartFrame) {
+        // can't collapse to zero, Track should have treated this as a full Undo
+        Trace(1, "MidiRecorder: Can't undo insert cycle any more");
+    }
+    else if (recordFrame > newModeEndFrame) {
+        // they had recorded something into this region
+        // Track should have caught this and prevented the insert reduction
+        // I suppose we could just start canceling the prior insert contents
+        // unclear what the right thing is here
+        Trace(1, "MidiRecorder: Can't undo insert cycle once it has begun recording");
+    }
+    else {
+        int newCycleLast = newModeEndFrame + cycleFrames - 1;
+
+        for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
+            int seglast = seg->originFrame + seg->segmentFrames - 1;
+            if (seglast < modeStartFrame) {
+                // unaffected
+            }
+            else if (seg->originFrame > newCycleLast) {
+                // beyond the new end, shift it down
+                seg->originFrame -= cycleFrames;
+            }
+            else {
+                // a segment exists spanning the insert region,
+                // this should not happen once we're in Insert mode
+                Trace(1, "MidiRecorder: Segment encountered within insert region during reduction");
+            }
+        }
+
+        // and remove time in the sequence
+        MidiSequence* sequence = recordLayer->getSequence();
+        if (sequence != nullptr)
+          sequence->removeTime(pools->getMidiPool(), modeEndFrame, cycleFrames);
+
+        modeEndFrame = newModeEndFrame;
+    }
 }
 
 /**
@@ -715,17 +784,33 @@ void MidiRecorder::endInsert(bool overdub, bool unrounded)
       Trace(1, "MidiRecorder: Rounded insert end frame mismatch");
     
     if (unrounded) {
-
+        
         int wasted = modeStartFrame - recordFrame;
         if (wasted > 0) {
             // take the extra inserted time out of the sequence
             // not expecting to have to change anything since we
             // didn't get far enough into it to add anything
-            MidiSequence* sequence = recordLayer->getSequence();
-            if (sequence != nullptr) {
-                int adjustments = sequence->removeTime(pools->getMidiPool(), recordFrame, wasted);
-                if (adjustments > 0)
-                  Trace(1, "MidiRecorder: Unexpected event adjusted required after unrounded insert");
+            // no! if an unquantized insert happened in the middle we will have
+            // pushed existing notes out beyond the end of the inserted cycle
+            // so there may be something there, really this should just truncate
+            // but removeTime should work too, just in a more complex way
+            bool seeIfRemoveTimeWorks = false;
+            if (seeIfRemoveTimeWorks) {
+                MidiSequence* sequence = recordLayer->getSequence();
+                if (sequence != nullptr) {
+                    int adjustments = sequence->removeTime(pools->getMidiPool(), recordFrame, wasted);
+                    // this is normal for insert that wasn't quantize to the end
+                    // don't whine
+                    //if (adjustments > 0)
+                    //Trace(1, "MidiRecorder: Unexpected event adjusted required after unrounded insert");
+                    (void)adjustments;
+                }
+            }
+            else {
+                // the easy way
+                MidiSequence* sequence = recordLayer->getSequence();
+                if (sequence != nullptr)
+                  sequence->truncate(pools->getMidiPool(), recordFrame);
             }
 
             // move the segments down
@@ -733,7 +818,9 @@ void MidiRecorder::endInsert(bool overdub, bool unrounded)
                 if (seg->originFrame >= modeEndFrame)
                   seg->originFrame -= wasted;
             }
+            
             recordFrames -= wasted;
+
         }
 
         // EDP style is to have the result be the new cycle length
@@ -1018,7 +1105,16 @@ void MidiRecorder::advance(int blockFrames)
     lastBlockFrames = blockFrames;
 
     int nextFrame = recordFrame + blockFrames;
-    if (nextFrame > recordFrames) {
+
+    // subtle math, it is >modeEndFrame rather than >= because nextFrame is one beyond
+    // where we'll record, if insert end is quantized we don't add another
+    // cycle if we reach the end but don't go beyond it
+    if (insert && nextFrame > modeEndFrame) {
+        // we've crossed the insert mode cycle boundary in this block
+        // and there wasn't a rounding event to break the block up so the insert continues
+        extendInsert();
+    }        
+    else if (nextFrame > recordFrames) {
         if (!extending) {
             // Track was supposed to prevent this
             Trace(1, "MidiRecorder: Advance crossed the loop boundary, shame on Track");

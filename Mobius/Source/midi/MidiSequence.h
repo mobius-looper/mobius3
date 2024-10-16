@@ -42,7 +42,8 @@ class MidiSequence : public PooledObject
     void cut(class MidiEventPool* pool, int start, int end, bool includeHolds);
     void insertTime(class MidiEventPool* pool, int startFrame, int insertFrames);
     int removeTime(class MidiEventPool* pool, int startFrame, int removeFrames);
-
+    void truncate(class MidiEventPool* pool, int startFrame);
+    
   protected:
     
     class MidiEvent* getTail() {

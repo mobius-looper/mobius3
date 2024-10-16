@@ -30,7 +30,7 @@ class MidiPlayer
     void restart();
     void shift(class MidiLayer* l);
     void setMute(bool b);
-    bool isMute();
+    bool isMuted();
     
     //
     // Play State
@@ -50,6 +50,11 @@ class MidiPlayer
 
     // store a playback checkpoint at the current frame
     void checkpoint();
+
+    // pause playback
+    void pause();
+    void unpause();
+    bool isPaused();
     
   private:
 
@@ -63,7 +68,8 @@ class MidiPlayer
     class MidiLayer* playLayer = nullptr;
     int playFrame = 0;
     int loopFrames = 0;
-    bool mute = false;
+    bool muted = false;
+    bool paused = false;
     class MidiFragment* restoredHeld = nullptr;
     
     // transient buffers used during event gathering
@@ -73,6 +79,7 @@ class MidiPlayer
     class MidiEvent* heldNotes = nullptr;
     
     void play(class MidiEvent* n);
+    void setMuteInternal(bool b, bool setMuteMode);
     void sendOn(class MidiEvent* e);
     void flushHeld();
     void advanceHeld(int blockFrames);
