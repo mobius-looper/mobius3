@@ -101,6 +101,7 @@ void MidiTrack::configure(Session::Track* def)
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
     
     // todo: loopsPerTrack from somewhere
+    loopCount = valuator->getLoopCount(def, 2);
 }
 
 /**
@@ -180,7 +181,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->mode = mode;
     state->overdub = overdub;
     state->reverse = reverse;
-    state->mute = mute;
+    state->mute = player.isMute();
     
     state->input = input;
     state->output = output;
@@ -200,10 +201,6 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     if (overdub && !nowRecording)
       Trace(1, "MidiTrack: Refresh state found overdub/record inconsistency");
 
-    // ditto mute mode
-    if (mute && !player.isMute())
-      Trace(1, "MidiTrack: Refresh state found mute inconsistency");
-    
     for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
         MobiusMidiState::Loop* lstate = state->loops[0];
@@ -662,7 +659,6 @@ void MidiTrack::doReset(bool full)
     resetRegions();
     
     overdub = false;
-    mute = false;
     reverse = false;
     pause = false;
     
@@ -855,8 +851,18 @@ void MidiTrack::doUndo()
         // a whole lot to think about regarding what happens
         // to major and minor modes here
         stopOverdubRegion();
-        mode = MobiusMidiState::ModePlay;
+        resumePlay();
     }
+}
+
+/**
+ * Should be used whenever you want to be in Play mode.
+ * Besides setting ModePlay also cancels mute mode in Player.
+ */
+void MidiTrack::resumePlay()
+{
+    mode = MobiusMidiState::ModePlay;
+    player.setMute(false);
 }
 
 /**
@@ -914,7 +920,7 @@ void MidiTrack::doRedo()
     // like undo, we've got a world of though around what happens to modes
     if (mode != MobiusMidiState::ModeReset) {
         overdub = false;
-        mode = MobiusMidiState::ModePlay;
+        resumePlay();
     }
 }
 
@@ -941,14 +947,14 @@ void MidiTrack::finishMultiply()
 {
     Trace(2, "MidiTrack: Finish Multiply");
     shiftMultiply(false);
-    mode = MobiusMidiState::ModePlay;
+    resumePlay();
 }
 
 void MidiTrack::unroundedMultiply()
 {
     Trace(2, "MidiTrack: Unrounded Multiply");
     shiftMultiply(true);
-    mode = MobiusMidiState::ModePlay;
+    resumePlay();
 }
 
 /**
@@ -1034,14 +1040,14 @@ void MidiTrack::finishInsert()
     // don't shift an insert right away like multiply, let it accumulate
     // shiftInsert(unrounded);
     recorder.endInsert(overdub, false);
-    mode = MobiusMidiState::ModePlay;
+    resumePlay();
 }
 
 void MidiTrack::unroundedInsert()
 {
     Trace(2, "MidiTrack: Unrounded Insert");
     recorder.endInsert(overdub, true);
-    mode = MobiusMidiState::ModePlay;
+    resumePlay();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1149,7 +1155,7 @@ void MidiTrack::finishSwitch(int newIndex)
 
         // the usual ambiguity about what happens to minor modes
         overdub = false;
-        mode = MobiusMidiState::ModePlay;
+        resumePlay();
 
         if (recorder.getFrames() != currentFrames) {
             // we switched to a loop of a different size
@@ -1176,26 +1182,75 @@ void MidiTrack::finishSwitch(int newIndex)
 /**
  * Here from scheduler after possible quantization.
  * This is not a rounding mode so here for both start and stop.
+ *
+ * It feels like Mute should a minor mode like Overdub.  It's really just
+ * a flag on Player like recording is for Recorder.  You can be in other modes
+ * but still have Player muted.  Audio tracks have a lot more semantics around
+ * Mute mode though.  
  */
 void MidiTrack::toggleMute()
 {
     // todo: ParameterMuteMode
-
-    // !! feels like there is more here, can't just assume
-    // we'll be transitioning to/from Play mode?
-    
-    if (mode == MobiusMidiState::ModeMute) {
+    if (player.isMute()) {
         Trace(2, "MidiTrack: Stopping Mute");
-        mode = MobiusMidiState::ModePlay;
+        if (mode != MobiusMidiState::ModeMute) {
+            Trace(1, "MidiTrack: Player muted but not in MuteMode, why?");
+            Trace(2, "MidiTrack: Mode is %s", getModeName());
+        }
+        else
+          resumePlay();
+
         player.setMute(false);
-        mute = false;
     }
-    else if (mode == MobiusMidiState::ModePlay) {
+    else {
         Trace(2, "MidiTrack: Starting Mute");
-        mode = MobiusMidiState::ModeMute;
+
+        if (mode != MobiusMidiState::ModePlay) {
+            Trace(1, "MidiTrack: Player muted but not in MuteMode, why?");
+            Trace(2, "MidiTrack: Mode is %s", getModeName());
+        }
+        else 
+          mode = MobiusMidiState::ModeMute;
+        
         player.setMute(true);
-        mute = true;
     }
+}
+
+const char* MidiTrack::getModeName()
+{
+    return getModeName(mode);
+}
+
+const char* MidiTrack::getModeName(MobiusMidiState::Mode amode)
+{
+    const char* name = "???";
+    switch (amode) {
+        case MobiusMidiState::ModeReset: name = "Reset"; break;
+        case MobiusMidiState::ModeSynchronize: name = "Synchronize"; break;
+        case MobiusMidiState::ModeRecord: name = "Record"; break;
+        case MobiusMidiState::ModePlay: name = "Play"; break;
+        case MobiusMidiState::ModeOverdub: name = "Overdub"; break;
+        case MobiusMidiState::ModeMultiply: name = "Multiply"; break;
+        case MobiusMidiState::ModeInsert: name = "Insert"; break;
+        case MobiusMidiState::ModeReplace: name = "Replace"; break;
+        case MobiusMidiState::ModeMute: name = "Mute"; break;
+
+        case MobiusMidiState::ModeConfirm: name = "Confirm"; break;
+        case MobiusMidiState::ModePause: name = "Pause"; break;
+        case MobiusMidiState::ModeStutter: name = "Stutter"; break;
+        case MobiusMidiState::ModeSubstitute: name = "Substitute"; break;
+        case MobiusMidiState::ModeThreshold: name = "Threshold"; break;
+
+        // old Mobius modes, may not need
+        case MobiusMidiState::ModeRehearse: name = "Rehearse"; break;
+        case MobiusMidiState::ModeRehearseRecord: name = "RehearseRecord"; break;
+        case MobiusMidiState::ModeRun: name = "Run"; break;
+        case MobiusMidiState::ModeSwitch: name = "Switch"; break;
+
+        case MobiusMidiState::ModeGlobalReset: name = "GlobalReset"; break;
+        case MobiusMidiState::ModeGlobalPause: name = "GlobalPause"; break;
+    }
+    return name;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1211,7 +1266,7 @@ void MidiTrack::toggleReplace()
         // audio tracks would shift the layer now, we'll let it go
         // till the end and accumulate more changes
         recorder.endReplace(overdub);
-        mode = MobiusMidiState::ModePlay;
+        resumePlay();
     }
     else {
         Trace(2, "MidiTrack: Starting Replace");

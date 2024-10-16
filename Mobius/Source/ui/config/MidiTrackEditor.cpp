@@ -146,6 +146,7 @@ void MidiTrackEditor::render()
     form.addField(ParamTrackSyncUnit);
     form.addField(ParamSlaveSyncUnit);
     form.addField(ParamBeatsPerBar);
+    form.addField(ParamLoopCount);
     
     addAndMakeVisible(form);
 }

@@ -72,6 +72,7 @@ class TrackScheduler
     void doActionInternal(class UIAction* a);
     void doStacked(class TrackEvent* actions);
     void doActionNow(class UIAction* a);
+    void checkModeCancel(class UIAction* a);
 
     // advance and events
     void doEvent(class TrackEvent* e);

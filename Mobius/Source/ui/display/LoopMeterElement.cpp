@@ -158,9 +158,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
         int regionRight = getMeterOffset(region.endFrame, track->frames);
         if (region.active) {
             g.setColour(juce::Colours::red);
-            // for some reason this is lagging the track frame and leaves
-            // a gap, are regions not being refreshed properly?
-            regionRight = thermoLeft + meterWidth - 1;
+            // refresh of the regions lags the current frame
+            // the frame is part of the group of "importaant" state that is refreshed
+            // on every request, while regions, events, and others are updated less frequently
+            // this means the frame may have wrapped around to the beginning while state still
+            // has an active region toward the end.  Correct the lag while frame is ahead of the
+            // region, but be careful when it wraps to avoid math anomolies
+            int cursorLeft = thermoLeft + meterWidth - 1;
+            if (regionRight < cursorLeft)
+              regionRight = cursorLeft;
         }
         else
           g.setColour(juce::Colours::yellow);

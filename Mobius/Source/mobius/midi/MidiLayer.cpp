@@ -292,9 +292,11 @@ void MidiLayer::copy(MidiSequence* src, int start, int end, int origin)
                 MidiEvent* ce = pools->newEvent();
                 ce->copy(event);
                 int adjustedFrame = ce->frame + origin;
-                Trace(2, "MidiLayer: Event adjusted from %d to %d",
-                      ce->frame, adjustedFrame);
-                ce->frame = adjustedFrame;
+                if (ce->frame != adjustedFrame) {
+                    Trace(2, "MidiLayer: Event adjusted from %d to %d",
+                          ce->frame, adjustedFrame);
+                    ce->frame = adjustedFrame;
+                }
                 sequence->insert(ce);
             }
             event = event->next;

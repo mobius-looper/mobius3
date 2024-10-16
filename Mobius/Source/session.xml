@@ -5,6 +5,7 @@
     <ValueSet>
       <Value name="beatsPerBar" value="4"/>
       <Value name="durationMode" value="1" type="int"/>
+      <Value name="loopCount" value="2"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="syncSource" value="none" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>

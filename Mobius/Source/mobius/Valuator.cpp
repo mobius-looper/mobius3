@@ -244,6 +244,16 @@ SyncUnit Valuator::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit dflt)
                                             dflt);
 }
 
+int Valuator::getLoopCount(Session::Track* trackdef, int dflt)
+{
+    int result = dflt;
+    Symbol* s = symbols->getSymbol(ParamLoopCount);
+    MslValue* v = trackdef->get(s->name);
+    if (v != nullptr)
+      result = v->getInt();
+    return result;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Group 2: Things currently in the Preset

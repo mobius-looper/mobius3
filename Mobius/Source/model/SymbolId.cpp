@@ -358,6 +358,8 @@ SymbolDefinition SymbolDefinitions[] = {
     {"WindowEndForward", FuncWindowEndForward},
     {"TraceStatus", FuncTraceStatus},
     {"Dump", FuncDump},
+    {"UnroundedMultiply", FuncUnroundedMultiply},
+    {"UnroundedInsert", FuncUnroundedInsert},
     
     //
     // Sampler

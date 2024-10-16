@@ -8,12 +8,13 @@
 
 #include "../../sync/Pulse.h"
 
+#include "AbstractTrack.h"
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
 #include "TrackScheduler.h"
 #include "ActionTransformer.h"
 
-class MidiTrack
+class MidiTrack : public AbstractTrack
 {
     friend class ActionTransformer;
     friend class TrackScheduler;
@@ -66,52 +67,54 @@ class MidiTrack
     class MidiEvent* getHeldNotes();
     class MidiEvent* copyNote(class MidiEvent* src);
 
-  protected:
-
     //
-    // TrackScheduler Interface
+    // AbstractTrack for ActionTransformer and TrackScheduler
     //
 
-    void alert(const char* msg);
-    int getLoopIndex();
-    int getLoopCount();
-    int getLoopFrames();
-    int getFrame();
-    int getFrames();
-    int getCycleFrames();
-    int getCycles();
-    int getSubcycles();
-    int getModeStartFrame();
-    //int getRoundingFrames();
-    int getModeEndFrame();
-    int extendRounding();
+    int getTrackNumber() override {
+        return number;
+    }
+    
+    void alert(const char* msg) override;
+    int getLoopIndex() override;
+    int getLoopCount() override;
+    int getLoopFrames() override;
+    int getFrame() override;
+    int getCycleFrames() override;
+    int getCycles() override;
+    int getSubcycles() override;
+    int getModeStartFrame() override;
+    int getModeEndFrame() override;
+    int extendRounding() override;
 
     // mode transitions
     
-    void startRecord();
-    void finishRecord();
+    void startRecord() override;
+    void finishRecord() override;
 
-    void startMultiply();
-    void finishMultiply();
+    void startMultiply() override;
+    void finishMultiply() override;
 
-    void startInsert();
-    void finishInsert();
+    void startInsert() override;
+    void finishInsert() override;
 
-    void toggleOverdub();
-    void toggleMute();
-    void toggleReplace();
+    void toggleOverdub() override;
+    void toggleMute() override;
+    void toggleReplace() override;
 
-    void finishSwitch(int target);
+    void finishSwitch(int target) override;
     
     // simple one-shot actions
-    void doParameter(class UIAction* a);
-    void doReset(bool full);
-    void doUndo();
-    void doRedo();
-    void doDump();
+    void doParameter(class UIAction* a) override;
+    void doReset(bool full) override;
+    void doUndo() override;
+    void doRedo() override;
+    void doDump() override;
     
-    void advance(int newFrames);
+    void advance(int newFrames) override;
     
+  protected:
+
   private:
 
     class MobiusContainer* container = nullptr;
@@ -138,7 +141,6 @@ class MidiTrack
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
     bool overdub = false;
     bool reverse = false;
-    bool mute = false;
     bool pause = false;
     
     int input = 127;
@@ -154,7 +156,6 @@ class MidiTrack
     void shiftInsert(bool unrounded);
     bool isMultiplyEndScheduled();
     void doMultiplyEarlyTermination();
-    
 
     //
     // Function Handlers
@@ -168,5 +169,13 @@ class MidiTrack
     bool inRecordingMode();
     void unroundedMultiply();
     void unroundedInsert();
+
+    //
+    // Misc utilities
+    //
+
+    void resumePlay();
+    const char* getModeName();
+    const char* getModeName(MobiusMidiState::Mode mode);
 
 };

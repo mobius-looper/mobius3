@@ -224,8 +224,29 @@ void TrackScheduler::doActionInternal(UIAction* a)
         case FuncGlobalReset:
         case FuncDump:
         case FuncUndo:
-        case FuncRedo: {
+        case FuncRedo:
+        {
             doActionNow(a);
+        }
+            break;
+
+        case FuncUnroundedMultiply: {
+            if (track->getMode() == MobiusMidiState::ModeMultiply)
+              doActionNow(a);
+            else {
+                Trace(1, "TrackScheduler: Unexpected FuncUnroundedMultiply outside Multiply mode");
+                actionPool->checkin(a);
+            }
+        }
+            break;
+
+        case FuncUnroundedInsert: {
+            if (track->getMode() == MobiusMidiState::ModeInsert)
+              doActionNow(a);
+            else {
+                Trace(1, "TrackScheduler: Unexpected FuncUnroundedInsert outside Insert mode");
+                actionPool->checkin(a);
+            }
         }
             break;
 
@@ -301,6 +322,9 @@ void TrackScheduler::doStacked(TrackEvent* e)
  */
 void TrackScheduler::doActionNow(UIAction* a)
 {
+    // kludge, needs thought
+    checkModeCancel(a);
+    
     switch (a->symbol->id) {
 
         case FuncReset: track->doReset(false); break;
@@ -703,12 +727,20 @@ bool TrackScheduler::isModeEnding(MobiusMidiState::Mode mode)
     // Threshold is odd, another form of Record?
     // blow off Rehearse
     // Pause is interesting
-    return (mode == MobiusMidiState::ModeRecord ||
-            mode == MobiusMidiState::ModeMultiply ||
-            mode == MobiusMidiState::ModeInsert ||
-            mode == MobiusMidiState::ModeSwitch ||
-            // is this a real mode or just an annotated form of Switch?
-            mode == MobiusMidiState::ModeConfirm);
+    bool ending = (mode == MobiusMidiState::ModeRecord ||
+                   mode == MobiusMidiState::ModeMultiply ||
+                   mode == MobiusMidiState::ModeInsert ||
+                   //mode == MobiusMidiState::ModeReplace ||
+                   mode == MobiusMidiState::ModeSwitch ||
+                   // is this a real mode or just an annotated form of Switch?
+                   mode == MobiusMidiState::ModeConfirm);
+
+    // ModeSwitch is in fact not a real mode, it just schedules a Switch event
+    // and stays in whatever mode it is in right now
+    if (!ending)
+      ending = (events.find(TrackEvent::EventSwitch) != nullptr);
+
+    return ending;
 }
 
 /**
@@ -786,6 +818,11 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
                 event->stack(a);
             }
         }
+        else if (mode == MobiusMidiState::ModeReplace) {
+            // interesting case
+            // trying to do this with checkModeCancel isntead
+            //endReplace(a);
+        }
         else {
             // rounding has not been scheduled
             // todo: this is where we have two options on how rounding works
@@ -818,6 +855,62 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
     else {
         // Switch or Confirm, keep the switch code together
         stackSwitch(a);
+    }
+}
+
+/**
+ * Before performing an action, see if we need to automatically ccancel the
+ * current mode.
+ *
+ * At the moment this is relevant only for Replace mode since is not isModeEnding
+ * and doesn't have a special end event to stack things on.
+ *
+ * I think this is close to how audio tracks work.  
+ *
+ * older notes:
+ * Here from scheduleModeEnd when in Replace mode.
+ *
+ * If you're in Replace mode and do something else there are a several options.
+ * I think audio tracks schedule the new function normally, then have it cancel Replace
+ * or any other recording mode as a side effect.  If you go that route take
+ * ModeReplace out of isModeEnding and cause finishReplace before entering the next
+ * function.  That's hard though here because we wouldn't have to look at the next
+ * action to see if it is something that would cancel Replace.
+ *
+ * We can give it a special mode ending event, maybe EventModeEnd that could be used
+ * for other things and stack the ending event on it.
+ *
+ * Or we could just schedule a normal Replace action as if the user had done it first
+ * followed by the ending event.
+ *
+ * In either of the last two cases, quantization is debatable.  Say we're in Replace mode
+ * and Mute is used.  If Replace is quantized and so is Mute but with different quantized
+ * when does it end, on Replace's quantize or Mute's?  After Replace, does Mute happen right
+ * away or is it quantized again?  If they set quantization as an action arg on the Mute
+ * or set it in a script, then quantization should be applied to the Mute, and Replace is ended
+ * when the Mute ends.  This would be more like audio tracks.
+ *
+ * So we don't have to analyze what the action is going to do, use the modeCancel flag
+ * on the event.  Ugh, but if quantization is off, there is no event to hang the flag on.
+ */
+void TrackScheduler::checkModeCancel(UIAction* a)
+{
+    auto mode = track->getMode();
+    SymbolId sid = a->symbol->id;
+    
+    if (mode == MobiusMidiState::ModeReplace && sid != FuncReplace) {
+        // here we have an ugly decision table since some of the actions
+        // might not need to cancel replace, things like Dump and scripts for example
+
+        switch (sid) {
+            case FuncMultiply:
+            case FuncInsert:
+            case FuncMute: {
+                track->toggleReplace();
+            }
+                break;
+            default: break;
+        }
     }
 }
 
