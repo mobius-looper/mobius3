@@ -46,7 +46,6 @@ class MidiTrack : public AbstractTrack
     bool isRecording();
     void refreshState(class MobiusMidiState::Track* state);
     void refreshImportant(class MobiusMidiState::Track* state);
-    MobiusMidiState::Mode getMode();
 
     //
     // stimuli
@@ -71,11 +70,12 @@ class MidiTrack : public AbstractTrack
     // AbstractTrack for ActionTransformer and TrackScheduler
     //
 
-    int getTrackNumber() override {
+    int getNumber() override {
         return number;
     }
     
     void alert(const char* msg) override;
+    MobiusMidiState::Mode getMode() override;
     int getLoopIndex() override;
     int getLoopCount() override;
     int getLoopFrames() override;
@@ -94,9 +94,11 @@ class MidiTrack : public AbstractTrack
 
     void startMultiply() override;
     void finishMultiply() override;
+    void unroundedMultiply() override;
 
     void startInsert() override;
     void finishInsert() override;
+    void unroundedInsert() override;
 
     void toggleOverdub() override;
     void toggleMute() override;
@@ -167,8 +169,6 @@ class MidiTrack : public AbstractTrack
     void advanceRegion(int frames);
     
     bool inRecordingMode();
-    void unroundedMultiply();
-    void unroundedInsert();
 
     //
     // Misc utilities

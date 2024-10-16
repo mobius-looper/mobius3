@@ -33,7 +33,7 @@ class TrackScheduler
 {
   public:
 
-    TrackScheduler(class MidiTrack* t);
+    TrackScheduler(class AbstractTrack* t);
     ~TrackScheduler();
     
     void initialize(class TrackEventPool* epool, class UIActionPool* apool,
@@ -55,7 +55,7 @@ class TrackScheduler
 
   private:
 
-    class MidiTrack* track = nullptr;
+    class AbstractTrack* track = nullptr;
     class TrackEventPool* eventPool = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Pulsator* pulsator = nullptr;

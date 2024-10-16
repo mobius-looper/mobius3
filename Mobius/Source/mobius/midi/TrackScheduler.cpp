@@ -13,11 +13,11 @@
 #include "../Valuator.h"
 #include "../MobiusInterface.h"
 #include "TrackEvent.h"
-#include "MidiTrack.h"
+#include "AbstractTrack.h"
 
 #include "TrackScheduler.h"
 
-TrackScheduler::TrackScheduler(MidiTrack* t)
+TrackScheduler::TrackScheduler(AbstractTrack* t)
 {
     track = t;
 }
@@ -66,7 +66,7 @@ void TrackScheduler::configure(Session::Track* def)
         // no specific track leader yet...
         int leader = 0;
         syncSource = Pulse::SourceLeader;
-        pulsator->follow(track->number, leader, ptype);
+        pulsator->follow(track->getNumber(), leader, ptype);
     }
     else if (ss == SYNC_OUT) {
         Trace(1, "TrackScheduler: MIDI tracks can't do OutSync yet");
@@ -74,14 +74,14 @@ void TrackScheduler::configure(Session::Track* def)
     }
     else if (ss == SYNC_HOST) {
         syncSource = Pulse::SourceHost;
-        pulsator->follow(track->number, syncSource, ptype);
+        pulsator->follow(track->getNumber(), syncSource, ptype);
     }
     else if (ss == SYNC_MIDI) {
         syncSource = Pulse::SourceMidiIn;
-        pulsator->follow(track->number, syncSource, ptype);
+        pulsator->follow(track->getNumber(), syncSource, ptype);
     }
     else {
-        pulsator->unfollow(track->number);
+        pulsator->unfollow(track->getNumber());
         syncSource = Pulse::SourceNone;
     }
 }
@@ -394,7 +394,7 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
 
     // here is where we need to ask Pulsator about drift
     // and do a correction if necessary
-    int number = track->number;
+    int number = track->getNumber();
     if (pulsator->shouldCheckDrift(number)) {
         int drift = pulsator->getDrift(number);
         (void)drift;
@@ -648,7 +648,7 @@ TrackEvent* TrackScheduler::scheduleRecordEvent(UIAction* a)
 bool TrackScheduler::isRecordSynced()
 {
     bool doSync = false;
-    int number = track->number;
+    int number = track->getNumber();
     
     if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
         //the easy one, always sync
@@ -1010,7 +1010,7 @@ bool TrackScheduler::isQuantized(UIAction* a)
 
     // need a much more robust lookup table
     if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
-        QuantizeMode q = valuator->getQuantizeMode(track->number);
+        QuantizeMode q = valuator->getQuantizeMode(track->getNumber());
         quantized = (q != QUANTIZE_OFF);
     }
     return quantized;
@@ -1028,7 +1028,7 @@ void TrackScheduler::scheduleQuantized(UIAction* a)
 {
     TrackEvent* event = nullptr;
 
-    QuantizeMode quant = valuator->getQuantizeMode(track->number);
+    QuantizeMode quant = valuator->getQuantizeMode(track->getNumber());
     if (quant == QUANTIZE_OFF) {
         doActionNow(a);
     }
@@ -1133,7 +1133,7 @@ bool TrackScheduler::isLoopSwitch(UIAction* a)
 void TrackScheduler::scheduleSwitch(UIAction* a)
 {
     int target = getSwitchTarget(a);
-    SwitchQuantize q = valuator->getSwitchQuantize(track->number);
+    SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
     if (q == SWITCH_QUANT_OFF) {
         // todo: might be some interesting action argument we need to convey as well?
         doSwitch(target);
@@ -1311,7 +1311,7 @@ void TrackScheduler::doSwitch(int target)
  */
 void TrackScheduler::scheduleSwitchDuration(int currentLoopIndex)
 {
-    SwitchDuration duration = valuator->getSwitchDuration(track->number);
+    SwitchDuration duration = valuator->getSwitchDuration(track->getNumber());
     switch (duration) {
         case SWITCH_ONCE: {
             TrackEvent* event = eventPool->newEvent();

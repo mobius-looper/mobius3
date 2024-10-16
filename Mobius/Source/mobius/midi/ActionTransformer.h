@@ -12,7 +12,7 @@ class ActionTransformer
 {
   public:
 
-    ActionTransformer(class MidiTrack* t, class TrackScheduler* s);
+    ActionTransformer(class AbstractTrack* t, class TrackScheduler* s);
     ~ActionTransformer();
 
     void initialize(class UIActionPool* ap, class SymbolTable* st);
@@ -22,7 +22,7 @@ class ActionTransformer
 
   private:
 
-    class MidiTrack* track = nullptr;
+    class AbstractTrack* track = nullptr;
     class TrackScheduler* scheduler = nullptr;
     class UIActionPool* actionPool = nullptr;
     class SymbolTable* symbols = nullptr;

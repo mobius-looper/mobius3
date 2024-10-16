@@ -7,11 +7,11 @@
 #include "../../model/Symbol.h"
 
 #include "TrackScheduler.h"
-#include "MidiTrack.h"
+#include "AbstractTrack.h"
 
 #include "ActionTransformer.h"
 
-ActionTransformer::ActionTransformer(MidiTrack* t, TrackScheduler* s)
+ActionTransformer::ActionTransformer(AbstractTrack* t, TrackScheduler* s)
 {
     track = t;
     scheduler = s;

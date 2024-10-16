@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "../../model/MobiusMidiState.h"
+
 class AbstractTrack
 {
   public:
@@ -17,7 +19,8 @@ class AbstractTrack
 
     // Loop state
 
-    virtual int getTrackNumber() = 0;
+    virtual int getNumber() = 0;
+    virtual MobiusMidiState::Mode getMode() = 0;
     virtual int getLoopCount() = 0;
     virtual int getLoopIndex() = 0;
     virtual int getLoopFrames() = 0;
@@ -36,9 +39,11 @@ class AbstractTrack
 
     virtual void startMultiply() = 0;
     virtual void finishMultiply() = 0;
-
+    virtual void unroundedMultiply() = 0;
+    
     virtual void startInsert() = 0;
     virtual void finishInsert() = 0;
+    virtual void unroundedInsert() = 0;
 
     virtual void toggleOverdub() = 0;
     virtual void toggleMute() = 0;
