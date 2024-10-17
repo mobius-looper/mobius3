@@ -95,9 +95,10 @@ void MidiPlayer::reset()
     pools->reclaim(restoredHeld);
     restoredHeld = nullptr;
 
-    // hmm, what about these, pause definately goes off but
-    // mute might be something that needs to linger like a minor mode?
-    //muted = false;
+    // didn't do muted at first thinking we would be the holder of the
+    // minor mode, but that's too fragile, if Track wants a minor mode for mute
+    // it needs to remute after reset
+    muted = false;
     paused = false;
 }
 
@@ -490,6 +491,10 @@ void MidiPlayer::play(int blockFrames)
 void MidiPlayer::play(MidiEvent* note)
 {
     if (note != nullptr) {
+
+        // check this for awhile, I don't think these should happen
+        if (note->duration == 0)
+          Trace(1, "MidiPlayer: Playing a note with no duration");
 
         note->remaining = note->duration;
         note->next = heldNotes;

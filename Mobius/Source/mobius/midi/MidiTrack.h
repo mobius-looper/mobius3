@@ -155,9 +155,7 @@ class MidiTrack : public AbstractTrack
 
     // advance
     void advancePlayer(int newFrames);
-    void shift();
-    void shiftMultiply(bool unrounded);
-    void shiftInsert(bool unrounded);
+    void shift(bool unrounded);
     bool isMultiplyEndScheduled();
     void doMultiplyEarlyTermination();
 

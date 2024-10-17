@@ -110,14 +110,14 @@ void MidiHarvester::harvestRange(MidiLayer* layer, int startFrame, int endFrame,
         int segstart = nextSegment->originFrame;
         int seglast = segstart + nextSegment->segmentFrames - 1;
 
-        if (segstart > startFrame) {
-            // haven't reached this segment yet, wait for the next block
-            break;
-        }
-        else if (seglast < startFrame) {
+        if (seglast < startFrame) {
             // this segment has passed, seek must be broken
             Trace(1, "MidiHarvester: Unexpected past segment in cursor");
             nextSegment = nullptr;
+        }
+        else if (segstart > endFrame) {
+            // haven't reached this segment yet, wait for the next block
+            break;
         }
         else {
             // segment in range
@@ -237,11 +237,26 @@ void MidiHarvester::harvest(MidiSegment* segment, int startFrame, int endFrame,
       Trace(1, "MidiHarvester: Segment end frame is beyond where it should be");
     
     int seglast = segment->originFrame + segment->segmentFrames - 1;
+
+    if (segment->prefix.size() > 0) {
+        // break here
+        int x = 0;
+        (void)x;
+    }
     
     if (startFrame == 0) {
         // we've entered the segment, add the prefix unless there was continunity
         // with the previous segment, or this the first one after some kind of jump
-        if (segment->prefix.size() > 0 && (forcePrefix || !hasContinuity(segment))) {
+        bool doPrefix = (forcePrefix || !hasContinuity(segment));
+
+        // debugging for missing prefixes
+        if (segment->prefix.size() > 0 && !doPrefix) {
+            // break here
+            int y = 0;
+            (void)y;
+        }
+        
+        if (segment->prefix.size() > 0 && doPrefix) {
             MidiEvent* event = segment->prefix.getFirst();
             while (event != nullptr) {
                 // the frame on these is usually zero but may be offset within the segment

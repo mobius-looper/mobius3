@@ -38,27 +38,34 @@ class MidiRecorder : public MidiWatcher::Listener
     void resume(MidiLayer* layer);
     void rollback(bool overdub);
     void clear();
-    MidiLayer* commit(bool overdub);
     MidiLayer* commitMultiply(bool overdub, bool unrounded);
     void setFrame(int newFrame);
 
+    // called when the layer needs to be shifted
+    // handles all modes and is the only way to do unrounded endings
+    MidiLayer* commit(bool overdub, bool unrounded);
+    
     int getModeStartFrame();
     int getModeEndFrame();
 
+    // replace may start/end without a full commit
+    void startReplace();
+    void finishReplace(bool overdub);
+    
+    // there is no finishMultiply, you must call commit()
     void startMultiply();
     void extendMultiply();
     void reduceMultiply();
-    
+
+    // insert may start/end without a full commit if rounding
+    // for unrounded you must call commit
     void startInsert();
     void extendInsert();
     void reduceInsert();
-    void endInsert(bool overdub, bool unrounded);
+    void finishInsert(bool overdub);
 
     void copy(MidiLayer* srcLayer, bool includeEvents);
 
-    void startReplace();
-    void endReplace(bool overdub);
-    
     //
     // Transaction State
     //
@@ -128,7 +135,9 @@ class MidiRecorder : public MidiWatcher::Listener
 
     void resetFlags();
     void addMultiplyCycle();
+    void finishMultiply(bool unrounded);
     MidiSegment* rebuildSegments(int startFrame,  int endFame);
+    void finishInsertInternal(bool unrounded);
     
     void assimilate(class MidiLayer* layer);
     class MidiLayer* prepLayer();

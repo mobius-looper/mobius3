@@ -420,11 +420,7 @@ void MidiTrack::advance(int newFrames)
                     doMultiplyEarlyTermination();
                 }
                 else if (recorder.hasChanges()) {
-                    shift();
-                    if (mode == MobiusMidiState::ModeReplace && !recorder.isReplace()) {
-                        // work to do here
-                        Trace(1, "MidiTrack: Shifted while in Replace mode");
-                    }
+                    shift(false);
                 }
                 else {
                     // squelching the record layer
@@ -502,47 +498,12 @@ void MidiTrack::advancePlayer(int newFrames)
     }
 }
 
-void MidiTrack::shift()
+void MidiTrack::shift(bool unrounded)
 {
     Trace(2, "MidiTrack: Shifting record layer");
     MidiLoop* loop = loops[loopIndex];
     
-    MidiLayer* neu = recorder.commit(overdub);
-    int layers = loop->getLayerCount();
-    neu->number = layers + 1;
-    loop->add(neu);
-    
-    player.shift(neu);
-}
-
-/**
- * Shift variant for remultiply and unrounded multiply.
- * Here a section of the loop is cut out between
- * the start of the multiply mode and the current frame.
- * Recorder remembered the region.
- */
-void MidiTrack::shiftMultiply(bool unrounded)
-{
-    Trace(2, "MidiTrack: Shifting multiply layer");
-    MidiLoop* loop = loops[loopIndex];
-    
-    MidiLayer* neu = recorder.commitMultiply(overdub, unrounded);
-    int layers = loop->getLayerCount();
-    neu->number = layers + 1;
-    loop->add(neu);
-    
-    player.shift(neu);
-}
-
-/**
- * Should these shift immediately or accumulate?
- */
-void MidiTrack::shiftInsert(bool unrounded)
-{
-    Trace(2, "MidiTrack: Shifting insert layer");
-    MidiLoop* loop = loops[loopIndex];
-    
-    MidiLayer* neu = recorder.commitMultiply(overdub, unrounded);
+    MidiLayer* neu = recorder.commit(overdub, unrounded);
     int layers = loop->getLayerCount();
     neu->number = layers + 1;
     loop->add(neu);
@@ -748,7 +709,7 @@ void MidiTrack::finishRecord()
     // close held notes
 
     // this does recorder.commit and player.shift to start playing
-    shift();
+    shift(false);
     
     mode = MobiusMidiState::ModePlay;
     
@@ -964,14 +925,14 @@ void MidiTrack::startMultiply()
 void MidiTrack::finishMultiply()
 {
     Trace(2, "MidiTrack: Finish Multiply");
-    shiftMultiply(false);
+    shift(false);
     resumePlay();
 }
 
 void MidiTrack::unroundedMultiply()
 {
     Trace(2, "MidiTrack: Unrounded Multiply");
-    shiftMultiply(true);
+    shift(true);
     resumePlay();
 }
 
@@ -1070,15 +1031,18 @@ void MidiTrack::finishInsert()
     // half of the split segment with the prefix, since this prefix includes any
     // notes beind held by Player when it was paused, unpause it with the noHold option
     player.unpause();
-    recorder.endInsert(overdub, false);
+    recorder.finishInsert(overdub);
     resumePlay();
 }
 
+/**
+ * Unrounded insert must do a complete layer shift.
+ */
 void MidiTrack::unroundedInsert()
 {
     Trace(2, "MidiTrack: Unrounded Insert");
     player.unpause();
-    recorder.endInsert(overdub, true);
+    shift(true);
     resumePlay();
 }
 
@@ -1135,7 +1099,7 @@ bool MidiTrack::finishSwitch(int newIndex)
             if (currentPlaying != nullptr) {
                 recorder.copy(currentPlaying, true);
                 // commit the copy to the Loop and prep another one
-                shift();
+                shift(false);
                 isEmpty = false;
                 mode = MobiusMidiState::ModePlay;
             }
@@ -1145,7 +1109,7 @@ bool MidiTrack::finishSwitch(int newIndex)
             if (currentPlaying != nullptr) {
                 recorder.copy(currentPlaying, false);
                 // commit the copy to the Loop and prep another one
-                shift();
+                shift(false);
                 isEmpty = false;
                 mode = MobiusMidiState::ModePlay;
             }
@@ -1295,7 +1259,7 @@ void MidiTrack::toggleReplace()
         Trace(2, "MidiTrack: Stopping Replace %d", recorder.getFrame());
         // audio tracks would shift the layer now, we'll let it go
         // till the end and accumulate more changes
-        recorder.endReplace(overdub);
+        recorder.finishReplace(overdub);
         // this will also unmute the player
         resumePlay();
     }
