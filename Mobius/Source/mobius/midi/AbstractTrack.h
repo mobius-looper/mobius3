@@ -50,7 +50,7 @@ class AbstractTrack
     virtual void toggleMute() = 0;
     virtual void toggleReplace() = 0;
 
-    virtual void finishSwitch(int target) = 0;
+    virtual bool finishSwitch(int target) = 0;
     
     // simple one-shot actions
     virtual void doParameter(class UIAction* a) = 0;

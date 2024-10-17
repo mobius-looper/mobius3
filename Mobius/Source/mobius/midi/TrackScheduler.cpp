@@ -241,8 +241,17 @@ void TrackScheduler::doActionInternal(UIAction* a)
             break;
 
         case FuncUnroundedInsert: {
-            if (track->getMode() == MobiusMidiState::ModeInsert)
-              doActionNow(a);
+            if (track->getMode() == MobiusMidiState::ModeInsert) {
+                // remove the previously scheduled extension or rounding event
+                TrackEvent* round = events.remove(TrackEvent::EventRound);
+                // do the unrounded insert
+                doActionNow(a);
+                // and finally any stacked actions
+                if (round != nullptr) {
+                    doStacked(round);
+                    dispose(round);
+                }
+            }
             else {
                 Trace(1, "TrackScheduler: Unexpected FuncUnroundedInsert outside Insert mode");
                 actionPool->checkin(a);
@@ -521,7 +530,7 @@ void TrackScheduler::doEvent(TrackEvent* e)
             break;
 
         case TrackEvent::EventSwitch: {
-            doSwitch(e);
+            doSwitch(e, e->switchTarget);
         }
             break;
 
@@ -1101,6 +1110,8 @@ void TrackScheduler::scheduleQuantized(UIAction* a)
         event->frame = getQuantizedFrame(a->symbol->id, quant);
         event->primary = a;
         events.add(event);
+
+        Trace(2, "TrackScheduler: Quantized %s to %d", a->symbol->getName(), event->frame);
     }
 }
 
@@ -1155,13 +1166,18 @@ int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
         }
     }
 
-    if (allow)
-      qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
-                                             track->getCycleFrames(),
-                                             relativeTo,
-                                             track->getSubcycles(),
-                                             qmode,
-                                             true);  // "after" means move beyond the current frame
+    if (allow) {
+
+        qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
+                                               track->getCycleFrames(),
+                                               relativeTo,
+                                               track->getSubcycles(),
+                                               qmode,
+                                               true);
+
+        //Trace(2, "TrackScheduler: Quantized to %d relative to %d", qframe, relativeTo);
+        
+    }
     return qframe;
 }
 
@@ -1199,7 +1215,7 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
     SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
     if (q == SWITCH_QUANT_OFF) {
         // todo: might be some interesting action argument we need to convey as well?
-        doSwitch(target);
+        doSwitch(nullptr, target);
     }
     else {
         TrackEvent* event = eventPool->newEvent();
@@ -1225,6 +1241,7 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
 
         events.add(event);
     }
+    actionPool->checkin(a);
 }
 
 /**
@@ -1306,6 +1323,20 @@ void TrackScheduler::stackSwitch(UIAction* a)
         Trace(1, "TrackScheduler: Switch mode without a switch event");
         actionPool->checkin(a);
     }
+    else if (ending->isReturn) {
+        // these are a special kind of Switch, we can stack things on them
+        // but they don't alter the target loop with Next/Prev
+        // hmm, might be interesting to have some options for that
+        SymbolId sid = a->symbol->id;
+        if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
+            Trace(1, "TrackScheduler: Ignoring switch function when waiting for a Return");
+            // maybe this should convert to a normal switch?
+        }
+        else {
+            Trace(2, "TrackScheduler: Stacking %s after return switch", a->symbol->getName());
+            ending->stack(a);
+        }
+    }
     else {
         SymbolId sid = a->symbol->id;
         if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
@@ -1344,66 +1375,110 @@ void TrackScheduler::stackSwitch(UIAction* a)
 }
 
 /**
- * Do a loop switch after waiting for a quantization boundary or confirmation.
- * The target loop is in the event and may have been modified from the
- * original action.
+ * Do a loop switch and perform follow on events.
+ *
+ * The event is null if the switch was not quantized and is being done immediately
+ * The target index was obtained from the UIAction.
+ *
+ * If the event is non-null, this was a quantized switch that may have stacked actions.
+ *
+ * In both cases, if we switch to an empty loop and EmptyLoopAction is Record,
+ * cause recording to start by synthesizing a UIAction for Record and passing it through
+ * the usual process which may synchronize.
+ *
+ * If there are stacked events, these happen after EmptyLoopAction=Record which may cause
+ * them to stack again if the record is synchronized.
+ *
+ * If the next loop was NOT empty, consult SwitchDuration to see if we need to
+ * schedule a Return event.  SwitchDuration does not currently apply if EmptyLoop=Record
+ * is happening because we don't have a place to hang the return switch without confusing
+ * things by having two mode events, one for the Record and one for the Return.
+ * Could make it pending, or put something on the Record event to cause it to be scheduled
+ * after the record is finished.  That would be cool but obscure.
+ *
+ * If the isReturn flag is set, then this wasn't a normal Next/Prev/Select loop switch,
+ * it was generated for SwitchDuration=Return.  In this case we don't obey SwitchDuration
+ * since that would just cause it to bounce back and forth.
+ * 
  */
-void TrackScheduler::doSwitch(TrackEvent* e)
+void TrackScheduler::doSwitch(TrackEvent* e, int target)
 {
-    if (e != nullptr) {
-        doSwitch(e->switchTarget);
+    int startingLoop = track->getLoopIndex();
+
+    // if both are passed should be the same, but obey the event
+    if (e != nullptr) target = e->switchTarget;
+    
+    bool isEmpty = track->finishSwitch(target);
+
+    // handle EmptyLoopAction=Record
+    bool recording = false;
+    if (isEmpty) {
+        EmptyLoopAction elc = valuator->getEmptyLoopAction(track->getNumber());
+        if (elc == EMPTY_LOOP_RECORD) {
+            // todo: if this was a Return event we most likely wouldn't be here
+            // but I guess handle it the same?
+            UIAction a;
+            a.symbol = symbols->getSymbol(FuncRecord);
+            // call the outermost action receiver as if this came from the outside
+            doAction(&a);
+            recording = true;
+        }
     }
+
+    // ignore SwitchDuration for Return events
+    if (!e->isReturn) {
+        SwitchDuration duration = valuator->getSwitchDuration(track->getNumber());
+        if (duration != SWITCH_PERMANENT && recording) {
+            // more work to do here, where would we hang the Mute/Return events?
+            Trace(1, "TrackScheduler: Ignoring SwitchDuration after starting record of empty loop");
+        }
+        else if (!isEmpty) {
+            switch (duration) {
+                case SWITCH_ONCE: {
+                    TrackEvent* event = eventPool->newEvent();
+                    event->type = TrackEvent::EventAction;
+                    UIAction* action = actionPool->newAction();
+                    action->symbol = symbols->getSymbol(FuncMute); 
+                    event->primary = action;
+                    event->frame = track->getLoopFrames();
+                    events.add(event);
+                }
+                    break;
+                case SWITCH_ONCE_RETURN: {
+                    TrackEvent* event = eventPool->newEvent();
+                    // instead of having EventReturn, use EventSwitch and set a flag
+                    // saves having to look for both
+                    event->type = TrackEvent::EventSwitch;
+                    event->isReturn = true;
+                    event->switchTarget = startingLoop;
+                    event->frame = track->getLoopFrames();
+                    events.add(event);
+                }
+                    break;
+                case SWITCH_SUSTAIN: {
+                    Trace(1, "TrackScheduler: SwitchDuration=Sustain not implemented");
+                }
+                    break;
+                case SWITCH_SUSTAIN_RETURN: {
+                    Trace(1, "TrackScheduler: SwitchDuration=SustainReturn not implemented");
+                }
+                    break;
+                case SWITCH_PERMANENT: break;
+            }
+        }
+    }
+    
+    // like SwitchDuration, if we started a Record because the loop was empty
+    // should be be doing the stacked events, these might cause premature
+    // Record termination?  may be best to ignore these like we do SwitchDuration
+    if (e != nullptr && e->stacked != nullptr && recording)
+      Trace(1, "TrackScheduler: Stacked actions being performed after empty loop record");
+
+    // if the new loop is empty, these may go nowhere but they could have stacked
+    // Reocord or some things that have meaning
     doStacked(e);
 }
 
-/**
- * After waiting and deciding which loop to switch to, tell track to do
- * the switch, and also schedule post-switch events if the SwitchDuration
- * parameter is set.
- */
-void TrackScheduler::doSwitch(int target)
-{
-    int currentLoop = track->getLoopIndex();
-    track->finishSwitch(target);
-    scheduleSwitchDuration(currentLoop);
-}
-
-/**
- * After we've asked Track to perform the switch, look at the duration
- * parameter and schedule a return event.
- */
-void TrackScheduler::scheduleSwitchDuration(int currentLoopIndex)
-{
-    SwitchDuration duration = valuator->getSwitchDuration(track->getNumber());
-    switch (duration) {
-        case SWITCH_ONCE: {
-            TrackEvent* event = eventPool->newEvent();
-            event->type = TrackEvent::EventAction;
-            UIAction* action = actionPool->newAction();
-            action->symbol = symbols->getSymbol(FuncMute); 
-            event->primary = action;
-            event->frame = track->getLoopFrames();
-            events.add(event);
-        }
-            break;
-        case SWITCH_ONCE_RETURN: {
-            TrackEvent* event = eventPool->newEvent();
-            event->type = TrackEvent::EventReturn;
-            event->switchTarget = currentLoopIndex;
-            event->frame = track->getLoopFrames();
-            events.add(event);
-        }
-            break;
-        case SWITCH_SUSTAIN: {
-        }
-            break;
-        case SWITCH_SUSTAIN_RETURN: {
-        }
-            break;
-        case SWITCH_PERMANENT: break;
-    }
-}
-    
 //////////////////////////////////////////////////////////////////////
 //
 // State
@@ -1424,13 +1499,10 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
             case TrackEvent::EventRecord: estate->name = "Record"; break;
                 
             case TrackEvent::EventSwitch: {
-                estate->name = "Switch";
-                arg = e->switchTarget + 1;
-                
-            }
-                break;
-            case TrackEvent::EventReturn: {
-                estate->name = "Return";
+                if (e->isReturn)
+                  estate->name = "Return";
+                else
+                  estate->name = "Switch";
                 arg = e->switchTarget + 1;
                 
             }

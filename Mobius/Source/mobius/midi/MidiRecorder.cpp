@@ -291,6 +291,10 @@ MidiLayer* MidiRecorder::commit(bool overdub)
         assimilate(commitLayer);
 
         // turn off extension mode, track has to turn it back on if necessary
+        // !! I think this shouldn't turn off replace mode, it continues
+        // into the next layer
+        if (replace)
+          Trace(1, "MidiRecorder: Committed layer while in Replace mode");
         resetFlags();
         if (!overdub)
           recording = false;
@@ -658,11 +662,10 @@ void MidiRecorder::startInsert()
 
     // Insert a segment between the others, splitting the spanning segment.
     // Prefix calculation for the right half of any split segment is subtle.
-    // To know what notes will extend into the right half before the split we
-    // can't truncate the left half before caculating the prefix for the right half.
-    // This results in three passes, one to just find the split segments,
-    // another to calculate the right half prefix, and another to truncate the left half.
-
+    // We can't insert the right half of the split segment into the layer during
+    // this loop or else we can encounter it on the list and think it needs to
+    // be pushed again.  It's better to insert them after the first pass.
+    // But we have to calculate the prefix BEFORE adjusting the origin frame.
     MidiSegment* rightSplits = nullptr;
     int newCycleLast = modeStartFrame + cycleFrames - 1;
     for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
@@ -675,44 +678,39 @@ void MidiRecorder::startInsert()
             seg->originFrame += cycleFrames;
         }
         else {
-            int leftCut = seglast - modeStartFrame + 1;
-            int rightCut = modeStartFrame - seg->originFrame;
-            
             // needs to split
+            int leftCut = seglast - modeStartFrame + 1;
+            int leftRemainder = seg->segmentFrames - leftCut;
+            int rightCut = modeStartFrame - seg->originFrame;
+
             MidiSegment* rightHalf = pools->copy(seg);
             rightHalf->segmentFrames -= rightCut;
-            rightHalf->originFrame = modeStartFrame + cycleFrames;
+            // this is where it logically starts for prefix calculation
+            rightHalf->originFrame = modeStartFrame;
             // right half reference frame is the original reference frame plus the amount
-            // we will leave in it after cutting
-            rightHalf->referenceFrame = seg->referenceFrame + (seg->segmentFrames - leftCut);
+            // we will leave in it after cutting the lhs
+            rightHalf->referenceFrame = seg->referenceFrame + leftRemainder;
+            // harvest the prefix
+            // since this doesn't have a prev pointer, might be some minor optimazations
+            // we could do if the split segment already has a prefix, right now
+            // it will start from the beginning of the backing layer
+            harvester.harvestPrefix(rightHalf);
+            // put put it up where it belongs
+            rightHalf->originFrame += cycleFrames;
             // save it for later
             rightHalf->next = rightSplits;
             rightSplits = rightHalf;
-            
-            // leave the left half at it's original lenght till after prefix calculation
+            // cut the lhs
+            seg->segmentFrames = leftRemainder;
         }
     }
 
-    // Now add the right halfs and calculate their prefix
+    // Now add the right halfs
     while (rightSplits != nullptr) {
         MidiSegment* next = rightSplits->next;
         rightSplits->next = nullptr;
         recordLayer->add(rightSplits);
-        harvester.harvestPrefix(rightSplits);
         rightSplits = next;
-    }
-
-    // finally truncate the left splits
-    for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next) {
-        int seglast = seg->originFrame + seg->segmentFrames - 1;
-        if (seglast < modeStartFrame) {
-            // unaffected
-        }
-        else if (seg->originFrame <= newCycleLast) {
-            // this would have been split in the first loop
-            int leftCut = seglast - modeStartFrame + 1;
-            seg->segmentFrames -= leftCut;
-        }
     }
             
     // finally stick a cycle in the sequence
@@ -928,20 +926,26 @@ void MidiRecorder::endReplace(bool overdub)
     else {
         MidiSegment* seg = recordLayer->getLastSegment();
         if (seg == nullptr || seg->originFrame > modeStartFrame ||
-            recordFrame >= (seg->originFrame + seg->segmentFrames)) {
+            // boundary condition, if the replace continues to the end of the loop,
+            // recordFrame will be recordFrames and the last segment will be EQUAL
+            // to that, so > rather than >=
+            recordFrame > (seg->originFrame + seg->segmentFrames)) {
             Trace(1, "MidiRecorder: Replace region spans multiple segments");
         }
         else {
             // backing segment gets truncated
             seg->segmentFrames = modeStartFrame - seg->originFrame;
-            // new one gets the remainder
-            MidiSegment* neu = pools->newSegment();
-            neu->layer = backingLayer;
-            neu->originFrame = recordFrame;
-            neu->referenceFrame = recordFrame;
-            neu->segmentFrames = recordFrames - recordFrame;
-            harvester.harvestPrefix(neu);
-            recordLayer->add(neu);
+            // new one gets the remainder, it may reduce to zero
+            int remainder = recordFrames - recordFrame;
+            if (remainder > 0) {
+                MidiSegment* neu = pools->newSegment();
+                neu->layer = backingLayer;
+                neu->originFrame = recordFrame;
+                neu->referenceFrame = recordFrame;
+                neu->segmentFrames = remainder;
+                harvester.harvestPrefix(neu);
+                recordLayer->add(neu);
+            }
         }
     }
     
@@ -1124,6 +1128,11 @@ void MidiRecorder::setRecording(bool b)
 bool MidiRecorder::isRecording()
 {
     return recording;
+}
+
+bool MidiRecorder::isReplace()
+{
+    return replace;
 }
 
 /**

@@ -53,7 +53,7 @@ class MidiPlayer
 
     // pause playback
     void pause();
-    void unpause();
+    void unpause(bool noHold=false);
     bool isPaused();
     
   private:

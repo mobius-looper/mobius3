@@ -38,6 +38,7 @@ void TrackEvent::poolInit()
     
     multiples = 0;
     switchTarget = 0;
+    isReturn = false;
 }
 
 void TrackEvent::stack(UIAction* a)
@@ -204,7 +205,6 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
             e->primary != nullptr &&
             e->primary->symbol->id == sym) {
             found = e;
-            break;
         }
     }
     return found;
@@ -256,7 +256,10 @@ void TrackEventList::shift(int delta)
             // only shift events that are beyond the loop frame
             // it isn't obvious but "delta" is loopFrames
             if (e->frame >= delta) {
-                e->frame = e->frame - delta;
+                int newFrame = e->frame - delta;
+                Trace(2, "TrackEventList: Shifting event from %d to %d",
+                      e->frame, newFrame);
+                e->frame = newFrame;
             }
         }
     }

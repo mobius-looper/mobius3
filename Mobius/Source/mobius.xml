@@ -29,7 +29,7 @@
     pitchBendRange='12'
     pitchStepRange='24'
     pitchTransfer='off'
-    quantize='off'
+    quantize='subCycle'
     speedBendRange='12'
     speedStepRange='24'
     speedTransfer='off'

@@ -355,9 +355,13 @@ MidiLayer* MidiLayerPool::newLayer()
 void MidiLayer::dump(StructureDumper& d, bool primary)
 {
     if (d.isVisited(number) || !primary) {
+        // actually just skip this, Segment is the only nonprimary
+        // and it will put the layer number in it's dump header
+        /*
         d.start("Layer:");
         d.add("number", number);
         d.newline();
+        */
     }
     else {
         d.start("Layer:");

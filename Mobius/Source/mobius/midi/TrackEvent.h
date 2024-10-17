@@ -25,8 +25,7 @@ class TrackEvent : public PooledObject
         EventRecord,
         EventAction,
         EventRound,
-        EventSwitch,
-        EventReturn
+        EventSwitch
     } Type;
     
     TrackEvent();
@@ -67,6 +66,10 @@ class TrackEvent : public PooledObject
     // for EventSwitch, the index of the target loop
     int switchTarget = 0;
 
+    // for EventSwitch true if this swithch was scheduled
+    // for SwitchDuration=Once, e.g. a "Return" event
+    bool isReturn = false;
+
     static int getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                  int subcycles, QuantizeMode q, bool after);
     
@@ -103,7 +106,7 @@ class TrackEventList
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
     TrackEvent* remove(TrackEvent::Type type);
-
+    
     TrackEvent* consume(int startFrame, int blockFrames);
     void shift(int delta);
     TrackEvent* consumePulsed();

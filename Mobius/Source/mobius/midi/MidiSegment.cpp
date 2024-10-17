@@ -41,13 +41,16 @@ void MidiSegment::dump(StructureDumper& d)
     d.add("originFrame", originFrame);
     d.add("segmentFrames", segmentFrames);
     d.add("referenceFrame", referenceFrame);
+    d.add("layer", layer->number);
     d.newline();
 
     d.inc();
     
     if (prefix.size() > 0) {
         d.line("Prefix:");
+        d.inc();
         prefix.dump(d);
+        d.dec();
     }
     
     if (layer != nullptr) {

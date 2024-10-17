@@ -390,10 +390,16 @@ void MidiPlayer::pause()
  * When resuming from a pause we can continue from the last seek position.
  * In both the Pause and Insert cases ideally we should determine the notes
  * that were held at the time of pause and restore them.
+ *
+ * The noHold option is used with Insert or other operations where we don't
+ * want notes held when the pause was started to continue after
+ * the unpause.
  */
-void MidiPlayer::unpause()
+void MidiPlayer::unpause(bool noHold)
 {
     if (paused) {
+        if (noHold)
+          flushHeld();
         paused = false;
         setMuteInternal(true, false);
     }

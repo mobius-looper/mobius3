@@ -131,10 +131,10 @@ void MidiHarvester::harvestRange(MidiLayer* layer, int startFrame, int endFrame,
             }
                 
             int segEndOffset = endFrame - nextSegment->originFrame;
-
-            if (segEndOffset > seglast) {
+            int lastFrameInSegment = nextSegment->segmentFrames - 1;
+            if (segEndOffset > lastFrameInSegment) {
                 // this segment is too short for the requested region
-                segEndOffset = seglast;
+                segEndOffset = lastFrameInSegment;
             }
             
             harvest(nextSegment, segStartOffset, segEndOffset, heldOnly, forceFirstPrefix,

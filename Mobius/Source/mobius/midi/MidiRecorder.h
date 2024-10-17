@@ -86,6 +86,7 @@ class MidiRecorder : public MidiWatcher::Listener
     void setRecording(bool b);
     bool isExtending();
     void setExtending(bool b);
+    bool isReplace();
     void advance(int frames);
     void add(class MidiEvent* e);
 

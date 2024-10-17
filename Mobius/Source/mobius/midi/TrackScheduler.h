@@ -111,9 +111,7 @@ class TrackScheduler
     int getQuantizedFrame(SwitchQuantize squant);
     QuantizeMode convert(SwitchQuantize squant);
     void stackSwitch(class UIAction* a);
-    void doSwitch(class TrackEvent* e);
-    void doSwitch(int target);
-    void scheduleSwitchDuration(int currentIndex);
+    void doSwitch(class TrackEvent* e, int target);
 
 };
 

@@ -179,9 +179,20 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->subcycle = 0;
 
     state->mode = mode;
+    // some simulated modes
+    if (mode == MobiusMidiState::ModePlay) {
+        if (overdub)
+          mode = MobiusMidiState::ModeOverdub;
+        else if (mute)
+          mode = MobiusMidiState::ModeMute;
+    }
+    
     state->overdub = overdub;
     state->reverse = reverse;
-    state->mute = player.isMuted();
+    // Track::mute means it is in Mute mode, the player
+    // can be muted for other reasons like Replace and Insert
+    // only show Track::mute
+    state->mute = mute;
     
     state->input = input;
     state->output = output;
@@ -410,6 +421,10 @@ void MidiTrack::advance(int newFrames)
                 }
                 else if (recorder.hasChanges()) {
                     shift();
+                    if (mode == MobiusMidiState::ModeReplace && !recorder.isReplace()) {
+                        // work to do here
+                        Trace(1, "MidiTrack: Shifted while in Replace mode");
+                    }
                 }
                 else {
                     // squelching the record layer
@@ -702,6 +717,7 @@ void MidiTrack::startRecord()
 {
     player.reset();
     recorder.reset();
+    resetRegions();
     
     MidiLoop* loop = loops[loopIndex];
     loop->reset();
@@ -753,9 +769,9 @@ void MidiTrack::finishRecord()
 void MidiTrack::toggleOverdub()
 {
     if (overdub)
-      Trace(2, "MidiTrck: Stopping Overdub");
+      Trace(2, "MidiTrck: Stopping Overdub %d", recorder.getFrame());
     else
-      Trace(2, "MidiTrck: Starting Overdub");
+      Trace(2, "MidiTrck: Starting Overdub %d", recorder.getFrame());
     
     // toggle our state
     if (overdub)
@@ -863,6 +879,7 @@ void MidiTrack::doUndo()
 void MidiTrack::resumePlay()
 {
     mode = MobiusMidiState::ModePlay;
+    mute = false;
     player.setMute(false);
 }
 
@@ -1048,8 +1065,10 @@ int MidiTrack::extendInsert()
 void MidiTrack::finishInsert()
 {
     Trace(2, "MidiTrack: Finish Insert");
-    // don't shift an insert right away like multiply, let it accumulate
-    // shiftInsert(unrounded);
+    // don't shift a rounded insert right away like multiply, let it accumulate
+    // assuming prefix calculation worked properly we'll start playing the right
+    // half of the split segment with the prefix, since this prefix includes any
+    // notes beind held by Player when it was paused, unpause it with the noHold option
     player.unpause();
     recorder.endInsert(overdub, false);
     resumePlay();
@@ -1072,12 +1091,16 @@ void MidiTrack::unroundedInsert()
 /**
  * Called from Scheduler after it has deal with switch quantize
  * and confirmation modes, or just decided to do it immediately.
- * Though this isn't really a mode, it is treated like other rounding modes,
- * the original action that triggered it has been consumed and the actions
- * passed here if any will be those stacked after the switch.
+ * Though this isn't really a mode, it is treated like other rounding modes.
+ *
+ * Returns true if the next loop was empty which causes EmptyLoopActions
+ * to be performed.  Scheduler needs to handle EMPTY_LOOP_RECORD, Track does the rest.
+ * If there are any actions stacked on the switch, Scheduler will do those next.
  */
-void MidiTrack::finishSwitch(int newIndex)
+bool MidiTrack::finishSwitch(int newIndex)
 {
+    bool isEmpty = false;
+    
     Trace(2, "MidiTrack: Switch %d", newIndex);
 
     MidiLoop* currentLoop = loops[loopIndex];
@@ -1095,43 +1118,42 @@ void MidiTrack::finishSwitch(int newIndex)
     // it's already dealing with Return events?  Or else move
     // Return handling out here
     if (playing == nullptr || playing->getFrames() == 0) {
+        isEmpty = true;
         // we switched to an empty loop
+        recorder.reset();
+        player.reset();
+        resetRegions();
+        mode = MobiusMidiState::ModeReset;
+        
         EmptyLoopAction action = valuator->getEmptyLoopAction(number);
-        if (action == EMPTY_LOOP_NONE) {
-            recorder.reset();
-            pulsator->unlock(number);
-            mode = MobiusMidiState::ModeReset;
-
-            // !! feels like Scheduler may want to know about this?
-        }
-        else if (action == EMPTY_LOOP_RECORD) {
+        if (action == EMPTY_LOOP_RECORD) {
+            // Scheduler will handle scheduling a Record event
             Trace(2, "MidiTrack: Empty loop record");
-            // this may need to synchronize on a pulse so pass it through the
-            // scheduler as if a Reord action  had been received
-            UIAction a;
-            a.symbol = container->getSymbols()->getSymbol(FuncRecord);
-            scheduler.doAction(&a);
         }
         else if (action == EMPTY_LOOP_COPY) {
             Trace(2, "MidiTrack: Empty loop copy");
-            if (currentPlaying == nullptr)
-              recorder.reset();
-            else {
+            if (currentPlaying != nullptr) {
                 recorder.copy(currentPlaying, true);
                 // commit the copy to the Loop and prep another one
                 shift();
+                isEmpty = false;
+                mode = MobiusMidiState::ModePlay;
             }
         }
         else if (action == EMPTY_LOOP_TIMING) {
             Trace(2, "MidiTrack: Empty loop time copy");
-            if (currentPlaying == nullptr)
-              recorder.reset();
-            else {
+            if (currentPlaying != nullptr) {
                 recorder.copy(currentPlaying, false);
                 // commit the copy to the Loop and prep another one
                 shift();
+                isEmpty = false;
+                mode = MobiusMidiState::ModePlay;
             }
         }
+
+        // if we didn't copy, then unlock the pulse follower
+        if (isEmpty)
+          pulsator->unlock(number);
     }
     else {
         int currentFrames = recorder.getFrames();
@@ -1184,6 +1206,7 @@ void MidiTrack::finishSwitch(int newIndex)
         player.change(playing, newPlayFrame);
     }
 
+    return isEmpty;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1196,35 +1219,29 @@ void MidiTrack::finishSwitch(int newIndex)
  * Here from scheduler after possible quantization.
  * This is not a rounding mode so here for both start and stop.
  *
- * It feels like Mute should a minor mode like Overdub.  It's really just
- * a flag on Player like recording is for Recorder.  You can be in other modes
- * but still have Player muted.  Audio tracks have a lot more semantics around
- * Mute mode though.  
+ * There are two levels of mute.  Track::mute is "mute mode" which means
+ * the track will be muted no matter what state it is in.  Player.isMute
+ * may be true for other reasons like Replace and Insert modes.  The Player
+ * should always be muted if mute mode is on, but the reverse is not true.
+ *
+ * ModeMute is not something that is set in Track::Mode, like ModeOverdub
+ * it is simulated in MobiusMidiState if we're in Play and overdub is on.
+ *
+ * Lots more to do here, if we're in Replace be sure that Mute stacks and
+ * can't happen over the top of a Replace/Insert so it confuses the modes.
  */
 void MidiTrack::toggleMute()
 {
     // todo: ParameterMuteMode
-    if (player.isMuted()) {
-        Trace(2, "MidiTrack: Stopping Mute");
-        if (mode != MobiusMidiState::ModeMute) {
-            Trace(1, "MidiTrack: Player muted but not in MuteMode, why?");
-            Trace(2, "MidiTrack: Mode is %s", getModeName());
-        }
-        else
-          resumePlay();
-
+    if (mute) {
+        Trace(2, "MidiTrack: Stopping Mute %d", recorder.getFrame());
+        mute = false;
+        mode = MobiusMidiState::ModePlay;
         player.setMute(false);
     }
     else {
-        Trace(2, "MidiTrack: Starting Mute");
-
-        if (mode != MobiusMidiState::ModePlay) {
-            Trace(1, "MidiTrack: Player muted but not in MuteMode, why?");
-            Trace(2, "MidiTrack: Mode is %s", getModeName());
-        }
-        else 
-          mode = MobiusMidiState::ModeMute;
-        
+        Trace(2, "MidiTrack: Starting Mute %d", recorder.getFrame());
+        mute = true;
         player.setMute(true);
     }
 }
@@ -1275,16 +1292,20 @@ const char* MidiTrack::getModeName(MobiusMidiState::Mode amode)
 void MidiTrack::toggleReplace()
 {
     if (mode == MobiusMidiState::ModeReplace) {
-        Trace(2, "MidiTrack: Stopping Replace");
+        Trace(2, "MidiTrack: Stopping Replace %d", recorder.getFrame());
         // audio tracks would shift the layer now, we'll let it go
         // till the end and accumulate more changes
         recorder.endReplace(overdub);
+        // this will also unmute the player
         resumePlay();
     }
     else {
-        Trace(2, "MidiTrack: Starting Replace");
+        Trace(2, "MidiTrack: Starting Replace %d", recorder.getFrame());
         mode = MobiusMidiState::ModeReplace;
         recorder.startReplace();
+        // temporarily mute the Player so we don't hear
+        // what is being replaced
+        player.setMute(true);
     }
 }
 
