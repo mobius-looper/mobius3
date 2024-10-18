@@ -344,33 +344,26 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
 
 /**
  * Here after Scheduler has isolated a section of the audio stream block
- * between two events.
- * Advance the record/play state.  If the loop point is encountered,
- * do a layer shift.
- *
- * "recording" has already happened as well with MidiKernel passing
- * the MidiEvents it received from the device or the host before
- * calling processAudioStream.
- *
- * These situations exist:
- *    - reset
- *    - recording
- *    - extending
- *    - looping
- *
- * In the Reset mode, the track contents are empty and the advance does nothing.
- * 
- * In the Record mode, the active loop in the track is being recorded for the first
- * time.  There is nothing playing, and the frame will advance without bound
- * until the record is ended.
- *
- * In an extension mode, the record layer will grow until the extension ends, and while
- * this is happening the last play layer will loop over and over.
- *
- * In looping mode, the play layer is playing, and the record layer is accumulating
- * overdubs or edits.  When the play frame reaches the loop point, the record layer
- * is "shifted" and becomes the play layer and a new record layer is created.
+ * between two events.  This is the newer implementation that does not
+ * handle the loop point, Scheduler deals with that.
  */
+void MidiTrack::advance(int frames)
+{
+    if (mode == MobiusMidiState::ModeReset) {
+        // nothing to do
+        // if we ever get around to latency compensation, may need
+        // to advance the player and recorder independently
+    }
+    else {
+        recorder.advance(frames);
+        advancePlayer(frames);
+        advanceRegion(frames);
+    }
+}
+
+// old implementation that did it's own looping
+// keep around for awhile
+#if 0
 void MidiTrack::advance(int newFrames)
 {
     if (mode == MobiusMidiState::ModeReset) {
@@ -444,6 +437,45 @@ void MidiTrack::advance(int newFrames)
         }
     }
 }
+#endif
+
+/**
+ * Called by scheduler to see if the track is in an extension mode and
+ * is allowed to continue beyond the loop point.  If yes it will allow
+ * the track to advance past the loop point, and the track must increase
+ * it's length by some amount.
+ */
+bool MidiTrack::isExtending()
+{
+    return recorder.isExtending();
+}
+
+/**
+ * Called by scheduler when the track has reached the loop point and needs
+ * to start over.  Scheduler needs to be in control of this for proper
+ * event insertion.  
+ */
+void MidiTrack::loop()
+{
+    Trace(2, "MidiTrack: Loop");
+    
+    // we should have advanced one beyond the last frame of the loop
+    if (recorder.getFrame() != recorder.getFrames()) {
+        Trace(1, "MidiTrack: Scheduler requested Loop not on the loop frame");
+    }
+
+    if (recorder.hasChanges())
+      shift(false);
+    else
+      recorder.rollback(overdub);
+    
+    // restart the region tracker
+    resetRegions();
+    if (overdub)
+      startOverdubRegion();
+
+    player.restart();
+}
 
 /**
  * Kludge for Multiply early termination.
@@ -500,7 +532,6 @@ void MidiTrack::advancePlayer(int newFrames)
 
 void MidiTrack::shift(bool unrounded)
 {
-    Trace(2, "MidiTrack: Shifting record layer");
     MidiLoop* loop = loops[loopIndex];
     
     MidiLayer* neu = recorder.commit(overdub, unrounded);

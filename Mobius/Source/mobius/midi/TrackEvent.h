@@ -107,7 +107,7 @@ class TrackEventList
     TrackEvent* findLast(SymbolId id);
     TrackEvent* remove(TrackEvent::Type type);
     
-    TrackEvent* consume(int startFrame, int blockFrames);
+    TrackEvent* consume(int startFrame, int endFrame);
     void shift(int delta);
     TrackEvent* consumePulsed();
 

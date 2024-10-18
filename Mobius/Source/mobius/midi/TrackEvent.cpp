@@ -210,15 +210,14 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
     return found;
 }
 
-TrackEvent* TrackEventList::consume(int startFrame, int blockFrames)
+TrackEvent* TrackEventList::consume(int startFrame, int endFrame)
 {
     TrackEvent* found = nullptr;
     
-    int maxFrame = startFrame + blockFrames - 1;
     TrackEvent* prev = nullptr;
     TrackEvent* e = events;
     while (e != nullptr) {
-        if (!e->pending && e->frame >= startFrame && e->frame <= maxFrame) {
+        if (!e->pending && e->frame >= startFrame && e->frame <= endFrame) {
             found = e;
             break;
         }

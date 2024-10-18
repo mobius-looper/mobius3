@@ -306,6 +306,10 @@ MidiLayer* MidiRecorder::commit(bool overdub, bool unrounded)
         }
         else if (replace) {
             finishReplace(overdub);
+            // finishReplace is a public function called by Track for user actions
+            // and it clears the replace flag, when auto-finalizing at the loop boundary
+            // without manually closing, it carries over
+            replace = true;
         }
         else {
             // simple overdub, should not have changed these
@@ -1011,6 +1015,13 @@ void MidiRecorder::startReplace()
         return;
     }
     
+    if (recordFrame == recordFrames) {
+        // saw this when it was incorrectly executiing a Replace action
+        // quantized just past the loop boundary
+        // same applies to other modes
+        Trace(1, "MidiRecorder: Starting Replace mode at the loop boundary, Scheduler is bad");
+    }
+    
     modeStartFrame = recordFrame;
     replace = true;
     setRecording(true);
@@ -1033,6 +1044,16 @@ void MidiRecorder::finishReplace(bool overdub)
 {
     if (!replace) {
         Trace(1, "MidiRecorder: Ending replace not in replace mode");
+    }
+    else if (recordFrame == 0) {
+        // this was a replace with the ending quantized to the loop boundary
+        // commit() will have already finalized the replace segments in the last layer
+        // we shifted a new one, and were prepared to continue replacing, but
+        // then encountered the end event immediately
+        // this does nothing but finally turn off replace mode
+        replace = false;
+        recording = overdub;
+        modeStartFrame = 0;
     }
     else {
         MidiSegment* seg = recordLayer->getLastSegment();
@@ -1061,7 +1082,6 @@ void MidiRecorder::finishReplace(bool overdub)
 
         replace = false;
         modeStartFrame = 0;
-        modeEndFrame = 0;
         recording = overdub;
     }
 }

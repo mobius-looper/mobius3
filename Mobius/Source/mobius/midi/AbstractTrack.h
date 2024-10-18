@@ -61,8 +61,10 @@ class AbstractTrack
 
 
     // advance play/record state between events
+    virtual bool isExtending() = 0;
     virtual void advance(int newFrames) = 0;
-
+    virtual void loop() = 0;
+    
     // misc utilities
     virtual void alert(const char* msg) = 0;
 

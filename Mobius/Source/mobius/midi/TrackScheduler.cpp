@@ -134,6 +134,8 @@ void TrackScheduler::dump(StructureDumper& d)
  * in question I don't think should have been there in the first place.
  *
  */
+// no longer used
+#if 0
 void TrackScheduler::shiftEvents(int frames, int remainder)
 {
     events.shift(frames);
@@ -167,6 +169,7 @@ void TrackScheduler::shiftEvents(int frames, int remainder)
     
     // track->kludgeAdvance(remainder);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -396,6 +399,20 @@ void TrackScheduler::doActionNow(UIAction* a)
  * May want to defer that so we can at least do processing first
  * which may activate a Record, before other events are scheduled, but really
  * those should be stacked on the pulsed record anway.  Something to think about...
+ *
+ * The loop point is an extremely sensitive location that is fraught with errors.
+ * When the track crosses the loop boundary it normally does a layer shift which
+ * has many consequences, events quantized to the loop boundary are typically supposed
+ * to happen AFTER the shift when the loop frame returns to zero.  When the track "loops"
+ * pending events are shifted downward by the loop length.  So for a loop of 100 frames
+ * the actual loop content frames are 0-99 and frame 100 is actually frame 0 of the
+ * next layer.  Track/Recorder originally tried to deal with this but it is too messy
+ * and is really a scheduler problem.
+ *
+ * An exception to the "event after the loop" rule is functions that extend the loop
+ * like Insert and Multiply.  Those need "before or after" options.  Certain forms
+ * of synchronization and script waits do as well.  Keep all of that shit up here.
+ *
  */
 void TrackScheduler::advance(MobiusAudioStream* stream)
 {
@@ -436,12 +453,93 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
             events.add(pulseEvent, true);
         }
     }
-    
-    // carve up the block for the events within it
-    int remainder = newFrames;
-    TrackEvent* e = events.consume(currentFrame, remainder);
-    while (e != nullptr) {
 
+    // now that we have the event list in order, look at carving up
+    // the block around them and the loop point
+
+    int loopFrames = track->getLoopFrames();
+    if (loopFrames == 0) {
+        // the loop is either in reset, waiting for a Record pulse
+        // or waiting for latencies
+        // we're going to need to handle some form of advance here
+        // for script waits and latency compensation
+        if (currentFrame > 0)
+          Trace(1, "TrackScheduler: Track is empty yet has a positive frame");
+        consume(newFrames);
+    }
+    else if (track->isExtending()) {
+        // track isn't empty but it is growing either during Record, Insert or Multiply
+        // will not have a loop point yet, but may have events
+        consume(newFrames);
+    }
+    else if (loopFrames < newFrames) {
+        // extremely short loop that would cycle several times within each block
+        // could handle that but it muddies up the code and is really not
+        // necessary
+        Trace(1, "TrackScheduler: Extremely short loop");
+        track->doReset(true);
+        events.clear();
+    }
+    else {
+        // check for deferred looping
+        if (currentFrame >= loopFrames) {
+            // if the currentFrame is exactly on the loop point, the last block advance
+            // left it there and is a normal shift, if it is beyond the loop point
+            // there is a boundary math error somewhere
+            if (currentFrame > loopFrames) {
+                Trace(1, "TrackScheduler: Track frame was beyond the end %d %d",
+                      currentFrame, loopFrames);
+            }
+            track->loop();
+            events.shift(loopFrames);
+            currentFrame = 0;
+        }
+
+        // the number of block frames before the loop point
+        int beforeFrames = newFrames;
+        // the number of block frames after the loop point
+        int afterFrames = 0;
+        // where the track will end up 
+        int nextFrame = currentFrame + newFrames;
+        
+        if (nextFrame >= loopFrames) {
+            int extra = nextFrame - loopFrames;
+            beforeFrames = newFrames - extra;
+            afterFrames = newFrames - beforeFrames;
+        }
+        
+        consume(beforeFrames);
+
+        if (afterFrames > 0) {
+            // we've reached the loop
+            // here we've got the sensitive shit around whether events
+            // exactly on the loop frame should be before or after
+            track->loop();
+            events.shift(loopFrames);
+
+            consume(afterFrames);
+        }
+
+        // after each of the two consume()s, if we got exactly up to the loop
+        // boundary we could loop early, but this will be caught on
+        // the next block
+        // this may also be an interesting thing to control from a script
+    }
+}
+
+/**
+ * For a range of block frames that are on either side if a loop boundary,
+ * look for events in that range and advance the track.
+ */
+void TrackScheduler::consume(int frames)
+{
+    int currentFrame = track->getFrame();
+    int lastFrame = currentFrame + frames - 1;
+
+    int remainder = frames;
+    TrackEvent* e = events.consume(currentFrame, lastFrame);
+    while (e != nullptr) {
+        
         int eventAdvance = e->frame - currentFrame;
         if (eventAdvance > remainder) {
             Trace(1, "TrackScheduler: Advance math is fucked");
@@ -458,7 +556,8 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
         currentFrame = track->getFrame();
         e = events.consume(currentFrame, remainder);
     }
-    
+
+    // whatever is left over, let the track consume it
     track->advance(remainder);
 }
 
