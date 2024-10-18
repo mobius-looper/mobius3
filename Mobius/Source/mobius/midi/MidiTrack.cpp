@@ -1306,6 +1306,73 @@ void MidiTrack::toggleReplace()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Instant Functions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Two ways we could approach these.
+ *    1) shift the layer to get a clean segment then do a very simple
+ *       duplicate of that
+ *
+ *    2) Multiply the current record layer in place which would be more complex
+ *       since it can have several segments and a long sequence for more duplication.
+ *
+ * By far the cleanest is to shift first which I'm pretty sure is what audio tracks did.
+ * The resulting multi-cycle layer could then be shifted immediately but if the goal
+ * is to do this several times it's better to defer the shift until they're done pushing
+ * buttons.  As soon as any change is made beyond multiply/divide it has to shift again.
+ */
+void MidiTrack::doInstantMultiply(int n)
+{
+    Trace(2, "MidiTrack: InstantMultiply %d", n);
+    if (!recorder.isEmpty()) {
+        if (n <= 0) n = 1;
+
+        // put a governor on this, Bert will no doubt hit this
+        if (n > 64) n = 64;
+
+        // "multiply clean" is an optimization that means
+        // 1) it has a single segment and no sequence, same as !hasChanges
+        // 2) it has segments created only by prior calls to instantMultiply or instantDivide
+        if (!recorder.isInstantClean())
+          shift(false);
+      
+        recorder.instantMultiply(n);
+
+        // player continues merilly along
+    }
+}
+
+/**
+ * Same issues as InstantMultily in the other direction.
+ *
+ * This one is a bit more complex because once you start or whittle this
+ * down to a single segment we can start dividing the layer which will lose
+ * content.  If you allow that, then Player may need to be informed if it is
+ * currently in the zone of truncation.
+ */
+void MidiTrack::doInstantDivide(int n)
+{
+    if (!recorder.isEmpty()) {
+        Trace(2, "MidiTrack: InstantMultiply %d", n);
+
+        if (n <= 0) n = 1;
+
+        // put a governor on this, Bert will no doubt hit this
+        if (n > 64) n = 64;
+
+        if (!recorder.isInstantClean())
+          shift(false);
+
+        // recorder can do the cycle limiting
+        // may want an option to do both: divide to infinity, or divide down to onw
+        recorder.instantDivide(n);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Dump
 //
 //////////////////////////////////////////////////////////////////////

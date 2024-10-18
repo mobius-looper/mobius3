@@ -66,6 +66,11 @@ class MidiRecorder : public MidiWatcher::Listener
 
     void copy(MidiLayer* srcLayer, bool includeEvents);
 
+    bool isEmpty();
+    bool isInstantClean();
+    void instantMultiply(int n);
+    void instantDivide(int n);
+
     //
     // Transaction State
     //
@@ -138,6 +143,9 @@ class MidiRecorder : public MidiWatcher::Listener
     void finishMultiply(bool unrounded);
     MidiSegment* rebuildSegments(int startFrame,  int endFame);
     void finishInsertInternal(bool unrounded);
+
+    void appendCycle(class MidiSegment* src, int cycle);
+    void truncateCycle();
     
     void assimilate(class MidiLayer* layer);
     class MidiLayer* prepLayer();

@@ -113,7 +113,9 @@ class MidiTrack : public AbstractTrack
     void doUndo() override;
     void doRedo() override;
     void doDump() override;
-
+    void doInstantMultiply(int n) override;
+    void doInstantDivide(int n) override;
+    
     bool isExtending() override;
     void advance(int newFrames) override;
     void loop() override;

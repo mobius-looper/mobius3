@@ -58,7 +58,8 @@ class AbstractTrack
     virtual void doUndo() = 0;
     virtual void doRedo() = 0;
     virtual void doDump() = 0;
-
+    virtual void doInstantMultiply(int n) = 0;
+    virtual void doInstantDivide(int n) = 0;
 
     // advance play/record state between events
     virtual bool isExtending() = 0;

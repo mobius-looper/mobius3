@@ -116,6 +116,8 @@
     <Button action="Dump"/>
     <Button action="Mute"/>
     <Button action="SUSUnroundedInsert"/>
+    <Button action="InstantMultiply" arguments="2"/>
+    <Button action="Divide"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

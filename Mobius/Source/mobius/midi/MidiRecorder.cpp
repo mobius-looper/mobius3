@@ -1133,7 +1133,150 @@ void MidiRecorder::copy(MidiLayer* srcLayer, bool includeEvents)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Transaction State
+// Instant Cycle Edits
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MidiRecorder::isEmpty()
+{
+    return (recordLayer == nullptr || recordFrames == 0);
+}
+
+bool MidiRecorder::isInstantClean()
+{
+    bool clean = false;
+
+    if (recordLayer != nullptr) {
+        MidiSequence* seq = recordLayer->getSequence();
+        if (seq == nullptr || seq->size() == 0) {
+            MidiSegment* seg = recordLayer->getSegments();
+            if (seg == nullptr) {
+                // must have at least one segment
+            }
+            else if (seg == nullptr || seg->next == nullptr) {
+                clean = true;
+            }
+            else {
+                // we have multiple segments, if they are all identical other
+                // than their originFrame, and are adjacent, it's almost certainly
+                // the result of an instant function
+                // they don't have to be though, could just be some careful quantized
+                // edits, would be more reliable to keep track of everything that
+                // had been done
+                bool allTheSame = true;
+                int cycle = 2;
+                for (MidiSegment* next = seg->next ; next != nullptr ; next = next->next) {
+                    int expectedOrigin = cycleFrames * cycle;
+                    if ((next->segmentFrames != seg->segmentFrames) ||
+                        next->originFrame != expectedOrigin ||
+                        next->referenceFrame != 0) {
+                        allTheSame = false;
+                        break;
+                    }
+                    cycle++;
+                }
+
+                clean = allTheSame;
+
+                // for multiply we don't care if there is an odd number
+                // for divide we do, check that later
+            }
+        }
+    }
+
+    return clean;
+}
+
+void MidiRecorder::instantMultiply(int n)
+{
+    if (recordLayer != nullptr) {
+        // if you call this without first having checked isInstantCleean the
+        // results will be unpredictable
+        MidiSegment* first = recordLayer->getSegments();
+        if (first == nullptr) {
+            Trace(1, "MidiRecorder: InstantMultiply with no segments");
+        }
+        else {
+            int cycles = 0;
+            for (MidiSegment* seg = first ; seg != nullptr ; seg = seg->next)
+              cycles++;
+
+            int additions = (cycles * (n - 1));
+        
+            // add this many replicas
+            for (int i = 0 ; i < additions ; i++)
+              appendCycle(first, cycles + i);
+
+            // not really an accurate extension count if something is keeping score
+            extensions++;
+            recordCycles = cycles + additions;
+            recordFrames = cycleFrames * recordCycles;
+            recordLayer->setCycles(recordCycles);
+            recordLayer->setFrames(recordFrames);
+        }
+    }
+}
+
+void MidiRecorder::appendCycle(MidiSegment* src, int cycle)
+{
+    MidiSegment* seg = pools->copy(src);
+    seg->originFrame = cycleFrames * cycle;
+    recordLayer->add(seg);
+}
+
+void MidiRecorder::truncateCycle()
+{
+    MidiSegment* seg = recordLayer->getSegments();
+    while (seg != nullptr && seg->next != nullptr)
+      seg = seg->next;
+
+    if (seg == nullptr)
+      Trace(1, "MidiRecorder::truncateCycle with no cycles");
+    else {
+        // kind of dangerious surgery here since we're a level removed
+        // but not worth pushing this into Layer yet
+        if (seg->prev == nullptr) {
+            Trace(2, "MidiRecorder::truncateCycle down to 1 cyle");
+        }
+        else {
+            seg->prev->next = nullptr;
+            pools->reclaim(seg);
+        }
+
+    }
+}
+
+/**
+ * There are more effecient ways to do this if you know you want to
+ * truncate several but who cares.
+ */
+void MidiRecorder::instantDivide(int n)
+{
+    if (recordLayer != nullptr && n > 1) {
+        int count = 0;
+        for (MidiSegment* seg = recordLayer->getSegments() ; seg != nullptr ; seg = seg->next)
+          count++;
+
+        if (count > 1) {
+            int desired = count / n;
+            if (desired > 1) {
+                int extra = count - desired;
+                for (int i = 0 ; i < extra ; i++)
+                  truncateCycle();
+
+                extensions++;
+                recordCycles = count - extra;
+                recordFrames = cycleFrames * recordCycles;
+                recordLayer->setCycles(recordCycles);
+                recordLayer->setFrames(recordFrames);
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// transaction State
 //
 //////////////////////////////////////////////////////////////////////
 

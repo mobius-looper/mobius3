@@ -106,7 +106,8 @@ class TrackScheduler
     void doReplace(class UIAction* a);
     void doOverdub(class UIAction* a);
     void doMute(class UIAction* a);
-
+    void doInstant(class UIAction* a);
+    
     // Switch
     bool isLoopSwitch(class UIAction* a);
     void scheduleSwitch(class UIAction* a);

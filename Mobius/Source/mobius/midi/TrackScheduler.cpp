@@ -363,6 +363,9 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncMute: doMute(a); break;
         case FuncReplace: doReplace(a); break;
 
+        case FuncInstantMultiply: doInstant(a); break;
+        case FuncDivide: doInstant(a); break;
+
         case FuncDump: track->doDump(); break;
 
             // internal functions from ActionTransformer
@@ -1576,6 +1579,27 @@ void TrackScheduler::doSwitch(TrackEvent* e, int target)
     // if the new loop is empty, these may go nowhere but they could have stacked
     // Reocord or some things that have meaning
     doStacked(e);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Instant Functions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here for both InstantMultiply and InstantDivide.
+ * Dig the multiple out of the action and pass it over to track.
+ * These are mode ending and may have been stacked.  Major modes should
+ * be closed by now.
+ */
+void TrackScheduler::doInstant(UIAction* a)
+{
+    if (a->symbol->id == FuncInstantMultiply)
+      track->doInstantMultiply(a->value);
+    
+    else if (a->symbol->id == FuncDivide)
+      track->doInstantDivide(a->value);
 }
 
 //////////////////////////////////////////////////////////////////////
