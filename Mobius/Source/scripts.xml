@@ -4,7 +4,7 @@
   <Machine name="Thor">
     <Externals>
       <External path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"/>
-      <External path="c:\dev\mobius3\Mobius\Source\upgrade.mos"/>
+      <External path="c:\dev\mobius3\Mobius\Source\manyscript"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -12,6 +12,168 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\inittest.msl" name="inittest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many1.mos" name="many1"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many11.mos" name="many11"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many12.mos" name="many12"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many13.mos" name="many13"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many14.mos" name="many14"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many15.mos" name="many15"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many16.mos" name="many16"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many17.mos" name="many17"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many18.mos" name="many18"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many19.mos" name="many19"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many2.mos" name="many2"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many21.mos" name="many21"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many22.mos" name="many22"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many23.mos" name="many23"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many24.mos" name="many24"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many25.mos" name="many25"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many26.mos" name="many26"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many27.mos" name="many27"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many28.mos" name="many28"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many29.mos" name="many29"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many3.mos" name="many3"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many31.mos" name="many31"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many32.mos" name="many32"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many33.mos" name="many33"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many34.mos" name="many34"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many35.mos" name="many35"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many36.mos" name="many36"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many37.mos" name="many37"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many38.mos" name="many38"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many39.mos" name="many39"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many4.mos" name="many4"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many41.mos" name="many41"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many42.mos" name="many42"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many43.mos" name="many43"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many44.mos" name="many44"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many45.mos" name="many45"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many46.mos" name="many46"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many47.mos" name="many47"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many48.mos" name="many48"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many49.mos" name="many49"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many5.mos" name="many5"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many51.mos" name="many51"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many52.mos" name="many52"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many53.mos" name="many53"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many54.mos" name="many54"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many55.mos" name="many55"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many56.mos" name="many56"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many57.mos" name="many57"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many58.mos" name="many58"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many59.mos" name="many59"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many6.mos" name="many6"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many61.mos" name="many61"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many62.mos" name="many62"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many63.mos" name="many63"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many64.mos" name="many64"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many65.mos" name="many65"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many66.mos" name="many66"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many67.mos" name="many67"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many68.mos" name="many68"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many69.mos" name="many69"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many7.mos" name="many7"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many71.mos" name="many71"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many72.mos" name="many72"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many73.mos" name="many73"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many74.mos" name="many74"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many75.mos" name="many75"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many76.mos" name="many76"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many77.mos" name="many77"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many78.mos" name="many78"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many79.mos" name="many79"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many8.mos" name="many8"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many81.mos" name="many81"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many82.mos" name="many82"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many83.mos" name="many83"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many84.mos" name="many84"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many85.mos" name="many85"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many86.mos" name="many86"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many87.mos" name="many87"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many88.mos" name="many88"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many89.mos" name="many89"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\manyscript\many9.mos" name="many9"
             added="2147483647"/>
     </Files>
   </Machine>

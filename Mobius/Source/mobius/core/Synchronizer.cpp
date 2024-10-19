@@ -1279,6 +1279,15 @@ bool Synchronizer::isRecordStopPulsed(Loop* l)
         SyncTracker* tracker = getSyncTracker(src);
         pulsed = tracker->isLocked();
 
+        // 10/18/14 alexs noticed that when using host sync with odd bar
+        // sizes this was adding an "extra beat" .  It appears that host
+        // sync never uses pulsed stop because the tracker isn't locked
+        // at this point.  When would it ever be on the initial recording?
+        // I guess if you were re-recording, but I can't fathom the logic here.
+        // Change this to always pulse the stop for HOST sync
+        if (src == SYNC_HOST)
+          pulsed = true;
+        
         // !! Not supporting this old option any more, weed this out
         if (!pulsed && src == SYNC_MIDI && 
             (mMidiRecordMode == MIDI_RECORD_PULSED))

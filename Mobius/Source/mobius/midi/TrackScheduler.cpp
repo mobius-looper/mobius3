@@ -557,7 +557,8 @@ void TrackScheduler::consume(int frames)
         
         remainder -= eventAdvance;
         currentFrame = track->getFrame();
-        e = events.consume(currentFrame, remainder);
+        lastFrame = currentFrame + remainder - 1;
+        e = events.consume(currentFrame, lastFrame);
     }
 
     // whatever is left over, let the track consume it

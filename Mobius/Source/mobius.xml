@@ -130,7 +130,7 @@
   <Setup
     name='Default'
     active='0'
-    beatsPerBar='4'
+    beatsPerBar='7'
     defaultSyncSource='none'
     defaultTrackSyncUnit='loop'
     maxTempo='300'
@@ -149,7 +149,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='none'
+      syncSource='host'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'

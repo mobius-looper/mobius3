@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<UIConfig windowWidth="1173" windowHeight="883" activeButtonSet="Default"
-          activeLayout="Default" activeBindings="midi2" activeOverlays="midi3">
+<UIConfig windowWidth="1200" windowHeight="800" activeButtonSet="Default"
+          activeLayout="Default">
   <Layout name="Default">
     <Element name="ModeElement" x="688" y="172" height="40"/>
     <Element name="BeatersElement" x="514" y="137" width="108" height="32"/>
@@ -123,7 +123,7 @@
     <Property name="alertDuration" value="5"/>
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
-    <Property name="mainWindow" value="0,0,1173,883"/>
+    <Property name="mainWindow" value="0,0,1200,800"/>
     <Property name="scriptWindow" value="146,261,740,900"/>
     <Property name="trackRows" value="1"/>
     <Property name="x" value="value of x"/>
