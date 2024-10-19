@@ -25,13 +25,6 @@
 //#include "TrackSynchronizer.h"
 #include "midi/MidiTracker.h"
 
-/**
- * Function ids for the things handled by the kernel.
- */
-typedef enum {
-    KernelSamplePlay = 1
-} KernelSymbols;
-
 class MobiusKernel : public MobiusAudioListener, public MslContext
 {
     friend class MobiusShell;

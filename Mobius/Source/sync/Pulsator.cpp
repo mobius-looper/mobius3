@@ -227,6 +227,7 @@ void Pulsator::trace(Pulse& p)
         case Pulse::SourceMidiOut: msg += "MidiOut "; break;
         case Pulse::SourceHost: msg += "Host "; break;
         case Pulse::SourceLeader: msg += "Internal "; break;
+        case Pulse::SourceNone: msg += "None "; break;
     }
 
     switch (p.type) {

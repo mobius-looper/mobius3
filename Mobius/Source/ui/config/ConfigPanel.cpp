@@ -223,7 +223,7 @@ void ConfigPanel::footerButton(juce::Button* b)
     }
 
     // save and cancel close the panel, revert keeps it going
-    if (b == &saveButton || b == &cancelButton ||  &doneButton)
+    if (b == &saveButton || b == &cancelButton ||  b == &doneButton)
       close();
 }
 

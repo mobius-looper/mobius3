@@ -1,4 +1,5 @@
 
+#include "../util/Trace.h"
 #include "SymbolId.h"
 #include "MobiusConfig.h"
 #include "Preset.h"
@@ -444,6 +445,13 @@ void UIParameterHandler::get(SymbolId id, void* obj, ExValue* value)
             
         case ParamTimeStretch:
             break;
+
+        default:
+            // there are a number of extended testing parameters
+            // that don't need to be dealt with yet
+            // avoid build warning on Mac with a default
+            Trace(1, "UIParameterHandler::get Unsupported id", (int)id);
+            break;
             
     }
 }
@@ -880,6 +888,12 @@ void UIParameterHandler::set(SymbolId id, void* obj, ExValue* value)
         case ParamTimeStretch:
             break;
             
+        default:
+            // there are a number of extended testing parameters
+            // that don't need to be dealt with yet
+            // avoid build warning on Mac with a default
+            Trace(1, "UIParameterHandler::get Unsupported id", (int)id);
+            break;
     }
 }
 

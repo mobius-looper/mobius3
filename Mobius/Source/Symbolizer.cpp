@@ -42,7 +42,7 @@ UISymbols::Function UISymbols::Functions[] = {
     {FuncScriptAddButton, false, nullptr},
     {FuncScriptListen, false, nullptr},
     
-    {SymbolIdNone, nullptr}
+    {SymbolIdNone, false, nullptr}
 };
 
 /**

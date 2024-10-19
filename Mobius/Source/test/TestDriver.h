@@ -63,7 +63,7 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
     void processAudioStream(class MobiusAudioStream* stream) override;
 
     // MobiusAudioStream
-	long getInterruptFrames() override;
+	int getInterruptFrames() override;
 	void getInterruptBuffers(int inport, float** input, 
                                      int outport, float** output) override;
 

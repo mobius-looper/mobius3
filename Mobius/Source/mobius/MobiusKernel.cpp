@@ -960,7 +960,7 @@ void MobiusKernel::doKernelAction(UIAction* action)
     }
     else {
         switch (symbol->id) {
-            case KernelSamplePlay: playSample(action); break;
+            case FuncSamplePlay: playSample(action); break;
             default:
                 Trace(1, "MobiusKernel::doAction Unknwon action symbol id %s %ld\n",
                       symbol->getName(), (long)symbol->id);

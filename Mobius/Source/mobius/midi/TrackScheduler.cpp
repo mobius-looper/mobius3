@@ -1339,6 +1339,7 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
                 event->pending = true;
             }
                 break;
+            default: break;
         }
 
         events.add(event);

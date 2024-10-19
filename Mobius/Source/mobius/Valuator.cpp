@@ -83,7 +83,7 @@ void Valuator::reconfigure(MobiusConfig* config, Session* session)
 //////////////////////////////////////////////////////////////////////
 
 const int ValuatorMaxMidiTracks = 16;
-const int ValuatorMaxAudioTracks = 32;
+//const int ValuatorMaxAudioTracks = 32;
 
 /**
  * Valuator maintains a value binding context for each possible track.

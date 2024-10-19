@@ -181,7 +181,7 @@ Pulsator* JuceAudioStream::getPulsator()
  * Called by the MobiusListener after being notified of an incomming
  * audio block to get the size of the block.
  */
-long JuceAudioStream::getInterruptFrames()
+int JuceAudioStream::getInterruptFrames()
 {
     return nextBlockSamples;
 }

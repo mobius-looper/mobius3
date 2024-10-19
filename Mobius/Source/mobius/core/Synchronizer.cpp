@@ -4996,7 +4996,7 @@ void Synchronizer::setTrackSyncMaster(Track* master)
         leader = mTrackSyncMaster->getDisplayNumber();
         // initial frame count only interesting for debugging since
         // this can change at any time
-        frames = mTrackSyncMaster->getLoop()->getFrames();
+        frames = (int)(mTrackSyncMaster->getLoop()->getFrames());
     }
     mPulsator->setTrackSyncMaster(leader, frames);
 }

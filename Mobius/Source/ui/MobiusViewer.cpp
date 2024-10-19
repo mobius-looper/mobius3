@@ -515,7 +515,7 @@ void MobiusViewer::refreshInactiveLoops(OldMobiusTrackState* tstate, MobiusViewT
         }
 
         // there isn't much to say other than whether it is empty or not
-        lview->frames = lstate->frames;
+        lview->frames = (int)(lstate->frames);
 
         // old model has these flags, but I don't think we need them
         // since the active track state will have the loop number
@@ -547,8 +547,8 @@ void MobiusViewer::refreshActiveLoop(OldMobiusTrackState* tstate, OldMobiusLoopS
     tview->recording = lstate->recording;
     tview->modified = lstate->modified;
     tview->pause = lstate->paused;
-    tview->frames = lstate->frames;
-    tview->frame = lstate->frame;
+    tview->frames = (int)(lstate->frames);
+    tview->frame = (int)(lstate->frame);
 
     // things below this are relevant only if this is the active track
     // since they are displayed in the main display and not the track strips
@@ -604,8 +604,8 @@ void MobiusViewer::refreshActiveLoop(OldMobiusTrackState* tstate, OldMobiusLoopS
     }
     
     // various
-    tview->windowOffset = lstate->windowOffset;
-    tview->windowHistoryFrames = lstate->historyFrames;
+    tview->windowOffset = (int)(lstate->windowOffset);
+    tview->windowHistoryFrames = (int)(lstate->historyFrames);
 
     if (activeTrack)
       refreshLayers(lstate, tview);
@@ -813,9 +813,9 @@ void MobiusViewer::refreshEvents(OldMobiusLoopState* lstate, MobiusViewTrack* tv
             if (estate->argument > 0)
               ve->name += " " + juce::String(estate->argument);
             
-            ve->frame = estate->frame;
-            ve->pending = estate->pending;
-            ve->argument = estate->argument;
+            ve->frame = (int)(estate->frame);
+            ve->pending = (int)(estate->pending);
+            ve->argument = (int)(estate->argument);
         }
     }
 }
@@ -918,11 +918,11 @@ void MobiusViewer::refreshMinorModes(OldMobiusTrackState* tstate, OldMobiusLoopS
 
     // loop windowing
     if (lstate->windowOffset != tview->windowOffset) {
-        tview->windowOffset = lstate->windowOffset;
+        tview->windowOffset = (int)(lstate->windowOffset);
         refresh = true;
     }
     if (lstate->historyFrames != tview->windowHistoryFrames) {
-        tview->windowHistoryFrames = lstate->historyFrames;
+        tview->windowHistoryFrames = (int)(lstate->historyFrames);
         refresh = true;
     }
         
@@ -1062,7 +1062,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     if (tview->frames > 0 && tstate->frames == 0)
       tview->refreshLoopContent = true;
     
-    tview->frames = tstate->frames;
+    tview->frames = (int)(tstate->frames);
     tview->subcycles = tstate->subcycles;
     tview->subcycle = tstate->subcycle;
     tview->cycles = tstate->cycles;
@@ -1136,7 +1136,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
             Trace(1, "MidiViewer: MobiusMidiState loop array too small");
         }
         else {
-            vl->frames = lstate->frames;
+            vl->frames = (int)(lstate->frames);
         }
     }
 

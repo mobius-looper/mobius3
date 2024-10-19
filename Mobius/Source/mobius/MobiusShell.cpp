@@ -766,6 +766,7 @@ void MobiusShell::consumeCommunications()
                 abandon = false;
                 
             }
+            case MsgMidi: break;
                 break;
         }
 

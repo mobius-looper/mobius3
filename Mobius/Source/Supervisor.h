@@ -139,7 +139,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &midiRealizer;
     }
 
-    class Pulsator* getPulsator() {
+    class Pulsator* getPulsator() override {
         return &pulsator;
     }
 

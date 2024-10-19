@@ -340,7 +340,7 @@ TrackEvent* TrackEventList::consumePulsed()
 int TrackEvent::getQuantizedFrame(int loopFrames, int cycleFrames, int currentFrame,
                                   int subcycles, QuantizeMode q, bool after)
 {
-    long qframe = currentFrame;
+    int qframe = currentFrame;
 
 	// if loopFrames is zero, then we haven't ended the record yet
 	// so there is no quantization
@@ -364,16 +364,16 @@ int TrackEvent::getQuantizedFrame(int loopFrames, int cycleFrames, int currentFr
 
 				// sanity check to avoid divide by zero
 				if (subcycles == 0) subcycles = 1;
-				long subcycleFrames = cycleFrames / subcycles;
+				int subcycleFrames = cycleFrames / subcycles;
 
 				// determine which cycle we're in
 				int cycle = (int)(currentFrame / cycleFrames);
-				long cycleBase = cycle * cycleFrames;
+				int cycleBase = cycle * cycleFrames;
 				
 				// now calculate which subcycle we're in
-				long relativeFrame = currentFrame - cycleBase;
+				int relativeFrame = currentFrame - cycleBase;
 				int subcycle = (int)(relativeFrame / subcycleFrames);
-				long subcycleBase = subcycle * subcycleFrames;
+				int subcycleBase = subcycle * subcycleFrames;
 
 				if (after || (subcycleBase != relativeFrame)) {
 					int nextSubcycle = subcycle + 1;

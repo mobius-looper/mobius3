@@ -536,7 +536,7 @@ void TestDriver::avoidMemoryLeak()
  * This is long for historical reasons, it doesn't need to be because int and long
  * are the same size.
  */
-long TestDriver::getInterruptFrames()
+int TestDriver::getInterruptFrames()
 {
     return 256;
 }

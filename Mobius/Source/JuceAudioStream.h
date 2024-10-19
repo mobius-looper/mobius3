@@ -46,7 +46,7 @@ class JuceAudioStream : public MobiusAudioStream
     int getBlockSize();
     
     // MobiusAudioStream interface
-	long getInterruptFrames() override;
+	int getInterruptFrames() override;
 	void getInterruptBuffers(int inport, float** input, 
                              int outport, float** output) override;
 

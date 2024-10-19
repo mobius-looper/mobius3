@@ -753,7 +753,7 @@ class MobiusAudioStream
      * This is long for historical reasons, it doesn't need to be because int and long
      * are the same size.
      */
-	virtual long getInterruptFrames() = 0;
+	virtual int getInterruptFrames() = 0;
 
     /**
      * Access the interleaved input and output buffers for a "port".
@@ -849,7 +849,7 @@ class AudioTime {
      * note: this never worked right and it will always be zero
      * see extensive comments in HostSyncState
 	 */
-	long boundaryOffset = 0;
+	int boundaryOffset = 0;
 
 	/**
 	 * Current beat.

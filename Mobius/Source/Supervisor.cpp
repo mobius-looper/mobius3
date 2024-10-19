@@ -1943,6 +1943,7 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 mobiusMessage(juce::String(action->arguments));
                 handled = true;
             }
+            default: break;
         }
         if (!handled) {
             // pass down to the listeners
