@@ -830,8 +830,10 @@ void TrackScheduler::doRecord(TrackEvent* e)
 
     if (e != nullptr) {
         doStacked(e);
-        if (e->primary != nullptr)
-          actionPool->checkin(e->primary);
+        if (e->primary != nullptr) {
+            actionPool->checkin(e->primary);
+            e->primary = nullptr;
+        }
     }
 }
 

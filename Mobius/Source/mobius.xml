@@ -149,7 +149,7 @@
       feedback='127'
       altFeedback='127'
       pan='64'
-      syncSource='host'
+      syncSource='none'
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'

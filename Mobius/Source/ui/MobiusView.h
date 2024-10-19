@@ -1,4 +1,4 @@
-/**
+ /**
  * A transformation of the MobiusState object built by the engine
  * for use under the UI components.
  *
@@ -380,6 +380,7 @@ class MobiusView
     int midiTracks = 0;
     int totalTracks = 0;
     int focusedTrack = 0;
+    int lastFocusedTrack = 0;
     
     MobiusViewTrack* track = nullptr;
     bool trackChanged = false;

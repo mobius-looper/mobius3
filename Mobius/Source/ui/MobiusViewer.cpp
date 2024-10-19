@@ -218,10 +218,27 @@ void MobiusViewer::refresh(MobiusInterface* mobius, OldMobiusState* state, Mobiu
         view->setupOrdinal = state->setupOrdinal;
     }
 
+
+    // detect when the selected track changes, this be driven by the state object
+    // for audio tracks, but when switching between audio and midi, or within midi
+    // we have to detect that at the root
+    if (view->lastFocusedTrack != view->focusedTrack) {
+        view->trackChanged = true;
+        view->lastFocusedTrack = view->focusedTrack;
+    }
+
     refreshAudioTracks(mobius, state, view);
 
     // MIDI Tracks are glued onto the end of the audio tracks
     refreshMidiTracks(mobius, view);
+
+
+    // so the display elements don't have to test for view->trackChanged
+    // in addition to the element specific refresh flags, if at the end of refresh
+    // trackChanged is set, force all the secondary flags on
+    if (view->trackChanged)
+      forceRefresh(view);
+    
 }
 
 /**
