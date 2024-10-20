@@ -38,7 +38,8 @@ class MidiPlayer
     
     int getFrame();
     int getFrames();
-
+    int captureEventsSent();
+    
     //
     // Play Advance
     //
@@ -71,6 +72,7 @@ class MidiPlayer
     bool muted = false;
     bool paused = false;
     class MidiFragment* restoredHeld = nullptr;
+    int eventsSent = 0;
     
     // transient buffers used during event gathering
     MidiHarvester harvester;

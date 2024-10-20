@@ -84,6 +84,13 @@ void MidiRecorder::dump(StructureDumper& d)
     d.dec();
 }
 
+int MidiRecorder::captureEventsReceived()
+{
+    int result = eventsReceived;
+    eventsReceived = 0;
+    return result;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Transaction Management
@@ -1536,6 +1543,11 @@ MidiEvent* MidiRecorder::copyEvent(MidiEvent* src)
  */
 void MidiRecorder::midiEvent(MidiEvent* e)
 {
+    // monitor the events that are comming in so we can flicker the level meter
+    // eventually need to be filtering out devices
+    if (!e->juceMessage.isNoteOff())
+      eventsReceived++;
+    
     // only bother with this if we're recording
     // the shared watcher will track everything
     if (recording)

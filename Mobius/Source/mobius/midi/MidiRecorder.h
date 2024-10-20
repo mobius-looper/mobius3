@@ -89,7 +89,8 @@ class MidiRecorder : public MidiWatcher::Listener
     void noteOn(class MidiEvent* e);
     void noteOff(class MidiEvent* e);
     void midiEvent(class MidiEvent* e);
-
+    int captureEventsReceived();
+    
     //
     // Edits
     //
@@ -137,6 +138,7 @@ class MidiRecorder : public MidiWatcher::Listener
     bool insert = false;
 
     int lastBlockFrames = 0;
+    int eventsReceived = 0;
 
     void resetFlags();
     void addMultiplyCycle();

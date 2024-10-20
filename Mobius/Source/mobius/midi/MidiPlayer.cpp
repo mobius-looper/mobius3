@@ -413,6 +413,16 @@ void MidiPlayer::unpause(bool noHold)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Reset the pseudo level meter at the beginning of each block.
+ */
+int MidiPlayer::captureEventsSent()
+{
+    int result = eventsSent;
+    eventsSent = 0;
+    return result;
+}
+
+/**
  * Play anything from the current position forward until the end
  * of the play region.
  */
@@ -442,6 +452,7 @@ void MidiPlayer::play(int blockFrames)
                 for (MidiEvent* e = events->getFirst() ; e != nullptr ; e = e->next) {
                     // todo: device id
                     container->midiSend(e->juceMessage, 0);
+                    eventsSent++;
                 }
             }
 
@@ -511,6 +522,9 @@ void MidiPlayer::play(MidiEvent* note)
  */
 void MidiPlayer::sendOn(MidiEvent* note)
 {
+    // bump the sent count even if we're muted so we can see the levels
+    // flicker
+    eventsSent++;
     if (!muted) {
         container->midiSend(note->juceMessage, 0);
     }

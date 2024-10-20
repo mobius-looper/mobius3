@@ -166,9 +166,14 @@ void MobiusViewer::configure(MobiusView* view)
     }
 
     view->midiTracks = session->midiTracks;
-
-    // need this?
     view->totalTracks = view->audioTracks + view->midiTracks;
+
+    // grow this when necessary, don't bother with shrinking it
+    for (int i = view->tracks.size() ; i < view->totalTracks ; i++) {
+        MobiusViewTrack* vt = new MobiusViewTrack();
+        vt->index = i;
+        view->tracks.add(vt);
+    }
 
     if (view->focusedTrack >= view->totalTracks) {
         // go to the highest or the first?
@@ -1074,7 +1079,6 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->activeLoop = tstate->activeLoop;
     
     tview->frame = tstate->frame;
-
     // having trouble tracking reset for some reason
     if (tview->frames > 0 && tstate->frames == 0)
       tview->refreshLoopContent = true;
@@ -1084,6 +1088,9 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->subcycle = tstate->subcycle;
     tview->cycles = tstate->cycles;
     tview->cycle = tstate->cycle;
+
+    tview->inputMonitorLevel = tstate->inputMonitorLevel;
+    tview->outputMonitorLevel = tstate->outputMonitorLevel;
 
     tview->inputLevel = tstate->input;
     tview->outputLevel = tstate->output;

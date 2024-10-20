@@ -156,13 +156,17 @@ class MidiTrack : public AbstractTrack
     int feedback = 127;
     int pan = 64;
     int subcycles = 4;
-
+    int inputMonitor = 0;
+    int inputDecay = 0;
+    int outputMonitor = 0;
+    int outputDecay = 0;
+    
     // advance
     void advancePlayer(int newFrames);
     void shift(bool unrounded);
     bool isMultiplyEndScheduled();
     void doMultiplyEarlyTermination();
-
+    
     //
     // Function Handlers
     //
@@ -181,5 +185,7 @@ class MidiTrack : public AbstractTrack
     void resumePlay();
     const char* getModeName();
     const char* getModeName(MobiusMidiState::Mode mode);
+    int simulateLevel(int count);
+    void captureLevels(MobiusMidiState::Track* state);
 
 };

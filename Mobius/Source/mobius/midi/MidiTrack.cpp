@@ -159,14 +159,93 @@ void MidiTrack::refreshImportant(MobiusMidiState::Track* state)
     state->cycles = recorder.getCycles();
 }
 
+/**
+ * Calculate a number we can put in either the inputLevel or outputLevel
+ * fields of the State.
+ *
+ * The value in OldMobiusState::inputMonitorLevel is calculated in Stream with
+ *    return (int)(mMaxSample * 32767.0f);
+ * mMaxSample is a floating point sample which ranges from 0 to 1.0f and this
+ * is converted to an integer from 0 to 32767.
+ *
+ * MIDI doesn't have the same level accuracy as audio so we simulate it.  The
+ * most important thing is to see the meters bouncing when something happens.
+ *
+ * Divide the possible range in chunks, and turn one chunk on for each note
+ * that is currently being held.
+ */
+int MidiTrack::simulateLevel(int count)
+{
+    int maxEvents = 8;
+    int chunkSize = 32767 / maxEvents;
+
+    // this seems to be too coarse, why, is it really 32767
+    chunkSize /= 2;
+
+    int chunks = count;
+    if (chunks > maxEvents)
+      chunks = maxEvents;
+
+    int level = chunks * chunkSize;
+
+    if (chunks > 0) {
+        // set breakpoint here
+        int x = 0;
+        (void)x;
+    }
+    
+    return level;
+}
+
+/**
+ * Come up with numbers to put into the input and output levels
+ * of the State.  Since the level meter sucks and doesn't do it's
+ * own decay, we'll do the decay down here so it is predictable.
+ */
+void MidiTrack::captureLevels(MobiusMidiState::Track* state)
+{
+    int decayUnit = 2;
+    
+    int newInput = simulateLevel(recorder.captureEventsReceived());
+    int newOutput = simulateLevel(player.captureEventsSent());
+
+    if (newInput > 0) {
+        // look mom, it's a peak meter
+        if (newInput > inputMonitor)
+          inputMonitor = newInput;
+        inputDecay = decayUnit;
+    }
+    else if (inputDecay > 0) {
+        inputDecay--;
+    }
+    else {
+        inputMonitor = 0;
+    }
+    state->inputMonitorLevel = inputMonitor;
+    
+    if (newOutput > 0) {
+        // look mom, it's a peak meter
+        if (newOutput > outputMonitor)
+          outputMonitor = newOutput;
+        outputDecay = decayUnit;
+    }
+    else if (outputDecay > 0) {
+        outputDecay--;
+    }
+    else {
+        outputMonitor = 0;
+    }
+    state->outputMonitorLevel = outputMonitor;
+    
+}
+
 void MidiTrack::refreshState(MobiusMidiState::Track* state)
 {
     state->loopCount = loopCount;
     state->activeLoop = loopIndex;
 
-    state->frames = recorder.getFrames();
-    state->frame = recorder.getFrame();
-    state->cycles = recorder.getCycles();
+    refreshImportant(state);
+    captureLevels(state);
 
     int cycleFrames = recorder.getCycleFrames();
     if (cycleFrames == 0)

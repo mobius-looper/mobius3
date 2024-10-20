@@ -1097,6 +1097,9 @@ void Supervisor::updateMobiusConfig()
             mobius->reconfigure(config, ses);
         }
 
+        // Pulsator watches track counts
+        pulsator.configure();
+
         // clear speical triggers for the engine now that it is done
         config->setupsEdited = false;
         config->presetsEdited = false;
@@ -1287,6 +1290,9 @@ void Supervisor::updateSession()
         // the only thing that cares about this is TrackStrips but we don't have
         // a way to reach only that one
         propagateConfiguration();
+
+        // Pulsator watches track counts
+        pulsator.configure();
     }
 }
 

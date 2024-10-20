@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Session audioTracks="4" midiTracks="1">
+<Session audioTracks="4" midiTracks="3">
   <Track type="midi" index="0">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>

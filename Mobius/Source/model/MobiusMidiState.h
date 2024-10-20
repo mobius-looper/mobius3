@@ -133,6 +133,10 @@ class MobiusMidiState
         int index = 0;
         int number = 0;
 
+        // simulated IO levels like audio tracks have
+        int inputMonitorLevel = 0;
+        int outputMonitorLevel = 0;
+
         // loop state
         int loopCount = 0;
         int activeLoop = 0;
