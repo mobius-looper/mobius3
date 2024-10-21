@@ -5,10 +5,11 @@
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
+      <Value name="inputDevice" value="Host"/>
       <Value name="loopCount" value="2"/>
-      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="outputDevice" value="Host"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncSource" value="host" type="enum" ordinal="4"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>

@@ -1155,6 +1155,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->activeLayer = tstate->activeLayer;
     // checkpoints not implemented yet
 
+    refreshSync(tstate, tview);
     refreshMidiEvents(tstate, tview);
     refreshRegions(tstate, tview);
 }

@@ -205,6 +205,10 @@ void MidiTrackEditor::render()
     trackSelector.setButtonCount(8);
     trackSelector.setListener(this);
     form.add(&trackSelector);
+    form.addSpacer();
+    
+    form.add(&inputDevice);
+    form.add(&outputDevice);
 
     form.addField(ParamSyncSource);
     form.addField(ParamTrackSyncUnit);
@@ -212,8 +216,6 @@ void MidiTrackEditor::render()
     form.addField(ParamBeatsPerBar);
     form.addField(ParamLoopCount);
     
-    form.add(&inputDevice);
-    form.add(&outputDevice);
     
     addAndMakeVisible(form);
 }

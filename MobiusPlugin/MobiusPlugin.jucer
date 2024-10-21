@@ -172,6 +172,8 @@
         <FILE id="xhGhj4" name="MobiusConfig.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/MobiusConfig.cpp"/>
         <FILE id="JADQzi" name="MobiusConfig.h" compile="0" resource="0" file="../Mobius/Source/model/MobiusConfig.h"/>
+        <FILE id="Zs2MTm" name="MobiusMidiState.cpp" compile="1" resource="0"
+              file="../Mobius/Source/model/MobiusMidiState.cpp"/>
         <FILE id="bdLfpv" name="ModeDefinition.cpp" compile="1" resource="0"
               file="../Mobius/Source/model/ModeDefinition.cpp"/>
         <FILE id="pPufKY" name="ModeDefinition.h" compile="0" resource="0"

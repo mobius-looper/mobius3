@@ -58,7 +58,7 @@ class MidiTrackEditor : public ConfigEditor,
 
     YanParameterForm form;
     YanInput trackCount {"Active Tracks"};
-    YanRadio trackSelector {"Tracks"};
+    YanRadio trackSelector {"Track"};
     YanCombo inputDevice {"Input Device"};
     YanCombo outputDevice {"Output Device"};
     int selectedTrack = 0;
