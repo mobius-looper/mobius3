@@ -178,8 +178,9 @@ class MidiTrack : public AbstractTrack
     //
     
     void resetRegions();
-    void startOverdubRegion();
-    void stopOverdubRegion();
+    void startRegion(MobiusMidiState::RegionType type);
+    void stopRegion();
+    void resumeOverdubRegion();
     void advanceRegion(int frames);
     
     bool inRecordingMode();

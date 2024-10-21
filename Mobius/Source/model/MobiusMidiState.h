@@ -115,12 +115,25 @@ class MobiusMidiState
     };
 
     /**
+     * The type of a Region
+     * Not sure how useful this is, in theory we could color these
+     * differently but it should be pretty obvious what they are,
+     * it's more important to know where they are.
+     */
+    typedef enum {
+        RegionOverdub,
+        RegionReplace,
+        RegionInsert
+    } RegionType;
+
+    /**
      * State for a region within the loop
      */
     class Region {
       public:
         int startFrame = 0;
         int endFrame = 0;
+        RegionType type = RegionOverdub;
         bool active = false;
     };
 

@@ -520,8 +520,7 @@ void MidiTrack::advance(int newFrames)
             
                 // restart the overdub region if we're still in it
                 resetRegions();
-                if (overdub)
-                  startOverdubRegion();
+                resumeOverdubRegion();
 
                 // shift events waiting for the loop end
                 // don't like this
@@ -569,8 +568,7 @@ void MidiTrack::loop()
     
     // restart the region tracker
     resetRegions();
-    if (overdub)
-      startOverdubRegion();
+    resumeOverdubRegion();
 
     player.restart();
 }
@@ -638,6 +636,7 @@ void MidiTrack::shift(bool unrounded)
     loop->add(neu);
     
     player.shift(neu);
+    resetRegions();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -701,7 +700,7 @@ void MidiTrack::resetRegions()
     regions.clearQuick();
 }
 
-void MidiTrack::startOverdubRegion()
+void MidiTrack::startRegion(MobiusMidiState::RegionType type)
 {
     if (activeRegion >= 0) {
         MobiusMidiState::Region& region = regions.getReference(activeRegion);
@@ -713,24 +712,27 @@ void MidiTrack::startOverdubRegion()
         activeRegion = regions.size();
         MobiusMidiState::Region region;
         region.active = true;
+        region.type = type;
         region.startFrame = recorder.getFrame();
         region.endFrame = recorder.getFrame();
         regions.add(region);
     }
-    overdub = true;
 }
 
-void MidiTrack::stopOverdubRegion()
+void MidiTrack::stopRegion()
 {
-    if (overdub) {
-        if (activeRegion >= 0) {
-            // were in the middle of one already
-            MobiusMidiState::Region& region = regions.getReference(activeRegion);
-            region.active = false;
-        }
-        activeRegion = -1;
-        overdub = false;
+    if (activeRegion >= 0) {
+        // were in the middle of one already
+        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        region.active = false;
     }
+    activeRegion = -1;
+}
+
+void MidiTrack::resumeOverdubRegion()
+{
+    if (overdub)
+      startRegion(MobiusMidiState::RegionOverdub);
 }
 
 void MidiTrack::advanceRegion(int frames)
@@ -864,10 +866,14 @@ void MidiTrack::toggleOverdub()
       Trace(2, "MidiTrck: Starting Overdub %d", recorder.getFrame());
     
     // toggle our state
-    if (overdub)
-      stopOverdubRegion();
-    else
-      startOverdubRegion();
+    if (overdub) {
+        overdub = false;
+        stopRegion();
+    }
+    else {
+        overdub = true;
+        resumeOverdubRegion();
+    }
 
     if (!inRecordingMode()) {
         recorder.setRecording(overdub);
@@ -957,7 +963,7 @@ void MidiTrack::doUndo()
     if (mode != MobiusMidiState::ModeReset) {
         // a whole lot to think about regarding what happens
         // to major and minor modes here
-        stopOverdubRegion();
+        stopRegion();
         resumePlay();
     }
 }
@@ -1136,6 +1142,7 @@ void MidiTrack::startInsert()
     mode = MobiusMidiState::ModeInsert;
     player.pause();
     recorder.startInsert();
+    startRegion(MobiusMidiState::RegionInsert);
 }
 
 /**
@@ -1159,6 +1166,7 @@ void MidiTrack::finishInsert()
     // assuming prefix calculation worked properly we'll start playing the right
     // half of the split segment with the prefix, since this prefix includes any
     // notes beind held by Player when it was paused, unpause it with the noHold option
+    stopRegion();
     player.unpause();
     recorder.finishInsert(overdub);
     resumePlay();
@@ -1170,6 +1178,7 @@ void MidiTrack::finishInsert()
 void MidiTrack::unroundedInsert()
 {
     Trace(2, "MidiTrack: Unrounded Insert");
+    stopRegion();
     player.unpause();
     shift(true);
     resumePlay();
@@ -1359,6 +1368,13 @@ void MidiTrack::toggleReplace()
         recorder.finishReplace(overdub);
         // this will also unmute the player
         resumePlay();
+
+        stopRegion();
+
+        // this can be confusing if you go in and out of Replace mode
+        // while overdub is on, the regions will just smear together
+        // unless they are a different color
+        resumeOverdubRegion();
     }
     else {
         Trace(2, "MidiTrack: Starting Replace %d", recorder.getFrame());
@@ -1367,6 +1383,8 @@ void MidiTrack::toggleReplace()
         // temporarily mute the Player so we don't hear
         // what is being replaced
         player.setMute(true);
+
+        startRegion(MobiusMidiState::RegionReplace);
     }
 }
 

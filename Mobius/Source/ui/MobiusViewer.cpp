@@ -1039,6 +1039,9 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 //
 // MIDI Tracks
 //
+// While the class is named MobiusMidiState it is really a new model
+// that will eventually be used for both audio and MIDI tracks.  
+//
 //////////////////////////////////////////////////////////////////////
 
 void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
@@ -1176,6 +1179,15 @@ void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate,
         refresh = true;
     }
 
+    if (tstate->outSyncMaster != tview->outSyncMaster) {
+        tview->outSyncMaster = tstate->outSyncMaster;
+        refresh = true;
+    }
+	if (tstate->trackSyncMaster != tview->trackSyncMaster) {
+        tview->trackSyncMaster = tstate->trackSyncMaster;
+        refresh = true;
+    }
+    
     if (refresh) {
         assembleMinorModes(tview);
         tview->refreshMinorModes = true;
@@ -1244,6 +1256,27 @@ void MobiusViewer::refreshRegions(MobiusMidiState::Track* tstate, MobiusViewTrac
         tview->regions.add(src);
     }
 }
+
+/**
+ * Refresh things related to the sync source for a track
+ *
+ * Tempo will be shown if it is non-zero, this applies to both slave
+ * sync and master sync.
+ *
+ * Beats and bars have only been shown if the syncSource is SYNC_MIDI or SYNC_HOST
+ * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
+ * 
+ */
+void MobiusViewer::refreshSync(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+{
+    tview->syncTempo = tstate->tempo;
+    tview->syncBeat = tstate->beat;
+    tview->syncBar = tstate->bar;
+    
+    // whether we pay attention to those or not depends on the syncSource
+    SyncSource src = tstate->syncSource;
+    tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
+}    
 
 /****************************************************************************/
 /****************************************************************************/

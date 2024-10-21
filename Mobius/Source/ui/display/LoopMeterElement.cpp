@@ -156,8 +156,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
         MobiusMidiState::Region& region = track->regions.getReference(i);
         int regionLeft = getMeterOffset(region.startFrame, track->frames);
         int regionRight = getMeterOffset(region.endFrame, track->frames);
+
+        // default overdub color
+        juce::Colour color = juce::Colours::lightpink;
+        if (region.type == MobiusMidiState::RegionReplace)
+          color = juce::Colours::grey;
+        else if (region.type != MobiusMidiState::RegionOverdub)
+          color = juce::Colours::lightblue;
+        g.setColour(color);
         if (region.active) {
-            g.setColour(juce::Colours::red);
             // refresh of the regions lags the current frame
             // the frame is part of the group of "importaant" state that is refreshed
             // on every request, while regions, events, and others are updated less frequently
@@ -168,8 +175,12 @@ void LoopMeterElement::paint(juce::Graphics& g)
             if (regionRight < cursorLeft)
               regionRight = cursorLeft;
         }
-        else
-          g.setColour(juce::Colours::yellow);
+        else {
+            // todo: might be interesting to leave it in it's original color?
+            // or dim it a little
+            //g.setColour(juce::Colours::yellow);
+            g.setColour(color.darker());
+        }
 
         int regionWidth = regionRight - regionLeft + 1;
         g.fillRect((float)regionLeft, (float)BorderThickness,
