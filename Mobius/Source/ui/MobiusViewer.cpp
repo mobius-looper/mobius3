@@ -1118,27 +1118,11 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
         tview->refreshSwitch = true;
     }
 
-    juce::String newMode;
-    switch (tstate->mode) {
-        case MobiusMidiState::ModeReset: newMode = "Reset"; break;
-        case MobiusMidiState::ModeSynchronize: newMode = "Synchronize"; break;
-        case MobiusMidiState::ModeRecord: newMode = "Record"; break;
-        case MobiusMidiState::ModeMultiply: newMode = "Multiply"; break;
-        case MobiusMidiState::ModeInsert: newMode = "Insert"; break;
-        case MobiusMidiState::ModeReplace: newMode = "Replace"; break;
-        case MobiusMidiState::ModeMute: newMode = "Mute"; break;
-        case MobiusMidiState::ModePlay: {
-            if (tstate->overdub)
-              newMode = "Overdub";
-            else
-              newMode = "Play";
-        }
-            break;
-        default:
-            // shouldn't happen
-            newMode = "???";
-            break;
-    }
+    juce::String newMode = MobiusMidiState::getModeName(tstate->mode);
+    // MidiTrack does this transformation now too
+    if (tstate->mode == MobiusMidiState::ModePlay && tstate->overdub)
+      newMode = "Overdub";
+
     if (newMode != tview->mode) {
         tview->mode = newMode;
         tview->refreshMode = true;

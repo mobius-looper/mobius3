@@ -175,6 +175,7 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     void setItems(juce::StringArray names);
     void setSelection(int index);
     int getSelection();
+    juce::String getSelectionText();
 
     int getPreferredWidth() override;
     

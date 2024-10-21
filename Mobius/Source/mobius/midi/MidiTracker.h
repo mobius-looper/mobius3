@@ -25,7 +25,14 @@ class MidiTracker : public LongWatcher::Listener
     void initialize(class Session* s);
     void loadSession(class Session* s);
 
+    // the interface for receiving events when called by MidiManager, tagged with the device id
     void midiEvent(class MidiEvent* event);
+
+    // the interface for receiving events from the host, and now MidiManager
+    void midiEvent(juce::MidiMessage& msg, int deviceId);
+    
+    void midiSend(juce::MidiMessage& msg, int deviceId);
+    int getMidiOutputDeviceId(const char* name);
     void processAudioStream(class MobiusAudioStream* argStream);
     
     void doAction(class UIAction* a);

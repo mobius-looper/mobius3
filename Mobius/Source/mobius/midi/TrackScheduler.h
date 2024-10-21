@@ -66,6 +66,11 @@ class TrackScheduler
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
 
+    // save these from the session until everything is converted to
+    // use Pulsator constants
+    SyncSource sessionSyncSource = SYNC_NONE;
+    SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
+
     TrackEventList events;
 
     // block advance

@@ -45,6 +45,8 @@ class Session
         ValueSet* ensureParameters();
         MslValue* get(juce::String name);
 
+        juce::OwnedArray<class SessionMidiDevice> devices;
+
       private:
         std::unique_ptr<ValueSet> parameters;
 
@@ -78,8 +80,31 @@ class Session
     void xmlError(const char* msg, juce::String arg);
     Track* parseTrack(juce::XmlElement* root);
     void renderTrack(juce::XmlElement* parent, Track* track);
+    void renderDevice(juce::XmlElement* parent, SessionMidiDevice* device);
+    void parseDevice(juce::XmlElement* root, SessionMidiDevice* device);
+
     
 };
+
+/**
+ * For MIDI tracks, a model to describe input and output devices.
+ * This is difficult to do well with just name/value pairs in
+ * a ValueSet.  In theory, could use nested ValueSets for a generic
+ * object model, but that's awkward.
+ */
+class SessionMidiDevice
+{
+  public:
+    SessionMidiDevice() {}
+    ~SessionMidiDevice() {}
+
+    juce::String name;
+    int id = 0;
+    int runtimeId = 0;
+    bool record = false;
+    juce::String output;
+};
+
 
 
     

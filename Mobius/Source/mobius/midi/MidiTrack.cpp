@@ -67,7 +67,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
                          container->getSymbols());
     transformer.initialize(pools->actionPool, container->getSymbols());
     recorder.initialize(pools);
-    player.initialize(container, pools);
+    player.initialize(pools);
 
     for (int i = 0 ; i < MidiTrackMaxLoops ; i++) {
         MidiLoop* l = new MidiLoop(pools);
@@ -102,6 +102,20 @@ void MidiTrack::configure(Session::Track* def)
     
     // todo: loopsPerTrack from somewhere
     loopCount = valuator->getLoopCount(def, 2);
+
+    // tell the player where to go
+    MslValue* v = def->get("outputDevice");
+    if (v == nullptr) {
+        player.setDeviceId(0);
+    }
+    else {
+        int id = tracker->getMidiOutputDeviceId(v->getString());
+        // kernel is currently deciding to default this to zero, but
+        // we could defer that to here?
+        if (id < 0)
+          id = 0;
+        player.setDeviceId(id);
+    }
 }
 
 /**
@@ -122,6 +136,11 @@ void MidiTrack::reset()
 void MidiTrack::alert(const char* msg)
 {
     tracker->alert(msg);
+}
+
+void MidiTrack::midiSend(juce::MidiMessage& msg, int deviceId)
+{
+    tracker->midiSend(msg, deviceId);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1322,39 +1341,7 @@ void MidiTrack::toggleMute()
 
 const char* MidiTrack::getModeName()
 {
-    return getModeName(mode);
-}
-
-const char* MidiTrack::getModeName(MobiusMidiState::Mode amode)
-{
-    const char* name = "???";
-    switch (amode) {
-        case MobiusMidiState::ModeReset: name = "Reset"; break;
-        case MobiusMidiState::ModeSynchronize: name = "Synchronize"; break;
-        case MobiusMidiState::ModeRecord: name = "Record"; break;
-        case MobiusMidiState::ModePlay: name = "Play"; break;
-        case MobiusMidiState::ModeOverdub: name = "Overdub"; break;
-        case MobiusMidiState::ModeMultiply: name = "Multiply"; break;
-        case MobiusMidiState::ModeInsert: name = "Insert"; break;
-        case MobiusMidiState::ModeReplace: name = "Replace"; break;
-        case MobiusMidiState::ModeMute: name = "Mute"; break;
-
-        case MobiusMidiState::ModeConfirm: name = "Confirm"; break;
-        case MobiusMidiState::ModePause: name = "Pause"; break;
-        case MobiusMidiState::ModeStutter: name = "Stutter"; break;
-        case MobiusMidiState::ModeSubstitute: name = "Substitute"; break;
-        case MobiusMidiState::ModeThreshold: name = "Threshold"; break;
-
-        // old Mobius modes, may not need
-        case MobiusMidiState::ModeRehearse: name = "Rehearse"; break;
-        case MobiusMidiState::ModeRehearseRecord: name = "RehearseRecord"; break;
-        case MobiusMidiState::ModeRun: name = "Run"; break;
-        case MobiusMidiState::ModeSwitch: name = "Switch"; break;
-
-        case MobiusMidiState::ModeGlobalReset: name = "GlobalReset"; break;
-        case MobiusMidiState::ModeGlobalPause: name = "GlobalPause"; break;
-    }
-    return name;
+    return MobiusMidiState::getModeName(mode);
 }
 
 //////////////////////////////////////////////////////////////////////

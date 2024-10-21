@@ -223,13 +223,6 @@ void MidiManager::openDevices()
     reconcileInputs(mconfig);
     reconcileOutputs(mconfig);
 
-    // also install ourselves as the MobiusMidiListener when running
-    // as a plugin, this only needs to be done once, but it's convenient
-    // to have it here rather than something else Supervisor has to call
-    if (supervisor->isPlugin()) {
-        MobiusInterface* mobius = supervisor->getMobius();
-        mobius->setMidiListener(this);
-    }
 }
 
 /**
@@ -799,10 +792,8 @@ void MidiManager::send(const juce::MidiMessage& msg)
 
 void MidiManager::send(const juce::MidiMessage& msg, int deviceId)
 {
-    (void)deviceId;
-    // todo: figure out where it goes
-    if (outputDevices.size() > 0) {
-        juce::MidiOutput* dev = outputDevices[0];
+    if (deviceId >= 0 && deviceId < outputDevices.size()) {
+        juce::MidiOutput* dev = outputDevices[deviceId];
         dev->sendMessageNow(msg);
     }
 }
@@ -814,6 +805,28 @@ void MidiManager::sendSync(const juce::MidiMessage& msg)
     
     else if (exportDevice)
       exportDevice->sendMessageNow(msg);
+}
+
+/**
+ * Called through a LONG path from MidiTrack to convert the name
+ * of a device from the Session into the internal id of the device.
+ * This is just the index into the open devices array.
+ * Returns -1 if not found.
+ */
+int MidiManager::getOutputDeviceId(const char* name)
+{
+    int id = -1;
+    if (name != nullptr) {
+        int index = 0;
+        for (auto dev : outputDevices) {
+            if (dev->getName() == name) {
+                id = index;
+                break;
+            }
+            index++;
+        }
+    }
+    return id;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1163,14 +1176,19 @@ void MidiManager::notifyListeners(const juce::MidiMessage& message, juce::String
  */
 void MidiManager::record(const juce::MidiMessage& message, juce::String& source)
 {
-    // need to share this pool!
-    MidiEvent* e = eventPool.newEvent();
-    e->juceMessage = message;
-    // todo: pass the source down too so tracks can be sensitive to different devices
-    // nice if it wasn't a big long variable string though
-    (void)source;
     MobiusInterface* mobius = supervisor->getMobius();
-    mobius->midiEvent(e);
+    if (mobius != nullptr) {
+        int id = 0;
+        int index = 0;
+        for (auto dev : inputDevices) {
+            if (dev->getName() == source) {
+                id = index;
+                break;
+            }
+            index++;
+        }
+        mobius->midiEvent(message, id);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

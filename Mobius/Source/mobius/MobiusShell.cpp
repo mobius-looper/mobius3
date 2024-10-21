@@ -407,17 +407,15 @@ bool MobiusShell::isGlobalReset()
     return kernel.isGlobalReset();
 }
 
-void MobiusShell::midiEvent(MidiEvent* e)
+void MobiusShell::midiEvent(const juce::MidiMessage& midiMessage, int deviceId)
 {
     KernelMessage* msg = communicator.shellAlloc();
     if (msg != nullptr) {
         msg->type = MsgMidi;
-        msg->object.midi = e;
+        // saves a copy if we allocate the MidiEvent now
+        msg->midiMessage = midiMessage;
+        msg->deviceId = deviceId;
         communicator.shellSend(msg);
-    }
-    else {
-        // shit's hitting the fan
-        delete e;
     }
 }
 

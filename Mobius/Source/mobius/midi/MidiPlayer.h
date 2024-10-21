@@ -17,7 +17,7 @@ class MidiPlayer
     //
     MidiPlayer(class MidiTrack* t);
     ~MidiPlayer();
-    void initialize(class MobiusContainer* c, class MidiPools* pools);
+    void initialize(class MidiPools* pools);
     void dump(StructureDumper& d);
     
     //
@@ -56,6 +56,8 @@ class MidiPlayer
     void pause();
     void unpause(bool noHold=false);
     bool isPaused();
+
+    void setDeviceId(int id);
     
   private:
 
@@ -64,6 +66,9 @@ class MidiPlayer
     class MidiPools* pools = nullptr;
     
     class MidiTrack* track = nullptr;
+
+    // the id of the device we're supposed to send to
+    int outputDevice = 0;
 
     // play state
     class MidiLayer* playLayer = nullptr;

@@ -299,7 +299,7 @@ class MobiusInterface {
     virtual bool mslQuery(class MslQuery* q) = 0;
 
     // midi!
-    virtual void midiEvent(class MidiEvent* e) = 0;
+    virtual void midiEvent(const juce::MidiMessage& msg, int deviceId) = 0;
 
   private:
 
@@ -403,6 +403,7 @@ class MobiusContainer
      * New MIDI event sender
      */
     virtual void midiSend(const juce::MidiMessage& msg, int deviceId) = 0;
+    virtual int getMidiOutputDeviceId(const char* name) = 0;
 
     /**
      * Object that provides MIDI synchronization services.

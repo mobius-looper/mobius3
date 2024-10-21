@@ -136,6 +136,7 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     juce::StringArray getErrors();
     juce::StringArray getOpenInputDevices();
     juce::StringArray getOpenOutputDevices();
+    int getOutputDeviceId(const char* name);
     
     // Close devices and remove callbacks
     void shutdown();
@@ -180,7 +181,6 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     class Supervisor* supervisor = nullptr;
     
     bool recordable = false;
-    MidiEventPool eventPool;
     
     class juce::Array<Listener*> listeners;
     class juce::Array<RealtimeListener*> realtimeListeners;

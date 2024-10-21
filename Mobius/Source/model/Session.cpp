@@ -240,6 +240,11 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
             ValueSet* set = track->ensureParameters();
             set->parse(el);
         }
+        else if (el->hasTagName("MidiDevice")) {
+            SessionMidiDevice* device = new SessionMidiDevice();
+            parseDevice(el, device);
+            track->devices.add(device);
+        }
         else {
             xmlError("Invalid XML element %s", el->getTagName().toUTF8());
         }
@@ -287,6 +292,34 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
     ValueSet* params = track->getParameters();
     if (params != nullptr)
       params->render(root);
+
+    for (auto device : track->devices)
+      renderDevice(root, device);
+}
+
+void Session::renderDevice(juce::XmlElement* parent, SessionMidiDevice* device)
+{
+    juce::XmlElement* root = new juce::XmlElement("MidiDevice");
+    parent->addChildElement(root);
+
+    root->setAttribute("name", device->name);
+    
+    if (device->record)
+      root->setAttribute("record", device->record);
+    
+    if (device->id > 0)
+      root->setAttribute("id", device->id);
+    
+    if (device->output.length() > 0)
+      root->setAttribute("output", device->output);
+}
+
+void Session::parseDevice(juce::XmlElement* root, SessionMidiDevice* device)
+{
+    device->name = root->getStringAttribute("name");
+    device->record = root->getBoolAttribute("record");
+    device->id = root->getIntAttribute("id");
+    device->output = root->getStringAttribute("output");
 }
 
 /****************************************************************************/

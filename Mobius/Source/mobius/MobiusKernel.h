@@ -191,7 +191,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // MSL callbacks after wait event scheduling
     //
     void coreWaitFinished(class MslWait* wait);
-    
+
+    // used by MidiTracker to send to the host or forward to MidiManager
+    void midiSend(juce::MidiMessage& msg, int deviceId);
+    int getMidiOutputDeviceId(const char* name);
     
   private:
 

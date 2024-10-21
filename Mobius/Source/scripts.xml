@@ -181,6 +181,7 @@
     <Externals>
       <External path="c:\dev\mobius3\Mobius\Source\test.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\bindingset.mos"/>
+      <External path="D:\Documents\mobius scripts"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"

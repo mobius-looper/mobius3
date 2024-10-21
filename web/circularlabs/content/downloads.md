@@ -20,6 +20,33 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 21
+- Fix binding MIDI commands to Configuration objects (presets, setups)
+- Fix binding MIDI commands to the "activePreset" parameter using object names as the binding argument
+- Simplify the way control knobs look and restore the center numbers
+- Improve host bar sync with odd beat numbers and truncated bars (FLStudio)
+
+The major new feature in this release is MIDI Tracks.  For more information please visit the community forum.
+
+## Windows Security
+
+Windows Defender may pop up and say it has "protected your PC".  In order to run the installer click "More info", then "Run Anyway".
+
+On Windows, the standalone application will be installed in `c:\Program Files\Circular Labs\Mobius` and the VST3 plugin will be installed
+in `c:\Program Files\Common Files\VST3`.   XML support files will be installed in `c:\Users\<yourname>\AppData\Local\Circular Labs\Mobius`.
+Note that while the executable files are in the usual shared locations, the support files are not.  If you need to support mulitple user logins on
+the same machine, you will have to reinstall for each user.
+
+## Mac Security
+
+The Mac may not allow you to run the .pkg installer after downloading.  A dialog popups up telling you how awful it is not to get Apple's permission to do anything, in the upper right there should be an icon that looks like a question mark.  Click it.  For me this brings up a help window with a link to bring up the security settings page.  Click it.  If not, bring up System Settings and navitage to Privacy & Security.  Scroll down the "Security" section, there should be an entry there with text saying that Mobius.pkg was blocked from use and a button that says "Open Anyway".  Click it.  The package installer should run.
+
+On MacOS, the standalone application will be installed in `/Applications`, VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`, and the Audio Units plugin will be installed in `/Library/Audio/Plug-Ins/Components`.
+
+The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
+
+## Older Releases
+
 ## Build 20
 - Fix issue where long-press scripts didn't work until after editing the configuration
 - Fix crash changing button colors with "All" and "Some"
@@ -62,19 +89,3 @@ I am aware that the icon displayed on the Mac is garbled when you run the standa
 - Allow more than 8 tracks in the Scope selection menus in binding panels
 - Use the window size of the standalone application in the plugin editor window
 
-## Windows Security
-
-Windows Defender may pop up and say it has "protected your PC".  In order to run the installer click "More info", then "Run Anyway".
-
-On Windows, the standalone application will be installed in `c:\Program Files\Circular Labs\Mobius` and the VST3 plugin will be installed
-in `c:\Program Files\Common Files\VST3`.   XML support files will be installed in `c:\Users\<yourname>\AppData\Local\Circular Labs\Mobius`.
-Note that while the executable files are in the usual shared locations, the support files are not.  If you need to support mulitple user logins on
-the same machine, you will have to reinstall for each user.
-
-## Mac Security
-
-The Mac may not allow you to run the .pkg installer after downloading.  A dialog popups up telling you how awful it is not to get Apple's permission to do anything, in the upper right there should be an icon that looks like a question mark.  Click it.  For me this brings up a help window with a link to bring up the security settings page.  Click it.  If not, bring up System Settings and navitage to Privacy & Security.  Scroll down the "Security" section, there should be an entry there with text saying that Mobius.pkg was blocked from use and a button that says "Open Anyway".  Click it.  The package installer should run.
-
-On MacOS, the standalone application will be installed in `/Applications`, VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`, and the Audio Units plugin will be installed in `/Library/Audio/Plug-Ins/Components`.
-
-The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.

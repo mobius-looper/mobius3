@@ -501,6 +501,11 @@ int YanCombo::getSelection()
     return combobox.getSelectedId() - 1;
 }
 
+juce::String YanCombo::getSelectionText()
+{
+    return combobox.getText();
+}
+
 void YanCombo::resized()
 {
     combobox.setBounds(getLocalBounds());

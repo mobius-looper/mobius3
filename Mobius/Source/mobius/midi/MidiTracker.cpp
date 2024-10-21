@@ -264,6 +264,16 @@ void MidiTracker::alert(const char* msg)
     kernel->sendMobiusMessage(msg);
 }
 
+void MidiTracker::midiSend(juce::MidiMessage& msg, int deviceId)
+{
+    kernel->midiSend(msg, deviceId);
+}
+
+int MidiTracker::getMidiOutputDeviceId(const char* name)
+{
+    return kernel->getMidiOutputDeviceId(name);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Incomming Events
@@ -283,6 +293,14 @@ MidiEvent* MidiTracker::getHeldNotes()
  *
  * The event is passed to all tracks, if a track wants to record the event
  * it must make a copy.
+ *
+ * !! The event is tagged with the MidiManager device id, but if this
+ * is a plugin we reserve id zero for the host, so they need to be bumped
+ * by one if that becomes significant
+ *
+ * Actually hate using MidiEvent for this because MidiManager needs to have
+ * a pool, but we won't share it so it's always allocating one.  Just
+ * pass the MidiMessage down
  */
 void MidiTracker::midiEvent(MidiEvent* e)
 {
@@ -296,7 +314,18 @@ void MidiTracker::midiEvent(MidiEvent* e)
     
     pools.checkin(e);
 }
-    
+
+/**
+ * An event comming in from the plugin host, via Kernel
+ */
+void MidiTracker::midiEvent(juce::MidiMessage& msg, int deviceId)
+{
+    MidiEvent* e = pools.newEvent();
+    e->juceMessage = msg;
+    e->device = deviceId;
+    midiEvent(e);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Object Pools

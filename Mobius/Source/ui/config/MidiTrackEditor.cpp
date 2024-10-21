@@ -106,11 +106,64 @@ void MidiTrackEditor::loadTrack(int index)
     Session::Track* track = session->getTrack(Session::TypeMidi, index);
     if (track != nullptr) {
         form.load(track->getParameters());
+        initInputDevice(track);
+        initOutputDevice(track);
+        // adapt to changes in the midi device since the last time
+        form.resized();
     }
     else {
         // didn't have a definition for this one, reset the fields to initial values
         form.load(nullptr);
     }
+}
+
+void MidiTrackEditor::initInputDevice(Session::Track* track)
+{
+    MidiManager* mm = supervisor->getMidiManager();
+    juce::StringArray names = mm->getOpenInputDevices();
+    if (supervisor->isPlugin())
+      names.insert(0, "Host");
+    else
+      names.insert(0, "Any");
+    inputDevice.setItems(names);
+
+    int index = 0;
+    ValueSet* params = track->getParameters();
+    if (params != nullptr) {
+        const char* savedName = params->getString("inputDevice");
+        if (savedName != nullptr) {
+            index = names.indexOf(juce::String(savedName));
+            if (index < 0) {
+                Trace(1, "MidiTrackEditor: Saved track input device not available %s", savedName);
+                index = 0;
+            }
+        }
+    }
+    inputDevice.setSelection(index);
+}
+
+void MidiTrackEditor::initOutputDevice(Session::Track* track)
+{
+    MidiManager* mm = supervisor->getMidiManager();
+    juce::StringArray names = mm->getOpenOutputDevices();
+    if (supervisor->isPlugin())
+      names.insert(0, "Host");
+    // output device defaults to the first one
+    outputDevice.setItems(names);
+
+    int index = 0;
+    ValueSet* params = track->getParameters();
+    if (params != nullptr) {
+        const char* savedName = params->getString("outputDevice");
+        if (savedName != nullptr) {
+            index = names.indexOf(juce::String(savedName));
+            if (index < 0) {
+                Trace(1, "MidiTrackEditor: Saved track output device not available %s", savedName);
+                index = 0;
+            }
+        }
+    }
+    outputDevice.setSelection(index);
 }
 
 void MidiTrackEditor::saveSession()
@@ -124,6 +177,17 @@ void MidiTrackEditor::saveTrack(int index)
     Session::Track* track = session->ensureTrack(Session::TypeMidi, index);
     ValueSet* params = track->ensureParameters();
     form.save(params);
+
+
+    juce::String devname = inputDevice.getSelectionText();
+    if (devname == "Any") {
+        // don't save this
+        params->setString("inputDevice", nullptr);
+    }
+    else
+      params->setJString("inputDevice", inputDevice.getSelectionText());
+    
+    params->setJString("outputDevice", outputDevice.getSelectionText());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -147,6 +211,9 @@ void MidiTrackEditor::render()
     form.addField(ParamSlaveSyncUnit);
     form.addField(ParamBeatsPerBar);
     form.addField(ParamLoopCount);
+    
+    form.add(&inputDevice);
+    form.add(&outputDevice);
     
     addAndMakeVisible(form);
 }

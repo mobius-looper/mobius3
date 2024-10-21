@@ -92,6 +92,10 @@ class KernelMessage
     // what it has
     MessageObject object;
 
+    // special for MidiMessage
+    juce::MidiMessage midiMessage;
+    int deviceId = 0;
+    
     // for loadLoop, possibly others someday
     int track = 0;
     int loop = 0;

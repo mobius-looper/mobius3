@@ -343,6 +343,12 @@ bool Supervisor::start()
 
     // setup Pulsator before the Mobius tracks start to register followers
     pulsator.configure();
+
+    // open MIDI devices before Mobius so MidiTracks can resolve device
+    // names in the session to device ids
+    midiManager.configure();
+    midiManager.openDevices();
+    midiRealizer.initialize();
     
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
@@ -378,12 +384,16 @@ bool Supervisor::start()
     uiThread.start();
 
     meter("Devices");
+
+    // formerly did MIDI devices here, but that has to be done before Mobius
+    //midiManager.configure();
+    //midiManager.openDevices();
+    //midiRealizer.initialize();
     
-    // setup MIDI devices
-    // if an input device is configured, Binderator may start receiving events
-    midiManager.configure();
-    midiManager.openDevices();
-    midiRealizer.initialize();
+    // install the MidiManager as the MobiusMidiListener when running
+    // as a plugin, this only needs to be done once
+    if (isPlugin())
+      mobius->setMidiListener(&midiManager);
     
     // initialize the audio device last if we're standalone after
     // everything is wired together and events can come in safely
@@ -1610,6 +1620,15 @@ void Supervisor::setAudioListener(MobiusAudioListener* l)
 void Supervisor::midiSend(const juce::MidiMessage& msg, int deviceId)
 {
     midiManager.send(msg, deviceId);
+}
+
+/**
+ * Called indirectly by MidiTrack to convert a device name from
+ * the Session into the numeric id used by MidiManager.
+ */
+int Supervisor::getMidiOutputDeviceId(const char* name)
+{
+    return midiManager.getOutputDeviceId(name);
 }
 
 //////////////////////////////////////////////////////////////////////

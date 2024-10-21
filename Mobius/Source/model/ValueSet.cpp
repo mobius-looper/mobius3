@@ -139,6 +139,18 @@ void ValueSet::setString(juce::String key, const char* charval)
     value->setString(charval);
 }
 
+void ValueSet::setJString(juce::String key, juce::String jvalue)
+{
+    MslValue* value = map[key];
+    if (value == nullptr)
+      value = alloc(key);
+    
+    if (jvalue.length() > 0)
+      value->setString(jvalue.toUTF8());
+    else
+      value->setNull();
+}
+
 /**
  * For integers and booleans there is no "unbound" checking or default value.
  * The return value is zero.

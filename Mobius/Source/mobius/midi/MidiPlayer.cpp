@@ -48,9 +48,8 @@ MidiPlayer::~MidiPlayer()
  * Called once during the application initialization process
  * when resources are available.
  */
-void MidiPlayer::initialize(MobiusContainer* c, MidiPools* p)
+void MidiPlayer::initialize(MidiPools* p)
 {
-    container = c;
     pools = p;
     harvester.initialize(p);
 }
@@ -68,6 +67,11 @@ void MidiPlayer::dump(StructureDumper& d)
     if (playLayer != nullptr)
       playLayer->dump(d);
     d.dec();
+}
+
+void MidiPlayer::setDeviceId(int id)
+{
+    outputDevice = id;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -450,8 +454,7 @@ void MidiPlayer::play(int blockFrames)
             MidiSequence* events = harvester.getEvents();
             if (events != nullptr) {
                 for (MidiEvent* e = events->getFirst() ; e != nullptr ; e = e->next) {
-                    // todo: device id
-                    container->midiSend(e->juceMessage, 0);
+                    track->midiSend(e->juceMessage, outputDevice);
                     eventsSent++;
                 }
             }
@@ -526,7 +529,7 @@ void MidiPlayer::sendOn(MidiEvent* note)
     // flicker
     eventsSent++;
     if (!muted) {
-        container->midiSend(note->juceMessage, 0);
+        track->midiSend(note->juceMessage, outputDevice);
     }
 }
 
@@ -630,8 +633,7 @@ void MidiPlayer::sendOff(MidiEvent* note)
             juce::MidiMessage::noteOff(note->juceMessage.getChannel(),
                                        note->juceMessage.getNoteNumber(),
                                        (juce::uint8)(note->releaseVelocity));
-        // todo: include the device id as second arg
-        container->midiSend(msg, 0);
+        track->midiSend(msg, outputDevice);
     }
 }
 

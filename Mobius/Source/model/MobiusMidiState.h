@@ -36,12 +36,15 @@
 
 #include <JuceHeader.h>
 
+// for SyncSource and SyncUnit
+#include "ParameterConstants.h"
+
 class MobiusMidiState
 {
   public:
 
     static const int MaxRegions = 10;
-    
+
     // major modes a track can be in
     typedef enum {
         ModeReset,
@@ -72,6 +75,8 @@ class MobiusMidiState
         
     } Mode;
 
+    static const char* getModeName(Mode amode);
+    
     MobiusMidiState() {}
     ~MobiusMidiState() {}
 
@@ -136,6 +141,15 @@ class MobiusMidiState
         // simulated IO levels like audio tracks have
         int inputMonitorLevel = 0;
         int outputMonitorLevel = 0;
+
+        // sync
+        SyncSource syncSource;
+        SyncUnit syncUnit;
+        float   tempo = 0.0f;
+        int 	beat = 0;
+        int 	bar = 0;
+        bool    outSyncMaster = false;
+        bool    trackSyncMaster = false;
 
         // loop state
         int loopCount = 0;

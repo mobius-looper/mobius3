@@ -109,6 +109,7 @@ class ValueSet
 
     const char* getString(juce::String name);
     void setString(juce::String name, const char* value);
+    void setJString(juce::String name, juce::String value);
     
     int getInt(juce::String name);
     void setInt(juce::String name, int ival);

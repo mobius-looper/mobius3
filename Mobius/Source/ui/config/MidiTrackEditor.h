@@ -47,6 +47,9 @@ class MidiTrackEditor : public ConfigEditor,
     
     void loadSession();
     void loadTrack(int index);
+    void initInputDevice(Session::Track* track);
+    void initOutputDevice(Session::Track* track);
+
     void saveSession();
     void saveTrack(int index);
 
@@ -56,6 +59,8 @@ class MidiTrackEditor : public ConfigEditor,
     YanParameterForm form;
     YanInput trackCount {"Active Tracks"};
     YanRadio trackSelector {"Tracks"};
+    YanCombo inputDevice {"Input Device"};
+    YanCombo outputDevice {"Output Device"};
     int selectedTrack = 0;
     
 };

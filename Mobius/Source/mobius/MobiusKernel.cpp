@@ -585,6 +585,8 @@ void MobiusKernel::consumeMidiMessages()
             // realtime might be interesting for Synchronizer, but when
             // comming through the host are likely to be jittery so get
             // sync with direct device connections working first
+
+            bool actionFound = false;
             if (msg.isNoteOnOrOff() || msg.isProgramChange() || msg.isController()) {
 
                 bool doit = true;
@@ -600,11 +602,91 @@ void MobiusKernel::consumeMidiMessages()
                         UIAction* pooled = actionPool->newAction();
                         pooled->copy(action);
                         doAction(pooled);
+                        actionFound = true;
                     }
                 }
             }
+
+            // now we need to pass it along to the MidiTracks, if this was bound
+            // to an action, suppress that in case the bindings use the same
+            // device that is used for recording?
+            // wrapping it in our MidiEvent is the convention used by MidiManager
+            // when receiving MIDI directly
+            mMidi->midiEvent(msg, 0);
         }
     }
+
+    // todo: unclear whether we're supposed to leave the messages in this block
+    // docs say that anything left in here will be passed as output from the plugin
+    //buffer->clear();
+}
+
+/**
+ * Called by MidiTracker when one of the tracks wants to send a messsage to a device.
+ * When running as a plugin, device id 0 is reserved for the host application, otherwise
+ * the device is the index of the devices returned by MidiManager::getOpenOutputDevices
+ * todo: need more flexible id mapping
+ */
+void MobiusKernel::midiSend(juce::MidiMessage& msg, int deviceId)
+{
+    if (container->isPlugin()) {
+        if (deviceId == 0) {
+            // add the message to the buffer accessible from the MobiusAudioStream
+            // which is JuceAudioStream, which is what was passed to the AudioProcessor
+            // this weak Juce abstraction is seeming kind of silly now
+            juce::MidiBuffer* buffer = stream->getMidiMessages();
+            // second argument is sampleNumber which is used to order the message in the buffer
+            // I don't think it has any actual relevance on timing other than order, though the
+            // host may use that if it is feeding events to a timer based queue consumer
+            // I don't think this is "stream time" it's just a buffer offset, but I guess we'll see
+            buffer->addEvent(msg, 0);
+        }
+        else {
+            container->midiSend(msg, deviceId - 1);
+        }
+    }
+    else {
+        container->midiSend(msg, deviceId);
+    }
+}
+
+/**
+ * Called by MIdiTrack::configure to get the deviceId to use when sending events.
+ * The name comes from the Session.
+ *
+ * The way it sits now, it will always default to id zero which is the first one
+ * selected.  There isn't a way to say "nothing", Player can deal with that.
+ */
+int MobiusKernel::getMidiOutputDeviceId(const char* name)
+{
+    int id = 0;
+    
+    if (container->isPlugin()) {
+        if (StringEqual(name, "Host")) {
+            // should have been filtering this out of the configuration form
+            // leave id zero
+        }
+        else {
+            // don't have a MobiusContainer interfacem but we should
+            id = container->getMidiOutputDeviceId(name);
+            if (id < 0) {
+                Trace(1, "MobiusKernel: Invalid MIDI output device name %s", name);
+                id = 0;
+            }
+            else {
+                // zero is reserved for the host, bump it up by one
+                id++;
+            }
+        }
+    }
+    else {
+        id = container->getMidiOutputDeviceId(name);
+        if (id < 0) {
+            Trace(1, "MobiusKernel: Invalid MIDI output device name %s", name);
+            id = 0;
+        }
+    }
+    return id;
 }
 
 /**
@@ -1252,10 +1334,7 @@ void MobiusKernel::doEvent(KernelMessage* msg)
 // that doesn't involve so much message passing
 void MobiusKernel::doMidi(KernelMessage* msg)
 {
-    MidiEvent* event = msg->object.midi;
-    if (event != nullptr) {
-        mMidi->midiEvent(event);
-    }
+    mMidi->midiEvent(msg->midiMessage, msg->deviceId);
     // nothing to send back
     communicator->kernelAbandon(msg);
 }

@@ -45,15 +45,15 @@ void TrackScheduler::configure(Session::Track* def)
 {
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
-    SyncSource ss = valuator->getSyncSource(def, SYNC_NONE);
-    SyncUnit su = valuator->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
+    sessionSyncSource = valuator->getSyncSource(def, SYNC_NONE);
+    sessionSyncUnit = valuator->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
 
     // set this up for host and midi, track sync will be different
     Pulse::Type ptype = Pulse::PulseBeat;
-    if (su == SYNC_UNIT_BAR)
+    if (sessionSyncUnit == SYNC_UNIT_BAR)
       ptype = Pulse::PulseBar;
     
-    if (ss == SYNC_TRACK) {
+    if (sessionSyncSource == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
         SyncTrackUnit stu = valuator->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
@@ -68,15 +68,15 @@ void TrackScheduler::configure(Session::Track* def)
         syncSource = Pulse::SourceLeader;
         pulsator->follow(track->getNumber(), leader, ptype);
     }
-    else if (ss == SYNC_OUT) {
+    else if (sessionSyncSource == SYNC_OUT) {
         Trace(1, "TrackScheduler: MIDI tracks can't do OutSync yet");
         syncSource = Pulse::SourceNone;
     }
-    else if (ss == SYNC_HOST) {
+    else if (sessionSyncSource == SYNC_HOST) {
         syncSource = Pulse::SourceHost;
         pulsator->follow(track->getNumber(), syncSource, ptype);
     }
-    else if (ss == SYNC_MIDI) {
+    else if (sessionSyncSource == SYNC_MIDI) {
         syncSource = Pulse::SourceMidiIn;
         pulsator->follow(track->getNumber(), syncSource, ptype);
     }
@@ -1614,6 +1614,19 @@ void TrackScheduler::doInstant(UIAction* a)
 
 void TrackScheduler::refreshState(MobiusMidiState::Track* state)
 {
+    // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
+    state->syncSource = sessionSyncSource;
+    state->syncUnit = sessionSyncUnit;
+
+    // what Synchronizer does
+	//state->outSyncMaster = (t == mOutSyncMaster);
+	//state->trackSyncMaster = (t == mTrackSyncMaster);
+
+    // Synchronizer has logic for this, but we need to get it in a different way
+	state->tempo = pulsator->getTempo(syncSource);
+	state->beat = pulsator->getBeat(syncSource);
+	state->bar = pulsator->getBar(syncSource);
+    
     // turn this off while we refresh
     state->eventCount = 0;
     int count = 0;

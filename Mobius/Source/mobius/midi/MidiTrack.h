@@ -67,6 +67,12 @@ class MidiTrack : public AbstractTrack
     class MidiEvent* copyNote(class MidiEvent* src);
 
     //
+    // Support for Player
+    //
+
+    void midiSend(juce::MidiMessage& msg, int deviceId);
+
+    //
     // AbstractTrack for ActionTransformer and TrackScheduler
     //
 
