@@ -85,7 +85,9 @@ void MidiClerk::dumpTrack(int track, const juce::MidiMessageSequence* seq)
     int max = 20;
     for (int i = 0 ; i < seq->getNumEvents() && i < max ; i++) {
         juce::MidiMessageSequence::MidiEventHolder* holder = seq->getEventPointer(i);
-        Trace(2, "%s", holder->message.getDescription().toUTF8());
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%f", (float)holder->message.getTimeStamp());
+        Trace(2, "%s: %s", buf, holder->message.getDescription().toUTF8());
     }
 }
 
