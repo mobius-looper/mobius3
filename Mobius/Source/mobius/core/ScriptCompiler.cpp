@@ -290,7 +290,7 @@ bool ScriptCompiler::parse(FILE* fp, Script* script)
 		char* ptr = line;
 
 		// fix? while (*ptr && isspace(*ptr)) ptr++;
-		while (isspace(*ptr)) ptr++;
+		while (IsSpace(*ptr)) ptr++;
 		int len = (int)strlen(ptr);
 
 		if (len > 0) {
@@ -601,10 +601,10 @@ char* ScriptCompiler::parseKeyword(char* line, char** retargs)
 	char* args = NULL;
 
 	// skip preceeding whitespace
-	while (*line && isspace(*line)) line++;
+	while (*line && IsSpace(*line)) line++;
 	if (*line) {
 		keyword = line;
-		while (*line && !isspace(*line)) line++;
+		while (*line && !IsSpace(*line)) line++;
 		if (*line != 0) {
 			*line = 0;
 			args = line + 1;
@@ -687,12 +687,12 @@ char* ScriptCompiler::skipToken(char* args, const char* token)
 
     if (args != NULL) {
         char* ptr = args;
-        while (*ptr && isspace(*ptr)) ptr++;
+        while (*ptr && IsSpace(*ptr)) ptr++;
         int len = (int)strlen(token);
 
         if (StringEqualNoCase(args, token, len)) {
             ptr += len;
-            if (*ptr == '\0' || isspace(*ptr)) 
+            if (*ptr == '\0' || IsSpace(*ptr)) 
               next = ptr;
         }
     }

@@ -80,6 +80,8 @@ void GetLeafName(const char* path, char* buffer, bool extension);
 #define MAX_NUMBER_TOKEN 128
 int ParseNumberString(const char* src, int* numbers, int max);
 
+bool IsSpace(int i);
+bool IsPrint(int i);
 bool IsInteger(const char* str);
 int ToInt(const char* str);
 

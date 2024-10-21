@@ -1314,7 +1314,7 @@ void ScriptInterpreter::expand(const char* value, ExValue* retval)
                         const char* src = &value[psn];
                         char* dest = refname;
                         // !! bounds checking
-                        while (*src && !isspace(*src) && 
+                        while (*src && !IsSpace(*src) && 
 							   (delimited || *src != ',') &&
                                (!delimited || *src != ')')) {
                             *dest++ = *src++;

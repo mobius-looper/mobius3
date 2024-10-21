@@ -35,6 +35,7 @@
 #include "VariableManager.h"
 #include "Alerter.h"
 #include "AudioClerk.h"
+#include "MidiClerk.h"
 #include "ProjectFiler.h"
 #include "script/ScriptClerk.h"
 #include "script/MslContext.h"
@@ -167,6 +168,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     AudioClerk* getAudioClerk() override {
         return &audioClerk;
     }
+    
+    MidiClerk* getMidiClerk() {
+        return &midiClerk;
+    }
 
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
@@ -213,6 +218,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void menuSaveLoop();
     void menuQuickSave();
     void menuActivateBindings(BindingSet* set);
+    void menuLoadMidi();
     
     // MobiusContainer
     int getSampleRate() override;
@@ -365,6 +371,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Alerter alerter {this};
     juce::StringArray pendingAlerts;
     AudioClerk audioClerk {this};
+    MidiClerk midiClerk {this};
     ProjectFiler projectFiler {this};
     ApplicationBinderator binderator {this};
     

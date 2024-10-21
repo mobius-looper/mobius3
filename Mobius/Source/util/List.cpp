@@ -384,7 +384,7 @@ StringList::StringList(const char* csv)
 			char* dest = token;
 			// should we trim?
 			// skip preceeding whitespace
-			while (*src && isspace(*src)) src++;
+			while (*src && IsSpace(*src)) src++;
 			while (*src && *src != ',')
 			  *dest++ = *src++;
 			*dest = 0;

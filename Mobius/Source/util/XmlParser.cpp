@@ -594,7 +594,7 @@ char XmlMiniParser::advanceToChar(void)
 {
 	char ch;
 
-	for (ch = nextchar() ; isspace(ch) ; ch = advance());
+	for (ch = nextchar() ; IsSpace(ch) ; ch = advance());
 
 	return ch;
 }
@@ -938,8 +938,8 @@ void XmlMiniParser::consumeKeyword(const char *expected)
 
 	for (ptr = expected ; *ptr ; ptr++) {
 		ch = tolower(advance());
-		if ((isspace(*ptr) && !isspace(ch)) ||
-			(!isspace(*ptr) && *ptr != ch)) {
+		if ((IsSpace(*ptr) && !IsSpace(ch)) ||
+			(!IsSpace(*ptr) && *ptr != ch)) {
 
 			syntaxError();
 		}
@@ -1319,11 +1319,11 @@ void XmlMiniParser::parseName(void)
 	clearToken();
 
 	// ignore leading whitespace
-	for (ch = nextchar() ; isspace(ch) ; ch = advance());
+	for (ch = nextchar() ; IsSpace(ch) ; ch = advance());
 
 	// extract the token
 	for (ch = nextchar() ; 
-		 !isspace(ch) && ch != '>' && ch != '[' && ch != '/' ; 
+		 !IsSpace(ch) && ch != '>' && ch != '[' && ch != '/' ; 
 		 ch = advance())
 	  addToken(ch);
 
@@ -1800,17 +1800,17 @@ void XmlMiniParser::parseAttributeName(void)
 	clearToken();
 
 	// ignore leading whitespace
-	for (ch = nextchar() ; isspace(ch) ; ch = advance());
+	for (ch = nextchar() ; IsSpace(ch) ; ch = advance());
 
 	// extract the token
 	for (ch = nextchar() ; 
-		 !isspace(ch) && ch != '=' && ch != '>' && ch != '/' ; 
+		 !IsSpace(ch) && ch != '=' && ch != '>' && ch != '/' ; 
 		 ch = advance())
 	  addToken(ch);
 
 	// consume trailing whitespace
 	for (ch = nextchar() ; 
-		 isspace(ch) && ch != '=' && ch != '>' && ch != '/' ; 
+		 IsSpace(ch) && ch != '=' && ch != '>' && ch != '/' ; 
 		 ch = advance());
 
 	// skip equal
@@ -1848,7 +1848,7 @@ char *XmlMiniParser::parseString(void)
 	int ch, delim;
 
 	// ignore leading whitespace
-	for (ch = nextchar() ; isspace(ch) ; ch = advance());
+	for (ch = nextchar() ; IsSpace(ch) ; ch = advance());
 
 	// must be a quote character
 	if (ch != '\'' && ch != '"')

@@ -1012,7 +1012,7 @@ char* ScriptStatement::parseArgs(char* line, int argOffset, int toParse)
 			bool quoted = false;
 
 			// skip preceeding whitespace
-			while (*line && isspace(*line)) line++;
+			while (*line && IsSpace(*line)) line++;
 
 			if (*line == '"') {
 				quoted = true;
@@ -1024,7 +1024,7 @@ char* ScriptStatement::parseArgs(char* line, int argOffset, int toParse)
 				if (quoted)
 				  while (*line && *line != '"') line++;
 				else
-				  while (*line && !isspace(*line)) line++;
+				  while (*line && !IsSpace(*line)) line++;
 			
 				bool more = (*line != 0);
 				*line = 0;
@@ -1367,7 +1367,7 @@ ScriptSetStatement::ScriptSetStatement(ScriptCompiler* comp,
     else {
         // ignore = between the name and initializer
         char* ptr = args;
-        while (*ptr && isspace(*ptr)) ptr++;
+        while (*ptr && IsSpace(*ptr)) ptr++;
         if (*ptr == '=') 
           args = ptr + 1;
 
@@ -1497,7 +1497,7 @@ ScriptVariableStatement::ScriptVariableStatement(ScriptCompiler* comp,
     }
     else {
         char* ptr = args;
-        while (*ptr && isspace(*ptr)) ptr++;
+        while (*ptr && IsSpace(*ptr)) ptr++;
         if (*ptr == '=') 
           args = ptr + 1;
 
@@ -1701,7 +1701,7 @@ ScriptIfStatement::ScriptIfStatement(ScriptCompiler* comp,
 	// ignore the first token if it is "if", it is a common error to
 	// use "else if" rather than "else if"
 	if (args != NULL) {
-		while (*args && isspace(*args)) args++;
+		while (*args && IsSpace(*args)) args++;
 		if (StartsWithNoCase(args, "if "))
 		  args += 3;
 	}

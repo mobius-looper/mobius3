@@ -234,6 +234,10 @@ void MainWindow::mainMenuSelection(int id)
             }
                 break;
 
+            case MainMenu::LoadMidi: {
+                supervisor->menuLoadMidi();
+            }
+                break;
             case MainMenu::Exit: {
                 if (juce::JUCEApplicationBase::isStandaloneApp())
                   juce::JUCEApplicationBase::quit();

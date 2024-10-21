@@ -150,6 +150,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addSeparator();
         menu.addItem(LoadScripts, "Reload Scripts");
         menu.addItem(LoadSamples, "Reload Samples");
+        menu.addItem(LoadMidi, "Load MIDI File");
         if (!mainWindow->getSupervisor()->isPlugin()) {
             menu.addSeparator();
             menu.addItem(Exit, "Exit");

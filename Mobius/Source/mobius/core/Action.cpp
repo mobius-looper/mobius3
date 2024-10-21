@@ -323,7 +323,7 @@ char* Action::advance(char* start, bool stopAtSpace)
 {
     while (*start) {
         char ch = *start;
-        if ((isspace(ch) != 0) == stopAtSpace)
+        if ((IsSpace(ch) != 0) == stopAtSpace)
           break;
         else
           start++;

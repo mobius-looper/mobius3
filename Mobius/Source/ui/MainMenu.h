@@ -89,6 +89,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         QuickSave,
         LoadScripts,
         LoadSamples,
+        LoadMidi,
         Exit,
 
         // Configuration

@@ -2623,7 +2623,7 @@ ExNode* ExParser::nextTokenForReal()
 	mTokenPsn = 0;
 
 	// skip leading space
-	while (mNext && (isspace(mNext) || !isprint(mNext))) nextChar();
+	while (mNext && (IsSpace(mNext) || !IsPrint(mNext))) nextChar();
 
 	if (mNext == '#') {
 		// an end of line comment

@@ -20,6 +20,14 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 22
+- MIDI Track configuration panel now has input/output device selectors
+- MIDI Tracks in the plugin may now record and play midi through the host application
+- Add rudimentary input and output level monitoring for MIDI tracks
+- Fix ??? mode displayed when in Overdub mode
+- Fix sync state display for MIDI tracks
+
+
 ## Build 21
 - Fix binding MIDI commands to Configuration objects (presets, setups)
 - Fix binding MIDI commands to the "activePreset" parameter using object names as the binding argument

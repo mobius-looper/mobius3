@@ -29,6 +29,30 @@
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This little bit of folderol is because isspace(*ptr) will throw
+ * a fucking microsoft assertion if ptr was "char *" and the character
+ * is corrupted or Unicode or something with the high bit set.  It does
+ * sign extension to make it negative since the isspace argument is an "int".
+ * And this fails a >-1 < 255 debug assertion.
+ *
+ * Saw this parsing some old Mobius script files that got corrupted along the way.
+ * Unclear if this is because the debug runtime was being used, because some builds
+ * didn't have this problem.
+ *
+ * Whatever the reason, do this stupid cast so it doesn't sign extend and returns
+ * a goddamn false so we can get on with our lives without the application halting.
+ */
+bool IsSpace(int ch)
+{
+    return isspace(static_cast<unsigned char>(ch)) != 0;
+}
+
+bool IsPrint(int ch)
+{
+    return isprint(static_cast<unsigned char>(ch)) != 0;
+}
+
+/**
  * Copy a string to a point.
  */
 char* CopyString(const char* src, int len)
@@ -240,12 +264,12 @@ int ParseNumberString(const char* src, int* numbers, int max)
 	if (src != NULL) {
 		while (*ptr != 0 && parsed < max) {
 			// skip whitespace
-			while (*ptr != 0 && isspace(*ptr) && !(*ptr == ',')) ptr++;
+			while (*ptr != 0 && IsSpace(*ptr) && !(*ptr == ',')) ptr++;
 
 			// isolate the number
 			char* psn = buffer;
 			for (int i = 0 ; *ptr != 0 && i < MAX_NUMBER_TOKEN ; i++) {
-				if (isspace(*ptr) || *ptr == ',') {
+				if (IsSpace(*ptr) || *ptr == ',') {
 					ptr++;
 					break;
 				}
@@ -682,11 +706,11 @@ char* TrimString(char* src)
 
 	if (start != NULL) {
 		// skip preceeding whitespace
-		while (*start && isspace(*start)) start++;
+		while (*start && IsSpace(*start)) start++;
 
 		// remove trailing whitespace
 		int last = (int)strlen(start) - 1;
-		while (last >= 0 && isspace(start[last])) {
+		while (last >= 0 && IsSpace(start[last])) {
 			start[last] = '\0';
 			last--;
 		}

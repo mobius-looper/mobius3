@@ -198,7 +198,7 @@ bool Supervisor::start()
         return false;
     }
 #endif
-    
+
     strcpy(meterName, "");
     meter("Start");
     
@@ -827,6 +827,13 @@ void Supervisor::menuQuickSave()
     projectFiler.quickSave();
 }
 
+/**
+ * Test hacking
+ */
+void Supervisor::menuLoadMidi()
+{
+    midiClerk.loadFile();
+}
 
 //////////////////////////////////////////////////////////////////////
 //
