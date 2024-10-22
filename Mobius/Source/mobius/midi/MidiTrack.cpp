@@ -143,6 +143,28 @@ void MidiTrack::midiSend(juce::MidiMessage& msg, int deviceId)
     tracker->midiSend(msg, deviceId);
 }
 
+void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
+{
+    (void)loopNumber;
+    //Trace(1, "MidiTrack: Abandoning loaded sequence");
+    //pools->reclaim(seq);
+
+    MidiLayer* layer = pools->newLayer();
+    layer->prepare(pools);
+    layer->setSequence(seq);
+    MidiLoop* loop = loops[loopIndex];
+    loop->reset();
+    loop->add(layer);
+    
+    recorder.reset();
+    recorder.resume(layer);
+    player.reset();
+    player.change(layer);
+
+    // todo: enter Pause mode
+    resumePlay();
+}
+
 ///////////////////////////////////////////////////////////////////////
 //
 // General State

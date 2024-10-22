@@ -19,9 +19,22 @@ class MidiClerk
     class Supervisor* supervisor;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
-    
+
     void chooseMidiFile();
     void doFileLoad(juce::File file);
-    void dumpTrack(int i, const juce::MidiMessageSequence* seq);
     
+    void traceFile(juce::File file);
+    void traceTrack(int i, int timeFormat, const juce::MidiMessageSequence* seq);
+    void traceMetaEvent(juce::MidiMessage& msg, int timeFormat);
+    
+    void convertFile(juce::File file);
+    void convertTrack(int track, int timeFormat, const juce::MidiMessageSequence* seq, juce::String& buffer);
+    void convertMetaEvent(juce::MidiMessage& msg, int timeFormat, juce::String& buffer);
+
+    class MidiSequence* toSequence(juce::File file);
+    void toSequence(const juce::MidiMessageSequence* mms, class MidiSequence* seq);
+    class MidiEvent* findNoteOn(juce::MidiMessage& msg);
+
+    class MidiEvent* heldNotes = nullptr;
+
 };

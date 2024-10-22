@@ -38,6 +38,8 @@ class MidiTracker : public LongWatcher::Listener
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
 
+    void loadLoop(class MidiSequence* seq, int track, int loop);
+
     class MobiusMidiState* getState();
 
     class MidiPools* getPools();

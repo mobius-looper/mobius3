@@ -24,6 +24,8 @@ class MidiLayer : public PooledObject
     class MidiSequence* getSequence() {
         return sequence;
     }
+
+    void setSequence(MidiSequence* seq);
     
     class MidiSegment* getSegments() {
         return segments;

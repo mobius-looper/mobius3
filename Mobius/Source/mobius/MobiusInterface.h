@@ -301,6 +301,8 @@ class MobiusInterface {
     // midi!
     virtual void midiEvent(const juce::MidiMessage& msg, int deviceId) = 0;
 
+    virtual void loadMidiLoop(class MidiSequence* seq, int track, int loop) = 0;
+
   private:
 
     

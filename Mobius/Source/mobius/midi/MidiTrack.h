@@ -30,6 +30,8 @@ class MidiTrack : public AbstractTrack
     void configure(class Session::Track* def);
     void reset();
 
+    void loadLoop(MidiSequence* seq, int loop);
+
     class MidiTracker* getTracker() {
         return tracker;
     }

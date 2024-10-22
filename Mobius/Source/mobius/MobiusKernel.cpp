@@ -249,6 +249,7 @@ void MobiusKernel::consumeCommunications()
             case MsgEvent: doEvent(msg); break;
             case MsgLoadLoop: doLoadLoop(msg); break;
             case MsgMidi: doMidi(msg); break;
+            case MsgMidiLoad: doMidiLoad(msg); break;
         }
         
         msg = communicator->kernelReceive();
@@ -1335,6 +1336,13 @@ void MobiusKernel::doEvent(KernelMessage* msg)
 void MobiusKernel::doMidi(KernelMessage* msg)
 {
     mMidi->midiEvent(msg->midiMessage, msg->deviceId);
+    // nothing to send back
+    communicator->kernelAbandon(msg);
+}
+
+void MobiusKernel::doMidiLoad(KernelMessage* msg)
+{
+    mMidi->loadLoop(msg->object.sequence, msg->track, msg->loop);
     // nothing to send back
     communicator->kernelAbandon(msg);
 }

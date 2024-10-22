@@ -49,7 +49,8 @@ typedef enum {
     MsgBinderator,
     MsgEvent,
     MsgLoadLoop,
-    MsgMidi
+    MsgMidi,
+    MsgMidiLoad
 
 } MessageType;
 
@@ -70,6 +71,7 @@ typedef union {
     class KernelEvent* event;
     class Audio* audio;
     class MidiEvent* midi;
+    class MidiSequence* sequence;
     
 } MessageObject;
 

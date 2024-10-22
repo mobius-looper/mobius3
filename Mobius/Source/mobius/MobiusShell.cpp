@@ -419,6 +419,18 @@ void MobiusShell::midiEvent(const juce::MidiMessage& midiMessage, int deviceId)
     }
 }
 
+void MobiusShell::loadMidiLoop(class MidiSequence* seq, int track, int loop)
+{
+    KernelMessage* msg = communicator.shellAlloc();
+    if (msg != nullptr) {
+        msg->type = MsgMidiLoad;
+        msg->object.sequence = seq;
+        msg->track = track;
+        msg->loop = loop;
+        communicator.shellSend(msg);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Action Handling
@@ -765,6 +777,8 @@ void MobiusShell::consumeCommunications()
                 
             }
             case MsgMidi: break;
+                break;
+            case MsgMidiLoad: break;
                 break;
         }
 

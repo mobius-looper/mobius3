@@ -78,6 +78,32 @@ void MidiLayer::clear()
     resetPlayState();
 }
 
+void MidiLayer::setSequence(MidiSequence* seq)
+{
+    if (sequence != nullptr || segments != nullptr)
+      Trace(1, "MidiLayer: Setting sequence in non-empty layer");
+    
+    clear();
+    sequence = seq;
+
+    // hmm, probably needing to reading a meta event that says how long the track
+    // is since it can be longer than theh last event
+    int maxFrame = 0;
+    for (MidiEvent* e = seq->getFirst() ; e != nullptr ; e = e->next) {
+        if (e->frame > maxFrame)
+          maxFrame = e->frame;
+
+        if (e->duration > 0) {
+            int endFrame = e->frame + e->duration;
+            if (endFrame > maxFrame)
+              maxFrame = endFrame;
+        }
+    }
+
+    layerFrames = maxFrame;
+    layerCycles = 1;
+}
+
 void MidiLayer::clearSegments()
 {
     while (segments != nullptr) {

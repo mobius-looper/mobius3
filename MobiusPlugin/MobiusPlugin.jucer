@@ -12,6 +12,8 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="uYNmMY" name="MidiClerk.cpp" compile="1" resource="0" file="../Mobius/Source/MidiClerk.cpp"/>
+      <FILE id="FLCsVv" name="MidiClerk.h" compile="0" resource="0" file="../Mobius/Source/MidiClerk.h"/>
       <FILE id="ZyvhBY" name="Provider.h" compile="0" resource="0" file="../Mobius/Source/Provider.h"/>
       <FILE id="ThJsYd" name="Upgrader.cpp" compile="1" resource="0" file="../Mobius/Source/Upgrader.cpp"/>
       <GROUP id="{7E4F6DE8-BEDA-A57D-B5AA-F850B2E3CC96}" name="sync">

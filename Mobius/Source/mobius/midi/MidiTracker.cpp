@@ -326,6 +326,18 @@ void MidiTracker::midiEvent(juce::MidiMessage& msg, int deviceId)
     midiEvent(e);
 }
 
+void MidiTracker::loadLoop(MidiSequence* seq, int track, int loop)
+{
+    if (activeTracks > 0) {
+        MidiTrack* t = tracks[0];
+        t->loadLoop(seq, loop);
+    }
+    else {
+        Trace(1, "MidiTracker: Unable to load loop into track %d", track);
+        pools.reclaim(seq);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Object Pools
