@@ -50,11 +50,22 @@ void MidiSequence::reset()
     tail = nullptr;
     insertPosition = nullptr;
     count = 0;
+    totalFrames = 0;
 }
 
 int MidiSequence::size()
 {
     return count;
+}
+
+int MidiSequence::getTotalFrames()
+{
+    return totalFrames;
+}
+
+void MidiSequence::setTotalFrames(int frames)
+{
+    totalFrames = frames;
 }
 
 MidiEvent* MidiSequence::steal()

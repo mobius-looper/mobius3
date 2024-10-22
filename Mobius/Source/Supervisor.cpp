@@ -53,6 +53,7 @@
 #include "JuceAudioStream.h"
 #include "SuperDumper.h"
 #include "ProjectFiler.h"
+#include "MidiClerk.h"
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
 #include "script/MobiusConsole.h"
@@ -434,6 +435,9 @@ bool Supervisor::start()
     // important to do this AFTER all the symbols are
     // intstalled, including scripts
     configureBindings();
+
+    // random internal utility objects
+    midiClerk.reset(new MidiClerk(this));
     
     meter(nullptr);
 
@@ -796,6 +800,11 @@ void Supervisor::setIdentifyMode(bool b)
     mainWindow->setIdentifyMode(b);
 }
 
+MidiClerk* Supervisor::getMidiClerk()
+{
+    return midiClerk.get();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Projects
@@ -832,7 +841,7 @@ void Supervisor::menuQuickSave()
  */
 void Supervisor::menuLoadMidi()
 {
-    midiClerk.loadFile();
+    midiClerk->loadFile();
 }
 
 //////////////////////////////////////////////////////////////////////

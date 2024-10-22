@@ -20,21 +20,21 @@ class MidiClerk
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
 
+    // parse state
+    class MidiEvent* heldNotes = nullptr;
+    int tsigNumerator = 0;
+    int tsigDenominator = 0;
+    double secondsPerQuarter = 0.0f;
+    
     void chooseMidiFile();
     void doFileLoad(juce::File file);
     
-    void traceFile(juce::File file);
-    void traceTrack(int i, int timeFormat, const juce::MidiMessageSequence* seq);
-    void traceMetaEvent(juce::MidiMessage& msg, int timeFormat);
-    
-    void convertFile(juce::File file);
-    void convertTrack(int track, int timeFormat, const juce::MidiMessageSequence* seq, juce::String& buffer);
-    void convertMetaEvent(juce::MidiMessage& msg, int timeFormat, juce::String& buffer);
+    void analyzeFile(juce::File file);
+    void analyzeTrack(int track, int timeFormat, const juce::MidiMessageSequence* seq, juce::String& buffer);
+    void analyzeMetaEvent(juce::MidiMessage& msg, int timeFormat, juce::String& buffer);
 
     class MidiSequence* toSequence(juce::File file);
     void toSequence(const juce::MidiMessageSequence* mms, class MidiSequence* seq);
     class MidiEvent* findNoteOn(juce::MidiMessage& msg);
-
-    class MidiEvent* heldNotes = nullptr;
 
 };

@@ -35,7 +35,6 @@
 #include "VariableManager.h"
 #include "Alerter.h"
 #include "AudioClerk.h"
-#include "MidiClerk.h"
 #include "ProjectFiler.h"
 #include "script/ScriptClerk.h"
 #include "script/MslContext.h"
@@ -169,9 +168,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &audioClerk;
     }
     
-    MidiClerk* getMidiClerk() {
-        return &midiClerk;
-    }
+    class MidiClerk* getMidiClerk();
 
     class DeviceConfig* getDeviceConfig();
     void updateDeviceConfig();
@@ -371,9 +368,12 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Alerter alerter {this};
     juce::StringArray pendingAlerts;
     AudioClerk audioClerk {this};
-    MidiClerk midiClerk {this};
     ProjectFiler projectFiler {this};
     ApplicationBinderator binderator {this};
+
+    // new way of doing embedded objects that doesn't require a
+    // full link every time you touch the header file
+    std::unique_ptr<class MidiClerk> midiClerk;
     
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;

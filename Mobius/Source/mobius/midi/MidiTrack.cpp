@@ -146,23 +146,37 @@ void MidiTrack::midiSend(juce::MidiMessage& msg, int deviceId)
 void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 {
     (void)loopNumber;
-    //Trace(1, "MidiTrack: Abandoning loaded sequence");
-    //pools->reclaim(seq);
+    if (seq != nullptr) {
+        //Trace(1, "MidiTrack: Abandoning loaded sequence");
+        //pools->reclaim(seq);
 
-    MidiLayer* layer = pools->newLayer();
-    layer->prepare(pools);
-    layer->setSequence(seq);
-    MidiLoop* loop = loops[loopIndex];
-    loop->reset();
-    loop->add(layer);
+        MidiLayer* layer = pools->newLayer();
+        layer->prepare(pools);
+        layer->setSequence(seq);
+        int totalFrames = seq->getTotalFrames();
+        if (totalFrames == 0) {
+            Trace(1, "MidiTrack: Sequence to load did not have a total frame count");
+            MidiEvent* e = seq->getLast();
+            if (e != nullptr) {
+                // this isn't actually correct, we would have to scan from the
+                // beginning since notes prior to the last one could be held longer
+                totalFrames = e->frame + e->duration;
+            }
+        }
+        layer->setFrames(totalFrames);
     
-    recorder.reset();
-    recorder.resume(layer);
-    player.reset();
-    player.change(layer);
+        MidiLoop* loop = loops[loopIndex];
+        loop->reset();
+        loop->add(layer);
+    
+        recorder.reset();
+        recorder.resume(layer);
+        player.reset();
+        player.change(layer);
 
-    // todo: enter Pause mode
-    resumePlay();
+        // todo: enter Pause mode
+        resumePlay();
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////

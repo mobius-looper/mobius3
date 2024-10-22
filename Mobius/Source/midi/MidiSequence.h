@@ -25,6 +25,13 @@ class MidiSequence : public PooledObject
     class MidiEvent* getFirst() {
         return events;
     }
+    class MidiEvent* getLast() {
+        return tail;
+    }
+
+    int getTotalFrames();
+    void setTotalFrames(int frames);
+    
     class MidiEvent* steal();
     int size();
     
@@ -59,6 +66,14 @@ class MidiSequence : public PooledObject
     class MidiEvent* tail = nullptr;
     class MidiEvent* insertPosition = nullptr;
     int count = 0;
+
+    // when dealing with MIDI files, this is the length of the sequence
+    // which may contain empty space after the last event
+    int totalFrames = 0;
+
+    // todo: might be interesting to capture other things from the midi file
+    // or add a MidiFile wrapper that has all this since sequences don't need it
+    // at runtime
 
     void reset();
     
