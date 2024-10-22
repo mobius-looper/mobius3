@@ -23,6 +23,7 @@
 #include "mobius/MobiusInterface.h"
 #include "mobius/WaveFile.h"
 
+#include "MidiClerk.h"
 #include "AudioClerk.h"
 
 
@@ -279,10 +280,27 @@ void AudioClerk::clearInterleavedBuffer(int numSamples, float* buffer)
  * todo: decide how to deal with multiples.  Would be nice to support
  * that for main and strip drop, just fill the loops we can.  When dropping
  * over a single loop, can only take the first one.
+ *
+ * Until we have a better distributor, this will handle both audio drops and midi drops.
+ * Could just as well handle scripts here too then MainWindow wouldn't need to deal with it.
  */
 void AudioClerk::filesDropped(const juce::StringArray& files, int track, int loop)
 {
-    if (files.size() > 0) {
+    juce::StringArray audioFiles;
+    juce::StringArray midiFiles;
+    
+    for (auto path : files) {
+        juce::File f (path);
+        juce::String ext = f.getFileExtension();
+
+        if (ext == juce::String(".wav"))
+          audioFiles.add(path);
+        else if (ext == juce::String(".mid") || ext == juce::String(".smf"))
+          midiFiles.add(path);
+    }
+
+    if (audioFiles.size() > 0) {
+        // todo: multiples
         juce::String path = files[0];
 
         Audio* audio = readFileToAudio(path);
@@ -294,6 +312,11 @@ void AudioClerk::filesDropped(const juce::StringArray& files, int track, int loo
             // zero means "active" for both loop and track
             mobius->installLoop(audio, track, loop);
         }
+    }
+    else if (midiFiles.size() > 0) {
+        // redirect
+        MidiClerk* mclerk = supervisor->getMidiClerk();
+        mclerk->filesDropped(midiFiles, track, loop);
     }
 }
 

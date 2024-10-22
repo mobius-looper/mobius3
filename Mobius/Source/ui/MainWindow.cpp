@@ -484,13 +484,19 @@ void MainWindow::filesDropped(const juce::StringArray& files, int x, int y)
     
     juce::StringArray audioFiles;
     juce::StringArray scriptFiles;
-
+    
     for (auto path : files) {
         juce::File f (path);
         juce::String ext = f.getFileExtension();
 
         if (ext == juce::String(".wav"))
           audioFiles.add(path);
+        else if (ext == juce::String(".mid") || ext == juce::String(".smf")) {
+            // a midi file
+            // let AudioClerk handle the distribution since it also gets the files
+            // dropped over the TrackStrip and LoopStack
+            audioFiles.add(path);
+        }
         else if (ext == juce::String(".mos") || ext == juce::String(".msl"))
           scriptFiles.add(path);
     }
@@ -498,7 +504,7 @@ void MainWindow::filesDropped(const juce::StringArray& files, int x, int y)
     if (audioFiles.size() > 0) {
         AudioClerk* clerk = supervisor->getAudioClerk();
         clerk->filesDropped(audioFiles, 0, 0);
-     }
+    }
 
     if (scriptFiles.size() > 0) {
         ScriptClerk* clerk = supervisor->getScriptClerk();

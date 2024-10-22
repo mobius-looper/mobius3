@@ -22,8 +22,15 @@ MidiClerk::~MidiClerk()
 
 void MidiClerk::loadFile()
 {
-    // this does it's thing async then calls back to doFileChosen
-    chooseMidiFile();
+    MobiusView* view = supervisor->getMobiusView();
+    // focusedTrack is an index
+    if (view->focusedTrack < view->audioTracks) {
+        supervisor->alert("MIDI Track must have focus");
+    }
+    else {
+        // this does it's thing async then calls back to doFileChosen
+        chooseMidiFile();
+    }
 }
 
 void MidiClerk::chooseMidiFile()
@@ -60,11 +67,55 @@ void MidiClerk::chooseMidiFile()
 void MidiClerk::doFileLoad(juce::File file)
 {
     Trace(2, "MidiClerk: Selected file %s", file.getFullPathName().toUTF8());
-    // analyzeFile(file);
-    MidiSequence* seq = toSequence(file);
-    if (seq != nullptr) {
-        MobiusInterface* mobius = supervisor->getMobius();
-        mobius->loadMidiLoop(seq, 0, 0);
+
+    MobiusView* view = supervisor->getMobiusView();
+    
+    if (view->focusedTrack < view->audioTracks) {
+        // they changed track focus while we were in the file chooser
+        supervisor->alert("MIDI track must have focus");
+    }
+    else {
+        // what we pass down needs to be 1 based track numbers
+        int trackNumber = view->focusedTrack + 1;
+        // analyzeFile(file);
+        MidiSequence* seq = toSequence(file);
+        if (seq != nullptr) {
+            MobiusInterface* mobius = supervisor->getMobius();
+            // leave loop unspecified, it goes to the active loop
+            mobius->loadMidiLoop(seq, trackNumber, 0);
+        }
+    }
+}
+
+/**
+ * Here indirectly from AudioClerk since the UI doesn't understand us yet.
+ * Need a more generic file distributor.
+ * At this point we will have already filtered out just .mid and .smf files
+ * But we need to check the target track type.
+ */
+void MidiClerk::filesDropped(const juce::StringArray& files, int track, int loop)
+{
+    MobiusView* view = supervisor->getMobiusView();
+    if (track == 0)
+      track = view->focusedTrack + 1;
+
+    // track is a 1 based number
+    if (track <= view->audioTracks) {
+        // either we dropped over an audio track or the focused track is an audio
+        // track, no can do
+        supervisor->alert("MIDI file dropped over audio track");
+    }
+    else if (files.size() > 0) {
+        // todo: multiples
+        juce::String path = files[0];
+        juce::File file(path);
+
+        MidiSequence* seq = toSequence(file);
+        if (seq != nullptr) {
+            MobiusInterface* mobius = supervisor->getMobius();
+            // leave loop unspecified, it goes to the active loop
+            mobius->loadMidiLoop(seq, track, loop);
+        }
     }
 }
 

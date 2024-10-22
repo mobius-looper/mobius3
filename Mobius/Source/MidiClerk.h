@@ -13,6 +13,7 @@ class MidiClerk
     ~MidiClerk();
 
     void loadFile();
+    void filesDropped(const juce::StringArray& files, int track, int loop);
     
   private:
 

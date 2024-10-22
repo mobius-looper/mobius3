@@ -143,39 +143,56 @@ void MidiTrack::midiSend(juce::MidiMessage& msg, int deviceId)
     tracker->midiSend(msg, deviceId);
 }
 
+/**
+ * Not sure how the loop number works for audio tracks, but
+ * I think I'd like it 1 based like track number.  Zero means unspecified
+ * which goes into the current loop.
+ */
 void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 {
-    (void)loopNumber;
     if (seq != nullptr) {
-        //Trace(1, "MidiTrack: Abandoning loaded sequence");
-        //pools->reclaim(seq);
+        // a loopNumber of 0 means the current loop
+        int targetIndex = loopIndex;
+        if (loopNumber > 0)
+          targetIndex = loopNumber - 1;
 
-        MidiLayer* layer = pools->newLayer();
-        layer->prepare(pools);
-        layer->setSequence(seq);
-        int totalFrames = seq->getTotalFrames();
-        if (totalFrames == 0) {
-            Trace(1, "MidiTrack: Sequence to load did not have a total frame count");
-            MidiEvent* e = seq->getLast();
-            if (e != nullptr) {
-                // this isn't actually correct, we would have to scan from the
-                // beginning since notes prior to the last one could be held longer
-                totalFrames = e->frame + e->duration;
+        if (targetIndex >= loopCount) {
+            // too far
+            Trace(1, "MidiTrack::loadLoop Invalid loop number %d", loopNumber);
+            pools->reclaim(seq);
+        }
+        else {
+            MidiLayer* layer = pools->newLayer();
+            layer->prepare(pools);
+            layer->setSequence(seq);
+            int totalFrames = seq->getTotalFrames();
+            if (totalFrames == 0) {
+                Trace(1, "MidiTrack: Sequence to load did not have a total frame count");
+                MidiEvent* e = seq->getLast();
+                if (e != nullptr) {
+                    // this isn't actually correct, we would have to scan from the
+                    // beginning since notes prior to the last one could be held longer
+                    totalFrames = e->frame + e->duration;
+                }
+            }
+            layer->setFrames(totalFrames);
+
+            // at minimum, put the new layer into the target loop
+            MidiLoop* loop = loops[targetIndex];
+            loop->reset();
+            loop->add(layer);
+
+            // if this is also the active loop, then reset the recorder and player
+            if (loopIndex == targetIndex) {
+                recorder.reset();
+                recorder.resume(layer);
+                player.reset();
+                player.change(layer);
+
+                // todo: enter Pause mode
+                resumePlay();
             }
         }
-        layer->setFrames(totalFrames);
-    
-        MidiLoop* loop = loops[loopIndex];
-        loop->reset();
-        loop->add(layer);
-    
-        recorder.reset();
-        recorder.resume(layer);
-        player.reset();
-        player.change(layer);
-
-        // todo: enter Pause mode
-        resumePlay();
     }
 }
 

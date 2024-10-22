@@ -9,7 +9,7 @@
       <Value name="loopCount" value="2"/>
       <Value name="outputDevice" value="Host"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="syncSource" value="host" type="enum" ordinal="4"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>

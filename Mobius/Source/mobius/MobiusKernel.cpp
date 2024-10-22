@@ -1343,6 +1343,7 @@ void MobiusKernel::doMidi(KernelMessage* msg)
 void MobiusKernel::doMidiLoad(KernelMessage* msg)
 {
     mMidi->loadLoop(msg->object.sequence, msg->track, msg->loop);
+
     // nothing to send back
     communicator->kernelAbandon(msg);
 }

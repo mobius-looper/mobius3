@@ -326,15 +326,22 @@ void MidiTracker::midiEvent(juce::MidiMessage& msg, int deviceId)
     midiEvent(e);
 }
 
+/**
+ * This may be called from the main menu, or drag and drop.
+ * The track number is 1 based and expected to be within the range
+ * of MIDI tracks.  If it isn't, the UI didn't do it's job so abandon
+ * the sequence so we don't accidentally trash something.
+ */
 void MidiTracker::loadLoop(MidiSequence* seq, int track, int loop)
 {
-    if (activeTracks > 0) {
-        MidiTrack* t = tracks[0];
-        t->loadLoop(seq, loop);
+    int trackIndex = track - audioTracks - 1;
+    if (trackIndex < 0 || trackIndex >= activeTracks) {
+        Trace(1, "MidiTracker::loadLoop Invalid track number %d", track);
+        pools.reclaim(seq);
     }
     else {
-        Trace(1, "MidiTracker: Unable to load loop into track %d", track);
-        pools.reclaim(seq);
+        MidiTrack* t = tracks[trackIndex];
+        t->loadLoop(seq, loop);
     }
 }
 
