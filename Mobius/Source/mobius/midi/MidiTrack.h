@@ -114,6 +114,10 @@ class MidiTrack : public AbstractTrack
     void toggleReplace() override;
 
     bool finishSwitch(int target) override;
+
+    bool isPaused() override;
+    void startPause() override;
+    void finishPause() override;
     
     // simple one-shot actions
     void doParameter(class UIAction* a) override;
@@ -154,6 +158,7 @@ class MidiTrack : public AbstractTrack
     
     // state
     MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
+    MobiusMidiState::Mode prePauseMode = MobiusMidiState::ModeReset;
     bool overdub = false;
     bool mute = false;
     bool reverse = false;

@@ -185,10 +185,41 @@ void TrackScheduler::shiftEvents(int frames, int remainder)
  */
 void TrackScheduler::doAction(UIAction* src)
 {
-    UIAction* a = actionPool->newAction();
-    a->copy(src);
+    SymbolId sid = src->symbol->id;
     
-    doActionInternal(a);
+    if (track->isPaused()) {
+        // when paused, actions are ignored unless this
+        // is an specific unpause action, need some configurability around this
+        // maybe everything should unpause as a side and stack if the
+        // pause is synchronized?
+        // todo: will want to be able to arm/unarm minor modes like Mute and Overdub
+        // modes are NOT ended while in pause mode
+        // todo: We'll be pauing an active Record here rather than ending it, might need options
+        if (sid == FuncPause || sid == FuncPlay) {
+            track->finishPause();
+        }
+        else if (sid == FuncReset) {
+            track->doReset(false);
+        }
+        else if (sid == FuncTrackReset || sid == FuncGlobalReset) {
+            track->doReset(true);
+        }
+        else if (sid == FuncResize) {
+            // should allow the Cycle functions here too
+            doResize(src);
+        }
+        else {
+            Trace(2, "TrackScheduler: Ignoring %s while paused", src->symbol->getName());
+        }
+    }
+    else if (sid == FuncPause) {
+        track->startPause();
+    }
+    else {
+        UIAction* a = actionPool->newAction();
+        a->copy(src);
+        doActionInternal(a);
+    }
 }
 
 /**
@@ -198,7 +229,11 @@ void TrackScheduler::doAction(UIAction* src)
  * We can in theory quantize parameter assignment.  Old Mobius does
  * some parameter to function conversion for this for rate and pitch
  * parameters.
+ *
  * Not implemented yet.
+ *
+ * These are allowed in Pause mode as long as they are simple non-scheduling
+ * parameters.
  */
 void TrackScheduler::doParameter(UIAction* src)
 {
@@ -371,6 +406,8 @@ void TrackScheduler::doActionNow(UIAction* a)
             // internal functions from ActionTransformer
         case FuncUnroundedMultiply: track->unroundedMultiply(); break;
         case FuncUnroundedInsert: track->unroundedInsert(); break;
+
+        case FuncResize: doResize(a); break;
             
         default: {
             char msgbuf[128];
@@ -419,6 +456,11 @@ void TrackScheduler::doActionNow(UIAction* a)
  */
 void TrackScheduler::advance(MobiusAudioStream* stream)
 {
+    if (track->isPaused()) {
+        pauseAdvance(stream);
+        return;
+    }
+
     int newFrames = stream->getInterruptFrames();
 
     // here is where we need to ask Pulsator about drift
@@ -528,6 +570,16 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
         // the next block
         // this may also be an interesting thing to control from a script
     }
+}
+
+/**
+ * When a stream advance happenes while in pause mode it is largely
+ * ignored, though we may want to allow pulsed events to respond
+ * to clock pulses?
+ */
+void TrackScheduler::pauseAdvance(MobiusAudioStream* stream)
+{
+    (void)stream;
 }
 
 /**
@@ -1604,6 +1656,19 @@ void TrackScheduler::doInstant(UIAction* a)
     
     else if (a->symbol->id == FuncDivide)
       track->doInstantDivide(a->value);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Resize
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Lots to do here, but this gets things started.
+ */
+void TrackScheduler::doResize(UIAction* a)
+{
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -287,6 +287,11 @@ typedef enum {
     FuncWindowEndBackward,
     FuncWindowEndForward,
 
+    FuncResize,
+    FuncUpCycle,
+    FuncDownCycle,
+    FuncSetCycles,
+    
     // various diagnostic functions for testing
     FuncTraceStatus,
     FuncDump,

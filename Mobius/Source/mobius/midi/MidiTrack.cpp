@@ -189,8 +189,8 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 player.reset();
                 player.change(layer);
 
-                // todo: enter Pause mode
-                resumePlay();
+                startPause();
+                //resumePlay();
             }
         }
     }
@@ -216,6 +216,11 @@ bool MidiTrack::isRecording()
     // can't just test for recording != nullptr since that's always there
     // waiting for an overdub
     return recorder.isRecording();
+}
+
+bool MidiTrack::isPaused()
+{
+    return (mode == MobiusMidiState::ModePause);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1404,6 +1409,34 @@ void MidiTrack::toggleMute()
 const char* MidiTrack::getModeName()
 {
     return MobiusMidiState::getModeName(mode);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Pause
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * When placed in Pause mode, everything halts until it is taken out.
+ * Since these will not process events, TrackScheduler needs to respond
+ * to unpause triggers.
+ */
+void MidiTrack::startPause()
+{
+    // no real cleanup to do, things just stop and pick up where they left off
+    prePauseMode = mode;
+    mode = MobiusMidiState::ModePause;
+
+    // all notes go off
+    player.pause();
+}
+
+
+void MidiTrack::finishPause()
+{
+    player.unpause();
+    mode = prePauseMode;
 }
 
 //////////////////////////////////////////////////////////////////////

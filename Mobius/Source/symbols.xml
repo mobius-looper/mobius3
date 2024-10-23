@@ -121,6 +121,11 @@
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true'/>
 
+  <Function name="Resize" mayFocus='true'/>
+  <Function name="UpCycle" mayFocus='true'/>
+  <Function name="DownCycle" mayFocus='true'/>
+  <Function name="SetCycles"/>
+  
   <!-- various diagnostic functions for testing -->
   
   <!-- core has this as mayFocus -->

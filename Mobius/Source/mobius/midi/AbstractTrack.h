@@ -51,7 +51,11 @@ class AbstractTrack
     virtual void toggleReplace() = 0;
 
     virtual bool finishSwitch(int target) = 0;
-    
+
+    virtual bool isPaused() = 0;
+    virtual void startPause() = 0;
+    virtual void finishPause() = 0;
+   
     // simple one-shot actions
     virtual void doParameter(class UIAction* a) = 0;
     virtual void doReset(bool full) = 0;

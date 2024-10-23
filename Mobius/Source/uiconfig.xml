@@ -119,6 +119,7 @@
     <Button action="InstantMultiply" arguments="2"/>
     <Button action="Divide"/>
     <Button action="rate +12"/>
+    <Button action="Pause"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

@@ -360,7 +360,12 @@ SymbolDefinition SymbolDefinitions[] = {
     {"Dump", FuncDump},
     {"UnroundedMultiply", FuncUnroundedMultiply},
     {"UnroundedInsert", FuncUnroundedInsert},
-    
+
+    {"Resize", FuncResize},
+    {"UpCycle", FuncUpCycle},
+    {"DownCycle", FuncDownCycle},
+    {"SetCycles", FuncSetCycles},
+
     //
     // Sampler
     //

@@ -83,6 +83,7 @@ class TrackScheduler
     void checkModeCancel(class UIAction* a);
 
     // advance and events
+    void pauseAdvance(class MobiusAudioStream* stream);
     void doEvent(class TrackEvent* e);
     void dispose(class TrackEvent* e);
     void dispose(class UIAction* a);
@@ -112,6 +113,7 @@ class TrackScheduler
     void doOverdub(class UIAction* a);
     void doMute(class UIAction* a);
     void doInstant(class UIAction* a);
+    void doResize(class UIAction* a);
     
     // Switch
     bool isLoopSwitch(class UIAction* a);
