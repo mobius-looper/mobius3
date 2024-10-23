@@ -1543,6 +1543,47 @@ void MidiTrack::doInstantDivide(int n)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Resize
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Lots to do here, but this gets things started.
+ *
+ * There are lots of potential resizing options, but the most common initially
+ * will be to size the track to match mathematically with another track so they
+ * play in sync and at similar percieved tempos.
+ *
+ * This does not necessarily mean they will be the same size, but the will share
+ * a common factor.
+ *
+ * The action argument may specifity the other track to match.
+ * If one is not specified we look at the SyncMode defined for this track
+ * and match with the sync source:
+ *
+ *     track sync - find the track that is the current Track Sync Master
+ *     MIDI sync - take the smoothed tempo and find a size that matches fits with that tempo
+ *     Host sync - can use either tempo matching or bar length
+ *
+ * 
+ */
+void MidiTrack::doResize(int otherTrack)
+{
+    if (otherTrack == 0) {
+        // no action argument, use sync modes
+        resizeWithSync();
+    }
+    else {
+    }
+}
+
+void MidiTrack::resizeWithSync()
+{
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
 // Dump
 //
 //////////////////////////////////////////////////////////////////////

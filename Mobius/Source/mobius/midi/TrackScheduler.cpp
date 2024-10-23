@@ -206,7 +206,7 @@ void TrackScheduler::doAction(UIAction* src)
         }
         else if (sid == FuncResize) {
             // should allow the Cycle functions here too
-            doResize(src);
+            track->resize(src);
         }
         else {
             Trace(2, "TrackScheduler: Ignoring %s while paused", src->symbol->getName());
@@ -407,7 +407,7 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncUnroundedMultiply: track->unroundedMultiply(); break;
         case FuncUnroundedInsert: track->unroundedInsert(); break;
 
-        case FuncResize: doResize(a); break;
+        case FuncResize: track->resize(a); break;
             
         default: {
             char msgbuf[128];
@@ -1224,6 +1224,40 @@ void TrackScheduler::doMute(UIAction* a)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Resize
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * All we do here is process the arguments contained in the action
+ * and pass it to MidiTrack for the actual resizing.  Trying to keep
+ * MidiTrack independent of UIAction.
+ */
+void MidiTrack::doResize(UIAction* a)
+{
+    int otherTrack = a->value;
+    if (a->value == 0) {
+        // sync based resize
+        if (sessionSyncSource == SYNC_TRACK) {
+            // no reason MidiTrack can't do this but we may as well do it here
+            // and try to keep pulsator hidden
+        }
+        else {
+            Trace(1, "TrackScheduler: Unsupported resize sync source");
+        }
+    }
+    else {
+        // do some validation on this so MidiTrack doesn't have to
+        int totalTracks = track->getTracker()->
+        if (otherTrack < 1 || otherTrack 
+
+
+        
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Quantization
 //
 //////////////////////////////////////////////////////////////////////
@@ -1656,19 +1690,6 @@ void TrackScheduler::doInstant(UIAction* a)
     
     else if (a->symbol->id == FuncDivide)
       track->doInstantDivide(a->value);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Resize
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Lots to do here, but this gets things started.
- */
-void TrackScheduler::doResize(UIAction* a)
-{
 }
 
 //////////////////////////////////////////////////////////////////////

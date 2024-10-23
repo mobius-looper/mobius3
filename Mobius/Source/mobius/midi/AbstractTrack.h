@@ -64,7 +64,8 @@ class AbstractTrack
     virtual void doDump() = 0;
     virtual void doInstantMultiply(int n) = 0;
     virtual void doInstantDivide(int n) = 0;
-
+    virtual void resize(int trackNumber) = 0;
+    
     // advance play/record state between events
     virtual bool isExtending() = 0;
     virtual void advance(int newFrames) = 0;
