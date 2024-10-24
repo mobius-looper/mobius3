@@ -1436,6 +1436,7 @@ void Function::initStaticFunctions()
         add(StaticFunctions, MidiStart);
         add(StaticFunctions, MuteMidiStart);
         add(StaticFunctions, MidiStop);
+        add(StaticFunctions, ClipStart);
         add(StaticFunctions, SyncStartPoint);
         add(StaticFunctions, StartCapture);
         add(StaticFunctions, SaveCapture);

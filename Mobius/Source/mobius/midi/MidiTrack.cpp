@@ -29,6 +29,9 @@
 #include "../Valuator.h"
 #include "../MobiusInterface.h"
 
+// need this for clipStart, consider moving that to TrackScheduler
+#include "../MobiusKernel.h"
+
 #include "TrackScheduler.h"
 
 #include "MidiTracker.h"
@@ -105,7 +108,7 @@ void MidiTrack::configure(Session::Track* def)
     
     // todo: loopsPerTrack from somewhere
     loopCount = valuator->getLoopCount(def, 2);
-
+    
     // tell the player where to go
     MslValue* v = def->get("outputDevice");
     if (v == nullptr) {
@@ -119,6 +122,8 @@ void MidiTrack::configure(Session::Track* def)
           id = 0;
         player.setDeviceId(id);
     }
+    
+    midiThru = def->getBool("midiThru");
 }
 
 /**
@@ -192,6 +197,11 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 player.reset();
                 player.change(layer);
 
+
+                // before we call startPause force the mode to Play
+                // so that when we come out of pause, that will be what
+                // we return tu
+                mode = MobiusMidiState::ModePlay;
                 startPause();
                 //resumePlay();
             }
@@ -437,6 +447,12 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 void MidiTrack::midiEvent(MidiEvent* e)
 {
     recorder.midiEvent(e);
+    if (midiThru) {
+        // this came from the Session::Track and player keeps it
+        // may want some filtering here
+        int device = player.getDeviceId();
+        midiSend(e->juceMessage, device);
+    }
 }
 
 /**
@@ -1569,7 +1585,7 @@ void MidiTrack::doInstantDivide(int n)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Resize
+// Resize and Clips
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1605,23 +1621,144 @@ void MidiTrack::doInstantDivide(int n)
  * and Resize.  Will need to combine those and have another scaling factor,
  * perpahs rateShift and resizesShift that can be multiplied together.
  */
-void MidiTrack::resize(int otherFrames, int otherCycles)
+void MidiTrack::resize(TrackProperties& props)
 {
-    // not factoring cycles into the decisions but it may help
-    (void)otherCycles;
-
-    int myFrames = recorder.getFrames();
-    if (myFrames == 0) {
-        Trace(2, "MidiTrack: Track is empty and cannot be resized");
+    if (props.invalid) {
+        // something didn't do it's job and didn't check track number ranges
+        Trace(1, "MidiTrack: Resize with invalid track properties");
+    }
+    else if (props.frames == 0) {
+        // the other track was valid but empty
+        // we don't resize for this
+        Trace(2, "MidiTrack: Resize requested against empty track");
     }
     else {
-        // ideeally we should try to find the greatest common divisor
-        // and choose the rate that results in thw lowest amount of resizing
-        // while still maintaining sync by allowing the loop to simply
-        // play several times to fit within the goal track
+        int myFrames = recorder.getFrames();
+        if (myFrames == 0) {
+            Trace(2, "MidiTrack: Resize requested on empty track");
+        }
+        else if (myFrames == props.frames) {
+            // nothing to do
+        }
+        else {
+            rate = (float)myFrames / (float)props.frames;
+            goalFrames = props.frames;
 
-        rate = (float)otherFrames / (float)myFrames;
-        goalFrames = otherFrames;
+            float adjusted = rate;
+            if (myFrames > props.frames) {
+                float next = adjusted / 2.0f;
+                while (next > 1.0f) {
+                    adjusted = next;
+                    next = next / 2.0f;
+                }
+            }
+            else {
+                float next = adjusted * 2.0f;
+                while (next < 1.0f) {
+                    adjusted = next;
+                    next *= 2.0f;
+                }
+            }
+            rate = adjusted;
+
+            // assuming we're syncing, warp to the same relative location
+            // that the other track has, may want options around this
+            float otherProportion = (float)(props.currentFrame) / (float)(props.frames);
+            int adjustedFrame = (int)((float)myFrames * otherProportion);
+
+            // sanity check, recorder/player should be advancing
+            // at the same rate until we start dealing with latency
+            int playFrame = player.getFrame();
+            int recordFrame = recorder.getFrame();
+            if (playFrame != recordFrame)
+              Trace(1, "MidiTrack: Unexpected record/play frame mismatch %d %d", recordFrame, playFrame);
+
+            // resizing is intended for read-only backing tracks, but it is possible there
+            // were modifications made during the current iteration
+            // making the recorder go back in time is awkward because I'm not sure if it expects
+            // the record position to jump around, append vs. insert on the MidiSequence and leaving
+            // modes unfinished
+            // could auto-commit and shift now, or just prevent it from moving
+            // maybe this should be more like Realign where it waits till the start point
+            // of the leader loop and changes then, will want that combined with pause/unpause anyway
+            if (recorder.hasChanges()) {
+                Trace(1, "MidiTrack: Preventing resize relocation with pending recorder changes");
+            }
+            else {
+                char buf[128];
+                snprintf(buf, sizeof(buf), "%f", rate);
+                Trace(2, "MidiTrack: Resize rate %s %d local frames %d follow frames",
+                      buf, myFrames, props.frames);
+                Trace(2, "MidiTrack: Follow frame %d adjusted to local frame %d",
+                      props.currentFrame, adjustedFrame);
+
+                recorder.setFrame(adjustedFrame);
+                player.setFrame(adjustedFrame);
+
+            }
+        }
+    }
+}
+
+/**
+ * Eventually called after a long process from a ClipStart event scheduled
+ * in an audio track.
+ *
+ * This is kind of like an action, but TrackScheduler is not involved.
+ * We've quantized to a location in the audio track and need to begin
+ * playing now.
+ *
+ * The Track must be in a quiet state, e.g. no pending recording.
+ */
+void MidiTrack::clipStart(int audioTrack, int newIndex)
+{
+    if (recorder.hasChanges()) {
+        // could try to unwind gracefully, but ugly if there is a rounding mode
+        Trace(1, "MidiTrack: Unable to trigger clip in track with pending changes");
+    }
+    else {
+        // we could have just passed all this shit up from where it came from
+        TrackProperties props = tracker->getKernel()->getTrackProperties(audioTrack);
+        if (props.invalid) {
+            Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
+        }
+        else {
+            // make the given loop active
+            // this is very similar to finishSwitch except we don't do the EmptyLoopAction
+            // if the desired clip loop is empty, it is probably a bad action
+            MidiLoop* loop = loops[newIndex];
+            if (loop == nullptr) {
+                Trace(1, "MidiTrack: clipStart bad loop index %d", newIndex);
+            }
+            else if (loop->getFrames() == 0 || loop->getPlayLayer() == nullptr) {
+                Trace(1, "MidiTrack: clipStart empty loop %d", newIndex);
+            }
+            else {
+                // loop switch "lite"
+                loopIndex = newIndex;
+                MidiLayer* playing = loop->getPlayLayer();
+
+                recorder.resume(playing);
+                player.change(playing, 0);
+                // ambiguity over minor modes, but definitely turn this off
+                overdub = false;
+
+                // now that we've got the right loop in place,
+                // resize and position it as if the Resize command
+                // had been actioned on this track
+                resize(props);
+                mode = MobiusMidiState::ModePlay;
+
+                // player was usually in pause
+                player.unpause();
+
+                // I don't think we have TrackScheduler issues at this point
+                // we can only get a clipStart event from an audio track,
+                // and audio tracks are advanced before MIDI tracks
+                // so we'll be at the beginning of the block at this point
+                scheduler.setFollowTrack(audioTrack, props);
+            }
+        }
     }
 }
 

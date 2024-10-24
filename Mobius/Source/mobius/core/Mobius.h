@@ -359,6 +359,12 @@ class Mobius
     void cancelMslWait(class Event* e);
     void handleMslWait(class Loop* l, class Event* e);
     
+    //////////////////////////////////////////////////////////////////////
+    // New public accessors for events to deal with clips
+    //////////////////////////////////////////////////////////////////////
+
+    void clipStart(class Loop* l, const char* bindingArgs);
+    
   protected:
 
   private:

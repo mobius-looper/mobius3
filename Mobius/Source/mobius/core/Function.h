@@ -317,6 +317,7 @@ extern Function* Backward;
 extern Function* Bounce;
 extern Function* Checkpoint;
 extern Function* Clear;
+extern Function* ClipStart;
 extern Function* Confirm;
 extern Function* Divide;
 extern Function* Divide3;

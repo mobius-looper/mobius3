@@ -157,6 +157,7 @@ extern EventType* ScriptEvent;
 extern EventType* StartPointEvent;
 extern EventType* RealignEvent;
 extern EventType* MidiStartEvent;
+//extern EventType* ClipStartEvent;
 extern EventType* SwitchEvent;
 extern EventType* ReturnEvent;
 extern EventType* SUSReturnEvent;

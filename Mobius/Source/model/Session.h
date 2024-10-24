@@ -45,6 +45,10 @@ class Session
         ValueSet* ensureParameters();
         MslValue* get(juce::String name);
 
+        bool getBool(juce::String name);
+        const char* getString(juce::String name);
+        int getInt(juce::String name);
+
         juce::OwnedArray<class SessionMidiDevice> devices;
 
       private:

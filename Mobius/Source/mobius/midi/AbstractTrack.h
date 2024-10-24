@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../../model/MobiusMidiState.h"
+#include "../TrackProperties.h"
 
 class AbstractTrack
 {
@@ -64,7 +65,7 @@ class AbstractTrack
     virtual void doDump() = 0;
     virtual void doInstantMultiply(int n) = 0;
     virtual void doInstantDivide(int n) = 0;
-    virtual void resize(int frames, int cycles) = 0;
+    virtual void resize(TrackProperties& props) = 0;
     
     // advance play/record state between events
     virtual bool isExtending() = 0;

@@ -26,6 +26,7 @@
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
+#include "../TrackProperties.h"
 
 #include "TrackEvent.h"
 
@@ -55,6 +56,8 @@ class TrackScheduler
     bool hasRoundingScheduled();
     void cancelRounding();
 
+    void setFollowTrack(int trackNumber, TrackProperties& props);
+    
   private:
 
     class MobiusKernel* kernel = nullptr;
@@ -79,6 +82,10 @@ class TrackScheduler
     // block advance
     void consume(int frames);
     int scale(int blockFrames);
+    int scaleWithCarry(int blockFrames);
+    void traceFollow();
+    float rateCarryover = 0.0f;
+    int followTrack = 0;
     
     // generic action processing
     void doActionInternal(class UIAction* a);

@@ -510,7 +510,7 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
 
     // apply rate shift
     //int goalFrames = track->getGoalFrames();
-    newFrames = scale(newFrames);
+    newFrames = scaleWithCarry(newFrames);
 
     // now that we have the event list in order, look at carving up
     // the block around them and the loop point
@@ -548,6 +548,7 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
                 Trace(1, "TrackScheduler: Track frame was beyond the end %d %d",
                       currentFrame, loopFrames);
             }
+            traceFollow();
             track->loop();
             events.shift(loopFrames);
             currentFrame = 0;
@@ -564,22 +565,23 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
             int extra = nextFrame - loopFrames;
 
             // the amount after the loop point must also be scaled
-            extra = scale(extra);
+            // no, it has already been scaled
+            //extra = scaleWithCarry(extra);
             
             beforeFrames = newFrames - extra;
             afterFrames = newFrames - beforeFrames;
-
-            // todo: feels like there is roundoff error here
         }
         
         consume(beforeFrames);
-
-        // !! this is where you need to deal with goal frames
 
         if (afterFrames > 0) {
             // we've reached the loop
             // here we've got the sensitive shit around whether events
             // exactly on the loop frame should be before or after
+            
+            // this is where you would check goal frame
+            traceFollow();
+
             track->loop();
             events.shift(loopFrames);
 
@@ -590,6 +592,15 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
         // boundary we could loop early, but this will be caught on
         // the next block
         // this may also be an interesting thing to control from a script
+    }
+}
+
+void TrackScheduler::traceFollow()
+{
+    if (followTrack > 0) {
+        TrackProperties props = kernel->getTrackProperties(followTrack);
+        Trace(2, "TrackScheduler: Loop frame %d follow frame %d",
+              track->getFrame(), props.currentFrame);
     }
 }
 
@@ -610,6 +621,29 @@ int TrackScheduler::scale(int blockFrames)
     }
     return trackFrames;
 }
+
+int TrackScheduler::scaleWithCarry(int blockFrames)
+{
+    int trackFrames = blockFrames;
+    float rate = track->getRate();
+    if (rate == 0.0f) {
+        // this is the common initialization value, it means "no change"
+        // or effectively 1.0f
+    }
+    else {
+        // the carryover represents the fractional frames we were SUPPOSED to advance on the
+        // last block but couldn't
+        // but the last frame actually DID represent that amount
+        // so the next block reduces by that amount
+        // feels like this only works if rate is above 1
+        float floatFrames = ((float)blockFrames * rate) + rateCarryover;
+        float integral;
+        rateCarryover = modf(floatFrames, &integral);
+        trackFrames = (int)integral;
+    }
+    return trackFrames;
+}
+
 
 /**
  * When a stream advance happenes while in pause mode it is largely
@@ -637,7 +671,12 @@ void TrackScheduler::consume(int frames)
     while (e != nullptr) {
         
         int eventAdvance = e->frame - currentFrame;
-        eventAdvance = scale(eventAdvance);
+
+        // no, we're advancing within scaled frames if this event
+        // was on a frame boundary, the only reason we would need
+        // to rescale if is this was a quantized event that
+        // CHANGED the scaling factor
+        //eventAdvance = scaleWithCarry(eventAdvance);
         
         if (eventAdvance > remainder) {
             Trace(1, "TrackScheduler: Advance math is fucked");
@@ -918,8 +957,12 @@ void TrackScheduler::stackRecord(TrackEvent* recordEvent, UIAction* a)
 void TrackScheduler::doRecord(TrackEvent* e)
 {
     auto mode = track->getMode();
-    if (mode == MobiusMidiState::ModeRecord)
-      track->finishRecord();
+    if (mode == MobiusMidiState::ModeRecord) {
+        track->finishRecord();
+        // I think we need to reset the rateCarryover?
+        rateCarryover = 0.0f;
+        followTrack = 0;
+    }
     else
       track->startRecord();
 
@@ -999,6 +1042,9 @@ void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
             // what happens here needs to be consistent with what
             // doRecord(TrackEvent) does after an event
             track->finishRecord();
+            // this resets, right?
+            rateCarryover = 0.0f;
+            followTrack = 0;
             if (stack != nullptr)
               doActionNow(stack);
         }
@@ -1292,7 +1338,8 @@ void TrackScheduler::doResize(UIAction* a)
         if (sessionSyncSource == SYNC_TRACK) {
             int otherTrack = pulsator->getTrackSyncMaster();
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->resize(props.frames, props.cycles);
+            track->resize(props);
+            followTrack = otherTrack;
         }
         else {
             Trace(1, "TrackScheduler: Unsupported resize sync source");
@@ -1310,9 +1357,33 @@ void TrackScheduler::doResize(UIAction* a)
         }
         else {
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->resize(props.frames, props.cycles);
+            track->resize(props);
+            // I think this can reset?
+            // actually no, it probably needs to be a component of the
+            // adjusted play frame proportion
+            rateCarryover = 0.0f;
+            followTrack = otherTrack;
         }
     }
+}
+
+/**
+ * This is called by MidiTrack in response to a ClipStart action.
+ * The way things are organized now, TrackScheduler is not involved
+ * in that process, the ClipStart is scheduled in another track and
+ * when it activates, it calls MidiTrack::clipStart directly.
+ * In order to get follow trace going it has to tell us the track
+ * it was following.
+ *
+ * Would be better if we moved a lot of the stuff bding done
+ * in MidiTrack::clipStart up here
+ */
+void TrackScheduler::setFollowTrack(int trackNumber, TrackProperties& props)
+{
+    // don't need this until you want to mess with goalFrames
+    (void)props;
+    followTrack = trackNumber;
+    rateCarryover = 0.0f;
 }
 
 //////////////////////////////////////////////////////////////////////

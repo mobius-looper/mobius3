@@ -1091,6 +1091,15 @@ UIAction* MobiusKernel::newUIAction()
     return actionPool->newAction();
 }
 
+/**
+ * Wound our way here from the ClipStartEvent scheduled in Mobius core
+ * to perform a synchronized clip start.
+ */
+void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
+{
+    mMidi->clipStart(audioTrack, bindingArgs);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Kernel level action handlers

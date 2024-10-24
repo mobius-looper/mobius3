@@ -108,6 +108,7 @@ void MidiTrackEditor::loadTrack(int index)
         form.load(track->getParameters());
         initInputDevice(track);
         initOutputDevice(track);
+        midiThru.setValue(track->getBool("midiThru"));
         // adapt to changes in the midi device since the last time
         form.resized();
     }
@@ -128,15 +129,12 @@ void MidiTrackEditor::initInputDevice(Session::Track* track)
     inputDevice.setItems(names);
 
     int index = 0;
-    ValueSet* params = track->getParameters();
-    if (params != nullptr) {
-        const char* savedName = params->getString("inputDevice");
-        if (savedName != nullptr) {
-            index = names.indexOf(juce::String(savedName));
-            if (index < 0) {
-                Trace(1, "MidiTrackEditor: Saved track input device not available %s", savedName);
-                index = 0;
-            }
+    const char* savedName = track->getString("inputDevice");
+    if (savedName != nullptr) {
+        index = names.indexOf(juce::String(savedName));
+        if (index < 0) {
+            Trace(1, "MidiTrackEditor: Saved track input device not available %s", savedName);
+            index = 0;
         }
     }
     inputDevice.setSelection(index);
@@ -152,15 +150,12 @@ void MidiTrackEditor::initOutputDevice(Session::Track* track)
     outputDevice.setItems(names);
 
     int index = 0;
-    ValueSet* params = track->getParameters();
-    if (params != nullptr) {
-        const char* savedName = params->getString("outputDevice");
-        if (savedName != nullptr) {
-            index = names.indexOf(juce::String(savedName));
-            if (index < 0) {
-                Trace(1, "MidiTrackEditor: Saved track output device not available %s", savedName);
-                index = 0;
-            }
+    const char* savedName = track->getString("outputDevice");
+    if (savedName != nullptr) {
+        index = names.indexOf(juce::String(savedName));
+        if (index < 0) {
+            Trace(1, "MidiTrackEditor: Saved track output device not available %s", savedName);
+            index = 0;
         }
     }
     outputDevice.setSelection(index);
@@ -188,6 +183,8 @@ void MidiTrackEditor::saveTrack(int index)
       params->setJString("inputDevice", inputDevice.getSelectionText());
     
     params->setJString("outputDevice", outputDevice.getSelectionText());
+
+    params->setBool("midiThru", midiThru.getValue());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -209,7 +206,8 @@ void MidiTrackEditor::render()
     
     form.add(&inputDevice);
     form.add(&outputDevice);
-
+    form.add(&midiThru);
+    
     form.addField(ParamSyncSource);
     form.addField(ParamTrackSyncUnit);
     form.addField(ParamSlaveSyncUnit);

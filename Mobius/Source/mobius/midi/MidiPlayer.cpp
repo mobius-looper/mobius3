@@ -74,6 +74,11 @@ void MidiPlayer::setDeviceId(int id)
     outputDevice = id;
 }
 
+int MidiPlayer::getDeviceId()
+{
+    return outputDevice;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Layer Management

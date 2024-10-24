@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Session audioTracks="4" midiTracks="1">
+<Session audioTracks="4" midiTracks="2">
   <Track type="midi" index="0">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
-      <Value name="inputDevice" value="Host"/>
       <Value name="loopCount" value="2"/>
-      <Value name="outputDevice" value="Host"/>
+      <Value name="midiThru" value="1" type="int"/>
+      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
-      <Value name="syncSource" value="none" type="enum" ordinal="1"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>

@@ -121,10 +121,11 @@
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true'/>
 
-  <Function name="Resize" mayFocus='true'/>
-  <Function name="UpCycle" mayFocus='true'/>
-  <Function name="DownCycle" mayFocus='true'/>
-  <Function name="SetCycles"/>
+  <Function name="Resize" mayFocus='true' level='core'/>
+  <Function name="UpCycle" mayFocus='true' level='core'/>
+  <Function name="DownCycle" mayFocus='true' level='core'/>
+  <Function name="SetCycles" level='core'/>
+  <Function name="ClipStart" level='core'/>
   
   <!-- various diagnostic functions for testing -->
   

@@ -11,6 +11,11 @@ class TrackProperties
 
     int frames = 0;
     int cycles = 0;
+    int currentFrame = 0;
     // todo: the syncMode used to record it?
+
+    // set when a request is made for track properties that is out of range
+    bool invalid = false;
+    
 };
 

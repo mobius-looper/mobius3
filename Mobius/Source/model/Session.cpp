@@ -164,6 +164,25 @@ MslValue* Session::Track::get(juce::String pname)
     return v;
 }
 
+bool Session::Track::getBool(juce::String name)
+{
+    MslValue* v = get(name);
+    return (v != nullptr) ? v->getBool() : false;
+}
+
+int Session::Track::getInt(juce::String name)
+
+{
+    MslValue* v = get(name);
+    return (v != nullptr) ? v->getInt() : false;
+}
+
+const char* Session::Track::getString(juce::String name)
+{
+    MslValue* v = get(name);
+    return (v != nullptr) ? v->getString() : false;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // XML

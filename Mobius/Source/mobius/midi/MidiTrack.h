@@ -7,6 +7,7 @@
 #include "../../model/ParameterConstants.h"
 
 #include "../../sync/Pulse.h"
+#include "../TrackProperties.h"
 
 #include "AbstractTrack.h"
 #include "MidiRecorder.h"
@@ -60,6 +61,8 @@ class MidiTrack : public AbstractTrack
     void noteOn(class MidiEvent* e);
     void noteOff(class MidiEvent* e);
     void midiEvent(class MidiEvent* e);
+
+    void clipStart(int audioTrack, int loopIndex);
 
     //
     // Support for Recorder
@@ -127,7 +130,7 @@ class MidiTrack : public AbstractTrack
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
-    void resize(int frames, int cycles) override;
+    void resize(TrackProperties& props) override;
     
     bool isExtending() override;
     void advance(int newFrames) override;
@@ -178,7 +181,8 @@ class MidiTrack : public AbstractTrack
     int inputDecay = 0;
     int outputMonitor = 0;
     int outputDecay = 0;
-
+    bool midiThru = false;
+    
     // rate shift/resize
     float rate = 0.0f;
     int goalFrames = 0;

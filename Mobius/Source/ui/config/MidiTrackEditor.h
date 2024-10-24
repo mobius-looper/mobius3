@@ -61,6 +61,7 @@ class MidiTrackEditor : public ConfigEditor,
     YanRadio trackSelector {"Track"};
     YanCombo inputDevice {"Input Device"};
     YanCombo outputDevice {"Output Device"};
+    YanCheckbox midiThru {"MIDI Thru"};
     int selectedTrack = 0;
     
 };

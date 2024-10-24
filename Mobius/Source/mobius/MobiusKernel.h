@@ -208,6 +208,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
 
+    // used by Mobius to trigger clips after a core event
+    void clipStart(int audioTrack, const char* bindingArgs);
+
   private:
 
     // hopefully temporary hack to suspend all audio block processing

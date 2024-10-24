@@ -54,6 +54,24 @@ MidiStartEventType::MidiStartEventType()
 MidiStartEventType MidiStartEventObj;
 EventType* MidiStartEvent = &MidiStartEventObj;
 
+// Clips
+// ugh, this is terrible to wire in, punt and use MidiStart
+#if 0
+class ClipStartEventType : public EventType {
+  public:
+    virtual ~ClipStartEventType() {}
+	ClipStartEventType();
+};
+
+ClipStartEventType::ClipStartEventType()
+{
+	name = "ClipStart";
+}
+
+ClipStartEventType ClipStartEventObj;
+EventType* ClipStartEvent = &ClipStartEventObj;
+#endif
+
 //////////////////////////////////////////////////////////////////////
 //
 // MidiStartFunction
@@ -62,32 +80,42 @@ EventType* MidiStartEvent = &MidiStartEventObj;
 
 class MidiStartFunction : public Function {
   public:
-	MidiStartFunction(bool mute);
+	MidiStartFunction(bool mute, bool clip);
 	Event* scheduleEvent(Action* action, Loop* l);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
     void doEvent(Loop* l, Event* e);
     void undoEvent(Loop* l, Event* e);
   private:
-	bool mute;
+	bool mute = false;
+    bool clip = false;
 };
 
-MidiStartFunction MidiStartObj {false};
+MidiStartFunction MidiStartObj {false, false};
 Function* MidiStart = &MidiStartObj;
 
-MidiStartFunction MuteMidiStartObj {true};
+MidiStartFunction MuteMidiStartObj {true, false};
 Function* MuteMidiStart = &MuteMidiStartObj;
 
-MidiStartFunction::MidiStartFunction(bool b)
+MidiStartFunction ClipStartObj {false, true};
+Function* ClipStart = &ClipStartObj;
+
+MidiStartFunction::MidiStartFunction(bool isMute, bool isClip)
 {
 	eventType = MidiStartEvent;
 	resetEnabled = true;
 	noFocusLock = true;
-	mute = b;
-
+	mute = isMute;
+    clip = isClip;
+    
 	// let it stack for after the switch
 	switchStack = true;
 
-	if (mute) {
+    if (clip) {
+        // don't have MuteClipStart yet but could
+		setName("ClipStart");
+        //eventType = ClipStartEvent;
+	}
+	else if (mute) {
 		setName("MuteMidiStart");
         alias1 = "MuteStartSong";
 	}
@@ -128,6 +156,7 @@ Event* MidiStartFunction::scheduleEvent(Action* action, Loop* l)
 		startEvent = em->findEvent(MidiStartEvent);
 		if (startEvent != NULL) {
 			// ignore
+            // new: for ClipStart could use this to adjust the clip parameters
 			startEvent = NULL;
 		}
 		else {
@@ -214,8 +243,23 @@ void MidiStartFunction::doEvent(Loop* l, Event* e)
         l->cancelSyncMute(e);
     }
 
-    Synchronizer* sync = l->getSynchronizer();
-	sync->loopMidiStart(l);
+    if (clip) {
+        // dig the clip info out of the event/action and throw it up to Kernel
+        // which will pass it back down to the MIDI side
+        Action* a = e->getAction();
+        if (a == nullptr) {
+            Trace(1, "MobiusMidi: ClipStart event without an action");
+        }
+        else {
+            // save binding argument parsing for the receiver so we can play around with it
+            Mobius* m = l->getMobius();
+            m->clipStart(l, a->bindingArgs);
+        }
+    }
+    else {
+        Synchronizer* sync = l->getSynchronizer();
+        sync->loopMidiStart(l);
+    }
 }
 
 void MidiStartFunction::undoEvent(Loop* l, Event* e)

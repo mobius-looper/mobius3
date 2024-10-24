@@ -58,6 +58,7 @@ class MidiPlayer
     bool isPaused();
 
     void setDeviceId(int id);
+    int getDeviceId();
     
   private:
 

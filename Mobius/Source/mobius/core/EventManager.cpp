@@ -473,7 +473,7 @@ Event* EventManager::getFunctionEvent(Action* action,
         // !! What about events that change the loop size like 
         // Insert/Multiply
 
-         frame = action->rescheduling->frame;
+        frame = action->rescheduling->frame;
 
         if (q == QUANTIZE_OFF) {
             // This is what we would do below to "catch up to real time"

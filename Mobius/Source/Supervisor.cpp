@@ -1306,6 +1306,11 @@ void Supervisor::updateSession()
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
         writeDefaultSession(s);
+        
+        // Pulsator watches track counts
+        // do this before we tell Mobius so it can register new followers without
+        // overflowing the existing arrays
+        pulsator.configure();
 
         // tell the engine to reorganize tracks, this will lag till the next interrupt
         mobius->reconfigure(getMobiusConfig(), s);
@@ -1317,8 +1322,6 @@ void Supervisor::updateSession()
         // a way to reach only that one
         propagateConfiguration();
 
-        // Pulsator watches track counts
-        pulsator.configure();
     }
 }
 

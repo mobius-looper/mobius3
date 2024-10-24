@@ -120,6 +120,9 @@
     <Button action="Divide"/>
     <Button action="rate +12"/>
     <Button action="Pause"/>
+    <Button action="SyncMasterTrack"/>
+    <Button action="Resize"/>
+    <Button action="ClipStart" arguments="5 1"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

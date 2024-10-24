@@ -1722,6 +1722,10 @@ TrackProperties Mobius::getTrackProperties(int number)
     if (track != nullptr) {
         props.frames = track->getFrames();
         props.cycles = track->getCycles();
+        props.currentFrame = track->getFrame();
+    }
+    else {
+        props.invalid = true;
     }
     return props;
 }
@@ -3031,6 +3035,17 @@ void Mobius::cancelMslWait(class Event* e)
 {
     (void)e;
     Trace(2, "Mobius::cancelMslWait");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Clips
+//
+//////////////////////////////////////////////////////////////////////
+
+void Mobius::clipStart(class Loop* l, const char* bindingArgs)
+{
+    mKernel->clipStart(l->getTrack()->getDisplayNumber(), bindingArgs);
 }
 
 /****************************************************************************/

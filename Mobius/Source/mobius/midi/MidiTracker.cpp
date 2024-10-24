@@ -194,6 +194,10 @@ TrackProperties MidiTracker::getTrackProperties(int number)
     if (track != nullptr) {
         props.frames = track->getLoopFrames();
         props.cycles = track->getCycles();
+        props.currentFrame = track->getFrame();
+    }
+    else {
+        props.invalid = true;
     }
     return props;
 }
@@ -322,6 +326,64 @@ void MidiTracker::midiSend(juce::MidiMessage& msg, int deviceId)
 int MidiTracker::getMidiOutputDeviceId(const char* name)
 {
     return kernel->getMidiOutputDeviceId(name);
+}
+
+/**
+ * Called through a tortured path from a core event to trigger a clip
+ * up through Kernel and back down here.
+ *
+ * The audio track number that contained the event is passed.
+ * The binding args come from the original UIAction and specify
+ * which clip to trigger.
+ *
+ * This will do a combination of things.
+ *    - resize the clip (MIDI loop) to match the source audio track
+ *    - start unpause or restart the clip
+ *
+ * There are two binding arguments, both integers.
+ * The first is the track number containing the clip and the second is the
+ * loop number within that track.
+ */
+void MidiTracker::clipStart(int audioTrack, const char* bindingArgs)
+{
+    Trace(2, "MidiTracker::clipStart %s %d", bindingArgs, audioTrack);
+    int trackNumber = 0;
+    int loopNumber = 0;
+    int result = sscanf(bindingArgs, "%d %d", &trackNumber, &loopNumber);
+    
+    if (result == 0) {
+        // empty or invalid, if it is empty then could randomly pick the first
+        // track and first loop but I think that's dangerous
+        Trace(1, "MidiTracker: Missing ClipStart arguments");
+    }
+    else {
+        // we got at least the track number
+        if (trackNumber < audioTracks) {
+            Trace(1, "MidiTracker: Track number was not a MIDI track %d", trackNumber);
+        }
+        else {
+            int maxTrack = audioTracks + activeTracks;
+            if (trackNumber >= maxTrack) {
+                Trace(1, "MidiTracker: Track number was out of range %d", trackNumber);
+            }
+            else {
+                int trackIndex = trackNumber - audioTracks - 1;
+                MidiTrack* track = tracks[trackIndex];
+                // if the binding arg for loop number was missing then assume the first one?
+                int loopIndex = 0;
+                if (result > 1) {
+                    loopIndex = loopNumber - 1;
+                    if (loopIndex < 0 || loopIndex > track->getLoopCount()) {
+                        Trace(1, "MidiTracker: Loop clip number is out of range %d", loopNumber);
+                        loopIndex = -1;
+                    }
+                }
+
+                if (loopIndex >= 0)
+                  track->clipStart(audioTrack, loopIndex);
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

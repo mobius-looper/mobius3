@@ -68,6 +68,10 @@ class MidiTracker : public LongWatcher::Listener
 
     MidiTrack* getTrackByNumber(int number);
     MidiTrack* getTrackByIndex(int index);
+
+    // called by MobiusKernel to trigger a clip scheduled
+    // from an audio track event
+    void clipStart(int audioTrack, const char* bindingArgs);
     
   private:
 
