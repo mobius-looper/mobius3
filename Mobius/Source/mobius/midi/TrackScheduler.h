@@ -35,8 +35,10 @@ class TrackScheduler
 
     TrackScheduler(class AbstractTrack* t);
     ~TrackScheduler();
-    
-    void initialize(class TrackEventPool* epool, class UIActionPool* apool,
+
+    // now that we're passing Kernel, could get most things from there
+    void initialize(class MobiusKernel* k,
+                    class TrackEventPool* epool, class UIActionPool* apool,
                     class Pulsator* p, class Valuator* v, class SymbolTable* st);
     void configure(Session::Track* def);
     void dump(class StructureDumper& d);
@@ -55,6 +57,7 @@ class TrackScheduler
 
   private:
 
+    class MobiusKernel* kernel = nullptr;
     class AbstractTrack* track = nullptr;
     class TrackEventPool* eventPool = nullptr;
     class UIActionPool* actionPool = nullptr;
@@ -75,7 +78,8 @@ class TrackScheduler
 
     // block advance
     void consume(int frames);
-
+    int scale(int blockFrames);
+    
     // generic action processing
     void doActionInternal(class UIAction* a);
     void doStacked(class TrackEvent* actions);

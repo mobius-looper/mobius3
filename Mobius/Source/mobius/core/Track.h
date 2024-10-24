@@ -178,6 +178,8 @@ class Track : public TraceContext
 	//int getOutputLatency();
     
 	MobiusMode* getMode();
+    int getFrames();
+    int getCycles();
 	long getFrame();
     void getState(class OldMobiusTrackState* s);
 	int getCurrentLevel();

@@ -1715,6 +1715,17 @@ bool Mobius::isFocused(Track* t)
              group == mTrack->getGroup()));
 }
 
+TrackProperties Mobius::getTrackProperties(int number)
+{
+    TrackProperties props;
+    Track* track = getTrack(number - 1);
+    if (track != nullptr) {
+        props.frames = track->getFrames();
+        props.cycles = track->getCycles();
+    }
+    return props;
+}
+
 //
 // Kernel Events
 //

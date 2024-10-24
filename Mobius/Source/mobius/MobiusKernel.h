@@ -22,6 +22,8 @@
 #include "KernelBinderator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
+#include "TrackProperties.h"
+
 //#include "TrackSynchronizer.h"
 #include "midi/MidiTracker.h"
 
@@ -31,7 +33,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     friend class SampleFunction;
     friend class Mobius;
     friend class MidiTracker;
-    
+
   public:
 
     MobiusKernel(class MobiusShell* shell, class KernelCommunicator* comm);
@@ -140,6 +142,16 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;
+
+    // things TrackScheduler started needing
+    int getAudioTrackCount() {
+        return audioTracks;
+    }
+    int getMidiTrackCount() {
+        return midiTracks;
+    }
+    
+    TrackProperties getTrackProperties(int number);
     
   protected:
 
@@ -195,7 +207,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // used by MidiTracker to send to the host or forward to MidiManager
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
-    
+
   private:
 
     // hopefully temporary hack to suspend all audio block processing

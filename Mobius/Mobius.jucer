@@ -484,6 +484,8 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
+        <FILE id="uFY5rv" name="TrackProperties.h" compile="0" resource="0"
+              file="Source/mobius/TrackProperties.h"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="GQRAM1" name="ActionTransformer.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/ActionTransformer.cpp"/>

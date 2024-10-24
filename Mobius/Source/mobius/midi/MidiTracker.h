@@ -5,6 +5,7 @@
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
+#include "../TrackProperties.h"
 
 #include "MidiPools.h"
 #include "TrackEvent.h"
@@ -24,6 +25,9 @@ class MidiTracker : public LongWatcher::Listener
 
     void initialize(class Session* s);
     void loadSession(class Session* s);
+
+    int getMidiTrackCount();
+    TrackProperties getTrackProperties(int number);
 
     // the interface for receiving events when called by MidiManager, tagged with the device id
     void midiEvent(class MidiEvent* event);
@@ -61,6 +65,9 @@ class MidiTracker : public LongWatcher::Listener
     
     // Internal components use this to get a message to the UI
     void alert(const char* msg);
+
+    MidiTrack* getTrackByNumber(int number);
+    MidiTrack* getTrackByIndex(int index);
     
   private:
 

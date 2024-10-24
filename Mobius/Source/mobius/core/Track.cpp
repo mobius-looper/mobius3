@@ -323,6 +323,16 @@ bool Track::isUISignal()
 	return signal;
 }
 
+int Track::getFrames()
+{
+    return mLoop->getFrames();
+}
+
+int Track::getCycles()
+{
+    return mLoop->getCycles();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Notifications

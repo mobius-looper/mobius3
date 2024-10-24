@@ -28,6 +28,12 @@
 #include "MidiTrack.h"
 #include "MidiTracker.h"
 
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * The number of tracks we pre-allocate so they can move the track count
  * up or down without requiring memory allocation.
@@ -163,6 +169,44 @@ void MidiTracker::loadSession(Session* session)
     longWatcher.initialize(session, container->getSampleRate());
 }
 
+int MidiTracker::getMidiTrackCount()
+{
+    return activeTracks;
+}
+
+MidiTrack* MidiTracker::getTrackByNumber(int number)
+{
+    return getTrackByIndex(number - audioTracks - 1);
+}
+
+MidiTrack* MidiTracker::getTrackByIndex(int index)
+{
+    MidiTrack* track = nullptr;
+    if (index >= 0 && index < activeTracks)
+      track = tracks[index];
+    return track;
+}
+
+TrackProperties MidiTracker::getTrackProperties(int number)
+{
+    TrackProperties props;
+    MidiTrack* track = getTrackByNumber(number);
+    if (track != nullptr) {
+        props.frames = track->getLoopFrames();
+        props.cycles = track->getCycles();
+    }
+    return props;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Activities
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The root of the audio block processing for all midi tracks.
+ */
 void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 {
     // advance the long press detector, this may call back
@@ -180,6 +224,9 @@ void MidiTracker::processAudioStream(MobiusAudioStream* stream)
 }
 
 /**
+ * Distribute an action passed down from the UI or from a script
+ * to one of the tracks.
+ *
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
@@ -233,6 +280,9 @@ void MidiTracker::doTrackAction(UIAction* a)
     }
 }    
 
+/**
+ * Just asking questions...
+ */
 bool MidiTracker::doQuery(Query* q)
 {
     if (q->symbol == nullptr) {

@@ -127,10 +127,15 @@ class MidiTrack : public AbstractTrack
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
+    void resize(int frames, int cycles) override;
     
     bool isExtending() override;
     void advance(int newFrames) override;
     void loop() override;
+    int getGoalFrames() override;
+    void setGoalFrames(int f) override;
+    float getRate() override;
+    void setRate(float r) override;
     
   protected:
 
@@ -173,6 +178,10 @@ class MidiTrack : public AbstractTrack
     int inputDecay = 0;
     int outputMonitor = 0;
     int outputDecay = 0;
+
+    // rate shift/resize
+    float rate = 0.0f;
+    int goalFrames = 0;
     
     // advance
     void advancePlayer(int newFrames);

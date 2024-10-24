@@ -12,6 +12,7 @@
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
 #include "../MobiusInterface.h"
+#include "../MobiusKernel.h"
 #include "TrackEvent.h"
 #include "AbstractTrack.h"
 
@@ -26,9 +27,10 @@ TrackScheduler::~TrackScheduler()
 {
 }
 
-void TrackScheduler::initialize(TrackEventPool* epool, UIActionPool* apool,
+void TrackScheduler::initialize(MobiusKernel* k, TrackEventPool* epool, UIActionPool* apool,
                                 Pulsator* p, Valuator* v, SymbolTable* st)
 {
+    kernel = k;
     eventPool = epool;
     actionPool = apool;
     pulsator = p;
@@ -206,7 +208,7 @@ void TrackScheduler::doAction(UIAction* src)
         }
         else if (sid == FuncResize) {
             // should allow the Cycle functions here too
-            track->resize(src);
+            doResize(src);
         }
         else {
             Trace(2, "TrackScheduler: Ignoring %s while paused", src->symbol->getName());
@@ -407,7 +409,7 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncUnroundedMultiply: track->unroundedMultiply(); break;
         case FuncUnroundedInsert: track->unroundedInsert(); break;
 
-        case FuncResize: track->resize(a); break;
+        case FuncResize: doResize(a); break;
             
         default: {
             char msgbuf[128];
@@ -476,6 +478,13 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
     int currentFrame = track->getFrame();
 
     // locate a sync pulse we follow within this block
+    // !! there is work to do here with rate shift
+    // unclear where the pulse should "happen" within a rate shifted
+    // track, if it is the actuall buffer offset and the track is slowed
+    // down, then the pulse frame may be beyond the track advance and won't
+    // be "reached" until the next block.  If the pulse must happen within
+    // this block, then the pulse frame in the event would need to be adjusted
+    // for track time
     if (syncSource != Pulse::SourceNone) {
 
         // todo: you can also pass the pulse type to getPulseFrame
@@ -498,6 +507,10 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
             events.add(pulseEvent, true);
         }
     }
+
+    // apply rate shift
+    //int goalFrames = track->getGoalFrames();
+    newFrames = scale(newFrames);
 
     // now that we have the event list in order, look at carving up
     // the block around them and the loop point
@@ -549,11 +562,19 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
         
         if (nextFrame >= loopFrames) {
             int extra = nextFrame - loopFrames;
+
+            // the amount after the loop point must also be scaled
+            extra = scale(extra);
+            
             beforeFrames = newFrames - extra;
             afterFrames = newFrames - beforeFrames;
+
+            // todo: feels like there is roundoff error here
         }
         
         consume(beforeFrames);
+
+        // !! this is where you need to deal with goal frames
 
         if (afterFrames > 0) {
             // we've reached the loop
@@ -573,6 +594,24 @@ void TrackScheduler::advance(MobiusAudioStream* stream)
 }
 
 /**
+ * Scale a frame count in "block time" to "track time"
+ * Will want some range checking here to prevent extreme values.
+ */
+int TrackScheduler::scale(int blockFrames)
+{
+    int trackFrames = blockFrames;
+    float rate = track->getRate();
+    if (rate == 0.0f) {
+        // this is the common initialization value, it means "no change"
+        // or effectively 1.0f
+    }
+    else {
+        trackFrames = (int)((float)blockFrames * rate);
+    }
+    return trackFrames;
+}
+
+/**
  * When a stream advance happenes while in pause mode it is largely
  * ignored, though we may want to allow pulsed events to respond
  * to clock pulses?
@@ -585,6 +624,8 @@ void TrackScheduler::pauseAdvance(MobiusAudioStream* stream)
 /**
  * For a range of block frames that are on either side if a loop boundary,
  * look for events in that range and advance the track.
+ *
+ * Note that the frames passed here is already rate adjusted.
  */
 void TrackScheduler::consume(int frames)
 {
@@ -596,6 +637,8 @@ void TrackScheduler::consume(int frames)
     while (e != nullptr) {
         
         int eventAdvance = e->frame - currentFrame;
+        eventAdvance = scale(eventAdvance);
+        
         if (eventAdvance > remainder) {
             Trace(1, "TrackScheduler: Advance math is fucked");
             eventAdvance = remainder;
@@ -1232,27 +1275,43 @@ void TrackScheduler::doMute(UIAction* a)
  * All we do here is process the arguments contained in the action
  * and pass it to MidiTrack for the actual resizing.  Trying to keep
  * MidiTrack independent of UIAction.
+ *
+ * When resizing to another track, figure out which one it is and get it's
+ * size.  When resizing to a sync source, dig out the necessary information
+ * from that source.
+ *
+ * For the most part, TrackScheduler doesn't know it is dealing with a MidiTrack,
+ * just an AbstractTrack.  We're going to violate that here for a moment and
+ * get ahold of MidiTracker, MidiTrack, and MobiusKernel until the interfaces can be
+ * cleaned up a bit.
  */
-void MidiTrack::doResize(UIAction* a)
+void TrackScheduler::doResize(UIAction* a)
 {
-    int otherTrack = a->value;
     if (a->value == 0) {
         // sync based resize
         if (sessionSyncSource == SYNC_TRACK) {
-            // no reason MidiTrack can't do this but we may as well do it here
-            // and try to keep pulsator hidden
+            int otherTrack = pulsator->getTrackSyncMaster();
+            TrackProperties props = kernel->getTrackProperties(otherTrack);
+            track->resize(props.frames, props.cycles);
         }
         else {
             Trace(1, "TrackScheduler: Unsupported resize sync source");
         }
     }
     else {
-        // do some validation on this so MidiTrack doesn't have to
-        int totalTracks = track->getTracker()->
-        if (otherTrack < 1 || otherTrack 
-
-
-        
+        int otherTrack = a->value;
+        // some validation before we ask for prperties
+        // could skip this if TrackPrperties had a way to return errors
+        int audioTracks = kernel->getAudioTrackCount();
+        int midiTracks = kernel->getMidiTrackCount();
+        int totalTracks = audioTracks + midiTracks;
+        if (otherTrack < 1 || otherTrack > totalTracks) {
+            Trace(1, "TrackScheduler: Track number out of range %d", otherTrack);
+        }
+        else {
+            TrackProperties props = kernel->getTrackProperties(otherTrack);
+            track->resize(props.frames, props.cycles);
+        }
     }
 }
 

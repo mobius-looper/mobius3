@@ -1348,6 +1348,23 @@ void MobiusKernel::doMidiLoad(KernelMessage* msg)
     communicator->kernelAbandon(msg);
 }
 
+/**
+ * Used by MIDI track internals to ask questions about audio tracks
+ * for synchronization.  Eventually can be used by audio tracks
+ * to ask the same things about MIDI tracs.
+ */
+TrackProperties MobiusKernel::getTrackProperties(int number)
+{
+    TrackProperties props;
+
+    if (number < audioTracks)
+      props = mCore->getTrackProperties(number);
+    else
+      props = mMidi->getTrackProperties(number);
+
+    return props;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Loop/Project Loading

@@ -63,8 +63,11 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
     valuator = t->getValuator();
     pools = t->getPools();
 
-    scheduler.initialize(&(pools->trackEventPool), pools->actionPool, pulsator, valuator,
-                         container->getSymbols());
+    // messy, messy
+    scheduler.initialize(t->getKernel(),
+                         &(pools->trackEventPool), pools->actionPool,
+                         pulsator, valuator, container->getSymbols());
+    
     transformer.initialize(pools->actionPool, container->getSymbols());
     recorder.initialize(pools);
     player.initialize(pools);
@@ -201,6 +204,26 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 // General State
 //
 //////////////////////////////////////////////////////////////////////
+
+void MidiTrack::setGoalFrames(int f)
+{
+    goalFrames = f;
+}
+
+int MidiTrack::getGoalFrames()
+{
+    return goalFrames;
+}
+
+void MidiTrack::setRate(float r)
+{
+    rate = r;
+}
+
+float MidiTrack::getRate()
+{
+    return rate;
+}
 
 /**
  * Used by Recorder to do held note injection, forward to the tracker
@@ -817,6 +840,9 @@ void MidiTrack::doReset(bool full)
       Trace(2, "MidiTrack: TrackReset");
     else
       Trace(2, "MidiTrack: Reset");
+
+    rate = 0.0f;
+    goalFrames = 0;
       
     mode = MobiusMidiState::ModeReset;
 
@@ -1557,30 +1583,47 @@ void MidiTrack::doInstantDivide(int n)
  * This does not necessarily mean they will be the same size, but the will share
  * a common factor.
  *
- * The action argument may specifity the other track to match.
- * If one is not specified we look at the SyncMode defined for this track
- * and match with the sync source:
+ * TrackScheduler has done the work of locating the other track we want to
+ * resize against and passes the length and the number of cycles.  Do something nice.
  *
- *     track sync - find the track that is the current Track Sync Master
- *     MIDI sync - take the smoothed tempo and find a size that matches fits with that tempo
- *     Host sync - can use either tempo matching or bar length
+ * notes: I started trying to modify the length, timing, and duration of events in the track
+ * but this is awkward due to the complexity of the loop/layer/segment/sequence model, which would
+ * all need to be resized.  Instead I'm going to try a simple rate adjustment maintained
+ * by scheduler.  Everything within the track stays the same, it just advances at an adjusted
+ * rate.  This works well enough for MIDI since we're not dealing with a continuous
+ * stream of audio samples.  It's also closer to how RateShift works in audio tracks.
+ * The only real difference between audio and midi rate shift is the notion of the "goal frames".
  *
- * 
+ * This is an absolute length in frames that this track (and the loops it contains) need
+ * to fit into to maintain perfect synchronization.  Beccause rate shift applies floating point
+ * math, there can be roundoff errors that result in a frame or two of error at the loop point.
+ * When this happens the goal frame is used to inject or insert "time" to make the MIDI
+ * loop stay in sync with the other track it is trying to match.
+ *
+ * Should we eventually support RateShift/Halfspeed and the other audio track functions
+ * there will be conflict with a single playback rate if you use both RateShift
+ * and Resize.  Will need to combine those and have another scaling factor,
+ * perpahs rateShift and resizesShift that can be multiplied together.
  */
-void MidiTrack::doResize(int otherTrack)
+void MidiTrack::resize(int otherFrames, int otherCycles)
 {
-    if (otherTrack == 0) {
-        // no action argument, use sync modes
-        resizeWithSync();
+    // not factoring cycles into the decisions but it may help
+    (void)otherCycles;
+
+    int myFrames = recorder.getFrames();
+    if (myFrames == 0) {
+        Trace(2, "MidiTrack: Track is empty and cannot be resized");
     }
     else {
+        // ideeally we should try to find the greatest common divisor
+        // and choose the rate that results in thw lowest amount of resizing
+        // while still maintaining sync by allowing the loop to simply
+        // play several times to fit within the goal track
+
+        rate = (float)otherFrames / (float)myFrames;
+        goalFrames = otherFrames;
     }
 }
-
-void MidiTrack::resizeWithSync()
-{
-}
-
 
 //////////////////////////////////////////////////////////////////////
 //

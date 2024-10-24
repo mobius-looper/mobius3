@@ -13,6 +13,7 @@
 #pragma once
 
 #include "../../model/OldMobiusState.h"
+#include "../TrackProperties.h"
 #include "Loader.h"
 
 /**
@@ -178,6 +179,8 @@ class Mobius
      * reading the Project object from files.
      */
     void loadProject(class Project* p);
+
+    TrackProperties getTrackProperties(int number);
     
     //////////////////////////////////////////////////////////////////////
     //
