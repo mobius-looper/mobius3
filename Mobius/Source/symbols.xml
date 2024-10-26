@@ -624,4 +624,30 @@
 
   </ParameterScope>
   
+  <!-- =======================================================================
+       Session
+  ============================================================================ -->
+
+  <!-- =======================================================================
+       Session Track
+  ============================================================================ -->
+
+  <Parameter name='trackLeader'
+             values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi'
+             valueLabels='None,Track Number,Track Sync Master,Out Sync Master,Focused,Host,MIDI In'/>
+      
+  <Parameter name='followRecord' type='bool'/>
+  <Parameter name='followRecordEnd' type='bool'/>
+  <Parameter name='followSize' type='bool'/>
+  <Parameter name='followLocation' type='bool'/>
+  <Parameter name='followMute' type='bool'/>
+  <Parameter name='followStartPoint' type='bool'/>
+  <Parameter name='followRate' type='bool'/>
+  <Parameter name='followDirection' type='bool'/>
+  <Parameter name='followSwitch' type='bool'/>
+  <Parameter name='followCut' type='bool'/>
+  
+  <Parameter name='noReset' type='bool'/>
+  <Parameter name='noEdit' type='bool'/>
+
 </Symbols>
