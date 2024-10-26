@@ -1,7 +1,9 @@
 /**
  * Class used to maintain a list of interesting things that happen inside the engine
  * as it runs.  Core code (mostly) posts notifications as things happen, and something
- * eventually consumes these and generates suitable actions.
+ * (Notifier) eventually consumes these and generates suitable actions.
+ *
+ * 
  *
  */
 
@@ -15,6 +17,10 @@
 typedef enum {
 
     NotificationNone = 0,
+
+    NotificationRecordStart,
+    NotificationRecordStop,
+
 
     NotificationLoopStart,
     NotificationLoopEnd,

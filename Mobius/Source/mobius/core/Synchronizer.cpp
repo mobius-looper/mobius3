@@ -123,6 +123,8 @@
 
 #include "../MobiusInterface.h"
 #include "../MobiusMidiTransport.h"
+#include "../Notification.h"
+#include "../Notifier.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -160,7 +162,7 @@ Synchronizer::Synchronizer(Mobius* mob)
 {
 	mMobius = mob;
     mPulsator = mob->getContainer()->getPulsator();
-
+    
     // todo: think about where we get this
     // it would be more consisent if this came through MobiusAudioStream like
     // normal MIDi events for plugins
@@ -1017,7 +1019,8 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 	Event* event = NULL;
     EventManager* em = l->getTrack()->getEventManager();
 	MobiusMode* mode = l->getMode();
-
+    bool notifyRecordStart = false;
+    
     // When we moved this over from RecordFunction we may have lost
     // the original function, make sure.  I don't think this hurts 
     // anything but we need to be clearer
@@ -1073,12 +1076,14 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		l->stopPlayback();
 
 		event = schedulePendingRecord(action, l, SynchronizeMode);
+        notifyRecordStart = true;
 	}
 	else if (!action->noSynchronization && isThresholdRecording(l)) {
         // see comments above for SynchronizeMode
         // should noSynchronization control threshold too?
 		l->stopPlayback();
 		event = schedulePendingRecord(action, l, ThresholdMode);
+        notifyRecordStart = true;
 	}
 	else {
         // Begin recording now
@@ -1136,6 +1141,8 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 
 		if (mode == ResetMode)
 		  l->setMode(PlayMode);
+
+        notifyRecordStart = true;
     }
 
 	// Script Kludge: If we're in a script context with this
@@ -1146,6 +1153,16 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
         action->arg.getType() == EX_STRING &&
         StringEqualNoCase(action->arg.getString(), "noFade"))
 	  event->fadeOverride = true;
+
+
+    // new: after that mess, if we deciced to schedule a record start
+    // either pulsed, or after latency, let the followers over in MIDI land
+    // know.  This should happen immediately rather deferred until the Record
+    // actually begins so it can mute the backing track if there is one.
+    // might want two notifications for this NotifyRecordStart
+    // and NotifyRecordStartScheduled
+    if (notifyRecordStart)
+      mMobius->getNotifier()->notify(l, NotificationRecordStart);
 
 	return event;
 }
@@ -4452,6 +4469,13 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
 
     // don't need this any more
     state->stopRecording();
+
+    // if we're here, we've stopped recording, let the MIDI track followers start
+    // due to input latency, these will be a little late, so we might
+    // want to adjust that so they go ahread a little, the issue is very
+    // similar to to pre-playing the record layer, but since MidiTrack just follows
+    // the record frame we can't do that reliably yet
+    mMobius->getNotifier()->notify(l, NotificationRecordStop);
 }
 
 /**
