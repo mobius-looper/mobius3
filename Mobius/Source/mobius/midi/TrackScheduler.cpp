@@ -1378,11 +1378,9 @@ void TrackScheduler::doResize(UIAction* a)
  * Would be better if we moved a lot of the stuff bding done
  * in MidiTrack::clipStart up here
  */
-void TrackScheduler::setFollowTrack(int trackNumber, TrackProperties& props)
+void TrackScheduler::setFollowTrack(TrackProperties& props)
 {
-    // don't need this until you want to mess with goalFrames
-    (void)props;
-    followTrack = trackNumber;
+    followTrack = props.number;
     rateCarryover = 0.0f;
 }
 

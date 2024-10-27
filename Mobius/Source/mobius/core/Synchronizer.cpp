@@ -4475,7 +4475,7 @@ void Synchronizer::loopRecordStop(Loop* l, Event* stop)
     // want to adjust that so they go ahread a little, the issue is very
     // similar to to pre-playing the record layer, but since MidiTrack just follows
     // the record frame we can't do that reliably yet
-    mMobius->getNotifier()->notify(l, NotificationRecordStop);
+    mMobius->getNotifier()->notify(l, NotificationRecordEnd);
 }
 
 /**

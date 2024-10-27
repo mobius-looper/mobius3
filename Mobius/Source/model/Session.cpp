@@ -164,22 +164,22 @@ MslValue* Session::Track::get(juce::String pname)
     return v;
 }
 
-bool Session::Track::getBool(juce::String name)
+bool Session::Track::getBool(juce::String pname)
 {
-    MslValue* v = get(name);
+    MslValue* v = get(pname);
     return (v != nullptr) ? v->getBool() : false;
 }
 
-int Session::Track::getInt(juce::String name)
+int Session::Track::getInt(juce::String pname)
 
 {
-    MslValue* v = get(name);
+    MslValue* v = get(pname);
     return (v != nullptr) ? v->getInt() : false;
 }
 
-const char* Session::Track::getString(juce::String name)
+const char* Session::Track::getString(juce::String pname)
 {
-    MslValue* v = get(name);
+    MslValue* v = get(pname);
     return (v != nullptr) ? v->getString() : false;
 }
 

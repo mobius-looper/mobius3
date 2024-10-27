@@ -16,16 +16,6 @@
 
 #include "TrackListener.h"
 
-// test hack
-class TestTrackListener : public TrackListener
-{
-  public:
-
-    void trackRecordStart(class TrackProperties& props) override;
-    void trackRecordStop(class TrackProperties& props) override;
-
-};
-
 class Notifier
 {
   public:
@@ -67,7 +57,5 @@ class Notifier
     // will need a better way to do this
     juce::Array<juce::Array<TrackListener*>> listeners;
 
-    TestTrackListener testListener;
-    
 };
 

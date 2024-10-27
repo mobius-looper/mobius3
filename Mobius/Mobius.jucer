@@ -484,8 +484,7 @@
         <FILE id="einvVL" name="MainWindow.h" compile="0" resource="0" file="Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{4F6A3072-2740-FD34-203C-0D9000D493F6}" name="mobius">
-        <FILE id="uFY5rv" name="TrackProperties.h" compile="0" resource="0"
-              file="Source/mobius/TrackProperties.h"/>
+        <FILE id="Uu5Vsr" name="TrackListener.h" compile="0" resource="0" file="Source/mobius/TrackListener.h"/>
         <GROUP id="{596E37D7-AA24-C72F-8984-94689825BF7C}" name="midi">
           <FILE id="GQRAM1" name="ActionTransformer.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/ActionTransformer.cpp"/>
@@ -711,6 +710,8 @@
         <FILE id="JOsfQX" name="SampleReader.cpp" compile="1" resource="0"
               file="Source/mobius/SampleReader.cpp"/>
         <FILE id="RDP88j" name="SampleReader.h" compile="0" resource="0" file="Source/mobius/SampleReader.h"/>
+        <FILE id="uFY5rv" name="TrackProperties.h" compile="0" resource="0"
+              file="Source/mobius/TrackProperties.h"/>
         <FILE id="b5NDV8" name="Valuator.cpp" compile="1" resource="0" file="Source/mobius/Valuator.cpp"/>
         <FILE id="UxFgK7" name="Valuator.h" compile="0" resource="0" file="Source/mobius/Valuator.h"/>
         <FILE id="BCqKCe" name="WaveFile.cpp" compile="1" resource="0" file="Source/mobius/WaveFile.cpp"/>

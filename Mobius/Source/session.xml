@@ -5,6 +5,13 @@
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
+      <Value name="followLocation" value="1" type="int"/>
+      <Value name="followMute" value="1" type="int"/>
+      <Value name="followRecord" value="1" type="int"/>
+      <Value name="followRecordEnd" value="1" type="int"/>
+      <Value name="followSize" value="1" type="int"/>
+      <Value name="leaderTrack" value="1"/>
+      <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
       <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>

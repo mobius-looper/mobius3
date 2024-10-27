@@ -547,13 +547,19 @@ void MidiTracker::refreshState()
 void MidiTracker::trackNotification(NotificationId notification, TrackProperties& props)
 {
     int sourceNumber = props.number;
-    for (auto track : tracks) {
-        if (track->getLeader() == sourceNumber) {
-            track->trackNotification(notification, props);
+    for (int i = 0 ; i < activeTracks ; i++) {
+        MidiTrack* track = tracks[i];
+
+        LeaderType ltype = track->getLeaderType();
+        // only supporting this one right now
+        if (ltype == LeaderTrack) {
+        
+            if (track->getLeader() == sourceNumber) {
+                track->trackNotification(notification, props);
+            }
         }
     }
 }
-
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

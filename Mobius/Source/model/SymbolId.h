@@ -171,6 +171,30 @@ typedef enum {
     ParamTimeStretch,
 
     //
+    // Follower/Leader
+    //
+
+    ParamLeaderType,
+    ParamLeaderTrack,
+    ParamFollowRecord,
+    ParamFollowRecordEnd,
+    ParamFollowSize,
+    ParamFollowLocation,
+    ParamFollowMute,
+    ParamFollowRate,
+    ParamFollowDirection,
+    ParamFollowStartPoint,
+    ParamFollowSwitch,
+    ParamFollowCut,
+
+    //
+    // Misc track properties
+    //
+
+    ParamNoReset,
+    ParamNoEdit,
+
+    //
     // Mobius Functions
     //
     

@@ -56,7 +56,7 @@ class TrackScheduler
     bool hasRoundingScheduled();
     void cancelRounding();
 
-    void setFollowTrack(int trackNumber, TrackProperties& props);
+    void setFollowTrack(TrackProperties& props);
     
   private:
 

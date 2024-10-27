@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 
 #include "../../model/Session.h"
+#include "../common/BasicTabs.h"
 #include "../common/YanForm.h"
 #include "../common/YanField.h"
 #include "YanParameterForm.h"
@@ -56,12 +57,24 @@ class MidiTrackEditor : public ConfigEditor,
     std::unique_ptr<class Session> session;
     std::unique_ptr<class Session> revertSession;
 
-    YanParameterForm form;
+    int selectedTrack = 0;
+    BasicTabs tabs;
+
+
+    YanForm rootForm;
     YanInput trackCount {"Active Tracks"};
     YanRadio trackSelector {"Track"};
+
+    YanParameterForm generalForm;
     YanCombo inputDevice {"Input Device"};
     YanCombo outputDevice {"Output Device"};
     YanCheckbox midiThru {"MIDI Thru"};
-    int selectedTrack = 0;
+
+    YanParameterForm followerForm;
+    YanCombo leader {"Leader Track"};;
+    YanCheckbox followRecord {"Follow Record"};
+    YanCheckbox followMute {"Follow Mute"};
+    YanCheckbox followSize {"Follow Size"};
+    YanCheckbox followLocation {"Follow Location"};
     
 };

@@ -19,7 +19,7 @@ typedef enum {
     NotificationNone = 0,
 
     NotificationRecordStart,
-    NotificationRecordStop,
+    NotificationRecordEnd,
 
 
     NotificationLoopStart,

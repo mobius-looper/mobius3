@@ -1,6 +1,8 @@
 /*
  * Provides a basic tabbed component.
  *
+ * Should be replaced by BasicTabs.h in newer code
+ *
  */
 
 #pragma once

@@ -23,7 +23,8 @@ void YanParameter::init(Symbol* s)
     symbol = s;
     isText = false;
     isCombo = false;
-
+    isCheckbox = false;
+    
     if (s == nullptr) {
         Trace(1, "YanParameter: Missing symbol");
     }
@@ -44,6 +45,10 @@ void YanParameter::init(Symbol* s)
             
             addAndMakeVisible(&combo);
         }
+        else if (props->type == TypeBool) {
+            isCheckbox = true;
+            addAndMakeVisible(&checkbox);
+        }
         else {
             isText = true;
             addAndMakeVisible(&input);
@@ -56,6 +61,8 @@ int YanParameter::getPreferredWidth()
     int width = 0;
     if (isCombo)
       width = combo.getPreferredWidth();
+    else if (isCheckbox)
+      width = checkbox.getPreferredWidth();
     else
       width = input.getPreferredWidth();
     return width;
@@ -65,6 +72,8 @@ void YanParameter::resized()
 {
     if (isCombo)
       combo.setBounds(getLocalBounds());
+    else if (isCheckbox)
+      checkbox.setBounds(getLocalBounds());
     else
       input.setBounds(getLocalBounds());
 }
@@ -75,6 +84,8 @@ void YanParameter::load(MslValue* v)
         // no current value, initialize fields to suitable defaults
         if (isCombo)
           combo.setSelection(0);
+        else if (isCheckbox)
+          checkbox.setValue(false);
         else
           input.setValue("");
     }
@@ -110,6 +121,9 @@ void YanParameter::load(MslValue* v)
                 }
             }
         }
+        else if (isCheckbox) {
+            checkbox.setValue(v->getBool());
+        }
         else {
             input.setValue(v->getString());
         }
@@ -131,6 +145,9 @@ void YanParameter::save(MslValue* v)
                 v->setEnum(props->values[ordinal].toUTF8(), ordinal);
             }
         }
+    }
+    else if (isCheckbox) {
+        v->setBool(checkbox.getValue());
     }
     else {
         v->setJString(input.getValue());

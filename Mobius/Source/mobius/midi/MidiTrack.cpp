@@ -124,6 +124,14 @@ void MidiTrack::configure(Session::Track* def)
     }
     
     midiThru = def->getBool("midiThru");
+
+    leaderType = valuator->getLeaderType(def, LeaderNone);
+    leader = def->getInt("leaderTrack");
+    followRecord = def->getBool("followRecord");
+    followRecordEnd = def->getBool("followRecordEnd");
+    followSize = def->getBool("followSize");
+    followLocation = def->getBool("followLocation");
+    followMute = def->getBool("followMute");
 }
 
 /**
@@ -262,15 +270,84 @@ bool MidiTrack::isPaused()
 //
 //////////////////////////////////////////////////////////////////////
 
+LeaderType MidiTrack::getLeaderType()
+{
+    return leaderType;
+}
+
 int MidiTrack::getLeader()
 {
     return leader;
 }
 
-void MidiTrack::leaderNotification(NotificationId notification, TrackProperties& props)
+void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
     Trace(2, "MidiTrack::leaderNotification %d for track %d",
           (int)notification, props.number);
+
+    if (leader != props.number) {
+        // shouldn't have been notified about this
+        Trace(1, "MidiTrack: Incorrect leader notification for track %d", props.number);
+    }
+    else {
+        switch (notification) {
+            case NotificationRecordStart:
+                leaderRecordStart();
+                break;
+            case NotificationRecordEnd:
+                leaderRecordEnd(props);
+                break;
+
+            default:
+                Trace(1, "MidiTrack: Unhandled notification %d", (int)notification);
+                break;
+        }
+    }
+}
+
+/**
+ * When the leader track begins recording, either immedaately
+ * or defererred until a pulse, the follower pauses and rewinds to zero.
+ */
+void MidiTrack::leaderRecordStart()
+{
+    if (followRecord) {
+        startPause();
+        recorder.rollback(false);
+        player.setFrame(0);
+    }
+}
+
+void MidiTrack::leaderRecordEnd(TrackProperties& props)
+{
+    if (followRecordEnd) {
+        // already be in a rewound Pause state if followRecord, but if not, go there
+        recorder.rollback(false);
+        player.setFrame(0);
+
+        // unlike clipStart we keep the loop we were left with
+        if (recorder.getFrames() == 0) {
+            // on an empty loop, nothing to play
+            Trace(2, "MidiTrack::leaderRecordEnd Follower loop is empty");
+        }
+        else {
+            // ambguity over what happens to minor modes, but followers
+            // normally have an edit lock
+            overdub = false;
+
+            // resize to fit the leader
+            resize(props);
+            mode = MobiusMidiState::ModePlay;
+
+            player.unpause();
+
+            // I don't think we have TrackScheduler issues at this point
+            // we can only get a clipStart event from an audio track,
+            // and audio tracks are advanced before MIDI tracks
+            // so we'll be at the beginning of the block at this point
+            scheduler.setFollowTrack(props);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1773,7 +1850,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // we can only get a clipStart event from an audio track,
                 // and audio tracks are advanced before MIDI tracks
                 // so we'll be at the beginning of the block at this point
-                scheduler.setFollowTrack(audioTrack, props);
+                scheduler.setFollowTrack(props);
             }
         }
     }

@@ -36,8 +36,6 @@ Notifier::Notifier()
         juce::Array<TrackListener*>& larray = listeners.getReference(i);
         larray.ensureStorageAllocated(4);
     }
-
-    addTrackListener(1, &testListener);
 }
 
 Notifier::~Notifier()
@@ -173,18 +171,6 @@ void Notifier::afterEvent(int track)
 void Notifier::afterTrack(int track)
 {
     (void)track;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// TestTrackListener
-//
-//////////////////////////////////////////////////////////////////////
-
-void TestTrackListener::trackNotification(NotificationId id, TrackProperties& props)
-{
-    (void)id;
-    (void)props;
 }
 
 /****************************************************************************/

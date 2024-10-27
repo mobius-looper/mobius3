@@ -338,6 +338,10 @@ UIParameterScope Symbolizer::parseScope(juce::String name)
       scope = ScopeSetup;
     else if (name == "track")
       scope = ScopeTrack;
+    else if (name == "session")
+      scope = ScopeSession;
+    else if (name == "sessionTrack")
+      scope = ScopeSessionTrack;
     else if (name == "ui")
       scope = ScopeUI;
 

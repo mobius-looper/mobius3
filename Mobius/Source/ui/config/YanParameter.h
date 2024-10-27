@@ -36,10 +36,12 @@ class YanParameter : public YanField
     Symbol* symbol = nullptr;
     bool isText = false;
     bool isCombo = false;
+    bool isCheckbox = false;
     
     // various renderings
     YanCombo combo {""};
     YanInput input {""};
+    YanCheckbox checkbox {""};
     
 };
 

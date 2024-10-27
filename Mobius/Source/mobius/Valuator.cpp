@@ -244,6 +244,14 @@ SyncUnit Valuator::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit dflt)
                                             dflt);
 }
 
+LeaderType Valuator::getLeaderType(Session::Track* trackdef, LeaderType dflt)
+{
+    return (LeaderType)Enumerator::getOrdinal(symbols,
+                                              ParamLeaderType,
+                                              trackdef->getParameters(),
+                                              dflt);
+}
+
 int Valuator::getLoopCount(Session::Track* trackdef, int dflt)
 {
     int result = dflt;

@@ -259,6 +259,26 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNamePitchBend, ParamPitchBend},
     {ParamNameTimeStretch, ParamTimeStretch},
 
+    {"leaderType", ParamLeaderType},
+    {"leaderTrack", ParamLeaderTrack},
+    {"followRecord", ParamFollowRecord},
+    {"followRecordEnd", ParamFollowRecordEnd},
+    {"followSize", ParamFollowSize},
+    {"followLocation", ParamFollowLocation},
+    {"followMute", ParamFollowMute},
+    {"followRate", ParamFollowRate},
+    {"followDirection", ParamFollowDirection},
+    {"followStartPoint", ParamFollowStartPoint},
+    {"followSwitch", ParamFollowSwitch},
+    {"followCut", ParamFollowCut},
+
+    //
+    // Misc track properties
+    //
+
+    {"trackNoReset", ParamNoReset},
+    {"trackNoEdit", ParamNoEdit},
+
     {"AutoRecord", FuncAutoRecord},
     {"Backward", FuncBackward},
     {"Bounce", FuncBounce},

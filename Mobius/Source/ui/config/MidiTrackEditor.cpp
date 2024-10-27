@@ -12,7 +12,7 @@
 
 #include "MidiTrackEditor.h"
 
-MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), form(s)
+MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), followerForm(s)
 {
     setName("MidiTrackEditor");
     render();
@@ -28,7 +28,10 @@ void MidiTrackEditor::prepare()
 
 void MidiTrackEditor::resized()
 {
-    form.setBounds(getLocalBounds());
+    juce::Rectangle<int> area = getLocalBounds();
+    rootForm.setBounds(area.removeFromTop(rootForm.getPreferredHeight()));
+
+    tabs.setBounds(area);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -105,16 +108,20 @@ void MidiTrackEditor::loadTrack(int index)
 {
     Session::Track* track = session->getTrack(Session::TypeMidi, index);
     if (track != nullptr) {
-        form.load(track->getParameters());
+        
+        generalForm.load(track->getParameters());
         initInputDevice(track);
         initOutputDevice(track);
         midiThru.setValue(track->getBool("midiThru"));
         // adapt to changes in the midi device since the last time
-        form.resized();
+        generalForm.resized();
+
+        followerForm.load(track->getParameters());
     }
     else {
         // didn't have a definition for this one, reset the fields to initial values
-        form.load(nullptr);
+        generalForm.load(nullptr);
+        followerForm.load(nullptr);
     }
 }
 
@@ -171,8 +178,8 @@ void MidiTrackEditor::saveTrack(int index)
 {
     Session::Track* track = session->ensureTrack(Session::TypeMidi, index);
     ValueSet* params = track->ensureParameters();
-    form.save(params);
-
+    generalForm.save(params);
+    followerForm.save(params);
 
     juce::String devname = inputDevice.getSelectionText();
     if (devname == "Any") {
@@ -196,26 +203,39 @@ void MidiTrackEditor::saveTrack(int index)
 void MidiTrackEditor::render()
 {
     trackCount.setListener(this);
-    form.add(&trackCount);
-    form.addSpacer();
+    rootForm.add(&trackCount);
+    rootForm.addSpacer();
     
     trackSelector.setButtonCount(8);
     trackSelector.setListener(this);
-    form.add(&trackSelector);
-    form.addSpacer();
+    rootForm.add(&trackSelector);
+    rootForm.addSpacer();
     
-    form.add(&inputDevice);
-    form.add(&outputDevice);
-    form.add(&midiThru);
+    addAndMakeVisible(rootForm);
     
-    form.addField(ParamSyncSource);
-    form.addField(ParamTrackSyncUnit);
-    form.addField(ParamSlaveSyncUnit);
-    form.addField(ParamBeatsPerBar);
-    form.addField(ParamLoopCount);
+    generalForm.add(&inputDevice);
+    generalForm.add(&outputDevice);
+    generalForm.add(&midiThru);
     
+    generalForm.addField(ParamSyncSource);
+    generalForm.addField(ParamTrackSyncUnit);
+    generalForm.addField(ParamSlaveSyncUnit);
+    generalForm.addField(ParamBeatsPerBar);
+    generalForm.addField(ParamLoopCount);
     
-    addAndMakeVisible(form);
+    tabs.add("General", &generalForm);
+
+    followerForm.addField(ParamLeaderType);
+    followerForm.addField(ParamLeaderTrack);
+    followerForm.addField(ParamFollowRecord);
+    followerForm.addField(ParamFollowRecordEnd);
+    followerForm.addField(ParamFollowSize);
+    followerForm.addField(ParamFollowLocation);
+    followerForm.addField(ParamFollowMute);
+    
+    tabs.add("Follower", &followerForm);
+    
+    addAndMakeVisible(tabs);
 }
 
 //////////////////////////////////////////////////////////////////////

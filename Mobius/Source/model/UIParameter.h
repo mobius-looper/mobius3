@@ -56,6 +56,8 @@ typedef enum {
     ScopePreset,
     ScopeSetup,
     ScopeTrack,
+    ScopeSession,
+    ScopeSessionTrack,
     ScopeUI
 
 } UIParameterScope;

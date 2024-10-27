@@ -48,8 +48,9 @@ class MidiTrack : public AbstractTrack
     // Follower state
     //
 
+    LeaderType getLeaderType();
     int getLeader();
-    void leaderNotification(NotificationId notification, class TrackProperties& props);
+    void trackNotification(NotificationId notification, class TrackProperties& props);
             
     //
     // State
@@ -160,7 +161,13 @@ class MidiTrack : public AbstractTrack
     class MidiPools* pools = nullptr;
 
     // leader state
+    LeaderType leaderType;
     int leader = 0;
+    bool followRecord = false;
+    bool followRecordEnd = false;
+    bool followSize = false;
+    bool followLocation = false;
+    bool followMute = false;
 
     // loops
     juce::OwnedArray<class MidiLoop> loops;
@@ -216,6 +223,13 @@ class MidiTrack : public AbstractTrack
     void advanceRegion(int frames);
     
     bool inRecordingMode();
+
+    //
+    // Leader/Follower handlers
+    //
+
+    void leaderRecordStart();
+    void leaderRecordEnd(class TrackProperties& props);
 
     //
     // Misc utilities
