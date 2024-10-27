@@ -8,7 +8,7 @@
 class TrackProperties
 {
   public:
-
+    int number = 0;
     int frames = 0;
     int cycles = 0;
     int currentFrame = 0;

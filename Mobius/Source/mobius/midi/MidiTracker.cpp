@@ -167,6 +167,11 @@ void MidiTracker::loadSession(Session* session)
     state2.activeTracks = activeTracks;
 
     longWatcher.initialize(session, container->getSampleRate());
+
+    // make sure we're a listener for every track, even our own
+    int totalTracks = audioTracks + activeTracks;
+    for (int i = 1 ; i <= totalTracks ; i++)
+      kernel->getNotifier()->addTrackListener(i, this);
 }
 
 int MidiTracker::getMidiTrackCount()
@@ -526,6 +531,27 @@ void MidiTracker::refreshState()
       statePhase = 1;
     else
       statePhase = 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// TrackListener
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * To start out, we'll be the common listener for all tracks but eventually
+ * it might be better for MidiTracks to do it themselves based on their
+ * follower settings.  Would save some unnessary hunting here.
+ */
+void MidiTracker::trackNotification(NotificationId notification, TrackProperties& props)
+{
+    int sourceNumber = props.number;
+    for (auto track : tracks) {
+        if (track->getLeader() == sourceNumber) {
+            track->trackNotification(notification, props);
+        }
+    }
 }
 
 /****************************************************************************/

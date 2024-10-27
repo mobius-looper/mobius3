@@ -5,7 +5,10 @@
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
+
+#include "../Notification.h"
 #include "../TrackProperties.h"
+#include "../TrackListener.h"
 
 #include "MidiPools.h"
 #include "TrackEvent.h"
@@ -16,7 +19,7 @@
 #include "LongWatcher.h"
 #include "MidiFragment.h"
 
-class MidiTracker : public LongWatcher::Listener
+class MidiTracker : public LongWatcher::Listener, public TrackListener
 {
   public:
 
@@ -72,6 +75,9 @@ class MidiTracker : public LongWatcher::Listener
     // called by MobiusKernel to trigger a clip scheduled
     // from an audio track event
     void clipStart(int audioTrack, const char* bindingArgs);
+
+    // TrackListener
+    void trackNotification(NotificationId notification, class TrackProperties& props);
     
   private:
 

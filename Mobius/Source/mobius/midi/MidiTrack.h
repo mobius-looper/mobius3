@@ -7,6 +7,7 @@
 #include "../../model/ParameterConstants.h"
 
 #include "../../sync/Pulse.h"
+#include "../Notification.h"
 #include "../TrackProperties.h"
 
 #include "AbstractTrack.h"
@@ -41,7 +42,15 @@ class MidiTrack : public AbstractTrack
     int number = 0;
     // the track index within the MidiTracker, need this?
     int index = 0;
-    
+
+
+    //
+    // Follower state
+    //
+
+    int getLeader();
+    void leaderNotification(NotificationId notification, class TrackProperties& props);
+            
     //
     // State
     //
@@ -149,6 +158,9 @@ class MidiTrack : public AbstractTrack
     class Pulsator* pulsator = nullptr;
     class MidiTracker* tracker = nullptr;
     class MidiPools* pools = nullptr;
+
+    // leader state
+    int leader = 0;
 
     // loops
     juce::OwnedArray<class MidiLoop> loops;

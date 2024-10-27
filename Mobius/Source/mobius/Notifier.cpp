@@ -75,24 +75,13 @@ void Notifier::notify(Track* track, NotificationId id)
         if (larray.size() > 0) {
 
             TrackProperties props;
+            props.number = trackNumber;
             props.frames = track->getFrames();
             props.cycles = track->getCycles();
             props.currentFrame = track->getFrame();
             
             for (auto l : larray) {
-
-                switch (id) {
-                    case NotificationRecordStart:
-                        l->trackRecordStart(props);
-                        break;
-
-                    case NotificationRecordStop:
-                        l->trackRecordStop(props);
-                        break;
-
-                    default:
-                        break;
-                }
+                l->trackNotification(id, props);
             }
         }
     }
@@ -192,16 +181,10 @@ void Notifier::afterTrack(int track)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TestTrackListener::trackRecordStart(TrackProperties& props)
+void TestTrackListener::trackNotification(NotificationId id, TrackProperties& props)
 {
+    (void)id;
     (void)props;
-    Trace(2, "TestTrackListener::trackRecordStart");
-}
-
-void TestTrackListener::trackRecordStop(TrackProperties& props)
-{
-    (void)props;
-    Trace(2, "TestTrackListener::trackRecordStop");
 }
 
 /****************************************************************************/
