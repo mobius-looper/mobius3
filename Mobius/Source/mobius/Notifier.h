@@ -34,6 +34,10 @@ class Notifier
     void notify(class Loop* loop, NotificationId id);
     void notify(class Track* track, NotificationId id);
 
+    // used in cases where the TrackProperties contains other information
+    // about what happened, rare and ugly
+    void notify(class Track* track, NotificationId id, class TrackProperties& props);
+    
     //
     // Old interface used for the initial prototype
     //

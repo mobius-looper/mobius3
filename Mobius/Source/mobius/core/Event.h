@@ -170,6 +170,8 @@ extern EventType* MoveEvent;
 extern EventType* ShuffleEvent;
 extern EventType* MidiOutEvent;
 
+extern EventType* FollowerEvent;
+
 /****************************************************************************
  *                                                                          *
  *                                   EVENT                                  *

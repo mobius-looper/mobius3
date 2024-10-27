@@ -792,6 +792,12 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
     clerk->filesDropped(files, tracknum + 1, loop + 1);
 }
 
+void StripLoopStack::mouseDrag(const juce::MouseEvent& e)
+{
+    (void)e;
+    Trace(2, "StripLoopStack::mouseDrag");
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

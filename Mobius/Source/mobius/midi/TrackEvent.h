@@ -108,6 +108,7 @@ class TrackEventList
     TrackEvent* remove(TrackEvent::Type type);
     
     TrackEvent* consume(int startFrame, int endFrame);
+    void remove(TrackEvent* e);
     void shift(int delta);
     TrackEvent* consumePulsed();
 

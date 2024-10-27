@@ -41,6 +41,7 @@
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
+#include "../Notification.h"
 
 // implemented by MobiusContainer now but still need the old MidiEvent model
 //#include "../../midi/MidiByte.h"
@@ -3046,6 +3047,83 @@ void Mobius::cancelMslWait(class Event* e)
 void Mobius::clipStart(class Loop* l, const char* bindingArgs)
 {
     mKernel->clipStart(l->getTrack()->getDisplayNumber(), bindingArgs);
+}
+
+/**
+ * Schedule a follower notification event.
+ * These are a lot like MSL wait events but with fewer options.
+ * Only supporting quantization points right now.  Most other things
+ * can be handled by injecting Notifier callbacks at the right places.
+ */
+void Mobius::scheduleFollowerEvent(int trackNumber, int followerNumber,
+                                   QuantizeMode quantPoint)
+{
+    Track* track = getTrack(trackNumber - 1);
+    if (track == nullptr) {
+        Trace(1, "Mobius::scheduleFollowerEvent Invalid track number %d", trackNumber);
+    }
+    else {
+        int frame = calculateFollowerEventFrame(track, quantPoint);
+
+        // if the location frame is negative it means that this
+        // is an invalid location because the loop hasn't finished recording
+        if (frame >= 0) {
+    
+            EventManager* em = track->getEventManager();
+            Event* e = em->newEvent();
+            
+            e->type = FollowerEvent;
+            e->frame = frame;
+
+            // if quant is OFF, may need to set the e->immediate flag
+            // to prevent the loop from advancing?
+            // but in that case, the follower shouldn't even be bothering with this
+
+            // usually this will be the only follower, but in theory
+            // there could be several follower track with different quantization points
+            e->number = followerNumber;
+
+            // if you set this, it means it is subject to undo
+            e->quantized = true;
+
+            // interesting option: afterLoop
+            // controls whether the event is processed before or after the LoopEvent
+            // at the loop boundary
+            
+            em->addEvent(e);
+
+        }
+    }
+}
+
+int Mobius::calculateFollowerEventFrame(Track* track, QuantizeMode q)
+{
+    EventManager* em = track->getEventManager();
+    Loop* loop = track->getLoop();
+    int eventFrame = 0;
+
+    if (q == QUANTIZE_OFF)
+      eventFrame = loop->getFrame();
+    else 
+      eventFrame = em->getQuantizedFrame(loop, loop->getFrame(), q, true);
+
+    return eventFrame;
+}
+
+/**
+ * This is what FollowerEvent calls when it is hit.
+ */
+void Mobius::followerEvent(Loop* l, Event* e)
+{
+    TrackProperties props;
+
+    // this is a strange properties object because it is less like
+    // a track query result, and more like an event payload the core sends
+    // over to the midi side
+    props.follower = e->number;
+
+    mNotifier->notify(l->getTrack(), NotificationFollower, props);
+    
 }
 
 /****************************************************************************/

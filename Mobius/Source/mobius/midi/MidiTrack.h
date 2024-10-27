@@ -48,8 +48,9 @@ class MidiTrack : public AbstractTrack
     // Follower state
     //
 
-    LeaderType getLeaderType();
-    int getLeader();
+    LeaderType getLeaderType() override;
+    LeaderLocation getLeaderSwitchLocation() override;
+    int getLeader() override;
     void trackNotification(NotificationId notification, class TrackProperties& props);
             
     //
@@ -162,6 +163,7 @@ class MidiTrack : public AbstractTrack
 
     // leader state
     LeaderType leaderType;
+    LeaderLocation leaderSwitchLocation;
     int leader = 0;
     bool followRecord = false;
     bool followRecordEnd = false;
@@ -230,6 +232,9 @@ class MidiTrack : public AbstractTrack
 
     void leaderRecordStart();
     void leaderRecordEnd(class TrackProperties& props);
+    void leaderMuteStart(class TrackProperties& props);
+    void leaderMuteEnd(class TrackProperties& props);
+    void leaderFollowerEvent(class TrackProperties& props);
 
     //
     // Misc utilities

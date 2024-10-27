@@ -44,6 +44,7 @@ class Valuator
     SyncUnit getSlaveSyncUnit(Session::Track* trackdef, SyncUnit dflt);
     int getLoopCount(Session::Track* trackdef, int dflt);
     LeaderType getLeaderType(Session::Track* trackdef, LeaderType dflt);
+    LeaderLocation getLeaderSwitchLocation(Session::Track* trackdef, LeaderLocation dflt);
 
     int getParameterOrdinal(int trackId, SymbolId id);
     ParameterMuteMode getMuteMode(int trackId);

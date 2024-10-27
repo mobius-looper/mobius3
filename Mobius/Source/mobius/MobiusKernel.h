@@ -26,6 +26,7 @@
 
 //#include "TrackSynchronizer.h"
 #include "midi/MidiTracker.h"
+#include "midi/TrackScheduler.h"
 
 class MobiusKernel : public MobiusAudioListener, public MslContext
 {
@@ -33,7 +34,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     friend class SampleFunction;
     friend class Mobius;
     friend class MidiTracker;
-
+    friend class TrackScheduler;
+    
   public:
 
     MobiusKernel(class MobiusShell* shell, class KernelCommunicator* comm);
@@ -210,6 +212,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     // used by Mobius to trigger clips after a core event
     void clipStart(int audioTrack, const char* bindingArgs);
+    // used by MidiTracker to schedule a follower event in a core track
+    void scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q);
 
   private:
 

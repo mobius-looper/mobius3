@@ -203,6 +203,9 @@ UIEventType* UIShuffleEventType = &UIShuffleEventObj;
 UIEventType UIMidiOutEventObj {"MidiOut", "Mo"};
 UIEventType* UIMidiOutEventType = &UIMidiOutEventObj;
 
+UIEventType UIFollowerEventObj {"Follower", "Fo"};
+UIEventType* UIFollowerEventType = &UIFollowerEventObj;
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../model/ParameterConstants.h"
 #include "../../model/MobiusMidiState.h"
 #include "../TrackProperties.h"
 
@@ -76,6 +77,16 @@ class AbstractTrack
     virtual void setRate(float r) = 0;
     virtual int getGoalFrames() = 0;
     virtual void setGoalFrames(int f) = 0;
+
+    //
+    // Leader State
+    // Unclear if I want these saved on the Track
+    // or if we should be going back to the Session
+    //
+
+    virtual LeaderType getLeaderType() = 0;
+    virtual int getLeader() = 0;
+    virtual LeaderLocation getLeaderSwitchLocation() = 0;
     
     // misc utilities
     virtual void alert(const char* msg) = 0;

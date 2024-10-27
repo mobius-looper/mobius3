@@ -1100,6 +1100,12 @@ void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
     mMidi->clipStart(audioTrack, bindingArgs);
 }
 
+void MobiusKernel::scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q)
+{
+    // todo: might as well allow both directions here
+    mCore->scheduleFollowerEvent(audioTrack, followerTrack, q);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Kernel level action handlers

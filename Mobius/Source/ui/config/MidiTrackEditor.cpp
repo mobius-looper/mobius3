@@ -229,9 +229,11 @@ void MidiTrackEditor::render()
     followerForm.addField(ParamLeaderTrack);
     followerForm.addField(ParamFollowRecord);
     followerForm.addField(ParamFollowRecordEnd);
-    followerForm.addField(ParamFollowSize);
-    followerForm.addField(ParamFollowLocation);
     followerForm.addField(ParamFollowMute);
+    followerForm.addField(ParamLeaderSwitchLocation);
+    
+    //followerForm.addField(ParamFollowSize);
+    //followerForm.addField(ParamFollowLocation);
     
     tabs.add("Follower", &followerForm);
     

@@ -252,6 +252,14 @@ LeaderType Valuator::getLeaderType(Session::Track* trackdef, LeaderType dflt)
                                               dflt);
 }
 
+LeaderLocation Valuator::getLeaderSwitchLocation(Session::Track* trackdef, LeaderLocation dflt)
+{
+    return (LeaderLocation)Enumerator::getOrdinal(symbols,
+                                                  ParamLeaderSwitchLocation,
+                                                  trackdef->getParameters(),
+                                                  dflt);
+}
+
 int Valuator::getLoopCount(Session::Track* trackdef, int dflt)
 {
     int result = dflt;

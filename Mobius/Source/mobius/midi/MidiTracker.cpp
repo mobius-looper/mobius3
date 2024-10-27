@@ -555,7 +555,11 @@ void MidiTracker::trackNotification(NotificationId notification, TrackProperties
         if (ltype == LeaderTrack) {
         
             if (track->getLeader() == sourceNumber) {
-                track->trackNotification(notification, props);
+
+                // we usually follow this leader, but the special Follower event can target
+                // a specific one
+                if (props.follower == 0 || props.follower == track->number)
+                  track->trackNotification(notification, props);
             }
         }
     }

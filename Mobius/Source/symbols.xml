@@ -636,6 +636,10 @@
     <Parameter name='leaderType'
                values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi'
                valueLabels='None,Track Number,Track Sync Master,Out Sync Master,Focused,Host,MIDI In'/>
+
+    <Parameter name='leaderSwitchLocation'
+               values='none,loop,cycle,subcycle'/>
+    
     <Parameter name='leaderTrack' type='int'/>
     <Parameter name='followRecord' type='bool'/>
     <Parameter name='followRecordEnd' type='bool'/>
@@ -647,7 +651,6 @@
     <Parameter name='followDirection' type='bool'/>
     <Parameter name='followSwitch' type='bool'/>
     <Parameter name='followCut' type='bool'/>
-  
     <Parameter name='noReset' type='bool'/>
     <Parameter name='noEdit' type='bool'/>
   </ParameterScope>

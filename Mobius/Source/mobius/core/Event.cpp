@@ -1138,6 +1138,37 @@ Event* EventList::steal()
     return stolen;
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// FollowerEvent
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is a special event type not associated with a Function or script.
+ * They are scheduled at quantization points by a MIDI track follower
+ * that needs to be informed when those quantization points are crossed.
+ */
+class FollowerEventType : public EventType {
+  public:
+    virtual ~FollowerEventType() {}
+	FollowerEventType();
+	void invoke(Loop* l, Event* e);
+};
+
+FollowerEventType::FollowerEventType()
+{
+	name = "Follower";
+}
+
+void FollowerEventType::invoke(Loop* l, Event* e)
+{
+    l->getMobius()->followerEvent(l, e);
+}
+
+FollowerEventType FollowerEventObj;
+EventType* FollowerEvent = &FollowerEventObj;
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

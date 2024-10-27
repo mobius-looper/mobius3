@@ -57,6 +57,7 @@ class TrackScheduler
     void cancelRounding();
 
     void setFollowTrack(TrackProperties& props);
+    void leaderEvent(TrackProperties& props);
     
   private:
 

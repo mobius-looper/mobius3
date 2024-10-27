@@ -373,6 +373,13 @@ typedef enum {
 
 } LeaderType;
 
+typedef enum {
+    LeaderLocationNone,
+    LeaderLocationLoop,
+    LeaderLocationCycle,
+    LeaderLocationSubcycle
+} LeaderLocation;
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

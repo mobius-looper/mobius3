@@ -85,6 +85,36 @@ void Notifier::notify(Track* track, NotificationId id)
     }
 }
 
+/**
+ * This can be called from the outside with a partially constructed
+ * TrackProperties object that has more than just the track state.
+ */
+void Notifier::notify(Track* track, NotificationId id, TrackProperties& props)
+{
+    Trace(2, "Notifier: Received notification %d for track %d",
+          (int)id, track->getDisplayNumber());
+
+    int trackNumber = track->getDisplayNumber();
+    if (trackNumber < 0 || trackNumber >= listeners.size()) {
+        Trace(1, "Notififier: Listener array is fucked");
+    }
+    else {
+        juce::Array<TrackListener*>& larray = listeners.getReference(trackNumber);
+        if (larray.size() > 0) {
+
+            // trust that the track info has already been filled in or do ot for the caller?
+            props.number = trackNumber;
+            props.frames = track->getFrames();
+            props.cycles = track->getCycles();
+            props.currentFrame = track->getFrame();
+            
+            for (auto l : larray) {
+                l->trackNotification(id, props);
+            }
+        }
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Listeners

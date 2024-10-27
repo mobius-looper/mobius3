@@ -364,6 +364,11 @@ class Mobius
     //////////////////////////////////////////////////////////////////////
 
     void clipStart(class Loop* l, const char* bindingArgs);
+
+    void scheduleFollowerEvent(int trackNumber, int followerNumber,
+                               QuantizeMode quantPoint);
+    
+    void followerEvent(class Loop* l, class Event* e);
     
   protected:
 
@@ -389,6 +394,9 @@ class Mobius
     bool scheduleLocationWait(MslWait* wait);
     int calculateLocationFrame(MslWait* wait, Track* track);
     bool scheduleEventWait(MslWait* wait);
+
+    // new clip/follower/MIDI support
+    int calculateFollowerEventFrame(class Track* track, QuantizeMode q);
 
     //
     // Member Variables

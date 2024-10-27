@@ -126,6 +126,7 @@ void MidiTrack::configure(Session::Track* def)
     midiThru = def->getBool("midiThru");
 
     leaderType = valuator->getLeaderType(def, LeaderNone);
+    leaderSwitchLocation = valuator->getLeaderSwitchLocation(def, LeaderLocationNone);
     leader = def->getInt("leaderTrack");
     followRecord = def->getBool("followRecord");
     followRecordEnd = def->getBool("followRecordEnd");
@@ -275,6 +276,11 @@ LeaderType MidiTrack::getLeaderType()
     return leaderType;
 }
 
+LeaderLocation MidiTrack::getLeaderSwitchLocation()
+{
+    return leaderSwitchLocation;
+}
+
 int MidiTrack::getLeader()
 {
     return leader;
@@ -298,6 +304,17 @@ void MidiTrack::trackNotification(NotificationId notification, TrackProperties& 
                 leaderRecordEnd(props);
                 break;
 
+            case NotificationMuteStart:
+                leaderMuteStart(props);
+                break;
+            case NotificationMuteEnd:
+                leaderMuteEnd(props);
+                break;
+
+            case NotificationFollower:
+                leaderFollowerEvent(props);
+                break;
+                
             default:
                 Trace(1, "MidiTrack: Unhandled notification %d", (int)notification);
                 break;
@@ -348,6 +365,33 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
             scheduler.setFollowTrack(props);
         }
     }
+}
+
+void MidiTrack::leaderMuteStart(TrackProperties& props)
+{
+    (void)props;
+    if (!mute)
+      toggleMute();
+}
+
+void MidiTrack::leaderMuteEnd(TrackProperties& props)
+{
+    (void)props;
+    if (mute)
+      toggleMute();
+}
+
+/**
+ * An awkward name, but this means we asked the core leader track to schedule
+ * a callback event at a quantization point in the leader, and that
+ * point has been reached.
+ *
+ * Only used for loop switch right now.
+ */
+void MidiTrack::leaderFollowerEvent(TrackProperties& props)
+{
+    (void)props;
+    scheduler.leaderEvent(props);
 }
 
 //////////////////////////////////////////////////////////////////////

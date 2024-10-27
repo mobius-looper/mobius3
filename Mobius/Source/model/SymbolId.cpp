@@ -260,6 +260,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameTimeStretch, ParamTimeStretch},
 
     {"leaderType", ParamLeaderType},
+    {"leaderSwitchLocation", ParamLeaderSwitchLocation},
     {"leaderTrack", ParamLeaderTrack},
     {"followRecord", ParamFollowRecord},
     {"followRecordEnd", ParamFollowRecordEnd},

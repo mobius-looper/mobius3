@@ -93,6 +93,7 @@ extern UIEventType* UISlipEventType;
 extern UIEventType* UIMoveEventType;
 extern UIEventType* UIShuffleEventType;
 extern UIEventType* UIMidiOutEventType;
+extern UIEventType* UIFollowerEventType;
 
 /****************************************************************************/
 /****************************************************************************/

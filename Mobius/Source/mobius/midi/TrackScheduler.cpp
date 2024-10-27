@@ -1531,35 +1531,63 @@ bool TrackScheduler::isLoopSwitch(UIAction* a)
 void TrackScheduler::scheduleSwitch(UIAction* a)
 {
     int target = getSwitchTarget(a);
-    SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
-    if (q == SWITCH_QUANT_OFF) {
-        // todo: might be some interesting action argument we need to convey as well?
-        doSwitch(nullptr, target);
-    }
-    else {
+
+    LeaderType ltype = track->getLeaderType();
+    int leader = track->getLeader();
+    LeaderLocation ll = track->getLeaderSwitchLocation();
+
+    if (ltype == LeaderTrack && leader != 0 && ll != LeaderLocationNone) {
+        // we let the leader determine when the switch happens
+        // convert to QuantizeMode
+        QuantizeMode q = QUANTIZE_OFF;
+        switch (ll) {
+            case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
+            case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
+            case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
+            default: break;
+        }
+        kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
+
+        // !! the event in the leader track can be caneled with Undo
+        // when that happens, this event will hang until reset, need
+        // to be notified of that
         TrackEvent* event = eventPool->newEvent();
         event->type = TrackEvent::EventSwitch;
         event->switchTarget = target;
-
-        switch (q) {
-            case SWITCH_QUANT_SUBCYCLE:
-            case SWITCH_QUANT_CYCLE:
-            case SWITCH_QUANT_LOOP: {
-                event->frame = getQuantizedFrame(q);
-                
-            }
-                break;
-            case SWITCH_QUANT_CONFIRM:
-            case SWITCH_QUANT_CONFIRM_SUBCYCLE:
-            case SWITCH_QUANT_CONFIRM_CYCLE:
-            case SWITCH_QUANT_CONFIRM_LOOP: {
-                event->pending = true;
-            }
-                break;
-            default: break;
-        }
-
+        event->pending = true;
         events.add(event);
+    }
+    else {
+        SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
+        if (q == SWITCH_QUANT_OFF) {
+            // todo: might be some interesting action argument we need to convey as well?
+            doSwitch(nullptr, target);
+        }
+        else {
+            TrackEvent* event = eventPool->newEvent();
+            event->type = TrackEvent::EventSwitch;
+            event->switchTarget = target;
+
+            switch (q) {
+                case SWITCH_QUANT_SUBCYCLE:
+                case SWITCH_QUANT_CYCLE:
+                case SWITCH_QUANT_LOOP: {
+                    event->frame = getQuantizedFrame(q);
+                
+                }
+                    break;
+                case SWITCH_QUANT_CONFIRM:
+                case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+                case SWITCH_QUANT_CONFIRM_CYCLE:
+                case SWITCH_QUANT_CONFIRM_LOOP: {
+                    event->pending = true;
+                }
+                    break;
+                default: break;
+            }
+
+            events.add(event);
+        }
     }
     actionPool->checkin(a);
 }
@@ -1691,6 +1719,32 @@ void TrackScheduler::stackSwitch(UIAction* a)
             Trace(2, "TrackScheduler: Stacking %s after switch", a->symbol->getName());
             ending->stack(a);
         }
+    }
+}
+
+/**
+ * Called by MidiTrack when it finally receives notification
+ * that the leader event we scheduled in scheduleSwitch has been reached
+ *
+ * We don't really care what is in the event payload, can only be here for
+ * pending switch events.
+ *
+ */
+void TrackScheduler::leaderEvent(TrackProperties& props)
+{
+    (void)props;
+
+    TrackEvent* e = events.find(TrackEvent::EventSwitch);
+    if (e == nullptr) {
+        Trace(1, "TrackScheduler: Expected switch event after leader event not found");
+    }
+    else if (!e->pending) {
+        Trace(1, "TrackScheduler: Switch event after leader event was not pending");
+        // what to do about this, just let it happen normally?
+    }
+    else {
+        events.remove(e);
+        doSwitch(e, e->switchTarget);
     }
 }
 

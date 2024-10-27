@@ -175,6 +175,7 @@ typedef enum {
     //
 
     ParamLeaderType,
+    ParamLeaderSwitchLocation,
     ParamLeaderTrack,
     ParamFollowRecord,
     ParamFollowRecordEnd,

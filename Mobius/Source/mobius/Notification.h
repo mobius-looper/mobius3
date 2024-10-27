@@ -18,9 +18,15 @@ typedef enum {
 
     NotificationNone = 0,
 
+    // newer ones used by MIDI followers
+
+    NotificationFollower,
     NotificationRecordStart,
     NotificationRecordEnd,
+    NotificationMuteStart,
+    NotificationMuteEnd,
 
+    // older ones that never went anywyere
 
     NotificationLoopStart,
     NotificationLoopEnd,

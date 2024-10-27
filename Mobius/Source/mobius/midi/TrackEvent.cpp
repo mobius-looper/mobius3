@@ -197,6 +197,28 @@ TrackEvent* TrackEventList::remove(TrackEvent::Type type)
     return found;
 }
 
+void TrackEventList::remove(TrackEvent* event)
+{
+    TrackEvent* found = nullptr;
+    TrackEvent* prev = nullptr;
+    
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e == event) {
+            found = e;
+            break;
+        }
+        prev = e;
+    }
+
+    if (found != nullptr) {
+        if (prev == nullptr)
+          events = found->next;
+        else
+          prev->next = found->next;
+        found->next = nullptr;
+    }
+}
+
 TrackEvent* TrackEventList::findLast(SymbolId sym)
 {
     TrackEvent* found = nullptr;

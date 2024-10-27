@@ -56,6 +56,8 @@
 #include "../../model/Trigger.h"
 
 #include "../Audio.h"
+#include "../Notification.h"
+#include "../Notifier.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -2130,9 +2132,15 @@ void Loop::setMute(bool b)
  * To be used only by MuteFunction when in reset.
  * Also called by PlayFunction.
  */
- void Loop::setMuteMode(bool b)
+void Loop::setMuteMode(bool b)
 {
     mMuteMode = b;
+
+    // seems to be as good a place as any for this
+    if (mMuteMode)
+      mMobius->getNotifier()->notify(this, NotificationMuteStart);
+    else
+      mMobius->getNotifier()->notify(this, NotificationMuteEnd);
 }
 
 /**
