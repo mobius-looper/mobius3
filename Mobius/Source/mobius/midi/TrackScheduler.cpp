@@ -180,7 +180,7 @@ void TrackScheduler::shiftEvents(int frames, int remainder)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Start the action process with an action send from outside.
+ * Start the action process with an action sent from outside.
  * From here down, code expects to be dealing with a copy of the
  * original action that may be modified, and must be reclaimed
  * when done.
@@ -237,6 +237,8 @@ void TrackScheduler::doAction(UIAction* src)
         track->startPause();
     }
     else {
+        // copy the action so that it may be modified
+        // ?? really, what modifies it?
         UIAction* a = actionPool->newAction();
         a->copy(src);
         doActionInternal(a);
@@ -1889,83 +1891,6 @@ void TrackScheduler::doSwitch(TrackEvent* e, int target)
     // if the new loop is empty, these may go nowhere but they could have stacked
     // Reocord or some things that have meaning
     doStacked(e);
-}
-
-/**
- * If the new loop is empty, handle the EmptyLoopAction parameter.
- *
- * If this track is following, ignore EmptyLoopAction.  When acting as a clip track,
- * it is normal for there to be empty loops and you need to select them in order to
- * load something into them.  Since EmptyLoopAction currently comes from the Preset
- * that is shared by non-leader audio tracks, this is often for live tracks that
- * you don't want for backing tracks.  Might want options around this.
- *
- */
-void TrackScheduler::setupEmptyLoop(int previousLoop)
-{
-    bool copied = false;
-    if (track->getFrames() == 0 && track->getLeaderType() == LeaderNone) {
-
-        EmptyLoopAction action = valuator->getEmptyLoopAction(track->getNumber());
-
-        if (action == EMPTY_LOOP_RECORD) {
-            // todo: if this was a Return event we most likely wouldn't be here
-            // but I guess handle it the same?
-            UIAction a;
-            a.symbol = symbols->getSymbol(FuncRecord);
-            // call the outermost action receiver as if this came from the outside
-            doAction(&a);
-        }
-        else if (action == EMPTY_LOOP_COPY) {
-            track->loopCopy(previousLoop, true);
-            copied = true;
-        }
-        else if (action == EMPTY_LOOP_TIMING) {
-            track->loopCopy(previousLoop, false);
-            copied = true;
-        }
-        
-    }
-    
-    // if we didn't copy, then unlock the pulse follower
-    if (!copied)
-      pulsator->unlock(number);
-}
-
-/**
- * If the new loop was not empty, handle the SwitchLocation parameter.
- *
- * Like EmptyLoopAction, if this is a follower track, ignore it.
- * This might make some sense for clip tracks though.
- */
-void TrackScheduler::setupSwitchLocation(int previousLoop, int previousFrame)
-{
-    if (track->getFrames() > 0 && track->getLeaderType() == LeaderNone) {
-
-        SwitchLocation location = valuator->getSwitchLocation(number);
-
-        if (location == SWITCH_FOLLOW) {
-            // if the destination is smaller, have to modulo down
-            // todo: ambiguity where this shold be if there are multiple
-            // cycles, the first one, or the highest cycle?
-            int followFrame = currentFrame;
-            if (followFrame >= recorder.getFrames())
-              followFrame = currentFrame % recorder.getFrames();
-            recorder.setFrame(followFrame);
-            newPlayFrame = followFrame;
-        }
-        else if (location == SWITCH_RESTORE) {
-            newPlayFrame = playing->getLastPlayFrame();
-            recorder.setFrame(newPlayFrame);
-        }
-        else if (location == SWITCH_RANDOM) {
-            // might be nicer to have this be a random subcycle or
-            // another rhythmically ineresting unit
-            int random = Random(0, player.getFrames() - 1);
-            recorder.setFrame(random);
-            newPlayFrame = random;
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

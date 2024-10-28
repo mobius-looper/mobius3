@@ -29,9 +29,12 @@
 #include "../TrackProperties.h"
 
 #include "TrackEvent.h"
+#include "LoopSwitcher.h"
 
 class TrackScheduler
 {
+    friend class LoopSwitcher;
+    
   public:
 
     TrackScheduler(class AbstractTrack* t);
@@ -58,16 +61,25 @@ class TrackScheduler
 
     void setFollowTrack(TrackProperties& props);
     void leaderEvent(TrackProperties& props);
+
+  protected:
+
+    // things LoopSwitcher needs
+    
+    class AbstractTrack* track = nullptr;
+    TrackEventList events;
+    class TrackEventPool* eventPool = nullptr;
     
   private:
 
     class MobiusKernel* kernel = nullptr;
-    class AbstractTrack* track = nullptr;
-    class TrackEventPool* eventPool = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
+
+    // handler for loop switch complexity
+    LoopSwitcher loopSwitcher {this};
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -78,7 +90,6 @@ class TrackScheduler
     SyncSource sessionSyncSource = SYNC_NONE;
     SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
 
-    TrackEventList events;
 
     // block advance
     void consume(int frames);

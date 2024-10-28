@@ -1507,10 +1507,8 @@ void MidiTrack::unroundedInsert()
  * to be performed.  Scheduler needs to handle EMPTY_LOOP_RECORD, Track does the rest.
  * If there are any actions stacked on the switch, Scheduler will do those next.
  */
-bool MidiTrack::finishSwitch(int newIndex)
+void MidiTrack::finishSwitch(int newIndex)
 {
-    bool isEmpty = false;
-    
     Trace(2, "MidiTrack: Switch %d", newIndex);
 
     MidiLoop* currentLoop = loops[loopIndex];
@@ -1524,16 +1522,15 @@ bool MidiTrack::finishSwitch(int newIndex)
     MidiLoop* loop = loops[newIndex];
     MidiLayer* playing = loop->getPlayLayer();
 
-    // todo: consider having Scheduler deal with this part since
-    // it's already dealing with Return events?  Or else move
-    // Return handling out here
     if (playing == nullptr || playing->getFrames() == 0) {
-        isEmpty = true;
         // we switched to an empty loop
         recorder.reset();
         player.reset();
         resetRegions();
         mode = MobiusMidiState::ModeReset;
+
+        // break the code below that does the copy shift into
+        // the new functions that LoopSwitcher will call loopCopy(prev, sound)
         
         EmptyLoopAction action = valuator->getEmptyLoopAction(number);
 
