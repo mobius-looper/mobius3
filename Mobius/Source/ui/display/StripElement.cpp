@@ -248,6 +248,20 @@ void StripElement::mouseDown(const juce::MouseEvent& event)
       strip->mouseDown(event);
 }
 
+void StripElement::mouseEnter(const juce::MouseEvent& e)
+{
+    (void)e;
+    mouseEntered = true;
+    // what StatusElement does
+    //repaint();
+}
+
+void StripElement::mouseExit(const juce::MouseEvent& e)
+{
+    (void)e;
+    mouseEntered = false;
+    //repaint();
+}
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

@@ -52,7 +52,8 @@ class MidiTrack : public AbstractTrack
     LeaderLocation getLeaderSwitchLocation() override;
     int getLeader() override;
     void trackNotification(NotificationId notification, class TrackProperties& props);
-            
+    bool isNoReset() override;
+    
     //
     // State
     //
@@ -135,6 +136,7 @@ class MidiTrack : public AbstractTrack
     
     // simple one-shot actions
     void doParameter(class UIAction* a) override;
+    void doPartialReset() override;
     void doReset(bool full) override;
     void doUndo() override;
     void doRedo() override;
@@ -170,7 +172,8 @@ class MidiTrack : public AbstractTrack
     bool followSize = false;
     bool followLocation = false;
     bool followMute = false;
-
+    bool noReset = false;
+    
     // loops
     juce::OwnedArray<class MidiLoop> loops;
     int loopCount = 0;
@@ -230,6 +233,8 @@ class MidiTrack : public AbstractTrack
     // Leader/Follower handlers
     //
 
+    void followerPauseRewind();
+    void leaderReset(class TrackProperties& props);
     void leaderRecordStart();
     void leaderRecordEnd(class TrackProperties& props);
     void leaderMuteStart(class TrackProperties& props);

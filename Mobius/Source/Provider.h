@@ -62,5 +62,7 @@ class Provider
     virtual class MobiusView* getMobiusView() = 0;
     virtual class AudioClerk* getAudioClerk() = 0;
 
-
+    // kludge for ctrl-click in the loop stack
+    virtual void menuLoadMidi() = 0;
+    
 };

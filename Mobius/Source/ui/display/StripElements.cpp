@@ -683,7 +683,10 @@ void StripLoopStack::paint(juce::Graphics& g)
         // the drop target shares the same color as switch destionation which
         // isn't too bad, but might want to make drop target a bit more extreme
         if (loopIndex == dropTarget) {
-            g.setColour(juce::Colours::red);
+            if (hoverTarget)
+              g.setColour(juce::Colours::grey);
+            else
+              g.setColour(juce::Colours::red);
         }
         else if (loopIndex == track->activeLoop) {
             // It's possible to switch to the same loop, an alternate
@@ -760,22 +763,22 @@ int StripLoopStack::getDropTarget(int x, int y)
 void StripLoopStack::fileDragEnter(const juce::StringArray& files, int x, int y)
 {
     (void)files;
-    //Trace(2, "StripLoopStack: fileDragEnter\n");
     dropTarget = getDropTarget(x, y);
+    //Trace(2, "LoopStack::fileDragEnter");
 }
 
 void StripLoopStack::fileDragMove(const juce::StringArray& files, int x, int y)
 {
     (void)files;
-    //Trace(2, "StripLoopStack: fileDragMove\n");
     dropTarget = getDropTarget(x, y);
+    //Trace(2, "LoopStack::fileDragMove");
 }
 
 void StripLoopStack::fileDragExit(const juce::StringArray& files)
 {
     (void)files;
-    //Trace(2, "StripLoopStack: fileDragExit\n");
     dropTarget = -1;
+    //Trace(2, "LoopStack::fileDragExit");
 }
 
 void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
@@ -792,10 +795,78 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
     clerk->filesDropped(files, tracknum + 1, loop + 1);
 }
 
-void StripLoopStack::mouseDrag(const juce::MouseEvent& e)
+/**
+ * Would like to highlight loop rows as you hover over them to indiciate
+ * you can click on them, independent of fileDragEnter.
+ * Was wondering if there would be a double notification betwene mouseEnter
+ * and fileDragEnter and there does not appear to be.  fileDragEnter has priority
+ * and mouseEnter will not be called.  So we can set the dropTarget to get the repaint
+ * to trigger, but also set hoverTarget so we can distinguish it from a file drop by color.
+ */
+void StripLoopStack::mouseEnter(const juce::MouseEvent& e)
+{
+    dropTarget = getDropTarget(e.x, e.y);
+    hoverTarget = true;
+    //Trace(2, "LoopStack::mouseEnter");
+}
+
+void StripLoopStack::mouseMove(const juce::MouseEvent& e)
+{
+    dropTarget = getDropTarget(e.x, e.y);
+    //Trace(2, "LoopStack::mouseMove");
+}
+
+void StripLoopStack::mouseExit(const juce::MouseEvent& e)
 {
     (void)e;
-    Trace(2, "StripLoopStack::mouseDrag");
+    dropTarget = -1;
+    hoverTarget = false;
+    //Trace(2, "LoopStack::mouseExit");
+}
+
+/**
+ * Allow mouseDown to change loops.
+ */
+void StripLoopStack::mouseDown(const juce::MouseEvent& e)
+{
+    // need this, or are they in the MouseEvent?
+    juce::ModifierKeys mods = juce::ModifierKeys::getCurrentModifiers();
+    bool lmb = e.mods.isLeftButtonDown();
+    bool rmb = e.mods.isRightButtonDown();
+    const char* bstr = "???";
+    if (lmb)
+      bstr = "left";
+    else if (rmb)
+      bstr = "right";
+    
+    int target = getDropTarget(e.getMouseDownX(), e.getMouseDownY());
+
+    // sigh, I wanted to make ctrl-click always do the file selector
+    // but this goes to the active loop so if we don't also select it, it will
+    // overwrite the wrong loop, might be nice to pass the desired target loop
+    // in when the chooser is launched
+#if 0
+    if (mods.isCtrlDown()) {
+        // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
+        Trace(2, "StripLoopStack: Ctrl-Mouse %s down over loop %d", bstr, target);
+    }
+#endif        
+    // Trace(2, "StripLoopStack: Mouse %s down over loop %d", bstr, target);
+    // this I want to be treated as a loop switch
+    MobiusViewTrack* track = strip->getTrackView();
+    if (track->activeLoop != target) {
+        UIAction a;
+        a.symbol = strip->getProvider()->getSymbols()->getSymbol(FuncSelectLoop);
+        a.value = target + 1;
+        a.setScopeTrack(track->index + 1);
+        strip->getProvider()->doAction(&a);
+    }
+
+    // whether we changed or not, ctrol-click starts the load process
+    // this will be async and in theory the switch won't have finished by the
+    // time we're done so maybe only do this if the loop is in Reset or Pause?
+    if (mods.isCtrlDown() && track->midi)
+      strip->getProvider()->menuLoadMidi();
 }
 
 /****************************************************************************/

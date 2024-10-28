@@ -125,6 +125,8 @@ class StripElement : public juce::Component
     void paint(juce::Graphics& g) override;
 
     void mouseDown(const class juce::MouseEvent& event) override;
+    void mouseEnter(const juce::MouseEvent& e) override;
+    void mouseExit(const juce::MouseEvent& e) override;
     
     // transient display order
     int position = 0;
@@ -134,6 +136,8 @@ class StripElement : public juce::Component
     
     StripElementDefinition* definition;
     class TrackStrip* strip;
+
+    bool mouseEntered = false;
 };
 
 /****************************************************************************/

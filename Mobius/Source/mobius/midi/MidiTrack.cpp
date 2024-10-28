@@ -133,6 +133,7 @@ void MidiTrack::configure(Session::Track* def)
     followSize = def->getBool("followSize");
     followLocation = def->getBool("followLocation");
     followMute = def->getBool("followMute");
+    noReset = def->getBool("noReset");
 }
 
 /**
@@ -271,6 +272,11 @@ bool MidiTrack::isPaused()
 //
 //////////////////////////////////////////////////////////////////////
 
+bool MidiTrack::isNoReset()
+{
+    return noReset;
+}
+
 LeaderType MidiTrack::getLeaderType()
 {
     return leaderType;
@@ -297,6 +303,9 @@ void MidiTrack::trackNotification(NotificationId notification, TrackProperties& 
     }
     else {
         switch (notification) {
+            case NotificationReset:
+                leaderReset(props);
+                break;
             case NotificationRecordStart:
                 leaderRecordStart();
                 break;
@@ -323,15 +332,47 @@ void MidiTrack::trackNotification(NotificationId notification, TrackProperties& 
 }
 
 /**
+ * Called whenever the leader resets.  This can happen in various
+ * ways: Reset, TrackReset, GlobalReset, long-press Record.
+ *
+ * Switching to an empty loop will also enter Reset mode without
+ * the user having explicitly performed performed a Reset action.
+ * It is less clear whether this should be treated the same as other
+ * resets.
+ *
+ * For user-initiated Reset, the usually useful thing is for the
+ * follower to enter a Pause/Rewind.  For empty loop switch, we could keep
+ * the track going, then pause it when the user starts recording in the empty
+ * loop.
+ */
+void MidiTrack::leaderReset(TrackProperties& props)
+{
+    (void)props;
+    // there is no follower option specific to reset, do we need
+    // one or does it make sense to combine this with Record?
+    if (followRecord)
+      followerPauseRewind();
+}
+
+void MidiTrack::followerPauseRewind()
+{
+    // don't enter Pause mode if we're in Reset
+    if (mode != MobiusMidiState::ModeReset) {
+        startPause();
+        recorder.rollback(false);
+        player.setFrame(0);
+        resetRegions();
+    }
+}
+
+/**
  * When the leader track begins recording, either immedaately
  * or defererred until a pulse, the follower pauses and rewinds to zero.
  */
 void MidiTrack::leaderRecordStart()
 {
     if (followRecord) {
-        startPause();
-        recorder.rollback(false);
-        player.setFrame(0);
+        followerPauseRewind();
     }
 }
 
@@ -985,6 +1026,35 @@ void MidiTrack::advanceRegion(int frames)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This is what happens if the user does a GlobalReset action and
+ * this track has the noReset option on.
+ * This is typically done for clip tracks that need to retain their content
+ * but cancel any pending editing state, minor modes, and retrn to the
+ * default PauseRewind.
+ */
+void MidiTrack::doPartialReset()
+{
+    followerPauseRewind();
+
+    // cancel the minor modes
+    rate = 0.0f;
+    goalFrames = 0;
+    overdub = false;
+    reverse = false;
+
+    // I guess leave the levels alone
+
+    // script bindings?
+    valuator->clearBindings(number);
+
+    // normally wouldn't have a pulsator lock on a MIDI follower?
+    pulsator->unlock(number);
+
+    // clear pending events
+    scheduler.reset();
+}
+
+/**
  * Action may be nullptr if we're resetting the track for other reasons
  * besides user action.
  */
@@ -1466,6 +1536,15 @@ bool MidiTrack::finishSwitch(int newIndex)
         mode = MobiusMidiState::ModeReset;
         
         EmptyLoopAction action = valuator->getEmptyLoopAction(number);
+
+        // here we have a problem
+        // if this is a follower track, you are generally using it for static backing
+        // loops and you need to be able to switch to them without triggering
+        // EmptyLoopAction which is in the preset and common to all tracks.
+        // May want more control over this
+        if (leaderType != LeaderNone)
+          action = EMPTY_LOOP_NONE;
+        
         if (action == EMPTY_LOOP_RECORD) {
             // Scheduler will handle scheduling a Record event
             Trace(2, "MidiTrack: Empty loop record");
@@ -1502,6 +1581,11 @@ bool MidiTrack::finishSwitch(int newIndex)
         recorder.resume(playing);
         
         SwitchLocation location = valuator->getSwitchLocation(number);
+        // like EmptyLoopAction, if we're a follower I din't think we want to
+        // obey SwitchLocation from the Preset, may want more control over this
+        if (leaderType != LeaderNone)
+          location = SWITCH_START;
+        
         // default is at the start
         recorder.setFrame(0);
         int newPlayFrame = 0;
@@ -1530,7 +1614,22 @@ bool MidiTrack::finishSwitch(int newIndex)
 
         // the usual ambiguity about what happens to minor modes
         overdub = false;
-        resumePlay();
+
+        // if this a normal track, going from Reset to a non-empty loop
+        // starts playing from where it left off
+        // if this is a normal track, starting in Pause continues in Pause
+        // if this is a follower track, we stay in Pause if we were there
+        // if this is a follower track, and the previoius loop was reset,
+        // then only resume play if the leader is non-empty and is not paused
+        // this is a case where pause should be independent of mode, we need
+        // to have the pause flag on while being in Reset
+        
+
+        // if we're in Pause, don't resume
+        // this is important if we're following, but probably makes
+        // sense all the time
+        if (!isPaused())
+          resumePlay();
 
         if (recorder.getFrames() != currentFrames) {
             // we switched to a loop of a different size

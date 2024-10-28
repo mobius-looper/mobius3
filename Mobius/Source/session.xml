@@ -6,15 +6,15 @@
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
       <Value name="followLocation" value="1" type="int"/>
-      <Value name="followMute" value="true" type="bool"/>
-      <Value name="followRecord" value="true" type="bool"/>
-      <Value name="followRecordEnd" value="true" type="bool"/>
+      <Value name="followMute" value="1" type="int"/>
+      <Value name="followRecord" value="1" type="int"/>
+      <Value name="followRecordEnd" value="1" type="int"/>
       <Value name="followSize" value="1" type="int"/>
       <Value name="leaderSwitchLocation" value="loop" type="enum" ordinal="1"/>
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
-      <Value name="midiThru" value="true" type="bool"/>
+      <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="syncSource" value="track" type="enum" ordinal="2"/>

@@ -21,6 +21,7 @@ typedef enum {
     // newer ones used by MIDI followers
 
     NotificationFollower,
+    NotificationReset,
     NotificationRecordStart,
     NotificationRecordEnd,
     NotificationMuteStart,

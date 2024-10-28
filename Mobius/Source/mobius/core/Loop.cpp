@@ -2202,6 +2202,9 @@ void Loop::reset(Action* action)
 	mPlayFrame = mOutput->latency;
 
 	mSynchronizer->loopReset(this);
+
+    // reasonable place for this, where does entering an empty loop go?
+    mMobius->getNotifier()->notify(this, NotificationReset);
 }
 
 /**

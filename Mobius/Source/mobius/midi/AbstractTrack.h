@@ -60,6 +60,7 @@ class AbstractTrack
    
     // simple one-shot actions
     virtual void doParameter(class UIAction* a) = 0;
+    virtual void doPartialReset() = 0;
     virtual void doReset(bool full) = 0;
     virtual void doUndo() = 0;
     virtual void doRedo() = 0;
@@ -84,6 +85,7 @@ class AbstractTrack
     // or if we should be going back to the Session
     //
 
+    virtual bool isNoReset() = 0;
     virtual LeaderType getLeaderType() = 0;
     virtual int getLeader() = 0;
     virtual LeaderLocation getLeaderSwitchLocation() = 0;

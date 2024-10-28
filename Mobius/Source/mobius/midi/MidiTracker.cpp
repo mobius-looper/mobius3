@@ -246,7 +246,7 @@ void MidiTracker::doAction(UIAction* a)
     }
     else if (a->symbol->id == FuncGlobalReset) {
         for (int i = 0 ; i < activeTracks ; i++)
-          tracks[i]->doAction(a);
+            tracks[i]->doAction(a);
 
         // having some trouble with stuck notes in the watcher
         // maybe only during debugging, but it's annoying when it happens to

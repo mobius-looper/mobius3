@@ -167,7 +167,10 @@ class StripLoopStack : public StripElement, public juce::FileDragAndDropTarget
     void fileDragExit(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
 
-    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseEnter(const juce::MouseEvent& e) override;
+    void mouseMove(const juce::MouseEvent& e) override;
+    void mouseExit(const juce::MouseEvent& e) override;
+    void mouseDown(const juce::MouseEvent& e) override;
     
   private:
 
@@ -181,6 +184,7 @@ class StripLoopStack : public StripElement, public juce::FileDragAndDropTarget
     int lastActive = -1;
     int lastDropTarget = -1;
     int dropTarget = -1;
+    bool hoverTarget = false;
     
     int getDropTarget(int x, int y);
 };

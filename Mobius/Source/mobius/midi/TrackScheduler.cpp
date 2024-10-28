@@ -203,12 +203,31 @@ void TrackScheduler::doAction(UIAction* src)
         else if (sid == FuncReset) {
             track->doReset(false);
         }
-        else if (sid == FuncTrackReset || sid == FuncGlobalReset) {
+        else if (sid == FuncTrackReset) {
             track->doReset(true);
+        }
+        else if (sid == FuncGlobalReset) {
+            // this one is more convenient to have control over
+            if (track->isNoReset()) {
+                // in retrospect I think no reset at all isn't useful,
+                // but protecting GlobalReset is
+                track->doPartialReset();
+            }
+            else {
+                track->doReset(true);
+            }
         }
         else if (sid == FuncResize) {
             // should allow the Cycle functions here too
             doResize(src);
+        }
+        else if (isLoopSwitch(src)) {
+            // I like being able to do loop switch while paused, it lets you
+            // select which backing to play when the leader starts
+            // if this were a normal non-following track, the loop could have had
+            // pending edits when it entered pause, I don't think we need to preserve
+            // those, but it might be a useful option?
+            doSwitch(nullptr, getSwitchTarget(src));
         }
         else {
             Trace(2, "TrackScheduler: Ignoring %s while paused", src->symbol->getName());
@@ -1532,61 +1551,67 @@ void TrackScheduler::scheduleSwitch(UIAction* a)
 {
     int target = getSwitchTarget(a);
 
-    LeaderType ltype = track->getLeaderType();
-    int leader = track->getLeader();
-    LeaderLocation ll = track->getLeaderSwitchLocation();
-
-    if (ltype == LeaderTrack && leader != 0 && ll != LeaderLocationNone) {
-        // we let the leader determine when the switch happens
-        // convert to QuantizeMode
-        QuantizeMode q = QUANTIZE_OFF;
-        switch (ll) {
-            case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
-            case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
-            case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
-            default: break;
-        }
-        kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
-
-        // !! the event in the leader track can be caneled with Undo
-        // when that happens, this event will hang until reset, need
-        // to be notified of that
-        TrackEvent* event = eventPool->newEvent();
-        event->type = TrackEvent::EventSwitch;
-        event->switchTarget = target;
-        event->pending = true;
-        events.add(event);
+    if (track->getMode() == MobiusMidiState::ModeReset) {
+        // just do it
+        doSwitch(nullptr, getSwitchTarget(a));
     }
     else {
-        SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
-        if (q == SWITCH_QUANT_OFF) {
-            // todo: might be some interesting action argument we need to convey as well?
-            doSwitch(nullptr, target);
-        }
-        else {
+        LeaderType ltype = track->getLeaderType();
+        int leader = track->getLeader();
+        LeaderLocation ll = track->getLeaderSwitchLocation();
+
+        if (ltype == LeaderTrack && leader != 0 && ll != LeaderLocationNone) {
+            // we let the leader determine when the switch happens
+            // convert to QuantizeMode
+            QuantizeMode q = QUANTIZE_OFF;
+            switch (ll) {
+                case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
+                case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
+                case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
+                default: break;
+            }
+            kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
+
+            // !! the event in the leader track can be caneled with Undo
+            // when that happens, this event will hang until reset, need
+            // to be notified of that
             TrackEvent* event = eventPool->newEvent();
             event->type = TrackEvent::EventSwitch;
             event->switchTarget = target;
-
-            switch (q) {
-                case SWITCH_QUANT_SUBCYCLE:
-                case SWITCH_QUANT_CYCLE:
-                case SWITCH_QUANT_LOOP: {
-                    event->frame = getQuantizedFrame(q);
-                
-                }
-                    break;
-                case SWITCH_QUANT_CONFIRM:
-                case SWITCH_QUANT_CONFIRM_SUBCYCLE:
-                case SWITCH_QUANT_CONFIRM_CYCLE:
-                case SWITCH_QUANT_CONFIRM_LOOP: {
-                    event->pending = true;
-                }
-                    break;
-                default: break;
-            }
-
+            event->pending = true;
             events.add(event);
+        }
+        else {
+            SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
+            if (q == SWITCH_QUANT_OFF) {
+                // todo: might be some interesting action argument we need to convey as well?
+                doSwitch(nullptr, target);
+            }
+            else {
+                TrackEvent* event = eventPool->newEvent();
+                event->type = TrackEvent::EventSwitch;
+                event->switchTarget = target;
+
+                switch (q) {
+                    case SWITCH_QUANT_SUBCYCLE:
+                    case SWITCH_QUANT_CYCLE:
+                    case SWITCH_QUANT_LOOP: {
+                        event->frame = getQuantizedFrame(q);
+                
+                    }
+                        break;
+                    case SWITCH_QUANT_CONFIRM:
+                    case SWITCH_QUANT_CONFIRM_SUBCYCLE:
+                    case SWITCH_QUANT_CONFIRM_CYCLE:
+                    case SWITCH_QUANT_CONFIRM_LOOP: {
+                        event->pending = true;
+                    }
+                        break;
+                    default: break;
+                }
+
+                events.add(event);
+            }
         }
     }
     actionPool->checkin(a);
@@ -1787,21 +1812,34 @@ void TrackScheduler::doSwitch(TrackEvent* e, int target)
     // handle EmptyLoopAction=Record
     bool recording = false;
     if (isEmpty) {
-        EmptyLoopAction elc = valuator->getEmptyLoopAction(track->getNumber());
-        if (elc == EMPTY_LOOP_RECORD) {
-            // todo: if this was a Return event we most likely wouldn't be here
-            // but I guess handle it the same?
-            UIAction a;
-            a.symbol = symbols->getSymbol(FuncRecord);
-            // call the outermost action receiver as if this came from the outside
-            doAction(&a);
-            recording = true;
+        // if this track is following, ignore EmptyLoopAction
+        // ugh, we suppress EmptyLoopAction in two places now, here
+        // and in MidiTrack for Copy and CopyTiming
+        // !! need to consolidate this, let the track do the switch, then follow
+        // it with EmptyLoopAction and SwitchDuration
+        // here if we have a leader but we DON'T follow Record, then may make sense
+        // to allow this?
+        if (track->getLeaderType() != LeaderNone) {
+            EmptyLoopAction elc = valuator->getEmptyLoopAction(track->getNumber());
+            if (elc == EMPTY_LOOP_RECORD) {
+                // todo: if this was a Return event we most likely wouldn't be here
+                // but I guess handle it the same?
+                UIAction a;
+                a.symbol = symbols->getSymbol(FuncRecord);
+                // call the outermost action receiver as if this came from the outside
+                doAction(&a);
+                recording = true;
+            }
         }
     }
-
+    
     // ignore SwitchDuration for Return events
-    if (!e->isReturn) {
+    if (e == nullptr || !e->isReturn) {
         SwitchDuration duration = valuator->getSwitchDuration(track->getNumber());
+        // probably should ignore this for followers too
+        if (track->getLeaderType() != LeaderNone)
+          duration = SWITCH_PERMANENT;
+        
         if (duration != SWITCH_PERMANENT && recording) {
             // more work to do here, where would we hang the Mute/Return events?
             Trace(1, "TrackScheduler: Ignoring SwitchDuration after starting record of empty loop");
@@ -1851,6 +1889,83 @@ void TrackScheduler::doSwitch(TrackEvent* e, int target)
     // if the new loop is empty, these may go nowhere but they could have stacked
     // Reocord or some things that have meaning
     doStacked(e);
+}
+
+/**
+ * If the new loop is empty, handle the EmptyLoopAction parameter.
+ *
+ * If this track is following, ignore EmptyLoopAction.  When acting as a clip track,
+ * it is normal for there to be empty loops and you need to select them in order to
+ * load something into them.  Since EmptyLoopAction currently comes from the Preset
+ * that is shared by non-leader audio tracks, this is often for live tracks that
+ * you don't want for backing tracks.  Might want options around this.
+ *
+ */
+void TrackScheduler::setupEmptyLoop(int previousLoop)
+{
+    bool copied = false;
+    if (track->getFrames() == 0 && track->getLeaderType() == LeaderNone) {
+
+        EmptyLoopAction action = valuator->getEmptyLoopAction(track->getNumber());
+
+        if (action == EMPTY_LOOP_RECORD) {
+            // todo: if this was a Return event we most likely wouldn't be here
+            // but I guess handle it the same?
+            UIAction a;
+            a.symbol = symbols->getSymbol(FuncRecord);
+            // call the outermost action receiver as if this came from the outside
+            doAction(&a);
+        }
+        else if (action == EMPTY_LOOP_COPY) {
+            track->loopCopy(previousLoop, true);
+            copied = true;
+        }
+        else if (action == EMPTY_LOOP_TIMING) {
+            track->loopCopy(previousLoop, false);
+            copied = true;
+        }
+        
+    }
+    
+    // if we didn't copy, then unlock the pulse follower
+    if (!copied)
+      pulsator->unlock(number);
+}
+
+/**
+ * If the new loop was not empty, handle the SwitchLocation parameter.
+ *
+ * Like EmptyLoopAction, if this is a follower track, ignore it.
+ * This might make some sense for clip tracks though.
+ */
+void TrackScheduler::setupSwitchLocation(int previousLoop, int previousFrame)
+{
+    if (track->getFrames() > 0 && track->getLeaderType() == LeaderNone) {
+
+        SwitchLocation location = valuator->getSwitchLocation(number);
+
+        if (location == SWITCH_FOLLOW) {
+            // if the destination is smaller, have to modulo down
+            // todo: ambiguity where this shold be if there are multiple
+            // cycles, the first one, or the highest cycle?
+            int followFrame = currentFrame;
+            if (followFrame >= recorder.getFrames())
+              followFrame = currentFrame % recorder.getFrames();
+            recorder.setFrame(followFrame);
+            newPlayFrame = followFrame;
+        }
+        else if (location == SWITCH_RESTORE) {
+            newPlayFrame = playing->getLastPlayFrame();
+            recorder.setFrame(newPlayFrame);
+        }
+        else if (location == SWITCH_RANDOM) {
+            // might be nicer to have this be a random subcycle or
+            // another rhythmically ineresting unit
+            int random = Random(0, player.getFrames() - 1);
+            recorder.setFrame(random);
+            newPlayFrame = random;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
