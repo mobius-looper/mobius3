@@ -7,14 +7,20 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
+
+#include "../../sync/Pulsator.h"
+#include "../MobiusInterface.h"
+#include "../MobiusKernel.h"
+
 #include "TrackEvent.h"
 #include "TrackScheduler.h"
+#include "AbstractTrack.h"
 
 #include "TrackAdvancer.h"
 
-TrackAdvancer::TrackAdvancer(TrackScheduler& s)
+TrackAdvancer::TrackAdvancer(TrackScheduler& s) : scheduler(s)
 {
-    scheduler = s;
 }
 
 TrackAdvancer::~TrackAdvancer()
@@ -50,7 +56,7 @@ TrackAdvancer::~TrackAdvancer()
  */
 void TrackAdvancer::advance(MobiusAudioStream* stream)
 {
-    MidiTrack* track = scheduler.track;
+    AbstractTrack* track = scheduler.track;
     
     if (track->isPaused()) {
         pauseAdvance(stream);
@@ -192,9 +198,9 @@ void TrackAdvancer::advance(MobiusAudioStream* stream)
 void TrackAdvancer::traceFollow()
 {
     if (scheduler.followTrack > 0) {
-        TrackProperties props = scheduler.kernel->getTrackProperties(followTrack);
+        TrackProperties props = scheduler.kernel->getTrackProperties(scheduler.followTrack);
         Trace(2, "TrackAdvancer: Loop frame %d follow frame %d",
-              track->getFrame(), props.currentFrame);
+              scheduler.track->getFrame(), props.currentFrame);
     }
 }
 
@@ -324,7 +330,8 @@ void TrackAdvancer::doEvent(TrackEvent* e)
               Trace(1, "TrackAdvancer: EventAction without an action");
             else {
                 scheduler.doActionNow(e->primary);
-                // ownership was transferred, don't dispose again
+                // the action must be reclaimed
+                scheduler.actionPool->checkin(e->primary);
                 e->primary = nullptr;
             }
             // quantized events are not expected to have stacked actions
@@ -336,42 +343,22 @@ void TrackAdvancer::doEvent(TrackEvent* e)
             
         case TrackEvent::EventRound: {
             // end of a Multiply or Insert
-            // actions that came in during the rounding period were stacked
-            MidiTrack* track = scheduler.track;
-            auto mode = track->getMode();
-            if (mode == MobiusMidiState::ModeMultiply)
-              track->finishMultiply();
-            else if (mode == MobiusMidiState::ModeInsert) {
-                if (!e->extension)
-                  track->finishInsert();
-                else {
-                    track->extendInsert();
-                    // extensions are special because they reschedule themselves for the
-                    // next boundary, the event was already removed from the list,
-                    // change the frame and add it back
-                    e->frame = track->getModeEndFrame();
-                    events.add(e);
-                    // prevent it from being disposed
-                    e = nullptr;
-                }
+            bool reused = scheduler.doRound(e);
+            if (reused) {
+                // prevent it from being disposed
+                e = nullptr;
             }
-            else
-              Trace(1, "TrackAdvancer: EventRound encountered unexpected track mode");
-
-            if (e != nullptr)
-              scheduler.doStacked(e);
-
         }
             break;
 
         case TrackEvent::EventSwitch: {
-            scheduler.doSwitch(e, e->switchTarget);
+            scheduler.loopSwitcher.doSwitchEvent(e, e->switchTarget);
         }
             break;
 
     }
 
-    if (e != nullptr) 
+    if (e != nullptr)
       dispose(e);
 }
 

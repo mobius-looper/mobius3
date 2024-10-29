@@ -8,6 +8,8 @@
  *
  * It handles the details of major mode transitions like Record, Switch, Multiply, and Insert.
  *
+ * In short, it is the nerve nexus of everything that can happen in a track.
+ *
  * It has a combination of functionality found in the old Synchronizer and EventManager classes
  * plus mode awareness that was strewn about all over in a most hideous way.  It interacts
  * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
@@ -131,6 +133,23 @@ void TrackScheduler::dump(StructureDumper& d)
     d.line("TrackScheduler:");
 }
 
+/**
+ * This is called by MidiTrack in response to a ClipStart action.
+ * The way things are organized now, TrackScheduler is not involved
+ * in that process, the ClipStart is scheduled in another track and
+ * when it activates, it calls MidiTrack::clipStart directly.
+ * In order to get follow trace going it has to tell us the track
+ * it was following.
+ *
+ * Would be better if we moved a lot of the stuff bding done
+ * in MidiTrack::clipStart up here
+ */
+void TrackScheduler::setFollowTrack(TrackProperties& props)
+{
+    followTrack = props.number;
+    advancer.rateCarryover = 0.0f;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions
@@ -144,7 +163,7 @@ void TrackScheduler::dump(StructureDumper& d)
  */
 void TrackScheduler::advance(MobiusAudioStream* stream)
 {
-    trackAdvancer.advance(stream);
+    advancer.advance(stream);
 }
 
 /**
@@ -201,8 +220,6 @@ void TrackScheduler::doParameter(UIAction* src)
  */
 void TrackScheduler::doAction(UIAction* src)
 {
-    SymbolId sid = src->symbol->id;
-
     // first the executive actions that don't require scheduling
     if (!handleExecutiveAction(src)) {
 
@@ -221,7 +238,7 @@ void TrackScheduler::doAction(UIAction* src)
             loopSwitcher.handleSwitchModeAction(src);
         }
         else if (isRounding()) {
-            handleRoundingAction(arc);
+            handleRoundingAction(src);
         }
         else {
             scheduleAction(src);
@@ -289,13 +306,9 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncUndo: track->doUndo(); break;
         case FuncRedo: track->doRedo(); break;
 
-            // not expecting these to be here, should have gone through
-            // scheduleSwitch
-            /*
-        case FuncNextLoop: doSwitch(a); break;
-        case FuncPrevLoop: doSwitch(a); break;
-        case FuncSelectLoop: doSwitch(a); break;
-            */
+        case FuncNextLoop: loopSwitcher.doSwitchNow(a); break;
+        case FuncPrevLoop: loopSwitcher.doSwitchNow(a); break;
+        case FuncSelectLoop: loopSwitcher.doSwitchNow(a); break;
             
         case FuncRecord: doRecord(nullptr); break;
             
@@ -322,8 +335,6 @@ void TrackScheduler::doActionNow(UIAction* a)
             Trace(2, "TrackScheduler: %s", msgbuf);
         }
     }
-
-    actionPool->checkin(a);
 }
 
 /**
@@ -335,7 +346,7 @@ void TrackScheduler::doActionNow(UIAction* a)
  * At the moment this is relevant only for Replace mode since is not a rounding mode
  * and doesn't have a special end event to stack things on.
  *
- * I think this is close to how audio tracks work.  
+ * I think this is close to how audio tracks work.
  *
  * older notes:
  * Here from scheduleModeEnd when in Replace mode.
@@ -384,6 +395,13 @@ void TrackScheduler::checkModeCancel(UIAction* a)
     }
 }
 
+UIAction* TrackScheduler::copyAction(UIAction* src)
+{
+    UIAction* copy = actionPool->newAction();
+    copy->copy(src);
+    return copy;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Executive Actions
@@ -430,11 +448,16 @@ bool TrackScheduler::handleExecutiveAction(UIAction* src)
             handled = true;
             break;
 
+            // !! no, I don't think this can be an executive action
+            // there is too much unwinding that needs to go on, we don't need
+            // a universal play yet, but it's something to consider
+#if 0            
         case FuncPlay:
             doPlay();
             handled = true;
             break;
-
+#endif
+            
             // todo: this doesn't belong here and shouldn't
             // be necessary now that we have followers
             // it has enormous mode implications anyway
@@ -498,13 +521,13 @@ void TrackScheduler::handleResetAction(UIAction* src)
 
         case FuncRecord: doRecord(nullptr); break;
 
-        case FuncOverdub: doOverdub(a); break;
-        case FuncMute: doMute(a); break;
+        case FuncOverdub: doOverdub(src); break;
+        case FuncMute: doMute(src); break;
             
         case FuncNextLoop:
         case FuncPrevLoop:
         case FuncSelectLoop:
-            doSwitch(a);
+            loopSwitcher.doSwitchNow(src);
             break;
             
         default: {
@@ -798,29 +821,262 @@ void TrackScheduler::handleRoundingAction(UIAction* src)
     }
 }
 
+/**
+ * The event handler for the Round event.
+ * Called by TrackAdvancer when it reaches the rounding event.
+ * 
+ * This signifies the ending of Multiply or Insert mode.
+ * Actions that came in during the rounding period were stacked.
+ */
+bool TrackScheduler::doRound(TrackEvent* event)
+{
+    auto mode = track->getMode();
+    
+    if (mode == MobiusMidiState::ModeMultiply) {
+        track->finishMultiply();
+    }
+    else if (mode == MobiusMidiState::ModeInsert) {
+        if (!e->extension) {
+            track->finishInsert();
+        }
+        else {
+            track->extendInsert();
+            // extensions are special because they reschedule themselves for the
+            // next boundary, the event was already removed from the list,
+            // change the frame and add it back
+            // kind of awkward control flow here to prevent disposing the event
+            // which is what TrackAdvancer normally does, cleaner to just make
+            // a new one, but we'd have to copy it
+            e->frame = track->getModeEndFrame();
+            events.add(e);
+            // prevent the stack from being executed
+            e = nullptr;
+        }
+    }
+    else {
+        Trace(1, "TrackAdvancer: EventRound encountered unexpected track mode");
+    }
+    
+    if (e != nullptr)
+      doStacked(e);
+
+    // returning true means it was reused
+    return (e == nullptr);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
-// Simple Actions
+// Normal or "Active" Mode Actions 
 //
-// The operating mode is "Active" which just means we're usually in
-// Play or another simple mode that does not need a complex ending.
+// This is the usual operating mode.  We're either playing or in one
+// of the editing modes.  Some modes may need to be ended through
+// "rounding", others can just end immediately and the loop transitions
+// to a new mode.
+//
+// If we don't enter Rounding, then the event is quantized.
 //
 //////////////////////////////////////////////////////////////////////
 
 void TrackScheduler::scheduleAction(UIAction* src)
 {
+    MobiusMidiState::Mode mode = track->getMode();
+
+    if (mode == MobiusMidiState::Multiply) {
+        scheduleRounding(src, mode);
+    }
+    else if (mode == MobiusMidiState::ModeInsert) {
+        scheduleRounding(src, mode);
+    }
+    else {
+        SymbolId sid = src->action->id;
+
+        switch (sid) {
+            case FuncRecord:
+            case FuncAutoRecord: {
+                // starting a new recording, everying that may have been done so
+                // far in this loop is lost
+                scheduleRecord(src);
+            }
+                break;
+
+            case FuncNextLoop:
+            case FuncPrevLoop:
+            case FuncSelectLoop: {
+                // entering switch mode
+                loopSwitcher.scheduleSwitch(src);
+            }
+                break;
+
+            default: {
+                if (isQuantized(src))
+                  scheduleQuantized(src);
+                else
+                  doActionNow(src);
+            }
+                break;
+        }
+    }
+}
+
+/**
+ * Schedule a mode Rounding event for Multiply or Insert.
+ * In both cases stack the action on the Rounding event.
+ *
+ * todo: this is where we have two options on how rounding works, 
+ * always round relative to the modeStartFrame or round just to the
+ * end of the current cycle
+ * update: because of addExtensionEvent we should never get here
+ * with Insert any more
+ */
+void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
+{
+    event = eventPool->newEvent();
+    event->type = TrackEvent::EventRound;
+
+    bool roundRelative = false;
+    if (roundRelative) {
+        event->frame = track->getModeEndFrame();
+    }
+    else {
+        int currentCycle = track->getFrame() / track->getCycleFrames();
+        event->frame = (currentCycle + 1) * track->getCycleFrames();
+    }
+
+    SymbolId function;
+    if (mode == MobiusMidiState::ModeMultiply)
+      function = FuncMultiply;
+    else
+      function = FuncInsert;
+
+    // if this is something other than the mode function it is stacked
+    // !! todo: need to support function "families"
+    if (a->symbol->id != function) {
+        Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
+        event->stack(copyAction(src));
+    }
+            
+    events.add(event);
+}
+
+/**
+ * Return true if this function is sensitive to quantization.
+ * This does not handle switch quantize.
+ *
+ * todo: If we want to support function-specific quantization options, this
+ * should return the QuantizeMode instead of just a true/false
+ */
+bool TrackScheduler::isQuantized(UIAction* a)
+{
+    bool quantized = false;
+    SymbolId sid = a->symbol->id;
+
+    // need a much more robust lookup table
+    if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
+        QuantizeMode q = valuator->getQuantizeMode(track->getNumber());
+        quantized = (q != QUANTIZE_OFF);
+    }
+    return quantized;
+}
+
+/**
+ * Schedule a quantization event if a function is quantized or do it now.
+ * If the next quantization point already has an event for this function,
+ * then it normally is pushed to the next one.
+ *
+ * todo: audio loops have more complexity here
+ * The different between regular and SUS will need to be dealt with.
+ */
+void TrackScheduler::scheduleQuantized(UIAction* src)
+{
+    TrackEvent* event = nullptr;
+
+    QuantizeMode quant = valuator->getQuantizeMode(track->getNumber());
+    if (quant == QUANTIZE_OFF) {
+        doActionNow(src);
+    }
+    else {
+        event = eventPool->newEvent();
+        event->type = TrackEvent::EventAction;
+        event->frame = getQuantizedFrame(a->symbol->id, quant);
+        event->primary = copyAction(src);
+        events.add(event);
+
+        Trace(2, "TrackScheduler: Quantized %s to %d", a->symbol->getName(), event->frame);
+    }
+}
+
+/**
+ * Given a QuantizeMode from the configuration, calculate the next
+ * loop frame at that quantization point.
+ */
+int TrackScheduler::getQuantizedFrame(QuantizeMode qmode)
+{
+    int qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
+                                               track->getCycleFrames(),
+                                               track->getFrame(),
+                                               // todo: this should be held locally
+                                               // since we're the only thing that needs it
+                                               track->getSubcycles(),
+                                               qmode,
+                                               false);  // "after" is this right?
+    return qframe;
+}
+
+/**
+ * Calculate the quantization frame for a function advancing to the next
+ * quantization point if there is already a scheduled event for this function.
+ *
+ * This can push events beyond the loop end point, which relies on
+ * event shift to bring them down.
+ *
+ * I don't remember how audio tracks work, this could keep going forever
+ * if you keep punching that button.  Or you could use the second press as
+ * an "escape" mechanism that cancels quant and starts it immediately.
+ *
+ */
+int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
+{
+    // means it can't be scheduled
+    int qframe = -1;
+    int relativeTo = track->getFrame();
+    bool allow = true;
     
+    // is there already an event for this function?
+    TrackEvent* last = events.findLast(func);
+    if (last != nullptr) {
+        // relies on this having a frame and not being marked pending
+        if (last->pending) {
+            // I think this is where some functions use it as an escape
+            // LoopSwitch was one
+            Trace(1, "TrackRecorder: Can't stack another event after pending");
+            allow = false;
+        }
+        else {
+            relativeTo = last->frame;
+        }
+    }
 
+    if (allow) {
 
+        qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
+                                               track->getCycleFrames(),
+                                               relativeTo,
+                                               track->getSubcycles(),
+                                               qmode,
+                                               true);
 
-
+        //Trace(2, "TrackScheduler: Quantized to %d relative to %d", qframe, relativeTo);
         
+    }
+    return qframe;
+}
+
 /****************************************************************************/
 //
 // Function Handlers
 //
 // This section has function-specific scheduling, after we've passed the veil
-// of what operating modes allow.
+// of what operating modes and mode transitions allow.
 //
 //
 /****************************************************************************/
@@ -927,7 +1183,7 @@ void TrackScheduler::doRecord(TrackEvent* e)
     if (mode == MobiusMidiState::ModeRecord) {
         track->finishRecord();
         // I think we need to reset the rateCarryover?
-        rateCarryover = 0.0f;
+        advancer.rateCarryover = 0.0f;
         followTrack = 0;
     }
     else {
@@ -945,56 +1201,21 @@ void TrackScheduler::doRecord(TrackEvent* e)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Rounding
+// Insert
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Schedule a mode ending event if we don't already have one.
- * In both cases stack the action on the ending event.
+ * Here for the start of an Insert.
+ * Once the mode has established, ending it will go through the mode end
+ * rounding process.
  */
-void TrackScheduler::scheduleModeEnd(UIAction* a, MobiusMidiState::Mode mode)
+void TrackScheduler::doInsert(UIAction* a)
 {
-        else if (mode == MobiusMidiState::ModeReplace) {
-            // interesting case
-            // trying to do this with checkModeCancel isntead
-            //endReplace(a);
-        }
-        else {
-            // rounding has not been scheduled
-            // todo: this is where we have two options on how rounding works
-            // always round relative to the modeStartFrame or round just to the
-            // end of the current cycle
-            // update: because of addExtensionEvent we should never get here
-            // with Insert any more
-            
-            event = eventPool->newEvent();
-            event->type = TrackEvent::EventRound;
-
-            bool roundRelative = false;
-            if (roundRelative) {
-                event->frame = track->getModeEndFrame();
-            }
-            else {
-                int currentCycle = track->getFrame() / track->getCycleFrames();
-                event->frame = (currentCycle + 1) * track->getCycleFrames();
-            }
-
-            // if this is something other than the mode function it is stacked
-            if (a->symbol->id != function) {
-                Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
-                event->stack(a);
-            }
-            else
-              actionPool->checkin(a);
-            
-            events.add(event);
-        }
-    }
-    else {
-        // Switch or Confirm, keep the switch code together
-        stackSwitch(a);
-    }
+    (void)a;
+    track->startInsert();
+    // pre-allocate the round off event so we have something to see
+    addExtensionEvent(track->getModeEndFrame());
 }
 
 /**
@@ -1032,7 +1253,7 @@ void TrackScheduler::addExtensionEvent(int frame)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Various Mode Starts
+// Simple Mode Starts
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1045,42 +1266,6 @@ void TrackScheduler::doMultiply(UIAction* a)
 {
     (void)a;
     track->startMultiply();
-}
-
-/**
- * Kludge for early multiply termination on the loop boundary.
- */
-bool TrackScheduler::hasRoundingScheduled()
-{
-    return (events.find(TrackEvent::EventRound) != nullptr);
-}
-
-void TrackScheduler::cancelRounding()
-{
-    TrackEvent* e = events.remove(TrackEvent::EventRound);
-    if (e == nullptr)
-      Trace(1, "TrackScheduler: Expecting to find a rounding event to cancel");
-    else {
-        // Track will have handled the behavior we would ordinally do here
-        // finishMultiply but we get to do the stacked events
-        // might be better for US to call track->finishMultiply to make
-        // that path consistent but this is already pretty terrible.
-        doStacked(e);
-        dispose(e);
-    }
-}
-
-/**
- * Here for the start of an Insert.
- * Once the mode has established, ending it will go through the mode end
- * rounding process.
- */
-void TrackScheduler::doInsert(UIAction* a)
-{
-    (void)a;
-    track->startInsert();
-    // pre-allocate the round off event so we have something to see
-    addExtensionEvent(track->getModeEndFrame());
 }
 
 /**
@@ -1109,6 +1294,21 @@ void TrackScheduler::doMute(UIAction* a)
 {
     (void)a;
     track->toggleMute();
+}
+
+/**
+ * Here for both InstantMultiply and InstantDivide.
+ * Dig the multiple out of the action and pass it over to track.
+ * These are mode ending and may have been stacked.  Major modes should
+ * be closed by now.
+ */
+void TrackScheduler::doInstant(UIAction* a)
+{
+    if (a->symbol->id == FuncInstantMultiply)
+      track->doInstantMultiply(a->value);
+    
+    else if (a->symbol->id == FuncDivide)
+      track->doInstantDivide(a->value);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1161,536 +1361,10 @@ void TrackScheduler::doResize(UIAction* a)
             // I think this can reset?
             // actually no, it probably needs to be a component of the
             // adjusted play frame proportion
-            rateCarryover = 0.0f;
+            advancer.rateCarryover = 0.0f;
             followTrack = otherTrack;
         }
     }
-}
-
-/**
- * This is called by MidiTrack in response to a ClipStart action.
- * The way things are organized now, TrackScheduler is not involved
- * in that process, the ClipStart is scheduled in another track and
- * when it activates, it calls MidiTrack::clipStart directly.
- * In order to get follow trace going it has to tell us the track
- * it was following.
- *
- * Would be better if we moved a lot of the stuff bding done
- * in MidiTrack::clipStart up here
- */
-void TrackScheduler::setFollowTrack(TrackProperties& props)
-{
-    followTrack = props.number;
-    rateCarryover = 0.0f;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Quantization
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Return true if this function is sensitive to quantization.
- * This does not handle switch quantize.
- */
-bool TrackScheduler::isQuantized(UIAction* a)
-{
-    bool quantized = false;
-    SymbolId sid = a->symbol->id;
-
-    // need a much more robust lookup table
-    if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
-        QuantizeMode q = valuator->getQuantizeMode(track->getNumber());
-        quantized = (q != QUANTIZE_OFF);
-    }
-    return quantized;
-}
-
-/**
- * Schedule a quantization event if a function is quantized or do it now.
- * If the next quantization point already has an event for this function,
- * then it normally is pushed to the next one.
- *
- * todo: audio loops have more complexity here
- * The different between regular and SUS will need to be dealt with.
- */
-void TrackScheduler::scheduleQuantized(UIAction* a)
-{
-    TrackEvent* event = nullptr;
-
-    QuantizeMode quant = valuator->getQuantizeMode(track->getNumber());
-    if (quant == QUANTIZE_OFF) {
-        doActionNow(a);
-    }
-    else {
-        event = eventPool->newEvent();
-        event->type = TrackEvent::EventAction;
-        event->frame = getQuantizedFrame(a->symbol->id, quant);
-        event->primary = a;
-        events.add(event);
-
-        Trace(2, "TrackScheduler: Quantized %s to %d", a->symbol->getName(), event->frame);
-    }
-}
-
-/**
- * Given a QuantizeMode from the configuration, calculate the next
- * loop frame at that quantization point.
- */
-int TrackScheduler::getQuantizedFrame(QuantizeMode qmode)
-{
-    int qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
-                                               track->getCycleFrames(),
-                                               track->getFrame(),
-                                               // todo: this should be held locally
-                                               // since we're the only thing that needs it
-                                               track->getSubcycles(),
-                                               qmode,
-                                               false);  // "after" is this right?
-    return qframe;
-}
-
-/**
- * Calculate the quantization frame for a function advancing to the next
- * quantization point if there is already a scheduled event for this function.
- *
- * This can push events beyond the loop end point, which relies on
- * event shift to bring them down.
- *
- * I don't remember how audio tracks work, this could keep going forever
- * if you keep punching that button.  Or you could use the second press as
- * an "escape" mechanism that cancels quant and starts it immediately.
- *
- */
-int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
-{
-    // means it can't be scheduled
-    int qframe = -1;
-    int relativeTo = track->getFrame();
-    bool allow = true;
-    
-    // is there already an event for this function?
-    TrackEvent* last = events.findLast(func);
-    if (last != nullptr) {
-        // relies on this having a frame and not being marked pending
-        if (last->pending) {
-            // I think this is where some functions use it as an escape
-            // LoopSwitch was one
-            Trace(1, "TrackRecorder: Can't stack another event after pending");
-            allow = false;
-        }
-        else {
-            relativeTo = last->frame;
-        }
-    }
-
-    if (allow) {
-
-        qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
-                                               track->getCycleFrames(),
-                                               relativeTo,
-                                               track->getSubcycles(),
-                                               qmode,
-                                               true);
-
-        //Trace(2, "TrackScheduler: Quantized to %d relative to %d", qframe, relativeTo);
-        
-    }
-    return qframe;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Switch
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * True if this is one of the loop switch functions.
- */
-bool TrackScheduler::isLoopSwitch(UIAction* a)
-{
-    SymbolId sid = a->symbol->id;
-    return (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop);
-}
-
-/**
- * Here when we're not in switch mode already and a switch function was received.
- * These are different than other quantized actions, because the ending event
- * of the "mode" is scheduled immediately and uses a special event type and
- * quantization options.
- *
- * Might be able to make this look just like any other quantized function, but
- * there are enough nuances I'm keeping it distinct for now.
- *
- * todo: if you swap the order of isModeEnding and isLoopSwitch up in doAction
- * then we could handle switch extension in this area rather than in scheduleModeEnd
- * which keeps the switch code together.
- */
-void TrackScheduler::scheduleSwitch(UIAction* a)
-{
-    int target = getSwitchTarget(a);
-
-    if (track->getMode() == MobiusMidiState::ModeReset) {
-        // just do it
-        doSwitch(nullptr, getSwitchTarget(a));
-    }
-    else {
-        LeaderType ltype = track->getLeaderType();
-        int leader = track->getLeader();
-        LeaderLocation ll = track->getLeaderSwitchLocation();
-
-        if (ltype == LeaderTrack && leader != 0 && ll != LeaderLocationNone) {
-            // we let the leader determine when the switch happens
-            // convert to QuantizeMode
-            QuantizeMode q = QUANTIZE_OFF;
-            switch (ll) {
-                case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
-                case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
-                case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
-                default: break;
-            }
-            kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
-
-            // !! the event in the leader track can be caneled with Undo
-            // when that happens, this event will hang until reset, need
-            // to be notified of that
-            TrackEvent* event = eventPool->newEvent();
-            event->type = TrackEvent::EventSwitch;
-            event->switchTarget = target;
-            event->pending = true;
-            events.add(event);
-        }
-        else {
-            SwitchQuantize q = valuator->getSwitchQuantize(track->getNumber());
-            if (q == SWITCH_QUANT_OFF) {
-                // todo: might be some interesting action argument we need to convey as well?
-                doSwitch(nullptr, target);
-            }
-            else {
-                TrackEvent* event = eventPool->newEvent();
-                event->type = TrackEvent::EventSwitch;
-                event->switchTarget = target;
-
-                switch (q) {
-                    case SWITCH_QUANT_SUBCYCLE:
-                    case SWITCH_QUANT_CYCLE:
-                    case SWITCH_QUANT_LOOP: {
-                        event->frame = getQuantizedFrame(q);
-                
-                    }
-                        break;
-                    case SWITCH_QUANT_CONFIRM:
-                    case SWITCH_QUANT_CONFIRM_SUBCYCLE:
-                    case SWITCH_QUANT_CONFIRM_CYCLE:
-                    case SWITCH_QUANT_CONFIRM_LOOP: {
-                        event->pending = true;
-                    }
-                        break;
-                    default: break;
-                }
-
-                events.add(event);
-            }
-        }
-    }
-    actionPool->checkin(a);
-}
-
-/**
- * Derive the loop switch target loop from the action that started it
- */
-int TrackScheduler::getSwitchTarget(UIAction* a)
-{
-    SymbolId sid = a->symbol->id;
-    int target = track->getLoopIndex();
-    
-    if (sid == FuncPrevLoop) {
-        target = target - 1;
-        if (target < 0)
-          target = track->getLoopCount() - 1;
-    }
-    else if (sid == FuncNextLoop) {
-        target = target + 1;
-        if (target >= track->getLoopCount())
-          target = 0;
-    }
-    else {
-        if (a->value < 1 || a->value > track->getLoopCount())
-          Trace(1, "TrackScheduler: Loop switch number out of range %d", target);
-        else
-          target = a->value - 1;
-    }
-    return target;
-}
-
-/**
- * Get the quantization frame for a loop switch.
- */
-int TrackScheduler::getQuantizedFrame(SwitchQuantize squant)
-{
-    QuantizeMode qmode = convert(squant);
-    return getQuantizedFrame(qmode);
-}
-
-/**
- * Convert the SwitchQuantize enum value into a QuantizeMode value
- * so we can use just one enum after factoring out the confirmation
- * options.
- */
-QuantizeMode TrackScheduler::convert(SwitchQuantize squant)
-{
-    QuantizeMode qmode = QUANTIZE_OFF;
-    switch (squant) {
-        case SWITCH_QUANT_SUBCYCLE:
-        case SWITCH_QUANT_CONFIRM_SUBCYCLE: {
-            qmode = QUANTIZE_SUBCYCLE;
-        }
-            break;
-        case SWITCH_QUANT_CYCLE:
-        case SWITCH_QUANT_CONFIRM_CYCLE: {
-            qmode = QUANTIZE_CYCLE;
-        }
-            break;
-        case SWITCH_QUANT_LOOP:
-        case SWITCH_QUANT_CONFIRM_LOOP: {
-            qmode = QUANTIZE_LOOP;
-        }
-            break;
-        default: qmode = QUANTIZE_OFF; break;
-    }
-    return qmode;
-}
-
-/**
- * Called by scheduleModeEnd when an action comes in while we are in switch mode.
- * Mode may be either Switch or Confirm and there must have been an EventSwitch
- * scheduled.
- */
-void TrackScheduler::stackSwitch(UIAction* a)
-{
-    TrackEvent* ending = events.find(TrackEvent::EventSwitch);
-    if (ending == nullptr) {
-        // this is an error, you can't be in Switch mode without having
-        // a pending or quantized event schedued
-        Trace(1, "TrackScheduler: Switch mode without a switch event");
-        actionPool->checkin(a);
-    }
-    else if (ending->isReturn) {
-        // these are a special kind of Switch, we can stack things on them
-        // but they don't alter the target loop with Next/Prev
-        // hmm, might be interesting to have some options for that
-        SymbolId sid = a->symbol->id;
-        if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
-            Trace(1, "TrackScheduler: Ignoring switch function when waiting for a Return");
-            // maybe this should convert to a normal switch?
-        }
-        else {
-            Trace(2, "TrackScheduler: Stacking %s after return switch", a->symbol->getName());
-            ending->stack(a);
-        }
-    }
-    else {
-        SymbolId sid = a->symbol->id;
-        if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
-            // A switch function was invoked again while in the quantize/confirm
-            // zone.  I believe this is supposed to change the target loop.
-            if (sid == FuncNextLoop) {
-                int next = ending->switchTarget + 1;
-                if (next >= track->getLoopCount())
-                  next = 0;
-                ending->switchTarget = next;
-            }
-            else if (sid == FuncPrevLoop) {
-                int next = ending->switchTarget - 1;
-                if (next < 0)
-                  next = track->getLoopCount() - 1;
-                ending->switchTarget = next;
-            }
-            else {
-                // the number in the action is 1 based, in the event 0 based
-                int target = a->value - 1;
-                if (target < 0 || target >= track->getLoopCount())
-                  Trace(1, "TrackScheduler: Loop switch number out of range %d", a->value);
-                else
-                  ending->switchTarget = target;
-            }
-            actionPool->checkin(a);
-        }
-        else {
-            // we're in the switch quantize period with a random function,
-            // it stacks
-            // audio loops have a lot of complexity here
-            Trace(2, "TrackScheduler: Stacking %s after switch", a->symbol->getName());
-            ending->stack(a);
-        }
-    }
-}
-
-/**
- * Called by MidiTrack when it finally receives notification
- * that the leader event we scheduled in scheduleSwitch has been reached
- *
- * We don't really care what is in the event payload, can only be here for
- * pending switch events.
- *
- */
-void TrackScheduler::leaderEvent(TrackProperties& props)
-{
-    (void)props;
-
-    TrackEvent* e = events.find(TrackEvent::EventSwitch);
-    if (e == nullptr) {
-        Trace(1, "TrackScheduler: Expected switch event after leader event not found");
-    }
-    else if (!e->pending) {
-        Trace(1, "TrackScheduler: Switch event after leader event was not pending");
-        // what to do about this, just let it happen normally?
-    }
-    else {
-        events.remove(e);
-        doSwitch(e, e->switchTarget);
-    }
-}
-
-/**
- * Do a loop switch and perform follow on events.
- *
- * The event is null if the switch was not quantized and is being done immediately
- * The target index was obtained from the UIAction.
- *
- * If the event is non-null, this was a quantized switch that may have stacked actions.
- *
- * In both cases, if we switch to an empty loop and EmptyLoopAction is Record,
- * cause recording to start by synthesizing a UIAction for Record and passing it through
- * the usual process which may synchronize.
- *
- * If there are stacked events, these happen after EmptyLoopAction=Record which may cause
- * them to stack again if the record is synchronized.
- *
- * If the next loop was NOT empty, consult SwitchDuration to see if we need to
- * schedule a Return event.  SwitchDuration does not currently apply if EmptyLoop=Record
- * is happening because we don't have a place to hang the return switch without confusing
- * things by having two mode events, one for the Record and one for the Return.
- * Could make it pending, or put something on the Record event to cause it to be scheduled
- * after the record is finished.  That would be cool but obscure.
- *
- * If the isReturn flag is set, then this wasn't a normal Next/Prev/Select loop switch,
- * it was generated for SwitchDuration=Return.  In this case we don't obey SwitchDuration
- * since that would just cause it to bounce back and forth.
- * 
- */
-void TrackScheduler::doSwitch(TrackEvent* e, int target)
-{
-    int startingLoop = track->getLoopIndex();
-
-    // if both are passed should be the same, but obey the event
-    if (e != nullptr) target = e->switchTarget;
-    
-    bool isEmpty = track->finishSwitch(target);
-
-    // handle EmptyLoopAction=Record
-    bool recording = false;
-    if (isEmpty) {
-        // if this track is following, ignore EmptyLoopAction
-        // ugh, we suppress EmptyLoopAction in two places now, here
-        // and in MidiTrack for Copy and CopyTiming
-        // !! need to consolidate this, let the track do the switch, then follow
-        // it with EmptyLoopAction and SwitchDuration
-        // here if we have a leader but we DON'T follow Record, then may make sense
-        // to allow this?
-        if (track->getLeaderType() != LeaderNone) {
-            EmptyLoopAction elc = valuator->getEmptyLoopAction(track->getNumber());
-            if (elc == EMPTY_LOOP_RECORD) {
-                // todo: if this was a Return event we most likely wouldn't be here
-                // but I guess handle it the same?
-                UIAction a;
-                a.symbol = symbols->getSymbol(FuncRecord);
-                // call the outermost action receiver as if this came from the outside
-                doAction(&a);
-                recording = true;
-            }
-        }
-    }
-    
-    // ignore SwitchDuration for Return events
-    if (e == nullptr || !e->isReturn) {
-        SwitchDuration duration = valuator->getSwitchDuration(track->getNumber());
-        // probably should ignore this for followers too
-        if (track->getLeaderType() != LeaderNone)
-          duration = SWITCH_PERMANENT;
-        
-        if (duration != SWITCH_PERMANENT && recording) {
-            // more work to do here, where would we hang the Mute/Return events?
-            Trace(1, "TrackScheduler: Ignoring SwitchDuration after starting record of empty loop");
-        }
-        else if (!isEmpty) {
-            switch (duration) {
-                case SWITCH_ONCE: {
-                    TrackEvent* event = eventPool->newEvent();
-                    event->type = TrackEvent::EventAction;
-                    UIAction* action = actionPool->newAction();
-                    action->symbol = symbols->getSymbol(FuncMute); 
-                    event->primary = action;
-                    event->frame = track->getLoopFrames();
-                    events.add(event);
-                }
-                    break;
-                case SWITCH_ONCE_RETURN: {
-                    TrackEvent* event = eventPool->newEvent();
-                    // instead of having EventReturn, use EventSwitch and set a flag
-                    // saves having to look for both
-                    event->type = TrackEvent::EventSwitch;
-                    event->isReturn = true;
-                    event->switchTarget = startingLoop;
-                    event->frame = track->getLoopFrames();
-                    events.add(event);
-                }
-                    break;
-                case SWITCH_SUSTAIN: {
-                    Trace(1, "TrackScheduler: SwitchDuration=Sustain not implemented");
-                }
-                    break;
-                case SWITCH_SUSTAIN_RETURN: {
-                    Trace(1, "TrackScheduler: SwitchDuration=SustainReturn not implemented");
-                }
-                    break;
-                case SWITCH_PERMANENT: break;
-            }
-        }
-    }
-    
-    // like SwitchDuration, if we started a Record because the loop was empty
-    // should be be doing the stacked events, these might cause premature
-    // Record termination?  may be best to ignore these like we do SwitchDuration
-    if (e != nullptr && e->stacked != nullptr && recording)
-      Trace(1, "TrackScheduler: Stacked actions being performed after empty loop record");
-
-    // if the new loop is empty, these may go nowhere but they could have stacked
-    // Reocord or some things that have meaning
-    doStacked(e);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Instant Functions
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Here for both InstantMultiply and InstantDivide.
- * Dig the multiple out of the action and pass it over to track.
- * These are mode ending and may have been stacked.  Major modes should
- * be closed by now.
- */
-void TrackScheduler::doInstant(UIAction* a)
-{
-    if (a->symbol->id == FuncInstantMultiply)
-      track->doInstantMultiply(a->value);
-    
-    else if (a->symbol->id == FuncDivide)
-      track->doInstantDivide(a->value);
 }
 
 //////////////////////////////////////////////////////////////////////

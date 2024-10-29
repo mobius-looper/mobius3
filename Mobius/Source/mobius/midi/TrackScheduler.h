@@ -26,14 +26,17 @@
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
+
 #include "../TrackProperties.h"
 
 #include "TrackEvent.h"
 #include "LoopSwitcher.h"
+#include "TrackAdvancer.h"
 
 class TrackScheduler
 {
     friend class LoopSwitcher;
+    friend class TrackAdvancer;
     
   public:
 
@@ -47,105 +50,104 @@ class TrackScheduler
     void configure(Session::Track* def);
     void dump(class StructureDumper& d);
     void reset();
-    //void shiftEvents(int frames, int remainder);
+    
     void refreshState(class MobiusMidiState::Track* state);
     
     // the main entry point from the track to get things going
-    void doAction(class UIAction* a);
     void doParameter(class UIAction* a);
+    void doAction(class UIAction* a);
     void advance(class MobiusAudioStream* stream);
-
-    // Track callbacks for that awful multiply termination mode
-    bool hasRoundingScheduled();
-    void cancelRounding();
 
     void setFollowTrack(TrackProperties& props);
     void leaderEvent(TrackProperties& props);
 
   protected:
 
-    // things LoopSwitcher needs
+    // things LoopSwitcher and TrackAdvancer need
     
     class AbstractTrack* track = nullptr;
     TrackEventList events;
     class TrackEventPool* eventPool = nullptr;
-    
-  private:
-
-    class MobiusKernel* kernel = nullptr;
     class UIActionPool* actionPool = nullptr;
+    
+    class MobiusKernel* kernel = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
 
+    class UIAction* copyAction(UIAction* src);
+    
+  private:
+
     // handler for loop switch complexity
-    LoopSwitcher loopSwitcher {this};
+    LoopSwitcher loopSwitcher {*this};
+
+    // handler for advance complexity
+    TrackAdvancer advancer {*this};
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
+    int followTrack = 0;
 
     // save these from the session until everything is converted to
     // use Pulsator constants
     SyncSource sessionSyncSource = SYNC_NONE;
     SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
 
-
-    // block advance
-    void consume(int frames);
-    int scale(int blockFrames);
-    int scaleWithCarry(int blockFrames);
-    void traceFollow();
-    float rateCarryover = 0.0f;
-    int followTrack = 0;
+    //
+    // Scheduling and mode transition guts
+    //
     
-    // generic action processing
-    void doActionInternal(class UIAction* a);
-    void doStacked(class TrackEvent* actions);
+    void doStacked(class TrackEvent* e) ;
     void doActionNow(class UIAction* a);
     void checkModeCancel(class UIAction* a);
 
-    // advance and events
-    void pauseAdvance(class MobiusAudioStream* stream);
-    void doEvent(class TrackEvent* e);
-    void dispose(class TrackEvent* e);
-    void dispose(class UIAction* a);
-    void doPulse(class TrackEvent* e);
+    bool handleExecutiveAction(class UIAction* src);
+    
+    bool isReset();
+    void handleResetAction(class UIAction* src);
+    
+    bool isPaused();
+    void handlePauseAction(class UIAction* src);
+    
+    bool isRecording();
+    void handleRecordAction(class UIAction* src);
+    void scheduleRecordPendingAction(class UIAction* src, class TrackEvent* starting);
+    void scheduleRecordEndAction(class UIAction* src, class TrackEvent* ending);
+    
+    bool isRounding();
+    void handleRoundingAction(class UIAction* src);
+    bool doRound(class TrackEvent* event);
 
-    // Rounding and Quantization
-    bool isModeEnding(MobiusMidiState::Mode mode);
-    void scheduleModeEnd(class UIAction* a, MobiusMidiState::Mode mode);
+    void scheduleAction(class UIAction* src);
+    void scheduleRounding(class UIAction* src, MobiusMidiState::Mode mode);
+    
     bool isQuantized(class UIAction* a);
-    void scheduleQuantized(class UIAction* a);
+    void scheduleQuantized(class UIAction* src);
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
-    void addExtensionEvent(int frame);
-    
-    // Record
-    bool isRecord(class UIAction* a);
+
+    //
+    // Post-scheduling function handlers
+    //
+
     void scheduleRecord(class UIAction* a);
-    class TrackEvent* scheduleRecordEvent(class UIAction* a);
+    class TrackEvent* scheduleRecordEnd();
+    class TrackEvent* addRecordEvent();
     bool isRecordSynced();
-    void stackRecord(class TrackEvent* recordEvent, class UIAction* a);
     void doRecord(class TrackEvent* e);
 
-    // Various
-    void doMultiply(class UIAction* a);
     void doInsert(class UIAction* a);
+    void addExtensionEvent(int frame);
+
+    void doMultiply(class UIAction* a);
     void doReplace(class UIAction* a);
     void doOverdub(class UIAction* a);
     void doMute(class UIAction* a);
     void doInstant(class UIAction* a);
     void doResize(class UIAction* a);
     
-    // Switch
-    bool isLoopSwitch(class UIAction* a);
-    void scheduleSwitch(class UIAction* a);
-    int getSwitchTarget(class UIAction* a);
-    int getQuantizedFrame(SwitchQuantize squant);
-    QuantizeMode convert(SwitchQuantize squant);
-    void stackSwitch(class UIAction* a);
-    void doSwitch(class TrackEvent* e, int target);
 
 };
 

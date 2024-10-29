@@ -43,8 +43,9 @@ class LoopSwitcher
     TrackScheduler& scheduler;
 
     int getSwitchTarget(class UIAction* a);
-    int getQuantizedFrame(class SwitchQuantize squant);
-    QuantizeMode convert(class SwitchQuantize squant);
+    int getQuantizedFrame(SwitchQuantize squant);
+    QuantizeMode convert(SwitchQuantize squant);
+    bool setupEmptyLoop(int previousLoop);
 
 
 };

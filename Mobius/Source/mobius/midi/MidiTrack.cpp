@@ -10,7 +10,7 @@
  * if you reset a sequence and return events to a pool.  Better to have the player just deal
  * with juce::MidiMessage at that point.
  * 
- */
+*/
 
 #include <JuceHeader.h>
 
@@ -735,83 +735,6 @@ void MidiTrack::advance(int frames)
     }
 }
 
-// old implementation that did it's own looping
-// keep around for awhile
-#if 0
-void MidiTrack::advance(int newFrames)
-{
-    if (mode == MobiusMidiState::ModeReset) {
-        // nothing to do
-    }
-    else {
-        // the loop point is mystical, I'd rather Scheduler be dealing with this
-        int included = newFrames;
-        int remainder = 0;
-        int currentFrame = recorder.getFrame();
-        int loopFrames = recorder.getFrames();
-        int nextFrame = currentFrame + newFrames;
-
-        if (nextFrame >= loopFrames) {
-            included = loopFrames - currentFrame;
-            remainder = newFrames - included;
-        }
-
-        // consume up to the the final frame in the loop, but not after
-        recorder.advance(included);
-        advancePlayer(included);
-        advanceRegion(included);
-
-        if (remainder > 0) {
-            // we have now consumed enough frames to fill the layer, before
-            // we shift, check for extension modes
-
-            // note that we're careful about the loop boundary, don't necessarily
-            // need the recorder.isExtending flag, could just let it auto extend if we ask it
-            // update: Decided to handle this shit in TrackScheduler where it should
-            // be rather than make it messy down here, if a multiply end event is scheduled
-            // it will be where it should be, not beyond and making Track figure
-            // out early termination, TrackScheduler will have put it at the end
-            // of the loop if that's where it wanted it
-            //bool earlyTermination = isMultiplyEndScheduled();
-            bool earlyTermination = false;
-            bool extending = (recorder.isExtending() && !earlyTermination);
-
-            if (extending) {
-                recorder.advance(remainder);
-                advancePlayer(remainder);
-                advanceRegion(remainder);
-            }
-            else {
-                // shift in some way
-                if (earlyTermination) {
-                    doMultiplyEarlyTermination();
-                }
-                else if (recorder.hasChanges()) {
-                    shift(false);
-                }
-                else {
-                    // squelching the record layer
-                    recorder.rollback(overdub);
-                }
-            
-                // restart the overdub region if we're still in it
-                resetRegions();
-                resumeOverdubRegion();
-
-                // shift events waiting for the loop end
-                // don't like this
-                scheduler.shiftEvents(recorder.getFrames(), remainder);
-            
-                player.restart();
-                player.play(remainder);
-                recorder.advance(remainder);
-                advanceRegion(remainder);
-            }
-        }
-    }
-}
-#endif
-
 /**
  * Called by scheduler to see if the track is in an extension mode and
  * is allowed to continue beyond the loop point.  If yes it will allow
@@ -847,37 +770,6 @@ void MidiTrack::loop()
     resumeOverdubRegion();
 
     player.restart();
-}
-
-/**
- * Kludge for Multiply early termination.
- * Old audio tracks will not add a new cycle until the loop boundary is reached.
- * When you end multiply it schedules an event one cycle beyond the mode start frame
- * but it won't actually get there unless you allow it to record past the loop boundary
- * to add the cycle.  It will always stop at the end of the current loop.
- *
- * Two ways to do this: Let Scheduler schedule it normally one cycle away, than cancel
- * that event if we hit the loop point during the roundoff period.
- * Or, have Scheduler schedule the round point to the end of the loop, then if you cross it,
- * adjust the frame to be what would have been the end of the (relative) cycle.
- * Both suck in different ways.
- *
- * Both require Track->Scheduler communication which is unusual, either to cancel or
- * adjust an event, unless we teach Scheduler about loop boundaries, which is not a bad thing.
- *
- * Taking approach 1 just to have something to start with.
- *
- * Returns true if we're going to do early termination.
- */
-bool MidiTrack::isMultiplyEndScheduled()
-{
-    return (mode == MobiusMidiState::ModeMultiply && scheduler.hasRoundingScheduled());
-}
-
-void MidiTrack::doMultiplyEarlyTermination()
-{
-    finishMultiply();
-    scheduler.cancelRounding();
 }
 
 /**
@@ -1157,6 +1049,51 @@ void MidiTrack::finishRecord()
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Play
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here in respose to a Play action.
+ * Whatever mode we were in should have been unwound gracefully.
+ * If not, complain about it and enter Play mode anyway.
+ *
+ * Actually, I abandoned this, but it's a nice idea, revisit.
+ */
+#if 0
+void MidiTrack::doPlay()
+{
+    switch (mode) {
+
+        case ModeReset:
+        case ModeSynchronize:
+        case ModeRecord:
+        case ModeMultiply:
+        case ModeInsert:
+
+        case ModeReplace: {
+            // this also should have been caught in the scheudler
+            // but at least it's easy to stop
+            toggleReplace();
+        }
+            break;
+
+        case ModeMute:
+        case ModeOverdub: {
+            // these are minor modes, shouldn't be here?
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+        }
+            break;
+
+        case ModePlay:
+            // noop
+            break;
+    }
+}
+#endif
+            
 //////////////////////////////////////////////////////////////////////
 //
 // Overdub
@@ -1585,6 +1522,13 @@ void MidiTrack::finishSwitch(int newIndex)
         // time to avoid redundant held note analysis
         player.change(playing, newPlayFrame);
     }
+}
+
+void MidiTrack::loopCopy(int previoius, bool sound)
+{
+    (void)previous;
+    (void)sound;
+    Trace(1, "MidiTrack: Lost loop copy!");
 }
 
 //////////////////////////////////////////////////////////////////////

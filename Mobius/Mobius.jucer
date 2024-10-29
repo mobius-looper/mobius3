@@ -492,6 +492,9 @@
                 file="Source/mobius/midi/ActionTransformer.h"/>
           <FILE id="a1SAjP" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/LongWatcher.cpp"/>
           <FILE id="tOds4k" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/midi/LongWatcher.h"/>
+          <FILE id="A34Qli" name="LoopSwitcher.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/LoopSwitcher.cpp"/>
+          <FILE id="Wtu1Qo" name="LoopSwitcher.h" compile="0" resource="0" file="Source/mobius/midi/LoopSwitcher.h"/>
           <FILE id="lDUunw" name="MidiFragment.cpp" compile="1" resource="0"
                 file="Source/mobius/midi/MidiFragment.cpp"/>
           <FILE id="xdZZo9" name="MidiFragment.h" compile="0" resource="0" file="Source/mobius/midi/MidiFragment.h"/>
@@ -517,6 +520,9 @@
           <FILE id="v49kWc" name="MidiTracker.h" compile="0" resource="0" file="Source/mobius/midi/MidiTracker.h"/>
           <FILE id="DjLNB0" name="MidiWatcher.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiWatcher.cpp"/>
           <FILE id="QmMmv7" name="MidiWatcher.h" compile="0" resource="0" file="Source/mobius/midi/MidiWatcher.h"/>
+          <FILE id="AuU7EB" name="TrackAdvancer.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/TrackAdvancer.cpp"/>
+          <FILE id="AdhgyE" name="TrackAdvancer.h" compile="0" resource="0" file="Source/mobius/midi/TrackAdvancer.h"/>
           <FILE id="Kf6cIP" name="TrackEvent.cpp" compile="1" resource="0" file="Source/mobius/midi/TrackEvent.cpp"/>
           <FILE id="IzyBty" name="TrackEvent.h" compile="0" resource="0" file="Source/mobius/midi/TrackEvent.h"/>
           <FILE id="an5GW1" name="TrackScheduler.cpp" compile="1" resource="0"

@@ -155,6 +155,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     TrackProperties getTrackProperties(int number);
     
+    // used by MidiTracker to schedule a follower event in a core track
+    void scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q);
+    
   protected:
 
     class MobiusPools* getPools() {
@@ -212,8 +215,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     // used by Mobius to trigger clips after a core event
     void clipStart(int audioTrack, const char* bindingArgs);
-    // used by MidiTracker to schedule a follower event in a core track
-    void scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q);
 
   private:
 

@@ -52,7 +52,8 @@ class AbstractTrack
     virtual void toggleMute() = 0;
     virtual void toggleReplace() = 0;
 
-    virtual bool finishSwitch(int target) = 0;
+    virtual void finishSwitch(int target) = 0;
+    virtual void loopCopy(int previous, bool sound) = 0;
 
     virtual bool isPaused() = 0;
     virtual void startPause() = 0;
@@ -62,6 +63,7 @@ class AbstractTrack
     virtual void doParameter(class UIAction* a) = 0;
     virtual void doPartialReset() = 0;
     virtual void doReset(bool full) = 0;
+    virtual void doPlay() = 0;
     virtual void doUndo() = 0;
     virtual void doRedo() = 0;
     virtual void doDump() = 0;

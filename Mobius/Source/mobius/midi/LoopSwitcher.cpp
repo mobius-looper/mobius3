@@ -7,14 +7,21 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
+
+#include "../../model/Symbol.h"
+
+#include "../../sync/Pulsator.h"
+#include "../MobiusKernel.h"
+#include "../Valuator.h"
+
 #include "TrackScheduler.h"
 #include "AbstractTrack.h"
 
 #include "LoopSwitcher.h"
 
-LoopSwitcher::LoopSwitcher(TrackScheduler& s)
+LoopSwitcher::LoopSwitcher(TrackScheduler& s) : scheduler(s)
 {
-    scheduler = s;
 }
 
 LoopSwitcher::~LoopSwitcher()
@@ -70,9 +77,9 @@ bool LoopSwitcher::isSwitching()
  * and when that happens, the pending Switch event we schedule here will hang until reset.
  * Followers need to be notified when a follower notification event is undone.
  */
-void LoopSwitcher::scheduleSwitch(UIAction* a)
+void LoopSwitcher::scheduleSwitch(UIAction* src)
 {
-    MidiTrack* track = scheduler.track;
+    AbstractTrack* track = scheduler.track;
     LeaderType ltype = track->getLeaderType();
     int leader = track->getLeader();
     LeaderLocation ll = track->getLeaderSwitchLocation();
@@ -82,14 +89,14 @@ void LoopSwitcher::scheduleSwitch(UIAction* a)
         // if the leader happens to be in Reset, then we do an immediate switch
         // !! unclear whether we should fall back to normal SwitchQuantize when
         // this happens, or if it becomes immediate
-        TrackProperties props = scheduler.kernel.getTrackProperties(leader);
+        TrackProperties props = scheduler.kernel->getTrackProperties(leader);
 
         // don't have the mode in TrackProperties but we can infer that from the size
         // may want the mode here too, if the leader is paused, would that impact how
         // we do the switch in the follower?
         if (props.frames == 0) {
             // leader is empty, do it now
-            doSwitchNow(a);
+            doSwitchNow(src);
         }
         else {
             // schedule a follower notification event in the leader track
@@ -105,7 +112,7 @@ void LoopSwitcher::scheduleSwitch(UIAction* a)
             // add a pending Switch event in this track
             TrackEvent* event = scheduler.eventPool->newEvent();
             event->type = TrackEvent::EventSwitch;
-            event->switchTarget = getSwitchTarget(a);
+            event->switchTarget = getSwitchTarget(src);
             event->pending = true;
             scheduler.events.add(event);
         }
@@ -115,13 +122,13 @@ void LoopSwitcher::scheduleSwitch(UIAction* a)
         SwitchQuantize q = scheduler.valuator->getSwitchQuantize(track->getNumber());
         if (q == SWITCH_QUANT_OFF) {
             // immediate switch
-            doSwitchNow(a);
+            doSwitchNow(src);
         }
         else {
             // the switch is quantized or pending confirmation
-            TrackEvent* event = eventPool->newEvent();
+            TrackEvent* event = scheduler.eventPool->newEvent();
             event->type = TrackEvent::EventSwitch;
-            event->switchTarget = getSwitchTarget(a);
+            event->switchTarget = getSwitchTarget(src);
 
             switch (q) {
                 case SWITCH_QUANT_SUBCYCLE:
@@ -144,7 +151,6 @@ void LoopSwitcher::scheduleSwitch(UIAction* a)
             scheduler.events.add(event);
         }
     }
-    actionPool->checkin(a);
 }
 
 /**
@@ -152,6 +158,7 @@ void LoopSwitcher::scheduleSwitch(UIAction* a)
  */
 int LoopSwitcher::getSwitchTarget(UIAction* a)
 {
+    AbstractTrack* track = scheduler.track;
     SymbolId sid = a->symbol->id;
     int target = track->getLoopIndex();
     
@@ -224,33 +231,33 @@ QuantizeMode LoopSwitcher::convert(SwitchQuantize squant)
  * using the switch functions can alter the nature of the switch, and other random
  * actions are "stacked" for execution after the switch finishes.
  */
-void LoopSwitcher::handleSwitchModeAction(UIAction* a)
+void LoopSwitcher::handleSwitchModeAction(UIAction* src)
 {
     TrackEvent* ending = scheduler.events.find(TrackEvent::EventSwitch);
     if (ending == nullptr) {
         // this is an error, you can't call this without having first asked
         // isSwitching() whether or not we're in switch mode
         Trace(1, "LoopSwitcher: Switch action handler called without a Switch event");
-        actionPool->checkin(a);
     }
     else if (ending->isReturn) {
         // A Return Switch is a special kind of Switch event that is not scheduled in response
         // to a user action.  It is scheduled automatically when SwitchDuration is OnceReturn
         // Unlike a normal switch if you use the Next/Prev/Select functions during this mode
         // those do not alter the target loop we're returning to, may want some options around this
-        SymbolId sid = a->symbol->id;
+        SymbolId sid = src->symbol->id;
         if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
             Trace(1, "LoopSwitcher: Ignoring switch function when waiting for a Return");
         }
         else {
             // non-switch actions are simply stacked on the return event and executed later
-            Trace(2, "LoopSwitcher: Stacking %s after return switch", a->symbol->getName());
-            ending->stack(a);
+            Trace(2, "LoopSwitcher: Stacking %s after return switch", src->symbol->getName());
+            ending->stack(scheduler.copyAction(src));
         }
     }
     else {
-        SymbolId sid = a->symbol->id;
+        SymbolId sid = src->symbol->id;
         if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
+            AbstractTrack* track = scheduler.track;
             // A switch function was invoked again while in the quantize/confirm
             // zone.  This is done to change the target loop of the previously
             // scheduled event.
@@ -268,20 +275,19 @@ void LoopSwitcher::handleSwitchModeAction(UIAction* a)
             }
             else {
                 // the number in the action is 1 based, in the event 0 based
-                int target = a->value - 1;
+                int target = src->value - 1;
                 if (target < 0 || target >= track->getLoopCount())
-                  Trace(1, "LoopSwitcher: Loop switch number out of range %d", a->value);
+                  Trace(1, "LoopSwitcher: Loop switch number out of range %d", src->value);
                 else
                   ending->switchTarget = target;
             }
-            actionPool->checkin(a);
         }
         else {
             // we're in the switch quantize period with a random function,
             // it stacks
             // audio loops have a lot of complexity here
-            Trace(2, "LoopSwitcher: Stacking %s after switch", a->symbol->getName());
-            ending->stack(a);
+            Trace(2, "LoopSwitcher: Stacking %s after switch", src->symbol->getName());
+            ending->stack(scheduler.copyAction(src));
         }
     }
 }
@@ -333,7 +339,7 @@ void LoopSwitcher::leaderEvent(TrackProperties& props)
     else {
         // instead of activating it and letting it be picked up on the next event
         // scan, we can just remove it and pretend 
-        events.remove(e);
+        scheduler.events.remove(e);
         doSwitchEvent(e, e->switchTarget);
     }
 }
@@ -374,19 +380,19 @@ void LoopSwitcher::leaderEvent(TrackProperties& props)
  */
 void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
 {
-    MidiTrack* track = scheduler.track;
+    AbstractTrack* track = scheduler.track;
     int startingLoop = track->getLoopIndex();
     int startingFrames = track->getLoopFrames();
     
     // if both are passed should be the same, but obey the event
     if (e != nullptr) target = e->switchTarget;
 
-    // now we pass control over to MidiTrack to make the switch happen
+    // now we pass control over to AbstractTrack to make the switch happen
     track->finishSwitch(target);
 
     int newFrames = track->getLoopFrames();
     
-    bool isReording = false;
+    bool isRecording = false;
     if (newFrames == 0)
       isRecording = setupEmptyLoop(startingLoop);
 
@@ -450,7 +456,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
     // If we ended up in an empty loop and did not initiate a new Record
     // unlock the pulse follower
     if (newFrames == 0) {
-        pulsator->unlock(track->getNumber());
+        scheduler.pulsator->unlock(track->getNumber());
     }
     else if (newFrames != startingFrames) {
         // we switched to a loop of a different size
@@ -488,11 +494,11 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
  */
 bool LoopSwitcher::setupEmptyLoop(int previousLoop)
 {
-    MidiTrack* track = scheduler.track;
+    AbstractTrack* track = scheduler.track;
     bool recording = false;
     bool copied = false;
     
-    if (track->getFrames() == 0 && track->getLeaderType() == LeaderNone) {
+    if (track->getLoopFrames() == 0 && track->getLeaderType() == LeaderNone) {
 
         EmptyLoopAction action = scheduler.valuator->getEmptyLoopAction(track->getNumber());
 
@@ -501,7 +507,7 @@ bool LoopSwitcher::setupEmptyLoop(int previousLoop)
             // but I guess handle it the same?  that would take some effort, while the loop
             // was playing a script would have had to force-reset the previous loop without selecting it
             UIAction a;
-            a.symbol = symbols->getSymbol(FuncRecord);
+            a.symbol = scheduler.symbols->getSymbol(FuncRecord);
             // call the outermost action receiver as if this came from the outside
             scheduler.doAction(&a);
         }

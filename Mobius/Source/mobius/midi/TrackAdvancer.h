@@ -7,14 +7,22 @@
 
 class TrackAdvancer
 {
+    friend class TrackScheduler;
+    
   public:
 
-    TrackAdvancer(TrackScheduler& s);
+    TrackAdvancer(class TrackScheduler& s);
     ~TrackAdvancer();
 
-    void advance(MobiusAudioStream* stream);
+    void advance(class MobiusAudioStream* stream);
+
+  protected:
+
+    float rateCarryover = 0.0f;
 
   private:
+
+    class TrackScheduler& scheduler;
     
     void traceFollow();
     int scale(int blockFrames);

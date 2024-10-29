@@ -128,8 +128,9 @@ class MidiTrack : public AbstractTrack
     void toggleMute() override;
     void toggleReplace() override;
 
-    bool finishSwitch(int target) override;
-
+    void finishSwitch(int target) override;
+    void loopCopy(int previous, bool sound) override;
+    
     bool isPaused() override;
     void startPause() override;
     void finishPause() override;
@@ -138,6 +139,7 @@ class MidiTrack : public AbstractTrack
     void doParameter(class UIAction* a) override;
     void doPartialReset() override;
     void doReset(bool full) override;
+    void doPlay() override;
     void doUndo() override;
     void doRedo() override;
     void doDump() override;
@@ -214,8 +216,6 @@ class MidiTrack : public AbstractTrack
     // advance
     void advancePlayer(int newFrames);
     void shift(bool unrounded);
-    bool isMultiplyEndScheduled();
-    void doMultiplyEarlyTermination();
     
     //
     // Function Handlers
