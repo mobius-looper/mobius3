@@ -1,3 +1,9 @@
+/**
+ * This is a subcomponent of TrackScheduler that isolates the code surrounding
+ * loop switching and helps keep TrackScheduler from being too bloated.
+ *
+ */
+
 
 #include <JuceHeader.h>
 
@@ -6,7 +12,7 @@
 
 #include "LoopSwitcher.h"
 
-LoopSwitcher::LoopSwitcher(TrackScheduler* s)
+LoopSwitcher::LoopSwitcher(TrackScheduler& s)
 {
     scheduler = s;
 }
@@ -17,7 +23,6 @@ LoopSwitcher::~LoopSwitcher()
 
 void LoopSwitcher::initialize()
 {
-    track = scheduler->getTrack();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -214,29 +219,31 @@ QuantizeMode LoopSwitcher::convert(SwitchQuantize squant)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by scheduleModeEnd when an action comes in while we are in switch mode.
- * Mode may be either Switch or Confirm and there must have been an EventSwitch
- * scheduled.
+ * This is called whenever an action comes in while the track is in "Switch Mode"
+ * waiting for the Switch event to be reached.  During this mode, further actions
+ * using the switch functions can alter the nature of the switch, and other random
+ * actions are "stacked" for execution after the switch finishes.
  */
-void LoopSwitcher::stackSwitch(UIAction* a)
+void LoopSwitcher::handleSwitchModeAction(UIAction* a)
 {
-    TrackEvent* ending = events.find(TrackEvent::EventSwitch);
+    TrackEvent* ending = scheduler.events.find(TrackEvent::EventSwitch);
     if (ending == nullptr) {
-        // this is an error, you can't be in Switch mode without having
-        // a pending or quantized event schedued
-        Trace(1, "LoopSwitcher: Switch mode without a switch event");
+        // this is an error, you can't call this without having first asked
+        // isSwitching() whether or not we're in switch mode
+        Trace(1, "LoopSwitcher: Switch action handler called without a Switch event");
         actionPool->checkin(a);
     }
     else if (ending->isReturn) {
-        // these are a special kind of Switch, we can stack things on them
-        // but they don't alter the target loop with Next/Prev
-        // hmm, might be interesting to have some options for that
+        // A Return Switch is a special kind of Switch event that is not scheduled in response
+        // to a user action.  It is scheduled automatically when SwitchDuration is OnceReturn
+        // Unlike a normal switch if you use the Next/Prev/Select functions during this mode
+        // those do not alter the target loop we're returning to, may want some options around this
         SymbolId sid = a->symbol->id;
         if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
             Trace(1, "LoopSwitcher: Ignoring switch function when waiting for a Return");
-            // maybe this should convert to a normal switch?
         }
         else {
+            // non-switch actions are simply stacked on the return event and executed later
             Trace(2, "LoopSwitcher: Stacking %s after return switch", a->symbol->getName());
             ending->stack(a);
         }
@@ -245,7 +252,8 @@ void LoopSwitcher::stackSwitch(UIAction* a)
         SymbolId sid = a->symbol->id;
         if (sid == FuncNextLoop || sid == FuncPrevLoop || sid == FuncSelectLoop) {
             // A switch function was invoked again while in the quantize/confirm
-            // zone.  I believe this is supposed to change the target loop.
+            // zone.  This is done to change the target loop of the previously
+            // scheduled event.
             if (sid == FuncNextLoop) {
                 int next = ending->switchTarget + 1;
                 if (next >= track->getLoopCount())
@@ -368,15 +376,19 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
 {
     MidiTrack* track = scheduler.track;
     int startingLoop = track->getLoopIndex();
-
+    int startingFrames = track->getLoopFrames();
+    
     // if both are passed should be the same, but obey the event
     if (e != nullptr) target = e->switchTarget;
 
     // now we pass control over to MidiTrack to make the switch happen
     track->finishSwitch(target);
 
-    // if the next loop is empty do things
-    bool isRecording = setupEmptyLoop(startingLoop);
+    int newFrames = track->getLoopFrames();
+    
+    bool isReording = false;
+    if (newFrames == 0)
+      isRecording = setupEmptyLoop(startingLoop);
 
     // ignore SwitchDuration if this was already a Return event
     if (!e->isReturn) {
@@ -388,7 +400,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
             // to cause the return to happen after the loop finishes recording and plays once
             Trace(1, "LoopSwitcher: Ignoring SwitchDuration after starting record of empty loop");
         }
-        else if (duration != SWITCH_PERMANENT && track->getLoopFrames() == 0) {
+        else if (duration != SWITCH_PERMANENT && newFrames == 0) {
             // we went to an empty loop without record or copy options
             // no where to hang a Return event, and I'm not sure that would make sense even if we tried
             Trace(2, "LoopSwitcher: Ignoring SwitchDuration after switching to empty loop");
@@ -403,7 +415,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     UIAction* action = scheduler.actionPool->newAction();
                     action->symbol = scheduler.symbols->getSymbol(FuncMute); 
                     event->primary = action;
-                    event->frame = track->getLoopFrames();
+                    event->frame = newFrames;
                     scheduler.events.add(event);
                 }
                     break;
@@ -415,7 +427,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     event->type = TrackEvent::EventSwitch;
                     event->isReturn = true;
                     event->switchTarget = startingLoop;
-                    event->frame = track->getLoopFrames();
+                    event->frame = newFrames;
                     scheduler.events.add(event);
                 }
                     break;
@@ -435,9 +447,17 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
         }
     }
 
-    // handle SwitchLocation
-    setupSwitchLocation();
-
+    // If we ended up in an empty loop and did not initiate a new Record
+    // unlock the pulse follower
+    if (newFrames == 0) {
+        pulsator->unlock(track->getNumber());
+    }
+    else if (newFrames != startingFrames) {
+        // we switched to a loop of a different size
+        // the pulse follower can continue as it did before, but if we're the out sync
+        // master, this is where it should be changing the MIDI clock speed
+    }
+    
     // I want stacked stuff to happen above, we're just a switcher
 #if 0    
     // like SwitchDuration, if we started a Record because the loop was empty
@@ -495,55 +515,8 @@ bool LoopSwitcher::setupEmptyLoop(int previousLoop)
         }
     }
     
-    // if we didn't copy, then unlock the pulse follower
-    // if we did copy, it will have been the same size so the pulse follower can continue
-    if (!copied)
-      pulsator->unlock(number);
-
     return recording;
 }
-
-/**
- * If the new loop was not empty, handle the SwitchLocation parameter.
- *
- * Like EmptyLoopAction, if this is a follower track, ignore it.
- * This might make some sense for clip tracks though.
- */
-// I think this makes sense to leave in MidiTrack, it doesn't involve any scheduling
-// and needs some deep hooks
-#if 0
-void LoopSwitcher::setupSwitchLocation(int previousLoop, int previousFrame)
-{
-    if (track->getFrames() > 0 && track->getLeaderType() == LeaderNone) {
-
-        SwitchLocation location = valuator->getSwitchLocation(number);
-
-        if (location == SWITCH_FOLLOW) {
-            // if the destination is smaller, have to modulo down
-            // todo: ambiguity where this shold be if there are multiple
-            // cycles, the first one, or the highest cycle?
-            int followFrame = currentFrame;
-            if (followFrame >= recorder.getFrames())
-              followFrame = currentFrame % recorder.getFrames();
-            recorder.setFrame(followFrame);
-            newPlayFrame = followFrame;
-        }
-        else if (location == SWITCH_RESTORE) {
-            newPlayFrame = playing->getLastPlayFrame();
-            recorder.setFrame(newPlayFrame);
-        }
-        else if (location == SWITCH_RANDOM) {
-            // might be nicer to have this be a random subcycle or
-            // another rhythmically ineresting unit
-            int frames = track->getLoopFrames();
-            int random = Random(0, frames - 1);
-            
-            recorder.setFrame(random);
-            newPlayFrame = random;
-        }
-    }
-}
-#endif
 
 /****************************************************************************/
 /****************************************************************************/

@@ -1499,13 +1499,15 @@ void MidiTrack::unroundedInsert()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called from Scheduler after it has deal with switch quantize
+ * Called from Scheduler after it has dealt with switch quantization
  * and confirmation modes, or just decided to do it immediately.
- * Though this isn't really a mode, it is treated like other rounding modes.
  *
- * Returns true if the next loop was empty which causes EmptyLoopActions
- * to be performed.  Scheduler needs to handle EMPTY_LOOP_RECORD, Track does the rest.
- * If there are any actions stacked on the switch, Scheduler will do those next.
+ * The track is expected to make the necessarily internal changes to cause
+ * the new loop to begin playback, it will be left at the playback position
+ * as determined by the SwitchLocation parameter.
+ *
+ * The EmptyLoopAction and SwitchDuration parameters are not handled here, those
+ * are handled by Scheduler after the track has finished moving.
  */
 void MidiTrack::finishSwitch(int newIndex)
 {
@@ -1528,48 +1530,6 @@ void MidiTrack::finishSwitch(int newIndex)
         player.reset();
         resetRegions();
         mode = MobiusMidiState::ModeReset;
-
-        // break the code below that does the copy shift into
-        // the new functions that LoopSwitcher will call loopCopy(prev, sound)
-        
-        EmptyLoopAction action = valuator->getEmptyLoopAction(number);
-
-        // here we have a problem
-        // if this is a follower track, you are generally using it for static backing
-        // loops and you need to be able to switch to them without triggering
-        // EmptyLoopAction which is in the preset and common to all tracks.
-        // May want more control over this
-        if (leaderType != LeaderNone)
-          action = EMPTY_LOOP_NONE;
-        
-        if (action == EMPTY_LOOP_RECORD) {
-            // Scheduler will handle scheduling a Record event
-            Trace(2, "MidiTrack: Empty loop record");
-        }
-        else if (action == EMPTY_LOOP_COPY) {
-            Trace(2, "MidiTrack: Empty loop copy");
-            if (currentPlaying != nullptr) {
-                recorder.copy(currentPlaying, true);
-                // commit the copy to the Loop and prep another one
-                shift(false);
-                isEmpty = false;
-                mode = MobiusMidiState::ModePlay;
-            }
-        }
-        else if (action == EMPTY_LOOP_TIMING) {
-            Trace(2, "MidiTrack: Empty loop time copy");
-            if (currentPlaying != nullptr) {
-                recorder.copy(currentPlaying, false);
-                // commit the copy to the Loop and prep another one
-                shift(false);
-                isEmpty = false;
-                mode = MobiusMidiState::ModePlay;
-            }
-        }
-
-        // if we didn't copy, then unlock the pulse follower
-        if (isEmpty)
-          pulsator->unlock(number);
     }
     else {
         int currentFrames = recorder.getFrames();
@@ -1578,7 +1538,7 @@ void MidiTrack::finishSwitch(int newIndex)
         recorder.resume(playing);
         
         SwitchLocation location = valuator->getSwitchLocation(number);
-        // like EmptyLoopAction, if we're a follower I din't think we want to
+        // like EmptyLoopAction, if we're a follower I don't think we want to
         // obey SwitchLocation from the Preset, may want more control over this
         if (leaderType != LeaderNone)
           location = SWITCH_START;
@@ -1612,37 +1572,19 @@ void MidiTrack::finishSwitch(int newIndex)
         // the usual ambiguity about what happens to minor modes
         overdub = false;
 
-        // if this a normal track, going from Reset to a non-empty loop
-        // starts playing from where it left off
-        // if this is a normal track, starting in Pause continues in Pause
-        // if this is a follower track, we stay in Pause if we were there
-        // if this is a follower track, and the previoius loop was reset,
-        // then only resume play if the leader is non-empty and is not paused
-        // this is a case where pause should be independent of mode, we need
-        // to have the pause flag on while being in Reset
-        
-
-        // if we're in Pause, don't resume
-        // this is important if we're following, but probably makes
+        // Pause mode is too complicated and needs work
+        // If we are not currently in pause mode, set up to resume playback
+        // in the new loop.  If we are in Pause mode, remain paused.
+        // This is important if we're following, but probably makes
         // sense all the time
         if (!isPaused())
           resumePlay();
 
-        if (recorder.getFrames() != currentFrames) {
-            // we switched to a loop of a different size
-            // if we were synchronizing this is important, especially if
-            // we're the out sync master
-            // let it continue with the old tempo for now
-            // but need to revisit this
-        }
-        
         // now adjust the player after we've determined the play frame
         // important to do both layer change and play frame at the same
         // time to avoid redundant held note analysis
         player.change(playing, newPlayFrame);
     }
-
-    return isEmpty;
 }
 
 //////////////////////////////////////////////////////////////////////

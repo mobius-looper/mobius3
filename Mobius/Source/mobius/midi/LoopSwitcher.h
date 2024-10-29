@@ -18,18 +18,33 @@
 
 #pragma once
 
+#include "../../model/ParameterConstants.h"
+
 class LoopSwitcher
 {
     friend class TaskScheduler;
     
   public:
 
-    LoopSwitcher(class TrackScheduler* sched);
+    LoopSwitcher(class TrackScheduler& s);
     ~LoopSwitcher();
+    void initialize();
 
-:
-    
+    bool isSwitching();
+    void scheduleSwitch(class UIAction* a);
+    void handleSwitchModeAction(class UIAction* a);
+    void doSwitchNow(class UIAction* a);
+    void doSwitchEvent(class TrackEvent* e, int target);
 
+    void leaderEvent(class TrackProperties& props);
     
+  private:
+
+    TrackScheduler& scheduler;
+
+    int getSwitchTarget(class UIAction* a);
+    int getQuantizedFrame(class SwitchQuantize squant);
+    QuantizeMode convert(class SwitchQuantize squant);
+
 
 };
