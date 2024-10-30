@@ -134,6 +134,8 @@ class MidiTrack : public AbstractTrack
     bool isPaused() override;
     void startPause() override;
     void finishPause() override;
+    void doStart() override;
+    void doStop() override;
     
     // simple one-shot actions
     void doParameter(class UIAction* a) override;
@@ -196,7 +198,7 @@ class MidiTrack : public AbstractTrack
     bool overdub = false;
     bool mute = false;
     bool reverse = false;
-    bool pause = false;
+    //bool pause = false;
     
     int input = 127;
     int output = 127;

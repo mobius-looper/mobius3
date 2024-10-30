@@ -972,7 +972,7 @@ void MidiTrack::doReset(bool full)
     
     overdub = false;
     reverse = false;
-    pause = false;
+    //pause = false;
     
     input = 127;
     output = 127;
@@ -1053,53 +1053,6 @@ void MidiTrack::finishRecord()
     Trace(2, "MidiTrack: %d Finished recording with %d events", number, eventCount);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Play
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Here in respose to a Play action.
- * Whatever mode we were in should have been unwound gracefully.
- * If not, complain about it and enter Play mode anyway.
- *
- * Actually, I abandoned this, but it's a nice idea, revisit.
- */
-void MidiTrack::doPlay()
-{
-    Trace(1, "MidiTrack::doPlay Not implemented");
-    
-#if 0
-    switch (mode) {
-
-        case ModeReset:
-        case ModeSynchronize:
-        case ModeRecord:
-        case ModeMultiply:
-        case ModeInsert:
-
-        case ModeReplace: {
-            // this also should have been caught in the scheudler
-            // but at least it's easy to stop
-            toggleReplace();
-        }
-            break;
-
-        case ModeMute:
-        case ModeOverdub: {
-            // these are minor modes, shouldn't be here?
-            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
-        }
-            break;
-
-        case ModePlay:
-            // noop
-            break;
-    }
-#endif
-}
-            
 //////////////////////////////////////////////////////////////////////
 //
 // Overdub
@@ -1591,7 +1544,7 @@ const char* MidiTrack::getModeName()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Pause
+// Pause, Stop, Play, Start
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1613,10 +1566,104 @@ void MidiTrack::startPause()
 
 void MidiTrack::finishPause()
 {
+    // formerly held notes come back on
     player.unpause();
     mode = prePauseMode;
 }
 
+/**
+ * Variant of Pause that rolls back changes and returns to zero.
+ */
+void MidiTrack::doStop()
+{
+    recorder.rollback(false);
+    player.stop();
+    prePauseMode = MobiusMidiState::ModePlay;
+    
+    resetRegions();
+
+    // also cancel minor modes
+    // may want more control over these
+    overdub = false;
+    mute = false;
+    reverse = false;
+    //pause = false;
+}
+
+/**
+ * This is the same as Retrigger, but I like the name Start better.
+ */
+void MidiTrack::doStart()
+{
+    recorder.rollback(false);
+    player.setFrame(0);
+    mode = MobiusMidiState::ModePlay;
+    
+    resetRegions();
+
+    // also cancel minor modes
+    // may want more control over these
+    overdub = false;
+    mute = false;
+    reverse = false;
+}
+
+/**
+ * Here in response to a Play action.
+ * Whatever mode we were in should have been unwound gracefully.
+ * If not, complain about it and enter Play mode anyway.
+ */
+void MidiTrack::doPlay()
+{
+    switch (mode) {
+
+        case MobiusMidiState::ModeReset:
+            // nothing to do
+            break;
+            
+        case MobiusMidiState::ModeSynchronize:
+        case MobiusMidiState::ModeRecord:
+        case MobiusMidiState::ModeMultiply:
+        case MobiusMidiState::ModeInsert:
+            // scheduler should not have allowed this without unwinding
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+            break;
+
+        case MobiusMidiState::ModeReplace: {
+            // this also should have been caught in the scheudler
+            // but at least it's easy to stop
+            toggleReplace();
+        }
+            break;
+
+        case MobiusMidiState::ModeMute:
+        case MobiusMidiState::ModeOverdub: {
+            // these are derived minor modes, shouldn't be here 
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+        }
+            break;
+
+        case MobiusMidiState::ModePlay: {
+            // mute is a minor mode of Play, turn it off
+            // should actually do th for other cases too?
+            if (mute)
+              toggleMute();
+        }
+
+        case MobiusMidiState::ModePause: {
+            finishPause();
+        }
+            break;
+
+        default: {
+            // trace so we can think about these
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+        }
+            break;
+            
+    }
+}
+            
 //////////////////////////////////////////////////////////////////////
 //
 // Replace

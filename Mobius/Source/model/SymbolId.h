@@ -316,6 +316,8 @@ typedef enum {
     FuncUpCycle,
     FuncDownCycle,
     FuncSetCycles,
+    FuncStart,
+    FuncStop,
     
     // various diagnostic functions for testing
     FuncTraceStatus,

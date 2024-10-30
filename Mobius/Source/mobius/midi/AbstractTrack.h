@@ -58,6 +58,8 @@ class AbstractTrack
     virtual bool isPaused() = 0;
     virtual void startPause() = 0;
     virtual void finishPause() = 0;
+    virtual void doStart() = 0;
+    virtual void doStop() = 0;
    
     // simple one-shot actions
     virtual void doParameter(class UIAction* a) = 0;

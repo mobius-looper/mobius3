@@ -340,6 +340,11 @@ void TrackScheduler::doActionNow(UIAction* a)
             // can only be here to start a Pause, after that we'll end up
             // in handlePauseModeAction
         case FuncPause: track->startPause(); break;
+        case FuncStop: track->doStop(); break;
+        case FuncStart:
+        case FuncRestart:
+            track->doStart();
+            break;
 
         default: {
             char msgbuf[128];
@@ -589,6 +594,17 @@ void TrackScheduler::handlePauseAction(UIAction* src)
             track->finishPause();
             break;
 
+        case FuncStop:
+            // we're already paused, but this also rewinds
+            track->doStop();
+            break;
+
+        case FuncStart:
+        case FuncRestart:
+            // exit pause from the beginning
+            track->doStart();
+            break;
+
         case FuncResize: {
             // should allow the Cycle functions here too
             doResize(src);
@@ -735,6 +751,8 @@ void TrackScheduler::scheduleRecordEndAction(UIAction* src, TrackEvent* ending)
 
         case FuncRecord:
         case FuncPlay:
+        case FuncStart:
+        case FuncRestart:
             // these do not stack and we're already ending
             break;
 

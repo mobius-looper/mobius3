@@ -125,7 +125,8 @@
   <Function name="UpCycle" mayFocus='true' level='core'/>
   <Function name="DownCycle" mayFocus='true' level='core'/>
   <Function name="SetCycles" level='core'/>
-  <Function name="ClipStart" level='core'/>
+  <Function name="Start" level='core'/>
+  <Function name="Stop" level='core'/>
   
   <!-- various diagnostic functions for testing -->
   

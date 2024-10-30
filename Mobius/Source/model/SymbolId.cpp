@@ -386,7 +386,9 @@ SymbolDefinition SymbolDefinitions[] = {
     {"UpCycle", FuncUpCycle},
     {"DownCycle", FuncDownCycle},
     {"SetCycles", FuncSetCycles},
-
+    {"Start", FuncStart},
+    {"Stop", FuncStop},
+    
     //
     // Sampler
     //

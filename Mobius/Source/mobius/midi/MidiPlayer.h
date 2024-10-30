@@ -56,6 +56,7 @@ class MidiPlayer
     void pause();
     void unpause(bool noHold=false);
     bool isPaused();
+    void stop();
 
     void setDeviceId(int id);
     int getDeviceId();

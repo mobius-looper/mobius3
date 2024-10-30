@@ -415,6 +415,18 @@ void MidiPlayer::unpause(bool noHold)
     }
 }
 
+/**
+ * Stop is similar to pause except it rewinds to zero and
+ * flushes held notes.
+ */
+void MidiPlayer::stop()
+{
+    paused = true;
+    setMuteInternal(true, false);
+    setFrame(0);
+    flushHeld();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Play/Advance
