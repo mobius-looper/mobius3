@@ -397,7 +397,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
       isRecording = setupEmptyLoop(startingLoop);
 
     // ignore SwitchDuration if this was already a Return event
-    if (!e->isReturn) {
+    if (e == nullptr || !e->isReturn) {
         SwitchDuration duration = scheduler.valuator->getSwitchDuration(track->getNumber());
 
         if (duration != SWITCH_PERMANENT && isRecording) {
@@ -464,19 +464,17 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
         // master, this is where it should be changing the MIDI clock speed
     }
     
-    // I want stacked stuff to happen above, we're just a switcher
-#if 0    
-    // like SwitchDuration, if we started a Record because the loop was empty
-    // should be be doing the stacked events, these might cause premature
-    // Record termination?  may be best to ignore these like we do SwitchDuration
-    if (e != nullptr && e->stacked != nullptr && isRecording)
-      Trace(1, "LoopSwitcher: Stacked actions being performed after empty loop record");
-
-    // if the new loop is empty, these may go nowhere but they could have stacked
-    // Reocord or some things that have meaning
-    doStacked(e);
-#endif
-    
+    // if we started a Record because the loop was empty and there were stacked events,
+    // this can mess up the Record, it will typically end immediately which isn't what you want
+    // in theory these would stack after the record ended but we have no place to hang them
+    if (e != nullptr && e->stacked != nullptr && isRecording) {
+        Trace(2, "LoopSwitcher: Ignoring stacked actions after empty loop record");
+    }
+    else {
+        // if the new loop is empty, these may go nowhere but they could have stacked
+        // a Reocord or something that has meaning in an empty loop
+        scheduler.doStacked(e);
+    }
 }
 
 /**

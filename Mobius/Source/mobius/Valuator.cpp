@@ -1,6 +1,5 @@
 /**
- * Like the earlier ParameterFinder, this is going to start with a mess of different
- * interfaces just to start getting things funneling through Valuator.
+ * Everyone loves value.
  *
  */
 
@@ -32,9 +31,14 @@
 
 #include "Valuator.h"
 
-Valuator::Valuator(MobiusShell* s)
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
+Valuator::Valuator()
 {
-    shell = s;
 }
 
 Valuator::~Valuator()
@@ -52,28 +56,25 @@ Valuator::~Valuator()
     }
 }
 
-void Valuator::initialize(MobiusConfig* config, Session* session)
+void Valuator::initialize(SymbolTable* s, MslEnvironment* e)
 {
-    (void)config;
-    
-    msl = shell->getContainer()->getMslEnvironment();
-    symbols = shell->getContainer()->getSymbols();
+    symbols = s;
+    msl = e;
+}
+
+/**
+ * This may be called multiple times during the Valuator's lifetime.
+ * The objects remain stable between calls to configure.
+ */
+void Valuator::configure(MobiusConfig* mc, Session* s)
+{
+    configuration = mc;
+    session = s;
     
     audioActive = session->audioTracks;
     midiActive = session->midiTracks;
     
     initTracks();
-
-    // todo: the Session is where the concept of the "default preset"
-    // will live for MIDI tracks, need to dig that out and
-    // set it on each Track
-}
-
-void Valuator::reconfigure(MobiusConfig* config, Session* session)
-{
-    (void)config;
-    (void)session;
-    // work to do...
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -102,21 +103,35 @@ const int ValuatorMaxMidiTracks = 16;
 void Valuator::initTracks()
 {
     // start by only dealing with MIDI tracks
-    for (int i = 0 ; i < ValuatorMaxMidiTracks ; i++) {
-        Valuator::Track* t = new Valuator::Track();
-        t->number = audioActive + i;
+    if (midiActive > ValuatorMaxMidiTracks)
+      midiActive = ValuatorMaxMidiTracks;
+    
+    for (int i = midiTracks.size() ; i < ValuatorMaxMidiTracks ; i++) {
+        Track* t = new Track();
+        t->number = audioActive + 1 + i;
+        t->midi = true;
         midiTracks.add(t);
+    }
+
+    // find the Session::Track for each MIDI track
+    // Session sucks right now because tracks don't have a unique number
+    // like they do everywhere else, they have an "index" and a "type"
+    
+    for (int i = 0 ; i < midiActive ; i++) {
+        Track* t = midiTracks[i];
+        Session::Track* st = session->ensureTrack(Session::TypeMidi, i);
+        t->session = st;
     }
 }
 
 /**
- * Locate the track data for a normalized track number.
+ * Locate the track data for a public track number.
  */
 Valuator::Track* Valuator::getTrack(int number)
 {
     Valuator::Track* found = nullptr;
-    if (number >= audioActive) {
-        int index = number - audioActive;
+    if (number > audioActive) {
+        int index = number - audioActive - 1;
         if (index < ValuatorMaxMidiTracks)
           found = midiTracks[index];
     }
@@ -216,63 +231,112 @@ void Valuator::clearBindings(Track* track)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Group 1: MidiTracks pulling things from the Session
+// Group 1: MidiTracks pulling things from the Session only
+//
+// Used only by MIDI tracks
+// Now that we've reworked how getParameterOrdinal deals with the Session
+// Should just use that.
 //
 //////////////////////////////////////////////////////////////////////
 
-SyncSource Valuator::getSyncSource(Session::Track* trackdef, SyncSource dflt)
+Session::Track* Valuator::getSessionTrack(int number)
 {
-    return (SyncSource)Enumerator::getOrdinal(symbols,
-                                              ParamSyncSource,
-                                              trackdef->getParameters(),
-                                              dflt);
+    Session::Track* result = nullptr;
+    Track* t = getTrack(number);
+    if (t != nullptr)
+      result = t->session;
+
+    if (result == nullptr)
+      Trace(1, "Valuator: Missing Session::Track for %d", number);
+    
+    return result;
 }
 
-SyncTrackUnit Valuator::getTrackSyncUnit(Session::Track* trackdef, SyncTrackUnit dflt)
+SyncSource Valuator::getSyncSource(int number)
 {
-    return (SyncTrackUnit)Enumerator::getOrdinal(symbols,
-                                                 ParamTrackSyncUnit,
-                                                 trackdef->getParameters(),
-                                                 dflt);
+    SyncSource result = SYNC_NONE;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr)
+      result = (SyncSource)Enumerator::getOrdinal(symbols,
+                                                  ParamSyncSource,
+                                                  st->getParameters(),
+                                                  result);
+    return result;
 }
 
-SyncUnit Valuator::getSlaveSyncUnit(Session::Track* trackdef, SyncUnit dflt)
+SyncTrackUnit Valuator::getTrackSyncUnit(int number)
 {
-    return (SyncUnit)Enumerator::getOrdinal(symbols,
-                                            ParamSlaveSyncUnit,
-                                            trackdef->getParameters(),
-                                            dflt);
+    SyncTrackUnit result = TRACK_UNIT_LOOP;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr)
+      result = (SyncTrackUnit)Enumerator::getOrdinal(symbols,
+                                                     ParamTrackSyncUnit,
+                                                     st->getParameters(),
+                                                     result);
+    return result;
 }
 
-LeaderType Valuator::getLeaderType(Session::Track* trackdef, LeaderType dflt)
+SyncUnit Valuator::getSlaveSyncUnit(int number)
 {
-    return (LeaderType)Enumerator::getOrdinal(symbols,
-                                              ParamLeaderType,
-                                              trackdef->getParameters(),
-                                              dflt);
+    SyncUnit result = SYNC_UNIT_BEAT;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr)
+      result = (SyncUnit)Enumerator::getOrdinal(symbols,
+                                                ParamSlaveSyncUnit,
+                                                st->getParameters(),
+                                                result);
+    return result;
 }
 
-LeaderLocation Valuator::getLeaderSwitchLocation(Session::Track* trackdef, LeaderLocation dflt)
+LeaderType Valuator::getLeaderType(int number)
 {
-    return (LeaderLocation)Enumerator::getOrdinal(symbols,
-                                                  ParamLeaderSwitchLocation,
-                                                  trackdef->getParameters(),
-                                                  dflt);
+    LeaderType result = LeaderNone;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr) 
+      result = (LeaderType)Enumerator::getOrdinal(symbols,
+                                                  ParamLeaderType,
+                                                  st->getParameters(),
+                                                  result);
+    return result;
 }
 
-int Valuator::getLoopCount(Session::Track* trackdef, int dflt)
+LeaderLocation Valuator::getLeaderSwitchLocation(int number)
 {
-    int result = dflt;
-    Symbol* s = symbols->getSymbol(ParamLoopCount);
-    MslValue* v = trackdef->get(s->name);
-    if (v != nullptr)
-      result = v->getInt();
+    LeaderLocation result = LeaderLocationNone;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr)
+      result = (LeaderLocation)Enumerator::getOrdinal(symbols,
+                                                      ParamLeaderSwitchLocation,
+                                                      st->getParameters(),
+                                                      result);
+    return result;
+}
+
+int Valuator::getLoopCount(int number)
+{
+    int result = 2;
+    Session::Track* st = getSessionTrack(number);
+    if (st != nullptr) {
+        Symbol* s = symbols->getSymbol(ParamLoopCount);
+        if (s != nullptr) {
+            MslValue* v = st->get(s->name);
+            if (v != nullptr) {
+                result = v->getInt();
+                if (result < 1) {
+                    Trace(1, "Valuator: Malformed LoopCount parameter in session %d", number);
+                    result = 1;
+                }
+            }
+        }
+    }
     return result;
 }
 
 //////////////////////////////////////////////////////////////////////
 //
-// Group 2: Things currently in the Preset
+// Group 2: Things that might be in the Preset
+//
+// These are temporary until the session editor is fleshed out.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -280,18 +344,15 @@ Preset* Valuator::getPreset(Track* track)
 {
     Preset* preset = nullptr;
     
-    // use the Kernel's since that's the one that will be calling this the most
-    // hmm, dangerous
-    MobiusConfig* config = shell->getKernel()->getMobiusConfig();
-    
     int ordinal = track->activePreset;
     if (ordinal >= 0)
-      preset = config->getPreset(ordinal);
+      preset = configuration->getPreset(ordinal);
     
     // fall back to the default
     // !! should be in the Session
+    // actually Presets should go away entirely for MIDI tracks
     if (preset == nullptr)
-      preset = config->getPresets();
+      preset = configuration->getPresets();
 
     return preset;
 }
@@ -299,8 +360,7 @@ Preset* Valuator::getPreset(Track* track)
 /**
  * The primary mechanism to access parameter values from within the kernel.
  *
- * Values currently come from a Preset by default and may be overridden with
- * track-specific value bindings.
+ * For audio tracks values come from a Preset for MIDI tracks the Session.
  */
 int Valuator::getParameterOrdinal(int trackId, SymbolId symbolId)
 {
@@ -351,47 +411,66 @@ int Valuator::getParameterOrdinal(int trackId, SymbolId symbolId)
         }
         else {
             // no track bindings, look in the value containers
-            // only Preset right now
-            switch (s->parameterProperties->scope) {
-                case ScopeGlobal: {
-                    // MidiTrack should be getting these from the Session
-                    //Trace(1, "Valuator: Kernel attempt to access global parameter %s",
-                    //s->getName());
-                }
-                    break;
-                case ScopePreset: {
-                    Preset* p = getPreset(track);
-                    if (p != nullptr) {
-                        ExValue value;
-                        UIParameterHandler::get(symbolId, p, &value);
-                        ordinal = value.getInt();
+
+            // ugliness: until the Session transition is complete, fall back to the
+            // Preset if there is no value in the Session
+            
+            bool foundInSession = false;
+            if (track->midi && track->session != nullptr) {
+
+                ValueSet* params = track->session->getParameters();
+                if (params != nullptr) {
+                    MslValue* v = params->get(s->name);
+                    if (v != nullptr) {
+                        ordinal = v->getInt();
+                        foundInSession = true;
                     }
                 }
-                    break;
-                case ScopeSetup: {
-                    // if 
-                    // not sure why MidiTrack would want things here
-                    //Trace(1, "Valuator: Kernel attempt to access track parameter %s",
-                    //s->getName());
+            }
+
+            if (!foundInSession) {
+
+                switch (s->parameterProperties->scope) {
+                    case ScopeGlobal: {
+                        // MidiTrack should be getting these from the Session
+                        //Trace(1, "Valuator: Kernel attempt to access global parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopePreset: {
+                        Preset* p = getPreset(track);
+                        if (p != nullptr) {
+                            ExValue value;
+                            UIParameterHandler::get(symbolId, p, &value);
+                            ordinal = value.getInt();
+                        }
+                    }
+                        break;
+                    case ScopeSetup: {
+                        // if 
+                                // not sure why MidiTrack would want things here
+                                //Trace(1, "Valuator: Kernel attempt to access track parameter %s",
+                                //s->getName());
+                                }
+                        break;
+                    case ScopeTrack: {
+                        // mostly for levels which MidiTrack should be intercepting
+                        //Trace(1, "Valuator: Kernel attempt to access track parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopeUI: {
+                        // not expecting this from kernel tracks
+                        //Trace(1, "Valuator: Kernel attempt to access UI parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopeNone: {
+                        Trace(1, "Valuator: Kernel attempt to access unscoped parameter %s",
+                              s->getName());
+                    }
+                        break;
                 }
-                    break;
-                case ScopeTrack: {
-                    // mostly for levels which MidiTrack should be intercepting
-                    //Trace(1, "Valuator: Kernel attempt to access track parameter %s",
-                    //s->getName());
-                }
-                    break;
-                case ScopeUI: {
-                    // not expecting this from kernel tracks
-                    //Trace(1, "Valuator: Kernel attempt to access UI parameter %s",
-                    //s->getName());
-                }
-                    break;
-                case ScopeNone: {
-                    Trace(1, "Valuator: Kernel attempt to access unscoped parameter %s",
-                          s->getName());
-                }
-                    break;
             }
         }
     }

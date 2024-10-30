@@ -97,6 +97,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // then may want multiples
     void addMobiusConsole(class MobiusConsole* c);
     void removeMobiusConsole(class MobiusConsole* c);
+
+    // track a temporary file created for drag-and-drop
+    void addTemporaryFile(juce::TemporaryFile* tf) override;
     
     // used by a few thigns to disable components that
     // can only be used standalne, like AudioDevicePanel
@@ -387,6 +390,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     std::unique_ptr<class UIConfig> uiConfig;
     std::unique_ptr<class DynamicConfig> dynamicConfig;
     std::unique_ptr<class HelpCatalog> helpCatalog;
+
+    // temporary files created for outbound drag and drop
+    // destroying these will try to also delete the files
+    juce::OwnedArray<juce::TemporaryFile> tempFiles;
 
     // testing subsystem
     TestDriver testDriver {this};

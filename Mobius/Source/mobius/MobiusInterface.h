@@ -291,7 +291,8 @@ class MobiusInterface {
     // the Project style of doing things
     virtual juce::StringArray loadLoop(juce::File src) = 0;
     virtual juce::StringArray saveLoop(juce::File src) = 0;
-
+    virtual juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file) = 0;
+    
     // resolve a MSL symbol reference to something in the core
     // note that while it shares the same name as a method in MslContext
     // the MobiusInterface is NOT itself an MslContext

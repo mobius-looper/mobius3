@@ -20,6 +20,7 @@
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
+#include "Valuator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
 #include "TrackProperties.h"
@@ -133,6 +134,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // to send something up levels
     class UIAction* newUIAction();
 
+    juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file);
+
     //
     // MslContext
     //
@@ -238,6 +241,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // these we own
     KernelEventPool eventPool;
     KernelBinderator binderator {this};
+    Valuator valuator;
     MobiusPools mobiusPools;
     Notifier notifier;
 //    TrackSynchronizer synchronizer {this};

@@ -46,7 +46,8 @@ class MidiTracker : public LongWatcher::Listener, public TrackListener
     bool doQuery(class Query* q);
 
     void loadLoop(class MidiSequence* seq, int track, int loop);
-
+    juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file);
+    
     class MobiusMidiState* getState();
 
     class MidiPools* getPools();

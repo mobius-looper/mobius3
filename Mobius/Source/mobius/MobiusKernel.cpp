@@ -147,6 +147,10 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     configuration = config;
     session = ses;
 
+    // this should replace direct access to configuration and session
+    valuator.initialize(container->getSymbols(), container->getMslEnvironment());
+    valuator.configure(configuration, session);
+
     // register ourselves as the audio listener
     // unclear when things start pumping in, but do this last
     // after we've had a chance to make ourselves look pretty
@@ -281,6 +285,10 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // send the old one back
     communicator->kernelSend(msg);
 
+    // sigh, the two new config objects are sent down one at a time,
+    // should be together
+    valuator.configure(configuration, session);
+
     // this would be the place where make changes for
     // the new configuration, nothing right now
     // this is NOT where track configuration comes in
@@ -305,6 +313,10 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // send the old one back
     communicator->kernelSend(msg);
 
+    // sigh, the two new config objects are sent down one at a time,
+    // should be together
+    valuator.configure(configuration, session);
+
     if (mMidi != nullptr)
       mMidi->loadSession(session);
 }
@@ -314,7 +326,7 @@ void MobiusKernel::loadSession(KernelMessage* msg)
  */
 Valuator* MobiusKernel::getValuator()
 {
-    return shell->getValuator();
+    return &valuator;
 }
 
 /**
@@ -397,6 +409,25 @@ void MobiusKernel::resume()
     
     suspendRequested = false;
     suspended = false;
+}
+
+/**
+ * Save a loop to a file.
+ * This should only be called when the kernel is in a suspended state.
+ */
+juce::StringArray MobiusKernel::saveLoop(int trackNumber, int loopNumber, juce::File& file)
+{
+    juce::StringArray errors;
+    
+    if (trackNumber <= audioTracks) {
+        // todo: should make this work eventually, but currently only used by
+        // MIDI drag and drop
+        Trace(1, "MobiusKernel::saveLoop Saving audio loops not supported");
+    }
+    else {
+        errors = mMidi->saveLoop(trackNumber, loopNumber, file);
+    }
+    return errors;
 }
 
 //////////////////////////////////////////////////////////////////////

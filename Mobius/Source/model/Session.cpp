@@ -50,6 +50,9 @@ Session::Track* Session::getTrack(TrackType type, int index)
  * Find or create a definition for this track index.
  * Because the indexes are expected to match array indexes,
  * need to flesh out preceeding tracks if they don't exist.
+ *
+ * todo: I don't like the way this is working.  Everywhere else tracks
+ * just have a unique number and may be of either type.
  */
 Session::Track* Session::ensureTrack(TrackType type, int index)
 {

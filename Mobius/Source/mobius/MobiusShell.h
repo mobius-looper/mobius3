@@ -17,7 +17,6 @@
 #include "MobiusInterface.h"
 #include "KernelEventHandler.h"
 #include "ProjectManager.h"
-#include "Valuator.h"
 
 class MobiusShell : public MobiusInterface
 {
@@ -65,6 +64,7 @@ class MobiusShell : public MobiusInterface
     juce::StringArray loadProject(juce::File src) override;
     juce::StringArray saveLoop(juce::File dest) override;
     juce::StringArray loadLoop(juce::File src) override;
+    juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file) override;
     
     //
     // Internal component services
@@ -87,10 +87,6 @@ class MobiusShell : public MobiusInterface
 
     MobiusListener* getListener() {
         return listener;
-    }
-
-    class Valuator* getValuator() {
-        return &valuator;
     }
 
   protected:
@@ -139,9 +135,6 @@ class MobiusShell : public MobiusInterface
     // ActionPool is also shared with Kernel
     class UIActionPool actionPool;
 
-    // newer parameter manager shared with Kernel
-    Valuator valuator {this};
-    
     // the kernel itself
     // todo: try to avoid passing this down, can we do
     // everything with messages?

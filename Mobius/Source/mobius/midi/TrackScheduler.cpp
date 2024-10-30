@@ -71,13 +71,18 @@ void TrackScheduler::initialize(MobiusKernel* k, TrackEventPool* epool, UIAction
 
 /**
  * Derive sync options from a session.
+ *
+ * Valuator now knows about the Session so we don't need to pass the
+ * Session::Track in anymore.
  */
 void TrackScheduler::configure(Session::Track* def)
 {
+    (void)def;
+    
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
-    sessionSyncSource = valuator->getSyncSource(def, SYNC_NONE);
-    sessionSyncUnit = valuator->getSlaveSyncUnit(def, SYNC_UNIT_BEAT);
+    sessionSyncSource = valuator->getSyncSource(track->getNumber());
+    sessionSyncUnit = valuator->getSlaveSyncUnit(track->getNumber());
 
     // set this up for host and midi, track sync will be different
     Pulse::Type ptype = Pulse::PulseBeat;
@@ -87,7 +92,7 @@ void TrackScheduler::configure(Session::Track* def)
     if (sessionSyncSource == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
-        SyncTrackUnit stu = valuator->getTrackSyncUnit(def, TRACK_UNIT_LOOP);
+        SyncTrackUnit stu = valuator->getTrackSyncUnit(track->getNumber());
         ptype = Pulse::PulseLoop;
         if (stu == TRACK_UNIT_SUBCYCLE)
           ptype = Pulse::PulseBeat;
@@ -155,6 +160,11 @@ void TrackScheduler::setFollowTrack(TrackProperties& props)
 // Actions
 //
 //////////////////////////////////////////////////////////////////////
+
+void TrackScheduler::leaderEvent(TrackProperties& props)
+{
+    loopSwitcher.leaderEvent(props);
+}
 
 /**
  * Called by MidiTrack.processAudioStream to manage the
@@ -326,7 +336,11 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncUnroundedInsert: track->unroundedInsert(); break;
 
         case FuncResize: doResize(a); break;
-            
+
+            // can only be here to start a Pause, after that we'll end up
+            // in handlePauseModeAction
+        case FuncPause: track->startPause(); break;
+
         default: {
             char msgbuf[128];
             snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
@@ -568,8 +582,6 @@ bool TrackScheduler::isPaused()
  */
 void TrackScheduler::handlePauseAction(UIAction* src)
 {
-    SymbolId sid = src->symbol->id;
-
     switch (src->symbol->id) {
 
         case FuncPause:
@@ -643,7 +655,7 @@ void TrackScheduler::handleRecordAction(UIAction* src)
     if (recevent != nullptr) {
         if (track->getMode() == MobiusMidiState::ModeRecord) {
             // this is a pending end
-            scheuleRecordEndAction(src, recevent);
+            scheduleRecordEndAction(src, recevent);
         }
         else {
             scheduleRecordPendingAction(src, recevent);
@@ -659,12 +671,15 @@ void TrackScheduler::handleRecordAction(UIAction* src)
         // need to end the recording
 
         TrackEvent* ending = scheduleRecordEnd();
-        
-        if (ending != nullptr)
-          schedueRecordEndAction(src);
-        else
-          doActionNow(src);
-    }   
+
+        SymbolId sid = src->symbol->id;
+        if (sid != FuncRecord && sid != FuncAutoRecord) {
+            if (ending != nullptr)
+              scheduleRecordEndAction(src, ending);
+            else
+              doActionNow(src);
+        }   
+    }
 }
 
 /**
@@ -678,6 +693,8 @@ void TrackScheduler::handleRecordAction(UIAction* src)
  */
 void TrackScheduler::scheduleRecordPendingAction(UIAction* src, TrackEvent* starting)
 {
+    (void)starting;
+    
     switch (src->symbol->id) {
 
         case FuncRecord:
@@ -763,12 +780,12 @@ void TrackScheduler::scheduleRecordEndAction(UIAction* src, TrackEvent* ending)
 
 bool TrackScheduler::isRounding()
 {
-    return events.find(MobiusMidiTrack::EventRound);
+    return events.find(TrackEvent::EventRound);
 }
 
 void TrackScheduler::handleRoundingAction(UIAction* src)
 {
-    TrackEvent* ending = events.find(MobiusMidiTrack::EventRound);
+    TrackEvent* ending = events.find(TrackEvent::EventRound);
     if (ending == nullptr) {
         Trace(1, "TrackScheduler::handleRoundingAction With no event");
     }
@@ -790,10 +807,10 @@ void TrackScheduler::handleRoundingAction(UIAction* src)
         if (src->symbol->id == function) {
             // the same function that scheduled the rounding is being used again
 
-            if (event->extension) {
+            if (ending->extension) {
                 // if this is an extension event, using the function again
                 // simply stops extensions and converts it to a normal rounded ending
-                event->extension = false;
+                ending->extension = false;
             }
             else {
                 // extend the rounding period
@@ -802,11 +819,11 @@ void TrackScheduler::handleRoundingAction(UIAction* src)
                 // zero means 1 which is not shown, any other
                 // positive number is shown
                 // cleaner if this just counted up from zero
-                if (event->multiples == 0)
-                  event->multiples = 2;
+                if (ending->multiples == 0)
+                  ending->multiples = 2;
                 else
-                  event->multiples++;
-                event->frame = track->extendRounding();
+                  ending->multiples++;
+                ending->frame = track->extendRounding();
             }
         }
         else {
@@ -814,9 +831,9 @@ void TrackScheduler::handleRoundingAction(UIAction* src)
             // if this was an auto-extender (Insert) it stops and becomes
             // a normal ending
             // todo: may want some filtering here and some that don't stack
-            event->extension = false;
+            ending->extension = false;
             Trace(2, "TrackScheduler: Stacking %s", src->symbol->getName());
-            event->stack(copyAction(src));
+            ending->stack(copyAction(src));
         }
     }
 }
@@ -836,7 +853,7 @@ bool TrackScheduler::doRound(TrackEvent* event)
         track->finishMultiply();
     }
     else if (mode == MobiusMidiState::ModeInsert) {
-        if (!e->extension) {
+        if (!event->extension) {
             track->finishInsert();
         }
         else {
@@ -847,21 +864,21 @@ bool TrackScheduler::doRound(TrackEvent* event)
             // kind of awkward control flow here to prevent disposing the event
             // which is what TrackAdvancer normally does, cleaner to just make
             // a new one, but we'd have to copy it
-            e->frame = track->getModeEndFrame();
-            events.add(e);
+            event->frame = track->getModeEndFrame();
+            events.add(event);
             // prevent the stack from being executed
-            e = nullptr;
+            event = nullptr;
         }
     }
     else {
         Trace(1, "TrackAdvancer: EventRound encountered unexpected track mode");
     }
     
-    if (e != nullptr)
-      doStacked(e);
+    if (event != nullptr)
+      doStacked(event);
 
     // returning true means it was reused
-    return (e == nullptr);
+    return (event == nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -881,14 +898,14 @@ void TrackScheduler::scheduleAction(UIAction* src)
 {
     MobiusMidiState::Mode mode = track->getMode();
 
-    if (mode == MobiusMidiState::Multiply) {
+    if (mode == MobiusMidiState::ModeMultiply) {
         scheduleRounding(src, mode);
     }
     else if (mode == MobiusMidiState::ModeInsert) {
         scheduleRounding(src, mode);
     }
     else {
-        SymbolId sid = src->action->id;
+        SymbolId sid = src->symbol->id;
 
         switch (sid) {
             case FuncRecord:
@@ -930,7 +947,7 @@ void TrackScheduler::scheduleAction(UIAction* src)
  */
 void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
 {
-    event = eventPool->newEvent();
+    TrackEvent* event = eventPool->newEvent();
     event->type = TrackEvent::EventRound;
 
     bool roundRelative = false;
@@ -950,8 +967,8 @@ void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
 
     // if this is something other than the mode function it is stacked
     // !! todo: need to support function "families"
-    if (a->symbol->id != function) {
-        Trace(2, "TrackScheduler: Stacking %s", a->symbol->getName());
+    if (src->symbol->id != function) {
+        Trace(2, "TrackScheduler: Stacking %s", src->symbol->getName());
         event->stack(copyAction(src));
     }
             
@@ -997,11 +1014,11 @@ void TrackScheduler::scheduleQuantized(UIAction* src)
     else {
         event = eventPool->newEvent();
         event->type = TrackEvent::EventAction;
-        event->frame = getQuantizedFrame(a->symbol->id, quant);
+        event->frame = getQuantizedFrame(src->symbol->id, quant);
         event->primary = copyAction(src);
         events.add(event);
 
-        Trace(2, "TrackScheduler: Quantized %s to %d", a->symbol->getName(), event->frame);
+        Trace(2, "TrackScheduler: Quantized %s to %d", src->symbol->getName(), event->frame);
     }
 }
 
@@ -1097,9 +1114,11 @@ int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
  */
 void TrackScheduler::scheduleRecord(UIAction* a)
 {
+    (void)a;
+    
     // the loop starts clean, and should already be if we did mode
     // transitions correctly
-    track->reset(false);
+    track->doReset(false);
 
     if (isRecordSynced()) {
         (void)addRecordEvent();

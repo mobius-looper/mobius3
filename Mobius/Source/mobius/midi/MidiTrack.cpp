@@ -97,6 +97,9 @@ MidiTrack::~MidiTrack()
  * keep playing during minor adjustments to the session.
  *
  * todo: should this be here or should we let TrackScheduler deal with.
+ *
+ * todo: Valuator should now be considered the manager of the Session,
+ * we don't need to pass it in.
  * 
  */
 void MidiTrack::configure(Session::Track* def)
@@ -106,10 +109,11 @@ void MidiTrack::configure(Session::Track* def)
 
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
     
-    // todo: loopsPerTrack from somewhere
-    loopCount = valuator->getLoopCount(def, 2);
+    loopCount = valuator->getLoopCount(number);
     
     // tell the player where to go
+    // !! todo: Valuator should be handling this but we need accessors
+    // that can return strings
     MslValue* v = def->get("outputDevice");
     if (v == nullptr) {
         player.setDeviceId(0);
@@ -125,8 +129,8 @@ void MidiTrack::configure(Session::Track* def)
     
     midiThru = def->getBool("midiThru");
 
-    leaderType = valuator->getLeaderType(def, LeaderNone);
-    leaderSwitchLocation = valuator->getLeaderSwitchLocation(def, LeaderLocationNone);
+    leaderType = valuator->getLeaderType(number);
+    leaderSwitchLocation = valuator->getLeaderSwitchLocation(number);
     leader = def->getInt("leaderTrack");
     followRecord = def->getBool("followRecord");
     followRecordEnd = def->getBool("followRecordEnd");
@@ -550,9 +554,9 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     // some simulated modes
     if (mode == MobiusMidiState::ModePlay) {
         if (overdub)
-          mode = MobiusMidiState::ModeOverdub;
+          state->mode = MobiusMidiState::ModeOverdub;
         else if (mute)
-          mode = MobiusMidiState::ModeMute;
+          state->mode = MobiusMidiState::ModeMute;
     }
     
     state->overdub = overdub;
@@ -1062,9 +1066,11 @@ void MidiTrack::finishRecord()
  *
  * Actually, I abandoned this, but it's a nice idea, revisit.
  */
-#if 0
 void MidiTrack::doPlay()
 {
+    Trace(1, "MidiTrack::doPlay Not implemented");
+    
+#if 0
     switch (mode) {
 
         case ModeReset:
@@ -1091,8 +1097,8 @@ void MidiTrack::doPlay()
             // noop
             break;
     }
-}
 #endif
+}
             
 //////////////////////////////////////////////////////////////////////
 //
@@ -1469,7 +1475,6 @@ void MidiTrack::finishSwitch(int newIndex)
         mode = MobiusMidiState::ModeReset;
     }
     else {
-        int currentFrames = recorder.getFrames();
         int currentFrame = recorder.getFrame();
         
         recorder.resume(playing);
@@ -1524,11 +1529,22 @@ void MidiTrack::finishSwitch(int newIndex)
     }
 }
 
-void MidiTrack::loopCopy(int previoius, bool sound)
+void MidiTrack::loopCopy(int previous, bool sound)
 {
-    (void)previous;
-    (void)sound;
-    Trace(1, "MidiTrack: Lost loop copy!");
+    MidiLoop* src = loops[previous];
+    MidiLayer* layer = src->getPlayLayer();
+    
+    if (sound)
+      Trace(2, "MidiTrack: Empty loop copy");
+    else
+      Trace(2, "MidiTrack: Empty loop time copy");
+      
+    if (layer != nullptr) {
+        recorder.copy(layer, sound);
+        // commit the copy to the Loop and prep another one
+        shift(false);
+        mode = MobiusMidiState::ModePlay;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

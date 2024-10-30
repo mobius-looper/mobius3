@@ -547,6 +547,9 @@ void Supervisor::shutdown()
     // make the editor call updateSymbolProperties, take this out
     //symbolizer.saveSymbolProperties();
 
+    // reclaim any temporary files created for drag-and-drop
+    tempFiles.clear();
+
     // Started getting a Juce leak detection on the StringArray
     // inside ScriptProperties on a Symbol when shutting down the app.
     // I think this is because Symbols is a static object outside of any Juce
@@ -561,6 +564,18 @@ void Supervisor::shutdown()
     
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
+}
+
+/**
+ * Add a TemporaryFile to a list that will be cleared on shutdown.
+ * While TemporaryFile was intended to be used as a stack object, when
+ * creating files for outbound drag-and-drop we have to let them live
+ * for awhile since DnD is an async process and the stack frame that
+ * created them will end soon after they are created.
+ */
+void Supervisor::addTemporaryFile(juce::TemporaryFile* tf)
+{
+    tempFiles.add(tf);
 }
 
 /**

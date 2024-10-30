@@ -7,6 +7,8 @@
 #include "../../model/Symbol.h"
 
 #include "../../AudioClerk.h"
+// for saving temporary loop files
+#include "../../mobius/MobiusInterface.h"
 
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -841,32 +843,50 @@ void StripLoopStack::mouseDown(const juce::MouseEvent& e)
     
     int target = getDropTarget(e.getMouseDownX(), e.getMouseDownY());
 
-    // sigh, I wanted to make ctrl-click always do the file selector
-    // but this goes to the active loop so if we don't also select it, it will
-    // overwrite the wrong loop, might be nice to pass the desired target loop
-    // in when the chooser is launched
-#if 0
-    if (mods.isCtrlDown()) {
+    if (mods.isAltDown()) {
         // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
-        Trace(2, "StripLoopStack: Ctrl-Mouse %s down over loop %d", bstr, target);
+        Trace(2, "StripLoopStack: Alt-Mouse %s down over loop %d", bstr, target);
+        MobiusViewTrack* track = strip->getTrackView();
+        // only do this for midi tracks for now
+        if (track->midi) {
+            // save the current loop in a temporary file
+            juce::TemporaryFile* tfile = new juce::TemporaryFile(".mid", 0);
+            juce::StringArray errors = strip->getProvider()->getMobius()->saveLoop(tfile->getFile());
+            if (errors.size() > 0) {
+                Trace(1, "StripElements: Save loop had errors");
+            }
+            juce::StringArray paths;
+            paths.add(tfile->getFile().getFullPathName());
+            // second arg is "canMoveFiles", since Supervisor is going to hold onto these
+            // and clean them up at shutdown, not sure if moving them would mess that up
+            bool status = juce::DragAndDropContainer::performExternalDragDropOfFiles(paths, false);
+            if (!status) {
+                Trace(1, "LoopStack: Failed to start external drag and drop");
+                delete tfile;
+            }
+            else {
+                strip->getProvider()->addTemporaryFile(tfile);
+            }
+        }
     }
-#endif        
-    // Trace(2, "StripLoopStack: Mouse %s down over loop %d", bstr, target);
-    // this I want to be treated as a loop switch
-    MobiusViewTrack* track = strip->getTrackView();
-    if (track->activeLoop != target) {
-        UIAction a;
-        a.symbol = strip->getProvider()->getSymbols()->getSymbol(FuncSelectLoop);
-        a.value = target + 1;
-        a.setScopeTrack(track->index + 1);
-        strip->getProvider()->doAction(&a);
-    }
+    else {
+        // Trace(2, "StripLoopStack: Mouse %s down over loop %d", bstr, target);
+        // this I want to be treated as a loop switch
+        MobiusViewTrack* track = strip->getTrackView();
+        if (track->activeLoop != target) {
+            UIAction a;
+            a.symbol = strip->getProvider()->getSymbols()->getSymbol(FuncSelectLoop);
+            a.value = target + 1;
+            a.setScopeTrack(track->index + 1);
+            strip->getProvider()->doAction(&a);
+        }
 
-    // whether we changed or not, ctrol-click starts the load process
-    // this will be async and in theory the switch won't have finished by the
-    // time we're done so maybe only do this if the loop is in Reset or Pause?
-    if (mods.isCtrlDown() && track->midi)
-      strip->getProvider()->menuLoadMidi();
+        // whether we changed or not, ctrl-click starts the load process
+        // this will be async and in theory the switch won't have finished by the
+        // time we're done so maybe only do this if the loop is in Reset or Pause?
+        if (mods.isCtrlDown() && track->midi)
+          strip->getProvider()->menuLoadMidi();
+    }
 }
 
 /****************************************************************************/

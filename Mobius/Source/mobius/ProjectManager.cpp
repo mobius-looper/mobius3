@@ -849,6 +849,32 @@ juce::StringArray ProjectManager::saveLoop(juce::File file)
     return errors;
 }
 
+/**
+ * Newer interface, primarily for saving drag-and-drop temp files.
+ * Here the track number and loop number are specified, which is what
+ * normal saveLoop should be doing too.
+ */
+juce::StringArray ProjectManager::saveLoop(int trackNumber, int loopNumber, juce::File& file)
+{
+    errors.clear();
+
+    // don't mess around with fastAndLoose mode for this one
+    if (shell->suspendKernel()) {
+
+        MobiusKernel* kernel = shell->getKernel();
+        errors = kernel->saveLoop(trackNumber, loopNumber, file);
+        
+        shell->resumeKernel();
+    }
+    else {
+        errors.add("Unable to suspend Kernel");
+    }
+
+    return errors;
+}
+
+
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

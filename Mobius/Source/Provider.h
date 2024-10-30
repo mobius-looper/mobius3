@@ -40,13 +40,14 @@ class Provider
 
     virtual void addAlertListener(AlertListener* l) = 0;
     virtual void removeAlertListener(AlertListener* l) = 0;
-    
+
     virtual class MobiusConfig* getMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;
     virtual class MobiusMidiTransport* getMidiTransport() = 0;
     virtual class MidiRealizer* getMidiRealizer() = 0;
     virtual class MidiManager* getMidiManager() = 0;
+    virtual class MobiusInterface* getMobius() = 0;
     virtual int getSampleRate() = 0;
 
     virtual class UIConfig* getUIConfig() = 0;
@@ -64,5 +65,7 @@ class Provider
 
     // kludge for ctrl-click in the loop stack
     virtual void menuLoadMidi() = 0;
+
+    virtual void addTemporaryFile(juce::TemporaryFile* tf) = 0;
     
 };

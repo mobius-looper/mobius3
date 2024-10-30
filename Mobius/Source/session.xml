@@ -12,7 +12,7 @@
       <Value name="followSize" value="1" type="int"/>
       <Value name="leaderSwitchLocation" value="loop" type="enum" ordinal="1"/>
       <Value name="leaderTrack" value="1"/>
-      <Value name="leaderType" value="track" type="enum" ordinal="1"/>
+      <Value name="leaderType" value="none" type="enum" ordinal="0"/>
       <Value name="loopCount" value="2"/>
       <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>

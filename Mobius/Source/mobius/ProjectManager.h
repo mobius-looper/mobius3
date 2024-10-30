@@ -29,6 +29,7 @@ class ProjectManager
 
     juce::StringArray loadLoop(juce::File file);
     juce::StringArray saveLoop(juce::File file);
+    juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file);
     
   private:
 

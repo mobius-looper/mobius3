@@ -462,6 +462,36 @@ void MidiTracker::loadLoop(MidiSequence* seq, int track, int loop)
     }
 }
 
+/**
+ * Experimental drag-and-drop file saver
+ */
+juce::StringArray MidiTracker::saveLoop(int trackNumber, int loopNumber, juce::File& file)
+{
+    juce::StringArray errors;
+    
+    int trackIndex = trackNumber - audioTracks - 1;
+    if (trackIndex < 0 || trackIndex >= activeTracks) {
+        Trace(1, "MidiTracker::loadLoop Invalid track number %d", trackNumber);
+    }
+    else {
+        MidiTrack* t = tracks[trackIndex];
+
+        // well this was a long way to go for nothing
+        // hating the interface where we have to worry about files, that's
+        // all up in MidiClerk
+        // better for Mobius to return the flattened MidiSequence and let the UI
+        // layer deal with the files
+        // Audio files used to work that way, what is ProjectManager going to do ?
+        //MidiSequence* seq = t->flattenSequence();
+
+        Trace(1, "MidiTracker::saveLoop Not implemented");
+        (void)t;
+        (void)loopNumber;
+        (void)file;
+    }
+    return errors;
+}    
+
 //////////////////////////////////////////////////////////////////////
 //
 // Object Pools

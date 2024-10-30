@@ -253,12 +253,6 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
     MobiusConfig* kernelCopy = config->clone();
     Session* kernelSession = new Session(ses);
 
-    // does it matter which copy we share here?  this can be used by both
-    // shell and kernel, kernel is probably safer, though atm it doesn't
-    // retain a pointer
-    // must be done before Kernel
-    valuator.initialize(kernelCopy, kernelSession);
-
     kernel.initialize(container, kernelCopy, kernelSession);
 
 }
@@ -294,14 +288,11 @@ void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
     installActivationSymbols();
 
     // clone it again and give it to the kernel
+    // it sucks that these are two messages!
     MobiusConfig* kernelCopy = config->clone();
     Session* kernelSession = new Session(ses);
     sendKernelConfigure(kernelCopy);
     sendKernelSession(kernelSession);
-
-    // starting to hate the ownership of Valuator, if it is mainly
-    // for Kernel, then let it do this
-    valuator.reconfigure(kernelCopy, kernelSession);
 }
 
 /**
@@ -1525,6 +1516,11 @@ juce::StringArray MobiusShell::loadLoop(juce::File src)
 juce::StringArray MobiusShell::saveLoop(juce::File dest)
 {
     return projectManager.saveLoop(dest);
+}
+
+juce::StringArray MobiusShell::saveLoop(int trackNumber, int loopNumber, juce::File& dest)
+{
+    return projectManager.saveLoop(trackNumber, loopNumber, dest);
 }
 
 /**
