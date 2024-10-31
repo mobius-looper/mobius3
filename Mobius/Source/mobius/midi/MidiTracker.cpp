@@ -54,6 +54,7 @@ MidiTracker::MidiTracker(MobiusContainer* c, MobiusKernel* k)
 
 MidiTracker::~MidiTracker()
 {
+    tracks.clear();
 }
 
 /**

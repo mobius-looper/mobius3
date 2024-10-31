@@ -433,6 +433,11 @@ class MobiusContainer
 
     virtual class SymbolTable* getSymbols() = 0;
 
+    /**
+     * For track followers, get the number of the track that has action focus.
+     */
+    virtual int getFocusedTrack() = 0;
+
     virtual void writeDump(juce::String file, juce::String content) = 0;
 
 };

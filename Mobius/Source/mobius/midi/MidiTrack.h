@@ -182,6 +182,7 @@ class MidiTrack : public AbstractTrack
     juce::OwnedArray<class MidiLoop> loops;
     int loopCount = 0;
     int loopIndex = 0;
+    bool loopsLoaded = false;
 
     // the meat
     MidiRecorder recorder {this};

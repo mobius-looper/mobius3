@@ -157,14 +157,39 @@ void TrackScheduler::setFollowTrack(TrackProperties& props)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Actions
+// Leader Events
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Currently can only be here when listening to a leader track location
+ * for loop switch.
+ */
 void TrackScheduler::leaderEvent(TrackProperties& props)
 {
     loopSwitcher.leaderEvent(props);
 }
+
+/**
+ * Called when the leader track has changed size.
+ */
+void TrackScheduler::leaderLoopResize(TrackProperties& props)
+{
+    (void)props;
+    Trace(2, "TrackScheduler: Leader track was resized");
+
+    track->resize(props);
+    // I think this can reset?
+    // actually no, it probably needs to be a component of the
+    // adjusted play frame proportion
+    advancer.rateCarryover = 0.0f;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Called by MidiTrack.processAudioStream to manage the

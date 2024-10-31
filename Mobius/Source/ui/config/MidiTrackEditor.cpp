@@ -12,7 +12,7 @@
 
 #include "MidiTrackEditor.h"
 
-MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), followerForm(s)
+MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), followerForm(s), switchForm(s)
 {
     setName("MidiTrackEditor");
     render();
@@ -117,11 +117,13 @@ void MidiTrackEditor::loadTrack(int index)
         generalForm.resized();
 
         followerForm.load(track->getParameters());
+        switchForm.load(track->getParameters());
     }
     else {
         // didn't have a definition for this one, reset the fields to initial values
         generalForm.load(nullptr);
         followerForm.load(nullptr);
+        switchForm.load(nullptr);
     }
 }
 
@@ -180,7 +182,8 @@ void MidiTrackEditor::saveTrack(int index)
     ValueSet* params = track->ensureParameters();
     generalForm.save(params);
     followerForm.save(params);
-
+    switchForm.save(params);
+    
     juce::String devname = inputDevice.getSelectionText();
     if (devname == "Any") {
         // don't save this
@@ -216,12 +219,17 @@ void MidiTrackEditor::render()
     generalForm.add(&inputDevice);
     generalForm.add(&outputDevice);
     generalForm.add(&midiThru);
+    generalForm.addSpacer();
     
     generalForm.addField(ParamSyncSource);
     generalForm.addField(ParamTrackSyncUnit);
     generalForm.addField(ParamSlaveSyncUnit);
     generalForm.addField(ParamBeatsPerBar);
+    generalForm.addSpacer();
+    
     generalForm.addField(ParamLoopCount);
+    generalForm.addField(ParamQuantize);
+    generalForm.addField(ParamSubcycles);
     
     tabs.add("General", &generalForm);
 
@@ -236,6 +244,16 @@ void MidiTrackEditor::render()
     //followerForm.addField(ParamFollowLocation);
     
     tabs.add("Follower", &followerForm);
+
+    switchForm.addField(ParamSwitchQuantize);
+    switchForm.addField(ParamEmptyLoopAction);
+    switchForm.addField(ParamSwitchDuration);
+    switchForm.addField(ParamSwitchLocation);
+
+    tabs.add("Loop Switch", &switchForm);
+
+    
+    
     
     addAndMakeVisible(tabs);
 }

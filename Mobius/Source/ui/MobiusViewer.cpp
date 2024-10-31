@@ -1085,6 +1085,15 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     // having trouble tracking reset for some reason
     if (tview->frames > 0 && tstate->frames == 0)
       tview->refreshLoopContent = true;
+
+    // special flag set after file loading, jesus, it might just be easier
+    // and more reliable to test the lengths of every loop
+    if (tstate->refreshLoopContent) {
+        tview->refreshLoopContent = true;
+        // this is "latching" and we are required to clear it when
+        // the UI is prepared to deal with it
+        tstate->refreshLoopContent = false;
+    }
     
     tview->frames = (int)(tstate->frames);
     tview->subcycles = tstate->subcycles;

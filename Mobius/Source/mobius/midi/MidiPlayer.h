@@ -26,11 +26,8 @@ class MidiPlayer
 
     void reset();
     void change(class MidiLayer* l, int newFrame = -1);
-    void setFrame(int frame);
-    void restart();
     void shift(class MidiLayer* l);
-    void setMute(bool b);
-    bool isMuted();
+    void restart();
     
     //
     // Play State
@@ -39,6 +36,13 @@ class MidiPlayer
     int getFrame();
     int getFrames();
     int captureEventsSent();
+    void setMute(bool b);
+    bool isMuted();
+    void setPause(bool b, bool noHold = false);
+    bool isPaused();
+    
+    void stop();
+    void setFrame(int frame);
     
     //
     // Play Advance
@@ -51,12 +55,6 @@ class MidiPlayer
 
     // store a playback checkpoint at the current frame
     void checkpoint();
-
-    // pause playback
-    void pause();
-    void unpause(bool noHold=false);
-    bool isPaused();
-    void stop();
 
     void setDeviceId(int id);
     int getDeviceId();

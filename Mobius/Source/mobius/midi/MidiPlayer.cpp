@@ -42,6 +42,8 @@ MidiPlayer::MidiPlayer(MidiTrack* t)
 
 MidiPlayer::~MidiPlayer()
 {
+    pools->reclaim(restoredHeld);
+    restoredHeld = nullptr;
 }
 
 /**
@@ -112,19 +114,6 @@ void MidiPlayer::reset()
 }
 
 /**
- * Here after playing to the end and the track decided not to
- * shift a new layer.  Just start over from the beginning.
- */
-void MidiPlayer::restart()
-{
-    if (paused) return;
-    
-    playFrame = 0;
-    if (playLayer != nullptr)
-      playLayer->resetPlayState();
-}
-
-/**
  * Unlike setLayer, we expect this to have contunity with the last
  * layer so don't need to force notes off.
  *
@@ -148,6 +137,19 @@ void MidiPlayer::shift(MidiLayer* layer)
         playFrame = 0;
         playLayer->resetPlayState();
     }
+}
+
+/**
+ * Here after playing to the end and the track decided not to
+ * shift a new layer.  Just start over from the beginning.
+ */
+void MidiPlayer::restart()
+{
+    if (paused) return;
+    
+    playFrame = 0;
+    if (playLayer != nullptr)
+      playLayer->resetPlayState();
 }
 
 /**
@@ -235,43 +237,6 @@ void MidiPlayer::saveHeld()
 }
 
 /**
- * Set the playback position
- * This is usually combined with change() for undo/redo/switch.
- * This can also be used to jump around in the play layer without changing it.
- *
- * todo: this hasn't been shutting notes off, it will need to if this becomes
- * a more general play mover.
- */
-void MidiPlayer::setFrame(int frame)
-{
-    // todo: should we make a checkpoint here?
-    // setFrame is called in more situations than change() so I think no, but
-    // in those cases heldNotes should be empty
-    
-    if (loopFrames == 0) {
-        // doesn't matter what they asked for
-        playFrame = 0;
-    }
-    else {
-        // wrap within the available frames
-        int adjustedFrame = frame;
-        if (frame > loopFrames) {
-            adjustedFrame = frame % loopFrames;
-            Trace(2, "MidiPlayer: Wrapping play frame from %d to %d",
-                  frame, adjustedFrame);
-        }
-        
-        playFrame = adjustedFrame;
-    }
-
-    if (playLayer != nullptr)
-        playLayer->resetPlayState();
-    
-    // determine white notes would be held at this position
-    prepareHeld();
-}
-
-/**
  * After changing the playback location, usually after also calling change()
  * determine which notes would have been held if this layer had been playing
  * normally.
@@ -328,40 +293,36 @@ bool MidiPlayer::isPaused()
 
 /**
  * Enter a state of Mute.
- * Held notes are turned off and the mute flag is set.
+ * 
+ * Held notes are turned off and the mute flag is set.  This flag
+ * is the basis for advertising the Mute minor mode in the UI, and
+ * for drawing the loop state in blue.
+ *
  * This differs from Pause mode because the note durations are allowed
- * to advance.  The setMute/setMuteIternal distinction is just to control
- * setting the muted flag which is what determines whether the track is in
- * Mute mode and will be colored blue.  When paused for either Pause or Insert
- * we are NOT in Mute mode and don't set that flag.
+ * to advance.
  */
 void MidiPlayer::setMute(bool b)
 {
-    setMuteInternal(b, true);
-}
- 
-void MidiPlayer::setMuteInternal(bool b, bool setMuteMode)
-{
     if (b) {
-        // turning mute on
-        // todo: either turn everything off then tack on
-        // or set volume CC to 0 then back to the previous value
-        // currently turning off then on
-        // note that we don't use forceOff here since that also removes
-        // them from the tracking list
-        MidiEvent* held = heldNotes;
-        while (held != nullptr) {
-            sendOff(held);
-            held = held->next;
+        if (!muted) {
+            // turning mute on
+            // todo: either turn everything off then back on
+            // or set volume CC to 0 then back to the previous value
+            // currently turning off then on
+            // note that we don't use forceOff here since that also removes
+            // them from the tracking list
+            MidiEvent* held = heldNotes;
+            while (held != nullptr) {
+                sendOff(held);
+                held = held->next;
+            }
+            muted = true;
         }
-        if (setMuteMode)
-          muted = b;
     }
-    else {
+    else if (muted) {
         // turning mute off
         // turn on any notes that are still being (silently) held
-        if (setMuteMode)
-          muted = b;
+        muted = false;
         MidiEvent* held = heldNotes;
         while (held != nullptr) {
             sendOn(held);
@@ -369,7 +330,7 @@ void MidiPlayer::setMuteInternal(bool b, bool setMuteMode)
         }
     }
 }
-
+ 
 /**
  * Put the player in a state of pause.
  * This can happen for two reasons:
@@ -382,36 +343,39 @@ void MidiPlayer::setMuteInternal(bool b, bool setMuteMode)
  * In the second case shift() should not be called but play() might be
  * and should be ignored.
  *
- * When resume() is called player picks up where it left off.  If any notes
- * were being held at the time of pause they are restored.  This works using
- * the same mechanism as setMute(true) which sends NoteOff messages but does
- * not remove notes from the hold list.  As long as play() is ignored, they
- * won't advance their durations, and will be restored when unpaused.
- */
-void MidiPlayer::pause()
-{
-    if (!paused) {
-        paused = true;
-        setMuteInternal(true, false);
-    }
-}
-
-/**
- * When resuming from a pause we can continue from the last seek position.
- * In both the Pause and Insert cases ideally we should determine the notes
- * that were held at the time of pause and restore them.
+ * In both cases the player is effectively muted, but we do not set the
+ * mute flag.  
  *
+ * When turned off, held notes are restored, unless the playback location changed.
+ * 
  * The noHold option is used with Insert or other operations where we don't
  * want notes held when the pause was started to continue after
  * the unpause.
  */
-void MidiPlayer::unpause(bool noHold)
+void MidiPlayer::setPause(bool b, bool noHold)
 {
-    if (paused) {
+    if (b) {
+        if (!paused) {
+            // turning pause on
+            MidiEvent* held = heldNotes;
+            while (held != nullptr) {
+                sendOff(held);
+                held = held->next;
+            }
+            paused = true;
+        }
+    }
+    else if (paused) {
+        paused = false;
         if (noHold)
           flushHeld();
-        paused = false;
-        setMuteInternal(true, false);
+        else {
+            MidiEvent* held = heldNotes;
+            while (held != nullptr) {
+                sendOn(held);
+                held = held->next;
+            }
+        }
     }
 }
 
@@ -421,10 +385,49 @@ void MidiPlayer::unpause(bool noHold)
  */
 void MidiPlayer::stop()
 {
-    paused = true;
-    setMuteInternal(true, false);
+    setPause(true);
     setFrame(0);
     flushHeld();
+}
+
+/**
+ * Set the playback position
+ * This is usually combined with change() for undo/redo/switch.
+ * This can also be used to jump around in the play layer without changing it.
+ *
+ * todo: this hasn't been shutting notes off, it will need to if this becomes
+ * a more general play mover.  If you're jumping a large amount the current
+ * held notes normally would need to go off.  If you're jumping just a little within
+ * the range of the held notes, then their durations should be adjusted.  If you
+ * flush/prepare instead it works but you get an extra retrigger of the notes.
+ */
+void MidiPlayer::setFrame(int frame)
+{
+    // todo: should we make a checkpoint here?
+    // setFrame is called in more situations than change() so I think no, but
+    // in those cases heldNotes should be empty
+    
+    if (loopFrames == 0) {
+        // doesn't matter what they asked for
+        playFrame = 0;
+    }
+    else {
+        // wrap within the available frames
+        int adjustedFrame = frame;
+        if (frame > loopFrames) {
+            adjustedFrame = frame % loopFrames;
+            Trace(2, "MidiPlayer: Wrapping play frame from %d to %d",
+                  frame, adjustedFrame);
+        }
+        
+        playFrame = adjustedFrame;
+    }
+
+    if (playLayer != nullptr)
+        playLayer->resetPlayState();
+    
+    // determine which notes would be held at this position
+    prepareHeld();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -545,7 +548,7 @@ void MidiPlayer::sendOn(MidiEvent* note)
     // bump the sent count even if we're muted so we can see the levels
     // flicker
     eventsSent++;
-    if (!muted) {
+    if (!muted && !paused) {
         track->midiSend(note->juceMessage, outputDevice);
     }
 }
@@ -645,7 +648,7 @@ void MidiPlayer::sendOff(MidiEvent* note)
     // forced everything off, we continue tracking so we can restore notes
     // when mute is turned off which will call down to sendOff when the (silent)
     // note finishes durating
-    if (!muted) {
+    if (!muted && !paused) {
         juce::MidiMessage msg =
             juce::MidiMessage::noteOff(note->juceMessage.getChannel(),
                                        note->juceMessage.getNoteNumber(),

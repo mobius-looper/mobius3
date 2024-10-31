@@ -15,6 +15,7 @@ class TrackAdvancer
     ~TrackAdvancer();
 
     void advance(class MobiusAudioStream* stream);
+    void dispose(class TrackEvent* e);
 
   protected:
 
@@ -30,7 +31,6 @@ class TrackAdvancer
     void pauseAdvance(class MobiusAudioStream* stream);
     void consume(int frames);
     void doEvent(class TrackEvent* e);
-    void dispose(class TrackEvent* e);
     void doPulse(class TrackEvent* e);
 
 };

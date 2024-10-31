@@ -27,6 +27,13 @@ typedef enum {
     NotificationMuteStart,
     NotificationMuteEnd,
 
+    // catch all notification for any abrupt change that may
+    // have impacted the loop size
+    // this includes loop switch, undo, redo, unrounded multiply, unrounded insert
+    // multiply/insert do not need notification because they preserved the cycle
+    // length, but that might be interesting too
+    NotificationLoopSize,
+    
     // older ones that never went anywyere
 
     NotificationLoopStart,

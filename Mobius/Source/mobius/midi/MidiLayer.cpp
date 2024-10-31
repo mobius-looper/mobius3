@@ -109,6 +109,7 @@ void MidiLayer::clearSegments()
     while (segments != nullptr) {
         MidiSegment* nextseg = segments->next;
         segments->next = nullptr;
+        segments->clear(pools);
         pools->reclaim(segments);
         segments = nextseg;
     }
@@ -119,6 +120,7 @@ void MidiLayer::clearFragments()
     while (fragments != nullptr) {
         MidiFragment* nextfrag = fragments->next;
         fragments->next = nullptr;
+        fragments->clear(pools);
         pools->reclaim(fragments);
         fragments = nextfrag;
     }

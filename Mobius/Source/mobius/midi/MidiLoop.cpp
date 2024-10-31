@@ -15,6 +15,8 @@ MidiLoop::MidiLoop(MidiPools* p)
 
 MidiLoop::~MidiLoop()
 {
+    // clean up layers
+    reset();
 }
 
 void MidiLoop::dump(StructureDumper& d)

@@ -198,6 +198,10 @@ class MobiusMidiState
         juce::OwnedArray<Event> events;
         int eventCount = 0;
 
+        // latching flag indiciating that loops were loaded from files
+        // or otherwise had their size adjusted when not active
+        bool refreshLoopContent = false;
+        
         juce::Array<Region> regions;
         
     };

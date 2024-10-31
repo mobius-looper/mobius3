@@ -89,6 +89,7 @@ MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
 
 MidiTrack::~MidiTrack()
 {
+    loops.clear();
 }
 
 /**
@@ -108,6 +109,8 @@ void MidiTrack::configure(Session::Track* def)
     scheduler.configure(def);
 
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
+    // default it
+    if (subcycles == 0) subcycles = 4;
     
     loopCount = valuator->getLoopCount(number);
     
@@ -221,6 +224,9 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
             }
         }
     }
+
+    // force a refresh of the loop stack
+    loopsLoaded = true;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -327,6 +333,10 @@ void MidiTrack::trackNotification(NotificationId notification, TrackProperties& 
             case NotificationFollower:
                 leaderFollowerEvent(props);
                 break;
+
+            case NotificationLoopSize:
+                scheduler.leaderLoopResize(props);
+                break;
                 
             default:
                 Trace(1, "MidiTrack: Unhandled notification %d", (int)notification);
@@ -401,7 +411,7 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
             resize(props);
             mode = MobiusMidiState::ModePlay;
 
-            player.unpause();
+            player.setPause(false);
 
             // I don't think we have TrackScheduler issues at this point
             // we can only get a clipStart event from an audio track,
@@ -555,7 +565,7 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     if (mode == MobiusMidiState::ModePlay) {
         if (overdub)
           state->mode = MobiusMidiState::ModeOverdub;
-        else if (mute)
+        else if (player.isMuted())
           state->mode = MobiusMidiState::ModeMute;
     }
     
@@ -584,9 +594,10 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     if (overdub && !nowRecording)
       Trace(1, "MidiTrack: Refresh state found overdub/record inconsistency");
 
+    // loop sizes for the loop stack
     for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
-        MobiusMidiState::Loop* lstate = state->loops[0];
+        MobiusMidiState::Loop* lstate = state->loops[i];
         
         if (lstate == nullptr)
           Trace(1, "MidiTrack: MobiusMidiState loop array too small");
@@ -594,12 +605,11 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
           lstate->frames = loop->getFrames();
     }
 
-    // only one loop right now, duplicate the frame counter
-    MobiusMidiState::Loop* lstate = state->loops[0];
-    if (lstate == nullptr)
-      Trace(1, "MidiTrack: MobiusMidiState loop array too small");
-    else
-      lstate->frames = recorder.getFrames();
+    // force a refresh after loops were loaded
+    if (loopsLoaded) {
+        state->refreshLoopContent = true;
+        loopsLoaded = false;
+    }
 
     // skip checkpoints for awhile, really thinking we should just
     // pass MobiusView down here and let us fill it in
@@ -660,7 +670,7 @@ void MidiTrack::doParameter(UIAction* a)
             if (a->value > 0)
               subcycles = a->value;
             else
-              subcycles = 1;
+              subcycles = 4;
         }
             break;
             
@@ -980,6 +990,7 @@ void MidiTrack::doReset(bool full)
     pan = 64;
 
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
+    if (subcycles == 0) subcycles = 4;
 
     if (full) {
         for (auto loop : loops)
@@ -998,6 +1009,9 @@ void MidiTrack::doReset(bool full)
     valuator->clearBindings(number);
 
     pulsator->unlock(number);
+
+    // force a refresh of the loop stack
+    loopsLoaded = true;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1344,7 +1358,7 @@ void MidiTrack::startInsert()
 {
     Trace(2, "MidiTrack: Start Insert");
     mode = MobiusMidiState::ModeInsert;
-    player.pause();
+    player.setPause(true);
     recorder.startInsert();
     startRegion(MobiusMidiState::RegionInsert);
 }
@@ -1371,7 +1385,7 @@ void MidiTrack::finishInsert()
     // half of the split segment with the prefix, since this prefix includes any
     // notes beind held by Player when it was paused, unpause it with the noHold option
     stopRegion();
-    player.unpause();
+    player.setPause(false, true);
     recorder.finishInsert(overdub);
     resumePlay();
 }
@@ -1383,7 +1397,7 @@ void MidiTrack::unroundedInsert()
 {
     Trace(2, "MidiTrack: Unrounded Insert");
     stopRegion();
-    player.unpause();
+    player.setPause(false, true);
     shift(true);
     resumePlay();
 }
@@ -1510,28 +1524,30 @@ void MidiTrack::loopCopy(int previous, bool sound)
  * Here from scheduler after possible quantization.
  * This is not a rounding mode so here for both start and stop.
  *
- * There are two levels of mute.  Track::mute is "mute mode" which means
- * the track will be muted no matter what state it is in.  Player.isMute
- * may be true for other reasons like Replace and Insert modes.  The Player
- * should always be muted if mute mode is on, but the reverse is not true.
+ * There are two levels of mute.  Track::mute is the Mute minor mode flag
+ * like overdub.  Player.isMuted usually tracks that, but Player mute can
+ * be on for other reasons like being in Replace mode.  When exporting state
+ * for the UI look at the Player since that is what ultimately determines
+ * if we're muted.
  *
- * ModeMute is not something that is set in Track::Mode, like ModeOverdub
- * it is simulated in MobiusMidiState if we're in Play and overdub is on.
- *
- * Lots more to do here, if we're in Replace be sure that Mute stacks and
- * can't happen over the top of a Replace/Insert so it confuses the modes.
+ * todo: ParameterMuteMode has some old options for when mute goes off
  */
 void MidiTrack::toggleMute()
 {
     // todo: ParameterMuteMode
     if (mute) {
-        Trace(2, "MidiTrack: Stopping Mute %d", recorder.getFrame());
+        Trace(2, "MidiTrack: Stopping Mute mode %d", recorder.getFrame());
+        // the minor mode always goes off
         mute = false;
-        mode = MobiusMidiState::ModePlay;
-        player.setMute(false);
+
+        // the player follows this only if it is not in Replace mode
+        if (mode != MobiusMidiState::ModeReplace) {
+            player.setMute(false);
+        }
+        // this does NOT change the mode to Play, other function handlers do that
     }
     else {
-        Trace(2, "MidiTrack: Starting Mute %d", recorder.getFrame());
+        Trace(2, "MidiTrack: Starting Mute mode %d", recorder.getFrame());
         mute = true;
         player.setMute(true);
     }
@@ -1560,14 +1576,14 @@ void MidiTrack::startPause()
     mode = MobiusMidiState::ModePause;
 
     // all notes go off
-    player.pause();
+    player.setPause(true);
 }
 
 
 void MidiTrack::finishPause()
 {
     // formerly held notes come back on
-    player.unpause();
+    player.setPause(false);
     mode = prePauseMode;
 }
 
@@ -1679,6 +1695,8 @@ void MidiTrack::toggleReplace()
         // till the end and accumulate more changes
         recorder.finishReplace(overdub);
         // this will also unmute the player
+        // todo: what if they have the mute minor mode flag set, should
+        // this work like overdub and stay in mute after we're done replacing?
         resumePlay();
 
         stopRegion();
@@ -1825,6 +1843,7 @@ void MidiTrack::resize(TrackProperties& props)
             // nothing to do
         }
         else {
+            // todo, if the cycle length changed, we probably don't have to recalculate
             rate = (float)myFrames / (float)props.frames;
             goalFrames = props.frames;
 
@@ -1849,6 +1868,8 @@ void MidiTrack::resize(TrackProperties& props)
             // that the other track has, may want options around this
             float otherProportion = (float)(props.currentFrame) / (float)(props.frames);
             int adjustedFrame = (int)((float)myFrames * otherProportion);
+            // and apply the scaling factor
+            adjustedFrame = (int)((float)adjustedFrame * rate);
 
             // sanity check, recorder/player should be advancing
             // at the same rate until we start dealing with latency
@@ -1934,7 +1955,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 mode = MobiusMidiState::ModePlay;
 
                 // player was usually in pause
-                player.unpause();
+                player.setPause(false, true);
 
                 // I don't think we have TrackScheduler issues at this point
                 // we can only get a clipStart event from an audio track,

@@ -5568,6 +5568,10 @@ void Loop::switchEvent(Event* event)
 
     mSynchronizer->loopSwitch(this, syncRestart);
 
+    // since we're not doing notifications in Synchronizer for Undo/Redo
+    // do it out here too
+    mMobius->getNotifier()->notify(this, NotificationLoopSize);
+
 	// Since we're processing events in an unusual way have to 
 	// inform the ScriptInterpreter about any control events we consumed
 	// in case the script is waiting on them.  Also note that
@@ -5872,6 +5876,10 @@ void Loop::returnEvent(Event* event)
     mTrack->setLoop(next);
 
     mSynchronizer->loopSwitch(this, false);
+    
+    // since we're not doing notifications in Synchronizer for Undo/Redo
+    // do it out here too
+    mMobius->getNotifier()->notify(this, NotificationLoopSize);
 }
 
 /****************************************************************************

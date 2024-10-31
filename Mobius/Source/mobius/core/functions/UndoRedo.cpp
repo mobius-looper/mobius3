@@ -21,6 +21,9 @@
 
 #include "../../../util/Util.h"
 
+#include "../../Notifier.h"
+#include "../Mobius.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -243,6 +246,12 @@ void UndoFunction::invokeLong(Action* action, Loop* l)
 void UndoFunction::doEvent(Loop* l, Event* e)
 {
 	l->undoEvent(e);
+
+    // if we have a follower track, let it know that the cycle size has changed
+    // wanted to use Synchronizer::loopResize for this, but it is called
+    // at inconsistent times, the notification must happen after all of
+    // the changes have been made to the loop
+    l->getMobius()->getNotifier()->notify(l, NotificationLoopSize);
 }
 
 /****************************************************************************
@@ -376,6 +385,12 @@ void RedoFunction::doEvent(Loop* l, Event* e)
 
 		Trace(l, 2, "Loop: Redo resuming at frame %ld play frame %ld\n", 
 			  l->getFrame(), l->getPlayFrame());
+
+        // if we have a follower track, let it know that the cycle size has changed
+        // wanted to use Synchronizer::loopResize for this, but it is called
+        // at inconsistent times, the notification must happen after all of
+        // the changes have been made to the loop
+        l->getMobius()->getNotifier()->notify(l, NotificationLoopSize);
 	}
 }
 

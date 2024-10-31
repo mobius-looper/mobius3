@@ -42,6 +42,7 @@ class LoopSwitcher
 
     TrackScheduler& scheduler;
 
+    int findLeader();
     int getSwitchTarget(class UIAction* a);
     int getQuantizedFrame(SwitchQuantize squant);
     QuantizeMode convert(SwitchQuantize squant);

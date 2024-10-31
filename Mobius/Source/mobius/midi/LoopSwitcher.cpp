@@ -13,6 +13,8 @@
 
 #include "../../sync/Pulsator.h"
 #include "../MobiusKernel.h"
+#include "../MobiusInterface.h"
+
 #include "../Valuator.h"
 
 #include "TrackScheduler.h"
@@ -80,42 +82,28 @@ bool LoopSwitcher::isSwitching()
 void LoopSwitcher::scheduleSwitch(UIAction* src)
 {
     AbstractTrack* track = scheduler.track;
-    LeaderType ltype = track->getLeaderType();
-    int leader = track->getLeader();
-    LeaderLocation ll = track->getLeaderSwitchLocation();
 
-    if (ltype == LeaderTrack && leader != 0 && ll != LeaderLocationNone) {
+    // see if we're supposed to follow a leader track
+    int leader = findLeader();
+    if (leader > 0) {
         // we're supposed to let a leader location determine when to switch
-        // if the leader happens to be in Reset, then we do an immediate switch
-        // !! unclear whether we should fall back to normal SwitchQuantize when
-        // this happens, or if it becomes immediate
-        TrackProperties props = scheduler.kernel->getTrackProperties(leader);
-
-        // don't have the mode in TrackProperties but we can infer that from the size
-        // may want the mode here too, if the leader is paused, would that impact how
-        // we do the switch in the follower?
-        if (props.frames == 0) {
-            // leader is empty, do it now
-            doSwitchNow(src);
+        // schedule a follower notification event in the leader track
+        LeaderLocation ll = track->getLeaderSwitchLocation();
+        QuantizeMode q = QUANTIZE_OFF;
+        switch (ll) {
+            case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
+            case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
+            case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
+            default: break;
         }
-        else {
-            // schedule a follower notification event in the leader track
-            QuantizeMode q = QUANTIZE_OFF;
-            switch (ll) {
-                case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
-                case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
-                case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
-                default: break;
-            }
-            scheduler.kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
+        scheduler.kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
 
-            // add a pending Switch event in this track
-            TrackEvent* event = scheduler.eventPool->newEvent();
-            event->type = TrackEvent::EventSwitch;
-            event->switchTarget = getSwitchTarget(src);
-            event->pending = true;
-            scheduler.events.add(event);
-        }
+        // add a pending Switch event in this track
+        TrackEvent* event = scheduler.eventPool->newEvent();
+        event->type = TrackEvent::EventSwitch;
+        event->switchTarget = getSwitchTarget(src);
+        event->pending = true;
+        scheduler.events.add(event);
     }
     else {
         // normal non-following switch
@@ -151,6 +139,50 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
             scheduler.events.add(event);
         }
     }
+}
+
+/**
+ * Determine which track is supposed to be the leader of this one.
+ * If the leader type is MIDI or Host returns zero.
+ */
+int LoopSwitcher::findLeader()
+{
+    AbstractTrack* track = scheduler.track;
+    int leader = 0;
+
+    // we only care about the leader if we're syncing the switch location
+    LeaderLocation ll = track->getLeaderSwitchLocation();
+    if (ll != LeaderLocationNone) {
+        
+        // since we're the only ones that use all these parameters,
+        // just get them here rather than saving them in the track?
+        LeaderType ltype = track->getLeaderType();
+
+        if (ltype == LeaderTrack) {
+            // supposed to follow a specific track 
+            int specificLeader = track->getLeader();
+            if (specificLeader > 0) {
+                // if the leader over an empty loop, ignore it and fall
+                // back to the usual SwitchQuantize parameter
+                TrackProperties props = scheduler.kernel->getTrackProperties(specificLeader);
+                if (props.frames > 0) {
+                    // follow this guy
+                    leader = specificLeader;
+                }
+            }
+        }
+        else if (ltype == LeaderTrackSyncMaster) {
+            leader = scheduler.pulsator->getTrackSyncMaster();
+        }
+        else if (ltype == LeaderOutSyncMaster) {
+            leader = scheduler.pulsator->getOutSyncMaster();
+        }
+        else if (ltype == LeaderFocused) {
+            scheduler.kernel->getContainer()->getFocusedTrack();
+        }
+    }
+
+    return leader;
 }
 
 /**
@@ -341,6 +373,7 @@ void LoopSwitcher::leaderEvent(TrackProperties& props)
         // scan, we can just remove it and pretend 
         scheduler.events.remove(e);
         doSwitchEvent(e, e->switchTarget);
+        scheduler.advancer.dispose(e);
     }
 }
 

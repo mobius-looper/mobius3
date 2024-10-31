@@ -60,6 +60,7 @@ class TrackScheduler
 
     void setFollowTrack(TrackProperties& props);
     void leaderEvent(TrackProperties& props);
+    void leaderLoopResize(TrackProperties& props);
 
   protected:
 

@@ -1692,6 +1692,11 @@ int Supervisor::getMidiOutputDeviceId(const char* name)
     return midiManager.getOutputDeviceId(name);
 }
 
+int Supervisor::getFocusedTrack()
+{
+    return  mobiusView.focusedTrack;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MobiusListener

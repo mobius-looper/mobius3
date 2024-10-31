@@ -23,6 +23,8 @@
 
 #include "../../../util/Util.h"
 
+#include "../../Notifier.h"
+
 #include "../Action.h"
 #include "../Event.h"
 #include "../EventManager.h"
@@ -405,6 +407,12 @@ void InsertFunction::doEvent(Loop* l, Event* e)
         l->resumePlay();
         l->setModeStartFrame(0);
         l->validate(e);
+
+        if (forceUnrounded) {
+            // if we have a follower track, let it know that the cycle size has changed
+            l->getMobius()->getNotifier()->notify(l, NotificationLoopSize);
+        }
+        
     }
 
 }

@@ -70,6 +70,8 @@ class MidiTrackEditor : public ConfigEditor,
     YanCombo outputDevice {"Output Device"};
     YanCheckbox midiThru {"MIDI Thru"};
 
+    YanParameterForm switchForm;
+
     YanParameterForm followerForm;
     YanCombo leader {"Leader Track"};;
     YanCheckbox followRecord {"Follow Record"};
