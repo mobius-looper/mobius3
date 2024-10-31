@@ -140,8 +140,11 @@ void BindingTable::deselect()
 {
     // easier to use deselectAllRows?
     int row = table.getSelectedRow();
-    if (row >= 0)
-      table.deselectRow(row);
+    if (row >= 0) {
+        table.deselectRow(row);
+        if (listener != nullptr)
+          listener->bindingDeselected();
+    }
 }
 
 Binding* BindingTable::getSelectedBinding()
@@ -193,6 +196,8 @@ void BindingTable::initTable()
     table.setMultipleSelectionEnabled (false);
     // any reason not to want this?
     // only relevant if multi selection enabled
+    // docs say to get toggle clicking in single-select mode use CMD or CTRL
+    // when clicking, but that didn't work for me
     table.setClickingTogglesRowSelection(true);
 
     // unclear what the defaults are here, 
@@ -323,7 +328,16 @@ void BindingTable::buttonClicked(juce::String name)
                 bindings.add(neu);
                 table.updateContent();
                 // select it, it will be the last
-                table.selectRow(bindings.size() - 1);
+                // hmm, not sure about this, if this is left selected then if you
+                // immediately pick a different target it modifies the new binding
+                // seems better to have to re-select the one you want to modify
+                //table.selectRow(bindings.size() - 1);
+                table.scrollToEnsureRowIsOnscreen(bindings.size() - 1);
+                // this actually won't do anything since New is normally clicked
+                // when there is already nothing selected, if you want the target table
+                // to always deselect must call the listener->bindingDeselected
+                // kind of like having it remain in place though
+                deselect();
             }
         }
     }
@@ -536,14 +550,23 @@ void BindingTable::cellClicked(int rowNumber, int columnId, const juce::MouseEve
 {
     (void)columnId;
     (void)event;
-    if (listener != nullptr) {
-        if (rowNumber >= bindings.size()) {
-            // trace("Binding row out of range! %d\n", rowNumber);
+
+    if (rowNumber != lastSelection) {
+        if (listener != nullptr) {
+            if (rowNumber >= bindings.size()) {
+                // trace("Binding row out of range! %d\n", rowNumber);
+            }
+            else {
+                Binding* b = bindings[rowNumber];
+                listener->bindingSelected(b);
+            }
         }
-        else {
-            Binding* b = bindings[rowNumber];
-            listener->bindingSelected(b);
-        }
+        lastSelection = rowNumber;
+    }
+    else {
+        // couldn't get cmd-click to work as documented, fake it
+        deselect();
+        lastSelection = -1;
     }
 }
 

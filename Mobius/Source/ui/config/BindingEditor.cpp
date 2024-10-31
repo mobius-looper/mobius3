@@ -688,6 +688,11 @@ void BindingEditor::bindingSelected(Binding* b)
     
 }
 
+void BindingEditor::bindingDeselected()
+{
+    resetFormAndTarget();
+}
+
 /**
  * The "New" button is clicked.
  * Two options here:

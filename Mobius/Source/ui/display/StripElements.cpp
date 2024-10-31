@@ -6,9 +6,8 @@
 #include "../../model/UIConfig.h"
 #include "../../model/Symbol.h"
 
+// so we can call filesDropped
 #include "../../AudioClerk.h"
-// for saving temporary loop files
-#include "../../mobius/MobiusInterface.h"
 
 #include "../JuceUtil.h"
 #include "../MobiusView.h"
@@ -794,6 +793,7 @@ void StripLoopStack::filesDropped(const juce::StringArray& files, int x, int y)
     AudioClerk* clerk = strip->getProvider()->getAudioClerk();
     // track/loop numbers are 1 based, with zero meaning "active"
     // strip->followTrack and our loop index are zero based
+    // this handles both audio and MIDI files
     clerk->filesDropped(files, tracknum + 1, loop + 1);
 }
 
@@ -842,50 +842,42 @@ void StripLoopStack::mouseDown(const juce::MouseEvent& e)
       bstr = "right";
     
     int target = getDropTarget(e.getMouseDownX(), e.getMouseDownY());
-
+    MobiusViewTrack* track = strip->getTrackView();
+    Provider* provider = strip->getProvider();
+    int trackNumber = track->index + 1;
+    int loopNumber = target + 1;
+    
+    // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
     if (mods.isAltDown()) {
-        // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
-        Trace(2, "StripLoopStack: Alt-Mouse %s down over loop %d", bstr, target);
-        MobiusViewTrack* track = strip->getTrackView();
-        // only do this for midi tracks for now
-        if (track->midi) {
-            // save the current loop in a temporary file
-            juce::TemporaryFile* tfile = new juce::TemporaryFile(".mid", 0);
-            juce::StringArray errors = strip->getProvider()->getMobius()->saveLoop(tfile->getFile());
-            if (errors.size() > 0) {
-                Trace(1, "StripElements: Save loop had errors");
-            }
-            juce::StringArray paths;
-            paths.add(tfile->getFile().getFullPathName());
-            // second arg is "canMoveFiles", since Supervisor is going to hold onto these
-            // and clean them up at shutdown, not sure if moving them would mess that up
-            bool status = juce::DragAndDropContainer::performExternalDragDropOfFiles(paths, false);
-            if (!status) {
-                Trace(1, "LoopStack: Failed to start external drag and drop");
-                delete tfile;
-            }
-            else {
-                strip->getProvider()->addTemporaryFile(tfile);
-            }
+        if (track->midi)
+          provider->dragMidi(trackNumber, loopNumber);
+        else
+          provider->dragAudio(trackNumber, loopNumber);
+    }
+    else if (mods.isCtrlDown()) {
+        if (mods.isShiftDown()) {
+            if (track->midi)
+              provider->saveMidi(trackNumber, loopNumber);
+            else
+              provider->saveAudio(trackNumber, loopNumber);
+        }
+        else {
+            if (track->midi)
+              provider->loadMidi(trackNumber, loopNumber);
+            else
+              provider->loadAudio(trackNumber, loopNumber);
         }
     }
     else {
         // Trace(2, "StripLoopStack: Mouse %s down over loop %d", bstr, target);
         // this I want to be treated as a loop switch
-        MobiusViewTrack* track = strip->getTrackView();
         if (track->activeLoop != target) {
             UIAction a;
-            a.symbol = strip->getProvider()->getSymbols()->getSymbol(FuncSelectLoop);
-            a.value = target + 1;
-            a.setScopeTrack(track->index + 1);
+            a.symbol = provider->getSymbols()->getSymbol(FuncSelectLoop);
+            a.value = loopNumber;
+            a.setScopeTrack(trackNumber);
             strip->getProvider()->doAction(&a);
         }
-
-        // whether we changed or not, ctrl-click starts the load process
-        // this will be async and in theory the switch won't have finished by the
-        // time we're done so maybe only do this if the loop is in Reset or Pause?
-        if (mods.isCtrlDown() && track->midi)
-          strip->getProvider()->menuLoadMidi();
     }
 }
 

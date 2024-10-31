@@ -1579,6 +1579,7 @@ void MidiTrack::doStop()
     recorder.rollback(false);
     player.stop();
     prePauseMode = MobiusMidiState::ModePlay;
+    mode = MobiusMidiState::ModePause;
     
     resetRegions();
 

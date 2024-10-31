@@ -29,6 +29,7 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
         virtual ~Listener() {}
         virtual juce::String renderTriggerCell(class Binding* b) = 0;
         virtual void bindingSelected(class Binding* b) = 0;
+        virtual void bindingDeselected() = 0;
         virtual void bindingUpdate(class Binding* b) = 0;
         virtual void bindingDelete(class Binding* b) = 0;
         virtual class Binding* bindingNew() = 0;
@@ -101,7 +102,8 @@ class BindingTable : public juce::Component, public juce::TableListBoxModel, pub
     
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
-
+    int lastSelection = -1;
+    
     void initTable();
     void initColumns();
 

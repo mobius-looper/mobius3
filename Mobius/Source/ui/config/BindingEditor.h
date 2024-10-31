@@ -53,6 +53,7 @@ class BindingEditor : public ConfigEditor,
     // BindingTable::Listener
     juce::String renderTriggerCell(class Binding* b) override;
     void bindingSelected(class Binding* b) override;
+    void bindingDeselected() override;
     void bindingUpdate(class Binding* b) override;
     void bindingDelete(class Binding* b) override;
     class Binding* bindingNew() override;

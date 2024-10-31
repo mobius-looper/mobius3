@@ -13,13 +13,21 @@ class MidiClerk
     ~MidiClerk();
 
     void loadFile();
+    void loadFile(int trackNumber, int loopNumber);
+
     void filesDropped(const juce::StringArray& files, int track, int loop);
+    
+    void saveFile();
+    void saveFile(int trackNumber, int loopNumber);
+    void dragOut(int trackNumber, int loopNumber);
     
   private:
 
     class Supervisor* supervisor;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
+    int destinationTrack = 0;
+    int destinationLoop = 0;
 
     // parse state
     class MidiEvent* heldNotes = nullptr;
@@ -29,6 +37,9 @@ class MidiClerk
     
     void chooseMidiFile();
     void doFileLoad(juce::File file);
+
+    void chooseMidiSaveFile();
+    void doFileSave(juce::File file);
     
     void analyzeFile(juce::File file);
     void analyzeTrack(int track, int timeFormat, const juce::MidiMessageSequence* seq, juce::String& buffer);

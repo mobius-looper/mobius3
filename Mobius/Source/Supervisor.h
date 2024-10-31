@@ -208,6 +208,14 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
+
+    // Provider interface for file transfer
+    void loadAudio(int trackNumber, int loopNumber) override;
+    void saveAudio(int trackNumber, int loopNumber) override;
+    void dragAudio(int trackNumber, int loopNumber) override;
+    void loadMidi(int trackNumber, int loopNumber) override;
+    void saveMidi(int trackNumber, int loopNumber) override;
+    void dragMidi(int trackNumber, int loopNumber) override;
     
     // menu implementations
     void menuLoadScripts(bool poppup = true);

@@ -822,7 +822,7 @@ MidiClerk* Supervisor::getMidiClerk()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Projects
+// Projects and Files
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -851,12 +851,39 @@ void Supervisor::menuQuickSave()
     projectFiler.quickSave();
 }
 
-/**
- * Test hacking
- */
 void Supervisor::menuLoadMidi()
 {
     midiClerk->loadFile();
+}
+
+void Supervisor::loadAudio(int trackNumber, int loopNumber)
+{
+    projectFiler.loadLoop(trackNumber, loopNumber);
+}
+
+void Supervisor::saveAudio(int trackNumber, int loopNumber)
+{
+    projectFiler.saveLoop(trackNumber, loopNumber);
+}
+
+void Supervisor::dragAudio(int trackNumber, int loopNumber)
+{
+    projectFiler.dragOut(trackNumber, loopNumber);
+}
+
+void Supervisor::loadMidi(int trackNumber, int loopNumber)
+{
+    midiClerk->loadFile(trackNumber, loopNumber);
+}
+
+void Supervisor::saveMidi(int trackNumber, int loopNumber)
+{
+    midiClerk->loadFile(trackNumber, loopNumber);
+}
+
+void Supervisor::dragMidi(int trackNumber, int loopNumber)
+{
+    midiClerk->dragOut(trackNumber, loopNumber);
 }
 
 //////////////////////////////////////////////////////////////////////

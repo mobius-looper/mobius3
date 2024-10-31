@@ -605,15 +605,22 @@ void TrackScheduler::handlePauseAction(UIAction* src)
             track->doStart();
             break;
 
-        case FuncResize: {
+        case FuncResize:
+            // this does not exit pause, but conditions the loop for resume
             // should allow the Cycle functions here too
             doResize(src);
-        }
+            break;
+
+        case FuncOverdub:
+        case FuncMute:
+            // these are minor modes that can be toggled while paused
+            doActionNow(src);
             break;
 
         case FuncNextLoop:
         case FuncPrevLoop:
         case FuncSelectLoop:
+            // useful to scroll around the desired loops, then unpause
             loopSwitcher.doSwitchNow(src);
             break;
 

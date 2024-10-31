@@ -20,6 +20,15 @@ MidiClerk::~MidiClerk()
 {
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Load
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Load a MIDI file into the active loop of the foused track.
+ */
 void MidiClerk::loadFile()
 {
     MobiusView* view = supervisor->getMobiusView();
@@ -28,7 +37,26 @@ void MidiClerk::loadFile()
         supervisor->alert("MIDI Track must have focus");
     }
     else {
-        // this does it's thing async then calls back to doFileChosen
+        // is it safe to save state here or would it be better to pass it
+        // into the choose closure?
+        destinationTrack = view->focusedTrack + 1;
+        destinationLoop = 0;
+        chooseMidiFile();
+    }
+}
+
+/**
+ * Load a file into a loop clicked on in the loop stack.
+ */
+void MidiClerk::loadFile(int trackNumber, int loopNumber)
+{
+    MobiusView* view = supervisor->getMobiusView();
+    if (trackNumber <= view->audioTracks) {
+        supervisor->alert("Track is not a MIDI track");
+    }
+    else {
+        destinationTrack = trackNumber;
+        destinationLoop = loopNumber;
         chooseMidiFile();
     }
 }
@@ -69,23 +97,27 @@ void MidiClerk::doFileLoad(juce::File file)
     Trace(2, "MidiClerk: Selected file %s", file.getFullPathName().toUTF8());
 
     MobiusView* view = supervisor->getMobiusView();
-    
-    if (view->focusedTrack < view->audioTracks) {
-        // they changed track focus while we were in the file chooser
+
+    if (destinationTrack <= view->audioTracks) {
+        // back track number or sholdn't have asked for MIDI
         supervisor->alert("MIDI track must have focus");
     }
     else {
-        // what we pass down needs to be 1 based track numbers
-        int trackNumber = view->focusedTrack + 1;
         // analyzeFile(file);
         MidiSequence* seq = toSequence(file);
         if (seq != nullptr) {
             MobiusInterface* mobius = supervisor->getMobius();
             // leave loop unspecified, it goes to the active loop
-            mobius->loadMidiLoop(seq, trackNumber, 0);
+            mobius->loadMidiLoop(seq, destinationTrack, destinationLoop);
         }
     }
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drag In
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Here indirectly from AudioClerk since the UI doesn't understand us yet.
@@ -117,6 +149,136 @@ void MidiClerk::filesDropped(const juce::StringArray& files, int track, int loop
             mobius->loadMidiLoop(seq, track, loop);
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Save
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiClerk::saveFile()
+{
+    MobiusView* view = supervisor->getMobiusView();
+    // focusedTrack is an index
+    if (view->focusedTrack < view->audioTracks) {
+        supervisor->alert("MIDI Track must have focus");
+    }
+    else {
+        destinationTrack = view->focusedTrack + 1;
+        destinationLoop = 0;
+        chooseMidiSaveFile();
+    }
+}
+
+void MidiClerk::saveFile(int trackNumber, int loopNumber)
+{
+    MobiusView* view = supervisor->getMobiusView();
+    if (trackNumber <= view->audioTracks) {
+        supervisor->alert("Track is not a MIDI track");
+    }
+    else {
+        destinationTrack = trackNumber;
+        destinationLoop = loopNumber;
+        chooseMidiSaveFile();
+    }
+}
+
+void MidiClerk::chooseMidiSaveFile()
+{
+    juce::File startPath(supervisor->getRoot());
+    if (lastFolder.length() > 0)
+      startPath = lastFolder;
+
+    juce::String title = "Select a MIDI loop destination...";
+
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.mid");
+
+    auto chooserFlags = juce::FileBrowserComponent::saveMode
+        | juce::FileBrowserComponent::canSelectFiles
+        | juce::FileBrowserComponent::warnAboutOverwriting;
+
+    chooser->launchAsync (chooserFlags, [this] (const juce::FileChooser& fc)
+    {
+        // magically get here after the modal dialog closes
+        // the array will be empty if Cancel was selected
+        juce::Array<juce::File> result = fc.getResults();
+        if (result.size() > 0) {
+            // chooserFlags should have only allowed one
+            juce::File file = result[0];
+            
+            doFileSave(file);
+
+            // remember this directory for the next time
+            lastFolder = file.getParentDirectory().getFullPathName();
+        }
+        
+    });
+}
+
+void MidiClerk::doFileSave(juce::File file)
+{
+    Trace(2, "MidiClerk: Selected file %s", file.getFullPathName().toUTF8());
+
+    MobiusView* view = supervisor->getMobiusView();
+
+    if (destinationTrack <= view->audioTracks) {
+        // bad track number or sholdn't have asked for MIDI
+        supervisor->alert("MIDI track must have focus");
+    }
+    else {
+
+        Trace(1, "MidiClerk: File save not implemented");
+
+        // something like this
+#if 0
+        MobiusInterface* mobius = supervisor->getMobius();
+        MidiSequence* seq = mobius->saveMidiLoop(destinationTrack, destinationLoop);
+        if (seq != nullptr) {
+            // do the other direction
+        }
+#endif        
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drag Out
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiClerk::dragOut(int trackNumber, int loopNumber)
+{
+    (void)trackNumber;
+    (void)loopNumber;
+
+    // this is what I had prototyped in LoopStack
+    
+#if 0    
+    // use e.mods.isLeftButtonDown or isRightButtonDown if you want to distinguish buttons
+    Trace(2, "StripLoopStack: Alt-Mouse %s down over loop %d", bstr, target);
+    MobiusViewTrack* track = strip->getTrackView();
+
+    // save the current loop in a temporary file
+    juce::TemporaryFile* tfile = new juce::TemporaryFile(".mid", 0);
+    juce::StringArray errors = strip->getProvider()->getMobius()->saveLoop(tfile->getFile());
+    if (errors.size() > 0) {
+        Trace(1, "StripElements: Save loop had errors");
+    }
+    juce::StringArray paths;
+    paths.add(tfile->getFile().getFullPathName());
+    // second arg is "canMoveFiles", since Supervisor is going to hold onto these
+    // and clean them up at shutdown, not sure if moving them would mess that up
+    bool status = juce::DragAndDropContainer::performExternalDragDropOfFiles(paths, false);
+    if (!status) {
+        Trace(1, "LoopStack: Failed to start external drag and drop");
+        delete tfile;
+    }
+    else {
+        strip->getProvider()->addTemporaryFile(tfile);
+    }
+#endif    
+
 }
 
 //////////////////////////////////////////////////////////////////////

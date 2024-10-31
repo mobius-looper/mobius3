@@ -55,11 +55,23 @@ void ProjectFiler::showErrors(juce::StringArray& errors)
 
 void ProjectFiler::loadLoop()
 {
+    destinationTrack = 0;
+    destinationLoop = 0;
+    chooseLoopLoad();
+}
+
+void ProjectFiler::loadLoop(int trackNumber, int loopNumber)
+{
+    destinationTrack = trackNumber;
+    destinationLoop = loopNumber;
     chooseLoopLoad();
 }
 
 void ProjectFiler::doLoopLoad(juce::File file)
 {
+    // todo: rework the MobiusInterface to have loadLoop
+    // that takes track/loop number specifiers, and I'd prefer
+    // that we do the file handling
     MobiusInterface* mobius = supervisor->getMobius();
     juce::StringArray errors = mobius->loadLoop(file);
     showErrors(errors);
@@ -67,11 +79,24 @@ void ProjectFiler::doLoopLoad(juce::File file)
 
 void ProjectFiler::saveLoop()
 {
+    destinationTrack = 0;
+    destinationLoop = 0;
+    chooseLoopSave();
+}
+
+void ProjectFiler::saveLoop(int trackNumber, int loopNumber)
+{
+    destinationTrack = trackNumber;
+    destinationLoop = loopNumber;
     chooseLoopSave();
 }
 
 void ProjectFiler::doLoopSave(juce::File file)
 {
+    // sigh, the interface here sucks, we have no MobiusInterface
+    // for saving specific track/loop combos, only the active
+    // loop in the focused track, and it doesn't work like MIDI
+    
     MobiusInterface* mobius = supervisor->getMobius();
     juce::StringArray errors = mobius->saveLoop(file);
     showErrors(errors);
@@ -350,6 +375,18 @@ void ProjectFiler::chooseLoopSave()
         }
         
     });
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Drag Out
+//
+//////////////////////////////////////////////////////////////////////
+
+void ProjectFiler::dragOut(int trackNumber, int loopNumber)
+{
+    (void)trackNumber;
+    (void)loopNumber;
 }
 
 /****************************************************************************/

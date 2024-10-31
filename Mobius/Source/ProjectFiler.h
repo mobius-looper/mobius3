@@ -27,7 +27,10 @@ class ProjectFiler
     void loadProject();
     void saveProject();
     void loadLoop();
+    void loadLoop(int trackNumber, int loopNumber);
     void saveLoop();
+    void saveLoop(int trackNumber, int loopNumber);
+    void dragOut(int trackNumber, int loopNumber);
     void quickSave();
     
   private:
@@ -35,6 +38,8 @@ class ProjectFiler
     class Supervisor* supervisor = nullptr;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::String lastFolder;
+    int destinationTrack = 0;
+    int destinationLoop = 0;
     
     void chooseProjectSave();
     void doProjectSave(juce::File file);

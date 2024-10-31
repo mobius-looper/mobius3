@@ -63,8 +63,12 @@ class Provider
     virtual class MobiusView* getMobiusView() = 0;
     virtual class AudioClerk* getAudioClerk() = 0;
 
-    // kludge for ctrl-click in the loop stack
-    virtual void menuLoadMidi() = 0;
+    virtual void loadMidi(int trackNumber, int loopNumber) = 0;
+    virtual void saveMidi(int trackNumber, int loopNumber) = 0;
+    virtual void dragMidi(int trackNumber, int loopNumber) = 0;
+    virtual void loadAudio(int trackNumber, int loopNumber) = 0;
+    virtual void saveAudio(int trackNumber, int loopNumber) = 0;
+    virtual void dragAudio(int trackNumber, int loopNumber) = 0;
 
     virtual void addTemporaryFile(juce::TemporaryFile* tf) = 0;
     
