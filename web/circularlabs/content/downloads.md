@@ -20,6 +20,10 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
+## Build 23
+- MIDI File support with leader/follower tracks and auto-resizing
+- Improved drag-and-drop into loop slots in the UI
+
 ## Build 22
 - MIDI Track configuration panel now has input/output device selectors
 - MIDI Tracks in the plugin may now record and play midi through the host application
