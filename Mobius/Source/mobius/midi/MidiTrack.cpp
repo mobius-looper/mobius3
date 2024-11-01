@@ -1195,6 +1195,7 @@ void MidiTrack::resumePlay()
     mode = MobiusMidiState::ModePlay;
     mute = false;
     player.setMute(false);
+    player.setPause(false);
 }
 
 /**
@@ -1614,6 +1615,8 @@ void MidiTrack::doStart()
 {
     recorder.rollback(false);
     player.setFrame(0);
+    player.setPause(false);
+    player.setMute(false);
     mode = MobiusMidiState::ModePlay;
     
     resetRegions();
@@ -1843,36 +1846,16 @@ void MidiTrack::resize(TrackProperties& props)
             // nothing to do
         }
         else {
-            // todo, if the cycle length changed, we probably don't have to recalculate
-            rate = (float)myFrames / (float)props.frames;
+            rate = followLeaderLength(myFrames, props.frames);
             goalFrames = props.frames;
-
-            float adjusted = rate;
-            if (myFrames > props.frames) {
-                float next = adjusted / 2.0f;
-                while (next > 1.0f) {
-                    adjusted = next;
-                    next = next / 2.0f;
-                }
-            }
-            else {
-                float next = adjusted * 2.0f;
-                while (next < 1.0f) {
-                    adjusted = next;
-                    next *= 2.0f;
-                }
-            }
-            rate = adjusted;
-
-            // assuming we're syncing, warp to the same relative location
-            // that the other track has, may want options around this
-            float otherProportion = (float)(props.currentFrame) / (float)(props.frames);
-            int adjustedFrame = (int)((float)myFrames * otherProportion);
-            // and apply the scaling factor
-            adjustedFrame = (int)((float)adjustedFrame * rate);
-
+            
+            int adjustedFrame = followLeaderLocation(myFrames, recorder.getFrame(),
+                                                     props.frames, props.currentFrame,
+                                                     rate, true);
+                                                     
             // sanity check, recorder/player should be advancing
             // at the same rate until we start dealing with latency
+            // !! not if we're doing Insert
             int playFrame = player.getFrame();
             int recordFrame = recorder.getFrame();
             if (playFrame != recordFrame)
@@ -1899,10 +1882,149 @@ void MidiTrack::resize(TrackProperties& props)
 
                 recorder.setFrame(adjustedFrame);
                 player.setFrame(adjustedFrame);
-
             }
         }
     }
+}
+
+/**
+ * Calculate a playback rate that allows two loops to remain in sync
+ * with the least amount of (musically useful) change.
+ *
+ * Because I suck at math, the calculations here are not optimized, but blown
+ * out and over-commented so I can remember what the fuck this is doing years
+ * down the road when I'm tired and don't want to think too hard.
+ *
+ * In the simple case the rate is simply dividing one length by another.
+ * Each loop repeats exactly once with one slower than the other.  If one
+ * loop is significantly larger than the other, this is almost never what you
+ * want.  Intead it is desireable to allow the smaller loop to repeat some integral number
+ * of times, then apply rate scaling to allow the total number of repetitions
+ * to "fill" the larger loop.
+ *
+ * For example, one loop is 20 seconds long and the other is 4.
+ * If the loop we want to stretch is the 20 second loop then the rate would be 20/4 = 5 meaning
+ * if the loop plays 5 times as fast the 20 seconds drops to 4.
+ *
+ * But when dealing with music, you rarely want uneven numbers of repetitions.  5 repeats
+ * will stay in sync but the tempo of the recorded rhythm may not match.  Usually
+ * it is better to keep the repetitions to a multiple of 2: 1, 2, 4, 8 etc.  Then if the
+ * loop is too fast or slow you can use HalfSpeed or DoubleSpeed to adjust it.
+ *
+ * There are lots of options that could be applied here to tune it for the best results.
+ *    - allow odd numbers
+ *    - allow 6 or 10 or other factors that are not powers of 2
+ *    - allow long loops to be cut in half before scaling
+ *
+ * Keeping it simple with powers of 2 for now.
+ */
+float MidiTrack::followLeaderLength(int myFrames, int otherFrames)
+{
+    // the base rate with no repetitions
+    rate = (float)myFrames / (float)otherFrames;
+
+    // allow repetitions to make the rate smaller
+    float adjusted = rate;
+    if (myFrames > otherFrames) {
+        // we are larger and the rate is above 1
+        // drop it by half until we are closest to 1 without going below
+        float next = adjusted / 2.0f;
+        while (next > 1.0f) {
+            adjusted = next;
+            next = next / 2.0f;
+        }
+    }
+    else {
+        // we are smaller and the rate is less than 1
+        // double it until we are cloest to 1 without going over
+        float next = adjusted * 2.0f;
+        while (next < 1.0f) {
+            adjusted = next;
+            next *= 2.0f;
+        }
+    }
+    rate = adjusted;
+
+    return rate;
+}
+
+/**
+ * Adapt to a location change in the leader loop.
+ *
+ * Because I suck at math, the calculations are rather drawn out and
+ * commented and use more than the necessary steps, but helps clarify
+ * exactly what is going on.
+ *
+ * The rate is a scaling factor that has already been calculated to allow
+ * the two loops to have the same "size" while allowing one or the other
+ * to repeat some number of times.
+ *
+ * If the leader is larger than the follower (us) then we are
+ * repeating some number of times (maybe 1) at this rate.  When
+ * the leader changes location, it's relatively simple, scale the
+ * leader location into our time, and wrap if it exceeds our length
+ * (meaning we have been repeating).  It doesn't matter where we are now.
+ *
+ * If the leader is smaller than us and has been repeating, then our
+ * current location is significant since we might want to make the smallest
+ * jump in playback position to remain in sync.  There are two options:
+ * Favor Early and Favor Late
+ *
+ * With Favor Early, we simply move our location to the lowest frame that matches
+ * where the leader is now.  If we had been playing toward the end of our loop
+ * after the leader repeated a few times, this will result in a large jump backward
+ * but we remain in sync, we just start our repeats from the beginning.  You might
+ * want this if you consider switching loops to be "starting over" in time.
+ *
+ * With Favor Late, we want to move our location the smallest amount to find
+ * where we would have been if the leader had been allowed to repeat.
+ *
+ * There are in-between cases.  If the leaader repeats 4 times for our length
+ * then when the leader jumps we could locate relative to any one of those repetitions,
+ * But it feels like the first or last repetition are the most predictable.
+ */
+int MidiTrack::followLeaderLocation(int myFrames, int myLocation,
+                                    int otherFrames, int otherLocation,
+                                    float playbackRate, bool favorLate)
+{
+    int newLocation = 0;
+    
+    if (myFrames < otherFrames) {
+        // we are smaller than the other loop and are allowed to repeat
+        // this is where we would be relative to the other loop
+        int scaledLocation = (int)((float)(otherLocation) * playbackRate);
+        if (scaledLocation > myFrames) {
+            // we have been repeating to keep up, wrap it
+            newLocation = scaledLocation % myFrames;
+        }
+        else {
+            // we have not been repeating, just go there
+            newLocation = scaledLocation;
+        }
+    }
+    else {
+        // we are larger than the other loop, and it has been repeating
+        if (!favorLate) {
+            // just scale the other location
+            newLocation = (int)((float)(otherLocation) * playbackRate);
+        }
+        else {
+            // this is where we logically are in the other loop with repeats
+            float unscaledLocation = (float)myLocation / playbackRate;
+            // this is how many times the other loop has to repeat to get there
+            int repetition = (int)(unscaledLocation / (float)(otherFrames));
+            // this is how long each repetition of the other loop represents in our time
+            float scaledRepetitionLength = (float)(otherFrames) * playbackRate;
+            // this is where we would be when the other loop repeats that number of times
+            float scaledBaseLocation = scaledRepetitionLength * (float)repetition;
+            // this is where we would be in the first repetition
+            float scaledOffset = (float)(otherLocation) * playbackRate;
+            // this is where we should be
+            newLocation = (int)(scaledBaseLocation + scaledOffset);
+        }
+    }
+
+    return newLocation;
 }
 
 /**

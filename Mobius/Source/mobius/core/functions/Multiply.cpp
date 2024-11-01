@@ -319,7 +319,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
     else if (e->type == MultiplyEndEvent) {
 
         bool pruned = false;
-        bool unrounded = false;
+        bool resized = false;
         Preset* p = l->getPreset();
         ParameterMultiplyMode mmode = p->getMultiplyMode();
         Layer* play = l->getPlayLayer();
@@ -331,7 +331,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
         if (l->isUnroundedEnding(e->getInvokingFunction())) {
              pruneCycles(l, 1, true, false);
              pruned = true;
-             unrounded = true;
+             resized = true;
         }
         else if (mmode == MULTIPLY_NORMAL &&
                  (play != NULL && play->getCycles() > 1)) {
@@ -385,7 +385,7 @@ void MultiplyFunction::doEvent(Loop* l, Event* e)
         l->setModeStartFrame(0);
         l->validate(e);
 
-        if (unrounded) {
+        if (resized) {
             // if we have a follower track, let it know that the cycle size has changed
             l->getMobius()->getNotifier()->notify(l, NotificationLoopSize);
         }

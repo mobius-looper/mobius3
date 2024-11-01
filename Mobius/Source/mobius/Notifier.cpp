@@ -61,8 +61,8 @@ void Notifier::notify(Loop* loop, NotificationId id)
 
 void Notifier::notify(Track* track, NotificationId id)
 {
-    Trace(2, "Notifier: Received notification %d for track %d",
-          (int)id, track->getDisplayNumber());
+    //Trace(2, "Notifier: Received notification %d for track %d",
+    //(int)id, track->getDisplayNumber());
 
     int trackNumber = track->getDisplayNumber();
     if (trackNumber < 0 || trackNumber >= listeners.size()) {

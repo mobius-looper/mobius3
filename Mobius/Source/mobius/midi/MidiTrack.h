@@ -254,4 +254,12 @@ class MidiTrack : public AbstractTrack
     int simulateLevel(int count);
     void captureLevels(MobiusMidiState::Track* state);
 
+    //
+    // Ugly Math
+    //
+    
+    float followLeaderLength(int myFrames, int otherFrames);
+    int followLeaderLocation(int myFrames, int myLocation, int otherFrames, int otherLocation,
+                             float rate, bool favorLate);
+
 };
