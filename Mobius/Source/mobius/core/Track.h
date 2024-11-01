@@ -197,7 +197,7 @@ class Track : public TraceContext
 
 	void loadProject(class ProjectTrack* t);
 	void setBounceRecording(class Audio* a, int cycles);
-	void setMuteKludge(Function* f, bool b);
+	void setMuteKludge(class Function* f, bool b);
 
 	/**
 	 * Called by Mobius at the start of an interrupt to assimilate 
@@ -309,8 +309,8 @@ class Track : public TraceContext
 	void resetPorts(class SetupTrack* st);
 	void trackReset(class Action* action);
     bool checkSyncEvent(class Event* e);
-    void switchLoop(Function* f, bool forward);
-    void switchLoop(Function* f, int index);
+    void switchLoop(class Function* f, bool forward);
+    void switchLoop(class Function* f, int index);
 	void checkFrames(float* buffer, long frames);
 	void playTail(float* outbuf, long frames);
 	float* playTailRegion(float* outbuf, long frames);

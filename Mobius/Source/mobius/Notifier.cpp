@@ -76,7 +76,7 @@ void Notifier::notify(Track* track, NotificationId id)
             props.number = trackNumber;
             props.frames = track->getFrames();
             props.cycles = track->getCycles();
-            props.currentFrame = track->getFrame();
+            props.currentFrame = (int)(track->getFrame());
             
             for (auto l : larray) {
                 l->trackNotification(id, props);
@@ -106,7 +106,7 @@ void Notifier::notify(Track* track, NotificationId id, TrackProperties& props)
             props.number = trackNumber;
             props.frames = track->getFrames();
             props.cycles = track->getCycles();
-            props.currentFrame = track->getFrame();
+            props.currentFrame = (int)(track->getFrame());
             
             for (auto l : larray) {
                 l->trackNotification(id, props);

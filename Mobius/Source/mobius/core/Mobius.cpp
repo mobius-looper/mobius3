@@ -1723,7 +1723,7 @@ TrackProperties Mobius::getTrackProperties(int number)
     if (track != nullptr) {
         props.frames = track->getFrames();
         props.cycles = track->getCycles();
-        props.currentFrame = track->getFrame();
+        props.currentFrame = (int)(track->getFrame());
     }
     else {
         props.invalid = true;
@@ -3103,9 +3103,9 @@ int Mobius::calculateFollowerEventFrame(Track* track, QuantizeMode q)
     int eventFrame = 0;
 
     if (q == QUANTIZE_OFF)
-      eventFrame = loop->getFrame();
+      eventFrame = (int)(loop->getFrame());
     else 
-      eventFrame = em->getQuantizedFrame(loop, loop->getFrame(), q, true);
+      eventFrame = (int)(em->getQuantizedFrame(loop, loop->getFrame(), q, true));
 
     return eventFrame;
 }
@@ -3120,7 +3120,7 @@ void Mobius::followerEvent(Loop* l, Event* e)
     // this is a strange properties object because it is less like
     // a track query result, and more like an event payload the core sends
     // over to the midi side
-    props.follower = e->number;
+    props.follower = (int)(e->number);
 
     mNotifier->notify(l->getTrack(), NotificationFollower, props);
     

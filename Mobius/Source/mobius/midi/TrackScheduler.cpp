@@ -509,6 +509,8 @@ bool TrackScheduler::handleExecutiveAction(UIAction* src)
             doResize(src);
             handled = true;
             break;
+
+        default: break;
     }
 
     return handled;

@@ -183,7 +183,7 @@ int Session::Track::getInt(juce::String pname)
 const char* Session::Track::getString(juce::String pname)
 {
     MslValue* v = get(pname);
-    return (v != nullptr) ? v->getString() : false;
+    return (v != nullptr) ? v->getString() : nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////

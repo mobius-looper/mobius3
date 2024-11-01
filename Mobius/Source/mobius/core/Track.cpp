@@ -325,12 +325,12 @@ bool Track::isUISignal()
 
 int Track::getFrames()
 {
-    return mLoop->getFrames();
+    return (int)(mLoop->getFrames());
 }
 
 int Track::getCycles()
 {
-    return mLoop->getCycles();
+    return (int)(mLoop->getCycles());
 }
 
 //////////////////////////////////////////////////////////////////////

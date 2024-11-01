@@ -146,7 +146,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &pulsator;
     }
 
-    class MobiusInterface* getMobius() {
+    class MobiusInterface* getMobius() override {
         return mobius;
     }
 

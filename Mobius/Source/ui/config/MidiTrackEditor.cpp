@@ -12,7 +12,7 @@
 
 #include "MidiTrackEditor.h"
 
-MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), followerForm(s), switchForm(s)
+MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), switchForm(s), followerForm(s)
 {
     setName("MidiTrackEditor");
     render();

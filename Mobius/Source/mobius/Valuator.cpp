@@ -470,6 +470,12 @@ int Valuator::getParameterOrdinal(int trackId, SymbolId symbolId)
                               s->getName());
                     }
                         break;
+
+                    case ScopeSession:
+                    case ScopeSessionTrack:
+                        // these would have been found in the Session
+                        // if they were there, avoid unhandled switch warning
+                        break;
                 }
             }
         }
