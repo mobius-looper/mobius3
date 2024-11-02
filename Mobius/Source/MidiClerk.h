@@ -13,6 +13,7 @@ class MidiClerk
     ~MidiClerk();
 
     void loadFile();
+    void analyzeFile();
     void loadFile(int trackNumber, int loopNumber);
 
     void filesDropped(const juce::StringArray& files, int track, int loop);
@@ -28,12 +29,14 @@ class MidiClerk
     juce::String lastFolder;
     int destinationTrack = 0;
     int destinationLoop = 0;
-
+    bool analyze = false;
+    
     // parse state
     class MidiEvent* heldNotes = nullptr;
     int tsigNumerator = 0;
     int tsigDenominator = 0;
     double secondsPerQuarter = 0.0f;
+    double highest = 0.0f;
     
     void chooseMidiFile();
     void doFileLoad(juce::File file);
@@ -46,7 +49,9 @@ class MidiClerk
     void analyzeMetaEvent(juce::MidiMessage& msg, int timeFormat, juce::String& buffer);
 
     class MidiSequence* toSequence(juce::File file);
-    void toSequence(const juce::MidiMessageSequence* mms, class MidiSequence* seq);
+    double toSequence(const juce::MidiMessageSequence* mms, class MidiSequence* seq,
+                      bool merge);
     class MidiEvent* findNoteOn(juce::MidiMessage& msg);
+    void finalizeSequence(class MidiSequence* seq, double last);
 
 };

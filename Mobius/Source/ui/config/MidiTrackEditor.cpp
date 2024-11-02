@@ -10,6 +10,8 @@
 
 #include "../common/SimpleRadio.h"
 
+#include "SymbolTree.h"
+
 #include "MidiTrackEditor.h"
 
 MidiTrackEditor::MidiTrackEditor(Supervisor* s) : ConfigEditor(s), generalForm(s), switchForm(s), followerForm(s)
@@ -48,6 +50,8 @@ void MidiTrackEditor::load()
     
     selectedTrack = 0;
     trackSelector.setSelection(selectedTrack);
+
+    tree.loadSymbols(supervisor->getSymbols());
     
     loadSession();
 }
@@ -252,8 +256,7 @@ void MidiTrackEditor::render()
 
     tabs.add("Loop Switch", &switchForm);
 
-    
-    
+    tabs.add("Tree", &tree);
     
     addAndMakeVisible(tabs);
 }

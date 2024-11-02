@@ -41,6 +41,24 @@ void MidiClerk::loadFile()
         // into the choose closure?
         destinationTrack = view->focusedTrack + 1;
         destinationLoop = 0;
+        analyze = false;
+        chooseMidiFile();
+    }
+}
+
+void MidiClerk::analyzeFile()
+{
+    MobiusView* view = supervisor->getMobiusView();
+    // focusedTrack is an index
+    if (view->focusedTrack < view->audioTracks) {
+        supervisor->alert("MIDI Track must have focus");
+    }
+    else {
+        // is it safe to save state here or would it be better to pass it
+        // into the choose closure?
+        destinationTrack = view->focusedTrack + 1;
+        destinationLoop = 0;
+        analyze = true;
         chooseMidiFile();
     }
 }
@@ -57,6 +75,7 @@ void MidiClerk::loadFile(int trackNumber, int loopNumber)
     else {
         destinationTrack = trackNumber;
         destinationLoop = loopNumber;
+        analyze = false;
         chooseMidiFile();
     }
 }
@@ -96,19 +115,23 @@ void MidiClerk::doFileLoad(juce::File file)
 {
     Trace(2, "MidiClerk: Selected file %s", file.getFullPathName().toUTF8());
 
-    MobiusView* view = supervisor->getMobiusView();
-
-    if (destinationTrack <= view->audioTracks) {
-        // back track number or sholdn't have asked for MIDI
-        supervisor->alert("MIDI track must have focus");
+    if (analyze) {
+        analyzeFile(file);
     }
     else {
-        // analyzeFile(file);
-        MidiSequence* seq = toSequence(file);
-        if (seq != nullptr) {
-            MobiusInterface* mobius = supervisor->getMobius();
-            // leave loop unspecified, it goes to the active loop
-            mobius->loadMidiLoop(seq, destinationTrack, destinationLoop);
+        MobiusView* view = supervisor->getMobiusView();
+
+        if (destinationTrack <= view->audioTracks) {
+            // back track number or sholdn't have asked for MIDI
+            supervisor->alert("MIDI track must have focus");
+        }
+        else {
+            MidiSequence* seq = toSequence(file);
+            if (seq != nullptr) {
+                MobiusInterface* mobius = supervisor->getMobius();
+                // leave loop unspecified, it goes to the active loop
+                mobius->loadMidiLoop(seq, destinationTrack, destinationLoop);
+            }
         }
     }
 }
@@ -292,6 +315,11 @@ MidiSequence* MidiClerk::toSequence(juce::File file)
     MidiSequence* sequence = nullptr;
     juce::FileInputStream fstream(file);
     juce::MidiFile mfile;
+    
+    tsigNumerator = 0;
+    tsigDenominator = 0;
+    secondsPerQuarter = 0.0f;
+    highest = 0.0f;
 
     heldNotes = nullptr;
     
@@ -304,30 +332,37 @@ MidiSequence* MidiClerk::toSequence(juce::File file)
         int ntracks = mfile.getNumTracks();
         //int timeFormat =  mfile.getTimeFormat();
 
-        if (ntracks > 0) {
-            const juce::MidiMessageSequence* mms = mfile.getTrack(0);
-            sequence = new MidiSequence();
-            toSequence(mms, sequence);
+        if (ntracks == 0) {
+            Trace(1, "MidiClerk: File has no tracks");
         }
+        else {
+            if (ntracks > 1)
+              Trace(2, "MidiClerk: Warning: More than one track in file, merging");
+                
+            sequence = new MidiSequence();
+            
+            for (int i = 0 ; i < ntracks ; i++) {
+                const juce::MidiMessageSequence* mms = mfile.getTrack(i);
+                double last = toSequence(mms, sequence, true);
+                if (last > highest)
+                  highest = last;
+                
+                if (heldNotes != nullptr) {
+                    Trace(1, "MidiClerk: Lingering held notes after reading track");
+                    // todo: should force them off
+                }
+            }
 
-        if (ntracks > 1) {
-            Trace(1, "MidiClerk: More than one track in file");
-            // unclear what we would do with this, I guess if we had
-            // a MidiFile wrapper we could load multiple sequences and return all of them
+            finalizeSequence(sequence, highest);
         }
     }
-
-    if (heldNotes != nullptr)
-      Trace(1, "MidiClerk: Lingering held notes after reading file");
 
     return sequence;
 }
 
-void MidiClerk::toSequence(const juce::MidiMessageSequence* mms, MidiSequence* seq)
+double MidiClerk::toSequence(const juce::MidiMessageSequence* mms, MidiSequence* seq,
+                             bool merge)
 {
-    tsigNumerator = 0;
-    tsigDenominator = 0;
-    secondsPerQuarter = 0.0f;
     double last = 0.0f;
     int sampleRate = supervisor->getSampleRate();
     
@@ -356,16 +391,23 @@ void MidiClerk::toSequence(const juce::MidiMessageSequence* mms, MidiSequence* s
                 double timestamp = msg.getTimeStamp();
                 int endFrame = (int)((double)sampleRate * timestamp);
                 on->duration = endFrame - on->frame;
-                seq->add(on);
+                if (merge)
+                  seq->insert(on);
+                else
+                  seq->add(on);
             }
         }
         else if (msg.isMetaEvent()) {
             if (msg.isTempoMetaEvent()) {
                 // don't need this?
                 //double tickLength = msg.getTempoMetaEventTickLength((short)timeFormat);
+                if (secondsPerQuarter != 0.0f)
+                  Trace(1, "MidiClerk: Redefining secondsPerQuarter");
                 secondsPerQuarter = msg.getTempoSecondsPerQuarterNote();
             }
             else if (msg.isTimeSignatureMetaEvent()) {
+                if (tsigNumerator != 0 || tsigDenominator != 0)
+                  Trace(1, "MidiClerk: Redefining time signature");
                 msg.getTimeSignatureInfo(tsigNumerator, tsigDenominator);
             }
         }
@@ -374,6 +416,16 @@ void MidiClerk::toSequence(const juce::MidiMessageSequence* mms, MidiSequence* s
         }
     }
 
+    if (!merge)
+      finalizeSequence(seq, last);
+
+    return last;
+}
+
+void MidiClerk::finalizeSequence(MidiSequence* seq, double last)
+{
+    int sampleRate = supervisor->getSampleRate();
+    
     if (tsigNumerator <= 0 || tsigDenominator <= 0) {
         Trace(1, "MidiClerk: Unspecified or invalid time signature %d/%d", tsigNumerator, tsigDenominator);
         if (tsigNumerator <= 0)

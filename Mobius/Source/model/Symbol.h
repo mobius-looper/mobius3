@@ -238,6 +238,8 @@ class Symbol
      * True if this symbol should be hidden in the binding UI.
      */
     bool hidden = false;
+
+    juce::String treePath;
     
   private:
 

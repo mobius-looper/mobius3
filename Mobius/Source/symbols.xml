@@ -1,140 +1,140 @@
 <Symbols>
   <Function name="AutoRecord" sustainable='true' longHelp='Long press becomes Reset'
-            mayFocus='true' mayCancelMute='true'/>
-  <Function name="Backward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Bounce"/>
-  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Clear" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Confirm" mayFocus='true'/>
-  <Function name="Divide" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Divide3" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Divide4" mayFocus='true' mayCancelMute='true'/>
-  <Function name="FocusLock"/>
-  <Function name="Forward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="GlobalMute" global='true'/>
-  <Function name="GlobalPause" global='true'/>
-  <Function name="GlobalReset" global='true'/>
-  <Function name="Halfspeed" mayFocus='true' mayCancelMute='true'/>
+            mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Backward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="Bounce" tree='Utility'/>
+  <Function name="Checkpoint" mayFocus='true' mayCancelMute='true' tree='Utility'/>
+  <Function name="Clear" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Confirm" mayFocus='true' tree='Switch'/>
+  <Function name="Divide" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Divide3" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Divide4" mayFocus='true' mayCancelMute='true' tree='Reocrding'/>
+  <Function name="FocusLock" tree='Utility'/>
+  <Function name="Forward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="GlobalMute" global='true' tree='Track'/>
+  <Function name="GlobalPause" global='true' tree='Movement'/>
+  <Function name="GlobalReset" global='true' tree='Recording'/>
+  <Function name="Halfspeed" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <!-- this was not sustainable at first, but it is in core, what does it mean? -->
-  <Function name="Insert" mayFocus='true' mayCancelMute='true'/>
-  <Function name="InstantMultiply" mayFocus='true'/>
+  <Function name="Insert" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="InstantMultiply" mayFocus='true' tree='Recording'/>
   <!--
       these are similar to replicated functions but have been in use
       for a long time, think about this
       -->
-  <Function name="InstantMultiply3" mayFocus='true'/>
-  <Function name="InstantMultiply4" mayFocus='true'/>
+  <Function name="InstantMultiply3" mayFocus='true' tree='Recording'/>
+  <Function name="InstantMultiply4" mayFocus='true' tree='Recording'/>
 
   <!-- Formerly LoopN, Loop1, Loop2, etc. -->
-  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true'
+  <Function name="SelectLoop" mayFocus='true' mayCancelMute='true' tree='Track'
             argumentHelp="Loop Number: 1-8"/>
 
-  <Function name="MidiStart"/>
-  <Function name="MidiStop"/>
+  <Function name="MidiStart" tree='Sync'/>
+  <Function name="MidiStop" tree='Sync'/>
 
-  <Function name="Multiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="Mute" sustainable='true' mayFocus='true'/>
+  <Function name="Multiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Mute" sustainable='true' mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->
-  <Function name="MuteRealign" mayFocus='true'/>
-  <Function name="MuteMidiStart"/>
-  <Function name="NextLoop" mayFocus='true' mayCancelMute='true'/>
-  <Function name="NextTrack"/>
-  <Function name="Overdub" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="Pause" sustainable='true' mayFocus='true'/>
-  <Function name="PitchDown" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PitchNext" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PitchCancel" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PitchPrev" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PitchStep" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PitchUp" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Play" mayFocus='true'/>
-  <Function name="PrevLoop" mayFocus='true' mayCancelMute='true'/>
-  <Function name="PrevTrack"/>
-  <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
-  <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true'/>
-  <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
-  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="MuteRealign" mayFocus='true' tree='Track'/>
+  <Function name="MuteMidiStart" tree='MIDI'/>
+  <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
+  <Function name="NextTrack" tree='Track'/>
+  <Function name="Overdub" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Pause" sustainable='true' mayFocus='true' tree='Track'/>
+  <Function name="PitchDown" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="PitchNext" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="PitchCancel" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="PitchPrev" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="PitchStep" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="PitchUp" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
+  <Function name="Play" mayFocus='true' tree='Recording'/>
+  <Function name="PrevLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
+  <Function name="PrevTrack" tree='Track'/>
+  <Function name="Realign" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
+  <Function name="Record" sustainable='true' longPressable='true' longHelp='Long press becomes Reset' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Redo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Track'/>
+  <Function name="Rehearse" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="Replace" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Recording'/>
   <!-- core has this as mayConfirm, why? -->
-  <Function name="Reset" mayFocus='true'/>
-  <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
-  <Function name="RestartOnce" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Reverse" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
+  <Function name="Reset" mayFocus='true' tree='Track'/>
+  <Function name="Restart" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
+  <Function name="RestartOnce" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="Reverse" sustainable='true' mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Movement'/>
   <!-- core has this as mayFocus, don't think that's relevant -->
-  <Function name="SaveCapture"/>
-  <Function name="SaveLoop"/>
-  <Function name="Shuffle" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SlipForward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SlipBackward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Solo" mayFocus='true'/>
-  <Function name="SpeedDown" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SpeedNext" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SpeedCancel" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SpeedPrev" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SpeedStep" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SpeedUp" mayFocus='true' mayCancelMute='true'/>
+  <Function name="SaveCapture" tree='Utility'/>
+  <Function name="SaveLoop" tree='Utility'/>
+  <Function name="Shuffle" mayFocus='true' mayCancelMute='true' tree='Recording'/>
+  <Function name="SlipForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="SlipBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="Solo" mayFocus='true' tree='Track'/>
+  <Function name="SpeedDown" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedNext" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedCancel" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedPrev" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedStep" mayFocus='true' mayCancelMute='true' tree='Speed'/>
+  <Function name="SpeedUp" mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <!-- why is this sustainable? -->
-  <Function name="SpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Speed'/>
   <!-- core has this mayFocus -->
-  <Function name="StartCapture"/>
-  <Function name="StartPoint" mayFocus='true' mayCancelMute='true'/>
+  <Function name="StartCapture" tree='Utility'/>
+  <Function name="StartPoint" mayFocus='true' mayCancelMute='true' tree='Editing'/>
   <!-- core has this mayFocus -->
-  <Function name="StopCapture"/>
-  <Function name="Stutter" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="Substitute" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="StopCapture" tree='Utility'/>
+  <Function name="Stutter" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Substitute" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Editing'/>
 
-  <Function name="SUSInsert" sustainable='true' mayFocus='true' mayCancelMute='true'/>
+  <Function name="SUSInsert" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
 />
-  <Function name="SUSMultiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSMute" sustainable='true' mayFocus='true'/>
-  <Function name="SUSMuteRestart" sustainable='true' mayFocus='true'/>
-  <Function name="SUSNextLoop" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSOverdub" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSPrevLoop" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSRecord" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSReplace" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSReverse" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSSpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSStutter" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSSubstitute" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSUnroundedInsert" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true'/>
-  <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true'/>
-  <Function name="SyncMasterTrack"/>
-  <Function name="SyncMasterMidi"/>
+  <Function name="SUSMultiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSMute" sustainable='true' mayFocus='true' tree='Sustaining'/>
+  <Function name="SUSMuteRestart" sustainable='true' mayFocus='true' tree='Sustaining'/>
+  <Function name="SUSNextLoop" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSOverdub" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSPrevLoop" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSRecord" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSReplace" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSReverse" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSSpeedToggle" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSStutter" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSSubstitute" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSUnroundedInsert" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SUSUnroundedMultiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Sustaining'/>
+  <Function name="SyncStartPoint" mayFocus='true' mayCancelMute='true' tree='Sync'/>
+  <Function name="SyncMasterTrack" tree='Sync'/>
+  <Function name="SyncMasterMidi" tree='Sync'/>
   
   <!-- Formerly TrackN, Track1, etc. -->
   <Function name="SelectTrack"
-            argumentHelp="Track Number: 1-16"/>
+            argumentHelp="Track Number: 1-16" tree='Track'/>
   
-  <Function name="TrackCopy"/>
-  <Function name="TrackCopyTiming"/>
-  <Function name="TrackGroup" sustainable='true' mayFocus='true'/>
-  <Function name="TrackReset" mayFocus='true'/>
-  <Function name="TrimEnd" mayFocus='true' mayCancelMute='true'/>
-  <Function name="TrimStart" mayFocus='true' mayCancelMute='true'/>
-  <Function name="Undo" mayFocus='true' mayCancelMute='true' mayConfirm='true'/>
-  <Function name="WindowBackward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="WindowForward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="WindowStartBackward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="WindowStartForward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true'/>
-  <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true'/>
+  <Function name="TrackCopy" tree='Track'/>
+  <Function name="TrackCopyTiming" tree='Track'/>
+  <Function name="TrackGroup" sustainable='true' mayFocus='true' tree='Track'/>
+  <Function name="TrackReset" mayFocus='true' tree='Editing'/>
+  <Function name="TrimEnd" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="TrimStart" mayFocus='true' mayCancelMute='true' tree='Editing'/>
+  <Function name="Undo" mayFocus='true' mayCancelMute='true' mayConfirm='true' tree='Editing'/>
+  <Function name="WindowBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="WindowForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="WindowStartBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="WindowStartForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
+  <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
 
-  <Function name="Resize" mayFocus='true' level='core'/>
-  <Function name="UpCycle" mayFocus='true' level='core'/>
-  <Function name="DownCycle" mayFocus='true' level='core'/>
-  <Function name="SetCycles" level='core'/>
-  <Function name="Start" level='core'/>
-  <Function name="Stop" level='core'/>
+  <Function name="Resize" mayFocus='true' level='core' tree='MIDI'/>
+  <Function name="UpCycle" mayFocus='true' level='core' tree='MIDI'/>
+  <Function name="DownCycle" mayFocus='true' level='core' tree='MIDI'/>
+  <Function name="SetCycles" level='core' tree='MIDI'/>
+  <Function name="Start" level='core' tree='Movement'/>
+  <Function name="Stop" level='core' tree='Movement'/>
   
   <!-- various diagnostic functions for testing -->
   
   <!-- core has this as mayFocus -->
-  <Function name="TraceStatus"/>
+  <Function name="TraceStatus" tree='Utility' hidden='true'/>
 
   <!-- new one for MIDI structure dumping -->
-  <Function name="Dump" level="core"/>
+  <Function name="Dump" level="core" tree='Utility'/>
   
   <!--
   Parameter type=int is assumed unless specified
@@ -593,7 +593,7 @@
     <Parameter name='mono' type='bool' options='noBinding'/>
     <Parameter name='feedback' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='altFeedback' high='127' options='control,resetRetain,mayFocus'/>
-    <Parameter name='input' codeName='InputLevel'high='127' options='control,resetRetain,mayFocus'/>
+    <Parameter name='input' codeName='InputLevel' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
 

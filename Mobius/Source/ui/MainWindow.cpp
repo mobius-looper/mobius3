@@ -235,7 +235,11 @@ void MainWindow::mainMenuSelection(int id)
                 break;
 
             case MainMenu::LoadMidi: {
-                supervisor->menuLoadMidi();
+                supervisor->menuLoadMidi(false);
+            }
+                break;
+            case MainMenu::AnalyzeMidi: {
+                supervisor->menuLoadMidi(true);
             }
                 break;
             case MainMenu::Exit: {

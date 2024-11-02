@@ -851,9 +851,12 @@ void Supervisor::menuQuickSave()
     projectFiler.quickSave();
 }
 
-void Supervisor::menuLoadMidi()
+void Supervisor::menuLoadMidi(bool analyze)
 {
-    midiClerk->loadFile();
+    if (analyze)
+      midiClerk->analyzeFile();
+    else
+      midiClerk->loadFile();
 }
 
 void Supervisor::loadAudio(int trackNumber, int loopNumber)

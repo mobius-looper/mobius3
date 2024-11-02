@@ -90,6 +90,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         LoadScripts,
         LoadSamples,
         LoadMidi,
+        AnalyzeMidi,
         Exit,
 
         // Configuration

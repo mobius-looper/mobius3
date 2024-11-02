@@ -172,6 +172,7 @@ void Symbolizer::installUISymbols()
             s->level = LevelUI;
             if (!f->visible)
               s->hidden = true;
+            s->treePath = "UI";
             // todo: parse and store the signature
             // atm, these don't need full blown FunctionProperties annotations
             // Well, one of these "ReloadScripts" also has a core function which will
@@ -194,6 +195,7 @@ void Symbolizer::installUISymbols()
             s->level = LevelUI;
             if (p->displayName == nullptr)
               s->hidden = true;
+            s->treePath = "UI";
 
             // !! the assumption right now is that these are all TypeStructure
             // but that won't always be true, need more of a definition structure
@@ -226,7 +228,7 @@ void Symbolizer::loadSymbolDefinitions()
         juce::XmlDocument doc(xml);
         std::unique_ptr<juce::XmlElement> docel = doc.getDocumentElement();
         if (docel == nullptr) {
-            xmlError("Parse parse error: %s\n", doc.getLastParseError());
+            xmlError("Parse error: %s\n", doc.getLastParseError());
         }
         else if (!docel->hasTagName("Symbols")) {
             xmlError("Unexpected XML tag name: %s\n", docel->getTagName());
@@ -285,6 +287,9 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
             func->level = level;
             s->level = level;
         }
+
+        s->treePath = root->getStringAttribute("tree");
+        s->hidden = root->getBoolAttribute("hidden");
         
         // Trace(2, "Symbolizer: Installed function %s\n", name.toUTF8());
     }

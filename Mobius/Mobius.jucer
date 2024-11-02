@@ -326,6 +326,8 @@
           <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
+          <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>
+          <FILE id="VOlHeq" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/config/SymbolTree.h"/>
           <FILE id="xPiHJd" name="YanParameter.cpp" compile="1" resource="0"
                 file="Source/ui/config/YanParameter.cpp"/>
           <FILE id="RppSPz" name="YanParameter.h" compile="0" resource="0" file="Source/ui/config/YanParameter.h"/>
