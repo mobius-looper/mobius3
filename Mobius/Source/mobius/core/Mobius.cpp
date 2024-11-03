@@ -1800,6 +1800,16 @@ MobiusMode* Mobius::getMode()
 	return mTrack->getMode();
 }
 
+void Mobius::midiSendSync(juce::MidiMessage& msg)
+{
+    mKernel->midiSendSync(msg);
+}
+
+void Mobius::midiSendExport(juce::MidiMessage& msg)
+{
+    mKernel->midiSendExport(msg);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Legacy Interface for internal components

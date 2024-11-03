@@ -18,7 +18,6 @@
 #include "../../../util/Util.h"
 
 #include "../../../midi/MidiByte.h"
-#include "../../../midi/OldMidiEvent.h"
 
 #include "../Action.h"
 #include "../Event.h"
@@ -32,7 +31,7 @@
 #include "../Synchronizer.h"
 #include "../Track.h"
 
-#include "../../MobiusInterface.h"
+//#include "../../MobiusInterface.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -451,27 +450,54 @@ void MidiOutFunction::invoke(Action* action, Mobius* m)
         }
     }
             
-	if (status > 0) {
+    // could simplify this and avoid the intermediate MS_ constants
 
-        // old way
-        // MidiInterface* midi = m->getMidiInterface();
-        // MidiEvent* mevent = midi->newEvent(status, channel, value, velocity);
-        // midi->send(mevent);
-        // mevent->free();
+    if (status > 0) {
+
+        juce::MidiMessage msg;
+        int juceChannel = channel + 1;
+        bool sync = false;
         
-        // !! get rid of this shit and start using the new event pool
-        OldMidiEvent* event = new OldMidiEvent();
-        event->setStatus(status);
-        event->setChannel(channel);
-        event->setKey(value);
-        event->setVelocity(velocity);
-        
-        MobiusContainer* cont = m->getContainer();
-        cont->midiSend(event);
-        
-        delete event;
+        switch (status) {
+            
+            case MS_NOTEON:
+                msg = juce::MidiMessage::noteOn(juceChannel, value, (juce::uint8)velocity);
+                break;
+                
+            case MS_NOTEOFF:
+                msg = juce::MidiMessage::noteOff(juceChannel, value, (juce::uint8)velocity);
+                break;
+
+            case MS_PROGRAM:
+                msg = juce::MidiMessage::programChange(juceChannel, value);
+                break;
+
+            case MS_CONTROL:
+                msg = juce::MidiMessage::controllerEvent(juceChannel, value, (juce::uint8)velocity);
+                break;
+
+            case MS_CLOCK:
+            case MS_START:
+            case MS_STOP:
+            case MS_CONTINUE: {
+                msg = juce::MidiMessage(status, 0, 0);
+                sync = true;
+            }
+
+            default: {
+                // punt and hope the 3 byte constructor is smart enough to figure out how
+                // many bytes the status actually needs
+                // todo: test this, I'm seeing that MS_START at least is going through as one byte
+                int byte1 = status | channel;
+                msg = juce::MidiMessage(byte1, value, (juce::uint8)velocity);
+            }
+        }
+
+        if (sync)
+          m->midiSendSync(msg);
+        else
+          m->midiSendExport(msg);
     }
-
 }
 
 /****************************************************************************/

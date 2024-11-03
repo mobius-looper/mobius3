@@ -142,17 +142,15 @@ class MidiManager : public juce::MidiInputCallback, public MobiusMidiListener
     void shutdown();
 
     bool hasOutputDevice(Usage usage);
-
-    // used for MIDI state export and the MidiOut script statement
-    // uses the device configured for Export usage
-    void send(const juce::MidiMessage& msg);
     
-    // used for MIDI clocks, uses the device configured for OutputSync usage
-    void sendSync(const juce::MidiMessage& msg);
-
-    // new interface, send to a specific device
+    // send to a specific device
     void send(const juce::MidiMessage &msg, int deviceId);
     
+    // used for MIDI clocks, send the device designated for sync
+    void sendSync(const juce::MidiMessage& msg);
+    
+    // send the device designated for export
+    void sendExport(const juce::MidiMessage& msg);
 
     // Available device information
     juce::StringArray getInputDevices();

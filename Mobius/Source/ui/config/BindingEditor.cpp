@@ -63,8 +63,8 @@ BindingEditor::BindingEditor(Supervisor* s) : ConfigEditor(s), targets(s)
     bindings.setListener(this);
     addAndMakeVisible(bindings);
 
-    targets.setListener(this);
     addAndMakeVisible(targets);
+    targets.setListener(this);
 
     addAndMakeVisible(form);
 }
@@ -759,9 +759,8 @@ void BindingEditor::bindingDelete(Binding* b)
  * Old thoughts said that it could try to locate a binding
  * with that target and select it, but I'm not liking that.
  */
-void BindingEditor::bindingTargetClicked(BindingTargetSelector* bts)
+void BindingEditor::bindingTargetClicked()
 {
-    (void)bts;
     targetChanged();
 
     // old way before form capture
@@ -797,6 +796,7 @@ void BindingEditor::resized()
     area.removeFromLeft(bindings.getWidth() + 10);
     // need enough room for arguments so shorten it
     // could try to adapt to the size of the argumnts Form instead
+    
     targets.setBounds(area.getX(), area.getY(), 400, 300);
 
     //form->render();

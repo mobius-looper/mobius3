@@ -784,17 +784,25 @@ bool MidiManager::hasOutputDevice(Usage usage)
     return has;
 }
 
-void MidiManager::send(const juce::MidiMessage& msg)
-{
-    if (exportDevice)
-      exportDevice->sendMessageNow(msg);
-}
-
 void MidiManager::send(const juce::MidiMessage& msg, int deviceId)
 {
     if (deviceId >= 0 && deviceId < outputDevices.size()) {
         juce::MidiOutput* dev = outputDevices[deviceId];
         dev->sendMessageNow(msg);
+    }
+}
+
+void MidiManager::sendExport(const juce::MidiMessage& msg)
+{
+    if (exportDevice)
+      exportDevice->sendMessageNow(msg);
+    else {
+        // what if they didn't check one, default to the first output?
+        // this is unlike sync which doesn't default
+        if (outputDevices.size() > 0) {
+            juce::MidiOutput* dev = outputDevices[0];
+            dev->sendMessageNow(msg);
+        }
     }
 }
 

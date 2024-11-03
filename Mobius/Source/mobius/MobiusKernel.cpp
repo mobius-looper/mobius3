@@ -683,6 +683,40 @@ void MobiusKernel::midiSend(juce::MidiMessage& msg, int deviceId)
 }
 
 /**
+ * Called by the MidiOut function to send a sync message, usually Start/Stop/Continue
+ * rather than clocks.  Unclear how much this was used.
+ *
+ * We can send these though the host but I doubt that's useful.
+ * If you want to send sync messages assume there is a specicic sync device
+ * open in the container.
+ */
+void MobiusKernel::midiSendSync(juce::MidiMessage& msg)
+{
+    container->midiSendSync(msg);
+}
+
+/**
+ * Called by the MidiOut function to send a normal message
+ * Unlike SendSync, here we can route through the host if the container
+ * does not have a MIDI export device configured.
+ */
+void MobiusKernel::midiSendExport(juce::MidiMessage& msg)
+{
+    if (container->isPlugin()) {
+        if (container->hasMidiExportDevice()) {
+            container->midiExport(msg);
+        }
+        else {
+            juce::MidiBuffer* buffer = stream->getMidiMessages();
+            buffer->addEvent(msg, 0);
+        }
+    }
+    else {
+        container->midiExport(msg);
+    }
+}
+
+/**
  * Called by MIdiTrack::configure to get the deviceId to use when sending events.
  * The name comes from the Session.
  *

@@ -11,12 +11,12 @@
 #include "../common/BasicButtonRow.h"
 
 #include "BindingTable.h"
-#include "BindingTargetSelector.h"
+#include "TargetSelectorWrapper.h"
 #include "ConfigEditor.h"
 
 class BindingEditor : public ConfigEditor,
                       public BindingTable::Listener,
-                      public BindingTargetSelector::Listener,
+                      public TargetSelectorWrapper::Listener,
                       public Field::Listener
 {
   public:
@@ -60,14 +60,16 @@ class BindingEditor : public ConfigEditor,
     class Binding* bindingCopy(class Binding* b) override;
 
     // BindingTargetSelector::Listener
-    void bindingTargetClicked(BindingTargetSelector* bts) override;
+    void bindingTargetClicked() override;
 
     // Field::Listener
     void fieldChanged(Field* field) override;
     
   protected:
     BindingTable bindings;
-    BindingTargetSelector targets;
+    
+    TargetSelectorWrapper targets;
+    
     Form form;
     Field* scope = nullptr;
     Field* arguments = nullptr;

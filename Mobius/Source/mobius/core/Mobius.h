@@ -333,6 +333,9 @@ class Mobius
     void sendMessage(const char* msg);
 
     void activateBindings(Action* a);
+
+    void midiSendSync(juce::MidiMessage& msg);
+    void midiSendExport(juce::MidiMessage& msg);
     
     //////////////////////////////////////////////////////////////////////
     // 

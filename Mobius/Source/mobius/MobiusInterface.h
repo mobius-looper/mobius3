@@ -396,16 +396,29 @@ class MobiusContainer
     virtual class Pulsator* getPulsator() = 0;
 
     /**
-     * Send a MIDI event somewhere.
-     * This is still under redesign.  The MidiEvent class is old
-     * and will eventually be replaced by juce::MidiMessage
-     */
-    virtual void midiSend(class OldMidiEvent* e) = 0;
-
-    /**
-     * New MIDI event sender
+     * Send a MIDI message to a specific device
      */
     virtual void midiSend(const juce::MidiMessage& msg, int deviceId) = 0;
+
+    /**
+     * Send to the designated export device
+     */
+    virtual void midiExport(const juce::MidiMessage& msg) = 0;
+
+    /**
+     * Send to the designated sync device
+     */
+    virtual void midiSendSync(const juce::MidiMessage& msg) = 0;
+
+    /**
+     * Test to see if the user configured an export device and it should
+     * be used instead of routing through the host.
+     */
+    virtual bool hasMidiExportDevice() = 0;
+
+    /**
+     * Get the runtime device id for a name
+     */
     virtual int getMidiOutputDeviceId(const char* name) = 0;
 
     /**

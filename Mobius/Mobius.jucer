@@ -328,6 +328,14 @@
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>
           <FILE id="VOlHeq" name="SymbolTree.h" compile="0" resource="0" file="Source/ui/config/SymbolTree.h"/>
+          <FILE id="ImU9ao" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
+                file="Source/ui/config/TargetSelectorWrapper.cpp"/>
+          <FILE id="MuAGqD" name="TargetSelectorWrapper.h" compile="0" resource="0"
+                file="Source/ui/config/TargetSelectorWrapper.h"/>
+          <FILE id="PJf3KC" name="TreeTargetSelector.cpp" compile="1" resource="0"
+                file="Source/ui/config/TreeTargetSelector.cpp"/>
+          <FILE id="OOMFyO" name="TreeTargetSelector.h" compile="0" resource="0"
+                file="Source/ui/config/TreeTargetSelector.h"/>
           <FILE id="xPiHJd" name="YanParameter.cpp" compile="1" resource="0"
                 file="Source/ui/config/YanParameter.cpp"/>
           <FILE id="RppSPz" name="YanParameter.h" compile="0" resource="0" file="Source/ui/config/YanParameter.h"/>

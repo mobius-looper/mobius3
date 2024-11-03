@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+
 #include "../script/MslContext.h"
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
@@ -161,6 +163,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // used by MidiTracker to schedule a follower event in a core track
     void scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q);
     
+    // used by the MidiOut function handler
+    void midiSendSync(juce::MidiMessage& msg);
+    void midiSendExport(juce::MidiMessage& msg);
+
   protected:
 
     class MobiusPools* getPools() {
@@ -215,7 +221,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // used by MidiTracker to send to the host or forward to MidiManager
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
-
+    
     // used by Mobius to trigger clips after a core event
     void clipStart(int audioTrack, const char* bindingArgs);
 

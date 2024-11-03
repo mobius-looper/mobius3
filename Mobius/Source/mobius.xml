@@ -292,7 +292,6 @@
       trackSyncUnit='default'/>
   </Setup>
   <BindingSet name='Base'>
-    <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
     <Binding name='Record' trigger='key' value='82'/>
     <Binding name='Reset' trigger='key' value='27'/>
     <Binding name='NextLoop' trigger='key' value='65576'/>
@@ -310,6 +309,8 @@
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
     <Binding name='Multiply' trigger='key' value='77'/>
     <Binding name='Insert' trigger='key' value='73'/>
+    <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
+    <Binding name='Record' trigger='note' value='64' channel='1'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

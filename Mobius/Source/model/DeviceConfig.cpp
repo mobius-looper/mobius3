@@ -224,11 +224,13 @@ MachineConfig* DeviceConfig::getMachineConfig()
 #define ATT_MIDI_INPUT "midiInput"
 #define ATT_MIDI_INPUT_SYNC "midiInputSync"
 #define ATT_MIDI_OUTPUT "midiOutput"
+#define ATT_MIDI_EXPORT "midiExport"
 #define ATT_MIDI_OUTPUT_SYNC "midiOutputSync"
 #define ATT_MIDI_THRU "midiThru"
 #define ATT_PLUGIN_MIDI_INPUT "pluginMidiInput"
 #define ATT_PLUGIN_MIDI_INPUT_SYNC "pluginMidiInputSync"
 #define ATT_PLUGIN_MIDI_OUTPUT "pluginMidiOutput"
+#define ATT_PLUGIN_MIDI_EXPORT "pluginMidiExport"
 #define ATT_PLUGIN_MIDI_OUTPUT_SYNC "pluginMidiOutputSync"
 #define ATT_PLUGIN_MIDI_THRU "pluginMidiThru"
 
@@ -268,12 +270,14 @@ juce::String DeviceConfig::toXml()
         addAttribute(child, ATT_MIDI_INPUT, machine->midiInput);
         addAttribute(child, ATT_MIDI_INPUT_SYNC, machine->midiInputSync);
         addAttribute(child, ATT_MIDI_OUTPUT, machine->midiOutput);
+        addAttribute(child, ATT_MIDI_EXPORT, machine->midiExport);
         addAttribute(child, ATT_MIDI_OUTPUT_SYNC, machine->midiOutputSync);
         addAttribute(child, ATT_MIDI_THRU, machine->midiThru);
         
         addAttribute(child, ATT_PLUGIN_MIDI_INPUT, machine->pluginMidiInput);
         addAttribute(child, ATT_PLUGIN_MIDI_INPUT_SYNC, machine->pluginMidiInputSync);
         addAttribute(child, ATT_PLUGIN_MIDI_OUTPUT, machine->pluginMidiOutput);
+        addAttribute(child, ATT_PLUGIN_MIDI_EXPORT, machine->pluginMidiExport);
         addAttribute(child, ATT_PLUGIN_MIDI_OUTPUT_SYNC, machine->pluginMidiOutputSync);
         addAttribute(child, ATT_PLUGIN_MIDI_THRU, machine->pluginMidiThru);
     }
@@ -324,12 +328,14 @@ void DeviceConfig::parseXml(juce::String xml)
                 mc->midiInput = el->getStringAttribute(ATT_MIDI_INPUT);
                 mc->midiInputSync = el->getStringAttribute(ATT_MIDI_INPUT_SYNC);
                 mc->midiOutput = el->getStringAttribute(ATT_MIDI_OUTPUT);
+                mc->midiExport = el->getStringAttribute(ATT_MIDI_EXPORT);
                 mc->midiOutputSync = el->getStringAttribute(ATT_MIDI_OUTPUT_SYNC);
                 mc->midiThru = el->getStringAttribute(ATT_MIDI_THRU);
             
                 mc->pluginMidiInput = el->getStringAttribute(ATT_PLUGIN_MIDI_INPUT);
                 mc->pluginMidiInputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_INPUT_SYNC);
                 mc->pluginMidiOutput = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT);
+                mc->pluginMidiExport = el->getStringAttribute(ATT_PLUGIN_MIDI_EXPORT);
                 mc->pluginMidiOutputSync = el->getStringAttribute(ATT_PLUGIN_MIDI_OUTPUT_SYNC);
                 mc->pluginMidiThru = el->getStringAttribute(ATT_PLUGIN_MIDI_THRU);
             }

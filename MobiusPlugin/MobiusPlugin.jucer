@@ -382,6 +382,16 @@
           <FILE id="TiRXAt" name="ScriptTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptTable.h"/>
           <FILE id="YImupE" name="SetupEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupEditor.cpp"/>
           <FILE id="f6jy1c" name="SetupEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SetupEditor.h"/>
+          <FILE id="brgXgQ" name="SymbolTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SymbolTree.cpp"/>
+          <FILE id="utCVzj" name="SymbolTree.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SymbolTree.h"/>
+          <FILE id="gF7eQT" name="TargetSelectorWrapper.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/TargetSelectorWrapper.cpp"/>
+          <FILE id="XB06G1" name="TargetSelectorWrapper.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/TargetSelectorWrapper.h"/>
+          <FILE id="Zp9cln" name="TreeTargetSelector.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/TreeTargetSelector.cpp"/>
+          <FILE id="yC9miv" name="TreeTargetSelector.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/TreeTargetSelector.h"/>
           <FILE id="vAZyhZ" name="YanParameter.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/YanParameter.cpp"/>
           <FILE id="xETFoK" name="YanParameter.h" compile="0" resource="0" file="../Mobius/Source/ui/config/YanParameter.h"/>

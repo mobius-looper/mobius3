@@ -233,8 +233,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     int getBlockSize() override;
     int getMillisecondCounter() override;
     void sleep(int millis) override;
-    void midiSend(class OldMidiEvent* event) override;
     void midiSend(const juce::MidiMessage& msg, int deviceId) override;
+    void midiExport(const juce::MidiMessage& msg) override;
+    void midiSendSync(const juce::MidiMessage& msg) override;
+    bool hasMidiExportDevice() override;
     int getMidiOutputDeviceId(const char* name) override;
     void setAudioListener(class MobiusAudioListener* l) override;
     class MslEnvironment* getMslEnvironment() override;

@@ -1616,56 +1616,6 @@ MobiusMidiTransport* Supervisor::getMidiTransport()
     return &midiRealizer;
 }
 
-/**
- * MidiEvent has always represented channels starting from zero, and this
- * has been expected in scripts.  Juce::MidiMessage channels start from 1
- * with zero being reserved for Sysex messages, if you use setChannel
- * or one of the static constructors like juce::MidiMessage::noteOn.
- *
- * The MidiMessage has constructors that take raw bytes, but there are several
- * of them for different message types, unclear if you can for example call
- * MidiMessage(byte1, byte2, byte3) with a status value that doesn't require three bytes.
- *
- * This conversion looks harder than it should be.
- */
-void Supervisor::midiSend(class OldMidiEvent* event)
-{
-    juce::MidiMessage msg;
-    bool sync = false;
-    
-    int status = event->getStatus();
-    int juceChannel = event->getChannel() + 1;
-
-    if (status == MS_NOTEON)
-      msg = juce::MidiMessage::noteOn(juceChannel, event->getKey(), (juce::uint8)event->getVelocity());
-
-    else if (status == MS_NOTEOFF)
-      msg = juce::MidiMessage::noteOff(juceChannel, event->getKey(), (juce::uint8)event->getVelocity());
-
-    else if (status == MS_PROGRAM)
-      msg = juce::MidiMessage::programChange(juceChannel, event->getProgram());
-
-    else if (status == MS_CONTROL)
-      msg = juce::MidiMessage::controllerEvent(juceChannel, event->getController(), event->getValue());
-    else if (status == MS_CLOCK || status == MS_START || status == MS_STOP || status == MS_CONTINUE) {
-        // would be better if MidiManager handled this
-        msg = juce::MidiMessage(status, 0, 0);
-        sync = true;
-    }
-    else {
-        // punt and hope the 3 byte constructor is smart enough to figure out how
-        // many bytes the status actually needs
-        // todo: test this, I'm seeing that MS_START at least is going through as one byte
-        int byte1 = status | event->getChannel();
-        msg = juce::MidiMessage(byte1, event->getKey(), event->getVelocity());
-    }
-
-    if (sync)
-      midiManager.sendSync(msg);
-    else
-      midiManager.send(msg);
-}
-
 void Supervisor::setAudioListener(MobiusAudioListener* l)
 {
     audioListener = l;
@@ -1684,6 +1634,21 @@ void Supervisor::setAudioListener(MobiusAudioListener* l)
 void Supervisor::midiSend(const juce::MidiMessage& msg, int deviceId)
 {
     midiManager.send(msg, deviceId);
+}
+
+void Supervisor::midiExport(const juce::MidiMessage& msg)
+{
+    midiManager.sendExport(msg);
+}
+
+void Supervisor::midiSendSync(const juce::MidiMessage& msg)
+{
+    midiManager.sendSync(msg);
+}
+
+bool Supervisor::hasMidiExportDevice()
+{
+    return midiManager.hasOutputDevice(MidiManager::Export);
 }
 
 /**

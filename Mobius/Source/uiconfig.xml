@@ -125,6 +125,7 @@
     <Button action="ClipStart" arguments="5 1"/>
     <Button action="Start"/>
     <Button action="Stop"/>
+    <Button action="MidiOutTest"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>
