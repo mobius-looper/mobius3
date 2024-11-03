@@ -6,6 +6,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
+#include "../../model/UIConfig.h"
 #include "../../Supervisor.h"
 
 #include "../common/SimpleRadio.h"
@@ -51,7 +52,9 @@ void MidiTrackEditor::load()
     selectedTrack = 0;
     trackSelector.setSelection(selectedTrack);
 
-    tree.loadSymbols(supervisor->getSymbols());
+    UIConfig* config = supervisor->getUIConfig();
+    juce::String favorites = config->get("symbolTreeFavorites");
+    tree.loadSymbols(supervisor->getSymbols(), favorites);
     
     loadSession();
 }
@@ -76,6 +79,9 @@ void MidiTrackEditor::save()
 
     session.reset(nullptr);
     revertSession.reset(nullptr);
+
+    UIConfig* config = supervisor->getUIConfig();
+    config->put("symbolTreeFavorites", tree.getFavorites());
 }
 
 /**

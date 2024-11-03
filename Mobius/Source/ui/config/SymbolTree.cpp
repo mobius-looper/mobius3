@@ -9,6 +9,7 @@
 
 #include "../../util/Trace.h"
 #include "../../model/Symbol.h"
+#include "../../model/ParameterProperties.h"
 
 #include "SymbolTree.h"
 
@@ -23,6 +24,9 @@ SymbolTree::SymbolTree()
     addAndMakeVisible(tree);
     tree.setRootItem(&root);
     tree.setRootItemVisible(false);
+    
+    addAndMakeVisible(search);
+    search.setListener(this);
 }
 
 SymbolTree::~SymbolTree()
@@ -31,19 +35,64 @@ SymbolTree::~SymbolTree()
 
 void SymbolTree::resized()
 {
-    tree.setBounds(getLocalBounds());
+    juce::Rectangle<int> area = getLocalBounds();
+    search.setBounds(area.removeFromTop(20));
+    tree.setBounds(area);
 }
 
-void SymbolTree::loadSymbols(SymbolTable* symbols)
+void SymbolTree::inputEditorShown(YanInput*)
 {
+    startSearch();
+}
+
+void SymbolTree::inputEditorChanged(YanInput* input, juce::String text)
+{
+    (void)input;
+    Trace(2, "%s", text.toUTF8());
+    searchTree(text, &root);
+}
+
+void SymbolTree::inputEditorHidden(YanInput*)
+{
+    endSearch();
+}
+
+void SymbolTree::loadSymbols(SymbolTable* symbols, juce::String newFavorites)
+{
+    SymbolTreeComparator comparator;
+
+    // pre-intern these in a particular order
+    SymbolTreeItem* favoritesNode = root.internChild("Favorites");
+    (void)root.internChild("Functions");
+    (void)root.internChild("Parameters");
+    (void)root.internChild("Controls");
+    (void)root.internChild("Scripts");
+    (void)root.internChild("Structures");
+    (void)root.internChild("Samples");
+    (void)root.internChild("Other");
+
+    favorites.clear();
+    if (newFavorites.length() > 0) {
+        // todo: may need to filter these if we remove symbols
+        favorites = juce::StringArray::fromTokens(newFavorites, ",", "");
+        for (auto name : favorites) {
+            SymbolTreeItem* neu = new SymbolTreeItem(name);
+            favoritesNode->addSubItemSorted(comparator, neu);
+        }
+    }
+    
     for (auto symbol : symbols->getSymbols()) {
         
         if (!symbol->hidden) {
         
             SymbolTreeItem* parent = nullptr;
 
-            if (symbol->parameterProperties != nullptr)
-              parent = root.internChild("Parameters");
+            if (symbol->parameterProperties != nullptr) {
+                if (symbol->parameterProperties->control)
+                  parent = root.internChild("Controls");
+                else
+                  parent = root.internChild("Parameters");
+            }
             else if (symbol->functionProperties != nullptr) {
                 // this is what BindingTargetPanel does, why?
                 if (symbol->behavior == BehaviorFunction)
@@ -56,6 +105,8 @@ void SymbolTree::loadSymbols(SymbolTable* symbols)
               parent = root.internChild("Scripts");
             else if (symbol->sample != nullptr)
               parent = root.internChild("Samples");
+            else if (symbol->behavior == BehaviorActivation)
+              parent = root.internChild("Structures");
             else
               parent = root.internChild("Other");
 
@@ -64,16 +115,23 @@ void SymbolTree::loadSymbols(SymbolTable* symbols)
                 SymbolTreeItem* neu = new SymbolTreeItem(symbol->name);
 
                 if (symbol->treePath == "") {
-                    parent->addSubItem(neu);
+                    //parent->addSubItem(neu);
+                    parent->addSubItemSorted(comparator, neu);
                 }
                 else {
                     juce::StringArray path = parsePath(symbol->treePath);
                     SymbolTreeItem* deepest = internPath(parent, path);
-                    deepest->addSubItem(neu);
+                    //deepest->addSubItem(neu);
+                    deepest->addSubItemSorted(comparator, neu);
                 }
             }
         }
     }
+}
+
+juce::String SymbolTree::getFavorites()
+{
+    return favorites.joinIntoString(",");
 }
 
 SymbolTreeItem* SymbolTree::internPath(SymbolTreeItem* parent, juce::StringArray path)
@@ -88,6 +146,124 @@ SymbolTreeItem* SymbolTree::internPath(SymbolTreeItem* parent, juce::StringArray
 juce::StringArray SymbolTree::parsePath(juce::String s)
 {
     return juce::StringArray::fromTokens(s, "/");
+}
+
+void SymbolTree::startSearch()
+{
+    // since we don't unhide then the search is ended, do it now
+    unhide(&root);
+    
+    // it is common to leave text in the search fields, then open and close nodes
+    // when the editor is clicked on again, recondition the tree to have the
+    // last search result
+    searchTree(search.getValue(), &root);
+}
+
+int SymbolTree::searchTree(juce::String text, SymbolTreeItem* node)
+{
+    int hits = 0;
+    
+    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+
+        if (item->getNumSubItems() > 0) {
+            // this is an interior node, don't match on those but descend
+        }
+        else if (text.length() == 0) {
+            // the search box was cleared, deselect the items to color them normally
+            // and unhide them
+            // if you bump the hit count it will keep the parent open
+            //hits++;
+            if (item->isSelected())
+              item->setSelected(false, false, juce::NotificationType::sendNotification);
+            item->setHidden(false);
+        }
+        else if (item->getName().contains(text)) {
+            hits++;
+            // no, do not select them, they have to click to select
+            //if (!item->isSelected())
+            //item->setSelected(true, false, juce::NotificationType::sendNotification);
+            item->setHidden(false);
+        }
+        else {
+            // deselect if previously selected
+            if (item->isSelected())
+              item->setSelected(false, false, juce::NotificationType::sendNotification);
+            item->setHidden(true);
+        }
+
+        hits += searchTree(text, item);
+    }
+
+    if (node != &root && node->getNumSubItems() > 0) {
+        if (hits > 0) {
+            node->setOpen(true);
+            node->setHidden(false);
+        }
+        else {
+            // nothing inside this node 
+            node->setOpen(false);
+            if (text.length() == 0) {
+                // no specific search token, make sure it becomes visible again
+                // for next time
+                node->setHidden(false);
+            }
+            else {
+                // nothing inside it and they typed something in, hide it
+                // unless it is one of the top level ones
+                if (node->getParentItem() != &root)
+                  node->setHidden(true);
+            }
+        }
+    }
+    
+    return hits;
+}
+
+void SymbolTree::endSearch()
+{
+    // formerly unhid things so they could browse normally
+    // that isn't what you want if after search you want to click
+    // on things and add favorites, make them clear the search box
+    //unhide(&root);
+}
+
+void SymbolTree::unhide(SymbolTreeItem* node)
+{
+    node->setHidden(false);
+    if (node->isSelected())
+      node->setSelected(false, false, juce::NotificationType::sendNotification);
+    for (int i = 0 ; i < node->getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(node->getSubItem(i));
+        unhide(item);
+    }
+}
+
+void SymbolTree::itemClicked(SymbolTreeItem* item)
+{
+    if (item->canBeSelected())
+      Trace(2, "Clicked %s", item->getName().toUTF8());
+}
+
+void SymbolTree::addFavorite(juce::String name)
+{
+    favorites.add(name);
+
+    SymbolTreeItem* parent = root.internChild("Favorites");
+    SymbolTreeItem* neu = new SymbolTreeItem(name);
+    SymbolTreeComparator comparator;
+    parent->addSubItemSorted(comparator, neu);
+
+    // auto open?
+    parent->setOpen(true);
+}
+
+void SymbolTree::removeFavorite(juce::String name)
+{
+    favorites.removeString(name);
+    
+    SymbolTreeItem* parent = root.internChild("Favorites");
+    parent->remove(name);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -119,16 +295,94 @@ juce::String SymbolTreeItem::getName()
     return name;
 }
 
+bool SymbolTreeItem::isHidden()
+{
+    return hidden;
+}
+
+void SymbolTreeItem::setHidden(bool b)
+{
+    hidden = b;
+}
+
+void SymbolTreeItem::setNoSelect(bool b)
+{
+    noSelect = b;
+}
+
 bool SymbolTreeItem::mightContainSubItems()
 {
     return getNumSubItems() != 0;
 }
 
+int SymbolTreeItem::getItemHeight() const
+{
+    return (hidden) ? 0 : 14;
+}
+
+bool SymbolTreeItem::canBeSelected() const
+{
+    return !noSelect;
+}
+
+void SymbolTreeItem::remove(juce::String childName)
+{
+    int index = -1;
+    for (int i = 0 ; i < getNumSubItems() ; i++) {
+        SymbolTreeItem* item = static_cast<SymbolTreeItem*>(getSubItem(i));
+        if (item->name == childName) {
+            index = i;
+            break;
+        }
+    }
+    if (index >= 0)
+      removeSubItem(index, true);
+}
+
 void SymbolTreeItem::paintItem(juce::Graphics& g, int width, int height)
 {
-    //g.fillAll(juce::Colours::grey);
-    g.setColour(juce::Colours::white);
-    g.drawText(name, 0, 0, width, height, juce::Justification::left);
+    if (!hidden) {
+        //g.fillAll(juce::Colours::grey);
+        if (isSelected())
+          g.setColour(juce::Colours::cyan);
+        else if (noSelect)
+          g.setColour(juce::Colours::yellow);
+        else
+          g.setColour(juce::Colours::white);
+        g.drawText(name, 0, 0, width, height, juce::Justification::left);
+    }
+}
+
+void SymbolTreeItem::itemClicked(const juce::MouseEvent& e)
+{
+    if (e.mods.isRightButtonDown()) {
+        SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());
+        juce::PopupMenu menu;
+        juce::PopupMenu::Item item ("Favorite");
+        item.setID(1);
+        if (tree->favorites.contains(name))
+          item.setTicked(true);
+        menu.addItem(item);
+        juce::PopupMenu::Options options;
+        menu.showMenuAsync(options, [this] (int result) {popupSelection(result);});
+    }
+    else {
+        SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());
+        tree->itemClicked(this);
+    }
+}
+
+void SymbolTreeItem::popupSelection(int result)
+{
+    if (result == 1) {
+        SymbolTree* tree = static_cast<SymbolTree*>(getOwnerView()->getParentComponent());
+        if (tree->favorites.contains(name)) {
+            tree->removeFavorite(name);
+        }
+        else {
+            tree->addFavorite(name);
+        }
+    }
 }
 
 SymbolTreeItem* SymbolTreeItem::internChild(juce::String childName)
@@ -145,10 +399,25 @@ SymbolTreeItem* SymbolTreeItem::internChild(juce::String childName)
 
     if (found == nullptr) {
         found = new SymbolTreeItem(childName);
+        found->setNoSelect(true);
         addSubItem(found);
     }
 
     return found;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sort Comparator
+//
+//////////////////////////////////////////////////////////////////////
+
+int SymbolTreeComparator::compareElements(juce::TreeViewItem* first, juce::TreeViewItem* second)
+{
+    juce::String name1 = (static_cast<SymbolTreeItem*>(first))->getName();
+    juce::String name2 = (static_cast<SymbolTreeItem*>(second))->getName();
+
+    return name1.compareIgnoreCase(name2);
 }
 
 /****************************************************************************/

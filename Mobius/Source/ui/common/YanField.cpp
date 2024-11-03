@@ -52,12 +52,27 @@ YanInput::YanInput(juce::String label, int argCharWidth, bool argReadOnly) : Yan
         // for some reason this uses lambdas rather than listeners to detect changes
         text.onEditorShow = [this](){
             juce::TextEditor* ed = text.getCurrentTextEditor();
-            if (ed != nullptr)
-              ed->moveCaretToEnd();
+            if (ed != nullptr) {
+                ed->moveCaretToEnd();
+                ed->addListener(this);
+            }
+            if (listener != nullptr)
+              listener->inputEditorShown(this);
+        };
+
+        text.onEditorHide = [this](){
+            if (listener != nullptr)
+              listener->inputEditorHidden(this);
         };
     }
 
     addAndMakeVisible(text);
+}
+
+void YanInput::textEditorTextChanged(juce::TextEditor& ed)
+{
+    if (listener != nullptr)
+      listener->inputEditorChanged(this, ed.getText());
 }
 
 void YanInput::setListener(Listener* l)

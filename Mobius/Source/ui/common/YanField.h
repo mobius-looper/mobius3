@@ -35,7 +35,7 @@ class YanSpacer : public YanField
 };
 
 
-class YanInput : public YanField, public juce::Label::Listener
+class YanInput : public YanField, public juce::Label::Listener, public juce::TextEditor::Listener
 {
   public:
     
@@ -45,7 +45,10 @@ class YanInput : public YanField, public juce::Label::Listener
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void inputChanged(YanInput* src) = 0;
+        virtual void inputChanged(YanInput*) {}
+        virtual void inputEditorShown(YanInput*) {}
+        virtual void inputEditorHidden(YanInput*) {}
+        virtual void inputEditorChanged(YanInput*, juce::String) {}
     };
     void setListener(Listener* l);
     
@@ -60,6 +63,7 @@ class YanInput : public YanField, public juce::Label::Listener
 
     void resized() override;
     void labelTextChanged(juce::Label* l) override;
+    void textEditorTextChanged(juce::TextEditor& ed);
 
   private:
 
