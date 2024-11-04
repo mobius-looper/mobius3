@@ -5,6 +5,8 @@
     <Externals>
       <External path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\midiout.mos"/>
+      <External path="c:\dev\mobius3\Mobius\Source\loadmidi.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -14,6 +16,10 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\midiout.mos" name="MidiOutTest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\loadmidi.msl" name="loadmidi"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl" name="loadmidi2"
             added="2147483647"/>
     </Files>
   </Machine>

@@ -406,6 +406,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"UIParameterDec", FuncParameterDec},
     {"ReloadScripts", FuncReloadScripts},
     {"ReloadSamples", FuncReloadSamples},
+    
     {"ShowPanel", FuncShowPanel},
     {"Message", FuncMessage},
     
@@ -416,6 +417,16 @@ SymbolDefinition SymbolDefinitions[] = {
     {"activeButtons", ParamActiveButtons},
     {"bindingOverlays", ParamBindingOverlays},
 
+    //
+    // Files
+    //
+
+    {"LoadLoop", FuncLoadLoop},
+    {"LoadMidi", FuncLoadMidi},
+    {"SaveMidi", FuncSaveMidi},
+    {"LoadSession", FuncLoadSession},
+    {"SaveSession", FuncSaveSession},
+    
     //
     // Terminator
     //

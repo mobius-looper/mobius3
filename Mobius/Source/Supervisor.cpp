@@ -2002,6 +2002,8 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 mobiusMessage(juce::String(action->arguments));
                 handled = true;
             }
+            case FuncLoadMidi: {
+            }
             default: break;
         }
         if (!handled) {
@@ -2530,28 +2532,41 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
  *
  * The interpreter supports complex argument lists but Mobius functions
  * only take one argument and it has to be an integer.
+ *
+ * !! This is a problem for LoadMidi and soon to be other external functions.
+ * We need to support complex argument lists with UIAction.  Easiest for bindings
+ * is to stringify them and parse them in doAction.  But when coming from a script
+ * it's an ugly transformation since we already have them split out.
  */
 bool Supervisor::mslAction(MslAction* action)
 {
     bool success = false;
     if (action->external->type == 0) {
-        UIAction uia;
-        uia.symbol = static_cast<Symbol*>(action->external->object);
+        Symbol* s = static_cast<Symbol*>(action->external->object);
 
-        if (action->arguments != nullptr)
-          uia.value = action->arguments->getInt();
+        if (s->id == FuncLoadMidi) {
+            doLoadMidi(action);
+            success = true;
+        }
+        else {
+            UIAction uia;
+            uia.symbol = static_cast<Symbol*>(action->external->object);
 
-        // there is no group scope in MslAction
-        uia.setScopeTrack(action->scope);
+            if (action->arguments != nullptr)
+              uia.value = action->arguments->getInt();
+
+            // there is no group scope in MslAction
+            uia.setScopeTrack(action->scope);
     
-        doAction(&uia);
+            doAction(&uia);
 
-        // UIActions don't have complex return values yet,
-        // and there isn't a way to return the scheduled event
-        // but events should be handled in the kernel anyway
-        action->result.setString(uia.result);
+            // UIActions don't have complex return values yet,
+            // and there isn't a way to return the scheduled event
+            // but events should be handled in the kernel anyway
+            action->result.setString(uia.result);
         
-        success = true;
+            success = true;
+        }
     }
     else {
         // must be a core Variable, should have transitioned
@@ -2625,20 +2640,191 @@ void Supervisor::mslExport(MslLinkage* link)
 {
     // export this as a Symbol for bindings
     Symbol* s = symbols.intern(link->name);
-    if (s->script != nullptr || s->behavior == BehaviorNone) {
-        // can make this a script
-        // todo: all sortts of things to check here, it could be a core script
-        // what about all the flags that can be set in ScriptRef?
-        if (s->script == nullptr)
-          s->script.reset(new ScriptProperties());
+
+    // bootstrap a ScriptProperties and check for conflicts
+    if (s->script == nullptr) {
+        if (s->behavior != BehaviorNone && s->behavior != BehaviorScript) {
+            // already exported as something else
+            Trace(1, "Supervisor: Symbol conflict exporting MSL script %s",
+                  s->getName());
+        }
+        else {
+            if (s->behavior == BehaviorScript) {
+                // symbol that thought it should be a script but didn't have properties
+                // not a problem, but it's an odd state, find out why
+                // is this what unlinking does?
+                Trace(2, "Supervisor: Warning: Correcting script properties for symbol that thinks it's a script %s",
+                      s->getName());
+            }
+            s->script.reset(new ScriptProperties());
+        }
+    }
+    else if (s->behavior != BehaviorScript) {
+        // something tried to use this after we installed properties
+        Trace(1, "Supervisor: Correcting behavior for script symbol %s", s->getName());
+    }
+
+    // finally update the script properties
+    if (s->script != nullptr) {
         s->script->mslLinkage = link;
         s->level = LevelUI;
         s->behavior = BehaviorScript;
     }
-    else {
-        Trace(1, "Supervisor: Symbol conflict exporting MSL script %s",
-              link->name.toUTF8());
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MSL Function Handlers
+//
+// Things in this section are action handlers that deal with MslAction
+// directly rather than squeezing it through UIAction
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Load a MIDI loop into a MIDI track.
+ * How the destination track and loop are specified needs thought.
+ * If we require normalized "view" numbers then the script would have assumptions
+ * about the number of audio tracks since MIDI tracks are always numbered after those.
+ * If you changed the number of audio tracks, all scripts with track numbers would need
+ * to be modified.  When using numbers I'm preferring used type-relative numbers where
+ * the first MIDI track is 1.
+ *
+ * Track names would be the most reliable.
+ *
+ * A relatively stable symbolic identifier would also be good: a1, a2, m1, m2 and
+ * less ambiguous.  Makes it easire to move tracks around.  Though not necessary here
+ * since the function name implies we're dealing with MIDI tracks.
+ *
+ * If they do NOT specify a track number we can go to the focused track if it is a MIDI
+ * track.  Otherwise default to the first one.
+ *
+ * If they do NOT specify a loop number, it's expected that this target the selected loop
+ * rather than just picking the first one arbitrarily.
+ *
+ * Note the number spaces here:
+ *
+ *     track/loop indexes: zero based
+ *     track/loop numbers: 1 based
+ *     track number: 1-n with audio and midi occupying the same space, audio first
+ *     track type number: 1-n within each type
+ *
+ * Within MobiusView things are usually INDEXES
+ *
+ */
+void Supervisor::doLoadMidi(MslAction* a)
+{
+    const char* argPath = nullptr;
+    int argTrack = 0;
+    int argLoop = 0;
+
+    // parse arguments
+    // these are on a linked list which is kind of awkward to deal with positionally
+    MslValue* arg = a->arguments;
+    if (arg != nullptr) {
+        argPath = arg->getString();
+        arg = arg->next;
     }
+    if (arg != nullptr) {
+        argTrack = arg->getInt();
+        arg = arg->next;
+    }
+    if (arg != nullptr) {
+        argLoop = arg->getInt();
+    }
+
+    if (mobiusView.midiTracks == 0) {
+        alert("No MIDI tracks configured");
+    }
+    else if (argTrack > mobiusView.midiTracks) {
+        alert("MIDI track type number " + juce::String(argTrack) + " out of range");
+    }
+    else if (argTrack == 0 && mobiusView.focusedTrack < mobiusView.audioTracks) {
+        alert("No track type number specified and a MIDI track does not have focus");
+    }
+    else {
+        // if unspecified, pretend they entered the type number of the focused track
+        // focusedTrack is an INDEX into the combined number space
+        if (argTrack == 0) argTrack = mobiusView.focusedTrack - mobiusView.audioTracks + 1;
+
+        // to get to the track view, convert the type number to a view index
+        int viewIndex = argTrack + mobiusView.audioTracks - 1;
+        MobiusViewTrack* tview = mobiusView.getTrack(viewIndex);
+        if (tview == nullptr) {
+            Trace(1, "Supervisor: Track index finding MIDI track is fucked");
+        }
+        else {
+            if (argLoop == 0) {
+                // loop not specified, use the active loop
+                argLoop = tview->activeLoop + 1;
+            }
+
+            if (argLoop > tview->loopCount) {
+                alert("Loop number " + juce::String(argLoop) + " out of range");
+            }
+            else {
+                // verify that we can find a file here
+                juce::File file = findUserFile(argPath);
+                if (file != juce::File()) {
+                    // MidiClerk deals with consolidated view numbers
+                    int viewTrackNumber = argTrack + mobiusView.audioTracks;
+                    midiClerk->loadFile(file, viewTrackNumber, argLoop);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Given a file path fragment from a script or binding, try to load an actual file.
+ * If this is a relative path, look at the global parameter defaultUserFileFolder and
+ * if set use that as the parent directory.  If not found there, use the installation
+ * directory as the parent.
+ */
+juce::File Supervisor::findUserFile(const char* fragment)
+{
+    juce::File file;
+
+    if (juce::File::isAbsolutePath(fragment)) {
+        juce::File possible = juce::File(fragment);
+        if (possible.existsAsFile())
+          file = possible;
+        else
+          alert("File does not exist: " + juce::String(fragment));
+    }
+    else {
+        bool found = false;
+        const char* userdir = session->getString("userFileFolder");
+        if (userdir != nullptr) {
+            juce::File folder (userdir);
+            if (!folder.isDirectory()) {
+                // could alert, but move on
+                Trace(1, "Supervisor: Invalid user specified file folder %s", userdir);
+            }
+            else {
+                juce::File possible = folder.getChildFile(fragment);
+                if (possible.existsAsFile()) {
+                    file = possible;
+                    found =  true;
+                }
+            }
+        }
+
+        if (!found) {
+            // I personally like falling back to the install directory but
+            // most probably will not want this
+            juce::File root = getRoot();
+            juce::File possible = root.getChildFile(fragment);
+            if (possible.existsAsFile()) {
+                file = possible;
+            }
+            else {
+                alert("Unable to locate file with path fragment: " + juce::String(fragment));
+            }
+        }
+    }
+
+    return file;
 }
 
 //////////////////////////////////////////////////////////////////////

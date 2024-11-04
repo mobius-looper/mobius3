@@ -126,6 +126,8 @@
     <Button action="Start"/>
     <Button action="Stop"/>
     <Button action="MidiOutTest"/>
+    <Button action="loadmidi"/>
+    <Button action="loadmidi2"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

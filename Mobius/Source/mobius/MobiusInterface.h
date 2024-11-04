@@ -289,6 +289,8 @@ class MobiusInterface {
 
     // newer interfaces for individual loop load/save that fit more with
     // the Project style of doing things
+    // todo: I don't like making Mobius do file handling, move toward passing Audio
+    // back and forth like we do MidiSequence
     virtual juce::StringArray loadLoop(juce::File src) = 0;
     virtual juce::StringArray saveLoop(juce::File src) = 0;
     virtual juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file) = 0;
@@ -303,7 +305,8 @@ class MobiusInterface {
     virtual void midiEvent(const juce::MidiMessage& msg, int deviceId) = 0;
 
     virtual void loadMidiLoop(class MidiSequence* seq, int track, int loop) = 0;
-
+    //virtual class MidiSequence* saveMidiLoop(int track, int loop) = 0;
+    
   private:
 
     

@@ -369,6 +369,17 @@ typedef enum {
     FuncScriptAddButton,
     FuncScriptListen,
 
+    //
+    // Files
+    //
+
+    FuncLoadLoop,
+    FuncLoadMidi,
+    FuncSaveMidi,
+    FuncLoadSession,
+    FuncSaveSession,
+    
+
     SymbolIdMax
 
 } SymbolId;

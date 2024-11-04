@@ -72,6 +72,11 @@ class Session
     // global parameters
     ValueSet* getGlobals();
     ValueSet* ensureGlobals();
+
+    MslValue* get(juce::String pname);
+    bool getBool(juce::String name);
+    const char* getString(juce::String name);
+    int getInt(juce::String name);
     
     void parseXml(juce::String xml);
     juce::String toXml();

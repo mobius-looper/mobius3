@@ -136,6 +136,19 @@ void MidiClerk::doFileLoad(juce::File file)
     }
 }
 
+/**
+ * Here from a script or binding where the file path was specified
+ * without interacting with a file chooser.
+ */
+void MidiClerk::loadFile(juce::File file, int trackNumber, int loopNumber)
+{
+    MidiSequence* seq = toSequence(file);
+    if (seq != nullptr) {
+        MobiusInterface* mobius = supervisor->getMobius();
+        mobius->loadMidiLoop(seq, trackNumber, loopNumber);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Drag In

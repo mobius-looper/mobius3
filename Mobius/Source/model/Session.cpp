@@ -132,6 +132,33 @@ ValueSet* Session::ensureGlobals()
     return globals.get();
 }
 
+MslValue* Session::get(juce::String pname)
+{
+    MslValue* v = nullptr;
+    if (globals != nullptr)
+      v = globals->get(pname);
+    return v;
+}
+
+bool Session::getBool(juce::String pname)
+{
+    MslValue* v = get(pname);
+    return (v != nullptr) ? v->getBool() : false;
+}
+
+int Session::getInt(juce::String pname)
+
+{
+    MslValue* v = get(pname);
+    return (v != nullptr) ? v->getInt() : false;
+}
+
+const char* Session::getString(juce::String pname)
+{
+    MslValue* v = get(pname);
+    return (v != nullptr) ? v->getString() : nullptr;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Track

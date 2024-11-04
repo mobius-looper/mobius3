@@ -458,5 +458,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // MIDI track nonesense
     void kludgeCoreSymbols();
     void doTrackSelectAction(UIAction* a);
-    
+
+    // msl file stuff
+    void doLoadMidi(class MslAction* a);
+    juce::File findUserFile(const char* fragment);
+
 };

@@ -15,7 +15,7 @@ class MidiClerk
     void loadFile();
     void analyzeFile();
     void loadFile(int trackNumber, int loopNumber);
-
+    void loadFile(juce::File file, int trackNumber, int loopNumber);
     void filesDropped(const juce::StringArray& files, int track, int loop);
     
     void saveFile();

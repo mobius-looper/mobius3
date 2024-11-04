@@ -208,20 +208,35 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
             loop->reset();
             loop->add(layer);
 
-            // if this is also the active loop, then reset the recorder and player
             if (loopIndex == targetIndex) {
+
+                // if this is also the active loop, then reset the recorder and player
+                // if we are actively playing, replace and continue
+                bool keepGoing = false;
+                int currentFrame = player.getFrame();
+                if (mode == MobiusMidiState::ModePlay && !player.isPaused())
+                  keepGoing = true;
+
+                // necessary if keepGoing, but shouldn't we be doing this every time?
+                xxx
+                
                 recorder.reset();
                 recorder.resume(layer);
                 player.reset();
                 player.change(layer);
 
-
-                // before we call startPause force the mode to Play
-                // so that when we come out of pause, that will be what
-                // we return tu
-                mode = MobiusMidiState::ModePlay;
-                startPause();
-                //resumePlay();
+                if (keepGoing) {
+                    recorder.setFrame(currentFrame);
+                    player.setFrame(currentFrame);
+                }
+                else {
+                    // before we call startPause force the mode to Play
+                    // so that when we come out of pause, that will be what
+                    // we return tu
+                    mode = MobiusMidiState::ModePlay;
+                    startPause();
+                    //resumePlay();
+                }
             }
         }
     }
@@ -1895,6 +1910,22 @@ void MidiTrack::resize(TrackProperties& props)
         }
     }
 }
+
+/**
+ * Internal resizer that isn't responding to a leader signal.
+ */
+void MidiTrack::resize()
+{
+    
+    // we could have just passed all this shit up from where it came from
+    TrackProperties props = tracker->getKernel()->getTrackProperties(audioTrack);
+    if (props.invalid) {
+        Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
+    }
+    else {
+    }
+}
+
 
 /**
  * Calculate a playback rate that allows two loops to remain in sync

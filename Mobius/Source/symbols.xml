@@ -127,6 +127,9 @@
   <Function name="SetCycles" level='core' tree='MIDI'/>
   <Function name="Start" level='core' tree='Movement' mayQuantize='true'/>
   <Function name="Stop" level='core' tree='Movement' mayQuantize='true'/>
+
+  <!-- file oriented functions -->
+  <Function name="LoadMidi" level='ui' tree='ui'/>
   
   <!-- various diagnostic functions for testing -->
   
