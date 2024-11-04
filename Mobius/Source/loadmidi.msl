@@ -1,0 +1,1 @@
+LoadMidi("test.mid", 1, 1)
