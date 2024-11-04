@@ -464,6 +464,16 @@ void Mobius::installSymbols()
         props->mayFocus = !f->noFocusLock && f->eventType != RunScriptEvent;
         props->mayConfirm = f->mayConfirm;
         props->mayCancelMute = f->mayCancelMute;
+
+        // until core can pay attention to quantization configuration,
+        // force the flags to match what is hard coded in the Function
+        // todo: quantizedStacked might also be interesting
+        if (f->quantized) {
+            props->mayQuantize = true;
+            // don't force this on until we can respond to it, MIDI tracks can
+            // be selective about this and the setting needs to be preserved on restart
+            //props->quantized = true;
+        }
     }
 
     for (int i = 0 ; Parameters[i] != nullptr ; i++) {
@@ -3065,25 +3075,26 @@ void Mobius::clipStart(class Loop* l, const char* bindingArgs)
  * Only supporting quantization points right now.  Most other things
  * can be handled by injecting Notifier callbacks at the right places.
  */
-void Mobius::scheduleFollowerEvent(int trackNumber, int followerNumber,
-                                   QuantizeMode quantPoint)
+int Mobius::scheduleFollowerEvent(int trackNumber, QuantizeMode q,
+                                  int followerNumber, int eventId)
 {
+    int eventFrame = -1;
     Track* track = getTrack(trackNumber - 1);
     if (track == nullptr) {
         Trace(1, "Mobius::scheduleFollowerEvent Invalid track number %d", trackNumber);
     }
     else {
-        int frame = calculateFollowerEventFrame(track, quantPoint);
+        eventFrame = calculateFollowerEventFrame(track, q);
 
         // if the location frame is negative it means that this
         // is an invalid location because the loop hasn't finished recording
-        if (frame >= 0) {
+        if (eventFrame >= 0) {
     
             EventManager* em = track->getEventManager();
             Event* e = em->newEvent();
             
             e->type = FollowerEvent;
-            e->frame = frame;
+            e->frame = eventFrame;
 
             // if quant is OFF, may need to set the e->immediate flag
             // to prevent the loop from advancing?
@@ -3093,6 +3104,9 @@ void Mobius::scheduleFollowerEvent(int trackNumber, int followerNumber,
             // there could be several follower track with different quantization points
             e->number = followerNumber;
 
+            // this uniquely defines the event in the other track
+            e->fields.follower.eventId = eventId;
+
             // if you set this, it means it is subject to undo
             e->quantized = true;
 
@@ -3101,9 +3115,9 @@ void Mobius::scheduleFollowerEvent(int trackNumber, int followerNumber,
             // at the loop boundary
             
             em->addEvent(e);
-
         }
     }
+    return eventFrame;
 }
 
 int Mobius::calculateFollowerEventFrame(Track* track, QuantizeMode q)
@@ -3131,6 +3145,11 @@ void Mobius::followerEvent(Loop* l, Event* e)
     // a track query result, and more like an event payload the core sends
     // over to the midi side
     props.follower = (int)(e->number);
+    props.eventId = e->fields.follower.eventId;
+
+    // this turns out not to be useful for correlation since we can reschedule
+    // the event and move it
+    //props.eventFrame = e->frame;
 
     mNotifier->notify(l->getTrack(), NotificationFollower, props);
     

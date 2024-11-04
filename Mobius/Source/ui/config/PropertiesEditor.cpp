@@ -150,6 +150,7 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
             addColumnCheckbox("Focus Lock", PropertyColumnFocus);
             addColumnCheckbox("Mute Cancel", PropertyColumnMuteCancel);
             addColumnCheckbox("Confirmation", PropertyColumnConfirmation);
+            addColumnCheckbox("Quantize", PropertyColumnQuantize);
         }
         
         juce::StringArray objectNames;
@@ -177,9 +178,16 @@ void PropertyTable::init(SymbolTable* symbols, bool parameter)
                     symbol->functionProperties->mayCancelMute = true;
                 }
 
+                if (!symbol->functionProperties->mayQuantize &&
+                    symbol->functionProperties->quantized) {
+                    Trace(1, "PropertiesEditor: Forcing mayQuantize on for %s", symbol->getName());
+                    symbol->functionProperties->mayQuantize = true;
+                }
+
                 if (symbol->functionProperties->mayFocus ||
                     symbol->functionProperties->mayConfirm ||
-                    symbol->functionProperties->mayCancelMute) {
+                    symbol->functionProperties->mayCancelMute ||
+                    symbol->functionProperties->mayQuantize) {
 
                     objectNames.add(symbol->name);
                 }
@@ -241,6 +249,9 @@ bool PropertyTable::needsCheckbox(int row, int column)
             else if (column == PropertyColumnMuteCancel) {
                 needs = obj->symbol->functionProperties->mayCancelMute;
             }
+            else if (column == PropertyColumnQuantize) {
+                needs = obj->symbol->functionProperties->mayQuantize;
+            }
         }
         else if (obj->symbol->parameterProperties != nullptr) {
             if (column == PropertyColumnFocus) {
@@ -301,6 +312,9 @@ void PropertyTable::load(SymbolTable* symbols)
 
                     if (symbol->functionProperties->muteCancel)
                       row->checks.add(PropertyColumnMuteCancel);
+
+                    if (symbol->functionProperties->quantized)
+                      row->checks.add(PropertyColumnQuantize);
                 }
             }
         }
@@ -325,6 +339,7 @@ void PropertyTable::save(SymbolTable* symbols)
                     props->focus = obj->checks.contains(PropertyColumnFocus);
                     props->confirmation = obj->checks.contains(PropertyColumnConfirmation);
                     props->muteCancel = obj->checks.contains(PropertyColumnMuteCancel);
+                    props->quantized = obj->checks.contains(PropertyColumnQuantize);
                 }
             }
             else if (s->parameterProperties != nullptr) {

@@ -368,8 +368,8 @@ class Mobius
 
     void clipStart(class Loop* l, const char* bindingArgs);
 
-    void scheduleFollowerEvent(int trackNumber, int followerNumber,
-                               QuantizeMode quantPoint);
+    int scheduleFollowerEvent(int trackNumber, QuantizeMode quantPoint,
+                              int followerNumber, int eventId);
     
     void followerEvent(class Loop* l, class Event* e);
     

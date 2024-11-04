@@ -358,8 +358,7 @@ void TrackAdvancer::doEvent(TrackEvent* e)
 
     }
 
-    if (e != nullptr)
-      dispose(e);
+    dispose(e);
 }
 
 /**

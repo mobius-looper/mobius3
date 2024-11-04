@@ -40,7 +40,7 @@
   <Function name="NextLoop" mayFocus='true' mayCancelMute='true' tree='Track'/>
   <Function name="NextTrack" tree='Track'/>
   <Function name="Overdub" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
-  <Function name="Pause" sustainable='true' mayFocus='true' tree='Track'/>
+  <Function name="Pause" sustainable='true' mayFocus='true' tree='Track' mayQuantize='true'/>
   <Function name="PitchDown" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchNext" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
   <Function name="PitchCancel" mayFocus='true' mayCancelMute='true' tree='Pitch' hidden='true'/>
@@ -125,8 +125,8 @@
   <Function name="UpCycle" mayFocus='true' level='core' tree='MIDI'/>
   <Function name="DownCycle" mayFocus='true' level='core' tree='MIDI'/>
   <Function name="SetCycles" level='core' tree='MIDI'/>
-  <Function name="Start" level='core' tree='Movement'/>
-  <Function name="Stop" level='core' tree='Movement'/>
+  <Function name="Start" level='core' tree='Movement' mayQuantize='true'/>
+  <Function name="Stop" level='core' tree='Movement' mayQuantize='true'/>
   
   <!-- various diagnostic functions for testing -->
   
@@ -652,6 +652,8 @@
     <Parameter name='followDirection' type='bool'/>
     <Parameter name='followSwitch' type='bool'/>
     <Parameter name='followCut' type='bool'/>
+    <Parameter name='followQuantizeLocation' type='bool'/>
+    <Parameter name='followerMuteStart' type='bool'/>
     <Parameter name='noReset' type='bool'/>
     <Parameter name='noEdit' type='bool'/>
   </ParameterScope>

@@ -35,6 +35,7 @@ void TrackEvent::poolInit()
     extension = false;
     primary = nullptr;
     stacked = nullptr;
+    correlationId = 0;
     
     multiples = 0;
     switchTarget = 0;
@@ -170,6 +171,30 @@ TrackEvent* TrackEventList::find(TrackEvent::Type type)
             break;
         }
     }
+    return found;
+}
+
+TrackEvent* TrackEventList::consumePendingLeader(int id)
+{
+    TrackEvent* found = nullptr;
+    TrackEvent* prev = nullptr;
+    
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->pending && e->correlationId == id) {
+            found = e;
+            break;
+        }
+        prev = e;
+    }
+
+    if (found != nullptr) {
+        if (prev == nullptr)
+          events = found->next;
+        else
+          prev->next = found->next;
+        found->next = nullptr;
+    }
+    
     return found;
 }
 

@@ -60,6 +60,13 @@ class FunctionProperties
     bool mayCancelMute = false;
 
     /**
+     * When true, this function may response to QuantizeMode.
+     * This is mostly to control the quantize enable UI for MIDI tracks, audio tracks
+     * do not pay attention to this.  The Function::quantized flag is hard coded.
+     */
+    bool mayQuantize = false;
+
+    /**
      * Handle to a core object that implements this function.
      */
     void* coreFunction = nullptr;
@@ -95,7 +102,8 @@ class FunctionProperties
     bool focus = false;
     bool confirmation = false;
     bool muteCancel = false;
-
+    bool quantized = false;
+    
     //
     // Kludge for emerging MIDI tracks
     // NextTrack, PrevTrack, and TrackSelect are core functions

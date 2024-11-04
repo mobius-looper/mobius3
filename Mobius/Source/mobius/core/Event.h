@@ -468,6 +468,13 @@ class Event {
     // 
 
     union {
+
+        /**
+         * Follower
+         */
+        struct {
+            int eventId;
+        } follower;
         
         /**
          * JumpPlayEvent, ReverseEvent

@@ -30,6 +30,7 @@
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/UIAction.h"
+#include "../../model/FunctionProperties.h"
 #include "../../model/MobiusMidiState.h"
 
 #include "../../sync/Pulsator.h"
@@ -120,6 +121,10 @@ void TrackScheduler::configure(Session::Track* def)
         pulsator->unfollow(track->getNumber());
         syncSource = Pulse::SourceNone;
     }
+
+    // follower options
+    // most of these are in MidiTrack but they should be here where we need them
+    followQuantize = def->getBool("followQuantizeLocation");
 }
 
 /**
@@ -162,12 +167,27 @@ void TrackScheduler::setFollowTrack(TrackProperties& props)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Currently can only be here when listening to a leader track location
+ * We scheduled an event in the leader with a parallel local event that
+ * is currently pending.  When the leader notifies us that it's event has
+ * been reached, we can activate the local event.
+ * todo: need a better way to associate the two beyond just insertion order !!
  * for loop switch.
  */
 void TrackScheduler::leaderEvent(TrackProperties& props)
 {
-    loopSwitcher.leaderEvent(props);
+    (void)props;
+    // locate the first pending event
+    // instead of activating it and letting it be picked up on the next event
+    // scan, we can just remove it and pretend 
+    TrackEvent* e = events.consumePendingLeader(props.eventId);
+    if (e == nullptr) {
+        // I suppose this could happen if you allowed a pending switch
+        // to escape from leader control and happen on it's own
+        Trace(1, "TrackScheduler: Leader notification did not find a pending event");
+    }
+    else {
+        advancer.doEvent(e);
+    }
 }
 
 /**
@@ -977,8 +997,9 @@ void TrackScheduler::scheduleAction(UIAction* src)
                 break;
 
             default: {
-                if (isQuantized(src))
-                  scheduleQuantized(src);
+                QuantizeMode q = isQuantized(src);
+                if (q != QUANTIZE_OFF)
+                  scheduleQuantized(src, q);
                 else
                   doActionNow(src);
             }
@@ -1027,24 +1048,26 @@ void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
     events.add(event);
 }
 
-/**
- * Return true if this function is sensitive to quantization.
- * This does not handle switch quantize.
- *
- * todo: If we want to support function-specific quantization options, this
- * should return the QuantizeMode instead of just a true/false
- */
-bool TrackScheduler::isQuantized(UIAction* a)
-{
-    bool quantized = false;
-    SymbolId sid = a->symbol->id;
+//////////////////////////////////////////////////////////////////////
+//
+// Quantization
+//
+//////////////////////////////////////////////////////////////////////
 
-    // need a much more robust lookup table
-    if (sid == FuncMultiply || sid == FuncInsert || sid == FuncMute || sid == FuncReplace) {
-        QuantizeMode q = valuator->getQuantizeMode(track->getNumber());
-        quantized = (q != QUANTIZE_OFF);
+/**
+ * Return the QuantizeMode relevant for this action.
+ * This does not handle switch quantize.
+ */
+QuantizeMode TrackScheduler::isQuantized(UIAction* a)
+{
+    QuantizeMode q = QUANTIZE_OFF;
+
+    FunctionProperties* props = a->symbol->functionProperties.get();
+    if (props != nullptr && props->quantized) {
+        q = valuator->getQuantizeMode(track->getNumber());
     }
-    return quantized;
+    
+    return q;
 }
 
 /**
@@ -1055,25 +1078,29 @@ bool TrackScheduler::isQuantized(UIAction* a)
  * todo: audio loops have more complexity here
  * The different between regular and SUS will need to be dealt with.
  */
-void TrackScheduler::scheduleQuantized(UIAction* src)
+void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
 {
-    TrackEvent* event = nullptr;
-
-    QuantizeMode quant = valuator->getQuantizeMode(track->getNumber());
-    if (quant == QUANTIZE_OFF) {
+    if (q == QUANTIZE_OFF) {
         doActionNow(src);
     }
     else {
-        event = eventPool->newEvent();
-        event->type = TrackEvent::EventAction;
-        event->frame = getQuantizedFrame(src->symbol->id, quant);
-        event->primary = copyAction(src);
-        events.add(event);
+        int leader = findLeader();
+        if (leader > 0 && followQuantize) {
+            TrackEvent* e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
+            e->primary = copyAction(src);
+            Trace(2, "TrackScheduler: Quantized %s to leader", src->symbol->getName());
+        }
+        else {
+            TrackEvent* e = eventPool->newEvent();
+            e->type = TrackEvent::EventAction;
+            e->frame = getQuantizedFrame(src->symbol->id, q);
+            e->primary = copyAction(src);
+            events.add(e);
 
-        Trace(2, "TrackScheduler: Quantized %s to %d", src->symbol->getName(), event->frame);
+            Trace(2, "TrackScheduler: Quantized %s to %d", src->symbol->getName(), e->frame);
+        }
     }
 }
-
 /**
  * Given a QuantizeMode from the configuration, calculate the next
  * loop frame at that quantization point.
@@ -1138,6 +1165,90 @@ int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
         
     }
     return qframe;
+}
+
+/**
+ * Schedule a pair of events to accomplish quantization of an action in the follower
+ * track, with the quantization point defined in the leader track.
+ *
+ * The first part to this scheduling a "Follower" event in the leader track that does nothing
+ * but notify this track when it has been reached.  The other part is an event in the local
+ * track that is marked pending and is activated when the leader notification is received.
+ *
+ * The event to be pending is passed in, in theory it can be any event type but is normall
+ * an action or switch event.
+ *
+ * todo: When displaying the events in
+ * the leader, the follower event just shows as "Follower" without anything saying what
+ * it's actually going to do.  It would be nice if it could say "Follower Multiply" or
+ * "Follower Switch".  This however requires that we allocate and pass strings around and
+ * the Event and EventType in the old audio model doesn't have a place for that.  A SymbolId
+ * would be more convenient but this also requires some retooling of the OldMobiusState model and
+ * how it passes back event types for the UI.
+ */
+TrackEvent* TrackScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type)
+{
+    // todo: if the leader is another MIDI track can just handle it locally without
+    // going through Kernel
+    int correlationId = correlationIdGenerator++;
+    
+    int leaderFrame = kernel->scheduleFollowerEvent(leader, q, track->getNumber(), correlationId);
+
+    // this turns out to be not useful since the event can move after scheduling
+    // remove it if we can't find a use for it
+    (void)leaderFrame;
+    
+    // add a pending local event
+    TrackEvent* event = eventPool->newEvent();
+    event->type = type;
+    event->pending = true;
+    event->correlationId = correlationId;
+    events.add(event);
+
+    return event;
+}
+
+/**
+ * Determine which track is supposed to be the leader of this one.
+ * If the leader type is MIDI or Host returns zero.
+ */
+int TrackScheduler::findLeader()
+{
+    int leader = 0;
+
+    // we only care about the leader if we're syncing the switch location
+    LeaderLocation ll = track->getLeaderSwitchLocation();
+    if (ll != LeaderLocationNone) {
+        
+        // since we're the only ones that use all these parameters,
+        // just get them here rather than saving them in the track?
+        LeaderType ltype = track->getLeaderType();
+
+        if (ltype == LeaderTrack) {
+            // supposed to follow a specific track 
+            int specificLeader = track->getLeader();
+            if (specificLeader > 0) {
+                // if the leader over an empty loop, ignore it and fall
+                // back to the usual SwitchQuantize parameter
+                TrackProperties props = kernel->getTrackProperties(specificLeader);
+                if (props.frames > 0) {
+                    // follow this guy
+                    leader = specificLeader;
+                }
+            }
+        }
+        else if (ltype == LeaderTrackSyncMaster) {
+            leader = pulsator->getTrackSyncMaster();
+        }
+        else if (ltype == LeaderOutSyncMaster) {
+            leader = pulsator->getOutSyncMaster();
+        }
+        else if (ltype == LeaderFocused) {
+            kernel->getContainer()->getFocusedTrack();
+        }
+    }
+
+    return leader;
 }
 
 /****************************************************************************/

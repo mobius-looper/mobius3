@@ -137,6 +137,7 @@ void MidiTrack::configure(Session::Track* def)
     leader = def->getInt("leaderTrack");
     followRecord = def->getBool("followRecord");
     followRecordEnd = def->getBool("followRecordEnd");
+    followerMuteStart = def->getBool("followerMuteStart");
     followSize = def->getBool("followSize");
     followLocation = def->getBool("followLocation");
     followMute = def->getBool("followMute");
@@ -418,6 +419,14 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
             // and audio tracks are advanced before MIDI tracks
             // so we'll be at the beginning of the block at this point
             scheduler.setFollowTrack(props);
+
+            if (followerMuteStart) {
+                // instead of going immediately to Play, allow starting
+                // muted so it can be turned on manually
+                // I think this is more usable than a non-starting resize option
+                if (!mute)
+                  toggleMute();
+            }
         }
     }
 }

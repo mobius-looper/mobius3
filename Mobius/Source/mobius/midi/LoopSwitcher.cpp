@@ -84,31 +84,27 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
     AbstractTrack* track = scheduler.track;
 
     // see if we're supposed to follow a leader track
-    int leader = findLeader();
-    if (leader > 0) {
-        // we're supposed to let a leader location determine when to switch
-        // schedule a follower notification event in the leader track
-        LeaderLocation ll = track->getLeaderSwitchLocation();
-        QuantizeMode q = QUANTIZE_OFF;
-        switch (ll) {
-            case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
-            case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
-            case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
-            default: break;
-        }
-        scheduler.kernel->scheduleFollowerEvent(leader, track->getNumber(), q);
+    int leader = scheduler.findLeader();
 
-        // add a pending Switch event in this track
-        TrackEvent* event = scheduler.eventPool->newEvent();
-        event->type = TrackEvent::EventSwitch;
-        event->switchTarget = getSwitchTarget(src);
-        event->pending = true;
-        scheduler.events.add(event);
+    // !! Now that we have followQuantize we should use that instead of
+    // another parameter that accomplishes the same thing but specific to switch
+    LeaderLocation ll = track->getLeaderSwitchLocation();
+    QuantizeMode q = QUANTIZE_OFF;
+    switch (ll) {
+        case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
+        case LeaderLocationCycle: q = QUANTIZE_CYCLE; break;
+        case LeaderLocationSubcycle: q = QUANTIZE_SUBCYCLE; break;
+        default: break;
+    }
+
+    if (leader > 0 && q != QUANTIZE_OFF) {
+        TrackEvent* e = scheduler.scheduleLeaderQuantization(leader, q, TrackEvent::EventSwitch);
+        e->switchTarget = getSwitchTarget(src);
     }
     else {
         // normal non-following switch
-        SwitchQuantize q = scheduler.valuator->getSwitchQuantize(track->getNumber());
-        if (q == SWITCH_QUANT_OFF) {
+        SwitchQuantize sq = scheduler.valuator->getSwitchQuantize(track->getNumber());
+        if (sq == SWITCH_QUANT_OFF) {
             // immediate switch
             doSwitchNow(src);
         }
@@ -118,11 +114,11 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
             event->type = TrackEvent::EventSwitch;
             event->switchTarget = getSwitchTarget(src);
 
-            switch (q) {
+            switch (sq) {
                 case SWITCH_QUANT_SUBCYCLE:
                 case SWITCH_QUANT_CYCLE:
                 case SWITCH_QUANT_LOOP: {
-                    event->frame = getQuantizedFrame(q);
+                    event->frame = getQuantizedFrame(sq);
                 
                 }
                     break;
@@ -139,50 +135,6 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
             scheduler.events.add(event);
         }
     }
-}
-
-/**
- * Determine which track is supposed to be the leader of this one.
- * If the leader type is MIDI or Host returns zero.
- */
-int LoopSwitcher::findLeader()
-{
-    AbstractTrack* track = scheduler.track;
-    int leader = 0;
-
-    // we only care about the leader if we're syncing the switch location
-    LeaderLocation ll = track->getLeaderSwitchLocation();
-    if (ll != LeaderLocationNone) {
-        
-        // since we're the only ones that use all these parameters,
-        // just get them here rather than saving them in the track?
-        LeaderType ltype = track->getLeaderType();
-
-        if (ltype == LeaderTrack) {
-            // supposed to follow a specific track 
-            int specificLeader = track->getLeader();
-            if (specificLeader > 0) {
-                // if the leader over an empty loop, ignore it and fall
-                // back to the usual SwitchQuantize parameter
-                TrackProperties props = scheduler.kernel->getTrackProperties(specificLeader);
-                if (props.frames > 0) {
-                    // follow this guy
-                    leader = specificLeader;
-                }
-            }
-        }
-        else if (ltype == LeaderTrackSyncMaster) {
-            leader = scheduler.pulsator->getTrackSyncMaster();
-        }
-        else if (ltype == LeaderOutSyncMaster) {
-            leader = scheduler.pulsator->getOutSyncMaster();
-        }
-        else if (ltype == LeaderFocused) {
-            scheduler.kernel->getContainer()->getFocusedTrack();
-        }
-    }
-
-    return leader;
 }
 
 /**

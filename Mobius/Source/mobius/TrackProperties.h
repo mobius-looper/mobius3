@@ -28,5 +28,8 @@ class TrackProperties
     // it might be better to break out a TrackNotification that contains a TracProperties
     // and whatever else it needs to convey
     int follower = 0;
+
+    // set when a follower event was reached on this frame
+    int eventId = 0;
 };
 

@@ -1181,10 +1181,11 @@ void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
     mMidi->clipStart(audioTrack, bindingArgs);
 }
 
-void MobiusKernel::scheduleFollowerEvent(int audioTrack, int followerTrack, QuantizeMode q)
+int MobiusKernel::scheduleFollowerEvent(int audioTrack, QuantizeMode q,
+                                        int followerTrack, int eventId)
 {
     // todo: might as well allow both directions here
-    mCore->scheduleFollowerEvent(audioTrack, followerTrack, q);
+    return mCore->scheduleFollowerEvent(audioTrack, q, followerTrack, eventId);
 }
 
 //////////////////////////////////////////////////////////////////////

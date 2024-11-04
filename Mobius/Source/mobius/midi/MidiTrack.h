@@ -173,6 +173,7 @@ class MidiTrack : public AbstractTrack
     int leader = 0;
     bool followRecord = false;
     bool followRecordEnd = false;
+    bool followerMuteStart = false;
     bool followSize = false;
     bool followLocation = false;
     bool followMute = false;

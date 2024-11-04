@@ -23,7 +23,8 @@ enum PropertyColumns {
     PropertyColumnFocus,
     PropertyColumnMuteCancel,
     PropertyColumnConfirmation,
-    PropertyColumnResetRetain
+    PropertyColumnResetRetain,
+    PropertyColumnQuantize
 };
 
 /**

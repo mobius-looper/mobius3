@@ -271,6 +271,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->mayCancelMute = root->getBoolAttribute("mayCancelMute");
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
+        func->mayQuantize = root->getBoolAttribute("mayQuantize");
 
         // todo: need mayFocus, mayConfirm, and mayMuteCancel in here too!
 

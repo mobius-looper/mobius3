@@ -77,6 +77,8 @@ class TrackScheduler
     class SymbolTable* symbols = nullptr;
 
     class UIAction* copyAction(UIAction* src);
+    int findLeader();
+    TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
     
   private:
 
@@ -90,11 +92,15 @@ class TrackScheduler
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
     int followTrack = 0;
+    bool followQuantize = false;
 
     // save these from the session until everything is converted to
     // use Pulsator constants
     SyncSource sessionSyncSource = SYNC_NONE;
     SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
+
+    // simple counter for generating leader/follower event correlation ids
+    int correlationIdGenerator = 1;
 
     //
     // Scheduling and mode transition guts
@@ -124,8 +130,8 @@ class TrackScheduler
     void scheduleAction(class UIAction* src);
     void scheduleRounding(class UIAction* src, MobiusMidiState::Mode mode);
     
-    bool isQuantized(class UIAction* a);
-    void scheduleQuantized(class UIAction* src);
+    QuantizeMode isQuantized(class UIAction* a);
+    void scheduleQuantized(class UIAction* src, QuantizeMode q);
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
 

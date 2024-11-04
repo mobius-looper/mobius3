@@ -54,6 +54,10 @@ class TrackEvent : public PooledObject
     class UIAction* primary = nullptr;
     class UIAction* stacked = nullptr;
     void stack(class UIAction* a);
+
+    // when this is a pending follower event with a leader
+    // event scheduled
+    int correlationId = 0;
     
     //
     // Extra state 
@@ -105,6 +109,7 @@ class TrackEventList
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
+    TrackEvent* consumePendingLeader(int frame);
     TrackEvent* remove(TrackEvent::Type type);
     
     TrackEvent* consume(int startFrame, int endFrame);
