@@ -266,7 +266,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;
-    
+
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill);
@@ -459,8 +459,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void kludgeCoreSymbols();
     void doTrackSelectAction(UIAction* a);
 
-    // msl file stuff
-    void doLoadMidi(class MslAction* a);
+    // Content Files
+    void loadMidi(class UIAction* a);
+    void loadMidi(class MslValue* args);
     juce::File findUserFile(const char* fragment);
 
 };

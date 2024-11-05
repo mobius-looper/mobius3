@@ -132,9 +132,9 @@ void MidiTrack::configure(Session::Track* def)
     
     midiThru = def->getBool("midiThru");
 
-    leaderType = valuator->getLeaderType(number);
-    leaderSwitchLocation = valuator->getLeaderSwitchLocation(number);
-    leader = def->getInt("leaderTrack");
+    // some leader/follow parameters are in TrackScheduler
+    // the flags are only necessary in here
+    // !! reconsider this, Scheduler should handle all of them?
     followRecord = def->getBool("followRecord");
     followRecordEnd = def->getBool("followRecordEnd");
     followerMuteStart = def->getBool("followerMuteStart");
@@ -217,9 +217,6 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 if (mode == MobiusMidiState::ModePlay && !player.isPaused())
                   keepGoing = true;
 
-                // necessary if keepGoing, but shouldn't we be doing this every time?
-                xxx
-                
                 recorder.reset();
                 recorder.resume(layer);
                 player.reset();
@@ -228,6 +225,9 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 if (keepGoing) {
                     recorder.setFrame(currentFrame);
                     player.setFrame(currentFrame);
+
+                    // do this after restoring the current frame
+                    resize();
                 }
                 else {
                     // before we call startPause force the mode to Play
@@ -236,6 +236,10 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                     mode = MobiusMidiState::ModePlay;
                     startPause();
                     //resumePlay();
+
+                    // necessary for keepGoing but probably want this
+                    // after any load right?
+                    resize();
                 }
             }
         }
@@ -303,27 +307,13 @@ bool MidiTrack::isNoReset()
     return noReset;
 }
 
-LeaderType MidiTrack::getLeaderType()
-{
-    return leaderType;
-}
-
-LeaderLocation MidiTrack::getLeaderSwitchLocation()
-{
-    return leaderSwitchLocation;
-}
-
-int MidiTrack::getLeader()
-{
-    return leader;
-}
-
 void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
     Trace(2, "MidiTrack::leaderNotification %d for track %d",
           (int)notification, props.number);
 
-    if (leader != props.number) {
+    // !! do we need to do this, MidiTracker can check this
+    if (scheduler.findLeader() != props.number) {
         // shouldn't have been notified about this
         Trace(1, "MidiTrack: Incorrect leader notification for track %d", props.number);
     }
@@ -1474,7 +1464,7 @@ void MidiTrack::finishSwitch(int newIndex)
         SwitchLocation location = valuator->getSwitchLocation(number);
         // like EmptyLoopAction, if we're a follower I don't think we want to
         // obey SwitchLocation from the Preset, may want more control over this
-        if (leaderType != LeaderNone)
+        if (scheduler.leaderType != LeaderNone)
           location = SWITCH_START;
         
         // default is at the start
@@ -1916,16 +1906,21 @@ void MidiTrack::resize(TrackProperties& props)
  */
 void MidiTrack::resize()
 {
-    
-    // we could have just passed all this shit up from where it came from
-    TrackProperties props = tracker->getKernel()->getTrackProperties(audioTrack);
-    if (props.invalid) {
-        Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
+    int leaderTrack = scheduler.findLeader();
+    if (leaderTrack > 0) {
+        // we could have just passed all this shit up from where it came from
+        TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+        if (props.invalid) {
+            Trace(1, "MidiTrack: resize() was given an invalid audio track number %d", leaderTrack);
+        }
+        else {
+            resize(props);
+        }
     }
     else {
+        // todo: should do the same for Host and MIDI following
     }
 }
-
 
 /**
  * Calculate a playback rate that allows two loops to remain in sync

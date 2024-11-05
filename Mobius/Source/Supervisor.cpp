@@ -889,6 +889,19 @@ void Supervisor::dragMidi(int trackNumber, int loopNumber)
     midiClerk->dragOut(trackNumber, loopNumber);
 }
 
+/**
+ * Actions unfortunately don't have multiple arguments
+ * so parse the arg string.
+ */
+void Supervisor::loadMidi(UIAction* a)
+{
+    MslValue* args = scriptenv.parseArguments(juce::String(a->arguments));
+    if (args != nullptr) {
+        loadMidi(args);
+        scriptenv.free(args);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Maintenance Thread
@@ -2003,6 +2016,8 @@ bool Supervisor::doUILevelAction(UIAction* action)
                 handled = true;
             }
             case FuncLoadMidi: {
+                loadMidi(action);
+                handled = true;
             }
             default: break;
         }
@@ -2545,7 +2560,7 @@ bool Supervisor::mslAction(MslAction* action)
         Symbol* s = static_cast<Symbol*>(action->external->object);
 
         if (s->id == FuncLoadMidi) {
-            doLoadMidi(action);
+            loadMidi(action->arguments);
             success = true;
         }
         else {
@@ -2674,15 +2689,17 @@ void Supervisor::mslExport(MslLinkage* link)
 
 //////////////////////////////////////////////////////////////////////
 //
-// MSL Function Handlers
+// Common File Operations
 //
-// Things in this section are action handlers that deal with MslAction
-// directly rather than squeezing it through UIAction
+// Here from various interfaces: UIActions, MslActions
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Load a MIDI loop into a MIDI track.
+ * Here from both loadMidi(MslASction) and loadMidi(UIAction) that
+ * converted the arguments to a list of MslValues.
+ *
  * How the destination track and loop are specified needs thought.
  * If we require normalized "view" numbers then the script would have assumptions
  * about the number of audio tracks since MIDI tracks are always numbered after those.
@@ -2712,15 +2729,14 @@ void Supervisor::mslExport(MslLinkage* link)
  * Within MobiusView things are usually INDEXES
  *
  */
-void Supervisor::doLoadMidi(MslAction* a)
+void Supervisor::loadMidi(MslValue* arguments)
 {
     const char* argPath = nullptr;
     int argTrack = 0;
     int argLoop = 0;
 
     // parse arguments
-    // these are on a linked list which is kind of awkward to deal with positionally
-    MslValue* arg = a->arguments;
+    MslValue* arg = arguments;
     if (arg != nullptr) {
         argPath = arg->getString();
         arg = arg->next;

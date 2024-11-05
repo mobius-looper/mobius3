@@ -38,6 +38,10 @@ class MidiTrack : public AbstractTrack
         return tracker;
     }
     
+    TrackScheduler* getScheduler() {
+        return &scheduler;
+    }
+    
     // the track number in "reference space"
     int number = 0;
     // the track index within the MidiTracker, need this?
@@ -48,9 +52,6 @@ class MidiTrack : public AbstractTrack
     // Follower state
     //
 
-    LeaderType getLeaderType() override;
-    LeaderLocation getLeaderSwitchLocation() override;
-    int getLeader() override;
     void trackNotification(NotificationId notification, class TrackProperties& props);
     bool isNoReset() override;
     
@@ -168,9 +169,6 @@ class MidiTrack : public AbstractTrack
     class MidiPools* pools = nullptr;
 
     // leader state
-    LeaderType leaderType;
-    LeaderLocation leaderSwitchLocation;
-    int leader = 0;
     bool followRecord = false;
     bool followRecordEnd = false;
     bool followerMuteStart = false;
@@ -254,6 +252,7 @@ class MidiTrack : public AbstractTrack
     const char* getModeName(MobiusMidiState::Mode mode);
     int simulateLevel(int count);
     void captureLevels(MobiusMidiState::Track* state);
+    void resize();
 
     //
     // Ugly Math

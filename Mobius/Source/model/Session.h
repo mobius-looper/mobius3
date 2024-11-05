@@ -77,6 +77,11 @@ class Session
     bool getBool(juce::String name);
     const char* getString(juce::String name);
     int getInt(juce::String name);
+
+    void setString(juce::String name, const char* value);
+    void setJString(juce::String name, juce::String value);
+    void setInt(juce::String name, int value);
+    void setBool(juce::String name, bool value);
     
     void parseXml(juce::String xml);
     juce::String toXml();

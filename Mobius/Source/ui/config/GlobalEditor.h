@@ -9,6 +9,8 @@
 #include "../common/Form.h"
 #include "../common/BasicForm.h"
 #include "../common/BasicInput.h"
+#include "../common/YanForm.h"
+#include "../common/YanField.h"
 
 #include "ConfigEditor.h"
 
@@ -43,6 +45,9 @@ class GlobalEditor : public ConfigEditor
     BasicInput asioOutputs {"Standalone Outputs", 20};
     BasicInput pluginInputs {"Plugin Inputs", 20};
     BasicInput pluginOutputs {"Plugin Outputs", 20};
+
+    YanForm fileForm;
+    YanInput userFiles {"Default User File Folder"};
 
     Field* ccThreshold = nullptr;
     

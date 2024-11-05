@@ -88,7 +88,7 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
 
     // !! Now that we have followQuantize we should use that instead of
     // another parameter that accomplishes the same thing but specific to switch
-    LeaderLocation ll = track->getLeaderSwitchLocation();
+    LeaderLocation ll = scheduler.leaderSwitchLocation;
     QuantizeMode q = QUANTIZE_OFF;
     switch (ll) {
         case LeaderLocationLoop: q = QUANTIZE_LOOP; break;
@@ -481,7 +481,7 @@ bool LoopSwitcher::setupEmptyLoop(int previousLoop)
     bool recording = false;
     bool copied = false;
     
-    if (track->getLoopFrames() == 0 && track->getLeaderType() == LeaderNone) {
+    if (track->getLoopFrames() == 0 && scheduler.leaderType == LeaderNone) {
 
         EmptyLoopAction action = scheduler.valuator->getEmptyLoopAction(track->getNumber());
 

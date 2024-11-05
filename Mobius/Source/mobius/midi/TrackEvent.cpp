@@ -257,6 +257,21 @@ TrackEvent* TrackEventList::findLast(SymbolId sym)
     return found;
 }
 
+/**
+ * Used for Undo, might need more awareness of how events interact.
+ */
+TrackEvent* TrackEventList::findLast()
+{
+    TrackEvent* found = nullptr;
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e->next == nullptr) {
+            found = e;
+            break;
+        }
+    }
+    return found;
+}
+
 TrackEvent* TrackEventList::consume(int startFrame, int endFrame)
 {
     TrackEvent* found = nullptr;

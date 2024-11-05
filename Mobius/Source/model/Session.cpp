@@ -159,6 +159,30 @@ const char* Session::getString(juce::String pname)
     return (v != nullptr) ? v->getString() : nullptr;
 }
 
+void Session::setString(juce::String pname, const char* value)
+{
+    ValueSet* g = ensureGlobals();
+    g->setString(pname, value);
+}
+
+void Session::setJString(juce::String pname, juce::String value)
+{
+    ValueSet* g = ensureGlobals();
+    g->setJString(pname, value);
+}
+
+void Session::setInt(juce::String pname, int value)
+{
+    ValueSet* g = ensureGlobals();
+    g->setInt(pname, value);
+}    
+
+void Session::setBool(juce::String pname, bool value)
+{
+    ValueSet* g = ensureGlobals();
+    g->setBool(pname, value);
+}    
+
 //////////////////////////////////////////////////////////////////////
 //
 // Track

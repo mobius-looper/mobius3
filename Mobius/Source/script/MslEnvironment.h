@@ -199,6 +199,11 @@ class MslEnvironment
     MslValue* allocValue();
 
     /**
+     * Parse a simple string of arguments into a value list.
+     */
+    MslValue* parseArguments(juce::String args);
+
+    /**
      * Return a value container to the object pool.
      */
     void free(MslValue* v);

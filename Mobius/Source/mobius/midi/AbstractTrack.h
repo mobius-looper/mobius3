@@ -90,9 +90,6 @@ class AbstractTrack
     //
 
     virtual bool isNoReset() = 0;
-    virtual LeaderType getLeaderType() = 0;
-    virtual int getLeader() = 0;
-    virtual LeaderLocation getLeaderSwitchLocation() = 0;
     
     // misc utilities
     virtual void alert(const char* msg) = 0;

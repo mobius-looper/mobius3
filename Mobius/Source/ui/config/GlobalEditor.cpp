@@ -3,6 +3,7 @@
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/DeviceConfig.h"
+#include "../../model/Session.h"
 #include "../../model/UIParameter.h"
 #include "../../Supervisor.h"
 
@@ -34,6 +35,21 @@ void GlobalEditor::load()
 {
     MobiusConfig* config = supervisor->getMobiusConfig();
     loadGlobal(config);
+    
+    // ports don't come from MobiusConfig
+    DeviceConfig* dc = supervisor->getDeviceConfig();
+
+    // actually don't need to expose these, we auto-adjust whenever
+    // AudioDevicesPanel selects channels
+    // MachineConfig* mc = dc->getMachineConfig();
+    //asioInputs.setText(juce::String(mc->inputPorts));
+    //asioOutputs.setText(juce::String(mc->outputPorts));
+    pluginInputs.setText(juce::String(dc->pluginConfig.defaultAuxInputs + 1));
+    pluginOutputs.setText(juce::String(dc->pluginConfig.defaultAuxOutputs + 1));
+
+    // things that come from the session
+    Session* session = supervisor->getSession();
+    userFiles.setValue(session->getString("userFileFolder"));
 }
 
 void GlobalEditor::save()
@@ -51,8 +67,11 @@ void GlobalEditor::save()
     //mc->outputPorts = getPortValue(&asioOutputs, 32);
     dc->pluginConfig.defaultAuxInputs = getPortValue(&pluginInputs, 8) - 1;
     dc->pluginConfig.defaultAuxOutputs = getPortValue(&pluginOutputs, 8) - 1;
+    // DeviceConfig is auto-updated on shutdown
 
-    // these auto-save on shutdown, but might want to do it early?
+    Session* session = supervisor->getSession();
+    session->setJString("userFileFolder", userFiles.getValue());
+    supervisor->updateSession();
 }
 
 /**
@@ -89,18 +108,6 @@ void GlobalEditor::loadGlobal(MobiusConfig* config)
           pf->loadValue(config);
     }
 
-    // ports don't come from MobiusConfig
-    DeviceConfig* dc = supervisor->getDeviceConfig();
-
-    // actually don't need to expose these, we auto-adjust whenever
-    // AudioDevicesPanel selects channels
-    // MachineConfig* mc = dc->getMachineConfig();
-    //asioInputs.setText(juce::String(mc->inputPorts));
-    //asioOutputs.setText(juce::String(mc->outputPorts));
-
-    pluginInputs.setText(juce::String(dc->pluginConfig.defaultAuxInputs + 1));
-    pluginOutputs.setText(juce::String(dc->pluginConfig.defaultAuxOutputs + 1));
-
     if (ccThreshold != nullptr) {
         // zero means max, but to make it look right to the user for the
         // first time, bump it up
@@ -127,7 +134,6 @@ void GlobalEditor::saveGlobal(MobiusConfig* config)
     if (ccThreshold != nullptr) {
         config->mControllerActionThreshold = ccThreshold->getIntValue();
     }
-    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -151,6 +157,10 @@ void GlobalEditor::render()
     //properties.add(&asioOutputs);
     properties.add(&pluginInputs);
     properties.add(&pluginOutputs);
+
+    form.addTab("Files", &fileForm);
+    fileForm.addSpacer();
+    fileForm.add(&userFiles);
     
     // place it in the content panel
     addAndMakeVisible(form);

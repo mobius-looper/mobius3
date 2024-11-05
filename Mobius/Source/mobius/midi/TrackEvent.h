@@ -109,6 +109,7 @@ class TrackEventList
     void add(TrackEvent* e, bool priority = false);
     TrackEvent* find(TrackEvent::Type type);
     TrackEvent* findLast(SymbolId id);
+    TrackEvent* findLast();
     TrackEvent* consumePendingLeader(int frame);
     TrackEvent* remove(TrackEvent::Type type);
     

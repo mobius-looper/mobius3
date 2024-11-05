@@ -128,6 +128,7 @@
     <Button action="MidiOutTest"/>
     <Button action="loadmidi"/>
     <Button action="loadmidi2"/>
+    <Button action="LoadMidi" arguments="test.mid 1 1"/>
   </ButtonSet>
   <Properties>
     <Property name="alertDuration" value="5"/>

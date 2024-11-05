@@ -37,6 +37,7 @@ class TrackScheduler
 {
     friend class LoopSwitcher;
     friend class TrackAdvancer;
+    friend class MidiTrack;
     
   public:
 
@@ -62,6 +63,15 @@ class TrackScheduler
     void leaderEvent(TrackProperties& props);
     void leaderLoopResize(TrackProperties& props);
 
+    // utility used by MidiTrack, MidiTracker
+    LeaderType getLeaderType() {
+        return leaderType;
+    }
+    int getLeaderTrack() {
+        return leaderTrack;
+    }
+    int findLeader();
+    
   protected:
 
     // things LoopSwitcher and TrackAdvancer need
@@ -76,8 +86,12 @@ class TrackScheduler
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
 
+    // leader options needed by LoopSwitcher, MidiTrack
+    LeaderType leaderType;
+    int leaderTrack = 0;
+    LeaderLocation leaderSwitchLocation;
+
     class UIAction* copyAction(UIAction* src);
-    int findLeader();
     TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
     
   private:
@@ -92,6 +106,8 @@ class TrackScheduler
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
     int followTrack = 0;
+
+    
     bool followQuantize = false;
 
     // save these from the session until everything is converted to
@@ -109,14 +125,18 @@ class TrackScheduler
     void doStacked(class TrackEvent* e) ;
     void doActionNow(class UIAction* a);
     void checkModeCancel(class UIAction* a);
-
+    
     bool handleExecutiveAction(class UIAction* src);
+    void doUndo(class UIAction* src);
+    void unstack(class TrackEvent* event);
+    void doRedo(class UIAction* src);
     
     bool isReset();
     void handleResetAction(class UIAction* src);
     
     bool isPaused();
     void handlePauseAction(class UIAction* src);
+    bool schedulePausedAction(class UIAction* src);
     
     bool isRecording();
     void handleRecordAction(class UIAction* src);

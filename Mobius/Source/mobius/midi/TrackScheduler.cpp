@@ -124,6 +124,11 @@ void TrackScheduler::configure(Session::Track* def)
 
     // follower options
     // most of these are in MidiTrack but they should be here where we need them
+
+    leaderType = valuator->getLeaderType(track->getNumber());
+    leaderTrack = def->getInt("leaderTrack");
+    leaderSwitchLocation = valuator->getLeaderSwitchLocation(track->getNumber());
+    
     followQuantize = def->getBool("followQuantizeLocation");
 }
 
@@ -357,7 +362,7 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncTrackReset: track->doReset(true); break;
         case FuncGlobalReset: track->doReset(true); break;
 
-            // these we're going to want more control over eventually
+            // these are executive actions now so shouldn't be here
         case FuncUndo: track->doUndo(); break;
         case FuncRedo: track->doRedo(); break;
 
@@ -530,10 +535,126 @@ bool TrackScheduler::handleExecutiveAction(UIAction* src)
             handled = true;
             break;
 
+        case FuncUndo:
+            doUndo(src);
+            handled = true;
+            break;
+
+        case FuncRedo:
+            doRedo(src);
+            handled = true;
+            break;
+
         default: break;
     }
 
     return handled;
+}
+
+/**
+ * Undo behaves in different ways.
+ * If there are stacked events, it starts removing them.
+ * If there are future schedule events it removes them.
+ * If we're in Pause, it can move between layers
+ * If we're in Record it cancels the recording.
+ *
+ * Ignoring the old EDPisms for now.
+ * Would like to support short/long Undo though.
+ */
+void TrackScheduler::doUndo(UIAction* src)
+{
+    (void)src;
+    
+    if (isReset()) {
+        // ignore
+    }
+    else if (isPaused()) {
+        track->doUndo();
+    }
+    else if (isRecording()) {
+
+        TrackEvent* recevent = events.find(TrackEvent::EventRecord);
+
+        if (recevent != nullptr) {
+            if (track->getMode() == MobiusMidiState::ModeRecord) {
+                // this is a pending end, unstack and cancel it
+                // todo: If this is AutoRecord we could start subtracting
+                // extensions first
+                unstack(recevent);
+            }
+            else {
+                // this is a pending start
+                unstack(recevent);
+            }
+        }
+        else if (track->getMode() == MobiusMidiState::ModeRecord) {
+            // we are within an active recording
+            track->doReset(false);
+        }
+    }
+    else {
+        // start chipping at events
+        // probably will want some more intelligence on these
+        TrackEvent* last = events.findLast();
+        unstack(last);
+    }
+}
+
+/**
+ * Undo helper
+ * Start removing events stacked on this event, and if we run out remove
+ * this event itself.
+ */
+void TrackScheduler::unstack(TrackEvent* event)
+{
+    if (event != nullptr) {
+        UIAction* last = event->stacked;
+        UIAction* prev = nullptr;
+        while (last != nullptr) {
+            if (last->next == nullptr)
+              break;
+            prev = last;
+            last = last->next;
+        }
+
+        if (last != nullptr) {
+            if (prev == nullptr)
+              event->stacked = nullptr;
+            else
+              prev->next = nullptr;
+            last->next = nullptr;
+            actionPool->checkin(last);
+
+            // !! if this was scheduled with a corresponding leader quantize
+            // event need to cancel the leader event too
+        }
+        else {
+            // nothing left to unstack
+            events.remove(event);
+            advancer.dispose(event);
+        }
+    }
+}
+
+void TrackScheduler::doRedo(UIAction* src)
+{
+    (void)src;
+    
+    if (isReset()) {
+        // ignore
+    }
+    else if (isPaused()) {
+        // !! if there are events scheduled, those need to be canceled
+        // does Track handle this right?
+        track->doRedo();
+    }
+    else if (isRecording()) {
+
+        // might be some interesting behavior here, unclear
+    }
+    else {
+        track->doRedo();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -638,18 +759,21 @@ void TrackScheduler::handlePauseAction(UIAction* src)
 
         case FuncPause:
         case FuncPlay:
-            track->finishPause();
+            if (!schedulePausedAction(src))
+              track->finishPause();
             break;
 
         case FuncStop:
             // we're already paused, but this also rewinds
+            // no need to quantize
             track->doStop();
             break;
 
         case FuncStart:
         case FuncRestart:
             // exit pause from the beginning
-            track->doStart();
+            if (!schedulePausedAction(src))
+              track->doStart();
             break;
 
         case FuncResize:
@@ -675,6 +799,29 @@ void TrackScheduler::handlePauseAction(UIAction* src)
             Trace(2, "TrackScheduler: Ignoring %s while paused", src->symbol->getName());
             break;
     }
+}
+
+/**
+ * Used for actions while in pause mode.
+ * Normally the allowed actions are done immediately, but if the track is configured
+ * to follow leader quantization point, we can let it determine
+ * the timing.
+ */
+bool TrackScheduler::schedulePausedAction(UIAction* src)
+{
+    bool scheduled = false;
+    
+    if (followQuantize) {
+        int leader = findLeader();
+        if (leader > 0) {
+            QuantizeMode q = isQuantized(src);
+            if (q != QUANTIZE_OFF) {
+                scheduleQuantized(src, q);
+                scheduled = true;
+            }
+        }
+    }
+    return scheduled;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -821,14 +968,6 @@ void TrackScheduler::scheduleRecordEndAction(UIAction* src, TrackEvent* ending)
         case FuncSelectLoop: {
             // these stack
             ending->stack(copyAction(src));
-        }
-            break;
-
-        case FuncUndo: {
-            // this is an interesting one
-            // we should start removing stacked events, and ultimately even the
-            // RecordEnd event
-            Trace(1, "TrackScheduler: Undo during record ending not implemented");
         }
             break;
 
@@ -1216,36 +1355,26 @@ int TrackScheduler::findLeader()
 {
     int leader = 0;
 
-    // we only care about the leader if we're syncing the switch location
-    LeaderLocation ll = track->getLeaderSwitchLocation();
-    if (ll != LeaderLocationNone) {
-        
-        // since we're the only ones that use all these parameters,
-        // just get them here rather than saving them in the track?
-        LeaderType ltype = track->getLeaderType();
-
-        if (ltype == LeaderTrack) {
-            // supposed to follow a specific track 
-            int specificLeader = track->getLeader();
-            if (specificLeader > 0) {
-                // if the leader over an empty loop, ignore it and fall
-                // back to the usual SwitchQuantize parameter
-                TrackProperties props = kernel->getTrackProperties(specificLeader);
-                if (props.frames > 0) {
-                    // follow this guy
-                    leader = specificLeader;
-                }
+    if (leaderType == LeaderTrack) {
+        // supposed to follow a specific track
+        if (leaderTrack > 0) {
+            // if the leader over an empty loop, ignore it and fall
+            // back to the usual SwitchQuantize parameter
+            TrackProperties props = kernel->getTrackProperties(leaderTrack);
+            if (props.frames > 0) {
+                // follow this guy
+                leader = leaderTrack;
             }
         }
-        else if (ltype == LeaderTrackSyncMaster) {
-            leader = pulsator->getTrackSyncMaster();
-        }
-        else if (ltype == LeaderOutSyncMaster) {
-            leader = pulsator->getOutSyncMaster();
-        }
-        else if (ltype == LeaderFocused) {
-            kernel->getContainer()->getFocusedTrack();
-        }
+    }
+    else if (leaderType == LeaderTrackSyncMaster) {
+        leader = pulsator->getTrackSyncMaster();
+    }
+    else if (leaderType == LeaderOutSyncMaster) {
+        leader = pulsator->getOutSyncMaster();
+    }
+    else if (leaderType == LeaderFocused) {
+        kernel->getContainer()->getFocusedTrack();
     }
 
     return leader;

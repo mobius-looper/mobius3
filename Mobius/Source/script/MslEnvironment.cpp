@@ -5,6 +5,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../util/Util.h"
 
 #include "MslContext.h"
 #include "MslError.h"
@@ -286,6 +287,63 @@ void MslEnvironment::addError(MslResult* result, const char* msg)
     error->setDetails(msg);
     error->next = result->errors;
     result->errors = error;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Simple Argument Parsing
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * A utility primarily for parsing UIAction arguments so they can be
+ * treated the same as MslAction arguments.
+ */
+MslValue* MslEnvironment::parseArguments(juce::String args)
+{
+    MslValue* first = nullptr;
+    MslValue* last = nullptr;
+    
+    char buffer[1024];
+    CopyString(args.toUTF8(), buffer, sizeof(buffer));
+
+    char* ptr = buffer;
+    while (*ptr) {
+        while (*ptr && IsSpace(*ptr)) ptr++;
+        if (*ptr) {
+            char* start = ptr;
+            char* end = start;
+            if (*start == '\"') {
+                start++;
+                end = start;
+                while (*end && *end != '\"') end++;
+            }
+            else {
+                end = start + 1;
+                while (*end && !IsSpace(*end)) end++;
+            }
+
+            if (PTRDIFF(start, end) > 0) {
+                char save = *end;
+                *end = '\0';
+                MslValue* v = allocValue();
+                v->setString(start);
+                if (last != nullptr)
+                  last->next = v;
+                else
+                  first = v;
+                last = v;
+                *end = save;
+            }
+
+            if (*end == '\0')
+              ptr = end;
+            else
+              ptr = end + 1;
+        }
+    }
+
+    return first;
 }
 
 //////////////////////////////////////////////////////////////////////
