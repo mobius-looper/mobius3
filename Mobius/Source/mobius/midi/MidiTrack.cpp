@@ -135,12 +135,8 @@ void MidiTrack::configure(Session::Track* def)
     // some leader/follow parameters are in TrackScheduler
     // the flags are only necessary in here
     // !! reconsider this, Scheduler should handle all of them?
-    followRecord = def->getBool("followRecord");
-    followRecordEnd = def->getBool("followRecordEnd");
     followerMuteStart = def->getBool("followerMuteStart");
-    followSize = def->getBool("followSize");
     followLocation = def->getBool("followLocation");
-    followMute = def->getBool("followMute");
     noReset = def->getBool("noReset");
 }
 
@@ -227,7 +223,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                     player.setFrame(currentFrame);
 
                     // do this after restoring the current frame
-                    resize();
+                    leaderResize();
                 }
                 else {
                     // before we call startPause force the mode to Play
@@ -239,7 +235,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 
                     // necessary for keepGoing but probably want this
                     // after any load right?
-                    resize();
+                    leaderResize();
                 }
             }
         }
@@ -307,53 +303,18 @@ bool MidiTrack::isNoReset()
     return noReset;
 }
 
+/**
+ * Forward the notification from the Kernel to the Scheduler to decide
+ * what to do with it based on follower settings.
+ */
 void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
-    Trace(2, "MidiTrack::leaderNotification %d for track %d",
-          (int)notification, props.number);
-
-    // !! do we need to do this, MidiTracker can check this
-    if (scheduler.findLeader() != props.number) {
-        // shouldn't have been notified about this
-        Trace(1, "MidiTrack: Incorrect leader notification for track %d", props.number);
-    }
-    else {
-        switch (notification) {
-            case NotificationReset:
-                leaderReset(props);
-                break;
-            case NotificationRecordStart:
-                leaderRecordStart();
-                break;
-            case NotificationRecordEnd:
-                leaderRecordEnd(props);
-                break;
-
-            case NotificationMuteStart:
-                leaderMuteStart(props);
-                break;
-            case NotificationMuteEnd:
-                leaderMuteEnd(props);
-                break;
-
-            case NotificationFollower:
-                leaderFollowerEvent(props);
-                break;
-
-            case NotificationLoopSize:
-                scheduler.leaderLoopResize(props);
-                break;
-                
-            default:
-                Trace(1, "MidiTrack: Unhandled notification %d", (int)notification);
-                break;
-        }
-    }
+    scheduler.trackNotification(notification, props);
 }
 
 /**
- * Called whenever the leader resets.  This can happen in various
- * ways: Reset, TrackReset, GlobalReset, long-press Record.
+ * Called by Scheduler when the leader resets and we're following.
+ * This can happen in various ways: Reset, TrackReset, GlobalReset, long-press Record.
  *
  * Switching to an empty loop will also enter Reset mode without
  * the user having explicitly performed performed a Reset action.
@@ -368,10 +329,8 @@ void MidiTrack::trackNotification(NotificationId notification, TrackProperties& 
 void MidiTrack::leaderReset(TrackProperties& props)
 {
     (void)props;
-    // there is no follower option specific to reset, do we need
-    // one or does it make sense to combine this with Record?
-    if (followRecord)
-      followerPauseRewind();
+    // !! this is now the same as the Stop function, make it so
+    followerPauseRewind();
 }
 
 void MidiTrack::followerPauseRewind()
@@ -386,52 +345,52 @@ void MidiTrack::followerPauseRewind()
 }
 
 /**
- * When the leader track begins recording, either immedaately
- * or defererred until a pulse, the follower pauses and rewinds to zero.
+ * Called by Scheduler when the leader begins recording and we're following.
+ * This can happen when the track is recording immediately, or deferred until
+ * a pulse.  In both cases the follower enters a Stop state.
  */
 void MidiTrack::leaderRecordStart()
 {
-    if (followRecord) {
-        followerPauseRewind();
-    }
+    followerPauseRewind();
 }
 
+/**
+ * Called by Scheduler when the leader ends a recording and we're following.
+ */
 void MidiTrack::leaderRecordEnd(TrackProperties& props)
 {
-    if (followRecordEnd) {
-        // already be in a rewound Pause state if followRecord, but if not, go there
-        recorder.rollback(false);
-        player.setFrame(0);
+    // already be in a rewound Pause state if we follow RecordStart, but if not, go there
+    recorder.rollback(false);
+    player.setFrame(0);
 
-        // unlike clipStart we keep the loop we were left with
-        if (recorder.getFrames() == 0) {
-            // on an empty loop, nothing to play
-            Trace(2, "MidiTrack::leaderRecordEnd Follower loop is empty");
-        }
-        else {
-            // ambguity over what happens to minor modes, but followers
-            // normally have an edit lock
-            overdub = false;
+    // unlike clipStart we keep the loop we were left with
+    if (recorder.getFrames() == 0) {
+        // on an empty loop, nothing to play
+        Trace(2, "MidiTrack::leaderRecordEnd Follower loop is empty");
+    }
+    else {
+        // ambguity over what happens to minor modes, but followers
+        // normally have an edit lock
+        overdub = false;
 
-            // resize to fit the leader
-            resize(props);
-            mode = MobiusMidiState::ModePlay;
+        // resize to fit the leader
+        leaderResize(props);
+        mode = MobiusMidiState::ModePlay;
 
-            player.setPause(false);
+        player.setPause(false);
 
-            // I don't think we have TrackScheduler issues at this point
-            // we can only get a clipStart event from an audio track,
-            // and audio tracks are advanced before MIDI tracks
-            // so we'll be at the beginning of the block at this point
-            scheduler.setFollowTrack(props);
+        // I don't think we have TrackScheduler issues at this point
+        // we can only get a clipStart event from an audio track,
+        // and audio tracks are advanced before MIDI tracks
+        // so we'll be at the beginning of the block at this point
+        scheduler.setFollowTrack(props);
 
-            if (followerMuteStart) {
-                // instead of going immediately to Play, allow starting
-                // muted so it can be turned on manually
-                // I think this is more usable than a non-starting resize option
-                if (!mute)
-                  toggleMute();
-            }
+        if (followerMuteStart) {
+            // instead of going immediately to Play, allow starting
+            // muted so it can be turned on manually
+            // I think this is more usable than a non-starting resize option
+            if (!mute)
+              toggleMute();
         }
     }
 }
@@ -448,19 +407,6 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
     (void)props;
     if (mute)
       toggleMute();
-}
-
-/**
- * An awkward name, but this means we asked the core leader track to schedule
- * a callback event at a quantization point in the leader, and that
- * point has been reached.
- *
- * Only used for loop switch right now.
- */
-void MidiTrack::leaderFollowerEvent(TrackProperties& props)
-{
-    (void)props;
-    scheduler.leaderEvent(props);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1465,7 +1411,7 @@ void MidiTrack::finishSwitch(int newIndex)
         // like EmptyLoopAction, if we're a follower I don't think we want to
         // obey SwitchLocation from the Preset, may want more control over this
         if (scheduler.leaderType != LeaderNone)
-          location = SWITCH_START;
+          location = SWITCH_FOLLOW;
         
         // default is at the start
         recorder.setFrame(0);
@@ -1840,7 +1786,7 @@ void MidiTrack::doInstantDivide(int n)
  * and Resize.  Will need to combine those and have another scaling factor,
  * perpahs rateShift and resizesShift that can be multiplied together.
  */
-void MidiTrack::resize(TrackProperties& props)
+void MidiTrack::leaderResize(TrackProperties& props)
 {
     if (props.invalid) {
         // something didn't do it's job and didn't check track number ranges
@@ -1904,17 +1850,17 @@ void MidiTrack::resize(TrackProperties& props)
 /**
  * Internal resizer that isn't responding to a leader signal.
  */
-void MidiTrack::resize()
+void MidiTrack::leaderResize()
 {
-    int leaderTrack = scheduler.findLeader();
+    int leaderTrack = scheduler.findLeaderTrack();
     if (leaderTrack > 0) {
         // we could have just passed all this shit up from where it came from
         TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
         if (props.invalid) {
-            Trace(1, "MidiTrack: resize() was given an invalid audio track number %d", leaderTrack);
+            Trace(1, "MidiTrack: leaderResize() was given an invalid audio track number %d", leaderTrack);
         }
         else {
-            resize(props);
+            leaderResize(props);
         }
     }
     else {
@@ -2108,7 +2054,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // now that we've got the right loop in place,
                 // resize and position it as if the Resize command
                 // had been actioned on this track
-                resize(props);
+                leaderResize(props);
                 mode = MobiusMidiState::ModePlay;
 
                 // player was usually in pause

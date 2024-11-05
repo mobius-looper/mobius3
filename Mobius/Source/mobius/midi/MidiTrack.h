@@ -34,19 +34,17 @@ class MidiTrack : public AbstractTrack
 
     void loadLoop(MidiSequence* seq, int loop);
 
-    class MidiTracker* getTracker() {
-        return tracker;
-    }
-    
+    // required by MidiTracker to get leader info before the advance
+    // and to respond to notifications
     TrackScheduler* getScheduler() {
         return &scheduler;
     }
     
     // the track number in "reference space"
+    // aka the view number
     int number = 0;
     // the track index within the MidiTracker, need this?
     int index = 0;
-
 
     //
     // Follower state
@@ -148,7 +146,7 @@ class MidiTrack : public AbstractTrack
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
-    void resize(TrackProperties& props) override;
+    void leaderResize(TrackProperties& props) override;
     
     bool isExtending() override;
     void advance(int newFrames) override;
@@ -157,6 +155,19 @@ class MidiTrack : public AbstractTrack
     void setGoalFrames(int f) override;
     float getRate() override;
     void setRate(float r) override;
+
+    //
+    // Leader responses
+    //
+    
+    void leaderReset(class TrackProperties& props) override;
+    void leaderRecordStart() override;
+    void leaderRecordEnd(class TrackProperties& props) override;
+    void leaderMuteStart(class TrackProperties& props) override;
+    void leaderMuteEnd(class TrackProperties& props) override;
+    void leaderResize();
+    void leaderRelocate();
+    void leaderReorient();
     
   protected:
 
@@ -169,12 +180,8 @@ class MidiTrack : public AbstractTrack
     class MidiPools* pools = nullptr;
 
     // leader state
-    bool followRecord = false;
-    bool followRecordEnd = false;
     bool followerMuteStart = false;
-    bool followSize = false;
     bool followLocation = false;
-    bool followMute = false;
     bool noReset = false;
     
     // loops
@@ -236,12 +243,6 @@ class MidiTrack : public AbstractTrack
     //
 
     void followerPauseRewind();
-    void leaderReset(class TrackProperties& props);
-    void leaderRecordStart();
-    void leaderRecordEnd(class TrackProperties& props);
-    void leaderMuteStart(class TrackProperties& props);
-    void leaderMuteEnd(class TrackProperties& props);
-    void leaderFollowerEvent(class TrackProperties& props);
 
     //
     // Misc utilities

@@ -21,9 +21,20 @@ class TrackAdvancer
 
     float rateCarryover = 0.0f;
 
+    // leader state
+    LeaderType lastLeaderType = LeaderNone;
+    int lastLeaderTrack = 0;
+    int lastLeaderFrames = 0;
+    //int lastLeaderCycleFrames = 0;
+    //int lastLeaderCycles = 0;
+    int lastLeaderLocation = 0;
+    float lastLeaderRate = 1.0f;
+    
   private:
 
     class TrackScheduler& scheduler;
+    
+    void detectLeaderChange();
     
     void traceFollow();
     int scale(int blockFrames);

@@ -417,6 +417,95 @@ void TrackAdvancer::doPulse(TrackEvent* e)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Leader Tracking
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * At the beginnigng of each block advance, watch for changes in the
+ * leader and automatically make adjustments.  This is an alternative
+ * to pro-active notifiication of leader changes.
+ *
+ * Assuming this works the older leader notifications can be removed
+ * if they are redundant.
+ */
+void TrackAdvancer::detectLeaderChange()
+{
+    bool doResize = false;
+    //bool doRelocate = false;
+    TrackProperties props;
+    
+    // the current leader is here, this must be set prior to advance()
+    // configuration changes happen with KernelMessages which are before advance,
+    // actions that might change the leader also happen before the advance currently
+    // but that might become more complex
+    LeaderType newLeaderType = scheduler.leaderType;
+
+    if (newLeaderType == LeaderNone) {
+        // not following any more, ignore
+    }
+    else if (newLeaderType == LeaderHost) {
+        // more work to do...
+        // in theory we need to monitor the host tempo which
+        // has an effect on the "bar" size which determines the leader length
+        // this would be put in TrackProperties as if it had come from a track
+    }
+    else if (newLeaderType == LeaderMidi) {
+        // more work to do...
+        // like LeaderHost, tempo determines leader length
+    }
+    else {
+        // we're following a track
+        // it doesn't really matter if the leader track number changed,
+        // we still have to check the length
+        int leader = scheduler.findLeaderTrack();
+        if (leader == 0) {
+            // this can happen when you're following a specific track
+            // but didn't specify a number, or if the TrackSyncMaster isn't set
+            // ignore
+        }
+        else {
+            props = scheduler.kernel->getTrackProperties(leader);
+            if (props.invalid) {
+                // something is messed up with track numbering
+                Trace(1, "TrackAdvancer: Unable to determine leader track properties");
+            }
+            else {
+                // todo, it may have changed an even cycle multiple
+                // could avoid a recalculation
+                doResize = (props.frames != lastLeaderFrames);
+
+                // todo: location is more complex, defer till a notification
+
+                // remember these for next time
+                lastLeaderFrames = props.frames;
+                lastLeaderLocation = props.currentFrame;
+            }
+        }
+        lastLeaderTrack = leader;
+    }
+
+    lastLeaderType = newLeaderType;
+
+    if (doResize) {
+
+        // this only happens if the track is following RecordEnd, or Size
+        if (scheduler.followRecordEnd || scheduler.followSize) {
+        
+            Trace(2, "TrackAdvancer: Automatic follower resize detected in track %d",
+                  scheduler.track->getNumber());
+            scheduler.track->leaderResize(props);
+
+            // I think this can reset?
+            // actually no, it probably needs to be a component of the
+            // adjusted play frame proportion
+            rateCarryover = 0.0f;
+        }
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

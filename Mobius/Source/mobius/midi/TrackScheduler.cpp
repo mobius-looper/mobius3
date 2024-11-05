@@ -123,13 +123,17 @@ void TrackScheduler::configure(Session::Track* def)
     }
 
     // follower options
-    // most of these are in MidiTrack but they should be here where we need them
+    // a few are in MidiTrack but they should be here if we need them
 
     leaderType = valuator->getLeaderType(track->getNumber());
     leaderTrack = def->getInt("leaderTrack");
     leaderSwitchLocation = valuator->getLeaderSwitchLocation(track->getNumber());
     
     followQuantize = def->getBool("followQuantizeLocation");
+    followRecord = def->getBool("followRecord");
+    followRecordEnd = def->getBool("followRecordEnd");
+    followSize = def->getBool("followSize");
+    followMute = def->getBool("followMute");
 }
 
 /**
@@ -162,51 +166,6 @@ void TrackScheduler::dump(StructureDumper& d)
 void TrackScheduler::setFollowTrack(TrackProperties& props)
 {
     followTrack = props.number;
-    advancer.rateCarryover = 0.0f;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Leader Events
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * We scheduled an event in the leader with a parallel local event that
- * is currently pending.  When the leader notifies us that it's event has
- * been reached, we can activate the local event.
- * todo: need a better way to associate the two beyond just insertion order !!
- * for loop switch.
- */
-void TrackScheduler::leaderEvent(TrackProperties& props)
-{
-    (void)props;
-    // locate the first pending event
-    // instead of activating it and letting it be picked up on the next event
-    // scan, we can just remove it and pretend 
-    TrackEvent* e = events.consumePendingLeader(props.eventId);
-    if (e == nullptr) {
-        // I suppose this could happen if you allowed a pending switch
-        // to escape from leader control and happen on it's own
-        Trace(1, "TrackScheduler: Leader notification did not find a pending event");
-    }
-    else {
-        advancer.doEvent(e);
-    }
-}
-
-/**
- * Called when the leader track has changed size.
- */
-void TrackScheduler::leaderLoopResize(TrackProperties& props)
-{
-    (void)props;
-    Trace(2, "TrackScheduler: Leader track was resized");
-
-    track->resize(props);
-    // I think this can reset?
-    // actually no, it probably needs to be a component of the
-    // adjusted play frame proportion
     advancer.rateCarryover = 0.0f;
 }
 
@@ -812,7 +771,7 @@ bool TrackScheduler::schedulePausedAction(UIAction* src)
     bool scheduled = false;
     
     if (followQuantize) {
-        int leader = findLeader();
+        int leader = findLeaderTrack();
         if (leader > 0) {
             QuantizeMode q = isQuantized(src);
             if (q != QUANTIZE_OFF) {
@@ -1223,7 +1182,7 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
         doActionNow(src);
     }
     else {
-        int leader = findLeader();
+        int leader = findQuantizationLeader();
         if (leader > 0 && followQuantize) {
             TrackEvent* e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
             e->primary = copyAction(src);
@@ -1240,6 +1199,27 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
         }
     }
 }
+
+
+/**
+ * Determine which track is supposed to be the leader of this one for quantization.
+ * If the leader type is MIDI or Host returns zero.
+ */
+int TrackScheduler::findQuantizationLeader()
+{
+    int leader = findLeaderTrack();
+    if (leader > 0) {
+        // if the leader over an empty loop, ignore it and fall
+        // back to the usual SwitchQuantize parameter
+        TrackProperties props = kernel->getTrackProperties(leader);
+        if (props.frames == 0) {
+            // ignore the leader
+            leader = 0;
+        }
+    }
+    return leader;
+}
+
 /**
  * Given a QuantizeMode from the configuration, calculate the next
  * loop frame at that quantization point.
@@ -1345,39 +1325,6 @@ TrackEvent* TrackScheduler::scheduleLeaderQuantization(int leader, QuantizeMode 
     events.add(event);
 
     return event;
-}
-
-/**
- * Determine which track is supposed to be the leader of this one.
- * If the leader type is MIDI or Host returns zero.
- */
-int TrackScheduler::findLeader()
-{
-    int leader = 0;
-
-    if (leaderType == LeaderTrack) {
-        // supposed to follow a specific track
-        if (leaderTrack > 0) {
-            // if the leader over an empty loop, ignore it and fall
-            // back to the usual SwitchQuantize parameter
-            TrackProperties props = kernel->getTrackProperties(leaderTrack);
-            if (props.frames > 0) {
-                // follow this guy
-                leader = leaderTrack;
-            }
-        }
-    }
-    else if (leaderType == LeaderTrackSyncMaster) {
-        leader = pulsator->getTrackSyncMaster();
-    }
-    else if (leaderType == LeaderOutSyncMaster) {
-        leader = pulsator->getOutSyncMaster();
-    }
-    else if (leaderType == LeaderFocused) {
-        kernel->getContainer()->getFocusedTrack();
-    }
-
-    return leader;
 }
 
 /****************************************************************************/
@@ -1649,7 +1596,7 @@ void TrackScheduler::doResize(UIAction* a)
         if (sessionSyncSource == SYNC_TRACK) {
             int otherTrack = pulsator->getTrackSyncMaster();
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->resize(props);
+            track->leaderResize(props);
             followTrack = otherTrack;
         }
         else {
@@ -1668,7 +1615,7 @@ void TrackScheduler::doResize(UIAction* a)
         }
         else {
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->resize(props);
+            track->leaderResize(props);
             // I think this can reset?
             // actually no, it probably needs to be a component of the
             // adjusted play frame proportion
@@ -1676,6 +1623,151 @@ void TrackScheduler::doResize(UIAction* a)
             followTrack = otherTrack;
         }
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Leader/Follower Management
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Called by MidiTracker when a leader notification comes in.
+ *
+ * If the track number in the event is the same as the track number
+ * we are following then handle it.
+ *
+ * Several tracks can follow the same leader.  Most events will be processed
+ * by all followers.  The one exception is a special Follower event scheduled
+ * in the leader track by a specific follower.  So if this is a Follower event
+ * only handle it if this track scheduled it.
+ */
+void TrackScheduler::trackNotification(NotificationId notification, TrackProperties& props)
+{
+    int myLeader = findLeaderTrack();
+
+    if (myLeader == props.number) {
+        // we normally follow this leader
+
+        // but not if this is a Follower event for a different track
+        if (props.follower == 0 || props.follower == track->getNumber())
+          doTrackNotification(notification, props);
+    }
+}
+
+void TrackScheduler::doTrackNotification(NotificationId notification, TrackProperties& props)
+{
+    Trace(2, "TrackScheduler::leaderNotification %d for track %d",
+          (int)notification, props.number);
+
+    switch (notification) {
+            
+        case NotificationReset: {
+            if (followRecord)
+              track->leaderReset(props);
+        }
+            break;
+                
+        case NotificationRecordStart: {
+            if (followRecord)
+              track->leaderRecordStart();
+        }
+            break;
+                 
+        case NotificationRecordEnd: {
+            if (followRecordEnd)
+              track->leaderRecordEnd(props);
+        }
+            break;
+
+        case NotificationMuteStart: {
+            if (followMute)
+              track->leaderMuteStart(props);
+        }
+            break;
+                
+        case NotificationMuteEnd: {
+            if (followMute)
+              track->leaderMuteEnd(props);
+        }
+            break;
+
+        case NotificationFollower:
+            leaderEvent(props);
+            break;
+
+        case NotificationLoopSize:
+            leaderLoopResize(props);
+            break;
+                
+        default:
+            Trace(1, "TrackScheduler: Unhandled notification %d", (int)notification);
+            break;
+    }
+}
+
+/**
+ * Determine which track is supposed to be the leader of this one.
+ * If the leader type is MIDI or Host returns zero.
+ */
+int TrackScheduler::findLeaderTrack()
+{
+    int leader = 0;
+
+    if (leaderType == LeaderTrack) {
+        leader = leaderTrack;
+    }
+    else if (leaderType == LeaderTrackSyncMaster) {
+        leader = pulsator->getTrackSyncMaster();
+    }
+    else if (leaderType == LeaderOutSyncMaster) {
+        leader = pulsator->getOutSyncMaster();
+    }
+    else if (leaderType == LeaderFocused) {
+        // this is a "view index" which is zero based!
+        leader = kernel->getContainer()->getFocusedTrack() + 1;
+    }
+
+    return leader;
+}
+
+/**
+ * We scheduled an event in the leader with a parallel local event that
+ * is currently pending.  When the leader notifies us that it's event has
+ * been reached, we can activate the local event.
+ * todo: need a better way to associate the two beyond just insertion order !!
+ * for loop switch.
+ */
+void TrackScheduler::leaderEvent(TrackProperties& props)
+{
+    (void)props;
+    // locate the first pending event
+    // instead of activating it and letting it be picked up on the next event
+    // scan, we can just remove it and pretend 
+    TrackEvent* e = events.consumePendingLeader(props.eventId);
+    if (e == nullptr) {
+        // I suppose this could happen if you allowed a pending switch
+        // to escape from leader control and happen on it's own
+        Trace(1, "TrackScheduler: Leader notification did not find a pending event");
+    }
+    else {
+        advancer.doEvent(e);
+    }
+}
+
+/**
+ * Called when the leader track has changed size.
+ */
+void TrackScheduler::leaderLoopResize(TrackProperties& props)
+{
+    (void)props;
+    Trace(2, "TrackScheduler: Leader track was resized");
+
+    track->leaderResize(props);
+    // I think this can reset?
+    // actually no, it probably needs to be a component of the
+    // adjusted play frame proportion
+    advancer.rateCarryover = 0.0f;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -28,6 +28,7 @@
 #include "../../model/SymbolId.h"
 
 #include "../TrackProperties.h"
+#include "../Notification.h"
 
 #include "TrackEvent.h"
 #include "LoopSwitcher.h"
@@ -60,9 +61,9 @@ class TrackScheduler
     void advance(class MobiusAudioStream* stream);
 
     void setFollowTrack(TrackProperties& props);
-    void leaderEvent(TrackProperties& props);
-    void leaderLoopResize(TrackProperties& props);
 
+    void trackNotification(NotificationId notification, TrackProperties& props);
+    
     // utility used by MidiTrack, MidiTracker
     LeaderType getLeaderType() {
         return leaderType;
@@ -70,7 +71,7 @@ class TrackScheduler
     int getLeaderTrack() {
         return leaderTrack;
     }
-    int findLeader();
+    int findLeaderTrack();
     
   protected:
 
@@ -86,10 +87,12 @@ class TrackScheduler
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
 
-    // leader options needed by LoopSwitcher, MidiTrack
+    // leader options needed by LoopSwitcher, TrackAdvancer
     LeaderType leaderType;
     int leaderTrack = 0;
     LeaderLocation leaderSwitchLocation;
+    bool followRecordEnd = false;
+    bool followSize = false;
 
     class UIAction* copyAction(UIAction* src);
     TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
@@ -106,10 +109,11 @@ class TrackScheduler
     Pulse::Source syncSource = Pulse::SourceNone;
     int syncLeader = 0;
     int followTrack = 0;
-
-    
     bool followQuantize = false;
-
+    bool followRecord = false;
+    bool followMute = false;
+    
+    
     // save these from the session until everything is converted to
     // use Pulsator constants
     SyncSource sessionSyncSource = SYNC_NONE;
@@ -117,6 +121,12 @@ class TrackScheduler
 
     // simple counter for generating leader/follower event correlation ids
     int correlationIdGenerator = 1;
+
+
+    // Leader/Follower Support
+    void doTrackNotification(NotificationId notification, TrackProperties& props);
+    void leaderEvent(TrackProperties& props);
+    void leaderLoopResize(TrackProperties& props);
 
     //
     // Scheduling and mode transition guts
@@ -152,6 +162,7 @@ class TrackScheduler
     
     QuantizeMode isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* src, QuantizeMode q);
+    int findQuantizationLeader();
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
 

@@ -577,19 +577,13 @@ void MidiTracker::refreshState()
  */
 void MidiTracker::trackNotification(NotificationId notification, TrackProperties& props)
 {
-    int sourceNumber = props.number;
     for (int i = 0 ; i < activeTracks ; i++) {
         MidiTrack* track = tracks[i];
-
-        if (track->getScheduler()->findLeader() == sourceNumber) {
-
-            // we usually follow this leader, but the special Follower event can target
-            // a specific one
-            if (props.follower == 0 || props.follower == track->number)
-              track->trackNotification(notification, props);
-        }
+        // this always passes through the Scheduler first
+        track->getScheduler()->trackNotification(notification, props);
     }
 }
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

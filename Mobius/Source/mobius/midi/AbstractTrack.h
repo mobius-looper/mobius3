@@ -71,7 +71,14 @@ class AbstractTrack
     virtual void doDump() = 0;
     virtual void doInstantMultiply(int n) = 0;
     virtual void doInstantDivide(int n) = 0;
-    virtual void resize(TrackProperties& props) = 0;
+
+    // leader stuff
+    virtual void leaderReset(class TrackProperties& props) = 0;
+    virtual void leaderRecordStart() = 0;
+    virtual void leaderRecordEnd(class TrackProperties& props) = 0;
+    virtual void leaderMuteStart(class TrackProperties& props) = 0;
+    virtual void leaderMuteEnd(class TrackProperties& props) = 0;
+    virtual void leaderResize(TrackProperties& props) = 0;
     
     // advance play/record state between events
     virtual bool isExtending() = 0;

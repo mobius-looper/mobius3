@@ -84,7 +84,7 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
     AbstractTrack* track = scheduler.track;
 
     // see if we're supposed to follow a leader track
-    int leader = scheduler.findLeader();
+    int leader = scheduler.findLeaderTrack();
 
     // !! Now that we have followQuantize we should use that instead of
     // another parameter that accomplishes the same thing but specific to switch
