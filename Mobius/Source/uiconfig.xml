@@ -11,7 +11,7 @@
     <Element name="ParametersElement" x="24" y="20" width="288" height="177"/>
     <Element name="AudioMeterElement" x="456" y="259"/>
     <Element name="LayerElement" x="456" y="301" width="246" height="63"/>
-    <Element name="AlertElement" x="107" y="372" width="666" height="53"/>
+    <Element name="AlertElement" x="106" y="374" width="666" height="53"/>
     <Element name="MinorModesElement" x="437" y="57"/>
     <Element name="TempoElement" x="438" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>

@@ -1385,6 +1385,7 @@ void MidiTrack::finishSwitch(int newIndex)
     Trace(2, "MidiTrack: Switch %d", newIndex);
 
     MidiLoop* currentLoop = loops[loopIndex];
+    bool startingEmpty = (mode == MobiusMidiState::ModeReset);
 
     // remember the location for SwitchLocation=Restore
     MidiLayer* currentPlaying = currentLoop->getPlayLayer();
@@ -1418,14 +1419,23 @@ void MidiTrack::finishSwitch(int newIndex)
         int newPlayFrame = 0;
         
         if (location == SWITCH_FOLLOW) {
-            // if the destination is smaller, have to modulo down
-            // todo: ambiguity where this shold be if there are multiple
-            // cycles, the first one, or the highest cycle?
-            int followFrame = currentFrame;
-            if (followFrame >= recorder.getFrames())
-              followFrame = currentFrame % recorder.getFrames();
-            recorder.setFrame(followFrame);
-            newPlayFrame = followFrame;
+            if (startingEmpty) {
+                // for followers, if you move to a loop with content from an empty
+                // loop you would like it to pick up at a reasonable location relative
+                // to the leader, since wasn't previouslly tracking the leader location
+// continue here
+                
+            }
+            else {
+                // if the destination is smaller, have to modulo down
+                // todo: ambiguity where this shold be if there are multiple
+                // cycles, the first one, or the highest cycle?
+                int followFrame = currentFrame;
+                if (followFrame >= recorder.getFrames())
+                  followFrame = currentFrame % recorder.getFrames();
+                recorder.setFrame(followFrame);
+                newPlayFrame = followFrame;
+            }
         }
         else if (location == SWITCH_RESTORE) {
             newPlayFrame = playing->getLastPlayFrame();
@@ -1969,6 +1979,19 @@ int MidiTrack::followLeaderLocation(int myFrames, int myLocation,
                                     float playbackRate, bool favorLate)
 {
     int newLocation = 0;
+
+
+    // when ending a recording, otherLocation will normally be the same
+    // will normally be the same as otherFrames, or "one past" the end
+    // of the loop which will immediately wrap back to zero after the
+    // notification
+    if (otherLocation == otherFrames)
+      otherLocation = 0;
+
+    if (otherLocation > otherFrames) {
+        // this is odd and unexpected
+        Trace(1, "MidiTrack: Leader location was beyond the end");
+    }
     
     if (myFrames < otherFrames) {
         // we are smaller than the other loop and are allowed to repeat
