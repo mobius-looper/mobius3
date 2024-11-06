@@ -266,7 +266,7 @@ class MidiTrack : public AbstractTrack
                              float rate, bool igoreCurrent, bool favorLate);
 
     void followLeaderSize();
-    int followLeaderLocation();
+    void followLeaderLocation();
     void reorientFollower(int previousFrames, int previoiusFrame);
 
 };

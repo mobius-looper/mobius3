@@ -2092,10 +2092,8 @@ void MidiTrack::followLeaderSize()
  * that we have not been following something, or following something else, and
  * our current location is not meangingful.
  */
-int MidiTrack::followLeaderLocation()
+void MidiTrack::followLeaderLocation()
 {
-    int startFrame = 0;
-    
     // ignore if we're empty
     int myFrames = recorder.getFrames();
     if (myFrames > 0) {
@@ -2112,13 +2110,15 @@ int MidiTrack::followLeaderLocation()
                 // leader is empty, just continue with what we have now
             }
             else if (myFrames != props.frames) {
-                startFrame = followLeaderLocation(myFrames, recorder.getFrame(),
-                                                  props.frames, props.currentFrame,
-                                                  rate, true, true);
+                int startFrame = followLeaderLocation(myFrames, recorder.getFrame(),
+                                                      props.frames, props.currentFrame,
+                                                      rate, true, true);
+
+                recorder.setFrame(startFrame);
+                player.setFrame(startFrame);
             }
         }
     }
-    return startFrame;
 }
 
 /**
