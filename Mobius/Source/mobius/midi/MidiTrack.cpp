@@ -208,34 +208,33 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 
                 // if this is also the active loop, then reset the recorder and player
                 // if we are actively playing, replace and continue
-                bool keepGoing = false;
-                int currentFrame = player.getFrame();
-                if (mode == MobiusMidiState::ModePlay && !player.isPaused())
-                  keepGoing = true;
 
+                int currentFrames = recorder.getFrames();
+                int currentFrame = recorder.getFrame();
+
+                // everything back to zero
                 recorder.reset();
                 recorder.resume(layer);
                 player.reset();
                 player.change(layer);
+                
+                bool keepGoing = (mode == MobiusMidiState::ModePlay && !player.isPaused());
 
                 if (keepGoing) {
                     recorder.setFrame(currentFrame);
                     player.setFrame(currentFrame);
 
-                    // do this after restoring the current frame
-                    leaderResize();
+                    reorientFollower(currentFrames, currentFrame);
                 }
                 else {
+                    // also reorient but since we're paused current doesn't matter?
+                    reorientFollower(currentFrames, 0);
+                    
                     // before we call startPause force the mode to Play
                     // so that when we come out of pause, that will be what
-                    // we return tu
+                    // we return to
                     mode = MobiusMidiState::ModePlay;
                     startPause();
-                    //resumePlay();
-
-                    // necessary for keepGoing but probably want this
-                    // after any load right?
-                    leaderResize();
                 }
             }
         }
@@ -261,10 +260,12 @@ int MidiTrack::getGoalFrames()
     return goalFrames;
 }
 
+#if 0
 void MidiTrack::setRate(float r)
 {
     rate = r;
 }
+#endif
 
 float MidiTrack::getRate()
 {
@@ -373,8 +374,8 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
         // normally have an edit lock
         overdub = false;
 
-        // resize to fit the leader
-        leaderResize(props);
+        // resize and relocate to fit the leader
+        leaderResized(props);
         mode = MobiusMidiState::ModePlay;
 
         player.setPause(false);
@@ -1097,7 +1098,6 @@ bool MidiTrack::inRecordingMode()
  * !! think about what happens to minor modes like overdub/reverse/speed
  * Touching the recorder is going to cancel most state, we need to track
  * that or tell it what we want
- *
  */
 void MidiTrack::doUndo()
 {
@@ -1130,11 +1130,17 @@ void MidiTrack::doUndo()
             Trace(2, "MidiTrack: Nothing to undo");
         }
         else {
-            // resume resets the location, try to keep it, wrap if necessary
+            int currentFrames = recorder.getFrames();
+            int currentFrame = recorder.getFrame();
+
+            // change keeps the current location
             player.change(restored);
-            int frame = recorder.getFrame();
+            // resume resets the location, try to keep it, wrap if necessary
             recorder.resume(restored);
-            recorder.setFrame(frame);
+            recorder.setFrame(currentFrame);
+
+            // make adjustments if we're following
+            reorientFollower(currentFrames, currentFrame);
         }
     }
 
@@ -1185,9 +1191,6 @@ void MidiTrack::doRedo()
             Trace(2, "MidiTrack: Nothing to redo");
         }
         else {
-            // try to restore the current position
-            int currentFrame = recorder.getFrame();
-            
             MidiLayer* playing = loop->getPlayLayer();
             MidiLayer* restored = loop->redo();
             if (playing == restored) {
@@ -1202,10 +1205,18 @@ void MidiTrack::doRedo()
                     Trace(2, "MidiTrack: Redo is abandoning layer changes");
                 }
 
+                int currentFrames = recorder.getFrames();
+                // try to restore the current position
+                int currentFrame = recorder.getFrame();
+
+                // change keeps the current frame
                 player.change(restored);
-                
+                // resume resets the frame and needs to be restored
                 recorder.resume(restored);
                 recorder.setFrame(currentFrame);
+
+                // if we're following, then may need to adjust our rate and location
+                reorientFollower(currentFrames, currentFrame);
             }
         }
     }
@@ -1385,7 +1396,6 @@ void MidiTrack::finishSwitch(int newIndex)
     Trace(2, "MidiTrack: Switch %d", newIndex);
 
     MidiLoop* currentLoop = loops[loopIndex];
-    bool startingEmpty = (mode == MobiusMidiState::ModeReset);
 
     // remember the location for SwitchLocation=Restore
     MidiLayer* currentPlaying = currentLoop->getPlayLayer();
@@ -1404,49 +1414,55 @@ void MidiTrack::finishSwitch(int newIndex)
         mode = MobiusMidiState::ModeReset;
     }
     else {
+        // a non-empty loop
+        int currentFrames = recorder.getFrames();
         int currentFrame = recorder.getFrame();
-        
         recorder.resume(playing);
         
-        SwitchLocation location = valuator->getSwitchLocation(number);
-        // like EmptyLoopAction, if we're a follower I don't think we want to
-        // obey SwitchLocation from the Preset, may want more control over this
-        if (scheduler.leaderType != LeaderNone)
-          location = SWITCH_FOLLOW;
-        
-        // default is at the start
-        recorder.setFrame(0);
-        int newPlayFrame = 0;
-        
-        if (location == SWITCH_FOLLOW) {
-            if (startingEmpty) {
-                // for followers, if you move to a loop with content from an empty
-                // loop you would like it to pick up at a reasonable location relative
-                // to the leader, since wasn't previouslly tracking the leader location
-// continue here
-                
-            }
-            else {
+        if (scheduler.hasActiveLeader()) {
+            // normal loop switch options don't apply
+            // need to adapt to size changes, and keep the current location only
+            // if it makes sense
+            
+            // default is at the start
+            recorder.setFrame(0);
+            player.change(playing, 0);
+            reorientFollower(currentFrames, currentFrame);
+        }
+        else {
+            // normal loop switch
+
+            // default is at the start
+            recorder.setFrame(0);
+            int newPlayFrame = 0;
+
+            SwitchLocation location = valuator->getSwitchLocation(number);
+            if (location == SWITCH_FOLLOW) {
+                int followFrame = currentFrame;
                 // if the destination is smaller, have to modulo down
                 // todo: ambiguity where this shold be if there are multiple
                 // cycles, the first one, or the highest cycle?
-                int followFrame = currentFrame;
                 if (followFrame >= recorder.getFrames())
                   followFrame = currentFrame % recorder.getFrames();
                 recorder.setFrame(followFrame);
                 newPlayFrame = followFrame;
             }
-        }
-        else if (location == SWITCH_RESTORE) {
-            newPlayFrame = playing->getLastPlayFrame();
-            recorder.setFrame(newPlayFrame);
-        }
-        else if (location == SWITCH_RANDOM) {
-            // might be nicer to have this be a random subcycle or
-            // another rhythmically ineresting unit
-            int random = Random(0, player.getFrames() - 1);
-            recorder.setFrame(random);
-            newPlayFrame = random;
+            else if (location == SWITCH_RESTORE) {
+                newPlayFrame = playing->getLastPlayFrame();
+                recorder.setFrame(newPlayFrame);
+            }
+            else if (location == SWITCH_RANDOM) {
+                // might be nicer to have this be a random subcycle or
+                // another rhythmically ineresting unit
+                int random = Random(0, player.getFrames() - 1);
+                recorder.setFrame(random);
+                newPlayFrame = random;
+            }
+
+            // now adjust the player after we've determined the play frame
+            // important to do both layer change and play frame at the same
+            // time to avoid redundant held note analysis
+            player.change(playing, newPlayFrame);
         }
 
         // the usual ambiguity about what happens to minor modes
@@ -1459,11 +1475,6 @@ void MidiTrack::finishSwitch(int newIndex)
         // sense all the time
         if (!isPaused())
           resumePlay();
-
-        // now adjust the player after we've determined the play frame
-        // important to do both layer change and play frame at the same
-        // time to avoid redundant held note analysis
-        player.change(playing, newPlayFrame);
     }
 }
 
@@ -1765,120 +1776,6 @@ void MidiTrack::doInstantDivide(int n)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Lots to do here, but this gets things started.
- *
- * There are lots of potential resizing options, but the most common initially
- * will be to size the track to match mathematically with another track so they
- * play in sync and at similar percieved tempos.
- *
- * This does not necessarily mean they will be the same size, but the will share
- * a common factor.
- *
- * TrackScheduler has done the work of locating the other track we want to
- * resize against and passes the length and the number of cycles.  Do something nice.
- *
- * notes: I started trying to modify the length, timing, and duration of events in the track
- * but this is awkward due to the complexity of the loop/layer/segment/sequence model, which would
- * all need to be resized.  Instead I'm going to try a simple rate adjustment maintained
- * by scheduler.  Everything within the track stays the same, it just advances at an adjusted
- * rate.  This works well enough for MIDI since we're not dealing with a continuous
- * stream of audio samples.  It's also closer to how RateShift works in audio tracks.
- * The only real difference between audio and midi rate shift is the notion of the "goal frames".
- *
- * This is an absolute length in frames that this track (and the loops it contains) need
- * to fit into to maintain perfect synchronization.  Beccause rate shift applies floating point
- * math, there can be roundoff errors that result in a frame or two of error at the loop point.
- * When this happens the goal frame is used to inject or insert "time" to make the MIDI
- * loop stay in sync with the other track it is trying to match.
- *
- * Should we eventually support RateShift/Halfspeed and the other audio track functions
- * there will be conflict with a single playback rate if you use both RateShift
- * and Resize.  Will need to combine those and have another scaling factor,
- * perpahs rateShift and resizesShift that can be multiplied together.
- */
-void MidiTrack::leaderResize(TrackProperties& props)
-{
-    if (props.invalid) {
-        // something didn't do it's job and didn't check track number ranges
-        Trace(1, "MidiTrack: Resize with invalid track properties");
-    }
-    else if (props.frames == 0) {
-        // the other track was valid but empty
-        // we don't resize for this
-        Trace(2, "MidiTrack: Resize requested against empty track");
-    }
-    else {
-        int myFrames = recorder.getFrames();
-        if (myFrames == 0) {
-            Trace(2, "MidiTrack: Resize requested on empty track");
-        }
-        else if (myFrames == props.frames) {
-            // nothing to do
-        }
-        else {
-            rate = followLeaderLength(myFrames, props.frames);
-            goalFrames = props.frames;
-            
-            int adjustedFrame = followLeaderLocation(myFrames, recorder.getFrame(),
-                                                     props.frames, props.currentFrame,
-                                                     rate, true);
-                                                     
-            // sanity check, recorder/player should be advancing
-            // at the same rate until we start dealing with latency
-            // !! not if we're doing Insert
-            int playFrame = player.getFrame();
-            int recordFrame = recorder.getFrame();
-            if (playFrame != recordFrame)
-              Trace(1, "MidiTrack: Unexpected record/play frame mismatch %d %d", recordFrame, playFrame);
-
-            // resizing is intended for read-only backing tracks, but it is possible there
-            // were modifications made during the current iteration
-            // making the recorder go back in time is awkward because I'm not sure if it expects
-            // the record position to jump around, append vs. insert on the MidiSequence and leaving
-            // modes unfinished
-            // could auto-commit and shift now, or just prevent it from moving
-            // maybe this should be more like Realign where it waits till the start point
-            // of the leader loop and changes then, will want that combined with pause/unpause anyway
-            if (recorder.hasChanges()) {
-                Trace(1, "MidiTrack: Preventing resize relocation with pending recorder changes");
-            }
-            else {
-                char buf[128];
-                snprintf(buf, sizeof(buf), "%f", rate);
-                Trace(2, "MidiTrack: Resize rate %s %d local frames %d follow frames",
-                      buf, myFrames, props.frames);
-                Trace(2, "MidiTrack: Follow frame %d adjusted to local frame %d",
-                      props.currentFrame, adjustedFrame);
-
-                recorder.setFrame(adjustedFrame);
-                player.setFrame(adjustedFrame);
-            }
-        }
-    }
-}
-
-/**
- * Internal resizer that isn't responding to a leader signal.
- */
-void MidiTrack::leaderResize()
-{
-    int leaderTrack = scheduler.findLeaderTrack();
-    if (leaderTrack > 0) {
-        // we could have just passed all this shit up from where it came from
-        TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
-        if (props.invalid) {
-            Trace(1, "MidiTrack: leaderResize() was given an invalid audio track number %d", leaderTrack);
-        }
-        else {
-            leaderResize(props);
-        }
-    }
-    else {
-        // todo: should do the same for Host and MIDI following
-    }
-}
-
-/**
  * Calculate a playback rate that allows two loops to remain in sync
  * with the least amount of (musically useful) change.
  *
@@ -1973,13 +1870,20 @@ float MidiTrack::followLeaderLength(int myFrames, int otherFrames)
  * There are in-between cases.  If the leaader repeats 4 times for our length
  * then when the leader jumps we could locate relative to any one of those repetitions,
  * But it feels like the first or last repetition are the most predictable.
+ *
+ * Finally, if we are starting from an empty loop or have otherwise not been following
+ * anything our current playback position is not relevant.  Move to a location that
+ * fits toward the end of the leader so we hit the downbeats at the next leader start point.
  */
 int MidiTrack::followLeaderLocation(int myFrames, int myLocation,
                                     int otherFrames, int otherLocation,
-                                    float playbackRate, bool favorLate)
+                                    float playbackRate,
+                                    bool ignoreCurrent, bool favorLate)
 {
     int newLocation = 0;
 
+    // for the calculations below a default rate of 0.0 means "no change"
+    if (playbackRate == 0.0f) playbackRate = 1.0f;
 
     // when ending a recording, otherLocation will normally be the same
     // will normally be the same as otherFrames, or "one past" the end
@@ -2012,7 +1916,7 @@ int MidiTrack::followLeaderLocation(int myFrames, int myLocation,
             // just scale the other location
             newLocation = (int)((float)(otherLocation) * playbackRate);
         }
-        else {
+        else if (!ignoreCurrent) {
             // this is where we logically are in the other loop with repeats
             float unscaledLocation = (float)myLocation / playbackRate;
             // this is how many times the other loop has to repeat to get there
@@ -2026,12 +1930,237 @@ int MidiTrack::followLeaderLocation(int myFrames, int myLocation,
             // this is where we should be
             newLocation = (int)(scaledBaseLocation + scaledOffset);
         }
+        else {
+            // this is where we would be in the first repetition
+            float scaledOffset = (float)(otherLocation) * playbackRate;
+            // this is how long each repetition of the other loop represents in our time
+            float scaledRepetitionLength = (float)(otherFrames) * playbackRate;
+            // increase our location until we're within the last iteration of the leader
+            if (scaledRepetitionLength == 0.0f) {
+                // shouldn't happen but prevent infinite loop
+                Trace(1, "MidiTrack: Repetition rate scaling anomoly");
+            }
+            else {
+                float next = scaledOffset + scaledRepetitionLength;
+                while (next < (float)myFrames) {
+                    scaledOffset = next;
+                    next += scaledRepetitionLength;
+                }
+                newLocation = (int)scaledOffset;
+            }
+        }
     }
-
+    
     return newLocation;
 }
 
 /**
+ * Here after being informed that the leader has changed size and we have not
+ * been changed.  Called by our own leaderRecordEnd as well as a few places in
+ * Scheduler.
+ *
+ * This does both a rate shift to scale follower so it plays in sync with the leader,
+ * and attempts to carry over the current playback position.
+ *
+ * todo: Because rate shift applies floating point math, there can be roundoff errors that
+ * result in a frame or two of error at the loop point.  When this happens the goal frame
+ * could be used to inject or insert "time" to make the MIDI loop stay in sync with the other
+ * track it is trying to match.
+ *
+ * Should we eventually support RateShift/Halfspeed and the other audio track functions
+ * there will be conflict with a single playback rate if you use both RateShift
+ * and Resize.  Will need to combine those and have another scaling factor,
+ * perpahs rateShift and resizesShift that can be multiplied together.
+ */
+void MidiTrack::leaderResized(TrackProperties& props)
+{
+    if (props.invalid) {
+        // something didn't do it's job and didn't check track number ranges
+        Trace(1, "MidiTrack: Resize with invalid track properties");
+    }
+    else if (props.frames == 0) {
+        // the other track was valid but empty
+        // we don't resize for this
+        Trace(2, "MidiTrack: Resize requested against empty track");
+    }
+    else {
+        int myFrames = recorder.getFrames();
+        if (myFrames == 0) {
+            Trace(2, "MidiTrack: Resize requested on empty track");
+        }
+        else if (myFrames == props.frames) {
+            // nothing to do
+        }
+        else {
+            rate = followLeaderLength(myFrames, props.frames);
+            goalFrames = props.frames;
+
+            // !! need to be considering whether ignoreCurrent should be set here
+            // if we had not been following and are suddenly trying to resize, our
+            // current location doesn't matter
+            int adjustedFrame = followLeaderLocation(myFrames, recorder.getFrame(),
+                                                     props.frames, props.currentFrame,
+                                                     rate, false, true);
+                                                     
+            // sanity check, recorder/player should be advancing
+            // at the same rate until we start dealing with latency
+            // !! not if we're doing Insert
+            int playFrame = player.getFrame();
+            int recordFrame = recorder.getFrame();
+            if (playFrame != recordFrame)
+              Trace(1, "MidiTrack: Unexpected record/play frame mismatch %d %d", recordFrame, playFrame);
+
+            // resizing is intended for read-only backing tracks, but it is possible there
+            // were modifications made during the current iteration
+            // making the recorder go back in time is awkward because I'm not sure if it expects
+            // the record position to jump around, append vs. insert on the MidiSequence and leaving
+            // modes unfinished
+            // could auto-commit and shift now, or just prevent it from moving
+            // maybe this should be more like Realign where it waits till the start point
+            // of the leader loop and changes then, will want that combined with pause/unpause anyway
+            if (recorder.hasChanges()) {
+                Trace(1, "MidiTrack: Preventing resize relocation with pending recorder changes");
+            }
+            else {
+                char buf[128];
+                snprintf(buf, sizeof(buf), "%f", rate);
+                Trace(2, "MidiTrack: Resize rate %s %d local frames %d follow frames",
+                      buf, myFrames, props.frames);
+                Trace(2, "MidiTrack: Follow frame %d adjusted to local frame %d",
+                      props.currentFrame, adjustedFrame);
+
+                recorder.setFrame(adjustedFrame);
+                player.setFrame(adjustedFrame);
+            }
+        }
+    }
+}
+
+/**
+ * Called when we've been informed that the leader has changed location but not
+ * it's size.
+ */
+void MidiTrack::leaderMoved(TrackProperties& props)
+{
+    (void)props;
+    Trace(1, "MidiTrack: leaderMoved not implemented");
+}
+
+/**
+ * Here after we have changed in some way and may need to adjust our playback rate to
+ * stay in sync with the leader.  This is mostly for loop switch and undo/redo, but
+ * in theory applies to unrounded multiply/insert or anything else that changes the
+ * follower's size.
+ *
+ * This only adjusts the playback rate, not the location.
+ */
+void MidiTrack::followLeaderSize()
+{
+    // ignore if we're empty
+    int myFrames = recorder.getFrames();
+    if (myFrames > 0) {
+    
+        // ignore if we don't have an active leader track
+        // !! not enough for host/midi leaders
+        int leaderTrack = scheduler.findLeaderTrack();
+        if (leaderTrack > 0) {
+            TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+            if (props.invalid) {
+                Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
+            }
+            else if (props.frames == 0) {
+                // leader is empty, just continue with what we have now
+            }
+            else if (myFrames == props.frames) {
+                // don't have to adjust rate, but we could factor in cycle counts
+                // if that makes sense to make them have similar "bar" counts?
+            }
+            else {
+                rate = followLeaderLength(myFrames, props.frames);
+                goalFrames = props.frames;
+            }
+        }
+    }
+}
+
+/**
+ * Attempt to find a suitable location to start if we're following something.
+ * Here after a change is made in THIS loop that requires that we re-orient with
+ * the leaader.
+ *
+ * The ignoreCurrent flag passed to the inner followLeaderLocation is true to indiciate
+ * that we have not been following something, or following something else, and
+ * our current location is not meangingful.
+ */
+int MidiTrack::followLeaderLocation()
+{
+    int startFrame = 0;
+    
+    // ignore if we're empty
+    int myFrames = recorder.getFrames();
+    if (myFrames > 0) {
+
+        // ignore if we don't have an active leader track
+        // !! not enough for host/midi leaders
+        int leaderTrack = scheduler.findLeaderTrack();
+        if (leaderTrack > 0) {
+            TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+            if (props.invalid) {
+                Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
+            }
+            else if (props.frames == 0) {
+                // leader is empty, just continue with what we have now
+            }
+            else if (myFrames != props.frames) {
+                startFrame = followLeaderLocation(myFrames, recorder.getFrame(),
+                                                  props.frames, props.currentFrame,
+                                                  rate, true, true);
+            }
+        }
+    }
+    return startFrame;
+}
+
+/**
+ * Here after we have made a fundamental change to this loop and need to
+ * consider what happens when we're following another loop.
+ */
+void MidiTrack::reorientFollower(int previousFrames, int previousFrame)
+{
+    // what was the purpose of this?
+    // followLeaderLocation() would ignore it anyway
+    // if we recalculate leader follow frame every time, and we didn't
+    // change size, we should end up back at the same point if we were already
+    // following so trying to preserve the prevous frame isn't really necessary
+    (void)previousFrame;
+    
+    // ignore if we don't have an active leader track
+    // !! not enough for host/midi leaders
+    int leaderTrack = scheduler.findLeaderTrack();
+    if (leaderTrack > 0) {
+        TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+        if (props.invalid) {
+            Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
+        }
+        else if (props.frames == 0) {
+            // leader is empty, just continue with what we have now
+        }
+        else if (previousFrames == recorder.getFrames()) {
+            // we went somewhere that was the same size as the last time
+            // don't need to resize, but may need to change location
+            followLeaderLocation();
+        }
+        else {
+            // all bets are off, do both
+            followLeaderSize();
+            followLeaderLocation();
+        }
+    }
+}
+
+/**
+ * todo: this is obsolete, but keep it around for awhile if useful
+ * 
  * Eventually called after a long process from a ClipStart event scheduled
  * in an audio track.
  *
@@ -2077,7 +2206,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // now that we've got the right loop in place,
                 // resize and position it as if the Resize command
                 // had been actioned on this track
-                leaderResize(props);
+                leaderResized(props);
                 mode = MobiusMidiState::ModePlay;
 
                 // player was usually in pause

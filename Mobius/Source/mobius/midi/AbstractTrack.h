@@ -78,7 +78,8 @@ class AbstractTrack
     virtual void leaderRecordEnd(class TrackProperties& props) = 0;
     virtual void leaderMuteStart(class TrackProperties& props) = 0;
     virtual void leaderMuteEnd(class TrackProperties& props) = 0;
-    virtual void leaderResize(TrackProperties& props) = 0;
+    virtual void leaderResized(TrackProperties& props) = 0;
+    virtual void leaderMoved(TrackProperties& props) = 0;
     
     // advance play/record state between events
     virtual bool isExtending() = 0;
@@ -86,7 +87,7 @@ class AbstractTrack
     virtual void loop() = 0;
 
     virtual float getRate() = 0;
-    virtual void setRate(float r) = 0;
+    //virtual void setRate(float r) = 0;
     virtual int getGoalFrames() = 0;
     virtual void setGoalFrames(int f) = 0;
 

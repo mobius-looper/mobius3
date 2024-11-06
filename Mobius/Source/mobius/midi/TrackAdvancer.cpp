@@ -496,7 +496,7 @@ void TrackAdvancer::detectLeaderChange()
         
             Trace(2, "TrackAdvancer: Automatic follower resize detected in track %d",
                   scheduler.track->getNumber());
-            scheduler.track->leaderResize(props);
+            scheduler.track->leaderResized(props);
 
             // I think this can reset?
             // actually no, it probably needs to be a component of the

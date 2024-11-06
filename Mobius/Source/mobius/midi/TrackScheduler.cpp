@@ -1576,27 +1576,36 @@ void TrackScheduler::doInstant(UIAction* a)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * All we do here is process the arguments contained in the action
- * and pass it to MidiTrack for the actual resizing.  Trying to keep
- * MidiTrack independent of UIAction.
+ * The Resize function was an early attempt at manual following and is no
+ * longer necessary, but may still be useful if you want to disable automatic
+ * following and do a manual resize.
  *
- * When resizing to another track, figure out which one it is and get it's
- * size.  When resizing to a sync source, dig out the necessary information
- * from that source.
+ * This uses leaderResized() which adjusts the playback rate to bring the two
+ * into a compable size but also attempts to maintain the backing loops current
+ * playback position.
+ *
+ * !! may want a "reorient" option that ignores the current playback position.
  *
  * For the most part, TrackScheduler doesn't know it is dealing with a MidiTrack,
  * just an AbstractTrack.  We're going to violate that here for a moment and
  * get ahold of MidiTracker, MidiTrack, and MobiusKernel until the interfaces can be
  * cleaned up a bit.
+ *
+ * !! this falls back to "sync based resize" and doesn't use an explicit follower
+ * revisit this
+ *
+ * What is useful here is passing a track number to force a resize against a track
+ * that this one may not actually be following.
  */
 void TrackScheduler::doResize(UIAction* a)
 {
     if (a->value == 0) {
         // sync based resize
+        // !! should be consulting the follower here
         if (sessionSyncSource == SYNC_TRACK) {
             int otherTrack = pulsator->getTrackSyncMaster();
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->leaderResize(props);
+            track->leaderResized(props);
             followTrack = otherTrack;
         }
         else {
@@ -1615,7 +1624,7 @@ void TrackScheduler::doResize(UIAction* a)
         }
         else {
             TrackProperties props = kernel->getTrackProperties(otherTrack);
-            track->leaderResize(props);
+            track->leaderResized(props);
             // I think this can reset?
             // actually no, it probably needs to be a component of the
             // adjusted play frame proportion
@@ -1707,6 +1716,22 @@ void TrackScheduler::doTrackNotification(NotificationId notification, TrackPrope
 }
 
 /**
+ * Return true if we are being led by something.
+ */
+bool TrackScheduler::hasActiveLeader()
+{
+    bool active = false;
+    if (leaderType == LeaderHost || leaderType == LeaderMidi) {
+        active = true;
+    }
+    else {
+        int leader = findLeaderTrack();
+        active = (leader > 0);
+    }
+    return active;
+}
+
+/**
  * Determine which track is supposed to be the leader of this one.
  * If the leader type is MIDI or Host returns zero.
  */
@@ -1757,13 +1782,16 @@ void TrackScheduler::leaderEvent(TrackProperties& props)
 
 /**
  * Called when the leader track has changed size.
+ * This is called for many reasons and the location may also have changed.
+ * Currently MidiTrack will attempt to maintain it's currrent location which
+ * may not always be what you want.
  */
 void TrackScheduler::leaderLoopResize(TrackProperties& props)
 {
     (void)props;
     Trace(2, "TrackScheduler: Leader track was resized");
 
-    track->leaderResize(props);
+    track->leaderResized(props);
     // I think this can reset?
     // actually no, it probably needs to be a component of the
     // adjusted play frame proportion

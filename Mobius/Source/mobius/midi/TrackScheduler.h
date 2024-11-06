@@ -72,6 +72,7 @@ class TrackScheduler
         return leaderTrack;
     }
     int findLeaderTrack();
+    bool hasActiveLeader();
     
   protected:
 

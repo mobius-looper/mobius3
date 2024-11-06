@@ -146,7 +146,8 @@ class MidiTrack : public AbstractTrack
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
-    void leaderResize(TrackProperties& props) override;
+    void leaderResized(TrackProperties& props) override;
+    void leaderMoved(TrackProperties& props) override;
     
     bool isExtending() override;
     void advance(int newFrames) override;
@@ -154,7 +155,7 @@ class MidiTrack : public AbstractTrack
     int getGoalFrames() override;
     void setGoalFrames(int f) override;
     float getRate() override;
-    void setRate(float r) override;
+    //void setRate(float r) override;
 
     //
     // Leader responses
@@ -243,6 +244,7 @@ class MidiTrack : public AbstractTrack
     //
 
     void followerPauseRewind();
+    int leaderLocate();
 
     //
     // Misc utilities
@@ -261,6 +263,10 @@ class MidiTrack : public AbstractTrack
     
     float followLeaderLength(int myFrames, int otherFrames);
     int followLeaderLocation(int myFrames, int myLocation, int otherFrames, int otherLocation,
-                             float rate, bool favorLate);
+                             float rate, bool igoreCurrent, bool favorLate);
+
+    void followLeaderSize();
+    int followLeaderLocation();
+    void reorientFollower(int previousFrames, int previoiusFrame);
 
 };
