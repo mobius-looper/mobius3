@@ -6,8 +6,6 @@ draft = false
 
 Use the following links to download installers for Mac or Windows.  Note that these are not signed and I have not gone though the registration process with Apple or Microsoft so you will get the usual scary warnings about it being from an unknown or untrusted source.  See the security comments below for how to deal with this.
 
-**NOTE:** We have had difficulty with the Windows download being corrupted if you simply click on it using Chrome.  If the application fails to run after downloading, return to the download page, right-click on the download link, and choose "Save link as...".   Reinstall using the new installer executable.
-
 [Download for Windows](https://www.mobiuslooper.com/MobiusSetup.exe)
 
 [Download for MacOS Silicon](https://www.mobiuslooper.com/Mobius.pkg)
@@ -19,6 +17,39 @@ The MacOS version is distributed in two different installation packages, one for
 Also be careful if you are running Intel host applications on a Silicon Mac using "Rosetta".  This has its own set of compatibility problems and is not recommended.
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
+
+## Build 24
+- Merge multi-track MIDI files when loading
+- Fix MidiOut script command sending through host 
+- Fix plugin export device not being saved on shutdown
+- Fix MIDI bindings routed through the host not targeting MIDI tracks
+- Add selective quantization for MIDI track functions, including Start/Stop/Pause
+- Add Follow Quantize Location to quantize events to leader track boundaries
+- Add LoadMidi function for MSL scripts
+- Add LoadMidi bindings to load files without scripts
+- Improvements to Undo/Redo in MIDI tracks
+- Improvements to auto-resizing when changing leader or follower loop sizes
+
+## Windows Security
+
+Windows Defender may pop up and say it has "protected your PC".  In order to run the installer click "More info", then "Run Anyway".
+
+On Windows, the standalone application will be installed in `c:\Program Files\Circular Labs\Mobius` and the VST3 plugin will be installed
+in `c:\Program Files\Common Files\VST3`.   XML support files will be installed in `c:\Users\<yourname>\AppData\Local\Circular Labs\Mobius`.
+Note that while the executable files are in the usual shared locations, the support files are not.  If you need to support mulitple user logins on
+the same machine, you will have to reinstall for each user.
+
+## Mac Security
+
+The Mac may not allow you to run the .pkg installer after downloading.  First try right-clicking on the .pkg file and selecting "open".  Choose the option to allow it even though it is not signed.
+
+If you are prompted with a warning dialog window, in the upper right there should be an icon that looks like a question mark.  Click it.  For me this brings up a help window with a link to bring up the security settings page.  Click it.  If not, bring up System Settings and navitage to Privacy & Security.  Scroll down the "Security" section, there should be an entry there with text saying that Mobius.pkg was blocked from use and a button that says "Open Anyway".  Click it.  The package installer should run.
+
+On MacOS, the standalone application will be installed in `/Applications`, VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`, and the Audio Units plugin will be installed in `/Library/Audio/Plug-Ins/Components`.
+
+The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
+
+## Older Releases
 
 ## Build 23
 - MIDI File support with leader/follower tracks and auto-resizing
@@ -37,27 +68,6 @@ I am aware that the icon displayed on the Mac is garbled when you run the standa
 - Fix binding MIDI commands to the "activePreset" parameter using object names as the binding argument
 - Simplify the way control knobs look and restore the center numbers
 - Improve host bar sync with odd beat numbers and truncated bars (FLStudio)
-
-The major new feature in this release is MIDI Tracks.  For more information please visit the community forum.
-
-## Windows Security
-
-Windows Defender may pop up and say it has "protected your PC".  In order to run the installer click "More info", then "Run Anyway".
-
-On Windows, the standalone application will be installed in `c:\Program Files\Circular Labs\Mobius` and the VST3 plugin will be installed
-in `c:\Program Files\Common Files\VST3`.   XML support files will be installed in `c:\Users\<yourname>\AppData\Local\Circular Labs\Mobius`.
-Note that while the executable files are in the usual shared locations, the support files are not.  If you need to support mulitple user logins on
-the same machine, you will have to reinstall for each user.
-
-## Mac Security
-
-The Mac may not allow you to run the .pkg installer after downloading.  A dialog popups up telling you how awful it is not to get Apple's permission to do anything, in the upper right there should be an icon that looks like a question mark.  Click it.  For me this brings up a help window with a link to bring up the security settings page.  Click it.  If not, bring up System Settings and navitage to Privacy & Security.  Scroll down the "Security" section, there should be an entry there with text saying that Mobius.pkg was blocked from use and a button that says "Open Anyway".  Click it.  The package installer should run.
-
-On MacOS, the standalone application will be installed in `/Applications`, VST3 plugin will be installed in `/Library/Audio/Plug-Ins/VST3`, and the Audio Units plugin will be installed in `/Library/Audio/Plug-Ins/Components`.
-
-The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
-
-## Older Releases
 
 ## Build 20
 - Fix issue where long-press scripts didn't work until after editing the configuration
