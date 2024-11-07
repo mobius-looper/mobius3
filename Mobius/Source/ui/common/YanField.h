@@ -63,7 +63,7 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
 
     void resized() override;
     void labelTextChanged(juce::Label* l) override;
-    void textEditorTextChanged(juce::TextEditor& ed);
+    void textEditorTextChanged(juce::TextEditor& ed) override;
 
   private:
 
