@@ -174,6 +174,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
 
     mTracks.reset(new TrackManager(this));
     mTracks->initialize(configuration, ses);
+    mTracks->setEngine(mCore);
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -508,6 +509,7 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // it is important that we watch for changes since it is unreliable during
     // initialization since the audio thread operates independently of Supervisor
     // probably need to be doing this with sampleRate as well if that's cached in core
+    // TrackManager move
     int newBlockSize = container->getBlockSize();
     if (newBlockSize != lastBlockSize) {
         mCore->updateLatencies(newBlockSize);
@@ -548,7 +550,8 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // KernelCommunicator message queues are a LIFO.  With the introduction of the coreActions
     // list, the order will be reversed again which is what we want, but if the implementation
     // of either collection changes this could break.
-    
+
+    // TrackManager move
     // tell core it has audio and some actions to do
     mCore->processAudioStream(stream, coreActions);
 
@@ -1142,6 +1145,11 @@ void MobiusKernel::doKernelAction(UIAction* action)
  * Since the core code doesn't know about MIDI tracks, it can't target one?
  * I suppose an old script could use "for 9" to go beyond the audio tracks
  * but make them use MSL for this.
+ *
+ * !! revisit this, shouldn't core code be able to make a UIAction and send
+ * it to itself?  This is going to go all the way back to Supervisor, which sees
+ * that it is a LevelCore and send it back down.  Can't this just route
+ * through doAction?
  */
 void MobiusKernel::doActionFromCore(UIAction* action)
 {

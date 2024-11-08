@@ -164,6 +164,15 @@ void TrackManager::loadSession(Session* session)
       kernel->getNotifier()->addTrackListener(i, this);
 }
 
+/**
+ * Take partial control over the Mobius audio track engine.
+ * aka the "core"
+ */
+void TrackManager::setEngine(Mobius* m)
+{
+    audioEngine = m;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Information and Services

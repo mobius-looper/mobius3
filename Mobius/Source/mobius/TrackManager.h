@@ -32,6 +32,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void initialize(MobiusConfig* config, Session* s);
 
+    // temporary until we can managed this
+    void setEngine(class Mobius* m);
+    
     void configure(MobiusConfig* config, Session* session);
     void loadSession(class Session* s);
     
@@ -77,8 +80,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void loadLoop(class MidiSequence* seq, int track, int loop);
     juce::StringArray saveLoop(int trackNumber, int loopNumber, juce::File& file);
-
-    
     
     //
     // Outbound Events
@@ -91,6 +92,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
   private:
 
     MobiusKernel* kernel = nullptr;
+    class Mobius* audioEngine = nullptr;
     
     // need a place to hang this, here or in Kernel?
     MidiPools pools;
