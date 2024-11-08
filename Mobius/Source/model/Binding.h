@@ -149,6 +149,10 @@ class Binding {
     Trigger *trigger = nullptr;
     TriggerMode* triggerMode = 0;
 
+    // new: flag indicating that this is a "release" binding that
+    // may differ from a "press" biding associated with the same trigger
+    bool release = false;
+
     // key number, midi note number
     int triggerValue = 0;
 

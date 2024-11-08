@@ -3,7 +3,6 @@
 
 #include "../../util/StructureDumper.h"
 
-#include "MidiTracker.h"
 #include "MidiTrack.h"
 #include "MidiLoop.h"
 #include "MidiPools.h"

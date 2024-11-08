@@ -450,7 +450,13 @@ void BindingEditor::initForm()
         capture->addAnnotation(100);
         form.add(capture);
     }
-        
+
+    // release option
+    if (wantsRelease()) {
+        release = new Field("Release", Field::Type::Boolean);
+        form.add(release);
+    }
+    
     form.render();
 }
 
@@ -522,6 +528,7 @@ void BindingEditor::fieldChanged(Field* f)
 void BindingEditor::resetForm()
 {
     scope->setValue(juce::var(0));
+    if (release != nullptr) release->setValue(juce::var());
     
     resetSubclassFields();
     
@@ -572,6 +579,8 @@ void BindingEditor::refreshForm(Binding* b)
     
     juce::var args = juce::var(b->getArguments());
     arguments->setValue(args);
+    if (release != nullptr) release->setValue(juce::var(b->release));
+    
     // used this in old code, now that we're within a form still necessary?
     // arguments.repaint();
 }
@@ -613,6 +622,8 @@ void BindingEditor::captureForm(Binding* b, bool includeTarget)
     
     juce::var value = arguments->getValue();
     b->setArguments(value.toString().toUTF8());
+    if (release != nullptr)
+      b->release = release->getBoolValue();
 
     // if we're doing immediate captures of the form without Update
     // this should be false so the target remains in place

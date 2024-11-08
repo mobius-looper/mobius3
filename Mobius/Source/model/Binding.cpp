@@ -32,6 +32,7 @@ Binding::Binding()
 {
     trigger = nullptr;
     triggerMode = nullptr;
+    release = false;
     triggerValue =  0;
     midiChannel = 0;
     
@@ -68,6 +69,7 @@ Binding::Binding(Binding* src)
     
     trigger = src->trigger;
     triggerMode = src->triggerMode;
+    release = src->release;
     triggerValue = src->triggerValue;
     midiChannel = src->midiChannel;
 
@@ -326,6 +328,7 @@ Binding* BindingSet::findBinding(Binding* src)
         for (Binding* b = mBindings ; b != nullptr ; b = b->getNext()) {
             // ignoring triggerMode
             if (b->trigger == src->trigger &&
+                b->release == src->release &&
                 b->triggerValue == src->triggerValue &&
                 b->midiChannel == src->midiChannel &&
                 StringEqual(b->getSymbolName(), src->getSymbolName()) &&

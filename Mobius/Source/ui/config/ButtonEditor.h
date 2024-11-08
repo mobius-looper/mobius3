@@ -15,6 +15,7 @@ class ButtonEditor : public BindingEditor
     ~ButtonEditor();
 
     juce::String getTitle() override {return juce::String("Button Sets");}
+    bool wantsRelease() override {return true;} 
 
     void prepare() override;
     void load() override;

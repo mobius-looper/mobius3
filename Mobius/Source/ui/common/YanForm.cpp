@@ -34,21 +34,26 @@ void YanForm::add(class YanField* f)
     fields.add(f);
     addAndMakeVisible(f);
 
-    juce::Label* label = new juce::Label();
-    label->setText(f->label, juce::NotificationType::dontSendNotification);
-    //label->setJustificationType(juce::Justification::centredLeft);
-    label->setJustificationType(juce::Justification::centredRight);
+    if (f->isAdjacent() && fields.size() > 0) {
+        // this one goes in without a label and we'll draw it later
+    }
+    else {
+        juce::Label* label = new juce::Label();
+        label->setText(f->label, juce::NotificationType::dontSendNotification);
+        //label->setJustificationType(juce::Justification::centredLeft);
+        label->setJustificationType(juce::Justification::centredRight);
 
-    // make them look like the old Form/Fields
-    // notes say bold can make it look too think in smaller forms
-    label->setFont (juce::Font (16.0f, juce::Font::bold));
-    label->setColour (juce::Label::textColourId, juce::Colours::orange);
+        // make them look like the old Form/Fields
+        // notes say bold can make it look too think in smaller forms
+        label->setFont (juce::Font (16.0f, juce::Font::bold));
+        label->setColour (juce::Label::textColourId, juce::Colours::orange);
 
-    if (labelColor != juce::Colour())
-      label->setColour(juce::Label::textColourId, labelColor);
+        if (labelColor != juce::Colour())
+          label->setColour(juce::Label::textColourId, labelColor);
 
-    labels.add(label);
-    addAndMakeVisible(label);
+        labels.add(label);
+        addAndMakeVisible(label);
+    }
 }
 
 void YanForm::addSpacer()
@@ -62,7 +67,12 @@ void YanForm::addSpacer()
 
 int YanForm::getPreferredHeight()
 {
-    return (RowHeight * fields.size()) + topInset;
+    int rows = 0;
+    for (auto f : fields) {
+        if (!f->isAdjacent())
+          rows++;
+    }
+    return (RowHeight * rows) + topInset;
 }
 
 int YanForm::getPreferredWidth()

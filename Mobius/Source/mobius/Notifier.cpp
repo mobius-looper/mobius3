@@ -13,13 +13,15 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+
 #include "Notification.h"
 #include "MobiusPools.h"
+#include "TrackProperties.h"
 
 #include "core/Track.h"
 #include "core/Loop.h"
-#include "midi/MidiTracker.h"
-#include "midi/MidiTrack.h"
+//#include "midi/MidiTracker.h"
+//#include "midi/MidiTrack.h"
 
 #include "Notifier.h"
 

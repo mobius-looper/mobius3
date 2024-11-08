@@ -1997,29 +1997,26 @@ bool Supervisor::doUILevelAction(UIAction* action)
         }
     }
     else if (s->behavior == BehaviorFunction) {
+        handled = true;
         switch (s->id) {
-            case FuncReloadScripts: {
+            case FuncReloadScripts:
                 menuLoadScripts(false);
-                handled = true;
-            }
                 break;
-            case FuncReloadSamples: {
+            case FuncReloadSamples:
                 menuLoadSamples(false);
-                handled = true;
-            }
-            case FuncShowPanel: {
+                break;
+            case FuncShowPanel:
                 mainWindow->showPanel(action->arguments);
-                handled = true;
-            }
-            case FuncMessage: {
+                break;
+            case FuncMessage:
                 mobiusMessage(juce::String(action->arguments));
-                handled = true;
-            }
-            case FuncLoadMidi: {
+                break;
+            case FuncLoadMidi:
                 loadMidi(action);
-                handled = true;
-            }
-            default: break;
+                break;
+            default:
+                handled = false;
+                break;
         }
         if (!handled) {
             // pass down to the listeners

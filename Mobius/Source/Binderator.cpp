@@ -154,10 +154,15 @@ void Binderator::prepareArray(juce::OwnedArray<juce::OwnedArray<TableEntry>>* ta
 /**
  * Add a table entry.
  * Be sure to call prepareArray on the table first.
+ *
+ * With the new sustain flag on bindings, we may need to adjust
+ * entries that have already been added to the table since
+ * they can come in in any order.
  */
 void Binderator::addEntry(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
                           int hashKey,
                           unsigned int qualifier,
+                          bool release,
                           UIAction* action)
 {
     juce::OwnedArray<TableEntry>* entries = (*table)[hashKey];
@@ -165,11 +170,39 @@ void Binderator::addEntry(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
         entries = new juce::OwnedArray<TableEntry>();
         table->set(hashKey, entries);
     }
+
+    TableEntry* neu = new TableEntry();
+    neu->qualifier = qualifier;
+    neu->release = release;
+    neu->action = action;
+    // kludge to allow this to be processed now that sustain is false
+    if (release) neu->action->release = true;
     
-    TableEntry* entry = new TableEntry();
-    entry->qualifier = qualifier;
-    entry->action = action;
-    entries->add(entry);
+    if (release) {
+        // mark existing ones for hasRelease snd remove sustainability
+        for (auto entry : *entries) {
+            if (entry->qualifier == qualifier && !entry->release) {
+                entry->hasRelease = true;
+                entry->action->sustain = false;
+                entry->action->sustainId = 0;
+            }
+        }
+    }
+    else {
+        // look for any existing ones (should only be one) that
+        // was already added as a release action
+        for (auto entry : *entries) {
+            if (entry->qualifier == qualifier && entry->release) {
+                // the new one can't be sustainable
+                neu->hasRelease = true;
+                neu->action->sustain = false;
+                neu->action->sustainId = 0;
+                break;
+            }
+        }
+    }
+    
+    entries->add(neu);
 }
 
 /**
@@ -190,7 +223,7 @@ void Binderator::addEntry(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
  * scripts, but reconsider someday.
  */
 UIAction* Binderator::getAction(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
-                                int hashKey, unsigned int qualifier, bool wildZero)
+                                int hashKey, unsigned int qualifier, bool release, bool wildZero)
 {
     UIAction* action = nullptr;
     
@@ -199,8 +232,22 @@ UIAction* Binderator::getAction(juce::OwnedArray<juce::OwnedArray<TableEntry>>* 
         for (auto entry : *entries) {
             if ((entry->qualifier == qualifier) ||
                 (wildZero && entry->qualifier == 0)) {
-                action = entry->action;
-                break;
+
+                // logic is obscure
+                // an entry can respond to either press, release, or both
+                // both is normal and is indicated by a false hasRelease flag
+                // when hasRelease is true, a press response happens only when the
+                // release argument is false
+                // if the entry release flag is set, it is a release action and
+                // responds only when the release argument is true
+                                  
+                if (!entry->hasRelease ||
+                    (entry->hasRelease && !release) ||
+                    (entry->release && release)) {
+                
+                    action = entry->action;
+                    break;
+                }
             }
         }
     }
@@ -323,7 +370,7 @@ void Binderator::installKeyboardActions(MobiusConfig* mconfig, UIConfig* uconfig
                     UIAction* action = buildAction(symbols, binding);
                     if (action != nullptr) {
                         int index = code & 0xFF;
-                        addEntry(&keyActions, index, code, action);
+                        addEntry(&keyActions, index, code, binding->release, action);
                     }
                 }
             }
@@ -397,7 +444,7 @@ void Binderator::installMidiActions(SymbolTable* symbols, BindingSet* set)
                     // "any" and specific channels are numbered from 1
                     // this needs to be understood when matching incomming events
                     int qualifier = binding->midiChannel;
-                    addEntry(dest, index, qualifier, action);
+                    addEntry(dest, index, qualifier, binding->release, action);
                 }
             }
         }
@@ -408,12 +455,12 @@ void Binderator::installMidiActions(SymbolTable* symbols, BindingSet* set)
 /**
  * Given a key code, look up a corresponding UIAction.
  */
-UIAction* Binderator::getKeyAction(int code, int modifiers)
+UIAction* Binderator::getKeyAction(int code, int modifiers, bool release)
 {
     int index = code & 0xFF;
     int qualifier = getKeyQualifier(code, modifiers);
     
-    return getAction(&keyActions, index, qualifier);
+    return getAction(&keyActions, index, qualifier, release, false);
 }
 
 /**
@@ -429,17 +476,22 @@ UIAction* Binderator::getMidiAction(const juce::MidiMessage& message)
     
     int qualifier = message.getChannel();
     
-    if (message.isNoteOnOrOff()) {
+    if (message.isNoteOn()) {
         int index = message.getNoteNumber();
-        action = getAction(&noteActions, index, qualifier, true);
+        action = getAction(&noteActions, index, qualifier, false, true);
+    }
+    else if (message.isNoteOff()) {
+        int index = message.getNoteNumber();
+        action = getAction(&noteActions, index, qualifier, true, true);
     }
     else if (message.isProgramChange()) {
         int index = message.getProgramChangeNumber();
-        action = getAction(&programActions, index, qualifier, true);
+        action = getAction(&programActions, index, qualifier, false, true);
     }
     else if (message.isController()) {
         int index = message.getControllerNumber();
-        action = getAction(&controlActions, index, qualifier, true);
+        bool release = (message.getControllerValue() == 0);
+        action = getAction(&controlActions, index, qualifier, release, true);
     }
 
     return action;
@@ -514,7 +566,13 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
         Trigger* trigger = b->trigger;
         TriggerMode* mode = b->triggerMode;
         int sustainId = -1;
-        
+
+        if (b->release) {
+            // this is a release binding, it is not sustainable
+            // sadly the other half of this may have already been added with
+            // sustain options so those need to be corrected when this one is 
+            // added to the entry table
+        }
         if (trigger == TriggerKey) {
             // these are implicitly sustainable, but I suppose you might
             // want to turn that OFF in some cases, so look at the mode if specified
@@ -751,7 +809,7 @@ UIAction* Binderator::handleKeyEvent(int code, int modifiers, bool up)
 {
     UIAction* send = nullptr;
     
-    UIAction* action = getKeyAction(code, modifiers);
+    UIAction* action = getKeyAction(code, modifiers, up);
     if (action != nullptr) {
 
         // reset state left over from the last event
@@ -766,6 +824,10 @@ UIAction* Binderator::handleKeyEvent(int code, int modifiers, bool up)
             // override sustainability, obey that
             if (action->sustain) {
                 action->sustainEnd = true;
+                send = action;
+            }
+            else if (action->release) {
+                // not sustaining, but allowed
                 send = action;
             }
         }

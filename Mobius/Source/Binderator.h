@@ -44,6 +44,13 @@ class Binderator
         // and the modifier bits
         unsigned int qualifier = 0;
 
+        // true if this is a release binding
+        bool release = false;
+
+        // true if this is associated with a release binding which means
+        // that sustain/long abilities are not relevant
+        bool hasRelease = false;
+
         // could use a smart pointer here, but it's really obvious what to do
         ~TableEntry() {
             delete action;
@@ -89,9 +96,9 @@ class Binderator
 
     void prepareArray(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table);
     void addEntry(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
-                  int hashKey, unsigned int qualifier, UIAction* action);
+                  int hashKey, unsigned int qualifier, bool release, UIAction* action);
     UIAction* getAction(juce::OwnedArray<juce::OwnedArray<TableEntry>>* table,
-                        int hashKey, unsigned int qualifier, bool wildZero = false);
+                        int hashKey, unsigned int qualifier, bool release, bool wildZero);
 
     void installKeyboardActions(class MobiusConfig* mconfig, class UIConfig* uconfig,
                                 class SymbolTable* symbols);
@@ -100,7 +107,7 @@ class Binderator
     void installMidiActions(class SymbolTable* symbols, class BindingSet* set);
     class UIAction* buildAction(class SymbolTable* symbols, class Binding* b);
     
-    class UIAction* getKeyAction(int code, int modifiers);
+    class UIAction* getKeyAction(int code, int modifiers, bool release);
     class UIAction* getMidiAction(const class juce::MidiMessage& msg);
     
     bool looksResolved(class Symbol* s);

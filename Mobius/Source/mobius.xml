@@ -3,7 +3,7 @@
   quickSave='mobiusloop'
   noiseFloor='13'
   maxSyncDrift='2048'
-  trackCount='4'
+  trackCount='8'
   groupCount='2'
   maxLoops='2'
   longPress='500'
@@ -309,8 +309,11 @@
     <Binding name='ShowPanel' trigger='key' value='262227' args='scriptEditor'/>
     <Binding name='Multiply' trigger='key' value='77'/>
     <Binding name='Insert' trigger='key' value='73'/>
+    <Binding name='Message' trigger='key' value='80' args='p down'/>
+    <Binding name='Message' trigger='key' release='true' value='80' args='p up'/>
     <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
     <Binding name='Record' trigger='note' value='64' channel='1'/>
+    <Binding name='SelectTrack' trigger='control' value='15' args='9'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

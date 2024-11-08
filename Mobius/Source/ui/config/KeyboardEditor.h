@@ -30,6 +30,7 @@ class KeyboardEditor : public BindingEditor,
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
+    bool wantsRelease() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;

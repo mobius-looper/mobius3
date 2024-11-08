@@ -64,7 +64,7 @@ class TrackScheduler
 
     void trackNotification(NotificationId notification, TrackProperties& props);
     
-    // utility used by MidiTrack, MidiTracker
+    // utility used by MidiTrack, TrackManager
     LeaderType getLeaderType() {
         return leaderType;
     }

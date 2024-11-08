@@ -31,10 +31,10 @@
 
 // need this for clipStart, consider moving that to TrackScheduler
 #include "../MobiusKernel.h"
+#include "../TrackManager.h"
 
 #include "TrackScheduler.h"
 
-#include "MidiTracker.h"
 #include "MidiPools.h"
 #include "MidiLoop.h"
 #include "MidiLayer.h"
@@ -52,12 +52,12 @@ const int MidiTrackMaxLoops = 8;
 
 /**
  * Construction just initializes the basic state but does not
- * prepare it for use.  MidiTracker will pre-allocate tracks during
+ * prepare it for use.  TrackManager will pre-allocate tracks during
  * initialization and may not use all of them.  When necessary
  * tracks are enabled for use by calling configure() passing
  * the track definition from the session.
  */
-MidiTrack::MidiTrack(MobiusContainer* c, MidiTracker* t)
+MidiTrack::MidiTrack(MobiusContainer* c, TrackManager* t)
 {
     container = c;
     tracker = t;
@@ -142,7 +142,7 @@ void MidiTrack::configure(Session::Track* def)
 
 /**
  * Initialize the track and release any resources.
- * This is called by MidiTracker when it de-activates tracks.
+ * This is called by TrackManager when it de-activates tracks.
  * It is not necessarily the same as the Reset function handler.
  */
 void MidiTrack::reset()

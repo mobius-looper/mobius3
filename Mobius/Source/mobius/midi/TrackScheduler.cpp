@@ -15,7 +15,7 @@
  * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
  * scheduling and mode transitions are the same for both.
  *
- * Still not entirely happy how control flow is happening.  MidiTracker calls MidiTrack which
+ * Still not entirely happy how control flow is happening.  TrackManager calls MidiTrack which
  * just forwards back here, then back down again.
  *
  * LoopSwitcher and TrackAdvancer were once within this class, but it got too big so they
@@ -1588,7 +1588,7 @@ void TrackScheduler::doInstant(UIAction* a)
  *
  * For the most part, TrackScheduler doesn't know it is dealing with a MidiTrack,
  * just an AbstractTrack.  We're going to violate that here for a moment and
- * get ahold of MidiTracker, MidiTrack, and MobiusKernel until the interfaces can be
+ * get ahold of TrackManager, MidiTrack, and MobiusKernel until the interfaces can be
  * cleaned up a bit.
  *
  * !! this falls back to "sync based resize" and doesn't use an explicit follower
@@ -1641,7 +1641,7 @@ void TrackScheduler::doResize(UIAction* a)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by MidiTracker when a leader notification comes in.
+ * Called by TrackManager when a leader notification comes in.
  *
  * If the track number in the event is the same as the track number
  * we are following then handle it.

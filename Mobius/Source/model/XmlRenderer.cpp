@@ -1024,6 +1024,7 @@ void XmlRenderer::parse(XmlElement* e, UserVariables* container)
 
 #define ATT_DISPLAY_NAME "displayName"
 #define ATT_TRIGGER "trigger"
+#define ATT_TRIGGER_RELEASE "release"
 #define ATT_VALUE "value"
 #define ATT_CHANNEL "channel"
 #define ATT_TRIGGER_VALUE "triggerValue"
@@ -1081,6 +1082,9 @@ void XmlRenderer::render(XmlBuffer* b, Binding* binding)
         b->addAttribute(ATT_TRIGGER_TYPE, binding->triggerMode->getName());
     }
 
+    if (binding->release)
+      b->addAttribute(ATT_TRIGGER_RELEASE, binding->release);
+
     if (binding->triggerValue > 0)
       b->addAttribute(ATT_VALUE, binding->triggerValue);
 
@@ -1117,6 +1121,7 @@ void XmlRenderer::parse(XmlElement* e, Binding* b)
 {
     // trigger
     b->trigger = Trigger::find(e->getAttribute(ATT_TRIGGER));
+    b->release = e->getBoolAttribute(ATT_TRIGGER_RELEASE);
     b->triggerMode = TriggerMode::find(e->getAttribute(ATT_TRIGGER_TYPE));
     b->triggerValue = e->getIntAttribute(ATT_VALUE);
     b->midiChannel = e->getIntAttribute(ATT_CHANNEL);

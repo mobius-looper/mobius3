@@ -28,7 +28,7 @@
 #include "TrackProperties.h"
 
 //#include "TrackSynchronizer.h"
-#include "midi/MidiTracker.h"
+#include "TrackManager.h"
 #include "midi/TrackScheduler.h"
 
 class MobiusKernel : public MobiusAudioListener, public MslContext
@@ -36,7 +36,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     friend class MobiusShell;
     friend class SampleFunction;
     friend class Mobius;
-    friend class MidiTracker;
+    friend class TrackManager;
     friend class TrackScheduler;
     
   public:
@@ -160,7 +160,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     TrackProperties getTrackProperties(int number);
     
-    // used by MidiTracker to schedule a follower event in a core track
+    // used by TrackManager to schedule a follower event in a core track
     int scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId);
     
     // used by the MidiOut function handler
@@ -218,7 +218,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     //
     void coreWaitFinished(class MslWait* wait);
 
-    // used by MidiTracker to send to the host or forward to MidiManager
+    // used by TrackManager to send to the host or forward to MidiManager
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
     
@@ -271,7 +271,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class UIAction* coreActions = nullptr;
     int activePreset = 0;
 
-    std::unique_ptr<MidiTracker> mMidi;
+    std::unique_ptr<TrackManager> mTracks;
 
     // special mode for TestDriver
     bool testMode = false;

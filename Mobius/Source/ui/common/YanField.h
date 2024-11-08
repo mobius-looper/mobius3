@@ -19,8 +19,20 @@ class YanField : public juce::Component
 
     juce::String label;
 
+    void setAdjacent(bool b) {
+        adjacent = b;
+    }
+
+    bool isAdjacent() {
+        return adjacent;
+    }
+    
     virtual int getPreferredWidth() = 0;
     virtual int getPreferredHeight() { return 0; }
+
+  private:
+
+    bool adjacent = false;
 
 };
 

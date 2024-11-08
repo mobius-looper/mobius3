@@ -208,6 +208,14 @@ class UIAction : public PooledObject {
     bool sustainEnd = false;
 
     /**
+     * True if this action response to release bindings.
+     * Kludge because we can't set the sustain flag to true without confusing
+     * the engine, but Binderator needs to know that up transitions are allowed.
+     * Transient field set only in Binderator.
+     */
+    bool release = false;
+
+    /**
      * True if this action represents a point in a sustained action's
      * lifetime that is considered a long time to be sustaining an action.
      * This theshold is configurable but is usually around 1 second.

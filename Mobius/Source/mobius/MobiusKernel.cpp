@@ -43,8 +43,7 @@
 #include "core/Parameter.h"
 #include "core/Mem.h"
 
-// and the lesser bitch
-#include "midi/MidiTracker.h"
+#include "TrackManager.h"
 
 #include "MobiusKernel.h"
 
@@ -173,8 +172,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
 
     //synchronizer.initialize();
 
-    mMidi.reset(new MidiTracker(cont, this));
-    mMidi->initialize(ses);
+    mTracks.reset(new TrackManager(this));
+    mTracks->initialize(configuration, ses);
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -226,7 +225,7 @@ OldMobiusState* MobiusKernel::getState()
 
 MobiusMidiState* MobiusKernel::getMidiState()
 {
-    return mMidi->getState();
+    return mTracks->getState();
 }
 
 /**
@@ -317,8 +316,8 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // should be together
     valuator.configure(configuration, session);
 
-    if (mMidi != nullptr)
-      mMidi->loadSession(session);
+    if (mTracks != nullptr)
+      mTracks->loadSession(session);
 }
 
 /**
@@ -425,7 +424,7 @@ juce::StringArray MobiusKernel::saveLoop(int trackNumber, int loopNumber, juce::
         Trace(1, "MobiusKernel::saveLoop Saving audio loops not supported");
     }
     else {
-        errors = mMidi->saveLoop(trackNumber, loopNumber, file);
+        errors = mTracks->saveLoop(trackNumber, loopNumber, file);
     }
     return errors;
 }
@@ -555,7 +554,7 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 
     // tell midi tracks to advance, when we get to audio/midi track sync, there will
     // no doubt be some order dependencies here
-    mMidi->processAudioStream(stream);
+    mTracks->processAudioStream(stream);
 
     // return the queued core ations to the pool
     UIAction* next = nullptr;
@@ -644,7 +643,7 @@ void MobiusKernel::consumeMidiMessages()
             // device that is used for recording?
             // wrapping it in our MidiEvent is the convention used by MidiManager
             // when receiving MIDI directly
-            mMidi->midiEvent(msg, 0);
+            mTracks->midiEvent(msg, 0);
         }
     }
 
@@ -1073,7 +1072,7 @@ void MobiusKernel::doAction(UIAction* action)
 
         if (scope > audioTracks || global) {
             //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
-            mMidi->doAction(action);
+            mTracks->doAction(action);
         }
 
         if (scope <= audioTracks || global) {
@@ -1178,7 +1177,9 @@ UIAction* MobiusKernel::newUIAction()
  */
 void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
 {
-    mMidi->clipStart(audioTrack, bindingArgs);
+    (void)audioTrack;
+    (void)bindingArgs;
+    //mMidi->clipStart(audioTrack, bindingArgs);
 }
 
 int MobiusKernel::scheduleFollowerEvent(int audioTrack, QuantizeMode q,
@@ -1344,7 +1345,7 @@ bool MobiusKernel::doQuery(Query* q)
     // it may be equal to audioTracks, when it goes over it
     // is a midi track
     if (q->scope > audioTracks) {
-        success = mMidi->doQuery(q);
+        success = mTracks->doQuery(q);
     }
     else {
         if (mCore != nullptr)
@@ -1432,14 +1433,14 @@ void MobiusKernel::doEvent(KernelMessage* msg)
 // that doesn't involve so much message passing
 void MobiusKernel::doMidi(KernelMessage* msg)
 {
-    mMidi->midiEvent(msg->midiMessage, msg->deviceId);
+    mTracks->midiEvent(msg->midiMessage, msg->deviceId);
     // nothing to send back
     communicator->kernelAbandon(msg);
 }
 
 void MobiusKernel::doMidiLoad(KernelMessage* msg)
 {
-    mMidi->loadLoop(msg->object.sequence, msg->track, msg->loop);
+    mTracks->loadLoop(msg->object.sequence, msg->track, msg->loop);
 
     // nothing to send back
     communicator->kernelAbandon(msg);
@@ -1457,7 +1458,7 @@ TrackProperties MobiusKernel::getTrackProperties(int number)
     if (number < audioTracks)
       props = mCore->getTrackProperties(number);
     else
-      props = mMidi->getTrackProperties(number);
+      props = mTracks->getTrackProperties(number);
 
     return props;
 }
@@ -1636,7 +1637,7 @@ bool MobiusKernel::mslAction(MslAction* action)
 
             // we need to allow MSL to target MIDI tracks so support re-scoping here
             if (action->scope > audioTracks)
-              mMidi->doAction(&uia);
+              mTracks->doAction(&uia);
             else
               mCore->doAction(&uia);
         }

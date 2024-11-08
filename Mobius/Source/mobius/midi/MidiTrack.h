@@ -27,14 +27,14 @@ class MidiTrack : public AbstractTrack
     // Configuration
     //
 
-    MidiTrack(class MobiusContainer* c, class MidiTracker* t);
+    MidiTrack(class MobiusContainer* c, class TrackManager* t);
     ~MidiTrack();
     void configure(class Session::Track* def);
     void reset();
 
     void loadLoop(MidiSequence* seq, int loop);
 
-    // required by MidiTracker to get leader info before the advance
+    // required by TrackManager to get leader info before the advance
     // and to respond to notifications
     TrackScheduler* getScheduler() {
         return &scheduler;
@@ -43,7 +43,7 @@ class MidiTrack : public AbstractTrack
     // the track number in "reference space"
     // aka the view number
     int number = 0;
-    // the track index within the MidiTracker, need this?
+    // the track index within the TrackManager, need this?
     int index = 0;
 
     //
@@ -177,7 +177,7 @@ class MidiTrack : public AbstractTrack
     class MobiusContainer* container = nullptr;
     class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
-    class MidiTracker* tracker = nullptr;
+    class TrackManager* tracker = nullptr;
     class MidiPools* pools = nullptr;
 
     // leader state
