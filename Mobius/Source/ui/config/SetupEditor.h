@@ -72,5 +72,7 @@ class SetupEditor : public ConfigEditor,
     
     Form form;
     class ParameterField* groupField = nullptr;
+    class ParameterField* trackPresetField = nullptr;
+    class ParameterField* defaultPresetField = nullptr;
     
 };

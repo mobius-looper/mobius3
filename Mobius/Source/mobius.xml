@@ -129,6 +129,7 @@
   <Setup
     name='Default'
     active='0'
+    defaultPreset='about to go away'
     beatsPerBar='7'
     defaultSyncSource='none'
     defaultTrackSyncUnit='loop'
@@ -142,6 +143,7 @@
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'
+      trackPreset='about to go away'
       groupName='Groupuu'
       input='127'
       output='127'

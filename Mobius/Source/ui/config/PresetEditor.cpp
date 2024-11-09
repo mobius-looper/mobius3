@@ -215,6 +215,7 @@ void PresetEditor::objectSelectorDelete()
           newOrdinal = presets.size() - 1;
         selectedPreset = newOrdinal;
         loadPreset(selectedPreset);
+        refreshObjectSelector();
     }
 }
 

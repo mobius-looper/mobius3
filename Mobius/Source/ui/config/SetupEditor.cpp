@@ -104,6 +104,12 @@ void SetupEditor::refreshAllowedValues()
 {
     if (groupField != nullptr)
       groupField->refreshAllowedValues();
+
+    if (trackPresetField != nullptr)
+      trackPresetField->refreshAllowedValues();
+    
+    if (defaultPresetField != nullptr)
+      defaultPresetField->refreshAllowedValues();
 }
 
 /**
@@ -442,7 +448,9 @@ void SetupEditor::initForm()
     addField("Tracks", UIParameterTrackName);
     addField("Tracks", UIParameterSyncSource);    // overrides default SyncSourceParameter
     addField("Tracks", UIParameterTrackSyncUnit);
-    addField("Tracks", UIParameterTrackPreset);
+    // same hackery as UIParameterGroupName to get it refreshed every time
+    trackPresetField = new ParameterField(supervisor, UIParameterTrackPreset);
+    form.add(trackPresetField, "Tracks", 0);
 
     // severe hackery to make group names look like Structures
     //addField("Tracks", UIParameterGroup);
@@ -481,7 +489,8 @@ void SetupEditor::initForm()
     // this needs to be done in a more obvious way
 
     addField("Other", UIParameterActiveTrack);
-    addField("Other", UIParameterDefaultPreset);
+    defaultPresetField = new ParameterField(supervisor, UIParameterDefaultPreset);
+    form.add(defaultPresetField, "Other", 0);
 
     // Binding Overlay
 }

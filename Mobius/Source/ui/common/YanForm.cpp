@@ -110,10 +110,20 @@ int YanForm::getFieldAreaWidth()
     int areaWidth = 0;
     
     int maxWidth = 0;
+    int rowWidth = 0;
     for (auto field : fields) {
+        // todo: will need to factor in the adjacent field label
         int fwidth = field->getPreferredWidth();
         if (fwidth > maxWidth)
           maxWidth = fwidth;
+
+        if (!field->isAdjacent())
+          rowWidth = fwidth;
+        else {
+            rowWidth += fwidth;
+            if (rowWidth > maxWidth)
+              maxWidth = rowWidth;
+        }
     }
     
     // any padding?
@@ -142,17 +152,60 @@ void YanForm::resized()
         rowTop += RowHeight;
     }
 
-    rowTop = topInset;
-    for (auto field : fields) {
-        // squash width but not height
-        int fwidth = area.getWidth();
-        if (!fillWidth) {
-            int pwidth = field->getPreferredWidth();
-            if (pwidth < fwidth)
-              fwidth = pwidth;
+    bool ignoreAdjacent = false;
+    if (ignoreAdjacent) {
+        // the old way, remove when adjaceny works
+        rowTop = topInset;
+        for (auto field : fields) {
+            // squash width but not height
+            int fwidth = area.getWidth();
+            if (!fillWidth) {
+                int pwidth = field->getPreferredWidth();
+                if (pwidth < fwidth)
+                  fwidth = pwidth;
+            }
+            field->setBounds(area.getX(), rowTop, fwidth, RowHeight);
+            rowTop += RowHeight;
         }
-        field->setBounds(area.getX(), rowTop, fwidth, RowHeight);
-        rowTop += RowHeight;
+    }
+    else {
+        rowTop = topInset;
+        int rowLeft = area.getX();
+        int rowRemainder = area.getWidth();
+        
+        for (int i = 0 ; i < fields.size() ; i++) {
+            YanField* field = fields[i];
+            YanField* nextField = nullptr;
+            if (i+1 < fields.size())
+              nextField = fields[i+1];
+            
+            // if fillWidth is on we could be smarter about evenly dividing
+            // the available width among all the adjacent fields but that's way
+            // more complex and I'm tired
+            int fwidth = rowRemainder;
+            int pwidth = field->getPreferredWidth();
+            if (nextField == nullptr || !nextField->isAdjacent()) {
+                // last one in row, let it fill
+                if (!fillWidth && pwidth < fwidth)
+                  fwidth = pwidth;
+            }
+            else {
+                if (pwidth < fwidth)
+                  fwidth = pwidth;
+            }
+            
+            field->setBounds(rowLeft, rowTop, fwidth, RowHeight);
+            
+            if (nextField != nullptr && nextField->isAdjacent()) {
+                rowLeft += fwidth;
+                rowRemainder -= fwidth;
+            }
+            else {
+                rowLeft = area.getX();
+                rowTop += RowHeight;
+                rowRemainder = area.getWidth();
+            }
+        }
     }
 }
 

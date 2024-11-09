@@ -104,6 +104,8 @@ void ObjectSelector::buttonClicked(juce::Button* b)
         }
         else if (b == &deleteButton) {
             listener->objectSelectorDelete();
+            // !! it is important that the caller also call setObjectNames
+            // if it does decide to delete something
         }
         else if (b == &copyButton) {
             listener->objectSelectorCopy();

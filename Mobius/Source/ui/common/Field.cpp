@@ -193,20 +193,38 @@ void Field::setAnnotation(juce::String text)
  */
 void Field::updateAllowedValues(juce::StringArray& src)
 {
-    allowedValues = src;
     if (renderType == RenderType::Combo) {
+        // preserve the current selection if we can
+        juce::String currentValue;
+        int selected = combobox.getSelectedId();
+        if (selected > 0)
+          currentValue = allowedValues[selected - 1];
+            
+        allowedValues = src;
+
         combobox.clear();
         int maxChars = 0;
+        // always select the first one if the previous selection went away,
+        // this is normally "[None]" for structure names
+        int newSelectedId = 1;
         for (int i = 0 ; i < allowedValues.size() ; i++) {
             juce::String s = allowedValues[i];
+            if (s == currentValue)
+              newSelectedId = i + 1;
             if (s.length() > maxChars)
               maxChars = s.length();
             // note that item ids must be non-zero
             combobox.addItem(s, i + 1);
         }
+        if (newSelectedId > 0)
+          combobox.setSelectedId(newSelectedId);
 
         // todo: in theory maxChars could be larger now and needs to make the field bigger
         // forms aren't that responsive yet and it is ordinarilly long enough
+    }
+    else {
+        // nothing special, just slam it home
+        allowedValues = src;
     }
 }
 

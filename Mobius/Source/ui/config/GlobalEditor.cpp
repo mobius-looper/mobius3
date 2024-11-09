@@ -161,6 +161,9 @@ void GlobalEditor::render()
     form.addTab("Files", &fileForm);
     fileForm.addSpacer();
     fileForm.add(&userFiles);
+    testCheck.setAdjacent(true);
+    fileForm.add(&testCheck);
+    fileForm.add(&anotherCheck);
     
     // place it in the content panel
     addAndMakeVisible(form);
