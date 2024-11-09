@@ -6,6 +6,9 @@
 
 #include <JuceHeader.h>
 
+#include "../common/YanField.h"
+
+
 #include "BindingEditor.h"
 
 class ButtonEditor : public BindingEditor
@@ -15,7 +18,6 @@ class ButtonEditor : public BindingEditor
     ~ButtonEditor();
 
     juce::String getTitle() override {return juce::String("Button Sets");}
-    bool wantsRelease() override {return true;} 
 
     void prepare() override;
     void load() override;
@@ -47,7 +49,8 @@ class ButtonEditor : public BindingEditor
     juce::OwnedArray<class ButtonSet> revertButtons;
     int selectedButtons = 0;
 
-    Field* displayName = nullptr;
+    //Field* displayName = nullptr;
+    YanInput displayName {"Display Name", 20};
     
 
 };

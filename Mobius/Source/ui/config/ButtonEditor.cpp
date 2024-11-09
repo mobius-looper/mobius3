@@ -376,15 +376,20 @@ juce::String ButtonEditor::renderSubclassTrigger(Binding* b)
 
 void ButtonEditor::addSubclassFields()
 {
+#if 0    
     displayName = new Field("Display Name", Field::Type::String);
     displayName->setWidthUnits(20);
     displayName->addListener(this);
     form.add(displayName);
+#endif    
+    
+    displayName.setListener(this);
+    form.add(&displayName);
 }
 
 void ButtonEditor::refreshSubclassFields(Binding* b)
 {
-    displayName->setValue(b->displayName);
+    displayName.setValue(b->displayName);
 }
 
 void ButtonEditor::captureSubclassFields(class Binding* b)
@@ -393,12 +398,12 @@ void ButtonEditor::captureSubclassFields(class Binding* b)
     // needs a Trigger
     b->trigger = TriggerUI;
     
-    b->displayName = displayName->getValue().toString();
+    b->displayName = displayName.getValue();
 }
 
 void ButtonEditor::resetSubclassFields()
 {
-    displayName->setValue("");
+    displayName.setValue("");
 }
 
 /****************************************************************************/

@@ -410,7 +410,7 @@ void YanRadio::setButtonLabels(juce::StringArray labels)
             // SimpleRadio wasn't smart since it was only used for numbers
             // we could do better
             int guessWidth = 50;
-            b->setSize(guessWidth, 20);
+            b->setSize(guessWidth, YanForm::RowHeight);
 
             if (initialSelection == index)
               b->setToggleState(true, juce::dontSendNotification);
@@ -572,7 +572,7 @@ void YanCombo::setItems(juce::StringArray names)
     // the usual guessing game
     int charWidth = 12;
 
-    setSize((maxChars * charWidth) + arrowWidth, 12);
+    setSize((maxChars * charWidth) + arrowWidth, YanForm::RowHeight);
 
     combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
 }

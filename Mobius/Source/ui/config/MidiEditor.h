@@ -9,7 +9,8 @@
 #include "../../MidiManager.h"
 #include "../common/SimpleTable.h"
 #include "../common/ButtonBar.h"
-#include "../common/Field.h"
+//#include "../common/Field.h"
+#include "../common/YanField.h"
 
 #include "BindingEditor.h"
 
@@ -29,7 +30,6 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
-    bool wantsRelease() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
@@ -40,10 +40,15 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
   private:
 
     bool started = false;
+#if 0    
     Field* messageType = nullptr;
     Field* messageChannel = nullptr;
     Field* messageValue = nullptr;
-
+#endif
+    YanCombo messageType {"Type"};
+    YanCombo messageChannel {"Channel"};
+    YanInput messageValue {"Value", 10};
+    
     juce::MidiMessage pluginMessage;
     bool pluginMessageQueued = false;
 

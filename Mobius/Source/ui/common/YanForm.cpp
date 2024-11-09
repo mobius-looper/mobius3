@@ -31,10 +31,11 @@ void YanForm::setFillWidth(bool b)
 
 void YanForm::add(class YanField* f)
 {
+    bool firstOne = (fields.size() == 0);
     fields.add(f);
     addAndMakeVisible(f);
 
-    if (f->isAdjacent() && fields.size() > 0) {
+    if (f->isAdjacent() && !firstOne) {
         // this will draw it's own label
     }
     else {

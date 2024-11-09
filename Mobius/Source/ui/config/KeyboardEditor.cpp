@@ -77,12 +77,20 @@ juce::String KeyboardEditor::renderSubclassTrigger(Binding* b)
  */
 void KeyboardEditor::addSubclassFields()
 {
+#if 0    
     key = new Field("Key", Field::Type::String);
     // needs to be wide enough to show the full text representation
     // including qualifiers
     key->setWidthUnits(20);
     key->addListener(this);
     form.add(key);
+#endif
+    
+    // note that the subclass does not listen, but BindingEditor does
+    key.setListener(this);
+    form.add(&key);
+    // stick a release selector next to it
+    addRelease();
 }
 
 /**
@@ -91,7 +99,7 @@ void KeyboardEditor::addSubclassFields()
  */
 void KeyboardEditor::refreshSubclassFields(class Binding* b)
 {
-    key->setValue(renderTriggerCell(b));
+    key.setValue(renderTriggerCell(b));
 }
 
 /**
@@ -107,12 +115,12 @@ void KeyboardEditor::captureSubclassFields(class Binding* b)
     // undo the text transformation that was captured or typed in
     int code = 0;
     int modifiers = 0;
-    juce::var value = key->getValue();
-    KeyTracker::parseKeyText(value.toString(), &code, &modifiers);
+    juce::String value = key.getValue();
+    KeyTracker::parseKeyText(value, &code, &modifiers);
 
     int myCode = Binderator::getKeyQualifier(code, modifiers);
 
-    if (capture->getBoolValue() && capturedCode > 0) {
+    if (capture.getValue() && capturedCode > 0) {
         // we're supposed to have saved the capture here
         b->triggerValue = capturedCode;
 
@@ -130,7 +138,7 @@ void KeyboardEditor::captureSubclassFields(class Binding* b)
 
 void KeyboardEditor::resetSubclassFields()
 {
-    key->setValue(juce::var());
+    key.setValue("");
 }
 
 // Hmm, we've got two ways to capture keyboard events.
@@ -154,7 +162,7 @@ bool KeyboardEditor::keyPressed(const juce::KeyPress& keypress, juce::Component*
     juce::String keytext = keypress.getTextDescription();
 
     if (isCapturing()) {
-        key->setValue(juce::var(keytext));
+        key.setValue(keytext);
 
         // format the Binderator "qualifier" for this key and save it
         // for captureSubclassFields
@@ -180,7 +188,7 @@ void KeyboardEditor::keyTrackerDown(int code, int modifiers)
 {
     juce::String keytext = KeyTracker::getKeyText(code, modifiers);
     if (isCapturing()) {
-        key->setValue(juce::var(keytext));
+        key.setValue(keytext);
         capturedCode = Binderator::getKeyQualifier(code, modifiers);
     }
 

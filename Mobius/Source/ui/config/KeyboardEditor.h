@@ -9,7 +9,8 @@
 #include "../../KeyTracker.h"
 #include "../common/SimpleTable.h"
 #include "../common/ButtonBar.h"
-#include "../common/Field.h"
+//#include "../common/Field.h"
+#include "../common/YanField.h"
 
 #include "BindingEditor.h"
 
@@ -30,7 +31,6 @@ class KeyboardEditor : public BindingEditor,
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
-    bool wantsRelease() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
@@ -43,7 +43,8 @@ class KeyboardEditor : public BindingEditor,
     
   private:
 
-    Field* key = nullptr;
+    //Field* key = nullptr;
+    YanInput key {"Key", 10};
 
     int capturedCode = 0;
     

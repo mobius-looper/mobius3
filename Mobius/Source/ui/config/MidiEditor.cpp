@@ -11,7 +11,9 @@
 
 #include "../../Supervisor.h"
 
-#include "../common/Form.h"
+//#include "../common/Form.h"
+#include "../common/YanField.h"
+#include "../common/YanForm.h"
 
 #include "MidiEditor.h"
 
@@ -133,6 +135,7 @@ juce::String MidiEditor::renderSubclassTrigger(Binding* b)
  */
 void MidiEditor::addSubclassFields()
 {
+#if 0    
     messageType = new Field("Type", Field::Type::String);
     juce::StringArray typeNames;
     // could have an array of Triggers for these
@@ -162,6 +165,35 @@ void MidiEditor::addSubclassFields()
     messageValue->setWidthUnits(4);
     messageValue->addListener(this);
     form.add(messageValue);
+#endif
+
+    juce::StringArray typeNames;
+    // could have an array of Triggers for these
+    typeNames.add("Note");
+    typeNames.add("Control");
+    typeNames.add("Program");
+    // typeNames.add("Pitch");
+    messageType.setItems(typeNames);
+    messageType.setListener(this);
+    form.add(&messageType);
+    // stick a release selector next to it
+    addRelease();
+
+    // Binding number is the combo index where
+    // zero means "any"
+    juce::StringArray channelNames;
+    channelNames.add("Any");
+    for (int i = 1 ; i <= 16 ; i++) {
+        channelNames.add(juce::String(i));
+    }
+    messageChannel.setItems(channelNames);
+    messageChannel.setListener(this);
+    form.add(&messageChannel);
+
+    // todo: need to make field smarter about text fields that
+    // can only contain digits
+    messageValue.setListener(this);
+    form.add(&messageValue);
 }
 
 /**
@@ -175,24 +207,24 @@ void MidiEditor::refreshSubclassFields(class Binding* b)
 {
     Trigger* trigger = b->trigger;
     if (trigger == TriggerNote) {
-        messageType->setValue(0);
+        messageType.setSelection(0);
     }
     else if (trigger == TriggerControl) {
-        messageType->setValue(1);
+        messageType.setSelection(1);
     }
     else if (trigger == TriggerProgram) {
-        messageType->setValue(2);
+        messageType.setSelection(2);
     }
     else if (trigger == TriggerPitch) {
-        messageType->setValue(3);
+        messageType.setSelection(3);
     }
     else {
         // shouldn't be here, go back to Note
-        messageType->setValue(0);
+        messageType.setSelection(0);
     }
 
-    messageChannel->setValue(b->midiChannel);
-    messageValue->setValue(juce::String(b->triggerValue));
+    messageChannel.setSelection(b->midiChannel);
+    messageValue.setValue(juce::String(b->triggerValue));
 }
 
 /**
@@ -200,7 +232,7 @@ void MidiEditor::refreshSubclassFields(class Binding* b)
  */
 void MidiEditor::captureSubclassFields(class Binding* b)
 {
-    int index = messageType->getIntValue();
+    int index = messageType.getSelection();
     switch (index) {
         case 0: b->trigger = TriggerNote; break;
         case 1: b->trigger = TriggerControl; break;
@@ -208,15 +240,15 @@ void MidiEditor::captureSubclassFields(class Binding* b)
         case 3: b->trigger = TriggerPitch; break;
     }
 
-    b->midiChannel = messageChannel->getIntValue();
-    b->triggerValue = messageValue->getIntValue();
+    b->midiChannel = messageChannel.getSelection();
+    b->triggerValue = messageValue.getInt();
 }
 
 void MidiEditor::resetSubclassFields()
 {
-    messageType->setValue(0);
-    messageChannel->setValue(0);
-    messageValue->setValue(juce::String());
+    messageType.setSelection(0);
+    messageChannel.setSelection(0);
+    messageValue.setValue(juce::String());
 }
 
 void MidiEditor::midiMonitor(const juce::MidiMessage& message, juce::String& source)
@@ -229,20 +261,20 @@ void MidiEditor::midiMonitor(const juce::MidiMessage& message, juce::String& sou
         if (isCapturing()) {
             int value = -1;
             if (message.isNoteOn()) {
-                messageType->setValue(0);
+                messageType.setSelection(0);
                 value = message.getNoteNumber();
             }
             else if (message.isController()) {
-                messageType->setValue(1);
+                messageType.setSelection(1);
                 value = message.getControllerNumber();
             }
             else if (message.isProgramChange()) {
-                messageType->setValue(2);
+                messageType.setSelection(2);
                 value = message.getProgramChangeNumber();
             }
 #if 0        
             else if (message.isPitchWheel()) {
-                messageType->setValue(3);
+                messageType.setSelection(3);
                 // value is a 14-bit number, and is not significant
                 // since there is only one pitch wheel
                 value = 0;
@@ -256,8 +288,8 @@ void MidiEditor::midiMonitor(const juce::MidiMessage& message, juce::String& sou
                 // if they want "any"
                 int ch = message.getChannel();
                 if (ch > 0)
-                  messageChannel->setValue(ch);
-                messageValue->setValue(value);
+                  messageChannel.setSelection(ch);
+                messageValue.setValue(juce::String(value));
             }
         }
 

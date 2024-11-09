@@ -453,9 +453,8 @@ void BindingEditor::objectSelectorRename(juce::String newName)
 void BindingEditor::initForm()
 {
     // scope always goes first
-    scope = new Field("Scope", Field::Type::String);
-    scope->addListener(this);
-    form.add(scope);
+    form.add(&scope);
+    scope.setListener(this);
     refreshScopeNames();
 
     // subclass gets to add it's fields
@@ -465,25 +464,29 @@ void BindingEditor::initForm()
     addSubclassFields();
 
     // arguments last
-    arguments = new Field("Arguments", Field::Type::String);
-    arguments->setWidthUnits(20);
-    arguments->addListener(this);
-    form.add(arguments);
+    form.add(&arguments);
+    arguments.setListener(this);
 
     // subclass overloads this if it wants to use capture
     if (wantsCapture()) {
-        capture = new Field("Capture", Field::Type::Boolean);
-        capture->addAnnotation(100);
-        form.add(capture);
+        form.add(&capture);
+        annotation.setAdjacent(true);
+        form.add(&annotation);
+        //passthrough.setAdjacent(true);
+        //form.add(&passthrough);
     }
 
-    // release option
-    if (wantsRelease()) {
-        release = new Field("Release", Field::Type::Boolean);
-        form.add(release);
-    }
-    
-    form.render();
+    addAndMakeVisible(&form);
+}
+
+/**
+ * Called by the subclass to add a release checkbox, normally
+ * after another field.  Examples: MIDI type and Key
+ */
+void BindingEditor::addRelease()
+{
+    release.setAdjacent(true);
+    form.add(&release);
 }
 
 /**
@@ -508,7 +511,7 @@ void BindingEditor::refreshScopeNames()
         scopeNames.add("Group " + group->name);
     }
     
-    scope->updateAllowedValues(scopeNames);
+    scope.setItems(scopeNames);
 }
 
 /**
@@ -516,7 +519,7 @@ void BindingEditor::refreshScopeNames()
  */
 bool BindingEditor::isCapturing()
 {
-    return (capture == nullptr) ? false : capture->getBoolValue();
+    return capture.getValue();
 }
 
 /**
@@ -529,7 +532,7 @@ bool BindingEditor::isCapturing()
  */
 void BindingEditor::showCapture(juce::String& s)
 {
-    capture->setAnnotation(s);
+    annotation.setValue(s);
 
     // subclass will have already captured to the fields
     // here we can automatically update the binding as well
@@ -537,14 +540,16 @@ void BindingEditor::showCapture(juce::String& s)
       formChanged();
 }
 
-/**
- * Field listener to do immediate updates to the binding table when
- * fields are changed.  It doesn't matter which one it is, just
- * capture the entire form.
- */
-void BindingEditor::fieldChanged(Field* f)
+void BindingEditor::inputChanged(YanInput* i)
 {
-    (void)f;
+    (void)i;
+    formChanged();
+}
+
+void BindingEditor::comboSelected(YanCombo* c, int selection)
+{
+    (void)c;
+    (void)selection;
     formChanged();
 }
 
@@ -553,12 +558,12 @@ void BindingEditor::fieldChanged(Field* f)
  */
 void BindingEditor::resetForm()
 {
-    scope->setValue(juce::var(0));
-    if (release != nullptr) release->setValue(juce::var());
+    scope.setSelection(0);
+    release.setValue(false);
     
     resetSubclassFields();
     
-    arguments->setValue(juce::var());
+    arguments.setValue("");
 }
 
 void BindingEditor::resetFormAndTarget()
@@ -577,7 +582,7 @@ void BindingEditor::refreshForm(Binding* b)
 {
     // if anything goes wrong parsing the scope string, leave the
     // selection at "Global"
-    scope->setValue(juce::var(0));
+    scope.setSelection(0);
     
     const char* scopeString = b->getScope();
     int tracknum = Scope::parseTrackNumber(scopeString);
@@ -589,13 +594,13 @@ void BindingEditor::refreshForm(Binding* b)
     }
     else if (tracknum >= 0) {
         // element 0 is "global" so track number works
-        scope->setValue(juce::var(tracknum));
+        scope.setSelection(tracknum);
     }
     else {
         MobiusConfig* config = supervisor->getMobiusConfig();
         int groupOrdinal = Scope::parseGroupOrdinal(config, scopeString);
         if (groupOrdinal >= 0)
-          scope->setValue(juce::var(maxTracks + groupOrdinal));
+          scope.setSelection(maxTracks + groupOrdinal);
         else
           Trace(1, "BindingEditor: Binding scope with unresolved group name %s", scopeString);
     }
@@ -603,9 +608,9 @@ void BindingEditor::refreshForm(Binding* b)
     targets.select(b);
     refreshSubclassFields(b);
     
-    juce::var args = juce::var(b->getArguments());
-    arguments->setValue(args);
-    if (release != nullptr) release->setValue(juce::var(b->release));
+    juce::String args = juce::String(b->getArguments());
+    arguments.setValue(args);
+    release.setValue(b->release);
     
     // used this in old code, now that we're within a form still necessary?
     // arguments.repaint();
@@ -626,7 +631,7 @@ void BindingEditor::refreshForm(Binding* b)
 void BindingEditor::captureForm(Binding* b, bool includeTarget)
 {
     // item 0 is global, then tracks, then groups
-    int item = scope->getIntValue();
+    int item = scope.getSelection();
     if (item == 0) {
         // global
         b->setScope(nullptr);
@@ -639,17 +644,16 @@ void BindingEditor::captureForm(Binding* b, bool includeTarget)
     else {
         // skip going back to the MobiusConfig for the names and
         // just remove our prefix
-        juce::String itemName = scope->getStringValue();
+        juce::String itemName = scope.getSelectionText();
         juce::String groupName = itemName.fromFirstOccurrenceOf("Group ", false, false);
         b->setScope(groupName.toUTF8());
     }
 
     captureSubclassFields(b);
     
-    juce::var value = arguments->getValue();
-    b->setArguments(value.toString().toUTF8());
-    if (release != nullptr)
-      b->release = release->getBoolValue();
+    juce::String value = arguments.getValue();
+    b->setArguments(value.toUTF8());
+    b->release = release.getValue();
 
     // if we're doing immediate captures of the form without Update
     // this should be false so the target remains in place
@@ -829,7 +833,7 @@ void BindingEditor::resized()
     // give the targets more room
     width -= 50;
     bindings.setBounds(area.getX(), area.getY(), width, height);
-
+    
     area.removeFromLeft(bindings.getWidth() + 10);
     // need enough room for arguments so shorten it
     // could try to adapt to the size of the argumnts Form instead
@@ -837,7 +841,9 @@ void BindingEditor::resized()
     targets.setBounds(area.getX(), area.getY(), 400, 300);
 
     //form->render();
-    form.setTopLeftPosition(area.getX(), targets.getY() + targets.getHeight() + 10);
+    form.setBounds(area.getX(), targets.getY() + targets.getHeight(),
+                   400, form.getPreferredHeight());
+    //form.setTopLeftPosition(area.getX(), targets.getY() + targets.getHeight() + 10);
 }    
 
 /****************************************************************************/

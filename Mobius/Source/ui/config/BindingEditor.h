@@ -6,8 +6,8 @@
 
 #include <JuceHeader.h>
 
-#include "../common/Field.h"
-#include "../common/Form.h"
+#include "../common/YanField.h"
+#include "../common/YanForm.h"
 #include "../common/BasicButtonRow.h"
 
 #include "BindingTable.h"
@@ -17,7 +17,8 @@
 class BindingEditor : public ConfigEditor,
                       public BindingTable::Listener,
                       public TargetSelectorWrapper::Listener,
-                      public Field::Listener
+                      public YanInput::Listener,
+                      public YanCombo::Listener
 {
   public:
 
@@ -26,13 +27,15 @@ class BindingEditor : public ConfigEditor,
     virtual bool isRelevant(class Binding* b) = 0;
     virtual void addSubclassFields() = 0;
     virtual bool wantsCapture() {return false;}
-    virtual bool wantsRelease() {return false;}
     virtual void refreshSubclassFields(class Binding* b) = 0;
     virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
 
-    // subvclass may call this if it wants an object selector
+    // subclass may call this if it wants an object selector
     void setInitialObject(juce::String name);
+
+    // subclass may call this if it wants to append a release checkbox
+    void addRelease();
 
     BindingEditor(class Supervisor* s);
     virtual ~BindingEditor();
@@ -66,20 +69,24 @@ class BindingEditor : public ConfigEditor,
     // BindingTargetSelector::Listener
     void bindingTargetClicked() override;
 
-    // Field::Listener
-    void fieldChanged(Field* field) override;
+    // YanField Listeners
+    void inputChanged(class YanInput* i);
+    void comboSelected(class YanCombo* c, int selection);
     
   protected:
     
     BindingTable bindings;
     TargetSelectorWrapper targets;
     juce::String initialObject;
+
+    YanForm form;
+    YanCombo scope {"Scope"};
+    YanInput arguments {"Arguments", 20};
+    YanCheckbox capture {"Capture"};
+    YanInput annotation {"", 5, true};
+    YanCheckbox passthrough {"Active"};
+    YanCheckbox release {"Release"};
     
-    Form form;
-    Field* scope = nullptr;
-    Field* arguments = nullptr;
-    Field* capture = nullptr;
-    Field* release = nullptr;
     int maxTracks = 0;
     //int maxGroups = 0;
     //juce::ToggleButton activeButton {"Active"};
