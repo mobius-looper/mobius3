@@ -21,7 +21,7 @@ class YanParameter : public YanField
     void load(class ValueSet* set);
     void save(class ValueSet* set);
 
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
     void resized() override;
 
     Symbol* getSymbol() {

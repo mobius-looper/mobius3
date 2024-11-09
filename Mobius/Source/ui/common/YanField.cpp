@@ -9,14 +9,89 @@
 
 //////////////////////////////////////////////////////////////////////
 //
+// Field
+//
+//////////////////////////////////////////////////////////////////////
+
+YanField::YanField()
+{
+}
+
+YanField::YanField(juce::String argLabel)
+{
+    label.setText(argLabel, juce::NotificationType::dontSendNotification);
+    // make them look like the old Form/Fields
+    // notes say bold can make it look too thick in smaller forms
+    // may want to dial this back from the justified label in the left column
+    // if this adjacent
+    label.setFont (juce::Font (16.0f, juce::Font::bold));
+    label.setColour (juce::Label::textColourId, juce::Colours::orange);
+}
+
+YanField::~YanField()
+{
+}
+
+void YanField::setLabel(juce::String s)
+{
+    label.setText(s, juce::NotificationType::dontSendNotification);
+}
+
+juce::Label* YanField::getLabel()
+{
+    return &label;
+}
+
+void YanField::setAdjacent(bool b)
+{
+    bool last = adjacent;
+    adjacent = b;
+    if (b != last) {
+        if (b)
+          addAndMakeVisible(&label);
+        else
+          removeChildComponent(&label);
+    }
+}
+
+bool YanField::isAdjacent()
+{
+    return adjacent;
+}
+
+int YanField::getPreferredWidth(int rowHeight)
+{
+    int pwidth = getPreferredComponentWidth();
+
+    if (adjacent) {
+        juce::Font font (JuceUtil::getFont(rowHeight));
+        int lwidth = font.getStringWidth(label.getText());
+        pwidth += lwidth;
+        pwidth += 4;
+    }
+    return pwidth;
+}
+
+juce::Rectangle<int> YanField::resizeLabel()
+{
+    juce::Rectangle<int> area = getLocalBounds();
+    if (adjacent) {
+        juce::Font font (JuceUtil::getFont(getHeight()));
+        int lwidth = font.getStringWidth(label.getText());
+        label.setBounds(area.removeFromLeft(lwidth));
+        (void)area.removeFromLeft(4);
+    }
+    return area;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Spacer
 //
 //////////////////////////////////////////////////////////////////////
 
-// sign, wish we could sprinkle these without needing an actual object
-// but the location in the OwnedArray is awkward
 
-YanSpacer::YanSpacer() : YanField("")
+YanSpacer::YanSpacer()
 {
 }
 
@@ -24,7 +99,7 @@ YanSpacer::~YanSpacer()
 {
 }
 
-int YanSpacer::getPreferredWidth()
+int YanSpacer::getPreferredComponentWidth()
 {
     return 0;
 }
@@ -105,7 +180,7 @@ void YanInput::setInt(int i)
     text.setText(juce::String(i), juce::NotificationType::dontSendNotification);
 }
 
-int YanInput::getPreferredWidth()
+int YanInput::getPreferredComponentWidth()
 {
     int preferred = 0;
     int chars = (charWidth > 0) ? charWidth : 20;
@@ -125,7 +200,7 @@ int YanInput::getPreferredWidth()
 
 void YanInput::resized()
 {
-    text.setBounds(getLocalBounds());
+    text.setBounds(resizeLabel());
 }
 
 void YanInput::labelTextChanged(juce::Label* l)
@@ -195,7 +270,7 @@ YanCheckbox::YanCheckbox(juce::String label) : YanField(label)
     addAndMakeVisible(checkbox);
 }
 
-int YanCheckbox::getPreferredWidth()
+int YanCheckbox::getPreferredComponentWidth()
 {
     return YanCheckboxWidth;
 }
@@ -212,7 +287,7 @@ bool YanCheckbox::getValue()
 
 void YanCheckbox::resized()
 {
-    checkbox.setBounds(getLocalBounds());
+    checkbox.setBounds(resizeLabel());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -237,14 +312,14 @@ YanColorChooser::YanColorChooser(juce::String label) : YanField(label)
     addAndMakeVisible(text);
 }
 
-int YanColorChooser::getPreferredWidth()
+int YanColorChooser::getPreferredComponentWidth()
 {
     return YanColorChooserWidth;
 }
 
 void YanColorChooser::resized()
 {
-    text.setBounds(getLocalBounds());
+    text.setBounds(resizeLabel());
 }
 
 void YanColorChooser::setValue(int argb)
@@ -355,7 +430,7 @@ void YanRadio::setButtonCount(int count)
     }
 }
 
-int YanRadio::getPreferredWidth()
+int YanRadio::getPreferredComponentWidth()
 {
     int width = 0;
     for (auto button : buttons)
@@ -371,6 +446,8 @@ int YanRadio::getPreferredWidth()
  */
 void YanRadio::resized()
 {
+    // how the hell does this work?
+    //juce::Rectangle<int> remainder = resizeLabel();
     int buttonOffset = 0;
     for (auto button : buttons) {
         // ugh, arguments are x,y not top,left
@@ -500,7 +577,7 @@ void YanCombo::setItems(juce::StringArray names)
     combobox.setSelectedId(1, juce::NotificationType::dontSendNotification);
 }
 
-int YanCombo::getPreferredWidth()
+int YanCombo::getPreferredComponentWidth()
 {
     // calculated when the items were added
     return getWidth();
@@ -523,7 +600,7 @@ juce::String YanCombo::getSelectionText()
 
 void YanCombo::resized()
 {
-    combobox.setBounds(getLocalBounds());
+    combobox.setBounds(resizeLabel());
 }
 
 void YanCombo::comboBoxChanged(juce::ComboBox* box)

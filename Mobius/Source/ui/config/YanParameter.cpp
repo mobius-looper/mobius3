@@ -56,26 +56,27 @@ void YanParameter::init(Symbol* s)
     }
 }
 
-int YanParameter::getPreferredWidth()
+int YanParameter::getPreferredComponentWidth()
 {
     int width = 0;
     if (isCombo)
-      width = combo.getPreferredWidth();
+      width = combo.getPreferredComponentWidth();
     else if (isCheckbox)
-      width = checkbox.getPreferredWidth();
+      width = checkbox.getPreferredComponentWidth();
     else
-      width = input.getPreferredWidth();
+      width = input.getPreferredComponentWidth();
     return width;
 }
 
 void YanParameter::resized()
 {
+    juce::Rectangle<int> remainder = resizeLabel();
     if (isCombo)
-      combo.setBounds(getLocalBounds());
+      combo.setBounds(remainder);
     else if (isCheckbox)
-      checkbox.setBounds(getLocalBounds());
+      checkbox.setBounds(remainder);
     else
-      input.setBounds(getLocalBounds());
+      input.setBounds(remainder);
 }
 
 void YanParameter::load(MslValue* v)

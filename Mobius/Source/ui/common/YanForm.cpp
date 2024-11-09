@@ -35,12 +35,10 @@ void YanForm::add(class YanField* f)
     addAndMakeVisible(f);
 
     if (f->isAdjacent() && fields.size() > 0) {
-        // this one goes in without a label and we'll draw it later
+        // this will draw it's own label
     }
     else {
-        juce::Label* label = new juce::Label();
-        label->setText(f->label, juce::NotificationType::dontSendNotification);
-        //label->setJustificationType(juce::Justification::centredLeft);
+        juce::Label* label = f->getLabel();
         label->setJustificationType(juce::Justification::centredRight);
 
         // make them look like the old Form/Fields
@@ -59,10 +57,7 @@ void YanForm::add(class YanField* f)
 void YanForm::addSpacer()
 {
     fields.add(&spacer);
-
-    // sigh, label array and field array are expected to match
-    juce::Label* label = new juce::Label();
-    labels.add(label);
+    labels.add(spacer.getLabel());
 }
 
 int YanForm::getPreferredHeight()
@@ -112,8 +107,7 @@ int YanForm::getFieldAreaWidth()
     int maxWidth = 0;
     int rowWidth = 0;
     for (auto field : fields) {
-        // todo: will need to factor in the adjacent field label
-        int fwidth = field->getPreferredWidth();
+        int fwidth = field->getPreferredWidth(RowHeight);
         if (fwidth > maxWidth)
           maxWidth = fwidth;
 
@@ -160,7 +154,7 @@ void YanForm::resized()
             // squash width but not height
             int fwidth = area.getWidth();
             if (!fillWidth) {
-                int pwidth = field->getPreferredWidth();
+                int pwidth = field->getPreferredWidth(RowHeight);
                 if (pwidth < fwidth)
                   fwidth = pwidth;
             }
@@ -183,7 +177,7 @@ void YanForm::resized()
             // the available width among all the adjacent fields but that's way
             // more complex and I'm tired
             int fwidth = rowRemainder;
-            int pwidth = field->getPreferredWidth();
+            int pwidth = field->getPreferredWidth(RowHeight);
             if (nextField == nullptr || !nextField->isAdjacent()) {
                 // last one in row, let it fill
                 if (!fillWidth && pwidth < fwidth)

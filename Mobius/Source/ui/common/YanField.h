@@ -14,24 +14,26 @@ class YanField : public juce::Component
 {
   public:
     
-    YanField(juce::String argLabel) { label = argLabel; }
-    virtual ~YanField() {}
+    YanField();
+    YanField(juce::String argLabel);
+    virtual ~YanField();
 
-    juce::String label;
+    void setLabel(juce::String s);
+    juce::Label* getLabel();
+    void setAdjacent(bool b);
+    bool isAdjacent();
 
-    void setAdjacent(bool b) {
-        adjacent = b;
-    }
-
-    bool isAdjacent() {
-        return adjacent;
-    }
+    int getPreferredWidth(int rowHeight);
     
-    virtual int getPreferredWidth() = 0;
-    virtual int getPreferredHeight() { return 0; }
+    virtual int getPreferredComponentWidth() = 0;
 
+  protected:
+    
+    juce::Rectangle<int> resizeLabel();
+        
   private:
 
+    juce::Label label;
     bool adjacent = false;
 
 };
@@ -43,7 +45,7 @@ class YanSpacer : public YanField
     YanSpacer();
     ~YanSpacer();
 
-    int getPreferredWidth();
+    int getPreferredComponentWidth();
 };
 
 
@@ -64,7 +66,7 @@ class YanInput : public YanField, public juce::Label::Listener, public juce::Tex
     };
     void setListener(Listener* l);
     
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
 
     void setValue(juce::String s);
     juce::String getValue();
@@ -92,7 +94,7 @@ class YanCheckbox : public YanField
     YanCheckbox(juce::String label);
     ~YanCheckbox() {}
 
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
     
     void setValue(bool b);
     bool getValue();
@@ -125,7 +127,7 @@ class YanColorChooser : public YanField, public ColorPopup::Listener
     void setValue(int i);
     int getValue();
 
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
     
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -159,7 +161,7 @@ class YanRadio : public YanField, public juce::Button::Listener
     void setSelection(int index);
     int getSelection();
 
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
     
     void resized() override;
     void buttonClicked(juce::Button* b) override;
@@ -193,7 +195,7 @@ class YanCombo : public YanField, public juce::ComboBox::Listener
     int getSelection();
     juce::String getSelectionText();
 
-    int getPreferredWidth() override;
+    int getPreferredComponentWidth() override;
     
     void resized() override;
     void comboBoxChanged(juce::ComboBox* box) override;

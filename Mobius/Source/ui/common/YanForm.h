@@ -38,12 +38,12 @@ class YanForm : public juce::Component
     
   private:
 
-    // fields arranged in a single column
+    // fields arranged in a single column unless adjacent
     // fields are normally static objects owned by the container of the form
     juce::Array<class YanField*> fields;
 
-    // generated labels for the fields, think about just using paint() for this
-    juce::OwnedArray<juce::Label> labels;
+    // left labels are in a column with padding and justification
+    juce::Array<juce::Label*> labels;
 
     YanSpacer spacer;
 
