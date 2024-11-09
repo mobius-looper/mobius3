@@ -364,7 +364,6 @@ bool Supervisor::start()
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
     mobius->initialize(config, ses);
-    kludgeCoreSymbols();
 
     // ScriptConfig no longer goes in through MobiusConfig
     // extract one from the new ScriptRegistry and send it down
@@ -1678,6 +1677,11 @@ int Supervisor::getFocusedTrack()
     return  mobiusView.focusedTrack;
 }
 
+void Supervisor::setFocusedTrack(int index)
+{
+    mobiusView.focusedTrack = index;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // MobiusListener
@@ -1906,39 +1910,10 @@ void Supervisor::doAction(UIAction* action)
     else if (s->level == LevelUI) {
         doUILevelAction(action);
     }
-    else if (s->functionProperties != nullptr && s->functionProperties->trackSelect) {
-        doTrackSelectAction(action);
-    }
     else {
-        // it is being sent to he core, if scope is set to a track number
-        // the the kernel is expected to distribute this to the audio and midi
-        // tracks as appropriate
-        // if the scope was left empty which means "active track" we force in
-        // the focused track number for MIDI tracks, for audio tracks they should be the same
-        // hmm, assuming it is okay to trash the scope here, might not want that?
-        bool trashedScope = false;
-        if (strlen(action->getScope()) == 0) {
-            if (mobiusView.focusedTrack >= mobiusView.audioTracks) {
-                // temporary trace
-                //Trace(2, "Supervisor: Forcing MIDI track scope");
-                action->setScopeTrack(mobiusView.focusedTrack + 1);
-                trashedScope = true;
-            }
-            else {
-                // we're within the audio tracks, focus normally follows
-                // activation so we shouldn't have to do anything
-                // it shouldn't hurt but leave it alone, could have that
-                // activation lag after focus changes going on
-            }
-        }
-        
         // send it down
-        if (mobius != nullptr) {
-            mobius->doAction(action);
-        }
-
-        if (trashedScope)
-          action->setScope("");
+        if (mobius != nullptr)
+          mobius->doAction(action);
     }
 }
 
@@ -2042,112 +2017,6 @@ bool Supervisor::doUILevelAction(UIAction* action)
     }
 
     return handled;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Track Select Actions
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * To start support for MIDI tracks the notion of the "focused" track was
- * added which is different than the "active track" in Mobius.  We need to
- * intercept NextTrack/PrevTrack/TrackSelect and change focus immediately rather than
- * following Mobius' active track.  They'll usually be the same but not always.
- * This will be a problem though if an old script changes the active track,
- * since that did't pass through Supervisor focus will lag unless the view refresh
- * snaps to it.
- *
- * Once this settles down, rethink how this should work.  Perhaps next/prev/select
- * should start life as UI functions and then forward to core.
- */
-void Supervisor::kludgeCoreSymbols()
-{
-    juce::StringArray names;
-    names.add("NextTrack");
-    names.add("PrevTrack");
-    names.add("SelectTrack");
-
-    for (auto name : names) {
-        Symbol* s = symbols.find(name);
-        if (s == nullptr) {
-            Trace(1, "Supervisor: Expected symbol not found %s", name.toUTF8());
-        }
-        else if (s->functionProperties == nullptr) {
-            Trace(1, "Supervisor: Track select symbol did not have function properties %s", name.toUTF8());
-        }
-        else {
-            s->functionProperties->trackSelect = true;
-        }
-    }
-}
-
-/**
- * Intercept track selection functions and pre-emptively
- * change the track focus in the UI.  For core audio tracks,
- * the actual "active" track may take a few milliseconds to catch up
- * since that is processed in the kernel.  But MIDI tracks can happen immediately
- */
-void Supervisor::doTrackSelectAction(UIAction* a)
-{
-    int prevFocused = mobiusView.focusedTrack;
-    bool relative = false;
-    
-    if (a->symbol->id == FuncNextTrack) {
-        int next = mobiusView.focusedTrack + 1;
-        if (next >= mobiusView.totalTracks)
-          next = 0;
-        mobiusView.focusedTrack = next;
-        relative = true;
-    }
-    else if (a->symbol->id == FuncPrevTrack) {
-        int next = mobiusView.focusedTrack - 1;
-        if (next < 0)
-          next = mobiusView.totalTracks - 1;
-        mobiusView.focusedTrack = next;
-        relative = true;
-    }
-    else if (a->symbol->id == FuncSelectTrack) {
-        // argument is 1 based
-        int next = a->value - 1;
-        if (next < 0) {
-            Trace(1, "Supervisor: Bad SelectTrack argument");
-        }
-        else {
-            mobiusView.focusedTrack = next;
-        }
-    }
-    else {
-        Trace(1, "Supervisor: You are bad, and you should feel bad");
-    }
-    
-    // if we move over midi tracks, we're done, otherwise send it down
-    if (mobiusView.focusedTrack < mobiusView.audioTracks) {
-
-        // now it gets weirder, if we were previously on a midi track
-        // and move back in to an audio track with next/prev, we don't actually
-        // want to send next/prev to the core, it becomes a SelectTrack
-        // of the desired index, either the last or the first
-        // if you don't do this, it skips an extra track
-        // todo: should we just always do this conversion?  the active track may
-        // already be there but that can happen normally so it can't mess anything up
-        // to ask for it redundantly
-        Symbol* saveSymbol = a->symbol;
-        int saveValue = a->value;
-        if (prevFocused >= mobiusView.audioTracks && relative) {
-            // don't trash the source action which usually comes from
-            // a binding.  two options: save/restore or copy it to a temp
-            a->symbol = symbols.find("SelectTrack");
-            a->value = mobiusView.focusedTrack + 1;
-        }
-        
-        if (mobius != nullptr)
-          mobius->doAction(a);
-
-        a->symbol = saveSymbol;
-        a->value = saveValue;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

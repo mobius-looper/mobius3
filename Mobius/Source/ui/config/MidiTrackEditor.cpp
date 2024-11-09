@@ -229,6 +229,7 @@ void MidiTrackEditor::render()
     generalForm.add(&inputDevice);
     generalForm.add(&outputDevice);
     generalForm.add(&midiThru);
+    generalForm.addField(ParamMidiChannelOverride);
     generalForm.addSpacer();
     
     generalForm.addField(ParamSyncSource);

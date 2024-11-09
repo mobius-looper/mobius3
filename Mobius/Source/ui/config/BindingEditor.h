@@ -31,6 +31,9 @@ class BindingEditor : public ConfigEditor,
     virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
 
+    // subvclass may call this if it wants an object selector
+    void setInitialObject(juce::String name);
+
     BindingEditor(class Supervisor* s);
     virtual ~BindingEditor();
 
@@ -67,9 +70,10 @@ class BindingEditor : public ConfigEditor,
     void fieldChanged(Field* field) override;
     
   protected:
-    BindingTable bindings;
     
+    BindingTable bindings;
     TargetSelectorWrapper targets;
+    juce::String initialObject;
     
     Form form;
     Field* scope = nullptr;

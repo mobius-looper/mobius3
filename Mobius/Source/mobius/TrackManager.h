@@ -124,6 +124,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class UIAction* coreActions = nullptr;
     void doActionInternal(class UIAction* a, bool noQueue);
     void doMidiAction(class UIAction* a);
+    void doTrackSelectAction(class UIAction* a);
     
     //
     // View state

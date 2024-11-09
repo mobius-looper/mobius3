@@ -104,15 +104,6 @@ class FunctionProperties
     bool muteCancel = false;
     bool quantized = false;
     
-    //
-    // Kludge for emerging MIDI tracks
-    // NextTrack, PrevTrack, and TrackSelect are core functions
-    // but we need to intercept them and treat them in a special way for
-    // MIDI tracks and the notion of "focused" being different than "active"
-    // This will be set by Supervisor after the symbols are installed
-    //
-    bool trackSelect = false;
-    
   private:
     
 };

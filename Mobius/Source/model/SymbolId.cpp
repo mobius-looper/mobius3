@@ -274,6 +274,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followSwitch", ParamFollowSwitch},
     {"followCut", ParamFollowCut},
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
+    {"midiChannelOverride", ParamMidiChannelOverride},
 
     //
     // Misc track properties

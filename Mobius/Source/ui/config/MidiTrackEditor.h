@@ -70,15 +70,15 @@ class MidiTrackEditor : public ConfigEditor,
     YanCombo inputDevice {"Input Device"};
     YanCombo outputDevice {"Output Device"};
     YanCheckbox midiThru {"MIDI Thru"};
-
+    
     YanParameterForm switchForm;
-
     YanParameterForm followerForm;
-    YanCombo leader {"Leader Track"};;
-    YanCheckbox followRecord {"Follow Record"};
-    YanCheckbox followMute {"Follow Mute"};
-    YanCheckbox followSize {"Follow Size"};
-    YanCheckbox followLocation {"Follow Location"};
+    
+    //YanCombo leader {"Leader Track"};
+    //YanCheckbox followRecord {"Follow Record"};
+    //YanCheckbox followMute {"Follow Mute"};
+    //YanCheckbox followSize {"Follow Size"};
+    //YanCheckbox followLocation {"Follow Location"};
 
     SymbolTree tree;
     

@@ -40,6 +40,7 @@ void MidiEvent::poolInit()
     releaseVelocity = 0;
     remaining = 0;
     peer = nullptr;
+    channelOverride = 0;
     // just leave juce message alone?
 }
 
@@ -53,6 +54,8 @@ void MidiEvent::copy(MidiEvent* src)
     remaining = src->remaining;
     // do NOT copy the peer, but it shouldn't have one
     peer = nullptr;
+    // channel override is transient for held notes
+    channelOverride = 0;
 }
 
 MidiEvent* MidiEvent::copy(MidiEventPool* pool)

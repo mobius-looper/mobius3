@@ -242,6 +242,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class MslEnvironment* getMslEnvironment() override;
     void writeDump(juce::String file, juce::String content) override;
     int getFocusedTrack() override;
+    void setFocusedTrack(int index) override;
     
     // MobiusListener
 	void mobiusTimeBoundary() override;
@@ -454,10 +455,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // msl support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
-
-    // MIDI track nonesense
-    void kludgeCoreSymbols();
-    void doTrackSelectAction(UIAction* a);
 
     // Content Files
     void loadMidi(class UIAction* a);

@@ -81,6 +81,11 @@ int MidiPlayer::getDeviceId()
     return outputDevice;
 }
 
+void MidiPlayer::setChannelOverride(int chan)
+{
+    channelOverride = chan;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Layer Management
@@ -549,7 +554,20 @@ void MidiPlayer::sendOn(MidiEvent* note)
     // flicker
     eventsSent++;
     if (!muted && !paused) {
-        track->midiSend(note->juceMessage, outputDevice);
+
+        if (channelOverride == 0) {
+            track->midiSend(note->juceMessage, outputDevice);
+        }
+        else {
+            juce::MidiMessage msg =
+                juce::MidiMessage::noteOn(channelOverride,
+                                          note->juceMessage.getNoteNumber(),
+                                          (juce::uint8)(note->releaseVelocity));
+            track->midiSend(msg, outputDevice);
+            // remember this in the held note tracking state so we turn
+            // off the right one
+            note->channelOverride = channelOverride;
+        }
     }
 }
 
@@ -638,8 +656,6 @@ void MidiPlayer::forceOff()
 
 /**
  * Send a NoteOff to the device
- *
- * !! todo: this needs to start remembering the device to send it to
  */
 void MidiPlayer::sendOff(MidiEvent* note)
 {
@@ -649,11 +665,19 @@ void MidiPlayer::sendOff(MidiEvent* note)
     // when mute is turned off which will call down to sendOff when the (silent)
     // note finishes durating
     if (!muted && !paused) {
+
+        int channel = note->juceMessage.getChannel();
+        if (note->channelOverride > 0)
+          channel = note->channelOverride;
+        
         juce::MidiMessage msg =
-            juce::MidiMessage::noteOff(note->juceMessage.getChannel(),
+            juce::MidiMessage::noteOff(channel,
                                        note->juceMessage.getNoteNumber(),
                                        (juce::uint8)(note->releaseVelocity));
         track->midiSend(msg, outputDevice);
+
+        // shouldn't matter but be clean
+        note->channelOverride = 0;
     }
 }
 

@@ -59,6 +59,7 @@ class MidiEvent : public PooledObject
 
     int remaining = 0;
     MidiEvent* peer = nullptr;
+    int channelOverride = 0;
 
 };
 

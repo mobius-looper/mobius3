@@ -131,6 +131,8 @@ void MidiTrack::configure(Session::Track* def)
     followerMuteStart = def->getBool("followerMuteStart");
     followLocation = def->getBool("followLocation");
     noReset = def->getBool("noReset");
+
+    player.setChannelOverride(def->getInt("midiChannelOverride"));
 }
 
 /**

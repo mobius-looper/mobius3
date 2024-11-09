@@ -73,6 +73,11 @@ BindingEditor::~BindingEditor()
 {
 }
 
+void BindingEditor::setInitialObject(juce::String name)
+{
+    initialObject = name;
+}
+
 /**
  * ConfigPanel overload to prepare the panel to be shown.
  * Make copies of all the BindingSets in bindingSets and revertBindingSets.
@@ -122,8 +127,29 @@ void BindingEditor::load()
 
         setlist = setlist->getNextBindingSet();
     }
-        
-    selectedBindingSet = 0;
+
+    if (initialObject.length() > 0) {
+        // this is the first time here for an editor that supports
+        // multiple binding sets, which is really only MidiEditor
+        // pre-select this one since it is likely it will be the first
+        // one to be edited
+        selectedBindingSet = 0;
+        for (int i = 0 ; i < bindingSets.size() ; i++) {
+            if (juce::String(bindingSets[i]->getName()) == initialObject) {
+                selectedBindingSet = i;
+                break;
+            }
+        }
+        // only do this the first time
+        initialObject = "";
+    }
+    else {
+        // on subseqeuent opens, maintain the last selection unless an object
+        // got lost for some reason
+        if (selectedBindingSet >= bindingSets.size())
+          selectedBindingSet = 0;
+    }
+    
     // make another copy of the Binding list into the table
     loadBindingSet(selectedBindingSet);
 

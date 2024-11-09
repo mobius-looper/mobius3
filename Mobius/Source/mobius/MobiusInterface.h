@@ -454,6 +454,10 @@ class MobiusContainer
      */
     virtual int getFocusedTrack() = 0;
 
+    // temporary kludge for TrackSelect functions handled in the core that need
+    // to pass the new focused track back to the view since State doesn't have it
+    virtual void setFocusedTrack(int index) = 0;
+
     virtual void writeDump(juce::String file, juce::String content) = 0;
 
 };

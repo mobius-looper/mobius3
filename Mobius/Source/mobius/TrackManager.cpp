@@ -360,17 +360,6 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     }
 }
 
-/**
- * Listener callback for LongWatcher.
- * We're inside processAudioStream and one of the watchers
- * has crossed the threshold
- */
-void TrackManager::longPressDetected(UIAction* a)
-{
-    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
-    doTrackAction(a);
-}
-
 void TrackManager::endAudioBlock()
 {
 }
@@ -409,48 +398,56 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
     // set true if we queue for later rather than process immediately
     // handling it immediately
     bool queued = false;
+    Symbol* s = action->symbol;
 
-    // fix the action scope
-    int scope = action->getScopeTrack();
-    if (scope == 0) {
-        // ask the container for focus which may be audio or midi
-        // note that this returns the INDEX not the NUMBER and the scope
-        // needs the number
-        scope = getFocusedTrackIndex() + 1;
+    if (s->id == FuncNextTrack || s->id == FuncPrevTrack || s->id == FuncSelectTrack) {
+        // special case for track selection functions
+        doTrackSelectAction(action);
     }
+    else {
+    
+        // fix the action scope
+        int scope = action->getScopeTrack();
+        if (scope == 0) {
+            // ask the container for focus which may be audio or midi
+            // note that this returns the INDEX not the NUMBER and the scope
+            // needs the number
+            scope = getFocusedTrackIndex() + 1;
+        }
         
-    // kludge: most of the functions can be directed to the specified
-    // track bank, but the few global functions like GlobalReset need to
-    // be sent to both since they don't know about each other's tracks
-    bool global = false;
-    if (action->symbol->functionProperties != nullptr) {
-        global = action->symbol->functionProperties->global;
+        // kludge: most of the functions can be directed to the specified
+        // track bank, but the few global functions like GlobalReset need to
+        // be sent to both since they don't know about each other's tracks
+        bool global = false;
+        if (s->functionProperties != nullptr) {
+            global = s->functionProperties->global;
 
-        // if this was sent down from the UI it will usually have the UI track number in it
-        // because the action is sent into both track bank, the number needs to
-        // be adjusted so that it fits within the bank size to avoid range errors
-        // it doesn't matter what track it actually targets since it is a global function
-        if (global)
-          scope = 0;
-    }
-    action->setScopeTrack(scope);
+            // if this was sent down from the UI it will usually have the UI track number in it
+            // because the action is sent into both track bank, the number needs to
+            // be adjusted so that it fits within the bank size to avoid range errors
+            // it doesn't matter what track it actually targets since it is a global function
+            if (global)
+              scope = 0;
+        }
+        action->setScopeTrack(scope);
 
-    if (scope > audioTrackCount || global) {
-        //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
-        doMidiAction(action);
-    }
+        if (scope > audioTrackCount || global) {
+            //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
+            doMidiAction(action);
+        }
 
-    if (scope <= audioTrackCount || global) {
+        if (scope <= audioTrackCount || global) {
 
-        if (noQueue)
-          audioEngine->doAction(action);
-        else {
-            action->next = coreActions;
-            coreActions = action;
-            queued = true;
+            if (noQueue)
+              audioEngine->doAction(action);
+            else {
+                action->next = coreActions;
+                coreActions = action;
+                queued = true;
+            }
         }
     }
-
+    
     // kludge, when noQueue is true the action is not pooled
     // and doesn't have to be reclaimed, too many obscure assumptions, hate this
     if (!noQueue && !queued)
@@ -458,23 +455,16 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
 }
 
 /**
- * todo: older methods, need to refactor now that we've pulled in the audio/midi
- * split above
- *
- * Distribute an action passed down from the UI or from a script
- * to one of the tracks.
- *
+ * Forward an action to one of the MIDI tracks.
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
 void TrackManager::doMidiAction(UIAction* a)
 {
-    if (a->symbol == nullptr) {
-        Trace(1, "TrackManager: UIAction without symbol, you had one job");
-    }
-    else if (a->symbol->id == FuncGlobalReset) {
+    // todo: will need the same replication for GlobalMute and GlobalPause
+    if (a->symbol->id == FuncGlobalReset) {
         for (int i = 0 ; i < activeMidiTracks ; i++)
-            midiTracks[i]->doAction(a);
+          midiTracks[i]->doAction(a);
 
         // having some trouble with stuck notes in the watcher
         // maybe only during debugging, but it's annoying when it happens to
@@ -489,6 +479,20 @@ void TrackManager::doMidiAction(UIAction* a)
     }
 }
 
+/**
+ * Listener callback for LongWatcher.
+ * We're inside processAudioStream and one of the watchers
+ * has crossed the threshold
+ */
+void TrackManager::longPressDetected(UIAction* a)
+{
+    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
+    doTrackAction(a);
+}
+
+/**
+ * Here from either doMidiAction or longPressDetected
+ */
 void TrackManager::doTrackAction(UIAction* a)
 {
     //Trace(2, "TrackManager::doTrackAction %s", a->symbol->getName());
@@ -496,15 +500,100 @@ void TrackManager::doTrackAction(UIAction* a)
     // this is where we will need some sort of mapping table
     // if you allow tracks to be reordered in the UI
     int actionScope = a->getScopeTrack();
-    int localIndex = actionScope - audioTrackCount - 1;
-    if (localIndex < 0 || localIndex >= activeMidiTracks) {
-        Trace(1, "TrackManager: Invalid action scope %d", actionScope);
+    int midiIndex = actionScope - audioTrackCount - 1;
+    if (midiIndex < 0 || midiIndex >= activeMidiTracks) {
+        Trace(1, "TrackManager: Invalid MIDI action scope %d", actionScope);
     }
     else {
-        MidiTrack* track = midiTracks[localIndex];
+        MidiTrack* track = midiTracks[midiIndex];
         track->doAction(a);
     }
 }    
+
+/**
+ * Special case for the track selection functions.  These are weird, they're
+ * kind of a global function, and kind of a UI level function, but they can be
+ * used in scripts and I don't want to throw it all the way back up async if
+ * the action starts down in the kernel.
+ *
+ * Supervisor has a similar intercept so it can update the selected track in the
+ * view immediately without waiting for the next State refresh.
+ *
+ * !! The focused track really needs to be something maintained authoritatively
+ * by TrackManager and passed up in the State, rather than letting Supervisor
+ * maintain it in the view and requiring us to notify it when it changes out
+ * from under the view.
+ */
+void TrackManager::doTrackSelectAction(UIAction* a)
+{
+    Symbol* s = a->symbol;
+    int prevFocused = getFocusedTrackIndex();
+    int newFocused = prevFocused;
+    bool relative = false;
+    
+    if (s->id == FuncNextTrack) {
+        int next = prevFocused + 1;
+        if (next >= (audioTrackCount + activeMidiTracks))
+          next = 0;
+        newFocused = next;
+        relative = true;
+    }
+    else if (s->id == FuncPrevTrack) {
+        int next = prevFocused - 1;
+        if (next < 0)
+          next = (audioTrackCount + activeMidiTracks) - 1;
+        newFocused = next;
+        relative = true;
+    }
+    else if (s->id == FuncSelectTrack) {
+        // argument is 1 based
+        int next = a->value - 1;
+        if (next < 0) {
+            Trace(1, "TrackManager: Bad SelectTrack argument");
+        }
+        else {
+            newFocused = next;
+        }
+    }
+    else {
+        Trace(1, "TrackManager: You are bad, and you should feel bad");
+    }
+
+    if (newFocused == prevFocused) {
+        // don't bother informing Mobius if nothing needs changing
+    }
+    else if (newFocused < audioTrackCount) {
+        // now it gets weirder, if we were previously on a midi track
+        // and move back in to an audio track with next/prev, we don't actually
+        // want to send next/prev to the core, it becomes a SelectTrack
+        // of the desired index, either the last or the first
+        // if you don't do this, it skips an extra track
+        // todo: should we just always do this conversion?  the active track may
+        // already be there but that can happen normally so it can't mess anything up
+        // to ask for it redundantly
+        Symbol* saveSymbol = a->symbol;
+        int saveValue = a->value;
+        if (prevFocused >= audioTrackCount && relative) {
+            // don't trash the source action which usually comes from
+            // a binding.  two options: save/restore or copy it to a temp
+            a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
+            a->value = newFocused + 1;
+        }
+        
+        audioEngine->doAction(a);
+
+        a->symbol = saveSymbol;
+        a->value = saveValue;
+    }
+    else {
+        // MIDI tracks don't have any special awaress of focus
+    }
+
+    // until we have returning focus changes in the State, have to inform
+    // the UI that it changed
+    if (newFocused != prevFocused)
+      kernel->getContainer()->setFocusedTrack(newFocused);
+}
 
 //////////////////////////////////////////////////////////////////////
 //

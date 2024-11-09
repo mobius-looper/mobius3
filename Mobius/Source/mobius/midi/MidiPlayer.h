@@ -19,6 +19,7 @@ class MidiPlayer
     ~MidiPlayer();
     void initialize(class MidiPools* pools);
     void dump(StructureDumper& d);
+    void setChannelOverride(int channel);
     
     //
     // Layer Management
@@ -69,6 +70,9 @@ class MidiPlayer
 
     // the id of the device we're supposed to send to
     int outputDevice = 0;
+
+    // optional channel override
+    int channelOverride = 0;
 
     // play state
     class MidiLayer* playLayer = nullptr;

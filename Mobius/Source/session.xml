@@ -17,6 +17,7 @@
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
+      <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
       <Value name="midiThru" value="1" type="int"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>

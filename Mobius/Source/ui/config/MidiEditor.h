@@ -39,6 +39,7 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
 
   private:
 
+    bool started = false;
     Field* messageType = nullptr;
     Field* messageChannel = nullptr;
     Field* messageValue = nullptr;

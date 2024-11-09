@@ -4,11 +4,14 @@
 #include <string>
 #include <sstream>
 
-#include "../../Supervisor.h"
 #include "../../util/Trace.h"
 #include "../../util/MidiUtil.h"
-#include "../common/Form.h"
 #include "../../model/Binding.h"
+#include "../../model/UIConfig.h"
+
+#include "../../Supervisor.h"
+
+#include "../common/Form.h"
 
 #include "MidiEditor.h"
 
@@ -28,6 +31,9 @@ MidiEditor::~MidiEditor()
 void MidiEditor::prepare()
 {
     context->enableObjectSelector();
+
+    UIConfig* config = supervisor->getUIConfig();
+    setInitialObject(config->activeBindings);
 }
 
 /**

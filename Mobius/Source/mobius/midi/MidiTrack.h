@@ -183,6 +183,7 @@ class MidiTrack : public AbstractTrack
     bool followerMuteStart = false;
     bool followLocation = false;
     bool noReset = false;
+    int outputChannel = 0;
     
     // loops
     juce::OwnedArray<class MidiLoop> loops;
