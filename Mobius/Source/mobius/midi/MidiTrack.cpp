@@ -27,10 +27,6 @@
 #include "../../sync/Pulsator.h"
 
 #include "../Valuator.h"
-#include "../MobiusInterface.h"
-
-// need this for clipStart, consider moving that to TrackScheduler
-#include "../MobiusKernel.h"
 #include "../TrackManager.h"
 
 #include "TrackScheduler.h"
@@ -57,21 +53,18 @@ const int MidiTrackMaxLoops = 8;
  * tracks are enabled for use by calling configure() passing
  * the track definition from the session.
  */
-MidiTrack::MidiTrack(MobiusContainer* c, TrackManager* t)
+MidiTrack::MidiTrack(TrackManager* t)
 {
-    container = c;
     tracker = t;
-    
-    pulsator = container->getPulsator();
+
+    // temporary, should be used only by Scheduler
+    pulsator = t->getPulsator();
     valuator = t->getValuator();
     pools = t->getPools();
 
-    // messy, messy
-    scheduler.initialize(t->getKernel(),
-                         &(pools->trackEventPool), pools->actionPool,
-                         pulsator, valuator, container->getSymbols());
+    scheduler.initialize(t);
     
-    transformer.initialize(pools->actionPool, container->getSymbols());
+    transformer.initialize(pools->actionPool, t->getSymbols());
     recorder.initialize(pools);
     player.initialize(pools);
 
@@ -2064,7 +2057,7 @@ void MidiTrack::followLeaderSize()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+            TrackProperties props = tracker->getTrackProperties(leaderTrack);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -2102,7 +2095,7 @@ void MidiTrack::followLeaderLocation()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+            TrackProperties props = tracker->getTrackProperties(leaderTrack);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -2138,7 +2131,7 @@ void MidiTrack::reorientFollower(int previousFrames, int previousFrame)
     // !! not enough for host/midi leaders
     int leaderTrack = scheduler.findLeaderTrack();
     if (leaderTrack > 0) {
-        TrackProperties props = tracker->getKernel()->getTrackProperties(leaderTrack);
+        TrackProperties props = tracker->getTrackProperties(leaderTrack);
         if (props.invalid) {
             Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
         }
@@ -2178,7 +2171,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
     }
     else {
         // we could have just passed all this shit up from where it came from
-        TrackProperties props = tracker->getKernel()->getTrackProperties(audioTrack);
+        TrackProperties props = tracker->getTrackProperties(audioTrack);
         if (props.invalid) {
             Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
         }
@@ -2251,7 +2244,7 @@ void MidiTrack::doDump()
     
     d.dec();
     
-    container->writeDump(juce::String("MidiTrack.txt"), d.getText());
+    tracker->writeDump(juce::String("MidiTrack.txt"), d.getText());
 }
 
 /****************************************************************************/

@@ -10,10 +10,9 @@
 #include "../../util/Trace.h"
 
 #include "../../model/Symbol.h"
+#include "../../model/UIAction.h"
 
 #include "../../sync/Pulsator.h"
-#include "../MobiusKernel.h"
-#include "../MobiusInterface.h"
 
 #include "../Valuator.h"
 

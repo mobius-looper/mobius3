@@ -27,7 +27,7 @@ class MidiTrack : public AbstractTrack
     // Configuration
     //
 
-    MidiTrack(class MobiusContainer* c, class TrackManager* t);
+    MidiTrack(class TrackManager* t);
     ~MidiTrack();
     void configure(class Session::Track* def);
     void reset();
@@ -174,10 +174,9 @@ class MidiTrack : public AbstractTrack
 
   private:
 
-    class MobiusContainer* container = nullptr;
+    class TrackManager* tracker = nullptr;
     class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
-    class TrackManager* tracker = nullptr;
     class MidiPools* pools = nullptr;
 
     // leader state

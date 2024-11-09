@@ -45,10 +45,7 @@ class TrackScheduler
     TrackScheduler(class AbstractTrack* t);
     ~TrackScheduler();
 
-    // now that we're passing Kernel, could get most things from there
-    void initialize(class MobiusKernel* k,
-                    class TrackEventPool* epool, class UIActionPool* apool,
-                    class Pulsator* p, class Valuator* v, class SymbolTable* st);
+    void initialize(class TrackManager* tm);
     void configure(Session::Track* def);
     void dump(class StructureDumper& d);
     void reset();
@@ -79,11 +76,12 @@ class TrackScheduler
     // things LoopSwitcher and TrackAdvancer need
     
     class AbstractTrack* track = nullptr;
+    class TrackManager* tracker = nullptr;
+    
     TrackEventList events;
     class TrackEventPool* eventPool = nullptr;
     class UIActionPool* actionPool = nullptr;
     
-    class MobiusKernel* kernel = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;

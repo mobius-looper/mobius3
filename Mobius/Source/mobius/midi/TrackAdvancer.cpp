@@ -10,8 +10,11 @@
 #include "../../util/Trace.h"
 
 #include "../../sync/Pulsator.h"
+
+// necessary for MobiusAudioStream, see if we can hide this in TrackManager
 #include "../MobiusInterface.h"
-#include "../MobiusKernel.h"
+
+#include "../TrackManager.h"
 
 #include "TrackEvent.h"
 #include "TrackScheduler.h"
@@ -198,7 +201,7 @@ void TrackAdvancer::advance(MobiusAudioStream* stream)
 void TrackAdvancer::traceFollow()
 {
     if (scheduler.followTrack > 0) {
-        TrackProperties props = scheduler.kernel->getTrackProperties(scheduler.followTrack);
+        TrackProperties props = scheduler.tracker->getTrackProperties(scheduler.followTrack);
         Trace(2, "TrackAdvancer: Loop frame %d follow frame %d",
               scheduler.track->getFrame(), props.currentFrame);
     }
@@ -467,7 +470,7 @@ void TrackAdvancer::detectLeaderChange()
             // ignore
         }
         else {
-            props = scheduler.kernel->getTrackProperties(leader);
+            props = scheduler.tracker->getTrackProperties(leader);
             if (props.invalid) {
                 // something is messed up with track numbering
                 Trace(1, "TrackAdvancer: Unable to determine leader track properties");

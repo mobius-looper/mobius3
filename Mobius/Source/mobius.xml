@@ -21,7 +21,7 @@
     emptyLoopAction='none'
     emptyTrackAction='none'
     loopCount='4'
-    maxRedo='2'
+    maxUndo='1'
     multiplyMode='normal'
     muteCancel='never'
     muteMode='continue'

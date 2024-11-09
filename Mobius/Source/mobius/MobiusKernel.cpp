@@ -71,7 +71,6 @@ MobiusKernel::MobiusKernel(MobiusShell* argShell, KernelCommunicator* comm)
     communicator = comm;
     // something we did for leak debugging
     Mobius::initStaticObjects();
-    coreActions = nullptr;
     notifier.setPool(&mobiusPools);
 }
 
@@ -115,13 +114,6 @@ MobiusKernel::~MobiusKernel()
     // stop listening
     if (container != nullptr)
       container->setAudioListener(nullptr);
-
-    // in theory we could have a lingering action queue from the
-    // audio thread, but how would that happen, you can't delete
-    // the Kernel out from under an active audio stream with good results
-    if (coreActions != nullptr) {
-        Trace(1, "MobiusKernel: Destruction with a lingering coreAction list!\n");
-    }
 
     // KernelEventPool will auto-delete
 }
@@ -518,10 +510,9 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 
     // save this here for the duration so we don't have to keep passing it around
     stream = argStream;
-    
-    // make sure this is clear
-    coreActions = nullptr;
 
+    mTracks->beginAudioBlock();
+    
     // begin whining about memory allocations
     //MemTraceEnabled = true;
     
@@ -531,7 +522,6 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 
     // this may receive an updated MobiusConfig and will
     // call Mobius::reconfigure
-    // UIActions that aren't handled at this level are placed in coreActions
     consumeCommunications();
     consumeMidiMessages();
     consumeParameters();
@@ -540,32 +530,10 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     if (sampleManager != nullptr)
       sampleManager->processAudioStream(stream);
 
-    // TODO: We now have UIActions to send to core in poorly defined order
-    // this usually does not matter but for for sweep controls like OutputLevel
-    // it can.  From the UI perspective the knob went from 100 to 101 to 102 but
-    // when we pull process the actions we could do them in reverse order leaving it at 100.
-    // They aren't timestamped so we don't know for sure what order Shell received them.
-    // If we're careful we could make assumptions about how the lists are managed,
-    // but that's too subtle, timestamps would be better.  As it stands at the moment,
-    // KernelCommunicator message queues are a LIFO.  With the introduction of the coreActions
-    // list, the order will be reversed again which is what we want, but if the implementation
-    // of either collection changes this could break.
-
-    // TrackManager move
-    // tell core it has audio and some actions to do
-    mCore->processAudioStream(stream, coreActions);
-
-    // tell midi tracks to advance, when we get to audio/midi track sync, there will
-    // no doubt be some order dependencies here
+    // advance the tracks
     mTracks->processAudioStream(stream);
 
-    // return the queued core ations to the pool
-    UIAction* next = nullptr;
-    while (coreActions != nullptr) {
-        next = coreActions->next;
-        actionPool->checkin(coreActions);
-        coreActions = next;
-    }
+    mTracks->endAudioBlock();
 
     updateParameters();
     notifier.afterBlock();
@@ -787,9 +755,8 @@ void MobiusKernel::doParameter(PluginParameter* p)
         action->symbol = s;
         action->value = p->get();
         action->setScope(p->getScope());
-        // todo: complex binding arguments
-        action->next = coreActions;
-        coreActions = action;
+
+        doAction(action);
     }
     else if (s->functionProperties != nullptr && s->coreFunction != nullptr) {
         // functions are exposed as booleans, should only be here with 0 and 1
@@ -826,9 +793,8 @@ void MobiusKernel::doParameter(PluginParameter* p)
                     action->sustainId = p->sustainId;
                     action->sustainEnd = true;
                 }
-        
-                action->next = coreActions;
-                coreActions = action;
+
+                doAction(action);
             }
         }
         else if (value > 0) {
@@ -838,8 +804,8 @@ void MobiusKernel::doParameter(PluginParameter* p)
             action->reset();
             action->symbol = s;
             action->setScope(p->getScope());
-            action->next = coreActions;
-            coreActions = action;
+
+            doAction(action);
         }
     }
     else if (s->script != nullptr) {
@@ -850,8 +816,7 @@ void MobiusKernel::doParameter(PluginParameter* p)
             action->reset();
             action->symbol = s;
             action->setScope(p->getScope());
-            action->next = coreActions;
-            coreActions = action;
+            doAction(action);
         }
     }
     else {
@@ -1018,13 +983,8 @@ void MobiusKernel::doAction(KernelMessage* msg)
 
 /**
  * Handle an action sent down through a KernelMessage from the shell
- * or received through KernelBinderator when a MIDI event comes in.
- *
- * Supervisor is handling the focused track and passing down a specific
- * track number, but KernelBinderator doesn't do that.  Since we have
- * to ask the container for the focused track number to handle MIDI comming
- * through the plugin host, we may as well do it for all actions and
- * take that transformation out of Supervisor::doAction
+ * or received through KernelBinderator when a MIDI event comes in,
+ * or synthesized in response to a host parameter change.
  */
 void MobiusKernel::doAction(UIAction* action)
 {
@@ -1048,42 +1008,9 @@ void MobiusKernel::doAction(UIAction* action)
     }
     else if (symbol->level == LevelCore) {
 
-        // fix the action scope
-        int scope = action->getScopeTrack();
-        if (scope == 0) {
-            // ask the container for focus which may be audio or midi
-            // note that this returns the INDEX not the NUMBER and the scope
-            // needs the number
-            scope = container->getFocusedTrack() + 1;
-        }
-        
-        // kludge: most of the functions can be directed to the specified
-        // track bank, but the few global functions like GlobalReset need to
-        // be sent to both since they don't know about each other's tracks
-        bool global = false;
-        if (symbol->functionProperties != nullptr) {
-            global = symbol->functionProperties->global;
-
-            // if this was sent down from the UI it will usually have the UI track number in it
-            // because the action is sent into both track bank, the number needs to
-            // be adjusted so that it fits within the bank size to avoid range errors
-            // it doesn't matter what track it actually targets since it is a global function
-            if (global)
-              scope = 0;
-        }
-        action->setScopeTrack(scope);
-
-        if (scope > audioTracks || global) {
-            //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
-            mTracks->doAction(action);
-        }
-
-        if (scope <= audioTracks || global) {
-            // not ours, pass to the core
-            action->next = coreActions;
-            coreActions = action;
-            passed = true;
-        }
+        // TrackManager does it's magic
+        mTracks->doAction(action);
+        passed = true;
     }
     else {
         // this one needs to go up
@@ -1188,13 +1115,6 @@ void MobiusKernel::clipStart(int audioTrack, const char* bindingArgs)
     (void)audioTrack;
     (void)bindingArgs;
     //mMidi->clipStart(audioTrack, bindingArgs);
-}
-
-int MobiusKernel::scheduleFollowerEvent(int audioTrack, QuantizeMode q,
-                                        int followerTrack, int eventId)
-{
-    // todo: might as well allow both directions here
-    return mCore->scheduleFollowerEvent(audioTrack, q, followerTrack, eventId);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1454,23 +1374,6 @@ void MobiusKernel::doMidiLoad(KernelMessage* msg)
     communicator->kernelAbandon(msg);
 }
 
-/**
- * Used by MIDI track internals to ask questions about audio tracks
- * for synchronization.  Eventually can be used by audio tracks
- * to ask the same things about MIDI tracs.
- */
-TrackProperties MobiusKernel::getTrackProperties(int number)
-{
-    TrackProperties props;
-
-    if (number < audioTracks)
-      props = mCore->getTrackProperties(number);
-    else
-      props = mTracks->getTrackProperties(number);
-
-    return props;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Loop/Project Loading
@@ -1643,11 +1546,12 @@ bool MobiusKernel::mslAction(MslAction* action)
 
         if (symbol->level == LevelCore) {
 
-            // we need to allow MSL to target MIDI tracks so support re-scoping here
-            if (action->scope > audioTracks)
-              mTracks->doAction(&uia);
-            else
-              mCore->doAction(&uia);
+            // !! pass the ugly flag to bypass queueing actions for the core
+            // and just do them immediately
+            // once we get rid of the stupid coreActions list then this
+            // can just pass through Kernel::doAction like everything else
+
+            mTracks->doActionNoQueue(&uia);
         }
         else {
             // the script is calling a kernel or UI level action

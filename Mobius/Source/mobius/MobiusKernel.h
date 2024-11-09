@@ -25,7 +25,6 @@
 #include "Valuator.h"
 #include "MobiusPools.h"
 #include "Notifier.h"
-#include "TrackProperties.h"
 
 //#include "TrackSynchronizer.h"
 #include "TrackManager.h"
@@ -157,11 +156,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     int getMidiTrackCount() {
         return midiTracks;
     }
-    
-    TrackProperties getTrackProperties(int number);
-    
-    // used by TrackManager to schedule a follower event in a core track
-    int scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId);
     
     // used by the MidiOut function handler
     void midiSendSync(juce::MidiMessage& msg);

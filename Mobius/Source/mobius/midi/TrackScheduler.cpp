@@ -35,8 +35,9 @@
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
-#include "../MobiusInterface.h"
-#include "../MobiusKernel.h"
+#include "../TrackManager.h"
+
+#include "MidiPools.h"
 #include "TrackEvent.h"
 #include "AbstractTrack.h"
 
@@ -57,15 +58,17 @@ TrackScheduler::~TrackScheduler()
 {
 }
 
-void TrackScheduler::initialize(MobiusKernel* k, TrackEventPool* epool, UIActionPool* apool,
-                                Pulsator* p, Valuator* v, SymbolTable* st)
+void TrackScheduler::initialize(TrackManager* tm)
 {
-    kernel = k;
-    eventPool = epool;
-    actionPool = apool;
-    pulsator = p;
-    valuator = v;
-    symbols = st;
+    tracker = tm;
+
+    MidiPools* pools = tracker->getPools();
+    
+    eventPool = &(pools->trackEventPool);
+    actionPool = pools->actionPool;
+    pulsator = tracker->getPulsator();
+    valuator = tracker->getValuator();
+    symbols = tracker->getSymbols();
     
     events.initialize(eventPool);
 }
@@ -1211,7 +1214,7 @@ int TrackScheduler::findQuantizationLeader()
     if (leader > 0) {
         // if the leader over an empty loop, ignore it and fall
         // back to the usual SwitchQuantize parameter
-        TrackProperties props = kernel->getTrackProperties(leader);
+        TrackProperties props = tracker->getTrackProperties(leader);
         if (props.frames == 0) {
             // ignore the leader
             leader = 0;
@@ -1311,7 +1314,7 @@ TrackEvent* TrackScheduler::scheduleLeaderQuantization(int leader, QuantizeMode 
     // going through Kernel
     int correlationId = correlationIdGenerator++;
     
-    int leaderFrame = kernel->scheduleFollowerEvent(leader, q, track->getNumber(), correlationId);
+    int leaderFrame = tracker->scheduleFollowerEvent(leader, q, track->getNumber(), correlationId);
 
     // this turns out to be not useful since the event can move after scheduling
     // remove it if we can't find a use for it
@@ -1604,7 +1607,7 @@ void TrackScheduler::doResize(UIAction* a)
         // !! should be consulting the follower here
         if (sessionSyncSource == SYNC_TRACK) {
             int otherTrack = pulsator->getTrackSyncMaster();
-            TrackProperties props = kernel->getTrackProperties(otherTrack);
+            TrackProperties props = tracker->getTrackProperties(otherTrack);
             track->leaderResized(props);
             followTrack = otherTrack;
         }
@@ -1616,14 +1619,14 @@ void TrackScheduler::doResize(UIAction* a)
         int otherTrack = a->value;
         // some validation before we ask for prperties
         // could skip this if TrackPrperties had a way to return errors
-        int audioTracks = kernel->getAudioTrackCount();
-        int midiTracks = kernel->getMidiTrackCount();
+        int audioTracks = tracker->getAudioTrackCount();
+        int midiTracks = tracker->getMidiTrackCount();
         int totalTracks = audioTracks + midiTracks;
         if (otherTrack < 1 || otherTrack > totalTracks) {
             Trace(1, "TrackScheduler: Track number out of range %d", otherTrack);
         }
         else {
-            TrackProperties props = kernel->getTrackProperties(otherTrack);
+            TrackProperties props = tracker->getTrackProperties(otherTrack);
             track->leaderResized(props);
             // I think this can reset?
             // actually no, it probably needs to be a component of the
@@ -1750,7 +1753,7 @@ int TrackScheduler::findLeaderTrack()
     }
     else if (leaderType == LeaderFocused) {
         // this is a "view index" which is zero based!
-        leader = kernel->getContainer()->getFocusedTrack() + 1;
+        leader = tracker->getFocusedTrackIndex() + 1;
     }
 
     return leader;

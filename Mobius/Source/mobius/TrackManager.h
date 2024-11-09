@@ -27,36 +27,40 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 {
   public:
 
-    TrackManager(MobiusKernel* k);
+    TrackManager(class MobiusKernel* k);
     ~TrackManager();
 
-    void initialize(MobiusConfig* config, Session* s);
+    void initialize(class MobiusConfig* config, class Session* s);
 
     // temporary until we can managed this
     void setEngine(class Mobius* m);
     
-    void configure(MobiusConfig* config, Session* session);
+    void configure(class MobiusConfig* config, class Session* session);
     void loadSession(class Session* s);
+
+    // Services
     
     class MobiusMidiState* getState();
     class MidiPools* getPools();
+    class Pulsator* getPulsator();
+    class Valuator* getValuator();
+    class SymbolTable* getSymbols();
     TrackProperties getTrackProperties(int number);
     class MidiEvent* getHeldNotes();
-    class MidiTrack* getTrackByNumber(int number);
-    class MidiTrack* getTrackByIndex(int index);
 
-    //
-    // Services
-    //
     void alert(const char* msg);
+    void writeDump(juce::String file, juce::String content);
     int getMidiTrackCount();
-
-    class Valuator* getValuator();
-    class MobiusKernel* getKernel();
-        
+    int getAudioTrackCount();
+    int getFocusedTrackIndex();
+    
     //
     // Stimuli
     //
+
+    void beginAudioBlock();
+    void processAudioStream(class MobiusAudioStream* argStream);
+    void endAudioBlock();
 
     // the interface for receiving events when called by MidiManager, tagged with the device id
     void midiEvent(class MidiEvent* event);
@@ -64,8 +68,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // the interface for receiving events from the host, and now MidiManager
     void midiEvent(juce::MidiMessage& msg, int deviceId);
 
-    void processAudioStream(class MobiusAudioStream* argStream);
     void doAction(class UIAction* a);
+    void doActionNoQueue(class UIAction* a);
     bool doQuery(class Query* q);
 
     // TrackListener
@@ -87,11 +91,15 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
+
+    // used by TrackScheduler to schedule a follower event in a core track
+    int scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId);
     
     
   private:
 
     MobiusKernel* kernel = nullptr;
+    class UIActionPool* actionPool = nullptr;
     class Mobius* audioEngine = nullptr;
     
     // need a place to hang this, here or in Kernel?
@@ -110,6 +118,12 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void allocateTracks(int baseNumber, int count);
     void refreshState();
     void doTrackAction(class UIAction* a);
+
+
+    // temporary old way of passing core actions
+    class UIAction* coreActions = nullptr;
+    void doActionInternal(class UIAction* a, bool noQueue);
+    void doMidiAction(class UIAction* a);
     
     //
     // View state

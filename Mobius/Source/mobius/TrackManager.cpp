@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../model/Symbol.h"
+#include "../model/FunctionProperties.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 #include "../model/UIAction.h"
@@ -13,6 +14,8 @@
 
 #include "midi/MidiWatcher.h"
 #include "midi/MidiTrack.h"
+
+#include "core/Mobius.h"
 
 #include "TrackManager.h"
 
@@ -36,6 +39,7 @@ const int TrackManagerMaxMidiLoops = 8;
 TrackManager::TrackManager(MobiusKernel* k)
 {
     kernel = k;
+    actionPool = k->getActionPool();
     watcher.initialize(&(pools.midiPool));
 }
 
@@ -43,6 +47,14 @@ TrackManager::~TrackManager()
 {
     tracks.clear();
     midiTracks.clear();
+
+    // in theory we could have a lingering action queue from the
+    // audio thread, but how would that happen, you can't delete
+    // the Kernel out from under an active audio stream with good results
+    if (coreActions != nullptr) {
+        Trace(1, "TrackManager: Destruction with a lingering coreAction list!\n");
+    }
+    
 }
 
 /**
@@ -76,7 +88,7 @@ void TrackManager::initialize(MobiusConfig* config, Session* session)
 void TrackManager::allocateTracks(int baseNumber, int count)
 {
     for (int i = 0 ; i < count ; i++) {
-        MidiTrack* mt = new MidiTrack(kernel->getContainer(), this);
+        MidiTrack* mt = new MidiTrack(this);
         mt->index = i;
         mt->number = baseNumber + i;
         midiTracks.add(mt);
@@ -184,14 +196,24 @@ MidiPools* TrackManager::getPools()
     return &pools;
 }
 
+Pulsator* TrackManager::getPulsator()
+{
+    return kernel->getContainer()->getPulsator();
+}
+
 Valuator* TrackManager::getValuator()
 {
     return kernel->getValuator();
 }
 
-MobiusKernel* TrackManager::getKernel()
+SymbolTable* TrackManager::getSymbols()
 {
-    return kernel;
+    return kernel->getContainer()->getSymbols();
+}
+
+int TrackManager::getAudioTrackCount()
+{
+    return audioTrackCount;
 }
 
 int TrackManager::getMidiTrackCount()
@@ -199,37 +221,49 @@ int TrackManager::getMidiTrackCount()
     return activeMidiTracks;
 }
 
-MidiTrack* TrackManager::getTrackByNumber(int number)
+// this needs to be implemented here rather than going back to the container
+// also, start passing this around as a number rather than an index like everything else
+int TrackManager::getFocusedTrackIndex()
 {
-    return getTrackByIndex(number - audioTrackCount - 1);
-}
-
-MidiTrack* TrackManager::getTrackByIndex(int index)
-{
-    MidiTrack* track = nullptr;
-    if (index >= 0 && index < activeMidiTracks)
-      track = midiTracks[index];
-    return track;
-}
-
-TrackProperties TrackManager::getTrackProperties(int number)
-{
-    TrackProperties props;
-    MidiTrack* track = getTrackByNumber(number);
-    if (track != nullptr) {
-        props.frames = track->getLoopFrames();
-        props.cycles = track->getCycles();
-        props.currentFrame = track->getFrame();
-    }
-    else {
-        props.invalid = true;
-    }
-    return props;
+    return kernel->getContainer()->getFocusedTrack();
 }
 
 int TrackManager::getMidiOutputDeviceId(const char* name)
 {
     return kernel->getMidiOutputDeviceId(name);
+}
+
+/**
+ * Here we have our first track split handler.
+ * If this is an audio track we have to forward to the core,
+ * if it is a midi track, we manage those directly.
+ *
+ * Eventually once LogicalTracks are in place, this would just
+ * ask them consnstently.
+ */
+TrackProperties TrackManager::getTrackProperties(int number)
+{
+    TrackProperties props;
+
+    if (number < 1) {
+        props.invalid = true;
+    }
+    else if (number <= audioTrackCount) {
+        props = audioEngine->getTrackProperties(number);
+    }
+    else {
+        int midiIndex = number - audioTrackCount - 1;
+        if (midiIndex >= activeMidiTracks) {
+            props.invalid = true;
+        }
+        else {
+            MidiTrack* track = midiTracks[midiIndex];
+            props.frames = track->getLoopFrames();
+            props.cycles = track->getCycles();
+            props.currentFrame = track->getFrame();
+        }
+    }
+    return props;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -248,11 +282,41 @@ void TrackManager::midiSend(juce::MidiMessage& msg, int deviceId)
     kernel->midiSend(msg, deviceId);
 }
 
+void TrackManager::writeDump(juce::String file, juce::String content)
+{
+    kernel->getContainer()->writeDump(file, content);
+}
+
+int TrackManager::scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId)
+{
+    return audioEngine->scheduleFollowerEvent(audioTrack, q, followerTrack, eventId);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
-// Stimuli
+// Audio Block Lifecycle
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * This must be called early during audio block processing to prepare
+ * for incomming actions and the stream.
+ *
+ * This is necessary for Mobius core.
+ *
+ * After this is called, actions may be received and processAudioStream is
+ * expected to be called once.
+ *
+ */
+void TrackManager::beginAudioBlock()
+{
+    // keep doing it this way for now, but need to fix Mobius so we can just
+    // send things to it directly after audio block prep
+    coreActions = nullptr;
+
+    // this is where we would prepare Mobius so we can send it actions
+    // directly rather than queuing coreActions
+}
 
 /**
  * The root of the audio block processing for all midi tracks.
@@ -262,7 +326,30 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     // advance the long press detector, this may call back
     // to longPressDetected to fire an action
     longWatcher.advance(stream->getInterruptFrames());
+
+    // TODO: We now have UIActions to send to core in poorly defined order
+    // this usually does not matter but for for sweep controls like OutputLevel
+    // it can.  From the UI perspective the knob went from 100 to 101 to 102 but
+    // when we pull process the actions we could do them in reverse order leaving it at 100.
+    // They aren't timestamped so we don't know for sure what order Shell received them.
+    // If we're careful we could make assumptions about how the lists are managed,
+    // but that's too subtle, timestamps would be better.  As it stands at the moment,
+    // KernelCommunicator message queues are a LIFO.  With the introduction of the coreActions
+    // list, the order will be reversed again which is what we want, but if the implementation
+    // of either collection changes this could break.
+
+    // tell core it has audio and some actions to do
+    audioEngine->processAudioStream(stream, coreActions);
     
+    // return the queued core ations to the pool
+    UIAction* next = nullptr;
+    while (coreActions != nullptr) {
+        next = coreActions->next;
+        actionPool->checkin(coreActions);
+        coreActions = next;
+    }
+    
+    // then the MIDI tracks
     for (int i = 0 ; i < activeMidiTracks ; i++)
       midiTracks[i]->processAudioStream(stream);
 
@@ -274,13 +361,113 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
 }
 
 /**
+ * Listener callback for LongWatcher.
+ * We're inside processAudioStream and one of the watchers
+ * has crossed the threshold
+ */
+void TrackManager::longPressDetected(UIAction* a)
+{
+    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
+    doTrackAction(a);
+}
+
+void TrackManager::endAudioBlock()
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Actions
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Two variants called from Kernel at different locations.
+ */
+void TrackManager::doAction(UIAction* action)
+{
+    doActionInternal(action, false);
+}
+
+void TrackManager::doActionNoQueue(UIAction* action)
+{
+    doActionInternal(action, true);
+}
+
+/**
+ * Handle an action from various sources determined to be at "core" level.
+ * We do not have to handle upward actions, Kernel has filtered those.
+ * Kernel also handled script actions.
+ *
+ * For stupid historical reasons, Mobius core actions are queued on a list
+ * and sent together with the audio block when processAudioStream is called.
+ * This shit needs to go away.  The exception is actions sent from
+ * scripts which happen after Mobius has been prepared and can happen immediately
+ */
+void TrackManager::doActionInternal(UIAction* action, bool noQueue)
+{
+    // set true if we queue for later rather than process immediately
+    // handling it immediately
+    bool queued = false;
+
+    // fix the action scope
+    int scope = action->getScopeTrack();
+    if (scope == 0) {
+        // ask the container for focus which may be audio or midi
+        // note that this returns the INDEX not the NUMBER and the scope
+        // needs the number
+        scope = getFocusedTrackIndex() + 1;
+    }
+        
+    // kludge: most of the functions can be directed to the specified
+    // track bank, but the few global functions like GlobalReset need to
+    // be sent to both since they don't know about each other's tracks
+    bool global = false;
+    if (action->symbol->functionProperties != nullptr) {
+        global = action->symbol->functionProperties->global;
+
+        // if this was sent down from the UI it will usually have the UI track number in it
+        // because the action is sent into both track bank, the number needs to
+        // be adjusted so that it fits within the bank size to avoid range errors
+        // it doesn't matter what track it actually targets since it is a global function
+        if (global)
+          scope = 0;
+    }
+    action->setScopeTrack(scope);
+
+    if (scope > audioTrackCount || global) {
+        //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
+        doMidiAction(action);
+    }
+
+    if (scope <= audioTrackCount || global) {
+
+        if (noQueue)
+          audioEngine->doAction(action);
+        else {
+            action->next = coreActions;
+            coreActions = action;
+            queued = true;
+        }
+    }
+
+    // kludge, when noQueue is true the action is not pooled
+    // and doesn't have to be reclaimed, too many obscure assumptions, hate this
+    if (!noQueue && !queued)
+      actionPool->checkin(action);
+}
+
+/**
+ * todo: older methods, need to refactor now that we've pulled in the audio/midi
+ * split above
+ *
  * Distribute an action passed down from the UI or from a script
  * to one of the tracks.
  *
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
-void TrackManager::doAction(UIAction* a)
+void TrackManager::doMidiAction(UIAction* a)
 {
     if (a->symbol == nullptr) {
         Trace(1, "TrackManager: UIAction without symbol, you had one job");
@@ -319,16 +506,11 @@ void TrackManager::doTrackAction(UIAction* a)
     }
 }    
 
-/**
- * Listener callback for LongWatcher.
- * We're inside processAudioStream and one of the watchers
- * has crossed the threshold
- */
-void TrackManager::longPressDetected(UIAction* a)
-{
-    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
-    doTrackAction(a);
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Stimuli
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Just asking questions...
