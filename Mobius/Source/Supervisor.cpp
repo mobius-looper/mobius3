@@ -60,6 +60,7 @@
 #include "script/MslExternal.h"
 #include "script/ActionAdapter.h"
 #include "script/ScriptRegistry.h"
+#include "script/ScriptExternals.h"
 
 #include "Supervisor.h"
 
@@ -2302,43 +2303,58 @@ MslContextId Supervisor::mslGetContextId()
 bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 {
     bool success = false;
-    
-    Symbol* s = symbols.find(name);
-    if (s != nullptr) {
 
-        // filter out symbosl that don't represent functions or parameters
-        // though I suppose we could treat Sample symbols like functions
-        // hmm, that could be cool for testing
-        //
-        // BehaviorScript may mean both old and new scripts old ones
-        // need to be treated as functions, but new ones will resolve
-        // within the MSL environment.  Need a way to distinguish those
-        // before we allow them to be called
+    // favor runtime library functions
+    ScriptExternalId extid = ScriptExternals::find(name);
+    if (extid != ExtNone) {
 
-        if (s->behavior == BehaviorParameter ||
-            s->behavior == BehaviorFunction ||
-            s->behavior == BehaviorSample) {
-
-            ext->object = s;
-            ext->type = 0;
-            
-            if (!(s->behavior == BehaviorParameter))
-              ext->isFunction = true;
-
-            // MSL only has two contexts shell and kernel
-            if (s->level == LevelKernel || s->level == LevelCore)
-              ext->context = MslContextKernel;
-            else
-              ext->context = MslContextShell;
-            
-            success = true;
-        }
+        // this sucks, give MslExternal an integer id alternative
+        // to an obejct pointer
+        ext->object = (void*)extid;
+        ext->type = 1;
+        ext->isFunction = true;
+        ext->context = MslContextNone;
+        // todo: some kind of signature definition
+        success = true;
     }
     else {
-        // pass it down to the core for resolution
-        success = mobius->mslResolve(name, ext);
-    }
+        Symbol* s = symbols.find(name);
+        if (s != nullptr) {
 
+            // filter out symbosl that don't represent functions or parameters
+            // though I suppose we could treat Sample symbols like functions
+            // hmm, that could be cool for testing
+            //
+            // BehaviorScript may mean both old and new scripts old ones
+            // need to be treated as functions, but new ones will resolve
+            // within the MSL environment.  Need a way to distinguish those
+            // before we allow them to be called
+
+            if (s->behavior == BehaviorParameter ||
+                s->behavior == BehaviorFunction ||
+                s->behavior == BehaviorSample) {
+
+                ext->object = s;
+                ext->type = 0;
+            
+                if (!(s->behavior == BehaviorParameter))
+                  ext->isFunction = true;
+
+                // MSL only has two contexts shell and kernel
+                if (s->level == LevelKernel || s->level == LevelCore)
+                  ext->context = MslContextKernel;
+                else
+                  ext->context = MslContextShell;
+            
+                success = true;
+            }
+        }
+        else {
+            // pass it down to the core for resolution
+            success = mobius->mslResolve(name, ext);
+        }
+    }
+    
     return success;
 }
 
@@ -2422,7 +2438,12 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 bool Supervisor::mslAction(MslAction* action)
 {
     bool success = false;
-    if (action->external->type == 0) {
+
+    if (action->external->type == 1) {
+        // a library function
+        success = ScriptExternals::doAction(this, action);
+    }
+    else if (action->external->type == 0) {
         Symbol* s = static_cast<Symbol*>(action->external->object);
 
         if (s->id == FuncLoadMidi) {

@@ -1385,6 +1385,18 @@ void MslSession::mslVisit(MslContextNode* con)
 
 /**
  * Keywords have no value
+ *
+ * !! I kind of wish they did.  For externals it's a convenient way
+ * to pass symbols: MidiOut(:note, 0, 42) rather than ("note", 0, 42)
+ *
+ * Why would this also not be useful for enumerations?
+ *
+ *     if (mode == :Reset)
+ *     if (quantize == :subcycle)
+ *
+ * The later could avoid the coercion shenangans we're doing now and would
+ * be consistent with "quoted symbol".  Alternately promote symbol as a MslValue
+ * type that just has the name.
  */
 void MslSession::mslVisit(MslKeyword* key)
 {

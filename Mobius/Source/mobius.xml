@@ -312,8 +312,7 @@
     <Binding name='Message' trigger='key' release='true' value='80' args='p up'/>
     <Binding name='activePreset' trigger='note' value='76' channel='1' args='asdf'/>
     <Binding name='Record' trigger='note' value='64' channel='1'/>
-    <Binding name='SelectTrack' trigger='control' value='15' args='9'/>
-    <Binding name='SelectTrack' trigger='control' value='14' args='2'/>
+    <Binding name='LoadMidi' trigger='control' value='15' args='test.mid 1 1'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

@@ -6,19 +6,39 @@
 
 #pragma once
 
+typedef enum {
+
+    ExtNone,
+    ExtMidiOut,
+    ExtMax
+
+} ScriptExternalId;
+
+/**
+ * Structure that associate a ScriptExternalId with it's name.
+ */
+class ScriptExternalDefinition
+{
+  public:
+    const char* name;
+    ScriptExternalId id;
+
+    static void dump();
+};
+
+extern ScriptExternalDefinition ScriptExternalDefinitions[];
+
 class ScriptExternals
 {
   public:
+    
+    static ScriptExternalId find(juce::String name);
 
-    ScriptExternals(class Supervisor* s) {
-        supervisor = s;
-    }
-    ~ScriptExternals() {}
-
+    static bool doAction(class MslContext* c, class MslAction* action);
+    
   private:
 
-    class Supervisor* supervisor = nullptr;
-
+    static bool MidiOut(class MslContext* c, class MslAction* action);
 };
 
 

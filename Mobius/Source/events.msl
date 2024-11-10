@@ -4,4 +4,14 @@
 
 #name eventHandler
 
-echo($1 $2 $3)
+//echo($1 $2 $3)
+
+if ($1 == "LoopStart") {
+  echo "Loop Start"
+  MidiOut("noteon", 0, 42)
+}
+else {
+  echo $1
+}
+
+

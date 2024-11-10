@@ -794,6 +794,8 @@
         <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
+        <FILE id="F0wdJK" name="ScriptExternals.cpp" compile="1" resource="0"
+              file="Source/script/ScriptExternals.cpp"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"

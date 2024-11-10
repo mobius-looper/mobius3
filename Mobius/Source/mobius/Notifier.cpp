@@ -277,8 +277,11 @@ const char* Notifier::mapNotificationId(NotificationId id)
         case NotificationModeStart: name = "ModeStart"; break;
         case NotificationModeEnd: name = "ModeEnd"; break;
         case NotificationLoopStart: name = "LoopStart"; break;
-        case NotificationCycle: name = "LoopCycle"; break;
-        case NotificationSubcycle: name = "LoopSubcycle"; break;
+        case NotificationLoopCycle: name = "LoopCycle"; break;
+
+            // this may be too noisy?
+            //case NotificationLoopSubcycle: name = "LoopSubcycle"; break;
+            
         default: break;
     }
     return name;

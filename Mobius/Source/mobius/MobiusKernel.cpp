@@ -25,6 +25,7 @@
 #include "../script/MslExternal.h"
 #include "../script/MslWait.h"
 #include "../script/ActionAdapter.h"
+#include "../script/ScriptExternals.h"
 
 #include "../Binderator.h"
 #include "../PluginParameter.h"
@@ -1535,7 +1536,12 @@ void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 bool MobiusKernel::mslAction(MslAction* action)
 {
     bool success = false;
-    if (action->external->type == 0) {
+
+    if (action->external->type == 1) {
+        // a library function
+        success = ScriptExternals::doAction(this, action);
+    }
+    else if (action->external->type == 0) {
         Symbol* symbol = static_cast<Symbol*>(action->external->object);
 
         UIAction uia;

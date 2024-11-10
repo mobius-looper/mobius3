@@ -273,7 +273,10 @@ class Track : public TraceContext
 
     void notifyModeStart(class MobiusMode* mode);
     void notifyModeEnd(class MobiusMode* mode);
-
+    void notifyLoopStart();
+    void notifyLoopCycle();
+    void notifyLoopSubcycle();
+    
   protected:
 
     void setLoop(class Loop* l);

@@ -1721,6 +1721,14 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 			// the UI to refresh itself
 			mTrack->setUISignal();
 		}
+
+        // new notifications
+        if (mBeatLoop)
+          mTrack->notifyLoopStart();
+        else if (mBeatCycle)
+          mTrack->notifyLoopCycle();
+        else if (mBeatSubCycle)
+          mTrack->notifyLoopSubcycle();
 	}
 }
 
@@ -2202,9 +2210,6 @@ void Loop::reset(Action* action)
 	mPlayFrame = mOutput->latency;
 
 	mSynchronizer->loopReset(this);
-
-    // reasonable place for this, where does entering an empty loop go?
-    mMobius->getNotifier()->notify(this, NotificationReset);
 }
 
 /**

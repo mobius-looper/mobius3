@@ -170,7 +170,6 @@ class MslContext
     // unclear what works best, since everything comes in through ScriptClerk
     // it is also in a position to install symbols after loading files
     virtual void mslExport(class MslLinkage* link) = 0;
-    
 
 };
 

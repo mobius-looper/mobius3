@@ -357,6 +357,24 @@ void Track::notifyModeEnd(MobiusMode* mode)
     mNotifier->notify(this, NotificationModeEnd, payload);
 }
 
+void Track::notifyLoopStart()
+{
+    NotificationPayload payload;
+    mNotifier->notify(this, NotificationLoopStart, payload);
+}
+
+void Track::notifyLoopCycle()
+{
+    NotificationPayload payload;
+    mNotifier->notify(this, NotificationLoopCycle, payload);
+}
+
+void Track::notifyLoopSubcycle()
+{
+    NotificationPayload payload;
+    mNotifier->notify(this, NotificationLoopSubcycle, payload);
+}
+
 /****************************************************************************
  *                                                                          *
  *   							  PARAMETERS                                *
@@ -1813,6 +1831,10 @@ void Track::reset(Action* action)
     lp->resetCounter();
 
 	trackReset(action);
+
+    // Do the notification at the track level rather than the loop level
+    // or else we'll get a duplicate notification for every loop in this track
+    mNotifier->notify(this, NotificationReset);
 }
 
 /**
@@ -1827,6 +1849,8 @@ void Track::loopReset(Action* action, Loop* loop)
 
 	loop->reset(action);
 	trackReset(action);
+
+    mNotifier->notify(this, NotificationReset);
 }
 
 /**

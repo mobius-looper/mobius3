@@ -36,8 +36,8 @@ typedef enum {
     NotificationModeStart,
     NotificationModeEnd,
     NotificationLoopStart,
-    NotificationCycle,
-    NotificationSubcycle,
+    NotificationLoopCycle,
+    NotificationLoopSubcycle,
     
 } NotificationId;
 
