@@ -339,38 +339,22 @@ int Track::getCycles()
 //
 //////////////////////////////////////////////////////////////////////
 
-Notification* Track::allocNotification(NotificationId id)
-{
-    Notification* n = mNotifier->alloc();
-    n->id = id;
-    n->trackNumber = mRawNumber + 1;
-    n->loopFrame = (int)(mLoop->getFrame());
-    return n;
-}
-
-void Track::add(Notification* n)
-{
-    mNotifier->add(n);
-}
-
-void Track::notify(NotificationId id)
-{
-    Notification* n = allocNotification(id);
-    mNotifier->add(n);
-}
-
+/**
+ * This is the first notification that requires an argument beyond
+ * what is in TrackProperties.
+ */
 void Track::notifyModeStart(MobiusMode* mode)
 {
-    Notification* n = allocNotification(NotificationModeStart);
-    n->mode = mode;
-    mNotifier->add(n);
+    NotificationPayload payload;
+    payload.mode = mode;
+    mNotifier->notify(this, NotificationModeStart, payload);
 
 }
 void Track::notifyModeEnd(MobiusMode* mode)
 {
-    Notification* n = allocNotification(NotificationModeEnd);
-    n->mode = mode;
-    mNotifier->add(n);
+    NotificationPayload payload;
+    payload.mode = mode;
+    mNotifier->notify(this, NotificationModeEnd, payload);
 }
 
 /****************************************************************************

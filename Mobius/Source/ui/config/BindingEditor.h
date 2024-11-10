@@ -27,6 +27,7 @@ class BindingEditor : public ConfigEditor,
     virtual bool isRelevant(class Binding* b) = 0;
     virtual void addSubclassFields() = 0;
     virtual bool wantsCapture() {return false;}
+    virtual bool wantsPassthrough() {return false;}
     virtual void refreshSubclassFields(class Binding* b) = 0;
     virtual void captureSubclassFields(class Binding* b) = 0;
     virtual void resetSubclassFields() = 0;
@@ -41,6 +42,7 @@ class BindingEditor : public ConfigEditor,
     virtual ~BindingEditor();
 
     bool isCapturing();
+    bool isCapturePassthrough();
     void showCapture(juce::String& stuff);
 
     // Component

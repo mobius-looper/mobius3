@@ -30,6 +30,7 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
     bool isRelevant(class Binding* b) override;
     void addSubclassFields() override;
     bool wantsCapture() override {return true;} 
+    bool wantsPassthrough() override {return true;} 
     void refreshSubclassFields(class Binding* b) override;
     void captureSubclassFields(class Binding* b) override;
     void resetSubclassFields() override;
@@ -40,11 +41,6 @@ class MidiEditor : public BindingEditor, public MidiManager::Monitor
   private:
 
     bool started = false;
-#if 0    
-    Field* messageType = nullptr;
-    Field* messageChannel = nullptr;
-    Field* messageValue = nullptr;
-#endif
     YanCombo messageType {"Type"};
     YanCombo messageChannel {"Channel"};
     YanInput messageValue {"Value", 10};

@@ -7,6 +7,7 @@
       <External path="c:\dev\mobius3\Mobius\Source\midiout.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\events.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -20,6 +21,8 @@
       <File path="c:\dev\mobius3\Mobius\Source\loadmidi.msl" name="loadmidi"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl" name="loadmidi2"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\events.msl" name="eventHandler"
             added="2147483647"/>
     </Files>
   </Machine>

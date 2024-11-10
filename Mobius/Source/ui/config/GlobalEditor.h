@@ -48,8 +48,7 @@ class GlobalEditor : public ConfigEditor
 
     YanForm fileForm;
     YanInput userFiles {"Default User File Folder"};
-    YanCheckbox testCheck {"Test"};
-    YanCheckbox anotherCheck {"Another"};
+    YanInput eventScript {"Event Script"};
     
     Field* ccThreshold = nullptr;
     

@@ -128,8 +128,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     else if (link->function != nullptr) {
         MslSession* session = pool.allocSession();
 
-        // todo: need a way to pass request arguments into the session
-        session->start(c, link->unit, link->function);
+        session->start(c, link->unit, link->function, req->arguments);
 
         if (session->isFinished()) {
 
@@ -230,7 +229,7 @@ MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
         // return results in a different way, and don't make a persistent MslResult
         // if there were errors
         MslSession* session = pool.allocSession();
-        session->start(c, link->unit, link->function);
+        session->start(c, link->unit, link->function, nullptr);
     
         if (session->isFinished()) {
             
@@ -886,7 +885,7 @@ void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
     if (init != nullptr) {
         MslSession* session = pool.allocSession();
 
-        session->start(c, unit, init);
+        session->start(c, unit, init, nullptr);
 
         if (session->isFinished()) {
 

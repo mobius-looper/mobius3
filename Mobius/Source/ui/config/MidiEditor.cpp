@@ -340,7 +340,7 @@ juce::String MidiEditor::renderCapture(const juce::MidiMessage& msg)
 
 bool MidiEditor::midiMonitorExclusive()
 {
-    return true;
+    return !isCapturePassthrough();
 }
 
 /****************************************************************************/

@@ -1,0 +1,7 @@
+//
+// eventScript test
+//
+
+#name eventHandler
+
+echo($1 $2 $3)

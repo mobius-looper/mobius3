@@ -71,7 +71,6 @@ MobiusKernel::MobiusKernel(MobiusShell* argShell, KernelCommunicator* comm)
     communicator = comm;
     // something we did for leak debugging
     Mobius::initStaticObjects();
-    notifier.setPool(&mobiusPools);
 }
 
 void MobiusKernel::setTestMode(bool b)
@@ -137,6 +136,9 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     actionPool = shell->getActionPool();
     configuration = config;
     session = ses;
+
+    notifier.initialize(this);
+    notifier.configure(ses);
 
     // this should replace direct access to configuration and session
     valuator.initialize(container->getSymbols(), container->getMslEnvironment());
@@ -308,6 +310,8 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // sigh, the two new config objects are sent down one at a time,
     // should be together
     valuator.configure(configuration, session);
+
+    notifier.configure(session);
 
     if (mTracks != nullptr)
       mTracks->loadSession(session);

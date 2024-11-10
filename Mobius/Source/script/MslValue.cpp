@@ -39,8 +39,10 @@ void MslValue::copy(MslValue* src)
 
     // I suppose we could support these, but needs more thought if you do
     // bindings will always be atomic, right?
-    if (src->next != nullptr)
-      Trace(1, "MslValue: Unable to copy value on a list");
+    // don't whine about this, it is now being used to copy MslRequest arguemnts
+    // into bindings
+    //if (src->next != nullptr)
+    //Trace(1, "MslValue: Unable to copy value on a list");
 
     if (src->list != nullptr)
       Trace(1, "MslValue: Unable to copy list value");

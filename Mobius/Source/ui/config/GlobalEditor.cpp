@@ -50,10 +50,26 @@ void GlobalEditor::load()
     // things that come from the session
     Session* session = supervisor->getSession();
     userFiles.setValue(session->getString("userFileFolder"));
+    eventScript.setValue(session->getString("eventScript"));
 }
 
+/**
+ * Ugly ordering here.
+ * Because the configuration is now split between MobiusConfig and Session
+ * Supervisor::updateSession and Supervisor::updateMobiusConfig will send down
+ * reconfigure messages for both calls and pass both objects.
+ * To prevent duplicate reconfigure, save things in the Session first,
+ * then save the MobiusConfig and call Supervisor::udpateMobiusConfig to handle both
+ * at once.
+ */
 void GlobalEditor::save()
 {
+    Session* session = supervisor->getSession();
+    session->setJString("userFileFolder", userFiles.getValue());
+    session->setJString("eventScript", eventScript.getValue());
+    // do NOT call this, it will go along with updateMobiusConfig
+    // supervisor->updateSession();
+    
     MobiusConfig* config = supervisor->getMobiusConfig();
     saveGlobal(config);
     supervisor->updateMobiusConfig();
@@ -68,10 +84,6 @@ void GlobalEditor::save()
     dc->pluginConfig.defaultAuxInputs = getPortValue(&pluginInputs, 8) - 1;
     dc->pluginConfig.defaultAuxOutputs = getPortValue(&pluginOutputs, 8) - 1;
     // DeviceConfig is auto-updated on shutdown
-
-    Session* session = supervisor->getSession();
-    session->setJString("userFileFolder", userFiles.getValue());
-    supervisor->updateSession();
 }
 
 /**
@@ -161,9 +173,7 @@ void GlobalEditor::render()
     form.addTab("Files", &fileForm);
     fileForm.addSpacer();
     fileForm.add(&userFiles);
-    testCheck.setAdjacent(true);
-    fileForm.add(&testCheck);
-    fileForm.add(&anotherCheck);
+    fileForm.add(&eventScript);
     
     // place it in the content panel
     addAndMakeVisible(form);

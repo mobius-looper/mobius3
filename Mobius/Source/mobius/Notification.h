@@ -2,9 +2,6 @@
  * Class used to maintain a list of interesting things that happen inside the engine
  * as it runs.  Core code (mostly) posts notifications as things happen, and something
  * (Notifier) eventually consumes these and generates suitable actions.
- *
- * 
- *
  */
 
 #pragma once
@@ -18,7 +15,7 @@ typedef enum {
 
     NotificationNone = 0,
 
-    // newer ones used by MIDI followers
+    // Notifications used by MIDI followers
 
     NotificationFollower,
     NotificationReset,
@@ -33,29 +30,36 @@ typedef enum {
     // multiply/insert do not need notification because they preserved the cycle
     // length, but that might be interesting too
     NotificationLoopSize,
-    
-    // older ones that never went anywyere
 
-    NotificationLoopStart,
-    NotificationLoopEnd,
-    NtificationSubcycle,
-    NotificationCycle,
-    NotificationLoopLocation,
-    NotificationLoopNumber,
-    
-    NotificationFunctionStart,
-    NotificationFunctionEnd,
+    // Notifications of interest to event scripts
+
     NotificationModeStart,
     NotificationModeEnd,
-
-    NotificationParameter,
-    NotificationControl,
-
-    NotificationBeat,
-    NotificationBar,
-    NotificationSyncPoint
-
+    NotificationLoopStart,
+    NotificationCycle,
+    NotificationSubcycle,
+    
 } NotificationId;
+
+/**
+ * Payload of random things that need to be passed with the notification.
+ * This augments what is in the TrackProperties.
+ * This should be kept small and passable by value.
+ */
+class NotificationPayload
+{
+  public:
+
+    // for NotificationModeStart/End
+    class MobiusMode* mode = nullptr;
+    
+};
+
+//////////////////////////////////////////////////////////////////////
+//
+// Old, currently unused
+//
+//////////////////////////////////////////////////////////////////////
 
 typedef enum {
 

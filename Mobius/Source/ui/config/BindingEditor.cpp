@@ -472,8 +472,10 @@ void BindingEditor::initForm()
         form.add(&capture);
         annotation.setAdjacent(true);
         form.add(&annotation);
-        //passthrough.setAdjacent(true);
-        //form.add(&passthrough);
+        if (wantsPassthrough()) {
+            passthrough.setAdjacent(true);
+            form.add(&passthrough);
+        }
     }
 
     addAndMakeVisible(&form);
@@ -520,6 +522,11 @@ void BindingEditor::refreshScopeNames()
 bool BindingEditor::isCapturing()
 {
     return capture.getValue();
+}
+
+bool BindingEditor::isCapturePassthrough()
+{
+    return passthrough.getValue();
 }
 
 /**
@@ -841,7 +848,7 @@ void BindingEditor::resized()
     targets.setBounds(area.getX(), area.getY(), 400, 300);
 
     //form->render();
-    form.setBounds(area.getX(), targets.getY() + targets.getHeight(),
+    form.setBounds(area.getX(), targets.getY() + targets.getHeight() + 8,
                    400, form.getPreferredHeight());
     //form.setTopLeftPosition(area.getX(), targets.getY() + targets.getHeight() + 10);
 }    

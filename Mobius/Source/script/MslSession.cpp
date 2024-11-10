@@ -85,7 +85,8 @@ void MslSession::init()
  * Primary entry point for evaluating a script.
  */
 void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
-                       MslFunction* argFunction)
+                       MslFunction* argFunction,
+                       MslValue* arguments)
 {
     // should be clean out of the pool but make sure
     pool->free(errors);
@@ -111,9 +112,31 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     // also, the last thread to execute overwrite the values of the previous ones
     // todo this the Right Way, static variable bindings need to be more like exported
     // bindings and managed in a single shared location with csects around access
+
+    // !! why is this necessary at all, since findBinding will look in the unit if
+    // falls off the stack?
     stack->bindings = unit->bindings;
     unit->bindings = nullptr;
 
+    // if there were any positional
+    // arguments, add them
+    // these need to be filtered out when the unit bindings are recaptured
+    if (arguments != nullptr) {
+        int position = 1;
+        for (MslValue* arg = arguments ; arg != nullptr ; arg = arg->next) {
+            MslBinding* b = pool->allocBinding();
+            // ownership is retained by the caller at the moment, so have to copy
+            // don't like this
+            MslValue* copy = pool->allocValue();
+            copy->copy(arg);
+            b->value = copy;
+            b->position = position;
+            b->next = stack->bindings;
+            stack->bindings = b;
+            position++;
+        }
+    }
+    
     context = argContext;
     run();
 }
@@ -407,8 +430,31 @@ void MslSession::popStack(MslValue* v)
         // and not locals
         // or we could have the binding reset when the MslVariable that defines
         // them is encountered during evaluation
-        unit->bindings = stack->bindings;
+        // sigh, now have to filter out positionals passed in to start()
+
+        MslBinding* finalBindings = stack->bindings;
         stack->bindings = nullptr;
+
+        MslBinding* b = finalBindings;
+        MslBinding* prev = nullptr;
+        while (b != nullptr) {
+            MslBinding* nextb = b->next;
+            if (b->position > 0) {
+                // it is positional
+                if (prev == nullptr)
+                  finalBindings = nextb;
+                else
+                  prev->next = nextb;
+                b->next = nullptr;
+                pool->free(b);
+            }
+            else {
+                prev = b;
+            }
+            b = nextb;
+        }
+        
+        unit->bindings = finalBindings;
     }
     else if (!parent->accumulator) {
         // replace the last value

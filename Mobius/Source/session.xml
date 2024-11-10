@@ -92,6 +92,7 @@
     <Value name="activeSetup" value="Default"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
+    <Value name="eventScript" value="eventHandler"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>

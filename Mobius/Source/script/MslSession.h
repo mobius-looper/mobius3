@@ -60,7 +60,7 @@ class MslSession : public MslVisitor
     
     // begin evaluation of a function, it will complete or reach a wait state
     void start(class MslContext* context, class MslCompilation* unit,
-               class MslFunction* func);
+               class MslFunction* func, class MslValue* arguments);
     
     // name for logging, usually the MslFunction name
     const char* getName();

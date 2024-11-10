@@ -199,6 +199,12 @@ typedef enum {
     ParamNoEdit,
 
     //
+    // Event scripts
+    //
+
+    ParamEventScript,
+
+    //
     // Mobius Functions
     //
     

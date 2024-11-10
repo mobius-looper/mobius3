@@ -276,6 +276,9 @@ SymbolDefinition SymbolDefinitions[] = {
     {"followQuantizeLocation", ParamFollowQuantizeLocation},
     {"midiChannelOverride", ParamMidiChannelOverride},
 
+    {"eventScript", ParamEventScript},
+    
+
     //
     // Misc track properties
     //
