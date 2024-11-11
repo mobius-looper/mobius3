@@ -140,6 +140,13 @@ bool ScriptExternals::assembleMidiMessage(MslAction* action, juce::MidiMessage& 
         deviceId = arg->getInt();
         arg = arg->next;
     }
+    else if (arg->isNull()) {
+        // most likely an initialized variable that was supposed
+        // to have a deviceId, really anything other than a String is considered
+        // the deviceId
+        Trace(1, "MidiOut: Device id argument was null");
+        arg = arg->next;
+    }
 
     //
     // In retrospect, it would be a lot easier for externals to deal with

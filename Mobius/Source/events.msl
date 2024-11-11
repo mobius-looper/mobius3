@@ -7,14 +7,7 @@
 //echo($1 $2 $3)
 
 var deviceId = GetMidiDeviceId("Bome MIDI Translator 2")
-echo deviceId
 
 if ($1 == "LoopStart") {
-  echo "Loop Start"
-  MidiOut(deviceId, "note", 1, 42, 64)
+    MidiOut("note", 1, 42)
 }
-else {
-  echo $1
-}
-
-

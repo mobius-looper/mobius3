@@ -51,15 +51,17 @@ bool MslVariable::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
-    if (t.type == MslToken::Type::Symbol) {
-        // take this as our name
-        name =  t.value;
-        wants = true;
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            // take this as our name
+            name =  t.value;
+            wants = true;
+        }
     }
     else if (t.type == MslToken::Type::Operator &&
              t.value == "=") {
         // skip past this once we have a name
-        wants = (name.length() > 0);
+        wants = true;
     }
     else {
         // now that we can stick errors in MslParser, is this
@@ -72,9 +74,11 @@ bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
-    if (t.type == MslToken::Type::Symbol) {
-        name =  t.value;
-        wants = true;
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            name =  t.value;
+            wants = true;
+        }
     }
     return wants;
 }

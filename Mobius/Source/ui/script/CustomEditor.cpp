@@ -98,6 +98,10 @@ bool CustomEditor::keyPressed(const juce::KeyPress& key, juce::Component* c)
             else if (code == 'W') {
                 // cut
             }
+            else if (code == 'D') {
+                // delete character
+                deleteForwards(false);
+            }
             else if (code == 'Y') {
                 // yank aka copy from clipboard if you
                 // don't have a copy list
@@ -127,6 +131,10 @@ bool CustomEditor::keyPressed(const juce::KeyPress& key, juce::Component* c)
             }
             else if (code == 'W') {
                 // copy and clear selection
+            }
+            else if (code == 'D') {
+                // delete word forward
+                deleteForwards(true);
             }
         }
         else if ((raw & juce::ModifierKeys::altModifier) &&

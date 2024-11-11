@@ -148,7 +148,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
                 // may have interesting runtime statistics or complex result values as well
 
                 MslValue* result = session->getValue();
-                if (result != nullptr) {
+                if (result != nullptr && !result->isNull()) {
                     Trace(2, "MslEnvironment: Script returned %s", result->getString());
 
                     // copy the value rather than the object so the caller doesn't have
