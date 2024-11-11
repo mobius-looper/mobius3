@@ -372,11 +372,17 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
             MslFunctionNode* func = nullptr;
             MslVariable *var = nullptr;
 
-            if (child->isFunction())
-              func = static_cast<MslFunctionNode*>(child);
-        
-            else if (child->isVariable())
-              var = static_cast<MslVariable*>(child);
+            // match the symbol name to either a function of variable definition
+            if (child->isFunction()) {
+                func = static_cast<MslFunctionNode*>(child);
+                if (func->name != sym->token.value)
+                  func = nullptr;
+            }
+            else if (child->isVariable()) {
+                var = static_cast<MslVariable*>(child);
+                if (var->name != sym->token.value)
+                  var = nullptr;
+            }
 
             if (func != nullptr && var != nullptr) {
                 // a block had both a function and a variable with the same name

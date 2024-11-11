@@ -571,6 +571,43 @@ MslBinding* MslSession::findBinding(int position)
     return found;
 }
 
+/**
+ * This is a user accessible function exposed through MslSessionInterface
+ * which is returned in an MslAction.  The containing application may use this
+ * to obtain the values of random script variables, similar to the way
+ * internal functions can freely reference dynamically bound variables.
+ *
+ * The returned value is "live" and remains owned by the session and should
+ * not be modified.  This just saves having to make a copy since the caller almost
+ * never needs to retain one and has to remember to free it.  But it's dangerous
+ * and can hose the session if they mishandle it so might want to copy it anyway.
+ * Also consider having a set of getInt, getString functions that don't copy and
+ * don't need to be freed but whose value is not guaraneteed to remain stable.
+ */
+MslValue* MslSession::getVariable(const char* name)
+{
+    MslValue* value = nullptr;
+
+    MslBinding* binding = findBinding(name);
+    if (binding != nullptr) {
+        value = binding->value;
+    }
+    else {
+        // MslSymbol evaluation will at this point look for an
+        // MslResolution that may have an MslLinksge to an exported
+        // variable from another script.  We can't do pre-resolution
+        // but it's a small amount of overhead.
+        MslLinkage* link = environment->find(juce::String(name));
+        if (link != nullptr && link->variable != nullptr) {
+
+            // see MslSession::returnVariable for why this isn't implemented yet
+        }
+    }
+    
+
+    return value;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Literal

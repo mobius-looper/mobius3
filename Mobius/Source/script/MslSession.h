@@ -22,6 +22,7 @@
 #include "MslError.h"
 #include "MslBinding.h"
 #include "MslWait.h"
+#include "MslContext.h"
 
 /**
  * This should live inside MslParser and it should do the work.
@@ -46,7 +47,7 @@ enum MslOperators {
     MslAmp
 };
 
-class MslSession : public MslVisitor
+class MslSession : public MslVisitor, public MslSessionInterface
 {
     friend class MslEnvironment;
     friend class MslConductor;
@@ -77,6 +78,9 @@ class MslSession : public MslVisitor
 
     // what we're waiting on
     class MslWait* getWait();
+
+    // MslSessionInterface
+    MslValue* getVariable(const char* name) override;
 
     // results after finishing
     MslValue* getValue();

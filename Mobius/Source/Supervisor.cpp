@@ -2307,11 +2307,8 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
     // favor runtime library functions
     ScriptExternalId extid = ScriptExternals::find(name);
     if (extid != ExtNone) {
-
-        // this sucks, give MslExternal an integer id alternative
-        // to an obejct pointer
-        ext->object = (void*)extid;
         ext->type = 1;
+        ext->id = (int)extid;
         ext->isFunction = true;
         ext->context = MslContextNone;
         // todo: some kind of signature definition
@@ -2334,8 +2331,9 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
                 s->behavior == BehaviorFunction ||
                 s->behavior == BehaviorSample) {
 
-                ext->object = s;
                 ext->type = 0;
+                // these use a full blown object pointer rather than an id
+                ext->object = s;
             
                 if (!(s->behavior == BehaviorParameter))
                   ext->isFunction = true;

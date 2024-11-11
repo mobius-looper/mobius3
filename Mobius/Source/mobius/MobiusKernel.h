@@ -161,6 +161,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // used by the MidiOut function handler
     void midiSendSync(juce::MidiMessage& msg);
     void midiSendExport(juce::MidiMessage& msg);
+    void midiSend(juce::MidiMessage& msg, int deviceId);
+    int getMidiOutputDeviceId(const char* name);
 
   protected:
 
@@ -213,10 +215,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     //
     void coreWaitFinished(class MslWait* wait);
 
-    // used by TrackManager to send to the host or forward to MidiManager
-    void midiSend(juce::MidiMessage& msg, int deviceId);
-    int getMidiOutputDeviceId(const char* name);
-    
     // used by Mobius to trigger clips after a core event
     void clipStart(int audioTrack, const char* bindingArgs);
 

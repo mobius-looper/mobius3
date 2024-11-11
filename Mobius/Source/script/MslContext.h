@@ -85,6 +85,24 @@ class MslQuery
 };
 
 /**
+ * The interface of an object placed in an MslAction that may be used
+ * to obtain additional information from the script runtime environment.
+ * This is actually an MslSession, but hides the dangerolus parts and reduces
+ * the compile time dependencies on the caller.
+ */
+class MslSessionInterface
+{
+  public:
+    
+    virtual ~MslSessionInterface() {}
+
+    /**
+     * Obtain the value of a bound variable.
+     */
+    virtual MslValue* getVariable(const char* name) = 0;
+};
+
+/**
  * MslAction defines a collection of state necessary to DO something.
  * Actions are used for two things: calling a function or assigning a variable.
  *
@@ -106,15 +124,25 @@ class MslAction
     MslAction() {}
     ~MslAction() {}
 
+    // action target, usually a symbol or a library fucntion
     class MslExternal* external = nullptr;
+
+    // positional arguments on a list
     MslValue* arguments = nullptr;
+
+    // script session that created this action, can be by library functions
+    // to pull additional information from the script runtime environment
+    class MslSessionInterface* session = nullptr;
 
     // actions may have a scope identifier when using "IN"
     // currently this is a track number but should be more flexible
     // about abstract scope names
     int scope = 0;
 
+    // the value you are supposed to fill in if the function returns a value
     MslValue result;
+
+    // an error message to be returned to the interpreter
     MslContextError error;
 
     // opaque pointer to an object in the context representing an asynchronous

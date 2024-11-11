@@ -465,6 +465,7 @@ void MslSession::callExternal(MslSymbol* snode)
     else {
         MslAction action;
 
+        action.session = this;
         action.external = external;
         action.scope = getTrackScope();
 

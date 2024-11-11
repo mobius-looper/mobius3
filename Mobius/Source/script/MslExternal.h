@@ -101,14 +101,18 @@ class MslExternal
     bool isFunction = false;
 
     // the signature specification supplied by the container
-    juce::String signatureDefinition; 
-    
-    // the primary pointer to the application object that implements this symbol
-    void *object = nullptr;
+    juce::String signatureDefinition;
 
-    // a value indiciating the type of this pointer if there can be more than one
-    // class of object being referenced
+    // a value indiciating an type identifier when the container needs
+    // to use ids that aren't unique or pointers to different things
     int type = 0;
+
+    // a value identifying something of this type when pointers are not required
+    int id = 0;
+
+    // a pointer to the application object that implements this symbol
+    // usually either this or an id is set but not both
+    void *object = nullptr;
 
     // todo: a small number of random arguments that may be necessary
     // to evaluate this external symbol?
@@ -118,8 +122,9 @@ class MslExternal
         name = src.name;
         context = src.context;
         isFunction = src.isFunction;
-        object = src.object;
         type = src.type;
+        id = src.id;
+        object = src.object;
     }
 
   private:
