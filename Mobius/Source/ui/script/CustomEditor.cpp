@@ -96,15 +96,20 @@ bool CustomEditor::keyPressed(const juce::KeyPress& key, juce::Component* c)
                 setHighlightedRegion(juce::Range<int>());
             }
             else if (code == 'W') {
-                // cut
+                cut();
             }
             else if (code == 'D') {
                 // delete character
                 deleteForwards(false);
             }
+            else if (code == 'K') {
+                // delete line
+                deleteForwards(false);
+            }
             else if (code == 'Y') {
                 // yank aka copy from clipboard if you
                 // don't have a copy list
+                paste();
             }
         }
         else if (raw == juce::ModifierKeys::altModifier) {
@@ -131,6 +136,7 @@ bool CustomEditor::keyPressed(const juce::KeyPress& key, juce::Component* c)
             }
             else if (code == 'W') {
                 // copy and clear selection
+                copy();
             }
             else if (code == 'D') {
                 // delete word forward

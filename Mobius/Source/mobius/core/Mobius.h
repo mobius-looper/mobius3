@@ -410,6 +410,7 @@ class Mobius
     class MobiusContainer* mContainer;
     class MobiusPools* mPools = nullptr;
     class Notifier* mNotifier = nullptr;
+    class Valuator* mValuator = nullptr;
     // the stream we are currently processing
     class MobiusAudioStream* mStream = nullptr;
 

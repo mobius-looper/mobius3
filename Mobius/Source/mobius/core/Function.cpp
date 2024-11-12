@@ -444,6 +444,9 @@ bool Function::isSustainable()
  * This is true if the function is considered a SUS function which
  * starts on the down transition and stops on the up transition.
  * In a few cases this is sensitive to the preset.
+ *
+ * new: This doesn't look like it uses the Preset, but some Functions
+ * overload this and use it.
  */
 bool Function::isSustain(Preset* p)
 {
@@ -453,6 +456,8 @@ bool Function::isSustain(Preset* p)
 
 /**
  * This is true if the function is can be used during recording.
+ * new: This doesn't look like it uses the Preset, but some Functions
+ * overload this and use it.
  */
 bool Function::isRecordable(Preset* p)
 {

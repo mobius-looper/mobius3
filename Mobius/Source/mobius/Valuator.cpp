@@ -514,6 +514,26 @@ EmptyLoopAction Valuator::getEmptyLoopAction(int trackId)
     return (EmptyLoopAction)getParameterOrdinal(trackId, ParamEmptyLoopAction);
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Sustain
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This just tries to replicate the old functionality using ths same model,
+ * which is an ugly combination of Function flags and a Preset parameter sustsinFunctions
+ */
+bool Valuator::isSustain(int trackId, Function* f)
+{
+    bool sustain = false;
+    
+    if (trackId <= audioTracks) {
+    }
+
+    return sustain;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
