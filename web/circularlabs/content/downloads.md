@@ -18,17 +18,16 @@ Also be careful if you are running Intel host applications on a Silicon Mac usin
 
 I am aware that the icon displayed on the Mac is garbled when you run the standalone application.
 
-## Build 24
-- Merge multi-track MIDI files when loading
-- Fix MidiOut script command sending through host 
-- Fix plugin export device not being saved on shutdown
-- Fix MIDI bindings routed through the host not targeting MIDI tracks
-- Add selective quantization for MIDI track functions, including Start/Stop/Pause
-- Add Follow Quantize Location to quantize events to leader track boundaries
-- Add LoadMidi function for MSL scripts
-- Add LoadMidi bindings to load files without scripts
-- Improvements to Undo/Redo in MIDI tracks
-- Improvements to auto-resizing when changing leader or follower loop sizes
+## Build 25
+- Track select functions now work with MIDI sent through the host
+- Remember the last edited binding set when returning to Edit MIDI Bindings panel
+- MIDI Binding editor supports an "Active" checkbox to pass MIDI events through to the engine for testing
+- Preset selectors in the Setup editor refresh to show newly added Preset names
+- Fix Delete in the Preset editor not working
+- Release bindings: Different bindings for press and release of the same note or cc
+- MIDI Channel Override when playing MIDI tracks
+- Early support for "Event Scripts" that run automatically in response to track state
+- MSL support for MidiOut and GetMidiDeviceId built-in functions
 
 ## Windows Security
 
@@ -50,6 +49,18 @@ On MacOS, the standalone application will be installed in `/Applications`, VST3 
 The mobius.xml and other supping files are installed in `/Users/<yourname>/Library/Application Support/Circular Labs/Mobius`.  This folder will be created only when you run the application or plugin for the first time.  As with Windows, I prefer to keep the configuration XML files under the `Users` folder so that they may be more easily edited manually without file permission problems.
 
 ## Older Releases
+
+## Build 24
+- Merge multi-track MIDI files when loading
+- Fix MidiOut script command sending through host 
+- Fix plugin export device not being saved on shutdown
+- Fix MIDI bindings routed through the host not targeting MIDI tracks
+- Add selective quantization for MIDI track functions, including Start/Stop/Pause
+- Add Follow Quantize Location to quantize events to leader track boundaries
+- Add LoadMidi function for MSL scripts
+- Add LoadMidi bindings to load files without scripts
+- Improvements to Undo/Redo in MIDI tracks
+- Improvements to auto-resizing when changing leader or follower loop sizes
 
 ## Build 23
 - MIDI File support with leader/follower tracks and auto-resizing
