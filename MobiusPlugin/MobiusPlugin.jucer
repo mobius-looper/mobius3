@@ -89,6 +89,10 @@
         <FILE id="xTMPD5" name="MslWaitNode.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWaitNode.cpp"/>
         <FILE id="v0yPX5" name="ScriptClerk.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptClerk.cpp"/>
         <FILE id="tp2f5F" name="ScriptClerk.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptClerk.h"/>
+        <FILE id="VQHqf6" name="ScriptExternals.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/ScriptExternals.cpp"/>
+        <FILE id="uC7Ulc" name="ScriptExternals.h" compile="0" resource="0"
+              file="../Mobius/Source/script/ScriptExternals.h"/>
         <FILE id="FiJ9fY" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ScriptRegistry.cpp"/>
         <FILE id="IhoShr" name="ScriptRegistry.h" compile="0" resource="0"
