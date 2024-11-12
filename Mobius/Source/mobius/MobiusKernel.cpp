@@ -853,7 +853,7 @@ void MobiusKernel::updateParameters()
                 Query q;
                 q.symbol = s;
                 q.scope = trackNumber;
-                if (mCore->doQuery(&q)) {
+                if (mTracks->doQuery(&q)) {
                     if (q.value != param->get())
                       param->set(q.value);
                 }
@@ -1272,19 +1272,7 @@ void MobiusKernel::coreTimeBoundary()
  */
 bool MobiusKernel::doQuery(Query* q)
 {
-    bool success = false;
-
-    // note index math, since Query.scope is 1 based
-    // it may be equal to audioTracks, when it goes over it
-    // is a midi track
-    if (q->scope > audioTracks) {
-        success = mTracks->doQuery(q);
-    }
-    else {
-        if (mCore != nullptr)
-          success = mCore->doQuery(q);
-    }
-    return success;
+    return mTracks->doQuery(q);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1465,11 +1453,12 @@ bool MobiusKernel::mslQuery(MslQuery* query)
 {
     bool success = false;
     if (query->external->type == 0) {
+        // a parameter
         Query q;
         q.symbol = static_cast<Symbol*>(query->external->object);
         q.scope = query->scope;
 
-        doQuery(&q);
+        (void)mTracks->doQuery(&q);
 
         mutateMslReturn(q.symbol, q.value, &(query->value));
 

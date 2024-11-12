@@ -105,7 +105,7 @@ class Valuator
      * Encapsulates old ugly logic around determining whether a core Function
      * can sustain.
      */
-    bool isSustain(int trackId, Function* f);
+    bool isSustain(int trackId, class Function* f);
     
 
   private:

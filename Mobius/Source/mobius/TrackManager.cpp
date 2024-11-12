@@ -597,7 +597,7 @@ void TrackManager::doTrackSelectAction(UIAction* a)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Stimuli
+// Parameters
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -606,24 +606,42 @@ void TrackManager::doTrackSelectAction(UIAction* a)
  */
 bool TrackManager::doQuery(Query* q)
 {
+    bool status = false;
+    
     if (q->symbol == nullptr) {
         Trace(1, "TrackManager: UIAction without symbol, you had one job");
     }
     else {
-        // convert the visible track number to a local array index
-        // this is where we will need some sort of mapping table
-        // if you allow tracks to be reordered in the UI
-        int localIndex = q->scope - audioTrackCount - 1;
-        if (localIndex < 0 || localIndex >= activeMidiTracks) {
-            Trace(1, "TrackManager: Invalid query scope %d", q->scope);
+        int trackNumber = q->scope;
+        if (trackNumber <= 0)
+          trackNumber = getFocusedTrackIndex() + 1;
+
+        if (trackNumber <= audioTrackCount) {
+            status = audioEngine->doQuery(q);
         }
         else {
-            MidiTrack* track = midiTracks[localIndex];
-            track->doQuery(q);
+            // convert the visible track number to a local array index
+            // this is where we will need some sort of mapping table
+            // if you allow tracks to be reordered in the UI
+            int midiIndex = trackNumber - audioTrackCount - 1;
+            if (midiIndex >= activeMidiTracks) {
+                Trace(1, "TrackManager: Invalid query scope %d", q->scope);
+            }
+            else {
+                MidiTrack* track = midiTracks[midiIndex];
+                track->doQuery(q);
+                status = true;
+            }
         }
     }
-    return true;
+    return status;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Other Stimuli
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * To start out, we'll be the common listener for all tracks but eventually

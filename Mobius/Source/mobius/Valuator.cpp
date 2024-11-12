@@ -24,6 +24,8 @@
 #include "../script/MslValue.h"
 #include "../script/MslBinding.h"
 
+#include "core/Function.h"
+
 #include "MobiusInterface.h"
 
 #include "MobiusShell.h"
@@ -526,9 +528,21 @@ EmptyLoopAction Valuator::getEmptyLoopAction(int trackId)
  */
 bool Valuator::isSustain(int trackId, Function* f)
 {
+    (void)f;
     bool sustain = false;
-    
-    if (trackId <= audioTracks) {
+
+    if (trackId < 1) {
+        Trace(1, "Valuator: Invalid track number %d", trackId);
+    }
+    else if (trackId <= audioActive) {
+        // todo: lots of nonesense around Parameters and sustainFunctions parameter
+    }
+    else {
+        // in the MIDI range
+        // don't have Presets here so I guess sustainFunctions if we keep them
+        // would be in the Session root
+        // else used FunctionProperties, and should be doing this  consisntently in
+        // audio tracks
     }
 
     return sustain;
