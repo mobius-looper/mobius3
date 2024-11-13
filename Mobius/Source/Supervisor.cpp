@@ -410,11 +410,18 @@ bool Supervisor::start()
     meter("Display Update");
     
     // initial display update if we're standalone
+    // new: having some timing problems in GP with MIDI commands to
+    // initialize things needing to have a refreshed view before the
+    // editor window is open, always do a view refresh
+    OldMobiusState* state = mobius->getState();
+    mobiusViewer.refresh(mobius, state, &mobiusView);
+    // nothing has been displayed set so turn on all the flags
+    mobiusViewer.forceRefresh(&mobiusView);
+
+    // not sure why I thought it was desireable to defer this for
+    // the plugin, seems harmless even though the editor window
+    // may not be open
     if (mainComponent != nullptr) {
-        OldMobiusState* state = mobius->getState();
-        mobiusViewer.refresh(mobius, state, &mobiusView);
-        // nothing has been displayed set so turn on all the flags
-        mobiusViewer.forceRefresh(&mobiusView);
         win->update(&mobiusView);
     }
 
@@ -1358,7 +1365,7 @@ Session* Supervisor::getSession()
  * The only thing sensitive to this right now is MobiusKernel
  * and MidiTracker.
  */
-void Supervisor::updateSession()
+void Supervisor::updateSession(bool noPropagation)
 {
     if (session) {
         Session* s = session.get();
@@ -1371,7 +1378,10 @@ void Supervisor::updateSession()
         pulsator.configure();
 
         // tell the engine to reorganize tracks, this will lag till the next interrupt
-        mobius->reconfigure(getMobiusConfig(), s);
+        // this may be delayed in some configuration panels that edit both the session
+        // and the MobiusConfig so we only reconfigure Mobius once
+        if (!noPropagation)
+          mobius->reconfigure(getMobiusConfig(), s);
         
         // tell the view to prepare for track changes
         mobiusViewer.configure(&mobiusView);

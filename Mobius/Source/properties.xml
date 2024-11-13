@@ -21,6 +21,7 @@
   <Property symbol="Overdub" name="focus" value="true"/>
   <Property symbol="Overdub" name="muteCancel" value="true"/>
   <Property symbol="Pause" name="focus" value="true"/>
+  <Property symbol="Pause" name="quantized" value="true"/>
   <Property symbol="PitchDown" name="focus" value="true"/>
   <Property symbol="PitchNext" name="focus" value="true"/>
   <Property symbol="PitchPrev" name="focus" value="true"/>
@@ -59,4 +60,5 @@
   <Property symbol="TrimStart" name="focus" value="true"/>
   <Property symbol="Undo" name="focus" value="true"/>
   <Property symbol="Undo" name="confirmation" value="true"/>
+  <Property symbol="Stop" name="quantized" value="true"/>
 </Properties>

@@ -540,6 +540,9 @@ void Symbolizer::parseProperty(juce::XmlElement* el)
             else if (pname == "muteCancel") {
                 s->functionProperties->muteCancel = bvalue;
             }
+            else if (pname == "quantized") {
+                s->functionProperties->quantized = bvalue;
+            }
             else {
                 Trace(1, "Symbolizer: Undefined property name %s\n", pname.toUTF8());
             }
@@ -586,6 +589,9 @@ void Symbolizer::saveSymbolProperties()
             
             if (symbol->functionProperties->muteCancel)
               addProperty(xmlroot, symbol, "muteCancel", "true");
+
+            if (symbol->functionProperties->quantized)
+              addProperty(xmlroot, symbol, "quantized", "true");
         }
         else if (symbol->parameterProperties != nullptr) {
             if (symbol->parameterProperties->focus)

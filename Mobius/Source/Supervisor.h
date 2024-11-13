@@ -186,7 +186,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // this is override because it is also part of MobiusContainer
     class Session* getSession() override;
-    void updateSession();
+    void updateSession(bool noPropagation=false);
     
     class HelpCatalog* getHelpCatalog();
     class DynamicConfig* getDynamicConfig();

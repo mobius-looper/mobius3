@@ -58,6 +58,16 @@ class MslRequest
      */
     MslValue* arguments = nullptr;
 
+    /**
+     * For script calls, a set of named arguments that can be used
+     * as an alternative to the "arguments" list which can only be referenced
+     * positionally with $x.  Normally only one of bindings or arguments will
+     * be set in the request.  In theory should allow both and merge them, in the
+     * same way that function call keywowrd arguments are assembled using both named
+     * and position arguments.
+     */
+    MslBinding* bindings = nullptr;
+
     //
     // Results
     //

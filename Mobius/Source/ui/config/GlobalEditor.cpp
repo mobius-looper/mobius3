@@ -67,8 +67,11 @@ void GlobalEditor::save()
     Session* session = supervisor->getSession();
     session->setJString("userFileFolder", userFiles.getValue());
     session->setJString("eventScript", eventScript.getValue());
-    // do NOT call this, it will go along with updateMobiusConfig
-    // supervisor->updateSession();
+    // note the use of the special noPropagation argument to cause
+    // the file to be saved, but defer the propagation of the changes
+    // until the call to updateMobiusConfig to prevent two back-to-back
+    // propagations to the kernel
+    supervisor->updateSession(true);
     
     MobiusConfig* config = supervisor->getMobiusConfig();
     saveGlobal(config);

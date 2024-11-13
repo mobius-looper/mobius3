@@ -13,13 +13,14 @@
       <Value name="followRecordEnd" value="1" type="int"/>
       <Value name="followSize" value="1" type="int"/>
       <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="inputDevice" value="Host"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="track" type="enum" ordinal="1"/>
       <Value name="loopCount" value="2"/>
       <Value name="midiChannelOverride" value="off" type="enum" ordinal="0"/>
       <Value name="midiThru" value="1" type="int"/>
-      <Value name="outputDevice" value="Bome MIDI Translator 1"/>
+      <Value name="outputDevice" value="Host"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
@@ -92,7 +93,7 @@
     <Value name="activeSetup" value="Default"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
-    <Value name="eventScript" value="eventHandler"/>
+    <Value name="eventScript" value="eventHandler29"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>

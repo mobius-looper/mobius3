@@ -358,6 +358,10 @@ void TrackScheduler::doActionNow(UIAction* a)
             track->doStart();
             break;
 
+        case FuncPlay:
+            track->doPlay();
+            break;
+
         default: {
             char msgbuf[128];
             snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",

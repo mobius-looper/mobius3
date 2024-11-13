@@ -573,7 +573,7 @@ UIAction* Binderator::buildAction(SymbolTable* symbols, Binding* b)
             // sustain options so those need to be corrected when this one is 
             // added to the entry table
         }
-        if (trigger == TriggerKey) {
+        else if (trigger == TriggerKey) {
             // these are implicitly sustainable, but I suppose you might
             // want to turn that OFF in some cases, so look at the mode if specified
             // in practice, this would be done by setting mode to Once
@@ -718,6 +718,10 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                 action->sustainEnd = true;
                 send = action;
             }
+            else if (action->release) {
+                // or if it is a release action
+                send = action;
+            }
         }
         else if (message.isController()) {
             int ccvalue = message.getControllerValue();
@@ -738,6 +742,9 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                         action->sustainEnd = true;
                         send = action;
                     }
+                    else if (action->release) {
+                        send = action;
+                    }
                 }
                 else if (ccvalue >= controllerThreshold) {
                     // it's "down"
@@ -745,7 +752,7 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                 }
             }
             else if (behavior == BehaviorScript) {
-                // these are treated like functeions unless the
+                // these are treated like functions unless the
                 // continuous flag is set
                 if (action->symbol->script != nullptr &&
                     action->symbol->script->continuous) {
@@ -759,6 +766,9 @@ UIAction* Binderator::handleMidiEvent(const juce::MidiMessage& message)
                     if (ccvalue == 0) {
                         if (action->sustain) {
                             action->sustainEnd = true;
+                            send = action;
+                        }
+                        else if (action->release) {
                             send = action;
                         }
                     }
