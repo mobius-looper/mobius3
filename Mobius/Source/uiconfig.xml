@@ -119,7 +119,7 @@
     <Button action="SyncMasterTrack"/>
     <Button action="Start"/>
     <Button action="Stop"/>
-    <Button action="Play"/>
+    <Button action="Pause"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

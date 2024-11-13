@@ -58,7 +58,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     static int InstanceCount;
     static int MaxInstanceCount;
     
-    static const int BuildNumber = 25;
+    static const int BuildNumber = 26;
 
     /**
      * Standalone Supervisor is statically constructed by MainComponent.

@@ -562,7 +562,7 @@ void MidiPlayer::sendOn(MidiEvent* note)
             juce::MidiMessage msg =
                 juce::MidiMessage::noteOn(channelOverride,
                                           note->juceMessage.getNoteNumber(),
-                                          (juce::uint8)(note->releaseVelocity));
+                                          note->juceMessage.getVelocity());
             track->midiSend(msg, outputDevice);
             // remember this in the held note tracking state so we turn
             // off the right one
