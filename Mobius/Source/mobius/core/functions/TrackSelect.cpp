@@ -341,7 +341,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                     // all behave like trackLeaveMode=wait.
                     // REALLY need a consistent ending method on MobiusMode...
                     
-                    Mobius* m = l->getMobius();
+                    //Mobius* m = l->getMobius();
                     Action* stopAction = m->cloneAction(action);
 
                     bool oldWay = false;
@@ -423,7 +423,7 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
                 }
                 else if (mode == RecordMode || mode == RehearseRecordMode) {
                     // secondary event, have to clone the Action
-                    Mobius* m = l->getMobius();
+                    //Mobius* m = l->getMobius();
 
                     Action* stopAction = m->cloneAction(action);
 
