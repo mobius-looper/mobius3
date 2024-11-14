@@ -234,14 +234,17 @@ Event* TrackSelectFunction::invoke(Action* action, Loop* l)
 
     if (action->down) {
 		trace(action, l);
+        Mobius* m = l->getMobius();
 
         // MIDI track hack, if the number is out of range, punt and pass it up
+        // this doesn't do enough to be useful since actions from the script won't go there anyway
+#if 0
         int nextNumber = action->arg.getInt();
-        Mobius* m = l->getMobius();
         if (nextNumber >= m->getTrackCount()) {
             m->trackSelectMidi(nextNumber);
             return nullptr;
         }
+#endif        
         
         EventManager* em = l->getTrack()->getEventManager();
         Event* prev = em->findEvent(eventType);
