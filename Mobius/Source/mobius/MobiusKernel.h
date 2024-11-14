@@ -191,6 +191,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     // used by Mobius to send an action up the levels
     void doActionFromCore(UIAction* action);
+    // used by Mobius to redirect TrackSelect to a MIDI track
+    void trackSelectFromCore(int number);
     
     // Sample function handler for the core
     // normally called only from a script

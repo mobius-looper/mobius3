@@ -336,6 +336,8 @@ class Mobius
 
     void midiSendSync(juce::MidiMessage& msg);
     void midiSendExport(juce::MidiMessage& msg);
+
+    void trackSelectMidi(int number);
     
     //////////////////////////////////////////////////////////////////////
     // 

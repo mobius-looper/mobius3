@@ -1821,6 +1821,15 @@ void Mobius::midiSendExport(juce::MidiMessage& msg)
     mKernel->midiSendExport(msg);
 }
 
+/**
+ * New method called by the TrackSelect function when it sees a track number
+ * that is out of range, which now means a MIDI track.  Let Kernel handle it.
+ */
+void Mobius::trackSelectMidi(int number)
+{
+    mKernel->trackSelectFromCore(number);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Legacy Interface for internal components

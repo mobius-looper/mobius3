@@ -1103,6 +1103,29 @@ void MobiusKernel::doActionFromCore(UIAction* action)
 }
 
 /**
+ * Here from the old TrackSelect function which only knows how to deal with
+ * audio tracks, and received an action argument that was out of range.
+ * Assuming this is within the MIDI track range, send an action there.
+ *
+ * In retrospect this is mostly irrelevant because we could only get here from "Track X"
+ * in a script and there are SO many things old scripts can't do to MIDI tracks once
+ * they're selected.
+ */
+void MobiusKernel::trackSelectFromCore(int number)
+{
+    if (number < audioTracks) {
+        // core should have handled this it's own self
+        Trace(1, "MobiusKernel::trackSelectFromCore Unexpected audio track number %d", number);
+    }
+    else {
+        UIAction action;
+        action.symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
+        action.value = number;
+        mTracks->doActionNoQueue(&action);
+    }
+}
+
+/**
  * Called by a core function to allocate a UIAction from the pool.
  * This will normally be almost immediately passed to doActionFromCore
  */
