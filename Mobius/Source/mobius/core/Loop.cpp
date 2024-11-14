@@ -1665,6 +1665,14 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 
 	long loopFrames = layer->getFrames();
 
+    // can't use mBeatLoop etc. for event script notificiaations since
+    // clearing those is under the control of the UI which may be unresponsive
+    // at times, only send script notifications in the block where
+    // this actually happens
+    bool beatLoop = false;
+    bool beatCycle = false;
+    bool beatSubcycle = false;
+
 	if (loopFrames == 0) {
 		// how can this happen?
 		Trace(this, 1, "Loop: notifyBeatListeners: zero length loop\n");
@@ -1683,6 +1691,7 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 
         if (delta < frames) {
             mBeatLoop = true;
+            beatLoop = true;
             // don't have WatchPoints any more
             //LoopStartPoint->notify(mMobius, this);
         }
@@ -1698,6 +1707,7 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 			// then this block of frames surrounded a cycle boundary
 			if (delta - frames <= 0) {
                 mBeatCycle = true;
+                beatCycle = true;
                 //LoopCyclePoint->notify(mMobius, this);
             }
 		}
@@ -1712,6 +1722,7 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 		delta = lastBufferFrame % tickFrames;
 		if (delta - frames <= 0) {
             mBeatSubCycle = true;
+            beatSubcycle = true;
             //LoopSubcyclePoint->notify(mMobius, this);
         }
 
@@ -1723,11 +1734,12 @@ void Loop::notifyBeatListeners(Layer* layer, long frames)
 		}
 
         // new notifications
-        if (mBeatLoop)
+        // use the new flags that get reset every time!
+        if (beatLoop)
           mTrack->notifyLoopStart();
-        else if (mBeatCycle)
+        else if (beatCycle)
           mTrack->notifyLoopCycle();
-        else if (mBeatSubCycle)
+        else if (beatSubcycle)
           mTrack->notifyLoopSubcycle();
 	}
 }

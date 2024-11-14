@@ -468,15 +468,16 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
  */
 void TrackManager::doMidiAction(UIAction* a)
 {
-    // todo: will need the same replication for GlobalMute and GlobalPause
-    if (a->symbol->id == FuncGlobalReset) {
+    FunctionProperties* props = a->symbol->functionProperties.get();
+    if (props != nullptr && props->global) {
         for (int i = 0 ; i < activeMidiTracks ; i++)
           midiTracks[i]->doAction(a);
 
         // having some trouble with stuck notes in the watcher
         // maybe only during debugging, but it's annoying when it happens to
-        // make sure to clear them 
-        watcher.flushHeld();
+        // make sure to clear them
+        if (a->symbol->id == FuncGlobalReset)
+          watcher.flushHeld();
     }
     else {
         // watch this if it isn't already a longPress
@@ -503,9 +504,7 @@ void TrackManager::longPressDetected(UIAction* a)
 void TrackManager::doTrackAction(UIAction* a)
 {
     //Trace(2, "TrackManager::doTrackAction %s", a->symbol->getName());
-    // convert the visible track number to a local array index
-    // this is where we will need some sort of mapping table
-    // if you allow tracks to be reordered in the UI
+    // this must be a qualified scope at this point and not a global
     int actionScope = a->getScopeTrack();
     int midiIndex = actionScope - audioTrackCount - 1;
     if (midiIndex < 0 || midiIndex >= activeMidiTracks) {

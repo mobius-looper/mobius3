@@ -120,6 +120,8 @@
     <Button action="Start"/>
     <Button action="Stop"/>
     <Button action="Pause"/>
+    <Button action="GlobalMute"/>
+    <Button action="GlobalPause"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

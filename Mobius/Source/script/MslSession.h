@@ -179,6 +179,9 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void setupWait(MslWaitNode* node);
     bool isWaitActive();
 
+    // in
+    MslValue* expandInKeyword(MslValue* keyword);
+
     // debugging
     void checkCycles(MslValue* v);
     bool found(MslValue* node, MslValue* list);

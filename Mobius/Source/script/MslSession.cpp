@@ -1321,7 +1321,23 @@ void MslSession::mslVisit(MslIn* innode)
             // capture the child results and reset it to accumulate body results
             MslValue* cv = stack->childResults;
             while (cv != nullptr) {
-                if (cv->type != MslValue::Int) {
+                if (cv->type == MslValue::String) {
+                    // accept a few keywords as shorthand
+                    MslValue* expanded = expandInKeyword(cv);
+                    if (expanded == nullptr) {
+                        addError(innode, "Unrecognized track sequence keyword");
+                    }
+                    else {
+                        // glue the lists together
+                        if (inLast != nullptr)
+                          inLast->next = expanded;
+                        else
+                          inList = expanded;
+                        while (inLast != nullptr && inLast->next != nullptr)
+                          inList = inLast->next;
+                    }
+                }
+                else if (cv->type != MslValue::Int) {
                     // error or just warn and move on
                     // since we're in the middle of the script it might
                     // be better to ignore and let it finish then present warnings
@@ -1393,6 +1409,66 @@ void MslSession::mslVisit(MslIn* innode)
             popStack(nullptr);
         }
     }
+}
+
+/**
+ * Given a keyword token from the "in" sequence, expand that out to
+ * an MslValue list containing the actual track numbers.  Return nullptr
+ * if this isn't a valid keyword.
+ *
+ * Currently these will have to be coded as quoted strings since we don't yet
+ * support unresolved symbol references in here.  Would really like :all
+ * here, rather than "all" or some way to defer symbol resolution.  Really
+ * need an MslValue of type Symbol.  OR let these be normal symbols that have
+ * a special derived evaluation.  Kind of a statement specific binding.
+ *
+ *     in all
+ *
+ * "all" becomes an MslSymbol node as normal, but Linker recognizes this as a keyword
+ * and sets a special resolution flag, kind of like we do for functionArgument.
+ * Then findBinding needs to have similar awareness of context specific calculated
+ * binding values.
+ *
+ * Some of these require insight into track state which can't be done reliably
+ * if we are not in Kernel context without doing a Query.  I suppose we could force
+ * a transition if that happens.
+ *
+ */
+MslValue* MslSession::expandInKeyword(MslValue* keyword)
+{
+    MslValue* list = nullptr;
+    const char* keystr = keyword->getString();
+    if (StringEqualNoCase(keystr, "all")) {
+        // MOS also supports "*" here but that would come in as an operator
+        // not worth messing with
+    }
+    else if (StringEqualNoCase(keystr, "focused")) {
+        // is this really necess?  could just leave it unscoped
+        // and let normal focus lock handle the replication
+    }
+    else if (StringEqualNoCase(keystr, "muted")) {
+    }
+    else if (StringEqualNoCase(keystr, "playing")) {
+        // MOS has this as the opposite of muted
+    }
+    // MOS has "group" which we don't need if we just
+    // assume that anything other than a keyword can
+    // be a group name
+    else if (StringEqualNoCase(keystr, "outSyncMaster")) {
+        // this we could skip if outSyncMaster were an actual external
+        // variable containing the number
+    }
+    else if (StringEqualNoCase(keystr, "trackSyncMaster")) {
+        // see outSyncMaster
+    }
+    else if (StringEqualNoCase(keystr, "audio")) {
+    }
+    else if (StringEqualNoCase(keystr, "midi")) {
+    }
+    else {
+        // check to see if this is the name of a GroupDefinition
+    }
+    return list;
 }
 
 /**

@@ -2649,6 +2649,12 @@ void Supervisor::loadMidi(MslValue* arguments)
         argLoop = arg->getInt();
     }
 
+    // !!!!! this needs to stop using the view which is sensntive to
+    // it being refreshed and passed back by the Kernel
+    // it should be going directly against the Session, at least
+    // for the track counts and loop counts or else you can get "out of range"
+    // errors if the kernel is not responding to session updates for a time
+
     if (mobiusView.midiTracks == 0) {
         alert("No MIDI tracks configured");
     }

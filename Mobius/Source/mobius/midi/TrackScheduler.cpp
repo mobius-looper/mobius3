@@ -337,7 +337,10 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncOverdub: doOverdub(a); break;
         case FuncMultiply: doMultiply(a); break;
         case FuncInsert: doInsert(a); break;
-        case FuncMute: doMute(a); break;
+        case FuncMute:
+        case FuncGlobalMute:
+            doMute(a);
+            break;
         case FuncReplace: doReplace(a); break;
 
         case FuncInstantMultiply: doInstant(a); break;
@@ -351,8 +354,13 @@ void TrackScheduler::doActionNow(UIAction* a)
 
             // can only be here to start a Pause, after that we'll end up
             // in handlePauseModeAction
-        case FuncPause: track->startPause(); break;
+        case FuncPause:
+        case FuncGlobalPause:
+            track->startPause();
+            break;
+            
         case FuncStop: track->doStop(); break;
+            
         case FuncStart:
         case FuncRestart:
             track->doStart();
@@ -421,7 +429,8 @@ void TrackScheduler::checkModeCancel(UIAction* a)
         switch (sid) {
             case FuncMultiply:
             case FuncInsert:
-            case FuncMute: {
+            case FuncMute:
+            case FuncGlobalMute: {
                 track->toggleReplace();
             }
                 break;
@@ -675,7 +684,11 @@ void TrackScheduler::handleResetAction(UIAction* src)
         case FuncRecord: doRecord(nullptr); break;
 
         case FuncOverdub: doOverdub(src); break;
-        case FuncMute: doMute(src); break;
+            
+        case FuncMute:
+        case FuncGlobalMute:
+            doMute(src);
+            break;
             
         case FuncNextLoop:
         case FuncPrevLoop:
@@ -724,6 +737,7 @@ void TrackScheduler::handlePauseAction(UIAction* src)
     switch (src->symbol->id) {
 
         case FuncPause:
+        case FuncGlobalPause:
         case FuncPlay:
             if (!schedulePausedAction(src))
               track->finishPause();
@@ -750,6 +764,7 @@ void TrackScheduler::handlePauseAction(UIAction* src)
 
         case FuncOverdub:
         case FuncMute:
+        case FuncGlobalMute:
             // these are minor modes that can be toggled while paused
             doActionNow(src);
             break;
@@ -887,6 +902,7 @@ void TrackScheduler::scheduleRecordPendingAction(UIAction* src, TrackEvent* star
 
         case FuncOverdub:
         case FuncMute:
+        case FuncGlobalMute:
             // just let the minor modes toggle
             doActionNow(src);
             break;
@@ -925,10 +941,12 @@ void TrackScheduler::scheduleRecordEndAction(UIAction* src, TrackEvent* ending)
 
         case FuncOverdub:
         case FuncMute:
+        case FuncGlobalMute:
         case FuncMultiply:
         case FuncInsert:
         case FuncReplace:
         case FuncPause:
+        case FuncGlobalPause:
         case FuncNextLoop:
         case FuncPrevLoop:
         case FuncSelectLoop: {
