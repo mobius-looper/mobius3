@@ -418,6 +418,12 @@ bool Supervisor::start()
     // nothing has been displayed set so turn on all the flags
     mobiusViewer.forceRefresh(&mobiusView);
 
+    // sanity check for that GP initialization issues
+    for (auto track : mobiusView.tracks) {
+        if (track->loopCount == 0)
+          Trace(1, "Supervisor: Initial loop count zero in track %d", track->index + 1);
+    }
+
     // not sure why I thought it was desireable to defer this for
     // the plugin, seems harmless even though the editor window
     // may not be open
@@ -930,15 +936,14 @@ void Supervisor::advance()
         // tell the engine to do housekeeping before we refresh the UI
         mobius->performMaintenance();
 
-        // when running as a plugin, only need to refresh the UI
-        // if the editor window is open
-        if (mainComponent != nullptr || pluginEditorOpen) {
-        
-            // traverse the display components telling then to reflect changes in the engine
-            OldMobiusState* state = mobius->getState();
+        // always refresh the view, even if the UI is not visible
+        // LoadMidi and possibly other places look at things in the view to
+        // do request validation and these need fresh state
+        OldMobiusState* state = mobius->getState();
+        mobiusViewer.refresh(mobius, state, &mobiusView);
 
-            mobiusViewer.refresh(mobius, state, &mobiusView);
-            
+        // the actual UI refresh doesn't need to happen unless the window is open
+        if (mainComponent != nullptr || pluginEditorOpen) {
             mainWindow->update(&mobiusView);
         }
     }

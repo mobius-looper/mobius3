@@ -80,6 +80,13 @@ void TrackManager::initialize(MobiusConfig* config, Session* session)
     // Mobius can use it too
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
     longWatcher.setListener(this);
+
+    // do an initial full state refresh since getState() only returns part of it
+    // and we need loop counts and other things right away
+    refreshState();
+    // jfc, have to do this twice so both state buffers are initiaized
+    // for the next call to getState, this is working all wrong
+    refreshState();
 }
 
 /**
