@@ -78,8 +78,10 @@ class ScriptExternals
 
     static bool GetMidiDeviceId(class MslContext* c, class MslAction* action);
     static bool MidiOut(class MslContext* c, class MslAction* action);
-    static bool assembleMidiMessage(class MslAction* action, juce::MidiMessage& msg,
+    static bool assembleMidiMessage(class MslContext* c, class MslAction* action,
+                                    juce::MidiMessage& msg,
                                     bool* returnSync, int *returnDeviceId);
+    static int getMidiDeviceId(class MslContext* c, const char* name);
     
 };
 

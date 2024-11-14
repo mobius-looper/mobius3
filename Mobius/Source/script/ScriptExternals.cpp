@@ -119,7 +119,7 @@ bool ScriptExternals::doAction(MslContext* c, MslAction* action)
  * is an integer, then it must be a device id.  To use symbolic device names
  * they must call GetMidiDevice(name)
  */
-bool ScriptExternals::assembleMidiMessage(MslAction* action, juce::MidiMessage& msg,
+bool ScriptExternals::assembleMidiMessage(MslContext* c, MslAction* action, juce::MidiMessage& msg,
                                           bool* returnSync,
                                           int *returnDeviceId)
 {
@@ -131,6 +131,12 @@ bool ScriptExternals::assembleMidiMessage(MslAction* action, juce::MidiMessage& 
 	int velocity = 0;
     bool isSync = false;
 
+    //
+    // In retrospect, it would be a lot easier for externals to deal with
+    // an Array of arguments rather than a linked list.  Easier to access
+    // and reason about.
+    //
+    
     MslValue* arg = action->arguments;
     if (arg == nullptr) {
         Trace(1, "MidiOut: No function arguments");
@@ -147,16 +153,22 @@ bool ScriptExternals::assembleMidiMessage(MslAction* action, juce::MidiMessage& 
         Trace(1, "MidiOut: Device id argument was null");
         arg = arg->next;
     }
-
-    //
-    // In retrospect, it would be a lot easier for externals to deal with
-    // an Array of arguments rather than a linked list.  Easier to access
-    // and reason about.
-    //
+    else if (arg->type == MslValue::String &&
+             arg->next != nullptr && arg->next->type == MslValue::String) {
+        // two strings in a row, first one must be the device name
+        const char* devName = arg->getString();
+        deviceId = getMidiDeviceId(c, devName);
+        if (deviceId == -1) {
+            Trace(1, "MidiOut: Invalid device name %s", devName);
+            // could treat this as a failure, or just ignore and and use the default
+        }
+        arg = arg->next;
+    }
 
     if (!failed) {
         if (arg == nullptr) {
             Trace(1, "MidiOut: Missing message type");
+            failed = true;
         }
         else {
             const char* type = arg->getString();
@@ -315,7 +327,7 @@ bool ScriptExternals::MidiOut(MslContext* c, MslAction* action)
     int deviceId = -1;
     bool isSync = false;
 
-    bool success = assembleMidiMessage(action, msg, &isSync, &deviceId);
+    bool success = assembleMidiMessage(c, action, msg, &isSync, &deviceId);
 
     if (success) {
     
@@ -364,17 +376,7 @@ bool ScriptExternals::GetMidiDeviceId(MslContext* c, MslAction* action)
         Trace(1, "GetMidiDeviceId: Name argument not a string");
     }
     else {
-        int deviceId = -1;
-
-        if (c->mslGetContextId() == MslContextShell) {
-            Supervisor* s = static_cast<Supervisor*>(c);
-            deviceId = s->getMidiOutputDeviceId(arg->getString());
-        }
-        else {
-            MobiusKernel* kernel = static_cast<MobiusKernel*>(c);
-            deviceId = kernel->getMidiOutputDeviceId(arg->getString());
-        }
-
+        int deviceId = getMidiDeviceId(c, arg->getString());
         if (deviceId == -1) {
             Trace(1, "GetMidiDeviceId: Invalid device name %s", arg->getString());
         }
@@ -387,6 +389,25 @@ bool ScriptExternals::GetMidiDeviceId(MslContext* c, MslAction* action)
     }
     
     return success;
+}
+
+/**
+ * Get the internal numeric device identifier for a device name
+ */
+int ScriptExternals::getMidiDeviceId(MslContext* c, const char* name)
+{
+    int deviceId = -1;
+
+    if (c->mslGetContextId() == MslContextShell) {
+        Supervisor* s = static_cast<Supervisor*>(c);
+        deviceId = s->getMidiOutputDeviceId(name);
+    }
+    else {
+        MobiusKernel* kernel = static_cast<MobiusKernel*>(c);
+        deviceId = kernel->getMidiOutputDeviceId(name);
+    }
+
+    return deviceId;
 }
 
 /****************************************************************************/
