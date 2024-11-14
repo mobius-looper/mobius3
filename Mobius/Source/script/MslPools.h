@@ -99,6 +99,7 @@ class MslPools
     class MslSession* allocSession();
     void free(class MslSession* s);
 
+    void traceSizes();
     void traceStatistics();
 
   private:

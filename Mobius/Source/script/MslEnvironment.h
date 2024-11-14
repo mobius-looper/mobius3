@@ -35,8 +35,8 @@
  * thing rather than have a shared one with unused fields.
  *
  * The call can target either a script or a function exported from a script.
- * Arguments are specified witha list of MslValues that must can be allocdated from
- * the pool.
+ * Arguments are specified witha list of MslBinding or MslValues that must be allocdated
+ * from the pool.
  *
  * MslLinkage is effectively the same as Symbol in a UIAction.
  */
@@ -53,20 +53,26 @@ class MslRequest
     class MslLinkage* linkage = nullptr;
 
     /**
-     * For function/script calls, optional arguments to the script.
-     * For variable assignments, the value to assign.
-     */
-    MslValue* arguments = nullptr;
-
-    /**
      * For script calls, a set of named arguments that can be used
      * as an alternative to the "arguments" list which can only be referenced
      * positionally with $x.  Normally only one of bindings or arguments will
      * be set in the request.  In theory should allow both and merge them, in the
      * same way that function call keywowrd arguments are assembled using both named
      * and position arguments.
+     *
+     * These must be pooled or freely allocadted objects and ownership will
+     * be taken by the environment.
      */
     MslBinding* bindings = nullptr;
+
+    /**
+     * For function/script calls, optional positional arguments to the script.
+     * For variable assignments, the value to assign.
+     *
+     * These must be pooled or freely allocadted objects and ownership will
+     * be taken by the environment.
+     */
+    MslValue* arguments = nullptr;
 
     //
     // Results
@@ -252,7 +258,7 @@ class MslEnvironment
     // resume a session after a scheduled wait has completed
     void resume(class MslContext* c, class MslWait* w);
 
-    // allocate a binding for use within the Valuator
+    // allocate a binding for use within the Valuator and Notifier
     MslBinding* allocBinding();
     void free(MslBinding* b);
 

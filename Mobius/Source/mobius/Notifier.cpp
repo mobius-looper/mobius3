@@ -18,6 +18,8 @@
 #include "../model/Symbol.h"
 #include "../model/ScriptProperties.h"
 #include "../script/MslEnvironment.h"
+#include "../script/MslBinding.h"
+#include "../script/MslValue.h"
 
 #include "MobiusKernel.h"
 #include "MobiusInterface.h"
@@ -224,40 +226,64 @@ void Notifier::notifyScript(NotificationId id, TrackProperties& props, Notificat
                 MslRequest req;
                 req.linkage = sprops->mslLinkage;
 
-                // the arglist we have to deal with, would be kind of nice if we didn't
-                // also would be nice to have keyword arguments here rather than positional
-                // signature assumption: script(id, trackNumber, argstring)
+                // the signature is script(eventType, eventTrack, eventMode)
+                // these can be referenced both by name and by $x positions (the very first
+                // release of this) so keep these in order
 
-                // these are a linked list so do them in reverse order
-                MslValue* arguments = nullptr;
-                
-                MslValue* v = scriptenv->allocValue();
-                mapPayloadArgument(payload, v);
-                v->next = arguments;
-                arguments = v;
+                // argument 1: type
+                MslBinding* arguments = makeBinding("eventType", typeName);
+                MslBinding* last = arguments;
 
-                v = scriptenv->allocValue();
-                v->setInt(props.number);
-                v->next = arguments;
-                arguments = v;
+                // argument 2: track
+                MslBinding* arg = makeBinding("eventTrack", props.number);
+                last->next = arg;
+                last = arg;
 
-                v = scriptenv->allocValue();
-                v->setString(typeName);
-                v->next = arguments;
-                arguments = v;
+                // argument 3: mode name
+                // todo: probably will need different names here for the different
+                // events, or genericize this as "eventData"
+                if (payload.mode != nullptr) {
+                    arg = makeBinding("eventMode", payload.mode->getName());
+                }
+                else {
+                    // if this isn't a mode change event, pass a null argument
+                    // just to avoid unresolved $3 references in the script
+                    arg = makeBinding("eventMode", nullptr);
+                }
+                last->next = arg;
+                last = arg;
 
-                req.arguments = arguments;
+                // ownership if the arguments is taken by the environment
+                // the request stays with the caller
+                req.bindings = arguments;
                 scriptenv->request(kernel, &req);
 
                 // no meaningful return value, but could have errors
                 if (req.error.hasError())
                   Trace(1, "Notifier: Script error %s", req.error.error);
-
-                scriptenv->free(arguments);
-            
             }
         }
     }
+}
+
+MslBinding* Notifier::makeBinding(const char* name, const char* value)
+{
+    MslBinding* b = scriptenv->allocBinding();
+    b->setName(name);
+    MslValue* v = scriptenv->allocValue();
+    v->setString(value);
+    b->value = v;
+    return b;
+}
+
+MslBinding* Notifier::makeBinding(const char* name, int value)
+{
+    MslBinding* b = scriptenv->allocBinding();
+    b->setName(name);
+    MslValue* v = scriptenv->allocValue();
+    v->setInt(value);
+    b->value = v;
+    return b;
 }
 
 /**
@@ -285,17 +311,6 @@ const char* Notifier::mapNotificationId(NotificationId id)
         default: break;
     }
     return name;
-}
-
-/**
- * Map the NotificationPayload arguments into a single string value
- * Only handling mode right now, obviously will need more.
- */
-void Notifier::mapPayloadArgument(NotificationPayload& payload, MslValue* arg)
-{
-    if (payload.mode != nullptr) {
-        arg->setString(payload.mode->getName());
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

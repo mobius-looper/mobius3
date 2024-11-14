@@ -36,7 +36,9 @@ class MslLinker
     void resolveLocal(class MslSymbol* sym);
     void resolveLocal(class MslSymbol* sym, class MslNode* node);
     void resolveFunctionArgument(class MslSymbol* sym, class MslFunctionNode* def);
+    void resolveFunctionArgument(class MslSymbol* sym, class MslBlock* decl);
     void resolveEnvironment(class MslSymbol* sym);
+    void resolveScriptArgument(class MslSymbol* sym);
     void resolveExternal(class MslSymbol* sym);
 
     void compileArguments(class MslSymbol* sym);

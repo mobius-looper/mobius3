@@ -72,7 +72,9 @@ class Notifier
 
     void notifyScript(NotificationId id, TrackProperties& props, NotificationPayload& payload);
     const char* mapNotificationId(NotificationId id);
-    void mapPayloadArgument(NotificationPayload& payload, class MslValue* arg);
+
+    class MslBinding* makeBinding(const char* name, const char* value);
+    class MslBinding* makeBinding(const char* name, int value);
     
     void flush();
 

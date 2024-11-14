@@ -61,8 +61,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     
     // begin evaluation of a function, it will complete or reach a wait state
     void start(class MslContext* context, class MslCompilation* unit,
-               class MslFunction* func, class MslValue* arguments);
-    
+               class MslFunction* func, class MslRequest* request);
+
     // name for logging, usually the MslFunction name
     const char* getName();
 
@@ -157,6 +157,11 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // core evaluator
     //
     void addError(class MslNode* node, const char* details);
+    
+    MslBinding* gatherStartBindings(class MslCompilation* argUnit,
+                                    class MslFunction* argFunction,
+                                    class MslRequest* request);
+    void saveStaticBindings();
     
     void run();
     void advanceStack();

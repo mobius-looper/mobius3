@@ -35,6 +35,7 @@ MslPools::~MslPools()
     flushErrors();
     flushValues();
 
+    traceSizes();
     traceStatistics();
 }
 
@@ -80,6 +81,18 @@ void MslPools::traceStatistics()
 void MslPools::initialize()
 {
     // todo: get initializes of these from a config
+    traceSizes();
+}
+
+void MslPools::traceSizes()
+{
+    Trace(2, "MslPools: object sizes");
+    Trace(2, "  MslValue: %d", sizeof(MslValue));
+    Trace(2, "  MslError: %d", sizeof(MslError));
+    Trace(2, "  MslResult: %d", sizeof(MslResult));
+    Trace(2, "  MslBinding: %d", sizeof(MslBinding));
+    Trace(2, "  MslStack: %d", sizeof(MslStack));
+    Trace(2, "  MslSession: %d", sizeof(MslSession));
 }
 
 void MslPools::fluff()

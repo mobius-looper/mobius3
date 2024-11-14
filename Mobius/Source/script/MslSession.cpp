@@ -85,8 +85,7 @@ void MslSession::init()
  * Primary entry point for evaluating a script.
  */
 void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
-                       MslFunction* argFunction,
-                       MslValue* arguments)
+                       MslFunction* argFunction, MslRequest* request)
 {
     // should be clean out of the pool but make sure
     pool->free(errors);
@@ -101,44 +100,130 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     
     stack = pool->allocStack();
     stack->node = argFunction->getBody();
+    stack->bindings = gatherStartBindings(argUnit, argFunction, request);
 
-    // put the saved static bindings in the root block stack frame
-    // !! todo: potential thread issues
-    // it is rare to have concurrent evaluations of the same script and still
-    // rarer to be doing it from both the UI thread and the audio thread at the same time
-    // but it can happen
-    // if static bindings are maintained on the MslCompilation and copied to the MslStack,
-    // any new values won't be "seen" by other threads until this session ends
-    // also, the last thread to execute overwrite the values of the previous ones
-    // todo this the Right Way, static variable bindings need to be more like exported
-    // bindings and managed in a single shared location with csects around access
+    run();
+}
 
-    // !! why is this necessary at all, since findBinding will look in the unit if
-    // falls off the stack?
-    stack->bindings = unit->bindings;
-    unit->bindings = nullptr;
+/**
+ * Assemble the initial bindings in the root block before running.
+ *
+ * This includes the "static" bindings that are left on the compilation unit,
+ * as well as arguments passed in the Request.
+ *
+ * !! todo: potential thread issues
+ * It is rare to have concurrent evaluations of the same script and still
+ * rarer to be doing it from both the UI thread and the audio thread at the same time
+ * but it can happen.
+ *
+ * If static bindings are maintained on the MslCompilation and copied to the MslStack,
+ * any new values won't be "seen" by other threads until this session ends.
+ * Also, the last thread to execute overwrite the values of the previous ones
+ * To do this the Right Way, static variable bindings need to be more like exported
+ * bindings and managed in a single shared location with csects around access.
+ *
+ * Request arguments can be passed as a list of MslValue positional arguments
+ * or as a list of MslBinding named arguments.  I started with just positional
+ * but moved to named bindings because it's better for system scripts.
+ *
+ * Should not have both, but in theory this should assemble them like we do
+ * for a combination of positional and keyword arguments passed in a function call.
+ */
+MslBinding* MslSession::gatherStartBindings(MslCompilation* argUnit,
+                                            MslFunction* argFunction,
+                                            MslRequest* request)
+{
+    // in theory we should use this to get to a signature to assist binding compilation
+    (void)argFunction;
+    
+    MslBinding* startBindings = nullptr;
 
-    // if there were any positional
-    // arguments, add them
-    // these need to be filtered out when the unit bindings are recaptured
-    if (arguments != nullptr) {
+    // While findBinding will look up into the unit if it doesn't find anything on the stack,
+    // copying it onto the root stack frame reduces thread contention since modificiations
+    // made during this session will be held locally until the script completes, and then
+    // copied back into the unit.
+    startBindings = argUnit->bindings;
+    argUnit->bindings = nullptr;
+
+    // add request arguments
+    if (request != nullptr) {
         int position = 1;
-        for (MslValue* arg = arguments ; arg != nullptr ; arg = arg->next) {
-            MslBinding* b = pool->allocBinding();
-            // ownership is retained by the caller at the moment, so have to copy
-            // don't like this
-            MslValue* copy = pool->allocValue();
-            copy->copy(arg);
-            b->value = copy;
-            b->position = position;
-            b->next = stack->bindings;
-            stack->bindings = b;
-            position++;
+
+        // old way, positional
+        if (request->arguments != nullptr) {
+            MslValue* arg = request->arguments;
+            while (arg != nullptr) {
+                MslValue* nextv = arg->next;
+                arg->next = nullptr;
+                
+                MslBinding* b = pool->allocBinding();
+                b->value = arg;
+                b->position = position;
+                b->next = startBindings;
+                startBindings = b;
+                position++;
+                arg = nextv;
+            }
+            // ownership was taken
+            request->arguments = nullptr;
+        }
+
+        // new way, pass named bindings rather than positionals
+        if (request->bindings != nullptr) {
+            MslBinding* binding = request->bindings;
+            while (binding != nullptr) {
+                MslBinding* nextb = binding->next;
+                binding->next = startBindings;
+                startBindings = binding;
+                binding->position = position;
+                position++;
+                binding = nextb;
+            }
+            // ownership was taken
+            request->bindings = nullptr;
         }
     }
     
-    context = argContext;
-    run();
+    return startBindings;
+}
+
+/**
+ * When evaluation has run to completion, move the "static" bindings that
+ * were copied to the root stack by gatherStartBindings back to the unit.
+ *
+ * todo: technically should only be doing this for static variables
+ * and not random locals declared at the top level.
+ * Or we could have the binding reset when the MslVariable that defines
+ * them is encountered during evaluation.
+ *
+ * What we DO need to do is filter out request arguments that were added
+ * by gatherStartBindings, these will have a non-zero position.
+ */
+void MslSession::saveStaticBindings()
+{
+    MslBinding* finalBindings = stack->bindings;
+    stack->bindings = nullptr;
+
+    MslBinding* b = finalBindings;
+    MslBinding* prev = nullptr;
+    while (b != nullptr) {
+        MslBinding* nextb = b->next;
+        if (b->position > 0) {
+            // it was a request argument
+            if (prev == nullptr)
+              finalBindings = nextb;
+            else
+              prev->next = nextb;
+            b->next = nullptr;
+            pool->free(b);
+        }
+        else {
+            prev = b;
+        }
+        b = nextb;
+    }
+        
+    unit->bindings = finalBindings;
 }
 
 /**
@@ -424,37 +509,8 @@ void MslSession::popStack(MslValue* v)
             last->next = v;
         }
 
-        // see start() for more on the thread issues here...
-        // save the final root block bindings back into the script
-        // technically should only be doing this for static variables
-        // and not locals
-        // or we could have the binding reset when the MslVariable that defines
-        // them is encountered during evaluation
-        // sigh, now have to filter out positionals passed in to start()
-
-        MslBinding* finalBindings = stack->bindings;
-        stack->bindings = nullptr;
-
-        MslBinding* b = finalBindings;
-        MslBinding* prev = nullptr;
-        while (b != nullptr) {
-            MslBinding* nextb = b->next;
-            if (b->position > 0) {
-                // it is positional
-                if (prev == nullptr)
-                  finalBindings = nextb;
-                else
-                  prev->next = nextb;
-                b->next = nullptr;
-                pool->free(b);
-            }
-            else {
-                prev = b;
-            }
-            b = nextb;
-        }
-        
-        unit->bindings = finalBindings;
+        // save the final bindings for static variables back to the compilation unit
+        saveStaticBindings();
     }
     else if (!parent->accumulator) {
         // replace the last value

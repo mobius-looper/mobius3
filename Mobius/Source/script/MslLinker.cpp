@@ -408,6 +408,10 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
         MslNode* parent = node->parent;
         if (parent != nullptr)
           resolveLocal(sym, parent);
+        else {
+            // we're at the top, resolve within script signature
+            resolveScriptArgument(sym);
+        }
     }
 }
 
@@ -418,7 +422,21 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
  */
 void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslFunctionNode* def)
 {
-    MslBlock* decl = def->getDeclaration();
+    resolveFunctionArgument(sym, def->getDeclaration());
+}
+
+/**
+ * Attempt to resolve the symbol to the argument of the outer script "body function"
+ */
+void MslLinker::resolveScriptArgument(MslSymbol* sym)
+{
+    MslFunction* body = unit->getBodyFunction();
+    if (body != nullptr)
+      resolveFunctionArgument(sym, body->getDeclaration());
+}
+
+void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslBlock* decl)
+{
     if (decl != nullptr) {
         for (auto arg : decl->children) {
             MslSymbol* argsym = nullptr;

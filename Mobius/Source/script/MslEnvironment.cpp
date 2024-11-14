@@ -27,6 +27,15 @@ MslEnvironment::MslEnvironment()
 MslEnvironment::~MslEnvironment()
 {
     Trace(2, "MslEnvironment: destructing");
+
+    // MslCompilation has a list of MslBindings representing
+    // "static" variable bindings.  Unfortunately it doesn't have
+    // a smart destructor and doesn't know where the pools are, so we
+    // have to help it
+    for (auto comp : compilations) {
+        pool.free(comp->bindings);
+        comp->bindings = nullptr;
+    }
 }
 
 /**
@@ -128,7 +137,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     else if (link->function != nullptr) {
         MslSession* session = pool.allocSession();
 
-        session->start(c, link->unit, link->function, req->arguments);
+        session->start(c, link->unit, link->function, req);
 
         if (session->isFinished()) {
 
@@ -176,6 +185,8 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     }
     else if (link->variable != nullptr) {
         Trace(1, "MslEnvironment: Variable requsts not implemented");
+        // I suppose we could free the MslValue to the pool but this isn't
+        // implemented yet anyway so let it leak
     }
     else {
         Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());

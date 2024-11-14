@@ -3,8 +3,12 @@
 //
 
 #name eventHandler
+#arguments eventType eventTrack eventMode
 
-//echo($1 $2 $3)
+print("eventHandler positional arguments", $1, $2, $3)
+print("eventType", eventType);
+print("eventTrack", eventTrack);
+print("eventMode", eventMode);
 
 var deviceId = GetMidiDeviceId("Bome MIDI Translator 2")
 
