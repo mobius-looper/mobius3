@@ -105,3 +105,54 @@ bool MslContextNode::wantsToken(MslParser* p, MslToken& t)
     }
     return wants;
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Operators
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Convert the operator token into an enumeration that is easier to deal
+ * with after parsing.
+ */
+
+MslOperators MslOperator::mapOperator(juce::String& s)
+{
+    MslOperators op = MslUnknown;
+    
+    if (s == "+") op = MslPlus;
+    else if (s == "-") op = MslMinus;
+    else if (s == "*") op = MslMult;
+    else if (s == "/") op = MslDiv;
+    else if (s == "=") op = MslEq;
+    else if (s == "==") op = MslDeq;
+    else if (s == "!=") op = MslNeq;
+    else if (s == ">") op = MslGt;
+    else if (s == ">=") op = MslGte;
+    else if (s == "<") op = MslLt;
+    else if (s == "<=") op = MslLte;
+    else if (s == "!") op = MslNot;
+    else if (s == "&&") op = MslAnd;
+    else if (s == "||") op = MslOr;
+
+    // will they try to use this?
+    //else if (s == "&") op = MslAmp;
+
+    return op;
+}
+
+MslOperators MslOperator::mapOperatorSymbol(juce::String& s)
+{
+    MslOperators op = MslUnknown;
+    
+    if (s.equalsIgnoreCase("and")) op = MslAnd;
+    else if (s.equalsIgnoreCase("or")) op = MslOr;
+    else if (s.equalsIgnoreCase("not")) op = MslNot;
+    else if (s.equalsIgnoreCase("eq")) op = MslDeq;
+    else if (s.equalsIgnoreCase("neq")) op = MslNeq;
+    else if (s.equalsIgnoreCase("equal")) op = MslDeq;
+    else if (s.equalsIgnoreCase("equals")) op = MslDeq;
+
+    return op;
+}    

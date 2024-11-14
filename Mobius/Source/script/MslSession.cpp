@@ -925,37 +925,6 @@ void MslSession::mslVisit(MslOperator* opnode)
     }
 }
 
-
-// if we allow async functions in expressions, then this
-// will need to be much more complicated and use the stack
-// once we add procs, we can't control what the proc will do so need
-// to set a flag indicating "inside expression evaluator" to prevent async
-
-MslOperators MslSession::mapOperator(juce::String& s)
-{
-    MslOperators op = MslUnknown;
-    
-    if (s == "+") op = MslPlus;
-    else if (s == "-") op = MslMinus;
-    else if (s == "*") op = MslMult;
-    else if (s == "/") op = MslDiv;
-    else if (s == "=") op = MslEq;
-    else if (s == "==") op = MslDeq;
-    else if (s == "!=") op = MslNeq;
-    else if (s == ">") op = MslGt;
-    else if (s == ">=") op = MslGte;
-    else if (s == "<") op = MslLt;
-    else if (s == "<=") op = MslLte;
-    else if (s == "!") op = MslNot;
-    else if (s == "&&") op = MslAnd;
-    else if (s == "||") op = MslOr;
-
-    // will they try to use this?
-    else if (s == "&") op = MslAmp;
-
-    return op;
-}    
-
 /**
  * Be relaxed about types here.  The only things we care about really
  * are numeric values and enumeration symbols coerced from/to ordinals.
@@ -971,7 +940,8 @@ void MslSession::doOperator(MslOperator* opnode)
 {
     MslValue* v = pool->allocValue();
     
-    MslOperators op = mapOperator(opnode->token.value);
+    //MslOperators op = mapOperator(opnode->token.value);
+    MslOperators op = opnode->opcode;
 
     if (op == MslUnknown) {
         addError(opnode, "Unknown operator");
@@ -1053,9 +1023,9 @@ void MslSession::doOperator(MslOperator* opnode)
                     break;
             
                     // unclear about this, treat it as and
-                case MslAmp:
-                    v->setInt(value1->getBool() && value2->getBool());
-                    break;
+                    //case MslAmp:
+                    //v->setInt(value1->getBool() && value2->getBool());
+                    //break;
             }
         }
     }

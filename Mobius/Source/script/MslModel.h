@@ -349,6 +349,39 @@ class MslSequence : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Enumeration of operator codes, ranked in increasing order of precedence.
+ * Try to be consistent with C++ precendece with many of the operators left out.
+ * The p in pemdas is already handled outside operator parsing, and we don't
+ * support exponents, so it's mdas plus the logical operators.
+ *
+ * Single = is the assignment operator not the equality operator.
+ */
+typedef enum {
+    
+    MslUnknown,
+
+    MslEq,  // actually assignment
+    MslOr,
+    MslAnd,
+    
+    MslDeq,  // Eq/Neq are the same, supposed to be left to right
+    MslNeq,
+
+    MslGte,
+    MslGt,
+    MslLte,
+    MslLt,
+    
+    MslMinus,
+    MslPlus,
+    MslDiv,
+    MslMult,
+
+    MslNot
+    
+} MslOperators;
+
 class MslOperator : public MslNode
 {
   public:
@@ -387,6 +420,11 @@ class MslOperator : public MslNode
     // is this necessary?
     bool unary = false;
 
+    MslOperators opcode;
+
+    static MslOperators mapOperator(juce::String& s);
+    static MslOperators mapOperatorSymbol(juce::String& s);
+    
     // runtime
     bool isOperator() override {return true;}
     bool operandable() override {return true;}

@@ -24,29 +24,6 @@
 #include "MslWait.h"
 #include "MslContext.h"
 
-/**
- * This should live inside MslParser and it should do the work.
- */
-enum MslOperators {
-    
-    MslUnknown,
-    MslPlus,
-    MslMinus,
-    MslMult,
-    MslDiv,
-    MslEq,
-    MslDeq,
-    MslNeq,
-    MslGt,
-    MslGte,
-    MslLt,
-    MslLte,
-    MslNot,
-    MslAnd,
-    MslOr,
-    MslAmp
-};
-
 class MslSession : public MslVisitor, public MslSessionInterface
 {
     friend class MslEnvironment;
@@ -195,7 +172,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // expressions
     MslValue* getArgument(int index);
     void doOperator(MslOperator* opnode);
-    MslOperators mapOperator(juce::String& s);
     bool compare(MslValue* value1, MslValue* value2, bool equal);
     void addTwoThings(MslValue* v1, MslValue* v2, MslValue* result);
 

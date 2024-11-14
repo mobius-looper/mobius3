@@ -53,8 +53,10 @@ class MslParser
     MslNode* checkKeywords(MslToken& t);
     MslNode* push(MslNode* node);
 
+    void parseOperator(MslToken& t, MslOperators opcode);
     bool operandable(MslNode* node);
     int precedence(juce::String op1, juce::String op2);
+    int precedence(MslOperators op1, MslOperators op2);
     void unarize(MslToken& t, class MslOperator* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 

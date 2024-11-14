@@ -361,18 +361,25 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::Symbol: {
-                // if the symbol name matches a keyword, a specific node class
-                // is pushed, otherwise it becomes a generic symbol node
-                MslNode* node = checkKeywords(t);
-                if (node == nullptr)
-                  node = new MslSymbol(t);
+                // special case for the few symbols we treat as operators
+                MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
+                if (opcode != MslUnknown) {
+                    parseOperator(t, opcode);
+                }
+                else {
+                    // if the symbol name matches a keyword, a specific node class
+                    // is pushed, otherwise it becomes a generic symbol node
+                    MslNode* node = checkKeywords(t);
+                    if (node == nullptr)
+                      node = new MslSymbol(t);
                     
-                current = push(node);
+                    current = push(node);
 
-                // hack for In that creates it's own child node for the
-                // target sequence
-                if (node->children.size() > 0)
-                  current = node->children[node->children.size() - 1];
+                    // hack for In that creates it's own child node for the
+                    // target sequence
+                    if (node->children.size() > 0)
+                      current = node->children[node->children.size() - 1];
+                }
             }
                 break;
 
@@ -426,34 +433,14 @@ void MslParser::parseInner(juce::String source)
                     }
                 }
                 else {
-                    MslOperator* op = new MslOperator(t);
-
-                    // pop up till we're wanted, more than one level?
-                    // this still feels weird
-                    if (!current->wantsNode(op)) {
-                        current->locked = true;
-                        current = current->parent;
-                    }
-
-                    // work backward until we can subsume something or hit a wall
-                    MslNode* last = current->getLast();
-                    if (!operandable(last)) {
-                        unarize(t, op);
+                    MslOperators opcode = MslOperator::mapOperator(t.value);
+                    if (opcode != MslUnknown) {
+                        parseOperator(t, opcode);
                     }
                     else {
-                        // either subsume the last node, or if we're adjacent to an
-                        // operator of lower priority, it's second operand
-                        MslNode* operand = last;
-                        if (operand->isOperator()) {
-                            if (precedence(op->token.value, operand->token.value) >= 0) {
-                                if (last->children.size() == 2)
-                                  operand = last->getLast();
-                                else
-                                  errorSyntax(t, "Invalid expression, missing operand");
-                            }
-                        }
-
-                        current = subsume(op, operand);
+                        // this was tokenized as a C++ operator but we didn't handle it
+                        // probably an error, but there may be some we want to ignore?
+                        errorSyntax(t, "Unsupported operator");
                     }
                 }
             }
@@ -499,6 +486,53 @@ void MslParser::parseInner(juce::String source)
         // can't go on without something to fill
         if (current == nullptr)
           errorSyntax(t, "Invalid expression");
+    }
+}
+
+/**
+ * Handle the processing of an operator token, or one of the
+ * symbols we treat as an operator.
+ */
+void MslParser::parseOperator(MslToken& t, MslOperators opcode)
+{
+    MslOperator* op = new MslOperator(t);
+    op->opcode = opcode;
+
+    // pop up till we're wanted, more than one level?
+    // this still feels weird
+    if (!current->wantsNode(op)) {
+        current->locked = true;
+        current = current->parent;
+    }
+
+    MslNode* last;
+    if (current->isOperator())
+      last = current;
+    else
+      last = current->getLast();
+    
+    // work backward until we can subsume something or hit a wall
+    if (!operandable(last)) {
+        unarize(t, op);
+    }
+    else {
+        // either subsume the last node, or if we're adjacent to an
+        // operator of lower priority, it's second operand
+        MslNode* operand = last;
+        if (operand->isOperator()) {
+            MslOperator* other = static_cast<MslOperator*>(operand);
+            
+            // old way
+            //if (precedence(op->token.value, operand->token.value) >= 0) {
+            if (precedence(opcode, other->opcode) >= 0) {
+                if (last->children.size() == 2)
+                  operand = last->getLast();
+                else
+                  errorSyntax(t, "Invalid expression, missing operand");
+            }
+        }
+
+        current = subsume(op, operand);
     }
 }
 
@@ -558,6 +592,22 @@ int MslParser::precedence(juce::String op1, juce::String op2)
 
     // else could check for unsupported operators but can do that above
     return 0;
+}
+
+/**
+ * New precendence calculator using opcodes.
+ */
+int MslParser::precedence(MslOperators op1, MslOperators op2)
+{
+    int i1 = (int)op1;
+    int i2 = (int)op2;
+
+    if (i1 == i2)
+      return 0;
+    else if (i1 < i2)
+      return -1;
+    else
+      return 1;
 }
 
 MslNode* MslParser::subsume(MslNode* op, MslNode* operand)
