@@ -345,6 +345,8 @@ bool Supervisor::start()
 
     // setup Pulsator before the Mobius tracks start to register followers
     pulsator.configure();
+    // may as well do this here too now that we have a pulsator
+    scriptUtil.initialize(&pulsator);
 
     // open MIDI devices before Mobius so MidiTracks can resolve device
     // names in the session to device ids
@@ -442,6 +444,8 @@ bool Supervisor::start()
     }
 
     // load the MSL files in the library
+    // this is where scripts with init blocks may run
+    // so it needs to be toward the end of most of the initialization
     scriptClerk.installMsl();
         
     // prepare action bindings
@@ -1314,6 +1318,10 @@ DynamicConfig* Supervisor::getDynamicConfig()
  */
 void Supervisor::propagateConfiguration()
 {
+    // this isn't a UI component, but it needs to reference the
+    // major config objects
+    scriptUtil.configure(mobiusConfig.get(), session.get());
+    
     mainWindow->configure();
 }
 
@@ -2330,51 +2338,71 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
         success = true;
     }
     else {
-        Symbol* s = symbols.find(name);
-        if (s != nullptr) {
-
-            // filter out symbosl that don't represent functions or parameters
-            // though I suppose we could treat Sample symbols like functions
-            // hmm, that could be cool for testing
-            //
-            // BehaviorScript may mean both old and new scripts old ones
-            // need to be treated as functions, but new ones will resolve
-            // within the MSL environment.  Need a way to distinguish those
-            // before we allow them to be called
-
-            if (s->behavior == BehaviorParameter ||
-                s->behavior == BehaviorFunction ||
-                s->behavior == BehaviorSample) {
-
-                ext->type = 0;
-                // these use a full blown object pointer rather than an id
-                ext->object = s;
-            
-                if (!(s->behavior == BehaviorParameter))
-                  ext->isFunction = true;
-
-                // MSL only has two contexts shell and kernel
-                if (s->level == LevelKernel || s->level == LevelCore)
-                  ext->context = MslContextKernel;
-                else
-                  ext->context = MslContextShell;
-            
-                success = true;
-            }
+        // then internal variables
+        ScriptVariableId varid = ScriptVariableDefinition::find(name.toUTF8());
+        if (varid != VarNone) {
+            ext->type = 2;
+            ext->id = (int)varid;
+            ext->context = MslContextNone;
+            success = true;
         }
         else {
-            // pass it down to the core for resolution
-            success = mobius->mslResolve(name, ext);
+            // and finally symbols
+            Symbol* s = symbols.find(name);
+            if (s != nullptr) {
+
+                // filter out symbosl that don't represent functions or parameters
+                // though I suppose we could treat Sample symbols like functions
+                // hmm, that could be cool for testing
+                //
+                // BehaviorScript may mean both old and new scripts old ones
+                // need to be treated as functions, but new ones will resolve
+                // within the MSL environment.  Need a way to distinguish those
+                // before we allow them to be called
+
+                if (s->behavior == BehaviorParameter ||
+                    s->behavior == BehaviorFunction ||
+                    s->behavior == BehaviorSample) {
+
+                    ext->type = 0;
+                    // these use a full blown object pointer rather than an id
+                    ext->object = s;
+            
+                    if (!(s->behavior == BehaviorParameter))
+                      ext->isFunction = true;
+
+                    // MSL only has two contexts shell and kernel
+                    if (s->level == LevelKernel || s->level == LevelCore)
+                      ext->context = MslContextKernel;
+                    else
+                      ext->context = MslContextShell;
+            
+                    success = true;
+                }
+            }
+            else {
+                // pass it down to the core for resolution
+                success = mobius->mslResolve(name, ext);
+            }
         }
     }
     
     return success;
 }
 
+/**
+ * Ugh, hating the "namespace" for the external types
+ * Mobius is currently using 0 to mean symbols and 1 to mean the
+ * old internal variables, so we need something else for the
+ * new script variables.  Use 2
+ */
 bool Supervisor::mslQuery(MslQuery* query)
 {
     bool success = false;
-    if (query->external->type == 0) {
+    if (query->external->type == 2) {
+        // internal variables
+    }
+    else if (query->external->type == 0) {
         Query q;
         q.symbol = static_cast<Symbol*>(query->external->object);
         q.scope = query->scope;
@@ -2511,6 +2539,16 @@ void Supervisor::mslPrint(const char* msg)
       mobiusConsole->mslPrint(msg);
     else
       Trace(2, "Supervisor::mslPrint %s", msg);
+}
+
+int Supervisor::mslGetMaxScope()
+{
+    return scriptUtil.getMaxScope();
+}
+
+bool Supervisor::mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers)
+{
+    return scriptUtil.expandScopeKeyword(name, numbers);
 }
 
 //

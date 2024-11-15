@@ -141,6 +141,9 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     notifier.initialize(this);
     notifier.configure(ses);
 
+    scriptUtil.initialize(cont->getPulsator());
+    scriptUtil.configure(config, ses);
+
     // this should replace direct access to configuration and session
     valuator.initialize(container->getSymbols(), container->getMslEnvironment());
     valuator.configure(configuration, session);
@@ -283,6 +286,7 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // sigh, the two new config objects are sent down one at a time,
     // should be together
     valuator.configure(configuration, session);
+    scriptUtil.configure(configuration, session);
 
     // this would be the place where make changes for
     // the new configuration, nothing right now
@@ -311,7 +315,7 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // sigh, the two new config objects are sent down one at a time,
     // should be together
     valuator.configure(configuration, session);
-
+    scriptUtil.configure(configuration, session);
     notifier.configure(session);
 
     if (mTracks != nullptr)
@@ -1633,6 +1637,16 @@ void MobiusKernel::mslExport(MslLinkage* link)
 {
     (void)link;
     Trace(1, "MobiusKernel::mslExport Not implemented");
+}
+
+int MobiusKernel::mslGetMaxScope()
+{
+    return scriptUtil.getMaxScope();
+}
+
+bool MobiusKernel::mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers)
+{
+    return scriptUtil.expandScopeKeyword(name, numbers);
 }
 
 //////////////////////////////////////////////////////////////////////

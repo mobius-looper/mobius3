@@ -39,6 +39,7 @@
 #include "script/ScriptClerk.h"
 #include "script/MslContext.h"
 #include "script/MslEnvironment.h"
+#include "script/ScriptUtil.h"
 
 #include "sync/MidiRealizer.h"
 #include "sync/Pulsator.h"
@@ -58,7 +59,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     static int InstanceCount;
     static int MaxInstanceCount;
     
-    static const int BuildNumber = 27;
+    static const int BuildNumber = 28;
 
     /**
      * Standalone Supervisor is statically constructed by MainComponent.
@@ -267,6 +268,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;
+    int mslGetMaxScope() override;
+    bool mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers) override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
@@ -378,6 +381,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     MidiManager midiManager {this};
     MidiRealizer midiRealizer {this};
     Pulsator pulsator {this};
+    ScriptUtil scriptUtil;
     VariableManager variableManager {this};
     Parametizer parametizer {this};
     Alerter alerter {this};

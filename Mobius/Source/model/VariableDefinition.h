@@ -1,4 +1,9 @@
 /**
+ *
+ * update: this experiment never went anywhere but it still feels useful
+ * do not confuse this with ScriptVariable which is the new way
+ * MSL scripts can access random system state for things that are not Symbols.
+ *
  * Experimental definitions for user-defined variables.
  * These will become Symbols with BehaviorVariable
  *

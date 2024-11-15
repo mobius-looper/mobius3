@@ -178,7 +178,7 @@ class MslContext
     virtual bool mslQuery(MslQuery* query) = 0;
 
     // perform an action
-    virtual bool mslAction(MslAction* ation) = 0;
+    virtual bool mslAction(MslAction* action) = 0;
 
     // initialize a wait state
     // for errors, an error buffer is supplied as an argument rather
@@ -198,6 +198,15 @@ class MslContext
     // unclear what works best, since everything comes in through ScriptClerk
     // it is also in a position to install symbols after loading files
     virtual void mslExport(class MslLinkage* link) = 0;
+
+    // get the number of scopes allowed for the "in" statement
+    // eventually will need more creative about naming them
+    // this may not be necessary if we let mslExpandScope do the work 
+    virtual int mslGetMaxScope() = 0;
+
+    // given the name of an abstract scope used with the "in" statement
+    // fill in an array of concrete scope numbers for that scope
+    virtual bool mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers) = 0;
 
 };
 

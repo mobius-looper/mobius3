@@ -800,6 +800,8 @@
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"
               file="Source/script/ScriptRegistry.h"/>
+        <FILE id="vR36s3" name="ScriptUtil.cpp" compile="1" resource="0" file="Source/script/ScriptUtil.cpp"/>
+        <FILE id="dcKk80" name="ScriptUtil.h" compile="0" resource="0" file="Source/script/ScriptUtil.h"/>
       </GROUP>
       <GROUP id="{0A345570-CA35-1A9D-5BC1-209B7CD2412C}" name="test">
         <FILE id="c69T5i" name="AudioDifferencer.cpp" compile="1" resource="0"

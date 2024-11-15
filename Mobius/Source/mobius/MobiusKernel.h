@@ -19,6 +19,7 @@
 #include <JuceHeader.h>
 
 #include "../script/MslContext.h"
+#include "../script/ScriptUtil.h"
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
@@ -149,6 +150,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;
+    int mslGetMaxScope() override;
+    bool mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers) override;
 
     // things TrackScheduler started needing
     int getAudioTrackCount() {
@@ -245,7 +248,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     Valuator valuator;
     MobiusPools mobiusPools;
     Notifier notifier;
-//    TrackSynchronizer synchronizer {this};
+    ScriptUtil scriptUtil;
+    //    TrackSynchronizer synchronizer {this};
     
     // internal state
 

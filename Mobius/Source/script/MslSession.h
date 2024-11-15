@@ -129,6 +129,12 @@ class MslSession : public MslVisitor, public MslSessionInterface
     
     // "root" value of the top of the stack
     MslValue* rootValue = nullptr;
+
+    // this is what we pass to MslContext to convert an abstract
+    // scope name into a set of scope numbers, to avoid memory allocation
+    // it should be initialized for the highest expected number of tracks
+    // hate this but it's easier than dealing with MslValue lists
+    juce::Array<int> scopeExpansion;
     
     //
     // core evaluator

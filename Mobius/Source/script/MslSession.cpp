@@ -32,6 +32,10 @@ MslSession::MslSession(MslEnvironment* env)
     environment = env;
     // need this all the time so cache it here
     pool = env->getPool();
+
+    // should be large enough to handle most track counts
+    // without needing to allocate if we're in the kernel
+    scopeExpansion.ensureStorageAllocated(64);
 }
 
 /**
@@ -1323,18 +1327,20 @@ void MslSession::mslVisit(MslIn* innode)
             while (cv != nullptr) {
                 if (cv->type == MslValue::String) {
                     // accept a few keywords as shorthand
-                    MslValue* expanded = expandInKeyword(cv);
-                    if (expanded == nullptr) {
+                    if (!expandInKeyword(cv)) {
                         addError(innode, "Unrecognized track sequence keyword");
                     }
                     else {
-                        // glue the lists together
-                        if (inLast != nullptr)
-                          inLast->next = expanded;
-                        else
-                          inList = expanded;
-                        while (inLast != nullptr && inLast->next != nullptr)
-                          inList = inLast->next;
+                        // result was left here
+                        for (int i = 0 ; i < scopeExpansion.size() ; i++) {
+                            int number = scopeExpansion[i];
+                            MslValue* v = pool->allocValue();
+                            v->setInt(number);
+                            if (inLast != nullptr)
+                              inLast->next = v;
+                            else
+                              inList = v;
+                        }
                     }
                 }
                 else if (cv->type != MslValue::Int) {
