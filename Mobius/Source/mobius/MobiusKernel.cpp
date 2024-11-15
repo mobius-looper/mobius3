@@ -1464,8 +1464,8 @@ MslContextId MobiusKernel::mslGetContextId()
 }
 
 /**
- * Symbols have already been resolved by the shell, here we add
- * internal script Variable definitions, but those are defined down in core.
+ * Symbols and newer externals have already been resolved by the shell,
+ * here we add internal script Variable definitions, but those are defined down in core.
  */
 bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
 {
@@ -1479,8 +1479,9 @@ bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
 bool MobiusKernel::mslQuery(MslQuery* query)
 {
     bool success = false;
-    if (query->external->type == 0) {
-        // a parameter
+    ScriptExternalType type = (ScriptExternalType)(query->external->type);
+
+    if (type == ExtTypeSymbol) {
         Query q;
         q.symbol = static_cast<Symbol*>(query->external->object);
         q.scope = query->scope;
@@ -1492,8 +1493,11 @@ bool MobiusKernel::mslQuery(MslQuery* query)
         // Query at this level will never be "async"
         success = true;
     }
+    else if (type == ExtTypeVariable) {
+        success = ScriptExternals::doQuery(this, query);
+    }
     else {
-        // must be a core Variable
+        // must be a core ScriptInternalVariable
         success = mCore->mslQuery(query);
     }
     return success;
@@ -1503,7 +1507,8 @@ bool MobiusKernel::mslQuery(MslQuery* query)
  * Convert a query result that was the value of an enumerated parameter
  * into a pair of values to return to the interpreter.
  * Not liking this but it works.  Supervisor needs to do exactly the same
- * thing so it would be nice to share this.
+ * thing so it would be nice to share this.  The only difference
+ * is the way we have to call getParameterLabel through the Container.
  */
 void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 {
@@ -1552,12 +1557,13 @@ void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 bool MobiusKernel::mslAction(MslAction* action)
 {
     bool success = false;
-
-    if (action->external->type == 1) {
+    ScriptExternalType type = (ScriptExternalType)(action->external->type);
+    
+    if (type == ExtTypeFunction) {
         // a library function
         success = ScriptExternals::doAction(this, action);
     }
-    else if (action->external->type == 0) {
+    else if (type == ExtTypeSymbol) {
         Symbol* symbol = static_cast<Symbol*>(action->external->object);
 
         UIAction uia;
@@ -1598,8 +1604,9 @@ bool MobiusKernel::mslAction(MslAction* action)
         success = true;
     }
     else {
-        // must be a core Variable, should have transitioned
-        // to the kernel context
+        // must be a core Variable
+        // a very small number of these are settable, and those are debatable
+        // have no way to do that now
         Trace(1, "MobiusKernel: mslAction with non-symbol target");
     }
     return success;
@@ -1644,7 +1651,7 @@ int MobiusKernel::mslGetMaxScope()
     return scriptUtil.getMaxScope();
 }
 
-bool MobiusKernel::mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers)
+bool MobiusKernel::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)
 {
     return scriptUtil.expandScopeKeyword(name, numbers);
 }

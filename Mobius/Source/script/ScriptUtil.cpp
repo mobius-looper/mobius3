@@ -24,11 +24,11 @@ int ScriptUtil::getMaxScope()
     return session->audioTracks + session->midiTracks;
 }
 
-bool ScriptUtil::expandScopeKeyword(juce::String name, juce::Array<int>& numbers)
+bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers)
 {
     bool valid = true;
-    numbers.clear();
-
+    juce::String name(cname);
+    
     if (name.equalsIgnoreCase("all")) {
         int total = session->audioTracks + session->midiTracks;
         for (int i = 0 ; i < total ; i++) {

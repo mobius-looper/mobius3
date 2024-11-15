@@ -269,7 +269,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;
     int mslGetMaxScope() override;
-    bool mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers) override;
+    bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
 
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);

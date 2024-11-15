@@ -38,6 +38,7 @@
 #include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
 #include "../../script/MslValue.h"
+#include "../../script/ScriptExternals.h"
 
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
@@ -2389,12 +2390,10 @@ bool Mobius::mslResolve(juce::String name, MslExternal* ext)
     ScriptInternalVariable* var = ScriptInternalVariable::getVariable(name.toUTF8());
     if (var != nullptr) {
         // todo: filter out the ones we don't want to expose so they
-        // don't get MslExternal that don't do anything
+        // don't get MslExternals that don't do anything
         
+        ext->type = (int)ExtTypeOldVariable;
         ext->object = var;
-        // none of these are functions
-        // there are only two types 0=Symbol and 1=Variable
-        ext->type = 1;
 
         // we can set a correct context here, but Supervisor isn't actually checking
         // that, it will always do a direct Query without thread transitions
@@ -2408,14 +2407,15 @@ bool Mobius::mslResolve(juce::String name, MslExternal* ext)
 
 /**
  * Handle an MSL query on an internal variable.
- * Symbol queries will have been handled through a different path.
+ * Symbol queries will have been handled by MobiusKernel.
  */
 bool Mobius::mslQuery(MslQuery* query)
 {
     bool success = false;
-
+    ScriptExternalType type = (ScriptExternalType)(query->external->type);
+    
     // symbols have been handled in an different path
-    if (query->external->type == 1) {
+    if (type == ExtTypeOldVariable) {
         ScriptInternalVariable* var = static_cast<ScriptInternalVariable*>(query->external->object);
 
         Track* track = getTrack();

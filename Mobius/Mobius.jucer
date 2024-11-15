@@ -762,7 +762,6 @@
         <FILE id="bhfqpU" name="MslError.cpp" compile="1" resource="0" file="Source/script/MslError.cpp"/>
         <FILE id="ig20Fx" name="MslError.h" compile="0" resource="0" file="Source/script/MslError.h"/>
         <FILE id="j4d2od" name="MslExternal.h" compile="0" resource="0" file="Source/script/MslExternal.h"/>
-        <FILE id="KLN9HN" name="MslFileError.h" compile="0" resource="0" file="Source/script/MslFileError.h"/>
         <FILE id="Ibco1Z" name="MslGarbage.cpp" compile="1" resource="0" file="Source/script/MslGarbage.cpp"/>
         <FILE id="YEYQ6w" name="MslGarbage.h" compile="0" resource="0" file="Source/script/MslGarbage.h"/>
         <FILE id="e3Mo4J" name="MslLinkage.h" compile="0" resource="0" file="Source/script/MslLinkage.h"/>
@@ -796,6 +795,8 @@
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
         <FILE id="F0wdJK" name="ScriptExternals.cpp" compile="1" resource="0"
               file="Source/script/ScriptExternals.cpp"/>
+        <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
+              file="Source/script/ScriptExternals.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"

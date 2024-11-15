@@ -11,6 +11,7 @@ MslStack::~MslStack()
 {
     delete childResults;
     delete bindings;
+    delete inList;
 }
 
 void MslStack::init()

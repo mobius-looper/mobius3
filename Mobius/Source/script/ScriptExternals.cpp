@@ -30,10 +30,12 @@
  */
 ScriptExternalDefinition ScriptExternalDefinitions[] = {
 
-    {"MidiOut", ExtMidiOut, ScriptContextNone},
-    {"GetMidiDeviceId", ExtGetMidiDeviceId, ScriptContextNone},
+    {"MidiOut", FuncMidiOut, ScriptContextNone, true},
+    {"GetMidiDeviceId", FuncGetMidiDeviceId, ScriptContextNone, true},
 
-    {nullptr, ExtNone, ScriptContextNone}
+    {"trackNumber", VarTrackNumber, ScriptContextNone, false},
+    
+    {nullptr, ExtNone, ScriptContextNone, false}
 
 };
 
@@ -41,17 +43,17 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
  * Map a function name into an internal id.
  * todo: if this starts getting large, use a HashMap
  */
-ScriptExternalId ScriptExternals::find(juce::String name)
+ScriptExternalDefinition* ScriptExternals::find(juce::String name)
 {
-    ScriptExternalId id = ExtNone;
+    ScriptExternalDefinition* def = nullptr;
 
     for (int i = 0 ; ScriptExternalDefinitions[i].name != nullptr ; i++) {
         if (strcmp(ScriptExternalDefinitions[i].name, name.toUTF8()) == 0) {
-            id = ScriptExternalDefinitions[i].id;
+            def = &(ScriptExternalDefinitions[i]);
             break;
         }
     }
-    return id;
+    return def;
 }
 
 /**
@@ -63,30 +65,42 @@ ScriptExternalId ScriptExternals::find(juce::String name)
 bool ScriptExternals::doAction(MslContext* c, MslAction* action)
 {
     bool success = false;
-
-    int intId = action->external->id;
+    ScriptExternalType type = (ScriptExternalType)(action->external->type);
     
-    if (intId >= 0 && intId < (int)ExtMax) {
-        ScriptExternalId id = (ScriptExternalId)intId;
+    if (type == ExtTypeFunction) {
 
-        switch (id) {
+        // prevent assertion failure if the id is out of range
+        int intId = action->external->id;
+        if (intId >= 0 && intId < (int)ExtMax) {
+            ScriptExternalId id = (ScriptExternalId)intId;
+
+            switch (id) {
             
-            case ExtMidiOut:
-                success = MidiOut(c, action);
-                break;
-            case ExtGetMidiDeviceId:
-                success = GetMidiDeviceId(c, action);
-                break;
+                case FuncMidiOut:
+                    success = MidiOut(c, action);
+                    break;
+                case FuncGetMidiDeviceId:
+                    success = GetMidiDeviceId(c, action);
+                    break;
 
-            default:
-                Trace(1, "ScriptExternals: Unhandled external id %d", id);
-                break;
+                default:
+                    Trace(1, "ScriptExternals: Unhandled external id %d", id);
+                    break;
+            }
+        }
+        else {
+            Trace(1, "ScriptExternals: Invalid external id %d", intId);
         }
     }
-    else {
-        Trace(1, "ScriptExternals: Invalid external id %d", intId);
+    else if (type == ExtTypeVariable) {
+        // no settable varialbes yet
+        Trace(1, "ScriptExternals: Assignment of external variables not implemented");
     }
-
+    else {
+        // shouldn't have gotten this far
+        Trace(1, "ScriptExternals: Assignment of external variables not implemented");
+    }
+    
     return success;
 }
 
@@ -408,6 +422,49 @@ int ScriptExternals::getMidiDeviceId(MslContext* c, const char* name)
     }
 
     return deviceId;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Variables
+//
+//////////////////////////////////////////////////////////////////////
+
+bool ScriptExternals::doQuery(MslContext* c, MslQuery* query)
+{
+    bool success = false;
+    
+    int intId = query->external->id;
+    if (intId >= 0 && intId < (int)ExtMax) {
+        ScriptExternalId id = (ScriptExternalId)intId;
+
+        switch (id) {
+            
+            case VarTrackNumber:
+                success = getTrackNumber(c, query);
+                break;
+                
+            default:
+                Trace(1, "ScriptExternals: Unhandled external id %d", id);
+                break;
+        }
+    }
+    return success;
+}
+
+bool ScriptExternals::getTrackNumber(MslContext* c, MslQuery* q)
+{
+    int number = 0;
+    if (c->mslGetContextId() == MslContextShell) {
+        Supervisor* s = static_cast<Supervisor*>(c);
+        number = s->getFocusedTrack() + 1;
+    }
+    else {
+        MobiusKernel* k = static_cast<MobiusKernel*>(c);
+        number = k->getContainer()->getFocusedTrack() + 1;
+    }
+    q->value.setInt(number);
+    return true;
 }
 
 /****************************************************************************/

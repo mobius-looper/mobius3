@@ -2327,63 +2327,68 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 {
     bool success = false;
 
-    // favor runtime library functions
-    ScriptExternalId extid = ScriptExternals::find(name);
-    if (extid != ExtNone) {
-        ext->type = 1;
-        ext->id = (int)extid;
-        ext->isFunction = true;
-        ext->context = MslContextNone;
-        // todo: some kind of signature definition
+    // favor runtime library functions and variables
+    ScriptExternalDefinition* def = ScriptExternals::find(name);
+    if (def != nullptr) {
+        if (def->function)
+          ext->type = (int)ExtTypeFunction;
+        else
+          ext->type = (int)ExtTypeVariable;
+        
+        ext->id = (int)def->id;
+        ext->isFunction = def->function;
+
+        // reconsider the need for this parallel enum
+        switch (def->context) {
+            case ScriptContextNone: ext->context = MslContextNone; break;
+            case ScriptContextShell: ext->context = MslContextShell; break;
+            case ScriptContextKernel: ext->context = MslContextKernel; break;
+        }
+                
+        // todo: some kind of signature definition for functions
+        
         success = true;
     }
     else {
-        // then internal variables
-        ScriptVariableId varid = ScriptVariableDefinition::find(name.toUTF8());
-        if (varid != VarNone) {
-            ext->type = 2;
-            ext->id = (int)varid;
-            ext->context = MslContextNone;
-            success = true;
+        // then symbols
+        Symbol* s = symbols.find(name);
+        if (s != nullptr) {
+
+            // filter out symbosl that don't represent functions or parameters
+            // though I suppose we could treat Sample symbols like functions
+            // hmm, that could be cool for testing
+            //
+            // BehaviorScript may mean both old and new scripts old ones
+            // need to be treated as functions, but new ones will resolve
+            // within the MSL environment.  Need a way to distinguish those
+            // before we allow them to be called
+
+            if (s->behavior == BehaviorParameter ||
+                s->behavior == BehaviorFunction ||
+                s->behavior == BehaviorSample) {
+
+                ext->type = (int)ExtTypeSymbol;
+                // samples are treated like functions in that they are
+                // called not queried
+                ext->isFunction = (s->behavior != BehaviorParameter);
+
+                // these use a full blown object pointer rather than an id
+                ext->object = s;
+            
+                // MSL only has two contexts shell and kernel
+                if (s->level == LevelKernel || s->level == LevelCore)
+                  ext->context = MslContextKernel;
+                else
+                  ext->context = MslContextShell;
+            
+                success = true;
+            }
         }
         else {
-            // and finally symbols
-            Symbol* s = symbols.find(name);
-            if (s != nullptr) {
-
-                // filter out symbosl that don't represent functions or parameters
-                // though I suppose we could treat Sample symbols like functions
-                // hmm, that could be cool for testing
-                //
-                // BehaviorScript may mean both old and new scripts old ones
-                // need to be treated as functions, but new ones will resolve
-                // within the MSL environment.  Need a way to distinguish those
-                // before we allow them to be called
-
-                if (s->behavior == BehaviorParameter ||
-                    s->behavior == BehaviorFunction ||
-                    s->behavior == BehaviorSample) {
-
-                    ext->type = 0;
-                    // these use a full blown object pointer rather than an id
-                    ext->object = s;
-            
-                    if (!(s->behavior == BehaviorParameter))
-                      ext->isFunction = true;
-
-                    // MSL only has two contexts shell and kernel
-                    if (s->level == LevelKernel || s->level == LevelCore)
-                      ext->context = MslContextKernel;
-                    else
-                      ext->context = MslContextShell;
-            
-                    success = true;
-                }
-            }
-            else {
-                // pass it down to the core for resolution
-                success = mobius->mslResolve(name, ext);
-            }
+            // could be an old ScriptInternalVariable
+            // pass it down to the core for resolution
+            // eventually replace these with ExtTypeVariables
+            success = mobius->mslResolve(name, ext);
         }
     }
     
@@ -2399,10 +2404,11 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 bool Supervisor::mslQuery(MslQuery* query)
 {
     bool success = false;
-    if (query->external->type == 2) {
-        // internal variables
+    ScriptExternalType type = (ScriptExternalType)(query->external->type);
+    if (type == ExtTypeVariable) {
+        success = ScriptExternals::doQuery(this, query);
     }
-    else if (query->external->type == 0) {
+    else if (type == ExtTypeSymbol) {
         Query q;
         q.symbol = static_cast<Symbol*>(query->external->object);
         q.scope = query->scope;
@@ -2479,12 +2485,13 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 bool Supervisor::mslAction(MslAction* action)
 {
     bool success = false;
-
-    if (action->external->type == 1) {
+    ScriptExternalType type = (ScriptExternalType)(action->external->type);
+    
+    if (type == ExtTypeFunction) {
         // a library function
         success = ScriptExternals::doAction(this, action);
     }
-    else if (action->external->type == 0) {
+    else if (type == ExtTypeSymbol) {
         Symbol* s = static_cast<Symbol*>(action->external->object);
 
         if (s->id == FuncLoadMidi) {
@@ -2493,7 +2500,7 @@ bool Supervisor::mslAction(MslAction* action)
         }
         else {
             UIAction uia;
-            uia.symbol = static_cast<Symbol*>(action->external->object);
+            uia.symbol = s;
 
             if (action->arguments != nullptr)
               uia.value = action->arguments->getInt();
@@ -2546,7 +2553,7 @@ int Supervisor::mslGetMaxScope()
     return scriptUtil.getMaxScope();
 }
 
-bool Supervisor::mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers)
+bool Supervisor::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)
 {
     return scriptUtil.expandScopeKeyword(name, numbers);
 }

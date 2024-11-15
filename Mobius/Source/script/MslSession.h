@@ -186,7 +186,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     bool isWaitActive();
 
     // in
-    MslValue* expandInKeyword(MslValue* keyword);
+    bool expandInKeyword(MslValue* keyword);
 
     // debugging
     void checkCycles(MslValue* v);

@@ -35,6 +35,7 @@
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\events.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\gustebeast.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\intest.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -48,6 +49,8 @@
       <File path="c:\dev\mobius3\Mobius\Source\events.msl" name="eventHandler"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\gustebeast.msl" name="gustebeast"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\intest.msl" name="intest"
             added="2147483647"/>
     </Files>
   </Machine>

@@ -1340,6 +1340,7 @@ void MslSession::mslVisit(MslIn* innode)
                               inLast->next = v;
                             else
                               inList = v;
+                            inLast = v;
                         }
                     }
                 }
@@ -1418,9 +1419,8 @@ void MslSession::mslVisit(MslIn* innode)
 }
 
 /**
- * Given a keyword token from the "in" sequence, expand that out to
- * an MslValue list containing the actual track numbers.  Return nullptr
- * if this isn't a valid keyword.
+ * Given a keyword token from the "in" sequence, ask the Context to expand
+ * that out into a set of scope (track) numbers.
  *
  * Currently these will have to be coded as quoted strings since we don't yet
  * support unresolved symbol references in here.  Would really like :all
@@ -1440,41 +1440,10 @@ void MslSession::mslVisit(MslIn* innode)
  * a transition if that happens.
  *
  */
-MslValue* MslSession::expandInKeyword(MslValue* keyword)
+bool MslSession::expandInKeyword(MslValue* keyword)
 {
-    MslValue* list = nullptr;
-    const char* keystr = keyword->getString();
-    if (StringEqualNoCase(keystr, "all")) {
-        // MOS also supports "*" here but that would come in as an operator
-        // not worth messing with
-    }
-    else if (StringEqualNoCase(keystr, "focused")) {
-        // is this really necess?  could just leave it unscoped
-        // and let normal focus lock handle the replication
-    }
-    else if (StringEqualNoCase(keystr, "muted")) {
-    }
-    else if (StringEqualNoCase(keystr, "playing")) {
-        // MOS has this as the opposite of muted
-    }
-    // MOS has "group" which we don't need if we just
-    // assume that anything other than a keyword can
-    // be a group name
-    else if (StringEqualNoCase(keystr, "outSyncMaster")) {
-        // this we could skip if outSyncMaster were an actual external
-        // variable containing the number
-    }
-    else if (StringEqualNoCase(keystr, "trackSyncMaster")) {
-        // see outSyncMaster
-    }
-    else if (StringEqualNoCase(keystr, "audio")) {
-    }
-    else if (StringEqualNoCase(keystr, "midi")) {
-    }
-    else {
-        // check to see if this is the name of a GroupDefinition
-    }
-    return list;
+    scopeExpansion.clearQuick();
+    return context->mslExpandScopeKeyword(keyword->getString(), scopeExpansion);
 }
 
 /**

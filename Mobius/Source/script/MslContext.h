@@ -206,7 +206,7 @@ class MslContext
 
     // given the name of an abstract scope used with the "in" statement
     // fill in an array of concrete scope numbers for that scope
-    virtual bool mslExpandScopeKeyword(juce::String name, juce::Array<int>& numbers) = 0;
+    virtual bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) = 0;
 
 };
 

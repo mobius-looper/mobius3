@@ -316,7 +316,7 @@
     <Binding name='SelectTrack' trigger='control' value='13' args='1'/>
     <Binding name='Pause' trigger='control' value='12'/>
     <Binding name='Play' trigger='control' release='true' value='12'/>
-    <Binding name='Mute' trigger='note' value='64' channel='1'/>
+    <Binding name='Mute' trigger='control' value='15' channel='2'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>

@@ -110,6 +110,11 @@ void Export::setTarget(Parameter* p, Track* t)
     // assuming it only needs the resolved Track and
     // not the scopeTrack number
     mTrack = t;
+    // well no it didn't, it will eventually call getTargetTrack
+    // which expected to have the scope number
+    // god this is a mess
+    // old comments say "have to re-resolve every time" why the fuck would you do that?
+    mScopeTrack = t->getRawNumber() + 1;
 }
 
 //void Export::setTarget(ResolvedTarget* t)
@@ -383,6 +388,7 @@ void Export::getValue(ExValue* value)
     value->setNull();
 
     // have to resresolve the track each time
+    // why???
     mTrack = getTargetTrack();
 
     if (mType == ActionParameter) {

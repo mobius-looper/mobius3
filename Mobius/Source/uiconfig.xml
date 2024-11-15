@@ -122,6 +122,7 @@
     <Button action="Pause"/>
     <Button action="GlobalMute"/>
     <Button action="GlobalPause"/>
+    <Button action="intest"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

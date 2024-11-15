@@ -9,6 +9,18 @@
 #include <JuceHeader.h>
 
 /**
+ * Type constants used in the MslExternal object when resolving external references
+ */
+typedef enum {
+
+    ExtTypeSymbol,
+    ExtTypeFunction,
+    ExtTypeVariable,
+    ExtTypeOldVariable
+    
+} ScriptExternalType;
+
+/**
  * Internal ids for the built-in external functions.
  * These are what is placed in the MslExternal when resolving
  * a reference from a script.
@@ -16,8 +28,12 @@
 typedef enum {
 
     ExtNone,
-    ExtGetMidiDeviceId,
-    ExtMidiOut,
+    
+    FuncGetMidiDeviceId,
+    FuncMidiOut,
+
+    VarTrackNumber,
+    
     ExtMax
 
 } ScriptExternalId;
@@ -36,7 +52,7 @@ typedef enum {
 } ScriptContext;
     
 /**
- * Structure that associate a ScriptExternalId with it's name.
+ * Structure that associates a ScriptExternalId with it's name.
  */
 class ScriptExternalDefinition
 {
@@ -44,6 +60,7 @@ class ScriptExternalDefinition
     const char* name;
     ScriptExternalId id;
     ScriptContext context;
+    bool function;
 
     static void dump();
 };
@@ -63,12 +80,17 @@ class ScriptExternals
     /**
      * Find a function id by name.  Returns ExtNone if this is not a valid function.
      */
-    static ScriptExternalId find(juce::String name);
+    static ScriptExternalDefinition* find(juce::String name);
 
     /**
      * Call a library function from a script.
      */
     static bool doAction(class MslContext* c, class MslAction* action);
+
+    /**
+     * Query the value of a new variable.
+     */
+    static bool doQuery(class MslContext* c, class MslQuery* query);
     
   private:
 
@@ -82,7 +104,10 @@ class ScriptExternals
                                     juce::MidiMessage& msg,
                                     bool* returnSync, int *returnDeviceId);
     static int getMidiDeviceId(class MslContext* c, const char* name);
+
+    // Variable Implementations
     
+    static bool getTrackNumber(class MslContext* c, class MslQuery* q);
 };
 
 /****************************************************************************/

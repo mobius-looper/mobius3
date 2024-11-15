@@ -374,9 +374,14 @@ MslStack* MslPools::allocStack()
             s->childResults = nullptr;
         }
         if (s->bindings != nullptr) {
-            Trace(1, "MslPools: Lingering child bindings in pooled stack");
+            Trace(1, "MslPools: Lingering bindings in pooled stack");
             free(s->bindings);
             s->bindings = nullptr;
+        }
+        if (s->inList != nullptr) {
+            Trace(1, "MslPools: Lingering inList in pooled stack");
+            free(s->inList);
+            s->inList = nullptr;
         }
 
         s->init();
@@ -400,6 +405,7 @@ void MslPools::free(MslStack* s)
         // release resources as soon as it goes back in the pool
         free(s->childResults);
         s->childResults = nullptr;
+        
         free(s->bindings);
         s->bindings = nullptr;
 
