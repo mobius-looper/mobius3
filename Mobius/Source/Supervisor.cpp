@@ -2385,9 +2385,8 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
             }
         }
         else {
-            // could be an old ScriptInternalVariable
-            // pass it down to the core for resolution
-            // eventually replace these with ExtTypeVariables
+            // finally pass it down to the core for variables
+            // this is thread safe
             success = mobius->mslResolve(name, ext);
         }
     }
@@ -2396,19 +2395,15 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
 }
 
 /**
- * Ugh, hating the "namespace" for the external types
- * Mobius is currently using 0 to mean symbols and 1 to mean the
- * old internal variables, so we need something else for the
- * new script variables.  Use 2
+ * There are currently no external variables implemented at this
+ * level, they all go down to the core.
  */
 bool Supervisor::mslQuery(MslQuery* query)
 {
     bool success = false;
     ScriptExternalType type = (ScriptExternalType)(query->external->type);
-    if (type == ExtTypeVariable) {
-        success = ScriptExternals::doQuery(this, query);
-    }
-    else if (type == ExtTypeSymbol) {
+    
+    if (type == ExtTypeSymbol) {
         Query q;
         q.symbol = static_cast<Symbol*>(query->external->object);
         q.scope = query->scope;
@@ -2423,7 +2418,7 @@ bool Supervisor::mslQuery(MslQuery* query)
     }
     else {
         // must be a core Variable
-        // Queries don't transition so send it down
+        // Queries don't transition so pull it up
         return mobius->mslQuery(query);
     }
     return success;

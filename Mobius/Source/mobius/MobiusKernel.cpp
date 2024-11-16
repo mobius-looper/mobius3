@@ -1464,12 +1464,13 @@ MslContextId MobiusKernel::mslGetContextId()
 }
 
 /**
- * Symbols and newer externals have already been resolved by the shell,
- * here we add internal script Variable definitions, but those are defined down in core.
+ * Resolution is done by the shell.  The only time Kernel would have to
+ * resolve is if we allow dynamic evaluation which we don't
  */
 bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
 {
-    return mCore->mslResolve(name, ext);
+    Trace(1, "MobiusKernel::mslResolve Shouldn't be here");
+    return false;
 }
 
 /**
@@ -1493,11 +1494,8 @@ bool MobiusKernel::mslQuery(MslQuery* query)
         // Query at this level will never be "async"
         success = true;
     }
-    else if (type == ExtTypeVariable) {
-        success = ScriptExternals::doQuery(this, query);
-    }
     else {
-        // must be a core ScriptInternalVariable
+        // must be a core variable
         success = mCore->mslQuery(query);
     }
     return success;

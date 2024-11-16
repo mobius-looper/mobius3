@@ -33,12 +33,48 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
     {"MidiOut", FuncMidiOut, ScriptContextNone, true},
     {"GetMidiDeviceId", FuncGetMidiDeviceId, ScriptContextNone, true},
 
-    {"trackNumber", VarTrackNumber, ScriptContextNone, false},
-    
+    // core variables, formerly implemented by ScriptInternalVariable
+
+    {"blockFrames", VarBlockFrames, ScriptContextKernel, false},
+    {"sampleFrames", VarSampleFrames, ScriptContextKernel, false},
+    {"loopCount", VarLoopCount, ScriptContextKernel, false},
+    {"loopNumber", VarLoopNumber, ScriptContextKernel, false},
+    {"loopFrames", VarLoopFrames, ScriptContextKernel, false},
+    {"loopFrame", VarLoopFrame, ScriptContextKernel, false},
+    {"cycleCount", VarCycleCount, ScriptContextKernel, false},
+    {"cycleNumber", VarCycleNumber, ScriptContextKernel, false},
+    {"cycleFrames", VarCycleFrames, ScriptContextKernel, false},
+    {"cycleFrame", VarCycleFrame, ScriptContextKernel, false},
+    {"subcycleCount", VarSubcycleCount, ScriptContextKernel, false},
+    {"subcycleNumber", VarSubcycleNumber, ScriptContextKernel, false},
+    {"subcycleFrames", VarSubcycleFrames, ScriptContextKernel, false},
+    {"subcycleFrame", VarSubcycleFrame, ScriptContextKernel, false},
+    {"modeName", VarModeName, ScriptContextKernel, false},
+    {"isRecording", VarIsRecording, ScriptContextKernel, false},
+    {"inOverdub", VarInOverdub, ScriptContextKernel, false},
+    {"inHalfspeed", VarInHalfspeed, ScriptContextKernel, false},
+    {"inReverse", VarInReverse, ScriptContextKernel, false},
+    {"inMute", VarInMute, ScriptContextKernel, false},
+    {"inPause", VarInPause, ScriptContextKernel, false},
+    {"inRealign", VarInRealign, ScriptContextKernel, false},
+    {"inReturn", VarInReturn, ScriptContextKernel, false},
+    {"playbackRate", VarPlaybackRate, ScriptContextKernel, false},
+    {"trackCount", VarTrackCount, ScriptContextKernel, false},
+    {"activeAudioTrack", VarActiveAudioTrack, ScriptContextKernel, false},
+    {"focusedTrack", VarFocusedTrack, ScriptContextKernel, false},
+    {"scopeTrack", VarScopeTrack, ScriptContextKernel, false},
+    {"globalMute", VarGlobalMute, ScriptContextKernel, false},
+    {"trackSyncMaster", VarTrackSyncMaster, ScriptContextKernel, false},
+    {"outSyncMaster", VarOutSyncMaster, ScriptContextKernel, false},
+    {"syncTempo", VarSyncTempo, ScriptContextKernel, false},
+    {"syncRawBeat", VarSyncRawBeat, ScriptContextKernel, false},
+    {"syncBeat", VarSyncBeat, ScriptContextKernel, false},
+    {"syncBar", VarSyncBar, ScriptContextKernel, false},
+
     {nullptr, ExtNone, ScriptContextNone, false}
 
 };
-
+ 
 /**
  * Map a function name into an internal id.
  * todo: if this starts getting large, use a HashMap
@@ -422,49 +458,6 @@ int ScriptExternals::getMidiDeviceId(MslContext* c, const char* name)
     }
 
     return deviceId;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Variables
-//
-//////////////////////////////////////////////////////////////////////
-
-bool ScriptExternals::doQuery(MslContext* c, MslQuery* query)
-{
-    bool success = false;
-    
-    int intId = query->external->id;
-    if (intId >= 0 && intId < (int)ExtMax) {
-        ScriptExternalId id = (ScriptExternalId)intId;
-
-        switch (id) {
-            
-            case VarTrackNumber:
-                success = getTrackNumber(c, query);
-                break;
-                
-            default:
-                Trace(1, "ScriptExternals: Unhandled external id %d", id);
-                break;
-        }
-    }
-    return success;
-}
-
-bool ScriptExternals::getTrackNumber(MslContext* c, MslQuery* q)
-{
-    int number = 0;
-    if (c->mslGetContextId() == MslContextShell) {
-        Supervisor* s = static_cast<Supervisor*>(c);
-        number = s->getFocusedTrack() + 1;
-    }
-    else {
-        MobiusKernel* k = static_cast<MobiusKernel*>(c);
-        number = k->getContainer()->getFocusedTrack() + 1;
-    }
-    q->value.setInt(number);
-    return true;
 }
 
 /****************************************************************************/

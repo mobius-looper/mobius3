@@ -618,6 +618,14 @@
           <FILE id="Kz2Efj" name="Mem.h" compile="0" resource="0" file="Source/mobius/core/Mem.h"/>
           <FILE id="lHBt2R" name="Mobius.cpp" compile="1" resource="0" file="Source/mobius/core/Mobius.cpp"/>
           <FILE id="LMQl5U" name="Mobius.h" compile="0" resource="0" file="Source/mobius/core/Mobius.h"/>
+          <FILE id="UXud9f" name="MobiusMslHandler.cpp" compile="1" resource="0"
+                file="Source/mobius/core/MobiusMslHandler.cpp"/>
+          <FILE id="D2XaAL" name="MobiusMslHandler.h" compile="0" resource="0"
+                file="Source/mobius/core/MobiusMslHandler.h"/>
+          <FILE id="wHBnp8" name="MobiusMslVariableHandler.cpp" compile="1" resource="0"
+                file="Source/mobius/core/MobiusMslVariableHandler.cpp"/>
+          <FILE id="p3BIiC" name="MobiusMslVariableHandler.h" compile="0" resource="0"
+                file="Source/mobius/core/MobiusMslVariableHandler.h"/>
           <FILE id="UE7nUh" name="Mode.cpp" compile="1" resource="0" file="Source/mobius/core/Mode.cpp"/>
           <FILE id="yTJ6C3" name="Mode.h" compile="0" resource="0" file="Source/mobius/core/Mode.h"/>
           <FILE id="WMBb80" name="Parameter.cpp" compile="1" resource="0" file="Source/mobius/core/Parameter.cpp"/>

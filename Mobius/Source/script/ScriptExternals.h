@@ -21,7 +21,7 @@ typedef enum {
 } ScriptExternalType;
 
 /**
- * Internal ids for the built-in external functions.
+ * Internal ids for the built-in external functions and variables.
  * These are what is placed in the MslExternal when resolving
  * a reference from a script.
  */
@@ -32,7 +32,41 @@ typedef enum {
     FuncGetMidiDeviceId,
     FuncMidiOut,
 
-    VarTrackNumber,
+    VarBlockFrames,
+    VarSampleFrames,
+    VarLoopCount,
+    VarLoopNumber,
+    VarLoopFrames,
+    VarLoopFrame,
+    VarCycleCount,
+    VarCycleNumber,
+    VarCycleFrames,
+    VarCycleFrame,
+    VarSubcycleCount,
+    VarSubcycleNumber,
+    VarSubcycleFrames,
+    VarSubcycleFrame,
+    VarModeName,
+    VarIsRecording,
+    VarInOverdub,
+    VarInHalfspeed,
+    VarInReverse,
+    VarInMute,
+    VarInPause,
+    VarInRealign,
+    VarInReturn,
+    VarPlaybackRate,
+    VarTrackCount,
+    VarActiveAudioTrack,
+    VarFocusedTrack,
+    VarScopeTrack,
+    VarGlobalMute,
+    VarTrackSyncMaster,
+    VarOutSyncMaster,
+    VarSyncTempo,
+    VarSyncRawBeat,
+    VarSyncBeat,
+    VarSyncBar,
     
     ExtMax
 
@@ -87,11 +121,6 @@ class ScriptExternals
      */
     static bool doAction(class MslContext* c, class MslAction* action);
 
-    /**
-     * Query the value of a new variable.
-     */
-    static bool doQuery(class MslContext* c, class MslQuery* query);
-    
   private:
 
     //
@@ -105,9 +134,6 @@ class ScriptExternals
                                     bool* returnSync, int *returnDeviceId);
     static int getMidiDeviceId(class MslContext* c, const char* name);
 
-    // Variable Implementations
-    
-    static bool getTrackNumber(class MslContext* c, class MslQuery* q);
 };
 
 /****************************************************************************/

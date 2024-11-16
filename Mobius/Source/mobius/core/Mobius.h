@@ -15,6 +15,7 @@
 #include "../../model/OldMobiusState.h"
 #include "../TrackProperties.h"
 #include "Loader.h"
+#include "MobiusMslHandler.h"
 
 /**
  * Size of a static char buffer to keep the custom mode name.
@@ -98,11 +99,6 @@ class Mobius
      * could be named mslAction which is what it is
      */
     void doAction(class UIAction* a);
-
-    /**
-     * Resolve an MSL symbol reference to an internal Variable.
-     */
-    bool mslResolve(juce::String name, class MslExternal* ext);
 
     /**
      * Perform an MSL query.  In theory this could be used for
@@ -391,15 +387,6 @@ class Mobius
     void beginAudioInterrupt(class MobiusAudioStream* stream, class UIAction* actions);
     void endAudioInterrupt(class MobiusAudioStream* stream);
 
-    // new MSL support
-    class Track* getWaitTarget(class MslWait* wait);
-    bool scheduleDurationWait(class MslWait* wait);
-    int calculateDurationFrame(class MslWait* wait, class Track* t);
-    int getMsecFrames(class Track* t, long msecs);
-    bool scheduleLocationWait(MslWait* wait);
-    int calculateLocationFrame(MslWait* wait, Track* track);
-    bool scheduleEventWait(MslWait* wait);
-
     // new clip/follower/MIDI support
     int calculateFollowerEventFrame(class Track* track, QuantizeMode q);
 
@@ -443,6 +430,9 @@ class Mobius
 	
 	// state exposed to the outside world
 	OldMobiusState mState;
+
+    // handler for MSL integration
+    MobiusMslHandler mslHandler {this};
 
     // new loop/project load helper
     Loader mLoader {this};
