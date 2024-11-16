@@ -102,4 +102,19 @@ class AbstractTrack
     // misc utilities
     virtual void alert(const char* msg) = 0;
 
+    // emerging interfaces for MslWait and new track architecture
+    virtual class TrackEventList* getEventList() = 0;
+
+    // utility we need o a few places
+    int getSubcycleFrames() {
+        int subcycleFrames = 0;
+        int cycleFrames = getCycleFrames();
+        if (cycleFrames > 0) {
+            int subcycles = getSubcycles();
+            if (subcycles > 0)
+              subcycleFrames = cycleFrames / subcycles;
+        }
+        return subcycleFrames;
+    }
+
 };

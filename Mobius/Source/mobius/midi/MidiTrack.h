@@ -157,6 +157,8 @@ class MidiTrack : public AbstractTrack
     float getRate() override;
     //void setRate(float r) override;
 
+    class TrackEventList* getEventList() override;
+
     //
     // Leader responses
     //

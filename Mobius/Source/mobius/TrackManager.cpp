@@ -40,7 +40,7 @@ const int TrackManagerMaxMidiTracks = 8;
  */
 const int TrackManagerMaxMidiLoops = 8;
 
-TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k)
+TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
 {
     kernel = k;
     actionPool = k->getActionPool();
@@ -207,6 +207,11 @@ MidiPools* TrackManager::getPools()
     return &pools;
 }
 
+MobiusContainer* TrackManager::getContainer()
+{
+    return kernel->getContainer();
+}
+
 Pulsator* TrackManager::getPulsator()
 {
     return kernel->getContainer()->getPulsator();
@@ -275,6 +280,21 @@ TrackProperties TrackManager::getTrackProperties(int number)
         }
     }
     return props;
+}
+
+/**
+ * Only works for MIDI tracks right now
+ * and only used by TrackMslHandler
+ */
+AbstractTrack* TrackManager::getTrack(int number)
+{
+    AbstractTrack* track = nullptr;
+    
+    if (number > audioTrackCount) {
+        int midiIndex = number - audioTrackCount - 1;
+        track = midiTracks[midiIndex];
+    }
+    return track;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -649,6 +669,7 @@ bool TrackManager::doQuery(Query* q)
 
 /**
  * MSL queries can be for symbol queries or internal variables.
+ * TrackMslHandler should be doing all of this now?
  */
 bool TrackManager::mslQuery(MslQuery* query)
 {
@@ -686,7 +707,7 @@ bool TrackManager::mslQuery(MslQuery* query)
             }
             else {
                 MidiTrack* track = midiTracks[midiIndex];
-                success = mslHandler.get(query, track);
+                success = mslHandler.mslQuery(query, track);
             }
         }
 

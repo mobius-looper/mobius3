@@ -33,6 +33,7 @@ void TrackEvent::poolInit()
     pending = false;
     pulsed = false;
     extension = false;
+    wait = nullptr;
     primary = nullptr;
     stacked = nullptr;
     correlationId = 0;

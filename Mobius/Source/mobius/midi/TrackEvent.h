@@ -25,7 +25,8 @@ class TrackEvent : public PooledObject
         EventRecord,
         EventAction,
         EventRound,
-        EventSwitch
+        EventSwitch,
+        EventWait
     } Type;
     
     TrackEvent();
@@ -49,6 +50,9 @@ class TrackEvent : public PooledObject
 
     // for Round events, indiciates this is an extension point
     bool extension = false;
+
+    // for MSL wait events
+    class MslWait* wait = nullptr;
 
     // stacked actions
     class UIAction* primary = nullptr;

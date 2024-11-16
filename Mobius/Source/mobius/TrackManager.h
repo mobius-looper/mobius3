@@ -18,11 +18,11 @@
 
 #include "TrackProperties.h"
 #include "TrackListener.h"
+#include "TrackMslHandler.h"
 // need to move these up
 #include "midi/LongWatcher.h"
 #include "midi/MidiWatcher.h"
 #include "midi/MidiPools.h"
-#include "midi/MidiMslVariableHandler.h"
 
 class TrackManager : public LongWatcher::Listener, public TrackListener
 {
@@ -40,7 +40,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void loadSession(class Session* s);
 
     // Services
-    
+
     class MobiusMidiState* getState();
     class MidiPools* getPools();
     class Pulsator* getPulsator();
@@ -96,7 +96,14 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // used by TrackScheduler to schedule a follower event in a core track
     int scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId);
-    
+
+
+    //
+    // New interfaces for emerging TrackMslHandler and others
+    //
+
+    class MobiusContainer* getContainer();
+    AbstractTrack* getTrack(int number);
     
   private:
 
@@ -109,8 +116,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     LongWatcher longWatcher;
     MidiWatcher watcher;
-    MidiMslVariableHandler mslHandler;
-
+    TrackMslHandler mslHandler;
+    
     juce::OwnedArray<class LogicalTrack> tracks;
     int audioTrackCount = 0;
     int activeMidiTracks = 0;

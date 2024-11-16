@@ -288,6 +288,11 @@ bool MidiTrack::isPaused()
     return (mode == MobiusMidiState::ModePause);
 }
 
+TrackEventList* MidiTrack::getEventList()
+{
+    return &(scheduler.events);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Follower/Leader State
