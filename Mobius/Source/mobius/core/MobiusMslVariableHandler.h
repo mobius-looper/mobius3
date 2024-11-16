@@ -17,49 +17,49 @@ class MobiusMslVariableHandler
     MobiusMslVariableHandler(class Mobius* m);
     ~MobiusMslVariableHandler();
 
-    bool get(class MslQuery* q);
+    bool get(class MslQuery* q, class Track* t);
 
   private:
 
     class Mobius* mobius = nullptr;
-
-    class Track* getTrack(class MslQuery* q);
     
-    void getLoopCount(class MslQuery* q);
-    void getLoopNumber(class MslQuery* q);
-    void getLoopFrames(class MslQuery* q);
-    void getLoopFrame(class MslQuery* q);
-    void getCycleCount(class MslQuery* q);
-    void getCycleNumber(class MslQuery* q);
-    void getCycleFrames(class MslQuery* q);
-    void getCycleFrame(class MslQuery* q);
-    void getSubcycleCount(class MslQuery* q);
-    void getSubcycleNumber(class MslQuery* q);
-    void getSubcycleFrames(class MslQuery* q);
-    void getSubcycleFrame(class MslQuery* q);
-    void getModeName(class MslQuery* q);
-    void getIsRecording(class MslQuery* q);;
-    void getInOverdub(class MslQuery* q);
-    void getInHalfspeed(class MslQuery* q);
-    void getInReverse(class MslQuery* q);
-    void getInMute(class MslQuery* q);
-    void getInPause(class MslQuery* q);
-    void getInRealign(class MslQuery* q);
-    void getInReturn(class MslQuery* q);
-    void getPlaybackRate(class MslQuery* q);
-    void getTrackCount(class MslQuery* q);
-    void getActiveTrack(class MslQuery* q);
-    void getFocusedTrack(class MslQuery* q);
-    void getScopeTrack(class MslQuery* q);
-    void getGlobalMute(class MslQuery* q);
-    void getTrackSyncMaster(class MslQuery* q);
-    void getOutSyncMaster(class MslQuery* q);
-    void getSyncTempo(class MslQuery* q);
-    void getSyncRawBeat(class MslQuery* q);
-    void getSyncBeat(class MslQuery* q);
-    void getSyncBar(class MslQuery* q);
-    void getBlockFrames(class MslQuery* q);
-    void getSampleRate(class MslQuery* q);
-    void getSampleFrames(class MslQuery* q);
+    void getLoopCount(class MslQuery* q, class Track* t);
+    void getLoopNumber(class MslQuery* q, class Track* t);
+    void getLoopFrames(class MslQuery* q, class Track* t);
+    void getLoopFrame(class MslQuery* q, class Track* t);
+    void getCycleCount(class MslQuery* q, class Track* t);
+    void getCycleNumber(class MslQuery* q, class Track* t);
+    void getCycleFrames(class MslQuery* q, class Track* t);
+    void getCycleFrame(class MslQuery* q, class Track* t);
+    void getSubcycleCount(class MslQuery* q, class Track* t);
+    void getSubcycleNumber(class MslQuery* q, class Track* t);
+    void getSubcycleFrames(class MslQuery* q, class Track* t);
+    void getSubcycleFrame(class MslQuery* q, class Track* t);
+    void getModeName(class MslQuery* q, class Track* t);
+    void getIsRecording(class MslQuery* q, class Track* t);;
+    void getInOverdub(class MslQuery* q, class Track* t);
+    void getInHalfspeed(class MslQuery* q, class Track* t);
+    void getInReverse(class MslQuery* q, class Track* t);
+    void getInMute(class MslQuery* q, class Track* t);
+    void getInPause(class MslQuery* q, class Track* t);
+    void getInRealign(class MslQuery* q, class Track* t);
+    void getInReturn(class MslQuery* q, class Track* t);
+    void getPlaybackRate(class MslQuery* q, class Track* t);
+    void getTrackCount(class MslQuery* q, class Track* t);
+    void getAudioTrackCount(class MslQuery* q, class Track* t);
+    void getMidiTrackCount(class MslQuery* q, class Track* t);
+    void getActiveTrack(class MslQuery* q, class Track* t);
+    void getFocusedTrack(class MslQuery* q, class Track* t);
+    void getScopeTrack(class MslQuery* q, class Track* t);
+    void getGlobalMute(class MslQuery* q, class Track* t);
+    void getTrackSyncMaster(class MslQuery* q, class Track* t);
+    void getOutSyncMaster(class MslQuery* q, class Track* t);
+    void getSyncTempo(class MslQuery* q, class Track* t);
+    void getSyncRawBeat(class MslQuery* q, class Track* t);
+    void getSyncBeat(class MslQuery* q, class Track* t);
+    void getSyncBar(class MslQuery* q, class Track* t);
+    void getBlockFrames(class MslQuery* q, class Track* t);
+    void getSampleRate(class MslQuery* q, class Track* t);
+    void getSampleFrames(class MslQuery* q, class Track* t);
 
 };

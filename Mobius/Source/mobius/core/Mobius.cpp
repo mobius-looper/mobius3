@@ -2314,6 +2314,12 @@ void Mobius::loadProject(Project* p)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This should only be called by TrackManager with a query scope that
+ * is within the range of audio tracks. And only for internal variables.
+ * Symbol queries are to be converted to a Query and passed in the
+ * normal way.
+ */
 bool Mobius::mslQuery(MslQuery* query)
 {
     return mslHandler.mslQuery(query);

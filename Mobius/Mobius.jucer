@@ -514,6 +514,10 @@
           <FILE id="WE5mju" name="MidiLayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiLayer.h"/>
           <FILE id="MLMR7A" name="MidiLoop.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiLoop.cpp"/>
           <FILE id="CM2C3p" name="MidiLoop.h" compile="0" resource="0" file="Source/mobius/midi/MidiLoop.h"/>
+          <FILE id="RixQ1h" name="MidiMslVariableHandler.cpp" compile="1" resource="0"
+                file="Source/mobius/midi/MidiMslVariableHandler.cpp"/>
+          <FILE id="OfaePL" name="MidiMslVariableHandler.h" compile="0" resource="0"
+                file="Source/mobius/midi/MidiMslVariableHandler.h"/>
           <FILE id="x2ozWZ" name="MidiPlayer.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="h9gNUn" name="MidiPlayer.h" compile="0" resource="0" file="Source/mobius/midi/MidiPlayer.h"/>
           <FILE id="yoEz7A" name="MidiPools.cpp" compile="1" resource="0" file="Source/mobius/midi/MidiPools.cpp"/>

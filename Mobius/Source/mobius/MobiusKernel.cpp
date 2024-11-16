@@ -724,6 +724,12 @@ int MobiusKernel::getMidiOutputDeviceId(const char* name)
             }
         }
     }
+    else if (StringEqual(name, "Host")) {
+        // we're standalone, but the plugin wanted output to go to the host
+        // there should be two parameters for this one for standalone and one for plugin
+        // not sure what to do here, I guess let it default silently?
+        Trace(1, "MobiusKernel: Warning: Plugin configured for MIDI output to Host, Standalone can't do that");
+    }
     else {
         id = container->getMidiOutputDeviceId(name);
         if (id < 0) {
@@ -1469,76 +1475,18 @@ MslContextId MobiusKernel::mslGetContextId()
  */
 bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
 {
+    (void)name;
+    (void)ext;
     Trace(1, "MobiusKernel::mslResolve Shouldn't be here");
     return false;
 }
 
 /**
  * Convert it to a Query and handle it like other queries.
- * If this external is bound to a Variable pass it to the core.
  */
 bool MobiusKernel::mslQuery(MslQuery* query)
 {
-    bool success = false;
-    ScriptExternalType type = (ScriptExternalType)(query->external->type);
-
-    if (type == ExtTypeSymbol) {
-        Query q;
-        q.symbol = static_cast<Symbol*>(query->external->object);
-        q.scope = query->scope;
-
-        (void)mTracks->doQuery(&q);
-
-        mutateMslReturn(q.symbol, q.value, &(query->value));
-
-        // Query at this level will never be "async"
-        success = true;
-    }
-    else {
-        // must be a core variable
-        success = mCore->mslQuery(query);
-    }
-    return success;
-}
-
-/**
- * Convert a query result that was the value of an enumerated parameter
- * into a pair of values to return to the interpreter.
- * Not liking this but it works.  Supervisor needs to do exactly the same
- * thing so it would be nice to share this.  The only difference
- * is the way we have to call getParameterLabel through the Container.
- */
-void MobiusKernel::mutateMslReturn(Symbol* s, int value, MslValue* retval)
-{
-    if (s->parameter == nullptr) {
-        // no extra definition, return whatever it was
-        retval->setInt(value);
-    }
-    else {
-        UIParameterType ptype = s->parameter->type;
-        if (ptype == TypeEnum) {
-            // don't use labels since I want scripters to get used to the names
-            const char* ename = s->parameter->getEnumName(value);
-            retval->setEnum(ename, value);
-        }
-        else if (ptype == TypeBool) {
-            retval->setBool(value == 1);
-        }
-        else if (ptype == TypeStructure) {
-            // hmm, the understanding of LevelUI symbols that live in
-            // UIConfig and LevelCore symbols that live in MobiusConfig
-            // is in Supervisor right now
-            // todo: Need to repackage this
-            // todo: this could also be Type::Enum in the value but I don't
-            // think anything cares?
-            retval->setJString(container->getParameterLabel(s, value));
-        }
-        else {
-            // should only be here for TypeInt
-            // unclear what String would do
-            retval->setInt(value);
-        }
-    }
+    return mTracks->mslQuery(query);
 }
 
 /**
@@ -1655,6 +1603,7 @@ int MobiusKernel::mslGetMaxScope()
  */
 bool MobiusKernel::mslIsScopeKeyword(const char* name)
 {
+    (void)name;
     Trace(1, "MobiusKernel::mslIsScopeKeyword Shouldn't be here");
     return false;
 }

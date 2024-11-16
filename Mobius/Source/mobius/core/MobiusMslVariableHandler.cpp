@@ -148,7 +148,7 @@ MobiusMslVariableHandler::~MobiusMslVariableHandler()
 {
 }
 
-bool MobiusMslVariableHandler::get(MslQuery* q)
+bool MobiusMslVariableHandler::get(MslQuery* q, Track* t)
 {
     bool success = false;
     
@@ -162,51 +162,53 @@ bool MobiusMslVariableHandler::get(MslQuery* q)
             ScriptExternalId id = (ScriptExternalId)intId;
             switch (id) {
 
-                case VarBlockFrames: getBlockFrames(q); break;
-                case VarSampleRate: getSampleRate(q); break;
-                case VarSampleFrames: getSampleFrames(q); break;
+                case VarBlockFrames: getBlockFrames(q,t); break;
+                case VarSampleRate: getSampleRate(q,t); break;
+                case VarSampleFrames: getSampleFrames(q,t); break;
                     
-                case VarLoopCount: getLoopCount(q); break;
-                case VarLoopNumber: getLoopNumber(q); break;
-                case VarLoopFrames: getLoopFrames(q); break;
-                case VarLoopFrame: getLoopFrame(q); break;
-                case VarCycleCount: getCycleCount(q); break;
-                case VarCycleNumber: getCycleNumber(q); break;
-                case VarCycleFrames: getCycleFrames(q); break;
-                case VarCycleFrame: getCycleFrame(q); break;
-                case VarSubcycleCount: getSubcycleCount(q); break;
-                case VarSubcycleNumber: getSubcycleNumber(q); break;
-                case VarSubcycleFrames: getSubcycleFrames(q); break;
-                case VarSubcycleFrame: getSubcycleFrame(q); break;
+                case VarLoopCount: getLoopCount(q,t); break;
+                case VarLoopNumber: getLoopNumber(q,t); break;
+                case VarLoopFrames: getLoopFrames(q,t); break;
+                case VarLoopFrame: getLoopFrame(q,t); break;
+                case VarCycleCount: getCycleCount(q,t); break;
+                case VarCycleNumber: getCycleNumber(q,t); break;
+                case VarCycleFrames: getCycleFrames(q,t); break;
+                case VarCycleFrame: getCycleFrame(q,t); break;
+                case VarSubcycleCount: getSubcycleCount(q,t); break;
+                case VarSubcycleNumber: getSubcycleNumber(q,t); break;
+                case VarSubcycleFrames: getSubcycleFrames(q,t); break;
+                case VarSubcycleFrame: getSubcycleFrame(q,t); break;
 
                     // old name was just "mode" may want to prefix that
-                case VarModeName: getModeName(q); break;
-                case VarIsRecording: getIsRecording(q);  break;
-                case VarInOverdub: getInOverdub(q); break;
-                case VarInHalfspeed: getInHalfspeed(q); break;
-                case VarInReverse: getInReverse(q); break;
-                case VarInMute: getInMute(q); break;
-                case VarInPause: getInPause(q); break;
-                case VarInRealign: getInRealign(q); break;
-                case VarInReturn: getInReturn(q); break;
+                case VarModeName: getModeName(q,t); break;
+                case VarIsRecording: getIsRecording(q,t);  break;
+                case VarInOverdub: getInOverdub(q,t); break;
+                case VarInHalfspeed: getInHalfspeed(q,t); break;
+                case VarInReverse: getInReverse(q,t); break;
+                case VarInMute: getInMute(q,t); break;
+                case VarInPause: getInPause(q,t); break;
+                case VarInRealign: getInRealign(q,t); break;
+                case VarInReturn: getInReturn(q,t); break;
 
                     // old name was just "rate"
-                case VarPlaybackRate: getPlaybackRate(q); break;
+                case VarPlaybackRate: getPlaybackRate(q,t); break;
                     
-                case VarTrackCount: getTrackCount(q); break;
+                case VarTrackCount: getTrackCount(q,t); break;
+                case VarAudioTrackCount: getAudioTrackCount(q,t); break;
+                case VarMidiTrackCount: getMidiTrackCount(q,t); break;
                     // old name was "trackNumber"
-                case VarActiveAudioTrack: getActiveTrack(q); break;
-                case VarFocusedTrack: getFocusedTrack(q); break;
-                case VarScopeTrack: getScopeTrack(q); break;
+                case VarActiveAudioTrack: getActiveTrack(q,t); break;
+                case VarFocusedTrack: getFocusedTrack(q,t); break;
+                case VarScopeTrack: getScopeTrack(q,t); break;
                     
-                case VarGlobalMute: getGlobalMute(q); break;
+                case VarGlobalMute: getGlobalMute(q,t); break;
 
-                case VarTrackSyncMaster: getTrackSyncMaster(q); break;
-                case VarOutSyncMaster: getOutSyncMaster(q); break;
-                case VarSyncTempo: getSyncTempo(q); break;
-                case VarSyncRawBeat: getSyncRawBeat(q); break;
-                case VarSyncBeat: getSyncBeat(q); break;
-                case VarSyncBar: getSyncBar(q); break;
+                case VarTrackSyncMaster: getTrackSyncMaster(q,t); break;
+                case VarOutSyncMaster: getOutSyncMaster(q,t); break;
+                case VarSyncTempo: getSyncTempo(q,t); break;
+                case VarSyncRawBeat: getSyncRawBeat(q,t); break;
+                case VarSyncBeat: getSyncBeat(q,t); break;
+                case VarSyncBar: getSyncBar(q,t); break;
 
                 default:
                     success = false;
@@ -223,121 +225,59 @@ bool MobiusMslVariableHandler::get(MslQuery* q)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Obtain the track relevant for the query scope.
- * ah, now we have the audio/midi problem.  We either land
- * here and forward back up, or Kernel needs to pass this through
- * TrackManager and let it decide where to send it.
- */
-Track* MobiusMslVariableHandler::getTrack(MslQuery* q)
+void MobiusMslVariableHandler::getLoopCount(MslQuery* q, Track* t)
 {
-    Track* track = nullptr;
-    
-    if (q->scope > 0) {
-        int trackIndex = q->scope - 1;
-        if (trackIndex < mobius->getTrackCount())
-          track = mobius->getTrack(trackIndex);
-        else {
-            Trace(1, "Mobius: MSL variable handler scoped to a MIDI track");
-        }
-    }
-    else {
-        // this is supposed to mean the "focused" track
-        // which can also be a MIDI track which needs to be handled higher
-        // punt for now and use the active track
-        track = mobius->getTrack();
-    }
-    return track;
+    q->value.setInt(t->getLoopCount());
 }
 
-void MobiusMslVariableHandler::getLoopCount(MslQuery* q)
+void MobiusMslVariableHandler::getLoopNumber(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) result = t->getLoopCount();
+    q->value.setInt(t->getLoop()->getNumber());
+}
+
+void MobiusMslVariableHandler::getLoopFrames(MslQuery* q, Track* t)
+{
+    q->value.setInt((int)(t->getLoop()->getFrames()));
+}
+
+void MobiusMslVariableHandler::getLoopFrame(MslQuery* q, Track* t)
+{
+    q->value.setInt((int)(t->getLoop()->getFrame()));
+}
+
+void MobiusMslVariableHandler::getCycleCount(MslQuery* q, Track* t)
+{
+    q->value.setInt((int)(t->getLoop()->getCycles()));
+}
+
+void MobiusMslVariableHandler::getCycleNumber(MslQuery* q, Track* t)
+{
+    Loop* l = t->getLoop();
+    long frame = l->getFrame();
+    long cycleFrames = l->getCycleFrames();
+    int result = (int)(frame / cycleFrames);
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getLoopNumber(MslQuery* q)
+void MobiusMslVariableHandler::getCycleFrames(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->getNumber();
+    q->value.setInt((int)(t->getLoop()->getCycleFrames()));
+}
+
+void MobiusMslVariableHandler::getCycleFrame(MslQuery* q, Track* t)
+{
+    Loop* l = t->getLoop();
+    long frame = l->getFrame();
+    long cycleFrames = l->getCycleFrames();
+    int result = (int)(frame % cycleFrames);
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getLoopFrames(MslQuery* q)
+void MobiusMslVariableHandler::getSubcycleCount(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (int)(t->getLoop()->getFrames());
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getLoopFrame(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (int)(t->getLoop()->getFrame());
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getCycleCount(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (int)(t->getLoop()->getCycles());
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getCycleNumber(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Loop* l = t->getLoop();
-        long frame = l->getFrame();
-        long cycleFrames = l->getCycleFrames();
-        result = (int)(frame / cycleFrames);
-    }
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getCycleFrames(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (int)(t->getLoop()->getCycleFrames());
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getCycleFrame(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Loop* l = t->getLoop();
-        long frame = l->getFrame();
-        long cycleFrames = l->getCycleFrames();
-        result = (int)(frame % cycleFrames);
-    }
-    q->value.setInt(result);
-}
-
-void MobiusMslVariableHandler::getSubcycleCount(MslQuery* q)
-{
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        // sigh, Variable still uses Preset for this and so shall we
-        Preset* p = t->getPreset();
-        result = p->getSubcycles();
-    }
+    // sigh, Variable still uses Preset for this and so shall we
+    Preset* p = t->getPreset();
+    int result = p->getSubcycles();
     q->value.setInt(result);
 }
 
@@ -346,46 +286,35 @@ void MobiusMslVariableHandler::getSubcycleCount(MslQuery* q)
  * The current subcycle number, relative to the current cycle.
  * !! Should this be relative to the start of the loop?
  */
-void MobiusMslVariableHandler::getSubcycleNumber(MslQuery* q)
+void MobiusMslVariableHandler::getSubcycleNumber(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Loop* l = t->getLoop();
-        Preset* p = l->getPreset();
-        long frame = l->getFrame();
-        long subCycleFrames = l->getSubCycleFrames();
+    Loop* l = t->getLoop();
+    Preset* p = l->getPreset();
+    long frame = l->getFrame();
+    long subCycleFrames = l->getSubCycleFrames();
 
-        // absolute subCycle with in loop
-        long subCycle = frame / subCycleFrames;
+    // absolute subCycle with in loop
+    long subCycle = frame / subCycleFrames;
 
-        // adjust to be relative to start of cycle
-        subCycle %= p->getSubcycles();
+    // adjust to be relative to start of cycle
+    subCycle %= p->getSubcycles();
 
-        result = (int)subCycle;
-    }
+    int result = (int)subCycle;
+
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getSubcycleFrames(MslQuery* q)
+void MobiusMslVariableHandler::getSubcycleFrames(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (int)(t->getLoop()->getSubCycleFrames());
-    q->value.setInt(result);
+    q->value.setInt((int)(t->getLoop()->getSubCycleFrames()));
 }
 
-void MobiusMslVariableHandler::getSubcycleFrame(MslQuery* q)
+void MobiusMslVariableHandler::getSubcycleFrame(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Loop* l = t->getLoop();
-        long frame = l->getFrame();
-        long subCycleFrames = l->getSubCycleFrames();
-        result = (int)(frame % subCycleFrames);
-    }
+    Loop* l = t->getLoop();
+    long frame = l->getFrame();
+    long subCycleFrames = l->getSubCycleFrames();
+    int result = (int)(frame % subCycleFrames);
     q->value.setInt(result);
 }
 
@@ -395,97 +324,66 @@ void MobiusMslVariableHandler::getSubcycleFrame(MslQuery* q)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusMslVariableHandler::getModeName(MslQuery* q)
+void MobiusMslVariableHandler::getModeName(MslQuery* q, Track* t)
 {
-    const char* result = nullptr;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->getMode()->getName();
-    q->value.setString(result);
+    q->value.setString(t->getLoop()->getMode()->getName());
 }
 
-void MobiusMslVariableHandler::getIsRecording(MslQuery* q)
+void MobiusMslVariableHandler::getIsRecording(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->isRecording();
-    q->value.setBool(result);
+    q->value.setBool(t->getLoop()->isRecording());
 }
 
-void MobiusMslVariableHandler::getInOverdub(MslQuery* q)
+
+void MobiusMslVariableHandler::getInOverdub(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->isOverdub();
-    q->value.setBool(result);
+    q->value.setBool(t->getLoop()->isOverdub());
 }
 
 /**
  * This is old, and it would be more useful to just know
  * the value of SpeedToggle
  */
-void MobiusMslVariableHandler::getInHalfspeed(MslQuery* q)
+void MobiusMslVariableHandler::getInHalfspeed(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = (t->getSpeedToggle() == -12);
+    bool result = (t->getSpeedToggle() == -12);
     q->value.setBool(result);
 }
 
-void MobiusMslVariableHandler::getInReverse(MslQuery* q)
+void MobiusMslVariableHandler::getInReverse(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->isReverse();
+    bool result = t->getLoop()->isReverse();
     q->value.setBool(result);
 }
 
-void MobiusMslVariableHandler::getInMute(MslQuery* q)
+void MobiusMslVariableHandler::getInMute(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->isMuteMode();
+    bool result = t->getLoop()->isMuteMode();
     q->value.setBool(result);
 }
 
-void MobiusMslVariableHandler::getInPause(MslQuery* q)
+void MobiusMslVariableHandler::getInPause(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getLoop()->isPaused();
+    bool result = t->getLoop()->isPaused();
     q->value.setBool(result);
 }
 
 /**
  * Is this really that interesting?  I guess for testing
  */
-void MobiusMslVariableHandler::getInRealign(MslQuery* q)
+void MobiusMslVariableHandler::getInRealign(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        EventManager* em = t->getEventManager();
-        Event* e = em->findEvent(RealignEvent);
-        result = (e != NULL);
-    }
+    EventManager* em = t->getEventManager();
+    Event* e = em->findEvent(RealignEvent);
+    bool result = (e != NULL);
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getInReturn(MslQuery* q)
+void MobiusMslVariableHandler::getInReturn(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        EventManager* em = t->getEventManager();
-        Event* e = em->findEvent(ReturnEvent);
-        result = (e != NULL);
-    }
+    EventManager* em = t->getEventManager();
+    Event* e = em->findEvent(ReturnEvent);
+    bool result = (e != NULL);
     q->value.setInt(result);
 }
 
@@ -493,27 +391,44 @@ void MobiusMslVariableHandler::getInReturn(MslQuery* q)
  * !! This should be "speedStep"
  * "rate" was used a long time ago but that should be a float
  */
-void MobiusMslVariableHandler::getPlaybackRate(MslQuery* q)
+void MobiusMslVariableHandler::getPlaybackRate(MslQuery* q, Track* t)
 {
-    int result = 1;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->getSpeedStep();
-    q->value.setInt(result);
+    q->value.setInt(t->getSpeedStep());
 }
 
-void MobiusMslVariableHandler::getTrackCount(MslQuery* q)
+/**
+ * Here we have a problem.
+ * Old scripts used this name to refer only to audio tracks
+ * but now we're starting to use it for the combined track count.
+ */
+void MobiusMslVariableHandler::getTrackCount(MslQuery* q, Track* t)
 {
+    (void)t;
+    int total = mobius->getTrackCount() + mobius->getKernel()->getMidiTrackCount();
+    q->value.setInt(total);
+}
+
+void MobiusMslVariableHandler::getAudioTrackCount(MslQuery* q, Track* t)
+{
+    (void)t;
     q->value.setInt(mobius->getTrackCount());
 }
 
-void MobiusMslVariableHandler::getActiveTrack(MslQuery* q)
+void MobiusMslVariableHandler::getMidiTrackCount(MslQuery* q, Track* t)
 {
+    (void)t;
+    q->value.setInt(mobius->getKernel()->getMidiTrackCount());
+}
+
+void MobiusMslVariableHandler::getActiveTrack(MslQuery* q, Track* t)
+{
+    (void)t;
     q->value.setInt(mobius->getTrack()->getDisplayNumber());
 }
 
-void MobiusMslVariableHandler::getFocusedTrack(MslQuery* q)
+void MobiusMslVariableHandler::getFocusedTrack(MslQuery* q, Track* t)
 {
+    (void)t;
     q->value.setInt(mobius->getContainer()->getFocusedTrack() + 1);
 }
 
@@ -521,8 +436,9 @@ void MobiusMslVariableHandler::getFocusedTrack(MslQuery* q)
  * If they didn't pass a scope in the query, I guess
  * this should fall back to the focused track?
  */
-void MobiusMslVariableHandler::getScopeTrack(MslQuery* q)
+void MobiusMslVariableHandler::getScopeTrack(MslQuery* q, Track* t)
 {
+    (void)t;
     if (q->scope > 0)
       q->value.setInt(q->scope);
     else
@@ -533,13 +449,9 @@ void MobiusMslVariableHandler::getScopeTrack(MslQuery* q)
  * Why the fuck is this on the Track?
  * Is it replicated in all of them?
  */
-void MobiusMslVariableHandler::getGlobalMute(MslQuery* q)
+void MobiusMslVariableHandler::getGlobalMute(MslQuery* q, Track* t)
 {
-    bool result = false;
-    Track* t = getTrack(q);
-    if (t != nullptr)
-      result = t->isGlobalMute();
-    q->value.setInt(result);
+    q->value.setInt(t->isGlobalMute());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -551,14 +463,16 @@ void MobiusMslVariableHandler::getGlobalMute(MslQuery* q)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusMslVariableHandler::getTrackSyncMaster(MslQuery* q)
+void MobiusMslVariableHandler::getTrackSyncMaster(MslQuery* q, Track* t)
 {
+    (void)t;
     int tnum = mobius->getContainer()->getPulsator()->getTrackSyncMaster();
     q->value.setInt(tnum);
 }
 
-void MobiusMslVariableHandler::getOutSyncMaster(MslQuery* q)
+void MobiusMslVariableHandler::getOutSyncMaster(MslQuery* q, Track* t)
 {
+    (void)t;
     // this could have been handled at either level
     int tnum = mobius->getContainer()->getPulsator()->getOutSyncMaster();
     q->value.setInt(tnum);
@@ -571,48 +485,32 @@ void MobiusMslVariableHandler::getOutSyncMaster(MslQuery* q)
  * It's not really the tempo of the track, it's the tempo
  * of the sync source the track is following.
  */
-void MobiusMslVariableHandler::getSyncTempo(MslQuery* q)
+void MobiusMslVariableHandler::getSyncTempo(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Synchronizer* s = t->getSynchronizer();
-        float tempo = s->getTempo(t);
-        result = (int)tempo;
-    }
+    Synchronizer* s = t->getSynchronizer();
+    float tempo = s->getTempo(t);
+    int result = (int)tempo;
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getSyncRawBeat(MslQuery* q)
+void MobiusMslVariableHandler::getSyncRawBeat(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Synchronizer* s = t->getSynchronizer();
-        result = s->getRawBeat(t);
-    }
+    Synchronizer* s = t->getSynchronizer();
+    int result = s->getRawBeat(t);
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getSyncBeat(MslQuery* q)
+void MobiusMslVariableHandler::getSyncBeat(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Synchronizer* s = t->getSynchronizer();
-        result = s->getBeat(t);
-    }
+    Synchronizer* s = t->getSynchronizer();
+    int result = s->getBeat(t);
     q->value.setInt(result);
 }
 
-void MobiusMslVariableHandler::getSyncBar(MslQuery* q)
+void MobiusMslVariableHandler::getSyncBar(MslQuery* q, Track* t)
 {
-    int result = 0;
-    Track* t = getTrack(q);
-    if (t != nullptr) {
-        Synchronizer* s = t->getSynchronizer();
-        result = s->getBar(t);
-    }
+    Synchronizer* s = t->getSynchronizer();
+    int result = s->getBar(t);
     q->value.setInt(result);
 }
 
@@ -622,13 +520,15 @@ void MobiusMslVariableHandler::getSyncBar(MslQuery* q)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusMslVariableHandler::getBlockFrames(MslQuery* q)
+void MobiusMslVariableHandler::getBlockFrames(MslQuery* q, Track* t)
 {
+    (void)t;
     q->value.setInt(mobius->getContainer()->getBlockSize());
 }
 
-void MobiusMslVariableHandler::getSampleRate(MslQuery* q)
+void MobiusMslVariableHandler::getSampleRate(MslQuery* q, Track* t)
 {
+    (void)t;
     q->value.setInt(mobius->getContainer()->getSampleRate());
 }
 
@@ -638,8 +538,9 @@ void MobiusMslVariableHandler::getSampleRate(MslQuery* q)
  * finish playing.
  * Should be "lastSampleFrames" or something
  */
-void MobiusMslVariableHandler::getSampleFrames(MslQuery* q)
+void MobiusMslVariableHandler::getSampleFrames(MslQuery* q, Track* t)
 {
+    (void)t;
     int frames = (int)(mobius->getKernel()->getLastSampleFrames());
     q->value.setInt(frames);
 }

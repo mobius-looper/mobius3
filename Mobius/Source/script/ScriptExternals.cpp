@@ -61,6 +61,8 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
     {"inReturn", VarInReturn, ScriptContextKernel, false},
     {"playbackRate", VarPlaybackRate, ScriptContextKernel, false},
     {"trackCount", VarTrackCount, ScriptContextKernel, false},
+    {"audioTrackCount", VarAudioTrackCount, ScriptContextKernel, false},
+    {"midiTrackCount", VarMidiTrackCount, ScriptContextKernel, false},
     {"activeAudioTrack", VarActiveAudioTrack, ScriptContextKernel, false},
     {"focusedTrack", VarFocusedTrack, ScriptContextKernel, false},
     {"scopeTrack", VarScopeTrack, ScriptContextKernel, false},

@@ -6,7 +6,11 @@
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 #include "../model/UIAction.h"
+#include "../model/UIParameter.h"
 #include "../model/Query.h"
+
+#include "../script/MslExternal.h"
+#include "../script/ScriptExternals.h"
 
 #include "MobiusKernel.h"
 #include "MobiusInterface.h"
@@ -36,7 +40,7 @@ const int TrackManagerMaxMidiTracks = 8;
  */
 const int TrackManagerMaxMidiLoops = 8;
 
-TrackManager::TrackManager(MobiusKernel* k)
+TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k)
 {
     kernel = k;
     actionPool = k->getActionPool();
@@ -641,6 +645,95 @@ bool TrackManager::doQuery(Query* q)
         }
     }
     return status;
+}
+
+/**
+ * MSL queries can be for symbol queries or internal variables.
+ */
+bool TrackManager::mslQuery(MslQuery* query)
+{
+    bool success = false;
+    ScriptExternalType type = (ScriptExternalType)(query->external->type);
+
+    if (type == ExtTypeSymbol) {
+        Query q;
+        q.symbol = static_cast<Symbol*>(query->external->object);
+        q.scope = query->scope;
+
+        (void)doQuery(&q);
+
+        mutateMslReturn(q.symbol, q.value, &(query->value));
+
+        // Query at this level will never be "async"
+        success = true;
+    }
+    else {
+        // here we have the problem of scope trashing since we need to
+        // direct it to one side or the other and be specific, I don't
+        // think MslSession cares, but be safe
+        int saveScope = query->scope;
+        if (query->scope == 0)
+          query->scope = kernel->getContainer()->getFocusedTrack() + 1;
+            
+        if (query->scope <= audioTrackCount) {
+            success = audioEngine->mslQuery(query);
+        }
+        else {
+            // same dance as symbol queries
+            int midiIndex = query->scope - audioTrackCount - 1;
+            if (midiIndex >= activeMidiTracks) {
+                Trace(1, "TrackManager: Invalid MSL query scope %d", query->scope);
+            }
+            else {
+                MidiTrack* track = midiTracks[midiIndex];
+                success = mslHandler.get(query, track);
+            }
+        }
+
+        // in case we trashed it
+        query->scope = saveScope;
+    }
+    return success;
+}
+
+/**
+ * Convert a query result that was the value of an enumerated parameter
+ * into a pair of values to return to the interpreter.
+ * Not liking this but it works.  Supervisor needs to do exactly the same
+ * thing so it would be nice to share this.  The only difference
+ * is the way we have to call getParameterLabel through the Container.
+ */
+void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
+{
+    if (s->parameter == nullptr) {
+        // no extra definition, return whatever it was
+        retval->setInt(value);
+    }
+    else {
+        UIParameterType ptype = s->parameter->type;
+        if (ptype == TypeEnum) {
+            // don't use labels since I want scripters to get used to the names
+            const char* ename = s->parameter->getEnumName(value);
+            retval->setEnum(ename, value);
+        }
+        else if (ptype == TypeBool) {
+            retval->setBool(value == 1);
+        }
+        else if (ptype == TypeStructure) {
+            // hmm, the understanding of LevelUI symbols that live in
+            // UIConfig and LevelCore symbols that live in MobiusConfig
+            // is in Supervisor right now
+            // todo: Need to repackage this
+            // todo: this could also be Type::Enum in the value but I don't
+            // think anything cares?
+            retval->setJString(kernel->getContainer()->getParameterLabel(s, value));
+        }
+        else {
+            // should only be here for TypeInt
+            // unclear what String would do
+            retval->setInt(value);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

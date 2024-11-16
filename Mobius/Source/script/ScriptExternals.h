@@ -58,6 +58,8 @@ typedef enum {
     VarInReturn,
     VarPlaybackRate,
     VarTrackCount,
+    VarAudioTrackCount,
+    VarMidiTrackCount,
     VarActiveAudioTrack,
     VarFocusedTrack,
     VarScopeTrack,

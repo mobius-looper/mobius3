@@ -44,8 +44,23 @@ MobiusMslHandler::~MobiusMslHandler()
  */
 bool MobiusMslHandler::mslQuery(MslQuery* query)
 {
-    // logic encapsulated here
-    return variables.get(query);
+    bool success = false;
+    Track* track = nullptr;
+    
+    if (query->scope > 0) {
+        int trackIndex = query->scope - 1;
+        if (trackIndex < mobius->getTrackCount())
+          track = mobius->getTrack(trackIndex);
+    }
+
+    if (track == nullptr) {
+        Trace(1, "Mobius: MSL variable query with invalid track scope");
+    }
+    else {
+        success = variables.get(query, track);
+    }
+    
+    return success;
 }
 
 /**

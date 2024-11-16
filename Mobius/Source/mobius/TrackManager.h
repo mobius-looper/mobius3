@@ -22,6 +22,7 @@
 #include "midi/LongWatcher.h"
 #include "midi/MidiWatcher.h"
 #include "midi/MidiPools.h"
+#include "midi/MidiMslVariableHandler.h"
 
 class TrackManager : public LongWatcher::Listener, public TrackListener
 {
@@ -71,6 +72,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doAction(class UIAction* a);
     void doActionNoQueue(class UIAction* a);
     bool doQuery(class Query* q);
+    bool mslQuery(class MslQuery* query);
 
     // TrackListener
     void trackNotification(NotificationId notification, class TrackProperties& props);
@@ -107,6 +109,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     LongWatcher longWatcher;
     MidiWatcher watcher;
+    MidiMslVariableHandler mslHandler;
 
     juce::OwnedArray<class LogicalTrack> tracks;
     int audioTrackCount = 0;
@@ -119,12 +122,13 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void refreshState();
     void doTrackAction(class UIAction* a);
 
-
     // temporary old way of passing core actions
     class UIAction* coreActions = nullptr;
     void doActionInternal(class UIAction* a, bool noQueue);
     void doMidiAction(class UIAction* a);
     void doTrackSelectAction(class UIAction* a);
+    
+    void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
     
     //
     // View state
