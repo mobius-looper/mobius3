@@ -1649,6 +1649,16 @@ int MobiusKernel::mslGetMaxScope()
     return scriptUtil.getMaxScope();
 }
 
+/**
+ * Supervisor will have handled this at compile time, all we need to do
+ * down here is expand it.
+ */
+bool MobiusKernel::mslIsScopeKeyword(const char* name)
+{
+    Trace(1, "MobiusKernel::mslIsScopeKeyword Shouldn't be here");
+    return false;
+}
+
 bool MobiusKernel::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)
 {
     return scriptUtil.expandScopeKeyword(name, numbers);

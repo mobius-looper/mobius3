@@ -2385,9 +2385,9 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
             }
         }
         else {
-            // finally pass it down to the core for variables
-            // this is thread safe
-            success = mobius->mslResolve(name, ext);
+            // formerly passed this to Kernel/Core for variable resolutin
+            // but now those are handled with ScriptExternalDefinitions up here
+            //success = mobius->mslResolve(name, ext);
         }
     }
     
@@ -2546,6 +2546,11 @@ void Supervisor::mslPrint(const char* msg)
 int Supervisor::mslGetMaxScope()
 {
     return scriptUtil.getMaxScope();
+}
+
+bool Supervisor::mslIsScopeKeyword(const char* name)
+{
+    return scriptUtil.isScopeKeyword(name);
 }
 
 bool Supervisor::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)

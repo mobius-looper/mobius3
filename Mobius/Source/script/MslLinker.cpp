@@ -485,25 +485,70 @@ void MslLinker::resolveEnvironment(MslSymbol* sym)
 void MslLinker::resolveExternal(MslSymbol* sym)
 {
     juce::String refname = sym->token.value;
-    
-    MslExternal* external = environment->getExternal(refname);
-    if (external == nullptr) {
 
-        // haven't seen this one before, ask the container
-        MslExternal retval;
-        if (context->mslResolve(refname, &retval)) {
-            // make one we can intern
-            external = new MslExternal(retval);
-            external->name = refname;
-            environment->intern(external);
+    if (isExternalKeyword(sym))
+      sym->resolution.keyword = true;
+    else {
+        MslExternal* external = environment->getExternal(refname);
+        if (external == nullptr) {
+
+            // haven't seen this one before, ask the container
+            MslExternal retval;
+            if (context->mslResolve(refname, &retval)) {
+                // make one we can intern
+                external = new MslExternal(retval);
+                external->name = refname;
+                environment->intern(external);
+            }
+            else {
+                // todo: so we don't keep going back here, could intern
+                // a special "null" external?
+            }
         }
-        else {
-            // todo: so we don't keep going back here, could intern
-            // a special "null" external?
+
+        sym->resolution.external = external;
+    }
+}
+
+/**
+ * Hack alert: Determine whether this symbol is in a location that
+ * allows external keywords. The only one we have right now is for the "in" node
+ * where special keywords can be used to reference calculated lists of scope numbers.
+ *
+ * We mostly just need to handle "in all" but it's nice to allow
+ * "in 1,midi" or "in trackSyncMaster,outSyncMaster" in which case the symbols
+ * will appear in a block rather than directly under the MslIn node.
+ *
+ * If the context says this is a keyword, that takes precedence over local
+ * or external variables that might have the same name.
+ *
+ * If you start having more of these will need to make keyword resolution
+ * a generalization on the parent node.
+ */
+bool MslLinker::isExternalKeyword(MslSymbol* sym)
+{
+    bool keyword = false;
+    bool maybe = false;
+        
+    if (sym->parent != nullptr) {
+        if (sym->parent->isIn()) {
+            maybe = true;
         }
+        else if (sym->parent->isSequence()) {
+            // I imagine there are more obscure node structures
+            // we could support here but one level of block is enough
+            maybe = (sym->parent->parent != nullptr &&
+                     sym->parent->parent->isIn());
+        }
+        // else what about blocks?  I guess "in (all)" would be a block
+        // within the sequence so we could traverse up until we find the sequence
+        // then go up one more
     }
 
-    sym->resolution.external = external;
+    if (maybe)
+      keyword = context->mslIsScopeKeyword(sym->token.value.toUTF8());
+        
+    return keyword;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -36,6 +36,7 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
     // core variables, formerly implemented by ScriptInternalVariable
 
     {"blockFrames", VarBlockFrames, ScriptContextKernel, false},
+    {"sampleRate", VarSampleRate, ScriptContextKernel, false},
     {"sampleFrames", VarSampleFrames, ScriptContextKernel, false},
     {"loopCount", VarLoopCount, ScriptContextKernel, false},
     {"loopNumber", VarLoopNumber, ScriptContextKernel, false},

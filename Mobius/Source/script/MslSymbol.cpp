@@ -126,6 +126,8 @@ void MslSession::mslVisit(MslSymbol* snode)
         // always prefer a dynamic binding on the stack
         // !! I don't think this is what the new MslLinker expects and it should
         // have errored at this point
+        // also this will override the use of "in all" if you bind "all" to a variable
+        // which is not intended
         MslBinding* binding = findBinding(snode->token.value.toUTF8());
         if (binding != nullptr) {
 
@@ -140,7 +142,10 @@ void MslSession::mslVisit(MslSymbol* snode)
         }
         else if (!snode->resolution.isFunction()) {
             // must be a variable
-            if (snode->resolution.external != nullptr)
+            if (snode->resolution.keyword)
+              returnKeyword(snode);
+            
+            else if (snode->resolution.external != nullptr)
               returnQuery(snode);
             
             else if (snode->resolution.linkage != nullptr)
@@ -197,6 +202,16 @@ void MslSession::returnUnresolved(MslSymbol* snode)
     MslValue* v = pool->allocValue();
     v->setJString(snode->token.value);
     // todo, might want an unresolved flag in the MslValue
+    popStack(v);
+}
+
+/**
+ * The value of a keyword is it's name
+ */
+void MslSession::returnKeyword(MslSymbol* snode)
+{
+    MslValue* v = pool->allocValue();
+    v->setJString(snode->token.value);
     popStack(v);
 }
 

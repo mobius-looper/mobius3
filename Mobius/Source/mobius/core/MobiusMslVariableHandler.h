@@ -23,6 +23,8 @@ class MobiusMslVariableHandler
 
     class Mobius* mobius = nullptr;
 
+    class Track* getTrack(class MslQuery* q);
+    
     void getLoopCount(class MslQuery* q);
     void getLoopNumber(class MslQuery* q);
     void getLoopFrames(class MslQuery* q);
@@ -57,6 +59,7 @@ class MobiusMslVariableHandler
     void getSyncBeat(class MslQuery* q);
     void getSyncBar(class MslQuery* q);
     void getBlockFrames(class MslQuery* q);
+    void getSampleRate(class MslQuery* q);
     void getSampleFrames(class MslQuery* q);
 
 };

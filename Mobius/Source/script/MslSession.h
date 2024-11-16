@@ -162,6 +162,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // implementation broken out to MslSymbol.cpp
     void returnUnresolved(MslSymbol* snode);
     void returnVariable(MslSymbol* snode);
+    void returnKeyword(MslSymbol* snode);
     void pushArguments(MslSymbol* snode);
     void pushCall(MslSymbol* snode);
     void pushBody(MslSymbol* snode, MslBlock* body);

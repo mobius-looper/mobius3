@@ -24,6 +24,36 @@ int ScriptUtil::getMaxScope()
     return session->audioTracks + session->midiTracks;
 }
 
+/**
+ * Group names are a bit of a problem here.
+ * If the groups are defined at the time the scripts are loaded then
+ * it will resolve, but if you add a new group, it won't be automatically
+ * re-resolve old scripts that referenced it.  You'll have to touch
+ * or reload the script.  Or just quote the string which makes it not
+ * a symbol and doesn't need to be resolved.
+ */
+bool ScriptUtil::isScopeKeyword(const char* cname)
+{
+    bool keyword = false;
+    juce::String name(cname);
+    
+    if (name.equalsIgnoreCase("all") ||
+        name.equalsIgnoreCase("audio") ||
+        name.equalsIgnoreCase("midi") ||
+        name.equalsIgnoreCase("outSyncMaster") ||
+        name.equalsIgnoreCase("trackSyncMaster") ||
+        name.equalsIgnoreCase("focused") ||
+        name.equalsIgnoreCase("muted") ||
+        name.equalsIgnoreCase("playing")) {
+        keyword = true;
+    }
+    else {
+        int ordinal = configuration->getGroupOrdinal(name);
+        keyword = (ordinal >= 0);
+    }
+    return keyword;
+}
+
 bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers)
 {
     bool valid = true;
@@ -48,14 +78,19 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
         }
     }
     else if (name.equalsIgnoreCase("outSyncMaster")) {
-        numbers.add(pulsator->getOutSyncMaster());
+        int tnum = pulsator->getTrackSyncMaster();
+        if (tnum > 0)
+          numbers.add(tnum);
     }
     else if (name.equalsIgnoreCase("trackSyncMaster")) {
-        numbers.add(pulsator->getTrackSyncMaster());
+        int tnum = pulsator->getTrackSyncMaster();
+        if (tnum > 0)
+          numbers.add(tnum);
     }
     else if (name.equalsIgnoreCase("focused")) {
         // this depends on who manages focus, if it's a UI level thing
         // then Supervisor else Kernel
+        valid = false;
     }
     else if (name.equalsIgnoreCase("muted")) {
         // this requires access to kernel track state

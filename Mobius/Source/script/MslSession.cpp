@@ -1364,19 +1364,27 @@ void MslSession::mslVisit(MslIn* innode)
                 }
                 cv = cv->next;
             }
-            // reset child results and accumulate body results
-            pool->free(stack->childResults);
-            stack->childResults = nullptr;
-            stack->childIndex = -1;
 
-            // save iteration list on the stack
-            stack->inList = inList;
-            // start the iteration
-            stack->inPtr = inList;
-            // advance the phase and evaluate this node again
-            stack->phase = 2;
-            // set this if you want to accumulate the results of all the body blocks
-            stack->accumulator = true;
+            if (inList != nullptr) {
+                // reset child results and accumulate body results
+                pool->free(stack->childResults);
+                stack->childResults = nullptr;
+                stack->childIndex = -1;
+
+                // save iteration list on the stack
+                stack->inList = inList;
+                // start the iteration
+                stack->inPtr = inList;
+                // advance the phase and evaluate this node again
+                stack->phase = 2;
+                // set this if you want to accumulate the results of all the body blocks
+                stack->accumulator = true;
+            }
+            else {
+                // scope symbol did not result in any sequence
+                // nothing happens, skip the body
+                popStack(nullptr);
+            }
         }
     }
     else if (stack->phase == 2) {

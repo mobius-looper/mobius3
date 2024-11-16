@@ -33,6 +33,7 @@ typedef enum {
     FuncMidiOut,
 
     VarBlockFrames,
+    VarSampleRate,
     VarSampleFrames,
     VarLoopCount,
     VarLoopNumber,

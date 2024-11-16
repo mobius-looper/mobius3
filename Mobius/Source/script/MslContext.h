@@ -204,6 +204,10 @@ class MslContext
     // this may not be necessary if we let mslExpandScope do the work 
     virtual int mslGetMaxScope() = 0;
 
+    // given the name of a symbol within the "in" statement
+    // return true if this is a valid scope reference keyword
+    virtual bool mslIsScopeKeyword(const char* name) = 0;
+    
     // given the name of an abstract scope used with the "in" statement
     // fill in an array of concrete scope numbers for that scope
     virtual bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) = 0;

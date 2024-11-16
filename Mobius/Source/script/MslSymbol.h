@@ -61,8 +61,11 @@ class MslResolution
     // a link to an exported function or variable from another script
     class MslLinkage* linkage = nullptr;
 
-    // an external function or variable defined by the contraining application
+    // an external function or variable defined by the containing application
     class MslExternal* external = nullptr;
+
+    // an external keyword defined by the containing application
+    bool keyword = false;
 
     void reset() {
         localVariable = nullptr;
@@ -71,6 +74,7 @@ class MslResolution
         localFunction = nullptr;
         linkage = nullptr;
         external = nullptr;
+        keyword = false;
     }
 
     // true if we found something
@@ -80,7 +84,8 @@ class MslResolution
                 innerFunction != nullptr ||
                 localFunction != nullptr ||
                 linkage != nullptr ||
-                external != nullptr);
+                external != nullptr ||
+                keyword);
     }
 
     // true if what we found is a function

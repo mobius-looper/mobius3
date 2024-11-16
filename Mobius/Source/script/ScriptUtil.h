@@ -18,6 +18,7 @@ class ScriptUtil
     void configure(class MobiusConfig* c, class Session* s);
 
     int getMaxScope();
+    bool isScopeKeyword(const char* cname);
     bool expandScopeKeyword(const char* name, juce::Array<int>& numbers);
 
   private:
