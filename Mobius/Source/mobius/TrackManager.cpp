@@ -505,6 +505,7 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
             if (global)
               scope = 0;
         }
+
         action->setScopeTrack(scope);
 
         if (scope > audioTrackCount || global) {
@@ -528,6 +529,51 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
     // and doesn't have to be reclaimed, too many obscure assumptions, hate this
     if (!noQueue && !queued)
       actionPool->checkin(action);
+}
+
+/**
+ * Replicate the action if necessary for groups and focus lock.
+ * The original action should be considered "consumed" and the returned
+ * list are all actions from the pool.  Each action will be given a
+ * track-specific scope.  From here on down, groups and focus lock do not
+ * need to be considered and we can start ripping that out of old Mobius code.
+ *
+ * Global functions are a special case.  Both audio and MIDI tracks will
+ * handle those without the need for replication.
+ *
+ * need for replication
+ */
+UIAction* TrackManager::replicateAction(UIAction* src)
+{
+    UIAction* list = nullptr;
+
+    if (src->functionProperties != nullptr && src->functionProperties->global) {
+        // just to pass it to each side without a scope
+
+    
+
+    if (src->symbol->functionProperties != nullptr) {
+    }
+    else if(src->symbol->parameterProperties != nullptr) {
+    }
+    else {
+        // scripts do not do groups or focus lock since they can
+        // do their own scoping, but might need to change that
+        // I think there are old options in MOS scripts to allow that
+        // Activations probably need to handle replication
+        if (src->getTrackScope() > 0) {
+            // it goes through unmodified
+            list = src;
+        }
+        else {
+            // need to adjust the scope for the focused track
+            src->setTrackScope(
+    }
+    
+
+    
+
+    
 }
 
 /**

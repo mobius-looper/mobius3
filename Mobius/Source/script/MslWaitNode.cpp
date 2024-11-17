@@ -7,6 +7,35 @@
  * Since this is only used at parse time can make use of juce::HashMap
  * or something.  The assumption is that the index of each string in the
  * array matches the numeric value of the corresponding enumeration.
+ *
+ * Syntax is weird, and perhaps too complex
+ *
+ * wait duration msec x
+ * wait location subcycle 4
+ * wait event last
+ *
+ * Most of the event waits don't take a multiplier.  I suppose
+ * you could want "wait switch 2" meaning wait for the second loop switch
+ * event but that's odd because events are pending and would either need
+ * a countdown on the event or keep rescheduling it.  maybe combine this
+ * with something more like what it would be:
+ *
+ *    repeat 2 wait switch
+ *
+ * So, what waits have optional arguments...
+ *
+ * The only ones that use the values (currently) are
+ *
+ *     wait frame x
+ *     wait msec x
+ *     wait second x
+ *     wait duration subycle x
+ *     wait duration cycle x
+ *     wait duration loop x
+ *        ! these should be optional
+ *
+ *    
+ * 
  */
 
 #include <JuceHeader.h>
@@ -245,6 +274,26 @@ bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
 /**
  * Accept one expression node as an event count,
  * location number, or duration length.
+ *
+ * ugh, some combos don't need arguments
+ *   wait last
+ *
+ * and some are rare to have multipliers
+ *   wait loop
+ *
+ * "argument" list is possible
+ *
+ *    wait loop(2)
+ *
+ * or a different keyword
+ *
+ *    waitn loop 2
+ *
+ * or require an argument list
+ *
+ *    wait(loop 2)
+ *
+ * None are pretty
  */
 bool MslWaitNode::wantsNode(MslNode* node)
 {
