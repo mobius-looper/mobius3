@@ -221,6 +221,7 @@ void EventPool::freeEvent(Event* e, bool freeAll)
 			}
             // parallel shit for MSL, fuck we don't have a Mobius here
             // this isn't supposed to happen, just let it hang I guess
+            // !! need to be notifying the MslEnvironment that this is being canceled
             class MslWait* wait = e->getMslWait();
             if (wait != nullptr) {
                 Trace(1, "EventPool: Freeing event with lingering MslWait!!");

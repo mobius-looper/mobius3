@@ -489,6 +489,9 @@ void MslSession::callExternal(MslSymbol* snode)
         // in the call list
         action.arguments = stack->childResults;
 
+        // reset async action state before calling
+        asyncState.init();
+
         if (!context->mslAction(&action)) {
             // need both messages?
             addError(stack->node, "Error calling external function");
@@ -501,15 +504,11 @@ void MslSession::callExternal(MslSymbol* snode)
             // !! this won't handle lists
             v->copy(&(action.result));
 
-            // ah...now we have the "wait last" problem.
-            // the action may have scheduled an event and the next
-            // statement is often "wait last" to wait for it
-            // but it isn't necessarily the next immediate statement so
-            // in the mean time, where do we store the event pointer that
-            // was returned in this action?
-
-            if (action.event != nullptr)
-              Trace(1, "MslSession: External action returned an event with no place to go");
+            // if the action returned async event state, save it
+            if (action.event != nullptr) {
+                asyncAction.event = actionEvent;
+                asyncAction.eventFrame = action.eventFrame;
+            }
 
             // what a long strange trip it's been
             popStack(v);
@@ -656,6 +655,7 @@ void MslSession::doAssignment(MslAssignment* ass)
                 action.arguments = stack->childResults;
 
                 // here is the magic bean
+                // assignments are not async so don't need to reset asyncState
                 context->mslAction(&action);
 
                 // assignment actions are not expected to have return value

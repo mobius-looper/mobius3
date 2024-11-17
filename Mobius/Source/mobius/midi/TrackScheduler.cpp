@@ -869,6 +869,7 @@ void TrackScheduler::handleRecordAction(UIAction* src)
         // need to end the recording
 
         TrackEvent* ending = scheduleRecordEnd();
+        src->coreEvent = ending;
 
         SymbolId sid = src->symbol->id;
         if (sid != FuncRecord && sid != FuncAutoRecord) {
@@ -1169,6 +1170,13 @@ void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
     }
             
     events.add(event);
+
+    // now we have an interesting WaitLast problem
+    // we can wait on the Round event the action was stacked on
+    // but if you continue stacking events, those can't have their own waits
+    // if it is important to be notified immediately after this specific function
+    // happens and not when the entire stack happens, then there is more to do
+    src->coreEvent = event;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1208,13 +1216,14 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
     }
     else {
         int leader = findQuantizationLeader();
+        TrackEvent* e = nullptr;
         if (leader > 0 && followQuantize) {
-            TrackEvent* e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
+            e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
             e->primary = copyAction(src);
             Trace(2, "TrackScheduler: Quantized %s to leader", src->symbol->getName());
         }
         else {
-            TrackEvent* e = eventPool->newEvent();
+            e = eventPool->newEvent();
             e->type = TrackEvent::EventAction;
             e->frame = getQuantizedFrame(src->symbol->id, q);
             e->primary = copyAction(src);
@@ -1222,9 +1231,12 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
 
             Trace(2, "TrackScheduler: Quantized %s to %d", src->symbol->getName(), e->frame);
         }
+
+        // in both cases, return the event in the original action so MSL can wait on it
+        src->coreEvent = e;
+        // don't bother with coreEventFrame till we need it for something
     }
 }
-
 
 /**
  * Determine which track is supposed to be the leader of this one for quantization.
@@ -1385,9 +1397,12 @@ void TrackScheduler::scheduleRecord(UIAction* a)
     track->doReset(false);
 
     if (isRecordSynced()) {
-        (void)addRecordEvent();
+        TrackEvent* e = addRecordEvent();
         // todo: remember whether this was AutoRecord and save
         // it on the event, don't need to remember the entire action
+
+        // remember for WaitLast
+        a->coreEvent = e;
     }
     else {
         doRecord(nullptr);
@@ -1531,6 +1546,8 @@ void TrackScheduler::addExtensionEvent(int frame)
         event->extension = true;
             
         events.add(event);
+
+        // !! what about WaitLast here
     }
 }
 

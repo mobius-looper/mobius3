@@ -148,6 +148,7 @@ class MslAction
     // opaque pointer to an object in the context representing an asynchronous
     // event that has been scheduled to handle the action
     // this may be used in a Wait
+    // this will be saved in the MslAsyncState object in the MslSession
     void* event = nullptr;
     int eventFrame = 0;
 

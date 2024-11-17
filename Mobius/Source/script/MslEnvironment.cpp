@@ -1290,7 +1290,7 @@ void MslEnvironment::resume(MslContext* c, MslWait* wait)
     else {
         // this is the magic bean that makes it go
         wait->finished = true;
-        
+
         session->resume(c);
 
         if (session->isTransitioning()) {

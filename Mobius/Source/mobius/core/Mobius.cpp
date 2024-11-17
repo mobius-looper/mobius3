@@ -2334,10 +2334,15 @@ bool Mobius::mslWait(MslWait* wait, MslContextError* error)
  * Here from the ScriptEventType::invoke handler
  * It would normally call ScriptInterpreter::scriptEvent
  *
+ * This happens when a ScriptEvent was scheduled on a frame
+ * or was pending.  
+ *
  * There is some commentary in old code about whether this should
  * advance the script synchronously or wait for the event processing
  * to wind out back to the outer event loop.  We have historically
  * done it synchronously.
+ *
+ * name is poor, should be finishMslWaitOnScriptEvent
  */
 void Mobius::handleMslWait(class Loop* l, class Event* e)
 {
@@ -2361,32 +2366,54 @@ void Mobius::handleMslWait(class Loop* l, class Event* e)
  * Here from Event::finishScriptWait
  *
  * This is called after EVERY event type that had an interpreter/wait
- * hanging on it and is used to resume a script that is waiting on
- * another event like the last function event.
- *
+ * hanging on it.  It differs from handleMslWait in that the former
+ * was a ScriptEvent specifically for the wait, but here we put the
+ * wait state on ANOTHER normal event.  This is used for "wait last"
+ * where the event will be the one that was scheduled to handle
+ * the deferred action.
+ * 
  * Comments from ScriptInterpreter::finishEvent
  * 
  * Called by Loop after it processes any Event that has an attached
  * interpreter.  Check to see if we've met an event wait condition.
  * Can get here with ScriptEvents, but we will have already handled
  * those in the scriptEvent method below.
+ *
+ * I think the comments mean that ScriptEvents will call handleMslWait
+ * above, but since finishScriptWait is called for all events regardless
+ * of their type, we can get here too.  In that case we should have
+ * nulled out the MslWant on the event, and EventManger won't have called
+ * this one.
+ *
+ * Name is poor, should be finishMslWaitOnRandomEvent
  */
 void Mobius::finishMslWait(class Event* e)
 {
-    (void)e;
-    Trace(2, "Mobius::finishMslWait");
+    MslWait* wait = e->getMslWait();
+    if (wait == nullptr)   
+      Trace(1, "Mobius::finishMslWait Event with no wait");
+    else {
+        mKernel->coreWaitFinished(wait);
+        e->setMslWait(nullptr);
+    }
 }
 
 /**
- * Here from both Event and Function after rescheduling an event
- * I think we're suppsoed to replace one with the other.
- * Normally calls ScriptInterpreter::rescheduleEvent
+ * Here from both Event and Function after rescheduling an event.
+ * MSL doesn't really care what the previous event pointer was, just
+ * that the wait is carried over to the new event.
  */
 void Mobius::rescheduleMslWait(class Event* e, class Event* neu)
 {
-    (void)e;
-    (void)neu;
-    Trace(2, "Mobius::rescheduleMslWait");
+    MslWait* w = e->getMslWait();
+    if (w == nullptr)
+      Trace(1, "Mobius::rescheduleMslWait No wait to move");
+    else {
+        // shouldn't happen?
+        if (neu->getMslWait() != nullptr)
+          Trace(1, "Mobius::rescheduleMslWait Replacing MslWait");
+        neu->setMslWait(w);
+    }
 }
 
 /**
@@ -2398,8 +2425,13 @@ void Mobius::rescheduleMslWait(class Event* e, class Event* neu)
  */
 void Mobius::cancelMslWait(class Event* e)
 {
-    (void)e;
-    Trace(2, "Mobius::cancelMslWait");
+    MslWait* w = e->getMslWait();
+    if (w == nullptr)
+      Trace(1, "Mobius::cancelMslWait No wait to cancel");
+    else {
+        mKernel->coreWaitCanceled(wait);
+        e->setMslWait(nullptr);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

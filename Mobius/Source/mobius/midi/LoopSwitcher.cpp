@@ -132,6 +132,8 @@ void LoopSwitcher::scheduleSwitch(UIAction* src)
             }
 
             scheduler.events.add(event);
+            // for MSL waits
+            src->coreEvent = event;
         }
     }
 }
@@ -407,6 +409,8 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     event->primary = action;
                     event->frame = newFrames;
                     scheduler.events.add(event);
+
+                    // todo: what about MSL wait last?  can you wait on this?
                 }
                     break;
                 case SWITCH_ONCE_RETURN: {
@@ -419,6 +423,7 @@ void LoopSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     event->switchTarget = startingLoop;
                     event->frame = newFrames;
                     scheduler.events.add(event);
+                    // todo: what about MSL wait last?  can you wait on this?
                 }
                     break;
                 case SWITCH_SUSTAIN: {

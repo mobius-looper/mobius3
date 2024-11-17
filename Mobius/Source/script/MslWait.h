@@ -131,6 +131,10 @@ class MslWait
     // loop frame on which the event was scheduled
     int coreEventFrame = 0;
 
+    // flag that may be set on completion if the event was canceled
+    // rather than being reached normally
+    bool coreEventCanceled = false;
+
     //
     // Interpreter State
     // This is what the interpreter uses to track the status of the wait
@@ -171,6 +175,7 @@ class MslWait
         track = 0;
         coreEvent = nullptr;
         coreEventFrame = 0;
+        coreEventCanceled = false;
         session = nullptr;
         stack = nullptr;
     }

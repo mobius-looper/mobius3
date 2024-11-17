@@ -1213,6 +1213,13 @@ void MslSession::mslVisit(MslWaitNode* wait)
             // can resume from the other side
             if (context->mslGetContextId() != MslContextKernel)
               Trace(1, "MslSession: Wait resumed outside of the kernel context");
+
+
+            if (stack->wait.canceled) {
+                // this indiciates that the event was canceled rather than being
+                // reached normally, might want options on how to handle this
+                Trace(2, "MslSession: Wait event was canceled");
+            }
             
             stack->wait.init();
             popStack();
@@ -1253,44 +1260,84 @@ void MslSession::mslVisit(MslWaitNode* wait)
 
 /**
  * Set up the MslWait on this stack frame to start the wait.
+ *
+ * If this is "wait last" and there is no asyncAction event from the
+ * last external call, then do nothing.
+ * 
+ * Interesting fringe case: we're doing this after evaluation of any
+ * wait arguments for count/number/duration and in theory those could
+ * have performed an asyncAction.  If so, then we'll be waiting on that
+ * rather than the real previous action.  I guess you get what you pay for
+ * and you shouldn't have wait arguments on a "wait last" anyway
+ * still we could have checked this earlier and not even bothered evaluating
+ * the wait argument if there is nothing to wait for.
  */
 void MslSession::setupWait(MslWaitNode* node)
 {
-    MslWait* wait = &(stack->wait);
-    
-    wait->type = node->type;
-    wait->event = node->event;
-    wait->duration = node->duration;
-    wait->location = node->location;
-
-    // This is always just a number right not, it just means different things
-    // depending on the wait type
-    wait->value = 0;
-    if (stack->childResults != nullptr)
-      wait->value = stack->childResults->getInt();
-
-    // ask the context to schedule something suitable to end the wait
-    // the context is allowed to retain a pointer to the wait object, and
-    // expected to set the finished flag when the wait is over
-    // todo: would really like to be able to have the context include more
-    // details about what was wrong with the wait request
-    // since we're almost always in the kernel now, have memory issues
-    MslContextError error;
-    if (!context->mslWait(wait, &error)) {
-        addError(node, "Unable to schedule wait state");
-        if (error.hasError())
-          addError(node, error.error);
+    if (node->type == WaitTypeEvent && node->event == WaitEventLast &&
+        asyncAction.event == nullptr) {
+        Trace(2, "MslSession: Wait last was not after an async action");
+        stack->wait.init();
+        popStack();
     }
+    else {
+        MslWait* wait = &(stack->wait);
+    
+        wait->type = node->type;
+        wait->event = node->event;
+        wait->duration = node->duration;
+        wait->location = node->location;
 
-    // save where it came from, the session is necessary so MslEnvironment
-    // knows which one to resume, I don't think the stack is, it just advances the session
-    // and the wait will normally be the top of the stack
-    wait->session = this;
-    wait->stack = stack;
+        // This is always just a number right not, it just means different things
+        // depending on the wait type
+        wait->value = 0;
+        if (stack->childResults != nullptr)
+          wait->value = stack->childResults->getInt();
 
-    // make it go, or rather stop
-    wait->finished = false;
-    wait->active = true;
+        
+        if (node->type == WaitTypeEvent && node->event == WaitEventLast) {
+            // this is how the core knows what to wait on
+            // the MOS interpreter handled this in a completely obscure way
+            wait->coreEvent = asyncAction.event;
+        }
+
+        // save where it came from, the session is necessary so MslEnvironment
+        // knows which one to resume, I don't think the stack is, it just advances the session
+        // and the wait will normally be the top of the stack
+        wait->session = this;
+        wait->stack = stack;
+        // important to clear this before the mslWait call
+        wait->finished = false;
+        
+        // ask the context to schedule something suitable to end the wait
+        // the context is allowed to retain a pointer to the wait object, and
+        // expected to set the finished flag when the wait is over
+        // todo: would really like to be able to have the context include more
+        // details about what was wrong with the wait request
+        // since we're almost always in the kernel now, have memory issues
+        MslContextError error;
+        if (!context->mslWait(wait, &error)) {
+            addError(node, "Unable to schedule wait state");
+            if (error.hasError())
+              addError(node, error.error);
+        }
+        else if (wait->finished) {
+            // this is a special case
+            // since an undefined amount of time may have elapsed between the
+            // last asyncAction and the wait statement, the event might be gone
+            // by now, don't treat this case as an error, just move on
+            // could also use this for time boundary waits, like "wait beat"
+            // when we start exactly on a beat, but will need some options on that
+            // since they might want to arm this for the next beat instead
+            Trace(2, "MslSession: Wait last finished immediately");
+            stack->wait.init();
+            popStack();
+        }
+        else {
+            // make it go, or rather stop
+            wait->active = true;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

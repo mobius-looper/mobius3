@@ -24,6 +24,34 @@
 #include "MslWait.h"
 #include "MslContext.h"
 
+/**
+ * Helper object to hold information about asynchronous MslActions
+ * sent to the context.  This will be initialized before every action.
+ * MslWait will use this for WaitEventLast
+ *
+ * todo: eventually want to keep one of these every time an async
+ * action happens so we can go back and tell what state it is in
+ * at any time and know if it was canceled.
+ */
+class MslAsyncAction
+{
+  public:
+
+    // an opaque container object representing the async request
+    // would like to change this to just be a numeric identifier
+    void* event = nullptr;
+
+    // the expected frame this event will occur on
+    // don't think we need this
+    int eventFrame = 0;
+    
+    void init() {
+        event = nullptr;
+        eventFrame = 0;
+    }
+};
+
+
 class MslSession : public MslVisitor, public MslSessionInterface
 {
     friend class MslEnvironment;
@@ -135,6 +163,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // it should be initialized for the highest expected number of tracks
     // hate this but it's easier than dealing with MslValue lists
     juce::Array<int> scopeExpansion;
+
+    MslAsyncAction asyncAction;
     
     //
     // core evaluator

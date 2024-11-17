@@ -1540,13 +1540,12 @@ bool MobiusKernel::mslAction(MslAction* action)
         // UIActions don't have complex return values yet,
         action->result.setString(uia.result);
 
-        // these would only have been set if it went into the core
+        // if the action resulted in an async event, information
+        // about that will have been returned in the UIAction
+        // transfer that to the MslAction so the script can wait on it
         action->event = uia.coreEvent;
         action->eventFrame = uia.coreEventFrame;
 
-        // must
-        // and there isn't a way to return the scheduled event
-        // but events should be handled in the kernel anyway
         success = true;
     }
     else {
@@ -1639,6 +1638,15 @@ void MobiusKernel::runExternalScripts()
 
 void MobiusKernel::coreWaitFinished(MslWait* wait)
 {
+    MslEnvironment* env = container->getMslEnvironment();
+    env->resume(this, wait);
+}
+
+void MobiusKernel::coreWaitCanceled(MslWait* wait)
+{
+    // while the want is "over" the script may want to handle
+    // control flow differently if it was canceled
+    wait->coreEventCanceled = true;
     MslEnvironment* env = container->getMslEnvironment();
     env->resume(this, wait);
 }

@@ -220,6 +220,9 @@ bool MobiusMslHandler::scheduleDurationWait(MslWait* wait)
 
             // the old interpreter would set the event on the ScriptStack
             // here we save it in the Wait object itself
+            // this actually isn't necessary MSL won't do anything with it,
+            // it is only used to pass the previous async event IN when
+            // setting up a "wait last"
             wait->coreEvent = e;
 
             // remember this while we're here, could be useful
@@ -538,7 +541,14 @@ int MobiusMslHandler::calculateLocationFrame(MslWait* wait, Track* track)
     return frame;
 }
 
-
+/**
+ * MSL event waits are far less integrated than MOS event waits.
+ * WaitEventLast is oddly enough the easiest since there is already
+ * an Event we can hang the MslWait on.
+ *
+ * For the others we'll have to save the wait object somewhere, perhaps
+ * with a pending Event and check it on every advance.
+ */
 bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
 {
     bool success = false;
@@ -598,7 +608,7 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
             case WaitEventRealign:
             case WaitEventReturn:
             case WaitEventDriftCheck: {
-                // schedule a pending wait and wayt for Synchronizer to activate it
+                // schedule a pending wait and wait for Synchronizer to activate it
             }
                 break;
 
@@ -610,14 +620,34 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
 
                 // the next three are impotant and the meaning is clear
             case WaitEventLast: {
-                // old code had both LAST and THREAD
-                // those should be the same now
-                // old also had SCRIPT which comments say is like THREAD
 
-                // to implement these kind of waits, need to remember a handle
-                // to the internal Event that was scheduled on the last action
-                
-                
+                // this works quite differently than MOS scripts
+                // if a previous action scheduled an event, that would have
+                // been returned in the UIAction and MSL would have remembered it
+                // when it reaches a "wait last" it passes that event back down
+                // unlike MOS, we're only dealing with Events here not ThreadEvents
+                Event* event = (Event*)wait->coreEvent;
+                if (event == nullptr) {
+                    // should not have gotten this far
+                    wait->finished = true;
+                }
+                else {
+                    // don't assume this object is still valid
+                    // it almost always will be, but if there was any delay between
+                    // the last action and the wait it could be gone
+                    EventManager* em = track->getEventManager();
+                    if (!em->isEventScheduled(event)) {
+                        // yep, it's gone, don't treat this as an error
+                        wait->finished = true;
+                    }
+                    else {
+                        // and now we wait
+                        event->setMslWait(wait);
+                        // set this while we're here though nothing uses it
+                        wait->coreEventFrame = event->getFrame();
+                    }
+                }
+                success = true;
             }
                 break;
                 
@@ -633,9 +663,6 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
                 break;
                 
             case WaitEventBlock: {
-                // since we are at the start of a block, there is no need
-                // to go through event scheduling, can just resume the session
-                // synchronously now
                 // old code set a special flag on the stack frame
                 
             }
