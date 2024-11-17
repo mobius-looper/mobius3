@@ -189,6 +189,8 @@ TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, AbstractTrack* t
     // this isn't something that should be on the track
     // TrackManager should be maintaining them?
     // or maybe TrackScheduler should be in the way?
+    // exposing TrackEventList means this can't be used for Mobius so
+    // consider abstracting it under AbstractTrack?
     TrackEventList* events = track->getEventList();
     TrackEvent* e = manager->getPools()->newTrackEvent();
     e->type = TrackEvent::EventWait;
@@ -199,8 +201,9 @@ TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, AbstractTrack* t
 
     // the old interpreter would set the event on the ScriptStack
     // here we save it in the Wait object itself
-    // "core" is a misnomer here, should just be trackEvent
-    // or nativeEvent
+    // this actually isn't necessary MSL won't do anything with it,
+    // it is only used to pass the previous async event IN when
+    // setting up a "wait last"
     wait->coreEvent = e;
             
     // remember this while we're here, could be useful
@@ -528,11 +531,15 @@ bool TrackMslHandler::scheduleEventWait(MslWait* wait)
             case WaitEventLoop: {
                 // new: should this be an event unit, or should it be
                 // in Duration or Location instead?
+                (void)scheduleWaitAtFrame(wait, track, 0);
+                success = true;
             }
                 break;
 
             case WaitEventEnd: {
                 // new: similar issues as WaitEventLoop and LocationLoop
+                (void)scheduleWaitAtFrame(wait, track, 0);
+                success = true;
             }
                 break;
                 
@@ -587,34 +594,63 @@ bool TrackMslHandler::scheduleEventWait(MslWait* wait)
 
                 // the next three are impotant and the meaning is clear
             case WaitEventLast: {
-                // old code had both LAST and THREAD
-                // those should be the same now
-                // old also had SCRIPT which comments say is like THREAD
+                // this works quite differently than MOS scripts
+                // if a previous action scheduled an event, that would have
+                // been returned in the UIAction and MSL would have remembered it
+                // when it reaches a "wait last" it passes that event back down
 
-                // to implement these kind of waits, need to remember a handle
-                // to the internal Event that was scheduled on the last action
-                
-                
+                // this is a TrackEvent but it shouldn't matter
+                void* requestId = wait->coreEvent;
+
+                if (requestId == nullptr) {
+                    // should not have gotten this far
+                    wait->finished = true;
+                }
+                else {
+                    // don't assume this object is still valid
+                    // it almost always will be, but if there was any delay between
+                    // the last action and the wait it could be gone
+
+                    // breaking abstraction now so we can look for it as an event
+                    TrackEventList* events = track->getEventList();
+                    TrackEvent* event = static_cast<TrackEvent*>(requestId);
+
+                    if (!events->isScheduled(event)) {
+                        // yep, it's gone, don't treat this as an error
+                        wait->finished = true;
+                    }
+                    else {
+                        // and now we wait
+                        event->wait = wait;
+                        // set this while we're here though nothing uses it
+                        wait->coreEventFrame = event->frame;
+                    }
+                }
+                success = true;
             }
                 break;
                 
             case WaitEventSwitch: {
-                // old comments
-                // no longer have the "fundamenatal command" concept
-                // !! what is this doing?
-                //Trace(1, "Script %s: wait switch\n", si->getTraceName());
-                //ScriptStack* frame = si->pushStackWait(this);
-                //frame->setWaitFunction(Loop1);
-
+                TrackEventList* events = track->getEventList();
+                TrackEvent* event = events->find(TrackEvent::EventSwitch);
+                if (event != nullptr) {
+                    wait->finished = true;
+                }
+                else {
+                    event->wait = wait;
+                }
+                success = true;
             }
                 break;
                 
             case WaitEventBlock: {
-                // since we are at the start of a block, there is no need
-                // to go through event scheduling, can just resume the session
-                // synchronously now
-                // old code set a special flag on the stack frame
-                
+                TrackEventList* events = track->getEventList();
+                TrackEvent* e = manager->getPools()->newTrackEvent();
+                e->type = TrackEvent::EventWait;
+                e->wait = wait;
+                e->pending = true;
+                events->add(e);
+                success = true;
             }
                 break;
                 

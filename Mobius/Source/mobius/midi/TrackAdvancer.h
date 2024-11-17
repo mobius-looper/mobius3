@@ -15,7 +15,7 @@ class TrackAdvancer
     ~TrackAdvancer();
 
     void advance(class MobiusAudioStream* stream);
-    void dispose(class TrackEvent* e);
+    void finishWaitAndDispose(TrackEvent* e, bool canceled);
 
   protected:
 
@@ -34,6 +34,7 @@ class TrackAdvancer
 
     class TrackScheduler& scheduler;
     
+    void dispose(class TrackEvent* e);
     void detectLeaderChange();
     
     void traceFollow();

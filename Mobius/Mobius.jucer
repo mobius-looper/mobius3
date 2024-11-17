@@ -634,6 +634,10 @@
                 file="Source/mobius/core/MobiusMslVariableHandler.cpp"/>
           <FILE id="p3BIiC" name="MobiusMslVariableHandler.h" compile="0" resource="0"
                 file="Source/mobius/core/MobiusMslVariableHandler.h"/>
+          <FILE id="gRvzNq" name="MobiusTrackWrapper.cpp" compile="1" resource="0"
+                file="Source/mobius/core/MobiusTrackWrapper.cpp"/>
+          <FILE id="GYxG8p" name="MobiusTrackWrapper.h" compile="0" resource="0"
+                file="Source/mobius/core/MobiusTrackWrapper.h"/>
           <FILE id="UE7nUh" name="Mode.cpp" compile="1" resource="0" file="Source/mobius/core/Mode.cpp"/>
           <FILE id="yTJ6C3" name="Mode.h" compile="0" resource="0" file="Source/mobius/core/Mode.h"/>
           <FILE id="WMBb80" name="Parameter.cpp" compile="1" resource="0" file="Source/mobius/core/Parameter.cpp"/>

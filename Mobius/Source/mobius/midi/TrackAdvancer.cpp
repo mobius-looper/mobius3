@@ -361,6 +361,21 @@ void TrackAdvancer::doEvent(TrackEvent* e)
 
     }
 
+    finishWaitAndDispose(e, false);
+}
+
+/**
+ * Must be called immediately after any TrackEvent has been processed.
+ * If there is an MslWait on this event inform the environment (via Kernel)
+ * that has either been reached normally or has been canceled.
+ */
+void TrackAdvancer::finishWaitAndDispose(TrackEvent* e, bool canceled)
+{
+    if (e->wait != nullptr) {
+        scheduler.tracker->finishWait(e->wait, canceled);
+        e->wait = nullptr;
+    }
+
     dispose(e);
 }
 
@@ -371,6 +386,9 @@ void TrackAdvancer::doEvent(TrackEvent* e)
  */
 void TrackAdvancer::dispose(TrackEvent* e)
 {
+    if (e->wait != nullptr)
+      Trace(1, "TrackAdvancer: Disposing of TrackEvent with an unfinished MslWait");
+    
     if (e->primary != nullptr)
       scheduler.actionPool->checkin(e->primary);
     

@@ -186,48 +186,7 @@ bool MobiusMslHandler::scheduleDurationWait(MslWait* wait)
         // to accomplish something.
     
         if (frame > 0) {
-    
-            EventManager* em = track->getEventManager();
-            Event* e = em->newEvent();
-        
-            e->type = ScriptEvent;
-            e->frame = frame;
-
-            // what old code did and we have no way to pass right now
-            // need this for location waits too
-#if 0            
-			// special option to bring us out of pause mode
-			// Should really only allow this for absolute millisecond waits?
-			// If we're waiting on a cycle should wait for the loop to be
-			// recorded and/or leave pause.  Still it could be useful
-			// to wait for a loop-relative time.
-			e->pauseEnabled = mInPause;
-
-            // !! every relative UNIT_MSEC wait should be implicitly
-            // enabled in pause mode.  No reason not to and it's what
-            // people expect.  No one will remember "inPause"
-            if (mWaitType == WAIT_RELATIVE && mUnit == UNIT_MSEC)
-              e->pauseEnabled = true;
-#endif            
-
-            // old scripts set the ScriptInterpreter on the event
-            // here we set the MslWait which triggers a parallel set of logic
-            // everywhere a ScriptInterpreter would be found
-            //e->setScript(si);
-            e->setMslWait(wait);
-        
-            em->addEvent(e);
-
-            // the old interpreter would set the event on the ScriptStack
-            // here we save it in the Wait object itself
-            // this actually isn't necessary MSL won't do anything with it,
-            // it is only used to pass the previous async event IN when
-            // setting up a "wait last"
-            wait->coreEvent = e;
-
-            // remember this while we're here, could be useful
-            // we can trace it once we get back
-            wait->coreEventFrame = frame;
+            scheduleWaitAtFrame(wait, track, frame);
             success = true;
         }
         else {
@@ -236,6 +195,51 @@ bool MobiusMslHandler::scheduleDurationWait(MslWait* wait)
         }
     }
     return success;
+}
+
+void MobiusMslHandler::scheduleWaitAtFrame(MslWait* wait, Track* track, int frame)
+{
+    EventManager* em = track->getEventManager();
+    Event* e = em->newEvent();
+        
+    e->type = ScriptEvent;
+    e->frame = frame;
+
+    // what old code did and we have no way to pass right now
+    // need this for location waits too
+#if 0            
+    // special option to bring us out of pause mode
+    // Should really only allow this for absolute millisecond waits?
+    // If we're waiting on a cycle should wait for the loop to be
+    // recorded and/or leave pause.  Still it could be useful
+    // to wait for a loop-relative time.
+    e->pauseEnabled = mInPause;
+
+    // !! every relative UNIT_MSEC wait should be implicitly
+    // enabled in pause mode.  No reason not to and it's what
+    // people expect.  No one will remember "inPause"
+    if (mWaitType == WAIT_RELATIVE && mUnit == UNIT_MSEC)
+      e->pauseEnabled = true;
+#endif            
+
+    // old scripts set the ScriptInterpreter on the event
+    // here we set the MslWait which triggers a parallel set of logic
+    // everywhere a ScriptInterpreter would be found
+    //e->setScript(si);
+    e->setMslWait(wait);
+        
+    em->addEvent(e);
+
+    // the old interpreter would set the event on the ScriptStack
+    // here we save it in the Wait object itself
+    // this actually isn't necessary MSL won't do anything with it,
+    // it is only used to pass the previous async event IN when
+    // setting up a "wait last"
+    wait->coreEvent = e;
+
+    // remember this while we're here, could be useful
+    // we can trace it once we get back
+    wait->coreEventFrame = frame;
 }
 
 /**
@@ -395,28 +399,7 @@ bool MobiusMslHandler::scheduleLocationWait(MslWait* wait)
         // is an invalid location because the loop hasn't finished recording
 
         if (frame >= 0) {
-    
-            EventManager* em = track->getEventManager();
-            Event* e = em->newEvent();
-        
-            e->type = ScriptEvent;
-            e->frame = frame;
-
-            // old scripts set the ScriptInterpreter on the event
-            // here we set the MslWait which triggers a parallel set of logic
-            // everywhere a ScriptInterpreter would be found
-            //e->setScript(si);
-            e->setMslWait(wait);
-        
-            em->addEvent(e);
-
-            // the old interpreter would set the event on the ScriptStack
-            // here we save it in the Wait object itself
-            wait->coreEvent = e;
-
-            // remember this while we're here, could be useful
-            // we can trace it once we get back
-            wait->coreEventFrame = frame;
+            scheduleWaitAtFrame(wait, track, frame);
             success = true;
         }
         else {
@@ -561,11 +544,16 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
             case WaitEventLoop: {
                 // new: should this be an event unit, or should it be
                 // in Duration or Location instead?
+                scheduleWaitAtFrame(wait, track, 0);
+                success = true;
+                break;
             }
                 break;
 
             case WaitEventEnd: {
                 // new: similar issues as WaitEventLoop and LocationLoop
+                scheduleWaitAtFrame(wait, track, 0);
+                success = true;
             }
                 break;
                 
@@ -644,7 +632,7 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
                         // and now we wait
                         event->setMslWait(wait);
                         // set this while we're here though nothing uses it
-                        wait->coreEventFrame = event->getFrame();
+                        wait->coreEventFrame = event->frame;
                     }
                 }
                 success = true;

@@ -245,6 +245,18 @@ void TrackEventList::remove(TrackEvent* event)
     }
 }
 
+bool TrackEventList::isScheduled(TrackEvent* event)
+{
+    bool found = false;
+    for (TrackEvent* e = events ; e != nullptr ; e = e->next) {
+        if (e == event) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
 TrackEvent* TrackEventList::findLast(SymbolId sym)
 {
     TrackEvent* found = nullptr;

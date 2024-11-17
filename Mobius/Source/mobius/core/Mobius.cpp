@@ -2355,7 +2355,7 @@ void Mobius::handleMslWait(class Loop* l, class Event* e)
         // we've done all the shit we're going to do in the core and
         // we feel very dirty about it, pop back up to the kernel that
         // thinks everything is just shiny
-        mKernel->coreWaitFinished(wait);
+        mKernel->finishWait(wait, false);
 
         // the pool will trace an error if this is left behind
         e->setMslWait(nullptr);
@@ -2393,7 +2393,7 @@ void Mobius::finishMslWait(class Event* e)
     if (wait == nullptr)   
       Trace(1, "Mobius::finishMslWait Event with no wait");
     else {
-        mKernel->coreWaitFinished(wait);
+        mKernel->finishWait(wait, false);
         e->setMslWait(nullptr);
     }
 }
@@ -2429,7 +2429,7 @@ void Mobius::cancelMslWait(class Event* e)
     if (w == nullptr)
       Trace(1, "Mobius::cancelMslWait No wait to cancel");
     else {
-        mKernel->coreWaitCanceled(wait);
+        mKernel->finishWait(w, true);
         e->setMslWait(nullptr);
     }
 }

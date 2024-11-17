@@ -1565,15 +1565,7 @@ bool MobiusKernel::mslAction(MslAction* action)
  */
 bool MobiusKernel::mslWait(MslWait* wait, MslContextError* error)
 {
-    bool success = mCore->mslWait(wait, error);
-
-    if (!success) {
-        Trace(1, "MobiusKernel: MslWait scheduling failed in core");
-    }
-    else {
-        Trace(2, "MobiusKernel: Core schedule a wait at frame %d", wait->coreEventFrame);
-    }
-    return success;
+    return mTracks->mslWait(wait, error);
 }
 
 void MobiusKernel::mslPrint(const char* msg)
@@ -1636,17 +1628,13 @@ void MobiusKernel::runExternalScripts()
     env->kernelAdvance(this);
 }
 
-void MobiusKernel::coreWaitFinished(MslWait* wait)
+/**
+ * Called by both Mobius core and TrackManager when a wait condition has bee
+ * reached or canceled.
+ */
+void MobiusKernel::finishWait(MslWait* wait, bool canceled)
 {
-    MslEnvironment* env = container->getMslEnvironment();
-    env->resume(this, wait);
-}
-
-void MobiusKernel::coreWaitCanceled(MslWait* wait)
-{
-    // while the want is "over" the script may want to handle
-    // control flow differently if it was canceled
-    wait->coreEventCanceled = true;
+    wait->coreEventCanceled = canceled;
     MslEnvironment* env = container->getMslEnvironment();
     env->resume(this, wait);
 }

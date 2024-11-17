@@ -22,6 +22,7 @@ class MobiusMslHandler
     MobiusMslVariableHandler variables;
 
     // new MSL support
+    void scheduleWaitAtFrame(class MslWait* wait, class Track* track, int frame);
     class Track* getWaitTarget(class MslWait* wait);
     bool scheduleDurationWait(class MslWait* wait);
     int calculateDurationFrame(class MslWait* wait, class Track* t);

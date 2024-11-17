@@ -490,7 +490,7 @@ void MslSession::callExternal(MslSymbol* snode)
         action.arguments = stack->childResults;
 
         // reset async action state before calling
-        asyncState.init();
+        asyncAction.init();
 
         if (!context->mslAction(&action)) {
             // need both messages?
@@ -506,7 +506,7 @@ void MslSession::callExternal(MslSymbol* snode)
 
             // if the action returned async event state, save it
             if (action.event != nullptr) {
-                asyncAction.event = actionEvent;
+                asyncAction.event = action.event;
                 asyncAction.eventFrame = action.eventFrame;
             }
 

@@ -326,7 +326,8 @@ void LoopSwitcher::leaderEvent(TrackProperties& props)
         // scan, we can just remove it and pretend 
         scheduler.events.remove(e);
         doSwitchEvent(e, e->switchTarget);
-        scheduler.advancer.dispose(e);
+
+        scheduler.advancer.finishWaitAndDispose(e, false);
     }
 }
 

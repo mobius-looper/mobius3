@@ -1215,7 +1215,7 @@ void MslSession::mslVisit(MslWaitNode* wait)
               Trace(1, "MslSession: Wait resumed outside of the kernel context");
 
 
-            if (stack->wait.canceled) {
+            if (stack->wait.coreEventCanceled) {
                 // this indiciates that the event was canceled rather than being
                 // reached normally, might want options on how to handle this
                 Trace(2, "MslSession: Wait event was canceled");

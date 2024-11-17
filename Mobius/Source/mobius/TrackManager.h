@@ -73,7 +73,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doActionNoQueue(class UIAction* a);
     bool doQuery(class Query* q);
     bool mslQuery(class MslQuery* query);
-
+    bool mslWait(class MslWait* wait, class MslContextError* error);
+    
     // TrackListener
     void trackNotification(NotificationId notification, class TrackProperties& props);
 
@@ -104,6 +105,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     class MobiusContainer* getContainer();
     AbstractTrack* getTrack(int number);
+
+    void finishWait(MslWait* wait, bool canceled);
     
   private:
 

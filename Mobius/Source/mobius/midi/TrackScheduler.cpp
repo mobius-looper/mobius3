@@ -606,7 +606,8 @@ void TrackScheduler::unstack(TrackEvent* event)
         else {
             // nothing left to unstack
             events.remove(event);
-            advancer.dispose(event);
+
+            advancer.finishWaitAndDispose(event, true);
         }
     }
 }
@@ -1881,12 +1882,13 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
                 else
                   estate->name = "Switch";
                 arg = e->switchTarget + 1;
-                
             }
                 break;
             case TrackEvent::EventAction: {
                 if (e->primary != nullptr && e->primary->symbol != nullptr)
                   estate->name = e->primary->symbol->getName();
+                else
+                  estate->name = "???";
             }
                 break;
 
@@ -1905,11 +1907,18 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
                   estate->name += juce::String(e->multiples);
             }
                 break;
+
+            case TrackEvent::EventWait:
+                estate->name = "Wait";
+                break;
                 
             default: addit = false; break;
         }
         
         if (addit) {
+            if (e->type != TrackEvent::EventWait && e->wait != nullptr)
+              estate->name += "/Wait";
+            
             estate->frame = e->frame;
             estate->pending = e->pending;
             estate->argument = arg;

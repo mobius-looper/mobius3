@@ -219,8 +219,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     //
     // MSL callbacks after wait event scheduling
     //
-    void coreWaitFinished(class MslWait* wait);
-    void coreWaitCanceled(class MslWait* wait);
+    void finishWait(class MslWait* wait, bool canceled);
     
     // used by Mobius to trigger clips after a core event
     void clipStart(int audioTrack, const char* bindingArgs);

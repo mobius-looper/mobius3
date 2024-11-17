@@ -10,6 +10,7 @@
 #include "../model/Query.h"
 
 #include "../script/MslExternal.h"
+#include "../script/MslWait.h"
 #include "../script/ScriptExternals.h"
 
 #include "MobiusKernel.h"
@@ -295,6 +296,50 @@ AbstractTrack* TrackManager::getTrack(int number)
         track = midiTracks[midiIndex];
     }
     return track;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MSL Waits
+//
+//////////////////////////////////////////////////////////////////////
+
+bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
+{
+    bool success = false;
+
+    int trackNumber = wait->track;
+    if (trackNumber <= 0) {
+        trackNumber = getFocusedTrackIndex() + 1;
+        // assuming it's okay to trash this, we have similar issues
+        // with MslAction and MslQuery
+        // Mobius can handle this without it, but the generic handler can't
+        wait->track = trackNumber;
+    }
+    
+    if (trackNumber <= audioTrackCount) {
+        success = audioEngine->mslWait(wait, error);
+    }
+    else {
+        success = mslHandler.mslWait(wait, error);
+    }
+
+    if (!success) {
+        Trace(1, "TrackManager: MslWait scheduling failed");
+    }
+    else {
+        Trace(2, "TrackManager: MslWait scheduled at frame %d", wait->coreEventFrame);
+    }
+    
+    return success;
+}
+
+/**
+ * Called when an internal event that had an MslWait has finished
+ */
+void TrackManager::finishWait(MslWait* wait, bool canceled)
+{
+    kernel->finishWait(wait, canceled);
 }
 
 //////////////////////////////////////////////////////////////////////
