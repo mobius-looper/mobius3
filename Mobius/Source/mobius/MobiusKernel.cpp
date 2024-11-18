@@ -763,6 +763,8 @@ int MobiusKernel::getMidiOutputDeviceId(const char* name)
             if (id < 0) {
                 Trace(1, "MobiusKernel: Invalid MIDI output device name %s", name);
                 id = 0;
+                // todo: this is worth of a startup alert, not sure how to get there from here...
+                // then again, this could have been checked on startup before we got this far
             }
             else {
                 // zero is reserved for the host, bump it up by one

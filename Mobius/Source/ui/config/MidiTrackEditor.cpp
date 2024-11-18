@@ -152,7 +152,10 @@ void MidiTrackEditor::initInputDevice(Session::Track* track)
     if (savedName != nullptr) {
         index = names.indexOf(juce::String(savedName));
         if (index < 0) {
-            Trace(1, "MidiTrackEditor: Saved track input device not available %s", savedName);
+            // soften the level since this can hit the trace breakpoint
+            // every time the window comes up
+            // todo: should show something in the editor so they know
+            Trace(2, "MidiTrackEditor: Warning: Saved track input device not available %s", savedName);
             index = 0;
         }
     }
@@ -173,7 +176,7 @@ void MidiTrackEditor::initOutputDevice(Session::Track* track)
     if (savedName != nullptr) {
         index = names.indexOf(juce::String(savedName));
         if (index < 0) {
-            Trace(1, "MidiTrackEditor: Saved track output device not available %s", savedName);
+            Trace(2, "MidiTrackEditor: Warning Saved track output device not available %s", savedName);
             index = 0;
         }
     }

@@ -86,6 +86,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void shutdown();
     juce::Component* getPluginEditorComponent();
     void closePluginEditor();
+
+    void addStartupError(juce::String msg);
+    void addStartupErrors(juce::StringArray src);
     
     void addActionListener(ActionListener* l) override;
     void removeActionListener(ActionListener* l) override;
@@ -195,6 +198,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*) override;
     void alert(juce::String message);
+    void alert(juce::StringArray& messages);
     void addAlert(juce::String message);
     void message(juce::String message);
     
@@ -327,6 +331,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     int meterTime = 0;
     bool doMeters = true;
     void meter(const char* name);
+
+    // a list of errors encountered during startup that can be displayed
+    // in an alert window when the UI is up
+    juce::StringArray startupErrors;
 
     // put this first since it contains object pools that the things below may
     // need to use during the destruction sequence

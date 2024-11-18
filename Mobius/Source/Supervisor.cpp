@@ -188,6 +188,7 @@ bool Supervisor::start()
     // note using lower "trace" functions here till we get
     // Trace files set up
     trace("Supervisor::start\n");
+    startupErrors.clear();
 
 #if 0    
     if (InstanceCount != 1) {
@@ -352,6 +353,8 @@ bool Supervisor::start()
     // names in the session to device ids
     midiManager.configure();
     midiManager.openDevices();
+    // go ahead and add MM errors to the startup alert so it doesn't have to
+    addStartupErrors(midiManager.getErrors());
     midiRealizer.initialize();
     
     // now bring up the bad boy
@@ -455,6 +458,8 @@ bool Supervisor::start()
 
     // random internal utility objects
     midiClerk.reset(new MidiClerk(this));
+
+    alert(startupErrors);
     
     meter(nullptr);
 
@@ -463,6 +468,17 @@ bool Supervisor::start()
 
     Trace(2, "Supervisor::start finished\n");
     return true;
+}
+
+void Supervisor::addStartupError(juce::String s)
+{
+    startupErrors.add(s);
+}
+
+void Supervisor::addStartupErrors(juce::StringArray src)
+{
+    for (auto err : src)
+      startupErrors.add(err);
 }
 
 /**
@@ -1537,6 +1553,17 @@ void Supervisor::alert(juce::String msg)
     // original style
     //alerter.alert(mainWindow.get(), msg);
     mainWindow->alert(msg);
+}
+
+/**
+ * For startup errors but could be for other things too
+ */
+void Supervisor::alert(juce::StringArray& errors)
+{
+    if (errors.size() > 0) {
+        juce::String msg = errors.joinIntoString("\n");
+        alert(msg);
+    }
 }
 
 /**
