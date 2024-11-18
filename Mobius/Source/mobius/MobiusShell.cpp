@@ -259,15 +259,10 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
 
 /**
  * Install symbols for the few shell level functions we support.
- * Used to have a few dynamic functions here, but now it's just
- * symbols to activate the Setup and Preset structures.
+ * Used to have a few dynamic functions here, but now there is nothing.
  */
 void MobiusShell::installSymbols()
 {
-    // Kernel will add theirs in Kernel::initialize
-
-    // symbols for Setup and Preset activation
-    installActivationSymbols();
 }
 
 /**
@@ -285,8 +280,7 @@ void MobiusShell::reconfigure(MobiusConfig* config, Session* ses)
     //session = new Session(ses);
 
     // todo: reload scripts whenever the config changes?
-    installActivationSymbols();
-
+    
     // clone it again and give it to the kernel
     // it sucks that these are two messages!
     MobiusConfig* kernelCopy = config->clone();
@@ -307,64 +301,6 @@ void MobiusShell::installBindings(Binderator* b)
 void MobiusShell::propagateSymbolProperties()
 {
     kernel.propagateSymbolProperties();
-}
-
-/**
- * On initialize() and reconfigure()
- * Add BehaviorActivation symbols for the Setups and Presets.
- * 
- * Like Script/Sample symbols, we can't unintern once they're there
- * or else binding tables that point to them will break.  But we can
- * mark them hidden so they won't show up in the binding tables, and
- * unresolved ones can be highlighted.
- *
- * Not really happy with the symbol use here, we've got a prefixed name
- * that hides the type and the id is overloaded as the ordinal.  It works
- * but feels hacky.  Better would be a more concrete definition object
- * that could hold these and maybe other things about the structure.
- *
- * !! can't this go up in Symbolizer?
- * it could except the hacky prefix convention is used by Actionator
- */
-void MobiusShell::installActivationSymbols()
-{
-    SymbolTable* symbols = container->getSymbols();
-    // hide existing activation symbols
-    // remove references to previously resolved presets and setups
-    for (auto symbol : symbols->getSymbols()) {
-        if (symbol->behavior == BehaviorActivation) {
-            symbol->hidden = true;
-        }
-    }
-
-    Setup* setups = configuration->getSetups();
-    unsigned char ordinal = 0;
-    while (setups != nullptr) {
-        juce::String name = juce::String(ActivationPrefixSetup) + setups->getName();
-        Symbol* s = symbols->intern(name);
-        s->behavior = BehaviorActivation;
-        s->level = LevelCore;
-        // can't do this any more
-        // s->id = ordinal;
-        // unhide if it was hidden above
-        s->hidden = false;
-        ordinal++;
-        setups = setups->getNextSetup();
-    }
-
-    Preset* presets = configuration->getPresets();
-    ordinal = 0;
-    while (presets != nullptr) {
-        juce::String name = juce::String(ActivationPrefixPreset) + presets->getName();
-        Symbol* s = symbols->intern(name);
-        s->behavior = BehaviorActivation;
-        s->level = LevelCore;
-        // s->id = ordinal;
-        s->hidden = false;
-        ordinal++;
-        presets = presets->getNextPreset();
-        
-    }
 }
 
 /**

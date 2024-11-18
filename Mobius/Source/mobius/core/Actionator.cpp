@@ -268,13 +268,13 @@ void Actionator::doActivation(UIAction* action)
     Symbol* symbol = action->symbol;
 
     // MobiusShell installs these with prefixes and the id set to the structure ordinal
-    if (symbol->name.startsWith(MobiusShell::ActivationPrefixPreset)) {
+    if (symbol->name.startsWith(Symbol::ActivationPrefixPreset)) {
 
         // kludge: the way activations are dealt with all needs a redesign
         // formerly stored the structure ordinal in the symbol id but that can't
         // be done now that it is a SymbolId enumeration
         // extract the preset name from the symbol and find the ordinal the hard way
-        juce::String pname = symbol->name.fromFirstOccurrenceOf(MobiusShell::ActivationPrefixPreset, false, false);
+        juce::String pname = symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixPreset, false, false);
         MobiusConfig* config = mMobius->getConfiguration();
         int ordinal = Structure::getOrdinal(config->getPresets(), pname.toUTF8());
         if (ordinal >= 0)
@@ -289,9 +289,9 @@ void Actionator::doActivation(UIAction* action)
         snprintf(buf, sizeof(buf), "%s activated", pname.toUTF8().getAddress());
         mMobius->sendMobiusMessage(buf);
     }
-    else if (symbol->name.startsWith(MobiusShell::ActivationPrefixSetup)) {
+    else if (symbol->name.startsWith(Symbol::ActivationPrefixSetup)) {
 
-        juce::String sname = symbol->name.fromFirstOccurrenceOf(MobiusShell::ActivationPrefixSetup, false, false);
+        juce::String sname = symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixSetup, false, false);
         MobiusConfig* config = mMobius->getConfiguration();
         int ordinal = Structure::getOrdinal(config->getPresets(), sname.toUTF8());
         if (ordinal >= 0)

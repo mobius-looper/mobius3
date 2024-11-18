@@ -151,6 +151,12 @@ class Symbol
     Symbol();
     ~Symbol();
 
+    /**
+     * Prefixes added to symbol names representing structure activations.
+     */
+    constexpr static const char* ActivationPrefixSetup = "Setup:";
+    constexpr static const char* ActivationPrefixPreset = "Preset:";
+
     // temporary kludge as we work around the
     // UIParameter/ParameterProperties transition
     // actually, might not be that bad since it can handle other things too

@@ -117,6 +117,7 @@ class Symbolizer
     void internSymbols();
     void installUISymbols();
     void installOldDefinitions();
+    void installActivationSymbols();
     
     // symbols.xml parsing
     void loadSymbolDefinitions();

@@ -658,9 +658,10 @@ bool Binderator::looksResolved(Symbol* s)
             s->functionProperties != nullptr ||
             s->parameter != nullptr ||
             s->parameterProperties != nullptr ||
-            s->structure != nullptr ||
             s->sample != nullptr ||
-            s->script != nullptr);
+            s->script != nullptr ||
+            // unfortunately don't have anything to look at other than behavior
+            s->behavior == BehaviorActivation);
 }
 
 //////////////////////////////////////////////////////////////////////

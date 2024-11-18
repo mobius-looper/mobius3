@@ -12,6 +12,9 @@
 #include "model/FunctionProperties.h"
 #include "model/UIParameter.h"
 #include "model/ParameterProperties.h"
+#include "model/MobiusConfig.h"
+#include "model/Setup.h"
+#include "model/Preset.h"
 
 #include "Supervisor.h"
 #include "Symbolizer.h"
@@ -105,6 +108,8 @@ void Symbolizer::initialize()
     internSymbols();
     
     installUISymbols();
+
+    installActivationSymbols();
 
     loadSymbolDefinitions();
     
@@ -688,6 +693,67 @@ void Symbolizer::installOldDefinitions()
             s->level = LevelCore;
             s->parameter = def;
         }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Structure Activations
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Add BehaviorActivation symbols for the Setups and Presets.
+ * 
+ * Like Script/Sample symbols, we can't unintern once they're there
+ * or else binding tables that point to them will break.  But we can
+ * mark them hidden so they won't show up in the binding tables, and
+ * unresolved ones can be highlighted.
+ *
+ * Not really happy with the symbol use here, we've got a prefixed name
+ * to make them unique and they can't reliably point to anything since
+ * the config objects can be deleted out from under it easily.
+ *
+ * There isn't a way to tell it was resolved other than it having
+ * BehaviorActivation, could add ActivationProperties like we do for
+ * other symbol types but there isn't anything to put into it yet.
+ * We could put the structure ordinal there?  But this happens so rarely
+ * a name lookup isn't that bad.
+ */
+void Symbolizer::installActivationSymbols()
+{
+    SymbolTable* symbols = supervisor->getSymbols();
+    // hide existing activation symbols
+    for (auto symbol : symbols->getSymbols()) {
+        if (symbol->behavior == BehaviorActivation) {
+            symbol->hidden = true;
+        }
+    }
+
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    Setup* setups = config->getSetups();
+    unsigned char ordinal = 0;
+    while (setups != nullptr) {
+        juce::String name = juce::String(Symbol::ActivationPrefixSetup) + setups->getName();
+        Symbol* s = symbols->intern(name);
+        s->behavior = BehaviorActivation;
+        s->level = LevelCore;
+        s->hidden = false;
+        ordinal++;
+        setups = setups->getNextSetup();
+    }
+
+    Preset* presets = config->getPresets();
+    ordinal = 0;
+    while (presets != nullptr) {
+        juce::String name = juce::String(Symbol::ActivationPrefixPreset) + presets->getName();
+        Symbol* s = symbols->intern(name);
+        s->behavior = BehaviorActivation;
+        s->level = LevelCore;
+        s->hidden = false;
+        ordinal++;
+        presets = presets->getNextPreset();
+        
     }
 }
 

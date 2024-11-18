@@ -26,12 +26,6 @@ class MobiusShell : public MobiusInterface
     
   public:
 
-    /**
-     * Prefixes we add to symbols representing structure activations.
-     */
-    constexpr static const char* ActivationPrefixSetup = "Setup:";
-    constexpr static const char* ActivationPrefixPreset = "Preset:";
-
     MobiusShell(class MobiusContainer* container);
     ~MobiusShell();
 
@@ -152,7 +146,6 @@ class MobiusShell : public MobiusInterface
     class SampleConfig* expandPaths(class SampleConfig* src);
 
     void installSymbols();
-    void installActivationSymbols();
     void installSymbols(class SampleManager* samples);
     void installSymbols(class Scriptarian* scripts);
 
