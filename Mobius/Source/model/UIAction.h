@@ -184,6 +184,7 @@ class UIAction : public PooledObject {
 
     const char* getScope();
     void setScope(const char* s);
+    bool hasScope();
     
     void setScopeTrack(int i);
     int getScopeTrack();

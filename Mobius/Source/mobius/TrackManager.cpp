@@ -548,7 +548,119 @@ UIAction* TrackManager::replicateAction(UIAction* src)
     UIAction* list = nullptr;
 
     if (src->functionProperties != nullptr && src->functionProperties->global) {
-        // just to pass it to each side without a scope
+        // globals are weird and handled special
+        doGlobal(src);
+    }
+    else if (src->noGroup) {
+        // noGroup is an obscure flag set in Scripts to disable focus/group handling
+        // for this action
+        pickATrack(src);
+        list = src;
+    }
+    else if (src->hasScope()) {
+        int track = scopes.parseTrackNumber(src->getScope());
+        if (track > 0) {
+            // targeting a specific track
+            // focus lock does not apply here but group replication might
+            // unclear
+            list = replicateGroupFocus(src);
+        }
+        else {
+            int group = scopes.parseGroupOrdinal(src->getScope());
+            if (group >= 0) {
+                list = replicateGroup(src, group);
+            }
+            else {
+                Trace(1, "TrackManager: Invalid scope %s", src->getScope());
+            }
+        }
+    }
+    else {
+        // no scope, send it to the focused track
+        pickATrack(src);
+        // then replicate to other focus lock gracks and do group replication
+        list = replicateFocus(src);
+    }
+    return list;
+}
+
+/**
+ * When an action has no scope, it goes to the focused track
+ */
+void TrackManager::pickATrack(UIAction* src)
+{
+    src->setScopeTrack(getFocusedTrackIndex() + 1);
+}
+
+/**
+ * Replicate this action to all members of a group
+ * Group is specified by ordinal which is what old Mobius Track uses
+ */
+UIAction* TrackManger::replicateGroup(UIAction* src, int group)
+{
+    UIAction* list = nullptr;
+
+    for (int i = 0 ; i < audioTrackCount ; i++) {
+        int tgroup = audioEngine->getTrackGroupOrdinal(i);
+        if (tgroup == group) {
+            UIAction* copy = actionPool->newAction();
+            copy->copy(src);
+            copy->setScopeTrack(i + 1);
+            copy->next = list;
+            list = copy;
+        }
+    }
+
+    for (int i = 0 ; i < midiTrackCount ; i++) {
+        MidiTrack* t = midiTracks[i];
+        // todo: MIDI tracks do not yet have groups
+        //int tgroup = t->getGroupOrdinal();
+        int tgroup = -1;
+        if (tgroup == group) {
+            UIAction* copy = actionPool->newAction();
+            copy->copy(src);
+            copy->setScopeTrack(i + audioTrackCount + 1);
+            copy->next = list;
+            list = copy;
+        }
+    }
+
+    // didn't end up using this to reclaim it
+    audioPool->checkin(src);
+    // final list may be empty if there were no tracks in this group
+    return list;
+}
+
+/**
+ * We've got 
+UIAction* TrackManager::replicateGroupFocus(UIAction* src)
+{
+}
+
+    
+          
+
+
+
+        
+        
+                
+
+    
+    else if (!src->hasScope()) {
+        pickA
+        
+    else if (!src->hasScope() || src->noGroup) {
+        list = src;
+
+        
+        if (scopes.parseTrackNumber(src->getScope() <= 0)) {
+            
+                
+    }
+    else {
+        
+        
 
     
 

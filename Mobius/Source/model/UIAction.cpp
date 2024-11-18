@@ -104,6 +104,11 @@ const char* UIAction::getScope()
     return scope;
 }
 
+bool UIAction::hasScope()
+{
+    return (scope[0] != '\0');
+}
+
 void UIAction::setScope(const char* s)
 {
     CopyString(s, scope, sizeof(scope));
