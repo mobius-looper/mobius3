@@ -242,7 +242,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     // important that we track changes in block sizes to adjust latency compensation
     int lastBlockSize = 0;
-    
+
     // these we own
     KernelEventPool eventPool;
     KernelBinderator binderator {this};
@@ -268,7 +268,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     // the big guy
     // see if we can make this a stack object at some point
     class Mobius* mCore = nullptr;
-    class UIAction* coreActions = nullptr;
     int activePreset = 0;
 
     std::unique_ptr<TrackManager> mTracks;
@@ -281,6 +280,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void installSymbols();
 
     // KernelMessage handling
+    void doMessage(class KernelMessage* msg);
     void reconfigure(class KernelMessage*);
     void loadSession(class KernelMessage*);
     void installSamples(class KernelMessage* msg);

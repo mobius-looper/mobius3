@@ -553,6 +553,10 @@ void Mobius::installScripts(Scriptarian* neu)
  * related to MobiusConfig changes should be done here, and beginAudioInterrupt
  * only needs to concern itself with audio consumption.
  *
+ * update: I dont't think this paranoia was warranted.  Configuration and actions
+ * can come down in any order and we need to accept that.  We do need to get configuration
+ * out of the way before block processing, but the order of configuration updates,
+ * track restructuring, action scheduling, and MIDI processing should not really matter.
  */
 void Mobius::reconfigure(class MobiusConfig* config)
 {
@@ -784,11 +788,12 @@ bool Mobius::doQuery(Query* q)
 }
 
 /**
- * Perform a core action directly from a script.
+ * Perform a core action queueud at the beginning
+ * of an audio block, or from an MSL script.
  */
 void Mobius::doAction(UIAction* a)
 {
-    mActionator->doScriptAction(a);
+    mActionator->doAction(a);
 }
 
 //
@@ -870,57 +875,104 @@ void Mobius::installLoop(Audio* a, int track, int loop)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by Kernel at the start of each audio block processing notification.
+ * Get things ready for the tracks to process the audio stream.
+ * This is the very first thing that happens on each audio block,
+ * before actions and queued configuration changes start happening.
  *
- * This is vastly simplified now that we don't have Recorder sitting in the
- * middle of everything.
- * 
- * Things related to "phasing" configuration from the UI thread to the audio
- * thread are gone and now done in reconfigure()
+ * Reset any lingering state from the last block, and phase in the
+ * Scriptarian if we're no longer busy.
  *
- * We can assume internal components are in a stable state regarding configuration
- * options and only need to concern ourselves with preparing for audio
- * block housekeeping.
- *
- * Old comments:
- *
- * !! Script Recording Inconsistency
- *
- * This is implemented assuming that we only record functions for the
- * active track.  In theory, if a burst of functions came in within
- * the same interrupt, something like this could happen:
- *
- *      NextTrack
- *      Record
- *      NextTrack
- *      Record
- *
- * The effect would be that there are now pending functions
- * on two tracks, but the script recorder doesn't know how
- * to interleave them with the NextTrack function handled
- * by Mobius.  The script would end up with:
- *
- *      NextTrack
- *      NextTrack
- *      Record
- *      Record
- *
- * We could address this by always posting functions to a list
- * in the order they come in and wait for the interrupt
- * handler to consume them.  But it's complicated because we have
- * to synchronize access to the list.    In practice, it is very
- * hard to get functions to come in this rapidly so there
- * are more important things to do right now.  Also, Track
- * only allows one function at a time.
+ * Interrupt prep is split into two parts, this and
+ * beginAudioInterruptPostActions that happens after queued configuration
+ * and actions have been processed.  Unclear if this is necessary
+ * but don't want to mess up the order dependencies at the moment.
  */
-void Mobius::processAudioStream(MobiusAudioStream* stream, UIAction* actions)
+void Mobius::beginAudioBlock(MobiusAudioStream* stream)
 {
+    // old flag to disable audio processing when a halt was requested
+    // don't know if we still need this but it seems like a good idea
+    // update: If we need this at all, it should be handled in Kernel
+	if (mHalting) return;
+
     // save for internal componenent access without having to pass it
     // everywhere
     mStream = stream;
+
+    // phase in a new scriptarian if we're not busy
+    if (mPendingScriptarian != nullptr) {
+        if (mScriptarian == nullptr) {
+            mScriptarian = mPendingScriptarian;
+            mPendingScriptarian = nullptr;
+        }
+        else if (!mScriptarian->isBusy()) {
+            mKernel->returnScriptarian(mScriptarian);
+            mScriptarian = mPendingScriptarian;
+            mPendingScriptarian = nullptr;
+        }
+        else {
+            // wait for a future interrupt when it's quiet
+            // todo: if a script is waiting on something, and the
+            // wait was misconfigured, or the UI dropped the ball on
+            // an event, this could cause the script to hang forever
+            // after about 10 seconds we should just give up and
+            // do a global reset, or at least cancel the active scripts
+            // so we can move on
+        }
+    }
+    
+	mSynchronizer->interruptStart(stream);
+
+	// prepare the tracks before running scripts
+    // this is a holdover from the old days, do we still need
+    // this or can we just do it in Track::processAudioStream?
+    // how would this be order sensitive for actions?
+	for (int i = 0 ; i < mTrackCount ; i++) {
+		Track* t = mTracks[i];
+		t->prepareForInterrupt();
+	}
+}
+
+/**
+ * Phase 2 of stream processing preparation.
+ *
+ * This was split out of beginAudioInterrupt so that it can be done after
+ * UIActions and other queueued messages have been processed.
+ *
+ * I don't think this is really necessary, but it's old sensitive code and
+ * I didn't want to mess up the order dependencies.
+ * After this call, it is safe to call processAudioStream.
+ */
+void Mobius::beginAudioBlockAfterActions()
+{
+	// process scripts
+    if (mScriptarian != nullptr)
+      mScriptarian->doScriptMaintenance();
+
+    // process MSL scripts
+    // should these be before or after old scripts?
+    mKernel->runExternalScripts();
+}
+
+/**
+ * Called by Kernel when everything is reaady to start receiving audio
+ * block content.
+ */
+void Mobius::processAudioStream(MobiusAudioStream* stream)
+{
+    // ugly transition between here and beginAudioBlock, make sure it's the same
+    if (stream != mStream) {
+        Trace(1, "Mobius: Audio stream mismatch");
+        mStream = stream;
+    }
+    
+    // let Actionator fire off any long-press actions since it
+    // controls the LongWatcher
+    // todo: MIDI tracks also have a LongWatcher and we should
+    // move that up there
+    mActionator->advanceLongWatcher(stream->getInterruptFrames());
     
     // pre-processing
-    beginAudioInterrupt(stream, actions);
+    //beginAudioInterrupt(stream, actions);
 
     // advance the tracks
     //
@@ -987,68 +1039,6 @@ void Mobius::notifyBufferModified(float* buffer)
 		Track* t = mTracks[i];
         t->notifyBufferModified(buffer);
     }
-}
-
-/**
- * Get things ready for the tracks to process the audio stream.
- * Approximately what the old code called recorderMonitorEnter.
- *
- * We have a lot less to do now.  Configuration phasing, and action
- * scheduling has already been done by Kernel.
- *
- * The UIActions received through the KernelCommunicator were queued
- * and passed down so we can process them in the same location as the
- * old code.
- */
-void Mobius::beginAudioInterrupt(MobiusAudioStream* stream, UIAction* actions)
-{
-    // old flag to disable audio processing when a halt was requested
-    // don't know if we still need this but it seems like a good idea
-	if (mHalting) return;
-
-    // phase in a new scriptarian if we're not busy
-    if (mPendingScriptarian != nullptr) {
-        if (mScriptarian == nullptr) {
-            mScriptarian = mPendingScriptarian;
-            mPendingScriptarian = nullptr;
-        }
-        else if (!mScriptarian->isBusy()) {
-            mKernel->returnScriptarian(mScriptarian);
-            mScriptarian = mPendingScriptarian;
-            mPendingScriptarian = nullptr;
-        }
-        else {
-            // wait for a future interrupt when it's quiet
-            // todo: if a script is waiting on something, and the
-            // wait was misconfigured, or the UI dropped the ball on
-            // an event, this could cause the script to hang forever
-            // after about 10 seconds we should just give up and
-            // do a global reset, or at least cancel the active scripts
-            // so we can move on
-        }
-    }
-    
-	mSynchronizer->interruptStart(stream);
-
-	// prepare the tracks before running scripts
-    // this is a holdover from the old days, do we still need
-    // this or can we just do it in Track::processAudioStream?
-    // how would this be order sensitive for actions?
-	for (int i = 0 ; i < mTrackCount ; i++) {
-		Track* t = mTracks[i];
-		t->prepareForInterrupt();
-	}
-
-    // do the queued actions
-    mActionator->doInterruptActions(actions, stream->getInterruptFrames());
-
-	// process scripts
-    if (mScriptarian != nullptr)
-      mScriptarian->doScriptMaintenance();
-
-    // process MSL scripts
-    // should these be before or after old scripts?
-    mKernel->runExternalScripts();
 }
 
 /**
@@ -1719,6 +1709,32 @@ bool Mobius::isFocused(Track* t)
             (mConfig->isGroupFocusLock() && 
              group > 0 && 
              group == mTrack->getGroup()));
+}
+
+/**
+ * New: Used by TrackManager to handle action replication
+ * Only test the focus lock flag, not all that other shit
+ * that isFocused(Track) is doing
+ */
+bool Mobius::isTrackFocused(int index)
+{
+    bool focused = false;
+    Track* track = getTrack(index);
+    if (track != nullptr)
+      focused = track->isFocusLock();
+    return focused;
+}
+
+/**
+ * New: Used by TrackManager to handle action replication
+ */
+int Mobius::getTrackGroup(int index)
+{
+    int group = 0;
+    Track* track = getTrack(index);
+    if (track != nullptr)
+      group = track->getGroup();
+    return group;
 }
 
 TrackProperties Mobius::getTrackProperties(int number)

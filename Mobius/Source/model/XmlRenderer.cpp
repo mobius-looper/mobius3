@@ -1256,6 +1256,7 @@ void XmlRenderer::parse(XmlElement* e, SampleConfig* c)
 
 // old name, now render EL_SAMPLE_CONFIG
 #define ATT_REPLICATED_FUNCTIONS "replicatedFunctions"
+#define ATT_REPLICATED_PARAMETERS "replicatedParameters"
 #define ATT_COLOR "color"
 #define ATT_REPLICATION "replication"
 
@@ -1273,6 +1274,10 @@ void XmlRenderer::render(XmlBuffer* b, GroupDefinition* g)
         juce::String csv = g->replicatedFunctions.joinIntoString(",");
         b->addAttribute(ATT_REPLICATED_FUNCTIONS, (const char*)(csv.toUTF8()));
     }
+    if (g->replicatedParameters.size() > 0) {
+        juce::String csv = g->replicatedParameters.joinIntoString(",");
+        b->addAttribute(ATT_REPLICATED_PARAMETERS, (const char*)(csv.toUTF8()));
+    }
     b->add("/>\n");
 }
 
@@ -1284,6 +1289,9 @@ void XmlRenderer::parse(XmlElement* e, GroupDefinition* g)
     juce::String csv = juce::String(e->getAttribute(ATT_REPLICATED_FUNCTIONS));
     if (csv.length() > 0)
       g->replicatedFunctions = juce::StringArray::fromTokens(csv, ",", "");
+    csv = juce::String(e->getAttribute(ATT_REPLICATED_PARAMETERS));
+    if (csv.length() > 0)
+      g->replicatedParameters = juce::StringArray::fromTokens(csv, ",", "");
 }
 
 /****************************************************************************/

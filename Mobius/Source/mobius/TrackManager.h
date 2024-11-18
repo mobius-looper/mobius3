@@ -15,6 +15,7 @@
 #include <JuceHeader.h>
 
 #include "../model/MobiusMidiState.h"
+#include "../model/Scope.h"
 
 #include "TrackProperties.h"
 #include "TrackListener.h"
@@ -36,7 +37,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // temporary until we can managed this
     void setEngine(class Mobius* m);
     
-    void configure(class MobiusConfig* config, class Session* session);
+    void configure(class MobiusConfig* config);
     void loadSession(class Session* s);
 
     // Services
@@ -61,7 +62,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void beginAudioBlock();
     void processAudioStream(class MobiusAudioStream* argStream);
-    void endAudioBlock();
 
     // the interface for receiving events when called by MidiManager, tagged with the device id
     void midiEvent(class MidiEvent* event);
@@ -70,7 +70,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void midiEvent(juce::MidiMessage& msg, int deviceId);
 
     void doAction(class UIAction* a);
-    void doActionNoQueue(class UIAction* a);
     bool doQuery(class Query* q);
     bool mslQuery(class MslQuery* query);
     bool mslWait(class MslWait* wait, class MslContextError* error);
@@ -113,12 +112,14 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     MobiusKernel* kernel = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Mobius* audioEngine = nullptr;
+    class MobiusConfig* configuration = nullptr;
     
     // need a place to hang this, here or in Kernel?
     MidiPools pools;
 
     LongWatcher longWatcher;
     MidiWatcher watcher;
+    ScopeCache scopes;
     TrackMslHandler mslHandler;
     
     juce::OwnedArray<class LogicalTrack> tracks;
@@ -130,14 +131,18 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     void allocateTracks(int baseNumber, int count);
     void refreshState();
-    void doTrackAction(class UIAction* a);
 
-    // temporary old way of passing core actions
-    class UIAction* coreActions = nullptr;
-    void doActionInternal(class UIAction* a, bool noQueue);
-    void doMidiAction(class UIAction* a);
+    class UIAction* replicateAction(class UIAction* src);
+    class UIAction* replicateGroup(class UIAction* src, int group);
+    class UIAction* addAction(class UIAction* list, class UIAction* src, int targetTrack);
+    class UIAction* replicateFocused(class UIAction* src);
+    bool isGroupFocused(class GroupDefinition* def, class UIAction* src);
+    void doGlobal(class UIAction* src);
+    void doMidiAction(class UIAction* src);
+    void doMidiTrackAction(class UIAction* a);
     void doTrackSelectAction(class UIAction* a);
-    
+
+    // MSL support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
     
     //

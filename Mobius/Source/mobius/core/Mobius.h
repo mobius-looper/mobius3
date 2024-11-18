@@ -75,11 +75,16 @@ class Mobius
     void propagateSymbolProperties();
 
     /**
+     * Prepare for processAudioStream
+     */
+    void beginAudioBlock(class MobiusAudioStream* stream);
+    void beginAudioBlockAfterActions();
+    
+    /**
      * Called by Kernel at the begging of each audio block.
      * What we once called "the interrupt".
      */
-    void processAudioStream(class MobiusAudioStream* stream, class UIAction* actions);
-
+    void processAudioStream(class MobiusAudioStream* stream);
 
     /**
      * Called by Kernel in the middle of an auto block to tell any
@@ -177,7 +182,11 @@ class Mobius
     void loadProject(class Project* p);
 
     TrackProperties getTrackProperties(int number);
-    
+
+    // needed by TrackManager
+    bool isTrackFocused(int index);
+    int getTrackGroup(int index);
+        
     //////////////////////////////////////////////////////////////////////
     //
     // Environment accessors for internal components
@@ -384,7 +393,6 @@ class Mobius
     void propagateSetup();
     
     // audio buffers
-    void beginAudioInterrupt(class MobiusAudioStream* stream, class UIAction* actions);
     void endAudioInterrupt(class MobiusAudioStream* stream);
 
     // new clip/follower/MIDI support

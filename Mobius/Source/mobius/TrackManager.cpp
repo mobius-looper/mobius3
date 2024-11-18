@@ -8,6 +8,7 @@
 #include "../model/UIAction.h"
 #include "../model/UIParameter.h"
 #include "../model/Query.h"
+#include "../model/Scope.h"
 
 #include "../script/MslExternal.h"
 #include "../script/MslWait.h"
@@ -52,14 +53,6 @@ TrackManager::~TrackManager()
 {
     tracks.clear();
     midiTracks.clear();
-
-    // in theory we could have a lingering action queue from the
-    // audio thread, but how would that happen, you can't delete
-    // the Kernel out from under an active audio stream with good results
-    if (coreActions != nullptr) {
-        Trace(1, "TrackManager: Destruction with a lingering coreAction list!\n");
-    }
-    
 }
 
 /**
@@ -68,10 +61,11 @@ TrackManager::~TrackManager()
  */
 void TrackManager::initialize(MobiusConfig* config, Session* session)
 {
-    (void)config;
+    configuration = config;
     // this isn't owned by MidiPools, but it's convenient to bundle
     // it up with the others
     pools.actionPool = kernel->getActionPool();
+    scopes.refresh(config);
     
     audioTrackCount = session->audioTracks;
     int baseNumber = audioTrackCount + 1;
@@ -135,6 +129,15 @@ void TrackManager::prepareState(MobiusMidiState* state, int baseNumber, int coun
         // loop regions
         tstate->regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
     }
+}
+
+/**
+ * Have to get this to refresh GroupDefinitions
+ */
+void TrackManager::configure(MobiusConfig* config)
+{
+    configuration = config;
+    scopes.refresh(config);
 }
 
 /**
@@ -378,66 +381,36 @@ int TrackManager::scheduleFollowerEvent(int audioTrack, QuantizeMode q, int foll
  * This must be called early during audio block processing to prepare
  * for incomming actions and the stream.
  *
- * This is necessary for Mobius core.
- *
- * After this is called, actions may be received and processAudioStream is
- * expected to be called once.
- *
+ * Formerly maintained a stupid queued action list for the core, now there
+ * is nothing extra to do, but leave in place in case MIDI tracks need
+ * something someday.
  */
 void TrackManager::beginAudioBlock()
 {
-    // keep doing it this way for now, but need to fix Mobius so we can just
-    // send things to it directly after audio block prep
-    coreActions = nullptr;
-
-    // this is where we would prepare Mobius so we can send it actions
-    // directly rather than queuing coreActions
 }
 
 /**
- * The root of the audio block processing for all midi tracks.
+ * The root of the audio block processing for all tracks.
  */
 void TrackManager::processAudioStream(MobiusAudioStream* stream)
 {
-    // advance the long press detector, this may call back
+    // advance the long press detector, this may call backa
     // to longPressDetected to fire an action
+    // todo: Mobius has one of these too, try to merge
     longWatcher.advance(stream->getInterruptFrames());
 
-    // TODO: We now have UIActions to send to core in poorly defined order
-    // this usually does not matter but for for sweep controls like OutputLevel
-    // it can.  From the UI perspective the knob went from 100 to 101 to 102 but
-    // when we pull process the actions we could do them in reverse order leaving it at 100.
-    // They aren't timestamped so we don't know for sure what order Shell received them.
-    // If we're careful we could make assumptions about how the lists are managed,
-    // but that's too subtle, timestamps would be better.  As it stands at the moment,
-    // KernelCommunicator message queues are a LIFO.  With the introduction of the coreActions
-    // list, the order will be reversed again which is what we want, but if the implementation
-    // of either collection changes this could break.
-
-    // tell core it has audio and some actions to do
-    audioEngine->processAudioStream(stream, coreActions);
+    // advance audio core
+    audioEngine->processAudioStream(stream);
     
-    // return the queued core ations to the pool
-    UIAction* next = nullptr;
-    while (coreActions != nullptr) {
-        next = coreActions->next;
-        actionPool->checkin(coreActions);
-        coreActions = next;
-    }
-    
-    // then the MIDI tracks
+    // then advance the MIDI tracks
     for (int i = 0 ; i < activeMidiTracks ; i++)
       midiTracks[i]->processAudioStream(stream);
-
+    
     stateRefreshCounter++;
     if (stateRefreshCounter > stateRefreshThreshold) {
         refreshState();
         stateRefreshCounter = 0;
     }
-}
-
-void TrackManager::endAudioBlock()
-{
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -447,88 +420,46 @@ void TrackManager::endAudioBlock()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Two variants called from Kernel at different locations.
+ * Distribute an action to the audio engine or the MIDI tracks.
+ * This only handles LevelCore actions, Kernel will have already
+ * dealt with upward actions.  Kernel also handled script actions.
  */
-void TrackManager::doAction(UIAction* action)
+void TrackManager::doAction(UIAction* src)
 {
-    doActionInternal(action, false);
-}
-
-void TrackManager::doActionNoQueue(UIAction* action)
-{
-    doActionInternal(action, true);
-}
-
-/**
- * Handle an action from various sources determined to be at "core" level.
- * We do not have to handle upward actions, Kernel has filtered those.
- * Kernel also handled script actions.
- *
- * For stupid historical reasons, Mobius core actions are queued on a list
- * and sent together with the audio block when processAudioStream is called.
- * This shit needs to go away.  The exception is actions sent from
- * scripts which happen after Mobius has been prepared and can happen immediately
- */
-void TrackManager::doActionInternal(UIAction* action, bool noQueue)
-{
-    // set true if we queue for later rather than process immediately
-    // handling it immediately
-    bool queued = false;
-    Symbol* s = action->symbol;
+    Symbol* s = src->symbol;
 
     if (s->id == FuncNextTrack || s->id == FuncPrevTrack || s->id == FuncSelectTrack) {
         // special case for track selection functions
-        doTrackSelectAction(action);
+        doTrackSelectAction(src);
+    }
+    else if (s->functionProperties != nullptr && s->functionProperties->global) {
+        // globals are weird
+        doGlobal(src);
     }
     else {
-    
-        // fix the action scope
-        int scope = action->getScopeTrack();
-        if (scope == 0) {
-            // ask the container for focus which may be audio or midi
-            // note that this returns the INDEX not the NUMBER and the scope
-            // needs the number
-            scope = getFocusedTrackIndex() + 1;
-        }
-        
-        // kludge: most of the functions can be directed to the specified
-        // track bank, but the few global functions like GlobalReset need to
-        // be sent to both since they don't know about each other's tracks
-        bool global = false;
-        if (s->functionProperties != nullptr) {
-            global = s->functionProperties->global;
+        // replicate the source action to one or more actions with specific track scopes
+        UIAction* trackActions = replicateAction(src);
 
-            // if this was sent down from the UI it will usually have the UI track number in it
-            // because the action is sent into both track bank, the number needs to
-            // be adjusted so that it fits within the bank size to avoid range errors
-            // it doesn't matter what track it actually targets since it is a global function
-            if (global)
-              scope = 0;
-        }
-
-        action->setScopeTrack(scope);
-
-        if (scope > audioTrackCount || global) {
-            //Trace(2, "MobiusKernel: Sending MIDI action %s\n", action->symbol->getName());
-            doMidiAction(action);
-        }
-
-        if (scope <= audioTrackCount || global) {
-
-            if (noQueue)
-              audioEngine->doAction(action);
-            else {
-                action->next = coreActions;
-                coreActions = action;
-                queued = true;
+        while (trackActions != nullptr) {
+            UIAction* next = trackActions->next;
+            int track = trackActions->getScopeTrack();
+            if (track == 0) {
+                // should not see this after replication
+                Trace(1, "TrackManager: Action replication is busted");
             }
+            else if (track <= audioTrackCount) {
+                // goes to the audio side
+                audioEngine->doAction(trackActions);
+            }
+            else {
+                // goes to the MIDI side
+                doMidiAction(trackActions);
+            }
+
+            actionPool->checkin(trackActions);
+            trackActions = next;
         }
     }
-    
-    // kludge, when noQueue is true the action is not pooled
-    // and doesn't have to be reclaimed, too many obscure assumptions, hate this
-    if (!noQueue && !queued)
-      actionPool->checkin(action);
 }
 
 /**
@@ -537,38 +468,45 @@ void TrackManager::doActionInternal(UIAction* action, bool noQueue)
  * list are all actions from the pool.  Each action will be given a
  * track-specific scope.  From here on down, groups and focus lock do not
  * need to be considered and we can start ripping that out of old Mobius code.
- *
- * Global functions are a special case.  Both audio and MIDI tracks will
- * handle those without the need for replication.
- *
- * need for replication
  */
 UIAction* TrackManager::replicateAction(UIAction* src)
 {
     UIAction* list = nullptr;
 
-    if (src->functionProperties != nullptr && src->functionProperties->global) {
-        // globals are weird and handled special
-        doGlobal(src);
-    }
-    else if (src->noGroup) {
-        // noGroup is an obscure flag set in Scripts to disable focus/group handling
-        // for this action
-        pickATrack(src);
-        list = src;
+    if (src->noGroup) {
+        // noGroup is an obscure flag set in Scripts to disable group/focus lock handling
+        // for this action,  old Mobius always sent this to the active/focused track
+        // I think it makes sense to obey track scope if one was set before falling
+        // back to focused track
+        int track = scopes.parseTrackNumber(src->getScope());
+        if (track > 0) {
+            // they asked for this track, that's what they'll get
+            list = src;
+        }
+        else {
+            // send it to the focused track
+            src->setScopeTrack(getFocusedTrackIndex() + 1);
+            list = src;
+        }
     }
     else if (src->hasScope()) {
         int track = scopes.parseTrackNumber(src->getScope());
         if (track > 0) {
             // targeting a specific track
-            // focus lock does not apply here but group replication might
-            // unclear
-            list = replicateGroupFocus(src);
+            // focus lock does not apply here but group focvus replication might
+            // unclear what this should do, the most recent implementation
+            // of "Group Have Focus Lock" did not do replication if there
+            // was an explicit track scope in the action, not sure what old
+            // Mobius did, but this is an obscure option and the one guy that
+            // uses it seems happy with this
+            list = src;
         }
         else {
-            int group = scopes.parseGroupOrdinal(src->getScope());
-            if (group >= 0) {
-                list = replicateGroup(src, group);
+            int ordinal = scopes.parseGroupOrdinal(src->getScope());
+            if (ordinal >= 0) {
+                // repliicate to all members of this group
+                // on the track group association is by number rather than ordinal
+                list = replicateGroup(src, ordinal + 1);
             }
             else {
                 Trace(1, "TrackManager: Invalid scope %s", src->getScope());
@@ -576,116 +514,163 @@ UIAction* TrackManager::replicateAction(UIAction* src)
         }
     }
     else {
-        // no scope, send it to the focused track
-        pickATrack(src);
-        // then replicate to other focus lock gracks and do group replication
-        list = replicateFocus(src);
+        // no scope, send it to the focused track,
+        // and other members of the focused track's group if the special
+        // group option is on
+        list = replicateFocused(src);
     }
     return list;
-}
-
-/**
- * When an action has no scope, it goes to the focused track
- */
-void TrackManager::pickATrack(UIAction* src)
-{
-    src->setScopeTrack(getFocusedTrackIndex() + 1);
 }
 
 /**
  * Replicate this action to all members of a group
  * Group is specified by ordinal which is what old Mobius Track uses
  */
-UIAction* TrackManger::replicateGroup(UIAction* src, int group)
+UIAction* TrackManager::replicateGroup(UIAction* src, int group)
 {
     UIAction* list = nullptr;
 
     for (int i = 0 ; i < audioTrackCount ; i++) {
-        int tgroup = audioEngine->getTrackGroupOrdinal(i);
-        if (tgroup == group) {
-            UIAction* copy = actionPool->newAction();
-            copy->copy(src);
-            copy->setScopeTrack(i + 1);
-            copy->next = list;
-            list = copy;
-        }
+        int tgroup = audioEngine->getTrackGroup(i);
+        if (tgroup == group)
+          list = addAction(list, src, i + 1);
     }
 
-    for (int i = 0 ; i < midiTrackCount ; i++) {
+    for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* t = midiTracks[i];
-        // todo: MIDI tracks do not yet have groups
-        //int tgroup = t->getGroupOrdinal();
-        int tgroup = -1;
+        int tgroup = t->getGroup();
         if (tgroup == group) {
-            UIAction* copy = actionPool->newAction();
-            copy->copy(src);
-            copy->setScopeTrack(i + audioTrackCount + 1);
-            copy->next = list;
-            list = copy;
+            int trackNumber = i + audioTrackCount + 1;
+            list = addAction(list, src, trackNumber);
         }
     }
 
     // didn't end up using this to reclaim it
-    audioPool->checkin(src);
+    actionPool->checkin(src);
     // final list may be empty if there were no tracks in this group
     return list;
 }
 
 /**
- * We've got 
-UIAction* TrackManager::replicateGroupFocus(UIAction* src)
+ * Helper to maintain the list of replicated actions
+ */
+UIAction* TrackManager::addAction(UIAction* list, UIAction* src, int targetTrack)
 {
+    UIAction* copy = actionPool->newAction();
+    copy->copy(src);
+    copy->setScopeTrack(targetTrack);
+    copy->next = list;
+    return copy;
 }
 
-    
-          
+/**
+ * Replicate this action to a the focused track and all other tracks
+ * that have focus lock.
+ *
+ * If the focused track is in a group and that group has the "Group Focus Lock"
+ * option enabled, then also replicate to other members of that group.
+ */
+UIAction* TrackManager::replicateFocused(UIAction* src)
+{
+    UIAction* list = nullptr;
 
-
-
-        
-        
-                
-
-    
-    else if (!src->hasScope()) {
-        pickA
-        
-    else if (!src->hasScope() || src->noGroup) {
-        list = src;
-
-        
-        if (scopes.parseTrackNumber(src->getScope() <= 0)) {
-            
-                
+    // find the group number of the focused track
+    int focusedIndex = getFocusedTrackIndex();
+    int focusedGroupNumber = 0;
+    if (focusedIndex < audioTrackCount) {
+        focusedGroupNumber = audioEngine->getTrackGroup(focusedIndex);
     }
     else {
-        
-        
+        int midiIndex = focusedIndex - audioTrackCount;
+        MidiTrack* mt = midiTracks[midiIndex];
+        focusedGroupNumber = mt->getGroup();
+    }
 
+    // get the definition from the number
+    GroupDefinition* groupdef = nullptr;
+    if (focusedGroupNumber > 0) {
+        int groupIndex = focusedGroupNumber - 1;
+        if (groupIndex < configuration->groups.size())
+          groupdef = configuration->groups[groupIndex];
+    }
     
-
-    if (src->symbol->functionProperties != nullptr) {
-    }
-    else if(src->symbol->parameterProperties != nullptr) {
-    }
-    else {
-        // scripts do not do groups or focus lock since they can
-        // do their own scoping, but might need to change that
-        // I think there are old options in MOS scripts to allow that
-        // Activations probably need to handle replication
-        if (src->getTrackScope() > 0) {
-            // it goes through unmodified
-            list = src;
+    // now add focused audio tracks
+    for (int i = 0 ; i < audioTrackCount ; i++) {
+        int tgroup = audioEngine->getTrackGroup(i);
+        if (i == focusedIndex ||
+            audioEngine->isTrackFocused(i) ||
+            (tgroup == focusedGroupNumber && isGroupFocused(groupdef, src))) {
+            list = addAction(list, src, i + 1);
         }
-        else {
-            // need to adjust the scope for the focused track
-            src->setTrackScope(
+    }
+        
+    // and the MIDI tracks
+    int focusedNumber = focusedIndex + 1;
+    for (int i = 0 ; i < activeMidiTracks ; i++) {
+        MidiTrack* mt = midiTracks[i];
+        int tgroup = mt->getGroup();
+        if (mt->number == focusedNumber ||
+            mt->isFocused() ||
+            (tgroup == focusedGroupNumber && isGroupFocused(groupdef, src))) {
+            int trackNumber = i + audioTrackCount + 1;
+            list = addAction(list, src, trackNumber);
+        }
     }
     
+    // didn't end up using this to reclaim it
+    actionPool->checkin(src);
+    // final list will always have at least the focused track
+    return list;
+}
 
-    
+/**
+ * When a target track is in a group we've got the old confusing
+ * "groups have focus lock" option which is now called "Enable Group Repliation".
+ */
+bool TrackManager::isGroupFocused(GroupDefinition* def, UIAction* src)
+{
+    bool focused = false;
 
+    if (def != nullptr && def->replicationEnabled) {
+        Symbol* s = src->symbol;
+        // we have a group and it allows replication
+        // only do this for certain functions and parameters
+        if (src->symbol->functionProperties != nullptr) {
+            focused = (def->replicatedFunctions.contains(s->name));
+        }
+        else if (src->symbol->parameterProperties != nullptr) {
+            focused = (def->replicatedParameters.contains(s->name));
+        }
+    }
+    return focused;
+}
+
+/**
+ * Perform a global function
+ * These don't have focus or replication.
+ * It's weird because the old Mobius core had it's own complex handling
+ * for global functions and I don't want to disrupt that.  So just send
+ * the action down to the first track, it doesn't matter what the action scope is.
+ *
+ * MIDI tracks do not have any special handling for global functions, they are
+ * simply duplicated for each track.
+ */
+void TrackManager::doGlobal(UIAction* src)
+{
+    // first send it to all midi tracks, they won't trash the action
+    for (int i = 0 ; i < activeMidiTracks ; i++)
+      midiTracks[i]->doAction(src);
     
+    // then send it to the first audio track
+    audioEngine->doAction(src);
+
+    // having some trouble with stuck notes in the watcher
+    // maybe only during debugging, but it's annoying when it happens to
+    // make sure to clear them
+    if (src->symbol->id == FuncGlobalReset)
+      watcher.flushHeld();
+
+    actionPool->checkin(src);
 }
 
 /**
@@ -693,25 +678,13 @@ UIAction* TrackManager::replicateGroupFocus(UIAction* src)
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
-void TrackManager::doMidiAction(UIAction* a)
+void TrackManager::doMidiAction(UIAction* src)
 {
-    FunctionProperties* props = a->symbol->functionProperties.get();
-    if (props != nullptr && props->global) {
-        for (int i = 0 ; i < activeMidiTracks ; i++)
-          midiTracks[i]->doAction(a);
+    // watch this if it isn't already a longPress
+    // the audio side has it's own watcher
+    if (!src->longPress) longWatcher.watch(src);
 
-        // having some trouble with stuck notes in the watcher
-        // maybe only during debugging, but it's annoying when it happens to
-        // make sure to clear them
-        if (a->symbol->id == FuncGlobalReset)
-          watcher.flushHeld();
-    }
-    else {
-        // watch this if it isn't already a longPress
-        if (!a->longPress) longWatcher.watch(a);
-
-        doTrackAction(a);
-    }
+    doMidiTrackAction(src);
 }
 
 /**
@@ -719,16 +692,16 @@ void TrackManager::doMidiAction(UIAction* a)
  * We're inside processAudioStream and one of the watchers
  * has crossed the threshold
  */
-void TrackManager::longPressDetected(UIAction* a)
+void TrackManager::longPressDetected(UIAction* src)
 {
     //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
-    doTrackAction(a);
+    doMidiTrackAction(src);
 }
 
 /**
  * Here from either doMidiAction or longPressDetected
  */
-void TrackManager::doTrackAction(UIAction* a)
+void TrackManager::doMidiTrackAction(UIAction* a)
 {
     //Trace(2, "TrackManager::doTrackAction %s", a->symbol->getName());
     // this must be a qualified scope at this point and not a global
@@ -804,19 +777,13 @@ void TrackManager::doTrackSelectAction(UIAction* a)
         // todo: should we just always do this conversion?  the active track may
         // already be there but that can happen normally so it can't mess anything up
         // to ask for it redundantly
-        Symbol* saveSymbol = a->symbol;
-        int saveValue = a->value;
+        // really need to remove the active track notion from Mobius
         if (prevFocused >= audioTrackCount && relative) {
-            // don't trash the source action which usually comes from
-            // a binding.  two options: save/restore or copy it to a temp
             a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
             a->value = newFocused + 1;
         }
-        
-        audioEngine->doAction(a);
 
-        a->symbol = saveSymbol;
-        a->value = saveValue;
+        audioEngine->doAction(a);
     }
     else {
         // MIDI tracks don't have any special awaress of focus
@@ -826,6 +793,8 @@ void TrackManager::doTrackSelectAction(UIAction* a)
     // the UI that it changed
     if (newFocused != prevFocused)
       kernel->getContainer()->setFocusedTrack(newFocused);
+
+    actionPool->checkin(a);
 }
 
 //////////////////////////////////////////////////////////////////////

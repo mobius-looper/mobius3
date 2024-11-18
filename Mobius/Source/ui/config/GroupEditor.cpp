@@ -279,6 +279,7 @@ void GroupEditor::saveGroup(int index)
         g->color = color.getValue();
         g->replicationEnabled = replication.getValue();
         g->replicatedFunctions = functions.getValue();
+        g->replicatedParameters = parameters.getValue();
     }
 }
 

@@ -230,31 +230,78 @@ MobiusMidiState* MobiusKernel::getMidiState()
 /**
  * Consume any messages from the shell at the beginning of each
  * audio listener interrupt.
+ * 
+ * This is done in two stage: 1) configuration and another things that
+ * won't cause UIActions to happen 2) UIAction and MIDI which may cause
+ * UIAction.
+ *
+ * The priority of configuration over action is probably not necessary but
+ * has een done that way for a long time.  The deferral of actions actually
+ * accomplishes an important thing: reversing the order of the queued actions.
+ * Because KernelCommunicator is a LIFO, message will come out in the reverse
+ * order they were added.  This is bad for parameter changes since several can
+ * come down in one block and when you're sweeping in a direction, they need to
+ * be processed in that order.
+ * 
+ */
+void MobiusKernel::consumeCommunications()
+{
+    KernelMessage* actions = nullptr;
+    
+    // specific handler methods decide whether to abandon or return this message
+    KernelMessage* msg = communicator->kernelReceive();
+    while (msg != nullptr) {
+        switch (msg->type) {
+            case MsgAction:
+            case MsgEvent:
+            case MsgMidi: {
+                // these are reversed and done after configuration
+                msg->next = actions;
+                actions = msg;
+            }
+                break;
+            default:
+                // these can be done now in any order
+                doMessage(msg);
+                break;
+        }
+        msg = communicator->kernelReceive();
+    }
+
+    // now do the reverse actions
+    while (actions != nullptr) {
+        KernelMessage* next = actions->next;
+        doMessage(actions);
+        actions = next;
+    }
+}
+
+/**
+ * Do one kernel message
  * Each message handler is responsible for calling communicator->free
  * when it is done, but often it will reuse the same message to
  * send a reply.
  */
-void MobiusKernel::consumeCommunications()
+void MobiusKernel::doMessage(KernelMessage* msg)
 {
-    // specific handler methods decide whether to abandon or return this message
-    KernelMessage* msg = communicator->kernelReceive();
-    
-    while (msg != nullptr) {
-        switch (msg->type) {
-            case MsgNone: break;
-            case MsgConfigure: reconfigure(msg); break;
-            case MsgSession: loadSession(msg); break;
-            case MsgSamples: installSamples(msg); break;
-            case MsgScripts: installScripts(msg); break;
-            case MsgBinderator: installBinderator(msg); break;
-            case MsgAction: doAction(msg); break;
-            case MsgEvent: doEvent(msg); break;
-            case MsgLoadLoop: doLoadLoop(msg); break;
-            case MsgMidi: doMidi(msg); break;
-            case MsgMidiLoad: doMidiLoad(msg); break;
+    switch (msg->type) {
+        case MsgConfigure: reconfigure(msg); break;
+        case MsgSession: loadSession(msg); break;
+        case MsgSamples: installSamples(msg); break;
+        case MsgScripts: installScripts(msg); break;
+        case MsgBinderator: installBinderator(msg); break;
+        case MsgLoadLoop: doLoadLoop(msg); break;
+        case MsgMidiLoad: doMidiLoad(msg); break;
+        case MsgAction: doAction(msg); break;
+        case MsgEvent: doEvent(msg); break;
+        case MsgMidi: doMidi(msg); break;
+
+        case MsgNone: {
+            // case exists just to avoid a compiler warning
+            Trace(1, "MobiusKernel: Received MsgNone");
+            communicator->kernelAbandon(msg);
         }
-        
-        msg = communicator->kernelReceive();
+            break;
     }
 }
 
@@ -293,6 +340,9 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     // this is NOT where track configuration comes in
     if (mCore != nullptr)
       mCore->reconfigure(configuration);
+
+    if (mTracks != nullptr)
+      mTracks->configure(configuration);
 }
 
 /**
@@ -488,14 +538,14 @@ void MobiusKernel::clearExternalInput()
  * Finally let the core advance.
  *
  * I'm having paranoia about the order of the queued UIAction processing.
- * Before this was done in recorderMonitorEnter after some very sensntive
+ * Before this was done in Mobius after some very sensntive
  * initialization in Synchronizer and Track.  With KernelCommunicator we
  * process those message first, before Mobius gets involved.  This may not mattern
  * but it is worrysome and I don't want to change it until we've reached a stable
  * point.  Even then, it's probably a good idea to let Mobius have some time to wake
- * up before we start slamming actions at it.  UIActions destined for the core
- * will therefore be put in another list and passed to Mobius at the same time
- * as it is notified about audio buffers so it can decide whan to do them.
+ * up before we start slamming actions at it.  We therefore have two preparation
+ * phases in Mobius before the audio blocks are processed, and actions happen
+ * in between those.
  */
 void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 {
@@ -520,6 +570,10 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // save this here for the duration so we don't have to keep passing it around
     stream = argStream;
 
+    // let the core get ready for action
+    mCore->beginAudioBlock(stream);
+    
+    // won't be necessary once we stop queuing actions
     mTracks->beginAudioBlock();
     
     // begin whining about memory allocations
@@ -529,8 +583,7 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 	if (noExternalInput)
       clearExternalInput();
 
-    // this may receive an updated MobiusConfig and will
-    // call Mobius::reconfigure
+    // consume any queueued configuration, actions, MIDI events, and host events
     consumeCommunications();
     consumeMidiMessages();
     consumeParameters();
@@ -539,10 +592,15 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     if (sampleManager != nullptr)
       sampleManager->processAudioStream(stream);
 
-    // advance the tracks
+    // core preparation phase 2
+    // try to merge this with phase 1 above
+    // mostly this does script maintenance, it also calls back to runExternalScripts
+    // which we may as well put here rather than have a callback
+    // unclear if scripts need to advance after sample injection
+    mCore->beginAudioBlockAfterActions();
+    
+    // advance the tracks, including core
     mTracks->processAudioStream(stream);
-
-    mTracks->endAudioBlock();
 
     updateParameters();
     notifier.afterBlock();
@@ -561,18 +619,6 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
  * Juce can timestamp these so they could be handled at offsets within
  * the current audio block, which would be more accurate for timing, but
  * I've always queued them and done them up front.
- *
- * The handoff with Mobius is awkward here.  We've potentially queued up
- * some UIActions to pass down from KernelCommunicator and will pass that
- * list to Mobius::processAudioStream.  Now we need to add in actions
- * for MIDI events that have bindings.  Since I've been using a linked list to
- * avoid container allocation we have to append them and technically should keep
- * them in order.  This could also be where we offset them if there are timestamps
- * available.  Binderator retains ownership of the UIAction and we normally just
- * process that immediately, but since these are being queued, and we can have more
- * than one MIDI event of the same type (rapid down/up events) we need to allocate
- * new ones.  This also fits with how UIActions sent down from the shell work.  They're
- * independent objects that have to be reclaimed when we're done with them.
  *
  * midiListener is a hack for MIDI logging utilities to redirect messages up to the UI.
  * We bypass the usual audio thread message passing and call MobiusListener directly
@@ -1131,7 +1177,7 @@ void MobiusKernel::trackSelectFromCore(int number)
         UIAction action;
         action.symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
         action.value = number;
-        mTracks->doActionNoQueue(&action);
+        mTracks->doAction(&action);
     }
 }
 
@@ -1430,37 +1476,10 @@ void MobiusKernel::doLoadLoop(KernelMessage* msg)
 //
 // How MSL gets injected into the core is a little unpleasant.
 //
-// The actual runtime container that scripts will be operating in most of the
-// time is Mobius core and the code underneath that.  So arguably Mobius should
-// implement the MslContext interface and BE the context.  I'm not liking that because
-// I would like scripts to "run" at as high a level as possible within the Kernel, and dip
-// into the core when they need to, which is most of the time.  But sometimes they need
-// to do things that are not in the core, which means core needs to redirect actions back
-// up to the Kernel.  So there we have to poke holes in the interface somewhere, either
-// kernel needs a few new access points into Mobius core, or Mobius core has to get into
-// the business of understanding what MSL is which introduces compile time dependencies and
-// complicates core code a bit.
-//
-// I'd like to keep MSL awareness in the new code with MslContext implemented by MobiusKernel
-// and Mobius providing the necessary interfaces to accomplish what MslContext needs to do,
-// mostly immediate sample-accurate execution of functions, and the scheduling of wait events.
-//
-// The main complication is how UIActions are performed.  Current MobiusKernel::doAction expects
-// to be working with a set of queued actions passed down through KernelEvents or MIDI events
-// received from Juce.  These actions are placed on a list and sent down to the core
-// in the call to Mobius::processAudioStream.  Script actions don't work that way, they
-// need to skip this buffering and execute immediately in the core which has already gone
-// through processAudioStream and has completed a "preparation" phase.  Script processing
-// needs to be injected at the end of Mobius::beginAudioInterrupt which is where the old
-// scripting language runs and this is AFTER any queued actions sent through the usual way
-// are performed.  It's kind of messy, but fixing this would require another level of mess,
-// refactoring Mobius::processAudioStream into several phases: one that prepares things for
-// the audio blocks, another to do the queued actions sent by the UI, and finally running the
-// scripts.  Instead we'll let Mobius call back to MobiusKernel::runExternalScripts when
-// it thinks the time is right.  This then advances the MSL scripts and calls out to MslContext
-// can assume they are happening at the same time as the old scripts run.  We can bypass
-// most of the action handling logic in Kernel, an just call the equivalent of
-// Actionator::doCoreAction.
+// There were some old complications related to when scripts were advanced,
+// and this was expected to happen after any actions queued for the start of
+// the audio block.  I'm forgetting why this was considered important but at this point
+// we will be inside Mobius::processAudioStream.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -1495,7 +1514,7 @@ bool MobiusKernel::mslQuery(MslQuery* query)
  * wants to perform an action.  If this action is destined for the core, bypass
  * the layers we would normally go through for actions that come from the UI.
  *
- * Note that one thing this bypasses is Actionator::doInterruptActions which
+ * Note that one thing this bypasses is Actionator::advanceLongWatcher which
  * is where TriggerState is monitoring long presses.  This shouldn't be an issue
  * because scripts aren't sustainable triggers and if we need to simulate that it can
  * be done in other ways.
@@ -1524,12 +1543,10 @@ bool MobiusKernel::mslAction(MslAction* action)
 
         if (symbol->level == LevelCore) {
 
-            // !! pass the ugly flag to bypass queueing actions for the core
-            // and just do them immediately
-            // once we get rid of the stupid coreActions list then this
-            // can just pass through Kernel::doAction like everything else
-
-            mTracks->doActionNoQueue(&uia);
+            // now that we don't have that stupid action queue we could just forward
+            // this to Kernel::doAction but I don't think it matters, this can
+            // only be a core action
+            mTracks->doAction(&uia);
         }
         else {
             // the script is calling a kernel or UI level action
@@ -1608,13 +1625,6 @@ bool MobiusKernel::mslExpandScopeKeyword(const char* name, juce::Array<int>& num
 //
 // Mobius MSL Callbacks
 //
-// We should end up in one of these after an unbelievably tortured journey
-// after the call to Mobius::scheduleScriptWait.
-// Some kind of hidden event was scheduled, waited for, and hit.
-// Now we get to tell the session it was done and let it advance or deal
-// with cancellation.  It may have been rescheduled from it's original
-// location.
-//
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -1631,6 +1641,13 @@ void MobiusKernel::runExternalScripts()
 /**
  * Called by both Mobius core and TrackManager when a wait condition has bee
  * reached or canceled.
+ * 
+ * We should end up here after an unbelievably tortured journey
+ * after the call to Mobius::scheduleScriptWait.
+ * Some kind of hidden event was scheduled, waited for, and hit.
+ * Now we get to tell the session it was done and let it advance or deal
+ * with cancellation.  It may have been rescheduled from it's original
+ * location.
  */
 void MobiusKernel::finishWait(MslWait* wait, bool canceled)
 {

@@ -136,6 +136,20 @@ void MidiTrack::configure(Session::Track* def)
 }
 
 /**
+ * Return the group ordinal this track is a member of
+ * todo: not implemented, need to be pulling this from the session
+ */
+int MidiTrack::getGroup()
+{
+    return 0;
+}
+
+bool MidiTrack::isFocused()
+{
+    return false;
+}
+
+/**
  * Initialize the track and release any resources.
  * This is called by TrackManager when it de-activates tracks.
  * It is not necessarily the same as the Reset function handler.

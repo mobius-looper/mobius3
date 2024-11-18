@@ -65,41 +65,21 @@ void Actionator::dump()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Processes the action list queued for the next audio block.
- * This is the way most actions are performed.
- *
- * The doOldAction() method below is called by a small number of internal
- * components that manufacture actions as a side effect of something other
- * than a trigger.
+ * Before audio stream processing begins, advance the long-press
+ * watcher and fire off any actions.
  */
-void Actionator::doInterruptActions(UIAction* actions, long frames)
+void Actionator::advanceLongWatcher(int frames)
 {
-    // we do not delete these, they are converted to Action
-    // and may have results in them, but the caller owns them
-    UIAction* action = actions;
-    while (action != nullptr) {
-        doCoreAction(action);
-        action = action->next;
-    }
-
     // Advance the long-press tracker too
     // this may cause other actions to fire.
-    mTriggerState->advance(this, (int)frames);
+    mTriggerState->advance(this, frames);
 }
 
 /**
- * Process an action that came from an MSL script.
+ * Do one action queued at the beginning of each block or
+ * from an MSL script.
  */
-void Actionator::doScriptAction(UIAction* action)
-{
-    doCoreAction(action);
-}
-
-/**
- * Do one of the actions in from the Shell and queued for the
- * next audio block.
- */
-void Actionator::doCoreAction(UIAction* action)
+void Actionator::doAction(UIAction* action)
 {
     Symbol* symbol = action->symbol;
 
@@ -117,18 +97,18 @@ void Actionator::doCoreAction(UIAction* action)
         UIAction sub;
         sub.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
         sub.setScope(action->getScope());
-        doCoreAction(&sub);
+        doAction(&sub);
     }
     else if (symbol->id == FuncStop) {
         // simulate it
         UIAction first;
         first.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncPause);
         first.setScope(action->getScope());
-        doCoreAction(&first);
+        doAction(&first);
         UIAction second;
         second.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
         second.setScope(action->getScope());
-        doCoreAction(&second);
+        doAction(&second);
     }
     else if (symbol->coreFunction) {
         Function* f = (Function*)(symbol->coreFunction);
@@ -149,7 +129,7 @@ void Actionator::doCoreAction(UIAction* action)
                 doParameter(action, p);
             }
             else {
-                Trace(1, "Actionator::doCoreAction Unresolved parameter %s\n", alt->getName());
+                Trace(1, "Actionator::doAction Unresolved parameter %s\n", alt->getName());
             }
         }
     }
@@ -164,7 +144,7 @@ void Actionator::doCoreAction(UIAction* action)
         doScript(action);
     }
     else {
-        Trace(1, "Actionator::doCoreAction Unknown symbol behavior %s\n",
+        Trace(1, "Actionator::doAction Unknown symbol behavior %s\n",
               symbol->getName());
     }
 }
@@ -386,6 +366,7 @@ void Actionator::doFunctionOld(UIAction* action, Function* f)
  * This is not used, and if you resurrect it, will need to handle
  * passing back the Event that was scheduled like doFunctionOld does...
  */
+#if 0
 void Actionator::doFunctionNew(UIAction* action, Function* f)
 {
     // inform TriggerState of the up/down transitions
@@ -401,6 +382,7 @@ void Actionator::doFunctionNew(UIAction* action, Function* f)
         doFunctionTracks(action, f);
     }
 }
+#endif
 
 /**
  * Determine the track to receive the action, replicating the
@@ -458,6 +440,7 @@ void Actionator::doFunctionNew(UIAction* action, Function* f)
  * parameter "groupsHaveFocusLock" that can turn that back on.  Which of course
  * no one ever did.  I'm not carrying that one forward, it just makes it worse.
  */
+#if 0
 void Actionator::doFunctionTracks(UIAction* action, Function* f)
 {
     // parse the scope, returns -1 if this is a group name
@@ -556,6 +539,7 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
         // of group replication here
     }
 }
+#endif
 
 /**
  * After laboriously determining what track to send an action to,
@@ -568,16 +552,19 @@ void Actionator::doFunctionTracks(UIAction* action, Function* f)
  * but since we're still doing model conversion, that is effectively a clone
  * so we don't need to clone the UIAction yet.
  */
+#if 0
 void Actionator::doFunctionTrack(UIAction* action, Function* f, Track* t, bool needsClone)
 {
     (void)needsClone;
     // invoke will do the model conversion
     invoke(action, f, t);
 }
+#endif
 
 /**
  * Transition to the old Action model for a global function invocation.
  */
+#if 0
 void Actionator::invoke(UIAction* action, Function* f)
 {
     Action* coreAction = convertAction(action);
@@ -591,10 +578,12 @@ void Actionator::invoke(UIAction* action, Function* f)
 
     completeAction(coreAction);
 }
+#endif
 
 /**
  * Transition to the old Action model for a track function invocation.
  */
+#if 0
 void Actionator::invoke(UIAction* action, Function* f, Track* t)
 {
     Action* coreAction = convertAction(action);
@@ -632,6 +621,7 @@ void Actionator::invoke(UIAction* action, Function* f, Track* t)
     // will return to the pool or not if ownership transferred to an Event
     completeAction(coreAction);
 }
+#endif
 
 /**
  * Convert a new UIAction into an old Action.
@@ -970,6 +960,8 @@ void Actionator::doPreset(Action* a)
             track->changePreset(number);
         }
         else {
+            Trace(1, "Actionator: Dealing with Preset focus and you said this wouldn't be on the test");
+            
             // Apply to the current track, all focused tracks
             // and all tracks in the Action scope.
             int targetGroup = a->getTargetGroup();
@@ -1108,6 +1100,11 @@ void Actionator::doFunction(Action* a)
             doFunction(a, f, mMobius->getTrack());
         }
         else {
+            // new: not expecting to be here any more, TrackManager is supposed
+            // to be dealing with groups and focus lock and only sending down
+            // actions with specific track scope
+            Trace(1, "Actionator: Dealing with function group/focus and you said this wouldn't be on the test");
+            
             // Apply to tracks in a group or focused
             Action* ta = a;
             int nactions = 0;
@@ -1138,8 +1135,8 @@ void Actionator::doFunction(Action* a)
             }
 
             // hack for group replication
-            if (targetGroup == 0)
-              doGroupReplication(a, f);
+            //if (targetGroup == 0)
+            //doGroupReplication(a, f);
         }
     }
 }
@@ -1150,7 +1147,11 @@ void Actionator::doFunction(Action* a)
  * in the same way, but trying not to disrupt old code.  At this point we've
  * done the action on the active track, and now need to look for replication
  * defined in the GroupDefinition.
+ *
+ * This is not necessary any more, TrackManager handles it and MOS scripts
+ * won't be using it.
  */
+#if 0
 void Actionator::doGroupReplication(Action* action, Function* function)
 {
     // is the active track in a group?
@@ -1189,6 +1190,7 @@ void Actionator::doGroupReplication(Action* action, Function* function)
         }
     }
 }
+#endif
 
 /**
  * Do a function action within a resolved track.
@@ -1294,6 +1296,8 @@ void Actionator::doParameter(Action* a)
           doParameter(a, p, t);
     }
     else if (a->getTargetGroup() > 0) {
+        // new: TrackManager should only be sending down actions with track scope
+        Trace(1, "Actionator: Dealign with parameter group binding and you said this wouldn't be on the test");
         // group specific binding
         // !! We used to have some special handling for 
         // OutputLevel where it would remember relative positions
@@ -1316,6 +1320,7 @@ void Actionator::doParameter(Action* a)
         }
     }
     else {
+        Trace(1, "Actionator: Dealign with parameter focus and you said this wouldn't be on the test");
         // current track and focused
         // !! Only track parameters have historically obeyed focus lock
         // Preset parameters could be useful but I'm scared about   

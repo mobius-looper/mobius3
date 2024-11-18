@@ -32,6 +32,9 @@ class MidiTrack : public AbstractTrack
     void configure(class Session::Track* def);
     void reset();
 
+    int getGroup();
+    bool isFocused();
+    
     void loadLoop(MidiSequence* seq, int loop);
 
     // required by TrackManager to get leader info before the advance

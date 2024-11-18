@@ -314,9 +314,7 @@
     <Binding name='LoadMidi' trigger='note'/>
     <Binding name='SelectTrack' trigger='control' value='14' args='9'/>
     <Binding name='SelectTrack' trigger='control' value='13' args='1'/>
-    <Binding name='Pause' trigger='control' value='12'/>
-    <Binding name='Play' trigger='control' release='true' value='12'/>
-    <Binding name='Mute' trigger='control' value='15' channel='2'/>
+    <Binding name='Preset:rrrrr' trigger='control' value='12' channel='2'/>
   </BindingSet>
   <BindingSet name='midi1'>
     <Binding name='Overdub' trigger='note' value='50' channel='1'/>
@@ -332,6 +330,6 @@
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>
-  <GroupDefinition name='Groupuu' color='-6608599' replication='true' replicatedFunctions='WindowBackward,Mute,Record'/>
+  <GroupDefinition name='Groupuu' color='-6608599' replicatedFunctions='WindowBackward,Mute' replicatedParameters='output'/>
   <GroupDefinition name='Group2' color='-6220468' replicatedFunctions='Confirm'/>
 </MobiusConfig>

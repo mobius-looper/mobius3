@@ -25,17 +25,15 @@ class Actionator
     // New Model
     //////////////////////////////////////////////////////////////////////
 
-    // perform actions queued for the next interrupt
-    // frames passed to advance the long-press trigger tracker
-    void doInterruptActions(class UIAction* actions, long frames);
+    // advance the long-press detected at the start of every block
+    void advanceLongWatcher(int frames);
 
+    // do a queueud action at the start of each block, or from a script
+    void doAction(UIAction* a);
+    
     // Parameter value access is in here too since
     // it has to do similar UI/core mapping and is small
     bool doQuery(class Query* q);
-
-    // special interface for scripts that want immediate action
-    // handling that isn't queued by doInterruptActions
-    void doScriptAction(class UIAction* action);
 
     //////////////////////////////////////////////////////////////////////
     // Old Model
@@ -62,7 +60,6 @@ class Actionator
     class TriggerState* mTriggerState;
     
     // new model
-    void doCoreAction(UIAction* action);
     void doFunction(UIAction* action, Function* f);
     void doParameter(UIAction* action, Parameter* p);
     void doScript(UIAction* action);
