@@ -216,6 +216,9 @@ class UIAction : public PooledObject {
      */
     bool release = false;
 
+    // !! long press shit should all go away now that TrackManager
+    // handles this a different way
+
     /**
      * True if this action represents a point in a sustained action's
      * lifetime that is considered a long time to be sustaining an action.

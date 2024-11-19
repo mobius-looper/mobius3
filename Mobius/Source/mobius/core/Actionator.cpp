@@ -67,6 +67,9 @@ void Actionator::dump()
 /**
  * Before audio stream processing begins, advance the long-press
  * watcher and fire off any actions.
+ *
+ * NEW: This is obsolete and not called.  There is no longer any
+ * concept of long presses in core.  
  */
 void Actionator::advanceLongWatcher(int frames)
 {

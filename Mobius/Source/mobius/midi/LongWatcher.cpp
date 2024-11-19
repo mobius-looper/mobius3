@@ -5,6 +5,7 @@
  */
 
 #include "../../util/Trace.h"
+#include "../../util/Util.h"
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
@@ -89,6 +90,9 @@ void LongWatcher::watch(UIAction* a)
             State* existing = nullptr;
             State* prev = nullptr;
             for (State* s = presses ; s != nullptr ; s = s->next) {
+
+                // !! if we ever allow more than one action on a trigger
+                // then this will need to find ALL of them
                 if (s->sustainId == a->sustainId) {
                     existing = s;
                     break;
@@ -119,11 +123,9 @@ void LongWatcher::watch(UIAction* a)
                         state->frames = 0;
                         state->notifications = 0;
 
-                        // todo: scope can only be a track number right now
-                        // I don't think this needs to support symbolic scopes
-                        // at this point?  wouldn't they have been transformed
-                        // by now?
-                        state->scope = a->getScopeTrack();
+                        state->value = a->value;
+                        CopyString(a->getScope(), state->scope, sizeof(state->scope));
+                        CopyString(a->arguments, state->arguments, sizeof(state->arguments));
                         
                         state->next = presses;
                         presses = state;
@@ -169,12 +171,17 @@ void LongWatcher::advance(int frames)
         }
         else {
             if (listener != nullptr) {
+                // old way
+                /*
                 UIAction action;
                 action.symbol = state->symbol;
                 action.setScopeTrack(state->scope);
                 action.longPress = true;
                 action.longPressCount = state->notifications;
                 listener->longPressDetected(&action);
+                */
+                // new way
+                listener->longPressDetected(state);
             }
 
             // formerly removed it, but I'd rather leave it in place

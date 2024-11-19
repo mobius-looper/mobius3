@@ -7,25 +7,26 @@
       <Value name="durationMode" value="1" type="int"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
       <Value name="followLocation" value="1" type="int"/>
-      <Value name="followMute" value="1" type="int"/>
-      <Value name="followQuantizeLocation" value="1" type="int"/>
-      <Value name="followRecord" value="1" type="int"/>
-      <Value name="followRecordEnd" value="1" type="int"/>
+      <Value name="followMute" value="true" type="bool"/>
+      <Value name="followQuantizeLocation" value="true" type="bool"/>
+      <Value name="followRecord" value="true" type="bool"/>
+      <Value name="followRecordEnd" value="true" type="bool"/>
       <Value name="followSize" value="1" type="int"/>
-      <Value name="followerMuteStart" value="0" type="int"/>
+      <Value name="followerMuteStart" value="false" type="bool"/>
+      <Value name="group" value="Groupuu"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
       <Value name="loopCount" value="2"/>
       <Value name="midiChannelOverride" value="9" type="enum" ordinal="9"/>
-      <Value name="midiThru" value="1" type="int"/>
+      <Value name="midiThru" value="true" type="bool"/>
       <Value name="outputDevice" value="Bome MIDI Translator 1"/>
       <Value name="quantize" value="off" type="enum" ordinal="0"/>
       <Value name="slaveSyncUnit" value="bar" type="enum" ordinal="1"/>
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
+      <Value name="syncSource" value="none" type="enum" ordinal="1"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>

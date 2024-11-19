@@ -79,7 +79,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void trackNotification(NotificationId notification, class TrackProperties& props);
 
     // LongWatcher::Listener
-    void longPressDetected(UIAction* a);
+    void longPressDetected(class LongWatcher::State* state);
     
     //
     // Content Transfer
@@ -140,7 +140,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     bool isGroupFocused(class GroupDefinition* def, class UIAction* src);
     void doGlobal(class UIAction* src);
     void doMidiAction(class UIAction* src);
-    void doMidiTrackAction(class UIAction* a);
     void doTrackSelectAction(class UIAction* a);
 
     // MSL support

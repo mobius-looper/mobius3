@@ -328,6 +328,6 @@
   <SampleConfig>
     <Sample path='$INSTALL/test/samples/gcloop.wav'/>
   </SampleConfig>
-  <GroupDefinition name='Groupuu' color='-6608599' replication='true' replicatedFunctions='WindowBackward,Mute,Record' replicatedParameters='output'/>
+  <GroupDefinition name='Groupuu' color='-6608599' replication='true' replicatedFunctions='WindowBackward,Mute,Record,Reset' replicatedParameters='output'/>
   <GroupDefinition name='Group2' color='-6220468' replicatedFunctions='Confirm'/>
 </MobiusConfig>

@@ -399,7 +399,7 @@ void TrackManager::beginAudioBlock()
  */
 void TrackManager::processAudioStream(MobiusAudioStream* stream)
 {
-    // advance the long press detector, this may call backa
+    // advance the long press detector, this may call back
     // to longPressDetected to fire an action
     // todo: Mobius has one of these too, try to merge
     longWatcher.advance(stream->getInterruptFrames());
@@ -433,6 +433,11 @@ void TrackManager::doAction(UIAction* src)
 {
     Symbol* s = src->symbol;
 
+    // watch long before replication
+    // could also watch after but this would generate many long actions
+    // which could then all be duplicated
+    longWatcher.watch(src);
+    
     if (s->id == FuncNextTrack || s->id == FuncPrevTrack || s->id == FuncSelectTrack) {
         // special case for track selection functions
         doTrackSelectAction(src);
@@ -462,9 +467,6 @@ void TrackManager::doAction(UIAction* src)
             }
             else {
                 // goes to the MIDI side
-                //Trace(2, "Sending %s to MIDI %d",
-                //trackActions->symbol->getName(),
-                //trackActions->getScopeTrack());
                 doMidiAction(trackActions);
             }
 
@@ -691,32 +693,9 @@ void TrackManager::doGlobal(UIAction* src)
  * Scope is a 1 based track number including the audio tracks.
  * The local track index is scaled down to remove the preceeding audio tracks.
  */
-void TrackManager::doMidiAction(UIAction* src)
+void TrackManager::doMidiAction(UIAction* a)
 {
-    // watch this if it isn't already a longPress
-    // the audio side has it's own watcher
-    if (!src->longPress) longWatcher.watch(src);
-
-    doMidiTrackAction(src);
-}
-
-/**
- * Listener callback for LongWatcher.
- * We're inside processAudioStream and one of the watchers
- * has crossed the threshold
- */
-void TrackManager::longPressDetected(UIAction* src)
-{
-    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
-    doMidiTrackAction(src);
-}
-
-/**
- * Here from either doMidiAction or longPressDetected
- */
-void TrackManager::doMidiTrackAction(UIAction* a)
-{
-    //Trace(2, "TrackManager::doTrackAction %s", a->symbol->getName());
+    //Trace(2, "TrackManager::doMidiAction %s", a->symbol->getName());
     // this must be a qualified scope at this point and not a global
     int actionScope = a->getScopeTrack();
     int midiIndex = actionScope - audioTrackCount - 1;
@@ -813,6 +792,56 @@ void TrackManager::doTrackSelectAction(UIAction* a)
       kernel->getContainer()->setFocusedTrack(newFocused);
 
     actionPool->checkin(a);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Long Press
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Listener callback for LongWatcher.
+ * We're inside processAudioStream and one of the watchers
+ * has crossed the threshold
+ */
+void TrackManager::longPressDetected(LongWatcher::State* state)
+{
+    //Trace(2, "TrackManager::longPressDetected %s", a->symbol->getName());
+    //doMidiTrackAction(src);
+
+    // quick and dirty for the only one people use
+    if (state->symbol->id == FuncRecord) {
+
+        if (state->notifications < 2) {
+            // everything else expects these to be pooled
+            UIAction* la = actionPool->newAction();
+
+            if (state->notifications == 0) {
+                Trace(2, "TrackManager: Long Record to Reset");
+                la->symbol = getSymbols()->getSymbol(FuncReset);
+            }
+            else {
+                Trace(2, "TrackManager: LongLong Record to TrackReset");
+                la->symbol = getSymbols()->getSymbol(FuncTrackReset);
+            }
+            // would be nice to have this extend to GlobalReset but
+            // would have to throw that back to Kernel
+
+            la->value = state->value;
+            la->setScope(state->scope);
+            CopyString(state->arguments, la->arguments, sizeof(la->arguments));
+
+            // !! one difference doing it this way is with group focus replication
+            // which is limited to certain functions  if Record is on the list but not
+            // Reset, then the Reset will be ignored, whereas before it would be a Record
+            // action with the long flag which would pass
+            // could work around this by adding something to the action like
+            // originalSymbol or triggerSymbol that is used to test for passage
+            
+            doAction(la);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

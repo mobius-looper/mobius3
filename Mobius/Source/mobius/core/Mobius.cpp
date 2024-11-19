@@ -974,12 +974,8 @@ void Mobius::processAudioStream(MobiusAudioStream* stream)
     
     // let Actionator fire off any long-press actions since it
     // controls the LongWatcher
-    // todo: MIDI tracks also have a LongWatcher and we should
-    // move that up there
-    mActionator->advanceLongWatcher(stream->getInterruptFrames());
-    
-    // pre-processing
-    //beginAudioInterrupt(stream, actions);
+    // no: this is handled by TrackManager, no more long anything in
+    //mActionator->advanceLongWatcher(stream->getInterruptFrames());
 
     // advance the tracks
     //

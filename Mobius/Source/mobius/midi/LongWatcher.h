@@ -8,17 +8,40 @@
 
 #pragma once
 
+#include "../../model/UIAction.h"
+
 class LongWatcher
 {
   public:
 
+    class State {
+      public:
+        // chain pointer for pool and press list
+        State* next = nullptr;
+        // unique identifier of the trigger that caused the action
+        int sustainId = 0;
+        // associated function symbol
+        class Symbol* symbol = nullptr;
+        // number of frames held
+        int frames = 0;
+        // number of times we've been fired
+        int notifications = 0;
+
+        int value = 0;
+        char scope[UIActionScopeMax];
+        char arguments[UIActionArgMax];
+
+        // other things we may want to save
+        // noQuantize, noSynchronization, noGroup
+    };
+    
     /**
      * Class to be notified when a long press is detected.
      */
     class Listener {
       public:
         virtual ~Listener() {}
-        virtual void longPressDetected(class UIAction* a) = 0;
+        virtual void longPressDetected(State* s) = 0;
     };
     
     LongWatcher();
@@ -31,21 +54,6 @@ class LongWatcher
 
   private:
 
-    class State {
-      public:
-        // chain pointer for pool and press list
-        State* next = nullptr;
-        // unique identifier of the trigger that caused the action
-        int sustainId = 0;
-        // associated function symbol
-        class Symbol* symbol = nullptr;
-        // track number
-        int scope = 0;
-        // number of frames held
-        int frames = 0;
-        // number of times we've been fired
-        int notifications = 0;
-    };
 
     Listener* listener = nullptr;
     int sampleRate = 44100;

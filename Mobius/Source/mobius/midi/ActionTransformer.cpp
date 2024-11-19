@@ -80,37 +80,6 @@ void ActionTransformer::doOneAction(UIAction* a)
         // filter these out for now, no SUS functions yet so don't confuse things
         //Trace(2, "ActionTransformer: Filtering sustain end action");
     }
-    else if (a->longPress) {
-        // don't have many of these
-        if (a->symbol->id == FuncRecord) {
-            if (a->longPressCount == 0) {
-                // loop reset
-                Trace(2, "ActionTransformer: Long Record to Reset");
-                UIAction temp;
-                temp.symbol = symbols->getSymbol(FuncReset);
-                scheduler->doAction(&temp);
-            }
-            else if (a->longPressCount == 1) {
-                // track reset
-                Trace(2, "ActionTransformer: LongLong Record to TrackReset");
-                UIAction temp;
-                temp.symbol = symbols->getSymbol(FuncTrackReset);
-                scheduler->doAction(&temp);
-            }
-            else {
-                // would be nice to have this be GlobalReset but
-                // would have to throw that back to Kernel
-            }
-        }
-        else {
-            // these are good to show to the user
-            char msgbuf[128];
-            snprintf(msgbuf, sizeof(msgbuf), "Unsupported long press function: %s",
-                     a->symbol->getName());
-            track->alert(msgbuf);
-            Trace(1, "ActionTransformer: %s", msgbuf);
-        }
-    }
     else if (a->symbol->id == FuncRecord) {
         // record has special meaning, before scheduler gets it
         auto mode = track->getMode();
