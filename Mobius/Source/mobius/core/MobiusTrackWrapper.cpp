@@ -48,18 +48,18 @@ int MobiusTrackWrapper::getLoopIndex()
 
 int MobiusTrackWrapper::getLoopFrames()
 {
-    return track->getFrames();
+    return (int)(track->getFrames());
 }
 
 int MobiusTrackWrapper::getFrame()
 {
-    return track->getFrame();
+    return (int)(track->getFrame());
 }
 
 int MobiusTrackWrapper::getCycleFrames()
 {
     Loop* l = track->getLoop();
-    return l->getCycleFrames();
+    return (int)(l->getCycleFrames());
 }
 
 int MobiusTrackWrapper::getCycles()

@@ -359,6 +359,12 @@ void TrackAdvancer::doEvent(TrackEvent* e)
         }
             break;
 
+        case TrackEvent::EventWait: {
+            Trace(1, "TrackAdvancer: EventWait not handled");
+        }
+            break;
+
+
     }
 
     finishWaitAndDispose(e, false);

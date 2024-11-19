@@ -632,7 +632,7 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
                         // and now we wait
                         event->setMslWait(wait);
                         // set this while we're here though nothing uses it
-                        wait->coreEventFrame = event->frame;
+                        wait->coreEventFrame = (int)(event->frame);
                     }
                 }
                 success = true;
