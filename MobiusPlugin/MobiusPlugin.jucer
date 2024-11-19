@@ -97,6 +97,8 @@
               file="../Mobius/Source/script/ScriptRegistry.cpp"/>
         <FILE id="IhoShr" name="ScriptRegistry.h" compile="0" resource="0"
               file="../Mobius/Source/script/ScriptRegistry.h"/>
+        <FILE id="ZDO0iT" name="ScriptUtil.cpp" compile="1" resource="0" file="../Mobius/Source/script/ScriptUtil.cpp"/>
+        <FILE id="ezP1Wt" name="ScriptUtil.h" compile="0" resource="0" file="../Mobius/Source/script/ScriptUtil.h"/>
       </GROUP>
       <FILE id="Gck82d" name="ProjectFiler.cpp" compile="1" resource="0"
             file="../Mobius/Source/ProjectFiler.cpp"/>
@@ -554,6 +556,10 @@
         <FILE id="lEcdBG" name="MainWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/MainWindow.h"/>
       </GROUP>
       <GROUP id="{9EED59CE-20A8-984F-2766-AAF0F27339C9}" name="mobius">
+        <FILE id="hWq5MD" name="TrackMslHandler.cpp" compile="1" resource="0"
+              file="../Mobius/Source/mobius/TrackMslHandler.cpp"/>
+        <FILE id="SDIUxu" name="TrackMslHandler.h" compile="0" resource="0"
+              file="../Mobius/Source/mobius/TrackMslHandler.h"/>
         <GROUP id="{2604F741-E637-CC59-72EB-4DD5ED5AACB9}" name="midi">
           <FILE id="QxKyfG" name="AbstractTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/AbstractTrack.h"/>
           <FILE id="NJJ8MM" name="ActionTransformer.cpp" compile="1" resource="0"
@@ -575,6 +581,10 @@
           <FILE id="mMc7zG" name="MidiLayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLayer.h"/>
           <FILE id="lddC2p" name="MidiLoop.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.cpp"/>
           <FILE id="BFCPey" name="MidiLoop.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.h"/>
+          <FILE id="lOdURF" name="MidiMslVariableHandler.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/midi/MidiMslVariableHandler.cpp"/>
+          <FILE id="VPMnNQ" name="MidiMslVariableHandler.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/midi/MidiMslVariableHandler.h"/>
           <FILE id="wfkQMR" name="MidiPlayer.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="nvvZYi" name="MidiPlayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.h"/>
           <FILE id="aJufRD" name="MidiPools.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiPools.cpp"/>
@@ -679,6 +689,18 @@
           <FILE id="pAhso6" name="Mem.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mem.h"/>
           <FILE id="fEgNgD" name="Mobius.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mobius.cpp"/>
           <FILE id="ZR6Fip" name="Mobius.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mobius.h"/>
+          <FILE id="dBpHtR" name="MobiusMslHandler.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusMslHandler.cpp"/>
+          <FILE id="WvMley" name="MobiusMslHandler.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusMslHandler.h"/>
+          <FILE id="Kdi6pL" name="MobiusMslVariableHandler.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusMslVariableHandler.cpp"/>
+          <FILE id="F506Qk" name="MobiusMslVariableHandler.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusMslVariableHandler.h"/>
+          <FILE id="LTqHZQ" name="MobiusTrackWrapper.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusTrackWrapper.cpp"/>
+          <FILE id="pY0sYz" name="MobiusTrackWrapper.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/core/MobiusTrackWrapper.h"/>
           <FILE id="YayO54" name="Mode.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mode.cpp"/>
           <FILE id="if2nuD" name="Mode.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mode.h"/>
           <FILE id="JbUf7U" name="Parameter.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Parameter.cpp"/>
