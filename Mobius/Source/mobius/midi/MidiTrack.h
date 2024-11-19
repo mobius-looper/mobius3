@@ -32,8 +32,8 @@ class MidiTrack : public AbstractTrack
     void configure(class Session::Track* def);
     void reset();
 
-    int getGroup();
-    bool isFocused();
+    int getGroup() override;
+    bool isFocused() override;
     
     void loadLoop(MidiSequence* seq, int loop);
 
@@ -129,7 +129,8 @@ class MidiTrack : public AbstractTrack
     void toggleOverdub() override;
     void toggleMute() override;
     void toggleReplace() override;
-
+    void toggleFocusLock() override;
+    
     void finishSwitch(int target) override;
     void loopCopy(int previous, bool sound) override;
     
@@ -211,6 +212,8 @@ class MidiTrack : public AbstractTrack
     bool overdub = false;
     bool mute = false;
     bool reverse = false;
+    int group = 0;
+    bool focus = false;
     //bool pause = false;
     
     int input = 127;

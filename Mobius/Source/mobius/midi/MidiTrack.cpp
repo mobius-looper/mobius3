@@ -21,6 +21,8 @@
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
 #include "../../model/SymbolId.h"
+// for GroupDefinitions
+#include "../../model/MobiusConfig.h"
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
@@ -133,6 +135,23 @@ void MidiTrack::configure(Session::Track* def)
     noReset = def->getBool("noReset");
 
     player.setChannelOverride(def->getInt("midiChannelOverride"));
+
+    const char* groupName = def->getString("group");
+    // since we store the name in the session, have to map it back to an ordinal
+    // which requires the MobiusConfig
+    // might be better to store this as the ordinal to track renames?
+    // that isn't what SetupTrack does though, it stores the name
+    if (groupName != nullptr) {
+        MobiusConfig* config = tracker->getConfiguration();
+        int ordinal = config->getGroupOrdinal(groupName);
+        if (ordinal < 0)
+          Trace(1, "MidiTrack: Invalid group name found in session %s", groupName);
+        else
+          group = ordinal + 1;
+    }
+    else {
+        group = 0;
+    }
 }
 
 /**
@@ -141,12 +160,12 @@ void MidiTrack::configure(Session::Track* def)
  */
 int MidiTrack::getGroup()
 {
-    return 0;
+    return group;
 }
 
 bool MidiTrack::isFocused()
 {
-    return false;
+    return focus;
 }
 
 /**
@@ -305,6 +324,11 @@ bool MidiTrack::isPaused()
 TrackEventList* MidiTrack::getEventList()
 {
     return &(scheduler.events);
+}
+
+void MidiTrack::toggleFocusLock()
+{
+    focus = !focus;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -555,7 +579,9 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->output = output;
     state->feedback = feedback;
     state->pan = pan;
-
+    state->focus = focus;
+    state->group = group;
+    
     // not the same as mode=Record, can be any type of recording
     bool nowRecording = recorder.isRecording();
     // leftover bug investigation

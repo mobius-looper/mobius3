@@ -156,6 +156,7 @@ void StartPointFunction::invokeLong(Action* action, Loop* l)
             a->setResolvedTrack(l->getTrack());
             
             m->doOldAction(a);
+            m->completeAction(a);
 		}
 	}
 }

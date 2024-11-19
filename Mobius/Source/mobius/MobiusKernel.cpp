@@ -271,6 +271,8 @@ void MobiusKernel::consumeCommunications()
     // now do the reverse actions
     while (actions != nullptr) {
         KernelMessage* next = actions->next;
+        // communicator will warn if this still looks like it's on a list
+        actions->next = nullptr;
         doMessage(actions);
         actions = next;
     }

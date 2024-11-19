@@ -520,6 +520,10 @@ bool TrackScheduler::handleExecutiveAction(UIAction* src)
             handled = true;
             break;
 
+        case FuncFocusLock:
+            track->toggleFocusLock();
+            break;
+
         default: break;
     }
 
@@ -658,8 +662,7 @@ void TrackScheduler::doRedo(UIAction* src)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * A state of reset should be indiciated by Reset mode, but also catch when
- * the loop size is zero?
+ * A state of reset should be indiciated by Reset mode
  */
 bool TrackScheduler::isReset()
 {
@@ -671,7 +674,9 @@ bool TrackScheduler::isReset()
           Trace(1, "TrackScheduler: Inconsistent ModeReset with positive size");
     }
     else if (track->getLoopFrames() == 0) {
-        Trace(1, "TrackScheduler: Empty loop not in Reset mode");
+        // this is okay, the track can be just starting Record and be
+        // in Record mode but nothing has happened yet
+        //Trace(1, "TrackScheduler: Empty loop not in Reset mode");
     }
     
     return result;
@@ -1478,14 +1483,18 @@ bool TrackScheduler::isRecordSynced()
 
 void TrackScheduler::doRecord(TrackEvent* e)
 {
+    //Trace(2, "TrackScheduler::doRecord %d", track->getNumber());
+    
     auto mode = track->getMode();
     if (mode == MobiusMidiState::ModeRecord) {
+        //Trace(2, "TrackScheduler::doRecord finishing");
         track->finishRecord();
         // I think we need to reset the rateCarryover?
         advancer.rateCarryover = 0.0f;
         followTrack = 0;
     }
     else {
+        //Trace(2, "TrackScheduler::doRecord starting");
         track->startRecord();
     }
 

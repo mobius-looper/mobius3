@@ -71,5 +71,6 @@ class MobiusViewer
     void refreshMidiEvents(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
     void refreshRegions(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
     void refreshSync(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshTrackGroups(class MobiusMidiState::Track* tstate,  class MobiusViewTrack* tview);
 
 };

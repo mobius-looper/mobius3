@@ -7,6 +7,7 @@
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
 #include "../../model/UIConfig.h"
+#include "../../model/MobiusConfig.h"
 #include "../../Supervisor.h"
 
 #include "../common/SimpleRadio.h"
@@ -122,6 +123,7 @@ void MidiTrackEditor::loadTrack(int index)
         generalForm.load(track->getParameters());
         initInputDevice(track);
         initOutputDevice(track);
+        initTrackGroup(track);
         midiThru.setValue(track->getBool("midiThru"));
         // adapt to changes in the midi device since the last time
         generalForm.resized();
@@ -183,6 +185,23 @@ void MidiTrackEditor::initOutputDevice(Session::Track* track)
     outputDevice.setSelection(index);
 }
 
+void MidiTrackEditor::initTrackGroup(Session::Track* track)
+{
+    MobiusConfig* config = supervisor->getMobiusConfig();
+    juce::StringArray names;
+
+    names.add("[None]");
+    for (auto def : config->groups)
+      names.add(def->name);
+
+    trackGroup.setItems(names);
+
+    juce::String current = juce::String(track->getString("group"));
+    int ordinal = config->getGroupOrdinal(juce::String(current));
+    // ordinal is -1 if not found, which matches [None]
+    trackGroup.setSelection(ordinal + 1);
+}
+
 void MidiTrackEditor::saveSession()
 {
     session->midiTracks = trackCount.getInt();
@@ -208,6 +227,15 @@ void MidiTrackEditor::saveTrack(int index)
     params->setJString("outputDevice", outputDevice.getSelectionText());
 
     params->setBool("midiThru", midiThru.getValue());
+
+    int ordinal = trackGroup.getSelection();
+    if (ordinal <= 0) {
+        // none or unselected
+        params->setString("group", nullptr);
+    }
+    else {
+        params->setJString("group", trackGroup.getSelectionText());
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -244,7 +272,8 @@ void MidiTrackEditor::render()
     generalForm.addField(ParamLoopCount);
     generalForm.addField(ParamQuantize);
     generalForm.addField(ParamSubcycles);
-    
+    generalForm.add(&trackGroup);
+        
     tabs.add("General", &generalForm);
 
     followerForm.addField(ParamLeaderType);

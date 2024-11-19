@@ -42,6 +42,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // Services
 
+    class MobiusConfig* getConfiguration();
     class MobiusMidiState* getState();
     class MidiPools* getPools();
     class Pulsator* getPulsator();

@@ -2120,8 +2120,10 @@ void Loop::addUndo(Layer* l)
     // new: I see a memory leak if you start and end a recording
     // in a loop that is already playing
     // mPlay will be nullptr, but mRecord->prev has the last play layer
-    if (l->getPrev() != nullptr && l->getPrev() != mPlay) {
-        Trace(1, "Probably leaking layer setting up undo!\n");
+    Layer* prev = l->getPrev();
+    if (prev != nullptr && prev != mPlay) {
+        //Trace(1, "Probably leaking layer setting up undo!\n");
+        prev->freeAll();
     }
     
     l->setPrev(mPlay);
@@ -5956,6 +5958,7 @@ void Loop::trackEvent(Event* e)
             // if we're doing a Wait last on the track switch,
             // should this convert to a Wait last on the Record if
             // it is synchronized or latency delayed??
+            mMobius->completeAction(a);
         }
         else {
             // !! if this is before the current track, we will have already

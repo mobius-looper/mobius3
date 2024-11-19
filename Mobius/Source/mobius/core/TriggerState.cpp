@@ -329,6 +329,9 @@ void TriggerState::advance(Actionator* actionator, int frames)
                 a->longPress = true;
 
                 actionator->doOldAction(a);
+
+                // this was leaking, apparently for a long time
+                actionator->completeAction(a);
             }
         }
     }

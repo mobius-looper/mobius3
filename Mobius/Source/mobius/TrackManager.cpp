@@ -211,6 +211,11 @@ MidiPools* TrackManager::getPools()
     return &pools;
 }
 
+MobiusConfig* TrackManager::getConfiguration()
+{
+    return configuration;
+}
+
 MobiusContainer* TrackManager::getContainer()
 {
     return kernel->getContainer();
@@ -442,6 +447,10 @@ void TrackManager::doAction(UIAction* src)
 
         while (trackActions != nullptr) {
             UIAction* next = trackActions->next;
+            // internal components want to use next for their own use so
+            // make sure it starts empty
+            trackActions->next = nullptr;
+            
             int track = trackActions->getScopeTrack();
             if (track == 0) {
                 // should not see this after replication
@@ -453,6 +462,9 @@ void TrackManager::doAction(UIAction* src)
             }
             else {
                 // goes to the MIDI side
+                //Trace(2, "Sending %s to MIDI %d",
+                //trackActions->symbol->getName(),
+                //trackActions->getScopeTrack());
                 doMidiAction(trackActions);
             }
 
@@ -662,6 +674,7 @@ void TrackManager::doGlobal(UIAction* src)
       midiTracks[i]->doAction(src);
     
     // then send it to the first audio track
+    src->setScopeTrack(1);
     audioEngine->doAction(src);
 
     // having some trouble with stuck notes in the watcher
@@ -782,7 +795,12 @@ void TrackManager::doTrackSelectAction(UIAction* a)
             a->symbol = kernel->getContainer()->getSymbols()->find("SelectTrack");
             a->value = newFocused + 1;
         }
-
+        
+        // so the Actionator doesn't complain about having to deal with unscoped
+        // actions, give this a specific track scope
+        // it shouldn't matter what it is since track selection is a global function
+        a->setScopeTrack(audioEngine->getActiveTrack() + 1);
+        
         audioEngine->doAction(a);
     }
     else {

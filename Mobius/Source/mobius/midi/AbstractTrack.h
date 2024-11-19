@@ -22,6 +22,8 @@ class AbstractTrack
     // Loop state
 
     virtual int getNumber() = 0;
+    virtual bool isFocused() = 0;
+    virtual int getGroup() = 0;
     virtual MobiusMidiState::Mode getMode() = 0;
     virtual int getLoopCount() = 0;
     virtual int getLoopIndex() = 0;
@@ -51,6 +53,7 @@ class AbstractTrack
     virtual void toggleOverdub() = 0;
     virtual void toggleMute() = 0;
     virtual void toggleReplace() = 0;
+    virtual void toggleFocusLock() = 0;
 
     virtual void finishSwitch(int target) = 0;
     virtual void loopCopy(int previous, bool sound) = 0;

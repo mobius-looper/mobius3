@@ -965,7 +965,15 @@ bool Track::isPriority()
         // update: no, this happens whenever you drag a file onto a loop in a non-active
         // track and cursor over to it.  It is fine for there to be loops loaded in
         // a track and not doing anything
-		priority = true;
+
+        // new: started getting warnings about "more than one priority track" when using
+        // group replication (and probably focus lock would do the same) to record
+        // two tracks at the same time.  Two tracks start and end at the same time
+        // but Synchronizer hasn't received the record end event and set the master yet
+        // if Loop::isEmpty starts returning true before we hit the RecordEndEvent
+        // we'll get here.  This seems highly suspicious anyway.  Take it out and see what
+        // breaks, which will certainly be something and you will swear
+		//priority = true;
 	}
 
 	return priority;

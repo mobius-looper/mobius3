@@ -1108,7 +1108,8 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     tview->outputLevel = tstate->output;
     tview->feedback = tstate->feedback;
     tview->pan = tstate->pan;
-    
+    tview->focused = tstate->focus;
+
     // fake these up to avoid warnings in LoopMeterElement and LoopStackElement
     if (tview->cycle == 0) tview->cycle = 1;
     if (tview->subcycles == 0) tview->subcycles = 4;
@@ -1167,6 +1168,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     refreshSync(tstate, tview);
     refreshMidiEvents(tstate, tview);
     refreshRegions(tstate, tview);
+    refreshTrackGroups(tstate, tview);
 }
 
 void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 
@@ -1287,6 +1289,33 @@ void MobiusViewer::refreshSync(MobiusMidiState::Track* tstate, MobiusViewTrack* 
     SyncSource src = tstate->syncSource;
     tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
 }    
+
+void MobiusViewer::refreshTrackGroups(MobiusMidiState::Track* tstate,  MobiusViewTrack* tview)
+{
+    int newNumber = tstate->group;
+    
+    if (tview->groupOrdinal != newNumber) {
+        tview->groupOrdinal = newNumber;
+
+        // could just make the display work from the ordinal, but we might
+        // as well go get the name/color to make it easier
+        // should do others this way, let the view defined what to display
+        // so the UI components don't have to keep a copy
+        tview->groupName = "";
+        tview->groupColor = 0;
+        
+        MobiusConfig* config = supervisor->getMobiusConfig();
+        
+        // ignore if out of range
+        if (newNumber > 0 && newNumber <= config->groups.size()) {
+            GroupDefinition* group = config->groups[newNumber - 1];
+            tview->groupName = group->name;
+            tview->groupColor = group->color;
+        }
+
+        tview->refreshGroup = true;
+    }
+}
 
 /****************************************************************************/
 /****************************************************************************/

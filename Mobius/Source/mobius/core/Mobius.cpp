@@ -118,6 +118,13 @@ Mobius::Mobius(MobiusKernel* kernel)
     MobiusMode::initModes();
     Function::initStaticFunctions();
     Parameter::initParameters();
+
+    // trace some sizes for leak analysis
+    Trace(2, "Mobius: object sizes");
+    Trace(2, "  Layer: %d", sizeof(Layer));
+    Trace(2, "  Loop: %d", sizeof(Loop));
+    Trace(2, "  Track: %d", sizeof(Track));
+    Trace(2, "  Action: %d", sizeof(Action));
 }
 
 /**

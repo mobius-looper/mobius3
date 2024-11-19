@@ -164,6 +164,10 @@ class MobiusMidiState
         bool    outSyncMaster = false;
         bool    trackSyncMaster = false;
 
+        // track state
+        bool focus = false;
+        int group = 0;
+
         // loop state
         int loopCount = 0;
         int activeLoop = 0;
