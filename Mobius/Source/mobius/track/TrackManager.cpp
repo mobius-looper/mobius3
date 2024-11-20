@@ -1,28 +1,29 @@
 
 #include <JuceHeader.h>
 
-#include "../model/Symbol.h"
-#include "../model/FunctionProperties.h"
-#include "../model/ScriptProperties.h"
-#include "../model/MobiusConfig.h"
-#include "../model/Session.h"
-#include "../model/UIAction.h"
-#include "../model/UIParameter.h"
-#include "../model/Query.h"
-#include "../model/Scope.h"
+#include "../../model/Symbol.h"
+#include "../../model/FunctionProperties.h"
+#include "../../model/ScriptProperties.h"
+#include "../../model/MobiusConfig.h"
+#include "../../model/Session.h"
+#include "../../model/UIAction.h"
+#include "../../model/UIParameter.h"
+#include "../../model/Query.h"
+#include "../../model/Scope.h"
 
-#include "../script/MslExternal.h"
-#include "../script/MslWait.h"
-#include "../script/ScriptExternals.h"
+#include "../../script/MslExternal.h"
+#include "../../script/MslWait.h"
+#include "../../script/ScriptExternals.h"
 
-#include "MobiusKernel.h"
-#include "MobiusInterface.h"
+#include "../MobiusKernel.h"
+#include "../MobiusInterface.h"
+
 #include "LogicalTrack.h"
 
-#include "midi/MidiWatcher.h"
-#include "midi/MidiTrack.h"
+#include "../midi/MidiWatcher.h"
+#include "../midi/MidiTrack.h"
 
-#include "core/Mobius.h"
+#include "../core/Mobius.h"
 
 #include "TrackManager.h"
 

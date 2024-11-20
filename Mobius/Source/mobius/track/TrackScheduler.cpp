@@ -35,9 +35,13 @@
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
-#include "../TrackManager.h"
+#include "../track/TrackManager.h"
+#include "../track/TrackProperties.h"
 
-#include "MidiPools.h"
+// the only thing we need out of this is the TrackEvent pool
+// need TrackPools or maybe just put them all in KernelPools
+#include "../midi/MidiPools.h"
+
 #include "TrackEvent.h"
 #include "AbstractTrack.h"
 

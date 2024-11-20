@@ -15,7 +15,7 @@
 #include <JuceHeader.h>
 
 #include "Notification.h"
-#include "TrackListener.h"
+#include "track/TrackListener.h"
 
 class Notifier
 {

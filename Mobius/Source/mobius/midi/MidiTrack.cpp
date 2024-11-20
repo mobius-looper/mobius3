@@ -29,9 +29,10 @@
 #include "../../sync/Pulsator.h"
 
 #include "../Valuator.h"
-#include "../TrackManager.h"
 
-#include "TrackScheduler.h"
+#include "../track/TrackManager.h"
+#include "../track/TrackScheduler.h"
+#include "../track/TrackProperties.h"
 
 #include "MidiPools.h"
 #include "MidiLoop.h"

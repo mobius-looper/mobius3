@@ -1,7 +1,8 @@
 
-#include "../midi/AbstractTrack.h"
-
 #include "../../model/Preset.h"
+
+#include "../track/AbstractTrack.h"
+#include "../track/TrackProperties.h"
 
 #include "Mobius.h"
 #include "Track.h"
@@ -220,7 +221,7 @@ void MobiusTrackWrapper::doInstantDivide(int n)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusTrackWrapper::leaderReset(class TrackProperties& props)
+void MobiusTrackWrapper::leaderReset(TrackProperties& props)
 {
     (void)props;
 }
@@ -229,17 +230,17 @@ void MobiusTrackWrapper::leaderRecordStart()
 {
 }
 
-void MobiusTrackWrapper::leaderRecordEnd(class TrackProperties& props)
+void MobiusTrackWrapper::leaderRecordEnd(TrackProperties& props)
 {
     (void)props;
 }
 
-void MobiusTrackWrapper::leaderMuteStart(class TrackProperties& props)
+void MobiusTrackWrapper::leaderMuteStart(TrackProperties& props)
 {
     (void)props;
 }
 
-void MobiusTrackWrapper::leaderMuteEnd(class TrackProperties& props)
+void MobiusTrackWrapper::leaderMuteEnd(TrackProperties& props)
 {
     (void)props;
 }

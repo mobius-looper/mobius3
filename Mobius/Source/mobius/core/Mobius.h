@@ -13,7 +13,7 @@
 #pragma once
 
 #include "../../model/OldMobiusState.h"
-#include "../TrackProperties.h"
+#include "../track/TrackProperties.h"
 #include "Loader.h"
 #include "MobiusMslHandler.h"
 

@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "midi/MidiMslVariableHandler.h"
+#include "TrackMslVariableHandler.h"
 
 class TrackMslHandler
 {
@@ -27,7 +27,7 @@ class TrackMslHandler
 
     class MobiusKernel* kernel = nullptr;
     class TrackManager* manager = nullptr;
-    MidiMslVariableHandler variables;
+    TrackMslVariableHandler variables;
     
     class TrackEvent* scheduleWaitAtFrame(class MslWait* wait, class AbstractTrack* track, int frame);
     class AbstractTrack* getWaitTarget(class MslWait* wait);

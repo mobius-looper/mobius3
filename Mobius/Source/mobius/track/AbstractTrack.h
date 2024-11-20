@@ -12,7 +12,6 @@
 
 #include "../../model/ParameterConstants.h"
 #include "../../model/MobiusMidiState.h"
-#include "../TrackProperties.h"
 
 class AbstractTrack
 {
@@ -81,8 +80,8 @@ class AbstractTrack
     virtual void leaderRecordEnd(class TrackProperties& props) = 0;
     virtual void leaderMuteStart(class TrackProperties& props) = 0;
     virtual void leaderMuteEnd(class TrackProperties& props) = 0;
-    virtual void leaderResized(TrackProperties& props) = 0;
-    virtual void leaderMoved(TrackProperties& props) = 0;
+    virtual void leaderResized(class TrackProperties& props) = 0;
+    virtual void leaderMoved(class TrackProperties& props) = 0;
     
     // advance play/record state between events
     virtual bool isExtending() = 0;

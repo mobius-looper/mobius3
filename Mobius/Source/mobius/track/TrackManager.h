@@ -14,16 +14,15 @@
 
 #include <JuceHeader.h>
 
-#include "../model/MobiusMidiState.h"
-#include "../model/Scope.h"
+#include "../../model/MobiusMidiState.h"
+#include "../../model/Scope.h"
 
 #include "TrackProperties.h"
 #include "TrackListener.h"
 #include "TrackMslHandler.h"
-// need to move these up
-#include "midi/LongWatcher.h"
-#include "midi/MidiWatcher.h"
-#include "midi/MidiPools.h"
+#include "LongWatcher.h"
+#include "../midi/MidiWatcher.h"
+#include "../midi/MidiPools.h"
 
 class TrackManager : public LongWatcher::Listener, public TrackListener
 {

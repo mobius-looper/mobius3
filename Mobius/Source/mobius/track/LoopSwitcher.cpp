@@ -15,6 +15,7 @@
 #include "../../sync/Pulsator.h"
 
 #include "../Valuator.h"
+#include "../track/TrackProperties.h"
 
 #include "TrackScheduler.h"
 #include "AbstractTrack.h"

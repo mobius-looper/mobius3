@@ -10,12 +10,12 @@
 
 #pragma once
 
-class MidiMslVariableHandler
+class TrackMslVariableHandler
 {
   public:
 
-    MidiMslVariableHandler(class MobiusKernel* k);
-    ~MidiMslVariableHandler();
+    TrackMslVariableHandler(class MobiusKernel* k);
+    ~TrackMslVariableHandler();
 
     // should this be abstract or logical?
     bool get(class MslQuery* q, class AbstractTrack* t);

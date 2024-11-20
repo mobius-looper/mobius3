@@ -35,7 +35,11 @@
 #include "MidiLayer.h"
 #include "MidiSegment.h"
 #include "MidiFragment.h"
-#include "TrackEvent.h"
+
+// needs work on where all the pools go, nice to have them in one place
+// but then it's kind of a mess
+// this one probably can be on it's own or in a TrackPools
+#include "../track/TrackEvent.h"
 
 
 class MidiPools

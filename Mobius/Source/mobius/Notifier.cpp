@@ -26,7 +26,7 @@
 
 #include "Notification.h"
 #include "MobiusPools.h"
-#include "TrackProperties.h"
+#include "track/TrackProperties.h"
 
 #include "core/Track.h"
 #include "core/Loop.h"

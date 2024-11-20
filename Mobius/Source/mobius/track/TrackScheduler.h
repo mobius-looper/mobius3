@@ -27,7 +27,6 @@
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
 
-#include "../TrackProperties.h"
 #include "../Notification.h"
 
 #include "TrackEvent.h"
@@ -57,9 +56,9 @@ class TrackScheduler
     void doAction(class UIAction* a);
     void advance(class MobiusAudioStream* stream);
 
-    void setFollowTrack(TrackProperties& props);
+    void setFollowTrack(class TrackProperties& props);
 
-    void trackNotification(NotificationId notification, TrackProperties& props);
+    void trackNotification(NotificationId notification, class TrackProperties& props);
     
     // utility used by MidiTrack, TrackManager
     LeaderType getLeaderType() {
@@ -123,9 +122,9 @@ class TrackScheduler
 
 
     // Leader/Follower Support
-    void doTrackNotification(NotificationId notification, TrackProperties& props);
-    void leaderEvent(TrackProperties& props);
-    void leaderLoopResize(TrackProperties& props);
+    void doTrackNotification(NotificationId notification, class TrackProperties& props);
+    void leaderEvent(class TrackProperties& props);
+    void leaderLoopResize(class TrackProperties& props);
 
     //
     // Scheduling and mode transition guts

@@ -36,6 +36,7 @@
 #include "../MobiusKernel.h"
 #include "../AudioPool.h"
 #include "../Notification.h"
+#include "../track/TrackProperties.h"
 
 // implemented by MobiusContainer now but still need the old MidiEvent model
 //#include "../../midi/MidiByte.h"

@@ -1,23 +1,22 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
+#include "../../util/Trace.h"
 
-#include "../script/MslContext.h"
-#include "../script/MslExternal.h"
-#include "../script/MslWait.h"
-#include "../script/MslValue.h"
-#include "../script/ScriptExternals.h"
+#include "../../script/MslContext.h"
+#include "../../script/MslExternal.h"
+#include "../../script/MslWait.h"
+#include "../../script/MslValue.h"
+#include "../../script/ScriptExternals.h"
 
 // for MobiusContainer
-#include "MobiusInterface.h"
+#include "../MobiusInterface.h"
+
+#include "AbstractTrack.h"
 #include "TrackManager.h"
-// need to pull this up
-#include "midi/TrackEvent.h"
+#include "TrackEvent.h"
 // need to get TrackEvent pools out of here
-#include "midi/MidiPools.h"
-// need to pull this up
-#include "midi/AbstractTrack.h"
+#include "../midi/MidiPools.h"
 
 #include "TrackMslHandler.h"
 

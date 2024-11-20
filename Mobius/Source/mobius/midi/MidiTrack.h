@@ -8,13 +8,13 @@
 
 #include "../../sync/Pulse.h"
 #include "../Notification.h"
-#include "../TrackProperties.h"
 
-#include "AbstractTrack.h"
+#include "../track/AbstractTrack.h"
+#include "../track/TrackScheduler.h"
+#include "../track/ActionTransformer.h"
+
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
-#include "TrackScheduler.h"
-#include "ActionTransformer.h"
 
 class MidiTrack : public AbstractTrack
 {
@@ -150,8 +150,8 @@ class MidiTrack : public AbstractTrack
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
-    void leaderResized(TrackProperties& props) override;
-    void leaderMoved(TrackProperties& props) override;
+    void leaderResized(class TrackProperties& props) override;
+    void leaderMoved(class TrackProperties& props) override;
     
     bool isExtending() override;
     void advance(int newFrames) override;

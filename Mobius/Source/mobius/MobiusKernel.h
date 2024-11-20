@@ -27,9 +27,9 @@
 #include "MobiusPools.h"
 #include "Notifier.h"
 
+// does this even exist?
 //#include "TrackSynchronizer.h"
-#include "TrackManager.h"
-#include "midi/TrackScheduler.h"
+#include "track/TrackManager.h"
 
 class MobiusKernel : public MobiusAudioListener, public MslContext
 {
@@ -37,7 +37,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     friend class SampleFunction;
     friend class Mobius;
     friend class TrackManager;
-    friend class TrackScheduler;
     friend class Notifier;
     
   public:
@@ -155,7 +154,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
     juce::File mslGetLogRoot() override;
 
-    // things TrackScheduler started needing
+    // things TrackManager needs
     int getAudioTrackCount() {
         return audioTracks;
     }

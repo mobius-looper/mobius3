@@ -14,7 +14,8 @@
 // necessary for MobiusAudioStream, see if we can hide this in TrackManager
 #include "../MobiusInterface.h"
 
-#include "../TrackManager.h"
+#include "../track/TrackManager.h"
+#include "../track/TrackProperties.h"
 
 #include "TrackEvent.h"
 #include "TrackScheduler.h"
