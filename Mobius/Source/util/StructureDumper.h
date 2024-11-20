@@ -17,6 +17,7 @@ class StructureDumper
 
     juce::String getText();
     void clear();
+    bool hasText();
 
     void inc();
     void dec();

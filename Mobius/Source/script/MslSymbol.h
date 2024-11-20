@@ -134,6 +134,7 @@ class MslArgumentNode : public MslNode
     bool isArgument() override {return true;}
     bool operandable() override {return false;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Argument";}
 
     // the name of the argument we are satisfying
     juce::String name;
@@ -173,6 +174,7 @@ class MslSymbol : public MslNode
     bool isSymbol() override {return true;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Symbol";}
 
     // symbols only allow () arguemnt blocks, which turns them into
     // a parameterized reference, aka a "call"

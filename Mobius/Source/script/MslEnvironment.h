@@ -290,6 +290,8 @@ class MslEnvironment
     class MslExternal* getExternal(juce::String name);
     void intern(class MslExternal* ext);
 
+    void writeLog(class MslContext* c, class MslSession* s, class StructureDumper& d);
+
   private:
 
     // note that this has to be first because things are destructed in reverse
@@ -310,6 +312,9 @@ class MslEnvironment
     
     // unique id generator for anonymous compilation units (scriptlets)
     int idGenerator = 1;
+
+    // unique "run number" generator for generating session log files
+    int runNumber = 0;
 
     // exported links
     juce::OwnedArray<class MslLinkage> linkages;
@@ -350,6 +355,9 @@ class MslEnvironment
     class MslResult* makeResult(class MslSession* s, bool finished);
     int generateSessionId();
     int sessionIds = 1;
+
+    void logRequest(class MslContext* c, class MslCompilation* unit);
+    void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
     
 };
 

@@ -8,6 +8,27 @@
 #include "MslModel.h"
 #include "MslParser.h"
 
+bool MslTrace::wantsToken(MslParser* p, MslToken& t)
+{
+    (void)p;
+    bool wants = false;
+    if (children.size() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            if (t.value == "on") {
+                control = true;
+                on = true;
+                wants = true;
+            }
+            else if (t.value == "off") {
+                control = true;
+                on = false;
+                wants = true;
+            }
+        }
+    }
+    return wants;
+}
+
 bool MslReference::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;

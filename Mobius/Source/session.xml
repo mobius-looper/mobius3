@@ -13,7 +13,6 @@
       <Value name="followRecordEnd" value="1" type="int"/>
       <Value name="followSize" value="1" type="int"/>
       <Value name="followerMuteStart" value="0" type="int"/>
-      <Value name="group" value="Groupuu"/>
       <Value name="leaderSwitchLocation" value="none" type="enum" ordinal="0"/>
       <Value name="leaderTrack" value="1"/>
       <Value name="leaderType" value="none" type="enum" ordinal="0"/>
@@ -180,6 +179,7 @@
     <Value name="activeSetup" value="Default"/>
     <Value name="controllerActionThreshold" value="64" type="int"/>
     <Value name="driftCheckPoint" value="loop" type="enum" ordinal="0"/>
+    <Value name="eventScript" value="mutemidi"/>
     <Value name="fadeFrames" value="128" type="int"/>
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>

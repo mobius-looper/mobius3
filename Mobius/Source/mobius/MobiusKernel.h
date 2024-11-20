@@ -153,6 +153,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     int mslGetMaxScope() override;
     bool mslIsScopeKeyword(const char* name) override;
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
+    juce::File mslGetLogRoot() override;
 
     // things TrackScheduler started needing
     int getAudioTrackCount() {

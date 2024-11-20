@@ -6,6 +6,7 @@
 
 #include "../util/Trace.h"
 #include "../util/Util.h"
+#include "../util/StructureDumper.h"
 
 #include "MslContext.h"
 #include "MslError.h"
@@ -137,40 +138,40 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     else if (link->function != nullptr) {
         MslSession* session = pool.allocSession();
 
+        // give each session an incrementing number used to save the trace logs
+        // not thread safe, but enough for debug logging
+        runNumber++;
+        session->setRunNumber(runNumber);
+        
         session->start(c, link->unit, link->function, req);
 
         if (session->isFinished()) {
 
+            logCompletion(c, link->unit, session);
+            
             if (session->hasErrors()) {
+                Trace(1, "MslEnvironment: Script returned with errors");
                 // will want options to control the generation of a result since
                 // for actions there could be lot of them
                 (void)makeResult(session, true);
-
-                Trace(1, "MslEnvironment: Script returned with errors");
                 // todo: should have a way to convey at least an error flag in the action?
-
-                pool.free(session);
             }
             else {
                 // script/function return value was left on the session, copy it
                 // into the request
                 // may have interesting runtime statistics or complex result values as well
-
                 MslValue* result = session->getValue();
                 if (result != nullptr && !result->isNull()) {
                     Trace(2, "MslEnvironment: Script returned %s", result->getString());
-
                     // copy the value rather than the object so the caller doesn't have
                     // to mess with reclamation
                     req->result.setString(result->getString());
                 }
-                
                 // !! what about errors, they can be left behind on the session too
                 // for things like MIDI requests at most we need is a single line of text for
                 // an alert, the user can then go to the script console for details
-
-                pool.free(session);
             }
+            pool.free(session);
         }
         else if (session->isTransitioning()) {
             (void)makeResult(session, false);
@@ -191,6 +192,41 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     else {
         Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());
         req->error.setError("Unresolved link");
+    }
+}
+
+void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSession* s)
+{
+    StructureDumper& log = s->getLog();
+    // only write if trace was enabled at some point
+    if (log.hasText()) {
+        if (s->hasErrors()) {
+            log.line("Script returned with errors");
+            MslError* errors = s->getErrors();
+            for (MslError* e = errors ; e != nullptr ; e = e->next) {
+                // todo: full formatting like the script window does
+                log.line(e->details);
+            }
+        }
+        else {
+            MslValue* result = s->getValue();
+            if (result != nullptr && !result->isNull()) {
+                log.line("Script finished with value");
+                log.line(result->getString());
+            }
+            else {
+                log.line("Script finished");
+            }
+        }
+
+        juce::File root = c->mslGetLogRoot();
+        juce::File file = root.getChildFile(unit->name + juce::String(".log"));
+
+        juce::String header;
+        header += "---------------------\n";
+        
+        file.appendText(header, false, false, nullptr);
+        file.appendText(log.getText(), false, false, nullptr);
     }
 }
 

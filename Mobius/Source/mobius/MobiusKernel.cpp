@@ -1625,6 +1625,11 @@ bool MobiusKernel::mslExpandScopeKeyword(const char* name, juce::Array<int>& num
     return scriptUtil.expandScopeKeyword(name, numbers);
 }
 
+juce::File MobiusKernel::mslGetLogRoot()
+{
+    return container->getRoot();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Mobius MSL Callbacks

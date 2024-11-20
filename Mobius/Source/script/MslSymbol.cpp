@@ -102,6 +102,7 @@
  */
 void MslSession::mslVisit(MslSymbol* snode)
 {
+    logVisit(snode);
     // for safety check later
     MslStack* startStack = stack;
 
@@ -380,8 +381,17 @@ void MslSession::bindArguments(MslSymbol* snode)
  */
 void MslSession::mslVisit(MslArgumentNode* node)
 {
+    logVisit(node);
     if (node->node != nullptr) {
-        node->node->visit(this);
+        if (stack->phase == 0) {
+            stack->phase = 1;
+            pushStack(node->node);
+        }
+        else {
+            MslValue* cresult = stack->childResults;
+            stack->childResults = nullptr;
+            popStack(cresult);
+        }
     }
     else {
         // argument with no initializer
@@ -551,6 +561,7 @@ void MslSession::callExternal(MslSymbol* snode)
  */
 void MslSession::mslVisit(MslAssignment* ass)
 {
+    logVisit(ass);
     if (stack->phase == 1) {
         // back from the initializer expression
         if (stack->childResults == nullptr) {

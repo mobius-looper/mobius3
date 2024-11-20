@@ -2585,6 +2585,11 @@ bool Supervisor::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbe
     return scriptUtil.expandScopeKeyword(name, numbers);
 }
 
+juce::File Supervisor::mslGetLogRoot()
+{
+    return getRoot();
+}
+
 //
 // MSL support for other things in the shell
 //

@@ -15,6 +15,7 @@
 
 #include <JuceHeader.h>
 
+#include "../util/StructureDumper.h"
 #include "../model/Symbol.h"
 
 #include "MslModel.h"
@@ -63,6 +64,12 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslSession(class MslEnvironment* env);
     ~MslSession();
     void init();
+
+    void setRunNumber(int n);
+    int getRunNumber();
+    void setTrace(bool b);
+    bool isTrace();
+    class StructureDumper& getLog();
     
     // begin evaluation of a function, it will complete or reach a wait state
     void start(class MslContext* context, class MslCompilation* unit,
@@ -113,6 +120,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void mslVisit(class MslArgumentNode* obj) override;
     void mslVisit(class MslKeyword* obj) override;
     void mslVisit(class MslInitNode* obj) override;
+    void mslVisit(class MslTrace* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
@@ -165,6 +173,10 @@ class MslSession : public MslVisitor, public MslSessionInterface
     juce::Array<int> scopeExpansion;
 
     MslAsyncAction asyncAction;
+
+    StructureDumper log;
+    bool trace = false;
+    int runNumber = 0;
     
     //
     // core evaluator
@@ -226,7 +238,15 @@ class MslSession : public MslVisitor, public MslSessionInterface
     juce::String debugNode(MslNode* n);
     void debugNode(MslNode* n, juce::String& s);
     
-};
+    void logLine(const char* line);
+    void logStart();
+    void logContext(const char* title, class MslContext* c);
+    void logBindings(const char* title, class MslBinding* list);
+    void logVisit(class MslNode* node);
+    void logPop(class MslValue* v);
+    void logNode(const char* title, class MslNode* node);
+    const char* getLogName(class MslNode* node);
 
+};
 
     

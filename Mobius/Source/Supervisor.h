@@ -275,7 +275,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     int mslGetMaxScope() override;
     bool mslIsScopeKeyword(const char* name) override;
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
-
+    juce::File mslGetLogRoot() override;
+    
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill);

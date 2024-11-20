@@ -20,6 +20,11 @@ juce::String StructureDumper::getText()
     return buffer;
 }
 
+bool StructureDumper::hasText()
+{
+    return (buffer.length() > 0);
+}
+
 void StructureDumper::clearVisited()
 {
     visited.clear();

@@ -213,6 +213,8 @@ class MslContext
     // fill in an array of concrete scope numbers for that scope
     virtual bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) = 0;
 
+    virtual juce::File mslGetLogRoot() = 0;
+
 };
 
 /****************************************************************************/

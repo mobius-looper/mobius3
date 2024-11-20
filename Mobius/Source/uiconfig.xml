@@ -125,6 +125,7 @@
     <Button action="multiclick"/>
     <Button action="sustest"/>
     <Button action="Setup:asdf"/>
+    <Button action="hello"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

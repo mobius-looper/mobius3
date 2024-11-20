@@ -698,7 +698,10 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     
     else if (t.value == "print" || t.value == "echo")
       keyword = new MslPrint(t);
-    
+
+    else if (t.value == "trace")
+      keyword = new MslTrace(t);
+     
     else if (t.value == "context")
       keyword = new MslContextNode(t);
     

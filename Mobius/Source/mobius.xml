@@ -142,7 +142,6 @@
     speedSyncAdjust='none'>
     <SetupTrack
       name='sadf'
-      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'
@@ -152,7 +151,6 @@
       trackSyncUnit='loop'/>
     <SetupTrack
       name='xxxx'
-      groupName='Groupuu'
       input='127'
       output='127'
       feedback='127'

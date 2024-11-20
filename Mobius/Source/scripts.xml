@@ -41,6 +41,8 @@
       <External path="c:\dev\mobius3\Mobius\Source\intest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\waittest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testtrack.mos"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\mutemidi.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\hello.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -60,6 +62,10 @@
       <File path="c:\dev\mobius3\Mobius\Source\waittest.msl" name="waittest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testtrack.mos" name="testtrack"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\mutemidi.msl"
+            name="mutemidi" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\hello.msl" name="hello"
             added="2147483647"/>
     </Files>
   </Machine>

@@ -83,6 +83,37 @@ void MslSession::init()
     transitioning = false;
     errors = nullptr;
     rootValue = nullptr;
+    runNumber = 0;
+    trace = false;
+}
+
+/**
+ * Called by Environment to set a unique number used to qualify the trace
+ * log files generated when the session completes.
+ */
+void MslSession::setRunNumber(int n)
+{
+    runNumber = n;
+}
+
+int MslSession::getRunNumber()
+{
+    return runNumber;
+}
+
+void MslSession::setTrace(bool b)
+{
+    trace = b;
+}
+
+bool MslSession::isTrace()
+{
+    return trace;
+}
+
+StructureDumper& MslSession::getLog()
+{
+    return log;
 }
 
 /**
@@ -98,14 +129,17 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     rootValue = nullptr;
     pool->freeList(stack);
     stack = nullptr;
-
+    
     context = argContext;
     unit = argUnit;
+
+    log.clear();
+    logStart();
     
     stack = pool->allocStack();
     stack->node = argFunction->getBody();
     stack->bindings = gatherStartBindings(argUnit, argFunction, request);
-
+    
     run();
 }
 
@@ -187,6 +221,8 @@ MslBinding* MslSession::gatherStartBindings(MslCompilation* argUnit,
             request->bindings = nullptr;
         }
     }
+
+    logBindings("gatherStartBindings", startBindings);
     
     return startBindings;
 }
@@ -226,6 +262,8 @@ void MslSession::saveStaticBindings()
         }
         b = nextb;
     }
+
+    logBindings("finalBindings", finalBindings);
         
     unit->bindings = finalBindings;
 }
@@ -259,6 +297,8 @@ void MslSession::resume(MslContext* argContext)
 
     // stack and bindings remain in place
     context = argContext;
+
+    logContext("resume", argContext);
 
     // run may just immediately return if there were errors
     // or if the MslWait hasn't been satisified
@@ -450,6 +490,7 @@ void MslSession::advanceStack()
  */
 MslStack* MslSession::pushStack(MslNode* node)
 {
+    logNode("pushStack", node);
     MslStack* neu = pool->allocStack();
 
     neu->node = node;
@@ -501,6 +542,7 @@ MslStack* MslSession::pushNextChild()
  */
 void MslSession::popStack(MslValue* v)
 {
+    logPop(v);
     // it is permissible to pop without a value, if the child wants nullness to have
     // meaning, it must return an empty MslValue
     MslStack* parent = stack->parent;
@@ -515,6 +557,8 @@ void MslSession::popStack(MslValue* v)
 
         // save the final bindings for static variables back to the compilation unit
         saveStaticBindings();
+
+        logLine("Finished");
     }
     else if (!parent->accumulator) {
         // replace the last value
@@ -681,6 +725,7 @@ MslValue* MslSession::getVariable(const char* name)
  */
 void MslSession::mslVisit(MslLiteral* lit)
 {
+    logVisit(lit);
     MslValue* v = pool->allocValue();
     
     if (lit->isInt) {
@@ -710,7 +755,7 @@ void MslSession::mslVisit(MslLiteral* lit)
  */
 void MslSession::mslVisit(MslBlock* block)
 {
-    (void)block;
+    logVisit(block);
     
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr) {
@@ -739,6 +784,7 @@ void MslSession::mslVisit(MslBlock* block)
  */
 void MslSession::mslVisit(MslVariable* var)
 {
+    logVisit(var);
     // the parser should have only allowed one child, if there is more than
     // one we take the last value
     MslStack* nextStack = pushNextChild();
@@ -788,6 +834,7 @@ void MslSession::mslVisit(MslVariable* var)
  */
 void MslSession::mslVisit(MslFunctionNode* func)
 {
+    logVisit(func);
     addError(func, "Encountered unsifted Function");
 }
 
@@ -807,6 +854,7 @@ void MslSession::mslVisit(MslFunctionNode* func)
  */
 void MslSession::mslVisit(MslReference* ref)
 {
+    logVisit(ref);
     MslBinding* binding = nullptr;
     
     int position = atoi(ref->name.toUTF8());
@@ -914,6 +962,7 @@ MslValue* MslSession::getArgument(int index)
  */
 void MslSession::mslVisit(MslOperator* opnode)
 {
+    logVisit(opnode);
     if (opnode->children.size() == 0) {
         addError(opnode, "Missing operands");
     } 
@@ -1120,6 +1169,7 @@ bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
  */
 void MslSession::mslVisit(MslIf* node)
 {
+    logVisit(node);
     if (stack->phase == 0) {
         // need the condition
         int nodes = node->children.size();
@@ -1167,7 +1217,7 @@ void MslSession::mslVisit(MslIf* node)
  */
 void MslSession::mslVisit(MslElse* node)
 {
-    (void)node;
+    logVisit(node);
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr)
       popStack();
@@ -1201,6 +1251,7 @@ void MslSession::mslVisit(MslElse* node)
  */
 void MslSession::mslVisit(MslWaitNode* wait)
 {
+    logVisit(wait);
     if (stack->wait.active) {
         // we've been here before
         if (stack->wait.finished) {
@@ -1348,6 +1399,7 @@ void MslSession::setupWait(MslWaitNode* node)
 
 void MslSession::mslVisit(MslIn* innode)
 {
+    logVisit(innode);
     if (stack->phase == 0) {
         // the first child block will always be the sequnce injected
         // by the parser
@@ -1506,7 +1558,7 @@ bool MslSession::expandInKeyword(MslValue* keyword)
  */
 void MslSession::mslVisit(MslSequence* seq)
 {
-    (void)seq;
+    logVisit(seq);
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr) {
         popStack();
@@ -1535,6 +1587,7 @@ void MslSession::mslVisit(MslSequence* seq)
  */
 void MslSession::mslVisit(MslContextNode* con)
 {
+    logVisit(con);
     if (con->shell) {
         // the shell was requested
         if (context->mslGetContextId() == MslContextKernel) {
@@ -1569,7 +1622,7 @@ void MslSession::mslVisit(MslContextNode* con)
  */
 void MslSession::mslVisit(MslKeyword* key)
 {
-    (void)key;
+    logVisit(key);
     popStack();
 }
 
@@ -1578,8 +1631,51 @@ void MslSession::mslVisit(MslKeyword* key)
  */
 void MslSession::mslVisit(MslInitNode* init)
 {
-    (void)init;
+    logVisit(init);
     addError(init, "Encountered init mode in the main body");
+}
+
+void MslSession::mslVisit(MslTrace* node)
+{
+    logVisit(node);
+    if (node->control) {
+        trace = node->on;
+        if (trace)
+          Trace(2, "MslSession: Turning trace on");
+        else
+          Trace(2, "MslSession: Turning trace off");
+        popStack(nullptr);
+    }
+    else {
+        // can avoid all this if trace isn't even on
+        if (trace) {
+            // basically the same as MslPrint
+            // shold have a single child block
+            MslStack* nextStack = pushNextChild();
+            if (nextStack != nullptr) {
+                // capture all results in the block
+                nextStack->accumulator = true;
+            }
+            else {
+                if (stack->childResults != nullptr) {
+                    // this could be long so might want to use juce::String here
+                    // even though it can allocate memory in the audio thread
+                    char buffer[1024];
+                    strcpy(buffer, "");
+                    for (MslValue* v = stack->childResults ; v != nullptr ; v = v->next) {
+                        if (v != stack->childResults) AppendString(" ", buffer, sizeof(buffer));
+                        AppendString(v->getString(), buffer, sizeof(buffer));
+                    }
+                    logLine(buffer);
+                }
+                // trace has no return value so we don't clutter up the console displaying it
+                popStack(nullptr);
+            }
+        }
+        else {
+            popStack(nullptr);
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1593,7 +1689,7 @@ void MslSession::mslVisit(MslInitNode* init)
  */
 void MslSession::mslVisit(MslEnd* end)
 {
-    (void)end;
+    logVisit(end);
     MslValue* v = pool->allocValue();
     v->setString("end");
     popStack(v);
@@ -1619,7 +1715,7 @@ void MslSession::mslVisit(MslEnd* end)
  */
 void MslSession::mslVisit(MslPrint* echo)
 {
-    (void)echo;
+    logVisit(echo);
 
     // shold have a single child block
     MslStack* nextStack = pushNextChild();
@@ -1674,6 +1770,95 @@ void MslSession::debugNode(MslNode* n, juce::String& s)
             debugNode(child, s);
         }
         s += "]";
+    }
+}
+
+void MslSession::logLine(const char* line)
+{
+    if (trace) {
+        log.line(line);
+    }
+}
+
+void MslSession::logStart()
+{
+    if (trace) {
+        log.start("MslSession:start");
+        log.add("name", unit->name);
+        log.newline();
+        logContext("start", context);
+    }
+}
+
+void MslSession::logContext(const char* title, MslContext* c)
+{
+    if (trace) {
+        MslContextId id = c->mslGetContextId();
+        juce::String sid;
+        switch (id) {
+            case MslContextNone: sid = "none"; break;
+            case MslContextKernel: sid = "kernel"; break;
+            case MslContextShell: sid = "shell"; break;
+        }
+        log.start(title);
+        log.add("contextId", sid);
+        log.newline();
+    }
+}
+
+void MslSession::logBindings(const char* title, MslBinding* list)
+{
+    if (trace && list != nullptr) {
+        log.line(juce::String(title));
+        log.inc();
+        for (MslBinding* b = list ; b != nullptr ; b = b->next) {
+            juce::String value;
+            if (b->value != nullptr) value = juce::String(b->value->getString());
+            log.line(juce::String(b->name), value);
+        }
+        log.dec();
+    }
+}
+
+const char* MslSession::getLogName(MslNode* node)
+{
+    const char* name = node->getLogName();
+    if (strcmp(name, "?") == 0) {
+        // set breakpoint here
+        int x = 0;
+        (void)x;
+    }
+    return name;
+}
+
+void MslSession::logVisit(MslNode* node)
+{
+    if (trace) {
+        log.start("visit");
+        log.add("type", getLogName(node));
+        log.newline();
+    }
+}
+
+void MslSession::logNode(const char* title, MslNode* node)
+{
+    if (trace) {
+        log.start(title);
+        log.add("node", getLogName(node));
+        log.newline();
+    }
+}
+
+void MslSession::logPop(MslValue* v)
+{
+    if (trace) {
+        log.start("popStack");
+        log.add("node", getLogName(stack->node));
+        if (v == nullptr)
+          log.add("value", "null");
+        else
+          log.add("value", v->getString());
+        log.newline();
     }
 }
 
