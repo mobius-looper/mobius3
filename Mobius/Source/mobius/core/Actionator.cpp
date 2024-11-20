@@ -280,8 +280,18 @@ void Actionator::doActivation(UIAction* action)
         juce::String pname = symbol->name.fromFirstOccurrenceOf(Symbol::ActivationPrefixPreset, false, false);
         MobiusConfig* config = mMobius->getConfiguration();
         int ordinal = Structure::getOrdinal(config->getPresets(), pname.toUTF8());
-        if (ordinal >= 0)
-          mMobius->setActivePreset(ordinal);
+        if (ordinal >= 0) {
+            // in the new TrackManager world, we don't have to mess with focus
+            // and groups, the only thing is track scope
+            int trackNumber = action->getScopeTrack();
+            if (trackNumber == 0) {
+                // I don't think we can be here any more, but just go to the active
+                mMobius->setActivePreset(ordinal);
+            }
+            else {
+                mMobius->setActivePreset(trackNumber - 1, ordinal);
+            }
+        }
         
         char buf[1024];
         // ugh, this generates a warning about char* to juce::CharPointer_UTF8 conversion

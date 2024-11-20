@@ -1,0 +1,4 @@
+!name MidiOutTest
+
+MidiOut noteon 0 42
+MidiOut start

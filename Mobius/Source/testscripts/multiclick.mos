@@ -1,0 +1,34 @@
+#
+# Basic example of old multi-click scripts
+#
+# A multi-click script will wait for a period of time for additional
+# invocations of the script and call a label.
+#
+# When "Label click" is found, the ScriptInterpreter will suspend waiting for
+# more clicks.  When clicks come in it jumps to that label.
+# Just having !multiclick isn't enough, you also need that label.
+# !multiclick only sets the timeout value.
+#
+# Label endClick is optional and is called when the click timeout is reached
+# The timeout resets after every click and starts over
+#
+
+# argument is the multi-click timeout in msecs
+!multiclick 1000
+
+echo multiclick started
+end
+
+# this label is called as other clicks come in
+Label click
+echo multiclick click $clickCount
+end
+
+# this label is called when the click wait finally times out
+# the wait is reset on each click
+# is it?
+
+Label endClick
+echo multiclick end
+end
+

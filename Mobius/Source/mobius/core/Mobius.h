@@ -292,6 +292,7 @@ class Mobius
     // Control over the active track and preset from functions and parameters
     void setActiveTrack(int index);
     void setActivePreset(int ordinal);
+    void setActivePreset(int trackIndex, int presetOrdinal);
     
     // Actions
     class Action* newAction();

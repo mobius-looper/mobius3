@@ -1,0 +1,25 @@
+#
+# Basic example of old sustain scripts
+#
+# The script will run to completion but the ScriptInterpreter is kept around
+# waiting for the up transition on the trigger.  The magic happens in
+# ScriptRuntime::doScriptMaintenance.  It will run the script again jumping to
+# one of the labels.
+# 
+
+# argument is the sustain unit in msecs
+!sustain 1000
+
+echo sustest started
+end
+
+# this label is called when the sustain threshold is crossed
+Label sustain
+echo sustest sustained $sustainCount
+end
+
+# this label is called when the trigger finally goes up
+Label endSustain
+echo sustest end sustain
+end
+

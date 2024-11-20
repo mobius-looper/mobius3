@@ -1,0 +1,4 @@
+if (eventType == "LoopStart" and eventTrack == 1) {
+  MidiOut("Bome MIDI Translator 2" "note" 1 42)
+}
+  

@@ -3,6 +3,7 @@
 
 #include "../model/Symbol.h"
 #include "../model/FunctionProperties.h"
+#include "../model/ScriptProperties.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 #include "../model/UIAction.h"
@@ -306,48 +307,70 @@ AbstractTrack* TrackManager::getTrack(int number)
     return track;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// MSL Waits
-//
-//////////////////////////////////////////////////////////////////////
-
-bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
+MidiEvent* TrackManager::getHeldNotes()
 {
-    bool success = false;
+    return watcher.getHeldNotes();
+}
 
-    int trackNumber = wait->track;
-    if (trackNumber <= 0) {
-        trackNumber = getFocusedTrackIndex() + 1;
-        // assuming it's okay to trash this, we have similar issues
-        // with MslAction and MslQuery
-        // Mobius can handle this without it, but the generic handler can't
-        wait->track = trackNumber;
-    }
-    
-    if (trackNumber <= audioTrackCount) {
-        success = audioEngine->mslWait(wait, error);
-    }
-    else {
-        success = mslHandler.mslWait(wait, error);
-    }
+//////////////////////////////////////////////////////////////////////
+//
+// Inbound Events
+//
+//////////////////////////////////////////////////////////////////////
 
-    if (!success) {
-        Trace(1, "TrackManager: MslWait scheduling failed");
+/**
+ * To start out, we'll be the common listener for all tracks but eventually
+ * it might be better for MidiTracks to do it themselves based on their
+ * follower settings.  Would save some unnessary hunting here.
+ */
+void TrackManager::trackNotification(NotificationId notification, TrackProperties& props)
+{
+    for (int i = 0 ; i < activeMidiTracks ; i++) {
+        MidiTrack* track = midiTracks[i];
+        // this always passes through the Scheduler first
+        track->getScheduler()->trackNotification(notification, props);
     }
-    else {
-        Trace(2, "TrackManager: MslWait scheduled at frame %d", wait->coreEventFrame);
-    }
-    
-    return success;
 }
 
 /**
- * Called when an internal event that had an MslWait has finished
+ * An event comes in from one of the MIDI devices, or the host.
+ * For notes, a shared hold state is maintained in Tracker and can be used
+ * by each track to include notes in a record region that went down before they
+ * were recording, and are still held when they start recording.
+ *
+ * The event is passed to all tracks, if a track wants to record the event
+ * it must make a copy.
+ *
+ * !! The event is tagged with the MidiManager device id, but if this
+ * is a plugin we reserve id zero for the host, so they need to be bumped
+ * by one if that becomes significant
+ *
+ * Actually hate using MidiEvent for this because MidiManager needs to have
+ * a pool, but we won't share it so it's always allocating one.  Just
+ * pass the MidiMessage down
  */
-void TrackManager::finishWait(MslWait* wait, bool canceled)
+void TrackManager::midiEvent(MidiEvent* e)
 {
-    kernel->finishWait(wait, canceled);
+    // watch it first since tracks may reach a state that needs it
+    watcher.midiEvent(e);
+
+    for (int i = 0 ; i < activeMidiTracks ; i++) {
+        MidiTrack* track = midiTracks[i];
+        track->midiEvent(e);
+    }
+    
+    pools.checkin(e);
+}
+
+/**
+ * An event comming in from the plugin host, via Kernel
+ */
+void TrackManager::midiEvent(juce::MidiMessage& msg, int deviceId)
+{
+    MidiEvent* e = pools.newEvent();
+    e->juceMessage = msg;
+    e->device = deviceId;
+    midiEvent(e);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -446,34 +469,146 @@ void TrackManager::doAction(UIAction* src)
         // globals are weird
         doGlobal(src);
     }
+    else if (s->behavior == BehaviorActivation) {
+        doActivation(src);
+    }
+    else if (s->behavior == BehaviorSample) {
+        // Kernel should have caught this
+        Trace(1, "TrackManager: BehaviorSample action leaked down");
+    }
+    else if (s->behavior == BehaviorScript || s->script != nullptr) {
+        doScript(src);
+    }
     else {
+        // function or parameter
         // replicate the source action to one or more actions with specific track scopes
-        UIAction* trackActions = replicateAction(src);
+        UIAction* actions = replicateAction(src);
+        sendActions(actions);
+    }
+}
 
-        while (trackActions != nullptr) {
-            UIAction* next = trackActions->next;
-            // internal components want to use next for their own use so
-            // make sure it starts empty
-            trackActions->next = nullptr;
+/**
+ * Send a list of actions to one of the two sides, and return the actions to the pool.
+ */
+void TrackManager::sendActions(UIAction* actions)
+{
+    while (actions != nullptr) {
+        UIAction* next = actions->next;
+        // internal components want to use next for their own use so
+        // make sure it starts empty
+        actions->next = nullptr;
             
-            int track = trackActions->getScopeTrack();
-            if (track == 0) {
-                // should not see this after replication
-                Trace(1, "TrackManager: Action replication is busted");
-            }
-            else if (track <= audioTrackCount) {
-                // goes to the audio side
-                audioEngine->doAction(trackActions);
-            }
-            else {
-                // goes to the MIDI side
-                doMidiAction(trackActions);
-            }
+        int track = actions->getScopeTrack();
+        if (track == 0) {
+            // should not see this after replication
+            Trace(1, "TrackManager: Action replication is busted");
+        }
+        else if (track <= audioTrackCount) {
+            // goes to the audio side
+            audioEngine->doAction(actions);
+        }
+        else {
+            // goes to the MIDI side
+            doMidiAction(actions);
+        }
 
-            actionPool->checkin(trackActions);
-            trackActions = next;
+        actionPool->checkin(actions);
+        actions = next;
+    }
+}
+
+/**
+ * There are only two types of activations: Setups and Presets.
+ * We don't have a properties model for activations so we have to derive
+ * it from the name prefix, but Setup activations are "global" in that they
+ * do not apply to any particular track, and they only apply to audio tracks.
+ *
+ * Presets can be track specific and need replication, but they only apply
+ * audio tracks.  
+ */
+void TrackManager::doActivation(UIAction* src)
+{
+    juce::String name = src->symbol->name;
+    if (name.startsWith(Symbol::ActivationPrefixSetup)) {
+        // it doesn't matter what track this goes to
+        audioEngine->doAction(src);
+        actionPool->checkin(src);
+    }
+    else if (name.startsWith(Symbol::ActivationPrefixPreset)) {
+        // technically we should keep these out of MIDI tracks if they're
+        // included due to focus or group membership, it's okay to leave
+        // them in as long as they ignore the activation request without
+        // whining about it in the log, ideally should pass "doMidi and doAudio"
+        // flags to replicateAction
+        UIAction* actions = replicateAction(src);
+        sendActions(actions);
+    }
+    else {
+        // you snuck in another activation type without telling me, bastard
+        Trace(1, "TrackManager: Unknown activation type %s", name.toUTF8());
+        actionPool->checkin(src);
+    }
+}
+
+/**
+ * Here for a script symbol.
+ * If this is a MOS script it only goes to the audio side, MSL can
+ * go to both sides.
+ *
+ * Focus lock for MOS scripts is more complex than usual, I think the script
+ * has to say whether it supports focus and this is handled deep within
+ * Actionator, the RunScriptFunction and some combination of the old
+ * script runtime classes.  I don't want to break that right now, so just
+ * pass it through the old way.  This may cause some of my new warnings
+ * to fire if it lands in the Actionator code that deals with unspecified
+ * action scopes.  Eventually move all this out here if possible.
+ * Start by making MSL scripts have "functionness" and see what shakes out of that,
+ * then can handle MOS the same way.
+ *
+ * good news: !focusLock in old scripts worked if you just let it pass through
+ * and it didn't hit our warnings.  I think this is because RunScriptFunction
+ * is flagged as global and internally handled as global.  And must do focus lock
+ * in a different and certainly shitty way.
+ */
+void TrackManager::doScript(UIAction* src)
+{
+    Symbol* sym = src->symbol;
+    
+    if (sym->script == nullptr) {
+        // can't have ScriptHavior without ScriptProperties
+        Trace(1, "TrackManager: Script behavior action without properties %s",
+              sym->getName());
+    }
+    else if (sym->script->coreScript) {
+        // it's an old one
+        int track = src->getScopeTrack();
+        if (track > audioTrackCount) {
+            Trace(1, "TrackManager: MOS scripts can't be sent to MIDI tracks");
+        }
+        else {
+            audioEngine->doAction(src);
         }
     }
+    else if (sym->script->mslLinkage != nullptr) {
+        // it's a new one
+        // kernel is intercepting these and doing this
+        
+        //ActionAdapter aa;
+        //aa.doAction(container->getMslEnvironment(), this, action);
+
+        // let's continue with letting MSL scripts run at a higher level than
+        // function action handling until we need to, it's really more about the
+        // functions the script CAUSES than the running of the script itself,
+        // though it could be desireable to have a script that behaves just like
+        // a function for quantization, event stacking, undo, etc.  that would be more
+        // like how MOS scripts behave
+        Trace(1, "TrackManager: MSL Script action received and we weren't expecting that, no sir");
+    }
+    else {
+        Trace(1, "TrackManager: Malformed ScriptProperties on %s", sym->getName());
+    }
+    
+    actionPool->checkin(src);
 }
 
 /**
@@ -846,7 +981,7 @@ void TrackManager::longPressDetected(LongWatcher::State* state)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Parameters
+// Query
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -978,74 +1113,46 @@ void TrackManager::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Other Stimuli
+// MSL Waits
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * To start out, we'll be the common listener for all tracks but eventually
- * it might be better for MidiTracks to do it themselves based on their
- * follower settings.  Would save some unnessary hunting here.
- */
-void TrackManager::trackNotification(NotificationId notification, TrackProperties& props)
+bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
 {
-    for (int i = 0 ; i < activeMidiTracks ; i++) {
-        MidiTrack* track = midiTracks[i];
-        // this always passes through the Scheduler first
-        track->getScheduler()->trackNotification(notification, props);
-    }
-}
+    bool success = false;
 
-//////////////////////////////////////////////////////////////////////
-//
-// Incomming Events
-//
-//////////////////////////////////////////////////////////////////////
-
-MidiEvent* TrackManager::getHeldNotes()
-{
-    return watcher.getHeldNotes();
-}
-
-/**
- * An event comes in from one of the MIDI devices, or the host.
- * For notes, a shared hold state is maintained in Tracker and can be used
- * by each track to include notes in a record region that went down before they
- * were recording, and are still held when they start recording.
- *
- * The event is passed to all tracks, if a track wants to record the event
- * it must make a copy.
- *
- * !! The event is tagged with the MidiManager device id, but if this
- * is a plugin we reserve id zero for the host, so they need to be bumped
- * by one if that becomes significant
- *
- * Actually hate using MidiEvent for this because MidiManager needs to have
- * a pool, but we won't share it so it's always allocating one.  Just
- * pass the MidiMessage down
- */
-void TrackManager::midiEvent(MidiEvent* e)
-{
-    // watch it first since tracks may reach a state that needs it
-    watcher.midiEvent(e);
-
-    for (int i = 0 ; i < activeMidiTracks ; i++) {
-        MidiTrack* track = midiTracks[i];
-        track->midiEvent(e);
+    int trackNumber = wait->track;
+    if (trackNumber <= 0) {
+        trackNumber = getFocusedTrackIndex() + 1;
+        // assuming it's okay to trash this, we have similar issues
+        // with MslAction and MslQuery
+        // Mobius can handle this without it, but the generic handler can't
+        wait->track = trackNumber;
     }
     
-    pools.checkin(e);
+    if (trackNumber <= audioTrackCount) {
+        success = audioEngine->mslWait(wait, error);
+    }
+    else {
+        success = mslHandler.mslWait(wait, error);
+    }
+
+    if (!success) {
+        Trace(1, "TrackManager: MslWait scheduling failed");
+    }
+    else {
+        Trace(2, "TrackManager: MslWait scheduled at frame %d", wait->coreEventFrame);
+    }
+    
+    return success;
 }
 
 /**
- * An event comming in from the plugin host, via Kernel
+ * Called when an internal event that had an MslWait has finished
  */
-void TrackManager::midiEvent(juce::MidiMessage& msg, int deviceId)
+void TrackManager::finishWait(MslWait* wait, bool canceled)
 {
-    MidiEvent* e = pools.newEvent();
-    e->juceMessage = msg;
-    e->device = deviceId;
-    midiEvent(e);
+    kernel->finishWait(wait, canceled);
 }
 
 //////////////////////////////////////////////////////////////////////

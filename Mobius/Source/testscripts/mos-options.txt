@@ -1,0 +1,55 @@
+Some of the old script options available with ! directives
+
+                else if (StartsWithNoCase(ptr, "focuslock"))
+				  script->setFocusLockAllowed(true);
+
+                else if (StartsWithNoCase(ptr, "quantize"))
+				  script->setQuantize(true);
+
+                else if (StartsWithNoCase(ptr, "switchQuantize"))
+				  script->setSwitchQuantize(true);
+                  
+                // old name
+                else if (StartsWithNoCase(ptr, "controller"))
+				  script->setContinuous(true);
+
+                // new preferred name
+                else if (StartsWithNoCase(ptr, "continous"))
+				  script->setContinuous(true);
+
+                else if (StartsWithNoCase(ptr, "parameter")) {
+                    script->setParameter(true);
+                    // make sure this stays out of the binding windows
+                    script->setHide(true);
+                    // issues here, ignore autoload
+                    script->setAutoLoad(false);
+                }
+
+                else if (StartsWithNoCase(ptr, "sustain")) {
+					// second arg is the sustain unit in msecs
+					parseArgument(ptr, "sustain", arg);
+					int msecs = ToInt(arg);
+                    if (msecs > 0)
+					  script->setSustainMsecs(msecs);
+				}
+                else if (StartsWithNoCase(ptr, "multiclick")) {
+					// second arg is the multiclick unit in msecs
+					parseArgument(ptr, "multiclick", arg);
+					int msecs = ToInt(arg);
+					if (msecs > 0)
+					  script->setClickMsecs(msecs);
+				}
+                else if (StartsWithNoCase(ptr, "spread")) {
+					// second arg is the range in one direction,
+					// e.g. 12 is an octave up and down, if not specified
+					// use the global default range
+					script->setSpread(true);
+					parseArgument(ptr, "spread", arg);
+					int range = ToInt(arg);
+					if (range > 0)
+					  script->setSpreadRange(range);
+				}
+
+
+Of these, !sustain is used frequently, the others far less often.
+

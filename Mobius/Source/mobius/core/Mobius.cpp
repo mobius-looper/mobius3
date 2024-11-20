@@ -776,6 +776,13 @@ void Mobius::setActivePreset(int ordinal)
     mTrack->changePreset(ordinal);
 }
 
+void Mobius::setActivePreset(int track, int ordinal)
+{
+    Track* t = getTrack(track);
+    if (t != nullptr)
+      t->changePreset(ordinal);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Actions and Parameters

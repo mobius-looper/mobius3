@@ -122,8 +122,9 @@
     <Button action="Pause"/>
     <Button action="GlobalMute"/>
     <Button action="GlobalPause"/>
-    <Button action="intest"/>
-    <Button action="waittest"/>
+    <Button action="multiclick"/>
+    <Button action="sustest"/>
+    <Button action="Setup:asdf"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

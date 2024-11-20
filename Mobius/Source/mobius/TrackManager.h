@@ -133,12 +133,15 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void allocateTracks(int baseNumber, int count);
     void refreshState();
 
+    void sendActions(UIAction* actions);
     class UIAction* replicateAction(class UIAction* src);
     class UIAction* replicateGroup(class UIAction* src, int group);
     class UIAction* addAction(class UIAction* list, class UIAction* src, int targetTrack);
     class UIAction* replicateFocused(class UIAction* src);
     bool isGroupFocused(class GroupDefinition* def, class UIAction* src);
     void doGlobal(class UIAction* src);
+    void doActivation(UIAction* src);
+    void doScript(UIAction* src);
     void doMidiAction(class UIAction* src);
     void doTrackSelectAction(class UIAction* a);
 
