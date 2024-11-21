@@ -18,8 +18,10 @@
  * If you are exactly on a boundary, the wait will normally end
  * immediately.  The "next" keyword can be used to force it to the next
  * boundary.
- *
+ * 
  *    wait next bar
+ *    or
+ *    wait bar next
  *
  * Boundary waits are normally relative to the current location.  To
  * make them relative to the start of the loop use "number"
@@ -110,106 +112,75 @@ const char* MslWaitNode::typeToKeyword(MslWaitType e)
 
 /**
  * See file header comments for more on syntax
+ *
+ * This is the first one that would really bennefit from a real parser,
+ * what with the optional keywords and required values and such.
+ * Not worth messing with yet.
  */
 bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
     const char* key = t.value.toUTF8();
 
-    // I suppose we could accept the two keywords in any order
-    // and juggle their meaning?
-    // hmm, might be able to collapse the enumerations and
-    // sort out what is nonsensical later
-    
-    if (type == WaitTypeNone) {
+    if (strcmp(key, "next") == 0) {
+        // allow next on either side of the type, or anywhere really
+        if (next) {
+            // complain about this or just ignore it?
+            p->errorSyntax(t, "Duplicate next keyword");
+        }
+        else {
+            next = true;
+            wants = true;
+
+            // some of these have required amount numbers
+            
+        }
+    }
+    else if (type == WaitTypeNone) {
+        // first one needs to be the type
         type = keywordToType(key);
         if (type != WaitTypeNone)
           wants = true;
+        else
+          p->errorSyntax(t, "Invalid wait type");
+    }
+    else if (strcmp(key, "number")) {
+        if (waitingForAnyNumber())
+          p->errorSyntax(t, "Misplaced keyword");
+        else if (number > 0)
+          p->errorSyntax(t, "Number already specified");
         else {
-            // implicit type=event if the token matches an event keyword
-            // these are the most common and have priority
-            MslWaitEvent ev = keywordToEvent(key);
-            if (ev != WaitEventNone) {
-                type = WaitTypeEvent;
-                event = ev;
-                wants = true;
-            }
-            else {
-                // implicit type=duration or type=location if the token has
-                // an unambiguous match
-                MslWaitDuration dur = keywordToDuration(key);
-                MslWaitLocation loc = keywordToLocation(key);
-                if (dur != WaitDurationNone && loc == WaitLocationNone) {
-                    type = WaitTypeDuration;
-                    duration = dur;
-                    wants = true;
-                }
-                else if (dur == WaitDurationNone && loc != WaitLocationNone) {
-                    type = WaitTypeLocation;
-                    location = loc;
-                    wants = true;
-                }
-                else if (dur == WaitDurationNone && loc == WaitLocationNone) {
-                    p->errorSyntax(t, "Invalid wait unit");
-                }
-                else {
-                    p->errorSyntax(t, "Ambiguous wait unit: use location or duration");
-                }
-            }
+            waitingForNumber = true;
+            wants = true;
         }
     }
-    else if (type == WaitTypeEvent && event == WaitEventNone) {
-        event = keywordToEvent(key);
-        if (event != WaitEventNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid event name");
+    else if (strcmp(key, "repeat")) {
+        if (waitingForAnyNumber())
+          p->errorSyntax(t, "Misplaced keyword");
+        else if (repeats > 0)
+          p->errorSyntax(t, "Repeat already specified");
+        else {
+            waitingForRepeat = true;
+            wants = true;
+        }
     }
-    else if (type == WaitTypeDuration && duration == WaitDurationNone) {
-        duration = keywordToDuration(key);
-        if (duration != WaitDurationNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid duration name");
-    }
-    else if (type == WaitTypeLocation && location == WaitLocationNone) {
-        location = keywordToLocation(key);
-        if (location != WaitLocationNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid location name");
-    }
-    
     return wants;
 }
 
-/**
- * Accept one expression node as an event count,
- * location number, or duration length.
- *
- * ugh, some combos don't need arguments
- *   wait last
- *
- * and some are rare to have multipliers
- *   wait loop
- *
- * "argument" list is possible
- *
- *    wait loop(2)
- *
- * or a different keyword
- *
- *    waitn loop 2
- *
- * or require an argument list
- *
- *    wait(loop 2)
- *
- * None are pretty
- */
-bool MslWaitNode::wantsNode(MslNode* node)
+bool MslWaitNode::wantsNode(MslParser* p, MslNode* node)
 {
     (void)node;
+    bool wants = false;
+    if (type == WaitTypeNone) {
+        p->errorSyntax(node, "Missing wait keyword");
+    }
+    else if (waitingForAnyNumber()) {
+        wants = true;
+    }
+    else 
+    
+
+    
     return (children.size() < 1);
 }
 
