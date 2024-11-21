@@ -55,13 +55,9 @@
             added="2147483647" disabled="1"/>
       <File path="c:\dev\mobius3\Mobius\Source\events.msl" name="eventHandler"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\gustebeast.msl" name="gustebeast"
-            added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\intest.msl" name="intest"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\waittest.msl" name="waittest"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\testtrack.mos" name="testtrack"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\mutemidi.msl"
             name="mutemidi" added="2147483647"/>

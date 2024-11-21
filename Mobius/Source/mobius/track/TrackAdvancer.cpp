@@ -156,6 +156,7 @@ void TrackAdvancer::advance(MobiusAudioStream* stream)
             track->loop();
             scheduler.events.shift(loopFrames);
             currentFrame = 0;
+            checkDrift();
         }
 
         // the number of block frames before the loop point
@@ -188,6 +189,7 @@ void TrackAdvancer::advance(MobiusAudioStream* stream)
 
             track->loop();
             scheduler.events.shift(loopFrames);
+            checkDrift();
             
             consume(afterFrames);
         }
@@ -196,6 +198,50 @@ void TrackAdvancer::advance(MobiusAudioStream* stream)
         // boundary we could loop early, but this will be caught on
         // the next block
         // this may also be an interesting thing to control from a script
+    }
+}
+
+/**
+ * Called immediately after MidiTrack::loop has rewound to the beginning.
+ * See where the leader track is and how far off we are.
+ * There a few ways to do drift correction, a beetter more gradual one is to remember
+ * the amount of floating point roundoff when the rate is caculated and do periodic adjustments.
+ * This is a last resort for when that isn't working or something else knocks it out
+ * of alignment.  The assumption here is that if you're following, you always want to stay
+ * at a synced location, you can't deliberately put it it out of alignment and expect it
+ * to stay there.
+ */
+void TrackAdvancer::checkDrift()
+{
+    // track only for now
+    int leader = scheduler.findLeaderTrack();
+    if (leader > 0) {
+        AbstractTrack* track = scheduler.track;
+        TrackProperties props = scheduler.tracker->getTrackProperties(leader);
+        int myFrames = track->getLoopFrames();
+        int myFrame = track->getFrame();
+        bool checkIt = false;
+        if (myFrames > props.frames) {
+            // we are larger, the leader will play multiple times and when we're
+            // back to the beginning so should the leader be
+            checkIt = true;
+        }
+        else {
+            // we are smaller, we play multiple times for one pass of the leader
+            if (props.currentFrame < myFrames) {
+                // we are within the first pass within the leader track, the frames
+                // should be close
+                checkIt = true;
+            }
+        }
+        if (checkIt) {
+            int delta = myFrame - props.currentFrame;
+            if (delta != 0) {
+                Trace(2, "TrackAdvancer: Track %d with leader %d drift %d",
+                      track->getNumber(), leader, delta);
+                // now do something about it
+            }
+        }
     }
 }
 

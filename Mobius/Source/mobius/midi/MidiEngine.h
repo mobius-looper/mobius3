@@ -31,7 +31,7 @@ class MidiEngine : public TrackEngine
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
     void loadLoop(class MidiSequence* seq, int track, int loop);
-    void refreshState(class MobiusMidiState* state);
+    void refreshState(class MobiusState* state);
 
   private:
 

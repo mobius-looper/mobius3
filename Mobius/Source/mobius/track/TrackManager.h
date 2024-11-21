@@ -14,7 +14,7 @@
 
 #include <JuceHeader.h>
 
-#include "../../model/MobiusMidiState.h"
+#include "../../model/MobiusState.h"
 #include "../../model/Scope.h"
 
 #include "TrackProperties.h"
@@ -42,7 +42,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // Services
 
     class MobiusConfig* getConfiguration();
-    class MobiusMidiState* getState();
+    class MobiusState* getMobiusState();
     class MidiPools* getPools();
     class Pulsator* getPulsator();
     class Valuator* getValuator();
@@ -151,14 +151,14 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // View state
     //
 
-    MobiusMidiState state1;
-    MobiusMidiState state2;
+    MobiusState state1;
+    MobiusState state2;
     char statePhase = 0;
     // kludge: revisit
     int stateRefreshCounter = 0;
     // at 44100 samples per second, it takes 172 256 block to fill a second
     // 1/10 second would then be 17 blocks
     int stateRefreshThreshold = 17;
-    void prepareState(class MobiusMidiState* state, int baseNumber, int count);
+    void prepareState(class MobiusState* state, int baseNumber, int count);
 
 };

@@ -217,14 +217,14 @@ bool MobiusKernel::isGlobalReset()
  * up to the shell, destined for UI refresh.
  * Called at regular intervals by the refresh thread.
  */
-OldMobiusState* MobiusKernel::getState()
+OldMobiusState* MobiusKernel::getOldMobiusState()
 {
     return (mCore != nullptr) ? mCore->getState() : nullptr;
 }
 
-MobiusMidiState* MobiusKernel::getMidiState()
+MobiusState* MobiusKernel::getMobiusState()
 {
-    return mTracks->getState();
+    return mTracks->getMobiusState();
 }
 
 /**

@@ -17,7 +17,7 @@ class MobiusTrackWrapper : public AbstractTrack
     // AbstractTrack Implementations
 
     int getNumber() override;
-    MobiusMidiState::Mode getMode() override;
+    MobiusState::Mode getMode() override;
     int getLoopCount() override;
     int getLoopIndex() override;
     int getLoopFrames() override;

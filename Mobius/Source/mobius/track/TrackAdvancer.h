@@ -44,6 +44,7 @@ class TrackAdvancer
     void consume(int frames);
     void doEvent(class TrackEvent* e);
     void doPulse(class TrackEvent* e);
+    void checkDrift();
 
 };
 

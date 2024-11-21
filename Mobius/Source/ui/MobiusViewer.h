@@ -15,7 +15,7 @@
 #include <JuceHeader.h>
 
 #include "../model/Query.h"
-#include "../model/MobiusMidiState.h"
+#include "../model/MobiusState.h"
 
 class MobiusViewer
 {
@@ -61,16 +61,16 @@ class MobiusViewer
     void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
 
     void refreshMidiTracks(class MobiusInterface* mobius, class MobiusView* view);
-    void refreshMidiTrack(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshMidiTrack(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
 
     //
     // MIDI Tracks
     //
     
-    void refreshMidiMinorModes(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshMidiEvents(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshRegions(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshSync(class MobiusMidiState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshTrackGroups(class MobiusMidiState::Track* tstate,  class MobiusViewTrack* tview);
+    void refreshMidiMinorModes(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshMidiEvents(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshRegions(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshSync(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
+    void refreshTrackGroups(class MobiusState::Track* tstate,  class MobiusViewTrack* tview);
 
 };

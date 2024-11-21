@@ -126,7 +126,7 @@ void SyncContent::labelTextChanged(juce::Label* l)
 void SyncContent::update()
 {
     MobiusInterface* mobius = supervisor->getMobius();
-    OldMobiusState* state = mobius->getState();
+    OldMobiusState* state = mobius->getOldMobiusState();
     OldMobiusSyncState* sync = &(state->sync);
 
     // same pattern repeats three times, factor something that can be reused

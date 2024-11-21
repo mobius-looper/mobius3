@@ -31,7 +31,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/UIAction.h"
 #include "../../model/FunctionProperties.h"
-#include "../../model/MobiusMidiState.h"
+#include "../../model/MobiusState.h"
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
@@ -426,7 +426,7 @@ void TrackScheduler::checkModeCancel(UIAction* a)
     auto mode = track->getMode();
     SymbolId sid = a->symbol->id;
     
-    if (mode == MobiusMidiState::ModeReplace && sid != FuncReplace) {
+    if (mode == MobiusState::ModeReplace && sid != FuncReplace) {
         // here we have an ugly decision table since some of the actions
         // might not need to cancel replace, things like Dump and scripts for example
 
@@ -559,7 +559,7 @@ void TrackScheduler::doUndo(UIAction* src)
         TrackEvent* recevent = events.find(TrackEvent::EventRecord);
 
         if (recevent != nullptr) {
-            if (track->getMode() == MobiusMidiState::ModeRecord) {
+            if (track->getMode() == MobiusState::ModeRecord) {
                 // this is a pending end, unstack and cancel it
                 // todo: If this is AutoRecord we could start subtracting
                 // extensions first
@@ -570,7 +570,7 @@ void TrackScheduler::doUndo(UIAction* src)
                 unstack(recevent);
             }
         }
-        else if (track->getMode() == MobiusMidiState::ModeRecord) {
+        else if (track->getMode() == MobiusState::ModeRecord) {
             // we are within an active recording
             track->doReset(false);
         }
@@ -672,7 +672,7 @@ bool TrackScheduler::isReset()
 {
     bool result = false;
 
-    if (track->getMode() == MobiusMidiState::ModeReset) {
+    if (track->getMode() == MobiusState::ModeReset) {
         result = true;
         if (track->getLoopFrames() != 0)
           Trace(1, "TrackScheduler: Inconsistent ModeReset with positive size");
@@ -845,7 +845,7 @@ bool TrackScheduler::isRecording()
 {
     bool result = false;
     
-    if (track->getMode() == MobiusMidiState::ModeRecord) {
+    if (track->getMode() == MobiusState::ModeRecord) {
         result = true;
     }
     else if (events.find(TrackEvent::EventRecord)) {
@@ -861,7 +861,7 @@ void TrackScheduler::handleRecordAction(UIAction* src)
     TrackEvent* recevent = events.find(TrackEvent::EventRecord);
 
     if (recevent != nullptr) {
-        if (track->getMode() == MobiusMidiState::ModeRecord) {
+        if (track->getMode() == MobiusState::ModeRecord) {
             // this is a pending end
             scheduleRecordEndAction(src, recevent);
         }
@@ -869,7 +869,7 @@ void TrackScheduler::handleRecordAction(UIAction* src)
             scheduleRecordPendingAction(src, recevent);
         }
     }
-    else if (track->getMode() == MobiusMidiState::ModeRecord) {
+    else if (track->getMode() == MobiusState::ModeRecord) {
         // we are within an active recording
 
         // taking the approach initially that all actions will end
@@ -1005,7 +1005,7 @@ void TrackScheduler::handleRoundingAction(UIAction* src)
         // Didn't save the function on the Round event so have to look
         // at the track mode.
         SymbolId function;
-        if (track->getMode() == MobiusMidiState::ModeMultiply)
+        if (track->getMode() == MobiusState::ModeMultiply)
           function = FuncMultiply;
         else
           function = FuncInsert;
@@ -1055,10 +1055,10 @@ bool TrackScheduler::doRound(TrackEvent* event)
 {
     auto mode = track->getMode();
     
-    if (mode == MobiusMidiState::ModeMultiply) {
+    if (mode == MobiusState::ModeMultiply) {
         track->finishMultiply();
     }
-    else if (mode == MobiusMidiState::ModeInsert) {
+    else if (mode == MobiusState::ModeInsert) {
         if (!event->extension) {
             track->finishInsert();
         }
@@ -1102,12 +1102,12 @@ bool TrackScheduler::doRound(TrackEvent* event)
 
 void TrackScheduler::scheduleAction(UIAction* src)
 {
-    MobiusMidiState::Mode mode = track->getMode();
+    MobiusState::Mode mode = track->getMode();
 
-    if (mode == MobiusMidiState::ModeMultiply) {
+    if (mode == MobiusState::ModeMultiply) {
         scheduleRounding(src, mode);
     }
-    else if (mode == MobiusMidiState::ModeInsert) {
+    else if (mode == MobiusState::ModeInsert) {
         scheduleRounding(src, mode);
     }
     else {
@@ -1152,7 +1152,7 @@ void TrackScheduler::scheduleAction(UIAction* src)
  * update: because of addExtensionEvent we should never get here
  * with Insert any more
  */
-void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
+void TrackScheduler::scheduleRounding(UIAction* src, MobiusState::Mode mode)
 {
     TrackEvent* event = eventPool->newEvent();
     event->type = TrackEvent::EventRound;
@@ -1167,7 +1167,7 @@ void TrackScheduler::scheduleRounding(UIAction* src, MobiusMidiState::Mode mode)
     }
 
     SymbolId function;
-    if (mode == MobiusMidiState::ModeMultiply)
+    if (mode == MobiusState::ModeMultiply)
       function = FuncMultiply;
     else
       function = FuncInsert;
@@ -1490,7 +1490,7 @@ void TrackScheduler::doRecord(TrackEvent* e)
     //Trace(2, "TrackScheduler::doRecord %d", track->getNumber());
     
     auto mode = track->getMode();
-    if (mode == MobiusMidiState::ModeRecord) {
+    if (mode == MobiusState::ModeRecord) {
         //Trace(2, "TrackScheduler::doRecord finishing");
         track->finishRecord();
         // I think we need to reset the rateCarryover?
@@ -1863,7 +1863,7 @@ void TrackScheduler::leaderLoopResize(TrackProperties& props)
 /**
  * Contribute state managed by the scheduer to the exported state.
  */
-void TrackScheduler::refreshState(MobiusMidiState::Track* state)
+void TrackScheduler::refreshState(MobiusState::Track* state)
 {
     // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
     state->syncSource = sessionSyncSource;
@@ -1882,7 +1882,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
     state->eventCount = 0;
     int count = 0;
     for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
-        MobiusMidiState::Event* estate = state->events[count];
+        MobiusState::Event* estate = state->events[count];
         bool addit = true;
         int arg = 0;
         switch (e->type) {
@@ -1908,7 +1908,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
             case TrackEvent::EventRound: {
                 // horrible to be doing formatting down here
                 auto mode = track->getMode();
-                if (mode == MobiusMidiState::ModeMultiply)
+                if (mode == MobiusState::ModeMultiply)
                   estate->name = "End Multiply";
                 else {
                     if (e->extension)
@@ -1961,7 +1961,7 @@ void TrackScheduler::refreshState(MobiusMidiState::Track* state)
     // special pseudo mode
     e = events.find(TrackEvent::EventRecord);
     if (e != nullptr && e->pulsed)
-      state->mode = MobiusMidiState::ModeSynchronize;
+      state->mode = MobiusState::ModeSynchronize;
 
 }
 

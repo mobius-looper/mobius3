@@ -1,4 +1,4 @@
- /**
+/**
  * A transformation of the MobiusState object built by the engine
  * for use under the UI components.
  *
@@ -26,7 +26,7 @@
 
 #include <JuceHeader.h>
 
-#include "../model/MobiusMidiState.h"
+#include "../model/MobiusState.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -97,7 +97,7 @@ class MobiusViewTrack {
   public:
 
     MobiusViewTrack() {
-        regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
+        regions.ensureStorageAllocated(MobiusState::MaxRegions);
     }
 
     /**
@@ -348,7 +348,7 @@ class MobiusViewTrack {
     bool refreshEvents = false;
     juce::OwnedArray<MobiusViewEvent> events;
 
-    juce::Array<MobiusMidiState::Region> regions;
+    juce::Array<MobiusState::Region> regions;
     
   protected:
 

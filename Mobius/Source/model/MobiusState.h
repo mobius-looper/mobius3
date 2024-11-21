@@ -39,7 +39,7 @@
 // for SyncSource and SyncUnit
 #include "ParameterConstants.h"
 
-class MobiusMidiState
+class MobiusState
 {
   public:
 
@@ -77,8 +77,8 @@ class MobiusMidiState
 
     static const char* getModeName(Mode amode);
     
-    MobiusMidiState() {}
-    ~MobiusMidiState() {}
+    MobiusState() {}
+    ~MobiusState() {}
 
     /**
      * State for one loop in a track.

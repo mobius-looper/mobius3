@@ -79,7 +79,7 @@ MidiTrack::MidiTrack(TrackManager* t)
     loopCount = 2;
     loopIndex = 0;
 
-    regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
+    regions.ensureStorageAllocated(MobiusState::MaxRegions);
     activeRegion = -1;
 }
 
@@ -247,7 +247,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 player.reset();
                 player.change(layer);
                 
-                bool keepGoing = (mode == MobiusMidiState::ModePlay && !player.isPaused());
+                bool keepGoing = (mode == MobiusState::ModePlay && !player.isPaused());
 
                 if (keepGoing) {
                     recorder.setFrame(currentFrame);
@@ -262,7 +262,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                     // before we call startPause force the mode to Play
                     // so that when we come out of pause, that will be what
                     // we return to
-                    mode = MobiusMidiState::ModePlay;
+                    mode = MobiusState::ModePlay;
                     startPause();
                 }
             }
@@ -319,7 +319,7 @@ bool MidiTrack::isRecording()
 
 bool MidiTrack::isPaused()
 {
-    return (mode == MobiusMidiState::ModePause);
+    return (mode == MobiusState::ModePause);
 }
 
 TrackEventList* MidiTrack::getEventList()
@@ -376,7 +376,7 @@ void MidiTrack::leaderReset(TrackProperties& props)
 void MidiTrack::followerPauseRewind()
 {
     // don't enter Pause mode if we're in Reset
-    if (mode != MobiusMidiState::ModeReset) {
+    if (mode != MobiusState::ModeReset) {
         startPause();
         recorder.rollback(false);
         player.setFrame(0);
@@ -415,7 +415,7 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
 
         // resize and relocate to fit the leader
         leaderResized(props);
-        mode = MobiusMidiState::ModePlay;
+        mode = MobiusState::ModePlay;
 
         player.setPause(false);
 
@@ -455,7 +455,7 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::refreshImportant(MobiusMidiState::Track* state)
+void MidiTrack::refreshImportant(MobiusState::Track* state)
 {
     state->frames = recorder.getFrames();
     state->frame = recorder.getFrame();
@@ -505,7 +505,7 @@ int MidiTrack::simulateLevel(int count)
  * of the State.  Since the level meter sucks and doesn't do it's
  * own decay, we'll do the decay down here so it is predictable.
  */
-void MidiTrack::captureLevels(MobiusMidiState::Track* state)
+void MidiTrack::captureLevels(MobiusState::Track* state)
 {
     int decayUnit = 2;
     
@@ -542,7 +542,7 @@ void MidiTrack::captureLevels(MobiusMidiState::Track* state)
     
 }
 
-void MidiTrack::refreshState(MobiusMidiState::Track* state)
+void MidiTrack::refreshState(MobiusState::Track* state)
 {
     state->loopCount = loopCount;
     state->activeLoop = loopIndex;
@@ -562,11 +562,11 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
 
     state->mode = mode;
     // some simulated modes
-    if (mode == MobiusMidiState::ModePlay) {
+    if (mode == MobiusState::ModePlay) {
         if (overdub)
-          state->mode = MobiusMidiState::ModeOverdub;
+          state->mode = MobiusState::ModeOverdub;
         else if (player.isMuted())
-          state->mode = MobiusMidiState::ModeMute;
+          state->mode = MobiusState::ModeMute;
     }
     
     state->overdub = overdub;
@@ -599,10 +599,10 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     // loop sizes for the loop stack
     for (int i = 0 ; i < loopCount ; i++) {
         MidiLoop* loop = loops[i];
-        MobiusMidiState::Loop* lstate = state->loops[i];
+        MobiusState::Loop* lstate = state->loops[i];
         
         if (lstate == nullptr)
-          Trace(1, "MidiTrack: MobiusMidiState loop array too small");
+          Trace(1, "MidiTrack: MobiusState loop array too small");
         else
           lstate->frames = loop->getFrames();
     }
@@ -621,8 +621,8 @@ void MidiTrack::refreshState(MobiusMidiState::Track* state)
     state->layerCount = layerCount + loop->getRedoCount();
 
     state->regions.clearQuick();
-    for (int i = 0 ; i < regions.size() && i < MobiusMidiState::MaxRegions ; i++) {
-        MobiusMidiState::Region& region = regions.getReference(i);
+    for (int i = 0 ; i < regions.size() && i < MobiusState::MaxRegions ; i++) {
+        MobiusState::Region& region = regions.getReference(i);
         state->regions.add(region);
     }
     
@@ -739,7 +739,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTrack::advance(int frames)
 {
-    if (mode == MobiusMidiState::ModeReset) {
+    if (mode == MobiusState::ModeReset) {
         // nothing to do
         // if we ever get around to latency compensation, may need
         // to advance the player and recorder independently
@@ -832,7 +832,7 @@ void MidiTrack::shift(bool unrounded)
 //
 //////////////////////////////////////////////////////////////////////
 
-MobiusMidiState::Mode MidiTrack::getMode()
+MobiusState::Mode MidiTrack::getMode()
 {
     return mode;
 }
@@ -884,17 +884,17 @@ void MidiTrack::resetRegions()
     regions.clearQuick();
 }
 
-void MidiTrack::startRegion(MobiusMidiState::RegionType type)
+void MidiTrack::startRegion(MobiusState::RegionType type)
 {
     if (activeRegion >= 0) {
-        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        MobiusState::Region& region = regions.getReference(activeRegion);
         region.active = false;
         activeRegion = -1;
     }
     
-    if (regions.size() < MobiusMidiState::MaxRegions) {
+    if (regions.size() < MobiusState::MaxRegions) {
         activeRegion = regions.size();
-        MobiusMidiState::Region region;
+        MobiusState::Region region;
         region.active = true;
         region.type = type;
         region.startFrame = recorder.getFrame();
@@ -907,7 +907,7 @@ void MidiTrack::stopRegion()
 {
     if (activeRegion >= 0) {
         // were in the middle of one already
-        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        MobiusState::Region& region = regions.getReference(activeRegion);
         region.active = false;
     }
     activeRegion = -1;
@@ -916,13 +916,13 @@ void MidiTrack::stopRegion()
 void MidiTrack::resumeOverdubRegion()
 {
     if (overdub)
-      startRegion(MobiusMidiState::RegionOverdub);
+      startRegion(MobiusState::RegionOverdub);
 }
 
 void MidiTrack::advanceRegion(int frames)
 {
     if (activeRegion >= 0) {
-        MobiusMidiState::Region& region = regions.getReference(activeRegion);
+        MobiusState::Region& region = regions.getReference(activeRegion);
         region.endFrame += frames;
     }
 }
@@ -976,7 +976,7 @@ void MidiTrack::doReset(bool full)
     rate = 0.0f;
     goalFrames = 0;
       
-    mode = MobiusMidiState::ModeReset;
+    mode = MobiusState::ModeReset;
 
     recorder.reset();
     player.reset();
@@ -1034,7 +1034,7 @@ void MidiTrack::startRecord()
     MidiLoop* loop = loops[loopIndex];
     loop->reset();
     
-    mode = MobiusMidiState::ModeRecord;
+    mode = MobiusState::ModeRecord;
     recorder.begin();
 
     // todo: I'd like Scheduler to be the only thing that
@@ -1062,7 +1062,7 @@ void MidiTrack::finishRecord()
     // this does recorder.commit and player.shift to start playing
     shift(false);
     
-    mode = MobiusMidiState::ModePlay;
+    mode = MobiusState::ModePlay;
     
     pulsator->lock(number, recorder.getFrames());
 
@@ -1107,10 +1107,10 @@ void MidiTrack::toggleOverdub()
  */
 bool MidiTrack::inRecordingMode()
 {
-    bool recording = (mode == MobiusMidiState::ModeRecord ||
-                      mode == MobiusMidiState::ModeMultiply ||
-                      mode == MobiusMidiState::ModeInsert ||
-                      mode == MobiusMidiState::ModeReplace);
+    bool recording = (mode == MobiusState::ModeRecord ||
+                      mode == MobiusState::ModeMultiply ||
+                      mode == MobiusState::ModeInsert ||
+                      mode == MobiusState::ModeReplace);
     return recording;
 }
 
@@ -1146,7 +1146,7 @@ void MidiTrack::doUndo()
     
     // here is where we should start chipping away at events
     
-    if (mode == MobiusMidiState::ModeRecord) {
+    if (mode == MobiusState::ModeRecord) {
         // we're in the initial recording
         // I seem to remember the EDP used this as an alternate ending
         // reset the current loop only
@@ -1185,7 +1185,7 @@ void MidiTrack::doUndo()
         }
     }
 
-    if (mode != MobiusMidiState::ModeReset) {
+    if (mode != MobiusState::ModeReset) {
         // a whole lot to think about regarding what happens
         // to major and minor modes here
         stopRegion();
@@ -1199,7 +1199,7 @@ void MidiTrack::doUndo()
  */
 void MidiTrack::resumePlay()
 {
-    mode = MobiusMidiState::ModePlay;
+    mode = MobiusState::ModePlay;
     mute = false;
     player.setMute(false);
     player.setPause(false);
@@ -1217,10 +1217,10 @@ void MidiTrack::doRedo()
 {
     Trace(2, "MidiTrack: Redo");
     
-    if (mode == MobiusMidiState::ModeReset) {
+    if (mode == MobiusState::ModeReset) {
         // ignore
     }
-    else if (mode == MobiusMidiState::ModeRecord) {
+    else if (mode == MobiusState::ModeRecord) {
         // we're in the initial recording
         // What would redo do?
         Trace(2, "MidiTrack: Redo ignored during initial recording");
@@ -1263,7 +1263,7 @@ void MidiTrack::doRedo()
     }
 
     // like undo, we've got a world of though around what happens to modes
-    if (mode != MobiusMidiState::ModeReset) {
+    if (mode != MobiusState::ModeReset) {
         overdub = false;
         resumePlay();
     }
@@ -1281,7 +1281,7 @@ void MidiTrack::doRedo()
 void MidiTrack::startMultiply()
 {
     Trace(2, "MidiTrack: Start Multiply");
-    mode = MobiusMidiState::ModeMultiply;
+    mode = MobiusState::ModeMultiply;
     recorder.startMultiply();
 }
 
@@ -1327,7 +1327,7 @@ int MidiTrack::getModeEndFrame()
  */
 int MidiTrack::extendRounding()
 {
-    if (mode == MobiusMidiState::ModeMultiply) {
+    if (mode == MobiusState::ModeMultiply) {
         Trace(2, "MidiTrack: Extending Multiply");
         recorder.extendMultiply();
     }
@@ -1370,10 +1370,10 @@ int MidiTrack::getRoundingFrames()
 void MidiTrack::startInsert()
 {
     Trace(2, "MidiTrack: Start Insert");
-    mode = MobiusMidiState::ModeInsert;
+    mode = MobiusState::ModeInsert;
     player.setPause(true);
     recorder.startInsert();
-    startRegion(MobiusMidiState::RegionInsert);
+    startRegion(MobiusState::RegionInsert);
 }
 
 /**
@@ -1452,7 +1452,7 @@ void MidiTrack::finishSwitch(int newIndex)
         recorder.reset();
         player.reset();
         resetRegions();
-        mode = MobiusMidiState::ModeReset;
+        mode = MobiusState::ModeReset;
     }
     else {
         // a non-empty loop
@@ -1533,7 +1533,7 @@ void MidiTrack::loopCopy(int previous, bool sound)
         recorder.copy(layer, sound);
         // commit the copy to the Loop and prep another one
         shift(false);
-        mode = MobiusMidiState::ModePlay;
+        mode = MobiusState::ModePlay;
     }
 }
 
@@ -1564,7 +1564,7 @@ void MidiTrack::toggleMute()
         mute = false;
 
         // the player follows this only if it is not in Replace mode
-        if (mode != MobiusMidiState::ModeReplace) {
+        if (mode != MobiusState::ModeReplace) {
             player.setMute(false);
         }
         // this does NOT change the mode to Play, other function handlers do that
@@ -1578,7 +1578,7 @@ void MidiTrack::toggleMute()
 
 const char* MidiTrack::getModeName()
 {
-    return MobiusMidiState::getModeName(mode);
+    return MobiusState::getModeName(mode);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1596,7 +1596,7 @@ void MidiTrack::startPause()
 {
     // no real cleanup to do, things just stop and pick up where they left off
     prePauseMode = mode;
-    mode = MobiusMidiState::ModePause;
+    mode = MobiusState::ModePause;
 
     // all notes go off
     player.setPause(true);
@@ -1617,8 +1617,8 @@ void MidiTrack::doStop()
 {
     recorder.rollback(false);
     player.stop();
-    prePauseMode = MobiusMidiState::ModePlay;
-    mode = MobiusMidiState::ModePause;
+    prePauseMode = MobiusState::ModePlay;
+    mode = MobiusState::ModePause;
     
     resetRegions();
 
@@ -1639,7 +1639,7 @@ void MidiTrack::doStart()
     player.setFrame(0);
     player.setPause(false);
     player.setMute(false);
-    mode = MobiusMidiState::ModePlay;
+    mode = MobiusState::ModePlay;
     
     resetRegions();
 
@@ -1659,47 +1659,47 @@ void MidiTrack::doPlay()
 {
     switch (mode) {
 
-        case MobiusMidiState::ModeReset:
+        case MobiusState::ModeReset:
             // nothing to do
             break;
             
-        case MobiusMidiState::ModeSynchronize:
-        case MobiusMidiState::ModeRecord:
-        case MobiusMidiState::ModeMultiply:
-        case MobiusMidiState::ModeInsert:
+        case MobiusState::ModeSynchronize:
+        case MobiusState::ModeRecord:
+        case MobiusState::ModeMultiply:
+        case MobiusState::ModeInsert:
             // scheduler should not have allowed this without unwinding
-            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusState::getModeName(mode));
             break;
 
-        case MobiusMidiState::ModeReplace: {
+        case MobiusState::ModeReplace: {
             // this also should have been caught in the scheudler
             // but at least it's easy to stop
             toggleReplace();
         }
             break;
 
-        case MobiusMidiState::ModeMute:
-        case MobiusMidiState::ModeOverdub: {
+        case MobiusState::ModeMute:
+        case MobiusState::ModeOverdub: {
             // these are derived minor modes, shouldn't be here 
-            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusState::getModeName(mode));
         }
             break;
 
-        case MobiusMidiState::ModePlay: {
+        case MobiusState::ModePlay: {
             // mute is a minor mode of Play, turn it off
             // should actually do th for other cases too?
             if (mute)
               toggleMute();
         }
 
-        case MobiusMidiState::ModePause: {
+        case MobiusState::ModePause: {
             finishPause();
         }
             break;
 
         default: {
             // trace so we can think about these
-            Trace(1, "MidiTrack: doPlay with mode %s", MobiusMidiState::getModeName(mode));
+            Trace(1, "MidiTrack: doPlay with mode %s", MobiusState::getModeName(mode));
         }
             break;
             
@@ -1714,7 +1714,7 @@ void MidiTrack::doPlay()
 
 void MidiTrack::toggleReplace()
 {
-    if (mode == MobiusMidiState::ModeReplace) {
+    if (mode == MobiusState::ModeReplace) {
         Trace(2, "MidiTrack: Stopping Replace %d", recorder.getFrame());
         // audio tracks would shift the layer now, we'll let it go
         // till the end and accumulate more changes
@@ -1733,13 +1733,13 @@ void MidiTrack::toggleReplace()
     }
     else {
         Trace(2, "MidiTrack: Starting Replace %d", recorder.getFrame());
-        mode = MobiusMidiState::ModeReplace;
+        mode = MobiusState::ModeReplace;
         recorder.startReplace();
         // temporarily mute the Player so we don't hear
         // what is being replaced
         player.setMute(true);
 
-        startRegion(MobiusMidiState::RegionReplace);
+        startRegion(MobiusState::RegionReplace);
     }
 }
 
@@ -2248,7 +2248,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // resize and position it as if the Resize command
                 // had been actioned on this track
                 leaderResized(props);
-                mode = MobiusMidiState::ModePlay;
+                mode = MobiusState::ModePlay;
 
                 // player was usually in pause
                 player.setPause(false, true);

@@ -48,7 +48,7 @@
  *
  * Tracks can be added or removed by editing the session.  Because there is a lag between
  * sending the session down to the kernel and the updated track configuration, the engine
- * may send back MobiusState and MobiusMidiState results that do not match the session.  Always
+ * may send back MobiusState and MobiusState results that do not match the session.  Always
  * trust the state objects.
  *
  * Once created a MobiusViewTrack will remain in memory for the duration of the application.
@@ -62,7 +62,7 @@
 #include "../Supervisor.h"
 
 #include "../model/OldMobiusState.h"
-#include "../model/MobiusMidiState.h"
+#include "../model/MobiusState.h"
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
 #include "../model/MobiusConfig.h"
@@ -1039,14 +1039,14 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 //
 // MIDI Tracks
 //
-// While the class is named MobiusMidiState it is really a new model
+// While the class is named MobiusState it is really a new model
 // that will eventually be used for both audio and MIDI tracks.  
 //
 //////////////////////////////////////////////////////////////////////
 
 void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
 {
-    MobiusMidiState* state = mobius->getMidiState();
+    MobiusState* state = mobius->getMobiusState();
 
     if (view->midiTracks != state->activeTracks) {
         Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->activeTracks);
@@ -1062,7 +1062,7 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
     }
     
     for (int i = 0 ; i < state->activeTracks ; i++) {
-        MobiusMidiState::Track* tstate = state->tracks[i];
+        MobiusState::Track* tstate = state->tracks[i];
         int vtrackIndex = view->audioTracks + i;
         if (vtrackIndex < view->tracks.size()) {
             MobiusViewTrack* tview = view->tracks[vtrackIndex];
@@ -1075,7 +1075,7 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
     }
 }
 
-void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack* tview)
 {
     tview->midi = true;
     tview->loopCount = tstate->loopCount;
@@ -1131,9 +1131,9 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
         tview->refreshSwitch = true;
     }
 
-    juce::String newMode = MobiusMidiState::getModeName(tstate->mode);
+    juce::String newMode = MobiusState::getModeName(tstate->mode);
     // MidiTrack does this transformation now too
-    if (tstate->mode == MobiusMidiState::ModePlay && tstate->overdub)
+    if (tstate->mode == MobiusState::ModePlay && tstate->overdub)
       newMode = "Overdub";
 
     if (newMode != tview->mode) {
@@ -1144,7 +1144,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     refreshMidiMinorModes(tstate, tview);
 
     // inactive loop state, can grow these dynamically
-    // note that the MobiusMidiState::Loop array may be larger than the loopCount
+    // note that the MobiusState::Loop array may be larger than the loopCount
     for (int i = tview->loops.size() ; i <= tstate->loopCount ; i++) {
         MobiusViewLoop* vl = new MobiusViewLoop();
         tview->loops.add(vl);
@@ -1152,9 +1152,9 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
 
     for (int i = 0 ; i < tstate->loopCount ; i++) {
         MobiusViewLoop* vl = tview->loops[i];
-        MobiusMidiState::Loop* lstate = tstate->loops[i];
+        MobiusState::Loop* lstate = tstate->loops[i];
         if (lstate == nullptr) {
-            Trace(1, "MidiViewer: MobiusMidiState loop array too small");
+            Trace(1, "MidiViewer: MobiusState loop array too small");
         }
         else {
             vl->frames = (int)(lstate->frames);
@@ -1171,7 +1171,7 @@ void MobiusViewer::refreshMidiTrack(MobiusMidiState::Track* tstate, MobiusViewTr
     refreshTrackGroups(tstate, tview);
 }
 
-void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate, 
+void MobiusViewer::refreshMidiMinorModes(MobiusState::Track* tstate, 
                                          MobiusViewTrack* tview)
 {
     bool refresh = false;
@@ -1206,7 +1206,7 @@ void MobiusViewer::refreshMidiMinorModes(MobiusMidiState::Track* tstate,
     }
 }
     
-void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshMidiEvents(MobiusState::Track* tstate, MobiusViewTrack* tview)
 {
     int newCount = tstate->eventCount;
     int oldCount = tview->events.size();
@@ -1216,7 +1216,7 @@ void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewT
     else {
         // counts didn't change but the contents may have
         for (int i = 0 ; i < tstate->eventCount ; i++) {
-            MobiusMidiState::Event* estate = tstate->events[i];
+            MobiusState::Event* estate = tstate->events[i];
             MobiusViewEvent* ve = tview->events[i];
         
             // LoopMeter will display both the event type name and the argument
@@ -1243,7 +1243,7 @@ void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewT
         tview->events.clear();
 
         for (int i = 0 ; i < tstate->eventCount ; i++) {
-            MobiusMidiState::Event* estate = tstate->events[i];
+            MobiusState::Event* estate = tstate->events[i];
             MobiusViewEvent* ve = new MobiusViewEvent();
             tview->events.add(ve);
             
@@ -1259,12 +1259,12 @@ void MobiusViewer::refreshMidiEvents(MobiusMidiState::Track* tstate, MobiusViewT
     }
 }
 
-void MobiusViewer::refreshRegions(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshRegions(MobiusState::Track* tstate, MobiusViewTrack* tview)
 {
     // yet ANOTHER copy of this
     tview->regions.clearQuick();
-    for (int i = 0 ; i < tstate->regions.size() && i < MobiusMidiState::MaxRegions ; i++) {
-        MobiusMidiState::Region& src = tstate->regions.getReference(i);
+    for (int i = 0 ; i < tstate->regions.size() && i < MobiusState::MaxRegions ; i++) {
+        MobiusState::Region& src = tstate->regions.getReference(i);
         tview->regions.add(src);
     }
 }
@@ -1279,7 +1279,7 @@ void MobiusViewer::refreshRegions(MobiusMidiState::Track* tstate, MobiusViewTrac
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
  * 
  */
-void MobiusViewer::refreshSync(MobiusMidiState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshSync(MobiusState::Track* tstate, MobiusViewTrack* tview)
 {
     tview->syncTempo = tstate->tempo;
     tview->syncBeat = tstate->beat;
@@ -1290,7 +1290,7 @@ void MobiusViewer::refreshSync(MobiusMidiState::Track* tstate, MobiusViewTrack* 
     tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
 }    
 
-void MobiusViewer::refreshTrackGroups(MobiusMidiState::Track* tstate,  MobiusViewTrack* tview)
+void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTrack* tview)
 {
     int newNumber = tstate->group;
     

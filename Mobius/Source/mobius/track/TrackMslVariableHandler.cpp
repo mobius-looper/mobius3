@@ -211,8 +211,8 @@ void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, AbstractTrack* t)
 
 void TrackMslVariableHandler::getModeName(MslQuery* q, AbstractTrack* t)
 {
-    MobiusMidiState::Mode mode = t->getMode();
-    q->value.setString(MobiusMidiState::getModeName(mode));
+    MobiusState::Mode mode = t->getMode();
+    q->value.setString(MobiusState::getModeName(mode));
 }
 
 /**
@@ -230,7 +230,7 @@ void TrackMslVariableHandler::getInOverdub(MslQuery* q, AbstractTrack* t)
 {
     (void)t;
     // in general, MidiTrack doesn't have a lot of state exposure beyond
-    // the full MobiusMidiState
+    // the full MobiusState
     Trace(1, "TrackMslVariableHandler: inOverdub not implemented");
     q->value.setBool(false);
 }

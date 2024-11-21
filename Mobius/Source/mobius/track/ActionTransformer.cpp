@@ -84,12 +84,12 @@ void ActionTransformer::doOneAction(UIAction* a)
         // record has special meaning, before scheduler gets it
         auto mode = track->getMode();
         
-        if (mode == MobiusMidiState::ModeMultiply) {
+        if (mode == MobiusState::ModeMultiply) {
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedMultiply);
             scheduler->doAction(&temp);
         }
-        else if (mode == MobiusMidiState::ModeInsert) {
+        else if (mode == MobiusState::ModeInsert) {
             // unrounded insert
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedInsert);

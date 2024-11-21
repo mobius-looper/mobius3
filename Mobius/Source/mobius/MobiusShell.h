@@ -35,8 +35,8 @@ class MobiusShell : public MobiusInterface
     void initialize(class MobiusConfig* config, class Session* session) override;
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config, class Session* session) override;
-    OldMobiusState* getState() override;    // also shared by the kernel
-    class MobiusMidiState* getMidiState() override;
+    OldMobiusState* getOldMobiusState() override;    // also shared by the kernel
+    class MobiusState* getMobiusState() override;
     void performMaintenance() override;
     void doAction(class UIAction* action) override;
     bool doQuery(class Query* query) override;

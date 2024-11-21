@@ -31,9 +31,9 @@ int MobiusTrackWrapper::getNumber()
     return track->getDisplayNumber();
 }
 
-MobiusMidiState::Mode MobiusTrackWrapper::getMode()
+MobiusState::Mode MobiusTrackWrapper::getMode()
 {
-    return MobiusMidiState::ModeReset;
+    return MobiusState::ModeReset;
 }
 
 int MobiusTrackWrapper::getLoopCount()

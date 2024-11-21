@@ -136,12 +136,12 @@ class MobiusInterface {
      * It is considered read-only and possibly damaging to the engine if you
      * modify it.
      */
-    virtual class OldMobiusState* getState() = 0;
+    virtual class OldMobiusState* getOldMobiusState() = 0;
 
     /**
      * Ditto for MIDI
      */
-    virtual class MobiusMidiState* getMidiState() = 0;
+    virtual class MobiusState* getMobiusState() = 0;
     
     /**
      * Do periodic housekeeping tasks within the maintenance thread.

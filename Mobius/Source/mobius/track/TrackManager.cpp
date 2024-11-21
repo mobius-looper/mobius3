@@ -82,11 +82,11 @@ void TrackManager::initialize(MobiusConfig* config, Session* session)
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
     longWatcher.setListener(this);
 
-    // do an initial full state refresh since getState() only returns part of it
+    // do an initial full state refresh since getMobiusState() only returns part of it
     // and we need loop counts and other things right away
     refreshState();
     // jfc, have to do this twice so both state buffers are initiaized
-    // for the next call to getState, this is working all wrong
+    // for the next call to getMobiusState, this is working all wrong
     refreshState();
 }
 
@@ -106,16 +106,16 @@ void TrackManager::allocateTracks(int baseNumber, int count)
 /**
  * Prepare one of the two state objects.
  */
-void TrackManager::prepareState(MobiusMidiState* state, int baseNumber, int count)
+void TrackManager::prepareState(MobiusState* state, int baseNumber, int count)
 {
     for (int i = 0 ; i < count ; i++) {
-        MobiusMidiState::Track* tstate = new MobiusMidiState::Track();
+        MobiusState::Track* tstate = new MobiusState::Track();
         tstate->index = i;
         tstate->number = baseNumber + i;
         state->tracks.add(tstate);
 
         for (int l = 0 ; l < TrackManagerMaxMidiLoops ; l++) {
-            MobiusMidiState::Loop* loop = new MobiusMidiState::Loop();
+            MobiusState::Loop* loop = new MobiusState::Loop();
             loop->index = l;
             loop->number = l + 1;
             tstate->loops.add(loop);
@@ -124,12 +124,12 @@ void TrackManager::prepareState(MobiusMidiState* state, int baseNumber, int coun
         // enough for a few events
         int maxEvents = 5;
         for (int e = 0 ; e < maxEvents ; e++) {
-            MobiusMidiState::Event* event = new MobiusMidiState::Event();
+            MobiusState::Event* event = new MobiusState::Event();
             tstate->events.add(event);
         }
 
         // loop regions
-        tstate->regions.ensureStorageAllocated(MobiusMidiState::MaxRegions);
+        tstate->regions.ensureStorageAllocated(MobiusState::MaxRegions);
     }
 }
 
@@ -1217,9 +1217,9 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 //
 //////////////////////////////////////////////////////////////////////
 
-MobiusMidiState* TrackManager::getState()
+MobiusState* TrackManager::getMobiusState()
 {
-    MobiusMidiState* state;
+    MobiusState* state;
     if (statePhase == 0)
       state = &state1;
     else
@@ -1230,7 +1230,7 @@ MobiusMidiState* TrackManager::getState()
     for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* track = midiTracks[i];
         if (track != nullptr) {
-            MobiusMidiState::Track* tstate = state->tracks[i];
+            MobiusState::Track* tstate = state->tracks[i];
             if (tstate != nullptr)
               track->refreshImportant(tstate);
         }
@@ -1241,8 +1241,8 @@ MobiusMidiState* TrackManager::getState()
 
 void TrackManager::refreshState()
 {
-    // the opposite of what getState does
-    MobiusMidiState* state;
+    // the opposite of what getMobiusState does
+    MobiusState* state;
     if (statePhase == 0)
       state = &state2;
     else
@@ -1253,7 +1253,7 @@ void TrackManager::refreshState()
     for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* track = midiTracks[i];
         if (track != nullptr) {
-            MobiusMidiState::Track* tstate = state->tracks[i];
+            MobiusState::Track* tstate = state->tracks[i];
             if (tstate != nullptr)
               track->refreshState(tstate);
         }

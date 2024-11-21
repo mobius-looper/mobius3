@@ -418,7 +418,7 @@ bool Supervisor::start()
     // new: having some timing problems in GP with MIDI commands to
     // initialize things needing to have a refreshed view before the
     // editor window is open, always do a view refresh
-    OldMobiusState* state = mobius->getState();
+    OldMobiusState* state = mobius->getOldMobiusState();
     mobiusViewer.refresh(mobius, state, &mobiusView);
     // nothing has been displayed set so turn on all the flags
     mobiusViewer.forceRefresh(&mobiusView);
@@ -959,7 +959,7 @@ void Supervisor::advance()
         // always refresh the view, even if the UI is not visible
         // LoadMidi and possibly other places look at things in the view to
         // do request validation and these need fresh state
-        OldMobiusState* state = mobius->getState();
+        OldMobiusState* state = mobius->getOldMobiusState();
         mobiusViewer.refresh(mobius, state, &mobiusView);
 
         // the actual UI refresh doesn't need to happen unless the window is open

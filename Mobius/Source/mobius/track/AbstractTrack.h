@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../../model/ParameterConstants.h"
-#include "../../model/MobiusMidiState.h"
+#include "../../model/MobiusState.h"
 
 class AbstractTrack
 {
@@ -23,7 +23,7 @@ class AbstractTrack
     virtual int getNumber() = 0;
     virtual bool isFocused() = 0;
     virtual int getGroup() = 0;
-    virtual MobiusMidiState::Mode getMode() = 0;
+    virtual MobiusState::Mode getMode() = 0;
     virtual int getLoopCount() = 0;
     virtual int getLoopIndex() = 0;
     virtual int getLoopFrames() = 0;

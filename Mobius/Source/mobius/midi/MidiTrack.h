@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../../util/Util.h"
-#include "../../model/MobiusMidiState.h"
+#include "../../model/MobiusState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
@@ -61,8 +61,8 @@ class MidiTrack : public AbstractTrack
     //
     
     bool isRecording();
-    void refreshState(class MobiusMidiState::Track* state);
-    void refreshImportant(class MobiusMidiState::Track* state);
+    void refreshState(class MobiusState::Track* state);
+    void refreshImportant(class MobiusState::Track* state);
 
     //
     // stimuli
@@ -100,7 +100,7 @@ class MidiTrack : public AbstractTrack
     }
     
     void alert(const char* msg) override;
-    MobiusMidiState::Mode getMode() override;
+    MobiusState::Mode getMode() override;
     int getLoopIndex() override;
     int getLoopCount() override;
     int getLoopFrames() override;
@@ -203,12 +203,12 @@ class MidiTrack : public AbstractTrack
     TrackScheduler scheduler {this};
     ActionTransformer transformer {this, &scheduler};
     
-    juce::Array<MobiusMidiState::Region> regions;
+    juce::Array<MobiusState::Region> regions;
     int activeRegion = -1;
     
     // state
-    MobiusMidiState::Mode mode = MobiusMidiState::ModeReset;
-    MobiusMidiState::Mode prePauseMode = MobiusMidiState::ModeReset;
+    MobiusState::Mode mode = MobiusState::ModeReset;
+    MobiusState::Mode prePauseMode = MobiusState::ModeReset;
     bool overdub = false;
     bool mute = false;
     bool reverse = false;
@@ -240,7 +240,7 @@ class MidiTrack : public AbstractTrack
     //
     
     void resetRegions();
-    void startRegion(MobiusMidiState::RegionType type);
+    void startRegion(MobiusState::RegionType type);
     void stopRegion();
     void resumeOverdubRegion();
     void advanceRegion(int frames);
@@ -260,9 +260,9 @@ class MidiTrack : public AbstractTrack
 
     void resumePlay();
     const char* getModeName();
-    const char* getModeName(MobiusMidiState::Mode mode);
+    const char* getModeName(MobiusState::Mode mode);
     int simulateLevel(int count);
-    void captureLevels(MobiusMidiState::Track* state);
+    void captureLevels(MobiusState::Track* state);
     void resize();
 
     //

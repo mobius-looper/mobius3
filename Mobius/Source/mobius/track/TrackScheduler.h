@@ -22,7 +22,7 @@
 #pragma once
 
 #include "../../sync/Pulse.h"
-#include "../../model/MobiusMidiState.h"
+#include "../../model/MobiusState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
@@ -49,7 +49,7 @@ class TrackScheduler
     void dump(class StructureDumper& d);
     void reset();
     
-    void refreshState(class MobiusMidiState::Track* state);
+    void refreshState(class MobiusState::Track* state);
     
     // the main entry point from the track to get things going
     void doParameter(class UIAction* a);
@@ -156,7 +156,7 @@ class TrackScheduler
     bool doRound(class TrackEvent* event);
 
     void scheduleAction(class UIAction* src);
-    void scheduleRounding(class UIAction* src, MobiusMidiState::Mode mode);
+    void scheduleRounding(class UIAction* src, MobiusState::Mode mode);
     
     QuantizeMode isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* src, QuantizeMode q);

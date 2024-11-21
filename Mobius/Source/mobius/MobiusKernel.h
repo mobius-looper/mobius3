@@ -89,8 +89,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     class Valuator* getValuator();
 
-    class OldMobiusState* getState();
-    class MobiusMidiState* getMidiState();
+    class OldMobiusState* getOldMobiusState();
+    class MobiusState* getMobiusState();
     
     class AudioPool* getAudioPool() {
         return audioPool;

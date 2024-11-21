@@ -529,14 +529,14 @@ DynamicConfig* MobiusShell::getDynamicConfig()
  * Needs redesign, but this is old and it's all over the core so it will
  * be sensitive.
  */
-OldMobiusState* MobiusShell::getState()
+OldMobiusState* MobiusShell::getOldMobiusState()
 {
-    return kernel.getState();
+    return kernel.getOldMobiusState();
 }
 
-MobiusMidiState* MobiusShell::getMidiState()
+MobiusState* MobiusShell::getMobiusState()
 {
-    return kernel.getMidiState();
+    return kernel.getMobiusState();
 }
 
 /**
