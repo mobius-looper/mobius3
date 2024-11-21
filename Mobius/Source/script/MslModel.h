@@ -119,11 +119,15 @@ class MslNode
     }
 
     // returns true if the node would like to consume the token
-    virtual bool wantsToken(class MslParser* p, MslToken& t) {(void)p; (void)t; return false;}
+    virtual bool wantsToken(class MslParser* p, MslToken& t) {
+        (void)p; (void)t; return false;
+    }
 
     // returns true if the node would like to consume another child node
     // do we really need locked if this works?
-    virtual bool wantsNode(MslNode* node) {(void)node; return false;}
+    virtual bool wantsNode(class MslParser* p, MslNode* n) {
+        (void)p; (void)n; return false;
+    }
 
     // returns true if the node can behave as an operand
     // most of them except for keywoards like if/else/var
@@ -297,7 +301,9 @@ class MslBlock : public MslNode
     // I guess this is where locking comes in to play
     // unless we consume the close bracket token and remember that
     // to make wantsNode return false, this will always hapily take nodes
-    bool wantsNode(MslNode* node) override {(void)node; return true;}
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node; return true;
+    }
 
     // blocks accumulate procs and vars defined within it outside of the
     // logic node tree
@@ -336,8 +342,8 @@ class MslSequence : public MslNode
 
     // should be more restritive here, procs and vars for example
     // don't make sense in a sequence, they are not binding blocks
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         bool wants (children.size() == 0 || armed);
         armed = false;
         return wants;
@@ -401,7 +407,8 @@ class MslOperator : public MslNode
     // are satisified
     // todo: need to support unary
     // disallow structural nodes like proc and var
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
         bool wants = false;
         if (children.size() < 2 &&
             (node->operandable() ||
@@ -457,7 +464,8 @@ class MslAssignment : public MslNode
     MslAssignment(MslToken& t) : MslNode(t) {}
     virtual ~MslAssignment() {}
 
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser*p, MslNode* node) override {
+        (void)p;
         bool wants = false;
         // geez, just have an isAssignable or something
         if (children.size() < 2 &&
@@ -487,7 +495,8 @@ class MslVariable : public MslNode
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
     // vars accept an expression
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
         // okay this is the same as Operator and Assignment
         // except we only accept one child
         // need an isExpression() that encapsulates this
@@ -519,7 +528,8 @@ class MslFunctionNode : public MslNode
     // same as var
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
         bool wants = false;
         if (!hasArgs && node->isBlock() && node->token.value == "(") {
             hasArgs = true;
@@ -573,8 +583,8 @@ class MslInitNode : public MslNode
     MslInitNode(MslToken& t) : MslNode(t) {}
     virtual ~MslInitNode() {}
 
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         return (children.size() != 1);
     }
     
@@ -603,7 +613,8 @@ class MslIf : public MslNode
     // rather than asking a target node if it wants a new node,
     // ask the new node if it wants to be inside the target?
     // is this any different, still have to move up the stack
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
         bool wants = false;
         if (node->isElse()) {
             // only makes sense if we'e already got a condiition
@@ -635,8 +646,8 @@ class MslElse : public MslNode
 
     bool isElse() override {return true;}
 
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         return (children.size() == 0);
     }
     
@@ -670,8 +681,8 @@ class MslPrint : public MslNode
     MslPrint(MslToken& t) : MslNode(t) {}
     ~MslPrint() {}
 
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         return (children.size() == 0);
     }
     
@@ -692,8 +703,8 @@ class MslTrace : public MslNode
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         return (!control && children.size() == 0);
     }
     
@@ -730,8 +741,8 @@ class MslIn : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "In";}
 
-    bool wantsNode(MslNode* n) override {
-        (void)n;
+    bool wantsNode(class MslParser* p, MslNode* n) override {
+        (void)p; (void)n;
         return (children.size() < 2);
     }
 };
@@ -765,8 +776,8 @@ class MslContextNode : public MslNode
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
-    bool wantsNode(MslNode* node) override {
-        (void)node;
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
         return false;
     }
 
@@ -803,7 +814,7 @@ class MslWaitNode : public MslNode
     bool operandable() override {return false;}
     
     bool wantsToken(class MslParser* p, MslToken& t) override;
-    bool wantsNode(MslNode* node) override;
+    bool wantsNode(class MslParser* p, MslNode* node) override;
 
     MslWaitType type = WaitTypeNone;
     MslWaitEvent event = WaitEventNone;

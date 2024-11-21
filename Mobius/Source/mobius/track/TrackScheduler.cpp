@@ -53,6 +53,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+TrackScheduler::TrackScheduler()
+{
+}
+
 TrackScheduler::TrackScheduler(AbstractTrack* t)
 {
     track = t;
@@ -60,6 +64,11 @@ TrackScheduler::TrackScheduler(AbstractTrack* t)
 
 TrackScheduler::~TrackScheduler()
 {
+}
+
+void TrackScheduler::setTrack(AbstractTrack* t)
+{
+    track = t;
 }
 
 void TrackScheduler::initialize(TrackManager* tm)

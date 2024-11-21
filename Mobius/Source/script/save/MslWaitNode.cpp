@@ -32,6 +32,7 @@
 #include <JuceHeader.h>
 
 #include "MslModel.h"
+#include "MslWaitNode.h"
 #include "MslParser.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -40,68 +41,68 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const char* MslWaitTypeKeywords[] = {
-    "none",
-    "subcycle",
-    "cycle",
-    "loop",
-    "start",
-    "end",
-    "beat",
-    "bar",
-    "marker",
-    "frame",
-    "msec",
-    "second",
-    "block",
-    "last",
-    "switch"
-    "externalStart",
-    "pulse",
-    "realign",
-    "return",
-    "driftCheck",
-    nullptr
-    
+class MslWaitKeywordDefinition {
+  public:
+    const char* name;
+    MslWaitType type;
 };
 
-/**
- * Don't just trust these as indexes.
- */
-const char* MslWaitNode::enumToKeyword(const char* keywords[], int e)
+MslWaitKeywordDefinition MslWaitKeywordDefinitions[] = {
+
+    {"none", MslWaitNone},
+    {"subcycle", MslWaitSubcycle},
+    {"cycle", MslWaitCycle},
+    // ambiguous whether this should mean start or end
+    {"loop", MslWaitStart},
+    {"start", MslWaitStart},
+    {"end",, MslWaitEnd},
+    {"beat", MslWaitBeat},
+    {"bar", MslWaitBar},
+    {"marker", MslWaitMarker},
+
+    // since these are always used with a nuber
+    // let them be pluralized
+    {"frame", MslWaitFrame},
+    {"frames", MslWaitFrame},
+    {"msec", MslWaitMsec},
+    {"msecs", MslWaitMsec},
+    {"second",MslWaitSecond},
+    {"seconds",MslWaitSecond},
+
+    {"block", MslWaitBlock},
+    {"last", MslWaitLast},
+    {"switch", MslWaitSwitch},
+    {"externalStart", MslWaitExternalStart},
+    {"pulse", MslWaitPulse},
+    {"realign", MslWaitRealign},
+    {"return", MslWaitReturn},
+    {"driftCheck", MslWaitDriftCheck},
+    
+    {nullptr, MslWantNone}
+};
+
+const char* MslWaitNode::typeToKeyword(MslWaitType type)
 {
     const char* keyword = nullptr;
-    for (int i = 0 ; i <= e ; i++) {
-        keyword = keywords[i];
-        if (keyword == nullptr)
-          break;
+    for (int i = 0 ; MslWaitKeywordDefinitions[i] != nullptr ; i++) {
+        if (MslWaitKeywordDefinitions[i].type == type) {
+            keyword = MslWaitKeywordDefinitions[i].name;
+            break;
+        }
     }
     return keyword;
 }
 
-int MslWaitNode::keywordToEnum(const char* keywords[], const char* key)
+MslWaitType MslWaitNode::keywordToType(const char* key)
 {
-    int e = 0;
-    for (int i = 0 ; keywords[i] != nullptr ; i++) {
-        if (strcmp(keywords[i], key) == 0) {
-            e = i;
+    MslWaitType type = MslWaitNone;
+    for (int i = 0 ; MslWaitKeywordDefinitions[i] != nullptr ; i++) {
+        if (strcmp(MslWaitKeywordDefinitions[i].name, key) == 0) {
+            type = MslWaitKeywordDefinitions[i].type;
             break;
         }
     }
-    return e;
-}
-
-// enum specific mappers
-// used to have more of these, now there is only Type
-
-MslWaitType MslWaitNode::keywordToType(const char* s)
-{
-    return (MslWaitType)keywordToEnum(MslWaitTypeKeywords, s);
-}
-
-const char* MslWaitNode::typeToKeyword(MslWaitType e)
-{
-    return enumToKeyword(MslWaitTypeKeywords, e);
+    return type;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -131,21 +132,23 @@ bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
         else {
             next = true;
             wants = true;
-
-            // some of these have required amount numbers
-            
         }
     }
     else if (type == WaitTypeNone) {
         // first one needs to be the type
+        // I suppose we could let this be out of order too, but why bother
         type = keywordToType(key);
-        if (type != WaitTypeNone)
-          wants = true;
-        else
+        if (type == WaitTypeNone)
           p->errorSyntax(t, "Invalid wait type");
+        else {
+            wants = true;
+            // some of these have required amount numbers
+            if (type == WaitFrame || type == WaitMsec || type == WaitSecond)
+              waitingForAmount = true;
+        }
     }
     else if (strcmp(key, "number")) {
-        if (waitingForAnyNumber())
+        if (isWaitingForNumber())
           p->errorSyntax(t, "Misplaced keyword");
         else if (number > 0)
           p->errorSyntax(t, "Number already specified");
@@ -155,7 +158,7 @@ bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
         }
     }
     else if (strcmp(key, "repeat")) {
-        if (waitingForAnyNumber())
+        if (isWaitingForNumber())
           p->errorSyntax(t, "Misplaced keyword");
         else if (repeats > 0)
           p->errorSyntax(t, "Repeat already specified");
@@ -167,6 +170,11 @@ bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+bool MslWaitNode::isWaitingForNumber()
+{
+    return (waitingForAmount || waitingForNumber || waitingForRepeat);
+}
+
 bool MslWaitNode::wantsNode(MslParser* p, MslNode* node)
 {
     (void)node;
@@ -174,14 +182,19 @@ bool MslWaitNode::wantsNode(MslParser* p, MslNode* node)
     if (type == WaitTypeNone) {
         p->errorSyntax(node, "Missing wait keyword");
     }
-    else if (waitingForAnyNumber()) {
+    else if (waitingForAmount) {
+        amountNodeIndex = children.size();
         wants = true;
     }
-    else 
-    
-
-    
-    return (children.size() < 1);
+    else if (waitingForNumber) {
+        numberNodeIndex = children.size();
+        wants = true;
+    }
+    else if (waitingForRepeat) {
+        repeatNodeIndex = children.size();
+        wants = true;
+    }
+    return wants;
 }
 
 /****************************************************************************/

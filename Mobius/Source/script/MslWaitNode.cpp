@@ -295,8 +295,9 @@ bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
  *
  * None are pretty
  */
-bool MslWaitNode::wantsNode(MslNode* node)
+bool MslWaitNode::wantsNode(MslParser* p, MslNode* node)
 {
+    (void)p;
     (void)node;
     return (children.size() < 1);
 }

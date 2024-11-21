@@ -417,7 +417,7 @@ void MslParser::parseInner(juce::String source)
 
                         // pop up till we're wanted, more than one level?
                         // this still feels weird
-                        if (!current->wantsNode(ass)) {
+                        if (!current->wantsNode(this, ass)) {
                             current->locked = true;
                             current = current->parent;
                         }
@@ -500,7 +500,7 @@ void MslParser::parseOperator(MslToken& t, MslOperators opcode)
 
     // pop up till we're wanted, more than one level?
     // this still feels weird
-    if (!current->wantsNode(op)) {
+    if (!current->wantsNode(this, op)) {
         current->locked = true;
         current = current->parent;
     }
@@ -644,7 +644,7 @@ MslNode* MslParser::push(MslNode* node)
     // kind of dangerous loop, but we must eventually hit the upper
     // block which has an insatiable need
     MslNode* receiver = current;
-    while (!receiver->wantsNode(node)) {
+    while (!receiver->wantsNode(this, node)) {
         receiver->locked = true;
         if (receiver->parent != nullptr) 
           receiver = receiver->parent;

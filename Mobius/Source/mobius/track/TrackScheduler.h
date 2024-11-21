@@ -41,9 +41,11 @@ class TrackScheduler
     
   public:
 
+    TrackScheduler();
     TrackScheduler(class AbstractTrack* t);
     ~TrackScheduler();
 
+    void setTrack(class AbstractTrack* t);
     void initialize(class TrackManager* tm);
     void configure(Session::Track* def);
     void dump(class StructureDumper& d);

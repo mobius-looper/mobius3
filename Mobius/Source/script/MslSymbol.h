@@ -181,7 +181,8 @@ class MslSymbol : public MslNode
     // originally I allowed them to accept {} body blocks and magically
     // become a proc, but I think no, require a proc keyword
 
-    bool wantsNode(MslNode* node) override {
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
         bool wants = false;
         if (node->token.value == "(" && children.size() == 0)
           wants = true;
