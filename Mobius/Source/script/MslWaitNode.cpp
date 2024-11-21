@@ -3,39 +3,30 @@
  * This is more complicated than the others so it was factored
  * out of MslModel.h
  *
- * Very old-school on the name mapping here.  Explore something better.
- * Since this is only used at parse time can make use of juce::HashMap
- * or something.  The assumption is that the index of each string in the
- * array matches the numeric value of the corresponding enumeration.
- *
- * Syntax is weird, and perhaps too complex
- *
- * wait duration msec x
- * wait location subcycle 4
- * wait event last
- *
- * Most of the event waits don't take a multiplier.  I suppose
- * you could want "wait switch 2" meaning wait for the second loop switch
- * event but that's odd because events are pending and would either need
- * a countdown on the event or keep rescheduling it.  maybe combine this
- * with something more like what it would be:
- *
- *    repeat 2 wait switch
- *
- * So, what waits have optional arguments...
- *
- * The only ones that use the values (currently) are
- *
- *     wait frame x
- *     wait msec x
- *     wait second x
- *     wait duration subycle x
- *     wait duration cycle x
- *     wait duration loop x
- *        ! these should be optional
- *
- *    
+ * A keyword is required:
  * 
+ *    wait <type keyword>
+ *
+ * Some keywords require an amount
+ *
+ *    wait frame 123
+ *
+ * A repetition count is allowed but a few will ignore it
+ *
+ *    wait subcycle repeat 2
+ *
+ * If you are exactly on a boundary, the wait will normally end
+ * immediately.  The "next" keyword can be used to force it to the next
+ * boundary.
+ * 
+ *    wait next bar
+ *    or
+ *    wait bar next
+ *
+ * Boundary waits are normally relative to the current location.  To
+ * make them relative to the start of the loop use "number"
+ *
+ *    wait subcycle number 2
  */
 
 #include <JuceHeader.h>
@@ -49,132 +40,68 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-const char* MslWaitTypeKeywords[] = {
-    "none",
-    "event",
-    "duration",
-    "location",
-    nullptr
+class MslWaitKeywordDefinition {
+  public:
+    const char* name;
+    MslWaitType type;
 };
 
-const char* MslWaitEventKeywords[] = {
-    "none",
-    "loop",
-    "end",
-    "cycle",
-    "subcycle",
-    "beat",
-    "bar",
-    "marker",
-    "last",
-    "switch",
-    "block",
-    "externalStart",
-    "pulse",
-    "realign",
-    "return",
-    "driftCheck",
-    nullptr
+MslWaitKeywordDefinition MslWaitKeywordDefinitions[] = {
+
+    {"none", MslWaitNone},
+    {"subcycle", MslWaitSubcycle},
+    {"cycle", MslWaitCycle},
+    // ambiguous whether this should mean start or end
+    {"loop", MslWaitStart},
+    {"start", MslWaitStart},
+    {"end", MslWaitEnd},
+    {"beat", MslWaitBeat},
+    {"bar", MslWaitBar},
+    {"marker", MslWaitMarker},
+
+    // since these are always used with a nuber
+    // let them be pluralized
+    {"frame", MslWaitFrame},
+    {"frames", MslWaitFrame},
+    {"msec", MslWaitMsec},
+    {"msecs", MslWaitMsec},
+    {"second",MslWaitSecond},
+    {"seconds",MslWaitSecond},
+
+    {"block", MslWaitBlock},
+    {"last", MslWaitLast},
+    {"switch", MslWaitSwitch},
+    {"externalStart", MslWaitExternalStart},
+    {"pulse", MslWaitPulse},
+    {"realign", MslWaitRealign},
+    {"return", MslWaitReturn},
+    {"driftCheck", MslWaitDriftCheck},
+    
+    {nullptr, MslWaitNone}
 };
 
-const char* MslWaitDurationKeywords[] = {
-    "none",
-    "frame",
-    "msec",
-    "second",
-    "subcycle",
-    "cycle",
-    "loop",
-    "beat",
-    "bar",
-    nullptr
-};
-
-const char* MslWaitLocationKeywords[] = {
-    "none",
-    "start",
-    "end",
-    "subcycle",
-    "cycle",
-    "beat",
-    "bar",
-    "marker",
-    nullptr
-};
-
-/**
- * Don't just trust these as indexes.
- */
-const char* MslWaitNode::enumToKeyword(const char* keywords[], int e)
+const char* MslWaitNode::typeToKeyword(MslWaitType t)
 {
     const char* keyword = nullptr;
-    for (int i = 0 ; i <= e ; i++) {
-        keyword = keywords[i];
-        if (keyword == nullptr)
-          break;
+    for (int i = 0 ; MslWaitKeywordDefinitions[i].name != nullptr ; i++) {
+        if (MslWaitKeywordDefinitions[i].type == t) {
+            keyword = MslWaitKeywordDefinitions[i].name;
+            break;
+        }
     }
     return keyword;
 }
 
-int MslWaitNode::keywordToEnum(const char* keywords[], const char* key)
+MslWaitType MslWaitNode::keywordToType(const char* key)
 {
-    int e = 0;
-    for (int i = 0 ; keywords[i] != nullptr ; i++) {
-        if (strcmp(keywords[i], key) == 0) {
-            e = i;
+    MslWaitType wtype = MslWaitNone;
+    for (int i = 0 ; MslWaitKeywordDefinitions[i].name != nullptr ; i++) {
+        if (strcmp(MslWaitKeywordDefinitions[i].name, key) == 0) {
+            wtype = MslWaitKeywordDefinitions[i].type;
             break;
         }
     }
-    return e;
-}
-
-// enum specific mappers
-// Type
-
-MslWaitType MslWaitNode::keywordToType(const char* s)
-{
-    return (MslWaitType)keywordToEnum(MslWaitTypeKeywords, s);
-}
-
-const char* MslWaitNode::typeToKeyword(MslWaitType e)
-{
-    return enumToKeyword(MslWaitTypeKeywords, e);
-}
-
-// Event
-
-MslWaitEvent MslWaitNode::keywordToEvent(const char* s)
-{
-    return (MslWaitEvent)keywordToEnum(MslWaitEventKeywords, s);
-}
-
-const char* MslWaitNode::eventToKeyword(MslWaitEvent e)
-{
-    return enumToKeyword(MslWaitEventKeywords, e);
-}
-
-// Duration
-
-MslWaitDuration MslWaitNode::keywordToDuration(const char* s)
-{
-    return (MslWaitDuration)keywordToEnum(MslWaitDurationKeywords, s);
-}
-
-const char* MslWaitNode::durationToKeyword(MslWaitDuration e)
-{
-    return enumToKeyword(MslWaitDurationKeywords, e);
-}
-
-// Location
-
-MslWaitLocation MslWaitNode::keywordToLocation(const char* s)
-{
-    return (MslWaitLocation)keywordToEnum(MslWaitLocationKeywords, s);
-}
-
-const char* MslWaitNode::locationToKeyword(MslWaitLocation e)
-{
-    return enumToKeyword(MslWaitLocationKeywords, e);
+    return wtype;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -184,122 +111,89 @@ const char* MslWaitNode::locationToKeyword(MslWaitLocation e)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * General structure is
+ * See file header comments for more on syntax
  *
- * Wait <type> stuff...
- *
- * Wait event <eventType> <eventCount-expression>
- *
- * Wait duration <durationType> <durationLength-expression>
- *
- * Wait location <locationType> <locationNumber-expression>
- *
- * For syntax convenience, if the event wait token is one of the
- * event type names asume it is an event type.  The conflicts are
- * on things like "subcycle" which is used for all three types, but
- * event waits are the most common.  Reconsider this...
+ * This is the first one that would really bennefit from a real parser,
+ * what with the optional keywords and required values and such.
+ * Not worth messing with yet.
  */
 bool MslWaitNode::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
     const char* key = t.value.toUTF8();
 
-    // I suppose we could accept the two keywords in any order
-    // and juggle their meaning?
-    // hmm, might be able to collapse the enumerations and
-    // sort out what is nonsensical later
-    
-    if (type == WaitTypeNone) {
-        type = keywordToType(key);
-        if (type != WaitTypeNone)
-          wants = true;
+    if (strcmp(key, "next") == 0) {
+        // allow next on either side of the type, or anywhere really
+        if (next) {
+            // complain about this or just ignore it?
+            p->errorSyntax(t, "Duplicate next keyword");
+        }
         else {
-            // implicit type=event if the token matches an event keyword
-            // these are the most common and have priority
-            MslWaitEvent ev = keywordToEvent(key);
-            if (ev != WaitEventNone) {
-                type = WaitTypeEvent;
-                event = ev;
-                wants = true;
-            }
-            else {
-                // implicit type=duration or type=location if the token has
-                // an unambiguous match
-                MslWaitDuration dur = keywordToDuration(key);
-                MslWaitLocation loc = keywordToLocation(key);
-                if (dur != WaitDurationNone && loc == WaitLocationNone) {
-                    type = WaitTypeDuration;
-                    duration = dur;
-                    wants = true;
-                }
-                else if (dur == WaitDurationNone && loc != WaitLocationNone) {
-                    type = WaitTypeLocation;
-                    location = loc;
-                    wants = true;
-                }
-                else if (dur == WaitDurationNone && loc == WaitLocationNone) {
-                    p->errorSyntax(t, "Invalid wait unit");
-                }
-                else {
-                    p->errorSyntax(t, "Ambiguous wait unit: use location or duration");
-                }
-            }
+            next = true;
+            wants = true;
         }
     }
-    else if (type == WaitTypeEvent && event == WaitEventNone) {
-        event = keywordToEvent(key);
-        if (event != WaitEventNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid event name");
+    else if (type == MslWaitNone) {
+        // first one needs to be the type
+        // I suppose we could let this be out of order too, but why bother
+        type = keywordToType(key);
+        if (type == MslWaitNone)
+          p->errorSyntax(t, "Invalid wait type");
+        else {
+            wants = true;
+            // some of these have required amount numbers
+            if (type == MslWaitFrame || type == MslWaitMsec || type == MslWaitSecond)
+              waitingForAmount = true;
+        }
     }
-    else if (type == WaitTypeDuration && duration == WaitDurationNone) {
-        duration = keywordToDuration(key);
-        if (duration != WaitDurationNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid duration name");
+    else if (strcmp(key, "number")) {
+        if (isWaitingForNumber())
+          p->errorSyntax(t, "Misplaced keyword");
+        else if (numberNodeIndex >= 0)
+          p->errorSyntax(t, "Number already specified");
+        else {
+            waitingForNumber = true;
+            wants = true;
+        }
     }
-    else if (type == WaitTypeLocation && location == WaitLocationNone) {
-        location = keywordToLocation(key);
-        if (location != WaitLocationNone)
-          wants = true;
-        else
-          p->errorSyntax(t, "Invalid location name");
+    else if (strcmp(key, "repeat")) {
+        if (isWaitingForNumber())
+          p->errorSyntax(t, "Misplaced keyword");
+        else if (repeatNodeIndex >= 0)
+          p->errorSyntax(t, "Repeat already specified");
+        else {
+            waitingForRepeat = true;
+            wants = true;
+        }
     }
-    
     return wants;
 }
 
-/**
- * Accept one expression node as an event count,
- * location number, or duration length.
- *
- * ugh, some combos don't need arguments
- *   wait last
- *
- * and some are rare to have multipliers
- *   wait loop
- *
- * "argument" list is possible
- *
- *    wait loop(2)
- *
- * or a different keyword
- *
- *    waitn loop 2
- *
- * or require an argument list
- *
- *    wait(loop 2)
- *
- * None are pretty
- */
+bool MslWaitNode::isWaitingForNumber()
+{
+    return (waitingForAmount || waitingForNumber || waitingForRepeat);
+}
+
 bool MslWaitNode::wantsNode(MslParser* p, MslNode* node)
 {
-    (void)p;
     (void)node;
-    return (children.size() < 1);
+    bool wants = false;
+    if (type == MslWaitNone) {
+        p->errorSyntax(node, "Missing wait keyword");
+    }
+    else if (waitingForAmount) {
+        amountNodeIndex = children.size();
+        wants = true;
+    }
+    else if (waitingForNumber) {
+        numberNodeIndex = children.size();
+        wants = true;
+    }
+    else if (waitingForRepeat) {
+        repeatNodeIndex = children.size();
+        wants = true;
+    }
+    return wants;
 }
 
 /****************************************************************************/

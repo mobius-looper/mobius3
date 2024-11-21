@@ -11,92 +11,42 @@
 // either prefix these or move them inside MslWait
 
 /**
- * There are three fundamental wait types.
- *
- *   Event waits for something to happen at an unspecified time in the future
- *   Location waits for a specific point within the loop
- *   Duration waits for a specific period of time
- *
+ * There are all the wait types.  They correspond to keywords that must
+ * come after the wait statement keyword.
  */
 typedef enum {
-    WaitTypeNone,
-    WaitTypeEvent,
-    WaitTypeDuration,
-    WaitTypeLocation
+    MslWaitNone,
+
+    MslWaitSubcycle,
+    MslWaitCycle,
+    MslWaitLoop,
+    MslWaitStart,      // symonym of MslWaitLoop
+    MslWaitEnd,        // special meaning just before the loop point
+    MslWaitBeat,
+    MslWaitBar,
+    MslWaitMarker,
+
+    MslWaitFrame,
+    MslWaitMsec,
+    MslWaitSecond,
+    MslWaitBlock,
+    
+    MslWaitLast,
+    MslWaitSwitch,
+    // from here down, they're iffy and may be not necessary
+    // but the old scripts defined them
+    MslWaitExternalStart,
+    MslWaitPulse,
+    MslWaitRealign,
+    MslWaitReturn,
+    MslWaitDriftCheck
+    
 } MslWaitType;
 
 /**
- * Event waits end when one of these events are detected at an
- * undefined time.
- */
-typedef enum {
-    WaitEventNone,
-    // overlap with these and location events, consider whether we need both
-    WaitEventLoop,  // start of the loop, frame zero after the transition
-    WaitEventEnd,   // end of the loop, just before the transition
-    
-    WaitEventCycle,
-    WaitEventSubcycle,
-    WaitEventBeat,
-    WaitEventBar,
-    WaitEventMarker,
-    WaitEventLast,
-    WaitEventSwitch,
-    WaitEventBlock,
-    // from here down, they're iffy and may be not necessary
-    // but the old scripts defined them
-    WaitEventExternalStart,
-    WaitEventPulse,
-    WaitEventRealign,
-    WaitEventReturn,
-    WaitEventDriftCheck
-} MslWaitEvent;
-
-/**
- * Duration waits end after some number of sample frames advance.
- * The frame advance is calculated with a count applied to these units.
- *
- * todo: might be interesting to allow the specification of arbitrary
- * durations between two markers.
- */
-typedef enum {
-    WaitDurationNone,
-    WaitDurationFrame,
-    WaitDurationMsec,
-    WaitDurationSecond,
-    WaitDurationSubcycle,
-    WaitDurationCycle,
-    WaitDurationLoop,
-    WaitDurationBeat,
-    WaitDurationBar
-} MslWaitDuration;
-
-/**
- * Location waits end when one of these numbered locations within the loop
- * is reached.  You can accomplish the same thing by first using
- * an event "Wait loop" and then an event "Wait subcycle".  This is just
- * syntactic sugar to avoid two different wait statements and reads nicer.
- */
-typedef enum {
-    WaitLocationNone,
-    // overlap with these and event waits, need both?
-    // if we leave them here, they won't have meaningful nubmers
-    WaitLocationStart,
-    WaitLocationEnd,
-    // these have numbers
-    WaitLocationSubcycle,
-    WaitLocationCycle,
-    WaitLocationBeat,
-    WaitLocationBar,
-    // unclear about these, could have a default number in order of insertion
-    // but they'll usually be referenced by name?
-    WaitLocationMarker
-} MslWaitLocation;
-
-/**
- * The Wait object has those three enumerations plus information
- * about how to get back to the things that need to be notified when
- * the wait condition is reached.
+ * This is not the MslNode, it is a runtime object maintained
+ * on the MslStack to hold the results of the MslWaitNode evaluation
+ * and track the status of the wait in the engine.
  */
 class MslWait
 {
@@ -107,14 +57,19 @@ class MslWait
     // This is what is passed down to the engine to schedule the wait
     //
 
-    MslWaitType type = WaitTypeNone;
-    MslWaitEvent event = WaitEventNone;
-    MslWaitDuration duration = WaitDurationNone;
-    MslWaitLocation location = WaitLocationNone;
+    MslWaitType type = MslWaitNone;
 
-    // the numeric value of the Wait expression
-    // this is the duration, location, counter, etc.
-    int value = 0;
+    // the numeric required amount of a few wait types: Frame, Msec, Second
+    int amount = 0;
+
+    // the number of repetitions
+    int repeats = 0;
+
+    // the location number
+    int number = 0;
+
+    // if the "next" keyword was found
+    bool forceNext = false;
 
     // the track this wait should be in, zero means active track
     int track = 0;
@@ -169,10 +124,15 @@ class MslWait
      * debugger to initialize all state.
      */
     void init() {
+        type = MslWaitNone;
+        amount = 0;
+        repeats = 0;
+        number = 0;
+        forceNext = false;
+        
+        track = 0;
         active = false;
         finished = false;
-        value = 0;
-        track = 0;
         coreEvent = nullptr;
         coreEventFrame = 0;
         coreEventCanceled = false;

@@ -131,6 +131,138 @@ bool MobiusMslHandler::mslQuery(MslQuery* query)
 //
 //////////////////////////////////////////////////////////////////////
 
+bool MobiusMslHandler::mslWait(MslWait* wait, MslContextError* error)
+{
+    (void)wait;
+    (void)error;
+    return false;
+}
+
+/**
+ * The target track is supposed to be passed in the MslWait
+ * if the script is using an "in" statement for track scoping.
+ * I guess this can deafult to the active track since everything
+ * else works that way.
+ */
+Track* MobiusMslHandler::getWaitTarget(MslWait* wait)
+{
+    // defaults to active
+    Track* track = mobius->getTrack();
+
+    if (wait->track > 0) {
+        track = mobius->getTrack(wait->track);
+        if (track == nullptr) {
+            Trace(1, "Mobius: MslWait with invalid track number %d", wait->track);
+            // fatal or default?
+            track = mobius->getTrack();
+        }
+    }
+    return track;
+}
+
+bool MobiusMslHandler::scheduleWaitAtFrame(MslWait* wait, int frame)
+{
+    bool success = false;
+    Track* track = getWaitTarget(wait);
+    if (track != nullptr) {
+        EventManager* em = track->getEventManager();
+        Event* e = em->newEvent();
+        
+        e->type = ScriptEvent;
+        e->frame = frame;
+
+        // what old code did and we have no way to pass right now
+        // need this for location waits too
+#if 0            
+        // special option to bring us out of pause mode
+        // Should really only allow this for absolute millisecond waits?
+        // If we're waiting on a cycle should wait for the loop to be
+        // recorded and/or leave pause.  Still it could be useful
+        // to wait for a loop-relative time.
+        e->pauseEnabled = mInPause;
+
+        // !! every relative UNIT_MSEC wait should be implicitly
+        // enabled in pause mode.  No reason not to and it's what
+        // people expect.  No one will remember "inPause"
+        if (mWaitType == WAIT_RELATIVE && mUnit == UNIT_MSEC)
+          e->pauseEnabled = true;
+#endif            
+
+        // old scripts set the ScriptInterpreter on the event
+        // here we set the MslWait which triggers a parallel set of logic
+        // everywhere a ScriptInterpreter would be found
+        //e->setScript(si);
+        e->setMslWait(wait);
+        
+        em->addEvent(e);
+
+        // the old interpreter would set the event on the ScriptStack
+        // here we save it in the Wait object itself
+        // this actually isn't necessary MSL won't do anything with it,
+        // it is only used to pass the previous async event IN when
+        // setting up a "wait last"
+        wait->coreEvent = e;
+
+        // remember this while we're here, could be useful
+        // we can trace it once we get back
+        wait->coreEventFrame = frame;
+
+        success = true;
+    }
+    return success;
+}
+
+/**
+ * Schedule a wait on something that can't be calculated to a specific
+ * frame
+ */
+bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
+{
+    bool success = false;
+    Track* track = getWaitTarget(wait);
+    if (track != nullptr) {
+
+        switch (wait->type) {
+
+            case MslWaitLast: {
+
+                // this works quite differently than MOS scripts
+                // if a previous action scheduled an event, that would have
+                // been returned in the UIAction and MSL would have remembered it
+                // when it reaches a "wait last" it passes that event back down
+                // unlike MOS, we're only dealing with Events here not ThreadEvents
+                Event* event = (Event*)wait->coreEvent;
+                if (event == nullptr) {
+                    // should not have gotten this far
+                    wait->finished = true;
+                }
+                else {
+                    // don't assume this object is still valid
+                    // it almost always will be, but if there was any delay between
+                    // the last action and the wait it could be gone
+                    EventManager* em = track->getEventManager();
+                    if (!em->isEventScheduled(event)) {
+                        // yep, it's gone, don't treat this as an error
+                        wait->finished = true;
+                    }
+                    else {
+                        // and now we wait
+                        event->setMslWait(wait);
+                        // set this while we're here though nothing uses it
+                        wait->coreEventFrame = (int)(event->frame);
+                    }
+                }
+                success = true;
+            }
+                break;
+        }
+    }
+
+    return success;
+}
+
+// old implementation that needs to be redesigned for the new model
+#if 0
 /**
  * todo: not handling the old "inPause" argument, need to find a syntax for
  * that and pass it down through the MslWait
@@ -240,28 +372,6 @@ void MobiusMslHandler::scheduleWaitAtFrame(MslWait* wait, Track* track, int fram
     // remember this while we're here, could be useful
     // we can trace it once we get back
     wait->coreEventFrame = frame;
-}
-
-/**
- * The target track is supposed to be passed in the MslWait
- * if the script is using an "in" statement for track scoping.
- * I guess this can deafult to the active track since everything
- * else works that way.
- */
-Track* MobiusMslHandler::getWaitTarget(MslWait* wait)
-{
-    // defaults to active
-    Track* track = mobius->getTrack();
-
-    if (wait->track > 0) {
-        track = mobius->getTrack(wait->track);
-        if (track == nullptr) {
-            Trace(1, "Mobius: MslWait with invalid track number %d", wait->track);
-            // fatal or default?
-            track = mobius->getTrack();
-        }
-    }
-    return track;
 }
 
 /**
@@ -664,6 +774,7 @@ bool MobiusMslHandler::scheduleEventWait(MslWait* wait)
     }
     return success;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

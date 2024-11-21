@@ -808,34 +808,35 @@ class MslWaitNode : public MslNode
     MslWaitNode(MslToken& t) : MslNode(t) {}
     ~MslWaitNode() {}
 
+    // parsing
+    
+    bool operandable() override {return false;}
+    bool wantsToken(class MslParser* p, MslToken& t) override;
+    bool wantsNode(class MslParser* p, MslNode* node) override;
+    bool waitingForAmount = false;
+    bool waitingForNumber = false;
+    bool waitingForRepeat = false;
+    
+    // runtime
+
     bool isWait() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Wait";}
-    bool operandable() override {return false;}
     
-    bool wantsToken(class MslParser* p, MslToken& t) override;
-    bool wantsNode(class MslParser* p, MslNode* node) override;
-
-    MslWaitType type = WaitTypeNone;
-    MslWaitEvent event = WaitEventNone;
-    MslWaitDuration duration = WaitDurationNone;
-    MslWaitLocation location = WaitLocationNone;
-    juce::String typeName;
-    bool error = false;
-
+    MslWaitType type = MslWaitNone;
+    bool next = false;
+    int amountNodeIndex = -1;
+    int numberNodeIndex = -1;
+    int repeatNodeIndex = -1;
+    
     // public for the console
     const char* typeToKeyword(MslWaitType e);
-    const char* eventToKeyword(MslWaitEvent e);
-    const char* durationToKeyword(MslWaitDuration e);
-    const char* locationToKeyword(MslWaitLocation e);
 
   private:
-    const char* enumToKeyword(const char* keywords[], int e);
-    int keywordToEnum(const char* keywords[], const char* key);
+    
     MslWaitType keywordToType(const char* s);
-    MslWaitEvent keywordToEvent(const char* s);
-    MslWaitDuration keywordToDuration(const char* s);
-    MslWaitLocation keywordToLocation(const char* s);
+    bool isWaitingForNumber();
+
 };
 
 /****************************************************************************/

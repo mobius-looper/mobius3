@@ -21,15 +21,19 @@ class MobiusMslHandler
     class Mobius* mobius = nullptr;
     MobiusMslVariableHandler variables;
 
-    // new MSL support
-    void scheduleWaitAtFrame(class MslWait* wait, class Track* track, int frame);
     class Track* getWaitTarget(class MslWait* wait);
+    bool scheduleWaitAtFrame(class MslWait* wait, int frame);
+    bool scheduleEventWait(MslWait* wait);
+    
+#if 0    
+    void scheduleWaitAtFrame(class MslWait* wait, class Track* track, int frame);
     bool scheduleDurationWait(class MslWait* wait);
     int calculateDurationFrame(class MslWait* wait, class Track* t);
     int getMsecFrames(class Track* t, long msecs);
     bool scheduleLocationWait(class MslWait* wait);
     int calculateLocationFrame(class MslWait* wait, class Track* track);
     bool scheduleEventWait(class MslWait* wait);
+#endif    
 
 };
 

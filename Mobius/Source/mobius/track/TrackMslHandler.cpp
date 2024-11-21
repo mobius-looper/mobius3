@@ -122,11 +122,14 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
 {
     // todo: start depositing errors in MslError now that we have it
     (void)error;
+    (void)wait;
     bool success = false;
 
     // the first thing the old eval() did was user a UserVarible named "interrupted"
     // to null, unclear what that was for
 
+#if 0
+    
     // first dispatch on type
     if (wait->type == WaitTypeDuration)
       success = scheduleDurationWait(wait);
@@ -139,10 +142,14 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
     
     else
       Trace(1, "TrackMslHandler: Invalid wait type");
+#endif
+    
     
     return success;
 }
 
+// old implementation for the original wait model
+#if 0
 /**
  * Duration waits schedule an event that fires after
  * a period of time realative to where the loop is now.
@@ -661,6 +668,7 @@ bool TrackMslHandler::scheduleEventWait(MslWait* wait)
     }
     return success;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/
