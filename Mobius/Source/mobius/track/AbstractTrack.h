@@ -73,7 +73,9 @@ class AbstractTrack
     virtual void doDump() = 0;
     virtual void doInstantMultiply(int n) = 0;
     virtual void doInstantDivide(int n) = 0;
-
+    virtual void doHalfspeed() = 0;
+    virtual void doDoublespeed() = 0;
+    
     // leader stuff
     virtual void leaderReset(class TrackProperties& props) = 0;
     virtual void leaderRecordStart() = 0;

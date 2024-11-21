@@ -290,6 +290,10 @@ TrackProperties TrackManager::getTrackProperties(int number)
             props.currentFrame = track->getFrame();
         }
     }
+    
+    // Mobius doesn't set this, caller should get it consistently
+    props.number = number;
+    
     return props;
 }
 

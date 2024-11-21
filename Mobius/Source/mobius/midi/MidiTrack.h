@@ -139,6 +139,8 @@ class MidiTrack : public AbstractTrack
     void finishPause() override;
     void doStart() override;
     void doStop() override;
+    void doHalfspeed() override;
+    void doDoublespeed() override;
     
     // simple one-shot actions
     void doParameter(class UIAction* a) override;

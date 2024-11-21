@@ -388,7 +388,6 @@ SymbolDefinition SymbolDefinitions[] = {
     {"UnroundedMultiply", FuncUnroundedMultiply},
     {"UnroundedInsert", FuncUnroundedInsert},
 
-    {"Resize", FuncResize},
     {"UpCycle", FuncUpCycle},
     {"DownCycle", FuncDownCycle},
     {"SetCycles", FuncSetCycles},
@@ -421,6 +420,14 @@ SymbolDefinition SymbolDefinitions[] = {
     {"activeButtons", ParamActiveButtons},
     {"bindingOverlays", ParamBindingOverlays},
 
+    //
+    // MIDI
+    //
+
+    {"Resize", FuncMidiResize},
+    {"MidiHalfspeed", FuncMidiHalfspeed},
+    {"MidiDoublespeed", FuncMidiDoublespeed},
+    
     //
     // Files
     //

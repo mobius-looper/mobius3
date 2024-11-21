@@ -28,6 +28,11 @@ class FunctionProperties
     SymbolLevel level = LevelNone;
 
     /**
+     * True if this function is relevant only in MIDI tracks.
+     */
+    bool midiOnly = false;
+
+    /**
      * When true, this is a global function, meaning it is not specific
      * to any one track scope.  Became necessary with MIDI tracks to get things
      * like GlobalReset targeted to both track sets.  Core Function also has a global

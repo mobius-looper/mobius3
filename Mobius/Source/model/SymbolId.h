@@ -321,7 +321,6 @@ typedef enum {
     FuncWindowEndBackward,
     FuncWindowEndForward,
 
-    FuncResize,
     FuncUpCycle,
     FuncDownCycle,
     FuncSetCycles,
@@ -353,6 +352,14 @@ typedef enum {
 
     FuncSamplePlay,
 
+    //
+    // MIDI Specific functions
+    //
+    
+    FuncMidiResize,
+    FuncMidiDoublespeed,
+    FuncMidiHalfspeed,
+    
     //
     // UI Functions
     //

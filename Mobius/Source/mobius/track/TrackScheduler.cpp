@@ -354,8 +354,10 @@ void TrackScheduler::doActionNow(UIAction* a)
         case FuncUnroundedMultiply: track->unroundedMultiply(); break;
         case FuncUnroundedInsert: track->unroundedInsert(); break;
 
-        case FuncResize: doResize(a); break;
-
+        case FuncMidiResize: doResize(a); break;
+        case FuncMidiHalfspeed: track->doHalfspeed(); break;
+        case FuncMidiDoublespeed: track->doDoublespeed(); break;
+            
             // can only be here to start a Pause, after that we'll end up
             // in handlePauseModeAction
         case FuncPause:
@@ -509,7 +511,7 @@ bool TrackScheduler::handleExecutiveAction(UIAction* src)
             // todo: this doesn't belong here and shouldn't
             // be necessary now that we have followers
             // it has enormous mode implications anyway
-        case FuncResize:
+        case FuncMidiResize:
             doResize(src);
             handled = true;
             break;
@@ -766,11 +768,14 @@ void TrackScheduler::handlePauseAction(UIAction* src)
               track->doStart();
             break;
 
-        case FuncResize:
+        case FuncMidiResize:
             // this does not exit pause, but conditions the loop for resume
             // should allow the Cycle functions here too
             doResize(src);
             break;
+
+        case FuncMidiHalfspeed: track->doHalfspeed(); break;
+        case FuncMidiDoublespeed: track->doDoublespeed(); break;
 
         case FuncOverdub:
         case FuncMute:

@@ -121,7 +121,6 @@
   <Function name="WindowEndBackward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="WindowEndForward" mayFocus='true' mayCancelMute='true' tree='Movement'/>
 
-  <Function name="Resize" mayFocus='true' level='core' tree='MIDI'/>
   <Function name="UpCycle" mayFocus='true' level='core' tree='MIDI'/>
   <Function name="DownCycle" mayFocus='true' level='core' tree='MIDI'/>
   <Function name="SetCycles" level='core' tree='MIDI'/>
@@ -138,6 +137,12 @@
 
   <!-- new one for MIDI structure dumping -->
   <Function name="Dump" level="core" tree='Utility'/>
+
+  <!-- MIDI specific -->
+
+  <Function name="MidiResize" midi='true' mayFocus='true' level='core' tree='MIDI'/>
+  <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
+  <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
   
   <!--
   Parameter type=int is assumed unless specified

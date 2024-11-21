@@ -218,28 +218,31 @@ void TrackAdvancer::checkDrift()
     if (leader > 0) {
         AbstractTrack* track = scheduler.track;
         TrackProperties props = scheduler.tracker->getTrackProperties(leader);
-        int myFrames = track->getLoopFrames();
-        int myFrame = track->getFrame();
-        bool checkIt = false;
-        if (myFrames > props.frames) {
-            // we are larger, the leader will play multiple times and when we're
-            // back to the beginning so should the leader be
-            checkIt = true;
-        }
-        else {
-            // we are smaller, we play multiple times for one pass of the leader
-            if (props.currentFrame < myFrames) {
-                // we are within the first pass within the leader track, the frames
-                // should be close
+        // ignore if the leader is empty
+        if (props.frames > 0) {
+            int myFrames = track->getLoopFrames();
+            int myFrame = track->getFrame();
+            bool checkIt = false;
+            if (myFrames > props.frames) {
+                // we are larger, the leader will play multiple times and when we're
+                // back to the beginning so should the leader be
                 checkIt = true;
             }
-        }
-        if (checkIt) {
-            int delta = myFrame - props.currentFrame;
-            if (delta != 0) {
-                Trace(2, "TrackAdvancer: Track %d with leader %d drift %d",
-                      track->getNumber(), leader, delta);
-                // now do something about it
+            else {
+                // we are smaller, we play multiple times for one pass of the leader
+                if (props.currentFrame < myFrames) {
+                    // we are within the first pass within the leader track, the frames
+                    // should be close
+                    checkIt = true;
+                }
+            }
+            if (checkIt) {
+                int delta = myFrame - props.currentFrame;
+                if (delta != 0) {
+                    Trace(2, "TrackAdvancer: Track %d with leader %d drift %d",
+                          track->getNumber(), leader, delta);
+                    // now do something about it
+                }
             }
         }
     }

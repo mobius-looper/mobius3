@@ -277,7 +277,8 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         func->argumentHelp = root->getStringAttribute("argumentHelp");
         func->sustainHelp = root->getStringAttribute("sustainHelp");
         func->mayQuantize = root->getBoolAttribute("mayQuantize");
-
+        func->midiOnly = root->getBoolAttribute("midi");
+        
         // todo: need mayFocus, mayConfirm, and mayMuteCancel in here too!
 
         Symbol* s = supervisor->getSymbols()->intern(name);

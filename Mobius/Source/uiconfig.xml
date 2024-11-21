@@ -126,6 +126,8 @@
     <Button action="sustest"/>
     <Button action="Setup:asdf"/>
     <Button action="hello"/>
+    <Button action="MidiDoublespeed"/>
+    <Button action="MidiHalfspeed"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

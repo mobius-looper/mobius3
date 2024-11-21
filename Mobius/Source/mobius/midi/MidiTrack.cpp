@@ -2263,6 +2263,30 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
     }
 }
 
+/**
+ * Like leader follow, user controlled speed adjustments just adjust
+ * the playback rate, they do not modify the structure of the MidiSequence.
+ * The later is possibly interesting if you always want it to be twice the size
+ * it is from a file, but there can be other non-live ways to do that.
+ */
+void MidiTrack::doHalfspeed()
+{
+    // todo: I think rate change could adjust the location relative to the leaader
+    // if the loop had been playing in this speed from the beginning
+    // that should be caught by the drift detector eventually but it could also
+    // be done now.  Unclear, what does the user expect to hear?
+
+    // this initializes to zero which means "no adjustment" or effecitively 1.0
+    if (rate == 0.0f) rate = 1.0f;
+    rate *= 0.5f;
+}
+
+void MidiTrack::doDoublespeed()
+{
+    if (rate == 0.0f) rate = 1.0f;
+    rate *= 2.0f;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Temporary MSL Stuff
