@@ -829,12 +829,8 @@ class MslWaitNode : public MslNode
     int numberNodeIndex = -1;
     int repeatNodeIndex = -1;
     
-    // public for the console
-    const char* typeToKeyword(MslWaitType e);
-
   private:
     
-    MslWaitType keywordToType(const char* s);
     bool isWaitingForNumber();
 
 };

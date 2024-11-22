@@ -36,3 +36,10 @@ void LogicalTrack::loadSession(Session::Track* session)
 {
     scheduler.configure(session);
 }
+
+bool LogicalTrack::scheduleWait(MslWait* w)
+{
+    // todo: create an EventWait with this wait object
+    // mark it pending, have beginAudioBlock look for it
+    return false;
+}

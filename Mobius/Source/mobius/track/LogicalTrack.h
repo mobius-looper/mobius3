@@ -22,6 +22,8 @@ class LogicalTrack
     void setTrack(class AbstractTrack* t);
     void loadSession(class Session::Track* session);
 
+    bool scheduleWait(MslWait* wait);
+
   private:
 
     /**

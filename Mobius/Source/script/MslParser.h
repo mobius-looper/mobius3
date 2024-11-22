@@ -24,8 +24,9 @@ class MslParser
     // usual file and scriptlet parsing interface
     MslCompilation* parse(juce::String source);
 
-    // make this public so the MslModel classes can add token errors
+    // make these public so the MslModel classes can add token errors
     void errorSyntax(MslToken& t, juce::String details);
+    void errorSyntax(MslNode* node, juce::String details);
     
   private:
 
@@ -47,7 +48,6 @@ class MslParser
     void embody();
     
     void parseInner(juce::String source);
-    void errorSyntax(MslNode* node, juce::String details);
     bool matchBracket(MslToken& t, class MslNode* block);
 
     MslNode* checkKeywords(MslToken& t);

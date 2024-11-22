@@ -125,70 +125,205 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
     (void)wait;
     bool success = false;
 
-    // the first thing the old eval() did was user a UserVarible named "interrupted"
-    // to null, unclear what that was for
+    Trace(2, "TrackMslHandler::mslWait %s", MslWait::typeToKeyword(wait->type));
+    Trace(2, "  amount %d number %d repeats %d",
+          wait->amount, wait->number, wait->repeats);
+    if (wait->forceNext)
+      Trace(2, "  forceNext");
 
-#if 0
-    
-    // first dispatch on type
-    if (wait->type == WaitTypeDuration)
-      success = scheduleDurationWait(wait);
-    
-    else if (wait->type == WaitTypeLocation)
-      success = scheduleLocationWait(wait);
 
-    else if (wait->type == WaitTypeEvent)
-      success = scheduleEventWait(wait);
-    
-    else
-      Trace(1, "TrackMslHandler: Invalid wait type");
-#endif
-    
-    
-    return success;
-}
+    AbstractTrack* track = manager.getAbstractTrack(wait->track);
+    if (track == nullptr) {
+        Trace(TrackMslHandler: Invalid track number in MslWait %d", wait->track);
+    }
+    else {
+        switch (wait->type) {
+            case MslWaitSubcycle: {
+                int subframes = track->getSubcycleFrames();
+                if (subframes == 0)
+                  Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
+                else if (wait->number == 0) {
+                    // todo: find the subcycle we're in, then advance to the next one
+                    // for repeats add the subcycle frame length
+                }
+                else {
+                    int multiplier = wait->number - 1;
+                    // repeats don't really make sense here, but ifyou have them
+                    // it causes multiple iterations to reach the numbered subcycle
+                    int frame = subframes * multiplier;
+                    if (wait->repeats > 0) frame += (track->getLoopFrames * wait->repeats);
+                    success = track->scheduleWaitFrame(wait, frame);
+            }
+                break;
+            
+            case MslWaitCycle: {
+                int cycframes = track->getCycleFrames();
+                if (cycframes == 0)
+                  Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
+                else if (wait->number == 0) {
+                    // todo: find the cycle we're in, then advance to the next one
+                    // for repeats add the cycle frame length
+                }
+                else {
+                    int multiplier = wait->number - 1;
+                    int frame = cycframes * multiplier;
+                    if (wait->repeats > 0) frame += (track->getLoopFrames * wait->repeats);
+                    success = track->scheduleWaitFrame(wait, frame);
+            }
+                break;
+            case MslWaitStart: {
+                if (wait->repeats == 0)
+                  track->scheduleWaitFrame(wait, 0);
+                else {
+                    // I suppose this could mean waiting for several loop passes
+                }
+            }
+                break;
+            case MslWaitEnd: {
+                // todo: this is going to need something special, forget
+                // how Mobius did this
+                track->scheduleWaitFrame(wait, 0);
+            }
+                break;
+            case MslWaitBeat: {
+                // todo: Schedule an EventWait marked pending in our TrackEventList
+                // then have TrackAdvancer look for it
+                // for repeats, give it a countdown
+            }
+                break;
+            case MslWaitBar: {
+                // todo: Schedule an EventWait marked pending in our TrackEventList
+                // then have TrackAdvancer look for it
+            }
+                break;
 
-// old implementation for the original wait model
-#if 0
-/**
- * Duration waits schedule an event that fires after
- * a period of time realative to where the loop is now.
- * Old scripts call this WAIT_RELATIVE.
- *
- * The track number in which to schedule the wait is passed in MslWait::track
- * The frame at which the wait was scheduled is passed back in MslWait::endFrame
- * An opaque pointer to the Event that was scheduled is passed back in MslWait::coreEvent
- *
- */
-bool TrackMslHandler::scheduleDurationWait(MslWait* wait)
-{
-    bool success = false;
+            case MslWaitFrame: {
+                // straight and to the point
+                int frames = wait->amount;
+                // I suppose we can support repeats here, but you could also just mutltiply
+                if (wait->repeats > 0) frames *= wait->repeats;
+                success = track->scheduleWaitFrame(wait, frame);
+            }
+                break;
+            case MslWaitMsec: {
+                int frames = getMsecFrames(track, wait->amount);
+                if (wait->repeats > 0) frames *= wait->repeats;
+                success = track->scheduleWaitFrame(wait, track->getLoopFrame() + frames);
+            }
+                break;
+            case MslWaitSecond: {
+                int frames = getSecondFrames(track, wait->amount);
+                if (wait->repeats > 0) frames *= wait->repeats;
+                success = track->scheduleWaitFrame(wait, track->getLoopFrame() + frames);
+            }
+                break;
+            case MslWaitBlock: {
+                // this we don't need to ask the track to schedule, just put
+                // it on our event list and handle it
+                LogicalTrack* lt = manager->getLogicalTrack(wait->track);
+                success = lt->scheduleWait(wait);
+            }
+                break;
     
-    AbstractTrack* track = getWaitTarget(wait);
-    if (track != nullptr) {
-        int frame = calculateDurationFrame(wait, track);
-
-        // If the duration is zero, skip scheduling an event
-        // This is different than old scripts which always scheduled an event
-        // that immediately timed out, unclear if there was some subtle side
-        // effect to doing that.  I know people used to do "Wait 1" a lot to
-        // advance past a quantization point but I don't think they used "Wait 0"
-        // to accomplish something.
-    
-        if (frame > 0) {
-            (void)scheduleWaitAtFrame(wait, track, frame);
-            success = true;
+            case MslWaitLast: {
+                // this is track engine specific
+                success = track->scheduleWaitEvent(wait);
+            }
+                break;
         }
-        else {
-            // if we ignored it, is this "success"?
-            // MslSession will error off if we return false
+            break;
+            
+            case MslWaitMarker:
+            // from here down, they're iffy and may be not necessary
+            // but the old scripts defined them
+            case MslWaitSwitch:
+            case MslWaitExternalStart:
+            case MslWaitPulse:
+            case MslWaitRealign:
+            case MslWaitReturn:
+            case MslWaitDriftCheck:
+            default:
+                Trace(1, "TrackMslHandler: Wait type %s not implemented",
+                      MslWait::typeToKeyword(wait->type));
+                break;
         }
     }
     return success;
 }
 
 /**
+ * The target track is supposed to be passed in the MslWait
+ * if the script is using an "in" statement for track scoping.
+ * I guess this can deafult to the active track since everything
+ * else works that way.
+ *
+ * new: The notion of "active track" only applies to Mobius audio
+ * tracks.  For MIDI tracks it must be specified, and when Mobius
+ * tracks become AbstractTracks, TrackManager must always resolve this.
+ */
+AbstractTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
+{
+    AbstractTrack* track = nullptr;
+    
+    if (wait->track == 0) {
+        Trace(1, "TrackMslHandler: Can't schedule wait without a track scope");
+    }
+    else {
+        track = manager->getTrack(wait->track);
+        if (track == nullptr) {
+            Trace(1, "TrackMslHandler: MslWait with invalid track number %d", wait->track);
+            // default to focused?
+            //track = mobius->getTrack();
+        }
+    }
+    return track;
+}
+
+/**
+ * Return the number of frames represented by a millisecond.
+ * Adjusted for the current playback rate.  
+ * For accurate waits, you have to ensure that the rate can't
+ * change while we're waiting.
+ *
+ * new: Revisit this I hate having to rely on rate adjusted track
+ * advance for absolute time waits.  Instead, the event could be pending
+ * with a countdown frame counter that decrements on each block at the
+ * normal sampleRate and is independent of the track advance.
+ */
+int TrackMslHandler::getMsecFrames(AbstractTrack* track, int msecs)
+{
+    // old code uses the MSEC_TO_FRAMES macro which was defined
+    // as this buried in MobiusConfig.h
+    // #define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
+    // that obviously doesn't work with variable sample rates so need to weed
+    // out all uses of that old macro
+	// should we ceil() here?
+    int msecFrames = (int)((float)(manager->getContainer()->getSampleRate()) * ((float)msecs / 1000.0f));
+
+    // adjust by playback rate
+	//float rate = track->getEffectiveSpeed();
+	float rate = track->getRate();
+    int frames = (int)((float)msecFrames * rate);
+    
+    return frames;
+}
+
+int TrackMslHandler::getSecondFrames(AbstractTrack* track, int seconds)
+{
+    int secFrames = manager->getContainer()->getSampleRate();
+    secFrames *= seconds;
+	float rate = track->getRate();
+    int frames = (int)((float)secFrames * rate);
+    return frames;
+}
+
+
+// old implementation for the original wait model
+#if 0
+
+/**
  * The basic mechanism of scheduling an event at a specific position
+ * This would be implemented by MidiTrack and MobiusTrackWrapper
  */
 TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, AbstractTrack* track, int frame)
 {
@@ -236,158 +371,7 @@ TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, AbstractTrack* t
 
     return e;
 }
-
-/**
- * The target track is supposed to be passed in the MslWait
- * if the script is using an "in" statement for track scoping.
- * I guess this can deafult to the active track since everything
- * else works that way.
- *
- * new: The notion of "active track" only applies to Mobius audio
- * tracks.  For MIDI tracks it must be specified, and when Mobius
- * tracks become AbstractTracks, TrackManager must always resolve this.
- */
-AbstractTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
-{
-    AbstractTrack* track = nullptr;
-    
-    if (wait->track == 0) {
-        Trace(1, "TrackMslHandler: Can't schedule wait without a track scope");
-    }
-    else {
-        track = manager->getTrack(wait->track);
-        if (track == nullptr) {
-            Trace(1, "TrackMslHandler: MslWait with invalid track number %d", wait->track);
-            // default to focused?
-            //track = mobius->getTrack();
-        }
-    }
-    return track;
-}
-
-/**
- * Calculate the number of frames that correspond to a duration.
- *
- * When the target loop is empty as is the case on the initial record,
- * the durations Subcycle, Cycle, and Loop are not relevant.
- *
- * Well, I suppose they could be for AutoRecord, but it is most likely an error.
- * Old scripts converted this to an arbitrary 1 second wait, here
- * we'll trace an error.
- *
- * todo: need a way for wait scheduling to return warnings and errors
- * so the user doesn't have to watch the trace log.
- */
-int TrackMslHandler::calculateDurationFrame(MslWait* wait, AbstractTrack* track)
-{
-    int frame = 0;
-    int loopFrames = track->getLoopFrames();
-
-    switch (wait->duration) {
-
-        case WaitDurationFrame: {
-            // straight and to the point
-            frame = wait->value;
-        }
-            break;
-
-        case WaitDurationMsec: {
-            frame = getMsecFrames(track, wait->value);
-        }
-            break;
             
-        case WaitDurationSecond: {
-            frame = getMsecFrames(track, wait->value * 1000);
-        }
-            break;
-            
-        case WaitDurationSubcycle: {
-            if (loopFrames > 0) {
-                frame = track->getSubcycleFrames() * wait->value;
-            }
-            else {
-                Trace(1, "MSL: Wait duration Subcycle is not evailable in an empty loop");
-            }
-        }
-            break;
-            
-        case WaitDurationCycle: {
-            if (loopFrames > 0) {
-                frame = track->getCycleFrames() * wait->value;
-            }
-            else {
-                Trace(1, "MSL: Wait duration Cycle is not evailable in an empty loop");
-            }
-        }
-            break;
-            
-        case WaitDurationLoop: {
-            if (loopFrames > 0) {
-                frame = loopFrames * wait->value;
-            }
-            else {
-                Trace(1, "MSL: Wait duration Loop is not evailable in an empty loop");
-            }
-        }
-            break;
-            
-        case WaitDurationBeat: {
-            // new in MSL and not available yet
-            // beat is relevant only when syncing to Host or MIDI in which
-            // case we need to get the beat frame width from Synchronizer
-            // if Mobius is the sync master I suppose this could be the
-            // same as subcycle
-            Trace(1, "MSL: Wait duration Beat not implemented");
-        }
-            break;
-            
-        case WaitDurationBar: {
-            // new in MSL and not available yet
-            // like beat only relevant when syncing to Host or MIDI
-            // if Mobius is the sync master I suppose this could be the
-            // same as cycle
-            Trace(1, "MSL: Wait duration Beat not implemented");
-        }
-            break;
-
-        default:
-            Trace(1, "MSL: Invalid wait duration");
-            break;
-    }
-
-    return frame;
-}
-            
-/**
- * Return the number of frames represented by a millisecond.
- * Adjusted for the current playback rate.  
- * For accurate waits, you have to ensure that the rate can't
- * change while we're waiting.
- *
- * new: Revisit this I hate having to rely on rate adjusted track
- * advance for absolute time waits.  Instead, the event could be pending
- * with a countdown frame counter that decrements on each block at the
- * normal sampleRate and is independent of the track advance.
- */
-int TrackMslHandler::getMsecFrames(AbstractTrack* track, long msecs)
-{
-    // old code uses the MSEC_TO_FRAMES macro which was defined
-    // as this buried in MobiusConfig.h
-    // #define MSEC_TO_FRAMES(msec) (int)(CD_SAMPLE_RATE * ((float)msec / 1000.0f))
-    //
-    // that obviously doesn't work with variable sample rates so need to weed
-    // out all uses of that old macro
-	// should we ceil() here?
-    int msecFrames = (int)((float)(manager->getContainer()->getSampleRate()) * ((float)msecs / 1000.0f));
-
-    // adjust by playback rate
-	//float rate = track->getEffectiveSpeed();
-	float rate = track->getRate();
-    int frames = (int)((float)msecFrames * rate);
-    
-    return frames;
-}
-
 /**
  * A location wait waits for a subdivision of the loop identifified by number.
  */

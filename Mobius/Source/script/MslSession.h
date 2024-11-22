@@ -227,6 +227,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // waits
     void setupWait(MslWaitNode* node);
     bool isWaitActive();
+    MslValue* getChildResult(int index);
 
     // in
     bool expandInKeyword(MslValue* keyword);

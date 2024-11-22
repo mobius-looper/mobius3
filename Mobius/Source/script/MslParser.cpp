@@ -292,11 +292,24 @@ void MslParser::parseInner(juce::String source)
     while (tokenizer.hasNext() && script->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
+        if (script->errors.size() > 0)
+          continue;
+
         // some nodes consume tokens without creating more nodes
         // parser passed so the node can add an error if it wants to
         // ugly
-        if (current->wantsToken(this, t) || script->errors.size() > 0)
+        if (current->wantsToken(this, t))
           continue;
+
+        // kludge for waits, keywords come in while child nodes are on the stack
+        // and if the child node doesn't want it, it becomes a MslSymbol which
+        // can then be passed to wantsNode, but we don't have a way to keep it out
+        // of the child list, if a child doesn't want a token, ask the parent and if
+        // it does, pop and give it do it
+        if (current->parent != nullptr && current->parent->wantsToken(this, t)) {
+            current = current->parent;
+            continue;
+        }
 
         // todo: if this is a keyword like "else" that doesn't
         // make sense on it's own, then raise an error, otherwies

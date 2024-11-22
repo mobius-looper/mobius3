@@ -19,8 +19,7 @@ typedef enum {
 
     MslWaitSubcycle,
     MslWaitCycle,
-    MslWaitLoop,
-    MslWaitStart,      // symonym of MslWaitLoop
+    MslWaitStart,
     MslWaitEnd,        // special meaning just before the loop point
     MslWaitBeat,
     MslWaitBar,
@@ -139,4 +138,9 @@ class MslWait
         session = nullptr;
         stack = nullptr;
     }
+
+    // keyword parsing and logging tools
+    static const char* typeToKeyword(MslWaitType e);
+    static MslWaitType keywordToType(const char* s);
+    
 };

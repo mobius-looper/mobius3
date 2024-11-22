@@ -1281,20 +1281,15 @@ void MslSession::mslVisit(MslWaitNode* wait)
     }
     else {
         // starting a wait for the first time
-        if (wait->type == WaitTypeNone) {
-            addError(wait, "Missing wait type");
-        }
-        else if (wait->type == WaitTypeEvent && wait->event == WaitEventNone) {
-            addError(wait, "Missing or invalid event name");
-        }
-        else if (wait->type == WaitTypeDuration && wait->duration == WaitDurationNone) {
-            addError(wait, "Missing or invalid duration name");
-        }
-        else if (wait->type == WaitTypeLocation && wait->location == WaitLocationNone) {
-            addError(wait, "Missing or invalid location name");
+        if (wait->type == MslWaitNone) {
+            // this should have failed parsing
+            addError(wait, "Missing or invalid wait type");
         }
         else {
-            // evaluate the count/number/duration
+            // accumulate all results
+            stack->accumulator = true;
+            
+            // evaluate the amount/number/repeat expressions
             MslStack* nextStack = pushNextChild();
             if (nextStack == nullptr) {
                 // transition if we're not in kernel before setting up the wait event
@@ -1325,8 +1320,7 @@ void MslSession::mslVisit(MslWaitNode* wait)
  */
 void MslSession::setupWait(MslWaitNode* node)
 {
-    if (node->type == WaitTypeEvent && node->event == WaitEventLast &&
-        asyncAction.event == nullptr) {
+    if (node->type == MslWaitLast && asyncAction.event == nullptr) {
         Trace(2, "MslSession: Wait last was not after an async action");
         stack->wait.init();
         popStack();
@@ -1335,60 +1329,98 @@ void MslSession::setupWait(MslWaitNode* node)
         MslWait* wait = &(stack->wait);
     
         wait->type = node->type;
-        wait->event = node->event;
-        wait->duration = node->duration;
-        wait->location = node->location;
+        // the association between child results and what they mean is a bit loose
+        // but its up to the user to use value expressions that will have actually
+        // left the necessary number of child results.  If not, mayhem ensues
+        if (node->amountNodeIndex >= 0) {
+            MslValue* v = getChildResult(node->amountNodeIndex);
+            if (v == nullptr)
+              addError(node, "Missing wait amount value");
+            else
+              wait->amount = v->getInt();
+        }
+        if (!hasErrors() && node->numberNodeIndex >= 0) {
+            MslValue* v = getChildResult(node->numberNodeIndex);
+            if (v == nullptr)
+              addError(node, "Missing wait number value");
+            else
+              wait->number = v->getInt();
+        }
+        if (!hasErrors() && node->repeatNodeIndex >= 0) {
+            MslValue* v = getChildResult(node->repeatNodeIndex);
+            if (v == nullptr)
+              addError(node, "Missing wait repeat value");
+            else
+              wait->repeats = v->getInt();
+        }
 
-        // This is always just a number right not, it just means different things
-        // depending on the wait type
-        wait->value = 0;
-        if (stack->childResults != nullptr)
-          wait->value = stack->childResults->getInt();
+        if (!hasErrors()) {
+            wait->forceNext = node->next;
+            if (node->type == MslWaitLast) {
+                // this is how the core knows what to wait on
+                // the MOS interpreter handled this in a completely obscure way
+                wait->coreEvent = asyncAction.event;
+            }
 
+            // save where it came from, the session is necessary so MslEnvironment
+            // knows which one to resume, I don't think the stack is, it just advances the session
+            // and the wait will normally be the top of the stack
+            wait->session = this;
+            wait->stack = stack;
+            // important to clear this before the mslWait call
+            wait->finished = false;
         
-        if (node->type == WaitTypeEvent && node->event == WaitEventLast) {
-            // this is how the core knows what to wait on
-            // the MOS interpreter handled this in a completely obscure way
-            wait->coreEvent = asyncAction.event;
-        }
-
-        // save where it came from, the session is necessary so MslEnvironment
-        // knows which one to resume, I don't think the stack is, it just advances the session
-        // and the wait will normally be the top of the stack
-        wait->session = this;
-        wait->stack = stack;
-        // important to clear this before the mslWait call
-        wait->finished = false;
-        
-        // ask the context to schedule something suitable to end the wait
-        // the context is allowed to retain a pointer to the wait object, and
-        // expected to set the finished flag when the wait is over
-        // todo: would really like to be able to have the context include more
-        // details about what was wrong with the wait request
-        // since we're almost always in the kernel now, have memory issues
-        MslContextError error;
-        if (!context->mslWait(wait, &error)) {
-            addError(node, "Unable to schedule wait state");
-            if (error.hasError())
-              addError(node, error.error);
-        }
-        else if (wait->finished) {
-            // this is a special case
-            // since an undefined amount of time may have elapsed between the
-            // last asyncAction and the wait statement, the event might be gone
-            // by now, don't treat this case as an error, just move on
-            // could also use this for time boundary waits, like "wait beat"
-            // when we start exactly on a beat, but will need some options on that
-            // since they might want to arm this for the next beat instead
-            Trace(2, "MslSession: Wait last finished immediately");
-            stack->wait.init();
-            popStack();
-        }
-        else {
-            // make it go, or rather stop
-            wait->active = true;
+            // ask the context to schedule something suitable to end the wait
+            // the context is allowed to retain a pointer to the wait object, and
+            // expected to set the finished flag when the wait is over
+            // todo: would really like to be able to have the context include more
+            // details about what was wrong with the wait request
+            // since we're almost always in the kernel now, have memory issues
+            MslContextError error;
+            if (!context->mslWait(wait, &error)) {
+                addError(node, "Unable to schedule wait state");
+                if (error.hasError())
+                  addError(node, error.error);
+            }
+            else if (wait->finished) {
+                // this is a special case
+                // since an undefined amount of time may have elapsed between the
+                // last asyncAction and the wait statement, the event might be gone
+                // by now, don't treat this case as an error, just move on
+                // could also use this for time boundary waits, like "wait beat"
+                // when we start exactly on a beat, but will need some options on that
+                // since they might want to arm this for the next beat instead
+                Trace(2, "MslSession: Wait last finished immediately");
+                stack->wait.init();
+                popStack();
+            }
+            else {
+                // make it go, or rather stop
+                wait->active = true;
+            }
         }
     }
+}
+
+/**
+ * Locate a child result by index.
+ * This is awkward for MslWait since the value expressions can be in any
+ * order.  Cumbersome with a linked list but there are only three.
+ */
+MslValue* MslSession::getChildResult(int index)
+{
+    MslValue* found = nullptr;
+    MslValue* value = stack->childResults;
+    int position = 0;
+    while (value != nullptr) {
+        if (position == index) {
+            found = value;
+            break;
+        }
+        value = value->next;
+        position++;
+    }
+    return found;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -706,14 +706,7 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         }
         else if (node->isWait()) {
             MslWaitNode* waitnode = static_cast<MslWaitNode*>(node);
-            line += "Wait: " + juce::String(waitnode->typeToKeyword(waitnode->type));
-            if (waitnode->type == WaitTypeEvent)
-              line += " " + juce::String(waitnode->eventToKeyword(waitnode->event));
-            else if (waitnode->type == WaitTypeDuration)
-              line += " " + juce::String(waitnode->durationToKeyword(waitnode->duration));
-            else if (waitnode->type == WaitTypeLocation)
-              line += " " + juce::String(waitnode->locationToKeyword(waitnode->location));
-              
+            line += "Wait: " + juce::String(MslWait::typeToKeyword(waitnode->type));
         }
         else if (node->isContext()) {
             MslContextNode* con = static_cast<MslContextNode*>(node);
