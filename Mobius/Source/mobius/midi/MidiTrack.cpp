@@ -279,6 +279,13 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 //
 //////////////////////////////////////////////////////////////////////
 
+void MidiTrack::getTrackProperties(TrackProperties& props)
+{
+    props.frames = recorder.getFrames();
+    props.cycles = recorder.getCycles();
+    props.currentFrame = recorder.getFrame();
+}
+
 void MidiTrack::setGoalFrames(int f)
 {
     goalFrames = f;
@@ -692,7 +699,7 @@ void MidiTrack::doParameter(UIAction* a)
  * for the controllers and a few important parameters which are
  * cached in local members.
  */
-void MidiTrack::doQuery(Query* q)
+bool MidiTrack::doQuery(Query* q)
 {
     switch (q->symbol->id) {
 
@@ -710,6 +717,9 @@ void MidiTrack::doQuery(Query* q)
         }
             break;
     }
+
+    // what are we supposed to do here, I guess just ignore it if it isn't valid
+    return true;
 }    
 
 //////////////////////////////////////////////////////////////////////

@@ -1,0 +1,4 @@
+wait msec 4 number 99 repeat 23 next
+print "hello!"
+
+

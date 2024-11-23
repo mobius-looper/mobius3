@@ -281,7 +281,7 @@ AbstractTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
         Trace(1, "TrackMslHandler: Can't schedule wait without a track scope");
     }
     else {
-        track = manager->getTrack(wait->track);
+        track = manager->getAbstractTrack(wait->track);
         if (track == nullptr) {
             Trace(1, "TrackMslHandler: MslWait with invalid track number %d", wait->track);
             // default to focused?

@@ -20,33 +20,24 @@ MobiusTrackWrapper::~MobiusTrackWrapper()
 {
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Stubs
-//
-// These are here because this is the way MidiTrack does this.
-// With Mobius, these are core actions that get implemented internally
-// so they can be accessible to old MOS scripts
-//
-//////////////////////////////////////////////////////////////////////
-
-void MobiusTrackWrapper::toggleFocusLock()
+void MobiusTrackWrapper::getTrackProperties(TrackProperties& props)
 {
+    props.frames = track->getFrames();
+    props.cycles = track->getCycles();
+    props.currentFrame = (int)(track->getFrame());
 }
 
-// these are examples of things that only make sense for MIDI
-// tracks and we're going to have more of these, need to be breaking
-// apart TrackScheduler and track type specific action handlers
-
-void MobiusTrackWrapper::doHalfspeed()
+void MobiusTrackWrapper::doAction(UIAction* a)
 {
+    // these always go through Mobius/Actionator
+    mobius->doAction(a);
 }
 
-void MobiusTrackWrapper::doDoublespeed()
+bool MobiusTrackWrapper::doQuery(Query* q)
 {
+    // like actions we have always passed these through Mobius first
+    return mobius->doQuery(q);
 }
-
-// These we DO need to implement
 
 bool MobiusTrackWrapper::scheduleWaitFrame(class MslWait* w, int frame)
 {
@@ -61,6 +52,27 @@ bool MobiusTrackWrapper::scheduleWaitEvent(class MslWait* w)
     (void)w;
     Trace(1, "MobiusTrackWrapper::scheduleWaitEvent not implemented");
     return false;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Stubs
+//
+// These are here because this is the way MidiTrack does this.
+// With Mobius, these are core actions that get implemented internally
+// so they can be accessible to old MOS scripts
+//
+//////////////////////////////////////////////////////////////////////
+
+// wtf is this here?
+void MobiusTrackWrapper::MobiusTrackWrapper::alert(const char* msg)
+{
+    (void)msg;
+}
+
+class TrackEventList* MobiusTrackWrapper::getEventList()
+{
+    return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -204,6 +216,10 @@ void MobiusTrackWrapper::toggleReplace()
 {
 }
 
+void MobiusTrackWrapper::toggleFocusLock()
+{
+}
+
 void MobiusTrackWrapper::finishSwitch(int target)
 {
     (void)target;
@@ -229,14 +245,6 @@ void MobiusTrackWrapper::finishPause()
 {
 }
 
-void MobiusTrackWrapper::doStart()
-{
-}
-
-void MobiusTrackWrapper::doStop()
-{
-}
-
 void MobiusTrackWrapper::doParameter(class UIAction* a)
 {
     (void)a;
@@ -249,6 +257,14 @@ void MobiusTrackWrapper::doPartialReset()
 void MobiusTrackWrapper::doReset(bool full)
 {
     (void)full;
+}
+
+void MobiusTrackWrapper::doStart()
+{
+}
+
+void MobiusTrackWrapper::doStop()
+{
 }
 
 void MobiusTrackWrapper::doPlay()
@@ -275,6 +291,14 @@ void MobiusTrackWrapper::doInstantMultiply(int n)
 void MobiusTrackWrapper::doInstantDivide(int n)
 {
     (void)n;
+}
+
+void MobiusTrackWrapper::doHalfspeed()
+{
+}
+
+void MobiusTrackWrapper::doDoublespeed()
+{
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -355,17 +379,6 @@ void MobiusTrackWrapper::MobiusTrackWrapper::setGoalFrames(int f)
 bool MobiusTrackWrapper::isNoReset()
 {
     return false;
-}
-
-// wtf is this here?
-void MobiusTrackWrapper::MobiusTrackWrapper::alert(const char* msg)
-{
-    (void)msg;
-}
-
-class TrackEventList* MobiusTrackWrapper::getEventList()
-{
-    return nullptr;
 }
 
 int MobiusTrackWrapper::extendRounding()

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "../track/AbstractTrack.h"
+#include "../track/TrackProperties.h"
 
 class MobiusTrackWrapper : public AbstractTrack
 {
@@ -16,21 +17,21 @@ class MobiusTrackWrapper : public AbstractTrack
     MobiusTrackWrapper(class Mobius* m, class Track* t);
     ~MobiusTrackWrapper();
 
-    // temporary stubs until we can split up TrackScheduler
-    void toggleFocusLock() override;
-    void doHalfspeed() override;
-    void doDoublespeed() override;
+    // misc utilities
+    void alert(const char* msg) override;
+    class TrackEventList* getEventList() override;
+    
+    void setNumber(int n) override;
+    int getNumber() override;
+    int getGroup() override;
+    bool isFocused() override;
 
-    // AbstractTrack Implementations
-
+    void getTrackProperties(TrackProperties& props);
+    void doAction(UIAction* a) override;
+    bool doQuery(Query* q) override;
     bool scheduleWaitFrame(class MslWait* w, int frame) override;
     bool scheduleWaitEvent(class MslWait* w) override;
 
-    void setNumber(int n) override;
-    int getNumber() override;
-
-    bool isFocused() override;
-    int getGroup() override;
     MobiusState::Mode getMode() override;
     int getLoopCount() override;
     int getLoopIndex() override;
@@ -43,8 +44,12 @@ class MobiusTrackWrapper : public AbstractTrack
     int getModeEndFrame() override;
     int extendRounding() override;
 
-    // Mode transitions
-    
+    //
+    // None of these are Necessary aince audio tracks do not
+    // pass through TrackScheduler to do things
+    // really need to factor this out
+    //
+
     void startRecord() override;
     void finishRecord() override;
 
@@ -60,6 +65,7 @@ class MobiusTrackWrapper : public AbstractTrack
     void toggleOverdub() override;
     void toggleMute() override;
     void toggleReplace() override;
+    void toggleFocusLock() override;
 
     void finishSwitch(int target) override;
     void loopCopy(int previous, bool sound) override;
@@ -67,19 +73,21 @@ class MobiusTrackWrapper : public AbstractTrack
     bool isPaused() override;
     void startPause() override;
     void finishPause() override;
-    void doStart() override;
-    void doStop() override;
    
     // simple one-shot actions
     void doParameter(class UIAction* a) override;
     void doPartialReset() override;
     void doReset(bool full) override;
+    void doStart() override;
+    void doStop() override;
     void doPlay() override;
     void doUndo() override;
     void doRedo() override;
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
+    void doHalfspeed() override;
+    void doDoublespeed() override;
 
     // leader stuff
     void leaderReset(class TrackProperties& props) override;
@@ -96,18 +104,11 @@ class MobiusTrackWrapper : public AbstractTrack
     void loop() override;
 
     float getRate() override;
-    //void setRate(float r) override;
     int getGoalFrames() override;
     void setGoalFrames(int f) override;
     
     bool isNoReset() override;
     
-    // misc utilities
-    void alert(const char* msg) override;
-
-    // emerging interfaces for MslWait and new track architecture
-    class TrackEventList* getEventList() override;
-
   private:
 
     class Mobius* mobius = nullptr;

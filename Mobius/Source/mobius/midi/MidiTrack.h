@@ -12,6 +12,7 @@
 #include "../track/AbstractTrack.h"
 #include "../track/TrackScheduler.h"
 #include "../track/ActionTransformer.h"
+#include "../track/TrackProperties.h"
 
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
@@ -32,62 +33,13 @@ class MidiTrack : public AbstractTrack
     void configure(class Session::Track* def);
     void reset();
 
-    int getGroup() override;
-    bool isFocused() override;
-    
-    void loadLoop(MidiSequence* seq, int loop);
 
-    // required by TrackManager to get leader info before the advance
-    // and to respond to notifications
-    TrackScheduler* getScheduler() {
-        return &scheduler;
-    }
-    
     //
-    // Follower state
-    //
-
-    void trackNotification(NotificationId notification, class TrackProperties& props);
-    bool isNoReset() override;
-    
-    //
-    // State
+    // Abstract Track Implementations
     //
     
-    bool isRecording();
-    void refreshState(class MobiusState::Track* state);
-    void refreshImportant(class MobiusState::Track* state);
-
-    //
-    // stimuli
-    //
-    
-    void doAction(class UIAction* a);
-    void doQuery(class Query* q);
-    void processAudioStream(class MobiusAudioStream* argStream);
-
-    void noteOn(class MidiEvent* e);
-    void noteOff(class MidiEvent* e);
-    void midiEvent(class MidiEvent* e);
-
-    void clipStart(int audioTrack, int loopIndex);
-
-    //
-    // Support for Recorder
-    //
-    
-    class MidiEvent* getHeldNotes();
-    class MidiEvent* copyNote(class MidiEvent* src);
-
-    //
-    // Support for Player
-    //
-
-    void midiSend(juce::MidiMessage& msg, int deviceId);
-
-    //
-    // AbstractTrack for ActionTransformer and TrackScheduler
-    //
+    void alert(const char* msg) override;
+    class TrackEventList* getEventList() override;
 
     void setNumber(int n) {
         number = n;
@@ -97,10 +49,16 @@ class MidiTrack : public AbstractTrack
         return number;
     }
     
+    int getGroup() override;
+    bool isFocused() override;
+
+    void getTrackProperties(TrackProperties& props) override;
+    void doAction(class UIAction* a) override;
+    bool doQuery(class Query* q) override;
+
     bool scheduleWaitFrame(class MslWait* w, int frame) override;
     bool scheduleWaitEvent(class MslWait* w) override;
     
-    void alert(const char* msg) override;
     MobiusState::Mode getMode() override;
     int getLoopIndex() override;
     int getLoopCount() override;
@@ -138,48 +96,90 @@ class MidiTrack : public AbstractTrack
     bool isPaused() override;
     void startPause() override;
     void finishPause() override;
-    void doStart() override;
-    void doStop() override;
-    void doHalfspeed() override;
-    void doDoublespeed() override;
     
     // simple one-shot actions
     void doParameter(class UIAction* a) override;
     void doPartialReset() override;
     void doReset(bool full) override;
+    void doStart() override;
+    void doStop() override;
     void doPlay() override;
     void doUndo() override;
     void doRedo() override;
     void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
-    void leaderResized(class TrackProperties& props) override;
-    void leaderMoved(class TrackProperties& props) override;
-    
-    bool isExtending() override;
-    void advance(int newFrames) override;
-    void loop() override;
-    int getGoalFrames() override;
-    void setGoalFrames(int f) override;
-    float getRate() override;
-    //void setRate(float r) override;
+    void doHalfspeed() override;
+    void doDoublespeed() override;
 
-    class TrackEventList* getEventList() override;
-
-    //
     // Leader responses
-    //
-    
     void leaderReset(class TrackProperties& props) override;
     void leaderRecordStart() override;
     void leaderRecordEnd(class TrackProperties& props) override;
     void leaderMuteStart(class TrackProperties& props) override;
     void leaderMuteEnd(class TrackProperties& props) override;
+    void leaderResized(class TrackProperties& props) override;
+    void leaderMoved(class TrackProperties& props) override;
+
+    bool isExtending() override;
+    void advance(int newFrames) override;
+    void loop() override;
+    float getRate() override;
+    int getGoalFrames() override;
+    void setGoalFrames(int f) override;
+
+    // configuration
+    bool isNoReset() override;
+
+    //
+    // Things not in AbstractTrack
+    //
+    
+    // required by TrackManager to get leader info before the advance
+    // and to respond to notifications
+    TrackScheduler* getScheduler() {
+        return &scheduler;
+    }
+    
+    void loadLoop(MidiSequence* seq, int loop);
+
+    //
+    // Follower state
+    //
+
+    void trackNotification(NotificationId notification, class TrackProperties& props);
+    
+    //
+    // State
+    //
+    
+    bool isRecording();
+    void refreshState(class MobiusState::Track* state);
+    void refreshImportant(class MobiusState::Track* state);
+
+    //
+    // stimuli
+    //
+    
+    void processAudioStream(class MobiusAudioStream* argStream);
+
+    void noteOn(class MidiEvent* e);
+    void noteOff(class MidiEvent* e);
+    void midiEvent(class MidiEvent* e);
+
+    void clipStart(int audioTrack, int loopIndex);
+
+    // Support for Recorder
+    class MidiEvent* getHeldNotes();
+    class MidiEvent* copyNote(class MidiEvent* src);
+
+    // Support for Player
+    void midiSend(juce::MidiMessage& msg, int deviceId);
+
+    // leader support
     void leaderResize();
     void leaderRelocate();
     void leaderReorient();
-    
-  protected:
 
   private:
 

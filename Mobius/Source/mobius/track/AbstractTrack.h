@@ -2,32 +2,51 @@
  * The interface of an object that exhibits looping track behavior,
  * either audio or MIDI.
  *
- * The only implementation of this right now is MidiTrack, but in the long
- * term when the core engine is redesigned, it should be an AbstractTrack
- * and use the same TrackScheduler that MidiTrack does.
- *
+ * Might want to refactor this when we starting adding other track
+ * types that consume the audio stream and take actions, but which
+ * don't behave as loopers.
  */
 
 #pragma once
 
 #include "../../model/ParameterConstants.h"
 #include "../../model/MobiusState.h"
+#include "TrackProperties.h"
 
 class AbstractTrack
 {
   public:
     virtual ~AbstractTrack() {}
 
-    // emerging support for waits
+
+    // Temporary, shouldn't be here
+    virtual void alert(const char* msg) = 0;
+    virtual class TrackEventList* getEventList() = 0;
+
+    //
+    // Generic Actions
+    // These are the things TrackManager and LogicalTrack use
+    //
+    
+    virtual void setNumber(int n) = 0;
+    virtual int getNumber() = 0;
+    virtual int getGroup() = 0;
+    virtual bool isFocused() = 0;
+
+    virtual void getTrackProperties(TrackProperties& props) = 0;
+    virtual void doAction(class UIAction* a) = 0;
+    virtual bool doQuery(class Query* q) = 0;
+
     virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
     virtual bool scheduleWaitEvent(class MslWait* w) = 0;
 
+    //
+    // Looping Track Interface
+    // These are used mostly by Scheduler and a few by MSL when scheduling waits
+    //
+    
     // Loop state
 
-    virtual void setNumber(int n) = 0;
-    virtual int getNumber() = 0;
-    virtual bool isFocused() = 0;
-    virtual int getGroup() = 0;
     virtual MobiusState::Mode getMode() = 0;
     virtual int getLoopCount() = 0;
     virtual int getLoopIndex() = 0;
@@ -40,6 +59,18 @@ class AbstractTrack
     virtual int getModeEndFrame() = 0;
     virtual int extendRounding() = 0;
 
+    // utility we need o a few places
+    int getSubcycleFrames() {
+        int subcycleFrames = 0;
+        int cycleFrames = getCycleFrames();
+        if (cycleFrames > 0) {
+            int subcycles = getSubcycles();
+            if (subcycles > 0)
+              subcycleFrames = cycleFrames / subcycles;
+        }
+        return subcycleFrames;
+    }
+    
     // Mode transitions
     
     virtual void startRecord() = 0;
@@ -65,13 +96,13 @@ class AbstractTrack
     virtual bool isPaused() = 0;
     virtual void startPause() = 0;
     virtual void finishPause() = 0;
-    virtual void doStart() = 0;
-    virtual void doStop() = 0;
    
     // simple one-shot actions
     virtual void doParameter(class UIAction* a) = 0;
     virtual void doPartialReset() = 0;
     virtual void doReset(bool full) = 0;
+    virtual void doStart() = 0;
+    virtual void doStop() = 0;
     virtual void doPlay() = 0;
     virtual void doUndo() = 0;
     virtual void doRedo() = 0;
@@ -96,34 +127,12 @@ class AbstractTrack
     virtual void loop() = 0;
 
     virtual float getRate() = 0;
-    //virtual void setRate(float r) = 0;
     virtual int getGoalFrames() = 0;
     virtual void setGoalFrames(int f) = 0;
 
     //
-    // Leader State
-    // Unclear if I want these saved on the Track
-    // or if we should be going back to the Session
+    // Configuration
     //
-
     virtual bool isNoReset() = 0;
     
-    // misc utilities
-    virtual void alert(const char* msg) = 0;
-
-    // emerging interfaces for MslWait and new track architecture
-    virtual class TrackEventList* getEventList() = 0;
-
-    // utility we need o a few places
-    int getSubcycleFrames() {
-        int subcycleFrames = 0;
-        int cycleFrames = getCycleFrames();
-        if (cycleFrames > 0) {
-            int subcycles = getSubcycles();
-            if (subcycles > 0)
-              subcycleFrames = cycleFrames / subcycles;
-        }
-        return subcycleFrames;
-    }
-
 };

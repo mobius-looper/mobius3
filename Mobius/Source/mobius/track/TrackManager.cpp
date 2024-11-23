@@ -55,7 +55,7 @@ TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
 TrackManager::~TrackManager()
 {
     tracks.clear();
-    midiTracks.clear();
+    //midiTracks.clear();
 }
 
 /**
@@ -71,12 +71,10 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
     pools.actionPool = kernel->getActionPool();
     scopes.refresh(config);
 
-    // test this but don't use it yet
-    configureTracks(session);
-    
     audioTrackCount = session->audioTracks;
     int baseNumber = audioTrackCount + 1;
-    allocateTracks(baseNumber, TrackManagerMaxMidiTracks);
+    //allocateTracks(baseNumber, TrackManagerMaxMidiTracks);
+    
     prepareState(&state1, baseNumber, TrackManagerMaxMidiTracks);
     prepareState(&state2, baseNumber, TrackManagerMaxMidiTracks);
     statePhase = 0;
@@ -124,6 +122,7 @@ void TrackManager::configureTracks(Session* session)
     }
 
     // now put them back, for now Mobius always goes first
+    // Mobius tracs configure themselves through MobiusConfig at an earlier stage
     int mobiusTracks = audioEngine->getTrackCount();
     for (int i = 0 ; i < mobiusTracks ; i++) {
         MobiusTrackWrapper* mtw = audioEngine->getTrackWrapper(i);
@@ -155,6 +154,15 @@ void TrackManager::configureTracks(Session* session)
         }
         lt->setNumber(baseNumber + i);
         tracks.add(lt);
+
+        // Session currently only has MIDI tracks and they are identified by index
+        // within their type rather than by number
+        // this may be nullptr if they upped the track count without configuring it
+        Session::Track* trackdef = session->getTrack(Session::TypeMidi, i);
+        if (trackdef != nullptr) {
+            MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
+            mt->configure(trackdef);
+        }
     }
 
     // if we have leftovers, might consider saving them in reserve
@@ -164,10 +172,15 @@ void TrackManager::configureTracks(Session* session)
     // Mobius tracks to be downsized yet
     while (oldTracks.size() > 0) {
         LogicalTrack* lt = oldTracks.removeAndReturn(0);
-        if (lt->getType() == Session::TypeMidi)
-          Trace(2, "TrackManager: Removing MIDI track");
-        else
-          Trace(2, "TrackManager: Removing *unknown* track");
+        if (lt->getType() != Session::TypeMidi) {
+            Trace(1, "TrackManager: Removing *unknown* track");
+        }
+        else {
+            Trace(2, "TrackManager: Removing MIDI track");
+            MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
+            // shouldn't be necessary, but makes the destructor work less
+            mt->reset();
+        }
         delete lt;
     }
 }
@@ -194,6 +207,7 @@ LogicalTrack* TrackManager::getNext(juce::Array<LogicalTrack*>& old, Session::Tr
 /**
  * Allocate track memory during the initialization phase.
  */
+#if 0
 void TrackManager::allocateTracks(int baseNumber, int count)
 {
     for (int i = 0 ; i < count ; i++) {
@@ -202,9 +216,18 @@ void TrackManager::allocateTracks(int baseNumber, int count)
         midiTracks.add(mt);
     }
 }
+#endif
 
 /**
  * Prepare one of the two state objects.
+ *
+ * This is only being used for MIDI tracks right now, but it's another thing
+ * that needs redesign so that both audio and MIDI tracks cacn use the same
+ * state object with consistent indexing.
+ *
+ * Further, the Track state object is specific to looping tracks, once we have
+ * other styles of tracks, the state objects will need to be different, or have the
+ * union of all possible states for the different track types.
  */
 void TrackManager::prepareState(MobiusState* state, int baseNumber, int count)
 {
@@ -256,13 +279,20 @@ void TrackManager::configure(MobiusConfig* config)
  */
 void TrackManager::loadSession(Session* session) 
 {
+    configureTracks(session);
+
+    // can we get rid of this?
+    activeMidiTracks = session->midiTracks;
+
+    // old way
+#if 0    
     activeMidiTracks = session->midiTracks;
     if (activeMidiTracks > TrackManagerMaxMidiTracks) {
         Trace(1, "TrackManager: Session had too many tracks %d", session->midiTracks);
         activeMidiTracks = TrackManagerMaxMidiTracks;
     }
 
-    for (int i = 0 ; i < activeMidiTracks ; i++) {
+    for (int i = 0 ; i < activeMidiTracks ; i++) {f
         // this may be nullptr if they upped the track count without configuring it
         Session::Track* track = session->getTrack(Session::TypeMidi, i);
         MidiTrack* mt = midiTracks[i];
@@ -279,7 +309,8 @@ void TrackManager::loadSession(Session* session)
         if (mt != nullptr)
           mt->reset();
     }
-
+#endif
+    
     // make the curtains match the drapes
     // !! is this the place to be fucking with this?
     state1.activeTracks = activeMidiTracks;
@@ -386,6 +417,16 @@ TrackProperties TrackManager::getTrackProperties(int number)
     if (number < 1) {
         props.invalid = true;
     }
+    else {
+        LogicalTrack* lt = getLogicalTrack(number);
+        if (lt != nullptr)
+          lt->getTrackProperties(props);
+        else
+          props.invalid = true;
+    }
+
+    // old way
+#if 0    
     else if (number <= audioTrackCount) {
         props = audioEngine->getTrackProperties(number);
     }
@@ -401,6 +442,7 @@ TrackProperties TrackManager::getTrackProperties(int number)
             props.currentFrame = track->getFrame();
         }
     }
+#endif
     
     // Mobius doesn't set this, caller should get it consistently
     props.number = number;
@@ -412,6 +454,7 @@ TrackProperties TrackManager::getTrackProperties(int number)
  * Only works for MIDI tracks right now
  * and only used by TrackMslHandler
  */
+#if 0
 AbstractTrack* TrackManager::getTrack(int number)
 {
     AbstractTrack* track = nullptr;
@@ -422,6 +465,7 @@ AbstractTrack* TrackManager::getTrack(int number)
     }
     return track;
 }
+#endif
 
 MidiEvent* TrackManager::getHeldNotes()
 {
@@ -441,11 +485,16 @@ MidiEvent* TrackManager::getHeldNotes()
  */
 void TrackManager::trackNotification(NotificationId notification, TrackProperties& props)
 {
-    for (int i = 0 ; i < activeMidiTracks ; i++) {
-        MidiTrack* track = midiTracks[i];
-        // this always passes through the Scheduler first
-        track->getScheduler()->trackNotification(notification, props);
+    for (auto track : tracks) {
+        track->trackNotification(notification, props);
     }
+#if 0
+            MidiTrack* track = midiTracks[i];
+            // this always passes through the Scheduler first
+            track->getScheduler()->trackNotification(notification, props);
+        }
+    }
+#endif
 }
 
 /**
@@ -470,10 +519,14 @@ void TrackManager::midiEvent(MidiEvent* e)
     // watch it first since tracks may reach a state that needs it
     watcher.midiEvent(e);
 
+    for (auto track : tracks)
+      track->midiEvent(e);
+#if 0    
     for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* track = midiTracks[i];
         track->midiEvent(e);
     }
+#endif
     
     pools.checkin(e);
 }
@@ -510,6 +563,10 @@ void TrackManager::writeDump(juce::String file, juce::String content)
     kernel->getContainer()->writeDump(file, content);
 }
 
+/**
+ * Only need to support following of audio tracks right now so can go
+ * directly to Mobius.
+ */
 int TrackManager::scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId)
 {
     return audioEngine->scheduleFollowerEvent(audioTrack, q, followerTrack, eventId);
@@ -547,8 +604,12 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     audioEngine->processAudioStream(stream);
     
     // then advance the MIDI tracks
+    for (auto track : tracks)
+      track->processAudioStream(stream);
+#if 0    
     for (int i = 0 ; i < activeMidiTracks ; i++)
       midiTracks[i]->processAudioStream(stream);
+#endif    
     
     stateRefreshCounter++;
     if (stateRefreshCounter > stateRefreshThreshold) {
@@ -614,11 +675,19 @@ void TrackManager::sendActions(UIAction* actions)
         // make sure it starts empty
         actions->next = nullptr;
             
-        int track = actions->getScopeTrack();
-        if (track == 0) {
+        int number = actions->getScopeTrack();
+        if (number == 0) {
             // should not see this after replication
             Trace(1, "TrackManager: Action replication is busted");
         }
+        else {
+            LogicalTrack* lt = getLogicalTrack(number);
+            if (lt == nullptr)
+              Trace(1, "TrackManager: Invalid track number %d", number);
+            else
+              lt->doAction(actions);
+        }
+#if 0            
         else if (track <= audioTrackCount) {
             // goes to the audio side
             audioEngine->doAction(actions);
@@ -627,6 +696,7 @@ void TrackManager::sendActions(UIAction* actions)
             // goes to the MIDI side
             doMidiAction(actions);
         }
+#endif            
 
         actionPool->checkin(actions);
         actions = next;
@@ -795,6 +865,13 @@ UIAction* TrackManager::replicateGroup(UIAction* src, int group)
 {
     UIAction* list = nullptr;
 
+    for (auto track : tracks) {
+        int tgroup = track->getGroup();
+        if (tgroup == group)
+          list = addAction(list, src, track->getNumber());
+    }
+
+#if 0    
     for (int i = 0 ; i < audioTrackCount ; i++) {
         int tgroup = audioEngine->getTrackGroup(i);
         if (tgroup == group)
@@ -809,7 +886,8 @@ UIAction* TrackManager::replicateGroup(UIAction* src, int group)
             list = addAction(list, src, trackNumber);
         }
     }
-
+#endif
+    
     // didn't end up using this to reclaim it
     actionPool->checkin(src);
     // final list may be empty if there were no tracks in this group
@@ -840,7 +918,31 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
     UIAction* list = nullptr;
 
     // find the group number of the focused track
-    int focusedIndex = getFocusedTrackIndex();
+    int focusedGroupNumber = 0;
+    GroupDefinition* groupdef = nullptr;
+    int focusedNumber = getFocusedTrackIndex() + 1;
+    LogicalTrack* lt = getLogicalTrack(focusedNumber);
+    if (lt != nullptr) {
+        focusedGroupNumber = lt->getGroup();
+        // get the definition from the number
+        if (focusedGroupNumber > 0) {
+            int groupIndex = focusedGroupNumber - 1;
+            if (groupIndex < configuration->groups.size())
+              groupdef = configuration->groups[groupIndex];
+        }
+    }
+
+    // now add focused tracks
+    for (auto track : tracks) {
+        int tgroup = track->getGroup();
+        if ((focusedNumber == track->getNumber()) ||
+            track->isFocused() ||
+            (tgroup == focusedGroupNumber && isGroupFocused(groupdef, src))) {
+            list = addAction(list, src, track->getNumber());
+        }
+    }
+    
+#if 0    
     int focusedGroupNumber = 0;
     if (focusedIndex < audioTrackCount) {
         focusedGroupNumber = audioEngine->getTrackGroup(focusedIndex);
@@ -881,6 +983,7 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
             list = addAction(list, src, trackNumber);
         }
     }
+#endif    
     
     // didn't end up using this to reclaim it
     actionPool->checkin(src);
@@ -923,8 +1026,15 @@ bool TrackManager::isGroupFocused(GroupDefinition* def, UIAction* src)
 void TrackManager::doGlobal(UIAction* src)
 {
     // first send it to all midi tracks, they won't trash the action
+    for (auto track : tracks) {
+        if (track->getType() != Session::TypeAudio)
+          track->doAction(src);
+    }
+
+#if 0    
     for (int i = 0 ; i < activeMidiTracks ; i++)
       midiTracks[i]->doAction(src);
+#endif
     
     // then send it to the first audio track
     src->setScopeTrack(1);
@@ -939,6 +1049,7 @@ void TrackManager::doGlobal(UIAction* src)
     actionPool->checkin(src);
 }
 
+#if 0
 /**
  * Forward an action to one of the MIDI tracks.
  * Scope is a 1 based track number including the audio tracks.
@@ -958,6 +1069,7 @@ void TrackManager::doMidiAction(UIAction* a)
         track->doAction(a);
     }
 }    
+#endif
 
 /**
  * Special case for the track selection functions.  These are weird, they're
@@ -1116,6 +1228,14 @@ bool TrackManager::doQuery(Query* q)
         if (trackNumber <= 0)
           trackNumber = getFocusedTrackIndex() + 1;
 
+        LogicalTrack* lt = getLogicalTrack(trackNumber);
+        if (lt == nullptr) {
+            Trace(1, "TrackManager: Invalid query scope %d", q->scope);
+        }
+        else {
+            status = lt->doQuery(q);
+        }
+#if 0
         if (trackNumber <= audioTrackCount) {
             status = audioEngine->doQuery(q);
         }
@@ -1133,6 +1253,7 @@ bool TrackManager::doQuery(Query* q)
                 status = true;
             }
         }
+#endif
     }
     return status;
 }
@@ -1165,7 +1286,20 @@ bool TrackManager::mslQuery(MslQuery* query)
         int saveScope = query->scope;
         if (query->scope == 0)
           query->scope = kernel->getContainer()->getFocusedTrack() + 1;
-            
+
+        LogicalTrack* lt = getLogicalTrack(query->scope);
+        if (lt == nullptr) {
+            Trace(1, "TrackManager: Invalid query scope %d", query->scope);
+        }
+        else {
+            // here we need to work on having TrackMslHandler do both of them
+            if (lt->getType() == Session::TypeAudio)
+              success = audioEngine->mslQuery(query);
+            else
+              success = mslHandler.mslQuery(query, lt->getTrack());
+        }
+
+#if 0        
         if (query->scope <= audioTrackCount) {
             success = audioEngine->mslQuery(query);
         }
@@ -1180,7 +1314,8 @@ bool TrackManager::mslQuery(MslQuery* query)
                 success = mslHandler.mslQuery(query, track);
             }
         }
-
+#endif
+        
         // in case we trashed it
         query->scope = saveScope;
     }
@@ -1245,13 +1380,27 @@ bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
         // Mobius can handle this without it, but the generic handler can't
         wait->track = trackNumber;
     }
+
+    LogicalTrack* lt = getLogicalTrack(trackNumber);
+    if (lt == nullptr) {
+        Trace(1, "TrackManager: Invalid MslWait scope %d", trackNumber);
+    }
+    else {
+        // again we need to have mslHandler do both
+        if (lt->getType() == Session::TypeAudio)
+          success = audioEngine->mslWait(wait, error);
+        else
+          success = mslHandler.mslWait(wait, error);
+    }
     
+#if 0          
     if (trackNumber <= audioTrackCount) {
         success = audioEngine->mslWait(wait, error);
     }
     else {
         success = mslHandler.mslWait(wait, error);
     }
+#endif    
 
     if (!success) {
         Trace(1, "TrackManager: MslWait scheduling failed");
@@ -1285,6 +1434,17 @@ void TrackManager::finishWait(MslWait* wait, bool canceled)
  */
 void TrackManager::loadLoop(MidiSequence* seq, int track, int loop)
 {
+    LogicalTrack* lt = getLogicalTrack(track);
+    if (lt->getType() != Session::TypeMidi) {
+        Trace(1, "TrackManager::loadLoop Invalid track number %d", track);
+        pools.reclaim(seq);
+    }
+    else {
+        MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
+        mt->loadLoop(seq, loop);
+    }
+
+#if 0    
     int trackIndex = track - audioTrackCount - 1;
     if (trackIndex < 0 || trackIndex >= activeMidiTracks) {
         Trace(1, "TrackManager::loadLoop Invalid track number %d", track);
@@ -1294,6 +1454,8 @@ void TrackManager::loadLoop(MidiSequence* seq, int track, int loop)
         MidiTrack* t = midiTracks[trackIndex];
         t->loadLoop(seq, loop);
     }
+#endif
+    
 }
 
 /**
@@ -1302,7 +1464,21 @@ void TrackManager::loadLoop(MidiSequence* seq, int track, int loop)
 juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::File& file)
 {
     juce::StringArray errors;
-    
+
+    LogicalTrack* lt = getLogicalTrack(trackNumber);
+    if (lt->getType() != Session::TypeMidi) {
+        Trace(1, "TrackManager::saveLoop Invalid track number %d", trackNumber);
+    }
+    else {
+        MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
+
+        Trace(1, "TrackManager::saveLoop Not implemented");
+        (void)mt;
+        (void)loopNumber;
+        (void)file;
+    }
+
+#if 0
     int trackIndex = trackNumber - audioTrackCount - 1;
     if (trackIndex < 0 || trackIndex >= activeMidiTracks) {
         Trace(1, "TrackManager::loadLoop Invalid track number %d", trackNumber);
@@ -1323,6 +1499,8 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
         (void)loopNumber;
         (void)file;
     }
+#endif
+    
     return errors;
 }    
 
@@ -1340,6 +1518,18 @@ MobiusState* TrackManager::getMobiusState()
     else
       state = &state2;
 
+    // only MIDI tracks return state this way atm
+    for (auto track : tracks) {
+        if (track->getType() == Session::TypeMidi) {
+            MidiTrack* mt = static_cast<MidiTrack*>(track->getTrack());
+            int midiIndex = track->getNumber() - audioTrackCount - 1;
+            MobiusState::Track* tstate = state->tracks[midiIndex];
+            if (tstate != nullptr)
+              mt->refreshImportant(tstate);
+        }
+    }
+
+#if 0    
     // the most important one to loop crisp is the frame counter
     // since that's reliable to read, always refresh that one
     for (int i = 0 ; i < activeMidiTracks ; i++) {
@@ -1350,6 +1540,7 @@ MobiusState* TrackManager::getMobiusState()
               track->refreshImportant(tstate);
         }
     }
+#endif    
     
     return state;
 }
@@ -1364,7 +1555,20 @@ void TrackManager::refreshState()
       state = &state1;
     
     state->activeTracks = activeMidiTracks;
+
+
+    // only MIDI tracks return state this way atm
+    for (auto track : tracks) {
+        if (track->getType() == Session::TypeMidi) {
+            MidiTrack* mt = static_cast<MidiTrack*>(track->getTrack());
+            int midiIndex = track->getNumber() - audioTrackCount - 1;
+            MobiusState::Track* tstate = state->tracks[midiIndex];
+            if (tstate != nullptr)
+              mt->refreshState(tstate);
+        }
+    }
     
+#if 0    
     for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* track = midiTracks[i];
         if (track != nullptr) {
@@ -1373,7 +1577,7 @@ void TrackManager::refreshState()
               track->refreshState(tstate);
         }
     }
-
+#endif
 
     // ugh, this isn't reliable either, UI can be using the old one after
     // we've swapped in the new one and if we hit another refresh before it

@@ -11,6 +11,7 @@
 #include "../../model/ValueSet.h"
 
 #include "TrackScheduler.h"
+#include "TrackProperties.h"
 
 class LogicalTrack
 {
@@ -19,16 +20,27 @@ class LogicalTrack
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
     void initialize();
+    void loadSession(class Session::Track* session);
     
     void setTrack(Session::TrackType type, class AbstractTrack* t);
-    class AbstractTrack* getTrack();
-    Session::TrackType getType();
     void setNumber(int n);
-    int getNumber();
     void setEngineNumber(int n);
     
-    void loadSession(class Session::Track* session);
+    Session::TrackType getType();
+    class AbstractTrack* getTrack();
+    class MidiTrack* getMidiTrack();
+    int getNumber();
 
+    void getTrackProperties(TrackProperties& props);
+    int getGroup();
+    bool isFocused();
+    
+    void processAudioStream(class MobiusAudioStream* stream);
+    void doAction(class UIAction* a);
+    bool doQuery(class Query* q);
+    void midiEvent(class MidiEvent* e);
+
+    void trackNotification(NotificationId notification, TrackProperties& props);
     bool scheduleWait(MslWait* wait);
 
   private:

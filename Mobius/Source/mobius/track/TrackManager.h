@@ -108,7 +108,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     //
 
     class MobiusContainer* getContainer();
-    AbstractTrack* getTrack(int number);
+    //AbstractTrack* getTrack(int number);
 
     void finishWait(MslWait* wait, bool canceled);
     
@@ -132,13 +132,13 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     int activeMidiTracks = 0;
 
     // temporary
-    juce::OwnedArray<class MidiTrack> midiTracks;
+    //juce::OwnedArray<class MidiTrack> midiTracks;
 
     // new way
     void configureTracks(class Session* session);
     class LogicalTrack* getNext(juce::Array<class LogicalTrack*>& old, Session::TrackType type);
     
-    void allocateTracks(int baseNumber, int count);
+    //void allocateTracks(int baseNumber, int count);
     void refreshState();
 
     void sendActions(UIAction* actions);
@@ -150,7 +150,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doGlobal(class UIAction* src);
     void doActivation(UIAction* src);
     void doScript(UIAction* src);
-    void doMidiAction(class UIAction* src);
+    //void doMidiAction(class UIAction* src);
     void doTrackSelectAction(class UIAction* a);
 
     // MSL support
