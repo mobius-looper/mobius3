@@ -171,8 +171,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     //synchronizer.initialize();
 
     mTracks.reset(new TrackManager(this));
-    mTracks->initialize(configuration, ses);
-    mTracks->setEngine(mCore);
+    mTracks->initialize(configuration, ses, mCore);
 }
 
 void MobiusKernel::propagateSymbolProperties()

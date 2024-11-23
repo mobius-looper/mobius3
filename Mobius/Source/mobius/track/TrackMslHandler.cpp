@@ -13,6 +13,7 @@
 #include "../MobiusInterface.h"
 
 #include "AbstractTrack.h"
+#include "LogicalTrack.h"
 #include "TrackManager.h"
 #include "TrackEvent.h"
 // need to get TrackEvent pools out of here
@@ -131,13 +132,13 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
     if (wait->forceNext)
       Trace(2, "  forceNext");
 
-
-    AbstractTrack* track = manager.getAbstractTrack(wait->track);
+    AbstractTrack* track = manager->getAbstractTrack(wait->track);
     if (track == nullptr) {
-        Trace(TrackMslHandler: Invalid track number in MslWait %d", wait->track);
+        Trace(1, "TrackMslHandler: Invalid track number in MslWait %d", wait->track);
     }
     else {
         switch (wait->type) {
+            
             case MslWaitSubcycle: {
                 int subframes = track->getSubcycleFrames();
                 if (subframes == 0)
@@ -151,8 +152,9 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
                     // repeats don't really make sense here, but ifyou have them
                     // it causes multiple iterations to reach the numbered subcycle
                     int frame = subframes * multiplier;
-                    if (wait->repeats > 0) frame += (track->getLoopFrames * wait->repeats);
+                    if (wait->repeats > 0) frame += (track->getLoopFrames() * wait->repeats);
                     success = track->scheduleWaitFrame(wait, frame);
+                }
             }
                 break;
             
@@ -167,10 +169,12 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
                 else {
                     int multiplier = wait->number - 1;
                     int frame = cycframes * multiplier;
-                    if (wait->repeats > 0) frame += (track->getLoopFrames * wait->repeats);
+                    if (wait->repeats > 0) frame += (track->getLoopFrames() * wait->repeats);
                     success = track->scheduleWaitFrame(wait, frame);
+                }
             }
                 break;
+                
             case MslWaitStart: {
                 if (wait->repeats == 0)
                   track->scheduleWaitFrame(wait, 0);
@@ -179,18 +183,21 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
                 }
             }
                 break;
+                
             case MslWaitEnd: {
                 // todo: this is going to need something special, forget
                 // how Mobius did this
                 track->scheduleWaitFrame(wait, 0);
             }
                 break;
+                
             case MslWaitBeat: {
                 // todo: Schedule an EventWait marked pending in our TrackEventList
                 // then have TrackAdvancer look for it
                 // for repeats, give it a countdown
             }
                 break;
+                
             case MslWaitBar: {
                 // todo: Schedule an EventWait marked pending in our TrackEventList
                 // then have TrackAdvancer look for it
@@ -202,21 +209,27 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
                 int frames = wait->amount;
                 // I suppose we can support repeats here, but you could also just mutltiply
                 if (wait->repeats > 0) frames *= wait->repeats;
+                int frame = track->getFrame() + frames;
                 success = track->scheduleWaitFrame(wait, frame);
             }
                 break;
+                
             case MslWaitMsec: {
                 int frames = getMsecFrames(track, wait->amount);
                 if (wait->repeats > 0) frames *= wait->repeats;
-                success = track->scheduleWaitFrame(wait, track->getLoopFrame() + frames);
+                int frame = track->getFrame() + frames;
+                success = track->scheduleWaitFrame(wait, frame);
             }
                 break;
+                
             case MslWaitSecond: {
                 int frames = getSecondFrames(track, wait->amount);
                 if (wait->repeats > 0) frames *= wait->repeats;
-                success = track->scheduleWaitFrame(wait, track->getLoopFrame() + frames);
+                int frame = track->getFrame() + frames;
+                success = track->scheduleWaitFrame(wait, frame);
             }
                 break;
+                
             case MslWaitBlock: {
                 // this we don't need to ask the track to schedule, just put
                 // it on our event list and handle it
@@ -230,8 +243,6 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
                 success = track->scheduleWaitEvent(wait);
             }
                 break;
-        }
-            break;
             
             case MslWaitMarker:
             // from here down, they're iffy and may be not necessary
@@ -242,9 +253,10 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
             case MslWaitRealign:
             case MslWaitReturn:
             case MslWaitDriftCheck:
-            default:
+            default: {
                 Trace(1, "TrackMslHandler: Wait type %s not implemented",
                       MslWait::typeToKeyword(wait->type));
+            }
                 break;
         }
     }
@@ -484,7 +496,7 @@ int TrackMslHandler::calculateLocationFrame(MslWait* wait, AbstractTrack* track)
             // loop is triggered, that would be inconsistent with the
             // other absolute time values though.
             // Let this mean to wait for n iterations of the loop
-            // frame = loop->getFrames() * time;
+            // frame = loop->getLoopFrames() * time;
 
         case WaitLocationBeat: {
             // new: if we're slave syncing and we know the beat length

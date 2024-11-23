@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "../track/AbstractTrack.h"
+
 class MobiusTrackWrapper : public AbstractTrack
 {
   public:
@@ -14,9 +16,21 @@ class MobiusTrackWrapper : public AbstractTrack
     MobiusTrackWrapper(class Mobius* m, class Track* t);
     ~MobiusTrackWrapper();
 
+    // temporary stubs until we can split up TrackScheduler
+    void toggleFocusLock() override;
+    void doHalfspeed() override;
+    void doDoublespeed() override;
+
     // AbstractTrack Implementations
 
+    bool scheduleWaitFrame(class MslWait* w, int frame) override;
+    bool scheduleWaitEvent(class MslWait* w) override;
+
+    void setNumber(int n) override;
     int getNumber() override;
+
+    bool isFocused() override;
+    int getGroup() override;
     MobiusState::Mode getMode() override;
     int getLoopCount() override;
     int getLoopIndex() override;

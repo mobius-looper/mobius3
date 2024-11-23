@@ -58,6 +58,7 @@
 #include "ScriptRuntime.h"
 #include "Synchronizer.h"
 #include "Track.h"
+#include "MobiusTrackWrapper.h"
 
 // for ScriptInternalVariable, encapsulation sucks
 #include "Variable.h"
@@ -1685,6 +1686,20 @@ int Mobius::getEffectiveOutputLatency()
 //
 // Tracks
 //
+
+/**
+ * Note that the argument is the INDEX, not the 1 based number.
+ */
+MobiusTrackWrapper* Mobius::getTrackWrapper(int index)
+{
+    Track* t = getTrack(index);
+    if (t == nullptr)
+      Trace(1, "Mobius::getTrackWrapper Invalid index %d", index);
+
+    // make one of these regardless, it just may not do anything
+    MobiusTrackWrapper* mtw = new MobiusTrackWrapper(this, t);
+    return mtw;
+}
 
 int Mobius::getTrackCount()
 {

@@ -18,8 +18,13 @@ class AbstractTrack
   public:
     virtual ~AbstractTrack() {}
 
+    // emerging support for waits
+    virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
+    virtual bool scheduleWaitEvent(class MslWait* w) = 0;
+
     // Loop state
 
+    virtual void setNumber(int n) = 0;
     virtual int getNumber() = 0;
     virtual bool isFocused() = 0;
     virtual int getGroup() = 0;

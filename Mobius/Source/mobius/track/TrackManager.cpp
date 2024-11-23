@@ -24,6 +24,7 @@
 #include "../midi/MidiTrack.h"
 
 #include "../core/Mobius.h"
+#include "../core/MobiusTrackWrapper.h"
 
 #include "TrackManager.h"
 
@@ -61,13 +62,17 @@ TrackManager::~TrackManager()
  * Startup initialization.  Session here is normally the default
  * session, a different one may come down later via loadSession()
  */
-void TrackManager::initialize(MobiusConfig* config, Session* session)
+void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* core)
 {
     configuration = config;
+    audioEngine = core;
     // this isn't owned by MidiPools, but it's convenient to bundle
     // it up with the others
     pools.actionPool = kernel->getActionPool();
     scopes.refresh(config);
+
+    // test this but don't use it yet
+    configureTracks(session);
     
     audioTrackCount = session->audioTracks;
     int baseNumber = audioTrackCount + 1;
@@ -91,14 +96,109 @@ void TrackManager::initialize(MobiusConfig* config, Session* session)
 }
 
 /**
+ * Organize the track arrays for a new session.
+ * Mobius tracks always go at the front and can't be changed without a restart.
+ * Other track types can come and go.
+ *
+ * This needs to eventually let the Session::Track list be the guide for
+ * what the LogicalTracks are and which logical numbers are assigned.
+ * For Mobius tracks, these then map between the logical track numbers and
+ * the internal Mobius track numbers.
+ *
+ * This needs to more old/new matching besides position if you
+ * allow new tracks to be inserted into the middle rather than just appended.
+ * Much more work to do...
+ */
+void TrackManager::configureTracks(Session* session)
+{
+    // transfer the current track list to a holding area
+    // discard old MobiusTrackWrappers since the referenced Track may no longer be valid
+    // and build fresh ones
+    juce::Array<LogicalTrack*> oldTracks;
+    while (tracks.size() > 0) {
+        LogicalTrack* lt = tracks.removeAndReturn(0);
+        if (lt->getType() == Session::TypeAudio)
+          delete lt;
+        else
+          oldTracks.add(tracks.removeAndReturn(0));
+    }
+
+    // now put them back, for now Mobius always goes first
+    int mobiusTracks = audioEngine->getTrackCount();
+    for (int i = 0 ; i < mobiusTracks ; i++) {
+        MobiusTrackWrapper* mtw = audioEngine->getTrackWrapper(i);
+        LogicalTrack* lt = new LogicalTrack(this);
+        lt->setTrack(Session::TypeAudio, mtw);
+        // the logical number
+        lt->setNumber(i+1);
+        // these are the only ones that need number mapping
+        // once we can have them out of order in the logical list
+        lt->setEngineNumber(i+1);
+        tracks.add(lt);
+    }
+    
+    // now midi and eventually the others, these have more flexibility
+    // in being guided by the Session::Track list, but keep going with
+    // numbers for now so the session doesn't have to be fleshed out
+    int baseNumber = mobiusTracks + 1;
+    int midiCount = session->midiTracks;
+    for (int i = 0 ; i < midiCount ; i++) {
+        LogicalTrack* lt = getNext(oldTracks, Session::TypeMidi);
+        if (lt == nullptr) {
+            // MidiTrack should actually point back to the LogicalTrack
+            // doesn't need to go all the way back here?
+            // AbstractTrack* mt = new MidiTrack(this, lt);
+            MidiTrack* mt = new MidiTrack(this);
+            lt = new LogicalTrack(this);
+            lt->setTrack(Session::TypeMidi, mt);
+            Trace(2, "TrackManager: Adding MIDI track");
+        }
+        lt->setNumber(baseNumber + i);
+        tracks.add(lt);
+    }
+
+    // if we have leftovers, might consider saving them in reserve
+    // in case they want to put them back and have all the previous contents
+    // restored, kind of overkill though
+    // it is okay to remove MIDI tracks but we are NOT expecting
+    // Mobius tracks to be downsized yet
+    while (oldTracks.size() > 0) {
+        LogicalTrack* lt = oldTracks.removeAndReturn(0);
+        if (lt->getType() == Session::TypeMidi)
+          Trace(2, "TrackManager: Removing MIDI track");
+        else
+          Trace(2, "TrackManager: Removing *unknown* track");
+        delete lt;
+    }
+}
+
+/**
+ * Helper for configureTracks.  Transfer the next former track of the given
+ * type back to the main track list.  More general than it actually needs to be
+ * since tracks types are always contiguous, but won't be always.
+ */
+LogicalTrack* TrackManager::getNext(juce::Array<LogicalTrack*>& old, Session::TrackType type)
+{
+    LogicalTrack* found = nullptr;
+    for (int i = 0 ; i < old.size() ; i++) {
+        LogicalTrack* lt = old[i];
+        if (lt->getType() == type) {
+            found = lt;
+            old.remove(i);
+            break;
+        }
+    }
+    return found;
+}
+
+/**
  * Allocate track memory during the initialization phase.
  */
 void TrackManager::allocateTracks(int baseNumber, int count)
 {
     for (int i = 0 ; i < count ; i++) {
         MidiTrack* mt = new MidiTrack(this);
-        mt->index = i;
-        mt->number = baseNumber + i;
+        mt->setNumber(baseNumber + i);
         midiTracks.add(mt);
     }
 }
@@ -193,20 +293,31 @@ void TrackManager::loadSession(Session* session)
       kernel->getNotifier()->addTrackListener(i, this);
 }
 
-/**
- * Take partial control over the Mobius audio track engine.
- * aka the "core"
- */
-void TrackManager::setEngine(Mobius* m)
-{
-    audioEngine = m;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Information and Services
 //
 //////////////////////////////////////////////////////////////////////
+
+AbstractTrack* TrackManager::getAbstractTrack(int n)
+{
+    AbstractTrack* at = nullptr;
+    LogicalTrack* lt = getLogicalTrack(n);
+    if (lt != nullptr)
+      at = lt->getTrack();
+    return at;
+}
+
+LogicalTrack* TrackManager::getLogicalTrack(int n)
+{
+    LogicalTrack* track = nullptr;
+    int index = n - 1;
+    if (index >= 0 && index < tracks.size())
+      track = tracks[index];
+    else
+      Trace(1, "TrackManager: Invalid lgical track number %d", n);
+    return track;
+}
 
 MidiPools* TrackManager::getPools()
 {
@@ -763,7 +874,7 @@ UIAction* TrackManager::replicateFocused(UIAction* src)
     for (int i = 0 ; i < activeMidiTracks ; i++) {
         MidiTrack* mt = midiTracks[i];
         int tgroup = mt->getGroup();
-        if (mt->number == focusedNumber ||
+        if (mt->getNumber() == focusedNumber ||
             mt->isFocused() ||
             (tgroup == focusedGroupNumber && isGroupFocused(groupdef, src))) {
             int trackNumber = i + audioTrackCount + 1;

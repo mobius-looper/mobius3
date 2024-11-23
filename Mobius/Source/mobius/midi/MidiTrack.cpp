@@ -2289,9 +2289,24 @@ void MidiTrack::doDoublespeed()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Temporary MSL Stuff
+// MSL Support
 //
 //////////////////////////////////////////////////////////////////////
+
+bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
+{
+    (void)w;
+    (void)frame;
+    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
+    return false;
+}
+
+bool MidiTrack::scheduleWaitEvent(class MslWait* w)
+{
+    (void)w;
+    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
+    return false;
+}
 
 //////////////////////////////////////////////////////////////////////
 //

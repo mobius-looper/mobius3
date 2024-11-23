@@ -43,12 +43,6 @@ class MidiTrack : public AbstractTrack
         return &scheduler;
     }
     
-    // the track number in "reference space"
-    // aka the view number
-    int number = 0;
-    // the track index within the TrackManager, need this?
-    int index = 0;
-
     //
     // Follower state
     //
@@ -95,9 +89,16 @@ class MidiTrack : public AbstractTrack
     // AbstractTrack for ActionTransformer and TrackScheduler
     //
 
+    void setNumber(int n) {
+        number = n;
+    }
+    
     int getNumber() override {
         return number;
     }
+    
+    bool scheduleWaitFrame(class MslWait* w, int frame) override;
+    bool scheduleWaitEvent(class MslWait* w) override;
     
     void alert(const char* msg) override;
     MobiusState::Mode getMode() override;
@@ -186,6 +187,10 @@ class MidiTrack : public AbstractTrack
     class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiPools* pools = nullptr;
+
+    // the number is only used for logging messages
+    // and correlation of events
+    int number = 0;
 
     // leader state
     bool followerMuteStart = false;

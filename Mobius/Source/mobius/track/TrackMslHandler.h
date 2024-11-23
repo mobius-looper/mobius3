@@ -28,14 +28,19 @@ class TrackMslHandler
     class MobiusKernel* kernel = nullptr;
     class TrackManager* manager = nullptr;
     TrackMslVariableHandler variables;
-    
-    class TrackEvent* scheduleWaitAtFrame(class MslWait* wait, class AbstractTrack* track, int frame);
+
     class AbstractTrack* getWaitTarget(class MslWait* wait);
+    int getMsecFrames(class AbstractTrack* track, int msecs);
+    int getSecondFrames(class AbstractTrack* track, int seconds);
+
+    #if 0
+    class TrackEvent* scheduleWaitAtFrame(class MslWait* wait, class AbstractTrack* track, int frame);
     bool scheduleDurationWait(class MslWait* wait);
     int calculateDurationFrame(class MslWait* wait, class AbstractTrack* t);
     int getMsecFrames(class AbstractTrack* t, long msecs);
     bool scheduleLocationWait(class MslWait* wait);
     int calculateLocationFrame(class MslWait* wait, class AbstractTrack* track);
     bool scheduleEventWait(class MslWait* wait);
+    #endif
 
 };    

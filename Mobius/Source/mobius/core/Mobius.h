@@ -67,6 +67,12 @@ class Mobius
     void shutdown();
 
     /**
+     * New for TrackManager
+     * Make something we can refer to each track as if it were independent.
+     */
+    class MobiusTrackWrapper* getTrackWrapper(int index);
+
+    /**
      * Called by Kernel after initialization and we've been running and
      * the user has edited the configuration.
      */

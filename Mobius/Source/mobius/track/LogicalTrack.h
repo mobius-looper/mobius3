@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/Session.h"
 #include "../../model/ValueSet.h"
 
 #include "TrackScheduler.h"
@@ -15,22 +16,33 @@ class LogicalTrack
 {
   public:
 
-    LogicalTrack();
+    LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
+    void initialize();
     
-    void initialize(class TrackManager* tm);
-    void setTrack(class AbstractTrack* t);
+    void setTrack(Session::TrackType type, class AbstractTrack* t);
+    class AbstractTrack* getTrack();
+    Session::TrackType getType();
+    void setNumber(int n);
+    int getNumber();
+    void setEngineNumber(int n);
+    
     void loadSession(class Session::Track* session);
 
     bool scheduleWait(MslWait* wait);
 
   private:
 
+    class TrackManager* manager = nullptr;
+    Session::TrackType trackType;
+    int number = 0;
+    int engineNumber = 0;
+
     /**
      * The underlying track implementation, either a MidiTrack
      * or a MobiusTrackWrapper.
      */
-    class AbstractTrack* track = nullptr;
+    std::unique_ptr<class AbstractTrack> track;
 
     /**
      * The scheduler for this track.

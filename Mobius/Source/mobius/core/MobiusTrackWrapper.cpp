@@ -22,13 +22,75 @@ MobiusTrackWrapper::~MobiusTrackWrapper()
 
 //////////////////////////////////////////////////////////////////////
 //
+// Stubs
+//
+// These are here because this is the way MidiTrack does this.
+// With Mobius, these are core actions that get implemented internally
+// so they can be accessible to old MOS scripts
+//
+//////////////////////////////////////////////////////////////////////
+
+void MobiusTrackWrapper::toggleFocusLock()
+{
+}
+
+// these are examples of things that only make sense for MIDI
+// tracks and we're going to have more of these, need to be breaking
+// apart TrackScheduler and track type specific action handlers
+
+void MobiusTrackWrapper::doHalfspeed()
+{
+}
+
+void MobiusTrackWrapper::doDoublespeed()
+{
+}
+
+// These we DO need to implement
+
+bool MobiusTrackWrapper::scheduleWaitFrame(class MslWait* w, int frame)
+{
+    (void)w;
+    (void)frame;
+    Trace(1, "MobiusTrackWrapper::scheduleWaitFrame not implemented");
+    return false;
+}
+
+bool MobiusTrackWrapper::scheduleWaitEvent(class MslWait* w)
+{
+    (void)w;
+    Trace(1, "MobiusTrackWrapper::scheduleWaitEvent not implemented");
+    return false;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Basic State
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This is just here because AbstractTrack Requires it.
+ * We can ignore it and use our own internal engine numberes.
+ */
+void MobiusTrackWrapper::setNumber(int n)
+{
+    (void)n;
+}
+
 int MobiusTrackWrapper::getNumber()
 {
     return track->getDisplayNumber();
+}
+
+bool MobiusTrackWrapper::isFocused()
+{
+    return track->isFocusLock();
+}
+
+int MobiusTrackWrapper::getGroup()
+{
+    return track->getGroup();
 }
 
 MobiusState::Mode MobiusTrackWrapper::getMode()

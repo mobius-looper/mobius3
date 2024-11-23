@@ -14,6 +14,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../model/Session.h"
 #include "../../model/MobiusState.h"
 #include "../../model/Scope.h"
 
@@ -31,8 +32,12 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackManager(class MobiusKernel* k);
     ~TrackManager();
 
-    void initialize(class MobiusConfig* config, class Session* s);
+    void initialize(class MobiusConfig* config, class Session* s, class Mobius* engine);
 
+    // new stuff for the track model evoluation
+    class AbstractTrack* getAbstractTrack(int number);
+    class LogicalTrack* getLogicalTrack(int number);
+    
     // temporary until we can managed this
     void setEngine(class Mobius* m);
     
@@ -129,6 +134,10 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // temporary
     juce::OwnedArray<class MidiTrack> midiTracks;
 
+    // new way
+    void configureTracks(class Session* session);
+    class LogicalTrack* getNext(juce::Array<class LogicalTrack*>& old, Session::TrackType type);
+    
     void allocateTracks(int baseNumber, int count);
     void refreshState();
 
