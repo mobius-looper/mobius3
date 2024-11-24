@@ -500,6 +500,9 @@
                 file="Source/mobius/track/ActionTransformer.cpp"/>
           <FILE id="pWVhua" name="ActionTransformer.h" compile="0" resource="0"
                 file="Source/mobius/track/ActionTransformer.h"/>
+          <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
+                file="Source/mobius/track/BaseScheduler.cpp"/>
+          <FILE id="D0C3IR" name="BaseScheduler.h" compile="0" resource="0" file="Source/mobius/track/BaseScheduler.h"/>
           <FILE id="vEVjGD" name="LogicalTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LogicalTrack.cpp"/>
           <FILE id="TCiX2I" name="LogicalTrack.h" compile="0" resource="0" file="Source/mobius/track/LogicalTrack.h"/>
@@ -508,6 +511,8 @@
           <FILE id="WkztCV" name="LoopSwitcher.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LoopSwitcher.cpp"/>
           <FILE id="sGeJUP" name="LoopSwitcher.h" compile="0" resource="0" file="Source/mobius/track/LoopSwitcher.h"/>
+          <FILE id="QSEdLl" name="TrackActionScheduler.h" compile="0" resource="0"
+                file="Source/mobius/track/TrackActionScheduler.h"/>
           <FILE id="Fr56e1" name="TrackAdvancer.cpp" compile="1" resource="0"
                 file="Source/mobius/track/TrackAdvancer.cpp"/>
           <FILE id="QF6jon" name="TrackAdvancer.h" compile="0" resource="0" file="Source/mobius/track/TrackAdvancer.h"/>

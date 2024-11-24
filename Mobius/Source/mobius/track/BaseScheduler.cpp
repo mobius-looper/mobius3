@@ -1,5 +1,5 @@
 /**
- * The TrackScheduler combined with the TrackActionHandler is the central point of control
+ * The BaseScheduler combined with the TrackActionHandler is the central point of control
  * for handling actions sent down by the user, for scheduling events to process those actions
  * at points in the future, and for advancing the track play/record frames for each audio
  * block, split up by the events that occur within that block.
@@ -29,13 +29,16 @@
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
+// MobiusAudioStream
+#include "../MobiusInterface.h"
 #include "../track/TrackManager.h"
 #include "../track/TrackProperties.h"
 
 #include "TrackEvent.h"
 #include "AbstractTrack.h"
+#include "TrackActionScheduler.h"
 
-#include "TrackScheduler.h"
+#include "BaseScheduler.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -43,46 +46,39 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-TrackScheduler::TrackScheduler()
+BaseScheduler::BaseScheduler()
 {
 }
 
-TrackScheduler::TrackScheduler(AbstractTrack* t)
+BaseScheduler::~BaseScheduler()
 {
+}
+
+void BaseScheduler::initialize(TrackManager* tm, AbstractTrack* t,
+                               TrackActionScheduler* ts)
+{
+    manager = tm;
     track = t;
-}
-
-TrackScheduler::~TrackScheduler()
-{
-}
-
-void TrackScheduler::setTrack(AbstractTrack* t)
-{
-    track = t;
-}
-
-void TrackScheduler::initialize(TrackManager* tm)
-{
-    tracker = tm;
-
-    MidiPools* pools = tracker->getPools();
+    trackScheduler = ts;
     
-    eventPool = &(pools->trackEventPool);
+    MidiPools* pools = manager->getPools();
     actionPool = pools->actionPool;
-    pulsator = tracker->getPulsator();
-    valuator = tracker->getValuator();
-    symbols = tracker->getSymbols();
     
-    events.initialize(eventPool);
+    pulsator = manager->getPulsator();
+    valuator = manager->getValuator();
+    symbols = manager->getSymbols();
+    
+    events.initialize(&eventPool);
 }
 
 /**
  * Derive sync options from a session.
  *
  * Valuator now knows about the Session so we don't need to pass the
- * Session::Track in anymore.
+ * Session::Track in anymore.  Unclear if I want Valuator in the middle
+ * of everything though at least not for bulk configuration.
  */
-void TrackScheduler::configure(Session::Track* def)
+void BaseScheduler::configure(Session::Track* def)
 {
     (void)def;
     
@@ -112,7 +108,7 @@ void TrackScheduler::configure(Session::Track* def)
         pulsator->follow(track->getNumber(), leader, ptype);
     }
     else if (sessionSyncSource == SYNC_OUT) {
-        Trace(1, "TrackScheduler: MIDI tracks can't do OutSync yet");
+        Trace(1, "BaseScheduler: MIDI tracks can't do OutSync yet");
         syncSource = Pulse::SourceNone;
     }
     else if (sessionSyncSource == SYNC_HOST) {
@@ -142,39 +138,6 @@ void TrackScheduler::configure(Session::Track* def)
     followMute = def->getBool("followMute");
 }
 
-/**
- * Called by MidiTrack in response to a Reset action.
- * Clear any events currently scheduled.
- * We could do this our own self since we're in control of the Reset
- * action before MidiTrack is.
- */
-void TrackScheduler::reset()
-{
-    events.clear();
-}
-
-void TrackScheduler::dump(StructureDumper& d)
-{
-    d.line("TrackScheduler:");
-}
-
-/**
- * This is called by MidiTrack in response to a ClipStart action.
- * The way things are organized now, TrackScheduler is not involved
- * in that process, the ClipStart is scheduled in another track and
- * when it activates, it calls MidiTrack::clipStart directly.
- * In order to get follow trace going it has to tell us the track
- * it was following.
- *
- * Would be better if we moved a lot of the stuff bding done
- * in MidiTrack::clipStart up here
- */
-void TrackScheduler::setFollowTrack(TrackProperties& props)
-{
-    followTrack = props.number;
-    advancer.rateCarryover = 0.0f;
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Actions
@@ -182,21 +145,72 @@ void TrackScheduler::setFollowTrack(TrackProperties& props)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by MidiTrack.processAudioStream to manage the
- * advance split up by events.  We just pass it along to the
- * Advancer subcomponent.
+ * The scheduler is the first line of action handling.
+ * It recognizes a few but passes most of them to the TrackActionHandler
+ *
+ * It is assumed at this point that ownership of the UIAction passes
+ * to us and we can modify it, and must pool it at the end.
  */
-void TrackScheduler::advance(MobiusAudioStream* stream)
+void BaseScheduler::doAction(UIAction* src)
 {
-    advancer.advance(stream);
+    SymbolId id = src->symbol->id;
+    bool handled = false;
+    
+    switch (id) {
+
+        case FuncReset:
+        case FuncTrackReset:
+        case FuncGlobalReset:
+            // todo: obsy the track->isNoReset() option out ere
+            // to keep the event list?
+            reset();
+            break;
+            
+        case FuncDump:
+            dump();
+            handled = true;
+            break;
+
+        case FuncUndo:
+            defaultUndo(src);
+            handled = true;
+            break;
+
+        default:
+            break;
+    }
+
+    if (!handled)
+      trackScheduler->doAction(src);
 }
 
-void TrackScheduler::doAction(UIAction* src)
+void BaseScheduler::reset()
 {
+    events.clear();
 }
 
 /**
- * Here from TrackAdvancer and various function handlers that have a rounding period where
+ * Add our diagnostc dump.
+ * Could be here or in LocicalTrack
+ */
+void BaseScheduler::dump()
+{
+    StructureDumper d;
+    
+    d.line("BaseScheduler:");
+    // todo: add the event list
+
+
+    // sigh, until we can modify AbstractTrack, let MidiTrack
+    // control the StructureDumper
+    //track->doDump(d);
+    track->doDump();
+    
+    manager->writeDump(juce::String("MidiTrack.txt"), d.getText());
+}
+
+/**
+ * Here from BaseScheduler and various function handlers that have a rounding period where
  * stacked actions can accumulate.  Once the rounding event behavior has been
  * performed by the Track, we then pass each stacked action through the
  * scheduling process.
@@ -207,7 +221,7 @@ void TrackScheduler::doAction(UIAction* src)
  * Stacked actions were copied and must be reclaimed.
  *
  */
-void TrackScheduler::doStacked(TrackEvent* e) 
+void BaseScheduler::doStacked(TrackEvent* e) 
 {
     if (e != nullptr) {
         UIAction* action = e->stacked;
@@ -235,7 +249,7 @@ void TrackScheduler::doStacked(TrackEvent* e)
  * Start removing events stacked on this event, and if we run out remove
  * this event itself.
  */
-void TrackScheduler::unstack(TrackEvent* event)
+void BaseScheduler::unstack(TrackEvent* event)
 {
     if (event != nullptr) {
         UIAction* last = event->stacked;
@@ -262,14 +276,134 @@ void TrackScheduler::unstack(TrackEvent* event)
             // nothing left to unstack
             events.remove(event);
 
-            advancer.finishWaitAndDispose(event, true);
+            finishWaitAndDispose(event, true);
         }
     }
+}
+
+/**
+ * Default undo handling rewinds scheduled events first, then
+ * calls the action scheduler.
+ */
+void BaseScheduler::defaultUndo(UIAction* src)
+{
+    (void)src;
+    
+    if (isReset()) {
+        // ignore
+    }
+    else if (isPaused()) {
+
+        // should the track be notified?
+        // why wouldn't we undo events while paused?
+        trackScheduler->doAction(src);
+    }
+    else if (isRecording()) {
+
+        TrackEvent* recevent = events.find(TrackEvent::EventRecord);
+
+        if (recevent != nullptr) {
+            if (track->getMode() == MobiusState::ModeRecord) {
+                // this is a pending end, unstack and cancel it
+                // todo: If this is AutoRecord we could start subtracting
+                // extensions first
+                unstack(recevent);
+            }
+            else {
+                // this is a pending start
+                unstack(recevent);
+            }
+        }
+        else if (track->getMode() == MobiusState::ModeRecord) {
+            // we are within an active recording
+            track->doReset(false);
+        }
+    }
+    else {
+        // start chipping at events
+        // probably will want some more intelligence on these
+        TrackEvent* last = events.findLast();
+        unstack(last);
+    }
+}
+
+/**
+ * A state of pause is indicated by a MobiusMode, but I'm starting to think
+ * this should be a Scheduler flag that is independent of the loop mode.
+ */
+bool BaseScheduler::isPaused()
+{
+    return track->isPaused();
+}
+
+/**
+ * A state of reset should be indiciated by Reset mode
+ */
+bool BaseScheduler::isReset()
+{
+    bool result = false;
+
+    if (track->getMode() == MobiusState::ModeReset) {
+        result = true;
+        if (track->getLoopFrames() != 0)
+          Trace(1, "BaseScheduler: Inconsistent ModeReset with positive size");
+    }
+    else if (track->getLoopFrames() == 0) {
+        // this is okay, the track can be just starting Record and be
+        // in Record mode but nothing has happened yet
+        //Trace(1, "BaseScheduler: Empty loop not in Reset mode");
+    }
+    
+    return result;
+}
+
+/**
+ * This should not be necessary, refactor what defaultUndo does
+ */
+bool BaseScheduler::isRecording()
+{
+    bool result = false;
+    
+    if (track->getMode() == MobiusState::ModeRecord) {
+        result = true;
+    }
+    else if (events.find(TrackEvent::EventRecord)) {
+        // outwardly, this is "Synchronize" mode
+        result = true;
+    }
+
+    return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Track Callbacks
+//
+//////////////////////////////////////////////////////////////////////
+
+
+/**
+ * This is called by MidiTrack in response to a ClipStart action.
+ * The way things are organized now, BaseScheduler is not involved
+ * in that process, the ClipStart is scheduled in another track and
+ * when it activates, it calls MidiTrack::clipStart directly.
+ * In order to get follow trace going it has to tell us the track
+ * it was following.
+ *
+ * Would be better if we moved a lot of the stuff bding done
+ * in MidiTrack::clipStart up here
+ */
+void BaseScheduler::setFollowTrack(TrackProperties& props)
+{
+    followTrack = props.number;
+    rateCarryover = 0.0f;
 }
 
 //////////////////////////////////////////////////////////////////////
 //
 // Quantization
+//
+// Unclear how general this is, or if should be in LooperScheduler
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -277,7 +411,7 @@ void TrackScheduler::unstack(TrackEvent* event)
  * Return the QuantizeMode relevant for this action.
  * This does not handle switch quantize.
  */
-QuantizeMode TrackScheduler::isQuantized(UIAction* a)
+QuantizeMode BaseScheduler::isQuantized(UIAction* a)
 {
     QuantizeMode q = QUANTIZE_OFF;
 
@@ -297,10 +431,13 @@ QuantizeMode TrackScheduler::isQuantized(UIAction* a)
  * todo: audio loops have more complexity here
  * The different between regular and SUS will need to be dealt with.
  */
-void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
+void BaseScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
 {
     if (q == QUANTIZE_OFF) {
-        doActionNow(src);
+        // formerly had doActionNow but since only AbstractTrack can
+        // call back to this, it needs to check it's own self
+        Trace(1, "BaseScheduler: Why did you ask me to scheduleQuantized");
+        //doActionNow(src);
     }
     else {
         int leader = findQuantizationLeader();
@@ -308,16 +445,16 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
         if (leader > 0 && followQuantize) {
             e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
             e->primary = copyAction(src);
-            Trace(2, "TrackScheduler: Quantized %s to leader", src->symbol->getName());
+            Trace(2, "BaseScheduler: Quantized %s to leader", src->symbol->getName());
         }
         else {
-            e = eventPool->newEvent();
+            e = eventPool.newEvent();
             e->type = TrackEvent::EventAction;
             e->frame = getQuantizedFrame(src->symbol->id, q);
             e->primary = copyAction(src);
             events.add(e);
 
-            Trace(2, "TrackScheduler: Quantized %s to %d", src->symbol->getName(), e->frame);
+            Trace(2, "BaseScheduler: Quantized %s to %d", src->symbol->getName(), e->frame);
         }
 
         // in both cases, return the event in the original action so MSL can wait on it
@@ -326,17 +463,24 @@ void TrackScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
     }
 }
 
+UIAction* BaseScheduler::copyAction(UIAction* src)
+{
+    UIAction* copy = actionPool->newAction();
+    copy->copy(src);
+    return copy;
+}
+
 /**
  * Determine which track is supposed to be the leader of this one for quantization.
  * If the leader type is MIDI or Host returns zero.
  */
-int TrackScheduler::findQuantizationLeader()
+int BaseScheduler::findQuantizationLeader()
 {
     int leader = findLeaderTrack();
     if (leader > 0) {
         // if the leader over an empty loop, ignore it and fall
         // back to the usual SwitchQuantize parameter
-        TrackProperties props = tracker->getTrackProperties(leader);
+        TrackProperties props = manager->getTrackProperties(leader);
         if (props.frames == 0) {
             // ignore the leader
             leader = 0;
@@ -349,7 +493,7 @@ int TrackScheduler::findQuantizationLeader()
  * Given a QuantizeMode from the configuration, calculate the next
  * loop frame at that quantization point.
  */
-int TrackScheduler::getQuantizedFrame(QuantizeMode qmode)
+int BaseScheduler::getQuantizedFrame(QuantizeMode qmode)
 {
     int qframe = TrackEvent::getQuantizedFrame(track->getLoopFrames(),
                                                track->getCycleFrames(),
@@ -374,7 +518,7 @@ int TrackScheduler::getQuantizedFrame(QuantizeMode qmode)
  * an "escape" mechanism that cancels quant and starts it immediately.
  *
  */
-int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
+int BaseScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
 {
     // means it can't be scheduled
     int qframe = -1;
@@ -405,7 +549,7 @@ int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
                                                qmode,
                                                true);
 
-        //Trace(2, "TrackScheduler: Quantized to %d relative to %d", qframe, relativeTo);
+        //Trace(2, "BaseScheduler: Quantized to %d relative to %d", qframe, relativeTo);
         
     }
     return qframe;
@@ -430,91 +574,26 @@ int TrackScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
  * would be more convenient but this also requires some retooling of the OldMobiusState model and
  * how it passes back event types for the UI.
  */
-TrackEvent* TrackScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type)
+TrackEvent* BaseScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type)
 {
     // todo: if the leader is another MIDI track can just handle it locally without
     // going through Kernel
     int correlationId = correlationIdGenerator++;
     
-    int leaderFrame = tracker->scheduleFollowerEvent(leader, q, track->getNumber(), correlationId);
+    int leaderFrame = manager->scheduleFollowerEvent(leader, q, track->getNumber(), correlationId);
 
     // this turns out to be not useful since the event can move after scheduling
     // remove it if we can't find a use for it
     (void)leaderFrame;
     
     // add a pending local event
-    TrackEvent* event = eventPool->newEvent();
+    TrackEvent* event = eventPool.newEvent();
     event->type = type;
     event->pending = true;
     event->correlationId = correlationId;
     events.add(event);
 
     return event;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Resize
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * The Resize function was an early attempt at manual following and is no
- * longer necessary, but may still be useful if you want to disable automatic
- * following and do a manual resize.
- *
- * This uses leaderResized() which adjusts the playback rate to bring the two
- * into a compable size but also attempts to maintain the backing loops current
- * playback position.
- *
- * !! may want a "reorient" option that ignores the current playback position.
- *
- * For the most part, TrackScheduler doesn't know it is dealing with a MidiTrack,
- * just an AbstractTrack.  We're going to violate that here for a moment and
- * get ahold of TrackManager, MidiTrack, and MobiusKernel until the interfaces can be
- * cleaned up a bit.
- *
- * !! this falls back to "sync based resize" and doesn't use an explicit follower
- * revisit this
- *
- * What is useful here is passing a track number to force a resize against a track
- * that this one may not actually be following.
- */
-void TrackScheduler::doResize(UIAction* a)
-{
-    if (a->value == 0) {
-        // sync based resize
-        // !! should be consulting the follower here
-        if (sessionSyncSource == SYNC_TRACK) {
-            int otherTrack = pulsator->getTrackSyncMaster();
-            TrackProperties props = tracker->getTrackProperties(otherTrack);
-            track->leaderResized(props);
-            followTrack = otherTrack;
-        }
-        else {
-            Trace(1, "TrackScheduler: Unsupported resize sync source");
-        }
-    }
-    else {
-        int otherTrack = a->value;
-        // some validation before we ask for prperties
-        // could skip this if TrackPrperties had a way to return errors
-        int audioTracks = tracker->getAudioTrackCount();
-        int midiTracks = tracker->getMidiTrackCount();
-        int totalTracks = audioTracks + midiTracks;
-        if (otherTrack < 1 || otherTrack > totalTracks) {
-            Trace(1, "TrackScheduler: Track number out of range %d", otherTrack);
-        }
-        else {
-            TrackProperties props = tracker->getTrackProperties(otherTrack);
-            track->leaderResized(props);
-            // I think this can reset?
-            // actually no, it probably needs to be a component of the
-            // adjusted play frame proportion
-            advancer.rateCarryover = 0.0f;
-            followTrack = otherTrack;
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -534,7 +613,7 @@ void TrackScheduler::doResize(UIAction* a)
  * in the leader track by a specific follower.  So if this is a Follower event
  * only handle it if this track scheduled it.
  */
-void TrackScheduler::trackNotification(NotificationId notification, TrackProperties& props)
+void BaseScheduler::trackNotification(NotificationId notification, TrackProperties& props)
 {
     int myLeader = findLeaderTrack();
 
@@ -547,9 +626,9 @@ void TrackScheduler::trackNotification(NotificationId notification, TrackPropert
     }
 }
 
-void TrackScheduler::doTrackNotification(NotificationId notification, TrackProperties& props)
+void BaseScheduler::doTrackNotification(NotificationId notification, TrackProperties& props)
 {
-    Trace(2, "TrackScheduler::leaderNotification %d for track %d",
+    Trace(2, "BaseScheduler::leaderNotification %d for track %d",
           (int)notification, props.number);
 
     switch (notification) {
@@ -593,7 +672,7 @@ void TrackScheduler::doTrackNotification(NotificationId notification, TrackPrope
             break;
                 
         default:
-            Trace(1, "TrackScheduler: Unhandled notification %d", (int)notification);
+            Trace(1, "BaseScheduler: Unhandled notification %d", (int)notification);
             break;
     }
 }
@@ -601,7 +680,7 @@ void TrackScheduler::doTrackNotification(NotificationId notification, TrackPrope
 /**
  * Return true if we are being led by something.
  */
-bool TrackScheduler::hasActiveLeader()
+bool BaseScheduler::hasActiveLeader()
 {
     bool active = false;
     if (leaderType == LeaderHost || leaderType == LeaderMidi) {
@@ -618,7 +697,7 @@ bool TrackScheduler::hasActiveLeader()
  * Determine which track is supposed to be the leader of this one.
  * If the leader type is MIDI or Host returns zero.
  */
-int TrackScheduler::findLeaderTrack()
+int BaseScheduler::findLeaderTrack()
 {
     int leader = 0;
 
@@ -633,7 +712,7 @@ int TrackScheduler::findLeaderTrack()
     }
     else if (leaderType == LeaderFocused) {
         // this is a "view index" which is zero based!
-        leader = tracker->getFocusedTrackIndex() + 1;
+        leader = manager->getFocusedTrackIndex() + 1;
     }
 
     return leader;
@@ -646,7 +725,7 @@ int TrackScheduler::findLeaderTrack()
  * todo: need a better way to associate the two beyond just insertion order !!
  * for loop switch.
  */
-void TrackScheduler::leaderEvent(TrackProperties& props)
+void BaseScheduler::leaderEvent(TrackProperties& props)
 {
     (void)props;
     // locate the first pending event
@@ -656,10 +735,10 @@ void TrackScheduler::leaderEvent(TrackProperties& props)
     if (e == nullptr) {
         // I suppose this could happen if you allowed a pending switch
         // to escape from leader control and happen on it's own
-        Trace(1, "TrackScheduler: Leader notification did not find a pending event");
+        Trace(1, "BaseScheduler: Leader notification did not find a pending event");
     }
     else {
-        advancer.doEvent(e);
+        doEvent(e);
     }
 }
 
@@ -669,16 +748,575 @@ void TrackScheduler::leaderEvent(TrackProperties& props)
  * Currently MidiTrack will attempt to maintain it's currrent location which
  * may not always be what you want.
  */
-void TrackScheduler::leaderLoopResize(TrackProperties& props)
+void BaseScheduler::leaderLoopResize(TrackProperties& props)
 {
     (void)props;
-    Trace(2, "TrackScheduler: Leader track was resized");
+    Trace(2, "BaseScheduler: Leader track was resized");
 
     track->leaderResized(props);
     // I think this can reset?
     // actually no, it probably needs to be a component of the
     // adjusted play frame proportion
-    advancer.rateCarryover = 0.0f;
+    rateCarryover = 0.0f;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Advance the event list for one audio block.
+ *
+ * The block is broken up into multiple sections between each scheduled
+ * event that is within range of this block.  We handle processing of the
+ * events, and Track handles the advance between each event and advances
+ * the recorder and player.
+ *
+ * Actions queued for this block have already been processed.
+ * May want to defer that so we can at least do processing first
+ * which may activate a Record, before other events are scheduled, but really
+ * those should be stacked on the pulsed record anway.  Something to think about...
+ *
+ * The loop point is an extremely sensitive location that is fraught with errors.
+ * When the track crosses the loop boundary it normally does a layer shift which
+ * has many consequences, events quantized to the loop boundary are typically supposed
+ * to happen AFTER the shift when the loop frame returns to zero.  When the track "loops"
+ * pending events are shifted downward by the loop length.  So for a loop of 100 frames
+ * the actual loop content frames are 0-99 and frame 100 is actually frame 0 of the
+ * next layer.  Track/Recorder originally tried to deal with this but it is too messy
+ * and is really a scheduler problem.
+ *
+ * An exception to the "event after the loop" rule is functions that extend the loop
+ * like Insert and Multiply.  Those need "before or after" options.  Certain forms
+ * of synchronization and script waits do as well.  Keep all of that shit up here.
+ *
+ */
+void BaseScheduler::advance(MobiusAudioStream* stream)
+{
+    if (track->isPaused()) {
+        pauseAdvance(stream);
+        return;
+    }
+
+    int newFrames = stream->getInterruptFrames();
+
+    // here is where we need to ask Pulsator about drift
+    // and do a correction if necessary
+    int number = track->getNumber();
+    if (pulsator->shouldCheckDrift(number)) {
+        int drift = pulsator->getDrift(number);
+        (void)drift;
+        //  track->doSomethingMagic()
+        pulsator->correctDrift(number, 0);
+    }
+
+    int currentFrame = track->getFrame();
+
+    // locate a sync pulse we follow within this block
+    // !! there is work to do here with rate shift
+    // unclear where the pulse should "happen" within a rate shifted
+    // track, if it is the actuall buffer offset and the track is slowed
+    // down, then the pulse frame may be beyond the track advance and won't
+    // be "reached" until the next block.  If the pulse must happen within
+    // this block, then the pulse frame in the event would need to be adjusted
+    // for track time
+    if (syncSource != Pulse::SourceNone) {
+
+        // todo: you can also pass the pulse type to getPulseFrame
+        // and it will obey it rather than the one passed to follow()
+        // might be useful if you want to change pulse types during
+        // recording
+        int pulseOffset = pulsator->getPulseFrame(number);
+        if (pulseOffset >= 0) {
+            // sanity check before we do the math
+            if (pulseOffset >= newFrames) {
+                Trace(1, "BaseScheduler: Pulse frame is fucked");
+                pulseOffset = newFrames - 1;
+            }
+            // it dramatically cleans up the carving logic if we make this look
+            // like a scheduled event
+            TrackEvent* pulseEvent = eventPool.newEvent();
+            pulseEvent->frame = currentFrame + pulseOffset;
+            pulseEvent->type = TrackEvent::EventPulse;
+            // note priority flag so it goes before others on this frame
+            events.add(pulseEvent, true);
+        }
+    }
+
+    // apply rate shift
+    //int goalFrames = track->getGoalFrames();
+    newFrames = scaleWithCarry(newFrames);
+
+    // now that we have the event list in order, look at carving up
+    // the block around them and the loop point
+
+    int loopFrames = track->getLoopFrames();
+    if (loopFrames == 0) {
+        // the loop is either in reset, waiting for a Record pulse
+        // or waiting for latencies
+        // we're going to need to handle some form of advance here
+        // for script waits and latency compensation
+        // update: this can also happen for track types that don't advance
+        // like loopers
+        if (currentFrame > 0)
+          Trace(1, "BaseScheduler: Track is empty yet has a positive frame");
+        consume(newFrames);
+    }
+    else if (track->isExtending()) {
+        // track isn't empty but it is growing either during Record, Insert or Multiply
+        // will not have a loop point yet, but may have events
+
+        // todo: this is a minor violation of track type hiding
+        // I suppose tracks that don't loop can just return true here all the time
+        consume(newFrames);
+    }
+    else if (loopFrames < newFrames) {
+        // extremely short loop that would cycle several times within each block
+        // could handle that but it muddies up the code and is really not
+        // necessary
+        Trace(1, "BaseScheduler: Extremely short loop");
+        track->doReset(true);
+        events.clear();
+    }
+    else {
+        // check for deferred looping
+        if (currentFrame >= loopFrames) {
+            // if the currentFrame is exactly on the loop point, the last block advance
+            // left it there and is a normal shift, if it is beyond the loop point
+            // there is a boundary math error somewhere
+            if (currentFrame > loopFrames) {
+                Trace(1, "BaseScheduler: Track frame was beyond the end %d %d",
+                      currentFrame, loopFrames);
+            }
+            traceFollow();
+            track->loop();
+            events.shift(loopFrames);
+            currentFrame = 0;
+            checkDrift();
+        }
+
+        // the number of block frames before the loop point
+        int beforeFrames = newFrames;
+        // the number of block frames after the loop point
+        int afterFrames = 0;
+        // where the track will end up 
+        int nextFrame = currentFrame + newFrames;
+        
+        if (nextFrame >= loopFrames) {
+            int extra = nextFrame - loopFrames;
+
+            // the amount after the loop point must also be scaled
+            // no, it has already been scaled
+            //extra = scaleWithCarry(extra);
+            
+            beforeFrames = newFrames - extra;
+            afterFrames = newFrames - beforeFrames;
+        }
+        
+        consume(beforeFrames);
+
+        if (afterFrames > 0) {
+            // we've reached the loop
+            // here we've got the sensitive shit around whether events
+            // exactly on the loop frame should be before or after
+            
+            // this is where you would check goal frame
+            traceFollow();
+
+            track->loop();
+            events.shift(loopFrames);
+            checkDrift();
+            
+            consume(afterFrames);
+        }
+
+        // after each of the two consume()s, if we got exactly up to the loop
+        // boundary we could loop early, but this will be caught on
+        // the next block
+        // this may also be an interesting thing to control from a script
+    }
+}
+
+/**
+ * Called immediately after MidiTrack::loop has rewound to the beginning.
+ * See where the leader track is and how far off we are.
+ * There a few ways to do drift correction, a beetter more gradual one is to remember
+ * the amount of floating point roundoff when the rate is caculated and do periodic adjustments.
+ * This is a last resort for when that isn't working or something else knocks it out
+ * of alignment.  The assumption here is that if you're following, you always want to stay
+ * at a synced location, you can't deliberately put it it out of alignment and expect it
+ * to stay there.
+ */
+void BaseScheduler::checkDrift()
+{
+    // track only for now
+    int leader = findLeaderTrack();
+    if (leader > 0) {
+        TrackProperties props = manager->getTrackProperties(leader);
+        // ignore if the leader is empty
+        if (props.frames > 0) {
+            int myFrames = track->getLoopFrames();
+            int myFrame = track->getFrame();
+            bool checkIt = false;
+            if (myFrames > props.frames) {
+                // we are larger, the leader will play multiple times and when we're
+                // back to the beginning so should the leader be
+                checkIt = true;
+            }
+            else {
+                // we are smaller, we play multiple times for one pass of the leader
+                if (props.currentFrame < myFrames) {
+                    // we are within the first pass within the leader track, the frames
+                    // should be close
+                    checkIt = true;
+                }
+            }
+            if (checkIt) {
+                int delta = myFrame - props.currentFrame;
+                if (delta != 0) {
+                    Trace(2, "BaseScheduler: Track %d with leader %d drift %d",
+                          track->getNumber(), leader, delta);
+                    // now do something about it
+                }
+            }
+        }
+    }
+}
+
+void BaseScheduler::traceFollow()
+{
+    if (followTrack > 0) {
+        TrackProperties props = manager->getTrackProperties(followTrack);
+        Trace(2, "BaseScheduler: Loop frame %d follow frame %d",
+              track->getFrame(), props.currentFrame);
+    }
+}
+
+/**
+ * Scale a frame count in "block time" to "track time"
+ * Will want some range checking here to prevent extreme values.
+ */
+int BaseScheduler::scale(int blockFrames)
+{
+    int trackFrames = blockFrames;
+    float rate = track->getRate();
+    if (rate == 0.0f) {
+        // this is the common initialization value, it means "no change"
+        // or effectively 1.0f
+    }
+    else {
+        trackFrames = (int)((float)blockFrames * rate);
+    }
+    return trackFrames;
+}
+
+int BaseScheduler::scaleWithCarry(int blockFrames)
+{
+    int trackFrames = blockFrames;
+    float rate = track->getRate();
+    if (rate == 0.0f) {
+        // this is the common initialization value, it means "no change"
+        // or effectively 1.0f
+    }
+    else {
+        // the carryover represents the fractional frames we were SUPPOSED to advance on the
+        // last block but couldn't
+        // but the last frame actually DID represent that amount
+        // so the next block reduces by that amount
+        // feels like this only works if rate is above 1
+        float floatFrames = ((float)blockFrames * rate) + rateCarryover;
+        float integral;
+        rateCarryover = modf(floatFrames, &integral);
+        trackFrames = (int)integral;
+    }
+    return trackFrames;
+}
+
+/**
+ * When a stream advance happenes while in pause mode it is largely
+ * ignored, though we may want to allow pulsed events to respond
+ * to clock pulses?
+ */
+void BaseScheduler::pauseAdvance(MobiusAudioStream* stream)
+{
+    (void)stream;
+}
+
+/**
+ * For a range of block frames that are on either side if a loop boundary,
+ * look for events in that range and advance the track.
+ *
+ * Note that the frames passed here is already rate adjusted.
+ */
+void BaseScheduler::consume(int frames)
+{
+    int currentFrame = track->getFrame();
+    int lastFrame = currentFrame + frames - 1;
+
+    int remainder = frames;
+    TrackEvent* e = events.consume(currentFrame, lastFrame);
+    while (e != nullptr) {
+        
+        int eventAdvance = e->frame - currentFrame;
+
+        // no, we're advancing within scaled frames if this event
+        // was on a frame boundary, the only reason we would need
+        // to rescale if is this was a quantized event that
+        // CHANGED the scaling factor
+        //eventAdvance = scaleWithCarry(eventAdvance);
+        
+        if (eventAdvance > remainder) {
+            Trace(1, "BaseScheduler: Advance math is fucked");
+            eventAdvance = remainder;
+        }
+
+        // let track consume a block of frames
+        track->advance(eventAdvance);
+
+        // then we inject event handling
+        doEvent(e);
+        
+        remainder -= eventAdvance;
+        currentFrame = track->getFrame();
+        lastFrame = currentFrame + remainder - 1;
+        
+        e = events.consume(currentFrame, lastFrame);
+    }
+
+    // whatever is left over, let the track consume it
+    track->advance(remainder);
+}
+
+/**
+ * Process an event that has been reached or activated after a pulse.
+ *
+ * Most of the logic is forwarded to the TrackActionHandler
+ * We free the event out here so the handler doesn't have to.
+ */
+void BaseScheduler::doEvent(TrackEvent* e)
+{
+    bool handled = false;
+    
+    switch (e->type) {
+        case TrackEvent::EventNone: {
+            Trace(1, "BaseScheduler: Event with nothing to do");
+            handled = true;
+        }
+            break;
+
+        case TrackEvent::EventPulse: {
+            doPulse(e);
+            handled = true;
+        }
+            break;
+
+        case TrackEvent::EventSync: {
+            Trace(1, "BaseScheduler: Not expecting sync event");
+            handled = true;
+        }
+            break;
+
+            // I suppose we can handle this here
+        case TrackEvent::EventAction: {
+            if (e->primary == nullptr)
+              Trace(1, "BaseScheduler: EventAction without an action");
+            else {
+                doAction(e->primary);
+                // the action must be reclaimed
+                actionPool->checkin(e->primary);
+                e->primary = nullptr;
+            }
+            // quantized events are not expected to have stacked actions
+            // does that ever make sense?
+            if (e->stacked != nullptr)
+              Trace(1, "BaseScheduler: Unexpected action stack on EventAction");
+            handled = true;
+        }
+            break;
+
+            // is this something we do here or pass along?
+        case TrackEvent::EventWait: {
+            Trace(1, "BaseScheduler: EventWait not handled");
+        }
+            break;
+
+        default:
+            break;
+
+
+    }
+
+    if (!handled)
+      trackScheduler->doEvent(e);
+
+    finishWaitAndDispose(e, false);
+}
+
+/**
+ * Must be called immediately after any TrackEvent has been processed.
+ * If there is an MslWait on this event inform the environment (via Kernel)
+ * that has either been reached normally or has been canceled.
+ */
+void BaseScheduler::finishWaitAndDispose(TrackEvent* e, bool canceled)
+{
+    if (e->wait != nullptr) {
+        manager->finishWait(e->wait, canceled);
+        e->wait = nullptr;
+    }
+
+    dispose(e);
+}
+
+/**
+ * Dispose of an event, including any stacked actions.
+ * Normally the actions have been removed, but if we hit an error condition
+ * don't leak them.
+ */
+void BaseScheduler::dispose(TrackEvent* e)
+{
+    if (e->wait != nullptr)
+      Trace(1, "BaseScheduler: Disposing of TrackEvent with an unfinished MslWait");
+    
+    if (e->primary != nullptr)
+      actionPool->checkin(e->primary);
+    
+    UIAction* stack = e->stacked;
+    while (stack != nullptr) {
+        UIAction* next = stack->next;
+        actionPool->checkin(stack);
+        stack = next;
+    }
+    
+    e->stacked = nullptr;
+    eventPool.checkin(e);
+}
+
+/**
+ * We should only be injecting pulse events if we are following
+ * something, and have been waiting on a record start or stop pulse.
+ * Events that are waiting for a pulse are called "pulsed" events.
+ *
+ * As usual, what will actually happen in practice is simpler than what
+ * the code was designed for to allow for future extensions.  Right now,
+ * there can only be one pending pulsed event, and it must be for record start
+ * or stop.
+ *
+ * In theory there could be any number of pulsed events, they are processed
+ * in order, one per pulse.
+ * todo: rethink this, why not activate all of them, which is more useful?
+ *
+ * When a pulse comes in a pulse event is "activated" which means it becomes
+ * not pending and is given a location equal to where the pulse frame.
+ * Again in theory, this could be in front of other scheduled events and because
+ * events must be in order, it is removed and reinserted after giving it a frame.
+ */
+void BaseScheduler::doPulse(TrackEvent* e)
+{
+    (void)e;
+    
+    // todo: there could be more than one thing waiting on a pulse?
+    TrackEvent* pulsed = events.consumePulsed();
+    if (pulsed != nullptr) {
+        Trace(2, "BaseScheduler: Activating pulsed event");
+        // activate it on this frame and insert it back into the list
+        pulsed->frame = track->getFrame();
+        pulsed->pending = false;
+        pulsed->pulsed = false;
+        events.add(pulsed);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Leader Tracking
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * At the beginnigng of each block advance, watch for changes in the
+ * leader and automatically make adjustments.  This is an alternative
+ * to pro-active notifiication of leader changes.
+ *
+ * Assuming this works the older leader notifications can be removed
+ * if they are redundant.
+ *
+ * !! never used, should it be?
+ */
+void BaseScheduler::detectLeaderChange()
+{
+    bool doResize = false;
+    //bool doRelocate = false;
+    TrackProperties props;
+    
+    // the current leader is here, this must be set prior to advance()
+    // configuration changes happen with KernelMessages which are before advance,
+    // actions that might change the leader also happen before the advance currently
+    // but that might become more complex
+    LeaderType newLeaderType = leaderType;
+
+    if (newLeaderType == LeaderNone) {
+        // not following any more, ignore
+    }
+    else if (newLeaderType == LeaderHost) {
+        // more work to do...
+        // in theory we need to monitor the host tempo which
+        // has an effect on the "bar" size which determines the leader length
+        // this would be put in TrackProperties as if it had come from a track
+    }
+    else if (newLeaderType == LeaderMidi) {
+        // more work to do...
+        // like LeaderHost, tempo determines leader length
+    }
+    else {
+        // we're following a track
+        // it doesn't really matter if the leader track number changed,
+        // we still have to check the length
+        int leader = findLeaderTrack();
+        if (leader == 0) {
+            // this can happen when you're following a specific track
+            // but didn't specify a number, or if the TrackSyncMaster isn't set
+            // ignore
+        }
+        else {
+            props = manager->getTrackProperties(leader);
+            if (props.invalid) {
+                // something is messed up with track numbering
+                Trace(1, "BaseScheduler: Unable to determine leader track properties");
+            }
+            else {
+                // todo, it may have changed an even cycle multiple
+                // could avoid a recalculation
+                doResize = (props.frames != lastLeaderFrames);
+
+                // todo: location is more complex, defer till a notification
+
+                // remember these for next time
+                lastLeaderFrames = props.frames;
+                lastLeaderLocation = props.currentFrame;
+            }
+        }
+        lastLeaderTrack = leader;
+    }
+
+    lastLeaderType = newLeaderType;
+
+    if (doResize) {
+
+        // this only happens if the track is following RecordEnd, or Size
+        if (followRecordEnd || followSize) {
+        
+            Trace(2, "BaseScheduler: Automatic follower resize detected in track %d",
+                  track->getNumber());
+            track->leaderResized(props);
+
+            // I think this can reset?
+            // actually no, it probably needs to be a component of the
+            // adjusted play frame proportion
+            rateCarryover = 0.0f;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -690,7 +1328,7 @@ void TrackScheduler::leaderLoopResize(TrackProperties& props)
 /**
  * Contribute state managed by the scheduer to the exported state.
  */
-void TrackScheduler::refreshState(MobiusState::Track* state)
+void BaseScheduler::refreshState(MobiusState::Track* state)
 {
     // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
     state->syncSource = sessionSyncSource;
@@ -780,6 +1418,8 @@ void TrackScheduler::refreshState(MobiusState::Track* state)
     state->eventCount = count;
 
     // loop switch, can only be one of these
+    // !! this violates track type hiding but in order to share we would
+    // need AbstractLooperTrack or something which isn't a bad idea
     state->nextLoop = 0;
     TrackEvent* e = events.find(TrackEvent::EventSwitch);
     if (e != nullptr)

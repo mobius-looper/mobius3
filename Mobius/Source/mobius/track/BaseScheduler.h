@@ -21,21 +21,18 @@
 #include "../Notification.h"
 
 #include "TrackEvent.h"
-#include "TrackAdvancer.h"
 
-class BaseTrackScheduler
+class BaseScheduler
 {
-    friend class TrackAdvancer;
-    
   public:
 
-    BaseTrackScheduler();
-    ~BaseTrackScheduler();
+    BaseScheduler();
+    ~BaseScheduler();
 
-    void initialize(class TrackManager* tm, AbstractTrack* track);
+    void initialize(class TrackManager* tm, AbstractTrack* track,
+                    class TrackActionScheduler* tas);
+    
     void configure(Session::Track* def);
-    void dump(class StructureDumper& d);
-    void reset();
     
     void refreshState(class MobiusState::Track* state);
 
@@ -64,7 +61,7 @@ class BaseTrackScheduler
     
   protected:
 
-    // things LoopSwitcher and TrackAdvancer need
+    // things TrackActionScheduler need
     
     class TrackManager* manager = nullptr;
     class UIActionPool* actionPool = nullptr;
@@ -74,7 +71,7 @@ class BaseTrackScheduler
     class AbstractTrack* track = nullptr;
     
     TrackEventList events;
-    TrackEventPool trackEventPool;
+    TrackEventPool eventPool;
 
     // leader options needed by LoopSwitcher, TrackAdvancer
     LeaderType leaderType;
@@ -87,9 +84,8 @@ class BaseTrackScheduler
     TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
     
   private:
-    
-    // handler for advance complexity
-    TrackAdvancer advancer {*this};
+
+    class TrackActionScheduler* trackScheduler = nullptr;
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -98,6 +94,17 @@ class BaseTrackScheduler
     bool followQuantize = false;
     bool followRecord = false;
     bool followMute = false;
+
+    float rateCarryover = 0.0f;
+
+    // leader state change detection
+    LeaderType lastLeaderType = LeaderNone;
+    int lastLeaderTrack = 0;
+    int lastLeaderFrames = 0;
+    //int lastLeaderCycleFrames = 0;
+    //int lastLeaderCycles = 0;
+    int lastLeaderLocation = 0;
+    float lastLeaderRate = 1.0f;
     
     // save these from the session until everything is converted to
     // use Pulsator constants
@@ -106,6 +113,16 @@ class BaseTrackScheduler
 
     // simple counter for generating leader/follower event correlation ids
     int correlationIdGenerator = 1;
+
+    // common action handling;
+    void reset();
+    void dump();
+    void doStacked(class TrackEvent* e);
+    void unstack(TrackEvent* event);
+    void defaultUndo(UIAction* src);
+    bool isRecording();
+    bool isPaused();
+    bool isReset();
 
     // Leader/Follower Support
     void doTrackNotification(NotificationId notification, class TrackProperties& props);
@@ -116,9 +133,6 @@ class BaseTrackScheduler
     // Scheduling support
     //
     
-    void doStacked(class TrackEvent* e);
-    void doActionNow(class UIAction* a);
-    
     QuantizeMode isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* src, QuantizeMode q);
     int findQuantizationLeader();
@@ -126,8 +140,20 @@ class BaseTrackScheduler
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
 
     //
-    // Post-scheduling function handlers
+    // Advance
     //
 
+    void traceFollow();
+    int scale(int blockFrames);
+    int scaleWithCarry(int blockFrames);
+    void pauseAdvance(MobiusAudioStream* stream);
+    void consume(int frames);
+    void doEvent(TrackEvent* e);
+    void finishWaitAndDispose(TrackEvent* e, bool canceled);
+    void dispose(TrackEvent* e);
+    void doPulse(TrackEvent* e);
+    void detectLeaderChange();
+    void checkDrift();
+    
 };
 
