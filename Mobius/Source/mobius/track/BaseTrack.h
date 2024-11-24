@@ -1,5 +1,5 @@
 /**
- * Interfface for the most basic track type.
+ * Interface for the most basic track type.
  */
 
 #pragma once
@@ -13,7 +13,7 @@ class BaseTrack
     virtual ~BaseTrack() {}
 
     // tracks come in many shapes and sizes
-    virtual void configure(class Session::Track* def) = 0;
+    virtual void loadSssion(class Session::Track* def) = 0;
 
     // all tracks have a unique number shown in the UI
     // these are assigned by Trackmanager
@@ -27,8 +27,7 @@ class BaseTrack
     virtual bool doQuery(class Query* q) = 0;
 
     // they are voracious consumers of audio
-    // todo: they need access to the audio stream in fragments and multiple ports
-    virtual void advance(int frames) = 0;
+    virtual void processAudioStream(class MobiusAudioStream* stream) = 0;
 
     // and some like MIDI very much
     virtual void midiEvent(class MidiEvent* e) = 0;
@@ -52,6 +51,12 @@ class BaseTrack
     // MSL will wait patiently for them, like a good dad
     virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
     virtual bool scheduleWaitEvent(class MslWait* w) = 0;
+
+    // they can have important things to say
+    virtual void refreshPriorityState(class MobiusState::Track* tstate) = 0;
+
+    // and can go on and on if you let them
+    virtual void refreshState(class MobiusState::Track* tstate) = 0;
 
   protected:
 

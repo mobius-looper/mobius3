@@ -117,7 +117,12 @@ void MidiTrackEditor::loadSession()
 
 void MidiTrackEditor::loadTrack(int index)
 {
-    Session::Track* track = session->getTrack(Session::TypeMidi, index);
+    // before we used getTrack which might return nullptr
+    // now use ensureTrack and assume it is initialized to reasonable values
+    // effect should be the same
+    // Session::Track* track = session->getTrack(Session::TypeMidi, index);
+    Session::Track* track = session->ensureTrack(Session::TypeMidi, index);
+    
     if (track != nullptr) {
         
         generalForm.load(track->getParameters());

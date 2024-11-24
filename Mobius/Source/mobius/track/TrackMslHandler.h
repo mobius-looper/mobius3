@@ -21,7 +21,7 @@ class TrackMslHandler
     ~TrackMslHandler();
 
     bool mslWait(class MslWait* wait, class MslContextError* error);
-    bool mslQuery(class MslQuery* q, AbstractTrack* t);
+    bool mslQuery(class MslQuery* q, class LogicalTrakc* t);
     
   private:
 

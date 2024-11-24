@@ -25,34 +25,49 @@ Session::Session(Session* src)
 
     if (src->globals != nullptr)
       globals.reset(new ValueSet(src->globals.get()));
+
+    // source tracks should already have ids but make sure
+    assignIds();
 }
 
 /**
- * Return the definition of this track if we have one.
+ * After parsing or editing, make sure all tracks have a unique id.
  */
-Session::Track* Session::getTrack(TrackType type, int index)
+void Session::assignIds()
 {
-    Track* found = nullptr;
-    int count = 0;
+    int max = 0;
     for (auto track : tracks) {
-        if (track->type == type) {
-            if (count == index) {
-                found = track;
-                break;
-            }
-            count++;
-        }
+        if (track->id > max)
+          max = track->id;
     }
-    return found;
+    max++;
+    for (auto track : tracks) {
+        if (track->id == 0)
+          track->id = max++;
+    }
+}
+
+int Session::getTrackCount()
+{
+    return tracks.size();
+}
+
+Session::Track* Session::getTrack(int index)
+{
+    Session::Track* track = nullptr;
+    if (index >= 0 && index < tracks.size())
+      track = tracks[index];
+    return track;
 }
 
 /**
- * Find or create a definition for this track index.
- * Because the indexes are expected to match array indexes,
- * need to flesh out preceeding tracks if they don't exist.
+ * Kludge for MidiTrackEditor
  *
- * todo: I don't like the way this is working.  Everywhere else tracks
- * just have a unique number and may be of either type.
+ * Find or create a definition for a track of this type
+ * with a logical index.  Meaning if the index is 2 there need to be
+ * three tracks accessible with that index to store configuration.
+ * Will go away once MidiTrackEditor can handle dynamic track add/remove
+ * rather than being fixed at 8 tracks.
  */
 Session::Track* Session::ensureTrack(TrackType type, int index)
 {
@@ -72,11 +87,13 @@ Session::Track* Session::ensureTrack(TrackType type, int index)
     if (found == nullptr) {
         for (int i = count ; i <= index ; i++) {
             found = new Session::Track();
-            found->index = i;
             found->type = type;
             tracks.add(found);
         }
     }
+
+    // give any new ones unique ids
+    assignIds();
 
     return found;
 }
@@ -100,6 +117,8 @@ void Session::replaceMidiTracks(Session* src)
             index++;
         }
     }
+
+    assignIds();
 
     // this is authoritative over how many tracks there logically are
     // the Track array may be sparse or have extras
@@ -191,9 +210,9 @@ void Session::setBool(juce::String pname, bool value)
 
 Session::Track::Track(Session::Track* src)
 {
+    id = src->id;
     type = src->type;
     name = src->name;
-    index = src->index;
     if (src->parameters != nullptr)
       parameters.reset(new ValueSet(src->parameters.get()));
 }
@@ -271,12 +290,8 @@ void Session::parseXml(juce::String xml)
             }
         }
 
-        // re-index the tracks, looks better in the debugger
-        int index = 0;
-        for (auto track : tracks) {
-            track->index = index;
-            index++;
-        }
+        // assign ids, this will replace the notion of "index"
+        assignIds();
     }
 }
 
@@ -293,7 +308,7 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
 {
     Session::Track* track = new Session::Track();
 
-    // todo: should be "id" ?
+    track->id = root->getIntAttribute("id");
     track->name = root->getStringAttribute("name");
     
     juce::String typeString = root->getStringAttribute("type");
@@ -332,7 +347,11 @@ juce::String Session::toXml()
 
     if (audioTracks > 0)
       root.setAttribute("audioTracks", audioTracks);
-    
+
+    // todo: this is the "active" number of MIDI tracks
+    // it may be fewer than the number of tracks in the array
+    // this is temporary until the UI supports dynamic add/remove
+    // of tracks
     if (midiTracks > 0)
       root.setAttribute("midiTracks", midiTracks);
 
@@ -350,14 +369,17 @@ void Session::renderTrack(juce::XmlElement* parent, Session::Track* track)
     juce::XmlElement* root = new juce::XmlElement("Track");
     parent->addChildElement(root);
 
+    // this needs to be saved and restored for cloning at runtime
+    // but it is meaningless when saved in a file
+    if (track->id > 0)
+      root->setAttribute("id", track->id);
+
     if (track->type == Session::TypeAudio)
       root->setAttribute("type", "audio");
     else if (track->type == Session::TypeMidi)
       root->setAttribute("type", "midi");
     else
       root->setAttribute("type", "???");
-
-    root->setAttribute("index", track->index);
 
     if (track->name.length() > 0)
       root->setAttribute("name", track->name);

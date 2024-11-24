@@ -342,8 +342,7 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     if (mCore != nullptr)
       mCore->reconfigure(configuration);
 
-    if (mTracks != nullptr)
-      mTracks->configure(configuration);
+    mTracks->configure(configuration);
 }
 
 /**
@@ -356,21 +355,18 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     // take the new one
     session = msg->object.session;
     
-    // reuse the request message to respond with the
-    // old one to be deleted
-    msg->object.session = old;
-
-    // send the old one back
-    communicator->kernelSend(msg);
-
     // sigh, the two new config objects are sent down one at a time,
     // should be together
     valuator.configure(configuration, session);
     scriptUtil.configure(configuration, session);
     notifier.configure(session);
 
-    if (mTracks != nullptr)
-      mTracks->loadSession(session);
+    mTracks->loadSession(session);
+
+    // reuse the request message to respond with the
+    // old one to be deleted
+    msg->object.session = old;
+    communicator->kernelSend(msg);
 }
 
 /**

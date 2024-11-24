@@ -14,8 +14,6 @@ class LooperTrack : public BaseTrack
     virtual LooperTrack() {}
     virtual ~LooperTrack() {}
 
-    virtual void initialize(class LooperScheduler& scheduler) = 0;
-
     // Loop state
 
     virtual MobiusState::Mode getMode() = 0;

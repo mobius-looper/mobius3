@@ -5,6 +5,15 @@
  *
  * There is a default session, and any nymber of user defined sessions.
  *
+ * The track list may be sparse for Mobius core tracks since they do not
+ * yet configure themselves with Sessions and don't resize dynamically.
+ * Also due to current core limitations all audio tracks must be numbered
+ * first from 1 to N.
+ *
+ * The remaining tracks can be in any order and do not have numbers, numbers
+ * are assigned dynamically at startup, in the order they appear in the Session
+ * with numbers starting after the audio tracks.
+ *
  */
 
 #pragma once
@@ -32,14 +41,16 @@ class Session
         ~Track() {}
         Track(Track* src);
 
+        // tracks are assigned a unique transient identifier at startup
+        // and this identifier will be retained as the session is edited
+        // it is used to correlate track derfinitions with their existing
+        // implementations in case order changes or tracks are added and removed
+        int id = 0;
+
         TrackType type;
 
         // should this be a first-class member or inside the value set?
         juce::String name;
-
-        // maybe not necessary, but convenient in the debugger
-        // and looking at XML
-        int index = 0;
 
         ValueSet* getParameters();
         ValueSet* ensureParameters();
@@ -59,12 +70,10 @@ class Session
     // until we get audio tracks in here, copy this from MobiusConfig
     int audioTracks = 0;
 
-    // the number of active midi tracks
-    // there can be entries in the tracks array that are higher than this
-    // they are kept around in case they hold useful state, but are ignored
-    int midiTracks = 0;
+    int getTrackCount();
+    Track* getTrack(int index);
 
-    Track* getTrack(TrackType type, int index);
+    // temporary kludge for MidiTrackEditor
     Track* ensureTrack(TrackType type, int index);
     void replaceMidiTracks(Session* src);
     void clearTracks(TrackType type);
@@ -90,13 +99,14 @@ class Session
 
     juce::OwnedArray<Track> tracks;
     std::unique_ptr<ValueSet> globals;
-    
+
     void xmlError(const char* msg, juce::String arg);
     Track* parseTrack(juce::XmlElement* root);
     void renderTrack(juce::XmlElement* parent, Track* track);
     void renderDevice(juce::XmlElement* parent, SessionMidiDevice* device);
     void parseDevice(juce::XmlElement* root, SessionMidiDevice* device);
 
+    void assignIds();
     
 };
 

@@ -33,17 +33,11 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     ~TrackManager();
 
     void initialize(class MobiusConfig* config, class Session* s, class Mobius* engine);
-
-    // new stuff for the track model evoluation
-    class AbstractTrack* getAbstractTrack(int number);
-    class LogicalTrack* getLogicalTrack(int number);
-    
-    // temporary until we can managed this
-    void setEngine(class Mobius* m);
-    
     void configure(class MobiusConfig* config);
     void loadSession(class Session* s);
 
+    class LogicalTrack* getLogicalTrack(int number);
+    
     // Services
 
     class MobiusConfig* getConfiguration();
@@ -101,15 +95,11 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // used by TrackScheduler to schedule a follower event in a core track
     int scheduleFollowerEvent(int audioTrack, QuantizeMode q, int followerTrack, int eventId);
-
-
     //
     // New interfaces for emerging TrackMslHandler and others
     //
 
     class MobiusContainer* getContainer();
-    //AbstractTrack* getTrack(int number);
-
     void finishWait(MslWait* wait, bool canceled);
     
   private:
@@ -131,14 +121,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     int audioTrackCount = 0;
     int activeMidiTracks = 0;
 
-    // temporary
-    //juce::OwnedArray<class MidiTrack> midiTracks;
-
-    // new way
     void configureTracks(class Session* session);
-    class LogicalTrack* getNext(juce::Array<class LogicalTrack*>& old, Session::TrackType type);
     
-    //void allocateTracks(int baseNumber, int count);
     void refreshState();
 
     void sendActions(UIAction* actions);
@@ -150,7 +134,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doGlobal(class UIAction* src);
     void doActivation(UIAction* src);
     void doScript(UIAction* src);
-    //void doMidiAction(class UIAction* src);
     void doTrackSelectAction(class UIAction* a);
 
     // MSL support

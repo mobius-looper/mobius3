@@ -1,3 +1,5 @@
+// obsolete - delete when ready
+
 /**
  * The interface of an object that exhibits looping track behavior,
  * either audio or MIDI.

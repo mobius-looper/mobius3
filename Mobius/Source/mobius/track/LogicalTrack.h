@@ -10,27 +10,25 @@
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
 
-#include "TrackScheduler.h"
 #include "TrackProperties.h"
+#include "BaseScheduler.h"
 
 class LogicalTrack
 {
+    friend class BaseTrack;
+    
   public:
 
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
-    void initialize();
-    void loadSession(class Session::Track* session);
-    
-    void setTrack(Session::TrackType type, class AbstractTrack* t);
-    void setNumber(int n);
-    void setEngineNumber(int n);
+
+    void initializeCore(class Mobius, int index);
+    void loadSession(class Session::Track* def, int number);
     
     Session::TrackType getType();
-    class AbstractTrack* getTrack();
-    class MidiTrack* getMidiTrack();
+    int getSessionId();
     int getNumber();
-
+    
     void getTrackProperties(TrackProperties& props);
     int getGroup();
     bool isFocused();
@@ -41,12 +39,20 @@ class LogicalTrack
     void midiEvent(class MidiEvent* e);
 
     void trackNotification(NotificationId notification, TrackProperties& props);
-    bool scheduleWait(MslWait* wait);
+    bool scheduleWait(class MslWait* wait);
 
+    void refreshPriorityState(class MobiusState::Track* tstate);
+    void refreshState(class MobiusState::Track* tstate);
+
+  protected:
+
+    // services we offer to BaseTracks
+    BaseScheduler* getBaseScheduler();
+    
   private:
 
     class TrackManager* manager = nullptr;
-    Session::TrackType trackType;
+    class Session::Track* session = nullptr;
     int number = 0;
     int engineNumber = 0;
 
@@ -54,27 +60,12 @@ class LogicalTrack
      * The underlying track implementation, either a MidiTrack
      * or a MobiusTrackWrapper.
      */
-    std::unique_ptr<class AbstractTrack> track;
+    std::unique_ptr<class BaseTrack> track;
 
     /**
-     * The scheduler for this track.
-     */
-    TrackScheduler scheduler;
-
-    /**
-     * The common scheduler for all track types.
+     * The common scheduler for track types that want to use it.
      */
     BaseScheduler baseScheduler;
-
-    /**
-     * The track type specific scheduler.
-     */
-    std::unique_ptr<class TrackTypeScheduler> trackScheduler;
-
-    /**
-     * The common track behavior.
-     */
-    std::unique_ptr<class BaseTrack> baseTrack;
 
     /**
      * A colletion of parameter overrides for this track.
