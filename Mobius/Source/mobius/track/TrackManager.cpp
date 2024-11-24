@@ -73,7 +73,6 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
 
     audioTrackCount = session->audioTracks;
     int baseNumber = audioTrackCount + 1;
-    //allocateTracks(baseNumber, TrackManagerMaxMidiTracks);
     
     prepareState(&state1, baseNumber, TrackManagerMaxMidiTracks);
     prepareState(&state2, baseNumber, TrackManagerMaxMidiTracks);
@@ -125,14 +124,8 @@ void TrackManager::configureTracks(Session* session)
     // Mobius tracs configure themselves through MobiusConfig at an earlier stage
     int mobiusTracks = audioEngine->getTrackCount();
     for (int i = 0 ; i < mobiusTracks ; i++) {
-        MobiusTrackWrapper* mtw = audioEngine->getTrackWrapper(i);
         LogicalTrack* lt = new LogicalTrack(this);
-        lt->setTrack(Session::TypeAudio, mtw);
-        // the logical number
-        lt->setNumber(i+1);
-        // these are the only ones that need number mapping
-        // once we can have them out of order in the logical list
-        lt->setEngineNumber(i+1);
+        lt->initializeCore(i);
         tracks.add(lt);
     }
     
@@ -144,6 +137,8 @@ void TrackManager::configureTracks(Session* session)
     for (int i = 0 ; i < midiCount ; i++) {
         LogicalTrack* lt = getNext(oldTracks, Session::TypeMidi);
         if (lt == nullptr) {
+
+            
             // MidiTrack should actually point back to the LogicalTrack
             // doesn't need to go all the way back here?
             // AbstractTrack* mt = new MidiTrack(this, lt);
@@ -203,20 +198,6 @@ LogicalTrack* TrackManager::getNext(juce::Array<LogicalTrack*>& old, Session::Tr
     }
     return found;
 }
-
-/**
- * Allocate track memory during the initialization phase.
- */
-#if 0
-void TrackManager::allocateTracks(int baseNumber, int count)
-{
-    for (int i = 0 ; i < count ; i++) {
-        MidiTrack* mt = new MidiTrack(this);
-        mt->setNumber(baseNumber + i);
-        midiTracks.add(mt);
-    }
-}
-#endif
 
 /**
  * Prepare one of the two state objects.

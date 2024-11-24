@@ -62,6 +62,21 @@ class LogicalTrack
     TrackScheduler scheduler;
 
     /**
+     * The common scheduler for all track types.
+     */
+    BaseScheduler baseScheduler;
+
+    /**
+     * The track type specific scheduler.
+     */
+    std::unique_ptr<class TrackTypeScheduler> trackScheduler;
+
+    /**
+     * The common track behavior.
+     */
+    std::unique_ptr<class BaseTrack> baseTrack;
+
+    /**
      * A colletion of parameter overrides for this track.
      * This is currently implemented by Valuator which has its own
      * Track model.  Not liking this.  Valuator should be in touch

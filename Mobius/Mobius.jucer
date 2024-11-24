@@ -503,14 +503,22 @@
           <FILE id="feGMpx" name="BaseScheduler.cpp" compile="1" resource="0"
                 file="Source/mobius/track/BaseScheduler.cpp"/>
           <FILE id="D0C3IR" name="BaseScheduler.h" compile="0" resource="0" file="Source/mobius/track/BaseScheduler.h"/>
+          <FILE id="MCUOmT" name="BaseTrack.h" compile="0" resource="0" file="Source/mobius/track/BaseTrack.h"/>
           <FILE id="vEVjGD" name="LogicalTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LogicalTrack.cpp"/>
           <FILE id="TCiX2I" name="LogicalTrack.h" compile="0" resource="0" file="Source/mobius/track/LogicalTrack.h"/>
           <FILE id="U0i9pO" name="LongWatcher.cpp" compile="1" resource="0" file="Source/mobius/track/LongWatcher.cpp"/>
           <FILE id="s0AgYM" name="LongWatcher.h" compile="0" resource="0" file="Source/mobius/track/LongWatcher.h"/>
+          <FILE id="xYVFGJ" name="LooperScheduler.cpp" compile="1" resource="0"
+                file="Source/mobius/track/LooperScheduler.cpp"/>
+          <FILE id="wQ2MmX" name="LooperTrack.h" compile="0" resource="0" file="Source/mobius/track/LooperTrack.h"/>
           <FILE id="WkztCV" name="LoopSwitcher.cpp" compile="1" resource="0"
                 file="Source/mobius/track/LoopSwitcher.cpp"/>
           <FILE id="sGeJUP" name="LoopSwitcher.h" compile="0" resource="0" file="Source/mobius/track/LoopSwitcher.h"/>
+          <FILE id="gdrvxb" name="MobiusLooperTrack.cpp" compile="1" resource="0"
+                file="Source/mobius/track/MobiusLooperTrack.cpp"/>
+          <FILE id="AKQGLE" name="MobiusLooperTrack.h" compile="0" resource="0"
+                file="Source/mobius/track/MobiusLooperTrack.h"/>
           <FILE id="QSEdLl" name="TrackActionScheduler.h" compile="0" resource="0"
                 file="Source/mobius/track/TrackActionScheduler.h"/>
           <FILE id="Fr56e1" name="TrackAdvancer.cpp" compile="1" resource="0"

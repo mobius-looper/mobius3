@@ -21,47 +21,64 @@ LogicalTrack::~LogicalTrack()
     // track unique_ptr deletes itself
 }
 
-void LogicalTrack::initialize()
+/**
+ * Special initialization for Mobius core tracks.
+ * Mobius will already have been configured, we just need to make the BaseTrack.
+ * These don't use a scheduler yet.
+ */
+void LogicalTrack::initializeCore(int index)
 {
-    scheduler.initialize(manager);
+    trackType = Session::TypeAudio;
+    // no mapping at the moment
+    number = index + 1;
+    engineNumber = index + 1;
+
+    Mobius* m = manager->getAudioEngine();
+    MobiusLooperTrack* t = new MobiusLooperTrack(m, m->getTrack(index));
+    baseTrack.reset(t);
+
+    baseScheduler.initialize(manager, t, nullptr);
+}
+
+/**
+ * Normal initialization driven from the Session.
+ */
+void LogicalTrack::initialize(Session::Track* trackdef, int argNumber)
+{
+    trackType = def->type;
+    number = argNumber;
+
+    if (trackType == Session::TypeMidi) {
+
+        // ugly dependency cycles
+        LooperScheduler* ls = new LooperScheduler(&baseScheduler);
+
+        // why the hell does this need manager?
+        MidiTrack* mt = new MidiTrack(manager);
+
+        // LooperScheduler forwards actions to the track
+        ls->setTrack(mt);
+
+        // and the track needs to call back to the scheduler
+        mt->setScheduler(ls);
+
+        // and finally BaseScheduler needs both
+        baseScheduler.initialize(tm, mt, ls);
+        baseTrack.reset(mt);
+        trackScheduler.reset(ls);
+    }
+    // other types someday
+
+    baseScheduler.configure(trackdef);
 }
 
 /**
  * Called during initialization and whenever the session
  * changes.
  */
-void LogicalTrack::loadSession(Session::Track* session)
+void LogicalTrack::loadSession(Session::Track* trackdef)
 {
-    scheduler.configure(session);
-}
-
-void LogicalTrack::setTrack(Session::TrackType type, AbstractTrack* t)
-{
-    trackType = type;
-    track.reset(t);
-    scheduler.setTrack(t);
-
-    // just in case they set the number before setting the track
-    setNumber(number);
-}
-
-void LogicalTrack::setNumber(int n)
-{
-    number = n;
-
-    // if we're dealing with something other than a Mobius track,
-    // pass the number along too for use in logging
-    if (track != nullptr && trackType != Session::TypeAudio)
-      track->setNumber(n);
-}
-
-/**
- * Special for audio tracks, or any other type with tracks managed in a group
- * by something else and their own internal indexing.
- */
-void LogicalTrack::setEngineNumber(int n)
-{
-    engineNumber = n;
+    baseScheduler.configure(trackdef);
 }
 
 Session::TrackType LogicalTrack::getType()

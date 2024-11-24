@@ -1,5 +1,7 @@
 /**
- * This is the base class for track type specific action handling.
+ * This is the interface for action handling and event processing
+ * that are track type specific.
+ * 
  * BaseScheduler will have an instance of this and pass along actions
  * and events.
  *
@@ -10,14 +12,14 @@
  * Other track types may have far less complex scheduling requirements.
  */
 
-class TrackActionScheduler
+class TrackTypeScheduler
 {
   public:
 
-    virtual ~TrackActionScheduler() {}
+    virtual ~TrackTypeScheduler() {}
 
     virtual void doAction(class UIAction* a) = 0;
-    virtual void advance(class MoibusAudioStream* stream) = 0;
+    virtual void advance(class MobusAudioStream* stream) = 0;
     virtual void doEvent(class TrackEvent* e) = 0;
 
 };

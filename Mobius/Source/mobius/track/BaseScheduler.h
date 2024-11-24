@@ -24,13 +24,15 @@
 
 class BaseScheduler
 {
+    friend class LooperScheduler;
+    
   public:
 
     BaseScheduler();
     ~BaseScheduler();
 
-    void initialize(class TrackManager* tm, AbstractTrack* track,
-                    class TrackActionScheduler* tas);
+    void initialize(class TrackManager* tm, BaseTrack* track,
+                    class TrackTypeScheduler* tas);
     
     void configure(Session::Track* def);
     
@@ -61,19 +63,19 @@ class BaseScheduler
     
   protected:
 
-    // things TrackActionScheduler need
+    // things TrackTypeSchedulers need
     
     class TrackManager* manager = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
-    class AbstractTrack* track = nullptr;
+    class BaseTrack* track = nullptr;
     
     TrackEventList events;
     TrackEventPool eventPool;
 
-    // leader options needed by LoopSwitcher, TrackAdvancer
+    // leader options needed by LooperScheduler
     LeaderType leaderType;
     int leaderTrack = 0;
     LeaderLocation leaderSwitchLocation;
@@ -85,7 +87,7 @@ class BaseScheduler
     
   private:
 
-    class TrackActionScheduler* trackScheduler = nullptr;
+    class TrackTypeScheduler* trackScheduler = nullptr;
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -95,6 +97,12 @@ class BaseScheduler
     bool followRecord = false;
     bool followMute = false;
 
+    // save these from the session until everything is converted to
+    // use Pulsator constants
+    SyncSource sessionSyncSource = SYNC_NONE;
+    SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
+
+    // advance and sync state
     float rateCarryover = 0.0f;
 
     // leader state change detection
@@ -106,15 +114,10 @@ class BaseScheduler
     int lastLeaderLocation = 0;
     float lastLeaderRate = 1.0f;
     
-    // save these from the session until everything is converted to
-    // use Pulsator constants
-    SyncSource sessionSyncSource = SYNC_NONE;
-    SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
-
     // simple counter for generating leader/follower event correlation ids
     int correlationIdGenerator = 1;
 
-    // common action handling;
+    // common action handling
     void reset();
     void dump();
     void doStacked(class TrackEvent* e);
@@ -131,14 +134,15 @@ class BaseScheduler
 
     //
     // Scheduling support
-    //
-    
+    // This should be in LooperTrack
+#if 0    
     QuantizeMode isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* src, QuantizeMode q);
     int findQuantizationLeader();
     int getQuantizedFrame(QuantizeMode qmode);
     int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
-
+#endif
+    
     //
     // Advance
     //

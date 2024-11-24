@@ -1,6 +1,12 @@
 /**
  * An implementation of TrackActionScheduler for looping tracks.
  * MidiTrack initially and eventually what Mobius evolves into.
+ * 
+ * It has a combination of functionality found in the old Synchronizer and EventManager classes
+ * plus mode awareness that was strewn about all over in a most hideous way.  It interacts
+ * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
+ * scheduling and mode transitions are the same for both.
+ *
  */
 
 #pragma once
@@ -14,21 +20,21 @@
 #include "../Notification.h"
 
 #include "TrackEvent.h"
-#include "LoopSwitcher.h"
-#include "TrackAdvancer.h"
+#include "LooperSwitcher.h"
+#include "TrackTypeScheduler.h"
 
-class LooperScheduler : public TrackActionScheduler
+class LooperScheduler : public TrackTypeScheduler
 {
     friend class LoopSwitcher;
     
   public:
 
-    LooperScheduler();
+    LooperScheduler(class BaseScheduler* bs);
     ~LooperScheduler();
 
     // ponder whether this should jsut be an extension of
     // BaseScheduler rather than splitting classes
-    void initialize(class BaseScheduler& bs, class AbstractTrack* t);
+    void setTrack(class LooperTrack* t);
 
     // here via BaseScheduler after it checks a few things
     void doAction(class UIAction* a);
@@ -41,13 +47,13 @@ class LooperScheduler : public TrackActionScheduler
 
     // things LoopSwitcher needs
 
-    class BaseScheduler& scheduler;
-    class AbstractTrack* track = nullptr;
+    class BaseScheduler* scheduler = nullptr;
+    class LooperTrack* track = nullptr;
     
   private:
 
     // handler for loop switch complexity
-    //LoopSwitcher loopSwitcher {*this};
+    LooperSwitcher loopSwitcher {*this};
 
     //
     // Scheduling and mode transition guts

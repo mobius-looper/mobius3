@@ -1,19 +1,13 @@
 /**
- * The BaseScheduler combined with the TrackActionHandler is the central point of control
- * for handling actions sent down by the user, for scheduling events to process those actions
- * at points in the future, and for advancing the track play/record frames for each audio
- * block, split up by the events that occur within that block.
+ * The BaseScheduler combined with the TrackTypeScheduler subclass is the central point of
+ * control for handling actions sent down by the user, for scheduling events to
+ * process those actions at points in the future, and for advancing the track
+ * play/record frames for each audio block, split up by the events that occur within that block.
  *
  * It also handles interaction with the Pulsator for synchronizing events on sync pulses.
  *
- * It handles the details of major mode transitions like Record, Switch, Multiply, and Insert.
- *
- * In short, it is the nerve nexus of everything that can happen in a track.
- *
- * It has a combination of functionality found in the old Synchronizer and EventManager classes
- * plus mode awareness that was strewn about all over in a most hideous way.  It interacts
- * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
- * scheduling and mode transitions are the same for both.
+ * Details about what actions actually do and the various modes a track can be in
+ * are contained in the TrackTypeScheduler.
  *
  */
  
@@ -29,14 +23,14 @@
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
-// MobiusAudioStream
+// only for MobiusAudioStream
 #include "../MobiusInterface.h"
 #include "../track/TrackManager.h"
 #include "../track/TrackProperties.h"
 
 #include "TrackEvent.h"
 #include "AbstractTrack.h"
-#include "TrackActionScheduler.h"
+#include "TrackTypeScheduler.h"
 
 #include "BaseScheduler.h"
 
@@ -54,8 +48,8 @@ BaseScheduler::~BaseScheduler()
 {
 }
 
-void BaseScheduler::initialize(TrackManager* tm, AbstractTrack* t,
-                               TrackActionScheduler* ts)
+void BaseScheduler::initialize(TrackManager* tm, BaseTrack* t,
+                               TrackTypeScheduler* ts)
 {
     manager = tm;
     track = t;
@@ -407,6 +401,9 @@ void BaseScheduler::setFollowTrack(TrackProperties& props)
 //
 //////////////////////////////////////////////////////////////////////
 
+// I think this belongs in LooperScheduler until we have more track types
+// thta do similar quantization
+#if 0
 /**
  * Return the QuantizeMode relevant for this action.
  * This does not handle switch quantize.
@@ -464,6 +461,59 @@ void BaseScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
 }
 
 UIAction* BaseScheduler::copyAction(UIAction* src)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 {
     UIAction* copy = actionPool->newAction();
     copy->copy(src);
@@ -554,6 +604,7 @@ int BaseScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
     }
     return qframe;
 }
+#endif
 
 /**
  * Schedule a pair of events to accomplish quantization of an action in the follower
