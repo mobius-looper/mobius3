@@ -2364,12 +2364,17 @@ void Mobius::loadProject(Project* p)
  */
 bool Mobius::mslQuery(MslQuery* query)
 {
-    return mslHandler.mslQuery(query);
+    (void)query;
+    //return mslHandler.mslQuery(query);
+    return false;
 }
 
 bool Mobius::mslWait(MslWait* wait, MslContextError* error)
 {
-    return mslHandler.mslWait(wait, error);
+    (void)wait;
+    (void)error;
+    // return mslHandler.mslWait(wait, error);
+    return false;
 }
 
 /**

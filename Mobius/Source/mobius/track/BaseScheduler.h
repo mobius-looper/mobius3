@@ -42,17 +42,11 @@ class BaseScheduler
     // Things called by the BaseTrack to do leader management
     //
 
-    void setFollowTrack(class TrackProperties& props);
-    
-    LeaderType getLeaderType() {
-        return leaderType;
-    }
-    int getLeaderTrack() {
-        return leaderTrack;
-    }
-    int findLeaderTrack();
     bool hasActiveLeader();
+    int findLeaderTrack();
+    void setFollowTrack(int number);
 
+    // tracks need to provide this for the MSL handler
     TrackEventList* getEvents();
     
   protected:
@@ -72,13 +66,14 @@ class BaseScheduler
     TrackEventList events;
     TrackEventPool eventPool;
 
-    // leader options needed by LooperScheduler
+    // leader options pulled from the Session
     LeaderType leaderType;
     int leaderTrack = 0;
     LeaderLocation leaderSwitchLocation;
     bool followRecordEnd = false;
     bool followSize = false;
 
+    void doStacked(class TrackEvent* e);
     class UIAction* copyAction(UIAction* src);
     TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
     
@@ -115,31 +110,15 @@ class BaseScheduler
     // simple counter for generating leader/follower event correlation ids
     int correlationIdGenerator = 1;
 
-    // common action handling
-    void dump();
-    void doStacked(class TrackEvent* e);
-    bool unstack(TrackEvent* event);
+    // internal action handling
     bool defaultUndo(UIAction* src);
-    bool isRecording();
-    bool isPaused();
-    bool isReset();
+    bool unstack(TrackEvent* event);
 
     // Leader/Follower Support
     void doTrackNotification(NotificationId notification, class TrackProperties& props);
     void leaderEvent(class TrackProperties& props);
     void leaderLoopResize(class TrackProperties& props);
 
-    //
-    // Scheduling support
-    // This should be in LooperTrack
-#if 0    
-    QuantizeMode isQuantized(class UIAction* a);
-    void scheduleQuantized(class UIAction* src, QuantizeMode q);
-    int findQuantizationLeader();
-    int getQuantizedFrame(QuantizeMode qmode);
-    int getQuantizedFrame(SymbolId func, QuantizeMode qmode);
-#endif
-    
     //
     // Advance
     //

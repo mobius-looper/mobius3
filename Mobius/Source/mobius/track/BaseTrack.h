@@ -1,5 +1,10 @@
 /**
  * Interface for the most basic track type.
+ * Any track implementation that wants to live in TrackManager/LogicalTrack
+ * must implement this.
+ *
+ * BaseTracks are usually also ScheduledTracks and make use of BaseScheduler
+ * for synchronization, but that isn't required.
  */
 
 #pragma once
@@ -53,7 +58,8 @@ class BaseTrack
     // and sometimes it's spills its guts
     virtual void dump(class StructureDumper& d) = 0;
 
-    
+    // it might like MSL
+    virtual class MslTrack* getMslTrack() = 0;
 
   protected:
 

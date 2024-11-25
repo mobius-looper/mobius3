@@ -1,6 +1,14 @@
-sgetFram/**
+/**
+ * The main purpose of BaseScheduler is to deal with synchronization pulses
+ * and the leader/follower relatinship with another track.
+ *
+ * The advance for each audio block is split up around each event that is
+ * ready within this block.
+ *
+ * !! todo: Advance carving works only for MidiTrack since it does not actually
+ * send partial block content through to the track, only the size.
  */
- 
+
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -15,11 +23,10 @@ sgetFram/**
 #include "../Valuator.h"
 // only for MobiusAudioStream
 #include "../MobiusInterface.h"
-#include "../track/TrackManager.h"
-#include "../track/TrackProperties.h"
 
+#include "TrackManager.h"
+#include "TrackProperties.h"
 #include "TrackEvent.h"
-#include "Basetrack.h"
 #include "ScheduledTrack.h"
 
 #include "BaseScheduler.h"
@@ -33,6 +40,7 @@ sgetFram/**
 BaseScheduler::BaseScheduler(TrackManager*tm, LogialTrack* lt, ScheduledTrack* st)
 {
     manager = tm;
+    // don't really need this 
     logicalTrack = lt;
     scheduledTrack = st;
     
@@ -58,15 +66,15 @@ BaseScheduler::~BaseScheduler()
  *
  * !! no, I want to stop using valuator.  reloading a session should clear
  * bindings so you can go direct through the Session.
+ *
+ * Also too, if it gets to the point where MSL scripts can bind these
+ * on the fly, then we're going to need to recalculate things again, it has more
+ * side effects than just binding a parameter.  doParameter will need to intercept.
  */
 void BaseScheduler::loadSession(Session::Track* def)
 {
     (void)def;
 
-    // dislike going through Valuator for this, sort this out
-    // if you reload the session we should revert any temporary parameter
-    // bindings and just get what we need from the Session
-    
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
     sessionSyncSource = valuator->getSyncSource(scheduledTrack->getNumber());
@@ -178,38 +186,6 @@ void BaseScheduler::passAction(UIAction* src)
 }
 
 /**
- * Utility that may be called by the subclass to process all actions
- * stacked on an event.
- *
- * This is where we could inject some intelligence into action merging
- * or side effects.
- *
- * Stacked actions were copied and must be reclaimed.
- */
-void BaseScheduler::doStacked(TrackEvent* e) 
-{
-    if (e != nullptr) {
-        UIAction* action = e->stacked;
-    
-        while (action != nullptr) {
-            UIAction* next = action->next;
-            action->next = nullptr;
-
-            // might need some nuance betwee a function comming from
-            // the outside and one that was stacked, currently they look the same
-            scheduledTrack->doActionNow(action);
-
-            actionPool->checkin(action);
-            
-            action = next;
-        }
-
-        // don't leave the list on the event so they doin't get reclaimed again
-        e->stacked = nullptr;
-    }
-}
-
-/**
  * Default undo handling rewinds scheduled events first, then
  * calls the subclass scheduler or the track itself.
  * Returns true if we did something with it.
@@ -276,9 +252,41 @@ bool BaseScheduler::unstack(TrackEvent* event)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Subvlass and SheduledTrack Callbacks
+// Subclass and SheduledTrack Callbacks
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Utility that may be called by the subclass to process all actions
+ * stacked on an event.
+ *
+ * This is where we could inject some intelligence into action merging
+ * or side effects.
+ *
+ * Stacked actions were copied and must be reclaimed.
+ */
+void BaseScheduler::doStacked(TrackEvent* e) 
+{
+    if (e != nullptr) {
+        UIAction* action = e->stacked;
+    
+        while (action != nullptr) {
+            UIAction* next = action->next;
+            action->next = nullptr;
+
+            // might need some nuance betwee a function comming from
+            // the outside and one that was stacked, currently they look the same
+            scheduledTrack->doActionNow(action);
+
+            actionPool->checkin(action);
+            
+            action = next;
+        }
+
+        // don't leave the list on the event so they doin't get reclaimed again
+        e->stacked = nullptr;
+    }
+}
 
 /**
  * This is called by MidiTrack in response to a ClipStart action.
@@ -291,9 +299,9 @@ bool BaseScheduler::unstack(TrackEvent* event)
  * Would be better if we moved a lot of the stuff bding done
  * in MidiTrack::clipStart up here
  */
-void BaseScheduler::setFollowTrack(TrackProperties& props)
+void BaseScheduler::setFollowTrack(int number)
 {
-    followTrack = props.number;
+    followTrack = number;
     rateCarryover = 0.0f;
 }
 
@@ -343,6 +351,47 @@ TrackEvent* BaseScheduler::scheduleLeaderQuantization(int leader, QuantizeMode q
 // Leader/Follower Management
 //
 //////////////////////////////////////////////////////////////////////
+
+/**
+ * Return true if we are being led by something.
+ */
+bool BaseScheduler::hasActiveLeader()
+{
+    bool active = false;
+    if (leaderType == LeaderHost || leaderType == LeaderMidi) {
+        active = true;
+    }
+    else {
+        int leader = findLeaderTrack();
+        active = (leader > 0);
+    }
+    return active;
+}
+
+/**
+ * Determine which track is supposed to be the leader of this one.
+ * If the leader type is MIDI or Host returns zero.
+ */
+int BaseScheduler::findLeaderTrack()
+{
+    int leader = 0;
+
+    if (leaderType == LeaderTrack) {
+        leader = leaderTrack;
+    }
+    else if (leaderType == LeaderTrackSyncMaster) {
+        leader = pulsator->getTrackSyncMaster();
+    }
+    else if (leaderType == LeaderOutSyncMaster) {
+        leader = pulsator->getOutSyncMaster();
+    }
+    else if (leaderType == LeaderFocused) {
+        // this is a "view index" which is zero based!
+        leader = manager->getFocusedTrackIndex() + 1;
+    }
+
+    return leader;
+}
 
 /**
  * Called by TrackManager when a leader notification comes in.
@@ -417,47 +466,6 @@ void BaseScheduler::doTrackNotification(NotificationId notification, TrackProper
             Trace(1, "BaseScheduler: Unhandled notification %d", (int)notification);
             break;
     }
-}
-
-/**
- * Return true if we are being led by something.
- */
-bool BaseScheduler::hasActiveLeader()
-{
-    bool active = false;
-    if (leaderType == LeaderHost || leaderType == LeaderMidi) {
-        active = true;
-    }
-    else {
-        int leader = findLeaderTrack();
-        active = (leader > 0);
-    }
-    return active;
-}
-
-/**
- * Determine which track is supposed to be the leader of this one.
- * If the leader type is MIDI or Host returns zero.
- */
-int BaseScheduler::findLeaderTrack()
-{
-    int leader = 0;
-
-    if (leaderType == LeaderTrack) {
-        leader = leaderTrack;
-    }
-    else if (leaderType == LeaderTrackSyncMaster) {
-        leader = pulsator->getTrackSyncMaster();
-    }
-    else if (leaderType == LeaderOutSyncMaster) {
-        leader = pulsator->getOutSyncMaster();
-    }
-    else if (leaderType == LeaderFocused) {
-        // this is a "view index" which is zero based!
-        leader = manager->getFocusedTrackIndex() + 1;
-    }
-
-    return leader;
 }
 
 /**

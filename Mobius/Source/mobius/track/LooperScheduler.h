@@ -3,7 +3,7 @@
  * 
  * This has a combination of functionality found in the old Synchronizer and EventManager classes
  * plus mode awareness that was strewn about all over in a most hideous way.  It interacts
- * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
+ * with a LooperTrack that may either be a MIDI or an audio track, since the behavior of event
  * scheduling and mode transitions are the same for both.
  *
  */

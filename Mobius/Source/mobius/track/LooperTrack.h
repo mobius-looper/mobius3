@@ -1,13 +1,15 @@
 /**
  * The base class of tracks that implement Mobius-style looper functionality.
+ * This extends ScheduledTrack so it can be used with BaseScheduler.
  */
 
 #pragma once
 
 #include "../../model/MobiusState.h"
 #include "BaseTrack.h"
+#include "ScheduledTrack.h"
 
-class LooperTrack : public BaseTrack
+class LooperTrack : public ScheduledTrack
 {
   public:
 
@@ -78,25 +80,8 @@ class LooperTrack : public BaseTrack
     virtual void doInstantDivide(int n) = 0;
     virtual void doHalfspeed() = 0;
     virtual void doDoublespeed() = 0;
-    
-    // leader stuff
-    virtual void leaderReset(class TrackProperties& props) = 0;
-    virtual void leaderRecordStart() = 0;
-    virtual void leaderRecordEnd(class TrackProperties& props) = 0;
-    virtual void leaderMuteStart(class TrackProperties& props) = 0;
-    virtual void leaderMuteEnd(class TrackProperties& props) = 0;
-    virtual void leaderResized(class TrackProperties& props) = 0;
-    virtual void leaderMoved(class TrackProperties& props) = 0;
-    
-    // advance play/record state between events
-    virtual bool isExtending() = 0;
-    virtual void advance(int newFrames) = 0;
-    virtual void loop() = 0;
 
-    virtual float getRate() = 0;
-    virtual int getGoalFrames() = 0;
-    virtual void setGoalFrames(int f) = 0;
-
+    // axperimental option that never went anywhere
     virtual bool isNoReset() = 0;
 
   protected:

@@ -178,6 +178,14 @@ void LogicalTrack::dump(StructureDumper& d)
     track->dump(d);
 }
 
+/**
+ * If this track is capable of responding to MSL, return it.
+ */
+MslTrack* LogicalTrack::getMslTrack()
+{
+    return track->getMslTrack();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

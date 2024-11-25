@@ -1,7 +1,10 @@
 /**
  * A MidiTrack is a BaseTrack so it can live inside a LogicalTrack.
- * It makes use of the BaseScheduler and LooperScheduler to provide
- * most of the compolex action and event processing.
+ *
+ * It is also a LooperTrack and uses LooperSchedule to handle the complex
+ * action scheduling and mode transitions.
+ *
+ * And it is an MslTrack so it can play MSL games.
  */
 
 #pragma once
@@ -16,12 +19,13 @@
 
 #include "../track/BaseTrack.h"
 #include "../track/LooperTrack.h"
+#include "../track/MslTrack.h"
 #include "../track/TrackProperties.h"
 
 #include "MidiRecorder.h"
 #include "MidiPlayer.h"
 
-class MidiTrack : public LooperTrack
+class MidiTrack : public LooperTrack, public MslTrack
 {
   public:
 
@@ -36,22 +40,24 @@ class MidiTrack : public LooperTrack
     // BaseTrack
     //
     
-    virtual void loadSssion(class Session::Track* def) override;
-    virtual void doAction(class UIAction* a) override;
-    virtual bool doQuery(class Query* q) override;
-    virtual void processAudioStream(class MobiusAudioStream* stream) override;
-    virtual void midiEvent(class MidiEvent* e) override;
-    virtual int getFrames() override;
-    virtual int getFrame() override;
-    virtual void getTrackProperties(class TrackProperties& props) override;
-    virtual void trackNotification(NotificationId notification, TrackProperties& props) override;
-    virtual int getGroup() override;
-    virtual bool isFocused() override;
-    virtual bool scheduleWaitFrame(class MslWait* w, int frame) override;
-    virtual bool scheduleWaitEvent(class MslWait* w) override;
-    virtual void refreshPriorityState(class MobiusState::Track* tstate) override;
-    virtual void refreshState(class MobiusState::Track* tstate) override;
-
+    void loadSssion(class Session::Track* def) override;
+    void doAction(class UIAction* a) override;
+    bool doQuery(class Query* q) override;
+    void processAudioStream(class MobiusAudioStream* stream) override;
+    void midiEvent(class MidiEvent* e) override;
+    int getFrames() override;
+    int getFrame() override;
+    void getTrackProperties(class TrackProperties& props) override;
+    void trackNotification(NotificationId notification, TrackProperties& props) override;
+    int getGroup() override;
+    bool isFocused() override;
+    bool scheduleWaitFrame(class MslWait* w, int frame) override;
+    bool scheduleWaitEvent(class MslWait* w) override;
+    void refreshPriorityState(class MobiusState::Track* tstate) override;
+    void refreshState(class MobiusState::Track* tstate) override;
+    void dump(class StructureDumper& d) override;
+    class MslTrack* getMslTrack() override;
+    
     //
     // ScheduledTrack
     //
@@ -61,75 +67,75 @@ class MidiTrack : public LooperTrack
     // LooperTrack
     //
 
-    virtual MobiusState::Mode getMode() override;
-    virtual int getLoopCount() override;
-    virtual int getLoopIndex() override;
-    virtual int getCycleFrames() override;
-    virtual int getCycles() override;
-    virtual int getSubcycles() override;
-    virtual int getModeStartFrame() override;
-    virtual int getModeEndFrame() override;
-    virtual int extendRounding() override;
+    MobiusState::Mode getMode() override;
+    int getLoopCount() override;
+    int getLoopIndex() override;
+    int getCycleFrames() override;
+    int getCycles() override;
+    int getSubcycles() override;
+    int getModeStartFrame() override;
+    int getModeEndFrame() override;
+    int extendRounding() override;
     
 
-    virtual void startRecord() override;
-    virtual void finishRecord() override;
+    void startRecord() override;
+    void finishRecord() override;
 
-    virtual void startMultiply() override;
-    virtual void finishMultiply() override;
-    virtual void unroundedMultiply() override;
+    void startMultiply() override;
+    void finishMultiply() override;
+    void unroundedMultiply() override;
     
-    virtual void startInsert() override;
-    virtual int extendInsert() override;
-    virtual void finishInsert() override;
-    virtual void unroundedInsert() override;
+    void startInsert() override;
+    int extendInsert() override;
+    void finishInsert() override;
+    void unroundedInsert() override;
 
-    virtual void toggleOverdub() override;
-    virtual void toggleMute() override;
-    virtual void toggleReplace() override;
-    virtual void toggleFocusLock() override;
+    void toggleOverdub() override;
+    void toggleMute() override;
+    void toggleReplace() override;
+    void toggleFocusLock() override;
 
-    virtual void finishSwitch(int target) override;
-    virtual void loopCopy(int previous, bool sound) override;
+    void finishSwitch(int target) override;
+    void loopCopy(int previous, bool sound) override;
 
-    virtual bool isPaused() override;
-    virtual void startPause() override;
-    virtual void finishPause() override;
+    bool isPaused() override;
+    void startPause() override;
+    void finishPause() override;
    
     // simple one-shot actions
-    virtual void doParameter(class UIAction* a) override;
-    virtual void doPartialReset() override;
-    virtual void doReset(bool full) override;
-    virtual void doStart() override;
-    virtual void doStop() override;
-    virtual void doPlay() override;
-    virtual void doUndo() override;
-    virtual void doRedo() override;
-    virtual void doDump() override;
-    virtual void doInstantMultiply(int n) override;
-    virtual void doInstantDivide(int n) override;
-    virtual void doHalfspeed() override;
-    virtual void doDoublespeed() override;
+    void doParameter(class UIAction* a) override;
+    void doPartialReset() override;
+    void doReset(bool full) override;
+    void doStart() override;
+    void doStop() override;
+    void doPlay() override;
+    void doUndo() override;
+    void doRedo() override;
+    void doDump() override;
+    void doInstantMultiply(int n) override;
+    void doInstantDivide(int n) override;
+    void doHalfspeed() override;
+    void doDoublespeed() override;
     
     // leader stuff
-    virtual void leaderReset(class TrackProperties& props) override;
-    virtual void leaderRecordStart() override;
-    virtual void leaderRecordEnd(class TrackProperties& props) override;
-    virtual void leaderMuteStart(class TrackProperties& props) override;
-    virtual void leaderMuteEnd(class TrackProperties& props) override;
-    virtual void leaderResized(class TrackProperties& props) override;
-    virtual void leaderMoved(class TrackProperties& props) override;
+    void leaderReset(class TrackProperties& props) override;
+    void leaderRecordStart() override;
+    void leaderRecordEnd(class TrackProperties& props) override;
+    void leaderMuteStart(class TrackProperties& props) override;
+    void leaderMuteEnd(class TrackProperties& props) override;
+    void leaderResized(class TrackProperties& props) override;
+    void leaderMoved(class TrackProperties& props) override;
     
     // advance play/record state between events
-    virtual bool isExtending() override;
-    virtual void advance(int newFrames) override;
-    virtual void loop() override;
+    bool isExtending() override;
+    void advance(int newFrames) override;
+    void loop() override;
 
-    virtual float getRate() override;
-    virtual int getGoalFrames() override;
-    virtual void setGoalFrames(int f) override;
+    float getRate() override;
+    int getGoalFrames() override;
+    void setGoalFrames(int f) override;
 
-    virtual bool isNoReset() override;
+    bool isNoReset() override;
 
     //
     // Extensions outside BaseTrack

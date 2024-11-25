@@ -45,6 +45,4 @@ class LooperSwitcher
     int getQuantizedFrame(SwitchQuantize squant);
     QuantizeMode convert(SwitchQuantize squant);
     bool setupEmptyLoop(int previousLoop);
-
-
 };

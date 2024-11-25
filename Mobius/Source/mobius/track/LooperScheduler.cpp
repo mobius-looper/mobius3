@@ -1,4 +1,4 @@
-s 
+
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -27,18 +27,14 @@ s
 //
 //////////////////////////////////////////////////////////////////////
 
-LooperScheduler::LooperScheduler(BaseScheduler* bs)
+LooperScheduler::LooperScheduler(TrackManager* tm, LogicalTrack* lt, LooperTrack* looper)
+    : BaseScheduler(tm, lt, looper)
 {
-    scheduler = bs;
+    track = looper;
 }
 
 LooperScheduler::~LooperScheduler()
 {
-}
-
-void LooperScheduler::setTrack(LooperTrack* t)
-{
-    track = t;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -43,6 +43,8 @@ class LogicalTrack
 
     void dump(class StructureDumper& d);
 
+    class MslTrack* getMslTrack();
+
   private:
 
     class TrackManager* manager = nullptr;

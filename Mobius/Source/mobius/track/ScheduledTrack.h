@@ -13,18 +13,20 @@ class ScheduledTrack : public BaseTrack
 
     virtual ~ScheduledTrack() {}
 
-    // kind of messy, revisit these
-
-    virtual void doActionNow(class UIAction* a) = 0;
+    // various bits of track state required for scheduling
     virtual int getFrames() = 0;
     virtual int getFrame() = 0;
     virtual MobusState::Mode getMode() = 0;
     virtual bool isExtending() = 0;
+    virtual float getRate() = 0;
+    
+    // primary actions
+    virtual void doActionNow(class UIAction* a) = 0;
+    virtual void advance(int frames) = 0;;
     virtual void reset() = 0;
     virtual void loop() = 0;
-    virtual float getRate() = 0;
-    virtual void advance(int frames);
 
+    // leader responses
     virtual void leaderReset(class TrackProperties& props) = 0;
     virtual void leaderRecordStart() = 0;
     virtual void leaderRecordEnd(class TrackProperties& props) = 0;

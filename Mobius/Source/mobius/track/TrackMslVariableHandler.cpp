@@ -27,7 +27,7 @@ TrackMslVariableHandler::~TrackMslVariableHandler()
 {
 }
 
-bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
+bool TrackMslVariableHandler::get(MslTrack* t, MslQuery* q)
 {
     bool success = false;
     

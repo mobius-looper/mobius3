@@ -20,8 +20,8 @@ class TrackMslHandler
     TrackMslHandler(class MobiusKernel* kernel, class TrackManager* m);
     ~TrackMslHandler();
 
-    bool mslWait(class MslWait* wait, class MslContextError* error);
-    bool mslQuery(class MslQuery* q, class LogicalTrakc* t);
+    bool mslWait(class LogicalTrack* track, class MslWait* wait, class MslContextError* error);
+    bool mslQuery(class LogicalTrack* track, class MslQuery* q);
     
   private:
 

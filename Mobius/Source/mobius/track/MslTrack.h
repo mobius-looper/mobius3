@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "../../model/MobiusState.h"
+
 class MslTrack
 {
   public:
@@ -18,11 +20,11 @@ class MslTrack
 
     // used by TrackMslHandler
 
-    virtual getSubcycleFrames() = 0;
-    virtual getCycleFrames() = 0;
-    virtual getLoopFrames() = 0;
-    virtual getFrame() = 0;
-    virtual getRate() = 0;
+    virtual int getSubcycleFrames() = 0;
+    virtual int getCycleFrames() = 0;
+    virtual int getLoopFrames() = 0;
+    virtual int getFrame() = 0;
+    virtual float getRate() = 0;
     
     virtual TrackEventList* getEventList() = 0;
     virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
@@ -30,12 +32,12 @@ class MslTrack
 
     // used by TrackMslVariableHandler
 
-    virtual getLoopCount() = 0;
-    virtual getLoopIndex() = 0;
-    virtual getCycles() = 0;
-    virtual getSubcycles() = 0;
-    virtual getMode() = 0;
-    virtual isPaused() = 0;
+    virtual int getLoopCount() = 0;
+    virtual int getLoopIndex() = 0;
+    virtual int getCycles() = 0;
+    virtual int getSubcycles() = 0;
+    virtual MobiusState::Mode getMode() = 0;
+    virtual bool isPaused() = 0;
 
 };
 

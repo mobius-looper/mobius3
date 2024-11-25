@@ -284,6 +284,11 @@ void MidiTrack::dump(StructureDumper& d)
     d.dec();
 }
 
+MslTrack* MidiTrack::getMslTrack()
+{
+    return this;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // ScheduledTrack
@@ -590,7 +595,7 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
         // we can only get a clipStart event from an audio track,
         // and audio tracks are advanced before MIDI tracks
         // so we'll be at the beginning of the block at this point
-        scheduler.setFollowTrack(props);
+        scheduler.setFollowTrack(props.number);
 
         if (followerMuteStart) {
             // instead of going immediately to Play, allow starting

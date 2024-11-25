@@ -1041,7 +1041,7 @@ bool TrackManager::mslQuery(MslQuery* query)
             if (lt->getType() == Session::TypeAudio)
               success = audioEngine->mslQuery(query);
             else
-              success = mslHandler.mslQuery(query, lt);
+              success = mslHandler.mslQuery(lt, query);
         }
 
         // in case we trashed it
@@ -1111,11 +1111,10 @@ bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
 
     LogicalTrack* lt = getLogicalTrack(trackNumber);
     if (lt != nullptr) {
-        // again we need to have mslHandler do both
         if (lt->getType() == Session::TypeAudio)
           success = audioEngine->mslWait(wait, error);
         else
-          success = mslHandler.mslWait(wait, error);
+          success = mslHandler.mslWait(lt, wait, error);
     }
     
     if (!success) {

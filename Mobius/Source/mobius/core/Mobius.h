@@ -15,7 +15,7 @@
 #include "../../model/OldMobiusState.h"
 #include "../track/TrackProperties.h"
 #include "Loader.h"
-#include "MobiusMslHandler.h"
+//#include "MobiusMslHandler.h"
 
 /**
  * Size of a static char buffer to keep the custom mode name.
@@ -447,7 +447,7 @@ class Mobius
 	OldMobiusState mState;
 
     // handler for MSL integration
-    MobiusMslHandler mslHandler {this};
+    //MobiusMslHandler mslHandler {this};
 
     // new loop/project load helper
     Loader mLoader {this};
