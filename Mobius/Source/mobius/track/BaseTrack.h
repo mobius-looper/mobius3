@@ -20,7 +20,7 @@ class BaseTrack
     void setNumber(int n) {number = n;}
     virtual int getNumber() {return number;}
 
-    // tracks may all do things
+    // tracks may all do things or schedule them
     virtual void doAction(class UIAction* a) = 0;
 
     // and you can ask them their secrets
@@ -31,10 +31,6 @@ class BaseTrack
 
     // and some like MIDI very much
     virtual void midiEvent(class MidiEvent* e) = 0;
-
-    // they normally have a size and position
-    virtual int getFrames() = 0;
-    virtual int getFrame() = 0;
 
     // and they can package up useful information to share with others
     virtual void getTrackProperties(class TrackProperties& props) = 0;
@@ -48,15 +44,16 @@ class BaseTrack
     // and some feel left out if they aren't included
     virtual bool isFocused() = 0;
 
-    // MSL will wait patiently for them, like a good dad
-    virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
-    virtual bool scheduleWaitEvent(class MslWait* w) = 0;
-
     // they can have important things to say
     virtual void refreshPriorityState(class MobiusState::Track* tstate) = 0;
 
     // and can go on and on if you let them
     virtual void refreshState(class MobiusState::Track* tstate) = 0;
+
+    // and sometimes it's spills its guts
+    virtual void dump(class StructureDumper& d) = 0;
+
+    
 
   protected:
 

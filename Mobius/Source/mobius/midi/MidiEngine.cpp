@@ -18,9 +18,9 @@
  *
  * Still not entirely happy with how this is shaking out, but it's a start.
  */
-BaseTrack* MidiEngine::newTrack(LogicalTrack* lt, Session::Track* def)
+BaseTrack* MidiEngine::newTrack(TrackManager* tm, LogicalTrack* lt, Session::Track* def)
 {
-    MidiTrack* mt = new MidiTrack(lt);
+    MidiTrack* mt = new MidiTrack(tm, lt);
     mt->loadSession(def);
     return mt;
 }

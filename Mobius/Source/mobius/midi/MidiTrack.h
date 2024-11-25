@@ -16,8 +16,6 @@
 
 #include "../track/BaseTrack.h"
 #include "../track/LooperTrack.h"
-#include "../track/TrackScheduler.h"
-#include "../track/ActionTransformer.h"
 #include "../track/TrackProperties.h"
 
 #include "MidiRecorder.h"
@@ -31,7 +29,7 @@ class MidiTrack : public LooperTrack
     // Configuration
     //
 
-    MidiTrack(class LogicalTrack* lt);
+    MidiTrack(class TrackManager* tm, class LogicalTrack* lt);
     ~MidiTrack();
 
     //
@@ -53,6 +51,11 @@ class MidiTrack : public LooperTrack
     virtual bool scheduleWaitEvent(class MslWait* w) override;
     virtual void refreshPriorityState(class MobiusState::Track* tstate) override;
     virtual void refreshState(class MobiusState::Track* tstate) override;
+
+    //
+    // ScheduledTrack
+    //
+    
 
     //
     // LooperTrack
@@ -134,11 +137,10 @@ class MidiTrack : public LooperTrack
     
     void loadLoop(MidiSequence* seq, int loop);
 
-    //
-    // Old stuff weed
-    //
-
   private:
+
+    LogicalTrack* logicalTrack = nullptr;
+    LooperScheduler scheduler;
     
     void reset();
 
@@ -178,7 +180,8 @@ class MidiTrack : public LooperTrack
 
   private:
 
-    class TrackManager* tracker = nullptr;
+    class TrackManager* manager = nullptr;
+    class LogicalTrack* logicalTrack = nullptr;
     class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiPools* pools = nullptr;

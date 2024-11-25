@@ -15,7 +15,7 @@ class MidiEngine : public TrackEngine
     MidiEngine() {}
     ~MidiEngine();
 
-    class BaseTrack* newTrack(class LogicalTrack* lt, class Session::Track* def);
+    class BaseTrack* newTrack(class TrackManager* tm, class LogicalTrack* lt, class Session::Track* def);
     
   private:
     

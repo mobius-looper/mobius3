@@ -12,7 +12,7 @@
 // for MobiusContainer
 #include "../MobiusInterface.h"
 
-#include "AbstractTrack.h"
+#include "MslTrack.h"
 #include "LogicalTrack.h"
 #include "TrackManager.h"
 #include "TrackEvent.h"
@@ -42,7 +42,7 @@ TrackMslHandler::~TrackMslHandler()
  * Symbol queries will have been handled by MobiusKernel
  * and/or TrackManager.
  */
-bool TrackMslHandler::mslQuery(MslQuery* query, AbstractTrack* track)
+bool TrackMslHandler::mslQuery(MslQuery* query, MslTrack* track)
 {
     return variables.get(query, track);
 }
@@ -132,7 +132,7 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
     if (wait->forceNext)
       Trace(2, "  forceNext");
 
-    AbstractTrack* track = manager->getAbstractTrack(wait->track);
+    MslTrack* track = manager->getMslTrack(wait->track);
     if (track == nullptr) {
         Trace(1, "TrackMslHandler: Invalid track number in MslWait %d", wait->track);
     }
@@ -271,17 +271,17 @@ bool TrackMslHandler::mslWait(MslWait* wait, MslContextError* error)
  *
  * new: The notion of "active track" only applies to Mobius audio
  * tracks.  For MIDI tracks it must be specified, and when Mobius
- * tracks become AbstractTracks, TrackManager must always resolve this.
+ * tracks become MslTracks, TrackManager must always resolve this.
  */
-AbstractTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
+MslTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
 {
-    AbstractTrack* track = nullptr;
+    MslTrack* track = nullptr;
     
     if (wait->track == 0) {
         Trace(1, "TrackMslHandler: Can't schedule wait without a track scope");
     }
     else {
-        track = manager->getAbstractTrack(wait->track);
+        track = manager->getMslTrack(wait->track);
         if (track == nullptr) {
             Trace(1, "TrackMslHandler: MslWait with invalid track number %d", wait->track);
             // default to focused?
@@ -302,7 +302,7 @@ AbstractTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
  * with a countdown frame counter that decrements on each block at the
  * normal sampleRate and is independent of the track advance.
  */
-int TrackMslHandler::getMsecFrames(AbstractTrack* track, int msecs)
+int TrackMslHandler::getMsecFrames(MslTrack* track, int msecs)
 {
     // old code uses the MSEC_TO_FRAMES macro which was defined
     // as this buried in MobiusConfig.h
@@ -320,7 +320,7 @@ int TrackMslHandler::getMsecFrames(AbstractTrack* track, int msecs)
     return frames;
 }
 
-int TrackMslHandler::getSecondFrames(AbstractTrack* track, int seconds)
+int TrackMslHandler::getSecondFrames(MslTrack* track, int seconds)
 {
     int secFrames = manager->getContainer()->getSampleRate();
     secFrames *= seconds;
@@ -337,13 +337,13 @@ int TrackMslHandler::getSecondFrames(AbstractTrack* track, int seconds)
  * The basic mechanism of scheduling an event at a specific position
  * This would be implemented by MidiTrack and MobiusTrackWrapper
  */
-TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, AbstractTrack* track, int frame)
+TrackEvent* TrackMslHandler::scheduleWaitAtFrame(MslWait* wait, MslTrack* track, int frame)
 {
     // this isn't something that should be on the track
     // TrackManager should be maintaining them?
     // or maybe TrackScheduler should be in the way?
     // exposing TrackEventList means this can't be used for Mobius so
-    // consider abstracting it under AbstractTrack?
+    // consider abstracting it under MslTrack?
     TrackEventList* events = track->getEventList();
     TrackEvent* e = manager->getPools()->newTrackEvent();
     e->type = TrackEvent::EventWait;
@@ -391,7 +391,7 @@ bool TrackMslHandler::scheduleLocationWait(MslWait* wait)
 {
     bool success = false;
     
-    AbstractTrack* track = getWaitTarget(wait);
+    MslTrack* track = getWaitTarget(wait);
     if (track != nullptr) {
         int frame = calculateLocationFrame(wait, track);
 
@@ -439,7 +439,7 @@ bool TrackMslHandler::scheduleLocationWait(MslWait* wait)
  * The problem with putting msec and frame back is that it makes it ambiguous
  * with duration msec and frame which are far more common.  
  */
-int TrackMslHandler::calculateLocationFrame(MslWait* wait, AbstractTrack* track)
+int TrackMslHandler::calculateLocationFrame(MslWait* wait, MslTrack* track)
 {
     int frame = -1;
 
@@ -525,7 +525,7 @@ bool TrackMslHandler::scheduleEventWait(MslWait* wait)
 {
     bool success = false;
     
-    AbstractTrack* track = getWaitTarget(wait);
+    MslTrack* track = getWaitTarget(wait);
     if (track != nullptr) {
 
         switch (wait->event) {

@@ -17,8 +17,8 @@
 #include "../Valuator.h"
 #include "../track/TrackProperties.h"
 
-#include "TrackScheduler.h"
-#include "AbstractTrack.h"
+#include "LooperScheduler.h"
+#include "LooperTrack.h"
 
 #include "LoopSwitcher.h"
 

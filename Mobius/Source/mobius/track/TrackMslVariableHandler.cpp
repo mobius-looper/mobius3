@@ -14,7 +14,7 @@
 #include "../MobiusKernel.h"
 #include "../../sync/Pulsator.h"
 
-#include "AbstractTrack.h"
+#include "MslTrack.h"
 
 #include "TrackMslVariableHandler.h"
 
@@ -27,7 +27,7 @@ TrackMslVariableHandler::~TrackMslVariableHandler()
 {
 }
 
-bool TrackMslVariableHandler::get(MslQuery* q, AbstractTrack* t)
+bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
 {
     bool success = false;
     
@@ -104,32 +104,32 @@ bool TrackMslVariableHandler::get(MslQuery* q, AbstractTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getLoopCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getLoopCount(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getLoopCount());
 }
 
-void TrackMslVariableHandler::getLoopNumber(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getLoopNumber(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getLoopIndex() + 1);
 }
 
-void TrackMslVariableHandler::getLoopFrames(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getLoopFrames(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getLoopFrames());
 }
 
-void TrackMslVariableHandler::getLoopFrame(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getLoopFrame(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getFrame());
 }
 
-void TrackMslVariableHandler::getCycleCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getCycleCount(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getCycles());
 }
 
-void TrackMslVariableHandler::getCycleNumber(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getCycleNumber(MslQuery* q, MslTrack* t)
 {
     int frame = t->getFrame();
     int cycleFrames = t->getCycleFrames();
@@ -137,12 +137,12 @@ void TrackMslVariableHandler::getCycleNumber(MslQuery* q, AbstractTrack* t)
     q->value.setInt(cycleNumber);
 }
 
-void TrackMslVariableHandler::getCycleFrames(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getCycleFrames(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getCycleFrames());
 }
 
-void TrackMslVariableHandler::getCycleFrame(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getCycleFrame(MslQuery* q, MslTrack* t)
 {
     int frame = t->getFrame();
     int cycleFrames = t->getCycleFrames();
@@ -150,7 +150,7 @@ void TrackMslVariableHandler::getCycleFrame(MslQuery* q, AbstractTrack* t)
     q->value.setInt(cycleFrame);
 }
 
-void TrackMslVariableHandler::getSubcycleCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSubcycleCount(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(t->getSubcycles());
 }
@@ -160,7 +160,7 @@ void TrackMslVariableHandler::getSubcycleCount(MslQuery* q, AbstractTrack* t)
  * The current subcycle number, relative to the current cycle.
  * !! Should this be relative to the start of the loop?
  */
-void TrackMslVariableHandler::getSubcycleNumber(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSubcycleNumber(MslQuery* q, MslTrack* t)
 {
     int subcycles = t->getSubcycles();
     int frame = t->getFrame();
@@ -176,9 +176,9 @@ void TrackMslVariableHandler::getSubcycleNumber(MslQuery* q, AbstractTrack* t)
 }
 
 /**
- * This is a calculation Loop has but AbstractTrack doesn't
+ * This is a calculation Loop has but MslTrack doesn't
  */
-int TrackMslVariableHandler::getSubcycleFrames(AbstractTrack* t)
+int TrackMslVariableHandler::getSubcycleFrames(MslTrack* t)
 {
     int subcycleFrames = 0;
 	int cycleFrames = t->getCycleFrames();
@@ -190,12 +190,12 @@ int TrackMslVariableHandler::getSubcycleFrames(AbstractTrack* t)
     return subcycleFrames;
 }
 
-void TrackMslVariableHandler::getSubcycleFrames(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSubcycleFrames(MslQuery* q, MslTrack* t)
 {
     q->value.setInt(getSubcycleFrames(t));
 }
 
-void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, MslTrack* t)
 {
     int frame = t->getFrame();
     int subcycleFrames = getSubcycleFrames(t);
@@ -209,7 +209,7 @@ void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, AbstractTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getModeName(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
 {
     MobiusState::Mode mode = t->getMode();
     q->value.setString(MobiusState::getModeName(mode));
@@ -219,14 +219,14 @@ void TrackMslVariableHandler::getModeName(MslQuery* q, AbstractTrack* t)
  * Loop has a flag for this, and MidiRecorder has basically the
  * same thing, but it isn't exposed
  */
-void TrackMslVariableHandler::getIsRecording(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getIsRecording(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: isRecording not implemented");
     q->value.setBool(false);
 }
 
-void TrackMslVariableHandler::getInOverdub(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInOverdub(MslQuery* q, MslTrack* t)
 {
     (void)t;
     // in general, MidiTrack doesn't have a lot of state exposure beyond
@@ -239,28 +239,28 @@ void TrackMslVariableHandler::getInOverdub(MslQuery* q, AbstractTrack* t)
  * This is old, and it would be more useful to just know
  * the value of SpeedToggle
  */
-void TrackMslVariableHandler::getInHalfspeed(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInHalfspeed(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inHalfspeed not implemented");
     q->value.setBool(false);
 }
 
-void TrackMslVariableHandler::getInReverse(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInReverse(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inReverse not implemented");
     q->value.setBool(false);
 }
 
-void TrackMslVariableHandler::getInMute(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInMute(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inMute not implemented");
     q->value.setBool(false);
 }
 
-void TrackMslVariableHandler::getInPause(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInPause(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setBool(t->isPaused());
@@ -269,14 +269,14 @@ void TrackMslVariableHandler::getInPause(MslQuery* q, AbstractTrack* t)
 /**
  * Is this really that interesting?  I guess for testing
  */
-void TrackMslVariableHandler::getInRealign(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInRealign(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inRealign not implemented");
     q->value.setBool(false);
 }
 
-void TrackMslVariableHandler::getInReturn(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getInReturn(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inReturn not implemented");
@@ -287,7 +287,7 @@ void TrackMslVariableHandler::getInReturn(MslQuery* q, AbstractTrack* t)
  * !! This should be "speedStep"
  * "rate" was used a long time ago but that should be a float
  */
-void TrackMslVariableHandler::getPlaybackRate(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getPlaybackRate(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: playbackRate not implemented");
@@ -297,20 +297,20 @@ void TrackMslVariableHandler::getPlaybackRate(MslQuery* q, AbstractTrack* t)
 /**
  * This is expected to be the total track count
  */
-void TrackMslVariableHandler::getTrackCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getTrackCount(MslQuery* q, MslTrack* t)
 {
     (void)t;
     int total = kernel->getAudioTrackCount() + kernel->getMidiTrackCount();
     q->value.setInt(total);
 }
 
-void TrackMslVariableHandler::getAudioTrackCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getAudioTrackCount(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setInt(kernel->getAudioTrackCount());
 }
 
-void TrackMslVariableHandler::getMidiTrackCount(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getMidiTrackCount(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setInt(kernel->getMidiTrackCount());
@@ -321,14 +321,14 @@ void TrackMslVariableHandler::getMidiTrackCount(MslQuery* q, AbstractTrack* t)
  * I don't think it's worthwhile to return this, though we could
  * rename this activeAudioTrack and have both sides handle it
  */
-void TrackMslVariableHandler::getActiveTrack(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getActiveTrack(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: activeTrack not implemented");
     q->value.setInt(0);
 }
 
-void TrackMslVariableHandler::getFocusedTrack(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getFocusedTrack(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setInt(kernel->getContainer()->getFocusedTrack() + 1);
@@ -338,7 +338,7 @@ void TrackMslVariableHandler::getFocusedTrack(MslQuery* q, AbstractTrack* t)
  * If they didn't pass a scope in the query, I guess
  * this should fall back to the focused track?
  */
-void TrackMslVariableHandler::getScopeTrack(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getScopeTrack(MslQuery* q, MslTrack* t)
 {
     (void)t;
     if (q->scope > 0)
@@ -351,7 +351,7 @@ void TrackMslVariableHandler::getScopeTrack(MslQuery* q, AbstractTrack* t)
  * Audio tracks have the flag on the Track which makes no sense
  * it should be derived from the mute state in all tracks.
  */
-void TrackMslVariableHandler::getGlobalMute(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getGlobalMute(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: globalMute not implemented");
@@ -367,14 +367,14 @@ void TrackMslVariableHandler::getGlobalMute(MslQuery* q, AbstractTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getTrackSyncMaster(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getTrackSyncMaster(MslQuery* q, MslTrack* t)
 {
     (void)t;
     int tnum = kernel->getContainer()->getPulsator()->getTrackSyncMaster();
     q->value.setInt(tnum);
 }
 
-void TrackMslVariableHandler::getOutSyncMaster(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getOutSyncMaster(MslQuery* q, MslTrack* t)
 {
     (void)t;
     // this could have been handled at either level
@@ -386,28 +386,28 @@ void TrackMslVariableHandler::getOutSyncMaster(MslQuery* q, AbstractTrack* t)
  * Audio tracks save the sync source on each track and have
  * Synchronizer deal with it.  We could do something similar with TrackScheduler
  */
-void TrackMslVariableHandler::getSyncTempo(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSyncTempo(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncTempo not implemented");
     q->value.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncRawBeat(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSyncRawBeat(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncRawBeat not implemented");
     q->value.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncBeat(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSyncBeat(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncBeat not implemented");
     q->value.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncBar(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSyncBar(MslQuery* q, MslTrack* t)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncBar not implemented");
@@ -420,13 +420,13 @@ void TrackMslVariableHandler::getSyncBar(MslQuery* q, AbstractTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getBlockFrames(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getBlockFrames(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setInt(kernel->getContainer()->getBlockSize());
 }
 
-void TrackMslVariableHandler::getSampleRate(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSampleRate(MslQuery* q, MslTrack* t)
 {
     (void)t;
     q->value.setInt(kernel->getContainer()->getSampleRate());
@@ -438,7 +438,7 @@ void TrackMslVariableHandler::getSampleRate(MslQuery* q, AbstractTrack* t)
  * finish playing.
  * Should be "lastSampleFrames" or something
  */
-void TrackMslVariableHandler::getSampleFrames(MslQuery* q, AbstractTrack* t)
+void TrackMslVariableHandler::getSampleFrames(MslQuery* q, MslTrack* t)
 {
     (void)t;
     int frames = (int)(kernel->getLastSampleFrames());

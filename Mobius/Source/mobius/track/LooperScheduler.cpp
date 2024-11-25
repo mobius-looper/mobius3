@@ -1,4 +1,4 @@
- 
+s 
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -48,24 +48,6 @@ void LooperScheduler::setTrack(LooperTrack* t)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Called by action transformer to set a parameter.
- * Normally just a pass-through.
- *
- * We can in theory quantize parameter assignment.  Old Mobius does
- * some parameter to function conversion for this for rate and pitch
- * parameters.
- *
- * Not implemented yet.
- *
- * These are allowed in Pause mode as long as they are simple non-scheduling
- * parameters.
- */
-void LooperScheduler::doParameter(UIAction* src)
-{
-    track->doParameter(src);
-}
-
-/**
  * Start the action process with an action sent from outside.
  * The source action is not modified or reclaimed and may be passed
  * to other tracks.  If this action needs to be modified or saved, a
@@ -99,32 +81,88 @@ void LooperScheduler::doParameter(UIAction* src)
  *      the other operating modes
  *    
  */
-void LooperScheduler::doAction(UIAction* src)
+void LooperScheduler::passAction(UIAction* src)
 {
-    // first the executive actions that don't require scheduling
-    if (!handleExecutiveAction(src)) {
+    if (src->symbol->parameterProperties) {
+        // a parameter assignment, no transformations yet
+        // scheduler may quantize these
+        doParameter(src);
+    }
+    else if (src->sustainEnd) {
+        // filter these out for now, no SUS functions yet so don't confuse things
+        //Trace(2, "ActionTransformer: Filtering sustain end action");
+    }
+    else if (!doTransformation(src)) {
+    
+        // first the executive actions that don't require scheduling
+        if (!handleExecutiveAction(src)) {
 
-        // then the major operating modes
+            // then the major operating modes
         
-        if (isReset()) {
-            handleResetAction(src);
-        }
-        else if (isPaused()) {
-            handlePauseAction(src);
-        }
-        else if (isRecording()) {
-            handleRecordAction(src);
-        }
-        else if (loopSwitcher.isSwitching()) {
-            loopSwitcher.handleSwitchModeAction(src);
-        }
-        else if (isRounding()) {
-            handleRoundingAction(src);
-        }
-        else {
-            scheduleAction(src);
+            if (isReset()) {
+                handleResetAction(src);
+            }
+            else if (isPaused()) {
+                handlePauseAction(src);
+            }
+            else if (isRecording()) {
+                handleRecordAction(src);
+            }
+            else if (loopSwitcher.isSwitching()) {
+                loopSwitcher.handleSwitchModeAction(src);
+            }
+            else if (isRounding()) {
+                handleRoundingAction(src);
+            }
+            else {
+                scheduleAction(src);
+            }
         }
     }
+}
+
+/**
+ * We can in theory quantize parameter assignment.  Old Mobius does
+ * some parameter to function conversion for this for rate and pitch
+ * parameters.
+ *
+ * Not implemented yet.
+ *
+ * These are allowed in Pause mode as long as they are simple non-scheduling
+ * parameters.
+ */
+void LooperScheduler::doParameter(UIAction* src)
+{
+    track->doParameter(src);
+}
+
+/**
+ * Transform a few "alternate endings" into different actions.
+ * Don't like hwow this is working but we don't have many of these.
+ */
+bool LooperScheduler::doTransformation(UIAction* src)
+{
+    bool transformed = false;
+
+    if (a->symbol->id == FuncRecord) {
+        // record has special meaning, before scheduler gets it
+        auto mode = track->getMode();
+        
+        if (mode == MobiusState::ModeMultiply) {
+            UIAction temp;
+            temp.symbol = symbols->getSymbol(FuncUnroundedMultiply);
+            passAction(&temp);
+            transormed = true;
+        }
+        else if (mode == MobiusState::ModeInsert) {
+            // unrounded insert
+            UIAction temp;
+            temp.symbol = symbols->getSymbol(FuncUnroundedInsert);
+            passAction(&temp);
+            transormed = true;
+        }
+    }
+    return transformed;
 }
 
 /**

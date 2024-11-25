@@ -22,11 +22,11 @@
 
 class LoopSwitcher
 {
-    friend class TaskScheduler;
+    friend class LooperScheduler;
     
   public:
 
-    LoopSwitcher(class TrackScheduler& s);
+    LoopSwitcher(class LooperScheduler& s);
     ~LoopSwitcher();
     void initialize();
 
@@ -40,13 +40,12 @@ class LoopSwitcher
     
   private:
 
-    TrackScheduler& scheduler;
+    LooperScheduler& scheduler;
 
     int findLeader();
     int getSwitchTarget(class UIAction* a);
     int getQuantizedFrame(SwitchQuantize squant);
     QuantizeMode convert(SwitchQuantize squant);
     bool setupEmptyLoop(int previousLoop);
-
 
 };

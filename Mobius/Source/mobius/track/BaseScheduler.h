@@ -4,10 +4,11 @@
  * pending pulsed events, and receives notifications from other tracks to activate
  * pending leader events.
  *
- * It coordinates the scheduling of UIActions reeived by the track, and passes
- * ccntrol to the track's action/event handler when those are are ready to be performed.
+ * It is normally subclassed for more detailed UIAction handling and to handle
+ * TrackEvents when they are ready.
  *
  * Eventually this will be the component responsible for latency compensation.
+ *
  */
 
 #pragma once
@@ -24,32 +25,25 @@
 
 class BaseScheduler
 {
-    friend class LooperScheduler;
-    
   public:
 
-    BaseScheduler();
+    BaseScheduler(class TrackManager* tm, class LogicaclTrack* lt, class ScheduledTrack* t);
     ~BaseScheduler();
-
-    void initialize(class TrackManager* tm, BaseTrack* track,
-                    class TrackTypeScheduler* tas);
     
-    void configure(Session::Track* def);
+    void loadSession(Session::Track* def);
     
     void refreshState(class MobiusState::Track* state);
 
     void advance(class MobiusAudioStream* stream);
-    void doAction(class UIAction* a);
+    void scheduleAction(class UIAction* a);
     void trackNotification(NotificationId notification, class TrackProperties& props);
 
     //
-    // Things called by the child track to do leader management
+    // Things called by the BaseTrack to do leader management
     //
 
-    // called by the child track when it wants to follow something
     void setFollowTrack(class TrackProperties& props);
     
-    // utility used by MidiTrack, TrackManager
     LeaderType getLeaderType() {
         return leaderType;
     }
@@ -63,14 +57,17 @@ class BaseScheduler
     
   protected:
 
-    // things TrackTypeSchedulers need
+    // subclass overloads if the track wants more complex scheduling
+    virtual void passAction(class UIAction* a);
+    virtual void passEvent(class TrackEvent* e);
+
+    // things the subclass needs
     
     class TrackManager* manager = nullptr;
     class UIActionPool* actionPool = nullptr;
     class Pulsator* pulsator = nullptr;
     class Valuator* valuator = nullptr;
     class SymbolTable* symbols = nullptr;
-    class BaseTrack* track = nullptr;
     
     TrackEventList events;
     TrackEventPool eventPool;
@@ -87,7 +84,8 @@ class BaseScheduler
     
   private:
 
-    class TrackTypeScheduler* trackScheduler = nullptr;
+    class LogicalTrack* logicalTrack = nullptr;
+    class ScheduledTrack* scheduledTrack = nullptr;
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -118,11 +116,10 @@ class BaseScheduler
     int correlationIdGenerator = 1;
 
     // common action handling
-    void reset();
     void dump();
     void doStacked(class TrackEvent* e);
-    void unstack(TrackEvent* event);
-    void defaultUndo(UIAction* src);
+    bool unstack(TrackEvent* event);
+    bool defaultUndo(UIAction* src);
     bool isRecording();
     bool isPaused();
     bool isReset();

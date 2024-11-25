@@ -488,13 +488,23 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
 void TrackManager::doAction(UIAction* src)
 {
     Symbol* s = src->symbol;
-
+    SymbolId sid = s->id;
+    
     // watch long before replication
     // could also watch after but this would generate many long actions
     // which could then all be duplicated
     longWatcher.watch(src);
-    
-    if (s->id == FuncNextTrack || s->id == FuncPrevTrack || s->id == FuncSelectTrack) {
+
+    if (sid == FuncDump) {
+        // at what level should this be handled?
+        StructureDumper d;
+        int focusedNumber = getFocusedTrackIndex() + 1;
+        LogicalTrack* lt = getLogicalTrack(focusedNumber);
+        lt->dump(d);
+        writeDump(juce::String("LogicalTrack.txt"), d.getText());
+        actionPool->checkin(src);
+    }
+    else if (sid == FuncNextTrack || sid == FuncPrevTrack || sid == FuncSelectTrack) {
         // special case for track selection functions
         doTrackSelectAction(src);
     }

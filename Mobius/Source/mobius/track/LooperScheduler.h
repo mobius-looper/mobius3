@@ -1,8 +1,7 @@
 /**
- * An implementation of TrackActionScheduler for looping tracks.
- * MidiTrack initially and eventually what Mobius evolves into.
+ * An extension of BaseScheduler for looping tracks.
  * 
- * It has a combination of functionality found in the old Synchronizer and EventManager classes
+ * This has a combination of functionality found in the old Synchronizer and EventManager classes
  * plus mode awareness that was strewn about all over in a most hideous way.  It interacts
  * with an AbstractTrack that may either be a MIDI or an audio track, since the behavior of event
  * scheduling and mode transitions are the same for both.
@@ -19,35 +18,25 @@
 
 #include "../Notification.h"
 
-#include "TrackEvent.h"
+#include "BaseScheduler.h"
 #include "LooperSwitcher.h"
-#include "TrackTypeScheduler.h"
 
-class LooperScheduler : public TrackTypeScheduler
+class LooperScheduler : public BaseScheduler
 {
     friend class LoopSwitcher;
     
   public:
 
-    LooperScheduler(class BaseScheduler* bs);
+    LooperScheduler(class TrackManager* tm, class LogicalTrack* lt, class LooperTrack* t);
     ~LooperScheduler();
 
-    // ponder whether this should jsut be an extension of
-    // BaseScheduler rather than splitting classes
-    void setTrack(class LooperTrack* t);
-
-    // here via BaseScheduler after it checks a few things
-    void doAction(class UIAction* a);
-    void doEvent(class TrackEvent* e);
+    // BaseScheduler overloads
+    void passAction(class UIAction* a) override;
+    void passEvent(class TrackEvent* e) override;
     
-    // here direct from TrackManager
-    void doParameter(class UIAction* a);
-
   protected:
 
     // things LoopSwitcher needs
-
-    class BaseScheduler* scheduler = nullptr;
     class LooperTrack* track = nullptr;
     
   private:
@@ -59,6 +48,7 @@ class LooperScheduler : public TrackTypeScheduler
     // Scheduling and mode transition guts
     //
     
+    bool doTransformation(class UIAction* src);
     void doActionNow(class UIAction* a);
     void checkModeCancel(class UIAction* a);
     
@@ -114,5 +104,7 @@ class LooperScheduler : public TrackTypeScheduler
 
     class UIAction* copyAction(class UIAction* src);
 
+    // temporary
+    void doParameter(class UIAction* src);
 };
 

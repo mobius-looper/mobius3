@@ -30,8 +30,11 @@
 
 #include "../Valuator.h"
 
-#include "../track/TrackManager.h"
-#include "../track/TrackScheduler.h"
+#include "../track/LogicalTrack.h"
+#include "../track/BaseScheduler.h"
+#include "../track/LooperScheduler.h"
+//#include "../track/TrackManager.h"
+//#include "../track/TrackScheduler.h"
 #include "../track/TrackProperties.h"
 
 #include "MidiPools.h"
@@ -56,18 +59,19 @@ const int MidiTrackMaxLoops = 8;
  * tracks are enabled for use by calling configure() passing
  * the track definition from the session.
  */
-MidiTrack::MidiTrack(TrackManager* t)
+MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) : scheduler(tm, lt, this)
 {
-    tracker = t;
+    manager = tm;
+    // may not need this
+    logicalTrack = lt;
+
+    TrackManager* tm = lt->getTrackManager();
 
     // temporary, should be used only by Scheduler
-    pulsator = t->getPulsator();
-    valuator = t->getValuator();
-    pools = t->getPools();
+    pulsator = tm->getPulsator();
+    valuator = tm->getValuator();
+    pools = tm->getPools();
 
-    scheduler.initialize(t);
-    
-    transformer.initialize(pools->actionPool, t->getSymbols());
     recorder.initialize(pools);
     player.initialize(pools);
 
@@ -99,10 +103,10 @@ MidiTrack::~MidiTrack()
  * we don't need to pass it in.
  * 
  */
-void MidiTrack::configure(Session::Track* def)
+void MidiTrack::loadSession(Session::Track* def)
 {
     // capture sync options
-    scheduler.configure(def);
+    scheduler.loadSession(def);
 
     subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
     // default it
@@ -118,7 +122,7 @@ void MidiTrack::configure(Session::Track* def)
         player.setDeviceId(0);
     }
     else {
-        int id = tracker->getMidiOutputDeviceId(v->getString());
+        int id = manager->getMidiOutputDeviceId(v->getString());
         // kernel is currently deciding to default this to zero, but
         // we could defer that to here?
         if (id < 0)
@@ -143,7 +147,7 @@ void MidiTrack::configure(Session::Track* def)
     // might be better to store this as the ordinal to track renames?
     // that isn't what SetupTrack does though, it stores the name
     if (groupName != nullptr) {
-        MobiusConfig* config = tracker->getConfiguration();
+        MobiusConfig* config = manager->getConfiguration();
         int ordinal = config->getGroupOrdinal(groupName);
         if (ordinal < 0)
           Trace(1, "MidiTrack: Invalid group name found in session %s", groupName);
@@ -153,6 +157,78 @@ void MidiTrack::configure(Session::Track* def)
     else {
         group = 0;
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// BaseTrack
+//
+// Things we implemented to be a BaseTrack and live in a LogicalTrack
+//
+//////////////////////////////////////////////////////////////////////
+
+void MidiTrack::doAction(UIAction* a)
+{
+    // all actions pass through the scheduler
+    scheduler.scheduleAction(a);
+}
+
+/**
+ * Query uses Valuator for most things but doesn't
+ * for the controllers and a few important parameters which are
+ * cached in local members.
+ */
+bool MidiTrack::doQuery(Query* q)
+{
+    switch (q->symbol->id) {
+
+        // local caches
+        case ParamSubcycles: q->value = subcycles; break;
+        case ParamInput: q->value = input; break;
+        case ParamOutput: q->value = output; break;
+        case ParamFeedback: q->value = feedback; break;
+        case ParamPan: q->value = pan; break;
+
+        default: {
+            // everything else gets passed over to Valuator
+            // todo: need to be smarter about non-ordinal parameters
+            q->value = valuator->getParameterOrdinal(number, q->symbol->id);
+        }
+            break;
+    }
+
+    // what are we supposed to do here, I guess just ignore it if it isn't valid
+    return true;
+}    
+
+/**
+ * Pass a MIDI event from the outside along to the recorder.
+ */
+void MidiTrack::midiEvent(MidiEvent* e)
+{
+    recorder.midiEvent(e);
+    if (midiThru) {
+        // this came from the Session::Track and player keeps it
+        // may want some filtering here
+        int device = player.getDeviceId();
+        midiSend(e->juceMessage, device);
+    }
+}
+
+void MidiTrack::getTrackProperties(TrackProperties& props)
+{
+    props.frames = recorder.getFrames();
+    props.cycles = recorder.getCycles();
+    props.currentFrame = recorder.getFrame();
+}
+
+/**
+ * Forward the notification from the Kernel to the Scheduler to decide
+ * what to do with it based on follower settings.
+ */
+void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
+{
+    scheduler.trackNotification(notification, props);
 }
 
 /**
@@ -169,9 +245,90 @@ bool MidiTrack::isFocused()
     return focus;
 }
 
+bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
+{
+    (void)w;
+    (void)frame;
+    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
+    return false;
+}
+
+bool MidiTrack::scheduleWaitEvent(class MslWait* w)
+{
+    (void)w;
+    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
+    return false;
+}
+
+// State refresh is toward the bottom
+
+void MidiTrack::dump(StructureDumper& d)
+{
+    d.start("MidiTrack:");
+    d.add("number", number);
+    d.add("loops", loopCount);
+    d.add("loopIndex", loopIndex);
+    d.newline();
+    
+    d.inc();
+
+    for (int i = 0 ; i < loopCount ; i++) {
+        MidiLoop* loop = loops[i];
+        loop->dump(d);
+    }
+    
+    //scheduler.dump(d);
+    recorder.dump(d);
+    player.dump(d);
+    
+    d.dec();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// ScheduledTrack
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
+ * This is the BaseScheduler fallback if there is no subclass overload.
+ * We shouldn't get here
+ */
+void MidiTrack::doActionNow(UIAction* a)
+{
+    (void)a;
+    Trace(1, "MidiTrack::doActionNow Not supposed to get here");
+}
+
+int MidiTrack::getFrames()
+{
+    return recorder.getFrames();
+}
+
+int MidiTrack::getFrame()
+{
+    return recorder.getFrame();
+}
+
+MobiusState::Mode MidiTrack::getMode()
+{
+    return mode;
+}
+
+/**
+ * Called by BaseScheduler to see if the track is in an extension mode and
+ * is allowed to continue beyond the loop point.  If yes it will allow
+ * the track to advance past the loop point, and the track must increase
+ * it's length by some amount.
+ */
+bool MidiTrack::isExtending()
+{
+    return recorder.isExtending();
+}
+
+/**
+ * Called by BaseScheduler in cases of emergency.
  * Initialize the track and release any resources.
- * This is called by TrackManager when it de-activates tracks.
  * It is not necessarily the same as the Reset function handler.
  */
 void MidiTrack::reset()
@@ -180,21 +337,54 @@ void MidiTrack::reset()
 }
 
 /**
- * Send an alert back to the UI, somehow
- * Starting to use this method for MIDI tracks rather than the trace log
- * since the user needs to know right away when something isn't implemented.
+ * Called by scheduler when the track has reached the loop point and needs
+ * to start over.  Scheduler needs to be in control of this for proper
+ * event insertion.  
  */
-void MidiTrack::alert(const char* msg)
+void MidiTrack::loop()
 {
-    tracker->alert(msg);
+    Trace(2, "MidiTrack: Loop");
+    
+    // we should have advanced one beyond the last frame of the loop
+    if (recorder.getFrame() != recorder.getFrames()) {
+        Trace(1, "MidiTrack: Scheduler requested Loop not on the loop frame");
+    }
+
+    if (recorder.hasChanges())
+      shift(false);
+    else
+      recorder.rollback(overdub);
+    
+    // restart the region tracker
+    resetRegions();
+    resumeOverdubRegion();
+
+    player.restart();
 }
 
+float MidiTrack::getRate()
+{
+    return rate;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Random
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Called internally by Player to send events.
+ */
 void MidiTrack::midiSend(juce::MidiMessage& msg, int deviceId)
 {
-    tracker->midiSend(msg, deviceId);
+    manager->midiSend(msg, deviceId);
 }
 
 /**
+ * Called directly by TrackManager bypassing the usual track interfaces
+ * since it can only be meaningful with Midi tracks.
+ *
  * Not sure how the loop number works for audio tracks, but
  * I think I'd like it 1 based like track number.  Zero means unspecified
  * which goes into the current loop.
@@ -279,13 +469,9 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::getTrackProperties(TrackProperties& props)
-{
-    props.frames = recorder.getFrames();
-    props.cycles = recorder.getCycles();
-    props.currentFrame = recorder.getFrame();
-}
-
+/**
+ * Not used, it was intended to help prevent follower drift.
+ */
 void MidiTrack::setGoalFrames(int f)
 {
     goalFrames = f;
@@ -296,25 +482,13 @@ int MidiTrack::getGoalFrames()
     return goalFrames;
 }
 
-#if 0
-void MidiTrack::setRate(float r)
-{
-    rate = r;
-}
-#endif
-
-float MidiTrack::getRate()
-{
-    return rate;
-}
-
 /**
  * Used by Recorder to do held note injection, forward to the tracker
  * that has the shared tracking state.
  */
 MidiEvent* MidiTrack::getHeldNotes()
 {
-    return tracker->getHeldNotes();
+    return manager->getHeldNotes();
 }
 
 bool MidiTrack::isRecording()
@@ -327,11 +501,6 @@ bool MidiTrack::isRecording()
 bool MidiTrack::isPaused()
 {
     return (mode == MobiusState::ModePause);
-}
-
-TrackEventList* MidiTrack::getEventList()
-{
-    return &(scheduler.events);
 }
 
 void MidiTrack::toggleFocusLock()
@@ -348,15 +517,6 @@ void MidiTrack::toggleFocusLock()
 bool MidiTrack::isNoReset()
 {
     return noReset;
-}
-
-/**
- * Forward the notification from the Kernel to the Scheduler to decide
- * what to do with it based on follower settings.
- */
-void MidiTrack::trackNotification(NotificationId notification, TrackProperties& props)
-{
-    scheduler.trackNotification(notification, props);
 }
 
 /**
@@ -462,7 +622,7 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MidiTrack::refreshImportant(MobiusState::Track* state)
+void MidiTrack::refreshPriorityState(MobiusState::Track* state)
 {
     state->frames = recorder.getFrames();
     state->frame = recorder.getFrame();
@@ -644,30 +804,6 @@ void MidiTrack::refreshState(MobiusState::Track* state)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Pass a MIDI event from the outside along to the recorder.
- */
-void MidiTrack::midiEvent(MidiEvent* e)
-{
-    recorder.midiEvent(e);
-    if (midiThru) {
-        // this came from the Session::Track and player keeps it
-        // may want some filtering here
-        int device = player.getDeviceId();
-        midiSend(e->juceMessage, device);
-    }
-}
-
-/**
- * First level action handler.
- * Pass immediately to ActionTransformer which then passes it to TrackScheduler,
- * then eventually back to us.
- */
-void MidiTrack::doAction(UIAction* a)
-{
-    transformer.doSchedulerActions(a);
-}
-
-/**
  * Actions on a few important parameters are cached locally,
  * the rest are held in Valuator until the next reset.
  */
@@ -693,34 +829,6 @@ void MidiTrack::doParameter(UIAction* a)
             break;
     }
 }
-
-/**
- * Query uses Valuator for most things but doesn't
- * for the controllers and a few important parameters which are
- * cached in local members.
- */
-bool MidiTrack::doQuery(Query* q)
-{
-    switch (q->symbol->id) {
-
-        // local caches
-        case ParamSubcycles: q->value = subcycles; break;
-        case ParamInput: q->value = input; break;
-        case ParamOutput: q->value = output; break;
-        case ParamFeedback: q->value = feedback; break;
-        case ParamPan: q->value = pan; break;
-
-        default: {
-            // everything else gets passed over to Valuator
-            // todo: need to be smarter about non-ordinal parameters
-            q->value = valuator->getParameterOrdinal(number, q->symbol->id);
-        }
-            break;
-    }
-
-    // what are we supposed to do here, I guess just ignore it if it isn't valid
-    return true;
-}    
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -762,43 +870,6 @@ void MidiTrack::advance(int frames)
 }
 
 /**
- * Called by scheduler to see if the track is in an extension mode and
- * is allowed to continue beyond the loop point.  If yes it will allow
- * the track to advance past the loop point, and the track must increase
- * it's length by some amount.
- */
-bool MidiTrack::isExtending()
-{
-    return recorder.isExtending();
-}
-
-/**
- * Called by scheduler when the track has reached the loop point and needs
- * to start over.  Scheduler needs to be in control of this for proper
- * event insertion.  
- */
-void MidiTrack::loop()
-{
-    Trace(2, "MidiTrack: Loop");
-    
-    // we should have advanced one beyond the last frame of the loop
-    if (recorder.getFrame() != recorder.getFrames()) {
-        Trace(1, "MidiTrack: Scheduler requested Loop not on the loop frame");
-    }
-
-    if (recorder.hasChanges())
-      shift(false);
-    else
-      recorder.rollback(overdub);
-    
-    // restart the region tracker
-    resetRegions();
-    resumeOverdubRegion();
-
-    player.restart();
-}
-
-/**
  * When the recorder is in an extension mode, the player
  * loops on itself.
  */
@@ -835,17 +906,12 @@ void MidiTrack::shift(bool unrounded)
 
 //////////////////////////////////////////////////////////////////////
 //
-// TrackScheduler Support
+// LooperScheduler Support
 //
-// These are the callbacks TrackScheduler will use during action analysis
+// These are the callbacks LooperScheduler will use during action analysis
 // and to cause things to happen.
 //
 //////////////////////////////////////////////////////////////////////
-
-MobiusState::Mode MidiTrack::getMode()
-{
-    return mode;
-}
 
 int MidiTrack::getLoopIndex()
 {
@@ -857,14 +923,6 @@ int MidiTrack::getLoopCount()
     return loopCount;
 }
 
-int MidiTrack::getLoopFrames()
-{
-    return recorder.getFrames();
-}
-int MidiTrack::getFrame()
-{
-    return recorder.getFrame();
-}
 int MidiTrack::getCycleFrames()
 {
     return recorder.getCycleFrames();
@@ -2115,7 +2173,7 @@ void MidiTrack::followLeaderSize()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = tracker->getTrackProperties(leaderTrack);
+            TrackProperties props = manager->getTrackProperties(leaderTrack);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -2153,7 +2211,7 @@ void MidiTrack::followLeaderLocation()
         // !! not enough for host/midi leaders
         int leaderTrack = scheduler.findLeaderTrack();
         if (leaderTrack > 0) {
-            TrackProperties props = tracker->getTrackProperties(leaderTrack);
+            TrackProperties props = manager->getTrackProperties(leaderTrack);
             if (props.invalid) {
                 Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
             }
@@ -2189,7 +2247,7 @@ void MidiTrack::reorientFollower(int previousFrames, int previousFrame)
     // !! not enough for host/midi leaders
     int leaderTrack = scheduler.findLeaderTrack();
     if (leaderTrack > 0) {
-        TrackProperties props = tracker->getTrackProperties(leaderTrack);
+        TrackProperties props = manager->getTrackProperties(leaderTrack);
         if (props.invalid) {
             Trace(1, "MidiTrack: followLeaderSize() was given an invalid audio track number %d", leaderTrack);
         }
@@ -2229,7 +2287,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
     }
     else {
         // we could have just passed all this shit up from where it came from
-        TrackProperties props = tracker->getTrackProperties(audioTrack);
+        TrackProperties props = manager->getTrackProperties(audioTrack);
         if (props.invalid) {
             Trace(1, "MidiTrack: clipStart was given an invalid audio track number %d", audioTrack);
         }
@@ -2295,59 +2353,6 @@ void MidiTrack::doDoublespeed()
 {
     if (rate == 0.0f) rate = 1.0f;
     rate *= 2.0f;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// MSL Support
-//
-//////////////////////////////////////////////////////////////////////
-
-bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
-{
-    (void)w;
-    (void)frame;
-    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
-    return false;
-}
-
-bool MidiTrack::scheduleWaitEvent(class MslWait* w)
-{
-    (void)w;
-    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
-    return false;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Dump
-//
-//////////////////////////////////////////////////////////////////////
-
-void MidiTrack::doDump()
-{
-    StructureDumper d;
-
-    d.start("MidiTrack:");
-    d.add("number", number);
-    d.add("loops", loopCount);
-    d.add("loopIndex", loopIndex);
-    d.newline();
-    
-    d.inc();
-
-    for (int i = 0 ; i < loopCount ; i++) {
-        MidiLoop* loop = loops[i];
-        loop->dump(d);
-    }
-    
-    //scheduler.dump(d);
-    recorder.dump(d);
-    player.dump(d);
-    
-    d.dec();
-    
-    tracker->writeDump(juce::String("MidiTrack.txt"), d.getText());
 }
 
 /****************************************************************************/

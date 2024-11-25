@@ -11,12 +11,9 @@
 #include "../../model/ValueSet.h"
 
 #include "TrackProperties.h"
-#include "BaseScheduler.h"
 
 class LogicalTrack
 {
-    friend class BaseTrack;
-    
   public:
 
     LogicalTrack(class TrackManager* tm);
@@ -44,11 +41,8 @@ class LogicalTrack
     void refreshPriorityState(class MobiusState::Track* tstate);
     void refreshState(class MobiusState::Track* tstate);
 
-  protected:
+    void dump(class StructureDumper& d);
 
-    // services we offer to BaseTracks
-    BaseScheduler* getBaseScheduler();
-    
   private:
 
     class TrackManager* manager = nullptr;
@@ -61,11 +55,6 @@ class LogicalTrack
      * or a MobiusTrackWrapper.
      */
     std::unique_ptr<class BaseTrack> track;
-
-    /**
-     * The common scheduler for track types that want to use it.
-     */
-    BaseScheduler baseScheduler;
 
     /**
      * A colletion of parameter overrides for this track.

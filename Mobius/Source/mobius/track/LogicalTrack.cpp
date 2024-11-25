@@ -4,10 +4,11 @@
 #include "../../util/Trace.h"
 #include "../../model/Session.h"
 
-#include "../midi/MidiTrack.h"
+#include "../core/Mobius.h"
+#include "../midi/MidiEngine.h"
 
-#include "AbstractTrack.h"
-#include "TrackScheduler.h"
+#include "BaseTrack.h"
+#include "MobiusLooperTrack.h"
 
 #include "LogicalTrack.h"
 
@@ -19,11 +20,6 @@ LogicalTrack::LogicalTrack(TrackManager* tm)
 LogicalTrack::~LogicalTrack()
 {
     // track unique_ptr deletes itself
-}
-
-BaseScheduler* LogicalTrack::getBaseScheudler()
-{
-    return &baseScheduler;
 }
 
 /**
@@ -39,7 +35,9 @@ void LogicalTrack::initializeCore(Mobius* mobius, int index)
     engineNumber = index + 1;
 
     MobiusLooperTrack* t = new MobiusLooperTrack(mobius, mobius->getTrack(index));
-    baseTrack.reset(t);
+    track.reset(t);
+
+    // this one doesn't use a BaseScheduler
 }
 
 /**
@@ -50,41 +48,25 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
     // assumes it is okay to hang onto this until the next one is loaded
     session = trackdef;
     number = argNumber;
-    
-    if (session->type == Session::TypeMidi) {
 
-        // the engine has no state at the moment, though we may want this
-        // to be where the type specific pools live
-        MidiEngine engine;
-
-        // this one will call back for the BaseScheduler and wire it in
-        // with a LooperScheduler
-        // not sure I like the handoff here
-        track.reset(engine.newTrack(this, trackdef));
-
-        
-
-        engine.
-        // ugly dependency cycles
-        LooperScheduler* ls = new LooperScheduler(&baseScheduler);
-
-        // why the hell does this need manager?
-        MidiTrack* mt = new MidiTrack(manager);
-
-        // LooperScheduler forwards actions to the track
-        ls->setTrack(mt);
-
-        // and the track needs to call back to the scheduler
-        mt->setScheduler(ls);
-
-        // and finally BaseScheduler needs both
-        baseScheduler.initialize(tm, mt, ls);
-        baseTrack.reset(mt);
-        trackScheduler.reset(ls);
+    if (track == nullptr) {
+        // make a new one using the appopriate track factory
+        if (session->type == Session::TypeMidi) {
+            // the engine has no state at the moment, though we may want this
+            // to be where the type specific pools live
+            MidiEngine engine;
+            // this one will call back for the BaseScheduler and wire it in
+            // with a LooperScheduler
+            // not sure I like the handoff here
+            track.reset(engine.newTrack(manager, this, trackdef));
+        }
+        else {
+            Trace(1, "LogicalTrack: Unknown track type");
+        }
     }
-    // other types someday
-
-    baseScheduler.configure(trackdef);
+    else {
+        track->loadSession(trackdef);
+    }
 }
 
 Session::TrackType LogicalTrack::getType()
@@ -189,6 +171,11 @@ void LogicalTrack::refreshState(class MobiusState::Track* tstate)
         MidiTrack* mt = static_cast<MidiTrack*>(track.get());
         mt->refreshState(tstate);
     }
+}
+
+void LogicalTrack::dump(StructureDumper& d)
+{
+    track->dump(d);
 }
 
 /****************************************************************************/
