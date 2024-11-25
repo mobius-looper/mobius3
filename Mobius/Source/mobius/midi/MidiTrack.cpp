@@ -33,8 +33,8 @@
 #include "../track/LogicalTrack.h"
 #include "../track/BaseScheduler.h"
 #include "../track/LooperScheduler.h"
-//#include "../track/TrackManager.h"
-//#include "../track/TrackScheduler.h"
+// necessary for a few subcomponents
+#include "../track/TrackManager.h"
 #include "../track/TrackProperties.h"
 
 #include "MidiPools.h"
@@ -65,9 +65,7 @@ MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) : scheduler(tm, l
     // may not need this
     logicalTrack = lt;
 
-    TrackManager* tm = lt->getTrackManager();
-
-    // temporary, should be used only by Scheduler
+    // temporary, should be used only by LooperScheduler
     pulsator = tm->getPulsator();
     valuator = tm->getValuator();
     pools = tm->getPools();
@@ -245,21 +243,6 @@ bool MidiTrack::isFocused()
     return focus;
 }
 
-bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
-{
-    (void)w;
-    (void)frame;
-    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
-    return false;
-}
-
-bool MidiTrack::scheduleWaitEvent(class MslWait* w)
-{
-    (void)w;
-    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
-    return false;
-}
-
 // State refresh is toward the bottom
 
 void MidiTrack::dump(StructureDumper& d)
@@ -287,6 +270,27 @@ void MidiTrack::dump(StructureDumper& d)
 MslTrack* MidiTrack::getMslTrack()
 {
     return this;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MslTrack
+//
+//////////////////////////////////////////////////////////////////////
+
+bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
+{
+    (void)w;
+    (void)frame;
+    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
+    return false;
+}
+
+bool MidiTrack::scheduleWaitEvent(class MslWait* w)
+{
+    (void)w;
+    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
+    return false;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -477,6 +481,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
 /**
  * Not used, it was intended to help prevent follower drift.
  */
+#if 0
 void MidiTrack::setGoalFrames(int f)
 {
     goalFrames = f;
@@ -486,6 +491,7 @@ int MidiTrack::getGoalFrames()
 {
     return goalFrames;
 }
+#endif
 
 /**
  * Used by Recorder to do held note injection, forward to the tracker
@@ -719,7 +725,7 @@ void MidiTrack::refreshState(MobiusState::Track* state)
     state->loopCount = loopCount;
     state->activeLoop = loopIndex;
 
-    refreshImportant(state);
+    refreshPriorityState(state);
     captureLevels(state);
 
     int cycleFrames = recorder.getCycleFrames();
@@ -940,6 +946,13 @@ int MidiTrack::getSubcycles()
 {
     return subcycles;
 }
+
+int MidiTrack::getSubcycleFrames()
+{
+    // cross-interface annoyance
+    return LooperTrack::getSubcycleFrames();
+}
+
 int MidiTrack::getModeStartFrame()
 {
     return recorder.getModeStartFrame();
@@ -1030,9 +1043,6 @@ void MidiTrack::doPartialReset()
 
     // normally wouldn't have a pulsator lock on a MIDI follower?
     pulsator->unlock(number);
-
-    // clear pending events
-    scheduler.reset();
 }
 
 /**
@@ -1076,8 +1086,6 @@ void MidiTrack::doReset(bool full)
         MidiLoop* loop = loops[loopIndex];
         loop->reset();
     }
-
-    scheduler.reset();
 
     // clear parameter bindings
     // todo: that whole "reset retains" thing
@@ -2330,7 +2338,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // we can only get a clipStart event from an audio track,
                 // and audio tracks are advanced before MIDI tracks
                 // so we'll be at the beginning of the block at this point
-                scheduler.setFollowTrack(props);
+                scheduler.setFollowTrack(props.number);
             }
         }
     }

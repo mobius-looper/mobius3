@@ -37,7 +37,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-BaseScheduler::BaseScheduler(TrackManager*tm, LogialTrack* lt, ScheduledTrack* st)
+BaseScheduler::BaseScheduler(TrackManager*tm, LogicalTrack* lt, ScheduledTrack* st)
 {
     manager = tm;
     // don't really need this 
@@ -177,10 +177,19 @@ void BaseScheduler::scheduleAction(UIAction* src)
 
 /**
  * The default implementation of pass action is to send it directly
- * to the track.  The subclass must overload this if more needs to be
+ * to the track.  The subclass must overload this if more scheduling needs to be
  * inserted.
  */
 void BaseScheduler::passAction(UIAction* src)
+{
+    scheduledTrack->doActionNow(src);
+}
+
+/**
+ * Default implementation sends it to the track and the subclass
+ * must not do any additional scheduling.
+ */
+void BaseScheduler::doActionNow(UIAction* src)
 {
     scheduledTrack->doActionNow(src);
 }
@@ -276,7 +285,7 @@ void BaseScheduler::doStacked(TrackEvent* e)
 
             // might need some nuance betwee a function comming from
             // the outside and one that was stacked, currently they look the same
-            scheduledTrack->doActionNow(action);
+            doActionNow(action);
 
             actionPool->checkin(action);
             
@@ -873,8 +882,8 @@ void BaseScheduler::doEvent(TrackEvent* e)
             if (e->primary == nullptr)
               Trace(1, "BaseScheduler: EventAction without an action");
             else {
-                if (track != nullptr)
-                  scheduledTrack->doActionNow(e->primary);
+                if (scheduledTrack != nullptr)
+                  doActionNow(e->primary);
 
                 actionPool->checkin(e->primary);
                 e->primary = nullptr;
@@ -897,19 +906,22 @@ void BaseScheduler::doEvent(TrackEvent* e)
             break;
     }
 
+    bool extended = false;
     if (!handled)
-      passEvent(e);
+      extended = passEvent(e);
 
-    finishWaitAndDispose(e, false);
+    if (!extended)
+      finishWaitAndDispose(e, false);
 }
 
 /**
  * If this is not subclassed, then it is not given to the track.
  * Is that right?
  */
-void BaseScheduler::passEvent(TrackEvent* e)
+bool BaseScheduler::passEvent(TrackEvent* e)
 {
     (void)e;
+    return false;
 }
 
 /**

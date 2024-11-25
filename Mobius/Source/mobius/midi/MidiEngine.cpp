@@ -7,7 +7,19 @@
 #include "../track/LogicalTrack.h"
 #include "../track/BaseTrack.h"
 
+#include "MidiTrack.h"
 #include "MidiEngine.h"
+
+// turns out this is transient but keep it around for awhile
+// could just have a static factory method instead
+MidiEngine::MidiEngine()
+{
+}
+
+MidiEngine::~MidiEngine()
+{
+}
+
 
 /**
  * Now we're finally getting down to the Gordian Knot that is

@@ -13,12 +13,10 @@ class LooperTrack : public ScheduledTrack
 {
   public:
 
-    virtual LooperTrack() {}
     virtual ~LooperTrack() {}
 
     // Loop state
 
-    virtual MobiusState::Mode getMode() = 0;
     virtual int getLoopCount() = 0;
     virtual int getLoopIndex() = 0;
     virtual int getCycleFrames() = 0;
@@ -62,7 +60,6 @@ class LooperTrack : public ScheduledTrack
     virtual void finishSwitch(int target) = 0;
     virtual void loopCopy(int previous, bool sound) = 0;
 
-    virtual bool isPaused() = 0;
     virtual void startPause() = 0;
     virtual void finishPause() = 0;
    
@@ -75,7 +72,6 @@ class LooperTrack : public ScheduledTrack
     virtual void doPlay() = 0;
     virtual void doUndo() = 0;
     virtual void doRedo() = 0;
-    virtual void doDump() = 0;
     virtual void doInstantMultiply(int n) = 0;
     virtual void doInstantDivide(int n) = 0;
     virtual void doHalfspeed() = 0;
@@ -83,10 +79,6 @@ class LooperTrack : public ScheduledTrack
 
     // axperimental option that never went anywhere
     virtual bool isNoReset() = 0;
-
-  protected:
-
-    class LooperScheduler& scheduler;
 
 };
 

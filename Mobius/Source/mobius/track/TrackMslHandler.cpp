@@ -52,7 +52,7 @@ bool TrackMslHandler::mslQuery(LogicalTrack* track, MslQuery* query)
     // not all tracks support MSL
     MslTrack* mt = track->getMslTrack();
     if (mt != nullptr)
-      success = variables.get(mt, query);
+      success = variables.get(query, mt);
     else {
         // do we want to trace warnings about this?
         // or just silently return null
@@ -166,7 +166,7 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
                     // repeats don't really make sense here, but ifyou have them
                     // it causes multiple iterations to reach the numbered subcycle
                     int frame = subframes * multiplier;
-                    if (wait->repeats > 0) frame += (track->getLoopFrames() * wait->repeats);
+                    if (wait->repeats > 0) frame += (track->getFrames() * wait->repeats);
                     success = track->scheduleWaitFrame(wait, frame);
                 }
             }
@@ -183,7 +183,7 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
                 else {
                     int multiplier = wait->number - 1;
                     int frame = cycframes * multiplier;
-                    if (wait->repeats > 0) frame += (track->getLoopFrames() * wait->repeats);
+                    if (wait->repeats > 0) frame += (track->getFrames() * wait->repeats);
                     success = track->scheduleWaitFrame(wait, frame);
                 }
             }
@@ -275,34 +275,6 @@ bool TrackMslHandler::mslWait(LogicalTrack* ltrack, MslWait* wait, MslContextErr
         }
     }
     return success;
-}
-
-/**
- * The target track is supposed to be passed in the MslWait
- * if the script is using an "in" statement for track scoping.
- * I guess this can deafult to the active track since everything
- * else works that way.
- *
- * new: The notion of "active track" only applies to Mobius audio
- * tracks.  For MIDI tracks it must be specified, and when Mobius
- * tracks become MslTracks, TrackManager must always resolve this.
- */
-MslTrack* TrackMslHandler::getWaitTarget(MslWait* wait)
-{
-    MslTrack* track = nullptr;
-    
-    if (wait->track == 0) {
-        Trace(1, "TrackMslHandler: Can't schedule wait without a track scope");
-    }
-    else {
-        track = manager->getMslTrack(wait->track);
-        if (track == nullptr) {
-            Trace(1, "TrackMslHandler: MslWait with invalid track number %d", wait->track);
-            // default to focused?
-            //track = mobius->getTrack();
-        }
-    }
-    return track;
 }
 
 /**

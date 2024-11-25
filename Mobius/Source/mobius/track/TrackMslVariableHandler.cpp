@@ -27,7 +27,7 @@ TrackMslVariableHandler::~TrackMslVariableHandler()
 {
 }
 
-bool TrackMslVariableHandler::get(MslTrack* t, MslQuery* q)
+bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
 {
     bool success = false;
     
@@ -116,7 +116,7 @@ void TrackMslVariableHandler::getLoopNumber(MslQuery* q, MslTrack* t)
 
 void TrackMslVariableHandler::getLoopFrames(MslQuery* q, MslTrack* t)
 {
-    q->value.setInt(t->getLoopFrames());
+    q->value.setInt(t->getFrames());
 }
 
 void TrackMslVariableHandler::getLoopFrame(MslQuery* q, MslTrack* t)

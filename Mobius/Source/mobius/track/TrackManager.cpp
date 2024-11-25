@@ -1,6 +1,7 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/StructureDumper.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ScriptProperties.h"
@@ -24,7 +25,7 @@
 #include "../midi/MidiTrack.h"
 
 #include "../core/Mobius.h"
-#include "../core/MobiusTrackWrapper.h"
+//#include "../core/MobiusTrackWrapper.h"
 
 #include "TrackManager.h"
 
@@ -1146,21 +1147,20 @@ void TrackManager::finishWait(MslWait* wait, bool canceled)
  * The track number is 1 based and expected to be within the range
  * of MIDI tracks.  If it isn't, the UI didn't do it's job so abandon
  * the sequence so we don't accidentally trash something.
+ *
+ * Violates the usual track interfaces since it can only go to a MIDI track.
+ * Don't like this.
  */
 void TrackManager::loadLoop(MidiSequence* seq, int track, int loop)
 {
     LogicalTrack* lt = getLogicalTrack(track);
-    if (lt != nullptr) {
-        if (lt->getType() != Session::TypeMidi) {
-            Trace(1, "TrackManager::loadLoop Invalid track number %d", track);
-            pools.reclaim(seq);
-        }
-        else {
-            // this is specific to MIDI tracks and I don't feel like cluttering
-            // up the LogicalTrack and BaseTrack interfaces just for this
-            MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
-            mt->loadLoop(seq, loop);
-        }
+    MidiTrack* mt = lt->getMidiTrack();
+    if (mt == nullptr) {
+        Trace(1, "TrackManager::loadLoop Invalid track number %d", track);
+        pools.reclaim(seq);
+    }
+    else {
+        mt->loadLoop(seq, loop);
     }
 }
 
@@ -1172,11 +1172,11 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
     juce::StringArray errors;
 
     LogicalTrack* lt = getLogicalTrack(trackNumber);
-    if (lt->getType() != Session::TypeMidi) {
+    MidiTrack* mt = lt->getMidiTrack();
+    if (mt == nullptr) {
         Trace(1, "TrackManager::saveLoop Invalid track number %d", trackNumber);
     }
     else {
-        //MidiTrack* mt = static_cast<MidiTrack*>(lt->getTrack());
         Trace(1, "TrackManager::saveLoop Not implemented");
         (void)loopNumber;
         (void)file;
@@ -1233,7 +1233,7 @@ void TrackManager::refreshState()
             int midiIndex = track->getNumber() - audioTrackCount - 1;
             MobiusState::Track* tstate = state->tracks[midiIndex];
             if (tstate != nullptr)
-              mt->refreshState(tstate);
+              track->refreshState(tstate);
         }
     }
     

@@ -10,6 +10,7 @@
 #pragma once
 
 #include "../../model/Session.h"
+#include "../Notification.h"
 
 class BaseTrack
 {
@@ -18,7 +19,7 @@ class BaseTrack
     virtual ~BaseTrack() {}
 
     // tracks come in many shapes and sizes
-    virtual void loadSssion(class Session::Track* def) = 0;
+    virtual void loadSession(class Session::Track* def) = 0;
 
     // all tracks have a unique number shown in the UI
     // these are assigned by Trackmanager

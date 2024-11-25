@@ -1,5 +1,5 @@
 /**
- * An adapter class that implements AbstractTrack so the old
+ * An adapter class that implements BaseTrack so the old
  * Track objects can live in the new world with MidiTrack
  * and the new track architecture.
  *
@@ -11,7 +11,7 @@
 
 #include "TrackProperties.h"
 #include "BaseTrack.h"
-#incldue "MslTrack.h"
+#include "MslTrack.h"
 
 class MobiusLooperTrack : public BaseTrack, public MslTrack
 {
@@ -24,7 +24,7 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     // BaseTrack
     //
 
-    void loadSssion(class Session::Track* def) override;
+    void loadSession(class Session::Track* def) override;
     void doAction(class UIAction* a) override;
     bool doQuery(class Query* q) override;
     void processAudioStream(class MobiusAudioStream* stream) override;
@@ -36,20 +36,21 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void refreshPriorityState(class MobiusState::Track* tstate) override;
     void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
+    class MslTrack* getMslTrack() override;
 
     //
     // MslTrack
     //
     
-    class TrackEventList* getEventList() override;
+    int getSubcycleFrames() override;
+    int getCycleFrames() override;
+    int getFrames() override;
+    int getFrame() override;
+    float getRate() override;
+
     bool scheduleWaitFrame(class MslWait* w, int frame) override;
     bool scheduleWaitEvent(class MslWait* w) override;
 
-    int getSubcycleFrames() override;
-    int getCycleFrames() override;
-    int getLoopFrames() override;
-    int getFrame() override;
-    float getRate() override;
     int getLoopCount() override;
     int getLoopIndex() override;
     int getCycles() override;

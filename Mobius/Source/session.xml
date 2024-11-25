@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <Session audioTracks="8" midiTracks="2">
-  <Track type="midi" index="0">
+  <Track id="1" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="durationMode" value="1" type="int"/>
@@ -29,7 +29,7 @@
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="1">
+  <Track id="2" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="2"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -52,7 +52,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="2">
+  <Track id="3" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="3"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -75,7 +75,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="3">
+  <Track id="4" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="4"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -98,7 +98,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="4">
+  <Track id="5" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="5"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -121,7 +121,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="5">
+  <Track id="6" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="6"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -144,7 +144,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="6">
+  <Track id="7" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="7"/>
       <Value name="emptyLoopAction" value="none" type="enum" ordinal="0"/>
@@ -167,7 +167,7 @@
       <Value name="trackSyncUnit" value="default" type="enum" ordinal="0"/>
     </ValueSet>
   </Track>
-  <Track type="midi" index="7">
+  <Track id="8" type="midi">
     <ValueSet>
       <Value name="beatsPerBar" value="8"/>
       <Value name="slaveSyncUnit" value="beat" type="enum" ordinal="0"/>

@@ -85,7 +85,7 @@ void MobiusLooperTrack::refreshPriorityState(MobiusState::Track* tstate)
     (void)tstate;
 }
 
-void void MobiusLooperTrack::refreshState(MobiusState::Track* tstate)
+void MobiusLooperTrack::refreshState(MobiusState::Track* tstate)
 {
     (void)tstate;
 }
@@ -93,6 +93,11 @@ void void MobiusLooperTrack::refreshState(MobiusState::Track* tstate)
 void MobiusLooperTrack::dump(StructureDumper& d)
 {
     (void)d;
+}
+
+MslTrack* MobiusLooperTrack::getMslTrack()
+{
+    return this;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -116,11 +121,6 @@ bool MobiusLooperTrack::scheduleWaitEvent(class MslWait* w)
     return false;
 }
 
-TrackEventList* MobiusLooperTrack::getEventList()
-{
-    return nullptr;
-}
-
 int MobiusLooperTrack::getSubcycleFrames()
 {
     return 0;
@@ -131,7 +131,7 @@ int MobiusLooperTrack::getCycleFrames()
     return 0;
 }
 
-int MobiusLooperTrack::getLoopFrames()
+int MobiusLooperTrack::getFrames()
 {
     return 0;
 }
@@ -175,8 +175,6 @@ bool MobiusLooperTrack::isPaused()
 {
     return false;
 }
-
-
 
 /****************************************************************************/
 /****************************************************************************/

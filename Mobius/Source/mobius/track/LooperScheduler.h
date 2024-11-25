@@ -23,7 +23,7 @@
 
 class LooperScheduler : public BaseScheduler
 {
-    friend class LoopSwitcher;
+    friend class LooperSwitcher;
     
   public:
 
@@ -32,7 +32,8 @@ class LooperScheduler : public BaseScheduler
 
     // BaseScheduler overloads
     void passAction(class UIAction* a) override;
-    void passEvent(class TrackEvent* e) override;
+    bool passEvent(class TrackEvent* e) override;
+    void doActionNow(class UIAction* a) override;
     
   protected:
 
@@ -49,7 +50,6 @@ class LooperScheduler : public BaseScheduler
     //
     
     bool doTransformation(class UIAction* src);
-    void doActionNow(class UIAction* a);
     void checkModeCancel(class UIAction* a);
     
     bool handleExecutiveAction(class UIAction* src);
@@ -73,7 +73,7 @@ class LooperScheduler : public BaseScheduler
     void handleRoundingAction(class UIAction* src);
     bool doRound(class TrackEvent* event);
 
-    void scheduleAction(class UIAction* src);
+    void scheduleNormalAction(class UIAction* src);
     void scheduleRounding(class UIAction* src, MobiusState::Mode mode);
     
     QuantizeMode isQuantized(class UIAction* a);

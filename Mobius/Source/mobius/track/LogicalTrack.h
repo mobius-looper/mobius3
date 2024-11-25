@@ -9,7 +9,9 @@
 
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
+#include "../../model/MobiusState.h"
 
+#include "../Notification.h"
 #include "TrackProperties.h"
 
 class LogicalTrack
@@ -19,7 +21,7 @@ class LogicalTrack
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
 
-    void initializeCore(class Mobius, int index);
+    void initializeCore(class Mobius* m, int index);
     void loadSession(class Session::Track* def, int number);
     
     Session::TrackType getType();
@@ -44,6 +46,7 @@ class LogicalTrack
     void dump(class StructureDumper& d);
 
     class MslTrack* getMslTrack();
+    class MidiTrack* getMidiTrack();
 
   private:
 

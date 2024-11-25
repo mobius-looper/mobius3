@@ -19,14 +19,19 @@ class TrackEvent : public PooledObject
   public:
 
     typedef enum {
+
+        // BaseScheduler events
         EventNone,
         EventPulse,
         EventSync,
-        EventRecord,
         EventAction,
+        EventWait,
+
+        // LooperScheduler events
+        EventRecord,
         EventRound,
-        EventSwitch,
-        EventWait
+        EventSwitch
+        
     } Type;
     
     TrackEvent();

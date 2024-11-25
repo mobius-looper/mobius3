@@ -12,7 +12,7 @@ class MidiEngine : public TrackEngine
 {
   public:
 
-    MidiEngine() {}
+    MidiEngine();
     ~MidiEngine();
 
     class BaseTrack* newTrack(class TrackManager* tm, class LogicalTrack* lt, class Session::Track* def);

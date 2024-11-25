@@ -2,10 +2,13 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../util/StructureDumper.h"
 #include "../../model/Session.h"
+#include "../../model/MobiusState.h"
 
 #include "../core/Mobius.h"
 #include "../midi/MidiEngine.h"
+#include "../midi/MidiTrack.h"
 
 #include "BaseTrack.h"
 #include "MobiusLooperTrack.h"
@@ -29,7 +32,6 @@ LogicalTrack::~LogicalTrack()
  */
 void LogicalTrack::initializeCore(Mobius* mobius, int index)
 {
-    trackType = Session::TypeAudio;
     // no mapping at the moment
     number = index + 1;
     engineNumber = index + 1;
@@ -156,20 +158,17 @@ bool LogicalTrack::scheduleWait(MslWait* w)
     return false;
 }
 
-void LogicalTrack::refreshPriorityState(class MobiusState::Track* tstate)
+void LogicalTrack::refreshPriorityState(MobiusState::Track* tstate)
 {
-    // not sure I want this in the BaseTrack yet
     if (session->type == Session::TypeMidi) {
-        MidiTrack* mt = static_cast<MidiTrack*>(track.get());
-        mt->refreshImportant(tstate);
+        track->refreshPriorityState(tstate);
     }
 }
 
-void LogicalTrack::refreshState(class MobiusState::Track* tstate)
+void LogicalTrack::refreshState(MobiusState::Track* tstate)
 {
     if (session->type == Session::TypeMidi) {
-        MidiTrack* mt = static_cast<MidiTrack*>(track.get());
-        mt->refreshState(tstate);
+        track->refreshState(tstate);
     }
 }
 
@@ -184,6 +183,22 @@ void LogicalTrack::dump(StructureDumper& d)
 MslTrack* LogicalTrack::getMslTrack()
 {
     return track->getMslTrack();
+}
+
+/**
+ * Special so TrackManager can go direct to a MidiTrack
+ * to call loadLoop.
+ * Needs thought but I don't want to clutter up every interface
+ * with something so MIDI specific.
+ * It's kind of like getMslTrack, what's a good way to have track type
+ * specific extensions that we can directly access?
+ */
+MidiTrack* LogicalTrack::getMidiTrack()
+{
+    MidiTrack* mt = nullptr;
+    if (session->type == Session::TypeMidi)
+      mt = static_cast<MidiTrack*>(track.get());
+    return mt;
 }
 
 /****************************************************************************/

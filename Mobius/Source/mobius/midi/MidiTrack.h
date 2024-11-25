@@ -19,6 +19,7 @@
 
 #include "../track/BaseTrack.h"
 #include "../track/LooperTrack.h"
+#include "../track/LooperScheduler.h"
 #include "../track/MslTrack.h"
 #include "../track/TrackProperties.h"
 
@@ -27,6 +28,9 @@
 
 class MidiTrack : public LooperTrack, public MslTrack
 {
+    friend class MidiPlayer;
+    friend class MidiRecorder;
+    
   public:
 
     //
@@ -40,34 +44,46 @@ class MidiTrack : public LooperTrack, public MslTrack
     // BaseTrack
     //
     
-    void loadSssion(class Session::Track* def) override;
+    void loadSession(class Session::Track* def) override;
     void doAction(class UIAction* a) override;
     bool doQuery(class Query* q) override;
     void processAudioStream(class MobiusAudioStream* stream) override;
     void midiEvent(class MidiEvent* e) override;
-    int getFrames() override;
-    int getFrame() override;
     void getTrackProperties(class TrackProperties& props) override;
     void trackNotification(NotificationId notification, TrackProperties& props) override;
     int getGroup() override;
     bool isFocused() override;
-    bool scheduleWaitFrame(class MslWait* w, int frame) override;
-    bool scheduleWaitEvent(class MslWait* w) override;
     void refreshPriorityState(class MobiusState::Track* tstate) override;
     void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
-    
+
     //
     // ScheduledTrack
     //
-    
+
+    int getFrames() override;
+    int getFrame() override;
+    MobiusState::Mode getMode() override;
+    bool isExtending() override;
+    bool isPaused() override;
+    float getRate() override;
+    void doActionNow(class UIAction* a) override;
+    void advance(int frames) override;
+    void reset() override;
+    void loop() override;
+    void leaderReset(class TrackProperties& props) override;
+    void leaderRecordStart() override;
+    void leaderRecordEnd(class TrackProperties& props) override;
+    void leaderMuteStart(class TrackProperties& props) override;
+    void leaderMuteEnd(class TrackProperties& props) override;
+    void leaderResized(class TrackProperties& props) override;
+    void leaderMoved(class TrackProperties& props) override;
 
     //
     // LooperTrack
     //
 
-    MobiusState::Mode getMode() override;
     int getLoopCount() override;
     int getLoopIndex() override;
     int getCycleFrames() override;
@@ -77,7 +93,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     int getModeEndFrame() override;
     int extendRounding() override;
     
-
     void startRecord() override;
     void finishRecord() override;
 
@@ -98,11 +113,11 @@ class MidiTrack : public LooperTrack, public MslTrack
     void finishSwitch(int target) override;
     void loopCopy(int previous, bool sound) override;
 
-    bool isPaused() override;
+    // also in ScheduledTrack
+    //bool isPaused() override;
     void startPause() override;
     void finishPause() override;
    
-    // simple one-shot actions
     void doParameter(class UIAction* a) override;
     void doPartialReset() override;
     void doReset(bool full) override;
@@ -111,31 +126,30 @@ class MidiTrack : public LooperTrack, public MslTrack
     void doPlay() override;
     void doUndo() override;
     void doRedo() override;
-    void doDump() override;
     void doInstantMultiply(int n) override;
     void doInstantDivide(int n) override;
     void doHalfspeed() override;
     void doDoublespeed() override;
     
-    // leader stuff
-    void leaderReset(class TrackProperties& props) override;
-    void leaderRecordStart() override;
-    void leaderRecordEnd(class TrackProperties& props) override;
-    void leaderMuteStart(class TrackProperties& props) override;
-    void leaderMuteEnd(class TrackProperties& props) override;
-    void leaderResized(class TrackProperties& props) override;
-    void leaderMoved(class TrackProperties& props) override;
-    
-    // advance play/record state between events
-    bool isExtending() override;
-    void advance(int newFrames) override;
-    void loop() override;
-
-    float getRate() override;
-    int getGoalFrames() override;
-    void setGoalFrames(int f) override;
-
     bool isNoReset() override;
+
+    //
+    // MslTrack, many of these are in other interfaces
+    //
+    
+    int getSubcycleFrames() override;
+    //int getCycleFrames() override;
+    //int getFrames() override;
+    //int getFrame() override;
+    //float getRate() override;
+    bool scheduleWaitFrame(class MslWait* w, int frame) override;
+    bool scheduleWaitEvent(class MslWait* w) override;
+    //int getLoopCount() override;
+    //int getLoopIndex() override;
+    //int getCycles() override;
+    //int getSubcycles() override;
+    //MobiusState::Mode getMode() override;
+    //bool isPaused() override;
 
     //
     // Extensions outside BaseTrack
@@ -143,47 +157,18 @@ class MidiTrack : public LooperTrack, public MslTrack
     
     void loadLoop(MidiSequence* seq, int loop);
 
-  private:
-
-    LogicalTrack* logicalTrack = nullptr;
-    LooperScheduler scheduler;
-    
-    void reset();
+  protected:
 
     //
-    // Follower state
-    //
-
-    //
-    // State
+    // Player support
     //
     
-    bool isRecording();
-
-    //
-    // stimuli
-    //
-    
-    void processAudioStream(class MobiusAudioStream* argStream);
-
-    void noteOn(class MidiEvent* e);
-    void noteOff(class MidiEvent* e);
-    void midiEvent(class MidiEvent* e);
-
-    void clipStart(int audioTrack, int loopIndex);
-
-    // Support for Recorder
-    class MidiEvent* getHeldNotes();
-    class MidiEvent* copyNote(class MidiEvent* src);
-
     // Support for Player
     void midiSend(juce::MidiMessage& msg, int deviceId);
 
-    // leader support
-    void leaderResize();
-    void leaderRelocate();
-    void leaderReorient();
-
+    // Support for Recorder
+    class MidiEvent* getHeldNotes();
+    
   private:
 
     class TrackManager* manager = nullptr;
@@ -192,9 +177,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     class Pulsator* pulsator = nullptr;
     class MidiPools* pools = nullptr;
 
-    // the number is only used for logging messages
-    // and correlation of events
-    int number = 0;
+    LooperScheduler scheduler;
 
     // leader state
     bool followerMuteStart = false;
@@ -211,8 +194,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     // the meat
     MidiRecorder recorder {this};
     MidiPlayer player {this};
-    TrackScheduler scheduler {this};
-    ActionTransformer transformer {this, &scheduler};
     
     juce::Array<MobiusState::Region> regions;
     int activeRegion = -1;
@@ -241,40 +222,31 @@ class MidiTrack : public LooperTrack, public MslTrack
     // rate shift/resize
     float rate = 0.0f;
     int goalFrames = 0;
+
+    // unused after the track reorg, I think BaseScheduler releated to undo
+    bool isRecording();
+
+    // used to be called by a scheduler
+    void clipStart(int audioTrack, int loopIndex);
     
-    // advance
+    // advance support
     void advancePlayer(int newFrames);
     void shift(bool unrounded);
     
-    //
-    // Function Handlers
-    //
-    
+    // regions
     void resetRegions();
     void startRegion(MobiusState::RegionType type);
     void stopRegion();
     void resumeOverdubRegion();
     void advanceRegion(int frames);
-    
+
+    // various function support
     bool inRecordingMode();
-
-    //
-    // Leader/Follower handlers
-    //
-
     void followerPauseRewind();
-    int leaderLocate();
-
-    //
-    // Misc utilities
-    //
-
     void resumePlay();
     const char* getModeName();
-    const char* getModeName(MobiusState::Mode mode);
     int simulateLevel(int count);
     void captureLevels(MobiusState::Track* state);
-    void resize();
 
     //
     // Ugly Math

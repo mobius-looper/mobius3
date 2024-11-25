@@ -27,7 +27,7 @@ class BaseScheduler
 {
   public:
 
-    BaseScheduler(class TrackManager* tm, class LogicaclTrack* lt, class ScheduledTrack* t);
+    BaseScheduler(class TrackManager* tm, class LogicalTrack* lt, class ScheduledTrack* t);
     ~BaseScheduler();
     
     void loadSession(Session::Track* def);
@@ -53,8 +53,9 @@ class BaseScheduler
 
     // subclass overloads if the track wants more complex scheduling
     virtual void passAction(class UIAction* a);
-    virtual void passEvent(class TrackEvent* e);
-
+    virtual bool passEvent(class TrackEvent* e);
+    virtual void doActionNow(class UIAction* a);
+    
     // things the subclass needs
     
     class TrackManager* manager = nullptr;
@@ -76,11 +77,7 @@ class BaseScheduler
     void doStacked(class TrackEvent* e);
     class UIAction* copyAction(UIAction* src);
     TrackEvent* scheduleLeaderQuantization(int leader, QuantizeMode q, TrackEvent::Type type);
-    
-  private:
-
-    class LogicalTrack* logicalTrack = nullptr;
-    class ScheduledTrack* scheduledTrack = nullptr;
+    void finishWaitAndDispose(TrackEvent* e, bool canceled);
     
     // configuration
     Pulse::Source syncSource = Pulse::SourceNone;
@@ -89,14 +86,21 @@ class BaseScheduler
     bool followQuantize = false;
     bool followRecord = false;
     bool followMute = false;
+    
+    // advance and sync state
+    float rateCarryover = 0.0f;
+
+    // LooperSchedulder wanted this, should be using Pulse::Source instead?
+    SyncSource sessionSyncSource = SYNC_NONE;
+    
+  private:
+
+    class LogicalTrack* logicalTrack = nullptr;
+    class ScheduledTrack* scheduledTrack = nullptr;
 
     // save these from the session until everything is converted to
     // use Pulsator constants
-    SyncSource sessionSyncSource = SYNC_NONE;
     SyncUnit sessionSyncUnit = SYNC_UNIT_BEAT;
-
-    // advance and sync state
-    float rateCarryover = 0.0f;
 
     // leader state change detection
     LeaderType lastLeaderType = LeaderNone;
@@ -129,7 +133,6 @@ class BaseScheduler
     void pauseAdvance(MobiusAudioStream* stream);
     void consume(int frames);
     void doEvent(TrackEvent* e);
-    void finishWaitAndDispose(TrackEvent* e, bool canceled);
     void dispose(TrackEvent* e);
     void doPulse(TrackEvent* e);
     void detectLeaderChange();

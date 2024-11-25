@@ -111,7 +111,7 @@ void LooperScheduler::passAction(UIAction* src)
                 handleRoundingAction(src);
             }
             else {
-                scheduleAction(src);
+                scheduleNormalAction(src);
             }
         }
     }
@@ -140,7 +140,7 @@ bool LooperScheduler::doTransformation(UIAction* src)
 {
     bool transformed = false;
 
-    if (a->symbol->id == FuncRecord) {
+    if (src->symbol->id == FuncRecord) {
         // record has special meaning, before scheduler gets it
         auto mode = track->getMode();
         
@@ -148,14 +148,14 @@ bool LooperScheduler::doTransformation(UIAction* src)
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedMultiply);
             passAction(&temp);
-            transormed = true;
+            transformed = true;
         }
         else if (mode == MobiusState::ModeInsert) {
             // unrounded insert
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedInsert);
             passAction(&temp);
-            transormed = true;
+            transformed = true;
         }
     }
     return transformed;
@@ -234,7 +234,7 @@ void LooperScheduler::doActionNow(UIAction* a)
             char msgbuf[128];
             snprintf(msgbuf, sizeof(msgbuf), "Unsupported function: %s",
                      a->symbol->getName());
-            scheduler->manager->alert(msgbuf);
+            manager->alert(msgbuf);
             Trace(2, "LooperScheduler: %s", msgbuf);
         }
     }
@@ -344,12 +344,6 @@ bool LooperScheduler::handleExecutiveAction(UIAction* src)
                 track->doReset(true);
             }
         }
-            handled = true;
-            break;
-
-        case FuncDump:
-            // !! who gets to handle this, us or BaseScheduler
-            track->doDump();
             handled = true;
             break;
 
@@ -594,8 +588,8 @@ bool LooperScheduler::schedulePausedAction(UIAction* src)
 {
     bool scheduled = false;
     
-    if (scheduler->followQuantize) {
-        int leader = scheduler->findLeaderTrack();
+    if (followQuantize) {
+        int leader = findLeaderTrack();
         if (leader > 0) {
             QuantizeMode q = isQuantized(src);
             if (q != QUANTIZE_OFF) {
@@ -640,7 +634,7 @@ bool LooperScheduler::isRecording()
     if (track->getMode() == MobiusState::ModeRecord) {
         result = true;
     }
-    else if (scheduler->events.find(TrackEvent::EventRecord)) {
+    else if (events.find(TrackEvent::EventRecord)) {
         // outwardly, this is "Synchronize" mode
         result = true;
     }
@@ -650,7 +644,7 @@ bool LooperScheduler::isRecording()
 
 void LooperScheduler::handleRecordAction(UIAction* src)
 {
-    TrackEvent* recevent = scheduler->events.find(TrackEvent::EventRecord);
+    TrackEvent* recevent = events.find(TrackEvent::EventRecord);
 
     if (recevent != nullptr) {
         if (track->getMode() == MobiusState::ModeRecord) {
@@ -778,12 +772,12 @@ void LooperScheduler::scheduleRecordEndAction(UIAction* src, TrackEvent* ending)
 
 bool LooperScheduler::isRounding()
 {
-    return scheduler->events.find(TrackEvent::EventRound);
+    return events.find(TrackEvent::EventRound);
 }
 
 void LooperScheduler::handleRoundingAction(UIAction* src)
 {
-    TrackEvent* ending = scheduler->events.find(TrackEvent::EventRound);
+    TrackEvent* ending = events.find(TrackEvent::EventRound);
     if (ending == nullptr) {
         Trace(1, "LooperScheduler::handleRoundingAction With no event");
     }
@@ -842,6 +836,8 @@ void LooperScheduler::handleRoundingAction(UIAction* src)
  * 
  * This signifies the ending of Multiply or Insert mode.
  * Actions that came in during the rounding period were stacked.
+ *
+ * Returns true if we decided to reuse this event and extend it. 
  */
 bool LooperScheduler::doRound(TrackEvent* event)
 {
@@ -863,7 +859,7 @@ bool LooperScheduler::doRound(TrackEvent* event)
             // which is what TrackAdvancer normally does, cleaner to just make
             // a new one, but we'd have to copy it
             event->frame = track->getModeEndFrame();
-            scheduler->events.add(event);
+            events.add(event);
             // prevent the stack from being executed
             event = nullptr;
         }
@@ -873,7 +869,7 @@ bool LooperScheduler::doRound(TrackEvent* event)
     }
     
     if (event != nullptr)
-      scheduler->doStacked(event);
+      doStacked(event);
 
     // returning true means it was reused
     return (event == nullptr);
@@ -892,7 +888,7 @@ bool LooperScheduler::doRound(TrackEvent* event)
 //
 //////////////////////////////////////////////////////////////////////
 
-void LooperScheduler::scheduleAction(UIAction* src)
+void LooperScheduler::scheduleNormalAction(UIAction* src)
 {
     MobiusState::Mode mode = track->getMode();
 
@@ -946,7 +942,7 @@ void LooperScheduler::scheduleAction(UIAction* src)
  */
 void LooperScheduler::scheduleRounding(UIAction* src, MobiusState::Mode mode)
 {
-    TrackEvent* event = scheduler->eventPool.newEvent();
+    TrackEvent* event = eventPool.newEvent();
     event->type = TrackEvent::EventRound;
 
     bool roundRelative = false;
@@ -971,7 +967,7 @@ void LooperScheduler::scheduleRounding(UIAction* src, MobiusState::Mode mode)
         event->stack(copyAction(src));
     }
             
-    scheduler->events.add(event);
+    events.add(event);
 
     // now we have an interesting WaitLast problem
     // we can wait on the Round event the action was stacked on
@@ -997,7 +993,7 @@ QuantizeMode LooperScheduler::isQuantized(UIAction* a)
 
     FunctionProperties* props = a->symbol->functionProperties.get();
     if (props != nullptr && props->quantized) {
-        q = scheduler->valuator->getQuantizeMode(track->getNumber());
+        q = valuator->getQuantizeMode(track->getNumber());
     }
     
     return q;
@@ -1019,17 +1015,17 @@ void LooperScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
     else {
         int leader = findQuantizationLeader();
         TrackEvent* e = nullptr;
-        if (leader > 0 && scheduler->followQuantize) {
-            e = scheduler->scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
+        if (leader > 0 && followQuantize) {
+            e = scheduleLeaderQuantization(leader, q, TrackEvent::EventAction);
             e->primary = copyAction(src);
             Trace(2, "LooperScheduler: Quantized %s to leader", src->symbol->getName());
         }
         else {
-            e = scheduler->eventPool.newEvent();
+            e = eventPool.newEvent();
             e->type = TrackEvent::EventAction;
             e->frame = getQuantizedFrame(src->symbol->id, q);
             e->primary = copyAction(src);
-            scheduler->events.add(e);
+            events.add(e);
 
             Trace(2, "LooperScheduler: Quantized %s to %d", src->symbol->getName(), e->frame);
         }
@@ -1046,11 +1042,11 @@ void LooperScheduler::scheduleQuantized(UIAction* src, QuantizeMode q)
  */
 int LooperScheduler::findQuantizationLeader()
 {
-    int leader = scheduler->findLeaderTrack();
+    int leader = findLeaderTrack();
     if (leader > 0) {
         // if the leader over an empty loop, ignore it and fall
         // back to the usual SwitchQuantize parameter
-        TrackProperties props = scheduler->manager->getTrackProperties(leader);
+        TrackProperties props = manager->getTrackProperties(leader);
         if (props.frames == 0) {
             // ignore the leader
             leader = 0;
@@ -1096,7 +1092,7 @@ int LooperScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
     bool allow = true;
     
     // is there already an event for this function?
-    TrackEvent* last = scheduler->events.findLast(func);
+    TrackEvent* last = events.findLast(func);
     if (last != nullptr) {
         // relies on this having a frame and not being marked pending
         if (last->pending) {
@@ -1123,6 +1119,44 @@ int LooperScheduler::getQuantizedFrame(SymbolId func, QuantizeMode qmode)
         
     }
     return qframe;
+}
+
+/////////////////////////////////////////////////////////////////////
+//
+// Events
+//
+/////////////////////////////////////////////////////////////////////
+
+/**
+ * BaseScheduler handles most of these.
+ */
+bool LooperScheduler::passEvent(TrackEvent* e)
+{
+    bool extended = false;
+        
+    switch (e->type) {
+
+        case TrackEvent::EventRecord: {
+            doRecord(e);
+        }
+            break;
+            
+        case TrackEvent::EventRound: {
+            // end of a Multiply or Insert
+            extended = doRound(e);
+        }
+            break;
+
+        case TrackEvent::EventSwitch: {
+            loopSwitcher.doSwitchEvent(e, e->switchTarget);
+        }
+
+        default:
+            Trace(1, "LooperScheduler::passEvent Unhandled event type");
+            break;
+    }
+
+    return extended;
 }
 
 /****************************************************************************/
@@ -1191,11 +1225,11 @@ TrackEvent* LooperScheduler::scheduleRecordEnd()
  */
 TrackEvent* LooperScheduler::addRecordEvent()
 {
-    TrackEvent* e = scheduler->eventPool.newEvent();
+    TrackEvent* e = eventPool.newEvent();
     e->type = TrackEvent::EventRecord;
     e->pending = true;
     e->pulsed = true;
-    scheduler->events.add(e);
+    events.add(e);
     return e;
 }
 
@@ -1207,22 +1241,22 @@ bool LooperScheduler::isRecordSynced()
     bool doSync = false;
     int number = track->getNumber();
     
-    if (scheduler->syncSource == Pulse::SourceHost || scheduler->syncSource == Pulse::SourceMidiIn) {
+    if (syncSource == Pulse::SourceHost || syncSource == Pulse::SourceMidiIn) {
         //the easy one, always sync
         doSync = true;
     }
-    else if (scheduler->syncSource == Pulse::SourceLeader) {
+    else if (syncSource == Pulse::SourceLeader) {
         // if we're following track sync, and did not request a specific
         // track to follow, and Pulsator wasn't given one, then we freewheel
-        int master = scheduler->pulsator->getTrackSyncMaster();
+        int master = pulsator->getTrackSyncMaster();
         // sync if there is a master and it isn't us
         doSync = (master > 0 && master != number);
     }
-    else if (scheduler->syncSource == Pulse::SourceMidiOut) {
+    else if (syncSource == Pulse::SourceMidiOut) {
         // if another track is already the out sync master, then
         // we have in the past switched this to track sync
         // unclear if we should have more options around this
-        int outMaster = scheduler->pulsator->getOutSyncMaster();
+        int outMaster = pulsator->getOutSyncMaster();
         if (outMaster > 0 && outMaster != number) {
 
             // the out sync master is normally also the track sync
@@ -1245,8 +1279,8 @@ void LooperScheduler::doRecord(TrackEvent* e)
         //Trace(2, "LooperScheduler::doRecord finishing");
         track->finishRecord();
         // I think we need to reset the rateCarryover?
-        scheduler->rateCarryover = 0.0f;
-        scheduler->followTrack = 0;
+        rateCarryover = 0.0f;
+        followTrack = 0;
     }
     else {
         //Trace(2, "LooperScheduler::doRecord starting");
@@ -1254,7 +1288,7 @@ void LooperScheduler::doRecord(TrackEvent* e)
     }
 
     if (e != nullptr) {
-        scheduler->doStacked(e);
+        doStacked(e);
         if (e->primary != nullptr) {
             actionPool->checkin(e->primary);
             e->primary = nullptr;
@@ -1301,16 +1335,16 @@ void LooperScheduler::doInsert(UIAction* a)
 void LooperScheduler::addExtensionEvent(int frame)
 {
     // there can only be one rounding event at any time
-    TrackEvent* event = scheduler->events.find(TrackEvent::EventRound);
+    TrackEvent* event = events.find(TrackEvent::EventRound);
     if (event != nullptr)
       Trace(1, "LooperScheduler: Insert extension event already scheduled");
     else {
-        event = scheduler->eventPool.newEvent();
+        event = eventPool.newEvent();
         event->type = TrackEvent::EventRound;
         event->frame = frame;
         event->extension = true;
             
-        scheduler->events.add(event);
+        events.add(event);
 
         // !! what about WaitLast here
     }
@@ -1409,11 +1443,11 @@ void LooperScheduler::doResize(UIAction* a)
     if (a->value == 0) {
         // sync based resize
         // !! should be consulting the follower here
-        if (scheduler->sessionSyncSource == SYNC_TRACK) {
-            int otherTrack = scheduler->pulsator->getTrackSyncMaster();
-            TrackProperties props = scheduler->manager->getTrackProperties(otherTrack);
+        if (sessionSyncSource == SYNC_TRACK) {
+            int otherTrack = pulsator->getTrackSyncMaster();
+            TrackProperties props = manager->getTrackProperties(otherTrack);
             track->leaderResized(props);
-            scheduler->followTrack = otherTrack;
+            followTrack = otherTrack;
         }
         else {
             Trace(1, "LooperScheduler: Unsupported resize sync source");
@@ -1423,20 +1457,20 @@ void LooperScheduler::doResize(UIAction* a)
         int otherTrack = a->value;
         // some validation before we ask for prperties
         // could skip this if TrackPrperties had a way to return errors
-        int audioTracks = scheduler->manager->getAudioTrackCount();
-        int midiTracks = scheduler->manager->getMidiTrackCount();
+        int audioTracks = manager->getAudioTrackCount();
+        int midiTracks = manager->getMidiTrackCount();
         int totalTracks = audioTracks + midiTracks;
         if (otherTrack < 1 || otherTrack > totalTracks) {
             Trace(1, "LooperScheduler: Track number out of range %d", otherTrack);
         }
         else {
-            TrackProperties props = scheduler->manager->getTrackProperties(otherTrack);
+            TrackProperties props = manager->getTrackProperties(otherTrack);
             track->leaderResized(props);
             // I think this can reset?
             // actually no, it probably needs to be a component of the
             // adjusted play frame proportion
-            scheduler->rateCarryover = 0.0f;
-            scheduler->followTrack = otherTrack;
+            rateCarryover = 0.0f;
+            followTrack = otherTrack;
         }
     }
 }

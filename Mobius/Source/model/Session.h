@@ -70,6 +70,10 @@ class Session
     // until we get audio tracks in here, copy this from MobiusConfig
     int audioTracks = 0;
 
+    // !!!!!!!!!!!!!!!!!!!!
+    // this shit is accessed all over and it needs to stop
+    int midiTracks = 0;
+
     int getTrackCount();
     Track* getTrack(int index);
 

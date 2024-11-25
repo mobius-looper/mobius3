@@ -14,14 +14,14 @@
 #include "../../sync/Pulsator.h"
 
 #include "../Valuator.h"
-#include "../track/TrackProperties.h"
 
+#include "TrackProperties.h"
 #include "LooperScheduler.h"
 #include "LooperTrack.h"
 
 #include "LooperSwitcher.h"
 
-LooperSwitcher::LooperSwitcher(TrackScheduler& s) : scheduler(s)
+LooperSwitcher::LooperSwitcher(LooperScheduler& s) : scheduler(s)
 {
 }
 
@@ -109,7 +109,7 @@ void LooperSwitcher::scheduleSwitch(UIAction* src)
         }
         else {
             // the switch is quantized or pending confirmation
-            TrackEvent* event = scheduler.eventPool->newEvent();
+            TrackEvent* event = scheduler.eventPool.newEvent();
             event->type = TrackEvent::EventSwitch;
             event->switchTarget = getSwitchTarget(src);
 
@@ -327,7 +327,7 @@ void LooperSwitcher::leaderEvent(TrackProperties& props)
         scheduler.events.remove(e);
         doSwitchEvent(e, e->switchTarget);
 
-        scheduler.advancer.finishWaitAndDispose(e, false);
+        scheduler.finishWaitAndDispose(e, false);
     }
 }
 
@@ -369,7 +369,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
 {
     LooperTrack* track = scheduler.track;
     int startingLoop = track->getLoopIndex();
-    int startingFrames = track->getLoopFrames();
+    int startingFrames = track->getFrames();
     
     // if both are passed should be the same, but obey the event
     if (e != nullptr) target = e->switchTarget;
@@ -377,7 +377,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
     // now we pass control over to LooperTrack to make the switch happen
     track->finishSwitch(target);
 
-    int newFrames = track->getLoopFrames();
+    int newFrames = track->getFrames();
     
     bool isRecording = false;
     if (newFrames == 0)
@@ -403,7 +403,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
                 case SWITCH_ONCE: {
                     // the new loop is supposed to play once and enter Mute
                     // synthesize a Mute action and "quantize" it to the end of the loop
-                    TrackEvent* event = scheduler.eventPool->newEvent();
+                    TrackEvent* event = scheduler.eventPool.newEvent();
                     event->type = TrackEvent::EventAction;
                     UIAction* action = scheduler.actionPool->newAction();
                     action->symbol = scheduler.symbols->getSymbol(FuncMute); 
@@ -418,7 +418,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
                     // the new loop is supposed to play once and return to the previous one
                     // this is also referred to as a Return event, though it's just a Switch
                     // event with a special flag
-                    TrackEvent* event = scheduler.eventPool->newEvent();
+                    TrackEvent* event = scheduler.eventPool.newEvent();
                     event->type = TrackEvent::EventSwitch;
                     event->isReturn = true;
                     event->switchTarget = startingLoop;
@@ -486,7 +486,7 @@ bool LooperSwitcher::setupEmptyLoop(int previousLoop)
     bool recording = false;
     bool copied = false;
     
-    if (track->getLoopFrames() == 0 && scheduler.leaderType == LeaderNone) {
+    if (track->getFrames() == 0 && scheduler.leaderType == LeaderNone) {
 
         EmptyLoopAction action = scheduler.valuator->getEmptyLoopAction(track->getNumber());
 
@@ -497,7 +497,7 @@ bool LooperSwitcher::setupEmptyLoop(int previousLoop)
             UIAction a;
             a.symbol = scheduler.symbols->getSymbol(FuncRecord);
             // call the outermost action receiver as if this came from the outside
-            scheduler.doAction(&a);
+            scheduler.scheduleAction(&a);
         }
         else if (action == EMPTY_LOOP_COPY) {
             track->loopCopy(previousLoop, true);

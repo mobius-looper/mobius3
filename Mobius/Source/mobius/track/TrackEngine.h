@@ -14,7 +14,9 @@ class TrackEngine
     virtual ~TrackEngine() {}
 
     // make one
-    virtual BaseTrack* newTrack(class LogicalTrack* lt, class Session::Track* def) = 0;
+    virtual class BaseTrack* newTrack(class TrackManager* rm,
+                                      class LogicalTrack* lt,
+                                      class Session::Track* def) = 0;
 
 };
 

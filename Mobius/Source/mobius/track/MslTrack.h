@@ -22,11 +22,10 @@ class MslTrack
 
     virtual int getSubcycleFrames() = 0;
     virtual int getCycleFrames() = 0;
-    virtual int getLoopFrames() = 0;
+    virtual int getFrames() = 0;
     virtual int getFrame() = 0;
     virtual float getRate() = 0;
     
-    virtual TrackEventList* getEventList() = 0;
     virtual bool scheduleWaitFrame(class MslWait* w, int frame) = 0;
     virtual bool scheduleWaitEvent(class MslWait* w) = 0;
 
