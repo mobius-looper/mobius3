@@ -545,6 +545,14 @@ void TrackManager::doAction(UIAction* src)
 
 /**
  * Send a list of actions to one of the two sides, and return the actions to the pool.
+ * Here we do filtering of functions that can only be used with certain tracks.
+ * Could have done that during replication as well, but it's easier to let that mess
+ * finish and suppress it here.  This could also be a place where we do last minute
+ * adjustments so the action function is actually changed to something suitable for that
+ * track type.
+ *
+ * Could do the same for parameters.   It doesn't hurt to send it through, but it generates
+ * log errors if it doesn't make sense.
  */
 void TrackManager::sendActions(UIAction* actions)
 {
@@ -561,8 +569,16 @@ void TrackManager::sendActions(UIAction* actions)
         }
         else {
             LogicalTrack* lt = getLogicalTrack(number);
-            if (lt != nullptr)
-              lt->doAction(actions);
+            if (lt != nullptr) {
+                bool sendIt = true;
+                Symbol* s = actions->symbol;
+                if (s->functionProperties != nullptr &&
+                    s->functionProperties->midiOnly) {
+                    sendIt = (lt->getType() == Session::TypeMidi);
+                }
+                if (sendIt)
+                  lt->doAction(actions);
+            }
         }
 
         actionPool->checkin(actions);
