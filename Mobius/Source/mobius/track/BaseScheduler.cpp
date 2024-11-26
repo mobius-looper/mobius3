@@ -20,6 +20,7 @@
 #include "../../model/MobiusState.h"
 
 #include "../../sync/Pulsator.h"
+#include "../../script/MslWait.h"
 // only for MobiusAudioStream
 #include "../MobiusInterface.h"
 
@@ -550,6 +551,8 @@ void BaseScheduler::leaderLoopResize(TrackProperties& props)
  */
 void BaseScheduler::advance(MobiusAudioStream* stream)
 {
+    activateBlockWait();
+    
     if (scheduledTrack->isPaused()) {
         pauseAdvance(stream);
         return;
@@ -693,6 +696,35 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
         // this may also be an interesting thing to control from a script
     }
 }
+
+/**
+ * Called at the top of advance() to activate any MslWaits with type Block
+ * This assumes that advance() can only be called for the full block, not partial blocks.
+ */
+void BaseScheduler::activateBlockWait()
+{
+    // should only have one, but activate all of them
+    int count = 0;
+    for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
+        if (e->type == TrackEvent::EventWait) {
+            if (e->wait == nullptr) {
+                Trace(1, "BaseScheduler: Found EventWait with no MslWait");
+            }
+            else if (e->wait->type == MslWaitBlock) {
+                if (!e->pending)
+                  Trace(1, "BaseScheduler: Found activated block wait");
+                e->pending = false;
+                // we can activate it and process it normally
+                // or inform the script now, should be effectively the same
+                e->frame = scheduledTrack->getFrame();
+                count++;
+            }
+        }
+    }
+
+    if (count > 1)
+      Trace(1, "BaseScheduler: Found %d wait events, what's the deal?", count);
+}    
 
 /**
  * Called immediately after MidiTrack::loop has rewound to the beginning.
@@ -894,7 +926,8 @@ void BaseScheduler::doEvent(TrackEvent* e)
 
             // is this something we do here or pass along?
         case TrackEvent::EventWait: {
-            Trace(1, "BaseScheduler: EventWait not handled");
+            // no side effects
+            // finishWaitAndDispose will inform the manager
         }
             break;
 

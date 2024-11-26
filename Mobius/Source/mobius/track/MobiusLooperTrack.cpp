@@ -8,6 +8,7 @@
 #include "../core/Mobius.h"
 #include "../core/Track.h"
 #include "../core/Loop.h"
+#include "../core/Mode.h"
 
 #include "LooperTrack.h"
 #include "TrackProperties.h"
@@ -16,8 +17,8 @@
 
 MobiusLooperTrack::MobiusLooperTrack(TrackManager* tm, LogicalTrack* lt,
                                      Mobius* m, Track* t)
+    : BaseTrack(tm, lt)
 {
-    setTrackContext(tm, lt);
     mobius = m;
     track = t;
 }
@@ -104,78 +105,151 @@ MslTrack* MobiusLooperTrack::getMslTrack()
 
 //////////////////////////////////////////////////////////////////////
 //
-// MslTrack
+// MslTrack Waits
+//
+// Complex enough to defer to Mobius so we don't have to ddrag in
+// too much internal stuff.
 //
 //////////////////////////////////////////////////////////////////////
 
 bool MobiusLooperTrack::scheduleWaitFrame(class MslWait* w, int frame)
 {
-    (void)w;
-    (void)frame;
-    Trace(1, "MobiusLooperTrack::scheduleWaitFrame not implemented");
-    return false;
+    return mobius->mslScheduleWaitFrame(w, frame);
 }
 
 bool MobiusLooperTrack::scheduleWaitEvent(class MslWait* w)
 {
-    (void)w;
-    Trace(1, "MobiusLooperTrack::scheduleWaitEvent not implemented");
-    return false;
+    return mobius->mslScheduleWaitEvent(w);
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// MslTrack
+//
+//////////////////////////////////////////////////////////////////////
 
 int MobiusLooperTrack::getSubcycleFrames()
 {
-    return 0;
+    return (int)(track->getLoop()->getSubCycleFrames());
 }
 
 int MobiusLooperTrack::getCycleFrames()
 {
-    return 0;
+    return (int)(track->getLoop()->getCycleFrames());
 }
 
 int MobiusLooperTrack::getFrames()
 {
-    return 0;
+    return (int)(track->getLoop()->getFrames());
 }
 
 int MobiusLooperTrack::getFrame()
 {
-    return 0;
+    return (int)(track->getLoop()->getFrame());
 }
 
 float MobiusLooperTrack::getRate()
 {
-    return 1.0f;
+    return track->getEffectiveSpeed();
 }
 
 int MobiusLooperTrack::getLoopCount()
 {
-    return 0;
+    return track->getLoopCount();
 }
 
 int MobiusLooperTrack::getLoopIndex()
 {
-    return 0;
+    return track->getLoop()->getNumber() - 1;
 }
 
 int MobiusLooperTrack::getCycles()
 {
-    return 0;
+    return (int)(track->getLoop()->getCycles());
 }
 
 int MobiusLooperTrack::getSubcycles()
 {
-    return 0;
+    // sigh, Variable still uses Preset for this and so shall we
+    Preset* p = track->getPreset();
+    int result = p->getSubcycles();
+    return result;
 }
 
 MobiusState::Mode MobiusLooperTrack::getMode()
 {
-    return MobiusState::ModeReset;
+    MobiusState::Mode newmode = MobiusState::ModeUnknown;
+    
+    MobiusMode* mode = track->getMode();
+    // no good way to map these
+    if (mode == ConfirmMode) {
+        newmode = MobiusState::ModeConfirm;
+    }
+    else if (mode == InsertMode) {
+        newmode = MobiusState::ModeInsert;
+    }
+    else if (mode == MultiplyMode) {
+        newmode = MobiusState::ModeMultiply;
+    }
+    else if (mode == MuteMode) {
+        newmode = MobiusState::ModeMute;
+    }
+    else if (mode == OverdubMode) {
+        newmode = MobiusState::ModeOverdub;
+    }
+    else if (mode == PauseMode) {
+        newmode = MobiusState::ModePause;
+    }
+    else if (mode == PlayMode) {
+        newmode = MobiusState::ModePlay;
+    }
+    else if (mode == RecordMode) {
+        newmode = MobiusState::ModeRecord;
+    }
+    else if (mode == RehearseMode) {
+        newmode = MobiusState::ModeRehearse;
+    }
+    else if (mode == RehearseRecordMode) {
+        newmode = MobiusState::ModeRehearseRecord;
+    }
+    else if (mode == ReplaceMode) {
+        newmode = MobiusState::ModeReplace;
+    }
+    else if (mode == ResetMode) {
+        newmode = MobiusState::ModeReset;
+    }
+    else if (mode == RunMode) {
+        newmode = MobiusState::ModeRun;
+    }
+    else if (mode == StutterMode) {
+        newmode = MobiusState::ModeStutter;
+    }
+    else if (mode == SubstituteMode) {
+        newmode = MobiusState::ModeSubstitute;
+    }
+    else if (mode == SwitchMode) {
+        newmode = MobiusState::ModeSwitch;
+    }
+    else if (mode == SynchronizeMode) {
+        newmode = MobiusState::ModeSynchronize;
+    }
+    else if (mode == ThresholdMode) {
+        newmode = MobiusState::ModeThreshold;
+    }
+
+    if (newmode == MobiusState::ModeUnknown) {
+        if (mode != nullptr)
+          Trace(1, "MobiusLooperTrack: Unmapped mode %s", mode->getName());
+        else
+          Trace(1, "MobiusLooperTrack: Missing mode");
+    }
+    
+    return newmode;
 }
 
 bool MobiusLooperTrack::isPaused()
 {
-    return false;
+    return track->getLoop()->isPaused();
 }
 
 /****************************************************************************/

@@ -13,6 +13,7 @@ class ScheduledTrack : public BaseTrack
 {
   public:
 
+    ScheduledTrack(class TrackManager* tm, class LogicalTrack* lt) : BaseTrack(tm,lt) {}
     virtual ~ScheduledTrack() {}
 
     // various bits of track state required for scheduling

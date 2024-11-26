@@ -47,7 +47,25 @@ class BaseScheduler
     void setFollowTrack(int number);
 
     // tracks need to provide this for the MSL handler
-    TrackEventList* getEvents();
+    //TrackEventList* getEvents();
+
+    // Event list access for tracks
+    // might be okay to expose the TrackEventList?
+    TrackEvent* newEvent() {
+        return eventPool.newEvent();
+    }
+
+    bool isScheduled(TrackEvent* e) {
+        return events.isScheduled(e);
+    }
+
+    void addEvent(TrackEvent* e) {
+        events.add(e);
+    }
+
+    TrackEvent* findEvent(TrackEvent::Type type) {
+        return events.find(type);
+    }
     
   protected:
 
@@ -126,6 +144,7 @@ class BaseScheduler
     // Advance
     //
 
+    void activateBlockWait();
     void traceFollow();
     int scale(int blockFrames);
     int scaleWithCarry(int blockFrames);

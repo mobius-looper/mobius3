@@ -202,7 +202,7 @@ void TrackManager::configureTracks(Session* session)
         if (lt->getType() == Session::TypeAudio)
           delete lt;
         else
-          oldTracks.add(tracks.removeAndReturn(0));
+          oldTracks.add(lt);
     }
 
     // now put them back, for now Mobius always goes first
@@ -1050,11 +1050,11 @@ bool TrackManager::mslQuery(MslQuery* query)
 
         LogicalTrack* lt = getLogicalTrack(query->scope);
         if (lt != nullptr) {
-            // here we need to work on having TrackMslHandler do both of them
-            if (lt->getType() == Session::TypeAudio)
-              success = audioEngine->mslQuery(query);
-            else
-              success = mslHandler.mslQuery(lt, query);
+            // MobiusLooperTrack now provides this
+            //if (lt->getType() == Session::TypeAudio)
+            //success = audioEngine->mslQuery(query);
+            //else
+            success = mslHandler.mslQuery(lt, query);
         }
 
         // in case we trashed it
@@ -1124,10 +1124,12 @@ bool TrackManager::mslWait(MslWait* wait, MslContextError* error)
 
     LogicalTrack* lt = getLogicalTrack(trackNumber);
     if (lt != nullptr) {
-        if (lt->getType() == Session::TypeAudio)
-          success = audioEngine->mslWait(wait, error);
-        else
-          success = mslHandler.mslWait(lt, wait, error);
+        // can now go through generic handling down to two frame and event
+        // wait interfaces
+        //if (lt->getType() == Session::TypeAudio)
+        //success = audioEngine->mslWait(wait, error);
+        //else
+        success = mslHandler.mslWait(lt, wait, error);
     }
     
     if (!success) {

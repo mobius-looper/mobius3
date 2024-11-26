@@ -47,6 +47,7 @@ class MobiusState
 
     // major modes a track can be in
     typedef enum {
+        ModeUnknown,
         ModeReset,
         ModeSynchronize,
         ModeRecord,

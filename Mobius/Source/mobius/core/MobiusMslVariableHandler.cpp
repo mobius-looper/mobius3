@@ -1,4 +1,7 @@
 /**
+ * update: Not actually used, a subset of these are now handled
+ * in MobiusLooperTrck
+ *
  * Variables that require thought
  *
  * Most of these are only for use in the test scripts.  Which is unfortunate since I'd like

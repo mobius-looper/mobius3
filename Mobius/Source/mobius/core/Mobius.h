@@ -15,7 +15,7 @@
 #include "../../model/OldMobiusState.h"
 #include "../track/TrackProperties.h"
 #include "Loader.h"
-//#include "MobiusMslHandler.h"
+#include "MobiusMslHandler.h"
 
 /**
  * Size of a static char buffer to keep the custom mode name.
@@ -117,14 +117,18 @@ class Mobius
      * queries will already have been converted so the only
      * thing this needs to deal with are Variables.
      */
-    bool mslQuery(class MslQuery* query);
+    // update: now handled by MobiusLooperTrack
+    //bool mslQuery(class MslQuery* query);
 
     /**
-     * Schedule a wait event for the new MSL interpreter.
-     * Temporary: need to be factoring a cleaner interface for
-     * event management from outside Mobius core.
+     * Schedule a frame-based wait event for the MSL interpreter.
      */
-    bool mslWait(class MslWait* w, class MslContextError* error);
+    bool mslScheduleWaitFrame(class MslWait* w, int frame);
+
+    /**
+     * Schedule an event-based wait
+     */
+    bool mslScheduleWaitEvent(class MslWait* w);
     
     /**
      * Process a completed KernelEvent core scheduled earlier.
@@ -447,7 +451,7 @@ class Mobius
 	OldMobiusState mState;
 
     // handler for MSL integration
-    //MobiusMslHandler mslHandler {this};
+    MobiusMslHandler mslHandler {this};
 
     // new loop/project load helper
     Loader mLoader {this};

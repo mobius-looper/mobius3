@@ -5,6 +5,7 @@ const char* MobiusState::getModeName(MobiusState::Mode amode)
 {
     const char* name = "???";
     switch (amode) {
+        case MobiusState::ModeUnknown: name = "Unknown"; break;
         case MobiusState::ModeReset: name = "Reset"; break;
         case MobiusState::ModeSynchronize: name = "Synchronize"; break;
         case MobiusState::ModeRecord: name = "Record"; break;

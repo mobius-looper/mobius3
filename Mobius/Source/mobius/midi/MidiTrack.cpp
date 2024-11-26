@@ -27,6 +27,7 @@
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
 #include "../../sync/Pulsator.h"
+#include "../../script/MslWait.h"
 
 #include "../track/LogicalTrack.h"
 #include "../track/BaseScheduler.h"
@@ -58,11 +59,8 @@ const int MidiTrackMaxLoops = 8;
  * the track definition from the session.
  */
 MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
-    scheduler(tm, lt, this)
+    scheduler(tm, lt, this), LooperTrack(tm,lt)
 {
-    // BaseTrack needs these and can't do this easily with the initialization list
-    setTrackContext(tm, lt);
-    
     // temporary, should be used only by LooperScheduler
     pulsator = tm->getPulsator();
     pools = tm->getPools();
@@ -274,19 +272,93 @@ MslTrack* MidiTrack::getMslTrack()
 //
 //////////////////////////////////////////////////////////////////////
 
-bool MidiTrack::scheduleWaitFrame(class MslWait* w, int frame)
+// todo: In retrospect this is all generic and could go in BaseTrack
+// might change with other wait types
+
+bool MidiTrack::scheduleWaitFrame(class MslWait* wait, int frame)
 {
-    (void)w;
-    (void)frame;
-    Trace(1, "MidiTrack::scheduleWaitFrame not implemented");
-    return false;
+    TrackEvent* e = scheduler.newEvent();
+    e->type = TrackEvent::EventWait;
+    e->frame = frame;
+    e->wait = wait;
+    wait->coreEvent = e;
+    wait->coreEventFrame = frame;
+    scheduler.addEvent(e);
+    return true;
 }
 
-bool MidiTrack::scheduleWaitEvent(class MslWait* w)
+bool MidiTrack::scheduleWaitEvent(class MslWait* wait)
 {
-    (void)w;
-    Trace(1, "MidiTrack::scheduleWaitEvent not implemented");
-    return false;
+    bool success = false;
+    
+    switch (wait->type) {
+
+        case MslWaitLast: {
+            // if a previous action scheduled an event, that would have
+            // been returned in the UIAction and MSL would have remembered it
+            // when it reaches a "wait last" it passes that event back down
+            TrackEvent* event = (TrackEvent*)wait->coreEvent;
+            if (event == nullptr) {
+                // should not have gotten this far
+                wait->finished = true;
+            }
+            else {
+                // don't assume this object is still valid
+                // it almost always will be, but if there was any delay between
+                // the last action and the wait it could be gone
+                if (!scheduler.isScheduled(event)) {
+                    // yep, it's gone, don't treat this as an error
+                    wait->finished = true;
+                }
+                else {
+                    if (event->wait != nullptr)
+                      Trace(1, "MidiTrack: Replacing wait on Last event");
+                    // and now we wait
+                    event->wait = wait;
+                    // set this while we're here though nothing uses it
+                    wait->coreEventFrame = event->frame;
+                }
+            }
+            success = true;
+        }
+            break;
+
+        case MslWaitBlock: {
+            // these don't have anything to hang off of BaseScheduler needs to find
+            // it on the next advance
+            TrackEvent* e = scheduler.newEvent();
+            e->type = TrackEvent::EventWait;
+            e->pending = true;
+            e->wait = wait;
+            wait->coreEvent = e;
+            wait->coreEventFrame = 0;
+            scheduler.addEvent(e);
+            success = true;
+        }
+            break;
+            
+        case MslWaitSwitch: {
+            TrackEvent* event = scheduler.findEvent(TrackEvent::EventSwitch);
+            if (event != nullptr) {
+                if (event->wait != nullptr)
+                  Trace(1, "MidiTrack: Replacing wait on Switch event");
+                event->wait = wait;
+                wait->coreEvent = event;
+                wait->coreEventFrame = event->frame;
+                success = true;
+            }
+            else {
+                Trace(2, "MidiTrack: No Switch to wait on");
+            }
+        }
+            break;
+
+        default:
+            Trace(1, "MidiTrack::scheduleWaitEvent Unhandled wait type %d",
+                  (int)(wait->type));
+            break;
+    }
+    return success;
 }
 
 //////////////////////////////////////////////////////////////////////

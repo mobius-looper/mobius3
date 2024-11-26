@@ -2364,19 +2364,23 @@ void Mobius::loadProject(Project* p)
  * Symbol queries are to be converted to a Query and passed in the
  * normal way.
  */
+#if 0
 bool Mobius::mslQuery(MslQuery* query)
 {
     (void)query;
     //return mslHandler.mslQuery(query);
     return false;
 }
+#endif
 
-bool Mobius::mslWait(MslWait* wait, MslContextError* error)
+bool Mobius::mslScheduleWaitFrame(MslWait* wait, int frame)
 {
-    (void)wait;
-    (void)error;
-    // return mslHandler.mslWait(wait, error);
-    return false;
+    return mslHandler.scheduleWaitFrame(wait, frame);
+}
+
+bool Mobius::mslScheduleWaitEvent(MslWait* wait)
+{
+    return mslHandler.scheduleWaitEvent(wait);
 }
 
 /**

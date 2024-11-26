@@ -13,6 +13,7 @@ class LooperTrack : public ScheduledTrack
 {
   public:
 
+    LooperTrack(class TrackManager* tm, class LogicalTrack* lt) : ScheduledTrack(tm, lt) {}
     virtual ~LooperTrack() {}
 
     // Loop state

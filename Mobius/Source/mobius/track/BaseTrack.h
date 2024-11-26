@@ -17,22 +17,21 @@ class BaseTrack
   public:
 
     // base tracks are connected to the community
-    BaseTrack() {}
-    virtual ~BaseTrack() {}
-
-    // base tracks are connected to the community
-    // difficult to do this with initialization given the many levels
-    void setTrackContext(class TrackManager* tm, class LogicalTrack* lt) {
+    BaseTrack(class TrackManager* tm, class LogicalTrack* lt) {
         manager = tm;
         logicalTrack = lt;
     }
+    virtual ~BaseTrack() {}
 
+    class TrackManager* getTrackManager() {
+        return manager;
+    }
     class LogicalTrack* getLogicalTrack() {
         return logicalTrack;
     }
     
     // all tracks have a unique number shown in the UI
-    // these are assigned by Trackmanager
+    // these are assigned by Trackmanager and can change at runtime
     void setNumber(int n) {number = n;}
     virtual int getNumber() {return number;}
 
@@ -80,7 +79,6 @@ class BaseTrack
 
     class TrackManager* manager = nullptr;
     class LogicalTrack* logicalTrack = nullptr;
-
     int number = 0;
     
 };
