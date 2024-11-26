@@ -16,15 +16,29 @@ class BaseTrack
 {
   public:
 
+    // base tracks are connected to the community
+    BaseTrack() {}
     virtual ~BaseTrack() {}
 
-    // tracks come in many shapes and sizes
-    virtual void loadSession(class Session::Track* def) = 0;
+    // base tracks are connected to the community
+    // difficult to do this with initialization given the many levels
+    void setTrackContext(class TrackManager* tm, class LogicalTrack* lt) {
+        manager = tm;
+        logicalTrack = lt;
+    }
 
+    class LogicalTrack* getLogicalTrack() {
+        return logicalTrack;
+    }
+    
     // all tracks have a unique number shown in the UI
     // these are assigned by Trackmanager
     void setNumber(int n) {number = n;}
     virtual int getNumber() {return number;}
+
+    // tracks come in many shapes and sizes
+    virtual void loadSession(class Session::Track* def) = 0;
+
 
     // tracks may all do things or schedule them
     virtual void doAction(class UIAction* a) = 0;
@@ -63,6 +77,9 @@ class BaseTrack
     virtual class MslTrack* getMslTrack() = 0;
 
   protected:
+
+    class TrackManager* manager = nullptr;
+    class LogicalTrack* logicalTrack = nullptr;
 
     int number = 0;
     

@@ -210,7 +210,9 @@ void TrackManager::configureTracks(Session* session)
     int mobiusTracks = audioEngine->getTrackCount();
     for (int i = 0 ; i < mobiusTracks ; i++) {
         LogicalTrack* lt = new LogicalTrack(this);
-        lt->initializeCore(audioEngine, i);
+        // really want to do this?
+        Session::Track* def = session->ensureTrack(Session::TypeAudio, i);
+        lt->loadSession(def, i+1);
         tracks.add(lt);
     }
 
@@ -290,6 +292,16 @@ Valuator* TrackManager::getValuator()
 SymbolTable* TrackManager::getSymbols()
 {
     return kernel->getContainer()->getSymbols();
+}
+
+MslEnvironment* TrackManager::getMsl()
+{
+    return kernel->getContainer()->getMslEnvironment();
+}
+
+Mobius* TrackManager::getAudioEngine()
+{
+    return audioEngine;
 }
 
 int TrackManager::getAudioTrackCount()

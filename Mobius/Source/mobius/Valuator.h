@@ -1,4 +1,9 @@
 /**
+ * update: This is no longer used by non-core tracks.
+ *
+ * It might be useful within Mobius core, but it should forward everything
+ * to the LogicalTrack which implements what this did.
+ *
  * The Valuators job is to provide the central point of access to the values of
  * configuration parameters at runtime.   When the engine is in a resting initial
  * state, parmeter values come from one of two persistent configuration objects,

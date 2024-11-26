@@ -48,6 +48,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class SymbolTable* getSymbols();
     TrackProperties getTrackProperties(int number);
     class MidiEvent* getHeldNotes();
+    class MslEnvironment* getMsl();
+    class Mobius* getAudioEngine();
 
     void alert(const char* msg);
     void writeDump(juce::String file, juce::String content);

@@ -20,7 +20,6 @@
 #include "../../model/MobiusState.h"
 
 #include "../../sync/Pulsator.h"
-#include "../Valuator.h"
 // only for MobiusAudioStream
 #include "../MobiusInterface.h"
 
@@ -28,6 +27,7 @@
 #include "TrackProperties.h"
 #include "TrackEvent.h"
 #include "ScheduledTrack.h"
+#include "LogicalTrack.h"
 
 #include "BaseScheduler.h"
 
@@ -40,14 +40,13 @@
 BaseScheduler::BaseScheduler(TrackManager*tm, LogicalTrack* lt, ScheduledTrack* st)
 {
     manager = tm;
-    // don't really need this 
+    // this is now accessible through ScheduledTrack, don't need to pass it in
     logicalTrack = lt;
     scheduledTrack = st;
     
     MidiPools* pools = tm->getPools();
     actionPool = pools->actionPool;
     pulsator = tm->getPulsator();
-    valuator = tm->getValuator();
     symbols = tm->getSymbols();
     
     events.initialize(&eventPool);
@@ -60,12 +59,10 @@ BaseScheduler::~BaseScheduler()
 /**
  * Derive sync options from a session.
  *
- * Valuator now knows about the Session so we don't need to pass the
- * Session::Track in anymore.  Unclear if I want Valuator in the middle
- * of everything though at least not for bulk configuration.
+ * Since we go through the LogicalTrack now rather than Valuator
+ * we don't really need the Session passed in.
  *
- * !! no, I want to stop using valuator.  reloading a session should clear
- * bindings so you can go direct through the Session.
+ * !! Should reloading a session also clear bindings?
  *
  * Also too, if it gets to the point where MSL scripts can bind these
  * on the fly, then we're going to need to recalculate things again, it has more
@@ -77,8 +74,9 @@ void BaseScheduler::loadSession(Session::Track* def)
 
     // convert sync options into a Pulsator follow
     // ugly mappings but I want to keep use of the old constants limited
-    sessionSyncSource = valuator->getSyncSource(scheduledTrack->getNumber());
-    sessionSyncUnit = valuator->getSlaveSyncUnit(scheduledTrack->getNumber());
+    LogicalTrack* lt = scheduledTrack->getLogicalTrack();
+    sessionSyncSource = lt->getSyncSource();
+    sessionSyncUnit = lt->getSlaveSyncUnit();
 
     // set this up for host and midi, track sync will be different
     Pulse::Type ptype = Pulse::PulseBeat;
@@ -88,7 +86,7 @@ void BaseScheduler::loadSession(Session::Track* def)
     if (sessionSyncSource == SYNC_TRACK) {
         // track sync uses a different unit parameter
         // default for this one is the entire loop
-        SyncTrackUnit stu = valuator->getTrackSyncUnit(scheduledTrack->getNumber());
+        SyncTrackUnit stu = lt->getTrackSyncUnit();
         ptype = Pulse::PulseLoop;
         if (stu == TRACK_UNIT_SUBCYCLE)
           ptype = Pulse::PulseBeat;
@@ -120,9 +118,9 @@ void BaseScheduler::loadSession(Session::Track* def)
     // follower options
     // a few are in MidiTrack but they should be here if we need them
 
-    leaderType = valuator->getLeaderType(scheduledTrack->getNumber());
+    leaderType = lt->getLeaderType();
     leaderTrack = def->getInt("leaderTrack");
-    leaderSwitchLocation = valuator->getLeaderSwitchLocation(scheduledTrack->getNumber());
+    leaderSwitchLocation = lt->getLeaderSwitchLocation();
     
     followQuantize = def->getBool("followQuantizeLocation");
     followRecord = def->getBool("followRecord");
@@ -171,8 +169,6 @@ void BaseScheduler::scheduleAction(UIAction* src)
 
     if (!handled)
       passAction(src);
-
-    actionPool->checkin(src);
 }
 
 /**

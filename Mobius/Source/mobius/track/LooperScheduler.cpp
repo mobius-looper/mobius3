@@ -18,6 +18,7 @@
 #include "TrackEvent.h"
 #include "BaseScheduler.h"
 #include "LooperTrack.h"
+#include "LogicalTrack.h"
 
 #include "LooperScheduler.h"
 
@@ -993,7 +994,7 @@ QuantizeMode LooperScheduler::isQuantized(UIAction* a)
 
     FunctionProperties* props = a->symbol->functionProperties.get();
     if (props != nullptr && props->quantized) {
-        q = valuator->getQuantizeMode(track->getNumber());
+        q = track->getLogicalTrack()->getQuantizeMode();
     }
     
     return q;

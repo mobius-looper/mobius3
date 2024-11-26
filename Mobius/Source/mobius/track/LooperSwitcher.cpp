@@ -18,6 +18,7 @@
 #include "TrackProperties.h"
 #include "LooperScheduler.h"
 #include "LooperTrack.h"
+#include "LogicalTrack.h"
 
 #include "LooperSwitcher.h"
 
@@ -102,7 +103,7 @@ void LooperSwitcher::scheduleSwitch(UIAction* src)
     }
     else {
         // normal non-following switch
-        SwitchQuantize sq = scheduler.valuator->getSwitchQuantize(track->getNumber());
+        SwitchQuantize sq = track->getLogicalTrack()->getSwitchQuantize();
         if (sq == SWITCH_QUANT_OFF) {
             // immediate switch
             doSwitchNow(src);
@@ -385,7 +386,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
 
     // ignore SwitchDuration if this was already a Return event
     if (e == nullptr || !e->isReturn) {
-        SwitchDuration duration = scheduler.valuator->getSwitchDuration(track->getNumber());
+        SwitchDuration duration = track->getLogicalTrack()->getSwitchDuration();
 
         if (duration != SWITCH_PERMANENT && isRecording) {
             // supposed to do a temporary switch but the loop was empty and
@@ -488,7 +489,7 @@ bool LooperSwitcher::setupEmptyLoop(int previousLoop)
     
     if (track->getFrames() == 0 && scheduler.leaderType == LeaderNone) {
 
-        EmptyLoopAction action = scheduler.valuator->getEmptyLoopAction(track->getNumber());
+        EmptyLoopAction action = track->getLogicalTrack()->getEmptyLoopAction();
 
         if (action == EMPTY_LOOP_RECORD) {
             // todo: if the switch was due to a Return event we most likely wouldn't be here

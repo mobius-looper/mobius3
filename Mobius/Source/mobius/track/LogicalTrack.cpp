@@ -5,6 +5,16 @@
 #include "../../util/StructureDumper.h"
 #include "../../model/Session.h"
 #include "../../model/MobiusState.h"
+#include "../../model/Symbol.h"
+#include "../../model/Enumerator.h"
+#include "../../model/MobiusConfig.h"
+#include "../../model/ParameterProperties.h"
+#include "../../model/UIParameterHandler.h"
+#include "../../model/ExValue.h"
+
+#include "../../script/MslEnvironment.h"
+#include "../../script/MslBinding.h"
+#include "../../script/MslValue.h"
 
 #include "../core/Mobius.h"
 #include "../midi/MidiEngine.h"
@@ -12,6 +22,7 @@
 
 #include "BaseTrack.h"
 #include "MobiusLooperTrack.h"
+#include "TrackManager.h"
 
 #include "LogicalTrack.h"
 
@@ -26,34 +37,18 @@ LogicalTrack::~LogicalTrack()
 }
 
 /**
- * Special initialization for Mobius core tracks.
- * Mobius will already have been configured, we just need to make the BaseTrack.
- * These don't use a scheduler yet.
- */
-void LogicalTrack::initializeCore(Mobius* mobius, int index)
-{
-    // no mapping at the moment
-    number = index + 1;
-    engineNumber = index + 1;
-
-    MobiusLooperTrack* t = new MobiusLooperTrack(mobius, mobius->getTrack(index));
-    track.reset(t);
-
-    // this one doesn't use a BaseScheduler
-}
-
-/**
  * Normal initialization driven from the Session.
  */
 void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
 {
     // assumes it is okay to hang onto this until the next one is loaded
     session = trackdef;
+    trackType = trackdef->type;
     number = argNumber;
 
     if (track == nullptr) {
         // make a new one using the appopriate track factory
-        if (session->type == Session::TypeMidi) {
+        if (trackType == Session::TypeMidi) {
             // the engine has no state at the moment, though we may want this
             // to be where the type specific pools live
             MidiEngine engine;
@@ -61,6 +56,16 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // with a LooperScheduler
             // not sure I like the handoff here
             track.reset(engine.newTrack(manager, this, trackdef));
+        }
+        else if (trackType == Session::TypeAudio) {
+            // core tracks are special
+            // these have to be done in order at the front
+            // if they can be out of order then will need to "allocate" engine
+            // numbers as they are encountered
+            engineNumber = number - 1;
+            Mobius* m = manager->getAudioEngine();
+            Track* mt = m->getTrack(engineNumber);
+            track.reset(new MobiusLooperTrack(manager, this, m, mt));
         }
         else {
             Trace(1, "LogicalTrack: Unknown track type");
@@ -73,7 +78,7 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
 
 Session::TrackType LogicalTrack::getType()
 {
-    return session->type;
+    return trackType;
 }
 
 int LogicalTrack::getNumber()
@@ -83,7 +88,9 @@ int LogicalTrack::getNumber()
 
 int LogicalTrack::getSessionId()
 {
-    return session->id;
+    // mobius tracks won't have a Session and therefore won't have
+    // correlation ids, but it doesn't matter since we rebuild them every time
+    return (session != nullptr) ? session->id : 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -112,7 +119,7 @@ bool LogicalTrack::isFocused()
  */
 void LogicalTrack::processAudioStream(MobiusAudioStream* stream)
 {
-    if (session->type != Session::TypeAudio)
+    if (trackType != Session::TypeAudio)
       track->processAudioStream(stream);
 }
 
@@ -132,14 +139,14 @@ bool LogicalTrack::doQuery(Query* q)
 void LogicalTrack::midiEvent(MidiEvent* e)
 {
     // only MIDI tracks care about this, though I guess the others could just ignore it
-    if (session->type == Session::TypeMidi)
+    if (trackType == Session::TypeMidi)
       track->midiEvent(e);
 }
 
 void LogicalTrack::trackNotification(NotificationId notification, TrackProperties& props)
 {
     // only MIDI tracks support notifications
-    if (session->type == Session::TypeMidi) {
+    if (trackType == Session::TypeMidi) {
         track->trackNotification(notification, props);
     }
 }
@@ -160,14 +167,14 @@ bool LogicalTrack::scheduleWait(MslWait* w)
 
 void LogicalTrack::refreshPriorityState(MobiusState::Track* tstate)
 {
-    if (session->type == Session::TypeMidi) {
+    if (trackType == Session::TypeMidi) {
         track->refreshPriorityState(tstate);
     }
 }
 
 void LogicalTrack::refreshState(MobiusState::Track* tstate)
 {
-    if (session->type == Session::TypeMidi) {
+    if (trackType == Session::TypeMidi) {
         track->refreshState(tstate);
     }
 }
@@ -196,9 +203,328 @@ MslTrack* LogicalTrack::getMslTrack()
 MidiTrack* LogicalTrack::getMidiTrack()
 {
     MidiTrack* mt = nullptr;
-    if (session->type == Session::TypeMidi)
+    if (trackType == Session::TypeMidi)
       mt = static_cast<MidiTrack*>(track.get());
     return mt;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parameters
+//
+// This grew out of Valuator, which turned out not to be necessary for
+// non-core tracks since LogicalTrack provices the place to hang transient
+// parameter bindings and is more easilly accessible everywhere.
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here when a track receives an action to change the value of
+ * a parameter.  Tracks may choose to cache some parameters in local
+ * class members, the rest will be maintained in LogicalTrack.
+ *
+ * Parameter bindings are temporary and normally cleared on the next Reset.
+ *
+ * !! holy shit, MslEnvironment object pools are NOT thread safe
+ * how did you miss that?  
+ */
+void LogicalTrack::bindParameter(UIAction* a)
+{
+    SymbolId symid = a->symbol->id;
+    MslBinding* existing = nullptr;
+    for (MslBinding* b = bindings ; b != nullptr ; b = b->next) {
+        // by convention we use the symbol id to identify bindings rather than the name
+        if (b->symbolId == symid) {
+            existing = b;
+            break;
+        }
+    }
+
+    MslValue* value = nullptr;
+    if (existing != nullptr) {
+        // replace the previous value
+        value = existing->value;
+        if (value == nullptr) {
+            Trace(1, "LogicalTrack: Unexpected null value in binding");
+            value = manager->getMsl()->allocValue();
+            existing->value = value;
+        }
+    }
+    else {
+        value = manager->getMsl()->allocValue();
+        MslBinding* b = manager->getMsl()->allocBinding();
+        b->symbolId = symid;
+        b->value = value;
+        b->next = bindings;
+        bindings = b;
+    }
+
+    // todo: only expecting ordinals right now
+    value->setInt(a->value);
+
+    // activePreset is special, store it here so we don't have to keep
+    // digging it out of the binding list
+    if (symid == ParamActivePreset)
+      activePreset = a->value;
+}
+
+/**
+ * Clear the temporary parameter bindings.
+ * Sigh, this is called by the MidiTrack constructor which goes through its
+ * Reset processing which wants to clear bindings.  Valuator will not have been
+ * initialized yet.
+ */
+void LogicalTrack::clearBindings()
+{
+    while (bindings != nullptr) {
+        MslBinding* next = bindings->next;
+        bindings->next = nullptr;
+        manager->getMsl()->free(bindings);
+        bindings = next;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Group 1: MidiTracks pulling things from the Session only
+//
+// Used only by MIDI tracks
+//
+// Now that we've reworked how getParameterOrdinal deals with the Session
+// Should just use that and skip Enumerator!!
+//
+//////////////////////////////////////////////////////////////////////
+
+SyncSource LogicalTrack::getSyncSource()
+{
+    return (SyncSource)Enumerator::getOrdinal(manager->getSymbols(),
+                                              ParamSyncSource,
+                                              session->getParameters(),
+                                              SYNC_NONE);
+}
+
+SyncTrackUnit LogicalTrack::getTrackSyncUnit()
+{
+    return (SyncTrackUnit)Enumerator::getOrdinal(manager->getSymbols(),
+                                                 ParamTrackSyncUnit,
+                                                 session->getParameters(),
+                                                 TRACK_UNIT_LOOP);
+}
+
+SyncUnit LogicalTrack::getSlaveSyncUnit()
+{
+    return (SyncUnit)Enumerator::getOrdinal(manager->getSymbols(),
+                                            ParamSlaveSyncUnit,
+                                            session->getParameters(),
+                                            SYNC_UNIT_BEAT);
+}
+
+LeaderType LogicalTrack::getLeaderType()
+{
+    return (LeaderType)Enumerator::getOrdinal(manager->getSymbols(),
+                                              ParamLeaderType,
+                                              session->getParameters(),
+                                              LeaderNone);
+}
+
+LeaderLocation LogicalTrack::getLeaderSwitchLocation()
+{
+    return (LeaderLocation)Enumerator::getOrdinal(manager->getSymbols(),
+                                                  ParamLeaderSwitchLocation,
+                                                  session->getParameters(),
+                                                  LeaderLocationNone);
+}
+
+int LogicalTrack::getLoopCount()
+{
+    int result = 2;
+    Symbol* s = manager->getSymbols()->getSymbol(ParamLoopCount);
+    if (s != nullptr) {
+        MslValue* v = session->get(s->name);
+        if (v != nullptr) {
+            result = v->getInt();
+            if (result < 1) {
+                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
+                result = 1;
+            }
+        }
+    }
+    return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Group 2: Things that might be in the Preset
+//
+// These are temporary until the session editor is fleshed out.
+//
+//////////////////////////////////////////////////////////////////////
+
+Preset* LogicalTrack::getPreset()
+{
+    Preset* preset = nullptr;
+    
+    if (activePreset >= 0)
+      preset = manager->getConfiguration()->getPreset(activePreset);
+    
+    // fall back to the default
+    // !! should be in the Session
+    // actually Presets should go away entirely for MIDI tracks
+    if (preset == nullptr)
+      preset = manager->getConfiguration()->getPresets();
+
+    return preset;
+}
+
+/**
+ * The primary mechanism to access parameter values from within the kernel.
+ *
+ * For audio tracks values come from a Preset for MIDI tracks the Session.
+ *
+ */
+int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
+{
+    Symbol* s = manager->getSymbols()->getSymbol(symbolId);
+    int ordinal = 0;
+
+    if (s == nullptr) {
+        Trace(1, "LogicalTrack: Unmapped symbol id %d", symbolId);
+    }
+    else if (s->parameterProperties == nullptr) {
+        Trace(1, "LogicalTrack: Symbol %s is not a parameter", s->getName());
+    }
+    else if (symbolId == ParamActivePreset) {
+        // this one is special
+        ordinal = activePreset;
+    }
+    else {
+        MslBinding* binding = nullptr;
+
+        // first look for a binding
+        for (MslBinding* b = bindings ; b != nullptr ; b = b->next) {
+            // MSL doesn't use symbol ids, only names, but since we're overloading
+            // MslBinding for use in LogicalTrack, we will use ids by convention
+            // hmm, cleaner if LogicalTrack just had it's own object pool for this
+            if (b->symbolId == symbolId) {
+                binding = b;
+                break;
+            }
+        }
+
+        if (binding != nullptr) {
+            // this wins
+            if (binding->value == nullptr) {
+                // unclear whether a binding with a null value means
+                // "unbound" or if it means zero?
+            }
+            else {
+                ordinal = binding->value->getInt();
+            }
+        }
+        else {
+            // no track bindings, look in the value containers
+
+            // ugliness: until the Session transition is complete, fall back to the
+            // Preset if there is no value in the Session
+            
+            bool foundInSession = false;
+            if (trackType == Session::TypeMidi && session != nullptr) {
+                ValueSet* params = session->getParameters();
+                if (params != nullptr) {
+                    MslValue* v = params->get(s->name);
+                    if (v != nullptr) {
+                        ordinal = v->getInt();
+                        foundInSession = true;
+                    }
+                }
+            }
+
+            if (!foundInSession) {
+
+                // wasn't in the session, fall back to the old model
+
+                switch (s->parameterProperties->scope) {
+                    case ScopeGlobal: {
+                        // MidiTrack should be getting these from the Session
+                        //Trace(1, "LogicalTrack: Kernel attempt to access global parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopePreset: {
+                        Preset* p = getPreset();
+                        if (p != nullptr) {
+                            ExValue value;
+                            UIParameterHandler::get(symbolId, p, &value);
+                            ordinal = value.getInt();
+                        }
+                    }
+                        break;
+                    case ScopeSetup: {
+                        // if 
+                                // not sure why MidiTrack would want things here
+                                //Trace(1, "LogicalTrack: Kernel attempt to access track parameter %s",
+                                //s->getName());
+                                }
+                        break;
+                    case ScopeTrack: {
+                        // mostly for levels which MidiTrack should be intercepting
+                        //Trace(1, "LogicalTrack: Kernel attempt to access track parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopeUI: {
+                        // not expecting this from kernel tracks
+                        //Trace(1, "LogicalTrack: Kernel attempt to access UI parameter %s",
+                        //s->getName());
+                    }
+                        break;
+                    case ScopeNone: {
+                        Trace(1, "LogicalTrack: Kernel attempt to access unscoped parameter %s",
+                              s->getName());
+                    }
+                        break;
+
+                    case ScopeSession:
+                    case ScopeSessionTrack:
+                        // these would have been found in the Session
+                        // if they were there, avoid unhandled switch warning
+                        break;
+                }
+            }
+        }
+    }
+    
+    return ordinal;
+}
+
+ParameterMuteMode LogicalTrack::getMuteMode()
+{
+    return (ParameterMuteMode)getParameterOrdinal(ParamMuteMode);
+}
+
+SwitchLocation LogicalTrack::getSwitchLocation()
+{
+    return (SwitchLocation)getParameterOrdinal(ParamSwitchLocation);
+}
+
+SwitchDuration LogicalTrack::getSwitchDuration()
+{
+    return (SwitchDuration)getParameterOrdinal(ParamSwitchDuration);
+}
+
+SwitchQuantize LogicalTrack::getSwitchQuantize()
+{
+    return (SwitchQuantize)getParameterOrdinal(ParamSwitchQuantize);
+}
+
+QuantizeMode LogicalTrack::getQuantizeMode()
+{
+    return (QuantizeMode)getParameterOrdinal(ParamQuantize);
+}
+
+EmptyLoopAction LogicalTrack::getEmptyLoopAction()
+{
+    return (EmptyLoopAction)getParameterOrdinal(ParamEmptyLoopAction);
 }
 
 /****************************************************************************/

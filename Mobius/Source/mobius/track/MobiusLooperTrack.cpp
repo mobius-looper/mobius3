@@ -14,8 +14,10 @@
 
 #include "MobiusLooperTrack.h"
 
-MobiusLooperTrack::MobiusLooperTrack(Mobius* m, Track* t)
+MobiusLooperTrack::MobiusLooperTrack(TrackManager* tm, LogicalTrack* lt,
+                                     Mobius* m, Track* t)
 {
+    setTrackContext(tm, lt);
     mobius = m;
     track = t;
 }

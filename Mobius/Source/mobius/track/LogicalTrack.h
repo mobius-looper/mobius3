@@ -21,7 +21,6 @@ class LogicalTrack
     LogicalTrack(class TrackManager* tm);
     ~LogicalTrack();
 
-    void initializeCore(class Mobius* m, int index);
     void loadSession(class Session::Track* def, int number);
     
     Session::TrackType getType();
@@ -48,10 +47,34 @@ class LogicalTrack
     class MslTrack* getMslTrack();
     class MidiTrack* getMidiTrack();
 
+    //
+    // Subclass parameter accessors
+    // 
+
+    void bindParameter(UIAction* a);
+    void clearBindings();
+    
+    int getParameterOrdinal(SymbolId id);
+    
+    SyncSource getSyncSource();
+    SyncTrackUnit getTrackSyncUnit();
+    SyncUnit getSlaveSyncUnit();
+    int getLoopCount();
+    LeaderType getLeaderType();
+    LeaderLocation getLeaderSwitchLocation();
+
+    ParameterMuteMode getMuteMode();
+    SwitchLocation getSwitchLocation();
+    SwitchDuration getSwitchDuration();
+    SwitchQuantize getSwitchQuantize();
+    QuantizeMode getQuantizeMode();
+    EmptyLoopAction getEmptyLoopAction();
+
   private:
 
     class TrackManager* manager = nullptr;
     class Session::Track* session = nullptr;
+    Session::TrackType trackType = Session::TypeAudio;
     int number = 0;
     int engineNumber = 0;
 
@@ -62,16 +85,19 @@ class LogicalTrack
     std::unique_ptr<class BaseTrack> track;
 
     /**
-     * A colletion of parameter overrides for this track.
-     * This is currently implemented by Valuator which has its own
-     * Track model.  Not liking this.  Valuator should be in touch
-     * with TrackManager and should actually just be a Track level module.
-     * It can save bindings on the LogicalTrack.
-     * Does this need to be a ValueSet, or should it just be a list
-     * of MslBindings like Valuator does?
+     * A colletion of parameter bindings for this track.
+     * These override what is in the Session 
      */
-    ValueSet parameters;
+    class MslBinding* bindings = nullptr;
 
+    /**
+     * Kludge until the Session migration is complete.
+     * Fall back to the old Preset model.
+     */
+    int activePreset = 0;
+    
+    class Preset* getPreset();
+    
 };
 
  

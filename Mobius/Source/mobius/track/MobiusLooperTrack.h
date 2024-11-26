@@ -17,7 +17,8 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
 {
   public:
 
-    MobiusLooperTrack(class Mobius* m, class Track* t);
+    MobiusLooperTrack(class TrackManager* tm, class LogicalTrack*lt,
+                      class Mobius* m, class Track* t);
     ~MobiusLooperTrack();
 
     //

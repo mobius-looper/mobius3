@@ -28,8 +28,6 @@
 #include "../../midi/MidiSequence.h"
 #include "../../sync/Pulsator.h"
 
-#include "../Valuator.h"
-
 #include "../track/LogicalTrack.h"
 #include "../track/BaseScheduler.h"
 #include "../track/LooperScheduler.h"
@@ -59,15 +57,14 @@ const int MidiTrackMaxLoops = 8;
  * tracks are enabled for use by calling configure() passing
  * the track definition from the session.
  */
-MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) : scheduler(tm, lt, this)
+MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
+    scheduler(tm, lt, this)
 {
-    manager = tm;
-    // may not need this
-    logicalTrack = lt;
-
+    // BaseTrack needs these and can't do this easily with the initialization list
+    setTrackContext(tm, lt);
+    
     // temporary, should be used only by LooperScheduler
     pulsator = tm->getPulsator();
-    valuator = tm->getValuator();
     pools = tm->getPools();
 
     recorder.initialize(pools);
@@ -96,21 +93,20 @@ MidiTrack::~MidiTrack()
  * keep playing during minor adjustments to the session.
  *
  * todo: should this be here or should we let TrackScheduler deal with.
- *
- * todo: Valuator should now be considered the manager of the Session,
- * we don't need to pass it in.
  * 
+ * todo: LogicalTrack should now be considered the manager of the Session,
+ * we don't need to pass it in.
  */
 void MidiTrack::loadSession(Session::Track* def)
 {
     // capture sync options
     scheduler.loadSession(def);
 
-    subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
+    subcycles = logicalTrack->getParameterOrdinal(ParamSubcycles);
     // default it
     if (subcycles == 0) subcycles = 4;
     
-    loopCount = valuator->getLoopCount(number);
+    loopCount = logicalTrack->getLoopCount();
     
     // tell the player where to go
     // !! todo: Valuator should be handling this but we need accessors
@@ -190,7 +186,7 @@ bool MidiTrack::doQuery(Query* q)
         default: {
             // everything else gets passed over to Valuator
             // todo: need to be smarter about non-ordinal parameters
-            q->value = valuator->getParameterOrdinal(number, q->symbol->id);
+            q->value = logicalTrack->getParameterOrdinal(q->symbol->id);
         }
             break;
     }
@@ -836,7 +832,7 @@ void MidiTrack::doParameter(UIAction* a)
         case ParamPan: pan = a->value; break;
             
         default:
-            valuator->bindParameter(number, a);
+            logicalTrack->bindParameter(a);
             break;
     }
 }
@@ -1039,7 +1035,7 @@ void MidiTrack::doPartialReset()
     // I guess leave the levels alone
 
     // script bindings?
-    valuator->clearBindings(number);
+    logicalTrack->clearBindings();
 
     // normally wouldn't have a pulsator lock on a MIDI follower?
     pulsator->unlock(number);
@@ -1074,7 +1070,7 @@ void MidiTrack::doReset(bool full)
     feedback = 127;
     pan = 64;
 
-    subcycles = valuator->getParameterOrdinal(number, ParamSubcycles);
+    subcycles = logicalTrack->getParameterOrdinal(ParamSubcycles);
     if (subcycles == 0) subcycles = 4;
 
     if (full) {
@@ -1089,7 +1085,7 @@ void MidiTrack::doReset(bool full)
 
     // clear parameter bindings
     // todo: that whole "reset retains" thing
-    valuator->clearBindings(number);
+    logicalTrack->clearBindings();
 
     pulsator->unlock(number);
 
@@ -1558,7 +1554,7 @@ void MidiTrack::finishSwitch(int newIndex)
             recorder.setFrame(0);
             int newPlayFrame = 0;
 
-            SwitchLocation location = valuator->getSwitchLocation(number);
+            SwitchLocation location = logicalTrack->getSwitchLocation();
             if (location == SWITCH_FOLLOW) {
                 int followFrame = currentFrame;
                 // if the destination is smaller, have to modulo down

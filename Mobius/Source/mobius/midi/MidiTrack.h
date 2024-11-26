@@ -171,9 +171,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     
   private:
 
-    class TrackManager* manager = nullptr;
-    class LogicalTrack* logicalTrack = nullptr;
-    class Valuator* valuator = nullptr;
     class Pulsator* pulsator = nullptr;
     class MidiPools* pools = nullptr;
 
