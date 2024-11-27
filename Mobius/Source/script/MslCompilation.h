@@ -1,9 +1,11 @@
-
 /**
  * Class used to hold the results of a compilation.
  * This includes both parsing into an MslNode tree and at least partial linking
  * to resolve symbol references.  It is created by MslEnvironment
  * at the request of the application and must be disposed of.
+ *
+ * A "compilation unit" or more briefly "unit" can represent either a file
+ * or a string of scriptlet text.
  */
 
 #pragma once
@@ -86,6 +88,28 @@ class MslCompilation
     bool hasErrors() {
         return (errors.size() > 0);
     }
+
+    /**
+     * Set true if the #sustain directive was found
+     */
+    bool sustain = false;
+
+    /**
+     * The number argument of #sustain which represnts the sustain interval
+     * in millieconds
+     */
+    int sustainInterval = 0;
+
+    /**
+     * Set true if the #repeat directive was found
+     */
+    bool repeat = false;
+
+    /**
+     * The number argument of #repeat which represents the repeat timeout
+     * in milliseconds.
+     */
+    int repeatTimeout = 0;
 
     //
     // Runtime state

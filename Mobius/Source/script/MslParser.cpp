@@ -738,12 +738,36 @@ void MslParser::parseDirective(MslToken& t)
         script->name = remainder.trim();
     }
     else if (directive.equalsIgnoreCase("#arguments")) {
+        // better name for this would be parseSignature ?
         parseArguments(t, space, remainder);
+    }
+    else if (directive.equalsIgnoreCase("#sustain")) {
+        // argument has to be a number for now, not an expression
+        // though it could be handy to be able to reference a global varialbe
+        // so you could change the sustain interval in several scripts at once
+        script->sustain = true;
+        script->sustainInterval = parseNumber(t, remainder);
+    }
+    else if (directive.equalsIgnoreCase("#repeat")) {
+        // argument has to be a number for now, not an expression
+        // though it could be handy to be able to reference a global varialbe
+        // so you could change the sustain interval in several scripts at once
+        script->repeat = true;
+        script->repeatTimeout = parseNumber(t, remainder);
     }
     else {
         Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
         errorSyntax(t, juce::String("Unknown directive ") + directive);
     }
+}
+
+int MslParser::parseNumber(juce::String s)
+{
+    // does this need to be trimmed first, might want some syntax checking
+    int value = s.getIntValue();
+    if (value < 0)
+      errorSyntax(t, "Not a well formed number");
+    return value;
 }
 
 //////////////////////////////////////////////////////////////////////

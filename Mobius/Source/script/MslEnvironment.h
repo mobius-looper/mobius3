@@ -60,7 +60,7 @@ class MslRequest
      * same way that function call keywowrd arguments are assembled using both named
      * and position arguments.
      *
-     * These must be pooled or freely allocadted objects and ownership will
+      * These must be pooled or freely allocadted objects and ownership will
      * be taken by the environment.
      */
     MslBinding* bindings = nullptr;
@@ -73,6 +73,22 @@ class MslRequest
      * be taken by the environment.
      */
     MslValue* arguments = nullptr;
+
+    /**
+     * When non-zero this request came from a sustainable trigger, and the
+     * envionment needs to prepare to receive another request later with the same
+     * id and the release flag set.  This is relevant only for #sustain scripts.
+     *
+     * todo: This could also be relevant for #repeat scripts but in practice
+     * you won't have the same script bound to two different triggers so we
+     * don't need to match them?
+     */
+    int triggerId = 0;
+
+    /**
+     * True if this represents the release of a sustainable trigger.
+     */
+    bool release = false;
 
     //
     // Results

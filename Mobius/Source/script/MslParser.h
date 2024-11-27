@@ -62,5 +62,6 @@ class MslParser
 
     void parseDirective(MslToken& t);
     void parseArguments(MslToken& t, int offset, juce::String remainder);
-
+    int parseNumber(juce::String s);
+    
 };
