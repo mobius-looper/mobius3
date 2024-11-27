@@ -34,6 +34,7 @@ void MslBinding::init()
     value = nullptr;
     position = 0;
     symbolId = 0;
+    transient = false;
 }
 
 void MslBinding::setName(const char* s)

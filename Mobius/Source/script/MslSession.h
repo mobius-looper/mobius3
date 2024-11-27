@@ -26,6 +26,19 @@
 #include "MslContext.h"
 
 /**
+ * Internal codes for the various notification functions we
+ * may call automatiacally.
+ */
+typedef enum {
+
+    MslNotificationSustain,
+    MslNotificationRepeat,
+    MslNotificationRelease,
+    MslNotificationTimeout
+
+} MslNotificationFunction;
+
+/**
  * Helper object to hold information about asynchronous MslActions
  * sent to the context.  This will be initialized before every action.
  * MslWait will use this for WaitEventLast
@@ -52,6 +65,61 @@ class MslAsyncAction
     }
 };
 
+/**
+ * Structure to maintain state for #sustain and #repeat scripts
+ * between each notification.
+ */
+class MslSuspendState
+{
+  public:
+
+    // the system millisecond time this suspension started
+    // if this is zero it means the suspension is not active
+    int start = 0;
+
+    // the time in miliiseconds to wait between notifications
+    // for #suspend this is the length of time the trigger is held
+    // before OnSustain is called
+    // for #repeeat this is the length of time to wait for further
+    // repeat triggers before ending the session and calling OnTimeout
+    int timeout = 0;
+
+    // the time remaining in the timeout interval
+    int remaining = 0;
+
+    // the nuber of times OnSustain or OnRepeat have been called
+    // this starts at 1 for the first call
+    int count = 0;
+
+    // true if a notification could not be sent because the script
+    // was in an activate wait state, was transitioning, or was
+    // in the opposite context at the time of the resume event
+    bool pending = false;
+    
+    void init() {
+        start = 0;
+        timeout = 0;
+        remaining = 0;
+        count = 0;
+        pending = false;
+    }
+
+    bool isActive() {
+        return (start > 0);
+    }
+    
+    void activate(int t) {
+        start = juce::Time::getMillisecondCounter();
+        timeout = t;
+        remaining = timeout;
+    }
+
+    void advance() {
+        remaining = timeout;
+        count++;
+    }
+    
+};
 
 class MslSession : public MslVisitor, public MslSessionInterface
 {
@@ -75,6 +143,12 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void start(class MslContext* context, class MslCompilation* unit,
                class MslFunction* func, class MslRequest* request);
 
+    // evaluate one of the sustain/repeat notification functions
+    void release(class MslContext* c, class MslRequest* r);
+    void sustain(class MslContext* c);
+    void repeat(class MslContext* c, class MslRequest* r);
+    void timeout(class MslContext* c);
+
     // name for logging, usually the MslFunction name
     const char* getName();
 
@@ -83,6 +157,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     bool isFinished();
     bool isWaiting();
     bool isTransitioning();
+    bool isSuspended();
     bool hasErrors();
 
     // resume evaluation after transitioning or to check wait states
@@ -132,6 +207,13 @@ class MslSession : public MslVisitor, public MslSessionInterface
     int getSessionId() {
         return sessionId;
     }
+
+    int getTriggerId() {
+        return triggerId;
+    }
+    void setTriggerId(int i) {
+        triggerId = i;
+    }
     
   protected:
 
@@ -159,6 +241,11 @@ class MslSession : public MslVisitor, public MslSessionInterface
 
     // set true during evaluation to transition to the other side
     bool transitioning = false;
+
+    // for #suspend and #repeat stripts the id of the trigger that started it
+    int triggerId = 0;
+    MslSuspendState sustaining;
+    MslSuspendState repeating;
     
     // runtime errors
     class MslError* errors = nullptr;
@@ -183,11 +270,21 @@ class MslSession : public MslVisitor, public MslSessionInterface
     //
     void addError(class MslNode* node, const char* details);
     
+    void prepareStart(class MslContext* c, class MslCompilation* u);
     MslBinding* gatherStartBindings(class MslCompilation* argUnit,
                                     class MslFunction* argFunction,
                                     class MslRequest* request);
     void saveStaticBindings();
-    
+
+    void checkRepeatStart();
+    void checkSustainStart();
+
+    MslNode* getNotificationNode(MslNotificationFunction func);
+    MslNode* findNotificationFunction(const char* name);
+    void runNotification(MslContext* argContext, MslRequest* request, MslNode* node);
+    MslBinding* addSuspensionBindings(MslBinding* start);
+    MslBinding* makeSuspensionBinding(const char* name, int value);
+
     void run();
     void advanceStack();
     MslStack* pushStack(MslNode* node);

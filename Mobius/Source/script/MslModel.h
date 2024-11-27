@@ -150,26 +150,47 @@ class MslNode
 
     virtual const char* getLogName() {return "?";}
 
-    virtual bool isLiteral() {return false;}
-    virtual bool isSymbol() {return false;}
-    virtual bool isBlock() {return false;}
-    virtual bool isOperator() {return false;}
-    virtual bool isAssignment() {return false;}
-    virtual bool isVariable() {return false;}
-    virtual bool isFunction() {return false;}
-    virtual bool isIf() {return false;}
-    virtual bool isElse() {return false;}
-    virtual bool isReference() {return false;}
-    virtual bool isEnd() {return false;}
-    virtual bool isWait() {return false;}
-    virtual bool isPrint() {return false;}
-    virtual bool isContext() {return false;}
-    virtual bool isIn() {return false;}
-    virtual bool isSequence() {return false;}
-    virtual bool isArgument() {return false;}
-    virtual bool isKeyword() {return false;}
-    virtual bool isInit() {return false;}
-    virtual bool isTrace() {return false;}
+    virtual class MslLiteral* getLiteral() {return nullptr;}
+    virtual class MslSymbol* getSymbol() {return nullptr;}
+    virtual class MslBlock* getBlock() {return nullptr;}
+    virtual class MslOperator* getOperator() {return nullptr;}
+    virtual class MslAssignment* getAssignment() {return nullptr;}
+    virtual class MslVariable* getVariable() {return nullptr;}
+    virtual class MslFunctionNode* getFunction() {return nullptr;}
+    virtual class MslIf* getIf() {return nullptr;}
+    virtual class MslElse* getElse() {return nullptr;}
+    virtual class MslReference* getReference() {return nullptr;}
+    virtual class MslEnd* getEnd() {return false;}
+    virtual class MslWaitNode* getWait() {return nullptr;}
+    virtual class MslPrint* getPrint() {return nullptr;}
+    virtual class MslContextNode* getContext() {return nullptr;}
+    virtual class MslIn* getIn() {return nullptr;}
+    virtual class MslSequence* getSequence() {return nullptr;}
+    virtual class MslArgumentNode* getArgument() {return nullptr;}
+    virtual class MslKeyword* getKeyword() {return nullptr;}
+    virtual class MslInitNode* getInit() {return nullptr;}
+    virtual class MslTrace* getTrace() {return nullptr;}
+
+    bool isLiteral() {return getLiteral() != nullptr;}
+    bool isSymbol() {return getSymbol() != nullptr;}
+    bool isBlock() {return getBlock() != nullptr;}
+    bool isOperator() {return getOperator() != nullptr;}
+    bool isAssignment() {return getAssignment() != nullptr;}
+    bool isVariable() {return getVariable() != nullptr;}
+    bool isFunction() {return getFunction() != nullptr;}
+    bool isIf() {return getIf() != nullptr;}
+    bool isElse() {return getElse() != nullptr;}
+    bool isReference() {return getReference() != nullptr;}
+    bool isEnd() {return getEnd() != false;}
+    bool isWait() {return getWait() != nullptr;}
+    bool isPrint() {return getPrint() != nullptr;}
+    bool isContext() {return getContext() != nullptr;}
+    bool isIn() {return getIn() != nullptr;}
+    bool isSequence() {return getSequence() != nullptr;}
+    bool isArgument() {return getArgument() != nullptr;}
+    bool isKeyword() {return getKeyword() != nullptr;}
+    bool isInit() {return getInit() != nullptr;}
+    bool isTrace() {return getTrace() != nullptr;}
     
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslResolutionContext* rc, class MslCompilation* comp) {
         (void)context;
@@ -212,7 +233,7 @@ class MslLiteral : public MslNode
     MslLiteral(MslToken& t) : MslNode(t) {locked=true;}
     virtual ~MslLiteral() {}
 
-    bool isLiteral() override {return true;}
+    MslLiteral* getLiteral() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Literal";}
@@ -246,7 +267,7 @@ class MslKeyword : public MslNode
     MslKeyword(MslToken& t) : MslNode(t) {locked=true;}
     virtual ~MslKeyword() {}
 
-    bool isKeyword() override {return true;}
+    MslKeyword* getKeyword() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Keyword";}
 
@@ -275,7 +296,7 @@ class MslReference : public MslNode
     
     juce::String name;
     
-    bool isReference() override {return true;}
+    MslReference* getReference() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Reference";}
@@ -311,7 +332,7 @@ class MslBlock : public MslNode
     juce::OwnedArray<MslFunctionNode> functions;
     juce::OwnedArray<MslVariable> variables;
 
-    bool isBlock() override {return true;}
+    MslBlock* getBlock() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Block";}
@@ -351,7 +372,7 @@ class MslSequence : public MslNode
 
     bool armed = false;
     
-    bool isSequence() override {return true;}
+    MslSequence* getSequence() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Sequence";}
@@ -442,7 +463,7 @@ class MslOperator : public MslNode
     static MslOperators mapOperatorSymbol(juce::String& s);
     
     // runtime
-    bool isOperator() override {return true;}
+    MslOperator* getOperator() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Operator";}
@@ -474,7 +495,7 @@ class MslAssignment : public MslNode
         return wants;
     }
 
-    bool isAssignment() override {return true;}
+    MslAssignment* getAssignment() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Assignment";}
 
@@ -508,7 +529,7 @@ class MslVariable : public MslNode
 
     juce::String name;
 
-    bool isVariable() override {return true;}
+    MslVariable* getVariable() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Variable";}
 };
@@ -546,15 +567,16 @@ class MslFunctionNode : public MslNode
     bool hasArgs = false;
     bool hasBody = false;
     
-    bool isFunction() override {return true;}
+    MslFunctionNode* getFunction() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Function";}
     
     MslBlock* getBody() {
         MslBlock* body = nullptr;
         for (auto child : children) {
-            if (child->isBlock() && child->token.value == "{") {
-                body = static_cast<MslBlock*>(child);
+            MslBlock* b = child->getBlock();
+            if (b != nullptr && child->token.value == "{") {
+                body = b;
                 break;
             }
         }
@@ -563,8 +585,9 @@ class MslFunctionNode : public MslNode
     MslBlock* getDeclaration() {
         MslBlock* decl = nullptr;
         for (auto child : children) {
-            if (child->isBlock() && child->token.value == "(") {
-                decl = static_cast<MslBlock*>(child);
+            MslBlock* b = child->getBlock();
+            if (b != nullptr  && child->token.value == "(") {
+                decl = b;
                 break;
             }
         }
@@ -588,7 +611,7 @@ class MslInitNode : public MslNode
         return (children.size() != 1);
     }
     
-    bool isInit() override {return true;}
+    MslInitNode* getInit() override {return this;}
     void visit(MslVisitor* v) override {(void)v;}
     const char* getLogName() override {return "Init";}
 };
@@ -605,7 +628,7 @@ class MslIf : public MslNode
     MslIf(MslToken& t) : MslNode(t) {}
     ~MslIf() {}
 
-    bool isIf() override {return true;}
+    MslIf* getIf() override {return this;}
 
     // this one can get kind of weird with else
     // MslIf is the only thing that can receive an else so if
@@ -644,7 +667,7 @@ class MslElse : public MslNode
     MslElse(MslToken& t) : MslNode(t) {}
     ~MslElse() {}
 
-    bool isElse() override {return true;}
+    MslElse* getElse() override {return this;}
 
     bool wantsNode(class MslParser* p, MslNode* node) override {
         (void)p; (void)node;
@@ -669,7 +692,7 @@ class MslEnd : public MslNode
     MslEnd(MslToken& t) : MslNode(t) {}
     ~MslEnd() {}
 
-    bool isEnd() override {return true;}
+    MslEnd* getEnd() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "End";}
     bool operandable() override {return false;}
@@ -686,7 +709,7 @@ class MslPrint : public MslNode
         return (children.size() == 0);
     }
     
-    bool isPrint() override {return true;}
+    MslPrint* getPrint() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Print";}
     bool operandable() override {return false;}
@@ -708,7 +731,7 @@ class MslTrace : public MslNode
         return (!control && children.size() == 0);
     }
     
-    bool isTrace() override {return true;}
+    MslTrace* getTrace() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Trace";}
     bool operandable() override {return false;}
@@ -737,7 +760,7 @@ class MslIn : public MslNode
     bool hasArgs = false;
     bool hasBody = false;
     
-    bool isIn() override {return true;}
+    MslIn* getIn() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "In";}
 
@@ -781,7 +804,7 @@ class MslContextNode : public MslNode
         return false;
     }
 
-    bool isContext() override {return true;}
+    MslContextNode* getContext() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Context";}
     bool operandable() override {return false;}
@@ -819,7 +842,7 @@ class MslWaitNode : public MslNode
     
     // runtime
 
-    bool isWait() override {return true;}
+    MslWaitNode* getWait() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Wait";}
     

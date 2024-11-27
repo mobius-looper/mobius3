@@ -144,10 +144,9 @@ void MslLinker::link(MslNode* node)
 
         // now the hard part
         // only symbols need special processing right now
-        if (node->isSymbol()) {
-            MslSymbol* sym = static_cast<MslSymbol*>(node);
-            link(sym);
-        }
+        MslSymbol* sym = node->getSymbol();
+        if (sym != nullptr)
+          link(sym);
     }
 }
 
@@ -360,10 +359,10 @@ void MslLinker::resolveLocal(MslSymbol* sym)
  */
 void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
 {
-    if (node->isFunction()) {
+    MslFunctionNode* def = node->getFunction();
+    if (def != nullptr) {
         // we're inside a function definition, function signature symbols
         // will have bindings at runtime
-        MslFunctionNode* def = static_cast<MslFunctionNode*>(node);
         resolveFunctionArgument(sym, def);
     }
     else {
@@ -373,15 +372,14 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
             MslVariable *var = nullptr;
 
             // match the symbol name to either a function of variable definition
-            if (child->isFunction()) {
-                func = static_cast<MslFunctionNode*>(child);
-                if (func->name != sym->token.value)
-                  func = nullptr;
+            MslFunctionNode* f = child->getFunction();
+            if (f != nullptr && f->name == sym->token.value) {
+                func = f;
             }
-            else if (child->isVariable()) {
-                var = static_cast<MslVariable*>(child);
-                if (var->name != sym->token.value)
-                  var = nullptr;
+            else {
+                MslVariable* v = child->getVariable();
+                if (v != nullptr && v->name == sym->token.value)
+                  var = v;
             }
 
             if (func != nullptr && var != nullptr) {
@@ -439,19 +437,17 @@ void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslBlock* decl)
 {
     if (decl != nullptr) {
         for (auto arg : decl->children) {
-            MslSymbol* argsym = nullptr;
-            if (arg->isSymbol()) {
-                argsym = static_cast<MslSymbol*>(arg);
-            }
-            else if (arg->isAssignment()) {
-                // it's a default argument, LHS must be a symbol
-                if (arg->children.size() > 0) {
-                    MslNode* first = arg->children[0];
-                    if (first->isSymbol())
-                      argsym = static_cast<MslSymbol*>(first);
+            MslSymbol* argsym = arg->getSymbol();
+            if (argsym == nullptr) {
+                if (arg->isAssignment()) {
+                    // it's a default argument, LHS must be a symbol
+                    if (arg->children.size() > 0) {
+                        MslNode* first = arg->children[0];
+                        argsym = first->getSymbol();
+                    }
                 }
             }
-
+            
             if (argsym != nullptr && argsym->token.value == sym->token.value) {
                 // okay it resolves to an argument in the declaration, these
                 // are just raw symbols, they don't have MslVariableNodes around them
@@ -638,8 +634,8 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
         for (auto arg : signature->children) {
 
             // deal with keywords for :optional and :include
-            if (arg->isKeyword()) {
-                MslKeyword* key = static_cast<MslKeyword*>(arg);
+            MslKeyword* key = arg->getKeyword();
+            if (key != nullptr) {
                 if (key->name == "optional") {
                     optional = true;
                 }
@@ -655,29 +651,29 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
                 }
             }
             else {
-                MslSymbol* argsym = nullptr;
+                // if it's a symbol, it's a simple named argument
+                MslSymbol* argsym = arg->getSymbol();
                 MslNode* initializer = nullptr;
-                if (arg->isSymbol()) {
-                    // simple named argument
-                    argsym = static_cast<MslSymbol*>(arg);
-                }
-                else if (arg->isAssignment()) {
-                    MslAssignment* argass = static_cast<MslAssignment*>(arg);
-                    // assignments have two children, LHS is the symbol to assign
-                    // and RHS is the value expression
-                    // would be nicer if the parser could simplify this
-                    if (argass->children.size() > 0) {
-                        MslNode* node = argass->children[0];
-                        if (node->isSymbol()) {
-                            argsym = static_cast<MslSymbol*>(node);
-                            if (argass->children.size() > 1)
-                              initializer = argass->children[1];
+                if (argsym == nullptr) {
+                    // not a symbol, might be an assignment
+                    MslAssignment* argass = arg->getAssignment();
+                    if (argass != nullptr) {
+                        // assignments have two children, LHS is the symbol to assign
+                        // and RHS is the value expression
+                        // would be nicer if the parser could simplify this
+                        if (argass->children.size() > 0) {
+                            MslNode* node = argass->children[0];
+                            argsym = node->getSymbol();
+                            if (argsym != nullptr) {
+                                if (argass->children.size() > 1)
+                                  initializer = argass->children[1];
+                            }
                         }
                     }
-                }
-                else {
-                    // this is probably an error, what else would it be?
-                    Trace(2, "MslLinker: Unexpected situation 42");
+                    else {
+                        // this is probably an error, what else would it be?
+                        Trace(2, "MslLinker: Unexpected situation 42");
+                    }
                 }
 
                 if (argsym == nullptr) {
@@ -747,14 +743,14 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
         while (callargs.size() > 0) {
             MslNode* extra = callargs.removeAndReturn(0);
             MslArgumentNode* argref = nullptr;
-        
-            if (extra->isAssignment()) {
-                MslAssignment* argass = static_cast<MslAssignment*>(extra);
+
+            MslAssignment* argass = extra->getAssignment();
+            if (argass != nullptr) {
                 // foo(...x=y)  becomes a local binding for this symbol
                 if (argass->children.size() > 0) {
                     MslNode* node = argass->children[0];
-                    if (node->isSymbol()) {
-                        MslSymbol* argsym = static_cast<MslSymbol*>(node);
+                    MslSymbol* argsym = node->getSymbol();
+                    if (argsym != nullptr) {
                         argref = new MslArgumentNode();
                         argref->name = argsym->token.value;
                         if (argass->children.size() > 1)
@@ -792,12 +788,12 @@ MslAssignment* MslLinker::findCallKeyword(juce::Array<MslNode*>& callargs, juce:
     MslAssignment* found = nullptr;
 
     for (auto arg : callargs) {
-        if (arg->isAssignment()) {
-            MslAssignment* argass = static_cast<MslAssignment*>(arg);
+        MslAssignment* argass = arg->getAssignment();
+        if (argass != nullptr) {
             if (argass->children.size() > 0) {
                 MslNode* node = argass->children[0];
-                if (node->isSymbol()) {
-                    MslSymbol* argsym = static_cast<MslSymbol*>(node);
+                MslSymbol* argsym = node->getSymbol();
+                if (argsym != nullptr) {
                     if (argsym->token.value == name) {
                         found = argass;
                         // why the fuck is it whining about this, are the docs wrong?
@@ -822,7 +818,8 @@ MslNode* MslLinker::findCallPositional(juce::Array<MslNode*>& callargs)
     MslNode* found = nullptr;
 
     for (auto arg : callargs) {
-        if (!arg->isAssignment()) {
+        MslAssignment* ass = arg->getAssignment();
+        if (ass == nullptr) {
             found = arg;
             // again, wtf??
             //callargs.remove(arg);

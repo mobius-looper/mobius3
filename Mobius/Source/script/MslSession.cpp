@@ -1,5 +1,5 @@
 /**
- * The MSL interupreter.
+ * The MSL interpreter.
  *
  * Interpretation of symbols has been broken out into the MslSymbol file.
  *
@@ -81,6 +81,11 @@ void MslSession::init()
     context = nullptr;
     stack = nullptr;
     transitioning = false;
+    
+    triggerId = 0;
+    sustaining.init();
+    repeating.init();
+    
     errors = nullptr;
     rootValue = nullptr;
     runNumber = 0;
@@ -117,10 +122,106 @@ StructureDumper& MslSession::getLog()
 }
 
 /**
+ * Return true if we're transitioning.
+ * This is just a flag that will toss the session to the other side.
+ * It is important that the session logic does not flag a transition that doesn't
+ * make sense, or else it will just keep bouncing between them.
+ */
+bool MslSession::isTransitioning()
+{
+    return (transitioning == true);
+}
+
+/**
+ * Return true if we're waiting on something.
+ * This is not normally true if transitioning is also true since
+ * we shold do the transition before we enter the wait state.
+ *
+ * When we get to the point where sessions can have multiple threads of
+ * execution will have to check all threads.
+ *
+ * Currently a wait state is indiciated by the top of the stack having
+ * an active MslWait 
+ */
+bool MslSession::isWaiting()
+{
+    bool waiting = (stack != nullptr && stack->wait.active);
+    
+    if (waiting && transitioning)
+      Trace(1, "MslSession: I'm both transitioning and waiting, can this happen?");
+    
+    return waiting;
+}
+
+bool MslSession::isSuspended()
+{
+    return (sustaining.isActive() || repeating.isActive());
+}
+
+/**
+ * Only for MslScriptlet and the console
+ */
+MslWait* MslSession::getWait()
+{
+    MslWait* wait = nullptr;
+    if (stack != nullptr && stack->wait.active)
+      wait = &(stack->wait);
+    return wait;
+}
+
+/**
+ * Return true if the script has finished.
+ * This is indicated by an empty stack or the presence of errors.
+ * The error list is what distinguishes this from simply testing
+ * !transitioning and !waiting.  We can be in either of those states
+ * but are still fished because of errors.
+ */
+bool MslSession::isFinished()
+{
+    return (stack == nullptr || hasErrors());
+}
+
+bool MslSession::hasErrors()
+{
+    return (errors != nullptr);
+}
+
+/**
+ * Name to use in the MslResult and for logging.
+ */
+const char* MslSession::getName()
+{
+    const char* s = nullptr;
+    if (unit != nullptr)
+      s = unit->name.toUTF8();
+    return s;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Start/Resume
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
  * Primary entry point for evaluating a script.
  */
 void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
                        MslFunction* argFunction, MslRequest* request)
+{
+    prepareStart(argContext, argUnit);
+
+    stack = pool->allocStack();
+    stack->node = argFunction->getBody();
+    stack->bindings = gatherStartBindings(argUnit, argFunction, request);
+    
+    run();
+
+    checkSustainStart();
+    checkRepeatStart();
+}
+
+void MslSession::prepareStart(MslContext* argContext, MslCompilation* argUnit)
 {
     // should be clean out of the pool but make sure
     pool->free(errors);
@@ -135,16 +236,368 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
 
     log.clear();
     logStart();
+}
+
+/**
+ * At the end of each start() check to see if this is a #repeat script
+ * and prepare it for suspension.
+ */
+void MslSession::checkRepeatStart()
+{
+    if (unit->repeat) {
+        int timeout = unit->repeatTimeout;
+        if (timeout == 0)
+          // need a configuurable default
+          timeout = 1000;
+        repeating.activate(timeout);
+    }
+}
+
+/**
+ * At the end of each start() or repeat() check to see if we need to sustain
+ */
+void MslSession::checkSustainStart()
+{
+    if (unit->sustain) {
+        int timeout = unit->sustainInterval;
+        if (timeout == 0)
+          // need a configuurable default
+          timeout = 1000;
+        sustaining.activate(timeout);
+    }
+}
+
+/**
+ * Resume a script after transitioning or to check wait states.
+ * If we transitioned, it will just continue from the previous node.
+ * If waiting, we'll immediately wait again unless the MslWait was
+ * modified.
+ *
+ * If this was transitioning, the transition has happened, and that
+ * state can be cleared.
+ * 
+ * Everything else is left untouched, the error list may be non-empty
+ * if we're transitioning from the kernel back to the shell to show results.
+ */
+void MslSession::resume(MslContext* argContext)
+{
+    transitioning = false;
+
+    // stack and bindings remain in place
+    context = argContext;
+
+    logContext("resume", argContext);
+
+    // run may just immediately return if there were errors
+    // or if the MslWait hasn't been satisified
+    run();
+
+    // if we have either a pending sustain release or a repeat timeout
+    // do them now
+    // todo: need to think about how sustan/repeat work when the
+    // script is waiting, we could push a new stack frame just for the notification
+    // rather than doing it after the wait and the script finishes
+    // but this complicates how the start bindings work for the notification
+    if (stack == nullptr) {
+        if (sustaining.pending)
+          release(context, nullptr);
+        
+        if (repeating.pending)
+          repeat(context, nullptr);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sustain/Repeat Notifications
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here if Environment has received the up transition for a sustaining session.
+ */
+void MslSession::release(MslContext* argContext, MslRequest* request)
+{
+    if (!unit->sustain) {
+        // shouldn't have allowed this
+        Trace(1, "MslSession::release Script was not sustainable");
+        sustaining.init();
+    }
+    else if (!sustaining.isActive()) {
+        // also should not be here
+        // it is at least a #susstain script so we could call OnRelease
+        // but don't lead them into unpredictable expectations
+        Trace(1, "MslSession::release Script was not sustaining");
+        sustaining.init();
+    }
+    else if (stack != nullptr) {
+        // the script is still waiting on something
+        // either a wait or a transition, or is just being slow?
+        // defer the notification until it resumes
+        Trace(2, "MslSession::release Script was busy");
+        sustaining.pending = true;
+    }
+    else {
+        // if request is nullptr here, it means that the session was busy or in the
+        // opposite context when the resume event was received
+        // we can resume it now but the request arguments have been lost
+        // need a thread safe way of saving those in the suspension state
+        MslNode* node = getNotificationNode(MslNotificationRelease);
+        if (node != nullptr)
+          runNotification(argContext, request, node);
+        else {
+            // else they weren't interested which is unusual if they bothered with #sustain
+            // but allowed
+            Trace(2, "MslSession::release No OnRelease function");
+        }
+        sustaining.init();
+    }
+}
+
+/**
+ * Here if Environment detects that the sustain timeout has been reached
+ */
+void MslSession::sustain(MslContext* argContext)
+{
+    if (!unit->sustain) {
+        // shouldn't have allowed this
+        Trace(1, "MslSession::sustain Script was not sustainable");
+        sustaining.init();
+    }
+    else if (!sustaining.isActive()) {
+        Trace(1, "MslSession::sustain Script was not sustaining");
+        sustaining.init();
+    }
+    else if (stack != nullptr) {
+        // script is waiting on something or in the wrong context
+        // it should only be a wait, if it was transitioning then it would have been picked
+        // up by the maintenance cycle in the right context by now
+        // unclear what to do, so ignore it and just start sending sustain notifications
+        // when the wait is over, could also queue them up for when the wait ends?
+        Trace(2, "MslSession::sustain Script was busy");
+        // count the number of missed sustains
+        sustaining.advance();
+        // ambiguity over the pending flag which is also used for release()
+        // could have another flag?
+    }
+    else {
+        // bump the counter before calling the notificcation function
+        sustaining.advance();
+        MslNode* node = getNotificationNode(MslNotificationSustain);
+        if (node != nullptr)
+          runNotification(argContext, nullptr, node);
+        else {
+            // it's okay, but unusual
+            Trace(2, "MslSession::sustain No OnSustain function");
+        }
+    }
+}
+
+/**
+ * Here when Environment gets a trigger down and the script is #repeat
+ */
+void MslSession::repeat(MslContext* argContext, MslRequest* request)
+{
+    if (!unit->repeat) {
+        Trace(1, "MslSession::repeat Script was not repeeatable");
+        repeating.init();
+    }
+    else if (!repeating.isActive()) {
+        Trace(1, "MslSession::repeat Script was not waiting for repeats");
+        repeating.init();
+    }
+    else if (stack != nullptr) {
+        // the script is still waiting on something
+        Trace(2, "MslSession::repeat Script was busy");
+        // I guess reset the timer but DO NOT bump the counter
+        // since we didn't call it?
+        repeating.remaining = repeating.timeout;
+        // amgiugity over the pending flag for both repeat() and timeout()
+        // I think it makes sense to just ignore repeats if the script is waiting
+    }
+    else {
+        // bump the counter before calling the notificcation function
+        repeating.advance();
+        MslNode* node = getNotificationNode(MslNotificationRepeat);
+        if (node != nullptr)
+          runNotification(argContext, request, node);
+        else {
+            // it's okay, but unusual
+            Trace(2, "MslSession::repeat No OnRepeat function");
+        }
+
+        // sustain state may activate on repeats too
+        checkSustainStart();
+    }
+}
+
+/**
+ * Here for a #repeat script when we've finished waiting for more repeats.
+ */
+void MslSession::timeout(MslContext* argContext)
+{
+    if (!unit->repeat) {
+        Trace(1, "MslSession::timeout Script was not repeeatable");
+        repeating.init();
+    }
+    else if (!repeating.isActive()) {
+        Trace(1, "MslSession::timeout Script was not waiting for repeats");
+        repeating.init();
+    }
+    else if (stack != nullptr) {
+        // the script is still waiting on something
+        
+        // it could be a wait or a transition
+        // like sustain, the issue is whether to set a pending flag and do it immediately
+        // after the wait finishes or just let them accumulate
+        Trace(2, "MslSession::sustain Script was busy");
+        // so we could keep resetting the timtout until the script is no
+        // longer busy, but it seems more natural just to end the repeat now
+        repeating.pending;
+    }
+    else {
+        MslNode* node = getNotificationNode(MslNotificationTimeout);
+        if (node != nullptr)
+          runNotification(argContext, nullptr, node);
+        else {
+            // it's okay and common
+            Trace(2, "MslSession::timeout No OnTimeout function");
+        }
+        repeating.init();
+    }
+}
+
+MslNode* MslSession::getNotificationNode(MslNotificationFunction func)
+{
+    MslNode* node = nullptr;
+    
+    // determine the name of the function to call
+    // should be able to override the deafult names if desired
+    const char* name = nullptr;
+    switch (func) {
+        case MslNotificationSustain: name = "OnSustain"; break;
+        case MslNotificationRepeat: name = "OnRepeat"; break;
+        case MslNotificationRelease: name = "OnRelease"; break;
+        case MslNotificationTimeout: name = "OnTimeout"; break;
+    }
+
+    node = findNotificationFunction(name);
+    return node;
+}
+
+/**
+ * Only supporting notification functions on the root unit.
+ * If the script started from a Function instead, would need to look
+ * for inner functions inside that one.
+ *
+ * We don't need to handle this like a normal function call.
+ * The "arguments" to the function have already been effectively left
+ * as bindings on the root frame and notification functions don't need to support
+ * keyword arguments or optionals or anything fancy.
+ * Just return the function nodes body block.
+ */
+MslNode* MslSession::findNotificationFunction(const char* name)
+{
+    MslNode* node = nullptr;
+    
+    MslFunction* body = unit->getBodyFunction();
+    if (body == nullptr) {
+        Trace(1, "MslSession::findFunction Unit with no body");
+    }
+    else {
+        MslBlock* block = body->getBody();
+        MslFunctionNode* found = nullptr;
+        for (auto child : block->children) {
+            MslFunctionNode* fnode = child->getFunction();
+            if (fnode != nullptr && fnode->name == juce::String(name)) {
+                found = fnode;
+                break;
+            }
+        }
+
+        if (found != nullptr)
+          node = found->getBody();
+    }
+    return node;
+}
+
+/**
+ * Run one of the notification functions
+ */
+void MslSession::runNotification(MslContext* argContext, MslRequest* request, MslNode* node)
+{
+    prepareStart(argContext, unit);
     
     stack = pool->allocStack();
-    stack->node = argFunction->getBody();
-    stack->bindings = gatherStartBindings(argUnit, argFunction, request);
+    stack->node = node;
+
+    // restore static bindings
+    MslBinding* bindings = gatherStartBindings(unit, nullptr, request);
+    
+    // add or update the suspension state arguments
+    bindings = addSuspensionBindings(bindings);
+    
+    stack->bindings = bindings;
     
     run();
 }
 
 /**
- * Assemble the initial bindings in the root block before running.
+ * Add suspension state bindings to the list of start bindings
+ * when running a notification function.
+ *
+ * Note that this sets the "transient" flag on the bindings so they
+ * will be filtered out by saveStaticBindings when the script ends.
+ * If you don't do this they'll accumulate on each notification.
+ */
+MslBinding* MslSession::addSuspensionBindings(MslBinding* start)
+{
+    MslBinding* combined = start;
+    
+    if (sustaining.isActive()) {
+        MslBinding* b = makeSuspensionBinding("sustainCount", sustaining.count);
+        b->next = combined;
+        combined = b;
+
+        // what is more useful, knowing the start or total elapsed?
+        int now = juce::Time::getMillisecondCounter();
+        int elapsed = now - sustaining.start;
+        b = makeSuspensionBinding("sustainElapsed", elapsed);
+        b->next = combined;
+        combined = b;
+    }
+
+    if (repeating.isActive()) {
+        MslBinding* b = makeSuspensionBinding("repeatCount", repeating.count);
+        b->next = combined;
+        combined = b;
+
+        // any use for passing the elapsed time like sustain?
+    }
+    
+    return combined;
+}
+
+MslBinding* MslSession::makeSuspensionBinding(const char* name, int value)
+{
+    MslBinding* b = pool->allocBinding();
+    b->setName(name);
+    MslValue* v = pool->allocValue();
+    v->setInt(value);
+    b->value = v;
+    // important for filtering at the end!
+    b->transient = true;
+    return b;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// StartEnd Bindings
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Assemble the initial bindings for the root block before running.
  *
  * This includes the "static" bindings that are left on the compilation unit,
  * as well as arguments passed in the Request.
@@ -238,6 +691,10 @@ MslBinding* MslSession::gatherStartBindings(MslCompilation* argUnit,
  *
  * What we DO need to do is filter out request arguments that were added
  * by gatherStartBindings, these will have a non-zero position.
+ *
+ * Also filter out bindings added for sustain/repeat state.
+ * These will have the transient flag set on them, which could be useful
+ * as well for filtering non-static local bindings.
  */
 void MslSession::saveStaticBindings()
 {
@@ -248,8 +705,8 @@ void MslSession::saveStaticBindings()
     MslBinding* prev = nullptr;
     while (b != nullptr) {
         MslBinding* nextb = b->next;
-        if (b->position > 0) {
-            // it was a request argument
+        if (b->position > 0 || b->transient) {
+            // it was a request argument or other non-static binding
             if (prev == nullptr)
               finalBindings = nextb;
             else
@@ -266,103 +723,6 @@ void MslSession::saveStaticBindings()
     logBindings("finalBindings", finalBindings);
         
     unit->bindings = finalBindings;
-}
-
-/**
- * Name to use in the MslResult and for logging.
- */
-const char* MslSession::getName()
-{
-    const char* s = nullptr;
-    if (unit != nullptr)
-      s = unit->name.toUTF8();
-    return s;
-}
-
-/**
- * Resume a script after transitioning or to check wait states.
- * If we transitioned, it will just continue from the previous node.
- * If waiting, we'll immediately wait again unless the MslWait was
- * modified.
- *
- * If this was transitioning, the transition has happened, and that
- * state can be cleared.
- * 
- * Everything else is left untouched, the error list may be non-empty
- * if we're transitioning from the kernel back to the shell to show results.
- */
-void MslSession::resume(MslContext* argContext)
-{
-    transitioning = false;
-
-    // stack and bindings remain in place
-    context = argContext;
-
-    logContext("resume", argContext);
-
-    // run may just immediately return if there were errors
-    // or if the MslWait hasn't been satisified
-    run();
-}
-
-/**
- * Return true if we're transitioning.
- * This is just a flag that will toss the session to the other side.
- * It is important that the session logic does not flag a transition that doesn't
- * make sense, or else it will just keep bouncing between them.
- */
-bool MslSession::isTransitioning()
-{
-    return (transitioning == true);
-}
-
-/**
- * Return true if we're waiting on something.
- * This is not normally true if transitioning is also true since
- * we shold do the transition before we enter the wait state.
- *
- * When we get to the point where sessions can have multiple threads of
- * execution will have to check all threads.
- *
- * Currently a wait state is indiciated by the top of the stack having
- * an active MslWait 
- */
-bool MslSession::isWaiting()
-{
-    bool waiting = (stack != nullptr && stack->wait.active);
-    
-    if (waiting && transitioning)
-      Trace(1, "MslSession: I'm both transitioning and waiting, can this happen?");
-    
-    return waiting;
-}
-
-/**
- * Only for MslScriptlet and the console
- */
-MslWait* MslSession::getWait()
-{
-    MslWait* wait = nullptr;
-    if (stack != nullptr && stack->wait.active)
-      wait = &(stack->wait);
-    return wait;
-}
-
-/**
- * Return true if the script has finished.
- * This is indicated by an empty stack or the presence of errors.
- * The error list is what distinguishes this from simply testing
- * !transitioning and !waiting.  We can be in either of those states
- * but are still fished because of errors.
- */
-bool MslSession::isFinished()
-{
-    return (stack == nullptr || hasErrors());
-}
-
-bool MslSession::hasErrors()
-{
-    return (errors != nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////

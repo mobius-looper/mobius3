@@ -42,6 +42,11 @@ class MslBinding
     // used to resolve alternate $x references rather than name references
     int position = 0;
 
+    // for internal notification arguments like sustain/repeat
+    // or for non-statkc local bindings, this means it should not be
+    // saved when the script ends
+    bool transient = false;
+
     // todo: if this overloads an external Symbol, will need information
     // about save/restore state
 

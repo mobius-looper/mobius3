@@ -14,6 +14,9 @@
 #include "../model/ScriptProperties.h"
 
 #include "MslEnvironment.h"
+#include "MslLinkage.h"
+#include "MslCompilation.h"
+
 #include "ActionAdapter.h"
 
 /**
@@ -59,6 +62,37 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
         MslRequest req;
 
         req.linkage = s->script->mslLinkage;
+
+        // Really need to support passing MslBindings for named arguments
+        // there are two argument conventions used with UIAction a value number
+        // and an arguments string.  The number is used often for internal actions
+        // but for scripts it's more flexible to require the string.  To make use of this
+        // need to support splitting the string either here or with some library functions
+        if (strlen(action->arguments) > 0) {
+            MslValue* v = env->allocValue();
+            v->setString(action->arguments);
+            req.arguments = v;
+        }
+
+        // if this flag is set, it means the binding expects this to be a sustainable
+        // action and sustainId will be set
+        // todo: should only get here if the script itself used the #sustain option
+        // and advertised itself as sustainable
+        if (action->sustain || action->sustainEnd) {
+
+            if (req.linkage->unit == nullptr) {
+                Trace(1, "ActionAdapter: Calling MSL with a linkage without a unit");
+            }
+            else if (!req.linkage->unit->sustain) {
+                // the action thinks it's going to sustain but the script doesn't
+                // expect that
+                Trace(1, "ActionAdapter: Sustainable action used for non-sustainable script %s",
+                      s->getName());
+            }
+
+            req.triggerId = action->sustainId;
+            req.release = action->sustainEnd;
+        }
 
         env->request(c, &req);
 

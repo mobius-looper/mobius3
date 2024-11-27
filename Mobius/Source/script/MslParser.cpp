@@ -111,22 +111,24 @@ void MslParser::sift()
     int index = 0;
     while (index < root->size()) {
         MslNode* node = root->get(index);
-        
-        if (node->isFunction()) {
-            MslFunctionNode* f = static_cast<MslFunctionNode*>(node);
+
+        MslFunctionNode* f = node->getFunction();
+        if (f != nullptr) {
             root->remove(node);
             functionize(f);
         }
-        else if (node->isInit()) {
-            MslInitNode* i = static_cast<MslInitNode*>(node);
-            root->remove(node);
-            functionize(i);
-        }
         else {
-            index++;
+            MslInitNode* i = node->getInit();
+            if (i != nullptr) {
+                root->remove(node);
+                functionize(i);
+            }
+            else {
+                index++;
+            }
         }
     }
-
+    
     // what remains becomes the body block for the script
     // which may be evaluated if it has a reference name
     embody();
@@ -477,11 +479,9 @@ void MslParser::parseInner(juce::String source)
                         current = current->parent;
 
                         // maybe call wantsNode here instead
-                        if (current->isSequence()) {
-                            MslSequence* seq = static_cast<MslSequence*>(current);
-                            seq->armed = true;
-                        }
-                        
+                        MslSequence* seq = current->getSequence();
+                        if (seq != nullptr)
+                          seq->armed = true;
                     }
                 }
                 else if (t.value == ":") {
@@ -532,9 +532,8 @@ void MslParser::parseOperator(MslToken& t, MslOperators opcode)
         // either subsume the last node, or if we're adjacent to an
         // operator of lower priority, it's second operand
         MslNode* operand = last;
-        if (operand->isOperator()) {
-            MslOperator* other = static_cast<MslOperator*>(operand);
-            
+        MslOperator* other = operand->getOperator();
+        if (other != nullptr) {
             // old way
             //if (precedence(op->token.value, operand->token.value) >= 0) {
             if (precedence(opcode, other->opcode) >= 0) {
@@ -761,7 +760,7 @@ void MslParser::parseDirective(MslToken& t)
     }
 }
 
-int MslParser::parseNumber(juce::String s)
+int MslParser::parseNumber(MslToken& t, juce::String s)
 {
     // does this need to be trimmed first, might want some syntax checking
     int value = s.getIntValue();

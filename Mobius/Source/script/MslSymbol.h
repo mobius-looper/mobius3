@@ -131,7 +131,7 @@ class MslArgumentNode : public MslNode
     MslArgumentNode() : MslNode() {}
     virtual ~MslArgumentNode() {}
     
-    bool isArgument() override {return true;}
+    MslArgumentNode* getArgument() override {return this;}
     bool operandable() override {return false;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Argument";}
@@ -171,7 +171,7 @@ class MslSymbol : public MslNode
     MslSymbol(MslToken& t) : MslNode(t) {}
     virtual ~MslSymbol() {}
 
-    bool isSymbol() override {return true;}
+    MslSymbol* getSymbol() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Symbol";}
