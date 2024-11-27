@@ -754,6 +754,9 @@ void MslParser::parseDirective(MslToken& t)
         script->repeat = true;
         script->repeatTimeout = parseNumber(t, remainder);
     }
+    else if (directive.equalsIgnoreCase("#usage")) {
+        script->usage = remainder.trim();
+    }
     else {
         Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
         errorSyntax(t, juce::String("Unknown directive ") + directive);

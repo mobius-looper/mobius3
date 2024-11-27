@@ -1615,6 +1615,14 @@ bool MobiusKernel::mslIsScopeKeyword(const char* name)
     return false;
 }
 
+bool MobiusKernel::mslIsUsageArgument(const char* usage, const char* name)
+{
+    (void)usage;
+    (void)name;
+    Trace(1, "MobiusKernel::mslIsUsageArgument Shouldn't be here");
+    return false;
+}
+
 bool MobiusKernel::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)
 {
     return scriptUtil.expandScopeKeyword(name, numbers);

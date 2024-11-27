@@ -41,6 +41,7 @@ class MslLinker
     void resolveScriptArgument(class MslSymbol* sym);
     void resolveExternal(class MslSymbol* sym);
     bool isExternalKeyword(class MslSymbol* sym);
+    void resolveExternalUsage(class MslSymbol* sym);
 
     void compileArguments(class MslSymbol* sym);
     void compileArguments(class MslSymbol* sym, class MslBlock* signature);

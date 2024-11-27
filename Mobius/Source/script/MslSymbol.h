@@ -67,6 +67,10 @@ class MslResolution
     // an external keyword defined by the containing application
     bool keyword = false;
 
+    // an external usage argument
+    // could lwe just use keyword for this too?
+    bool usageArgument = false;
+
     void reset() {
         localVariable = nullptr;
         functionArgument = false;
@@ -75,6 +79,7 @@ class MslResolution
         linkage = nullptr;
         external = nullptr;
         keyword = false;
+        usageArgument = false;
     }
 
     // true if we found something
@@ -85,7 +90,7 @@ class MslResolution
                 localFunction != nullptr ||
                 linkage != nullptr ||
                 external != nullptr ||
-                keyword);
+                keyword || usageArgument);
     }
 
     // true if what we found is a function

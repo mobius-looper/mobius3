@@ -151,6 +151,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void mslExport(class MslLinkage* link) override;
     int mslGetMaxScope() override;
     bool mslIsScopeKeyword(const char* name) override;
+    bool mslIsUsageArgument(const char* usage, const char* name) override;
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
     juce::File mslGetLogRoot() override;
 

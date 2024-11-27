@@ -325,6 +325,8 @@ void MslLinker::resolve(MslSymbol* sym)
         if (!sym->isResolved()) {
             // then externals
             resolveExternal(sym);
+            if (!sym->isResolved())
+              resolveExternalUsage(sym);
         }
     }
         
@@ -504,6 +506,15 @@ void MslLinker::resolveExternal(MslSymbol* sym)
 
         sym->resolution.external = external;
     }
+}
+
+void MslLinker::resolveExternalUsage(MslSymbol* sym)
+{
+    juce::String refname = sym->token.value;
+
+    if (unit->usage.length() > 0)
+      sym->resolution.usageArgument =
+          context->mslIsUsageArgument(unit->usage.toUTF8(), sym->token.value.toUTF8());
 }
 
 /**

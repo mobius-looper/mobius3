@@ -2580,6 +2580,14 @@ bool Supervisor::mslIsScopeKeyword(const char* name)
     return scriptUtil.isScopeKeyword(name);
 }
 
+bool Supervisor::mslIsUsageArgument(const char* usage, const char* name)
+{
+    (void)usage;
+    (void)name;
+    // todo: for event scripts return true if this is one of the known arguments
+    return false;
+}
+
 bool Supervisor::mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers)
 {
     return scriptUtil.expandScopeKeyword(name, numbers);

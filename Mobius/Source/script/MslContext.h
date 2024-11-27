@@ -208,6 +208,11 @@ class MslContext
     // given the name of a symbol within the "in" statement
     // return true if this is a valid scope reference keyword
     virtual bool mslIsScopeKeyword(const char* name) = 0;
+
+    // given a usage identifier from the script source, and the name of an
+    // otherwise unresolved symbol reference, return true if this will be
+    // a usage specific argument passed into the script
+    virtual bool mslIsUsageArgument(const char* usage, const char* name) = 0;
     
     // given the name of an abstract scope used with the "in" statement
     // fill in an array of concrete scope numbers for that scope

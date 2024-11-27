@@ -111,6 +111,14 @@ class MslCompilation
      */
     int repeatTimeout = 0;
 
+    /**
+     * Usage name.  Used for scripts that are used in a certain context
+     * to allow deferred resolution symbol references that are
+     * ensured to be passed in at runtime.  e.g. event scripts
+     * and references to "eventType" and "eventTrack"
+     */
+    juce::String usage;
+
     //
     // Runtime state
     //
