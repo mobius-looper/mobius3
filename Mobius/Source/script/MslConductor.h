@@ -81,6 +81,10 @@ class MslConductor
     MslResult* getResult(int id);
     bool isWaiting(int id);
 
+    // suspended sessions
+    MslSession* removeSuspended(class MslContext* c, int triggerId);
+    void sendRequest(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
+
   private:
 
     juce::CriticalSection criticalSection;

@@ -134,7 +134,7 @@ void MslConductor::shellTransition()
         MslSession* next = neu->next;
         neu->next = nullptr;
 
-        if (neu->isFinished()) {
+        if (neu->isFinished() && !neu->isSuspended()) {
             finishResult(neu);
         }
         else {
@@ -147,6 +147,14 @@ void MslConductor::shellTransition()
 
 /**
  * Iterate over the active shell sessions.
+ *
+ * TODO: Potential issues if the maintenance thread that calls this
+ * is allowed to be concurrent with the UI thread which is creating
+ * new sessions or doing suspend/repeat notifications.
+ * Currently the two block in Mobus but this shouldn't be assumed.
+ *
+ * This would have to remove the session from the list with a lock
+ * in order to process it, then put it back with a lock if it didn't finish.
  */
 void MslConductor::shellIterate(MslContext* context)
 {
@@ -158,7 +166,10 @@ void MslConductor::shellIterate(MslContext* context)
 
         environment->processSession(context, current);
 
-        if (current->isFinished() || current->isTransitioning()) {
+        // not liking the name "Finished"
+        bool finished = current->isFinished() && !current->isSuspended();
+
+        if (finished || current->isTransitioning()) {
             
             // splice it out of the list
             if (prev != nullptr)
@@ -167,7 +178,7 @@ void MslConductor::shellIterate(MslContext* context)
               shellSessions = next;
             current->next = nullptr;
 
-            if (current->isFinished()) {
+            if (finished) {
                 finishResult(current);
             }
             else {
@@ -324,7 +335,9 @@ void MslConductor::kernelIterate(MslContext* context)
 
         environment->processSession(context, current);
 
-        if (current->isFinished() || current->isTransitioning()) {
+        bool finished = current->isFinished() && !current->isSuspended();
+
+        if (finished || current->isTransitioning()) {
             
             // splice it out of the list
             if (prev != nullptr)
@@ -384,16 +397,23 @@ void MslConductor::addTransitioning(MslContext* weAreHere, MslSession* s)
  * Although we are on the "right side" the shell still needs to csect
  * protect the list because UIActions can be handled by both the UI
  * thread and the maintenance thread.  Really?  won't they be blocking
- * each other?
+ * each other?  If it can be assured that the maintenance thread can't
+ * be running at the same time as the UI thread could avoid this.  HOWEVER
+ * this means MIDI events need to be sent through the UI thread since
+ * those come in on their own special thread.  I believe this is true.
  *
- * !!!!!!!!!!!!! why is this a special case, this is only used
- * on the initial launch, once launched transition() is used to toss
- * it from one side to another.  
+ * Note that the lock here isn't enough if this is really an issue because
+ * shellIterate isn't locking.
+ *
  */
 void MslConductor::addWaiting(MslContext* weAreHere, MslSession* s)
 {
     if (weAreHere->mslGetContextId() == MslContextShell) {
-        // use the result csect since the kernel doesn't care
+        // this actually can't happen because Session will force a
+        // kernel transition when setting up a wait state
+        Trace(1, "MslConductor: Adding a waiting session to the shell list");
+        
+        // use the result csect since the kernel doesn't care 
         juce::ScopedLock lock (criticalSectionResult);
         s->next = shellSessions;
         shellSessions = s;
@@ -472,6 +492,57 @@ bool MslConductor::remove(MslSession** list, MslSession* s)
         ptr->next = nullptr;
     }
     return foundit;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Suspended
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Return a session that is on the list matching the given triggerId.
+ * TODO: THis has the UI/maintenance thread issue in the Shell context.
+ */
+MslSession* MslConductor::removeSuspended(MslContext* c, int triggerId)
+{
+    MslSession* found = nullptr;
+
+    if (c == MslContextShell) {
+        MslSession* ses = shellSessions;
+        while (ses != nullptr) {
+            if (ses->getTriggerId() == triggerId()) {
+                found = ses;
+                break;
+            }
+        }
+    }
+    else {
+        MslSession* ses = kernelSessions;
+        while (ses != nullptr) {
+            if (ses->getTriggerId() == triggerId()) {
+                found = ses;
+                break;
+            }
+        }
+    }
+    return found;
+}
+
+/**
+ * Called when a suspended session has been finished and can be removed
+ * from the list.
+ */
+bool MslConductor::removeSuspended(MslContext* c, MslSession* ses)
+{
+    bool found = false;
+    
+    if (c == MslContextShell)
+      found = remove(&shellSessions, s);
+    else
+      found = remove(&kernelSessions, s);
+
+    return found;
 }
 
 //////////////////////////////////////////////////////////////////////
