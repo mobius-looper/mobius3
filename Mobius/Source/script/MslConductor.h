@@ -49,6 +49,8 @@
 #include <JuceHeader.h>
 
 #include "MslConstants.h"
+#include "MslMessage.h"
+#include "MslProcess.h"
 
 class MslConductor
 {
@@ -107,12 +109,21 @@ class MslConductor
     class MslMessage* toShellMessages = nullptr;
     class MslMessage* toKernelMessages = nullptr;
     class MslResult* results = nullptr;
+
+    MslMessagePool messagePool;
+    MslProcessPool processPool;
     
     void deleteSessionList(class MslSession* list);
     void deleteResultList(class MslResult* list);
     void deleteMessageList(class MslMessage* list);
     void finishResult(class MslSession* s);
     bool remove(class MslSession** list, class MslSession* s);
+
+    void processMessage(class MslContext* c, class MslMessage* m);
+    void doNotification(class MslContext* c, class MslMessage* m);
+    void doRelease(class MslContext* c, class MslMessage* m);
+    void doRepeat(class MslContext* c, class MslMessage* m);
+    
 
 };
 

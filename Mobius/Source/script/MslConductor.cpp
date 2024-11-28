@@ -584,8 +584,9 @@ bool MslConductor::probeSuspended(MslContext* c, int triggerId)
 
 void MslConductor::sendMessage(MslContext* c, MslNotificationFunction type, MslRequest* req)
 {
-    MslMessage* msg = environment->getPool()->allocMessage();
+    MslMessage* msg = messagePool->newMessage();
 
+    msg->type = MslMessage::TypeNotification;
     msg->notification = type;
     msg->bindings = req->bindings;
     msg->arguments = req->arguments;
@@ -631,6 +632,65 @@ void MslConductor::consumeMessages(MslContext* c)
 
 void MslConductor::processMessage(MslContext* c, MslMessage* m)
 {
+    switch (m->type) {
+        case MslMessage::MsgeNone:
+            Trace(1, "MslConductor::processMessage Message with no type");
+            break;
+        case MslMessage::MsgTransition:
+            Trace(1, "MslConductor::processMessage MsgTransition unexpected");
+            break;
+        case MslMessage::MsgNotification:
+            doNotification(c, m);
+            break;
+        case MslMessage::MsgCompletion:
+            Trace(1, "MslConductor::processMessage MsgCompletion unexpected");
+            break;
+        case MslMessage::MsgResult:
+            Trace(1, "MslConductor::processMessage MsgResult unexpected");
+            break;
+    }
+
+    // todo: return the bindings and arguments to the pool
+    // rather than just deleting them
+    m->clear();
+
+    messagePool->checkin(m);
+}
+
+void MslConductor::doNotification(MslContext* c, MslMessage* m)
+{
+    switch (m->notification) {
+        case MslMessage::MslNotificationRelease:
+            doRelease(c, m);
+            break;
+        case MslMessage::MslNotificationRepeat:
+            doRepeat(c, m);
+            break;
+        default:
+            Trace(1, "MslConductor::doNotification Unexpected notification type %d",
+                  m->notification);
+            break;
+    }
+}
+
+void MslConductor::doRelease(c, m)
+{
+    (void)c;
+    (void)m;
+    Trace(1, "MslConductor::doNotification Release not implemented");
+}
+
+void MslConductor::doRepeat(c, m)
+{
+    (void)c;
+    (void)m;
+    Trace(1, "MslConductor::doNotification Repeat not implemented");
+}
+
+#if 0
+        case MslMessage::MsgTransition:
+        
+            
     MslSession* sessions = nullptr;
     
     if (c->mslGetContextId() == MslContextShell)
@@ -658,6 +718,7 @@ void MslConductor::processMessage(MslContext* c, MslMessage* m)
         environment->processMessage(c, m, found);
     }
 }
+#endif
 
 void MslConductor::advanceSuspended(MslContext* c)
 {

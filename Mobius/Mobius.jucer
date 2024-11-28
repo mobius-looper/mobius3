@@ -806,6 +806,8 @@
               file="Source/script/MslPreprocessor.cpp"/>
         <FILE id="qtqfqu" name="MslPreprocessor.h" compile="0" resource="0"
               file="Source/script/MslPreprocessor.h"/>
+        <FILE id="is2GnL" name="MslProcess.cpp" compile="1" resource="0" file="Source/script/MslProcess.cpp"/>
+        <FILE id="S1tVF7" name="MslProcess.h" compile="0" resource="0" file="Source/script/MslProcess.h"/>
         <FILE id="lavRAY" name="MslResult.cpp" compile="1" resource="0" file="Source/script/MslResult.cpp"/>
         <FILE id="cg5Mmk" name="MslResult.h" compile="0" resource="0" file="Source/script/MslResult.h"/>
         <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
