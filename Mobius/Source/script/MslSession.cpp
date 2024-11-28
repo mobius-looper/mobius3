@@ -158,6 +158,16 @@ bool MslSession::isSuspended()
     return (sustaining.isActive() || repeating.isActive());
 }
 
+MslSuspendState* MslSession::getSustainState()
+{
+    return &sustaining;
+}
+
+MslSuspendState* MslSession::getRepeatState()
+{
+    return &repeating;
+}
+
 /**
  * Only for MslScriptlet and the console
  */
@@ -355,7 +365,9 @@ void MslSession::release(MslContext* argContext, MslRequest* request)
 }
 
 /**
- * Here if Environment detects that the sustain timeout has been reached
+ * Here when Environment detects that the sustain timeout has been reached
+ * The count has already been advanced and it will be re-armed if the sustain
+ * is still active when this returns.
  */
 void MslSession::sustain(MslContext* argContext)
 {
@@ -369,25 +381,24 @@ void MslSession::sustain(MslContext* argContext)
         sustaining.init();
     }
     else if (stack != nullptr) {
-        // script is waiting on something or in the wrong context
+        // script is waiting on something or is transitioning
         // it should only be a wait, if it was transitioning then it would have been picked
         // up by the maintenance cycle in the right context by now
-        // unclear what to do, so ignore it and just start sending sustain notifications
-        // when the wait is over, could also queue them up for when the wait ends?
-        Trace(2, "MslSession::sustain Script was busy");
-        // count the number of missed sustains
-        sustaining.advance();
+        // unclear what to do, so ignore it and wait for the next timeout
         // ambiguity over the pending flag which is also used for release()
         // could have another flag?
+        Trace(2, "MslSession::sustain Script was busy");
+
+        // todo: it wouldn't be that hard to do the notification anyway by pushing
+        // a new node and then returning to the currrent one
     }
     else {
-        // bump the counter before calling the notificcation function
-        sustaining.advance();
         MslNode* node = getNotificationNode(MslNotificationSustain);
         if (node != nullptr)
           runNotification(argContext, nullptr, node);
         else {
             // it's okay, but unusual
+            // why would you ask for #sustain if you dodn't provide a function?
             Trace(2, "MslSession::sustain No OnSustain function");
         }
     }
@@ -411,7 +422,7 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
         Trace(2, "MslSession::repeat Script was busy");
         // I guess reset the timer but DO NOT bump the counter
         // since we didn't call it?
-        repeating.remaining = repeating.timeout;
+        repeating.timeoutStart =  juce::Time::getMillisecondCounter();
         // amgiugity over the pending flag for both repeat() and timeout()
         // I think it makes sense to just ignore repeats if the script is waiting
     }
@@ -432,7 +443,7 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
 }
 
 /**
- * Here for a #repeat script when we've finished waiting for more repeats.
+ * Here when Environment determined that the repeat timeout has been reached.
  */
 void MslSession::timeout(MslContext* argContext)
 {

@@ -24,19 +24,7 @@
 #include "MslBinding.h"
 #include "MslWait.h"
 #include "MslContext.h"
-
-/**
- * Internal codes for the various notification functions we
- * may call automatiacally.
- */
-typedef enum {
-
-    MslNotificationSustain,
-    MslNotificationRepeat,
-    MslNotificationRelease,
-    MslNotificationTimeout
-
-} MslNotificationFunction;
+#include "MslConstants.h"
 
 /**
  * Helper object to hold information about asynchronous MslActions
@@ -84,8 +72,8 @@ class MslSuspendState
     // repeat triggers before ending the session and calling OnTimeout
     int timeout = 0;
 
-    // the time remaining in the timeout interval
-    int remaining = 0;
+    // the time we reset the timeout
+    int timeoutStart = 0;
 
     // the nuber of times OnSustain or OnRepeat have been called
     // this starts at 1 for the first call
@@ -99,7 +87,7 @@ class MslSuspendState
     void init() {
         start = 0;
         timeout = 0;
-        remaining = 0;
+        timeoutStart = 0;
         count = 0;
         pending = false;
     }
@@ -111,11 +99,10 @@ class MslSuspendState
     void activate(int t) {
         start = juce::Time::getMillisecondCounter();
         timeout = t;
-        remaining = timeout;
+        timeoutStart = start;
     }
 
     void advance() {
-        remaining = timeout;
         count++;
     }
     
@@ -158,6 +145,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     bool isWaiting();
     bool isTransitioning();
     bool isSuspended();
+    MslSuspendState* getSustainState();
+    MslSuspendState* getRepeatState();
     bool hasErrors();
 
     // resume evaluation after transitioning or to check wait states

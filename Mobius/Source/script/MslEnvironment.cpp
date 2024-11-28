@@ -18,6 +18,7 @@
 #include "MslResult.h"
 #include "MslExternal.h"
 #include "MslSymbol.h"
+#include "MslMessage.h"
 
 #include "MslEnvironment.h"
 
@@ -135,81 +136,130 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     if (link == nullptr) {
         Trace(1, "MslEnvironment::request Missing link");
     }
-    else if (link->function != nullptr) {
-        if (req.release) {
-            release(c, req);
-        }
-        else if (link->unit->repeat) {
-            if (req->triggerId == 0)
-              Trace(1, "MslEnvironment: Potential repeat request didn't have a trigger id");
-            else {
-                // probe first before assuming a message needs to be sent
-                if (conductor.probeSuspended(c, req->triggerId))
-                  repeat(c, req);
-                else {
-                    // not repeating, start normally
-                }
-            }
-        }
-        else {
-            MslSession* session = pool.allocSession();
-
-            // give each session an incrementing number used to save the trace logs
-            // not thread safe, but enough for debug logging
-            runNumber++;
-            session->setRunNumber(runNumber);
-        
-            session->start(c, link->unit, link->function, req);
-
-            if (session->isFinished()) {
-
-                logCompletion(c, link->unit, session);
-            
-                if (session->hasErrors()) {
-                    Trace(1, "MslEnvironment: Script returned with errors");
-                    // will want options to control the generation of a result since
-                    // for actions there could be lot of them
-                    (void)makeResult(session, true);
-                    // todo: should have a way to convey at least an error flag in the action?
-                }
-                else {
-                    // script/function return value was left on the session, copy it
-                    // into the request
-                    // may have interesting runtime statistics or complex result values as well
-                    MslValue* result = session->getValue();
-                    if (result != nullptr && !result->isNull()) {
-                        Trace(2, "MslEnvironment: Script returned %s", result->getString());
-                        // copy the value rather than the object so the caller doesn't have
-                        // to mess with reclamation
-                        req->result.setString(result->getString());
-                    }
-                    // !! what about errors, they can be left behind on the session too
-                    // for things like MIDI requests at most we need is a single line of text for
-                    // an alert, the user can then go to the script console for details
-                }
-                pool.free(session);
-            }
-            else if (session->isTransitioning()) {
-                (void)makeResult(session, false);
-                conductor.addTransitioning(c, session);
-                // todo: put something in the request?
-            }
-            else if (session->isWaiting()) {
-                // actually can't get here since wait forces a transition
-                (void)makeResult(session, false);
-                conductor.addWaiting(c, session);
-                // todo: put something in the request?
-            }
-        }
-    }
     else if (link->variable != nullptr) {
         Trace(1, "MslEnvironment: Variable requsts not implemented");
-        // I suppose we could free the MslValue to the pool but this isn't
-        // implemented yet anyway so let it leak
     }
-    else {
+    else if (link->function == nullptr) {
         Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());
         req->error.setError("Unresolved link");
+    }
+    else if (req->release) {
+        // this can only do OnRelease
+        release(c, req, link);
+    }
+    else {
+        bool repeating = false;
+        if (link->unit->repeat) {
+            // it it potentially repeatable, but have to probe first
+            if (req->triggerId == 0) {
+                // could soften this and just do it normally
+                // but caller should be sending these if they're bothering
+                // to use repeat scripts
+                Trace(1, "MslEnvironment: Potential repeat request didn't have a trigger id");
+            }
+            else {
+                repeating = conductor.probeSuspended(c, req->triggerId);
+            }
+        }
+
+        if (repeating)
+          repeat(c, req, link);
+        else
+          start(c, req, link);
+    }
+
+    // todo: clean request arguments if they weren't taken
+    if (req->arguments != nullptr || req->bindings != nullptr)
+      Trace(1, "MslEnvironment::request Leaking request arguments");
+}
+
+/**
+ * Start a new session.
+ */
+void MslEnvironment::start(MslContext* c, MslRequest* req, MslLinkage* link)
+{
+    MslSession* session = pool.allocSession();
+
+    // give each session an incrementing number used to save the trace logs
+    // not thread safe, but enough for debug logging
+    runNumber++;
+    session->setRunNumber(runNumber);
+        
+    session->start(c, link->unit, link->function, req);
+
+    complete(c, req, link, session);
+}
+
+/**
+ * Common completion processing after start, release, and repeat
+ */
+void MslEnvironment::complete(MslContext* c, MslRequest* req, MslLinkage* link,
+                              MslSession* session)
+{
+    // if it runs to completion can resturn a result
+    if (session->isFinished()) {
+
+        logCompletion(c, link->unit, session);
+            
+        if (session->hasErrors()) {
+            Trace(1, "MslEnvironment: Script returned with errors");
+            // will want options to control the generation of a result since
+            // for actions there could be lot of them
+            if (session->result == nullptr)
+              (void)makeResult(session, true);
+            // todo: should have a way to convey at least an error flag in the action?
+        }
+        else if (req != nullptr) {
+            // script/function return value was left on the session, copy it
+            // into the request
+            // may have interesting runtime statistics or complex result values as well
+            MslValue* result = session->getValue();
+            if (result != nullptr && !result->isNull()) {
+                Trace(2, "MslEnvironment: Script returned %s", result->getString());
+                // copy the value rather than the object so the caller doesn't have
+                // to mess with reclamation
+                req->result.setString(result->getString());
+            }
+            // !! what about errors, they can be left behind on the session too
+            // for things like MIDI requests at most we need is a single line of text for
+            // an alert, the user can then go to the script console for details
+        }
+    }
+
+    if (session->hasErrors()) {
+        // this should have caused isFinished() to return true
+        // and we dealt with the result already
+        // I guess it doesn't matter if this wants to suspend, once
+        // we hit errors it ends
+        pool.free(session);
+    }
+    else if (session->isTransitioning()) {
+        // shouldn't be transitioning and finished at the same time
+        if (session->isFinished())
+          Trace(1, "MslEnvironment::complete Finished or Transitioning, can't be both");
+        // again should be optional for simple things since
+        // almost everything transitions
+        if (session->result == nullptr)
+          (void)makeResult(session, false);
+        conductor.addTransitioning(c, session);
+        // todo: put something in the request?
+    }
+    else if (session->isWaiting()) {
+        // actually can't get here since wait forces a transition
+        if (session->result == nullptr)
+          (void)makeResult(session, false);
+        conductor.addWaiting(c, session);
+        // todo: put something in the request?
+    }
+    else if (session->isSuspended()) {
+        // this is usually in a state of isFinished, but we need to keep it alive
+        // this is like a wait in that it goes back on the list
+        // but we don't create a result
+        conductor.addWaiting(c, session);
+    }
+    else {
+        // finished with nowhere else to go
+        pool.free(session);
     }
 }
 
@@ -251,17 +301,15 @@ void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSessi
 /**
  * Here from request() when this is a release action.
  */
-void MslEnvironment::release(MslContext* c, MslRequest* req)
+void MslEnvironment::release(MslContext* c, MslRequest* req, MslLinkage* link)
 {
     if (!link->unit->sustain) {
         // this could be silently ignored, but the container should be
         // suppressing this if it knows that the script doesn't support sustaining
         Trace(1, "MslEnvironment: Release request for non-sustainable script");
-        // !! supposed to consume the request arguments
     }
     else if (req->triggerId == 0) {
         Trace(1, "MslEnvironment: Release request without a trigger id");
-        // !! supposed to consume the request arguments
     }
     else {
         // this remmoves it from the list if it is on our side
@@ -271,69 +319,14 @@ void MslEnvironment::release(MslContext* c, MslRequest* req)
             // in pracctice this will almost always from the shell to the kernel
             // could probe here like repeat() just to make sure we don't waste
             // a message
-            conductor.sendRequest(c, MslNotificationRelease, req);
+            conductor.sendMessage(c, MslNotificationRelease, req);
         }
         else {
             // it's on our side, if we're the Shell have the potential thread
             // issue with the maintenance thread if it isn't blocking on the UI thread
-            
             session->release(c, req);
 
-            if (session->isFinished() && !session->isSuspended()) {
-
-                logCompletion(c, link->unit, session);
-            
-                if (session->hasErrors()) {
-                    Trace(1, "MslEnvironment: Script release returned with errors");
-                    // will want options to control the generation of a result since
-                    // for actions there could be lot of them
-                    // for release scripts there might already be a result
-                    if (session->result == nullptr)
-                      (void)makeResult(session, true);
-                    // todo: should have a way to convey at least an error flag in the action?
-                }
-                else {
-                    // script/function return value was left on the session, copy it
-                    // into the request
-                    // may have interesting runtime statistics or complex result values as well
-                    // this is less necessary for release actions, but may as well 
-                    MslValue* result = session->getValue();
-                    if (result != nullptr && !result->isNull()) {
-                        Trace(2, "MslEnvironment: Script returned %s", result->getString());
-                        // copy the value rather than the object so the caller doesn't have
-                        // to mess with reclamation
-                        req->result.setString(result->getString());
-                    }
-                    // !! what about errors, they can be left behind on the session too
-                    // for things like MIDI requests at most we need is a single line of text for
-                    // an alert, the user can then go to the script console for details
-                }
-
-                pool.free(session);
-            }
-            else if (session->isTransitioning()) {
-                // unlike start() we don't need to call makeResult here?
-                // well we would if we hadn't transitioned before and the
-                // notification function wanted to transition
-                conductor.addTransitioning(c, session);
-                // todo: put something in the request?
-            }
-            else if (session->isWaiting()) {
-                conductor.addWaiting(c, session);
-                // todo: put something in the request?
-            }
-            else if (session->isSuspended()) {
-                // the suspension isn't over and it didn't need to transition
-                // or wait, put it back on the main list
-                // this is the same as waiting
-                conductor.addWaiting(c, session);
-            }
-            else {
-                // logic error, let it leak for safety
-                // it wasn't finished, didn't have errors, and didn't need to
-                // wait, transition, or suspend, what the hell state is it in?
-                Trace(1, "MslEnvironment::release Unable to deal with session after release");
-            }
+            complete(c, req, link, session);
         }
     }
 }
@@ -342,7 +335,7 @@ void MslEnvironment::release(MslContext* c, MslRequest* req)
  * Here from request() when this is a repeat action.
  * This is shaking out exactly like release() so need to share.
  */
-void MslEnvironment::repeat(MslContext* c, MslRequest* req)
+void MslEnvironment::repeat(MslContext* c, MslRequest* req, MslLinkage* link)
 {
     if (!link->unit->repeat) {
         // this could be silently ignored, but the container should be
@@ -360,69 +353,13 @@ void MslEnvironment::repeat(MslContext* c, MslRequest* req)
             // in pracctice this will almost always from the shell to the kernel
             // could probe here like repeat() just to make sure we don't waste
             // a message
-            conductor.sendRequest(c, MslNotificationRepeat, req);
+            conductor.sendMessage(c, MslNotificationRepeat, req);
         }
         else {
             // it's on our side, if we're the Shell have the potential thread
             // issue with the maintenance thread if it isn't blocking on the UI thread
-            
             session->repeat(c, req);
-
-            if (session->isFinished() && !session->isSuspended()) {
-
-                logCompletion(c, link->unit, session);
-            
-                if (session->hasErrors()) {
-                    Trace(1, "MslEnvironment: Script release returned with errors");
-                    // will want options to control the generation of a result since
-                    // for actions there could be lot of them
-                    // for release scripts there might already be a result
-                    if (session->result == nullptr)
-                      (void)makeResult(session, true);
-                    // todo: should have a way to convey at least an error flag in the action?
-                }
-                else {
-                    // script/function return value was left on the session, copy it
-                    // into the request
-                    // may have interesting runtime statistics or complex result values as well
-                    // this is less necessary for release actions, but may as well 
-                    MslValue* result = session->getValue();
-                    if (result != nullptr && !result->isNull()) {
-                        Trace(2, "MslEnvironment: Script returned %s", result->getString());
-                        // copy the value rather than the object so the caller doesn't have
-                        // to mess with reclamation
-                        req->result.setString(result->getString());
-                    }
-                    // !! what about errors, they can be left behind on the session too
-                    // for things like MIDI requests at most we need is a single line of text for
-                    // an alert, the user can then go to the script console for details
-                }
-
-                pool.free(session);
-            }
-            else if (session->isTransitioning()) {
-                // unlike start() we don't need to call makeResult here?
-                // well we would if we hadn't transitioned before and the
-                // notification function wanted to transition
-                conductor.addTransitioning(c, session);
-                // todo: put something in the request?
-            }
-            else if (session->isWaiting()) {
-                conductor.addWaiting(c, session);
-                // todo: put something in the request?
-            }
-            else if (session->isSuspended()) {
-                // the suspension isn't over and it didn't need to transition
-                // or wait, put it back on the main list
-                // this is the same as waiting
-                conductor.addWaiting(c, session);
-            }
-            else {
-                // logic error, let it leak for safety
-                // it wasn't finished, didn't have errors, and didn't need to
-                // wait, transition, or suspend, what the hell state is it in?
-                Trace(1, "MslEnvironment::repeat Unable to deal with session after release");
-            }
+            complete(c, req, link, session);
         }
     }
 }
@@ -1386,19 +1323,24 @@ juce::Array<MslLinkage*> MslEnvironment::getLinks()
  *
  * This is kind of contorted, but I really want to keep all the sensitive session
  * list management encapsulated in MslConductor so it is less easy to fuck up.
+ *
+ * The interface is dumb.  Why have two different functions here
+ * if you have to pass an MslContext which can be used to pick the right side anyway
  */
 void MslEnvironment::shellAdvance(MslContext* c)
 {
     conductor.shellTransition();
+    conductor.consumeMessages(c);
     conductor.shellIterate(c);
-    advanceSuspended(c);
+    conductor.advanceSuspended(c);
 }
 
 void MslEnvironment::kernelAdvance(MslContext* c)
 {
     conductor.kernelTransition();
+    conductor.consumeMessages(c);
     conductor.kernelIterate(c);
-    advanceSuspended(c);
+    conductor.advanceSuspended(c);
 }
 
 /**
@@ -1416,13 +1358,69 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
     }
 }
 
-/**
- * Advance sustain state for any suspended #sustain scripts
- * and timeouts for any #repeat scripts in this context.
- * Not sure if I want this here or in conductor.
- */
-void MslEnvironment::advanceSuspended(MslContext* c)
+void MslEnvironment::processMessage(MslContext* c, MslMessage* m, MslSession* s)
 {
+    (void)c;
+    (void)s;
+    
+    if (m->notification == MslNotificationRelease) {
+        Trace(1, "MslEnvironment::processMessage Release unimplemented");
+    }
+    else if (m->notification == MslNotificationRepeat) {
+        Trace(1, "MslEnvironment::processMessage Repeat unimplemented");
+    }
+    else {
+        Trace(1, "MslEnvironment::processMessage Unexpected message type");
+    }
+
+    pool.free(m);
+}
+
+/**
+ * Here from MslConductor during the call to advanceSuspended when a
+ * suspended script waiting for a sustain nottification has been found.
+ * Advance the threshold and if it is crossed actiate the session.
+ *
+ * The session will normally go right back to sleep but it could finish
+ * if there are new features addded.
+ *
+ * Return true if the session was reclaimed and should be removed from the list.
+ * 
+ */
+bool MslEnvironment::processSustain(MslContext* c, MslSession* s)
+{
+    MslSuspendState* state = session->getSustainState();
+    if (state->isActive()) {
+        int now = juce::Time::getMillisecondCounter();
+        int delta = now - state->timeoutStart;
+        if (delta > state->timeout) {
+            // bump the counter and re-arm for next time
+            state->count++;
+            state->timeoutStart = now;
+
+            s->sustain(c);
+
+            xxx
+
+    
+    
+
+    
+
+    session->sustain(
+
+    
+    Trace(1, "MslEnvironment::processSustain not implemented");
+    return remove;
+}
+
+bool MslEnvironment::processRepeat(MslContext* c, MslSession* s)
+{
+    (void)c;
+    (void)s;
+    bool remove = false;
+    Trace(1, "MslEnvironment::processSustain not implemented");
+    return remove;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -779,6 +779,7 @@
         <FILE id="UK2N5a" name="MslConductor.cpp" compile="1" resource="0"
               file="Source/script/MslConductor.cpp"/>
         <FILE id="NNSWtD" name="MslConductor.h" compile="0" resource="0" file="Source/script/MslConductor.h"/>
+        <FILE id="DVlw0b" name="MslConstants.h" compile="0" resource="0" file="Source/script/MslConstants.h"/>
         <FILE id="hAbJ2X" name="MslContext.h" compile="0" resource="0" file="Source/script/MslContext.h"/>
         <FILE id="BC7kAK" name="MslDetails.h" compile="0" resource="0" file="Source/script/MslDetails.h"/>
         <FILE id="rl8nR0" name="MslEnvironment.cpp" compile="1" resource="0"
@@ -793,6 +794,8 @@
         <FILE id="e3Mo4J" name="MslLinkage.h" compile="0" resource="0" file="Source/script/MslLinkage.h"/>
         <FILE id="pZhd29" name="MslLinker.cpp" compile="1" resource="0" file="Source/script/MslLinker.cpp"/>
         <FILE id="BpzbIB" name="MslLinker.h" compile="0" resource="0" file="Source/script/MslLinker.h"/>
+        <FILE id="TlgSMG" name="MslMessage.cpp" compile="1" resource="0" file="Source/script/MslMessage.cpp"/>
+        <FILE id="HsNAna" name="MslMessage.h" compile="0" resource="0" file="Source/script/MslMessage.h"/>
         <FILE id="s2BlCY" name="MslModel.cpp" compile="1" resource="0" file="Source/script/MslModel.cpp"/>
         <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
         <FILE id="Y9Hjcr" name="MslParser.cpp" compile="1" resource="0" file="Source/script/MslParser.cpp"/>

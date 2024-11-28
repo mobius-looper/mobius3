@@ -64,6 +64,7 @@
 
 #include "MslSession.h"
 #include "MslResult.h"
+#include "MslMessage.h"
 #include "MslEnvironment.h"
 #include "MslContext.h"
 #include "MslConductor.h"
@@ -85,6 +86,9 @@ MslConductor::~MslConductor()
     deleteSessionList(toShell);
     deleteSessionList(toKernel);
 
+    deleteMessageList(toShellMessages);
+    deleteMessageList(toKernelMessages);
+
     deleteResultList(results);
 }
 
@@ -92,6 +96,16 @@ void MslConductor::deleteSessionList(MslSession* list)
 {
     while (list != nullptr) {
         MslSession* next = list->next;
+        list->next = nullptr;
+        delete list;
+        list = next;
+    }
+}
+
+void MslConductor::deleteMessageList(MslMessage* list)
+{
+    while (list != nullptr) {
+        MslMessage* next = list->next;
         list->next = nullptr;
         delete list;
         list = next;
@@ -508,11 +522,12 @@ MslSession* MslConductor::removeSuspended(MslContext* c, int triggerId)
 {
     MslSession* found = nullptr;
 
-    if (c == MslContextShell) {
+    if (c->mslGetContextId() == MslContextShell) {
         MslSession* ses = shellSessions;
         while (ses != nullptr) {
-            if (ses->getTriggerId() == triggerId()) {
+            if (ses->getTriggerId() == triggerId) {
                 found = ses;
+                remove(&shellSessions, ses);
                 break;
             }
         }
@@ -520,8 +535,9 @@ MslSession* MslConductor::removeSuspended(MslContext* c, int triggerId)
     else {
         MslSession* ses = kernelSessions;
         while (ses != nullptr) {
-            if (ses->getTriggerId() == triggerId()) {
+            if (ses->getTriggerId() == triggerId) {
                 found = ses;
+                remove(&kernelSessions, ses);
                 break;
             }
         }
@@ -530,19 +546,163 @@ MslSession* MslConductor::removeSuspended(MslContext* c, int triggerId)
 }
 
 /**
- * Called when a suspended session has been finished and can be removed
- * from the list.
+ * For repeating scripts, return true if there is a session with this triggerId
+ * still active.
+ *
+ * !! This is a terrible and unreliable kludge walking over the other side's session
+ * list which is unstable.  Need a safer way to determine this, but this allows progress
+ * on repeat testing.
+ *
+ * The probe is just there to determine whether we need to do more work since most of the
+ * time scripts will not repeat even if they allow it.
  */
-bool MslConductor::removeSuspended(MslContext* c, MslSession* ses)
+bool MslConductor::probeSuspended(MslContext* c, int triggerId)
 {
+    (void)c;
     bool found = false;
-    
-    if (c == MslContextShell)
-      found = remove(&shellSessions, s);
-    else
-      found = remove(&kernelSessions, s);
 
+    MslSession* ses = shellSessions;
+    while (ses != nullptr) {
+        if (ses->getTriggerId() == triggerId) {
+            found = ses;
+            break;
+        }
+    }
+
+    if (!found) {
+        ses = kernelSessions;
+        while (ses != nullptr) {
+            if (ses->getTriggerId() == triggerId) {
+                found = ses;
+                break;
+            }
+        }
+    }
+    
     return found;
+}
+
+void MslConductor::sendMessage(MslContext* c, MslNotificationFunction type, MslRequest* req)
+{
+    MslMessage* msg = environment->getPool()->allocMessage();
+
+    msg->notification = type;
+    msg->bindings = req->bindings;
+    msg->arguments = req->arguments;
+
+    // ownership transfers
+    req->bindings = nullptr;
+    req->arguments = nullptr;
+    
+    if (c->mslGetContextId() == MslContextShell) {
+        juce::ScopedLock lock (criticalSection);
+        msg->next = toKernelMessages;
+        toKernelMessages = msg;
+    }
+    else {
+        juce::ScopedLock lock (criticalSection);
+        msg->next = toShellMessages;
+        toShellMessages = msg;
+    }
+}
+
+void MslConductor::consumeMessages(MslContext* c)
+{
+    MslMessage* messages = nullptr;
+    
+    if (c->mslGetContextId() == MslContextShell) {
+        juce::ScopedLock lock (criticalSection);
+        messages = toShellMessages;
+        toShellMessages = nullptr;
+    }
+    else {
+        juce::ScopedLock lock (criticalSection);
+        messages = toKernelMessages;
+        toKernelMessages = nullptr;
+    }
+
+    while (messages != nullptr) {
+        MslMessage* next = messages->next;
+        messages->next = nullptr;
+        processMessage(c, messages);
+        messages = next;
+    }
+}
+
+void MslConductor::processMessage(MslContext* c, MslMessage* m)
+{
+    MslSession* sessions = nullptr;
+    
+    if (c->mslGetContextId() == MslContextShell)
+      sessions = shellSessions;
+    else
+      sessions = kernelSessions;
+
+    MslSession* found = nullptr;
+    for (MslSession* s = sessions ; s != nullptr ; s = s->next) {
+        if (s->getTriggerId() == m->triggerId) {
+            found = s;
+            break;
+        }
+    }
+
+    if (!found) {
+        // must have been sent over at exactly the same time as the
+        // message was sent
+        // todo: return the message to the other side, but need a
+        // governor to prevent infinite bouncing if the session went away
+        Trace(1, "MslConductor::processMessage Target session not found");
+        environment->getPool()->free(m);
+    }
+    else {
+        environment->processMessage(c, m, found);
+    }
+}
+
+void MslConductor::advanceSuspended(MslContext* c)
+{
+    MslSession* list = nullptr;
+    
+    if (c->mslGetContextId() == MslContextShell)
+      list = shellSessions;
+    else
+      list = kernelSessions;
+
+    MslSession* prev = nullptr;
+    MslSession* session = list;
+    while (session != nullptr) {
+        MslSession* next = session->next;
+        bool remove = false;
+        
+        MslSuspendState* state = session->getSustainState();
+        if (state->isActive())
+          remove = environment->processSustain(c, session);
+
+        // if sustain ends it, then we don't need to check repeat timeouts
+        if (!remove) {
+            state = session->getRepeatState();
+            if (state->isActive())
+              remove = environment->processRepeat(c, session);
+        }
+
+        if (remove) {
+            if (prev == nullptr)
+              list = next;
+            else
+              prev->next = next;
+            // environment will have already freed it
+        }
+        else {
+            prev = session;
+        }
+
+        session = next;
+    }
+
+    if (c->mslGetContextId() == MslContextShell)
+      shellSessions = list;
+    else
+      kernelSessions = list;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -48,6 +48,8 @@
 
 #include <JuceHeader.h>
 
+#include "MslConstants.h"
+
 class MslConductor
 {
   public:
@@ -66,6 +68,9 @@ class MslConductor
     void kernelTransition();
     void kernelIterate(class MslContext* c);
 
+    // messages, handles both sides and so should the two iterators
+    void consumeMessages(class MslContext* c);
+
     // launch transitions
     
     void addTransitioning(class MslContext* c, class MslSession* s);
@@ -83,7 +88,10 @@ class MslConductor
 
     // suspended sessions
     MslSession* removeSuspended(class MslContext* c, int triggerId);
-    void sendRequest(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
+    bool probeSuspended(class MslContext* c, int triggerId);
+    void sendMessage(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
+    void processMessage(class MslContext* c, class MslMessage* m);
+    void advanceSuspended(class MslContext* c);
 
   private:
 
@@ -96,12 +104,15 @@ class MslConductor
     class MslSession* kernelSessions = nullptr;
     class MslSession* toShell = nullptr;
     class MslSession* toKernel = nullptr;
+    class MslMessage* toShellMessages = nullptr;
+    class MslMessage* toKernelMessages = nullptr;
     class MslResult* results = nullptr;
     
-    void deleteSessionList(MslSession* list);
-    void deleteResultList(MslResult* list);
-    void finishResult(MslSession* s);
-    bool remove(MslSession** list, MslSession* s);
+    void deleteSessionList(class MslSession* list);
+    void deleteResultList(class MslResult* list);
+    void deleteMessageList(class MslMessage* list);
+    void finishResult(class MslSession* s);
+    bool remove(class MslSession** list, class MslSession* s);
 
 };
 

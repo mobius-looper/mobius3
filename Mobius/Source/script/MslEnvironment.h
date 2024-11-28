@@ -23,6 +23,7 @@
 #include "MslContext.h"
 #include "MslConductor.h"
 #include "MslGarbage.h"
+#include "MslConstants.h"
 
 /**
  * An object used by the application to ask the environment to do something,
@@ -300,7 +301,10 @@ class MslEnvironment
     }
 
     // for MslConductor
-    void processSession(MslContext* c, MslSession* s);
+    void processSession(class MslContext* c, class MslSession* s);
+    void processMessage(class MslContext* c, class MslMessage* m, class MslSession* s);
+    bool processSustain(class MslContext* c, class MslSession* s);
+    bool processRepeat(class MslContext* c, class MslSession* s);
 
     // for MslLinker
     class MslExternal* getExternal(juce::String name);
@@ -366,6 +370,11 @@ class MslEnvironment
     //
     // session management
     //
+    void start(class MslContext* c, class MslRequest* req, class MslLinkage* link);
+    void complete(class MslContext* c, class MslRequest* req, class MslLinkage* link,
+                  class MslSession* session);
+    void release(class MslContext* c, class MslRequest* req, class MslLinkage* link);
+    void repeat(class MslContext* c, class MslRequest* req, class MslLinkage* link);
     
     void addError(MslResult* result, const char* msg);
     class MslResult* makeResult(class MslSession* s, bool finished);
