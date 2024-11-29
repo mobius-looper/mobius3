@@ -302,7 +302,7 @@ class MslEnvironment
 
     // for MslConductor
     void processSession(class MslContext* c, class MslSession* s);
-    void processMessage(class MslContext* c, class MslMessage* m, class MslSession* s);
+    void processMessage(class MslContext* c, class MslMessage* m);
     bool processSustain(class MslContext* c, class MslSession* s);
     bool processRepeat(class MslContext* c, class MslSession* s);
 
@@ -383,6 +383,16 @@ class MslEnvironment
 
     void logRequest(class MslContext* c, class MslCompilation* unit);
     void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
+
+
+    //
+    // Message handling
+    //
+
+    void doNotification(class MslContext* c, class MslMessage* m);
+    void doRelease(class MslContext* c, class MslMessage* m);
+    void doRepeat(class MslContext* c, class MslMessage* m);
+
     
 };
 

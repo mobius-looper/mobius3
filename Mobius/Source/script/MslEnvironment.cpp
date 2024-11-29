@@ -148,23 +148,7 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
         release(c, req, link);
     }
     else {
-        bool repeating = false;
-        if (link->unit->repeat) {
-            // it it potentially repeatable, but have to probe first
-            if (req->triggerId == 0) {
-                // could soften this and just do it normally
-                // but caller should be sending these if they're bothering
-                // to use repeat scripts
-                Trace(1, "MslEnvironment: Potential repeat request didn't have a trigger id");
-            }
-            else {
-                repeating = conductor.probeSuspended(c, req->triggerId);
-            }
-        }
-
-        if (repeating)
-          repeat(c, req, link);
-        else
+        if (!checkRepeat(c, req))
           start(c, req, link);
     }
 
@@ -299,6 +283,15 @@ void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSessi
 }
 
 /**
+ * Check to see if a repatable session for this trigger already exists
+ * and cause a repeat, either locally or remotely with a Message.
+ * Returns true if this was handled as a repeat.
+ */
+bool MslEnvironment::checkRepeat(MslContext* c, MslRequest* req)
+{
+    
+
+/**
  * Here from request() when this is a release action.
  */
 void MslEnvironment::release(MslContext* c, MslRequest* req, MslLinkage* link)
@@ -333,7 +326,6 @@ void MslEnvironment::release(MslContext* c, MslRequest* req, MslLinkage* link)
 
 /**
  * Here from request() when this is a repeat action.
- * This is shaking out exactly like release() so need to share.
  */
 void MslEnvironment::repeat(MslContext* c, MslRequest* req, MslLinkage* link)
 {
@@ -1358,37 +1350,16 @@ void MslEnvironment::processSession(MslContext* c, MslSession* s)
     }
 }
 
-void MslEnvironment::processMessage(MslContext* c, MslMessage* m, MslSession* s)
-{
-    (void)c;
-    (void)s;
-    
-    if (m->notification == MslNotificationRelease) {
-        Trace(1, "MslEnvironment::processMessage Release unimplemented");
-    }
-    else if (m->notification == MslNotificationRepeat) {
-        Trace(1, "MslEnvironment::processMessage Repeat unimplemented");
-    }
-    else {
-        Trace(1, "MslEnvironment::processMessage Unexpected message type");
-    }
-
-    pool.free(m);
-}
-
 /**
- * Here from MslConductor during the call to advanceSuspended when a
- * suspended script waiting for a sustain nottification has been found.
- * Advance the threshold and if it is crossed actiate the session.
+ * Conductor callback during advanceSuspended when it finds a sustaining session
  *
- * The session will normally go right back to sleep but it could finish
- * if there are new features addded.
- *
- * Return true if the session was reclaimed and should be removed from the list.
- * 
+ * Return true to indicicate this session should terminate and be removed from
+ * the active list.
  */
 bool MslEnvironment::processSustain(MslContext* c, MslSession* s)
 {
+    bool remove = false;
+    
     MslSuspendState* state = session->getSustainState();
     if (state->isActive()) {
         int now = juce::Time::getMillisecondCounter();
@@ -1399,28 +1370,77 @@ bool MslEnvironment::processSustain(MslContext* c, MslSession* s)
             state->timeoutStart = now;
 
             s->sustain(c);
-
-            xxx
-
-    
-    
-
-    
-
-    session->sustain(
-
-    
-    Trace(1, "MslEnvironment::processSustain not implemented");
-    return remove;
+        }
+    }
 }
 
 bool MslEnvironment::processRepeat(MslContext* c, MslSession* s)
 {
+    bool remove = false;
     (void)c;
     (void)s;
-    bool remove = false;
     Trace(1, "MslEnvironment::processSustain not implemented");
     return remove;
+}
+
+/**
+ * Here from MslConductor when a message comes in.
+ */
+void MslEnvironment::processMessage(MslContext* c, MslMessage* m)
+{
+    switch (m->type) {
+        case MslMessage::MsgeNone:
+            Trace(1, "MslConductor::processMessage Message with no type");
+            break;
+        case MslMessage::MsgTransition:
+            Trace(1, "MslConductor::processMessage MsgTransition unexpected");
+            break;
+        case MslMessage::MsgNotification:
+            doNotification(c, m);
+            break;
+        case MslMessage::MsgCompletion:
+            Trace(1, "MslConductor::processMessage MsgCompletion unexpected");
+            break;
+        case MslMessage::MsgResult:
+            Trace(1, "MslConductor::processMessage MsgResult unexpected");
+            break;
+    }
+
+    // todo: return the bindings and arguments to the pool
+    // rather than just deleting them
+    m->clear();
+
+    messagePool->checkin(m);
+}
+
+void MslEnvironment::doNotification(MslContext* c, MslMessage* m)
+{
+    switch (m->notification) {
+        case MslMessage::MslNotificationRelease:
+            doRelease(c, m);
+            break;
+        case MslMessage::MslNotificationRepeat:
+            doRepeat(c, m);
+            break;
+        default:
+            Trace(1, "MslEnvironment::doNotification Unexpected notification type %d",
+                  m->notification);
+            break;
+    }
+}
+
+void MslEnvironment::doRelease(MslContext* c, MslMessage* m)
+{
+    (void)c;
+    (void)m;
+    Trace(1, "MslEnvironment::doRelease Release not implemented");
+}
+
+void MslEnvironment::doRepeat(MslContext* c, MslMessage* m)
+{
+    (void)c;
+    (void)m;
+    Trace(1, "MslEnvironment::doRepeat Repeat not implemented");
 }
 
 //////////////////////////////////////////////////////////////////////

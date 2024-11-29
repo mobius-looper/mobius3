@@ -36,6 +36,9 @@ class MslProcess : public MslPooledObject
     // state this process is in
     State state = StateNone;
 
+    // the context that owns it
+    MslContextId context;
+
     // display name for this process, taken from the MslCompilation
     // or MslLinkage
     // typically a script or functio name
@@ -47,6 +50,7 @@ class MslProcess : public MslPooledObject
     int triggerId = 0;
 
     void setName(const char* s);
+    void copy(MslProcess* src);
 
   private:
 
@@ -62,8 +66,8 @@ class MslProcessPool : public MslObjectPool
 {
   public:
 
-    MslSequencePool();
-    virtual ~MslSequencePool();
+    MslProcessPool();
+    virtual ~MslProcessPool();
 
     class MslProcess* newProcess();
 

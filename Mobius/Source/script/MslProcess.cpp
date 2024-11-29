@@ -37,6 +37,17 @@ void MslProcess::setName(const char* s)
       strcpy(name, "");
 }
 
+void MslProcess::copy(MslProcess* src)
+{
+    id = src->id;
+    state = src->state;
+    context = src->context;
+    triggerId = src->triggerId;
+
+    // don't really need this
+    strncpy(name, src->name, sizeof(name));
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Pool

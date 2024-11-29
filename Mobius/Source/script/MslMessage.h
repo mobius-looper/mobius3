@@ -61,8 +61,8 @@ class MslMessagePool : public MslObjectPool
 {
   public:
 
-    MslSequencePool();
-    virtual ~MslSequencePool();
+    MslMessagePool();
+    virtual ~MslMessagePool();
 
     class MslMessage* newMessage();
 

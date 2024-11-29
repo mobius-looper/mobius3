@@ -79,8 +79,9 @@ class MslConductor
     void addWaiting(class MslContext* c, class MslSession* s);
 
     // post-launch transitions
-    void transition(MslContext* weAreHere, MslSession* s);
-
+    void transition(class MslContext* weAreHere, class MslSession* s);
+    class MslProcess* indProcess(class MslContext* c, int triggerId)
+        
     // results
     
     void addResult(class MslResult* r);
@@ -88,12 +89,6 @@ class MslConductor
     MslResult* getResult(int id);
     bool isWaiting(int id);
 
-    // suspended sessions
-    MslSession* removeSuspended(class MslContext* c, int triggerId);
-    bool probeSuspended(class MslContext* c, int triggerId);
-    void sendMessage(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
-    void processMessage(class MslContext* c, class MslMessage* m);
-    void advanceSuspended(class MslContext* c);
 
   private:
 
@@ -119,12 +114,15 @@ class MslConductor
     void finishResult(class MslSession* s);
     bool remove(class MslSession** list, class MslSession* s);
 
-    void processMessage(class MslContext* c, class MslMessage* m);
-    void doNotification(class MslContext* c, class MslMessage* m);
-    void doRelease(class MslContext* c, class MslMessage* m);
-    void doRepeat(class MslContext* c, class MslMessage* m);
+    // processes
+    void updateProcessState(class MslSession* s);
+
     
 
+    // suspended sessions
+    void advanceSuspended(class MslContext* c);
+    MslSession* removeSuspended(class MslContext* c, int triggerId);
+    void sendMessage(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
 };
 
 
