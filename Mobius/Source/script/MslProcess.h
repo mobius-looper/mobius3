@@ -10,18 +10,13 @@
 #pragma once
 
 #include "MslObjectPool.h"
+#include "MslConstants.h"
 
 class MslProcess : public MslPooledObject
 {
+    friend class MslConductor;
+    
   public:
-
-    typedef enum {
-        StateNone,
-        StateRunning,
-        StateWaiting,
-        StateSuspended,
-        StateTransitioning
-    } State;
 
     MslProcess();
     ~MslProcess();
@@ -31,10 +26,10 @@ class MslProcess : public MslPooledObject
     MslProcess* next = nullptr;
 
     // unique id, for correlating the session
-    int id = 0;
+    int sessionId = 0;
 
     // state this process is in
-    State state = StateNone;
+    MslSessionState state = MslStateNone;
 
     // the context that owns it
     MslContextId context;
@@ -52,7 +47,7 @@ class MslProcess : public MslPooledObject
     void setName(const char* s);
     void copy(MslProcess* src);
 
-  private:
+  protected:
 
     // handle to the running session
     class MslSession* session = nullptr;

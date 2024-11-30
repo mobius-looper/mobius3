@@ -20,6 +20,8 @@
 #include "../script/MslEnvironment.h"
 #include "../script/MslBinding.h"
 #include "../script/MslValue.h"
+#include "../script/MslResult.h"
+#include "../script/MslError.h"
 
 #include "MobiusKernel.h"
 #include "MobiusInterface.h"
@@ -223,6 +225,7 @@ void Notifier::notifyScript(NotificationId id, TrackProperties& props, Notificat
                 // this means don't pass it
             }
             else {
+                // todo: Need an MslRequestBuilder like we do for MslResult
                 MslRequest req;
                 req.linkage = sprops->mslLinkage;
 
@@ -256,11 +259,14 @@ void Notifier::notifyScript(NotificationId id, TrackProperties& props, Notificat
                 // ownership if the arguments is taken by the environment
                 // the request stays with the caller
                 req.bindings = arguments;
-                scriptenv->request(kernel, &req);
+                
+                MslResult* res = scriptenv->request(kernel, &req);
 
                 // no meaningful return value, but could have errors
-                if (req.error.hasError())
-                  Trace(1, "Notifier: Script error %s", req.error.error);
+                if (res->errors != nullptr)
+                  Trace(1, "Notifier: Script error %s", res->errors->details);
+
+                scriptenv->free(res);
             }
         }
     }

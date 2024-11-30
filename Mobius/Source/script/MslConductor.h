@@ -67,26 +67,19 @@ class MslConductor
     class MslResult* getResults();
 
     // Environment interface
-    void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
+    class MslResult* start(class MslContext* c, class MslRequest *req, class MslLinkage* link);
 
+    // resume after a wait
+    void resume(class MslContext* c, class MslWait* wait);
 
-// launch transitions
-    
-    void addTransitioning(class MslContext* c, class MslSession* s);
-    void addWaiting(class MslContext* c, class MslSession* s);
-
-    // post-launch transitions
-    void transition(class MslContext* weAreHere, class MslSession* s);
-    class MslProcess* indProcess(class MslContext* c, int triggerId)
-        
     // results
+
+    void saveResult(class MslContext* c, class MslResult* r);
+    class MslResult* getResult(int id);
     
-    void addResult(class MslResult* r);
-    MslResult* getResults();
-    MslResult* getResult(int id);
-    bool isWaiting(int id);
-
-
+    bool captureProcess(int sessionId, class MslProcess& result);
+    void listProcesses(juce::Array<MslProcess>& result);
+    
   private:
 
     juce::CriticalSection criticalSection;
@@ -115,29 +108,28 @@ class MslConductor
     void sendMessage(class MslContext* c, class MslMessage* msg);
     void doTransition(class MslContext* c, class MslMessage* msg);
     void addSession(class MslContext* c, class MslSession* s);
-    void updateProcessState(class class MslSession* s);
+    void updateProcessState(class MslSession* s);
     void sendTransition(class MslContext* c, class MslSession* s);
     void addTransitioning(class MslContext* c, class MslSession* s);
     void addWaiting(class MslContext* c, class MslSession* s);
     void addProcess(class MslContext* c, class MslProcess* p);
 
     void advanceActive(class MslContext* c);
-    void checkCompletion(class MslContext* c, class MslSession* s, MslRequeset* req);
-    void finalize(class MslContext* c, class MslSession* s, class MslRequest* req);
+    class MslResult* checkCompletion(class MslContext* c, class MslSession* s);
+    class MslResult* finalize(class MslContext* c, class MslSession* s);
     bool removeProcess(class MslContext* c, class MslProcess* p);
     bool removeSession(class MslContext*c, class MslSession* s);
-    MslResult* makeResult(class MslContext* c, class MslSession* s);
-    void saveResult(class MslContext* c, MslResult* r);
+    class MslResult* makeResult(class MslContext* c, class MslSession* s);
     void doResult(class MslContext* c, class MslMessage* msg);
     
     void ageSuspended(class MslContext* c);
-    void ageSustain(class MslContext* c, class MslSession* s, MslSuspendState* state);
-    void ageRepeat(class MslContext* c, class MslSession* s, MslSuspendState* state);
+    void ageSustain(class MslContext* c, class MslSession* s, class MslSuspendState* state);
+    void ageRepeat(class MslContext* c, class MslSession* s, class MslSuspendState* state);
 
-    void release(class MslContext* c, class MslRequest* req);
-    void repeat(class MslContext* c, class MslRequest* req, MslContextId otherContext);
+    class MslResult* release(class MslContext* c, class MslRequest* req);
+    class MslResult* repeat(class MslContext* c, class MslRequest* req, MslContextId otherContext);
     class MslSession* findSuspended(class MslContext* c, int triggerId);
-    class MslContextId probeSuspended(class MslContext* c, int triggerId);
+    MslContextId probeSuspended(class MslContext* c, int triggerId);
     void sendNotification(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
     void doNotification(class MslContext* c, class MslMessage* msg);
     void doRelease(class MslContext* c, class MslMessage* msg);

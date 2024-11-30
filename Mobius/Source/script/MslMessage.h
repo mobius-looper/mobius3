@@ -19,7 +19,6 @@ class MslMessage : public MslPooledObject
         MsgNone,
         MsgTransition,
         MsgNotification,
-        MsgCompletion,
         MsgResult
     } Type;
     

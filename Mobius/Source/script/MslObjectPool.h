@@ -63,11 +63,11 @@ class MslPooledObject {
         mPooled = b;
     }
 
-    class ObjectPool* getPool() {
+    class MslObjectPool* getPool() {
         return mPool;
     }
 
-    void setPool(class ObjectPool* pool) {
+    void setPool(class MslObjectPool* pool) {
         mPool = pool;
     }
     
@@ -80,7 +80,7 @@ class MslPooledObject {
      * An object may be returned to the original pool by calling
      * checkin() but this is not required.
      */
-    class ObjectPool* mPool = nullptr;
+    class MslObjectPool* mPool = nullptr;
 
     /**
      * Chain pointer for the pool's free list.

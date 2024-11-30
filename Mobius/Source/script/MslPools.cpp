@@ -10,7 +10,6 @@
 #include "MslStack.h"
 #include "MslSession.h"
 #include "MslBinding.h"
-#include "MslMessage.h"
 
 #include "MslPools.h"
 
@@ -35,7 +34,6 @@ MslPools::~MslPools()
     flushResults();
     flushErrors();
     flushValues();
-    flushMessages();
     
     traceSizes();
     traceStatistics();
@@ -70,11 +68,6 @@ void MslPools::traceStatistics()
           bindingsCreated, bindingsRequested, bindingsReturned, bindingsDeleted);
 
     count = 0;
-    for (MslMessage* obj = messagePool ; obj != nullptr ; obj = obj->next) count++;
-    Trace(2, "  messages: %d %d %d %d",
-          messagesCreated, messagesRequested, messagesReturned, messagesDeleted);
-    
-    count = 0;
     for (MslStack* obj = stackPool ; obj != nullptr ; obj = obj->parent) count++;
     Trace(2, "  stacks: %d %d %d %d",
           stacksCreated, stacksRequested, stacksReturned, stacksDeleted);
@@ -99,7 +92,6 @@ void MslPools::traceSizes()
     Trace(2, "  MslError: %d", sizeof(MslError));
     Trace(2, "  MslResult: %d", sizeof(MslResult));
     Trace(2, "  MslBinding: %d", sizeof(MslBinding));
-    Trace(2, "  MslMessage: %d", sizeof(MslMessage));
     Trace(2, "  MslStack: %d", sizeof(MslStack));
     Trace(2, "  MslSession: %d", sizeof(MslSession));
 }
@@ -344,80 +336,6 @@ void MslPools::free(MslBinding* b)
         b->next = bindingPool;
         bindingPool = b;
         bindingsReturned++;
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Messages
-//
-//////////////////////////////////////////////////////////////////////
-
-void MslPools::flushMessages()
-{
-    while (messagePool != nullptr) {
-        // messages cascade delete
-        // though we might want to override that to gather statistics?
-        MslMessage* next = messagePool->next;
-        messagePool->next = nullptr;
-        delete messagePool;
-        messagePool = next;
-        messagesDeleted++;
-    }
-}
-
-MslMessage* MslPools::allocMessage()
-{
-    MslMessage* m = nullptr;
-
-    // todo: need a csect here
-    if (messagePool != nullptr) {
-        m = messagePool;
-        messagePool = messagePool->next;
-        m->next = nullptr;
-
-        if (m->bindings != nullptr) {
-            // should have been cleansed by now
-            Trace(1, "Dirty Message in the pool");
-            free(m->bindings);
-            m->bindings = nullptr;
-        }
-
-        if (m->arguments != nullptr) {
-            Trace(1, "Dirty Message in the pool");
-            free(m->arguments);
-            m->arguments = nullptr;
-        }
-
-        m->init();
-    }
-    else {
-        // complain
-        m = new MslMessage();
-        messagesCreated++;
-    }
-    messagesRequested++;
-    return m;
-}
-
-void MslPools::free(MslMessage* m)
-{
-    if (m != nullptr) {
-
-        if (m->bindings != nullptr) {
-            free(m->bindings);
-            m->bindings = nullptr;
-        }
-        
-        if (m->arguments != nullptr) {
-            free(m->arguments);
-            m->arguments = nullptr;
-        }
-
-        // messages are independent objects and don't own the chain pointer
-        m->next = messagePool;
-        messagePool = m;
-        messagesReturned++;
     }
 }
 

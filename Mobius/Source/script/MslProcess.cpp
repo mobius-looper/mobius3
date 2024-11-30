@@ -21,8 +21,8 @@ MslProcess::~MslProcess()
 void MslProcess::poolInit()
 {
     next = nullptr;
-    id = 0;
-    state = StateNone;
+    sessionId = 0;
+    state = MslStateNone;
     strcpy(name, "");
     triggerId = 0;
     session = nullptr;
@@ -39,7 +39,7 @@ void MslProcess::setName(const char* s)
 
 void MslProcess::copy(MslProcess* src)
 {
-    id = src->id;
+    sessionId = src->sessionId;
     state = src->state;
     context = src->context;
     triggerId = src->triggerId;

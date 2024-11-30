@@ -84,7 +84,6 @@ void MslSession::init()
     stack = nullptr;
     transitioning = false;
     
-    triggerId = 0;
     sustaining.init();
     repeating.init();
     

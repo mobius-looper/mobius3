@@ -98,9 +98,6 @@ class MslPools
     class MslBinding* allocBinding();
     void free(class MslBinding* b);
 
-    class MslMessage* allocMessage();
-    void free(class MslMessage* m);
-    
     class MslStack* allocStack();
     void free(class MslStack* s);
     void freeList(class MslStack* s);
@@ -120,7 +117,6 @@ class MslPools
     class MslError* errorPool = nullptr;
     class MslResult* resultPool = nullptr;
     class MslBinding* bindingPool = nullptr;
-    class MslMessage* messagePool = nullptr;
     class MslStack* stackPool = nullptr;
     class MslSession* sessionPool = nullptr;
 
@@ -145,11 +141,6 @@ class MslPools
     int bindingsReturned = 0;
     int bindingsDeleted = 0;
     
-    int messagesCreated = 0;
-    int messagesRequested = 0;
-    int messagesReturned = 0;
-    int messagesDeleted = 0;
-
     int stacksCreated = 0;
     int stacksRequested = 0;
     int stacksReturned = 0;
@@ -163,7 +154,6 @@ class MslPools
     void flushSessions();
     void flushStacks();
     void flushBindings();
-    void flushMessages();
     void flushResults();
     void flushErrors();
     void flushValues();

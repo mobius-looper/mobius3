@@ -141,6 +141,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("results")) {
         doResults(withoutCommand(line));
     }
+    else if (line.startsWith("processes")) {
+        doProcesses(withoutCommand(line));
+    }
     else if (line.startsWith("resume")) {
         doResume();
     }
@@ -534,11 +537,11 @@ void MobiusConsole::showResult(MslResult* result)
     
     asyncSession = 0;
     
-    if (result->isWaiting()) {
+    if (result->state == MslStateWaiting) {
         asyncSession = result->sessionId;
         console.add("Session " + juce::String(asyncSession) + " is waiting");
     }
-    if (result->isTransitioning()) {
+    if (result->state == MslStateTransitioning) {
         asyncSession = result->sessionId;
         console.add("Session " + juce::String(asyncSession) + " is transitioning");
     }
@@ -591,8 +594,6 @@ void MobiusConsole::doResults(juce::String arg)
         while (result != nullptr) {
             juce::String status;
             status += result->name;
-            if (!result->isRunning()) status += " finished";
-            if (result->isWaiting()) status += " waiting";
             if (result->errors != nullptr) status += " errors";
 
             console.add(juce::String(result->sessionId) + ": " + status);
@@ -602,6 +603,51 @@ void MobiusConsole::doResults(juce::String arg)
     else {
         int id = arg.getIntValue();
         if (id > 0) {
+            MslResult* result = scriptenv->getResult(id);
+            if (result == nullptr) {
+                console.add("No results for session " + juce::String(id));
+            }
+            else {
+                console.add("Session " + juce::String(id) + " " + juce::String(result->name));
+                showErrors(result->errors);
+                MslValue* value = result->value;
+                if (value != nullptr)
+                  console.add("Result value: " + juce::String(value->getString()));
+                else
+                  console.add("No result value");
+            }
+        }
+    }
+}
+
+void MobiusConsole::doProcesses(juce::String arg)
+{
+    if (arg.length() == 0) {
+        juce::Array<MslProcess> result;
+        int count = scriptenv->listProcesses(result);
+        for (int i = 0 ; i < count ; i++) {
+            MslProcess& p = result.getReference(i);
+
+            juce::String status;
+            status += p.name;
+
+            switch (p.state) {
+                case MslStateNone: status += " no status"; break;
+                case MslStateFinished: status += " finished"; break;
+                case MslStateError: status += " errors"; break;
+                case MslStateRunning: status += " running"; break;
+                case MslStateWaiting: status += " waiting"; break;
+                case MslStateSuspended: status += " suspended"; break;
+                case MslStateTransitioning: status += " transitioning"; break;
+            }
+
+            console.add(juce::String(p.sessionId) + ": " + status);
+        }
+    }
+    else {
+        int id = arg.getIntValue();
+        if (id > 0) {
+            
             MslResult* result = scriptenv->getResult(id);
             if (result == nullptr) {
                 console.add("No results for session " + juce::String(id));

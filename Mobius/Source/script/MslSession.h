@@ -209,14 +209,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
     int getSessionId() {
         return sessionId;
     }
-    /*
-    int getTriggerId() {
-        return triggerId;
-    }
-    void setTriggerId(int i) {
-        triggerId = i;
-    }
-    */
     
   protected:
 
@@ -248,7 +240,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
     bool transitioning = false;
 
     // for #suspend and #repeat stripts the id of the trigger that started it
-    //int triggerId = 0;
     MslSuspendState sustaining;
     MslSuspendState repeating;
     

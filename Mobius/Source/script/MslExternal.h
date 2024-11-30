@@ -78,10 +78,8 @@
 
 #pragma once
 
+#include "MslConstants.h"
 #include "MslSignature.h"
-
-// dragging way too much shit in for this
-#include "MslContext.h"
 
 class MslExternal
 {

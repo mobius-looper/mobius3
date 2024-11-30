@@ -1,18 +1,25 @@
 /**
- * An object holding both the incomplete runtime status of an MslSession and the
- * final result after it finishes.
+ * An object holding results from one execution of a script.
  *
- * One of these is created whenever a script or scriptlet is launched.  If the script
- * runs to completion synchronously, it is returned to the caller.  If the
- * script becomes asynchronous it is placed on the environments result list where
- * it can be inspected in the script console.
+ * This may contain one or more values if the script performed a computation
+ * and may contain one or more error messages if the script encountered errors.
+ * If the script could not be completed synchronously it will contain a "session id"
+ * which can be used to find the results of the script later when it finishes.
  *
- * todo: disliking the name ambiguity between "result" being the complex result
- * from a running session and "result value" being the MslValue that was computed by
- * the script.  Here we use "value" but session uses "result" and "childResults".
+ * Results may either be "free" or "saved".  Free results are owned by the application
+ * and muse be deleted.  Saved results are owned by the Environment and are deleted
+ * by the Environment under controlled conditions.  Free results may be added to the
+ * saved result list if desired.
+ *
+ * If a script request runs to completion synchronously a free result is returned.
+ * If the script needs to suspend, an saved result is created which may be inspected
+ * later by the monitoring UI.
+ *
  */
 
 #pragma once
+
+#include "MslConstants.h"
 
 class MslResult
 {
@@ -22,12 +29,20 @@ class MslResult
     
   public:
 
+
+    
+
     MslResult();
     ~MslResult();
     void init();
     
-    // the id of the asynchronous session that produced this result
+    // the id of the asynchronous session that saved this result
+    // or the id of the session that is running in the background to produce a result
     int sessionId = 0;
+
+    // session state, normally Finished, Waiting, or Suspended
+    // and for very brief moments Transitioning
+    MslSessionState state = MslStateNone;
 
     // the final result value when the session finishes without errors
     class MslValue* value = nullptr;
@@ -35,10 +50,12 @@ class MslResult
     // the list of errors accumulated at runtime
     class MslError* errors = nullptr;
 
-    // chain pointer accessor so the console may iterate over results
+    // for saved results, the chain pointer for the list of saved results
+    // used by the monitoring UI
     MslResult* getNext();
 
     // logging name
+    // what's this for?
     static const int MslResultMaxName = 64;
     char name[MslResultMaxName];
     void setName(const char* s);
@@ -55,3 +72,34 @@ class MslResult
 
 };
 
+/**
+ * Class used internally to assist building complex results.
+ * May also be used by the application to assemble results to be returned
+ * by mslAction and mslQuery.
+ */
+class MslResultBuilder
+{
+  public:
+
+    MslResultBuilder();
+    MslResultBuilder(class MslEnvironment* env);
+    MslResultBuilder(MslResult* res);
+    MslResultBuilder(class MslEnvironment* env, MslResult* res);
+    ~MslResultBuilder();
+    
+    void addValue(int i);
+    void addValue(const char* s);
+    void addError(const char* s);
+
+    MslResult* finish();
+    
+  private:
+
+    class MslEnvironment* environment = nullptr;
+    MslResult* result = nullptr;
+    bool externalResult = false;
+    
+    void ensureResult();
+    class MslError* allocError();
+    
+};

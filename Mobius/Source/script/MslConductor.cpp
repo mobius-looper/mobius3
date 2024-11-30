@@ -83,12 +83,15 @@
 
 #include "../util/Trace.h"
 
+#include "MslConstants.h"
+#include "MslContext.h"
 #include "MslSession.h"
 #include "MslResult.h"
 #include "MslMessage.h"
 #include "MslProcess.h"
 #include "MslEnvironment.h"
-#include "MslContext.h"
+#include "MslLinkage.h"
+
 #include "MslConductor.h"
 
 MslConductor::MslConductor(MslEnvironment* env)
@@ -174,7 +177,7 @@ void MslConductor::deleteMessageList(MslMessage* list)
  * when they are are advanced in the new context.
  *
  * Note also that since transitions happen with Messages, this means that
- * messsage handling happens after aging.  Normally this isn't an issue but
+ * message handling happens after aging.  Normally this isn't an issue but
  * if we ever have "executive" messages like Cancel that should be processed
  * first, then we'll need to do message handling in two phases.
  */
@@ -210,12 +213,12 @@ void MslConductor::consumeMessages(MslContext* c)
     else {
         juce::ScopedLock lock (criticalSection);
         list = kernelMessages;
-        kernelMessags = nullptr;
+        kernelMessages = nullptr;
     }
 
-    while (list != nullptr) {
-        MslMessage* msg = list;
-        MslMessage* next = list->next;
+    MslMessage* msg = list;
+    while (msg != nullptr) {
+        MslMessage* next = msg->next;
         msg->next = nullptr;
 
         switch (msg->type) {
@@ -228,16 +231,14 @@ void MslConductor::consumeMessages(MslContext* c)
             case MslMessage::MsgNotification:
                 doNotification(c, msg);
                 break;
-            case MslMessage::MsgCompletion:
-                doCompletion(c, msg);
-                break;
-            case MslMessage::Result:
+            case MslMessage::MsgResult:
                 doResult(c, msg);
                 break;
         }
 
         // the doers are responsible for cleaning contents of the message
-        messsagePool.checkin(msg);
+        messagePool.checkin(msg);
+        msg = next;
     }
 }
 
@@ -278,7 +279,7 @@ void MslConductor::doTransition(MslContext* c, MslMessage* msg)
         Trace(1, "MslConductor: Transition message with no session");
     }
     else {
-        addSession(ses);
+        addSession(c, ses);
         // the Process was givem StateTransitioning temporarily
         // to catch whether sessions get stuck transitioning
         // restore the actual state
@@ -302,12 +303,12 @@ void MslConductor::updateProcessState(MslSession* s)
 {
     MslProcess* p = s->process;
     if (p != nullptr) {
-        if (neu->isWaiting())
-          p->state = MslProcess::StateWaiting;
-        else if (neu->isSuspended())
-          p->state = MslProcess::StateSuspended;
+        if (s->isWaiting())
+          p->state = MslStateWaiting;
+        else if (s->isSuspended())
+          p->state = MslStateSuspended;
         else
-          p->state = MslProcess::StateRunning;
+          p->state = MslStateRunning;
     }
 }
 
@@ -317,34 +318,33 @@ void MslConductor::updateProcessState(MslSession* s)
 void MslConductor::sendTransition(MslContext* c, MslSession* s)
 {
     MslMessage* msg = messagePool.newMessage();
-    msg->type = MslMessage::TypeTransition;
+    msg->type = MslMessage::MsgTransition;
     msg->session = s;
 
     // temporary process state
-    Process* p = s->process;
-    if (p != null)
-      p->state = MslProcess::StateTransitioning;
+    MslProcess* p = s->process;
+    if (p != nullptr)
+      p->state = MslStateTransitioning;
 
     sendMessage(c, msg);
 }
 
 /**
- * Called by Environment after a session is created and decides it
- * needs to transition.  At this point a Process is created so both
+ * A session wants to transition. At this point a Process is created so both
  * sides can monitor it.
  */
 void MslConductor::addTransitioning(MslContext* c, MslSession* s)
 {
     MslProcess* p = processPool.newProcess();
     p->sessionId = generateSessionId();
-    p->state = MslProcess::StateTransitioning;
+    p->state = MslStateTransitioning;
     
     // this pointer is unstable so we probably shouldn't even have it
     // Session can point back to it's Process but not the other way around
     p->session = s;
     s->setProcess(p);
 
-    addProcess(p);
+    addProcess(c, p);
     sendTransition(c, s);
 }
 
@@ -361,16 +361,16 @@ void MslConductor::addWaiting(MslContext* c, MslSession* s)
 {
     MslProcess* p = processPool.newProcess();
     p->sessionId = generateSessionId();
-    p->state = MslProcess::StateWaiting;
+    p->state = MslStateWaiting;
     
     // this pointer is unstable so we probably shouldn't even have it
     // Session can point back to it's Process but not the other way around
     p->session = s;
     s->setProcess(p);
 
-    addProcess(p);
+    addProcess(c, p);
     // if it waits it transitions first, and we're on the right side
-    addSession(s);
+    addSession(c, s);
 }
 
 void MslConductor::addProcess(MslContext* c, MslProcess* p)
@@ -387,6 +387,39 @@ void MslConductor::addProcess(MslContext* c, MslProcess* p)
 int MslConductor::generateSessionId()
 {
     return ++sessionIds;
+}
+
+/**
+ * Capture the state of the process with this session id.
+ */
+bool MslConductor::captureProcess(int sessionId, MslProcess& result)
+{
+    bool found = false;
+    juce::ScopedLock lock (criticalSection);
+    for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
+        if (p->sessionId == sessionId) {
+            
+            result.sessionId = sessionId;
+            result.state = p->state;
+            result.context = p->context;
+            result.triggerId = p->triggerId;
+
+            // don't waste time on the name, shouldn't need it
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
+void MslConductor::listProcesses(juce::Array<MslProcess>& result)
+{
+    juce::ScopedLock lock (criticalSection);
+
+    for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
+        result.add(*p);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -422,13 +455,14 @@ void MslConductor::advanceActive(MslContext* c)
         MslSession* next = session->next;
 
         // resuming will cancel the transitioning state but not the waits
-        s->resume(c);
+        session->resume(c);
 
         // decide what to do now, this may remove the session
         // from the list
-        checkCompletion(c, session, nullptr);
+        MslResult* result = checkCompletion(c, session);
+        saveResult(c, result);
         
-        current = next;
+        session = next;
     }
 }
 
@@ -442,8 +476,10 @@ void MslConductor::advanceActive(MslContext* c)
  * A Request is passed only when called from Environment, and ending state
  * can be stored there for synchronous return the application.
  */
-void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* req)
+MslResult* MslConductor::checkCompletion(MslContext* c, MslSession* s)
 {
+    MslResult* result = nullptr;
+    
     if (s->hasErrors()) {
         // it doesn't matter what state it's in, as soon as an error
         // condition is reached, it terminates
@@ -453,20 +489,21 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* re
         // something up
         // would be nice to have an optional OnError that always gets
         // called for cleanup
-        finalize(c, s, req);
+        result = finalize(c, s);
     }
     else if (s->isTransitioning()) {
         // break on through to the other side
         if (s->process == nullptr) {
             // must be the initial launch, not on a list yet
             addTransitioning(c, s);
+            // todo: make a result to convey the session id
         }
         else {
             (void)removeSession(c, s);
             sendTransition(c, s);
         }
     }
-    else if (current->isWaiting()) {
+    else if (s->isWaiting()) {
         // it stays here
         if (s->process == nullptr)
           addWaiting(c, s);
@@ -478,7 +515,7 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* re
             // but it gets to stay
             if (s->process == nullptr)
               addWaiting(c, s);
-            updateProcessState(current);
+            updateProcessState(s);
             // todo: any interesting statistics to leave
             // in the Process
 
@@ -487,7 +524,7 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* re
             // it is suspending
         }
         else {
-            finalize(c, s, req);
+            result = finalize(c, s);
         }
     }
     else {
@@ -498,8 +535,10 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* re
         // make sure the session has an error in it to take
         // the right path in finalize()
         s->addError("Abnormal termination");
-        finalize(c, s, req);
+        result = finalize(c, s);
     }
+
+    return result;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -521,17 +560,19 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* re
  * or allow the script to ask that results be created if they have something
  * to say.
  */
-void MslConductor::finalize(MslContext* c, MslSession* s, MslRequest* req)
+MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
 {
+    MslResult* result = nullptr;
+    
     MslProcess* p = s->getProcess();
     if (p != nullptr) {
         // this should be on the active list
         bool removed = removeSession(c, s);
         if (!removed)
           Trace(1, "MslConductor: Session with a Process was not on the list");
-        removeProcess(p);
+        removeProcess(c, p);
         // thanks for playing
-        processPool->free(p);
+        processPool.checkin(p);
     }
     else {
         // this should not be on the active list but make sure
@@ -543,35 +584,15 @@ void MslConductor::finalize(MslContext* c, MslSession* s, MslRequest* req)
     // todo: here we can have more complex decisions over whether
     // to save a result
     if (s->hasErrors()) {
-        MslResult* r = makeResult(c, s);
-        if (req.noResult) {
-            // kludge for the console, store the error in the Request but it
-            // only gets one, need to work on the eval() interface
-            req.privateResult = r;
-        }
-        else {
-            saveResult(c, r);
-        }
-    }
-
-    // if we're in a synchronous request from the Environment
-    // can save ending state there too
-    if (req != nullptr) {
-        // only return a value if there were no errors
-        // no way to return errors in the Request yet but that could be handy
-        if (!s->hasErrors()) {
-            MslValue* result = session->getValue();
-            if (result != nullptr && !result->isNull()) {
-                Trace(2, "MslEnvironment: Script returned %s", result->getString());
-                // copy the value rather than the object so the caller doesn't have
-                // to mess with reclamation
-                req->result.setString(result->getString());
-            }
-        }
+        result = makeResult(c, s);
+        // if we're in the background this needs to be saved, but let the caller
+        // sort that out
     }
 
     // you can go now, thank you for your service
     environment->getPool()->free(s);
+
+    return result;
 }
 
 /**
@@ -643,6 +664,8 @@ bool MslConductor::removeSession(MslContext*c, MslSession* s)
         else
           kernelSessions = list;
     }
+
+    return removed;
 }
 
 /**
@@ -695,15 +718,17 @@ MslResult* MslConductor::makeResult(MslContext* c, MslSession* s)
  */
 void MslConductor::saveResult(MslContext* c, MslResult* r)
 {
-    if (c->mslGetContextId() == MslContextShell) {
-        r->next = results;
-        results = r;
-    }
-    else {
-        MslMessage* msg = messagePool.newMessage();
-        msg->type = MslMessage::TypeResult;
-        msg->result = r;
-        sendMessage(c, msg);
+    if (r != nullptr) {
+        if (c->mslGetContextId() == MslContextShell) {
+            r->next = results;
+            results = r;
+        }
+        else {
+            MslMessage* msg = messagePool.newMessage();
+            msg->type = MslMessage::MsgResult;
+            msg->result = r;
+            sendMessage(c, msg);
+        }
     }
 }
 
@@ -832,12 +857,14 @@ void MslConductor::ageSuspended(MslContext* c)
 
         state = session->getRepeatState();
         if (state->isActive()) {
-            ageRepeat(c, ssession, state);
+            ageRepeat(c, session, state);
             mightBeDone = true;
         }
 
-        if (mightBeDone)
-          checkCompletion(c, session, nullptr);
+        if (mightBeDone) {
+            MslResult* r = checkCompletion(c, session);
+            saveResult(c, r);
+        }
         
         session = next;
     }
@@ -851,7 +878,7 @@ void MslConductor::ageSuspended(MslContext* c)
  * timeouts.  If they do, the higher of the two wins as far as finalizing
  * the script, but it will at least stop sending sustain notifications.
  */
-void MslEnvironment::ageSustain(MslContext* c, MslSession* s, MslSuspendState* state)
+void MslConductor::ageSustain(MslContext* c, MslSession* s, MslSuspendState* state)
 {
     int now = juce::Time::getMillisecondCounter();
     int delta = now - state->timeoutStart;
@@ -864,7 +891,7 @@ void MslEnvironment::ageSustain(MslContext* c, MslSession* s, MslSuspendState* s
     }
 }
 
-void MslEnvironment::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* state)
+void MslConductor::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* state)
 {
     int now = juce::Time::getMillisecondCounter();
     int delta = now - state->timeoutStart;
@@ -884,8 +911,10 @@ void MslEnvironment::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* st
 /**
  * Start a new session or repeat an existing one.
  */
-void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
+MslResult* MslConductor::start(MslContext* c, MslRequest *req, MslLinkage* link)
 {
+    MslResult* result = nullptr;
+    
     if (req->release) {
         // this can only do OnRelease on an existing session
         if (req->triggerId == 0) {
@@ -899,7 +928,7 @@ void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
             // if you allow that then several layers from here on down will need to
             // be more complicated than just searching by triggerId, will need to pass
             // the Linkage through as well
-            release(c, req);
+            result = release(c, req);
         }
     }
     else {
@@ -916,7 +945,7 @@ void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
           repeatContext = probeSuspended(c, req->triggerId);
 
         if (repeatContext != MslContextNone) {
-            repeat(c, req, repeatContext);
+            result = repeat(c, req, repeatContext);
         }
         else {
             // a normal missionary position start
@@ -927,9 +956,11 @@ void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
         
             session->start(c, link->unit, link->function, req);
 
-            checkCompletion(c, session, req);
+            result = checkCompletion(c, session);
         }
     }
+
+    return result;
 }
 
 /**
@@ -938,8 +969,10 @@ void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
  * These make sense only for scripts that used #sustain which are normally still
  * waiting for the release.
  */
-void MslConductor::release(MslContext* c, MslRequest* req)
+MslResult* MslConductor::release(MslContext* c, MslRequest* req)
 {
+    MslResult* result = nullptr;
+    
     // is it on our side?
     MslSession* session = findSuspended(c, req->triggerId);
     if (session != nullptr) {
@@ -949,12 +982,12 @@ void MslConductor::release(MslContext* c, MslRequest* req)
         session->release(c, req);
 
         // the suspension is normall not active, should we force it?
-        MslSuspensionState* state = session->getSustainState();
+        MslSuspendState* state = session->getSustainState();
         if (state->isActive()) {
             Trace(1, "MslConductor: Lingering sustain state after release");
             state->init();
         }
-        checkCompletion(c, session, req);
+        result = checkCompletion(c, session);
     }
     else {
         // wasn't on this side, it's either on the other side or it
@@ -962,7 +995,7 @@ void MslConductor::release(MslContext* c, MslRequest* req)
         // before we send a message, make sure it's there
 
         MslContextId otherContext = probeSuspended(c, req->triggerId);
-        if (otherContext == MslContxtNone) {
+        if (otherContext == MslContextNone) {
             Trace(2, "MslConductor: Ignoring relase of terminated session");
         }
         else if (otherContext == c->mslGetContextId()) {
@@ -980,16 +1013,23 @@ void MslConductor::release(MslContext* c, MslRequest* req)
         }
         else {
             sendNotification(c, MslNotificationRelease, req);
+
+            // todo: should have probeSuspended return the sessionId as well
+            // so we can include that in an MslResult
         }
     }
+
+    return result;
 }
 
 /**
  * Cause an OnRepeat notification after checking that the request
  * does in fact mean a repeat rather than just a simple start.
  */
-void MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherContext)
+MslResult* MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherContext)
 {
+    MslResult* result = nullptr;
+    
     // is it on our side?
     MslSession* session = findSuspended(c, req->triggerId);
     if (session != nullptr) {
@@ -999,7 +1039,7 @@ void MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherCont
         session->repeat(c, req);
 
         // the suspension is normall not active, should we force it?
-        MslSuspensionState* state = session->getRepeatState();
+        MslSuspendState* state = session->getRepeatState();
         if (state->isActive()) {
             Trace(1, "MslConductor: Lingering sustain state after release");
             state->init();
@@ -1007,7 +1047,7 @@ void MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherCont
 
         // these normally don't complete until the timeout
         // unless there is a maxRepeat set
-        checkCompletion(c, session, req);
+        result = checkCompletion(c, session);
     }
     else if (otherContext == c->mslGetContextId()) {
         // it's in our context, this can't happen if findSuspended is working
@@ -1018,7 +1058,11 @@ void MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherCont
     }
     else {
         sendNotification(c, MslNotificationRepeat, req);
+        // todo: should have probeSuspended return the sessionId as well
+        // so we can include that in an MslResult
     }
+
+    return result;
 }
 
 /**
@@ -1056,6 +1100,7 @@ MslSession* MslConductor::findSuspended(MslContext* c, int triggerId)
  */
 MslContextId MslConductor::probeSuspended(MslContext* c, int triggerId)
 {
+    (void)c;
     MslContextId otherContext = MslContextNone;
     {
         juce::ScopedLock lock (criticalSection);
@@ -1071,9 +1116,9 @@ MslContextId MslConductor::probeSuspended(MslContext* c, int triggerId)
 
 void MslConductor::sendNotification(MslContext* c, MslNotificationFunction type, MslRequest* req)
 {
-    MslMessage* msg = messagePool->newMessage();
+    MslMessage* msg = messagePool.newMessage();
 
-    msg->type = MslMessage::TypeNotification;
+    msg->type = MslMessage::MsgNotification;
     msg->notification = type;
     msg->bindings = req->bindings;
     msg->arguments = req->arguments;
@@ -1109,30 +1154,68 @@ void MslConductor::doRelease(MslContext* c, MslMessage* msg)
 {
     // make it look like we got the Request in this context
     MslRequest req;
-    req->triggerId = msg->triggerId;
-    req->bindings = msg->bindings;
-    req->arguments = msg->arguments;
+    req.triggerId = msg->triggerId;
+    req.bindings = msg->bindings;
+    req.arguments = msg->arguments;
 
     // ownership transfers
     msg->bindings = nullptr;
     msg->arguments = nullptr;
 
-    release(c, req);
+    MslResult* res = release(c, &req);
+    // this is a bagkround result so save it
+    saveResult(c, res);
 }
 
 void MslConductor::doRepeat(MslContext* c, MslMessage* msg)
 {
     // make it look like we got the Request in this context
     MslRequest req;
-    req->triggerId = msg->triggerId;
-    req->bindings = msg->bindings;
-    req->arguments = msg->arguments;
+    req.triggerId = msg->triggerId;
+    req.bindings = msg->bindings;
+    req.arguments = msg->arguments;
 
     // ownership transfers
     msg->bindings = nullptr;
     msg->arguments = nullptr;
 
-    repeat(c, req, c->mslGetContextId());
+    MslResult* res = repeat(c, &req, c->mslGetContextId());
+    saveResult(c, res);
+}
+
+/**
+ * Here after a Wait statement has been scheduled in the MslContext
+ * and the has come.  Normally in the kernel thread at this point.
+ *
+ * Setting the finished flag on the MslWait object will automatically pick
+ * this up on the next maintenance cycle, but it is important that the
+ * script be advanced synchronously now.
+ *
+ * Getting back to the MslSession what caused this is simple if it is stored
+ * on the MslWait before sending it off.  We could also look in all the active
+ * sessions for the one containing this MslWait object, but that's kind of a tedious walk
+ * and it's easy enough just to save it.
+ *
+ * There is some potential thread contention here on the session if we allow waits
+ * to happen in sessions at the shell level since there are more threads involved
+ * up there than there are in the kernel.  That can't happen right now, but
+ * if you do, then think about it here.
+ */
+void MslConductor::resume(MslContext* c, MslWait* wait)
+{
+    MslSession* session = wait->session;
+    if (session == nullptr)
+      Trace(1, "MslConductor: No session stored in MslWait");
+    else {
+        // this is the magic bean that makes it go
+        wait->finished = true;
+
+        session->resume(c);
+
+        MslResult* result = checkCompletion(c, session);
+        // we're in the background so save if errors
+        saveResult(c, result);
+    }
 }
 
 /****************************************************************************/

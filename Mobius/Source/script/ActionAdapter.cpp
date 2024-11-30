@@ -16,6 +16,7 @@
 #include "MslEnvironment.h"
 #include "MslLinkage.h"
 #include "MslCompilation.h"
+#include "MslResult.h"
 
 #include "ActionAdapter.h"
 
@@ -94,9 +95,10 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
             req.release = action->sustainEnd;
         }
 
-        env->request(c, &req);
+        MslResult* res = env->request(c, &req);
 
         // what and how results are conveyed needs thought
-        CopyString(req.result.getString(), action->result, sizeof(action->result));
+        if (res->value != nullptr)
+          CopyString(res->value->getString(), action->result, sizeof(action->result));
     }
 }

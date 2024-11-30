@@ -37,6 +37,7 @@
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
 #include "script/ScriptClerk.h"
+#include "script/MslConstants.h"
 #include "script/MslContext.h"
 #include "script/MslEnvironment.h"
 #include "script/ScriptUtil.h"

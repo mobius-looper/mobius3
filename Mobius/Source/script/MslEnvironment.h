@@ -91,19 +91,6 @@ class MslRequest
      */
     bool release = false;
 
-    //
-    // Results
-    //
-
-    MslValue result;
-    MslContextError error;
-
-    // kludge for Environment::eval()
-    // suppress storing an MslResult if there are errors and return
-    // one of them in the Request
-    bool noResult = false;
-    class MslResult* privateResult = nullptr;
-
 };
 
 /**
@@ -114,6 +101,7 @@ class MslEnvironment
     friend class MslLinker;
     friend class MslSession;
     friend class MslConductor;
+    friend class MslResultBuilder;
     
   public:
 
@@ -249,11 +237,16 @@ class MslEnvironment
     void free(MslValue* v);
 
     /**
+     * Return a result and whatever is in it to the pools.
+     */
+    void free(MslResult* v);
+    
+    /**
      * Call a function or assign a variable.
      * The MslRequest remains owned by the caller and may be filled in
      * with a result that must be reclaimed.
      */
-    void request(class MslContext* c, MslRequest* req);
+    MslResult* request(class MslContext* c, MslRequest* req);
 
     /**
      * Evaluate a scriptlet.
@@ -299,6 +292,10 @@ class MslEnvironment
     bool isWaiting(int id);
     class MslResult* getResults();
     void pruneResults();
+
+    int listProcesses(juce::Array<MslProcess>& array);
+    bool getProcess(int sessionId, class MslProcess& p);
+    
 
   protected:
 
@@ -374,11 +371,6 @@ class MslEnvironment
     void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
     void exportLinkages(MslContext* c, MslCompilation* unit);
 
-    //
-    // session management
-    //
-    
-    void addError(MslResult* result, const char* msg);
     //void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
 };
 

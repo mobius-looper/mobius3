@@ -112,6 +112,11 @@ void MslEnvironment::free(MslValue* v)
     if (v != nullptr) pool.free(v);
 }
 
+void MslEnvironment::free(MslResult* r)
+{
+    if (r != nullptr) pool.free(r);
+}
+
 /**
  * Access the value of a variable.
  */
@@ -128,12 +133,14 @@ void MslEnvironment::query(MslLinkage* linkage, MslValue* result)
  * side of the linkage.  It will either start a session to run
  * a script or function.  Or assign the value of a static variable.
  */
-void MslEnvironment::request(MslContext* c, MslRequest* req)
+MslResult* MslEnvironment::request(MslContext* c, MslRequest* req)
 {
-    req->result.setNull();
+    MslResult* result = nullptr;
     
     MslLinkage* link = req->linkage;
     if (link == nullptr) {
+        // todo: could add these to the MslResult but in this case
+        // no one is watching
         Trace(1, "MslEnvironment::request Missing link");
     }
     else if (link->variable != nullptr) {
@@ -141,18 +148,23 @@ void MslEnvironment::request(MslContext* c, MslRequest* req)
     }
     else if (link->function == nullptr) {
         Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());
-        req->error.setError("Unresolved link");
+        MslResultBuilder b(this);
+        b.addError("Unresolved link");
+        result = b.finish();
     }
     else {
         // now the magic happens
-        conductor.start(c, req, link);
+        result = conductor.start(c, req, link);
     }
     
     // clean request arguments if they weren't taken due to errors
-    pool->free(req->arguments);
-    pool->free(req->bindings);
+    // todo: hate this, the entire Request should be consumed
+    pool.free(req->arguments);
+    pool.free(req->bindings);
     req->arguments = nullptr;
     req->bindings = nullptr;
+
+    return result;
 }
 
 /**
@@ -221,64 +233,38 @@ void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSessi
 MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
 {
     MslResult* result = nullptr;
+    MslResultBuilder b(this);
+    char msg[1024];
     const char* idchar = id.toUTF8();
     MslLinkage* link = linkMap[id];
     
     if (link == nullptr) {
         // ugh, MslResult has an unpleasant interface for random errors
-        result = pool.allocResult();
-        char msg[1024];
         snprintf(msg, sizeof(msg), "Unknown function: %s", idchar);
-        addError(result, msg);
+        b.addError(msg);
+        result = b.finish();
     }
     else if (link->variable != nullptr) {
         // I suppose we could allow this and just return the value but
         // it is more common for scriplets to be evaluating a unit that
         // returns the value
-        result = pool.allocResult();
-        char msg[1024];
         snprintf(msg, sizeof(msg), "Unit id is a variable: %s", idchar);
-        addError(result, msg);
+        b.addError(msg);
+        result = b.finish();
     }
     else if (link->function == nullptr) {
-        result = pool.allocResult();
-        char msg[1024];
         snprintf(msg, sizeof(msg), "Unresolved function: %s", idchar);
-        addError(result, msg);
+        b.addError(msg);
+        result = b.finish();
     }
     else {
         // so we can make use of the same Conductor interface for starting
         // normal sessions, fake up a Request
         MslRequest req;
-
-        // set the silly flag that indicates that a permanent MslResult should
-        // not be saved and return a single error (which is all we'll have)
-        // in the Request
-        req.noResult = true;
-
-        conductor.start(c, req, link);
-
-        result = req.privateResult;
-        req.privateResult = nullptr;
-        
-        if (result == nullptr)
-          // old callers don't expect null
-          result = pool.allocResult();
+        result = conductor.start(c, &req, link);
     }
 
     return result;
-}
-
-/**
- * Helpers to build pooled results with single error messages.
- */
-void MslEnvironment::addError(MslResult* result, const char* msg)
-{
-    MslError* error = pool.allocError();
-    error->source = MslSourceEnvironment;
-    error->setDetails(msg);
-    error->next = result->errors;
-    result->errors = error;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -876,57 +862,36 @@ void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
 {
     MslFunction* init = unit->getInitFunction();
     if (init != nullptr) {
-        MslSession* session = pool.allocSession();
 
-        session->start(c, unit, init, nullptr);
+        // Conductor requires a Linkage as an argumnt, fake one
+        MslRequest req;
+        MslLinkage link;
+        link.unit = unit;
+        link.function = init;
+        MslResult* result = conductor.start(c, &req, &link);
+        if (result != nullptr) {
 
-        if (session->isFinished()) {
-
-            if (session->hasErrors()) {
-
-                // leave the errors on the installation result
-                // this makes a copy since makeResult() needs them too
-                // and will remove them
-                // this is actually the most useful way to return initialization
-                // errors since the caller can respond to them immediately as opposed
-                // to user initiated requests
-                MslError* errors = session->captureErrors();
-
-                // session uses an error list, unit uses an OwnedArray
-                // remember to clear the next pointer!
+            if (result != nullptr && result->errors != nullptr) {
+                // transfer the errors to the unit
+                MslError* error = result->errors;
                 MslError* next = nullptr;
-                while (errors != nullptr) {
-                    next = errors->next;
-                    errors->next = nullptr;
-                    unit->errors.add(errors);
-                    errors = next;
+                while (error != nullptr) {
+                    next = error->next;
+                    error->next = nullptr;
+                    unit->errors.add(error);
+                    error = next;
                 }
-
-                // don't need to make a persistent MslResult like
-                // request() does, the errors can be returned immediately to the
-                // caller which is ScriptClerk
-                Trace(1, "MslEnvironment: Initializer returned with errors");
-
-                pool.free(session);
+                result->errors = nullptr;
             }
-            else {
-                // there is nothing meaningful todo with the return value?
-                pool.free(session);
+
+            if (result->sessionId != 0) {
+                // the init script transitioned or waited
+                // what kind of mayhem are they going to do down there?
+                // !! todo: initializers really should not wait
+                // should have a flag somewhere to prevent that
+                Trace(2, "MslEnvironment: Warning: init block went background %s", unit->name.toUTF8());
             }
-        }
-        else if (session->isTransitioning()) {
-            // initializers really shouldn't need a kernel transition
-            // what kind of mayhem are they going to do down there
-            Trace(1, "MslEnvironment: Script initialization block wanted to transition");
-            (void)makeResult(session, false);
-            conductor.addTransitioning(c, session);
-            // todo: put something in the unit
-        }
-        else if (session->isWaiting()) {
-            // !! Initializers really shouldn't wait, probably best to cancel it
-            Trace(1, "MslEnvironment: Someone put a Wait in a script initializer, hurt them");
-            (void)makeResult(session, false);
-            conductor.addWaiting(c, session);
+            free(result);
         }
     }
 }
@@ -1137,7 +1102,7 @@ juce::Array<MslLinkage*> MslEnvironment::getLinks()
  */
 void MslEnvironment::shellAdvance(MslContext* c)
 {
-    if (context->mslGetContextId() != MslContextShell)
+    if (c->mslGetContextId() != MslContextShell)
       Trace(1, "MslEnvironment: Wrong advance method called");
     else
       conductor.advance(c);
@@ -1145,7 +1110,7 @@ void MslEnvironment::shellAdvance(MslContext* c)
 
 void MslEnvironment::kernelAdvance(MslContext* c)
 {
-    if (context->mslGetContextId() != MslContextKernel)
+    if (c->mslGetContextId() != MslContextKernel)
       Trace(1, "MslEnvironment: Wrong advance method called");
     else
       conductor.advance(c);
@@ -1186,34 +1151,10 @@ void MslEnvironment::intern(MslExternal* ext)
 /**
  * Here after a Wait statement has been scheduled in the MslContext
  * and the has come.  Normally in the kernel thread at this point.
- *
- * Setting the finished flag on the MslWait object will automatically pick
- * this up on the next maintenance cycle, but it is important that the
- * script be advanced synchronously now.
- *
- * Getting back to the MslSession what caused this is simple if it is stored
- * on the MslWait before sending it off.  We could also look in all the active
- * sessions for the one containing this MslWait object, but that's kind of a tedious walk
- * and it's easy enough just to save it.
- *
- * There is some potential thread contention here on the session if we allow waits
- * to happen in sessions at the shell level since there are more threads involved
- * up there than there are in the kernel.  That can't happen right now, but
- * if you do, then think about it here.
  */
 void MslEnvironment::resume(MslContext* c, MslWait* wait)
 {
-    MslSession* session = wait->session;
-    if (session == nullptr)
-      Trace(1, "MslEnvironment: No session stored in MslWait");
-    else {
-        // this is the magic bean that makes it go
-        wait->finished = true;
-
-        session->resume(c);
-
-        conductor.checkCompletion(c, session);
-    }
+    conductor.resume(c, wait);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1229,18 +1170,15 @@ MslResult* MslEnvironment::getResult(int id)
 
 /**
  * Hack to probe for session status after it was launched async.
- * This is old for the MobiusConsole and dangerous becuse the session
- * pointer on the result is unstable.  Revisit...
+ * This is old for the MobiusConsole
  */
 bool MslEnvironment::isWaiting(int id)
 {
     bool waiting = false;
-    
-    MslResult* result = getResult(id);
 
-    // okay, this is dangerous, should be updating the result instead
-    if (result->session != nullptr)
-      waiting = result->session->isWaiting();
+    MslProcess p;
+    if (conductor.captureProcess(id, p))
+      waiting = (p.state == MslStateWaiting);
     
     return waiting;
 }
@@ -1253,6 +1191,17 @@ MslResult* MslEnvironment::getResults()
 void MslEnvironment::pruneResults()
 {
     conductor.pruneResults();
+}
+
+bool MslEnvironment::getProcess(int sessionId, MslProcess& p)
+{
+    return conductor.captureProcess(sessionId, p);
+}
+
+int MslEnvironment::listProcesses(juce::Array<MslProcess>& result)
+{
+    (void)result;
+    return 0;
 }
 
 /****************************************************************************/
