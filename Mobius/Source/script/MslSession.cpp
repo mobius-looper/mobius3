@@ -77,6 +77,8 @@ void MslSession::init()
     next = nullptr;
     result = nullptr;
     sessionId = 0;
+    process = nullptr;
+
     unit = nullptr;
     context = nullptr;
     stack = nullptr;
@@ -88,22 +90,7 @@ void MslSession::init()
     
     errors = nullptr;
     rootValue = nullptr;
-    runNumber = 0;
     trace = false;
-}
-
-/**
- * Called by Environment to set a unique number used to qualify the trace
- * log files generated when the session completes.
- */
-void MslSession::setRunNumber(int n)
-{
-    runNumber = n;
-}
-
-int MslSession::getRunNumber()
-{
-    return runNumber;
 }
 
 void MslSession::setTrace(bool b)

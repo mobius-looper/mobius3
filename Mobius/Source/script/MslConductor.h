@@ -104,7 +104,8 @@ class MslConductor
     class MslMessage* toShellMessages = nullptr;
     class MslMessage* toKernelMessages = nullptr;
     class MslResult* results = nullptr;
-
+    class MslProcess* processes = nullptr;
+    
     MslMessagePool messagePool;
     MslProcessPool processPool;
     

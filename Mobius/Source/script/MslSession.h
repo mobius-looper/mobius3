@@ -193,6 +193,16 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslSession* getNext() {
         return next;
     }
+
+    class MslProcess* getProcess() {
+        return process;
+    }
+    void setProcess(MslProcess* p) {
+        process = p;
+    }
+
+    // storing a sessionId and triggerId should no longer be necessary
+    // now that we have Process
     int getSessionId() {
         return sessionId;
     }
@@ -218,6 +228,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // mostly for the console
     int sessionId = 0;
 
+    class MslProcess* process = nullptr;
+    
   private:
 
     class MslEnvironment* environment = nullptr;
@@ -252,7 +264,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
 
     StructureDumper log;
     bool trace = false;
-    int runNumber = 0;
     
     //
     // core evaluator

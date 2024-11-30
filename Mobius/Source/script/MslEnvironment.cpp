@@ -164,10 +164,8 @@ void MslEnvironment::start(MslContext* c, MslRequest* req, MslLinkage* link)
 {
     MslSession* session = pool.allocSession();
 
-    // give each session an incrementing number used to save the trace logs
-    // not thread safe, but enough for debug logging
-    runNumber++;
-    session->setRunNumber(runNumber);
+    // nice for the monitor
+    link->runCount++;
         
     session->start(c, link->unit, link->function, req);
 
@@ -175,13 +173,14 @@ void MslEnvironment::start(MslContext* c, MslRequest* req, MslLinkage* link)
 }
 
 /**
- * Common completion processing after start, release, and repeat
+ * Common completion processing after start, release, and repeat.
  */
 void MslEnvironment::complete(MslContext* c, MslRequest* req, MslLinkage* link,
                               MslSession* session)
 {
-    // if it runs to completion can resturn a result
     if (session->isFinished()) {
+        // it ran to completion or had errors
+        
 
         logCompletion(c, link->unit, session);
             
@@ -247,6 +246,13 @@ void MslEnvironment::complete(MslContext* c, MslRequest* req, MslLinkage* link,
     }
 }
 
+/**
+ * After launch, send error messages to a file log.
+ * This only works for the initial launch, if you get errors
+ * after a transition or wait this won't happen.
+ * todo: revisit whether this is necessary.  Once the monitoring UI is working
+ * won't need this.
+ */
 void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSession* s)
 {
     StructureDumper& log = s->getLog();
@@ -281,6 +287,10 @@ void MslEnvironment::logCompletion(MslContext* c, MslCompilation* unit, MslSessi
         file.appendText(log.getText(), false, false, nullptr);
     }
 }
+
+    
+
+
 
 /**
  * Check to see if a repatable session for this trigger already exists

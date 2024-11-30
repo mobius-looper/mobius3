@@ -23,6 +23,11 @@ MslMessage::~MslMessage()
     if (session != nullptr)
       Trace(1, "MslMessage: Leaking session");
 
+    // these are probably safe to delete, if they were caught
+    // in transition during shutdown no one owns them
+    if (result != nullptr)
+      Trace(1, "MslMessage: Leaking result");
+
     // the message itself itself does not cascade
 }
 
@@ -35,6 +40,7 @@ void MslMessage::poolInit()
     bindings = nullptr;
     arguments = nullptr;
     triggerId = 0;
+    result = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////

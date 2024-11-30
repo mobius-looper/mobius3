@@ -275,19 +275,23 @@ void MslConductor::doTransition(MslContext* c, MslMessage* msg)
         Trace(1, "MslConductor: Transition message with no session");
     }
     else {
-        if (c->mslGetContextId() == MslContextShell) {
-            ses->next = shellSessions;
-            shellSessions = ses;
-        }
-        else {
-            msg->next = kernelSessions;
-            kernelSessions = msg;
-        }
-
+        addSession(ses);
         // the Process was givem StateTransitioning temporarily
         // to catch whether sessions get stuck transitioning
         // restore the actual state
         updateProcessState(ses);
+    }
+}
+
+void MslConductor::addSession(MslContext* c, MslSession* s)
+{
+    if (c->mslGetContextId() == MslContextShell) {
+        s->next = shellSessions;
+        shellSessions = s;
+    }
+    else {
+        s->next = kernelSessions;
+        kernelSessions = s;
     }
 }
 
@@ -319,6 +323,66 @@ void MslConductor::sendTransition(MslContext* c, MslSession* s)
       p->state = MslProcess::StateTransitioning;
 
     sendMessage(c, msg);
+}
+
+/**
+ * Called by Environment after a session is created and decides it
+ * needs to transition.  At this point a Process is created so both
+ * sides can monitor it.
+ */
+void MslConductor::addTransitioning(MslContext* c, MslSession* s)
+{
+    MslProcess* p = processPool.newProcess();
+    p->sessionId = generateSessionId();
+    p->state = MslProcess::StateTransitioning;
+    
+    // this pointer is unstable so we probably shouldn't even have it
+    // Session can point back to it's Process but not the other way around
+    p->session = s;
+    s->setProcess(p);
+
+    addProcess(p);
+    sendTransition(c, s);
+}
+
+/**
+ * Called by Environment aftar a session is created and enters a wait state.
+ * If the session was created in the shell shouldn't be here since wait requires
+ * a transition to the kernel first.  This commonly happens for sessions
+ * created in the kernel though.
+ *
+ * Like transitioning, if we enter a wait state after launch, a Process is created
+ * for monitoring.
+ */
+void MslConductor::addWaiting(MslContext* c, MslSession* s)
+{
+    MslProcess* p = processPool.newProcess();
+    p->sessionId = generateSessionId();
+    p->state = MslProcess::StateWaiting;
+    
+    // this pointer is unstable so we probably shouldn't even have it
+    // Session can point back to it's Process but not the other way around
+    p->session = s;
+    s->setProcess(p);
+
+    addProcess(p);
+    addSession(s);
+}
+
+void MslConductor::addProcess(MslContext* c, MslProcess* p)
+{
+    (void)c;
+    juce::ScopedLock lock (criticalSection);
+    p->next = processes;
+    processes = p;
+}
+
+/**
+ * Generate a unique non-zero session id for a newly launched session.
+ */
+int MslConductor::generateSessionId()
+{
+    return ++sessionIds;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -426,6 +490,271 @@ void MslConductor::advanceActive(MslContext* c)
  */
 void MslConductor::terminate(MslContext* c, MslSession* s)
 {
+}
+
+/**
+ * Called by Environment after a session was started for the first time,
+ * and after advanceActive after allowing it to resume after suspending.
+ *
+ * Check for varous ending states and take the appropriate action.
+ */
+void MslConductor::checkCompletion(MslContext* c, MslSession* s)
+{
+    if (s->hasErrors()) {
+        // it doesn't matter what state it's in, as soon as an error
+        // condition is reached, it terminates
+        // todo: might want some tolerance here
+        // you could have errors in one repeat, but move on to the next one
+        // or errors in an OnSustain, but still want OnRelease to clean
+        // something up
+        // would be nice to have an optional OnError that always gets
+        // called for cleanup
+        terminate(c, s);
+    }
+    else if (s->isTransitioning()) {
+        // break on through to the other side
+        if (s->process == nullptr) {
+            // must be the initial launch
+            addTransitioning(c, s);
+        }
+        else {
+            (void)removeSession(c, s);
+            sendTransition(c, s);
+        }
+    }
+    else if (current->isWaiting()) {
+        // it stays here
+        if (s->process == nullptr)
+          addWaiting(c, s);
+        updateProcessState(s);
+    }
+    else if (s->isFinished()) {
+        // it ran to completion without errors
+        if (s->isSuspended()) {
+            if (s->process == nullptr)
+              addWaiting(c, s);
+            // but it gets to stay
+            updateProcessState(current);
+            // todo: any interesting statistics to leave
+            // in the Process or Result?
+        }
+        else {
+            finalize(c, s);
+        }
+    }
+    else {
+        // this is odd, it still has stack frames
+        // but it isn't transitioning or waiting
+        // shouldn't be here
+        Trace(1, "MslConductor: Terminating session with mysterioius state");
+        // todo: shold leave an error in the session that can be
+        // transferred to the Result
+        terminate(c, current);
+        remove = true;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Finalization and Results
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * After a session has run to completion or been terminated,
+ * clean up after it.
+ * 
+ * Save the final state in a Result object for the monitoring UI.
+ * Results should only created when the session is over, while it is running
+ * state ust be monitored throught the Process list.
+ *
+ * To avoid clutter, only create results if there were errors.
+ * In the future, there need to be diagnostic options to always create results,
+ * or allow the script to ask that results be created if they have something
+ * to say.
+ */
+void MslConductor::finalize(MslContext* c, MslSession* s)
+{
+    MslProcess* p = s->getProcess();
+    if (p != nullptr) {
+        // this should be on the active list
+        bool removed = removeSession(c, s);
+        if (!removed)
+          Trace(1, "MslConductor: Session with a Process was not on the list");
+        removeProcess(p);
+        // thanks for playing
+        processPool->free(p);
+    }
+    else {
+        // this should not be on the active list but make sure
+        bool removed = removeSession(c, s);
+        if (removed)
+          Trace(1, "MslConductor: Session without a Process was on the list");
+    }
+
+    // todo: here we can have more complex decisions over whether
+    // to save a result
+    if (s->hasErrors()) {
+        MslResult* r = makeResult(c, s);
+        saveResult(c, r);
+    }
+
+    // you can go now, thank you for your service
+    environment->getPool()->free(s);
+}
+
+bool MslConductor::removeProcess(MslContext* c, MslProcess* p)
+{
+    (void)c;
+    bool removed = false;
+
+    // this list is shared and must be locked
+    {
+        juce::ScopedLock lock (criticalSection);
+        
+        MslProcess* prev = nullptr;
+        MslProcess* current = processes;
+        while (current != nullptr) {
+            MslProcess* next = current->next;
+            if (current != p)
+              prev = current;
+            else {
+                if (prev != nullptr)
+                  prev->next = next;
+                else
+                  processes = next;
+                current->next = nullptr;
+                removed = true;
+                break;
+            }
+        }
+    }
+    
+    return removed;
+}
+
+/**
+ * Remove the session from the active list.
+ * Used for various reasons to get the session out of further consideration
+ * by this context.
+ */
+bool MslConductor::removeSession(MslContext*c, MslSession* s)
+{
+    bool removed = false;
+    
+    MslSession* list = nullptr;
+    if (c->mslGetContextId() == MslContextShell)
+      list = shellSessions;
+    else
+      list = kernelSessions;
+
+    MslSession* prev = nullptr;
+    MslSession* current = list;
+
+    while (current != nullptr) {
+        MslSession* next = current->next;
+        if (current != s)
+          prev = current;
+        else {
+            if (prev != nullptr)
+              prev->next = next;
+            else
+              list = next;
+            current->next = nullptr;
+            removed = true;
+            break;
+        }
+    }
+
+    if (removed) {
+        // put the modified list back
+        if (c->mslGetContextId() == MslContextShell)
+          shellSessions = list;
+        else
+          kernelSessions = list;
+    }
+}
+
+/**
+ * After a session has run to completion or been terminated,
+ * save the final state in a Result object for the monitoring UI.
+ * Results should only created when the session is over, while it is running
+ * state ust be monitored throught the Process list.
+ *
+ * To avoid clutter, only create results if there were errors.
+ * In the future, there need to be diagnostic options to always create results,
+ * or allow the script to ask that results be created if they have something
+ * to say.
+ *
+ * It is the responsibility of the caller to decide if this is necessary.
+ */
+MslResult* MslConductor::makeResult(MslContext* c, MslSession* s)
+{
+    (void)c;
+    // need to move the result pool in here
+    MslResult* result = environment->getPool()->allocResult();
+
+    // this is old, don't need this any more now that we have Process
+    // but it does provide a unique identifier
+    MslProcess* p = s->getProcess();
+    if (p != nullptr) {
+        result->sessionId = p->sessionId;
+        // anything else from the process?
+    }
+    else {
+        // this was a synchronous session with launch errors
+        // for consistency generate a unique id
+        result->sessionId = generateSessionId();
+    }
+    
+    // give it a meaningful name if we can
+    result->setName(s->getName());
+
+    // transfer errors and result value
+    result->errors = s->captureErrors();
+    result->value = s->captureValue();
+
+    return result;
+}
+
+/**
+ * Save the final result on the result list if we're in the shell,
+ * If not send it to the shell.
+ * This avoids contention on the result list so the monitoring UI
+ * doesn't have to mess with locking.
+ */
+void MslConductor::saveResult(MslContext* c, MslResult* r)
+{
+    if (c->mslGetContextId() == MslContextShell) {
+        r->next = results;
+        results = r;
+    }
+    else {
+        MslMessage* msg = messagePool.newMessage();
+        msg->type = MslMessage::TypeResult;
+        msg->result = r;
+        sendMessage(c, msg);
+    }
+}
+
+/**
+ * Handle a MsgResult message
+ * These should only be sent by the kernel to the shell.
+ */
+void MslConductor::doResult(MslContext* c, MslMessage* msg)
+{
+    if (c->mslGetContextId() != MslContextShell) {
+        Trace(1, "MslConductor: Result message sent to the wrong context");
+    }
+    else if (msg->result == nullptr) {
+        Trace(1, "MslConductor: Result message missing result");
+    }
+    else {
+        MslResult* r = msg->result;
+        msg->result = nullptr;
+        r->next = results;
+        results = r;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

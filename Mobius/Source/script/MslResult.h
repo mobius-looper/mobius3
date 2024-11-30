@@ -43,11 +43,6 @@ class MslResult
     char name[MslResultMaxName];
     void setName(const char* s);
     
-    // true if this session is still running
-    bool isRunning();
-    bool isTransitioning();
-    bool isWaiting();
-
   protected:
 
     // the chain pointer for the environment's result list
@@ -55,9 +50,6 @@ class MslResult
 
     // becomes true once the result has been installed on the environment's global result list
     bool interned = false;
-    
-    // direct pointer to the session if it is still running
-    class MslSession* session = nullptr;
 
   private:
 

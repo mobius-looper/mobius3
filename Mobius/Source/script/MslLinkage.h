@@ -27,6 +27,11 @@ class MslLinkage
     // the resolved target of the link
     class MslFunction* function =  nullptr;
     class MslVariableExport* variable = nullptr;
+
+    // the number of times the function has been called with a Request
+    // todo: need more interesting stats, like internal function calls
+    // varialbe updates, etc.
+    int runCount = 0;
     
 };
 

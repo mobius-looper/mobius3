@@ -49,6 +49,10 @@ class MslMessage : public MslPooledObject
     // for some of the Notifications, an associated trigger
     int triggerId = 0;
 
+    // for MsgResult, the result object the shell is to take
+    // ownership of
+    class MslResult* result = nullptr;
+
     // todo: for Result, need the sessionId or some other way to
     // identify it.  Work through what goes in the result, certainly
     // error and informational messages, name/value pairs so probably
