@@ -352,7 +352,7 @@ void MslSession::release(MslContext* argContext, MslRequest* request)
 }
 
 /**
- * Here when Environment detects that the sustain timeout has been reached
+ * Here when Conductor detects that the sustain timeout has been reached
  * The count has already been advanced and it will be re-armed if the sustain
  * is still active when this returns.
  */
@@ -770,6 +770,14 @@ void MslSession::addError(MslNode* node, const char* details)
 {
     MslError* e = pool->allocError();
     e->init(node, details);
+    e->next = errors;
+    errors = e;
+}
+
+void MslSession::addError(const char* details)
+{
+    MslError* e = pool->allocError();
+    e->setDetails(details);
     e->next = errors;
     errors = e;
 }

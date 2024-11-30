@@ -1,6 +1,9 @@
 /**
  * The Manager for session lists within the MSL environment.
  *
+ * update: also sucking in almost all of the old Environment code related
+ * to session management
+ *
  * Each MslContext thread has an active session list for the sessions
  * that are running within it, though in practice there are only
  * two, the shell and the kernel.  Unclear if we need a different
@@ -366,6 +369,7 @@ void MslConductor::addWaiting(MslContext* c, MslSession* s)
     s->setProcess(p);
 
     addProcess(p);
+    // if it waits it transitions first, and we're on the right side
     addSession(s);
 }
 
@@ -395,110 +399,50 @@ int MslConductor::generateSessionId()
  * Process each of the active sessions.
  *
  * If a session completes and does not suspend is is removed from the
- * list and has results updated.
+ * list and has results generated.
+ *
+ * Note that the checkCompletion() is shared by this caller and
+ * by Environment when it launches a transient session for the first time.
+ * checkCompletion() needs to do list management as well, so some of that
+ * will be redundant since we're already iterating here, but it isn't worth
+ * refactoring.  Just be careful that when you call checkCompletion the session
+ * may be removed from the list we're iterating over here.  So be sure to capture
+ * the next pointer before calling.
  */
 void MslConductor::advanceActive(MslContext* c)
 {
-    MslSession* list = nullptr;
+    MslSession* session = nullptr;
     if (c->mslGetContextId() == MslContextShell)
-      list = shellSessions;
+      session = shellSessions;
     else
-      list = kernelSessions;
+      session = kernelSessions;
     
-    MslSession* prev = nullptr;
-    MslSession* current = list;
+    while (session != nullptr) {
+        // capture early before the list is modified
+        MslSession* next = session->next;
 
-    while (current != nullptr) {
-        MslSession* next = current->next;
+        // resuming will cancel the transitioning state but not the waits
+        s->resume(c);
 
-        // environment does all the work
-        environment->processSession(c, current);
-
-        bool remove = false;
-        if (current->hasErrors()) {
-            // it doesn't matter what state it's in, as soon as an error
-            // condition is reached, it terminates
-            // todo: might want some tolerance here
-            // you could have errors in one repeat, but move on to the next one
-            // or errors in an OnSustain, but still want OnRelease to clean
-            // something up
-            // would be nice to have an optional OnError that always gets
-            // called for cleanup
-            terminate(c, current);
-            remove = true;
-        }
-        else if (current->isTransitioning()) {
-            // break on through to the other side
-            sendTransition(c, current);
-            remove = true;
-        }
-        else if (current->isWaiting()) {
-            // it stays
-            updateProcessState(currrent);
-        }
-        else if (current->isFinished()) {
-            // it ran to completion without errors
-            if (current->isSuspended()) {
-                // but it gets to stay
-                updateProcessState(current);
-                // todo: any interesting statistics to leave
-                // in the Process or Result?
-            }
-            else {
-                // it's finally over, update Results
-                updateResults(c, current);
-                remove = true;
-            }
-        }
-        else {
-            // this is odd, it still has stack frames
-            // but it isn't transitioning or waiting
-            // shouldn't be here
-            Trace(1, "MslConductor: Terminating session with mysterioius state");
-            // todo: shold leave an error in the session that can be
-            // transferred to the Result
-            terminate(c, current);
-            remove = true;
-        }
-
-        if (remove) {
-            // splice it out of the list
-            if (prev != nullptr)
-              prev->next = next;
-            else
-              list = next;
-        }
-        else {
-            prev = current;
-        }
+        // decide what to do now, this may remove the session
+        // from the list
+        checkCompletion(c, session, nullptr);
         
         current = next;
     }
-
-    // put the modified list back
-    if (c->mslGetContextId() == MslContextShell)
-      shellSessions = list;
-    else
-      kernelSessions = list;
-}
-
-/**
- * Terminte a session due to an error condition.
- *
- * This case almost always causes errors to be transferred
- * to the Result.
- */
-void MslConductor::terminate(MslContext* c, MslSession* s)
-{
 }
 
 /**
  * Called by Environment after a session was started for the first time,
- * and after advanceActive after allowing it to resume after suspending.
+ * and by advanceActive after allowing it to resume after suspending.
  *
  * Check for varous ending states and take the appropriate action.
+ *
+ * When called from Environment we won't have a Process yet so make one.
+ * A Request is passed only when called from Environment, and ending state
+ * can be stored there for synchronous return the application.
  */
-void MslConductor::checkCompletion(MslContext* c, MslSession* s)
+void MslConductor::checkCompletion(MslContext* c, MslSession* s, MslRequeset* req)
 {
     if (s->hasErrors()) {
         // it doesn't matter what state it's in, as soon as an error
@@ -509,12 +453,12 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s)
         // something up
         // would be nice to have an optional OnError that always gets
         // called for cleanup
-        terminate(c, s);
+        finalize(c, s, req);
     }
     else if (s->isTransitioning()) {
         // break on through to the other side
         if (s->process == nullptr) {
-            // must be the initial launch
+            // must be the initial launch, not on a list yet
             addTransitioning(c, s);
         }
         else {
@@ -531,26 +475,30 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s)
     else if (s->isFinished()) {
         // it ran to completion without errors
         if (s->isSuspended()) {
+            // but it gets to stay
             if (s->process == nullptr)
               addWaiting(c, s);
-            // but it gets to stay
             updateProcessState(current);
             // todo: any interesting statistics to leave
-            // in the Process or Result?
+            // in the Process
+
+            // todo: if the main body ran to completion it could
+            // still return something through the Request even though
+            // it is suspending
         }
         else {
-            finalize(c, s);
+            finalize(c, s, req);
         }
     }
     else {
-        // this is odd, it still has stack frames
-        // but it isn't transitioning or waiting
-        // shouldn't be here
+        // this is odd, it still has stack frames but is not transitioning or waiting
+        // can't happen without a logic error somewhere
+        // force a termination to get it out of here
         Trace(1, "MslConductor: Terminating session with mysterioius state");
-        // todo: shold leave an error in the session that can be
-        // transferred to the Result
-        terminate(c, current);
-        remove = true;
+        // make sure the session has an error in it to take
+        // the right path in finalize()
+        s->addError("Abnormal termination");
+        finalize(c, s, req);
     }
 }
 
@@ -573,7 +521,7 @@ void MslConductor::checkCompletion(MslContext* c, MslSession* s)
  * or allow the script to ask that results be created if they have something
  * to say.
  */
-void MslConductor::finalize(MslContext* c, MslSession* s)
+void MslConductor::finalize(MslContext* c, MslSession* s, MslRequest* req)
 {
     MslProcess* p = s->getProcess();
     if (p != nullptr) {
@@ -596,47 +544,69 @@ void MslConductor::finalize(MslContext* c, MslSession* s)
     // to save a result
     if (s->hasErrors()) {
         MslResult* r = makeResult(c, s);
-        saveResult(c, r);
+        if (req.noResult) {
+            // kludge for the console, store the error in the Request but it
+            // only gets one, need to work on the eval() interface
+            req.privateResult = r;
+        }
+        else {
+            saveResult(c, r);
+        }
+    }
+
+    // if we're in a synchronous request from the Environment
+    // can save ending state there too
+    if (req != nullptr) {
+        // only return a value if there were no errors
+        // no way to return errors in the Request yet but that could be handy
+        if (!s->hasErrors()) {
+            MslValue* result = session->getValue();
+            if (result != nullptr && !result->isNull()) {
+                Trace(2, "MslEnvironment: Script returned %s", result->getString());
+                // copy the value rather than the object so the caller doesn't have
+                // to mess with reclamation
+                req->result.setString(result->getString());
+            }
+        }
     }
 
     // you can go now, thank you for your service
     environment->getPool()->free(s);
 }
 
+/**
+ * Splice a process out of the list.
+ * Since the list is shared by both shell and kernel it needs to be locked.
+ */
 bool MslConductor::removeProcess(MslContext* c, MslProcess* p)
 {
     (void)c;
     bool removed = false;
-
-    // this list is shared and must be locked
-    {
-        juce::ScopedLock lock (criticalSection);
+    juce::ScopedLock lock (criticalSection);
         
-        MslProcess* prev = nullptr;
-        MslProcess* current = processes;
-        while (current != nullptr) {
-            MslProcess* next = current->next;
-            if (current != p)
-              prev = current;
-            else {
-                if (prev != nullptr)
-                  prev->next = next;
-                else
-                  processes = next;
-                current->next = nullptr;
-                removed = true;
-                break;
-            }
+    MslProcess* prev = nullptr;
+    MslProcess* current = processes;
+    while (current != nullptr) {
+        MslProcess* next = current->next;
+        if (current != p)
+          prev = current;
+        else {
+            if (prev != nullptr)
+              prev->next = next;
+            else
+              processes = next;
+            current->next = nullptr;
+            removed = true;
+            break;
         }
     }
-    
     return removed;
 }
 
 /**
  * Remove the session from the active list.
- * Used for various reasons to get the session out of further consideration
- * by this context.
+ * Used for various reasons to get the session out of further
+ * consideration by this context.
  */
 bool MslConductor::removeSession(MslContext*c, MslSession* s)
 {
@@ -667,7 +637,7 @@ bool MslConductor::removeSession(MslContext*c, MslSession* s)
     }
 
     if (removed) {
-        // put the modified list back
+        // if the list head was modified, have to put it back
         if (c->mslGetContextId() == MslContextShell)
           shellSessions = list;
         else
@@ -757,214 +727,29 @@ void MslConductor::doResult(MslContext* c, MslMessage* msg)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-// **** OLD ***
-//////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////
-//
-// Shell Maintenance
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * During the shell transition phase, queued sessions from the kernel are consumed.
- * Sessions that are still alive are placed on the shell active list and
- * sessions that have completed are removed and their results updated.
- *
- * The Result list is only maintained by the shell context.  When a session
- * termintates in the kernel, it is transitioned back to the shell for
- * results processing.
- */
-void MslConductor::shellTransition()
-{
-    // capture the incomming sessions
-    // csect because kernel can be pushing at this very moment
-    MslSession* neu = nullptr;
-    {
-        juce::ScopedLock lock (criticalSection);
-        neu = toShell;
-        toShell = nullptr;
-    }
-
-    while (neu != nullptr) {
-        MslSession* next = neu->next;
-        neu->next = nullptr;
-
-        if (neu->isFinished() && !neu->isSuspended()) {
-            // leave it off the active list, update result, and discard
-            finishResult(neu);
-        }
-        else {
-            // add it to the active list
-            updateProcessState(neu);
-            neu->next = shellSessions;
-            shellSessions = neu;
-        }
-        neu = next;
-    }
-}
-
-/**
- * Iterate over the active shell sessions.
- *
- * TODO: Potential issues if the maintenance thread that calls this
- * is allowed to be concurrent with the UI thread which is creating
- * new sessions or doing suspend/repeat notifications.
- * Currently the two block in Mobius but this may not hold true in other
- * applications.
- *
- * This would have to remove the session from the list with a lock
- * in order to process it, then put it back with a lock if it didn't finish.
- */
-void MslConductor::shellIterate(MslContext* context)
-{
-    MslSession* prev = nullptr;
-    MslSession* current = shellSessions;
-
-    while (current != nullptr) {
-        MslSession* next = current->next;
-
-        environment->processSession(context, current);
-
-        // these clears StateTransitioning
-        updateProcessState(current);
-        
-        bool remove = false;
-        if (current->isTransitioning()) {
-            juce::ScopedLock lock (criticalSection);
-            current->next = toKernel;
-            toKernel = current;
-            MslProcess* p = current->getProcess();
-            if (p != nullptr) p->state = MslProcess:StateTransitioning;
-            remove = true;
-        }
-        else if (current->isSuspended() || current->isWaiting()) {
-            // leave on the list, process state has been updated
-        }
-        
-        
-        
-
-        
-        // not liking the name "Finished"
-        bool finished = current->isFinished() && !current->isSuspended();
-
-        
-
-        
-
-        if (finished || current->isTransitioning()) {
-            
-            // splice it out of the list
-            if (prev != nullptr)
-              prev->next = next;
-            else
-              shellSessions = next;
-            current->next = nullptr;
-
-            if (finished) {
-                finishResult(current);
-            }
-            else {
-                juce::ScopedLock lock (criticalSection);
-                current->next = toKernel;
-                toKernel = current;
-            }
-        }
-        
-        current = next;
-    }
-}
-
-/**
- * Add a new result to the interned result list.
- * The result may still be associated with an active session, or
- * it may what was left behind from a session that immediately ran to completion
- * without transitioning.
- */
-void MslConductor::addResult(MslResult* r)
-{
-    juce::ScopedLock lock (criticalSectionResult);
-    r->next = results;
-    results = r;
-}
-
-/**
- * Called when an background session has finished.
- * It has been removed from the shell or kernel session list.
- * Move any final state from the session to the result and
- * release the session back to the pool.
- *
- * An associated MslResult should always have been created by now.
- * todo: Who has the responsibility for refreshing the result, conductor
- * or do we allow the session to touch the result along the way?
- */
-void MslConductor::finishResult(MslSession* s)
-{
-    MslPools* pool = environment->getPool();
-    
-    MslResult* result = s->result;
-    if (result == nullptr) {
-        // I suppose we could generate a new one here, but Environment
-        // is supposed to have already done that
-        Trace(1, "MslConductor: Finished session without a result");
-    }
-    else {
-        // the console may be examining the object so only allowed to do
-        // atomic things
-        // !! this is a problem since we don't incrementally add things
-        // like more errors on a list or a different value this is safe,
-        // but I don't like how this is working.  Really don't want to have
-        // console locking these, perhaps we need two lists, one for dead sessions
-        // and one for those still running
-        
-        MslError* oldErrors = result->errors;
-        if (oldErrors != nullptr)
-          Trace(1, "MslConductor: Replacing result error list!");
-        result->errors = s->captureErrors();
-        pool->free(oldErrors);
-
-        MslValue* oldValue = result->value;
-        if (oldValue != nullptr)
-          Trace(1, "MslConductor: Replacing result value!");
-        result->value = s->captureValue();
-        pool->free(oldValue);
-
-        // todo: interesting execution statistics
-
-        // take away this pointer, which really shouldn't have been there anyway
-        result->session = nullptr;
-    }
-
-    // and finally reclaim the session
-    pool->free(s);
-}
-
 /**
  * Called under user control to prune the result list.
  * Note that this can't be called periodically by the maintenance thread since
  * the ScriptConsole expects this list to be stable.
+ *
+ * This can only be called from the shell context.
  */
 void MslConductor::pruneResults()
 {
     MslResult* remainder = nullptr;
-    {
-        juce::ScopedLock lock (criticalSectionResult);
     
-        // pick a number, any nummber
-        int maxResults = 10;
+    // pick a number, any nummber
+    int maxResults = 10;
 
-        int count = 0;
-        MslResult* s = results;
-        while (s != nullptr && count < maxResults) {
-            s = s->next;
-            count++;
-        }
-        remainder = s->next;
-        s->next = nullptr;
+    int count = 0;
+    MslResult* s = results;
+    while (s != nullptr && count < maxResults) {
+        s = s->next;
+        count++;
     }
-
+    remainder = s->next;
+    s->next = nullptr;
+    
     while (remainder != nullptr) {
         MslResult* next = remainder->next;
         remainder->next = nullptr;
@@ -977,384 +762,15 @@ void MslConductor::pruneResults()
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Kernel Maintenance
-//
-//////////////////////////////////////////////////////////////////////
-
 /**
- * The kernel transition phase is simpler because we don't have to deal
- * with adding finished sessions to the result list, they all go on the active list.
- */
-void MslConductor::kernelTransition()
-{
-    // capture the incomming sessions
-    // csect because shell can be pushing at this very moment
-    MslSession* neu = nullptr;
-    {
-        juce::ScopedLock lock (criticalSection);
-        neu = toKernel;
-        toKernel = nullptr;
-    }
-
-    while (neu != nullptr) {
-        MslSession* next = neu->next;
-        neu->next = kernelSessions;
-        kernelSessions = neu;
-        neu = next;
-    }
-}
-
-/**
- * Iterate over the active kernel sessions.
- * Both finished and transitioning sessions to back to the shell.
- */
-void MslConductor::kernelIterate(MslContext* context)
-{
-    MslSession* prev = nullptr;
-    MslSession* current = kernelSessions;
-
-    while (current != nullptr) {
-        MslSession* next = current->next;
-
-        environment->processSession(context, current);
-
-        bool finished = current->isFinished() && !current->isSuspended();
-
-        if (finished || current->isTransitioning()) {
-            
-            // splice it out of the list
-            if (prev != nullptr)
-              prev->next = next;
-            else
-              kernelSessions = next;
-            current->next = nullptr;
-
-            // and send it to the shell
-            // actually we could do the same finishResult processing
-            // that shell does here, but keep doing it the old way
-            {
-                juce::ScopedLock lock (criticalSection);
-                current->next = toShell;
-                toShell = current;
-            }
-        }
-        
-        current = next;
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Transitions
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Place the session in the opposite context from where we are now.
- */
-void MslConductor::addTransitioning(MslContext* weAreHere, MslSession* s)
-{
-    if (weAreHere->mslGetContextId() == MslContextShell) {
-        juce::ScopedLock lock (criticalSection);
-        s->next = toKernel;
-        toKernel = s;
-    }
-    else {
-        juce::ScopedLock lock (criticalSection);
-        s->next = toShell;
-        toShell = s;
-    }
-}
-
-/**
- * Place a non-transitioning but waiting session on the current
- * context's active list.  In practice, the current context
- * shold always be Kernel since waits can't be performed by the shell
- * at the moment, and this should have caused an immediate transition.
- * But someday it may make sense to have shell waits, like to respond
- * to a UI event.
- *
- * Needs more thought but infintely waiting shell sessions could be used
- * as "handlers" for things.
- *
- * Although we are on the "right side" the shell still needs to csect
- * protect the list because UIActions can be handled by both the UI
- * thread and the maintenance thread.  Really?  won't they be blocking
- * each other?  If it can be assured that the maintenance thread can't
- * be running at the same time as the UI thread could avoid this.  HOWEVER
- * this means MIDI events need to be sent through the UI thread since
- * those come in on their own special thread.  I believe this is true.
- *
- * Note that the lock here isn't enough if this is really an issue because
- * shellIterate isn't locking.
- *
- */
-void MslConductor::addWaiting(MslContext* weAreHere, MslSession* s)
-{
-    if (weAreHere->mslGetContextId() == MslContextShell) {
-        // this actually can't happen because Session will force a
-        // kernel transition when setting up a wait state
-        Trace(1, "MslConductor: Adding a waiting session to the shell list");
-        
-        // use the result csect since the kernel doesn't care 
-        juce::ScopedLock lock (criticalSectionResult);
-        s->next = shellSessions;
-        shellSessions = s;
-    }
-    else {
-        // there are no threads in the kernel, so if that's where we are
-        // then we have control
-        s->next = kernelSessions;
-        kernelSessions = s;
-    }
-}
-
-/**
- * Move a session from one side to the other after it has been added.
- */
-void MslConductor::transition(MslContext* weAreHere, MslSession* s)
-{
-    if (s != nullptr) {
-        if (weAreHere->mslGetContextId() == MslContextShell) {
-            bool foundit = false;
-            {
-                // scope lock on the "result" csect just in case we have
-                // multiple shell threads touching sessions
-                juce::ScopedLock lock (criticalSectionResult);
-                foundit = remove(&shellSessions, s);
-            }
-            if (!foundit) {
-                // it must have been added by now
-                // don't just toss it on the kernel list without figuring out why
-                Trace(1, "MslConductor: Transitioning session not on shell list");
-            }
-            else {
-                juce::ScopedLock lock (criticalSection);
-                s->next = toKernel;
-                toKernel = s;
-            }
-        }
-        else {
-            // don't need to csect on the kernel list since there is only one thread
-            bool foundit = remove(&kernelSessions, s);
-            if (!foundit) {
-                Trace(1, "MslConductor: Transitioning session not on kernel list");
-            }
-            else {
-                juce::ScopedLock lock (criticalSection);
-                s->next = toShell;
-                toShell = s;
-            }
-        }
-    }
-}
-
-/**
- * Splice a session out of a list.
- * Because we need to return both a status flag and a modification
- * to the head of the list, pass a pointer to the list head.
- * This must already be in an appropriate csect.
- */
-bool MslConductor::remove(MslSession** list, MslSession* s)
-{
-    bool foundit = false;
-
-    MslSession* prev = nullptr;
-    MslSession* ptr = *list;
-    while (ptr != nullptr && ptr != s) {
-        prev = ptr;
-        ptr = ptr->next;
-    }
-    
-    if (ptr == s) {
-        foundit = true;
-        if (prev == nullptr)
-          *list = ptr->next;
-        else
-          prev->next = ptr->next;
-        ptr->next = nullptr;
-    }
-    return foundit;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Suspended
-//
-//////////////////////////////////////////////////////////////////////
-
-void MslConductor::sendMessage(MslContext* c, MslNotificationFunction type, MslRequest* req)
-{
-    MslMessage* msg = messagePool->newMessage();
-
-    msg->type = MslMessage::TypeNotification;
-    msg->notification = type;
-    msg->bindings = req->bindings;
-    msg->arguments = req->arguments;
-
-    // ownership transfers
-    req->bindings = nullptr;
-    req->arguments = nullptr;
-
-    sendMessage(c, msg);
-}
-/**
- * Return a session that is on the list matching the given triggerId.
- * TODO: THis has the UI/maintenance thread issue in the Shell context.
- */
-MslSession* MslConductor::removeSuspended(MslContext* c, int triggerId)
-{
-    MslSession* found = nullptr;
-
-    if (c->mslGetContextId() == MslContextShell) {
-        MslSession* ses = shellSessions;
-        while (ses != nullptr) {
-            if (ses->getTriggerId() == triggerId) {
-                found = ses;
-                remove(&shellSessions, ses);
-                break;
-            }
-        }
-    }
-    else {
-        MslSession* ses = kernelSessions;
-        while (ses != nullptr) {
-            if (ses->getTriggerId() == triggerId) {
-                found = ses;
-                remove(&kernelSessions, ses);
-                break;
-            }
-        }
-    }
-    return found;
-}
-
-/**
- * For repeating scripts, return true if there is a session with this triggerId
- * still active.
- *
- * !! This is a terrible and unreliable kludge walking over the other side's session
- * list which is unstable.  Need a safer way to determine this, but this allows progress
- * on repeat testing.
- *
- * The probe is just there to determine whether we need to do more work since most of the
- * time scripts will not repeat even if they allow it.
- */
-bool MslConductor::probeSuspended(MslContext* c, int triggerId)
-{
-    (void)c;
-    bool found = false;
-
-    MslSession* ses = shellSessions;
-    while (ses != nullptr) {
-        if (ses->getTriggerId() == triggerId) {
-            found = ses;
-            break;
-        }
-    }
-
-    if (!found) {
-        ses = kernelSessions;
-        while (ses != nullptr) {
-            if (ses->getTriggerId() == triggerId) {
-                found = ses;
-                break;
-            }
-        }
-    }
-    
-    return found;
-}
-
-
-void MslConductor::advanceSuspended(MslContext* c)
-{
-    MslSession* list = nullptr;
-    
-    if (c->mslGetContextId() == MslContextShell)
-      list = shellSessions;
-    else
-      list = kernelSessions;
-
-    MslSession* prev = nullptr;
-    MslSession* session = list;
-    while (session != nullptr) {
-        MslSession* next = session->next;
-        bool remove = false;
-        
-        MslSuspendState* state = session->getSustainState();
-        if (state->isActive())
-          remove = environment->processSustain(c, session);
-
-        // if sustain ends it, then we don't need to check repeat timeouts
-        if (!remove) {
-            state = session->getRepeatState();
-            if (state->isActive())
-              remove = environment->processRepeat(c, session);
-        }
-
-        if (remove) {
-            if (prev == nullptr)
-              list = next;
-            else
-              prev->next = next;
-            // environment will have already freed it
-        }
-        else {
-            prev = session;
-        }
-
-        session = next;
-    }
-
-    if (c->mslGetContextId() == MslContextShell)
-      shellSessions = list;
-    else
-      kernelSessions = list;
-}
-
-/**
- * Retutn true if there is a process with this triggerId that is
- * suspendded and ready supports repeat.
- *
- * List has to be locked during the scan.
- */
-MslProcess* MslConductor::findProcess(MslContext* c, int triggerId)
-{
-    MslProcess* found = nullptr;
-
-    // the list is accessed from multiple threads to have to lock to scan
-    {
-        juce::ScopedLock lock (criticalSection);
-        for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
-            if (p->triggerId == triggerId) {
-                // 
-                found = p;
-                break;
-            }
-        }
-    }
-
-    return found;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Result Access
-//
-//////////////////////////////////////////////////////////////////////
-
-
-/**
- * This would be called by ScriptConsole to show what happened when recent script ran.
+ * This would be called by ScriptConsole to show what happened when a recent script ran.
  * Important for scripts that ended up in the kernel because they may have hit errors
  * and those couldn't be conveyed to the user immediately.
  *
- * todo: currently race conditions here betwene the ScriptConsole displaying them
- * and the maintenance threads actively adding things to them.   Need a more
- * robust way to iterate over these or capture them.
+ * todo: currently a minor race conditions here betwene the ScriptConsole displaying them
+ * the maintenance threads actively adding things to the list.  As long as it only
+ * puts them on the head of the list and doesn't disrupt any of the chain pointers
+ * it's safe, but still feels dirty.
  */
 MslResult* MslConductor::getResults()
 {
@@ -1377,6 +793,346 @@ MslResult* MslConductor::getResult(int id)
         ptr = ptr->next;
     }
     return found;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Suspended Session Aging
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Find any suspended sessions on the context list and advance their
+ * wait states which may result in script notifications.
+ *
+ * If both #sustain and #repeat suspensions time out, then the session
+ * goes through completion processing.
+ */
+void MslConductor::ageSuspended(MslContext* c)
+{
+    MslSession* list = nullptr;
+    
+    if (c->mslGetContextId() == MslContextShell)
+      list = shellSessions;
+    else
+      list = kernelSessions;
+
+    MslSession* session = list;
+    while (session != nullptr) {
+        // like advanceActive, this session can be reclaimed while
+        // processing so get the next pointer now
+        MslSession* next = session->next;
+        bool mightBeDone = false;
+        
+        MslSuspendState* state = session->getSustainState();
+        if (state->isActive()) {
+            ageSustain(c, session, state);
+            mightBeDone = true;
+        }
+
+        state = session->getRepeatState();
+        if (state->isActive()) {
+            ageRepeat(c, ssession, state);
+            mightBeDone = true;
+        }
+
+        if (mightBeDone)
+          checkCompletion(c, session, nullptr);
+        
+        session = next;
+    }
+}
+
+/**
+ * Advance sustain state an call OnSuspend if we reach the threshold
+ * Sustain does not currently have a timeout but we might want to add one.
+ *
+ * Subtle conflict: if you combine #sustain and #repeat they could have different
+ * timeouts.  If they do, the higher of the two wins as far as finalizing
+ * the script, but it will at least stop sending sustain notifications.
+ */
+void MslEnvironment::ageSustain(MslContext* c, MslSession* s, MslSuspendState* state)
+{
+    int now = juce::Time::getMillisecondCounter();
+    int delta = now - state->timeoutStart;
+    if (delta > state->timeout) {
+        // bump the counter and re-arm for next time
+        state->count++;
+        state->timeoutStart = now;
+
+        s->sustain(c);
+    }
+}
+
+void MslEnvironment::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* state)
+{
+    int now = juce::Time::getMillisecondCounter();
+    int delta = now - state->timeoutStart;
+    if (delta > state->timeout) {
+
+        // this doesn't bump the counter or rearm, it means the repeat wait is over
+        s->timeout(c);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Environment Requests
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Start a new session or repeat an existing one.
+ */
+void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
+{
+    if (req->release) {
+        // this can only do OnRelease on an existing session
+        if (req->triggerId == 0) {
+            Trace(1, "MslConductor: Release request with no trigger id");
+        }
+        else {
+            // todo: once this locates the session it would be good to verify that
+            // the link->function matches the session, but it isn't really necessary
+            // because triggers can only do one thing
+            // !! well until the point where you allow multiple bindings on one trigger
+            // if you allow that then several layers from here on down will need to
+            // be more complicated than just searching by triggerId, will need to pass
+            // the Linkage through as well
+            release(c, req);
+        }
+    }
+    else {
+        // see if we have a suspended repeat session for this trigger
+        // we don't actually check to see if this is a repeat suspension
+        // but there can only be one script bound to this triggere ATM
+        MslContextId repeatContext = MslContextNone;
+
+        // if they didn't pass a triggerId, could consider htat a failure
+        // but it's also easy enough to fall back to simple start
+        if (req->triggerId == 0)
+          Trace(2, "MslConductor: Warning: No trigger id in request, couldn't check repeat");
+        else
+          repeatContext = probeSuspended(c, req->triggerId);
+
+        if (repeatContext != MslContextNone) {
+            repeat(c, req, repeatContext);
+        }
+        else {
+            // a normal missionary position start
+            MslSession* session = environment->getPool()->allocSession();
+
+            // nice for the monitor
+            link->runCount++;
+        
+            session->start(c, link->unit, link->function, req);
+
+            checkCompletion(c, session, req);
+        }
+    }
+}
+
+/**
+ * Here for a Request with a release action.
+ * 
+ * These make sense only for scripts that used #sustain which are normally still
+ * waiting for the release.
+ */
+void MslConductor::release(MslContext* c, MslRequest* req)
+{
+    // is it on our side?
+    MslSession* session = findSuspended(c, req->triggerId);
+    if (session != nullptr) {
+        // yes it is, let it go
+        // we pass the Request in so OnRelease can have request arguments
+        // rare but possible
+        session->release(c, req);
+
+        // the suspension is normall not active, should we force it?
+        MslSuspensionState* state = session->getSustainState();
+        if (state->isActive()) {
+            Trace(1, "MslConductor: Lingering sustain state after release");
+            state->init();
+        }
+        checkCompletion(c, session, req);
+    }
+    else {
+        // wasn't on this side, it's either on the other side or it
+        // evaporated, due to an error on launch
+        // before we send a message, make sure it's there
+
+        MslContextId otherContext = probeSuspended(c, req->triggerId);
+        if (otherContext == MslContxtNone) {
+            Trace(2, "MslConductor: Ignoring relase of terminated session");
+        }
+        else if (otherContext == c->mslGetContextId()) {
+            // it's in our context, this can't happen if findSuspended is working
+            // avoid sending a message so we don't loop
+            Trace(1, "MslConductor: Stale context id in Process");
+            // minor issue: there is a very rare race condition where if the other
+            // side decided to transition the session to this context at the same time
+            // as the probe, the Process context could be stale if the transition
+            // is waiting in the message list.  Could peek into the message list
+            // at this point to see if it's there.  Or could require a lock around
+            // any MODIFICATION to a Process beyond just the process list which seems
+            // kind of severe for such a rare case.  Still, keep an eye on it.
+            // I suppse we could just send the message and let it bounce back too.
+        }
+        else {
+            sendNotification(c, MslNotificationRelease, req);
+        }
+    }
+}
+
+/**
+ * Cause an OnRepeat notification after checking that the request
+ * does in fact mean a repeat rather than just a simple start.
+ */
+void MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId otherContext)
+{
+    // is it on our side?
+    MslSession* session = findSuspended(c, req->triggerId);
+    if (session != nullptr) {
+        // yes it is, let it go
+        // we pass the Request in so OnRelease can have request arguments
+        // rare but possible
+        session->repeat(c, req);
+
+        // the suspension is normall not active, should we force it?
+        MslSuspensionState* state = session->getRepeatState();
+        if (state->isActive()) {
+            Trace(1, "MslConductor: Lingering sustain state after release");
+            state->init();
+        }
+
+        // these normally don't complete until the timeout
+        // unless there is a maxRepeat set
+        checkCompletion(c, session, req);
+    }
+    else if (otherContext == c->mslGetContextId()) {
+        // it's in our context, this can't happen if findSuspended is working
+        // avoid sending a message so we don't loop
+        // like release() this has a potential race condition with stale
+        // context ids in the process
+        Trace(1, "MslConductor: Stale context id in Process");
+    }
+    else {
+        sendNotification(c, MslNotificationRepeat, req);
+    }
+}
+
+/**
+ * Return a session that is on the local list matching the given triggerId.
+ */
+MslSession* MslConductor::findSuspended(MslContext* c, int triggerId)
+{
+    MslSession* found = nullptr;
+    
+    MslSession* list = nullptr;
+    if (c->mslGetContextId() == MslContextShell)
+      list = shellSessions;
+    else
+      list = kernelSessions;
+
+    while (list != nullptr) {
+        MslProcess* p = list->getProcess();
+        if (p == nullptr) {
+            Trace(1, "MslConductor: Active session with no process");
+        }
+        else if (p->triggerId == triggerId) {
+            found = list;
+            break;
+        }
+        list = list->next;
+    }
+    return found;
+}
+
+/**
+ * Return true if there is a suspended session with a matching trigger id
+ * in the OTHER context.
+ * This must use the Process list since the opposing session list is
+ * unstable.
+ */
+MslContextId MslConductor::probeSuspended(MslContext* c, int triggerId)
+{
+    MslContextId otherContext = MslContextNone;
+    {
+        juce::ScopedLock lock (criticalSection);
+        for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
+            if (p->triggerId == triggerId) {
+                otherContext = p->context;
+                break;
+            }
+        }
+    }
+    return otherContext;
+}
+
+void MslConductor::sendNotification(MslContext* c, MslNotificationFunction type, MslRequest* req)
+{
+    MslMessage* msg = messagePool->newMessage();
+
+    msg->type = MslMessage::TypeNotification;
+    msg->notification = type;
+    msg->bindings = req->bindings;
+    msg->arguments = req->arguments;
+
+    // ownership transfers
+    req->bindings = nullptr;
+    req->arguments = nullptr;
+
+    sendMessage(c, msg);
+}
+
+/**
+ * Here when a Notification message comes in.
+ * These can only be related to sustain and repeat right now.
+ * Release and Timeout are handled during aging.
+ */
+void MslConductor::doNotification(MslContext* c, MslMessage* msg)
+{
+    switch (msg->notification) {
+        case MslNotificationRelease:
+            doRelease(c, msg);
+            break;
+        case MslNotificationRepeat:
+            doRepeat(c, msg);
+            break;
+        default:
+            Trace(1, "MslConductor: Unexpected notfication message %d", msg->notification);
+            break;
+    }
+}
+
+void MslConductor::doRelease(MslContext* c, MslMessage* msg)
+{
+    // make it look like we got the Request in this context
+    MslRequest req;
+    req->triggerId = msg->triggerId;
+    req->bindings = msg->bindings;
+    req->arguments = msg->arguments;
+
+    // ownership transfers
+    msg->bindings = nullptr;
+    msg->arguments = nullptr;
+
+    release(c, req);
+}
+
+void MslConductor::doRepeat(MslContext* c, MslMessage* msg)
+{
+    // make it look like we got the Request in this context
+    MslRequest req;
+    req->triggerId = msg->triggerId;
+    req->bindings = msg->bindings;
+    req->arguments = msg->arguments;
+
+    // ownership transfers
+    msg->bindings = nullptr;
+    msg->arguments = nullptr;
+
+    repeat(c, req, c->mslGetContextId());
 }
 
 /****************************************************************************/

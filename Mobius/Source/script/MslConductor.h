@@ -59,21 +59,18 @@ class MslConductor
     MslConductor(class MslEnvironment* env);
     ~MslConductor();
 
+    // maintenance thread intterface
+    void advance(class MslContext* c);
+    
     // shell interface
-
-    void shellTransition();
-    void shellIterate(class MslContext* c);
     void pruneResults();
+    class MslResult* getResults();
 
-    // kernel interface
+    // Environment interface
+    void MslConductor::start(MslContext* c, MslRequest req, MslLinkage* link)
 
-    void kernelTransition();
-    void kernelIterate(class MslContext* c);
 
-    // messages, handles both sides and so should the two iterators
-    void consumeMessages(class MslContext* c);
-
-    // launch transitions
+// launch transitions
     
     void addTransitioning(class MslContext* c, class MslSession* s);
     void addWaiting(class MslContext* c, class MslSession* s);
@@ -99,31 +96,53 @@ class MslConductor
 
     class MslSession* shellSessions = nullptr;
     class MslSession* kernelSessions = nullptr;
-    class MslSession* toShell = nullptr;
-    class MslSession* toKernel = nullptr;
-    class MslMessage* toShellMessages = nullptr;
-    class MslMessage* toKernelMessages = nullptr;
+    class MslMessage* shellMessages = nullptr;
+    class MslMessage* kernelMessages = nullptr;
     class MslResult* results = nullptr;
     class MslProcess* processes = nullptr;
     
     MslMessagePool messagePool;
     MslProcessPool processPool;
+    int sessionIds = 1;
     
     void deleteSessionList(class MslSession* list);
     void deleteResultList(class MslResult* list);
     void deleteMessageList(class MslMessage* list);
-    void finishResult(class MslSession* s);
-    bool remove(class MslSession** list, class MslSession* s);
+    void deleteProcessList(class MslProcess* list);
 
-    // processes
-    void updateProcessState(class MslSession* s);
+    int generateSessionId();
+    void consumeMessages(class MslContext* c);
+    void sendMessage(class MslContext* c, class MslMessage* msg);
+    void doTransition(class MslContext* c, class MslMessage* msg);
+    void addSession(class MslContext* c, class MslSession* s);
+    void updateProcessState(class class MslSession* s);
+    void sendTransition(class MslContext* c, class MslSession* s);
+    void addTransitioning(class MslContext* c, class MslSession* s);
+    void addWaiting(class MslContext* c, class MslSession* s);
+    void addProcess(class MslContext* c, class MslProcess* p);
 
+    void advanceActive(class MslContext* c);
+    void checkCompletion(class MslContext* c, class MslSession* s, MslRequeset* req);
+    void finalize(class MslContext* c, class MslSession* s, class MslRequest* req);
+    bool removeProcess(class MslContext* c, class MslProcess* p);
+    bool removeSession(class MslContext*c, class MslSession* s);
+    MslResult* makeResult(class MslContext* c, class MslSession* s);
+    void saveResult(class MslContext* c, MslResult* r);
+    void doResult(class MslContext* c, class MslMessage* msg);
     
+    void ageSuspended(class MslContext* c);
+    void ageSustain(class MslContext* c, class MslSession* s, MslSuspendState* state);
+    void ageRepeat(class MslContext* c, class MslSession* s, MslSuspendState* state);
 
-    // suspended sessions
-    void advanceSuspended(class MslContext* c);
-    MslSession* removeSuspended(class MslContext* c, int triggerId);
-    void sendMessage(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
+    void release(class MslContext* c, class MslRequest* req);
+    void repeat(class MslContext* c, class MslRequest* req, MslContextId otherContext);
+    class MslSession* findSuspended(class MslContext* c, int triggerId);
+    class MslContextId probeSuspended(class MslContext* c, int triggerId);
+    void sendNotification(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
+    void doNotification(class MslContext* c, class MslMessage* msg);
+    void doRelease(class MslContext* c, class MslMessage* msg);
+    void doRepeat(class MslContext* c, class MslMessage* msg);
+
 };
 
 

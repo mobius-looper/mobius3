@@ -136,6 +136,9 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void repeat(class MslContext* c, class MslRequest* r);
     void timeout(class MslContext* c);
 
+    // force an usual error for early termination
+    void addError(const char* details);
+
     // name for logging, usually the MslFunction name
     const char* getName();
 
@@ -206,13 +209,14 @@ class MslSession : public MslVisitor, public MslSessionInterface
     int getSessionId() {
         return sessionId;
     }
-
+    /*
     int getTriggerId() {
         return triggerId;
     }
     void setTriggerId(int i) {
         triggerId = i;
     }
+    */
     
   protected:
 
@@ -244,7 +248,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     bool transitioning = false;
 
     // for #suspend and #repeat stripts the id of the trigger that started it
-    int triggerId = 0;
+    //int triggerId = 0;
     MslSuspendState sustaining;
     MslSuspendState repeating;
     

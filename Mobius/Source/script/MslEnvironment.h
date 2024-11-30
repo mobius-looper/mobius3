@@ -97,6 +97,13 @@ class MslRequest
 
     MslValue result;
     MslContextError error;
+
+    // kludge for Environment::eval()
+    // suppress storing an MslResult if there are errors and return
+    // one of them in the Request
+    bool noResult = false;
+    class MslResult* privateResult = nullptr;
+
 };
 
 /**
@@ -370,29 +377,8 @@ class MslEnvironment
     //
     // session management
     //
-    void start(class MslContext* c, class MslRequest* req, class MslLinkage* link);
-    void complete(class MslContext* c, class MslRequest* req, class MslLinkage* link,
-                  class MslSession* session);
-    void release(class MslContext* c, class MslRequest* req, class MslLinkage* link);
-    void repeat(class MslContext* c, class MslRequest* req, class MslLinkage* link);
     
     void addError(MslResult* result, const char* msg);
-    class MslResult* makeResult(class MslSession* s, bool finished);
-    int generateSessionId();
-    int sessionIds = 1;
-
-    void logRequest(class MslContext* c, class MslCompilation* unit);
-    void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
-
-
-    //
-    // Message handling
-    //
-
-    void doNotification(class MslContext* c, class MslMessage* m);
-    void doRelease(class MslContext* c, class MslMessage* m);
-    void doRepeat(class MslContext* c, class MslMessage* m);
-
-    
+    //void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
 };
 
