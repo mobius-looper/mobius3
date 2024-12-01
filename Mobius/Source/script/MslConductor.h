@@ -79,6 +79,8 @@ class MslConductor
     
     bool captureProcess(int sessionId, class MslProcess& result);
     void listProcesses(juce::Array<MslProcess>& result);
+
+    void enableResultDiagnostics(bool b);
     
   private:
 
@@ -97,6 +99,7 @@ class MslConductor
     MslMessagePool messagePool;
     MslProcessPool processPool;
     int sessionIds = 1;
+    bool resultDiagnostics = false;
     
     void deleteSessionList(class MslSession* list);
     void deleteResultList(class MslResult* list);
@@ -116,6 +119,7 @@ class MslConductor
 
     void advanceActive(class MslContext* c);
     class MslResult* checkCompletion(class MslContext* c, class MslSession* s);
+    class MslResult* makeAsyncResult(class MslSession* s, MslSessionState state);
     class MslResult* finalize(class MslContext* c, class MslSession* s);
     bool removeProcess(class MslContext* c, class MslProcess* p);
     bool removeSession(class MslContext*c, class MslSession* s);

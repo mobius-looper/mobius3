@@ -197,18 +197,9 @@ class MslSession : public MslVisitor, public MslSessionInterface
         return next;
     }
 
-    class MslProcess* getProcess() {
-        return process;
-    }
-    void setProcess(MslProcess* p) {
-        process = p;
-    }
-
-    // storing a sessionId and triggerId should no longer be necessary
-    // now that we have Process
-    int getSessionId() {
-        return sessionId;
-    }
+    class MslProcess* getProcess();
+    void setProcess(MslProcess* p);
+    int getSessionId();
     
   protected:
 
@@ -218,12 +209,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslSession* next = nullptr;
 
     // result the envionment allocated for us if we needed to go async
-    class MslResult* result = nullptr;
-
-    // unique id generated for results tracking
-    // mostly for the console
-    int sessionId = 0;
-
+    //class MslResult* result = nullptr;
     class MslProcess* process = nullptr;
     
   private:

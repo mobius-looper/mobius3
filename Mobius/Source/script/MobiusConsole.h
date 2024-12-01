@@ -71,6 +71,7 @@ class MobiusConsole : public juce::Component,
     void doStatus(juce::String line);
     void doResults(juce::String arg);
     void doProcesses(juce::String arg);
+    void doDiagnostics(juce::String arg);
     
     void doEval(juce::String line);
     void showResult(class MslResult* result);

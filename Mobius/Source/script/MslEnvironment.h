@@ -295,7 +295,10 @@ class MslEnvironment
 
     int listProcesses(juce::Array<MslProcess>& array);
     bool getProcess(int sessionId, class MslProcess& p);
-    
+
+    // diagnostic flag to always persist session results
+    void setDiagnosticMode(bool b);
+    bool isDiagnosticMode();
 
   protected:
 
@@ -339,6 +342,9 @@ class MslEnvironment
 
     // unique "run number" generator for generating session log files
     int runNumber = 0;
+
+    // enables some result diagnostics and possibly other things
+    bool diagnosticMode = false;
 
     // exported links
     juce::OwnedArray<class MslLinkage> linkages;

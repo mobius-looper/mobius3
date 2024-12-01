@@ -75,8 +75,7 @@ MslSession::~MslSession()
 void MslSession::init()
 {
     next = nullptr;
-    result = nullptr;
-    sessionId = 0;
+    //result = nullptr;
     process = nullptr;
 
     unit = nullptr;
@@ -191,6 +190,21 @@ const char* MslSession::getName()
     if (unit != nullptr)
       s = unit->name.toUTF8();
     return s;
+}
+
+MslProcess* MslSession::getProcess()
+{
+    return process;
+}
+
+void MslSession::setProcess(MslProcess* p)
+{
+    process = p;
+}
+
+int MslSession::getSessionId()
+{
+    return (process != nullptr) ? process->sessionId : 0;
 }
 
 //////////////////////////////////////////////////////////////////////

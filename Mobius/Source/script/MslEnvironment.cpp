@@ -51,6 +51,17 @@ void MslEnvironment::shutdown()
 {
 }
 
+void MslEnvironment::setDiagnosticMode(bool b)
+{
+    diagnosticMode = b;
+    conductor.enableResultDiagnostics(b);
+}
+
+bool MslEnvironment::isDiagnosticMode()
+{
+    return diagnosticMode;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Valuator Interface

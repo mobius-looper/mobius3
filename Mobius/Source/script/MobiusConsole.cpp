@@ -138,11 +138,14 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("status")) {
         doStatus(withoutCommand(line));
     }
-    else if (line.startsWith("results")) {
+    else if (line.startsWith("result")) {
         doResults(withoutCommand(line));
     }
-    else if (line.startsWith("processes")) {
+    else if (line.startsWith("proc")) {
         doProcesses(withoutCommand(line));
+    }
+    else if (line.startsWith("diag")) {
+        doDiagnostics(withoutCommand(line));
     }
     else if (line.startsWith("resume")) {
         doResume();
@@ -185,6 +188,8 @@ void MobiusConsole::doHelp()
     console.add("status       show the status of an async session");
     console.add("resume       resume the last scriptlet after a wait");
     console.add("results      show prior evaluation results");
+    console.add("processes    show current processes");
+    console.add("diagnostics  enable/disable extended diagnostics");
     console.add("");
     console.add("parse        parse a line of MSL text");
     console.add("preproc      test the preprocessor");
@@ -532,18 +537,20 @@ void MobiusConsole::doEval(juce::String line)
 
 void MobiusConsole::showResult(MslResult* result)
 {
-    showErrors(result->errors);
-    showValue(result->value);
+    if (result != nullptr) {
+        showErrors(result->errors);
+        showValue(result->value);
     
-    asyncSession = 0;
+        asyncSession = 0;
     
-    if (result->state == MslStateWaiting) {
-        asyncSession = result->sessionId;
-        console.add("Session " + juce::String(asyncSession) + " is waiting");
-    }
-    if (result->state == MslStateTransitioning) {
-        asyncSession = result->sessionId;
-        console.add("Session " + juce::String(asyncSession) + " is transitioning");
+        if (result->state == MslStateWaiting) {
+            asyncSession = result->sessionId;
+            console.add("Session " + juce::String(asyncSession) + " is waiting");
+        }
+        if (result->state == MslStateTransitioning) {
+            asyncSession = result->sessionId;
+            console.add("Session " + juce::String(asyncSession) + " is transitioning");
+        }
     }
 }
 
@@ -664,6 +671,18 @@ void MobiusConsole::doProcesses(juce::String arg)
         }
     }
 }
+
+void MobiusConsole::doDiagnostics(juce::String arg)
+{
+    (void)arg;
+    bool current = scriptenv->isDiagnosticMode();
+    if (current)
+      console.add("Diagnostic mode is off");
+    else
+      console.add("Diagnostic mode is on");
+    scriptenv->setDiagnosticMode(!current);
+}
+
 
 /**
  * Test hack for directive parsing

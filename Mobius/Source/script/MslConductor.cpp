@@ -116,6 +116,11 @@ MslConductor::~MslConductor()
     deleteProcessList(processes);
 }
 
+void MslConductor::enableResultDiagnostics(bool b)
+{
+    resultDiagnostics = b;
+}
+
 // todo: it would be nice if these could share a common
 // interface for the chain pointer
 
@@ -492,11 +497,12 @@ MslResult* MslConductor::checkCompletion(MslContext* c, MslSession* s)
         result = finalize(c, s);
     }
     else if (s->isTransitioning()) {
+        
         // break on through to the other side
         if (s->process == nullptr) {
             // must be the initial launch, not on a list yet
             addTransitioning(c, s);
-            // todo: make a result to convey the session id
+            result = makeAsyncResult(s, MslStateTransitioning);
         }
         else {
             (void)removeSession(c, s);
@@ -505,16 +511,21 @@ MslResult* MslConductor::checkCompletion(MslContext* c, MslSession* s)
     }
     else if (s->isWaiting()) {
         // it stays here
-        if (s->process == nullptr)
-          addWaiting(c, s);
+        if (s->process == nullptr) {
+            addWaiting(c, s);
+            result = makeAsyncResult(s, MslStateWaiting);
+        }
         updateProcessState(s);
     }
     else if (s->isFinished()) {
         // it ran to completion without errors
         if (s->isSuspended()) {
             // but it gets to stay
-            if (s->process == nullptr)
-              addWaiting(c, s);
+            if (s->process == nullptr) {
+                addWaiting(c, s);
+                result = makeAsyncResult(s, MslStateSuspended);
+            }
+            
             updateProcessState(s);
             // todo: any interesting statistics to leave
             // in the Process
@@ -539,6 +550,14 @@ MslResult* MslConductor::checkCompletion(MslContext* c, MslSession* s)
     }
 
     return result;
+}
+
+MslResult* MslConductor::makeAsyncResult(MslSession* s, MslSessionState state)
+{
+    MslResult* r = environment->getPool()->allocResult();
+    r->sessionId = s->getSessionId();
+    r->state = state;
+    return r;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -583,7 +602,7 @@ MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
 
     // todo: here we can have more complex decisions over whether
     // to save a result
-    if (s->hasErrors()) {
+    if (s->hasErrors() || resultDiagnostics) {
         result = makeResult(c, s);
         // if we're in the background this needs to be saved, but let the caller
         // sort that out
