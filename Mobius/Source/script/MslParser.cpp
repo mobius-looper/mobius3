@@ -730,8 +730,14 @@ MslNode* MslParser::checkKeywords(MslToken& t)
 void MslParser::parseDirective(MslToken& t)
 {
     int space = t.value.indexOfChar(0, ' ');
-    juce::String directive = t.value.substring(0, space);
-    juce::String remainder = t.value.substring(space);
+    juce::String directive;
+    juce::String remainder;
+    if (space < 0)
+      directive = t.value.trim();
+    else {
+        directive = t.value.substring(0, space);
+        remainder = t.value.substring(space);
+    }
 
     if (directive.equalsIgnoreCase("#name")) {
         script->name = remainder.trim();

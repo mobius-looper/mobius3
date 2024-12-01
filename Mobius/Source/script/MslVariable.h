@@ -13,6 +13,9 @@ class MslVariableExport
     MslVariableExport() {}
     ~MslVariableExport() {}
 
+    // lots to work out here
+    bool exported = false;
+
     juce::String getName() {
         return (node != nullptr) ? node->name : "";
     }

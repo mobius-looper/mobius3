@@ -2667,8 +2667,11 @@ void Supervisor::mslExport(MslLinkage* link)
     // finally update the script properties
     if (s->script != nullptr) {
         s->script->mslLinkage = link;
-        s->level = LevelUI;
+        // some of the same properties conveyed through the Linkage
+        s->script->sustainable = link->isSustainable;
+        s->script->continuous = link->isContinuous;
         s->behavior = BehaviorScript;
+        s->level = LevelUI;
     }
 }
 

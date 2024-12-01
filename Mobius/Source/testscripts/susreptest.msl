@@ -1,0 +1,21 @@
+#name Repeat and Sustain Me
+#repeat
+#sustain
+
+print "Starting"
+
+function OnRepeat(repeatCount repeatDelta repeatElapsed) {
+  print ("Repeat " repeatCount repeatDelta repeatElapsed)
+}
+
+function OnTimeout(repeatCount repeatElapsed) {
+  print ("Timeout " repeatCount repeatElapsed)
+}
+
+function OnRelease (sustainCount sustainElapsed) {
+  print ("Going up after" sustainCount sustainElapsed)
+}
+
+function OnSustain(sustainCount sustainElapsed) {
+  print( "sustain" sustainCount sustainElapsed)
+}

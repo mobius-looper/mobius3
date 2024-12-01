@@ -24,6 +24,15 @@ class MslLinkage
     // the compilation unit this came from
     class MslCompilation* unit = nullptr;
 
+    // Behavior characteristics for use by the applicaion when this
+    // is passed to mslExport
+    bool isFunction = false;
+    bool isSustainable = false;
+    bool isContinuous = false;
+
+    // From here down these should be accessible only within the MslEnvironment
+    // try to protect them
+    
     // the resolved target of the link
     class MslFunction* function =  nullptr;
     class MslVariableExport* variable = nullptr;
@@ -32,6 +41,19 @@ class MslLinkage
     // todo: need more interesting stats, like internal function calls
     // varialbe updates, etc.
     int runCount = 0;
+
+    // used when installing a previous link
+    void reset() {
+        // do NOT reset the name, a Linkage with that name still exists
+        // it just may not do anything
+        unit = nullptr;
+        function = nullptr;
+        variable = nullptr;
+        isFunction = false;
+        isSustainable = false;
+        isContinuous = false;
+        runCount = 0;
+    }
     
 };
 

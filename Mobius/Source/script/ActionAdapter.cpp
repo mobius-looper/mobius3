@@ -79,26 +79,37 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
         // action and sustainId will be set
         // todo: should only get here if the script itself used the #sustain option
         // and advertised itself as sustainable
+        // update: UI buttons aren't smart about the sustainability of their targets
+        // suppress release actions if one comes in
+        bool allowIt = true;
         if (action->sustain || action->sustainEnd) {
+            req.triggerId = action->sustainId;
 
             if (req.linkage->unit == nullptr) {
                 Trace(1, "ActionAdapter: Calling MSL with a linkage without a unit");
+                allowIt = false;
             }
-            else if (!req.linkage->unit->sustain) {
-                // the action thinks it's going to sustain but the script doesn't
-                // expect that
+            else if (req.linkage->unit->sustain) {
+                // this will recognize release
+                req.release = action->sustainEnd;
+            }
+            else if (action->sustainEnd) {
+                // script isn't expecting release
+                // harmless going down, but ignore going up
                 Trace(1, "ActionAdapter: Sustainable action used for non-sustainable script %s",
                       s->getName());
+                allowIt = false;
             }
-
-            req.triggerId = action->sustainId;
-            req.release = action->sustainEnd;
         }
 
-        MslResult* res = env->request(c, &req);
+        if (allowIt) {
+            MslResult* res = env->request(c, &req);
 
-        // what and how results are conveyed needs thought
-        if (res->value != nullptr)
-          CopyString(res->value->getString(), action->result, sizeof(action->result));
+            if (res != nullptr) {
+                if (res->value != nullptr)
+                  CopyString(res->value->getString(), action->result, sizeof(action->result));
+                env->free(res);
+            }
+        }
     }
 }

@@ -1,0 +1,12 @@
+#name Release Me
+#sustain
+
+print "Going down"
+
+function OnRelease (sustainCount sustainElapsed) {
+  print ("Going up after" sustainCount sustainElapsed)
+}
+
+function OnSustain(sustainCount sustainElapsed) {
+  print( "sustain" sustainCount sustainElapsed)
+}

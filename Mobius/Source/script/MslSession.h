@@ -101,10 +101,6 @@ class MslSuspendState
         timeout = t;
         timeoutStart = start;
     }
-
-    void advance() {
-        count++;
-    }
     
 };
 
@@ -200,6 +196,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     class MslProcess* getProcess();
     void setProcess(MslProcess* p);
     int getSessionId();
+    int getTriggerId();
     
   protected:
 
@@ -221,6 +218,10 @@ class MslSession : public MslVisitor, public MslSessionInterface
     class MslContext* context = nullptr;
 
     class MslStack* stack = nullptr;
+
+    // capture this from the MslRequest that started it so we can
+    // move it to the MslProcess if this suspends
+    int triggerId = 0;
 
     // set true during evaluation to transition to the other side
     bool transitioning = false;

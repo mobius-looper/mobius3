@@ -116,6 +116,7 @@ class MslConductor
     void addTransitioning(class MslContext* c, class MslSession* s);
     void addWaiting(class MslContext* c, class MslSession* s);
     void addProcess(class MslContext* c, class MslProcess* p);
+    class MslProcess* makeProcess(class MslSession* s);
 
     void advanceActive(class MslContext* c);
     class MslResult* checkCompletion(class MslContext* c, class MslSession* s);

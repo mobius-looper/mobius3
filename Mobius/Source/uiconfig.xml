@@ -129,6 +129,9 @@
     <Button action="MidiDoublespeed"/>
     <Button action="MidiHalfspeed"/>
     <Button action="waittest"/>
+    <Button action="Release Me"/>
+    <Button action="Repeat Me"/>
+    <Button action="Repeat and Sustain Me"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

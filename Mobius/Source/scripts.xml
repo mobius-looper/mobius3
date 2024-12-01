@@ -39,6 +39,9 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\mutemidi.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\hello.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\waittest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -59,6 +62,12 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\waittest.msl"
             name="waittest" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl" name="Release Me"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl" name="Repeat Me"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"
+            name="Repeat and Sustain Me" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

@@ -54,6 +54,9 @@ class MslFunction
     // todo: lots more here
     bool sustainable = false;
 
+    // this means the function should be visible to other scripts
+    bool exported = false;
+
   protected:
 
     class MslBlock* getBody() {

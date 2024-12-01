@@ -8,14 +8,14 @@ MslProcess::MslProcess()
 {
 }
 
+MslProcess::MslProcess(MslProcess* p)
+{
+    copy(p);
+}
+
 MslProcess::~MslProcess()
 {
-    // unclear who owns this
-    if (session != nullptr)
-      Trace(1, "MslProcess: Destructor leaking session");
-    
-    if (result != nullptr)
-      Trace(1, "MslProcess: Destructor leaking result");
+    // the session is not owned
 }
 
 void MslProcess::poolInit()
@@ -26,7 +26,6 @@ void MslProcess::poolInit()
     strcpy(name, "");
     triggerId = 0;
     session = nullptr;
-    result = nullptr;
 }
 
 void MslProcess::setName(const char* s)

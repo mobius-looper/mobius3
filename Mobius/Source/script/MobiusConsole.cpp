@@ -631,8 +631,8 @@ void MobiusConsole::doProcesses(juce::String arg)
 {
     if (arg.length() == 0) {
         juce::Array<MslProcess> result;
-        int count = scriptenv->listProcesses(result);
-        for (int i = 0 ; i < count ; i++) {
+        scriptenv->listProcesses(result);
+        for (int i = 0 ; i < result.size() ; i++) {
             MslProcess& p = result.getReference(i);
 
             juce::String status;

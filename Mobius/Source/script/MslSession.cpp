@@ -207,6 +207,11 @@ int MslSession::getSessionId()
     return (process != nullptr) ? process->sessionId : 0;
 }
 
+int MslSession::getTriggerId()
+{
+    return triggerId;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Start/Resume
@@ -219,6 +224,9 @@ int MslSession::getSessionId()
 void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
                        MslFunction* argFunction, MslRequest* request)
 {
+    // remember this for later when making the MslProcess
+    triggerId = request->triggerId;
+    
     prepareStart(argContext, argUnit);
 
     stack = pool->allocStack();
@@ -259,7 +267,14 @@ void MslSession::checkRepeatStart()
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
-        repeating.activate(timeout);
+
+        MslNode* repnode = getNotificationNode(MslNotificationRepeat);
+        MslNode* timenode = getNotificationNode(MslNotificationTimeout);
+        // todo: could cache these
+        // ignore maintain suspended session state if they didn't provide
+        // at least one of the callbacks
+        if (repnode != nullptr || timenode != nullptr)
+          repeating.activate(timeout);
     }
 }
 
@@ -273,7 +288,14 @@ void MslSession::checkSustainStart()
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
-        sustaining.activate(timeout);
+
+        MslNode* relnode = getNotificationNode(MslNotificationRelease);
+        MslNode* susnode = getNotificationNode(MslNotificationSustain);
+        // todo: could cache these
+        // ignore maintain suspended session state if they didn't provide
+        // at least one of the callbacks
+        if (relnode != nullptr || susnode != nullptr)
+          sustaining.activate(timeout);
     }
 }
 
@@ -357,8 +379,8 @@ void MslSession::release(MslContext* argContext, MslRequest* request)
           runNotification(argContext, request, node);
         else {
             // else they weren't interested which is unusual if they bothered with #sustain
-            // but allowed
-            Trace(2, "MslSession::release No OnRelease function");
+            // well, not that unusual, may just want OnSustain
+            //Trace(2, "MslSession::release No OnRelease function");
         }
         sustaining.init();
     }
@@ -397,9 +419,9 @@ void MslSession::sustain(MslContext* argContext)
         if (node != nullptr)
           runNotification(argContext, nullptr, node);
         else {
-            // it's okay, but unusual
-            // why would you ask for #sustain if you dodn't provide a function?
-            Trace(2, "MslSession::sustain No OnSustain function");
+            // it's not uncommon to want a release action without
+            // sustain notifications so don't whine about it
+            //Trace(2, "MslSession::sustain No OnSustain function");
         }
     }
 }
@@ -428,7 +450,7 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
     }
     else {
         // bump the counter before calling the notificcation function
-        repeating.advance();
+        repeating.count++;
         MslNode* node = getNotificationNode(MslNotificationRepeat);
         if (node != nullptr)
           runNotification(argContext, request, node);
@@ -436,6 +458,13 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
             // it's okay, but unusual
             Trace(2, "MslSession::repeat No OnRepeat function");
         }
+
+        // does the timeout re-arm or is there only one timeout?
+        // rearming might be nice in some cases if you're slow on the draw,
+        // but it also means that you have to always wait the full timeout every time
+        // which may make it harder to move on?
+        // could be an option
+        repeating.timeoutStart = juce::Time::getMillisecondCounter();
 
         // sustain state may activate on repeats too
         checkSustainStart();
@@ -510,24 +539,14 @@ MslNode* MslSession::getNotificationNode(MslNotificationFunction func)
 MslNode* MslSession::findNotificationFunction(const char* name)
 {
     MslNode* node = nullptr;
-    
-    MslFunction* body = unit->getBodyFunction();
-    if (body == nullptr) {
-        Trace(1, "MslSession::findFunction Unit with no body");
-    }
-    else {
-        MslBlock* block = body->getBody();
-        MslFunctionNode* found = nullptr;
-        for (auto child : block->children) {
-            MslFunctionNode* fnode = child->getFunction();
-            if (fnode != nullptr && fnode->name == juce::String(name)) {
-                found = fnode;
-                break;
-            }
+    for (auto func : unit->functions) {
+        if (func->name == juce::String(name)) {
+            // this isn't called like a regular function
+            // can just push the body block on the stack and the bindings
+            // will have been put in place
+            node = func->getBody();
+            break;
         }
-
-        if (found != nullptr)
-          node = found->getBody();
     }
     return node;
 }
@@ -583,7 +602,18 @@ MslBinding* MslSession::addSuspensionBindings(MslBinding* start)
         b->next = combined;
         combined = b;
 
-        // any use for passing the elapsed time like sustain?
+        int now = juce::Time::getMillisecondCounter();
+        int elapsed = now - repeating.start;
+        b = makeSuspensionBinding("repeatElapsed", elapsed);
+        b->next = combined;
+        combined = b;
+
+        // delta is more interesting for repeats since the user controls the distance
+        // between them
+        int delta = now - repeating.timeoutStart;
+        b = makeSuspensionBinding("repeatDelta", delta);
+        b->next = combined;
+        combined = b;
     }
     
     return combined;

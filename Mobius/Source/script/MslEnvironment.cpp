@@ -755,9 +755,7 @@ void MslEnvironment::uninstall(MslContext* c, MslCompilation* unit, juce::String
     (void)c;
     for (auto link : linkages) {
         if (link->unit == unit) {
-            link->unit = nullptr;
-            link->function = nullptr;
-            link->variable = nullptr;
+            link->reset();
             // remember the reference names of the things we touched
             links.add(link->name);
         }
@@ -778,27 +776,43 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
 {
     MslFunction* f = unit->getBodyFunction();
     if (f != nullptr) {
-        publish(unit, f, links);
+        MslLinkage* link = publish(unit, f, links);
+        if (link != nullptr) {
+            // the body function can have properties taken from the script
+            // file directives, ordinary functions can't yet
+            link->isFunction = true;
+            link->isSustainable = unit->sustain;
+            link->isContinuous = unit->continuous;
+        }
     }
-    for (auto func : unit->functions)
-      publish(unit, func, links);
-
-    for (auto var : unit->variables)
-      publish(unit, var, links);
+    
+    for (auto func : unit->functions) {
+        if (func->exported) {
+            MslLinkage* link = publish(unit, func, links);
+            if (link != nullptr)
+              link->isFunction = true;
+        }
+    }
+    
+    for (auto var : unit->variables) {
+        if (var->exported)
+          (void)publish(unit, var, links);
+    }
 
     unit->published = true;
     // todo: we'll return the links list in the MslDetails
     // should we save them on the unit too?  could be handy
 }
 
-void MslEnvironment::publish(MslCompilation* unit, MslFunction* f,
-                             juce::StringArray& links)
+MslLinkage* MslEnvironment::publish(MslCompilation* unit, MslFunction* f,
+                                    juce::StringArray& links)
 {
     MslLinkage* link = internLinkage(unit, f->name);
     if (link != nullptr) {
         link->function = f;
         links.add(link->name);
     }
+    return link;
 }
 
 void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v,
@@ -846,10 +860,10 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
                 linkages.add(link);
                 linkMap.set(name, link);
             }
-
+            else {
+                link->reset();
+            }
             link->unit = unit;
-            link->function = nullptr;
-            link->variable = nullptr;
             found = link;
         }
     }
@@ -926,6 +940,15 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
 {
     for (auto link : linkages) {
         if (link->unit == unit) {
+
+            // fill in some behavior flags so the application can
+            // use it properly
+            link->isFunction = (link->function != nullptr);
+
+            // this is true for top-level scripts only 
+
+
+            
             c->mslExport(link);
         }
     }
@@ -1209,10 +1232,9 @@ bool MslEnvironment::getProcess(int sessionId, MslProcess& p)
     return conductor.captureProcess(sessionId, p);
 }
 
-int MslEnvironment::listProcesses(juce::Array<MslProcess>& result)
+void MslEnvironment::listProcesses(juce::Array<MslProcess>& result)
 {
-    (void)result;
-    return 0;
+    conductor.listProcesses(result);
 }
 
 /****************************************************************************/

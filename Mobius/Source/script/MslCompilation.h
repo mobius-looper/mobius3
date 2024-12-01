@@ -112,6 +112,12 @@ class MslCompilation
     int repeatTimeout = 0;
 
     /**
+     * True if this script behaves like a continuous control.
+     * Set via the #continuous directive
+     */
+    bool continuous;
+
+    /**
      * Usage name.  Used for scripts that are used in a certain context
      * to allow deferred resolution symbol references that are
      * ensured to be passed in at runtime.  e.g. event scripts

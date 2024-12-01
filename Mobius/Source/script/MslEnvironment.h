@@ -293,7 +293,7 @@ class MslEnvironment
     class MslResult* getResults();
     void pruneResults();
 
-    int listProcesses(juce::Array<MslProcess>& array);
+    void listProcesses(juce::Array<MslProcess>& array);
     bool getProcess(int sessionId, class MslProcess& p);
 
     // diagnostic flag to always persist session results
@@ -368,8 +368,8 @@ class MslEnvironment
     void uninstall(class MslContext* c, class MslCompilation* unit, juce::StringArray& links);
 
     void publish(class MslCompilation* unit, juce::StringArray& links);
-
-    void publish(class MslCompilation* unit, class MslFunction* f, juce::StringArray& links);
+    
+    MslLinkage* publish(class MslCompilation* unit, class MslFunction* f, juce::StringArray& links);
     void publish(class MslCompilation* unit, class MslVariableExport* v, juce::StringArray& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
     void initialize(class MslContext* c, class MslCompilation* unit);

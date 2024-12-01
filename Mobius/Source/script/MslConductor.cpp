@@ -340,17 +340,30 @@ void MslConductor::sendTransition(MslContext* c, MslSession* s)
  */
 void MslConductor::addTransitioning(MslContext* c, MslSession* s)
 {
+    MslProcess* p = makeProcess(s);
+    p->state = MslStateTransitioning;
+    addProcess(c, p);
+    sendTransition(c, s);
+}
+
+MslProcess* MslConductor::makeProcess(MslSession* s)
+{
     MslProcess* p = processPool.newProcess();
     p->sessionId = generateSessionId();
-    p->state = MslStateTransitioning;
-    
-    // this pointer is unstable so we probably shouldn't even have it
-    // Session can point back to it's Process but not the other way around
+
+    // could avoid this if we just go through the session
+    // since we have a pointer to it
+    p->setName(s->getName());
+
+    // this was saved here from the MslRequest, could have just passed
+    // MslRequest everwhere within Conductor too since it started here
+    p->triggerId = s->getTriggerId();
+
+    // can't have one without the other?
     p->session = s;
     s->setProcess(p);
 
-    addProcess(c, p);
-    sendTransition(c, s);
+    return p;
 }
 
 /**
@@ -364,15 +377,8 @@ void MslConductor::addTransitioning(MslContext* c, MslSession* s)
  */
 void MslConductor::addWaiting(MslContext* c, MslSession* s)
 {
-    MslProcess* p = processPool.newProcess();
-    p->sessionId = generateSessionId();
+    MslProcess* p = makeProcess(s);
     p->state = MslStateWaiting;
-    
-    // this pointer is unstable so we probably shouldn't even have it
-    // Session can point back to it's Process but not the other way around
-    p->session = s;
-    s->setProcess(p);
-
     addProcess(c, p);
     // if it waits it transitions first, and we're on the right side
     addSession(c, s);
@@ -403,13 +409,7 @@ bool MslConductor::captureProcess(int sessionId, MslProcess& result)
     juce::ScopedLock lock (criticalSection);
     for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
         if (p->sessionId == sessionId) {
-            
-            result.sessionId = sessionId;
-            result.state = p->state;
-            result.context = p->context;
-            result.triggerId = p->triggerId;
-
-            // don't waste time on the name, shouldn't need it
+            result.copy(p);
             found = true;
             break;
         }
@@ -423,7 +423,9 @@ void MslConductor::listProcesses(juce::Array<MslProcess>& result)
     juce::ScopedLock lock (criticalSection);
 
     for (MslProcess* p = processes ; p != nullptr ; p = p->next) {
-        result.add(*p);
+        // this feels messy
+        MslProcess copy(p);
+        result.add(copy);
     }
 }
 
@@ -583,9 +585,18 @@ MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
 {
     MslResult* result = nullptr;
     
+    // todo: here we can have more complex decisions over whether
+    // to save a result
+    if (s->hasErrors() || resultDiagnostics) {
+        result = makeResult(c, s);
+        // if we're in the background this needs to be saved, but let the caller
+        // sort that out
+        
+    }
+    
+    // this should be on the active list
     MslProcess* p = s->getProcess();
     if (p != nullptr) {
-        // this should be on the active list
         bool removed = removeSession(c, s);
         if (!removed)
           Trace(1, "MslConductor: Session with a Process was not on the list");
@@ -598,14 +609,6 @@ MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
         bool removed = removeSession(c, s);
         if (removed)
           Trace(1, "MslConductor: Session without a Process was on the list");
-    }
-
-    // todo: here we can have more complex decisions over whether
-    // to save a result
-    if (s->hasErrors() || resultDiagnostics) {
-        result = makeResult(c, s);
-        // if we're in the background this needs to be saved, but let the caller
-        // sort that out
     }
 
     // you can go now, thank you for your service
@@ -639,6 +642,7 @@ bool MslConductor::removeProcess(MslContext* c, MslProcess* p)
             removed = true;
             break;
         }
+        current = next;
     }
     return removed;
 }
@@ -674,6 +678,7 @@ bool MslConductor::removeSession(MslContext*c, MslSession* s)
             removed = true;
             break;
         }
+        current = next;
     }
 
     if (removed) {
@@ -1056,13 +1061,6 @@ MslResult* MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId oth
         // we pass the Request in so OnRelease can have request arguments
         // rare but possible
         session->repeat(c, req);
-
-        // the suspension is normall not active, should we force it?
-        MslSuspendState* state = session->getRepeatState();
-        if (state->isActive()) {
-            Trace(1, "MslConductor: Lingering sustain state after release");
-            state->init();
-        }
 
         // these normally don't complete until the timeout
         // unless there is a maxRepeat set

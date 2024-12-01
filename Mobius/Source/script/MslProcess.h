@@ -19,6 +19,7 @@ class MslProcess : public MslPooledObject
   public:
 
     MslProcess();
+    MslProcess(MslProcess* p);
     ~MslProcess();
     void poolInit() override;
 
@@ -50,11 +51,9 @@ class MslProcess : public MslPooledObject
   protected:
 
     // handle to the running session
+    // seems like we don't really need this
     class MslSession* session = nullptr;
-
-    // handle to the result created for this session
-    class MslResult* result = nullptr;
-
+    
 };    
 
 class MslProcessPool : public MslObjectPool
