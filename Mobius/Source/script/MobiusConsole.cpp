@@ -511,22 +511,17 @@ void MobiusConsole::doEval(juce::String line)
     bool success = false;
     
     // establish a new scriptlet "unit" if we don't have one
-    if (scriptlet.length() == 0) {
-        MslDetails* details = scriptenv->install(supervisor, "", line);
-        success = details->errors.size() == 0;
-        if (details->errors.size() > 0 || details->warnings.size() > 0)
-          showDetails(details);
-        // remember the id for next time if it didn't fail
-        scriptlet = details->id;
-        delete details;
-    }
-    else {
-        MslDetails* details = scriptenv->extend(supervisor, scriptlet, line);
-        success = details->errors.size() == 0;
-        if (details->errors.size() > 0 || details->warnings.size() > 0)
-          showDetails(details);
-        delete details;
-    }
+    // uses the special bindingCarryover option so we can define variables
+    // and reference them from one console line to the next
+    // todo: need a way to list and clear this list
+    if (scriptlet.length() == 0)
+      scriptlet = scriptenv->registerScriptlet(supervisor, true);
+
+    MslDetails* details = scriptenv->extend(supervisor, scriptlet, line);
+    success = details->errors.size() == 0;
+    if (details->errors.size() > 0 || details->warnings.size() > 0)
+      showDetails(details);
+    delete details;
 
     if (success) {
         MslResult* result = scriptenv->eval(supervisor, scriptlet);

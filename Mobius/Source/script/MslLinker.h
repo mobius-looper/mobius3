@@ -42,7 +42,8 @@ class MslLinker
     void resolveExternal(class MslSymbol* sym);
     bool isExternalKeyword(class MslSymbol* sym);
     void resolveExternalUsage(class MslSymbol* sym);
-
+    void resolveCarryover(class MslSymbol* sym);
+    
     void compileArguments(class MslSymbol* sym);
     void compileArguments(class MslSymbol* sym, class MslBlock* signature);
     class MslAssignment* findCallKeyword(juce::Array<class MslNode*>& callargs, juce::String name);

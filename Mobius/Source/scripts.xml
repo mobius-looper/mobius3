@@ -7,9 +7,9 @@
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\events.msl"/>
-      <External path="c:\dev\mobius3\Mobius\Source\mostest.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\multiclick.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.mos"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -28,6 +28,8 @@
             name="multiclick" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.mos" name="sustest"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"
+            name="vartest1" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">

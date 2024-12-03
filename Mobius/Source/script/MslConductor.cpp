@@ -583,16 +583,7 @@ MslResult* MslConductor::makeAsyncResult(MslSession* s, MslSessionState state)
  */
 MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
 {
-    MslResult* result = nullptr;
-    
-    // todo: here we can have more complex decisions over whether
-    // to save a result
-    if (s->hasErrors() || resultDiagnostics) {
-        result = makeResult(c, s);
-        // if we're in the background this needs to be saved, but let the caller
-        // sort that out
-        
-    }
+    MslResult* result = makeResult(c, s);
     
     // this should be on the active list
     MslProcess* p = s->getProcess();
@@ -735,22 +726,31 @@ MslResult* MslConductor::makeResult(MslContext* c, MslSession* s)
 }
 
 /**
- * Save the final result on the result list if we're in the shell,
- * If not send it to the shell.
- * This avoids contention on the result list so the monitoring UI
- * doesn't have to mess with locking.
+ * If the session ran to completion in the background (after transitioning
+ * or waiting), results can't be returned synchronously to the application
+ * launching the session.  If there were errors in the session, save
+ * a persistent MslResult object that can be viewed later in the monitoring UI.
+ *
+ * Also allow save to be forced for diagnostics.
  */
-void MslConductor::saveResult(MslContext* c, MslResult* r)
+void MslConductor::saveResult(MslContext* c, MslResult* result)
 {
-    if (r != nullptr) {
-        if (c->mslGetContextId() == MslContextShell) {
-            r->next = results;
-            results = r;
+    if (result != nullptr) {
+
+        if (!resultDiagnostics && result->errors == nullptr) {
+            // nothing interesting to save
+            environment->getPool()->free(result);
+        }
+        else if (c->mslGetContextId() == MslContextShell) {
+            // can save it directly
+            result->next = results;
+            results = result;
         }
         else {
+            // have to send it over
             MslMessage* msg = messagePool.newMessage();
             msg->type = MslMessage::MsgResult;
-            msg->result = r;
+            msg->result = result;
             sendMessage(c, msg);
         }
     }
@@ -963,10 +963,12 @@ MslResult* MslConductor::start(MslContext* c, MslRequest *req, MslLinkage* link)
 
         // if they didn't pass a triggerId, could consider htat a failure
         // but it's also easy enough to fall back to simple start
-        if (req->triggerId == 0)
-          Trace(2, "MslConductor: Warning: No trigger id in request, couldn't check repeat");
-        else
+        if (req->triggerId > 0)
           repeatContext = probeSuspended(c, req->triggerId);
+        else {
+            // this is common for scriptlets, don't whine
+            //Trace(2, "MslConductor: Warning: No trigger id in request, couldn't check repeat");
+        }
 
         if (repeatContext != MslContextNone) {
             result = repeat(c, req, repeatContext);
@@ -978,7 +980,7 @@ MslResult* MslConductor::start(MslContext* c, MslRequest *req, MslLinkage* link)
             // nice for the monitor
             link->runCount++;
         
-            session->start(c, link->unit, link->function, req);
+            session->start(c, link, req);
 
             result = checkCompletion(c, session);
         }

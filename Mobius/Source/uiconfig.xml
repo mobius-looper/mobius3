@@ -122,16 +122,10 @@
     <Button action="Pause"/>
     <Button action="GlobalMute"/>
     <Button action="GlobalPause"/>
-    <Button action="multiclick"/>
-    <Button action="sustest"/>
-    <Button action="Setup:asdf"/>
-    <Button action="hello"/>
-    <Button action="MidiDoublespeed"/>
-    <Button action="MidiHalfspeed"/>
-    <Button action="waittest"/>
     <Button action="Release Me"/>
     <Button action="Repeat Me"/>
     <Button action="Repeat and Sustain Me"/>
+    <Button action="vartest1"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

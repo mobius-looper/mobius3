@@ -24,6 +24,9 @@ class MslLinkage
     // the compilation unit this came from
     class MslCompilation* unit = nullptr;
 
+    // true if the function or variable is to be exported to the containing application
+    bool isExport = false;
+
     // Behavior characteristics for use by the applicaion when this
     // is passed to mslExport
     bool isFunction = false;

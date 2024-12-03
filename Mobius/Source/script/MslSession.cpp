@@ -74,13 +74,15 @@ MslSession::~MslSession()
 
 void MslSession::init()
 {
+    // do not initialize environment or pool
+    
     next = nullptr;
-    //result = nullptr;
     process = nullptr;
 
-    unit = nullptr;
     context = nullptr;
+    rootLink = nullptr;
     stack = nullptr;
+    triggerId = 0;
     transitioning = false;
     
     sustaining.init();
@@ -187,8 +189,8 @@ bool MslSession::hasErrors()
 const char* MslSession::getName()
 {
     const char* s = nullptr;
-    if (unit != nullptr)
-      s = unit->name.toUTF8();
+    if (rootLink->unit != nullptr)
+      s = rootLink->unit->name.toUTF8();
     return s;
 }
 
@@ -221,17 +223,16 @@ int MslSession::getTriggerId()
 /**
  * Primary entry point for evaluating a script.
  */
-void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
-                       MslFunction* argFunction, MslRequest* request)
+void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* request)
 {
     // remember this for later when making the MslProcess
     triggerId = request->triggerId;
     
-    prepareStart(argContext, argUnit);
+    prepareStart(argContext, argLink);
 
     stack = pool->allocStack();
-    stack->node = argFunction->getBody();
-    stack->bindings = gatherStartBindings(argUnit, argFunction, request);
+    stack->node = rootLink->function->getBody();
+    stack->bindings = gatherStartBindings(request);
     
     run();
 
@@ -239,7 +240,7 @@ void MslSession::start(MslContext* argContext, MslCompilation* argUnit,
     checkRepeatStart();
 }
 
-void MslSession::prepareStart(MslContext* argContext, MslCompilation* argUnit)
+void MslSession::prepareStart(MslContext* argContext, MslLinkage* argLink)
 {
     // should be clean out of the pool but make sure
     pool->free(errors);
@@ -250,7 +251,7 @@ void MslSession::prepareStart(MslContext* argContext, MslCompilation* argUnit)
     stack = nullptr;
     
     context = argContext;
-    unit = argUnit;
+    rootLink = argLink;
 
     log.clear();
     logStart();
@@ -262,8 +263,8 @@ void MslSession::prepareStart(MslContext* argContext, MslCompilation* argUnit)
  */
 void MslSession::checkRepeatStart()
 {
-    if (unit->repeat) {
-        int timeout = unit->repeatTimeout;
+    if (rootLink->unit->repeat) {
+        int timeout = rootLink->unit->repeatTimeout;
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
@@ -283,8 +284,8 @@ void MslSession::checkRepeatStart()
  */
 void MslSession::checkSustainStart()
 {
-    if (unit->sustain) {
-        int timeout = unit->sustainInterval;
+    if (rootLink->unit->sustain) {
+        int timeout = rootLink->unit->sustainInterval;
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
@@ -350,7 +351,7 @@ void MslSession::resume(MslContext* argContext)
  */
 void MslSession::release(MslContext* argContext, MslRequest* request)
 {
-    if (!unit->sustain) {
+    if (!rootLink->unit->sustain) {
         // shouldn't have allowed this
         Trace(1, "MslSession::release Script was not sustainable");
         sustaining.init();
@@ -393,7 +394,7 @@ void MslSession::release(MslContext* argContext, MslRequest* request)
  */
 void MslSession::sustain(MslContext* argContext)
 {
-    if (!unit->sustain) {
+    if (!rootLink->unit->sustain) {
         // shouldn't have allowed this
         Trace(1, "MslSession::sustain Script was not sustainable");
         sustaining.init();
@@ -431,7 +432,7 @@ void MslSession::sustain(MslContext* argContext)
  */
 void MslSession::repeat(MslContext* argContext, MslRequest* request)
 {
-    if (!unit->repeat) {
+    if (!rootLink->unit->repeat) {
         Trace(1, "MslSession::repeat Script was not repeeatable");
         repeating.init();
     }
@@ -476,7 +477,7 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
  */
 void MslSession::timeout(MslContext* argContext)
 {
-    if (!unit->repeat) {
+    if (!rootLink->unit->repeat) {
         Trace(1, "MslSession::timeout Script was not repeeatable");
         repeating.init();
     }
@@ -539,7 +540,7 @@ MslNode* MslSession::getNotificationNode(MslNotificationFunction func)
 MslNode* MslSession::findNotificationFunction(const char* name)
 {
     MslNode* node = nullptr;
-    for (auto func : unit->functions) {
+    for (auto func : rootLink->unit->functions) {
         if (func->name == juce::String(name)) {
             // this isn't called like a regular function
             // can just push the body block on the stack and the bindings
@@ -556,13 +557,13 @@ MslNode* MslSession::findNotificationFunction(const char* name)
  */
 void MslSession::runNotification(MslContext* argContext, MslRequest* request, MslNode* node)
 {
-    prepareStart(argContext, unit);
+    prepareStart(argContext, rootLink);
     
     stack = pool->allocStack();
     stack->node = node;
 
     // restore static bindings
-    MslBinding* bindings = gatherStartBindings(unit, nullptr, request);
+    MslBinding* bindings = gatherStartBindings(request);
     
     // add or update the suspension state arguments
     bindings = addSuspensionBindings(bindings);
@@ -660,22 +661,21 @@ MslBinding* MslSession::makeSuspensionBinding(const char* name, int value)
  *
  * Should not have both, but in theory this should assemble them like we do
  * for a combination of positional and keyword arguments passed in a function call.
+ *
+ * !! todo: Once we have proper "public" variables, the value should be kept
+ * on the MslLinkage created for each variable.
+ *
  */
-MslBinding* MslSession::gatherStartBindings(MslCompilation* argUnit,
-                                            MslFunction* argFunction,
-                                            MslRequest* request)
+MslBinding* MslSession::gatherStartBindings(MslRequest* request)
 {
-    // in theory we should use this to get to a signature to assist binding compilation
-    (void)argFunction;
-    
     MslBinding* startBindings = nullptr;
 
     // While findBinding will look up into the unit if it doesn't find anything on the stack,
     // copying it onto the root stack frame reduces thread contention since modificiations
     // made during this session will be held locally until the script completes, and then
     // copied back into the unit.
-    startBindings = argUnit->bindings;
-    argUnit->bindings = nullptr;
+    startBindings = rootLink->unit->bindings;
+    rootLink->unit->bindings = nullptr;
 
     // add request arguments
     if (request != nullptr) {
@@ -725,17 +725,16 @@ MslBinding* MslSession::gatherStartBindings(MslCompilation* argUnit,
  * When evaluation has run to completion, move the "static" bindings that
  * were copied to the root stack by gatherStartBindings back to the unit.
  *
- * todo: technically should only be doing this for static variables
- * and not random locals declared at the top level.
- * Or we could have the binding reset when the MslVariable that defines
- * them is encountered during evaluation.
+ * There are three forms of static variables: Those declared "global"
+ * which is the normal way to do this.  Those declared "public" or "external"
+ * which will have MslLinkages for them so they can be accessed by other units.
+ * And for the console only, top-level bindings left behind by a prior run
+ * when the bindingCarryover flag is set on the unit.  These make variables
+ * behave like static/global without having to declare them that way.
  *
- * What we DO need to do is filter out request arguments that were added
- * by gatherStartBindings, these will have a non-zero position.
- *
- * Also filter out bindings added for sustain/repeat state.
- * These will have the transient flag set on them, which could be useful
- * as well for filtering non-static local bindings.
+ * Also on the root binding list will be any bindings passed in the Request
+ * that started the session, and arguments injected by the sustain/repeat
+ * notifications.  Those must always be filtered.
  */
 void MslSession::saveStaticBindings()
 {
@@ -746,7 +745,16 @@ void MslSession::saveStaticBindings()
     MslBinding* prev = nullptr;
     while (b != nullptr) {
         MslBinding* nextb = b->next;
-        if (b->position > 0 || b->transient) {
+
+        // logic is messy, simplify 
+        bool filter = true;
+        if (b->position == 0 && !b->transient) {
+            // it wsn't a request arg or an injected binding
+            // only carry them over if requested by the console
+            filter = !rootLink->unit->bindingCarryover;
+        }
+
+        if (filter) {
             // it was a request argument or other non-static binding
             if (prev == nullptr)
               finalBindings = nextb;
@@ -763,7 +771,7 @@ void MslSession::saveStaticBindings()
 
     logBindings("finalBindings", finalBindings);
         
-    unit->bindings = finalBindings;
+    rootLink->unit->bindings = finalBindings;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1054,8 +1062,8 @@ MslBinding* MslSession::findBinding(const char* name)
     // if we make it to the top of the stack, look in the static bindings
     // !! potential thread issues here
     if (found == nullptr) {
-        if (unit->bindings != nullptr)
-          found = unit->bindings->find(name);
+        if (rootLink->unit->bindings != nullptr)
+          found = rootLink->unit->bindings->find(name);
     }
 
     return found;
@@ -1077,8 +1085,8 @@ MslBinding* MslSession::findBinding(int position)
     // if we make it to the top of the stack, look in the static bindings
     // !! potential thread issues here
     if (found == nullptr) {
-        if (unit->bindings != nullptr)
-          found = unit->bindings->find(position);
+        if (rootLink->unit->bindings != nullptr)
+          found = rootLink->unit->bindings->find(position);
     }
 
     return found;
@@ -2225,7 +2233,7 @@ void MslSession::logStart()
 {
     if (trace) {
         log.start("MslSession:start");
-        log.add("name", unit->name);
+        log.add("name", rootLink->unit->name);
         log.newline();
         logContext("start", context);
     }

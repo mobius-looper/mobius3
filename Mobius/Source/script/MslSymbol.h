@@ -71,6 +71,11 @@ class MslResolution
     // could lwe just use keyword for this too?
     bool usageArgument = false;
 
+    // a "carryover" variable defined in a prior scriptlet session
+    // hate this, do we actually need all these flags?
+    // a single "internal" to prevent unresolved errors should be enough
+    bool carryover = false;
+
     void reset() {
         localVariable = nullptr;
         functionArgument = false;
@@ -80,6 +85,7 @@ class MslResolution
         external = nullptr;
         keyword = false;
         usageArgument = false;
+        carryover = false;
     }
 
     // true if we found something
@@ -90,7 +96,7 @@ class MslResolution
                 localFunction != nullptr ||
                 linkage != nullptr ||
                 external != nullptr ||
-                keyword || usageArgument);
+                keyword || usageArgument || carryover);
     }
 
     // true if what we found is a function

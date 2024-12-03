@@ -123,8 +123,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     class StructureDumper& getLog();
     
     // begin evaluation of a function, it will complete or reach a wait state
-    void start(class MslContext* context, class MslCompilation* unit,
-               class MslFunction* func, class MslRequest* request);
+    void start(class MslContext* context, class MslLinkage* link, 
+               class MslRequest* request);
 
     // evaluate one of the sustain/repeat notification functions
     void release(class MslContext* c, class MslRequest* r);
@@ -213,9 +213,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
 
     class MslEnvironment* environment = nullptr;
     class MslPools* pool = nullptr;
-    class MslCompilation* unit = nullptr;
-    class MslFunction* function = nullptr;
     class MslContext* context = nullptr;
+    class MslLinkage* rootLink = nullptr;
 
     class MslStack* stack = nullptr;
 
@@ -252,10 +251,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     //
     void addError(class MslNode* node, const char* details);
     
-    void prepareStart(class MslContext* c, class MslCompilation* u);
-    MslBinding* gatherStartBindings(class MslCompilation* argUnit,
-                                    class MslFunction* argFunction,
-                                    class MslRequest* request);
+    void prepareStart(class MslContext* c, class MslLinkage* link);
+    MslBinding* gatherStartBindings(class MslRequest* request);
     void saveStaticBindings();
 
     void checkRepeatStart();

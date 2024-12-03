@@ -150,6 +150,12 @@ class MslEnvironment
                               juce::String source, bool relinkNow=true);
 
     /**
+     * This interface is used only by the console to create a special scriptlet
+     * unit that can carrover bindings from one run to the next.
+     */
+    juce::String registerScriptlet(class MslContext* c, bool bindingCarryover);
+
+    /**
      * Speical interface for the console or anything else that wants to extend
      * a previously compiled unit.  The top-level function and variable definitions
      * from the referenced unit are first copied into the new unit, then the source

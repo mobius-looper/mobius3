@@ -504,6 +504,38 @@ void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
 }
 
 /**
+ * Special interface for the console to register a scriptlet and enable the option
+ * to carry over root bindings from one session to the next.
+ *
+ * Still not happy with how scriptlets work.
+ *
+ * The id of the scriptlet unit is returned is then passed to extend()
+ *
+ */
+juce::String MslEnvironment::registerScriptlet(MslContext* c, bool bindingCarryover)
+{
+
+    // have to use the parser to get a Compilation that can be installed
+    // ask it to parse nothing
+    MslParser parser;
+    MslCompilation* unit = parser.parse("");
+
+    // generate a scriptlet unit id
+    // todo: would be nice to be able to pass in the base name so this
+    // could show as "console" rather than "scriptlet" to distinguish it
+    ensureUnitName("", unit);
+
+    // install needs a Details for results we don't have
+    MslDetails details;
+    install(c, unit, &details, false);
+
+    // magic bean
+    unit->bindingCarryover = bindingCarryover;
+
+    return unit->id;
+}
+
+/**
  * Special interface for the console or anything else that wants to extend
  * a previously installed unit.  The previous function definitions, variable
  * definitions, and variable bindings are kept, and a new source string is parsed
@@ -529,6 +561,15 @@ void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
  * pre-installed MslFunctions rather than creating one from scratch.  Or I suppose
  * we could serialize the base unit functions back to text and inject it at the
  * front of the source string, then parse it normally.
+ *
+ * !! this is pretty terrible and hacky
+ *
+ * There needs to be a more well defined concept here.  The problem is once a unit
+ * is installed, there can be active sessions against it so we can't just structurally
+ * modify it, even though for the console that would almost always be harmless.  Maybe
+ * something special that has to wait for sessions to finish before extension.  Really should
+ * be doing a full copy then splice in the new lines after a partial parse, or something.
+ * 
  */
 MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                                    juce::String source)
@@ -555,6 +596,8 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
             // gak, names are a mess
             unit->id = baseUnitId;
             unit->name = baseUnitId;
+            unit->bindingCarryover = base->bindingCarryover;
+            
             if (base->name.length() > 0 && base->name != baseUnitId)
               Trace(2, "MslEnvironment: Extending a unit with an alternate reference name, why?");
             unit->name = base->name;
@@ -581,7 +624,14 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                 MslFunction* f = base->functions.removeAndReturn(0);
                 unit->functions.add(f);
             }
-            // todo: also need to move variable declarations
+
+            // if variable carryover is enabled, copy the bindings
+            // !! this won't work if the way session works is to capture them and then
+            // put them back when finished, and there is a prior session that is waiting
+            // the whole concept needs thought, they should just stay on the unit like
+            // globals and be resolved to that rather than synthesizing bindings
+            unit->bindings = base->bindings;
+            base->bindings = nullptr;
 
             MslLinker linker;
             linker.link(c, this, unit);
@@ -591,13 +641,6 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                 // the body of the existing unit rather than phasing
                 // in a new version, if there are no active sessions on this
                 // object can can resuse it
-
-                // variable bindings need to be moved as well
-                // note that this includes both static and transient bindings since
-                // each execution of the scriptlet is also considered to be an extension
-                // of the last one, so any non-static bindings get to live too
-                unit->bindings = base->bindings;
-                base->bindings = nullptr;
 
                 // since extend is normally done one line at a time rather than in bulk
                 // force a full relink if it changed anything that might be visible to
@@ -783,20 +826,23 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
             link->isFunction = true;
             link->isSustainable = unit->sustain;
             link->isContinuous = unit->continuous;
+            // the script body is always considered exported until
+            // a concept of "library scripts" is added where there is no
+            // callable body
+            link->isExport = true;
         }
     }
     
     for (auto func : unit->functions) {
         if (func->isExport() || func->isPublic()) {
-            MslLinkage* link = publish(unit, func, links);
-            if (link != nullptr)
-              link->isFunction = true;
+            (void)publish(unit, func, links);
         }
     }
     
     for (auto var : unit->variables) {
-        if (var->isExport() || var->isPublic())
-          (void)publish(unit, var, links);
+        if (var->isExport() || var->isPublic()) {
+            publish(unit, var, links);
+        }
     }
 
     unit->published = true;
@@ -810,6 +856,8 @@ MslLinkage* MslEnvironment::publish(MslCompilation* unit, MslFunction* f,
     MslLinkage* link = internLinkage(unit, f->name);
     if (link != nullptr) {
         link->function = f;
+        link->isFunction = true;
+        link->isExport = f->isExport();
         links.add(link->name);
     }
     return link;
@@ -821,6 +869,7 @@ void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v,
     MslLinkage* link = internLinkage(unit, v->getName());
     if (link != nullptr) {
         link->variable = v;
+        link->isExport = v->isExport();
         links.add(link->name);
     }
 }
@@ -942,14 +991,11 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
         if (link->unit == unit) {
 
             // fill in some behavior flags so the application can
-            // use it properly
+            // use it properly, this should have been done during publish() !?
             link->isFunction = (link->function != nullptr);
 
-            if ((link->function != nullptr && link->function->isExport()) ||
-                (link->variable != nullptr && link->variable->isExport())) {
-            
-                c->mslExport(link);
-            }
+            if (link->isExport)
+              c->mslExport(link);
         }
     }
 }

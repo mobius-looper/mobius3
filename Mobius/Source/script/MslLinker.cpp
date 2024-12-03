@@ -95,6 +95,7 @@
 #include "MslModel.h"
 #include "MslSymbol.h"
 #include "MslError.h"
+#include "MslBinding.h"
 
 #include "MslLinker.h"
 
@@ -325,8 +326,14 @@ void MslLinker::resolve(MslSymbol* sym)
         if (!sym->isResolved()) {
             // then externals
             resolveExternal(sym);
-            if (!sym->isResolved())
-              resolveExternalUsage(sym);
+            if (!sym->isResolved()) {
+                // experimental usage declaration
+                resolveExternalUsage(sym);
+                if (!sym->isResolved()) {
+                    // and finally the stupid carryover for the console
+                    resolveCarryover(sym);
+                }
+            }
         }
     }
         
@@ -515,6 +522,21 @@ void MslLinker::resolveExternalUsage(MslSymbol* sym)
     if (unit->usage.length() > 0)
       sym->resolution.usageArgument =
           context->mslIsUsageArgument(unit->usage.toUTF8(), sym->token.value.toUTF8());
+}
+
+/**
+ * Another session carryover kludge for the console.
+ */
+void MslLinker::resolveCarryover(MslSymbol* sym)
+{
+    juce::String refname = sym->token.value;
+
+    // it feels like this won't work if there is a session active
+    // that captured the bindings and hasn't finished yet to leave them behind
+    for (MslBinding* b = unit->bindings ; b != nullptr ; b = b->next) {
+        if (juce::String(b->name) == refname)
+          sym->resolution.carryover = true;
+    }
 }
 
 /**

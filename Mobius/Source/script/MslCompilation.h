@@ -39,6 +39,10 @@ class MslCompilation
     // true if this was published
     bool published = false;
 
+    // hack for the console
+    // don't like this, but works well enough for now
+    bool bindingCarryover = false;
+
     // no direct access to the unique_ptrs because they are a fucking pita
     MslFunction* getInitFunction() {
         return (initFunction != nullptr) ? initFunction.get() : nullptr;
@@ -56,11 +60,16 @@ class MslCompilation
         bodyFunction.reset(f);
     }
 
-    // function exports for each function within the compilation
-    // unit that was exported
+    // sifted function definitions for the top-level functions
+    // the functions in this list may or may not be exported, they'll all
+    // go here for two reasons, 1) to get them out of the node tree since they
+    // don't do anything at runtime without a call and 2) to support the stupid
+    // unit "extension" that the console uses to carry function definitions over from
+    // one evaluation to another
     juce::OwnedArray<MslFunction> functions;
 
-    // variable exports for each exported variable
+    // variable exports for each variable
+    // not actually used, needs thought
     juce::OwnedArray<MslVariableExport> variables;
 
     /**

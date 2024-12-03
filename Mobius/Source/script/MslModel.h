@@ -510,6 +510,7 @@ class MslAssignment : public MslNode
 class MslVariable : public MslNode
 {
   public:
+    MslVariable() {}
     MslVariable(MslToken& t) : MslNode(t) {}
     virtual ~MslVariable() {}
 
