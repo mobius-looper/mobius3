@@ -1487,6 +1487,11 @@ MslContextId MobiusKernel::mslGetContextId()
     return MslContextKernel;
 }
 
+int MobiusKernel::mslGetFocusedScope()
+{
+    return container->getFocusedTrackIndex() + 1;
+}
+
 /**
  * Resolution is done by the shell.  The only time Kernel would have to
  * resolve is if we allow dynamic evaluation which we don't

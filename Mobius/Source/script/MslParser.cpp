@@ -317,6 +317,8 @@ void MslParser::parseInner(juce::String source)
         // make sense on it's own, then raise an error, otherwies
         // it will just become a Symbol named "else"
 
+        bool foundScopeKeyword = false;
+
         switch (t.type) {
             
             // why would hasNext be true, then have nothing?
@@ -376,24 +378,33 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::Symbol: {
-                // special case for the few symbols we treat as operators
-                MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
-                if (opcode != MslUnknown) {
-                    parseOperator(t, opcode);
+                if (t.value == "external" ||
+                    t.value == "public" ||
+                    t.value == "global" ||
+                    t.value == "scope" ||
+                    t.value == "track") {
+                    scopeKeyword = t.value;
                 }
                 else {
-                    // if the symbol name matches a keyword, a specific node class
-                    // is pushed, otherwise it becomes a generic symbol node
-                    MslNode* node = checkKeywords(t);
-                    if (node == nullptr)
-                      node = new MslSymbol(t);
+                    // special case for the few symbols we treat as operators
+                    MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
+                    if (opcode != MslUnknown) {
+                        parseOperator(t, opcode);
+                    }
+                    else {
+                        // if the symbol name matches a keyword, a specific node class
+                        // is pushed, otherwise it becomes a generic symbol node
+                        MslNode* node = checkKeywords(t);
+                        if (node == nullptr)
+                          node = new MslSymbol(t);
                     
-                    current = push(node);
+                        current = push(node);
 
-                    // hack for In that creates it's own child node for the
-                    // target sequence
-                    if (node->children.size() > 0)
-                      current = node->children[node->children.size() - 1];
+                        // hack for In that creates it's own child node for the
+                        // target sequence
+                        if (node->children.size() > 0)
+                          current = node->children[node->children.size() - 1];
+                    }
                 }
             }
                 break;
@@ -501,6 +512,16 @@ void MslParser::parseInner(juce::String source)
           errorSyntax(t, "Invalid expression");
     }
 }
+
+/**
+ * Return true if one of the function or variable qualifier keywords
+ * was found.  These must immediately be followed by "function" or "variable".
+ */
+bool MslParser::isScopeKeywordFound()
+{
+    return scopeKeyword.length() > 0;
+}
+
 
 /**
  * Handle the processing of an operator token, or one of the

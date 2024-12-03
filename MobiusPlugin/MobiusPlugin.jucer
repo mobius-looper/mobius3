@@ -61,8 +61,13 @@
         <FILE id="cvFP6f" name="MslGarbage.h" compile="0" resource="0" file="../Mobius/Source/script/MslGarbage.h"/>
         <FILE id="XIwAr6" name="MslLinker.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslLinker.cpp"/>
         <FILE id="QGp65S" name="MslLinker.h" compile="0" resource="0" file="../Mobius/Source/script/MslLinker.h"/>
+        <FILE id="xhKUTG" name="MslMessage.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslMessage.cpp"/>
+        <FILE id="gHE2TH" name="MslMessage.h" compile="0" resource="0" file="../Mobius/Source/script/MslMessage.h"/>
         <FILE id="ICgOuB" name="MslModel.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslModel.cpp"/>
         <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
+        <FILE id="IFLBib" name="MslObjectPool.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslObjectPool.cpp"/>
+        <FILE id="xhuOKe" name="MslObjectPool.h" compile="0" resource="0" file="../Mobius/Source/script/MslObjectPool.h"/>
         <FILE id="AGNZ7d" name="MslParser.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslParser.cpp"/>
         <FILE id="HXhg6q" name="MslParser.h" compile="0" resource="0" file="../Mobius/Source/script/MslParser.h"/>
         <FILE id="Y8s5yQ" name="MslPools.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslPools.cpp"/>
@@ -71,6 +76,8 @@
               file="../Mobius/Source/script/MslPreprocessor.cpp"/>
         <FILE id="aoFO3g" name="MslPreprocessor.h" compile="0" resource="0"
               file="../Mobius/Source/script/MslPreprocessor.h"/>
+        <FILE id="VKtOml" name="MslProcess.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslProcess.cpp"/>
+        <FILE id="SSQrns" name="MslProcess.h" compile="0" resource="0" file="../Mobius/Source/script/MslProcess.h"/>
         <FILE id="PP50zY" name="MslResult.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslResult.cpp"/>
         <FILE id="yg8cNS" name="MslResult.h" compile="0" resource="0" file="../Mobius/Source/script/MslResult.h"/>
         <FILE id="xAkXss" name="MslSession.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslSession.cpp"/>
@@ -603,6 +610,8 @@
         <GROUP id="{2604F741-E637-CC59-72EB-4DD5ED5AACB9}" name="midi">
           <FILE id="RrqoUo" name="MidiEngine.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiEngine.cpp"/>
           <FILE id="sxCqxY" name="MidiEngine.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiEngine.h"/>
+          <FILE id="sutrkW" name="MidiFollower.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/midi/MidiFollower.cpp"/>
           <FILE id="JJtgei" name="MidiFragment.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/midi/MidiFragment.cpp"/>
           <FILE id="lDgpzq" name="MidiFragment.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiFragment.h"/>
@@ -613,6 +622,7 @@
           <FILE id="mMc7zG" name="MidiLayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLayer.h"/>
           <FILE id="lddC2p" name="MidiLoop.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.cpp"/>
           <FILE id="BFCPey" name="MidiLoop.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiLoop.h"/>
+          <FILE id="B1zA7D" name="MidiLooper.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiLooper.cpp"/>
           <FILE id="wfkQMR" name="MidiPlayer.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.cpp"/>
           <FILE id="nvvZYi" name="MidiPlayer.h" compile="0" resource="0" file="../Mobius/Source/mobius/midi/MidiPlayer.h"/>
           <FILE id="aJufRD" name="MidiPools.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/midi/MidiPools.cpp"/>

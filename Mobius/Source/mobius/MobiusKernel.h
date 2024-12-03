@@ -154,7 +154,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     bool mslIsUsageArgument(const char* usage, const char* name) override;
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
     juce::File mslGetLogRoot() override;
-
+    int mslGetFocusedScope() override;
+    
     // things TrackManager needs
     int getAudioTrackCount() {
         return audioTracks;

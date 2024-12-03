@@ -318,7 +318,7 @@ int TrackManager::getMidiTrackCount()
 // also, start passing this around as a number rather than an index like everything else
 int TrackManager::getFocusedTrackIndex()
 {
-    return kernel->getContainer()->getFocusedTrack();
+    return kernel->getContainer()->getFocusedTrackIndex();
 }
 
 int TrackManager::getMidiOutputDeviceId(const char* name)
@@ -1062,7 +1062,7 @@ bool TrackManager::mslQuery(MslQuery* query)
         // think MslSession cares, but be safe
         int saveScope = query->scope;
         if (query->scope == 0)
-          query->scope = kernel->getContainer()->getFocusedTrack() + 1;
+          query->scope = kernel->getContainer()->getFocusedTrackIndex() + 1;
 
         LogicalTrack* lt = getLogicalTrack(query->scope);
         if (lt != nullptr) {

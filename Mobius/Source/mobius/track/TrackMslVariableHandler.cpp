@@ -77,7 +77,7 @@ bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
                 case VarMidiTrackCount: getMidiTrackCount(q,t); break;
                     // old name was "trackNumber"
                 case VarActiveAudioTrack: getActiveTrack(q,t); break;
-                case VarFocusedTrack: getFocusedTrack(q,t); break;
+                case VarFocusedTrack: getFocusedTrackNumber(q,t); break;
                 case VarScopeTrack: getScopeTrack(q,t); break;
                     
                 case VarGlobalMute: getGlobalMute(q,t); break;
@@ -328,15 +328,17 @@ void TrackMslVariableHandler::getActiveTrack(MslQuery* q, MslTrack* t)
     q->value.setInt(0);
 }
 
-void TrackMslVariableHandler::getFocusedTrack(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getFocusedTrackNumber(MslQuery* q, MslTrack* t)
 {
     (void)t;
-    q->value.setInt(kernel->getContainer()->getFocusedTrack() + 1);
+    q->value.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
 }
 
 /**
  * If they didn't pass a scope in the query, I guess
  * this should fall back to the focused track?
+ *
+ * todo: this should be "scopeId" or "defaultScope" or "scopeNumber"
  */
 void TrackMslVariableHandler::getScopeTrack(MslQuery* q, MslTrack* t)
 {
@@ -344,7 +346,7 @@ void TrackMslVariableHandler::getScopeTrack(MslQuery* q, MslTrack* t)
     if (q->scope > 0)
       q->value.setInt(q->scope);
     else
-      q->value.setInt(kernel->getContainer()->getFocusedTrack() + 1);
+      q->value.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
 }
 
 /**

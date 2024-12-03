@@ -208,6 +208,8 @@ class MslContext
 
     virtual juce::File mslGetLogRoot() = 0;
 
+    virtual int mslGetFocusedScope() = 0;
+
 };
 
 /****************************************************************************/

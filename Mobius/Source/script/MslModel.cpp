@@ -72,7 +72,24 @@ bool MslVariable::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
-    if (name.length() == 0) {
+
+    if (t.value == "public") {
+        keywordPublic = true;
+        wants = true;
+    }
+    else if (t.value == "export") {
+        keywordExport = true;
+        wants = true;
+    }
+    else if (t.value == "global") {
+        keywordGlobal = true;
+        wants = true;
+    }
+    else if (t.value == "track" || t.value == "scope") {
+        keywordScope = true;
+        wants = true;
+    }
+    else if (name.length() == 0) {
         if (t.type == MslToken::Type::Symbol) {
             // take this as our name
             name =  t.value;
@@ -95,12 +112,29 @@ bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
-    if (name.length() == 0) {
+    if (t.value == "public") {
+        keywordPublic = true;
+        wants = true;
+    }
+    else if (t.value == "export") {
+        keywordExport = true;
+        wants = true;
+    }
+    else if (t.value == "global") {
+        keywordGlobal = true;
+        wants = true;
+    }
+    else if (t.value == "track" || t.value == "scope") {
+        keywordScope = true;
+        wants = true;
+    }
+    else if (name.length() == 0) {
         if (t.type == MslToken::Type::Symbol) {
             name =  t.value;
             wants = true;
         }
     }
+    
     return wants;
 }
 

@@ -50,7 +50,7 @@ class TrackMslVariableHandler
     void getAudioTrackCount(class MslQuery* q, class MslTrack* t);
     void getMidiTrackCount(class MslQuery* q, class MslTrack* t);
     void getActiveTrack(class MslQuery* q, class MslTrack* t);
-    void getFocusedTrack(class MslQuery* q, class MslTrack* t);
+    void getFocusedTrackNumber(class MslQuery* q, class MslTrack* t);
     void getScopeTrack(class MslQuery* q, class MslTrack* t);
     void getGlobalMute(class MslQuery* q, class MslTrack* t);
     void getTrackSyncMaster(class MslQuery* q, class MslTrack* t);

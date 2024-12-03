@@ -787,7 +787,7 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
     }
     
     for (auto func : unit->functions) {
-        if (func->exported) {
+        if (func->isExport() || func->isPublic()) {
             MslLinkage* link = publish(unit, func, links);
             if (link != nullptr)
               link->isFunction = true;
@@ -795,7 +795,7 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
     }
     
     for (auto var : unit->variables) {
-        if (var->exported)
+        if (var->isExport() || var->isPublic())
           (void)publish(unit, var, links);
     }
 
@@ -945,11 +945,11 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
             // use it properly
             link->isFunction = (link->function != nullptr);
 
-            // this is true for top-level scripts only 
-
-
+            if ((link->function != nullptr && link->function->isExport()) ||
+                (link->variable != nullptr && link->variable->isExport())) {
             
-            c->mslExport(link);
+                c->mslExport(link);
+            }
         }
     }
 }

@@ -528,7 +528,11 @@ class MslVariable : public MslNode
     }
 
     juce::String name;
-
+    bool keywordPublic = false;
+    bool keywordExport = false;
+    bool keywordGlobal = false;
+    bool keywordScope = false;
+    
     MslVariable* getVariable() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Variable";}
@@ -564,6 +568,10 @@ class MslFunctionNode : public MslNode
     }
 
     juce::String name;
+    bool keywordPublic = false;
+    bool keywordExport = false;
+    bool keywordGlobal = false;
+    bool keywordScope = false;
     bool hasArgs = false;
     bool hasBody = false;
     

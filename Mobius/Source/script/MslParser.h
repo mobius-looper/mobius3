@@ -41,6 +41,9 @@ class MslParser
     // the parse stack
     class MslNode* current = nullptr;
 
+    // keyword assimilation flags
+    juce::String scopeKeyword;
+
     void init();
     void sift();
     void functionize(class MslFunctionNode* node);
@@ -63,5 +66,6 @@ class MslParser
     void parseDirective(MslToken& t);
     void parseArguments(MslToken& t, int offset, juce::String remainder);
     int parseNumber(MslToken& t, juce::String s);
+    bool isScopeKeywordFound();
     
 };

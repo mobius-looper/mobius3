@@ -261,12 +261,12 @@ void Notifier::notifyScript(NotificationId id, TrackProperties& props, Notificat
                 req.bindings = arguments;
                 
                 MslResult* res = scriptenv->request(kernel, &req);
-
-                // no meaningful return value, but could have errors
-                if (res->errors != nullptr)
-                  Trace(1, "Notifier: Script error %s", res->errors->details);
-
-                scriptenv->free(res);
+                if (res != nullptr) {
+                    // no meaningful return value, but could have errors
+                    if (res->errors != nullptr)
+                      Trace(1, "Notifier: Script error %s", res->errors->details);
+                    scriptenv->free(res);
+                }
             }
         }
     }

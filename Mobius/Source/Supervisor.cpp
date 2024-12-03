@@ -1723,7 +1723,7 @@ int Supervisor::getMidiOutputDeviceId(const char* name)
     return midiManager.getOutputDeviceId(name);
 }
 
-int Supervisor::getFocusedTrack()
+int Supervisor::getFocusedTrackIndex()
 {
     return  mobiusView.focusedTrack;
 }
@@ -2339,6 +2339,11 @@ void Supervisor::reloadMobiusScripts()
 MslContextId Supervisor::mslGetContextId()
 {
     return MslContextShell;
+}
+
+int Supervisor::mslGetFocusedScope()
+{
+    return getFocusedTrackIndex() + 1;
 }
 
 /**

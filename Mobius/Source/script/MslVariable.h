@@ -13,8 +13,18 @@ class MslVariableExport
     MslVariableExport() {}
     ~MslVariableExport() {}
 
-    // lots to work out here
-    bool exported = false;
+    bool isExport() {
+        return (node != nullptr) ? node->keywordExport : false;
+    }
+    bool isPublic() {
+        return (node != nullptr) ? node->keywordPublic : false;
+    }
+    bool isGlobal() {
+        return (node != nullptr) ? node->keywordGlobal : false;
+    }
+    bool isScoped() {
+        return (node != nullptr) ? node->keywordScope : false;
+    }
 
     juce::String getName() {
         return (node != nullptr) ? node->name : "";

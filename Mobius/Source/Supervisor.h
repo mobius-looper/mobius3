@@ -247,7 +247,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void setAudioListener(class MobiusAudioListener* l) override;
     class MslEnvironment* getMslEnvironment() override;
     void writeDump(juce::String file, juce::String content) override;
-    int getFocusedTrack() override;
+    int getFocusedTrackIndex() override;
     void setFocusedTrack(int index) override;
     
     // MobiusListener
@@ -278,7 +278,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     bool mslIsUsageArgument(const char* usage, const char* name) override;
     bool mslExpandScopeKeyword(const char* name, juce::Array<int>& numbers) override;
     juce::File mslGetLogRoot() override;
-    
+    int mslGetFocusedScope() override;
+        
     // AudioStreamHandler
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate);
     void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill);

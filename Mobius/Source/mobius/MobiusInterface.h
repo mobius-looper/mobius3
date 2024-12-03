@@ -450,9 +450,9 @@ class MobiusContainer
     virtual class SymbolTable* getSymbols() = 0;
 
     /**
-     * For track followers, get the number of the track that has action focus.
+     * For track followers, get the index of the track that has action focus.
      */
-    virtual int getFocusedTrack() = 0;
+    virtual int getFocusedTrackIndex() = 0;
 
     // temporary kludge for TrackSelect functions handled in the core that need
     // to pass the new focused track back to the view since State doesn't have it
