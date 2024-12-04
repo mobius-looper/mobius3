@@ -1344,7 +1344,8 @@ void MobiusShell::installSymbols(Scriptarian* scriptarian)
     
     // remove references to previously resolved Scripts
     for (auto symbol : symbols->getSymbols()) {
-        if (symbol->script) {
+        // note: do NOT mess with MSL script symbols, you only get to reset coreScripts
+        if (symbol->script && symbol->script->coreScript != nullptr) {
             symbol->script.reset(nullptr);
             symbol->hidden = true;
         }

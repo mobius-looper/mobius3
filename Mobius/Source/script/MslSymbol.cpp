@@ -222,8 +222,10 @@ void MslSession::returnKeyword(MslSymbol* snode)
 
 /**
  * Here for a symbol that resolved to a top-level variable that
- * was declared global or exported.  The values are stored in
- * the MslVariable in the unit rather than in a stack binding.
+ * was declared global or exported and is referenced within the
+ * script that defined it.  In this case there may be no MslLinkage
+ * but the variable is still static for the compilation unit where
+ * it was defined.
  */
 void MslSession::returnStaticVariable(MslSymbol* snode)
 {
@@ -237,28 +239,25 @@ void MslSession::returnStaticVariable(MslSymbol* snode)
 }
 
 /**
- * Here for a symbol that resolved to a variable exported from another script.
- *
- * todo: Not implemented yet
- * Here we have what might loosly be called a "lexical closure" or a "member variable".
- *
- * Scripts need to be allowed to define things that behave like Mobius parameters.
- * Global variables that hold a value that doesn't need to be bound on the stack.
- *
- * You can think of a script as a class with static member variables in it.  Those need
- * to be stored somwehere, probably in a MslBinding list hanging off the MslScript.
+ * Here for a symbol that resolved to a public or exported static
+ * variable defined in another script.  These must indirece
+ * through an MslLinkage so the defining script can be reloaded.
  */
 void MslSession::returnLinkedVariable(MslSymbol* snode)
 {
-    Trace(1, "MslSession: Reference to public variable not implemented %s",
-          snode->getName());
+    MslLinkage* link = snode->resolution.linkage;
+    MslVariable* var = link->variable;
+    MslValue* value = pool->allocValue();
     
-    // don't have a way to save values for these yet,
-    // needs to either be in the MslLinkage or in a list of value containers
-    // inside the referenced script
-
-    // return null
-    popStack(pool->allocValue());
+    if (var == nullptr) {
+        Trace(1, "MslSession: Unresolved variable link %s",
+              snode->getName());
+    }
+    else {
+        // !! this needs to be csect protected
+        value->copy(var->getValue());
+    }
+    popStack(value);
 }
 
 /**
@@ -663,9 +662,14 @@ void MslSession::doAssignment(MslAssignment* ass)
             popStack(nullptr);
         }
         else if (namesym->resolution.linkage != nullptr) {
-            // assignment of exported variable in another script
-            // not implemented
-            addError(ass, "Exported variable assignment not implemented");
+            // assignment of public variable in another script
+            MslVariable* var = namesym->resolution.linkage->variable;
+            if (var == nullptr)
+              addError(ass, "Missing variable in linkage");
+            else {
+                assignStaticVariable(var, stack->childResults);
+                popStack(nullptr);
+            }
         }
         else if (namesym->resolution.external != nullptr) {
             // assignments are currently expected to be synchronous and won't do transitions

@@ -1,0 +1,8 @@
+// query the global variable defined in pubvar
+
+print("Public variable is" pubvartest)
+
+// this one should generate a link error, it is static but not public
+print("Global variable is" gvar)
+
+

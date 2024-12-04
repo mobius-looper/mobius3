@@ -526,6 +526,7 @@ class MslScopedNode : public MslNode
 
     bool wantsToken(class MslParser* p, MslToken& t);
     bool hasScope();
+    bool isStatic();
     void resetScope();
     void transferScope(MslScopedNode* dest);
 };

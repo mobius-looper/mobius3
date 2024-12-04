@@ -1,0 +1,5 @@
+// test cross-script access to public static variables
+// referenced by pubtest.msl
+
+public variable pubvartest 42
+

@@ -10,6 +10,13 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\multiclick.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\exporttest.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -30,6 +37,20 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"
             name="vartest1" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"
+            name="vartest2" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl" name="pubvar"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"
+            name="varquery" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl" name="Release Me"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl" name="Repeat Me"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"
+            name="Repeat and Sustain Me" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\exporttest.msl"
+            name="exporttest" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">

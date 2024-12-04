@@ -35,7 +35,7 @@
       <Element name="outputMeter" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration"/>
+    <InstantParameters names="activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration,scriptvar"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>
@@ -127,6 +127,7 @@
     <Button action="Repeat and Sustain Me"/>
     <Button action="vartest1"/>
     <Button action="vartest2"/>
+    <Button action="varquery"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

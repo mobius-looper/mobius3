@@ -114,7 +114,6 @@ void MslLinker::link(MslContext* c, MslEnvironment* e, MslCompilation* u)
     unit->collisions.clear();
     unit->unresolved.clear();
 
-    link(unit->getInitFunction());
     link(unit->getBodyFunction());
 
     for (auto func : unit->functions)

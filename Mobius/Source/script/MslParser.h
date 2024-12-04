@@ -50,7 +50,6 @@ class MslParser
     void init();
     void sift();
     void functionize(class MslFunctionNode* node);
-    void functionize(class MslInitNode* node);
     void variableize(class MslVariableNode* node);
     void embody();
     

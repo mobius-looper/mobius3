@@ -1967,6 +1967,12 @@ void Supervisor::doAction(UIAction* action)
     if (s == nullptr) {
         Trace(1, "Supervisor::doAction Action without symbol\n");
     }
+    else if (s->script != nullptr) {
+        // having some difficult getting levels set on these assume
+        // they don't care and let them transition if necessary
+        ActionAdapter aa;
+        aa.doAction(&scriptenv, this, action);
+    }
     else if (s->level == LevelUI) {
         doUILevelAction(action);
     }
@@ -2109,6 +2115,23 @@ bool Supervisor::doQuery(Query* query)
     if (s == nullptr) {
         Trace(1, "Supervisor: Query without symbol\n");
     }
+    else if (s->script != nullptr) {
+        if (s->script->mslLinkage == nullptr) {
+            Trace(1, "Supervisor: Query on script symbol that wasn't a variable", s->getName());
+        }
+        else {
+            MslResult* result = scriptenv.query(s->script->mslLinkage);
+            if (result != nullptr) {
+                // only supporting integers right now
+                if (result->value != nullptr) 
+                  query->value = result->value->getInt();
+                scriptenv.free(result);
+            }
+            // what is success?  must this have a Result and Value or can
+            // it just unbound and zero?
+            success = true;
+        }
+    }
     else if (s->level == LevelUI) {
         // it's one of ours, these don't use UIParameter
         UIConfig* config = getUIConfig();
@@ -2157,20 +2180,6 @@ bool Supervisor::doQuery(Query* query)
         query->value = value;
         if (value >= 0)
           success = true;
-    }
-    else if (s->script != nullptr) {
-        if (s->script->mslLinkage == nullptr) {
-            Trace(1, "Supervisor: Query on script symbol that wasn't a variable", s->getName());
-        }
-        else {
-            MslResult* result = scriptenv.query(s->script->mslLinkage);
-            if (result != nullptr) {
-                // only supporting integers right now
-                if (result->value != nullptr) 
-                  query->value = result->value->getInt();
-                scriptenv.free(result);
-            }
-        }
     }
     else {
         // send it down

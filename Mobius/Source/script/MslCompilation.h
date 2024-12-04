@@ -43,15 +43,6 @@ class MslCompilation
     // don't like this, but works well enough for now
     bool variableCarryover = false;
 
-    // no direct access to the unique_ptrs because they are a fucking pita
-    MslFunction* getInitFunction() {
-        return (initFunction != nullptr) ? initFunction.get() : nullptr;
-    }
-
-    void setInitFunction(MslFunction* f) {
-        initFunction.reset(f);
-    }
-    
     MslFunction* getBodyFunction() {
         return (bodyFunction != nullptr) ? bodyFunction.get() : nullptr;
     }
@@ -68,7 +59,7 @@ class MslCompilation
     // one evaluation to another
     juce::OwnedArray<MslFunction> functions;
 
-    // sifted variable definitions for the top-level variables
+    // sifted variable definitions for the top-level static variables
     juce::OwnedArray<MslVariable> variables;
 
     /**
@@ -135,9 +126,6 @@ class MslCompilation
 
   private:
     
-    // the initialization block found within the source
-    std::unique_ptr<class MslFunction> initFunction;
-
     // a function parse tree representing the outer script code
     // if it had any, nullptr if this is a library file
     std::unique_ptr<class MslFunction> bodyFunction;

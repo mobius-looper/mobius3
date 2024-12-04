@@ -69,6 +69,9 @@ class MslConductor
     // Environment interface
     class MslResult* start(class MslContext* c, class MslRequest *req, class MslLinkage* link);
 
+    class MslResult* runInitializer(class MslContext* c, class MslCompilation* unit,
+                                    class MslBinding* arguments, class MslNode* node);
+    
     // resume after a wait
     void resume(class MslContext* c, class MslWait* wait);
 

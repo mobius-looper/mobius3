@@ -90,6 +90,12 @@ bool MslScopedNode::hasScope()
     return (keywordPublic || keywordExport || keywordGlobal || keywordScope);
 }
 
+bool MslScopedNode::isStatic()
+{
+    // all scopes imply staticness atm
+    return hasScope();
+}
+
 void MslScopedNode::transferScope(MslScopedNode* dest)
 {
     dest->keywordPublic = keywordPublic;

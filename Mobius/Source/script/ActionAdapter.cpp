@@ -74,6 +74,11 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
             v->setString(action->arguments);
             req.arguments = v;
         }
+        else {
+            MslValue* v = env->allocValue();
+            v->setInt(action->value);
+            req.arguments = v;
+        }
 
         // if this flag is set, it means the binding expects this to be a sustainable
         // action and sustainId will be set
@@ -110,6 +115,11 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
                   CopyString(res->value->getString(), action->result, sizeof(action->result));
                 env->free(res);
             }
+        }
+        else {
+            // this wasn't consumed so we have to free it
+            env->free(req.arguments);
+            req.arguments = nullptr;
         }
     }
 }

@@ -156,7 +156,7 @@ MslResult* MslEnvironment::request(MslContext* c, MslRequest* req)
         Trace(1, "MslEnvironment::request Missing link");
     }
     else if (link->variable != nullptr) {
-        Trace(1, "MslEnvironment: Variable requsts not implemented");
+        setVariable(c, link, req);
     }
     else if (link->function == nullptr) {
         Trace(1, "MslEnvironment: Unresolved link %s", link->name.toUTF8());
@@ -169,14 +169,50 @@ MslResult* MslEnvironment::request(MslContext* c, MslRequest* req)
         result = conductor.start(c, req, link);
     }
     
-    // clean request arguments if they weren't taken due to errors
-    // todo: hate this, the entire Request should be consumed
+    clean(req);
+    
+    return result;
+}
+
+/**
+ * Here for a request with a variable link.
+ * These can just slam in the value, there is no need to get a session
+ * involved, though we might want to have side effects like "triggers" someday.
+ * But for that you could also use #continuous scripts
+ *
+ * A MslRequest is too general than it needs to be, we will only look at the
+ * arguments list and take the first one.  The request() interface is however
+ * expected to consume anything that was in the Request so clean it out
+ * who owns the Request?  Allowing it to be static atm.
+ */
+void MslEnvironment::setVariable(MslContext*c, MslLinkage* link, MslRequest* req)
+{
+    MslVariable* var = link->variable;
+    if (var == nullptr) {
+        // this must be an old linkage to a script that was unloaded
+        // not uncommon if the variable was put in the Instant Parameters element
+        // or bound to a MIDI action
+    }
+    else {
+        // this will copy the value
+        // !! need a csect around this
+        var->setValue(req->arguments);
+    }
+    clean(req);
+}
+
+/**
+ * After a request() clean out any lingering arguments or bindings
+ * that were not consumed.
+ *
+ * todo: hate this, the entire Request should be consumed
+ */
+void MslEnvironment::clean(MslRequest* req)
+{
     pool.free(req->arguments);
     pool.free(req->bindings);
     req->arguments = nullptr;
     req->bindings = nullptr;
-
-    return result;
 }
 
 /**
@@ -939,39 +975,94 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
  */
 void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
 {
-    MslFunction* init = unit->getInitFunction();
-    if (init != nullptr) {
+    // none of these should be null
+    MslFunction* bf = unit->getBodyFunction();
+    if (bf != nullptr) {
+        MslBlock* body = bf->getBody();
+        if (body != nullptr) {
+            
+            for (auto node : body->children) {
 
-        // Conductor requires a Linkage as an argumnt, fake one
-        MslRequest req;
-        MslLinkage link;
-        link.unit = unit;
-        link.function = init;
-        MslResult* result = conductor.start(c, &req, &link);
-        if (result != nullptr) {
+                MslInitNode* init = node->getInit();
+                if (init != nullptr) {
+                    if (init->children.size() > 0) {
+                        MslNode* child = init->children[0];
 
-            if (result != nullptr && result->errors != nullptr) {
-                // transfer the errors to the unit
-                MslError* error = result->errors;
-                MslError* next = nullptr;
-                while (error != nullptr) {
-                    next = error->next;
-                    error->next = nullptr;
-                    unit->errors.add(error);
-                    error = next;
+                        // the normal session evaluator will ignore InitNodes
+                        // so have to evaluate the body
+                        // there needs to be a special conductor interface
+                        // that doesn't allow these to wait, though they can transition
+                        MslResult* result = conductor.runInitializer(c, unit, nullptr, child);
+                        processInitializerResult(c, unit, result);
+                    }
                 }
-                result->errors = nullptr;
+                else {
+                    MslVariableNode* var = node->getVariable();
+                    if (var != nullptr) {
+                        if (var->isStatic()) {
+                            MslResult* result = conductor.runInitializer(c, unit, nullptr, var);
+                            processInitializerResult(c, unit, result);
+                        }
+                    }
+                }
             }
-
-            if (result->sessionId != 0) {
-                // the init script transitioned or waited
-                // what kind of mayhem are they going to do down there?
-                // !! todo: initializers really should not wait
-                // should have a flag somewhere to prevent that
-                Trace(2, "MslEnvironment: Warning: init block went background %s", unit->name.toUTF8());
-            }
-            free(result);
         }
+    }
+}
+
+void MslEnvironment::processInitializerResult(MslContext* c, MslCompilation* unit, MslResult* result)
+{
+    (void)c;
+    
+    if (result != nullptr) {
+        
+        switch (result->state) {
+            
+            case MslStateNone:
+            case MslStateFinished:
+                break;
+                
+            case MslStateError:
+                Trace(1, "MslConductor: Initialization block finished with an error state");
+                break;
+                
+            case MslStateRunning:
+                // should not be preparing for sustain or repeat
+                Trace(1, "MslConductor: Initialization block entered a running state");
+                break;
+                
+            case MslStateWaiting:
+                // this should NOT be allowed
+                Trace(1, "MslConductor: Initialization block entered a wait state");
+                break;
+
+            case MslStateSuspended:
+                // should not be preparing for sustain or repeat
+                Trace(1, "MslConductor: Initialization block entered a suspended state");
+                break;
+                
+            case MslStateTransitioning: {
+                // this might be necessary to do kernel things
+                // hmm, in theory this could create multiple sessions for every
+                // init block or static variable initializer, might be better to do
+                // that with threads if it is common
+                Trace(2, "MslConductor: Initialization block is transitioning");
+            }
+                break;
+        }
+
+        // transfer errors to the unit
+        MslError* error = result->errors;
+        MslError* next = nullptr;
+        while (error != nullptr) {
+            next = error->next;
+            error->next = nullptr;
+            unit->errors.add(error);
+            error = next;
+        }
+        result->errors = nullptr;
+        
+        free(result);
     }
 }
 

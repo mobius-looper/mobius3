@@ -933,6 +933,27 @@ void MslConductor::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* stat
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Start a new session for an initialization block.
+ * todo: support an initial set of binding arguments?
+ */
+MslResult* MslConductor::runInitializer(MslContext* c, MslCompilation* unit,
+                                        MslBinding* arguments, MslNode* node)
+{
+    MslResult* result = nullptr;
+    if (node != nullptr) {
+        MslSession* session = environment->getPool()->allocSession();
+
+        // don't bump the run count for these
+        
+        session->run(c, unit, arguments, node);
+
+        result = checkCompletion(c, session);
+    }
+    return result;
+}
+
+
+/**
  * Start a new session or repeat an existing one.
  */
 MslResult* MslConductor::start(MslContext* c, MslRequest *req, MslLinkage* link)

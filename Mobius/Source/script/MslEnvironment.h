@@ -359,6 +359,10 @@ class MslEnvironment
     juce::OwnedArray<class MslExternal> externals;
     juce::HashMap<juce::String,class MslExternal*> externalMap;
 
+    // request handling
+    void setVariable(class MslContext*c, class MslLinkage* link, class MslRequest* req);
+    void clean(class MslRequest* req);
+
     //
     // internal library management
     //
@@ -378,6 +382,8 @@ class MslEnvironment
     void publish(class MslCompilation* unit, class MslVariable* v, juce::StringArray& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
     void initialize(class MslContext* c, class MslCompilation* unit);
+    void processInitializerResult(class MslContext* c, class MslCompilation* unit,
+                                  class MslResult* result);
 
     void extractDetails(class MslCompilation* src, class MslDetails* dest, bool move=false);
     void exportLinkages(MslContext* c, MslCompilation* unit);

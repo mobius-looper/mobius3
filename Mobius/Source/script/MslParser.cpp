@@ -122,24 +122,17 @@ void MslParser::sift()
             functionize(f);
         }
         else {
-            MslInitNode* i = node->getInit();
-            if (i != nullptr) {
-                root->remove(node);
-                functionize(i);
+            // unlike function nodes, we don't remove VariableNodes from the tree
+            // since they can have initialization blocks that need to be evaluated
+            // the special "carryover" option effectively makes all top-level variables
+            // static variables so their values will be held in an MslVariable that
+            // spans sessions
+            MslVariableNode* v = node->getVariable();
+            if (v != nullptr &&
+                (v->isStatic() || variableCarryover)) {
+                variableize(v);
             }
-            else {
-                // unlike function nodes, we don't remove VariableNodes from the tree
-                // since they can have initialization blocks that need to be evaluated
-                // the special "carryover" option effectively makes all top-level variables
-                // static variables so their values will be held in an MslVariable that
-                // spans sessions
-                MslVariableNode* v = node->getVariable();
-                if (v != nullptr &&
-                    (v->hasScope() || variableCarryover)) {
-                    variableize(v);
-                }
-                index++;
-            }
+            index++;
         }
     }
     
@@ -153,8 +146,8 @@ void MslParser::sift()
  * It has already been removed from the parse tree.
  *
  * The body block is moved from the OwnedArray in the node
- * to the unique_ptr in the Function.  Same for the declaration
- * block.
+ * to the unique_ptr in the Function.  
+ * Formerly did the init block here too but that is now left in place.
  *
  * The empty node husk is then discarded.
  *
@@ -185,45 +178,6 @@ void MslParser::functionize(MslFunctionNode* node)
         script->functions.removeObject(existing);
     }
     script->functions.add(function);
-}
-
-/**
- * Convert an MslInitNode into an MslFunction.
- * It has already been removed from the parse tree.
- *
- * Initialization blocks are packaged like functions so they
- * may be evaluated consistently, but they do not have names.
- *
- * Unlike function definitions, if we encounter more than one
- * init block in the text, they are merged.
- *
- * For mergers, this could go two ways.  We can unwrap the child
- * nodes and make it look like they were in a single block
- * or keep this as a block of blocks that would allow local
- * declarations to shadow things.  I think it's more useful
- * to unwrap them so in theory a function defined in one block
- * could be used in another.
- */
-void MslParser::functionize(MslInitNode* node)
-{
-    MslFunction* init = script->getInitFunction();
-    if (init == nullptr) {
-        init = new MslFunction();
-        script->setInitFunction(init);
-    }
-    
-    MslBlock* body = init->getBody();
-    if (body == nullptr) {
-        body = new MslBlock();
-        init->setBody(body);
-    }
-
-    // transfer the children
-    while (node->children.size() > 0) {
-        MslNode* child = node->children.removeAndReturn(0);
-        body->add(child);
-    }
-    delete node;
 }
 
 /**

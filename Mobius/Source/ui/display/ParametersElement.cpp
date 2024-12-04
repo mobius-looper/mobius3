@@ -58,8 +58,14 @@ ParametersElement::~ParametersElement()
  * To reduce flicker, retain the values of the currently displayed parameters
  * if they change position.
  *
- * update: Once UI level parameters stopped being UIParameters, we lost the
- * ability to 
+ * With the introduction of script variables, scripts may not be loaded
+ * at the time of initial configuration which is early in Supervisor::start.
+ * But they will have ScroptProperties shortly after that.  The issue is similar
+ * to ActionButtons that reference scripts that may or may not be loaded.  We still
+ * display them, but they do nothing.  Might want to color the label red when this
+ * happens so they know, but that will usually flicker on startup.  I suppose we could
+ * defer that for a few refresh cycles, but actually since scripts can be unloaded
+ * it can happen at any time, not just during startup.
  */
 void ParametersElement::configure()
 {
@@ -75,32 +81,28 @@ void ParametersElement::configure()
     
     DisplayLayout* layout = config->getActiveLayout();
     for (auto name : layout->instantParameters) {
-        
-        Symbol* s = statusArea->getProvider()->getSymbols()->find(name);
-        if (s == nullptr ||
-            // two ways to represent these now...
-            (s->parameter == nullptr &&
-             s->parameterProperties == nullptr)) {
 
-            Trace(1, "ParametersElement: Invalid parameter name %s\n", name.toUTF8());
+        // intern rather than find to pick up script symbols
+        Symbol* s = statusArea->getProvider()->getSymbols()->intern(name);
+
+        // rather than warning and ignoring if it doesn't resolve
+        // always put what was configured on the list, just display it differently
+        
+        ParameterState* existing = nullptr;
+        for (auto pstate : parameters) {
+            if (pstate->symbol == s) {
+                existing = pstate;
+                break;
+            }
+        }
+        if (existing != nullptr) {
+            parameters.removeObject(existing, false);
+            newParameters.add(existing);
         }
         else {
-            ParameterState* existing = nullptr;
-            for (auto pstate : parameters) {
-                if (pstate->symbol == s) {
-                    existing = pstate;
-                    break;
-                }
-            }
-            if (existing != nullptr) {
-                parameters.removeObject(existing, false);
-                newParameters.add(existing);
-            }
-            else {
-                ParameterState* neu = new ParameterState();
-                neu->symbol = s;
-                newParameters.add(neu);
-            }
+            ParameterState* neu = new ParameterState();
+            neu->symbol = s;
+            newParameters.add(neu);
         }
     }
 
@@ -132,12 +134,18 @@ int ParametersElement::getPreferredHeight()
 juce::String ParametersElement::getDisplayName(Symbol* s)
 {
     juce::String displayName;
-    
+
+    // do we really need to mess with UIParameter any more?
+    // can't we just use parameterProperties
     if (s->parameter != nullptr) 
       displayName = s->parameter->getDisplayableName();
     
-    else
+    else if (s->parameterProperties != nullptr)
       displayName = s->parameterProperties->displayName;
+
+    else if (s->script != nullptr) {
+        // exported variables don't have display names, seems find
+    }
             
     if (displayName.length() == 0)
       displayName = s->name;
@@ -181,14 +189,17 @@ void ParametersElement::update(MobiusView* view)
 {
     bool changes = false;
 
-    // skip detailed queries if we know the track changed
-    if (view->trackChanged) {
-        changes = true;
-    }
-    else {
-        for (int i = 0 ; i < parameters.size() ; i++) {
-            ParameterState* ps = parameters[i];
-            int value = ps->value;
+    for (int i = 0 ; i < parameters.size() ; i++) {
+        ParameterState* ps = parameters[i];
+        int value = ps->value;
+
+        // for unresolved symbols for script variables,
+        // prevent Supervisor from logging about this and just
+        // suppress the query
+        if (isUnresolved(ps)) {
+            // just keep the old value, which is usually zero
+        }
+        else {
             Query q (ps->symbol);
             // focusedTrack is zero based, Query scope is 1 based
             q.scope = view->focusedTrack + 1;
@@ -204,6 +215,13 @@ void ParametersElement::update(MobiusView* view)
     
     if (changes)
       repaint();
+}
+
+bool ParametersElement::isUnresolved(ParameterState* ps)
+{
+    return (ps->symbol->parameter == nullptr &&
+            ps->symbol->parameterProperties == nullptr &&
+            ps->symbol->script == nullptr);
 }
 
 void ParametersElement::resized()
@@ -228,12 +246,19 @@ void ParametersElement::paint(juce::Graphics& g)
         juce::String strValue;
 
         // ugliness here due to the dual model again
-        UIParameterType type;
+        UIParameterType type = TypeInt;
 
         if (s->parameter != nullptr)
           type = s->parameter->type;
-        else
+        else if (s->parameterProperties != nullptr)
           type = s->parameterProperties->type;
+        else if (s->script != nullptr) {
+            // these are interesting, MSL exports don't have a type, they
+            // can be anything, they'll almost always be integers
+            // but strings are possible
+            // but since we're limited by what Query can return it
+            // will always be an integer for now
+        }
         
         if (type == TypeEnum) {
             // only works for UIParameter
@@ -255,7 +280,11 @@ void ParametersElement::paint(juce::Graphics& g)
         }
 
         // old mobius uses dim yellow
-        g.setColour(juce::Colours::beige);
+        if (isUnresolved(ps))
+          g.setColour(juce::Colours::red);
+        else
+          g.setColour(juce::Colours::beige);
+              
         g.drawText(getDisplayName(s),
                    0, rowTop, maxNameWidth, ParametersRowHeight,
                    juce::Justification::centredRight);
@@ -312,8 +341,9 @@ bool ParametersElement::doAction(UIAction* action)
         case FuncParameterInc: {
             ParameterState* ps = parameters[cursor];
             int value = ps->value;
-            int max = statusArea->getProvider()->getParameterMax(ps->symbol);
+            int max = getMax(ps);
             if (value < max ) {
+                // update: coreAction is a misnomer
                 UIAction coreAction;
                 coreAction.symbol = ps->symbol;
                 coreAction.value = value + 1;
@@ -349,6 +379,37 @@ bool ParametersElement::doAction(UIAction* action)
 }
 
 /**
+ * With script variables there is no formal definition for them
+ * so they won't have ranges, this is an interesting case, if you bother to export
+ * a variable you generally want to interact with it, which means
+ * the application needs to know its range and behavior
+ * this needs thought
+ * 
+ * max is almost always parameter->high, but structure parameters
+ * are variable and we have to query them
+ */
+int ParametersElement::getMax(ParameterState* ps)
+{
+    int max = 127;
+
+    if (ps->symbol->parameterProperties != nullptr)
+      max = statusArea->getProvider()->getParameterMax(ps->symbol);
+
+    return max;
+}
+
+int ParametersElement::getMin(ParameterState* ps)
+{
+    int min = 0;
+
+    // won't parameterProperties have this too?
+    if (ps->symbol->parameter != nullptr)
+      min = ps->symbol->parameter->low;
+
+    return min;
+}
+
+/**
  * Within this element, clicking over a title activates the element drag
  * and clicking over a value activates the parameter row and allows value drag.
  */
@@ -371,13 +432,8 @@ void ParametersElement::mouseDown(const juce::MouseEvent& e)
         valueDragStart = ps->value;
 
         // most have a min of zero, Subcycles is an outlier with a min of 1
-        valueDragMin = 0;
-        if (ps->symbol->parameter != nullptr)
-          valueDragMin = ps->symbol->parameter->low;
-
-        // max is almost always parameter->high, but structure parameters
-        // are variable and we have to query them
-        valueDragMax = statusArea->getProvider()->getParameterMax(ps->symbol);
+        valueDragMin = getMin(ps);
+        valueDragMax = getMax(ps);
     }
 }
 

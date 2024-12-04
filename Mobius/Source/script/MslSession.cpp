@@ -1124,7 +1124,7 @@ MslBinding* MslSession::findBinding(int position)
  * never needs to retain one and has to remember to free it.  But it's dangerous
  * and can hose the session if they mishandle it so might want to copy it anyway.
  * Also consider having a set of getInt, getString functions that don't copy and
- * don't need to be freed but whose value is not guaraneteed to remain stable.
+ * don't need to be freed but whose value is not guaranteed to remain stable.
  */
 MslValue* MslSession::getVariable(const char* name)
 {
@@ -1135,17 +1135,36 @@ MslValue* MslSession::getVariable(const char* name)
         value = binding->value;
     }
     else {
-        // MslSymbol evaluation will at this point look for an
-        // MslResolution that may have an MslLinksge to an exported
-        // variable from another script.  We can't do pre-resolution
-        // but it's a small amount of overhead.
-        MslLinkage* link = environment->find(juce::String(name));
-        if (link != nullptr && link->variable != nullptr) {
+        juce::String jname(name);
 
-            // see MslSession::returnVariable for why this isn't implemented yet
+        // look for static non-public variables in this unit
+        MslVariable* found = nullptr;
+        for (auto var : unit->variables) {
+            if (var->name == jname) {
+                found = var;
+                break;
+            }
+        }
+        if (found != nullptr) {
+            // !! supposed to have a csect around this which means
+            // we really should be copying
+            // todo: not handling track scope
+            value = found->getValue();
+        }
+        else {
+            // MslSymbol evaluation will at this point look for an
+            // MslResolution that may have an MslLinksge to an exported
+            // variable from another script.  We can't do pre-resolution
+            // but it's a small amount of overhead.
+
+            MslLinkage* link = environment->find(jname);
+            if (link != nullptr && link->variable != nullptr) {
+
+                // !! also supposed to be csect protected
+                value = link->variable->getValue();
+            }
         }
     }
-    
 
     return value;
 }
@@ -1245,36 +1264,38 @@ void MslSession::mslVisit(MslVariableNode* var)
         MslStack* nextStack = pushNextChild();
         if (nextStack == nullptr) {
             // initializer finished
-    
-            MslStack* parent = stack->parent;
-            if (parent == nullptr) {
-                // this shouldn't happen, there can be vars at the top level of a script
-                // but the script body should have been surrounded by a containing block
-                addError(var, "Variable encountered above root block");
-            }
-            else if (!parent->node->isBlock()) {
-                // the var was inside something other than a {} block
-                // the parser allows this but it's unclear what that should mean, what use
-                // would a var be inside an expression for example?  I suppose we could allow
-                // this, but flag it for now until we find a compelling use case
-                addError(var, "Variable encountered in non-block container");
-            }
-            else if (var->staticVariable != nullptr) {
+
+            if (var->staticVariable != nullptr) {
                 // ownership does not transfer, it is copied
                 assignStaticVariable(var->staticVariable, stack->childResults);
                 popStack(nullptr);
             }
             else {
-                MslBinding* b = pool->allocBinding();
-                b->setName(var->name.toUTF8());
-                // value ownership transfers
-                b->value = stack->childResults;
-                stack->childResults = nullptr;
+                MslStack* parent = stack->parent;
+                if (parent == nullptr) {
+                    // local variables should always be inside something
+                    // that can accept a binding
+                    addError(var, "Variable encountered above root block");
+                }
+                else if (!parent->node->isBlock()) {
+                    // the var was inside something other than a {} block
+                    // the parser allows this but it's unclear what that should mean, what use
+                    // would a var be inside an expression for example?  I suppose we could allow
+                    // this, but flag it for now until we find a compelling use case
+                    addError(var, "Variable encountered in non-block container");
+                }
+                else {
+                    MslBinding* b = pool->allocBinding();
+                    b->setName(var->name.toUTF8());
+                    // value ownership transfers
+                    b->value = stack->childResults;
+                    stack->childResults = nullptr;
             
-                parent->addBinding(b);
+                    parent->addBinding(b);
 
-                // vars do not have values themselves
-                popStack(nullptr);
+                    // vars do not have values themselves
+                    popStack(nullptr);
+                }
             }
         }
     }
@@ -2134,12 +2155,14 @@ void MslSession::mslVisit(MslKeyword* key)
 }
 
 /**
- * Won't see these but have to overload it for the visitor
+ * These are no longer sifted at compile time.  If you encounter
+ * one during a normal evaluation, they are simply ignored, similar
+ * to the initializer of a static variable.
  */
 void MslSession::mslVisit(MslInitNode* init)
 {
     logVisit(init);
-    addError(init, "Encountered init mode in the main body");
+    popStack();
 }
 
 void MslSession::mslVisit(MslTrace* node)

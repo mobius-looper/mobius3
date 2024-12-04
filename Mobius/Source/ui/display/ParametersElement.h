@@ -25,6 +25,7 @@ class ParametersElement : public StatusElement,
       public:
         class Symbol* symbol = nullptr;
         int value = 0;
+        bool looksGood = false;
         ParameterState() {}
         ~ParameterState() {}
     };
@@ -59,6 +60,9 @@ class ParametersElement : public StatusElement,
     int valueDragMax = 0;
     
     juce::String getDisplayName(Symbol* s);
+    int getMax(ParameterState* ps);
+    int getMin(ParameterState* ps);
+    bool isUnresolved(ParameterState* ps);
     
 };
 

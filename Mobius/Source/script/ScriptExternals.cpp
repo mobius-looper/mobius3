@@ -137,6 +137,7 @@ bool ScriptExternals::doAction(MslContext* c, MslAction* action)
     }
     else {
         // shouldn't have gotten this far
+        // parameters are handled elsewhere
         Trace(1, "ScriptExternals: Assignment of external variables not implemented");
     }
     
