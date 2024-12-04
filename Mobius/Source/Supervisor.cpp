@@ -61,6 +61,7 @@
 #include "script/ActionAdapter.h"
 #include "script/ScriptRegistry.h"
 #include "script/ScriptExternals.h"
+#include "script/MslResult.h"
 
 #include "Supervisor.h"
 
@@ -1821,6 +1822,14 @@ void Supervisor::mobiusDoAction(UIAction* action)
     else if (s->level == LevelUI) {
         doUILevelAction(action);
     }
+    else if (s->level == LevelNone) {
+        // most likely something bound to a missing script
+        // there would be a MIDI binding for this name which interned a symbol,
+        // but there is no behavior in it
+        // should we be checking Level or Behavior?
+        juce::String msg = "Symbol " + s->name + " has no associated behavior";
+        alert(msg);
+    }
     else {
         Trace(1, "Supervisor::doAction Mobius sent up an action not at LevelUI\n");
     }
@@ -1960,6 +1969,14 @@ void Supervisor::doAction(UIAction* action)
     }
     else if (s->level == LevelUI) {
         doUILevelAction(action);
+    }
+    else if (s->level == LevelNone) {
+        // most likely something bound to a missing script
+        // there would be a MIDI binding for this name which interned a symbol,
+        // but there is no behavior in it
+        // should we be checking Level or Behavior?
+        juce::String msg = "Symbol " + s->name + " has no associated behavior";
+        alert(msg);
     }
     else {
         // send it down
@@ -2140,6 +2157,20 @@ bool Supervisor::doQuery(Query* query)
         query->value = value;
         if (value >= 0)
           success = true;
+    }
+    else if (s->script != nullptr) {
+        if (s->script->mslLinkage == nullptr) {
+            Trace(1, "Supervisor: Query on script symbol that wasn't a variable", s->getName());
+        }
+        else {
+            MslResult* result = scriptenv.query(s->script->mslLinkage);
+            if (result != nullptr) {
+                // only supporting integers right now
+                if (result->value != nullptr) 
+                  query->value = result->value->getInt();
+                scriptenv.free(result);
+            }
+        }
     }
     else {
         // send it down

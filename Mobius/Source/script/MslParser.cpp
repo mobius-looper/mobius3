@@ -32,6 +32,11 @@
 #include "MslError.h"
 #include "MslParser.h"
 
+void MslParser::setVariableCarryover(bool b)
+{
+    variableCarryover = b;
+}
+
 /**
  * Main entry point for parsing.
  * The source may come from a file or from scriptlet text in memory.
@@ -103,8 +108,7 @@ void MslParser::init()
  * done on each MslBlock instead.  The only things that need special extraction
  * are functions declared as exported.
  *
- * declarations will have been removed at this point and left in the MslCompilation
- * eventually may want a declaration block.
+ * Declarations will have been removed at this point and left in the MslCompilation.
  */
 void MslParser::sift()
 {
@@ -124,6 +128,16 @@ void MslParser::sift()
                 functionize(i);
             }
             else {
+                // unlike function nodes, we don't remove VariableNodes from the tree
+                // since they can have initialization blocks that need to be evaluated
+                // the special "carryover" option effectively makes all top-level variables
+                // static variables so their values will be held in an MslVariable that
+                // spans sessions
+                MslVariableNode* v = node->getVariable();
+                if (v != nullptr &&
+                    (v->hasScope() || variableCarryover)) {
+                    variableize(v);
+                }
                 index++;
             }
         }
@@ -213,6 +227,43 @@ void MslParser::functionize(MslInitNode* node)
 }
 
 /**
+ * Similar treatment for top-level variables.
+ * The difference is that the VariableNode is left in the tree
+ * since it may have an initialization block that needs to be evaluated.
+ */
+void MslParser::variableize(MslVariableNode* node)
+{
+    MslVariable* variable = new MslVariable();
+
+    variable->name = node->name;
+
+    // do we even need this?  I don't think so, unlike MslFunctionNode
+    // there is no publicly accessible body
+    variable->setNode(node);
+
+    // point back to this so we know it keeps values in a special place
+    node->staticVariable = variable;
+
+    // if there was already a definition for this variable
+    // replace it, this could be considered an error, though
+    // perhaps more likely for variables sine they have initializers
+    // and you could declare/re-initialize it more than once?
+    MslVariable* existing = nullptr;
+    for (auto v : script->variables) {
+        if (v->name == variable->name) {
+            existing = v;
+            break;
+        }
+    }
+    
+    if (existing != nullptr) {
+        Trace(2, "MslParser: Replacing variable definition %s", variable->name.toUTF8());
+        script->variables.removeObject(existing);
+    }
+    script->variables.add(variable);
+}
+
+/**
  * Convert the remaining top-level nodes into a function.
  * The function name is taken from the name declaration if
  * one was present.
@@ -291,6 +342,11 @@ void MslParser::parseInner(juce::String source)
 {
     tokenizer.setContent(source);
 
+    // scope keyword intermediate parser
+    // an oddment to "look backward" at previous tokens that were'nt acted upon
+    // when encountered
+    MslScopedNode scopeHolder;
+
     while (tokenizer.hasNext() && script->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
@@ -313,11 +369,14 @@ void MslParser::parseInner(juce::String source)
             continue;
         }
 
+        // if we encouter a scope token on the lhs of a function or variable
+        // remember it
+        if (scopeHolder.wantsToken(this, t))
+          continue;
+
         // todo: if this is a keyword like "else" that doesn't
         // make sense on it's own, then raise an error, otherwies
         // it will just become a Symbol named "else"
-
-        bool foundScopeKeyword = false;
 
         switch (t.type) {
             
@@ -378,33 +437,31 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::Symbol: {
-                if (t.value == "external" ||
-                    t.value == "public" ||
-                    t.value == "global" ||
-                    t.value == "scope" ||
-                    t.value == "track") {
-                    scopeKeyword = t.value;
+                // special case for the few symbols we treat as operators
+                MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
+                if (opcode != MslUnknown) {
+                    parseOperator(t, opcode);
                 }
                 else {
-                    // special case for the few symbols we treat as operators
-                    MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
-                    if (opcode != MslUnknown) {
-                        parseOperator(t, opcode);
-                    }
+                    // if the symbol name matches a keyword, a specific node class
+                    // is pushed, otherwise it becomes a generic symbol node
+                    MslNode* node = checkKeywords(t);
+                    if (node == nullptr)
+                      node = new MslSymbol(t);
                     else {
-                        // if the symbol name matches a keyword, a specific node class
-                        // is pushed, otherwise it becomes a generic symbol node
-                        MslNode* node = checkKeywords(t);
-                        if (node == nullptr)
-                          node = new MslSymbol(t);
-                    
-                        current = push(node);
-
-                        // hack for In that creates it's own child node for the
-                        // target sequence
-                        if (node->children.size() > 0)
-                          current = node->children[node->children.size() - 1];
+                        // for "function" and "variable" keywords, consume the pending
+                        // scope qualifier
+                        MslScopedNode* sn = node->getScopedNode();
+                        if (sn != nullptr)
+                          scopeHolder.transferScope(sn);
                     }
+                    
+                    current = push(node);
+
+                    // hack for In that creates it's own child node for the
+                    // target sequence
+                    if (node->children.size() > 0)
+                      current = node->children[node->children.size() - 1];
                 }
             }
                 break;
@@ -507,21 +564,16 @@ void MslParser::parseInner(juce::String source)
 
         }
 
+        // if we get here with a pending scope token that was not consumed,
+        // then it was misplaced, e.g. "public wait"
+        if (scopeHolder.hasScope())
+          errorSyntax(t, "Misplaced scope qualifier");
+
         // can't go on without something to fill
         if (current == nullptr)
           errorSyntax(t, "Invalid expression");
     }
 }
-
-/**
- * Return true if one of the function or variable qualifier keywords
- * was found.  These must immediately be followed by "function" or "variable".
- */
-bool MslParser::isScopeKeywordFound()
-{
-    return scopeKeyword.length() > 0;
-}
-
 
 /**
  * Handle the processing of an operator token, or one of the
@@ -709,7 +761,7 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     MslNode* keyword = nullptr;
 
     if (t.value == "var" || t.value == "variable")
-      keyword = new MslVariable(t);
+      keyword = new MslVariableNode(t);
     
     else if (t.value == "function" || t.value == "func" || t.value == "proc")
       keyword = new MslFunctionNode(t);

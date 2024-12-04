@@ -329,10 +329,6 @@ void MslLinker::resolve(MslSymbol* sym)
             if (!sym->isResolved()) {
                 // experimental usage declaration
                 resolveExternalUsage(sym);
-                if (!sym->isResolved()) {
-                    // and finally the stupid carryover for the console
-                    resolveCarryover(sym);
-                }
             }
         }
     }
@@ -378,7 +374,7 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
         for (auto child : node->children) {
         
             MslFunctionNode* func = nullptr;
-            MslVariable *var = nullptr;
+            MslVariableNode *var = nullptr;
 
             // match the symbol name to either a function of variable definition
             MslFunctionNode* f = child->getFunction();
@@ -386,7 +382,7 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
                 func = f;
             }
             else {
-                MslVariable* v = child->getVariable();
+                MslVariableNode* v = child->getVariable();
                 if (v != nullptr && v->name == sym->token.value)
                   var = v;
             }
@@ -404,7 +400,15 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
                 break;
             }
             else if (var != nullptr) {
-                sym->resolution.localVariable = var;
+                // kludge: root functions are sifted to a list on the unit so they won't be
+                // encountered in the body.  static variables are NOT sifted so you will find
+                // them during the body walk, but if these are in the root block they need
+                // to resolve to the MslVariable in the unit since that is where the shared value
+                // is held, rather than in an MslBinding on the stack
+                if (var->staticVariable != nullptr)
+                  sym->resolution.staticVariable = var->staticVariable;
+                else
+                  sym->resolution.innerVariable = var;
                 break;
             }
         }
@@ -416,8 +420,33 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
         if (parent != nullptr)
           resolveLocal(sym, parent);
         else {
-            // we're at the top, resolve within script signature
-            resolveScriptArgument(sym);
+            // we're at the top
+            // if we didn't find a FunctionNode, it may have been sifted to the
+            // unit's MslFunction list
+            for (auto func : unit->functions) {
+                if (func->name == sym->token.value) {
+                    sym->resolution.rootFunction = func;
+                    break;
+                }
+            }
+
+            // for the console ONLY also look for static variables
+            // this is necessary because the console keeps MslVariables between
+            // each evaluation, but the script "body" starts over every time and there
+            // will be no unsifted MslVariableNodes in each new evaluation
+            if (!sym->isResolved()) {
+                for (auto var : unit->variables) {
+                    if (var->name == sym->token.value) {
+                        sym->resolution.staticVariable = var;
+                        break;
+                    }
+                }
+            }
+
+            if (!sym->isResolved()) {
+                // and finally, resolve within script signature
+                resolveScriptArgument(sym);
+            }
         }
     }
 }
@@ -525,21 +554,6 @@ void MslLinker::resolveExternalUsage(MslSymbol* sym)
 }
 
 /**
- * Another session carryover kludge for the console.
- */
-void MslLinker::resolveCarryover(MslSymbol* sym)
-{
-    juce::String refname = sym->token.value;
-
-    // it feels like this won't work if there is a session active
-    // that captured the bindings and hasn't finished yet to leave them behind
-    for (MslBinding* b = unit->bindings ; b != nullptr ; b = b->next) {
-        if (juce::String(b->name) == refname)
-          sym->resolution.carryover = true;
-    }
-}
-
-/**
  * Hack alert: Determine whether this symbol is in a location that
  * allows external keywords. The only one we have right now is for the "in" node
  * where special keywords can be used to reference calculated lists of scope numbers.
@@ -606,8 +620,8 @@ void MslLinker::compileArguments(MslSymbol* sym)
         // someday these might be MslFunctions too
         signature = sym->resolution.innerFunction->getDeclaration();
     }
-    else if (sym->resolution.localFunction != nullptr) {
-        signature = sym->resolution.localFunction->getDeclaration();
+    else if (sym->resolution.rootFunction != nullptr) {
+        signature = sym->resolution.rootFunction->getDeclaration();
     }
     else if (sym->resolution.linkage != nullptr) {
         if (sym->resolution.linkage->function != nullptr)

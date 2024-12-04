@@ -126,6 +126,7 @@
     <Button action="Repeat Me"/>
     <Button action="Repeat and Sustain Me"/>
     <Button action="vartest1"/>
+    <Button action="vartest2"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

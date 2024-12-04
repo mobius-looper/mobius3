@@ -29,15 +29,6 @@ MslEnvironment::MslEnvironment()
 MslEnvironment::~MslEnvironment()
 {
     Trace(2, "MslEnvironment: destructing");
-
-    // MslCompilation has a list of MslBindings representing
-    // "static" variable bindings.  Unfortunately it doesn't have
-    // a smart destructor and doesn't know where the pools are, so we
-    // have to help it
-    for (auto comp : compilations) {
-        pool.free(comp->bindings);
-        comp->bindings = nullptr;
-    }
 }
 
 /**
@@ -131,11 +122,21 @@ void MslEnvironment::free(MslResult* r)
 /**
  * Access the value of a variable.
  */
-void MslEnvironment::query(MslLinkage* linkage, MslValue* result)
+MslResult* MslEnvironment::query(MslLinkage* linkage)
 {
-    (void)linkage;
-    Trace(1, "MslEnvironment::query not implemented");
-    result->setNull();
+    MslResult* result = pool.allocResult();
+    
+    if (linkage->variable == nullptr) {
+        Trace(1, "MslEnvironment::query on non-variable link");
+        // todo: add an error to the result?
+    }
+    else {
+        MslValue* value = pool.allocValue();
+        // todo: track scope
+        value->copy(linkage->variable->getValue());
+        result->value = value;
+    }
+    return result;
 }
 
 /**
@@ -512,7 +513,7 @@ void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
  * The id of the scriptlet unit is returned is then passed to extend()
  *
  */
-juce::String MslEnvironment::registerScriptlet(MslContext* c, bool bindingCarryover)
+juce::String MslEnvironment::registerScriptlet(MslContext* c, bool variableCarryover)
 {
 
     // have to use the parser to get a Compilation that can be installed
@@ -530,7 +531,7 @@ juce::String MslEnvironment::registerScriptlet(MslContext* c, bool bindingCarryo
     install(c, unit, &details, false);
 
     // magic bean
-    unit->bindingCarryover = bindingCarryover;
+    unit->variableCarryover = variableCarryover;
 
     return unit->id;
 }
@@ -562,8 +563,6 @@ juce::String MslEnvironment::registerScriptlet(MslContext* c, bool bindingCarryo
  * we could serialize the base unit functions back to text and inject it at the
  * front of the source string, then parse it normally.
  *
- * !! this is pretty terrible and hacky
- *
  * There needs to be a more well defined concept here.  The problem is once a unit
  * is installed, there can be active sessions against it so we can't just structurally
  * modify it, even though for the console that would almost always be harmless.  Maybe
@@ -585,6 +584,9 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
     }
     else {
         MslParser parser;
+        // special option for the console to treat all top-level variables as static
+        // so the values can be referenced in future lines
+        parser.setVariableCarryover(base->variableCarryover);
         MslCompilation* unit = parser.parse(source);
         bool installed = false;
 
@@ -596,7 +598,8 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
             // gak, names are a mess
             unit->id = baseUnitId;
             unit->name = baseUnitId;
-            unit->bindingCarryover = base->bindingCarryover;
+            // keep this going
+            unit->variableCarryover = base->variableCarryover;
             
             if (base->name.length() > 0 && base->name != baseUnitId)
               Trace(2, "MslEnvironment: Extending a unit with an alternate reference name, why?");
@@ -625,13 +628,11 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                 unit->functions.add(f);
             }
 
-            // if variable carryover is enabled, copy the bindings
-            // !! this won't work if the way session works is to capture them and then
-            // put them back when finished, and there is a prior session that is waiting
-            // the whole concept needs thought, they should just stay on the unit like
-            // globals and be resolved to that rather than synthesizing bindings
-            unit->bindings = base->bindings;
-            base->bindings = nullptr;
+            // same with the variables
+            while (base->variables.size() > 0) {
+                MslVariable* v = base->variables.removeAndReturn(0);
+                unit->variables.add(v);
+            }
 
             MslLinker linker;
             linker.link(c, this, unit);
@@ -656,6 +657,10 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                 while (unit->functions.size() > 0) {
                     MslFunction* f = unit->functions.removeAndReturn(0);
                     base->functions.add(f);
+                }
+                while (unit->variables.size() > 0) {
+                    MslVariable* v = unit->variables.removeAndReturn(0);
+                    base->variables.add(v);
                 }
             }
         }
@@ -863,7 +868,7 @@ MslLinkage* MslEnvironment::publish(MslCompilation* unit, MslFunction* f,
     return link;
 }
 
-void MslEnvironment::publish(MslCompilation* unit, MslVariableExport* v,
+void MslEnvironment::publish(MslCompilation* unit, MslVariable* v,
                              juce::StringArray& links)
 {
     MslLinkage* link = internLinkage(unit, v->getName());
@@ -992,7 +997,10 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
 
             // fill in some behavior flags so the application can
             // use it properly, this should have been done during publish() !?
-            link->isFunction = (link->function != nullptr);
+            if (link->function != nullptr && !link->isFunction) {
+                Trace(1, "MslEnvironment: Bad isFunction flag on link, fixing");
+                link->isFunction = true;
+            }
 
             if (link->isExport)
               c->mslExport(link);

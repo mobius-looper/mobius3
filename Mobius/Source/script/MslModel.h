@@ -36,7 +36,7 @@ class MslVisitor
     virtual void mslVisit(class MslBlock* obj) = 0;
     virtual void mslVisit(class MslOperator* obj) = 0;
     virtual void mslVisit(class MslAssignment* obj) = 0;
-    virtual void mslVisit(class MslVariable* obj) = 0;
+    virtual void mslVisit(class MslVariableNode* obj) = 0;
     virtual void mslVisit(class MslFunctionNode* obj) = 0;
     virtual void mslVisit(class MslIf* obj) = 0;
     virtual void mslVisit(class MslElse* obj) = 0;
@@ -155,8 +155,9 @@ class MslNode
     virtual class MslBlock* getBlock() {return nullptr;}
     virtual class MslOperator* getOperator() {return nullptr;}
     virtual class MslAssignment* getAssignment() {return nullptr;}
-    virtual class MslVariable* getVariable() {return nullptr;}
+    virtual class MslVariableNode* getVariable() {return nullptr;}
     virtual class MslFunctionNode* getFunction() {return nullptr;}
+    virtual class MslScopedNode* getScopedNode() {return nullptr;}
     virtual class MslIf* getIf() {return nullptr;}
     virtual class MslElse* getElse() {return nullptr;}
     virtual class MslReference* getReference() {return nullptr;}
@@ -178,6 +179,7 @@ class MslNode
     bool isAssignment() {return getAssignment() != nullptr;}
     bool isVariable() {return getVariable() != nullptr;}
     bool isFunction() {return getFunction() != nullptr;}
+    bool isScoped() {return getScopedNode() != nullptr;}
     bool isIf() {return getIf() != nullptr;}
     bool isElse() {return getElse() != nullptr;}
     bool isReference() {return getReference() != nullptr;}
@@ -330,7 +332,7 @@ class MslBlock : public MslNode
     // logic node tree
 
     juce::OwnedArray<MslFunctionNode> functions;
-    juce::OwnedArray<MslVariable> variables;
+    juce::OwnedArray<MslVariableNode> variables;
 
     MslBlock* getBlock() override {return this;}
     bool operandable() override {return true;}
@@ -507,12 +509,32 @@ class MslAssignment : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslVariable : public MslNode
+class MslScopedNode : public MslNode
 {
   public:
-    MslVariable() {}
-    MslVariable(MslToken& t) : MslNode(t) {}
-    virtual ~MslVariable() {}
+    // special no-arg constructor for the temporary keyword holder during parsing
+    MslScopedNode() {}
+    MslScopedNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslScopedNode() {}
+    MslScopedNode* getScopedNode() override {return this;}
+    void visit(MslVisitor* visitor) override {(void)visitor;}
+
+    bool keywordPublic = false;
+    bool keywordExport = false;
+    bool keywordGlobal = false;
+    bool keywordScope = false;
+
+    bool wantsToken(class MslParser* p, MslToken& t);
+    bool hasScope();
+    void resetScope();
+    void transferScope(MslScopedNode* dest);
+};
+
+class MslVariableNode : public MslScopedNode
+{
+  public:
+    MslVariableNode(MslToken& t) : MslScopedNode(t) {}
+    virtual ~MslVariableNode() {}
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
 
@@ -529,12 +551,9 @@ class MslVariable : public MslNode
     }
 
     juce::String name;
-    bool keywordPublic = false;
-    bool keywordExport = false;
-    bool keywordGlobal = false;
-    bool keywordScope = false;
+    class MslVariable* staticVariable = nullptr;
     
-    MslVariable* getVariable() override {return this;}
+    MslVariableNode* getVariable() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Variable";}
 };
@@ -545,10 +564,10 @@ class MslVariable : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslFunctionNode : public MslNode
+class MslFunctionNode : public MslScopedNode
 {
   public:
-    MslFunctionNode(MslToken& t) : MslNode(t) {}
+    MslFunctionNode(MslToken& t) : MslScopedNode(t) {}
     virtual ~MslFunctionNode() {}
 
     // same as var
@@ -569,10 +588,6 @@ class MslFunctionNode : public MslNode
     }
 
     juce::String name;
-    bool keywordPublic = false;
-    bool keywordExport = false;
-    bool keywordGlobal = false;
-    bool keywordScope = false;
     bool hasArgs = false;
     bool hasBody = false;
     

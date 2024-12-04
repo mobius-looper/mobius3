@@ -32,21 +32,24 @@ MslValue::~MslValue()
  */
 void MslValue::copy(MslValue* src)
 {
-    type = src->type;
-    ival = src->ival;
-    fval = src->fval;
-    strcpy(string, src->string);
+    if (src == nullptr)
+      setNull();
+    else {
+        type = src->type;
+        ival = src->ival;
+        fval = src->fval;
+        strcpy(string, src->string);
 
-    // I suppose we could support these, but needs more thought if you do
-    // bindings will always be atomic, right?
-    // don't whine about this, it is now being used to copy MslRequest arguments
-    // into bindings
-    //if (src->next != nullptr)
-    //Trace(1, "MslValue: Unable to copy value on a list");
+        // I suppose we could support these, but needs more thought if you do
+        // bindings will always be atomic, right?
+        // don't whine about this, it is now being used to copy MslRequest arguments
+        // into bindings
+        //if (src->next != nullptr)
+        //Trace(1, "MslValue: Unable to copy value on a list");
 
-    if (src->list != nullptr)
-      Trace(1, "MslValue: Unable to copy list value");
-      
+        if (src->list != nullptr)
+          Trace(1, "MslValue: Unable to copy list value");
+    }
 }
 
 /**

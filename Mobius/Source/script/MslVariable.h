@@ -6,13 +6,18 @@
 
 #include "MslModel.h"
 
-class MslVariableExport
+class MslVariable
 {
+    friend class MslParser;
+    
   public:
 
-    MslVariableExport() {}
-    ~MslVariableExport() {}
+    MslVariable() {}
+    ~MslVariable() {}
 
+    // reference name of the function
+    juce::String name;
+    
     bool isExport() {
         return (node != nullptr) ? node->keywordExport : false;
     }
@@ -30,21 +35,32 @@ class MslVariableExport
         return (node != nullptr) ? node->name : "";
     }
 
+    bool isBound();
+    void unbind();
+    MslValue* getValue();
+    void setValue(MslValue* v);
+    
   protected:
     
-    class MslVariable* getNode() {
-        return (node != nullptr) ? node.get() : nullptr;
+    class MslVariableNode* getNode() {
+        return node;
     }
 
-    void setNode(MslVariable* v) {
-        node.reset(v);
+    void setNode(MslVariableNode* v) {
+        node = v;
     }
 
   private:
-    
-    // the parse tree for the variable node
-    std::unique_ptr<class MslVariable> node;
 
+    // unlike MslFunction, this is not a unique_ptr since
+    // we don't remove the node from the parse tree
+    class MslVariableNode* node = nullptr;
+
+    // the current static value
+    MslValue value;
+
+    // true once the variable has been given a value, including null
+    bool bound = false;
 };
 
 

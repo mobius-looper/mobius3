@@ -115,6 +115,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslSession(class MslEnvironment* env);
     ~MslSession();
     void init();
+    void reset();
 
     void setRunNumber(int n);
     int getRunNumber();
@@ -131,6 +132,11 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void sustain(class MslContext* c);
     void repeat(class MslContext* c, class MslRequest* r);
     void timeout(class MslContext* c);
+
+    // evaluate a random node, normally the init block or a static
+    // variable initializer
+    void run(class MslContext* c, class MslCompilation* unit,
+             class MslBinding* arguments, MslNode* node);
 
     // force an usual error for early termination
     void addError(const char* details);
@@ -169,7 +175,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void mslVisit(class MslBlock* obj) override;
     void mslVisit(class MslOperator* obj) override;
     void mslVisit(class MslAssignment* obj) override;
-    void mslVisit(class MslVariable* obj) override;
+    void mslVisit(class MslVariableNode* obj) override;
     void mslVisit(class MslFunctionNode* obj) override;
     void mslVisit(class MslIf* obj) override;
     void mslVisit(class MslElse* obj) override;
@@ -205,22 +211,22 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // session list chain
     MslSession* next = nullptr;
 
-    // result the envionment allocated for us if we needed to go async
-    //class MslResult* result = nullptr;
-    class MslProcess* process = nullptr;
-    
   private:
 
     class MslEnvironment* environment = nullptr;
     class MslPools* pool = nullptr;
     class MslContext* context = nullptr;
-    class MslLinkage* rootLink = nullptr;
-
-    class MslStack* stack = nullptr;
-
+    class MslCompilation* unit = nullptr;
+    
+    // result the envionment allocated for us if we needed to go async
+    //class MslResult* result = nullptr;
+    class MslProcess* process = nullptr;
+    
     // capture this from the MslRequest that started it so we can
     // move it to the MslProcess if this suspends
     int triggerId = 0;
+    
+    class MslStack* stack = nullptr;
 
     // set true during evaluation to transition to the other side
     bool transitioning = false;
@@ -228,6 +234,10 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // for #suspend and #repeat stripts the id of the trigger that started it
     MslSuspendState sustaining;
     MslSuspendState repeating;
+    
+    // information about async actions sent to the context that may be
+    // waited on
+    MslAsyncAction asyncAction;
     
     // runtime errors
     class MslError* errors = nullptr;
@@ -241,8 +251,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // hate this but it's easier than dealing with MslValue lists
     juce::Array<int> scopeExpansion;
 
-    MslAsyncAction asyncAction;
-
     StructureDumper log;
     bool trace = false;
     
@@ -253,7 +261,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     
     void prepareStart(class MslContext* c, class MslLinkage* link);
     MslBinding* gatherStartBindings(class MslRequest* request);
-    void saveStaticBindings();
+    //void saveStaticBindings();
 
     void checkRepeatStart();
     void checkSustainStart();
@@ -279,7 +287,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // symbol evaluation
     // implementation broken out to MslSymbol.cpp
     void returnUnresolved(MslSymbol* snode);
-    void returnVariable(MslSymbol* snode);
+    void returnLinkedVariable(MslSymbol* snode);
+    void returnStaticVariable(MslSymbol* snode);
     void returnKeyword(MslSymbol* snode);
     void pushArguments(MslSymbol* snode);
     void pushCall(MslSymbol* snode);
@@ -292,6 +301,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // also in MslSymbol.cpp
     class MslSymbol* getAssignmentSymbol(MslAssignment* ass);
     void doAssignment(MslAssignment* ass);
+    void assignStaticVariable(class MslVariable* var, MslValue* value);
     int getTrackScope();
     
     // expressions

@@ -61,6 +61,52 @@ bool MslKeyword::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+bool MslScopedNode::wantsToken(MslParser* p, MslToken& t)
+{
+    (void)p;
+    bool wants = false;
+
+    if (t.value == "public") {
+        keywordPublic = true;
+        wants = true;
+    }
+    else if (t.value == "export") {
+        keywordExport = true;
+        wants = true;
+    }
+    else if (t.value == "global" || t.value == "static") {
+        keywordGlobal = true;
+        wants = true;
+    }
+    else if (t.value == "track" || t.value == "scope") {
+        keywordScope = true;
+        wants = true;
+    }
+    return wants;
+}
+
+bool MslScopedNode::hasScope()
+{
+    return (keywordPublic || keywordExport || keywordGlobal || keywordScope);
+}
+
+void MslScopedNode::transferScope(MslScopedNode* dest)
+{
+    dest->keywordPublic = keywordPublic;
+    dest->keywordExport = keywordExport;
+    dest->keywordGlobal = keywordGlobal;
+    dest->keywordScope = keywordScope;
+    resetScope();
+}
+
+void MslScopedNode::resetScope()
+{
+    keywordPublic = false;
+    keywordExport = false;
+    keywordGlobal = false;
+    keywordScope = false;
+}
+
 /**
  * var is one of the few that consumes tokens
  * hmm, it's a little more than this, it REQUIRES a token
@@ -68,42 +114,28 @@ bool MslKeyword::wantsToken(MslParser* p, MslToken& t)
  * we'll end up with a bad parse tree that will have to be caught at runtime
  * update: added error returns in MslParser
  */
-bool MslVariable::wantsToken(MslParser* p, MslToken& t)
+bool MslVariableNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
-    bool wants = false;
-
-    if (t.value == "public") {
-        keywordPublic = true;
-        wants = true;
-    }
-    else if (t.value == "export") {
-        keywordExport = true;
-        wants = true;
-    }
-    else if (t.value == "global") {
-        keywordGlobal = true;
-        wants = true;
-    }
-    else if (t.value == "track" || t.value == "scope") {
-        keywordScope = true;
-        wants = true;
-    }
-    else if (name.length() == 0) {
-        if (t.type == MslToken::Type::Symbol) {
-            // take this as our name
-            name =  t.value;
+    
+    bool wants = MslScopedNode::wantsToken(p, t);
+    if (!wants) {
+        if (name.length() == 0) {
+            if (t.type == MslToken::Type::Symbol) {
+                // take this as our name
+                name =  t.value;
+                wants = true;
+            }
+        }
+        else if (t.type == MslToken::Type::Operator &&
+                 t.value == "=") {
+            // skip past this once we have a name
             wants = true;
         }
-    }
-    else if (t.type == MslToken::Type::Operator &&
-             t.value == "=") {
-        // skip past this once we have a name
-        wants = true;
-    }
-    else {
-        // now that we can stick errors in MslParser, is this
-        // where that should go?
+        else {
+            // now that we can stick errors in MslParser, is this
+            // where that should go?
+        }
     }
     return wants;
 }
@@ -111,30 +143,16 @@ bool MslVariable::wantsToken(MslParser* p, MslToken& t)
 bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
-    bool wants = false;
-    if (t.value == "public") {
-        keywordPublic = true;
-        wants = true;
-    }
-    else if (t.value == "export") {
-        keywordExport = true;
-        wants = true;
-    }
-    else if (t.value == "global") {
-        keywordGlobal = true;
-        wants = true;
-    }
-    else if (t.value == "track" || t.value == "scope") {
-        keywordScope = true;
-        wants = true;
-    }
-    else if (name.length() == 0) {
-        if (t.type == MslToken::Type::Symbol) {
-            name =  t.value;
-            wants = true;
+    
+    bool wants = MslScopedNode::wantsToken(p, t);
+    if (!wants) {
+        if (name.length() == 0) {
+            if (t.type == MslToken::Type::Symbol) {
+                name =  t.value;
+                wants = true;
+            }
         }
     }
-    
     return wants;
 }
 

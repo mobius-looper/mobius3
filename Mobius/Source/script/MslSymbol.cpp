@@ -16,6 +16,7 @@
 #include "MslSession.h"
 #include "MslStack.h"
 #include "MslExternal.h"
+#include "MslVariable.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -150,7 +151,10 @@ void MslSession::mslVisit(MslSymbol* snode)
               returnQuery(snode);
             
             else if (snode->resolution.linkage != nullptr)
-              returnVariable(snode);
+              returnLinkedVariable(snode);
+
+            else if (snode->resolution.staticVariable != nullptr)
+              returnStaticVariable(snode);
 
             else {
                 // it's either a functionArgument or a localVariable
@@ -217,6 +221,22 @@ void MslSession::returnKeyword(MslSymbol* snode)
 }
 
 /**
+ * Here for a symbol that resolved to a top-level variable that
+ * was declared global or exported.  The values are stored in
+ * the MslVariable in the unit rather than in a stack binding.
+ */
+void MslSession::returnStaticVariable(MslSymbol* snode)
+{
+    MslVariable* rv = snode->resolution.staticVariable;
+    MslValue* v = pool->allocValue();
+
+    // !! needs to be csect protected
+    v->copy(rv->getValue());
+    
+    popStack(v);
+}
+
+/**
  * Here for a symbol that resolved to a variable exported from another script.
  *
  * todo: Not implemented yet
@@ -228,9 +248,9 @@ void MslSession::returnKeyword(MslSymbol* snode)
  * You can think of a script as a class with static member variables in it.  Those need
  * to be stored somwehere, probably in a MslBinding list hanging off the MslScript.
  */
-void MslSession::returnVariable(MslSymbol* snode)
+void MslSession::returnLinkedVariable(MslSymbol* snode)
 {
-    Trace(1, "MslSession: Reference to exported variable not implemented %s",
+    Trace(1, "MslSession: Reference to public variable not implemented %s",
           snode->getName());
     
     // don't have a way to save values for these yet,
@@ -541,7 +561,7 @@ void MslSession::callExternal(MslSymbol* snode)
  * RHS can be any expression.  The LHS symbol is NOT evaluated, it is
  * simply used as the name of the thing to be assigned.  It may be better
  * to have the parser consume the Symbol token and just leave the name behind
- * in the node as is done for MslFunctionNode and MslVariable.  But this does open up potentially
+ * in the node as is done for MslFunctionNode and MslVariableNode.  But this does open up potentially
  * useful behavior where the LHS could be any expression that produces a name
  * literal string:    "x"=y  or foo()=y.  While possible and relatively easy
  * that's hard to explain.
@@ -636,6 +656,10 @@ void MslSession::doAssignment(MslAssignment* ass)
             // and we are done, assignments do not have values though I suppose
             // we could allow the initializer value to be the assignment node value
             // as well, Lisp does that, not sure what c++ does
+            popStack(nullptr);
+        }
+        else if (namesym->resolution.staticVariable != nullptr) {
+            assignStaticVariable(namesym->resolution.staticVariable, stack->childResults);
             popStack(nullptr);
         }
         else if (namesym->resolution.linkage != nullptr) {

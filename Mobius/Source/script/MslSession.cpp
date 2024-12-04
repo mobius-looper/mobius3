@@ -72,25 +72,18 @@ MslSession::~MslSession()
     }
 }
 
+/**
+ * Pool initializer
+ */
 void MslSession::init()
 {
     // do not initialize environment or pool
-    
-    next = nullptr;
-    process = nullptr;
 
-    context = nullptr;
-    rootLink = nullptr;
-    stack = nullptr;
-    triggerId = 0;
-    transitioning = false;
-    
-    sustaining.init();
-    repeating.init();
-    
-    errors = nullptr;
-    rootValue = nullptr;
-    trace = false;
+    // init() differs from reset() in that the chain pointer
+    // is expected to be clear
+    next = nullptr;
+
+    reset();
 }
 
 void MslSession::setTrace(bool b)
@@ -189,8 +182,8 @@ bool MslSession::hasErrors()
 const char* MslSession::getName()
 {
     const char* s = nullptr;
-    if (rootLink->unit != nullptr)
-      s = rootLink->unit->name.toUTF8();
+    if (unit != nullptr)
+      s = unit->name.toUTF8();
     return s;
 }
 
@@ -221,17 +214,76 @@ int MslSession::getTriggerId()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Reset runtime state from a prior run.
+ *
+ * Environment and pool are assigned during construction
+ * and may be preserved.  This differs from pool init() in that
+ * there may be lingering objects that need to be returned to the pool.
+ *
+ * Also do not clear the "next" chain pointer as this may be on te
+ * suspension list.
+ */
+void MslSession::reset()
+{
+    context = nullptr;
+    unit = nullptr;
+    process = nullptr;
+    triggerId = 0;
+
+    pool->freeList(stack);
+    stack = nullptr;
+    transitioning = false;
+
+    sustaining.init();
+    repeating.init();
+    asyncAction.init();
+
+    pool->free(errors);
+    errors = nullptr;
+    pool->free(rootValue);
+    rootValue = nullptr;
+
+    scopeExpansion.clearQuick();
+    
+    log.clear();
+    trace = false;
+}
+
+/**
+ * Run an arbitrary node within a unit.
+ * This is intended for static initialization but may have other uses.
+ * The session is expected to be clean.
+ */
+void MslSession::run(MslContext* argContext, MslCompilation* argUnit, MslBinding* arguments,
+                     MslNode* node)
+{
+    reset();
+
+    context = argContext;
+    unit = argUnit;
+    
+    stack = pool->allocStack();
+    stack->node = node;
+    stack->bindings = arguments;
+    
+    run();
+}
+
+/**
  * Primary entry point for evaluating a script.
  */
 void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* request)
 {
+    reset();
+
+    context = argContext;
+    unit = argLink->unit;
+    
     // remember this for later when making the MslProcess
     triggerId = request->triggerId;
     
-    prepareStart(argContext, argLink);
-
     stack = pool->allocStack();
-    stack->node = rootLink->function->getBody();
+    stack->node = argLink->function->getBody();
     stack->bindings = gatherStartBindings(request);
     
     run();
@@ -240,31 +292,14 @@ void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* 
     checkRepeatStart();
 }
 
-void MslSession::prepareStart(MslContext* argContext, MslLinkage* argLink)
-{
-    // should be clean out of the pool but make sure
-    pool->free(errors);
-    errors = nullptr;
-    pool->free(rootValue);
-    rootValue = nullptr;
-    pool->freeList(stack);
-    stack = nullptr;
-    
-    context = argContext;
-    rootLink = argLink;
-
-    log.clear();
-    logStart();
-}
-
 /**
  * At the end of each start() check to see if this is a #repeat script
  * and prepare it for suspension.
  */
 void MslSession::checkRepeatStart()
 {
-    if (rootLink->unit->repeat) {
-        int timeout = rootLink->unit->repeatTimeout;
+    if (unit->repeat) {
+        int timeout = unit->repeatTimeout;
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
@@ -284,8 +319,8 @@ void MslSession::checkRepeatStart()
  */
 void MslSession::checkSustainStart()
 {
-    if (rootLink->unit->sustain) {
-        int timeout = rootLink->unit->sustainInterval;
+    if (unit->sustain) {
+        int timeout = unit->sustainInterval;
         if (timeout == 0)
           // need a configuurable default
           timeout = 1000;
@@ -351,7 +386,7 @@ void MslSession::resume(MslContext* argContext)
  */
 void MslSession::release(MslContext* argContext, MslRequest* request)
 {
-    if (!rootLink->unit->sustain) {
+    if (!unit->sustain) {
         // shouldn't have allowed this
         Trace(1, "MslSession::release Script was not sustainable");
         sustaining.init();
@@ -394,7 +429,7 @@ void MslSession::release(MslContext* argContext, MslRequest* request)
  */
 void MslSession::sustain(MslContext* argContext)
 {
-    if (!rootLink->unit->sustain) {
+    if (!unit->sustain) {
         // shouldn't have allowed this
         Trace(1, "MslSession::sustain Script was not sustainable");
         sustaining.init();
@@ -432,7 +467,7 @@ void MslSession::sustain(MslContext* argContext)
  */
 void MslSession::repeat(MslContext* argContext, MslRequest* request)
 {
-    if (!rootLink->unit->repeat) {
+    if (!unit->repeat) {
         Trace(1, "MslSession::repeat Script was not repeeatable");
         repeating.init();
     }
@@ -477,7 +512,7 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
  */
 void MslSession::timeout(MslContext* argContext)
 {
-    if (!rootLink->unit->repeat) {
+    if (!unit->repeat) {
         Trace(1, "MslSession::timeout Script was not repeeatable");
         repeating.init();
     }
@@ -540,7 +575,7 @@ MslNode* MslSession::getNotificationNode(MslNotificationFunction func)
 MslNode* MslSession::findNotificationFunction(const char* name)
 {
     MslNode* node = nullptr;
-    for (auto func : rootLink->unit->functions) {
+    for (auto func : unit->functions) {
         if (func->name == juce::String(name)) {
             // this isn't called like a regular function
             // can just push the body block on the stack and the bindings
@@ -553,16 +588,36 @@ MslNode* MslSession::findNotificationFunction(const char* name)
 }
 
 /**
- * Run one of the notification functions
+ * Run one of the notification functions.
+ * The stack may already be in place so do not trash it.
+ * This will push/pop it's own set of stacks, and run() needs to terminate when
+ * it finishes the first one we added, NOT unwind all the way back to the top.
+ *
+ * todo: actuallky there are more issues here.  If we're in a wait state, or
+ * something else that expects to be in control of the session, that could be messed up
+ * by the notification stack.  Might be better to fork a new session rather than
+ * reuse an existing one, but we lose bindings.  Needs thought...
  */
 void MslSession::runNotification(MslContext* argContext, MslRequest* request, MslNode* node)
 {
-    prepareStart(argContext, rootLink);
+    context = argContext;
+    
+    if (stack != nullptr) {
+        Trace(1, "MslSession::runNotification Not prepared to run notifications in active session");
+        return;
+    }
+
+    if (unit == nullptr) {
+        Trace(1, "MslSession::runNotification Unresolved compilation unit");
+        return;
+    }
+
+    context = argContext;
     
     stack = pool->allocStack();
     stack->node = node;
 
-    // restore static bindings
+    // add request bindings
     MslBinding* bindings = gatherStartBindings(request);
     
     // add or update the suspension state arguments
@@ -634,26 +689,12 @@ MslBinding* MslSession::makeSuspensionBinding(const char* name, int value)
 
 //////////////////////////////////////////////////////////////////////
 //
-// StartEnd Bindings
+// Start Bindings
 //
 //////////////////////////////////////////////////////////////////////
 
 /**
  * Assemble the initial bindings for the root block before running.
- *
- * This includes the "static" bindings that are left on the compilation unit,
- * as well as arguments passed in the Request.
- *
- * !! todo: potential thread issues
- * It is rare to have concurrent evaluations of the same script and still
- * rarer to be doing it from both the UI thread and the audio thread at the same time
- * but it can happen.
- *
- * If static bindings are maintained on the MslCompilation and copied to the MslStack,
- * any new values won't be "seen" by other threads until this session ends.
- * Also, the last thread to execute overwrite the values of the previous ones
- * To do this the Right Way, static variable bindings need to be more like exported
- * bindings and managed in a single shared location with csects around access.
  *
  * Request arguments can be passed as a list of MslValue positional arguments
  * or as a list of MslBinding named arguments.  I started with just positional
@@ -661,21 +702,10 @@ MslBinding* MslSession::makeSuspensionBinding(const char* name, int value)
  *
  * Should not have both, but in theory this should assemble them like we do
  * for a combination of positional and keyword arguments passed in a function call.
- *
- * !! todo: Once we have proper "public" variables, the value should be kept
- * on the MslLinkage created for each variable.
- *
  */
 MslBinding* MslSession::gatherStartBindings(MslRequest* request)
 {
     MslBinding* startBindings = nullptr;
-
-    // While findBinding will look up into the unit if it doesn't find anything on the stack,
-    // copying it onto the root stack frame reduces thread contention since modificiations
-    // made during this session will be held locally until the script completes, and then
-    // copied back into the unit.
-    startBindings = rootLink->unit->bindings;
-    rootLink->unit->bindings = nullptr;
 
     // add request arguments
     if (request != nullptr) {
@@ -722,6 +752,9 @@ MslBinding* MslSession::gatherStartBindings(MslRequest* request)
 }
 
 /**
+ * update: no longer necessary as static variable values are stored
+ * in the MslVariable on the unit, not as bindings
+ *
  * When evaluation has run to completion, move the "static" bindings that
  * were copied to the root stack by gatherStartBindings back to the unit.
  *
@@ -729,13 +762,14 @@ MslBinding* MslSession::gatherStartBindings(MslRequest* request)
  * which is the normal way to do this.  Those declared "public" or "external"
  * which will have MslLinkages for them so they can be accessed by other units.
  * And for the console only, top-level bindings left behind by a prior run
- * when the bindingCarryover flag is set on the unit.  These make variables
+ * when the variableCarryover flag is set on the unit.  These make variables
  * behave like static/global without having to declare them that way.
  *
  * Also on the root binding list will be any bindings passed in the Request
  * that started the session, and arguments injected by the sustain/repeat
  * notifications.  Those must always be filtered.
  */
+#if 0
 void MslSession::saveStaticBindings()
 {
     MslBinding* finalBindings = stack->bindings;
@@ -751,7 +785,7 @@ void MslSession::saveStaticBindings()
         if (b->position == 0 && !b->transient) {
             // it wsn't a request arg or an injected binding
             // only carry them over if requested by the console
-            filter = !rootLink->unit->bindingCarryover;
+            filter = !unit->variableCarryover;
         }
 
         if (filter) {
@@ -771,8 +805,9 @@ void MslSession::saveStaticBindings()
 
     logBindings("finalBindings", finalBindings);
         
-    rootLink->unit->bindings = finalBindings;
+    unit->bindings = finalBindings;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -973,7 +1008,8 @@ void MslSession::popStack(MslValue* v)
         }
 
         // save the final bindings for static variables back to the compilation unit
-        saveStaticBindings();
+        // no longer necessary
+        //saveStaticBindings();
 
         logLine("Finished");
     }
@@ -1041,8 +1077,7 @@ bool MslSession::found(MslValue* node, MslValue* list)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Walk up the stack looking for a binding, and finally into
- * the static binging list in the script.
+ * Walk up the stack looking for a binding.
  */
 MslBinding* MslSession::findBinding(const char* name)
 {
@@ -1059,13 +1094,6 @@ MslBinding* MslSession::findBinding(const char* name)
           level = level->parent;
     }
     
-    // if we make it to the top of the stack, look in the static bindings
-    // !! potential thread issues here
-    if (found == nullptr) {
-        if (rootLink->unit->bindings != nullptr)
-          found = rootLink->unit->bindings->find(name);
-    }
-
     return found;
 }
 
@@ -1082,13 +1110,6 @@ MslBinding* MslSession::findBinding(int position)
           level = level->parent;
     }
     
-    // if we make it to the top of the stack, look in the static bindings
-    // !! potential thread issues here
-    if (found == nullptr) {
-        if (rootLink->unit->bindings != nullptr)
-          found = rootLink->unit->bindings->find(position);
-    }
-
     return found;
 }
 
@@ -1196,44 +1217,81 @@ void MslSession::mslVisit(MslBlock* block)
  * When a var is encounterd, push the optional child node to calculate
  * an initial value.
  *
+ * For simple local variables, the result of the initializer is placed
+ * in a binding on the stack in the parent frame.
+ *
+ * For static variables, the initializer result is stored in an MslVariable held by
+ * the compilation unit.  The initializer only runs the FIRST TIME this variable
+ * is encountered and is thereafter considered "bound" even if the value is null.
+ * todo: might need the concept of unbinding a variable to allow the initializer
+ * to run again?  
+ *
  * When the initializer has finished, place a Binding for this var and
- * it's value into the parent frame
+ * it's value into the parent frame if it is a local variable.
+ *
+ * If it is a static variable, the initializer goes on the MslVariable
  */
-void MslSession::mslVisit(MslVariable* var)
+void MslSession::mslVisit(MslVariableNode* var)
 {
     logVisit(var);
-    // the parser should have only allowed one child, if there is more than
-    // one we take the last value
-    MslStack* nextStack = pushNextChild();
-    if (nextStack == nullptr) {
-        // initializer finished
-    
-        MslStack* parent = stack->parent;
-        if (parent == nullptr) {
-            // this shouldn't happen, there can be vars at the top level of a script
-            // but the script body should have been surrounded by a containing block
-            addError(var, "Variable encountered above root block");
-        }
-        else if (!parent->node->isBlock()) {
-            // the var was inside something other than a {} block
-            // the parser allows this but it's unclear what that should mean, what use
-            // would a var be inside an expression for example?  I suppose we could allow
-            // this, but flag it for now until we find a compelling use case
-            addError(var, "Variable encountered in non-block container");
-        }
-        else {
-            MslBinding* b = pool->allocBinding();
-            b->setName(var->name.toUTF8());
-            // value ownership transfers
-            b->value = stack->childResults;
-            stack->childResults = nullptr;
-            
-            parent->addBinding(b);
 
-            // vars do not have values themselves
-            popStack(nullptr);
+    if (var->staticVariable != nullptr && var->staticVariable->isBound()) {
+        // do not run the initializer again
+        popStack(nullptr);
+    }
+    else {
+        // the parser should have only allowed one child, if there is more than
+        // one we take the last value
+        MslStack* nextStack = pushNextChild();
+        if (nextStack == nullptr) {
+            // initializer finished
+    
+            MslStack* parent = stack->parent;
+            if (parent == nullptr) {
+                // this shouldn't happen, there can be vars at the top level of a script
+                // but the script body should have been surrounded by a containing block
+                addError(var, "Variable encountered above root block");
+            }
+            else if (!parent->node->isBlock()) {
+                // the var was inside something other than a {} block
+                // the parser allows this but it's unclear what that should mean, what use
+                // would a var be inside an expression for example?  I suppose we could allow
+                // this, but flag it for now until we find a compelling use case
+                addError(var, "Variable encountered in non-block container");
+            }
+            else if (var->staticVariable != nullptr) {
+                // ownership does not transfer, it is copied
+                assignStaticVariable(var->staticVariable, stack->childResults);
+                popStack(nullptr);
+            }
+            else {
+                MslBinding* b = pool->allocBinding();
+                b->setName(var->name.toUTF8());
+                // value ownership transfers
+                b->value = stack->childResults;
+                stack->childResults = nullptr;
+            
+                parent->addBinding(b);
+
+                // vars do not have values themselves
+                popStack(nullptr);
+            }
         }
     }
+}
+
+/**
+ * Assign a value to a static variable.  Here for the initializer expression
+ * the first time this variable is encountered (or is later unbound),
+ * and during an asignment to this variable.
+ *
+ * Ownership of the value is not transferred, it is copied.
+ * !! this needs a csect for concurrent sessions.
+ */
+void MslSession::assignStaticVariable(MslVariable* var, MslValue* value)
+{
+    // todo: csect
+    var->setValue(value);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2233,7 +2291,7 @@ void MslSession::logStart()
 {
     if (trace) {
         log.start("MslSession:start");
-        log.add("name", rootLink->unit->name);
+        log.add("name", unit->name);
         log.newline();
         logContext("start", context);
     }

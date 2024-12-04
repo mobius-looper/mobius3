@@ -41,7 +41,7 @@ class MslCompilation
 
     // hack for the console
     // don't like this, but works well enough for now
-    bool bindingCarryover = false;
+    bool variableCarryover = false;
 
     // no direct access to the unique_ptrs because they are a fucking pita
     MslFunction* getInitFunction() {
@@ -68,9 +68,8 @@ class MslCompilation
     // one evaluation to another
     juce::OwnedArray<MslFunction> functions;
 
-    // variable exports for each variable
-    // not actually used, needs thought
-    juce::OwnedArray<MslVariableExport> variables;
+    // sifted variable definitions for the top-level variables
+    juce::OwnedArray<MslVariable> variables;
 
     /**
      * Errors encountered during parsing or linking.
@@ -133,17 +132,6 @@ class MslCompilation
      * and references to "eventType" and "eventTrack"
      */
     juce::String usage;
-
-    //
-    // Runtime state
-    //
-
-    /**
-     * The unit is currently the holder of the bindings of static variables
-     * defined within the body.  This is only valid once the script has been evaluated.
-     * It must use pooled objects.
-     */
-    class MslBinding* bindings = nullptr;
 
   private:
     

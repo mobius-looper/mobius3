@@ -153,7 +153,7 @@ class MslEnvironment
      * This interface is used only by the console to create a special scriptlet
      * unit that can carrover bindings from one run to the next.
      */
-    juce::String registerScriptlet(class MslContext* c, bool bindingCarryover);
+    juce::String registerScriptlet(class MslContext* c, bool variableCarryover);
 
     /**
      * Speical interface for the console or anything else that wants to extend
@@ -263,10 +263,9 @@ class MslEnvironment
 
     /**
      * Retrieve the value of an exported variable.
-     * The result value remains owned by the caller and may be filled
-     * in with the result that must be reclaimed.
+     * The result is owned by the caller and must be reclaimed.
      */
-    void query(class MslLinkage* linkage, MslValue* result);
+    MslResult* query(class MslLinkage* linkage);
     
     //
     // Supervisor/MobiusKernel interfaces
@@ -376,7 +375,7 @@ class MslEnvironment
     void publish(class MslCompilation* unit, juce::StringArray& links);
     
     MslLinkage* publish(class MslCompilation* unit, class MslFunction* f, juce::StringArray& links);
-    void publish(class MslCompilation* unit, class MslVariableExport* v, juce::StringArray& links);
+    void publish(class MslCompilation* unit, class MslVariable* v, juce::StringArray& links);
     class MslLinkage* internLinkage(class MslCompilation* unit, juce::String name);
     void initialize(class MslContext* c, class MslCompilation* unit);
 

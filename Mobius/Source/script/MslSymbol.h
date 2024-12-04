@@ -44,9 +44,17 @@ class MslResolution
     MslResolution() {}
     ~MslResolution() {}
 
-    // a local variable defined somewhere in the tree
+    // a local variable at any level of scope under the root block
     // this is by far the most common
-    class MslVariable* localVariable = nullptr;
+    // todo: we don't really need this pointer, the value will be stored
+    // as an MslBinding on the stack where it will resolve, all we need to remember
+    // here is a flag saying it did resolve to a variable node
+    class MslVariableNode* innerVariable = nullptr;
+
+    // a top-level static (global, public, exported) script variable
+    // this will also have a VariableNode in the tree, but the value will be stored
+    // here rather than the stack so it is visible to other scripts if it is public
+    class MslVariable* staticVariable = nullptr;
 
     // a function argument declared within the containing function definition
     bool functionArgument = false;
@@ -56,7 +64,7 @@ class MslResolution
     class MslFunctionNode* innerFunction = nullptr;
 
     // a top-level local function, these are common
-    class MslFunction* localFunction = nullptr;
+    class MslFunction* rootFunction = nullptr;
 
     // a link to an exported function or variable from another script
     class MslLinkage* linkage = nullptr;
@@ -74,13 +82,15 @@ class MslResolution
     // a "carryover" variable defined in a prior scriptlet session
     // hate this, do we actually need all these flags?
     // a single "internal" to prevent unresolved errors should be enough
+    // actually this should just be a staticVariable now, get rid of this
     bool carryover = false;
 
     void reset() {
-        localVariable = nullptr;
+        innerVariable = nullptr;
+        staticVariable = nullptr;
         functionArgument = false;
         innerFunction = nullptr;
-        localFunction = nullptr;
+        rootFunction = nullptr;
         linkage = nullptr;
         external = nullptr;
         keyword = false;
@@ -90,10 +100,11 @@ class MslResolution
 
     // true if we found something
     bool isResolved() {
-        return (localVariable != nullptr ||
+        return (innerVariable != nullptr ||
+                staticVariable != nullptr ||
                 functionArgument ||
                 innerFunction != nullptr ||
-                localFunction != nullptr ||
+                rootFunction != nullptr ||
                 linkage != nullptr ||
                 external != nullptr ||
                 keyword || usageArgument || carryover);
@@ -102,7 +113,7 @@ class MslResolution
     // true if what we found is a function
     bool isFunction() {
         return (innerFunction != nullptr ||
-                localFunction != nullptr ||
+                rootFunction != nullptr ||
                 (linkage != nullptr && linkage->function != nullptr) ||
                 (external != nullptr && external->isFunction));
     }
@@ -114,8 +125,8 @@ class MslResolution
         if (innerFunction != nullptr) {
             body = innerFunction->getBody();
         }
-        else if (localFunction != nullptr) {
-            body = localFunction->getBody();
+        else if (rootFunction != nullptr) {
+            body = rootFunction->getBody();
         }
         else if (linkage != nullptr) {
             if (linkage->function != nullptr)

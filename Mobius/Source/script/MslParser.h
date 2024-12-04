@@ -21,6 +21,10 @@ class MslParser
     MslParser() {}
     ~MslParser() {}
 
+    // console hack to auto-promote top-level variables to static-like variables
+    // even if not declared static
+    void setVariableCarryover(bool b);
+
     // usual file and scriptlet parsing interface
     MslCompilation* parse(juce::String source);
 
@@ -29,6 +33,8 @@ class MslParser
     void errorSyntax(MslNode* node, juce::String details);
     
   private:
+
+    bool variableCarryover = false;
 
     MslTokenizer tokenizer;
 
@@ -41,13 +47,11 @@ class MslParser
     // the parse stack
     class MslNode* current = nullptr;
 
-    // keyword assimilation flags
-    juce::String scopeKeyword;
-
     void init();
     void sift();
     void functionize(class MslFunctionNode* node);
     void functionize(class MslInitNode* node);
+    void variableize(class MslVariableNode* node);
     void embody();
     
     void parseInner(juce::String source);

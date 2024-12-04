@@ -40,6 +40,7 @@ class Query
 
     /**
      * Returned value of the symbol.
+     * todo: this needs to support strings for MSL!
      */
     int value = 0;
 

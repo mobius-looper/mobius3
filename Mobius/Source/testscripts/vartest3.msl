@@ -1,0 +1,4 @@
+init {
+  export variable scriptvar 42
+}
+

@@ -37,13 +37,15 @@
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\loadmidi2.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\events.msl"/>
-      <External path="c:\dev\mobius3\Mobius\Source\intest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\mutemidi.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\hello.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\waittest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -68,6 +70,12 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"
             name="Repeat and Sustain Me" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"
+            name="vartest1" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"
+            name="vartest2" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"
+            name="vartest3" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

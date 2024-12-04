@@ -511,9 +511,10 @@ void MobiusConsole::doEval(juce::String line)
     bool success = false;
     
     // establish a new scriptlet "unit" if we don't have one
-    // uses the special bindingCarryover option so we can define variables
+    // uses the special variableCarryover option so we can define variables
     // and reference them from one console line to the next
     // todo: need a way to list and clear this list
+    // applies to any static or otherwise scoped variable
     if (scriptlet.length() == 0)
       scriptlet = scriptenv->registerScriptlet(supervisor, true);
 
@@ -734,7 +735,7 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             line += "Assignment: " + node->token.value;
         }
         else if (node->isVariable()) {
-            MslVariable* var = static_cast<MslVariable*>(node);
+            MslVariableNode* var = static_cast<MslVariableNode*>(node);
             line += "Variable: " + var->name;
         }
         else if (node->isFunction()) {

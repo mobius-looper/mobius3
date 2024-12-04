@@ -346,6 +346,17 @@ void DisplayEditor::initParameterSelector(MultiSelectDrag* multi, UIConfig* conf
         }
     }
 
+    // add exported script variables
+    // this is one way to do it, other panels operate from the symbol table
+    // which is probably better
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    juce::Array<MslLinkage*> links = env->getLinks();
+    for (auto link : links) {
+        if (!link->isFunction) {
+            allowed.add(link->name);
+        }
+    }
+
     // do a similar display name conversion on the current values
     juce::StringArray current;
     for (auto name : values) {
@@ -360,6 +371,10 @@ void DisplayEditor::addParameterDisplayName(juce::String name, juce::StringArray
     Symbol* s = supervisor->getSymbols()->find(name);
     if (s == nullptr) {
         Trace(1, "DisplayEditor: Unresolved parameter %s\n", name.toUTF8());
+    }
+    else if (s->script != nullptr) {
+        // these don't have display names
+        values.add(s->name);
     }
     else if (s->behavior != BehaviorParameter) {
         Trace(1, "DisplayEditor: Symbol %s is not a parameter\n", name.toUTF8());
