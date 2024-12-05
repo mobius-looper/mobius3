@@ -114,15 +114,46 @@ class MslCompilation
      * True if this script behaves like a continuous control.
      * Set via the #continuous directive
      */
-    bool continuous;
+    bool continuous = false;
 
     /**
-     * Usage name.  Used for scripts that are used in a certain context
-     * to allow deferred resolution symbol references that are
-     * ensured to be passed in at runtime.  e.g. event scripts
-     * and references to "eventType" and "eventTrack"
+     * True if this is considered a library script, one that contains the
+     * definitions of functions and variables, and init blocks, but does
+     * is not a callable function body.
+     */
+    bool library = false;
+
+    /**
+     * Usage name.  Used for scripts that are intended for use in a system
+     * defined context where a set of fixed named arguments are passed in.
+     * The main example is Event Scripts.  This allows references to the
+     * argument symbols within the script body that would otherwise be
+     * flagged as unresolved in ordinary scripts.
+     *
+     * For example event scripts are always passed the arguments "eventType
+     * and "eventTrack".  Using those names without a #usage would result
+     * in undefined symbol errors because those symbols are not defined within
+     * the script.  It's like a shorthand for a function signature
+     * of the script itself.
      */
     juce::String usage;
+
+    /**
+     * Optional namespace name for the exported functions and variables in this unit.
+     * "namespace" would be the obvious choice here but that is a reserved word
+     * in C++.  "package" comes from Lisp.
+     */
+    juce::String package;
+
+    /**
+     * Optional list of namespaces to import during the linking of this unit.
+     * When an unqualified symbol is encountered during linking, it will first resolve
+     * to the namespace of the containing unit, then each of the used namespaces
+     * in order.
+     *
+     * "using" is a C++ keyword unfortunately.
+     */
+    juce::StringArray usingNamespaces;
 
   private:
     

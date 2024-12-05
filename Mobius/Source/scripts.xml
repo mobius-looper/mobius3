@@ -70,6 +70,7 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\namespaces.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -106,6 +107,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"
             name="trackvar" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\namespaces.msl"
+            name="Namespace Testing" added="1733410972345"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

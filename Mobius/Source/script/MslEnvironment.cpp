@@ -89,12 +89,61 @@ void MslEnvironment::free(MslBinding* b)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Look up something in the script environment by name.
- * This is essentially the symbol table for the script environment.
+ * This is the application interface that must use qualified names.
  */
 MslLinkage* MslEnvironment::find(juce::String name)
 {
-    return linkMap[name];
+    return find(nullptr, name);
+}
+
+/**
+ * Look up something in the script environment by name.
+ * This is essentially the symbol table for the script environment.
+ */
+MslLinkage* MslEnvironment::find(MslCompilation* unit, juce::String name)
+{
+    MslLinkage* link = nullptr;
+    
+    bool isQualified = (name.indexOf(":") > 0);
+    if (isQualified) {
+        // must match exactly
+        link = linkMap[name];
+    }
+    else if (unit == nullptr) {
+        // this is coming from the application and there can be ambiguities
+        // if the same name is in more than one namespace.  I don't think we need
+        // to be smart about this and pick one at random.  Search only
+        // in the unqualified "global" namespace
+        link = linkMap[name];
+    }
+    else {
+        // look for symbols within this unit
+        juce::String qname = name;  // global namespace
+        if (unit->package.length() > 0)
+          qname = unit->package + ":" + name;
+        link = linkMap[qname];
+
+        if (link == nullptr) {
+            // now we have to look outside
+            // this isn't detecting ambiguities, in theory we should find all of them
+            // that match and warn if there is more than one, if you do that then
+            // should inlcude the global namespace search above in the list
+            link = linkMap[name];
+            for (auto usingValue : unit->usingNamespaces) {
+                // hack: nice to allow csvs for each #using directive
+                juce::StringArray namespaces = juce::StringArray::fromTokens(usingValue, ",", "");
+                for (auto ns : namespaces) {
+                    qname = ns + ":" + name;
+                    link = linkMap[qname];
+                    if (link != nullptr)
+                      break;
+                }
+                if (link != nullptr)
+                  break;
+            }
+        }
+    }
+    return link;
 }
 
 /**
@@ -498,6 +547,12 @@ void MslEnvironment::traceInteresting(juce::String type, MslDetails* details)
  * a unit id which will become the function name.
  *
  * This assumption isn't great, but it's all we're going to encounter.
+ *
+ * Note that if this is a #library script, we don't won't be using this
+ * as an exported Linkage, but for diagnistics in the console it's nice for
+ * all units to have a brief name.  Though not callable, it's also nice for
+ * the console to have library unit have unique names so they can be referenced
+ * reliably.
  */
 void MslEnvironment::ensureUnitName(juce::String unitId, MslCompilation* unit)
 {
@@ -859,19 +914,22 @@ void MslEnvironment::uninstall(MslContext* c, MslCompilation* unit, juce::String
  */
 void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
 {
-    MslFunction* f = unit->getBodyFunction();
-    if (f != nullptr) {
-        MslLinkage* link = publish(unit, f, links);
-        if (link != nullptr) {
-            // the body function can have properties taken from the script
-            // file directives, ordinary functions can't yet
-            link->isFunction = true;
-            link->isSustainable = unit->sustain;
-            link->isContinuous = unit->continuous;
-            // the script body is always considered exported until
-            // a concept of "library scripts" is added where there is no
-            // callable body
-            link->isExport = true;
+    // do not publish a body function if this is a #library script
+    if (!unit->library) {
+        MslFunction* f = unit->getBodyFunction();
+        if (f != nullptr) {
+            MslLinkage* link = publish(unit, f, links);
+            if (link != nullptr) {
+                // the body function can have properties taken from the script
+                // file directives, ordinary functions can't yet
+                link->isFunction = true;
+                link->isSustainable = unit->sustain;
+                link->isContinuous = unit->continuous;
+                // the script body is always considered exported until
+                // a concept of "library scripts" is added where there is no
+                // callable body
+                link->isExport = true;
+            }
         }
     }
     
@@ -941,7 +999,12 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
         Trace(1, "MslEnvironment: Attempt to publish link without a unit");
     }
     else {
-        MslLinkage* link = linkMap[name];
+        // Linkages always use qualfiied names
+        juce::String qname = name;  // global namespace
+        if (unit->package.length() > 0)
+          qname = unit->package + ":" + name;
+        
+        MslLinkage* link = linkMap[qname];
         if (link != nullptr && link->unit != nullptr &&
             link->unit->id != unit->id) {
             Trace(1, "MslEnvironment: Collision on link %s", name.toUTF8());
@@ -950,8 +1013,10 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
             // clear to launch
             if (link == nullptr) {
                 link = new MslLinkage();
-                link->name = name;
+                link->name = qname;
                 linkages.add(link);
+
+                // todo: need to make two entries, one qualified, and another not
                 linkMap.set(name, link);
             }
             else {
@@ -979,6 +1044,9 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
  */
 void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
 {
+    // todo: for #library units, we could consider the body code if there is one
+    // as the static initialization block and avoid the need for init{} blocks
+    
     // none of these should be null
     MslFunction* bf = unit->getBodyFunction();
     if (bf != nullptr) {

@@ -1155,7 +1155,7 @@ void MslSession::getVariable(const char* name, MslValue* dest)
             // variable from another script.  We can't do pre-resolution
             // but it's a small amount of overhead.
 
-            MslLinkage* link = environment->find(jname);
+            MslLinkage* link = environment->find(unit, jname);
             if (link != nullptr && link->variable != nullptr) {
 
                 // !! also supposed to be csect protected

@@ -232,6 +232,8 @@ class MslEnvironment
      *
      * A reference to the Linkage may be retained by the application for as
      * long as the environment is active, but the things inside it may change.
+     * This is the public interface that must use qualified names if units have
+     * namespaces.
      */
     class MslLinkage* find(juce::String name);
 
@@ -319,6 +321,9 @@ class MslEnvironment
     MslPools* getPool() {
         return &pool;
     }
+
+    // for MslLinker
+    MslLinkage* find(class MslCompilation* unit, juce::String name);
 
     // for MslConductor
     void processSession(class MslContext* c, class MslSession* s);

@@ -114,6 +114,9 @@ void MslLinker::link(MslContext* c, MslEnvironment* e, MslCompilation* u)
     unit->collisions.clear();
     unit->unresolved.clear();
 
+    // while library scripts don't technically have a callable
+    // body function, it can serve as the static initialization
+    // block so link it too
     link(unit->getBodyFunction());
 
     for (auto func : unit->functions)
@@ -175,25 +178,31 @@ void MslLinker::addWarning(MslNode* node, juce::String msg)
  * unit wants to export to the MslLinkage table.  If there is already
  * a linkage defined for a different unit, there is a collision.
  *
- * todo: We don't have the notion of exported functions and variable yet
- * so just for testing purposes, assume that any function found in the unit
- * will be exported.  This is temporary.
- *
- * What IS important is that if the unit has an executable body, the name
- * of the unit (aka the "script" from the user's perspective) must not collide.
+ * The script itself is also a callable function unless the #library
+ * directive was used.  The name of the unit (aka the "script" from the user's
+ * perspective) must not collide.
  */
 void MslLinker::checkCollisions()
 {
     // first the script body function
-    MslFunction* f = unit->getBodyFunction();
-    if (f != nullptr) {
-        checkCollision(f->name);
-    }
+    // actually no, do collision detection on the body name so that you can't
+    // have two libraries with the same name.  It doesn't really matter in normal
+    // use, but for diagnistics in the console it's nice if library unit can be
+    // referenced by name reliably.  It will not however be exported as a Linkage.
+    
+    //if (!unit->library) {
+        MslFunction* f = unit->getBodyFunction();
+        if (f != nullptr) {
+            // todo: need a unit->isLibrary meaning the body
+            // function is not callable and we don't need to check collisions
+            checkCollision(f->name);
+        }
+        //}
     
     // then the exported functions
     for (auto function : unit->functions) {
-        // todo: if function->isExported
-        checkCollision(function->name);
+        if (function->isExport())
+          checkCollision(function->name);
     }
 
     // todo: check exported variables
@@ -201,7 +210,7 @@ void MslLinker::checkCollisions()
 
 void MslLinker::checkCollision(juce::String name)
 {
-    MslLinkage* link = environment->find(name);
+    MslLinkage* link = environment->find(unit, name);
     if (link != nullptr &&
         link->unit != nullptr &&
         // note that it isn't enough to compare unit pointers, when
@@ -503,7 +512,7 @@ void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslBlock* decl)
  */
 void MslLinker::resolveEnvironment(MslSymbol* sym)
 {
-    sym->resolution.linkage = environment->find(sym->token.value);
+    sym->resolution.linkage = environment->find(unit, sym->token.value);
 }
 
 /**

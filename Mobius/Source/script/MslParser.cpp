@@ -792,6 +792,17 @@ void MslParser::parseDirective(MslToken& t)
     else if (directive.equalsIgnoreCase("#usage")) {
         script->usage = remainder.trim();
     }
+    else if (directive.equalsIgnoreCase("#namespace")) {
+        // sigh, namespace is a reserved word
+        script->package = remainder.trim();
+    }
+    else if (directive.equalsIgnoreCase("#using")) {
+        // so is "using"
+        script->usingNamespaces.add(remainder.trim());
+    }
+    else if (directive.equalsIgnoreCase("#library")) {
+        script->library = true;
+    }
     else {
         Trace(1, "MslParser: Unknown directive %s", directive.toUTF8());
         errorSyntax(t, juce::String("Unknown directive ") + directive);
