@@ -71,5 +71,9 @@ class Provider
     virtual void dragAudio(int trackNumber, int loopNumber) = 0;
 
     virtual void addTemporaryFile(juce::TemporaryFile* tf) = 0;
+
+    virtual class Pathfinder* getPathfinder() = 0;
+    virtual class Prompter* getPrompter() = 0;
+    virtual juce::File getRoot() = 0;
     
 };

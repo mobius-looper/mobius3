@@ -936,6 +936,19 @@ void Supervisor::loadMidi(UIAction* a)
     }
 }
 
+/**
+ * Emerging manager of file folders.
+ */
+Pathfinder* Supervisor::getPathfinder()
+{
+    return &pathfinder;
+}
+
+Prompter* Supervisor::getPrompter()
+{
+    return &prompter;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Maintenance Thread

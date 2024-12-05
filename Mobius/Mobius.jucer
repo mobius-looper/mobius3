@@ -7,8 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="bptNWG" name="MidiClerk.cpp" compile="1" resource="0" file="Source/MidiClerk.cpp"/>
-      <FILE id="QSHCY4" name="MidiClerk.h" compile="0" resource="0" file="Source/MidiClerk.h"/>
+      <FILE id="vS0bOi" name="Pathfinder.cpp" compile="1" resource="0" file="Source/Pathfinder.cpp"/>
+      <FILE id="V5vdg7" name="Pathfinder.h" compile="0" resource="0" file="Source/Pathfinder.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -833,6 +833,10 @@
               file="Source/script/ScriptExternals.cpp"/>
         <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
               file="Source/script/ScriptExternals.h"/>
+        <FILE id="b3XchT" name="ScriptInteractor.cpp" compile="1" resource="0"
+              file="Source/script/ScriptInteractor.cpp"/>
+        <FILE id="jlLiY8" name="ScriptInteractor.h" compile="0" resource="0"
+              file="Source/script/ScriptInteractor.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"
@@ -898,6 +902,8 @@
       <FILE id="yWDgXx" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="QNh0y4" name="MainThread.cpp" compile="1" resource="0" file="Source/MainThread.cpp"/>
       <FILE id="Q7CcHg" name="MainThread.h" compile="0" resource="0" file="Source/MainThread.h"/>
+      <FILE id="bptNWG" name="MidiClerk.cpp" compile="1" resource="0" file="Source/MidiClerk.cpp"/>
+      <FILE id="QSHCY4" name="MidiClerk.h" compile="0" resource="0" file="Source/MidiClerk.h"/>
       <FILE id="gYasMO" name="MidiManager.cpp" compile="1" resource="0" file="Source/MidiManager.cpp"/>
       <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>

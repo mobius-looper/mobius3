@@ -36,6 +36,8 @@
 #include "Alerter.h"
 #include "AudioClerk.h"
 #include "ProjectFiler.h"
+#include "Pathfinder.h"
+#include "Prompter.h"
 #include "script/ScriptClerk.h"
 #include "script/MslConstants.h"
 #include "script/MslContext.h"
@@ -116,7 +118,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // Various resources managed by Supervisor that internal
     // components need
 
-    // also in MobiusContainer
+    // also in MobiusContainer and Provider
     juce::File getRoot() override;
 
     SymbolTable* getSymbols() override {
@@ -222,6 +224,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void loadMidi(int trackNumber, int loopNumber) override;
     void saveMidi(int trackNumber, int loopNumber) override;
     void dragMidi(int trackNumber, int loopNumber) override;
+    Pathfinder* getPathfinder() override;
+    Prompter* getPrompter() override;
     
     // menu implementations
     void menuLoadScripts(bool poppup = true);
@@ -401,6 +405,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     juce::StringArray pendingAlerts;
     AudioClerk audioClerk {this};
     ProjectFiler projectFiler {this};
+    Pathfinder pathfinder {this};
+    Prompter prompter {this};
     ApplicationBinderator binderator {this};
 
     // new way of doing embedded objects that doesn't require a

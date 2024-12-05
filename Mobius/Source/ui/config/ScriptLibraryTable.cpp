@@ -13,6 +13,7 @@
 #include "../../util/Util.h"
 #include "../../model/ScriptConfig.h"
 #include "../../Supervisor.h"
+#include "../../Prompter.h"
 
 #include "../common/ButtonBar.h"
 #include "../JuceUtil.h"
@@ -32,10 +33,12 @@ ScriptLibraryTable::ScriptLibraryTable(Supervisor* s)
     initTable();
     addAndMakeVisible(table);
 
-    commands.add("Enable");
-    commands.add("Disable");
+    commands.add("Import");
     commands.add("Edit");
     commands.add("Details");
+    commands.add("Enable");
+    commands.add("Disable");
+    commands.add("Delete");
     commands.autoSize();
     commands.addListener(this);
 
@@ -194,30 +197,40 @@ void ScriptLibraryTable::resized()
  */
 void ScriptLibraryTable::buttonClicked(juce::String name)
 {
-    int row = table.getSelectedRow();
-    if (row >= 0) {
-        ScriptRegistry::File* file = files[row]->file;
-        if (file != nullptr) {
+    if (name == juce::String("Import")) {
+        Prompter* p = supervisor->getPrompter();
+        p->importScripts();
+    }
+    else {
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            ScriptRegistry::File* file = files[row]->file;
+            if (file != nullptr) {
 
-            if (name == juce::String("Enable")) {
-                ScriptClerk* clerk = supervisor->getScriptClerk();
-                clerk->enable(file);
-                table.updateContent();
-                // updateContent isn't enough, figure out why
-                table.repaint();
-            }
-            else if (name == juce::String("Disable")) {
-                ScriptClerk* clerk = supervisor->getScriptClerk();
-                clerk->disable(file);
-                table.updateContent();
-                table.repaint();
-            }
-            else if (name == juce::String("Details")) {
-                details.show(file);
-            }
-            else if (name == juce::String("Edit")) {
-                MainWindow* win = supervisor->getMainWindow();
-                win->editScript(file);
+                if (name == juce::String("Enable")) {
+                    ScriptClerk* clerk = supervisor->getScriptClerk();
+                    clerk->enable(file);
+                    table.updateContent();
+                    // updateContent isn't enough, figure out why
+                    table.repaint();
+                }
+                else if (name == juce::String("Disable")) {
+                    ScriptClerk* clerk = supervisor->getScriptClerk();
+                    clerk->disable(file);
+                    table.updateContent();
+                    table.repaint();
+                }
+                else if (name == juce::String("Details")) {
+                    details.show(file);
+                }
+                else if (name == juce::String("Edit")) {
+                    MainWindow* win = supervisor->getMainWindow();
+                    win->editScript(file);
+                }
+                else if (name == juce::String("Delete")) {
+                    //ScriptInteractor si {supervisor};
+                    //si.import();
+                }
             }
         }
     }
