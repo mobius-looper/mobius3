@@ -161,7 +161,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     class MslWait* getWait();
 
     // MslSessionInterface
-    MslValue* getVariable(const char* name) override;
+    void getVariable(const char* name, MslValue* dest) override;
 
     // results after finishing
     MslValue* getValue();
@@ -225,6 +225,11 @@ class MslSession : public MslVisitor, public MslSessionInterface
     // capture this from the MslRequest that started it so we can
     // move it to the MslProcess if this suspends
     int triggerId = 0;
+
+    // the default scope identifier
+    // this is the scope we are "in" until the scope is explicitly
+    // overridden
+    int defaultScope = 0;
     
     class MslStack* stack = nullptr;
 
@@ -317,6 +322,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
 
     // in
     bool expandInKeyword(MslValue* keyword);
+    int getEffectiveScope();
 
     // debugging
     void checkCycles(MslValue* v);

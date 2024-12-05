@@ -87,7 +87,7 @@ class MslSessionInterface
     /**
      * Obtain the value of a bound variable.
      */
-    virtual MslValue* getVariable(const char* name) = 0;
+    virtual void getVariable(const char* name, MslValue* dest) = 0;
 };
 
 /**

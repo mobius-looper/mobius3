@@ -35,7 +35,7 @@
       <Element name="outputMeter" disabled="1"/>
       <Element name="outputMeter" disabled="1"/>
     </Strip>
-    <InstantParameters names="activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration,scriptvar"/>
+    <InstantParameters names="activePreset,quantize,subcycles,switchQuantize,emptyLoopAction,emptyTrackAction,muteMode,multiplyMode,switchDuration"/>
   </Layout>
   <Layout name="Another">
     <Element name="ModeElement" x="688" y="182"/>

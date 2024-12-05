@@ -187,6 +187,8 @@ void MslParser::functionize(MslFunctionNode* node)
  */
 void MslParser::variableize(MslVariableNode* node)
 {
+    // using the constructor that doesn't take a pool since we don't
+    // have access to the Environment, set the pool later
     MslVariable* variable = new MslVariable();
 
     variable->name = node->name;

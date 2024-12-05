@@ -2120,7 +2120,9 @@ bool Supervisor::doQuery(Query* query)
             Trace(1, "Supervisor: Query on script symbol that wasn't a variable", s->getName());
         }
         else {
-            MslResult* result = scriptenv.query(s->script->mslLinkage);
+            // todo: assume track numbers are scope ids but won't always be the case
+            int mslScope = getFocusedTrackIndex() + 1;
+            MslResult* result = scriptenv.query(s->script->mslLinkage, mslScope);
             if (result != nullptr) {
                 // only supporting integers right now
                 if (result->value != nullptr) 

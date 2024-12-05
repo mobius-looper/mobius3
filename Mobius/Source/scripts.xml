@@ -67,6 +67,9 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
+      <External path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\notifyrec.mos" name="NotifyRecord"
@@ -97,6 +100,12 @@
             name="vartest2" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"
             name="vartest3" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"
+            name="varquery" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl" name="pubvar"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"
+            name="trackvar" added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

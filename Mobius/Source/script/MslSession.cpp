@@ -278,6 +278,7 @@ void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* 
 
     context = argContext;
     unit = argLink->unit;
+    defaultScope = request->scope;
     
     // remember this for later when making the MslProcess
     triggerId = request->triggerId;
@@ -1126,13 +1127,11 @@ MslBinding* MslSession::findBinding(int position)
  * Also consider having a set of getInt, getString functions that don't copy and
  * don't need to be freed but whose value is not guaranteed to remain stable.
  */
-MslValue* MslSession::getVariable(const char* name)
+void MslSession::getVariable(const char* name, MslValue* dest)
 {
-    MslValue* value = nullptr;
-
     MslBinding* binding = findBinding(name);
     if (binding != nullptr) {
-        value = binding->value;
+        dest->copy(binding->value);
     }
     else {
         juce::String jname(name);
@@ -1148,8 +1147,7 @@ MslValue* MslSession::getVariable(const char* name)
         if (found != nullptr) {
             // !! supposed to have a csect around this which means
             // we really should be copying
-            // todo: not handling track scope
-            value = found->getValue();
+            found->getValue(getEffectiveScope(), dest);
         }
         else {
             // MslSymbol evaluation will at this point look for an
@@ -1161,12 +1159,10 @@ MslValue* MslSession::getVariable(const char* name)
             if (link != nullptr && link->variable != nullptr) {
 
                 // !! also supposed to be csect protected
-                value = link->variable->getValue();
+                link->variable->getValue(getEffectiveScope(), dest);
             }
         }
     }
-
-    return value;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1254,7 +1250,7 @@ void MslSession::mslVisit(MslVariableNode* var)
 {
     logVisit(var);
 
-    if (var->staticVariable != nullptr && var->staticVariable->isBound()) {
+    if (var->staticVariable != nullptr && var->staticVariable->isBound(getEffectiveScope())) {
         // do not run the initializer again
         popStack(nullptr);
     }
@@ -1312,7 +1308,7 @@ void MslSession::mslVisit(MslVariableNode* var)
 void MslSession::assignStaticVariable(MslVariable* var, MslValue* value)
 {
     // todo: csect
-    var->setValue(value);
+    var->setValue(getEffectiveScope(), value);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2026,6 +2022,14 @@ void MslSession::mslVisit(MslIn* innode)
                 stack->bindings->setName("scope");
                 stack->bindings->value = pool->allocValue();
             }
+
+            // more convenient to just stick it in the session, this is
+            // what static variable references will use for track variables
+            // note that we can't just have one of these on the session since MslIn
+            // can be inside another MslIn, it needs to be on the stack and the effective
+            // scope searches the stack
+            stack->inScope = scopeNumber;
+            
             // to make use of this for echo REALLY need to support format
             // strings or string catenation 
             stack->bindings->value->setInt(scopeNumber);
@@ -2091,6 +2095,28 @@ void MslSession::mslVisit(MslSequence* seq)
     if (nextStack == nullptr) {
         popStack();
     }
+}
+
+/**
+ * Not really a binding, but kind of behaves like one.
+ */
+int MslSession::getEffectiveScope()
+{
+    int scope = 0;
+
+    MslStack* s = stack;
+    while (s != nullptr) {
+        if (s->inScope > 0) {
+            scope = s->inScope;
+            break;
+        }
+        s = s->parent;
+    }
+
+    if (scope == 0)
+      scope = defaultScope;
+    
+    return scope;
 }
 
 //////////////////////////////////////////////////////////////////////

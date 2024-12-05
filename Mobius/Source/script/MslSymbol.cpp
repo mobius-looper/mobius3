@@ -233,7 +233,7 @@ void MslSession::returnStaticVariable(MslSymbol* snode)
     MslValue* v = pool->allocValue();
 
     // !! needs to be csect protected
-    v->copy(rv->getValue());
+    rv->getValue(getEffectiveScope(), v);
     
     popStack(v);
 }
@@ -255,7 +255,7 @@ void MslSession::returnLinkedVariable(MslSymbol* snode)
     }
     else {
         // !! this needs to be csect protected
-        value->copy(var->getValue());
+        var->getValue(getEffectiveScope(), value);
     }
     popStack(value);
 }
@@ -454,6 +454,13 @@ void MslSession::returnQuery(MslSymbol* snode)
         MslQuery query;
 
         query.external = external;
+
+        // todo: unclear if this should send our internal scope ids and expect
+        // the container to map that back to track numbers, or if we should do that
+        // mapping here...it's realky the same we ask container to do the mapping now
+        // or later.  Actually MslIn is broken because it is taking a user-spece
+        // scope identifier and assuming that is an internal scope id which it isn't
+        // but works for now as long as scopeId==trackNumber
         query.scope = getTrackScope();
 
         if (!context->mslQuery(&query)) {
@@ -511,6 +518,7 @@ void MslSession::callExternal(MslSymbol* snode)
 
         action.session = this;
         action.external = external;
+        // see mslQuery for questions around what this scope number should be
         action.scope = getTrackScope();
 
         // external functions normally expect at most one argument
@@ -717,23 +725,40 @@ void MslSession::doAssignment(MslAssignment* ass)
 
 /**
  * Look up the stack for a binding for "scope" which will be taken as the track
- * number to use when referenccingn externals.
+ * number to use when referencing externals.
  * One of these is created automatically by "in" but as a side effect of the way
  * that works you could also do this:
  *
  *    {var scope = 1 Record}
  *
  * Interesting...if we keep that might want a better name.
+ *
+ * update: there is now getEffectiveScope() which saves the MslIn scope number
+ * on the stack rather than as a binding.  That is what static track variable
+ * referencing uses, so should be consistent about this.  I'm not sure I like
+ * using bindings to control this.  Feels better to build it into the stack, but
+ * might want to support a user defined binding as an option?
+ * 
  */
 int MslSession::getTrackScope()
 {
     int scope = 0;
 
-    MslBinding* b = findBinding("scope");
-    if (b != nullptr && b->value != nullptr) {
-        // need some sanity checks on the range
-        scope = b->value->getInt();
+    // if you want to supporr this then the traversal has to be done
+    // in getEffectiveScope because it is the NEAREST of either the stack
+    // sccope or the binding that wins
+    bool oldWay = false;
+    if (oldWay) {
+        MslBinding* b = findBinding("scope");
+        if (b != nullptr && b->value != nullptr) {
+            // need some sanity checks on the range
+            scope = b->value->getInt();
+        }
     }
+
+    if (scope == 0)
+      scope = getEffectiveScope();
+        
     return scope;
 }
 

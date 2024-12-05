@@ -26,6 +26,7 @@ void MslStack::init()
     bindings = nullptr;
     inList = nullptr;
     inPtr = nullptr;
+    inScope = 0;
     wait.init();
 }
 

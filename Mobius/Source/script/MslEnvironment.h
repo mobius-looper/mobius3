@@ -87,6 +87,14 @@ class MslRequest
     int triggerId = 0;
 
     /**
+     * When non-zero, specifies the default scope this script will logically
+     * be running in.  If not set the scope will also not be set in any
+     * MslAction or MslQuery calls made back to the application and it must
+     * choose an appropriate default.
+     */
+    int scope = 0;
+
+    /**
      * True if this represents the release of a sustainable trigger.
      */
     bool release = false;
@@ -265,7 +273,7 @@ class MslEnvironment
      * Retrieve the value of an exported variable.
      * The result is owned by the caller and must be reclaimed.
      */
-    MslResult* query(class MslLinkage* linkage);
+    MslResult* query(class MslLinkage* linkage, int scope);
     
     //
     // Supervisor/MobiusKernel interfaces

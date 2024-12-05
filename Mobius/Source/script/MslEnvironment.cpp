@@ -122,7 +122,7 @@ void MslEnvironment::free(MslResult* r)
 /**
  * Access the value of a variable.
  */
-MslResult* MslEnvironment::query(MslLinkage* linkage)
+MslResult* MslEnvironment::query(MslLinkage* linkage, int scope)
 {
     MslResult* result = pool.allocResult();
     
@@ -132,8 +132,7 @@ MslResult* MslEnvironment::query(MslLinkage* linkage)
     }
     else {
         MslValue* value = pool.allocValue();
-        // todo: track scope
-        value->copy(linkage->variable->getValue());
+        linkage->variable->getValue(scope, value);
         result->value = value;
     }
     return result;
@@ -187,6 +186,7 @@ MslResult* MslEnvironment::request(MslContext* c, MslRequest* req)
  */
 void MslEnvironment::setVariable(MslContext*c, MslLinkage* link, MslRequest* req)
 {
+    (void)c;
     MslVariable* var = link->variable;
     if (var == nullptr) {
         // this must be an old linkage to a script that was unloaded
@@ -196,7 +196,7 @@ void MslEnvironment::setVariable(MslContext*c, MslLinkage* link, MslRequest* req
     else {
         // this will copy the value
         // !! need a csect around this
-        var->setValue(req->arguments);
+        var->setValue(req->scope, req->arguments);
     }
     clean(req);
 }
@@ -309,6 +309,7 @@ MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
         // so we can make use of the same Conductor interface for starting
         // normal sessions, fake up a Request
         MslRequest req;
+        // todo: ask the context for the defalt scope since it wasn't passed in?
         result = conductor.start(c, &req, link);
     }
 
@@ -881,6 +882,9 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
     }
     
     for (auto var : unit->variables) {
+        // since the pool wasn't assigned during construction by the parser
+        // give it one now so it cal pool MslValues
+        var->setPool(&pool);
         if (var->isExport() || var->isPublic()) {
             publish(unit, var, links);
         }
@@ -907,7 +911,7 @@ MslLinkage* MslEnvironment::publish(MslCompilation* unit, MslFunction* f,
 void MslEnvironment::publish(MslCompilation* unit, MslVariable* v,
                              juce::StringArray& links)
 {
-    MslLinkage* link = internLinkage(unit, v->getName());
+    MslLinkage* link = internLinkage(unit, v->name);
     if (link != nullptr) {
         link->variable = v;
         link->isExport = v->isExport();

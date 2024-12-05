@@ -46,6 +46,7 @@ class MslStack
     // special state for MslIn iteration
     class MslValue* inList = nullptr;
     class MslValue* inPtr = nullptr;
+    int inScope = 0;
 
     // binding list for this block
     class MslBinding* bindings = nullptr;
