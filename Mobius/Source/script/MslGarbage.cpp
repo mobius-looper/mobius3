@@ -19,6 +19,9 @@ void MslGarbage::flush()
 {
     // units are not pooled
     units.clear();
+
+    // neither are blocks 
+    blocks.clear();
 }
 
 MslGarbage::~MslGarbage()

@@ -457,6 +457,194 @@ MslDetails* MslEnvironment::compile(MslContext* c, juce::String source)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Scriptlets
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Register a scriptlet with a generated name.
+ */
+juce::String MslEnvironment::scriptletRegister()
+{
+    return scriptletRegister("");
+}
+
+/**
+ * Register a scriptlet with a desired prefix.
+ */
+juce::String MslEnvironment::scriptletRegister(juce::String prefix)
+{
+    juce::String id = prefix;
+    
+    if (id.length() == 0)
+      id = "scriptlet";
+
+    // for things like "console" don't generate a qualifier unless we have to
+    MslCompilation* existing = compilationMap[id];
+    if (existing != nullptr) {
+        // todo: would be cool if each prefix had it's own increasing set of numbers
+        id += juce::String(idGenerator++);
+    }
+
+    MslCompilation* unit = new MslCompilation();
+    unit->id = id;
+    unit->name = id;
+    unit->package = id;
+
+    compilationMap.set(id, unit);
+
+    return id;
+}
+
+/**
+ * Replace the body function of a scriptlet with the compilation of a
+ * new source string.
+ */
+MslResult* MslEnvironment::scriptletCompile(MslContext* c, juce::String id, juce::String source)
+{
+    MslResultBuilder b (this);
+    
+    MslCompilation* unit = compilationMap[id];
+    if (unit == nullptr) {
+        b.addError("Invalid scriptlet id");
+    }
+    else {
+        MslParser parser;
+
+        // Would like to do this...
+        // - parser doesn't know to gc the body funtion block so that would have to be
+        //   done first
+        // - only helpful for the console really
+        // - no less messy than letting it make a new one and transferring the results
+        // over to the old unit
+        //parser.parse(unit, source);
+
+        // !! need to inject the namespace?  only if the source exports variables
+        // can punt and assume global for now
+        MslCompilation* neu = parser.parse(source);
+        bool installed = false;
+        
+        if (neu->hasErrors()) {
+            // todo: transfer the detailed errors
+            b.addError("Scriptlet compilation errors");
+        }
+        else {
+            MslLinker linker;
+            linker.link(c, this, neu);
+            if (neu->hasErrors()) {
+                // todo: transfer link errors
+                b.addError("Scriptlet link errors");
+            }
+            else {
+                // replace the unit
+                // todo: scriptlets should not be allowed to export anything
+                // to linkages, the console might want to do that which adds
+                // lots of complications
+                MslCompilation* old = unit;
+                compilationMap.set(id, neu);
+                garbage.add(old);
+                installed = true;
+            }
+        }
+
+        if (!installed)
+          delete unit;
+    }
+
+    MslResult* result = b.finish();
+    return result;
+}
+
+/**
+ * Todo: will need a variety of argument passing conventions?
+ */
+MslResult* MslEnvironment::scriptletRun(MslContext* c, juce::String id, juce::String arguments)
+{
+    MslResult* result = nullptr;
+    MslResultBuilder b(this);
+
+    MslCompilation* unit = compilationMap[id];
+    if (unit == nullptr) {
+        b.addError("Invalid scriptlet id");
+        result = b.finish();
+    }
+    else {
+        result = conductor.run(c, unit, nullptr);
+    }
+
+    return result;
+}
+
+MslResult* MslEnvironment::scriptletExtend(MslContext* c, juce::String id, juce::String source)
+{
+    MslResultBuilder b(this);
+    
+    MslCompilation* unit = compilationMap[id];
+    if (unit == nullptr) {
+        b.addError("Invalid scriptlet id");
+    }
+    else {
+        MslParser parser;
+        // special option for the console to treat all top-level variables as static
+        // so the values can be referenced in future lines
+        parser.setVariableCarryover(unit->variableCarryover);
+        MslCompilation* neu = parser.parse(source);
+        bool installed = false;
+
+        if (!neu->hasErrors()) {
+            
+            neu->id = unit->id;
+            neu->name = unit->name;
+            neu->package = unit->package;
+            neu->usingNamespaces = unit->usingNamespaces;
+            // keep this going
+            neu->variableCarryover = unit->variableCarryover;
+            
+            // here comes the magic (well, that's one word for it)
+            while (unit->functions.size() > 0) {
+                MslFunction* f = unit->functions.removeAndReturn(0);
+                neu->functions.add(f);
+            }
+
+            // same with the variables
+            while (unit->variables.size() > 0) {
+                MslVariable* v = unit->variables.removeAndReturn(0);
+                neu->variables.add(v);
+            }
+
+            MslLinker linker;
+            linker.link(c, this, unit);
+
+            if (ponderLinkErrors(unit)) {
+                MslCompilation* old = unit;
+                compilationMap.set(id, neu);
+                garbage.add(old);
+                installed = true;
+            }
+            else {
+                // well fuck, we have put the stoken functions back since we're not
+                // going to use the new unit
+                while (neu->functions.size() > 0) {
+                    MslFunction* f = neu->functions.removeAndReturn(0);
+                    unit->functions.add(f);
+                }
+                while (neu->variables.size() > 0) {
+                    MslVariable* v = neu->variables.removeAndReturn(0);
+                    unit->variables.add(v);
+                }
+            }
+        }
+
+        if (!installed)
+          delete unit;
+    }
+
+    MslResult* result = b.finish();
+    return result;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Installation
 //
 //////////////////////////////////////////////////////////////////////
@@ -630,19 +818,14 @@ juce::String MslEnvironment::registerScriptlet(MslContext* c, bool variableCarry
 
 /**
  * Special interface for the console or anything else that wants to extend
- * a previously installed unit.  The previous function definitions, variable
- * definitions, and variable bindings are kept, and a new source string is parsed
- * as if the file contained those previous definitions.  The new source may add or
- * remove definitions and change bindings, and replaces the body function.
+ * a previously installed unit.  The previous function definitions and variable
+ * definitions are retained, and a new source string is parsed as if the file contained
+ * those previous definitions.  The new source replaces the body function
+ * and may add new definitions.
  *
  * First the source string is parsed and checked for errors. 
  * Then the definitions from the base unit are copied into the new unit so that
  * they may be seen during linking.
- *
- * It is not possible to simply reference objects in the base unit since that
- * has an independent lifespan, and MslLinkages can't be used if the definitions
- * are non-exported locals definitions.  It's easier just to move or copy them
- * which makes it sort of like a compile-time closure.
  *
  * For this to work, parsing the source string can't make any assumptions
  * about the declarations of functions and variables in the base unit.  i.e.
@@ -660,7 +843,6 @@ juce::String MslEnvironment::registerScriptlet(MslContext* c, bool variableCarry
  * modify it, even though for the console that would almost always be harmless.  Maybe
  * something special that has to wait for sessions to finish before extension.  Really should
  * be doing a full copy then splice in the new lines after a partial parse, or something.
- * 
  */
 MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
                                    juce::String source)

@@ -280,6 +280,16 @@ class MslEnvironment
      * The result is owned by the caller and must be reclaimed.
      */
     MslResult* query(class MslLinkage* linkage, int scope);
+
+    //
+    // Emerging Scriptlet/Console Interface
+    //
+
+    juce::String scriptletRegister();
+    juce::String scriptletRegister(juce::String prefix);
+    class MslResult* scriptletCompile(class MslContext* c, juce::String id, juce::String source);
+    class MslResult* scriptletRun(class MslContext* c, juce::String id, juce::String arguments);
+    class MslResult* scriptletExtend(class MslContext* c, juce::String id, juce::String source);
     
     //
     // Supervisor/MobiusKernel interfaces

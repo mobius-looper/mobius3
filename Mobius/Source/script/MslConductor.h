@@ -71,6 +71,8 @@ class MslConductor
 
     class MslResult* runInitializer(class MslContext* c, class MslCompilation* unit,
                                     class MslBinding* arguments, class MslNode* node);
+
+    class MslResult* run(class MslContext* c, class MslCompilation* unit, class MslBinding* arguments);
     
     // resume after a wait
     void resume(class MslContext* c, class MslWait* wait);

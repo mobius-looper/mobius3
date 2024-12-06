@@ -91,6 +91,8 @@
 #include "MslProcess.h"
 #include "MslEnvironment.h"
 #include "MslLinkage.h"
+#include "MslFunction.h"
+#include "MslCompilation.h"
 
 #include "MslConductor.h"
 
@@ -931,6 +933,23 @@ void MslConductor::ageRepeat(MslContext* c, MslSession* s, MslSuspendState* stat
 // Environment Requests
 //
 //////////////////////////////////////////////////////////////////////
+
+MslResult* MslConductor::run(MslContext* c, MslCompilation* unit,
+                             MslBinding* arguments)
+{
+    MslResult* result = nullptr;
+
+    MslFunction* func = unit->getBodyFunction();
+    if (func != nullptr) {
+        MslBlock* body = func->getBody();
+        if (body != nullptr) {
+            MslSession* session = environment->getPool()->allocSession();
+            session->run(c, unit, arguments, body);
+            result = checkCompletion(c, session);
+        }
+    }
+    return result;
+}
 
 /**
  * Start a new session for an initialization block.
