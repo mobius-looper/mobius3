@@ -228,8 +228,8 @@ void ScriptLibraryTable::buttonClicked(juce::String name)
                     win->editScript(file);
                 }
                 else if (name == juce::String("Delete")) {
-                    //ScriptInteractor si {supervisor};
-                    //si.import();
+                    Prompter* p = supervisor->getPrompter();
+                    p->deleteScript(file->path);
                 }
             }
         }

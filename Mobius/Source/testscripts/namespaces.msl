@@ -1,4 +1,5 @@
 #name Namespace Testing
+#library
 #namespace test
 
 export function foo() {

@@ -1,0 +1,10 @@
+#name Namespace Testing
+#library
+#namespace test
+
+export function foo() {
+  print "Hello from test:foo"
+}
+
+export variable bar "test:bar"
+

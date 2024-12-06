@@ -160,6 +160,9 @@ void MobiusConsole::doLine(juce::String line)
     else if (line.startsWith("signature")) {
         doSignature();
     }
+    else if (line.startsWith("namespace")) {
+        doNamespace(withoutCommand(line));
+    }
     else {
         doEval(line);
     }
@@ -177,12 +180,13 @@ void MobiusConsole::doHelp()
     console.add("quit         close the console");
     console.add("");
     // contents of the environment
-    console.add("list         list compilation units");
-    console.add("list links   list exported links");
+    console.add("list         list exported links");
+    console.add("list units   list compilation units");
     console.add("list files   list script registry files");
     console.add("show <id>    show details of a compilation unit");
     console.add("load <path>  load a script file");
     console.add("unload <id>  unload a compilation unit");
+    console.add("namespace    change namespaces");
     console.add("");
     // sessions
     console.add("status       show the status of an async session");
@@ -347,7 +351,13 @@ void MobiusConsole::showErrors(MslError* list)
 void MobiusConsole::doList(juce::String line)
 {
     juce::String ltype = line.trim();
-    if (ltype == "" || ltype.startsWith("unit")) {
+
+    if (ltype == "") {
+        console.add("list links | units | files");
+        ltype = "link";
+    }
+        
+    if (ltype.startsWith("unit")) {
         console.add("Compilation Units");
         juce::StringArray ids = scriptenv->getUnits();
         int number = 1;
@@ -367,9 +377,16 @@ void MobiusConsole::doList(juce::String line)
               type = "variable";
             else
               type = "unresolved";
-            console.add("Link \"" + link->name + "\"" +
+            juce::String unit;
+            if (link->unit == nullptr)
+              unit = "unloaded";
+            else
+              unit = link->unit->id;
+            
+            // was kida hoping tab would work, but it's a variable width font so no
+            console.add(link->name + " \t" +
                         " type=" + type + 
-                        " unit=" + link->unit->id);
+                        " unit=" + unit);
         }
     }
     else if (ltype.startsWith("reg") || ltype.startsWith("file") || ltype.startsWith("lib")) {
@@ -472,6 +489,23 @@ void MobiusConsole::doShow(juce::String line)
 // Parsing and Evaluation
 //
 //////////////////////////////////////////////////////////////////////
+
+void MobiusConsole::doNamespace(juce::String line)
+{
+    juce::String arg = line.trim();
+
+    if (arg.length() == 0) {
+        juce::String ns = scriptenv->getNamespace(scriptlet);
+        if (ns.length() == 0)
+          ns = "global";
+        console.add(ns);
+    }
+    else {
+        juce::String error = scriptenv->setNamespace(scriptlet, arg);
+        if (error.length() > 0)
+          console.add(error);
+    }
+}
 
 void MobiusConsole::doParse(juce::String line)
 {

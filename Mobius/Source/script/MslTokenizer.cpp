@@ -38,8 +38,20 @@ MslToken MslTokenizer::next()
         juce::CodeDocument::Position end = iterator.toPosition();
 
         juce::String token = document.getTextBetween(start, end);
-        // this does not appear to trim leading whitespace
-        token = token.trimStart();
+
+        // what we have now is from 1 character after the end of the previous
+        // token to the end of the next token, this INCLUDES preceeding whitespace
+        // so for the line "a   b" the second token will be "   b".
+        // what I want is for the token to be just "b" but with the column
+        // adjusted for those 3 leading spaces so that adjacency detection
+        // works, this is important when using colons since : is tokenized
+        // as punctuation and a:b comes in as three tokens but
+        // a:b is different than a  :b
+        juce::String trim = token.trimStart();
+        int spaces = token.length() - trim.length();
+        token = trim;
+        t.column += spaces;
+        
         t.type = convertType(type);
         if (t.type == MslToken::Type::String) {
             // this tokenizer leaves the surrounding quotes on the token

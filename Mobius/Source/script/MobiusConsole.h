@@ -79,6 +79,7 @@ class MobiusConsole : public juce::Component,
     void traceNode(class MslNode* node, int indent);
 
     void doSignature();
+    void doNamespace(juce::String line);
     
     void showErrors(juce::OwnedArray<class MslError>* errors);
     void showErrors(class MslError* errors);

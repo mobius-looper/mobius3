@@ -836,6 +836,9 @@ bool ScriptClerk::deleteFile(Listener* listener, ScriptRegistry::File* file)
     bool success = f.deleteFile();
     if (success) {
 
+        // the File is interned, but the deleted flag goes on
+        file->deleted = true;
+
         // if this was an external we can actually remove the entry safely
         if (file->external != nullptr) {
             if (!file->external->folder) {
@@ -960,7 +963,7 @@ void ScriptClerk::doFilesDropped(juce::StringArray files, juce::String style)
                 else
                   Trace(2, "ScriptClerk: Adding library file %s", dest.getFullPathName().toUTF8());
 
-                failure = src.copyFileTo(dest);
+                failure = !src.copyFileTo(dest);
             }
 
             if (failure) {
@@ -1050,6 +1053,130 @@ void ScriptClerk::doFilesDropped(juce::StringArray files, juce::String style)
     int total = mosFilesDropped.size() + mslFilesDropped.size();
     supervisor->alert(juce::String(total) + " scripts loaded");
 
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Import
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Here from a file chooser or some other mechanism that selected
+ * a set of MSl files to be imported.
+ *
+ * The files are copied into the library, but the sources are not deleted.
+ * Could prompt for deletion, but Prompter needs to handle that and pass us
+ * a flag.
+ *
+ * If the are any externals defined for the given files they are removed.
+ * There is a lot of overlap between this and doFilesDropped, should
+ * try to share some...
+ */
+void ScriptClerk::import(juce::Array<juce::File> files)
+{
+    ScriptRegistry::Machine* machine = getMachine();
+    juce::File libdir = getLibraryFolder();
+    juce::Array<ScriptRegistry::File*> filesAdded;
+    juce::Array<ScriptRegistry::External*> redundantExternals;
+    juce::StringArray errors;
+    
+    for (auto src : files) {
+        juce::String path = src.getFullPathName();
+        if (!src.existsAsFile()) {
+            errors.add("File does not exist: " + path);
+        }
+        else if (src.getParentDirectory() == libdir) {
+            errors.add("File is already in the library: " + path);
+        }
+        else if (src.getFileExtension() != ".msl") {
+            errors.add("File is not an MSL file: " + path);
+        }
+        else {
+            juce::String fname = src.getFileName();
+            juce::File dest = libdir.getChildFile(fname);
+
+            if (dest.existsAsFile()) {
+                errors.add("A file with name \"" + fname + "\" is already in the library");
+            }
+            else {
+                bool failure = !src.copyFileTo(dest);
+                if (failure)
+                  errors.add("Failed to copy file: " + path);
+                else {
+                    // copy was sucessful, add it to the registry
+                    // if it was already there, this will still stage it for reload
+                    ScriptRegistry::File* regfile = scanFile(machine, dest, nullptr);
+                    filesAdded.add(regfile);
+
+                    ScriptRegistry::External* ext = machine->findExternal(path);
+                    if (ext != nullptr)
+                      redundantExternals.add(ext);
+                }
+            }
+        }
+    }
+
+    // since the environment identifies "compilation units" by the full path,
+    // the units installed under the old path need to be unloaded before installing
+    // them with the new path, event though the contents are identical,
+    // don't think it's worth having a "rename unit id" here, just drop and add
+    if (redundantExternals.size() > 0)  {
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        for (auto ext : redundantExternals) {
+            env->uninstall(supervisor, ext->path, false);
+            // remove the file first since the External owns the path
+            machine->removeFile(ext->path);
+            machine->removeExternal(ext);
+        }
+    }
+    
+    if (filesAdded.size() > 0) {
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        for (auto file : filesAdded) {
+            juce::File f(file->path);
+            file->source = f.loadFileAsString();
+            MslDetails* unit = env->install(supervisor, file->path, file->source, false);
+            updateDetails(file, unit);
+        }
+            
+        env->link(supervisor);
+        refreshDetails();
+    }
+
+    saveRegistry();
+
+    // notify any UIs that might be open
+    for (auto file : filesAdded)
+      notifyFileAdded(nullptr, file);
+
+    if (errors.size() > 0) {
+        // Supervisor only wants a single string, need a util for this
+        supervisor->alert(errors.joinIntoString("\n"));
+    }
+      
+    int total = filesAdded.size();
+    supervisor->alert(juce::String(total) + " scripts loaded");
+}
+
+/**
+ * Eventual handler for the "Delete" button in the library panel.
+ * We've already gone through confirmation on this so waste it.
+ */
+void ScriptClerk::deleteLibraryFile(juce::String path)
+{
+    ScriptRegistry::Machine* machine = getMachine();
+    ScriptRegistry::File* file = machine->findFile(path);
+    juce::StringArray errors;
+
+    if (file == nullptr) {
+        errors.add("Path is not in the library: " + path);
+    }
+    else {
+        // can use the same thing the editor uses, but we're coming
+        // from an async confirmation dialog and won't know the listener
+        deleteFile(nullptr, file);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

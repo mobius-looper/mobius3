@@ -524,7 +524,7 @@ class MslScopedNode : public MslNode
     bool keywordGlobal = false;
     bool keywordScope = false;
 
-    bool wantsToken(class MslParser* p, MslToken& t);
+    bool wantsToken(class MslParser* p, MslToken& t) override;
     bool hasScope();
     bool isStatic();
     void resetScope();

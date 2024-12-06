@@ -135,10 +135,16 @@ class ScriptRegistry
         juce::OwnedArray<File> files;
 
         File* findFile(juce::String& name);
+        bool removeFile(juce::String& path);
+        
         External* findExternal(juce::String& path);
         juce::StringArray getExternalPaths();
-        
         void filterExternals(juce::String folder);
+        bool removeExternal(juce::String& path);
+        void removeExternal(External* ext);
+        
+        bool pathEqual(juce::String p1, juce::String p2);
+        
     };
 
     /**
@@ -155,8 +161,6 @@ class ScriptRegistry
     
     juce::OwnedArray<Machine> machines;
 
-    External* findExternal(Machine* m, juce::String& path);
-    
     void xmlError(const char* msg, juce::String arg);
     juce::String renderTime(juce::Time& t);
     juce::Time parseTime(juce::String src);

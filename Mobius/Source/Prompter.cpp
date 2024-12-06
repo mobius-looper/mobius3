@@ -1,8 +1,11 @@
 
 #include <JuceHeader.h>
 
+#include "util/Trace.h"
+
 #include "Provider.h"
 #include "Pathfinder.h"
+#include "script/ScriptClerk.h"
 
 #include "Prompter.h"
 
@@ -39,7 +42,7 @@ void Prompter::startScriptImport()
     juce::String title = "Select an MSL script file to import...";
 
     // a form of smart pointer
-    chooser = std::make_unique<juce::FileChooser> (title, startPath, ".msl");
+    chooser = std::make_unique<juce::FileChooser> (title, startPath, "*.msl");
 
     auto chooserFlags = juce::FileBrowserComponent::openMode |
                          juce::FileBrowserComponent::canSelectFiles | 
@@ -57,7 +60,7 @@ void Prompter::startScriptImport()
     // identifier and Supervisor, and letting Supervisor walk back down
     // to the ScriptEditorFile if it still exists
     
-    chooser->launchAsync (chooserFlags, [this] (const juce::FileChooser& fc)
+    chooser->launchAsync (chooserFlags, [this,purpose] (const juce::FileChooser& fc)
     {
         // magically get here after the modal dialog closes
         // the array will be empty if Cancel was selected
@@ -69,6 +72,7 @@ void Prompter::startScriptImport()
             // just take the first one or the last?
             // almost always only one anyway
             juce::File file = result[0];
+            Pathfinder* pf = provider->getPathfinder();
             pf->saveLastFolder(purpose, file.getParentDirectory().getFullPathName());
         }
         
@@ -80,7 +84,34 @@ void Prompter::finishScriptImport(juce::Array<juce::File> files)
     for (auto file : files) {
         Trace(2, "Prompter: Importing %s", file.getFullPathName().toUTF8());
     }
+
+    ScriptClerk* clerk = provider->getScriptClerk();
+    clerk->import(files);
+}
+
+/**
+ * Prompt for verification before deleting a script library file.
+ */
+void Prompter::deleteScript(juce::String path)
+{
+    juce::File file(path);
+    juce::String fname = file.getFileNameWithoutExtension();
     
+    // launch an async dialog box that calls the lambda when finished
+    juce::MessageBoxOptions options = juce::MessageBoxOptions()
+        .withIconType (juce::MessageBoxIconType::QuestionIcon)
+        .withTitle ("Delete Script")
+        .withMessage ("Are you sure you want to permantly delete the library file?\n" + fname)
+        .withButton ("Yes")
+        .withButton ("No")
+        ;
+        
+    juce::AlertWindow::showAsync (options, [this,path] (int button) {
+        if (button == 1) {
+            ScriptClerk* clerk = provider->getScriptClerk();
+            clerk->deleteLibraryFile(path);
+        }
+    });
 }
 
 /****************************************************************************/

@@ -1,0 +1,5 @@
+#name Namespace2
+#namespace asdf
+
+export variable bar "asdf"
+export variable baz 99

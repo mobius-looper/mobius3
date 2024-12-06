@@ -23,7 +23,7 @@ class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
     ScriptConfigEditor(class Supervisor* s);
     ~ScriptConfigEditor();
 
-    juce::String getTitle() override {return "Scripts";}
+    juce::String getTitle() override {return "Script Library";}
     bool isImmediate() override {return true;}
     
     void showing() override;

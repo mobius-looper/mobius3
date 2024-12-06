@@ -1,0 +1,23 @@
+//
+// Basic local variable testing
+//
+
+// uninitialized
+var foo
+
+// initialized
+var bar = 2
+
+// another form of initialization block
+var baz 3
+
+print ("First print" foo bar baz)
+
+
+// assignment
+
+baz = baz + 1
+
+print ("Second print" baz)
+
+

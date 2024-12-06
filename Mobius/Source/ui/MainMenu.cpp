@@ -327,7 +327,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Groups, "Track Groups");
         menu.addItem(HostParameters, "Plugin Parameters");
         menu.addSeparator();
-        menu.addItem(Scripts, "Scripts");
+        menu.addItem(Scripts, "Script Library");
         menu.addItem(LoadScripts, "Reload Scripts");
         menu.addSeparator();
         menu.addItem(Samples, "Samples");

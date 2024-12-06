@@ -73,8 +73,9 @@ class ScriptClerk {
     void filesDropped(juce::StringArray& files);
 
     // file import from config panel
-    void import();
-
+    void import(juce::Array<juce::File> files);
+    void deleteLibraryFile(juce::String path);
+    
     //
     // ScriptConfigEditor Interface
     //

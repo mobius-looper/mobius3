@@ -75,5 +75,5 @@ class Provider
     virtual class Pathfinder* getPathfinder() = 0;
     virtual class Prompter* getPrompter() = 0;
     virtual juce::File getRoot() = 0;
-    
+    virtual class ScriptClerk* getScriptClerk() = 0;
 };

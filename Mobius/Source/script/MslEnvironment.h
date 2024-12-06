@@ -174,6 +174,10 @@ class MslEnvironment
     class MslDetails* extend(class MslContext* c, juce::String baseUnit,
                              juce::String source);
 
+    // only for the console, manipulate the scriptlet namespace
+    juce::String getNamespace(juce::String unitId);
+    juce::String setNamespace(juce::String unitId, juce::String ns);
+
     /**
      * Uninstall a previoiusly installed compilation unit.   This will result in a
      * full relink of the environment.  If the unit contained things that were

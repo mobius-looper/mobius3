@@ -7,8 +7,6 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="vS0bOi" name="Pathfinder.cpp" compile="1" resource="0" file="Source/Pathfinder.cpp"/>
-      <FILE id="V5vdg7" name="Pathfinder.h" compile="0" resource="0" file="Source/Pathfinder.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -833,10 +831,6 @@
               file="Source/script/ScriptExternals.cpp"/>
         <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
               file="Source/script/ScriptExternals.h"/>
-        <FILE id="b3XchT" name="ScriptInteractor.cpp" compile="1" resource="0"
-              file="Source/script/ScriptInteractor.cpp"/>
-        <FILE id="jlLiY8" name="ScriptInteractor.h" compile="0" resource="0"
-              file="Source/script/ScriptInteractor.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"
@@ -908,6 +902,8 @@
       <FILE id="hGkh3H" name="MidiManager.h" compile="0" resource="0" file="Source/MidiManager.h"/>
       <FILE id="qj6h9Q" name="Parametizer.cpp" compile="1" resource="0" file="Source/Parametizer.cpp"/>
       <FILE id="vP0uxA" name="Parametizer.h" compile="0" resource="0" file="Source/Parametizer.h"/>
+      <FILE id="vS0bOi" name="Pathfinder.cpp" compile="1" resource="0" file="Source/Pathfinder.cpp"/>
+      <FILE id="V5vdg7" name="Pathfinder.h" compile="0" resource="0" file="Source/Pathfinder.h"/>
       <FILE id="Zfd5Mq" name="PluginParameter.cpp" compile="1" resource="0"
             file="Source/PluginParameter.cpp"/>
       <FILE id="rXclHv" name="PluginParameter.h" compile="0" resource="0"
@@ -918,6 +914,8 @@
       <FILE id="XCsVKz" name="ProjectFiler.cpp" compile="1" resource="0"
             file="Source/ProjectFiler.cpp"/>
       <FILE id="IWWZnL" name="ProjectFiler.h" compile="0" resource="0" file="Source/ProjectFiler.h"/>
+      <FILE id="ca438s" name="Prompter.cpp" compile="1" resource="0" file="Source/Prompter.cpp"/>
+      <FILE id="hODZXF" name="Prompter.h" compile="0" resource="0" file="Source/Prompter.h"/>
       <FILE id="NzgXK9" name="Provider.h" compile="0" resource="0" file="Source/Provider.h"/>
       <FILE id="hGOwW6" name="RootLocator.cpp" compile="1" resource="0" file="Source/RootLocator.cpp"/>
       <FILE id="Tgt8wg" name="RootLocator.h" compile="0" resource="0" file="Source/RootLocator.h"/>

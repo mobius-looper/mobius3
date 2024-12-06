@@ -61,26 +61,66 @@ bool MslKeyword::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+/**
+ * This looks strange because of the perhaps misguided notion that
+ * the qualifiers can appear on each side of the primary keyword:
+ *
+ *     export variable
+ * vs
+ *     variable export
+ *
+ * The problem is that if you do this
+ *
+ *     export variable foo
+ *     export variable bar
+ *
+ * What is on the stack when the second export is parsed is the MslVaribleNode
+ * for the first variable foo, and it will say it wants the token even though
+ * it already consumed the one preceeding it.  This is all wound up in how
+ * the parser uses a MslScopedNode object just to hold onto the qualifiers until
+ * the primary token is reached, then it transfers that to the main node
+ * either MslVarialbeNode or MslFunctionNode.
+ *
+ * If you want to disallow having qualifers after the keyword which is going to
+ * be fine for most people, then DO NOT call MslScopedNode::wantsToken in the subclass.
+ * If you want it on either side, then MslScopedNode needs to not want it if it
+ * already found one.
+ *
+ * Alternately, we could use a completely different class for this token holder
+ * and avoid this confusion, which would be best if you end up only accepting
+ * prefixed qualifiers.
+ *
+ * It's actually not bad supressing redudant tokens because "export export" is an
+ * error anyway.  That's why we have the !keyword... logic below.
+ */
 bool MslScopedNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
 
     if (t.value == "public") {
-        keywordPublic = true;
-        wants = true;
+        if (!keywordPublic) {
+            keywordPublic = true;
+            wants = true;
+        }
     }
     else if (t.value == "export") {
-        keywordExport = true;
-        wants = true;
+        if (!keywordExport) {
+            keywordExport = true;
+            wants = true;
+        }
     }
     else if (t.value == "global" || t.value == "static") {
-        keywordGlobal = true;
-        wants = true;
+        if (!keywordGlobal) {
+            keywordGlobal = true;
+            wants = true;
+        }
     }
     else if (t.value == "track" || t.value == "scope") {
-        keywordScope = true;
-        wants = true;
+        if (!keywordScope) {
+            keywordScope = true;
+            wants = true;
+        }
     }
     return wants;
 }

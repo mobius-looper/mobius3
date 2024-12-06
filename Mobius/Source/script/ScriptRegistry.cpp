@@ -40,11 +40,39 @@ ScriptRegistry::Machine* ScriptRegistry::findMachine(juce::String& name)
     return found;
 }
 
+/**
+ * Horrible kludge for fucking Windows path names.
+ * For reasons I haven't determined, the full path string on Windows
+ * can differ in case in the drive letter, e.g c:\ vs C:\
+ *
+ * Windows has a case-insensitive file system, but paths tend to preserve
+ * case as created by the user, except for the drive letter.  Depending on
+ * where the path came from the letter may be upper or lower.  I almost always
+ * see lower, perhaps Juce normalizes it, but it is occasionally upper,
+ * maybe out of native file chooser dialogs, I'm not sure.
+ *
+ * Whatever the reason, when looking for files using path strings we
+ * must ignore the case of drive letter.  We could also try normalizing
+ * it but that's fragile and hard to ensure.
+ *
+ * I'm also a little leery of doing case insensitive on the entire path
+ * but that can only happen on Windows, Darwin is usually case sensitive.
+ */
+bool ScriptRegistry::Machine::pathEqual(juce::String p1, juce::String p2)
+{
+    bool equal = (p1 == p2);
+    // Mac/Darwin paths can't have colons in them, right?   Buehler?
+    if (!equal && p1.indexOf(":") > 0)
+      equal = p1.equalsIgnoreCase(p2);
+
+    return equal;
+}
+
 ScriptRegistry::File* ScriptRegistry::Machine::findFile(juce::String& path)
 {
     File* found = nullptr;
     for (auto file : files) {
-        if (file->path == path) {
+        if (pathEqual(file->path, path)) {
             found = file;
             break;
         }
@@ -52,16 +80,41 @@ ScriptRegistry::File* ScriptRegistry::Machine::findFile(juce::String& path)
     return found;
 }
 
+bool ScriptRegistry::Machine::removeFile(juce::String& path)
+{
+    File* found = findFile(path);
+    
+    if (found != nullptr)
+      files.removeObject(found, true);
+    
+    return (found != nullptr);
+}
+
 ScriptRegistry::External* ScriptRegistry::Machine::findExternal(juce::String& path)
 {
     External* found = nullptr;
     for (auto ext : externals) {
-        if (ext->path == path) {
+        if (pathEqual(ext->path, path)) {
             found = ext;
             break;
         }
     }
     return found;
+}
+
+bool ScriptRegistry::Machine::removeExternal(juce::String& path)
+{
+    External* found = findExternal(path);
+    
+    if (found != nullptr)
+      externals.removeObject(found, true);
+    
+    return (found != nullptr);
+}
+
+void ScriptRegistry::Machine::removeExternal(External* ext)
+{
+    externals.removeObject(ext, true);
 }
 
 /**
@@ -120,7 +173,7 @@ bool ScriptRegistry::convert(ScriptConfig* config)
         
         for (ScriptRef* ref = config->getScripts() ; ref != nullptr ; ref = ref->getNext()) {
             juce::String path = juce::String(ref->getFile());
-            External* ext = findExternal(machine, path);
+            External* ext = machine->findExternal(path);
             if (ext == nullptr) {
                 ext = new External();
                 ext->path = path;
@@ -130,18 +183,6 @@ bool ScriptRegistry::convert(ScriptConfig* config)
         }
     }
     return changed;
-}
-
-ScriptRegistry::External* ScriptRegistry::findExternal(Machine* m, juce::String& path)
-{
-    External* found = nullptr;
-    for (auto ext : m->externals) {
-        if (ext->path == path) {
-            found = ext;
-            break;
-        }
-    }
-    return found;
 }
 
 //////////////////////////////////////////////////////////////////////

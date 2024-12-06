@@ -692,6 +692,8 @@ MslDetails* MslEnvironment::extend(MslContext* c, juce::String baseUnitId,
             unit->name = baseUnitId;
             // keep this going
             unit->variableCarryover = base->variableCarryover;
+            unit->package = base->package;
+            unit->usingNamespaces = base->usingNamespaces;
             
             if (base->name.length() > 0 && base->name != baseUnitId)
               Trace(2, "MslEnvironment: Extending a unit with an alternate reference name, why?");
@@ -1017,7 +1019,7 @@ MslLinkage* MslEnvironment::internLinkage(MslCompilation* unit, juce::String nam
                 linkages.add(link);
 
                 // todo: need to make two entries, one qualified, and another not
-                linkMap.set(name, link);
+                linkMap.set(qname, link);
             }
             else {
                 link->reset();
@@ -1336,6 +1338,56 @@ juce::Array<MslLinkage*> MslEnvironment::getLinks()
         links.add(link);
     }
     return links;
+}
+
+/**
+ * For testing in the console, allow switching namespaces
+ * This won't change already interned links so things can get wonky.
+ */
+juce::String MslEnvironment::getNamespace(juce::String unitId)
+{
+    juce::String result;
+    
+    MslCompilation* unit = compilationMap[unitId];
+    if (unit == nullptr) {
+        result = "Invalid unit id: " + unitId;
+    }
+    else {
+        result = unit->package;
+    }
+    return result;
+}
+
+/**
+ * Sigh, it isn't enough just to set the namespace, you also have
+ * to rejigger the MslLinkage for this scriptlet since the body
+ * function is what gets called to do an "eval" in the console.
+ */
+juce::String MslEnvironment::setNamespace(juce::String unitId, juce::String name)
+{
+    juce::String result;
+    
+    MslCompilation* unit = compilationMap[unitId];
+    if (unit == nullptr) {
+        result = "Invalid unit id: " + unitId;
+    }
+    else {
+        MslLinkage* link = linkMap[unitId];
+        if (link == nullptr) {
+            result = "Invalid link for unit: " + unitId;
+        }
+        else {
+            unit->package = name;
+
+            // pretend it was there all along
+            linkMap.set(unitId, nullptr);
+            juce::String qname = unitId;;
+            if (name.length() > 0)
+              qname = name + ":" + unitId;
+            linkMap.set(qname, link);
+        }
+    }
+    return result;
 }
 
 ///////////////////////////////////////////////////////////////////////

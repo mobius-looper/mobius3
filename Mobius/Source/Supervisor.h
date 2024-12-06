@@ -166,7 +166,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &variableManager;
     }
 
-    class ScriptClerk* getScriptClerk() {
+    // part of Provider for Prompter
+    class ScriptClerk* getScriptClerk() override {
         return &scriptClerk;
     }
 

@@ -302,12 +302,24 @@ void MslParser::parseInner(juce::String source)
     // an oddment to "look backward" at previous tokens that were'nt acted upon
     // when encountered
     MslScopedNode scopeHolder;
+    bool awaitingQualifiedName = false;
 
     while (tokenizer.hasNext() && script->errors.size() == 0) {
         MslToken t = tokenizer.next();
 
         if (script->errors.size() > 0)
           continue;
+
+        if (awaitingQualifiedName) {
+            // we just received ":" after a symbol and now require
+            // the next ADJACENT token to be another symbol
+            if (t.type != MslToken::Type::Symbol)
+              errorSyntax(t, "Expecting qualified symbol name");
+            else
+              current->token.value += t.value;
+            awaitingQualifiedName = false;
+            continue;
+        }
 
         // some nodes consume tokens without creating more nodes
         // parser passed so the node can add an error if it wants to
@@ -509,8 +521,19 @@ void MslParser::parseInner(juce::String source)
                     }
                 }
                 else if (t.value == ":") {
-                    MslKeyword* k = new MslKeyword(t);
-                    current = push(k);
+                    // the tokenizer splits foo:bar into three tokens
+                    // but when they are all adjacent they need to be treated
+                    // as a single qualified symbol name
+                    if (current->isSymbol() &&
+                        ((current->token.column + current->token.value.length()) == t.column)) {
+                        // they are adjacent
+                        current->token.value += t.value;
+                        awaitingQualifiedName = true;
+                    }
+                    else {
+                        MslKeyword* k = new MslKeyword(t);
+                        current = push(k);
+                    }
                 }
                 else {
                     errorSyntax(t, "Unexpected punctuation");

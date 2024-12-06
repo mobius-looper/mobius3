@@ -9,14 +9,12 @@
       <External path="c:\dev\mobius3\Mobius\Source\events.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\multiclick.mos"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.mos"/>
-      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"/>
-      <External path="c:\dev\mobius3\Mobius\Source\testscripts\exporttest.msl"/>
     </Externals>
     <Files>
       <File path="c:\dev\mobius3\Mobius\Source\test\scripts\bindingarg.mos"
@@ -35,8 +33,6 @@
             name="multiclick" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\sustest.mos" name="sustest"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest1.msl"
-            name="vartest1" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"
             name="vartest2" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl" name="pubvar"
@@ -49,8 +45,14 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"
             name="Repeat and Sustain Me" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\testscripts\exporttest.msl"
-            name="exporttest" added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\exporttest.msl" name="exporttest"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces.msl" name="Namespace Testing"
+            added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="Namespace2"
+            added="0"/>
     </Files>
   </Machine>
   <Machine name="Loki">

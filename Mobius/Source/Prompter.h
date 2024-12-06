@@ -22,13 +22,14 @@ class Prompter
   public:
     
     Prompter(class Provider* p);
-    ~Propter();
+    ~Prompter();
 
     void importScripts();
+    void deleteScript(juce::String path);
 
   private:
 
-    class Provider* p = nulptr;
+    class Provider* provider = nullptr;
 
     // let's just keep one of these around and prevent concurrent access
     // though we could have an array of them for each purpose
