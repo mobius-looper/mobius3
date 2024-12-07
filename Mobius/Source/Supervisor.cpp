@@ -383,7 +383,9 @@ bool Supervisor::start()
     mobius->setListener(this);
 
     // let internal UI components interested in configuration adjust themselves
-    propagateConfiguration();
+    // move this after scrript installation so the new display elements can see
+    // MSL symbols
+    //propagateConfiguration();
 
     meter("Maintenance Thread");
 
@@ -451,6 +453,9 @@ bool Supervisor::start()
     // this is where scripts with init blocks may run
     // so it needs to be toward the end of most of the initialization
     scriptClerk.installMsl();
+
+    // now update the UI after script loading so it can see symbols
+    propagateConfiguration();
         
     // prepare action bindings
     // important to do this AFTER all the symbols are

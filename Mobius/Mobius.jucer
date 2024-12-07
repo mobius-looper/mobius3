@@ -421,6 +421,16 @@
           <FILE id="jzCok7" name="TrackStrip.h" compile="0" resource="0" file="Source/ui/display/TrackStrip.h"/>
           <FILE id="UXBs6H" name="TrackStrips.cpp" compile="1" resource="0" file="Source/ui/display/TrackStrips.cpp"/>
           <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
+          <FILE id="AT7paa" name="UIElement.cpp" compile="1" resource="0" file="Source/ui/display/UIElement.cpp"/>
+          <FILE id="eqEj1r" name="UIElement.h" compile="0" resource="0" file="Source/ui/display/UIElement.h"/>
+          <FILE id="W0RLCP" name="UIElementLight.cpp" compile="1" resource="0"
+                file="Source/ui/display/UIElementLight.cpp"/>
+          <FILE id="teQtWN" name="UIElementLight.h" compile="0" resource="0"
+                file="Source/ui/display/UIElementLight.h"/>
+          <FILE id="CbzvOA" name="UIElementStatusAdapter.cpp" compile="1" resource="0"
+                file="Source/ui/display/UIElementStatusAdapter.cpp"/>
+          <FILE id="Frnbcr" name="UIElementStatusAdapter.h" compile="0" resource="0"
+                file="Source/ui/display/UIElementStatusAdapter.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"

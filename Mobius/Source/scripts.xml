@@ -67,7 +67,6 @@
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\reptest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\susreptest.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"/>
-      <External path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl"/>
       <External path="c:\dev\mobius3\Mobius\Source\testscripts\trackvar.msl"/>
@@ -97,8 +96,6 @@
             name="Repeat and Sustain Me" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest2.msl"
             name="vartest2" added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\testscripts\vartest3.msl"
-            name="vartest3" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\varquery.msl"
             name="varquery" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\testscripts\pubvar.msl" name="pubvar"
@@ -112,6 +109,8 @@
       <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="Namespace2"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
+            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\rc505.msl" name="RC505 Library"
             added="2147483647"/>
     </Files>
   </Machine>

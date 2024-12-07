@@ -1,0 +1,10 @@
+#name RC505 Library
+#library
+#namespace rc505
+
+init{
+  InstallUIElement("RC505 Undo/Redo", "Light", ["monitor" "rc505:UndoRedo" "onColor" "white" "offColor" "blue"])
+}
+
+export track variable UndoRedo
+

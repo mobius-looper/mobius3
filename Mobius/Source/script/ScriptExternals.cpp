@@ -525,28 +525,48 @@ bool ScriptExternals::InstallUIElement(MslContext* c, MslAction* action)
             UIConfig* config = s->getUIConfig();
             juce::String jname (name->getString());
             UIElementDefinition* def = config->findDefinition(jname);
-            if (def != nullptr) {
-                // here we could add missing options
-                // or override some that need to be respecified
-            }
-            else {
+            bool created = false;
+            if (def == nullptr) {
                 def = new UIElementDefinition();
                 def->name = jname;
-                // todo: could do some validation on this
-                def->visualizer = juce::String(visualizer->getString());
+                created = true;
+            }
+            else {
+                // here we could skip this if it was already defined but until
+                // we have an editor it is more convenient to let the script
+                // rebuild it on every load
+            }
 
-                // now the hard part
-                if (!buildMap(properties->list, def->properties))
+            // todo: could do some validation on this
+            def->visualizer = juce::String(visualizer->getString());
+
+            // now the hard part
+            if (!buildMap(properties->list, def->properties)) {
+                if (created)
                   delete def;
-                else {
-                    config->definitions.add(def);
-                    s->updateUIConfig();
-                    success = true;
-                }
+            }
+            else {
+                if (created)
+                  config->definitions.add(def);
+
+                // note well
+                // there is an initialalization order dependency here
+                // if you call updateUIConfig now, it will propagate the changes to the
+                // UI components.  The new ones that can monitor MSL variables will attempt
+                // to locate Symbols for those variables, But at this moment, we are using
+                // in the static initialization period of MSL script loading and those
+                // variables may not be defined and exported yet, you get a log error and
+                // the UIElement won't have a symbol and will do nothing
+                // since uiconfig.xml is updated on shutdown we don't really need to save
+                // it here.  If that stops happening then we'll need some sort of deferred
+                // update with propagation after the scripts have been loaded
+                //s->updateUIConfig();
+                
+                success = true;
             }
         }
     }
-
+    
     return success;
 }
 

@@ -51,10 +51,25 @@ class UIElement : public juce::Component
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
 
-  private:
+    // need a factory for these, may as well be here
+    static UIElement* createElement(class Provider* p, class UIElementDefinition* def);
+
+    // have to capture these and pass them to the parent since
+    // since we are not a StatusElement and won't inherit the overloads
+    // that do borders and dragging
+    void mouseEnter(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& e) override;
+
+    // color tools
+    static juce::Colour getColor(class UIElementDefinition* d, juce::String usage);
+    static juce::Colour getColor(juce::String name);
+
+  protected:
 
     class Provider* provider = nullptr;
-    class UIElementDefinition definition = nullptr;
     
 };
 

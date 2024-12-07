@@ -6,12 +6,12 @@
 
 #include "StatusElement.h"
 
-class UIElementStatusWrapper : public StatusElement
+class UIElementStatusAdapter : public StatusElement
 {
   public:
 
-    UIElementStatusWrapper(class StatusArea* a, UIElement* el);
-    ~UIElementStatusWrapper();
+    UIElementStatusAdapter(class StatusArea* a, class UIElement* el);
+    ~UIElementStatusAdapter();
 
     void configure() override;
     void update(class MobiusView* view) override;
@@ -23,6 +23,6 @@ class UIElementStatusWrapper : public StatusElement
 
   private:
 
-    UIElement* element = nullptr;
+    std::unique_ptr<class UIElement> element;
 
 };

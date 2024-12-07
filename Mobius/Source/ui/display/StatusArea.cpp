@@ -27,6 +27,9 @@
 
 #include "MobiusDisplay.h"
 #include "Colors.h"
+#include "UIElement.h"
+#include "UIElementStatusAdapter.h"
+
 #include "StatusArea.h"
 
 StatusArea::StatusArea(MobiusDisplay* parent) : display(parent)
@@ -138,12 +141,10 @@ void StatusArea::configure()
         // we can only have StatusElements so safe to cast
         // if not, will ahve to use dynamic_cast
         StatusElement* el = (StatusElement*)findChildWithID(element->name);
-        if (el == nullptr) {
-            // didn't match any element names, shouldn't happen normally
-            // ignore and should remove from list
-            Trace(1, "Unknown StatusElement %s\n", element->name.toUTF8());
-        }
-        else {
+        if (el == nullptr)
+          el = createExtendedElement(element);
+
+        if (el != nullptr) {
             el->configure();
             el->setTopLeftPosition(element->x, element->y);
             
@@ -173,6 +174,42 @@ void StatusArea::configure()
         showBorders = config->showBorders;
         repaint();
     }
+}
+
+/**
+ * Here when there is an element reference in the layout that didn't have a matching
+ * component in the child list.  This only happens for extended components
+ * since the intrinsic components are always added as (possibly disabled)
+ * children in the constructor.
+ */
+StatusElement* StatusArea::createExtendedElement(DisplayElement* ref)
+{
+    StatusElement* element = nullptr;
+    UIConfig* config = display->getProvider()->getUIConfig();
+    UIElementDefinition* def = config->findDefinition(ref->name);
+    if (def == nullptr) {
+        Trace(1, "StatusArea: Unknwon UIElement definition name %s",
+              ref->name.toUTF8());
+    }
+    else {
+        // a better factory for these somewhere?
+        UIElement* uie = UIElement::createElement(display->getProvider(), def);
+        if (uie != nullptr) {
+            // temporary: wrap it in something that makes it look
+            // like a StatusElement
+            element = new UIElementStatusAdapter(this, uie);
+            // once this is added as a child, it stays there and is enabled or
+            // disabled, this ID is how configure() finds it
+            element->setComponentID(ref->name);
+            // this one is for Juce
+            addChildComponent(element);
+            // this one is for us
+            elements.add(element);
+            // and this one makes it go away
+            extendedElements.add(element);
+        }
+    }
+    return element;
 }
 
 /**

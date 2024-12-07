@@ -61,6 +61,7 @@ class StatusArea : public juce::Component
 
     class MobiusDisplay* display;
     juce::Array<StatusElement*> elements;
+    juce::OwnedArray<StatusElement> extendedElements;
     bool showBorders = false;
     bool identify = false;
     
@@ -80,6 +81,7 @@ class StatusArea : public juce::Component
     void addElement(StatusElement* el);
     void addMissing(StatusElement* el);
     bool captureConfiguration(class DisplayLayout* layout, StatusElement* el);
+    StatusElement* createExtendedElement(class DisplayElement* ref);
     
 };
 

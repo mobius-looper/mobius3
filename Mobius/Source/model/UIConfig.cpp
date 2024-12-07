@@ -75,8 +75,8 @@ UIElementDefinition* UIConfig::parseDefinition(juce::XmlElement* root)
     
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Properties")) {
-            properties.clear();
-            parseProperties(el, properties);
+            def->properties.clear();
+            parseProperties(el, def->properties);
         }
         else {
             xmlError("Unexpected XML tag name: %s\n", el->getTagName());
