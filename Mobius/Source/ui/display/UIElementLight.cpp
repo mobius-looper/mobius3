@@ -53,6 +53,7 @@ void UIElementLight::update(class MobiusView* v)
     if (symbol != nullptr) {
         Query q;
         q.symbol = symbol;
+        q.scope = scope;
         // todo: this element will either have track scope or
         // use the focused track
         if (provider->doQuery(&q)) {

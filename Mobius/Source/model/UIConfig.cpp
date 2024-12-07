@@ -71,7 +71,11 @@ UIElementDefinition* UIConfig::parseDefinition(juce::XmlElement* root)
         def->statusArea = areas.contains("main");
         def->trackStrip = areas.contains("strip");
     }
-    // todo: in the absense of an area, assume both?
+    else {
+        // for initial testing, the absense of an area implies both
+        def->statusArea = true;
+        def->trackStrip = true;
+    }
     
     for (auto* el : root->getChildIterator()) {
         if (el->hasTagName("Properties")) {

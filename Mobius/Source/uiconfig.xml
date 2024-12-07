@@ -24,6 +24,7 @@
       <Element name="output"/>
       <Element name="outputMeter"/>
       <Element name="groupName"/>
+      <Element name="RC505 Undo/Redo"/>
       <Element name="loopMeter" disabled="1"/>
     </Strip>
     <Strip name="Floating">
@@ -143,7 +144,7 @@
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>
   </Properties>
-  <ElementDefinition name="RC505 Undo/Redo" visualizer="Light">
+  <ElementDefinition name="RC505 Undo/Redo" visualizer="Light" area="strip,main">
     <Properties>
       <Property name="monitor" value="rc505:UndoRedo"/>
       <Property name="offColor" value="blue"/>

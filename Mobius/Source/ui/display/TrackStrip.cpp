@@ -24,6 +24,8 @@
 #include "TrackStrips.h"
 #include "TrackStrip.h"
 #include "FloatingStripElement.h"
+#include "UIElementStripAdapter.h"
+#include "UIElement.h"
 
 // eventually have one that takes a StatusAreaWrapper parent
 TrackStrip::TrackStrip(TrackStrips* parent)
@@ -331,7 +333,15 @@ void TrackStrip::configure()
             // in a static StripElementDefinition object that was stored on the Component
             const char* definitionName = displayElement->name.toUTF8();
             StripElementDefinition* def = StripElementDefinition::find(definitionName);
-            if (def == nullptr) {
+
+            // this is what is used for the new UIElement-based StripElements, and what
+            // all of them should eventually use
+            UIElementDefinition* newdef = nullptr;
+            if (def == nullptr)
+              newdef = config->findDefinition(displayElement->name);
+                
+
+            if (def == nullptr && newdef == nullptr) {
                 Trace(1, "TrackStrip: Unknwon StripElementDefinition name %s\n", definitionName);
             }
             else {
@@ -342,7 +352,12 @@ void TrackStrip::configure()
                     // if we ever support more than one instance per definition, which
                     // would happen once we allow multiple floating strips or other
                     // container, will need a way to identify them
-                    if (el->getDefinition() == def) {
+
+                    if (def != nullptr && el->getDefinition() == def) {
+                        child = el;
+                        break;
+                    }
+                    else if (newdef != nullptr && el->getName() == newdef->name) {
                         child = el;
                         break;
                     }
@@ -352,7 +367,11 @@ void TrackStrip::configure()
                     // haven't seen this one yet
                     // if the DisplayElement is disabled, don't make one just to hide it
                     if (!displayElement->disabled) {
-                        child = createStripElement(def);
+                        if (def != nullptr)
+                          child = createStripElement(def);
+                        else if (newdef != nullptr)
+                          child = createNewStripElement(newdef);
+                        
                         if (child != nullptr) {
                             addAndMakeVisible(child);
                             elements.add(child);
@@ -450,6 +469,33 @@ StripElement* TrackStrip::createStripElement(StripElementDefinition* def)
         Trace(1, "TrackStrip: Unsupported StripElementDefinition %s\n", def->getName());
     }
     return el;
+}
+
+StripElement* TrackStrip::createNewStripElement(UIElementDefinition* def)
+{
+    StripElement* element = nullptr;
+
+    UIElement* uie = UIElement::createElement(getProvider(), def);
+    if (uie != nullptr) {
+        // unlike use as a StatusElement, these will have a specific scope
+        // the number here is what is used to scope a Query
+        if (followTrack >= 0)
+          uie->setScope(followTrack+1);
+        
+        // temporary: wrap it in something that makes it look
+        // like a StatusElement
+        element = new UIElementStripAdapter(this, uie);
+        // once this is added as a child, it stays there and is enabled or
+        // disabled, this name is how configure() finds it
+        // note: TrackStrip uses a different convention for finding children than StatusArea
+        // SA uses the ComponentID and TS uses name, set both
+        element->setComponentID(def->name);
+        element->setName(def->name);
+
+        // configure() will call addChildComponent and elements.add
+    }
+    
+    return element;
 }
         
 /**

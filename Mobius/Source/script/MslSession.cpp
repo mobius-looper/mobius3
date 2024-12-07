@@ -261,6 +261,7 @@ void MslSession::run(MslContext* argContext, MslCompilation* argUnit, MslBinding
 
     context = argContext;
     unit = argUnit;
+    defaultScope = argContext->mslGetFocusedScope();
     
     stack = pool->allocStack();
     stack->node = node;
@@ -279,6 +280,8 @@ void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* 
     context = argContext;
     unit = argLink->unit;
     defaultScope = request->scope;
+    if (defaultScope == 0)
+      defaultScope = argContext->mslGetFocusedScope();
     
     // remember this for later when making the MslProcess
     triggerId = request->triggerId;

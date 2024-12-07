@@ -183,9 +183,12 @@ const StripElementDefinition* StripDockDefaults[] = {
 StripElement::StripElement(TrackStrip* parent, StripElementDefinition* def)
 {
     strip = parent;
+    // this is now optional for UIElementStripAdapter that doesn't need one
     definition = def;
-    setComponentID(def->getName());
-    setName(def->getName());
+    if (def != nullptr) {
+        setComponentID(def->getName());
+        setName(def->getName());
+    }
 }
         
 StripElement::~StripElement()

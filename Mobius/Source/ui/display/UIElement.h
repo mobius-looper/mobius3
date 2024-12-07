@@ -37,6 +37,10 @@ class UIElement : public juce::Component
     UIElement(class Provider* p, class UIElementDefinition* def);
     virtual ~UIElement();
 
+    void setScope(int i) {
+        scope = i;
+    }
+
     // respond to configuration changes if interested
     virtual void configure();
 
@@ -70,6 +74,7 @@ class UIElement : public juce::Component
   protected:
 
     class Provider* provider = nullptr;
+    int scope = 0;
     
 };
 

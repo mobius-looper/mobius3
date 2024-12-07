@@ -108,6 +108,11 @@ void ActionAdapter::doAction(MslEnvironment* env, MslContext* c, UIAction* actio
         }
 
         if (allowIt) {
+
+            // scope needs to be set for things to happen in the desired track
+            // here we would need to do UIAction scope number to MSL abstract scope number mapping
+            req.scope = action->getScopeTrack();
+            
             MslResult* res = env->request(c, &req);
 
             if (res != nullptr) {

@@ -2139,7 +2139,9 @@ bool Supervisor::doQuery(Query* query)
         }
         else {
             // todo: assume track numbers are scope ids but won't always be the case
-            int mslScope = getFocusedTrackIndex() + 1;
+            int mslScope = query->scope;
+            if (mslScope == 0)
+              mslScope = getFocusedTrackIndex() + 1;
             MslResult* result = scriptenv.query(s->script->mslLinkage, mslScope);
             if (result != nullptr) {
                 // only supporting integers right now

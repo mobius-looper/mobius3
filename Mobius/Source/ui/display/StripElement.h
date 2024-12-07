@@ -134,8 +134,8 @@ class StripElement : public juce::Component
     
   protected:
     
-    StripElementDefinition* definition;
-    class TrackStrip* strip;
+    StripElementDefinition* definition = nullptr;
+    class TrackStrip* strip = nullptr;
 
     bool mouseEntered = false;
 };

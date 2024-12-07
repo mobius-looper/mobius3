@@ -93,6 +93,7 @@ class TrackStrip : public juce::Component,
     UIAction trackSelectAction;
     
     class StripElement* createStripElement(class StripElementDefinition* def);
+    class StripElement* createNewStripElement(class UIElementDefinition* def);
 
 };
 

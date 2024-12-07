@@ -431,6 +431,10 @@
                 file="Source/ui/display/UIElementStatusAdapter.cpp"/>
           <FILE id="Frnbcr" name="UIElementStatusAdapter.h" compile="0" resource="0"
                 file="Source/ui/display/UIElementStatusAdapter.h"/>
+          <FILE id="xBpYxh" name="UIElementStripAdapter.cpp" compile="1" resource="0"
+                file="Source/ui/display/UIElementStripAdapter.cpp"/>
+          <FILE id="T8Kq0q" name="UIElementStripAdapter.h" compile="0" resource="0"
+                file="Source/ui/display/UIElementStripAdapter.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"
