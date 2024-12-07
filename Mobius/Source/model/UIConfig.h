@@ -31,26 +31,27 @@
 #include <JuceHeader.h>
 
 /**
- * Defines a single element that may be included in the display.
- * There will be a set of instances of this class contained in the UIConfig,
- * they define basic information about the elements that CAN be addedd to the
- * display and how they behave.  This set of objects is built-in to the system
- * and cannot be changed.
+ * Defines the configuration of one UIElement that may be added to the display.
+ * There is a built-in set of these for the hard coded elements.  User defined elements
+ * may be added through the UI or by loading script packages.
  *
- * The DisplayElement class defines the properties of a concrete use of
- * this element, including where it is, size preferences, color preferences, etc.
+ * Each element definition has a "class" which identifies the built-in class that renders
+ * the element.  The definition properties are used to configure the use of that class.
+ *
+ * Once defined there can be a single instance of this configuration added to either
+ * the status area or a track strip.
+ *
+ * The inclusion of an instance of this element and where it is is defined by
+ * DisplayElement objects found within the Layout.
+ * todo: DisplayElement should be renamed UIElementRef
  */
-class DisplayElementDefinition
+class UIElementDefinition
 {
   public:
 
-    DisplayElementDefinition() {}
-    DisplayElementDefinition(const char* argName, bool isTrackStrip = false) {
-        name = argName;
-        statusArea = !isTrackStrip;
-        trackStrip = isTrackStrip;
-    }
-    ~DisplayElementDefinition() {}
+    UIElementDefinition();
+    UIElementDefinition(const char* argName, bool isTrackStrip = false);
+    ~UIElementDefinition();
 
     /**
      * Internal name used in code.
@@ -59,8 +60,17 @@ class DisplayElementDefinition
 
     /**
      * Text shown when configuring then in the UI.
+     * todo: don't think we really need this distinction?
      */
     juce::String displayName;
+
+    /**
+     * The internal class that implements the rendering of this element.
+     * For the standard elements, this is not required.  For user defined
+     * elements it is the name of one of the configuable element rendering types
+     * such as Light, Button, Thermometer, etc.
+     */
+    juce::String visualizer;
 
     /**
      * True if this element is limited to the static or floating track strips.
@@ -73,6 +83,19 @@ class DisplayElementDefinition
      * True if this element is limited to the main display area.
      */
     bool statusArea = false;
+
+    /**
+     * True if this is an intrinsic definition that doesn't need to be saved.
+     * This is set when the (name,isTrackStrip) constructor is used which
+     * is only done at runtime to install the intrinsic definitions.
+     */
+    bool intrinsic = false;
+
+    /**
+     * Arbitrary properties for configuring the visualizer.
+     * todo: could use a ValueSet here, it has more features
+     */
+    juce::HashMap<juce::String,juce::String> properties;
 
     juce::String toXml();
     void parseXml(class XmlElement* e);
@@ -307,7 +330,7 @@ class UIConfig
     void captureLocations(juce::Component* main, juce::Component* script);
     
     // the definitions of the elements that can be displayed
-    juce::OwnedArray<DisplayElementDefinition> definitions;
+    juce::OwnedArray<UIElementDefinition> definitions;
 
     /**
      * This defines a subset of all possible parameter symbols
@@ -355,7 +378,7 @@ class UIConfig
     //
 
     // find one of the element definitiosn by name
-    DisplayElementDefinition* findDefinition(juce::String name);
+    UIElementDefinition* findDefinition(juce::String name);
 
     // find layouts
     // This is technically a "Structure" but we're implementing the
@@ -385,12 +408,13 @@ class UIConfig
     
   private:
 
-    // Build the DisplayElementDefinition list in code rather than
+    // Build the UIElementDefinition list in code rather than
     // reading it from a file.  Since these can't be user modified
     // we don't realy need file storage for them
     void hackDefinitions();
 
     // internal XML parsing and rendering tools
+    UIElementDefinition* parseDefinition(juce::XmlElement* root);
     DisplayLayout* parseLayout(juce::XmlElement* root);
     DisplayElement* parseElement(juce::XmlElement* root);
     DisplayStrip* parseStrip(juce::XmlElement* root);
@@ -399,6 +423,7 @@ class UIConfig
     void parseProperties(juce::XmlElement* root, juce::HashMap<juce::String,juce::String>& map);
     void xmlError(const char* msg, juce::String arg);
 
+    void renderDefinition(juce::XmlElement* parent, UIElementDefinition* def);
     void renderLayout(juce::XmlElement* parent, DisplayLayout* layout);
     void renderElement(juce::XmlElement* parent, DisplayElement* el);
     void renderStrip(juce::XmlElement* parent, DisplayStrip* strip);

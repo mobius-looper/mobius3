@@ -1209,6 +1209,12 @@ void MslSession::mslVisit(MslLiteral* lit)
 void MslSession::mslVisit(MslBlock* block)
 {
     logVisit(block);
+
+    // if this is a [] block consider it a "sequence" that
+    // accumulates results, this differs fro MslSequence which
+    // is in injected block that has no brackets around it
+    if (block->token.value == "[")
+      stack->accumulator = true;
     
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr) {
@@ -1218,7 +1224,19 @@ void MslSession::mslVisit(MslBlock* block)
         // concatenating a list onto the parent or returning a single
         // value that is itself a list, will become interesting if we ever
         // support arrays as values
-        popStack();
+
+        // let's try
+        MslValue* result = stack->childResults;
+        stack->childResults = nullptr;
+        
+        if (block->token.value == "[") {
+            MslValue* seq = pool->allocValue();
+            seq->list = result;
+            seq->type = MslValue::List;
+            result = seq;
+        }
+        
+        popStack(result);
     }
 }
 
@@ -2091,6 +2109,7 @@ bool MslSession::expandInKeyword(MslValue* keyword)
 void MslSession::mslVisit(MslSequence* seq)
 {
     logVisit(seq);
+    stack->accumulator = true;
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr) {
         popStack();
@@ -2285,7 +2304,26 @@ void MslSession::mslVisit(MslPrint* echo)
             strcpy(buffer, "");
             for (MslValue* v = stack->childResults ; v != nullptr ; v = v->next) {
                 if (v != stack->childResults) AppendString(" ", buffer, sizeof(buffer));
-                AppendString(v->getString(), buffer, sizeof(buffer));
+
+                if (v->type == MslValue::List || v->list != nullptr) {
+                    int lcount = 0;
+                    AppendString("[", buffer, sizeof(buffer));
+                    for (MslValue* lv = v->list ; lv != nullptr ; lv = lv->next) {
+                        if (lcount > 0)
+                          AppendString(" ", buffer, sizeof(buffer));
+                        // in theory we could have nested lists, need a much more powerful
+                        // string renderer
+                        if (lv->type == MslValue::List || lv->list != nullptr)
+                          AppendString("[...]", buffer, sizeof(buffer));
+                        else
+                          AppendString(lv->getString(), buffer, sizeof(buffer));
+                        lcount++;
+                    }
+                    AppendString("]", buffer, sizeof(buffer));
+                }
+                else {
+                    AppendString(v->getString(), buffer, sizeof(buffer));
+                }
             }
             context->mslPrint(buffer);
         }

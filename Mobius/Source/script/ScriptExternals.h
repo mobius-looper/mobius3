@@ -31,6 +31,7 @@ typedef enum {
     
     FuncGetMidiDeviceId,
     FuncMidiOut,
+    FuncInstallUIElement,
 
     VarBlockFrames,
     VarSampleRate,
@@ -136,6 +137,9 @@ class ScriptExternals
                                     juce::MidiMessage& msg,
                                     bool* returnSync, int *returnDeviceId);
     static int getMidiDeviceId(class MslContext* c, const char* name);
+
+    static bool InstallUIElement(class MslContext* c, class MslAction* action);
+    static bool buildMap(class MslValue* plist, juce::HashMap<juce::String,juce::String>& map);
 
 };
 

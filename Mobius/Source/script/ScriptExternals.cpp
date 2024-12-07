@@ -15,6 +15,8 @@
 #include "../util/Util.h"
 #include "../midi/MidiByte.h"
 
+#include "../model/UIConfig.h"
+
 #include "../Supervisor.h"
 #include "../mobius/MobiusKernel.h"
 
@@ -32,6 +34,7 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
 
     {"MidiOut", FuncMidiOut, ScriptContextNone, true},
     {"GetMidiDeviceId", FuncGetMidiDeviceId, ScriptContextNone, true},
+    {"InstallUIElement", FuncInstallUIElement, ScriptContextShell, true},
 
     // core variables, formerly implemented by ScriptInternalVariable
 
@@ -120,6 +123,9 @@ bool ScriptExternals::doAction(MslContext* c, MslAction* action)
                     break;
                 case FuncGetMidiDeviceId:
                     success = GetMidiDeviceId(c, action);
+                    break;
+                case FuncInstallUIElement:
+                    success = InstallUIElement(c, action);
                     break;
 
                 default:
@@ -462,6 +468,106 @@ int ScriptExternals::getMidiDeviceId(MslContext* c, const char* name)
     }
 
     return deviceId;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// UI Configuration
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Expecting three arguments:
+ *    name
+ *    visualizer
+ *    property list
+ *
+ * The property list is passed as a MslValue of type List and
+ * must have alternating name/value pairs.
+ *
+ * e.g: InstallUIElement("something" "Light" ["onColor" "red" "offColor" "black"])
+ *
+ * Since the parser doesn't care, could also just accept any additional arguments
+ * as name value pairs, but before you spend time on that would really like to
+ * see if we could get keyword arguments working.  Maybe if the result list
+ * is a sequence that is the signal to convert it to an MslValue list, except
+ * that in some cases we might just want an array of ints or something.
+ *
+ */
+bool ScriptExternals::InstallUIElement(MslContext* c, MslAction* action)
+{
+    bool success = false;
+
+    if (c->mslGetContextId() != MslContextShell) {
+        Trace(1, "InstallUIElement must be called in shell context");
+    }
+    else {
+        Supervisor* s = static_cast<Supervisor*>(c);
+
+        MslValue* name = action->arguments;
+        MslValue* visualizer = nullptr;
+        MslValue* properties = nullptr;
+
+        if (name != nullptr) {
+            visualizer = name->next;
+            if (visualizer != nullptr)
+              properties = visualizer->next;
+        }
+
+        if (name == nullptr)
+          Trace(1, "MidiOut: Missing element name");
+        else if (visualizer == nullptr)
+          Trace(1, "MidiOut: Missing visualizer");
+        else if (properties == nullptr || properties->list == nullptr)
+          Trace(1, "MidiOut: Missing properties");
+        else {
+
+            UIConfig* config = s->getUIConfig();
+            juce::String jname (name->getString());
+            UIElementDefinition* def = config->findDefinition(jname);
+            if (def != nullptr) {
+                // here we could add missing options
+                // or override some that need to be respecified
+            }
+            else {
+                def = new UIElementDefinition();
+                def->name = jname;
+                // todo: could do some validation on this
+                def->visualizer = juce::String(visualizer->getString());
+
+                // now the hard part
+                if (!buildMap(properties->list, def->properties))
+                  delete def;
+                else {
+                    config->definitions.add(def);
+                    s->updateUIConfig();
+                    success = true;
+                }
+            }
+        }
+    }
+
+    return success;
+}
+
+bool ScriptExternals::buildMap(MslValue* plist, juce::HashMap<juce::String,juce::String>& map)
+{
+    bool success = true;
+    
+    while (plist != nullptr) {
+        MslValue* name = plist;
+        MslValue* value = plist->next;
+        if (value == nullptr) {
+            Trace(1, "ScriptExternals: Malformed property list");
+            success = false;
+            break;
+        }
+        else {
+            map.set(juce::String(name->getString()), juce::String(value->getString()));
+            plist = value->next;
+        }
+    }
+    return success;
 }
 
 /****************************************************************************/

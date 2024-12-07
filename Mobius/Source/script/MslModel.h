@@ -373,7 +373,8 @@ class MslSequence : public MslNode
     }
 
     bool armed = false;
-    
+
+    // should this be a block subclass?
     MslSequence* getSequence() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}

@@ -13,6 +13,96 @@
 
 //////////////////////////////////////////////////////////////////////
 //
+// UIElementDefinition
+//
+//////////////////////////////////////////////////////////////////////
+
+UIElementDefinition::UIElementDefinition()
+{
+}
+
+UIElementDefinition::UIElementDefinition(const char* argName, bool isTrackStrip)
+{
+    name = argName;
+    statusArea = !isTrackStrip;
+    trackStrip = isTrackStrip;
+    intrinsic = true;
+}
+
+UIElementDefinition::~UIElementDefinition()
+{
+}
+
+void UIConfig::renderDefinition(juce::XmlElement* parent, UIElementDefinition* def)
+{
+    // suppress the intrinsics
+    if (!def->intrinsic) {
+        juce::XmlElement* root = new juce::XmlElement("ElementDefinition");
+        parent->addChildElement(root);
+
+        if (def->name.length() > 0) root->setAttribute("name", def->name);
+        if (def->displayName.length() > 0) root->setAttribute("displayName", def->displayName);
+        if (def->visualizer.length() > 0) root->setAttribute("visualizer", def->visualizer);
+
+        // todo: convert the old model flags into areas
+        juce::StringArray areas;
+        if (def->trackStrip)
+          areas.add("strip");
+        if (def->statusArea)
+          areas.add("main");
+        juce::String area = areas.joinIntoString(",");
+        if (area.length() > 0) root->setAttribute("area", area);
+
+        renderProperties(root, def->properties);
+    }
+}
+
+UIElementDefinition* UIConfig::parseDefinition(juce::XmlElement* root)
+{
+    UIElementDefinition* def = new UIElementDefinition();
+
+    def->name = root->getStringAttribute("name");
+    def->displayName = root->getStringAttribute("displayName");
+    def->visualizer = root->getStringAttribute("visualizer");
+
+    juce::String area = root->getStringAttribute("area");
+    if (area.length() > 0) {
+        juce::StringArray areas = juce::StringArray::fromTokens(area, ",", "");
+        def->statusArea = areas.contains("main");
+        def->trackStrip = areas.contains("strip");
+    }
+    // todo: in the absense of an area, assume both?
+    
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName("Properties")) {
+            properties.clear();
+            parseProperties(el, properties);
+        }
+        else {
+            xmlError("Unexpected XML tag name: %s\n", el->getTagName());
+        }
+    }
+
+    return def;
+}
+
+// Searching these object lists doesn't happen often so we'll
+// just do linear for simplicity
+
+UIElementDefinition* UIConfig::findDefinition(juce::String name)
+{
+    UIElementDefinition* found = nullptr;
+    for (auto def : definitions) {
+        if (def->name == name) {
+            found = def;
+            break;
+        }
+    }
+    return found;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // UIConfig
 //
 //////////////////////////////////////////////////////////////////////
@@ -23,21 +113,6 @@ UIConfig::UIConfig()
 
 UIConfig::~UIConfig()
 {
-}
-
-// Searching these object lists doesn't happen often so we'll
-// just do linear for simplicity
-
-DisplayElementDefinition* UIConfig::findDefinition(juce::String name)
-{
-    DisplayElementDefinition* found = nullptr;
-    for (auto def : definitions) {
-        if (def->name == name) {
-            found = def;
-            break;
-        }
-    }
-    return found;
 }
 
 DisplayLayout* UIConfig::findLayout(juce::String name)
@@ -489,12 +564,15 @@ void UIConfig::parseXml(juce::String xml)
                 properties.clear();
                 parseProperties(el, properties);
             }
+            else if (el->hasTagName("ElementDefinition")) {
+                definitions.add(parseDefinition(el));
+            }
             else {
                 xmlError("Unexpected XML tag name: %s\n", el->getTagName());
             }
         }
 
-        // not stored currently, synthesize it at runtime
+        // these are not serialized but the configuration UI needs to see them
         hackDefinitions();
     }
 }
@@ -641,6 +719,9 @@ juce::String UIConfig::toXml()
 
     renderProperties(&root, properties);
 
+    for (auto def : definitions)
+      renderDefinition(&root, def);
+
     return root.toString();
 }
 
@@ -782,18 +863,18 @@ void UIConfig::renderProperties(juce::XmlElement* parent, juce::HashMap<juce::St
  */
 void UIConfig::hackDefinitions()
 {
-    definitions.add(new DisplayElementDefinition("ModeElement"));
-    definitions.add(new DisplayElementDefinition("BeatersElement"));
-    definitions.add(new DisplayElementDefinition("LoopMeterElement"));
-    definitions.add(new DisplayElementDefinition("CounterElement"));
-    definitions.add(new DisplayElementDefinition("FloatingStripElement"));
-    definitions.add(new DisplayElementDefinition("ParametersElement"));
-    definitions.add(new DisplayElementDefinition("AudioMeterElement"));
-    definitions.add(new DisplayElementDefinition("LayerElement"));
-    definitions.add(new DisplayElementDefinition("AlertElement"));
-    definitions.add(new DisplayElementDefinition("MinorModesElement"));
-    definitions.add(new DisplayElementDefinition("TempoElement"));
-    definitions.add(new DisplayElementDefinition("LoopWindowElement"));
+    definitions.add(new UIElementDefinition("ModeElement"));
+    definitions.add(new UIElementDefinition("BeatersElement"));
+    definitions.add(new UIElementDefinition("LoopMeterElement"));
+    definitions.add(new UIElementDefinition("CounterElement"));
+    definitions.add(new UIElementDefinition("FloatingStripElement"));
+    definitions.add(new UIElementDefinition("ParametersElement"));
+    definitions.add(new UIElementDefinition("AudioMeterElement"));
+    definitions.add(new UIElementDefinition("LayerElement"));
+    definitions.add(new UIElementDefinition("AlertElement"));
+    definitions.add(new UIElementDefinition("MinorModesElement"));
+    definitions.add(new UIElementDefinition("TempoElement"));
+    definitions.add(new UIElementDefinition("LoopWindowElement"));
 
 
     // these were from old code and not yet implemented
@@ -828,19 +909,19 @@ void UIConfig::hackDefinitions()
     // There were a lot of things defined, but we only implemented these
     // so only need to include things here that have implementations
     
-    definitions.add(new DisplayElementDefinition("trackNumber", true));
-    definitions.add(new DisplayElementDefinition("focusLock", true));
-    definitions.add(new DisplayElementDefinition("loopRadar", true));
-    definitions.add(new DisplayElementDefinition("loopMeter", true));
-    definitions.add(new DisplayElementDefinition("loopStack", true));
-    definitions.add(new DisplayElementDefinition("output", true));
-    definitions.add(new DisplayElementDefinition("input", true));
-    definitions.add(new DisplayElementDefinition("feedback", true));
-    definitions.add(new DisplayElementDefinition("altFeedback", true));
-    definitions.add(new DisplayElementDefinition("pan", true));
-    definitions.add(new DisplayElementDefinition("outputMeter", true));
-    definitions.add(new DisplayElementDefinition("inputMeter", true));
-    definitions.add(new DisplayElementDefinition("groupName", true));
+    definitions.add(new UIElementDefinition("trackNumber", true));
+    definitions.add(new UIElementDefinition("focusLock", true));
+    definitions.add(new UIElementDefinition("loopRadar", true));
+    definitions.add(new UIElementDefinition("loopMeter", true));
+    definitions.add(new UIElementDefinition("loopStack", true));
+    definitions.add(new UIElementDefinition("output", true));
+    definitions.add(new UIElementDefinition("input", true));
+    definitions.add(new UIElementDefinition("feedback", true));
+    definitions.add(new UIElementDefinition("altFeedback", true));
+    definitions.add(new UIElementDefinition("pan", true));
+    definitions.add(new UIElementDefinition("outputMeter", true));
+    definitions.add(new UIElementDefinition("inputMeter", true));
+    definitions.add(new UIElementDefinition("groupName", true));
 
     // todo: derive the availableParameters list from Symbols marked
     // in some way or maybe just keep a static list

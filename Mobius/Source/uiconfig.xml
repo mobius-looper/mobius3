@@ -142,4 +142,9 @@
     <Property name="y" value="42"/>
     <Property name="z" value="true"/>
   </Properties>
+  <ElementDefinition name="foo" visualizer="bar">
+    <Properties>
+      <Property name="a" value="b"/>
+    </Properties>
+  </ElementDefinition>
 </UIConfig>

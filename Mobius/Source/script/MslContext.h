@@ -118,6 +118,10 @@ class MslAction
     // positional arguments on a list
     MslValue* arguments = nullptr;
 
+    // keyword arguments for a few functions
+    // doesn't work yet and may never
+    //MslBinding* keywordArguments = nullptr;
+
     // script session that created this action, can be by library functions
     // to pull additional information from the script runtime environment
     class MslSessionInterface* session = nullptr;

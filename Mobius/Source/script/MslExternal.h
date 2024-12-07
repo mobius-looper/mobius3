@@ -101,6 +101,14 @@ class MslExternal
     // the signature specification supplied by the container
     juce::String signatureDefinition;
 
+    // true if the expects keyword arguments passed as MslBindings
+    // rather than positional arguments passed as MslValues
+    // kludgey way to work around the lack of signatures but might be
+    // generally useful for really generic functions that don't much care
+    // what they get
+    // todo: this doesn't work yet, and may never
+    bool keywordArguments = false;
+
     // a value indiciating an type identifier when the container needs
     // to use ids that aren't unique or pointers to different things
     int type = 0;
@@ -120,6 +128,7 @@ class MslExternal
         name = src.name;
         context = src.context;
         isFunction = src.isFunction;
+        keywordArguments = src.keywordArguments;
         type = src.type;
         id = src.id;
         object = src.object;

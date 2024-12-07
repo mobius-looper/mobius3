@@ -586,8 +586,23 @@ void MobiusConsole::showResult(MslResult* result)
 
 void MobiusConsole::showValue(MslValue* value)
 {
-    if (value != nullptr)
-      console.add(juce::String(value->getString()));
+    if (value != nullptr) {
+        if (value->type == MslValue::List || value->list != nullptr) {
+            juce::String lvalue;
+            for (MslValue* v = value->list ; v != nullptr ; v = v->next) {
+                if (lvalue.length() == 0)
+                  lvalue += "[";
+                else
+                  lvalue += " ";
+                lvalue += v->getString();
+            }
+            lvalue += "]";
+            console.add(lvalue);
+        }
+        else {
+            console.add(juce::String(value->getString()));
+        }
+    }
 }
 
 void MobiusConsole::doStatus(juce::String line)

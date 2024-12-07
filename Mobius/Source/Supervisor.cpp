@@ -2431,6 +2431,11 @@ bool Supervisor::mslResolve(juce::String name, MslExternal* ext)
             case ScriptContextShell: ext->context = MslContextShell; break;
             case ScriptContextKernel: ext->context = MslContextKernel; break;
         }
+
+        // this is the only one that requires keyword arguments right now,
+        // should go in the definition
+        if (def->id == FuncInstallUIElement)
+          ext->keywordArguments = true;
                 
         // todo: some kind of signature definition for functions
         
