@@ -1516,9 +1516,12 @@ void MslSession::doOperator(MslOperator* opnode)
         // everything needs two operands except for !
         MslValue* value1 = getArgument(0);
         MslValue* value2 = nullptr;
-        if (op != MslNot)
-          value2 = getArgument(1);
-
+        if (op != MslNot) {
+            value2 = getArgument(1);
+            if (value2 == nullptr)
+              addError(opnode, "Missing operand");
+        }
+            
         if (errors == nullptr) {
     
             switch (op) {
@@ -1609,6 +1612,7 @@ void MslSession::doOperator(MslOperator* opnode)
  */
 void MslSession::addTwoThings(MslValue* v1, MslValue* v2, MslValue* res)
 {
+    // not don't allow Stringy types like Keyword here, it must be String
     if (v1->type == MslValue::String || v2->type == MslValue::String) {
         // if we flesh out string operations more, would be nice if MslValue
         // could do this sort of thing
@@ -1643,12 +1647,16 @@ void MslSession::addTwoThings(MslValue* v1, MslValue* v2, MslValue* res)
  *
  * Use of unresolved symbols is a little weird, and prevents checking for errors
  * at the point of evaluation.  But the alternative is to intern a bunch of Symbols.
+ *
+ * update: I don't think this is supported any more.  If you want to compare a
+ * an enumerated parameter value you have to use either the integer (which most won't know)
+ * a quoted string, or a Keyword (which is effectively a quoted string)
  */
 bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
 {
     bool bresult = false;
 
-    if (value1->type == MslValue::String || value2->type == MslValue::String) {
+    if (value1->isStringy() || value2->isStringy()) {
         // it doesn't really matter if one side is a symbol Enum, they
         // both compare as strings
         // numeric coersion to strings is a little weird, does that cause trouble?
@@ -1969,7 +1977,7 @@ void MslSession::mslVisit(MslIn* innode)
             // capture the child results and reset it to accumulate body results
             MslValue* cv = stack->childResults;
             while (cv != nullptr) {
-                if (cv->type == MslValue::String) {
+                if (cv->type == MslValue::String || cv->type == MslValue::Keyword) {
                     // accept a few keywords as shorthand
                     if (!expandInKeyword(cv)) {
                         addError(innode, "Unrecognized track sequence keyword");
@@ -2182,24 +2190,30 @@ void MslSession::mslVisit(MslContextNode* con)
 }
 
 /**
- * Keywords have no value
+ * Keywords started out life having no value on evaluation.
+ * I don't remember why that was, because they were only used in
+ * function signatures for :optional and signatures are not evaluated.
+ * I don't think so anyway.
  *
- * !! I kind of wish they did.  For externals it's a convenient way
- * to pass symbols: MidiOut(:note, 0, 42) rather than ("note", 0, 42)
+ * I lated found using keywords as an alternatve to quoted strings to
+ * be very convenient and more readable, and useful when passing keyword
+ * argument lists to the application.  So ":foo" will evaluate as a string
+ * whose value is the symbol name with the special MslValue type Keyword.
  *
- * Why would this also not be useful for enumerations?
+ * This may mess up something in function call argument parsing, but that's obscure
+ * and we can find ways around that that.
  *
- *     if (mode == :Reset)
- *     if (quantize == :subcycle)
- *
- * The later could avoid the coercion shenangans we're doing now and would
- * be consistent with "quoted symbol".  Alternately promote symbol as a MslValue
- * type that just has the name.
+ * Revisist the weird comparison we're allowing with enumerated parameters and
+ * see if this helps any.
  */
 void MslSession::mslVisit(MslKeyword* key)
 {
     logVisit(key);
-    popStack();
+
+    MslValue* v = pool->allocValue();
+    v->setKeyword(key->name.toUTF8());
+    
+    popStack(v);
 }
 
 /**

@@ -273,6 +273,10 @@ class MslKeyword : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Keyword";}
 
+    // if you want to use these as another form of string quoting
+    // e.g. if muteMode == :cancel  then they have to be operands
+    bool operandable() override {return true;}
+
     // take the next symbol
     bool wantsToken(class MslParser* p, MslToken& t) override;
     

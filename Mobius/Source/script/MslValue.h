@@ -75,6 +75,9 @@ class MslValue
         String,
         Enum,
         List,
+        // a string that used : prefix quoting, can have
+        // special meaning when parsing keyword argument lists
+        Keyword,
         // may not need this but keep it around
         Symbol
     };
@@ -144,6 +147,17 @@ class MslValue
             if (strlen(string) > 0)
               type = String;
         }
+    }
+    
+    void setKeyword(const char* s) {
+        setString(s);
+        type = Keyword;
+    }
+
+    // true if this is a String or Keyword that can be treated as one
+    // simplifies some evaluation logic
+    bool isStringy() {
+        return (type == String || type == Keyword);
     }
 
     void setEnum(const char* s, int i) {
