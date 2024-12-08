@@ -1,13 +1,16 @@
 
 #include "MslContext.h"
 #include "MslValue.h"
+#include "MslArgumentParser.h"
 
 MslArgumentParser::MslArgumentParser(MslAction* action)
 {
     list = action->arguments;
+    item = list;
+    position = 0;
 }
 
-void MslArgumentParser::seek(int index)
+MslValue* MslArgumentParser::seek(int index)
 {
     if (index < position) {
         item = list;
@@ -28,36 +31,55 @@ void MslArgumentParser::advance()
     }
 }
 
-MslValue* MslArgumentParser::consume()
+bool MslArgumentParser::hasNext()
+{
+    return (item != nullptr);
+}
+
+MslValue* MslArgumentParser::next()
 {
     MslValue* result = item;
     advance();
     return result;
 }
 
-MslValue* MslArgumentParser::get(int index)
+const char* MslArgumentParser::nextString()
 {
-    seek(index);
-    return item;
+    const char* result = nullptr;
+    MslValue* v = next();
+    if (v != nullptr)
+      result = v->getString();
+    return result;
 }
 
-MslArgumentParser::KeywordArg* MslArgumentParser::consumeKeyword()
+int MslArgumentParser::nextInt()
 {
-    KeywordArg* result = nullptr;
+    // todo: can't return "null" here to mean missing, need something
+    // without calling hasNext?
+    int result = 0;
+    MslValue* v = next();
+    if (v != nullptr)
+      result = v->getInt();
+    return result;
+}
+
+MslArgumentParser::Keyarg* MslArgumentParser::nextKeyarg()
+{
+    Keyarg* result = nullptr;
     
     if (item != nullptr) {
-        keywordArg.init();
-        result = &keywordArg;
+        keyarg.init();
+        result = &keyarg;
         
         if (item->type != MslValue::Keyword)
-          keywordArg.error = true;
+          keyarg.error = true;
         else {
-            keywordArg.name = item->getString();
+            keyarg.name = item->getString();
             advance();
             if (item == nullptr)
-              keywordArg.error = true;
+              keyarg.error = true;
             else {
-                keywordArg.value = item;
+                keyarg.value = item;
                 advance();
             }
         }

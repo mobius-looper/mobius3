@@ -22,6 +22,7 @@
 
 #include "MslContext.h"
 #include "MslExternal.h"
+#include "MslArgumentParser.h"
 
 #include "ScriptExternals.h"
 
@@ -479,19 +480,17 @@ int ScriptExternals::getMidiDeviceId(MslContext* c, const char* name)
 /**
  * Expecting three arguments:
  *    name
+ *    variable
  *    visualizer
  *    property list
  *
- * The property list is passed as a MslValue of type List and
- * must have alternating name/value pairs.
+ * The property list consists of alternating pairs of keyword symbols and values
  *
- * e.g: InstallUIElement("something" "Light" ["onColor" "red" "offColor" "black"])
+ * e.g: InstallUIElement("something" "myvar" "Light" :onColor "red" :offColor "black")
  *
- * Since the parser doesn't care, could also just accept any additional arguments
- * as name value pairs, but before you spend time on that would really like to
- * see if we could get keyword arguments working.  Maybe if the result list
- * is a sequence that is the signal to convert it to an MslValue list, except
- * that in some cases we might just want an array of ints or something.
+ * Since this is specific to variable visualizers might want to call this
+ *
+ * InstallVariableUIElement
  *
  */
 bool ScriptExternals::InstallUIElement(MslContext* c, MslAction* action)
@@ -504,26 +503,22 @@ bool ScriptExternals::InstallUIElement(MslContext* c, MslAction* action)
     else {
         Supervisor* s = static_cast<Supervisor*>(c);
 
-        MslValue* name = action->arguments;
-        MslValue* visualizer = nullptr;
-        MslValue* properties = nullptr;
+        MslArgumentParser p(action);
 
-        if (name != nullptr) {
-            visualizer = name->next;
-            if (visualizer != nullptr)
-              properties = visualizer->next;
-        }
+        const char* name = p.nextString();
+        const char* variable = p.nextString();
+        const char* visualizer = p.nextString();
 
         if (name == nullptr)
-          Trace(1, "MidiOut: Missing element name");
+          Trace(1, "InstallUIElement: Missing element name");
+        else if (variable == nullptr)
+          Trace(1, "InstallUIElement: Missing variable");
         else if (visualizer == nullptr)
-          Trace(1, "MidiOut: Missing visualizer");
-        else if (properties == nullptr || properties->list == nullptr)
-          Trace(1, "MidiOut: Missing properties");
+          Trace(1, "InstallUIElement: Missing visualizer");
         else {
 
             UIConfig* config = s->getUIConfig();
-            juce::String jname (name->getString());
+            juce::String jname(name);
             UIElementDefinition* def = config->findDefinition(jname);
             bool created = false;
             if (def == nullptr) {
@@ -538,10 +533,21 @@ bool ScriptExternals::InstallUIElement(MslContext* c, MslAction* action)
             }
 
             // todo: could do some validation on this
-            def->visualizer = juce::String(visualizer->getString());
+            def->visualizer = visualizer;
+            def->properties.set("monitor", variable);
 
-            // now the hard part
-            if (!buildMap(properties->list, def->properties)) {
+            bool error = false;
+            MslArgumentParser::Keyarg* keyarg = p.nextKeyarg();
+            while (!error && keyarg != nullptr) {
+                error = keyarg->error;
+                if (!error) {
+                    def->properties.set(juce::String(keyarg->name), juce::String(keyarg->value->getString()));
+                    keyarg = p.nextKeyarg();
+                }
+            }
+
+            if (error) {
+                Trace(1, "InstallUIElement: Malformed keyword list");
                 if (created)
                   delete def;
             }

@@ -13,7 +13,7 @@ class MslArgumentParser
   public:
 
     // helper structure to return key/value pairs
-    struct KeywordArg {
+    struct Keyarg {
         const char* name = nullptr;
         MslValue* value = nullptr;
         bool error = false;
@@ -27,10 +27,13 @@ class MslArgumentParser
     MslArgumentParser(class MslAction* action);
     ~MslArgumentParser() {}
 
-    MslValue* get(int index);
-    void seek(int index);
-
-    KeywordArg* nextKeywordArg();
+    MslValue* seek(int index);
+    void advance();
+    bool hasNext();
+    MslValue* next();
+    const char* nextString();
+    int nextInt();
+    Keyarg* nextKeyarg();
     
   private:
 
@@ -38,6 +41,6 @@ class MslArgumentParser
     MslValue* item = nullptr;
     int position = 0;
 
-    KeywordArg keywordArg;
+    Keyarg keyarg;
     
 };    

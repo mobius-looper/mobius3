@@ -147,7 +147,7 @@
   <ElementDefinition name="RC505 Undo/Redo" visualizer="Light" area="strip,main">
     <Properties>
       <Property name="monitor" value="rc505:UndoRedo"/>
-      <Property name="offColor" value="blue"/>
+      <Property name="offColor" value="green"/>
       <Property name="onColor" value="white"/>
     </Properties>
   </ElementDefinition>

@@ -785,6 +785,10 @@
         <FILE id="NoInlJ" name="MobiusConsole.cpp" compile="1" resource="0"
               file="Source/script/MobiusConsole.cpp"/>
         <FILE id="EFxzMc" name="MobiusConsole.h" compile="0" resource="0" file="Source/script/MobiusConsole.h"/>
+        <FILE id="zfsEO0" name="MslArgumentParser.cpp" compile="1" resource="0"
+              file="Source/script/MslArgumentParser.cpp"/>
+        <FILE id="x3DxF0" name="MslArgumentParser.h" compile="0" resource="0"
+              file="Source/script/MslArgumentParser.h"/>
         <FILE id="gucP7Y" name="MslBinding.cpp" compile="1" resource="0" file="Source/script/MslBinding.cpp"/>
         <FILE id="oflUBe" name="MslBinding.h" compile="0" resource="0" file="Source/script/MslBinding.h"/>
         <FILE id="QIzNz4" name="MslCollision.h" compile="0" resource="0" file="Source/script/MslCollision.h"/>
