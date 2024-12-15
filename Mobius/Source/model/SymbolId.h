@@ -237,6 +237,7 @@ typedef enum {
     FuncMidiStart,
     FuncMidiStop,
 
+    FuncMove,
     FuncMultiply,
     FuncMute,
     FuncMuteRealign,

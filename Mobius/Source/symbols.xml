@@ -31,7 +31,7 @@
 
   <Function name="MidiStart" tree='Sync'/>
   <Function name="MidiStop" tree='Sync'/>
-
+  <Function name="Move" mayFocus='true' mayCancelMute='true' tree='Movement'/>
   <Function name="Multiply" sustainable='true' mayFocus='true' mayCancelMute='true' tree='Recording'/>
   <Function name="Mute" sustainable='true' mayFocus='true' tree='Track'/>
   <!-- core has this as a mayCancelMute, why? -->

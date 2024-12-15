@@ -93,6 +93,7 @@ void Actionator::doAction(UIAction* action)
         Trace(1, "Actionator: action with incorrect level %s %ld\n",
               symbol->getName(), (long)symbol->level);
     }
+#if 0    
     else if (symbol->id == FuncStart) {
         // fitting this in to the existing framework is too much a PITA,
         // simulate it
@@ -105,14 +106,15 @@ void Actionator::doAction(UIAction* action)
     else if (symbol->id == FuncStop) {
         // simulate it
         UIAction first;
-        first.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncPause);
+        first.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
         first.setScope(action->getScope());
         doAction(&first);
         UIAction second;
-        second.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncRestart);
+        second.symbol = mMobius->getContainer()->getSymbols()->getSymbol(FuncPause);
         second.setScope(action->getScope());
         doAction(&second);
     }
+#endif    
     else if (symbol->coreFunction) {
         Function* f = (Function*)(symbol->coreFunction);
         doFunction(action, f);

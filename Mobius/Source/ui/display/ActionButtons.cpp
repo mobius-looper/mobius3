@@ -13,6 +13,7 @@
 #include "../../model/Binding.h"
 #include "../../model/DynamicConfig.h"
 #include "../../model/Symbol.h"
+#include "../../model/FunctionProperties.h"
 #include "../../model/ScriptProperties.h"
 #include "../../model/SampleProperties.h"
 
@@ -490,7 +491,9 @@ void ActionButtons::buttonUp(ActionButton* b)
         Symbol* s = action->symbol;
         // don't like how this logic is duplicated in several places
         if (s != nullptr &&
-            (s->coreFunction != nullptr ||
+            // formerly just tested coreFunction here and let Mobius sort
+            // it out, but the FunctionProperties should be up to date
+            ((s->functionProperties != nullptr && s->functionProperties->sustainable) ||
              (s->script != nullptr && s->script->sustainable))) {
 
             action->sustainEnd = true;

@@ -308,6 +308,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {"SelectLoop", FuncSelectLoop},
     {"MidiStart", FuncMidiStart},
     {"MidiStop", FuncMidiStop},
+    {"Move", FuncMove},
     {"Multiply", FuncMultiply},
     {"Mute", FuncMute},
     {"MuteRealign", FuncMuteRealign},

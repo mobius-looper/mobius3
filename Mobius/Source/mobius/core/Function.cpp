@@ -500,6 +500,10 @@ bool Function::isMuteCancel(Preset* p)
 			break;
 	}
 
+    // new: Start function always cancels mute
+    if (this == MyStart)
+      isCancel = true;
+
 	return isCancel;
 }
 
@@ -1367,6 +1371,8 @@ void Function::initStaticFunctions()
         add(StaticFunctions, Shuffle);
         add(StaticFunctions, Mute);
         add(StaticFunctions, Pause);
+        add(StaticFunctions, MyStop);
+        add(StaticFunctions, MyStart);
         add(StaticFunctions, Solo);
         add(StaticFunctions, Undo);
         add(StaticFunctions, Redo);

@@ -71,23 +71,28 @@ EventType* MoveEvent = &MoveEventObj;
  */
 class MoveFunction : public Function {
   public:
-	MoveFunction(bool drift);
+	MoveFunction(bool start, bool drift);
 	Event* scheduleEvent(Action* action, Loop* l);
 	void doEvent(Loop* loop, Event* event);
 	void undoEvent(Loop* loop, Event* event);
 	void prepareJump(Loop* l, Event* e, JumpContext* jump);
+  private:
+    bool mStart = false;
 };
 
 // NOTE: Originally used Move but that conflicts with something
 // in the QD.framework on OSX
 
-MoveFunction MyMoveObj {false};
+MoveFunction MyMoveObj {false, false};
 Function* MyMove = &MyMoveObj;
 
-MoveFunction DriftObj {true};
+MoveFunction DriftObj {false, true};
 Function* Drift = &DriftObj;
 
-MoveFunction::MoveFunction(bool drift)
+MoveFunction StartObj {true, false};
+Function* MyStart = &StartObj;
+
+MoveFunction::MoveFunction(bool start, bool drift)
 {
 	eventType = MoveEvent;
 	quantized = false;
@@ -99,12 +104,20 @@ MoveFunction::MoveFunction(bool drift)
 		setName("Drift");
 		scriptOnly = true;
 	}
+    else if (start) {
+        setName("Start");
+        mayCancelMute = true;
+        // what does this mean?
+        trigger = true;
+        mStart = true;
+    }
 	else {
 		setName("Move");
 
         // until we support binding arguments it doesn't make sense
         // to expose this
-        scriptOnly = true;
+        // update: need to implement Stop
+        //scriptOnly = true;
 
 		// considered a trigger function for Mute cancel
 		mayCancelMute = true;
@@ -117,21 +130,42 @@ Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
 	Event* event = NULL;
     EventManager* em = l->getTrack()->getEventManager();
 
-	// Since we don't quantize don't need to bother with modifying
-	// any previously scheduled events.
-
-    // New location specified with an expression whose result was left
-    // in scriptArg
-
-    long frame = action->arg.getInt();
-
-    event = Function::scheduleEvent(action, l);
-    if (event != NULL) {
-        event->number = frame;
-        if (!event->reschedule)
-          em->schedulePlayJump(l, event);
+    if (mStart) {
+        if (l->getFrame() == 0) {
+            // already there, but need to go out of Pause mode
+            // if we're in it
+            if (l->isPaused()) {
+                l->setMuteMode(false);
+                l->resumePlay();
+            }
+            else {
+                // noop?
+            }
+        }
+        else {
+            event = Function::scheduleEvent(action, l);
+            if (event != NULL) {
+                event->number = 0;
+                if (!event->reschedule)
+                  em->schedulePlayJump(l, event);
+            }
+        }
     }
+    else {
+        // Since we don't quantize don't need to bother with modifying
+        // any previously scheduled events.
 
+        // New location specified with an expression whose result was left
+        // in scriptArg
+
+        long frame = action->arg.getInt();
+        event = Function::scheduleEvent(action, l);
+        if (event != NULL) {
+            event->number = frame;
+            if (!event->reschedule)
+              em->schedulePlayJump(l, event);
+        }
+    }
 	return event;
 }
 

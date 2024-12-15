@@ -135,6 +135,7 @@ EventType* MuteEvent = &MuteEventObj;
 class MuteFunction : public Function {
   public:
 	MuteFunction(bool pause, bool sus, bool restart, bool glob, bool absolute);
+    MuteFunction(bool stop);
     void invoke(Action* action, Mobius* m);
     Event* invoke(Action* action, Loop* l);
     void invokeLong(Action* action, Loop* l);
@@ -149,6 +150,7 @@ class MuteFunction : public Function {
 	bool mMute;
 	bool mPause;
 	bool mRestart;
+    bool mStop;
 };
 
 // SUS first for longFunction
@@ -171,6 +173,9 @@ Function* MuteOff = &MuteOffObj;
 MuteFunction PauseObj {true, false, false, false, false};
 Function* Pause = &PauseObj;
 
+MuteFunction StopObj {true};
+Function* MyStop = &StopObj;
+
 MuteFunction SUSMuteRestartObj {false, true, true, false, false};
 Function* SUSMuteRestart = &SUSMuteRestartObj;
 
@@ -182,8 +187,27 @@ Function* GlobalPause = &GlobalPauseObj;
 
 // TODO: SUSGlobalMute and SUSGlobalPause seem useful
 
+// tired of endless bool flags
+MuteFunction::MuteFunction(bool stop)
+{
+    (void)stop;
+    mStop = true;
+
+	eventType = MuteEvent;
+    mMode = MuteMode;
+	majorMode = true;
+	minorMode = true;
+	quantized = true;
+	switchStack = true;
+	cancelReturn = true;
+	mToggle = true;
+	mMute = true;
+    
+    setName("Stop");
+}
+
 MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
-								  bool absolute)
+                           bool absolute)
 {
 	eventType = MuteEvent;
     mMode = MuteMode;
@@ -196,6 +220,7 @@ MuteFunction::MuteFunction(bool pause, bool sus, bool start, bool glob,
 	mMute = true;
 	mPause = pause;
 	mRestart = start;
+    mStop = false;
 	global = glob;
 
 	// Added MuteOn for RestartOnce, may as well have MuteOff now that
@@ -309,31 +334,56 @@ Event* MuteFunction::invoke(Action* action, Loop* loop)
  */
 Event* MuteFunction::scheduleEvent(Action* action, Loop* l)
 {
-    EventManager* em = l->getTrack()->getEventManager();
+    Event* event = nullptr;
+    
+    if (mStop) {
+        if (l->isPaused()) {
+            // we're already paused, just need to move the positions
+            if (l->getFrame() == 0) {
+                // already at zero, effectively in a state of Stop already
+            }
+            else {
+                // commit any pending edits
+                l->shift(true);
+                l->setFrame(0);
+                l->recalculatePlayFrame();
+            }
+        }
+        else {
+            // same logic as normal Pause
+            EventManager* em = l->getTrack()->getEventManager();
+            event = Function::scheduleEvent(action, l);
+            if (event != NULL && !event->reschedule)
+              em->schedulePlayJump(l, event);
+        }
+    }
+    else {
+        EventManager* em = l->getTrack()->getEventManager();
 
-    // do basic event scheduling
-    Event* event = Function::scheduleEvent(action, l);
+        // do basic event scheduling
+        event = Function::scheduleEvent(action, l);
 
-	// and a play transition event
-	if (event != NULL && !event->reschedule) {
-		if (!mRestart || action->down) {
-			// this will toggle mute
-			em->schedulePlayJump(l, event);
-		}
-		else {
-			// The up transition of a SUSMuteRestart
-			// could have a RestartEvent to make this easier?
-			// !! this is a MIDI START condition
-			// !! this is no longer taking us out of mute??
-			Event* jump = em->schedulePlayJump(l, event);
+        // and a play transition event
+        if (event != NULL && !event->reschedule) {
+            if (!mRestart || action->down) {
+                // this will toggle mute
+                em->schedulePlayJump(l, event);
+            }
+            else {
+                // The up transition of a SUSMuteRestart
+                // could have a RestartEvent to make this easier?
+                // !! this is a MIDI START condition
+                // !! this is no longer taking us out of mute??
+                Event* jump = em->schedulePlayJump(l, event);
 
-			// !! why are we doing this here, shouldn't this be part
-			// of the jumpPlayEvent handler?
-			jump->fields.jump.nextLayer = l->getPlayLayer();
-			jump->fields.jump.nextFrame = 0;
-		}
-	}
-
+                // !! why are we doing this here, shouldn't this be part
+                // of the jumpPlayEvent handler?
+                jump->fields.jump.nextLayer = l->getPlayLayer();
+                jump->fields.jump.nextFrame = 0;
+            }
+        }
+    }
+    
 	return event;
 }
 
@@ -371,6 +421,17 @@ void MuteFunction::prepareJump(Loop* l, Event* e, JumpContext* jump)
 		// but we shouldn't be here
 		Trace(l, 1, "MuteFunction: A place we shouldn't be!\n");
 	}
+    else if (mStop) {
+        // we want to end on with record frame zero and play frame
+        // at zero plus the two latencies, the play frame will
+        // still advance while we're waiting for the Stop event though
+        // so it should start at zero, but it feels like there needs
+        // to be latency loss factored in here
+        jump->frame = 0;
+        // we've already factored in latency loss so don't do it again
+        jump->latencyLossOverride = true;
+        jump->mute = true;
+    }
 	else {
 		Event* primary = e;
 		if (e->getParent() != NULL)
@@ -514,7 +575,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 	else {
 		// pause mode can come from the preset or from specific functions
 		ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
-		if (e->function == Pause || e->function == GlobalPause)	
+		if (e->function == Pause || e->function == GlobalPause || e->function == MyStop)	
 		  muteMode = MUTE_PAUSE;
 
         // ignore if we're already there
@@ -609,7 +670,7 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 			}
 			else if (muteMode == MUTE_START) {
 				// EDP stops clocks when we enter a mute in Start mode
-				sync->loopMute(l);
+                sync->loopMute(l);
 			}
 		}
 	}
@@ -617,6 +678,17 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 	// if this is not a GlobalMute, then GlobalMute is canceled
 	if (e->function != GlobalMute && invoker != Solo)
 	  l->getMobius()->cancelGlobalMute(NULL);
+
+    // Stop is a special form of Pause that rewinds to the start
+    if (e->function == MyStop && l->isPaused()) {
+        l->shift(true);
+        l->setFrame(0);
+
+        // make sure jumpPlayEvent did the right thing
+        long newFrame = l->recalculateFrame(false);
+        if (newFrame != 0)
+          Trace(1, "Mute: Inconsistent play/record frames after Stop");
+    }
 
 	l->validate(e);
 }

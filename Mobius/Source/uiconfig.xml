@@ -130,6 +130,8 @@
     <Button action="vartest1"/>
     <Button action="vartest2"/>
     <Button action="varquery"/>
+    <Button action="NextTrack"/>
+    <Button action="PrevTrack"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

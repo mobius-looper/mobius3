@@ -152,6 +152,10 @@ class MobiusState
         int index = 0;
         int number = 0;
 
+        // from OldMobiusState, temporary
+        int preset = 0;
+        
+
         // simulated IO levels like audio tracks have
         int inputMonitorLevel = 0;
         int outputMonitorLevel = 0;
@@ -175,6 +179,18 @@ class MobiusState
         int layerCount = 0;
         int activeLayer = 0;
         int nextLoop = 0;
+        // OldMobiusState has this, don't think we need both this and nextLoop
+        // int returnLoop = 0;
+
+        // latching flags set when the loop crosses boundaries
+        bool beatLoop = false;
+        bool beatCycle = false;
+        bool beatSubCycle = false;
+
+        // loop window position
+        int windowOffset = 0;
+        // total frames in all layers, used to draw loop window?
+        int historyFrames = 0;
         
         // play position
         int frames = 0;
@@ -188,8 +204,14 @@ class MobiusState
         int input = 0;
         int output = 0;
         int feedback = 0;
+        int altFeedback = 0;
         int pan = 0;
 
+        // OldMobiusState
+        bool solo = false;
+        bool globalMute = false;
+        bool globalPause = false;
+        
         // major and minor modes
         Mode mode = ModeReset;
         bool overdub = false;
@@ -198,6 +220,26 @@ class MobiusState
         bool pause = false;
         bool recording = false;
         bool modified = false;
+
+        // from OldMobiusState
+        // these shouldn't be booleans, need integer amounts of shift
+        bool speed = false;
+        bool pitch = false;
+        int speedToggle = 0;
+        int speedOctave = 0;
+        int speedStep = 0;
+        int speedBend = 0;
+        int pitchOctave = 0;
+        int pitchStep = 0;
+        int pitchBend = 0;
+        int timeStretch = 0;
+
+        // from OldMobiusState, the old tracks have the notion of an "active" track
+        // which needs to die, or maybe this was set for the loop "summaries" to indiciate
+        // the active loop?
+        bool active = false;
+        // not sure what this was for, seems to be unused
+        bool pending = false;
 
         juce::OwnedArray<Loop> loops;
         juce::OwnedArray<Event> events;
@@ -209,11 +251,51 @@ class MobiusState
         
         juce::Array<Region> regions;
         
+        // OldMobiusState
+        // I think this was set after loading projects
+        bool needsRefresh = false;
     };
 
     juce::OwnedArray<Track> tracks;
     // there may be more in the array than actually configured for use
     int activeTracks = 0;
+
+    // OldMobiusState, sync stuff
+    // unclear whether this should be here
+    /**
+     * New structure to hold state of the Synchronizer.
+     * Most sync state is independent of Tracks, and the older
+     * state in TrackState is duplicated.  Move toward using this
+     * for everything.
+     *
+     * The things that ARE track specific are:
+     *
+     *     syncSource
+     *     syncUnit
+     *     outSyncMaster
+     *     trackSyncMaster
+     */
+    class SyncState
+    {
+      public:
+
+        bool outStarted = false;
+        float outTempo = 0.0f;
+        int outBeat = 0;
+        int outBar = 0;
+
+        bool inStarted = false;
+        float inTempo = 0.0f;
+        int inBeat = 0;
+        int inBar = 0;
+
+        bool hostStarted = false;
+        float hostTempo = 0.0f;
+        int hostBeat = 0;
+        int hostBar = 0;
+    };
+
+    SyncState syncState;
     
   private:
     
