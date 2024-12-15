@@ -225,6 +225,18 @@ bool MslContextNode::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+bool MslFormNode::wantsToken(MslParser* p, MslToken& t)
+{
+    (void)p;
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            name =  t.value;
+            wants = true;
+        }
+    }
+    return wants;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Operators

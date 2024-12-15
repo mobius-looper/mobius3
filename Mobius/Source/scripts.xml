@@ -53,6 +53,8 @@
             added="2147483647"/>
       <File path="C:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="Namespace2"
             added="0"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\rc505.msl" name="RC505 Library"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">

@@ -54,7 +54,7 @@ class MslVisitor
     virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
     }
-    
+    virtual void mslVisit(class MslFormNode* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -887,6 +887,68 @@ class MslWaitNode : public MslNode
     bool isWaitingForNumber();
 
 };
+
+//////////////////////////////////////////////////////////////////////
+//
+// Form
+//
+//////////////////////////////////////////////////////////////////////
+
+class MslFormNode : public MslNode
+{
+  public:
+    MslFormNode(MslToken& t) : MslScopedNode(t) {}
+    virtual ~MslFormNode() {}
+
+    bool wantsToken(class MslParser* p, MslToken& t) override;
+
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
+        bool wants = false;
+        if (!hasArgs && node->isBlock() && node->token.value == "(") {
+            hasArgs = true;
+            wants = true;
+        }
+        else if (!hasBody && node->isBlock() && node->token.value == "{") {
+            hasBody = true;
+            wants = true;
+        }
+        return wants;
+    }
+
+    juce::String name;
+    bool hasArgs = false;
+    bool hasBody = false;
+    
+    MslFormNode* getForm() override {return this;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Form";}
+    
+    MslBlock* getBody() {
+        MslBlock* body = nullptr;
+        for (auto child : children) {
+            MslBlock* b = child->getBlock();
+            if (b != nullptr && child->token.value == "{") {
+                body = b;
+                break;
+            }
+        }
+        return body;
+    }
+    MslBlock* getDeclaration() {
+        MslBlock* decl = nullptr;
+        for (auto child : children) {
+            MslBlock* b = child->getBlock();
+            if (b != nullptr  && child->token.value == "(") {
+                decl = b;
+                break;
+            }
+        }
+        return decl;
+    }
+};
+
+
 
 /****************************************************************************/
 /****************************************************************************/

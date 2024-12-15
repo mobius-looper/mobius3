@@ -135,7 +135,12 @@ Event* MoveFunction::scheduleEvent(Action* action, Loop* l)
             // already there, but need to go out of Pause mode
             // if we're in it
             if (l->isPaused()) {
+                // as usual there is a confusing set of flags in Loop
+                // mMute is what makes it actually mute playback and mMuteMode
+                // I think is what says it is in Mute mode, the two are often the same
+                // but you can be muted without being in MuteMode, I think Insert does this
                 l->setMuteMode(false);
+                l->setMute(false);
                 l->resumePlay();
             }
             else {

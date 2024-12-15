@@ -555,6 +555,8 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 {
     Function* invoker = e->getInvokingFunction();
 
+    // "invoking function" is an old and confusing option, that is not
+    // necessary in most cases
 	if (invoker == MuteMidiStart ||	invoker == MuteRealign) {
 
 		// enter mute if we're not already there
@@ -572,6 +574,44 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 			l->setMuteMode(true);
 		}
 	}
+    else if (e->function == MyStop) {
+        // we're not toggling anything here, just get us to Pause mode at the beginning
+        // a play jump should have already happened
+        // should have prevent scheduling an event if we were already in Stop mode or Paused
+
+        // duplicating some of the logic below in the !muteMode case
+
+        // If we're in a loop entered with SwitchDuration=OnceReturn
+        // and there is a ReturnEvent to the previous loop, Mute
+        // cancels the transition as well as muting.
+        EventManager* em = l->getTrack()->getEventManager();
+        em->cancelReturn();
+
+        if (l->getMode() == RehearseMode)
+          l->cancelRehearse(e);
+        else if (l->isRecording())
+          l->finishRecording(e);
+
+        Synchronizer* sync = l->getSynchronizer();
+        l->setPause(true);
+        sync->loopPause(l);
+
+        // I think stop should cancel this, stop/start generally are used
+        // to do a form of "reset" where the contents are kept but modes are canceled
+        l->setMuteMode(false);
+        l->setMute(false);
+
+        // cobbling together various bits, we need to shift if you want to preserve
+        // overdubs, but we might want to cancel them instead
+        // unclear how this works if we did the finishRecording above
+        l->shift(true);
+        l->setFrame(0);
+
+        // make sure jumpPlayEvent did the right thing
+        long newFrame = l->recalculateFrame(false);
+        if (newFrame != 0)
+          Trace(1, "Mute: Inconsistent play/record frames after Stop");
+    }
 	else {
 		// pause mode can come from the preset or from specific functions
 		ParameterMuteMode muteMode = ParameterSource::getMuteMode(l, e);
@@ -678,17 +718,6 @@ void MuteFunction::doEvent(Loop* l, Event* e)
 	// if this is not a GlobalMute, then GlobalMute is canceled
 	if (e->function != GlobalMute && invoker != Solo)
 	  l->getMobius()->cancelGlobalMute(NULL);
-
-    // Stop is a special form of Pause that rewinds to the start
-    if (e->function == MyStop && l->isPaused()) {
-        l->shift(true);
-        l->setFrame(0);
-
-        // make sure jumpPlayEvent did the right thing
-        long newFrame = l->recalculateFrame(false);
-        if (newFrame != 0)
-          Trace(1, "Mute: Inconsistent play/record frames after Stop");
-    }
 
 	l->validate(e);
 }
