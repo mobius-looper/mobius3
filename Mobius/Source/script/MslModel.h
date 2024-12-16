@@ -50,11 +50,14 @@ class MslVisitor
     virtual void mslVisit(class MslArgumentNode* obj) = 0;
     virtual void mslVisit(class MslKeyword* obj) = 0;
     virtual void mslVisit(class MslTrace* obj) = 0;
+    virtual void mslVisit(class MslPropertyNode* obj) = 0;
+    virtual void mslVisit(class MslFieldNode* obj) = 0;
+    virtual void mslVisit(class MslFormNode* obj) = 0;
     // this one doesn't need a visitor
     virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
     }
-    virtual void mslVisit(class MslFormNode* obj) = 0;
+    //virtual void mslVisit(class MslFormNode* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -118,9 +121,18 @@ class MslNode
         return children.getLast();
     }
 
+    // returns true if the node is finished and can be removed from the stack
+    virtual bool isFinished() {
+        return false;
+    }
+    
     // returns true if the node would like to consume the token
     virtual bool wantsToken(class MslParser* p, MslToken& t) {
         (void)p; (void)t; return false;
+    }
+    
+    virtual class MslPropertyNode* wantsProperty(class MslParser* p, MslToken& t) {
+        (void)p; (void)t; return nullptr;
     }
 
     // returns true if the node would like to consume another child node
@@ -171,7 +183,10 @@ class MslNode
     virtual class MslKeyword* getKeyword() {return nullptr;}
     virtual class MslInitNode* getInit() {return nullptr;}
     virtual class MslTrace* getTrace() {return nullptr;}
-
+    virtual class MslPropertyNode* getProperty() {return nullptr;}
+    virtual class MslFieldNode* getField() {return nullptr;}
+    virtual class MslFormNode* getForm() {return nullptr;}
+    
     bool isLiteral() {return getLiteral() != nullptr;}
     bool isSymbol() {return getSymbol() != nullptr;}
     bool isBlock() {return getBlock() != nullptr;}
@@ -193,6 +208,9 @@ class MslNode
     bool isKeyword() {return getKeyword() != nullptr;}
     bool isInit() {return getInit() != nullptr;}
     bool isTrace() {return getTrace() != nullptr;}
+    bool isProperty() {return getProperty() != nullptr;}
+    bool isField() {return getField() != nullptr;}
+    bool isForm() {return getForm() != nullptr;}
     
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslResolutionContext* rc, class MslCompilation* comp) {
         (void)context;
@@ -236,6 +254,7 @@ class MslLiteral : public MslNode
     virtual ~MslLiteral() {}
 
     MslLiteral* getLiteral() override {return this;}
+    bool isFinished() override {return true;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Literal";}
@@ -524,16 +543,34 @@ class MslScopedNode : public MslNode
     MslScopedNode* getScopedNode() override {return this;}
     void visit(MslVisitor* visitor) override {(void)visitor;}
 
+    // hating this, look at how MslPropertyNode evolved
     bool keywordPublic = false;
     bool keywordExport = false;
     bool keywordGlobal = false;
     bool keywordScope = false;
+    bool keywordPersistent = false;
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
     bool hasScope();
     bool isStatic();
     void resetScope();
     void transferScope(MslScopedNode* dest);
+};
+
+class MslPropertyNode : public MslNode
+{
+  public:
+    MslPropertyNode(MslToken& t) : MslNode(t) {}
+
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
+        return (children.size() < 1);
+    }
+
+    MslPropertyNode* getProperty() override {return this;}
+    bool isFinished() override {return children.size() > 0;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Property";}
 };
 
 class MslVariableNode : public MslScopedNode
@@ -543,6 +580,7 @@ class MslVariableNode : public MslScopedNode
     virtual ~MslVariableNode() {}
 
     bool wantsToken(class MslParser* p, MslToken& t) override;
+    MslPropertyNode* wantsProperty(class MslParser* p, MslToken& t) override;
 
     // vars accept an expression
     bool wantsNode(class MslParser* p, MslNode* node) override {
@@ -550,6 +588,7 @@ class MslVariableNode : public MslScopedNode
         // okay this is the same as Operator and Assignment
         // except we only accept one child
         // need an isExpression() that encapsulates this
+        // !! no, this needs to requre an = token to specify the initial value
         bool wants = false;
         if (children.size() < 1 && node->operandable())
           wants = true;
@@ -558,6 +597,7 @@ class MslVariableNode : public MslScopedNode
 
     juce::String name;
     class MslVariable* staticVariable = nullptr;
+    juce::OwnedArray<MslPropertyNode> properties;
     
     MslVariableNode* getVariable() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
@@ -894,10 +934,44 @@ class MslWaitNode : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * todo: this needs to be an MslScopedNode if it needs to support "private"
+ * but could also handle that with a property which might be better in general.
+ * would need unary properties though
+ */
+class MslFieldNode : public MslNode
+{
+  public:
+    MslFieldNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslFieldNode() {}
+
+    bool wantsToken(class MslParser* p, MslToken& t) override;
+    MslPropertyNode* wantsProperty(class MslParser* p, MslToken& t) override;
+
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p;
+        // okay this is the same as Operator and Assignment
+        // except we only accept one child
+        // need an isExpression() that encapsulates this
+        // !! no, this needs to requre an = token to specify the initial value
+        bool wants = false;
+        if (children.size() < 1 && node->operandable())
+          wants = true;
+        return wants;
+    }
+
+    juce::String name;
+    juce::OwnedArray<MslPropertyNode> properties;
+    
+    MslFieldNode* getField() override {return this;}
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Field";}
+};
+
 class MslFormNode : public MslNode
 {
   public:
-    MslFormNode(MslToken& t) : MslScopedNode(t) {}
+    MslFormNode(MslToken& t) : MslNode(t) {}
     virtual ~MslFormNode() {}
 
     bool wantsToken(class MslParser* p, MslToken& t) override;

@@ -327,6 +327,18 @@ void MslParser::parseInner(juce::String source)
         if (current->wantsToken(this, t))
           continue;
 
+        MslPropertyNode* pnode = current->wantsProperty(this, t);
+        // node parser may raise an error
+        if (script->errors.size() > 0)
+          continue;
+
+        // node parser may promote this to a property
+        if (pnode != nullptr) {
+            // note we don't use push() here, it is already owned
+            current = pnode;
+            continue;
+        }
+
         // kludge for waits, keywords come in while child nodes are on the stack
         // and if the child node doesn't want it, it becomes a MslSymbol which
         // can then be passed to wantsNode, but we don't have a way to keep it out
@@ -548,6 +560,12 @@ void MslParser::parseInner(juce::String source)
         if (scopeHolder.hasScope())
           errorSyntax(t, "Misplaced scope qualifier");
 
+        while (current != nullptr && current->isFinished()) {
+            // this one will accept no more, remove it from the stack so the parent
+            // can consume tokens without promoting them to Symbols
+            current = current->parent;
+        }
+
         // can't go on without something to fill
         if (current == nullptr)
           errorSyntax(t, "Invalid expression");
@@ -768,6 +786,12 @@ MslNode* MslParser::checkKeywords(MslToken& t)
      
     else if (t.value == "context")
       keyword = new MslContextNode(t);
+    
+    else if (t.value == "form")
+      keyword = new MslFormNode(t);
+    
+    else if (t.value == "field")
+      keyword = new MslFieldNode(t);
     
     else if (t.value == "in") {
         // this one is weird because not only does it create a node

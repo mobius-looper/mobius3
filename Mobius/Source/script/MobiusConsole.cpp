@@ -786,6 +786,32 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isVariable()) {
             MslVariableNode* var = static_cast<MslVariableNode*>(node);
             line += "Variable: " + var->name;
+            // todo: any node should be able to have properties?
+            if (var->properties.size() > 0) {
+                console.add(line);
+                for (auto prop : var->properties)
+                  traceNode(prop, indent + 4);
+                line = "";
+            }
+        }
+        else if (node->isProperty()) {
+            MslPropertyNode* prop = node->getProperty();
+            line += "Property: " + prop->token.value;
+        }
+        else if (node->isForm()) {
+            MslFormNode* form = node->getForm();
+            line += "Form: " + form->name;
+        }
+        else if (node->isField()) {
+            MslFieldNode* field = node->getField();
+            line += "Field: " + field->name;
+            // todo: any node should be able to have properties?
+            if (field->properties.size() > 0) {
+                console.add(line);
+                for (auto prop : field->properties)
+                  traceNode(prop, indent + 4);
+                line = "";
+            }
         }
         else if (node->isFunction()) {
             MslFunctionNode* func = static_cast<MslFunctionNode*>(node);
@@ -830,7 +856,8 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             line += "???: ";
         }
 
-        console.add(line);
+        if (line.length() > 0)
+          console.add(line);
 
         for (auto child : node->children)
           traceNode(child, indent + 2);

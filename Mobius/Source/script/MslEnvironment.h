@@ -187,7 +187,24 @@ class MslEnvironment
      * or whenever scriptlets are removed from Bindings.
      */
     class MslDetails* uninstall(class MslContext* c, juce::String unitId, bool relinkNow=true);
-    
+
+    /**
+     * Obtain the state that needs to be persisted across instantiations of the
+     * environment, i.e. persistent variable values.
+     *
+     * The object is owned by the caller and must be deleted.
+     */
+    class MslState* saveState();
+
+    /**
+     * Restore previously saved state.
+     * This is normally done only during the installation sequence, after calling
+     * install() for each unit.
+     *
+     * Ownership of the object transfers to the Environment which will delete it.
+     */
+    void restoreState(class MslState* state);
+
     //
     // Installation Details
     //

@@ -186,6 +186,81 @@ bool MslVariableNode::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+/**
+ * todo: just wanting a property value isn't enough, properties will have
+ * constraints on their values so the MslPropertyNode probably needs a type
+ * it can use for parse time validation.  Without that have to do post-parsing
+ * validation at link time or in another phase.
+ */
+MslPropertyNode* MslVariableNode::wantsProperty(MslParser* p, MslToken& t)
+{
+    (void)p;
+    MslPropertyNode* pnode = nullptr;
+    
+    if (t.type == MslToken::Type::Symbol) {
+        if (t.value == "type" ||
+            t.value == "low" ||
+            t.value == "high" ||
+            t.value == "values") {
+
+            pnode = new MslPropertyNode(t);
+            pnode->parent = this;
+            properties.add(pnode);
+        }
+    }
+    return pnode;
+}
+
+/**
+ * Similar to MslVariableNode but not a ScopedNode
+ */
+bool MslFieldNode::wantsToken(MslParser* p, MslToken& t)
+{
+    (void)p;
+    bool wants = false;
+    
+    if (name.length() == 0) {
+        if (t.type == MslToken::Type::Symbol) {
+            // take this as our name
+            name =  t.value;
+            wants = true;
+        }
+    }
+    else if (t.type == MslToken::Type::Operator &&
+             t.value == "=") {
+        // skip past this once we have a name
+        wants = true;
+    }
+    else {
+        // now that we can stick errors in MslParser, is this
+        // where that should go?
+    }
+    return wants;
+}
+
+/**
+ * Same as MslVariableNode but more
+ */
+MslPropertyNode* MslFieldNode::wantsProperty(MslParser* p, MslToken& t)
+{
+    (void)p;
+    MslPropertyNode* pnode = nullptr;
+    
+    if (t.type == MslToken::Type::Symbol) {
+        if (t.value == "type" ||
+            t.value == "low" ||
+            t.value == "high" ||
+            t.value == "values" ||
+            t.value == "label") {
+
+            pnode = new MslPropertyNode(t);
+            pnode->parent = this;
+            properties.add(pnode);
+        }
+    }
+    return pnode;
+}
+
 bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
@@ -228,6 +303,7 @@ bool MslContextNode::wantsToken(MslParser* p, MslToken& t)
 bool MslFormNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
+    bool wants = false;
     if (name.length() == 0) {
         if (t.type == MslToken::Type::Symbol) {
             name =  t.value;

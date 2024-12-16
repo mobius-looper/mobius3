@@ -64,6 +64,9 @@ class MslVariable
     bool isScoped() {
         return (node != nullptr) ? node->keywordScope : false;
     }
+    bool isPersistent() {
+        return (node != nullptr) ? node->keywordPersistent : false;
+    }
 
     bool isBound(int scopeId);
     void unbind(int scopeId);

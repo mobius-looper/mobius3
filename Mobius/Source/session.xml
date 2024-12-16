@@ -199,10 +199,10 @@
     <Value name="inputLatency" value="0" type="int"/>
     <Value name="longPress" value="500" type="int"/>
     <Value name="maxLoops" value="2" type="int"/>
-    <Value name="maxSyncDrift" value="13" type="int"/>
+    <Value name="maxSyncDrift" value="50" type="int"/>
     <Value name="midiRecordMode" value="average" type="enum" ordinal="0"/>
     <Value name="monitorAudio" value="false" type="bool"/>
-    <Value name="noiseFloor" value="13" type="int"/>
+    <Value name="noiseFloor" value="50" type="int"/>
     <Value name="outputLatency" value="0" type="int"/>
     <Value name="quickSave" value="mobiusloop"/>
     <Value name="spreadRange" value="48" type="int"/>

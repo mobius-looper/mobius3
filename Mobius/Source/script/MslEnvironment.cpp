@@ -1357,6 +1357,100 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
 
 //////////////////////////////////////////////////////////////////////
 //
+// State
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Awkward model for state save, Linkages are in a common map but
+ * we need to organize the state by unit.  So either need to iterate
+ * over the MslCompilation list then for each Linkage find the
+ * variables in that unit, or iterate over all Linkages and search
+ * for the MslState::Unit to put something in.  Since the number of Linkages
+ * is higher than the number of Units, do the later.
+ */
+MslState* MslEnvironment::saveState()
+{
+    MslState* state = new MslState();
+
+    for (auto link : linkages) {
+        MslVariable* var = link->variable;
+        if (var != nullptr && var->isPersistent()) {
+            if (var->isScoped()) {
+                Trace(1, "MslEnvironment: Can't have persistent scoped (track) variables");
+            }
+            else {
+                MslState::Unit* unit = nullptr;
+                for (auto u : state->units) {
+                    if (u->id == link->unit->id) {
+                        unit = u;
+                        break;
+                    }
+                }
+                if (unit == nullptr) {
+                    unit = new MslState::Unit();
+                    unit->id = link->unit->id;
+                    state->units.add(unit);
+                }
+
+                // don't need to use the pool for these
+                MslValue* value = new MslValue();
+                var->getValue(0, value);
+
+                MslBinding* binding = new MslBinding();
+                binding->setName(var->name.toUTF8());
+                binding->value = value;
+                unit->variables.add(binding);
+            }
+        }
+    }
+    return state;
+}
+
+/**
+ * State restore has more failure conditions.
+ * If you unregister scripts there can be old state saves referencing
+ * variables that no longer exist. Also the variables may exist but
+ * the unit id (file path) may have changed, common if you move an external
+ * script into the library.  Unless we require that persistent variables have
+ * unique names.  Which we do actually.
+ *
+ * Don't really need to be organizing these by unit at all, but keep that around
+ * in case there need to be private persistent variables?
+ */
+void MslEnvironment::restoreState(MslState* state)
+{
+    if (state != nullptr) {
+        for (auto unit : state->units) {
+            for (auto binding : unit->bindings) {
+                MslLinkage* link = find(juce::String(binding->name));
+                if (link == nullptr) {
+                    Trace(1, "MslEnvironment: No linkage for persisistent variable %s",
+                          binding->name);
+                }
+                else if (link->variable == nullptr) {
+                    Trace(2, "MslEnvironment: Persistent state for %s is not a variable",
+                          binding->name);
+                }
+                else {
+                    // doesn't really matter if they moved the variable from
+                    // one file to another?
+                    if (link->unit->id != unit->id) {
+                        Trace(2, "MslEnvironment: WARNING: Inconsistent unit id for persisistent variable %s",
+                              binding->name);
+                    }
+
+                    // this copies
+                    link->variable->setValue(0, binding->value);
+                }
+            }
+        }
+    }
+    delete state;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Relink
 //
 //////////////////////////////////////////////////////////////////////

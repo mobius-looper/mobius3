@@ -325,9 +325,54 @@ juce::String ScriptRegistry::toXml()
             }
         }
     }
+
+    if (state != nullptr)
+      toXml(root, state);
     
     return root.toString();
 }
+
+/**
+ * MslState doesn't have an XML renderer, it's simple enough but could have
+ * it define it's own string representation for these.
+ *
+ * ValueSet provides the best modeling for this and has an XML renderer, but
+ * MSL does not define it even though ValueSet is built using MslValue.  Not sure
+ * I want to move ValueSet inside MSL yet.  Could also just write an XML rendering
+ * for MslBinding.
+ */
+void ScriptRegistry::toXml(juce::XmlElement* root, MslState* state)
+{
+    juce::XmlElement* elState = new juce::XmlElement("MslState");
+    root.addChildElement(elState);
+    for (auto unit : state->units) {
+        juce::XmlElement* elUnit = new juce::XmlElement("Unit");
+        elState.addChildElement(elUnit);
+        elUnit->setAttribute("id", unit->id);
+
+        // convert the unit variable Bindigns to a ValueSet
+        ValueSet vset;
+        for (auto var : unit->variables) {
+            if (var->value != nullptr)
+              vset.set(juce::String(var->name), var->value);
+        }
+
+        
+
+        
+        for (auto var : unit->variables) {
+            juce::XmlElement* elVariable = new juce::XmlElement("Variable");
+            elUnit.addChildElement(elVariable);
+            elVariable->setAttribute("name", var->name);
+            if (var->value != nullptr)
+              elVariable->setAttribute("value", var->value
+            
+            
+    
+    elMachine->setAttribute("name", machine->name);
+    
+}
+
 
 /**
  * Unclear how we should render dates.

@@ -160,6 +160,7 @@ class ScriptRegistry
   private:
     
     juce::OwnedArray<Machine> machines;
+    std::unique_ptr<class MslState*> state;
 
     void xmlError(const char* msg, juce::String arg);
     juce::String renderTime(juce::Time& t);

@@ -1332,6 +1332,35 @@ void MslSession::assignStaticVariable(MslVariable* var, MslValue* value)
     var->setValue(getEffectiveScope(), value);
 }
 
+/**
+ * Evaluator for a property node.
+ * This only happens during static initialization.
+ * ?? and how would that be exactly
+ */
+void MslSession::mslVisit(MslPropertyNode* prop)
+{
+    logVisit(prop);
+    addError(prop, "Unhandled property node");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Form/Field
+//
+//////////////////////////////////////////////////////////////////////
+
+void MslSession::mslVisit(MslFieldNode* fnode)
+{
+    logVisit(fnode);
+    addError(fnode, "Unhandled Field node");
+}
+
+void MslSession::mslVisit(MslFormNode* fnode)
+{
+    logVisit(fnode);
+    addError(fnode, "Unhandled Form node");
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Function

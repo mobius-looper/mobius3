@@ -190,6 +190,9 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void mslVisit(class MslKeyword* obj) override;
     void mslVisit(class MslInitNode* obj) override;
     void mslVisit(class MslTrace* obj) override;
+    void mslVisit(class MslPropertyNode* obj) override;
+    void mslVisit(class MslFieldNode* obj) override;
+    void mslVisit(class MslFormNode* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
