@@ -64,6 +64,8 @@ class ScriptClerk {
     void refresh();
     void saveRegistry();
     int installMsl();
+    void restoreState();
+    void saveState();
 
     // translation for old scripts
     class ScriptConfig* getMobiusScriptConfig();

@@ -2,6 +2,11 @@
 
 #include "../util/Trace.h"
 #include "../model/ScriptConfig.h"
+#include "../model/ValueSet.h"
+
+#include "MslState.h"
+#include "MslBinding.h"
+#include "MslValue.h"
 
 #include "ScriptRegistry.h"
 
@@ -250,6 +255,9 @@ void ScriptRegistry::parseXml(juce::String xml)
                     }
                 }
             }
+            else if (el->hasTagName("ValueSet")) {
+                state.reset(parseState(el));
+            }
             else {
                 xmlError("Unexpected XML tag name: %s\n", el->getTagName());
             }
@@ -327,7 +335,7 @@ juce::String ScriptRegistry::toXml()
     }
 
     if (state != nullptr)
-      toXml(root, state);
+      toXml(&root, state.get());
     
     return root.toString();
 }
@@ -335,44 +343,98 @@ juce::String ScriptRegistry::toXml()
 /**
  * MslState doesn't have an XML renderer, it's simple enough but could have
  * it define it's own string representation for these.
- *
- * ValueSet provides the best modeling for this and has an XML renderer, but
- * MSL does not define it even though ValueSet is built using MslValue.  Not sure
- * I want to move ValueSet inside MSL yet.  Could also just write an XML rendering
- * for MslBinding.
  */
-void ScriptRegistry::toXml(juce::XmlElement* root, MslState* state)
+void ScriptRegistry::toXml(juce::XmlElement* root, MslState* stateobj)
 {
     juce::XmlElement* elState = new juce::XmlElement("MslState");
-    root.addChildElement(elState);
-    for (auto unit : state->units) {
+    root->addChildElement(elState);
+    for (auto unit : stateobj->units) {
         juce::XmlElement* elUnit = new juce::XmlElement("Unit");
-        elState.addChildElement(elUnit);
+        elState->addChildElement(elUnit);
         elUnit->setAttribute("id", unit->id);
 
-        // convert the unit variable Bindigns to a ValueSet
-        ValueSet vset;
         for (auto var : unit->variables) {
-            if (var->value != nullptr)
-              vset.set(juce::String(var->name), var->value);
+            juce::XmlElement* elVar = new juce::XmlElement("Variable");
+            elUnit->addChildElement(elVar);
+
+            elVar->setAttribute("name", var->name);
+            if (var->scopeId > 0)
+              elVar->setAttribute("scopeId", var->scopeId);
+
+            // this part is duplicated with ValueSet unfortunately
+            if (!var->value.isNull()) {
+                
+                elVar->setAttribute("value", var->value.getString());
+
+                // only expecting a few types and NO lists yet
+                if (var->value.type == MslValue::Int) {
+                    elVar->setAttribute("type", juce::String("int"));
+                }
+                else if (var->value.type == MslValue::Bool) {
+                    elVar->setAttribute("type", juce::String("bool"));
+                }
+                else if (var->value.type == MslValue::Enum) {
+                    elVar->setAttribute("type", juce::String("enum"));
+                    elVar->setAttribute("ordinal", juce::String(var->value.getInt()));
+                }
+                else if (var->value.type != MslValue::String) {
+                    // float, list, Symbol
+                    // shouldn't see these in a value set yet
+                    Trace(1, "ScriptRegistry: Incompelte serialization of type %d",
+                          (int)var->value.type);
+                }
+            }
         }
-
-        
-
-        
-        for (auto var : unit->variables) {
-            juce::XmlElement* elVariable = new juce::XmlElement("Variable");
-            elUnit.addChildElement(elVariable);
-            elVariable->setAttribute("name", var->name);
-            if (var->value != nullptr)
-              elVariable->setAttribute("value", var->value
-            
-            
-    
-    elMachine->setAttribute("name", machine->name);
-    
+    }
 }
 
+MslState* ScriptRegistry::parseState(juce::XmlElement* root)
+{
+    MslState* stateobj = new MslState();
+    
+    for (auto* el : root->getChildIterator()) {
+        if (el->hasTagName("Unit")) {
+            MslState::Unit* unit = new MslState::Unit();
+            stateobj->units.add(unit);
+            unit->id = el->getStringAttribute("id");
+            for (auto* uel : el->getChildIterator()) {
+                if (uel->hasTagName("Variable")) {
+                    MslState::Variable* var = new MslState::Variable();
+                    unit->variables.add(var);
+                    var->name = uel->getStringAttribute("name");
+                    var->scopeId = uel->getIntAttribute("scopeId");
+
+                    juce::String type = uel->getStringAttribute("type");
+
+                    if (type.length() == 0) {
+                        // string
+                        juce::String jstr = uel->getStringAttribute("value");
+                        var->value.setString(jstr.toUTF8());
+                    }
+                    else if (type == "int") {
+                        var->value.setInt(uel->getIntAttribute("value"));
+                    }
+                    else if(type == "bool") {
+                        // uel->getBoolAttribute should have the same rules as MslValue
+                        // make sure of this! basically "true" and not "true"
+                        var->value.setInt(uel->getBoolAttribute("value"));
+                    }
+                    else if (type == "enum") {
+                        // the weird one
+                        juce::String jstr = uel->getStringAttribute("value");
+                        int ordinal = uel->getIntAttribute("ordinal");
+                        var->value.setEnum(jstr.toUTF8(), ordinal);
+                    }
+                    else {
+                        // leave null
+                        Trace(1, "ScriptRegistry: Invalid value type %s", type.toUTF8());
+                    }
+                }
+            }
+        }
+    }
+    return stateobj;
+}
 
 /**
  * Unclear how we should render dates.

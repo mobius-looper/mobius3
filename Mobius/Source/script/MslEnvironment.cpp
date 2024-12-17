@@ -19,6 +19,7 @@
 #include "MslExternal.h"
 #include "MslSymbol.h"
 #include "MslMessage.h"
+#include "MslState.h"
 
 #include "MslEnvironment.h"
 
@@ -667,7 +668,7 @@ MslDetails* MslEnvironment::install(MslContext* c, juce::String unitId,
                                     juce::String source, bool relinkNow)
 {
     MslDetails* result = new MslDetails();
-    
+
     MslParser parser;
     MslCompilation* unit = parser.parse(source);
     bool installed = false;
@@ -1006,6 +1007,11 @@ void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* re
     // maintain a list of linkage names that were added or removed
     juce::StringArray linksRemoved;
     juce::StringArray linksAdded;
+
+    // save any persistent variables since we're replacing the Variables
+    // in the Linkage.  This mostly needs to preserve persistent variables,
+    // but could preserve any static variable too?
+    MslState* state = saveState(unit);
     
     // replace the previous compilation of this unit
     MslCompilation* existing = compilationMap[unit->id];
@@ -1063,6 +1069,14 @@ void MslEnvironment::install(MslContext* c, MslCompilation* unit, MslDetails* re
         result->linksAdded = linksAdded;
         result->linksRemoved = linksRemoved;
     }
+
+    // restore persistent variable state
+    // if unit couldn't be published, these may go nowhere and will be lost
+    // dislike the temporary nature of state saves, might be better to always
+    // have a "state cache" on the Environment that can hold things across installation
+    // errors until things get straightened out
+    restoreState(state);
+    delete state;
 }
 
 /**
@@ -1362,49 +1376,81 @@ void MslEnvironment::exportLinkages(MslContext* c, MslCompilation* unit)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Awkward model for state save, Linkages are in a common map but
- * we need to organize the state by unit.  So either need to iterate
- * over the MslCompilation list then for each Linkage find the
- * variables in that unit, or iterate over all Linkages and search
- * for the MslState::Unit to put something in.  Since the number of Linkages
- * is higher than the number of Units, do the later.
+ * Save state for one unit.
+ * This is called during any install() so values can be preserved if
+ * scripts are reloaded during the session.
+ *
+ * The object is dynamically allocated and must be deleted by the caller.
+ *
+ * todo: this assumes we are building the state from scratch, could be useful
+ * to have incremental saves?
+ */
+MslState* MslEnvironment::saveState(MslCompilation* unit)
+{
+    MslState* state = new MslState();
+    saveState(unit, state);
+    return state;
+}
+
+/**
+ * Save state for all units
  */
 MslState* MslEnvironment::saveState()
 {
     MslState* state = new MslState();
+    for (auto unit : compilations) {
+        saveState(unit, state);
+    }
+    return state;
+}
 
+/**
+ * Save state for one unit into an existing state object.
+ * Used to both save state for individual units, and in bulk for
+ * all units.  The state object is expected to be clean, this
+ * does not "replace" previous variables.
+ */
+void MslEnvironment::saveState(MslCompilation* unit, MslState* state)
+{
     for (auto link : linkages) {
-        MslVariable* var = link->variable;
-        if (var != nullptr && var->isPersistent()) {
-            if (var->isScoped()) {
-                Trace(1, "MslEnvironment: Can't have persistent scoped (track) variables");
-            }
-            else {
-                MslState::Unit* unit = nullptr;
+        if (link->unit == unit) {
+            MslVariable* var = link->variable;
+            if (var != nullptr && var->isPersistent()) {
+
+                MslState::Unit* sunit = nullptr;
                 for (auto u : state->units) {
                     if (u->id == link->unit->id) {
-                        unit = u;
+                        sunit = u;
                         break;
                     }
                 }
-                if (unit == nullptr) {
-                    unit = new MslState::Unit();
-                    unit->id = link->unit->id;
-                    state->units.add(unit);
+            
+                if (sunit == nullptr) {
+                    sunit = new MslState::Unit();
+                    sunit->id = link->unit->id;
+                    state->units.add(sunit);
                 }
 
-                // don't need to use the pool for these
-                MslValue* value = new MslValue();
-                var->getValue(0, value);
-
-                MslBinding* binding = new MslBinding();
-                binding->setName(var->name.toUTF8());
-                binding->value = value;
-                unit->variables.add(binding);
+                if (!var->isScoped()) {
+                    MslState::Variable* sv = new MslState::Variable();
+                    sv->name = juce::String(var->name);
+                    var->getValue(0, &(sv->value));
+                    sunit->variables.add(sv);
+                }
+                else {
+                    for (int i = 1 ; i <= MslVariable::MaxScope ; i++) {
+                        if (var->isBound(i)) {
+                            MslState::Variable* sv = new MslState::Variable();
+                            sv->name = juce::String(var->name);
+                            sv->scopeId = i;
+                            var->getValue(i, &(sv->value));
+                            sunit->variables.add(sv);
+                        }
+                    }
+                }
             }
         }
     }
-    return state;
 }
 
 /**
@@ -1417,36 +1463,37 @@ MslState* MslEnvironment::saveState()
  *
  * Don't really need to be organizing these by unit at all, but keep that around
  * in case there need to be private persistent variables?
+ *
+ * Ownership of the state object is retained by the caller.
  */
 void MslEnvironment::restoreState(MslState* state)
 {
     if (state != nullptr) {
         for (auto unit : state->units) {
-            for (auto binding : unit->bindings) {
-                MslLinkage* link = find(juce::String(binding->name));
+            for (auto statevar : unit->variables) {
+                MslLinkage* link = find(statevar->name);
                 if (link == nullptr) {
                     Trace(1, "MslEnvironment: No linkage for persisistent variable %s",
-                          binding->name);
+                          statevar->name.toUTF8());
                 }
                 else if (link->variable == nullptr) {
                     Trace(2, "MslEnvironment: Persistent state for %s is not a variable",
-                          binding->name);
+                          statevar->name.toUTF8());
                 }
                 else {
                     // doesn't really matter if they moved the variable from
                     // one file to another?
                     if (link->unit->id != unit->id) {
                         Trace(2, "MslEnvironment: WARNING: Inconsistent unit id for persisistent variable %s",
-                              binding->name);
+                              statevar->name.toUTF8());
                     }
 
                     // this copies
-                    link->variable->setValue(0, binding->value);
+                    link->variable->setValue(statevar->scopeId, &(statevar->value));
                 }
             }
         }
     }
-    delete state;
 }
 
 //////////////////////////////////////////////////////////////////////

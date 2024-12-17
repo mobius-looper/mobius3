@@ -8,6 +8,8 @@
 
 #include "MslError.h"
 #include "MslDetails.h"
+#include "MslState.h"
+#include "MslBinding.h"
 
 class ScriptRegistry
 {
@@ -157,15 +159,19 @@ class ScriptRegistry
     juce::String toXml();
     bool convert(class ScriptConfig* config);
 
+    std::unique_ptr<class MslState> state;
+    
   private:
     
     juce::OwnedArray<Machine> machines;
-    std::unique_ptr<class MslState*> state;
 
     void xmlError(const char* msg, juce::String arg);
     juce::String renderTime(juce::Time& t);
     juce::Time parseTime(juce::String src);
 
+    void toXml(juce::XmlElement* root, class MslState* state);
+    class MslState* parseState(juce::XmlElement* root);
+    
 };
 
 

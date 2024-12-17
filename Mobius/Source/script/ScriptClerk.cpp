@@ -476,6 +476,51 @@ void ScriptClerk::updateDetails(ScriptRegistry::File* regfile, MslDetails* detai
     }
 }
 
+/**
+ * This must be called only ONCE during startup AFTER installMsl.
+ * The MslState loaded from the registry file is given to the environment
+ * to restore the values of persistent variables.
+ */
+void ScriptClerk::restoreState()
+{
+    if (registry->state != nullptr) {
+        MslEnvironment* env = supervisor->getMslEnvironment();
+        env->restoreState(registry->state.get());
+    }
+}
+
+/**
+ * This must be called during shutdown to save the current values
+ * of persistent variables.  It is possible for persistent variables
+ * to be removed so if the new state comes back empty, clear out the
+ * old state.
+ */
+void ScriptClerk::saveState()
+{
+    // highly sophisicated change detection
+    bool changed = false;
+    MslEnvironment* env = supervisor->getMslEnvironment();
+    MslState* state = env->saveState();
+
+    if (state != nullptr && state->units.size() > 0) {
+        // not diffing these, just replace it and save
+        registry->state.reset(state);
+        changed = true;
+    }
+    else if (registry->state != nullptr) {
+        // we had something but not it's gone
+        registry->state.reset(nullptr);
+        changed = true;
+    }
+    else {
+        // might be non-null but empty
+        delete state;
+    }
+    
+    if (changed)
+      saveRegistry();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Old File Installation

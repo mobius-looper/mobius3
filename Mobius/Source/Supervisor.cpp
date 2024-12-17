@@ -453,6 +453,8 @@ bool Supervisor::start()
     // this is where scripts with init blocks may run
     // so it needs to be toward the end of most of the initialization
     scriptClerk.installMsl();
+    // restore persistent variables
+    scriptClerk.restoreState();
 
     // now update the UI after script loading so it can see symbols
     propagateConfiguration();
@@ -581,6 +583,9 @@ void Supervisor::shutdown()
       audioManager.captureDeviceState(devconfig);
     
     writeDeviceConfig(devconfig);
+
+    // save final values of persistent script variables
+    scriptClerk.saveState();
 
     // until the editing panels do this, save on exit
     // make the editor call updateSymbolProperties, take this out

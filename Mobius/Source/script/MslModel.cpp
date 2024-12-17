@@ -122,12 +122,18 @@ bool MslScopedNode::wantsToken(MslParser* p, MslToken& t)
             wants = true;
         }
     }
+    else if (t.value == "persistent") {
+        if (!keywordPersistent) {
+            keywordPersistent =  true;
+            wants = true;
+        }
+    }
     return wants;
 }
 
 bool MslScopedNode::hasScope()
 {
-    return (keywordPublic || keywordExport || keywordGlobal || keywordScope);
+    return (keywordPublic || keywordExport || keywordGlobal || keywordScope || keywordPersistent);
 }
 
 bool MslScopedNode::isStatic()
@@ -142,6 +148,7 @@ void MslScopedNode::transferScope(MslScopedNode* dest)
     dest->keywordExport = keywordExport;
     dest->keywordGlobal = keywordGlobal;
     dest->keywordScope = keywordScope;
+    dest->keywordPersistent = keywordPersistent;
     resetScope();
 }
 
@@ -151,6 +158,7 @@ void MslScopedNode::resetScope()
     keywordExport = false;
     keywordGlobal = false;
     keywordScope = false;
+    keywordPersistent = false;
 }
 
 /**

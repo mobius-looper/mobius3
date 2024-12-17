@@ -13,15 +13,24 @@
 
 #include <JuceHeader.h>
 
+#include "MslValue.h"
+
 class MslState {
 
   public:
+
+    class Variable {
+      public:
+        int scopeId;
+        juce::String name;
+        MslValue value;
+    };
 
     class Unit {
       public:
 
         juce::String id;
-        juce::OwnedArray<MslBinding> variables;
+        juce::OwnedArray<Variable> variables;
     };
 
     juce::OwnedArray<Unit> units;

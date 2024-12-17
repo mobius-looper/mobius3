@@ -433,5 +433,9 @@ class MslEnvironment
     void exportLinkages(MslContext* c, MslCompilation* unit);
 
     //void logCompletion(class MslContext* c, class MslCompilation* unit, class MslSession* s);
+
+    class MslState* saveState(MslCompilation* unit);
+    void saveState(MslCompilation* unit, class MslState* state);
+
 };
 
