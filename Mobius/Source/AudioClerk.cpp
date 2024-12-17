@@ -337,6 +337,7 @@ void AudioClerk::writeAudio(Audio* audio, const char* filename)
 	wav->setChannels(2);
 	wav->setFrames(audio->getFrames());
 	wav->setFormat(WAV_FORMAT_IEEE);
+    wav->setSampleRate(supervisor->getSampleRate());
 	wav->setFile(cpath);
 
 	error = wav->writeStart();

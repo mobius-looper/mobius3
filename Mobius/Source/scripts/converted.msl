@@ -1,0 +1,26 @@
+//
+// A conversion of an example script from manymanyhaha
+//
+
+//!name MainTap Track33
+//!sustain 1200
+//!multiclick 300
+
+#name MainTap 
+#sustain 1200
+#repeat 300
+
+//Track 33
+
+if mode == :Reset Record
+else if mode == :Record Overdub
+else if mode == :Overdub Play
+else if mode == :Mute Play
+
+function OnSustain {
+  if sustainCount == 1 Reset
+}
+
+function OnRepeat {
+  if repeatCount == 1 Undo
+}

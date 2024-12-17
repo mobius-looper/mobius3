@@ -435,6 +435,9 @@
                 file="Source/ui/display/UIElementStripAdapter.cpp"/>
           <FILE id="T8Kq0q" name="UIElementStripAdapter.h" compile="0" resource="0"
                 file="Source/ui/display/UIElementStripAdapter.h"/>
+          <FILE id="eDmIYZ" name="UIElementText.cpp" compile="1" resource="0"
+                file="Source/ui/display/UIElementText.cpp"/>
+          <FILE id="yG9vE4" name="UIElementText.h" compile="0" resource="0" file="Source/ui/display/UIElementText.h"/>
         </GROUP>
         <GROUP id="{AEC022E8-1C76-A11C-D2FB-C021B2012684}" name="common">
           <FILE id="lXWr1d" name="BasicButtonRow.cpp" compile="1" resource="0"

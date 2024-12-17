@@ -275,6 +275,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     bool mslResolve(juce::String name, class MslExternal* ext) override;
     bool mslQuery(MslQuery* query) override;
     bool mslAction(MslAction* ation) override;
+    bool mslForm(MslForm* form) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;

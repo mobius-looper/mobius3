@@ -3,7 +3,8 @@
 #namespace rc505
 
 init{
-  InstallUIElement("RC505 Undo/Redo" "rc505:UndoRedo" :Light :onColor :white :offColor :green)
+  //InstallUIElement("RC505 Undo/Redo" "rc505:UndoRedo" :Light :onColor :white :offColor :green)
+  InstallUIElement("RC505 Undo/Redo" "rc505:UndoRedo" :Text :text "Undo/Redo" :width 80 :onColor :red :offColor :gray)
 }
 
 export track variable UndoRedo

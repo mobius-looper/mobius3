@@ -145,6 +145,14 @@ class MslConductor
     void doRelease(class MslContext* c, class MslMessage* msg);
     void doRepeat(class MslContext* c, class MslMessage* msg);
 
+    void repairProcesses(class MslContext* c);
+    class MslSession* findSession(class MslSession* list, class MslProcess* p);
+    class MslResult* reallyStart(class MslContext* c, class MslRequest* req, class MslLinkage* link);
+    class MslResult* dealWithUnterminatedSustain(class MslContext* c, class MslRequest* req, class MslSession* session);
+    class MslSession* dealWithInactiveRepeat(class MslContext* c, class MslRequest* req, class MslSession* session);
+    
+    
+
 };
 
 

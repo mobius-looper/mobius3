@@ -1,1 +1,2 @@
-persistent variable pvar = 42
+persistent variable pvar = 10
+

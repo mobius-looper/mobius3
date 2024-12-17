@@ -255,7 +255,7 @@ void ScriptRegistry::parseXml(juce::String xml)
                     }
                 }
             }
-            else if (el->hasTagName("ValueSet")) {
+            else if (el->hasTagName("MslState")) {
                 state.reset(parseState(el));
             }
             else {

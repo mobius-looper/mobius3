@@ -55,6 +55,8 @@ ScriptExternalDefinition ScriptExternalDefinitions[] = {
     {"subcycleFrames", VarSubcycleFrames, ScriptContextKernel, false},
     {"subcycleFrame", VarSubcycleFrame, ScriptContextKernel, false},
     {"modeName", VarModeName, ScriptContextKernel, false},
+    // old scripts heavily use this name
+    {"mode", VarModeName, ScriptContextKernel, false},
     {"isRecording", VarIsRecording, ScriptContextKernel, false},
     {"inOverdub", VarInOverdub, ScriptContextKernel, false},
     {"inHalfspeed", VarInHalfspeed, ScriptContextKernel, false},

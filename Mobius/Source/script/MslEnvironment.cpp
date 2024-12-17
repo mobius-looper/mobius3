@@ -1141,7 +1141,10 @@ void MslEnvironment::publish(MslCompilation* unit, juce::StringArray& links)
         // since the pool wasn't assigned during construction by the parser
         // give it one now so it cal pool MslValues
         var->setPool(&pool);
-        if (var->isExport() || var->isPublic()) {
+        // assume for now that persistent implies public since saveState is driven
+        // from MslLinkages, might be interesting to have private persistent variables
+        // but not finding a use yet and it complicates state save
+        if (var->isExport() || var->isPublic() || var->isPersistent()) {
             publish(unit, var, links);
         }
     }

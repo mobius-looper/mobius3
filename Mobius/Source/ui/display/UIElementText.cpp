@@ -1,12 +1,12 @@
 /**
- * Light Thoughts...
+ * Some options for text
  *
- *    - shape property: square, circle, triangle, star
- *    - light banks, multiple lights in a row monitoring different variables
- *      - alternately, a good way to group a set of lights
- *    - tri colored lights off/dim/on
+ *   1) Simple text with different on/off colors
+ *   2) Alternating text with different words for on/off
+ *   3) Word pairs with one or the other highlighted
+ *   4) Work sequence with value selecting word
+ *
  */
-
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
@@ -16,46 +16,50 @@
 #include "../../Provider.h"
 
 #include "UIElement.h"
-#include "UIElementLight.h"
+#include "UIElementText.h"
 
-UIElementLight::UIElementLight(Provider* p, UIElementDefinition* d) :
+UIElementText::UIElementText(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
     monitor = d->properties["monitor"];
+    text = d->properties["text"];
+    width = d->properties["width"].getIntValue();
+    height = d->properties["height"].getIntValue();
     onColor = UIElement::getColor(d, "onColor");
     offColor = UIElement::getColor(d, "offColor");
 
     if (monitor.length() == 0)
-      Trace(1, "UIElementLight: Missing monitor variable name");
+      Trace(1, "UIElementText: Missing monitor variable name");
     else {
         // todo: might be nice to be able to query on things that aren't
         // exported, kind of in beteen static variables that don't need
         // full blown Symbols
         symbol = p->getSymbols()->find(monitor);
         if (symbol == nullptr)
-          Trace(1, "UIElementLight: Invalid symbol name %s", monitor.toUTF8());
+          Trace(1, "UIElementText: Invalid symbol name %s", monitor.toUTF8());
     }
 }
 
-UIElementLight::~UIElementLight()
+UIElementText::~UIElementText()
 {
 }
 
-void UIElementLight::configure()
+void UIElementText::configure()
 {
 }
 
-int UIElementLight::getPreferredWidth()
+int UIElementText::getPreferredWidth()
 {
-    return 20;
+    // be smart about text width
+    return (width > 0) ? width : 30;
 }
 
-int UIElementLight::getPreferredHeight()
+int UIElementText::getPreferredHeight()
 {
-    return 20;
+    return (height > 0) ? height : 14;
 }
 
-void UIElementLight::update(class MobiusView* v)
+void UIElementText::update(class MobiusView* v)
 {
     (void)v;
     if (symbol != nullptr) {
@@ -75,15 +79,16 @@ void UIElementLight::update(class MobiusView* v)
     }
 }
 
-void UIElementLight::resized()
+void UIElementText::resized()
 {
 }
 
-void UIElementLight::paint(juce::Graphics& g)
+void UIElementText::paint(juce::Graphics& g)
 {
     if (lastValue == 0)
       g.setColour(offColor);
     else
       g.setColour(onColor);
-    g.fillRect(0, 0, getWidth(), getHeight());
+
+    g.drawText(text, 0, 0, getWidth(), getHeight(), juce::Justification::centred);
 }

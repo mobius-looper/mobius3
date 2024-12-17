@@ -1885,7 +1885,8 @@ void Supervisor::mobiusSaveCapture(Audio* content, juce::String fileName)
     if (fileName.length() == 0) fileName = "testcapture.wav";
 
     juce::File file = getRoot().getChildFile(fileName);
-    AudioFile::write(file, content);
+
+    AudioFile::write(file, content, getSampleRate());
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2565,6 +2566,16 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
             retval->setInt(value);
         }
     }
+}
+
+/**
+ * Present a form from an MSL script.
+ */
+bool Supervisor::mslForm(MslForm* form)
+{
+    (void)form;
+    Trace(1, "Supervisor::mslForm not implemented");
+    return false;
 }
 
 /**

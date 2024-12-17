@@ -20,6 +20,12 @@
 
 #include "AudioFile.h"
 
+
+juce::StringArray AudioFile::write(juce::File file, Audio* a)
+{
+    return write(file, a, 0);
+}
+
 /**
  * Write an audio file using the old tool.
  * This is an adaptation of what used to be in Audio::write()
@@ -27,7 +33,7 @@
  * a sample at a time rather than blocking.  Okay for initial testing
  * but you can do better.
  */
-juce::StringArray AudioFile::write(juce::File file, Audio* a)
+juce::StringArray AudioFile::write(juce::File file, Audio* a, int sampleRate)
 {
     juce::StringArray errors;
     
@@ -45,6 +51,11 @@ juce::StringArray AudioFile::write(juce::File file, Audio* a)
     // comes from WaveFile.h
     // other format is PCM, but I don't think the old writer supported that?
 	wav->setFormat(WAV_FORMAT_IEEE);
+    // store the sample rate that was in use when the audio was recorded
+    // Mobius doesn't use this, but other tools might be sensitive
+    if (sampleRate == 0)
+      sampleRate = a->getSampleRate();
+    wav->setSampleRate(sampleRate);
     // this was how we conveyed the file path
     const char* path = file.getFullPathName().toUTF8();
 	wav->setFile(path);

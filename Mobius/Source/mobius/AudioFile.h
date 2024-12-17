@@ -21,6 +21,8 @@ class AudioFile
 
     static juce::StringArray write(juce::File, class Audio* a);
     
+    static juce::StringArray write(juce::File, class Audio* a, int sampleRate);
+    
     static class Audio* read(juce::File, class AudioPool* pool);
     
     static class Audio* read(juce::File, class AudioPool* pool, juce::StringArray& errors);

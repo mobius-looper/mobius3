@@ -320,6 +320,12 @@ void ProjectManager::writeAudio(Audio* audio, const char* path)
     // this was repackaged awhile ago into this but it doesn't
     // support accumulation of error message, need to fix that!!
 
+    // when exchanging project files with other applications it can
+    // be important to save the correct sample rate used when they were
+    // recorded.  AudioFile will take the sampleRate stored in the Audio
+    // object
+    audio->setSampleRate(shell->getContainer()->getSampleRate());
+
     errors.addArray(AudioFile::write(juce::File(path), audio));
 }
 
@@ -819,7 +825,8 @@ juce::StringArray ProjectManager::saveLoop(juce::File file)
     if (fastAndLoose) {
         Mobius* core = shell->getKernel()->getCore();
         Audio* audio = core->getPlaybackAudio();
-        errors.addArray(AudioFile::write(file, audio));
+        int sampleRate = shell->getContainer()->getSampleRate();
+        errors.addArray(AudioFile::write(file, audio, sampleRate));
         delete audio;
     }
     else {
@@ -827,8 +834,8 @@ juce::StringArray ProjectManager::saveLoop(juce::File file)
 
             Mobius* core = shell->getKernel()->getCore();
             Audio* audio = core->getPlaybackAudio();
-        
-            errors.addArray(AudioFile::write(file, audio));
+            int sampleRate = shell->getContainer()->getSampleRate();
+            errors.addArray(AudioFile::write(file, audio, sampleRate));
             // this was a flattened copy of the play layer and must be reclaimed
             delete audio;
 

@@ -201,13 +201,23 @@ void MslSession::mslVisit(MslSymbol* snode)
  * enumerations are so if that's mispelled as looop we can raise an error rather
  * than just consider the comparison unequal.
  * Needs thought...
+ *
+ * update: now that we have keyword symbols, it isn't unreasonable to reequire
+ * the use if switchQuantize == :loop and we can treat unresolved symbols as
+ * an error.  This is better for diagnostics because otherewise they don't know
+ * nothing happened.
  */
 void MslSession::returnUnresolved(MslSymbol* snode)
 {
+    // lenient way
+/*    
     MslValue* v = pool->allocValue();
     v->setJString(snode->token.value);
     // todo, might want an unresolved flag in the MslValue
     popStack(v);
+*/
+    Trace(1, "MslSession: Reference to unresolved symbol %s\n", snode->token.value.toUTF8());
+    addError(snode, "Unresolved symbol");
 }
 
 /**

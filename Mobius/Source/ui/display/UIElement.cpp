@@ -11,6 +11,7 @@
 
 #include "UIElement.h"
 #include "UIElementLight.h"
+#include "UIElementText.h"
 
 UIElement::UIElement(Provider* p, UIElementDefinition* d)
 {
@@ -106,6 +107,9 @@ UIElement* UIElement::createElement(Provider* p, UIElementDefinition* def)
 
     if (def->visualizer == "Light") {
         element = new UIElementLight(p, def);
+    }
+    else if (def->visualizer == "Text") {
+        element = new UIElementText(p, def);
     }
     else {
         Trace(1, "UIElement: Unknown element visualizer %s", def->visualizer.toUTF8());

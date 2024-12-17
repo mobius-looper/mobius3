@@ -853,7 +853,8 @@ int WaveFile::writeStart()
         mError = AUF_ERROR_CHANNELS;
 
     else {
-		mSampleRate = 44100;
+        if (mSampleRate == 0)
+          mSampleRate = 44100;
 	
 		// try to preserve format, but init if we can't
 		if (mFormat == WAV_FORMAT_PCM) {

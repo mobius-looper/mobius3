@@ -1014,19 +1014,28 @@ MslResult* MslConductor::start(MslContext* c, MslRequest *req, MslLinkage* link)
             result = repeat(c, req, repeatContext);
         }
         else {
-            // a normal missionary position start
-            MslSession* session = environment->getPool()->allocSession();
-
-            // nice for the monitor
-            link->runCount++;
-        
-            session->start(c, link, req);
-
-            result = checkCompletion(c, session);
+            reallyStart(c, req, link);
         }
     }
 
     return result;
+}
+
+/**
+ * Start a new session after pondering the various suspension states.
+ */
+MslResult* MslConductor::reallyStart(MslContext* c, MslRequest* req, MslLinkage* link)
+{
+
+    MslResult* result = nullptr;
+    MslSession* session = environment->getPool()->allocSession();
+
+    // nice for the monitor
+    link->runCount++;
+        
+    session->start(c, link, req);
+
+    result = checkCompletion(c, session);
 }
 
 /**
@@ -1076,6 +1085,7 @@ MslResult* MslConductor::release(MslContext* c, MslRequest* req)
             // any MODIFICATION to a Process beyond just the process list which seems
             // kind of severe for such a rare case.  Still, keep an eye on it.
             // I suppse we could just send the message and let it bounce back too.
+            repairProcesses(c);
         }
         else {
             sendNotification(c, MslNotificationRelease, req);
@@ -1089,6 +1099,54 @@ MslResult* MslConductor::release(MslContext* c, MslRequest* req)
 }
 
 /**
+ * Attempt to correct damanage to the process list.
+ * Got here during some script testing and not sure why.  I think it was related
+ * to missing the release transition of a sustain script.  This is just for
+ * debugging, it shouldn't happen normally.
+ */
+void MslConductor::repairProcesses(MslContext* c)
+{
+    (void)c;
+    // this is all very dangerous and should be csect protected, but it's
+    // temporary diagnostics
+
+    for (auto process : processes) {
+
+        MslSession* s = findSession(shellSessions, process);
+        if (s != nullptr) {
+            if (process->context != MslContextShell)
+              Trace(1, "MslConductor: Found process with mismatched context");
+        }
+        else {
+            MslSession* s = findSession(kernelSessions, process);
+            if (s != nullptr) {
+                if (process->context != MslContextKernel)
+                  Trace(1, "MslConductor: Found process with mismatched context");
+            }
+            else {
+                Trace(1, "MslConductor: Found process with no session");
+            }
+        }
+    }
+}
+
+MslSession* MslConductor::findSession(MslSession* list, MslProcess* p)
+{
+    MslSession* found = nullptr;
+    while (list != nullptr) {
+        if (list->process == nullptr) {
+            Trace(1, "MslConductor: Session without a process");
+        }
+        else if (list->process == p) {
+            found = list;
+            break;
+        }
+        list = list->next;
+    }
+    return found;
+}
+                
+/**
  * Cause an OnRepeat notification after checking that the request
  * does in fact mean a repeat rather than just a simple start.
  */
@@ -1099,14 +1157,29 @@ MslResult* MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId oth
     // is it on our side?
     MslSession* session = findSuspended(c, req->triggerId);
     if (session != nullptr) {
-        // yes it is, let it go
-        // we pass the Request in so OnRelease can have request arguments
-        // rare but possible
-        session->repeat(c, req);
 
-        // these normally don't complete until the timeout
-        // unless there is a maxRepeat set
-        result = checkCompletion(c, session);
+        MslSuspendState* ss = session->getSustainState();
+        if (ss->start > 0) {
+            // not normal
+            result = dealWithUnterminatedSustain(c, req, session);
+        }
+        else {
+            ss = session->getRepeatState();
+            if (ss->start == 0) {
+                // not normal
+                result = dealWithInactiveRepeat(c, req, session);
+            }
+            else {
+                // yes it is, let it go
+                // we pass the Request in so OnRelease can have request arguments
+                // rare but possible
+                session->repeat(c, req);
+
+                // these normally don't complete until the timeout
+                // unless there is a maxRepeat set
+                result = checkCompletion(c, session);
+            }
+        }
     }
     else if (otherContext == c->mslGetContextId()) {
         // it's in our context, this can't happen if findSuspended is working
@@ -1114,12 +1187,92 @@ MslResult* MslConductor::repeat(MslContext* c, MslRequest* req, MslContextId oth
         // like release() this has a potential race condition with stale
         // context ids in the process
         Trace(1, "MslConductor: Stale context id in Process");
+        repairProcesses(c);
     }
     else {
         sendNotification(c, MslNotificationRepeat, req);
         // todo: should have probeSuspended return the sessionId as well
         // so we can include that in an MslResult
     }
+
+    return result;
+}
+
+/**
+ * Abnormal case
+ * We did a probe and found a suspended session for a trigger.
+ * The Request did not have the release flag set so this was a down transition of the trigger,
+ * which would normally indiciate a repeat.  But the session is in a #sustain suspension waiting
+ * for the up transition of the trigger.  This means that either we missed the
+ * up transition due to some internal error, or the containing application is behaving badly
+ * and didn't send it.
+ *
+ * There are a few options.  If we just ignore this request, then to the user nothing
+ * appears to happen, and assuming we eventually do get the up transition, the sustain will
+ * end but it won't repeat.
+ *
+ * Since you can't legally have a down transition without a preceeding up transition, we could
+ * assume that the transition was missed incorrectly, the sustain can either be canceled or
+ * we can pretend that it was received now, then procees the new request as a normal start or repeat.
+ *
+ * Combining an injected OnRelease notification with an OnRepeat at the same time is really
+ * messy since in theory the OnRelease can also suspend on a wait, or transition to the other
+ * context.  It's far easier to cancel the sustain and this really shouldn't happen anyway.
+ */
+MslResult* MslConductor::dealWithUnterminatedSustain(MslContext* c, MslRequest* req, MslSession* session)
+{
+    Trace(1, "MslConductor: Encountered unterminated sustaining session");
+    
+    MslResult* result = nullptr;
+
+    // cancel the sustain
+    MslSuspendState* ss = session->getSustainState();
+    ss->init();
+
+    // is repeat still active?
+    ss = session->getRepeatState();
+    if (ss->start > 0) {
+        // unusual to combine sustain and repeat but it is lowed
+        // !! this is going to get more complicated once you add suspension for forms,
+        // form and wait suspensions are normal and don't necessarily mean that this
+        // should be treated as a repeat.  We can mark the repeat pending, but this
+        // needs more thought, for some suspensions, it is probably better to ignore repeats
+        session->repeat(c, req);
+        result = checkCompletion(c, session);
+    }
+    else {
+        // now we have an stale session that is not suspended and doesn't want repeat notifications
+        // the user will expec this to start a new session
+        // the old one could be cleaned up here, but I think I'd like a more general housekeeping
+        // phase that finds these
+
+        // fuck me, reallyStart needs an MslLinkage we're too deep to switch gears
+        // and decide this should be a start after all
+        // either need to carry the entire MslRequest in the Message and take it
+        // from the top, or we should have checked all these session anomolies first
+        // before we switched contexts, mess
+        //result = reallyStart(c, req, req->linkage);
+        Trace(1, "MslConductor: Ignoring repeast because life is hard");
+    }
+    return result;
+}
+
+/**
+ * Here we found a dangling suspended session that was neither waiting on a sustain
+ * or in an active repeat.  But start() was not able to figure that out so we treated
+ * it like a repeat and sent it to the other side.
+ *
+ * This is all wrong, we shouldn't even be bothering with Messages to detect these
+ * cases, start() needs to get all the information it needs from the Process before
+ * we get this far, which means Process needs to have suspension states in it.
+ */
+MslSession* MslConductor::dealWithInactiveRepeat(MslContext* c, MslRequest* req, MslSession* session)
+{
+    Trace(1, "MslConductor: Encountered inactive repeat session");
+    
+    MslResult* result = nullptr;
+
+    // my brain hurts, ignore
 
     return result;
 }
