@@ -38,15 +38,10 @@ class MslMessage : public MslPooledObject
     // for the Notification type, the specific notification
     MslNotificationFunction notification = MslNotificationNone;
 
-    // for trigger notifications the option request arguments
-    // todo: could just pass the entire Request here which
-    // makes sense and would take the place of some of the Notification
-    // types but that would need to be pooled too
-    class MslBinding* bindings = nullptr;
-    class MslValue* arguments = nullptr;
-
-    // for some of the Notifications, an associated trigger
-    int triggerId = 0;
+    // for NotificationRequest, a copy of the request provided
+    // by the application, a member object so we don't have to mess with
+    // pooling for this since it is rarely cloned
+    MslRequest request;
 
     // for MsgResult, the result object the shell is to take
     // ownership of

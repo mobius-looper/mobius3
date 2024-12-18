@@ -99,6 +99,24 @@ class MslRequest
      */
     bool release = false;
 
+    /**
+     * Move the contents of one request to another.
+     * This is what happens when a request passed to MslEnvironment has to be
+     * sent to the other context through an MslMessage.
+     */
+    void transfer(MslRequest* src) {
+        if (src != nulptr) {
+            linkage = src->linkage;
+            bindings = src->bindings;
+            arguments = src->arguments;
+            triggerId = src->triggerId;
+            scope = src->scope;
+            release = src->release;
+            // ownership transfers
+            src->bindings = nullptr;
+            src->arguments = nullptr;
+        }
+    }
 };
 
 /**

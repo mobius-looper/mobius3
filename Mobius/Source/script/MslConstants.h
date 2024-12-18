@@ -33,14 +33,18 @@ typedef enum {
 /**
  * Internal codes for the various notification functions we
  * may call automatiacally.
+ *
+ * revisit: this is more general than it needs to be, it reduce
+ * to a single notification
  */
 typedef enum {
 
     MslNotificationNone,
-    MslNotificationSustain,
-    MslNotificationRepeat,
-    MslNotificationRelease,
-    MslNotificationTimeout
+    MslNotificationRequest,
+    //MslNotificationSustain,
+    //MslNotificationRepeat,
+    //MslNotificationRelease,
+    //MslNotificationTimeout
 
 } MslNotificationFunction;
 
