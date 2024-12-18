@@ -183,26 +183,27 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslError* captureErrors();
 
     // MslVisitor
-    void mslVisit(class MslLiteral* obj) override;
-    void mslVisit(class MslSymbol* obj) override;
-    void mslVisit(class MslBlock* obj) override;
-    void mslVisit(class MslOperator* obj) override;
-    void mslVisit(class MslAssignment* obj) override;
+    void mslVisit(class MslLiteralNode* obj) override;
+    void mslVisit(class MslSymbolNode* obj) override;
+    void mslVisit(class MslBlockNode* obj) override;
+    void mslVisit(class MslOperatorNode* obj) override;
+    void mslVisit(class MslAssignmentNode* obj) override;
     void mslVisit(class MslVariableNode* obj) override;
     void mslVisit(class MslFunctionNode* obj) override;
-    void mslVisit(class MslIf* obj) override;
-    void mslVisit(class MslElse* obj) override;
-    void mslVisit(class MslReference* obj) override;
-    void mslVisit(class MslEnd* obj) override;
+    void mslVisit(class MslIfNode* obj) override;
+    void mslVisit(class MslElseNode* obj) override;
+    void mslVisit(class MslCaseNode* obj) override;
+    void mslVisit(class MslReferenceNode* obj) override;
+    void mslVisit(class MslEndNode* obj) override;
     void mslVisit(class MslWaitNode* obj) override;
-    void mslVisit(class MslPrint* obj) override;
+    void mslVisit(class MslPrintNode* obj) override;
     void mslVisit(class MslContextNode* obj) override;
-    void mslVisit(class MslIn* obj) override;
-    void mslVisit(class MslSequence* obj) override;
+    void mslVisit(class MslInNode* obj) override;
+    void mslVisit(class MslSequenceNode* obj) override;
     void mslVisit(class MslArgumentNode* obj) override;
-    void mslVisit(class MslKeyword* obj) override;
+    void mslVisit(class MslKeywordNode* obj) override;
     void mslVisit(class MslInitNode* obj) override;
-    void mslVisit(class MslTrace* obj) override;
+    void mslVisit(class MslTraceNode* obj) override;
     void mslVisit(class MslPropertyNode* obj) override;
     void mslVisit(class MslFieldNode* obj) override;
     void mslVisit(class MslFormNode* obj) override;
@@ -307,27 +308,27 @@ class MslSession : public MslVisitor, public MslSessionInterface
 
     // symbol evaluation
     // implementation broken out to MslSymbol.cpp
-    void returnUnresolved(MslSymbol* snode);
-    void returnLinkedVariable(MslSymbol* snode);
-    void returnStaticVariable(MslSymbol* snode);
-    void returnKeyword(MslSymbol* snode);
-    void pushArguments(MslSymbol* snode);
-    void pushCall(MslSymbol* snode);
-    void pushBody(MslSymbol* snode, MslBlock* body);
-    void bindArguments(MslSymbol* snode);
-    void returnQuery(MslSymbol* snode);
-    void callExternal(MslSymbol* snode);
+    void returnUnresolved(MslSymbolNode* snode);
+    void returnLinkedVariable(MslSymbolNode* snode);
+    void returnStaticVariable(MslSymbolNode* snode);
+    void returnKeyword(MslSymbolNode* snode);
+    void pushArguments(MslSymbolNode* snode);
+    void pushCall(MslSymbolNode* snode);
+    void pushBody(MslSymbolNode* snode, MslBlockNode* body);
+    void bindArguments(MslSymbolNode* snode);
+    void returnQuery(MslSymbolNode* snode);
+    void callExternal(MslSymbolNode* snode);
 
     // assignment
     // also in MslSymbol.cpp
-    class MslSymbol* getAssignmentSymbol(MslAssignment* ass);
-    void doAssignment(MslAssignment* ass);
+    class MslSymbolNode* getAssignmentSymbol(MslAssignmentNode* ass);
+    void doAssignment(MslAssignmentNode* ass);
     void assignStaticVariable(class MslVariable* var, MslValue* value);
     int getTrackScope();
     
     // expressions
     MslValue* getArgument(int index);
-    void doOperator(MslOperator* opnode);
+    void doOperator(MslOperatorNode* opnode);
     bool compare(MslValue* value1, MslValue* value2, bool equal);
     void addTwoThings(MslValue* v1, MslValue* v2, MslValue* result);
 

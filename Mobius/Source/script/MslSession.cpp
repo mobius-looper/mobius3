@@ -495,7 +495,8 @@ void MslSession::repeat(MslContext* argContext, MslRequest* request)
         if (node != nullptr)
           runNotification(argContext, request, node);
         else {
-            // it's okay, but unusual
+            // it's okay, but unusual, if you bothered to have #repeat then
+            // you would always want an OnRepeat method
             Trace(2, "MslSession::repeat No OnRepeat function");
         }
 
@@ -541,7 +542,7 @@ void MslSession::timeout(MslContext* argContext)
           runNotification(argContext, nullptr, node);
         else {
             // it's okay and common
-            Trace(2, "MslSession::timeout No OnTimeout function");
+            //Trace(2, "MslSession::timeout No OnTimeout function");
         }
         repeating.init();
     }
@@ -1153,7 +1154,7 @@ void MslSession::getVariable(const char* name, MslValue* dest)
             found->getValue(getEffectiveScope(), dest);
         }
         else {
-            // MslSymbol evaluation will at this point look for an
+            // MslSymbolNode evaluation will at this point look for an
             // MslResolution that may have an MslLinksge to an exported
             // variable from another script.  We can't do pre-resolution
             // but it's a small amount of overhead.
@@ -1179,7 +1180,7 @@ void MslSession::getVariable(const char* name, MslValue* dest)
  * Literals do not have child nodes or computation, they simply return
  * their value to the parent frame.
  */
-void MslSession::mslVisit(MslLiteral* lit)
+void MslSession::mslVisit(MslLiteralNode* lit)
 {
     logVisit(lit);
     MslValue* v = pool->allocValue();
@@ -1209,12 +1210,12 @@ void MslSession::mslVisit(MslLiteral* lit)
  * results.  The accumulation flag will have been set by the parent frame
  * that pushed this one.
  */
-void MslSession::mslVisit(MslBlock* block)
+void MslSession::mslVisit(MslBlockNode* block)
 {
     logVisit(block);
 
     // if this is a [] block consider it a "sequence" that
-    // accumulates results, this differs fro MslSequence which
+    // accumulates results, this differs fro MslSequenceNode which
     // is in injected block that has no brackets around it
     if (block->token.value == "[")
       stack->accumulator = true;
@@ -1394,7 +1395,7 @@ void MslSession::mslVisit(MslFunctionNode* func)
  * If one of these is unresolved it's a little more serious than
  * an unresolved symbol since you can't use them for just the name.
  */
-void MslSession::mslVisit(MslReference* ref)
+void MslSession::mslVisit(MslReferenceNode* ref)
 {
     logVisit(ref);
     MslBinding* binding = nullptr;
@@ -1498,11 +1499,11 @@ MslValue* MslSession::getArgument(int index)
 /**
  * An operator node will normally have two children, one for unary.
  *
- * Kind of forgot about pushNextChild while my mind was melting with MslSymbol,
+ * Kind of forgot about pushNextChild while my mind was melting with MslSymbolNode,
  * revisit the complicated ones and see if that could be used there instead
  * of phase markers?
  */
-void MslSession::mslVisit(MslOperator* opnode)
+void MslSession::mslVisit(MslOperatorNode* opnode)
 {
     logVisit(opnode);
     if (opnode->children.size() == 0) {
@@ -1531,7 +1532,7 @@ void MslSession::mslVisit(MslOperator* opnode)
  *
  * Null is treated as zero numerically which might be bad.
  */
-void MslSession::doOperator(MslOperator* opnode)
+void MslSession::doOperator(MslOperatorNode* opnode)
 {
     MslValue* v = pool->allocValue();
     
@@ -1717,7 +1718,7 @@ bool MslSession::compare(MslValue* value1, MslValue* value2, bool equal)
  * First the condition block is pushed and evaluated and based on that
  * either the truth or false block is pushed.
  */
-void MslSession::mslVisit(MslIf* node)
+void MslSession::mslVisit(MslIfNode* node)
 {
     logVisit(node);
     if (stack->phase == 0) {
@@ -1765,12 +1766,18 @@ void MslSession::mslVisit(MslIf* node)
  * These could be collapsed by the parser since they do nothing but just act
  * as a placeholder node.
  */
-void MslSession::mslVisit(MslElse* node)
+void MslSession::mslVisit(MslElseNode* node)
 {
     logVisit(node);
     MslStack* nextStack = pushNextChild();
     if (nextStack == nullptr)
       popStack();
+}
+
+void MslSession::mslVisit(MslCaseNode* node)
+{
+    logVisit(node);
+    addError(node, "Not implemented");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1979,7 +1986,7 @@ MslValue* MslSession::getChildResult(int index)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MslSession::mslVisit(MslIn* innode)
+void MslSession::mslVisit(MslInNode* innode)
 {
     logVisit(innode);
     if (stack->phase == 0) {
@@ -2083,8 +2090,8 @@ void MslSession::mslVisit(MslIn* innode)
 
             // more convenient to just stick it in the session, this is
             // what static variable references will use for track variables
-            // note that we can't just have one of these on the session since MslIn
-            // can be inside another MslIn, it needs to be on the stack and the effective
+            // note that we can't just have one of these on the session since MslInNode
+            // can be inside another MslInNode, it needs to be on the stack and the effective
             // scope searches the stack
             stack->inScope = scopeNumber;
             
@@ -2127,7 +2134,7 @@ void MslSession::mslVisit(MslIn* innode)
  *
  *     in all
  *
- * "all" becomes an MslSymbol node as normal, but Linker recognizes this as a keyword
+ * "all" becomes an MslSymbolNode as normal, but Linker recognizes this as a keyword
  * and sets a special resolution flag, kind of like we do for functionArgument.
  * Then findBinding needs to have similar awareness of context specific calculated
  * binding values.
@@ -2146,7 +2153,7 @@ bool MslSession::expandInKeyword(MslValue* keyword)
 /**
  * This behaves just like a block after parsing
  */
-void MslSession::mslVisit(MslSequence* seq)
+void MslSession::mslVisit(MslSequenceNode* seq)
 {
     logVisit(seq);
     stack->accumulator = true;
@@ -2235,7 +2242,7 @@ void MslSession::mslVisit(MslContextNode* con)
  * Revisist the weird comparison we're allowing with enumerated parameters and
  * see if this helps any.
  */
-void MslSession::mslVisit(MslKeyword* key)
+void MslSession::mslVisit(MslKeywordNode* key)
 {
     logVisit(key);
 
@@ -2256,7 +2263,7 @@ void MslSession::mslVisit(MslInitNode* init)
     popStack();
 }
 
-void MslSession::mslVisit(MslTrace* node)
+void MslSession::mslVisit(MslTraceNode* node)
 {
     logVisit(node);
     if (node->control) {
@@ -2270,7 +2277,7 @@ void MslSession::mslVisit(MslTrace* node)
     else {
         // can avoid all this if trace isn't even on
         if (trace) {
-            // basically the same as MslPrint
+            // basically the same as MslPrintNode
             // shold have a single child block
             MslStack* nextStack = pushNextChild();
             if (nextStack != nullptr) {
@@ -2308,7 +2315,7 @@ void MslSession::mslVisit(MslTrace* node)
 /**
  * Todo: might be nice to have end return a value for the script?
  */
-void MslSession::mslVisit(MslEnd* end)
+void MslSession::mslVisit(MslEndNode* end)
 {
     logVisit(end);
     MslValue* v = pool->allocValue();
@@ -2329,12 +2336,12 @@ void MslSession::mslVisit(MslEnd* end)
  * helpful to handle both the capturing of results and conveying them to the context
  * right away.
  *
- * MslPrint accepts a single child node so if you to print more than one thing you
+ * MslPrintNode accepts a single child node so if you to print more than one thing you
  * have to use a () block.  To make it look more like Lisp (print a b c) we would
  * need to accept multiple nodes and require a delimiter "print a b c;"  Since it is
  * most common to use this with single strings, don't require a delimiter.
  */
-void MslSession::mslVisit(MslPrint* echo)
+void MslSession::mslVisit(MslPrintNode* echo)
 {
     logVisit(echo);
 

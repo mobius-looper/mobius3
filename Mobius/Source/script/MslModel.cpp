@@ -8,7 +8,7 @@
 #include "MslModel.h"
 #include "MslParser.h"
 
-bool MslTrace::wantsToken(MslParser* p, MslToken& t)
+bool MslTraceNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
     bool wants = false;
@@ -29,7 +29,7 @@ bool MslTrace::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
-bool MslReference::wantsToken(MslParser* p, MslToken& t)
+bool MslReferenceNode::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
     if (name.length() == 0) {
@@ -45,7 +45,7 @@ bool MslReference::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
-bool MslKeyword::wantsToken(MslParser* p, MslToken& t)
+bool MslKeywordNode::wantsToken(MslParser* p, MslToken& t)
 {
     bool wants = false;
     if (name.length() == 0) {
@@ -332,7 +332,7 @@ bool MslFormNode::wantsToken(MslParser* p, MslToken& t)
  * with after parsing.
  */
 
-MslOperators MslOperator::mapOperator(juce::String& s)
+MslOperators MslOperatorNode::mapOperator(juce::String& s)
 {
     MslOperators op = MslUnknown;
     
@@ -357,7 +357,7 @@ MslOperators MslOperator::mapOperator(juce::String& s)
     return op;
 }
 
-MslOperators MslOperator::mapOperatorSymbol(juce::String& s)
+MslOperators MslOperatorNode::mapOperatorSymbol(juce::String& s)
 {
     MslOperators op = MslUnknown;
     

@@ -1253,7 +1253,7 @@ void MslEnvironment::initialize(MslContext* c, MslCompilation* unit)
     // none of these should be null
     MslFunction* bf = unit->getBodyFunction();
     if (bf != nullptr) {
-        MslBlock* body = bf->getBody();
+        MslBlockNode* body = bf->getBody();
         if (body != nullptr) {
             
             for (auto node : body->children) {

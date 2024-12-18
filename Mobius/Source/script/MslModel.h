@@ -31,28 +31,29 @@ class MslVisitor
   public:
     virtual ~MslVisitor() {}
 
-    virtual void mslVisit(class MslLiteral* obj) = 0;
-    virtual void mslVisit(class MslSymbol* obj) = 0;
-    virtual void mslVisit(class MslBlock* obj) = 0;
-    virtual void mslVisit(class MslOperator* obj) = 0;
-    virtual void mslVisit(class MslAssignment* obj) = 0;
+    virtual void mslVisit(class MslLiteralNode* obj) = 0;
+    virtual void mslVisit(class MslSymbolNode* obj) = 0;
+    virtual void mslVisit(class MslBlockNode* obj) = 0;
+    virtual void mslVisit(class MslOperatorNode* obj) = 0;
+    virtual void mslVisit(class MslAssignmentNode* obj) = 0;
     virtual void mslVisit(class MslVariableNode* obj) = 0;
     virtual void mslVisit(class MslFunctionNode* obj) = 0;
-    virtual void mslVisit(class MslIf* obj) = 0;
-    virtual void mslVisit(class MslElse* obj) = 0;
-    virtual void mslVisit(class MslReference* obj) = 0;
-    virtual void mslVisit(class MslEnd* obj) = 0;
+    virtual void mslVisit(class MslIfNode* obj) = 0;
+    virtual void mslVisit(class MslElseNode* obj) = 0;
+    virtual void mslVisit(class MslReferenceNode* obj) = 0;
+    virtual void mslVisit(class MslEndNode* obj) = 0;
     virtual void mslVisit(class MslWaitNode* obj) = 0;
-    virtual void mslVisit(class MslPrint* obj) = 0;
+    virtual void mslVisit(class MslPrintNode* obj) = 0;
     virtual void mslVisit(class MslContextNode* obj) = 0;
-    virtual void mslVisit(class MslIn* obj) = 0;
-    virtual void mslVisit(class MslSequence* obj) = 0;
+    virtual void mslVisit(class MslInNode* obj) = 0;
+    virtual void mslVisit(class MslSequenceNode* obj) = 0;
     virtual void mslVisit(class MslArgumentNode* obj) = 0;
-    virtual void mslVisit(class MslKeyword* obj) = 0;
-    virtual void mslVisit(class MslTrace* obj) = 0;
+    virtual void mslVisit(class MslKeywordNode* obj) = 0;
+    virtual void mslVisit(class MslTraceNode* obj) = 0;
     virtual void mslVisit(class MslPropertyNode* obj) = 0;
     virtual void mslVisit(class MslFieldNode* obj) = 0;
     virtual void mslVisit(class MslFormNode* obj) = 0;
+    virtual void mslVisit(class MslCaseNode* obj) = 0;
     // this one doesn't need a visitor
     virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
@@ -162,27 +163,28 @@ class MslNode
 
     virtual const char* getLogName() {return "?";}
 
-    virtual class MslLiteral* getLiteral() {return nullptr;}
-    virtual class MslSymbol* getSymbol() {return nullptr;}
-    virtual class MslBlock* getBlock() {return nullptr;}
-    virtual class MslOperator* getOperator() {return nullptr;}
-    virtual class MslAssignment* getAssignment() {return nullptr;}
+    virtual class MslLiteralNode* getLiteral() {return nullptr;}
+    virtual class MslSymbolNode* getSymbol() {return nullptr;}
+    virtual class MslBlockNode* getBlock() {return nullptr;}
+    virtual class MslOperatorNode* getOperator() {return nullptr;}
+    virtual class MslAssignmentNode* getAssignment() {return nullptr;}
     virtual class MslVariableNode* getVariable() {return nullptr;}
     virtual class MslFunctionNode* getFunction() {return nullptr;}
     virtual class MslScopedNode* getScopedNode() {return nullptr;}
-    virtual class MslIf* getIf() {return nullptr;}
-    virtual class MslElse* getElse() {return nullptr;}
-    virtual class MslReference* getReference() {return nullptr;}
-    virtual class MslEnd* getEnd() {return false;}
+    virtual class MslIfNode* getIf() {return nullptr;}
+    virtual class MslElseNode* getElse() {return nullptr;}
+    virtual class MslCaseNode* getCase() {return nullptr;}
+    virtual class MslReferenceNode* getReference() {return nullptr;}
+    virtual class MslEndNode* getEnd() {return false;}
     virtual class MslWaitNode* getWait() {return nullptr;}
-    virtual class MslPrint* getPrint() {return nullptr;}
+    virtual class MslPrintNode* getPrint() {return nullptr;}
     virtual class MslContextNode* getContext() {return nullptr;}
-    virtual class MslIn* getIn() {return nullptr;}
-    virtual class MslSequence* getSequence() {return nullptr;}
+    virtual class MslInNode* getIn() {return nullptr;}
+    virtual class MslSequenceNode* getSequence() {return nullptr;}
     virtual class MslArgumentNode* getArgument() {return nullptr;}
-    virtual class MslKeyword* getKeyword() {return nullptr;}
+    virtual class MslKeywordNode* getKeyword() {return nullptr;}
     virtual class MslInitNode* getInit() {return nullptr;}
-    virtual class MslTrace* getTrace() {return nullptr;}
+    virtual class MslTraceNode* getTrace() {return nullptr;}
     virtual class MslPropertyNode* getProperty() {return nullptr;}
     virtual class MslFieldNode* getField() {return nullptr;}
     virtual class MslFormNode* getForm() {return nullptr;}
@@ -197,6 +199,7 @@ class MslNode
     bool isScoped() {return getScopedNode() != nullptr;}
     bool isIf() {return getIf() != nullptr;}
     bool isElse() {return getElse() != nullptr;}
+    bool isCase() {return getCase() != nullptr;}
     bool isReference() {return getReference() != nullptr;}
     bool isEnd() {return getEnd() != false;}
     bool isWait() {return getWait() != nullptr;}
@@ -247,13 +250,13 @@ class MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslLiteral : public MslNode
+class MslLiteralNode : public MslNode
 {
   public:
-    MslLiteral(MslToken& t) : MslNode(t) {locked=true;}
-    virtual ~MslLiteral() {}
+    MslLiteralNode(MslToken& t) : MslNode(t) {locked=true;}
+    virtual ~MslLiteralNode() {}
 
-    MslLiteral* getLiteral() override {return this;}
+    MslLiteralNode* getLiteral() override {return this;}
     bool isFinished() override {return true;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
@@ -275,20 +278,20 @@ class MslLiteral : public MslNode
 // Keywords have the form :name
 // Will eventually evolve into Qualified names of the form scope:name
 //
-// hmm, now that we have this, this could be merged with MslReference?
+// hmm, now that we have this, this could be merged with MslReferenceNode?
 //   $1 vs :1
 //
 // except that references always return something and :foo doesn't
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslKeyword : public MslNode
+class MslKeywordNode : public MslNode
 {
   public:
-    MslKeyword(MslToken& t) : MslNode(t) {locked=true;}
-    virtual ~MslKeyword() {}
+    MslKeywordNode(MslToken& t) : MslNode(t) {locked=true;}
+    virtual ~MslKeywordNode() {}
 
-    MslKeyword* getKeyword() override {return this;}
+    MslKeywordNode* getKeyword() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Keyword";}
 
@@ -309,11 +312,11 @@ class MslKeyword : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslReference : public MslNode
+class MslReferenceNode : public MslNode
 {
   public:
-    MslReference(MslToken& t) : MslNode(t) {locked=true;}
-    virtual ~MslReference() {}
+    MslReferenceNode(MslToken& t) : MslNode(t) {locked=true;}
+    virtual ~MslReferenceNode() {}
 
     // take the next number or symbol
     // if it isn't one of those raise an error
@@ -321,7 +324,7 @@ class MslReference : public MslNode
     
     juce::String name;
     
-    MslReference* getReference() override {return this;}
+    MslReferenceNode* getReference() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Reference";}
@@ -333,13 +336,13 @@ class MslReference : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslBlock : public MslNode
+class MslBlockNode : public MslNode
 {
   public:
-    MslBlock(MslToken& t) : MslNode(t) {}
+    MslBlockNode(MslToken& t) : MslNode(t) {}
     // special constructor for the root block with no tokcn
-    MslBlock() {}
-    virtual ~MslBlock() {}
+    MslBlockNode() {}
+    virtual ~MslBlockNode() {}
 
     // doesn't want tokens but will always accept nodes
     // might want tokens if inner blocks allow declarations
@@ -357,7 +360,7 @@ class MslBlock : public MslNode
     juce::OwnedArray<MslFunctionNode> functions;
     juce::OwnedArray<MslVariableNode> variables;
 
-    MslBlock* getBlock() override {return this;}
+    MslBlockNode* getBlock() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Block";}
@@ -369,12 +372,12 @@ class MslBlock : public MslNode
  * One of these is not created automatically during parsing, it needs to be
  * injected where necessary, notably after an "in"
  */
-class MslSequence : public MslNode
+class MslSequenceNode : public MslNode
 {
   public:
     // these are not created from tokens
-    MslSequence() {}
-    virtual ~MslSequence() {}
+    MslSequenceNode() {}
+    virtual ~MslSequenceNode() {}
 
     // this one is a little weird, it wants to SEE the token
     // but it doesn't consume it so , continues to act as a terminator
@@ -398,7 +401,7 @@ class MslSequence : public MslNode
     bool armed = false;
 
     // should this be a block subclass?
-    MslSequence* getSequence() override {return this;}
+    MslSequenceNode* getSequence() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Sequence";}
@@ -444,11 +447,11 @@ typedef enum {
     
 } MslOperators;
 
-class MslOperator : public MslNode
+class MslOperatorNode : public MslNode
 {
   public:
-    MslOperator(MslToken& t) : MslNode(t) {}
-    virtual ~MslOperator() {}
+    MslOperatorNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslOperatorNode() {}
 
     // operators stop accepting nodes with all of their operands
     // are satisified
@@ -489,7 +492,7 @@ class MslOperator : public MslNode
     static MslOperators mapOperatorSymbol(juce::String& s);
     
     // runtime
-    MslOperator* getOperator() override {return this;}
+    MslOperatorNode* getOperator() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Operator";}
@@ -505,11 +508,11 @@ class MslOperator : public MslNode
 /**
  * Assignments are basically operators with added runtime semantics
  */
-class MslAssignment : public MslNode
+class MslAssignmentNode : public MslNode
 {
   public:
-    MslAssignment(MslToken& t) : MslNode(t) {}
-    virtual ~MslAssignment() {}
+    MslAssignmentNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslAssignmentNode() {}
 
     bool wantsNode(class MslParser*p, MslNode* node) override {
         (void)p;
@@ -521,7 +524,7 @@ class MslAssignment : public MslNode
         return wants;
     }
 
-    MslAssignment* getAssignment() override {return this;}
+    MslAssignmentNode* getAssignment() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Assignment";}
 
@@ -641,10 +644,10 @@ class MslFunctionNode : public MslScopedNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Function";}
     
-    MslBlock* getBody() {
-        MslBlock* body = nullptr;
+    MslBlockNode* getBody() {
+        MslBlockNode* body = nullptr;
         for (auto child : children) {
-            MslBlock* b = child->getBlock();
+            MslBlockNode* b = child->getBlock();
             if (b != nullptr && child->token.value == "{") {
                 body = b;
                 break;
@@ -652,10 +655,10 @@ class MslFunctionNode : public MslScopedNode
         }
         return body;
     }
-    MslBlock* getDeclaration() {
-        MslBlock* decl = nullptr;
+    MslBlockNode* getDeclaration() {
+        MslBlockNode* decl = nullptr;
         for (auto child : children) {
-            MslBlock* b = child->getBlock();
+            MslBlockNode* b = child->getBlock();
             if (b != nullptr  && child->token.value == "(") {
                 decl = b;
                 break;
@@ -692,16 +695,16 @@ class MslInitNode : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslIf : public MslNode
+class MslIfNode : public MslNode
 {
   public:
-    MslIf(MslToken& t) : MslNode(t) {}
-    ~MslIf() {}
+    MslIfNode(MslToken& t) : MslNode(t) {}
+    ~MslIfNode() {}
 
-    MslIf* getIf() override {return this;}
+    MslIfNode* getIf() override {return this;}
 
     // this one can get kind of weird with else
-    // MslIf is the only thing that can receive an else so if
+    // MslIfNode is the only thing that can receive an else so if
     // we find one dangling need to error,
     // rather than asking a target node if it wants a new node,
     // ask the new node if it wants to be inside the target?
@@ -721,7 +724,7 @@ class MslIf : public MslNode
     }
     
     // old model just had a chain of conditionals and clauses
-    // which might be better than embedding another MslIf inside the false block
+    // which might be better than embedding another MslIfNode inside the false block
 
     MslNode* condition = nullptr;
     MslNode* trueBlock = nullptr;;
@@ -731,13 +734,13 @@ class MslIf : public MslNode
     const char* getLogName() override {return "If";}
 };
 
-class MslElse : public MslNode
+class MslElseNode : public MslNode
 {
   public:
-    MslElse(MslToken& t) : MslNode(t) {}
-    ~MslElse() {}
+    MslElseNode(MslToken& t) : MslNode(t) {}
+    ~MslElseNode() {}
 
-    MslElse* getElse() override {return this;}
+    MslElseNode* getElse() override {return this;}
 
     bool wantsNode(class MslParser* p, MslNode* node) override {
         (void)p; (void)node;
@@ -748,6 +751,23 @@ class MslElse : public MslNode
     const char* getLogName() override {return "Else";}
 };
 
+class MslCaseNode : public MslNode
+{
+  public:
+    MslCaseNode(MslToken& t) : MslNode(t) {}
+    ~MslCaseNode() {}
+
+    MslCaseNode* getCase() override {return this;}
+
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
+        return (children.size() == 0);
+    }
+    
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Case";}
+};
+
 //////////////////////////////////////////////////////////////////////
 //
 // Flow Control
@@ -756,40 +776,40 @@ class MslElse : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslEnd : public MslNode
+class MslEndNode : public MslNode
 {
   public:
-    MslEnd(MslToken& t) : MslNode(t) {}
-    ~MslEnd() {}
+    MslEndNode(MslToken& t) : MslNode(t) {}
+    ~MslEndNode() {}
 
-    MslEnd* getEnd() override {return this;}
+    MslEndNode* getEnd() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "End";}
     bool operandable() override {return false;}
 };
 
-class MslPrint : public MslNode
+class MslPrintNode : public MslNode
 {
   public:
-    MslPrint(MslToken& t) : MslNode(t) {}
-    ~MslPrint() {}
+    MslPrintNode(MslToken& t) : MslNode(t) {}
+    ~MslPrintNode() {}
 
     bool wantsNode(class MslParser* p, MslNode* node) override {
         (void)p; (void)node;
         return (children.size() == 0);
     }
     
-    MslPrint* getPrint() override {return this;}
+    MslPrintNode* getPrint() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Print";}
     bool operandable() override {return false;}
 };
 
-class MslTrace : public MslNode
+class MslTraceNode : public MslNode
 {
   public:
-    MslTrace(MslToken& t) : MslNode(t) {}
-    ~MslTrace() {}
+    MslTraceNode(MslToken& t) : MslNode(t) {}
+    ~MslTraceNode() {}
 
     bool control = false;
     bool on = false;
@@ -801,7 +821,7 @@ class MslTrace : public MslNode
         return (!control && children.size() == 0);
     }
     
-    MslTrace* getTrace() override {return this;}
+    MslTraceNode* getTrace() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Trace";}
     bool operandable() override {return false;}
@@ -821,16 +841,16 @@ class MslTrace : public MslNode
 //
 //////////////////////////////////////////////////////////////////////
 
-class MslIn : public MslNode
+class MslInNode : public MslNode
 {
   public:
-    MslIn(MslToken& t) : MslNode(t) {}
-    virtual ~MslIn() {}
+    MslInNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslInNode() {}
 
     bool hasArgs = false;
     bool hasBody = false;
     
-    MslIn* getIn() override {return this;}
+    MslInNode* getIn() override {return this;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "In";}
 
@@ -998,10 +1018,10 @@ class MslFormNode : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Form";}
     
-    MslBlock* getBody() {
-        MslBlock* body = nullptr;
+    MslBlockNode* getBody() {
+        MslBlockNode* body = nullptr;
         for (auto child : children) {
-            MslBlock* b = child->getBlock();
+            MslBlockNode* b = child->getBlock();
             if (b != nullptr && child->token.value == "{") {
                 body = b;
                 break;
@@ -1009,10 +1029,10 @@ class MslFormNode : public MslNode
         }
         return body;
     }
-    MslBlock* getDeclaration() {
-        MslBlock* decl = nullptr;
+    MslBlockNode* getDeclaration() {
+        MslBlockNode* decl = nullptr;
         for (auto child : children) {
-            MslBlock* b = child->getBlock();
+            MslBlockNode* b = child->getBlock();
             if (b != nullptr  && child->token.value == "(") {
                 decl = b;
                 break;

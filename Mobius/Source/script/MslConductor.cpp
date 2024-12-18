@@ -941,7 +941,7 @@ MslResult* MslConductor::run(MslContext* c, MslCompilation* unit,
 
     MslFunction* func = unit->getBodyFunction();
     if (func != nullptr) {
-        MslBlock* body = func->getBody();
+        MslBlockNode* body = func->getBody();
         if (body != nullptr) {
             MslSession* session = environment->getPool()->allocSession();
             session->run(c, unit, arguments, body);

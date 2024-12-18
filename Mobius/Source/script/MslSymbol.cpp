@@ -101,7 +101,7 @@
  * Phase 2: Back from the evaluation of the function body
  *
  */
-void MslSession::mslVisit(MslSymbol* snode)
+void MslSession::mslVisit(MslSymbolNode* snode)
 {
     logVisit(snode);
     // for safety check later
@@ -207,7 +207,7 @@ void MslSession::mslVisit(MslSymbol* snode)
  * an error.  This is better for diagnostics because otherewise they don't know
  * nothing happened.
  */
-void MslSession::returnUnresolved(MslSymbol* snode)
+void MslSession::returnUnresolved(MslSymbolNode* snode)
 {
     // lenient way
 /*    
@@ -223,7 +223,7 @@ void MslSession::returnUnresolved(MslSymbol* snode)
 /**
  * The value of a keyword is it's name
  */
-void MslSession::returnKeyword(MslSymbol* snode)
+void MslSession::returnKeyword(MslSymbolNode* snode)
 {
     MslValue* v = pool->allocValue();
     v->setJString(snode->token.value);
@@ -237,7 +237,7 @@ void MslSession::returnKeyword(MslSymbol* snode)
  * but the variable is still static for the compilation unit where
  * it was defined.
  */
-void MslSession::returnStaticVariable(MslSymbol* snode)
+void MslSession::returnStaticVariable(MslSymbolNode* snode)
 {
     MslVariable* rv = snode->resolution.staticVariable;
     MslValue* v = pool->allocValue();
@@ -253,7 +253,7 @@ void MslSession::returnStaticVariable(MslSymbol* snode)
  * variable defined in another script.  These must indirece
  * through an MslLinkage so the defining script can be reloaded.
  */
-void MslSession::returnLinkedVariable(MslSymbol* snode)
+void MslSession::returnLinkedVariable(MslSymbolNode* snode)
 {
     MslLinkage* link = snode->resolution.linkage;
     MslVariable* var = link->variable;
@@ -280,7 +280,7 @@ void MslSession::returnLinkedVariable(MslSymbol* snode)
  * with more than one possibility here, that decision has already been made.
  *
  */
-void MslSession::pushArguments(MslSymbol* snode)
+void MslSession::pushArguments(MslSymbolNode* snode)
 {
     if (snode->arguments.size() == 0) {
         // no arguments, just call it
@@ -302,13 +302,13 @@ void MslSession::pushArguments(MslSymbol* snode)
  * match the compiled argument list.  So while it looks we might be dealing
  * with more than one possibility here, that decision has already been made.
  */
-void MslSession::pushCall(MslSymbol* snode)
+void MslSession::pushCall(MslSymbolNode* snode)
 {
     if (snode->resolution.external != nullptr) {
         callExternal(snode);
     }
     else {
-        MslBlock* body = snode->resolution.getBody();
+        MslBlockNode* body = snode->resolution.getBody();
         if (body != nullptr)
           pushBody(snode, body);
         else
@@ -324,7 +324,7 @@ void MslSession::pushCall(MslSymbol* snode)
  * We don't currently have the notion of a "void" function so return nil for now.
  * Could have avoided evaluating the argument list in this case.
  */
-void MslSession::pushBody(MslSymbol* snode, MslBlock* body)
+void MslSession::pushBody(MslSymbolNode* snode, MslBlockNode* body)
 {
     if (body == nullptr) {
         // nothing to do, nil
@@ -342,7 +342,7 @@ void MslSession::pushBody(MslSymbol* snode, MslBlock* body)
  * into MslBindings on the stack frame.
  * The values for the binding are in the stack->childResults.
  */
-void MslSession::bindArguments(MslSymbol* snode)
+void MslSession::bindArguments(MslSymbolNode* snode)
 {
     int position = 1;
     
@@ -449,7 +449,7 @@ void MslSession::mslVisit(MslArgumentNode* node)
  * don't think that way, they want enumeration names.  Use the weird
  * Type::Enum to return both so either can be used.
  */
-void MslSession::returnQuery(MslSymbol* snode)
+void MslSession::returnQuery(MslSymbolNode* snode)
 {
     MslExternal* external = snode->resolution.external;
     
@@ -504,7 +504,7 @@ void MslSession::returnQuery(MslSymbol* snode)
  * don't think that way, they want enumeration names.  Use the weird
  * Type::Enum to return both so either can be used.
  */
-void MslSession::callExternal(MslSymbol* snode)
+void MslSession::callExternal(MslSymbolNode* snode)
 {
     MslExternal* external = snode->resolution.external;
     
@@ -596,7 +596,7 @@ void MslSession::callExternal(MslSymbol* snode)
  * Phase 1: evaluating the RHS value to assign
  *
  */
-void MslSession::mslVisit(MslAssignment* ass)
+void MslSession::mslVisit(MslAssignmentNode* ass)
 {
     logVisit(ass);
     if (stack->phase == 1) {
@@ -613,7 +613,7 @@ void MslSession::mslVisit(MslAssignment* ass)
     else {
         // verify we have an assignment target symbol before we bother
         // evaluating the initializer
-        MslSymbol* namesym = getAssignmentSymbol(ass);
+        MslSymbolNode* namesym = getAssignmentSymbol(ass);
         if (namesym != nullptr) {
             
             MslNode* initializer = ass->get(1);
@@ -631,11 +631,11 @@ void MslSession::mslVisit(MslAssignment* ass)
 
 /**
  * Derive the target symbol for the assignment.
- * Could have done this at parse time and just left it in the MslAssignment
+ * Could have done this at parse time and just left it in the MslAssignmentNode
  */
-MslSymbol* MslSession::getAssignmentSymbol(MslAssignment* ass)
+MslSymbolNode* MslSession::getAssignmentSymbol(MslAssignmentNode* ass)
 {
-    MslSymbol* namesym = nullptr;
+    MslSymbolNode* namesym = nullptr;
     MslNode* first = ass->get(0);
     if (first == nullptr) {
         addError(ass, "Malformed assignment, missing assignment symbol");
@@ -644,7 +644,7 @@ MslSymbol* MslSession::getAssignmentSymbol(MslAssignment* ass)
         addError(ass, "Malformed assignment, assignment to non-symbol");
     }
     else {
-        namesym = static_cast<MslSymbol*>(first);
+        namesym = static_cast<MslSymbolNode*>(first);
     }
     return namesym;
 }
@@ -657,9 +657,9 @@ MslSymbol* MslSession::getAssignmentSymbol(MslAssignment* ass)
  * If we have to do thread transition, we're going to end up looking for bindings twice,
  * could skip that with another stack phase but it shouldn't be too expensive.
  */
-void MslSession::doAssignment(MslAssignment* ass)
+void MslSession::doAssignment(MslAssignmentNode* ass)
 {
-    MslSymbol* namesym = getAssignmentSymbol(ass);
+    MslSymbolNode* namesym = getAssignmentSymbol(ass);
     if (namesym != nullptr) {
     
         // if there is a dyanmic binding on the stack, it always gets it first

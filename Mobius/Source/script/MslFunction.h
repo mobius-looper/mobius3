@@ -70,8 +70,8 @@ class MslFunction
 
   protected:
 
-    class MslBlock* getBody() {
-        MslBlock* retval = nullptr;
+    class MslBlockNode* getBody() {
+        MslBlockNode* retval = nullptr;
         if (body != nullptr) {
             retval = body.get();
         }
@@ -87,19 +87,19 @@ class MslFunction
         node.reset(n);
     }
 
-    void setBody(MslBlock* b) {
+    void setBody(MslBlockNode* b) {
         if (node != nullptr)
           Trace(1, "MslFunction: Conflicting body sources");
         body.reset(b);
     }
     
     // special for MslParser
-    class MslBlock* releaseBody() {
+    class MslBlockNode* releaseBody() {
         return (body != nullptr) ? body.release() : nullptr;
     }
 
-    class MslBlock* getDeclaration() {
-        MslBlock* retval = nullptr;
+    class MslBlockNode* getDeclaration() {
+        MslBlockNode* retval = nullptr;
         if (declaration != nullptr)
           retval = declaration.get();
         else if (node != nullptr)
@@ -107,7 +107,7 @@ class MslFunction
         return retval;
     }
 
-    void setDeclaration(MslBlock* b) {
+    void setDeclaration(MslBlockNode* b) {
         declaration.reset(b);
     }
 
@@ -119,11 +119,11 @@ class MslFunction
 
     // set when this was derived from an init block or the top level
     // script body block
-    std::unique_ptr<class MslBlock> body;
+    std::unique_ptr<class MslBlockNode> body;
 
     // set when this was derived from the top level script body block
     // and there was a declaration for the script signature
-    std::unique_ptr<class MslBlock> declaration;
+    std::unique_ptr<class MslBlockNode> declaration;
 
 };
 

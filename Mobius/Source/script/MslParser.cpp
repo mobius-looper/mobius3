@@ -57,7 +57,7 @@ MslCompilation* MslParser::parse(juce::String source)
     init();
     
     script = new MslCompilation();
-    root = new MslBlock();
+    root = new MslBlockNode();
 
     // the "stack"
     current = root;
@@ -105,7 +105,7 @@ void MslParser::init()
  * Top-level function definitions are extracted from the body and left on a list
  * since these are not evaluated in lexical order.
  * todo: once local function declarations are possible, this sifting should be
- * done on each MslBlock instead.  The only things that need special extraction
+ * done on each MslBlockNode instead.  The only things that need special extraction
  * are functions declared as exported.
  *
  * Declarations will have been removed at this point and left in the MslCompilation.
@@ -279,7 +279,7 @@ void MslParser::errorSyntax(MslNode* node, juce::String details)
  */
 bool MslParser::matchBracket(MslToken& t, MslNode* block)
 {
-    // let's try to avoid a specific MslBlock just store the
+    // let's try to avoid a specific MslBlockNode just store the
     // bracketing char
     bool match = (((t.value == "}") && (block->token.value == "{")) ||
                   ((t.value == ")") && (block->token.value == "(")) ||
@@ -372,7 +372,7 @@ void MslParser::parseInner(juce::String source)
                     // reserve these for positional argument references
                     // but may have other uses
                     // could just make this a symbol but that that's so overloaded already
-                    MslReference* r = new MslReference(t);
+                    MslReferenceNode* r = new MslReferenceNode(t);
                     // this will also consume the next token
                     current = push(r);
                 }
@@ -390,27 +390,27 @@ void MslParser::parseInner(juce::String source)
                 break;
 
             case MslToken::Type::String:
-                current = push(new MslLiteral(t));
+                current = push(new MslLiteralNode(t));
                 break;
 
             case MslToken::Type::Int: {
                 // would be convenient to pass the entire MslToken in but I
                 // don't want a dependency on that model yet
-                MslLiteral* l = new MslLiteral(t);
+                MslLiteralNode* l = new MslLiteralNode(t);
                 l->isInt = true;
                 current = push(l);
             }
                 break;
 
             case MslToken::Type::Float: {
-                MslLiteral* l = new MslLiteral(t);
+                MslLiteralNode* l = new MslLiteralNode(t);
                 l->isFloat = true;
                 current = push(l);
             }
                 break;
                 
             case MslToken::Type::Bool: {
-                MslLiteral* l = new MslLiteral(t);
+                MslLiteralNode* l = new MslLiteralNode(t);
                 l->isBool = true;
                 current = push(l);
             }
@@ -418,7 +418,7 @@ void MslParser::parseInner(juce::String source)
 
             case MslToken::Type::Symbol: {
                 // special case for the few symbols we treat as operators
-                MslOperators opcode = MslOperator::mapOperatorSymbol(t.value);
+                MslOperators opcode = MslOperatorNode::mapOperatorSymbol(t.value);
                 if (opcode != MslUnknown) {
                     parseOperator(t, opcode);
                 }
@@ -427,7 +427,7 @@ void MslParser::parseInner(juce::String source)
                     // is pushed, otherwise it becomes a generic symbol node
                     MslNode* node = checkKeywords(t);
                     if (node == nullptr)
-                      node = new MslSymbol(t);
+                      node = new MslSymbolNode(t);
                     else {
                         // for "function" and "variable" keywords, consume the pending
                         // scope qualifier
@@ -448,7 +448,7 @@ void MslParser::parseInner(juce::String source)
 
             case MslToken::Type::Bracket: {
                 if (t.isOpen()) {
-                    MslBlock* block = new MslBlock(t);
+                    MslBlockNode* block = new MslBlockNode(t);
                     current = push(block);
                 }
                 else {
@@ -476,7 +476,7 @@ void MslParser::parseInner(juce::String source)
                     else {
                         // these behave sort of like expression operators
                         // but they must have a symbol on the LHS
-                        MslAssignment* ass = new MslAssignment(t);
+                        MslAssignmentNode* ass = new MslAssignmentNode(t);
 
                         // pop up till we're wanted, more than one level?
                         // this still feels weird
@@ -496,7 +496,7 @@ void MslParser::parseInner(juce::String source)
                     }
                 }
                 else {
-                    MslOperators opcode = MslOperator::mapOperator(t.value);
+                    MslOperators opcode = MslOperatorNode::mapOperator(t.value);
                     if (opcode != MslUnknown) {
                         parseOperator(t, opcode);
                     }
@@ -527,7 +527,7 @@ void MslParser::parseInner(juce::String source)
                         current = current->parent;
 
                         // maybe call wantsNode here instead
-                        MslSequence* seq = current->getSequence();
+                        MslSequenceNode* seq = current->getSequence();
                         if (seq != nullptr)
                           seq->armed = true;
                     }
@@ -543,7 +543,7 @@ void MslParser::parseInner(juce::String source)
                         awaitingQualifiedName = true;
                     }
                     else {
-                        MslKeyword* k = new MslKeyword(t);
+                        MslKeywordNode* k = new MslKeywordNode(t);
                         current = push(k);
                     }
                 }
@@ -578,7 +578,7 @@ void MslParser::parseInner(juce::String source)
  */
 void MslParser::parseOperator(MslToken& t, MslOperators opcode)
 {
-    MslOperator* op = new MslOperator(t);
+    MslOperatorNode* op = new MslOperatorNode(t);
     op->opcode = opcode;
 
     // pop up till we're wanted, more than one level?
@@ -602,7 +602,7 @@ void MslParser::parseOperator(MslToken& t, MslOperators opcode)
         // either subsume the last node, or if we're adjacent to an
         // operator of lower priority, it's second operand
         MslNode* operand = last;
-        MslOperator* other = operand->getOperator();
+        MslOperatorNode* other = operand->getOperator();
         if (other != nullptr) {
             // old way
             //if (precedence(op->token.value, operand->token.value) >= 0) {
@@ -704,7 +704,7 @@ MslNode* MslParser::subsume(MslNode* op, MslNode* operand)
 /**
  * In a syntactical context that requires a unary, we allow a subset
  */
-void MslParser::unarize(MslToken& t, MslOperator* possible)
+void MslParser::unarize(MslToken& t, MslOperatorNode* possible)
 {
     if (t.value == "!" || t.value == "-" || t.value == "+") {
         // worth having a special node type for these?
@@ -767,22 +767,25 @@ MslNode* MslParser::checkKeywords(MslToken& t)
       keyword = new MslInitNode(t);
     
     else if (t.value == "if")
-      keyword = new MslIf(t);
+      keyword = new MslIfNode(t);
 
     else if (t.value == "else")
-      keyword = new MslElse(t);
+      keyword = new MslElseNode(t);
+    
+    else if (t.value == "case")
+      keyword = new MslCaseNode(t);
     
     else if (t.value == "end")
-      keyword = new MslEnd(t);
+      keyword = new MslEndNode(t);
     
     else if (t.value == "wait")
       keyword = new MslWaitNode(t);
     
     else if (t.value == "print" || t.value == "echo")
-      keyword = new MslPrint(t);
+      keyword = new MslPrintNode(t);
 
     else if (t.value == "trace")
-      keyword = new MslTrace(t);
+      keyword = new MslTraceNode(t);
      
     else if (t.value == "context")
       keyword = new MslContextNode(t);
@@ -796,8 +799,8 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     else if (t.value == "in") {
         // this one is weird because not only does it create a node
         // for this token, it also pushes another node under it, an MslSequence
-        keyword = new MslIn(t);
-        keyword->add(new MslSequence());
+        keyword = new MslInNode(t);
+        keyword->add(new MslSequenceNode());
     }
     
     return keyword;
@@ -875,7 +878,7 @@ int MslParser::parseNumber(MslToken& t, juce::String s)
  * This is a bit of a hack to parse the #signature directive into what looks
  * like the argument declaration block of an MslFunctionNode.  This allows
  * a script file to be called with arguments as if it were wrapped in a
- * MslFunctionNode which makes it easier for the MslSymbol evaluator to deal with.
+ * MslFunctionNode which makes it easier for the MslSymbolNode evaluator to deal with.
  * Since the text isn't part of the text of the file currently being
  * parsed, we create a new parser just for this so we don't mess up the state
  * of the main parser.
@@ -937,7 +940,7 @@ void MslParser::parseArguments(MslToken& t, int offset, juce::String remainder)
         MslFunction* f = c->getBodyFunction();
         if (f != nullptr) {
             // this is the root block of the function, which will become the signature block
-            MslBlock* sig = f->releaseBody();
+            MslBlockNode* sig = f->releaseBody();
 
             // where this goes is in the declaration block
             // of the body function for this compilation unit, whew

@@ -42,7 +42,7 @@ class MslParser
     class MslCompilation* script = nullptr;
     
     // the root block of the parse
-    class MslBlock* root = nullptr;
+    class MslBlockNode* root = nullptr;
 
     // the parse stack
     class MslNode* current = nullptr;
@@ -63,7 +63,7 @@ class MslParser
     bool operandable(MslNode* node);
     int precedence(juce::String op1, juce::String op2);
     int precedence(MslOperators op1, MslOperators op2);
-    void unarize(MslToken& t, class MslOperator* possible);
+    void unarize(MslToken& t, class MslOperatorNode* possible);
     MslNode* subsume(MslNode* op, MslNode* operand);
 
     void parseDirective(MslToken& t);

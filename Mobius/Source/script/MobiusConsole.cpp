@@ -761,7 +761,7 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         for (int i = 0 ; i < indent ; i++) line += " ";
 
         if (node->isLiteral()) {
-            MslLiteral* l = static_cast<MslLiteral*>(node);
+            MslLiteralNode* l = node->getLiteral();
             if (l->isInt)
               line += "Int: " + node->token.value;
             else if (l->isFloat)
@@ -784,7 +784,7 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             line += "Assignment: " + node->token.value;
         }
         else if (node->isVariable()) {
-            MslVariableNode* var = static_cast<MslVariableNode*>(node);
+            MslVariableNode* var = node->getVariable();
             line += "Variable: " + var->name;
             // todo: any node should be able to have properties?
             if (var->properties.size() > 0) {
@@ -814,18 +814,17 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             }
         }
         else if (node->isFunction()) {
-            MslFunctionNode* func = static_cast<MslFunctionNode*>(node);
+            MslFunctionNode* func = node->getFunction();
             line += "Function: " + func->name;
         }
         else if (node->isIf()) {
-            //MslIf* ifnode = static_cast<MslIf*>(node);
             line += "If: ";
         }
         else if (node->isElse()) {
             line += "Else: ";
         }
         else if (node->isReference()) {
-            MslReference* ref = static_cast<MslReference*>(node);
+            MslReferenceNode* ref = node->getReference();
             line += "Reference: " + ref->name;
         }
         else if (node->isEnd()) {
@@ -841,15 +840,15 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             line += "Sequence";
         }
         else if (node->isWait()) {
-            MslWaitNode* waitnode = static_cast<MslWaitNode*>(node);
+            MslWaitNode* waitnode = node->getWait();
             line += "Wait: " + juce::String(MslWait::typeToKeyword(waitnode->type));
         }
         else if (node->isContext()) {
-            MslContextNode* con = static_cast<MslContextNode*>(node);
+            MslContextNode* con = node->getContext();
             line += "Context: " + juce::String(con->shell ? "shell" : "kernel");
         }
         else if (node->isKeyword()) {
-            MslKeyword* key = static_cast<MslKeyword*>(node);
+            MslKeywordNode* key = node->getKeyword();
             line += "Keyword: " + key->name;
         }
         else {

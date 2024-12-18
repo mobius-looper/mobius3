@@ -22,7 +22,7 @@ class MslGarbage
         units.add(unit);
     }
     
-    void add(class MslBlock* block) {
+    void add(class MslBlockNode* block) {
         blocks.add(block);
     }
     
@@ -33,7 +33,7 @@ class MslGarbage
     class MslPools* pool = nullptr;
 
     juce::OwnedArray<class MslCompilation> units;
-    juce::OwnedArray<class MslBlock> blocks;
+    juce::OwnedArray<class MslBlockNode> blocks;
 
 };
 

@@ -27,7 +27,7 @@
 
 /**
  * Helper class to deal with all the various resolution targets
- * when resolving symbols.  One of these is embedded within each MslSymbol
+ * when resolving symbols.  One of these is embedded within each MslSymbolNode
  * Besides maintaining state while searching for things during linking it also
  * hides the details of the various object models at runtime to simplify code
  * in the interpreter.
@@ -119,8 +119,8 @@ class MslResolution
     }
 
     // return the function body to evaluate from wherever it may roam
-    MslBlock* getBody() {
-        MslBlock* body = nullptr;
+    MslBlockNode* getBody() {
+        MslBlockNode* body = nullptr;
         
         if (innerFunction != nullptr) {
             body = innerFunction->getBody();
@@ -186,14 +186,14 @@ class MslArgumentNode : public MslNode
 /**
  * Symbol node
  */
-class MslSymbol : public MslNode
+class MslSymbolNode : public MslNode
 {
   public:
     
-    MslSymbol(MslToken& t) : MslNode(t) {}
-    virtual ~MslSymbol() {}
+    MslSymbolNode(MslToken& t) : MslNode(t) {}
+    virtual ~MslSymbolNode() {}
 
-    MslSymbol* getSymbol() override {return this;}
+    MslSymbolNode* getSymbol() override {return this;}
     bool operandable() override {return true;}
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Symbol";}
@@ -216,7 +216,7 @@ class MslSymbol : public MslNode
     bool isResolved() {return resolution.isResolved();}
     
     // compiled argument list for the resolved function
-    MslBlock arguments;
+    MslBlockNode arguments;
     
 };
 

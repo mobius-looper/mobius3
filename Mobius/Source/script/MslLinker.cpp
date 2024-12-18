@@ -147,7 +147,7 @@ void MslLinker::link(MslNode* node)
 
         // now the hard part
         // only symbols need special processing right now
-        MslSymbol* sym = node->getSymbol();
+        MslSymbolNode* sym = node->getSymbol();
         if (sym != nullptr)
           link(sym);
     }
@@ -286,7 +286,7 @@ void MslLinker::checkCollisions(MslEnvironment* env, MslCompilation* comp)
  * is an error.
  *     
  */
-void MslLinker::link(MslSymbol* sym)
+void MslLinker::link(MslSymbolNode* sym)
 {
     resolve(sym);
 
@@ -318,7 +318,7 @@ void MslLinker::link(MslSymbol* sym)
  * Resolve a reference through the various levels.
  * Leave a warning if it was unresolved.
  */
-void MslLinker::resolve(MslSymbol* sym)
+void MslLinker::resolve(MslSymbolNode* sym)
 {
     // this helps maintain state while we look for things
     // todo: it would be useful to have a utility that examines
@@ -353,7 +353,7 @@ void MslLinker::resolve(MslSymbol* sym)
 /**
  * Attempt to resolve the symbol locally within the compilation unit.
  */
-void MslLinker::resolveLocal(MslSymbol* sym)
+void MslLinker::resolveLocal(MslSymbolNode* sym)
 {
     // start looking up the stack for a function or variable definition
     resolveLocal(sym, sym->parent);
@@ -370,7 +370,7 @@ void MslLinker::resolveLocal(MslSymbol* sym)
  * might have special meaning if it is inside the argument declaration
  * block of a function definition?
  */
-void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
+void MslLinker::resolveLocal(MslSymbolNode* sym, MslNode* node)
 {
     MslFunctionNode* def = node->getFunction();
     if (def != nullptr) {
@@ -464,7 +464,7 @@ void MslLinker::resolveLocal(MslSymbol* sym, MslNode* node)
  * This can get quite complicated if there are keyword arguments and special
  * keyword symbols.  Might be nice to compile this and leave it on the MslFunction
  */
-void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslFunctionNode* def)
+void MslLinker::resolveFunctionArgument(MslSymbolNode* sym, MslFunctionNode* def)
 {
     resolveFunctionArgument(sym, def->getDeclaration());
 }
@@ -472,18 +472,18 @@ void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslFunctionNode* def)
 /**
  * Attempt to resolve the symbol to the argument of the outer script "body function"
  */
-void MslLinker::resolveScriptArgument(MslSymbol* sym)
+void MslLinker::resolveScriptArgument(MslSymbolNode* sym)
 {
     MslFunction* body = unit->getBodyFunction();
     if (body != nullptr)
       resolveFunctionArgument(sym, body->getDeclaration());
 }
 
-void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslBlock* decl)
+void MslLinker::resolveFunctionArgument(MslSymbolNode* sym, MslBlockNode* decl)
 {
     if (decl != nullptr) {
         for (auto arg : decl->children) {
-            MslSymbol* argsym = arg->getSymbol();
+            MslSymbolNode* argsym = arg->getSymbol();
             if (argsym == nullptr) {
                 if (arg->isAssignment()) {
                     // it's a default argument, LHS must be a symbol
@@ -510,7 +510,7 @@ void MslLinker::resolveFunctionArgument(MslSymbol* sym, MslBlock* decl)
  * Resolving exports is relatively easy as name collisions have already been
  * dealt with.
  */
-void MslLinker::resolveEnvironment(MslSymbol* sym)
+void MslLinker::resolveEnvironment(MslSymbolNode* sym)
 {
     sym->resolution.linkage = environment->find(unit, sym->token.value);
 }
@@ -524,7 +524,7 @@ void MslLinker::resolveEnvironment(MslSymbol* sym)
  * the external resolution process and it has to resolve to the same
  * thing every time.
  */
-void MslLinker::resolveExternal(MslSymbol* sym)
+void MslLinker::resolveExternal(MslSymbolNode* sym)
 {
     juce::String refname = sym->token.value;
 
@@ -552,7 +552,7 @@ void MslLinker::resolveExternal(MslSymbol* sym)
     }
 }
 
-void MslLinker::resolveExternalUsage(MslSymbol* sym)
+void MslLinker::resolveExternalUsage(MslSymbolNode* sym)
 {
     juce::String refname = sym->token.value;
 
@@ -576,7 +576,7 @@ void MslLinker::resolveExternalUsage(MslSymbol* sym)
  * If you start having more of these will need to make keyword resolution
  * a generalization on the parent node.
  */
-bool MslLinker::isExternalKeyword(MslSymbol* sym)
+bool MslLinker::isExternalKeyword(MslSymbolNode* sym)
 {
     bool keyword = false;
     bool maybe = false;
@@ -617,12 +617,12 @@ bool MslLinker::isExternalKeyword(MslSymbol* sym)
  * The complexity here is why it can't be done at runtime, though
  * that could change with some effort.
  */
-void MslLinker::compileArguments(MslSymbol* sym)
+void MslLinker::compileArguments(MslSymbolNode* sym)
 {
     // first determine the signature of the function we're calling
     // this could be simplified into a model that isn't a raw node
     // block like MslFunction, but it only happens here so it isn't important
-    MslBlock* signature = nullptr;
+    MslBlockNode* signature = nullptr;
     
     if (sym->resolution.innerFunction != nullptr) {
         // someday these might be MslFunctions too
@@ -659,7 +659,7 @@ void MslLinker::compileArguments(MslSymbol* sym)
  *        use the function
  *
  */
-void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
+void MslLinker::compileArguments(MslSymbolNode* sym, MslBlockNode* signature)
 {
     bool error = false;
     
@@ -689,7 +689,7 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
         for (auto arg : signature->children) {
 
             // deal with keywords for :optional and :include
-            MslKeyword* key = arg->getKeyword();
+            MslKeywordNode* key = arg->getKeyword();
             if (key != nullptr) {
                 if (key->name == "optional") {
                     optional = true;
@@ -707,11 +707,11 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
             }
             else {
                 // if it's a symbol, it's a simple named argument
-                MslSymbol* argsym = arg->getSymbol();
+                MslSymbolNode* argsym = arg->getSymbol();
                 MslNode* initializer = nullptr;
                 if (argsym == nullptr) {
                     // not a symbol, might be an assignment
-                    MslAssignment* argass = arg->getAssignment();
+                    MslAssignmentNode* argass = arg->getAssignment();
                     if (argass != nullptr) {
                         // assignments have two children, LHS is the symbol to assign
                         // and RHS is the value expression
@@ -748,7 +748,7 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
                     sym->arguments.add(argref);
 
                     // is there a keyword argument for this in the call?
-                    MslAssignment* callass = findCallKeyword(callargs, name);
+                    MslAssignmentNode* callass = findCallKeyword(callargs, name);
                     if (callass != nullptr) {
                         if (callass->children.size() > 1)
                           argref->node = callass->children[1];
@@ -799,12 +799,12 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
             MslNode* extra = callargs.removeAndReturn(0);
             MslArgumentNode* argref = nullptr;
 
-            MslAssignment* argass = extra->getAssignment();
+            MslAssignmentNode* argass = extra->getAssignment();
             if (argass != nullptr) {
                 // foo(...x=y)  becomes a local binding for this symbol
                 if (argass->children.size() > 0) {
                     MslNode* node = argass->children[0];
-                    MslSymbol* argsym = node->getSymbol();
+                    MslSymbolNode* argsym = node->getSymbol();
                     if (argsym != nullptr) {
                         argref = new MslArgumentNode();
                         argref->name = argsym->token.value;
@@ -838,16 +838,16 @@ void MslLinker::compileArguments(MslSymbol* sym, MslBlock* signature)
  * Find the call argument with a matching assignment name and remove
  * it from the consideration list.
  */
-MslAssignment* MslLinker::findCallKeyword(juce::Array<MslNode*>& callargs, juce::String name)
+MslAssignmentNode* MslLinker::findCallKeyword(juce::Array<MslNode*>& callargs, juce::String name)
 {
-    MslAssignment* found = nullptr;
+    MslAssignmentNode* found = nullptr;
 
     for (auto arg : callargs) {
-        MslAssignment* argass = arg->getAssignment();
+        MslAssignmentNode* argass = arg->getAssignment();
         if (argass != nullptr) {
             if (argass->children.size() > 0) {
                 MslNode* node = argass->children[0];
-                MslSymbol* argsym = node->getSymbol();
+                MslSymbolNode* argsym = node->getSymbol();
                 if (argsym != nullptr) {
                     if (argsym->token.value == name) {
                         found = argass;
@@ -873,7 +873,7 @@ MslNode* MslLinker::findCallPositional(juce::Array<MslNode*>& callargs)
     MslNode* found = nullptr;
 
     for (auto arg : callargs) {
-        MslAssignment* ass = arg->getAssignment();
+        MslAssignmentNode* ass = arg->getAssignment();
         if (ass == nullptr) {
             found = arg;
             // again, wtf??
