@@ -29,22 +29,3 @@ typedef enum {
     MslStateSuspended,
     MslStateTransitioning
 } MslSessionState;
-
-/**
- * Internal codes for the various notification functions we
- * may call automatiacally.
- *
- * revisit: this is more general than it needs to be, it reduce
- * to a single notification
- */
-typedef enum {
-
-    MslNotificationNone,
-    MslNotificationRequest,
-    //MslNotificationSustain,
-    //MslNotificationRepeat,
-    //MslNotificationRelease,
-    //MslNotificationTimeout
-
-} MslNotificationFunction;
-

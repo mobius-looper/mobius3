@@ -14,34 +14,19 @@
  * The audio block processing thread is not allowed to allocate or deallocate memory which
  * is why the usual smart container classes like juce::OwnedArray are not used.  Instead
  * lists are represented with old-school linked lists with critical sections guarding any
- * modofication of them.
+ * modification of them.
  *
  * The end result is that the MslSession becomes the single means of communication betwee
  * the shell and the kernel within the script environment.  It behaves somewhat like
  * KernelCommunicator does within the Mobius engine but differs in that the "message"
- * being passes is only ever MslSession and sessions can have an indefinite lifespan
+ * being passed is almost always MslSession and sessions can have an indefinite lifespan
  * while KernelMessage it normally consumed and reclaimed immediately.
+ *
+ * The MslMessage is used to shuttle sessions between contexts, and also used for a few
+ * additional tasks like forwarding application requests, and storing session results.
  *
  * I wish I had a more general thread/memory-safe container class for things like this
  * since this pattern is happening in three places now.
- *
- * There are two lists of sessions to be processed: shellSessions and kernelSessions.
- * While each side is being processed, if a session needs to transition to the other
- * side it is placed on the toShell or toKernel list.
- *
- * Use of an intermediate TO list allows each side to be iterating over the primary
- * list without a csect around the entire iteration.  Each side is not allowed to modify
- * the primary list of the other side, it can only add things to the TO list.
- * At the beginning of the processing cycle for each side, the TO list is moved onto
- * the primary list, guarded by csects just for the move.
- *
- * When a session completes, it may contain errors or other interesting information that
- * needs to be conveyed to the user.  These are accumulated on the result list by the shell.
- * If a session ends in the kernel, it is marked as completed and placed on the toShell list.
- * The shell then later consumes it and moves it to the result list.
- *
- * The result list is eventually consumed by the ScriptConsole.
- *
  */
 
 #pragma once
@@ -67,12 +52,11 @@ class MslConductor
     class MslResult* getResults();
 
     // Environment interface
-    class MslResult* start(class MslContext* c, class MslRequest *req, class MslLinkage* link);
-
     class MslResult* runInitializer(class MslContext* c, class MslCompilation* unit,
                                     class MslBinding* arguments, class MslNode* node);
 
     class MslResult* run(class MslContext* c, class MslCompilation* unit, class MslBinding* arguments);
+    class MslResult* request(class MslContext* c, class MslRequest* req);
     
     // resume after a wait
     void resume(class MslContext* c, class MslWait* wait);
@@ -136,22 +120,14 @@ class MslConductor
     void ageSustain(class MslContext* c, class MslSession* s, class MslSuspendState* state);
     void ageRepeat(class MslContext* c, class MslSession* s, class MslSuspendState* state);
 
-    class MslResult* release(class MslContext* c, class MslRequest* req);
-    class MslResult* repeat(class MslContext* c, class MslRequest* req, MslContextId otherContext);
+    void doRequest(class MslContext* c, class MslMessage* msg);
+    MslResult* resume(class MslContext* c, class MslRequest* req, class MslSession* session);
+    MslResult* start(class MslContext* c, class MslRequest *req);
+    MslResult* release(class MslContext* c, class MslRequest* req, class MslSession* session);
+    MslResult* repeat(class MslContext* c, class MslRequest* req, class MslSession* session);
     class MslSession* findSuspended(class MslContext* c, int triggerId);
     MslContextId probeSuspended(class MslContext* c, int triggerId);
-    void sendNotification(class MslContext* c, MslNotificationFunction type, class MslRequest* req);
-    void doNotification(class MslContext* c, class MslMessage* msg);
-    void doRelease(class MslContext* c, class MslMessage* msg);
-    void doRepeat(class MslContext* c, class MslMessage* msg);
-
-    void repairProcesses(class MslContext* c);
-    class MslSession* findSession(class MslSession* list, class MslProcess* p);
-    class MslResult* reallyStart(class MslContext* c, class MslRequest* req, class MslLinkage* link);
-    class MslResult* dealWithUnterminatedSustain(class MslContext* c, class MslRequest* req, class MslSession* session);
-    class MslSession* dealWithInactiveRepeat(class MslContext* c, class MslRequest* req, class MslSession* session);
-    
-    
+    void sendRequest(class MslContext* c, class MslRequest* req);
 
 };
 

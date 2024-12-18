@@ -15,9 +15,9 @@ MslMessage::MslMessage()
 MslMessage::~MslMessage()
 {
     // this cascades
-    delete bindings;
+    delete request.bindings;
     // so does this
-    delete arguments;
+    delete request.arguments;
 
     // session I'm not sure about ownership
     if (session != nullptr)
@@ -36,11 +36,8 @@ void MslMessage::poolInit()
     next = nullptr;
     type = MslMessage::MsgNone;
     session = nullptr;
-    notification = MslNotificationNone;
-    bindings = nullptr;
-    arguments = nullptr;
-    triggerId = 0;
     result = nullptr;
+    request.init();
 }
 
 //////////////////////////////////////////////////////////////////////

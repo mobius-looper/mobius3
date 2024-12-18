@@ -20,6 +20,7 @@
 #include "MslSymbol.h"
 #include "MslMessage.h"
 #include "MslState.h"
+#include "MslRequest.h"
 
 #include "MslEnvironment.h"
 
@@ -215,7 +216,7 @@ MslResult* MslEnvironment::request(MslContext* c, MslRequest* req)
     }
     else {
         // now the magic happens
-        result = conductor.start(c, req, link);
+        result = conductor.request(c, req);
     }
     
     clean(req);
@@ -359,8 +360,9 @@ MslResult* MslEnvironment::eval(MslContext* c, juce::String id)
         // so we can make use of the same Conductor interface for starting
         // normal sessions, fake up a Request
         MslRequest req;
+        req.linkage = link;
         // todo: ask the context for the defalt scope since it wasn't passed in?
-        result = conductor.start(c, &req, link);
+        result = conductor.request(c, &req);
     }
 
     return result;

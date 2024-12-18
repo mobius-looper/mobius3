@@ -547,7 +547,7 @@ void MslSession::timeout(MslContext* argContext)
     }
 }
 
-MslNode* MslSession::getNotificationNode(MslNotificationFunction func)
+MslNode* MslSession::getNotificationNode(MslNotification func)
 {
     MslNode* node = nullptr;
     

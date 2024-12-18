@@ -2,6 +2,7 @@
 #repeat
 
 print "Starting"
+context kernel
 
 function OnRepeat(repeatCount repeatDelta repeatElapsed) {
   print ("Repeat " repeatCount repeatDelta repeatElapsed)

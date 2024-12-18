@@ -235,8 +235,8 @@ void MslConductor::consumeMessages(MslContext* c)
             case MslMessage::MsgTransition:
                 doTransition(c, msg);
                 break;
-            case MslMessage::MsgNotification:
-                doNotification(c, msg);
+            case MslMessage::MsgRequest:
+                doRequest(c, msg);
                 break;
             case MslMessage::MsgResult:
                 doResult(c, msg);
@@ -1009,14 +1009,14 @@ MslResult* MslConductor::request(MslContext* c, MslRequest* req)
                     result = start(c, req);
                 }
             }
-            else if (other == c->getMslContext()) {
+            else if (other == c->mslGetContextId()) {
                 // it thinks it is here but we didn't find it, shouldn't
                 // happen, this probably means there is an orphaned Process
                 Trace(1, "MslConductor: Inconsistent suspended session context");
             }
             else {
                 // there is a session for this trigger on the other side, send it over
-                sendNotification(c, MslNotificationRequest, req);
+                sendRequest(c, req);
             }
         }
     }
@@ -1034,31 +1034,39 @@ MslResult* MslConductor::request(MslContext* c, MslRequest* req)
 }
 
 /**
- * Message handler for MslNotificationRequest
+ * Message handler for the MslRequest message
  */
 void MslConductor::doRequest(MslContext* c, MslMessage* msg)
 {
-    if (msg->request->triggerId == 0) {
+    if (msg->request.triggerId == 0) {
         // shouldn't have bothered with a Message if there wasn't a known trigger
         Trace(1, "MslConductor: Invalid request trigger id");
     }
     else {
-        MslSession* session = findSuspended(c, msg->request->triggerId);
+        MslSession* session = findSuspended(c, msg->request.triggerId);
         if (session != nullptr) {
             // what we expected
-            result = resume(c, req, session);
+            MslResult* result = resume(c, &(msg->request), session);
+            saveResult(c, result);
         }
         else {
             // we thought there was a suspended session on this side,
             // but now that we're here it isn't there (if that make sense)
-            // this is probably an orphaned Process or the session happened to be
-            // transitioning at exactly the same time, which would be exceedingly rare
-            // though I suppose it could happen.  Could send the request back, but
-            // we've got the potential endless bounce problem
-            Trace(1, "MslConductor: Something weird is going on with sessions");
+            // this could be due to an orphaned Process which is unexpected,
+            // could also be due to the session transitioning at exactly the same time
+            // as the Request which is possible but extremely rare
+            // it also happens during debugging if a suspension times out while stopped
+            // on a breakpoint so the session is gone by the time we get here
+            // todo: could redo the Request now and start a new session
+            Trace(1, "MslConductor: Expected suspended session evaporated");
         }
     }
-    return result;
+
+    // reclaim anything left behind in the Request since this was a copy
+    environment->free(msg->request.bindings);
+    environment->free(msg->request.arguments);
+    msg->request.bindings = nullptr;
+    msg->request.arguments = nullptr;
 }
 
 /**
@@ -1101,7 +1109,7 @@ MslResult* MslConductor::resume(MslContext* c, MslRequest* req, MslSession* sess
             susstate->init();
         }
 
-        MslSuspendState* repstate = session->getSustainState();
+        MslSuspendState* repstate = session->getRepeatState();
         if (repstate->start > 0) {
             // it is expecting a repeat trigger
             result = repeat(c, req, session);
@@ -1241,39 +1249,16 @@ MslContextId MslConductor::probeSuspended(MslContext* c, int triggerId)
  * This has evolved to be the only NotificationFunction so revisit the
  * need for that.
  */
-void MslConductor::sendNotification(MslContext* c, MslNotificationFunction type, MslRequest* req)
+void MslConductor::sendRequest(MslContext* c, MslRequest* req)
 {
     MslMessage* msg = messagePool.newMessage();
 
-    msg->type = MslMessage::MsgNotification;
-    msg->notification = type;
+    msg->type = MslMessage::MsgRequest;
 
     // copy this for the other side
     msg->request.transfer(req);
 
     sendMessage(c, msg);
-}
-
-/**
- * Here when a Notification message comes in.
- * These can only be related to sustain and repeat right now.
- * Release and Timeout are handled during aging.
- *
- * update: Used to have notifications specifically for release and repeat
- * but those are now uniformly handled by a single Request notification
- * which makes the NotificationFunction as a concept unnecessary unless
- * we can find another reason.
- */
-void MslConductor::doNotification(MslContext* c, MslMessage* msg)
-{
-    switch (msg->notification) {
-        case MslNotificationRequest:
-            doRequest(c, msg);
-            break;
-        default:
-            Trace(1, "MslConductor: Unexpected notfication message %d", msg->notification);
-            break;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////

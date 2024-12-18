@@ -27,6 +27,19 @@
 #include "MslConstants.h"
 
 /**
+ * Enumeration of the various notifications suspended scripts may
+ * accept.
+ */
+typedef enum {
+
+    MslNotificationRelease,
+    MslNotificationRepeat,
+    MslNotificationTimeout,
+    MslNotificationSustain
+
+} MslNotification;
+
+/**
  * Helper object to hold information about asynchronous MslActions
  * sent to the context.  This will be initialized before every action.
  * MslWait will use this for WaitEventLast
@@ -274,7 +287,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void checkRepeatStart();
     void checkSustainStart();
 
-    MslNode* getNotificationNode(MslNotificationFunction func);
+    MslNode* getNotificationNode(MslNotification func);
     MslNode* findNotificationFunction(const char* name);
     void runNotification(MslContext* argContext, MslRequest* request, MslNode* node);
     MslBinding* addSuspensionBindings(MslBinding* start);

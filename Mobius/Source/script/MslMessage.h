@@ -10,6 +10,7 @@
 
 #include "MslObjectPool.h"
 #include "MslConstants.h"
+#include "MslRequest.h"
 
 class MslMessage : public MslPooledObject
 {
@@ -18,7 +19,7 @@ class MslMessage : public MslPooledObject
     typedef enum {
         MsgNone,
         MsgTransition,
-        MsgNotification,
+        MsgRequest,
         MsgResult
     } Type;
     
@@ -32,13 +33,10 @@ class MslMessage : public MslPooledObject
     // what it is
     Type type = MsgNone;
 
-    // for Transition and Completion, the session we're transitioning
+    // for MsgTransition, the session we're transitioning
     class MslSession* session = nullptr;
 
-    // for the Notification type, the specific notification
-    MslNotificationFunction notification = MslNotificationNone;
-
-    // for NotificationRequest, a copy of the request provided
+    // for MsgRequest, a copy of the request provided
     // by the application, a member object so we don't have to mess with
     // pooling for this since it is rarely cloned
     MslRequest request;

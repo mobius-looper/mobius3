@@ -2,6 +2,7 @@
 #sustain
 
 print "Going down"
+context kernel
 
 function OnRelease (sustainCount sustainElapsed) {
   print ("Going up after" sustainCount sustainElapsed)
