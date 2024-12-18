@@ -37,6 +37,8 @@ class MslTrack
     virtual int getSubcycles() = 0;
     virtual MobiusState::Mode getMode() = 0;
     virtual bool isPaused() = 0;
+    virtual bool isOverdub() = 0;
+    virtual bool isMuted() = 0;
 
 };
 

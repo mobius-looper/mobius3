@@ -157,14 +157,14 @@ void MslLinker::addError(MslNode* node, juce::String msg)
 {
     MslError* errobj = new MslError(node, msg);
     unit->errors.add(errobj);
-    Trace(1, "MslLInker: Link failure %s", msg.toUTF8());
+    Trace(1, "MslLinker: Link failure %s", msg.toUTF8());
 }
 
 void MslLinker::addWarning(MslNode* node, juce::String msg)
 {
     MslError* errobj = new MslError(node, msg);
     unit->warnings.add(errobj);
-    Trace(2, "MslLInker: Link warning %s", msg.toUTF8());
+    Trace(2, "MslLinker: Link warning %s", msg.toUTF8());
 }
 
 //////////////////////////////////////////////////////////////////////

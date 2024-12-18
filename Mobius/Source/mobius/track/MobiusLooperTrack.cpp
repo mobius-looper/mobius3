@@ -252,6 +252,19 @@ bool MobiusLooperTrack::isPaused()
     return track->getLoop()->isPaused();
 }
 
+bool MobiusLooperTrack::isOverdub()
+{
+    return track->getLoop()->isOverdub();
+}
+
+bool MobiusLooperTrack::isMuted()
+{
+    // we've got two of these isMute and isMuteMode
+    // isMute means it is in an active mute but not necessarily "mute mode"
+    // which happens on Insert mostly
+    return track->getLoop()->isMuteMode();
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

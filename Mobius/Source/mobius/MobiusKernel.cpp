@@ -1038,6 +1038,9 @@ void MobiusKernel::doAction(KernelMessage* msg)
 
     doAction(action);
     
+    // ownership of the action was transferred
+    // abandon won't try to free it
+    
     communicator->kernelAbandon(msg);
 }
 
@@ -1173,10 +1176,10 @@ void MobiusKernel::trackSelectFromCore(int number)
         Trace(1, "MobiusKernel::trackSelectFromCore Unexpected audio track number %d", number);
     }
     else {
-        UIAction action;
-        action.symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
-        action.value = number;
-        mTracks->doAction(&action);
+        UIAction* action = actionPool->newAction();
+        action->symbol = container->getSymbols()->getSymbol(FuncSelectTrack);
+        action->value = number;
+        mTracks->doAction(action);
     }
 }
 
@@ -1546,37 +1549,43 @@ bool MobiusKernel::mslAction(MslAction* action)
     else if (type == ExtTypeSymbol) {
         Symbol* symbol = static_cast<Symbol*>(action->external->object);
 
-        UIAction uia;
-        uia.symbol = symbol;
+        UIAction* uia = actionPool->newAction();
+        uia->symbol = symbol;
 
         if (action->arguments != nullptr)
-          uia.value = action->arguments->getInt();
+          uia->value = action->arguments->getInt();
 
         // there is no group scope in MslAction
         // !! why?  I guess the interpreter can do the group-to-tracks expansion
-        uia.setScopeTrack(action->scope);
+        uia->setScopeTrack(action->scope);
 
         if (symbol->level == LevelCore) {
 
             // now that we don't have that stupid action queue we could just forward
             // this to Kernel::doAction but I don't think it matters, this can
             // only be a core action
-            mTracks->doAction(&uia);
+
+            // ooh, MSL complexity...
+            // scripts need actions to return values, potentially the value
+            // of the function being called, but more importantly the event that
+            // was scheduled to handle it so the script can wait on it
+            // TrackManager expects to be able to reclaim the action that is
+            // passed in, so for MSL only we need a special interfacee
+            // kind of kludgey, but this is the only case where action results
+            // are important
+            TrackManager::ActionResult result;
+            mTracks->doActionWithResult(uia, result);
+
+            action->event = result.coreEvent;
+            action->eventFrame = result.coreEventFrame;
         }
         else {
             // the script is calling a kernel or UI level action
-            // here we can go through our normal action handling which may pass it up to the shell
-            doAction(&uia);
+            // here we can go through our normal action handling which may pass
+            // it up to the shell
+            // these don't currently have return values or schedule events
+            doAction(uia);
         }
-
-        // UIActions don't have complex return values yet,
-        action->result.setString(uia.result);
-
-        // if the action resulted in an async event, information
-        // about that will have been returned in the UIAction
-        // transfer that to the MslAction so the script can wait on it
-        action->event = uia.coreEvent;
-        action->eventFrame = uia.coreEventFrame;
 
         success = true;
     }

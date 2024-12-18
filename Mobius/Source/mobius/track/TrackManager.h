@@ -29,6 +29,20 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 {
   public:
 
+    /**
+     * Silly struct used for MSL integration which needs to know things
+     * about an action when it finishes.  Can't be passed back in the UIAction
+     * because that gets replicadted and pooled.  This doesn't need to support
+     * replicadted actions right now, but might want that.
+     */
+    class ActionResult {
+      public:
+        void* coreEvent = nullptr;
+        int coreEventFrame = 0;
+        // todo: functions can have return values too, but the old
+        // ones don't, needs thought
+    };
+
     TrackManager(class MobiusKernel* k);
     ~TrackManager();
 
@@ -71,6 +85,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void midiEvent(juce::MidiMessage& msg, int deviceId);
 
     void doAction(class UIAction* a);
+    void doActionWithResult(class UIAction* a, ActionResult& result);
     bool doQuery(class Query* q);
     bool mslQuery(class MslQuery* query);
     bool mslWait(class MslWait* wait, class MslContextError* error);
@@ -127,7 +142,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     
     void refreshState();
 
-    void sendActions(UIAction* actions);
+    void sendActions(UIAction* actions, ActionResult& result);
     class UIAction* replicateAction(class UIAction* src);
     class UIAction* replicateGroup(class UIAction* src, int group);
     class UIAction* addAction(class UIAction* list, class UIAction* src, int targetTrack);

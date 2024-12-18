@@ -151,6 +151,9 @@ class MidiTrack : public LooperTrack, public MslTrack
     //MobiusState::Mode getMode() override;
     //bool isPaused() override;
 
+    bool isMuted() override;
+    bool isOverdub() override;
+
     //
     // Extensions outside BaseTrack
     //

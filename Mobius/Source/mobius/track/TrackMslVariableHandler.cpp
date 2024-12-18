@@ -57,8 +57,6 @@ bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
                 case VarSubcycleNumber: getSubcycleNumber(q,t); break;
                 case VarSubcycleFrames: getSubcycleFrames(q,t); break;
                 case VarSubcycleFrame: getSubcycleFrame(q,t); break;
-
-                    // old name was just "mode" may want to prefix that
                 case VarModeName: getModeName(q,t); break;
                 case VarIsRecording: getIsRecording(q,t);  break;
                 case VarInOverdub: getInOverdub(q,t); break;
@@ -212,6 +210,20 @@ void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, MslTrack* t)
 void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
 {
     MobiusState::Mode mode = t->getMode();
+
+    // hack: minor modes are not conveyed by getMode, 
+    // preferred way is to use inOverdub, inHalfspeed, inMute, etc.
+    // unfortunately lots of old scripts do "if mode == "Overdub"
+    // and this is also convenient for the case statement
+    // this is also what the UI does but not sure I like it here
+    // scripts need to be precise
+    if (mode == MobiusState::ModePlay) {
+        if (t->isOverdub())
+          mode = MobiusState::ModeOverdub;
+        else if (t->isMuted())
+          mode = MobiusState::ModeMute;
+    }
+    
     q->value.setString(MobiusState::getModeName(mode));
 }
 
@@ -228,11 +240,7 @@ void TrackMslVariableHandler::getIsRecording(MslQuery* q, MslTrack* t)
 
 void TrackMslVariableHandler::getInOverdub(MslQuery* q, MslTrack* t)
 {
-    (void)t;
-    // in general, MidiTrack doesn't have a lot of state exposure beyond
-    // the full MobiusState
-    Trace(1, "TrackMslVariableHandler: inOverdub not implemented");
-    q->value.setBool(false);
+    q->value.setBool(t->isOverdub());
 }
 
 /**
@@ -255,14 +263,11 @@ void TrackMslVariableHandler::getInReverse(MslQuery* q, MslTrack* t)
 
 void TrackMslVariableHandler::getInMute(MslQuery* q, MslTrack* t)
 {
-    (void)t;
-    Trace(1, "TrackMslVariableHandler: inMute not implemented");
-    q->value.setBool(false);
+    q->value.setBool(t->isMuted());
 }
 
 void TrackMslVariableHandler::getInPause(MslQuery* q, MslTrack* t)
 {
-    (void)t;
     q->value.setBool(t->isPaused());
 }
 

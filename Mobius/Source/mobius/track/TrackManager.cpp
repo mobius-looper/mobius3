@@ -494,11 +494,23 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This is the interface most things call.
+ * Only MSL needs results.
+ *
+ * Ownership of the action transfers and it will be pooled.
+ */
+void TrackManager::doAction(UIAction* src)
+{
+    ActionResult result;
+    doActionWithResult(src, result);
+}
+
+/**
  * Distribute an action to the LogicalTracks.
  * This only handles LevelCore actions, Kernel will have already
  * dealt with upward actions.  Kernel also handled script actions.
  */
-void TrackManager::doAction(UIAction* src)
+void TrackManager::doActionWithResult(UIAction* src, ActionResult& result)
 {
     Symbol* s = src->symbol;
     SymbolId sid = s->id;
@@ -539,7 +551,7 @@ void TrackManager::doAction(UIAction* src)
         // function or parameter
         // replicate the source action to one or more actions with specific track scopes
         UIAction* actions = replicateAction(src);
-        sendActions(actions);
+        sendActions(actions, result);
     }
 }
 
@@ -553,8 +565,12 @@ void TrackManager::doAction(UIAction* src)
  *
  * Could do the same for parameters.   It doesn't hurt to send it through, but it generates
  * log errors if it doesn't make sense.
+ *
+ * ActionResult can only handle one result, which is all we need for scripts
+ * atm aince it handles focus and group bindings internally and will always
+ * send down a track-scoped action.
  */
-void TrackManager::sendActions(UIAction* actions)
+void TrackManager::sendActions(UIAction* actions, ActionResult& result)
 {
     while (actions != nullptr) {
         UIAction* next = actions->next;
@@ -580,6 +596,10 @@ void TrackManager::sendActions(UIAction* actions)
                   lt->doAction(actions);
             }
         }
+
+        // remember the last result
+        result.coreEvent = actions->coreEvent;
+        result.coreEventFrame = actions->coreEventFrame;
 
         actionPool->checkin(actions);
         actions = next;
@@ -610,7 +630,9 @@ void TrackManager::doActivation(UIAction* src)
         // whining about it in the log, ideally should pass "doMidi and doAudio"
         // flags to replicateAction
         UIAction* actions = replicateAction(src);
-        sendActions(actions);
+        // don't need results on these
+        ActionResult results;
+        sendActions(actions, results);
     }
     else {
         // you snuck in another activation type without telling me, bastard

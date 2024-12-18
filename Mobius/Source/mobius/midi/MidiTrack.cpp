@@ -402,6 +402,16 @@ MobiusState::Mode MidiTrack::getMode()
     return mode;
 }
 
+bool MidiTrack::isOverdub()
+{
+    return overdub;
+}
+
+bool MidiTrack::isMuted()
+{
+    return mute;
+}
+
 /**
  * Called by BaseScheduler to see if the track is in an extension mode and
  * is allowed to continue beyond the loop point.  If yes it will allow
@@ -818,6 +828,10 @@ void MidiTrack::refreshState(MobiusState::Track* state)
 
     state->mode = mode;
     // some simulated modes
+    // !! we've got this same shenanigans with MSL now
+    // too, need to be consistent about this
+    // maybe better to have a "displayMode" or "logicalMode"
+    // or something
     if (mode == MobiusState::ModePlay) {
         if (overdub)
           state->mode = MobiusState::ModeOverdub;

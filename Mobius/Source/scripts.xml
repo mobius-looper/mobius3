@@ -57,6 +57,8 @@
             added="2147483647"/>
       <File path="C:\dev\mobius3\Mobius\Source\scripts\persistence.msl" name="persistence"
             added="0"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\converted.msl" name="MainTap"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="Loki">
@@ -131,7 +133,7 @@
     </Files>
   </Machine>
   <MslState>
-    <Unit id="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
+    <Unit id="C:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
       <Variable name="pvar" value="12" type="int"/>
     </Unit>
   </MslState>

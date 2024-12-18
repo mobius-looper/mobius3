@@ -58,7 +58,9 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     int getSubcycles() override;
     MobiusState::Mode getMode() override;
     bool isPaused() override;
-
+    bool isMuted() override;
+    bool isOverdub() override;
+    
   private:
 
     class Mobius* mobius = nullptr;

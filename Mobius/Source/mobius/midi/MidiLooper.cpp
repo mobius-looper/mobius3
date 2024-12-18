@@ -800,7 +800,12 @@ void MidiTrack::doPlay()
             // should actually do th for other cases too?
             if (mute)
               toggleMute();
+            // overdub goes off, call the toggler so it can deal ith
+            // regions and other things
+            if (overdub)
+              toggleOverdub();
         }
+            break;
 
         case MobiusState::ModePause: {
             finishPause();

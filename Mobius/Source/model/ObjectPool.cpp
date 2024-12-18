@@ -109,6 +109,12 @@ void ObjectPool::checkin(PooledObject* obj)
             // leak it?
         }
         else {
+            // these aren't bad but can be useful to track pool corruption
+            if (obj->getPool() == nullptr)
+              Trace(2, "ObjectPool: Warning: Checking in object without a pool");
+            else if (obj->getPool() != this)
+              Trace(2, "ObjectPool: Warning: Checking in object from another pool");
+
             juce::ScopedLock lock (criticalSection);
             obj->setPoolChain(pool);
             pool = obj;
@@ -134,6 +140,7 @@ void ObjectPool::fluff()
         // we're initialzing
         for (int i = 0 ; i < initialSize ; i++) {
             PooledObject* obj = alloc();
+            obj->setPool(this);
             checkin(obj);
         }
         minSize = initialSize;
@@ -144,6 +151,7 @@ void ObjectPool::fluff()
 
         for (int i = 0 ; i < reliefSize ; i++) {
             PooledObject* obj = alloc();
+            obj->setPool(this);
             totalCreated++;
             checkin(obj);
         }

@@ -8,10 +8,20 @@
 
 // SelectTrack 33
 
+/* old way of doing this
 if mode == :Reset Record
 else if mode == :Record Overdub
 else if mode == :Overdub Play
 else if mode == :Mute Play
+*/
+
+case mode {
+  :Reset Record
+  :Record Overdub
+  :Overdub Play
+  :Mute Play
+  else print("Unhandled mode" mode)
+}
 
 function OnSustain {
   if sustainCount == 1 Reset
