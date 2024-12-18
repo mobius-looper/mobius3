@@ -759,11 +759,7 @@ class MslCaseNode : public MslNode
 
     MslCaseNode* getCase() override {return this;}
 
-    bool wantsNode(class MslParser* p, MslNode* node) override {
-        (void)p; (void)node;
-        return (children.size() == 0);
-    }
-    
+    bool wantsNode(class MslParser* p, MslNode* node) override;
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Case";}
 };

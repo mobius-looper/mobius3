@@ -12,6 +12,7 @@ MslStack::~MslStack()
     delete childResults;
     delete bindings;
     delete inList;
+    delete caseValue;
 }
 
 void MslStack::init()
@@ -27,6 +28,8 @@ void MslStack::init()
     inList = nullptr;
     inPtr = nullptr;
     inScope = 0;
+    caseValue = nullptr;
+    caseClause = 0;
     wait.init();
 }
 

@@ -384,6 +384,11 @@ MslStack* MslPools::allocStack()
             free(s->inList);
             s->inList = nullptr;
         }
+        if (s->caseValue != nullptr) {
+            Trace(1, "MslPools: Lingering caseValue in pooled stack");
+            free(s->caseValue);
+            s->caseValue = nullptr;
+        }
 
         s->init();
     }
@@ -413,6 +418,9 @@ void MslPools::free(MslStack* s)
         free(s->inList);
         s->inList = nullptr;
         s->inPtr = nullptr;
+
+        free(s->caseValue);
+        s->caseValue = nullptr;
 
         s->parent = stackPool;
         stackPool = s;

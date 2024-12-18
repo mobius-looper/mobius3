@@ -321,6 +321,23 @@ bool MslFormNode::wantsToken(MslParser* p, MslToken& t)
     return wants;
 }
 
+bool MslCaseNode::wantsNode(MslParser* p, MslNode* node)
+{
+    bool wants = false;
+    if (children.size() == 0) {
+        wants = true; // any single expression is allowed
+    }
+    else if (children.size() == 1) {
+        // second child must be a block
+        if (node->isBlock())
+          wants = true;
+        else
+          p->errorSyntax(node, "Second case child must be a block");
+        return wants;
+    }
+    return wants;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Operators

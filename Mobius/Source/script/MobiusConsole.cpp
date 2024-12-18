@@ -851,6 +851,9 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             MslKeywordNode* key = node->getKeyword();
             line += "Keyword: " + key->name;
         }
+        else if (node->isCase()) {
+            line += "Case";
+        }
         else {
             line += "???: ";
         }

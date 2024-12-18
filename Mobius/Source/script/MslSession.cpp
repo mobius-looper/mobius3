@@ -1035,6 +1035,8 @@ void MslSession::popStack(MslValue* v)
 
     // now do the popping part
     MslStack* prev = stack->parent;
+    // note that MslPools will clean out any lingering objects on the stack
+    // but it needs to be kept consistent with whatever you put in MslStack
     pool->free(stack);
     stack = prev;
 }
@@ -1774,10 +1776,153 @@ void MslSession::mslVisit(MslElseNode* node)
       popStack();
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Case
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Case is unusual in the way it evaluates the second child block.
+ * The block must be alternating pairs of Comparison and Action expressions:
+ *
+ *     case something {
+ *        "x" 1
+ *        "y" 2
+ *     }
+ *
+ * The first child of MslCaseNode produces the value we want to compare against.
+ * Call it the "case value".
+ *
+ * The second child block is called the "option block".  The option block contains
+ * alternating pairs of "option values" and "actions"
+ * 
+ * The option value expressions are evaluated one at a time and the first one
+ * that is equal to the case value causes the corresponding action expression
+ * to be evaluated.
+ *
+ * The result of a case node is the result of the chosen action expression, or
+ * null if none were chosen.
+ */
 void MslSession::mslVisit(MslCaseNode* node)
 {
     logVisit(node);
-    addError(node, "Not implemented");
+    
+    if (stack->phase == 0) {
+        // evaluate the case value expression
+
+        // do structure validation here too, should have caught most of this during parsing
+        if (node->children.size() == 0) {
+            addError(node, "Missing case value expression");
+        }
+        else if (node->children.size() == 1) {
+            // I suppose we could accept the degenerate form of a case value
+            // without an option block and return null
+            addError(node, "Missing case option block");
+        }
+        else {
+            MslBlockNode* options = node->children[1]->getBlock();
+            if (options == nullptr) {
+                // should not have gotten through parser
+                addError(node, "Case options not a block");
+            }
+            else if ((options->children.size() % 2) == 1) {
+                // an odd number is only allowed if the final clause
+                // is an MslElse node
+                MslNode* last = options->getLast();
+                if (last == nullptr)
+                  addError(node, "The universe is wrong");
+                else if (!last->isElse())
+                  addError(node, "Uneven number of option block elements");
+            }
+        }
+
+        if (!hasErrors()) {
+            stack->phase = 1;
+            pushStack(node->children[0]);
+        }
+    }
+    else if (stack->phase == 1) {
+        // back from value expression
+        MslValue* v = stack->childResults;
+        // this needs to be a single value
+        if (v->next != nullptr) {
+            addError(node, "Case value expression must produce a single literal value");
+        }
+        else {
+            stack->caseValue = v;
+            stack->childResults = nullptr;
+            stack->phase = 2;
+            stack->caseClause = 0;
+            // no push, loop around again and start with the options
+        }
+    }
+    else if (stack->phase == 2) {
+        // push the next option value
+        MslBlockNode* options = node->children[1]->getBlock();
+        int clauseIndex = stack->caseClause * 2;
+        if (clauseIndex >= options->children.size()) {
+            // fell off the end
+            free(stack->caseValue);
+            stack->caseValue = nullptr;
+            popStack(nullptr);
+        }
+        else {
+            MslNode* opnode = options->children[clauseIndex];
+            if (opnode->isElse()) {
+                // this has no comparison phase,
+                // always evaluate it as the final action
+                // todo: you're supposed to put this at the end but
+                // we're not checking that, if it is stuck in the middle
+                // it should fail validation about uneven option block elements
+                // or just go haywire parsing, might be better to have an "otherwise"
+                // keyword to make it clearer where it should go
+                stack->phase = 4;
+                pushStack(opnode);
+            }
+            else {
+                stack->phase = 3;
+                // this can accumulate
+                stack->accumulator = true;
+                pushStack(options->children[clauseIndex]);
+            }
+        }
+    }
+    else if (stack->phase == 3) {
+        // bacn from an option value
+        bool match = false;
+        MslValue* option = stack->childResults;
+        while (option != nullptr) {
+            if (compare(stack->caseValue, option, true)) {
+                match = true;
+                break;
+            }
+            option = option->next;
+        }
+
+        // since we're reusing the same stack frame release
+        // the previous child result after the comparison
+        free(stack->childResults);
+        stack->childResults = nullptr;
+        
+        if (match) {
+            stack->phase = 4;
+            MslBlockNode* options = node->children[1]->getBlock();
+            int clauseIndex = stack->caseClause * 2;
+            pushStack(options->children[clauseIndex + 1]);
+        }
+        else {
+            // loop back around and push another option
+            stack->phase = 2;
+            stack->caseClause++;
+        }
+    }
+    else if (stack->phase == 4) {
+        // back from the chosen action
+        free(stack->caseValue);
+        stack->caseValue = nullptr;
+        popStack();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
