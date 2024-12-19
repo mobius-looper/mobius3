@@ -16,6 +16,7 @@
 #include "../test/TracePanel.h"
 #include "../test/UpgradePanel.h"
 #include "../script/ConsolePanel.h"
+#include "../script/MonitorPanel.h"
 
 // this has all the configuration panels
 #include "config/ConfigPanels.h"
@@ -147,6 +148,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
         case Sync: panel =  new SyncPanel(super); break;
         case Upgrade: panel =  new UpgradePanel(super); break;
         case Console: panel = new ConsolePanel(super); break;
+        case Monitor: panel = new MonitorPanel(super); break;
         case TraceLog: panel = new TracePanel(super); break;
         default:
             Trace(1, "PanelFactory: Unknown panel id %d\n", id);
@@ -176,6 +178,8 @@ PanelFactory::PanelId PanelFactory::mapPanelName(juce::String name)
 
     if (name == "console")
       id = Console;
+    else if (name == "monitor")
+      id = Monitor;
 
     return id;
 }

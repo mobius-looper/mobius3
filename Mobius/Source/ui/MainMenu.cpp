@@ -327,9 +327,6 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(Groups, "Track Groups");
         menu.addItem(HostParameters, "Plugin Parameters");
         menu.addSeparator();
-        menu.addItem(Scripts, "Script Library");
-        menu.addItem(LoadScripts, "Reload Scripts");
-        menu.addSeparator();
         menu.addItem(Samples, "Samples");
         menu.addItem(LoadSamples, "Reload Samples");
         menu.addSeparator();
@@ -339,6 +336,14 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
           menu.addItem(AudioDevices, "Audio Devices");
         menu.addSeparator();
         menu.addItem(UpgradeConfig, "Upgrade Configuration");
+    }
+    else if (menuIndex == menuIndexScripts)
+    {
+        menu.addItem(LoadScripts, "Reload Scripts");
+        menu.addItem(Scripts, "Script Library");
+        menu.addItem(ScriptEditor, "Script Editor");
+        menu.addItem(Monitor, "Script Monitor");
+        menu.addItem(Console, "Console");
     }
     else if (menuIndex == menuIndexHelp)
     {
@@ -362,9 +367,7 @@ juce::PopupMenu MainMenu::getMenuForIndex (int menuIndex, const juce::String& me
         menu.addItem(MidiTransport, "MIDI Transport");
         menu.addItem(SyncPanel, "Synchronization Status");
         menu.addItem(SymbolTable, "Symbol Table");
-        menu.addItem(Console, "Console");
         menu.addItem(TraceLog, "Trace Log");
-        menu.addItem(ScriptEditor, "Script Editor");
         // this never did work right
         //menu.addItem(DiagnosticWindow, "Diagnostic Window");
     }

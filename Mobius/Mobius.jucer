@@ -794,6 +794,7 @@
         <FILE id="NoInlJ" name="MobiusConsole.cpp" compile="1" resource="0"
               file="Source/script/MobiusConsole.cpp"/>
         <FILE id="EFxzMc" name="MobiusConsole.h" compile="0" resource="0" file="Source/script/MobiusConsole.h"/>
+        <FILE id="f6inTY" name="MonitorPanel.h" compile="0" resource="0" file="Source/script/MonitorPanel.h"/>
         <FILE id="zfsEO0" name="MslArgumentParser.cpp" compile="1" resource="0"
               file="Source/script/MslArgumentParser.cpp"/>
         <FILE id="x3DxF0" name="MslArgumentParser.h" compile="0" resource="0"
@@ -858,6 +859,9 @@
               file="Source/script/ScriptExternals.cpp"/>
         <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
               file="Source/script/ScriptExternals.h"/>
+        <FILE id="m6YL1r" name="ScriptMonitor.cpp" compile="1" resource="0"
+              file="Source/script/ScriptMonitor.cpp"/>
+        <FILE id="daVprv" name="ScriptMonitor.h" compile="0" resource="0" file="Source/script/ScriptMonitor.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"

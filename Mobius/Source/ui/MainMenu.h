@@ -31,6 +31,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         menuIndexDisplay,
         menuIndexBindings,
         menuIndexConfig,
+        menuIndexScripts,
         menuIndexHelp,
         menuIndexTest
     };
@@ -38,7 +39,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
     /**
      * Names of the top-level menu items
      */
-    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Bindings", "Configuration", "Help", "Test"};
+    juce::StringArray MenuNames {"File", "Tracks", "Presets", "Display", "Bindings", "Configuration", "Scripts", "Help", "Test"};
 
     /**
      * Offset of menu item ids for the generated track setup items
@@ -102,13 +103,18 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         Buttons,
         HostParameters,
         DisplayComponents,
-        Scripts,
         Samples,
         MidiDevices,
         AudioDevices,
         Properties,
         Groups,
         MidiTracks,
+
+        // Scripts
+        Scripts,
+        ScriptEditor,
+        Monitor,
+        Console,
 
         // Help
         KeyBindings,
@@ -125,9 +131,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         SymbolTable,
         DiagnosticWindow,
         UpgradeConfig,
-        Console,
-        TraceLog,
-        ScriptEditor
+        TraceLog
         
         };
     

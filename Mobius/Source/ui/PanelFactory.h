@@ -55,13 +55,16 @@ class PanelFactory
         // Devices
         Audio,
         MidiDevice,
+
+        // Scripts
+        Console,
+        Monitor,
         
         // testing and diagnostic panels
         SymbolTable,
         MidiTransport,
         Sync,
         Upgrade,
-        Console,
         TraceLog
     };
 
