@@ -12,6 +12,10 @@
               pluginFormats="buildAU,buildStandalone,buildVST3">
   <MAINGROUP id="wayIBM" name="MobiusPlugin">
     <GROUP id="{483C48DF-28CC-3FCB-AD91-E01CCF9B283D}" name="Source">
+      <FILE id="uaw8KK" name="Prompter.cpp" compile="1" resource="0" file="../Mobius/Source/Prompter.cpp"/>
+      <FILE id="EAziZK" name="Prompter.h" compile="0" resource="0" file="../Mobius/Source/Prompter.h"/>
+      <FILE id="YFYj6n" name="Pathfinder.cpp" compile="1" resource="0" file="../Mobius/Source/Pathfinder.cpp"/>
+      <FILE id="vLZSOl" name="Pathfinder.h" compile="0" resource="0" file="../Mobius/Source/Pathfinder.h"/>
       <FILE id="uYNmMY" name="MidiClerk.cpp" compile="1" resource="0" file="../Mobius/Source/MidiClerk.cpp"/>
       <FILE id="FLCsVv" name="MidiClerk.h" compile="0" resource="0" file="../Mobius/Source/MidiClerk.h"/>
       <FILE id="ZyvhBY" name="Provider.h" compile="0" resource="0" file="../Mobius/Source/Provider.h"/>
@@ -38,12 +42,10 @@
         <FILE id="SEvMQT" name="ActionAdapter.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/ActionAdapter.cpp"/>
         <FILE id="Xc6tug" name="ActionAdapter.h" compile="0" resource="0" file="../Mobius/Source/script/ActionAdapter.h"/>
-        <FILE id="HnexiE" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/script/Console.cpp"/>
-        <FILE id="Oa9xwH" name="Console.h" compile="0" resource="0" file="../Mobius/Source/script/Console.h"/>
-        <FILE id="yeMOj1" name="ConsolePanel.h" compile="0" resource="0" file="../Mobius/Source/script/ConsolePanel.h"/>
-        <FILE id="L1gpwb" name="MobiusConsole.cpp" compile="1" resource="0"
-              file="../Mobius/Source/script/MobiusConsole.cpp"/>
-        <FILE id="m4hTgl" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/script/MobiusConsole.h"/>
+        <FILE id="xWGjdw" name="MslArgumentParser.cpp" compile="1" resource="0"
+              file="../Mobius/Source/script/MslArgumentParser.cpp"/>
+        <FILE id="l51YLI" name="MslArgumentParser.h" compile="0" resource="0"
+              file="../Mobius/Source/script/MslArgumentParser.h"/>
         <FILE id="TUZBpd" name="MslBinding.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslBinding.cpp"/>
         <FILE id="rXXRua" name="MslBinding.h" compile="0" resource="0" file="../Mobius/Source/script/MslBinding.h"/>
         <FILE id="zOdQWq" name="MslCollision.h" compile="0" resource="0" file="../Mobius/Source/script/MslCollision.h"/>
@@ -91,6 +93,8 @@
         <FILE id="fh2FOK" name="MslTokenizer.h" compile="0" resource="0" file="../Mobius/Source/script/MslTokenizer.h"/>
         <FILE id="I4U7Gs" name="MslValue.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslValue.cpp"/>
         <FILE id="Rh7p4V" name="MslValue.h" compile="0" resource="0" file="../Mobius/Source/script/MslValue.h"/>
+        <FILE id="sZBmKN" name="MslVariable.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslVariable.cpp"/>
+        <FILE id="xybT6i" name="MslVariable.h" compile="0" resource="0" file="../Mobius/Source/script/MslVariable.h"/>
         <FILE id="UPuwo4" name="MslWait.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWait.cpp"/>
         <FILE id="cFavfJ" name="MslWait.h" compile="0" resource="0" file="../Mobius/Source/script/MslWait.h"/>
         <FILE id="xTMPD5" name="MslWaitNode.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslWaitNode.cpp"/>
@@ -275,9 +279,16 @@
               file="../Mobius/Source/ui/WindowFactory.cpp"/>
         <FILE id="mRKMcf" name="WindowFactory.h" compile="0" resource="0" file="../Mobius/Source/ui/WindowFactory.h"/>
         <GROUP id="{219AC869-1E28-1A98-D3E3-341109F451EB}" name="script">
+          <FILE id="GtKEOC" name="Console.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/Console.cpp"/>
+          <FILE id="OKcOkD" name="Console.h" compile="0" resource="0" file="../Mobius/Source/ui/script/Console.h"/>
+          <FILE id="A6NQPq" name="ConsolePanel.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ConsolePanel.h"/>
           <FILE id="wljLAb" name="CustomEditor.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/CustomEditor.cpp"/>
           <FILE id="CUY225" name="CustomEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/CustomEditor.h"/>
+          <FILE id="bz3F27" name="MobiusConsole.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/MobiusConsole.cpp"/>
+          <FILE id="mdev24" name="MobiusConsole.h" compile="0" resource="0" file="../Mobius/Source/ui/script/MobiusConsole.h"/>
+          <FILE id="YQr1JV" name="MonitorPanel.h" compile="0" resource="0" file="../Mobius/Source/ui/script/MonitorPanel.h"/>
           <FILE id="nLqOqH" name="ScriptDetails.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/ScriptDetails.cpp"/>
           <FILE id="k9x61E" name="ScriptDetails.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptDetails.h"/>
@@ -286,6 +297,17 @@
           <FILE id="DGfl42" name="ScriptEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptEditor.h"/>
           <FILE id="wHZSxI" name="ScriptLog.cpp" compile="1" resource="0" file="../Mobius/Source/ui/script/ScriptLog.cpp"/>
           <FILE id="VRUGIU" name="ScriptLog.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptLog.h"/>
+          <FILE id="Lrol3n" name="ScriptMonitor.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptMonitor.cpp"/>
+          <FILE id="jmHju3" name="ScriptMonitor.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptMonitor.h"/>
+          <FILE id="gTGHfY" name="ScriptProcessTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptProcessTable.cpp"/>
+          <FILE id="K8QzCe" name="ScriptProcessTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/script/ScriptProcessTable.h"/>
+          <FILE id="mx4hWc" name="ScriptResultTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/script/ScriptResultTable.cpp"/>
+          <FILE id="kgItrP" name="ScriptResultTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/script/ScriptResultTable.h"/>
           <FILE id="QfiLki" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="TFpqtC" name="ScriptWindow.h" compile="0" resource="0" file="../Mobius/Source/ui/script/ScriptWindow.h"/>
@@ -383,6 +405,10 @@
                 file="../Mobius/Source/ui/config/ScriptConfigEditor.cpp"/>
           <FILE id="BtriNp" name="ScriptConfigEditor.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ScriptConfigEditor.h"/>
+          <FILE id="h1XwGR" name="ScriptExternalTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptExternalTable.cpp"/>
+          <FILE id="jjLrmi" name="ScriptExternalTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ScriptExternalTable.h"/>
           <FILE id="St4eI4" name="ScriptFileDetails.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/config/ScriptFileDetails.cpp"/>
           <FILE id="aEPhHP" name="ScriptFileDetails.h" compile="0" resource="0"
@@ -391,8 +417,10 @@
                 file="../Mobius/Source/ui/config/ScriptLibraryTable.cpp"/>
           <FILE id="wdHVPs" name="ScriptLibraryTable.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/config/ScriptLibraryTable.h"/>
-          <FILE id="IxoqUK" name="ScriptTable.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/ScriptTable.cpp"/>
-          <FILE id="TiRXAt" name="ScriptTable.h" compile="0" resource="0" file="../Mobius/Source/ui/config/ScriptTable.h"/>
+          <FILE id="TdHj1d" name="ScriptSymbolTable.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/config/ScriptSymbolTable.cpp"/>
+          <FILE id="kaeCC3" name="ScriptSymbolTable.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/config/ScriptSymbolTable.h"/>
           <FILE id="YImupE" name="SetupEditor.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SetupEditor.cpp"/>
           <FILE id="f6jy1c" name="SetupEditor.h" compile="0" resource="0" file="../Mobius/Source/ui/config/SetupEditor.h"/>
           <FILE id="brgXgQ" name="SymbolTree.cpp" compile="1" resource="0" file="../Mobius/Source/ui/config/SymbolTree.cpp"/>
@@ -492,6 +520,23 @@
           <FILE id="ABgtdZ" name="TrackStrip.h" compile="0" resource="0" file="../Mobius/Source/ui/display/TrackStrip.h"/>
           <FILE id="bCpZIo" name="TrackStrips.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/TrackStrips.cpp"/>
           <FILE id="MDJjOi" name="TrackStrips.h" compile="0" resource="0" file="../Mobius/Source/ui/display/TrackStrips.h"/>
+          <FILE id="TI7ylq" name="UIElement.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIElement.cpp"/>
+          <FILE id="IqeHUJ" name="UIElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIElement.h"/>
+          <FILE id="Nbt8vi" name="UIElementLight.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/UIElementLight.cpp"/>
+          <FILE id="s40yRR" name="UIElementLight.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/UIElementLight.h"/>
+          <FILE id="ZsodFQ" name="UIElementStatusAdapter.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/UIElementStatusAdapter.cpp"/>
+          <FILE id="NJegSJ" name="UIElementStatusAdapter.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/UIElementStatusAdapter.h"/>
+          <FILE id="VkqUUV" name="UIElementStripAdapter.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/UIElementStripAdapter.cpp"/>
+          <FILE id="zbpRkM" name="UIElementStripAdapter.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/UIElementStripAdapter.h"/>
+          <FILE id="Q59LDu" name="UIElementText.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/UIElementText.cpp"/>
+          <FILE id="XOVb1w" name="UIElementText.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIElementText.h"/>
         </GROUP>
         <GROUP id="{231B57B1-8D47-A229-88DE-29CA3BEA36CE}" name="common">
           <FILE id="PpDIDF" name="BasicButtonRow.cpp" compile="1" resource="0"
@@ -722,10 +767,6 @@
                 file="../Mobius/Source/mobius/core/MobiusMslHandler.cpp"/>
           <FILE id="WvMley" name="MobiusMslHandler.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/core/MobiusMslHandler.h"/>
-          <FILE id="Kdi6pL" name="MobiusMslVariableHandler.cpp" compile="1" resource="0"
-                file="../Mobius/Source/mobius/core/MobiusMslVariableHandler.cpp"/>
-          <FILE id="F506Qk" name="MobiusMslVariableHandler.h" compile="0" resource="0"
-                file="../Mobius/Source/mobius/core/MobiusMslVariableHandler.h"/>
           <FILE id="YayO54" name="Mode.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Mode.cpp"/>
           <FILE id="if2nuD" name="Mode.h" compile="0" resource="0" file="../Mobius/Source/mobius/core/Mode.h"/>
           <FILE id="JbUf7U" name="Parameter.cpp" compile="1" resource="0" file="../Mobius/Source/mobius/core/Parameter.cpp"/>

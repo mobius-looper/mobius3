@@ -1,3 +1,5 @@
+// update; no longer userd, delete when ready
+
 /**
  * Encapsulation of the gathering of various bits of information
  * to expose as external variable that may be referenced in MSL scripts.
