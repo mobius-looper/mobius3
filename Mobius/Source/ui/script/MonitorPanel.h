@@ -6,7 +6,7 @@
 
 #include <JuceHeader.h>
 
-#include "../ui/BasePanel.h"
+#include "../BasePanel.h"
 #include "ScriptMonitor.h"
 
 class MonitorPanel : public BasePanel

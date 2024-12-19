@@ -6,8 +6,8 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../ui/common/BasicButtonRow.h"
+#include "../../util/Trace.h"
+#include "../common/BasicButtonRow.h"
 
 class ScriptMonitor : public juce::Component,
                       public juce::Button::Listener

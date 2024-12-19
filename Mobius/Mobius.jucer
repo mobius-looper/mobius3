@@ -205,9 +205,16 @@
               file="Source/ui/WindowFactory.cpp"/>
         <FILE id="LfilVy" name="WindowFactory.h" compile="0" resource="0" file="Source/ui/WindowFactory.h"/>
         <GROUP id="{3D4045DD-1EF7-3B89-EAEB-D6AA0E637AB7}" name="script">
+          <FILE id="Uw69mu" name="Console.cpp" compile="1" resource="0" file="Source/ui/script/Console.cpp"/>
+          <FILE id="UNDOue" name="Console.h" compile="0" resource="0" file="Source/ui/script/Console.h"/>
+          <FILE id="AoyXtG" name="ConsolePanel.h" compile="0" resource="0" file="Source/ui/script/ConsolePanel.h"/>
           <FILE id="kozMp5" name="CustomEditor.cpp" compile="1" resource="0"
                 file="Source/ui/script/CustomEditor.cpp"/>
           <FILE id="WOsMf3" name="CustomEditor.h" compile="0" resource="0" file="Source/ui/script/CustomEditor.h"/>
+          <FILE id="XSkDB4" name="MobiusConsole.cpp" compile="1" resource="0"
+                file="Source/ui/script/MobiusConsole.cpp"/>
+          <FILE id="HdN4eD" name="MobiusConsole.h" compile="0" resource="0" file="Source/ui/script/MobiusConsole.h"/>
+          <FILE id="SuPEKT" name="MonitorPanel.h" compile="0" resource="0" file="Source/ui/script/MonitorPanel.h"/>
           <FILE id="zBRWmp" name="ScriptDetails.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptDetails.cpp"/>
           <FILE id="cad45K" name="ScriptDetails.h" compile="0" resource="0" file="Source/ui/script/ScriptDetails.h"/>
@@ -216,6 +223,9 @@
           <FILE id="rTX48Z" name="ScriptEditor.h" compile="0" resource="0" file="Source/ui/script/ScriptEditor.h"/>
           <FILE id="iy2tV5" name="ScriptLog.cpp" compile="1" resource="0" file="Source/ui/script/ScriptLog.cpp"/>
           <FILE id="XBvv4o" name="ScriptLog.h" compile="0" resource="0" file="Source/ui/script/ScriptLog.h"/>
+          <FILE id="qFoKXE" name="ScriptMonitor.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptMonitor.cpp"/>
+          <FILE id="Djd5U1" name="ScriptMonitor.h" compile="0" resource="0" file="Source/ui/script/ScriptMonitor.h"/>
           <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>
@@ -788,13 +798,6 @@
         <FILE id="nn3BzH" name="ActionAdapter.cpp" compile="1" resource="0"
               file="Source/script/ActionAdapter.cpp"/>
         <FILE id="Vg0bmb" name="ActionAdapter.h" compile="0" resource="0" file="Source/script/ActionAdapter.h"/>
-        <FILE id="U7Ep98" name="Console.cpp" compile="1" resource="0" file="Source/script/Console.cpp"/>
-        <FILE id="cGY5Fr" name="Console.h" compile="0" resource="0" file="Source/script/Console.h"/>
-        <FILE id="t6nx5O" name="ConsolePanel.h" compile="0" resource="0" file="Source/script/ConsolePanel.h"/>
-        <FILE id="NoInlJ" name="MobiusConsole.cpp" compile="1" resource="0"
-              file="Source/script/MobiusConsole.cpp"/>
-        <FILE id="EFxzMc" name="MobiusConsole.h" compile="0" resource="0" file="Source/script/MobiusConsole.h"/>
-        <FILE id="f6inTY" name="MonitorPanel.h" compile="0" resource="0" file="Source/script/MonitorPanel.h"/>
         <FILE id="zfsEO0" name="MslArgumentParser.cpp" compile="1" resource="0"
               file="Source/script/MslArgumentParser.cpp"/>
         <FILE id="x3DxF0" name="MslArgumentParser.h" compile="0" resource="0"
@@ -859,9 +862,6 @@
               file="Source/script/ScriptExternals.cpp"/>
         <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"
               file="Source/script/ScriptExternals.h"/>
-        <FILE id="m6YL1r" name="ScriptMonitor.cpp" compile="1" resource="0"
-              file="Source/script/ScriptMonitor.cpp"/>
-        <FILE id="daVprv" name="ScriptMonitor.h" compile="0" resource="0" file="Source/script/ScriptMonitor.h"/>
         <FILE id="xHC9sn" name="ScriptRegistry.cpp" compile="1" resource="0"
               file="Source/script/ScriptRegistry.cpp"/>
         <FILE id="bpoxPm" name="ScriptRegistry.h" compile="0" resource="0"

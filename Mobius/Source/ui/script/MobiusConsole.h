@@ -7,8 +7,8 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../ui/common/BasicButtonRow.h"
+#include "../../util/Trace.h"
+#include "../common/BasicButtonRow.h"
 
 #include "Console.h"
 

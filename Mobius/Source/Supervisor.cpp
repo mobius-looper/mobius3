@@ -56,7 +56,7 @@
 #include "MidiClerk.h"
 #include "script/ScriptClerk.h"
 #include "script/MslEnvironment.h"
-#include "script/MobiusConsole.h"
+#include "ui/script/MobiusConsole.h"
 #include "script/MslExternal.h"
 #include "script/ActionAdapter.h"
 #include "script/ScriptRegistry.h"

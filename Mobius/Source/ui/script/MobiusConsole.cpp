@@ -4,24 +4,26 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../util/Util.h"
-#include "../ui/JuceUtil.h"
-#include "../Supervisor.h"
+#include "../../util/Trace.h"
+#include "../../util/Util.h"
 
-#include "MslModel.h"
-#include "MslParser.h"
-#include "MslError.h"
-#include "MslEnvironment.h"
-#include "MslDetails.h"
-#include "MslCollision.h"
-#include "MslResult.h"
-#include "MslBinding.h"
-#include "MslPreprocessor.h"
+#include "../../script/MslModel.h"
+#include "../../script/MslParser.h"
+#include "../../script/MslError.h"
+#include "../../script/MslEnvironment.h"
+#include "../../script/MslDetails.h"
+#include "../../script/MslCollision.h"
+#include "../../script/MslResult.h"
+#include "../../script/MslBinding.h"
+#include "../../script/MslPreprocessor.h"
+
+#include "../JuceUtil.h"
+#include "../../Supervisor.h"
+
 #include "ConsolePanel.h"
 
 // not supposed to see this, but we're special
-#include "MslCompilation.h"
+#include "../../script/MslCompilation.h"
 
 #include "MobiusConsole.h"
 

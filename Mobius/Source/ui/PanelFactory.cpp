@@ -15,8 +15,9 @@
 #include "../test/SyncPanel.h"
 #include "../test/TracePanel.h"
 #include "../test/UpgradePanel.h"
-#include "../script/ConsolePanel.h"
-#include "../script/MonitorPanel.h"
+
+#include "script/ConsolePanel.h"
+#include "script/MonitorPanel.h"
 
 // this has all the configuration panels
 #include "config/ConfigPanels.h"

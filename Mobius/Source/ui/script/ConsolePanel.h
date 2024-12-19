@@ -6,7 +6,7 @@
 
 #include <JuceHeader.h>
 
-#include "../ui/BasePanel.h"
+#include "../BasePanel.h"
 #include "MobiusConsole.h"
 
 class ConsolePanel : public BasePanel

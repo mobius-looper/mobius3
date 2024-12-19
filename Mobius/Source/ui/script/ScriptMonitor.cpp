@@ -1,10 +1,10 @@
 
 #include <JuceHeader.h>
 
-#include "../util/Trace.h"
-#include "../util/Util.h"
-#include "../ui/JuceUtil.h"
-#include "../Supervisor.h"
+#include "../../util/Trace.h"
+#include "../../util/Util.h"
+#include "../../Supervisor.h"
+#include "../JuceUtil.h"
 
 #include "MonitorPanel.h"
 #include "ScriptMonitor.h"
