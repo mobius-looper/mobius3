@@ -61,28 +61,43 @@ void ScriptSymbolTable::load(ScriptRegistry* reg)
                 // cache the location so we don't have to do this every time the
                 // cell is rendered
                 ScriptRegistry::File* srf = machine->findFileByName(symbol->name);
+                if (srf == nullptr && symbol->script->mslLinkage) {
+                    // this can happen for exported functions that weren't the
+                    // body function of the unit, the unit id is the full path
+                    // except for scriptlets
+                    MslLinkage* link = symbol->script->mslLinkage;
+                    srf = machine->findFile(link->unit->id);
+                }
+                
                 if (srf != nullptr) {
+                    row->registryFile = srf;
+                    juce::File f (srf->path);
                     if (srf->external != nullptr)
-                      row->location = srf->external->path;
-                    else {
-                        juce::File f (srf->path);
-                        row->location = "Library: " + f.getFileName();
-                    }
+                      row->location = "External: " + f.getFileName();
+                    else
+                      row->location = f.getFileName();
                 }
                 else if (symbol->script->coreScript != nullptr) {
                     // File wasn't stored with the right name or something
+                    Trace(1, "ScriptSymbolTable: Symbol for core script not in registry %s",
+                          symbol->getName());
                     row->location = "???";
                 }
                 else {
-                    // this can happen for exported functions that weren't the
-                    // body function of the unit
+                    // since we handled the unit id above, should only be here
+                    // for scriptlets
                     MslLinkage* link = symbol->script->mslLinkage;
                     juce::File f (link->unit->id);
                     juce::File p = f.getParentDirectory();
-                    if (p == libdir)
-                      row->location = "Library: " + f.getFileName();
-                    else
-                      row->location = link->unit->id;
+                    if (p != libdir) {
+                        // more to do here for scriptlets
+                        row->location = link->unit->id;
+                    }
+                    else {
+                        Trace(1, "ScriptSymbolTable: Symbol for MSL linkage not in registry %s",
+                              symbol->getName());
+                        row->location = "Library: " + f.getFileName();
+                    }
                 }
                     
                 symbols.add(row);
@@ -171,7 +186,7 @@ void ScriptSymbolTable::initColumns()
 
     header.addColumn(juce::String("Name"), ColumnName,  200, 30, -1, columnFlags);
     header.addColumn(juce::String("Type"), ColumnType, 80, 30, -1, columnFlags);
-    header.addColumn(juce::String("Language"), ColumnLanguage, 50, 30, -1, columnFlags);
+    // too cluttery?
     header.addColumn(juce::String("Location"), ColumnLocation, 300, 30, -1, columnFlags);
 }
 
@@ -264,12 +279,6 @@ juce::String ScriptSymbolTable::getCellText(int rowNumber, int columnId)
             // there was marginal support for variables but no one used them
             cell = "Function";
         }
-    }
-    else if (columnId == ColumnLanguage) {
-        if (row->symbol->script->mslLinkage != nullptr)
-          cell = "MSL";
-        else
-          cell = "MOS";
     }
     else if (columnId == ColumnLocation) {
         cell = row->location;
@@ -367,12 +376,12 @@ void ScriptSymbolTable::paintCell(juce::Graphics& g, int rowNumber, int columnId
  */
 void ScriptSymbolTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
-    (void)rowNumber;
     (void)columnId;
     (void)event;
-    // todo: Locate the file in the ScriptLibraryTable, select that tab
-    // and select that file
-    //ScriptSymbolTableRow* row = symbols[rowNumber];}
+    
+    ScriptSymbolTableRow* row = symbols[rowNumber];
+    if (row->registryFile != nullptr)
+      supervisor->getMainWindow()->editScript(row->registryFile);
 }
 
 /**

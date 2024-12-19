@@ -20,8 +20,8 @@ ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), symbols
     setName("ScriptConfigEditor");
 
     tabs.add("Symbols", &symbols);
-    tabs.add("Library Files", &library);
-    tabs.add("External Files", &externals);
+    tabs.add("Files", &library);
+    tabs.add("Externals", &externals);
     
     addAndMakeVisible(&tabs);
 }
@@ -93,7 +93,7 @@ void ScriptConfigEditor::save()
 {
     if (!isImmediate()) {
         // old way, can delete eventually
-        juce::StringArray newPaths = externals.getResult();
+        juce::StringArray newPaths = externals.getPaths();
         ScriptClerk* clerk = supervisor->getScriptClerk();
         clerk->installExternals(this, newPaths);
     }
@@ -123,7 +123,7 @@ void ScriptConfigEditor::cancel()
 void ScriptConfigEditor::scriptExternalTableChanged()
 {
     if (isImmediate()) {
-        juce::StringArray newPaths = externals.getResult();
+        juce::StringArray newPaths = externals.getPaths();
         ScriptClerk* clerk = supervisor->getScriptClerk();
         clerk->installExternals(this, newPaths);
     }

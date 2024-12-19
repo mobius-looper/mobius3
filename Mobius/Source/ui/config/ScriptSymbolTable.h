@@ -30,6 +30,7 @@ class ScriptSymbolTableRow
 
     class Symbol* symbol = nullptr;
     juce::String location;
+    class ScriptRegistry::File* registryFile = nullptr;
     
 };
 
@@ -41,8 +42,7 @@ class ScriptSymbolTable : public juce::Component,
 
     const int ColumnName = 1;
     const int ColumnType = 2;
-    const int ColumnLanguage = 3;
-    const int ColumnLocation = 4;
+    const int ColumnLocation = 3;
     
     ScriptSymbolTable(class Supervisor* s);
     ~ScriptSymbolTable();

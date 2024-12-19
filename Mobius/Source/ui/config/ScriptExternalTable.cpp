@@ -36,9 +36,8 @@ ScriptExternalTable::~ScriptExternalTable()
 }
 
 /**
- * Populate internal state with a list of Scripts from a ScriptConfig.
+ * Populate internal state from the ScriptRegistry::Machine::Externals list
  */
-
 void ScriptExternalTable::load(ScriptRegistry* reg)
 {
     files.clear();
@@ -46,34 +45,38 @@ void ScriptExternalTable::load(ScriptRegistry* reg)
     // formerly based this off the Machine::externals list
     // File needs to be kept in sync with that
     ScriptRegistry::Machine* machine = reg->getMachine();
-    for (auto file : machine->files) {
-        if (!file->deleted && file->external != nullptr) {
-    
-            ScriptExternalTableFile* efile = new ScriptExternalTableFile();
-            files.add(efile);
-            efile->file = file;
-            efile->path = file->path;
-            juce::File f (file->path);
-            efile->folder = f.getParentDirectory().getFullPathName();
-            
-            // color it red if it doesn't exist
-            // this assumes that we have an absolute path, which should be the case now
-            // don't think we need to support relative paths like we used to
-            // note that unlike SampleTable we don't support $INSTALL prefixes
-            // for script files, though that wouldn't be hard
-            // !!  the Registry::File should have this, trust it?
-            if (!f.existsAsFile() && !f.isDirectory())
-              efile->missing = true;
+    for (auto ext : machine->externals) {
 
-            efile->filename = f.getFileName();
-            // library files aren't callable so don't show a reference name
-            if (!file->library)
-              efile->refname = file->name;
-            else {
-                // sometimes there can be a #name directive which is nice to show
-                efile->refname = "<" + file->name + ">";
-            }
+        ScriptExternalTableFile* efile = new ScriptExternalTableFile();
+        files.add(efile);
+        
+        efile->path = ext->path;
+        juce::File f (ext->path);
+        if (f.isDirectory()) {
+            efile->type = "Folder";
         }
+        else if (!f.existsAsFile()) {
+            efile->missing = true;
+            efile->type = "Missing";
+        }
+        else if (f.getFileExtension() == ".msl") {
+            efile->type = "MSL";
+        }
+        else if (f.getFileExtension() == ".mos") {
+            efile->type = "MOS";
+        }
+        else {
+            efile->type = "Unknown";
+        }
+        
+        // shows the enable/disable status
+        // !! this isn't working right with folders and we don't have
+        // if we make this oriented toward just the External paths,
+        // then you could not enable/dissable individisual files in a folder
+        // only the entire folder, the older Library Files table would allow this
+        // but it doesn't show externals any more, not worth messing with since
+        // I'm trying to move everyone toward the library folder
+        efile->registryFile = machine->findFile(efile->path);
     }
     table.updateContent();
 }
@@ -83,7 +86,11 @@ void ScriptExternalTable::updateContent()
     table.updateContent();
 }
 
-juce::StringArray ScriptExternalTable::getResult()
+/**
+ * Get the array of external paths in the table.
+ * Some of these may be directories.
+ */
+juce::StringArray ScriptExternalTable::getPaths()
 {
     juce::StringArray paths;
     for (int i = 0 ; i < files.size() ; i++) {
@@ -166,11 +173,9 @@ void ScriptExternalTable::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("File Name"), ColumnName,  150, 30, -1, columnFlags);
-    header.addColumn(juce::String("Reference Name"), ColumnRefname,  150, 30, -1, columnFlags);
-    header.addColumn(juce::String("Namespace"), ColumnNamespace,  80, 30, -1, columnFlags);
-    header.addColumn(juce::String("Status"), ColumnStatus, 80, 30, -1, columnFlags);
-    header.addColumn(juce::String("Folder"), ColumnFolder, 450, 30, -1, columnFlags);
+    header.addColumn(juce::String("File Path"), ColumnPath,  450, 30, -1, columnFlags);
+    header.addColumn(juce::String("Type"), ColumnType,  80, 30, -1, columnFlags);
+    header.addColumn(juce::String("Status"), ColumnStatus,  80, 30, -1, columnFlags);
 }
 
 const int CommandButtonGap = 10;
@@ -251,35 +256,27 @@ juce::String ScriptExternalTable::getCellText(int rowNumber, int columnId)
     juce::String cell;
     
     ScriptExternalTableFile* efile = files[rowNumber];
-    ScriptRegistry::File* file = efile->file;
+    ScriptRegistry::File* rfile = efile->registryFile;
     
-    if (columnId == ColumnName) {
-        cell = efile->filename;
+    if (columnId == ColumnPath) {
+        cell = efile->path;
     }
-    else if (columnId == ColumnRefname) {
-        cell = efile->refname;
-    }
-    else if (columnId == ColumnNamespace) {
-        if (file != nullptr)
-          cell = file->package;
+    else if (columnId == ColumnType) {
+        cell = efile->type;
     }
     else if (columnId == ColumnStatus) {
-        if (file != nullptr) {
-            MslDetails* fdetails = file->getDetails();
+        if (rfile != nullptr) {
+            MslDetails* fdetails = rfile->getDetails();
         
-            if (file->disabled)
+            if (rfile->disabled)
               cell += "disabled ";
-            else if (!file->old && (fdetails == nullptr || !fdetails->published))
+            else if (!rfile->old && (fdetails == nullptr || !fdetails->published))
               cell += "unloaded ";
           
-            if (file->hasErrors())
+            if (rfile->hasErrors())
               cell = "errors ";
         }
     }
-    else if (columnId == ColumnFolder) {
-        cell = efile->folder;
-    }
-    
     return cell;
 }
 

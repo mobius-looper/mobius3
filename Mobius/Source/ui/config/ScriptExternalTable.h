@@ -21,27 +21,32 @@ class ScriptExternalTableFile
     ~ScriptExternalTableFile() {
     }
 
-    ScriptRegistry::File* file = nullptr;
-    juce::String filename;
-    juce::String refname;
-    juce::String folder;
+    // the path guides the table, this is taken
+    // directly from the ScriptRegistry::Machine::Externals list
     juce::String path;
-    // anything else of intereset in here, maybe size, format or something
-    // Sample has a bunch of operational flags
 
+    // the file type: MOS, MSL, Folder, Missing
+    juce::String type;
+    
     // set true if we determine this file does not exist
+    // this is taken from the External path, if there is a FIle
+    // it should match the missing flag there, but that may be stale
+    // until the next ScriptClerk refresh
     bool missing = false;
+
+    // if ScriptClerk has had the opportunity to process this file
+    // it will create one of these with extra information, this is usually
+    // there but not during periods of new file addition
+    ScriptRegistry::File* registryFile = nullptr;
 };
 
 class ScriptExternalTable : public juce::Component, public juce::TableListBoxModel, public ButtonBar::Listener
 {
   public:
     
-    const int ColumnName = 1;
-    const int ColumnRefname = 2;
-    const int ColumnNamespace = 3;
-    const int ColumnStatus = 4;
-    const int ColumnFolder = 5;
+    const int ColumnPath = 1;
+    const int ColumnType = 2;
+    const int ColumnStatus = 3;
     
     ScriptExternalTable(class Supervisor* s, class ScriptConfigEditor* parent);
     ~ScriptExternalTable();
@@ -49,7 +54,7 @@ class ScriptExternalTable : public juce::Component, public juce::TableListBoxMod
     void load(class ScriptRegistry* reg);
     void updateContent();
     void clear();
-    juce::StringArray getResult();
+    juce::StringArray getPaths();
 
     int getPreferredWidth();
     int getPreferredHeight();

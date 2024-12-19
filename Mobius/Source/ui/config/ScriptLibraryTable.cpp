@@ -62,11 +62,12 @@ void ScriptLibraryTable::load(ScriptRegistry* reg)
 
     ScriptRegistry::Machine* machine = reg->getMachine();
     for (auto file : machine->files) {
-        if (!file->deleted && file->external == nullptr) {
+        if (!file->deleted) {
             ScriptLibraryTableFile* tfile = new ScriptLibraryTableFile(file);
             files.add(tfile);
             juce::File f (file->path);
             tfile->filename = f.getFileName();
+            tfile->folder = f.getParentDirectory().getFullPathName();
             // library files aren't callable so don't show a reference name
             if (!file->library)
               tfile->refname = file->name;
@@ -158,9 +159,9 @@ void ScriptLibraryTable::initColumns()
 
     header.addColumn(juce::String("File Name"), ColumnName,  200, 30, -1, columnFlags);
     header.addColumn(juce::String("Reference Name"), ColumnRefname,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Namespace"), ColumnNamespace,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Status"), ColumnStatus, 200, 30, -1, columnFlags);
-    // leave the path out here, put it in details
+    header.addColumn(juce::String("Language"), ColumnLanguage,  80, 30, -1, columnFlags);
+    header.addColumn(juce::String("Status"), ColumnStatus, 150, 30, -1, columnFlags);
+    header.addColumn(juce::String("Folder"), ColumnFolder, 300, 30, -1, columnFlags);
 }
 
 const int CommandButtonGap = 10;
@@ -278,7 +279,7 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
     juce::String cell;
     
     ScriptLibraryTableFile* tfile = files[rowNumber];
-    ScriptRegistry::File* file = tfile->file;
+    ScriptRegistry::File* rfile = tfile->file;
     
     if (columnId == ColumnName) {
         cell = tfile->filename;
@@ -287,18 +288,29 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
         cell = tfile->refname;
     }
     else if (columnId == ColumnNamespace) {
-        cell = file->package;
+        cell = rfile->package;
+    }
+    else if (columnId == ColumnLanguage) {
+        if (rfile->old)
+          cell = "MOS";
+        else
+          cell = "MSL";
     }
     else if (columnId == ColumnStatus) {
-        MslDetails* fdetails = file->getDetails();
-        
-        if (file->disabled)
+        MslDetails* fdetails = rfile->getDetails();
+
+        if (rfile->external != nullptr)
+          cell += "external ";
+        if (rfile->disabled)
           cell += "disabled ";
-        else if (!file->old && (fdetails == nullptr || !fdetails->published))
+        else if (!rfile->old && (fdetails == nullptr || !fdetails->published))
           cell += "unloaded ";
           
-        if (file->hasErrors())
+        if (rfile->hasErrors())
           cell = "errors ";
+    }
+    else if (columnId == ColumnFolder) {
+        cell = tfile->folder;
     }
     
     return cell;

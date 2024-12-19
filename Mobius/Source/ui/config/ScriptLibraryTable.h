@@ -29,6 +29,7 @@ class ScriptLibraryTableFile
     ScriptRegistry::File* file = nullptr;
     juce::String filename;
     juce::String refname;
+    juce::String folder;
     
     bool hasErrors() {
         return file->hasErrors();
@@ -44,9 +45,10 @@ class ScriptLibraryTable : public juce::Component,
 
     const int ColumnName = 1;
     const int ColumnRefname = 2;
-    const int ColumnNamespace = 3;
+    const int ColumnLanguage = 3;
     const int ColumnStatus = 4;
     const int ColumnFolder = 5;
+    const int ColumnNamespace = 6;
     
     ScriptLibraryTable(class Supervisor* s);
     ~ScriptLibraryTable();
