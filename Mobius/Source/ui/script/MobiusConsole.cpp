@@ -856,6 +856,9 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
         else if (node->isCase()) {
             line += "Case";
         }
+        else if (node->isResult()) {
+            line += "Result";
+        }
         else {
             line += "???: ";
         }

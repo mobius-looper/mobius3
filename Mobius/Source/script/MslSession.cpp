@@ -70,6 +70,12 @@ MslSession::~MslSession()
         Trace(1, "MslSession: Lingering errors on delete");
         delete errors;
     }
+    
+    if (results != nullptr) {
+        // this one does cascade
+        Trace(1, "MslSession: Lingering results on delete");
+        delete results;
+    }
 }
 
 /**
@@ -240,6 +246,14 @@ void MslSession::reset()
 
     pool->free(errors);
     errors = nullptr;
+
+    // results accumulate
+    //pool->free(results);
+    //results = nullptr;
+
+    // what about root value?
+    // if the initial script returned a value, then suspended
+    // the On callbacks probably should not reset the value
     pool->free(rootValue);
     rootValue = nullptr;
 
@@ -851,6 +865,18 @@ MslError* MslSession::captureErrors()
     return retval;
 }
 
+MslValue* MslSession::getResults()
+{
+    return results;
+}
+
+MslValue* MslSession::captureResults()
+{
+    MslValue* retval = results;
+    results = nullptr;
+    return retval;
+}
+
 /**
  * Called internally to add a runtime error.
  * Using MslError here so we can capture the location in the source
@@ -1362,6 +1388,31 @@ void MslSession::mslVisit(MslFormNode* fnode)
 {
     logVisit(fnode);
     addError(fnode, "Unhandled Form node");
+}
+
+void MslSession::mslVisit(MslResultNode* resnode)
+{
+    (void)resnode;
+    
+    MslStack* nextStack = pushNextChild();
+    if (nextStack == nullptr) {
+        MslValue* result = stack->childResults;
+        stack->childResults = nullptr;
+        if (result != nullptr) {
+            // nicer if this appends
+            MslValue* list = results;
+            MslValue* last = nullptr;
+            while (list != nullptr) {
+                last = list;
+                list = list->next;
+            }
+            if (last != nullptr)
+              last->next = result;
+            else
+              results = result;
+        }
+        popStack();
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

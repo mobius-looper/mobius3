@@ -29,9 +29,6 @@ class MslResult
     
   public:
 
-
-    
-
     MslResult();
     ~MslResult();
     void init();
@@ -42,6 +39,7 @@ class MslResult
 
     // session state, normally Finished, Waiting, or Suspended
     // and for very brief moments Transitioning
+    // todo: this shouldn't be necessary any more how that we have MslProcess?
     MslSessionState state = MslStateNone;
 
     // the final result value when the session finishes without errors
@@ -50,6 +48,9 @@ class MslResult
     // the list of errors accumulated at runtime
     class MslError* errors = nullptr;
 
+    // arbitrary results that can be added by the script and force persistence
+    class MslValue* results = nullptr;
+    
     // for saved results, the chain pointer for the list of saved results
     // used by the monitoring UI
     MslResult* getNext();

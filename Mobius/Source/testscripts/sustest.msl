@@ -4,6 +4,9 @@
 print "Going down"
 context kernel
 
+// test results persistence
+AddResult "This is a result"
+
 function OnRelease (sustainCount sustainElapsed) {
   print ("Going up after" sustainCount sustainElapsed)
 }

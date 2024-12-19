@@ -796,6 +796,9 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     else if (t.value == "field")
       keyword = new MslFieldNode(t);
     
+    else if (t.value == "AddResult")
+      keyword = new MslResultNode(t);
+    
     else if (t.value == "in") {
         // this one is weird because not only does it create a node
         // for this token, it also pushes another node under it, an MslSequence

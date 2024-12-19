@@ -18,6 +18,7 @@ MslResult::~MslResult()
 {
     delete value;
     delete errors;
+    delete results;
 }
 
 /**
@@ -29,6 +30,7 @@ void MslResult::init()
     sessionId = 0;
     value = nullptr;
     errors = nullptr;
+    results = nullptr;
     interned = false;
     strcpy(name, "");
 }

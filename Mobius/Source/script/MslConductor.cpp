@@ -722,8 +722,9 @@ MslResult* MslConductor::makeResult(MslContext* c, MslSession* s)
 
     // transfer errors and result value
     result->errors = s->captureErrors();
+    result->results = s->captureResults();
     result->value = s->captureValue();
-
+    
     return result;
 }
 
@@ -734,12 +735,14 @@ MslResult* MslConductor::makeResult(MslContext* c, MslSession* s)
  * a persistent MslResult object that can be viewed later in the monitoring UI.
  *
  * Also allow save to be forced for diagnostics.
+ * If the script adds detailed results with AddResult, then keep it as well.
  */
 void MslConductor::saveResult(MslContext* c, MslResult* result)
 {
     if (result != nullptr) {
 
-        if (!resultDiagnostics && result->errors == nullptr) {
+        if (!resultDiagnostics && result->errors == nullptr &&
+            result->results == nullptr) {
             // nothing interesting to save
             environment->getPool()->free(result);
         }

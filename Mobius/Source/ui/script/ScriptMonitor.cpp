@@ -27,16 +27,17 @@ ScriptMonitor::~ScriptMonitor()
 
 void ScriptMonitor::showing()
 {
+    startTimer(100);
 }
 
 void ScriptMonitor::hiding()
 {
+    stopTimer();
 }
 
 void ScriptMonitor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    
     tabs.setBounds(area);
 }
 
@@ -57,3 +58,12 @@ void ScriptMonitor::update()
 {
 }
 
+void ScriptMonitor::timerCallback()
+{
+    // could have different granularities on these
+    // processes change quickly, results rarely
+    processes.load();
+
+    // this can actually be manually refreshed
+    //results.load();
+}

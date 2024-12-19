@@ -265,6 +265,9 @@ void MslPools::free(MslResult* r)
             free(r->errors);
             r->errors = next;
         }
+
+        free(r->results);
+        r->results = nullptr;
         
         // and now me
         r->next = resultPool;
@@ -485,6 +488,11 @@ MslSession* MslPools::allocSession()
             free(s->errors);
             s->errors = nullptr;
         }
+        if (s->results != nullptr) {
+            Trace(1, "MslPools: Lingering errors in pooled stack");
+            free(s->results);
+            s->results = nullptr;
+        }
 
         s->init();
     }
@@ -512,6 +520,8 @@ void MslPools::free(MslSession* s)
         // errors also cascade
         free(s->errors);
         s->errors = nullptr;
+        free(s->results);
+        s->results = nullptr;
 
         s->next = sessionPool;
         sessionPool = s;

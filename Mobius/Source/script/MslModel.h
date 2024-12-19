@@ -54,6 +54,7 @@ class MslVisitor
     virtual void mslVisit(class MslFieldNode* obj) = 0;
     virtual void mslVisit(class MslFormNode* obj) = 0;
     virtual void mslVisit(class MslCaseNode* obj) = 0;
+    virtual void mslVisit(class MslResultNode* obj) = 0;
     // this one doesn't need a visitor
     virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
@@ -188,6 +189,7 @@ class MslNode
     virtual class MslPropertyNode* getProperty() {return nullptr;}
     virtual class MslFieldNode* getField() {return nullptr;}
     virtual class MslFormNode* getForm() {return nullptr;}
+    virtual class MslResultNode* getResult() {return nullptr;}
     
     bool isLiteral() {return getLiteral() != nullptr;}
     bool isSymbol() {return getSymbol() != nullptr;}
@@ -214,6 +216,7 @@ class MslNode
     bool isProperty() {return getProperty() != nullptr;}
     bool isField() {return getField() != nullptr;}
     bool isForm() {return getForm() != nullptr;}
+    bool isResult() {return getResult() != nullptr;}
     
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslResolutionContext* rc, class MslCompilation* comp) {
         (void)context;
@@ -821,6 +824,23 @@ class MslTraceNode : public MslNode
     void visit(MslVisitor* v) override {v->mslVisit(this);}
     const char* getLogName() override {return "Trace";}
     bool operandable() override {return false;}
+};
+
+class MslResultNode : public MslNode
+{
+  public:
+    MslResultNode(MslToken& t) : MslNode(t) {}
+    ~MslResultNode() {}
+
+    MslResultNode* getResult() override {return this;}
+
+    bool wantsNode(class MslParser* p, MslNode* node) override {
+        (void)p; (void)node;
+        return (children.size() == 0);
+    }
+    
+    void visit(MslVisitor* v) override {v->mslVisit(this);}
+    const char* getLogName() override {return "Result";}
 };
 
 //////////////////////////////////////////////////////////////////////

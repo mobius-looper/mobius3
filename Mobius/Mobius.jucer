@@ -237,6 +237,9 @@
           <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>
+          <FILE id="YMtqVy" name="TypicalTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/TypicalTable.cpp"/>
+          <FILE id="NyM8Ef" name="TypicalTable.h" compile="0" resource="0" file="Source/ui/script/TypicalTable.h"/>
         </GROUP>
         <FILE id="LOuXbq" name="BindingSummaryPanel.cpp" compile="1" resource="0"
               file="Source/ui/BindingSummaryPanel.cpp"/>

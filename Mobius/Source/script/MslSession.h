@@ -181,6 +181,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslValue* captureValue();
     MslError* getErrors();
     MslError* captureErrors();
+    MslValue* getResults();
+    MslValue* captureResults();
 
     // MslVisitor
     void mslVisit(class MslLiteralNode* obj) override;
@@ -207,6 +209,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void mslVisit(class MslPropertyNode* obj) override;
     void mslVisit(class MslFieldNode* obj) override;
     void mslVisit(class MslFormNode* obj) override;
+    void mslVisit(class MslResultNode* obj) override;
 
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
@@ -266,6 +269,9 @@ class MslSession : public MslVisitor, public MslSessionInterface
     
     // "root" value of the top of the stack
     MslValue* rootValue = nullptr;
+
+    // accumulated result list
+    MslValue* results = nullptr;
 
     // this is what we pass to MslContext to convert an abstract
     // scope name into a set of scope numbers, to avoid memory allocation

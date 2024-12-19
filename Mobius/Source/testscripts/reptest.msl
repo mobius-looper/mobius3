@@ -1,5 +1,5 @@
 #name Repeat Me
-#repeat
+#repeat 5000
 
 print "Starting"
 context kernel

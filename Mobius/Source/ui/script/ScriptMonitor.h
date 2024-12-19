@@ -14,7 +14,8 @@
 #include "ScriptProcessTable.h"
 
 class ScriptMonitor : public juce::Component,
-                      public juce::Button::Listener
+                      public juce::Button::Listener,
+                      public juce::Timer
 {
   public:
 
@@ -41,5 +42,6 @@ class ScriptMonitor : public juce::Component,
     ScriptResultTable results;
     ScriptProcessTable processes;
 
+    void timerCallback();
 };
 
