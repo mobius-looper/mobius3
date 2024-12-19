@@ -9,17 +9,16 @@
 #include "MonitorPanel.h"
 #include "ScriptMonitor.h"
 
-ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent)
+ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent) : processes(s), results(s)
 {
     supervisor = s;
     panel = parent;
-    
     scriptenv = supervisor->getScriptEnvironment();
 
-    //addAndMakeVisible(&console);
-    //console.setListener(this);
-    //console.add("Shall we play a game?");
-    //console.prompt();
+    tabs.add("Processes", &processes);
+    tabs.add("Results", &results);
+    
+    addAndMakeVisible(&tabs);
 }
 
 ScriptMonitor::~ScriptMonitor()
@@ -38,7 +37,7 @@ void ScriptMonitor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
-    //console.setBounds(area);
+    tabs.setBounds(area);
 }
 
 void ScriptMonitor::paint(juce::Graphics& g)

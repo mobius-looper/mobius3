@@ -226,6 +226,14 @@
           <FILE id="qFoKXE" name="ScriptMonitor.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptMonitor.cpp"/>
           <FILE id="Djd5U1" name="ScriptMonitor.h" compile="0" resource="0" file="Source/ui/script/ScriptMonitor.h"/>
+          <FILE id="Ys6xeO" name="ScriptProcessTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptProcessTable.cpp"/>
+          <FILE id="MoEVOR" name="ScriptProcessTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptProcessTable.h"/>
+          <FILE id="uHM0Ks" name="ScriptResultTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptResultTable.cpp"/>
+          <FILE id="rNPUWN" name="ScriptResultTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptResultTable.h"/>
           <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>

@@ -8,6 +8,10 @@
 
 #include "../../util/Trace.h"
 #include "../common/BasicButtonRow.h"
+#include "../common/BasicTabs.h"
+
+#include "ScriptResultTable.h"
+#include "ScriptProcessTable.h"
 
 class ScriptMonitor : public juce::Component,
                       public juce::Button::Listener
@@ -32,6 +36,10 @@ class ScriptMonitor : public juce::Component,
     class Supervisor* supervisor = nullptr;
     class MonitorPanel* panel = nullptr;
     class MslEnvironment* scriptenv = nullptr;
+
+    BasicTabs tabs;
+    ScriptResultTable results;
+    ScriptProcessTable processes;
 
 };
 
