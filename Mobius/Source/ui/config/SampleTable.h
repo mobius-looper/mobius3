@@ -1,8 +1,5 @@
 /**
  * A table showing a list of Samples within a SampleConfig.
- *
- * This is almost identical to ScriptTable, share something
- *
  */
 
 #pragma once

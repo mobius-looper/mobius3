@@ -1580,12 +1580,16 @@ void MslEnvironment::extractDetails(MslCompilation* src, MslDetails* dest, bool 
 {
     // things that are always copied;
     dest->id = src->id;
-    dest->name = src->name;
+    if (src->package.length() > 0)
+      dest->name = src->package + ":" + src->name;
+    else
+      dest->name = src->name;
     dest->published = src->published;
-
+    dest->library = src->library;
+    dest->package = src->package;
+    
     // this could be moved but Juce makes it easy to copy
     dest->unresolved = juce::StringArray(src->unresolved);
-
     // these are nicer to move just to avoid a little memory churn
     if (move) {
         MslError::transfer(&(src->errors), &(dest->errors));

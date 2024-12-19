@@ -51,6 +51,7 @@ class WindowFactory
     void captureConfiguration(class UIConfig* config);
     
     void editScript(ScriptRegistry::File* file);
+    class ScriptWindow* openScriptWindow();
     
   private:
 

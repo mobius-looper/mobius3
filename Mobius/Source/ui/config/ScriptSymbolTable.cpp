@@ -1,17 +1,13 @@
 /**
- * The library table is read only with the following columns:
- *
- *     name - the reference name of the script
- *     status - enabled, disabled, error
- *     path - full path name
- *
+ * The table of exported script symbols (linkages)
  */
 
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
 #include "../../util/Util.h"
-#include "../../model/ScriptConfig.h"
+#include "../../model/Symbol.h"
+#include "../../model/ScriptProperties.h"
 #include "../../Supervisor.h"
 #include "../../Prompter.h"
 
@@ -21,66 +17,83 @@
 
 #include "../../script/ScriptRegistry.h"
 #include "../../script/MslDetails.h"
-#include "../script/ScriptWindow.h"
+#include "../../script/MslLinkage.h"
+#include "../../script/MslCompilation.h"
 
-#include "ScriptFileDetails.h"
-#include "ScriptLibraryTable.h"
+//#include "ScriptFileDetails.h"
+#include "ScriptSymbolTable.h"
 
-ScriptLibraryTable::ScriptLibraryTable(Supervisor* s)
+ScriptSymbolTable::ScriptSymbolTable(Supervisor* s)
 {
     supervisor = s;
-    setName("ScriptLibraryTable");
+    setName("ScriptSymbolTable");
 
     initTable();
     addAndMakeVisible(table);
 
-    commands.add("Import");
-    commands.add("New");
     commands.add("Edit");
     commands.add("Details");
-    commands.add("Enable");
-    commands.add("Disable");
-    commands.add("Delete");
     commands.autoSize();
     commands.addListener(this);
 
     addAndMakeVisible(commands);
 
-    addChildComponent(details);
+    //addChildComponent(details);
 }
 
-ScriptLibraryTable::~ScriptLibraryTable()
+ScriptSymbolTable::~ScriptSymbolTable()
 {
 }
 
-/**
- * Populate internal state with a list of Scripts from a ScriptConfig.
- */
-void ScriptLibraryTable::load(ScriptRegistry* reg)
+void ScriptSymbolTable::load(ScriptRegistry* reg)
 {
-    files.clear();
-
     ScriptRegistry::Machine* machine = reg->getMachine();
-    for (auto file : machine->files) {
-        if (!file->deleted && file->external == nullptr) {
-            ScriptLibraryTableFile* tfile = new ScriptLibraryTableFile(file);
-            files.add(tfile);
-            juce::File f (file->path);
-            tfile->filename = f.getFileName();
-            // library files aren't callable so don't show a reference name
-            if (!file->library)
-              tfile->refname = file->name;
-            else {
-                // sometimes there can be a #name directive which is nice to show
-                tfile->refname = "<" + file->name + ">";
+    juce::File libdir = supervisor->getScriptClerk()->getLibraryFolder();
+    symbols.clear();
+
+    SymbolTable* stable = supervisor->getSymbols();
+    for (auto symbol : stable->getSymbols()) {
+        if (symbol->script != nullptr) {
+            if (symbol->script->mslLinkage != nullptr || symbol->script->coreScript != nullptr) {
+                ScriptSymbolTableRow* row = new ScriptSymbolTableRow();
+                row->symbol = symbol;
+
+                // cache the location so we don't have to do this every time the
+                // cell is rendered
+                ScriptRegistry::File* srf = machine->findFileByName(symbol->name);
+                if (srf != nullptr) {
+                    if (srf->external != nullptr)
+                      row->location = srf->external->path;
+                    else {
+                        juce::File f (srf->path);
+                        row->location = "Library: " + f.getFileName();
+                    }
+                }
+                else if (symbol->script->coreScript != nullptr) {
+                    // File wasn't stored with the right name or something
+                    row->location = "???";
+                }
+                else {
+                    // this can happen for exported functions that weren't the
+                    // body function of the unit
+                    MslLinkage* link = symbol->script->mslLinkage;
+                    juce::File f (link->unit->id);
+                    juce::File p = f.getParentDirectory();
+                    if (p == libdir)
+                      row->location = "Library: " + f.getFileName();
+                    else
+                      row->location = link->unit->id;
+                }
+                    
+                symbols.add(row);
             }
         }
     }
-
+    
     table.updateContent();
 }
 
-void ScriptLibraryTable::updateContent()
+void ScriptSymbolTable::updateContent()
 {
     table.updateContent();
 }
@@ -88,9 +101,9 @@ void ScriptLibraryTable::updateContent()
 /**
  * Delete contained Bindings and prepare for renewal.
  */
-void ScriptLibraryTable::clear()
+void ScriptSymbolTable::clear()
 {
-    files.clear();
+    symbols.clear();
     table.updateContent();
 }
 
@@ -103,7 +116,7 @@ void ScriptLibraryTable::clear()
 /**
  * Set starting table properties
  */
-void ScriptLibraryTable::initTable()
+void ScriptSymbolTable::initTable()
 {
     // from the example
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);      // [2]
@@ -137,7 +150,7 @@ void ScriptLibraryTable::initTable()
  *
  * Pick some reasonable default widths but need to be smarter
  */
-void ScriptLibraryTable::initColumns()
+void ScriptSymbolTable::initColumns()
 {
     // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
     // sortable is not relevant for most tables and causes confusion when things don't sort
@@ -156,22 +169,21 @@ void ScriptLibraryTable::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("File Name"), ColumnName,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Reference Name"), ColumnRefname,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Namespace"), ColumnNamespace,  200, 30, -1, columnFlags);
-    header.addColumn(juce::String("Status"), ColumnStatus, 200, 30, -1, columnFlags);
-    // leave the path out here, put it in details
+    header.addColumn(juce::String("Name"), ColumnName,  200, 30, -1, columnFlags);
+    header.addColumn(juce::String("Type"), ColumnType, 80, 30, -1, columnFlags);
+    header.addColumn(juce::String("Language"), ColumnLanguage, 50, 30, -1, columnFlags);
+    header.addColumn(juce::String("Location"), ColumnLocation, 300, 30, -1, columnFlags);
 }
 
 const int CommandButtonGap = 10;
 
-int ScriptLibraryTable::getPreferredWidth()
+int ScriptSymbolTable::getPreferredWidth()
 {
     // todo: adapt to column configuration
     return 500;
 }
 
-int ScriptLibraryTable::getPreferredHeight()
+int ScriptSymbolTable::getPreferredHeight()
 {
     int height = 400;
     
@@ -188,7 +200,7 @@ int ScriptLibraryTable::getPreferredHeight()
  * Always put buttons at the bottom, and let the table
  * be as large as it wants.
  */
-void ScriptLibraryTable::resized()
+void ScriptSymbolTable::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
@@ -210,50 +222,9 @@ void ScriptLibraryTable::resized()
 /**
  * ButtonBar::Listener
  */
-void ScriptLibraryTable::buttonClicked(juce::String name)
+void ScriptSymbolTable::buttonClicked(juce::String name)
 {
-    if (name == juce::String("Import")) {
-        Prompter* p = supervisor->getPrompter();
-        p->importScripts();
-    }
-    else if (name == juce::String("New")) {
-        MainWindow* win = supervisor->getMainWindow();
-        ScriptWindow* swin = win->openScriptWindow();
-        swin->newScript();
-    }
-    else {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            ScriptRegistry::File* file = files[row]->file;
-            if (file != nullptr) {
-
-                if (name == juce::String("Enable")) {
-                    ScriptClerk* clerk = supervisor->getScriptClerk();
-                    clerk->enable(file);
-                    table.updateContent();
-                    // updateContent isn't enough, figure out why
-                    table.repaint();
-                }
-                else if (name == juce::String("Disable")) {
-                    ScriptClerk* clerk = supervisor->getScriptClerk();
-                    clerk->disable(file);
-                    table.updateContent();
-                    table.repaint();
-                }
-                else if (name == juce::String("Details")) {
-                    details.show(file);
-                }
-                else if (name == juce::String("Edit")) {
-                    MainWindow* win = supervisor->getMainWindow();
-                    win->editScript(file);
-                }
-                else if (name == juce::String("Delete")) {
-                    Prompter* p = supervisor->getPrompter();
-                    p->deleteScript(file->path);
-                }
-            }
-        }
-    }
+    (void)name;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -273,34 +244,37 @@ void ScriptLibraryTable::buttonClicked(juce::String name)
  *  should be a checkbox independent of the status
  *
  */
-juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
+juce::String ScriptSymbolTable::getCellText(int rowNumber, int columnId)
 {
     juce::String cell;
     
-    ScriptLibraryTableFile* tfile = files[rowNumber];
-    ScriptRegistry::File* file = tfile->file;
-    
+    ScriptSymbolTableRow* row = symbols[rowNumber];
     if (columnId == ColumnName) {
-        cell = tfile->filename;
+        cell = row->symbol->name;
     }
-    else if (columnId == ColumnRefname) {
-        cell = tfile->refname;
+    else if (columnId == ColumnType) {
+        MslLinkage* link = row->symbol->script->mslLinkage;
+        if (link != nullptr) {
+            if (link->isFunction)
+              cell = "Function";
+            else
+              cell = "Variable";
+        }
+        else {
+            // there was marginal support for variables but no one used them
+            cell = "Function";
+        }
     }
-    else if (columnId == ColumnNamespace) {
-        cell = file->package;
+    else if (columnId == ColumnLanguage) {
+        if (row->symbol->script->mslLinkage != nullptr)
+          cell = "MSL";
+        else
+          cell = "MOS";
     }
-    else if (columnId == ColumnStatus) {
-        MslDetails* fdetails = file->getDetails();
-        
-        if (file->disabled)
-          cell += "disabled ";
-        else if (!file->old && (fdetails == nullptr || !fdetails->published))
-          cell += "unloaded ";
-          
-        if (file->hasErrors())
-          cell = "errors ";
+    else if (columnId == ColumnLocation) {
+        cell = row->location;
     }
-    
+
     return cell;
 }
 
@@ -308,9 +282,9 @@ juce::String ScriptLibraryTable::getCellText(int rowNumber, int columnId)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int ScriptLibraryTable::getNumRows()
+int ScriptSymbolTable::getNumRows()
 {
-    return files.size();
+    return symbols.size();
 }
 
 /**
@@ -323,7 +297,7 @@ int ScriptLibraryTable::getNumRows()
  * fancier than just filling the entire thing.  Could be useful
  * for borders, though Juce might provide something for selected rows/cells already.
  */
-void ScriptLibraryTable::paintRowBackground(juce::Graphics& g, int rowNumber,
+void ScriptSymbolTable::paintRowBackground(juce::Graphics& g, int rowNumber,
                                       int /*width*/, int /*height*/,
                                       bool rowIsSelected)
 {
@@ -349,18 +323,18 @@ void ScriptLibraryTable::paintRowBackground(juce::Graphics& g, int rowNumber,
  * default to 22 but ideally this should be proportional to the row height if it can be changed.
  * 14 is 63% of 22
  */
-void ScriptLibraryTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void ScriptSymbolTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     (void)columnId;
-    ScriptLibraryTableFile* file = files[rowNumber];
+    //ScriptSymbolTableRow* row = symbols[rowNumber];
 
     // what the tutorial did
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
 
     // highlight errors
-    if (columnId == ColumnStatus && file->hasErrors())
-      g.setColour(juce::Colours::red);
+    //if (columnId == ColumnStatus && file->hasErrors())
+    //g.setColour(juce::Colours::red);
     
     // how expensive is this, should we be caching it after the row height changes?
     g.setFont(JuceUtil::getFontf(height * .66f));
@@ -384,30 +358,6 @@ void ScriptLibraryTable::paintCell(juce::Graphics& g, int rowNumber, int columnI
 }
 
 /**
- * MouseEvent has various characters of the mouse click such as the actual x/y coordinate
- * offsetFromDragStart, numberOfClicks, etc.  Not interested in those right now.
- *
- * Can pass the row/col to the listener.
- * Can use ListBox::isRowSelected to get the selected row
- * Don't know if there is tracking of a selected column but we don't need that yet.
- */
-// commented out because it doesn't respond to keyboard row selection
-#if 0
-void ScriptLibraryTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
-{
-    (void)columnId;
-    (void)event;
-
-    if (details.isVisible()) {
-        ScriptLibraryTableFile* tfile = files[rowNumber];
-        if (details.isVisible()) {
-            details.show(tfile->file);
-        }
-    }
-}
-#endif
-
-/**
  * Chicken and egg here.
  * selectedRowsChanged will be called first, then this one.
  * So when this starts invisible, selectedRowsChanged won't have done anything
@@ -415,43 +365,23 @@ void ScriptLibraryTable::cellClicked(int rowNumber, int columnId, const juce::Mo
  *
  * If it is already visible we don't have to do anything. 
  */
-void ScriptLibraryTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void ScriptSymbolTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;
     (void)event;
-
-    // old way, show details
-    /*
-    if (!details.isVisible()) {
-        ScriptLibraryTableFile* tfile = files[rowNumber];
-        if (tfile->file != nullptr)
-          details.show(tfile->file);
-    }
-    */
-    // new way, just bring up the editor already
-    ScriptLibraryTableFile* tfile = files[rowNumber];
-    if (tfile->file != nullptr)
-      supervisor->getMainWindow()->editScript(tfile->file);
+    // todo: Locate the file in the ScriptLibraryTable, select that tab
+    // and select that file
+    //ScriptSymbolTableRow* row = symbols[rowNumber];}
 }
 
 /**
  * Alternative to cellClicked that picks up selection changes
  * when you use the arrow keys on the keyboard.
  */
-void ScriptLibraryTable::selectedRowsChanged(int lastRowSelected)
+void ScriptSymbolTable::selectedRowsChanged(int lastRowSelected)
 {
     (void)lastRowSelected;
-
-    if (details.isVisible()) {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            ScriptLibraryTableFile* tfile = files[row];
-            if (details.isVisible()) {
-                details.show(tfile->file);
-            }
-        }
-    }
 }
 
 /****************************************************************************/

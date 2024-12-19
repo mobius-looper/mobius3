@@ -141,7 +141,7 @@
     <Property name="alertHeight" value="30"/>
     <Property name="buttonHeight" value="25"/>
     <Property name="mainWindow" value="0,0,1166,800"/>
-    <Property name="scriptWindow" value="424,290,740,900"/>
+    <Property name="scriptWindow" value="219,251,740,900"/>
     <Property name="symbolTreeFavorites" value="Record,AutoRecord,SpeedCancel"/>
     <Property name="trackRows" value="1"/>
     <Property name="x" value="value of x"/>

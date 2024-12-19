@@ -473,6 +473,8 @@ void ScriptClerk::updateDetails(ScriptRegistry::File* regfile, MslDetails* detai
         regfile->setDetails(details);
         // the compiler will have determined the reference name to use
         regfile->name = details->name;
+        regfile->library = details->library;
+        regfile->package = details->package;
     }
 }
 

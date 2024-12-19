@@ -77,6 +77,7 @@ class MainWindow : public juce::Component, public MainMenu::Listener, public juc
 
     // pop up a script editor
     void editScript(class ScriptRegistry::File* file);
+    class ScriptWindow* openScriptWindow();
     
   private:
 

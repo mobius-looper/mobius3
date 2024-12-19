@@ -85,6 +85,18 @@ ScriptRegistry::File* ScriptRegistry::Machine::findFile(juce::String& path)
     return found;
 }
 
+ScriptRegistry::File* ScriptRegistry::Machine::findFileByName(juce::String& refname)
+{
+    File* found = nullptr;
+    for (auto file : files) {
+        if (file->name == refname) {
+            found = file;
+            break;
+        }
+    }
+    return found;
+}
+
 bool ScriptRegistry::Machine::removeFile(juce::String& path)
 {
     File* found = findFile(path);

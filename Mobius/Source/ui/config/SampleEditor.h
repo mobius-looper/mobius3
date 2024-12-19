@@ -1,8 +1,5 @@
 /**
  * ConfigEditor for editing the sample file registry.
- *
- * todo: ScriptTable and SampleTable are basically identical.
- * Refactor this to share.
  */
 
 #pragma once

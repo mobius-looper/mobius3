@@ -13,17 +13,18 @@
  * Represents one sample file in the table.
  * todo: see if this can be replaced with the new script/ScriptFile
  */
-class ScriptTableFile
+class ScriptExternalTableFile
 {
   public:
-    ScriptTableFile() {
+    ScriptExternalTableFile() {
     }
-    ScriptTableFile(juce::String argPath) {
-        path = argPath;
-    }
-    ~ScriptTableFile() {
+    ~ScriptExternalTableFile() {
     }
 
+    ScriptRegistry::File* file = nullptr;
+    juce::String filename;
+    juce::String refname;
+    juce::String folder;
     juce::String path;
     // anything else of intereset in here, maybe size, format or something
     // Sample has a bunch of operational flags
@@ -32,18 +33,20 @@ class ScriptTableFile
     bool missing = false;
 };
 
-class ScriptTable : public juce::Component, public juce::TableListBoxModel, public ButtonBar::Listener
+class ScriptExternalTable : public juce::Component, public juce::TableListBoxModel, public ButtonBar::Listener
 {
   public:
     
-    ScriptTable(class Supervisor* s, class ScriptConfigEditor* parent);
-    ~ScriptTable();
+    const int ColumnName = 1;
+    const int ColumnRefname = 2;
+    const int ColumnNamespace = 3;
+    const int ColumnStatus = 4;
+    const int ColumnFolder = 5;
+    
+    ScriptExternalTable(class Supervisor* s, class ScriptConfigEditor* parent);
+    ~ScriptExternalTable();
 
-    /**
-     * Build the table from a ScriptConfig
-     * Ownership is not taken.
-     */
-    void setPaths(juce::StringArray paths);
+    void load(class ScriptRegistry* reg);
     void updateContent();
     void clear();
     juce::StringArray getResult();
@@ -70,12 +73,10 @@ class ScriptTable : public juce::Component, public juce::TableListBoxModel, publ
     class Supervisor* supervisor = nullptr;
     class ScriptConfigEditor* parent = nullptr;
     
-    juce::OwnedArray<class ScriptTableFile> files;
+    juce::OwnedArray<class ScriptExternalTableFile> files;
     
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
-
-    int fileColumn = 0;
 
     void initTable();
     void initColumns();

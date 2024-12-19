@@ -312,6 +312,10 @@
                 file="Source/ui/config/ScriptConfigEditor.cpp"/>
           <FILE id="E0ZfGU" name="ScriptConfigEditor.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptConfigEditor.h"/>
+          <FILE id="qO3j2y" name="ScriptExternalTable.cpp" compile="1" resource="0"
+                file="Source/ui/config/ScriptExternalTable.cpp"/>
+          <FILE id="hW1X0M" name="ScriptExternalTable.h" compile="0" resource="0"
+                file="Source/ui/config/ScriptExternalTable.h"/>
           <FILE id="j1KMkU" name="ScriptFileDetails.cpp" compile="1" resource="0"
                 file="Source/ui/config/ScriptFileDetails.cpp"/>
           <FILE id="R3GD5u" name="ScriptFileDetails.h" compile="0" resource="0"
@@ -320,8 +324,10 @@
                 file="Source/ui/config/ScriptLibraryTable.cpp"/>
           <FILE id="vcccUb" name="ScriptLibraryTable.h" compile="0" resource="0"
                 file="Source/ui/config/ScriptLibraryTable.h"/>
-          <FILE id="hZGAaO" name="ScriptTable.cpp" compile="1" resource="0" file="Source/ui/config/ScriptTable.cpp"/>
-          <FILE id="iSQI1L" name="ScriptTable.h" compile="0" resource="0" file="Source/ui/config/ScriptTable.h"/>
+          <FILE id="DLDcYz" name="ScriptSymbolTable.cpp" compile="1" resource="0"
+                file="Source/ui/config/ScriptSymbolTable.cpp"/>
+          <FILE id="sJ7xu7" name="ScriptSymbolTable.h" compile="0" resource="0"
+                file="Source/ui/config/ScriptSymbolTable.h"/>
           <FILE id="pzeGck" name="SetupEditor.cpp" compile="1" resource="0" file="Source/ui/config/SetupEditor.cpp"/>
           <FILE id="dtBl3I" name="SetupEditor.h" compile="0" resource="0" file="Source/ui/config/SetupEditor.h"/>
           <FILE id="WR0iDK" name="SymbolTree.cpp" compile="1" resource="0" file="Source/ui/config/SymbolTree.cpp"/>

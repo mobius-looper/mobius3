@@ -1,8 +1,5 @@
 /**
  * ConfigEditor for editing the script file registry.
- *
- * todo: ScriptTable and SampleTable are basically identical.
- * Refactor this to share.
  */
 
 #pragma once
@@ -13,8 +10,9 @@
 #include "../common/BasicTabs.h"
 
 #include "ConfigEditor.h"
-#include "ScriptTable.h"
+#include "ScriptExternalTable.h"
 #include "ScriptLibraryTable.h"
+#include "ScriptSymbolTable.h"
 
 class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
 {
@@ -39,14 +37,15 @@ class ScriptConfigEditor : public ConfigEditor, public ScriptClerk::Listener
     void scriptFileAdded(class ScriptRegistry::File* file) override;
     void scriptFileDeleted(class ScriptRegistry::File* file) override;
 
-    // ScriptTable callback
-    void scriptTableChanged();
+    // ScriptExternalTable callback
+    void scriptExternalTableChanged();
     
   private:
 
     BasicTabs tabs;
+    ScriptSymbolTable symbols;
     ScriptLibraryTable library;
-    ScriptTable externals;
+    ScriptExternalTable externals;
 
     
 };

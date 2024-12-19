@@ -413,7 +413,7 @@ void SampleTable::doFileChooser()
                                                    startPath,
                                                    "*.wav");
 
-    // unlike ScriptTable, we won't allow selecting directories
+    // unlike ScriptExternalTable, we won't allow selecting directories
     // here but we will allow multiple files
     auto chooserFlags = juce::FileBrowserComponent::openMode
         | juce::FileBrowserComponent::canSelectFiles

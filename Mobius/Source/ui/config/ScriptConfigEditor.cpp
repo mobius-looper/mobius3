@@ -15,11 +15,12 @@
 
 #include "ScriptConfigEditor.h"
 
-ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), library(s), externals(s, this)
+ScriptConfigEditor::ScriptConfigEditor(Supervisor* s) : ConfigEditor(s), symbols(s), library(s), externals(s, this)
 {
     setName("ScriptConfigEditor");
 
-    tabs.add("Library", &library);
+    tabs.add("Symbols", &symbols);
+    tabs.add("Library Files", &library);
     tabs.add("External Files", &externals);
     
     addAndMakeVisible(&tabs);
@@ -73,17 +74,11 @@ void ScriptConfigEditor::scriptFileDeleted(class ScriptRegistry::File* file)
 void ScriptConfigEditor::load()
 {
     ScriptClerk* clerk = supervisor->getScriptClerk();
-
-    // dig out just the Files that represent Externals
-    // since we don't need anything beyond the path and the table
-    // can test for missing files it's own self, just model this
-    // with a list of paths
-    ScriptRegistry::Machine* machine = clerk->getMachine();
-    juce::StringArray paths = machine->getExternalPaths();
-    externals.setPaths(paths);
-
     ScriptRegistry* reg = clerk->getRegistry();
+
+    symbols.load(reg);
     library.load(reg);
+    externals.load(reg);
 }
 
 /**
@@ -116,16 +111,16 @@ void ScriptConfigEditor::cancel()
 }
 
 /**
- * Callback from the ScriptTable as things are added or removed.
+ * Callback from the ScriptExternalTable as things are added or removed.
  * This takes the place of the older deferred installation
  * with save/cancel.
  *
- * ScriptTable is old and path-oriented, it should be redesigned
+ * ScriptExternalTable is old and path-oriented, it should be redesigned
  * to work directly with the new ScriptRegistry::External model
  * and convey incremental changes.  But for now, I'm making it look
  * to ScriptClerk like we're still doing things in bulk.
  */
-void ScriptConfigEditor::scriptTableChanged()
+void ScriptConfigEditor::scriptExternalTableChanged()
 {
     if (isImmediate()) {
         juce::StringArray newPaths = externals.getResult();

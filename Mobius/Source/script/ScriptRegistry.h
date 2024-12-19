@@ -71,6 +71,9 @@ class ScriptRegistry
         
         // true if this is a library file
         bool library = false;
+
+        // namespace if one was declared
+        juce::String package;
         
         // where the file came from
         juce::String author;
@@ -101,7 +104,7 @@ class ScriptRegistry
         // information about the compiled compilation unit, possibly with errors
         class MslDetails* getDetails() {
             return (details != nullptr) ? details.get() : nullptr;
-        }
+         }
         void setDetails(class MslDetails* d) {
             details.reset(d);
         }
@@ -136,7 +139,8 @@ class ScriptRegistry
         // until restart.  Application is allowed to reference them at any time
         juce::OwnedArray<File> files;
 
-        File* findFile(juce::String& name);
+        File* findFile(juce::String& path);
+        File* findFileByName(juce::String& name);
         bool removeFile(juce::String& path);
         
         External* findExternal(juce::String& path);

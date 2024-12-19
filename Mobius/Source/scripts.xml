@@ -110,18 +110,20 @@
             name="trackvar" added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\exporttest.msl" name="exporttest"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces.msl" name="Namespace Testing"
-            added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="Namespace2"
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces.msl" name="test:Namespace Testing"
+            added="2147483647" library="1"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\namespaces2.msl" name="asdf:Namespace2"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\vartest1.msl" name="vartest1"
             added="2147483647"/>
-      <File path="c:\dev\mobius3\Mobius\Source\scripts\rc505.msl" name="RC505 Library"
-            added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\rc505.msl" name="rc505:RC505 Library"
+            added="2147483647" library="1"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl" name="persistence"
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\converted.msl" name="MainTap"
             added="2147483647"/>
+      <File path="C:\dev\mobius3\Mobius\Source\scripts\jefftest.msl" name="jefftest"
+            added="0"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">
@@ -133,7 +135,7 @@
     </Files>
   </Machine>
   <MslState>
-    <Unit id="C:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
+    <Unit id="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
       <Variable name="pvar" value="12" type="int"/>
     </Unit>
   </MslState>

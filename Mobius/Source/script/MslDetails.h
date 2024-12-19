@@ -46,7 +46,14 @@ class MslDetails
     juce::String id;
 
     // the name of the unit if it has a callable body
+    // this is actually returned all the time even for libraries
     juce::String name;
+
+    // true if this is a script library and doesn't have a callable body
+    bool library = false;
+
+    // package/namespace name if one was declared
+    juce::String package;
 
     // true if the unit contents have been "published" and available for use
     // a unit can be installed but not published, publishing is denied

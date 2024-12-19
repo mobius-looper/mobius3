@@ -145,6 +145,11 @@ void MainWindow::editScript(ScriptRegistry::File* file)
     windowFactory.editScript(file);
 }
 
+ScriptWindow* MainWindow::openScriptWindow()
+{
+    return windowFactory.openScriptWindow();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Menu Callbacks

@@ -108,6 +108,12 @@ void WindowFactory::editScript(ScriptRegistry::File* file)
     scriptEditor->load(file);
 }
 
+ScriptWindow* WindowFactory::openScriptWindow()
+{
+    showScriptEditor();
+    return scriptEditor;
+}
+
 void WindowFactory::showScriptEditor()
 {
     if (scriptEditor == nullptr) {

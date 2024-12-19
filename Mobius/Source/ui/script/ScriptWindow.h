@@ -27,6 +27,7 @@ class ScriptWindowContent : public juce::Component
     void resized() override;
 
     void load(class ScriptRegistry::File* file);
+    void newScript();
     
   private:
 
@@ -42,7 +43,8 @@ class ScriptWindow : public juce::DocumentWindow
 
     void closeButtonPressed();
     void load(class ScriptRegistry::File* file);
-
+    void newScript();
+    
   private:
     
     class Supervisor* supervisor = nullptr;

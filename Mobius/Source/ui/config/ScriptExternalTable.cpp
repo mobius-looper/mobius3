@@ -12,13 +12,13 @@
 #include "../JuceUtil.h"
 
 #include "ScriptConfigEditor.h"
-#include "ScriptTable.h"
+#include "ScriptExternalTable.h"
 
-ScriptTable::ScriptTable(Supervisor* s, ScriptConfigEditor* sce)
+ScriptExternalTable::ScriptExternalTable(Supervisor* s, ScriptConfigEditor* sce)
 {
     supervisor = s;
     parent = sce;
-    setName("ScriptTable");
+    setName("ScriptExternalTable");
 
     initTable();
     addAndMakeVisible(table);
@@ -31,7 +31,7 @@ ScriptTable::ScriptTable(Supervisor* s, ScriptConfigEditor* sce)
     addAndMakeVisible(commands);
 }
 
-ScriptTable::~ScriptTable()
+ScriptExternalTable::~ScriptExternalTable()
 {
 }
 
@@ -39,35 +39,55 @@ ScriptTable::~ScriptTable()
  * Populate internal state with a list of Scripts from a ScriptConfig.
  */
 
-void ScriptTable::setPaths(juce::StringArray paths)
+void ScriptExternalTable::load(ScriptRegistry* reg)
 {
     files.clear();
 
-    for (auto path : paths) {
-        ScriptTableFile* sf = new ScriptTableFile(path);
-        files.add(sf);
-        // color it red if it doesn't exist
-        // this assumes that we have an absolute path, which should be the case now
-        // don't think we need to support relative paths like we used to
-        // note that unlike SampleTable we don't support $INSTALL prefixes
-        // for script files, though that wouldn't be hard
-        juce::File file (path);
-        if (!file.existsAsFile() && !file.isDirectory())
-          sf->missing = true;
+    // formerly based this off the Machine::externals list
+    // File needs to be kept in sync with that
+    ScriptRegistry::Machine* machine = reg->getMachine();
+    for (auto file : machine->files) {
+        if (!file->deleted && file->external != nullptr) {
+    
+            ScriptExternalTableFile* efile = new ScriptExternalTableFile();
+            files.add(efile);
+            efile->file = file;
+            efile->path = file->path;
+            juce::File f (file->path);
+            efile->folder = f.getParentDirectory().getFullPathName();
+            
+            // color it red if it doesn't exist
+            // this assumes that we have an absolute path, which should be the case now
+            // don't think we need to support relative paths like we used to
+            // note that unlike SampleTable we don't support $INSTALL prefixes
+            // for script files, though that wouldn't be hard
+            // !!  the Registry::File should have this, trust it?
+            if (!f.existsAsFile() && !f.isDirectory())
+              efile->missing = true;
+
+            efile->filename = f.getFileName();
+            // library files aren't callable so don't show a reference name
+            if (!file->library)
+              efile->refname = file->name;
+            else {
+                // sometimes there can be a #name directive which is nice to show
+                efile->refname = "<" + file->name + ">";
+            }
+        }
     }
     table.updateContent();
 }
 
-void ScriptTable::updateContent()
+void ScriptExternalTable::updateContent()
 {
     table.updateContent();
 }
 
-juce::StringArray ScriptTable::getResult()
+juce::StringArray ScriptExternalTable::getResult()
 {
     juce::StringArray paths;
     for (int i = 0 ; i < files.size() ; i++) {
-        ScriptTableFile* sf = files[i];
+        ScriptExternalTableFile* sf = files[i];
         if (sf->path.length() > 0) {
             paths.add(sf->path);
         }
@@ -78,7 +98,7 @@ juce::StringArray ScriptTable::getResult()
 /**
  * Delete contained Bindings and prepare for renewal.
  */
-void ScriptTable::clear()
+void ScriptExternalTable::clear()
 {
     files.clear();
     table.updateContent();
@@ -93,7 +113,7 @@ void ScriptTable::clear()
 /**
  * Set starting table properties
  */
-void ScriptTable::initTable()
+void ScriptExternalTable::initTable()
 {
     // from the example
     table.setColour (juce::ListBox::outlineColourId, juce::Colours::grey);      // [2]
@@ -127,7 +147,7 @@ void ScriptTable::initTable()
  *
  * Pick some reasonable default widths but need to be smarter
  */
-void ScriptTable::initColumns()
+void ScriptExternalTable::initColumns()
 {
     // default includes visible, resizable, draggable, appearsOnColumnMenu, sortable
     // sortable is not relevant for most tables and causes confusion when things don't sort
@@ -138,8 +158,6 @@ void ScriptTable::initColumns()
     
     juce::TableHeaderComponent& header = table.getHeader();
 
-    fileColumn = 1;
-    
     // columnId, width, minWidth, maxWidth, propertyFlags, insertIndex
     // minWidth defaults to 30
     // maxWidth to -1
@@ -148,20 +166,22 @@ void ScriptTable::initColumns()
     // propertyFlags has various options for visibility, sorting, resizing, dragging
     // example used 1 based column ids, is that necessary?
 
-    header.addColumn(juce::String("File"), fileColumn,
-                     450, 30, -1,
-                     columnFlags);
+    header.addColumn(juce::String("File Name"), ColumnName,  150, 30, -1, columnFlags);
+    header.addColumn(juce::String("Reference Name"), ColumnRefname,  150, 30, -1, columnFlags);
+    header.addColumn(juce::String("Namespace"), ColumnNamespace,  80, 30, -1, columnFlags);
+    header.addColumn(juce::String("Status"), ColumnStatus, 80, 30, -1, columnFlags);
+    header.addColumn(juce::String("Folder"), ColumnFolder, 450, 30, -1, columnFlags);
 }
 
 const int CommandButtonGap = 10;
 
-int ScriptTable::getPreferredWidth()
+int ScriptExternalTable::getPreferredWidth()
 {
     // todo: adapt to column configuration
     return 500;
 }
 
-int ScriptTable::getPreferredHeight()
+int ScriptExternalTable::getPreferredHeight()
 {
     int height = 400;
     
@@ -178,7 +198,7 @@ int ScriptTable::getPreferredHeight()
  * Always put buttons at the bottom, and let the table
  * be as large as it wants.
  */
-void ScriptTable::resized()
+void ScriptExternalTable::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
 
@@ -200,7 +220,7 @@ void ScriptTable::resized()
 /**
  * ButtonBar::Listener
  */
-void ScriptTable::buttonClicked(juce::String name)
+void ScriptExternalTable::buttonClicked(juce::String name)
 {
     // is this the best way to compare them?
     if (name == juce::String("Add External")) {
@@ -215,7 +235,7 @@ void ScriptTable::buttonClicked(juce::String name)
 
             // notify the containing editor that a file was removed
             if (parent != nullptr)
-              parent->scriptTableChanged();
+              parent->scriptExternalTableChanged();
         }
     }
 }
@@ -226,11 +246,40 @@ void ScriptTable::buttonClicked(juce::String name)
 //
 //////////////////////////////////////////////////////////////////////
 
-juce::String ScriptTable::getCellText(int rowNumber, int columnId)
+juce::String ScriptExternalTable::getCellText(int rowNumber, int columnId)
 {
-    (void)columnId;
-    // only one column
-    juce::String cell = files[rowNumber]->path;
+    juce::String cell;
+    
+    ScriptExternalTableFile* efile = files[rowNumber];
+    ScriptRegistry::File* file = efile->file;
+    
+    if (columnId == ColumnName) {
+        cell = efile->filename;
+    }
+    else if (columnId == ColumnRefname) {
+        cell = efile->refname;
+    }
+    else if (columnId == ColumnNamespace) {
+        if (file != nullptr)
+          cell = file->package;
+    }
+    else if (columnId == ColumnStatus) {
+        if (file != nullptr) {
+            MslDetails* fdetails = file->getDetails();
+        
+            if (file->disabled)
+              cell += "disabled ";
+            else if (!file->old && (fdetails == nullptr || !fdetails->published))
+              cell += "unloaded ";
+          
+            if (file->hasErrors())
+              cell = "errors ";
+        }
+    }
+    else if (columnId == ColumnFolder) {
+        cell = efile->folder;
+    }
+    
     return cell;
 }
 
@@ -238,7 +287,7 @@ juce::String ScriptTable::getCellText(int rowNumber, int columnId)
  * The maximum of all column rows.
  * This is independent of the table size.
  */
-int ScriptTable::getNumRows()
+int ScriptExternalTable::getNumRows()
 {
     return files.size();
 }
@@ -253,7 +302,7 @@ int ScriptTable::getNumRows()
  * fancier than just filling the entire thing.  Could be useful
  * for borders, though Juce might provide something for selected rows/cells already.
  */
-void ScriptTable::paintRowBackground(juce::Graphics& g, int rowNumber,
+void ScriptExternalTable::paintRowBackground(juce::Graphics& g, int rowNumber,
                                       int /*width*/, int /*height*/,
                                       bool rowIsSelected)
 {
@@ -279,11 +328,11 @@ void ScriptTable::paintRowBackground(juce::Graphics& g, int rowNumber,
  * default to 22 but ideally this should be proportional to the row height if it can be changed.
  * 14 is 63% of 22
  */
-void ScriptTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
+void ScriptExternalTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
                              int width, int height, bool rowIsSelected)
 {
     (void)columnId;
-    ScriptTableFile* file = files[rowNumber];
+    ScriptExternalTableFile* file = files[rowNumber];
 
     // what the tutorial did
     g.setColour (rowIsSelected ? juce::Colours::darkblue : getLookAndFeel().findColour (juce::ListBox::textColourId));
@@ -301,7 +350,10 @@ void ScriptTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
     // same on the right with the width reduction
     // height was expected to be tall enough
     // centeredLeft means "centered vertically but placed on the left hand side"
-    g.drawText (file->path, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
+
+    juce::String cell = getCellText(rowNumber, columnId);
+    
+    g.drawText (cell, 2, 0, width - 4, height, juce::Justification::centredLeft, true);
 
     // this is odd, it fills a little rectangle on the right edge 1 pixel wide with
     // the background color, I'm guessing if the text is long enough, perhaps with elippses,
@@ -318,7 +370,7 @@ void ScriptTable::paintCell(juce::Graphics& g, int rowNumber, int columnId,
  * Can use ListBox::isRowSelected to get the selected row
  * Don't know if there is tracking of a selected column but we don't need that yet.
  */
-void ScriptTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void ScriptExternalTable::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;
@@ -328,13 +380,13 @@ void ScriptTable::cellClicked(int rowNumber, int columnId, const juce::MouseEven
 /**
  * Like ScriptLibraryTable allow double click to bring up the editor.
  */
-void ScriptTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
+void ScriptExternalTable::cellDoubleClicked(int rowNumber, int columnId, const juce::MouseEvent& event)
 {
     (void)rowNumber;
     (void)columnId;
     (void)event;
     
-    ScriptTableFile* tfile = files[rowNumber];
+    ScriptExternalTableFile* tfile = files[rowNumber];
     ScriptClerk* clerk = supervisor->getScriptClerk();
     ScriptRegistry::File* file = clerk->findFile(tfile->path);
     if (file != nullptr)
@@ -372,7 +424,7 @@ void ScriptTable::cellDoubleClicked(int rowNumber, int columnId, const juce::Mou
  * body is within braces as usual.
  *
  * With [this] you can reference object members as if you were in it, which
- * you are, but how you got there is magic.  Here we'll call ScriptTable's
+ * you are, but how you got there is magic.  Here we'll call ScriptExternalTable's
  * fileChooserResult function.
  *
  * Observations: The window is huge, see if we can control that.
@@ -392,7 +444,7 @@ void ScriptTable::cellDoubleClicked(int rowNumber, int columnId, const juce::Mou
  * Explore that someday since we'll want to support AU and probably v3.
  * 
  */
-void ScriptTable::doFileChooser()
+void ScriptExternalTable::doFileChooser()
 {
     juce::File startPath(supervisor->getRoot());
     if (lastFolder.length() > 0)
@@ -427,7 +479,8 @@ void ScriptTable::doFileChooser()
                 juce::String path = file.getFullPathName();
                 //Trace(2, "  %s\n", path.toUTF8());
 
-                ScriptTableFile* sf = new ScriptTableFile(path);
+                ScriptExternalTableFile* sf = new ScriptExternalTableFile();
+                sf->path = path;
                 files.add(sf);
 
                 // remember this directory for the next time
@@ -439,7 +492,7 @@ void ScriptTable::doFileChooser()
             table.selectRow(files.size() - 1);
 
             if (parent != nullptr)
-              parent->scriptTableChanged();
+              parent->scriptExternalTableChanged();
         }
         
     });

@@ -1,5 +1,12 @@
 /**
- * A table showing the files loaded into the script library.
+ * A table showing the exported symbols (functions and variables)
+ * accessible from the library and external files.
+ *
+ * This is basically the "Linkages" table which is the most useful for seeing
+ * what the scripts are providing.  The ScriptLibraryTable shows the files in the
+ * library which are often callable symbols but each file can have multiple
+ * symbols and library files won't have any for the file itself.
+ * 
  */
 
 #pragma once
@@ -10,46 +17,35 @@
 #include "../../script/ScriptRegistry.h"
 #include "../../script/MslDetails.h"
 
-#include "ScriptFileDetails.h"
-
 /**
  * Represents one file in the library.
  */
-class ScriptLibraryTableFile
+class ScriptSymbolTableRow
 {
   public:
-    ScriptLibraryTableFile() {
+    ScriptSymbolTableRow() {
     }
-    ScriptLibraryTableFile(ScriptRegistry::File* argFile) {
-        file = argFile;
-    }
-    ~ScriptLibraryTableFile() {
+    ~ScriptSymbolTableRow() {
     }
 
-    ScriptRegistry::File* file = nullptr;
-    juce::String filename;
-    juce::String refname;
-    
-    bool hasErrors() {
-        return file->hasErrors();
-    }
+    class Symbol* symbol = nullptr;
+    juce::String location;
     
 };
 
-class ScriptLibraryTable : public juce::Component,
-                           public juce::TableListBoxModel,
-                           public ButtonBar::Listener
+class ScriptSymbolTable : public juce::Component,
+                          public juce::TableListBoxModel,
+                          public ButtonBar::Listener
 {
   public:
 
     const int ColumnName = 1;
-    const int ColumnRefname = 2;
-    const int ColumnNamespace = 3;
-    const int ColumnStatus = 4;
-    const int ColumnFolder = 5;
+    const int ColumnType = 2;
+    const int ColumnLanguage = 3;
+    const int ColumnLocation = 4;
     
-    ScriptLibraryTable(class Supervisor* s);
-    ~ScriptLibraryTable();
+    ScriptSymbolTable(class Supervisor* s);
+    ~ScriptSymbolTable();
 
     /**
      * Build the table from a ScriptConfig
@@ -81,13 +77,10 @@ class ScriptLibraryTable : public juce::Component,
   private:
     class Supervisor* supervisor = nullptr;
 
-    juce::OwnedArray<class ScriptLibraryTableFile> files;
+    juce::OwnedArray<class ScriptSymbolTableRow> symbols;
     
     ButtonBar commands;
     juce::TableListBox table { {} /* component name */, this /* TableListBoxModel */};
-
-    ScriptFileDetails details;
-    
 
     void initTable();
     void initColumns();

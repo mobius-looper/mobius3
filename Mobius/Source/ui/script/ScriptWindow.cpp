@@ -96,6 +96,11 @@ void ScriptWindow::load(ScriptRegistry::File* file)
     content.load(file);
 }
 
+void ScriptWindow::newScript()
+{
+    content.newScript();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Content
@@ -114,6 +119,11 @@ ScriptWindowContent::~ScriptWindowContent()
 void ScriptWindowContent::load(ScriptRegistry::File* file)
 {
     editor.load(file);
+}
+
+void ScriptWindowContent::newScript()
+{
+    editor.newFile();
 }
 
 void ScriptWindowContent::resized()
