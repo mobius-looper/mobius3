@@ -44,6 +44,7 @@ class MslLinkage
     // todo: need more interesting stats, like internal function calls
     // varialbe updates, etc.
     int runCount = 0;
+    int errorCount = 0;
 
     // used when installing a previous link
     void reset() {
@@ -55,7 +56,10 @@ class MslLinkage
         isFunction = false;
         isSustainable = false;
         isContinuous = false;
-        runCount = 0;
+
+        // I think these should persist across script reloads?
+        //runCount = 0;
+        //errorCount = 0;
     }
     
 };

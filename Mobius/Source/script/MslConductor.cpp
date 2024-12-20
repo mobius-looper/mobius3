@@ -604,6 +604,14 @@ MslResult* MslConductor::finalize(MslContext* c, MslSession* s)
           Trace(1, "MslConductor: Session without a Process was on the list");
     }
 
+    // keep track or error stats for the monitor
+    // todo: session doesn't always have a Linkage, might be better on the unit?
+    if (result->errors != nullptr) {
+        MslLinkage* link = s->getLinkage();
+        if (link != nullptr)
+          link->errorCount++;
+    }
+    
     // you can go now, thank you for your service
     environment->getPool()->free(s);
 

@@ -12,6 +12,7 @@
 
 #include "ScriptResultTable.h"
 #include "ScriptProcessTable.h"
+#include "ScriptStatisticsTable.h"
 
 class ScriptMonitor : public juce::Component,
                       public juce::Button::Listener,
@@ -41,6 +42,7 @@ class ScriptMonitor : public juce::Component,
     BasicTabs tabs;
     ScriptResultTable results;
     ScriptProcessTable processes;
+    ScriptStatisticsTable statistics;
 
     void timerCallback();
 };

@@ -234,6 +234,10 @@
                 file="Source/ui/script/ScriptResultTable.cpp"/>
           <FILE id="rNPUWN" name="ScriptResultTable.h" compile="0" resource="0"
                 file="Source/ui/script/ScriptResultTable.h"/>
+          <FILE id="TfqMp0" name="ScriptStatisticsTable.cpp" compile="1" resource="0"
+                file="Source/ui/script/ScriptStatisticsTable.cpp"/>
+          <FILE id="Y6csbJ" name="ScriptStatisticsTable.h" compile="0" resource="0"
+                file="Source/ui/script/ScriptStatisticsTable.h"/>
           <FILE id="IKINDe" name="ScriptWindow.cpp" compile="1" resource="0"
                 file="Source/ui/script/ScriptWindow.cpp"/>
           <FILE id="GJAwEH" name="ScriptWindow.h" compile="0" resource="0" file="Source/ui/script/ScriptWindow.h"/>

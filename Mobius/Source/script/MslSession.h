@@ -166,7 +166,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     MslSuspendState* getSustainState();
     MslSuspendState* getRepeatState();
     bool hasErrors();
-
+    MslLinkage* getLinkage() {return linkage;}
+    
     // resume evaluation after transitioning or to check wait states
     void resume(class MslContext* context);
 
@@ -236,6 +237,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     class MslEnvironment* environment = nullptr;
     class MslPools* pool = nullptr;
     class MslContext* context = nullptr;
+    class MslLinkage* linkage = nullptr;
     class MslCompilation* unit = nullptr;
     
     // result the envionment allocated for us if we needed to go async

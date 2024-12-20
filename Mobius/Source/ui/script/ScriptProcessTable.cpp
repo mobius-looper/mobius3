@@ -30,7 +30,7 @@ ScriptProcessTable::ScriptProcessTable(Supervisor* s)
 
     initialize();
 
-    addColumn("Name", ColumnName, 100);
+    addColumn("Name", ColumnName, 200);
     addColumn("Status", ColumnStatus, 100);
     addColumn("Session", ColumnSession, 100);
     

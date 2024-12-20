@@ -9,7 +9,8 @@
 #include "MonitorPanel.h"
 #include "ScriptMonitor.h"
 
-ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent) : processes(s), results(s)
+ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent) :
+    processes(s), results(s), statistics(s)
 {
     supervisor = s;
     panel = parent;
@@ -17,6 +18,7 @@ ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent) : processes(s)
 
     tabs.add("Processes", &processes);
     tabs.add("Results", &results);
+    tabs.add("Statistics", &statistics);
     
     addAndMakeVisible(&tabs);
 }
@@ -28,6 +30,9 @@ ScriptMonitor::~ScriptMonitor()
 void ScriptMonitor::showing()
 {
     startTimer(100);
+    processes.load();
+    results.load();
+    statistics.load();
 }
 
 void ScriptMonitor::hiding()
@@ -53,6 +58,7 @@ void ScriptMonitor::buttonClicked(juce::Button* b)
 
 /**
  * Called during Supervisor's advance() in the maintenance thread.
+ * Also using theh juce::Timer so don't need both
  */
 void ScriptMonitor::update()
 {

@@ -232,6 +232,7 @@ int MslSession::getTriggerId()
 void MslSession::reset()
 {
     context = nullptr;
+    linkage = nullptr;
     unit = nullptr;
     process = nullptr;
     triggerId = 0;
@@ -267,6 +268,9 @@ void MslSession::reset()
  * Run an arbitrary node within a unit.
  * This is intended for static initialization but may have other uses.
  * The session is expected to be clean.
+ *
+ * todo: Since we don't have the MslLinkage here, can't keep failure statistics on it,
+ * might be better to have those on the unit?
  */
 void MslSession::run(MslContext* argContext, MslCompilation* argUnit, MslBinding* arguments,
                      MslNode* node)
@@ -292,6 +296,7 @@ void MslSession::start(MslContext* argContext, MslLinkage* argLink, MslRequest* 
     reset();
 
     context = argContext;
+    linkage = argLink;
     unit = argLink->unit;
     defaultScope = request->scope;
     if (defaultScope == 0)

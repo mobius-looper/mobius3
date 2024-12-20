@@ -25,7 +25,7 @@ ScriptResultTable::ScriptResultTable(Supervisor* s)
 
     initialize();
 
-    addColumn("Name", ColumnName, 100);
+    addColumn("Name", ColumnName, 200);
     addColumn("Session", ColumnSession, 100);
     addColumn("Value", ColumnValue, 100);
     addColumn("Error", ColumnError, 100);
