@@ -326,7 +326,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void bindArguments(MslSymbolNode* snode);
     void returnQuery(MslSymbolNode* snode);
     void callExternal(MslSymbolNode* snode);
-
+    void callInternal(MslSymbolNode* snode);
+    
     // assignment
     // also in MslSymbol.cpp
     class MslSymbolNode* getAssignmentSymbol(MslAssignmentNode* ass);

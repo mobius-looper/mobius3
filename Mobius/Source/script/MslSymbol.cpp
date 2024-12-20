@@ -17,6 +17,7 @@
 #include "MslStack.h"
 #include "MslExternal.h"
 #include "MslVariable.h"
+#include "MslStandardLibrary.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -304,7 +305,10 @@ void MslSession::pushArguments(MslSymbolNode* snode)
  */
 void MslSession::pushCall(MslSymbolNode* snode)
 {
-    if (snode->resolution.external != nullptr) {
+    if (snode->resolution.internal != MslFuncNone) {
+        callInternal(snode);
+    }
+    else if (snode->resolution.external != nullptr) {
         callExternal(snode);
     }
     else {
@@ -560,6 +564,24 @@ void MslSession::callExternal(MslSymbolNode* snode)
             // what a long strange trip it's been
             popStack(v);
         }
+    }
+}
+
+/**
+ * Call an internal library function.
+ */
+void MslSession::callInternal(MslSymbolNode* snode)
+{
+    MslLibraryId id = snode->resolution.internal;
+    
+    // error checks that should have been done by now
+    if (id == MslFuncNone) {
+        addError(snode, "Attempting to call internal that isn't an internal");
+    }
+    else {
+        // don't need to mess with MslAction for these
+        MslValue* result = MslStandardLibrary::call(environment, id, stack->childResults);
+        popStack(result);
     }
 }
 

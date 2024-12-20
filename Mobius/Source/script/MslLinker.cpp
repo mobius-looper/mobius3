@@ -337,6 +337,8 @@ void MslLinker::resolve(MslSymbolNode* sym)
             if (!sym->isResolved()) {
                 // experimental usage declaration
                 resolveExternalUsage(sym);
+                if (!sym->isResolved())
+                  resolveStandard(sym);
             }
         }
     }
@@ -357,6 +359,14 @@ void MslLinker::resolveLocal(MslSymbolNode* sym)
 {
     // start looking up the stack for a function or variable definition
     resolveLocal(sym, sym->parent);
+}
+
+void MslLinker::resolveStandard(MslSymbolNode* sym)
+{
+    MslLibraryDefinition* def = MslStandardLibrary::find(sym->token.value);
+    if (def != nullptr) {
+        sym->resolution.internal = def->id;
+    }
 }
 
 /**

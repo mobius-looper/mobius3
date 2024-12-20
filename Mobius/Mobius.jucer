@@ -860,6 +860,10 @@
         <FILE id="YAN8PG" name="MslSession.cpp" compile="1" resource="0" file="Source/script/MslSession.cpp"/>
         <FILE id="VRVGi3" name="MslSession.h" compile="0" resource="0" file="Source/script/MslSession.h"/>
         <FILE id="gJ3Lt9" name="MslStack.cpp" compile="1" resource="0" file="Source/script/MslStack.cpp"/>
+        <FILE id="qXRxdX" name="MslStandardLibrary.cpp" compile="1" resource="0"
+              file="Source/script/MslStandardLibrary.cpp"/>
+        <FILE id="DvS5PU" name="MslStandardLibrary.h" compile="0" resource="0"
+              file="Source/script/MslStandardLibrary.h"/>
         <FILE id="snZFMI" name="MslSymbol.cpp" compile="1" resource="0" file="Source/script/MslSymbol.cpp"/>
         <FILE id="QjoJyt" name="MslSymbol.h" compile="0" resource="0" file="Source/script/MslSymbol.h"/>
         <FILE id="gv4inU" name="MslTokenizer.cpp" compile="1" resource="0"

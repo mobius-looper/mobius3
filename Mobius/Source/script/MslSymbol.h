@@ -18,6 +18,7 @@
 #include "MslLinkage.h"
 #include "MslExternal.h"
 #include "MslFunction.h"
+#include "MslStandardLibrary.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -72,6 +73,9 @@ class MslResolution
     // an external function or variable defined by the containing application
     class MslExternal* external = nullptr;
 
+    // a standard library function id
+    MslLibraryId internal = MslFuncNone;
+
     // an external keyword defined by the containing application
     bool keyword = false;
 
@@ -93,6 +97,7 @@ class MslResolution
         rootFunction = nullptr;
         linkage = nullptr;
         external = nullptr;
+        internal = MslFuncNone;
         keyword = false;
         usageArgument = false;
         carryover = false;
@@ -107,6 +112,7 @@ class MslResolution
                 rootFunction != nullptr ||
                 linkage != nullptr ||
                 external != nullptr ||
+                internal != MslFuncNone ||
                 keyword || usageArgument || carryover);
     }
 
@@ -114,6 +120,7 @@ class MslResolution
     bool isFunction() {
         return (innerFunction != nullptr ||
                 rootFunction != nullptr ||
+                internal != MslFuncNone ||
                 (linkage != nullptr && linkage->function != nullptr) ||
                 (external != nullptr && external->isFunction));
     }
