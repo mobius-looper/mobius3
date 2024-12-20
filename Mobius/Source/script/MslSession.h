@@ -224,6 +224,10 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void setProcess(MslProcess* p);
     int getSessionId();
     int getTriggerId();
+
+    // StandardLibrary support
+    MslContext* getContext() {return context;}
+    MslEnvironment* getEnvironment() {return environment;}
     
   protected:
 

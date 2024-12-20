@@ -8,8 +8,12 @@
 typedef enum {
 
     MslFuncNone,
+    MslFuncEndSustain,
+    MslFuncEndRepeat,
     MslFuncRand,
-    MslFuncTime
+    MslFuncTime,
+    MslFuncSampleRate,
+    MslFuncTempo
     
 } MslLibraryId;
 
@@ -31,13 +35,16 @@ class MslStandardLibrary
      */
     static MslLibraryDefinition* find(juce::String name);
     
-    static class MslValue* call(class MslEnvironment* env, MslLibraryId id, class MslValue* arguments);
-
+    static class MslValue* call(class MslSession* s, MslLibraryId id, class MslValue* arguments);
 
   private:
 
-    static class MslValue* Rand(class MslEnvironment* env, class MslValue* arguments);
-    static class MslValue* Time(class MslEnvironment* env, class MslValue* arguments);
+    static class MslValue* EndSustain(class MslSession* s, class MslValue* arguments);
+    static class MslValue* EndRepeat(class MslSession* s, class MslValue* arguments);
+    static class MslValue* Rand(class MslSession* s, class MslValue* arguments);
+    static class MslValue* Time(class MslSession* s, class MslValue* arguments);
+    static class MslValue* SampleRate(class MslSession* s, class MslValue* arguments);
+    static class MslValue* Tempo(class MslSession* s, class MslValue* arguments);
     static bool RandSeeded;
     
 };

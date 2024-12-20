@@ -2414,6 +2414,11 @@ int Supervisor::mslGetFocusedScope()
     return getFocusedTrackIndex() + 1;
 }
 
+int Supervisor::mslGetSampleRate()
+{
+    return getSampleRate();
+}
+
 /**
  * Resolve a symbolic reference in an MSL script to something
  * in the outside world.  For Mobius there are two possibilities

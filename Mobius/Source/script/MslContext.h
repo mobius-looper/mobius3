@@ -219,6 +219,8 @@ class MslContext
 
     virtual int mslGetFocusedScope() = 0;
 
+    virtual int mslGetSampleRate() = 0;
+
 };
 
 /****************************************************************************/

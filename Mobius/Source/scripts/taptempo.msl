@@ -1,0 +1,12 @@
+#name TapTempo
+#repeat 5000
+
+static variable start
+
+start = Time
+
+function OnRepeat {
+  print("Tempo " Tempo(start Time))
+  EndRepeat
+}
+

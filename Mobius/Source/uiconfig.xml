@@ -134,6 +134,7 @@
     <Button action="PrevTrack"/>
     <Button action="MainTap"/>
     <Button action="Play"/>
+    <Button action="TapTempo"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

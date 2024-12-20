@@ -67,7 +67,9 @@ class MslResult
     MslResult* next = nullptr;
 
     // becomes true once the result has been installed on the environment's global result list
-    bool interned = false;
+    // internment is no longer a concept, they aren't put on the result list without
+    // the session being finished
+    //bool interned = false;
 
   private:
 

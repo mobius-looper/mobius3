@@ -180,20 +180,34 @@ bool MslVariableNode::wantsToken(MslParser* p, MslToken& t)
                 name =  t.value;
                 wants = true;
             }
+            else {
+                p->errorSyntax(t, "Missing variable name");
+            }
         }
         else if (t.type == MslToken::Type::Operator &&
                  t.value == "=") {
             // skip past this once we have a name
             wants = true;
-        }
-        else {
-            // now that we can stick errors in MslParser, is this
-            // where that should go?
+            wantsInitializer = true;
         }
     }
     return wants;
 }
 
+bool MslVariableNode::wantsNode(class MslParser* p, MslNode* node)
+{
+    bool wants = false;
+    if (wantsInitializer) {
+        if (node->operandable()) {
+            wants = true;
+            wantsInitializer = false;
+        }
+        else
+          p->errorSyntax(node, "Missing variable initializer");
+    }
+    return wants;
+}
+ 
 /**
  * todo: just wanting a property value isn't enough, properties will have
  * constraints on their values so the MslPropertyNode probably needs a type

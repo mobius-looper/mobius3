@@ -589,19 +589,10 @@ class MslVariableNode : public MslScopedNode
     MslPropertyNode* wantsProperty(class MslParser* p, MslToken& t) override;
 
     // vars accept an expression
-    bool wantsNode(class MslParser* p, MslNode* node) override {
-        (void)p;
-        // okay this is the same as Operator and Assignment
-        // except we only accept one child
-        // need an isExpression() that encapsulates this
-        // !! no, this needs to requre an = token to specify the initial value
-        bool wants = false;
-        if (children.size() < 1 && node->operandable())
-          wants = true;
-        return wants;
-    }
+    bool wantsNode(class MslParser* p, MslNode* node) override;
 
     juce::String name;
+    bool wantsInitializer = false;
     class MslVariable* staticVariable = nullptr;
     juce::OwnedArray<MslPropertyNode> properties;
     

@@ -28,10 +28,11 @@ void MslResult::init()
 {
     next = nullptr;
     sessionId = 0;
+    state = MslStateNone;
     value = nullptr;
     errors = nullptr;
     results = nullptr;
-    interned = false;
+    //interned = false;
     strcpy(name, "");
 }
 

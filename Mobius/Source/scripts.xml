@@ -126,6 +126,8 @@
             added="2147483647"/>
       <File path="C:\dev\mobius3\Mobius\Source\scripts\jefftest.msl" name="jefftest"
             added="0"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\taptempo.msl" name="TapTempo"
+            added="2147483647"/>
     </Files>
   </Machine>
   <Machine name="frigg.lan">

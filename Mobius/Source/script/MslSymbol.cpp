@@ -580,7 +580,7 @@ void MslSession::callInternal(MslSymbolNode* snode)
     }
     else {
         // don't need to mess with MslAction for these
-        MslValue* result = MslStandardLibrary::call(environment, id, stack->childResults);
+        MslValue* result = MslStandardLibrary::call(this, id, stack->childResults);
         popStack(result);
     }
 }
