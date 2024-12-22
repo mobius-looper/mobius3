@@ -393,7 +393,13 @@ typedef enum {
     FuncSaveMidi,
     FuncLoadSession,
     FuncSaveSession,
-    
+
+    //
+    // Metronome
+    //
+
+    FuncMetronomeStart,
+    FuncMetronomeStop,
 
     SymbolIdMax
 

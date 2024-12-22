@@ -438,6 +438,13 @@ SymbolDefinition SymbolDefinitions[] = {
     {"SaveMidi", FuncSaveMidi},
     {"LoadSession", FuncLoadSession},
     {"SaveSession", FuncSaveSession},
+
+    //
+    // Metronome
+    //
+
+    {"MetronomeStart", FuncMetronomeStart},
+    {"MetronomeStop", FuncMetronomeStop},
     
     //
     // Terminator

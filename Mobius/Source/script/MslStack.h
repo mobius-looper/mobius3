@@ -51,7 +51,7 @@ class MslStack
     // state for MslCaseNode
     class MslValue* caseValue = nullptr;
     int caseClause = 0;
-    
+
     // binding list for this block
     class MslBinding* bindings = nullptr;
     void addBinding(class MslBinding* b);

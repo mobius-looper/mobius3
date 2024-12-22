@@ -392,7 +392,6 @@ MslStack* MslPools::allocStack()
             free(s->caseValue);
             s->caseValue = nullptr;
         }
-
         s->init();
     }
     else {

@@ -1521,17 +1521,6 @@ bool MobiusKernel::mslQuery(MslQuery* query)
 }
 
 /**
- * Forms must be presented in shell context, transitioning if necessary
- * so this kernel method will never be called.
- */
-bool MobiusKernel::mslForm(MslForm* form)
-{
-    (void)form;
-    Trace(1, "MobiusKernel::mslForm Shouldn't be here");
-    return false;
-}
-
-/**
  * Now we're at the heart of the matter.
  * A script running under runExternalScripts reached a point where it
  * wants to perform an action.  If this action is destined for the core, bypass

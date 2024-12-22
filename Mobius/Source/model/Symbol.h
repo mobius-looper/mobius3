@@ -74,9 +74,19 @@ typedef enum {
 
     // applies to the innermost core of the Mobius implementation
     // consisting of legacy code
+    // todo: This should really be named LevelTrack
     LevelCore
 
 } SymbolLevel;
+
+typedef enum {
+
+    TrackTypeNone,
+    TrackTypeAudio,
+    TrackTypeMidi,
+    TrackTypeMetronome
+
+} SymbolTrackType;
 
 /**
  * Symbols have a few number of possible behavioral types.
@@ -190,6 +200,11 @@ class Symbol
      * it can be handled.
      */
     SymbolLevel level = LevelNone;
+
+    /**
+     * When level is LevelTrack, this can specify track type restrictions.
+     */
+    juce::Array<SymbolTrackType> trackTypes;
     
     /**
      * Most built-in symbols will also have a unique numeric identifier.

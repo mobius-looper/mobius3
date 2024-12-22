@@ -800,21 +800,6 @@ void MobiusConsole::traceNode(MslNode* node, int indent)
             MslPropertyNode* prop = node->getProperty();
             line += "Property: " + prop->token.value;
         }
-        else if (node->isForm()) {
-            MslFormNode* form = node->getForm();
-            line += "Form: " + form->name;
-        }
-        else if (node->isField()) {
-            MslFieldNode* field = node->getField();
-            line += "Field: " + field->name;
-            // todo: any node should be able to have properties?
-            if (field->properties.size() > 0) {
-                console.add(line);
-                for (auto prop : field->properties)
-                  traceNode(prop, indent + 4);
-                line = "";
-            }
-        }
         else if (node->isFunction()) {
             MslFunctionNode* func = node->getFunction();
             line += "Function: " + func->name;

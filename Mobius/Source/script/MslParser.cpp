@@ -790,12 +790,6 @@ MslNode* MslParser::checkKeywords(MslToken& t)
     else if (t.value == "context")
       keyword = new MslContextNode(t);
     
-    else if (t.value == "form")
-      keyword = new MslFormNode(t);
-    
-    else if (t.value == "field")
-      keyword = new MslFieldNode(t);
-    
     else if (t.value == "AddResult")
       keyword = new MslResultNode(t);
     

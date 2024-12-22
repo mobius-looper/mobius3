@@ -58,5 +58,9 @@ class MslForm
 
     // close button names
     // There will usually be a single "Ok" button
+
+    // true once this form is sent to the context, and indiciates that the
+    // session is in a state of waiting
+    bool active = false;
 };
 

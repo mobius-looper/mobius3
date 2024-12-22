@@ -11,7 +11,6 @@
 
 #include "MslConstants.h"
 #include "MslValue.h"
-#include "MslForm.h"
 
 /**
  * Access to things in the context may encounter errors that are of interest
@@ -173,10 +172,6 @@ class MslContext
 
     // perform an action
     virtual bool mslAction(MslAction* action) = 0;
-
-    // present a form
-    // when finished the context is expected to call back to MslEnvironment::finishForm
-    virtual bool mslForm(MslForm* form) = 0;
 
     // initialize a wait state
     // for errors, an error buffer is supplied as an argument rather

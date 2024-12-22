@@ -2574,16 +2574,6 @@ void Supervisor::mutateMslReturn(Symbol* s, int value, MslValue* retval)
 }
 
 /**
- * Present a form from an MSL script.
- */
-bool Supervisor::mslForm(MslForm* form)
-{
-    (void)form;
-    Trace(1, "Supervisor::mslForm not implemented");
-    return false;
-}
-
-/**
  * Convert the MslAction to a UIAction and send it down
  * Normally kernel level actions will have been thread transitioned
  * to the kernel context so we won't have to deal with them here,

@@ -131,7 +131,8 @@ bool MslSession::isTransitioning()
  */
 bool MslSession::isWaiting()
 {
-    bool waiting = (stack != nullptr && stack->wait.active);
+    bool waiting = (stack != nullptr &&
+                    stack->wait.active);
     
     if (waiting && transitioning)
       Trace(1, "MslSession: I'm both transitioning and waiting, can this happen?");
@@ -1379,21 +1380,27 @@ void MslSession::mslVisit(MslPropertyNode* prop)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Form/Field
+// Properties
 //
 //////////////////////////////////////////////////////////////////////
 
-void MslSession::mslVisit(MslFieldNode* fnode)
+#if 0
+MslStack* MslSession::pushNextProperty(MslFieldNode* fnode)
 {
-    logVisit(fnode);
-    addError(fnode, "Unhandled Field node");
-}
+    MslStack* neu = nullptr;
 
-void MslSession::mslVisit(MslFormNode* fnode)
-{
-    logVisit(fnode);
-    addError(fnode, "Unhandled Form node");
+    // todo: some nodes will want more control over this list
+    juce::OwnedArray<MslPropertyNode>* properties = &(fnode->properties);
+
+    // this starts at -1 
+    stack->childIndex++;
+    if (stack->childIndex < properties->size()) {
+        MslPropertyNode* nextNode = (*properties)[stack->childIndex];
+        neu = pushStack(nextNode);
+    }
+    return neu;
 }
+#endif
 
 void MslSession::mslVisit(MslResultNode* resnode)
 {

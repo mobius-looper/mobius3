@@ -208,10 +208,8 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void mslVisit(class MslInitNode* obj) override;
     void mslVisit(class MslTraceNode* obj) override;
     void mslVisit(class MslPropertyNode* obj) override;
-    void mslVisit(class MslFieldNode* obj) override;
-    void mslVisit(class MslFormNode* obj) override;
     void mslVisit(class MslResultNode* obj) override;
-
+    
     // ugh, need to expose this for the console to iterate
     // over finished session results.  it would be better if we just
     // captured the results in a new object rather than having
@@ -310,6 +308,7 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void advanceStack();
     MslStack* pushStack(MslNode* node);
     MslStack* pushNextChild();
+    //MslStack* pushNextProperty(class MslFieldNode* fnode);
     void popStack(MslValue* v);
     void popStack();
 
@@ -369,7 +368,6 @@ class MslSession : public MslVisitor, public MslSessionInterface
     void logPop(class MslValue* v);
     void logNode(const char* title, class MslNode* node);
     const char* getLogName(class MslNode* node);
-
 };
 
     

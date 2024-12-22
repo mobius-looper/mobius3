@@ -51,15 +51,12 @@ class MslVisitor
     virtual void mslVisit(class MslKeywordNode* obj) = 0;
     virtual void mslVisit(class MslTraceNode* obj) = 0;
     virtual void mslVisit(class MslPropertyNode* obj) = 0;
-    virtual void mslVisit(class MslFieldNode* obj) = 0;
-    virtual void mslVisit(class MslFormNode* obj) = 0;
     virtual void mslVisit(class MslCaseNode* obj) = 0;
     virtual void mslVisit(class MslResultNode* obj) = 0;
     // this one doesn't need a visitor
     virtual void mslVisit(class MslInitNode* obj) {
         (void)obj;
     }
-    //virtual void mslVisit(class MslFormNode* obj) = 0;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -187,8 +184,6 @@ class MslNode
     virtual class MslInitNode* getInit() {return nullptr;}
     virtual class MslTraceNode* getTrace() {return nullptr;}
     virtual class MslPropertyNode* getProperty() {return nullptr;}
-    virtual class MslFieldNode* getField() {return nullptr;}
-    virtual class MslFormNode* getForm() {return nullptr;}
     virtual class MslResultNode* getResult() {return nullptr;}
     
     bool isLiteral() {return getLiteral() != nullptr;}
@@ -214,8 +209,6 @@ class MslNode
     bool isInit() {return getInit() != nullptr;}
     bool isTrace() {return getTrace() != nullptr;}
     bool isProperty() {return getProperty() != nullptr;}
-    bool isField() {return getField() != nullptr;}
-    bool isForm() {return getForm() != nullptr;}
     bool isResult() {return getResult() != nullptr;}
     
     virtual void link(class MslContext* context, class MslEnvironment* env, class MslResolutionContext* rc, class MslCompilation* comp) {
@@ -954,102 +947,6 @@ class MslWaitNode : public MslNode
     bool isWaitingForNumber();
 
 };
-
-//////////////////////////////////////////////////////////////////////
-//
-// Form
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * todo: this needs to be an MslScopedNode if it needs to support "private"
- * but could also handle that with a property which might be better in general.
- * would need unary properties though
- */
-class MslFieldNode : public MslNode
-{
-  public:
-    MslFieldNode(MslToken& t) : MslNode(t) {}
-    virtual ~MslFieldNode() {}
-
-    bool wantsToken(class MslParser* p, MslToken& t) override;
-    MslPropertyNode* wantsProperty(class MslParser* p, MslToken& t) override;
-
-    bool wantsNode(class MslParser* p, MslNode* node) override {
-        (void)p;
-        // okay this is the same as Operator and Assignment
-        // except we only accept one child
-        // need an isExpression() that encapsulates this
-        // !! no, this needs to requre an = token to specify the initial value
-        bool wants = false;
-        if (children.size() < 1 && node->operandable())
-          wants = true;
-        return wants;
-    }
-
-    juce::String name;
-    juce::OwnedArray<MslPropertyNode> properties;
-    
-    MslFieldNode* getField() override {return this;}
-    void visit(MslVisitor* v) override {v->mslVisit(this);}
-    const char* getLogName() override {return "Field";}
-};
-
-class MslFormNode : public MslNode
-{
-  public:
-    MslFormNode(MslToken& t) : MslNode(t) {}
-    virtual ~MslFormNode() {}
-
-    bool wantsToken(class MslParser* p, MslToken& t) override;
-
-    bool wantsNode(class MslParser* p, MslNode* node) override {
-        (void)p;
-        bool wants = false;
-        if (!hasArgs && node->isBlock() && node->token.value == "(") {
-            hasArgs = true;
-            wants = true;
-        }
-        else if (!hasBody && node->isBlock() && node->token.value == "{") {
-            hasBody = true;
-            wants = true;
-        }
-        return wants;
-    }
-
-    juce::String name;
-    bool hasArgs = false;
-    bool hasBody = false;
-    
-    MslFormNode* getForm() override {return this;}
-    void visit(MslVisitor* v) override {v->mslVisit(this);}
-    const char* getLogName() override {return "Form";}
-    
-    MslBlockNode* getBody() {
-        MslBlockNode* body = nullptr;
-        for (auto child : children) {
-            MslBlockNode* b = child->getBlock();
-            if (b != nullptr && child->token.value == "{") {
-                body = b;
-                break;
-            }
-        }
-        return body;
-    }
-    MslBlockNode* getDeclaration() {
-        MslBlockNode* decl = nullptr;
-        for (auto child : children) {
-            MslBlockNode* b = child->getBlock();
-            if (b != nullptr  && child->token.value == "(") {
-                decl = b;
-                break;
-            }
-        }
-        return decl;
-    }
-};
-
-
 
 /****************************************************************************/
 /****************************************************************************/

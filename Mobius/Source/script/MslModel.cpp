@@ -233,56 +233,6 @@ MslPropertyNode* MslVariableNode::wantsProperty(MslParser* p, MslToken& t)
     return pnode;
 }
 
-/**
- * Similar to MslVariableNode but not a ScopedNode
- */
-bool MslFieldNode::wantsToken(MslParser* p, MslToken& t)
-{
-    (void)p;
-    bool wants = false;
-    
-    if (name.length() == 0) {
-        if (t.type == MslToken::Type::Symbol) {
-            // take this as our name
-            name =  t.value;
-            wants = true;
-        }
-    }
-    else if (t.type == MslToken::Type::Operator &&
-             t.value == "=") {
-        // skip past this once we have a name
-        wants = true;
-    }
-    else {
-        // now that we can stick errors in MslParser, is this
-        // where that should go?
-    }
-    return wants;
-}
-
-/**
- * Same as MslVariableNode but more
- */
-MslPropertyNode* MslFieldNode::wantsProperty(MslParser* p, MslToken& t)
-{
-    (void)p;
-    MslPropertyNode* pnode = nullptr;
-    
-    if (t.type == MslToken::Type::Symbol) {
-        if (t.value == "type" ||
-            t.value == "low" ||
-            t.value == "high" ||
-            t.value == "values" ||
-            t.value == "label") {
-
-            pnode = new MslPropertyNode(t);
-            pnode->parent = this;
-            properties.add(pnode);
-        }
-    }
-    return pnode;
-}
-
 bool MslFunctionNode::wantsToken(MslParser* p, MslToken& t)
 {
     (void)p;
@@ -317,19 +267,6 @@ bool MslContextNode::wantsToken(MslParser* p, MslToken& t)
           wants = true;
         else {
             p->errorSyntax(t, "Invalid context name");
-        }
-    }
-    return wants;
-}
-
-bool MslFormNode::wantsToken(MslParser* p, MslToken& t)
-{
-    (void)p;
-    bool wants = false;
-    if (name.length() == 0) {
-        if (t.type == MslToken::Type::Symbol) {
-            name =  t.value;
-            wants = true;
         }
     }
     return wants;
