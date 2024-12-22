@@ -1,6 +1,8 @@
 
 #include <JuceHeader.h>
 
+#include "../../util/Trace.h"
+
 #include "../../model/Symbol.h"
 #include "../../model/Session.h"
 #include "../../model/UIAction.h"
@@ -38,9 +40,15 @@ void MetronomeTrack::loadSession(Session::Track* def)
 void MetronomeTrack::doAction(UIAction* a)
 {
     Symbol* s = a->symbol;
+
     switch (s->id) {
         case FuncMetronomeStop: doStop(a); break;
         case FuncMetronomeStart: doStart(a); break;
+        case ParamMetronomeTempo: doTempo(a); break;
+        case ParamMetronomeBeatsPerBar: doBeatsPerBar(a); break;
+        default:
+            Trace(1, "MetronomeTrack: Unhandled action %s", s->getName());
+            break;
     }
 }
 
@@ -110,11 +118,36 @@ class MslTrack* MetronomeTrack::getMslTrack()
 void MetronomeTrack::doStop(UIAction* a)
 {
     (void)a;
+    Trace(2, "MetronomeTrack::doStop");
 }
 
 void MetronomeTrack::doStart(UIAction* a)
 {
     (void)a;
+    Trace(2, "MetronomeTrack::doStart");
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Parameters
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Don't support floating point values in UIAction so assume the value
+ * is x100.
+ */
+void MetronomeTrack::doTempo(UIAction* a)
+{
+    float tempo = (float)(a->value) / 100.0f;
+    Trace(2, "MetronomeTrack::doTempo %d", a->value);
+    (void)tempo;
+}
+
+void MetronomeTrack::doBeatsPerBar(UIAction* a)
+{
+    (void)a;
+    Trace(2, "MetronomeTrack::doBeatsPerBar %d", a->value);
 }
 
 //////////////////////////////////////////////////////////////////////

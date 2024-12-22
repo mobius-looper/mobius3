@@ -296,6 +296,25 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
             s->level = level;
         }
 
+        juce::String trackTypes = root->getStringAttribute("trackTypes");
+        if (trackTypes.length() > 0) {
+            juce::StringArray types = juce::StringArray::fromTokens(trackTypes, ",", "");
+            for (auto type : types) {
+                if (type == "Audio") {
+                    s->trackTypes.add(TrackTypeAudio);
+                }
+                else if (type == "Midi") {
+                    s->trackTypes.add(TrackTypeMidi);
+                }
+                else if (type == "Metronome") {
+                    s->trackTypes.add(TrackTypeMetronome);
+                }
+                else {
+                    Trace(1, "Symbolizer: Unknown track type %s", type.toUTF8());
+                }
+            }
+        }
+
         s->treePath = root->getStringAttribute("tree");
         s->hidden = root->getBoolAttribute("hidden");
         
@@ -357,6 +376,8 @@ UIParameterScope Symbolizer::parseScope(juce::String name)
       scope = ScopeSessionTrack;
     else if (name == "ui")
       scope = ScopeUI;
+    else if (name == "metronome")
+      scope = ScopeMetronome;
 
     return scope;
 }

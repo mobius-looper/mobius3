@@ -846,6 +846,8 @@
         <FILE id="HsNAna" name="MslMessage.h" compile="0" resource="0" file="Source/script/MslMessage.h"/>
         <FILE id="s2BlCY" name="MslModel.cpp" compile="1" resource="0" file="Source/script/MslModel.cpp"/>
         <FILE id="mEdRvY" name="MslModel.h" compile="0" resource="0" file="Source/script/MslModel.h"/>
+        <FILE id="lVGF7R" name="MslObject.cpp" compile="1" resource="0" file="Source/script/MslObject.cpp"/>
+        <FILE id="yvN1wL" name="MslObject.h" compile="0" resource="0" file="Source/script/MslObject.h"/>
         <FILE id="wCqtDL" name="MslObjectPool.cpp" compile="1" resource="0"
               file="Source/script/MslObjectPool.cpp"/>
         <FILE id="ei82LK" name="MslObjectPool.h" compile="0" resource="0" file="Source/script/MslObjectPool.h"/>

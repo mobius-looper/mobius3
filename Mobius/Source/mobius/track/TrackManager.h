@@ -135,6 +135,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackMslHandler mslHandler;
     
     juce::OwnedArray<class LogicalTrack> tracks;
+    std::unique_ptr<class MetronomeTrack> metronome;
+    
     int audioTrackCount = 0;
     int activeMidiTracks = 0;
 

@@ -400,7 +400,9 @@ typedef enum {
 
     FuncMetronomeStart,
     FuncMetronomeStop,
-
+    ParamMetronomeTempo,
+    ParamMetronomeBeatsPerBar,
+    
     SymbolIdMax
 
 } SymbolId;

@@ -135,6 +135,7 @@
     <Button action="MainTap"/>
     <Button action="Play"/>
     <Button action="TapTempo"/>
+    <Button action="MetronomeStart"/>
   </ButtonSet>
   <ButtonSet name="Buttons2"/>
   <Properties>

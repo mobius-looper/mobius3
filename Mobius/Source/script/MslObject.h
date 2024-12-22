@@ -6,9 +6,10 @@
 
 #include <JuceHeader.h>
 
-#include "../model/ObjectPool.h"
+#include "MslValue.h"
+#include "MslObjectPool.h"
 
-class MslAttribute : public PooledObject
+class MslAttribute : public MslPooledObject
 {
   public:
     
@@ -26,25 +27,49 @@ class MslAttribute : public PooledObject
 
     MslAttribute* next = nullptr;
     
-}
+};
 
-class MslObject
+class MslObject : public MslPooledObject
 {
   public:
 
-    
-        
-        
-
-
-
-    
-
     MslObject();
     ~MslObject();
+    void poolInit();
 
   private:
 
     // until we can find a no-memory HashMap just keep them
     // on a list, son't have any big objects for awhile
+    MslAttribute* attributes = nullptr;
+};
+
+class MslObjectValuePool : public MslObjectPool
+{
+  public:
+
+    MslObjectValuePool();
+    virtual ~MslObjectValuePool();
+
+    class MslObject* newObject();
+
+  protected:
     
+    virtual MslPooledObject* alloc() override;
+    
+};
+
+class MslAttributePool : public MslObjectPool
+{
+  public:
+
+    MslAttributePool();
+    virtual ~MslAttributePool();
+
+    class MslAttribute* newObject();
+
+  protected:
+    
+    virtual MslPooledObject* alloc() override;
+    
+};

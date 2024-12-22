@@ -145,7 +145,7 @@
   <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
 
   <Function name='MetronomeStart' trackTypes='Metronome' level='core' tree='Metronome'/>
-  <Function name='MetronomeStop trackTypes='Metronome' level='core' tree='Metronome'/>
+  <Function name='MetronomeStop' trackTypes='Metronome' level='core' tree='Metronome'/>
   
   <!--
   Parameter type=int is assumed unless specified
@@ -678,4 +678,15 @@
 
   </ParameterScope>
   
+  <!-- =======================================================================
+       Metronome
+  ============================================================================ -->
+
+  <ParameterScope name='metronome'>
+    
+    <Parameter name='metronomeTempo' type='int'/>
+    <Parameter name='metronomeBeatsPerBar' type='int'/>
+    
+  </ParameterScope>
+    
 </Symbols>

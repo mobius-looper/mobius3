@@ -445,6 +445,8 @@ SymbolDefinition SymbolDefinitions[] = {
 
     {"MetronomeStart", FuncMetronomeStart},
     {"MetronomeStop", FuncMetronomeStop},
+    {"metronomeTempo", ParamMetronomeTempo},
+    {"metronomeBeatsPerBar", ParamMetronomeBeatsPerBar},
     
     //
     // Terminator

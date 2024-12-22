@@ -20,6 +20,7 @@
 #include "../MobiusInterface.h"
 
 #include "LogicalTrack.h"
+#include "MetronomeTrack.h"
 
 #include "../midi/MidiWatcher.h"
 #include "../midi/MidiTrack.h"
@@ -51,6 +52,9 @@ TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
     kernel = k;
     actionPool = k->getActionPool();
     watcher.initialize(&(pools.midiPool));
+
+    MetronomeTrack* mt = new MetronomeTrack(this, nullptr);
+    metronome.reset(mt);
 }
 
 TrackManager::~TrackManager()
@@ -547,7 +551,14 @@ void TrackManager::doActionWithResult(UIAction* src, ActionResult& result)
     else if (s->behavior == BehaviorScript || s->script != nullptr) {
         doScript(src);
     }
-    else {
+    else  if (s->trackTypes.contains(TrackTypeMetronome)) {
+        // before we replicate check for metronome functions
+        // there aren't any metronome functions that are shared by other
+        // track types but there could be someday
+        metronome->doAction(src);
+        actionPool->checkin(src);
+    }
+    else {    
         // function or parameter
         // replicate the source action to one or more actions with specific track scopes
         UIAction* actions = replicateAction(src);
@@ -1288,6 +1299,8 @@ void TrackManager::refreshState()
               track->refreshState(tstate);
         }
     }
+
+    metronome->refreshState(&(state->metronome));
     
     // ugh, this isn't reliable either, UI can be using the old one after
     // we've swapped in the new one and if we hit another refresh before it

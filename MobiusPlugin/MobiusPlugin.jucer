@@ -67,6 +67,8 @@
         <FILE id="gHE2TH" name="MslMessage.h" compile="0" resource="0" file="../Mobius/Source/script/MslMessage.h"/>
         <FILE id="ICgOuB" name="MslModel.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslModel.cpp"/>
         <FILE id="sXuhDo" name="MslModel.h" compile="0" resource="0" file="../Mobius/Source/script/MslModel.h"/>
+        <FILE id="IKRgvo" name="MslObject.cpp" compile="1" resource="0" file="../Mobius/Source/script/MslObject.cpp"/>
+        <FILE id="zTqDTb" name="MslObject.h" compile="0" resource="0" file="../Mobius/Source/script/MslObject.h"/>
         <FILE id="IFLBib" name="MslObjectPool.cpp" compile="1" resource="0"
               file="../Mobius/Source/script/MslObjectPool.cpp"/>
         <FILE id="xhuOKe" name="MslObjectPool.h" compile="0" resource="0" file="../Mobius/Source/script/MslObjectPool.h"/>
@@ -627,6 +629,10 @@
           <FILE id="vhBstS" name="LooperSwitcher.h" compile="0" resource="0"
                 file="../Mobius/Source/mobius/track/LooperSwitcher.h"/>
           <FILE id="B7qvJG" name="LooperTrack.h" compile="0" resource="0" file="../Mobius/Source/mobius/track/LooperTrack.h"/>
+          <FILE id="VAUP7W" name="MetronomeTrack.cpp" compile="1" resource="0"
+                file="../Mobius/Source/mobius/track/MetronomeTrack.cpp"/>
+          <FILE id="sZsqDo" name="MetronomeTrack.h" compile="0" resource="0"
+                file="../Mobius/Source/mobius/track/MetronomeTrack.h"/>
           <FILE id="hJNmrx" name="MobiusLooperTrack.cpp" compile="1" resource="0"
                 file="../Mobius/Source/mobius/track/MobiusLooperTrack.cpp"/>
           <FILE id="gHRwcY" name="MobiusLooperTrack.h" compile="0" resource="0"

@@ -8,6 +8,8 @@
 
 class MetronomeTrack : public BaseTrack
 {
+  public:
+    
     MetronomeTrack(class TrackManager* tm, class LogicalTrack* lt);
     ~MetronomeTrack();
     
@@ -29,8 +31,12 @@ class MetronomeTrack : public BaseTrack
     
     void doStop(class UIAction* a);
     void doStart(class UIAction* a);
+    void doTempo(class UIAction* a);
+    void doBeatsPerBar(class UIAction* a);
 
     void advance(int frames);
+
+    int beatsPerBar = 0;
 
 };
 
