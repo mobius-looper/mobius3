@@ -61,6 +61,8 @@
             added="2147483647"/>
       <File path="c:\dev\mobius3\Mobius\Source\scripts\jefftest.msl" name="jefftest"
             added="2147483647"/>
+      <File path="c:\dev\mobius3\Mobius\Source\scripts\taptempo.msl" name="TapTempo"
+            added="1734737555438"/>
     </Files>
   </Machine>
   <Machine name="Loki">
@@ -139,7 +141,7 @@
     </Files>
   </Machine>
   <MslState>
-    <Unit id="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
+    <Unit id="C:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
       <Variable name="pvar" value="10" type="int"/>
     </Unit>
   </MslState>
