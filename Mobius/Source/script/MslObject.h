@@ -16,6 +16,7 @@ class MslAttribute : public MslPooledObject
     MslAttribute();
     ~MslAttribute();
     void poolInit();
+    void clear(class MslPools* p);
 
     // these aren't commonly user defined so have more control over their size
     char name[32];
@@ -26,7 +27,7 @@ class MslAttribute : public MslPooledObject
     MslValue value;
 
     MslAttribute* next = nullptr;
-    
+
 };
 
 class MslObject : public MslPooledObject
@@ -44,6 +45,20 @@ class MslObject : public MslPooledObject
     MslAttribute* attributes = nullptr;
 };
 
+class MslAttributePool : public MslObjectPool
+{
+  public:
+
+    MslAttributePool();
+    virtual ~MslAttributePool();
+
+    class MslAttribute* newObject();
+
+  protected:
+    
+    virtual MslPooledObject* alloc() override;
+    
+};
 class MslObjectValuePool : public MslObjectPool
 {
   public:
@@ -59,17 +74,3 @@ class MslObjectValuePool : public MslObjectPool
     
 };
 
-class MslAttributePool : public MslObjectPool
-{
-  public:
-
-    MslAttributePool();
-    virtual ~MslAttributePool();
-
-    class MslAttribute* newObject();
-
-  protected:
-    
-    virtual MslPooledObject* alloc() override;
-    
-};

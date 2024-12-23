@@ -1,11 +1,20 @@
 /**
- * todo: this is rather horrible and I much prefer the way ObjectPool
- * is handling this.  Redesign it so that each object can be treated the same
- * without so much duplication.
+ * A collection of object pools for all of the pooled objects used within MSL.
  *
- * Some of these also must have csects around then: MslBinding, MslValue, MslMessag
+ * While each object may reference it's own pool, it may also have a pointer
+ * to the "pool manager" that knows about all the other pools.  This alllows a few
+ * objects that have inter-dependencies to free themselves cleanly and allocate
+ * new child objects from the type-specific pool.
  *
- * A collection of object pools managed by the MslEnvironment.
+ * Newer object pools are implemented with MslObjectPool.
+ *
+ * Older pooled objects are implemented with a much more rough pooling convention
+ * that will be replaced over time.
+ * 
+ * !! Need csects around most of these since there can be concurrent access between
+ * the audio and shell threads.
+ *
+ * Design Notes
  *
  * MSL differs from typical scripting systems in that it was designed to
  * run in the Audio Thread.  This is the high priority system thread that is responding
@@ -13,8 +22,9 @@
  * of this as an "interrupt handler". One of the important characteristics of code
  * running in the audio thread is that it must be fast, and it must make very minimal
  * use of system services, in particular dynamic memory allocation.  malloc/free/new/delete
- * often work in the audio thread, and I have indeed used them extensivily in the past.  But
- * they don't always.  Every now and then this can result in "thread inversion" or time
+ * often work in the audio thread, and I have indeed used them extensivily in the past.
+ *
+ * But they don't always.  Every now and then this can result in "thread inversion" or time
  * consuming restructuring of the free memory pool.  When that happens the audio thread may
  * not be able to respond to a block request from the audio interface within the alotted time,
  * which is a Very Bad Thing.  It results in discontinuity in the audio block stream,
@@ -40,7 +50,7 @@
  *     - runtime reclamation of objects should return them to the pool rather than deleting them
  *
  * The pools are accessed by multiple threads so must use critical sections when
- * managing lists.  There are two catagoeies of threads that I'm calling "shell" and "kernel".
+ * managing lists.  There are two categories of threads that I'm calling "shell" and "kernel".
  * A Kernel thread is a high priority thread, in this context almost always the audio thread
  * but could also be a MIDI device thread.  Kernel threads must always use the pool to allocate
  * and free objects.  A Shell thread is anything that doesn't have the runtime restrictions
@@ -63,14 +73,13 @@
  * in this context.  I've found occasional use for pass-by-value for some of these, but
  * it is rare since they almost always need to to be passed around and have indefinite lifespan.
  *
- * One improvement that stands out here is a generic representation for "things on a list"
- * because the same little code patterns are used for all of these.  I've done that
- * before and it worked okay, but there are tiny differences in each object, so it's
- * dupliccated for now.  Templates could work well here too.  Revisit at some point.
- * 
  */
 
 #pragma once
+
+#include "MslObjectPool.h"
+
+#include "MslObject.h"
 
 class MslPools
 {
@@ -88,6 +97,7 @@ class MslPools
 
     class MslValue* allocValue();
     void free(class MslValue* v);
+    void clear(class MslValue* v);
     
     class MslError* allocError();
     void free(class MslError* v);
@@ -105,12 +115,23 @@ class MslPools
     class MslSession* allocSession();
     void free(class MslSession* s);
 
+    class MslObject* allocObject();
+    void free(class MslObject* o);
+
+    class MslAttribute* allocAttribute();
+    void free(class MslAttribute* a);
+
     void traceSizes();
     void traceStatistics();
 
   private:
 
     class MslEnvironment* environment = nullptr;
+
+    MslAttributePool attributePool;
+    MslObjectValuePool objectPool;
+
+    // old, horrible pools that need to die
 
     // in retrospect, I like the way ObjectPools works MUCH better
     class MslValue* valuePool = nullptr;

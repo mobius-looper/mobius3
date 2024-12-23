@@ -27,6 +27,9 @@ MslPools::MslPools(MslEnvironment* env)
 MslPools::~MslPools()
 {
     Trace(2, "MslPools: destructing");
+
+    // new pools will destruct themselves
+    
     // try to do these in reverse depenndency order, though shouldn't be necessary
     flushSessions();
     flushStacks();
@@ -154,16 +157,24 @@ MslValue* MslPools::allocValue()
 void MslPools::free(MslValue* v)
 {
     if (v != nullptr) {
+        // release the list I have and the list I'm on
+        v->clear();
+        // and now me
+        v->next = valuePool;
+        valuePool = v;
+        valuesReturned++;
+    }
+}
+
+void MslPools::clear(MslValue* v)
+{
+    if (v != nullptr) {
         // first the list I HAVE
         free(v->list);
         v->list = nullptr;
         // then the list I'm ON
         free(v->next);
         v->next = nullptr;
-        // and now me
-        v->next = valuePool;
-        valuePool = v;
-        valuesReturned++;
     }
 }
 
@@ -528,7 +539,51 @@ void MslPools::free(MslSession* s)
         sessionsReturned++;
     }
 }
-        
+
+//////////////////////////////////////////////////////////////////////
+//
+// Object/Attribute
+//
+//////////////////////////////////////////////////////////////////////
+
+MslObject* MslPools::allocObject()
+{
+    return objectPool.newObject();
+}
+
+void MslPools::clear(MslObject* obj)
+{
+    if (obj != nullptr)
+      obj->clear(this);
+}
+
+void MslPools::free(MslObject* obj)
+{
+    if (obj != nullptr) {
+        clear(obj);
+        objectePool.checkin(obj);
+    }
+}
+
+MslAttribute* MslPools::allocAttribute()
+{
+    return attributePool.newObject();
+}
+
+void MslPools::clear(MslAttribute* att)
+{
+    if (att != nullptr)
+      att->clear(this);
+}
+
+void MslPools::free(MslAttribute* att)
+{
+    if (att != nullptr) {
+        att->clear(this);
+        attributePool.checkin(att);
+    }
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
