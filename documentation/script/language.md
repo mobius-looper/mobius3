@@ -5,7 +5,7 @@ for the Mobius looper.  While it was created for Mobius, it is intended for use 
 applications so some of the terms used will be different from the related concepts in Mobius.
 
 The scripting environment lives within an application that can be controlled primarily in
-two ways, Through *Functions* and *Parameters*.
+two ways, Through *Functions* and *Variables*.
 
 A function is a command that causes the application to do something.  Examples in Mobius
 include *Record*, *Overdub*, and *Multiply*.

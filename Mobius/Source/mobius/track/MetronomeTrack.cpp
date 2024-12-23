@@ -281,12 +281,12 @@ float Synchronizer::calcTempo(Loop* l, int beatsPerBar, long frames,
  * The length of a bar is determined by multiplying the framesPerBeat by
  * the metronomeBeatsPerBar parameter.
  */
-int MetronomeTrack::calcTempoLength(float tempo, int beatsPerBar)
+int MetronomeTrack::calcTempoLength(float tempo, int bpb)
 {
     int sampleRate = manager->getContainer()->getSampleRate();
     int samplesPerBeat = (int)((float)sampleRate / ((float)tempo / 60.0f));
-    if (beatsPerBar < 1) beatsPerBar = 1;
-    int samplesPerBar = samplesPerBeat * beatsPerBar;
+    if (bpb < 1) bpb = 1;
+    int samplesPerBar = samplesPerBeat * bpb;
     return samplesPerBar;
 }
 

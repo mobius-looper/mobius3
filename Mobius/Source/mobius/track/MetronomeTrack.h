@@ -36,6 +36,8 @@ class MetronomeTrack : public BaseTrack
 
     void advance(int frames);
 
+    int calcTempoLength(float tempo, int bpb);
+    
     int beatsPerBar = 0;
 
 };

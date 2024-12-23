@@ -4,6 +4,7 @@
 #include "../model/ObjectPool.h"
 
 #include "MslPools.h"
+#include "MslValue.h"
 #include "MslObject.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -29,22 +30,28 @@ MslObject::~MslObject()
 
 void MslObject::poolInit()
 {
+    pools = nullptr;
     attributes = nullptr;
 }
 
-void MslObject::clear(MslPools* p)
+void MslObject::setPools(MslPools* p)
+{
+    pools = p;
+}
+
+void MslObject::clear()
 {
     while (attributes != nullptr) {
         MslAttribute* next = attributes->next;
         attributes->next = nullptr;
-        if (p != nullptr) {
-            attributes->clear(p);
-            p->free(attributes);
+        if (pools != nullptr) {
+            attributes->clear(pools);
+            pools->free(attributes);
         }
         else {
             delete attributes;
         }
-        attribute = next;
+        attributes = next;
     }
 }
 
@@ -93,20 +100,19 @@ MslAttribute::~MslAttribute()
 void MslAttribute::poolInit()
 {
     strcpy(name, "");
-    value.setNull();
     next = nullptr;
+    value = nullptr;
 }
 
 void MslAttribute::clear(MslPools* p)
 {
     if (p != nullptr) {
-        p->clear(&value);
+        p->free(value);
     }
     else {
-        // todo: not sure I want't to mess with deletion of these?
-        // should be passing a pool
+        delete value;
     }
-    value.setNull();
+    value = nullptr;
 }
 
 MslAttributePool::MslAttributePool()

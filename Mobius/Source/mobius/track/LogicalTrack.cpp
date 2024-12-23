@@ -56,6 +56,15 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // with a LooperScheduler
             // not sure I like the handoff here
             track.reset(engine.newTrack(manager, this, trackdef));
+
+            // !! MidiTrack is a BaseTrack and for some reason BaseTrack has a number
+            // that is used for leader/follower lookups
+            // somewhere in the LogicalTrack addition the assignment of this number got lost
+            // and track numbers are now assigned to theh LogicalTrack not the BaseTrack
+            // If that's where the numbers are supposed to live then BaseTrack shouldn't have
+            // a number and it should call up to the LogicalTrack to get it, keep them
+            // in syncn until I'm less tired
+            track->setNumber(number);
         }
         else if (trackType == Session::TypeAudio) {
             // core tracks are special

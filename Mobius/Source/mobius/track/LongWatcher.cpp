@@ -187,7 +187,9 @@ void LongWatcher::advance(int frames)
             // formerly removed it, but I'd rather leave it in place
             // and wait for the up?  it might be interesting to let it
             // fire more than once, long and REALLY long?
-            bool allowVeryLong = true;
+            // update: no, when running under the debugger it is common to miss
+            // up transitions and this ends up firing long press forever
+            bool allowVeryLong = false;
             if (allowVeryLong) {
                 state->frames = 0;
                 state->notifications++;

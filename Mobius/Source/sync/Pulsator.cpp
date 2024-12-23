@@ -83,6 +83,9 @@ void Pulsator::reset()
     hostPulse.source = Pulse::SourceNone;
     midiInPulse.source = Pulse::SourceNone;
     midiOutPulse.source = Pulse::SourceNone;
+
+    // this is where pending pulses that were just over the last block
+    // are activated for this block
     for (auto leader : leaders)
       leader->reset();
 }
@@ -98,7 +101,7 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
     
     gatherHost(stream);
     gatherMidi();
-    
+
     // leader pulses are added as the tracks advance
 
     // advance drift detectors

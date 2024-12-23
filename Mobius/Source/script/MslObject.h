@@ -6,7 +6,6 @@
 
 #include <JuceHeader.h>
 
-#include "MslValue.h"
 #include "MslObjectPool.h"
 
 class MslAttribute : public MslPooledObject
@@ -18,15 +17,24 @@ class MslAttribute : public MslPooledObject
     void poolInit();
     void clear(class MslPools* p);
 
+    MslAttribute* next = nullptr;
+    
     // these aren't commonly user defined so have more control over their size
     char name[32];
     void setName(const char* s) {
         strncpy(name, s, sizeof(name));
     }
 
-    MslValue value;
+    class MslValue* getValue() {
+        return value;
+    }
 
-    MslAttribute* next = nullptr;
+    void setValue(MslValue* v);
+    void copyValue(MslValue& v);
+    
+  private:
+
+    MslValue* value = nullptr;
 
 };
 
@@ -37,8 +45,12 @@ class MslObject : public MslPooledObject
     MslObject();
     ~MslObject();
     void poolInit();
+    void setPools(class MslPools* p);
+    void clear();
 
   private:
+
+    class MslPools* pools = nullptr;
 
     // until we can find a no-memory HashMap just keep them
     // on a list, son't have any big objects for awhile

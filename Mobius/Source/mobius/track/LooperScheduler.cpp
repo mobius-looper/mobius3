@@ -475,7 +475,10 @@ void LooperScheduler::handleResetAction(UIAction* src)
     SymbolId sid = src->symbol->id;
     switch (sid) {
 
-        case FuncRecord: doRecord(nullptr); break;
+        case FuncRecord:
+        case FuncAutoRecord:
+            scheduleRecord(src);
+            break;
 
         case FuncOverdub: doOverdub(src); break;
             

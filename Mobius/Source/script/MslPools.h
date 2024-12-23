@@ -117,9 +117,11 @@ class MslPools
 
     class MslObject* allocObject();
     void free(class MslObject* o);
-
+    void clear(class MslObject* o);
+    
     class MslAttribute* allocAttribute();
     void free(class MslAttribute* a);
+    void clear(class MslAttribute* a);
 
     void traceSizes();
     void traceStatistics();

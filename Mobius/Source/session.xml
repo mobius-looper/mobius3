@@ -26,7 +26,7 @@
       <Value name="switchDuration" value="permanent" type="enum" ordinal="0"/>
       <Value name="switchLocation" value="follow" type="enum" ordinal="0"/>
       <Value name="switchQuantize" value="off" type="enum" ordinal="0"/>
-      <Value name="syncSource" value="none" type="enum" ordinal="1"/>
+      <Value name="syncSource" value="track" type="enum" ordinal="2"/>
       <Value name="trackSyncUnit" value="loop" type="enum" ordinal="3"/>
     </ValueSet>
   </Track>

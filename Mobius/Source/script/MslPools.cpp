@@ -158,7 +158,7 @@ void MslPools::free(MslValue* v)
 {
     if (v != nullptr) {
         // release the list I have and the list I'm on
-        v->clear();
+        clear(v);
         // and now me
         v->next = valuePool;
         valuePool = v;
@@ -553,15 +553,18 @@ MslObject* MslPools::allocObject()
 
 void MslPools::clear(MslObject* obj)
 {
-    if (obj != nullptr)
-      obj->clear(this);
+    if (obj != nullptr) {
+        obj->setPools(this);
+        obj->clear();
+    }
 }
 
 void MslPools::free(MslObject* obj)
 {
     if (obj != nullptr) {
-        clear(obj);
-        objectePool.checkin(obj);
+        obj->setPools(this);
+        obj->clear();
+        objectPool.checkin(obj);
     }
 }
 
