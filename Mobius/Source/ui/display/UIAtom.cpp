@@ -327,6 +327,7 @@ UIAtomText::UIAtomText()
     onColor = juce::Colours::red;
     offColor = juce::Colours::yellow;
     backColor = juce::Colours::black;
+    outlineColor = juce::Colours::white;
 }
 
 UIAtomText::~UIAtomText()
@@ -385,8 +386,7 @@ void UIAtomText::resized()
 
 void UIAtomText::paint(juce::Graphics& g)
 {
-    g.setColour(backColor);
-    g.fillRect(getLocalBounds());
+    drawTextBackground(g);
     
     if (on)
       g.setColour(onColor);
@@ -408,6 +408,31 @@ void UIAtomText::paint(juce::Graphics& g)
                      1, // max lines
                      1.0f);
 }
+
+void UIAtomText::drawTextBackground(juce::Graphics& g)
+{
+    //g.setColour(backColor);
+    //g.fillRect(getLocalBounds());
+
+    auto cornerSize = 6.0f;
+    auto bounds = getLocalBounds().toFloat().reduced (0.5f, 0.5f);
+
+    // various things from the Juce drawButtonBackground
+    /*
+      auto baseColour = backgroundColour.withMultipliedSaturation (button.hasKeyboardFocus (true) ? 1.3f : 0.9f)
+      .withMultipliedAlpha (button.isEnabled() ? 1.0f : 0.5f);
+      
+      if (shouldDrawButtonAsDown || shouldDrawButtonAsHighlighted)
+      baseColour = baseColour.contrasting (shouldDrawButtonAsDown ? 0.2f : 0.05f);
+    */
+    
+    g.setColour (backColor);
+
+    g.fillRoundedRectangle (bounds, cornerSize);
+
+    g.setColour (outlineColor);
+    g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
+}    
 
 /****************************************************************************/
 /****************************************************************************/

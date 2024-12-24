@@ -54,8 +54,8 @@ MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     tempo.setFlash(true);
     addAndMakeVisible(tempo);
 
-    start.setOnText("Stop");
-    start.setOffText("Start");
+    //start.setOnText("Stop");
+    //start.setOffText("Start");
 }
 
 MetronomeElement::~MetronomeElement()
@@ -123,8 +123,9 @@ void MetronomeElement::sizeAtom(juce::Rectangle<int> area, juce::Component* comp
 
 void MetronomeElement::paint(juce::Graphics& g)
 {
-    g.setColour(juce::Colours::yellow);
-    g.fillRect(0, 0, getWidth(), getHeight());
+    (void)g;
+    //g.setColour(juce::Colours::yellow);
+    //g.fillRect(0, 0, getWidth(), getHeight());
 }
 
 void MetronomeElement::atomButtonPressed(UIAtomButton* b)

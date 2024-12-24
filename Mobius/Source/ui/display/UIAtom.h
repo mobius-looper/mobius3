@@ -136,8 +136,10 @@ class UIAtomText : public UIAtom
     juce::Colour onColor;
     juce::Colour offColor;
     juce::Colour backColor;
+    juce::Colour outlineColor;
     bool on = false;
     bool flash = false;
     int ticks = 0;
     
+    void drawTextBackground(juce::Graphics& g);
 };
