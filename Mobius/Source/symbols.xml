@@ -230,6 +230,10 @@
       Forget what the unit is here, milliseconds or tenths?
       Belongs in UIConfig with other Binding parameters.
     </Parameter>
+    <Parameter name='longDisable' type='bool'>
+      During debugging it is really annoying to have long-press behavior firing
+      when we're single stepping so allow it to be turned off.
+    </Parameter>
     
     <Parameter name='spreadRange' low='1' high='128'>
       The amount to spread the binding range over adjacent values.

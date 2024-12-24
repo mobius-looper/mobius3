@@ -130,6 +130,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     MidiPools pools;
 
     LongWatcher longWatcher;
+    bool longDisable = false;
     MidiWatcher watcher;
     ScopeCache scopes;
     TrackMslHandler mslHandler;

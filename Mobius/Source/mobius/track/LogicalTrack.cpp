@@ -44,7 +44,6 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
     // assumes it is okay to hang onto this until the next one is loaded
     session = trackdef;
     trackType = trackdef->type;
-    number = argNumber;
 
     if (track == nullptr) {
         // make a new one using the appopriate track factory
@@ -57,24 +56,19 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // not sure I like the handoff here
             track.reset(engine.newTrack(manager, this, trackdef));
 
-            // !! MidiTrack is a BaseTrack and for some reason BaseTrack has a number
-            // that is used for leader/follower lookups
-            // somewhere in the LogicalTrack addition the assignment of this number got lost
-            // and track numbers are now assigned to theh LogicalTrack not the BaseTrack
-            // If that's where the numbers are supposed to live then BaseTrack shouldn't have
-            // a number and it should call up to the LogicalTrack to get it, keep them
-            // in syncn until I'm less tired
-            track->setNumber(number);
+            // Give the BaseTrack it's number
+            track->setNumber(argNumber);
         }
         else if (trackType == Session::TypeAudio) {
             // core tracks are special
             // these have to be done in order at the front
             // if they can be out of order then will need to "allocate" engine
             // numbers as they are encountered
-            engineNumber = number - 1;
+            engineNumber = argNumber - 1;
             Mobius* m = manager->getAudioEngine();
             Track* mt = m->getTrack(engineNumber);
             track.reset(new MobiusLooperTrack(manager, this, m, mt));
+            track->setNumber(argNumber);
         }
         else {
             Trace(1, "LogicalTrack: Unknown track type");
@@ -82,6 +76,9 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
     }
     else {
         track->loadSession(trackdef);
+        // number can't change?
+        if (track->getNumber() != argNumber)
+          Trace(1, "LogicalTrack::loadSession Track number mismatch");
     }
 }
 
@@ -92,7 +89,7 @@ Session::TrackType LogicalTrack::getType()
 
 int LogicalTrack::getNumber()
 {
-    return number;
+    return (track != nullptr) ? track->getNumber() : 0;
 }
 
 int LogicalTrack::getSessionId()
@@ -353,7 +350,8 @@ int LogicalTrack::getLoopCount()
         if (v != nullptr) {
             result = v->getInt();
             if (result < 1) {
-                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d", number);
+                Trace(1, "LogicalTrack: Malformed LoopCount parameter in session %d",
+                      track->getNumber());
                 result = 1;
             }
         }

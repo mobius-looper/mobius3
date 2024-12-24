@@ -153,6 +153,7 @@ SymbolDefinition SymbolDefinitions[] = {
     {ParamNameMaxSyncDrift, ParamMaxSyncDrift},
     {ParamNameDriftCheckPoint, ParamDriftCheckPoint},
     {ParamNameLongPress, ParamLongPress},
+    {"longDisable", ParamLongDisable},
     {ParamNameSpreadRange, ParamSpreadRange},
     {ParamNameTraceLevel, ParamTraceLevel},
     {ParamNameAutoFeedbackReduction, ParamAutoFeedbackReduction},

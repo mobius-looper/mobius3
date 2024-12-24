@@ -75,7 +75,6 @@ class LogicalTrack
     class TrackManager* manager = nullptr;
     class Session::Track* session = nullptr;
     Session::TrackType trackType = Session::TypeAudio;
-    int number = 0;
     int engineNumber = 0;
 
     /**

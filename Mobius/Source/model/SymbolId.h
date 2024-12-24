@@ -47,6 +47,7 @@ typedef enum {
     ParamMaxSyncDrift,
     ParamDriftCheckPoint,
     ParamLongPress,
+    ParamLongDisable,
     ParamSpreadRange,
     ParamTraceLevel,
     ParamAutoFeedbackReduction,

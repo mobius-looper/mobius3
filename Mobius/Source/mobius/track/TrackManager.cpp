@@ -179,6 +179,9 @@ void TrackManager::loadSession(Session* session)
 
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
 
+    // allow this to be disabled during debugging
+    longDisable = session->getBool("longDisable");
+
     // make sure we're a listener for every track, even our own
     int totalTracks = audioTrackCount + activeMidiTracks;
     for (int i = 1 ; i <= totalTracks ; i++)
@@ -475,7 +478,8 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     // advance the long press detector, this may call back
     // to longPressDetected to fire an action
     // todo: Mobius has one of these too, try to merge
-    longWatcher.advance(stream->getInterruptFrames());
+    if (!longDisable)
+      longWatcher.advance(stream->getInterruptFrames());
 
     // advance audio core
     audioEngine->processAudioStream(stream);
@@ -522,7 +526,8 @@ void TrackManager::doActionWithResult(UIAction* src, ActionResult& result)
     // watch long before replication
     // could also watch after but this would generate many long actions
     // which could then all be duplicated
-    longWatcher.watch(src);
+    if (!longDisable)
+      longWatcher.watch(src);
 
     if (sid == FuncDump) {
         // at what level should this be handled?
