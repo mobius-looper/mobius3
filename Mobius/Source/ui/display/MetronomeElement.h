@@ -12,7 +12,7 @@
 #include "UIAtom.h"
 #include "UIElement.h"
 
-class MetronomeElement : public UIElement
+class MetronomeElement : public UIElement, public UIAtomButton::Listener
 {
   public:
     
@@ -32,11 +32,15 @@ class MetronomeElement : public UIElement
     void resized() override;
     void paint(juce::Graphics& g) override;
 
+    void atomButtonPressed(UIAtomButton* b);
+    
   private:
 
     UIAtomLight light;
     UIAtomLight square;
     UIAtomButton tap;
+    UIAtomText tempo;
+    int tapStart = 0;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);
 };

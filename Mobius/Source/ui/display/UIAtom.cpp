@@ -172,10 +172,19 @@ void UIAtomLight::setFillColor(juce::Graphics& g)
 
 UIAtomButton::UIAtomButton()
 {
+    onColor = juce::Colours::red;
+    offColor = juce::Colours::black;
+    backColor = juce::Colours::grey;
+    overColor = juce::Colours::white;
 }
 
 UIAtomButton::~UIAtomButton()
 {
+}
+
+void UIAtomButton::setListener(Listener* l)
+{
+    listener = l;
 }
 
 void UIAtomButton::setText(juce::String s)
@@ -232,6 +241,153 @@ void UIAtomButton::resized()
  */
 void UIAtomButton::paint(juce::Graphics& g)
 {
+    if (over)
+      g.setColour(overColor);
+    else
+      g.setColour(backColor);
+    g.fillRect(getLocalBounds());
+    
+    if (on)
+      g.setColour(onColor);
+    else
+      g.setColour(offColor);
+
+    juce::Font font(JuceUtil::getFont(getHeight()));
+    // hacking around the unpredictable truncation, if the name is beyond
+    // a certain length, reduce the font height
+    if (text.length() >= 10)
+      font = JuceUtil::getFontf(getHeight() * 0.75f);
+          
+    // not sure about font sizes, we're going to use fit so I think
+    // that will size down as necessary
+    g.setFont(font);
+    
+    g.drawFittedText(text, 0, 0, getWidth(), getHeight(),
+                     juce::Justification::centred,
+                     1, // max lines
+                     1.0f);
+}
+
+void UIAtomButton::mouseEnter(const juce::MouseEvent& event)
+{
+    // getParentComponent()->mouseEnter(event);
+    (void)event;
+    if (!over) {
+        over = true;
+        repaint();
+    }
+}
+
+void UIAtomButton::mouseExit(const juce::MouseEvent& event)
+{
+    //getParentComponent()->mouseExit(event);
+    (void)event;
+    if (over) {
+        over = false;
+        repaint();
+    }
+}
+
+void UIAtomButton::mouseDown(const juce::MouseEvent& event)
+{
+    // getParentComponent()->mouseDown(event);
+    (void)event;
+    if (!on) {
+        on = true;
+        if (listener != nullptr)
+          listener->atomButtonPressed(this);
+        repaint();
+    }
+}
+
+void UIAtomButton::mouseDrag(const juce::MouseEvent& event)
+{
+    //getParentComponent()->mouseDrag(event);
+    (void)event;
+}
+
+void UIAtomButton::mouseUp(const juce::MouseEvent& event)
+{
+    //getParentComponent()->mouseUp(e);
+    (void)event;
+    if (on) {
+        on = false;
+        repaint();
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Text
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomText::UIAtomText()
+{
+    onColor = juce::Colours::red;
+    offColor = juce::Colours::yellow;
+    backColor = juce::Colours::black;
+}
+
+UIAtomText::~UIAtomText()
+{
+}
+
+void UIAtomText::setText(juce::String s)
+{
+    text = s;
+    repaint();
+}
+
+void UIAtomText::setOnColor(juce::Colour c)
+{
+    onColor = c;
+}
+
+void UIAtomText::setOffColor(juce::Colour c)
+{
+    offColor = c;
+}
+
+void UIAtomText::setBackColor(juce::Colour c)
+{
+    backColor = c;
+}
+
+void UIAtomText::setOn(bool b)
+{
+    on = b;
+}
+
+void UIAtomText::setFlash(bool b)
+{
+    flash = b;
+}
+
+void UIAtomText::advance()
+{
+    ticks++;
+    if (ticks > 10) {
+        ticks = 0;
+        if (flash) {
+            if (on)
+              on = false;
+            else
+              on = true;
+            repaint();
+        }
+    }
+}
+
+void UIAtomText::resized()
+{
+}
+
+void UIAtomText::paint(juce::Graphics& g)
+{
+    g.setColour(backColor);
+    g.fillRect(getLocalBounds());
+    
     if (on)
       g.setColour(onColor);
     else

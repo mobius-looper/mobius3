@@ -48,7 +48,14 @@ MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     tap.setText("Tap");
     tap.setOnColor(juce::Colours::white);
     tap.setOffColor(juce::Colours::black);
+    tap.setListener(this);
     addAndMakeVisible(tap);
+
+    tempo.setFlash(true);
+    addAndMakeVisible(tempo);
+
+    start.setOnText("Stop");
+    start.setOffText("Start");
 }
 
 MetronomeElement::~MetronomeElement()
@@ -72,17 +79,18 @@ int MetronomeElement::getPreferredHeight()
 void MetronomeElement::update(class MobiusView* v)
 {
     (void)v;
+    tempo.advance();
 }
 
 void MetronomeElement::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     int width = area.getWidth();
-    int unit = (int)(width * 0.20f);
+    int unit = (int)(width * 0.15f);
     sizeAtom(area.removeFromLeft(unit), &light);
     sizeAtom(area.removeFromLeft(unit), &square);
-
-    tap.setBounds(area.removeFromLeft(unit * 2));
+    tap.setBounds(area.removeFromLeft((int)(width * 0.3f)));
+    tempo.setBounds(area);
 }
 
 /**
@@ -119,3 +127,25 @@ void MetronomeElement::paint(juce::Graphics& g)
     g.fillRect(0, 0, getWidth(), getHeight());
 }
 
+void MetronomeElement::atomButtonPressed(UIAtomButton* b)
+{
+    if (b == &tap) {
+        if (tapStart == 0) {
+            tapStart = juce::Time::getMillisecondCounter();
+        }
+        else {
+            int tapEnd = juce::Time::getMillisecondCounter();
+            float ftempo = 60000.0f / (float)(tapEnd - tapStart);
+            int itempo = (int)(ftempo * 100);
+            Trace(2, "MetronomeElement: Tempo %d", itempo);
+            tapStart = 0;
+
+            int decimal = (int)ftempo;
+            int fraction = (int)((ftempo - (float)decimal) * 10.0f);
+            juce::String stempo = juce::String(decimal);
+            stempo += ".";
+            stempo += juce::String(fraction);
+            tempo.setText(stempo);
+        }
+    }
+}
