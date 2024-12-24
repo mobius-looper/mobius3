@@ -30,6 +30,8 @@
 
 MetronomeTrack::MetronomeTrack(TrackManager* tm, LogicalTrack* lt) : BaseTrack(tm, lt)
 {
+    tempo = 120.0f;
+    beatsPerBar = 4;
 }
 
 MetronomeTrack::~MetronomeTrack()
@@ -45,6 +47,8 @@ MetronomeTrack::~MetronomeTrack()
 void MetronomeTrack::loadSession(Session::Track* def)
 {
     (void)def;
+
+    // todo: get tempo and bpb from here
 }
 
 void MetronomeTrack::doAction(UIAction* a)
@@ -64,8 +68,28 @@ void MetronomeTrack::doAction(UIAction* a)
 
 bool MetronomeTrack::doQuery(Query* q)
 {
-    (void)q;
-    return false;
+    bool success = false;
+    Symbol* s = q->symbol;
+
+    switch (s->id) {
+        case ParamMetronomeTempo: {
+            // no floats in Query yet...
+            q->value = (int)(tempo * 100.0f);
+            success = true;
+        }
+            break;
+            
+        case ParamMetronomeBeatsPerBar: {
+            q->value = beatsPerBar;
+            success = true;
+        }
+            break;
+            
+        default:
+            Trace(1, "MetronomeTrack: Unhandled query %s", s->getName());
+            break;
+    }
+    return success;
 }
 
 void MetronomeTrack::processAudioStream(MobiusAudioStream* stream)
@@ -106,7 +130,25 @@ void MetronomeTrack::refreshPriorityState(MobiusState::Track* tstate)
 
 void MetronomeTrack::refreshState(MobiusState::Track* tstate)
 {
-    (void)tstate;
+    // don't have "running" mode so it's Reset or Play
+    if (running)
+      tstate->mode = MobiusState::ModePlay;
+    else
+      tstate->mode = MobiusState::ModeReset;
+
+    // not sure if this is useful but could be
+    tstate->frames = frameLength;
+    tstate->frame = playFrame;
+    tstate->tempo = tempo;
+    tstate->beatsPerBar = beatsPerBar;
+    tstate->beat = beat;
+
+    // what IS useful is the beat flags, subcycle on beats
+    // and cycle or loop on bar
+    tstate->beatLoop = barHit;
+    barHit = false;
+    tstate->beatSubCycle = beatHit;
+    beatHit = false;
 }
 
 void MetronomeTrack::dump(StructureDumper& d)
@@ -129,12 +171,26 @@ void MetronomeTrack::doStop(UIAction* a)
 {
     (void)a;
     Trace(2, "MetronomeTrack::doStop");
+    running = false;
+    playFrame = 0;
+    beatHit = false;
+    barHit = false;
 }
 
 void MetronomeTrack::doStart(UIAction* a)
 {
     (void)a;
-    Trace(2, "MetronomeTrack::doStart");
+    if (!running) {
+        if (frameLength == 0) {
+            Trace(1, "MetronomeTrack: Can't run without a tempo");
+        }
+        else {
+            running = true;
+            playFrame = 0;
+            // flash?
+            barHit = true;
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -149,15 +205,45 @@ void MetronomeTrack::doStart(UIAction* a)
  */
 void MetronomeTrack::doTempo(UIAction* a)
 {
-    float tempo = (float)(a->value) / 100.0f;
     Trace(2, "MetronomeTrack::doTempo %d", a->value);
-    (void)tempo;
+    
+    tempo = (float)(a->value) / 100.0f;
+    setLength(calcTempoLength(tempo, beatsPerBar));
+}
+
+void MetronomeTrack::setLength(int l)
+{
+    frameLength = l;
+
+    if (beatsPerBar <= 0) {
+        // divide by zero hedge, shouldn't happen
+        framesPerBeat = 0;
+    }
+    else {
+        framesPerBeat = frameLength / beatsPerBar;
+    }
+    
+    if (running) {
+        // so does this try to keep the same relative location
+        // or start from the beginning?
+        if (frameLength > 0) {
+            while (playFrame > frameLength)
+              playFrame -= frameLength;
+        }
+    }
 }
 
 void MetronomeTrack::doBeatsPerBar(UIAction* a)
 {
-    (void)a;
     Trace(2, "MetronomeTrack::doBeatsPerBar %d", a->value);
+
+    int bpb = a->value;
+    if (bpb <= 0)
+      Trace(1, "MetronomeTrack: Invalid beatsPerBar %d", bpb);
+    else {
+        beatsPerBar = bpb;
+        setLength(calcTempoLength(tempo, beatsPerBar));
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -168,7 +254,24 @@ void MetronomeTrack::doBeatsPerBar(UIAction* a)
 
 void MetronomeTrack::advance(int frames)
 {
-    (void)frames;
+    if (running) {
+        playFrame += frames;
+        if (playFrame > frameLength) {
+            barHit = true;
+            playFrame -= frameLength;
+            if (playFrame > frameLength) {
+                // something is off here, must be an extremely short block size
+                Trace(1, "MetronomeTrack: PlayFrame anomoly");
+            }
+        }
+        else if (framesPerBeat > 0) {
+            int b = playFrame / framesPerBeat;
+            if (b != beat) {
+                beat = b;
+                beatHit = true;
+            }
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -281,10 +384,10 @@ float Synchronizer::calcTempo(Loop* l, int beatsPerBar, long frames,
  * The length of a bar is determined by multiplying the framesPerBeat by
  * the metronomeBeatsPerBar parameter.
  */
-int MetronomeTrack::calcTempoLength(float tempo, int bpb)
+int MetronomeTrack::calcTempoLength(float t, int bpb)
 {
     int sampleRate = manager->getContainer()->getSampleRate();
-    int samplesPerBeat = (int)((float)sampleRate / ((float)tempo / 60.0f));
+    int samplesPerBeat = (int)((float)sampleRate / ((float)t / 60.0f));
     if (bpb < 1) bpb = 1;
     int samplesPerBar = samplesPerBeat * bpb;
     return samplesPerBar;

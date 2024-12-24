@@ -2005,7 +2005,7 @@ void Supervisor::doAction(UIAction* action)
         // there would be a MIDI binding for this name which interned a symbol,
         // but there is no behavior in it
         // should we be checking Level or Behavior?
-        juce::String msg = "Symbol " + s->name + " has no associated behavior";
+        juce::String msg = "Symbol " + s->name + " has no defined level";
         alert(msg);
     }
     else {

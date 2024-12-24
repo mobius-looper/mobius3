@@ -688,8 +688,8 @@
 
   <ParameterScope name='metronome'>
     
-    <Parameter name='metronomeTempo' type='int'/>
-    <Parameter name='metronomeBeatsPerBar' type='int'/>
+    <Parameter name='metronomeTempo' type='int' level='core' trackTypes='Metronome'/>
+    <Parameter name='metronomeBeatsPerBar' type='int' level='core' trackTypes='Metronome'/>
     
   </ParameterScope>
     

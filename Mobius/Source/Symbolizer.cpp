@@ -296,24 +296,7 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
             s->level = level;
         }
 
-        juce::String trackTypes = root->getStringAttribute("trackTypes");
-        if (trackTypes.length() > 0) {
-            juce::StringArray types = juce::StringArray::fromTokens(trackTypes, ",", "");
-            for (auto type : types) {
-                if (type == "Audio") {
-                    s->trackTypes.add(TrackTypeAudio);
-                }
-                else if (type == "Midi") {
-                    s->trackTypes.add(TrackTypeMidi);
-                }
-                else if (type == "Metronome") {
-                    s->trackTypes.add(TrackTypeMetronome);
-                }
-                else {
-                    Trace(1, "Symbolizer: Unknown track type %s", type.toUTF8());
-                }
-            }
-        }
+        parseTrackTypes(root, s);
 
         s->treePath = root->getStringAttribute("tree");
         s->hidden = root->getBoolAttribute("hidden");
@@ -321,6 +304,28 @@ void Symbolizer::parseFunction(juce::XmlElement* root)
         // Trace(2, "Symbolizer: Installed function %s\n", name.toUTF8());
     }
 }
+
+void Symbolizer::parseTrackTypes(juce::XmlElement* el, Symbol* s)
+{
+    juce::String trackTypes = el->getStringAttribute("trackTypes");
+    if (trackTypes.length() > 0) {
+        juce::StringArray types = juce::StringArray::fromTokens(trackTypes, ",", "");
+        for (auto type : types) {
+            if (type == "Audio") {
+                s->trackTypes.add(TrackTypeAudio);
+            }
+            else if (type == "Midi") {
+                s->trackTypes.add(TrackTypeMidi);
+            }
+            else if (type == "Metronome") {
+                s->trackTypes.add(TrackTypeMetronome);
+            }
+            else {
+                Trace(1, "Symbolizer: Unknown track type %s", type.toUTF8());
+            }
+        }
+    }
+}    
 
 /**
  * Parse an XML level name into a SymbolLevel enumeration value.
@@ -442,6 +447,17 @@ void Symbolizer::parseParameter(juce::XmlElement* el, UIParameterScope scope)
         
         Symbol* s = supervisor->getSymbols()->intern(name);
         s->parameterProperties.reset(props);
+        // this seems to be necessary for some things
+        s->behavior = BehaviorParameter;
+        // Supervisor whines if this isn't set for the newer parameters
+        // that don't have coreParameters
+        juce::String levelValue = el->getStringAttribute("level");
+        if (levelValue.length() > 0) {
+            SymbolLevel level = parseLevel(levelValue);
+            s->level = level;
+        }
+
+        parseTrackTypes(el, s);
     }
 }
 

@@ -286,6 +286,7 @@ class MobiusViewTrack {
     float syncTempo = 0.0f;
     int syncBeat = 0;
     int syncBar = 0;
+    int syncBeatsPerBar = 0;
     bool syncShowBeat = false;
     
     //
@@ -374,6 +375,8 @@ class MobiusView
 
     juce::OwnedArray<MobiusViewTrack> tracks;
     MobiusViewTrack* getTrack(int index);
+
+    MobiusViewTrack metronome;
 
     int audioTracks = 0;
     int activeAudioTrack = 0;

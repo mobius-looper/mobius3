@@ -107,7 +107,15 @@ void UIAtomLight::setOffColor(juce::Colour c)
 
 void UIAtomLight::setOn(bool b)
 {
-    on = b;
+    if (on != b) {
+        on = b;
+        repaint();
+    }
+}
+
+bool UIAtomLight::isOn()
+{
+    return on;
 }
 
 void UIAtomLight::resized()
@@ -166,16 +174,73 @@ void UIAtomLight::setFillColor(juce::Graphics& g)
 
 //////////////////////////////////////////////////////////////////////
 //
+// Flash
+//
+//////////////////////////////////////////////////////////////////////
+
+UIAtomFlash::UIAtomFlash()
+{
+    decay = 500;
+    count = 0;
+}
+
+UIAtomFlash::~UIAtomFlash()
+{
+}
+
+void UIAtomFlash::setDecay(int msec)
+{
+    decay = msec;
+    if (count > decay)
+      count = decay;
+}
+
+void UIAtomFlash::flash()
+{
+    setOn(true);
+    count = decay;
+}
+
+void UIAtomFlash::advance()
+{
+    // assume 100 msec per tick
+    if (isOn()) {
+        count -= 100;
+        if (count <= 0) {
+            setOn(false);
+            count = 0;
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
 // Button
+//
+// Buttons have these colors:
+//
+//    onColor - the color to draw the button text when the button is
+//     pressed or when it is toggled on
+//
+//    offColor - the color of the text when the button is released and
+//     it is not toggled on
+//
+//    backColor - the color of the background under the text
+//
+//    overColor - the color of the background when the mouse is hovering
+//      over the button
+//
+//    borderColor - the color of the border around the background
 //
 //////////////////////////////////////////////////////////////////////
 
 UIAtomButton::UIAtomButton()
 {
     onColor = juce::Colours::red;
-    offColor = juce::Colours::black;
-    backColor = juce::Colours::grey;
-    overColor = juce::Colours::white;
+    offColor = juce::Colours::white;
+    backColor = juce::Colours::black;
+    overColor = juce::Colours::grey;
+    outlineColor = juce::Colours::white;
 }
 
 UIAtomButton::~UIAtomButton()
@@ -192,6 +257,11 @@ void UIAtomButton::setText(juce::String s)
     text = s;
 }
 
+void UIAtomButton::setOnText(juce::String s)
+{
+    onText = s;
+}
+
 void UIAtomButton::setOnColor(juce::Colour c)
 {
     onColor = c;
@@ -202,9 +272,34 @@ void UIAtomButton::setOffColor(juce::Colour c)
     offColor = c;
 }
 
+void UIAtomButton::setBackColor(juce::Colour c)
+{
+    backColor = c;
+}
+
+void UIAtomButton::setOverColor(juce::Colour c)
+{
+    overColor = c;
+}
+
+void UIAtomButton::setOutlineColor(juce::Colour c)
+{
+    outlineColor = c;
+}
+
+void UIAtomButton::setToggle(bool b)
+{
+    toggle = b;
+}
+
 void UIAtomButton::setOn(bool b)
 {
     on = b;
+}
+
+bool UIAtomButton::isOn()
+{
+    return on;
 }
 
 void UIAtomButton::resized()
@@ -212,6 +307,9 @@ void UIAtomButton::resized()
 }
 
 /**
+ * [old notes I drag around whenever I have to use drawFittedText, it's still
+ *  a mystery]
+ *
  * drawFittedText
  * arg after justification is maximumNumberOfLines
  * which can be used to break up the next into several lines
@@ -241,32 +339,60 @@ void UIAtomButton::resized()
  */
 void UIAtomButton::paint(juce::Graphics& g)
 {
-    if (over)
-      g.setColour(overColor);
-    else
-      g.setColour(backColor);
-    g.fillRect(getLocalBounds());
+    drawBackground(g);
     
     if (on)
       g.setColour(onColor);
     else
       g.setColour(offColor);
 
-    juce::Font font(JuceUtil::getFont(getHeight()));
+    juce::Rectangle<int> area = getLocalBounds();
+    area = area.reduced(0, (int)(area.getHeight() * 0.10f));
+
+    juce::Font font((float)(area.getHeight()));
     // hacking around the unpredictable truncation, if the name is beyond
     // a certain length, reduce the font height
     if (text.length() >= 10)
-      font = JuceUtil::getFontf(getHeight() * 0.75f);
+      font = JuceUtil::getFontf(area.getHeight() * 0.75f);
           
     // not sure about font sizes, we're going to use fit so I think
     // that will size down as necessary
     g.setFont(font);
+
+    juce::String s = text;
+    if (onText.length() > 0 && on)
+      s = onText;
     
-    g.drawFittedText(text, 0, 0, getWidth(), getHeight(),
+    g.drawFittedText(s, area.getX(), area.getY(), area.getWidth(), area.getHeight(),
                      juce::Justification::centred,
                      1, // max lines
                      1.0f);
 }
+
+void UIAtomButton::drawBackground(juce::Graphics& g)
+{
+    auto cornerSize = 6.0f;
+    auto bounds = getLocalBounds().toFloat().reduced (0.5f, 0.5f);
+
+    // various things from the Juce drawButtonBackground
+    /*
+      auto baseColour = backgroundColour.withMultipliedSaturation (button.hasKeyboardFocus (true) ? 1.3f : 0.9f)
+      .withMultipliedAlpha (button.isEnabled() ? 1.0f : 0.5f);
+      
+      if (shouldDrawButtonAsDown || shouldDrawButtonAsHighlighted)
+      baseColour = baseColour.contrasting (shouldDrawButtonAsDown ? 0.2f : 0.05f);
+    */
+
+    if (over)
+      g.setColour(overColor);
+    else
+      g.setColour (backColor);
+
+    g.fillRoundedRectangle (bounds, cornerSize);
+
+    g.setColour (outlineColor);
+    g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
+}    
 
 void UIAtomButton::mouseEnter(const juce::MouseEvent& event)
 {
@@ -290,10 +416,10 @@ void UIAtomButton::mouseExit(const juce::MouseEvent& event)
 
 void UIAtomButton::mouseDown(const juce::MouseEvent& event)
 {
-    // getParentComponent()->mouseDown(event);
     (void)event;
-    if (!on) {
-        on = true;
+    bool newOn = (toggle) ? !on : true;
+    if (newOn != on) {
+        on = newOn;
         if (listener != nullptr)
           listener->atomButtonPressed(this);
         repaint();
@@ -308,12 +434,17 @@ void UIAtomButton::mouseDrag(const juce::MouseEvent& event)
 
 void UIAtomButton::mouseUp(const juce::MouseEvent& event)
 {
-    //getParentComponent()->mouseUp(e);
     (void)event;
-    if (on) {
+
+    if (toggle) {
+        // up is ignored for toggles
+    }
+    else if (on) {
+        // it should normally always be on if mouseDown was received properly
         on = false;
         repaint();
     }
+    // todo: could have a release listener
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -327,7 +458,6 @@ UIAtomText::UIAtomText()
     onColor = juce::Colours::red;
     offColor = juce::Colours::yellow;
     backColor = juce::Colours::black;
-    outlineColor = juce::Colours::white;
 }
 
 UIAtomText::~UIAtomText()
@@ -386,7 +516,9 @@ void UIAtomText::resized()
 
 void UIAtomText::paint(juce::Graphics& g)
 {
-    drawTextBackground(g);
+    // todo: need a background color?
+    g.setColour(backColor);
+    g.fillRect(getLocalBounds());
     
     if (on)
       g.setColour(onColor);
@@ -408,31 +540,6 @@ void UIAtomText::paint(juce::Graphics& g)
                      1, // max lines
                      1.0f);
 }
-
-void UIAtomText::drawTextBackground(juce::Graphics& g)
-{
-    //g.setColour(backColor);
-    //g.fillRect(getLocalBounds());
-
-    auto cornerSize = 6.0f;
-    auto bounds = getLocalBounds().toFloat().reduced (0.5f, 0.5f);
-
-    // various things from the Juce drawButtonBackground
-    /*
-      auto baseColour = backgroundColour.withMultipliedSaturation (button.hasKeyboardFocus (true) ? 1.3f : 0.9f)
-      .withMultipliedAlpha (button.isEnabled() ? 1.0f : 0.5f);
-      
-      if (shouldDrawButtonAsDown || shouldDrawButtonAsHighlighted)
-      baseColour = baseColour.contrasting (shouldDrawButtonAsDown ? 0.2f : 0.05f);
-    */
-    
-    g.setColour (backColor);
-
-    g.fillRoundedRectangle (bounds, cornerSize);
-
-    g.setColour (outlineColor);
-    g.drawRoundedRectangle (bounds, cornerSize, 1.0f);
-}    
 
 /****************************************************************************/
 /****************************************************************************/

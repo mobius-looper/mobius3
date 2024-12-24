@@ -481,6 +481,10 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     if (!longDisable)
       longWatcher.advance(stream->getInterruptFrames());
 
+    // let the metronome go first so it can cause sync pulses
+    // before the tracks that need them
+    metronome->processAudioStream(stream);
+
     // advance audio core
     audioEngine->processAudioStream(stream);
     

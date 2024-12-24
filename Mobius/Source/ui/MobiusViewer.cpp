@@ -237,7 +237,6 @@ void MobiusViewer::refresh(MobiusInterface* mobius, OldMobiusState* state, Mobiu
     // MIDI Tracks are glued onto the end of the audio tracks
     refreshMidiTracks(mobius, view);
 
-
     // so the display elements don't have to test for view->trackChanged
     // in addition to the element specific refresh flags, if at the end of refresh
     // trackChanged is set, force all the secondary flags on
@@ -1073,6 +1072,9 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
             break;
         }
     }
+
+    // not a MIDI track but uses the same new state model
+    refreshMetronome(&(state->metronome), &(view->metronome));
 }
 
 void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack* tview)
@@ -1315,6 +1317,22 @@ void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTra
 
         tview->refreshGroup = true;
     }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MetronomeTrack is special, try to merge it with Midi when the time comes
+//
+//////////////////////////////////////////////////////////////////////
+
+void MobiusViewer::refreshMetronome(MobiusState::Track* tstate,
+                                    MobiusViewTrack* tview)
+{
+    tview->beatSubcycle = tstate->beatSubCycle;
+    tview->beatCycle = tstate->beatCycle;
+    tview->beatLoop = tstate->beatLoop;
+    tview->syncTempo = tstate->tempo;
+    tview->syncBeatsPerBar = tstate->beatsPerBar;
 }
 
 /****************************************************************************/

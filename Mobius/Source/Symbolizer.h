@@ -139,6 +139,7 @@ class Symbolizer
     void parseProperty(juce::XmlElement* el);
     bool isTruthy(juce::String value);
     void addProperty(juce::XmlElement& root, class Symbol* s, juce::String name, juce::String value);
+    void parseTrackTypes(juce::XmlElement* el, class Symbol* s);
 
 };
 

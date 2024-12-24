@@ -47,6 +47,7 @@ class UIAtomLight : public UIAtom
     void setOnColor(juce::Colour c);
     void setOffColor(juce::Colour c);
     void setOn(bool b);
+    bool isOn();
     
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
@@ -63,6 +64,24 @@ class UIAtomLight : public UIAtom
 
 };
 
+class UIAtomFlash : public UIAtomLight
+{
+  public:
+
+    UIAtomFlash();
+    ~UIAtomFlash();
+
+    void setDecay(int msec);
+    void flash();
+    void advance();
+    
+  private:
+
+    int decay = 0;
+    int count = 0;
+    
+};
+
 class UIAtomButton : public UIAtom
 {
   public:
@@ -77,9 +96,15 @@ class UIAtomButton : public UIAtom
 
     void setListener(Listener* l);
     void setText(juce::String s);
+    void setOnText(juce::String s);
     void setOnColor(juce::Colour c);
     void setOffColor(juce::Colour c);
+    void setBackColor(juce::Colour c);
+    void setOverColor(juce::Colour c);
+    void setOutlineColor(juce::Colour c);
+    void setToggle(bool b);
     void setOn(bool b);
+    bool isOn();
     
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
@@ -95,22 +120,20 @@ class UIAtomButton : public UIAtom
     Listener* listener = nullptr;
 
     juce::String text;
+    juce::String onText;
     juce::Colour onColor;
     juce::Colour offColor;
     juce::Colour backColor;
     juce::Colour overColor;
+    juce::Colour outlineColor;
+    
     bool on = false;
     bool over = false;
+    bool toggle = false;
+    
+    void drawBackground(juce::Graphics& g);
     
 };
-
-class UIAtomToggle : public UIAtomButton
-{
-  public:
-
-
-};
-
 
 class UIAtomText : public UIAtom
 {
@@ -136,7 +159,6 @@ class UIAtomText : public UIAtom
     juce::Colour onColor;
     juce::Colour offColor;
     juce::Colour backColor;
-    juce::Colour outlineColor;
     bool on = false;
     bool flash = false;
     int ticks = 0;

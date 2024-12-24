@@ -24,7 +24,11 @@
 #include <JuceHeader.h>
 
 #include "../../util/Trace.h"
+#include "../../model/UIAction.h"
+#include "../../model/Symbol.h"
+
 #include "../MobiusView.h"
+#include "../../Provider.h"
 
 #include "MetronomeElement.h"
 
@@ -40,14 +44,13 @@ MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     light.setOffColor(juce::Colours::black);
     addAndMakeVisible(light);
 
-    square.setShape(UIAtomLight::Square);
-    square.setOnColor(juce::Colours::red);
-    square.setOffColor(juce::Colours::black);
-    addAndMakeVisible(square);
+    start.setText("Start");
+    start.setOnText("Stop");
+    start.setToggle(true);
+    start.setListener(this);
+    addAndMakeVisible(start);
     
     tap.setText("Tap");
-    tap.setOnColor(juce::Colours::white);
-    tap.setOffColor(juce::Colours::black);
     tap.setListener(this);
     addAndMakeVisible(tap);
 
@@ -80,6 +83,17 @@ void MetronomeElement::update(class MobiusView* v)
 {
     (void)v;
     tempo.advance();
+
+    if (v->metronome.beatLoop) {
+        light.flash();
+    }
+    else if (v->metronome.beatSubcycle) {
+        // todo: flash a different color
+        light.flash();
+    }
+    else {
+        light.advance();
+    }
 }
 
 void MetronomeElement::resized()
@@ -88,8 +102,8 @@ void MetronomeElement::resized()
     int width = area.getWidth();
     int unit = (int)(width * 0.15f);
     sizeAtom(area.removeFromLeft(unit), &light);
-    sizeAtom(area.removeFromLeft(unit), &square);
-    tap.setBounds(area.removeFromLeft((int)(width * 0.3f)));
+    start.setBounds(area.removeFromLeft((int)(width * 0.2f)));
+    tap.setBounds(area.removeFromLeft((int)(width * 0.2f)));
     tempo.setBounds(area);
 }
 
@@ -147,6 +161,20 @@ void MetronomeElement::atomButtonPressed(UIAtomButton* b)
             stempo += ".";
             stempo += juce::String(fraction);
             tempo.setText(stempo);
+
+            UIAction a;
+            a.symbol = provider->getSymbols()->getSymbol(ParamMetronomeTempo);
+            // sigh, need UIAction with a float value 
+            a.value = itempo;
+            provider->doAction(&a);
         }
+    }
+    else if (b == &start) {
+        UIAction a;
+        if (b->isOn())
+          a.symbol = provider->getSymbols()->getSymbol(FuncMetronomeStart);
+        else
+          a.symbol = provider->getSymbols()->getSymbol(FuncMetronomeStop);
+        provider->doAction(&a);
     }
 }

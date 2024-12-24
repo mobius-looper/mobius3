@@ -36,8 +36,8 @@ class MetronomeElement : public UIElement, public UIAtomButton::Listener
     
   private:
 
-    UIAtomLight light;
-    UIAtomLight square;
+    UIAtomFlash light;
+    UIAtomButton start;
     UIAtomButton tap;
     UIAtomText tempo;
     int tapStart = 0;

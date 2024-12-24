@@ -166,6 +166,7 @@ class MobiusState
         float   tempo = 0.0f;
         int 	beat = 0;
         int 	bar = 0;
+        int     beatsPerBar = 0;
         bool    outSyncMaster = false;
         bool    trackSyncMaster = false;
 
