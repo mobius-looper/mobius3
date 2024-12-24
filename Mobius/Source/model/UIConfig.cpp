@@ -879,6 +879,7 @@ void UIConfig::hackDefinitions()
     definitions.add(new UIElementDefinition("MinorModesElement"));
     definitions.add(new UIElementDefinition("TempoElement"));
     definitions.add(new UIElementDefinition("LoopWindowElement"));
+    definitions.add(new UIElementDefinition("Metronome"));
 
 
     // these were from old code and not yet implemented

@@ -28,6 +28,7 @@
 #include "MobiusDisplay.h"
 #include "Colors.h"
 #include "UIElement.h"
+#include "UIElementFactory.h"
 #include "UIElementStatusAdapter.h"
 
 #include "StatusArea.h"
@@ -192,8 +193,7 @@ StatusElement* StatusArea::createExtendedElement(DisplayElement* ref)
               ref->name.toUTF8());
     }
     else {
-        // a better factory for these somewhere?
-        UIElement* uie = UIElement::createElement(display->getProvider(), def);
+        UIElement* uie = UIElementFactory::create(display->getProvider(), def);
         if (uie != nullptr) {
             // temporary: wrap it in something that makes it look
             // like a StatusElement

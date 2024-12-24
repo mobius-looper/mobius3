@@ -486,6 +486,10 @@
                 file="../Mobius/Source/ui/display/LoopWindowElement.cpp"/>
           <FILE id="x1VQO3" name="LoopWindowElement.h" compile="0" resource="0"
                 file="../Mobius/Source/ui/display/LoopWindowElement.h"/>
+          <FILE id="QXSLGZ" name="MetronomeElement.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/MetronomeElement.cpp"/>
+          <FILE id="IbM3Ds" name="MetronomeElement.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/MetronomeElement.h"/>
           <FILE id="T9qOvY" name="MinorModesElement.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/MinorModesElement.cpp"/>
           <FILE id="gPyjDW" name="MinorModesElement.h" compile="0" resource="0"
@@ -522,8 +526,14 @@
           <FILE id="ABgtdZ" name="TrackStrip.h" compile="0" resource="0" file="../Mobius/Source/ui/display/TrackStrip.h"/>
           <FILE id="bCpZIo" name="TrackStrips.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/TrackStrips.cpp"/>
           <FILE id="MDJjOi" name="TrackStrips.h" compile="0" resource="0" file="../Mobius/Source/ui/display/TrackStrips.h"/>
+          <FILE id="GCBxi6" name="UIAtom.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIAtom.cpp"/>
+          <FILE id="PWdTQo" name="UIAtom.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIAtom.h"/>
           <FILE id="TI7ylq" name="UIElement.cpp" compile="1" resource="0" file="../Mobius/Source/ui/display/UIElement.cpp"/>
           <FILE id="IqeHUJ" name="UIElement.h" compile="0" resource="0" file="../Mobius/Source/ui/display/UIElement.h"/>
+          <FILE id="tUU7gF" name="UIElementFactory.cpp" compile="1" resource="0"
+                file="../Mobius/Source/ui/display/UIElementFactory.cpp"/>
+          <FILE id="wKwMW7" name="UIElementFactory.h" compile="0" resource="0"
+                file="../Mobius/Source/ui/display/UIElementFactory.h"/>
           <FILE id="Nbt8vi" name="UIElementLight.cpp" compile="1" resource="0"
                 file="../Mobius/Source/ui/display/UIElementLight.cpp"/>
           <FILE id="s40yRR" name="UIElementLight.h" compile="0" resource="0"

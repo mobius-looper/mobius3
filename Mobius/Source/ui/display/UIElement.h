@@ -55,9 +55,6 @@ class UIElement : public juce::Component
     virtual void resized() override;
     virtual void paint(juce::Graphics& g) override;
 
-    // need a factory for these, may as well be here
-    static UIElement* createElement(class Provider* p, class UIElementDefinition* def);
-
     // have to capture these and pass them to the parent since
     // since we are not a StatusElement and won't inherit the overloads
     // that do borders and dragging

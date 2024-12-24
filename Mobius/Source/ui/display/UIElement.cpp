@@ -10,8 +10,6 @@
 #include "../../model/UIConfig.h"
 
 #include "UIElement.h"
-#include "UIElementLight.h"
-#include "UIElementText.h"
 
 UIElement::UIElement(Provider* p, UIElementDefinition* d)
 {
@@ -89,32 +87,6 @@ void UIElement::mouseDrag(const juce::MouseEvent& event)
 void UIElement::mouseUp(const juce::MouseEvent& e)
 {
     getParentComponent()->mouseUp(e);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Factory
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Create an appropriate UIElement object to implement the visualization
- * defined in the UIElementDefinition.
- */
-UIElement* UIElement::createElement(Provider* p, UIElementDefinition* def)
-{
-    UIElement* element = nullptr;
-
-    if (def->visualizer == "Light") {
-        element = new UIElementLight(p, def);
-    }
-    else if (def->visualizer == "Text") {
-        element = new UIElementText(p, def);
-    }
-    else {
-        Trace(1, "UIElement: Unknown element visualizer %s", def->visualizer.toUTF8());
-    }
-    return element;
 }
 
 //////////////////////////////////////////////////////////////////////

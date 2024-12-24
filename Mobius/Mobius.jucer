@@ -416,6 +416,10 @@
                 file="Source/ui/display/LoopWindowElement.cpp"/>
           <FILE id="nlWxmg" name="LoopWindowElement.h" compile="0" resource="0"
                 file="Source/ui/display/LoopWindowElement.h"/>
+          <FILE id="zTIbnQ" name="MetronomeElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/MetronomeElement.cpp"/>
+          <FILE id="MrCIEv" name="MetronomeElement.h" compile="0" resource="0"
+                file="Source/ui/display/MetronomeElement.h"/>
           <FILE id="Z6gJ99" name="MinorModesElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/MinorModesElement.cpp"/>
           <FILE id="JAQb1S" name="MinorModesElement.h" compile="0" resource="0"
@@ -452,8 +456,14 @@
           <FILE id="jzCok7" name="TrackStrip.h" compile="0" resource="0" file="Source/ui/display/TrackStrip.h"/>
           <FILE id="UXBs6H" name="TrackStrips.cpp" compile="1" resource="0" file="Source/ui/display/TrackStrips.cpp"/>
           <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
+          <FILE id="hFRw08" name="UIAtom.cpp" compile="1" resource="0" file="Source/ui/display/UIAtom.cpp"/>
+          <FILE id="fpO9ne" name="UIAtom.h" compile="0" resource="0" file="Source/ui/display/UIAtom.h"/>
           <FILE id="AT7paa" name="UIElement.cpp" compile="1" resource="0" file="Source/ui/display/UIElement.cpp"/>
           <FILE id="eqEj1r" name="UIElement.h" compile="0" resource="0" file="Source/ui/display/UIElement.h"/>
+          <FILE id="lA4sic" name="UIElementFactory.cpp" compile="1" resource="0"
+                file="Source/ui/display/UIElementFactory.cpp"/>
+          <FILE id="G3WJL8" name="UIElementFactory.h" compile="0" resource="0"
+                file="Source/ui/display/UIElementFactory.h"/>
           <FILE id="W0RLCP" name="UIElementLight.cpp" compile="1" resource="0"
                 file="Source/ui/display/UIElementLight.cpp"/>
           <FILE id="teQtWN" name="UIElementLight.h" compile="0" resource="0"

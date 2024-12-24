@@ -47,6 +47,13 @@ class Session
         // implementations in case order changes or tracks are added and removed
         int id = 0;
 
+        // an internal reference number used in bindings, scripts, and other configuration
+        // to reliably refer to this track, this is different than the id though they
+        // will often match
+        // how tracks are identified and numbered sucks and needs thought
+        // this is not persisted in the XML it is assigned by TrackManager during initialization
+        int number = 0;
+
         TrackType type;
 
         // should this be a first-class member or inside the value set?

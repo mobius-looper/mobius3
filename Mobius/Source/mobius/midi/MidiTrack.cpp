@@ -107,6 +107,9 @@ MidiTrack::~MidiTrack()
  */
 void MidiTrack::loadSession(Session::Track* def)
 {
+    // set our number before we do any configuration loading
+    number = def->number;
+    
     // capture sync options
     scheduler.loadSession(def);
 

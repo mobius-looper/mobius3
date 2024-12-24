@@ -141,7 +141,7 @@
     </Files>
   </Machine>
   <MslState>
-    <Unit id="C:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
+    <Unit id="c:\dev\mobius3\Mobius\Source\scripts\persistence.msl">
       <Variable name="pvar" value="10" type="int"/>
     </Unit>
   </MslState>

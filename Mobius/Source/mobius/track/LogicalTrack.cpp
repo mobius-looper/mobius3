@@ -54,10 +54,15 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             // this one will call back for the BaseScheduler and wire it in
             // with a LooperScheduler
             // not sure I like the handoff here
+            // !! Engine::newTrack will cause the Session::Track to be loaded
+            // which needs the track number to initialize things
+            // really hating how tracks are identified, the "id" generated at runtime
+            // stays the same after reording but the number is the visible number and is how
+            // tracks are identified in bindings and what not....
+            // set the logical number on the definition here so it can be used from this point forward
+            trackdef->number = argNumber;
+            
             track.reset(engine.newTrack(manager, this, trackdef));
-
-            // Give the BaseTrack it's number
-            track->setNumber(argNumber);
         }
         else if (trackType == Session::TypeAudio) {
             // core tracks are special
@@ -68,6 +73,8 @@ void LogicalTrack::loadSession(Session::Track* trackdef, int argNumber)
             Mobius* m = manager->getAudioEngine();
             Track* mt = m->getTrack(engineNumber);
             track.reset(new MobiusLooperTrack(manager, this, m, mt));
+            // Mobius tracks don't use the Session so we have to put the number
+            // there for it
             track->setNumber(argNumber);
         }
         else {

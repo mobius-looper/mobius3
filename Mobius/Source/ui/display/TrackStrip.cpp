@@ -26,6 +26,7 @@
 #include "FloatingStripElement.h"
 #include "UIElementStripAdapter.h"
 #include "UIElement.h"
+#include "UIElementFactory.h"
 
 // eventually have one that takes a StatusAreaWrapper parent
 TrackStrip::TrackStrip(TrackStrips* parent)
@@ -475,7 +476,7 @@ StripElement* TrackStrip::createNewStripElement(UIElementDefinition* def)
 {
     StripElement* element = nullptr;
 
-    UIElement* uie = UIElement::createElement(getProvider(), def);
+    UIElement* uie = UIElementFactory::create(getProvider(), def);
     if (uie != nullptr) {
         // unlike use as a StatusElement, these will have a specific scope
         // the number here is what is used to scope a Query
