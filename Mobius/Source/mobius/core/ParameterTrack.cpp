@@ -1507,7 +1507,7 @@ class SyncSourceParameterType : public TrackParameter
 };
 
 const char* SYNC_SOURCE_NAMES[] = {
-	"default", "none", "track", "out", "host", "midi", NULL
+	"default", "none", "track", "out", "host", "midi", "metronome", NULL
 };
 
 SyncSourceParameterType::SyncSourceParameterType() :
