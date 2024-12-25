@@ -14,8 +14,15 @@ class UIAtom : public juce::Component
     UIAtom();
     ~UIAtom();
 
-    virtual int getPreferredHeight();
-    virtual int getPreferredWidth();
+    int getPreferredWidth();
+    void setPreferredWidth(int w);
+    int getPreferredHeight();
+    void setPreferredHeight(int h);
+    
+    int getMinWidth();
+    void setMinWidth(int w);
+    int getMinHeight();
+    void setMinHeight(int h);
     
     // do Jucy things
     virtual void resized() override;
@@ -26,6 +33,13 @@ class UIAtom : public juce::Component
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& e) override;
+
+  protected:
+
+    int preferredWidth = 0;
+    int preferredHeight = 0;
+    int minWidth = 0;
+    int minHeight = 0;
 
 };
 
@@ -46,6 +60,7 @@ class UIAtomLight : public UIAtom
     void setShape(Shape s);
     void setOnColor(juce::Colour c);
     void setOffColor(juce::Colour c);
+    void setOutlineColor(juce::Colour c);
     void setOn(bool b);
     bool isOn();
     
@@ -57,6 +72,7 @@ class UIAtomLight : public UIAtom
     Shape shape = Circle;
     juce::Colour onColor;
     juce::Colour offColor;
+    juce::Colour outlineColor;
     bool on = false;
     
     void setBorderColor(juce::Graphics& g);
@@ -73,6 +89,7 @@ class UIAtomFlash : public UIAtomLight
 
     void setDecay(int msec);
     void flash();
+    void flash(juce::Colour c);
     void advance();
     
   private:

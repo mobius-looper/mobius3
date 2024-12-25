@@ -5,8 +5,9 @@
 #pragma once
 
 #include "BaseTrack.h"
+#include "../../sync/Pulsator.h"
 
-class MetronomeTrack : public BaseTrack
+class MetronomeTrack : public BaseTrack, public Pulsator::MetronomeSource
 {
   public:
     
@@ -22,10 +23,21 @@ class MetronomeTrack : public BaseTrack
     void trackNotification(NotificationId notification, TrackProperties& props) override;
     int getGroup() override;
     bool isFocused() override;
+    void refreshPriorityState(class MobiusPriorityState* state) override;
     void refreshPriorityState(class MobiusState::Track* tstate) override;
     void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
+
+    void setTempo(float t);
+    void setBeatsPerBar(int bpb);
+
+    // MetronomeSource
+    float getTempo();
+    int getBeatsPerBar();
+    int getBeat();
+    int getBar();
+    void getPulse(class Pulse& p);
     
   private:
     
@@ -35,6 +47,9 @@ class MetronomeTrack : public BaseTrack
     void doBeatsPerBar(class UIAction* a);
 
     void advance(int frames);
+    bool blockPulse = false;
+    Pulse::Type blockPulseType = Pulse::PulseBeat;
+    int blockPulseFrame = 0;
 
     int calcTempoLength(float tempo, int bpb);
     void setLength(int l);

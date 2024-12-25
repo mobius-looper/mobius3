@@ -135,13 +135,33 @@ class MobiusInterface {
      *
      * It is considered read-only and possibly damaging to the engine if you
      * modify it.
+     *
+     * todo: This is obsolete and will eventually be replaced by MobiusState.
      */
     virtual class OldMobiusState* getOldMobiusState() = 0;
 
     /**
-     * Ditto for MIDI
+     * Return a newer refreshed state object.
+     * This also remains stable for the lifetime of the engine, but I want
+     * to start requiring that these be pooled objects with a request/return
+     * protocol so we can prevent concurrent access issues.
+     *
+     * Currently working around this with "phasing" which is ugly.
      */
     virtual class MobiusState* getMobiusState() = 0;
+
+    /**
+     * Refresh and return the high-resolution state.
+     *
+     * This contains a small amount of information that is typically refreshed
+     * at a much higher rate than the full MobiusState.  This includes metronome
+     * beat/bar flags, output levels, and other things that look jittery if you
+     * refresh them every 1/10th second like the main state.
+     *
+     * The object is stable for the lifetime of the engine, but you must
+     * call this method to cause it to be refreshed.
+     */
+    virtual class MobiusPriorityState* getPriorityState() = 0;
     
     /**
      * Do periodic housekeeping tasks within the maintenance thread.

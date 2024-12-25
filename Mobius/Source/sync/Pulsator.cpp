@@ -80,10 +80,11 @@ void Pulsator::configure()
 
 void Pulsator::reset()
 {
-    hostPulse.source = Pulse::SourceNone;
-    midiInPulse.source = Pulse::SourceNone;
-    midiOutPulse.source = Pulse::SourceNone;
-
+    host.pulse.source = Pulse::SourceNone;
+    midiIn.pulse.source = Pulse::SourceNone;
+    midiOut.pulse.source = Pulse::SourceNone;
+    metronome.pulse.source = Pulse::SourceNone;
+    
     // this is where pending pulses that were just over the last block
     // are activated for this block
     for (auto leader : leaders)
@@ -132,10 +133,11 @@ float Pulsator::getTempo(Pulse::Source src)
 {
     float tempo = 0.0f;
     switch (src) {
-        case Pulse::SourceHost: tempo = hostTempo; break;
+        case Pulse::SourceHost: tempo = host.tempo; break;
             //case SourceMidiIn: tempo = midiTransport->getInputSmoothTempo(); break;
         case Pulse::SourceMidiIn: tempo = midiTransport->getInputTempo(); break;
         case Pulse::SourceMidiOut: tempo = midiTransport->getTempo(); break;
+        case Pulse::SourceMetronome: tempo = metronome.tempo; break;
         default: break;
     }
     return tempo;
@@ -150,9 +152,10 @@ int Pulsator::getBeat(Pulse::Source src)
 {
     int beat = 0;
     switch (src) {
-        case Pulse::SourceHost: beat = hostBeat; break;
+        case Pulse::SourceHost: beat = host.beat; break;
         case Pulse::SourceMidiIn: beat = midiTransport->getInputRawBeat(); break;
         case Pulse::SourceMidiOut: beat = midiTransport->getRawBeat(); break;
+        case Pulse::SourceMetronome: beat = metronome.beat; break;
         default: break;
     }
     return beat;
@@ -165,9 +168,10 @@ int Pulsator::getBar(Pulse::Source src)
 {
     int bar = 0;
     switch (src) {
-        case Pulse::SourceHost: bar = hostBar; break;
+        case Pulse::SourceHost: bar = host.bar; break;
         case Pulse::SourceMidiIn: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
         case Pulse::SourceMidiOut: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
+        case Pulse::SourceMetronome: bar = metronome.bar; break;
         default: break;
     }
     return bar;
@@ -203,9 +207,10 @@ int Pulsator::getBeatsPerBar(Pulse::Source src)
 {
     int bar = 0;
     switch (src) {
-        case Pulse::SourceHost: bar = hostBeatsPerBar; break;
+        case Pulse::SourceHost: bar = host.beatsPerBar; break;
         case Pulse::SourceMidiIn: bar = 4; break;
         case Pulse::SourceMidiOut: bar = 4; break;
+        case Pulse::SourceMetronome: bar = host.beatsPerBar; break;
         default: break;
     }
     return bar;
@@ -213,9 +218,9 @@ int Pulsator::getBeatsPerBar(Pulse::Source src)
 
 void Pulsator::trace()
 {
-    if (hostPulse.source != Pulse::SourceNone) trace(hostPulse);
-    if (midiInPulse.source != Pulse::SourceNone) trace(midiInPulse);
-    if (midiOutPulse.source != Pulse::SourceNone) trace(midiOutPulse);
+    if (host.pulse.source != Pulse::SourceNone) trace(host.pulse);
+    if (midiIn.pulse.source != Pulse::SourceNone) trace(midiIn.pulse);
+    if (midiOut.pulse.source != Pulse::SourceNone) trace(midiOut.pulse);
     for (auto leader : leaders) {
         if (leader->pulse.source != Pulse::SourceNone)
           trace(leader->pulse);
@@ -229,6 +234,7 @@ void Pulsator::trace(Pulse& p)
         case Pulse::SourceMidiIn: msg += "MidiIn "; break;
         case Pulse::SourceMidiOut: msg += "MidiOut "; break;
         case Pulse::SourceHost: msg += "Host "; break;
+        case Pulse::SourceMetronome: msg += "Metronome "; break;
         case Pulse::SourceLeader: msg += "Internal "; break;
         case Pulse::SourceNone: msg += "None "; break;
     }
@@ -277,18 +283,18 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
     // this will come back nullptr if we're not a plugin
 	AudioTime* hostTime = stream->getAudioTime();
     if (hostTime != nullptr) {
-		hostBeat = hostTime->beat;
-        hostBar = hostTime->bar;
+		host.beat = hostTime->beat;
+        host.bar = hostTime->bar;
 
         // trace these since I want to know which hosts can provide them
-        if (hostTempo != hostTime->tempo) {
+        if (host.tempo != hostTime->tempo) {
             // historically this has been a double, not necessary
-            hostTempo = (float)(hostTime->tempo);
-            Trace(2, "Pulsator: Host tempo %d (x100)", (int)(hostTempo * 100));
+            host.tempo = (float)(hostTime->tempo);
+            Trace(2, "Pulsator: Host tempo %d (x100)", (int)(host.tempo * 100));
         }
-        if (hostBeatsPerBar != hostTime->beatsPerBar) {
-            hostBeatsPerBar = hostTime->beatsPerBar;
-            Trace(2, "Pulsator: Host beatsPerBar %d", hostBeatsPerBar);
+        if (host.beatsPerBar != hostTime->beatsPerBar) {
+            host.beatsPerBar = hostTime->beatsPerBar;
+            Trace(2, "Pulsator: Host beatsPerBar %d", host.beatsPerBar);
         }
         
         bool starting = false;
@@ -299,11 +305,11 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
             // the host transport stopped
             stopping = true;
             // generate a pulse for this, may be replace if there is also a beat here
-            hostPulse.reset(Pulse::SourceHost, millisecond);
-            hostPulse.blockFrame = 0;
+            host.pulse.reset(Pulse::SourceHost, millisecond);
+            host.pulse.blockFrame = 0;
             // doesn't really matter what this is
-            hostPulse.type = Pulse::PulseBeat;
-            hostPulse.stop = true;
+            host.pulse.type = Pulse::PulseBeat;
+            host.pulse.stop = true;
             hostPlaying = false;
         }
         else if (!hostPlaying && hostTime->playing) {
@@ -322,20 +328,20 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
         // but since we can't keep more than one pulse per block, just overwrite it
         if (hostTime->beatBoundary || hostTime->barBoundary) {
 
-            hostPulse.reset(Pulse::SourceHost, millisecond);
-            hostPulse.blockFrame = hostTime->boundaryOffset;
+            host.pulse.reset(Pulse::SourceHost, millisecond);
+            host.pulse.blockFrame = hostTime->boundaryOffset;
             if (hostTime->barBoundary)
-              hostPulse.type = Pulse::PulseBar;
+              host.pulse.type = Pulse::PulseBar;
             else
-              hostPulse.type = Pulse::PulseBeat;
+              host.pulse.type = Pulse::PulseBeat;
 
-            hostPulse.beat = hostTime->beat;
-            hostPulse.bar = hostTime->bar;
+            host.pulse.beat = hostTime->beat;
+            host.pulse.bar = hostTime->bar;
 
             // convey these, though start may be unreliable
             // blow off continue, too hard
-            hostPulse.start = starting;
-            hostPulse.stop = stopping;
+            host.pulse.start = starting;
+            host.pulse.stop = stopping;
         }
     }
 }
@@ -357,7 +363,7 @@ void Pulsator::gatherMidi()
     midiTransport->iterateInputStart();
     MidiSyncEvent* mse = midiTransport->iterateInputNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMidiIn, &midiInPulse))
+        if (detectMidiBeat(mse, Pulse::SourceMidiIn, &(midiIn.pulse)))
           break;
         else
           mse = midiTransport->iterateInputNext();
@@ -367,7 +373,7 @@ void Pulsator::gatherMidi()
     midiTransport->iterateOutputStart();
     mse = midiTransport->iterateOutputNext();
     while (mse != nullptr) {
-        if (detectMidiBeat(mse, Pulse::SourceMidiOut, &midiOutPulse))
+        if (detectMidiBeat(mse, Pulse::SourceMidiOut, &(midiOut.pulse)))
           break;
         else
           mse = midiTransport->iterateOutputNext();
@@ -434,6 +440,33 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
     }
     
 	return detected;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Metronome
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Metronome is odd because the implementation is buried in the audio thread,
+ * more like a Leader track and we expect information to be pushed to us
+ * rather than pulling it from somewhere.
+ * 
+ * Pulsator is owned by Supervisor though it is normally onlhy accessed from
+ * the audio thread.  Unclear what the best way forward is here.  Maybe host
+ * and MidiTransport should push too?
+ */
+void Pulsator::gatherMetronome(MetronomeSource* src)
+{
+    metronome.tempo = src->getTempo();
+    metronome.beat = src->getBeat();
+    metronome.bar = src->getBar();
+    src->getPulse(metronome.pulse);
+
+    // ugh, MetronomeTrack didn't have our millisecond counter
+    if (metronome.pulse.source != Pulse::SourceNone)
+      metronome.pulse.millisecond = millisecond;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -935,9 +968,9 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
         
             switch (source) {
                 case Pulse::SourceNone: /* nothing to say */ break;
-                case Pulse::SourceMidiIn: frame = getPulseFrame(&midiInPulse, type); break;
-                case Pulse::SourceMidiOut: frame = getPulseFrame(&midiOutPulse, type); break;
-                case Pulse::SourceHost: frame = getPulseFrame(&hostPulse, type); break;
+                case Pulse::SourceMidiIn: frame = getPulseFrame(&(midiIn.pulse), type); break;
+                case Pulse::SourceMidiOut: frame = getPulseFrame(&(midiOut.pulse), type); break;
+                case Pulse::SourceHost: frame = getPulseFrame(&(host.pulse), type); break;
                 case Pulse::SourceLeader: {
 
                     // leader can be zero here if there was no track sync leader

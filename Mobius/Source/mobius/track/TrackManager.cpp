@@ -1264,8 +1264,27 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * This is the new way to get high priority state.
+ * Retool getMobiusState to use this.
+ */
+MobiusPriorityState* TrackManager::getPriorityState()
+{
+    metronome->refreshPriorityState(&priorityState);
+    return &priorityState;
+}
+
+/**
  * Get the "important" track state.
  * todo: hate this name
+ *
+ * So.."priority"
+ *
+ * This is called ever 1/10th second on the regular mainenance cycle
+ * What makes refreshPriorityState different is that because we're dealing
+ * with the buffered MobiusState object, this makes sure it is up to date at the
+ * tiem of the call rather than waiting for the next periodic refresh.  It still
+ * only has 1/10th resolution.  Now that we have getPriorityState which is called
+ * every 10sm could be returning it there.
  */
 MobiusState* TrackManager::getMobiusState()
 {

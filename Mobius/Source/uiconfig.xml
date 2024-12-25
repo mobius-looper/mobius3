@@ -16,7 +16,7 @@
     <Element name="TempoElement" x="438" y="31"/>
     <Element name="LoopWindowElement" x="452" y="343"/>
     <Element name="RC505 Undo/Redo" x="42" y="258" width="75" height="41"/>
-    <Element name="Metronome" x="22" y="321" width="289" height="29"/>
+    <Element name="Metronome" x="785" y="23" width="234" height="29"/>
     <Strip name="Docked">
       <Element name="focusLock"/>
       <Element name="trackNumber"/>

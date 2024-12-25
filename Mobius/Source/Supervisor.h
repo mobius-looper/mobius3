@@ -99,6 +99,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void addAlertListener(AlertListener* l) override;
     void removeAlertListener(AlertListener* l) override;
     
+    void addHighListener(HighRefreshListener* l) override;
+    void removeHighListener(HighRefreshListener* l) override;
+    
     // this isn't really a listener, but it wants to be informed of things
     // if we ever have more the one console-like thing (MobiusConsole and ScriptConsole)
     // then may want multiples
@@ -217,7 +220,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // entry point for the "maintenance thread" only to be called by MainThread
     void advance();
-
+    void advanceHigh();
+    
     // Provider interface for file transfer
     void loadAudio(int trackNumber, int loopNumber) override;
     void saveAudio(int trackNumber, int loopNumber) override;
@@ -418,6 +422,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // internal component listeners
     juce::Array<ActionListener*> actionListeners;
     juce::Array<AlertListener*> alertListeners;
+    juce::Array<HighRefreshListener*> highListeners;
     class MobiusConsole* mobiusConsole = nullptr;
 
     // master copies of the configuration files

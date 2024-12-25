@@ -539,6 +539,11 @@ MobiusState* MobiusShell::getMobiusState()
     return kernel.getMobiusState();
 }
 
+MobiusPriorityState* MobiusShell::getPriorityState()
+{
+    return kernel.getPriorityState();
+}
+
 /**
  * Expected to be called at regular small intervals by a thread
  * managed in the UI, usually 1/10 second.

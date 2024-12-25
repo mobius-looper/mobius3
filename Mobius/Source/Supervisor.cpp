@@ -24,6 +24,7 @@
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
 #include "model/OldMobiusState.h"
+#include "model/MobiusPriorityState.h"
 #include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
@@ -1004,6 +1005,18 @@ void Supervisor::advance()
     midiManager.performMaintenance();
 }
 
+/**
+ * Advance high-resolution UI elements only
+ */
+void Supervisor::advanceHigh()
+{
+    if (highListeners.size() > 0) {
+        MobiusPriorityState* state = mobius->getPriorityState();
+        for (auto l : highListeners)
+          l->highRefresh(state);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration Files
@@ -1552,6 +1565,17 @@ void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
 // Alerts and Time Boundaries
 //
 //////////////////////////////////////////////////////////////////////
+
+void Supervisor::addHighListener(HighRefreshListener* l)
+{
+    if (!highListeners.contains(l))
+      highListeners.add(l);
+}
+
+void Supervisor::removeHighListener(HighRefreshListener* l)
+{
+    highListeners.removeFirstMatchingValue(l);
+}
 
 void Supervisor::addAlertListener(AlertListener* l)
 {

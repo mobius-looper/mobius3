@@ -33,6 +33,16 @@ class Provider
         virtual void alertReceived(juce::String msg) = 0;
     };
 
+    /**
+     * For a small number of components that want to receive high-resolution
+     * refresh pings.
+     */
+    class HighRefreshListener {
+      public:
+        virtual ~HighRefreshListener() {}
+        virtual void highRefresh(class MobiusPriorityState* state) = 0;
+    };
+
     virtual ~Provider() {}
 
     virtual void addActionListener(ActionListener* l) = 0;
@@ -40,6 +50,9 @@ class Provider
 
     virtual void addAlertListener(AlertListener* l) = 0;
     virtual void removeAlertListener(AlertListener* l) = 0;
+
+    virtual void addHighListener(HighRefreshListener* l) = 0;
+    virtual void removeHighListener(HighRefreshListener* l) = 0;
 
     virtual class MobiusConfig* getMobiusConfig() = 0;
     virtual class Session* getSession() = 0;

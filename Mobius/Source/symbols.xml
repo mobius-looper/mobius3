@@ -517,7 +517,7 @@
          allowed for this parameter since internally it shares the same SyncSource enumeration
          with the syncSource track scope parameter
     -->
-    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi'
+    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,metronome'
                coreName='syncSource'
                codeName='SyncSource'
                enumName='SyncSource'/>
@@ -612,7 +612,7 @@
     <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
 
-    <Parameter name='syncSource' values='default,none,track,out,host,midi' />
+    <Parameter name='syncSource' values='default,none,track,out,host,midi,metronome' />
     <Parameter name='trackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
                values='default,subcycle,cycle,loop' />
     <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>

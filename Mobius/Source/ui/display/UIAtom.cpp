@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 
 #include "../JuceUtil.h"
+#include "Colors.h"
 #include "UIAtom.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -20,12 +21,42 @@ UIAtom::~UIAtom()
 
 int UIAtom::getPreferredWidth()
 {
-    return 20;
+    return preferredWidth;
 }
 
 int UIAtom::getPreferredHeight()
 {
-    return 20;
+    return preferredHeight;
+}
+
+void UIAtom::setPreferredWidth(int w)
+{
+    preferredWidth = w;
+}
+
+void UIAtom::setPreferredHeight(int h)
+{
+    preferredHeight = h;
+}
+
+int UIAtom::getMinWidth()
+{
+    return minWidth;
+}
+
+void UIAtom::setMinWidth(int w)
+{
+    minWidth = w;
+}
+
+int UIAtom::getMinHeight()
+{
+    return minHeight;
+}
+
+void UIAtom::setMinHeight(int h)
+{
+    minHeight = h;
 }
 
 void UIAtom::resized()
@@ -105,6 +136,11 @@ void UIAtomLight::setOffColor(juce::Colour c)
     offColor = c;
 }
 
+void UIAtomLight::setOutlineColor(juce::Colour c)
+{
+    outlineColor = c;
+}
+
 void UIAtomLight::setOn(bool b)
 {
     if (on != b) {
@@ -129,6 +165,8 @@ void UIAtomLight::paint(juce::Graphics& g)
             // Ellipse wants float rectangles, getLocalBounds returns ints
             // seems like there should be an easier way to convert this
             juce::Rectangle<float> area (0.0f, 0.0f, (float)getWidth(), (float)getHeight());
+            // getting some clipping on the edges
+            area = area.reduced(0.5f);
             setBorderColor(g);
             g.drawEllipse(area, 2.0f);
             area = area.reduced(2.0f);
@@ -161,7 +199,10 @@ void UIAtomLight::paint(juce::Graphics& g)
 void UIAtomLight::setBorderColor(juce::Graphics& g)
 {
     // todo: configurable border color and maybe no border
-    g.setColour(juce::Colours::blue);
+    if (outlineColor != juce::Colour())
+      g.setColour(outlineColor);
+    else
+      g.setColour(juce::Colour(MobiusBlue));
 }
 
 void UIAtomLight::setFillColor(juce::Graphics& g)
@@ -180,7 +221,7 @@ void UIAtomLight::setFillColor(juce::Graphics& g)
 
 UIAtomFlash::UIAtomFlash()
 {
-    decay = 500;
+    decay = 200;
     count = 0;
 }
 
@@ -199,6 +240,13 @@ void UIAtomFlash::flash()
 {
     setOn(true);
     count = decay;
+}
+
+void UIAtomFlash::flash(juce::Colour c)
+{
+    setOnColor(c);
+    flash();
+    repaint();
 }
 
 void UIAtomFlash::advance()
@@ -240,7 +288,7 @@ UIAtomButton::UIAtomButton()
     offColor = juce::Colours::white;
     backColor = juce::Colours::black;
     overColor = juce::Colours::grey;
-    outlineColor = juce::Colours::white;
+    outlineColor = juce::Colour(MobiusBlue);
 }
 
 UIAtomButton::~UIAtomButton()
@@ -349,7 +397,8 @@ void UIAtomButton::paint(juce::Graphics& g)
     juce::Rectangle<int> area = getLocalBounds();
     area = area.reduced(0, (int)(area.getHeight() * 0.10f));
 
-    juce::Font font((float)(area.getHeight()));
+    juce::Font font(JuceUtil::getFont(area.getHeight()));
+    
     // hacking around the unpredictable truncation, if the name is beyond
     // a certain length, reduce the font height
     if (text.length() >= 10)

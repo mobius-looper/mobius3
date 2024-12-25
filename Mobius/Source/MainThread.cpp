@@ -68,11 +68,19 @@ void MainThread::run()
     // trace buffering for some reason
     
     GlobalTraceFlusher = this;
-
+    int ticks = 0;
+    
     // threadShouldExit returns true when the stopThread method is called
     while (!threadShouldExit()) {
 
-        wait(100);
+        wait(10);
+        ticks++;
+
+        bool doCoarse = false;
+        if (ticks >= 10) {
+            doCoarse = true;
+            ticks = 0;
+        }
 
         // from the Juce example
         // because this is a background thread, we mustn't do any UI work without
@@ -84,21 +92,26 @@ void MainThread::run()
             return;
         }
 
-        // flush any accumulated trace messages
-        // had to move this under MessageManagerLock once UnitTestPanel started
-        // intercepting messages
-        if (GlobalTraceFlusher == this)
-          FlushTrace();
+        supervisor->advanceHigh();
 
-        // hmm, not liking the double buffering
-        // Should FlushTrace do this or are they independent?
-        // gak, what a mess
-        TraceFile.flush();
+        if (doCoarse) {
 
-        // thread is locked, we can mess with components
-        // I don't think we're going to need events to process, just
-        // notify Supervisor
-        supervisor->advance();
+            // flush any accumulated trace messages
+            // had to move this under MessageManagerLock once UnitTestPanel started
+            // intercepting messages
+            if (GlobalTraceFlusher == this)
+              FlushTrace();
+
+            // hmm, not liking the double buffering
+            // Should FlushTrace do this or are they independent?
+            // gak, what a mess
+            TraceFile.flush();
+
+            // thread is locked, we can mess with components
+            // I don't think we're going to need events to process, just
+            // notify Supervisor
+            supervisor->advance();
+        }
     }
 
     FlushTrace();

@@ -111,6 +111,10 @@ void BaseScheduler::loadSession(Session::Track* def)
         syncSource = Pulse::SourceMidiIn;
         pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
+    else if (sessionSyncSource == SYNC_METRONOME) {
+        syncSource = Pulse::SourceMetronome;
+        pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
+    }
     else {
         pulsator->unfollow(scheduledTrack->getNumber());
         syncSource = Pulse::SourceNone;

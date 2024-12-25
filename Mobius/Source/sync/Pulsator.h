@@ -60,6 +60,32 @@ class Pulsator
 {
   public:
 
+    /**
+     * The interface of something that can provide information about an internal
+     * metronome.  In practice this will always be MetronomeTrack.
+     */
+    class MetronomeSource {
+      public:
+        virtual ~MetronomeSource() {}
+        virtual float getTempo() = 0;
+        virtual int getBeat() = 0;
+        virtual int getBar() = 0;
+        virtual int getBeatsPerBar() = 0;
+        virtual void getPulse(Pulse& p) = 0;
+    };
+
+    /**
+     * The sync state maintained for each source
+     */
+    class SyncState {
+      public:
+        float tempo = 0.0f;
+        int beat = 0;
+        int bar = 0;
+        int beatsPerBar = 0;
+        Pulse pulse;
+    };
+    
     Pulsator(class Provider* p);
     ~Pulsator();
     void configure();
@@ -97,6 +123,9 @@ class Pulsator
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
 
+    // pull information from a metronome
+    void gatherMetronome(MetronomeSource* src);
+
     //
     // State of the various sources
     //
@@ -133,27 +162,10 @@ class Pulsator
 
     // true when the host transport was advancing in the past
     bool hostPlaying = false;
-
-    // tempo and time signature from the host
-    float hostTempo = 0.0f;
-    int hostBeat = 0;
-    int hostBar = 0;
-    int hostBeatsPerBar = 0;
-    Pulse hostPulse;
-    
-    //
-    // MIDI sync state
-    //
-
-    int midiInBeat = 0;
-    int midiInBar = 0;
-    int midiInBeatsPerBar = 0;
-    Pulse midiInPulse;
-    
-    int midiOutBeat = 0;
-    int midiOutBar = 0;
-    int midiOutBeatsPerBar = 0;
-    Pulse midiOutPulse;
+    SyncState host;
+    SyncState metronome;
+    SyncState midiIn;
+    SyncState midiOut;
 
     void reset();
     Leader* getLeader(int id);

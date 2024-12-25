@@ -26,6 +26,7 @@
 #include "../../util/Trace.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
+#include "../../model/MobiusPriorityState.h"
 
 #include "../MobiusView.h"
 #include "../../Provider.h"
@@ -35,6 +36,7 @@
 // dimensions of the colored bar that represents the loop position
 const int MetronomeWidth = 200;
 const int MetronomeHeight = 30;
+const int MetronomeGap = 4;
 
 MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
@@ -42,27 +44,33 @@ MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     light.setShape(UIAtomLight::Circle);
     light.setOnColor(juce::Colours::red);
     light.setOffColor(juce::Colours::black);
+    light.setPreferredWidth(30);
     addAndMakeVisible(light);
 
     start.setText("Start");
     start.setOnText("Stop");
     start.setToggle(true);
     start.setListener(this);
+    start.setPreferredWidth(60);
     addAndMakeVisible(start);
     
     tap.setText("Tap");
     tap.setListener(this);
+    tap.setPreferredWidth(40);
     addAndMakeVisible(tap);
 
-    tempo.setFlash(true);
-    addAndMakeVisible(tempo);
+    // tempo.setFlash(true);
+    tempoAtom.setPreferredWidth(50);
+    addAndMakeVisible(tempoAtom);
 
-    //start.setOnText("Stop");
-    //start.setOffText("Start");
+    // !! there needs to be showing() and hiding() simiilar to how the
+    // ConfigPanels work so we can remove the listener if the element is disabled
+    p->addHighListener(this);
 }
 
 MetronomeElement::~MetronomeElement()
 {
+    provider->removeHighListener(this);
 }
 
 void MetronomeElement::configure()
@@ -71,7 +79,11 @@ void MetronomeElement::configure()
 
 int MetronomeElement::getPreferredWidth()
 {
-    return MetronomeWidth;
+    return
+        light.getPreferredWidth() + MetronomeGap +
+        start.getPreferredWidth() + MetronomeGap +
+        tap.getPreferredWidth() + MetronomeGap +
+        tempoAtom.getPreferredWidth();
 }
 
 int MetronomeElement::getPreferredHeight()
@@ -79,38 +91,69 @@ int MetronomeElement::getPreferredHeight()
     return MetronomeHeight;
 }
 
-void MetronomeElement::update(class MobiusView* v)
+void MetronomeElement::highRefresh(MobiusPriorityState* s)
 {
-    (void)v;
-    tempo.advance();
-
-    if (v->metronome.beatLoop) {
-        light.flash();
+    if (s->metronomeBar) {
+        light.flash(juce::Colours::red);
     }
-    else if (v->metronome.beatSubcycle) {
-        // todo: flash a different color
-        light.flash();
-    }
-    else {
-        light.advance();
+    else if (s->metronomeBeat) {
+        light.flash(juce::Colours::yellow);
     }
 }
 
+void MetronomeElement::update(class MobiusView* v)
+{
+    (void)v;
+    // only needed this to test flashing
+    //tempo.advance();
+
+    float ftempo = v->metronome.syncTempo;
+    // trunicate to two decimal places to prevent excessive
+    // fluctuations
+    int itempo = (int)(ftempo * 100);
+    if (itempo != tempoValue) {
+        int decimal = (int)ftempo;
+        int fraction = (int)((ftempo - (float)decimal) * 10.0f);
+        juce::String stempo = juce::String(decimal);
+        stempo += ".";
+        stempo += juce::String(fraction);
+        // this will repaing()
+        tempoAtom.setText(stempo);
+        tempoValue = itempo;
+    }
+
+    // todo: a display for beatsPerBar
+    
+    // this is necessary to flash beats
+    light.advance();
+}
+
+/**
+ * Need to work out a decent layout manager for things like this.
+ * Each Atom has a minimum size, but if the bounding box grows larger
+ * we should expand them to have similar proportional sizes.
+ */
 void MetronomeElement::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    int width = area.getWidth();
-    int unit = (int)(width * 0.15f);
-    sizeAtom(area.removeFromLeft(unit), &light);
-    start.setBounds(area.removeFromLeft((int)(width * 0.2f)));
-    tap.setBounds(area.removeFromLeft((int)(width * 0.2f)));
-    tempo.setBounds(area);
+    
+    sizeAtom(area.removeFromLeft(light.getPreferredWidth()), &light);
+    area.removeFromLeft(MetronomeGap);
+    
+    start.setBounds(area.removeFromLeft(start.getPreferredWidth()));
+    area.removeFromLeft(MetronomeGap);
+    
+    tap.setBounds(area.removeFromLeft(tap.getPreferredWidth()));
+    area.removeFromLeft(MetronomeGap);
+    
+    tempoAtom.setBounds(area);
 }
 
 /**
  * Resize an atom with a percentage of the available area but keeping
  * the bounds of the atom square.
  * Feels like there should be a built-in way to do this.
+ * Also, this belongs in the UIAtom class, not out here.
  */
 void MetronomeElement::sizeAtom(juce::Rectangle<int> area, juce::Component* comp)
 {
@@ -151,22 +194,18 @@ void MetronomeElement::atomButtonPressed(UIAtomButton* b)
         else {
             int tapEnd = juce::Time::getMillisecondCounter();
             float ftempo = 60000.0f / (float)(tapEnd - tapStart);
+
+            // sigh, UIAtion can't convey a full float yet, have to bump it up
+            // and truncate to two decimal places
             int itempo = (int)(ftempo * 100);
-            Trace(2, "MetronomeElement: Tempo %d", itempo);
-            tapStart = 0;
-
-            int decimal = (int)ftempo;
-            int fraction = (int)((ftempo - (float)decimal) * 10.0f);
-            juce::String stempo = juce::String(decimal);
-            stempo += ".";
-            stempo += juce::String(fraction);
-            tempo.setText(stempo);
-
+            
             UIAction a;
             a.symbol = provider->getSymbols()->getSymbol(ParamMetronomeTempo);
-            // sigh, need UIAction with a float value 
             a.value = itempo;
             provider->doAction(&a);
+
+            // reset this for next time
+            tapStart = 0;
         }
     }
     else if (b == &start) {

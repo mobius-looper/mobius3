@@ -11,8 +11,10 @@
 
 #include "UIAtom.h"
 #include "UIElement.h"
+#include "../../Provider.h"
 
-class MetronomeElement : public UIElement, public UIAtomButton::Listener
+class MetronomeElement : public UIElement, public UIAtomButton::Listener,
+                         public Provider::HighRefreshListener
 {
   public:
     
@@ -33,13 +35,16 @@ class MetronomeElement : public UIElement, public UIAtomButton::Listener
     void paint(juce::Graphics& g) override;
 
     void atomButtonPressed(UIAtomButton* b);
+
+    void highRefresh(class MobiusPriorityState* state);
     
   private:
 
     UIAtomFlash light;
     UIAtomButton start;
     UIAtomButton tap;
-    UIAtomText tempo;
+    UIAtomText tempoAtom;
+    int tempoValue = 0;
     int tapStart = 0;
     
     void sizeAtom(juce::Rectangle<int> area, juce::Component* comp);

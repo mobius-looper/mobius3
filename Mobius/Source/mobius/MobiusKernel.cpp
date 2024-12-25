@@ -226,6 +226,13 @@ MobiusState* MobiusKernel::getMobiusState()
     return mTracks->getMobiusState();
 }
 
+MobiusPriorityState* MobiusKernel::getPriorityState()
+{
+    // only TrackManager has things to contribute so we'll let it own the object
+    // if we start adding state that isn't track related, move it up here
+    return mTracks->getPriorityState();
+}
+
 /**
  * Consume any messages from the shell at the beginning of each
  * audio listener interrupt.

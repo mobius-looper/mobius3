@@ -1328,9 +1328,7 @@ void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTra
 void MobiusViewer::refreshMetronome(MobiusState::Track* tstate,
                                     MobiusViewTrack* tview)
 {
-    tview->beatSubcycle = tstate->beatSubCycle;
-    tview->beatCycle = tstate->beatCycle;
-    tview->beatLoop = tstate->beatLoop;
+    // beat flags are obtained through getPriorityState
     tview->syncTempo = tstate->tempo;
     tview->syncBeatsPerBar = tstate->beatsPerBar;
 }
