@@ -656,7 +656,7 @@
 
   <ParameterScope name='track'>
     <Parameter name='leaderType'
-               values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi'
+               values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi,metronome'
                valueLabels='None,Track Number,Track Sync Master,Out Sync Master,Focused,Host,MIDI In'/>
 
     <Parameter name='leaderSwitchLocation'

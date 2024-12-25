@@ -2105,8 +2105,8 @@ class UIParameterDefaultSyncSourceClass : public UIParameter
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-const char* UIParameterDefaultSyncSourceClassValues[] = {"default","none","track","out","host","midi",nullptr};
-const char* UIParameterDefaultSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi",nullptr};
+const char* UIParameterDefaultSyncSourceClassValues[] = {"default","none","track","out","host","midi","metronome",nullptr};
+const char* UIParameterDefaultSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi","Metronome",nullptr};
 UIParameterDefaultSyncSourceClass::UIParameterDefaultSyncSourceClass()
 {
     name = "defaultSyncSource";
@@ -2876,8 +2876,8 @@ class UIParameterSyncSourceClass : public UIParameter
     void getValue(void* obj, class ExValue* value) override;
     void setValue(void* obj, class ExValue* value) override;
 };
-const char* UIParameterSyncSourceClassValues[] = {"default","none","track","out","host","midi",nullptr};
-const char* UIParameterSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi",nullptr};
+const char* UIParameterSyncSourceClassValues[] = {"default","none","track","out","host","midi","metronome",nullptr};
+const char* UIParameterSyncSourceClassLabels[] = {"Default","None","Track","Out","Host","Midi","Metronome",nullptr};
 UIParameterSyncSourceClass::UIParameterSyncSourceClass()
 {
     name = "syncSource";

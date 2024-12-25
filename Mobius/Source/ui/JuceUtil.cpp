@@ -20,12 +20,30 @@ juce::Font JuceUtil::getFont(int height)
 #endif    
 }
 
+juce::Font JuceUtil::getFont(int height, int styleFlags)
+{
+#if JUCE_MAJOR_VERSION > 7
+    return juce::Font(juce::FontOptions((float)height, styleFlags));
+#else    
+    return juce::Font((float)height, styleFlags);
+#endif    
+}
+
 juce::Font JuceUtil::getFontf(float height)
 {
 #if JUCE_MAJOR_VERSION > 7
     return juce::Font(juce::FontOptions(height));
 #else    
     return juce::Font(height);
+#endif    
+}
+
+juce::Font JuceUtil::getFontf(float height, int styleFlags)
+{
+#if JUCE_MAJOR_VERSION > 7
+    return juce::Font(juce::FontOptions(height, styleFlags));
+#else    
+    return juce::Font(height, styleFlags);
 #endif    
 }
 

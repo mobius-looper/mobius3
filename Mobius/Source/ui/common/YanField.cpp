@@ -24,7 +24,8 @@ YanField::YanField(juce::String argLabel)
     // notes say bold can make it look too thick in smaller forms
     // may want to dial this back from the justified label in the left column
     // if this adjacent
-    label.setFont (juce::Font (16.0f, juce::Font::bold));
+    //label.setFont (juce::Font (16.0f, juce::Font::bold));
+    label.setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
     label.setColour (juce::Label::textColourId, juce::Colours::orange);
 }
 
