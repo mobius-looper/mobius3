@@ -213,6 +213,11 @@ Synchronizer::~Synchronizer()
     delete mInterruptEvents;
 }
 
+void Synchronizer::setMetronome(Pulsator::MetronomeSource* m)
+{
+    mMetronome = m;
+}
+
 /**
  * Flush the interrupt event list.
  */
@@ -363,6 +368,9 @@ int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
         // if not set we fall back to the setup
         if (src == SYNC_HOST)
           beatsPerBar = mHostBeatsPerBar;
+
+        else if (src == SYNC_METRONOME)
+          beatsPerBar = mMetronome->getBeatsPerBar();
 
         if (beatsPerBar <= 0) {
 
@@ -691,6 +699,10 @@ float Synchronizer::getTempo(Track* t)
 			// capture it to a local field.
 			tempo = mHostTempo;
             break;
+
+        case SYNC_METRONOME:
+            tempo = mMetronome->getTempo();
+            break;
 			
 		// have to have these or Xcode 5 bitches
 		case SYNC_DEFAULT:
@@ -727,6 +739,10 @@ int Synchronizer::getRawBeat(Track* t)
 			beat = getHostRawBeat();
             break;
 
+        case SYNC_METRONOME:
+            beat = mMetronome->getBeat();
+            break;
+
 		// have to have these or Xcode 5 bitches
 		case SYNC_DEFAULT:
 		case SYNC_NONE:
@@ -761,6 +777,10 @@ int Synchronizer::getBeat(Track* t)
 			beat = getHostBeat();
             break;
 
+        case SYNC_METRONOME:
+            beat = mMetronome->getBeat();
+            break;
+
 		// have to have these or Xcode 5 bitches
 		case SYNC_DEFAULT:
 		case SYNC_NONE:
@@ -793,6 +813,10 @@ int Synchronizer::getBar(Track* t)
 
 		case SYNC_HOST:
 			bar = getHostBar();
+            break;
+
+        case SYNC_METRONOME:
+            bar = mMetronome->getBar();
             break;
 
 		// have to have these or Xcode 5 bitches
@@ -848,6 +872,7 @@ long Synchronizer::getMidiSongClock(SyncSource src)
             break;
 
 		case SYNC_HOST:
+		case SYNC_METRONOME:
 			// hmm, probably could capture this if necessary
             break;
 
@@ -937,6 +962,13 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
                 state->bar = getHostBar() + 1;
             }
 		}
+            break;
+
+        case SYNC_METRONOME: {
+            state->tempo = mMetronome->getTempo();
+            state->beat = mMetronome->getBeat();
+            state->bar = mMetronome->getBar();
+        }
             break;
 
             // have to have these or Xcode 5 bitches
@@ -1190,7 +1222,7 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
     // in the master tracks
     SyncSource src = state->getEffectiveSyncSource();
 
-    sync = (src == SYNC_MIDI || src == SYNC_HOST || src == SYNC_TRACK);
+    sync = (src == SYNC_MIDI || src == SYNC_HOST || src == SYNC_TRACK || src == SYNC_METRONOME);
         
 	return sync;
 }
@@ -1310,7 +1342,11 @@ bool Synchronizer::isRecordStopPulsed(Loop* l)
             (mMidiRecordMode == MIDI_RECORD_PULSED))
           pulsed = true;
     }
-
+    else if (src == SYNC_METRONOME) {
+        // always pulsed
+        pulsed = true;
+    }
+    
 	return pulsed;
 }
 
@@ -1899,6 +1935,10 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
 				break;
         }
     }
+    else if (src == SYNC_METRONOME) {
+        // this is normally the bar length
+        unit->frames = (float)(mMetronome->getFrames());
+    }
     else if (src == SYNC_HOST) {
         if (mHostTracker->isLocked()) {
             // we've already locked the beat length, normally this
@@ -2148,6 +2188,15 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
         mse = mTransport->nextOutputEvent();
     }
 
+    // Metronome events
+    Pulse p;
+    mMetronome->getPulse(p);
+    if (p.source != Pulse::SourceNone) {
+        Event* event = convertMetronomeEvent(&p, pool);
+        event->fields.sync.source = SYNC_METRONOME;
+        mInterruptEvents->insert(event);
+    }
+    
     // Host events
     // Unlike MIDI events which are quantized by the MidiQueue, these
     // will have been created in the *same* interrupt and will have frame
@@ -2304,7 +2353,6 @@ void Synchronizer::traceSyncEvent(Event* event, bool out)
     }
 }
 
-
 /**
  * Convert a MidiSyncEvent from the transport into a track Event.
  * todo: this is place where we should try to offset the event into the buffer
@@ -2355,6 +2403,29 @@ Event* Synchronizer::convertEvent(MidiSyncEvent* mse, EventPool* pool, int beats
 
         if ((event->fields.sync.beat % beatsPerBar) == 0)
           event->fields.sync.pulseType = SYNC_PULSE_BAR;
+    }
+
+	return event;
+}
+
+/**
+ * Convert a new Metronome pulse to a track Event.
+ */
+Event* Synchronizer::convertMetronomeEvent(Pulse* p, EventPool* pool) 
+{
+    Event* event = pool->newEvent();
+
+    event->type = SyncEvent;
+
+    // we don't get start/stop/continue but could...
+    if (p->type == Pulse::PulseBeat) {
+        event->fields.sync.pulseType = SYNC_PULSE_BEAT;
+        event->fields.sync.beat = p->beat;
+    }
+    else {
+        // must be bar or loop, they are the same for the Metronome
+        event->fields.sync.pulseType = SYNC_PULSE_BAR;
+        event->fields.sync.beat = p->beat;
     }
 
 	return event;
@@ -2704,7 +2775,8 @@ void Synchronizer::syncEvent(Loop* l, Event* e)
 
             SyncTracker* tracker = getSyncTracker(src);
             if (tracker == NULL) {
-                // Must be TRACK, these won't be duplicated
+                // Must be TRACK or METRONOME
+                // wait, does it matter if this is Metronome beat or bar?
                 pass = true;
             }
             else if (tracker == mOutTracker) {
@@ -2891,6 +2963,10 @@ void Synchronizer::syncPulseWaiting(Loop* l, Event* e)
 				break;
 		}
 	}
+    else if (src == SYNC_METRONOME) {
+        // only bar or should we use SyncTrackUnit?
+        ready = (pulseType == SYNC_PULSE_BAR);
+    }
     else if (src == SYNC_OUT) {
         // This should never happen.  The master track can't
         // wait on it's own pulses, and slave tracks should
@@ -3024,6 +3100,9 @@ void Synchronizer::startRecording(Loop* l, Event* e)
             // using that for the record end pulse if the master preset changes
             Preset* mp = mTrackSyncMaster->getPreset();
             cyclePulses = mp->getSubcycles();
+        }
+        else if (src == SYNC_METRONOME) {
+            cyclePulses = mMetronome->getBeatsPerBar();
         }
         else {
             // not expecting to be here for SYNC_OUT 
@@ -3257,8 +3336,12 @@ void Synchronizer::checkRecordStop(Loop* l, Event* pulse, Event* stop)
                   stop = NULL;
             }
         }
+        else if (source == SYNC_METRONOME) {
+            // only bars
+            if (pulse->fields.sync.pulseType != SYNC_PULSE_BAR)
+              stop = nullptr;
+        }
     }
-
 
     if (stop != NULL) {
         activateRecordStop(l, pulse, stop);
@@ -3383,6 +3466,28 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
             Trace(l, 2, "Sync: Missing %ld pulses in final cycle, restructuring to one cycle\n",
                   (long)missing);
             l->setRecordCycles(1);
+        }
+    }
+    else if (source == SYNC_METRONOME) {
+        // todo: should be a cycle per bar?
+        // similar logic to TRACK
+        int slaveFrames = l->getRecordedFrames();
+        int cycleFrames = mMetronome->getFrames();
+        if ((slaveFrames % cycleFrames) > 0) {
+            l->setRecordCycles(1);
+        }
+        else {
+            int cycles = (int)(slaveFrames / cycleFrames);
+            if (cycles == 0) cycles = 1;
+            long current = l->getCycles();
+            if (current != cycles) {
+                // Is this normal?  I guess we would need this
+                // to pull it back by one if we end recording exactly
+                // on the cycle boundary?
+                Trace(l, 2, "Sync: Adjusting ending cycle count from %ld to %ld\n",
+                      (long)current, (long)cycles);
+                l->setRecordCycles(cycles);
+            }
         }
     }
 }
@@ -3663,7 +3768,10 @@ void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
     else if (pulse->fields.sync.source == SYNC_TRACK) {
 		realignSlave(loop, pulse);
     }
-	else {
+    else if (pulse->fields.sync.source == SYNC_METRONOME) {
+        // no drift on these?
+    }
+    else {
         // Since the tracker may have generated several pulses in this
         // interrupt we have to store the pulseFrame in the event.
         long newFrame = pulse->fields.sync.pulseFrame;

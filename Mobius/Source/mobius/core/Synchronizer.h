@@ -14,6 +14,8 @@
 #define SYNCHRONIZER_H
 
 #include "../../sync/MidiQueue.h"
+// ugly dependency, refactor an interface
+#include "../../sync/Pulsator.h"
 
 // necessary for DriftCheckPoint
 #include "../../model/MobiusConfig.h"
@@ -110,7 +112,8 @@ class Synchronizer {
 
 	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
-
+    void setMetronome(class Pulsator::MetronomeSource* m);
+    
 	//
 	// Variable sources
 	//
@@ -219,6 +222,7 @@ class Synchronizer {
   private:
     
     class Event* convertEvent(class MidiSyncEvent* mse, class EventPool* pool, int beatsPerBar);
+    class Event* convertMetronomeEvent(class Pulse* p, class EventPool* pool);
     void traceSyncEvent(class Event* event, bool out);
     void flushEvents();
     float getSpeed(Loop* l);
@@ -297,6 +301,7 @@ class Synchronizer {
 
     // our eventual upstart replacement, the ass kissing bastard
     class Pulsator* mPulsator = nullptr;
+    class Pulsator::MetronomeSource* mMetronome = nullptr;
     
     // MIDI services from the container
     class MobiusMidiTransport* mTransport;

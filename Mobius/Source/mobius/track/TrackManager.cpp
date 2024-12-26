@@ -70,6 +70,9 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
 {
     configuration = config;
     audioEngine = core;
+
+    // connect the core with the MetronomeTrack for sync
+    audioEngine->setMetronome(metronome.get());
     
     // this isn't owned by MidiPools, but it's convenient to bundle
     // it up with the others

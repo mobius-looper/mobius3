@@ -38,6 +38,7 @@ class MetronomeTrack : public BaseTrack, public Pulsator::MetronomeSource
     int getBeat();
     int getBar();
     void getPulse(class Pulse& p);
+    int getFrames();
     
   private:
     

@@ -72,6 +72,7 @@ class Pulsator
         virtual int getBar() = 0;
         virtual int getBeatsPerBar() = 0;
         virtual void getPulse(Pulse& p) = 0;
+        virtual int getFrames() = 0;
     };
 
     /**
@@ -89,7 +90,7 @@ class Pulsator
     Pulsator(class Provider* p);
     ~Pulsator();
     void configure();
-    
+
     void interruptStart(class MobiusAudioStream* stream);
     juce::Array<int>* getOrderedLeaders();
     int getPulseFrame(int follower);
@@ -156,10 +157,6 @@ class Pulsator
     int trackSyncMaster = 0;
     int trackSyncMasterFrames = 0;
     
-    //
-    // Host sync state
-    //
-
     // true when the host transport was advancing in the past
     bool hostPlaying = false;
     SyncState host;

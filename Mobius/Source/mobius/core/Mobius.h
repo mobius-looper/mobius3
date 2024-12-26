@@ -17,6 +17,9 @@
 #include "Loader.h"
 #include "MobiusMslHandler.h"
 
+// ugly dependency, refactor an interface
+#include "../../sync/Pulsator.h"
+
 /**
  * Size of a static char buffer to keep the custom mode name.
  */
@@ -196,6 +199,9 @@ class Mobius
     // needed by TrackManager
     bool isTrackFocused(int index);
     int getTrackGroup(int index);
+
+    // new Metronome object needed by Synchronizer
+    void setMetronome(class Pulsator::MetronomeSource* src);
         
     //////////////////////////////////////////////////////////////////////
     //

@@ -127,6 +127,11 @@ int MetronomeTrack::getBar()
     return 1;
 }
 
+int MetronomeTrack::getFrames()
+{
+    return frameLength;
+}
+
 void MetronomeTrack::getPulse(Pulse& p)
 {
     if (blockPulse) {
