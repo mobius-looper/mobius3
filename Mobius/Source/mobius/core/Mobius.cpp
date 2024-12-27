@@ -253,11 +253,11 @@ void Mobius::freeStaticObjects()
 }
 
 /**
- * Pass a handle to the new internal metronome to the Synchronizer
+ * Pass a handle to the new internal synchronizer to the Synchronizer
  */
-void Mobius::setMetronome(class Pulsator::MetronomeSource* m)
+void Mobius::setSyncMaster(class SyncMaster* m)
 {
-    mSynchronizer->setMetronome(m);
+    mSynchronizer->setSyncMaster(m);
 }
 
 //////////////////////////////////////////////////////////////////////

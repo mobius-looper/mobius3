@@ -20,6 +20,8 @@
 #include "mobius/MobiusInterface.h"
 #include "mobius/MobiusMidiTransport.h"
 #include "model/Symbol.h"
+#include "model/SystemState.h"
+#include "model/PriorityState.h"
 
 #include "JuceAudioStream.h"
 
@@ -359,6 +361,10 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // symbol table for this application/plugin instance
     SymbolTable symbols;
+
+    // system state capture, used to drive the view
+    SystemState systemState;
+    PriorityState priorityState;
     
     // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
     juce::AudioDeviceManager customAudioDeviceManager;
@@ -462,6 +468,9 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // config file management
     juce::String readConfigFile(const char* name);
     void writeConfigFile(const char* name, const char* xml);
+
+    // make sure the SystemState is the right size after Session edits
+    void configureSystemState();
 
     class DeviceConfig* readDeviceConfig();
     void writeDeviceConfig(class DeviceConfig* config);

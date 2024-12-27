@@ -150,18 +150,22 @@ class MobiusInterface {
      */
     virtual class MobiusState* getMobiusState() = 0;
 
+    // Yet another round of state modeling
+
+    /**
+     * Refresh the primary system state.
+     */
+    virtual void refreshState(class SystemState* state) = 0;
+    
     /**
      * Refresh and return the high-resolution state.
      *
      * This contains a small amount of information that is typically refreshed
-     * at a much higher rate than the full MobiusState.  This includes metronome
+     * at a much higher rate than the full MobiusState.  This includes SyncMaster
      * beat/bar flags, output levels, and other things that look jittery if you
      * refresh them every 1/10th second like the main state.
-     *
-     * The object is stable for the lifetime of the engine, but you must
-     * call this method to cause it to be refreshed.
      */
-    virtual class MobiusPriorityState* getPriorityState() = 0;
+    virtual void refreshPriorityState(class PriorityState* state) = 0;
     
     /**
      * Do periodic housekeeping tasks within the maintenance thread.

@@ -40,7 +40,7 @@ class Provider
     class HighRefreshListener {
       public:
         virtual ~HighRefreshListener() {}
-        virtual void highRefresh(class MobiusPriorityState* state) = 0;
+        virtual void highRefresh(class PriorityState* state) = 0;
     };
 
     virtual ~Provider() {}

@@ -811,6 +811,23 @@ void MidiTrack::captureLevels(MobiusState::Track* state)
     
 }
 
+void MidiTrack::refreshState(TrackState* state)
+{
+    // need to move the stuff that the older MobiusState::Track
+    // method is doing here
+    scheduler.refreshState(state);
+}
+
+void MidiTrack::refreshPriorityState(PriorityState* state)
+{
+    (void)state;
+}
+
+void MidiTrack::refreshDynamicState(DynamicState* state)
+{
+    scheduler.refreshDynamicState(state);
+}
+
 void MidiTrack::refreshState(MobiusState::Track* state)
 {
     state->loopCount = loopCount;

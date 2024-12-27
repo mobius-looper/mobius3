@@ -317,9 +317,6 @@ void Symbolizer::parseTrackTypes(juce::XmlElement* el, Symbol* s)
             else if (type == "Midi") {
                 s->trackTypes.add(TrackTypeMidi);
             }
-            else if (type == "Metronome") {
-                s->trackTypes.add(TrackTypeMetronome);
-            }
             else {
                 Trace(1, "Symbolizer: Unknown track type %s", type.toUTF8());
             }
@@ -381,8 +378,8 @@ UIParameterScope Symbolizer::parseScope(juce::String name)
       scope = ScopeSessionTrack;
     else if (name == "ui")
       scope = ScopeUI;
-    else if (name == "metronome")
-      scope = ScopeMetronome;
+    else if (name == "sync")
+      scope = ScopeSync;
 
     return scope;
 }

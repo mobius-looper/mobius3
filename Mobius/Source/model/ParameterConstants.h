@@ -271,7 +271,7 @@ typedef enum {
     SYNC_OUT,
     SYNC_HOST,
     SYNC_MIDI,
-    SYNC_METRONOME
+    SYNC_TRANSPORT
 
 } SyncSource;
 

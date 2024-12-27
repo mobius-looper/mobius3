@@ -20,7 +20,6 @@
 #include "../MobiusInterface.h"
 
 #include "LogicalTrack.h"
-#include "MetronomeTrack.h"
 
 #include "../midi/MidiWatcher.h"
 #include "../midi/MidiTrack.h"
@@ -52,9 +51,6 @@ TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
     kernel = k;
     actionPool = k->getActionPool();
     watcher.initialize(&(pools.midiPool));
-
-    MetronomeTrack* mt = new MetronomeTrack(this, nullptr);
-    metronome.reset(mt);
 }
 
 TrackManager::~TrackManager()
@@ -71,9 +67,6 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
     configuration = config;
     audioEngine = core;
 
-    // connect the core with the MetronomeTrack for sync
-    audioEngine->setMetronome(metronome.get());
-    
     // this isn't owned by MidiPools, but it's convenient to bundle
     // it up with the others
     pools.actionPool = kernel->getActionPool();
@@ -484,20 +477,26 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     if (!longDisable)
       longWatcher.advance(stream->getInterruptFrames());
 
-    // let the metronome go first so it can cause sync pulses
-    // before the tracks that need them
-    metronome->processAudioStream(stream);
-
+    // todo: need to be using SyncMaster to order the advance
+    // of both the audio tracks and the MIDI tracks
+    
     // advance audio core
     audioEngine->processAudioStream(stream);
     
     // then advance the MIDI tracks
     for (auto track : tracks)
       track->processAudioStream(stream);
-    
+
+    // refresh dynamic state
     stateRefreshCounter++;
     if (stateRefreshCounter > stateRefreshThreshold) {
+
+        // old way
         refreshState();
+
+        // new way
+        refreshDynamicstate();
+        
         stateRefreshCounter = 0;
     }
 }
@@ -562,13 +561,6 @@ void TrackManager::doActionWithResult(UIAction* src, ActionResult& result)
     }
     else if (s->behavior == BehaviorScript || s->script != nullptr) {
         doScript(src);
-    }
-    else  if (s->trackTypes.contains(TrackTypeMetronome)) {
-        // before we replicate check for metronome functions
-        // there aren't any metronome functions that are shared by other
-        // track types but there could be someday
-        metronome->doAction(src);
-        actionPool->checkin(src);
     }
     else {    
         // function or parameter
@@ -1267,27 +1259,7 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 //////////////////////////////////////////////////////////////////////
 
 /**
- * This is the new way to get high priority state.
- * Retool getMobiusState to use this.
- */
-MobiusPriorityState* TrackManager::getPriorityState()
-{
-    metronome->refreshPriorityState(&priorityState);
-    return &priorityState;
-}
-
-/**
- * Get the "important" track state.
- * todo: hate this name
- *
- * So.."priority"
- *
- * This is called ever 1/10th second on the regular mainenance cycle
- * What makes refreshPriorityState different is that because we're dealing
- * with the buffered MobiusState object, this makes sure it is up to date at the
- * tiem of the call rather than waiting for the next periodic refresh.  It still
- * only has 1/10th resolution.  Now that we have getPriorityState which is called
- * every 10sm could be returning it there.
+ * Old soon to be removed way.
  */
 MobiusState* TrackManager::getMobiusState()
 {
@@ -1330,8 +1302,6 @@ void TrackManager::refreshState()
               track->refreshState(tstate);
         }
     }
-
-    metronome->refreshState(&(state->metronome));
     
     // ugh, this isn't reliable either, UI can be using the old one after
     // we've swapped in the new one and if we hit another refresh before it
@@ -1342,6 +1312,37 @@ void TrackManager::refreshState()
       statePhase = 1;
     else
       statePhase = 0;
+}
+
+/**
+ * New way of doing things.
+ */
+void TrackManager::refreshState(SystemState* state)
+{
+    // all we have right now is the DynamicState which is refreshed periodically
+    state->dynamicState = &dynamicState;
+
+    // also convey the old state
+    // this takes time to assemble, so only start doing this after we get
+    // MobiusKernel out of the business of doing it
+    //state->oldState = audioEngine->getState();
+}
+
+void TrackManager::refreshDynamicState()
+{
+    // only need to do the focused track right now, but for
+    // events at least we could do all of them
+    int focusedNumber = getFocusedTrackIndex() + 1;
+    LogicalTrack* lt = getLogicalTrack(focusedNumber);
+    lt->refreshDynamicState(&dynamicState);
+}
+
+void TrackManager::refreshPriorityState(PriorityState* state)
+{
+    // don't really have anything to say yet
+    for (auto track : tracks) {
+        track->refreshPriorityState(state);
+    }
 }
 
 /****************************************************************************/

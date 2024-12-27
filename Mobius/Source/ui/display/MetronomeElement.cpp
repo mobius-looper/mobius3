@@ -26,7 +26,7 @@
 #include "../../util/Trace.h"
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
-#include "../../model/MobiusPriorityState.h"
+#include "../../model/PriorityState.h"
 
 #include "../MobiusView.h"
 #include "../../Provider.h"
@@ -91,12 +91,12 @@ int MetronomeElement::getPreferredHeight()
     return MetronomeHeight;
 }
 
-void MetronomeElement::highRefresh(MobiusPriorityState* s)
+void MetronomeElement::highRefresh(PriorityState* s)
 {
-    if (s->metronomeBar) {
+    if (s->transportBar) {
         light.flash(juce::Colours::red);
     }
-    else if (s->metronomeBeat) {
+    else if (s->transportBeat) {
         light.flash(juce::Colours::yellow);
     }
 }
@@ -107,7 +107,10 @@ void MetronomeElement::update(class MobiusView* v)
     // only needed this to test flashing
     //tempo.advance();
 
-    float ftempo = v->metronome.syncTempo;
+    // gak, need work out where this comes from...
+    //float ftempo = v->metronome.syncTempo;
+    float ftempo = 120.0f;
+    
     // trunicate to two decimal places to prevent excessive
     // fluctuations
     int itempo = (int)(ftempo * 100);

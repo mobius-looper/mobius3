@@ -19,6 +19,7 @@
 #include "../model/FunctionProperties.h"
 #include "../model/SampleProperties.h"
 #include "../model/ScriptProperties.h"
+#include "../model/SystemState.h"
 
 #include "../script/MslEnvironment.h"
 #include "../script/MslContext.h"
@@ -138,6 +139,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     configuration = config;
     session = ses;
 
+    syncMaster.setSampleRate(container->getSampleRate());
+    
     notifier.initialize(this);
     notifier.configure(ses);
 
@@ -226,11 +229,21 @@ MobiusState* MobiusKernel::getMobiusState()
     return mTracks->getMobiusState();
 }
 
-MobiusPriorityState* MobiusKernel::getPriorityState()
+void MobiusKernel::refreshState(SystemState* state)
 {
-    // only TrackManager has things to contribute so we'll let it own the object
-    // if we start adding state that isn't track related, move it up here
-    return mTracks->getPriorityState();
+    syncMaster.refreshState(&(state->syncState));
+    mTracks->refreshState(state);
+
+    // temporary
+    state->oldState = mCore->getState();
+}
+
+void MobiusKernel::refreshPriorityState(PriorityState* state)
+{
+    // only SyncMaster has things to contribute right now,
+    // but this would be a good place for the track frame
+    syncMaster.refreshPriorityState(state);
+    mTracks->refreshPriorityState(state);
 }
 
 /**

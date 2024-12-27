@@ -112,7 +112,7 @@ class Synchronizer {
 
 	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
-    void setMetronome(class Pulsator::MetronomeSource* m);
+    void setSyncMaster(class SyncMaster* sm);
     
 	//
 	// Variable sources
@@ -222,7 +222,7 @@ class Synchronizer {
   private:
     
     class Event* convertEvent(class MidiSyncEvent* mse, class EventPool* pool, int beatsPerBar);
-    class Event* convertMetronomeEvent(class Pulse* p, class EventPool* pool);
+    class Event* convertTransportEvent(class Pulse* p, class EventPool* pool);
     void traceSyncEvent(class Event* event, bool out);
     void flushEvents();
     float getSpeed(Loop* l);
@@ -301,7 +301,7 @@ class Synchronizer {
 
     // our eventual upstart replacement, the ass kissing bastard
     class Pulsator* mPulsator = nullptr;
-    class Pulsator::MetronomeSource* mMetronome = nullptr;
+    class SyncMaster* mSyncMaster = nullptr;
     
     // MIDI services from the container
     class MobiusMidiTransport* mTransport;

@@ -34,7 +34,9 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void trackNotification(NotificationId notification, TrackProperties& props) override;
     int getGroup() override;
     bool isFocused() override;
+    void refreshState(class TrackState* state) override;
     void refreshPriorityState(class MobiusState::Track* tstate) override;
+    void refreshDynamicState(class DynamicState* state) override;
     void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;

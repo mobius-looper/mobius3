@@ -132,6 +132,7 @@
 #include "../../util/Util.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/Trigger.h"
+#include "../../model/DynamicState.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -1974,6 +1975,87 @@ void EventManager::cleanReturnEvents()
  *                               EVENT SUMMARY                              *
  *                                                                          *
  ****************************************************************************/
+
+/**
+ * New way to show events.
+ */
+void EventManager::refreshDynamicState(DynamicState* state)
+{
+	Event* events = mEvents->getEvents();
+    bool overflow = false;
+    for (Event* e = events ; e != nullptr && !overflow ;  e = e->getNext()) {
+
+        if (isEventVisible(e, false)) {
+            DynamicEvent* de = state->nextWriteEvent();
+            if (de != nullptr) {
+                getEventSummary(de, e, false);
+            }
+            else {
+                Trace(1, "EventManager: Maximum events in DynamicState");
+                overflow = true;
+            }
+        }
+        
+        if (e->type == SwitchEvent) {
+            // and the events stacked after the switch
+            for (Event* se = e->getChildren() ; 
+                 se != NULL && !overflow ;
+                 se = se->getSibling()) {
+
+                if (isEventVisible(se, true)) {
+                    DynamicEvent* de = state->nextWriteEvent();
+                    if (de != nullptr) {
+                        getEventSummary(de, e, true);
+                    }
+                    else {
+                        Trace(1, "EventManager: Maximum events in DynamicState");
+                        overflow = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void EventManager::getEventSummary(DynamicEvent* estate, Event* e, bool stacked)
+{
+    estate->track = getRawNumber() + 1;
+
+    // todo: here lies the matic to convert EventType into a symbol id, etc...
+    estate->type = DynamicEvent::EventUnknown;
+        
+    estate->argument = e->number;
+
+    // usually defines its own frame
+    long frame = e->frame;
+
+    Loop* loop = mTrack->getLoop();
+
+    if (stacked) {
+        // frame dependent on parent
+        Event* p = e->getParent();
+        if (!p->pending)
+          frame = p->frame;
+        else {
+            // must be in Confirm mode make it look pending
+            frame = loop->getFrames();
+        }
+    }
+    else if (e->pending) {
+        // make it look like it is after the loop
+        frame = loop->getFrames();
+
+        // estate has a pending flag so don't need to do the old max frames hack?
+        estate->pending = true;
+    }
+
+    if (loop->isReverse())
+      frame = reflectFrame(loop, frame);
+    estate->frame = frame;
+
+    if (e->getMslWait() != nullptr)
+      estate->waiting = true;
+}
 
 /**
  * Describe the scheduled events in a way convenient for display.

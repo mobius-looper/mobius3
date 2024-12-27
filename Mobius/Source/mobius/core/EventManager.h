@@ -105,6 +105,7 @@ class EventManager {
 
     // Summary
 
+    void refreshDynamicState(class DynamicState* s);
     void getEventSummary(class OldMobiusLoopState* s);
 
     // Selection
@@ -139,6 +140,7 @@ class EventManager {
     void finishReturnEvent(Loop* loop, Event* re);
 
     void getEventSummary(class OldMobiusLoopState* s, Event* e, bool stacked);
+    void getEventSummary(class DynamicEvent* estate, Event* e, bool stacked);
     bool isEventVisible(Event* e, bool stacked);
     long reflectFrame(Loop* loop, long frame);
 

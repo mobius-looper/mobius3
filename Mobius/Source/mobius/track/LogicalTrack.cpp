@@ -178,13 +178,27 @@ bool LogicalTrack::scheduleWait(MslWait* w)
     return false;
 }
 
-void LogicalTrack::refreshPriorityState(MobiusState::Track* tstate)
+void LogicalTrack::refreshState(TrackState* state)
+{
+    // todo: both need to do this
+    if (trackType == Session::TypeMidi) {
+        track->refreshState(state);
+    }
+}
+
+void LogicalTrack::refreshPriorityState(PriorityState* state)
 {
     if (trackType == Session::TypeMidi) {
         track->refreshPriorityState(tstate);
     }
 }
 
+void LogicalTrack::refreshDynamicState(DynamicState* state)
+{
+    track->refreshDynamicState(state);
+}
+
+// old and temporary
 void LogicalTrack::refreshState(MobiusState::Track* tstate)
 {
     if (trackType == Session::TypeMidi) {

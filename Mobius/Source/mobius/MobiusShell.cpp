@@ -539,9 +539,14 @@ MobiusState* MobiusShell::getMobiusState()
     return kernel.getMobiusState();
 }
 
-MobiusPriorityState* MobiusShell::getPriorityState()
+void MobiusShell::refreshState(SystemState* state)
 {
-    return kernel.getPriorityState();
+    kernel.refreshState(state);
+}
+
+void MobiusShell::refreshPriorityState(PriorityState* state)
+{
+    kernel.refreshPriorityState(state);
 }
 
 /**

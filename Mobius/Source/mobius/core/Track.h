@@ -167,6 +167,9 @@ class Track : public TraceContext
 	class Synchronizer* getSynchronizer();
     class EventManager* getEventManager();
 
+    // new way to export state
+    void refreshDynamicState(class DynamicState* state);
+
 	int getLoopCount();
 	class Loop* getLoop(int index);
 	int getRawNumber();

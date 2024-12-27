@@ -36,7 +36,7 @@ class MetronomeElement : public UIElement, public UIAtomButton::Listener,
 
     void atomButtonPressed(UIAtomButton* b);
 
-    void highRefresh(class MobiusPriorityState* state);
+    void highRefresh(class PriorityState* state);
     
   private:
 

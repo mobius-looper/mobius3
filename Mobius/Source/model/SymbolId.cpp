@@ -441,13 +441,13 @@ SymbolDefinition SymbolDefinitions[] = {
     {"SaveSession", FuncSaveSession},
 
     //
-    // Metronome
+    // SyncMaster
     //
 
-    {"MetronomeStart", FuncMetronomeStart},
-    {"MetronomeStop", FuncMetronomeStop},
-    {"metronomeTempo", ParamMetronomeTempo},
-    {"metronomeBeatsPerBar", ParamMetronomeBeatsPerBar},
+    {"TransportStart", FuncTransportStart},
+    {"TransportStop", FuncTransportStop},
+    {"transportTempo", ParamTransportTempo},
+    {"transportBeatsPerBar", ParamTransportBeatsPerBar},
     
     //
     // Terminator

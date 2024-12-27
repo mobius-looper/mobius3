@@ -1235,6 +1235,134 @@ void BaseScheduler::refreshState(MobiusState::Track* state)
 
 }
 
+/**
+ * Contribute scheduling related state to the main state.
+ * Events are in the DynamicState
+ */
+void BaseScheduler::refreshState(TrackState* state)
+{
+    // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
+    state->syncSource = sessionSyncSource;
+    state->syncUnit = sessionSyncUnit;
+
+    // what Synchronizer does
+	//state->outSyncMaster = (t == mOutSyncMaster);
+	//state->trackSyncMaster = (t == mTrackSyncMaster);
+
+    // Synchronizer has logic for this, but we need to get it in a different way
+	state->tempo = pulsator->getTempo(syncSource);
+	state->beat = pulsator->getBeat(syncSource);
+	state->bar = pulsator->getBar(syncSource);
+
+    // loop switch, can only be one of these
+    // !! this violates track type hiding but in order to share we would
+    // need AbstractLooperTrack or something which isn't a bad idea
+    state->nextLoop = 0;
+    TrackEvent* e = events.find(TrackEvent::EventSwitch);
+    if (e != nullptr)
+      state->nextLoop = (e->switchTarget + 1);
+
+    // special pseudo mode
+    e = events.find(TrackEvent::EventRecord);
+    if (e != nullptr && e->pulsed)
+      state->mode = TrackState::ModeSynchronize;
+}
+
+/**
+ * Contribute events to the new DynamicState model
+ */
+void BaseScheduler::refreshDynamicState(DynamicState* state)
+{
+    int index = state->activeEvents;
+    for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
+
+        if (index >= DynamicState::MaxEvents) {
+            Trace(1, "BaseScheduler: Maximum events in DynamicState");
+            break;
+        }
+
+        DynamicState::Event* estate = &(state->events[index]);
+        bool addit = true;
+        int arg = 0;
+        switch (e->type) {
+            
+            case TrackEvent::EventRecord: {
+                estate->type = DynamicState::EventAction;
+                estate->symbol = FuncRecord;
+            }
+                break;
+                
+            case TrackEvent::EventSwitch: {
+                if (e->isReturn)
+                  estate->type = DynamicState::EventReturn;
+                else
+                  estate->type = DynamicState::EventSwitch;
+                arg = e->switchTarget + 1;
+            }
+                break;
+                
+            case TrackEvent::EventAction: {
+                if (e->primary != nullptr && e->primary->symbol != nullptr) {
+                    estate->type = DynamicState::EventAction;
+                    estate->symbol = e->primary->symbol->id;
+                }
+                else
+                  estate->type = DynamicState::EventUnknown;
+            }
+                break;
+
+            case TrackEvent::EventRound: {
+                estate->type = DynamicState::EventRound;
+                auto mode = scheduledTrack->getMode();
+                if (mode == MobiusState::ModeMultiply) {
+                    estate->symbol = FuncMultiply;
+                }
+                else {
+                    estate->symbol = FuncInsert;
+                    if (e->extension) {
+                        // wasn't displayed as "End" in the first implementation, why?
+                        estate->type = DynamicState::EventAction;
+                    }
+                }
+                if (e->multiples > 0)
+                  arg = e->multiples;
+            }
+                break;
+
+            case TrackEvent::EventWait:
+                estate->type = DynamicState::EventWait;
+                break;
+                
+            default: addit = false; break;
+        }
+        
+        if (addit) {
+            if (e->type != TrackEvent::EventWait && e->wait != nullptr)
+              estate->waiting = true;
+            
+            estate->track = scheduledTrack->getNumber();
+            estate->frame = e->frame;
+            estate->pending = e->pending;
+            estate->argument = arg;
+            index++;
+
+            if (index < DynamicState::MaxEvents) {
+                UIAction* stack = e->stacked;
+                while (stack != nullptr && index < DynamicState::MaxEvents) {
+                    estate = &(state->events[index]);
+                    estate->track = scheduledTrack->getNumber();
+                    estate->type = DynamicState::EventAction;
+                    estate->symbol = stack->symbol->id;
+                    estate->frame = e->frame;
+                    estate->pending = e->pending;
+                    index++;
+                }
+            }
+        }
+    }
+    state->activeEvents = index;
+}
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

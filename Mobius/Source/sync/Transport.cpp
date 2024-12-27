@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
+#include "../model/PriorityState.h"
 
 #include "Pulse.h"
 #include "Transport.h"
@@ -177,6 +178,17 @@ int Transport::getTimelineFrame()
     return playFrame;
 }
 
+/**
+ * Capture the priority state from the transport.
+ */
+void Transport::refreshPriorityState(PriorityState* state)
+{   
+    state->transportBar = barHit;
+    barHit = false;
+    state->transportBeat = beatHit;
+    beatHit = false;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Traansport Controls
@@ -252,6 +264,8 @@ bool Transport::advance(int frames, Pulse& p)
                 }
                 playFrame = newPlayFrame;
                 beat = 0;
+                // for state refresh
+                barHit = true;
             }
             else if (framesPerBeat > 0) {
                 int newBeat = newPlayFrame / framesPerBeat;
@@ -262,6 +276,7 @@ bool Transport::advance(int frames, Pulse& p)
                     int beatOver = newPlayFrame - beatBase;
                     p.blockFrame = frames - beatOver;
                     beat = newBeat;
+                    beatHit = true;
                 }
             }
         }

@@ -376,8 +376,6 @@ class MobiusView
     juce::OwnedArray<MobiusViewTrack> tracks;
     MobiusViewTrack* getTrack(int index);
 
-    MobiusViewTrack metronome;
-
     int audioTracks = 0;
     int activeAudioTrack = 0;
     int midiTracks = 0;

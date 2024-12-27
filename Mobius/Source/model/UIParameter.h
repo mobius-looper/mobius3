@@ -59,7 +59,7 @@ typedef enum {
     ScopeSession,
     ScopeSessionTrack,
     ScopeUI,
-    ScopeMetronome
+    ScopeSync
 
 } UIParameterScope;
 

@@ -396,13 +396,13 @@ typedef enum {
     FuncSaveSession,
 
     //
-    // Metronome
+    // SyncMaster
     //
 
-    FuncMetronomeStart,
-    FuncMetronomeStop,
-    ParamMetronomeTempo,
-    ParamMetronomeBeatsPerBar,
+    FuncTransportStart,
+    FuncTransportStop,
+    ParamTransportTempo,
+    ParamTransportBeatsPerBar,
     
     SymbolIdMax
 

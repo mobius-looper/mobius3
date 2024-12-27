@@ -200,8 +200,8 @@ class Mobius
     bool isTrackFocused(int index);
     int getTrackGroup(int index);
 
-    // new Metronome object needed by Synchronizer
-    void setMetronome(class Pulsator::MetronomeSource* src);
+    // new synchronization object needed by Synchronizer
+    void setSyncMaster(class SyncMaster* src);
         
     //////////////////////////////////////////////////////////////////////
     //

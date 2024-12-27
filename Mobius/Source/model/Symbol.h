@@ -83,8 +83,7 @@ typedef enum {
 
     TrackTypeNone,
     TrackTypeAudio,
-    TrackTypeMidi,
-    TrackTypeMetronome
+    TrackTypeMidi
 
 } SymbolTrackType;
 

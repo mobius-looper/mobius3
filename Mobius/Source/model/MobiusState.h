@@ -261,9 +261,6 @@ class MobiusState
     // there may be more in the array than actually configured for use
     int activeTracks = 0;
 
-    // special state for the MetronomeTrack
-    Track metronome;
-
     // OldMobiusState, sync stuff
     // unclear whether this should be here
     /**

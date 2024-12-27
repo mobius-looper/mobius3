@@ -44,7 +44,7 @@ class Transport
     int getBar();
 
     bool advance(int frames, class Pulse& p);
-    
+    void refreshPriorityState(class PriorityState* ps);
 
   private:
     
@@ -58,6 +58,8 @@ class Transport
     int bar = 1;
     bool started = false;
     bool paused = false;
+    bool beatHit = false;
+    bool barHit = false;
 
     void wrap();
     void recalculateTempo();

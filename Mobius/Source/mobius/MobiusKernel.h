@@ -20,6 +20,9 @@
 
 #include "../script/MslContext.h"
 #include "../script/ScriptUtil.h"
+
+#include "../sync/SyncMaster.h"
+
 #include "MobiusInterface.h"
 #include "KernelEvent.h"
 #include "KernelBinderator.h"
@@ -89,7 +92,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     class OldMobiusState* getOldMobiusState();
     class MobiusState* getMobiusState();
-    class MobiusPriorityState* getPriorityState();
+    void refreshState(class SystemState* state);
+    void refreshPriorityState(class PriorityState* state);
     
     class AudioPool* getAudioPool() {
         return audioPool;
@@ -250,6 +254,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     KernelBinderator binderator {this};
     Valuator valuator;
     MobiusPools mobiusPools;
+    SyncMaster syncMaster;
     Notifier notifier;
     ScriptUtil scriptUtil;
     

@@ -144,8 +144,8 @@
   <Function name="MidiHalfspeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
   <Function name="MidiDoublespeed" midi='true' mayFocus='true' mayQuantize='true' level='core' tree='MIDI'/>
 
-  <Function name='MetronomeStart' trackTypes='Metronome' level='core' tree='Metronome'/>
-  <Function name='MetronomeStop' trackTypes='Metronome' level='core' tree='Metronome'/>
+  <Function name='TransportStart' level='kernel' tree='Transport'/>
+  <Function name='TransportStop' level='kernel' tree='Transport'/>
   
   <!--
   Parameter type=int is assumed unless specified
@@ -517,7 +517,7 @@
          allowed for this parameter since internally it shares the same SyncSource enumeration
          with the syncSource track scope parameter
     -->
-    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,metronome'
+    <Parameter name='defaultSyncSource' values='default,none,track,out,host,midi,transport'
                coreName='syncSource'
                codeName='SyncSource'
                enumName='SyncSource'/>
@@ -612,7 +612,7 @@
     <Parameter name='output' codeName='OutputLevel' high='127' options='control,resetRetain,mayFocus'/>
     <Parameter name='pan' high='127' options='control,resetRetain,mayFocus'/>
 
-    <Parameter name='syncSource' values='default,none,track,out,host,midi,metronome' />
+    <Parameter name='syncSource' values='default,none,track,out,host,midi,transport' />
     <Parameter name='trackSyncUnit' codeName='SyncTrackUnit' enumName='SyncTrackUnit'
                values='default,subcycle,cycle,loop' />
     <Parameter name='audioInputPort' low='0' high='31' displayBase='1' options='noBinding'/>
@@ -656,7 +656,7 @@
 
   <ParameterScope name='track'>
     <Parameter name='leaderType'
-               values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi,metronome'
+               values='none,track,trackSyncMaster, outSyncMaster,focused,host,midi,transport'
                valueLabels='None,Track Number,Track Sync Master,Out Sync Master,Focused,Host,MIDI In'/>
 
     <Parameter name='leaderSwitchLocation'
@@ -683,13 +683,13 @@
   </ParameterScope>
   
   <!-- =======================================================================
-       Metronome
+       Sync and Transport
   ============================================================================ -->
 
-  <ParameterScope name='metronome'>
+  <ParameterScope name='sync'>
     
-    <Parameter name='metronomeTempo' type='int' level='core' trackTypes='Metronome'/>
-    <Parameter name='metronomeBeatsPerBar' type='int' level='core' trackTypes='Metronome'/>
+    <Parameter name='transportTempo' type='int' level='kernel'>
+    <Parameter name='transportBeatsPerBar' type='int' level='kernel'>
     
   </ParameterScope>
     

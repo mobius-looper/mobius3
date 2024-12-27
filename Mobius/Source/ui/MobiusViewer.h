@@ -72,6 +72,4 @@ class MobiusViewer
     void refreshRegions(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
     void refreshSync(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class MobiusState::Track* tstate,  class MobiusViewTrack* tview);
-
-    void refreshMetronome(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
 };

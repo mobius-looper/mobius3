@@ -1072,9 +1072,6 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
             break;
         }
     }
-
-    // not a MIDI track but uses the same new state model
-    refreshMetronome(&(state->metronome), &(view->metronome));
 }
 
 void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack* tview)
@@ -1317,20 +1314,6 @@ void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTra
 
         tview->refreshGroup = true;
     }
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// MetronomeTrack is special, try to merge it with Midi when the time comes
-//
-//////////////////////////////////////////////////////////////////////
-
-void MobiusViewer::refreshMetronome(MobiusState::Track* tstate,
-                                    MobiusViewTrack* tview)
-{
-    // beat flags are obtained through getPriorityState
-    tview->syncTempo = tstate->tempo;
-    tview->syncBeatsPerBar = tstate->beatsPerBar;
 }
 
 /****************************************************************************/

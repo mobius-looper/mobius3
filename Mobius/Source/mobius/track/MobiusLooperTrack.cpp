@@ -83,9 +83,19 @@ bool MobiusLooperTrack::isFocused()
     return track->isFocusLock();
 }
 
-void MobiusLooperTrack::refreshPriorityState(MobiusState::Track* tstate)
+void MobiusLooperTrack::refreshState(TrackState* state)
 {
-    (void)tstate;
+    (void)state;
+}
+
+void MobiusLooperTrack::refreshPriorityState(PriorityState* state)
+{
+    (void)state;
+}
+
+void MobiusLooperTrack::refreshDynamicState(DynamicState* state)
+{
+    track->refreshDynamicState(state);
 }
 
 void MobiusLooperTrack::refreshState(MobiusState::Track* tstate)

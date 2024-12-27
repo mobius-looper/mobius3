@@ -24,7 +24,8 @@
 #include "model/Query.h"
 #include "model/ParameterProperties.h"
 #include "model/OldMobiusState.h"
-#include "model/MobiusPriorityState.h"
+#include "model/SystemState.h"
+#include "model/PriorityState.h"
 #include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
@@ -282,6 +283,9 @@ bool Supervisor::start()
     upgradeSession(config, ses);
     writeDefaultSession(ses);
 
+    // make the SystemState match the session
+    configureSystemState();
+    
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
     
@@ -967,6 +971,19 @@ Prompter* Supervisor::getPrompter()
 //////////////////////////////////////////////////////////////////////
 
 /**
+ * Configure the SystemState object so that it has TrackStates
+ * that match the Session.
+ */
+void Supervisor::configureSystemState()
+{
+    // !! need to be smart about this
+    int maxTracks = 32;
+    for (int i = systemState.tracks.size() ; i < maxTracks ; i++) {
+        systemState.tracks.add(new TrackState());
+    }
+}
+
+/**
  * Called by the MobiusThread to process events outside the audio thread.
  * The expected cycle time is 10ms or 1/10 second.
  */
@@ -1011,9 +1028,9 @@ void Supervisor::advance()
 void Supervisor::advanceHigh()
 {
     if (highListeners.size() > 0) {
-        MobiusPriorityState* state = mobius->getPriorityState();
+        mobius->refreshPriorityState(&priorityState);
         for (auto l : highListeners)
-          l->highRefresh(state);
+          l->highRefresh(&priorityState);
     }
 }
 
@@ -1437,6 +1454,8 @@ void Supervisor::updateSession(bool noPropagation)
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
         writeDefaultSession(s);
+
+        configureSystemState();
         
         // Pulsator watches track counts
         // do this before we tell Mobius so it can register new followers without

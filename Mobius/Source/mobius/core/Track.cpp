@@ -760,6 +760,19 @@ void Track::doFunction(Action* action)
  ****************************************************************************/
 
 /**
+ * This is the new way of doing things.
+ */
+void Track::refreshDynamicState(DynamicState* s)
+{
+    // event manager will contribute events
+    mEventManager.refreshDynamicState(s);
+
+    // todo: summarize the layer checkpoints
+
+    // old core tracks do not support regions
+}
+
+/**
  * Return an object holding the current state of this track.
  * This may be used directly by the UI and as such must be changed
  * carefully since more than one thread may be accessing it at once.

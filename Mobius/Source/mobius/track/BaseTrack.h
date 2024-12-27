@@ -64,12 +64,15 @@ class BaseTrack
     virtual bool isFocused() = 0;
 
     // they can have important things to say
-    virtual void refreshPriorityState(class MobiusPriorityState* state) {(void)state;}
-
-    // an old way of saying important things, take this away
-    virtual void refreshPriorityState(class MobiusState::Track* tstate) = 0;
-
+    virtual void refreshPriorityState(class PriorityState* state) {(void)state;}
+    
     // and can go on and on if you let them
+    virtual void refreshState(class TrackState* tstate) = 0;
+    
+    // some state is weird
+    virtual void refreshDynamicState(class DynamicState* state) = 0;
+
+    // old temporary way 
     virtual void refreshState(class MobiusState::Track* tstate) = 0;
 
     // and sometimes it's spills its guts

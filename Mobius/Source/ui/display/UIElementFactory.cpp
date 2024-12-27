@@ -27,7 +27,7 @@ UIElement* UIElementFactory::create(Provider* p, UIElementDefinition* def)
     UIElement* element = nullptr;
 
     // for some the visualizers are implicit
-    if (def->name == "Metronome") {
+    if (def->name == "Transport") {
         element = new MetronomeElement(p, def);
     }
     else {

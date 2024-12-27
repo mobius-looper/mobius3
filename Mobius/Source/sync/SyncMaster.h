@@ -23,15 +23,28 @@ class SyncMaster
 {
   public:
     
-    SyncMaster(class Provider* p);
+    SyncMaster();
     ~SyncMaster();
+
+    void setSampleRate(int rate);
 
     void loadSession(class Session* s);
     
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
     void advance(int frames);
-    
+
+    void refreshState(class SyncMasterState* s);
+    void refreshPriorityState(class PriorityState* s);
+
+    // direct access for Synchronizer
+    Transport* getTransport() {
+        return &transport;
+    }
+
+    // this is what core Synchronizer uses to get internal sync pulses
+    void getTransportPulse(class Pulse& p);
+
   private:
 
     class Provider* provider = nullptr;

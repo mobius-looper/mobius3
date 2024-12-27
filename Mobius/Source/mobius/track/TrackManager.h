@@ -17,6 +17,7 @@
 #include "../../model/Session.h"
 #include "../../model/MobiusState.h"
 #include "../../model/MobiusPriorityState.h"
+#include "../../model/DynamicState.h"
 #include "../../model/Scope.h"
 
 #include "TrackProperties.h"
@@ -121,6 +122,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     class MobiusContainer* getContainer();
     void finishWait(MslWait* wait, bool canceled);
     
+    void refreshState();
+    void refreshState(class SystemState* state);
+    
   private:
 
     MobiusKernel* kernel = nullptr;
@@ -138,15 +142,12 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     TrackMslHandler mslHandler;
     
     juce::OwnedArray<class LogicalTrack> tracks;
-    std::unique_ptr<class MetronomeTrack> metronome;
     
     int audioTrackCount = 0;
     int activeMidiTracks = 0;
 
     void configureTracks(class Session* session);
     
-    void refreshState();
-
     void sendActions(UIAction* actions, ActionResult& result);
     class UIAction* replicateAction(class UIAction* src);
     class UIAction* replicateGroup(class UIAction* src, int group);
@@ -165,6 +166,9 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // View state
     //
 
+    DynamicState dynamicState;
+
+    // temporary old hideous state
     MobiusState state1;
     MobiusState state2;
     char statePhase = 0;

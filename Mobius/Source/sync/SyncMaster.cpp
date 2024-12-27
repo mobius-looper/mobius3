@@ -7,25 +7,27 @@
 #include "../model/Session.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
-#include "../model/MobiusState.h"
-#include "../model/MobiusPriorityState.h"
+#include "../model/PriorityState.h"
 
 #include "../Provider.h"
 
 #include "Pulsator.h"
 #include "Pulse.h"
+#include "SyncMasterState.h"
 
 #include "SyncMaster.h"
 
-SyncMaster::SyncMaster(Provider* p)
+SyncMaster::SyncMaster()
 {
-    provider = p;
-
-    transport.setSampleRate(p->getSampleRate());
 }
 
 SyncMaster::~SyncMaster()
 {
+}
+
+void SyncMaster::setSampleRate(int rate)
+{
+    transport.setSampleRate(rate);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -127,6 +129,25 @@ void SyncMaster::doTempo(UIAction* a)
 void SyncMaster::doBeatsPerBar(UIAction* a)
 {
     (void)a;
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// State
+//
+//////////////////////////////////////////////////////////////////////
+
+void SyncMaster::refreshState(SyncMasterState* state)
+{
+    state->tempo = transport.getTempo();
+    state->beatsPerBar = transport.getBeatsPerBar();
+    state->beat = transport.getBeat();
+    state->bar = transport.getBar();
+}
+
+void SyncMaster::refreshPriorityState(PriorityState* state)
+{
+    transport.refreshPriorityState(state);
 }
 
 /****************************************************************************/

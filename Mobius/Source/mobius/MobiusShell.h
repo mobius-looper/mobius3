@@ -37,7 +37,8 @@ class MobiusShell : public MobiusInterface
     void reconfigure(class MobiusConfig* config, class Session* session) override;
     OldMobiusState* getOldMobiusState() override;    // also shared by the kernel
     class MobiusState* getMobiusState() override;
-    class MobiusPriorityState* getPriorityState();
+    void refreshState(class SystemState* state) override;
+    void refreshPriorityState(class PriorityState* state) override;
     void performMaintenance() override;
     void doAction(class UIAction* action) override;
     bool doQuery(class Query* query) override;

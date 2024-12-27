@@ -39,7 +39,9 @@ class LogicalTrack
     void trackNotification(NotificationId notification, TrackProperties& props);
     bool scheduleWait(class MslWait* wait);
 
-    void refreshPriorityState(class MobiusState::Track* tstate);
+    void refreshState(class TrackState* state);
+    void refreshPriorityState(class PriorityState* state);
+    void refreshDynamicState(class DynamicState* state);
     void refreshState(class MobiusState::Track* tstate);
 
     void dump(class StructureDumper& d);
