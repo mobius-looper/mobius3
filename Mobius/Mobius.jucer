@@ -22,9 +22,13 @@
         <FILE id="blqXw9" name="Pulsator.cpp" compile="1" resource="0" file="Source/sync/Pulsator.cpp"/>
         <FILE id="bLVZYB" name="Pulsator.h" compile="0" resource="0" file="Source/sync/Pulsator.h"/>
         <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>
+        <FILE id="XnnDpK" name="SyncMaster.cpp" compile="1" resource="0" file="Source/sync/SyncMaster.cpp"/>
+        <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
         <FILE id="r8b1tS" name="TempoMonitor.cpp" compile="1" resource="0"
               file="Source/sync/TempoMonitor.cpp"/>
         <FILE id="gYiqBB" name="TempoMonitor.h" compile="0" resource="0" file="Source/sync/TempoMonitor.h"/>
+        <FILE id="zGop4e" name="Transport.cpp" compile="1" resource="0" file="Source/sync/Transport.cpp"/>
+        <FILE id="nCVKQR" name="Transport.h" compile="0" resource="0" file="Source/sync/Transport.h"/>
       </GROUP>
       <GROUP id="{F958D1D1-0714-F899-8A96-C4B8CCDAC94D}" name="ff_meters">
         <FILE id="MHymLv" name="ff_meters.cpp" compile="1" resource="0" file="Source/ff_meters/ff_meters.cpp"/>

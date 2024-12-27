@@ -27,8 +27,6 @@
 #include "MobiusPools.h"
 #include "Notifier.h"
 
-// does this even exist?
-//#include "TrackSynchronizer.h"
 #include "track/TrackManager.h"
 
 class MobiusKernel : public MobiusAudioListener, public MslContext
@@ -254,7 +252,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     MobiusPools mobiusPools;
     Notifier notifier;
     ScriptUtil scriptUtil;
-    //    TrackSynchronizer synchronizer {this};
     
     // internal state
 

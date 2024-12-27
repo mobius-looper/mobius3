@@ -42,6 +42,8 @@ class Pulse
      * significance than others.
      */
     typedef enum {
+
+        PulseNone,
         
         // the smallest pulse a source can provide
         // for Midi this is determined by the PPQ of the clocks
