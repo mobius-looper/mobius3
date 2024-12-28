@@ -61,21 +61,6 @@ class Pulsator
   public:
 
     /**
-     * The interface of something that can provide information about an internal
-     * metronome.  In practice this will always be MetronomeTrack.
-     */
-    class MetronomeSource {
-      public:
-        virtual ~MetronomeSource() {}
-        virtual float getTempo() = 0;
-        virtual int getBeat() = 0;
-        virtual int getBar() = 0;
-        virtual int getBeatsPerBar() = 0;
-        virtual void getPulse(Pulse& p) = 0;
-        virtual int getFrames() = 0;
-    };
-
-    /**
      * The sync state maintained for each source
      */
     class SyncState {
@@ -89,6 +74,8 @@ class Pulsator
     
     Pulsator(class Provider* p);
     ~Pulsator();
+    void setSyncMaster(class SyncMaster* sm);
+    
     void configure();
 
     void interruptStart(class MobiusAudioStream* stream);
@@ -124,8 +111,8 @@ class Pulsator
     // called by leaders to register a pulse in this block
     void addLeaderPulse(int leader, Pulse::Type type, int frameOffset);
 
-    // pull information from a metronome
-    void gatherMetronome(MetronomeSource* src);
+    // pull information from the internal sync transport
+    void gatherTransport();
 
     //
     // State of the various sources
@@ -139,6 +126,7 @@ class Pulsator
   private:
 
     class Provider* provider = nullptr;
+    class SyncMaster* syncMaster = nullptr;
     class MidiRealizer* midiTransport = nullptr;
     juce::OwnedArray<Leader> leaders;
     juce::OwnedArray<Follower> followers;
@@ -160,7 +148,7 @@ class Pulsator
     // true when the host transport was advancing in the past
     bool hostPlaying = false;
     SyncState host;
-    SyncState metronome;
+    SyncState transport;
     SyncState midiIn;
     SyncState midiOut;
 

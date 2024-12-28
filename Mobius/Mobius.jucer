@@ -126,8 +126,6 @@
         <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
               file="Source/model/MobiusConfig.cpp"/>
         <FILE id="rrRIuQ" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/MobiusConfig.h"/>
-        <FILE id="QTqeVd" name="MobiusPriorityState.h" compile="0" resource="0"
-              file="Source/model/MobiusPriorityState.h"/>
         <FILE id="zXt2hO" name="MobiusState.cpp" compile="1" resource="0" file="Source/model/MobiusState.cpp"/>
         <FILE id="XV9YIY" name="MobiusState.h" compile="0" resource="0" file="Source/model/MobiusState.h"/>
         <FILE id="aasR6n" name="ModeDefinition.cpp" compile="1" resource="0"
@@ -581,10 +579,6 @@
           <FILE id="D0QOzo" name="LooperSwitcher.h" compile="0" resource="0"
                 file="Source/mobius/track/LooperSwitcher.h"/>
           <FILE id="wQ2MmX" name="LooperTrack.h" compile="0" resource="0" file="Source/mobius/track/LooperTrack.h"/>
-          <FILE id="OEt0OE" name="MetronomeTrack.cpp" compile="1" resource="0"
-                file="Source/mobius/track/MetronomeTrack.cpp"/>
-          <FILE id="Qt71Ie" name="MetronomeTrack.h" compile="0" resource="0"
-                file="Source/mobius/track/MetronomeTrack.h"/>
           <FILE id="gdrvxb" name="MobiusLooperTrack.cpp" compile="1" resource="0"
                 file="Source/mobius/track/MobiusLooperTrack.cpp"/>
           <FILE id="AKQGLE" name="MobiusLooperTrack.h" compile="0" resource="0"

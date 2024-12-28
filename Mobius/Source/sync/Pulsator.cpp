@@ -25,6 +25,7 @@
 #include "Pulse.h"
 #include "Leader.h"
 #include "Follower.h"
+#include "SyncMaster.h"
 #include "Pulsator.h"
 
 Pulsator::Pulsator(Provider* p)
@@ -35,6 +36,12 @@ Pulsator::Pulsator(Provider* p)
 
 Pulsator::~Pulsator()
 {
+}
+
+// work this out
+void Pulsator::setSyncMaster(SyncMaster* sm)
+{
+    syncMaster = sm;
 }
 
 /**
@@ -83,7 +90,7 @@ void Pulsator::reset()
     host.pulse.source = Pulse::SourceNone;
     midiIn.pulse.source = Pulse::SourceNone;
     midiOut.pulse.source = Pulse::SourceNone;
-    metronome.pulse.source = Pulse::SourceNone;
+    transport.pulse.source = Pulse::SourceNone;
     
     // this is where pending pulses that were just over the last block
     // are activated for this block
@@ -137,7 +144,7 @@ float Pulsator::getTempo(Pulse::Source src)
             //case SourceMidiIn: tempo = midiTransport->getInputSmoothTempo(); break;
         case Pulse::SourceMidiIn: tempo = midiTransport->getInputTempo(); break;
         case Pulse::SourceMidiOut: tempo = midiTransport->getTempo(); break;
-        case Pulse::SourceMetronome: tempo = metronome.tempo; break;
+        case Pulse::SourceTransport: tempo = transport.tempo; break;
         default: break;
     }
     return tempo;
@@ -155,7 +162,7 @@ int Pulsator::getBeat(Pulse::Source src)
         case Pulse::SourceHost: beat = host.beat; break;
         case Pulse::SourceMidiIn: beat = midiTransport->getInputRawBeat(); break;
         case Pulse::SourceMidiOut: beat = midiTransport->getRawBeat(); break;
-        case Pulse::SourceMetronome: beat = metronome.beat; break;
+        case Pulse::SourceTransport: beat = transport.beat; break;
         default: break;
     }
     return beat;
@@ -171,7 +178,7 @@ int Pulsator::getBar(Pulse::Source src)
         case Pulse::SourceHost: bar = host.bar; break;
         case Pulse::SourceMidiIn: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
         case Pulse::SourceMidiOut: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
-        case Pulse::SourceMetronome: bar = metronome.bar; break;
+        case Pulse::SourceTransport: bar = transport.bar; break;
         default: break;
     }
     return bar;
@@ -210,7 +217,7 @@ int Pulsator::getBeatsPerBar(Pulse::Source src)
         case Pulse::SourceHost: bar = host.beatsPerBar; break;
         case Pulse::SourceMidiIn: bar = 4; break;
         case Pulse::SourceMidiOut: bar = 4; break;
-        case Pulse::SourceMetronome: bar = host.beatsPerBar; break;
+        case Pulse::SourceTransport: bar = host.beatsPerBar; break;
         default: break;
     }
     return bar;
@@ -234,7 +241,7 @@ void Pulsator::trace(Pulse& p)
         case Pulse::SourceMidiIn: msg += "MidiIn "; break;
         case Pulse::SourceMidiOut: msg += "MidiOut "; break;
         case Pulse::SourceHost: msg += "Host "; break;
-        case Pulse::SourceMetronome: msg += "Metronome "; break;
+        case Pulse::SourceTransport: msg += "Transport "; break;
         case Pulse::SourceLeader: msg += "Internal "; break;
         case Pulse::SourceNone: msg += "None "; break;
     }
@@ -444,29 +451,24 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
 
 //////////////////////////////////////////////////////////////////////
 //
-// Metronome
+// Transport
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Metronome is odd because the implementation is buried in the audio thread,
- * more like a Leader track and we expect information to be pushed to us
- * rather than pulling it from somewhere.
- * 
- * Pulsator is owned by Supervisor though it is normally onlhy accessed from
- * the audio thread.  Unclear what the best way forward is here.  Maybe host
- * and MidiTransport should push too?
- */
-void Pulsator::gatherMetronome(MetronomeSource* src)
+void Pulsator::gatherTransport()
 {
-    metronome.tempo = src->getTempo();
-    metronome.beat = src->getBeat();
-    metronome.bar = src->getBar();
-    src->getPulse(metronome.pulse);
+    Transport* t = syncMaster->getTransport();
+    
+    transport.tempo = t->getTempo();
+    transport.beat = t->getBeat();
+    transport.bar = t->getBar();
+
+    // how the hell is this going to work?
+    syncMaster->getTransportPulse(transport.pulse);
 
     // ugh, MetronomeTrack didn't have our millisecond counter
-    if (metronome.pulse.source != Pulse::SourceNone)
-      metronome.pulse.millisecond = millisecond;
+    if (transport.pulse.source != Pulse::SourceNone)
+      transport.pulse.millisecond = millisecond;
 }
 
 //////////////////////////////////////////////////////////////////////

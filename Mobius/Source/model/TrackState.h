@@ -76,6 +76,7 @@ class TrackState
     int outputMonitorLevel = 0;
 
     // sync
+    SyncSource syncSource;
     SyncUnit syncUnit;
     float   tempo = 0.0f;
     int 	beat = 0;

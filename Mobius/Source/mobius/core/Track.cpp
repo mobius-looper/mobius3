@@ -765,7 +765,7 @@ void Track::doFunction(Action* action)
 void Track::refreshDynamicState(DynamicState* s)
 {
     // event manager will contribute events
-    mEventManager.refreshDynamicState(s);
+    mEventManager->refreshDynamicState(s);
 
     // todo: summarize the layer checkpoints
 

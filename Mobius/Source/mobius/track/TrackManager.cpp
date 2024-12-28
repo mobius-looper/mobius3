@@ -11,6 +11,7 @@
 #include "../../model/UIParameter.h"
 #include "../../model/Query.h"
 #include "../../model/Scope.h"
+#include "../../model/SystemState.h"
 
 #include "../../script/MslExternal.h"
 #include "../../script/MslWait.h"
@@ -495,7 +496,7 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
         refreshState();
 
         // new way
-        refreshDynamicstate();
+        refreshDynamicState();
         
         stateRefreshCounter = 0;
     }
@@ -1270,6 +1271,8 @@ MobiusState* TrackManager::getMobiusState()
       state = &state2;
 
     // only MIDI tracks return state this way atm
+    // the fuck did this do, the beaters?
+#if 0    
     for (auto track : tracks) {
         if (track->getType() == Session::TypeMidi) {
             int midiIndex = track->getNumber() - audioTrackCount - 1;
@@ -1278,6 +1281,7 @@ MobiusState* TrackManager::getMobiusState()
               track->refreshPriorityState(tstate);
         }
     }
+#endif    
 
     return state;
 }

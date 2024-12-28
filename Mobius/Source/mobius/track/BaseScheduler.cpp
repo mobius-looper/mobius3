@@ -18,6 +18,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 
 #include "../../sync/Pulsator.h"
 #include "../../script/MslWait.h"
@@ -111,8 +112,8 @@ void BaseScheduler::loadSession(Session::Track* def)
         syncSource = Pulse::SourceMidiIn;
         pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
-    else if (sessionSyncSource == SYNC_METRONOME) {
-        syncSource = Pulse::SourceMetronome;
+    else if (sessionSyncSource == SYNC_TRANSPORT) {
+        syncSource = Pulse::SourceTransport;
         pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else {
@@ -1273,55 +1274,51 @@ void BaseScheduler::refreshState(TrackState* state)
  */
 void BaseScheduler::refreshDynamicState(DynamicState* state)
 {
-    int index = state->activeEvents;
-    for (TrackEvent* e = events.getEvents() ; e != nullptr ; e = e->next) {
+    bool overflow = false;
+    for (TrackEvent* e = events.getEvents() ; e != nullptr && !overflow ; e = e->next) {
 
-        if (index >= DynamicState::MaxEvents) {
-            Trace(1, "BaseScheduler: Maximum events in DynamicState");
-            break;
-        }
-
-        DynamicState::Event* estate = &(state->events[index]);
-        bool addit = true;
+        DynamicEvent::Type type = DynamicEvent::EventNone;
+        SymbolId symbol = SymbolIdNone;
         int arg = 0;
+        
         switch (e->type) {
             
             case TrackEvent::EventRecord: {
-                estate->type = DynamicState::EventAction;
-                estate->symbol = FuncRecord;
+                type = DynamicEvent::EventAction;
+                symbol = FuncRecord;
             }
                 break;
                 
             case TrackEvent::EventSwitch: {
                 if (e->isReturn)
-                  estate->type = DynamicState::EventReturn;
+                  type = DynamicEvent::EventReturn;
                 else
-                  estate->type = DynamicState::EventSwitch;
+                  type = DynamicEvent::EventSwitch;
                 arg = e->switchTarget + 1;
             }
                 break;
                 
             case TrackEvent::EventAction: {
                 if (e->primary != nullptr && e->primary->symbol != nullptr) {
-                    estate->type = DynamicState::EventAction;
-                    estate->symbol = e->primary->symbol->id;
+                    type = DynamicEvent::EventAction;
+                    symbol = e->primary->symbol->id;
                 }
                 else
-                  estate->type = DynamicState::EventUnknown;
+                  type = DynamicEvent::EventUnknown;
             }
                 break;
 
             case TrackEvent::EventRound: {
-                estate->type = DynamicState::EventRound;
+                type = DynamicEvent::EventRound;
                 auto mode = scheduledTrack->getMode();
                 if (mode == MobiusState::ModeMultiply) {
-                    estate->symbol = FuncMultiply;
+                    symbol = FuncMultiply;
                 }
                 else {
-                    estate->symbol = FuncInsert;
+                    symbol = FuncInsert;
                     if (e->extension) {
                         // wasn't displayed as "End" in the first implementation, why?
-                        estate->type = DynamicState::EventAction;
+                        type = DynamicEvent::EventAction;
                     }
                 }
                 if (e->multiples > 0)
@@ -1330,37 +1327,49 @@ void BaseScheduler::refreshDynamicState(DynamicState* state)
                 break;
 
             case TrackEvent::EventWait:
-                estate->type = DynamicState::EventWait;
+                type = DynamicEvent::EventWait;
                 break;
                 
-            default: addit = false; break;
+            default: break;
         }
         
-        if (addit) {
-            if (e->type != TrackEvent::EventWait && e->wait != nullptr)
-              estate->waiting = true;
-            
-            estate->track = scheduledTrack->getNumber();
-            estate->frame = e->frame;
-            estate->pending = e->pending;
-            estate->argument = arg;
-            index++;
+        if (type != DynamicEvent::EventNone) {
 
-            if (index < DynamicState::MaxEvents) {
+            DynamicEvent* estate = state->nextWriteEvent();
+            if (estate == nullptr) {
+                Trace(1, "BaseScheduler: Maximum events in DynamicState");
+                overflow = true;
+            }
+            else {
+                estate->type = type;
+                estate->symbol = symbol;
+                estate->argument = arg;
+            
+                if (e->type != TrackEvent::EventWait && e->wait != nullptr)
+                  estate->waiting = true;
+            
+                estate->track = scheduledTrack->getNumber();
+                estate->frame = e->frame;
+                estate->pending = e->pending;
+
                 UIAction* stack = e->stacked;
-                while (stack != nullptr && index < DynamicState::MaxEvents) {
-                    estate = &(state->events[index]);
-                    estate->track = scheduledTrack->getNumber();
-                    estate->type = DynamicState::EventAction;
-                    estate->symbol = stack->symbol->id;
-                    estate->frame = e->frame;
-                    estate->pending = e->pending;
-                    index++;
+                while (stack != nullptr && !overflow) {
+                    estate = state->nextWriteEvent();
+                    if (estate == nullptr) {
+                        Trace(1, "BaseScheduler: Maximum events in DynamicState");
+                        overflow = true;
+                    }
+                    else {
+                        estate->track = scheduledTrack->getNumber();
+                        estate->type = DynamicEvent::EventAction;
+                        estate->symbol = stack->symbol->id;
+                        estate->frame = e->frame;
+                        estate->pending = e->pending;
+                    }
                 }
             }
         }
     }
-    state->activeEvents = index;
 }
 
 /****************************************************************************/

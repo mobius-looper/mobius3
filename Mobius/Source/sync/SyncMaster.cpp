@@ -30,6 +30,14 @@ void SyncMaster::setSampleRate(int rate)
     transport.setSampleRate(rate);
 }
 
+/**
+ * Called by kernel components to see the transport pulse this block.
+ */
+void SyncMaster::getTransportPulse(Pulse& p)
+{
+    p = transportPulse;
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Sessions
@@ -52,10 +60,10 @@ void SyncMaster::doAction(UIAction* a)
     Symbol* s = a->symbol;
 
     switch (s->id) {
-        case FuncMetronomeStop: doStop(a); break;
-        case FuncMetronomeStart: doStart(a); break;
-        case ParamMetronomeTempo: doTempo(a); break;
-        case ParamMetronomeBeatsPerBar: doBeatsPerBar(a); break;
+        case FuncTransportStop: doStop(a); break;
+        case FuncTransportStart: doStart(a); break;
+        case ParamTransportTempo: doTempo(a); break;
+        case ParamTransportBeatsPerBar: doBeatsPerBar(a); break;
         default:
             Trace(1, "SyncMaster: Unhandled action %s", s->getName());
             break;
@@ -74,14 +82,14 @@ bool SyncMaster::doQuery(Query* q)
     Symbol* s = q->symbol;
 
     switch (s->id) {
-        case ParamMetronomeTempo: {
+        case ParamTransportTempo: {
             // no floats in Query yet...
             q->value = (int)(transport.getTempo() * 100.0f);
             success = true;
         }
             break;
             
-        case ParamMetronomeBeatsPerBar: {
+        case ParamTransportBeatsPerBar: {
             q->value = transport.getBeatsPerBar();
             success = true;
         }
@@ -102,7 +110,13 @@ bool SyncMaster::doQuery(Query* q)
 
 void SyncMaster::advance(int frames)
 {
-    (void)frames;
+    if (transport.advance(frames, transportPulse)) {
+        transportPulse.source = Pulse::SourceTransport;
+    }
+    else {
+        // dumb way to indiciate "none"
+        transportPulse.source = Pulse::SourceNone;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////

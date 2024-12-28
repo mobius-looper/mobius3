@@ -16,7 +16,6 @@
 
 #include "../../model/Session.h"
 #include "../../model/MobiusState.h"
-#include "../../model/MobiusPriorityState.h"
 #include "../../model/DynamicState.h"
 #include "../../model/Scope.h"
 
@@ -58,7 +57,6 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     class MobiusConfig* getConfiguration();
     class MobiusState* getMobiusState();
-    class MobiusPriorityState* getPriorityState();
     class MidiPools* getPools();
     class Pulsator* getPulsator();
     class Valuator* getValuator();
@@ -124,6 +122,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     
     void refreshState();
     void refreshState(class SystemState* state);
+    void refreshPriorityState(class PriorityState* state);
     
   private:
 
@@ -167,6 +166,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     //
 
     DynamicState dynamicState;
+    void refreshDynamicState();
 
     // temporary old hideous state
     MobiusState state1;
@@ -178,8 +178,5 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     // 1/10 second would then be 17 blocks
     int stateRefreshThreshold = 17;
     void prepareState(class MobiusState* state, int baseNumber, int count);
-
-    // new priority state
-    MobiusPriorityState priorityState;
 
 };

@@ -724,12 +724,19 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * This was a hack to refresh a few pieces of state that needed
+ * to be faster than the goofy double buffered state refresh
+ * it won't be necessary after SystemState is in place
+ */
+#if 0
 void MidiTrack::refreshPriorityState(MobiusState::Track* state)
 {
     state->frames = recorder.getFrames();
     state->frame = recorder.getFrame();
     state->cycles = recorder.getCycles();
 }
+#endif
 
 /**
  * Calculate a number we can put in either the inputLevel or outputLevel
@@ -833,7 +840,11 @@ void MidiTrack::refreshState(MobiusState::Track* state)
     state->loopCount = loopCount;
     state->activeLoop = loopIndex;
 
-    refreshPriorityState(state);
+    //refreshPriorityState(state);
+    state->frames = recorder.getFrames();
+    state->frame = recorder.getFrame();
+    state->cycles = recorder.getCycles();
+    
     captureLevels(state);
 
     int cycleFrames = recorder.getCycleFrames();

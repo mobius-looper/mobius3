@@ -140,7 +140,11 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     session = ses;
 
     syncMaster.setSampleRate(container->getSampleRate());
-    
+    // this is dumb, need to sort out the dependencies, Pulsator
+    // should be inside SyncMaster
+    Pulsator* p = container->getPulsator();
+    p->setSyncMaster(&syncMaster);
+
     notifier.initialize(this);
     notifier.configure(ses);
 

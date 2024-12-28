@@ -115,6 +115,8 @@
 
 #include "../../midi/MidiByte.h"
 #include "../../sync/MidiSyncEvent.h"
+#include "../../sync/SyncMaster.h"
+#include "../../sync/Transport.h"
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/OldMobiusState.h"
@@ -965,10 +967,10 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
             break;
 
         case SYNC_TRANSPORT: {
-            Transport* t = mSyncMaster->getTransport();
-            state->tempo = t->getTempo();
-            state->beat = t->getBeat();
-            state->bar = t->getBar();
+            Transport* trans = mSyncMaster->getTransport();
+            state->tempo = trans->getTempo();
+            state->beat = trans->getBeat();
+            state->bar = trans->getBar();
         }
             break;
 
@@ -1938,7 +1940,7 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     }
     else if (src == SYNC_TRANSPORT) {
         // this is normally the bar length
-        unit->frames = (float)(mSyncMaster->getTransport()->getFrames());
+        unit->frames = (float)(mSyncMaster->getTransport()->getTimelineFrames());
     }
     else if (src == SYNC_HOST) {
         if (mHostTracker->isLocked()) {
@@ -3473,7 +3475,7 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
         // todo: should be a cycle per bar?
         // similar logic to TRACK
         int slaveFrames = l->getRecordedFrames();
-        int cycleFrames = mSyncMaster->getTransport()->getFrames();
+        int cycleFrames = mSyncMaster->getTransport()->getTimelineFrames();
         if ((slaveFrames % cycleFrames) > 0) {
             l->setRecordCycles(1);
         }

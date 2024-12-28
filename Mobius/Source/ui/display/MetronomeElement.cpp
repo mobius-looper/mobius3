@@ -203,7 +203,7 @@ void MetronomeElement::atomButtonPressed(UIAtomButton* b)
             int itempo = (int)(ftempo * 100);
             
             UIAction a;
-            a.symbol = provider->getSymbols()->getSymbol(ParamMetronomeTempo);
+            a.symbol = provider->getSymbols()->getSymbol(ParamTransportTempo);
             a.value = itempo;
             provider->doAction(&a);
 
@@ -214,9 +214,9 @@ void MetronomeElement::atomButtonPressed(UIAtomButton* b)
     else if (b == &start) {
         UIAction a;
         if (b->isOn())
-          a.symbol = provider->getSymbols()->getSymbol(FuncMetronomeStart);
+          a.symbol = provider->getSymbols()->getSymbol(FuncTransportStart);
         else
-          a.symbol = provider->getSymbols()->getSymbol(FuncMetronomeStop);
+          a.symbol = provider->getSymbols()->getSymbol(FuncTransportStop);
         provider->doAction(&a);
     }
 }

@@ -189,7 +189,7 @@ void LogicalTrack::refreshState(TrackState* state)
 void LogicalTrack::refreshPriorityState(PriorityState* state)
 {
     if (trackType == Session::TypeMidi) {
-        track->refreshPriorityState(tstate);
+        track->refreshPriorityState(state);
     }
 }
 

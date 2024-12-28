@@ -54,7 +54,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     int getGroup() override;
     bool isFocused() override;
     void refreshState(class TrackState* stsate) override;
-    void refreshPriorityState(class MobiusState::Track* tstate) override;
+    void refreshPriorityState(class PriorityState* state) override;
     void refreshDynamicState(class DynamicState* state) override;
     void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;

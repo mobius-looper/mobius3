@@ -32,7 +32,7 @@ class Pulse
         SourceMidiIn,
         SourceMidiOut,
         SourceHost,
-        SourceMetronome,
+        SourceTransport,
         SourceLeader
     } Source;
 

@@ -2019,7 +2019,7 @@ void EventManager::refreshDynamicState(DynamicState* state)
 
 void EventManager::getEventSummary(DynamicEvent* estate, Event* e, bool stacked)
 {
-    estate->track = getRawNumber() + 1;
+    estate->track = mTrack->getRawNumber() + 1;
 
     // todo: here lies the matic to convert EventType into a symbol id, etc...
     estate->type = DynamicEvent::EventUnknown;

@@ -44,6 +44,8 @@
 
 #pragma once
 
+#include "SymbolId.h"
+
 class DynamicEvent
 {
   public:
@@ -83,7 +85,7 @@ class DynamicEvent
         
     } Type;
 
-    EventType type = EventNone;
+    Type type = EventNone;
     SymbolId symbol = SymbolIdNone;
     int argument = 0;
     int frame = 0;
@@ -125,7 +127,7 @@ class DynamicRegion
         RegionInsert
     } Type;
 
-    RegionType type = RegionOverdub;
+    Type type = RegionOverdub;
     int startFrame = 0;
     int endFrame = 0;
 
@@ -214,7 +216,7 @@ class DynamicEventRing : public DynamicRing
 {
   public:
     // don't think these need to be configurable but they could be
-    const int MaxEvents = 64;
+    static const int MaxEvents = 64;
 
     DynamicEvent elements[MaxEvents];
 
@@ -231,6 +233,14 @@ class DynamicEventRing : public DynamicRing
         }
         return el;
     }
+
+    DynamicEvent* nextRead() {
+        DynamicEvent* el = nullptr;
+        int index = nextReadIndex();
+        if (index >= 0)
+          el = &(elements[index]);
+        return el;
+    }
     
 };
 
@@ -239,7 +249,7 @@ class DynamicLayerRing : public DynamicRing
   public:
 
     // don't think these need to be configurable but they could be
-    const int MaxLayers = 64;
+    static const int MaxLayers = 64;
 
     DynamicLayer elements[MaxLayers];
 
@@ -256,6 +266,14 @@ class DynamicLayerRing : public DynamicRing
         }
         return el;
     }
+    
+    DynamicLayer* nextRead() {
+        DynamicLayer* el = nullptr;
+        int index = nextReadIndex();
+        if (index >= 0)
+          el = &(elements[index]);
+        return el;
+    }
 };
 
 class DynamicRegionRing : public DynamicRing
@@ -263,7 +281,7 @@ class DynamicRegionRing : public DynamicRing
   public:
 
     // don't think these need to be configurable but they could be
-    const int MaxRegions = 64;
+    static const int MaxRegions = 64;
 
     DynamicRegion elements[MaxRegions];
     
@@ -278,7 +296,15 @@ class DynamicRegionRing : public DynamicRing
             el = &(elements[index]);
             el->init();
         }
-        return e;
+        return el;
+    }
+    
+    DynamicRegion* nextRead() {
+        DynamicRegion* el = nullptr;
+        int index = nextReadIndex();
+        if (index >= 0)
+          el = &(elements[index]);
+        return el;
     }
 };
 
@@ -300,8 +326,8 @@ class DynamicState
     void commitWrite();
 
     DynamicEvent* nextReadEvent();
-    DynamicReEgion* nextReadRegion();
-    DynamicRegionLayer* nextReadLayer();
+    DynamicRegion* nextReadRegion();
+    DynamicLayer* nextReadLayer();
 };
 
 /****************************************************************************/

@@ -14,7 +14,7 @@
 
 #include "../sync/SyncMasterState.h"
 #include "TrackState.h"
-#incldue "DynamicState.h"
+#include "DynamicState.h"
 
 class SystemState
 {

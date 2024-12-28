@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Transport.h"
+#include "Pulse.h"
 
 class SyncMaster
 {
@@ -49,6 +50,8 @@ class SyncMaster
 
     class Provider* provider = nullptr;
     Transport transport;
+    // why can't this be in Transport?
+    Pulse transportPulse;
     
     void doStop(class UIAction* a);
     void doStart(class UIAction* a);
