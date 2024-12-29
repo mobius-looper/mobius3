@@ -16,22 +16,6 @@
 
 #include "../model/Query.h"
 
-/**
- * Helper class to consume the DynamicState and make the contents
- * accessible over several iterations.
- */
-class DynamicStateConsumer
-{
-  public:
-
-    void consume(DynamicState* ds);
-
-    juce::Array<DynamicEvent> events;
-    juce::Array<DynamicRegion> regions;
-    juce::Array<DynamicLayer> layers;
-};
-
-   
 class MobiusViewer
 {
   public:
@@ -48,8 +32,7 @@ class MobiusViewer
 
     class Provider* provider = nullptr;
     Query subcyclesQuery;
-    DynamicStateConsumer dynamicState;
-    
+
     void resetRefreshTriggers(class MobiusView* view);
 
     void refreshAudioTracks(class OldMobiusState* state, class MobiusView* view);
@@ -84,10 +67,10 @@ class MobiusViewer
     void refreshTrack(class TrackState* tstate, class MobiusViewTrack* tview);
 
     void refreshMinorModes(class TrackState* tstate, class MobiusViewTrack* tview);
-    void refreshEvents(class TrackState* tstate, class MobiusViewTrack* tview);
-    void refreshRegions(class MobiusViewTrack* tview);
+    void refreshEvents(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshRegions(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
     void refreshSync(class TrackState* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class TrackState* tstate,  class MobiusViewTrack* tview);
-    void expandEventName(class DynamicEvent& e, juce::String& name);
+    void expandEventName(class TrackState::Event& e, juce::String& name);
 };
 

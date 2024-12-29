@@ -13,6 +13,7 @@
 #define EVENT_MANAGER_H
 
 #include "../../model/ParameterConstants.h"
+#include "../../model/TrackState.h"
 
 /**
  * A class encapsulating Event management code for a Track.
@@ -105,7 +106,7 @@ class EventManager {
 
     // Summary
 
-    void refreshDynamicState(class DynamicState* s);
+    void refreshFocusedState(class FocusedTrackState* s);
     void getEventSummary(class OldMobiusLoopState* s);
 
     // Selection
@@ -140,7 +141,7 @@ class EventManager {
     void finishReturnEvent(Loop* loop, Event* re);
 
     void getEventSummary(class OldMobiusLoopState* s, Event* e, bool stacked);
-    void getEventSummary(class DynamicEvent* estate, Event* e, bool stacked);
+    void getEventSummary(class TrackState::Event& estate, Event* e, bool stacked);
     bool isEventVisible(Event* e, bool stacked);
     long reflectFrame(Loop* loop, long frame);
 

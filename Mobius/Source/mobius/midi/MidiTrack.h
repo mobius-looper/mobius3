@@ -11,7 +11,6 @@
 
 #include "../../util/Util.h"
 #include "../../model/TrackState.h"
-#include "../../model/DynamicState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
@@ -56,7 +55,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     bool isFocused() override;
     void refreshState(class TrackState* stsate) override;
     void refreshPriorityState(class PriorityState* state) override;
-    void refreshDynamicState(class DynamicState* state) override;
+    void refreshFocusedState(class FocusedTrackState* state) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
 
@@ -197,7 +196,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     MidiRecorder recorder {this};
     MidiPlayer player {this};
     
-    juce::Array<DynamicRegion> regions;
+    juce::Array<TrackState::Region> regions;
     int activeRegion = -1;
     
     // state
@@ -237,7 +236,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     
     // regions
     void resetRegions();
-    void startRegion(DynamicRegion::Type type);
+    void startRegion(TrackState::RegionType type);
     void stopRegion();
     void resumeOverdubRegion();
     void advanceRegion(int frames);

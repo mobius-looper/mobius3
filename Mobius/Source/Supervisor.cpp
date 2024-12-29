@@ -415,9 +415,7 @@ bool Supervisor::start()
     // initialize things needing to have a refreshed view before the
     // editor window is open, always do a view refresh
 
-    refreshView();
-    // nothing has been displayed set so turn on all the flags
-    mobiusViewer.forceRefresh(&mobiusView);
+    initializeView();
 
     // sanity check for that GP initialization issues
     for (auto track : mobiusView.tracks) {
@@ -616,18 +614,24 @@ void Supervisor::shutdown()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Ask the engine to do a full refresh of the system state.
+ * There were some odd problems with GP if the view was not in a fleshed out
+ * state during startup.  Now that SystemState is refreshed with an asynchronous
+ * query, we need to pretend that we did a full refresh just to get the track arrays
+ * and what-not populated.
  */
-void Supervisor::refreshSystemState()
+void Supervisor::initializeView()
 {
-    if (mobius != nullptr)
-      mobius->refreshState(&systemState);
-}
+    Session* s = getSession();
 
-void Supervisor::refreshView()
-{
-    refreshSystemState();
+    // I think this is all that is needed, the track arrays will be built out and
+    // in a good enough default stsate
+    systemState.audioTracks = s->audioTracks;
+    systemState.midiTracks = s->midiTracks;
+    
     mobiusViewer.refresh(&systemState, &mobiusView);
+
+    // nothing has been displayed set so turn on all the flags
+    mobiusViewer.forceRefresh(&mobiusView);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -979,15 +983,32 @@ void Supervisor::advance()
         // tell the engine to do housekeeping before we refresh the UI
         mobius->performMaintenance();
 
-        // always refresh the view, even if the UI is not visible
-        // LoadMidi and possibly other places look at things in the view to
-        // do request validation and these need fresh state
-        refreshView();
-
-        // the actual UI refresh doesn't need to happen unless the window is open
-        if (mainComponent != nullptr || pluginEditorOpen) {
-            mainWindow->update(&mobiusView);
+        if (stateRefreshReturned) {
+            // always refresh the view, even if the UI is not visible
+            // LoadMidi and possibly other places look at things in the view to
+            // do request validation and these need fresh state
+            mobiusViewer.refresh(&systemState, &mobiusView);
+            
+            // the actual UI refresh doesn't need to happen unless the window is open
+            if (mainComponent != nullptr || pluginEditorOpen)
+              mainWindow->update(&mobiusView);
+            
+            stateRefreshReturned = false;
         }
+
+        // request another state refresh
+        if (!stateRefreshRequested) {
+            stateRefreshRequested = true;
+            mobius->refreshState(&systemState);
+        }
+        else {
+            // unusual, the engine should be keeping up with this but it can happen
+            // in rare cases if you hit it just right
+            // should keep track of the number of advances that happen while this is waiting
+            // and if we get more than a few then the engine must be hung
+            Trace(2, "Supervisor: Mobius is late on a refresh request");
+        }
+        
     }
 
     // check the input clock stream
@@ -1000,6 +1021,23 @@ void Supervisor::advance()
 
     // let MidiMonitors display things queued from the plugin
     midiManager.performMaintenance();
+}
+
+/**
+ * Engine callback when the state has finished a refresh.
+ */
+void Supervisor::mobiusStateRefreshed(class SystemState* state)
+{
+    (void)state;
+    
+    if (!stateRefreshRequested)
+      Trace(1, "Supervisor: Mobius refreshed a SystemState without asking");
+
+    if (stateRefreshReturned)
+      Trace(1, "Supervisor: Mobius returned an extra SystemState");
+      
+    stateRefreshReturned = true;
+    stateRefreshRequested = false;
 }
 
 /**
@@ -1427,20 +1465,33 @@ void Supervisor::configureSystemState(Session* s)
 
     // in theory should whip through the config model and calculate
     // the maximum
-    int maxLoops = 16;
+    int maxLoops = TrackState::MaxLoops;
     
     for (int i = systemState.tracks.size() ; i < maxTracks ; i++) {
         TrackState* ts = new TrackState();
         for (int l = 0 ; l < maxLoops ; l++) {
-            TrackState::Loop* loop = new TrackState::Loop();
+            TrackState::Loop loop;
             ts->loops.add(loop);
         }
         systemState.tracks.add(ts);
     }
 
-    // events and regions now come in via the DynamicState but it would
-    // make it easier for the Viewer if we put them in TrackState and made
-    // it look like they came in together, would require more arrays
+    FocusedTrackState* focused = &(systemState.focusedState);
+    
+    // not crucial, the number of events is typically less than 4 but with
+    // stacking can be higher, it's okay to miss a few since if there are that many
+    // it's hard to read anyway
+    int maxEvents = FocusedTrackState::MaxEvents;
+    for (int i = focused->events.size() ; i < maxEvents ; i++) {
+        // todo: look at that fill() method, that's probably a better way to do this
+        // what about ensureStorageAllocated?
+        TrackState::Event e;
+        focused->events.add(e);
+    }
+    
+    // try this one and see if it works
+    focused->regions.ensureStorageAllocated(FocusedTrackState::MaxRegions);
+    focused->layers.ensureStorageAllocated(FocusedTrackState::MaxLayers);
 }
 
 /**

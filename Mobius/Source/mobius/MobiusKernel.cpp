@@ -218,13 +218,38 @@ bool MobiusKernel::isGlobalReset()
     return (mCore != nullptr) ? mCore->isGlobalReset() : true;
 }
 
+/**
+ * This is called from the maintenance thread to ask for a state refresh.
+ * We save it in a special place and handle it on the next block.
+ */
 void MobiusKernel::refreshState(SystemState* state)
 {
-    syncMaster.refreshState(&(state->syncState));
-    mTracks->refreshState(state);
+    if (stateToRefresh == nullptr)
+      stateToRefresh = state;
+    else {
+        Trace(1, "MobiusKernel: State refresh requested before finishing the last one");
+    }
+}
 
-    // temporary
-    state->oldState = mCore->getState();
+/**
+ * Called at the beginning of each block to handle a state refresh request.
+ */
+void MobiusKernel::checkStateRefresh()
+{
+    if (stateToRefresh != nullptr) {
+        
+        syncMaster.refreshState(&(stateToRefresh->syncState));
+        mTracks->refreshState(stateToRefresh);
+
+        // temporary
+        stateToRefresh->oldState = mCore->getState();
+
+        stateToRefresh = nullptr;
+        
+        MobiusListener* l = shell->getListener();
+        if (l != nullptr)
+          l->mobiusStateRefreshed(stateToRefresh);
+    }
 }
 
 void MobiusKernel::refreshPriorityState(PriorityState* state)
@@ -588,6 +613,9 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // if we're running tests, ignore any external input once this flag is set
 	if (noExternalInput)
       clearExternalInput();
+
+    // do this at the beginning or end of the block?
+    checkStateRefresh();
 
     // consume any queueued configuration, actions, MIDI events, and host events
     consumeCommunications();

@@ -153,15 +153,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
     
     // regions
     for (int i = 0 ; i < track->regions.size() ; i++) {
-        DynamicRegion& region = track->regions.getReference(i);
+        TrackState::Region& region = track->regions.getReference(i);
         int regionLeft = getMeterOffset(region.startFrame, track->frames);
         int regionRight = getMeterOffset(region.endFrame, track->frames);
 
         // default overdub color
         juce::Colour color = juce::Colours::lightpink;
-        if (region.type == DynamicRegion::RegionReplace)
+        if (region.type == TrackState::RegionReplace)
           color = juce::Colours::grey;
-        else if (region.type != DynamicRegion::RegionOverdub)
+        else if (region.type != TrackState::RegionOverdub)
           color = juce::Colours::lightblue;
         g.setColour(color);
         if (region.active) {

@@ -36,7 +36,7 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     bool isFocused() override;
     void refreshState(class TrackState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
-    void refreshDynamicState(class DynamicState* state) override;
+    void refreshFocusedState(class FocusedTrackState* state) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
 

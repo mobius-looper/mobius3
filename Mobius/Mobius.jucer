@@ -104,9 +104,6 @@
         <FILE id="dnNSw0" name="DeviceConfig.cpp" compile="1" resource="0"
               file="Source/model/DeviceConfig.cpp"/>
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
-        <FILE id="ouguyK" name="DynamicState.cpp" compile="1" resource="0"
-              file="Source/model/DynamicState.cpp"/>
-        <FILE id="Y8neCa" name="DynamicState.h" compile="0" resource="0" file="Source/model/DynamicState.h"/>
         <FILE id="cObUhB" name="Enumerator.cpp" compile="1" resource="0" file="Source/model/Enumerator.cpp"/>
         <FILE id="z4eQpK" name="Enumerator.h" compile="0" resource="0" file="Source/model/Enumerator.h"/>
         <FILE id="azEsBL" name="ExValue.cpp" compile="1" resource="0" file="Source/model/ExValue.cpp"/>
@@ -141,9 +138,12 @@
               file="Source/model/ParameterConstants.h"/>
         <FILE id="JyBzf9" name="ParameterProperties.cpp" compile="1" resource="0"
               file="Source/model/ParameterProperties.cpp"/>
+        <FILE id="wHWkb1" name="ParameterProperties.h" compile="0" resource="0"
+              file="Source/model/ParameterProperties.h"/>
         <FILE id="pVDAsq" name="Preset.cpp" compile="1" resource="0" file="Source/model/Preset.cpp"/>
         <FILE id="godsX2" name="Preset.h" compile="0" resource="0" file="Source/model/Preset.h"/>
         <FILE id="PKfY2J" name="PriorityState.h" compile="0" resource="0" file="Source/model/PriorityState.h"/>
+        <FILE id="hUNddz" name="Query.h" compile="0" resource="0" file="Source/model/Query.h"/>
         <FILE id="gNzjgL" name="SampleConfig.cpp" compile="1" resource="0"
               file="Source/model/SampleConfig.cpp"/>
         <FILE id="ndteTZ" name="SampleConfig.h" compile="0" resource="0" file="Source/model/SampleConfig.h"/>

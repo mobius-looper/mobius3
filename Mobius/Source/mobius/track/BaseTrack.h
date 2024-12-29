@@ -68,10 +68,10 @@ class BaseTrack
     
     // and can go on and on if you let them
     virtual void refreshState(class TrackState* tstate) = 0;
-    
-    // some state is weird
-    virtual void refreshDynamicState(class DynamicState* state) = 0;
 
+    // and one can be tmi
+    virtual void refreshFocusedState(class FocusedTrackState* state) = 0;
+    
     // and sometimes it's spills its guts
     virtual void dump(class StructureDumper& d) = 0;
 

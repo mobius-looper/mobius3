@@ -32,7 +32,7 @@ class BaseScheduler
     void loadSession(Session::Track* def);
     
     void refreshState(class TrackState* state);
-    void refreshDynamicState(class DynamicState* state);
+    void refreshFocusedState(class FocusedTrackState* state);
 
     void advance(class MobiusAudioStream* stream);
     void scheduleAction(class UIAction* a);

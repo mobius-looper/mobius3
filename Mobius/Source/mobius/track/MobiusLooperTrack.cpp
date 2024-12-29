@@ -94,9 +94,9 @@ void MobiusLooperTrack::refreshPriorityState(PriorityState* state)
     (void)state;
 }
 
-void MobiusLooperTrack::refreshDynamicState(DynamicState* state)
+void MobiusLooperTrack::refreshFocusedState(FocusedTrackState* state)
 {
-    track->refreshDynamicState(state);
+    track->refreshFocusedState(state);
 }
 
 void MobiusLooperTrack::dump(StructureDumper& d)

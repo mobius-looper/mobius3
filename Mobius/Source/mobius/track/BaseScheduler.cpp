@@ -1132,7 +1132,7 @@ void BaseScheduler::detectLeaderChange()
 /**
  * Contribute state managed by the scheduer to the exported state.
  */
-// replaced by TrackState and DynamicState
+// replaced by TrackState and FocusedTrackState
 #if 0
 void BaseScheduler::refreshState(MobiusState::Track* state)
 {
@@ -1241,7 +1241,7 @@ void BaseScheduler::refreshState(MobiusState::Track* state)
 
 /**
  * Contribute scheduling related state to the main state.
- * Events are in the DynamicState
+ * Events are in the FocusedTrackState
  */
 void BaseScheduler::refreshState(TrackState* state)
 {
@@ -1273,46 +1273,48 @@ void BaseScheduler::refreshState(TrackState* state)
 }
 
 /**
- * Contribute events to the new DynamicState model
+ * Contribute events to the focused model
  */
-void BaseScheduler::refreshDynamicState(DynamicState* state)
+void BaseScheduler::refreshFocusedState(FocusedTrackState* state)
 {
-    bool overflow = false;
-    for (TrackEvent* e = events.getEvents() ; e != nullptr && !overflow ; e = e->next) {
+    int count = 0;
+    
+    for (TrackEvent* e = events.getEvents() ;
+         e != nullptr && count < FocusedTrackState::MaxEvents ; e = e->next) {
 
-        DynamicEvent::Type type = DynamicEvent::EventNone;
+        TrackState::EventType type = TrackState::EventNone;
         SymbolId symbol = SymbolIdNone;
         int arg = 0;
         
         switch (e->type) {
             
             case TrackEvent::EventRecord: {
-                type = DynamicEvent::EventAction;
+                type = TrackState::EventAction;
                 symbol = FuncRecord;
             }
                 break;
                 
             case TrackEvent::EventSwitch: {
                 if (e->isReturn)
-                  type = DynamicEvent::EventReturn;
+                  type = TrackState::EventReturn;
                 else
-                  type = DynamicEvent::EventSwitch;
+                  type = TrackState::EventSwitch;
                 arg = e->switchTarget + 1;
             }
                 break;
                 
             case TrackEvent::EventAction: {
                 if (e->primary != nullptr && e->primary->symbol != nullptr) {
-                    type = DynamicEvent::EventAction;
+                    type = TrackState::EventAction;
                     symbol = e->primary->symbol->id;
                 }
                 else
-                  type = DynamicEvent::EventUnknown;
+                  type = TrackState::EventUnknown;
             }
                 break;
 
             case TrackEvent::EventRound: {
-                type = DynamicEvent::EventRound;
+                type = TrackState::EventRound;
                 auto mode = scheduledTrack->getMode();
                 if (mode == TrackState::ModeMultiply) {
                     symbol = FuncMultiply;
@@ -1321,7 +1323,7 @@ void BaseScheduler::refreshDynamicState(DynamicState* state)
                     symbol = FuncInsert;
                     if (e->extension) {
                         // wasn't displayed as "End" in the first implementation, why?
-                        type = DynamicEvent::EventAction;
+                        type = TrackState::EventAction;
                     }
                 }
                 if (e->multiples > 0)
@@ -1330,46 +1332,36 @@ void BaseScheduler::refreshDynamicState(DynamicState* state)
                 break;
 
             case TrackEvent::EventWait:
-                type = DynamicEvent::EventWait;
+                type = TrackState::EventWait;
                 break;
                 
             default: break;
         }
         
-        if (type != DynamicEvent::EventNone) {
+        if (type != TrackState::EventNone) {
 
-            DynamicEvent* estate = state->nextWriteEvent();
-            if (estate == nullptr) {
-                Trace(1, "BaseScheduler: Maximum events in DynamicState");
-                overflow = true;
-            }
-            else {
-                estate->type = type;
-                estate->symbol = symbol;
-                estate->argument = arg;
+            TrackState::Event& estate = state->events.getReference(count);
+            estate.type = type;
+            estate.symbol = symbol;
+            estate.argument = arg;
             
-                if (e->type != TrackEvent::EventWait && e->wait != nullptr)
-                  estate->waiting = true;
+            if (e->type != TrackEvent::EventWait && e->wait != nullptr)
+              estate.waiting = true;
             
-                estate->track = scheduledTrack->getNumber();
-                estate->frame = e->frame;
-                estate->pending = e->pending;
-
-                UIAction* stack = e->stacked;
-                while (stack != nullptr && !overflow) {
-                    estate = state->nextWriteEvent();
-                    if (estate == nullptr) {
-                        Trace(1, "BaseScheduler: Maximum events in DynamicState");
-                        overflow = true;
-                    }
-                    else {
-                        estate->track = scheduledTrack->getNumber();
-                        estate->type = DynamicEvent::EventAction;
-                        estate->symbol = stack->symbol->id;
-                        estate->frame = e->frame;
-                        estate->pending = e->pending;
-                    }
-                }
+            estate.track = scheduledTrack->getNumber();
+            estate.frame = e->frame;
+            estate.pending = e->pending;
+            count++;
+            
+            UIAction* stack = e->stacked;
+            while (stack != nullptr && count < FocusedTrackState::MaxEvents) {
+                estate = state->events.getReference(count);
+                estate.track = scheduledTrack->getNumber();
+                estate.type = TrackState::EventAction;
+                estate.symbol = stack->symbol->id;
+                estate.frame = e->frame;
+                estate.pending = e->pending;
+                count++;
             }
         }
     }

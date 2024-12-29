@@ -168,7 +168,7 @@ class Track : public TraceContext
     class EventManager* getEventManager();
 
     // new way to export state
-    void refreshDynamicState(class DynamicState* state);
+    void refreshFocusedState(class FocusedTrackState* state);
 
 	int getLoopCount();
 	class Loop* getLoop(int index);

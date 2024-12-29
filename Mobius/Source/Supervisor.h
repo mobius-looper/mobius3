@@ -272,6 +272,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void mobiusDynamicConfigChanged() override;
     void mobiusSaveCapture(Audio* content, juce::String fileName) override;
     void mobiusActivateBindings(juce::String name) override;
+    void mobiusStateRefreshed(class SystemState* state) override;
     
     //
     // MslContext
@@ -365,6 +366,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     // system state capture, used to drive the view
     SystemState systemState;
     PriorityState priorityState;
+    bool stateRefreshRequested = false;
+    bool stateRefreshReturned = false;
     
     // use a custom AudioDeviceManager so we don't have to mess with that XML initializer
     juce::AudioDeviceManager customAudioDeviceManager;
@@ -472,8 +475,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void upgradeSession(class MobiusConfig* old, class Session* ses);
     void convertEnum(juce::String name, int value, class ValueSet* dest);
 
-    void refreshSystemState();
-    void refreshView();
+    void initializeView();
 
     void saveSession();
 

@@ -132,7 +132,7 @@
 #include "../../util/Util.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/Trigger.h"
-#include "../../model/DynamicState.h"
+#include "../../model/TrackState.h"
 
 #include "Action.h"
 #include "Event.h"
@@ -1979,52 +1979,44 @@ void EventManager::cleanReturnEvents()
 /**
  * New way to show events.
  */
-void EventManager::refreshDynamicState(DynamicState* state)
+void EventManager::refreshFocusedState(FocusedTrackState* state)
 {
 	Event* events = mEvents->getEvents();
-    bool overflow = false;
-    for (Event* e = events ; e != nullptr && !overflow ;  e = e->getNext()) {
-
+    int count = 0;
+    for (Event* e = events ;
+         e != nullptr && count < FocusedTrackState::MaxEvents ;
+         e = e->getNext()) {
+        
         if (isEventVisible(e, false)) {
-            DynamicEvent* de = state->nextWriteEvent();
-            if (de != nullptr) {
-                getEventSummary(de, e, false);
-            }
-            else {
-                Trace(1, "EventManager: Maximum events in DynamicState");
-                overflow = true;
-            }
+            TrackState::Event& estate = state->events.getReference(count);
+            getEventSummary(estate, e, false);
+            count++;
         }
         
         if (e->type == SwitchEvent) {
             // and the events stacked after the switch
             for (Event* se = e->getChildren() ; 
-                 se != NULL && !overflow ;
+                 se != NULL && count < FocusedTrackState::MaxEvents ;
                  se = se->getSibling()) {
 
                 if (isEventVisible(se, true)) {
-                    DynamicEvent* de = state->nextWriteEvent();
-                    if (de != nullptr) {
-                        getEventSummary(de, e, true);
-                    }
-                    else {
-                        Trace(1, "EventManager: Maximum events in DynamicState");
-                        overflow = true;
-                    }
+                    TrackState::Event& estate = state->events.getReference(count);
+                    getEventSummary(estate, se, true);
+                    count++;
                 }
             }
         }
     }
 }
 
-void EventManager::getEventSummary(DynamicEvent* estate, Event* e, bool stacked)
+void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool stacked)
 {
-    estate->track = mTrack->getRawNumber() + 1;
+    estate.track = mTrack->getRawNumber() + 1;
 
-    // todo: here lies the matic to convert EventType into a symbol id, etc...
-    estate->type = DynamicEvent::EventUnknown;
+    // todo: here lies the magic to convert EventType into a symbol id, etc...
+    estate.type = TrackState::EventUnknown;
         
-    estate->argument = e->number;
+    estate.argument = e->number;
 
     // usually defines its own frame
     long frame = e->frame;
@@ -2046,15 +2038,15 @@ void EventManager::getEventSummary(DynamicEvent* estate, Event* e, bool stacked)
         frame = loop->getFrames();
 
         // estate has a pending flag so don't need to do the old max frames hack?
-        estate->pending = true;
+        estate.pending = true;
     }
 
     if (loop->isReverse())
       frame = reflectFrame(loop, frame);
-    estate->frame = frame;
+    estate.frame = frame;
 
     if (e->getMslWait() != nullptr)
-      estate->waiting = true;
+      estate.waiting = true;
 }
 
 /**

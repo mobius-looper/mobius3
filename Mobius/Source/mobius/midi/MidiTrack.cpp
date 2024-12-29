@@ -28,7 +28,6 @@
 #include "../../util/StructureDumper.h"
 
 #include "../../model/TrackState.h"
-#include "../../model/DynamicState.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
@@ -785,20 +784,14 @@ void MidiTrack::refreshPriorityState(PriorityState* state)
     (void)state;
 }
 
-void MidiTrack::refreshDynamicState(DynamicState* state)
+void MidiTrack::refreshFocusedState(FocusedTrackState* state)
 {
-    scheduler.refreshDynamicState(state);
+    scheduler.refreshFocusedState(state);
 
-    for (int i = 0 ; i < regions.size() ; i++) {
-
-        DynamicRegion* rstate = state->nextWriteRegion();
-        if (rstate == nullptr) {
-            Trace(1, "MidiTrack: Maximum regions in DynamicState");
-            break;
-        }
-        else {
-            *rstate = regions.getReference(i);
-        }
+    for (int i = 0 ; i < regions.size() && i < FocusedTrackState::MaxRegions ; i++) {
+        TrackState::Region& rstate = state->regions.getReference(i);
+        // we use the same structure so it just copies
+        rstate = regions.getReference(i);
     }
 }
 
@@ -867,14 +860,10 @@ void MidiTrack::refreshState(TrackState* state)
     // loop sizes for the loop stack
     // !! in theory, the loop array could be changing if we're doing a refresh
     // at the same time as a Session load, the loop array may not be stable?
-    for (int i = 0 ; i < loopCount ; i++) {
+    for (int i = 0 ; i < loopCount && i < TrackState::MaxLoops ; i++) {
         MidiLoop* loop = loops[i];
-        TrackState::Loop* lstate = state->loops[i];
-        
-        if (lstate == nullptr)
-          Trace(1, "MidiTrack: TrackState loop array too small");
-        else
-          lstate->frames = loop->getFrames();
+        TrackState::Loop& lstate = state->loops.getReference(i);
+        lstate.frames = loop->getFrames();
     }
 
     // force a refresh after loops were loaded
@@ -1098,17 +1087,17 @@ void MidiTrack::resetRegions()
     regions.clearQuick();
 }
 
-void MidiTrack::startRegion(DynamicRegion::Type type)
+void MidiTrack::startRegion(TrackState::RegionType type)
 {
     if (activeRegion >= 0) {
-        DynamicRegion& region = regions.getReference(activeRegion);
+        TrackState::Region& region = regions.getReference(activeRegion);
         region.active = false;
         activeRegion = -1;
     }
     
     if (regions.size() < MidiTrackMaxRegions) {
         activeRegion = regions.size();
-        DynamicRegion region;
+        TrackState::Region region;
         region.active = true;
         region.type = type;
         region.startFrame = recorder.getFrame();
@@ -1121,7 +1110,7 @@ void MidiTrack::stopRegion()
 {
     if (activeRegion >= 0) {
         // were in the middle of one already
-        DynamicRegion& region = regions.getReference(activeRegion);
+        TrackState::Region& region = regions.getReference(activeRegion);
         region.active = false;
     }
     activeRegion = -1;
@@ -1130,13 +1119,13 @@ void MidiTrack::stopRegion()
 void MidiTrack::resumeOverdubRegion()
 {
     if (overdub)
-      startRegion(DynamicRegion::RegionOverdub);
+      startRegion(TrackState::RegionOverdub);
 }
 
 void MidiTrack::advanceRegion(int frames)
 {
     if (activeRegion >= 0) {
-        DynamicRegion& region = regions.getReference(activeRegion);
+        TrackState::Region& region = regions.getReference(activeRegion);
         region.endFrame += frames;
     }
 }

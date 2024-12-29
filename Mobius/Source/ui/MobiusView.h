@@ -26,7 +26,7 @@
 
 #include <JuceHeader.h>
 
-#include "../model/DynamicState.h"
+#include "../model/TrackState.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -349,7 +349,7 @@ class MobiusViewTrack {
 
     bool refreshEvents = false;
     juce::Array<MobiusViewEvent> events;
-    juce::Array<DynamicRegion> regions;
+    juce::Array<TrackState::Region> regions;
     
   protected:
 

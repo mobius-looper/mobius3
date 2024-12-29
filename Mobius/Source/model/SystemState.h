@@ -1,20 +1,26 @@
 /**
- * An object representing the state of most parts of the system at a moment in time.
- * One of these will be maintained by Supervisor and passed around periodically where each
- * system component may contribute it's state.  This state then drives the construction
- * of the Mobius View which in turn drives most of the UI.
+ * An object representing the state of Kernel components at a moment in time.
+ * One of these will be maintained by Supervisor and passed down to the Kernel periodically.
+ * Each component may then contribute it's state.  THe state refresh is handled during
+ * block processing in the audio thread, and then passed back to the UI where it
+ * can drive the refresh of the UI.
  *
  * You might think of it like a very large Query result, where there is a single query
  * to refresh state rather than hundreds of individual Query's to access each piece.
  *
- * This is the latest of state redesigned, destined to replace MobiusState and OldMobiusState.
+ * This is the latest of state redesigned, destined OldMobiusState.
+ *
+ * The state object is allocated by the UI/Shell and must be fleshed out with enough variable
+ * length containers to hold what the kernel wants to return.
+ *
+ * TrackState contains that is needed for all tracks.
+ * FocusedTrackState contains additional details that are only gathered for one track.
  */
 
 #pragma once
 
 #include "../sync/SyncMasterState.h"
 #include "TrackState.h"
-#include "DynamicState.h"
 
 class SystemState
 {
@@ -23,19 +29,23 @@ class SystemState
     SystemState() {}
     ~SystemState() {}
 
-    // state for various non-track components
-    SyncMasterState syncState;
+    // the reference number of the track that has focus
+    // this is an argument to the query passed from UI to kernel and determines
+    // what is left in FocusedTrackState
+    int focusedTrack = 0;
 
-    // the number of tracks of each type
+    // the number of tracks of each type, returned by the engine
     int audioTracks = 0;
     int midiTracks = 0;
 
-    // state for each track
+    // full state for each track
     juce::OwnedArray<TrackState> tracks;
 
-    // special variable size state that is harder to export
-    // the object this points to is managed by the kernel and will remain stable
-    DynamicState* dynamicState = nullptr;
+    // details for the focused track only
+    FocusedTrackState focusedState;
+
+    // state for various non-track components
+    SyncMasterState syncState;
 
     // until the old core is converted, return a pointer to the old state model
     class OldMobiusState* oldState = nullptr;

@@ -672,6 +672,11 @@ void TestDriver::mobiusMidiReceived(juce::MidiMessage& msg)
     (void)msg;
 }
 
+void TestDriver::mobiusStateRefreshed(class SystemState* state)
+{
+    (void)state;
+}
+
 void TestDriver::mobiusTestStart(juce::String name)
 {
 }

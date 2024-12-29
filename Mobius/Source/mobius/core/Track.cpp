@@ -762,10 +762,10 @@ void Track::doFunction(Action* action)
 /**
  * This is the new way of doing things.
  */
-void Track::refreshDynamicState(DynamicState* s)
+void Track::refreshFocusedState(FocusedTrackState* s)
 {
     // event manager will contribute events
-    mEventManager->refreshDynamicState(s);
+    mEventManager->refreshFocusedState(s);
 
     // todo: summarize the layer checkpoints
 

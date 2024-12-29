@@ -247,6 +247,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class Session* session = nullptr;
     class AudioPool* audioPool = nullptr;
     class UIActionPool* actionPool = nullptr;
+
+    class SystemState* stateToRefresh = nullptr;
     
     // important that we track changes in block sizes to adjust latency compensation
     int lastBlockSize = 0;
@@ -303,6 +305,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void clearExternalInput();
     void consumeMidiMessages();
     
+    void checkStateRefresh();
     void consumeParameters();
     void doParameter(class PluginParameter* p);
     void updateParameters();

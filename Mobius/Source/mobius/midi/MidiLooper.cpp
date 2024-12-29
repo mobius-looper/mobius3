@@ -16,7 +16,6 @@
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
 #include "../../model/TrackState.h"
-#include "../../model/DynamicState.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
@@ -485,7 +484,7 @@ void MidiTrack::startInsert()
     mode = TrackState::ModeInsert;
     player.setPause(true);
     recorder.startInsert();
-    startRegion(DynamicRegion::RegionInsert);
+    startRegion(TrackState::RegionInsert);
 }
 
 /**
@@ -856,7 +855,7 @@ void MidiTrack::toggleReplace()
         // what is being replaced
         player.setMute(true);
 
-        startRegion(DynamicRegion::RegionReplace);
+        startRegion(TrackState::RegionReplace);
     }
 }
 

@@ -15,7 +15,6 @@
 #include <JuceHeader.h>
 
 #include "../../model/Session.h"
-#include "../../model/DynamicState.h"
 #include "../../model/Scope.h"
 
 #include "TrackProperties.h"
@@ -158,13 +157,4 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     // MSL support
     void mutateMslReturn(class Symbol* s, int value, class MslValue* retval);
-    
-    //
-    // View state
-    //
-
-    DynamicState dynamicState;
-    int stateRefreshCounter = 0;
-    int stateRefreshThreshold = 17;
-    void refreshDynamicState();
 };

@@ -430,13 +430,6 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     // then advance the MIDI tracks
     for (auto track : tracks)
       track->processAudioStream(stream);
-
-    // refresh dynamic state
-    stateRefreshCounter++;
-    if (stateRefreshCounter > stateRefreshThreshold) {
-        refreshDynamicState();
-        stateRefreshCounter = 0;
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1198,14 +1191,6 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 
 void TrackManager::refreshState(SystemState* state)
 {
-    // all we have right now is the DynamicState which is refreshed periodically
-    state->dynamicState = &dynamicState;
-
-    // also convey the old state
-    // this takes time to assemble, so only start doing this after we get
-    // MobiusKernel out of the business of doing it
-    //state->oldState = audioEngine->getState();
-
     // only MIDI tracks return state this way atm
     int audioTracks = 0;
     int midiTracks = 0;
@@ -1231,18 +1216,12 @@ void TrackManager::refreshState(SystemState* state)
     state->audioTracks = audioTracks;
     state->midiTracks = midiTracks;
 
-    // tell the view what we thought the focused track was?
-    //int focusedNumber = getFocusedTrackIndex() + 1;
-    //state->focusedTrack = focusedNumber;
-}
-
-void TrackManager::refreshDynamicState()
-{
-    // only need to do the focused track right now, but for
-    // events at least we could do all of them
-    int focusedNumber = getFocusedTrackIndex() + 1;
-    LogicalTrack* lt = getLogicalTrack(focusedNumber);
-    lt->refreshDynamicState(&dynamicState);
+    if (state->focusedTrack > 0) {
+        LogicalTrack* lt = getLogicalTrack(state->focusedTrack);
+        if (lt->getType() == Session::TypeMidi) {
+            lt->refreshFocusedState(&(state->focusedState));
+        }
+    }
 }
 
 void TrackManager::refreshPriorityState(PriorityState* state)

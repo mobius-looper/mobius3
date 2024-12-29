@@ -64,7 +64,6 @@
 #include "../model/OldMobiusState.h"
 #include "../model/SystemState.h"
 #include "../model/TrackState.h"
-#include "../model/DynamicState.h"
 
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
@@ -73,40 +72,6 @@
 
 #include "MobiusView.h"
 #include "MobiusViewer.h"
-
-//////////////////////////////////////////////////////////////////////
-//
-// DynamicStateConsumer
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Copy the DynamicState into a processing area.
- * DynamicState uses a ring buffer that can only be read once.  When reasoning
- * about events that may for different tracks, it is more convenient to load them
- * into an array that is not shared with the kernel that we can ponder at our leasure.
- */
-void DynamicStateConsumer::consume(DynamicState* ds)
-{
-    events.clearQuick();
-    regions.clearQuick();
-    layers.clearQuick();
-
-    for (DynamicEvent* e = ds->events.nextRead() ; e != nullptr ;
-         e = ds->events.nextRead()) {
-        events.add(*e);
-    }
-    
-    for (DynamicRegion* r = ds->regions.nextRead() ; r != nullptr ;
-         r = ds->regions.nextRead()) {
-        regions.add(*r);
-    }
-    
-    for (DynamicLayer* l = ds->layers.nextRead() ; l != nullptr ;
-         l = ds->layers.nextRead()) {
-        layers.add(*l);
-    }
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -236,9 +201,7 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
 {
     OldMobiusState* state = sysstate->oldState;
     
-    dynamicState.consume(sysstate->dynamicState);
-    
-    if (state->trackCount != view->audioTracks) {
+    if (state != nullptr && state->trackCount != view->audioTracks) {
         Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
         view->audioTracks = state->trackCount;
     }
@@ -262,11 +225,12 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
     // !! this is not enough, you can edit the setup and change the names but the
     // ordinal will stay the same, need to increment a version number on each edit
     // how to did pre-view code detect this?
-    if (view->setupOrdinal != state->setupOrdinal) {
-        view->setupChanged = true;
-        view->setupOrdinal = state->setupOrdinal;
+    if (state != nullptr) {
+        if (view->setupOrdinal != state->setupOrdinal) {
+            view->setupChanged = true;
+            view->setupOrdinal = state->setupOrdinal;
+        }
     }
-
 
     // detect when the selected track changes, this be driven by the state object
     // for audio tracks, but when switching between audio and midi, or within midi
@@ -276,7 +240,8 @@ void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
         view->lastFocusedTrack = view->focusedTrack;
     }
 
-    refreshAudioTracks(state, view);
+    if (state != nullptr)
+      refreshAudioTracks(state, view);
 
     // MIDI Tracks are glued onto the end of the audio tracks
     refreshMidiTracks(sysstate, view);
@@ -1127,10 +1092,19 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
             MobiusViewTrack* tview = view->tracks[trackIndex];
 
             refreshTrack(tstate, tview);
+        }
+    }
 
-            // things that are only valid for the focused track
-            if (view->focusedTrack == trackIndex + 1)
-              refreshRegions(tview);
+    if (view->focusedTrack > 0) {
+        int trackIndex = view->focusedTrack - 1;
+        MobiusViewTrack* tview = view->tracks[trackIndex];
+        if (tview == nullptr) {
+            Trace(1, "MobiusViewer: Track index overflow");
+        }
+        else {
+            FocusedTrackState* tstate = &(state->focusedState);
+            refreshRegions(tstate, tview);
+            refreshEvents(tstate, tview);
         }
     }
 }
@@ -1213,15 +1187,10 @@ void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
         tview->loops.add(vl);
     }
 
-    for (int i = 0 ; i < tstate->loopCount ; i++) {
+    for (int i = 0 ; i < tstate->loopCount && i < TrackState::MaxLoops ; i++) {
         MobiusViewLoop* vl = tview->loops[i];
-        TrackState::Loop* lstate = tstate->loops[i];
-        if (lstate == nullptr) {
-            Trace(1, "MidiViewer: MobiusState loop array too small");
-        }
-        else {
-            vl->frames = (int)(lstate->frames);
-        }
+        TrackState::Loop& lstate = tstate->loops.getReference(i);
+        vl->frames = (int)(lstate.frames);
     }
 
     tview->layerCount = tstate->layerCount;
@@ -1230,10 +1199,6 @@ void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
 
     refreshSync(tstate, tview);
     refreshTrackGroups(tstate, tview);
-
-    // events and regions use the DynamicState which has been copied
-    // to DynamicStateConsumer
-    refreshEvents(tstate, tview);
 }
 
 void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
@@ -1270,68 +1235,65 @@ void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
     }
 }
 
-void MobiusViewer::refreshEvents(TrackState* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshEvents(FocusedTrackState* tstate, MobiusViewTrack* tview)
 {
-    int trackNumber = tstate->number;
-
     tview->events.clearQuick();
-    for (int i = 0 ; i < dynamicState.events.size() ; i++) {
-        DynamicEvent& e = dynamicState.events.getReference(i);
-        if (e.track == trackNumber) {
-            // still feels like there is too much copying going on
-            MobiusViewEvent ve;
+    for (int i = 0 ; i < tstate->events.size() ; i++) {
+        TrackState::Event& e = tstate->events.getReference(i);
 
-            expandEventName(e, ve.name);
-            if (e.argument > 0)
-              ve.name += " " + juce::String(e.argument);
+        // still feels like there is too much copying going on
+        MobiusViewEvent ve;
+
+        expandEventName(e, ve.name);
+        if (e.argument > 0)
+          ve.name += " " + juce::String(e.argument);
             
-            ve.frame = e.frame;
-            ve.pending = e.pending;
-            ve.argument = e.argument;
+        ve.frame = e.frame;
+        ve.pending = e.pending;
+        ve.argument = e.argument;
             
-            tview->events.add(ve);
-        }
+        tview->events.add(ve);
     }
 }
 
-void MobiusViewer::expandEventName(DynamicEvent& e, juce::String& name)
+void MobiusViewer::expandEventName(TrackState::Event& e, juce::String& name)
 {
     switch (e.type) {
-        case DynamicEvent::EventNone:
+        case TrackState::EventNone:
             // placeholder for "unspecified" should not be seen
             name = "None";
             break;
 
-        case DynamicEvent::EventUnknown:
+        case TrackState::EventUnknown:
             // catch-all event for internal events that don't have mappings
             name = "Unknown";
             break;
 
-        case DynamicEvent::EventAction:
-        case DynamicEvent::EventRound: {
+        case TrackState::EventAction:
+        case TrackState::EventRound: {
             Symbol* s = provider->getSymbols()->getSymbol(e.symbol);
             if (s == nullptr)
               name = "Bad Symbol";
             else
               name = s->name;
-            if (e.type == DynamicEvent::EventRound)
+            if (e.type == TrackState::EventRound)
               name += " End";
         }
             break;
 
-        case DynamicEvent::EventSwitch:
+        case TrackState::EventSwitch:
             name = "Switch";
             break;
 
-        case DynamicEvent::EventReturn:
+        case TrackState::EventReturn:
             name = "Return";
             break;
             
-        case DynamicEvent::EventWait:
+        case TrackState::EventWait:
             name = "Wait";
             break;
             
-        case DynamicEvent::EventFollower:
+        case TrackState::EventFollower:
             name = "Follower";
             break;
     }
@@ -1343,11 +1305,12 @@ void MobiusViewer::expandEventName(DynamicEvent& e, juce::String& name)
  * These are only returned for the focused track, caller is responsible for
  * restricting that.
  */
-void MobiusViewer::refreshRegions(MobiusViewTrack* tview)
+void MobiusViewer::refreshRegions(FocusedTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->regions.clearQuick();
-    for (int i = 0 ; i < dynamicState.regions.size() ; i++) {
-        tview->regions.add(dynamicState.regions.getReference(i));
+    for (int i = 0 ; i < tstate->regions.size() ; i++) {
+        TrackState::Region& src = tstate->regions.getReference(i);
+        tview->regions.add(src);
     }
 }
 

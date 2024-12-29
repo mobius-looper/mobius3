@@ -192,9 +192,9 @@ void LogicalTrack::refreshPriorityState(PriorityState* state)
     }
 }
 
-void LogicalTrack::refreshDynamicState(DynamicState* state)
+void LogicalTrack::refreshFocusedState(FocusedTrackState* state)
 {
-    track->refreshDynamicState(state);
+    track->refreshFocusedState(state);
 }
 
 void LogicalTrack::dump(StructureDumper& d)

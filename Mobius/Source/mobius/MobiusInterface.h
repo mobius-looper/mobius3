@@ -537,6 +537,11 @@ class MobiusListener {
      */
     virtual void mobiusMidiReceived(juce::MidiMessage& msg) = 0;
 
+    /**
+     * A SystemState refresh has been completed.
+     */
+    virtual void mobiusStateRefreshed(class SystemState* state) = 0;
+
     //////////////////////////////////////////////////////////////////////
     //
     // Test Script Support

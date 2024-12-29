@@ -40,7 +40,7 @@ class LogicalTrack
 
     void refreshState(class TrackState* state);
     void refreshPriorityState(class PriorityState* state);
-    void refreshDynamicState(class DynamicState* state);
+    void refreshFocusedState(class FocusedTrackState* state);
 
     void dump(class StructureDumper& d);
 
