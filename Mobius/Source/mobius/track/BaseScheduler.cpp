@@ -1277,10 +1277,11 @@ void BaseScheduler::refreshState(TrackState* state)
  */
 void BaseScheduler::refreshFocusedState(FocusedTrackState* state)
 {
+    int maxEvents = state->events.size();
     int count = 0;
     
     for (TrackEvent* e = events.getEvents() ;
-         e != nullptr && count < FocusedTrackState::MaxEvents ; e = e->next) {
+         e != nullptr && count < maxEvents ; e = e->next) {
 
         TrackState::EventType type = TrackState::EventNone;
         SymbolId symbol = SymbolIdNone;
@@ -1354,7 +1355,7 @@ void BaseScheduler::refreshFocusedState(FocusedTrackState* state)
             count++;
             
             UIAction* stack = e->stacked;
-            while (stack != nullptr && count < FocusedTrackState::MaxEvents) {
+            while (stack != nullptr && count < maxEvents) {
                 estate = state->events.getReference(count);
                 estate.track = scheduledTrack->getNumber();
                 estate.type = TrackState::EventAction;
@@ -1365,6 +1366,8 @@ void BaseScheduler::refreshFocusedState(FocusedTrackState* state)
             }
         }
     }
+
+    state->eventCount = count;
 }
 
 /****************************************************************************/

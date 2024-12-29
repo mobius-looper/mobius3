@@ -788,11 +788,17 @@ void MidiTrack::refreshFocusedState(FocusedTrackState* state)
 {
     scheduler.refreshFocusedState(state);
 
-    for (int i = 0 ; i < regions.size() && i < FocusedTrackState::MaxRegions ; i++) {
-        TrackState::Region& rstate = state->regions.getReference(i);
+    int maxRegions = state->regions.size();
+    int count = 0;
+    while (count < regions.size() && count < maxRegions) {
+        TrackState::Region& rstate = state->regions.getReference(count);
         // we use the same structure so it just copies
-        rstate = regions.getReference(i);
+        rstate = regions.getReference(count);
+        count++;
     }
+    state->regionCount = count;
+
+    // todo: layers
 }
 
 void MidiTrack::refreshState(TrackState* state)

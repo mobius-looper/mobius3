@@ -67,10 +67,17 @@ class MobiusViewer
     void refreshTrack(class TrackState* tstate, class MobiusViewTrack* tview);
 
     void refreshMinorModes(class TrackState* tstate, class MobiusViewTrack* tview);
-    void refreshEvents(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
-    void refreshRegions(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
     void refreshSync(class TrackState* tstate, class MobiusViewTrack* tview);
     void refreshTrackGroups(class TrackState* tstate,  class MobiusViewTrack* tview);
+
+    //
+    // Focused Track
+    //
+    
+    void refreshLayers(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshRegions(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
+    void refreshEvents(class FocusedTrackState* tstate, class MobiusViewTrack* tview);
     void expandEventName(class TrackState::Event& e, juce::String& name);
+    
 };
 

@@ -1982,10 +1982,10 @@ void EventManager::cleanReturnEvents()
 void EventManager::refreshFocusedState(FocusedTrackState* state)
 {
 	Event* events = mEvents->getEvents();
+    int maxEvents = state->events.size();
     int count = 0;
-    for (Event* e = events ;
-         e != nullptr && count < FocusedTrackState::MaxEvents ;
-         e = e->getNext()) {
+    
+    for (Event* e = events ; e != nullptr && count < maxEvents ; e = e->getNext()) {
         
         if (isEventVisible(e, false)) {
             TrackState::Event& estate = state->events.getReference(count);
@@ -1996,7 +1996,7 @@ void EventManager::refreshFocusedState(FocusedTrackState* state)
         if (e->type == SwitchEvent) {
             // and the events stacked after the switch
             for (Event* se = e->getChildren() ; 
-                 se != NULL && count < FocusedTrackState::MaxEvents ;
+                 se != NULL && count < maxEvents ; 
                  se = se->getSibling()) {
 
                 if (isEventVisible(se, true)) {
@@ -2007,6 +2007,7 @@ void EventManager::refreshFocusedState(FocusedTrackState* state)
             }
         }
     }
+    state->eventCount = count;
 }
 
 void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool stacked)

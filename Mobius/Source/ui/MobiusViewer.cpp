@@ -1096,8 +1096,7 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
     }
 
     if (view->focusedTrack > 0) {
-        int trackIndex = view->focusedTrack - 1;
-        MobiusViewTrack* tview = view->tracks[trackIndex];
+        MobiusViewTrack* tview = view->tracks[view->focusedTrack];
         if (tview == nullptr) {
             Trace(1, "MobiusViewer: Track index overflow");
         }
@@ -1105,6 +1104,7 @@ void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
             FocusedTrackState* tstate = &(state->focusedState);
             refreshRegions(tstate, tview);
             refreshEvents(tstate, tview);
+            refreshLayers(tstate, tview);
         }
     }
 }
@@ -1238,22 +1238,27 @@ void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
 void MobiusViewer::refreshEvents(FocusedTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->events.clearQuick();
-    for (int i = 0 ; i < tstate->events.size() ; i++) {
+    for (int i = 0 ; i < tstate->eventCount ; i++) {
         TrackState::Event& e = tstate->events.getReference(i);
-
-        // still feels like there is too much copying going on
         MobiusViewEvent ve;
-
         expandEventName(e, ve.name);
         if (e.argument > 0)
           ve.name += " " + juce::String(e.argument);
-            
         ve.frame = e.frame;
         ve.pending = e.pending;
         ve.argument = e.argument;
-            
         tview->events.add(ve);
     }
+}
+
+/**
+ * This gets converted into an array of ints representing the layer
+ * numbers that are checkpoints.
+ */
+void MobiusViewer::refreshLayers(FocusedTrackState* tstate, MobiusViewTrack* tview)
+{
+    (void)tstate;
+    (void)tview;
 }
 
 void MobiusViewer::expandEventName(TrackState::Event& e, juce::String& name)
@@ -1308,7 +1313,7 @@ void MobiusViewer::expandEventName(TrackState::Event& e, juce::String& name)
 void MobiusViewer::refreshRegions(FocusedTrackState* tstate, MobiusViewTrack* tview)
 {
     tview->regions.clearQuick();
-    for (int i = 0 ; i < tstate->regions.size() ; i++) {
+    for (int i = 0 ; i < tstate->regionCount ; i++) {
         TrackState::Region& src = tstate->regions.getReference(i);
         tview->regions.add(src);
     }

@@ -999,6 +999,10 @@ void Supervisor::advance()
         // request another state refresh
         if (!stateRefreshRequested) {
             stateRefreshRequested = true;
+
+            // set this to get details for the focused track
+            systemState.focusedTrack = mobiusView.focusedTrack + 1;
+            
             mobius->refreshState(&systemState);
         }
         else {
@@ -1473,6 +1477,7 @@ void Supervisor::configureSystemState(Session* s)
             TrackState::Loop loop;
             ts->loops.add(loop);
         }
+        ts->loopCount = 0;
         systemState.tracks.add(ts);
     }
 
@@ -1489,9 +1494,21 @@ void Supervisor::configureSystemState(Session* s)
         focused->events.add(e);
     }
     
-    // try this one and see if it works
-    focused->regions.ensureStorageAllocated(FocusedTrackState::MaxRegions);
-    focused->layers.ensureStorageAllocated(FocusedTrackState::MaxLayers);
+    // this it leaves numAllocated with the right number but numUsed is zero
+    // so size() returns zero
+    //focused->regions.ensureStorageAllocated(FocusedTrackState::MaxRegions);
+    //focused->layers.ensureStorageAllocated(FocusedTrackState::MaxLayers);
+
+    focused->regions.resize(FocusedTrackState::MaxRegions);
+    focused->layers.resize(FocusedTrackState::MaxLayers);
+
+    // not necessary if the default constructor initializes it the way you want
+    //focused->regions.fill(TrackState::Region());
+    //focused->layers.fill(TrackState::Layer());
+
+    focused->eventCount = 0;
+    focused->regionCount = 0;
+    focused->layerCount = 0;
 }
 
 /**

@@ -286,6 +286,7 @@ class TrackState
     // not sure what this was for, seems to be unused
     bool pending = false;
 
+    // the actual used size of this is in loopCount
     juce::Array<Loop> loops;
 
     // latching flag indiciating that loops were loaded from files
@@ -313,8 +314,13 @@ class FocusedTrackState
     static const int MaxLayers = 10;
 
     juce::Array<TrackState::Event> events;
+    int eventCount = 0;
+    
     juce::Array<TrackState::Region> regions;
+    int regionCount = 0;
+    
     juce::Array<TrackState::Layer> layers;
+    int layerCount = 0;
 
 };
 
