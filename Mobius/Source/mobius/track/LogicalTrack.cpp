@@ -4,7 +4,6 @@
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
 #include "../../model/Session.h"
-#include "../../model/MobiusState.h"
 #include "../../model/Symbol.h"
 #include "../../model/Enumerator.h"
 #include "../../model/MobiusConfig.h"
@@ -196,14 +195,6 @@ void LogicalTrack::refreshPriorityState(PriorityState* state)
 void LogicalTrack::refreshDynamicState(DynamicState* state)
 {
     track->refreshDynamicState(state);
-}
-
-// old and temporary
-void LogicalTrack::refreshState(MobiusState::Track* tstate)
-{
-    if (trackType == Session::TypeMidi) {
-        track->refreshState(tstate);
-    }
 }
 
 void LogicalTrack::dump(StructureDumper& d)

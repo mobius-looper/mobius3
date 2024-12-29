@@ -85,60 +85,8 @@ void TrackManager::initialize(MobiusConfig* config, Session* session, Mobius* co
         Trace(1, "TrackManager: Session audio track count didn't match core");
         audioTrackCount = actual;
     }
-    
-    int baseNumber = audioTrackCount + 1;
 
     loadSession(session);
-
-    // this needs a shit ton of work
-    prepareState(&state1, baseNumber, TrackManagerMaxMidiTracks);
-    prepareState(&state2, baseNumber, TrackManagerMaxMidiTracks);
-    statePhase = 0;
-
-    // do an initial full state refresh since getMobiusState() only returns part of it
-    // and we need loop counts and other things right away
-    refreshState();
-    // jfc, have to do this twice so both state buffers are initiaized
-    // for the next call to getMobiusState, this is working all wrong
-    refreshState();
-}
-
-/**
- * Prepare one of the two state objects.
- *
- * This is only being used for MIDI tracks right now, but it's another thing
- * that needs redesign so that both audio and MIDI tracks cacn use the same
- * state object with consistent indexing.
- *
- * Further, the Track state object is specific to looping tracks, once we have
- * other styles of tracks, the state objects will need to be different, or have the
- * union of all possible states for the different track types.
- */
-void TrackManager::prepareState(MobiusState* state, int baseNumber, int count)
-{
-    for (int i = 0 ; i < count ; i++) {
-        MobiusState::Track* tstate = new MobiusState::Track();
-        tstate->index = i;
-        tstate->number = baseNumber + i;
-        state->tracks.add(tstate);
-
-        for (int l = 0 ; l < TrackManagerMaxMidiLoops ; l++) {
-            MobiusState::Loop* loop = new MobiusState::Loop();
-            loop->index = l;
-            loop->number = l + 1;
-            tstate->loops.add(loop);
-        }
-
-        // enough for a few events
-        int maxEvents = 5;
-        for (int e = 0 ; e < maxEvents ; e++) {
-            MobiusState::Event* event = new MobiusState::Event();
-            tstate->events.add(event);
-        }
-
-        // loop regions
-        tstate->regions.ensureStorageAllocated(MobiusState::MaxRegions);
-    }
 }
 
 /**
@@ -168,11 +116,6 @@ void TrackManager::loadSession(Session* session)
 
     // can we get rid of this?
     activeMidiTracks = session->midiTracks;
-
-    // make the curtains match the drapes
-    // !! is this the place to be fucking with this?
-    state1.activeTracks = activeMidiTracks;
-    state2.activeTracks = activeMidiTracks;
 
     longWatcher.initialize(session, kernel->getContainer()->getSampleRate());
 
@@ -491,13 +434,7 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     // refresh dynamic state
     stateRefreshCounter++;
     if (stateRefreshCounter > stateRefreshThreshold) {
-
-        // old way
-        refreshState();
-
-        // new way
         refreshDynamicState();
-        
         stateRefreshCounter = 0;
     }
 }
@@ -1259,68 +1196,6 @@ juce::StringArray TrackManager::saveLoop(int trackNumber, int loopNumber, juce::
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * Old soon to be removed way.
- */
-MobiusState* TrackManager::getMobiusState()
-{
-    MobiusState* state;
-    if (statePhase == 0)
-      state = &state1;
-    else
-      state = &state2;
-
-    // only MIDI tracks return state this way atm
-    // the fuck did this do, the beaters?
-#if 0    
-    for (auto track : tracks) {
-        if (track->getType() == Session::TypeMidi) {
-            int midiIndex = track->getNumber() - audioTrackCount - 1;
-            MobiusState::Track* tstate = state->tracks[midiIndex];
-            if (tstate != nullptr)
-              track->refreshPriorityState(tstate);
-        }
-    }
-#endif    
-
-    return state;
-}
-
-void TrackManager::refreshState()
-{
-    // the opposite of what getMobiusState does
-    MobiusState* state;
-    if (statePhase == 0)
-      state = &state2;
-    else
-      state = &state1;
-    
-    state->activeTracks = activeMidiTracks;
-
-    // only MIDI tracks return state this way atm
-    for (auto track : tracks) {
-        if (track->getType() == Session::TypeMidi) {
-            int midiIndex = track->getNumber() - audioTrackCount - 1;
-            MobiusState::Track* tstate = state->tracks[midiIndex];
-            if (tstate != nullptr)
-              track->refreshState(tstate);
-        }
-    }
-    
-    // ugh, this isn't reliable either, UI can be using the old one after
-    // we've swapped in the new one and if we hit another refresh before it
-    // is done we corrupt
-
-    // swap phases
-    if (statePhase == 0)
-      statePhase = 1;
-    else
-      statePhase = 0;
-}
-
-/**
- * New way of doing things.
- */
 void TrackManager::refreshState(SystemState* state)
 {
     // all we have right now is the DynamicState which is refreshed periodically
@@ -1330,6 +1205,35 @@ void TrackManager::refreshState(SystemState* state)
     // this takes time to assemble, so only start doing this after we get
     // MobiusKernel out of the business of doing it
     //state->oldState = audioEngine->getState();
+
+    // only MIDI tracks return state this way atm
+    int audioTracks = 0;
+    int midiTracks = 0;
+    for (auto track : tracks) {
+        if (track->getType() == Session::TypeMidi) {
+            int trackIndex = track->getNumber() - 1;
+            if (trackIndex >= state->tracks.size()) {
+                // this should have been pre-sized
+                Trace(1, "TrackManager: Not enough SystemState tracks");
+            }
+            else {
+                TrackState* tstate = state->tracks[trackIndex];
+                if (tstate != nullptr)
+                  track->refreshState(tstate);
+            }
+            midiTracks++;
+        }
+        else {
+            audioTracks++;
+        }
+    }
+
+    state->audioTracks = audioTracks;
+    state->midiTracks = midiTracks;
+
+    // tell the view what we thought the focused track was?
+    //int focusedNumber = getFocusedTrackIndex() + 1;
+    //state->focusedTrack = focusedNumber;
 }
 
 void TrackManager::refreshDynamicState()

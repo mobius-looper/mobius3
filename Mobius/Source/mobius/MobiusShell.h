@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "../model/OldMobiusState.h"
-#include "../model/DynamicConfig.h"
 #include "../model/ObjectPool.h"
 #include "../model/UIAction.h"
 
@@ -35,8 +33,6 @@ class MobiusShell : public MobiusInterface
     void initialize(class MobiusConfig* config, class Session* session) override;
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config, class Session* session) override;
-    OldMobiusState* getOldMobiusState() override;    // also shared by the kernel
-    class MobiusState* getMobiusState() override;
     void refreshState(class SystemState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
     void performMaintenance() override;
@@ -47,7 +43,6 @@ class MobiusShell : public MobiusInterface
     void installScripts(class ScriptConfig*) override;
     void installSamples(class SampleConfig*) override;
     void installBindings(class Binderator*) override;
-    class DynamicConfig* getDynamicConfig() override;
     void setTestMode(bool b) override;
     void dump(class StructureDumper& d) override;
     bool isGlobalReset() override;
@@ -116,9 +111,6 @@ class MobiusShell : public MobiusInterface
     class MobiusConfig* configuration = nullptr;
     //class Session* session = nullptr;
     
-    OldMobiusState simulatorState;
-    DynamicConfig dynamicConfig;
-
     // kernel communication and shared state
     KernelCommunicator communicator;
     
@@ -150,8 +142,6 @@ class MobiusShell : public MobiusInterface
     void installSymbols();
     void installSymbols(class SampleManager* samples);
     void installSymbols(class Scriptarian* scripts);
-
-    void initDynamicConfig();
 
     void doShellAction(UIAction* action);
     void doActionFromKernel(UIAction* action);

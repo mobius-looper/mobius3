@@ -735,7 +735,7 @@ juce::StringArray ProjectManager::loadLoop(juce::File file)
 
     // rethink the interface here, I like being able to build the Project
     // outside the core, but to get it numbered reliably we need to ask the
-    // core where it is, I guess you could get that from MobiusState
+    // core where it is, I guess you could get that from SystemState
 
     Mobius* core = shell->getKernel()->getCore();
     // will always have an active track

@@ -112,7 +112,6 @@ class Synchronizer {
 
 	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
-    void setSyncMaster(class SyncMaster* sm);
     
 	//
 	// Variable sources

@@ -17,7 +17,7 @@
 #include "../../model/UIAction.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
-#include "../../model/MobiusState.h"
+#include "../../model/SystemState.h"
 #include "../../model/TrackState.h"
 
 #include "../../sync/Pulsator.h"
@@ -1132,6 +1132,8 @@ void BaseScheduler::detectLeaderChange()
 /**
  * Contribute state managed by the scheduer to the exported state.
  */
+// replaced by TrackState and DynamicState
+#if 0
 void BaseScheduler::refreshState(MobiusState::Track* state)
 {
     // old state object uses this, continue until MobiusViewer knows about Pulsator oonstants
@@ -1235,6 +1237,7 @@ void BaseScheduler::refreshState(MobiusState::Track* state)
       state->mode = MobiusState::ModeSynchronize;
 
 }
+#endif
 
 /**
  * Contribute scheduling related state to the main state.
@@ -1311,7 +1314,7 @@ void BaseScheduler::refreshDynamicState(DynamicState* state)
             case TrackEvent::EventRound: {
                 type = DynamicEvent::EventRound;
                 auto mode = scheduledTrack->getMode();
-                if (mode == MobiusState::ModeMultiply) {
+                if (mode == TrackState::ModeMultiply) {
                     symbol = FuncMultiply;
                 }
                 else {

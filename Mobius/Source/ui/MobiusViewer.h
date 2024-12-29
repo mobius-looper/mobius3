@@ -15,28 +15,44 @@
 #include <JuceHeader.h>
 
 #include "../model/Query.h"
-#include "../model/MobiusState.h"
 
+/**
+ * Helper class to consume the DynamicState and make the contents
+ * accessible over several iterations.
+ */
+class DynamicStateConsumer
+{
+  public:
+
+    void consume(DynamicState* ds);
+
+    juce::Array<DynamicEvent> events;
+    juce::Array<DynamicRegion> regions;
+    juce::Array<DynamicLayer> layers;
+};
+
+   
 class MobiusViewer
 {
   public:
 
-    MobiusViewer(class Supervisor* s);
+    MobiusViewer(class Provider* p);
     ~MobiusViewer();
 
     void initialize(class MobiusView* view);
-    void configure(MobiusView* view);
-    void refresh(class MobiusInterface* mobius, class OldMobiusState* state, class MobiusView* v);
+    void configure(class MobiusView* view);
+    void refresh(class SystemState* state, class MobiusView* v);
     void forceRefresh(MobiusView* v);
     
   private:
 
-    class Supervisor* supervisor = nullptr;
+    class Provider* provider = nullptr;
     Query subcyclesQuery;
+    DynamicStateConsumer dynamicState;
     
     void resetRefreshTriggers(class MobiusView* view);
 
-    void refreshAudioTracks(class MobiusInterface* mobius, class OldMobiusState* state, class MobiusView* view);
+    void refreshAudioTracks(class OldMobiusState* state, class MobiusView* view);
     void refreshTrack(class OldMobiusState* state, class OldMobiusTrackState* tstate,
                       class MobiusView* mview, class MobiusViewTrack* vt,
                       bool active);
@@ -60,16 +76,18 @@ class MobiusViewer
     void addMinorMode(class MobiusViewTrack* tview, const char* mode);
     void addMinorMode(class MobiusViewTrack* tview, const char* mode, int arg);
 
-    void refreshMidiTracks(class MobiusInterface* mobius, class MobiusView* view);
-    void refreshMidiTrack(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
-
     //
     // MIDI Tracks
     //
     
-    void refreshMidiMinorModes(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshMidiEvents(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshRegions(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshSync(class MobiusState::Track* tstate, class MobiusViewTrack* tview);
-    void refreshTrackGroups(class MobiusState::Track* tstate,  class MobiusViewTrack* tview);
+    void refreshMidiTracks(class SystemState* state, class MobiusView* view);
+    void refreshTrack(class TrackState* tstate, class MobiusViewTrack* tview);
+
+    void refreshMinorModes(class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshEvents(class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshRegions(class MobiusViewTrack* tview);
+    void refreshSync(class TrackState* tstate, class MobiusViewTrack* tview);
+    void refreshTrackGroups(class TrackState* tstate,  class MobiusViewTrack* tview);
+    void expandEventName(class DynamicEvent& e, juce::String& name);
 };
+

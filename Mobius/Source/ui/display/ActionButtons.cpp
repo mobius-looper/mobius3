@@ -11,7 +11,6 @@
 #include "../../Provider.h"
 #include "../../model/UIConfig.h"
 #include "../../model/Binding.h"
-#include "../../model/DynamicConfig.h"
 #include "../../model/Symbol.h"
 #include "../../model/FunctionProperties.h"
 #include "../../model/ScriptProperties.h"
@@ -141,16 +140,13 @@ void ActionButtons::buildButtons(UIConfig* config)
 }
 
 /**
- * Rebuild the button list after the SymbolTable (formerly DynamicConfig)
- * changed. Here we preserve the MobiusConfig buttons, and rebuild
+ * Rebuild the button list after the SymbolTable changed.
+ * Here we preserve the MobiusConfig buttons, and rebuild
  * the dynamic buttons.
  *
  * If the button was manually configured then leave it in place.
  * Otherwise completely rebuild the dynamic button list at the end.
  * Order will be random which is enough for now.
- *
- * DynamicConfig is still passed but it will be empty now.  We derive
- * the script/sample buttons from the Symbols table.
  */
 void ActionButtons::dynamicConfigChanged()
 {

@@ -45,6 +45,8 @@ void YanForm::add(class YanField* f)
         // make them look like the old Form/Fields
         // notes say bold can make it look too think in smaller forms
         label->setFont (juce::Font (16.0f, juce::Font::bold));
+        // should be using this instead
+        //label->setFont (JuceUtil::getFontf(16.0f, juce::Font::bold));
         label->setColour (juce::Label::textColourId, juce::Colours::orange);
 
         if (labelColor != juce::Colour())

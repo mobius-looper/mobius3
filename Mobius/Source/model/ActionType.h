@@ -63,9 +63,6 @@ extern ActionType* ActionScript;
 
 /**
  * Similar pseudo-action for actions representing sample playback.
- * This isn't used in a binding, but DynamicConfig now uses it to
- * pass information from the engine back to the UI about samples
- * that have been loaded.
  */
 extern ActionType* ActionSample;
 

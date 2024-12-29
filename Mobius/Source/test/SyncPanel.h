@@ -1,3 +1,6 @@
+// this is obsolete after the introduction of SyncMaster and TransportElement
+// it can be removed when ready
+
 /**
  * A testing panel that shows the state of synchronization within the engine.
  */

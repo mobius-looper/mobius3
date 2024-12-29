@@ -26,7 +26,7 @@
 
 #include <JuceHeader.h>
 
-#include "../model/MobiusState.h"
+#include "../model/DynamicState.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -97,7 +97,8 @@ class MobiusViewTrack {
   public:
 
     MobiusViewTrack() {
-        regions.ensureStorageAllocated(MobiusState::MaxRegions);
+        // don't really need this, just let it grow over time
+        //regions.ensureStorageAllocated(MobiusState::MaxRegions);
     }
 
     /**
@@ -347,9 +348,8 @@ class MobiusViewTrack {
     //
 
     bool refreshEvents = false;
-    juce::OwnedArray<MobiusViewEvent> events;
-
-    juce::Array<MobiusState::Region> regions;
+    juce::Array<MobiusViewEvent> events;
+    juce::Array<DynamicRegion> regions;
     
   protected:
 

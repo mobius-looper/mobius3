@@ -252,14 +252,6 @@ void Mobius::freeStaticObjects()
     Parameter::deleteParameters();
 }
 
-/**
- * Pass a handle to the new internal synchronizer to the Synchronizer
- */
-void Mobius::setSyncMaster(class SyncMaster* m)
-{
-    mSynchronizer->setSyncMaster(m);
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Initialization

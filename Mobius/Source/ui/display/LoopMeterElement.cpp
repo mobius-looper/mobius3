@@ -153,15 +153,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
     
     // regions
     for (int i = 0 ; i < track->regions.size() ; i++) {
-        MobiusState::Region& region = track->regions.getReference(i);
+        DynamicRegion& region = track->regions.getReference(i);
         int regionLeft = getMeterOffset(region.startFrame, track->frames);
         int regionRight = getMeterOffset(region.endFrame, track->frames);
 
         // default overdub color
         juce::Colour color = juce::Colours::lightpink;
-        if (region.type == MobiusState::RegionReplace)
+        if (region.type == DynamicRegion::RegionReplace)
           color = juce::Colours::grey;
-        else if (region.type != MobiusState::RegionOverdub)
+        else if (region.type != DynamicRegion::RegionOverdub)
           color = juce::Colours::lightblue;
         g.setColour(color);
         if (region.active) {
@@ -244,13 +244,15 @@ void LoopMeterElement::paint(juce::Graphics& g)
     if (track->events.size() > 0) {
         int lastEventFrame = -1;
         int stackCount = 0;
-        for (auto ev : track->events) {
-            int eventOffset = getMeterOffset(ev->frame, track->frames);
+        for (int i = 0 ; i < track->events.size() ; i++) {
+            MobiusViewEvent& ev = track->events.getReference(i);
+
+            int eventOffset = getMeterOffset(ev.frame, track->frames);
             int eventCenter = eventInfoLeft + eventOffset;
             // should also stack if "close enough"
             // should really be testing the scaled location of the markers
             // the loop frame
-            if (ev->frame != lastEventFrame) {
+            if (ev.frame != lastEventFrame) {
                 // reset this if we were stacking
                 stackCount = 0;
                 g.setColour(juce::Colours::white);
@@ -267,7 +269,7 @@ void LoopMeterElement::paint(juce::Graphics& g)
             
             g.setColour(juce::Colours::white);
             
-            int nameWidth = font.getStringWidth(ev->name);
+            int nameWidth = font.getStringWidth(ev.name);
             int nameLeft = eventCenter - (nameWidth / 2);
             if (nameLeft < nameStart)
               nameLeft = nameStart;
@@ -276,11 +278,11 @@ void LoopMeterElement::paint(juce::Graphics& g)
             
             int textTop = nameTop + (MarkerTextHeight * stackCount);
 
-            g.drawText(juce::String(ev->name),nameLeft, textTop,
+            g.drawText(juce::String(ev.name),nameLeft, textTop,
                        nameWidth, MarkerTextHeight,
                        juce::Justification::left);
             stackCount++;
-            lastEventFrame = (int)(ev->frame);
+            lastEventFrame = (int)(ev.frame);
         }
     }
 }

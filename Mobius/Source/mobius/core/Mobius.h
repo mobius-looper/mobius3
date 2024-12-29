@@ -199,9 +199,6 @@ class Mobius
     // needed by TrackManager
     bool isTrackFocused(int index);
     int getTrackGroup(int index);
-
-    // new synchronization object needed by Synchronizer
-    void setSyncMaster(class SyncMaster* src);
         
     //////////////////////////////////////////////////////////////////////
     //

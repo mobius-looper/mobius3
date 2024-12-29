@@ -4,6 +4,7 @@
  */
 
 #include "../../model/Preset.h"
+#include "../../model/TrackState.h"
 
 #include "../core/Mobius.h"
 #include "../core/Track.h"
@@ -98,11 +99,6 @@ void MobiusLooperTrack::refreshDynamicState(DynamicState* state)
     track->refreshDynamicState(state);
 }
 
-void MobiusLooperTrack::refreshState(MobiusState::Track* tstate)
-{
-    (void)tstate;
-}
-
 void MobiusLooperTrack::dump(StructureDumper& d)
 {
     (void)d;
@@ -186,68 +182,68 @@ int MobiusLooperTrack::getSubcycles()
     return result;
 }
 
-MobiusState::Mode MobiusLooperTrack::getMode()
+TrackState::Mode MobiusLooperTrack::getMode()
 {
-    MobiusState::Mode newmode = MobiusState::ModeUnknown;
+    TrackState::Mode newmode = TrackState::ModeUnknown;
     
     MobiusMode* mode = track->getMode();
     // no good way to map these
     if (mode == ConfirmMode) {
-        newmode = MobiusState::ModeConfirm;
+        newmode = TrackState::ModeConfirm;
     }
     else if (mode == InsertMode) {
-        newmode = MobiusState::ModeInsert;
+        newmode = TrackState::ModeInsert;
     }
     else if (mode == MultiplyMode) {
-        newmode = MobiusState::ModeMultiply;
+        newmode = TrackState::ModeMultiply;
     }
     else if (mode == MuteMode) {
-        newmode = MobiusState::ModeMute;
+        newmode = TrackState::ModeMute;
     }
     else if (mode == OverdubMode) {
-        newmode = MobiusState::ModeOverdub;
+        newmode = TrackState::ModeOverdub;
     }
     else if (mode == PauseMode) {
-        newmode = MobiusState::ModePause;
+        newmode = TrackState::ModePause;
     }
     else if (mode == PlayMode) {
-        newmode = MobiusState::ModePlay;
+        newmode = TrackState::ModePlay;
     }
     else if (mode == RecordMode) {
-        newmode = MobiusState::ModeRecord;
+        newmode = TrackState::ModeRecord;
     }
     else if (mode == RehearseMode) {
-        newmode = MobiusState::ModeRehearse;
+        newmode = TrackState::ModeRehearse;
     }
     else if (mode == RehearseRecordMode) {
-        newmode = MobiusState::ModeRehearseRecord;
+        newmode = TrackState::ModeRehearseRecord;
     }
     else if (mode == ReplaceMode) {
-        newmode = MobiusState::ModeReplace;
+        newmode = TrackState::ModeReplace;
     }
     else if (mode == ResetMode) {
-        newmode = MobiusState::ModeReset;
+        newmode = TrackState::ModeReset;
     }
     else if (mode == RunMode) {
-        newmode = MobiusState::ModeRun;
+        newmode = TrackState::ModeRun;
     }
     else if (mode == StutterMode) {
-        newmode = MobiusState::ModeStutter;
+        newmode = TrackState::ModeStutter;
     }
     else if (mode == SubstituteMode) {
-        newmode = MobiusState::ModeSubstitute;
+        newmode = TrackState::ModeSubstitute;
     }
     else if (mode == SwitchMode) {
-        newmode = MobiusState::ModeSwitch;
+        newmode = TrackState::ModeSwitch;
     }
     else if (mode == SynchronizeMode) {
-        newmode = MobiusState::ModeSynchronize;
+        newmode = TrackState::ModeSynchronize;
     }
     else if (mode == ThresholdMode) {
-        newmode = MobiusState::ModeThreshold;
+        newmode = TrackState::ModeThreshold;
     }
 
-    if (newmode == MobiusState::ModeUnknown) {
+    if (newmode == TrackState::ModeUnknown) {
         if (mode != nullptr)
           Trace(1, "MobiusLooperTrack: Unmapped mode %s", mode->getName());
         else

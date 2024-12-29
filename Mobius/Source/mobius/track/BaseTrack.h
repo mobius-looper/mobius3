@@ -72,9 +72,6 @@ class BaseTrack
     // some state is weird
     virtual void refreshDynamicState(class DynamicState* state) = 0;
 
-    // old temporary way 
-    virtual void refreshState(class MobiusState::Track* tstate) = 0;
-
     // and sometimes it's spills its guts
     virtual void dump(class StructureDumper& d) = 0;
 

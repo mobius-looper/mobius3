@@ -23,7 +23,6 @@
 //#include <stdio.h>
 
 #include "../model/SampleConfig.h"
-#include "../model/DynamicConfig.h"
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -330,7 +329,6 @@ class SampleManager
 	SamplePlayer* mPlayers[MAX_SAMPLES];
 	int mSampleCount;
 	int mLastSample;
-    class DynamicConfig dynamicConfig;
 
 };
 

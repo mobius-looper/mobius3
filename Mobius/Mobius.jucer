@@ -7,6 +7,8 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
+      <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
+      <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -102,9 +104,6 @@
         <FILE id="dnNSw0" name="DeviceConfig.cpp" compile="1" resource="0"
               file="Source/model/DeviceConfig.cpp"/>
         <FILE id="W4myih" name="DeviceConfig.h" compile="0" resource="0" file="Source/model/DeviceConfig.h"/>
-        <FILE id="t2jj07" name="DynamicConfig.cpp" compile="1" resource="0"
-              file="Source/model/DynamicConfig.cpp"/>
-        <FILE id="a9NMlH" name="DynamicConfig.h" compile="0" resource="0" file="Source/model/DynamicConfig.h"/>
         <FILE id="ouguyK" name="DynamicState.cpp" compile="1" resource="0"
               file="Source/model/DynamicState.cpp"/>
         <FILE id="Y8neCa" name="DynamicState.h" compile="0" resource="0" file="Source/model/DynamicState.h"/>
@@ -126,8 +125,6 @@
         <FILE id="w1kSSZ" name="MobiusConfig.cpp" compile="1" resource="0"
               file="Source/model/MobiusConfig.cpp"/>
         <FILE id="rrRIuQ" name="MobiusConfig.h" compile="0" resource="0" file="Source/model/MobiusConfig.h"/>
-        <FILE id="zXt2hO" name="MobiusState.cpp" compile="1" resource="0" file="Source/model/MobiusState.cpp"/>
-        <FILE id="XV9YIY" name="MobiusState.h" compile="0" resource="0" file="Source/model/MobiusState.h"/>
         <FILE id="aasR6n" name="ModeDefinition.cpp" compile="1" resource="0"
               file="Source/model/ModeDefinition.cpp"/>
         <FILE id="yuqq72" name="ModeDefinition.h" compile="0" resource="0"
@@ -174,6 +171,7 @@
         <FILE id="JZYXKm" name="SystemConstant.h" compile="0" resource="0"
               file="Source/model/SystemConstant.h"/>
         <FILE id="W5mEyK" name="SystemState.h" compile="0" resource="0" file="Source/model/SystemState.h"/>
+        <FILE id="mlzDDU" name="TrackState.cpp" compile="1" resource="0" file="Source/model/TrackState.cpp"/>
         <FILE id="neInsb" name="TrackState.h" compile="0" resource="0" file="Source/model/TrackState.h"/>
         <FILE id="Gs8SHl" name="Trigger.cpp" compile="1" resource="0" file="Source/model/Trigger.cpp"/>
         <FILE id="A7dZul" name="Trigger.h" compile="0" resource="0" file="Source/model/Trigger.h"/>
@@ -923,8 +921,6 @@
               file="Source/test/SymbolTablePanel.cpp"/>
         <FILE id="fvesuL" name="SymbolTablePanel.h" compile="0" resource="0"
               file="Source/test/SymbolTablePanel.h"/>
-        <FILE id="Yz1NTw" name="SyncPanel.cpp" compile="1" resource="0" file="Source/test/SyncPanel.cpp"/>
-        <FILE id="grb203" name="SyncPanel.h" compile="0" resource="0" file="Source/test/SyncPanel.h"/>
         <FILE id="vEWRZ2" name="TestDriver.cpp" compile="1" resource="0" file="Source/test/TestDriver.cpp"/>
         <FILE id="E9hifY" name="TestDriver.h" compile="0" resource="0" file="Source/test/TestDriver.h"/>
         <FILE id="lgCOr0" name="TestPanel.cpp" compile="1" resource="0" file="Source/test/TestPanel.cpp"/>

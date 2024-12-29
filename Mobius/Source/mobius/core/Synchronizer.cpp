@@ -124,6 +124,7 @@
 #include "../../model/Trigger.h"
 
 #include "../MobiusInterface.h"
+#include "../MobiusKernel.h"
 #include "../MobiusMidiTransport.h"
 #include "../Notification.h"
 #include "../Notifier.h"
@@ -163,6 +164,8 @@
 Synchronizer::Synchronizer(Mobius* mob)
 {
 	mMobius = mob;
+    mSyncMaster = mob->getKernel()->getSyncMaster();
+    // todo: this will eventually be inside SyncMaster
     mPulsator = mob->getContainer()->getPulsator();
     
     // todo: think about where we get this
@@ -213,11 +216,6 @@ Synchronizer::~Synchronizer()
     
     flushEvents();
     delete mInterruptEvents;
-}
-
-void Synchronizer::setSyncMaster(SyncMaster* sm)
-{
-    mSyncMaster = sm;
 }
 
 /**

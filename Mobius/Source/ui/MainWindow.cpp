@@ -337,9 +337,9 @@ void MainWindow::mainMenuSelection(int id)
                 panelFactory.show(PanelFactory::MidiTransport);
                 break;
                 
-            case MainMenu::SyncPanel:
-                panelFactory.show(PanelFactory::Sync);
-                break;
+                //case MainMenu::SyncPanel:
+                //panelFactory.show(PanelFactory::Sync);
+                //break;
                 
             case MainMenu::SymbolTable:
                 panelFactory.show(PanelFactory::SymbolTable);

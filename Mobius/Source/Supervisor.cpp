@@ -26,7 +26,6 @@
 #include "model/OldMobiusState.h"
 #include "model/SystemState.h"
 #include "model/PriorityState.h"
-#include "model/DynamicConfig.h"
 #include "model/DeviceConfig.h"
 #include "model/Symbol.h"
 #include "model/SymbolId.h"
@@ -271,20 +270,8 @@ bool Supervisor::start()
     // install variables
     variableManager.install();
 
-    // validate/upgrade the configuration files
-    // doing a gradual migration toward Session from MobiusConfig
-    // this must be done after symbols are initialized
-    MobiusConfig* config = getMobiusConfig();
-    Session* ses = getSession();
-    if (upgrader.upgrade(config, ses)) {
-        writeMobiusConfig(config);
-    }
-    // do this unconditionally for awhile
-    upgradeSession(config, ses);
-    writeDefaultSession(ses);
-
-    // make the SystemState match the session
-    configureSystemState();
+    // load the initial session and prepare internal objects
+    Session * ses = initializeSession();
     
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
@@ -375,6 +362,7 @@ bool Supervisor::start()
     // this is where the bulk of the engine initialization happens
     // it will call MobiusContainer to register callbacks for
     // audio and midi streams
+    MobiusConfig* config = getMobiusConfig();
     mobius->initialize(config, ses);
 
     // ScriptConfig no longer goes in through MobiusConfig
@@ -426,8 +414,8 @@ bool Supervisor::start()
     // new: having some timing problems in GP with MIDI commands to
     // initialize things needing to have a refreshed view before the
     // editor window is open, always do a view refresh
-    OldMobiusState* state = mobius->getOldMobiusState();
-    mobiusViewer.refresh(mobius, state, &mobiusView);
+
+    refreshView();
     // nothing has been displayed set so turn on all the flags
     mobiusViewer.forceRefresh(&mobiusView);
 
@@ -520,6 +508,12 @@ void Supervisor::meter(const char* name)
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+//
+// Shutdown
+//
+//////////////////////////////////////////////////////////////////////
+
 /**
  * Shut down the supervisor, we're tired, but it's a good kind of tired.
  */
@@ -571,7 +565,7 @@ void Supervisor::shutdown()
     mainWindow->captureConfiguration(config);
     testDriver.captureConfiguration(config);
     if (config->dirty) {
-        writeUIConfig(config);
+        fileManager.writeUIConfig(config);
     }
 
     // save any changes to audio/midi device selection
@@ -587,7 +581,7 @@ void Supervisor::shutdown()
     if (mainComponent != nullptr)
       audioManager.captureDeviceState(devconfig);
     
-    writeDeviceConfig(devconfig);
+    fileManager.writeDeviceConfig(devconfig);
 
     // save final values of persistent script variables
     scriptClerk.saveState();
@@ -614,6 +608,34 @@ void Supervisor::shutdown()
     TraceFile.flush();
     Trace(2, "Supervisor: Shutdown finished\n");
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// SystemState
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Ask the engine to do a full refresh of the system state.
+ */
+void Supervisor::refreshSystemState()
+{
+    if (mobius != nullptr)
+      mobius->refreshState(&systemState);
+}
+
+void Supervisor::refreshView()
+{
+    refreshSystemState();
+    mobiusViewer.refresh(&systemState, &mobiusView);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Random
+// todo: organize these
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Add a TemporaryFile to a list that will be cleared on shutdown.
@@ -690,34 +712,6 @@ int Supervisor::getActivePreset()
           ordinal = q.value;
     }
     return ordinal;
-}
-
-/**
- * Emergine "session" concept that at the moment just consists of
- * saving the active setup on shutdown.
- * Since we don't have a session object, this goes in the MobiusConfig.
- */
-void Supervisor::saveSession()
-{
-    int active = getActiveSetup();
-    if (active >= 0) {
-        // try not to rewrite mobius.xml if we stayed on the starting setup
-        MobiusConfig* mconfig = getMobiusConfig();
-        Setup* setup = mconfig->getSetup(active);
-
-        if (setup == nullptr) {
-            // saw this while testing randomly, active was 2 and there
-            // were only 2 setups so getSetup returned nullptr
-            Trace(1, "Supervisor: Null setup when saving final session");
-        }
-        else {
-            const char* starting = mconfig->getStartingSetupName();
-            if (!StringEqual(setup->getName(), starting)) {
-                mconfig->setStartingSetupName(setup->getName());
-                writeMobiusConfig(mconfig);
-            }
-        }
-    }
 }
 
 /**
@@ -971,19 +965,6 @@ Prompter* Supervisor::getPrompter()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Configure the SystemState object so that it has TrackStates
- * that match the Session.
- */
-void Supervisor::configureSystemState()
-{
-    // !! need to be smart about this
-    int maxTracks = 32;
-    for (int i = systemState.tracks.size() ; i < maxTracks ; i++) {
-        systemState.tracks.add(new TrackState());
-    }
-}
-
-/**
  * Called by the MobiusThread to process events outside the audio thread.
  * The expected cycle time is 10ms or 1/10 second.
  */
@@ -1001,8 +982,7 @@ void Supervisor::advance()
         // always refresh the view, even if the UI is not visible
         // LoadMidi and possibly other places look at things in the view to
         // do request validation and these need fresh state
-        OldMobiusState* state = mobius->getOldMobiusState();
-        mobiusViewer.refresh(mobius, state, &mobiusView);
+        refreshView();
 
         // the actual UI refresh doesn't need to happen unless the window is open
         if (mainComponent != nullptr || pluginEditorOpen) {
@@ -1036,146 +1016,12 @@ void Supervisor::advanceHigh()
 
 //////////////////////////////////////////////////////////////////////
 //
-// Configuration Files
-//
-// Still using our old File utiltiies, need to use Juce
+// Configuration Objects
 //
 //////////////////////////////////////////////////////////////////////
 
-const char* DeviceConfigFile = "devices.xml";
-const char* MobiusConfigFile = "mobius.xml";
-const char* UIConfigFile = "uiconfig.xml";
-const char* HelpFile = "help.xml";
-    
 /**
- * Read the XML for a configuration file.
- */
-juce::String Supervisor::readConfigFile(const char* name)
-{
-    juce::String xml;
-    juce::File root = rootLocator.getRoot();
-    juce::File file = root.getChildFile(name);
-    if (file.existsAsFile()) {
-        Tracej("Reading configuration file " + file.getFullPathName());
-        xml = file.loadFileAsString();
-    }
-    return xml;
-}
-
-/**
- * Write an XML configuration file.
- */
-void Supervisor::writeConfigFile(const char* name, const char* xml)
-{
-    juce::File root = rootLocator.getRoot();
-    juce::File file = root.getChildFile(name);
-    // juce::String path = file.getFullPathName();
-    // WriteFile(path.toUTF8(), xml);
-    file.replaceWithText(juce::String(xml));
-}
-
-/**
- * Read the device configuration file.
- */
-DeviceConfig* Supervisor::readDeviceConfig()
-{
-    DeviceConfig* config = nullptr;
-    
-    juce::String xml = readConfigFile(DeviceConfigFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Bootstrapping %s\n", DeviceConfigFile);
-        config = new DeviceConfig();
-    }
-    else {
-        config = new DeviceConfig();
-        config->parseXml(xml);
-    }
-
-    return config;
-}
-
-
-/**
- * Read the MobiusConfig from.
- */
-MobiusConfig* Supervisor::readMobiusConfig()
-{
-    MobiusConfig* config = nullptr;
-    
-    juce::String xml = readConfigFile(MobiusConfigFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Bootstrapping %s\n", MobiusConfigFile);
-        config = new MobiusConfig();
-    }
-    else {
-        XmlRenderer xr;
-        config = xr.parseMobiusConfig(xml.toUTF8());
-        // todo: capture or trace parse errors
-    }
-    return config;
-}
-
-/**
- * Similar read/writer for the UIConfig
- */
-UIConfig* Supervisor::readUIConfig()
-{
-    UIConfig* config = nullptr;
-    
-    juce::String xml = readConfigFile(UIConfigFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Bootstrapping %s\n", UIConfigFile);
-        config = new UIConfig();
-    }
-    else {
-        config = new UIConfig();
-        config->parseXml(xml);
-    }
-    return config;
-}
-
-/**
- * Write a DeviceConfig back to the file system.
- * Ownership of the config object does not transfer.
- */
-void Supervisor::writeDeviceConfig(DeviceConfig* config)
-{
-    if (config != nullptr) {
-        juce::String xml = config->toXml();
-        writeConfigFile(DeviceConfigFile, xml.toUTF8());
-    }
-}
-
-/**
- * Write a MobiusConfig back to the file system.
- * This should only be called to do surgical modifications
- * to the file for an upgrade, it will NOT propagate changes.
- */
-void Supervisor::writeMobiusConfig(MobiusConfig* config)
-{
-    if (config != nullptr) {
-        XmlRenderer xr;
-        char* xml = xr.render(config);
-        writeConfigFile(MobiusConfigFile, xml);
-        delete xml;
-    }
-}
-
-/**
- * Write a UIConfig back to the file system.
- * Ownership of the config object does not transfer.
- */
-void Supervisor::writeUIConfig(UIConfig* config)
-{
-    if (config != nullptr) {
-        juce::String xml = config->toXml();
-        writeConfigFile(UIConfigFile, xml.toUTF8());
-        config->dirty = false;
-    }
-}
-
-/**
- * Called by components to obtain the MobiusConfig file.
+ * Called by components to obtain the MobiusConfig object.
  * The object remains owned by the Supervisor and must not be deleted.
  * For now we will allow it to be modified by the caller, but to save
  * it and propagate change it must call updateMobiusConfig.
@@ -1190,7 +1036,7 @@ MobiusConfig* Supervisor::getMobiusConfig()
 {
     // bool operator tests for nullness of the pointer
     if (!mobiusConfig) {
-        MobiusConfig* neu = readMobiusConfig();
+        MobiusConfig* neu = fileManager.readMobiusConfig();
         if (neu == nullptr) {
             // bootstrap one so we don't have to keep checking
             neu = new MobiusConfig();
@@ -1201,13 +1047,10 @@ MobiusConfig* Supervisor::getMobiusConfig()
     return mobiusConfig.get();
 }
 
-/**
- * Same dance for the UIConfig
- */
 UIConfig* Supervisor::getUIConfig()
 {
     if (!uiConfig) {
-        UIConfig* neu = readUIConfig();
+        UIConfig* neu = fileManager.readUIConfig();
         if (neu == nullptr) {
             neu = new UIConfig();
         }
@@ -1219,7 +1062,7 @@ UIConfig* Supervisor::getUIConfig()
 DeviceConfig* Supervisor::getDeviceConfig()
 {
     if (!deviceConfig) {
-        DeviceConfig* neu = readDeviceConfig();
+        DeviceConfig* neu = fileManager.readDeviceConfig();
         if (neu == nullptr) {
             // bootstrap one so we don't have to keep checking
             neu = new DeviceConfig();
@@ -1228,6 +1071,25 @@ DeviceConfig* Supervisor::getDeviceConfig()
     }
     return deviceConfig.get();
 }
+
+/**
+ * Get the system help catalog.
+ * Unlike the other XML files, this one is read only.
+ */
+HelpCatalog* Supervisor::getHelpCatalog()
+{
+    if (!helpCatalog) {
+        HelpCatalog* help = fileManager.readHelpCatalog();
+        helpCatalog.reset(help);
+    }
+    return helpCatalog.get();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Configuration Propagation
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Save a modified MobiusConfig, and propagate changes
@@ -1252,11 +1114,7 @@ void Supervisor::updateMobiusConfig()
     if (mobiusConfig) {
         MobiusConfig* config = mobiusConfig.get();
 
-        writeMobiusConfig(config);
-
-        // reset this so we get a fresh one on next use
-        // to reflect potential changes to Script actions
-        dynamicConfig.reset(nullptr);
+        fileManager.writeMobiusConfig(config);
 
         // propagate config changes to other components
         propagateConfiguration();
@@ -1288,7 +1146,7 @@ void Supervisor::writeMobiusConfig()
 {
     if (mobiusConfig) {
         MobiusConfig* config = mobiusConfig.get();
-        writeMobiusConfig(config);
+        fileManager.writeMobiusConfig(config);
     }
 }
 
@@ -1330,7 +1188,7 @@ void Supervisor::updateUIConfig()
     if (uiConfig) {
         UIConfig* config = uiConfig.get();
         
-        writeUIConfig(config);
+        fileManager.writeUIConfig(config);
 
         propagateConfiguration();
     }
@@ -1351,35 +1209,8 @@ void Supervisor::updateDeviceConfig()
 {
     if (deviceConfig) {
         DeviceConfig* config = deviceConfig.get();
-        writeDeviceConfig(config);
+        fileManager.writeDeviceConfig(config);
     }
-}
-
-/**
- * Get the system help catalog.
- * Unlike the other XML files, this one is ready only.
- */
-HelpCatalog* Supervisor::getHelpCatalog()
-{
-    if (!helpCatalog) {
-        juce::String xml = readConfigFile(HelpFile);
-        HelpCatalog* help = new HelpCatalog();
-        help->parseXml(xml);
-        helpCatalog.reset(help);
-    }
-    return helpCatalog.get();
-}
-
-/**
- * Old interface we don't use anymore.
- * I don't see this being useful in the future so weed it.
- */
-DynamicConfig* Supervisor::getDynamicConfig()
-{
-    if (!dynamicConfig) {
-        dynamicConfig.reset(mobius->getDynamicConfig());
-    }
-    return dynamicConfig.get();
 }
 
 /**
@@ -1401,43 +1232,12 @@ void Supervisor::propagateConfiguration()
 //
 //////////////////////////////////////////////////////////////////////
 
-const char* DefaultSessionFile = "session.xml";
-
-Session* Supervisor::readDefaultSession()
-{
-    Session* ses = nullptr;
-    
-    juce::String xml = readConfigFile(DefaultSessionFile);
-    if (xml.length() == 0) {
-        Trace(2, "Supervisor: Bootstrapping %s\n", DefaultSessionFile);
-        ses = bootstrapDefaultSession();
-    }
-    else {
-        ses = new Session();
-        ses->parseXml(xml);
-
-        // todo: copy globals from MobiusConfig into Session here?
-    }
-
-    return ses;
-}
-
-/**
- * Write a MainConfig back to the file system.
- * Ownership of the config object does not transfer.
- */
-void Supervisor::writeDefaultSession(Session* ses)
-{
-    if (ses != nullptr) {
-        juce::String xml = ses->toXml();
-        writeConfigFile(DefaultSessionFile, xml.toUTF8());
-    }
-}
-
 Session* Supervisor::getSession()
 {
     if (!session) {
-        Session* neu = readDefaultSession();
+        Session* neu = fileManager.readDefaultSession();
+        if (neu == nullptr)
+          neu = bootstrapDefaultSession();
         session.reset(neu);
     }
     return session.get();
@@ -1453,9 +1253,9 @@ void Supervisor::updateSession(bool noPropagation)
     if (session) {
         Session* s = session.get();
         // todo: if this wasn't the default session, remember where it came from
-        writeDefaultSession(s);
+        fileManager.writeDefaultSession(s);
 
-        configureSystemState();
+        configureSystemState(s);
         
         // Pulsator watches track counts
         // do this before we tell Mobius so it can register new followers without
@@ -1572,12 +1372,106 @@ void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Alerts and Time Boundaries
-//
-//////////////////////////////////////////////////////////////////////
+/**
+ * Initialize the first Session on startup.
+ */
+Session* Supervisor::initializeSession()
+{
+    // validate/upgrade the configuration files
+    // doing a gradual migration toward Session from MobiusConfig
+    // this must be done after symbols are initialized
+    MobiusConfig* config = getMobiusConfig();
+    Session* ses = getSession();
+    if (upgrader.upgrade(config, ses)) {
+        fileManager.writeMobiusConfig(config);
+    }
+    
+    // do this unconditionally for awhile
+    upgradeSession(config, ses);
+    fileManager.writeDefaultSession(ses);
 
+    // make the SystemState match the session
+    configureSystemState(ses);
+
+    return ses;
+}
+
+/**
+ * Configure the SystemState object so that it has enough TrackStates
+ * to match the tracks defined in the session.  Since TrackState is a
+ * generic model used for all track types, it doesn't really matter what
+ * order these are in.  If Session changes result in track reording the
+ * TrackState it depisits things into may change or have stale data.  Could
+ * tag TrackStates with the Session::Track::id and reorder those if it
+ * becomes important.
+ *
+ * The main thing is that TrackState needs a flag to force a full refresh and
+ * ignore any of the change flags that may currently be in it.
+ *
+ * Besides allocating TrackState objects, each of those needs a pre-allocated
+ * array of TrackState::Loops.  In the old days, these were defined in the Preset
+ * and could be different for each track.  In the new world, they should be in
+ * the Session::Track.  Assume a maximum of 16 which should be more than enough
+ * for most users.
+ */
+void Supervisor::configureSystemState(Session* s)
+{
+    // start with the configured counts
+    int maxTracks = s->audioTracks + s->midiTracks;
+
+    // if there are more Session::Tracks than there are in the count
+    // grow the state count until it is clearer which of the two should win
+    int sessionTracks = s->getTrackCount();
+
+    if (sessionTracks > maxTracks) maxTracks = sessionTracks;
+
+    // in theory should whip through the config model and calculate
+    // the maximum
+    int maxLoops = 16;
+    
+    for (int i = systemState.tracks.size() ; i < maxTracks ; i++) {
+        TrackState* ts = new TrackState();
+        for (int l = 0 ; l < maxLoops ; l++) {
+            TrackState::Loop* loop = new TrackState::Loop();
+            ts->loops.add(loop);
+        }
+        systemState.tracks.add(ts);
+    }
+
+    // events and regions now come in via the DynamicState but it would
+    // make it easier for the Viewer if we put them in TrackState and made
+    // it look like they came in together, would require more arrays
+}
+
+/**
+ * Emergine "session" concept that at the moment just consists of
+ * saving the active setup on shutdown.
+ * Since we don't have a session object, this goes in the MobiusConfig.
+ *
+ * !! Now we DO have a session, so need to move this there
+ */
+void Supervisor::saveSession()
+{
+    int active = getActiveSetup();
+    if (active >= 0) {
+        // try not to rewrite mobius.xml if we stayed on the starting setup
+        MobiusConfig* mconfig = getMobiusConfig();
+        Setup* setup = mconfig->getSetup(active);
+
+        if (setup == nullptr) {
+            // saw this while testing randomly, active was 2 and there
+            // were only 2 setups so getSetup returned nullptr
+            Trace(1, "Supervisor: Null setup when saving final session");
+        }
+        else {
+            const char* starting = mconfig->getStartingSetupName();
+            if (!StringEqual(setup->getName(), starting)) {
+                mconfig->setStartingSetupName(setup->getName());
+                fileManager.writeMobiusConfig(mconfig);
+            }
+        }
+    }
+}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -1834,7 +1728,6 @@ void Supervisor::mobiusTimeBoundary()
  */
 void Supervisor::mobiusDynamicConfigChanged()
 {
-    dynamicConfig.reset(mobius->getDynamicConfig());
     propagateConfiguration();
 }
 

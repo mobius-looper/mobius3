@@ -10,7 +10,8 @@
 #pragma once
 
 #include "../../util/Util.h"
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
+#include "../../model/DynamicState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 
@@ -56,7 +57,6 @@ class MidiTrack : public LooperTrack, public MslTrack
     void refreshState(class TrackState* stsate) override;
     void refreshPriorityState(class PriorityState* state) override;
     void refreshDynamicState(class DynamicState* state) override;
-    void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
 
@@ -66,7 +66,7 @@ class MidiTrack : public LooperTrack, public MslTrack
 
     int getFrames() override;
     int getFrame() override;
-    MobiusState::Mode getMode() override;
+    TrackState::Mode getMode() override;
     bool isExtending() override;
     bool isPaused() override;
     float getRate() override;
@@ -150,7 +150,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     //int getLoopIndex() override;
     //int getCycles() override;
     //int getSubcycles() override;
-    //MobiusState::Mode getMode() override;
+    //TrackState::Mode getMode() override;
     //bool isPaused() override;
 
     bool isMuted() override;
@@ -197,12 +197,12 @@ class MidiTrack : public LooperTrack, public MslTrack
     MidiRecorder recorder {this};
     MidiPlayer player {this};
     
-    juce::Array<MobiusState::Region> regions;
+    juce::Array<DynamicRegion> regions;
     int activeRegion = -1;
     
     // state
-    MobiusState::Mode mode = MobiusState::ModeReset;
-    MobiusState::Mode prePauseMode = MobiusState::ModeReset;
+    TrackState::Mode mode = TrackState::ModeReset;
+    TrackState::Mode prePauseMode = TrackState::ModeReset;
     bool overdub = false;
     bool mute = false;
     bool reverse = false;
@@ -237,7 +237,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     
     // regions
     void resetRegions();
-    void startRegion(MobiusState::RegionType type);
+    void startRegion(DynamicRegion::Type type);
     void stopRegion();
     void resumeOverdubRegion();
     void advanceRegion(int frames);
@@ -248,7 +248,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     void resumePlay();
     const char* getModeName();
     int simulateLevel(int count);
-    void captureLevels(MobiusState::Track* state);
+    void captureLevels(class TrackState* state);
 
     //
     // Ugly Math

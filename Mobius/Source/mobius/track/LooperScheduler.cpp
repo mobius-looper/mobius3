@@ -8,7 +8,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/UIAction.h"
 #include "../../model/FunctionProperties.h"
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 
 #include "../../sync/Pulsator.h"
 #include "../Valuator.h"
@@ -145,13 +145,13 @@ bool LooperScheduler::doTransformation(UIAction* src)
         // record has special meaning, before scheduler gets it
         auto mode = track->getMode();
         
-        if (mode == MobiusState::ModeMultiply) {
+        if (mode == TrackState::ModeMultiply) {
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedMultiply);
             passAction(&temp);
             transformed = true;
         }
-        else if (mode == MobiusState::ModeInsert) {
+        else if (mode == TrackState::ModeInsert) {
             // unrounded insert
             UIAction temp;
             temp.symbol = symbols->getSymbol(FuncUnroundedInsert);
@@ -283,7 +283,7 @@ void LooperScheduler::checkModeCancel(UIAction* a)
     auto mode = track->getMode();
     SymbolId sid = a->symbol->id;
     
-    if (mode == MobiusState::ModeReplace && sid != FuncReplace) {
+    if (mode == TrackState::ModeReplace && sid != FuncReplace) {
         // here we have an ugly decision table since some of the actions
         // might not need to cancel replace, things like Dump and scripts for example
 
@@ -456,7 +456,7 @@ bool LooperScheduler::isReset()
 {
     bool result = false;
 
-    if (track->getMode() == MobiusState::ModeReset) {
+    if (track->getMode() == TrackState::ModeReset) {
         result = true;
         if (track->getFrames() != 0)
           Trace(1, "LooperScheduler: Inconsistent ModeReset with positive size");
@@ -635,7 +635,7 @@ bool LooperScheduler::isRecording()
 {
     bool result = false;
     
-    if (track->getMode() == MobiusState::ModeRecord) {
+    if (track->getMode() == TrackState::ModeRecord) {
         result = true;
     }
     else if (events.find(TrackEvent::EventRecord)) {
@@ -651,7 +651,7 @@ void LooperScheduler::handleRecordAction(UIAction* src)
     TrackEvent* recevent = events.find(TrackEvent::EventRecord);
 
     if (recevent != nullptr) {
-        if (track->getMode() == MobiusState::ModeRecord) {
+        if (track->getMode() == TrackState::ModeRecord) {
             // this is a pending end
             scheduleRecordEndAction(src, recevent);
         }
@@ -659,7 +659,7 @@ void LooperScheduler::handleRecordAction(UIAction* src)
             scheduleRecordPendingAction(src, recevent);
         }
     }
-    else if (track->getMode() == MobiusState::ModeRecord) {
+    else if (track->getMode() == TrackState::ModeRecord) {
         // we are within an active recording
 
         // taking the approach initially that all actions will end
@@ -795,7 +795,7 @@ void LooperScheduler::handleRoundingAction(UIAction* src)
         // Didn't save the function on the Round event so have to look
         // at the track mode.
         SymbolId function;
-        if (track->getMode() == MobiusState::ModeMultiply)
+        if (track->getMode() == TrackState::ModeMultiply)
           function = FuncMultiply;
         else
           function = FuncInsert;
@@ -847,10 +847,10 @@ bool LooperScheduler::doRound(TrackEvent* event)
 {
     auto mode = track->getMode();
     
-    if (mode == MobiusState::ModeMultiply) {
+    if (mode == TrackState::ModeMultiply) {
         track->finishMultiply();
     }
-    else if (mode == MobiusState::ModeInsert) {
+    else if (mode == TrackState::ModeInsert) {
         if (!event->extension) {
             track->finishInsert();
         }
@@ -894,12 +894,12 @@ bool LooperScheduler::doRound(TrackEvent* event)
 
 void LooperScheduler::scheduleNormalAction(UIAction* src)
 {
-    MobiusState::Mode mode = track->getMode();
+    TrackState::Mode mode = track->getMode();
 
-    if (mode == MobiusState::ModeMultiply) {
+    if (mode == TrackState::ModeMultiply) {
         scheduleRounding(src, mode);
     }
-    else if (mode == MobiusState::ModeInsert) {
+    else if (mode == TrackState::ModeInsert) {
         scheduleRounding(src, mode);
     }
     else {
@@ -944,7 +944,7 @@ void LooperScheduler::scheduleNormalAction(UIAction* src)
  * update: because of addExtensionEvent we should never get here
  * with Insert any more
  */
-void LooperScheduler::scheduleRounding(UIAction* src, MobiusState::Mode mode)
+void LooperScheduler::scheduleRounding(UIAction* src, TrackState::Mode mode)
 {
     TrackEvent* event = eventPool.newEvent();
     event->type = TrackEvent::EventRound;
@@ -959,7 +959,7 @@ void LooperScheduler::scheduleRounding(UIAction* src, MobiusState::Mode mode)
     }
 
     SymbolId function;
-    if (mode == MobiusState::ModeMultiply)
+    if (mode == TrackState::ModeMultiply)
       function = FuncMultiply;
     else
       function = FuncInsert;
@@ -1279,7 +1279,7 @@ void LooperScheduler::doRecord(TrackEvent* e)
     //Trace(2, "LooperScheduler::doRecord %d", track->getNumber());
     
     auto mode = track->getMode();
-    if (mode == MobiusState::ModeRecord) {
+    if (mode == TrackState::ModeRecord) {
         //Trace(2, "LooperScheduler::doRecord finishing");
         track->finishRecord();
         // I think we need to reset the rateCarryover?

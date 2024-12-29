@@ -12,7 +12,7 @@
 
 #include "../test/SymbolTablePanel.h"
 #include "../test/MidiTransportPanel.h"
-#include "../test/SyncPanel.h"
+//#include "../test/SyncPanel.h"
 #include "../test/TracePanel.h"
 #include "../test/UpgradePanel.h"
 
@@ -146,7 +146,7 @@ BasePanel* PanelFactory::createPanel(PanelId id)
 
         case SymbolTable: panel = new SymbolTablePanel(super); break;
         case MidiTransport: panel =  new MidiTransportPanel(super); break;
-        case Sync: panel =  new SyncPanel(super); break;
+            //case Sync: panel =  new SyncPanel(super); break;
         case Upgrade: panel =  new UpgradePanel(super); break;
         case Console: panel = new ConsolePanel(super); break;
         case Monitor: panel = new MonitorPanel(super); break;

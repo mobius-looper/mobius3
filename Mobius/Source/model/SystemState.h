@@ -26,6 +26,10 @@ class SystemState
     // state for various non-track components
     SyncMasterState syncState;
 
+    // the number of tracks of each type
+    int audioTracks = 0;
+    int midiTracks = 0;
+
     // state for each track
     juce::OwnedArray<TrackState> tracks;
 

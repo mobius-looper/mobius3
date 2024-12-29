@@ -41,17 +41,35 @@ class Session
         ~Track() {}
         Track(Track* src);
 
-        // tracks are assigned a unique transient identifier at startup
-        // and this identifier will be retained as the session is edited
-        // it is used to correlate track derfinitions with their existing
-        // implementations in case order changes or tracks are added and removed
+        /**
+         * Tracks are assigned a unique transient identifier at startup
+         * and this identifier will be retained as the session is edited.
+         * It is used to correlate track definitions with their existing
+         * implementations as sessions are edited in the UI and passed down to the
+         * engine.  Ids are not stored, they should be considered random numbers
+         * or UUIDS and are not array indexes.   The id exists only within the Session object.
+         */
         int id = 0;
 
-        // an internal reference number used in bindings, scripts, and other configuration
-        // to reliably refer to this track, this is different than the id though they
-        // will often match
-        // how tracks are identified and numbered sucks and needs thought
-        // this is not persisted in the XML it is assigned by TrackManager during initialization
+        /**
+         * Tracks are assigned a unique internal reference number when the session
+         * is consumed by the engine and track implementations are constructed.
+         * This serves as the canonical track identifier used within the engine and may
+         * be used as an array index.  This is the number given to track objects, and used
+         * in resolved action and query scopes.
+         *
+         * In current convention, old Mobius audio tracks are numbered from 1-N followed
+         * by MIDI tracks from N+1 to M, followed by other track types in ascending order.
+         *
+         * This number is currently visible to the user and is stored in Bindings, but this
+         * is temporary and needs to change.  Users should never need to be aware of these numbers.
+         *
+         * todo: A better name for this would be "index".  But "number" is currently widespread
+         * in code.
+         *
+         * All other forms of track identifier should be considered "names" or "tags" and are
+         * completely user defined and stable.
+         */
         int number = 0;
 
         TrackType type;

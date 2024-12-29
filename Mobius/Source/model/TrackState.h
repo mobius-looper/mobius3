@@ -4,11 +4,12 @@
  * MobiusInterface::refreshState which forwards most of the work to TrackManager.
  *
  * This contains everythingng the UI needs about the track except for the event list
- * and the region list which are refreshed as part of the DynamicState model
+ * and the region list which are refreshed as part of the DynamicState model.
  */
 
 #pragma once
 
+#include <JuceHeader.h>
 #include "ParameterConstants.h"
 
 class TrackState

@@ -14,7 +14,6 @@
 #pragma once
 
 #include "../../sync/Pulse.h"
-#include "../../model/MobiusState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
@@ -34,7 +33,6 @@ class BaseScheduler
     
     void refreshState(class TrackState* state);
     void refreshDynamicState(class DynamicState* state);
-    void refreshState(class MobiusState::Track* state);
 
     void advance(class MobiusAudioStream* stream);
     void scheduleAction(class UIAction* a);

@@ -218,21 +218,6 @@ bool MobiusKernel::isGlobalReset()
     return (mCore != nullptr) ? mCore->isGlobalReset() : true;
 }
 
-/**
- * Return a pointer to the live MobiusState managed by the core
- * up to the shell, destined for UI refresh.
- * Called at regular intervals by the refresh thread.
- */
-OldMobiusState* MobiusKernel::getOldMobiusState()
-{
-    return (mCore != nullptr) ? mCore->getState() : nullptr;
-}
-
-MobiusState* MobiusKernel::getMobiusState()
-{
-    return mTracks->getMobiusState();
-}
-
 void MobiusKernel::refreshState(SystemState* state)
 {
     syncMaster.refreshState(&(state->syncState));

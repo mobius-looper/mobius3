@@ -308,6 +308,8 @@ Session::Track* Session::parseTrack(juce::XmlElement* root)
 {
     Session::Track* track = new Session::Track();
 
+    // normally the id is not stored, but is necessary when XML serialization
+    // is used for copying, get rid of this!
     track->id = root->getIntAttribute("id");
     track->name = root->getStringAttribute("name");
     

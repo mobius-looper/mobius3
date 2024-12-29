@@ -127,7 +127,7 @@ class MainMenu : public juce::Component, public juce::MenuBarModel
         TestInfo,
         TestMode,
         MidiTransport,
-        SyncPanel,
+        //SyncPanel,
         SymbolTable,
         DiagnosticWindow,
         UpgradeConfig,

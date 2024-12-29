@@ -9,6 +9,8 @@
 #include "../../script/MslExternal.h"
 #include "../../script/ScriptExternals.h"
 
+#include "../../model/TrackState.h"
+
 // for MobiusContainer
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
@@ -209,7 +211,7 @@ void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, MslTrack* t)
 
 void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
 {
-    MobiusState::Mode mode = t->getMode();
+    TrackState::Mode mode = t->getMode();
 
     // hack: minor modes are not conveyed by getMode, 
     // preferred way is to use inOverdub, inHalfspeed, inMute, etc.
@@ -217,14 +219,14 @@ void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
     // and this is also convenient for the case statement
     // this is also what the UI does but not sure I like it here
     // scripts need to be precise
-    if (mode == MobiusState::ModePlay) {
+    if (mode == TrackState::ModePlay) {
         if (t->isOverdub())
-          mode = MobiusState::ModeOverdub;
+          mode = TrackState::ModeOverdub;
         else if (t->isMuted())
-          mode = MobiusState::ModeMute;
+          mode = TrackState::ModeMute;
     }
     
-    q->value.setString(MobiusState::getModeName(mode));
+    q->value.setString(TrackState::getModeName(mode));
 }
 
 /**

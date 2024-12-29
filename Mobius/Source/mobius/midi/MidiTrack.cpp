@@ -26,6 +26,9 @@
 
 #include "../../util/Trace.h"
 #include "../../util/StructureDumper.h"
+
+#include "../../model/TrackState.h"
+#include "../../model/DynamicState.h"
 #include "../../model/UIAction.h"
 #include "../../model/Query.h"
 #include "../../model/Symbol.h"
@@ -60,6 +63,7 @@
 //////////////////////////////////////////////////////////////////////
 
 const int MidiTrackMaxLoops = 8;
+const int MidiTrackMaxRegions = 10;
 
 /**
  * Construction just initializes the basic state but does not
@@ -86,7 +90,7 @@ MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
     loopCount = 2;
     loopIndex = 0;
 
-    regions.ensureStorageAllocated(MobiusState::MaxRegions);
+    regions.ensureStorageAllocated(MidiTrackMaxRegions);
     activeRegion = -1;
 }
 
@@ -400,7 +404,7 @@ int MidiTrack::getFrame()
     return recorder.getFrame();
 }
 
-MobiusState::Mode MidiTrack::getMode()
+TrackState::Mode MidiTrack::getMode()
 {
     return mode;
 }
@@ -537,7 +541,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                 player.reset();
                 player.change(layer);
                 
-                bool keepGoing = (mode == MobiusState::ModePlay && !player.isPaused());
+                bool keepGoing = (mode == TrackState::ModePlay && !player.isPaused());
 
                 if (keepGoing) {
                     recorder.setFrame(currentFrame);
@@ -552,7 +556,7 @@ void MidiTrack::loadLoop(MidiSequence* seq, int loopNumber)
                     // before we call startPause force the mode to Play
                     // so that when we come out of pause, that will be what
                     // we return to
-                    mode = MobiusState::ModePlay;
+                    mode = TrackState::ModePlay;
                     startPause();
                 }
             }
@@ -602,7 +606,7 @@ bool MidiTrack::isRecording()
 
 bool MidiTrack::isPaused()
 {
-    return (mode == MobiusState::ModePause);
+    return (mode == TrackState::ModePause);
 }
 
 void MidiTrack::toggleFocusLock()
@@ -645,7 +649,7 @@ void MidiTrack::leaderReset(TrackProperties& props)
 void MidiTrack::followerPauseRewind()
 {
     // don't enter Pause mode if we're in Reset
-    if (mode != MobiusState::ModeReset) {
+    if (mode != TrackState::ModeReset) {
         startPause();
         recorder.rollback(false);
         player.setFrame(0);
@@ -684,7 +688,7 @@ void MidiTrack::leaderRecordEnd(TrackProperties& props)
 
         // resize and relocate to fit the leader
         leaderResized(props);
-        mode = MobiusState::ModePlay;
+        mode = TrackState::ModePlay;
 
         player.setPause(false);
 
@@ -730,7 +734,7 @@ void MidiTrack::leaderMuteEnd(TrackProperties& props)
  * it won't be necessary after SystemState is in place
  */
 #if 0
-void MidiTrack::refreshPriorityState(MobiusState::Track* state)
+void MidiTrack::refreshPriorityState(TrackState::Track* state)
 {
     state->frames = recorder.getFrames();
     state->frame = recorder.getFrame();
@@ -776,12 +780,126 @@ int MidiTrack::simulateLevel(int count)
     return level;
 }
 
+void MidiTrack::refreshPriorityState(PriorityState* state)
+{
+    (void)state;
+}
+
+void MidiTrack::refreshDynamicState(DynamicState* state)
+{
+    scheduler.refreshDynamicState(state);
+
+    for (int i = 0 ; i < regions.size() ; i++) {
+
+        DynamicRegion* rstate = state->nextWriteRegion();
+        if (rstate == nullptr) {
+            Trace(1, "MidiTrack: Maximum regions in DynamicState");
+            break;
+        }
+        else {
+            *rstate = regions.getReference(i);
+        }
+    }
+}
+
+void MidiTrack::refreshState(TrackState* state)
+{
+    state->loopCount = loopCount;
+    state->activeLoop = loopIndex;
+
+    //refreshPriorityState(state);
+    state->frames = recorder.getFrames();
+    state->frame = recorder.getFrame();
+    state->cycles = recorder.getCycles();
+    
+    captureLevels(state);
+
+    int cycleFrames = recorder.getCycleFrames();
+    if (cycleFrames == 0)
+      state->cycle = 1;
+    else
+      state->cycle = (int)(state->frame / cycleFrames) + 1;
+
+    state->subcycles = subcycles;
+    // todo: calculate this!
+    state->subcycle = 0;
+
+    state->mode = mode;
+    // some simulated modes
+    // !! we've got this same shenanigans with MSL now
+    // too, need to be consistent about this
+    // maybe better to have a "displayMode" or "logicalMode"
+    // or something
+    if (mode == TrackState::ModePlay) {
+        if (overdub)
+          state->mode = TrackState::ModeOverdub;
+        else if (player.isMuted())
+          state->mode = TrackState::ModeMute;
+    }
+    
+    state->overdub = overdub;
+    state->reverse = reverse;
+    // Track::mute means it is in Mute mode, the player
+    // can be muted for other reasons like Replace and Insert
+    // only show Track::mute
+    state->mute = mute;
+    
+    state->input = input;
+    state->output = output;
+    state->feedback = feedback;
+    state->pan = pan;
+    state->focus = focus;
+    state->group = group;
+    
+    // not the same as mode=Record, can be any type of recording
+    bool nowRecording = recorder.isRecording();
+    // leftover bug investigation
+    //if (!nowRecording && state->recording) {
+    //Trace(2, "MidiTrack: Recording state going off");
+    //}
+    state->recording = nowRecording;
+    state->modified = recorder.hasChanges();
+
+    // verify that lingering overdub always gets back to the recorder
+    if (overdub && !nowRecording)
+      Trace(1, "MidiTrack: Refresh state found overdub/record inconsistency");
+
+    // loop sizes for the loop stack
+    // !! in theory, the loop array could be changing if we're doing a refresh
+    // at the same time as a Session load, the loop array may not be stable?
+    for (int i = 0 ; i < loopCount ; i++) {
+        MidiLoop* loop = loops[i];
+        TrackState::Loop* lstate = state->loops[i];
+        
+        if (lstate == nullptr)
+          Trace(1, "MidiTrack: TrackState loop array too small");
+        else
+          lstate->frames = loop->getFrames();
+    }
+
+    // force a refresh after loops were loaded
+    if (loopsLoaded) {
+        state->refreshLoopContent = true;
+        loopsLoaded = false;
+    }
+
+    // skip checkpoints for awhile, really thinking we should just
+    // pass MobiusView down here and let us fill it in
+    MidiLoop* loop = loops[loopIndex];
+    int layerCount = loop->getLayerCount();
+    state->activeLayer = layerCount - 1;
+    state->layerCount = layerCount + loop->getRedoCount();
+
+    // this also handles state->nextLoop since it needs to look at events
+    scheduler.refreshState(state);
+}
+
 /**
  * Come up with numbers to put into the input and output levels
  * of the State.  Since the level meter sucks and doesn't do it's
  * own decay, we'll do the decay down here so it is predictable.
  */
-void MidiTrack::captureLevels(MobiusState::Track* state)
+void MidiTrack::captureLevels(TrackState* state)
 {
     int decayUnit = 2;
     
@@ -816,119 +934,6 @@ void MidiTrack::captureLevels(MobiusState::Track* state)
     }
     state->outputMonitorLevel = outputMonitor;
     
-}
-
-void MidiTrack::refreshState(TrackState* state)
-{
-    // need to move the stuff that the older MobiusState::Track
-    // method is doing here
-    scheduler.refreshState(state);
-}
-
-void MidiTrack::refreshPriorityState(PriorityState* state)
-{
-    (void)state;
-}
-
-void MidiTrack::refreshDynamicState(DynamicState* state)
-{
-    scheduler.refreshDynamicState(state);
-}
-
-void MidiTrack::refreshState(MobiusState::Track* state)
-{
-    state->loopCount = loopCount;
-    state->activeLoop = loopIndex;
-
-    //refreshPriorityState(state);
-    state->frames = recorder.getFrames();
-    state->frame = recorder.getFrame();
-    state->cycles = recorder.getCycles();
-    
-    captureLevels(state);
-
-    int cycleFrames = recorder.getCycleFrames();
-    if (cycleFrames == 0)
-      state->cycle = 1;
-    else
-      state->cycle = (int)(state->frame / cycleFrames) + 1;
-
-    state->subcycles = subcycles;
-    // todo: calculate this!
-    state->subcycle = 0;
-
-    state->mode = mode;
-    // some simulated modes
-    // !! we've got this same shenanigans with MSL now
-    // too, need to be consistent about this
-    // maybe better to have a "displayMode" or "logicalMode"
-    // or something
-    if (mode == MobiusState::ModePlay) {
-        if (overdub)
-          state->mode = MobiusState::ModeOverdub;
-        else if (player.isMuted())
-          state->mode = MobiusState::ModeMute;
-    }
-    
-    state->overdub = overdub;
-    state->reverse = reverse;
-    // Track::mute means it is in Mute mode, the player
-    // can be muted for other reasons like Replace and Insert
-    // only show Track::mute
-    state->mute = mute;
-    
-    state->input = input;
-    state->output = output;
-    state->feedback = feedback;
-    state->pan = pan;
-    state->focus = focus;
-    state->group = group;
-    
-    // not the same as mode=Record, can be any type of recording
-    bool nowRecording = recorder.isRecording();
-    // leftover bug investigation
-    //if (!nowRecording && state->recording) {
-    //Trace(2, "MidiTrack: Recording state going off");
-    //}
-    state->recording = nowRecording;
-    state->modified = recorder.hasChanges();
-
-    // verify that lingering overdub always gets back to the recorder
-    if (overdub && !nowRecording)
-      Trace(1, "MidiTrack: Refresh state found overdub/record inconsistency");
-
-    // loop sizes for the loop stack
-    for (int i = 0 ; i < loopCount ; i++) {
-        MidiLoop* loop = loops[i];
-        MobiusState::Loop* lstate = state->loops[i];
-        
-        if (lstate == nullptr)
-          Trace(1, "MidiTrack: MobiusState loop array too small");
-        else
-          lstate->frames = loop->getFrames();
-    }
-
-    // force a refresh after loops were loaded
-    if (loopsLoaded) {
-        state->refreshLoopContent = true;
-        loopsLoaded = false;
-    }
-
-    // skip checkpoints for awhile, really thinking we should just
-    // pass MobiusView down here and let us fill it in
-    MidiLoop* loop = loops[loopIndex];
-    int layerCount = loop->getLayerCount();
-    state->activeLayer = layerCount - 1;
-    state->layerCount = layerCount + loop->getRedoCount();
-
-    state->regions.clearQuick();
-    for (int i = 0 ; i < regions.size() && i < MobiusState::MaxRegions ; i++) {
-        MobiusState::Region& region = regions.getReference(i);
-        state->regions.add(region);
-    }
-    
-    // this also handles state->nextLoop since it needs to look at events
-    scheduler.refreshState(state);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -991,7 +996,7 @@ void MidiTrack::processAudioStream(MobiusAudioStream* stream)
  */
 void MidiTrack::advance(int frames)
 {
-    if (mode == MobiusState::ModeReset) {
+    if (mode == TrackState::ModeReset) {
         // nothing to do
         // if we ever get around to latency compensation, may need
         // to advance the player and recorder independently
@@ -1093,17 +1098,17 @@ void MidiTrack::resetRegions()
     regions.clearQuick();
 }
 
-void MidiTrack::startRegion(MobiusState::RegionType type)
+void MidiTrack::startRegion(DynamicRegion::Type type)
 {
     if (activeRegion >= 0) {
-        MobiusState::Region& region = regions.getReference(activeRegion);
+        DynamicRegion& region = regions.getReference(activeRegion);
         region.active = false;
         activeRegion = -1;
     }
     
-    if (regions.size() < MobiusState::MaxRegions) {
+    if (regions.size() < MidiTrackMaxRegions) {
         activeRegion = regions.size();
-        MobiusState::Region region;
+        DynamicRegion region;
         region.active = true;
         region.type = type;
         region.startFrame = recorder.getFrame();
@@ -1116,7 +1121,7 @@ void MidiTrack::stopRegion()
 {
     if (activeRegion >= 0) {
         // were in the middle of one already
-        MobiusState::Region& region = regions.getReference(activeRegion);
+        DynamicRegion& region = regions.getReference(activeRegion);
         region.active = false;
     }
     activeRegion = -1;
@@ -1125,13 +1130,13 @@ void MidiTrack::stopRegion()
 void MidiTrack::resumeOverdubRegion()
 {
     if (overdub)
-      startRegion(MobiusState::RegionOverdub);
+      startRegion(DynamicRegion::RegionOverdub);
 }
 
 void MidiTrack::advanceRegion(int frames)
 {
     if (activeRegion >= 0) {
-        MobiusState::Region& region = regions.getReference(activeRegion);
+        DynamicRegion& region = regions.getReference(activeRegion);
         region.endFrame += frames;
     }
 }

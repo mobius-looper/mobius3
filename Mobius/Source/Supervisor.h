@@ -31,6 +31,7 @@
 #include "MidiManager.h"
 #include "AudioManager.h"
 #include "RootLocator.h"
+#include "FileManager.h"
 #include "Upgrader.h"
 #include "Symbolizer.h"
 #include "Parametizer.h"
@@ -202,7 +203,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void updateSession(bool noPropagation=false);
     
     class HelpCatalog* getHelpCatalog();
-    class DynamicConfig* getDynamicConfig();
 
     // propagate an action to either MobiusInterface or MainWindow
     void doAction(class UIAction*) override;
@@ -405,6 +405,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // various internal functionality managers
     RootLocator rootLocator;
+    FileManager fileManager {this};
     Upgrader upgrader {this};
     AudioManager audioManager {this};
     MidiManager midiManager {this};
@@ -436,7 +437,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     std::unique_ptr<class Session> session;
     std::unique_ptr<class MobiusConfig> mobiusConfig;
     std::unique_ptr<class UIConfig> uiConfig;
-    std::unique_ptr<class DynamicConfig> dynamicConfig;
     std::unique_ptr<class HelpCatalog> helpCatalog;
 
     // temporary files created for outbound drag and drop
@@ -464,28 +464,16 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     
     // configure Binderator depending on where we are
     void configureBindings();
-    
-    // config file management
-    juce::String readConfigFile(const char* name);
-    void writeConfigFile(const char* name, const char* xml);
 
-    // make sure the SystemState is the right size after Session edits
-    void configureSystemState();
+    class Session* initializeSession();
+    void configureSystemState(class Session* s);
 
-    class DeviceConfig* readDeviceConfig();
-    void writeDeviceConfig(class DeviceConfig* config);
-    
-    class Session* readDefaultSession();
-    void writeDefaultSession(class Session* session);
     class Session* bootstrapDefaultSession();
     void upgradeSession(class MobiusConfig* old, class Session* ses);
     void convertEnum(juce::String name, int value, class ValueSet* dest);
 
-    class MobiusConfig* readMobiusConfig();
-    void writeMobiusConfig(class MobiusConfig* config);
-    
-    class UIConfig* readUIConfig();
-    void writeUIConfig(class UIConfig* config);
+    void refreshSystemState();
+    void refreshView();
 
     void saveSession();
 

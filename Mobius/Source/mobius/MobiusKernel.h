@@ -88,10 +88,12 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
         return container;
     }
 
+    class SyncMaster* getSyncMaster() {
+        return &syncMaster;
+    }
+    
     class Valuator* getValuator();
 
-    class OldMobiusState* getOldMobiusState();
-    class MobiusState* getMobiusState();
     void refreshState(class SystemState* state);
     void refreshPriorityState(class PriorityState* state);
     
@@ -187,7 +189,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     class Notifier* getNotifier() {
         return &notifier;
     }
-    
+
     // hacky shit for unit test setup
     class SampleManager* getSampleManager() {
         return sampleManager;

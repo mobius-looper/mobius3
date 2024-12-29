@@ -131,10 +131,15 @@ class DynamicRegion
     int startFrame = 0;
     int endFrame = 0;
 
+    // the same model is used in both the DynamicState and live in MidiTrack which
+    // keeps a pre-allocated number of these with an active flag, reconsider this...
+    bool active = false;
+
     void init() {
         type = RegionOverdub;
         startFrame = 0;
         endFrame = 0;
+        active = false;
     }
 };
 

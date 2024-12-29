@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../../sync/Pulse.h"
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 #include "../../model/Session.h"
 #include "../../model/ParameterConstants.h"
 #include "../../model/SymbolId.h"
@@ -74,7 +74,7 @@ class LooperScheduler : public BaseScheduler
     bool doRound(class TrackEvent* event);
 
     void scheduleNormalAction(class UIAction* src);
-    void scheduleRounding(class UIAction* src, MobiusState::Mode mode);
+    void scheduleRounding(class UIAction* src, TrackState::Mode mode);
     
     QuantizeMode isQuantized(class UIAction* a);
     void scheduleQuantized(class UIAction* src, QuantizeMode q);

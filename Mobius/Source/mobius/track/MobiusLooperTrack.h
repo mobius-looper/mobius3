@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 
 #include "TrackProperties.h"
 #include "BaseTrack.h"
@@ -37,7 +37,6 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     void refreshState(class TrackState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
     void refreshDynamicState(class DynamicState* state) override;
-    void refreshState(class MobiusState::Track* tstate) override;
     void dump(class StructureDumper& d) override;
     class MslTrack* getMslTrack() override;
 
@@ -58,7 +57,7 @@ class MobiusLooperTrack : public BaseTrack, public MslTrack
     int getLoopIndex() override;
     int getCycles() override;
     int getSubcycles() override;
-    MobiusState::Mode getMode() override;
+    TrackState::Mode getMode() override;
     bool isPaused() override;
     bool isMuted() override;
     bool isOverdub() override;

@@ -472,7 +472,7 @@ void MidiTrack::clipStart(int audioTrack, int newIndex)
                 // resize and position it as if the Resize command
                 // had been actioned on this track
                 leaderResized(props);
-                mode = MobiusState::ModePlay;
+                mode = TrackState::ModePlay;
 
                 // player was usually in pause
                 player.setPause(false, true);

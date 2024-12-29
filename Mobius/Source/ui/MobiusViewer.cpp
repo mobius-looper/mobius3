@@ -1,5 +1,5 @@
 /**
- * NOTE: This is in a transition between OldMobiusState and the new MobiusState
+ * NOTE: This is in a transition between OldMobiusState and the new SysstemStatMobiusState
  * that will be shared by both audio and midi tracks.
  *
  * Translation between the old MobiusState and the new MobiusView,
@@ -62,24 +62,66 @@
 #include "../Supervisor.h"
 
 #include "../model/OldMobiusState.h"
-#include "../model/MobiusState.h"
+#include "../model/SystemState.h"
+#include "../model/TrackState.h"
+#include "../model/DynamicState.h"
+
 #include "../model/UIEventType.h"
 #include "../model/ModeDefinition.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 
-#include "../mobius/MobiusInterface.h"
-
 #include "MobiusView.h"
 #include "MobiusViewer.h"
 
-MobiusViewer::MobiusViewer(Supervisor* s)
+//////////////////////////////////////////////////////////////////////
+//
+// DynamicStateConsumer
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Copy the DynamicState into a processing area.
+ * DynamicState uses a ring buffer that can only be read once.  When reasoning
+ * about events that may for different tracks, it is more convenient to load them
+ * into an array that is not shared with the kernel that we can ponder at our leasure.
+ */
+void DynamicStateConsumer::consume(DynamicState* ds)
 {
-    supervisor = s;
+    events.clearQuick();
+    regions.clearQuick();
+    layers.clearQuick();
+
+    for (DynamicEvent* e = ds->events.nextRead() ; e != nullptr ;
+         e = ds->events.nextRead()) {
+        events.add(*e);
+    }
+    
+    for (DynamicRegion* r = ds->regions.nextRead() ; r != nullptr ;
+         r = ds->regions.nextRead()) {
+        regions.add(*r);
+    }
+    
+    for (DynamicLayer* l = ds->layers.nextRead() ; l != nullptr ;
+         l = ds->layers.nextRead()) {
+        layers.add(*l);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// MObiusViewer
+//
+//////////////////////////////////////////////////////////////////////
+
+
+MobiusViewer::MobiusViewer(Provider* p)
+{
+    provider = p;
     
     // initialize the Query we use to dig out the runtime subcycles
     // parameter value
-    subcyclesQuery.symbol = s->getSymbols()->intern("subcycles");
+    subcyclesQuery.symbol = p->getSymbols()->intern("subcycles");
 }
 
 MobiusViewer::~MobiusViewer()
@@ -94,7 +136,7 @@ MobiusViewer::~MobiusViewer()
  * The number of audio tracks is controlled by MobiusConfig.tracks which is used
  * by the core during initialization.  The core does not respond to changes in track counts
  * until a restart, but it will someday so always obey the trackCount returned in the
- * MobiusState.
+ * SystemSetate.
  *
  * Midi tracks are allowed to be dynamic at runtime.
  *
@@ -112,7 +154,7 @@ MobiusViewer::~MobiusViewer()
  */
 void MobiusViewer::initialize(MobiusView* view)
 {
-    Session* session = supervisor->getSession();
+    Session* session = provider->getSession();
 
     view->audioTracks = session->audioTracks;
     if (view->audioTracks == 0) {
@@ -153,7 +195,7 @@ void MobiusViewer::initialize(MobiusView* view)
  */
 void MobiusViewer::configure(MobiusView* view)
 {
-    Session* session = supervisor->getSession();
+    Session* session = provider->getSession();
     
     if (view->audioTracks != session->audioTracks) {
         Trace(1, "MobiusViewer: Audio track counts changed, this might be a problem");
@@ -190,17 +232,19 @@ void MobiusViewer::configure(MobiusView* view)
  * the model and sets various flags when something that is more complex
  * changes so the UI can optimize out repaints when nothing is changing.
  */
-void MobiusViewer::refresh(MobiusInterface* mobius, OldMobiusState* state, MobiusView* view)
+void MobiusViewer::refresh(SystemState* sysstate, MobiusView* view)
 {
-    (void)mobius;
-
+    OldMobiusState* state = sysstate->oldState;
+    
+    dynamicState.consume(sysstate->dynamicState);
+    
     if (state->trackCount != view->audioTracks) {
         Trace(2, "MobiusViewer: Adjusting audio tracks to %d", state->trackCount);
         view->audioTracks = state->trackCount;
     }
     
     // Counter needs this
-    view->sampleRate = supervisor->getSampleRate();
+    view->sampleRate = provider->getSampleRate();
 
     // move the track view to the one that has focus
     // !! now that tracks can be higher than the configured number to use, may
@@ -232,10 +276,10 @@ void MobiusViewer::refresh(MobiusInterface* mobius, OldMobiusState* state, Mobiu
         view->lastFocusedTrack = view->focusedTrack;
     }
 
-    refreshAudioTracks(mobius, state, view);
+    refreshAudioTracks(state, view);
 
     // MIDI Tracks are glued onto the end of the audio tracks
-    refreshMidiTracks(mobius, view);
+    refreshMidiTracks(sysstate, view);
 
     // so the display elements don't have to test for view->trackChanged
     // in addition to the element specific refresh flags, if at the end of refresh
@@ -297,10 +341,8 @@ void MobiusViewer::forceRefresh(MobiusView* view)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusViewer::refreshAudioTracks(MobiusInterface* mobius, OldMobiusState* state, MobiusView* view)
+void MobiusViewer::refreshAudioTracks(OldMobiusState* state, MobiusView* view)
 {
-    (void)mobius;
-
     // !! OldMobiusState has no way to tell us how many tracks are in the state
     // have to trust the view, this is bad
     for (int i = 0 ; i < state->trackCount ; i++) {
@@ -406,7 +448,7 @@ void MobiusViewer::refreshTrackName(OldMobiusState* state, OldMobiusTrackState* 
     if (mview->setupChanged) {
 
         tview->name = "";
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = provider->getMobiusConfig();
         Setup* setup = config->getSetup(state->setupOrdinal);
         if (setup != nullptr) {
             // note that OldMobiusTrackState has an inconsistent use of "number"
@@ -495,7 +537,7 @@ void MobiusViewer::refreshTrackGroups(OldMobiusTrackState* tstate,  MobiusViewTr
         tview->groupName = "";
         tview->groupColor = 0;
         
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = provider->getMobiusConfig();
         
         // ignore if out of range
         if (newNumber > 0 && newNumber <= config->groups.size()) {
@@ -690,7 +732,7 @@ void MobiusViewer::refreshMode(OldMobiusTrackState* tstate, MobiusViewTrack* tvi
 void MobiusViewer::refreshSubcycles(MobiusViewTrack* tview)
 {
     int subcycles = 0;
-    if (supervisor->doQuery(&subcyclesQuery)) {
+    if (provider->doQuery(&subcyclesQuery)) {
 
         // todo: view indexes are assumed to correspond directly to track
         // numbers. Once we support track reorder this will need to change
@@ -791,7 +833,7 @@ void MobiusViewer::refreshEvents(OldMobiusLoopState* lstate, MobiusViewTrack* tv
         // counts didn't change but the contents may have
         for (int i = 0 ; i < lstate->eventCount ; i++) {
             OldMobiusEventState* estate = &(lstate->events[i]);
-            MobiusViewEvent* ve = tview->events[i];
+            MobiusViewEvent& ve = tview->events.getReference(i);
         
             const char* newName = nullptr;
             if (estate->type != nullptr)
@@ -804,11 +846,11 @@ void MobiusViewer::refreshEvents(OldMobiusLoopState* lstate, MobiusViewTrack* tv
             // comparisons, use strncmp to only compare the name without the argument
             
             // more weirdness around the lifespan of toUTF8()
-            const char* oldName = ve->name.toUTF8();
+            const char* oldName = ve.name.toUTF8();
             if (strncmp(oldName, newName, strlen(newName)) ||
-                ve->argument != estate->argument ||
-                ve->frame != estate->frame ||
-                ve->pending != estate->pending) {
+                ve.argument != estate->argument ||
+                ve.frame != estate->frame ||
+                ve.pending != estate->pending) {
 
                 tview->refreshEvents = true;
                 break;
@@ -818,25 +860,26 @@ void MobiusViewer::refreshEvents(OldMobiusLoopState* lstate, MobiusViewTrack* tv
     
     // if after all that we detected a difference, rebuild the event view
     if (tview->refreshEvents) {
-        tview->events.clear();
+        tview->events.clearQuick();
 
         for (int i = 0 ; i < lstate->eventCount ; i++) {
             OldMobiusEventState* estate = &(lstate->events[i]);
-            MobiusViewEvent* ve = new MobiusViewEvent();
-            tview->events.add(ve);
+            MobiusViewEvent ve;
 
             // sigh, repeat this little dance
             const char* newName = "???";
             if (estate->type != nullptr) newName = estate->type->getName();
 
-            ve->name = juce::String(newName);
+            ve.name = juce::String(newName);
             // the argument is only visible if it is non-zero
             if (estate->argument > 0)
-              ve->name += " " + juce::String(estate->argument);
+              ve.name += " " + juce::String(estate->argument);
             
-            ve->frame = (int)(estate->frame);
-            ve->pending = (int)(estate->pending);
-            ve->argument = (int)(estate->argument);
+            ve.frame = (int)(estate->frame);
+            ve.pending = (int)(estate->pending);
+            ve.argument = (int)(estate->argument);
+            
+            tview->events.add(ve);
         }
     }
 }
@@ -1038,18 +1081,24 @@ void MobiusViewer::addMinorMode(MobiusViewTrack* tview, const char* mode, int ar
 //
 // MIDI Tracks
 //
-// While the class is named MobiusState it is really a new model
-// that will eventually be used for both audio and MIDI tracks.  
-//
 //////////////////////////////////////////////////////////////////////
 
-void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
+/**
+ * This currently refreshes only the state for MIDI tracks, but the model
+ * in both the SystemState and MobiusView is generic and will eventually
+ * be used for all track types.
+ *
+ * The SystemState will be fleshed out with a TrackState for all tracks, but
+ * only the MIDI tracks will be filled.  Tracks are identified by internal
+ * number.  
+ */
+void MobiusViewer::refreshMidiTracks(SystemState* state, MobiusView* view)
 {
-    MobiusState* state = mobius->getMobiusState();
-
-    if (view->midiTracks != state->activeTracks) {
-        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->activeTracks);
-        view->midiTracks = state->activeTracks;
+    // state changes along with the Session, but the view can lag
+    // if things got bigger, grow
+    if (view->midiTracks != state->midiTracks) {
+        Trace(2, "MobiusViewer: Adjusting MIDI track view to %d", state->midiTracks);
+        view->midiTracks = state->midiTracks;
     }
 
     // add new ones
@@ -1059,22 +1108,37 @@ void MobiusViewer::refreshMidiTracks(MobiusInterface* mobius, MobiusView* view)
         vt->index = view->tracks.size();
         view->tracks.add(vt);
     }
-    
-    for (int i = 0 ; i < state->activeTracks ; i++) {
-        MobiusState::Track* tstate = state->tracks[i];
-        int vtrackIndex = view->audioTracks + i;
-        if (vtrackIndex < view->tracks.size()) {
-            MobiusViewTrack* tview = view->tracks[vtrackIndex];
-            refreshMidiTrack(tstate, tview);
+
+    // jump to the MIDI tracks
+    for (int i = 0 ; i < state->midiTracks ; i++) {
+        
+        int trackIndex = view->audioTracks + i;
+
+        // sanity check before we start indexing
+        // neither of these should happen
+        if (trackIndex >= state->tracks.size()) {
+            Trace(1, "MobiusViewer: Track index overflow");
+        }
+        else if (trackIndex >= view->tracks.size()) {
+            Trace(1, "MobiusViewer: Track index overflow");
         }
         else {
-            Trace(1, "MobiusViweer: MIDI view tracks are fucked");
-            break;
+            TrackState* tstate = state->tracks[trackIndex];
+            MobiusViewTrack* tview = view->tracks[trackIndex];
+
+            refreshTrack(tstate, tview);
+
+            // things that are only valid for the focused track
+            if (view->focusedTrack == trackIndex + 1)
+              refreshRegions(tview);
         }
     }
 }
 
-void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack* tview)
+/**
+ * Refresh a track view from the new TrackState model.
+ */ 
+void MobiusViewer::refreshTrack(TrackState* tstate, MobiusViewTrack* tview)
 {
     tview->midi = true;
     tview->loopCount = tstate->loopCount;
@@ -1130,9 +1194,9 @@ void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack*
         tview->refreshSwitch = true;
     }
 
-    juce::String newMode = MobiusState::getModeName(tstate->mode);
+    juce::String newMode = TrackState::getModeName(tstate->mode);
     // MidiTrack does this transformation now too
-    if (tstate->mode == MobiusState::ModePlay && tstate->overdub)
+    if (tstate->mode == TrackState::ModePlay && tstate->overdub)
       newMode = "Overdub";
 
     if (newMode != tview->mode) {
@@ -1140,10 +1204,10 @@ void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack*
         tview->refreshMode = true;
     }
 
-    refreshMidiMinorModes(tstate, tview);
+    refreshMinorModes(tstate, tview);
 
     // inactive loop state, can grow these dynamically
-    // note that the MobiusState::Loop array may be larger than the loopCount
+    // note that the TrackState::Loop array may be larger than the loopCount
     for (int i = tview->loops.size() ; i <= tstate->loopCount ; i++) {
         MobiusViewLoop* vl = new MobiusViewLoop();
         tview->loops.add(vl);
@@ -1151,7 +1215,7 @@ void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack*
 
     for (int i = 0 ; i < tstate->loopCount ; i++) {
         MobiusViewLoop* vl = tview->loops[i];
-        MobiusState::Loop* lstate = tstate->loops[i];
+        TrackState::Loop* lstate = tstate->loops[i];
         if (lstate == nullptr) {
             Trace(1, "MidiViewer: MobiusState loop array too small");
         }
@@ -1165,13 +1229,14 @@ void MobiusViewer::refreshMidiTrack(MobiusState::Track* tstate, MobiusViewTrack*
     // checkpoints not implemented yet
 
     refreshSync(tstate, tview);
-    refreshMidiEvents(tstate, tview);
-    refreshRegions(tstate, tview);
     refreshTrackGroups(tstate, tview);
+
+    // events and regions use the DynamicState which has been copied
+    // to DynamicStateConsumer
+    refreshEvents(tstate, tview);
 }
 
-void MobiusViewer::refreshMidiMinorModes(MobiusState::Track* tstate, 
-                                         MobiusViewTrack* tview)
+void MobiusViewer::refreshMinorModes(TrackState* tstate, MobiusViewTrack* tview)
 {
     bool refresh = false;
 
@@ -1204,67 +1269,85 @@ void MobiusViewer::refreshMidiMinorModes(MobiusState::Track* tstate,
         tview->refreshMinorModes = true;
     }
 }
-    
-void MobiusViewer::refreshMidiEvents(MobiusState::Track* tstate, MobiusViewTrack* tview)
+
+void MobiusViewer::refreshEvents(TrackState* tstate, MobiusViewTrack* tview)
 {
-    int newCount = tstate->eventCount;
-    int oldCount = tview->events.size();
+    int trackNumber = tstate->number;
 
-    if (newCount != oldCount)
-      tview->refreshEvents = true;
-    else {
-        // counts didn't change but the contents may have
-        for (int i = 0 ; i < tstate->eventCount ; i++) {
-            MobiusState::Event* estate = tstate->events[i];
-            MobiusViewEvent* ve = tview->events[i];
-        
-            // LoopMeter will display both the event type name and the argument
-            // number for things like "LoopSwitch 2" so when doing name
-            // comparisons, use strncmp to only compare the name without the argument
-            const char* newName = estate->name.toUTF8();
+    tview->events.clearQuick();
+    for (int i = 0 ; i < dynamicState.events.size() ; i++) {
+        DynamicEvent& e = dynamicState.events.getReference(i);
+        if (e.track == trackNumber) {
+            // still feels like there is too much copying going on
+            MobiusViewEvent ve;
+
+            expandEventName(e, ve.name);
+            if (e.argument > 0)
+              ve.name += " " + juce::String(e.argument);
             
-            // more weirdness around the lifespan of toUTF8()
-            const char* oldName = ve->name.toUTF8();
-            if (strncmp(oldName, newName, strlen(newName)) ||
-                ve->argument != estate->argument ||
-                ve->frame != estate->frame ||
-                ve->pending != estate->pending) {
-
-                tview->refreshEvents = true;
-                break;
-            }
-        }
-    }
-    
-    // if after all that we detected a difference, rebuild the event view
-    // sweet jesus this is horrible, memory allocations every damn time !?
-    if (tview->refreshEvents) {
-        tview->events.clear();
-
-        for (int i = 0 ; i < tstate->eventCount ; i++) {
-            MobiusState::Event* estate = tstate->events[i];
-            MobiusViewEvent* ve = new MobiusViewEvent();
+            ve.frame = e.frame;
+            ve.pending = e.pending;
+            ve.argument = e.argument;
+            
             tview->events.add(ve);
-            
-            ve->name = estate->name;
-            // the argument is only visible if it is non-zero
-            if (estate->argument > 0)
-              ve->name += " " + juce::String(estate->argument);
-            
-            ve->frame = estate->frame;
-            ve->pending = estate->pending;
-            ve->argument = estate->argument;
         }
     }
 }
 
-void MobiusViewer::refreshRegions(MobiusState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::expandEventName(DynamicEvent& e, juce::String& name)
 {
-    // yet ANOTHER copy of this
+    switch (e.type) {
+        case DynamicEvent::EventNone:
+            // placeholder for "unspecified" should not be seen
+            name = "None";
+            break;
+
+        case DynamicEvent::EventUnknown:
+            // catch-all event for internal events that don't have mappings
+            name = "Unknown";
+            break;
+
+        case DynamicEvent::EventAction:
+        case DynamicEvent::EventRound: {
+            Symbol* s = provider->getSymbols()->getSymbol(e.symbol);
+            if (s == nullptr)
+              name = "Bad Symbol";
+            else
+              name = s->name;
+            if (e.type == DynamicEvent::EventRound)
+              name += " End";
+        }
+            break;
+
+        case DynamicEvent::EventSwitch:
+            name = "Switch";
+            break;
+
+        case DynamicEvent::EventReturn:
+            name = "Return";
+            break;
+            
+        case DynamicEvent::EventWait:
+            name = "Wait";
+            break;
+            
+        case DynamicEvent::EventFollower:
+            name = "Follower";
+            break;
+    }
+}
+
+/**
+ * These are easier than events because there is no name transformation.
+ * The structures can just be copied.
+ * These are only returned for the focused track, caller is responsible for
+ * restricting that.
+ */
+void MobiusViewer::refreshRegions(MobiusViewTrack* tview)
+{
     tview->regions.clearQuick();
-    for (int i = 0 ; i < tstate->regions.size() && i < MobiusState::MaxRegions ; i++) {
-        MobiusState::Region& src = tstate->regions.getReference(i);
-        tview->regions.add(src);
+    for (int i = 0 ; i < dynamicState.regions.size() ; i++) {
+        tview->regions.add(dynamicState.regions.getReference(i));
     }
 }
 
@@ -1278,7 +1361,7 @@ void MobiusViewer::refreshRegions(MobiusState::Track* tstate, MobiusViewTrack* t
  * Old code only showed bars if syncUnit was SYNC_UNIT_BAR but now we always do both.
  * 
  */
-void MobiusViewer::refreshSync(MobiusState::Track* tstate, MobiusViewTrack* tview)
+void MobiusViewer::refreshSync(TrackState* tstate, MobiusViewTrack* tview)
 {
     tview->syncTempo = tstate->tempo;
     tview->syncBeat = tstate->beat;
@@ -1289,7 +1372,7 @@ void MobiusViewer::refreshSync(MobiusState::Track* tstate, MobiusViewTrack* tvie
     tview->syncShowBeat = (src == SYNC_MIDI || src == SYNC_HOST);
 }    
 
-void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTrack* tview)
+void MobiusViewer::refreshTrackGroups(TrackState* tstate,  MobiusViewTrack* tview)
 {
     int newNumber = tstate->group;
     
@@ -1303,7 +1386,7 @@ void MobiusViewer::refreshTrackGroups(MobiusState::Track* tstate,  MobiusViewTra
         tview->groupName = "";
         tview->groupColor = 0;
         
-        MobiusConfig* config = supervisor->getMobiusConfig();
+        MobiusConfig* config = provider->getMobiusConfig();
         
         // ignore if out of range
         if (newNumber > 0 && newNumber <= config->groups.size()) {

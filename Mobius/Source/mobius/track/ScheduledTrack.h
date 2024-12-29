@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 
 #include "BaseTrack.h"
 
@@ -19,7 +19,7 @@ class ScheduledTrack : public BaseTrack
     // various bits of track state required for scheduling
     virtual int getFrames() = 0;
     virtual int getFrame() = 0;
-    virtual MobiusState::Mode getMode() = 0;
+    virtual TrackState::Mode getMode() = 0;
     virtual bool isExtending() = 0;
     virtual bool isPaused() = 0;
     virtual float getRate() = 0;

@@ -9,7 +9,6 @@
 
 #include "../../model/Session.h"
 #include "../../model/ValueSet.h"
-#include "../../model/MobiusState.h"
 
 #include "../Notification.h"
 #include "TrackProperties.h"
@@ -42,7 +41,6 @@ class LogicalTrack
     void refreshState(class TrackState* state);
     void refreshPriorityState(class PriorityState* state);
     void refreshDynamicState(class DynamicState* state);
-    void refreshState(class MobiusState::Track* tstate);
 
     void dump(class StructureDumper& d);
 

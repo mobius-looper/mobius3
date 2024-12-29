@@ -127,32 +127,6 @@ class MobiusInterface {
     virtual void propagateSymbolProperties() = 0;
     
     /**
-     * Return a state object that can be watched by the UI to display
-     * the state of the engine.
-     * 
-     * The object is owned by the MobiusInterface and will
-     * be deleted during shutdown()
-     *
-     * It is considered read-only and possibly damaging to the engine if you
-     * modify it.
-     *
-     * todo: This is obsolete and will eventually be replaced by MobiusState.
-     */
-    virtual class OldMobiusState* getOldMobiusState() = 0;
-
-    /**
-     * Return a newer refreshed state object.
-     * This also remains stable for the lifetime of the engine, but I want
-     * to start requiring that these be pooled objects with a request/return
-     * protocol so we can prevent concurrent access issues.
-     *
-     * Currently working around this with "phasing" which is ugly.
-     */
-    virtual class MobiusState* getMobiusState() = 0;
-
-    // Yet another round of state modeling
-
-    /**
      * Refresh the primary system state.
      */
     virtual void refreshState(class SystemState* state) = 0;
@@ -161,7 +135,7 @@ class MobiusInterface {
      * Refresh and return the high-resolution state.
      *
      * This contains a small amount of information that is typically refreshed
-     * at a much higher rate than the full MobiusState.  This includes SyncMaster
+     * at a much higher rate than the full SystemState.  This includes SyncMaster
      * beat/bar flags, output levels, and other things that look jittery if you
      * refresh them every 1/10th second like the main state.
      */
@@ -254,20 +228,6 @@ class MobiusInterface {
     virtual void installBindings(class Binderator* b) = 0;
     
     /**
-     * Return information about dynamic configuration.  Should be called
-     * after configure() is called or after the DynamicConfigChanged
-     * MobiusListener method is called.
-     *
-     * Ownership of the object is passed to the caller.
-     * 
-     * TODO: Should this be like MobiusState and owned by the engine
-     * till shutdown?
-     *
-     * UPDATE: No longer used after the introduction of Symbols.
-     */
-    virtual class DynamicConfig* getDynamicConfig() = 0;
-
-    /**
      * Special setting used by TestDriver to enable direct communication
      * between the kernel and the shell rather than waiting for events
      * between the two to pass between threads.  This allows for more
@@ -286,7 +246,7 @@ class MobiusInterface {
 
     /**
      * Return true if the engine is in a state of global reset.
-     * This can be found in other ways through MobiusState, but it's convenient
+     * This can be found in other ways through SystemState, but it's convenient
      * for TestDriver to know this easily.
      */
     virtual bool isGlobalReset() = 0;

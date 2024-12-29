@@ -22,8 +22,6 @@
  *
  * MainThread uses juce::MessageManagerLock to ensure that the UI
  * thread is blocked for the duration of the MainThread's run cycle.
- * This means we are free to do complex modifications to structures
- * that are shared by both threads, mostly MobiusConfig and DynamicConfig.
  *
  * Still it's a good idea to keep what is done in the UI thread
  * relavely simple, during normal use that is almost always just
@@ -43,14 +41,12 @@
 #include "../util/StructureDumper.h"
 
 #include "../model/MobiusConfig.h"
-#include "../model/OldMobiusState.h"
 #include "../model/UIParameter.h"
 #include "../model/Setup.h"
 #include "../model/Preset.h"
 #include "../model/UIAction.h"
 #include "../model/Query.h"
 #include "../model/UIEventType.h"
-#include "../model/DynamicConfig.h"
 #include "../model/ScriptConfig.h"
 #include "../model/SampleConfig.h"
 #include "../model/ObjectPool.h"
@@ -228,11 +224,6 @@ void MobiusShell::initialize(MobiusConfig* config, Session* ses)
     session = new Session(ses);
     */
 
-    
-    // start tracking internal runtime changes that the UI may be interested in
-    // update: not used any more
-    initDynamicConfig();
-        
     // add symbols for our built-in functions
     // symbols for scripts and samples are added later as they are loaded
     installSymbols();
@@ -467,77 +458,9 @@ bool MobiusShell::doQuery(Query* query)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Dynamic Configuration
-//
-// This has been gutted after the introduction of the Symbol concept
-// which is now how we tell the UI about loaded scripts and samples.
-//
-// The mobiusDynamicConfigUpdated listener callback is still necessary
-// to notify the UI when something changes, but the DynamicConfig object
-// is now empty and no longer used.  Keep it around for awhile in case
-// we find some other use for it.
-//
-//////////////////////////////////////////////////////////////////////
-
-void MobiusShell::initDynamicConfig()
-{
-}
-
-/**
- * Called by the UI in the Maintenance Thread to get information about
- * engine configuration not contained in the MobiusConfig.
- *
- * Ownership of the object passes to the caller who must delete it.
- * Not entirely happy with this interface.  The caller needs to be
- * able to retain this information indefinitately so we either require
- * that it copy it and not take ownership, or we do the copy and make
- * it deal with it.  Also not sure whether this is the best way
- * to get this or if we should be sending it in the DynamicConfigChange
- * listener callback.
- * 
- * We can assume that the object has been maintained incrementally as
- * things happen and all we have to do here is copy it and return it.
- */
-DynamicConfig* MobiusShell::getDynamicConfig()
-{
-    // really need to brush up on copy constructors
-    return new DynamicConfig(&dynamicConfig);
-}
-
-//////////////////////////////////////////////////////////////////////
-//
 // Maintenance Thread
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * Return the complex state object that serves as the primary
- * mechanism for communicationg the internal state of the Mobius engine
- * to the UI.  It is intended to be called periodically from the
- * Maintenance Thread, though it is safe to call from the UI thread.
- *
- * The object is owned by the shell and must not be deleted or modified.
- * It will live as long as the MobiusInterface/MobiusShell does so the
- * UI is allowed to retain a pointer to it.  Not sure I like this,
- * we could require that this be called every time and may return
- * different objects, but a handful of componenents now expect to retain
- * pointers into the middle of this.
- *
- * So while this will return the same object every time, this does serve
- * as the trigger to refresh the state.
- *
- * Needs redesign, but this is old and it's all over the core so it will
- * be sensitive.
- */
-OldMobiusState* MobiusShell::getOldMobiusState()
-{
-    return kernel.getOldMobiusState();
-}
-
-MobiusState* MobiusShell::getMobiusState()
-{
-    return kernel.getMobiusState();
-}
 
 void MobiusShell::refreshState(SystemState* state)
 {

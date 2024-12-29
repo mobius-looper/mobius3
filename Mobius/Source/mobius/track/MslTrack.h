@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../model/MobiusState.h"
+#include "../../model/TrackState.h"
 
 class MslTrack
 {
@@ -35,7 +35,7 @@ class MslTrack
     virtual int getLoopIndex() = 0;
     virtual int getCycles() = 0;
     virtual int getSubcycles() = 0;
-    virtual MobiusState::Mode getMode() = 0;
+    virtual TrackState::Mode getMode() = 0;
     virtual bool isPaused() = 0;
     virtual bool isOverdub() = 0;
     virtual bool isMuted() = 0;
