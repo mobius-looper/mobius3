@@ -29,6 +29,9 @@ TrackMslVariableHandler::~TrackMslVariableHandler()
 {
 }
 
+/**
+ * A query comming from within an MSL script
+ */
 bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
 {
     bool success = false;
@@ -39,127 +42,87 @@ bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
         
         int intId = q->external->id;
         if (intId >= 0 && intId < (int)ExtMax) {
-            success = true;
             ScriptExternalId id = (ScriptExternalId)intId;
-            switch (id) {
 
-                case VarBlockFrames: getBlockFrames(q,t); break;
-                case VarSampleRate: getSampleRate(q,t); break;
-                case VarSampleFrames: getSampleFrames(q,t); break;
-                    
-                case VarLoopCount: getLoopCount(q,t); break;
-                case VarLoopNumber: getLoopNumber(q,t); break;
-                case VarLoopFrames: getLoopFrames(q,t); break;
-                case VarLoopFrame: getLoopFrame(q,t); break;
-                case VarCycleCount: getCycleCount(q,t); break;
-                case VarCycleNumber: getCycleNumber(q,t); break;
-                case VarCycleFrames: getCycleFrames(q,t); break;
-                case VarCycleFrame: getCycleFrame(q,t); break;
-                case VarSubcycleCount: getSubcycleCount(q,t); break;
-                case VarSubcycleNumber: getSubcycleNumber(q,t); break;
-                case VarSubcycleFrames: getSubcycleFrames(q,t); break;
-                case VarSubcycleFrame: getSubcycleFrame(q,t); break;
-                case VarModeName: getModeName(q,t); break;
-                case VarIsRecording: getIsRecording(q,t);  break;
-                case VarInOverdub: getInOverdub(q,t); break;
-                case VarInHalfspeed: getInHalfspeed(q,t); break;
-                case VarInReverse: getInReverse(q,t); break;
-                case VarInMute: getInMute(q,t); break;
-                case VarInPause: getInPause(q,t); break;
-                case VarInRealign: getInRealign(q,t); break;
-                case VarInReturn: getInReturn(q,t); break;
-
-                    // old name was just "rate"
-                case VarPlaybackRate: getPlaybackRate(q,t); break;
-                    
-                case VarTrackCount: getTrackCount(q,t); break;
-                case VarAudioTrackCount: getAudioTrackCount(q,t); break;
-                case VarMidiTrackCount: getMidiTrackCount(q,t); break;
-                    // old name was "trackNumber"
-                case VarActiveAudioTrack: getActiveTrack(q,t); break;
-                case VarFocusedTrack: getFocusedTrackNumber(q,t); break;
-                case VarScopeTrack: getScopeTrack(q,t); break;
-                    
-                case VarGlobalMute: getGlobalMute(q,t); break;
-
-                case VarTrackSyncMaster: getTrackSyncMaster(q,t); break;
-                case VarOutSyncMaster: getOutSyncMaster(q,t); break;
-                case VarSyncTempo: getSyncTempo(q,t); break;
-                case VarSyncRawBeat: getSyncRawBeat(q,t); break;
-                case VarSyncBeat: getSyncBeat(q,t); break;
-                case VarSyncBar: getSyncBar(q,t); break;
-
-                default:
-                    success = false;
-                    break;
+            if (id == VarScopeTrack) {
+                // this one is weird
+                // If they didn't pass a scope in the query, I guess
+                // this should fall back to the focused track?
+                // * todo: this should be "scopeId" or "defaultScope" or "scopeNumber"
+                if (q->scope > 0)
+                  q->value.setInt(q->scope);
+                else
+                  q->value.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
+                success = true;
+            }
+            else {
+                success = get(t, id, q->value);
             }
         }
     }
     return success;
 }
 
+/**
+ * A query comming from system code
+ */
 bool TrackMslVariableHandler::get(VarQuery* q, MslTrack* t)
 {
-    bool success = false;
-
-    (void)q;
-    (void)t;
-    
-    return success;
+    return get(t, q->id, q->result);
 }
 
-#if 0
-bool TrackMslVariableHandler::get(ScriptExternalId id, int scope, MslValue& result,
-                                  MslTrack* t)
+/**
+ * Common query dispatcher
+ */
+bool TrackMslVariableHandler::get(MslTrack* t, ScriptExternalId id, MslValue& result)
 {
     bool success = true;
     
     switch (id) {
-        case VarBlockFrames: getBlockFrames(q,t); break;
-        case VarSampleRate: getSampleRate(q,t); break;
-        case VarSampleFrames: getSampleFrames(q,t); break;
+        case VarBlockFrames: getBlockFrames(t,result); break;
+        case VarSampleRate: getSampleRate(t,result); break;
+        case VarSampleFrames: getSampleFrames(t,result); break;
                     
-        case VarLoopCount: getLoopCount(q,t); break;
-        case VarLoopNumber: getLoopNumber(q,t); break;
-        case VarLoopFrames: getLoopFrames(q,t); break;
-        case VarLoopFrame: getLoopFrame(q,t); break;
-        case VarCycleCount: getCycleCount(q,t); break;
-        case VarCycleNumber: getCycleNumber(q,t); break;
-        case VarCycleFrames: getCycleFrames(q,t); break;
-        case VarCycleFrame: getCycleFrame(q,t); break;
-        case VarSubcycleCount: getSubcycleCount(q,t); break;
-        case VarSubcycleNumber: getSubcycleNumber(q,t); break;
-        case VarSubcycleFrames: getSubcycleFrames(q,t); break;
-        case VarSubcycleFrame: getSubcycleFrame(q,t); break;
-        case VarModeName: getModeName(q,t); break;
-        case VarIsRecording: getIsRecording(q,t);  break;
-        case VarInOverdub: getInOverdub(q,t); break;
-        case VarInHalfspeed: getInHalfspeed(q,t); break;
-        case VarInReverse: getInReverse(q,t); break;
-        case VarInMute: getInMute(q,t); break;
-        case VarInPause: getInPause(q,t); break;
-        case VarInRealign: getInRealign(q,t); break;
-        case VarInReturn: getInReturn(q,t); break;
+        case VarLoopCount: getLoopCount(t,result); break;
+        case VarLoopNumber: getLoopNumber(t,result); break;
+        case VarLoopFrames: getLoopFrames(t,result); break;
+        case VarLoopFrame: getLoopFrame(t,result); break;
+        case VarCycleCount: getCycleCount(t,result); break;
+        case VarCycleNumber: getCycleNumber(t,result); break;
+        case VarCycleFrames: getCycleFrames(t,result); break;
+        case VarCycleFrame: getCycleFrame(t,result); break;
+        case VarSubcycleCount: getSubcycleCount(t,result); break;
+        case VarSubcycleNumber: getSubcycleNumber(t,result); break;
+        case VarSubcycleFrames: getSubcycleFrames(t,result); break;
+        case VarSubcycleFrame: getSubcycleFrame(t,result); break;
+        case VarModeName: getModeName(t,result); break;
+        case VarIsRecording: getIsRecording(t,result);  break;
+        case VarInOverdub: getInOverdub(t,result); break;
+        case VarInHalfspeed: getInHalfspeed(t,result); break;
+        case VarInReverse: getInReverse(t,result); break;
+        case VarInMute: getInMute(t,result); break;
+        case VarInPause: getInPause(t,result); break;
+        case VarInRealign: getInRealign(t,result); break;
+        case VarInReturn: getInReturn(t,result); break;
 
             // old name was just "rate"
-        case VarPlaybackRate: getPlaybackRate(q,t); break;
+        case VarPlaybackRate: getPlaybackRate(t,result); break;
                     
-        case VarTrackCount: getTrackCount(q,t); break;
-        case VarAudioTrackCount: getAudioTrackCount(q,t); break;
-        case VarMidiTrackCount: getMidiTrackCount(q,t); break;
+        case VarTrackCount: getTrackCount(t,result); break;
+        case VarAudioTrackCount: getAudioTrackCount(t,result); break;
+        case VarMidiTrackCount: getMidiTrackCount(t,result); break;
             // old name was "trackNumber"
-        case VarActiveAudioTrack: getActiveTrack(q,t); break;
-        case VarFocusedTrack: getFocusedTrackNumber(q,t); break;
-        case VarScopeTrack: getScopeTrack(q,t); break;
+        case VarActiveAudioTrack: getActiveTrack(t,result); break;
+        case VarFocusedTrack: getFocusedTrackNumber(t,result); break;
                     
-        case VarGlobalMute: getGlobalMute(q,t); break;
+        case VarGlobalMute: getGlobalMute(t,result); break;
 
-        case VarTrackSyncMaster: getTrackSyncMaster(q,t); break;
-        case VarOutSyncMaster: getOutSyncMaster(q,t); break;
-        case VarSyncTempo: getSyncTempo(q,t); break;
-        case VarSyncRawBeat: getSyncRawBeat(q,t); break;
-        case VarSyncBeat: getSyncBeat(q,t); break;
-        case VarSyncBar: getSyncBar(q,t); break;
+        case VarTrackSyncMaster: getTrackSyncMaster(t,result); break;
+        case VarOutSyncMaster: getOutSyncMaster(t,result); break;
+        case VarSyncTempo: getSyncTempo(t,result); break;
+        case VarSyncRawBeat: getSyncRawBeat(t,result); break;
+        case VarSyncBeat: getSyncBeat(t,result); break;
+        case VarSyncBar: getSyncBar(t,result); break;
 
         default:
             success = false;
@@ -167,7 +130,6 @@ bool TrackMslVariableHandler::get(ScriptExternalId id, int scope, MslValue& resu
     }
     return success;
 }
-#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -175,55 +137,55 @@ bool TrackMslVariableHandler::get(ScriptExternalId id, int scope, MslValue& resu
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getLoopCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getLoopCount(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getLoopCount());
+    v.setInt(t->getLoopCount());
 }
 
-void TrackMslVariableHandler::getLoopNumber(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getLoopNumber(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getLoopIndex() + 1);
+    v.setInt(t->getLoopIndex() + 1);
 }
 
-void TrackMslVariableHandler::getLoopFrames(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getLoopFrames(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getFrames());
+    v.setInt(t->getFrames());
 }
 
-void TrackMslVariableHandler::getLoopFrame(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getLoopFrame(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getFrame());
+    v.setInt(t->getFrame());
 }
 
-void TrackMslVariableHandler::getCycleCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getCycleCount(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getCycles());
+    v.setInt(t->getCycles());
 }
 
-void TrackMslVariableHandler::getCycleNumber(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getCycleNumber(MslTrack* t, MslValue& v)
 {
     int frame = t->getFrame();
     int cycleFrames = t->getCycleFrames();
     int cycleNumber = (int)(frame / cycleFrames);
-    q->value.setInt(cycleNumber);
+    v.setInt(cycleNumber);
 }
 
-void TrackMslVariableHandler::getCycleFrames(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getCycleFrames(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getCycleFrames());
+    v.setInt(t->getCycleFrames());
 }
 
-void TrackMslVariableHandler::getCycleFrame(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getCycleFrame(MslTrack* t, MslValue& v)
 {
     int frame = t->getFrame();
     int cycleFrames = t->getCycleFrames();
     int cycleFrame = (int)(frame % cycleFrames);
-    q->value.setInt(cycleFrame);
+    v.setInt(cycleFrame);
 }
 
-void TrackMslVariableHandler::getSubcycleCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSubcycleCount(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(t->getSubcycles());
+    v.setInt(t->getSubcycles());
 }
 
 /**
@@ -231,7 +193,7 @@ void TrackMslVariableHandler::getSubcycleCount(MslQuery* q, MslTrack* t)
  * The current subcycle number, relative to the current cycle.
  * !! Should this be relative to the start of the loop?
  */
-void TrackMslVariableHandler::getSubcycleNumber(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSubcycleNumber(MslTrack* t, MslValue& v)
 {
     int subcycles = t->getSubcycles();
     int frame = t->getFrame();
@@ -243,7 +205,7 @@ void TrackMslVariableHandler::getSubcycleNumber(MslQuery* q, MslTrack* t)
     // adjust to be relative to start of cycle
     subcycle %= subcycles;
 
-    q->value.setInt(subcycle);
+    v.setInt(subcycle);
 }
 
 /**
@@ -261,17 +223,17 @@ int TrackMslVariableHandler::getSubcycleFrames(MslTrack* t)
     return subcycleFrames;
 }
 
-void TrackMslVariableHandler::getSubcycleFrames(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSubcycleFrames(MslTrack* t, MslValue& v)
 {
-    q->value.setInt(getSubcycleFrames(t));
+    v.setInt(getSubcycleFrames(t));
 }
 
-void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSubcycleFrame(MslTrack* t, MslValue& v)
 {
     int frame = t->getFrame();
     int subcycleFrames = getSubcycleFrames(t);
     int subcycleFrame = (int)(frame % subcycleFrames);
-    q->value.setInt(subcycleFrame);
+    v.setInt(subcycleFrame);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -280,7 +242,7 @@ void TrackMslVariableHandler::getSubcycleFrame(MslQuery* q, MslTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getModeName(MslTrack* t, MslValue& v)
 {
     TrackState::Mode mode = t->getMode();
 
@@ -297,101 +259,101 @@ void TrackMslVariableHandler::getModeName(MslQuery* q, MslTrack* t)
           mode = TrackState::ModeMute;
     }
     
-    q->value.setString(TrackState::getModeName(mode));
+    v.setString(TrackState::getModeName(mode));
 }
 
 /**
  * Loop has a flag for this, and MidiRecorder has basically the
  * same thing, but it isn't exposed
  */
-void TrackMslVariableHandler::getIsRecording(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getIsRecording(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: isRecording not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
-void TrackMslVariableHandler::getInOverdub(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInOverdub(MslTrack* t, MslValue& v)
 {
-    q->value.setBool(t->isOverdub());
+    v.setBool(t->isOverdub());
 }
 
 /**
  * This is old, and it would be more useful to just know
  * the value of SpeedToggle
  */
-void TrackMslVariableHandler::getInHalfspeed(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInHalfspeed(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inHalfspeed not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
-void TrackMslVariableHandler::getInReverse(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInReverse(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inReverse not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
-void TrackMslVariableHandler::getInMute(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInMute(MslTrack* t, MslValue& v)
 {
-    q->value.setBool(t->isMuted());
+    v.setBool(t->isMuted());
 }
 
-void TrackMslVariableHandler::getInPause(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInPause(MslTrack* t, MslValue& v)
 {
-    q->value.setBool(t->isPaused());
+    v.setBool(t->isPaused());
 }
 
 /**
  * Is this really that interesting?  I guess for testing
  */
-void TrackMslVariableHandler::getInRealign(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInRealign(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inRealign not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
-void TrackMslVariableHandler::getInReturn(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getInReturn(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: inReturn not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
 /**
  * !! This should be "speedStep"
  * "rate" was used a long time ago but that should be a float
  */
-void TrackMslVariableHandler::getPlaybackRate(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getPlaybackRate(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: playbackRate not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
 /**
  * This is expected to be the total track count
  */
-void TrackMslVariableHandler::getTrackCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
     int total = kernel->getAudioTrackCount() + kernel->getMidiTrackCount();
-    q->value.setInt(total);
+    v.setInt(total);
 }
 
-void TrackMslVariableHandler::getAudioTrackCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getAudioTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
-    q->value.setInt(kernel->getAudioTrackCount());
+    v.setInt(kernel->getAudioTrackCount());
 }
 
-void TrackMslVariableHandler::getMidiTrackCount(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getMidiTrackCount(MslTrack* t, MslValue& v)
 {
     (void)t;
-    q->value.setInt(kernel->getMidiTrackCount());
+    v.setInt(kernel->getMidiTrackCount());
 }
 
 /**
@@ -399,43 +361,28 @@ void TrackMslVariableHandler::getMidiTrackCount(MslQuery* q, MslTrack* t)
  * I don't think it's worthwhile to return this, though we could
  * rename this activeAudioTrack and have both sides handle it
  */
-void TrackMslVariableHandler::getActiveTrack(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getActiveTrack(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: activeTrack not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
-void TrackMslVariableHandler::getFocusedTrackNumber(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getFocusedTrackNumber(MslTrack* t, MslValue& v)
 {
     (void)t;
-    q->value.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
-}
-
-/**
- * If they didn't pass a scope in the query, I guess
- * this should fall back to the focused track?
- *
- * todo: this should be "scopeId" or "defaultScope" or "scopeNumber"
- */
-void TrackMslVariableHandler::getScopeTrack(MslQuery* q, MslTrack* t)
-{
-    (void)t;
-    if (q->scope > 0)
-      q->value.setInt(q->scope);
-    else
-      q->value.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
+    v.setInt(kernel->getContainer()->getFocusedTrackIndex() + 1);
 }
 
 /**
  * Audio tracks have the flag on the Track which makes no sense
  * it should be derived from the mute state in all tracks.
  */
-void TrackMslVariableHandler::getGlobalMute(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getGlobalMute(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: globalMute not implemented");
-    q->value.setBool(false);
+    v.setBool(false);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -447,51 +394,51 @@ void TrackMslVariableHandler::getGlobalMute(MslQuery* q, MslTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getTrackSyncMaster(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getTrackSyncMaster(MslTrack* t, MslValue& v)
 {
     (void)t;
     int tnum = kernel->getContainer()->getPulsator()->getTrackSyncMaster();
-    q->value.setInt(tnum);
+    v.setInt(tnum);
 }
 
-void TrackMslVariableHandler::getOutSyncMaster(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getOutSyncMaster(MslTrack* t, MslValue& v)
 {
     (void)t;
     // this could have been handled at either level
     int tnum = kernel->getContainer()->getPulsator()->getOutSyncMaster();
-    q->value.setInt(tnum);
+    v.setInt(tnum);
 }
 
 /**
  * Audio tracks save the sync source on each track and have
  * Synchronizer deal with it.  We could do something similar with TrackScheduler
  */
-void TrackMslVariableHandler::getSyncTempo(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSyncTempo(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncTempo not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncRawBeat(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSyncRawBeat(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncRawBeat not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncBeat(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSyncBeat(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncBeat not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
-void TrackMslVariableHandler::getSyncBar(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSyncBar(MslTrack* t, MslValue& v)
 {
     (void)t;
     Trace(1, "TrackMslVariableHandler: syncBar not implemented");
-    q->value.setInt(0);
+    v.setInt(0);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -500,16 +447,16 @@ void TrackMslVariableHandler::getSyncBar(MslQuery* q, MslTrack* t)
 //
 //////////////////////////////////////////////////////////////////////
 
-void TrackMslVariableHandler::getBlockFrames(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getBlockFrames(MslTrack* t, MslValue& v)
 {
     (void)t;
-    q->value.setInt(kernel->getContainer()->getBlockSize());
+    v.setInt(kernel->getContainer()->getBlockSize());
 }
 
-void TrackMslVariableHandler::getSampleRate(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSampleRate(MslTrack* t, MslValue& v)
 {
     (void)t;
-    q->value.setInt(kernel->getContainer()->getSampleRate());
+    v.setInt(kernel->getContainer()->getSampleRate());
 }
 
 /**
@@ -518,11 +465,11 @@ void TrackMslVariableHandler::getSampleRate(MslQuery* q, MslTrack* t)
  * finish playing.
  * Should be "lastSampleFrames" or something
  */
-void TrackMslVariableHandler::getSampleFrames(MslQuery* q, MslTrack* t)
+void TrackMslVariableHandler::getSampleFrames(MslTrack* t, MslValue& v)
 {
     (void)t;
     int frames = (int)(kernel->getLastSampleFrames());
-    q->value.setInt(frames);
+    v.setInt(frames);
 }
 
 /****************************************************************************/

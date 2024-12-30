@@ -1047,7 +1047,7 @@ bool TrackManager::mslQuery(MslQuery* query)
     return success;
 }
 
-bool TrackManager::doQuery(VarQuery* query)
+bool TrackManager::mslQuery(VarQuery* query)
 {
     bool success = false;
     // here we have the problem of scope trashing since we need to

@@ -181,9 +181,9 @@ bool MobiusShell::mslQuery(class MslQuery* q)
     return kernel.mslQuery(q);
 }
 
-bool MobiusShell::doQuery(VarQuery* q)
+bool MobiusShell::mslQuery(VarQuery* q)
 {
-    return kernel.doQuery(q);
+    return kernel.mslQuery(q);
 }
 
 //////////////////////////////////////////////////////////////////////

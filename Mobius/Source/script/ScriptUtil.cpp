@@ -4,13 +4,15 @@
 #include "../util/Trace.h"
 #include "../model/MobiusConfig.h"
 #include "../model/Session.h"
-#include "../sync/Pulsator.h"
+
+#include "MslContext.h"
+#include "ScriptExternals.h"
 
 #include "ScriptUtil.h"
 
-void ScriptUtil::initialize(Pulsator* p)
+void ScriptUtil::initialize(MslContext* c)
 {
-    pulsator = p;
+    context = c;
 }
 
 void ScriptUtil::configure(MobiusConfig* c, Session* s)
@@ -78,14 +80,31 @@ bool ScriptUtil::expandScopeKeyword(const char* cname, juce::Array<int>& numbers
         }
     }
     else if (name.equalsIgnoreCase("outSyncMaster")) {
-        int tnum = pulsator->getTrackSyncMaster();
-        if (tnum > 0)
-          numbers.add(tnum);
+        // this is the whole reason VarQuery exists, we need access to
+        // variable implementations on both sides of the aisle
+        // and it's easier to deal with than MslQuery which requires an MslExternal
+        // which we don't have ready access to here
+        // reconsider this, ScriptExternalId is basically just another symbol table
+        // perhaps there should be a non-MSL way to access track variables and have
+        // MslQuery forward through that
+        // maybe it's better if this did context transitions in order to sxpand scopeps
+        // must be a better way 
+        VarQuery q;
+        q.id = VarOutSyncMaster;
+        if (context->mslQuery(&q)) {
+            int tnum = q.result.getInt();
+            if (tnum > 0)
+              numbers.add(tnum);
+        }
     }
     else if (name.equalsIgnoreCase("trackSyncMaster")) {
-        int tnum = pulsator->getTrackSyncMaster();
-        if (tnum > 0)
-          numbers.add(tnum);
+        VarQuery q;
+        q.id = VarTrackSyncMaster;
+        if (context->mslQuery(&q)) {
+            int tnum = q.result.getInt();
+            if (tnum > 0)
+              numbers.add(tnum);
+        }
     }
     else if (name.equalsIgnoreCase("focused")) {
         // this depends on who manages focus, if it's a UI level thing

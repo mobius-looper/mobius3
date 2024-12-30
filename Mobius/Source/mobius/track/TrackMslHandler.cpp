@@ -64,11 +64,6 @@ bool TrackMslHandler::mslQuery(LogicalTrack* track, MslQuery* query)
  * A different form of variable query that comes from system code rather than
  * from within a script.  Used in a few places for the UI/Shell to access
  * variables without having to punch holes in MobiusInterface every time.
- *
- * Not happy with the interface, but it solves the immediate problem of accessing
- * some of the sync state that aren't parameters and don't have Symbols.
- * Only supporting the few we need right now since everything below is oriented
- * around MslQuery.  Refactor as necessary.
  */
 bool TrackMslHandler::varQuery(LogicalTrack* track, VarQuery* query)
 {

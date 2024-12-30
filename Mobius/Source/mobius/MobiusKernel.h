@@ -154,8 +154,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
 
     MslContextId mslGetContextId() override;
     bool mslResolve(juce::String name, class MslExternal* ext) override;
-    bool mslQuery(MslQuery* query) override;
-    bool mslAction(MslAction* ation) override;
+    bool mslQuery(class MslQuery* query) override;
+    bool mslQuery(class VarQuery* q) override;
+    bool mslAction(class MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;
     void mslExport(class MslLinkage* link) override;

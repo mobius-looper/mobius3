@@ -85,8 +85,8 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     void doAction(class UIAction* a);
     void doActionWithResult(class UIAction* a, ActionResult& result);
     bool doQuery(class Query* q);
-    bool doQuery(class VarQuery* q);
     bool mslQuery(class MslQuery* query);
+    bool mslQuery(class VarQuery* query);
     bool mslWait(class MslWait* wait, class MslContextError* error);
 
     // TrackListener

@@ -1,6 +1,9 @@
 /**
  * A few MSL support utilities that need to be shared by Supervisor
  * and MobiusKernel depending on which side the script is running on.
+ *
+ * Most of this deals with epanding scope references from scripts.
+ * 
  */
 
 #pragma once
@@ -14,7 +17,7 @@ class ScriptUtil
     ScriptUtil() {}
     ~ScriptUtil() {}
 
-    void initialize(class Pulsator* p);
+    void initialize(class MslContext* c);
     void configure(class MobiusConfig* c, class Session* s);
 
     int getMaxScope();
@@ -23,7 +26,7 @@ class ScriptUtil
 
   private:
 
-    class Pulsator* pulsator = nullptr;
+    class MslContext* context = nullptr;
     class MobiusConfig* configuration = nullptr;
     class Session* session = nullptr;
     int audioTracks = 0;

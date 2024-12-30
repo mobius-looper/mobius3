@@ -280,7 +280,8 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     MslContextId mslGetContextId() override;
     bool mslResolve(juce::String name, class MslExternal* ext) override;
-    bool mslQuery(MslQuery* query) override;
+    bool mslQuery(class MslQuery* query) override;
+    bool mslQuery(class VarQuery* q) override;
     bool mslAction(MslAction* ation) override;
     bool mslWait(class MslWait* w, class MslContextError* error) override;
     void mslPrint(const char* msg) override;

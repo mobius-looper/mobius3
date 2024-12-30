@@ -340,7 +340,7 @@ bool Supervisor::start()
     // setup Pulsator before the Mobius tracks start to register followers
     pulsator.configure();
     // may as well do this here too now that we have a pulsator
-    scriptUtil.initialize(&pulsator);
+    scriptUtil.initialize(this);
 
     // open MIDI devices before Mobius so MidiTracks can resolve device
     // names in the session to device ids
@@ -2536,6 +2536,12 @@ bool Supervisor::mslQuery(MslQuery* query)
         return mobius->mslQuery(query);
     }
     return success;
+}
+
+bool Supervisor::mslQuery(VarQuery* query)
+{
+    // all variables go directly to the kernel
+    return mobius->mslQuery(query);
 }
 
 /**

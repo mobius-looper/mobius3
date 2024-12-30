@@ -216,6 +216,14 @@ class MslContext
 
     virtual int mslGetSampleRate() = 0;
 
+    // return the value of an external variable
+    // this isn't actually used in scripts, it is used by ScriptUtil which
+    // needs to run on both sides and have access to some of the variables
+    // not excited about the interface here, but dealing with mslQuery and MslExternal
+    // is too painful from system code
+    virtual bool mslQuery(class VarQuery* q) = 0;
+    
+
 };
 
 /****************************************************************************/

@@ -148,7 +148,7 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     notifier.initialize(this);
     notifier.configure(ses);
 
-    scriptUtil.initialize(cont->getPulsator());
+    scriptUtil.initialize(this);
     scriptUtil.configure(config, ses);
 
     // this should replace direct access to configuration and session
@@ -1393,11 +1393,6 @@ bool MobiusKernel::doQuery(Query* q)
     return mTracks->doQuery(q);
 }
 
-bool MobiusKernel::doQuery(VarQuery* q)
-{
-    return mTracks->doQuery(q);
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Events
@@ -1558,6 +1553,11 @@ bool MobiusKernel::mslResolve(juce::String name, MslExternal* ext)
  * Convert it to a Query and handle it like other queries.
  */
 bool MobiusKernel::mslQuery(MslQuery* query)
+{
+    return mTracks->mslQuery(query);
+}
+
+bool MobiusKernel::mslQuery(VarQuery* query)
 {
     return mTracks->mslQuery(query);
 }

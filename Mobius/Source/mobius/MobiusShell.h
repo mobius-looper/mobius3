@@ -48,7 +48,7 @@ class MobiusShell : public MobiusInterface
     bool isGlobalReset() override;
     bool mslResolve(juce::String name, class MslExternal* ext) override;
     bool mslQuery(class MslQuery* q) override;
-    bool doQuery(class VarQuery* q) override;
+    bool mslQuery(class VarQuery* q) override;
     void midiEvent(const juce::MidiMessage& msg, int deviceId) override;
     void loadMidiLoop(class MidiSequence* seq, int track, int loop) override;
     
