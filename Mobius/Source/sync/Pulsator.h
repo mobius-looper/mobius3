@@ -72,11 +72,11 @@ class Pulsator
         Pulse pulse;
     };
     
-    Pulsator(class Provider* p);
+    Pulsator();
     ~Pulsator();
-    void setSyncMaster(class SyncMaster* sm);
-    
-    void configure();
+
+    void kludgeSetup(class SyncMaster* sm, class MidiRealizer* mr);
+    void loadSession(class Session* s);
 
     void interruptStart(class MobiusAudioStream* stream);
     juce::Array<int>* getOrderedLeaders();
@@ -125,9 +125,8 @@ class Pulsator
     
   private:
 
-    class Provider* provider = nullptr;
     class SyncMaster* syncMaster = nullptr;
-    class MidiRealizer* midiTransport = nullptr;
+    class MidiRealizer* midiRealizer = nullptr;
     juce::OwnedArray<Leader> leaders;
     juce::OwnedArray<Follower> followers;
     juce::Array<int> orderedLeaders;

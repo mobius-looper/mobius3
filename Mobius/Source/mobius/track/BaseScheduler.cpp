@@ -20,7 +20,7 @@
 #include "../../model/SystemState.h"
 #include "../../model/TrackState.h"
 
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 #include "../../script/MslWait.h"
 // only for MobiusAudioStream
 #include "../MobiusInterface.h"
@@ -48,7 +48,7 @@ BaseScheduler::BaseScheduler(TrackManager*tm, LogicalTrack* lt, ScheduledTrack* 
     
     MidiPools* pools = tm->getPools();
     actionPool = pools->actionPool;
-    pulsator = tm->getPulsator();
+    syncMaster = tm->getSyncMaster();
     symbols = tm->getSymbols();
     
     events.initialize(&eventPool);
@@ -98,7 +98,7 @@ void BaseScheduler::loadSession(Session::Track* def)
         // no specific track leader yet...
         int leader = 0;
         syncSource = Pulse::SourceLeader;
-        pulsator->follow(scheduledTrack->getNumber(), leader, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), leader, ptype);
     }
     else if (sessionSyncSource == SYNC_OUT) {
         Trace(1, "BaseScheduler: MIDI tracks can't do OutSync yet");
@@ -106,18 +106,18 @@ void BaseScheduler::loadSession(Session::Track* def)
     }
     else if (sessionSyncSource == SYNC_HOST) {
         syncSource = Pulse::SourceHost;
-        pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else if (sessionSyncSource == SYNC_MIDI) {
         syncSource = Pulse::SourceMidiIn;
-        pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else if (sessionSyncSource == SYNC_TRANSPORT) {
         syncSource = Pulse::SourceTransport;
-        pulsator->follow(scheduledTrack->getNumber(), syncSource, ptype);
+        syncMaster->follow(scheduledTrack->getNumber(), syncSource, ptype);
     }
     else {
-        pulsator->unfollow(scheduledTrack->getNumber());
+        syncMaster->unfollow(scheduledTrack->getNumber());
         syncSource = Pulse::SourceNone;
     }
 
@@ -391,10 +391,10 @@ int BaseScheduler::findLeaderTrack()
         leader = leaderTrack;
     }
     else if (leaderType == LeaderTrackSyncMaster) {
-        leader = pulsator->getTrackSyncMaster();
+        leader = syncMaster->getTrackSyncMaster();
     }
     else if (leaderType == LeaderOutSyncMaster) {
-        leader = pulsator->getOutSyncMaster();
+        leader = syncMaster->getOutSyncMaster();
     }
     else if (leaderType == LeaderFocused) {
         // this is a "view index" which is zero based!
@@ -568,11 +568,11 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
     // here is where we need to ask Pulsator about drift
     // and do a correction if necessary
     int number = scheduledTrack->getNumber();
-    if (pulsator->shouldCheckDrift(number)) {
-        int drift = pulsator->getDrift(number);
+    if (syncMaster->shouldCheckDrift(number)) {
+        int drift = syncMaster->getDrift(number);
         (void)drift;
         //  scheduledTrack->doSomethingMagic()
-        pulsator->correctDrift(number, 0);
+        syncMaster->correctDrift(number, 0);
     }
 
     int currentFrame = scheduledTrack->getFrame();
@@ -591,7 +591,7 @@ void BaseScheduler::advance(MobiusAudioStream* stream)
         // and it will obey it rather than the one passed to follow()
         // might be useful if you want to change pulse types during
         // recording
-        int pulseOffset = pulsator->getPulseFrame(number);
+        int pulseOffset = syncMaster->getPulseFrame(number);
         if (pulseOffset >= 0) {
             // sanity check before we do the math
             if (pulseOffset >= newFrames) {
@@ -1145,9 +1145,9 @@ void BaseScheduler::refreshState(MobiusState::Track* state)
 	//state->trackSyncMaster = (t == mTrackSyncMaster);
 
     // Synchronizer has logic for this, but we need to get it in a different way
-	state->tempo = pulsator->getTempo(syncSource);
-	state->beat = pulsator->getBeat(syncSource);
-	state->bar = pulsator->getBar(syncSource);
+	state->tempo = syncMaster->getTempo(syncSource);
+	state->beat = syncMaster->getBeat(syncSource);
+	state->bar = syncMaster->getBar(syncSource);
     
     // turn this off while we refresh
     state->eventCount = 0;
@@ -1254,9 +1254,9 @@ void BaseScheduler::refreshState(TrackState* state)
 	//state->trackSyncMaster = (t == mTrackSyncMaster);
 
     // Synchronizer has logic for this, but we need to get it in a different way
-	state->tempo = pulsator->getTempo(syncSource);
-	state->beat = pulsator->getBeat(syncSource);
-	state->bar = pulsator->getBar(syncSource);
+	state->tempo = syncMaster->getTempo(syncSource);
+	state->beat = syncMaster->getBeat(syncSource);
+	state->bar = syncMaster->getBar(syncSource);
 
     // loop switch, can only be one of these
     // !! this violates track type hiding but in order to share we would

@@ -107,27 +107,20 @@
 
 #include "../util/Trace.h"
 #include "../SyncTrace.h"
-#include "../Supervisor.h"
 #include "../MidiManager.h"
 
 #include "../midi/MidiByte.h"
 #include "MidiQueue.h"
 #include "MidiSyncEvent.h"
 #include "TempoMonitor.h"
-
+#include "SyncMaster.h"
 
 #include "MidiRealizer.h"
 
-MidiRealizer::MidiRealizer(Supervisor* s)
+MidiRealizer::MidiRealizer()
 {
-    supervisor = s;
-    midiManager = s->getMidiManager();
-    
 	inputQueue.setName("external");
 	outputQueue.setName("internal");
-
-    mSampleRate = supervisor->getSampleRate();
-
     setTempoNow(120.0f);
 }
 
@@ -136,9 +129,16 @@ MidiRealizer::~MidiRealizer()
     stopThread();
 }
 
-void MidiRealizer::initialize()
+void MidiRealizer::kludgeSetup(SyncMaster* sm, MidiManager* mm)
 {
-    midiManager->addRealtimeListener(this);
+    syncMaster = sm;
+    midiManager = mm;
+    mm->addRealtimeListener(this);
+}
+
+void MidiRealizer::setSampleRate(int rate)
+{
+    mSampleRate = rate;
 }
 
 /**
@@ -156,7 +156,7 @@ void MidiRealizer::startThread()
             delete thread;
             thread = nullptr;
 
-            supervisor->addAlert("Unable to start MIDI timer thread");
+            syncMaster->sendAlert("Unable to start MIDI timer thread");
         }
     }
 }
@@ -525,7 +525,9 @@ void MidiRealizer::start()
         // a Juce runtime assertion since we're usually in the audio thread
         // at this point.  Instead, set a pending alert and let Synchronizer do this
         // on the next update.
-        supervisor->addAlert("No MIDI Output device is open.  Unable to send Start");
+        // update: no longer calling Supervisor directly here
+        // supervisor->addAlert(...)
+        syncMaster->sendAlert("No MIDI Output device is open.  Unable to send Start");
     }
     
     // what to do about overlaps?
@@ -754,11 +756,6 @@ void MidiRealizer::checkClocks()
     outputQueue.checkClocks(now);
 }
 
-int MidiRealizer::getMilliseconds()
-{
-    return juce::Time::getMillisecondCounter();
-}
-
 float MidiRealizer::getInputTempo()
 {
     return tempoMonitor.getTempo();
@@ -835,7 +832,7 @@ void MidiRealizer::midiRealtime(const juce::MidiMessage& msg, juce::String& sour
     
     const juce::uint8* data = msg.getRawData();
     const juce::uint8 status = *data;
-    int now = getMilliseconds();
+    int now = juce::Time::getMillisecondCounter();
     
 	switch (status) {
 		case MS_QTRFRAME: {

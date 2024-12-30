@@ -1,6 +1,7 @@
 /**
- * An implementation of MobiusMidiTransport that provides MIDI synchronization
- * services to the Mobius engine.
+ * Early container of MIDI synchronization services for the Mobius engine.
+ * Formerly implemented MobiusMidiTransport and was used directly by Synchronizer.
+ * Now encapsulated under SyncMaster.
  *
  * todo: generalize this so that it can be packaged as a standalone MIDI services
  * utility for other plugins.  Part of a synchronization library that also pulls
@@ -12,7 +13,6 @@
 #include <JuceHeader.h>
 
 
-#include "../mobius/MobiusMidiTransport.h"
 #include "../MidiManager.h"
 
 #include "MidiQueue.h"
@@ -42,20 +42,19 @@ class MidiClockThread : public juce::Thread
 
 /**
  * Class encapsulating all MIDI realtime message processing.
- * 
- * Implements MobiusMidiTransport so it can be handed
- * to the engine's Synchronizer.
  */
-class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeListener
+class MidiRealizer : public MidiManager::RealtimeListener
 {
     friend class MidiClockThread;
     
   public:
 
-    MidiRealizer(class Supervisor* s);
+    MidiRealizer();
     ~MidiRealizer();
 
-    void initialize();
+    void kludgeSetup(class SyncMaster* sm, class MidiManager* mm);
+    void setSampleRate(int rate);
+
     void shutdown();
     void startThread();
     void stopThread();
@@ -73,22 +72,22 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
 
     // Output Sync
     
-    void start() override;
-    void startClocks() override;
-    void stop() override;
-    void stopSelective(bool sendStop, bool stopClocks) override;
-    void midiContinue() override;
-    void setTempo(float tempo) override;
+    void start();
+    void startClocks();
+    void stop();
+    void stopSelective(bool sendStop, bool stopClocks);
+    void midiContinue();
+    void setTempo(float tempo);
 
-    float getTempo() override;
-    int getRawBeat() override;
-    bool isSending() override;
-    bool isStarted() override;
-    int getStarts() override;
-    void incStarts() override;
-    int getSongClock() override;
+    float getTempo();
+    int getRawBeat();
+    bool isSending();
+    bool isStarted();
+    int getStarts();
+    void incStarts();
+    int getSongClock();
 
-    MidiSyncEvent* nextOutputEvent() override;
+    MidiSyncEvent* nextOutputEvent();
     
     // new non-destrictive iterator
     // since the consumer of this, Pulsator, was moved up here, we could
@@ -98,15 +97,14 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
     
     // Input Sync
 
-    int getMilliseconds() override;
-    float getInputTempo() override;
-    int getInputSmoothTempo() override;
-    int getInputRawBeat() override;
-    int getInputSongClock() override;
-    bool isInputReceiving() override;
-    bool isInputStarted() override;
+    float getInputTempo();
+    int getInputSmoothTempo();
+    int getInputRawBeat();
+    int getInputSongClock();
+    bool isInputReceiving();
+    bool isInputStarted();
     
-    MidiSyncEvent* nextInputEvent() override;
+    MidiSyncEvent* nextInputEvent();
     void iterateInputStart();
     MidiSyncEvent* iterateInputNext();
     
@@ -119,7 +117,7 @@ class MidiRealizer : public MobiusMidiTransport, public MidiManager::RealtimeLis
     
     void startClocksInternal();
 
-    class Supervisor* supervisor = nullptr;
+    class SyncMaster* syncMaster = nullptr;
     class MidiManager* midiManager = nullptr;
     
     //////////////////////////////////////////////////////////////////////

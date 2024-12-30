@@ -54,6 +54,9 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void initialize(class MobiusContainer* cont, class MobiusConfig* config, class Session* session);
     void propagateSymbolProperties();
 
+    void enableSyncEvents();
+    void shutdown();
+
     /**
      * Special mode enabling direct shell/kernel communication.
      */
@@ -181,6 +184,10 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void midiSendExport(juce::MidiMessage& msg);
     void midiSend(juce::MidiMessage& msg, int deviceId);
     int getMidiOutputDeviceId(const char* name);
+
+    // used by SyncMaster to send alert messages to Supervisor
+    // work on a clean way to do this, compare with MobiusListener::mobiusAlert
+    void sendAlert(juce::String msg);
 
   protected:
 

@@ -125,7 +125,6 @@
 
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
-#include "../MobiusMidiTransport.h"
 #include "../Notification.h"
 #include "../Notifier.h"
 
@@ -145,7 +144,7 @@
 
 // new
 #include "../../sync/Pulse.h"
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 
 #include "Synchronizer.h"
 
@@ -165,13 +164,6 @@ Synchronizer::Synchronizer(Mobius* mob)
 {
 	mMobius = mob;
     mSyncMaster = mob->getKernel()->getSyncMaster();
-    // todo: this will eventually be inside SyncMaster
-    mPulsator = mob->getContainer()->getPulsator();
-    
-    // todo: think about where we get this
-    // it would be more consisent if this came through MobiusAudioStream like
-    // normal MIDi events for plugins
-    mTransport = mob->getContainer()->getMidiTransport();
 
     mHostTracker = new SyncTracker(SYNC_HOST);
     mMidiTracker = new SyncTracker(SYNC_MIDI);
@@ -414,11 +406,11 @@ int Synchronizer::getOutBeatsPerBar()
  * This is the same value returned by "tempo" but only if the
  * current track is in Sync=Out or Sync=OutManual.
  * Note that unlike "tempo" this one is not sensitive to 
- * mTransport->isSending().
+ * mSyncMaster->isMidiOutSending().
  */
 float Synchronizer::getOutTempo()
 {
-	return mTransport->getTempo();
+	return mSyncMaster->getMidiOutTempo();
 }
 
 /**
@@ -429,7 +421,7 @@ float Synchronizer::getOutTempo()
  */
 int Synchronizer::getOutRawBeat()
 {
-    return mTransport->getRawBeat();
+    return mSyncMaster->getMidiOutRawBeat();
 }
 
 /**
@@ -469,7 +461,7 @@ int Synchronizer::getOutBar()
  */
 bool Synchronizer::isSending()
 {
-	return mTransport->isSending();
+	return mSyncMaster->isMidiOutSending();
 }
 
 /**
@@ -478,7 +470,7 @@ bool Synchronizer::isSending()
  */
 bool Synchronizer::isStarted()
 {
-	return mTransport->isStarted();
+	return mSyncMaster->isMidiOutStarted();
 }
 
 /**
@@ -488,7 +480,7 @@ bool Synchronizer::isStarted()
  */
 int Synchronizer::getStarts()
 {
-	return mTransport->getStarts();
+	return mSyncMaster->getMidiOutStarts();
 }
 
 /****************************************************************************
@@ -521,7 +513,7 @@ int Synchronizer::getInBeatsPerBar()
  */
 float Synchronizer::getInTempo()
 {
-	return mTransport->getInputTempo();
+	return mSyncMaster->getMidiInTempo();
 }
 
 /**
@@ -530,7 +522,7 @@ float Synchronizer::getInTempo()
  */
 int Synchronizer::getInRawBeat()
 {
-    return mTransport->getInputRawBeat();
+    return mSyncMaster->getMidiInRawBeat();
 }
 
 /**
@@ -570,7 +562,7 @@ int Synchronizer::getInBar()
  */
 bool Synchronizer::isInReceiving()
 {
-    return mTransport->isInputReceiving();
+    return mSyncMaster->isMidiInReceiving();
 }
 
 /**
@@ -579,7 +571,7 @@ bool Synchronizer::isInReceiving()
  */
 bool Synchronizer::isInStarted()
 {
-    return mTransport->isInputStarted();
+    return mSyncMaster->isMidiInStarted();
 }
 
 /****************************************************************************
@@ -685,12 +677,12 @@ float Synchronizer::getTempo(Track* t)
 			// only return a value while we're sending clocks, 
 			// currently used so we don't display a tempo when we're
 			// not running
-			if (mTransport->isSending())
-			  tempo = mTransport->getTempo();
+			if (mSyncMaster->isMidiOutSending())
+			  tempo = mSyncMaster->getMidiOutTempo();
             break;
 
 		case SYNC_MIDI:
-			tempo = mTransport->getInputTempo();
+			tempo = mSyncMaster->getMidiInTempo();
             break;
 
 		case SYNC_HOST:
@@ -864,11 +856,11 @@ long Synchronizer::getMidiSongClock(SyncSource src)
 
 	switch (src) {
 		case SYNC_OUT:
-			clock = mTransport->getSongClock();
+			clock = mSyncMaster->getMidiOutSongClock();
             break;
 
 		case SYNC_MIDI:
-			clock = mTransport->getInputSongClock();
+			clock = mSyncMaster->getMidiInSongClock();
             break;
 
 		case SYNC_HOST:
@@ -925,7 +917,7 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 		case SYNC_OUT: {
 			// if we're not sending, don't display tempo
 			// ?? what about beat/bar, could display those?
-			if (mTransport->isSending()) {
+			if (mSyncMaster->isMidiOutSending()) {
 				state->tempo = getOutTempo();
 				// Note that we adjust the zero based beat/bar count
 				// for display.
@@ -938,7 +930,7 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 		case SYNC_MIDI: {
 			// for display purposes we use the "smooth" tempo
 			// this is a 10x integer
-			int smoothTempo = mTransport->getInputSmoothTempo();
+			int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
 			state->tempo = (float)smoothTempo / 10.0f;
 
 			// only display advance beats when started,
@@ -990,7 +982,7 @@ void Synchronizer::getState(OldMobiusState* state)
 
     // MIDI output sync
 
-    sync->outStarted = mTransport->isSending();
+    sync->outStarted = mSyncMaster->isMidiOutSending();
     sync->outTempo = 0;
     sync->outBeat = 0;
     sync->outBar = 0;
@@ -1009,7 +1001,7 @@ void Synchronizer::getState(OldMobiusState* state)
     
     // for display purposes we use the "smooth" tempo
     // this is a 10x integer
-    int smoothTempo = mTransport->getInputSmoothTempo();
+    int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
     sync->inTempo = (float)smoothTempo / 10.0f;
 
     // only display advance beats when started,
@@ -1969,10 +1961,10 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
             // We have an internal parameter to select the mode, figure
             // out the best one and stick with it!
 
-            float tempo = mTransport->getInputTempo();
+            float tempo = mSyncMaster->getMidiInTempo();
             traceTempo(l, "MIDI", tempo);
 
-            int smooth = mTransport->getInputSmoothTempo();
+            int smooth = mSyncMaster->getMidiInSmoothTempo();
             float fsmooth = (float)smooth / 10.0f;
             traceTempo(l, "MIDI smooth", fsmooth);
 
@@ -2146,7 +2138,7 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
 {
     // capture some statistics
 	mLastInterruptMsec = mInterruptMsec;
-	mInterruptMsec = mTransport->getMilliseconds();
+	mInterruptMsec = mSyncMaster->getMilliseconds();
 	mInterruptFrames = stream->getInterruptFrames();
 
     // should be empty but make sure
@@ -2166,7 +2158,7 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
     // I really dont' think that's worth it
     EventPool* pool = mMobius->getEventPool();
     int bpb = getInBeatsPerBar();
-    MidiSyncEvent* mse = mTransport->nextInputEvent();
+    MidiSyncEvent* mse = mSyncMaster->midiInNextEvent();
     while (mse != nullptr) {
         Event* event = convertEvent(mse, pool, bpb);
         event->fields.sync.source = SYNC_MIDI;
@@ -2174,19 +2166,19 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
         mMidiTracker->event(event);
         traceSyncEvent(event, false);
         mInterruptEvents->insert(event);
-        mse = mTransport->nextInputEvent();
+        mse = mSyncMaster->midiInNextEvent();
     }
 
     // again for internal output events
     bpb = getOutBeatsPerBar();
-    mse = mTransport->nextOutputEvent();
+    mse = mSyncMaster->midiOutNextEvent();
     while (mse != nullptr) {
         Event* event = convertEvent(mse, pool, bpb);
         event->fields.sync.source = SYNC_OUT;
         mOutTracker->event(event);
         traceSyncEvent(event, true);
         mInterruptEvents->insert(event);
-        mse = mTransport->nextOutputEvent();
+        mse = mSyncMaster->midiOutNextEvent();
     }
 
     // Transport events
@@ -2497,14 +2489,14 @@ void Synchronizer::interruptEnd()
  */
 void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 {
-    // new: Pulsator is interested in all potential leaders,
+    // new: SyncMaster is interested in all potential leaders,
     // their hopes and their dreams
     Pulse::Type pulsatorType = Pulse::PulseBeat;
     if (type == LoopEvent) 
       pulsatorType = Pulse::PulseLoop;
     else if (type == CycleEvent) 
       pulsatorType = Pulse::PulseBar;
-    mPulsator->addLeaderPulse(t->getDisplayNumber(), pulsatorType, offset);
+    mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulsatorType, offset);
     
     if (t == mTrackSyncMaster) {
 
@@ -4451,7 +4443,7 @@ void Synchronizer::fullStop(TraceContext* l, const char* msg)
 {
     (void)l;
     (void)msg;
-    mTransport->stop();
+    mSyncMaster->midiOutStop();
 }
 
 /**
@@ -4866,12 +4858,12 @@ void Synchronizer::loopResume(Loop* l)
             mode == MUTE_SYNC_TRANSPORT_CLOCKS) {
             // we sent MS_STOP, now send MS_CONTINUE
             //mTransport->midiContinue(l);
-            mTransport->midiContinue();
+            mSyncMaster->midiOutContinue();
         }
         else  {
             // we just stopped sending clocks, resume them
             // mTransport->startClocks(l);
-            mTransport->startClocks();
+            mSyncMaster->midiOutStartClocks();
         }
 	}
 }
@@ -4913,7 +4905,7 @@ void Synchronizer::muteMidiStop(Loop* l)
                    mode == MUTE_SYNC_TRANSPORT_CLOCKS);
 
     // mTransport->stop(l, transport, clocks);
-    mTransport->stopSelective(transport, clocks);
+    mSyncMaster->midiOutStopSelective(transport, clocks);
 }
 
 /**
@@ -4985,7 +4977,7 @@ void Synchronizer::loopMidiStop(Loop* l, bool force)
 {
     if (force || (l->getTrack() == mOutSyncMaster))
       // mTransport->stop(l, true, false);
-      mTransport->stopSelective(true, false);
+      mSyncMaster->midiOutStopSelective(true, false);
 }
 
 /**
@@ -5042,7 +5034,7 @@ void Synchronizer::loadProject(Project* p)
 
     mOutSyncMaster = NULL;
     mTrackSyncMaster = NULL;
-    mPulsator->setTrackSyncMaster(0, 0);
+    mSyncMaster->setTrackSyncMaster(0, 0);
     
     mOutTracker->reset();
     mHostTracker->reset();
@@ -5131,7 +5123,7 @@ void Synchronizer::setTrackSyncMaster(Track* master)
 
 	mTrackSyncMaster = master;
 
-    // Pulsator now wants to know this too
+    // SyncMaster now wants to know this too
     int leader = 0;
     int frames = 0;
     if (mTrackSyncMaster != nullptr) {
@@ -5140,7 +5132,7 @@ void Synchronizer::setTrackSyncMaster(Track* master)
         // this can change at any time
         frames = (int)(mTrackSyncMaster->getLoop()->getFrames());
     }
-    mPulsator->setTrackSyncMaster(leader, frames);
+    mSyncMaster->setTrackSyncMaster(leader, frames);
 }
 
 /**
@@ -5353,7 +5345,7 @@ void Synchronizer::resizeOutSyncTracker()
                     // resizing
                     mOutTracker->resize(pulses, newFrames, speed);
                     // mTransport->setTempo(l, tempo);
-                    mTransport->setTempo(tempo);
+                    mSyncMaster->setMidiOutTempo(tempo);
                 }
             }
         }
@@ -5417,16 +5409,16 @@ void Synchronizer::lockOutSyncTracker(Loop* l, bool recordStop)
         }
 
         //mTransport->setTempo(l, tempo);
-        mTransport->setTempo(tempo);
+        mSyncMaster->setMidiOutTempo(tempo);
         
         // if this isn't ManualStart=true, send the MS_START message now
         SyncState* state = t->getSyncState();
         if (!state->isManualStart())
           // mTransport->start(l);
-          mTransport->start();
+          mSyncMaster->midiOutStart();
         else
           // mTransport->startClocks(l);
-          mTransport->startClocks();
+          mSyncMaster->midiOutStartClocks();
 
         // must keep these in sync
         if (t != mOutSyncMaster)
@@ -5573,17 +5565,17 @@ void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
               nearStart = true;
         }
 
-        if (nearStart && mTransport->isStarted()) {
+        if (nearStart && mSyncMaster->isMidiOutStarted()) {
 			// The unit tests want to verify that we at least tried
 			// to send a start event.  If we suppressed one because we're
 			// already there, still increment the start count.
             Trace(l, 2, "Sync: Suppressing MIDI Start since we're near\n");
-			mTransport->incStarts();
+			mSyncMaster->incMidiOutStarts();
         }
         else {
             Trace(l, 2, "Sync: Sending MIDI Start\n");
             // mTransport->start(l);
-            mTransport->start();
+            mSyncMaster->midiOutStart();
 		}
 	}
 }

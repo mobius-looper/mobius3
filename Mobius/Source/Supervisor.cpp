@@ -43,7 +43,6 @@
 #include "mobius/AudioFile.h"
 // temporary for MobiusContainer::midiSend
 #include "midi/OldMidiEvent.h"
-#include "sync/MidiRealizer.h"
 #include "test/TestDriver.h"
 
 #include "MainComponent.h"
@@ -271,7 +270,7 @@ bool Supervisor::start()
     variableManager.install();
 
     // load the initial session and prepare internal objects
-    Session * ses = initializeSession();
+    Session* ses = initializeSession();
     
     // initialize the view for the known track counts
     mobiusViewer.initialize(&mobiusView);
@@ -337,9 +336,6 @@ bool Supervisor::start()
     // load the script registry to do ScriptConfig conversion first
     scriptClerk.initialize();
 
-    // setup Pulsator before the Mobius tracks start to register followers
-    pulsator.configure();
-    // may as well do this here too now that we have a pulsator
     scriptUtil.initialize(this);
 
     // open MIDI devices before Mobius so MidiTracks can resolve device
@@ -348,7 +344,6 @@ bool Supervisor::start()
     midiManager.openDevices();
     // go ahead and add MM errors to the startup alert so it doesn't have to
     addStartupErrors(midiManager.getErrors());
-    midiRealizer.initialize();
     
     // now bring up the bad boy
     // here is where we may want to defer this for host plugin scanning
@@ -390,7 +385,6 @@ bool Supervisor::start()
     // formerly did MIDI devices here, but that has to be done before Mobius
     //midiManager.configure();
     //midiManager.openDevices();
-    //midiRealizer.initialize();
     
     // install the MidiManager as the MobiusMidiListener when running
     // as a plugin, this only needs to be done once
@@ -406,7 +400,9 @@ bool Supervisor::start()
     // allow accumulation of MidiSyncMessage, I think Mobius is up enough
     // to start consuming these, but if not JuceAudioStream will flush the
     // queue on each block
-    midiRealizer.enableEvents();
+    // !! try to get rid of this, now that Kernel controls MidiRealizer it should
+    // know to enable it as soon as blocks start comming in
+    mobius->enableSyncEvents();
     
     meter("Display Update");
     
@@ -541,7 +537,9 @@ void Supervisor::shutdown()
     
     binderator.stop();
     scriptenv.shutdown();
-    midiRealizer.shutdown();
+    // formerly midiRealizer.shutdown()
+    // stop the realtime clock threads
+    mobius->shutdown();
     midiManager.shutdown();
 
     // have to do this while Mobius is still alive
@@ -1015,9 +1013,6 @@ void Supervisor::advance()
         
     }
 
-    // check the input clock stream
-    midiRealizer.checkClocks();
-
     // let TestDriver advance wait states, and process completed tests
     // need to revisit this after TestPanel becomes managed by PanelFactory
     // and will have it's own mechanism for periodic advance
@@ -1167,9 +1162,6 @@ void Supervisor::updateMobiusConfig()
             mobius->reconfigure(config, ses);
         }
 
-        // Pulsator watches track counts
-        pulsator.configure();
-
         // clear speical triggers for the engine now that it is done
         config->setupsEdited = false;
         config->presetsEdited = false;
@@ -1278,56 +1270,40 @@ Session* Supervisor::getSession()
 {
     if (!session) {
         Session* neu = fileManager.readDefaultSession();
-        if (neu == nullptr)
-          neu = bootstrapDefaultSession();
+        if (neu == nullptr) {
+            // bootstrap a default session
+            // shouldn't be happening unless the .xml files are missing
+            neu = new Session();
+            MobiusConfig* config = getMobiusConfig();
+            neu->audioTracks = config->getCoreTracks();
+        }
         session.reset(neu);
     }
     return session.get();
 }
 
 /**
- * Write the default session after editing.
- * The only thing sensitive to this right now is MobiusKernel
- * and MidiTracker.
+ * Initialize the first Session on startup.
  */
-void Supervisor::updateSession(bool noPropagation)
+Session* Supervisor::initializeSession()
 {
-    if (session) {
-        Session* s = session.get();
-        // todo: if this wasn't the default session, remember where it came from
-        fileManager.writeDefaultSession(s);
-
-        configureSystemState(s);
-        
-        // Pulsator watches track counts
-        // do this before we tell Mobius so it can register new followers without
-        // overflowing the existing arrays
-        pulsator.configure();
-
-        // tell the engine to reorganize tracks, this will lag till the next interrupt
-        // this may be delayed in some configuration panels that edit both the session
-        // and the MobiusConfig so we only reconfigure Mobius once
-        if (!noPropagation)
-          mobius->reconfigure(getMobiusConfig(), s);
-        
-        // tell the view to prepare for track changes
-        mobiusViewer.configure(&mobiusView);
-
-        // the only thing that cares about this is TrackStrips but we don't have
-        // a way to reach only that one
-        propagateConfiguration();
-
-    }
-}
-
-Session* Supervisor::bootstrapDefaultSession()
-{
-    Session* s = new Session();
+    // validate/upgrade the configuration files
+    // doing a gradual migration toward Session from MobiusConfig
+    // this must be done after symbols are initialized
     MobiusConfig* config = getMobiusConfig();
+    Session* ses = getSession();
+    if (upgrader.upgrade(config, ses)) {
+        fileManager.writeMobiusConfig(config);
+    }
+    
+    // do this unconditionally for awhile
+    upgradeSession(config, ses);
+    fileManager.writeDefaultSession(ses);
 
-    s->audioTracks = config->getCoreTracks();
+    // make the SystemState match the session
+    configureSystemState(ses);
 
-    return s;
+    return ses;
 }
 
 void Supervisor::upgradeSession(MobiusConfig* old, Session* ses)
@@ -1415,30 +1391,6 @@ void Supervisor::convertEnum(juce::String name, int value, ValueSet* dest)
 }
 
 /**
- * Initialize the first Session on startup.
- */
-Session* Supervisor::initializeSession()
-{
-    // validate/upgrade the configuration files
-    // doing a gradual migration toward Session from MobiusConfig
-    // this must be done after symbols are initialized
-    MobiusConfig* config = getMobiusConfig();
-    Session* ses = getSession();
-    if (upgrader.upgrade(config, ses)) {
-        fileManager.writeMobiusConfig(config);
-    }
-    
-    // do this unconditionally for awhile
-    upgradeSession(config, ses);
-    fileManager.writeDefaultSession(ses);
-
-    // make the SystemState match the session
-    configureSystemState(ses);
-
-    return ses;
-}
-
-/**
  * Configure the SystemState object so that it has enough TrackStates
  * to match the tracks defined in the session.  Since TrackState is a
  * generic model used for all track types, it doesn't really matter what
@@ -1509,6 +1461,36 @@ void Supervisor::configureSystemState(Session* s)
     focused->eventCount = 0;
     focused->regionCount = 0;
     focused->layerCount = 0;
+}
+
+/**
+ * Write the default session after editing.
+ * The only thing sensitive to this right now is MobiusKernel
+ * and MidiTracker.
+ */
+void Supervisor::updateSession(bool noPropagation)
+{
+    if (session) {
+        Session* s = session.get();
+        // todo: if this wasn't the default session, remember where it came from
+        fileManager.writeDefaultSession(s);
+
+        configureSystemState(s);
+        
+        // tell the engine to reorganize tracks, this will lag till the next interrupt
+        // this may be delayed in some configuration panels that edit both the session
+        // and the MobiusConfig so we only reconfigure Mobius once
+        if (!noPropagation)
+          mobius->reconfigure(getMobiusConfig(), s);
+        
+        // tell the view to prepare for track changes
+        mobiusViewer.configure(&mobiusView);
+
+        // the only thing that cares about this is TrackStrips but we don't have
+        // a way to reach only that one
+        propagateConfiguration();
+
+    }
 }
 
 /**
@@ -1701,11 +1683,6 @@ void Supervisor::sleep(int millis)
 Parametizer* Supervisor::getParametizer()
 {
     return &parametizer;
-}
-
-MobiusMidiTransport* Supervisor::getMidiTransport()
-{
-    return &midiRealizer;
 }
 
 void Supervisor::setAudioListener(MobiusAudioListener* l)

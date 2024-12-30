@@ -10,7 +10,7 @@
 #include "../../model/FunctionProperties.h"
 #include "../../model/TrackState.h"
 
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 #include "../Valuator.h"
 
 #include "TrackManager.h"
@@ -1252,7 +1252,7 @@ bool LooperScheduler::isRecordSynced()
     else if (syncSource == Pulse::SourceLeader) {
         // if we're following track sync, and did not request a specific
         // track to follow, and Pulsator wasn't given one, then we freewheel
-        int master = pulsator->getTrackSyncMaster();
+        int master = syncMaster->getTrackSyncMaster();
         // sync if there is a master and it isn't us
         doSync = (master > 0 && master != number);
     }
@@ -1260,7 +1260,7 @@ bool LooperScheduler::isRecordSynced()
         // if another track is already the out sync master, then
         // we have in the past switched this to track sync
         // unclear if we should have more options around this
-        int outMaster = pulsator->getOutSyncMaster();
+        int outMaster = syncMaster->getOutSyncMaster();
         if (outMaster > 0 && outMaster != number) {
 
             // the out sync master is normally also the track sync
@@ -1448,7 +1448,7 @@ void LooperScheduler::doResize(UIAction* a)
         // sync based resize
         // !! should be consulting the follower here
         if (sessionSyncSource == SYNC_TRACK) {
-            int otherTrack = pulsator->getTrackSyncMaster();
+            int otherTrack = syncMaster->getTrackSyncMaster();
             TrackProperties props = manager->getTrackProperties(otherTrack);
             track->leaderResized(props);
             followTrack = otherTrack;

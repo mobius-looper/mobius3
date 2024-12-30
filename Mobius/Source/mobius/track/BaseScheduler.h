@@ -78,7 +78,7 @@ class BaseScheduler
     
     class TrackManager* manager = nullptr;
     class UIActionPool* actionPool = nullptr;
-    class Pulsator* pulsator = nullptr;
+    class SyncMaster* syncMaster = nullptr;
     class SymbolTable* symbols = nullptr;
     
     TrackEventList events;

@@ -69,8 +69,6 @@ class TestDriver : public MobiusListener, public MobiusAudioListener, public Mob
                                      int outport, float** output) override;
 
     juce::MidiBuffer* getMidiMessages() override;
-    class MobiusMidiTransport* getMidiTransport() override;
-    class Pulsator* getPulsator() override;
     
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;

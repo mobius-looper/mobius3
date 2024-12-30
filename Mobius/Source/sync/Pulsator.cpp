@@ -12,10 +12,8 @@
 #include <JuceHeader.h>
 
 #include "../util/Trace.h"
-#include "../model/MobiusConfig.h"
 #include "../model/Session.h"
 
-#include "../Provider.h"
 #include "../mobius/MobiusInterface.h"
 
 #include "MidiRealizer.h"
@@ -26,22 +24,21 @@
 #include "Leader.h"
 #include "Follower.h"
 #include "SyncMaster.h"
+
 #include "Pulsator.h"
 
-Pulsator::Pulsator(Provider* p)
+Pulsator::Pulsator()
 {
-    provider = p;
-    midiTransport = provider->getMidiRealizer();
 }
 
 Pulsator::~Pulsator()
 {
 }
 
-// work this out
-void Pulsator::setSyncMaster(SyncMaster* sm)
+void Pulsator::kludgeSetup(SyncMaster* sm, MidiRealizer* mr)
 {
     syncMaster = sm;
+    midiRealizer = mr;
 }
 
 /**
@@ -53,14 +50,11 @@ void Pulsator::setSyncMaster(SyncMaster* sm)
  * and ids are always track numbers.  This simplification may not always
  * hold true.
  */
-void Pulsator::configure()
+void Pulsator::loadSession(Session* s)
 {
     int numFollowers = 0;
-    MobiusConfig* config = provider->getMobiusConfig();
-    numFollowers = config->getCoreTracks();
-    
-    Session* session = provider->getSession();
-    numFollowers += session->midiTracks;
+    numFollowers = s->audioTracks;
+    numFollowers += s->midiTracks;
 
     // ensure the array is big enough
     // !! this is potentially dangerous if tracks are actively registering
@@ -102,7 +96,7 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
 {
     // capture some statistics
 	lastMillisecond = millisecond;
-	millisecond = midiTransport->getMilliseconds();
+	millisecond = juce::Time::getMillisecondCounter();
 	interruptFrames = stream->getInterruptFrames();
 
     reset();
@@ -141,9 +135,9 @@ float Pulsator::getTempo(Pulse::Source src)
     float tempo = 0.0f;
     switch (src) {
         case Pulse::SourceHost: tempo = host.tempo; break;
-            //case SourceMidiIn: tempo = midiTransport->getInputSmoothTempo(); break;
-        case Pulse::SourceMidiIn: tempo = midiTransport->getInputTempo(); break;
-        case Pulse::SourceMidiOut: tempo = midiTransport->getTempo(); break;
+            //case SourceMidiIn: tempo = midiRealizer->getInputSmoothTempo(); break;
+        case Pulse::SourceMidiIn: tempo = midiRealizer->getInputTempo(); break;
+        case Pulse::SourceMidiOut: tempo = midiRealizer->getTempo(); break;
         case Pulse::SourceTransport: tempo = transport.tempo; break;
         default: break;
     }
@@ -160,8 +154,8 @@ int Pulsator::getBeat(Pulse::Source src)
     int beat = 0;
     switch (src) {
         case Pulse::SourceHost: beat = host.beat; break;
-        case Pulse::SourceMidiIn: beat = midiTransport->getInputRawBeat(); break;
-        case Pulse::SourceMidiOut: beat = midiTransport->getRawBeat(); break;
+        case Pulse::SourceMidiIn: beat = midiRealizer->getInputRawBeat(); break;
+        case Pulse::SourceMidiOut: beat = midiRealizer->getRawBeat(); break;
         case Pulse::SourceTransport: beat = transport.beat; break;
         default: break;
     }
@@ -367,23 +361,23 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
  */
 void Pulsator::gatherMidi()
 {
-    midiTransport->iterateInputStart();
-    MidiSyncEvent* mse = midiTransport->iterateInputNext();
+    midiRealizer->iterateInputStart();
+    MidiSyncEvent* mse = midiRealizer->iterateInputNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiIn, &(midiIn.pulse)))
           break;
         else
-          mse = midiTransport->iterateInputNext();
+          mse = midiRealizer->iterateInputNext();
     }
     
     // again for internal output events
-    midiTransport->iterateOutputStart();
-    mse = midiTransport->iterateOutputNext();
+    midiRealizer->iterateOutputStart();
+    mse = midiRealizer->iterateOutputNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiOut, &(midiOut.pulse)))
           break;
         else
-          mse = midiTransport->iterateOutputNext();
+          mse = midiRealizer->iterateOutputNext();
     }
 }
 

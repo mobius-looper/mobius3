@@ -14,7 +14,7 @@
 // for MobiusContainer
 #include "../MobiusInterface.h"
 #include "../MobiusKernel.h"
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 
 #include "MslTrack.h"
 
@@ -397,7 +397,7 @@ void TrackMslVariableHandler::getGlobalMute(MslTrack* t, MslValue& v)
 void TrackMslVariableHandler::getTrackSyncMaster(MslTrack* t, MslValue& v)
 {
     (void)t;
-    int tnum = kernel->getContainer()->getPulsator()->getTrackSyncMaster();
+    int tnum = kernel->getSyncMaster()->getTrackSyncMaster();
     v.setInt(tnum);
 }
 
@@ -405,7 +405,7 @@ void TrackMslVariableHandler::getOutSyncMaster(MslTrack* t, MslValue& v)
 {
     (void)t;
     // this could have been handled at either level
-    int tnum = kernel->getContainer()->getPulsator()->getOutSyncMaster();
+    int tnum = kernel->getSyncMaster()->getOutSyncMaster();
     v.setInt(tnum);
 }
 

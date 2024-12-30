@@ -186,6 +186,16 @@ bool MobiusShell::mslQuery(VarQuery* q)
     return kernel.mslQuery(q);
 }
 
+void MobiusShell::shutdown()
+{
+    kernel.shutdown();
+}
+
+void MobiusShell::enableSyncEvents()
+{
+    kernel.enableSyncEvents();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration

@@ -22,9 +22,6 @@
  *  An object that receives the real-time audo and MIDI data
  *  from the MidiAudioStream
  *
- * MobiusMidiTransport
- *   An object that provides MIDI synchronization services for the engine.
- *
  * These interfaces hide the most of the implementation details
  * of the the application and the engine from each other.  There should
  * be little communication between the two "sides" that do not pass through
@@ -57,7 +54,6 @@
  * MobiusListener = Supervisor
  * MobiusAudioStream = JuceAudioStream
  * MobiusAudioListener = MobiusKernel
- * MobiusMidiTransport = MidiRealizer
  */
 
 #pragma once
@@ -292,6 +288,20 @@ class MobiusInterface {
     virtual void loadMidiLoop(class MidiSequence* seq, int track, int loop) = 0;
     //virtual class MidiSequence* saveMidiLoop(int track, int loop) = 0;
 
+    // weird one for the SyncMaster reorg
+    // during Supervisor shutdown() it used to call MidiRealizer::shutdown to stop the
+    // clock threads, best to continue doing that but need a more well
+    // defined shutdown sequence
+    virtual void shutdown() = 0;
+
+    // tell SyncMaster/MidiRealizer it can start watching for realtime events
+    // !! this is part of the old Supervisor::start sequence, unclear why
+    // it was necessary to defer this, try to get rid of it and just have
+    // it enabled when Kernel finishes initializing?
+    // I think probably we wanted to make sure that Kernel was advancing audio
+    // blocks and clearing queued events from the MIDI input device
+    virtual void enableSyncEvents() = 0;
+
   private:
 
     
@@ -378,12 +388,6 @@ class MobiusContainer
     virtual class Parametizer* getParametizer() = 0;
 
     /**
-     * New alternative to MidiTransport for MIDI tracks until we get more formal
-     * about how this should look.
-     */
-    virtual class Pulsator* getPulsator() = 0;
-
-    /**
      * Send a MIDI message to a specific device
      */
     virtual void midiSend(const juce::MidiMessage& msg, int deviceId) = 0;
@@ -408,15 +412,6 @@ class MobiusContainer
      * Get the runtime device id for a name
      */
     virtual int getMidiOutputDeviceId(const char* name) = 0;
-
-    /**
-     * Object that provides MIDI synchronization services.
-     * Not sure where I want this to live.  It needs to be accessed on
-     * every audio block, but it is more convenient for Synchronizer to have
-     * it during initialization and cache it rather than having to wait for
-     * an interrupt and get it every time.
-     */
-    virtual class MobiusMidiTransport* getMidiTransport() = 0;
 
     /**
      * The MSL environment from wherever it lives.
@@ -445,6 +440,13 @@ class MobiusContainer
 
     virtual void writeDump(juce::String file, juce::String content) = 0;
 
+    // now needed for SyncMaster/MidiRealizer, need to work on the
+    // proper abstraction here
+    virtual class MidiManager* getMidiManager() = 0;
+
+    // another weird hole for MidiRealizer, compare with MobiusListener::mobiusAlert and combine
+    virtual void addAlert(juce::String msg) = 0;
+    
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -787,20 +789,6 @@ class MobiusAudioStream
      * has to operate in the Kernel.
      */
     virtual juce::MidiBuffer* getMidiMessages() = 0;
-
-    /**
-     * Access the MidiTransport that has been queuing MIDI realtime events
-     * in either standalone or plugin.  This also provides services
-     * for Synchronizer to emit MIDI clocks to a connected device.
-     */
-    virtual class MobiusMidiTransport* getMidiTransport() = 0;
-
-    /**
-     * New alternative to MidiTransport for MIDI tracks until we get more formal
-     * about how this should look.
-     * !! This is better in MobiusContainer than the stream
-     */
-    virtual class Pulsator* getPulsator() = 0;
 
     //
     // Stream Time

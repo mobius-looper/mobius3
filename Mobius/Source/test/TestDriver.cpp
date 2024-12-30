@@ -565,17 +565,6 @@ juce::MidiBuffer* TestDriver::getMidiMessages()
     return nullptr;
 }
 
-// as will this
-MobiusMidiTransport* TestDriver::getMidiTransport()
-{
-    return nullptr;
-}
-
-Pulsator* TestDriver::getPulsator()
-{
-    return nullptr;
-}
-
 //
 // Stream Time
 // This isn't implemented in JuceAudioStream yet, so don't bother

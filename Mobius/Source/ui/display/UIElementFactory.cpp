@@ -13,7 +13,7 @@
 #include "../../model/UIConfig.h"
 
 #include "UIElement.h"
-#include "MetronomeElement.h"
+#include "TransportElement.h"
 #include "UIElementLight.h"
 #include "UIElementText.h"
 #include "UIElementFactory.h"
@@ -28,7 +28,7 @@ UIElement* UIElementFactory::create(Provider* p, UIElementDefinition* def)
 
     // for some the visualizers are implicit
     if (def->name == "Transport") {
-        element = new MetronomeElement(p, def);
+        element = new TransportElement(p, def);
     }
     else {
         // for others, the visualization is part of the definition

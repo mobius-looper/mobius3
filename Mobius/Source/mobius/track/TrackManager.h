@@ -55,7 +55,7 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
 
     class MobiusConfig* getConfiguration();
     class MidiPools* getPools();
-    class Pulsator* getPulsator();
+    class SyncMaster* getSyncMaster();
     class Valuator* getValuator();
     class SymbolTable* getSymbols();
     TrackProperties getTrackProperties(int number);

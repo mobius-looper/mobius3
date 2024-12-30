@@ -139,11 +139,11 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     configuration = config;
     session = ses;
 
+    // this is a mess, just get it working
+    // this MUST happen before any tracks try to register followers
+    syncMaster.kludgeSetup(this, container->getMidiManager());
     syncMaster.setSampleRate(container->getSampleRate());
-    // this is dumb, need to sort out the dependencies, Pulsator
-    // should be inside SyncMaster
-    Pulsator* p = container->getPulsator();
-    p->setSyncMaster(&syncMaster);
+    syncMaster.loadSession(ses);
 
     notifier.initialize(this);
     notifier.configure(ses);
@@ -186,6 +186,21 @@ void MobiusKernel::propagateSymbolProperties()
     mCore->propagateSymbolProperties();
 }
 
+void MobiusKernel::enableSyncEvents()
+{
+    syncMaster.enableEvents();
+}
+
+/**
+ * Called during the Supervisor::shutdown sequence to stop processing as things
+ * are being deleted.
+ * Originally this called MidiRealizer::shutdown
+ */
+void MobiusKernel::shutdown()
+{
+    syncMaster.shutdown();
+}
+
 /**
  * Install kernel level symbols.
  * The symbols have already been interned during Symbolizer initialzation.
@@ -211,6 +226,16 @@ void MobiusKernel::dump(StructureDumper& d)
     if (mCore != nullptr)
       mCore->dump(d);
     d.dec();
+}
+
+/**
+ * Kludge for SyncMaster/MidiRealizer
+ * MidiRealizer wants to call Supervisor::addAlert to post pending alert messages
+ * MobiusListener::mobiusAlert doesn't do that, why??
+ */
+void MobiusKernel::sendAlert(juce::String msg)
+{
+    container->addAlert(msg);
 }
 
 bool MobiusKernel::isGlobalReset()
@@ -370,6 +395,11 @@ void MobiusKernel::reconfigure(KernelMessage* msg)
     valuator.configure(configuration, session);
     scriptUtil.configure(configuration, session);
 
+    // SyncMaster cares about the audio track count but only gets
+    // it through the session
+    session->audioTracks = configuration->getCoreTracks();
+    syncMaster.loadSession(session);
+
     // this would be the place where make changes for
     // the new configuration, nothing right now
     // this is NOT where track configuration comes in
@@ -394,6 +424,7 @@ void MobiusKernel::loadSession(KernelMessage* msg)
     valuator.configure(configuration, session);
     scriptUtil.configure(configuration, session);
     notifier.configure(session);
+    syncMaster.loadSession(session);
 
     mTracks->loadSession(session);
 
@@ -603,6 +634,9 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
 
     // let the core get ready for action
     mCore->beginAudioBlock(stream);
+
+    // SyncMaster prepares pulses
+    syncMaster.advance(stream);
     
     // won't be necessary once we stop queuing actions
     mTracks->beginAudioBlock();

@@ -226,9 +226,9 @@ MobiusContainer* TrackManager::getContainer()
     return kernel->getContainer();
 }
 
-Pulsator* TrackManager::getPulsator()
+SyncMaster* TrackManager::getSyncMaster()
 {
-    return kernel->getContainer()->getPulsator();
+    return kernel->getSyncMaster();
 }
 
 Valuator* TrackManager::getValuator()

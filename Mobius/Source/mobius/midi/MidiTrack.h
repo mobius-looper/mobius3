@@ -175,7 +175,7 @@ class MidiTrack : public LooperTrack, public MslTrack
     
   private:
 
-    class Pulsator* pulsator = nullptr;
+    class SyncMaster* syncMaster = nullptr;
     class MidiPools* pools = nullptr;
 
     LooperScheduler scheduler;

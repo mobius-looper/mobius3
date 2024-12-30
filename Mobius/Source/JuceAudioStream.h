@@ -51,8 +51,6 @@ class JuceAudioStream : public MobiusAudioStream
                              int outport, float** output) override;
 
     juce::MidiBuffer* getMidiMessages() override;
-    class MobiusMidiTransport* getMidiTransport() override;
-    class Pulsator* getPulsator() override;
     
     double getStreamTime() override;
     double getLastInterruptStreamTime() override;
@@ -69,7 +67,6 @@ class JuceAudioStream : public MobiusAudioStream
     class Supervisor* supervisor = nullptr;
     // owned by Supervisor, but since we're the primary user does it make
     // sense to define it here?
-    class Pulsator* pulsator = nullptr;
     class DeviceConfigurator* deviceConfigurator = nullptr;
     class MobiusAudioListener* audioListener = nullptr;
 

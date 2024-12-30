@@ -57,8 +57,6 @@ class Provider
     virtual class MobiusConfig* getMobiusConfig() = 0;
     virtual class Session* getSession() = 0;
     virtual class SymbolTable* getSymbols() = 0;
-    virtual class MobiusMidiTransport* getMidiTransport() = 0;
-    virtual class MidiRealizer* getMidiRealizer() = 0;
     virtual class MidiManager* getMidiManager() = 0;
     virtual class MobiusInterface* getMobius() = 0;
     virtual int getSampleRate() = 0;

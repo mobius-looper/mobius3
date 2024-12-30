@@ -1,9 +1,9 @@
 /**
- * A UI element that dislays the status of the internal Metronome track
+ * A UI element that dislays the status of the internal SyncMaster/Transport
  * and provides buttons to control it.
  *
  * This differs from the generic UIElements in that it was designed for a specific
- * purpose and can only be used for the built-in Metronome.  It is only allowed in the
+ * purpose and can only be used for the built-in Transport.  It is only allowed in the
  * StatusArea and there can only be one of them.
  */
 
@@ -13,13 +13,13 @@
 #include "UIElement.h"
 #include "../../Provider.h"
 
-class MetronomeElement : public UIElement, public UIAtomButton::Listener,
+class TransportElement : public UIElement, public UIAtomButton::Listener,
                          public Provider::HighRefreshListener
 {
   public:
     
-    MetronomeElement(class Provider* p, class UIElementDefinition* d);
-    ~MetronomeElement();
+    TransportElement(class Provider* p, class UIElementDefinition* d);
+    ~TransportElement();
 
     void configure() override;
 

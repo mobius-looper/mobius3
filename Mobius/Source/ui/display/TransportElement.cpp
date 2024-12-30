@@ -1,7 +1,7 @@
 /**
- * The metronome displays these things
+ * The transport displays these things
  *  Beater light: a circle that flashes with the beat
- *  Tempo: a label and read-only text displaying the current metronome tempo
+ *  Tempo: a label and read-only text displaying the current transport tempo
  *  Tap: a button that can be clicked to set the tempo
  *  Start/Stop: a button that can be clicked to start or stop the tempo
  *
@@ -31,14 +31,14 @@
 #include "../MobiusView.h"
 #include "../../Provider.h"
 
-#include "MetronomeElement.h"
+#include "TransportElement.h"
 
 // dimensions of the colored bar that represents the loop position
-const int MetronomeWidth = 200;
-const int MetronomeHeight = 30;
-const int MetronomeGap = 4;
+const int TransportWidth = 200;
+const int TransportHeight = 30;
+const int TransportGap = 4;
 
-MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
+TransportElement::TransportElement(Provider* p, UIElementDefinition* d) :
     UIElement(p, d)
 {
     light.setShape(UIAtomLight::Circle);
@@ -68,30 +68,30 @@ MetronomeElement::MetronomeElement(Provider* p, UIElementDefinition* d) :
     p->addHighListener(this);
 }
 
-MetronomeElement::~MetronomeElement()
+TransportElement::~TransportElement()
 {
     provider->removeHighListener(this);
 }
 
-void MetronomeElement::configure()
+void TransportElement::configure()
 {
 }
 
-int MetronomeElement::getPreferredWidth()
+int TransportElement::getPreferredWidth()
 {
     return
-        light.getPreferredWidth() + MetronomeGap +
-        start.getPreferredWidth() + MetronomeGap +
-        tap.getPreferredWidth() + MetronomeGap +
+        light.getPreferredWidth() + TransportGap +
+        start.getPreferredWidth() + TransportGap +
+        tap.getPreferredWidth() + TransportGap +
         tempoAtom.getPreferredWidth();
 }
 
-int MetronomeElement::getPreferredHeight()
+int TransportElement::getPreferredHeight()
 {
-    return MetronomeHeight;
+    return TransportHeight;
 }
 
-void MetronomeElement::highRefresh(PriorityState* s)
+void TransportElement::highRefresh(PriorityState* s)
 {
     if (s->transportBar) {
         light.flash(juce::Colours::red);
@@ -101,7 +101,7 @@ void MetronomeElement::highRefresh(PriorityState* s)
     }
 }
 
-void MetronomeElement::update(class MobiusView* v)
+void TransportElement::update(class MobiusView* v)
 {
     (void)v;
     // only needed this to test flashing
@@ -136,18 +136,18 @@ void MetronomeElement::update(class MobiusView* v)
  * Each Atom has a minimum size, but if the bounding box grows larger
  * we should expand them to have similar proportional sizes.
  */
-void MetronomeElement::resized()
+void TransportElement::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
     
     sizeAtom(area.removeFromLeft(light.getPreferredWidth()), &light);
-    area.removeFromLeft(MetronomeGap);
+    area.removeFromLeft(TransportGap);
     
     start.setBounds(area.removeFromLeft(start.getPreferredWidth()));
-    area.removeFromLeft(MetronomeGap);
+    area.removeFromLeft(TransportGap);
     
     tap.setBounds(area.removeFromLeft(tap.getPreferredWidth()));
-    area.removeFromLeft(MetronomeGap);
+    area.removeFromLeft(TransportGap);
     
     tempoAtom.setBounds(area);
 }
@@ -158,7 +158,7 @@ void MetronomeElement::resized()
  * Feels like there should be a built-in way to do this.
  * Also, this belongs in the UIAtom class, not out here.
  */
-void MetronomeElement::sizeAtom(juce::Rectangle<int> area, juce::Component* comp)
+void TransportElement::sizeAtom(juce::Rectangle<int> area, juce::Component* comp)
 {
     int left = area.getX();
     int top = area.getY();
@@ -181,14 +181,14 @@ void MetronomeElement::sizeAtom(juce::Rectangle<int> area, juce::Component* comp
     comp->setBounds(left, top, width, height);
 }
 
-void MetronomeElement::paint(juce::Graphics& g)
+void TransportElement::paint(juce::Graphics& g)
 {
     (void)g;
     //g.setColour(juce::Colours::yellow);
     //g.fillRect(0, 0, getWidth(), getHeight());
 }
 
-void MetronomeElement::atomButtonPressed(UIAtomButton* b)
+void TransportElement::atomButtonPressed(UIAtomButton* b)
 {
     if (b == &tap) {
         if (tapStart == 0) {

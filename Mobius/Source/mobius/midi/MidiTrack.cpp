@@ -38,7 +38,7 @@
 
 #include "../../midi/MidiEvent.h"
 #include "../../midi/MidiSequence.h"
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 #include "../../script/MslWait.h"
 
 #include "../track/LogicalTrack.h"
@@ -75,7 +75,7 @@ MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
     scheduler(tm, lt, this), LooperTrack(tm,lt)
 {
     // temporary, should be used only by LooperScheduler
-    pulsator = tm->getPulsator();
+    syncMaster = tm->getSyncMaster();
     pools = tm->getPools();
 
     recorder.initialize(pools);

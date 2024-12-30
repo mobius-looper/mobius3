@@ -11,7 +11,7 @@
 #include "../../model/Symbol.h"
 #include "../../model/UIAction.h"
 
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 
 #include "../Valuator.h"
 
@@ -447,7 +447,7 @@ void LooperSwitcher::doSwitchEvent(TrackEvent* e, int target)
     // If we ended up in an empty loop and did not initiate a new Record
     // unlock the pulse follower
     if (newFrames == 0) {
-        scheduler.pulsator->unlock(track->getNumber());
+        scheduler.syncMaster->unlock(track->getNumber());
     }
     else if (newFrames != startingFrames) {
         // we switched to a loop of a different size

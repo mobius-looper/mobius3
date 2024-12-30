@@ -18,7 +18,6 @@
 #include <JuceHeader.h>
 
 #include "mobius/MobiusInterface.h"
-#include "mobius/MobiusMidiTransport.h"
 #include "model/Symbol.h"
 #include "model/SystemState.h"
 #include "model/PriorityState.h"
@@ -47,8 +46,6 @@
 #include "script/MslEnvironment.h"
 #include "script/ScriptUtil.h"
 
-#include "sync/MidiRealizer.h"
-#include "sync/Pulsator.h"
 #include "test/TestDriver.h"
 
 #include "ui/MobiusView.h"
@@ -151,14 +148,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
         return &midiManager;
     }
 
-    class MidiRealizer* getMidiRealizer() override {
-        return &midiRealizer;
-    }
-
-    class Pulsator* getPulsator() override {
-        return &pulsator;
-    }
-
     class MobiusInterface* getMobius() override {
         return mobius;
     }
@@ -179,7 +168,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
 
     // part of MobiusContainer
     Parametizer* getParametizer() override;
-    class MobiusMidiTransport* getMidiTransport() override;
     
     AudioClerk* getAudioClerk() override {
         return &audioClerk;
@@ -413,8 +401,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     Upgrader upgrader {this};
     AudioManager audioManager {this};
     MidiManager midiManager {this};
-    MidiRealizer midiRealizer {this};
-    Pulsator pulsator {this};
     ScriptUtil scriptUtil;
     VariableManager variableManager {this};
     Parametizer parametizer {this};
@@ -472,7 +458,6 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     class Session* initializeSession();
     void configureSystemState(class Session* s);
 
-    class Session* bootstrapDefaultSession();
     void upgradeSession(class MobiusConfig* old, class Session* ses);
     void convertEnum(juce::String name, int value, class ValueSet* dest);
 

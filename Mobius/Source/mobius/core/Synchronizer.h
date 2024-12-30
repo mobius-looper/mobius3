@@ -15,7 +15,7 @@
 
 #include "../../sync/MidiQueue.h"
 // ugly dependency, refactor an interface
-#include "../../sync/Pulsator.h"
+#include "../../sync/SyncMaster.h"
 
 // necessary for DriftCheckPoint
 #include "../../model/MobiusConfig.h"
@@ -283,7 +283,7 @@ class Synchronizer {
     float calcTempo(Loop* l, int beatsPerBar, long frames, int* retPulses);
     void sendStart(Loop* l, bool checkManual, bool checkNear);
 
-    // temporary porting to MobiusMidiTransport that doesn't take a TraceContext
+    // temporary porting to SyncMaster that doesn't take a TraceContext
     void fullStop(TraceContext* l, const char* msg);
 
     // new event conversion
@@ -299,12 +299,8 @@ class Synchronizer {
 	class Mobius* mMobius;
 
     // our eventual upstart replacement, the ass kissing bastard
-    class Pulsator* mPulsator = nullptr;
     class SyncMaster* mSyncMaster = nullptr;
     
-    // MIDI services from the container
-    class MobiusMidiTransport* mTransport;
-
 	// queue for external MIDI events
 	MidiQueue mMidiQueue;
 

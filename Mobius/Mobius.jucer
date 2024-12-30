@@ -7,8 +7,6 @@
               version="3.0">
   <MAINGROUP id="NUIV6l" name="Mobius">
     <GROUP id="{CE56572D-2E17-35BB-3F2F-9778BF27F9C3}" name="Source">
-      <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
-      <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
       <FILE id="f8egPq" name="BlueSphere-10-40.png" compile="0" resource="1"
             file="Source/BlueSphere-10-40.png"/>
       <FILE id="ZTzR5l" name="mobius.png" compile="0" resource="1" file="Source/mobius.png"/>
@@ -424,10 +422,6 @@
                 file="Source/ui/display/LoopWindowElement.cpp"/>
           <FILE id="nlWxmg" name="LoopWindowElement.h" compile="0" resource="0"
                 file="Source/ui/display/LoopWindowElement.h"/>
-          <FILE id="zTIbnQ" name="MetronomeElement.cpp" compile="1" resource="0"
-                file="Source/ui/display/MetronomeElement.cpp"/>
-          <FILE id="MrCIEv" name="MetronomeElement.h" compile="0" resource="0"
-                file="Source/ui/display/MetronomeElement.h"/>
           <FILE id="Z6gJ99" name="MinorModesElement.cpp" compile="1" resource="0"
                 file="Source/ui/display/MinorModesElement.cpp"/>
           <FILE id="JAQb1S" name="MinorModesElement.h" compile="0" resource="0"
@@ -464,6 +458,10 @@
           <FILE id="jzCok7" name="TrackStrip.h" compile="0" resource="0" file="Source/ui/display/TrackStrip.h"/>
           <FILE id="UXBs6H" name="TrackStrips.cpp" compile="1" resource="0" file="Source/ui/display/TrackStrips.cpp"/>
           <FILE id="NYaX5Z" name="TrackStrips.h" compile="0" resource="0" file="Source/ui/display/TrackStrips.h"/>
+          <FILE id="hWSQmz" name="TransportElement.cpp" compile="1" resource="0"
+                file="Source/ui/display/TransportElement.cpp"/>
+          <FILE id="XnSpzv" name="TransportElement.h" compile="0" resource="0"
+                file="Source/ui/display/TransportElement.h"/>
           <FILE id="hFRw08" name="UIAtom.cpp" compile="1" resource="0" file="Source/ui/display/UIAtom.cpp"/>
           <FILE id="fpO9ne" name="UIAtom.h" compile="0" resource="0" file="Source/ui/display/UIAtom.h"/>
           <FILE id="AT7paa" name="UIElement.cpp" compile="1" resource="0" file="Source/ui/display/UIElement.cpp"/>
@@ -799,8 +797,6 @@
         <FILE id="vFnGFJ" name="MobiusKernel.cpp" compile="1" resource="0"
               file="Source/mobius/MobiusKernel.cpp"/>
         <FILE id="jXxZsV" name="MobiusKernel.h" compile="0" resource="0" file="Source/mobius/MobiusKernel.h"/>
-        <FILE id="a53xaP" name="MobiusMidiTransport.h" compile="0" resource="0"
-              file="Source/mobius/MobiusMidiTransport.h"/>
         <FILE id="EXVMFi" name="MobiusPools.cpp" compile="1" resource="0" file="Source/mobius/MobiusPools.cpp"/>
         <FILE id="LTcPBB" name="MobiusPools.h" compile="0" resource="0" file="Source/mobius/MobiusPools.h"/>
         <FILE id="RZNLnz" name="MobiusShell.cpp" compile="1" resource="0" file="Source/mobius/MobiusShell.cpp"/>
@@ -947,6 +943,8 @@
             file="Source/DiagnosticWindow.cpp"/>
       <FILE id="Hk9F8Y" name="DiagnosticWindow.h" compile="0" resource="0"
             file="Source/DiagnosticWindow.h"/>
+      <FILE id="rjWkvK" name="FileManager.cpp" compile="1" resource="0" file="Source/FileManager.cpp"/>
+      <FILE id="IggUul" name="FileManager.h" compile="0" resource="0" file="Source/FileManager.h"/>
       <FILE id="YEqlIy" name="HostSyncState.cpp" compile="1" resource="0"
             file="Source/HostSyncState.cpp"/>
       <FILE id="cNUiA8" name="HostSyncState.h" compile="0" resource="0" file="Source/HostSyncState.h"/>
