@@ -1393,6 +1393,11 @@ bool MobiusKernel::doQuery(Query* q)
     return mTracks->doQuery(q);
 }
 
+bool MobiusKernel::doQuery(VarQuery* q)
+{
+    return mTracks->doQuery(q);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Events

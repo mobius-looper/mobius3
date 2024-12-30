@@ -19,6 +19,7 @@ class TrackMslVariableHandler
 
     // should this be abstract or logical?
     bool get(class MslQuery* q, class MslTrack* t);
+    bool get(class VarQuery* q, class MslTrack* t);
 
   private:
 

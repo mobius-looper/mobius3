@@ -72,6 +72,11 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
      */
     bool doQuery(class Query* q);
 
+    /**
+     * Return the value of a script variable.
+     */
+    bool doQuery(class VarQuery* q);
+
     // normally this should be private, but leave it open for the shell for testing
     void consumeCommunications();
 

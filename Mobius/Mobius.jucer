@@ -897,6 +897,8 @@
         <FILE id="xZVLas" name="MslWaitNode.cpp" compile="1" resource="0" file="Source/script/MslWaitNode.cpp"/>
         <FILE id="tiIAWA" name="ScriptClerk.cpp" compile="1" resource="0" file="Source/script/ScriptClerk.cpp"/>
         <FILE id="GZ8e5a" name="ScriptClerk.h" compile="0" resource="0" file="Source/script/ScriptClerk.h"/>
+        <FILE id="iaezmp" name="ScriptExternalId.h" compile="0" resource="0"
+              file="Source/script/ScriptExternalId.h"/>
         <FILE id="F0wdJK" name="ScriptExternals.cpp" compile="1" resource="0"
               file="Source/script/ScriptExternals.cpp"/>
         <FILE id="Xfnqz4" name="ScriptExternals.h" compile="0" resource="0"

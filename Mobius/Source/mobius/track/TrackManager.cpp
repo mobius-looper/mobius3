@@ -1047,6 +1047,30 @@ bool TrackManager::mslQuery(MslQuery* query)
     return success;
 }
 
+bool TrackManager::doQuery(VarQuery* query)
+{
+    bool success = false;
+    // here we have the problem of scope trashing since we need to
+    // direct it to one side or the other and be specific, I don't
+    // think MslSession cares, but be safe
+    int saveScope = query->scope;
+    if (query->scope == 0)
+      query->scope = kernel->getContainer()->getFocusedTrackIndex() + 1;
+
+    LogicalTrack* lt = getLogicalTrack(query->scope);
+    if (lt != nullptr) {
+        // MobiusLooperTrack now provides this
+        //if (lt->getType() == Session::TypeAudio)
+        //success = audioEngine->mslQuery(query);
+        //else
+        success = mslHandler.varQuery(lt, query);
+    }
+
+    // in case we trashed it
+    query->scope = saveScope;
+    return success;
+}
+
 /**
  * Convert a query result that was the value of an enumerated parameter
  * into a pair of values to return to the interpreter.

@@ -8,6 +8,9 @@
 
 #include <JuceHeader.h>
 
+#include "ScriptExternalId.h"
+#include "MslValue.h"
+
 /**
  * Type constants used in the MslExternal object when resolving external references
  */
@@ -19,62 +22,6 @@ typedef enum {
     ExtTypeOldVariable
     
 } ScriptExternalType;
-
-/**
- * Internal ids for the built-in external functions and variables.
- * These are what is placed in the MslExternal when resolving
- * a reference from a script.
- */
-typedef enum {
-
-    ExtNone,
-    
-    FuncGetMidiDeviceId,
-    FuncMidiOut,
-    FuncInstallUIElement,
-
-    VarBlockFrames,
-    VarSampleRate,
-    VarSampleFrames,
-    VarLoopCount,
-    VarLoopNumber,
-    VarLoopFrames,
-    VarLoopFrame,
-    VarCycleCount,
-    VarCycleNumber,
-    VarCycleFrames,
-    VarCycleFrame,
-    VarSubcycleCount,
-    VarSubcycleNumber,
-    VarSubcycleFrames,
-    VarSubcycleFrame,
-    VarModeName,
-    VarIsRecording,
-    VarInOverdub,
-    VarInHalfspeed,
-    VarInReverse,
-    VarInMute,
-    VarInPause,
-    VarInRealign,
-    VarInReturn,
-    VarPlaybackRate,
-    VarTrackCount,
-    VarAudioTrackCount,
-    VarMidiTrackCount,
-    VarActiveAudioTrack,
-    VarFocusedTrack,
-    VarScopeTrack,
-    VarGlobalMute,
-    VarTrackSyncMaster,
-    VarOutSyncMaster,
-    VarSyncTempo,
-    VarSyncRawBeat,
-    VarSyncBeat,
-    VarSyncBar,
-    
-    ExtMax
-
-} ScriptExternalId;
 
 /**
  * This identifies which "side" the function should run on.
@@ -141,6 +88,16 @@ class ScriptExternals
     static bool InstallUIElement(class MslContext* c, class MslAction* action);
     static bool buildMap(class MslValue* plist, juce::HashMap<juce::String,juce::String>& map);
 
+};
+
+/**
+ * Experimental...
+ */
+class VarQuery {
+  public:
+    ScriptExternalId id = ExtNone;
+    int scope = 0;
+    MslValue result;
 };
 
 /****************************************************************************/

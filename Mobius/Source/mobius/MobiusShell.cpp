@@ -181,6 +181,11 @@ bool MobiusShell::mslQuery(class MslQuery* q)
     return kernel.mslQuery(q);
 }
 
+bool MobiusShell::doQuery(VarQuery* q)
+{
+    return kernel.doQuery(q);
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration

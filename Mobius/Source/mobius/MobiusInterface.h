@@ -290,6 +290,23 @@ class MobiusInterface {
 
     virtual void loadMidiLoop(class MidiSequence* seq, int track, int loop) = 0;
     //virtual class MidiSequence* saveMidiLoop(int track, int loop) = 0;
+
+    /**
+     * Query the value of a script variable.
+     * Since most script variables are not parameters, they won't have Symbols
+     * and can't use Query.  Variable lookup is designed around MslQuery which
+     * is awkward to use outside of a script since it reqiures an MslExternal
+     * which are not interened like Symbol.
+     *
+     * Reconsider that, if you requires the MSL container to intern MslExternals
+     * then they could be used more like Symbol.  Also could just make them Symbols
+     * but it clutters the namespace.
+     *
+     * This is only used for a few things like trackSyncMaster and outSyncMaster
+     * and rather than provide accessors for just those may as well make any variable
+     * accessible from above.
+     */
+    virtual bool doQuery(class VarQuery* q) = 0;
     
   private:
 

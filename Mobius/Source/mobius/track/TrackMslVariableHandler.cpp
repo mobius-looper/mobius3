@@ -98,6 +98,77 @@ bool TrackMslVariableHandler::get(MslQuery* q, MslTrack* t)
     return success;
 }
 
+bool TrackMslVariableHandler::get(VarQuery* q, MslTrack* t)
+{
+    bool success = false;
+
+    (void)q;
+    (void)t;
+    
+    return success;
+}
+
+#if 0
+bool TrackMslVariableHandler::get(ScriptExternalId id, int scope, MslValue& result,
+                                  MslTrack* t)
+{
+    bool success = true;
+    
+    switch (id) {
+        case VarBlockFrames: getBlockFrames(q,t); break;
+        case VarSampleRate: getSampleRate(q,t); break;
+        case VarSampleFrames: getSampleFrames(q,t); break;
+                    
+        case VarLoopCount: getLoopCount(q,t); break;
+        case VarLoopNumber: getLoopNumber(q,t); break;
+        case VarLoopFrames: getLoopFrames(q,t); break;
+        case VarLoopFrame: getLoopFrame(q,t); break;
+        case VarCycleCount: getCycleCount(q,t); break;
+        case VarCycleNumber: getCycleNumber(q,t); break;
+        case VarCycleFrames: getCycleFrames(q,t); break;
+        case VarCycleFrame: getCycleFrame(q,t); break;
+        case VarSubcycleCount: getSubcycleCount(q,t); break;
+        case VarSubcycleNumber: getSubcycleNumber(q,t); break;
+        case VarSubcycleFrames: getSubcycleFrames(q,t); break;
+        case VarSubcycleFrame: getSubcycleFrame(q,t); break;
+        case VarModeName: getModeName(q,t); break;
+        case VarIsRecording: getIsRecording(q,t);  break;
+        case VarInOverdub: getInOverdub(q,t); break;
+        case VarInHalfspeed: getInHalfspeed(q,t); break;
+        case VarInReverse: getInReverse(q,t); break;
+        case VarInMute: getInMute(q,t); break;
+        case VarInPause: getInPause(q,t); break;
+        case VarInRealign: getInRealign(q,t); break;
+        case VarInReturn: getInReturn(q,t); break;
+
+            // old name was just "rate"
+        case VarPlaybackRate: getPlaybackRate(q,t); break;
+                    
+        case VarTrackCount: getTrackCount(q,t); break;
+        case VarAudioTrackCount: getAudioTrackCount(q,t); break;
+        case VarMidiTrackCount: getMidiTrackCount(q,t); break;
+            // old name was "trackNumber"
+        case VarActiveAudioTrack: getActiveTrack(q,t); break;
+        case VarFocusedTrack: getFocusedTrackNumber(q,t); break;
+        case VarScopeTrack: getScopeTrack(q,t); break;
+                    
+        case VarGlobalMute: getGlobalMute(q,t); break;
+
+        case VarTrackSyncMaster: getTrackSyncMaster(q,t); break;
+        case VarOutSyncMaster: getOutSyncMaster(q,t); break;
+        case VarSyncTempo: getSyncTempo(q,t); break;
+        case VarSyncRawBeat: getSyncRawBeat(q,t); break;
+        case VarSyncBeat: getSyncBeat(q,t); break;
+        case VarSyncBar: getSyncBar(q,t); break;
+
+        default:
+            success = false;
+            break;
+    }
+    return success;
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////
 //
 // Loop State
