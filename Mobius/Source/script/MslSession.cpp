@@ -554,7 +554,7 @@ void MslSession::timeout(MslContext* argContext)
         Trace(2, "MslSession::sustain Script was busy");
         // so we could keep resetting the timtout until the script is no
         // longer busy, but it seems more natural just to end the repeat now
-        repeating.pending;
+        repeating.pending = true;
     }
     else {
         MslNode* node = getNotificationNode(MslNotificationTimeout);

@@ -196,7 +196,7 @@ class Supervisor : public Provider, public MobiusContainer, public MobiusListene
     void doAction(class UIAction*) override;
     void alert(juce::String message);
     void alert(juce::StringArray& messages);
-    void addAlert(juce::String message);
+    void addAlert(juce::String message) override;
     void message(juce::String message);
     
     // find the value of a parameter or variable

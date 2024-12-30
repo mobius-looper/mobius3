@@ -28,7 +28,7 @@ class LooperScheduler : public BaseScheduler
   public:
 
     LooperScheduler(class TrackManager* tm, class LogicalTrack* lt, class LooperTrack* t);
-    ~LooperScheduler();
+    virtual ~LooperScheduler();
 
     // BaseScheduler overloads
     void passAction(class UIAction* a) override;

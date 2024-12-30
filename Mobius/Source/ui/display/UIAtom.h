@@ -108,6 +108,7 @@ class UIAtomButton : public UIAtom
 
     class Listener {
       public:
+        virtual ~Listener() {}
         virtual void atomButtonPressed(UIAtomButton* b) = 0;
     };
 

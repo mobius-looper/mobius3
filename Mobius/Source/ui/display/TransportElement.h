@@ -34,9 +34,9 @@ class TransportElement : public UIElement, public UIAtomButton::Listener,
     void resized() override;
     void paint(juce::Graphics& g) override;
 
-    void atomButtonPressed(UIAtomButton* b);
+    void atomButtonPressed(UIAtomButton* b) override;
 
-    void highRefresh(class PriorityState* state);
+    void highRefresh(class PriorityState* state) override;
     
   private:
 

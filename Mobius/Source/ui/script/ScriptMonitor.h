@@ -44,6 +44,6 @@ class ScriptMonitor : public juce::Component,
     ScriptProcessTable processes;
     ScriptStatisticsTable statistics;
 
-    void timerCallback();
+    void timerCallback() override;
 };
 

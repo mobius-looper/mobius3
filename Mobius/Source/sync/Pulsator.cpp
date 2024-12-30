@@ -241,6 +241,7 @@ void Pulsator::trace(Pulse& p)
     }
 
     switch (p.type) {
+        case Pulse::PulseNone: msg += "None "; break;
         case Pulse::PulseBeat: msg += "Beat "; break;
         case Pulse::PulseBar: msg += "Bar "; break;
         case Pulse::PulseLoop: msg += "Loop "; break;
@@ -716,6 +717,7 @@ const char* Pulsator::getSourceName(Pulse::Source source)
         case Pulse::SourceMidiOut: name = "MidiOut"; break;
         case Pulse::SourceHost: name = "Host"; break;
         case Pulse::SourceLeader: name = "Leader"; break;
+        case Pulse::SourceTransport: name = "Transport"; break;
     }
     return name;
 }
@@ -727,6 +729,7 @@ const char* Pulsator::getPulseName(Pulse::Type type)
         case Pulse::PulseBeat: name = "Beat"; break;
         case Pulse::PulseBar: name = "Bar"; break;
         case Pulse::PulseLoop: name = "Loop"; break;
+        case Pulse::PulseNone: name = "None"; break;
     }
     return name;
 }    
@@ -978,6 +981,11 @@ int Pulsator::getPulseFrame(int followerId, Pulse::Type type)
                             frame = getPulseFrame(&(l->pulse), type);
                         }
                     }
+                }
+                    break;
+                    
+                case Pulse::SourceTransport: {
+                    Trace(1, "Pulsator::getPulseFrame for Transport not implemented");
                 }
                     break;
             }

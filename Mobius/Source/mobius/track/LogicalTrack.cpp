@@ -497,6 +497,10 @@ int LogicalTrack::getParameterOrdinal(SymbolId symbolId)
                         //s->getName());
                     }
                         break;
+                    case ScopeSync: {
+                        // also supposed to be in Session
+                    }
+                        break;
                     case ScopeNone: {
                         Trace(1, "LogicalTrack: Kernel attempt to access unscoped parameter %s",
                               s->getName());

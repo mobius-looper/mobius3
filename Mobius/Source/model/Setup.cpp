@@ -79,6 +79,7 @@ const char* GetSyncSourceName(SyncSource src)
         case SYNC_OUT: name = "Out"; break;
         case SYNC_HOST: name = "Host"; break;
         case SYNC_MIDI: name = "MIDI"; break;
+        case SYNC_TRANSPORT: name = "Transport"; break;
     }
     return name;
 }

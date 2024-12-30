@@ -10,7 +10,7 @@
 #include "ScriptMonitor.h"
 
 ScriptMonitor::ScriptMonitor(Supervisor* s, MonitorPanel* parent) :
-    processes(s), results(s), statistics(s)
+    results(s), processes(s), statistics(s)
 {
     supervisor = s;
     panel = parent;

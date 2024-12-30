@@ -3464,7 +3464,7 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
     else if (source == SYNC_TRANSPORT) {
         // todo: should be a cycle per bar?
         // similar logic to TRACK
-        int slaveFrames = l->getRecordedFrames();
+        int slaveFrames = (int)(l->getRecordedFrames());
         int cycleFrames = mSyncMaster->getTransport()->getTimelineFrames();
         if ((slaveFrames % cycleFrames) > 0) {
             l->setRecordCycles(1);

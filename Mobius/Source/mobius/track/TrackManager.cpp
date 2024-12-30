@@ -36,17 +36,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * The number of tracks we pre-allocate so they can move the track count
- * up or down without requiring memory allocation.
- */
-const int TrackManagerMaxMidiTracks = 8;
-
-/**
- * Maximum number of loops per track
- */
-const int TrackManagerMaxMidiLoops = 8;
-
 TrackManager::TrackManager(MobiusKernel* k) : mslHandler(k, this)
 {
     kernel = k;

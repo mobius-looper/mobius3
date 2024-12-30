@@ -34,7 +34,6 @@
 #include "TransportElement.h"
 
 // dimensions of the colored bar that represents the loop position
-const int TransportWidth = 200;
 const int TransportHeight = 30;
 const int TransportGap = 4;
 

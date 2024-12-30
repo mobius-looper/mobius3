@@ -72,7 +72,7 @@ const int MidiTrackMaxRegions = 10;
  * the track definition from the session.
  */
 MidiTrack::MidiTrack(class TrackManager* tm, LogicalTrack* lt) :
-    scheduler(tm, lt, this), LooperTrack(tm,lt)
+    LooperTrack(tm,lt), scheduler(tm, lt, this)
 {
     // temporary, should be used only by LooperScheduler
     syncMaster = tm->getSyncMaster();

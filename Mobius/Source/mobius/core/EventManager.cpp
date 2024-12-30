@@ -400,8 +400,8 @@ void EventManager::removeScriptReferences(class MslWait* wait)
  * Ownership of the Action is taken.
  */
 Event* EventManager::getFunctionEvent(Action* action,
-                                             Loop* loop, 
-                                             Function* func)
+                                      Loop* loop, 
+                                      Function* func)
 {
     if (func == NULL)
       func = action->getFunction();
@@ -1753,7 +1753,7 @@ Event* EventManager::schedulePlayJumpAt(Loop* loop, Event* parent, long frame)
  * that NextLoop chains will work as expected?
  */
 Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger, 
-                                                Loop* prev, bool sustain)
+                                         Loop* prev, bool sustain)
 {
 	Event* re = findEvent(ReturnEvent);
     Preset* preset = mTrack->getPreset();
@@ -1779,21 +1779,21 @@ Event* EventManager::scheduleReturnEvent(Loop* loop, Event* trigger,
                 case SWITCH_QUANT_CONFIRM_CYCLE: {
                     returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_CYCLE, true);
                 }
-                break;
+                    break;
                 case SWITCH_QUANT_SUBCYCLE:
                 case SWITCH_QUANT_CONFIRM_SUBCYCLE: {
                     returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_SUBCYCLE, true);
                 }
-                break;
+                    break;
                 case SWITCH_QUANT_LOOP:
                 case SWITCH_QUANT_CONFIRM_LOOP: {
                     returnFrame = getQuantizedFrame(loop, loopFrame, QUANTIZE_LOOP, true);
                 }
-                break;
+                    break;
                 default:
                     // must be OFF
                     returnFrame = loopFrame;
-                break;
+                    break;
             }
         }
         else {
@@ -2017,7 +2017,7 @@ void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool sta
     // todo: here lies the magic to convert EventType into a symbol id, etc...
     estate.type = TrackState::EventUnknown;
         
-    estate.argument = e->number;
+    estate.argument = (int)(e->number);
 
     // usually defines its own frame
     long frame = e->frame;
@@ -2044,7 +2044,7 @@ void EventManager::getEventSummary(TrackState::Event& estate, Event* e, bool sta
 
     if (loop->isReverse())
       frame = reflectFrame(loop, frame);
-    estate.frame = frame;
+    estate.frame = (int)frame;
 
     if (e->getMslWait() != nullptr)
       estate.waiting = true;

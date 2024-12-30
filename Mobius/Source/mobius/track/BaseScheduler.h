@@ -27,7 +27,7 @@ class BaseScheduler
   public:
 
     BaseScheduler(class TrackManager* tm, class LogicalTrack* lt, class ScheduledTrack* t);
-    ~BaseScheduler();
+    virtual ~BaseScheduler();
     
     void loadSession(Session::Track* def);
     

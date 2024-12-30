@@ -173,7 +173,7 @@ class MslNode
     virtual class MslElseNode* getElse() {return nullptr;}
     virtual class MslCaseNode* getCase() {return nullptr;}
     virtual class MslReferenceNode* getReference() {return nullptr;}
-    virtual class MslEndNode* getEnd() {return false;}
+    virtual class MslEndNode* getEnd() {return nullptr;}
     virtual class MslWaitNode* getWait() {return nullptr;}
     virtual class MslPrintNode* getPrint() {return nullptr;}
     virtual class MslContextNode* getContext() {return nullptr;}
@@ -198,7 +198,7 @@ class MslNode
     bool isElse() {return getElse() != nullptr;}
     bool isCase() {return getCase() != nullptr;}
     bool isReference() {return getReference() != nullptr;}
-    bool isEnd() {return getEnd() != false;}
+    bool isEnd() {return getEnd() != nullptr;}
     bool isWait() {return getWait() != nullptr;}
     bool isPrint() {return getPrint() != nullptr;}
     bool isContext() {return getContext() != nullptr;}

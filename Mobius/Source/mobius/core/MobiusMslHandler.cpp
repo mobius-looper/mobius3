@@ -220,39 +220,38 @@ bool MobiusMslHandler::scheduleWaitEvent(MslWait* wait)
     Track* track = getWaitTarget(wait);
     if (track != nullptr) {
 
-        switch (wait->type) {
+        if (wait->type == MslWaitLast) {
 
-            case MslWaitLast: {
-
-                // this works quite differently than MOS scripts
-                // if a previous action scheduled an event, that would have
-                // been returned in the UIAction and MSL would have remembered it
-                // when it reaches a "wait last" it passes that event back down
-                // unlike MOS, we're only dealing with Events here not ThreadEvents
-                Event* event = (Event*)wait->coreEvent;
-                if (event == nullptr) {
-                    // should not have gotten this far
+            // this works quite differently than MOS scripts
+            // if a previous action scheduled an event, that would have
+            // been returned in the UIAction and MSL would have remembered it
+            // when it reaches a "wait last" it passes that event back down
+            // unlike MOS, we're only dealing with Events here not ThreadEvents
+            Event* event = (Event*)wait->coreEvent;
+            if (event == nullptr) {
+                // should not have gotten this far
+                wait->finished = true;
+            }
+            else {
+                // don't assume this object is still valid
+                // it almost always will be, but if there was any delay between
+                // the last action and the wait it could be gone
+                EventManager* em = track->getEventManager();
+                if (!em->isEventScheduled(event)) {
+                    // yep, it's gone, don't treat this as an error
                     wait->finished = true;
                 }
                 else {
-                    // don't assume this object is still valid
-                    // it almost always will be, but if there was any delay between
-                    // the last action and the wait it could be gone
-                    EventManager* em = track->getEventManager();
-                    if (!em->isEventScheduled(event)) {
-                        // yep, it's gone, don't treat this as an error
-                        wait->finished = true;
-                    }
-                    else {
-                        // and now we wait
-                        event->setMslWait(wait);
-                        // set this while we're here though nothing uses it
-                        wait->coreEventFrame = (int)(event->frame);
-                    }
+                    // and now we wait
+                    event->setMslWait(wait);
+                    // set this while we're here though nothing uses it
+                    wait->coreEventFrame = (int)(event->frame);
                 }
-                success = true;
             }
-                break;
+            success = true;
+        }
+        else {
+            Trace(1, "MobiusMslHandler::scheduleWaitEvent Unexpected wait type");
         }
     }
 

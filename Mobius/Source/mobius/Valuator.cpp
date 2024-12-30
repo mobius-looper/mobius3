@@ -433,6 +433,11 @@ int Valuator::getParameterOrdinal(int trackId, SymbolId symbolId)
             if (!foundInSession) {
 
                 switch (s->parameterProperties->scope) {
+                    case ScopeSync: {
+                        // not of interest to the core
+                        // new tracks get these from the Session
+                    }
+                        break;
                     case ScopeGlobal: {
                         // MidiTrack should be getting these from the Session
                         //Trace(1, "Valuator: Kernel attempt to access global parameter %s",

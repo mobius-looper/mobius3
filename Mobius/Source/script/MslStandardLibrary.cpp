@@ -39,10 +39,12 @@ MslValue* MslStandardLibrary::call(MslSession* s, MslLibraryId id, MslValue* arg
     MslValue* result = nullptr;
 
     switch (id) {
+        case MslFuncNone: break;
         case MslFuncEndSustain: result = EndSustain(s, arguments) ; break;
         case MslFuncEndRepeat: result = EndRepeat(s, arguments) ; break;
         case MslFuncTime: result = Time(s, arguments) ; break;
         case MslFuncRand: result = Rand(s, arguments) ; break;
+        case MslFuncSampleRate: result = SampleRate(s, arguments); break;
         case MslFuncTempo: result = Tempo(s, arguments) ; break;
     }
 
