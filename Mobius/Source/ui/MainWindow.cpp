@@ -332,15 +332,7 @@ void MainWindow::mainMenuSelection(int id)
             case MainMenu::Environment:
                 panelFactory.show(PanelFactory::Environment);
                 break;
-                
-            case MainMenu::MidiTransport:
-                panelFactory.show(PanelFactory::MidiTransport);
-                break;
-                
-                //case MainMenu::SyncPanel:
-                //panelFactory.show(PanelFactory::Sync);
-                //break;
-                
+
             case MainMenu::SymbolTable:
                 panelFactory.show(PanelFactory::SymbolTable);
                 break;

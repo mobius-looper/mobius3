@@ -62,8 +62,6 @@ class PanelFactory
         
         // testing and diagnostic panels
         SymbolTable,
-        MidiTransport,
-        Sync,
         Upgrade,
         TraceLog
     };

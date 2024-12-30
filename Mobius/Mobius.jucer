@@ -915,10 +915,6 @@
               file="Source/test/AudioDifferencer.cpp"/>
         <FILE id="Qc1i0p" name="AudioDifferencer.h" compile="0" resource="0"
               file="Source/test/AudioDifferencer.h"/>
-        <FILE id="ADIZUu" name="MidiTransportPanel.cpp" compile="1" resource="0"
-              file="Source/test/MidiTransportPanel.cpp"/>
-        <FILE id="gCCTmG" name="MidiTransportPanel.h" compile="0" resource="0"
-              file="Source/test/MidiTransportPanel.h"/>
         <FILE id="Vul8l7" name="SymbolTablePanel.cpp" compile="1" resource="0"
               file="Source/test/SymbolTablePanel.cpp"/>
         <FILE id="fvesuL" name="SymbolTablePanel.h" compile="0" resource="0"
