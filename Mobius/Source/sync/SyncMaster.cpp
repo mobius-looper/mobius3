@@ -26,9 +26,19 @@ SyncMaster::~SyncMaster()
 {
 }
 
-void SyncMaster::enableEvents()
+/**
+ * The event queue should only be enabled once audio blocks
+ * start comming in.  If blocks stop then the queue can overflow
+ * if there is MIDI being actively received or sent.
+ */
+void SyncMaster::enableEventQueue()
 {
     midiRealizer->enableEvents();
+}
+
+void SyncMaster::disableEventQueue()
+{
+    midiRealizer->disableEvents();
 }
 
 void SyncMaster::shutdown()
@@ -148,6 +158,14 @@ bool SyncMaster::doQuery(Query* q)
 void SyncMaster::advance(MobiusAudioStream* stream)
 {
     int frames = stream->getInterruptFrames();
+
+    // once we start receiving audio blocks, it is okay to start converting
+    // MIDI events into MidiSyncMessages, if you allow event queueing before
+    // blocks come in, the queue can overflow
+    // todo: while not normally a problem, if you disconnect the audio stream
+    // after initialization, then the queue will get stuck and overflow, the maintenance
+    // thread could monitor for a suspension of audio blocks and disable the queue
+    enableEventQueue();
     
     if (transport.advance(frames, transportPulse)) {
         transportPulse.source = Pulse::SourceTransport;
@@ -198,6 +216,9 @@ void SyncMaster::doBeatsPerBar(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * todo: SyncMaster state could all be PriorityState since it is small.
+ */
 void SyncMaster::refreshState(SyncMasterState* state)
 {
     state->tempo = transport.getTempo();

@@ -55,6 +55,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void propagateSymbolProperties();
 
     void enableSyncEvents();
+    void disableSyncEvents();
     void shutdown();
 
     /**
@@ -102,7 +103,8 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     
     class Valuator* getValuator();
 
-    void refreshState(class SystemState* state);
+    void initializeState(class SystemState* state);
+    void requestState(class SystemState* state);
     void refreshPriorityState(class PriorityState* state);
     
     class AudioPool* getAudioPool() {
@@ -319,6 +321,7 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void consumeMidiMessages();
     
     void checkStateRefresh();
+    void refreshStateNow(class SystemState* state);
     void consumeParameters();
     void doParameter(class PluginParameter* p);
     void updateParameters();

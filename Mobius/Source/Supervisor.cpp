@@ -360,6 +360,11 @@ bool Supervisor::start()
     MobiusConfig* config = getMobiusConfig();
     mobius->initialize(config, ses);
 
+    // force a synchronous refresh of SystemState to reflect up the
+    // state after initialization, don't need to use the normal async state
+    // refresh protocol yet
+    mobius->initializeState(&systemState);
+
     // ScriptConfig no longer goes in through MobiusConfig
     // extract one from the new ScriptRegistry and send it down
     ScriptConfig* oldScripts = scriptClerk.getMobiusScriptConfig();
@@ -397,13 +402,6 @@ bool Supervisor::start()
         audioManager.openDevices();
     }
 
-    // allow accumulation of MidiSyncMessage, I think Mobius is up enough
-    // to start consuming these, but if not JuceAudioStream will flush the
-    // queue on each block
-    // !! try to get rid of this, now that Kernel controls MidiRealizer it should
-    // know to enable it as soon as blocks start comming in
-    mobius->enableSyncEvents();
-    
     meter("Display Update");
     
     // initial display update if we're standalone
@@ -1001,7 +999,7 @@ void Supervisor::advance()
             // set this to get details for the focused track
             systemState.focusedTrack = mobiusView.focusedTrack + 1;
             
-            mobius->refreshState(&systemState);
+            mobius->requestState(&systemState);
         }
         else {
             // unusual, the engine should be keeping up with this but it can happen

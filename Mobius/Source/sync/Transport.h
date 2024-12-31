@@ -27,11 +27,16 @@ class Transport
 
     void setBeatsPerBar(int bpb);
     int getBeatsPerBar();
+    
+    void setBarsPerLoop(int bpl);
+    int getBarsPerLoop();
 
-    void setTimelineFrames(int f);
-    int getTimelineFrames();
+    void setMasterBarFrames(int f);
+    int getMasterBarFrames();
+
     void setTimelineFrame(int f);
     int getTimelineFrame();
+    int getTimelineFrames();
 
     void start();
     void stop();
@@ -50,16 +55,23 @@ class Transport
     
     int sampleRate = 44100;
     float tempo = 0.0f;
-    int timelineFrames = 0;
-    int playFrame = 0;
     int beatsPerBar = 0;
-    int framesPerBeat = 0;
+    int barsPerLoop = 1;
     int beat = 0;
     int bar = 1;
+    
+    int masterBarFrames = 0;
+    int framesPerBeat = 0;
+    int loopFrames = 0;
+    int playFrame = 0;
+    
     bool started = false;
     bool paused = false;
     bool beatHit = false;
     bool barHit = false;
+
+    bool metronomeEnabled = false;
+    bool midiEnabled = false;
 
     void wrap();
     void recalculateTempo();

@@ -33,7 +33,8 @@ class MobiusShell : public MobiusInterface
     void initialize(class MobiusConfig* config, class Session* session) override;
     void propagateSymbolProperties() override;
     void reconfigure(class MobiusConfig* config, class Session* session) override;
-    void refreshState(class SystemState* state) override;
+    void initializeState(class SystemState* state) override;
+    void requestState(class SystemState* state) override;
     void refreshPriorityState(class PriorityState* state) override;
     void performMaintenance() override;
     void doAction(class UIAction* action) override;

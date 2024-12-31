@@ -477,9 +477,14 @@ bool MobiusShell::doQuery(Query* query)
 //
 //////////////////////////////////////////////////////////////////////
 
-void MobiusShell::refreshState(SystemState* state)
+void MobiusShell::initializeState(SystemState* state)
 {
-    kernel.refreshState(state);
+    kernel.initializeState(state);
+}
+
+void MobiusShell::requestState(SystemState* state)
+{
+    kernel.requestState(state);
 }
 
 void MobiusShell::refreshPriorityState(PriorityState* state)

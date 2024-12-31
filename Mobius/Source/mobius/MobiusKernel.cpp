@@ -188,7 +188,12 @@ void MobiusKernel::propagateSymbolProperties()
 
 void MobiusKernel::enableSyncEvents()
 {
-    syncMaster.enableEvents();
+    syncMaster.enableEventQueue();
+}
+
+void MobiusKernel::disableSyncEvents()
+{
+    syncMaster.disableEventQueue();
 }
 
 /**
@@ -244,10 +249,19 @@ bool MobiusKernel::isGlobalReset()
 }
 
 /**
+ * This is called by Supervisor during initialization to force a synchronous
+ * refresh of the system state after loading the session.
+ */
+void MobiusKernel::initializeState(SystemState* state)
+{
+    refreshStateNow(state);
+}
+
+/**
  * This is called from the maintenance thread to ask for a state refresh.
  * We save it in a special place and handle it on the next block.
  */
-void MobiusKernel::refreshState(SystemState* state)
+void MobiusKernel::requestState(SystemState* state)
 {
     if (stateToRefresh == nullptr)
       stateToRefresh = state;
@@ -263,11 +277,7 @@ void MobiusKernel::checkStateRefresh()
 {
     if (stateToRefresh != nullptr) {
         
-        syncMaster.refreshState(&(stateToRefresh->syncState));
-        mTracks->refreshState(stateToRefresh);
-
-        // temporary
-        stateToRefresh->oldState = mCore->getState();
+        refreshStateNow(stateToRefresh);
 
         stateToRefresh = nullptr;
         
@@ -275,6 +285,15 @@ void MobiusKernel::checkStateRefresh()
         if (l != nullptr)
           l->mobiusStateRefreshed(stateToRefresh);
     }
+}
+
+void MobiusKernel::refreshStateNow(SystemState* state)
+{
+    syncMaster.refreshState(&(state->syncState));
+    mTracks->refreshState(state);
+
+    // temporary
+    state->oldState = mCore->getState();
 }
 
 void MobiusKernel::refreshPriorityState(PriorityState* state)

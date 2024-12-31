@@ -37,9 +37,8 @@ class SyncMaster
     void kludgeSetup(class MobiusKernel* k, class MidiManager* mm);
     void setSampleRate(int rate);
 
-    // Supervisor formerly called MidiRealizer::enableEvents after opening
-    // the audio devices, not sure how critical the deferral of this is
-    void enableEvents();
+    void enableEventQueue();
+    void disableEventQueue();
     
     // needed by MidiRealizer to send to Supervisor
     void sendAlert(juce::String msg);

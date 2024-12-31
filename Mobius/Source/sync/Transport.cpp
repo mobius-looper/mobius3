@@ -78,9 +78,9 @@ float Transport::getTempo()
     return tempo;
 }
 
-int Transport::getTimelineFrames()
+int Transport::getMasterBarFrames()
 {
-    return timelineFrames;
+    return masterBarFrames;
 }
 
 int Transport::getBeatsPerBar()
@@ -101,7 +101,7 @@ void Transport::setTempo(float t)
       t = TransportMaxTempo;
     
     tempo = t;
-    timelineFrames = 0;
+    masterBarFrames = 0;
     framesPerBeat = 0;
 
     // correct this if unset
@@ -111,7 +111,7 @@ void Transport::setTempo(float t)
     framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
     int framesPerBar = framesPerBeat * beatsPerBar;
     // not supporting multiple bars yet
-    timelineFrames = framesPerBar;
+    masterBarFrames = framesPerBar;
 
     // if we were currently playing, this may have made it shorter
     wrap();
@@ -125,10 +125,10 @@ void Transport::setTempo(float t)
  * because the resulting tempo may either be unusably fast or slow, so the
  * tempo may be adjusted.
  */
-void Transport::setTimelineFrames(int f)
+void Transport::setMasterBarFrames(int f)
 {
     if (f > 0) {
-        timelineFrames = f;
+        masterBarFrames = f;
         recalculateTempo();
     }
 }
@@ -146,10 +146,10 @@ void Transport::setBeatsPerBar(int bpb)
     if (bpb > 0) {
         beatsPerBar = bpb;
         // this can result in roundoff error where framesPerBeat * beatsPerBar
-        // is not exactly equal to timelineFrames
-        // that's okay as long as the final pulse uses timelineFrames to trigger
+        // is not exactly equal to masterBarFrames
+        // that's okay as long as the final pulse uses masterBarFrames to trigger
         // rather than inner beat calculations
-        framesPerBeat = timelineFrames / beatsPerBar;
+        framesPerBeat = masterBarFrames / beatsPerBar;
     }
 }
 
@@ -163,13 +163,13 @@ void Transport::setTimelineFrame(int f)
 
 void Transport::wrap()
 {
-    if (timelineFrames == 0) {
+    if (masterBarFrames == 0) {
         playFrame = 0;
     }
     else {
         // hey, can't math do this?
-        while (playFrame > timelineFrames)
-          playFrame -= timelineFrames;
+        while (playFrame > masterBarFrames)
+          playFrame -= masterBarFrames;
     }
 }
 
@@ -246,19 +246,19 @@ bool Transport::advance(int frames, Pulse& p)
     bool pulseEncountered = false;
 
     if (started) {
-        if (playFrame >= timelineFrames) {
+        if (playFrame >= masterBarFrames) {
             // bad dog, could wrap here but shouldn't be happening
             Trace(1, "Transport: Play frame beyond the end");
         }
         else {
             int newPlayFrame = playFrame + frames;
-            if (newPlayFrame >= timelineFrames) {
+            if (newPlayFrame >= masterBarFrames) {
                 // todo: multiple bars and PulseLoop?
                 pulseEncountered = true;
                 p.type = Pulse::PulseBar;
-                p.blockFrame = timelineFrames - playFrame;
-                newPlayFrame -= timelineFrames;
-                if (newPlayFrame > timelineFrames) {
+                p.blockFrame = masterBarFrames - playFrame;
+                newPlayFrame -= masterBarFrames;
+                if (newPlayFrame > masterBarFrames) {
                     // something is off here, must be an extremely short block size
                     Trace(1, "Transport: PlayFrame anomoly");
                 }
@@ -301,7 +301,7 @@ bool Transport::advance(int frames, Pulse& p)
  */
 void Transport::recalculateTempo()
 {
-    if (timelineFrames == 0) {
+    if (masterBarFrames == 0) {
         // degenerate case, not sure what this means
         Trace(1, "Transport::recalculateTempo Timeline length is zero");
     }
@@ -309,7 +309,7 @@ void Transport::recalculateTempo()
         // correct this if it isn't by now
         if (beatsPerBar < 1) beatsPerBar = 1;
     
-        float floatFramesPerBeat = (float)timelineFrames / (float)beatsPerBar;
+        float floatFramesPerBeat = (float)masterBarFrames / (float)beatsPerBar;
         float secondsPerBeat = floatFramesPerBeat / (float)sampleRate;
         float newTempo = 60.0f / secondsPerBeat;
 

@@ -123,9 +123,18 @@ class MobiusInterface {
     virtual void propagateSymbolProperties() = 0;
     
     /**
-     * Refresh the primary system state.
+     * Refresh the primary system state immediately after initialize()
+     * Unlike requestState this is a synchronous operation and can only happen
+     * during initialization or when the kernel is suspended.
      */
-    virtual void refreshState(class SystemState* state) = 0;
+    virtual void initializeState(class SystemState* state) = 0;
+    
+    /**
+     * Request an asynchronous refresh of the system state.
+     * The state will be refreshed on the next audio block and sent back
+     * with a MobiusListener notification.
+     */
+    virtual void requestState(class SystemState* state) = 0;
     
     /**
      * Refresh and return the high-resolution state.
