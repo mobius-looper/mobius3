@@ -14,6 +14,7 @@
 #include "Pulsator.h"
 #include "Pulse.h"
 #include "MidiRealizer.h"
+#include "MidiAnalyzer.h"
 #include "SyncMasterState.h"
 
 #include "SyncMaster.h"
@@ -34,11 +35,13 @@ SyncMaster::~SyncMaster()
 void SyncMaster::enableEventQueue()
 {
     midiRealizer->enableEvents();
+    midiAnalyzer->enableEvents();
 }
 
 void SyncMaster::disableEventQueue()
 {
     midiRealizer->disableEvents();
+    midiAnalyzer->disableEvents();
 }
 
 void SyncMaster::shutdown()
@@ -49,12 +52,13 @@ void SyncMaster::shutdown()
 void SyncMaster::kludgeSetup(MobiusKernel* k, MidiManager* mm)
 {
     kernel = k;
-    
-    midiRealizer.reset(new MidiRealizer());
-    pulsator.reset(new Pulsator());
 
-    pulsator->kludgeSetup(this, midiRealizer.get());
-    midiRealizer->kludgeSetup(this, mm);
+    midiRealizer.reset(new MidiRealizer());
+    midiAnalyzer.reset(new MidiAnalyzer());
+    pulsator.reset(new Pulsator(this));
+
+    midiRealizer->initialize(this, mm);
+    midiAnalyzer->initialize(this, mm);
 }
 
 void SyncMaster::setSampleRate(int rate)
@@ -181,7 +185,7 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     // interval, since we don't get a performMaintenance ping down here
     // we can check it on every block, the granularity doesn't really matter
     // since it is based off millisecond time advance
-    midiRealizer->checkClocks();
+    midiAnalyzer->checkClocks();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -216,20 +220,19 @@ void SyncMaster::doBeatsPerBar(UIAction* a)
 //
 //////////////////////////////////////////////////////////////////////
 
-/**
- * todo: SyncMaster state could all be PriorityState since it is small.
- */
-void SyncMaster::refreshState(SyncMasterState* state)
+void SyncMaster::refreshState(SyncMasterState* extstate)
 {
-    state->tempo = transport.getTempo();
-    state->beatsPerBar = transport.getBeatsPerBar();
-    state->beat = transport.getBeat();
-    state->bar = transport.getBar();
+    // todo: if we consolidate all of the state sources up here
+    // we could just to a single structure copy
+
+    extstate->transport = state.transport;
+
+    midiAnalyzer->getState(extstate->midi);
 }
 
-void SyncMaster::refreshPriorityState(PriorityState* state)
+void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
-    transport.refreshPriorityState(state);
+    transport.refreshPriorityState(pstate);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -326,6 +329,11 @@ int SyncMaster::getBeatsPerBar(Pulse::Source src)
 //
 //////////////////////////////////////////////////////////////////////
 
+//
+// This is all temporary, MIDI out status will be the same thing
+// as the Transport status, don't think we need those to be independent
+// 
+
 float SyncMaster::getMidiOutTempo()
 {
     return midiRealizer->getTempo();
@@ -336,7 +344,7 @@ void SyncMaster::setMidiOutTempo(float tempo)
 }
 int SyncMaster::getMidiOutRawBeat()
 {
-    return midiRealizer->getRawBeat();
+    return midiRealizer->getBeat();
 }
 bool SyncMaster::isMidiOutSending()
 {
@@ -377,10 +385,20 @@ void SyncMaster::midiOutStopSelective(bool sendStop, bool stopClocks)
 void SyncMaster::midiOutContinue()
 {
     midiRealizer->midiContinue();
+
 }
+
 class MidiSyncEvent* SyncMaster::midiOutNextEvent()
 {
-    return midiRealizer->nextOutputEvent();
+    return midiRealizer->nextEvent();
+}
+class MidiSyncEvent* SyncMaster::midiOutIterateNext()
+{
+    return midiRealizer->iterateNext();
+}
+void SyncMaster::midiOutIterateStart()
+{
+    return midiRealizer->iterateStart();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -391,31 +409,41 @@ class MidiSyncEvent* SyncMaster::midiOutNextEvent()
     
 class MidiSyncEvent* SyncMaster::midiInNextEvent()
 {
-    return midiRealizer->nextInputEvent();
+    return midiAnalyzer->nextEvent();
 }
+class MidiSyncEvent* SyncMaster::midiInIterateNext()
+{
+    return midiAnalyzer->iterateNext();
+}
+void SyncMaster::midiInIterateStart()
+{
+    return midiAnalyzer->iterateStart();
+}
+
+
 float SyncMaster::getMidiInTempo()
 {
-    return midiRealizer->getInputTempo();
+    return midiAnalyzer->getTempo();
 }
 int SyncMaster::getMidiInSmoothTempo()
 {
-    return midiRealizer->getInputSmoothTempo();
+    return midiAnalyzer->getSmoothTempo();
 }
 int SyncMaster::getMidiInRawBeat()
 {
-    return midiRealizer->getInputRawBeat();
+    return midiAnalyzer->getBeat();
 }
 int SyncMaster::getMidiInSongClock()
 {
-    return midiRealizer->getInputSongClock();
+    return midiAnalyzer->getSongClock();
 }
 bool SyncMaster::isMidiInReceiving()
 {
-    return midiRealizer->isInputReceiving();
+    return midiAnalyzer->isReceiving();
 }
 bool SyncMaster::isMidiInStarted()
 {
-    return midiRealizer->isInputStarted();
+    return midiAnalyzer->isStarted();
 }
 
 /****************************************************************************/

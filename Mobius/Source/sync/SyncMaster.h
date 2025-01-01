@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "SyncMasterState.h"
 #include "Transport.h"
 #include "Pulse.h"
 
@@ -174,13 +175,20 @@ class SyncMaster
      */
     void midiOutContinue();
 
+    // this is used by Synchronizer
     class MidiSyncEvent* midiOutNextEvent();
+
+    // these are used by Pulsator
+    void midiOutIterateStart();
+    class MidiSyncEvent* midiOutIterateNext();
      
     //////////////////////////////////////////////////////////////////////
     // MIDI Input
     //////////////////////////////////////////////////////////////////////
     
     class MidiSyncEvent* midiInNextEvent();
+    void midiInIterateStart();
+    class MidiSyncEvent* midiInIterateNext();
     
     /**
      * The raw measured tempo of the incomming clock stream.
@@ -202,16 +210,19 @@ class SyncMaster
   private:
 
     class MobiusKernel* kernel = nullptr;
+    
+    SyncMasterState state;
     Transport transport;
     // why can't this be in Transport?
     Pulse transportPulse;
     
+    std::unique_ptr<class MidiRealizer> midiRealizer;
+    std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
+    std::unique_ptr<class Pulsator> pulsator;
+
     void doStop(class UIAction* a);
     void doStart(class UIAction* a);
     void doTempo(class UIAction* a);
     void doBeatsPerBar(class UIAction* a);
-
-    std::unique_ptr<class MidiRealizer> midiRealizer;
-    std::unique_ptr<class Pulsator> pulsator;
 
 };

@@ -1,22 +1,18 @@
 /**
- * Early container of MIDI synchronization services for the Mobius engine.
- * Formerly implemented MobiusMidiTransport and was used directly by Synchronizer.
- * Now encapsulated under SyncMaster.
+ * Generator of MIDI realtime events.
+ * Used under the Transport when clock generation is enabled.
  *
- * todo: generalize this so that it can be packaged as a standalone MIDI services
- * utility for other plugins.  Part of a synchronization library that also pulls
- * in HostSyncState and possibly parts of what is now mobius/core/SyncTaracker
+ * What used to be called SyncMode=Out is now more like track control
+ * over the system transport with the option to make it generate MIDI clocks.
  */
 
 #pragma once
 
 #include <JuceHeader.h>
 
-
 #include "../MidiManager.h"
 
 #include "MidiQueue.h"
-#include "TempoMonitor.h"
 
 /**
  * High resolution thread used when generating MIDI clocks and sending
@@ -26,7 +22,7 @@ class MidiClockThread : public juce::Thread
 {
   public:
     
-    MidiClockThread(class MidiRealizer* mr);
+    MidiClockThread(class MidiRealizer* gen);
     ~MidiClockThread();
 
     bool start();
@@ -40,10 +36,7 @@ class MidiClockThread : public juce::Thread
     
 };
 
-/**
- * Class encapsulating all MIDI realtime message processing.
- */
-class MidiRealizer : public MidiManager::RealtimeListener
+class MidiRealizer
 {
     friend class MidiClockThread;
     
@@ -52,7 +45,7 @@ class MidiRealizer : public MidiManager::RealtimeListener
     MidiRealizer();
     ~MidiRealizer();
 
-    void kludgeSetup(class SyncMaster* sm, class MidiManager* mm);
+    void initialize(class SyncMaster* sm, class MidiManager* mm);
     void setSampleRate(int rate);
 
     void shutdown();
@@ -64,13 +57,7 @@ class MidiRealizer : public MidiManager::RealtimeListener
     void disableEvents();
     void flushEvents();
     
-    // check for termination of MIDI clocks without warning
-    void checkClocks();
-
-    // MidiManager::RealtimeListener
-    void midiRealtime(const juce::MidiMessage& msg, juce::String& source) override;
-
-    // Output Sync
+    // Transport control
     
     void start();
     void startClocks();
@@ -79,34 +66,23 @@ class MidiRealizer : public MidiManager::RealtimeListener
     void midiContinue();
     void setTempo(float tempo);
 
+    // State
+
     float getTempo();
-    int getRawBeat();
+    int getBeat();
     bool isSending();
     bool isStarted();
     int getStarts();
     void incStarts();
     int getSongClock();
 
-    MidiSyncEvent* nextOutputEvent();
+    MidiSyncEvent* nextEvent();
     
     // new non-destrictive iterator
     // since the consumer of this, Pulsator, was moved up here, we could
     // just expose the MidiQueue and be done with it
-    void iterateOutputStart();
-    MidiSyncEvent* iterateOutputNext();
-    
-    // Input Sync
-
-    float getInputTempo();
-    int getInputSmoothTempo();
-    int getInputRawBeat();
-    int getInputSongClock();
-    bool isInputReceiving();
-    bool isInputStarted();
-    
-    MidiSyncEvent* nextInputEvent();
-    void iterateInputStart();
-    MidiSyncEvent* iterateInputNext();
+    void iterateStart();
+    MidiSyncEvent* iterateNext();
     
   protected:
 
@@ -120,10 +96,6 @@ class MidiRealizer : public MidiManager::RealtimeListener
     class SyncMaster* syncMaster = nullptr;
     class MidiManager* midiManager = nullptr;
     
-    //////////////////////////////////////////////////////////////////////
-    // Output sync state
-    //////////////////////////////////////////////////////////////////////
-
     MidiClockThread* thread = nullptr;
 
     MidiQueue outputQueue;
@@ -183,12 +155,6 @@ class MidiRealizer : public MidiManager::RealtimeListener
      */
 	long mInterruptMsec = 0;
 
-    //////////////////////////////////////////////////////////////////////
-    // Input sync state
-    //////////////////////////////////////////////////////////////////////
-
-    MidiQueue inputQueue;
-    TempoMonitor tempoMonitor;
 };
 
 /****************************************************************************/

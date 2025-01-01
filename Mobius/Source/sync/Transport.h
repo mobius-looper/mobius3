@@ -36,7 +36,6 @@ class Transport
 
     void setTimelineFrame(int f);
     int getTimelineFrame();
-    int getTimelineFrames();
 
     void start();
     void stop();

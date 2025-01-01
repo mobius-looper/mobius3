@@ -1,4 +1,11 @@
 /**
+ *
+ * Maintenance of the MidiQueue and the generation of sync pulses is no longer necessary
+ * now that clock generation is within the Transport.  Transport will generate pulses
+ * not the clock generator.
+ *
+ * old comments, need a lot of weeding here...
+ *
  * An implementation of MobiusMidiTransport that provides MIDI synchronization
  * services to the Mobius engine.
  *
@@ -112,14 +119,12 @@
 #include "../midi/MidiByte.h"
 #include "MidiQueue.h"
 #include "MidiSyncEvent.h"
-#include "TempoMonitor.h"
 #include "SyncMaster.h"
 
 #include "MidiRealizer.h"
 
 MidiRealizer::MidiRealizer()
 {
-	inputQueue.setName("external");
 	outputQueue.setName("internal");
     setTempoNow(120.0f);
 }
@@ -129,11 +134,10 @@ MidiRealizer::~MidiRealizer()
     stopThread();
 }
 
-void MidiRealizer::kludgeSetup(SyncMaster* sm, MidiManager* mm)
+void MidiRealizer::initialize(SyncMaster* sm, MidiManager* mm)
 {
     syncMaster = sm;
     midiManager = mm;
-    mm->addRealtimeListener(this);
 }
 
 void MidiRealizer::setSampleRate(int rate)
@@ -178,7 +182,6 @@ void MidiRealizer::stopThread()
 void MidiRealizer::shutdown()
 {
     stopThread();
-    midiManager->removeRealtimeListener(this);
 }
 
 /**
@@ -188,19 +191,16 @@ void MidiRealizer::shutdown()
  */
 void MidiRealizer::disableEvents()
 {
-    inputQueue.setEnableEvents(false);
     outputQueue.setEnableEvents(false);
 }
 
 void MidiRealizer::enableEvents()
 {
-    inputQueue.setEnableEvents(true);
     outputQueue.setEnableEvents(true);
 }
 
 void MidiRealizer::flushEvents()
 {
-    inputQueue.flushEvents();
     outputQueue.flushEvents();
 }
 
@@ -688,19 +688,19 @@ bool MidiRealizer::isSending()
     return running;
 }
 
+bool MidiRealizer::isStarted()
+{
+	return outputQueue.started;
+}
+
 float MidiRealizer::getTempo()
 {
     return tempo;
 }
 
-int MidiRealizer::getRawBeat()
+int MidiRealizer::getBeat()
 {
 	return outputQueue.beat;
-}
-
-bool MidiRealizer::isStarted()
-{
-	return outputQueue.started;
 }
 
 /**
@@ -721,155 +721,19 @@ int MidiRealizer::getSongClock()
 	return outputQueue.songClock;
 }
 
-MidiSyncEvent* MidiRealizer::nextOutputEvent()
+MidiSyncEvent* MidiRealizer::nextEvent()
 {
     return outputQueue.popEvent();
 }
 
-void MidiRealizer::iterateOutputStart()
+void MidiRealizer::iterateStart()
 {
     outputQueue.iterateStart();
 }
 
-MidiSyncEvent* MidiRealizer::iterateOutputNext()
+MidiSyncEvent* MidiRealizer::iterateNext()
 {
     return outputQueue.iterateNext();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Input Sync
-//
-//////////////////////////////////////////////////////////////////////
-    
-/**
- * Expected to be called periodically to check whather clocks are still
- * being received.  We'll check both queues, but this is mostly interesting
- * for the input queue.  For the output queue, clocks should only stop if
- * the transport is stopped.  
- */
-void MidiRealizer::checkClocks()
-{
-    int now = juce::Time::getMillisecondCounter();
-
-    inputQueue.checkClocks(now);
-    outputQueue.checkClocks(now);
-}
-
-float MidiRealizer::getInputTempo()
-{
-    return tempoMonitor.getTempo();
-}
-
-int MidiRealizer::getInputSmoothTempo()
-{
-    return tempoMonitor.getSmoothTempo();
-}
-
-// The current beat count derived from the external MIDI clock.
-int MidiRealizer::getInputRawBeat()
-{
-    return inputQueue.beat;
-}
-
-int MidiRealizer::getInputSongClock()
-{
-    return inputQueue.songClock;
-}
-
-/**
- * Exposed as syncInReceiving.
- * True if we are currently receiving MIDI clocks.
- */
-bool MidiRealizer::isInputReceiving()
-{
-    return inputQueue.receivingClocks;
-}
-
-/**
- * Exposed as syncInStarted.
- * True if we have received a MIDI start or continue message.
- */
-bool MidiRealizer::isInputStarted()
-{
-    return inputQueue.started;
-}
-
-/**
- * Return the next queued sync message.
- */
-MidiSyncEvent* MidiRealizer::nextInputEvent()
-{
-    return inputQueue.popEvent();
-}
-
-void MidiRealizer::iterateInputStart()
-{
-    inputQueue.iterateStart();
-}
-
-MidiSyncEvent* MidiRealizer::iterateInputNext()
-{
-    return inputQueue.iterateNext();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// MidiManager::RealtimeListener
-//
-//////////////////////////////////////////////////////////////////////
-
-/**
- * Given a MIDI Realtime message received from a MIDI device, add the
- * interesting ones to the input queue.
- *
- * We'll get SystemCommon messages as well as Realtime messages which
- * we need for SongPosition.  Everything else ignore.
- */
-void MidiRealizer::midiRealtime(const juce::MidiMessage& msg, juce::String& source)
-{
-    (void)source;
-    
-    const juce::uint8* data = msg.getRawData();
-    const juce::uint8 status = *data;
-    int now = juce::Time::getMillisecondCounter();
-    
-	switch (status) {
-		case MS_QTRFRAME: {
-			// not sure what this is, ignore
-		}
-		break;
-		case MS_SONGPOSITION: {
-			// only considered actionable if a MS_CONTINUE is received later
-            // does not generate a MidiSyncEvent, just save it
-            // I'm not sure what Juce does with this value, assume it's
-            // the usual combination of message bytes
-            inputQueue.setSongPosition(msg.getSongPositionPointerMidiBeat());
-		}
-		break;
-		case MS_SONGSELECT: {
-			// nothing meaningful for Mobius?
-			// could use it to select loops?
-		}
-		break;
-		case MS_CLOCK: {
-			inputQueue.add(status, now);
-            tempoMonitor.clock(now);
-		}
-		break;
-		case MS_START: {
-			inputQueue.add(status, now);
-		}
-		break;
-		case MS_STOP: {
-			inputQueue.add(status, now);
-		}
-		break;
-		case MS_CONTINUE: {
-			inputQueue.add(status, now);
-		}
-		break;
-	}
 }
 
 /****************************************************************************/

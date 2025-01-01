@@ -1930,7 +1930,7 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     }
     else if (src == SYNC_TRANSPORT) {
         // this is normally the bar length
-        unit->frames = (float)(mSyncMaster->getTransport()->getTimelineFrames());
+        unit->frames = (float)(mSyncMaster->getTransport()->getMasterBarFrames());
     }
     else if (src == SYNC_HOST) {
         if (mHostTracker->isLocked()) {
@@ -3465,7 +3465,7 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
         // todo: should be a cycle per bar?
         // similar logic to TRACK
         int slaveFrames = (int)(l->getRecordedFrames());
-        int cycleFrames = mSyncMaster->getTransport()->getTimelineFrames();
+        int cycleFrames = mSyncMaster->getTransport()->getMasterBarFrames();
         if ((slaveFrames % cycleFrames) > 0) {
             l->setRecordCycles(1);
         }

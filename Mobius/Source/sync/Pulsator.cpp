@@ -27,18 +27,13 @@
 
 #include "Pulsator.h"
 
-Pulsator::Pulsator()
+Pulsator::Pulsator(SyncMaster* sm)
 {
+    syncMaster = sm;
 }
 
 Pulsator::~Pulsator()
 {
-}
-
-void Pulsator::kludgeSetup(SyncMaster* sm, MidiRealizer* mr)
-{
-    syncMaster = sm;
-    midiRealizer = mr;
 }
 
 /**
@@ -136,8 +131,8 @@ float Pulsator::getTempo(Pulse::Source src)
     switch (src) {
         case Pulse::SourceHost: tempo = host.tempo; break;
             //case SourceMidiIn: tempo = midiRealizer->getInputSmoothTempo(); break;
-        case Pulse::SourceMidiIn: tempo = midiRealizer->getInputTempo(); break;
-        case Pulse::SourceMidiOut: tempo = midiRealizer->getTempo(); break;
+        case Pulse::SourceMidiIn: tempo = syncMaster->getMidiInTempo(); break;
+        case Pulse::SourceMidiOut: tempo = syncMaster->getMidiOutTempo(); break;
         case Pulse::SourceTransport: tempo = transport.tempo; break;
         default: break;
     }
@@ -154,8 +149,8 @@ int Pulsator::getBeat(Pulse::Source src)
     int beat = 0;
     switch (src) {
         case Pulse::SourceHost: beat = host.beat; break;
-        case Pulse::SourceMidiIn: beat = midiRealizer->getInputRawBeat(); break;
-        case Pulse::SourceMidiOut: beat = midiRealizer->getRawBeat(); break;
+        case Pulse::SourceMidiIn: beat = syncMaster->getMidiInRawBeat(); break;
+        case Pulse::SourceMidiOut: beat = syncMaster->getMidiOutRawBeat(); break;
         case Pulse::SourceTransport: beat = transport.beat; break;
         default: break;
     }
@@ -362,23 +357,23 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
  */
 void Pulsator::gatherMidi()
 {
-    midiRealizer->iterateInputStart();
-    MidiSyncEvent* mse = midiRealizer->iterateInputNext();
+    syncMaster->midiInIterateStart();
+    MidiSyncEvent* mse = syncMaster->midiInIterateNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiIn, &(midiIn.pulse)))
           break;
         else
-          mse = midiRealizer->iterateInputNext();
+          mse = syncMaster->midiInIterateNext();
     }
     
     // again for internal output events
-    midiRealizer->iterateOutputStart();
-    mse = midiRealizer->iterateOutputNext();
+    syncMaster->midiOutIterateStart();
+    mse = syncMaster->midiOutIterateNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiOut, &(midiOut.pulse)))
           break;
         else
-          mse = midiRealizer->iterateOutputNext();
+          mse = syncMaster->midiOutIterateNext();
     }
 }
 

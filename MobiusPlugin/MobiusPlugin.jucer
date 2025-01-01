@@ -15,6 +15,9 @@
       <GROUP id="{7E4F6DE8-BEDA-A57D-B5AA-F850B2E3CC96}" name="sync">
         <FILE id="FK7DXx" name="Follower.h" compile="0" resource="0" file="../Mobius/Source/sync/Follower.h"/>
         <FILE id="hPhfXu" name="Leader.h" compile="0" resource="0" file="../Mobius/Source/sync/Leader.h"/>
+        <FILE id="kwKtlF" name="MidiAnalyzer.cpp" compile="1" resource="0"
+              file="../Mobius/Source/sync/MidiAnalyzer.cpp"/>
+        <FILE id="te32Nz" name="MidiAnalyzer.h" compile="0" resource="0" file="../Mobius/Source/sync/MidiAnalyzer.h"/>
         <FILE id="aMeYOk" name="MidiQueue.cpp" compile="1" resource="0" file="../Mobius/Source/sync/MidiQueue.cpp"/>
         <FILE id="YNADVk" name="MidiQueue.h" compile="0" resource="0" file="../Mobius/Source/sync/MidiQueue.h"/>
         <FILE id="nqqaMj" name="MidiRealizer.cpp" compile="1" resource="0"
@@ -27,6 +30,8 @@
         <FILE id="pelkmH" name="SyncMaster.h" compile="0" resource="0" file="../Mobius/Source/sync/SyncMaster.h"/>
         <FILE id="Ljw2Vp" name="SyncMasterState.h" compile="0" resource="0"
               file="../Mobius/Source/sync/SyncMasterState.h"/>
+        <FILE id="bC0wUt" name="SyncSourceState.h" compile="0" resource="0"
+              file="../Mobius/Source/sync/SyncSourceState.h"/>
         <FILE id="bXAFrx" name="TempoMonitor.cpp" compile="1" resource="0"
               file="../Mobius/Source/sync/TempoMonitor.cpp"/>
         <FILE id="Syu7wF" name="TempoMonitor.h" compile="0" resource="0" file="../Mobius/Source/sync/TempoMonitor.h"/>

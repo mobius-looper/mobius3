@@ -13,6 +13,9 @@
       <GROUP id="{17D1AD70-C175-4456-F59E-2C7879A600B9}" name="sync">
         <FILE id="RXCW17" name="Follower.h" compile="0" resource="0" file="Source/sync/Follower.h"/>
         <FILE id="AvwHPv" name="Leader.h" compile="0" resource="0" file="Source/sync/Leader.h"/>
+        <FILE id="xCfCPz" name="MidiAnalyzer.cpp" compile="1" resource="0"
+              file="Source/sync/MidiAnalyzer.cpp"/>
+        <FILE id="Gk3yQx" name="MidiAnalyzer.h" compile="0" resource="0" file="Source/sync/MidiAnalyzer.h"/>
         <FILE id="DmwDFl" name="MidiQueue.cpp" compile="1" resource="0" file="Source/sync/MidiQueue.cpp"/>
         <FILE id="gJLcbw" name="MidiQueue.h" compile="0" resource="0" file="Source/sync/MidiQueue.h"/>
         <FILE id="YQpF3E" name="MidiRealizer.cpp" compile="1" resource="0"
@@ -24,6 +27,8 @@
         <FILE id="efK3Bv" name="Pulse.h" compile="0" resource="0" file="Source/sync/Pulse.h"/>
         <FILE id="XnnDpK" name="SyncMaster.cpp" compile="1" resource="0" file="Source/sync/SyncMaster.cpp"/>
         <FILE id="G80cvL" name="SyncMaster.h" compile="0" resource="0" file="Source/sync/SyncMaster.h"/>
+        <FILE id="G4AVkf" name="SyncSourceState.h" compile="0" resource="0"
+              file="Source/sync/SyncSourceState.h"/>
         <FILE id="r8b1tS" name="TempoMonitor.cpp" compile="1" resource="0"
               file="Source/sync/TempoMonitor.cpp"/>
         <FILE id="gYiqBB" name="TempoMonitor.h" compile="0" resource="0" file="Source/sync/TempoMonitor.h"/>
