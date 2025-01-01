@@ -22,7 +22,6 @@ class MidiAnalyzer : public MidiManager::RealtimeListener
     ~MidiAnalyzer();
 
     void initialize(class SyncMaster* sm, class MidiManager* mm);
-
     void shutdown();
     
     // message accumulation can be turned on and off for testing

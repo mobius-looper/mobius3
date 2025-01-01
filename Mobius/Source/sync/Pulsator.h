@@ -117,11 +117,14 @@ class Pulsator
     // State of the various sources
     //
 
-    float getTempo(Pulse::Source src);
-    int getBeat(Pulse::Source src);
-    int getBar(Pulse::Source src);
-    int getBeatsPerBar(Pulse::Source src);
-    
+    SyncState* getHostState() {
+        return &host;
+    }
+
+    SyncState* getMidiInState() {
+        return &midiIn;
+    }
+
   private:
 
     class SyncMaster* syncMaster = nullptr;
@@ -158,7 +161,8 @@ class Pulsator
     void gatherHost(class MobiusAudioStream* stream);
     void gatherMidi();
     bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
-    int getBar(int beat, int bpb);
+    void gatherTransport();
+
     int getPulseFrame(Pulse* p, Pulse::Type type);
     
     void trace();

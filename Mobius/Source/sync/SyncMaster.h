@@ -14,11 +14,8 @@
  *    - generation of MIDI output clocks to send to external applications and devices
  *    - generation of an audible Metronome
  *
- * Evolution
  *
- * Just get everything under SyncMaster and redesign...this is far to twisty
- *
-  */
+ */
 
 #pragma once
 
@@ -33,40 +30,31 @@ class SyncMaster
     SyncMaster();
     ~SyncMaster();
 
-    void shutdown();
-    
-    void kludgeSetup(class MobiusKernel* k, class MidiManager* mm);
-    void setSampleRate(int rate);
-
-    void enableEventQueue();
-    void disableEventQueue();
-    
-    // needed by MidiRealizer to send to Supervisor
-    void sendAlert(juce::String msg);
-    
+    void initialize(class MobiusContainer* c);
     void loadSession(class Session* s);
-    
+    void shutdown();
+
+    void advance(class MobiusAudioStream* stream);
     void doAction(class UIAction* a);
     bool doQuery(class Query* q);
-    void advance(class MobiusAudioStream* stream);
-
     void refreshState(class SyncMasterState* s);
     void refreshPriorityState(class PriorityState* s);
 
-    // direct access for Synchronizer
-    Transport* getTransport() {
-        return &transport;
-    }
+    //
+    // Granular state
+    //
+    
+    float getTempo(Pulse::Source src);
+    int getBeat(Pulse::Source src);
+    int getBar(Pulse::Source src);
+    int getBeatsPerBar(Pulse::Source src);
 
-    // this is what core Synchronizer uses to get internal sync pulses
-    void getTransportPulse(class Pulse& p);
-
-    /**
-     * An accurate millisecond counter provided by the container.
-     * We have this in MobiusContainer as well, but Synchronizer has
-     * historically expected it here so duplicate for now.
-     */
+    //
+    // internal component services
+    //
+    
     int getMilliseconds();
+    void sendAlert(juce::String msg);
 
     //////////////////////////////////////////////////////////////////////
     // Leader/Follower Pulsator passthroughs
@@ -89,13 +77,6 @@ class SyncMaster
     int getPulseFrame(int follower);
     int getPulseFrame(int followerId, Pulse::Type type);
 
-
-    // don't need these in Pulsator any more
-    float getTempo(Pulse::Source src);
-    int getBeat(Pulse::Source src);
-    int getBar(Pulse::Source src);
-    int getBeatsPerBar(Pulse::Source src);
-    
     //////////////////////////////////////////////////////////////////////
     // Transport/MIDI Output
     //////////////////////////////////////////////////////////////////////
@@ -175,20 +156,24 @@ class SyncMaster
      */
     void midiOutContinue();
 
+    #if 0
     // this is used by Synchronizer
     class MidiSyncEvent* midiOutNextEvent();
 
     // these are used by Pulsator
     void midiOutIterateStart();
     class MidiSyncEvent* midiOutIterateNext();
+    #endif
      
     //////////////////////////////////////////////////////////////////////
     // MIDI Input
     //////////////////////////////////////////////////////////////////////
-    
+
+    #if 0
     class MidiSyncEvent* midiInNextEvent();
     void midiInIterateStart();
     class MidiSyncEvent* midiInIterateNext();
+    #endif
     
     /**
      * The raw measured tempo of the incomming clock stream.
@@ -207,22 +192,36 @@ class SyncMaster
     bool isMidiInReceiving();
     bool isMidiInStarted();
 
+  protected:
+
+    // internal component access for Pulsator
+    // could also just pass these to it during initialization
+    class MidiAnalyzer* getMidiAnalyzer() {
+        return midiAnalyzer.get();
+    }
+
+    class MidiRealizer* getMidiRealizer() {
+        return midiRealizer.get();
+    }
+
+    Transport* getTransport() {
+        return &transport;
+    }
+
   private:
 
-    class MobiusKernel* kernel = nullptr;
+    class MobiusContainer* container = nullptr;
+    int sampleRate = 44100;
     
     SyncMasterState state;
     Transport transport;
-    // why can't this be in Transport?
-    Pulse transportPulse;
     
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class Pulsator> pulsator;
 
-    void doStop(class UIAction* a);
-    void doStart(class UIAction* a);
-    void doTempo(class UIAction* a);
-    void doBeatsPerBar(class UIAction* a);
+    void refreshSampleRate(int rate);
+    void enableEventQueue();
+    void disableEventQueue();
 
 };

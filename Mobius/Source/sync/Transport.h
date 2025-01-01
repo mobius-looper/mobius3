@@ -14,12 +14,13 @@
 #include <JuceHeader.h>
 
 #include "SyncSourceState.h"
+#include "Pulse.h"
 
 class Transport
 {
   public:
 
-    Transport();
+    Transport(SyncMaster* sm);
     ~Transport();
 
     void setSampleRate(int r);
@@ -55,18 +56,24 @@ class Transport
     int getBar();
 
     bool advance(int frames, class Pulse& p);
-    void refreshPriorityState(class PriorityState* ps);
-
-  private:
+    Pulse* getPulse();
     
-    int sampleRate = 44100;
+    void refreshPriorityState(class PriorityState* ps);
+    
+  private:
 
+    class SyncMaster* sm = nullptr;
+    int sampleRate = 44100;
+    
     SyncSourceState state;
     
     int framesPerBeat = 0;
     int loopFrames = 0;
     
     bool paused = false;
+
+    Pulse pulse;
+
     bool beatHit = false;
     bool barHit = false;
 

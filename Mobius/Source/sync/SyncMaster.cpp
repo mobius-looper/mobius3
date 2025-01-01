@@ -28,9 +28,109 @@ SyncMaster::~SyncMaster()
 }
 
 /**
+ * The MobiusContainer is necessary for these things:
+ *   - access to MidiManager
+ *   - access to sendAlert()
+ *   - access to the sampleRate
+ *
+ * MidiAnalyzer needs MidiManager to register the realtime event listener.
+ * MidiRealizer needs MidiManager to send clock events.
+ *
+ * MidiRealizer uses sendAlert() to send a few warning messages to the user related
+ * to midi device configuration.
+ *
+ * MidiRealizer and Transport use the SampleRate for some timing calculations.
+ *
+ * In time, try to factor out a more focused SyncContainer that hides all the other
+ * dependencies MobiusContainer drags in.  The MidiRealtimeListener will be a problem
+ * since that would have to move out of MidiManager.
+ */
+void SyncMaster::initialize(MobiusContainer* c)
+{
+    container = c;
+
+    // these are now dynamically allocated to reduce header file dependencies
+    midiRealizer.reset(new MidiRealizer());
+    midiAnalyzer.reset(new MidiAnalyzer());
+    pulsator.reset(new Pulsator(this));
+
+    MidiManager* mm = container->getMidiManager();
+    midiRealizer->initialize(this, mm);
+    midiAnalyzer->initialize(this, mm);
+
+    // start everything off with a default sample rate, but this
+    // may change as soon as the audio devices are open
+    refreshSampleRate(44100);
+}
+
+/**
+ * Pulsator needs this for a few things
+ * Transport should be using it for the starting tempo, and various options.
+ */
+void SyncMaster::loadSession(Session* s)
+{
+    pulsator->loadSession(s);
+}
+
+/**
+ * Called during the Supervisor::shutdown process.  Make sure the
+ * clock generator thread is cleanly stopped.
+ */
+void SyncMaster::shutdown()
+{
+    midiRealizer->shutdown();
+    midiAnalyzer->shutdown();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Advance
+//
+//////////////////////////////////////////////////////////////////////
+
+void SyncMaster::advance(MobiusAudioStream* stream)
+{
+    int frames = stream->getInterruptFrames();
+
+    // once we start receiving audio blocks, it is okay to start converting
+    // MIDI events into MidiSyncMessages, if you allow event queueing before
+    // blocks come in, the queue can overflow
+    // todo: while not normally a problem, if you disconnect the audio stream
+    // after initialization, then the queue will get stuck and overflow, the maintenance
+    // thread could monitor for a suspension of audio blocks and disable the queue
+    enableEventQueue();
+
+    // monitor changes to the sample rate once the audio device is pumping
+    // and adjust internal calculations
+    int newSampleRate = container->getSampleRate();
+    if (newSampleRate != sampleRate)
+      refreshSampleRate(sampleRate);
+    
+    transport.advance(frames);
+
+    pulsator->interruptStart(stream);
+
+    // Supervisor formerly called this on the maintenance thread
+    // interval, since we don't get a performMaintenance ping down here
+    // we can check it on every block, the granularity doesn't really matter
+    // since it is based off millisecond time advance
+    midiAnalyzer->checkClocks();
+}
+
+void SyncMaster::refreshSampleRate(int rate)
+{
+    sampleRate = rate;
+    transport.setSampleRate(rate);
+    midiRealizer->setSampleRate(rate);
+}
+
+/**
  * The event queue should only be enabled once audio blocks
  * start comming in.  If blocks stop then the queue can overflow
  * if there is MIDI being actively received or sent.
+ *
+ * Block stoppage can't be monitored here, it would need to be done
+ * by a higher power, probablky the maintenance thread.
  */
 void SyncMaster::enableEventQueue()
 {
@@ -44,88 +144,50 @@ void SyncMaster::disableEventQueue()
     midiAnalyzer->disableEvents();
 }
 
-void SyncMaster::shutdown()
-{
-    midiRealizer->shutdown();
-}
-
-void SyncMaster::kludgeSetup(MobiusKernel* k, MidiManager* mm)
-{
-    kernel = k;
-
-    midiRealizer.reset(new MidiRealizer());
-    midiAnalyzer.reset(new MidiAnalyzer());
-    pulsator.reset(new Pulsator(this));
-
-    midiRealizer->initialize(this, mm);
-    midiAnalyzer->initialize(this, mm);
-}
-
-void SyncMaster::setSampleRate(int rate)
-{
-    transport.setSampleRate(rate);
-    midiRealizer->setSampleRate(rate);
-}
-
-void SyncMaster::sendAlert(juce::String msg)
-{
-    // MidiRealizer does this and used to call supervisor->addAlert
-    kernel->sendAlert(msg);
-}
-
-void SyncMaster::loadSession(Session* s)
-{
-    pulsator->loadSession(s);
-}
-
-/**
- * Called by kernel components to see the transport pulse this block.
- */
-void SyncMaster::getTransportPulse(Pulse& p)
-{
-    p = transportPulse;
-}
-
-/**
- * This is in about a dozen places now.  Formerly tried to force this
- * through MobiusContainer but we don't have that here, and I'm tired
- * of hiding Juce.
- *
- * Within the SyncMaster subcomponents, it would be good to have a stable
- * millisecond number that is captured at the start of each audio block rather
- * than going back to Juce each time, which might come back with a different number.
- */
-int SyncMaster::getMilliseconds()
-{
-    return juce::Time::getMillisecondCounter();
-}
-
 //////////////////////////////////////////////////////////////////////
 //
-// Actions
+// Shell Requests
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * The only action receiver right now is Transport.
+ * There isn't anything about host/midi sync that is under the user's
+ * control.
+ */
 void SyncMaster::doAction(UIAction* a)
 {
     Symbol* s = a->symbol;
 
     switch (s->id) {
-        case FuncTransportStop: doStop(a); break;
-        case FuncTransportStart: doStart(a); break;
-        case ParamTransportTempo: doTempo(a); break;
-        case ParamTransportBeatsPerBar: doBeatsPerBar(a); break;
+        
+        case FuncTransportStop:
+            transport.stop();
+            break;
+
+        case FuncTransportStart:
+            transport.start();
+            break;
+
+            // todo FuncTransportPause
+            
+        case ParamTransportTempo: {
+            // Action doesn't have a way to pass floats right now so the
+            // integer value is x100
+            float tempo = (float)(a->value) / 100.0f;
+            transport.setTempo(tempo);
+        }
+            break;
+            
+        case ParamTransportBeatsPerBar:
+            transport.setBeatsPerBar(a->value);
+            break;
+
         default:
             Trace(1, "SyncMaster: Unhandled action %s", s->getName());
             break;
     }
 }
-
-//////////////////////////////////////////////////////////////////////
-//
-// Query
-//
-//////////////////////////////////////////////////////////////////////
 
 bool SyncMaster::doQuery(Query* q)
 {
@@ -153,78 +215,13 @@ bool SyncMaster::doQuery(Query* q)
     return success;
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// Advance
-//
-//////////////////////////////////////////////////////////////////////
-
-void SyncMaster::advance(MobiusAudioStream* stream)
-{
-    int frames = stream->getInterruptFrames();
-
-    // once we start receiving audio blocks, it is okay to start converting
-    // MIDI events into MidiSyncMessages, if you allow event queueing before
-    // blocks come in, the queue can overflow
-    // todo: while not normally a problem, if you disconnect the audio stream
-    // after initialization, then the queue will get stuck and overflow, the maintenance
-    // thread could monitor for a suspension of audio blocks and disable the queue
-    enableEventQueue();
-    
-    if (transport.advance(frames, transportPulse)) {
-        transportPulse.source = Pulse::SourceTransport;
-    }
-    else {
-        // dumb way to indiciate "none"
-        transportPulse.source = Pulse::SourceNone;
-    }
-
-    pulsator->interruptStart(stream);
-
-    // Supervisor formerly called this on the maintenance thread
-    // interval, since we don't get a performMaintenance ping down here
-    // we can check it on every block, the granularity doesn't really matter
-    // since it is based off millisecond time advance
-    midiAnalyzer->checkClocks();
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// Transport Actions
-//
-//////////////////////////////////////////////////////////////////////
-
-void SyncMaster::doStop(UIAction* a)
-{
-    (void)a;
-}
-
-void SyncMaster::doStart(UIAction* a)
-{
-    (void)a;
-}
-
-void SyncMaster::doTempo(UIAction* a)
-{
-    (void)a;
-}
-
-void SyncMaster::doBeatsPerBar(UIAction* a)
-{
-    (void)a;
-}
-
-//////////////////////////////////////////////////////////////////////
-//
-// State
-//
-//////////////////////////////////////////////////////////////////////
-
+/**
+ * Unclear whether we need to be including the state for the
+ * non-transport sources.  Some of that will also be returned
+ * through the TrackState for each track that follows a sync source.
+ */
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
-    // todo: if we consolidate all of the state sources up here
-    // we could just to a single structure copy
-
     extstate->transport = state.transport;
 
     midiAnalyzer->getState(extstate->midi);
@@ -233,6 +230,178 @@ void SyncMaster::refreshState(SyncMasterState* extstate)
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
     transport.refreshPriorityState(pstate);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+// Internal Component Services
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * This is in about a dozen places now.  Formerly tried to force this
+ * through MobiusContainer but I'm tired of hiding Juce.
+ *
+ * Within the SyncMaster subcomponents, it would be good to have a stable
+ * millisecond number that is captured at the start of each audio block rather
+ * than going back to Juce each time, which might come back with a different number.
+ */
+int SyncMaster::getMilliseconds()
+{
+    return juce::Time::getMillisecondCounter();
+}
+
+/**
+ * MidiRealizer does this for MIDI device issues.
+ * This needs to end up in Supervisor::addAlert and handled in the
+ * UI thread.
+ */
+void SyncMaster::sendAlert(juce::String msg)
+{
+    container->addAlert(msg);
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Granular State
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * For the track monitoring UI, return information about the sync source this
+ * track is following.
+ *
+ * For MIDI do we want to return the fluctuationg tempo or smooth tempo
+ * with only one decimal place?
+ */
+float SyncMaster::getTempo(Pulse::Source src)
+{
+    float tempo = 0.0f;
+    switch (src) {
+        
+        case Pulse::SourceHost: {
+            // Pulsator tracks this
+            Pulsator::SyncState* state = pulsator->getHostState();
+            tempo = state->tempo;
+        }
+            break;
+
+        case Pulse::SourceMidiIn: {
+            // Pulsator also tracks this but we can get it directly from the Analyzer
+            tempo = midiAnalyzer->getTempo();
+        }
+            break;
+
+        case Pulse::SourceMidiOut:
+        case Pulse::SourceTransport: {
+            // these are now the same
+            tempo = transport.getTempo();
+        }
+            break;
+
+        default: break;
+    }
+    return tempo;
+}
+
+/**
+ * Todo: old code had the notion of "raw beat" which advanced without wrapping
+ * and regular beat which wrapped according to beatsPerBar.
+ *
+ * This currently returns raw beats for MidiIn.  May need to differentiate this.
+ */
+int SyncMaster::getBeat(Pulse::Source src)
+{
+    int beat = 0;
+    switch (src) {
+    
+        case Pulse::SourceHost: {
+            // Pulsator tracks this
+            Pulsator::SyncState* state = pulsator->getHostState();
+            beat = state->beat;
+        }
+            break;
+
+        case Pulse::SourceMidiIn: {
+            // Pulsator also tracks this but we can get it directly from the Analyzer
+            beat = midiAnalyzer->getBeat();
+        }
+            break;
+
+        case Pulse::SourceMidiOut:
+        case Pulse::SourceTransport: {
+            // these are now the same
+            beat = transport.getBeat();
+        }
+            break;
+
+        default: break;
+    }
+    return beat;
+}
+
+/**
+ * The host usually has a reliable time signature but not always.
+ * MIDI doesn't have a time signature at all.
+ * The Transport has one under user control.
+ *
+ * Fall back to the Transport which will get it from the Session.
+ *
+ * In old code, the BPB for internal tracks was annoyingly complex, getting it from
+ * the Setup or the current value of the subcycles parameter.  Mobius core
+ * can continue doing that if it wants, but it would be best to standardize
+ * on getting it from the Transport.
+ */
+int Pulsator::getBeatsPerBar(Pulse::Source src)
+{
+    int bpb = transport.getBeatsPerBar();
+
+    if (src == Pulse::SourceHost) {
+        Pulsator::SyncState* state = pulsator->getHostState();
+        hbpb = state->beatsPerBar;
+        if (hbpb > 0)
+          bpb = hbpb;
+    }
+    return bpb;
+}
+
+/**
+ * What bar you're on depends on an accurate value for beatsPerBar.
+ * Transport will have this and host usually will, but we have to guess
+ * for MIDI.
+ */
+int SyncMaster::getBar(Pulse::Source src)
+{
+    // is this supposed to be zero relative like beat?
+    // older code assumed 1 relative
+    int bar = 1;
+    switch (src) {
+    
+        case Pulse::SourceHost: {
+            // Pulsator tracks this
+            Pulsator::SyncState* state = pulsator->getHostState();
+            bar = state->bar;
+        }
+            break;
+
+        case Pulse::SourceMidiIn: {
+            int beat = midiAnalyzer->getBeat();
+            int bpb = getBpb(src);
+            if (bpb > 0)
+              bar = (beat / bpb) + 1;
+        }
+            break;
+
+        case Pulse::SourceMidiOut:
+        case Pulse::SourceTransport: {
+            // these are now the same
+            bar = transport.getBar();
+        }
+
+        default: break;
+    }
+    return bar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -306,22 +475,6 @@ int SyncMaster::getPulseFrame(int followerId, Pulse::Type type)
 {
     return pulsator->getPulseFrame(followerId, type);
 }
-float SyncMaster::getTempo(Pulse::Source src)
-{
-    return pulsator->getTempo(src);
-}
-int SyncMaster::getBeat(Pulse::Source src)
-{
-    return pulsator->getBeat(src);
-}
-int SyncMaster::getBar(Pulse::Source src)
-{
-    return pulsator->getBar(src);
-}
-int SyncMaster::getBeatsPerBar(Pulse::Source src)
-{
-    return pulsator->getBeatsPerBar(src);
-}
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -391,6 +544,8 @@ void SyncMaster::midiContinue()
     midiRealizer->midiContinue();
 }
 
+// Synchronizer needs to be using pulses now
+#if 0
 /**
  * The event interface should no longer be used.  The clock generator
  * thread will be adjusted to match the advance of the transport bar, not the
@@ -408,6 +563,7 @@ void SyncMaster::midiOutIterateStart()
 {
     midiRealizer->iterateStart();
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -415,6 +571,7 @@ void SyncMaster::midiOutIterateStart()
 //
 //////////////////////////////////////////////////////////////////////
     
+#if 0
 class MidiSyncEvent* SyncMaster::midiInNextEvent()
 {
     return midiAnalyzer->nextEvent();
@@ -427,6 +584,7 @@ void SyncMaster::midiInIterateStart()
 {
     midiAnalyzer->iterateStart();
 }
+#endif
 
 float SyncMaster::getMidiInTempo()
 {
@@ -459,6 +617,7 @@ bool SyncMaster::isMidiInStarted()
 //
 //////////////////////////////////////////////////////////////////////
     
+#if 0
 class MidiSyncEvent* SyncMaster::hostNextEvent()
 {
     //return midiAnalyzer->nextEvent();
@@ -473,6 +632,7 @@ void SyncMaster::hostIterateStart()
 {
     //midiAnalyzer->iterateStart();
 }
+#endif
 
 float SyncMaster::getHostTempo()
 {

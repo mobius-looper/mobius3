@@ -5,9 +5,10 @@
  * What used to be called SyncMode=Out is now more like track control
  * over the system transport with the option to make it generate MIDI clocks.
  *
- * The Realizer is independent of Transport and maintains it's own tempo, '
+ * The Realizer is independent of Transport and maintains it's own tempo,
  * beatsPerBar and other control parameters.  In current usage however, it will
- * always be a slave to the Transport and track the corresponding Transport parameters exactly.
+ * always be a slave to the Transport and track the corresponding Transport parameters
+ * exactly.
  * Not seeing a reason to generate clocks at a tempo independent of the Transport
  * but it's possible.
  */
@@ -53,15 +54,14 @@ class MidiRealizer
 
     void initialize(class SyncMaster* sm, class MidiManager* mm);
     void setSampleRate(int rate);
-
     void shutdown();
-    void startThread();
-    void stopThread();
-    
-    // message accumulation can be turned on and off for testing
+
     void enableEvents();
     void disableEvents();
     void flushEvents();
+    
+    void startThread();
+    void stopThread();
     
     // Transport control
     
@@ -82,8 +82,9 @@ class MidiRealizer
     void incStarts();
     int getSongClock();
 
+    // Events
+
     MidiSyncEvent* nextEvent();
-    
     // new non-destrictive iterator
     // since the consumer of this, Pulsator, was moved up here, we could
     // just expose the MidiQueue and be done with it
@@ -92,6 +93,7 @@ class MidiRealizer
     
   protected:
 
+    // this is called from the clock thread NOT the SyncMaster on audio blocks
     void advance();
     void setTempoNow(float newTempo);
     
@@ -103,7 +105,6 @@ class MidiRealizer
     class MidiManager* midiManager = nullptr;
     
     MidiClockThread* thread = nullptr;
-
     MidiQueue outputQueue;
 
     /**

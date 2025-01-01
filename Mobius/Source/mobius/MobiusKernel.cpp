@@ -139,10 +139,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
     configuration = config;
     session = ses;
 
-    // this is a mess, just get it working
     // this MUST happen before any tracks try to register followers
-    syncMaster.kludgeSetup(this, container->getMidiManager());
-    syncMaster.setSampleRate(container->getSampleRate());
+    syncMaster.initialize(cont);
     syncMaster.loadSession(ses);
 
     notifier.initialize(this);

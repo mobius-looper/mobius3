@@ -452,9 +452,6 @@ void MidiRealizer::advance()
 //
 // Transport Control
 //
-// These are the entry points Synchronizer calls to control the MIDI
-// output thread.
-//
 //////////////////////////////////////////////////////////////////////
 
 //

@@ -1,12 +1,6 @@
 /**
  * Fingering the pulse, of the world.
  *
- * Use of the interfaces MobiusAudioStream and AudioTime are from when this code
- * lived under Mobius.  Now that it has been moved up a level, this could be rewritten
- * to directly use what those interfaces hide: JuceAudioStream and HostSyncState.
- * Or better, define local interfaces to hide those two that are not dependent on
- * either Mobius or Supervisor.
- *
  */
 
 #include <JuceHeader.h>
@@ -16,13 +10,14 @@
 
 #include "../mobius/MobiusInterface.h"
 
-#include "MidiRealizer.h"
 #include "MidiSyncEvent.h"
-#include "MidiQueue.h"
-
 #include "Pulse.h"
 #include "Leader.h"
 #include "Follower.h"
+
+#include "MidiAnalyzer.h"
+#include "MidiRealizer.h"
+//#include "MidiQueue.h"
 #include "SyncMaster.h"
 
 #include "Pulsator.h"
@@ -74,19 +69,10 @@ void Pulsator::loadSession(Session* s)
     orderedLeaders.ensureStorageAllocated(numLeaders+1);
 }
 
-void Pulsator::reset()
-{
-    host.pulse.source = Pulse::SourceNone;
-    midiIn.pulse.source = Pulse::SourceNone;
-    midiOut.pulse.source = Pulse::SourceNone;
-    transport.pulse.source = Pulse::SourceNone;
-    
-    // this is where pending pulses that were just over the last block
-    // are activated for this block
-    for (auto leader : leaders)
-      leader->reset();
-}
-
+/**
+ * Called at the beginning of each audio block to detect sync
+ * pulses from the various sources.
+ */
 void Pulsator::interruptStart(MobiusAudioStream* stream)
 {
     // capture some statistics
@@ -98,6 +84,7 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
     
     gatherHost(stream);
     gatherMidi();
+    gatherTransport();
 
     // leader pulses are added as the tracks advance
 
@@ -112,105 +99,27 @@ void Pulsator::interruptStart(MobiusAudioStream* stream)
     //trace();
 }
 
+/**
+ * Reset pulse tracking state at the beginning of each block.
+ */
+void Pulsator::reset()
+{
+    host.pulse.source = Pulse::SourceNone;
+    midiIn.pulse.source = Pulse::SourceNone;
+    midiOut.pulse.source = Pulse::SourceNone;
+    transport.pulse.source = Pulse::SourceNone;
+    
+    // this is where pending pulses that were just over the last block
+    // are activated for this block
+    for (auto leader : leaders)
+      leader->reset();
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 // Source state
 //
 //////////////////////////////////////////////////////////////////////
-
-/**
- * For the track monitoring UI, return information about the sync source this
- * track is following.
- *
- * For MIDI do we want to return the fluxuating tempo or smooth tempo
- * with only one decimal place?
- */
-float Pulsator::getTempo(Pulse::Source src)
-{
-    float tempo = 0.0f;
-    switch (src) {
-        case Pulse::SourceHost: tempo = host.tempo; break;
-            //case SourceMidiIn: tempo = midiRealizer->getInputSmoothTempo(); break;
-        case Pulse::SourceMidiIn: tempo = syncMaster->getMidiInTempo(); break;
-        case Pulse::SourceMidiOut: tempo = syncMaster->getMidiOutTempo(); break;
-        case Pulse::SourceTransport: tempo = transport.tempo; break;
-        default: break;
-    }
-    return tempo;
-}
-
-/**
- * Internal pulses do not have a beat number, and the current UI won't ask for one.
- * I suppose when it registered the events for subcycle/cycle it could also
- * register the subcycle/cycle numbers.
- */
-int Pulsator::getBeat(Pulse::Source src)
-{
-    int beat = 0;
-    switch (src) {
-        case Pulse::SourceHost: beat = host.beat; break;
-        case Pulse::SourceMidiIn: beat = syncMaster->getMidiInRawBeat(); break;
-        case Pulse::SourceMidiOut: beat = syncMaster->getMidiOutRawBeat(); break;
-        case Pulse::SourceTransport: beat = transport.beat; break;
-        default: break;
-    }
-    return beat;
-}
-
-/**
- * Bar numbers depend on a reliable BeatsPerBar, punt
- */
-int Pulsator::getBar(Pulse::Source src)
-{
-    int bar = 0;
-    switch (src) {
-        case Pulse::SourceHost: bar = host.bar; break;
-        case Pulse::SourceMidiIn: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
-        case Pulse::SourceMidiOut: bar = getBar(getBeat(src), getBeatsPerBar(src)); break;
-        case Pulse::SourceTransport: bar = transport.bar; break;
-        default: break;
-    }
-    return bar;
-}
-
-/**
- * Calculate the bar number for a beat with a known time signature.
- */
-int Pulsator::getBar(int beat, int bpb)
-{
-    int bar = 1;
-    if (bpb > 0)
-      bar = (beat / bpb) + 1;
-    return bar;
-}
-
-/**
- * Time signature is unreliable when when it is getBar()
- * won't return anything meaningful.
- * Might want an isBarKnown method?
- *
- * The BPB for internal tracks was annoyingly complex, getting it from
- * the Setup or the current value of the subcycles parameter.
- * Assuming for now that internal tracks will deal with that and won't
- * need to be calling up here.
- *
- * Likewise MIDI doesn't have any notion of a reliable time siguature
- * so it would have to come from configuration parameters.
- *
- * Only host can tell us what this is, and even then some hosts may not.
- */
-int Pulsator::getBeatsPerBar(Pulse::Source src)
-{
-    int bar = 0;
-    switch (src) {
-        case Pulse::SourceHost: bar = host.beatsPerBar; break;
-        case Pulse::SourceMidiIn: bar = 4; break;
-        case Pulse::SourceMidiOut: bar = 4; break;
-        case Pulse::SourceTransport: bar = host.beatsPerBar; break;
-        default: break;
-    }
-    return bar;
-}
 
 void Pulsator::trace()
 {
@@ -345,7 +254,7 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
 
 //////////////////////////////////////////////////////////////////////
 //
-// MIDI In & Out
+// MIDI
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -357,23 +266,27 @@ void Pulsator::gatherHost(MobiusAudioStream* stream)
  */
 void Pulsator::gatherMidi()
 {
-    syncMaster->midiInIterateStart();
-    MidiSyncEvent* mse = syncMaster->midiInIterateNext();
+    MidiAnalyzer* analyzer = syncMaster->getMidiAnalyzer();
+
+    analyzer->iterateStart();
+    MidiSyncEvent* mse = analyzer->iterateNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiIn, &(midiIn.pulse)))
           break;
         else
-          mse = syncMaster->midiInIterateNext();
+          mse = analyzer->iterateNext();
     }
-    
-    // again for internal output events
-    syncMaster->midiOutIterateStart();
-    mse = syncMaster->midiOutIterateNext();
+
+    // this is actually not used any more, things don't sync directly
+    // with the clock generator, they sync with the Transport
+    MidiRealizer* realizer = syncMaster->getMidiRealizer();
+    realizer->iterateStart();
+    mse = realizer->iterateNext();
     while (mse != nullptr) {
         if (detectMidiBeat(mse, Pulse::SourceMidiOut, &(midiOut.pulse)))
           break;
         else
-          mse = syncMaster->midiOutIterateNext();
+          mse = realizer->iterateNext();
     }
 }
 
@@ -445,6 +358,10 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
 //
 //////////////////////////////////////////////////////////////////////
 
+/**
+ * Transport maintains it's own Pulse so we don't really need to copy
+ * it over here, but make it look like everything else.
+ */
 void Pulsator::gatherTransport()
 {
     Transport* t = syncMaster->getTransport();
@@ -452,11 +369,9 @@ void Pulsator::gatherTransport()
     transport.tempo = t->getTempo();
     transport.beat = t->getBeat();
     transport.bar = t->getBar();
+    transport.pulse = *(t->getPulse());
 
-    // how the hell is this going to work?
-    syncMaster->getTransportPulse(transport.pulse);
-
-    // ugh, MetronomeTrack didn't have our millisecond counter
+    // Transport has historically not set this, it could
     if (transport.pulse.source != Pulse::SourceNone)
       transport.pulse.millisecond = millisecond;
 }

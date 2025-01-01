@@ -16,6 +16,7 @@
 
 #include "Pulse.h"
 #include "SyncSourceState.h"
+#include "SyncMaster.h"
 #include "Transport.h"
 
 /**
@@ -47,8 +48,11 @@ const float TransportMaxTempo = 1000.0f;
  */
 const float TransportMinTempo = 10.0f;
 
-Transport::Transport()
+Transport::Transport(SyncMaster* sm))
 {
+    syncMaster = sm;
+    // this will usually be wrong, setSampleRate needs to be called
+    // after the audio stream is initialized to get the right one
     sampleRate = 44100;
     state.beatsPerBar = 4;
     setTempo(120.0f);
@@ -59,18 +63,19 @@ Transport::~Transport()
 }
 
 /**
- * The audio stream sample rate is necessary for calculating
- * tempo and timeline frames.  It generally does not change.
+ * Called whenever the sample rate changes.
+ * Initialization happens before the audio devices are open so MobiusContainer
+ * won't have the right one when we were constructured.  It may also change at any
+ * time after initialization if the user fiddles with the audio device configuration.
  *
- * todo: needs some sanity checks on the range
+ * Since this is used for tempo calculations, go through the tempo/length calculations
+ * whenever this changes.  This is okay when the system is quiet, but if there are
+ * active tracks going and the masterBarLength changes, all sorts of weird things can
+ * happen.
  */
 void Transport::setSampleRate(int r)
 {
     sampleRate = r;
-    // go through tempo/length calculations again
-    // this is okay if we're being initialized, but if you change
-    // the sample rate while a session is active this changes the sync master
-    // length and all sorts of things are going to go haywire
     setTempo(tempo);
 }
 
@@ -197,7 +202,7 @@ void Transport::refreshPriorityState(PriorityState* state)
 
 //////////////////////////////////////////////////////////////////////
 //
-// Traansport Controls
+// Internal Transport Controls
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -244,12 +249,12 @@ int Transport::getBar()
 //////////////////////////////////////////////////////////////////////
 
 /**
- * Advance the transport and let the caller (SyncMaster) know if
- * it crossed a beat or bar boundary.
+ * Advance the transport and detect whether a pulse was encountered.
  */
-bool Transport::advance(int frames, Pulse& p)
+bool Transport::advance(int frames)
 {
     bool pulseEncountered = false;
+    pulse.reset();
 
     if (state.started) {
         int masterBarFrames = state.barFrames;
@@ -263,8 +268,8 @@ bool Transport::advance(int frames, Pulse& p)
             if (newPlayFrame >= masterBarFrames) {
                 // todo: multiple bars and PulseLoop?
                 pulseEncountered = true;
-                p.type = Pulse::PulseBar;
-                p.blockFrame = masterBarFrames - state.playFrame;
+                pulse.type = Pulse::PulseBar;
+                pulse.blockFrame = masterBarFrames - state.playFrame;
                 newPlayFrame -= masterBarFrames;
                 if (newPlayFrame > masterBarFrames) {
                     // something is off here, must be an extremely short block size
@@ -279,10 +284,10 @@ bool Transport::advance(int frames, Pulse& p)
                 int newBeat = newPlayFrame / framesPerBeat;
                 if (newBeat != beat) {
                     pulseEncountered = true;
-                    p.type = Pulse::PulseBeat;
+                    pulse.type = Pulse::PulseBeat;
                     int beatBase = newBeat * framesPerBeat;
                     int beatOver = newPlayFrame - beatBase;
-                    p.blockFrame = frames - beatOver;
+                    pulse.blockFrame = frames - beatOver;
                     beat = newBeat;
                     beatHit = true;
                 }
@@ -290,6 +295,11 @@ bool Transport::advance(int frames, Pulse& p)
         }
     }
     return pulseEncountered;
+}
+
+Pulse* Transport::getPulse()
+{
+    return &pulse;
 }
 
 //////////////////////////////////////////////////////////////////////

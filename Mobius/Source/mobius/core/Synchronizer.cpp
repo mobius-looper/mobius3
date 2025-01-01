@@ -346,6 +346,8 @@ SyncTracker* Synchronizer::getSyncTracker(SyncSource src)
  * is also locked because this defines where the bars were when the 
  * tracker was used for recording.
  */
+// old complicated way
+#if 0
 int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
 {
     int beatsPerBar = 0;
@@ -384,12 +386,33 @@ int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
 
     return beatsPerBar;
 }
+#endif
+
+/**
+ * New way, trust SyncMaster transport
+ */
+int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
+{
+    int bpb = 4;
+    
+    if (src == SYNC_HOST)
+      bpb = mSyncMaster->getBeatsPerBar(Pulse::SourceHost);
+    else
+      bpb = mSyncMaster->getBeatsPerBar(Pulse::SourceTransport);
+      
+    return bpb;
+}
 
 /****************************************************************************
  *                                                                          *
  *                          MIDI OUT SYNC VARIABLES                         *
  *                                                                          *
  ****************************************************************************/
+
+//
+// new: these continue to exist for the old script variables but everything
+// comes indirectly from the SyncMaster::Transport
+// 
 
 /**
  * Get the effective beatsPerBar for OUT sync.
@@ -410,7 +433,7 @@ int Synchronizer::getOutBeatsPerBar()
  */
 float Synchronizer::getOutTempo()
 {
-	return mSyncMaster->getMidiOutTempo();
+	return mSyncMaster->getTempo();
 }
 
 /**
@@ -421,6 +444,8 @@ float Synchronizer::getOutTempo()
  */
 int Synchronizer::getOutRawBeat()
 {
+    // unlike the Transport beat, this will advance without end
+    // is that what we want here?
     return mSyncMaster->getMidiOutRawBeat();
 }
 
@@ -431,11 +456,14 @@ int Synchronizer::getOutRawBeat()
  */
 int Synchronizer::getOutBeat()
 {
+    #if 0
     int beat = getOutRawBeat();
     int beatsPerBar = getOutBeatsPerBar();
 	if (beatsPerBar > 0)
 	  beat = beat % beatsPerBar;
 	return beat;
+    #endif
+    return mSyncMaster->getBeat();
 }
 
 /**
@@ -446,6 +474,7 @@ int Synchronizer::getOutBeat()
  */
 int Synchronizer::getOutBar()
 {
+    #if 0
     int bar = 1;
     int beatsPerBar = getOutBeatsPerBar();
 	if (beatsPerBar > 0) {
@@ -453,6 +482,8 @@ int Synchronizer::getOutBar()
         bar = beat / beatsPerBar;
     }
     return bar;
+    #endif
+    return mSyncMaster->getBar();
 }
 
 /**
@@ -489,6 +520,8 @@ int Synchronizer::getStarts()
  *                                                                          *
  ****************************************************************************/
 
+// new: these also go through SyncMaster
+
 /**
  * Get the effective beats per bar for MIDI sync.
  * This has historically not been something defined within the transport.
@@ -513,7 +546,7 @@ int Synchronizer::getInBeatsPerBar()
  */
 float Synchronizer::getInTempo()
 {
-	return mSyncMaster->getMidiInTempo();
+	return mSyncMaster->getTempo(Pulse::SourceMidiIn);
 }
 
 /**
@@ -522,7 +555,7 @@ float Synchronizer::getInTempo()
  */
 int Synchronizer::getInRawBeat()
 {
-    return mSyncMaster->getMidiInRawBeat();
+    return mSyncMaster->getBeat(Pulse::SourceMidiIn);
 }
 
 /**
@@ -533,12 +566,14 @@ int Synchronizer::getInRawBeat()
  */
 int Synchronizer::getInBeat()
 {
+    #if 0
     int beat = getInRawBeat();
     int beatsPerBar = getInBeatsPerBar();
 	if (beatsPerBar > 0)
 	  beat = beat % beatsPerBar;
-
 	return beat;
+    #endif
+    return mSyncMaster->getBeat(Pulse::SourceMidiIn);
 }
 
 /**
@@ -547,6 +582,7 @@ int Synchronizer::getInBeat()
  */
 int Synchronizer::getInBar()
 {
+    #if 0
     int bar = 1;
     int beatsPerBar = getInBeatsPerBar();
 	if (beatsPerBar > 0) {
@@ -554,6 +590,8 @@ int Synchronizer::getInBar()
         bar = beat / beatsPerBar;
     }
 	return bar;
+    #endif
+    return mSyncMaster->getBar(Pulse::SourceMidiIn);
 }
 
 /**
@@ -594,7 +632,8 @@ int Synchronizer::getHostBeatsPerBar()
  */
 float Synchronizer::getHostTempo()
 {
-	return mHostTempo;
+	//return mHostTempo;
+    return mSyncMaster->getTempo(Pulse::SourceHost);
 }
 
 /**
@@ -603,7 +642,8 @@ float Synchronizer::getHostTempo()
  */
 int Synchronizer::getHostRawBeat()
 {
-    return mHostBeat;
+    //return mHostBeat;
+    return mSyncMaster->getBeat(Pulse::SourceHost);
 }
 
 /**
@@ -612,13 +652,15 @@ int Synchronizer::getHostRawBeat()
  */
 int Synchronizer::getHostBeat()
 {
+    #if 0
     int beat = mHostBeat;
 
     int bpb = getHostBeatsPerBar();
     if (bpb > 0)
       beat = (mHostBeat % bpb);
-
 	return beat;
+    #endif
+    return mSyncMaster->getBeat(Pulse::SourceHost);
 }
 
 /**
@@ -627,13 +669,14 @@ int Synchronizer::getHostBeat()
  */
 int Synchronizer::getHostBar()
 {
+    #if 0
     int bar = 0;
-
     int bpb = getHostBeatsPerBar();
     if (bpb > 0)
       bar = (mHostBeat / bpb);
-
 	return bar;
+    #endif
+    return mSyncMaster->getBar(Pulse::SourceHost);
 }
 
 /**
@@ -646,7 +689,8 @@ int Synchronizer::getHostBar()
  */
 bool Synchronizer::isHostReceiving()
 {
-	return mHostTransport;
+	//return mHostTransport;
+    return mSyncMaster->isHostReceiving();
 }
 
 /****************************************************************************
@@ -678,22 +722,23 @@ float Synchronizer::getTempo(Track* t)
 			// currently used so we don't display a tempo when we're
 			// not running
 			if (mSyncMaster->isMidiOutSending())
-			  tempo = mSyncMaster->getMidiOutTempo();
+			  tempo = mSyncMaster->getTempo(Pulse::SourceTransport);
             break;
 
 		case SYNC_MIDI:
-			tempo = mSyncMaster->getMidiInTempo();
+			tempo = mSyncMaster->getTempo(Pulse::SourceMidiIn);
             break;
 
 		case SYNC_HOST:
 			// NOTE: mHostTime is usually valid, but technically it could
 			// be in a state of change during an interrupt, so we need to 
 			// capture it to a local field.
-			tempo = mHostTempo;
+			//tempo = mHostTempo;
+            tempo = mSyncMaster->getTempo(Pulse::SourceHost);
             break;
 
         case SYNC_TRANSPORT:
-            tempo = mSyncMaster->getTransport()->getTempo();
+            tempo = mSyncMaster->getTempo();
             break;
 			
 		// have to have these or Xcode 5 bitches
@@ -770,7 +815,7 @@ int Synchronizer::getBeat(Track* t)
             break;
 
         case SYNC_TRANSPORT:
-            beat = mSyncMaster->getTransport()->getBeat();
+            beat = mSyncMaster->getBeat();
             break;
 
 		// have to have these or Xcode 5 bitches
@@ -808,7 +853,7 @@ int Synchronizer::getBar(Track* t)
             break;
 
         case SYNC_TRANSPORT:
-            bar = mSyncMaster->getTransport()->getBar();
+            bar = mSyncMaster->getBar();
             break;
 
 		// have to have these or Xcode 5 bitches
