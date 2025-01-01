@@ -15,6 +15,7 @@
 #include "../model/PriorityState.h"
 
 #include "Pulse.h"
+#include "SyncSourceState.h"
 #include "Transport.h"
 
 /**
@@ -49,7 +50,7 @@ const float TransportMinTempo = 10.0f;
 Transport::Transport()
 {
     sampleRate = 44100;
-    beatsPerBar = 4;
+    state.beatsPerBar = 4;
     setTempo(120.0f);
 }
 
@@ -78,6 +79,11 @@ float Transport::getTempo()
     return tempo;
 }
 
+SyncSourceState* getState()
+{
+    return &state;
+}
+
 int Transport::getMasterBarFrames()
 {
     return masterBarFrames;
@@ -100,18 +106,18 @@ void Transport::setTempo(float t)
     else if (t > TransportMaxTempo)
       t = TransportMaxTempo;
     
-    tempo = t;
-    masterBarFrames = 0;
+    state.tempo = t;
+    state.masterBarFrames = 0;
     framesPerBeat = 0;
 
     // correct this if unset
-    if (beatsPerBar < 1) beatsPerBar = 1;
+    if (state.beatsPerBar < 1) state.beatsPerBar = 1;
 
-    float beatsPerSecond = tempo / 60.0f;
+    float beatsPerSecond = state.tempo / 60.0f;
     framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
     int framesPerBar = framesPerBeat * beatsPerBar;
     // not supporting multiple bars yet
-    masterBarFrames = framesPerBar;
+    state.barFrames = framesPerBar;
 
     // if we were currently playing, this may have made it shorter
     wrap();
@@ -128,7 +134,7 @@ void Transport::setTempo(float t)
 void Transport::setMasterBarFrames(int f)
 {
     if (f > 0) {
-        masterBarFrames = f;
+        state.barFrames = f;
         recalculateTempo();
     }
 }
@@ -144,38 +150,38 @@ void Transport::setMasterBarFrames(int f)
 void Transport::setBeatsPerBar(int bpb)
 {
     if (bpb > 0) {
-        beatsPerBar = bpb;
+        state.beatsPerBar = bpb;
         // this can result in roundoff error where framesPerBeat * beatsPerBar
         // is not exactly equal to masterBarFrames
         // that's okay as long as the final pulse uses masterBarFrames to trigger
         // rather than inner beat calculations
-        framesPerBeat = masterBarFrames / beatsPerBar;
+        framesPerBeat = state.barFrames / state.beatsPerBar;
     }
 }
 
 void Transport::setTimelineFrame(int f)
 {
     if (f >= 0) {
-        playFrame = f;
+        state.playFrame = f;
         wrap();
     }
 }
 
 void Transport::wrap()
 {
-    if (masterBarFrames == 0) {
-        playFrame = 0;
+    if (state.barFrames == 0) {
+        state.playFrame = 0;
     }
     else {
         // hey, can't math do this?
-        while (playFrame > masterBarFrames)
-          playFrame -= masterBarFrames;
+        while (state.playFrame > state.barFrames)
+          state.playFrame -= state.barFrames;
     }
 }
 
 int Transport::getTimelineFrame()
 {
-    return playFrame;
+    return state.playFrame;
 }
 
 /**
@@ -197,13 +203,13 @@ void Transport::refreshPriorityState(PriorityState* state)
 
 void Transport::start()
 {
-    started = true;
+    state.started = true;
 }
 
 void Transport::stop()
 {
-    started = false;
-    playFrame = 0;
+    state.started = false;
+    state.playFrame = 0;
 }
 
 void Transport::pause()
@@ -213,7 +219,7 @@ void Transport::pause()
 
 bool Transport::isStarted()
 {
-    return started;
+    return state.started;
 }
 
 bool Transport::isPaused()
@@ -223,12 +229,12 @@ bool Transport::isPaused()
 
 int Transport::getBeat()
 {
-    return beat;
+    return state.beat;
 }
 
 int Transport::getBar()
 {
-    return bar;
+    return state.bar;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -245,25 +251,27 @@ bool Transport::advance(int frames, Pulse& p)
 {
     bool pulseEncountered = false;
 
-    if (started) {
-        if (playFrame >= masterBarFrames) {
+    if (state.started) {
+        int masterBarFrames = state.barFrames;
+        
+        if (state.playFrame >= masterBarFrames) {
             // bad dog, could wrap here but shouldn't be happening
             Trace(1, "Transport: Play frame beyond the end");
         }
         else {
-            int newPlayFrame = playFrame + frames;
+            int newPlayFrame = state.playFrame + frames;
             if (newPlayFrame >= masterBarFrames) {
                 // todo: multiple bars and PulseLoop?
                 pulseEncountered = true;
                 p.type = Pulse::PulseBar;
-                p.blockFrame = masterBarFrames - playFrame;
+                p.blockFrame = masterBarFrames - state.playFrame;
                 newPlayFrame -= masterBarFrames;
                 if (newPlayFrame > masterBarFrames) {
                     // something is off here, must be an extremely short block size
                     Trace(1, "Transport: PlayFrame anomoly");
                 }
-                playFrame = newPlayFrame;
-                beat = 0;
+                state.playFrame = newPlayFrame;
+                state.beat = 0;
                 // for state refresh
                 barHit = true;
             }
@@ -301,15 +309,15 @@ bool Transport::advance(int frames, Pulse& p)
  */
 void Transport::recalculateTempo()
 {
-    if (masterBarFrames == 0) {
+    if (state.barFrames == 0) {
         // degenerate case, not sure what this means
         Trace(1, "Transport::recalculateTempo Timeline length is zero");
     }
     else {
         // correct this if it isn't by now
-        if (beatsPerBar < 1) beatsPerBar = 1;
+        if (state.beatsPerBar < 1) state.beatsPerBar = 1;
     
-        float floatFramesPerBeat = (float)masterBarFrames / (float)beatsPerBar;
+        float floatFramesPerBeat = (float)(state.barFrames) / (float)(state.beatsPerBar);
         float secondsPerBeat = floatFramesPerBeat / (float)sampleRate;
         float newTempo = 60.0f / secondsPerBeat;
 
@@ -325,9 +333,9 @@ void Transport::recalculateTempo()
 		while (newTempo < minTempo)
           newTempo *= 2.0;
 
-        tempo = newTempo;
+        state.tempo = newTempo;
 
-        float beatsPerSecond = tempo / 60.0f;
+        float beatsPerSecond = newTempo / 60.0f;
         framesPerBeat = (int)((float)sampleRate / beatsPerSecond);
 	}
 }

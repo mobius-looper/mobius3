@@ -4,6 +4,12 @@
  *
  * What used to be called SyncMode=Out is now more like track control
  * over the system transport with the option to make it generate MIDI clocks.
+ *
+ * The Realizer is independent of Transport and maintains it's own tempo, '
+ * beatsPerBar and other control parameters.  In current usage however, it will
+ * always be a slave to the Transport and track the corresponding Transport parameters exactly.
+ * Not seeing a reason to generate clocks at a tempo independent of the Transport
+ * but it's possible.
  */
 
 #pragma once

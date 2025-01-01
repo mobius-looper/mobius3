@@ -88,20 +88,20 @@ class SyncMaster
     void correctDrift(int follower, int frames);
     int getPulseFrame(int follower);
     int getPulseFrame(int followerId, Pulse::Type type);
+
+
+    // don't need these in Pulsator any more
     float getTempo(Pulse::Source src);
     int getBeat(Pulse::Source src);
     int getBar(Pulse::Source src);
     int getBeatsPerBar(Pulse::Source src);
     
     //////////////////////////////////////////////////////////////////////
-    // MIDI Output
+    // Transport/MIDI Output
     //////////////////////////////////////////////////////////////////////
 
-    /**
-     * Return the current tempo used when sending MIDI clocks.
-     */
-    float getMidiOutTempo();
-    void setMidiOutTempo(float tempo);
+    float getTempo();
+    void setTempo(float tempo);
 
     /**
      * Return the raw beat counter.  This will be zero if the clock is not running.

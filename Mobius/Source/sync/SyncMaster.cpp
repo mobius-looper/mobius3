@@ -325,7 +325,7 @@ int SyncMaster::getBeatsPerBar(Pulse::Source src)
 
 //////////////////////////////////////////////////////////////////////
 //
-// MIDI Out
+// Transport/MIDI Out
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -334,60 +334,68 @@ int SyncMaster::getBeatsPerBar(Pulse::Source src)
 // as the Transport status, don't think we need those to be independent
 // 
 
-float SyncMaster::getMidiOutTempo()
+float SyncMaster::getTempo()
 {
-    return midiRealizer->getTempo();
+    return transport.getTempo();
 }
-void SyncMaster::setMidiOutTempo(float tempo)
+void SyncMaster::setTempo(float tempo)
 {
-    midiRealizer->setTempo(tempo);
+    transport.setTempo(tempo);
 }
-int SyncMaster::getMidiOutRawBeat()
+int SyncMaster::getBeat()
 {
-    return midiRealizer->getBeat();
+    return transport.getBeat();
 }
-bool SyncMaster::isMidiOutSending()
+bool SyncMaster::isSending()
 {
     return midiRealizer->isSending();
 }
-bool SyncMaster::isMidiOutStarted()
+bool SyncMaster::isStarted()
 {
     return midiRealizer->isStarted();
 }
-int SyncMaster::getMidiOutStarts()
+int SyncMaster::getStarts()
 {
     return midiRealizer->getStarts();
 }
-void SyncMaster::incMidiOutStarts()
+void SyncMaster::incStarts()
 {
     midiRealizer->incStarts();
 }
-int SyncMaster::getMidiOutSongClock()
+int SyncMaster::getSongClock()
 {
     return midiRealizer->getSongClock();
 }
-void SyncMaster::midiOutStart()
+void SyncMaster::start()
 {
-    midiRealizer->start();
+    transport.start();
 }
-void SyncMaster::midiOutStartClocks()
+void SyncMaster::startClocks()
 {
-    midiRealizer->startClocks();
+    // unclear whether this should auto-enable MIDI out or if that still
+    // has authority
+    transport.startClocks();
 }
-void SyncMaster::midiOutStop()
+void SyncMaster::stop()
 {
-    midiRealizer->stop();
+    transport.stop();
 }
-void SyncMaster::midiOutStopSelective(bool sendStop, bool stopClocks)
+void SyncMaster::stopSelective(bool sendStop, bool stopClocks)
 {
-    midiRealizer->stopSelective(sendStop, stopClocks);
+    transport.stopSelective(sendStop, stopClocks);
 }
-void SyncMaster::midiOutContinue()
+void SyncMaster::midiContinue()
 {
+    // todo: several issues here, what does this mean for transport?
+    // what does pause() do?
     midiRealizer->midiContinue();
-
 }
 
+/**
+ * The event interface should no longer be used.  The clock generator
+ * thread will be adjusted to match the advance of the transport bar, not the
+ * other way around.  Still needed for legacy code in Synchronizer.
+ */
 class MidiSyncEvent* SyncMaster::midiOutNextEvent()
 {
     return midiRealizer->nextEvent();
@@ -398,7 +406,7 @@ class MidiSyncEvent* SyncMaster::midiOutIterateNext()
 }
 void SyncMaster::midiOutIterateStart()
 {
-    return midiRealizer->iterateStart();
+    midiRealizer->iterateStart();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -417,9 +425,8 @@ class MidiSyncEvent* SyncMaster::midiInIterateNext()
 }
 void SyncMaster::midiInIterateStart()
 {
-    return midiAnalyzer->iterateStart();
+    midiAnalyzer->iterateStart();
 }
-
 
 float SyncMaster::getMidiInTempo()
 {
@@ -444,6 +451,46 @@ bool SyncMaster::isMidiInReceiving()
 bool SyncMaster::isMidiInStarted()
 {
     return midiAnalyzer->isStarted();
+}
+
+//////////////////////////////////////////////////////////////////////
+//
+// Host
+//
+//////////////////////////////////////////////////////////////////////
+    
+class MidiSyncEvent* SyncMaster::hostNextEvent()
+{
+    //return midiAnalyzer->nextEvent();
+    return nullptr;
+}
+class MidiSyncEvent* SyncMaster::hostIterateNext()
+{
+    //return midiAnalyzer->iterateNext();
+    return nullptr;
+}
+void SyncMaster::hostIterateStart()
+{
+    //midiAnalyzer->iterateStart();
+}
+
+float SyncMaster::getHostTempo()
+{
+    return host.tempo;
+}
+int SyncMaster::getHostBeat()
+{
+    return host.beat;
+}
+bool SyncMaster::isHostReceiving()
+{
+    //return midiAnalyzer->isReceiving();
+    return false;
+}
+bool SyncMaster::isHostStarted()
+{
+    //return midiAnalyzer->isStarted();
+    return false;
 }
 
 /****************************************************************************/

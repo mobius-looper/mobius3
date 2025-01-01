@@ -39,7 +39,7 @@ class SyncSourceState
     
     // The position within the logical loop the transport is currently "playing"
     // The length of the loop is masterBarFrames * barsPerLoop
-    int loopFrame = 0;
+    int playFrame = 0;
 
     //
     // Extra state for MIDI clocks

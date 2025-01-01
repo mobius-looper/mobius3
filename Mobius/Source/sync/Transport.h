@@ -13,6 +13,8 @@
 
 #include <JuceHeader.h>
 
+#include "SyncSourceState.h"
+
 class Transport
 {
   public:
@@ -37,8 +39,13 @@ class Transport
     void setTimelineFrame(int f);
     int getTimelineFrame();
 
+    SyncSourceState* getState();
+    
     void start();
+    void startClocks();
     void stop();
+    void stopSelective(bool sendStop, bool stopClocks);
+    void midiContinue();
     void pause();
 
     bool isStarted();
@@ -53,18 +60,12 @@ class Transport
   private:
     
     int sampleRate = 44100;
-    float tempo = 0.0f;
-    int beatsPerBar = 0;
-    int barsPerLoop = 1;
-    int beat = 0;
-    int bar = 1;
+
+    SyncSourceState state;
     
-    int masterBarFrames = 0;
     int framesPerBeat = 0;
     int loopFrames = 0;
-    int playFrame = 0;
     
-    bool started = false;
     bool paused = false;
     bool beatHit = false;
     bool barHit = false;
