@@ -1,108 +1,25 @@
-/*
- * Copyright (c) 2010 Jeffrey S. Larson  <jeff@circularlabs.com>
- * All rights reserved.
- * See the LICENSE file for the full copyright and license declaration.
+/**
+ * This has been largely gutted during the Great SyncMaster Reorganization
+ *
+ * There is some potentially valuable commentary in the old code but I'm not doing
+ * to duplicate all of it here.  The new purpose of Synchronizer is:
+ *
+ *    - record the currently selected Track Sync Master and Out Sync Master
+ *        (temporary)
+ *
+ *    - receive internal notificiations of Record start and stop actions to determine
+ *      whether those need to be synchronized
+ *
+ *    - receive sync pulse notifications from SyncMaster to active the above synchroned events
  * 
- * ---------------------------------------------------------------------
- * 
- * A class encapsulating most of the logic related to external and
- * internal synchronization.
- * 
- * This one is a little funny in that it contains things that are called
- * from several levels of the system.  But the synchronization logic is
- * so closely related, I wanted to keep it all in one place rather than 
- * distributing it over Mobius, Track, InputStream, and Loop.  It's a bit
- * like a Mediator pattern.
+ *    - receive internal notification of track boundary crossings for track sync
  *
- * At the top, Synchronizer is called by Mobius during each audio Interrupt
- * to handle sync events that came in since the last interrupt.  MIDI events
- * are maintained in a MidiQueue, the queue maintains a MidiState that
- * is updated as events are removed from the queue.  MidiState keeps
- * track of start/stop, clock counts, and beat counts.
- * 
- * Synchronizer manages a MidiTransport object which coordinates the
- * control over a millisecond timer and a MIDI device used to generate
- * midi clocks in "out" sync mode.  As we send out MIDI clocks we also
- * route them into another MidiQueue managed by MidiTransport so that we
- * can track drift between the timer and the audio stream.  In this way, 
- * tracking internal clock drift works much the same as tracking an
- * external MIDI clock.
- * 
- * During an audio interrupt, we will be passed an AudioStream (now MobiusContainer)
- * containing information about VST/AU host sync events such as beats or 
- * bars that will happen within the next audio buffer.  The VST/AU
- * sync events, and events from the internal and external MIDI queues
- * are converted into a list of Event objects with appropriate offsets
- * into the current audio buffer.  These events will be injected
- * into the Event list of the active Loop in each Track so that each
- * track can take action on them differently.
- * 
- * Sync events for inter-track sync are a bit more complicated because
- * the master track must be advanced first before we know if it
- * crosses any interesting sync boundaries.  This is handled by 
- * giving the TrackSyncMaster track a higher priority than the others,
- * Mobius will process it first in each interrupt.
+ *    - receive drift correction notifications from SyncMaster
  *
- * So, the Synchronizer is the funnel into which three types of sync
- * events go to be converted into the appropriate Event objects for
- * each track.  These sync Events are then merged with the events scheduled
- * on the Loop.  
+ *    - setup Realign scheduling and interaction with SyncMaster
  *
- * When the loop is eventually ready to process a sync Event, it just
- * turns around and calls back to Synchronizer::syncEvent for processing.
- * Sync event processing happens during three loop modes:
+ *    - handle internal state related to AutoRecord
  *
- *  SynchronizeMode
- *     - a recording has been requested and we're waiting for the
- *       appropriate time to start
- *
- *  RecordMode
- *     - recording has begun, we're waiting for a function to stop the
- *       recording, waiting for the quantized end to be reached, or waiting
- *       for the end of an AutoRecord
- *
- *  PlayMode (MuteMode, ConfirmMode)
- *     - the loop has finished recording, we maintain a SyncTrakcer to 
- *       compare the receipt rate of sync pulses to the advance in the
- *       audio stream, the loop is adjusted if it drifts too far
- *       out of sync with the pulses
- *    
- * Loop will also call back to synchronizer when various events with
- * possible synchronization consequences occur.  These include ending
- * the initial record, multiplying or inserting new cycles, 
- * redefining the cycle length with unrounded multiply/insert, speed shift,
- * or "transport" operations like mute, restart, and pause.
- *
- * TRACKER EVENTS
- *
- * Once a SyncTracker has been locked it will generate its own events
- * for beats and bars according to the frame advance during each interrupt.
- * These will start close to the beat/bar events being received from the
- * external source but may drift over time.  
- *
- * It is important to understand that once a SyncTracker has been locked
- * all other tracks that follow the same source will beging following
- * tracker events *not* source events.  For example, say all tracks are
- * configured to follow MIDI clocks.
- *
- * The first track to be recorded watches pulses from the MIDI device,
- * calculates a tempo and rounds off the recording so we have a nice
- * integral beat length.  The tracker is now locked.  If another MIDI
- * follower begins recording it waits for pulses from the tracker rather
- * than the MIDI device.  The effect is similar to track sync, once the
- * tracker is locked it becomes the "master" track that everyone else follows.
- * This ensures that all tracks that follow the same source will end up
- * with compatible lengths which we can't ensure if we follow jittery
- * clocks like MIDI.  This also solves a number of other problems related
- * to realign and drift.  Realign is always done to the tracker not the
- * actual source so that all tracks realign consistently.  Drift correction
- * when it happens is detectted once by the tracker and applied to all
- * followers.  
- *
- * This applies to SYNC_MIDI and SYMC_HOST.  SYNC_OUT has historically fallen
- * back to normal Track Sync with the master track, but now that we have
- * Tracker Sync we could provide an alternate to follow OutSyncTracker 
- * which has a stable beat (subcycle) length.
  */
 
 #include <stdlib.h>
@@ -113,10 +30,9 @@
 #include "../../util/Util.h"
 #include "../../SyncTrace.h"
 
-#include "../../midi/MidiByte.h"
-#include "../../sync/MidiSyncEvent.h"
+//#include "../../midi/MidiByte.h"
+//#include "../../sync/MidiSyncEvent.h"
 #include "../../sync/SyncMaster.h"
-#include "../../sync/Transport.h"
 
 #include "../../model/MobiusConfig.h"
 #include "../../model/OldMobiusState.h"
@@ -139,7 +55,7 @@
 #include "Script.h"
 #include "Stream.h"
 #include "SyncState.h"
-#include "SyncTracker.h"
+//#include "SyncTracker.h"
 #include "Track.h"
 
 // new
@@ -148,81 +64,21 @@
 
 #include "Synchronizer.h"
 
-/****************************************************************************
- *                                                                          *
- *   							  CONSTANTS                                 *
- *                                                                          *
- ****************************************************************************/
-
-/****************************************************************************
- *                                                                          *
- *   							 SYNCHRONIZER                               *
- *                                                                          *
- ****************************************************************************/
-
 Synchronizer::Synchronizer(Mobius* mob)
 {
 	mMobius = mob;
     mSyncMaster = mob->getKernel()->getSyncMaster();
 
-    mHostTracker = new SyncTracker(SYNC_HOST);
-    mMidiTracker = new SyncTracker(SYNC_MIDI);
-    mOutTracker = new SyncTracker(SYNC_OUT);
-
     mOutSyncMaster = NULL;
 	mTrackSyncMaster = NULL;
 
-	mMaxSyncDrift = DEFAULT_MAX_SYNC_DRIFT;
-	mDriftCheckPoint = DRIFT_CHECK_LOOP;
-	mMidiRecordMode = MIDI_TEMPO_AVERAGE;
-    mNoSyncBeatRounding = false;
-
-    mInterruptEvents = new EventList();
-    
-    // formerly got this out of the pool which leaked on shutdown
-    // for some reason, just create an autonomous one and remember to delet eit
-    mReturnEvent = new Event(nullptr);
-    // suppresses a warning
-    mReturnEvent->setOwned(true);
-    
-	mHostTempo = 0.0f;
-	mHostBeat = 0;
-    mHostBeatsPerBar = 0;
-    mHostTransport = false;
-    mHostTransportPending = false;
 	mLastInterruptMsec = 0;
 	mInterruptMsec = 0;
 	mInterruptFrames = 0;
-
-    mForceDriftCorrect = false;
-	// kludge for special conditional breakpoints
-	mKludgeBreakpoint = false;
 }
 
 Synchronizer::~Synchronizer()
 {
-    delete mHostTracker;
-    delete mMidiTracker;
-    delete mOutTracker;
-    delete mReturnEvent;
-    
-    flushEvents();
-    delete mInterruptEvents;
-}
-
-/**
- * Flush the interrupt event list.
- */
-void Synchronizer::flushEvents()
-{
-    if (mInterruptEvents != nullptr) {
-        // have to mark them not owned so they can be freed
-        for (Event* event = mInterruptEvents->getEvents() ; event != NULL ; 
-             event = event->getNext())
-          event->setOwned(false);
-
-        mInterruptEvents->flush(true, false);
-    }
 }
 
 /**
@@ -230,19 +86,7 @@ void Synchronizer::flushEvents()
  */
 void Synchronizer::updateConfiguration(MobiusConfig* config)
 {
-	mMaxSyncDrift = config->getMaxSyncDrift();
-	mDriftCheckPoint = config->getDriftCheckPoint();
-	mMidiRecordMode = config->getMidiRecordMode();
-    mNoSyncBeatRounding = config->isNoSyncBeatRounding();
-}
-
-/**
- * Set a flag to force drift correction on the next interrupt.
- */
-void Synchronizer::forceDriftCorrect()
-{
-    Trace(2, "Sync: Scheduling forced drift correction\n");
-    mForceDriftCorrect = true;
+    (void)config;
 }
 
 /**
@@ -261,692 +105,29 @@ void Synchronizer::globalReset()
     //}
 }
 
-/****************************************************************************
- *                                                                          *
- *                               BEATS PER BAR                              *
- *                                                                          *
- ****************************************************************************/
-/*
- * This is too complicated for my taste, think more about ways to simplify this!
- *
- * The number of beats in a bar is ideally defined in the Setup, but we
- * have historically fallen back to subCycles parameter from the Preset
- * if Setup beatsPerBar isn't set.  The problem is that this makes BPB
- * track specific since each track can have a different preset.
- *
- * The exception to this rule is SYNC_HOST where we always let the 
- * host determine the time signature.  
- *
- * In practice beatsPerBar is almost never changed, but I'm not sure how
- * advanced users have been using it so we'll continue to fall back to the
- * Preset.
- *
- * BPB is used for several things:
- *
- *    - quantizing the start/end of a recording
- *    - Realign when RealignTime=Bar
- *    - calcultaing the number of cycle pulses during recording
- *    - length of an AutoRecord bar
- *
- * Since this is a fundamental part of the SyncTracker calculations, we
- * capture beatsPerBar in the SyncTracker when it is locked.  Thereafter
- * this value will be used in all calcultaions even if the Preset or
- * Setup changes.  The idea here is that you recorded something against
- * an external loop with a certain time signature, and once that recording
- * ends you no longer control the time signature of the external loop.
- * The Preset can change BPB for other purposes like polyrhythms, but for
- * the purposes of Realign the BPB in effect when the SyncTracker was locked
- * remains constant.
- *
- * So...determining the effective beats per bar is defined as:
- *
- *    If the Loop/Track follows a locked SyncTracker, get it from the tracker.
- *    Else use the Setup
- *    Else use the Preset active in the Track
- *
- * It's even a little more complicated than that because when recording
- * starts we'll save the BPB in the SyncState temporarily until the
- * recording ends.  This because BPB was used in the quantization of the
- * record start and we should be consistent about quantizing the ending.
- *
- * THINK: It would make life easier if we only used the Setup and we let
- * it change during recording.   This might have strange results but 
- * maybe no stranger than explaining to users why changing Presets has
- * an effect on sync tempo.
- */
-
-/**
- * Get the tracker for a sync source.
- */
-SyncTracker* Synchronizer::getSyncTracker(SyncSource src)
-{
-    SyncTracker* tracker = NULL;
-
-    if (src == SYNC_OUT)
-      tracker = mOutTracker;
-
-    else if (src == SYNC_HOST)
-      tracker = mHostTracker;
-
-    else if (src == SYNC_MIDI)
-      tracker = mMidiTracker;
-
-    return tracker;
-}
-
-/**
- * Derive the number of beats in one bar.
- *
- * This expected to be defined globally for all tracks and sync sources
- * in the Setup.  If not set there, we will fall back to the subCycles
- * parameter from the current track which is an older convention I don't like.
- *
- * The number of beats defines the lengt of a "bar" which is important for:
- * Once a SyncTracker is locked, the BeatsPerBar active at that time 
- * is also locked because this defines where the bars were when the 
- * tracker was used for recording.
- */
-// old complicated way
-#if 0
-int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
-{
-    int beatsPerBar = 0;
-
-    SyncTracker* tracker = getSyncTracker(src);
-
-    if (tracker != NULL && tracker->isLocked())
-      beatsPerBar = tracker->getBeatsPerBar();
-
-    else {
-        // host is special, we let it be determined externally
-        // if not set we fall back to the setup
-        if (src == SYNC_HOST)
-          beatsPerBar = mHostBeatsPerBar;
-
-        else if (src == SYNC_TRANSPORT)
-          beatsPerBar = mSyncMaster->getTransport()->getBeatsPerBar();
-
-        if (beatsPerBar <= 0) {
-
-            Setup* setup = mMobius->getActiveSetup();
-            beatsPerBar = setup->getBeatsPerBar();
-
-            if (beatsPerBar <= 0) {
-                // now it gets spooky, pick the current track preset
-                Track* t;
-                if (l != NULL)
-                  t = l->getTrack();
-                else
-                  t = mMobius->getTrack(mMobius->getActiveTrack());
-                Preset* p = t->getPreset();
-                beatsPerBar = p->getSubcycles();
-            }
-        }
-    }
-
-    return beatsPerBar;
-}
-#endif
-
-/**
- * New way, trust SyncMaster transport
- */
-int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
-{
-    int bpb = 4;
-    
-    if (src == SYNC_HOST)
-      bpb = mSyncMaster->getBeatsPerBar(Pulse::SourceHost);
-    else
-      bpb = mSyncMaster->getBeatsPerBar(Pulse::SourceTransport);
-      
-    return bpb;
-}
-
-/****************************************************************************
- *                                                                          *
- *                          MIDI OUT SYNC VARIABLES                         *
- *                                                                          *
- ****************************************************************************/
-
+//////////////////////////////////////////////////////////////////////
 //
-// new: these continue to exist for the old script variables but everything
-// comes indirectly from the SyncMaster::Transport
-// 
-
-/**
- * Get the effective beatsPerBar for OUT sync.
- */
-int Synchronizer::getOutBeatsPerBar()
-{
-    return getBeatsPerBar(SYNC_OUT, NULL);
-}
-
-/**
- * Exposed as variable syncOutTempo.
- * 
- * The tempo of the internal clock used for out sync.
- * This is the same value returned by "tempo" but only if the
- * current track is in Sync=Out or Sync=OutManual.
- * Note that unlike "tempo" this one is not sensitive to 
- * mSyncMaster->isMidiOutSending().
- */
-float Synchronizer::getOutTempo()
-{
-	return mSyncMaster->getTempo();
-}
-
-/**
- * Exposed as the variable syncOutRawBeat.
- * 
- * The current raw beat count maintained by the internal clock.
- * This will be zero if the internal clock is not running.
- */
-int Synchronizer::getOutRawBeat()
-{
-    // unlike the Transport beat, this will advance without end
-    // is that what we want here?
-    return mSyncMaster->getMidiOutRawBeat();
-}
-
-/**
- * Exposed as the variable syncOutBeat.
- * The current beat count maintained by the internal clock relative 
- * to the bar.
- */
-int Synchronizer::getOutBeat()
-{
-    #if 0
-    int beat = getOutRawBeat();
-    int beatsPerBar = getOutBeatsPerBar();
-	if (beatsPerBar > 0)
-	  beat = beat % beatsPerBar;
-	return beat;
-    #endif
-    return mSyncMaster->getBeat();
-}
-
-/**
- * Exposed as the variable syncOutBar.
- * The current bar count maintained by the internal clock.
- * This is calculated from the raw beat count, modified by the
- * effective beatsPerBar.
- */
-int Synchronizer::getOutBar()
-{
-    #if 0
-    int bar = 1;
-    int beatsPerBar = getOutBeatsPerBar();
-	if (beatsPerBar > 0) {
-        int beat = getOutRawBeat();
-        bar = beat / beatsPerBar;
-    }
-    return bar;
-    #endif
-    return mSyncMaster->getBar();
-}
-
-/**
- * Exposed as variable syncOutSending.
- * Return true if we're sending clocks.
- */
-bool Synchronizer::isSending()
-{
-	return mSyncMaster->isMidiOutSending();
-}
-
-/**
- * Exposed as variable syncOutStarted.
- * Return true if we've sent the MIDI Start event and are sending clocks.
- */
-bool Synchronizer::isStarted()
-{
-	return mSyncMaster->isMidiOutStarted();
-}
-
-/**
- * Exposed as variable syncOutStarts.
- * Return the number of MIDI Start messages sent since the last stop.
- * Used by unit tests to verify that we're sending start messages.
- */
-int Synchronizer::getStarts()
-{
-	return mSyncMaster->getMidiOutStarts();
-}
-
-/****************************************************************************
- *                                                                          *
- *                           MIDI IN SYNC VARIABLES                         *
- *                                                                          *
- ****************************************************************************/
-
-// new: these also go through SyncMaster
-
-/**
- * Get the effective beats per bar for MIDI sync.
- * This has historically not been something defined within the transport.
- * It gets calculated in a complex way depending on SyncSource and
- * is realted to SyncTracker so keep it here.
- */
-int Synchronizer::getInBeatsPerBar()
-{
-    return getBeatsPerBar(SYNC_MIDI, NULL);
-}
-
-/**
- * Exposed as variable syncInTempo.
- * 
- * The tempo of the external MIDI clock being received.
- * This is the same value returned by "tempo" but only if the
- * current track is in SyncMode In, MIDIBeat, or MIDIBar.
- * Note that this is the full precision tempo, not the "smooth" tempo.
- *
- * new: not sure what the previous comment means about "tempo"
- * and how this differs
- */
-float Synchronizer::getInTempo()
-{
-	return mSyncMaster->getTempo(Pulse::SourceMidiIn);
-}
-
-/**
- * Exposed as syncInRawBeat
- * The current beat count derived from the external MIDI clock.
- */
-int Synchronizer::getInRawBeat()
-{
-    return mSyncMaster->getBeat(Pulse::SourceMidiIn);
-}
-
-/**
- * Exposed as syncInBeat.
- * 
- * The current beat count derived from the external MIDI clock,
- * relative to the bar.
- */
-int Synchronizer::getInBeat()
-{
-    #if 0
-    int beat = getInRawBeat();
-    int beatsPerBar = getInBeatsPerBar();
-	if (beatsPerBar > 0)
-	  beat = beat % beatsPerBar;
-	return beat;
-    #endif
-    return mSyncMaster->getBeat(Pulse::SourceMidiIn);
-}
-
-/**
- * Exposed as syncInBar.
- * The current bar count derived from the external MIDI clock.
- */
-int Synchronizer::getInBar()
-{
-    #if 0
-    int bar = 1;
-    int beatsPerBar = getInBeatsPerBar();
-	if (beatsPerBar > 0) {
-        int beat = getInRawBeat();
-        bar = beat / beatsPerBar;
-    }
-	return bar;
-    #endif
-    return mSyncMaster->getBar(Pulse::SourceMidiIn);
-}
-
-/**
- * Exposed as syncInReceiving.
- * True if we are currently receiving MIDI clocks.
- */
-bool Synchronizer::isInReceiving()
-{
-    return mSyncMaster->isMidiInReceiving();
-}
-
-/**
- * Exposed as syncInStarted.
- * True if we have received a MIDI start or continue message.
- */
-bool Synchronizer::isInStarted()
-{
-    return mSyncMaster->isMidiInStarted();
-}
-
-/****************************************************************************
- *                                                                          *
- *                            HOST SYNC VARIABLES                           *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Get the effective beats per bar for HOST sync.
- */
-int Synchronizer::getHostBeatsPerBar()
-{
-    return getBeatsPerBar(SYNC_HOST, NULL);
-}
-
-/**
- * Exposed as syncHostTempo.
- * The tempo advertised by the plugin host.
- */
-float Synchronizer::getHostTempo()
-{
-	//return mHostTempo;
-    return mSyncMaster->getTempo(Pulse::SourceHost);
-}
-
-/**
- * Exposed as syncHostRawBeat
- * The current beat count given by the host, not relative to the bar.
- */
-int Synchronizer::getHostRawBeat()
-{
-    //return mHostBeat;
-    return mSyncMaster->getBeat(Pulse::SourceHost);
-}
-
-/**
- * Exposed as syncHostBeat
- * The current beat count given by the host, relative to the bar.
- */
-int Synchronizer::getHostBeat()
-{
-    #if 0
-    int beat = mHostBeat;
-
-    int bpb = getHostBeatsPerBar();
-    if (bpb > 0)
-      beat = (mHostBeat % bpb);
-	return beat;
-    #endif
-    return mSyncMaster->getBeat(Pulse::SourceHost);
-}
-
-/**
- * Exposed as syncHostBar.
- * The current bar count given by the host.
- */
-int Synchronizer::getHostBar()
-{
-    #if 0
-    int bar = 0;
-    int bpb = getHostBeatsPerBar();
-    if (bpb > 0)
-      bar = (mHostBeat / bpb);
-	return bar;
-    #endif
-    return mSyncMaster->getBar(Pulse::SourceHost);
-}
-
-/**
- * Exposed as syncHostReceiving.
- * True if we are currently receiving VST pulse events from the host.
- *
- * TODO: Need to determine what this means.
- * If the transport is playing it makes sense for this to be one, but 
- * you could also use this for bypass state.
- */
-bool Synchronizer::isHostReceiving()
-{
-	//return mHostTransport;
-    return mSyncMaster->isHostReceiving();
-}
-
-/****************************************************************************
- *                                                                          *
- *                           GENERIC SYNC VARIABLES                         *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Exposed as variable "syncTempo".
- * 
- * For OUT this is the tempo we calculated.
- * For MIDI this is the tempo we're smoothing from the external source.
- * For HOST this is the tempo reported by the host.
- *
- * Also called by track to return in the TrackState for the UI to display.
- * This is called outside the interrupt handler so anything we touch
- * has to be stable.
- * 
- */
-float Synchronizer::getTempo(Track* t)
-{
-	float tempo = 0.0f;
-    SyncState* state = t->getSyncState();
-
-	switch (state->getDefinedSyncSource()) {
-		case SYNC_OUT:
-			// only return a value while we're sending clocks, 
-			// currently used so we don't display a tempo when we're
-			// not running
-			if (mSyncMaster->isMidiOutSending())
-			  tempo = mSyncMaster->getTempo(Pulse::SourceTransport);
-            break;
-
-		case SYNC_MIDI:
-			tempo = mSyncMaster->getTempo(Pulse::SourceMidiIn);
-            break;
-
-		case SYNC_HOST:
-			// NOTE: mHostTime is usually valid, but technically it could
-			// be in a state of change during an interrupt, so we need to 
-			// capture it to a local field.
-			//tempo = mHostTempo;
-            tempo = mSyncMaster->getTempo(Pulse::SourceHost);
-            break;
-
-        case SYNC_TRANSPORT:
-            tempo = mSyncMaster->getTempo();
-            break;
-			
-		// have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
-
-	}
-
-	return tempo;
-}
-
-/**
- * Exposed as syncRawBeat
- * The current absolute beat count.
- * This will be the same as syncOutRawBeat, syncInRawBeat, 
- * or syncHostRawBeat depending on the SyncMode of the current track.
- */
-int Synchronizer::getRawBeat(Track* t)
-{
-	int beat = 0;
-    SyncState* state = t->getSyncState();
-
-	switch (state->getDefinedSyncSource()) {
-		case SYNC_OUT:
-			beat = getOutRawBeat();
-            break;
-
-		case SYNC_MIDI:
-			beat = getInRawBeat();
-            break;
-
-		case SYNC_HOST:
-			beat = getHostRawBeat();
-            break;
-
-        case SYNC_TRANSPORT:
-            beat = mSyncMaster->getTransport()->getBeat();
-            break;
-
-		// have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
-	}
-
-	return beat;
-}
-
-/**
- * Exposd as syncBeat
- * The current bar relative beat count.
- * This will be the same as syncOutBeat, syncInBeat, or syncHostBeat
- * depending on the SyncMode of the current track.
- */
-int Synchronizer::getBeat(Track* t)
-{
-	int beat = 0;
-    SyncState* state = t->getSyncState();
-    
-	switch (state->getDefinedSyncSource()) {
-		case SYNC_OUT:
-			beat = getOutBeat();
-            break;
-
-		case SYNC_MIDI:
-			beat = getInBeat();
-            break;
-
-		case SYNC_HOST:
-			beat = getHostBeat();
-            break;
-
-        case SYNC_TRANSPORT:
-            beat = mSyncMaster->getBeat();
-            break;
-
-		// have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
-	}
-
-	return beat;
-}
-
-/**
- * Exposed as syncBar
- * The current bar count.
- * This will be the same as syncOutBar, syncInBar, or syncHostBar
- * depending on the SyncMode of the current track.
- */
-int Synchronizer::getBar(Track* t)
-{
-	int bar = 0;
-    SyncState* state = t->getSyncState();
-
-	switch (state->getDefinedSyncSource()) {
-		case SYNC_OUT:
-			bar = getOutBar();
-            break;
-
-		case SYNC_MIDI:
-			bar = getInBar();
-            break;
-
-		case SYNC_HOST:
-			bar = getHostBar();
-            break;
-
-        case SYNC_TRANSPORT:
-            bar = mSyncMaster->getBar();
-            break;
-
-		// have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
-
-	}
-
-	return bar;
-}
-
-/****************************************************************************
- *                                                                          *
- *   							 SYNC STATUS                                *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Used for the Variables that expose sync loop status.
- * TODO: Should we just put this on the SyncState?
- */
-SyncTracker* Synchronizer::getSyncTracker(Track* t)
-{
-    SyncState* state = t->getSyncState();
-    SyncSource src = state->getEffectiveSyncSource();
-
-    return getSyncTracker(src);
-}
-
-SyncTracker* Synchronizer::getSyncTracker(Loop* l)
-{
-    return getSyncTracker(l->getTrack());
-}
-
-/**
- * Return the current MIDI clock for use in trace messages.
- * Be sure to return the ITERATOR clock, not the global one that hasn't
- * been incremented yet.
- */
-long Synchronizer::getMidiSongClock(SyncSource src)
-{
-	int clock = 0;
-
-	switch (src) {
-		case SYNC_OUT:
-			clock = mSyncMaster->getMidiOutSongClock();
-            break;
-
-		case SYNC_MIDI:
-			clock = mSyncMaster->getMidiInSongClock();
-            break;
-
-		case SYNC_HOST:
-		case SYNC_TRANSPORT:
-			// hmm, probably could capture this if necessary
-            break;
-
-		// have to have these or Xcode 5 bitches
-		case SYNC_DEFAULT:
-		case SYNC_NONE:
-		case SYNC_TRACK:
-			break;
-	}
-
-	return clock;
-}
+// State
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Called by Track to fill in the relevant sync state for a track.
  *
- * The tempo value will be zero if we are not currently sending or receiving
- * clocks.  It is normally always non-zero for host sync.
+ * This could be simplified now with SyncMaster.  All we really need to know
+ * is which Pulse::Source this track follows, and the view can pull the tempo
+ * and location from the common sync state.
  *
- * When the beat and bar values are zero, they do not have meaningful
- * values and should not be displayed.  The UI may want to capture the last
- * known valid values and continue displaying those until the next
- * start/continue.  
- *
- * When beat/bar are non-zero, we are receiving or sending clocks and are
- * in a "started" state.  The first beat and bar are numbered 1.
- *
- * !! This is no longer really track specific.  Sync on/off can be set
- * but you can't have one track with Sync=Host and another with Sync=Midi,
- * some of the state variables could be moved up?
- *
- * update: added MobiusSyncState for common state for all tracks.
- * Need to refactor TrackState.
+ * Historically, the tempo, beat, and bar values are left zero unless we are
+ * actively sending or receiving MIDI clocks, or the host transport is advancing.
+ * Assuming the TransportElement is usually visible, the need for this is less.
  */
 void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 {
 	SyncState* syncState = t->getSyncState();
+
+    // this is what decides between SYNC_OUT and SYNC_TRACK
+    // this should be moved up to SyncMaster
     SyncSource source = syncState->getEffectiveSyncSource();
 	
     state->syncSource = source;
@@ -960,14 +141,13 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 	switch (source) {
 
 		case SYNC_OUT: {
-			// if we're not sending, don't display tempo
-			// ?? what about beat/bar, could display those?
+            // we have historically not displayed a tempo unless
+            // clocks were actually going out, now that we have the transport
+            // it matters less
 			if (mSyncMaster->isMidiOutSending()) {
-				state->tempo = getOutTempo();
-				// Note that we adjust the zero based beat/bar count
-				// for display.
-				state->beat = getOutBeat() + 1;
-				state->bar = getOutBar() + 1;
+				state->tempo = mSyncMaster->getTempo(Pulse::SourceTransport);
+				state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
+				state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
 			}
 		}
             break;
@@ -975,37 +155,33 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 		case SYNC_MIDI: {
 			// for display purposes we use the "smooth" tempo
 			// this is a 10x integer
+            // this should also be moved into SyncMaster since TempoElement
+            // will likely need the same treatment
 			int smoothTempo = mSyncMaster->getMidiInSmoothTempo();
 			state->tempo = (float)smoothTempo / 10.0f;
 
-			// only display advance beats when started,
-			// TODO: should we save the last known beat/bar values
-			// so we can keep displaying them till the next start/continue?
-			if (isInStarted()) {
-				state->beat = getInBeat() + 1;
-				state->bar = getInBar() + 1;
+            // MIDI in sync has also only displayed beats if clocks were actively
+            // being received
+			if (mSyncMaster->isMidiInStarted()) {
+				state->beat = mSyncMaster->getBeat(Pulse::SourceMidiIn);
+				state->bar = mSyncMaster->getBar(Pulse::SourceMidiIn);
 			}
 		}
             break;
 
 		case SYNC_HOST: {
-			state->tempo = getHostTempo();
-
-			// only display advance beats when started,
-			// TODO: should we save the last known beat/bar values
-			// so we can keep displaying them till the next start/continue?
-			if (isHostReceiving()) {
-                state->beat = getHostBeat() + 1;
-                state->bar = getHostBar() + 1;
+			state->tempo = mSyncMaster->getTempo(Pulse::SourceHost);
+			if (mSyncMaster->isHostReceiving()) {
+				state->beat = mSyncMaster->getBeat(Pulse::SourceHost);
+				state->bar = mSyncMaster->getBar(Pulse::SourceHost);
             }
 		}
             break;
 
         case SYNC_TRANSPORT: {
-            Transport* trans = mSyncMaster->getTransport();
-            state->tempo = trans->getTempo();
-            state->beat = trans->getBeat();
-            state->bar = trans->getBar();
+            state->tempo = mSyncMaster->getTempo();
+            state->beat = mSyncMaster->getBeat(Pulse::SourceTransport);
+            state->bar = mSyncMaster->getBar(Pulse::SourceTransport);
         }
             break;
 
@@ -1015,28 +191,26 @@ void Synchronizer::getState(OldMobiusTrackState* state, Track* t)
 		case SYNC_TRACK:
 			break;
 	}
-
 }
 
 /**
  * Newer state shared by all tracks.
+ *
+ * !! Redundancies with the previous state filler.
  */
 void Synchronizer::getState(OldMobiusState* state)
 {
     OldMobiusSyncState* sync = &(state->sync);
 
     // MIDI output sync
-
     sync->outStarted = mSyncMaster->isMidiOutSending();
-    sync->outTempo = 0;
+    sync->outTempo = 0.0f;
     sync->outBeat = 0;
     sync->outBar = 0;
     if (sync->outStarted) {
-        sync->outTempo = getOutTempo();
-        // Note that we adjust the zero based beat/bar count
-        // for display.
-        sync->outBeat = getOutBeat() + 1;
-        sync->outBar = getOutBar() + 1;
+        sync->outTempo = mSyncMaster->getTempo();
+        sync->outBeat = mSyncMaster->getBeat(Pulse::SourceTransport);
+        sync->outBar = mSyncMaster->getBar(Pulse::SourceTransport);
     }
 
     // MIDI input sync
@@ -1053,38 +227,46 @@ void Synchronizer::getState(OldMobiusState* state)
     // TODO: should we save the last known beat/bar values
     // so we can keep displaying them till the next start/continue?
     if (isInStarted()) {
-        sync->inBeat = getInBeat() + 1;
-        sync->inBar = getInBar() + 1;
+        sync->inBeat = mSyncMaster->getBeat(Pulse::SourceMidiIn);
+        sync->inBar = mSyncMaster->getBar(Pulse::SourceMidiIn);
     }
 
     // Host sync
-    sync->hostStarted = isHostReceiving();
-    sync->hostTempo = getHostTempo();
+    sync->hostStarted = mSyncMaster->isHostReceiving();
+    sync->hostTempo = mSyncMaster->getTempo(Pulse::SourceHost);
     sync->hostBeat = 0;
     sync->hostBar = 0;
-    if (isHostReceiving()) {
-        sync->hostBeat = getHostBeat() + 1;
-        sync->hostBar = getHostBar() + 1;
+    if (sync->hostStarted()) {
+        sync->hostBeat = mSyncMaster->getBeat(Pulse::SourceHost);
+        sync->hostBar = mSyncMaster->getBar(Pulse::SourceHost);
     }
 }
-    
-/****************************************************************************
- *                                                                          *
- *                          RECORD START SCHEDULING                         *
- *                                                                          *
- ****************************************************************************/
+
+//////////////////////////////////////////////////////////////////////
+//
+// Record Scheduling
+//
+// There are four Synchronizer calls the Record function makes during the
+// recording process:
+//
+//     scheduleRecordStart
+//     scheduleRecordStop
+//     undoRecordStop
+//     loopRecordStart
+//     loopRecordStop
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Schedule a recording event.
- * This must be called only by RecordFunction and the Action's function
- * must be in the Record family.
- * 
+ *
+ * This is the first step in the recording process.  A UIAction/Action has
+ * been recieved with one of the record family functions (Record, AutoRecord, Rehearse).
  * If were already in Record mode should have called scheduleModStop first.
- * See file header comments about nuances.
  */
 Event* Synchronizer::scheduleRecordStart(Action* action,
-                                                Function* function,
-                                                Loop* l)
+                                         Function* function,
+                                         Loop* l)
 {
 	Event* event = NULL;
     EventManager* em = l->getTrack()->getEventManager();
@@ -1127,7 +309,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
             if (function->sustain) {
                 // should have had one from the up transition of the
                 // last SUS trigger
-                Trace(l, 1, "Sync: Missing RecordStopEvent for SUSRecord!\n");
+                Trace(l, 1, "Sync: Missing RecordStopEvent for SUSRecord");
             }
 
             event = scheduleRecordStop(action, l);
@@ -1207,7 +389,7 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 		// leave the current mode in place until RecordEvent.  Note that
 		// this MUST be done after scheduleStop because decisions
 		// are made based on whether we're in Reset mode 
-		// (see Synchronizer::d;getSyncMode)
+		// (see Synchronizer::getSyncMode)
 
 		if (mode == ResetMode)
 		  l->setMode(PlayMode);
@@ -1223,7 +405,6 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
         action->arg.getType() == EX_STRING &&
         StringEqualNoCase(action->arg.getString(), "noFade"))
 	  event->fadeOverride = true;
-
 
     // new: after that mess, if we deciced to schedule a record start
     // either pulsed, or after latency, let the followers over in MIDI land
@@ -1260,6 +441,8 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
     // in the master tracks
     SyncSource src = state->getEffectiveSyncSource();
 
+    // todo: SYNC_TRANSPORT is variable, if the transport is running we sync
+    // if we control it we don't
     sync = (src == SYNC_MIDI || src == SYNC_HOST || src == SYNC_TRACK || src == SYNC_TRANSPORT);
         
 	return sync;
@@ -1975,7 +1158,7 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     }
     else if (src == SYNC_TRANSPORT) {
         // this is normally the bar length
-        unit->frames = (float)(mSyncMaster->getTransport()->getMasterBarFrames());
+        unit->frames = (float)(mSyncMaster->getMasterBarFrames());
     }
     else if (src == SYNC_HOST) {
         if (mHostTracker->isLocked()) {
@@ -2185,288 +1368,6 @@ void Synchronizer::interruptStart(MobiusAudioStream* stream)
 	mLastInterruptMsec = mInterruptMsec;
 	mInterruptMsec = mSyncMaster->getMilliseconds();
 	mInterruptFrames = stream->getInterruptFrames();
-
-    // should be empty but make sure
-    flushEvents();
-    mNextAvailableEvent = NULL;
-
-    // tell the trackers to prepare for an interrupt
-    mMidiTracker->interruptStart();
-    mHostTracker->interruptStart();
-    mOutTracker->interruptStart();
-
-    // process queued MIDI realtime events from the transport
-    // we'll get UNIT_BEAT events here, to detect UNIT_BAR we have
-    // to apply BeatsPerBar from the Setup
-    // NOTE: in theory BPB can be track specific if we fall back to the Preset
-    // that would mean we have to recalculate the pulses for every Track,
-    // I really dont' think that's worth it
-    EventPool* pool = mMobius->getEventPool();
-    int bpb = getInBeatsPerBar();
-    MidiSyncEvent* mse = mSyncMaster->midiInNextEvent();
-    while (mse != nullptr) {
-        Event* event = convertEvent(mse, pool, bpb);
-        event->fields.sync.source = SYNC_MIDI;
-        // pass through the SyncTracker for annotations
-        mMidiTracker->event(event);
-        traceSyncEvent(event, false);
-        mInterruptEvents->insert(event);
-        mse = mSyncMaster->midiInNextEvent();
-    }
-
-    // again for internal output events
-    bpb = getOutBeatsPerBar();
-    mse = mSyncMaster->midiOutNextEvent();
-    while (mse != nullptr) {
-        Event* event = convertEvent(mse, pool, bpb);
-        event->fields.sync.source = SYNC_OUT;
-        mOutTracker->event(event);
-        traceSyncEvent(event, true);
-        mInterruptEvents->insert(event);
-        mse = mSyncMaster->midiOutNextEvent();
-    }
-
-    // Transport events
-    Pulse p;
-    mSyncMaster->getTransportPulse(p);
-    if (p.source != Pulse::SourceNone) {
-        Event* event = convertTransportEvent(&p, pool);
-        event->fields.sync.source = SYNC_TRANSPORT;
-        mInterruptEvents->insert(event);
-    }
-    
-    // Host events
-    // Unlike MIDI events which are quantized by the MidiQueue, these
-    // will have been created in the *same* interrupt and will have frame
-    // values that are offsets into the current interrupt.  These must
-    // be maintained in order and interleaved with the loop events.
-
-    // refresh host sync state for the status display in the UI thread
-	AudioTime* hostTime = stream->getAudioTime();
-    if (hostTime == NULL) {
-        // can this happen, reset everyting or leave it where it was?
-        /*
-        mHostTempo = 0.0f;
-        mHostBeat = 0;
-        mHostBeatsPerBar = 0;
-        mHostTransport = false;
-        mHostTransportPending = false;
-        */
-    }
-    else {
-        // similar jump detection in VstMobius, could we push
-        // that into AudioTimer?
-        //int lastBeat = mHostBeat;
-
-		mHostTempo = (float)hostTime->tempo;
-		mHostBeat = hostTime->beat;
-        mHostBeatsPerBar = hostTime->beatsPerBar;
-        
-        // stop is always non-pulsed
-        if (mHostTransport && !hostTime->playing) {
-            Event* event = pool->newEvent();
-            event->type = SyncEvent;
-            event->fields.sync.source = SYNC_HOST;
-            event->fields.sync.eventType = SYNC_EVENT_STOP;
-            // no boundary offset on these
-            mHostTracker->event(event);
-            // do these need propagation?
-            mInterruptEvents->insert(event);
-            mHostTransport = false;
-        }
-        else if (hostTime->playing && !mHostTransport)
-          mHostTransportPending = true;
-
-        // should this be an else with handling transport stop above ?
-        // what about CONTINUE, will we always be on a boundary?
-        if (hostTime->beatBoundary || hostTime->barBoundary) {
-
-            Event* event = pool->newEvent();
-            event->type = SyncEvent;
-            event->fields.sync.source = SYNC_HOST;
-            event->frame = hostTime->boundaryOffset;
-
-            // If the transport state changed or if we did not
-            // advance the beat by one, assume we can do a START/CONTINUE.
-            // This isn't critical but it's nice with host sync so we can 
-            // reset the avererage pulse width calculator which may be
-            // way off if we're jumping the host transport.
-
-
-            // NEW: This logic was messing up FL Studio and probably other pattern-based
-            // hosts that don't increase beat numbers monotonically, it jumps back to zero
-            // on every cycle.  In general, Mobius isn't ready to be smart about
-            // following the host transport.  The old sync code is an absoluate mess
-            // that needs to be taken out back and burned.  Don't try to be smart about this.
-            // get the fundamental beat/bar sync working and worry about trying to follow
-            // pause/continue later since it is far more complicated than just this
-            // if (mHostTransportPending || ((lastBeat + 1) != mHostBeat)) {
-            
-            if (mHostTransportPending) {
-
-                // NEW: not sure if we should even try to mess with CONTINUE
-                // whenever the transport starts, just send START?
-                bool alwaysStarts = false;
-                
-                if (alwaysStarts ||  mHostBeat == 0) {
-                    event->fields.sync.eventType = SYNC_EVENT_START;
-                    event->fields.sync.pulseType = SYNC_PULSE_BAR;
-                }
-                else {
-                    event->fields.sync.eventType = SYNC_EVENT_CONTINUE;
-                    // continue pulse is the raw pulse not rounded for bars
-                    event->fields.sync.continuePulse = mHostBeat;
-                    if (hostTime->barBoundary)
-                      event->fields.sync.pulseType = SYNC_PULSE_BAR;
-                    else
-                      event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-                }
-                mHostTransport = true;
-                mHostTransportPending = false;
-            }
-            else {
-                event->fields.sync.eventType = SYNC_EVENT_PULSE;
-                if (hostTime->barBoundary)
-                  event->fields.sync.pulseType = SYNC_PULSE_BAR;
-                else
-                  event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-            }
-
-            mHostTracker->event(event);
-            mInterruptEvents->insert(event);
-        }
-    }
-
-    // advance the audio frames of the trackers, these may also generate events
-    // we don't care about OUT events since we always fall back to track sync
-
-    mOutTracker->advance(mInterruptFrames, NULL, NULL);
-    mHostTracker->advance(mInterruptFrames, pool, mInterruptEvents);
-    mMidiTracker->advance(mInterruptFrames, pool, mInterruptEvents);
-
-    // mark all of these as "owned" so the usually event processing
-    // logic in Loop won't free them
-    // actually now that we always return mReturnEvent we don't need
-    // to own these
-    for (Event* event = mInterruptEvents->getEvents() ; event != NULL ; 
-         event = event->getNext()) {
-        event->setOwned(true);
-
-        // sanity check, these must be processed in the current interrupt
-        if (event->frame >= mInterruptFrames)
-          Trace(1, "Sync: Sync event beyond edge of interrupt!\n");
-    }
-
-}
-
-/**
- * Temporary tracing of Event conversion from the MidiTransport.
- * Don't really need this since SyncTracker also traces.
- */
-void Synchronizer::traceSyncEvent(Event* event, bool out)
-{
-    if (SyncTraceEnabled) {
-        const char* direction = (out) ? "out" : "in";
-        SyncEventType type = event->fields.sync.eventType;
-        if (type == SYNC_EVENT_STOP) {
-            Trace(2, "Synchronizer: Sync %s event Stop \n", direction);
-        }
-        else if (type == SYNC_EVENT_START) {
-            Trace(2, "Synchronizer: Sync %s event Start\n", direction);
-        }
-        else if (type == SYNC_EVENT_CONTINUE) {
-            Trace(2, "Synchronizer: Sync %s event Continue\n", direction);
-        }
-        else if (type == SYNC_EVENT_PULSE) {
-            SyncPulseType ptype = event->fields.sync.pulseType;
-            if (ptype == SYNC_PULSE_BEAT) {
-                Trace(2, "Synchronizer: Sync %s Beat pulse %d\n",
-                      direction, event->fields.sync.beat);
-            }
-            else if (ptype == SYNC_PULSE_BAR) {
-                Trace(2, "Synchronizer: Sync %s Bar pulse %d\n",
-                      direction, event->fields.sync.beat);
-            }
-        }
-    }
-}
-
-/**
- * Convert a MidiSyncEvent from the transport into a track Event.
- * todo: this is place where we should try to offset the event into the buffer
- * to make it align more accurately when real time.
- */
-Event* Synchronizer::convertEvent(MidiSyncEvent* mse, EventPool* pool, int beatsPerBar)
-{
-    Event* event = pool->newEvent();
-
-    event->type = SyncEvent;
-    // save this for trace debugging
-    event->fields.sync.millisecond = mse->millisecond;
-
-    if (mse->isStop) {
-        event->fields.sync.eventType = SYNC_EVENT_STOP;
-    }
-    else if (mse->isStart) {
-        event->fields.sync.eventType = SYNC_EVENT_START;
-        event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-    }
-    else if (mse->isContinue) {
-        event->fields.sync.eventType = SYNC_EVENT_CONTINUE;
-        event->fields.sync.continuePulse = mse->songClock;
-        // If we're exactly on a beat boundary, set the continue
-        // pulse type so we can treat this as a beat pulse later
-        if (mse->isBeat)
-          event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-    }
-    else {
-        // ordinary clock
-        // hmm, would like to detect UNIT_BAR here but currently
-        // that can be different for each track, should we just
-        // require one beatsPerBar in the Setup?
-        event->fields.sync.eventType = SYNC_EVENT_PULSE;
-        if (!mse->isBeat) {
-            event->fields.sync.pulseType = SYNC_PULSE_CLOCK;
-        }
-        else {
-            event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-            event->fields.sync.beat = mse->beat;
-        }
-    }
-
-    // upgrade BEAT pulses to BAR pulses if we're on a bar
-    if (event->fields.sync.eventType == SYNC_EVENT_PULSE && 
-        event->fields.sync.pulseType == SYNC_PULSE_BEAT &&
-        beatsPerBar > 0) {
-
-        if ((event->fields.sync.beat % beatsPerBar) == 0)
-          event->fields.sync.pulseType = SYNC_PULSE_BAR;
-    }
-
-	return event;
-}
-
-/**
- * Convert a new Transport pulse to a track Event.
- */
-Event* Synchronizer::convertTransportEvent(Pulse* p, EventPool* pool) 
-{
-    Event* event = pool->newEvent();
-
-    event->type = SyncEvent;
-
-    // we don't get start/stop/continue but could...
-    if (p->type == Pulse::PulseBeat) {
-        event->fields.sync.pulseType = SYNC_PULSE_BEAT;
-        event->fields.sync.beat = p->beat;
-    }
-    else {
-        // must be bar or loop, they are the same for the Transport
-        event->fields.sync.pulseType = SYNC_PULSE_BAR;
-        event->fields.sync.beat = p->beat;
-    }
-
-	return event;
 }
 
 /**
@@ -2475,8 +1376,6 @@ Event* Synchronizer::convertTransportEvent(Pulse* p, EventPool* pool)
  */
 void Synchronizer::prepare(Track* t)
 {
-    mNextAvailableEvent = mInterruptEvents->getEvents();
-
     // this will be set by trackSyncEvent if we see boundary
     // events during this interrupt
     SyncState* state = t->getSyncState();
@@ -2497,21 +1396,7 @@ void Synchronizer::prepare(Track* t)
  */
 void Synchronizer::finish(Track* t)
 {
-    if (mNextAvailableEvent != NULL) {
-        
-        SyncState* state = t->getSyncState();
-        SyncSource src = state->getEffectiveSyncSource();
-
-        int unused = 0;
-        for (Event* e = mNextAvailableEvent ; e != NULL ; e = e->getNext()) {
-            if (e->fields.sync.source == src) 
-              unused++;
-        }
-
-        if (unused > 0)
-          Trace(t, 1, "Sync: Finishing interrupt for track %ld with %ld unused sync events\n",
-                (long)t->getDisplayNumber(), (long)unused);
-    }
+    (void)t;
 }
 
 /**
@@ -2519,11 +1404,6 @@ void Synchronizer::finish(Track* t)
  */
 void Synchronizer::interruptEnd()
 {
-    // do drift correction at the end of each interrupt
-    checkDrift();
-
-    flushEvents();
-    mNextAvailableEvent = NULL;
 }
 
 /**
@@ -2543,201 +1423,12 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
       pulsatorType = Pulse::PulseBar;
     mSyncMaster->addLeaderPulse(t->getDisplayNumber(), pulsatorType, offset);
     
-    if (t == mTrackSyncMaster) {
-
-        EventPool* pool = mMobius->getEventPool();
-        Event* e = pool->newEvent();
-        e->type = SyncEvent;
-        e->fields.sync.source = SYNC_TRACK;
-        e->fields.sync.eventType = SYNC_EVENT_PULSE;
-        
-        // the "frame" is the offset into the interrupt buffer,
-        // loop will adjust this for its own relative position
-        e->frame = offset;
-
-        // convert event type to pulse type
-        SyncPulseType pulse;
-        if (type == LoopEvent) 
-          pulse = SYNC_PULSE_LOOP;
-        else if (type == CycleEvent) 
-          pulse = SYNC_PULSE_CYCLE;
-        else if (type == SubCycleEvent) 
-          pulse = SYNC_PULSE_SUBCYCLE;
-
-        else {
-            // what the hell is this?
-            Trace(t, 1, "Sync: Invalid master track sync event!\n");
-            pulse = SYNC_PULSE_CYCLE;
-        }
-        
-        e->fields.sync.pulseType = pulse;
-
-        // So "Wait external" has defined behavior, consider the
-        // external start point to be the master track start point
-        e->fields.sync.syncStartPoint = (pulse == SYNC_PULSE_LOOP);
-
-        // Remember this for Realign pulses
-        Loop* masterLoop = mTrackSyncMaster->getLoop();
-        e->fields.sync.pulseFrame = masterLoop->getFrame();
-
-        // all events in mInterruptEvents must have this set!
-        e->setOwned(true);
-
-        mInterruptEvents->insert(e);
-    }
-
     // In all cases store the event type in the SyncState so we know
     // we reached an interesting boundary during this interrupt.  
     // This is how we detect boundary crossings for checkDrift.
     SyncState* state = t->getSyncState();
     state->setBoundaryEvent(type);
 
-}
-
-/**
- * Return the next ordered sync event relevant for the given loop.
- * The caller may decide not to use this, in which case we keep
- * searching from this position on every call.  If the loop decides
- * to use it it will call useEvent() and we can begin searching
- * from the next event on the list.
- *
- * Relevance means the event sync source matches the effective sync
- * source of the track.  Note that we will usually be getting pairs
- * of pulse events from the same source once a tracker is locked, one
- * a "raw" event from the external clock and one internal event generated
- * by the tracker.  We could filter those here, but I'd rather defer
- * them to syncEvent() so we can think about them at their appropiate
- * location within the loop.
- * 
- */
-Event* Synchronizer::getNextEvent(Loop* loop)
-{
-    Event* next = NULL;
-    Event* relevant = NULL;
-
-    if (mNextAvailableEvent != NULL) {
-        Track* track = loop->getTrack();
-        SyncState* state = track->getSyncState();
-        SyncSource src = state->getEffectiveSyncSource();
-
-        // move up the list until we find one of the type we're interested in
-        relevant = mNextAvailableEvent;
-        while (relevant != NULL && 
-               relevant->fields.sync.source != src)
-          relevant = relevant->getNext();
-    }
-
-    // Sigh, Stream wants to change the sync event frame to fit within
-    // the loop being advanced.  But since we use the same events
-    // for all tracks we don't want to lose the original buffer offset
-    // that is stored in the frame.  We could burn another arg on the Event
-    // for this, but it's safest just to return a copy that the caller can do
-    // anything it wants to.  
-    // !! ugh, I hate this,we have to remember to copy every sync related
-    // field one at a time 
-    if (relevant != NULL) {
-
-        // do NOT call init() here, it clears owned among other things
-        next = mReturnEvent;
-        next->setNext(relevant->getNext());
-        next->type = relevant->type;
-        next->frame = relevant->frame;
-        next->processed = false;
-        next->fields.sync.source = relevant->fields.sync.source;
-        next->fields.sync.eventType = relevant->fields.sync.eventType;
-        next->fields.sync.pulseType = relevant->fields.sync.pulseType;
-        next->fields.sync.pulseFrame = relevant->fields.sync.pulseFrame;
-        next->fields.sync.beat = relevant->fields.sync.beat;
-        next->fields.sync.continuePulse = relevant->fields.sync.continuePulse;
-        next->fields.sync.millisecond = relevant->fields.sync.millisecond;
-        next->fields.sync.syncStartPoint = relevant->fields.sync.syncStartPoint;
-        next->fields.sync.syncTrackerEvent = relevant->fields.sync.syncTrackerEvent;
-        next->fields.sync.pulseNumber = relevant->fields.sync.pulseNumber;
-    }
-
-    return next;
-}
-
-/**
- * Move the next available event pointer to the last one we returned
- * from getEvent().
- */
-void Synchronizer::useEvent(Event* e)
-{
-    if (e != NULL) {
-        if (e != mReturnEvent)
-          Trace(1, "Sync:useEvent called with the wrong event!\n");
-        mNextAvailableEvent = e->getNext();
-    }
-}
-
-/**
- * NOTE: THis is not used and I never did get it working, but it
- * represents some thought in this direction and I want to keep it
- * around for awhile.
- * 
- * Given a MIDI sync event, calculate the offset into the interrupt
- * buffer near where this event occured.
- *
- * MidiEvents are timestamped with the millisecond timer before they
- * are sent, this is captured in the "clock"  field of the MidiSyncEvent
- * when it is moved to the MidiQueue, and then copied from MidiSyncEvent
- * to the "millisecond" field of the Event.
- *
- * We saved the millisecond counter at the beginning of the last interrupt
- * in mLastInterruptMsec.  The distance between these represents the 
- * location of the MIDI event within the last buffer.  We convert that 
- * distance in milliseconds to frames and leave that as the interrupt buffer
- * offset for the event in the current interrupt.
- *
- * A consesquence of this is that MIDI events are always processed 1 interrupt
- * later than they happened.  Resulting in a latency of around 5ms with
- * a 256 frame buffer.  If we slid all the events to the front of the buffer
- * rather than trying to offset them the response time would be better
- * on average, though more jittery and lead to worse inaccuracies in 
- * the recorded frame count, which results in more frequent drift adjustments.
- *
- * UPDATE: This is flakey.  There is a common overflow of 264 (8 frames) 
- * and less common underflows ranging from -1 to -30.  The underflows seem
- * to coincide with system load, such as dragging a window around.  Both
- * are disturbing and are probably due to PortAudio not calling the interupts
- * in close to "real" time.  May need to be using the "stream" time instead?
- *
- * The 264 overflow is probably just roudning since a buffer is not an even
- * multiple of msecs.
- */
-void Synchronizer::adjustEventFrame(Loop* l, Event* e)
-{
-	long delta = e->fields.sync.millisecond - mLastInterruptMsec;
-	long offset = 0;
-
-	if (delta < 0) {
-		// In theory this could happen if the msec timer rolled immediately
-		// after creating the MidiEvent but before it made its way to 
-		// our MidiQueue.  It should never be more than one though.
-		// Well, it often is, see comments above.
-		if (delta < -31 && l->getTrack()->getDisplayNumber() == 1)
-		  Trace(l, 2, "Sync: Sync event offset underflow %ld!\n", delta);
-	}
-	else {
-		// convert millisecond delta to frame offset
-		float framesPerMsec = mMobius->getSampleRate() / 1000.0f;
-		offset = (long)(framesPerMsec * (float)delta);
-
-		if (offset >= mInterruptFrames) {
-			// We don't have enough frames in this interrupt to hold 
-			// the full offset.  This can happen if we're processing 
-			// buffers more rapidly than in real time, which seems to happen
-			// sometimes as PortAudio tries to make up for a previous
-			// interrupt that took too long.
-			
-			if (offset > 264 && l->getTrack()->getDisplayNumber() == 1)
-			  Trace(l, 2, "Sync: Sync event offset overflow %ld!\n", offset);
-			offset = mInterruptFrames;
-		}
-	}
-
-	e->frame = offset;
 }
 
 /****************************************************************************
@@ -3140,7 +1831,7 @@ void Synchronizer::startRecording(Loop* l, Event* e)
             cyclePulses = mp->getSubcycles();
         }
         else if (src == SYNC_TRANSPORT) {
-            cyclePulses = mSyncMaster->getTransport()->getBeatsPerBar();
+            cyclePulses = mSyncMaster->getBeatsPerBar(Pulse::SourceTransport);
         }
         else {
             // not expecting to be here for SYNC_OUT 
@@ -3510,7 +2201,7 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
         // todo: should be a cycle per bar?
         // similar logic to TRACK
         int slaveFrames = (int)(l->getRecordedFrames());
-        int cycleFrames = mSyncMaster->getTransport()->getMasterBarFrames();
+        int cycleFrames = mSyncMaster->getMasterBarFrames();
         if ((slaveFrames % cycleFrames) > 0) {
             l->setRecordCycles(1);
         }
@@ -3528,867 +2219,6 @@ void Synchronizer::activateRecordStop(Loop* l, Event* pulse,
             }
         }
     }
-}
-
-/****************************************************************************
- *                                                                          *
- *   						   PLAY MODE PULSES                             *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Called on each pulse after a synchronized loop has finished recoding.
- *
- * There are two things we do here:
- * 
- *   - Check pending Realign events
- *   - Check "external start point" events
- *
- * Originally we checked drift here too but that has to be deferred
- * until the end of the interrupt because we share SyncTrackers among
- * several tracks.
- *
- * Track sync pulses are only interesting if we're in Realign mode
- * waiting for a master track location.  Other pulses just increment
- * the SyncTracker.
- * 
- * SYNC_MIDI: The pulses will be from the SyncTracker since once the
- * first MIDI loop is recorded and the tracker is locked we no longer
- * directly follow MIDI clocks.
- *
- * SYNC_HOST: The pulses be from the SyncTracker.
- *
- * SYNC_TRACK: The pulses will be from the master track.
- *
- * SYNC_OUT: The pulses will be from the timer, not the SyncTracker.
- * ?? Really why ??
- * 
- * EXTERNAL START POINT
- * 
- * For sync sources that have a SyncTracker, the tracker will reach
- * the "external start point" whenever the pulse counter wraps back to zero.
- * This will have been recorded in the Event.isSyncStartPoint property.
- * This can trigger a Realign if RealignTime is START, the
- * SyncStartPoint function, or a script wait statement.
- * 
- * REALIGN
- *
- * If there is a RealignEvent marked pending, then the track is waiting
- * for a realign pulse.  The RealignTime parameter from the Setup
- * determines which pulse we will wait for.  
- * 
- * If we have a pending Realign, SYNC_OUT and OutRealignMode=midiStart,
- * then it is more accurate to wait for the actual loop start point
- * (frame zero) rather than watching the pulses.  In this scenario
- * we are forcing the external device back into sync with the loop, and
- * the pulse counter may have drifted slightly.  When OutRealignMode=restart
- * then we obey the pulse counts because we are forcing the loop to be in sync
- * with the external device.
- *
- * The Realign/SYNC_OUT/OutRealignMode=midiStart case will therefore be
- * handled by the loopLocalStartPoint callback rather than here.
- * Note that in this case we ignore the RealignTime parameter and always
- * wait for the loop start point.  It might be interesting to allow
- * RealignTime, but we would then need Loop callbacks for each cycle
- * and subcycle, and would need to send a MIDI SongPosition event to 
- * orient the external device relative to the loop location.
- * 
- */
-void Synchronizer::syncPulsePlaying(Loop* l, Event* e)
-{
-    Track* t = l->getTrack();
-    EventManager* em = t->getEventManager();
-	Event* realign = em->findEvent(RealignEvent);
-    
-    if (realign != NULL) {
-
-        if (!realign->pending) {
-			// Might get here in the special case for Sync=Out
-			// OutRealignMode=midiStart described above?
-            Trace(l, 2, "Sync: Ignoring active Realign event at sync pulse");
-        }
-        else {
-            // determine whether this is the right pulse
-            // for SYNC_TRACK we get SUBCYCLE, CYCLE, and LOOP pulses, 
-            // for the others we get BEAT and BAR
-
-            Setup* setup = mMobius->getActiveSetup();
-            RealignTime rtime = setup->getRealignTime();
-            SyncPulseType pulse = e->fields.sync.pulseType;
-            bool ready = false;
-
-            // SYNC_OUT, OutRealignMode=midiStart is a special case
-            // handled by loopLocalStartPoint
-            if (l->getTrack() != mOutSyncMaster ||
-                setup->getOutRealignMode() != REALIGN_MIDI_START) {
-
-                switch (rtime) {
-                    case REALIGN_NOW:
-                        // REALIGN_NOW will normally have been handled
-                        // immediately but just in case handle it here on
-                        // the next pulse
-                        ready = true;
-                        break;
-
-                    case REALIGN_BEAT:
-                        // everything except clocks
-                        ready = (pulse != SYNC_PULSE_UNDEFINED && 
-                                 pulse != SYNC_PULSE_CLOCK);
-                        break;
-
-                    case REALIGN_BAR:
-                        ready = (pulse == SYNC_PULSE_BAR ||
-                                 pulse == SYNC_PULSE_CYCLE ||
-                                 pulse == SYNC_PULSE_LOOP);
-                        break;
-
-                    case REALIGN_START:
-                        ready = e->fields.sync.syncStartPoint;
-                        break;
-                }
-            }
-
-            if (ready)
-              doRealign(l, e, realign);
-        }
-	}
-
-    // Check for pending events that can be activated on this pulse.
-    // Note that we have to do this after a realign so we know the
-    // new loop frame.
-
-    if (e->fields.sync.syncStartPoint) {
-
-        traceDealign(l);
-
-        // Check for pending SyncStartPoint
-        Event* startPoint = em->findEvent(StartPointEvent);
-        if (startPoint != NULL &&
-            startPoint->function == SyncStartPoint &&
-            startPoint->pending) {
-			
-            long frame = l->getFrame();
-
-            // For SYNC_MIDI if we're directly following the external
-            // clock we have to adjust for latency.  This is not necessary
-            // when following the SyncTracker which we should always
-            // be doing now.
-            if (e->fields.sync.source == SYNC_MIDI) {
-                if (!e->fields.sync.syncTrackerEvent) {
-                    Trace(l, 1, "Sync: Not expecting raw pulse for StartPointEvent\n");
-                    frame += l->getInputLatency();
-                }
-            }
-
-            Trace(l, 2, "Sync: Activating pending SyncStartPoint at frame %ld\n", frame);
-            startPoint->pending = false;
-            startPoint->immediate = true;
-            startPoint->frame = frame;
-        }
-    }
-
-    // Check for various pulse waits
-    checkPulseWait(l, e);
-}
-
-/**
- * At the external start point, trace dealign amounts for one
- * of the following tracks.
- *
- * After the tracker is locked for the first time, this should
- * stay in perfect sync.  For reasons I can't explain yet, the 
- * loop start point is usually at the "end point" where the frame
- * number is equal to the loop size rather than zero.  Every once
- * and awhile I see this at zero, need to find out why.
- *
- * For dealign purposes though, they are the same.
- *
- * Note that the tracker frame number will have already advanced
- * so you can't compare it to the loop frame.  This is only called
- * when we're processing a pulse event with isSyncStartPoint so we
- * can assume the tracker frame was zero.
- */
-void Synchronizer::traceDealign(Loop* l)
-{
-    Track* t = l->getTrack();
-    SyncState* state = t->getSyncState();
-    SyncSource src = state->getEffectiveSyncSource();
-    SyncTracker* tracker = getSyncTracker(src);
-
-    if (tracker != NULL) {
-        long loopFrames = l->getFrames();
-        long trackerFrames = tracker->getLoopFrames();
-
-        if (trackerFrames > 0 && loopFrames > 0) {
-            long loopFrame = l->getFrame();
-            // long trackerFrame = tracker->getAudioFrame();
-
-            // wrap if we're at the end point
-            if (loopFrame == loopFrames) loopFrame = 0;
-
-            // if we're a multiple up try not to exagurate the dealign
-            // find the closest common boundary
-            if (loopFrames > trackerFrames) {
-                // loop is more than tracker, must have been a Multiply or
-                // multi cycle record
-                if ((loopFrames % trackerFrames) == 0)
-                  loopFrame = loopFrame % trackerFrames;
-            }
-
-            // tracker frame is zero
-            // let a negative alighment mean the loop is behind the tracker
-            long dealign;
-            long line = loopFrames / 2;
-            if (loopFrame > line)
-              dealign = -(loopFrames - loopFrame);
-            else
-              dealign = loopFrame;
-
-            Trace(l, 2, "Sync: Tracker %s start point, loop frame %ld dealign %ld\n",
-                  tracker->getName(), l->getFrame(), dealign);
-        }
-    }
-}
-
-/****************************************************************************
- *                                                                          *
- *                                  REALIGN                                 *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Called when we reach a realign point.
- * Determine where the ideal Loop frame should be relative to the
- * sync source and move the loop.
- * 
- * This can be called in two contexts: by suncPulsePlaying during processing
- * of a SyncEvent and by loopLocalStartPoint when the Loop reaches the start
- * point and we're the OutSyncMaster and OutRealignMode=Midistart.
- *
- * When called by syncPulsePlaying the "pulse" event will be non-null 
- * and should have come from the SyncTracker.
- *
- * When we're the OutSyncMaster, we own the clock and can make the external
- * device move.  NOTE: this is only working RealignTime=Loop and
- * we can simply send MS_START.  For other RealignTimes we need to 
- * be sending song position messges!!
- */
-void Synchronizer::doRealign(Loop* loop, Event* pulse, Event* realign)
-{
-    Track* track = loop->getTrack();
-    EventManager* em = track->getEventManager();
-    Setup* setup = mMobius->getActiveSetup();
-
-    // sanity checks since we can be called directly by the Realign function
-    // really should be safe by now...
-    if (loop->getFrames() == 0) {
-		Trace(loop, 1, "Sync: Ignoring realign of empty loop!\n");
-	}
-    else if (track == mOutSyncMaster &&
-             setup->getOutRealignMode() == REALIGN_MIDI_START) {
-
-        // We don't change position, we tell the external device to 
-        // retrigger from the beginning.  We should be at the internal
-        // Loop start point (see comments)
-        if (loop->getFrame() != 0)
-          Trace(loop, 1, "Sync:doRealign Loop not at start point!\n");
-
-        // !! We have historically disabled sending MS_START if the
-        // ManualStart option was on.  But this makes Realign effectively
-        // meaningless.  Maybe we should violate ManualStart in this case?
-        if (!setup->isManualStart())
-          sendStart(loop, false, false);
-	}
-    else if (pulse == NULL) {
-        // only the clause above is allowed without a pulse
-        Trace(loop, 1, "Sync:doRealign no pulse event!\n");
-    }
-    else if (pulse->fields.sync.source == SYNC_TRACK) {
-		realignSlave(loop, pulse);
-    }
-    else if (pulse->fields.sync.source == SYNC_TRANSPORT) {
-        // no drift on these?
-    }
-    else {
-        // Since the tracker may have generated several pulses in this
-        // interrupt we have to store the pulseFrame in the event.
-        long newFrame = pulse->fields.sync.pulseFrame;
-
-        // formerly adjusted for MIDI pulse latency, this should
-        // no longer be necessary if we're following the SyncTracker
-        SyncSource source = pulse->fields.sync.source;
-        if (source == SYNC_MIDI && !pulse->fields.sync.syncTrackerEvent) {
-            Trace(loop, 1, "Sync: Not expecting raw event for MIDI Realign\n");
-            newFrame += loop->getInputLatency();
-        }
-
-        // host realign should always be following the tracker
-        if (source == SYNC_HOST && !pulse->fields.sync.syncTrackerEvent)
-          Trace(loop, 1, "Sync: Not expecting raw event for HOST Realign\n");
-
-        newFrame = wrapFrame(loop, newFrame);
-
-        Trace(loop, 2, "Sync: Realign to external pulse from frame %ld to %ld\n",
-              loop->getFrame(), newFrame);
-
-        // save this for the unit tests
-        SyncState* state = track->getSyncState();
-        state->setPreRealignFrame(loop->getFrame());
-
-        moveLoopFrame(loop, newFrame);
-    }
-
-    // Post processing after realign.  RealignEvent doesn't have
-    // an invoke handler, it is always pending and evaluated by Synchronzer.
-    // If this was scheduled from MuteRealign then cancel mute mode.
-    // Wish we could bring cancelSyncMute implementation in here but it is also
-    // needed by the MidiStartEvent handler.  
-	if (realign->function == MuteRealign)
-      loop->cancelSyncMute(realign);
-
-    // resume waiting scripts
-    realign->finishScriptWait(mMobius);
-
-	// we didn't process this in the usual way, we own it
-    // this will remove and free
-    em->freeEvent(realign);
-
-	// Check for "Wait realign"
-	Event* wait = em->findEvent(ScriptEvent);
-	if (wait != NULL && 
-        wait->pending && 
-        wait->fields.script.waitType == WAIT_REALIGN) {
-		wait->pending = false;
-		// note that we use the special immediate option since
-		// the loop frame can be chagned by SyncStartPoint
-		wait->immediate = true;
-		wait->frame = loop->getFrame();
-	}
-}
-
-/**
- * Called by RealignFunction when RealignTime=Now.
- * Here we don't schedule a Realign event and wait for a pulse, 
- * we immediately move the slave loop.
- */
-void Synchronizer::loopRealignSlave(Loop* l)
-{
-	realignSlave(l, NULL);
-}
-
-/**
- * Perform a track sync realign with the master.
- *
- * When "pulse" is non-null we're being called for a pending RealignEvent
- * and we've received the proper master track sync pulse.  The pulse
- * will have the master track frame where the pulse was located.  Note
- * that we must use the frame from the event since the master track
- * will have been fully advanced by now and may be after the pulse frame.
- * 
- * When "pulse" is null, we're being called by RealignFunction
- * when RealignTime=Now.  We can take the currrent master track location
- * but we have to do some subtle adjustments.
- * 
- * Example: Master track is at frame 1000 and slave track is at 2000, 
- * interrupt buffer size is 256.  The Realign is scheduled for frame
- * 2128 in the middle of the buffer.  By the time we process the Realign
- * event, the master track will already have advanced to frame 1256.  
- * If we set the slave frame to that, we still have another 128 frames to
- * advance so the state at the end of the interrupt will be master 1256 and
- * slave 1384.   We can compensate for this by factoring in the 
- * current buffer offset of the Realign event which we don't' have but we
- * can assume we're being called by the Realgin event handler and use
- * Track::getRemainingFrames.
- * 
- * It gets messier if the master track is running at a different speed.
- * 
- */
-void Synchronizer::realignSlave(Loop* l, Event* pulse)
-{
-	long loopFrames = l->getFrames();
-	
-	if (loopFrames == 0) {
-		// empty slave, shouldn't be here
-		Trace(l, 1, "Sync: Ignoring realign of empty loop\n");
-	}
-	else if (mTrackSyncMaster == NULL) {
-		// also should have caught this
-		Trace(l, 1, "Sync: Ignoring realign with no master track\n");
-	}
-	else {
-        Track* track = l->getTrack();
-        SyncState* state = track->getSyncState();
-		long newFrame = 0;
-
-        if (pulse != NULL) {
-            // frame conveyed in the event
-            newFrame = (long)pulse->fields.sync.pulseFrame;
-        }
-        else {
-            // subtle, see comments above
-            Loop* masterLoop = mTrackSyncMaster->getLoop();
-
-			// the master track at the end of the interrupt (usually)
-			long masterFrame = masterLoop->getFrame();
-
-			// the number of frames left in the master interrupt
-			// this is usually zero, but in some of the unit tests
-			// that wait in the master track, then switch to the
-			// slave track there may still be a remainder
-			long masterRemaining = mTrackSyncMaster->getRemainingFrames();
-
-			// the number of frames left in the slave interrupt
-			long remaining = track->getRemainingFrames();
-
-			// SPEED NOTE
-			// Assuming speeds are the same, we should try to have
-			// both the master and slave frames be the same at the
-			// end of the interrupt.  If speeds are different, we can 
-			// cause that to happen, but it is probably ok that they
-			// be allowed to drift.
-
-			masterRemaining = (long)((float)masterRemaining * getSpeed(masterLoop));
-			remaining = (long)((float)remaining * getSpeed(l));
-
-			remaining -= masterRemaining;
-
-			// remove the advance from the master frame
-			// wrapFrame will  handle it if this goes negative
-			newFrame = masterFrame - remaining;
-		}
-
-		// wrap master frame relative to our length
-		newFrame = wrapFrame(l, newFrame);
-
-		Trace(l, 2, "Sync: Realign slave from frame %ld to %ld\n",
-			  l->getFrame(), newFrame);
-
-        // save this for the unit tests
-        state->setPreRealignFrame(l->getFrame());
-        moveLoopFrame(l, newFrame);
-	}
-}
-
-/**
- * Called by Loop when we're at the local start point.
- * 
- * If we're the out sync master with a pending Realign and 
- * OutRealignMode is REALIGN_MIDI_START, activate the Realign.
- * 
- */
-void Synchronizer::loopLocalStartPoint(Loop* l)
-{
-    Track* t = l->getTrack();
-
-	if (t == mOutSyncMaster) {
-
-        Setup* setup = mMobius->getActiveSetup();
-		OutRealignMode mode = setup->getOutRealignMode();
-
-		if (mode == REALIGN_MIDI_START) {
-            EventManager* em = l->getTrack()->getEventManager();
-			Event* realign = em->findEvent(RealignEvent);
-			if (realign != NULL)
-			  doRealign(l, NULL, realign);
-		}
-	}
-
-}
-
-/****************************************************************************
- *                                                                          *
- *                              DRIFT CORRECTION                            *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * For each tracker, check to see if the drift exceeds the threshold
- * and attempt to correct all tracks that follow the tracker.  If any
- * track is in an incorrectable state (recording) the correction must
- * be deferred.
- * 
- * This could be done at either the beginning or end of the
- * interrupt but if we need to support DriftCheckPoint=loop we have to 
- * let the tracks advance first.  In retrospect I don't really like
- * DriftCheckPoint=Loop since not all tracks will be aligned the same,
- * consider removing it.
- *
- * When exactly we make this correction isn't important, it doesn't have to be
- * adjusted for pulse latency.
- *
- */
-void Synchronizer::checkDrift()
-{
-    checkDrift(mOutTracker);
-    checkDrift(mMidiTracker);
-    checkDrift(mHostTracker);
-    mForceDriftCorrect = false;
-}
-
-void Synchronizer::correctDrift()
-{
-    correctDrift(mOutTracker);
-    correctDrift(mMidiTracker);
-    correctDrift(mHostTracker);
-    mForceDriftCorrect = false;
-}
-
-/**
- * Check drift for one sync tracker.
- * 
- * There are two places we can check for drift, defined by the 
- * DriftCheckPoint parameter.  LOOP means the start point of the Mobius loop
- * and EXTERNAL means the start point of the external loop being
- * maintained by the SyncTracker.  This is not currently exposed
- * in the UI, the unit tests expect LOOP.
- *
- * Checking drift at internal loop locations can result in a more musically
- * useful correction since the correction happens near a boundary where 
- * the listener is accustomed to hearing something change.  Checking
- * drift at the external loop boundary makes things seem tighter
- * with the drum pattern or sequence being played which might be preferable.
- * 
- * In either case the drift we check and apply was calculated on the LAST
- * pulse we cannot compare the current pulse frame with the current 
- * audio frame in the tracker.  See comments at the top of SyncTracker
- * about the possible margin of error.
- * 
- */
-void Synchronizer::checkDrift(SyncTracker* tracker)
-{
-    bool checkpoint = false;
-    const char* traceMsg;
-
-    if (tracker->isLocked()) {
-        if (mDriftCheckPoint == DRIFT_CHECK_EXTERNAL) {
-            // See if we have a start point pulse for this tracker.
-            // Note that there could be two events with this sync source, 
-            // one from the external clock and one from the SyncTracker.
-            // It doesn't really matter which we use since the adjustment
-            // will be the same, only the timing of the adjustment will 
-            // be different.  But since the goal of this is to realign
-            // with the external clock, let it control the timing.
-            // We do this by checking !e->isSyncTrackerEvent().
-            Event* e = mInterruptEvents->getEvents();
-            for ( ; e != NULL ; e = e->getNext()) {
-                if (e->fields.sync.source == tracker->getSyncSource() &&
-                    !e->fields.sync.syncTrackerEvent &&
-                    e->fields.sync.syncStartPoint) {
-                    checkpoint = true;
-                    traceMsg = "Sync:checkDrift %s: External start point drift %ld\n";
-                    break;
-                }
-            }
-        }
-        else {
-            // See if the first slave track crossed its start point.
-            // We determine this by looking for a "boundary event" saved
-            // in the SyncState.
-            Track* slave = NULL;
-            int tcount = mMobius->getTrackCount();
-            for (int i = 0 ; i < tcount ; i++) {
-                Track* t = mMobius->getTrack(i);
-                SyncState* state = t->getSyncState();
-                if (state->getEffectiveSyncSource() == tracker->getSyncSource()) {
-                    slave = t;
-                    break;
-                }
-            }
-
-            if (slave != NULL) {
-                SyncState* state = slave->getSyncState();
-                checkpoint = (state->getBoundaryEvent() == LoopEvent);
-                if (checkpoint)
-                  traceMsg = "Sync:checkDrift %s: Internal start point drift %ld\n";
-            }
-        }
-    }
-
-    // Would we ever want to defer forced drift checkpoint to 
-    // a checkpoint boundary or are they always immediate?
-
-    if (checkpoint || mForceDriftCorrect) {
-
-        // keep a count of the drift checks for sync test scripts
-        tracker->incDriftChecks();
-
-        // tracker has been calculating the amount of drift
-        long drift = (long)tracker->getDrift();
-        int absdrift = (int)((drift > 0) ? drift : -drift);
-        
-        // Trackers are already tracing every beat with drift
-        // this doesn't tell us anything new other than whether
-        // it was an External or Internal start point
-        //Trace(2, traceMsg, tracker->getName(), (long)drift);
-
-        if (absdrift > mMaxSyncDrift || 
-            (mForceDriftCorrect && absdrift != 0))
-          correctDrift(tracker);
-
-        // Wake up a script waiting for the drift check point.
-        // Note that this has to be done after the frame is changed.
-        // Sigh, yet another track walk, only look at the directly slaved
-        // tracks which is enough for unit tests
-        int ntracks = mMobius->getTrackCount();
-        for (int i = 0 ; i < ntracks ; i++) {
-            Track* t = mMobius->getTrack(i);
-            SyncState* state = t->getSyncState();
-            if (state->getEffectiveSyncSource() == tracker->getSyncSource()) {
-                EventManager* em = t->getEventManager();
-                Event* wait = em->findEvent(ScriptEvent);
-                if (wait != NULL && 
-                    wait->pending && 
-                    wait->fields.script.waitType == WAIT_DRIFT_CHECK) {
-                    // activate it now
-                    Loop* loop = t->getLoop();
-                    wait->pending = false;
-                    wait->immediate = true;
-                    wait->frame = loop->getFrame();
-                }
-            }
-        }
-    }
-}
-
-/**
- * Force drift correction for a tracker regardless of the current
- * amount of drift.  
- * 
- * Factored out of checkDrift so we can call it directly from a function.
- *
- * The correction may be denied if any of the affected tracks are
- * recording or in a state that can't be corrected.
- */
-void Synchronizer::correctDrift(SyncTracker* tracker)
-{
-    // not so fast...all tracks have to be in a correctable state
-    bool correctable = true;
-
-    int ntracks = mMobius->getTrackCount();
-    for (int i = 0 ; i < ntracks && correctable ; i++) {
-        Track* t = mMobius->getTrack(i);
-        SyncState* state = t->getSyncState();
-
-        if (state->getEffectiveSyncSource() == tracker->getSyncSource()) {
-            // it follows this tracker
-            correctable = isDriftCorrectable(t, tracker);
-            if (correctable) {
-                // tracksync slaves must also be ready
-                // currently only one master, eventually may need recursion
-                if (t == mTrackSyncMaster) {
-                    for (int j = 0 ; j < ntracks && correctable ; j++) {
-                        Track* t2 = mMobius->getTrack(j);
-                        SyncState* state2 = t2->getSyncState();
-                        if (state2->getEffectiveSyncSource() == SYNC_TRACK)
-                          correctable = isDriftCorrectable(t2, tracker);
-                    }
-                }
-            }
-        }
-    }
-
-    if (!correctable) {
-        Trace(2, "Sync: Unable to correct drift for tracker %s\n",
-              tracker->getName());
-    }
-    else {
-        Trace(2, "Sync: Beginning drift correction for tracker %s\n",
-              tracker->getName());
-
-        // keep track of the number of drift corrections we've performed
-        tracker->incDriftCorrections();
-
-        // sigh, same walk as we did above, could have saved them 
-        // in a List...
-        for (int i = 0 ; i < ntracks ; i++) {
-            Track* t = mMobius->getTrack(i);
-            SyncState* state = t->getSyncState();
-
-            if (state->getEffectiveSyncSource() == tracker->getSyncSource()) {
-                            
-                correctDrift(t, tracker);
-
-                if (t == mTrackSyncMaster) {
-                    for (int j = 0 ; j < ntracks && correctable ; j++) {
-                        Track* t2 = mMobius->getTrack(j);
-                        SyncState* state2 = t2->getSyncState();
-                        if (state2->getEffectiveSyncSource() == SYNC_TRACK) {
-                            correctDrift(t2, tracker);
-                        }
-                    }
-                }
-            }
-        }
-
-        // reset the drift state in this tracker now that all
-        // the dependent tracks have been corrected
-        tracker->correct();
-    }
-}
-
-/**
- * Return true if drift correction can be done in this track.
- */
-bool Synchronizer::isDriftCorrectable(Track* track, SyncTracker* tracker)
-{
-    // logic is backward for historical reasons...too lazy to rewrite
-    bool suppress = false;
-
-    Loop* loop = track->getLoop();
-	MobiusMode* mode = loop->getMode();
-
-    // tracker has been calculating the amount of drift
-    // new: unreferenced
-    // long drift = (long)tracker->getDrift();
-    // int absdrift = (int)((drift > 0) ? drift : -drift);
-
-    // NOTE: Some older logic let a track in Synchronize mode be corrected
-    // if this was a track sync slave to the OUT sync master tracn
-    // and the direction of the drift was negative.  I don't remember why
-    // jumping backard was okay but not forward, either way it seems
-    // obscure and not worth the trouble.
-		
-    if (mode != PlayMode && mode != MuteMode &&	mode != ConfirmMode && 
-        mode != ResetMode) {
-        Trace(loop, 2, "Sync: Tracker %s: Suppressing drift correction in mode %s\n",
-              tracker->getName(), mode->getName());
-        suppress = true;
-    }
-
-    // Disable drift adjust if continuous feedback is being applied so 
-    // we get a clean copy of the layer.
-    if (!suppress) {
-        Preset* p = track->getPreset();
-        if (!p->isNoLayerFlattening()) {
-            // !! this may be more complicated since the effective
-            // feedback is buried in the smoothers
-            int feedback = track->getFeedback();
-            if (feedback < 127) {
-                Trace(loop, 2, "Sync: Tracker %s: Suppressing drift correction while feedback reduced\n",
-                      tracker->getName());
-                suppress = true;
-            }
-        }
-    }
-
-    // Disable retrigger for certain pending events
-    if (!suppress) {
-        EventManager* em = track->getEventManager();
-        for (Event* e = em->getEvents() ; e != NULL && !suppress ; e = e->getNext()) {
-
-            if (!e->pending) {
-                // Let ReturnEvents finish
-                suppress = (e->type == ReturnEvent);
-                if (suppress)
-                  Trace(loop, 2, "Sync: Tracker %s: Suppressing drift correction due to ReturnEvent\n",
-                        tracker->getName());
-            }
-            else {
-                if (e->type == ScriptEvent) {
-                    // Suppress if we have a wait event that isn't waiting
-                    // for us to actually do the drift check.
-                    WaitType wt = e->fields.script.waitType;
-                    suppress = (wt != WAIT_DRIFT_CHECK && wt != WAIT_PULSE);
-                    if (suppress)
-                      Trace(loop, 2, "Sync: Tracker %s: Suppressing drift correction due to ScriptEvent\n",
-                            tracker->getName());
-                }
-                else {	
-                    // Old comments say to suppress if there is a pending
-                    // ReturnEvent but we've actually been suppressing if
-                    // there are ANY pending events for quite awhile.
-                    // Revisit this...!!
-                    suppress = true;
-                    Trace(loop, 2, "Sync: Tracker %s: Suppressing drift correction due to pending event\n",
-                          tracker->getName());
-                }
-            }
-        }
-    }
-
-    return !suppress;
-}
-
-/**
- * Correct the drift in one track.
- */
-void Synchronizer::correctDrift(Track* track, SyncTracker* tracker)
-{
-    Loop* loop = track->getLoop();
-    
-    // may be other states to ignore?
-    if (!loop->isReset()) {
-
-        SyncState* state = track->getSyncState();
-        long drift = (long)tracker->getDrift();
-
-        // save this for the unit tests
-        state->setPreRealignFrame(loop->getFrame());
-
-        long loopFrames = loop->getFrames();
-        long newFrame = loop->getFrame();
-
-        if (loopFrames <= 0) {
-            // catch this just to be absoultely sure we don't divide by zero
-            Trace(loop, 1, "Sync: Loop frame count hootered!\n");
-        }
-        else {
-            // if drift is positive the audio frame is ahead
-            newFrame -= (long)drift;
-            newFrame = wrapFrame(loop, newFrame);
-
-            // don't need to worry about pulse latency, right??
-            Trace(loop, 2, "Sync: Drift correction of track %ld from %ld to %ld\n",
-                  (long)track->getDisplayNumber(), loop->getFrame(), newFrame);
-
-            moveLoopFrame(loop, newFrame);
-        }
-    }
-}
-
-/**
- * Given a logical loop frame calculated for drift correction or realignment,
- * adjust it so that it fits within the target loop.
- */
-long Synchronizer::wrapFrame(Loop* l, long frame)
-{
-    long max = l->getFrames();
-    if (max <= 0) {
-        Trace(l, 1, "Sync:wrapFrame loop is empty!\n");
-        frame = 0;
-    }
-    else {
-        if (frame > 0)
-          frame = frame % max;
-        else {
-            // can be negative after drift correction
-            // ugh, must be a better way to do this!
-            while (frame < 0)
-              frame += max;
-        }
-    }
-    return frame;
-}
-
-/**
- * Called when we need to change the loop frame for either drift 
- * correction or realign.
- * 
- * We normally won't call this if we're recording, but the
- * layer still could have unshifted contents in some cases left
- * behind from an eariler operation.
- *
- */
-void Synchronizer::moveLoopFrame(Loop* l, long newFrame)
-{
-	if (newFrame < l->getFrame()) {
-		// jumping backwards, this is probably ok if we're
-		// at the end, but a shift shouldn't hurt 
-		l->shift(true);
-	}
-
-	l->setFrame(newFrame);
-	l->recalculatePlayFrame();
 }
 
 /****************************************************************************
@@ -5217,412 +3047,6 @@ void Synchronizer::setOutSyncMasterInternal(Track* master)
 	}
 
 	mOutSyncMaster = master;
-}
-
-/**
- * Find a track able to serve as the SYNC_TRACK master.
- * It doesn't matter what the SyncSource is, the first track
- * we find that isn't empty is the default sync master.
- */
-Track* Synchronizer::findTrackSyncMaster()
-{
-	Track* master = NULL;
-
-	int tcount = mMobius->getTrackCount();
-	for (int i = 0 ; i < tcount ; i++) {
-		Track* t = mMobius->getTrack(i);
-        //SyncState* state = t->getSyncState();
-		Loop* l = t->getLoop();
-
-		// !! in theory we have the "latency delay" state before the
-		// record starts here?
-		MobiusMode* mode = l->getMode();
-		bool recording = 
-			(mode == RecordMode || 
-			 mode == ThresholdMode ||
-			 mode == SynchronizeMode);
-
-        // Formerly called t->isEmpty which returns true if there is 
-        // ANY non-empty loop in the track.  I don't know why I did
-        // this but it seems more logical to pick a track that is actually
-        // playing now.
-		//bool empty = t->isEmpty();
-        bool empty = l->isEmpty();
-
-		if ((!empty || recording) && (t == mTrackSyncMaster || master == NULL))
-		  master = t;
-	}
-
-    return master;
-}
-
-/**
- * Find a track able to serve as the SYNC_OUT master.
- */
-Track* Synchronizer::findOutSyncMaster()
-{
-	Track* master = NULL;
-
-	int tcount = mMobius->getTrackCount();
-	for (int i = 0 ; i < tcount ; i++) {
-		Track* t = mMobius->getTrack(i);
-        SyncState* state = t->getSyncState();
-
-        if (state->getDefinedSyncSource() == SYNC_OUT) {
-            // if the track was a sync master and isn't empty, let it continue
-
-            // Formerly called t->isEmpty which returns true if there is 
-            // ANY non-empty loop in the track.  I don't know why I did
-            // this but it seems more logical to pick a track that is actually
-            // playing now.
-            //bool empty = t->isEmpty();
-            Loop* l = t->getLoop();
-            bool empty = l->isEmpty();
-
-            if (!empty && (t == mOutSyncMaster || master == NULL))
-              master = t;
-
-        }
-    }
-
-    return master;
-}
-
-/****************************************************************************
- *                                                                          *
- *   							   OUT SYNC                                 *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Called whenever the size of the out sync master track changes.
- * This can happen for many reasons.  Functions that alter the loop
- * size or cycle size (Multiply, Insert, Divide).  Functions that move
- * between layers that may be of different sizes (Undo, Redo).  Functions
- * that move between loops of different sizes (NextLoop, PrevLoop, LoopX).
- * Functions that replace the contents of a loop (LoadLoop, 
- * LoadProject, Bounce).
- *
- * It doesn't matter here what caused the resize, we look at the
- * new size of the master track's loop and compare it to the loop
- * size in the OutSyncTracker.  If they are not compatible, then a tempo
- * adjustment must be made and the tracker resized.
- */
-void Synchronizer::resizeOutSyncTracker()
-{
-    if (mOutSyncMaster == NULL) {
-        // This normally happens only when you reset the master
-        // track and there are no others to choose from.
-        // It could also happen if you forced an empty track to be the
-        // master.  Try to avoid this in the caller.
-        Trace(2, "Sync:resizeOutSyncTracker with no master track\n");
-    }
-    else {
-        Loop* l = mOutSyncMaster->getLoop();
-
-        // start from cycle frames rather than the full loop
-        // !! really? always? may want control over how many "bars"
-        // there are in the external loop so we don't have to rely on
-        // tempo wrapping to record a multi-bar loop and get the right
-        // tempo
-        long newFrames = l->getCycleFrames();
-        if (newFrames == 0) {
-            // This can happen if you're switching loops within the
-            // master track and some are empty.  Leave the old loop
-            // size in place.
-            Trace(l, 2, "Sync:resizeOutSyncTracker empty loop\n");
-        }
-        else {
-            if (!mOutTracker->isLocked()) {
-                // first time here, just lock it
-                // this can happen when we load loops or projects rather
-                // than record them, and maybe when setting the master manually
-                Trace(l, 2, "Sync: Locking master track after loading\n");
-                lockOutSyncTracker(l, false);
-            }
-            else {
-                // if either is a perfect multiple of the other, ignore
-                // note that we have to use the "future" accessors since
-                // there could be several resize events rapidly before the 
-                // next pulse
-                bool resize = false;
-                long trackerFrames = mOutTracker->getFutureLoopFrames();
-
-                if (newFrames > trackerFrames) {
-                    // If new size is greater, it is okay as long as
-                    // it remains an even multiple of the original cycle size.
-                    resize = ((newFrames % trackerFrames) != 0);
-                }
-                else if (trackerFrames > newFrames) {
-                    // If size is less then the original cycle was cut. 
-                    // We could also keep the tempo if the tracker is
-                    // an even multiple of the new cycle size, but here
-                    // it seems more like you want to double speed.
-                    // Could have an option for this.
-                    bool alwaysKeepTempo = false;
-                    if (alwaysKeepTempo)
-                      resize = ((trackerFrames % newFrames) != 0);
-                    else
-                      resize = true;
-                }
-
-                // speed changes always force a resize even if the fundamental
-                // cycle length doesn't change
-                float speed = getSpeed(l);
-
-                if (resize || speed != mOutTracker->getFutureSpeed()) {
-
-                    if (speed != 1.0)
-                      newFrames = (long)((float)newFrames / speed);
-
-                    // calculate preferred tempo and pulses
-                    int pulses = 0;
-                    float tempo = calcTempo(l, mOutTracker->getBeatsPerBar(),
-                                            newFrames, &pulses);
-
-                    Trace(l, 2, "Sync: master track %ld resizing to %ld frames, tempo (x100) %ld\n",
-                          (long)mOutSyncMaster->getDisplayNumber(), 
-                          (long)newFrames,
-                          (long)(tempo * 100));
-
-                    // Transport won't change tempo until after generating
-                    // the next clock, Tracker will wait for that before
-                    // resizing
-                    mOutTracker->resize(pulses, newFrames, speed);
-                    // mTransport->setTempo(l, tempo);
-                    mSyncMaster->setMidiOutTempo(tempo);
-                }
-            }
-        }
-    }
-}
-
-/**
- * Lock the out sync tracker.
- * This called at the end of loopRecordStop if we determine that we
- * can be the out symc master.  It will also be called by 
- * resizeOutSyncTracker if the tracker is currently unlocked.
- *
- * The recordStop flag is set if we're called from loopRecordStop.
- *
- * !! Determine if we need the recorStop flag and the difference in 
- * behavior.  We need to be factoring in speed shift when speed shift
- * causes the assignment of a new sync master which locks the tracker.
- * 
- */
-void Synchronizer::lockOutSyncTracker(Loop* l, bool recordStop)
-{
-    // don't call this if already locked
-    if (mOutTracker->isLocked()) {
-        Trace(1, "Sync: Don't call this if the tracker is locked!\n");
-    }
-    else {
-        // If this was AutoRecord, we may have precalculated a frame and pulse
-        // count and left SyncState rounding.  We don't really need that, just
-        // work from the final cycle size which may have to be rounded for
-        // tempo and adjusted for speed.
-
-        long trackerFrames = l->getCycleFrames();
-
-        // resizeOutSyncTracker factors in speed shift, do we need that here?!!
-        if (!recordStop) {
-            float speed = getSpeed(l);
-            if (speed != 1.0)
-              trackerFrames = (long)((float)trackerFrames / speed);
-        }
-
-        int pulses = 0;
-        int bpb = getBeatsPerBar(SYNC_NONE, l);
-        float tempo = calcTempo(l, bpb, trackerFrames, &pulses);
-
-        mOutTracker->lock(l, 0, pulses, trackerFrames, getSpeed(l), bpb);
-        // temporary debugging
-        Track* t = l->getTrack();
-        mOutTracker->setMasterTrack(t);
-
-        Trace(l, 2, "Sync: Locked Out tracker at loop frame %ld\n",
-              l->getFrame());
-
-        // advance the remaining frames in the buffer
-        // if we're going to send START now, this doesn't matter since we'll 
-        // immediately reset the frame counter back to zero on the 
-        // next interrupt, but be consistent with the other trackers
-        if (recordStop) {
-            long advance = t->getRemainingFrames();
-            Trace(l, 2, "Sync: initial tracker audio frame advance %ld\n", advance);
-            mOutTracker->advance(advance, NULL, NULL);
-        }
-
-        //mTransport->setTempo(l, tempo);
-        mSyncMaster->setMidiOutTempo(tempo);
-        
-        // if this isn't ManualStart=true, send the MS_START message now
-        SyncState* state = t->getSyncState();
-        if (!state->isManualStart())
-          // mTransport->start(l);
-          mSyncMaster->midiOutStart();
-        else
-          // mTransport->startClocks(l);
-          mSyncMaster->midiOutStartClocks();
-
-        // must keep these in sync
-        if (t != mOutSyncMaster)
-          setOutSyncMasterInternal(t);
-    }
-}
-
-/**
- * Helper to calculate the tempo and number of sync pulses
- * from a span of frames.  This is normally the length of one "cycle"
- * of the loop, though when creating the initial loop this will be the
- * full length of the master loop.
- *
- * Speed is not factored in here, if you need to adjust for speed it should
- * be factored into the given frame length.
- *
- *    framesForTempo = trueFrames / speed
- *
- * For example with a 120,000 frame loop recorded at 1/2 speed, the effective
- * size of the loop for tempo calculations is 240,000.
- *
- * Without speed adjustment 120,000 at 4 beats per bar results in a tempo of 88.2
- *
- * With 240,000 frames the tempo becomes 44.1, which is 1/2 of 88.2.
- *
- * The number of pulses returned is usually take from the beatsPerBar parameter.
- * 
- * TODO: May need anoter setup parameter for RecordBars in case the external
- * pattern is several bars long, but usually rounding should fix that?
- * It doesn't really matter what the pulse count is, it is really just
- * a starting point that we carry over to the SyncTracker, it does not 
- * necessarily have to match the number of beats in a logical measure.
- */
-float Synchronizer::calcTempo(Loop* l, int beatsPerBar, long frames, 
-                                      int* retPulses)
-{
-	float tempo = 0.0;
-	int pulses = 0;
-
-	if (frames > 0) {
-
-        Setup* setup = mMobius->getActiveSetup();
-        // SyncState should already have figured out the beat count
-        // new: these were unreferenced
-        // Track* t = l->getTrack();
-        // SyncState* state = t->getSyncState();
-
-        // 24 MIDI clocks per beat
-		pulses = beatsPerBar * 24;
-		
-        // original forumla
-        // I don't know how I arrived at this, it works but
-        // it is too obscure to explain in the docs
-		//float cycleSeconds = (float)frames /  (float)CD_SAMPLE_RATE;
-		//tempo = (float)beatsPerBar * (60.0f / cycleSeconds);
-
-        // more obvoius formula
-        float framesPerBeat = (float)frames / (float)beatsPerBar;
-        float secondsPerBeat = framesPerBeat / (float)mMobius->getSampleRate();
-        tempo = 60.0f / secondsPerBeat;
-
-		float original = tempo;
-		float fpulses = (float)pulses;
-
-		// guard against extremely low or high values
-		// allow these to be floats?
-		int min = setup->getMinTempo();
-		int max = setup->getMaxTempo();
-
-		if (max < SYNC_MIN_TEMPO || max > SYNC_MAX_TEMPO)
-		  max = SYNC_MAX_TEMPO;
-
-		if (min < SYNC_MIN_TEMPO || min > SYNC_MAX_TEMPO)
-		  min = SYNC_MIN_TEMPO;
-
-		while (tempo > max) {
-			tempo /= 2.0;
-			fpulses /= 2.0;
-		}
-
-		// if a conflicting min/max specified, min wins
-		while (tempo < min) {
-			tempo *= 2.0;
-			fpulses *= 2.0;
-		}
-        
-        Trace(l, 2, "Sync: calcTempo frames %ld beatsPerBar %ld pulses %ld tempo %ld (x100)\n",
-              frames, (long)beatsPerBar, (long)fpulses, (long)(tempo * 100));
-
-		if (tempo != original) {
-			Trace(l, 2, "Sync: calcTempo wrapped from %ld to %ld (x100) pulses from %ld to %ld\n",
-				  (long)(original * 100),
-				  (long)(tempo * 100), 
-				  (long)pulses, 
-				  (long)fpulses);
-
-            // care about roundoff?
-            // !! yes we do...need to have a integral number of pulses and
-            // we ordinally will unless beatsPerBar is odd
-            float intpart;
-            float frac = modff(fpulses, &intpart);
-            if (frac != 0) {
-                Trace(l, 1, "WARNING: Sync: non-integral master pulse count %ld (x10)\n",
-                      (long)(fpulses * 10));
-            }
-            pulses = (int)fpulses;
-		}
-	}
-
-	if (retPulses != NULL) *retPulses = pulses;
-    return tempo;
-}
-
-/**
- * Helper for several loop callbacks to send a MIDI start event
- * to the external device, and start sending clocks if we aren't already.
- * The tempo must have already been calculated.
- *
- * If the checkManual flag is set, we will only send the START
- * message if the ManualStart setup parameter is off.  
- *
- * If the checkNear flag is set, we will suppress sending START
- * if the tracker says we're already 
- */
-void Synchronizer::sendStart(Loop* l, bool checkManual, bool checkNear)
-{
-	bool doStart = true;
-
-	if (checkManual) {
-        Setup* setup = mMobius->getActiveSetup();
-        doStart = !(setup->isManualStart());
-	}
-
-	if (doStart) {
-		// To avoid a flam, detect if we're already at the external
-		// start point so we don't need to send a START.
-        // !! We could be a long way from the pulse, should we be
-        // checking frame advance as well?
-        
-        bool nearStart = false;
-        if (checkNear) {
-            int pulse = mOutTracker->getPulse();
-            if (pulse == 0 || pulse == mOutTracker->getLoopPulses())
-              nearStart = true;
-        }
-
-        if (nearStart && mSyncMaster->isMidiOutStarted()) {
-			// The unit tests want to verify that we at least tried
-			// to send a start event.  If we suppressed one because we're
-			// already there, still increment the start count.
-            Trace(l, 2, "Sync: Suppressing MIDI Start since we're near\n");
-			mSyncMaster->incMidiOutStarts();
-        }
-        else {
-            Trace(l, 2, "Sync: Sending MIDI Start\n");
-            // mTransport->start(l);
-            mSyncMaster->midiOutStart();
-		}
-	}
 }
 
 /****************************************************************************/

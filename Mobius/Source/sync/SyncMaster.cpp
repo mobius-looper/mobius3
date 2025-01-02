@@ -15,6 +15,7 @@
 #include "Pulse.h"
 #include "MidiRealizer.h"
 #include "MidiAnalyzer.h"
+#include "Transport.h"
 #include "SyncMasterState.h"
 
 #include "SyncMaster.h"
@@ -53,6 +54,7 @@ void SyncMaster::initialize(MobiusContainer* c)
     midiRealizer.reset(new MidiRealizer());
     midiAnalyzer.reset(new MidiAnalyzer());
     pulsator.reset(new Pulsator(this));
+    transport.reset(new Transport(this));
 
     MidiManager* mm = container->getMidiManager();
     midiRealizer->initialize(this, mm);
@@ -106,7 +108,7 @@ void SyncMaster::advance(MobiusAudioStream* stream)
     if (newSampleRate != sampleRate)
       refreshSampleRate(sampleRate);
     
-    transport.advance(frames);
+    transport->advance(frames);
 
     pulsator->interruptStart(stream);
 
@@ -120,7 +122,7 @@ void SyncMaster::advance(MobiusAudioStream* stream)
 void SyncMaster::refreshSampleRate(int rate)
 {
     sampleRate = rate;
-    transport.setSampleRate(rate);
+    transport->setSampleRate(rate);
     midiRealizer->setSampleRate(rate);
 }
 
@@ -162,11 +164,11 @@ void SyncMaster::doAction(UIAction* a)
     switch (s->id) {
         
         case FuncTransportStop:
-            transport.stop();
+            transport->stop();
             break;
 
         case FuncTransportStart:
-            transport.start();
+            transport->start();
             break;
 
             // todo FuncTransportPause
@@ -175,12 +177,12 @@ void SyncMaster::doAction(UIAction* a)
             // Action doesn't have a way to pass floats right now so the
             // integer value is x100
             float tempo = (float)(a->value) / 100.0f;
-            transport.setTempo(tempo);
+            transport->setTempo(tempo);
         }
             break;
             
         case ParamTransportBeatsPerBar:
-            transport.setBeatsPerBar(a->value);
+            transport->setBeatsPerBar(a->value);
             break;
 
         default:
@@ -197,13 +199,13 @@ bool SyncMaster::doQuery(Query* q)
     switch (s->id) {
         case ParamTransportTempo: {
             // no floats in Query yet...
-            q->value = (int)(transport.getTempo() * 100.0f);
+            q->value = (int)(transport->getTempo() * 100.0f);
             success = true;
         }
             break;
             
         case ParamTransportBeatsPerBar: {
-            q->value = transport.getBeatsPerBar();
+            q->value = transport->getBeatsPerBar();
             success = true;
         }
             break;
@@ -222,14 +224,14 @@ bool SyncMaster::doQuery(Query* q)
  */
 void SyncMaster::refreshState(SyncMasterState* extstate)
 {
-    extstate->transport = state.transport;
+    extstate->transport = states.transport;
 
     midiAnalyzer->getState(extstate->midi);
 }
 
 void SyncMaster::refreshPriorityState(PriorityState* pstate)
 {
-    transport.refreshPriorityState(pstate);
+    transport->refreshPriorityState(pstate);
 }
 
 
@@ -296,7 +298,7 @@ float SyncMaster::getTempo(Pulse::Source src)
         case Pulse::SourceMidiOut:
         case Pulse::SourceTransport: {
             // these are now the same
-            tempo = transport.getTempo();
+            tempo = transport->getTempo();
         }
             break;
 
@@ -332,7 +334,7 @@ int SyncMaster::getBeat(Pulse::Source src)
         case Pulse::SourceMidiOut:
         case Pulse::SourceTransport: {
             // these are now the same
-            beat = transport.getBeat();
+            beat = transport->getBeat();
         }
             break;
 
@@ -353,13 +355,13 @@ int SyncMaster::getBeat(Pulse::Source src)
  * can continue doing that if it wants, but it would be best to standardize
  * on getting it from the Transport.
  */
-int Pulsator::getBeatsPerBar(Pulse::Source src)
+int SyncMaster::getBeatsPerBar(Pulse::Source src)
 {
-    int bpb = transport.getBeatsPerBar();
+    int bpb = transport->getBeatsPerBar();
 
     if (src == Pulse::SourceHost) {
         Pulsator::SyncState* state = pulsator->getHostState();
-        hbpb = state->beatsPerBar;
+        int hbpb = state->beatsPerBar;
         if (hbpb > 0)
           bpb = hbpb;
     }
@@ -387,7 +389,7 @@ int SyncMaster::getBar(Pulse::Source src)
 
         case Pulse::SourceMidiIn: {
             int beat = midiAnalyzer->getBeat();
-            int bpb = getBpb(src);
+            int bpb = getBeatsPerBar(src);
             if (bpb > 0)
               bar = (beat / bpb) + 1;
         }
@@ -396,12 +398,26 @@ int SyncMaster::getBar(Pulse::Source src)
         case Pulse::SourceMidiOut:
         case Pulse::SourceTransport: {
             // these are now the same
-            bar = transport.getBar();
+            bar = transport->getBar();
         }
 
         default: break;
     }
     return bar;
+}
+
+int SyncMaster::getMasterBarFrames()
+{
+    return transport->getMasterBarFrames();
+}
+
+/**
+ * This is the main way that the old Synchronizer injects sync events
+ * into the Track event timeline.
+ */
+Pulse* SyncMaster::getBlockPulse(Pulse::Source src)
+{
+    return pulsator->getBlockPulse(src);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -489,55 +505,54 @@ int SyncMaster::getPulseFrame(int followerId, Pulse::Type type)
 
 float SyncMaster::getTempo()
 {
-    return transport.getTempo();
+    return transport->getTempo();
 }
 void SyncMaster::setTempo(float tempo)
 {
-    transport.setTempo(tempo);
+    transport->setTempo(tempo);
 }
-int SyncMaster::getBeat()
-{
-    return transport.getBeat();
-}
-bool SyncMaster::isSending()
+
+bool SyncMaster::isMidiOutSending()
 {
     return midiRealizer->isSending();
 }
-bool SyncMaster::isStarted()
+bool SyncMaster::isMidiOutStarted()
 {
     return midiRealizer->isStarted();
 }
-int SyncMaster::getStarts()
+int SyncMaster::getMidiOutStarts()
 {
     return midiRealizer->getStarts();
 }
-void SyncMaster::incStarts()
+void SyncMaster::incMidiOutStarts()
 {
     midiRealizer->incStarts();
 }
-int SyncMaster::getSongClock()
+int SyncMaster::getMidiOutSongClock()
 {
     return midiRealizer->getSongClock();
 }
-void SyncMaster::start()
+int SyncMaster::getMidiOutRawBeat()
 {
-    transport.start();
+    return midiRealizer->getBeat();
 }
-void SyncMaster::startClocks()
+void SyncMaster::midiOutStart()
 {
-    // unclear whether this should auto-enable MIDI out or if that still
-    // has authority
-    transport.startClocks();
+    midiRealizer->start();
 }
-void SyncMaster::stop()
+void SyncMaster::midiOutStartClocks()
 {
-    transport.stop();
+    midiRealizer->startClocks();
 }
-void SyncMaster::stopSelective(bool sendStop, bool stopClocks)
+void SyncMaster::midiOutStop()
 {
-    transport.stopSelective(sendStop, stopClocks);
+    midiRealizer->stop();
 }
-void SyncMaster::midiContinue()
+void SyncMaster::midiOutStopSelective(bool sendStop, bool stopClocks)
+{
+    midiRealizer->stopSelective(sendStop, stopClocks);
+}
+void SyncMaster::midiOutContinue()
 {
     // todo: several issues here, what does this mean for transport?
     // what does pause() do?
@@ -632,16 +647,16 @@ void SyncMaster::hostIterateStart()
 {
     //midiAnalyzer->iterateStart();
 }
-#endif
 
 float SyncMaster::getHostTempo()
 {
-    return host.tempo;
+    return states.host.tempo;
 }
 int SyncMaster::getHostBeat()
 {
-    return host.beat;
+    return states.host.beat;
 }
+
 bool SyncMaster::isHostReceiving()
 {
     //return midiAnalyzer->isReceiving();
@@ -652,6 +667,7 @@ bool SyncMaster::isHostStarted()
     //return midiAnalyzer->isStarted();
     return false;
 }
+#endif
 
 /****************************************************************************/
 /****************************************************************************/

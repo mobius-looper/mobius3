@@ -20,7 +20,7 @@ class Transport
 {
   public:
 
-    Transport(SyncMaster* sm);
+    Transport(class SyncMaster* sm);
     ~Transport();
 
     void setSampleRate(int r);
@@ -55,17 +55,17 @@ class Transport
     int getBeat();
     int getBar();
 
-    bool advance(int frames, class Pulse& p);
+    void advance(int frames);
     Pulse* getPulse();
     
     void refreshPriorityState(class PriorityState* ps);
     
   private:
 
-    class SyncMaster* sm = nullptr;
+    class SyncMaster* syncMaster = nullptr;
     int sampleRate = 44100;
     
-    SyncSourceState state;
+    SyncSourceState syncstate;
     
     int framesPerBeat = 0;
     int loopFrames = 0;

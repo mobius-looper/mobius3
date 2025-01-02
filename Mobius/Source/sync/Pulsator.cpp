@@ -17,6 +17,7 @@
 
 #include "MidiAnalyzer.h"
 #include "MidiRealizer.h"
+#include "Transport.h"
 //#include "MidiQueue.h"
 #include "SyncMaster.h"
 
@@ -113,6 +114,42 @@ void Pulsator::reset()
     // are activated for this block
     for (auto leader : leaders)
       leader->reset();
+}
+
+/**
+ * After interruptStart(*) has done it's analysis, return the Pulse
+ * within this block for the given sync source.
+ * This is the interface used by the old Synchronizer.  Newer MidiTracks get
+ * to it with the leader/follower interfaces.
+ */
+Pulse* Pulsator::getBlockPulse(Pulse::Source src)
+{
+    Pulse* pulse = nullptr;
+    
+    switch (src) {
+        case Pulse::SourceTransport:
+        case Pulse::SourceMidiOut: {
+            Transport* t = syncMaster->getTransport();
+            pulse = t->getPulse();
+        }
+            break;
+            
+        case Pulse::SourceMidiIn: {
+            if (midiIn.pulse.source != Pulse::SourceNone)
+              pulse = &(midiIn.pulse);
+        }
+            break;
+            
+        case Pulse::SourceHost: {
+            if (host.pulse.source != Pulse::SourceNone)
+              pulse = &(host.pulse);
+        }
+            break;
+
+        default: break;
+    }
+
+    return pulse;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -344,7 +381,7 @@ bool Pulsator::detectMidiBeat(MidiSyncEvent* mse, Pulse::Source src, Pulse* puls
 
     // upgrade Beat pulses to Bar pulses if we're on a bar
     if (detected && !pulse->stop) {
-        int bpb = getBeatsPerBar(src);
+        int bpb = syncMaster->getBeatsPerBar(src);
         if (bpb > 0 && ((pulse->beat % bpb) == 0))
           pulse->type = Pulse::PulseBar;
     }

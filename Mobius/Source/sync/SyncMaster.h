@@ -19,12 +19,15 @@
 
 #pragma once
 
+#include <JuceHeader.h>
+
 #include "SyncMasterState.h"
-#include "Transport.h"
 #include "Pulse.h"
 
 class SyncMaster
 {
+    friend class Pulsator;
+    
   public:
     
     SyncMaster();
@@ -48,6 +51,8 @@ class SyncMaster
     int getBeat(Pulse::Source src);
     int getBar(Pulse::Source src);
     int getBeatsPerBar(Pulse::Source src);
+    int getMasterBarFrames();
+    Pulse* getBlockPulse(Pulse::Source src);
 
     //
     // internal component services
@@ -204,8 +209,8 @@ class SyncMaster
         return midiRealizer.get();
     }
 
-    Transport* getTransport() {
-        return &transport;
+    class Transport* getTransport() {
+        return transport.get();
     }
 
   private:
@@ -213,13 +218,13 @@ class SyncMaster
     class MobiusContainer* container = nullptr;
     int sampleRate = 44100;
     
-    SyncMasterState state;
-    Transport transport;
+    SyncMasterState states;
     
     std::unique_ptr<class MidiRealizer> midiRealizer;
     std::unique_ptr<class MidiAnalyzer> midiAnalyzer;
     std::unique_ptr<class Pulsator> pulsator;
-
+    std::unique_ptr<class Transport> transport;
+    
     void refreshSampleRate(int rate);
     void enableEventQueue();
     void disableEventQueue();

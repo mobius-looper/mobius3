@@ -303,14 +303,6 @@ class MobiusInterface {
     // defined shutdown sequence
     virtual void shutdown() = 0;
 
-    // tell SyncMaster/MidiRealizer it can start watching for realtime events
-    // !! this is part of the old Supervisor::start sequence, unclear why
-    // it was necessary to defer this, try to get rid of it and just have
-    // it enabled when Kernel finishes initializing?
-    // I think probably we wanted to make sure that Kernel was advancing audio
-    // blocks and clearing queued events from the MIDI input device
-    virtual void enableSyncEvents() = 0;
-
   private:
 
     

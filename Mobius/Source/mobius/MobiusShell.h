@@ -53,7 +53,6 @@ class MobiusShell : public MobiusInterface
     void midiEvent(const juce::MidiMessage& msg, int deviceId) override;
     void loadMidiLoop(class MidiSequence* seq, int track, int loop) override;
     void shutdown() override;
-    void enableSyncEvents() override;
     
     juce::StringArray saveProject(juce::File dest) override;
     juce::StringArray loadProject(juce::File src) override;

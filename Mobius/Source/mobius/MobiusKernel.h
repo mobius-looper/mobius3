@@ -54,8 +54,6 @@ class MobiusKernel : public MobiusAudioListener, public MslContext
     void initialize(class MobiusContainer* cont, class MobiusConfig* config, class Session* session);
     void propagateSymbolProperties();
 
-    void enableSyncEvents();
-    void disableSyncEvents();
     void shutdown();
 
     /**

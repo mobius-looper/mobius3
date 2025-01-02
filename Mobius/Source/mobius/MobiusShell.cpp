@@ -191,11 +191,6 @@ void MobiusShell::shutdown()
     kernel.shutdown();
 }
 
-void MobiusShell::enableSyncEvents()
-{
-    kernel.enableSyncEvents();
-}
-
 //////////////////////////////////////////////////////////////////////
 //
 // Configuration

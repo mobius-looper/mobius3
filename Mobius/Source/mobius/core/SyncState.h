@@ -115,6 +115,7 @@ class SyncState {
 
     //
     // Recording State
+    // UPDATE: These are all obsolete and should be removed
     //
 
     /**

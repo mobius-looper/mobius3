@@ -2253,8 +2253,10 @@ ScriptInternalVariable* SyncBarVariable = &SyncBarVariableObj;
 //
 // The number of pulses in the sync tracker.
 //
+// update: lobotomized after the Great Sync Reorganization
+//
 //////////////////////////////////////////////////////////////////////
-
+#if 0
 class SyncPulsesVariableType : public ScriptInternalVariable {
   public:
     virtual ~SyncPulsesVariableType() {}
@@ -2287,6 +2289,8 @@ ScriptInternalVariable* SyncPulsesVariable = &SyncPulsesVariableObj;
 // syncPulse
 //
 // The current pulse in the sync tracker for this track.
+//
+// update: lobotomized after the Great Sync Reorganization
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -2659,6 +2663,7 @@ void SyncCyclePulsesVariableType::getTrackValue(Track* t, ExValue* value)
 
 SyncCyclePulsesVariableType SyncCyclePulsesVariableObj;
 ScriptInternalVariable* SyncCyclePulsesVariable = &SyncCyclePulsesVariableObj;
+#endif
 
 /****************************************************************************
  *                                                                          *

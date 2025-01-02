@@ -1,21 +1,8 @@
-/*
- * Copyright (c) 2010 Jeffrey S. Larson  <jeff@circularlabs.com>
- * All rights reserved.
- * See the LICENSE file for the full copyright and license declaration.
- * 
- * ---------------------------------------------------------------------
- * 
- * A class encapsulating most of the logic related to external and
- * internal synchronization.
- *
- */
 
 #ifndef SYNCHRONIZER_H
 #define SYNCHRONIZER_H
 
-#include "../../sync/MidiQueue.h"
-// ugly dependency, refactor an interface
-#include "../../sync/SyncMaster.h"
+//#include "../../sync/MidiQueue.h"
 
 // necessary for DriftCheckPoint
 #include "../../model/MobiusConfig.h"
@@ -30,6 +17,9 @@
  *   							  CONSTANTS                                 *
  *                                                                          *
  ****************************************************************************/
+
+// OBSOLETE: Should be moved somewhere under SyncMaster
+
 
 /**
  * The minimum tempo we allow when generating MIDI clocks.
@@ -100,9 +90,6 @@ typedef struct {
  *                                                                          *
  ****************************************************************************/
 
-/**
- * Utility class to track MIDI realtime events.
- */
 class Synchronizer {
 
   public:
@@ -113,45 +100,10 @@ class Synchronizer {
 	void updateConfiguration(class MobiusConfig* config);
     void globalReset();
     
-	//
-	// Variable sources
-	//
-
-    int getOutBeatsPerBar();
-	float getOutTempo();
-	int getOutRawBeat();
-	int getOutBeat();
-	int getOutBar();
-	bool isSending();
-	bool isStarted();
-	int getStarts();
-
-    int getInBeatsPerBar();
-	float getInTempo();
-	int getInRawBeat();
-	int getInBeat();
-	int getInBar();
-	bool isInReceiving();
-	bool isInStarted();
-
-    int getHostBeatsPerBar();
-	float getHostTempo();
-	int getHostRawBeat();
-	int getHostBeat();
-	int getHostBar();
-	bool isHostReceiving();
-
-	float getTempo(Track* track);
-	int getRawBeat(Track* track);
-	int getBeat(Track* track);
-	int getBar(Track* track);
-
     //
     // Misc status
     //
 
-    class SyncTracker* getSyncTracker(Track* t);
-	long getMidiSongClock(SyncSource src);
     void getState(class OldMobiusState* state);
 	void getState(class OldMobiusTrackState* state, class Track* t);
 
@@ -220,8 +172,7 @@ class Synchronizer {
     
   private:
     
-    class Event* convertEvent(class MidiSyncEvent* mse, class EventPool* pool, int beatsPerBar);
-    class Event* convertTransportEvent(class Pulse* p, class EventPool* pool);
+    class Event* convertEvent(class EventPool* pool, class Pulse* pulse, SyncSource src);
     void traceSyncEvent(class Event* event, bool out);
     void flushEvents();
     float getSpeed(Loop* l);

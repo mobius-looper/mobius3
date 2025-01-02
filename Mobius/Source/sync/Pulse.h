@@ -115,6 +115,11 @@ class Pulse
         mcontinue = false;
         continuePulse = 0;
     }
+
+    void reset() {
+        reset(SourceNone, 0);
+    }
+    
 };
 
 /****************************************************************************/

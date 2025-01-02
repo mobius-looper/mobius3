@@ -125,6 +125,8 @@ class Pulsator
         return &midiIn;
     }
 
+    Pulse* getBlockPulse(Pulse::Source src);
+
   private:
 
     class SyncMaster* syncMaster = nullptr;
@@ -161,7 +163,6 @@ class Pulsator
     void gatherHost(class MobiusAudioStream* stream);
     void gatherMidi();
     bool detectMidiBeat(class MidiSyncEvent* mse, Pulse::Source src, Pulse* pulse);
-    void gatherTransport();
 
     int getPulseFrame(Pulse* p, Pulse::Type type);
     

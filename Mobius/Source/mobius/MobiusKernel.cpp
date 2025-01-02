@@ -184,16 +184,6 @@ void MobiusKernel::propagateSymbolProperties()
     mCore->propagateSymbolProperties();
 }
 
-void MobiusKernel::enableSyncEvents()
-{
-    syncMaster.enableEventQueue();
-}
-
-void MobiusKernel::disableSyncEvents()
-{
-    syncMaster.disableEventQueue();
-}
-
 /**
  * Called during the Supervisor::shutdown sequence to stop processing as things
  * are being deleted.
