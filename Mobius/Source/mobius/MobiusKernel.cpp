@@ -177,6 +177,8 @@ void MobiusKernel::initialize(MobiusContainer* cont, MobiusConfig* config, Sessi
 
     mTracks.reset(new TrackManager(this));
     mTracks->initialize(configuration, ses, mCore);
+
+    mTimeSlicer.reset(new TimeSlicer(this, &syncMaster, mTracks));
 }
 
 void MobiusKernel::propagateSymbolProperties()
@@ -674,9 +676,11 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // unclear if scripts need to advance after sample injection
     mCore->beginAudioBlockAfterActions();
     
-    // advance the tracks, including core
-    mTracks->processAudioStream(stream);
-
+    // !! The TimeSlicer is going to need to include MSL track Waits in its
+    // dependency analysis which will complicate what mCore->beginAudioBlockAfterActions
+    // above is doing.  Need to merge that with whatever the surgeon is doing
+    mTimeSlicer->processAudioStream(stream);
+    
     updateParameters();
     notifier.afterBlock();
 
