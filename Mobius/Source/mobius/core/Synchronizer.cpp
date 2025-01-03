@@ -419,16 +419,13 @@ Event* Synchronizer::scheduleRecordStart(Action* action,
 }
 
 /**
- * Called by RecordFunction::scheduleEvent to see if the start of a recording
+ * Called by scheduleRecordStart to see if the start of a recording
  * needs to be synchronized.  When true it usually means that the start of
  * the recording needs to wait for a synchronization pulse and the
  * end may either need to wait for a pulse or be scheduled for an exact time.
  *
  * !! Need to support an option where we start recording immediately then
  * round off at the end.
- *
- * !! Should just always call Synchronizer to start the recording and 
- * let it have the logic.
  */
 bool Synchronizer::isRecordStartSynchronized(Loop* l)
 {
@@ -441,8 +438,11 @@ bool Synchronizer::isRecordStartSynchronized(Loop* l)
     // in the master tracks
     SyncSource src = state->getEffectiveSyncSource();
 
-    // todo: SYNC_TRANSPORT is variable, if the transport is running we sync
-    // if we control it we don't
+    // SYNC_OUT implies we're going to be the out sync master and can freely
+    // record if it is not already set, this gets to control the
+    // transport tempo
+    // SYNC_TRANSPORT means we'll sync to the transport which must either be
+    // running or be manually started
     sync = (src == SYNC_MIDI || src == SYNC_HOST || src == SYNC_TRACK || src == SYNC_TRANSPORT);
         
 	return sync;
@@ -464,8 +464,7 @@ bool Synchronizer::isThresholdRecording(Loop* l)
 
 	Preset* p = l->getPreset();
 	if (p->getRecordThreshold() > 0) {
-		Synchronizer* sync = l->getSynchronizer();
-		threshold = !sync->isRecordStartSynchronized(l);
+		threshold = !isRecordStartSynchronized(l);
 	}
 
 	return threshold;
@@ -476,9 +475,8 @@ bool Synchronizer::isThresholdRecording(Loop* l)
  * Schedule a pending Record event and optionally a RecordStop event
  * if this is an AutoRecord.
  */
-Event* Synchronizer::schedulePendingRecord(Action* action,
-                                                   Loop* l,
-                                                   MobiusMode* mode)
+Event* Synchronizer::schedulePendingRecord(Action* action, Loop* l,
+                                           MobiusMode* mode)
 {
     Event* event = NULL;
     EventManager* em = l->getTrack()->getEventManager();
@@ -489,10 +487,12 @@ Event* Synchronizer::schedulePendingRecord(Action* action,
 
 	event = em->newEvent(f, RecordEvent, 0);
 	event->pending = true;
+
+    // !! get rid of this shit
 	event->savePreset(p);
 	em->addEvent(event);
 
-    // For AutoRecord we could want on the start or the stop.
+    // For AutoRecord we could wait on the start or the stop.
     // Seems reasonable to wait for the stop, this must be in sync
     // with what scheduleRecordStart does...
 
@@ -501,75 +501,30 @@ Event* Synchronizer::schedulePendingRecord(Action* action,
     }
     else {
 		// Note that this will be scheduled for the end frame,
-		// but the loop isn't actually recording yet.  That's ok, 
-		// it is where we want it when we eventually do start recording.\
+		// but the loop isn't actually recording yet.  That's ok,
+		// it is where we want it when we eventually do start recording.
         // Have to clone the action since it is already owned by RecordEvent.
         Mobius* m = l->getMobius();
         Action* startAction = m->cloneAction(action);
         startAction->setEvent(event);
 
         // scheduleRecordStop will take ownership of the action
-        // !! this may return null in which we should have allowed 
-        // the original Action to own the start event
         event = scheduleRecordStop(action, l);
+
+        // !! this may return null in which we should have allowed
+        // the original Action to own the start event
+        if (event == nullptr)
+          Trace(1, "Synchronizer: Possible event anomoly");
 	}
 
 	return event;
 }
 
-/****************************************************************************
- *                                                                          *
- *                           RECORD STOP SCHEDULING                         *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Return true if a recording will be stopped by the Synchronizer 
- * after a sync pulse is received.  Returns false if the recording will
- * be stopped on a specific frame calculated from the sync tempo, or if this
- * is an unsynchronized recording that will stop normally.
- *
- * Note that this does not have to return the same value as
- * isRecordStartSynchronzied.
- */
-bool Synchronizer::isRecordStopPulsed(Loop* l)
-{
-    bool pulsed = false;
-
-    Track* t = l->getTrack();
-    SyncState* state = t->getSyncState();
-    SyncSource src = state->getEffectiveSyncSource();
-
-    if (src == SYNC_TRACK) {
-        // always pulsed
-        pulsed = true;
-    }
-    else if (src == SYNC_HOST || src == SYNC_MIDI) {
-        // we pulse if the tracker is locked, otherwise schedule
-        SyncTracker* tracker = getSyncTracker(src);
-        pulsed = tracker->isLocked();
-
-        // 10/18/14 alexs noticed that when using host sync with odd bar
-        // sizes this was adding an "extra beat" .  It appears that host
-        // sync never uses pulsed stop because the tracker isn't locked
-        // at this point.  When would it ever be on the initial recording?
-        // I guess if you were re-recording, but I can't fathom the logic here.
-        // Change this to always pulse the stop for HOST sync
-        if (src == SYNC_HOST)
-          pulsed = true;
-        
-        // !! Not supporting this old option any more, weed this out
-        if (!pulsed && src == SYNC_MIDI && 
-            (mMidiRecordMode == MIDI_RECORD_PULSED))
-          pulsed = true;
-    }
-    else if (src == SYNC_TRANSPORT) {
-        // always pulsed
-        pulsed = true;
-    }
-    
-	return pulsed;
-}
+//////////////////////////////////////////////////////////////////////
+//
+// Record Stop Scheduling
+//
+//////////////////////////////////////////////////////////////////////
 
 /**
  * Decide how to end Record mode.
@@ -625,13 +580,13 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
     EventManager* em = loop->getTrack()->getEventManager();
     Event* prev = em->findEvent(RecordStopEvent);
     MobiusMode* mode = loop->getMode();
-    Function* function = action->getFunction();
+    Function* function = action->getFunction();a
 
     if (prev != NULL) {
         // Since the mode doesn't change until the event is processed, we
         // can get here several times as functions are stacked for
         // evaluation after the stop.  This is common for AutoRecord.
-        Trace(loop, 2, "Sync: RecordStopEvent already scheduled\n");
+        Trace(loop, 2, "Sync: Reusing RecordStopEvent\n");
         event = prev;
     }
     else if (mode != ResetMode &&
@@ -644,20 +599,20 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
         // Reset or Synchronize modes.  For AutoRecord we may be 
         // in Play mode.
 
-        Trace(loop, 1, "Sync: Attempt to schedule RecordStop in mode %s!\n",
+        Trace(loop, 1, "Sync: Attempt to schedule RecordStop in mode %s",
               mode->getName());
     }
     else {
         // Pressing Record during Synchronize mode is handled the same as
         // an AutoRecord, except that the bar length is limited to 1 rather
-        // than using the RecordBars parameter.
+        // than using the RecordBars parameter
 
         bool scheduleEnd = true;
 
         if (function == AutoRecord || 
             (function == Record && mode == SynchronizeMode)) {
 
-            // calculate the desired length, the second true argument says	
+            // calculate the desired length, the second true argument says
             // extend to a full bar if we're using a beat sync mode
             float barFrames;
             int bars;
@@ -765,123 +720,38 @@ Event* Synchronizer::scheduleRecordStop(Action* action, Loop* loop)
 }
 
 /**
- * Called whenever the Record or AutoRecord function
- * is pressed again after we have already scheduled a RecordStopEvent.
+ * Return true if a recording will be stopped by the Synchronizer 
+ * after a sync pulse is received.  Returns false if the recording will
+ * be stopped on a specific frame calculated from the sync tempo, or if this
+ * is an unsynchronized recording that will stop normally.
  *
- * For AutoRecord we push the stop event out by the number of bars
- * set in the RecordBars parameter.
- *
- * For Record during synchronize mode we push it out by one bar.
- *
- * For Record during Record mode (we're waiting for the final pulse)
- * we push it out by one "unit".  Unit may be either a bar or a beat.
- * 
+ * Note that this does not have to return the same value as
+ * isRecordStartSynchronzied.
  */
-void Synchronizer::extendRecordStop(Action* action, Loop* loop, 
-                                           Event* stop)
+bool Synchronizer::isRecordStopPulsed(Loop* l)
 {
-	// Pressing Record during Synchronize mode is handled the same as
-	// an AutoRecord, except that the bar length is limited to 1 rather
-	// than using the RecordBars parameter.
-    Function* function = action->getFunction();
+    bool pulsed = false;
 
-    if (function == AutoRecord || 
-        (function == Record && loop->getMode() == SynchronizeMode)) {
+    Track* t = l->getTrack();
+    SyncState* state = t->getSyncState();
+    SyncSource src = state->getEffectiveSyncSource();
 
-		// calculate the desired length
-		float barFrames;
-		int bars;
-		getAutoRecordUnits(loop, &barFrames, &bars);
-
-		// Only one bar if not using AutoRecord
-		if (function != AutoRecord)
-		  bars = 1;
-
-		int newBars = (int)(stop->number) + bars;
-
-		if (isRecordStopPulsed(loop)) {
-			// ignore the frames, but remember bars, 
-			stop->number = newBars;
-		}
-		else if (barFrames <= 0.0) {
-			// If there isn't a valid bar length in the preset, just
-			// ignore it and behave like an ordinary Record.  
-			// Since we've already scheduled a RecordStopEvent, just
-			// ignore the extra Record.
-
-			Trace(loop, 2, "Sync: Ignoring Record during Synchronize mode\n");
-		}
-		else {
-			setAutoStopEvent(action, loop, stop, barFrames, newBars);
-		}
-
-        // !! Action should take this so a script can wait on it
+    if (src == SYNC_TRACK) {
+        // always pulsed
+        pulsed = true;
     }
-    else {
-        // normal recording, these can't be extended
-		Trace(loop, 2, "Sync: Ignoring attempt to extend recording\n");
-	}
-}
-
-/**
- * Called from RecordFunction::undoModeStop.
- *
- * Check if we are in an AutoRecord that has been extended 
- * beyond one "unit" by pressing AutoRecord again during the 
- * recording period.  If so, remove units if we haven't begun recording
- * them yet.  
- *
- * If we can't remove any units, then let the undo remove
- * the RecordStopEvent which will effectively cancel the auto record
- * and you have to end it manually.  
- *
- * Q: An interesting artifact will
- * be that the number of cycles in the loop will be left at
- * the AutoRecord bar count which may not be what we want.
- */
-bool Synchronizer::undoRecordStop(Loop* loop)
-{
-	bool undone = false;
-    EventManager* em = loop->getTrack()->getEventManager();
-	Event* stop = em->findEvent(RecordStopEvent);
-
-	if (stop != NULL &&
-		((stop->function == AutoRecord) ||
-		 (stop->function == Record && isRecordStartSynchronized(loop)))) {
-		
-		// calculate the unit length
-		float barFrames;
-		int bars;
-		getAutoRecordUnits(loop, &barFrames, &bars);
-
-		// Only one bar if not using AutoRecord
-		// this must match what we do in extendRecordStop
-		if (stop->function != AutoRecord)
-		  bars = 1;
-
-		int newBars = (int)(stop->number) - bars;
-		long newFrames = (long)(barFrames * (float)newBars);
-
-		if (newFrames < loop->getFrame()) {
-			// we're already past this point let the entire event
-			// be undone
-		}
-		else {
-			undone = true;
-			stop->number = newBars;
-
-			if (!isRecordStopPulsed(loop)) {
-				stop->frame = newFrames;
-
-				// When you schedule stop events on specific frames, we have
-				// to set the loop cycle count since Synchronizer is no
-				// longer watching.
-				loop->setRecordCycles(newBars);
-			}
-		}
-	}
-
-	return undone;
+    else if (src == SYNC_HOST || src == SYNC_MIDI) {
+        // formerly only scheduled pulsed "if the tracker was locked"
+        // I don't remember what this means, maybe it required that MIDI
+        // clocks were being received so we had something to lock on to?
+        pulsed = true;
+    }
+    else if (src == SYNC_TRANSPORT) {
+        // always pulsed
+        pulsed = true;
+    }
+    
+	return pulsed;
 }
 
 /**
@@ -898,11 +768,10 @@ bool Synchronizer::undoRecordStop(Loop* loop)
  * !! REALLY?  It seems better to let the Sync mode determine this?
  *
  * !! This is an ugly interface, look at callers and see if they can either
- * just to bar counts or frames by calling getRecordUnit directly.
+ * just use bar counts or frames by calling getRecordUnit directly.
  */
 void Synchronizer::getAutoRecordUnits(Loop* loop,
-                                              float* retFrames,
-                                              int* retBars)
+                                      float* retFrames, int* retBars)
 {
     Preset* preset = loop->getPreset();
     int bars = preset->getAutoRecordBars();
@@ -921,9 +790,8 @@ void Synchronizer::getAutoRecordUnits(Loop* loop,
  * calculate the total number of frames and put it in the event.
  * This is only used for AutoRecord.
  */
-void Synchronizer::setAutoStopEvent(Action* action, Loop* loop, 
-                                            Event* stop, 
-                                            float barFrames, int bars)
+void Synchronizer::setAutoStopEvent(Action* action, Loop* loop, Event* stop, 
+                                    float barFrames, int bars)
 {
 	// multiply by bars and round down
 	long totalFrames = (long)(barFrames * (float)bars);
@@ -1103,6 +971,9 @@ Event* Synchronizer::scheduleSyncRecordStop(Action* action, Loop* l)
  * here.  But once we allow unquantized record starts and can't pulse
  * the end we'll need an accurate tracker unit returned here.
  *
+ * new: This should now be handled by SyncMaster which would do a similar
+ * tempo to barFrames derivation as described above
+ *
  */
 void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
 {
@@ -1118,6 +989,10 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
     unit->adjustedFrames = 0.0f;
 
     if (src == SYNC_TRACK) {
+
+        // !! todo: SyncMaster should be handling this so MIDI
+        // tracks can be the track sync master
+        
         Loop* masterLoop = mTrackSyncMaster->getLoop();
         Preset* p = masterLoop->getPreset();
         int subCycles = p->getSubcycles();
@@ -1161,57 +1036,17 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
         unit->frames = (float)(mSyncMaster->getMasterBarFrames());
     }
     else if (src == SYNC_HOST) {
-        if (mHostTracker->isLocked()) {
-            // we've already locked the beat length, normally this
-            // will have been rounded before locking so we won't have a fraction
-            unit->frames = mHostTracker->getPulseFrames();
-        }
-        else {
-            // NOTE: Should we use what the host tells us or what we measured
-            // in tye SyncTracker?  Assuming we should follow the host.
-            traceTempo(l, "Host", mHostTempo);
-            unit->frames = getFramesPerBeat(mHostTempo);
-        }
 
+        // formerly asked the Host tracker for PulseFrames
+        // or derived FramesPerBeat from the HostTempo
+        // SyncMaster can do this now
+        unit->frames = (float)(mSyncMaster->getBarFrames(Pulse::SourceHost));
         adjustBarUnit(l, state, src, unit);
     }
     else if (src == SYNC_MIDI) {
-        if (mMidiTracker->isLocked()) {
-            // We've already locked the pulse length, this may have a fraction
-            // but normally we will round it up so that when multiplied by 24
-            // the resulting beat width is integral
-            float pulseFrames = mMidiTracker->getPulseFrames();
-            unit->frames = pulseFrames * (float)24;
-        }
-        else {
-            // Two tempos to choose from, the average tempo and
-            // a smoothed tempo rounded down to a 1/10th.  
-            // We have an internal parameter to select the mode, figure
-            // out the best one and stick with it!
 
-            float tempo = mSyncMaster->getMidiInTempo();
-            traceTempo(l, "MIDI", tempo);
-
-            int smooth = mSyncMaster->getMidiInSmoothTempo();
-            float fsmooth = (float)smooth / 10.0f;
-            traceTempo(l, "MIDI smooth", fsmooth);
-
-            float frames = getFramesPerBeat(tempo);
-            float sframes = getFramesPerBeat(fsmooth);
-
-            Trace(l, 2, "Sync: getRecordUnit average frames %ld smooth frames %ld\n",
-                  (long)frames, (long)sframes);
-        
-            if (mMidiRecordMode == MIDI_TEMPO_AVERAGE)
-              unit->frames = frames;
-            else
-              unit->frames = sframes;
-        }
-
+        unit->frames = (float)(mSyncMaster->getBarFrames(Pulse::SourceMidiIn));
         adjustBarUnit(l, state, src, unit);
-
-        // NOTE: sync pulses are actually clocks so multiply by 24
-        unit->pulses *= 24;
     }
     else {
         // NONE, OUT
@@ -1223,9 +1058,11 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
         unit->frames = getFramesPerBeat(tempo);
 
         // !! do we care about the OUT tracker for SYNC_NONE?
-        // formerly got BeatsPerBar from a preset parameter, now it 
+        // formerly got BeatsPerBar from a preset parameter, now it
         // comes from the setup so all sync modes can use it consistently
         //int bpb = p->getAutoRecordBeats();
+
+        // !! get this from SyncMaster too
         int bpb = getBeatsPerBar(src, l);
 
         if (bpb <= 0)
@@ -1262,7 +1099,6 @@ void Synchronizer::getRecordUnit(Loop* l, SyncUnitInfo* unit)
         Trace(l, 2, "Sync: getRecordUnit speed %ld (x100) adjusted frames %ld (x100)\n",
               (long)(speed * 100), (long)(unit->adjustedFrames * 100));
     }
-
 }
 
 float Synchronizer::getSpeed(Loop* l)
@@ -1306,6 +1142,18 @@ float Synchronizer::getFramesPerBeat(float tempo)
 }
 
 /**
+ * A stub for something that used to be a lot more complicated.
+ * Unclear where this should come from now, always get it from the transport or
+ * allow the old Preset/Setup parameters?
+ */
+int Synchronizer::getBeatsPerBar(SyncSource src, Loop* l)
+{
+    (void)src;
+    (void)l;
+    return mSyncMaster->getBeatsPerBar();
+}
+
+/**
  * Helper for getRecordUnit.
  * After calculating the beat frames, check for bar sync and multiply
  * the unit by beats per bar.
@@ -1314,9 +1162,8 @@ float Synchronizer::getFramesPerBeat(float tempo)
  * and gets the SyncTracker but state also captured it.  Follow this
  * mess and make sure if the tracker isn't locked we get it from the state.
  */
-void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, 
-                                         SyncSource src,
-                                         SyncUnitInfo* unit)
+void Synchronizer::adjustBarUnit(Loop* l, SyncState* state, SyncSource src,
+                                 SyncUnitInfo* unit)
 {
     int bpb = getBeatsPerBar(src, l);
     if (state->getSyncUnit() == SYNC_UNIT_BAR) {
@@ -1335,6 +1182,131 @@ void Synchronizer::adjustBarUnit(Loop* l, SyncState* state,
     }
 }
 
+///////////////////////////////////////////////////////////////////////
+//
+// Extend and Undo
+//
+///////////////////////////////////////////////////////////////////////
+
+/**
+ * Called whenever the Record or AutoRecord function
+ * is pressed again after we have already scheduled a RecordStopEvent.
+ *
+ * For AutoRecord we push the stop event out by the number of bars
+ * set in the RecordBars parameter.
+ *
+ * For Record during synchronize mode we push it out by one bar.
+ *
+ * For Record during Record mode (we're waiting for the final pulse)
+ * we push it out by one "unit".  Unit may be either a bar or a beat.
+ * 
+ */
+void Synchronizer::extendRecordStop(Action* action, Loop* loop, Event* stop)
+{
+	// Pressing Record during Synchronize mode is handled the same as
+	// an AutoRecord, except that the bar length is limited to 1 rather
+	// than using the RecordBars parameter.
+    Function* function = action->getFunction();
+
+    if (function == AutoRecord || 
+        (function == Record && loop->getMode() == SynchronizeMode)) {
+
+		// calculate the desired length
+		float barFrames;
+		int bars;
+		getAutoRecordUnits(loop, &barFrames, &bars);
+
+		// Only one bar if not using AutoRecord
+		if (function != AutoRecord)
+		  bars = 1;
+
+		int newBars = (int)(stop->number) + bars;
+
+		if (isRecordStopPulsed(loop)) {
+			// ignore the frames, but remember bars, 
+			stop->number = newBars;
+		}
+		else if (barFrames <= 0.0) {
+			// If there isn't a valid bar length in the preset, just
+			// ignore it and behave like an ordinary Record.  
+			// Since we've already scheduled a RecordStopEvent, just
+			// ignore the extra Record.
+
+			Trace(loop, 2, "Sync: Ignoring Record during Synchronize mode\n");
+		}
+		else {
+			setAutoStopEvent(action, loop, stop, barFrames, newBars);
+		}
+
+        // !! Action should take this so a script can wait on it
+    }
+    else {
+        // normal recording, these can't be extended
+		Trace(loop, 2, "Sync: Ignoring attempt to extend recording\n");
+	}
+}
+
+/**
+ * Called from RecordFunction::undoModeStop.
+ *
+ * Check if we are in an AutoRecord that has been extended 
+ * beyond one "unit" by pressing AutoRecord again during the 
+ * recording period.  If so, remove units if we haven't begun recording
+ * them yet.  
+ *
+ * If we can't remove any units, then let the undo remove
+ * the RecordStopEvent which will effectively cancel the auto record
+ * and you have to end it manually.  
+ *
+ * Q: An interesting artifact will
+ * be that the number of cycles in the loop will be left at
+ * the AutoRecord bar count which may not be what we want.
+ */
+bool Synchronizer::undoRecordStop(Loop* loop)
+{
+	bool undone = false;
+    EventManager* em = loop->getTrack()->getEventManager();
+	Event* stop = em->findEvent(RecordStopEvent);
+
+	if (stop != NULL &&
+		((stop->function == AutoRecord) ||
+		 (stop->function == Record && isRecordStartSynchronized(loop)))) {
+		
+		// calculate the unit length
+		float barFrames;
+		int bars;
+		getAutoRecordUnits(loop, &barFrames, &bars);
+
+		// Only one bar if not using AutoRecord
+		// this must match what we do in extendRecordStop
+		if (stop->function != AutoRecord)
+		  bars = 1;
+
+		int newBars = (int)(stop->number) - bars;
+		long newFrames = (long)(barFrames * (float)newBars);
+
+		if (newFrames < loop->getFrame()) {
+			// we're already past this point let the entire event
+			// be undone
+		}
+		else {
+			undone = true;
+			stop->number = newBars;
+
+			if (!isRecordStopPulsed(loop)) {
+				stop->frame = newFrames;
+
+				// When you schedule stop events on specific frames, we have
+				// to set the loop cycle count since Synchronizer is no
+				// longer watching.
+				loop->setRecordCycles(newBars);
+			}
+		}
+	}
+
+	return undone;
+}
+
 /****************************************************************************
  *                                                                          *
  *                              AUDIO INTERRUPT                             *
@@ -1343,24 +1315,9 @@ void Synchronizer::adjustBarUnit(Loop* l, SyncState* state,
 
 /**
  * Called by Mobius at the beginning of a new audio interrupt.
- * Convert raw events recieved since the last interrupt into a list
- * of Event object we can feed into each track's event list.
- *
- * Host events may have an offset within the current buffer.  MIDI and Timer
- * events are always processed at the beinning of the buffer since they
- * have already happened and we need to catch up ASAP.  
- *
- * TODO: Eventually try to be smarter about buffer quantization.
- * The events are always queued and being processed late so we must
- * handle them at the beginning of the interrupt.  But the delay could
- * factor in to some calculations like input latency delay.  
- *
- *    effectiveInputLatency = inputLatency - triggerLatency
- *
- * Where triggerLatency is defined by the physical trigger latency 
- * (around 1ms for MIDI) plus buffering latency, which will be up to
- * the interrupt block size.  See looptime.txt for a more thorough explanation.
- *
+ * This is where we used to prepare Events for insertion into each
+ * track's event list.  That is no longer done, and there isn't much left
+ * behind except some trace statistics.
  */
 void Synchronizer::interruptStart(MobiusAudioStream* stream)
 {
@@ -1384,15 +1341,6 @@ void Synchronizer::prepare(Track* t)
 
 /**
  * Called after each track has finished processing.
- * We should have consumed every sync event that is relevant for this track.
- * If not, there could be float rounding issues in InputStream.
- *
- * Unfotunately we can't just test for mNextAvailableEvent != NULL because
- * getNextEvent doesn't advance it if it doesn't find any relevant events.
- * In theory this is so we can Loop events between two sync events that change
- * the sync source and therefore make events that might have been irrelevant
- * at the start of the interrupt relevant later.  I'm not sure this can
- * happen in practice. Think...
  */
 void Synchronizer::finish(Track* t)
 {
@@ -1428,8 +1376,36 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
     // This is how we detect boundary crossings for checkDrift.
     SyncState* state = t->getSyncState();
     state->setBoundaryEvent(type);
-
 }
+
+//////////////////////////////////////////////////////////////////////
+//
+// Sync Pulse Handling
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * The way this works now, is that each Track will tell SyncMaster if
+ * it is expecting a sync pulse.  If it doesn't the block will not be split
+ * and the track will do a full advance.
+ *
+ * If this returns true, then the block will be split when the relevant
+ * pulse is detected and handleSyncPulse is called.
+ *
+ * This should only be true of there is a pending RecordStart or RecordStop
+ * scheduled.  
+ */
+bool Synchronizer::isExpectingSyncPulse(Track* t)
+{
+}
+
+/**
+ * Called when a relevant sync pulse is detected in this block.
+ * Activate the pending record start or stop.
+ */
+
+
+
 
 /****************************************************************************
  *                                                                          *

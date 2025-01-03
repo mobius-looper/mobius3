@@ -669,6 +669,68 @@ bool SyncMaster::isHostStarted()
 }
 #endif
 
+//////////////////////////////////////////////////////////////////////
+//
+// Bar Lengths
+//
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * Old code scraped from Synchronizer, we need to do something similar here.
+ */
+int SyncMaster::getBarFrames(Pulse::Source src)
+{
+#if 0        
+    if (src == SYNC_HOST) {
+        if (mHostTracker->isLocked()) {
+            // we've already locked the beat length, normally this
+            // will have been rounded before locking so we won't have a fraction
+            unit->frames = mHostTracker->getPulseFrames();
+        }
+        else {
+            // NOTE: Should we use what the host tells us or what we measured
+            // in tye SyncTracker?  Assuming we should follow the host.
+            traceTempo(l, "Host", mHostTempo);
+            unit->frames = getFramesPerBeat(mHostTempo);
+        }
+    }
+#endif                               
+
+#if 0
+       if (mMidiTracker->isLocked()) {
+            // We've already locked the pulse length, this may have a fraction
+            // but normally we will round it up so that when multiplied by 24
+            // the resulting beat width is integral
+            float pulseFrames = mMidiTracker->getPulseFrames();
+            unit->frames = pulseFrames * (float)24;
+        }
+        else {
+            // Two tempos to choose from, the average tempo and
+            // a smoothed tempo rounded down to a 1/10th.
+            // We have an internal parameter to select the mode, figure
+            // out the best one and stick with it!
+
+            float tempo = mSyncMaster->getMidiInTempo();
+            traceTempo(l, "MIDI", tempo);
+
+            int smooth = mSyncMaster->getMidiInSmoothTempo();
+            float fsmooth = (float)smooth / 10.0f;
+            traceTempo(l, "MIDI smooth", fsmooth);
+
+            float frames = getFramesPerBeat(tempo);
+            float sframes = getFramesPerBeat(fsmooth);
+
+            Trace(l, 2, "Sync: getRecordUnit average frames %ld smooth frames %ld\n",
+                  (long)frames, (long)sframes);
+        
+            if (mMidiRecordMode == MIDI_TEMPO_AVERAGE)
+              unit->frames = frames;
+            else
+              unit->frames = sframes;
+        }
+#endif
+
+
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/

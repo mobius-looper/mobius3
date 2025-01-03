@@ -2,11 +2,6 @@
 #ifndef SYNCHRONIZER_H
 #define SYNCHRONIZER_H
 
-//#include "../../sync/MidiQueue.h"
-
-// necessary for DriftCheckPoint
-#include "../../model/MobiusConfig.h"
-
 // necessary for SyncSource
 #include "../../model/Setup.h"
 
@@ -111,11 +106,10 @@ class Synchronizer {
     // Record scheduling
     //
 
-    Event* scheduleRecordStart(Action* action, Function* function, Loop* l);
-    bool isRecordStartSynchronized(Loop* l);
-    Event* scheduleRecordStop(Action* action, Loop* loop);
-    void extendRecordStop(Action* action, Loop* loop, Event* stop);
-    bool undoRecordStop(Loop* loop);
+    class Event* scheduleRecordStart(class Action* action, class Function* function, class Loop* l);
+    class Event* scheduleRecordStop(class Action* action, class Loop* loop);
+    void extendRecordStop(class Action* action, class Loop* loop, class Event* stop);
+    bool undoRecordStop(class Loop* loop);
 
     //
     // Interrupt Lifecycle
@@ -127,10 +121,6 @@ class Synchronizer {
 	void interruptEnd();
 
     void trackSyncEvent(class Track* t, class EventType* type, int offset);
-	class Event* getNextEvent(class Loop* l);
-    void useEvent(Event* e);
-    void syncEvent(Loop* l, Event* e);
-    void forceDriftCorrect();
 
     // 
     // Loop and Function callbacks
@@ -164,6 +154,13 @@ class Synchronizer {
     void loadProject(class Project* p);
     void loadLoop(class Loop* l);
 
+    //
+    // Pulse processing
+    //
+
+    void syncEvent(class Loop* l, class Event* e);
+    
+
 	/////////////////////////////////////////////////////////////////////
 	// 
 	// Private
@@ -171,31 +168,31 @@ class Synchronizer {
 	/////////////////////////////////////////////////////////////////////
     
   private:
+
+    // record scheduling
     
-    class Event* convertEvent(class EventPool* pool, class Pulse* pulse, SyncSource src);
-    void traceSyncEvent(class Event* event, bool out);
-    void flushEvents();
-    float getSpeed(Loop* l);
-    void traceTempo(Loop* l, const char* type, float tempo);
+    bool isRecordStartSynchronized(class Loop* l);
+    bool isThresholdRecording(class Loop* l);
+    class Event* schedulePendingRecord(class Action* action, class Loop* l, class MobiusMode* mode);
+    
+    bool isRecordStopPulsed(class Loop* l);
+    void getAutoRecordUnits(class Loop* loop, float* retFrames, int* retBars);
+    void setAutoStopEvent(class Action* action, class Loop* loop, class Event* stop, 
+                          float barFrames, int bars);
+    class Event* scheduleSyncRecordStop(class Action* action, class Loop* l);
+    void getRecordUnit(class Loop* l, class SyncUnitInfo* unit);
+    float getSpeed(class Loop* l);
+    void traceTempo(class Loop* l, const char* type, float tempo);
+    float getFramesPerBeat(float tempo);
+    void adjustBarUnit(class Loop* l, class SyncState* state, SyncSource src, 
+                       class SyncUnitInfo *unit);
 
     int getBeatsPerBar(SyncSource src, Loop* l);
-    float getFramesPerBeat(float tempo);
 
-    bool isThresholdRecording(Loop* l);
-    Event* schedulePendingRecord(Action* action, Loop* l,
-                                 MobiusMode* mode);
+    // pulse processing
 
-    bool isRecordStopPulsed(Loop* l);
-    void getAutoRecordUnits(Loop* loop, float* retFrames, int* retBars);
-    void setAutoStopEvent(Action* action, Loop* loop, Event* stop, 
-                          float barFrames, int bars);
-    Event* scheduleSyncRecordStop(Action* action, Loop* l);
-    void getRecordUnit(Loop* l, SyncUnitInfo* unit);
-    void adjustBarUnit(Loop* l, SyncState* state, SyncSource src, 
-                       SyncUnitInfo *unit);
-
-    void adjustEventFrame(Loop* l, Event* e);
-
+    // weed
+    
     void checkPulseWait(Loop* l, Event* e);
     void syncPulseWaiting(Loop* l, Event* e);
     void startRecording(Loop* l, Event* e);
@@ -208,6 +205,8 @@ class Synchronizer {
     void doRealign(Loop* l, Event* pulse, Event* realign);
     void realignSlave(Loop* l, Event* pulse);
     void traceDealign(Loop* l);
+
+    
 
     void checkDrift();
     void correctDrift();
