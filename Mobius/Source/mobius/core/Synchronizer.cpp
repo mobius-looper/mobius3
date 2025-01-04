@@ -1385,157 +1385,107 @@ void Synchronizer::trackSyncEvent(Track* t, EventType* type, int offset)
 //////////////////////////////////////////////////////////////////////
 
 /**
- * The way this works now, is that each Track will tell SyncMaster if
- * it is expecting a sync pulse.  If it doesn't the block will not be split
- * and the track will do a full advance.
- *
- * If this returns true, then the block will be split when the relevant
- * pulse is detected and handleSyncPulse is called.
- *
- * This should only be true of there is a pending RecordStart or RecordStop
- * scheduled.  
+ * TimeSlicer is telling the track about the detection of a sync pulse.
+ * The track has already been advanced up to the block offset where the
+ * pulse was detected.  The track now activates any pending events.
  */
-bool Synchronizer::isExpectingSyncPulse(Track* t)
+void Synchronizer::syncPulse(Track* track, Pulse* pulse)
 {
-}
+    // old crufty model
+    SyncState* state = track->getSyncState();
+    SyncSource syncmode = state->getEffectiveSyncSource();
+    bool relevant = false;
+    
+    switch (syncmode) {
 
-/**
- * Called when a relevant sync pulse is detected in this block.
- * Activate the pending record start or stop.
- */
+        case SYNC_DEFAULT:
+        case SYNC_NONE:
+            // not syncing, no events to activate
+            break;
 
-
-
-
-/****************************************************************************
- *                                                                          *
- *                               EVENT HANDLING                             *
- *                                                                          *
- ****************************************************************************/
-
-/**
- * Called by Loop when it gets around to processing one of the
- * sync pseudo-events we insert into the event stream.
- *
- * Usually here for pulse events.  Call one of the three mode handlers.
- *
- * For pulse events we can get here from two places, first the "raw"
- * event that comes from the external source (host, midi, timer)
- * and one that can come from the SyncTracker after it has been locked
- * (currently only HOST and MIDI).
- *
- * Only one of these will be relevant to pass down to the lower levels
- * of pulse handling but we can allow any of them to be waited on in scripts.
- * 
- */
-void Synchronizer::syncEvent(Loop* l, Event* e)
-{
-	SyncEventType type = e->fields.sync.eventType;
-	Track* track = l->getTrack();
-
-    // becomes true if the event represent a pulse we can take action on
-    bool pass = false;
-
-	if (type == SYNC_EVENT_STOP) {
-
-		if (track->getDisplayNumber() == 1)
-			Trace(l, 2, "Sync: Stop Event\n");
-        
-        // TODO: event script
-        // I've had requests to let this become a Pause, but 
-        // it seems more useful to keep going and realign on continue
-	}
-	else {
-        // START, CONTINUE, or PULSE
-
-        // trace in just the first track
-        // start/continue would be a good place for an event script
-        // actually don't trace, SyncTracker will already said enough
-        if (type == SYNC_EVENT_START) {
-            //if (track->getDisplayNumber() == 1)
-            //Trace(l, 2, "Sync: Start Event\n");
-            // TODO: event script
-        }
-        else if (type == SYNC_EVENT_CONTINUE) {
-            //if (track->getDisplayNumber() == 1)
-            //Trace(l, 2, "Sync: Continue Event\n");
-            // TODO: event script
-        }
-
-        // sanity check, should have filtered events that the track
-        // doesn't want
-        SyncSource src = e->fields.sync.source;
-        SyncState* state = track->getSyncState();
-        SyncSource expecting = state->getEffectiveSyncSource();
-
-        if (src != expecting) {
-            Trace(l, 1, "Sync: Event SyncSource %s doesn't match Track %s!\n",
-                  GetSyncSourceName(src),
-                  GetSyncSourceName(expecting));
-        }
-        else {
-            // Decide whether to watch raw or tracker pulses.
-            // Yes, this could be shorter but I like commenting the
-            // exploded logic to make it easier to understand.
-
-            SyncTracker* tracker = getSyncTracker(src);
-            if (tracker == NULL) {
-                // Must be TRACK or TRANSPORT
-                // wait, does it matter if this is a Transport beat or bar?
-                pass = true;
-            }
-            else if (tracker == mOutTracker) {
-                // we don't let this generate events, so always pass
-                // raw timer events to the master track
-                pass = true;
-            }
-
-            // MIDI or HOST
-            else if (!tracker->isLocked()) {
-                if (e->fields.sync.syncTrackerEvent) {
-                    // This should only happen if there was a scheduled
-                    // reset or a script that reset the loop and the tracker
-                    // and it left some events behind.  Could have cleaned
-                    // this up in unlockTracker but safer here.
-                    Trace(l, 2, "Sync: Ignoring residual tracker event\n");
-                }
-                else {
-                    // pulses always pass, start always passes, 
-                    // but continue passes only if we went back exactly
-                    // to a beat boundary
-                    if (type == SYNC_EVENT_PULSE || 
-                        e->fields.sync.pulseType == SYNC_PULSE_BEAT ||
-                        e->fields.sync.pulseType == SYNC_PULSE_BAR)
-                      pass = true;
+        case SYNC_TRACK: {
+            if (pulse->source == Pulse::SourceLeader) {
+                // a pulse from another track
+                int master = mSyncMaster->getTrackSyncMaster();
+                if (master > 0 && master != t->getDisplayNumber()) {
+                    // there is another master track
+                    // !! how are we supposed to tell this is from the requested leader?
+                    // can only follow the TrackSyncMaster right now but should be more flexible
+                    SyncTrackUnit unit = state->getSyncTrackUnit();
+                    if (unit == TRACK_UNIT_SUBCYCLE) {
+                        // any pulse will do
+                        relivant = true;
+                    }
+                    else if (unit == TRACK_UNIT_CYCLE) {
+                        // SM will model this as a "bar"
+                        relivant = (pulse->type == Pulse::PulseBar ||
+                                    pulse->type == Pulse::PulseLoop);
+                    }
+                    else if (unit == TRACK_UNIT_LOOP) {
+                        relivant = (pulse->type == Pulse::PulseLoop);
+                    }
                 }
             }
-            else if (l->isSyncRecording()) {
-                // recording is special, even though the tracker is locked
-                // we have to pay attention to whether it was locked
-                // when the recording began because we can't switch sources
-                // int the middle
-                if (state->wasTrackerLocked()) {
-                    // locked when we started and still locked
-                    // only pass tracker events
-                    pass = e->fields.sync.syncTrackerEvent;
-                }
-                else {
-                    // not locked when we started but locked now, pass raw
-                    if (!e->fields.sync.syncTrackerEvent && 
-                        (type == SYNC_EVENT_PULSE || 
-                         e->fields.sync.pulseType == SYNC_PULSE_BEAT ||
-                         e->fields.sync.pulseType == SYNC_PULSE_BAR))
-                      pass = true;
-                }
-            }
-            else {
-                // tracker was locked, follow it
-                pass = e->fields.sync.syncTrackerEvent;
-            }
         }
-    }
+            break;
+
+        case SYNC_OUT: {
+            // "out" is effectively "master" it does not pulse events
             
-    if (pass) {
+        }
+            break;
+
+        case SYNC_HOST: {
+            if (pulse->source == Pulse::SourceHost) {
+                SuncUnit unit = state->getSyncUnit();
+                if (unit == SYNC_UNIT_BEAT) {
+                    // any pulse will do
+                    activate = true;
+                }
+                else {
+                    // can only be bar
+                    activate = (pulse->type == Pulse::PulseBar ||
+                                pulse->type == Pulse::PulseLoop);
+                }
+            }
+        }
+            break;
+
+        case SYNC_MIDI: {
+            if (pulse->source == Pulse::SourceMidiIn) {
+                SuncUnit unit = state->getSyncUnit();
+                if (unit == SYNC_UNIT_BEAT) {
+                    // any pulse will do
+                    activate = true;
+                }
+                else {
+                    // can only be bar
+                    activate = (pulse->type == Pulse::PulseBar ||
+                                pulse->type == Pulse::PulseLoop);
+                }
+            }
+        }
+            break;
+
+        case SYNC_TRANSPORT: {
+            if (pulse->source == Pulse::SourceTransport) {
+                SuncUnit unit = state->getSyncUnit();
+                if (unit == SYNC_UNIT_BEAT) {
+                    // any pulse will do
+                    activate = true;
+                }
+                else {
+                    // can only be bar
+                    activate = (pulse->type == Pulse::PulseBar ||
+                                pulse->type == Pulse::PulseLoop);
+                }
+            }
+        }
+            break;
+    }
+
+    if (relevant) {
+        Loop* l = track->getLoop();
         MobiusMode* mode = l->getMode();
 
         if (mode == SynchronizeMode)
@@ -1544,19 +1494,8 @@ void Synchronizer::syncEvent(Loop* l, Event* e)
         else if (l->isSyncRecording())
           syncPulseRecording(l, e);
 
-        else if (l->isSyncPlaying())
-          syncPulsePlaying(l, e);
-
         else
-          checkPulseWait(l, e);
-    }
-    else {
-        // TODO: Still allow waits on these? 
-        // Have to figure out how to Wait for the "other"
-        // kind of pulse: Wait xbeat, Wait xbar, Wait xclock
-        // Can't call checkPulseWait here because it doesn't
-        // know the difference between the sources "Wait beat"
-        // must only wait for the sync relevant pulse.
+          checkPulseWait(l);
     }
 }
 
@@ -1629,12 +1568,6 @@ void Synchronizer::checkPulseWait(Loop* l, Event* e)
 		}
 	}
 }
-
-/****************************************************************************
- *                                                                          *
- *   					   SYNCHRONIZE MODE PULSES                          *
- *                                                                          *
- ****************************************************************************/
 
 /**
  * Called on each pulse during Synchronize mode.

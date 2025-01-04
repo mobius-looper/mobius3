@@ -400,16 +400,23 @@ void TrackManager::beginAudioBlock()
 }
 
 /**
- * The root of the audio block processing for all tracks.
+ * Advance the longWatcher which may cause more actions to fire.
  */
-void TrackManager::processAudioStream(MobiusAudioStream* stream)
+void TrackManager::advanceLongWatcher()
 {
     // advance the long press detector, this may call back
     // to longPressDetected to fire an action
     // todo: Mobius has one of these too, try to merge
     if (!longDisable)
       longWatcher.advance(stream->getInterruptFrames());
+}
 
+#if 0
+/**
+ * The root of the audio block processing for all tracks.
+ */
+void TrackManager::processAudioStream(MobiusAudioStream* stream)
+{
     // todo: need to be using SyncMaster to order the advance
     // of both the audio tracks and the MIDI tracks
     
@@ -420,6 +427,7 @@ void TrackManager::processAudioStream(MobiusAudioStream* stream)
     for (auto track : tracks)
       track->processAudioStream(stream);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //

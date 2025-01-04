@@ -53,7 +53,7 @@ bool MobiusLooperTrack::doQuery(Query* q)
 
 void MobiusLooperTrack::processAudioStream(class MobiusAudioStream* stream) 
 {
-    (void)stream;
+    track->processAudioStream(stream);
 }
 
 void MobiusLooperTrack::midiEvent(class MidiEvent* e)

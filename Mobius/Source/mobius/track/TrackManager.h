@@ -74,7 +74,10 @@ class TrackManager : public LongWatcher::Listener, public TrackListener
     //
 
     void beginAudioBlock();
-    void processAudioStream(class MobiusAudioStream* argStream);
+    void advanceLongWatcher();
+
+    // no longer in control over this, TimeSlizer does ordered track advance
+    //void processAudioStream(class MobiusAudioStream* argStream);
 
     // the interface for receiving events when called by MidiManager, tagged with the device id
     void midiEvent(class MidiEvent* event);

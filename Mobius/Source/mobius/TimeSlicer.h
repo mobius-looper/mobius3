@@ -24,6 +24,13 @@ class TimeSlicer
 {
   public:
 
+    class Slice {
+      public:
+        int blockOffset = 0;
+        class Pulse* pulse = nullptr;
+        // todo: other slice types are Script Waits, leader pulses
+    };
+
     TimeSlicer(class MobiusKernel* k, class SyncMaster* sm, class TrackManager* tm);
     ~TimeSlicer();
 
@@ -35,6 +42,12 @@ class TimeSlicer
     class SyncMaster* syncMaster = nullptr;
     class TrackManager* trackManager = nullptr;
 
+    // sorted array of slices
+    // sync pulses are added at the start of the block as are absolute script waits
+    // leader pulses are added as tracks advance
+    juce::Array<Slice> slices;
+    int sliceCount = 0;
+    
 };
 
 

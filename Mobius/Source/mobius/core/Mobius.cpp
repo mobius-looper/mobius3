@@ -973,6 +973,7 @@ void Mobius::beginAudioBlockAfterActions()
  * Called by Kernel when everything is reaady to start receiving audio
  * block content.
  */
+#if 0
 void Mobius::processAudioStream(MobiusAudioStream* stream)
 {
     // ugly transition between here and beginAudioBlock, make sure it's the same
@@ -1016,6 +1017,11 @@ void Mobius::processAudioStream(MobiusAudioStream* stream)
         }
     }
 
+}
+#endif
+
+void Mobius::finishAudioBlock(MobiusAudioStream* stream)
+{
     // post-processing
     endAudioInterrupt(stream);
 

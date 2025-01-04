@@ -675,11 +675,18 @@ void MobiusKernel::processAudioStream(MobiusAudioStream* argStream)
     // which we may as well put here rather than have a callback
     // unclear if scripts need to advance after sample injection
     mCore->beginAudioBlockAfterActions();
+
+    // at this point before TimeSlicer, TrackManager would advance the LongWatcher
+    // which could result in more actions firing, that still needs to happen
+    // before block advance
+    mTracks->advanceLongWatcher();
     
     // !! The TimeSlicer is going to need to include MSL track Waits in its
     // dependency analysis which will complicate what mCore->beginAudioBlockAfterActions
     // above is doing.  Need to merge that with whatever the surgeon is doing
     mTimeSlicer->processAudioStream(stream);
+
+    mCore->finishAudioBlock();
     
     updateParameters();
     notifier.afterBlock();

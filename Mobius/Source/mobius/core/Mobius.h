@@ -89,9 +89,15 @@ class Mobius
     /**
      * Called by Kernel at the begging of each audio block.
      * What we once called "the interrupt".
+     *
+     * update: not any more, TrackManager/LogicalTrack will call
+     * Track::processAudioStream directly, it no longer goes through Mobius.
+     * Mobus will be aclled for beginAudioBlock and finishAudioBlcok
+     * around track advance.
      */
-    void processAudioStream(class MobiusAudioStream* stream);
-
+    //void processAudioStream(class MobiusAudioStream* stream);
+    void finishAudioBlock(class MobiusAudioStream* stream);
+    
     /**
      * Called by Kernel in the middle of an auto block to tell any
      * tracks that an input buffer was modified due to

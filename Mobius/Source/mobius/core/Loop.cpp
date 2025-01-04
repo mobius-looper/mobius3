@@ -71,7 +71,6 @@
 #include "Script.h"
 #include "Stream.h"
 #include "Synchronizer.h"
-#include "SyncState.h"
 #include "Track.h"
 
 #include "Loop.h"

@@ -131,8 +131,7 @@ bool LogicalTrack::isFocused()
  */
 void LogicalTrack::processAudioStream(MobiusAudioStream* stream)
 {
-    if (trackType != Session::TypeAudio)
-      track->processAudioStream(stream);
+    track->processAudioStream(stream);
 }
 
 void LogicalTrack::doAction(UIAction* a)
